@@ -436,10 +436,9 @@ def nan_euclidean_distances(X, Y=None, *, squared=False,
     return distances
 
 
-@njit(parallel=True)
 def _nan_fill_row_norm(X):
     ret = np.zeros(X.shape[0])
-    for i in prange(X.shape[0]):
+    for i in range(X.shape[0]):
         ret[i] = np.nansum(np.multiply(X[i], X[i]))
     return ret
 
