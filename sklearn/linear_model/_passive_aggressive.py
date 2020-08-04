@@ -440,7 +440,8 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
                                  loss="epsilon_insensitive",
                                  learning_rate=lr, max_iter=1,
                                  sample_weight=None,
-                                 coef_init=None, intercept_init=None)
+                                 coef_init=None, intercept_init=None,
+                                 accept_large_sparse=False)
 
     def fit(self, X, y, coef_init=None, intercept_init=None):
         """Fit linear model with Passive Aggressive algorithm.

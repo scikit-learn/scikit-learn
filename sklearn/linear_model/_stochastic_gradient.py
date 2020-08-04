@@ -531,14 +531,14 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         return self
 
     def _fit(self, X, y, alpha, C, loss, learning_rate, coef_init=None,
-             intercept_init=None, sample_weight=None):
+             intercept_init=None, sample_weight=None, accept_large_sparse=False):
         self._validate_params()
         if hasattr(self, "classes_"):
             self.classes_ = None
 
         X, y = self._validate_data(X, y, accept_sparse='csr',
                                    dtype=np.float64, order="C",
-                                   accept_large_sparse=False)
+                                   accept_large_sparse=accept_large_sparse)
 
         # labels can be encoded as float, int, or string literals
         # np.unique sorts in asc order; largest class id is positive class
@@ -694,7 +694,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
                                  coef_init=None, intercept_init=None)
 
     def fit(self, X, y, coef_init=None, intercept_init=None,
-            sample_weight=None):
+            sample_weight=None, accept_large_sparse=False):
         """Fit linear model with Stochastic Gradient Descent.
 
         Parameters
@@ -725,7 +725,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         return self._fit(X, y, alpha=self.alpha, C=1.0,
                          loss=self.loss, learning_rate=self.learning_rate,
                          coef_init=coef_init, intercept_init=intercept_init,
-                         sample_weight=sample_weight)
+                         sample_weight=sample_weight, accept_large_sparse=accept_large_sparse)
 
 
 class SGDClassifier(BaseSGDClassifier):
@@ -1133,7 +1133,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             average=average)
 
     def _partial_fit(self, X, y, alpha, C, loss, learning_rate,
-                     max_iter, sample_weight, coef_init, intercept_init):
+                     max_iter, sample_weight, coef_init, intercept_init, accept_large_sparse):
         X, y = self._validate_data(X, y, accept_sparse="csr", copy=False,
                                    order='C', dtype=np.float64,
                                    accept_large_sparse=False)
@@ -1161,7 +1161,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
 
         return self
 
-    def partial_fit(self, X, y, sample_weight=None):
+    def partial_fit(self, X, y, sample_weight=None, accept_large_sparse=False):
         """Perform one epoch of stochastic gradient descent on given samples.
 
         Internally, this method uses ``max_iter = 1``. Therefore, it is not
@@ -1181,6 +1181,8 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             Weights applied to individual samples.
             If not provided, uniform weights are assumed.
 
+        accept_large_sparse :
+
         Returns
         -------
         self : returns an instance of self.
@@ -1190,10 +1192,10 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
                                  loss=self.loss,
                                  learning_rate=self.learning_rate, max_iter=1,
                                  sample_weight=sample_weight, coef_init=None,
-                                 intercept_init=None)
+                                 intercept_init=None, accept_large_sparse=accept_large_sparse)
 
     def _fit(self, X, y, alpha, C, loss, learning_rate, coef_init=None,
-             intercept_init=None, sample_weight=None):
+             intercept_init=None, sample_weight=None, accept_large_sparse=False):
         self._validate_params()
         if self.warm_start and getattr(self, "coef_", None) is not None:
             if coef_init is None:
@@ -1209,7 +1211,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
 
         self._partial_fit(X, y, alpha, C, loss, learning_rate,
                           self.max_iter, sample_weight, coef_init,
-                          intercept_init)
+                          intercept_init, accept_large_sparse=accept_large_sparse)
 
         if (self.tol is not None and self.tol > -np.inf
                 and self.n_iter_ == self.max_iter):
@@ -1221,7 +1223,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         return self
 
     def fit(self, X, y, coef_init=None, intercept_init=None,
-            sample_weight=None):
+            sample_weight=None, accept_large_sparse=False):
         """Fit linear model with Stochastic Gradient Descent.
 
         Parameters
@@ -1249,7 +1251,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
                          loss=self.loss, learning_rate=self.learning_rate,
                          coef_init=coef_init,
                          intercept_init=intercept_init,
-                         sample_weight=sample_weight)
+                         sample_weight=sample_weight, accept_large_sparse=accept_large_sparse)
 
     def _decision_function(self, X):
         """Predict using the linear model

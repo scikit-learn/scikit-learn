@@ -1086,6 +1086,14 @@ def test_sgd_reg(klass):
 
 
 @pytest.mark.parametrize('klass', [SGDRegressor, SparseSGDRegressor])
+def test_sgd_accept_large_sparse(klass):
+    # Check that SGD gives any results.
+    clf = klass(alpha=0.1, max_iter=2, fit_intercept=False)
+    clf.fit([[0, 0], [1, 1], [2, 2]], [0, 1, 2], accept_large_sparse=True)
+    assert clf.coef_[0] == clf.coef_[1]
+
+
+@pytest.mark.parametrize('klass', [SGDRegressor, SparseSGDRegressor])
 def test_sgd_averaged_computed_correctly(klass):
     # Tests the average regressor matches the naive implementation
 
