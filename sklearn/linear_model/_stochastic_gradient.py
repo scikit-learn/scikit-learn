@@ -1198,7 +1198,8 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
                                  accept_large_sparse=accept_large_sparse)
 
     def _fit(self, X, y, alpha, C, loss, learning_rate, coef_init=None,
-             intercept_init=None, sample_weight=None, accept_large_sparse=False):
+             intercept_init=None, sample_weight=None,
+             accept_large_sparse=False):
         self._validate_params()
         if self.warm_start and getattr(self, "coef_", None) is not None:
             if coef_init is None:
