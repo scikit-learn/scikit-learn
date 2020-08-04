@@ -249,6 +249,14 @@ Changelog
   :func:`metrics.check_scoring` function as well.
   :pr:`17962` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Enhancement| Add the possibility to set additional parameter of a scorer
+  created with :func:`metrics.make_scorer` using the method `set_kwargs`.
+  :pr:`17962` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Enhancement| Add the possibility to pass additional parameter required by
+  the scoring function when calling :func:`get_scorer`.
+  :pr:`17962` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
