@@ -707,8 +707,8 @@ class OrdinalEncoder(_BaseEncoder):
         else:
             if self.unknown_value is not None:
                 raise TypeError(f"unknown_value should only be set when "
-                                f"`handle_unknown is 'use_encoded_value'`, got "
-                                f"{self.unknown_value}.")
+                                f"`handle_unknown is 'use_encoded_value'`, "
+                                f"got {self.unknown_value}.")
 
         self._fit(X)
 
