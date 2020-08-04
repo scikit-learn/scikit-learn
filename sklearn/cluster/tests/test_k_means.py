@@ -492,31 +492,58 @@ def test_score_max_iter(Estimator):
 @pytest.mark.parametrize("array_constr", [np.array, sp.csr_matrix],
                          ids=["dense", "sparse"])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-@pytest.mark.parametrize("init", ["random", "k-means++", "ndarray"])
-@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
-def test_predict(Estimator, init, dtype, array_constr):
+@pytest.mark.parametrize("init", ["random", "k-means++"])
+@pytest.mark.parametrize("Estimator, algorithm", [
+    (KMeans, "full"),
+    (KMeans, "elkan"),
+    (MiniBatchKMeans, None)
+])
+def test_predict(Estimator, algorithm, init, dtype, array_constr):
     # Check the predict method and the equivalence between fit.predict and
     # fit_predict.
+
+    # There's a very small chance of failure with elkan on unstructured dataset
+    # because predict method uses fast euclidean distances computation which
+    # may cause small numerical instabilities.
     if sys.platform == "darwin":
         pytest.xfail(
             "Known failures on MacOS, See "
             "https://github.com/scikit-learn/scikit-learn/issues/12644")
 
     X, _ = make_blobs(n_samples=500, n_features=10, centers=10, random_state=0)
-
-    n_init = 1 if init == "ndarray" else 10
-    init = X[:10] if init == "ndarray" else init
     X = array_constr(X)
 
-    km = Estimator(n_clusters=10, init=init, n_init=n_init,
-                   random_state=0).fit(X)
+    # With n_init = 1
+    km = Estimator(n_clusters=10, init=init, n_init=1, random_state=0)
+    if algorithm is not None:
+        km.set_params(algorithm=algorithm)
+    km.fit(X)
     labels = km.labels_
 
+    # re-predict labels for training set using predict
+    pred = km.predict(X)
+    assert_array_equal(pred, labels)
+
+    # re-predict labels for training set using fit_predict
+    pred = km.fit_predict(X)
+    assert_array_equal(pred, labels)
+
+    # predict centroid labels
+    pred = km.predict(km.cluster_centers_)
+    assert_array_equal(pred, np.arange(10))
+
+    # With n_init > 1
     # Due to randomness in the order in which chunks of data are processed when
     # using more than one thread, there might be different rounding errors for
-    # the computation of the inertia for each init between 2 runs. This might
-    # result in a different ranking of the inits, hence a different labeling,
-    # which should still correspond to the same clustering
+    # the computation of the inertia between 2 runs. This might result in a
+    # different ranking of 2 inits, hence a different labeling, even if they
+    # give the same clustering. We only check the labels up to a permutation.
+
+    km = Estimator(n_clusters=10, init=init, n_init=10, random_state=0)
+    if algorithm is not None:
+        km.set_params(algorithm=algorithm)
+    km.fit(X)
+    labels = km.labels_
 
     # re-predict labels for training set using predict
     pred = km.predict(X)
