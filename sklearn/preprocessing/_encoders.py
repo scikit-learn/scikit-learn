@@ -629,10 +629,15 @@ class OrdinalEncoder(_BaseEncoder):
         set to the value given for the parameter `unknown_value`. In
         :meth:`inverse_transform`, an unknown category will be denoted as None.
 
+        .. versionadded:: 0.24
+
     unknown_value : int, default=None
         When the parameter handle_unknown is set to 'use_encoded_value', this
         parameter is required and will set the encoded value of unknown
-        categories.
+        categories. It has to be distinct from the values used to encode any of
+        the categories in the fit.
+
+        .. versionadded:: 0.24
 
     Attributes
     ----------

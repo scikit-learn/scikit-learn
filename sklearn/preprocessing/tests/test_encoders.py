@@ -600,7 +600,7 @@ def test_ordinal_encoder_handle_unknowns_raise():
         enc.fit(X)
 
     enc = OrdinalEncoder(handle_unknown='use_encoded_value', unknown_value=1)
-    msg = ("The used value for unknown_value 1 is one of the values already "
+    msg = ("The used value for unknown_value (1) is one of the values already "
            "used for encoding the seen categories.")
     with pytest.raises(ValueError, match=msg):
         enc.fit(X)
