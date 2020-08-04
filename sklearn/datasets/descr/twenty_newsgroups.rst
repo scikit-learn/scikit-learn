@@ -100,11 +100,12 @@ example that extract `TF-IDF`_ vectors of unigram tokens
 from a subset of 20news::
 
   >>> from sklearn.feature_extraction.text import TfidfVectorizer
+  >>> from sklearn.feature_extraction import stop_words
   >>> categories = ['alt.atheism', 'talk.religion.misc',
   ...               'comp.graphics', 'sci.space']
   >>> newsgroups_train = fetch_20newsgroups(subset='train',
   ...                                       categories=categories)
-  >>> vectorizer = TfidfVectorizer()
+  >>> vectorizer = TfidfVectorizer(stop_words=stop_words.ENGLISH_STOP_WORDS)
   >>> vectors = vectorizer.fit_transform(newsgroups_train.data)
   >>> vectors.shape
   (2034, 33814)
