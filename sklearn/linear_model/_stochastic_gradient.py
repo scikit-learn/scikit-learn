@@ -1181,7 +1181,9 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             Weights applied to individual samples.
             If not provided, uniform weights are assumed.
 
-        accept_large_sparse :
+        accept_large_sparse : boolean, default=False
+            if accept_large_sparse is set to True, model input validation allows for
+            sparse matrices with 64-bit integer indices.
 
         Returns
         -------
