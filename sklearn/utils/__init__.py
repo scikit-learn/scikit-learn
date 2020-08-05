@@ -948,6 +948,7 @@ def get_chunk_n_rows(row_bytes, *, max_n_rows=None, working_memory=None):
         chunk_n_rows = 1
     return chunk_n_rows
 
+
 def is_scalar_nan(x):
     """Tests if x is NaN
 
