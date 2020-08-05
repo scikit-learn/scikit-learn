@@ -11,7 +11,9 @@ you some hints on how to persist a scikit-learn model.
 .. note::
 
    Remember that, once exported in a persistent format, the model should only
-   be used for predictions and it should not be refitted.
+   be used for predictions and cannot necessarily be refitted as information
+   about the original hyper-parameters might not have been exported
+   (depending on the serialization method).
 
 Python specific serialization
 -----------------------------
@@ -96,7 +98,8 @@ serialization methods, please refer to this
 Interoperable formats
 ---------------------
 
-For reproducibility and quality control needs, exporting the model in
+For reproducibility and quality control needs, when different architectures
+and environments should be taken into account, exporting the model in
 `Open Neural Network
 Exchange <https://onnx.ai/>`_ format or `Predictive Model Markup Language
 (PMML) <http://dmg.org/pmml/v4-4-1/GeneralStructure.html>`_ format
