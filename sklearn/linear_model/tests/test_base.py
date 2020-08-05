@@ -9,7 +9,6 @@ import numpy as np
 from scipy import sparse
 from scipy import linalg
 
-import sklearn
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_almost_equal
@@ -139,19 +138,10 @@ def test_fit_intercept():
             lr3_without_intercept.coef_.ndim)
 
 
-@pytest.fixture(scope='function')
-# FIXME remove fixture in 0.28
-def set_correct_version():
-    present_version = sklearn.__version__
-    yield set_correct_version  # provide the fixture value
-    sklearn.__version__ = present_version
-
-
 @pytest.mark.parametrize('normalize', [True, False, 'deprecated'])
 @pytest.mark.parametrize('default', [True, False])
-@pytest.mark.parametrize('version', ['0.24', '0.25'])
 # FIXME update test in 0.26 for new versions
-def test_deprecate_normalize(set_correct_version, normalize, default, version):
+def test_deprecate_normalize(normalize, default):
     if not default:
         if normalize == 'deprecated':
             # no warning
@@ -166,9 +156,7 @@ def test_deprecate_normalize(set_correct_version, normalize, default, version):
                 warning_msg.append('default value')
             else:
                 warning_msg.append('StandardScaler()')
-            if version == '0.24' or version == '0.25':
-                warning_msg.append('0.24')
-    elif default and (version == '0.24' or version == '0.25'):
+    elif default:
         if normalize == 'deprecated':
             # warning to pass False and use StandardScaler
             output = default
@@ -179,8 +167,6 @@ def test_deprecate_normalize(set_correct_version, normalize, default, version):
             output = normalize
             expected = None
             warning_msg = []
-
-    sklearn.__version__ = version
 
     if expected == AssertionError:
         with pytest.raises(AssertionError) as record:
