@@ -142,6 +142,12 @@ Changelog
   for large ``batch_size`` and ``n_samples`` values.`
   :pr:`17985` by :user:`Alan Butler <aldee153>` and :user:`Amanda Dsouza <amy12xx>`.
 
+- |Enhancement| :class:`decomposition.NMF` now supports the optional parameter
+  `regularization`, which can take the values `None`, `components`,
+  `transformation` or `both`, in accordance with
+  :func:`decomposition.NMF.non_negative_factorization`.
+  :pr:`17414` by :user:`Bharat Raghunathan <Bharat123rox>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
