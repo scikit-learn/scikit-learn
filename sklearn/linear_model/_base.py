@@ -24,7 +24,6 @@ from scipy import sparse
 from scipy.special import expit
 from joblib import Parallel, delayed
 
-from .. import __version__
 from ..base import (BaseEstimator, ClassifierMixin, RegressorMixin,
                     MultiOutputMixin)
 from ..utils import check_array
@@ -33,7 +32,7 @@ from ..utils.validation import _deprecate_positional_args
 from ..utils import check_random_state
 from ..utils.extmath import safe_sparse_dot
 from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
-from ..utils.fixes import sparse_lsqr, parse_version
+from ..utils.fixes import sparse_lsqr
 from ..utils._seq_dataset import ArrayDataset32, CSRDataset32
 from ..utils._seq_dataset import ArrayDataset64, CSRDataset64
 from ..utils.validation import check_is_fitted, _check_sample_weight
@@ -48,17 +47,15 @@ SPARSE_INTERCEPT_DECAY = 0.01
 
 
 # FIXME in 0.26: variable 'normalize' should be removed from linear models
-# where now normalize=False. default value of 'normalize' should be changed to
-# False in linear models where now normalize=True and should be deprecated
-# change this function accordingly
+# in cases where now normalize=False. default value of 'normalize' should be
+# changed to False in linear models where now normalize=True
 def _deprecate_normalize(normalize, default):
     if normalize == 'deprecated':
         _normalize = default
     else:
         _normalize = normalize
 
-    if default and normalize == 'deprecated' and \
-       parse_version(__version__) < parse_version('0.26'):
+    if default and normalize == 'deprecated':
         warnings.warn(
             " default of 'normalize' will be set to False in version 0.26 and"
             " deprecated in version 0.28."
