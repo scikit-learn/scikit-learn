@@ -9,4 +9,4 @@ if [[ "$BUILD_WITH_ICC" == "true" ]]; then
     source /opt/intel/inteloneapi/setvars.sh
 fi
 
-make test-doc
+PYTEST="pytest -n $CI_CPU_COUNT" make test-doc
