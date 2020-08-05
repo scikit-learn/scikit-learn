@@ -330,6 +330,12 @@ Changelog
   which clips the transformed values of test data to ``feature_range``.
   :pr:`17833` by :user:`Yashika Sharma <yashika51>`.
 
+- |Enhancement| Add a new ``handle_unknown`` parameter with a
+  ``use_encoded_value`` option, along with a new ``unknown_value`` parameter,
+  to :class:`preprocessing.OrdinalEncoder` to allow unknown categories during
+  transform and set the encoded value of the unknown categories.
+  :pr:`17406` by :user:`Felix Wick <FelixWick>`.
+
 :mod:`sklearn.svm`
 ..................
 
