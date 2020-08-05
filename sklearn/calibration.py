@@ -127,30 +127,6 @@ class CalibratedClassifierCV(ClassifierMixin,
 
         .. versionadded:: 0.24
 
-    pre_dispatch : int or str, default='2*n_jobs'
-        Controls the number of jobs that get dispatched during parallel
-        execution. Reducing this number can be useful to avoid an
-        explosion of memory consumption when more jobs get dispatched
-        than CPUs can process. This parameter can be:
-
-            - None, in which case all the jobs are immediately
-              created and spawned. Use this for lightweight and
-              fast-running jobs, to avoid delays due to on-demand
-              spawning of the jobs
-
-            - An int, giving the exact number of total jobs that are
-              spawned
-
-            - A str, giving an expression as a function of n_jobs,
-              as in '2*n_jobs'
-
-        .. versionadded:: 0.24
-
-    verbose : int, default=0
-        Controls the verbosity: the higher, the more messages.
-
-        .. versionadded:: 0.24
-
     Attributes
     ----------
     classes_ : ndarray of shape (n_classes,)
@@ -217,14 +193,11 @@ class CalibratedClassifierCV(ClassifierMixin,
     """
     @_deprecate_positional_args
     def __init__(self, base_estimator=None, *, method='sigmoid',
-                 cv=None, n_jobs=None, pre_dispatch='2*n_jobs',
-                 verbose=0):
+                 cv=None, n_jobs=None):
         self.base_estimator = base_estimator
         self.method = method
         self.cv = cv
         self.n_jobs = n_jobs
-        self.verbose = verbose
-        self.pre_dispatch = pre_dispatch
 
     def fit(self, X, y, sample_weight=None):
         """Fit the calibrated model
@@ -304,8 +277,7 @@ class CalibratedClassifierCV(ClassifierMixin,
                                   "sample weights will only be used for the "
                                   "calibration itself." % estimator_name)
 
-            parallel = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
-                                pre_dispatch=self.pre_dispatch)
+            parallel = Parallel(n_jobs=self.n_jobs)
 
             self.calibrated_classifiers_ = parallel(delayed(
                 _fit_calibrated_classifer)(clone(base_estimator),
