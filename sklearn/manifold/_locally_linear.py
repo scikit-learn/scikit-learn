@@ -31,6 +31,7 @@ def barycenter_weights(X, Y, indices, reg=1e-3):
     Y : array-like, shape (n_samples, n_dim)
 
     indices : array-like, shape (n_samples, n_dim)
+            Indices of the points in Y used to compute the barycenter
 
     reg : float, default=1e-3
         amount of regularization to add for the problem to be
