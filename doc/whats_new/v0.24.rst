@@ -313,6 +313,16 @@ Changelog
 :mod:`sklearn.preprocessing`
 ............................
 
+- |Feature| Add a new ``handle_unknown`` parameter with a
+  ``use_encoded_value`` option, along with a new ``unknown_value`` parameter,
+  to :class:`preprocessing.OrdinalEncoder` to allow unknown categories during
+  transform and set the encoded value of the unknown categories.
+  :pr:`17406` by :user:`Felix Wick <FelixWick>`.
+
+- |Feature| Add ``clip`` parameter to :class:`preprocessing.MinMaxScaler`,
+  which clips the transformed values of test data to ``feature_range``.
+  :pr:`17833` by :user:`Yashika Sharma <yashika51>`.
+
 - |Enhancement| Verbose output of :class:`model_selection.GridSearchCV` has
   been improved for readability. :pr:`16935` by :user:`Raghav Rajagopalan
   <raghavrv>` and :user:`Chiara Marmo <cmarmo>`.
@@ -325,16 +335,6 @@ Changelog
 - |Enhancement| Add `dtype` parameter to
   :class:`preprocessing.KBinsDiscretizer`.
   :pr:`16335` by :user:`Arthur Imbert <Henley13>`.
-
-- |Enhancement| Add ``clip`` parameter to :class:`preprocessing.MinMaxScaler`,
-  which clips the transformed values of test data to ``feature_range``.
-  :pr:`17833` by :user:`Yashika Sharma <yashika51>`.
-
-- |Enhancement| Add a new ``handle_unknown`` parameter with a
-  ``use_encoded_value`` option, along with a new ``unknown_value`` parameter,
-  to :class:`preprocessing.OrdinalEncoder` to allow unknown categories during
-  transform and set the encoded value of the unknown categories.
-  :pr:`17406` by :user:`Felix Wick <FelixWick>`.
 
 :mod:`sklearn.svm`
 ..................
