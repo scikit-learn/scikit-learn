@@ -33,7 +33,7 @@ def _unique(values, *, return_inverse=False):
     if return_inverse:
         uniques, inverse = out
     else:
-        uniques, inverse = out, None
+        uniques = out
 
     # np.unique will have duplicate missing values at the end of `uniques`
     # here we clip the nans and remove it from uniques
