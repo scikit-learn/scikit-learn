@@ -169,14 +169,14 @@ def fastica(X, n_components=None, *, algorithm="parallel", whiten=True,
     algorithm : {'parallel', 'deflation'}, default='parallel'
         Apply a parallel or deflational FASTICA algorithm.
 
-    whiten : boolean, default=True
+    whiten : bool, default=True
         If True perform an initial whitening of the data.
         If False, the data is assumed to have already been
         preprocessed: it should be centered, normed and white.
         Otherwise you will get incorrect results.
         In this case the parameter n_components will be ignored.
 
-    fun : string or function, default: 'logcosh'
+    fun : {'logcosh', 'exp', 'cube'} or function, default='logcosh'
         The functional form of the G function used in the
         approximation to neg-entropy. Could be either 'logcosh', 'exp',
         or 'cube'.
@@ -188,7 +188,7 @@ def fastica(X, n_components=None, *, algorithm="parallel", whiten=True,
         def my_g(x):
             return x ** 3, np.mean(3 * x ** 2, axis=-1)
 
-    fun_args : dictionary, default=None
+    fun_args : dict, default=None
         Arguments to send to the functional form.
         If empty or None and if fun='logcosh', fun_args will take value
         {'alpha' : 1.0}
@@ -200,7 +200,7 @@ def fastica(X, n_components=None, *, algorithm="parallel", whiten=True,
         A positive scalar giving the tolerance at which the
         un-mixing matrix is considered to have converged.
 
-    w_init : (n_components, n_components) array, default=None
+    w_init : ndarray of shape (n_components, n_components), default=None
         Initial un-mixing array of dimension (n.comp,n.comp).
         If None (default) then an array of normal r.v.'s is used.
 
@@ -213,11 +213,11 @@ def fastica(X, n_components=None, *, algorithm="parallel", whiten=True,
     return_X_mean : bool, default=False
         If True, X_mean is returned too.
 
-    compute_sources : bool, True
+    compute_sources : bool, default=True
         If False, sources are not computed, but only the rotation matrix.
         This can save memory when working with big data. Defaults to True.
 
-    return_n_iter : bool, False
+    return_n_iter : bool, default=False
         Whether or not to return the number of iterations.
 
     Returns
@@ -314,7 +314,7 @@ class FastICA(TransformerMixin, BaseEstimator):
     algorithm : {'parallel', 'deflation'}, default='parallel'
         Apply parallel or deflational algorithm for FastICA.
 
-    whiten : boolean, default=True
+    whiten : bool, default=True
         If whiten is false, the data is already considered to be
         whitened, and no whitening is performed.
 
@@ -329,7 +329,7 @@ class FastICA(TransformerMixin, BaseEstimator):
             def my_g(x):
                 return x ** 3, (3 * x ** 2).mean(axis=-1)
 
-    fun_args : dictionary, default=None
+    fun_args : dict, default=None
         Arguments to send to the functional form.
         If empty and if fun='logcosh', fun_args will take value
         {'alpha' : 1.0}.
@@ -340,7 +340,7 @@ class FastICA(TransformerMixin, BaseEstimator):
     tol : float, default=1e-4
         Tolerance on update at each iteration.
 
-    w_init : None of an (n_components, n_components) ndarray, default=None
+    w_init : ndarray of shape (n_components, n_components), default=None
         The mixing matrix to be used to initialize the algorithm.
 
     random_state : int, RandomState instance, default=None
