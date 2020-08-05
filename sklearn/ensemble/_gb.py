@@ -1505,7 +1505,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
     estimators_ : ndarray of DecisionTreeRegressor of shape (n_estimators, 1)
         The collection of fitted sub-estimators.
- 
+
     n_classes_ : int
         The number of classes, set to 1 in regression tasks.
 
@@ -1519,7 +1519,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
     max_features_ : int
         The inferred value of max_features.
- 
+
     See Also
     --------
     sklearn.ensemble.HistGradientBoostingRegressor : Histogram-based
