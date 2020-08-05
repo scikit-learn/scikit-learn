@@ -50,7 +50,8 @@ def _unique(values, *, return_inverse=False):
 
 def _split_missing(items, none_is_missing=True):
     """Split items into a set and a list of missing values. If none_is_missing
-    is True, then None would be considered a missing value.
+    is True, then None and nan are considered missing. If none_is_missing
+    is False, then only nans are considered missing.
     """
     def is_missing(value):
         if none_is_missing:
@@ -191,23 +192,25 @@ def _check_unknown(values, known_values, return_mask=False):
 
     if values.dtype.kind in 'UO':
         values_set = set(values)
-        values_set, missing_in_values = _split_missing(values_set,
-                                                       none_is_missing=False)
+        values_set, nan_in_values = _split_missing(values_set,
+                                                   none_is_missing=False)
 
         uniques_set = set(known_values)
-        uniques_set, missing_in_uniques = _split_missing(uniques_set,
-                                                         none_is_missing=False)
+        uniques_set, nan_in_uniques = _split_missing(uniques_set,
+                                                     none_is_missing=False)
         diff = values_set - uniques_set
-        is_missing_in_uniques = bool(missing_in_uniques)
+        is_missing_in_uniques = bool(nan_in_uniques)
+
+        nan_in_diff = nan_in_values and not nan_in_uniques
 
         def is_valid(value):
             value_in_set = value in uniques_set
-            if missing_in_values and is_scalar_nan(value):
+            if nan_in_uniques and is_scalar_nan(value):
                 return is_missing_in_uniques
             return value_in_set
 
         if return_mask:
-            if diff:
+            if diff or nan_in_diff:
                 valid_mask = np.array([is_valid(value) for value in values])
             else:
                 valid_mask = np.ones(len(values), dtype=bool)
@@ -220,7 +223,7 @@ def _check_unknown(values, known_values, return_mask=False):
         if none_in_diff:
             diff.append(None)
 
-        if missing_in_values and not missing_in_uniques:
+        if nan_in_diff:
             diff.append(np.nan)
     else:
         unique_values = np.unique(values)

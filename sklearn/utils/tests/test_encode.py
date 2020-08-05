@@ -105,31 +105,32 @@ def test_check_unknown(values, uniques, expected_diff, expected_mask):
 @pytest.mark.parametrize('pickle_uniques', [True, False])
 def test_check_unknown_missing_values(missing_value, pickle_uniques):
     # check for check_unknown with missing values with object dtypes
-    values = np.array(['d', 'c', 'a', 'b', missing_value], dtype=object)
-    uniques = np.array(['c', 'a', 'b', missing_value], dtype=object)
+    # values = np.array(['d', 'c', 'a', 'b', missing_value], dtype=object)
+    # uniques = np.array(['c', 'a', 'b', missing_value], dtype=object)
+    # if pickle_uniques:
+    #     uniques = pickle.loads(pickle.dumps(uniques))
+
+    # expected_diff = ['d']
+    # expected_mask = [False, True, True, True, True]
+    # _assert_check_unknown(values, uniques, expected_diff, expected_mask)
+
+    # values = np.array(['d', 'c', 'a', 'b', missing_value], dtype=object)
+    # uniques = np.array(['c', 'a', 'b'], dtype=object)
+    # if pickle_uniques:
+    #     uniques = pickle.loads(pickle.dumps(uniques))
+
+    # expected_diff = ['d', missing_value]
+
+    # expected_mask = [False, True, True, True, False]
+    # _assert_check_unknown(values, uniques, expected_diff, expected_mask)
+
+    values = np.array(['a', missing_value], dtype=object)
+    uniques = np.array(['a', 'b', 'z'], dtype=object)
     if pickle_uniques:
         uniques = pickle.loads(pickle.dumps(uniques))
 
-    expected_diff = ['d']
-    expected_mask = [False, True, True, True, True]
-    _assert_check_unknown(values, uniques, expected_diff, expected_mask)
-
-    values = np.array(['d', 'c', 'a', 'b', missing_value], dtype=object)
-    uniques = np.array(['c', 'a', 'b'], dtype=object)
-    if pickle_uniques:
-        uniques = pickle.loads(pickle.dumps(uniques))
-
-    expected_diff = ['d', missing_value]
-    expected_mask = [False, True, True, True, False]
-    _assert_check_unknown(values, uniques, expected_diff, expected_mask)
-
-    values = np.array(['d', 'c', 'a', 'b'], dtype=object)
-    uniques = np.array(['c', 'a', 'b', missing_value], dtype=object)
-    if pickle_uniques:
-        uniques = pickle.loads(pickle.dumps(uniques))
-
-    expected_diff = ['d']
-    expected_mask = [False, True, True, True]
+    expected_diff = [missing_value]
+    expected_mask = [True, False]
     _assert_check_unknown(values, uniques, expected_diff, expected_mask)
 
 

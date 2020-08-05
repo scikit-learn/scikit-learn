@@ -360,8 +360,11 @@ def test_one_hot_encoder_categories(X, cat_exp, cat_dtype):
     (np.array([[None, 'a']], dtype=object).T,
      np.array([[None, 'b']], dtype=object).T,
      [[None, 'a', 'z']], object),
-    ], ids=['object', 'numeric', 'object-string-cat',
-            'object-string-none-cat'])
+    (np.array([['a', 'b']], dtype=object).T,
+     np.array([['a', np.nan]], dtype=object).T,
+     [['a', 'b', 'z']], object),
+    ], ids=['object', 'numeric', 'object-string',
+            'object-string-none', 'object-string-nan'])
 def test_one_hot_encoder_specified_categories(X, X2, cats, cat_dtype):
     enc = OneHotEncoder(categories=cats)
     exp = np.array([[1., 0., 0.],
