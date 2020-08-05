@@ -833,31 +833,18 @@ def mcc_f1_curve(y_true, y_score, *, pos_label=None, sample_weight=None):
     fps, tps, thresholds = _binary_clf_curve(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight)
 
-    fns = tps[-1] - tps
-    tns = fps[-1] - fps
+    ps = tps + fps   # Array of total positive predictions
+    p = tps[-1]      # No of positives in ground truth
+    n = fps[-1]      # No of negatives in ground truth
 
-    # Build an N-dimensional confusion matrix,
-    # where the last dimension = N, the number of points in the curve.
-    Cs = np.array([[tns, fps],
-                   [fns, tps]])
+    # Compute MCC
+    with np.errstate(divide='ignore', invalid='ignore'):
+        mccs = np.divide(n*tps - p*fps, np.sqrt(p*n*ps*(p + n - ps)))
+    np.nan_to_num(mccs, nan=0., copy=False)
+    mccs = (mccs + 1) / 2   # Unit-normalize MCC values
 
-    # Calculate MCC
-    t_sum = Cs.sum(axis=1, dtype=np.float64)
-    p_sum = Cs.sum(axis=0, dtype=np.float64)
-    n_correct = np.trace(Cs, dtype=np.float64)
-    n_samples = p_sum.sum(axis=0)
-    cov_ytyp = n_correct * n_samples - (t_sum * p_sum).sum(axis=0)
-    cov_ypyp = n_samples ** 2 - (p_sum * p_sum).sum(axis=0)
-    cov_ytyt = n_samples ** 2 - (t_sum * t_sum).sum(axis=0)
-    mccs = cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
-    np.nan_to_num(mccs, copy=False, nan=0.)
-
-    # Unit-normalize MCC values
-    mccs = (mccs + 1) / 2
-
-    # Calculate F1-Score
-    f1s = 2*tps / (2*tps + fps + fns)
-    np.nan_to_num(f1s, copy=False, nan=np.nan)
+    # Compute F1-Score
+    f1s = 2*tps / (ps + p)
 
     return mccs, f1s, thresholds
 
