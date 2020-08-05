@@ -704,11 +704,10 @@ class OrdinalEncoder(_BaseEncoder):
                 raise TypeError(f"unknown_value should be an integer when "
                                 f"`handle_unknown is 'use_encoded_value'`, "
                                 f"got {self.unknown_value}.")
-        else:
-            if self.unknown_value is not None:
-                raise TypeError(f"unknown_value should only be set when "
-                                f"`handle_unknown is 'use_encoded_value'`, "
-                                f"got {self.unknown_value}.")
+        elif self.unknown_value is not None:
+            raise TypeError(f"unknown_value should only be set when "
+                            f"`handle_unknown is 'use_encoded_value'`, "
+                            f"got {self.unknown_value}.")
 
         self._fit(X)
 
