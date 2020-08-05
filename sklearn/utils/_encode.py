@@ -48,30 +48,62 @@ def _unique(values, *, return_inverse=False):
     return uniques
 
 
-def _check_missing_values(items):
-    # Return missing values in items and errors for float('nan')
-    missing_values = [value for value in items
-                      if value is None or is_scalar_nan(value)]
+def _split_missing(items, none_is_missing=True):
+    """Split items into a set and a list of missing values. If none_is_missing
+    is True, then None would be considered a missing value.
+    """
+    def is_missing(value):
+        if none_is_missing:
+            return value is None or is_scalar_nan(value)
+        return is_scalar_nan(value)
 
-    if any(v not in (None, np.nan) for v in missing_values):
-        raise ValueError("Encoders supports missing values encoded as "
-                         "np.nan or None and does not support float('nan')")
+    # Return items without missing items
+    missing_values = [value for value in items if is_missing(value)]
 
-    # ensures that None is the first value in missing_values
-    if None in missing_values and missing_values[0] is not None:
-        missing_values[0], missing_values[1] = \
-            missing_values[1], missing_values[0]
+    if not missing_values:
+        return items, []
 
-    return missing_values
+    # Enforces an order where None always comes first
+    if None in missing_values:
+        if len(missing_values) == 1:
+            output_missing_values = [None]
+        else:
+            output_missing_values = [None, np.nan]
+    else:
+        output_missing_values = [np.nan]
+
+    # create set without the missing values
+    output = set(value for value in items if not is_missing(value))
+    return output, output_missing_values
+
+
+class _nandict(dict):
+    """Dictionary with support for nans."""
+    def __init__(self, mapping):
+        super().__init__(mapping)
+        for key, value in mapping.items():
+            if is_scalar_nan(key):
+                self.nan_value = value
+                break
+
+    def __missing__(self, key):
+        if hasattr(self, 'nan_value') and is_scalar_nan(key):
+            return self.nan_value
+        raise KeyError(key)
+
+
+def _map_to_integer(values, uniques):
+    """Map values based on its position in uniques."""
+    table = _nandict({val: i for i, val in enumerate(uniques)})
+    return np.array([table[v] for v in values])
 
 
 def _unique_python(values, *, return_inverse):
     # Only used in `_uniques`, see docstring there for details
     try:
         uniques_set = set(values)
-        missing_values = _check_missing_values(uniques_set)
+        uniques_set, missing_values = _split_missing(uniques_set)
 
-        uniques_set -= set(missing_values)
         uniques = sorted(uniques_set)
         uniques.extend(missing_values)
         uniques = np.array(uniques, dtype=values.dtype)
@@ -82,9 +114,7 @@ def _unique_python(values, *, return_inverse):
                         f"strings or numbers. Got {types}")
 
     if return_inverse:
-        table = {val: i for i, val in enumerate(uniques)}
-        inverse = np.array([table[v] for v in values])
-        return uniques, inverse
+        return uniques, _map_to_integer(values, uniques)
 
     return uniques
 
@@ -119,9 +149,8 @@ def _encode(values, *, uniques, check_unknown=True):
         Encoded values
     """
     if values.dtype == object:
-        table = {val: i for i, val in enumerate(uniques)}
         try:
-            return np.array([table[v] for v in values])
+            return _map_to_integer(values, uniques)
         except KeyError as e:
             raise ValueError(f"y contains previously unseen labels: {str(e)}")
     else:
@@ -161,21 +190,38 @@ def _check_unknown(values, known_values, return_mask=False):
     valid_mask = None
 
     if values.dtype.kind in 'UO':
+        values_set = set(values)
+        values_set, missing_in_values = _split_missing(values_set,
+                                                       none_is_missing=False)
+
         uniques_set = set(known_values)
-        diff = set(values) - uniques_set
+        uniques_set, missing_in_uniques = _split_missing(uniques_set,
+                                                         none_is_missing=False)
+        diff = values_set - uniques_set
+        is_missing_in_uniques = bool(missing_in_uniques)
+
+        def is_valid(value):
+            value_in_set = value in uniques_set
+            if missing_in_values and is_scalar_nan(value):
+                return is_missing_in_uniques
+            return value_in_set
+
         if return_mask:
             if diff:
-                valid_mask = np.array([val in uniques_set for val in values])
+                valid_mask = np.array([is_valid(value) for value in values])
             else:
                 valid_mask = np.ones(len(values), dtype=bool)
 
-        missing_values_in_diff = [value for value in (None, np.nan)
-                                  if value in diff]
-
-        diff -= set(missing_values_in_diff)
+        # ensure that None is at the end
+        none_in_diff = None in diff
+        if none_in_diff:
+            diff.remove(None)
         diff = list(diff)
-        diff.extend(missing_values_in_diff)
+        if none_in_diff:
+            diff.append(None)
 
+        if missing_in_values and not missing_in_uniques:
+            diff.append(np.nan)
     else:
         unique_values = np.unique(values)
         diff = np.setdiff1d(unique_values, known_values,

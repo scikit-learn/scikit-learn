@@ -204,10 +204,12 @@ def check_categorical_onehot(X):
     np.array([[10, 1, 55], [5, 2, 55]]),
     np.array([['b', 'A', 'cat'], ['a', 'B', 'cat']], dtype=object),
     np.array([['b', 1, 'cat'], ['a', np.nan, 'cat']], dtype=object),
+    np.array([['b', 1, 'cat'], ['a', float('nan'), 'cat']], dtype=object),
     np.array([[None, 1, 'cat'], ['a', 2, 'cat']], dtype=object),
     np.array([[None, 1, None], ['a', np.nan, None]], dtype=object),
-    ], ids=['mixed', 'numeric', 'object', 'mixed-nan', 'mixed-None',
-            'mixed-None-nan'])
+    np.array([[None, 1, None], ['a', float('nan'), None]], dtype=object),
+    ], ids=['mixed', 'numeric', 'object', 'mixed-nan', 'mixed-float-nan',
+            'mixed-None', 'mixed-None-nan', 'mixed-None-float-nan'])
 def test_one_hot_encoder(X):
     Xtr = check_categorical_onehot(np.array(X)[:, [0]])
     assert_allclose(Xtr, [[0, 1], [1, 0]])
@@ -324,8 +326,10 @@ def test_X_is_not_1D_pandas(method):
     (np.array([[1, 2], [np.nan, 2]]), [[1, np.nan], [2]], np.float_),
     (np.array([['A', np.nan], [None, np.nan]], dtype=object),
      [['A', None], [np.nan]], np.object_),
+    (np.array([['A', float('nan')], [None, float('nan')]], dtype=object),
+     [['A', None], [float('nan')]], np.object_),
     ], ids=['mixed', 'numeric', 'object', 'string', 'missing-float',
-            'missing-object'])
+            'missing-np.nan-object', 'missing-float-nan-object'])
 def test_one_hot_encoder_categories(X, cat_exp, cat_dtype):
     # order of categories should not depend on order of samples
     for Xi in [X, X[::-1]]:
@@ -609,7 +613,7 @@ def test_one_hot_encoder_warning():
     np.testing.assert_no_warnings(enc.fit_transform, X)
 
 
-@pytest.mark.parametrize("missing_value", [np.nan, None])
+@pytest.mark.parametrize("missing_value", [np.nan, None, float('nan')])
 def test_one_hot_encoder_drop_manual(missing_value):
     cats_to_drop = ['def', 12, 3, 56, missing_value]
     enc = OneHotEncoder(drop=cats_to_drop)
@@ -644,8 +648,6 @@ def test_one_hot_encoder_drop_manual(missing_value):
         assert_array_equal(X_array, X_inv_trans)
 
 
-
-
 @pytest.mark.parametrize(
     "X_fit, params, err_msg",
     [([["Male"], ["Female"]], {'drop': 'second'},
@@ -657,10 +659,7 @@ def test_one_hot_encoder_drop_manual(missing_value):
      "Wrong input for parameter `drop`"),
      ([['abc', 2, 55], ['def', 1, 55], ['def', 3, 59]],
       {'drop': ['ghi', 3, 59]},
-     "The following categories were supposed"),
-     (np.array([['abc', 2], ['def', float('nan')]], dtype=object),
-     {'categories': [['abc', 'def'], [2, float('nan')]]},
-      r'Encoders supports missing values encoded as')]
+     "The following categories were supposed")]
 )
 def test_one_hot_encoder_invalid_params(X_fit, params, err_msg):
     enc = OneHotEncoder(**params)

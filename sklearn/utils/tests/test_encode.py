@@ -1,3 +1,5 @@
+import pickle
+
 import numpy as np
 import pytest
 from numpy.testing import assert_array_equal
@@ -99,34 +101,41 @@ def test_check_unknown(values, uniques, expected_diff, expected_mask):
     _assert_check_unknown(values, uniques, expected_diff, expected_mask)
 
 
-@pytest.mark.parametrize("missing_value", [None, np.nan])
-def test_check_unknown_missing_values(missing_value):
+@pytest.mark.parametrize("missing_value", [None, np.nan, float('nan')])
+@pytest.mark.parametrize('pickle_uniques', [True, False])
+def test_check_unknown_missing_values(missing_value, pickle_uniques):
     # check for check_unknown with missing values with object dtypes
     values = np.array(['d', 'c', 'a', 'b', missing_value], dtype=object)
     uniques = np.array(['c', 'a', 'b', missing_value], dtype=object)
+    if pickle_uniques:
+        uniques = pickle.loads(pickle.dumps(uniques))
+
     expected_diff = ['d']
     expected_mask = [False, True, True, True, True]
-
     _assert_check_unknown(values, uniques, expected_diff, expected_mask)
 
     values = np.array(['d', 'c', 'a', 'b', missing_value], dtype=object)
     uniques = np.array(['c', 'a', 'b'], dtype=object)
+    if pickle_uniques:
+        uniques = pickle.loads(pickle.dumps(uniques))
+
     expected_diff = ['d', missing_value]
     expected_mask = [False, True, True, True, False]
-
     _assert_check_unknown(values, uniques, expected_diff, expected_mask)
 
     values = np.array(['d', 'c', 'a', 'b'], dtype=object)
     uniques = np.array(['c', 'a', 'b', missing_value], dtype=object)
+    if pickle_uniques:
+        uniques = pickle.loads(pickle.dumps(uniques))
+
     expected_diff = ['d']
     expected_mask = [False, True, True, True]
-
     _assert_check_unknown(values, uniques, expected_diff, expected_mask)
 
 
-@pytest.mark.parametrize('missing_value', [np.nan, None])
-@pytest.mark.parametrize('to_pickle', [True, False])
-def test_unique_util_missing_values_objects(missing_value, to_pickle):
+@pytest.mark.parametrize('missing_value', [np.nan, None, float('nan')])
+@pytest.mark.parametrize('pickle_uniques', [True, False])
+def test_unique_util_missing_values_objects(missing_value, pickle_uniques):
     # check for _unique and _encode with missing values with object dtypes
     values = np.array(['a', 'c', 'c', missing_value, 'b'], dtype=object)
     expected_uniques = np.array(['a', 'b', 'c', missing_value], dtype=object)
@@ -138,6 +147,9 @@ def test_unique_util_missing_values_objects(missing_value, to_pickle):
     else:  # missing_value == np.nan
         assert_array_equal(uniques[:-1], expected_uniques[:-1])
         assert np.isnan(uniques[-1])
+
+    if pickle_uniques:
+        uniques = pickle.loads(pickle.dumps(uniques))
 
     encoded = _encode(values, uniques=uniques)
     assert_array_equal(encoded, np.array([0, 2, 2, 3, 1]))
@@ -162,7 +174,7 @@ def test_unique_util_missing_values_numeric():
 
 def test_unique_util_with_both_missing_values():
     # test for both types of missing values for object dtype
-    values = np.array([np.nan, 'a', 'c', 'c', None, np.nan,
+    values = np.array([np.nan, 'a', 'c', 'c', None, float('nan'),
                        None], dtype=object)
 
     uniques = _unique(values)
@@ -193,12 +205,3 @@ def test_check_unknown_with_both_missing_values():
     assert np.isnan(diff[1])
     assert_array_equal(valid_mask,
                        [False, True, True, True, False, False, False])
-
-
-def test_unique_error_on_float_nan():
-    values = np.array([np.nan, None, float('nan'), 'a'], dtype=object)
-
-    msg = (r"Encoders supports missing values encoded as np\.nan or None and "
-           r"does not support float\('nan'\)")
-    with pytest.raises(ValueError, match=msg):
-        _unique(values)
