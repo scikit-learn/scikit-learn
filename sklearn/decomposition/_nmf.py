@@ -1165,13 +1165,6 @@ class NMF(TransformerMixin, BaseEstimator):
     max_iter : integer, default: 200
         Maximum number of iterations before timing out.
 
-    regularization : {'both', 'components', 'transformation', None}, \
-    				 default='both'
-        Select whether the regularization affects the components (H), the
-        transformation (W), both or none of them.
-
-        .. versionadded:: 0.24
-
     random_state : int, RandomState instance, default=None
         Used for initialisation (when ``init`` == 'nndsvdar' or
         'random'), and in Coordinate Descent. Pass an int for reproducible
@@ -1204,6 +1197,13 @@ class NMF(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.17
            *shuffle* parameter used in the Coordinate Descent solver.
+
+    regularization : {'both', 'components', 'transformation', None}, \
+                     default='both'
+        Select whether the regularization affects the components (H), the
+        transformation (W), both or none of them.
+
+        .. versionadded:: 0.24
 
     Attributes
     ----------
@@ -1245,20 +1245,20 @@ class NMF(TransformerMixin, BaseEstimator):
     @_deprecate_positional_args
     def __init__(self, n_components=None, *, init=None, solver='cd',
                  beta_loss='frobenius', tol=1e-4, max_iter=200,
-                 regularization='both', random_state=None, alpha=0.,
-                 l1_ratio=0., verbose=0, shuffle=False):
+                 random_state=None, alpha=0., l1_ratio=0., verbose=0,
+                 shuffle=False, regularization='both'):
         self.n_components = n_components
         self.init = init
         self.solver = solver
         self.beta_loss = beta_loss
         self.tol = tol
         self.max_iter = max_iter
-        self.regularization = regularization
         self.random_state = random_state
         self.alpha = alpha
         self.l1_ratio = l1_ratio
         self.verbose = verbose
         self.shuffle = shuffle
+        self.regularization = regularization
 
     def _more_tags(self):
         return {'requires_positive_X': True}
