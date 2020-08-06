@@ -18,7 +18,6 @@ the lower the better
 # License: BSD 3 clause
 
 
-from operator import pos
 import warnings
 from functools import partial
 
