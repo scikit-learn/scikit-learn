@@ -86,9 +86,10 @@ same range as before.
 
 Since a model internal representation may be different on two different
 architectures, dumping a model on one architecture and loading it on
-another architecture is not supported.
-To overcome the issue of portability between different architectures, pickle
-models might be deployed in production using containers, like docker.
+another architecture is not a supported behaviour, even if it might work
+on some cases.
+To overcome the issue of portability, pickle models are often deployed in
+production using containers, like docker.
 
 If you want to know more about these issues and explore other possible
 serialization methods, please refer to this
