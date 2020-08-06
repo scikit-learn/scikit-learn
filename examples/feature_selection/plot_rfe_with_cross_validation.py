@@ -24,7 +24,7 @@ svc = SVC(kernel="linear")
 # The "accuracy" scoring is proportional to the number of correct
 # classifications
 
-min_features_to_select = 1 # Minimum number of features to consider 
+min_features_to_select = 1  # Minimum number of features to consider 
 rfecv = RFECV(estimator=svc, step=1, cv=StratifiedKFold(2),
               scoring='accuracy',
               min_features_to_select= min_features_to_select)
