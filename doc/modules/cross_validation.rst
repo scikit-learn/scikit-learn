@@ -866,13 +866,16 @@ Permutation test score
 to evaluate the performance of classifiers. It provides a permutation-based
 p-value, which represents how likely an observed performance of the
 classifier would be obtained by chance. The null hypothesis in this test is
-that the features and labels are independent.
+that the classifier fails to leverage any statistical dependency between the
+features and the labels to make correct predictions on left out data.
 :func:`~sklearn.model_selection.permutation_test_score` generates a null
 distribution by calculating `n_permutations` different permutations of the
 data. In each permutation the labels are randomly shuffled, thereby removing
-any dependency between the features (data) and the labels. The p-value output
-is the fraction of permutations for which the score obtained is better
-that the score obtained using the original data.
+any dependency between the features and the labels. The p-value output
+is the fraction of permutations for which the average cross-validation score
+obtained by the model is better than the cross-validation score obtained by
+the model using the original data. For reliable results ``n_permutations``
+should typically be larger than 100 and ``cv`` between 3-10 folds.
 
 A low p-value provides evidence that the dataset contains real dependency
 between features and labels and the classifier was able to utilize this
@@ -886,16 +889,23 @@ p-value.
 Cross-validation provides information about how well a classifier generalizes,
 specifically the range of expected errors of the classifier. However, a
 classifier trained on a high dimensional dataset with no structure may still
-perform well on cross-validation.
+perform better than expected on cross-validation, just by chance.
+This can typically happen with small datasets with less than a few hundred
+samples.
 :func:`~sklearn.model_selection.permutation_test_score` provides information
 on whether the classifier has found a real class structure and can help in
 evaluating the performance of the classifier.
 
-Finally, it is important to note that this test has been shown to produce low
+It is important to note that this test has been shown to produce low
 p-values even if there is only weak structure in the data because in the
 corresponding permutated datasets there is absolutely no structure. This
 test is therefore only able to show when the model reliably outperforms
 random guessing.
+
+Finally, :func:`~sklearn.model_selection.permutation_test_score` is computed
+using brute force and interally fits ``(n_permutations + 1) * n_cv`` models.
+It is therefore only tractable with small datasets for which fitting an
+individual model is very fast.
 
 .. topic:: Examples
 
