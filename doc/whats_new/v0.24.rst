@@ -184,6 +184,13 @@ Changelog
   :pr:`17233` by :user:`Zolisa Bleki <zoj613>`.
 
 
+:mod:`sklearn.tree`
+.........................
+
+- |Fix| A fix to allow a binary serialized model to be successfully loaded on a machine
+  with different endianness.
+  :pr:`17644` by :user:`Qi Zhang <qzhang90>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
