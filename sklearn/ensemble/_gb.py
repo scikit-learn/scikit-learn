@@ -169,7 +169,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                    random_state, X_csc=None, X_csr=None):
         """Fit another stage of ``n_classes_`` trees to the boosting model. """
 
-        assert sample_mask.dtype == np.bool
+        assert sample_mask.dtype == bool
         loss = self.loss_
         original_y = y
 
@@ -306,7 +306,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             self.init_ = self.loss_.init_estimator()
 
         self.estimators_ = np.empty((self.n_estimators, self.loss_.K),
-                                    dtype=np.object)
+                                    dtype=object)
         self.train_score_ = np.zeros((self.n_estimators,), dtype=np.float64)
         # do oob?
         if self.subsample < 1.0:
@@ -316,7 +316,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
     def _clear_state(self):
         """Clear the state of the gradient boosting model. """
         if hasattr(self, 'estimators_'):
-            self.estimators_ = np.empty((0, 0), dtype=np.object)
+            self.estimators_ = np.empty((0, 0), dtype=object)
         if hasattr(self, 'train_score_'):
             del self.train_score_
         if hasattr(self, 'oob_improvement_'):
@@ -509,7 +509,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         """
         n_samples = X.shape[0]
         do_oob = self.subsample < 1.0
-        sample_mask = np.ones((n_samples, ), dtype=np.bool)
+        sample_mask = np.ones((n_samples, ), dtype=bool)
         n_inbag = max(1, int(self.subsample * n_samples))
         loss_ = self.loss_
 
@@ -1493,6 +1493,14 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
     estimators_ : ndarray of DecisionTreeRegressor of shape (n_estimators, 1)
         The collection of fitted sub-estimators.
+
+    n_classes_ : int
+        The number of classes, set to 1 in regression tasks.
+
+    n_estimators_ : int
+        The number of estimators as selected by early stopping (if
+        ``n_iter_no_change`` is specified). Otherwise it is set to
+        ``n_estimators``.
 
     n_features_ : int
         The number of data features.

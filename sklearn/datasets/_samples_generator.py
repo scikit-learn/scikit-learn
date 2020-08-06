@@ -195,7 +195,7 @@ def make_classification(n_samples=100, n_features=20, *, n_informative=2,
 
     # Initialize X and y
     X = np.zeros((n_samples, n_features))
-    y = np.zeros(n_samples, dtype=np.int)
+    y = np.zeros(n_samples, dtype=int)
 
     # Build the polytope whose vertices become cluster centroids
     centroids = _generate_hypercube(n_clusters, n_informative,
@@ -549,7 +549,7 @@ def make_regression(n_samples=100, n_features=100, *, n_informative=10,
     y : array of shape [n_samples] or [n_samples, n_targets]
         The output values.
 
-    coef : array of shape [n_features] or [n_features, n_targets], optional
+    coef : array of shape (n_features,) or (n_features, n_targets)
         The coefficient of the underlying linear model. It is returned only if
         coef is True.
     """
