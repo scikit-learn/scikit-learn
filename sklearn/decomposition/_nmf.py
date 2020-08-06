@@ -1198,8 +1198,7 @@ class NMF(TransformerMixin, BaseEstimator):
         .. versionadded:: 0.17
            *shuffle* parameter used in the Coordinate Descent solver.
 
-    regularization : {'both', 'components', 'transformation', None}, \
-                     default='both'
+    regularization : {'both', 'components', 'transformation', None}, default='both'
         Select whether the regularization affects the components (H), the
         transformation (W), both or none of them.
 
