@@ -265,16 +265,26 @@ def roc_auc_score(y_true, y_score, *, average="macro", sample_weight=None,
         binary label indicators with shape (n_samples, n_classes).
 
     y_score : array-like of shape (n_samples,) or (n_samples, n_classes)
-        Target scores. In the binary and multilabel cases, these can be either
-        probability estimates or non-thresholded decision values (as returned
-        by `decision_function` on some classifiers). In the multiclass case,
-        these must be probability estimates which sum to 1. The binary
-        case expects a shape (n_samples,), and the scores must be the scores of
-        the class with the greater label. The multiclass and multilabel
-        cases expect a shape (n_samples, n_classes). In the multiclass case,
-        the order of the class scores must correspond to the order of
-        ``labels``, if provided, or else to the numerical or lexicographical
-        order of the labels in ``y_true``.
+        Target scores.
+
+        * In the binary case, it corresponds to an array of shape (n_samples,).
+          Both probability estimates and non-thresholded decision values can
+          be provided. The probability estimates correspond to the
+          **probability of the class with the greater label**,
+          i.e. `estimator.classes_[1]` and thus
+          `estimator.predict_proba(X, y)[:, 1]`. The decision values
+          corresponds to the output of `estimator.decision_function(X, y)`;
+        * In the multilabel case, it corresponds to an array of shape
+          (n_samples, n_classes). Probability estimates are provided by the
+          `predict_proba` method and the non-thresholded decision values by
+          the `decision_function` method;
+        * In the multiclass case, it corresponds to an array of shape
+          (n_samples, n_classes) of probability estimates provided by the
+          `predict_proba` method. The probability estimates **must**
+          sum to 1 across the possible classes. In addition, the order of the
+          class scores must correspond to the order of ``labels``,
+          if provided, or else to the numerical or lexicographical order of
+          the labels in ``y_true``.
 
     average : {'micro', 'macro', 'samples', 'weighted'} or None, \
             default='macro'
@@ -352,7 +362,7 @@ def roc_auc_score(y_true, y_score, *, average="macro", sample_weight=None,
             Machine Learning, 45(2), 171-186.
             <http://link.springer.com/article/10.1023/A:1010920819831>`_
 
-    See also
+    See Also
     --------
     average_precision_score : Area under the precision-recall curve
 
@@ -362,12 +372,69 @@ def roc_auc_score(y_true, y_score, *, average="macro", sample_weight=None,
 
     Examples
     --------
-    >>> import numpy as np
+    ROC-AUC can be computed in different problem. In binary case, both
+    probability estimates and non-thresholded decision values can be used:
+
+    >>> from sklearn.datasets import load_breast_cancer
+    >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.metrics import roc_auc_score
-    >>> y_true = np.array([0, 0, 1, 1])
-    >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> roc_auc_score(y_true, y_scores)
-    0.75
+    >>> X, y = load_breast_cancer(return_X_y=True)
+    >>> clf = LogisticRegression(solver="liblinear").fit(X, y)
+    >>> y_probability_estimates = clf.predict_proba(X)
+    >>> print(
+    ...     f"Shape of the probability estimates in binary case: "
+    ...     f"{y_probability_estimates.shape}"
+    ... )
+    Shape of the probability estimates in binary case: (569, 2)
+    >>> print(
+    ...     f"The labels learn by the classifierare: {clf.classes_}"
+    ... )
+    The labels learn by the classifierare: [0 1]
+
+    In the binary case, we need to pass the probability estimates corresponding
+    to the greater label which is always `y_probability_estimates[:, 1]`
+    corresponding to `clf.classes_[1]`.
+
+    >>> print(
+    ...     f"ROC-AUC score using probability estimate: "
+    ...     f"{roc_auc_score(y, y_probability_estimates[:, 1])}"
+    ... )
+    ROC-AUC score using probability estimate: 0.99...
+
+    Otherwise, you can passed the decision values directly:
+
+    >>> y_decision_values = clf.decision_function(X)
+    >>> print(
+    ...     f"Shape of the non-thresholded decision values in binary case: "
+    ...     f"{y_decision_values.shape}"
+    ... )
+    Shape of the non-thresholded decision values in binary case: (569,)
+    >>> print(
+    ...     f"ROC-AUC score using non-thresholded decision values: "
+    ...     f"{roc_auc_score(y, y_decision_values)}"
+    ... )
+    ROC-AUC score using non-thresholded decision values: 0.99...
+
+    In the multiclass case, one need to pass probability estimates which
+    should sum to 1 across class. In addition, you need to specify the
+    `multi_class` strategy to use.
+
+    >>> from sklearn.datasets import load_iris
+    >>> X, y = load_iris(return_X_y=True)
+    >>> clf = LogisticRegression(solver="liblinear").fit(X, y)
+    >>> y_probability_estimates = clf.predict_proba(X)
+    >>> print(
+    ...     f"Shape of the probability estimates in multiclass case: "
+    ...     f"{y_probability_estimates.shape}"
+    ... )
+    Shape of the probability estimates in multiclass case: (150, 3)
+    >>> y_probability_estimates.sum(axis=1)
+    array([1., 1., 1., 1., ...])
+    >>> print(
+    ...     f"ROC-AUC score using probability estimate: "
+    ...     f"{roc_auc_score(y, y_probability_estimates, multi_class='ovr')}"
+    ... )
+    ROC-AUC score using probability estimate: 0.99...
     """
 
     y_type = type_of_target(y_true)
