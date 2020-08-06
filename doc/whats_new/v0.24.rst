@@ -211,6 +211,12 @@ Changelog
   :pr:`17578` by :user:`Joseph Knox <jknox13>`, :user:`Nelle Varoquaux <NelleV>`
   and :user:`Chiara Marmo <cmarmo>`.
 
+- |Enhancement| :class:`linear_model.RidgeCV` now supports finding an optimal
+  regularization value `alpha` for each target separately by setting
+  ``alpha_per_target=True``. This is only supported when using the default
+  efficient leave-one-out cross-validation scheme ``cv=None``. :pr:`6624` by
+  :user:`Marijn van Vliet <wmvanvliet>`.
+
 :mod:`sklearn.manifold`
 .......................
 
