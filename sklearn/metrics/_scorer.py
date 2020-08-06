@@ -240,15 +240,13 @@ class _ProbaScorer(_BaseScorer):
         y_type = type_of_target(y)
         y_pred = method_caller(clf, "predict_proba", X)
 
-        kwargs = deepcopy(self._kwargs)
         if y_type == "binary":
             if y_pred.shape[1] == 2:
-                if "pos_label" in kwargs:
-                    col_idx = np.flatnonzero(
-                        clf.classes_ == kwargs["pos_label"]
-                    )[0]
-                else:
-                    col_idx = 1
+                col_idx = np.flatnonzero(
+                    clf.classes_ == self._kwargs.get(
+                        "pos_label", clf.classes_[1]
+                    )
+                )[0]
                 y_pred = y_pred[:, col_idx]
             elif y_pred.shape[1] == 1:  # not multiclass
                 raise ValueError('got predict_proba of shape {},'
@@ -257,10 +255,10 @@ class _ProbaScorer(_BaseScorer):
                                      y_pred.shape, self._score_func.__name__))
         if sample_weight is not None:
             return self._sign * self._score_func(
-                y, y_pred, sample_weight=sample_weight, **kwargs
+                y, y_pred, sample_weight=sample_weight, **self._kwargs
             )
         else:
-            return self._sign * self._score_func(y, y_pred, **kwargs)
+            return self._sign * self._score_func(y, y_pred, **self._kwargs)
 
     def _factory_args(self):
         return ", needs_proba=True"
@@ -322,12 +320,11 @@ class _ThresholdScorer(_BaseScorer):
 
                 if y_type == "binary":
                     if y_pred.shape[1] == 2:
-                        if "pos_label" in kwargs:
-                            col_idx = np.flatnonzero(
-                                clf.classes_ == kwargs["pos_label"]
-                            )[0]
-                        else:
-                            col_idx = 1
+                        col_idx = np.flatnonzero(
+                            clf.classes_ == kwargs.get(
+                                "pos_label", clf.classes_[1]
+                            )
+                        )[0]
                         y_pred = y_pred[:, col_idx]
                     else:
                         raise ValueError('got predict_proba of shape {},'
