@@ -1394,8 +1394,8 @@ def test_zero_devision_jaccard_score():
                               average='samples',
                               zero_division='warn')
     assert score == pytest.approx(score)
-    assert jaccard_score(y_true, y_pred,
-                         average='samples', zero_division=0) == 0.0
+    assert jaccard_score(y_true, y_pred, average='samples',
+                         zero_division=0) == pytest.approx(0)
     assert jaccard_score(y_true, y_pred,
                          average='samples', zero_division=1) == 0.5
 
