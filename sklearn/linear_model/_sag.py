@@ -165,7 +165,7 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
         going through all the samples. The value should be precomputed
         to speed up cross validation.
 
-    warm_start_mem : dict, defualt=None
+    warm_start_mem : dict, default=None
         The initialization parameters used for warm starting. Warm starting is
         currently used in LogisticRegression but not in Ridge.
         It contains:
