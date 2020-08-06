@@ -18,9 +18,11 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 # License: Simplified BSD
 
-from collections.abc import Iterable
-from functools import partial
 from collections import Counter
+from collections.abc import Iterable
+from copy import deepcopy
+from functools import partial
+from inspect import signature
 
 import numpy as np
 
@@ -237,20 +239,28 @@ class _ProbaScorer(_BaseScorer):
 
         y_type = type_of_target(y)
         y_pred = method_caller(clf, "predict_proba", X)
+
+        kwargs = deepcopy(self._kwargs)
         if y_type == "binary":
             if y_pred.shape[1] == 2:
-                y_pred = y_pred[:, 1]
+                if "pos_label" in kwargs:
+                    col_idx = np.flatnonzero(
+                        clf.classes_ == kwargs["pos_label"]
+                    )[0]
+                else:
+                    col_idx = 1
+                y_pred = y_pred[:, col_idx]
             elif y_pred.shape[1] == 1:  # not multiclass
                 raise ValueError('got predict_proba of shape {},'
                                  ' but need classifier with two'
                                  ' classes for {} scoring'.format(
                                      y_pred.shape, self._score_func.__name__))
         if sample_weight is not None:
-            return self._sign * self._score_func(y, y_pred,
-                                                 sample_weight=sample_weight,
-                                                 **self._kwargs)
+            return self._sign * self._score_func(
+                y, y_pred, sample_weight=sample_weight, **kwargs
+            )
         else:
-            return self._sign * self._score_func(y, y_pred, **self._kwargs)
+            return self._sign * self._score_func(y, y_pred, **kwargs)
 
     def _factory_args(self):
         return ", needs_proba=True"
@@ -292,6 +302,11 @@ class _ThresholdScorer(_BaseScorer):
         if y_type not in ("binary", "multilabel-indicator"):
             raise ValueError("{0} format is not supported".format(y_type))
 
+        kwargs = deepcopy(self._kwargs)
+        params_score_func = signature(self._score_func).parameters
+        if "pos_label" in params_score_func and "pos_label" not in kwargs:
+            kwargs["pos_label"] = clf.classes_[1]
+
         if is_regressor(clf):
             y_pred = method_caller(clf, "predict", X)
         else:
@@ -307,7 +322,13 @@ class _ThresholdScorer(_BaseScorer):
 
                 if y_type == "binary":
                     if y_pred.shape[1] == 2:
-                        y_pred = y_pred[:, 1]
+                        if "pos_label" in kwargs:
+                            col_idx = np.flatnonzero(
+                                clf.classes_ == kwargs["pos_label"]
+                            )[0]
+                        else:
+                            col_idx = 1
+                        y_pred = y_pred[:, col_idx]
                     else:
                         raise ValueError('got predict_proba of shape {},'
                                          ' but need classifier with two'
@@ -318,11 +339,11 @@ class _ThresholdScorer(_BaseScorer):
                     y_pred = np.vstack([p[:, -1] for p in y_pred]).T
 
         if sample_weight is not None:
-            return self._sign * self._score_func(y, y_pred,
-                                                 sample_weight=sample_weight,
-                                                 **self._kwargs)
+            return self._sign * self._score_func(
+                y, y_pred, sample_weight=sample_weight, **kwargs
+            )
         else:
-            return self._sign * self._score_func(y, y_pred, **self._kwargs)
+            return self._sign * self._score_func(y, y_pred, **kwargs)
 
     def _factory_args(self):
         return ", needs_threshold=True"
@@ -494,8 +515,14 @@ def _check_multimetric_scoring(estimator, scoring):
 
 
 @_deprecate_positional_args
-def make_scorer(score_func, *, greater_is_better=True, needs_proba=False,
-                needs_threshold=False, **kwargs):
+def make_scorer(
+    score_func,
+    *,
+    greater_is_better=True,
+    needs_proba=False,
+    needs_threshold=False,
+    **kwargs,
+):
     """Make a scorer from a performance metric or loss function.
 
     This factory function wraps scoring functions for use in GridSearchCV
@@ -610,20 +637,26 @@ accuracy_scorer = make_scorer(accuracy_score)
 balanced_accuracy_scorer = make_scorer(balanced_accuracy_score)
 
 # Score functions that need decision values
-roc_auc_scorer = make_scorer(roc_auc_score, greater_is_better=True,
-                             needs_threshold=True)
-average_precision_scorer = make_scorer(average_precision_score,
-                                       needs_threshold=True)
-roc_auc_ovo_scorer = make_scorer(roc_auc_score, needs_proba=True,
-                                 multi_class='ovo')
-roc_auc_ovo_weighted_scorer = make_scorer(roc_auc_score, needs_proba=True,
-                                          multi_class='ovo',
-                                          average='weighted')
-roc_auc_ovr_scorer = make_scorer(roc_auc_score, needs_proba=True,
-                                 multi_class='ovr')
-roc_auc_ovr_weighted_scorer = make_scorer(roc_auc_score, needs_proba=True,
-                                          multi_class='ovr',
-                                          average='weighted')
+roc_auc_scorer = make_scorer(
+    roc_auc_score,
+    greater_is_better=True,
+    needs_threshold=True,
+)
+average_precision_scorer = make_scorer(
+    average_precision_score, needs_threshold=True
+)
+roc_auc_ovo_scorer = make_scorer(
+    roc_auc_score, needs_proba=True, multi_class="ovo"
+)
+roc_auc_ovo_weighted_scorer = make_scorer(
+    roc_auc_score, needs_proba=True, multi_class="ovo", average="weighted"
+)
+roc_auc_ovr_scorer = make_scorer(
+    roc_auc_score, needs_proba=True, multi_class="ovr"
+)
+roc_auc_ovr_weighted_scorer = make_scorer(
+    roc_auc_score, needs_proba=True, multi_class="ovr", average="weighted"
+)
 
 # Score function for probabilistic classification
 neg_log_loss_scorer = make_scorer(log_loss, greater_is_better=False,
