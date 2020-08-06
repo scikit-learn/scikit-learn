@@ -123,5 +123,5 @@ PMML is a good option for model validation on different platforms and
 long term archiving. On the other hand, as XML in general, its verbosity does
 not help in production when performance is critical.
 To convert scikit-learn model to PMML you can use for example `sklearn2pmml
-<https://github.com/jpmml/sklearn2pmml>`_ distributed under the GNU Affero
-License version3.
+<https://github.com/jpmml/sklearn2pmml>`_ distributed under the Affero GPLv3
+license.
