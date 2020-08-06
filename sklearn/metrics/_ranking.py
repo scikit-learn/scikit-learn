@@ -219,15 +219,10 @@ def average_precision_score(y_true, y_score, *, average="macro", pos_label=1,
                                  average, sample_weight=sample_weight)
 
 
-<<<<<<< Updated upstream
-def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None):
-    """Binary roc auc score"""
-=======
 def _binary_roc_auc_score(
     y_true, y_score, sample_weight=None, max_fpr=None, pos_label=None
 ):
     """Binary roc auc score."""
->>>>>>> Stashed changes
     if len(np.unique(y_true)) != 2:
         raise ValueError("Only one class present in y_true. ROC AUC score "
                          "is not defined in that case.")
