@@ -26,7 +26,8 @@ svc = SVC(kernel="linear")
 
 min_features_to_select = 1 # Minimum number of features to consider 
 rfecv = RFECV(estimator=svc, step=1, cv=StratifiedKFold(2),
-              scoring='accuracy', min_features_to_select=min_features)
+              scoring='accuracy',
+              min_features_to_select= min_features_to_select)
 rfecv.fit(X, y)
 
 print("Optimal number of features : %d" % rfecv.n_features_)
