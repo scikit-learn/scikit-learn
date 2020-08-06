@@ -203,6 +203,14 @@ Changelog
 - |Enhancement| :class:`isotonic.IsotonicRegression` now accepts 2darray with 1 feature as
   input array. :pr:`17379` by :user:`Jiaxiang <fujiaxiang>`.
 
+:mod:`sklearn.linear_model`
+...........................
+
+- |Feature| :class:`linear_model.LinearRegression` now forces coefficients
+  to be all positive when ``positive`` is set to ``True``.
+  :pr:`17578` by :user:`Joseph Knox <jknox13>`, :user:`Nelle Varoquaux <NelleV>`
+  and :user:`Chiara Marmo <cmarmo>`.
+
 :mod:`sklearn.manifold`
 .......................
 
