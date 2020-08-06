@@ -1081,7 +1081,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
 
 
 class NMF(TransformerMixin, BaseEstimator):
-    r"""Non-Negative Matrix Factorization (NMF)
+    """Non-Negative Matrix Factorization (NMF)
 
     Find two non-negative matrices (W, H) whose product approximates the non-
     negative matrix X. This factorization can be used for example for
@@ -1097,8 +1097,8 @@ class NMF(TransformerMixin, BaseEstimator):
 
     Where::
 
-        ||A||_Fro^2 = \sum_{i,j} A_{ij}^2 (Frobenius norm)
-        ||vec(A)||_1 = \sum_{i,j} abs(A_{ij}) (Elementwise L1 norm)
+        ||A||_Fro^2 = \\sum_{i,j} A_{ij}^2 (Frobenius norm)
+        ||vec(A)||_1 = \\sum_{i,j} abs(A_{ij}) (Elementwise L1 norm)
 
     For multiplicative-update ('mu') solver, the Frobenius norm
     (0.5 * ||X - WH||_Fro^2) can be changed into another beta-divergence loss,
@@ -1198,7 +1198,8 @@ class NMF(TransformerMixin, BaseEstimator):
         .. versionadded:: 0.17
            *shuffle* parameter used in the Coordinate Descent solver.
 
-    regularization : {'both', 'components', 'transformation', None}, default='both'
+    regularization : {'both', 'components', 'transformation', None}, \
+                     default='both'
         Select whether the regularization affects the components (H), the
         transformation (W), both or none of them.
 
