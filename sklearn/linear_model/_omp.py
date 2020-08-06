@@ -699,7 +699,7 @@ def _omp_path_residues(X_train, y_train, X_test, y_test, copy=True,
     y_test : ndarray of shape (n_samples)
         The target variable to compute the residues on.
 
-    copy : bool, defualt=True
+    copy : bool, default=True
         Whether X_train, X_test, y_train and y_test should be copied.  If
         False, they may be overwritten.
 
@@ -767,7 +767,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
 
     Parameters
     ----------
-    copy : bool, defualt=True
+    copy : bool, default=True
         Whether the design matrix X must be copied by the algorithm. A false
         value is only helpful if X is already Fortran-ordered, otherwise a
         copy is made anyway.
