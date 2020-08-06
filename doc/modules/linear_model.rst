@@ -43,6 +43,8 @@ and will store the coefficients :math:`w` of the linear model in its
 
     >>> from sklearn import linear_model
     >>> reg = linear_model.LinearRegression()
+    >>> reg.fit ([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
+    LinearRegression()
     >>> reg.fit([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
     LinearRegression()
     >>> reg.coef_
@@ -61,6 +63,19 @@ example, when data are collected without an experimental design.
 
    * :ref:`sphx_glr_auto_examples_linear_model_plot_ols.py`
 
+Non-Negative Least Squares
+--------------------------
+
+It is possible to constrain all the coefficients to be non-negative, which may
+be useful when they represent some physical or naturally non-negative
+quantities (e.g., frequency counts or prices of goods).
+:class:`LinearRegression` accepts a boolean ``positive``
+parameter: when set to `True` `Non Negative Least Squares
+<https://en.wikipedia.org/wiki/Non-negative_least_squares>`_ are then applied.
+
+.. topic:: Examples:
+
+   * :ref:`sphx_glr_auto_examples_linear_model_plot_nnls.py`
 
 Ordinary Least Squares Complexity
 ---------------------------------
