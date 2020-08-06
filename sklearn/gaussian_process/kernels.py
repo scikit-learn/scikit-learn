@@ -32,6 +32,9 @@ from ..metrics.pairwise import pairwise_kernels
 from ..base import clone
 from ..utils.validation import _num_samples
 
+import warnings
+from sklearn.exceptions import ConvergenceWarning
+
 
 def _check_length_scale(X, length_scale):
     length_scale = np.squeeze(length_scale).astype(float)
@@ -385,6 +388,35 @@ class Kernel(metaclass=ABCMeta):
         vectors or generic objects. Defaults to True for backward
         compatibility."""
         return True
+
+    def _check_bounds_params(self):
+        """Called after fitting to warn if bounds may have been too tight."""
+        list_close = np.isclose(self.bounds,
+                                np.atleast_2d(self.theta).T)
+        idx = 0
+        for hyp in self.hyperparameters:
+            if hyp.fixed:
+                continue
+            for dim in range(hyp.n_elements):
+                if list_close[idx, 0]:
+                    warnings.warn("The optimal value found for "
+                                  "dimension %s of parameter %s is "
+                                  "close to the specified lower "
+                                  "bound %s. Decreasing the bound and"
+                                  " calling fit again may find a "
+                                  "better value." %
+                                  (dim, hyp.name, hyp.bounds[dim][0]),
+                                  ConvergenceWarning)
+                elif list_close[idx, 1]:
+                    warnings.warn("The optimal value found for "
+                                  "dimension %s of parameter %s is "
+                                  "close to the specified upper "
+                                  "bound %s. Increasing the bound and"
+                                  " calling fit again may find a "
+                                  "better value." %
+                                  (dim, hyp.name, hyp.bounds[dim][1]),
+                                  ConvergenceWarning)
+                idx += 1
 
 
 class NormalizedKernelMixin:

@@ -1489,15 +1489,23 @@ def precision_recall_fscore_support(y_true, y_pred, *, beta=1.0, labels=None,
     if average == 'weighted':
         weights = true_sum
         if weights.sum() == 0:
-            zero_division_value = 0.0 if zero_division in ["warn", 0] else 1.0
+            zero_division_value = np.float64(1.0)
+            if zero_division in ["warn", 0]:
+                zero_division_value = np.float64(0.0)
             # precision is zero_division if there are no positive predictions
             # recall is zero_division if there are no positive labels
             # fscore is zero_division if all labels AND predictions are
             # negative
-            return (zero_division_value if pred_sum.sum() == 0 else 0,
-                    zero_division_value,
-                    zero_division_value if pred_sum.sum() == 0 else 0,
-                    None)
+            if pred_sum.sum() == 0:
+                return (zero_division_value,
+                        zero_division_value,
+                        zero_division_value,
+                        None)
+            else:
+                return (np.float64(0.0),
+                        zero_division_value,
+                        np.float64(0.0),
+                        None)
 
     elif average == 'samples':
         weights = sample_weight
@@ -2129,17 +2137,19 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
 @_deprecate_positional_args
 def log_loss(y_true, y_pred, *, eps=1e-15, normalize=True, sample_weight=None,
              labels=None):
-    """Log loss, aka logistic loss or cross-entropy loss.
+    r"""Log loss, aka logistic loss or cross-entropy loss.
 
     This is the loss function used in (multinomial) logistic regression
     and extensions of it such as neural networks, defined as the negative
     log-likelihood of a logistic model that returns ``y_pred`` probabilities
     for its training data ``y_true``.
     The log loss is only defined for two or more labels.
-    For a single sample with true label yt in {0,1} and
-    estimated probability yp that yt = 1, the log loss is
+    For a single sample with true label :math:`y \in \{0,1\}` and
+    and a probability estimate :math:`p = \operatorname{Pr}(y = 1)`, the log
+    loss is:
 
-        -log P(yt|yp) = -(yt log(yp) + (1 - yt) log(1 - yp))
+    .. math::
+        L_{\log}(y, p) = -(y \log (p) + (1 - y) \log (1 - p))
 
     Read more in the :ref:`User Guide <log_loss>`.
 

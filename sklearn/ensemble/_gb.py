@@ -771,13 +771,13 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     Parameters
     ----------
     loss : {'deviance', 'exponential'}, default='deviance'
-        loss function to be optimized. 'deviance' refers to
+        The loss function to be optimized. 'deviance' refers to
         deviance (= logistic regression) for classification
         with probabilistic outputs. For loss 'exponential' gradient
         boosting recovers the AdaBoost algorithm.
 
     learning_rate : float, default=0.1
-        learning rate shrinks the contribution of each tree by `learning_rate`.
+        Learning rate shrinks the contribution of each tree by `learning_rate`.
         There is a trade-off between learning_rate and n_estimators.
 
     n_estimators : int, default=100
@@ -834,7 +834,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         equal weight when sample_weight is not provided.
 
     max_depth : int, default=3
-        maximum depth of the individual regression estimators. The maximum
+        The maximum depth of the individual regression estimators. The maximum
         depth limits the number of nodes in the tree. Tune this parameter
         for best performance; the best value depends on the interaction
         of the input variables.
@@ -1006,6 +1006,23 @@ shape (n_estimators, ``loss_.K``)
     max_features_ : int
         The inferred value of max_features.
 
+
+    See Also
+    --------
+    sklearn.ensemble.HistGradientBoostingClassifier : Histogram-based Gradient
+        Boosting Classification Tree.
+    sklearn.tree.DecisionTreeClassifier : A decision tree classifier.
+    sklearn.ensemble.RandomForestClassifier : A meta-estimator that fits a
+        number of decision tree classifiers on various sub-samples of the
+        dataset and uses averaging to improve the predictive accuracy and
+        control over-fitting.
+    sklearn.ensemble.AdaBoostClassifier : A meta-estimator that begins by
+        fitting a classifier on the original dataset and then fits additional
+        copies of the classifier on the same dataset where the weights of
+        incorrectly classified instances are adjusted such that subsequent
+        classifiers focus more on difficult cases.
+
+
     Notes
     -----
     The features are always randomly permuted at each split. Therefore,
@@ -1014,28 +1031,6 @@ shape (n_estimators, ``loss_.K``)
     identical for several splits enumerated during the search of the best
     split. To obtain a deterministic behaviour during fitting,
     ``random_state`` has to be fixed.
-
-    Examples
-    --------
-    >>> from sklearn.datasets import make_classification
-    >>> from sklearn.ensemble import GradientBoostingClassifier
-    >>> from sklearn.model_selection import train_test_split
-    >>> X, y = make_classification(random_state=0)
-    >>> X_train, X_test, y_train, y_test = train_test_split(
-    ...     X, y, random_state=0)
-    >>> clf = GradientBoostingClassifier(random_state=0)
-    >>> clf.fit(X_train, y_train)
-    GradientBoostingClassifier(random_state=0)
-    >>> clf.predict(X_test[:2])
-    array([1, 0])
-    >>> clf.score(X_test, y_test)
-    0.88
-
-    See also
-    --------
-    sklearn.ensemble.HistGradientBoostingClassifier,
-    sklearn.tree.DecisionTreeClassifier, RandomForestClassifier
-    AdaBoostClassifier
 
     References
     ----------
@@ -1046,6 +1041,23 @@ shape (n_estimators, ``loss_.K``)
 
     T. Hastie, R. Tibshirani and J. Friedman.
     Elements of Statistical Learning Ed. 2, Springer, 2009.
+
+    Examples
+    --------
+    The following example shows how to fit a gradient boosting classifier with
+    100 decision stumps as weak learners.
+
+    >>> from sklearn.datasets import make_hastie_10_2
+    >>> from sklearn.ensemble import GradientBoostingClassifier
+
+    >>> X, y = make_hastie_10_2(random_state=0)
+    >>> X_train, X_test = X[:2000], X[2000:]
+    >>> y_train, y_test = y[:2000], y[2000:]
+
+    >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
+    ...     max_depth=1, random_state=0).fit(X_train, y_train)
+    >>> clf.score(X_test, y_test)
+    0.913...
     """
 
     _SUPPORTED_LOSS = ('deviance', 'exponential')
@@ -1274,14 +1286,14 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     Parameters
     ----------
     loss : {'ls', 'lad', 'huber', 'quantile'}, default='ls'
-        loss function to be optimized. 'ls' refers to least squares
+        Loss function to be optimized. 'ls' refers to least squares
         regression. 'lad' (least absolute deviation) is a highly robust
         loss function solely based on order information of the input
         variables. 'huber' is a combination of the two. 'quantile'
         allows quantile regression (use `alpha` to specify the quantile).
 
     learning_rate : float, default=0.1
-        learning rate shrinks the contribution of each tree by `learning_rate`.
+        Learning rate shrinks the contribution of each tree by `learning_rate`.
         There is a trade-off between learning_rate and n_estimators.
 
     n_estimators : int, default=100
@@ -1338,7 +1350,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         equal weight when sample_weight is not provided.
 
     max_depth : int, default=3
-        maximum depth of the individual regression estimators. The maximum
+        Maximum depth of the individual regression estimators. The maximum
         depth limits the number of nodes in the tree. Tune this parameter
         for best performance; the best value depends on the interaction
         of the input variables.
@@ -1508,6 +1520,13 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     max_features_ : int
         The inferred value of max_features.
 
+    See Also
+    --------
+    sklearn.ensemble.HistGradientBoostingRegressor : Histogram-based
+        Gradient Boosting Classification Tree.
+    sklearn.tree.DecisionTreeRegressor : A decision tree regressor.
+    sklearn.tree.RandomForestRegressor : A random forest regressor.
+
     Notes
     -----
     The features are always randomly permuted at each split. Therefore,
@@ -1532,11 +1551,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     array([-61...])
     >>> reg.score(X_test, y_test)
     0.4...
-
-    See also
-    --------
-    sklearn.ensemble.HistGradientBoostingRegressor,
-    sklearn.tree.DecisionTreeRegressor, RandomForestRegressor
 
     References
     ----------
