@@ -5,6 +5,7 @@ import os
 import numbers
 from unittest.mock import Mock
 from functools import partial
+from _pytest.python_api import approx
 
 import numpy as np
 import pytest
@@ -751,7 +752,7 @@ def test_multiclass_roc_no_proba_scorer_errors(scorer_name):
         scorer(lr, X, y)
 
 
-def test_xxx():
+def _make_imbalanced_string_dataset():
     X, y = load_breast_cancer(return_X_y=True)
     # create an highly imbalanced
     idx_positive = np.flatnonzero(y == 1)
@@ -767,6 +768,61 @@ def test_xxx():
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, stratify=y, random_state=0,
     )
+    return X_train, X_test, y_train, y_test
 
-    classifier = LogisticRegression()
-    classifier.fit(X_train, y_train)
+
+def test_average_precision_pos_label():
+    from sklearn.metrics import average_precision_score
+    X_train, X_test, y_train, y_test = _make_imbalanced_string_dataset()
+
+    classifier = LogisticRegression().fit(X_train, y_train)
+    y_proba = classifier.predict_proba(X_test)
+    y_decision_function = classifier.decision_function(X_test)
+
+    pos_label = "cancer"
+    y_proba = y_proba[:, 0]
+    y_decision_function *= -1
+
+    ap_proba = average_precision_score(y_test, y_proba, pos_label=pos_label)
+    ap_decision_function = average_precision_score(
+        y_test, y_decision_function, pos_label=pos_label
+    )
+    assert ap_proba == pytest.approx(ap_decision_function)
+
+    average_precision_scorer = make_scorer(
+        average_precision_score, needs_threshold=True,
+    )
+    with pytest.raises(ValueError):
+        average_precision_scorer(classifier, X_test, y_test)
+
+    average_precision_scorer = make_scorer(
+        average_precision_score, needs_threshold=True, pos_label=pos_label
+    )
+    ap_scorer = average_precision_scorer(classifier, X_test, y_test)
+
+    assert ap_scorer == pytest.approx(ap_proba)
+
+
+def test_roc_auc_pos_label():
+    from sklearn.metrics import roc_auc_score
+    X_train, X_test, y_train, y_test = _make_imbalanced_string_dataset()
+
+    classifier = LogisticRegression().fit(X_train, y_train)
+    y_proba = classifier.predict_proba(X_test)
+    y_decision_function = classifier.decision_function(X_test)
+
+    pos_label = "cancer"
+    y_proba = y_proba[:, 0]
+    y_decision_function *= -1
+
+    ap_proba = roc_auc_score(y_test, y_proba, pos_label=pos_label)
+    ap_decision_function = roc_auc_score(
+        y_test, y_decision_function, pos_label=pos_label
+    )
+    assert ap_proba == pytest.approx(ap_decision_function)
+
+    roc_auc_scorer = make_scorer(
+        roc_auc_score, needs_threshold=True, is_symmetric=True
+    )
+    ap_scorer = roc_auc_scorer(classifier, X_test, y_test)
+    assert ap_scorer == pytest.approx(ap_proba)

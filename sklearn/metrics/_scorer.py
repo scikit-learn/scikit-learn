@@ -124,10 +124,11 @@ class _MultimetricScorer:
 
 
 class _BaseScorer:
-    def __init__(self, score_func, sign, kwargs):
+    def __init__(self, score_func, sign, is_symmetric, kwargs):
         self._kwargs = kwargs
         self._score_func = score_func
         self._sign = sign
+        self._is_symmetric = is_symmetric
 
     def __repr__(self):
         kwargs_string = "".join([", %s=%s" % (str(k), str(v))
@@ -302,7 +303,11 @@ class _ThresholdScorer(_BaseScorer):
 
         kwargs = deepcopy(self._kwargs)
         params_score_func = signature(self._score_func).parameters
-        if "pos_label" in params_score_func and "pos_label" not in kwargs:
+        if (
+            self._is_symmetric
+            and "pos_label" in params_score_func
+            and "pos_label" not in kwargs
+        ):
             kwargs["pos_label"] = clf.classes_[1]
 
         if is_regressor(clf):
@@ -311,9 +316,15 @@ class _ThresholdScorer(_BaseScorer):
             try:
                 y_pred = method_caller(clf, "decision_function", X)
 
-                # For multi-output multi-class estimator
                 if isinstance(y_pred, list):
+                    # For multi-output multi-class estimator
                     y_pred = np.vstack([p for p in y_pred]).T
+                elif (
+                    y_type == "binary"
+                    and "pos_label" in kwargs
+                    and kwargs["pos_label"] == clf.classes_[0]
+                ):
+                    y_pred *= -1
 
             except (NotImplementedError, AttributeError):
                 y_pred = method_caller(clf, "predict_proba", X)
@@ -518,6 +529,7 @@ def make_scorer(
     greater_is_better=True,
     needs_proba=False,
     needs_threshold=False,
+    is_symmetric=False,
     **kwargs,
 ):
     """Make a scorer from a performance metric or loss function.
@@ -599,7 +611,7 @@ def make_scorer(
         cls = _ThresholdScorer
     else:
         cls = _PredictScorer
-    return cls(score_func, sign, kwargs)
+    return cls(score_func, sign, is_symmetric, kwargs)
 
 
 # Standard regression scores
@@ -638,6 +650,7 @@ roc_auc_scorer = make_scorer(
     roc_auc_score,
     greater_is_better=True,
     needs_threshold=True,
+    is_symmetric=True,
 )
 average_precision_scorer = make_scorer(
     average_precision_score, needs_threshold=True
