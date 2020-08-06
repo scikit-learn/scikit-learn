@@ -35,10 +35,12 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_classification, make_regression
 from sklearn.datasets import make_multilabel_classification
+from sklearn.datasets import load_breast_cancer
 from sklearn.datasets import load_diabetes
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.model_selection import GridSearchCV
 from sklearn.multiclass import OneVsRestClassifier
+from sklearn.utils import shuffle
 
 
 REGRESSION_SCORERS = ['explained_variance', 'r2',
@@ -747,3 +749,24 @@ def test_multiclass_roc_no_proba_scorer_errors(scorer_name):
     msg = "'Perceptron' object has no attribute 'predict_proba'"
     with pytest.raises(AttributeError, match=msg):
         scorer(lr, X, y)
+
+
+def test_xxx():
+    X, y = load_breast_cancer(return_X_y=True)
+    # create an highly imbalanced
+    idx_positive = np.flatnonzero(y == 1)
+    idx_negative = np.flatnonzero(y == 0)
+    idx_selected = np.hstack([idx_negative, idx_positive[:25]])
+    X, y = X[idx_selected], y[idx_selected]
+    X, y = shuffle(X, y, random_state=42)
+    # only use 2 features to make the problem even harder
+    X = X[:, :2]
+    y = np.array(
+        ["cancer" if c == 1 else "not cancer" for c in y], dtype=object
+    )
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, stratify=y, random_state=0,
+    )
+
+    classifier = LogisticRegression()
+    classifier.fit(X_train, y_train)
