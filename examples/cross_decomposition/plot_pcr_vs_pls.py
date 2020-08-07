@@ -34,7 +34,7 @@ example, it does not suffer from the issue we just mentioned.
 
 print(__doc__)
 
-##############################################################################
+# %%
 # The data
 # --------
 #
@@ -64,7 +64,7 @@ plt.gca().set(aspect='equal',
 plt.legend()
 plt.show()
 
-##############################################################################
+# %%
 # For the purpose of this example, we now define the target `y` such that it is
 # strongly correlated with a direction that has a small variance. To this end,
 # we will project `X` onto the second component, and add some noise to it.
@@ -80,7 +80,7 @@ axes[1].set(xlabel='Projected data onto second PCA component', ylabel='y')
 plt.tight_layout()
 plt.show()
 
-##############################################################################
+# %%
 # Projection on one component and predictive power
 # ------------------------------------------------
 #
@@ -118,7 +118,7 @@ axes[1].set(xlabel='Projected data onto first PLS component',
 plt.tight_layout()
 plt.show()
 
-##############################################################################
+# %%
 # As expected, the unsupervised PCA transformation of PCR has dropped the
 # second component, i.e. the direction with the lowest variance, despite
 # it being the most predictive direction. This is because PCA is a completely
@@ -140,7 +140,7 @@ plt.show()
 print(f"PCR r-squared {pcr.score(X_test, y_test):.3f}")
 print(f"PLS r-squared {pls.score(X_test, y_test):.3f}")
 
-##############################################################################
+# %%
 # As a final remark, we note that PCR with 2 components performs as well as
 # PLS: this is because in this case, PCR was able to leverage the second
 # component which has the most preditive power on the target.
