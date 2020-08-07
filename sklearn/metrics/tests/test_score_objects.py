@@ -788,6 +788,9 @@ def fitted_clf_predictions():
 
 
 def test_average_precision_pos_label(fitted_clf_predictions):
+    # check that _ThresholdScorer will lead to the right score when passing
+    # `pos_label`. Currently, only `average_precision_score` is defined to
+    # be such a scorer.
     clf, X_test, y_test, y_pred_proba, y_pred_decision = fitted_clf_predictions
 
     pos_label = "cancer"
@@ -826,7 +829,10 @@ def test_average_precision_pos_label(fitted_clf_predictions):
 
 
 def test_brier_score_loss_pos_label(fitted_clf_predictions):
-    clf, X_test, y_test, y_pred_proba, y_pred_decision = fitted_clf_predictions
+    # check that _ProbaScorer leads to the right score when `pos_label` is
+    # provided. Currently only the `brier_score_loss` is defined to be such
+    # a scorer.
+    clf, X_test, y_test, y_pred_proba, _ = fitted_clf_predictions
 
     pos_label = "cancer"
     assert clf.classes_[0] == pos_label
