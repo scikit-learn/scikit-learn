@@ -740,7 +740,7 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             hess = _multinomial_grad_hess
         elif solver == 'trust-ncg':
             def func(x, *args): return _multinomial_loss_grad(x, *args)[0:2]
-            hess = _multinomial_grad_hess
+            def hessp(x, *args): return _multinomial_grad_hess(*args)[1](x)
         warm_start_sag = {'coef': w0.T}
     else:
         target = y_bin
@@ -752,7 +752,7 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             hess = _logistic_grad_hess
         elif solver == 'trust-ncg':
             func = _logistic_loss_and_grad
-            hess = _logistic_grad_hess
+            def hessp(x, *args): return _logistic_grad_hess(*args)[1](x)
         warm_start_sag = {'coef': np.expand_dims(w0, axis=1)}
 
     coefs = list()
@@ -769,9 +769,6 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                              "maxiter": max_iter}
                 )
             elif solver == 'trust-ncg':
-                def hessp(*args):
-                    (g, hp) = hess(*args[1:])
-                    return(hp(*args[:1]))
                 opt_res = optimize.minimize(
                     func, w0, method=solver, jac=True, hessp=hessp,
                     args=(X, target, 1. / C, sample_weight)
