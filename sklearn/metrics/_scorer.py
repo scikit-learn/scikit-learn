@@ -239,7 +239,9 @@ class _ProbaScorer(_BaseScorer):
         y_pred = method_caller(clf, "predict_proba", X)
         if y_type == "binary":
             if y_pred.shape[1] == 2:
-                y_pred = y_pred[:, 1]
+                pos_label = self._kwargs.get("pos_label", clf.classes_[1])
+                col_idx = np.flatnonzero(clf.classes_ == pos_label)[0]
+                y_pred = y_pred[:, col_idx]
             elif y_pred.shape[1] == 1:  # not multiclass
                 raise ValueError('got predict_proba of shape {},'
                                  ' but need classifier with two'
@@ -298,16 +300,28 @@ class _ThresholdScorer(_BaseScorer):
             try:
                 y_pred = method_caller(clf, "decision_function", X)
 
-                # For multi-output multi-class estimator
                 if isinstance(y_pred, list):
+                    # For multi-output multi-class estimator
                     y_pred = np.vstack([p for p in y_pred]).T
+                elif (
+                    y_type == "binary"
+                    and "pos_label" in self._kwargs
+                    and self._kwargs["pos_label"] == clf.classes_[0]
+                ):
+                    # The positive class is not the `pos_label` seen by the
+                    # classifier and we need to inverse the predictions
+                    y_pred *= -1
 
             except (NotImplementedError, AttributeError):
                 y_pred = method_caller(clf, "predict_proba", X)
 
                 if y_type == "binary":
                     if y_pred.shape[1] == 2:
-                        y_pred = y_pred[:, 1]
+                        pos_label = self._kwargs.get(
+                            "pos_label", clf.classes_[1]
+                        )
+                        col_idx = np.flatnonzero(clf.classes_ == pos_label)[0]
+                        y_pred = y_pred[:, col_idx]
                     else:
                         raise ValueError('got predict_proba of shape {},'
                                          ' but need classifier with two'

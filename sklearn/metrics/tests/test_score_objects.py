@@ -618,6 +618,8 @@ def test_multimetric_scorer_calls_method_once(scorers, expected_predict_count,
     mock_est.predict = predict_func
     mock_est.predict_proba = predict_proba_func
     mock_est.decision_function = decision_function_func
+    # add the classes that would be found during fit
+    mock_est.classes_ = np.array([0, 1])
 
     scorer_dict = _check_multimetric_scoring(LogisticRegression(), scorers)
     multi_scorer = _MultimetricScorer(**scorer_dict)
@@ -747,3 +749,59 @@ def test_multiclass_roc_no_proba_scorer_errors(scorer_name):
     msg = "'Perceptron' object has no attribute 'predict_proba'"
     with pytest.raises(AttributeError, match=msg):
         scorer(lr, X, y)
+
+
+def _make_imbalanced_string_dataset():
+    from sklearn.datasets import load_breast_cancer
+    from sklearn.utils import shuffle
+
+    X, y = load_breast_cancer(return_X_y=True)
+    # create an highly imbalanced
+    idx_positive = np.flatnonzero(y == 1)
+    idx_negative = np.flatnonzero(y == 0)
+    idx_selected = np.hstack([idx_negative, idx_positive[:25]])
+    X, y = X[idx_selected], y[idx_selected]
+    X, y = shuffle(X, y, random_state=42)
+    # only use 2 features to make the problem even harder
+    X = X[:, :2]
+    y = np.array(
+        ["cancer" if c == 1 else "not cancer" for c in y], dtype=object
+    )
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, stratify=y, random_state=0,
+    )
+    return X_train, X_test, y_train, y_test
+
+
+def test_xxx():
+    from sklearn.metrics import average_precision_score
+    X_train, X_test, y_train, y_test = _make_imbalanced_string_dataset()
+
+    classifier = LogisticRegression().fit(X_train, y_train)
+    y_proba = classifier.predict_proba(X_test)
+    y_decision_function = classifier.decision_function(X_test)
+
+    pos_label = "cancer"
+    y_proba = y_proba[:, 0]
+    y_decision_function *= -1
+
+    assert classifier.classes_[0] == pos_label
+
+    ap_proba = average_precision_score(y_test, y_proba, pos_label=pos_label)
+    ap_decision_function = average_precision_score(
+        y_test, y_decision_function, pos_label=pos_label
+    )
+    assert ap_proba == pytest.approx(ap_decision_function)
+
+    average_precision_scorer = make_scorer(
+        average_precision_score, needs_threshold=True,
+    )
+    with pytest.raises(ValueError):
+        average_precision_scorer(classifier, X_test, y_test)
+
+    average_precision_scorer = make_scorer(
+        average_precision_score, needs_threshold=True, pos_label=pos_label
+    )
+    ap_scorer = average_precision_scorer(classifier, X_test, y_test)
+
+    assert ap_scorer == pytest.approx(ap_proba)
