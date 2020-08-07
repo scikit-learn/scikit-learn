@@ -864,7 +864,7 @@ def test_brier_score_loss_pos_label(fitted_clf_predictions):
     brier_pos_not_cancer = brier_score_loss(
         y_test, y_pred_proba[:, 1], pos_label="not cancer"
     )
-    assert brier_pos_cancer == brier_pos_not_cancer
+    assert brier_pos_cancer == pytest.approx(brier_pos_not_cancer)
 
     brier_scorer = make_scorer(
         brier_score_loss, needs_proba=True, pos_label=pos_label,
