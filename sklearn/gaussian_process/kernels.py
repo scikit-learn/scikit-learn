@@ -582,7 +582,7 @@ class CompoundKernel(Kernel):
 
         K_gradient : ndarray of shape \
                 (n_samples_X, n_samples_X, n_dims, n_kernels), optional
-            The gradient of the kernel k(X, X) with respect to the
+            The gradient of the kernel k(X, X) with respect to the log of the
             hyperparameter of the kernel. Only returned when `eval_gradient`
             is True.
         """
@@ -806,7 +806,7 @@ class Sum(KernelOperator):
 
         K_gradient : ndarray of shape (n_samples_X, n_samples_X, n_dims),\
                 optional
-            The gradient of the kernel k(X, X) with respect to the
+            The gradient of the kernel k(X, X) with respect to the log of the
             hyperparameter of the kernel. Only returned when `eval_gradient`
             is True.
         """
@@ -904,7 +904,7 @@ class Product(KernelOperator):
 
         K_gradient : ndarray of shape (n_samples_X, n_samples_X, n_dims), \
                 optional
-            The gradient of the kernel k(X, X) with respect to the
+            The gradient of the kernel k(X, X) with respect to the log of the
             hyperparameter of the kernel. Only returned when `eval_gradient`
             is True.
         """
@@ -1082,7 +1082,7 @@ class Exponentiation(Kernel):
 
         K_gradient : ndarray of shape (n_samples_X, n_samples_X, n_dims),\
                 optional
-            The gradient of the kernel k(X, X) with respect to the
+            The gradient of the kernel k(X, X) with respect to the log of the
             hyperparameter of the kernel. Only returned when `eval_gradient`
             is True.
         """
@@ -1210,7 +1210,7 @@ class ConstantKernel(StationaryKernelMixin, GenericKernelMixin,
 
         K_gradient : ndarray of shape (n_samples_X, n_samples_X, n_dims), \
             optional
-            The gradient of the kernel k(X, X) with respect to the
+            The gradient of the kernel k(X, X) with respect to the log of the
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
@@ -1329,7 +1329,7 @@ class WhiteKernel(StationaryKernelMixin, GenericKernelMixin,
 
         K_gradient : ndarray of shape (n_samples_X, n_samples_X, n_dims),\
             optional
-            The gradient of the kernel k(X, X) with respect to the
+            The gradient of the kernel k(X, X) with respect to the log of the
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
@@ -1476,7 +1476,7 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
         K_gradient : ndarray of shape (n_samples_X, n_samples_X, n_dims), \
                 optional
-            The gradient of the kernel k(X, X) with respect to the
+            The gradient of the kernel k(X, X) with respect to the log of the
             hyperparameter of the kernel. Only returned when `eval_gradient`
             is True.
         """
@@ -1630,7 +1630,7 @@ class Matern(RBF):
 
         K_gradient : ndarray of shape (n_samples_X, n_samples_X, n_dims), \
                 optional
-            The gradient of the kernel k(X, X) with respect to the
+            The gradient of the kernel k(X, X) with respect to the log of the
             hyperparameter of the kernel. Only returned when `eval_gradient`
             is True.
         """
@@ -1818,7 +1818,7 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
             Kernel k(X, Y)
 
         K_gradient : ndarray of shape (n_samples_X, n_samples_X, n_dims)
-            The gradient of the kernel k(X, X) with respect to the
+            The gradient of the kernel k(X, X) with respect to the log of the
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
@@ -1964,7 +1964,7 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
         K_gradient : ndarray of shape (n_samples_X, n_samples_X, n_dims), \
                 optional
-            The gradient of the kernel k(X, X) with respect to the
+            The gradient of the kernel k(X, X) with respect to the log of the
             hyperparameter of the kernel. Only returned when `eval_gradient`
             is True.
         """
@@ -2096,7 +2096,7 @@ class DotProduct(Kernel):
 
         K_gradient : ndarray of shape (n_samples_X, n_samples_X, n_dims),\
                 optional
-            The gradient of the kernel k(X, X) with respect to the
+            The gradient of the kernel k(X, X) with respect to the log of the
             hyperparameter of the kernel. Only returned when `eval_gradient`
             is True.
         """
@@ -2250,7 +2250,7 @@ class PairwiseKernel(Kernel):
 
         K_gradient : ndarray of shape (n_samples_X, n_samples_X, n_dims),\
                 optional
-            The gradient of the kernel k(X, X) with respect to the
+            The gradient of the kernel k(X, X) with respect to the log of the
             hyperparameter of the kernel. Only returned when `eval_gradient`
             is True.
         """
