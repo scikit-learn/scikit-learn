@@ -79,7 +79,7 @@ Then run:
         ><span class="sk-expandable" data-packager="pip" data-os="linux" data-venv="no">pip3 install -U scikit-learn</span
         ><span class="sk-expandable" data-packager="conda" data-venv="">conda create -n sklearn-env</span
         ><span class="sk-expandable" data-packager="conda" data-venv="">conda activate sklearn-env</span
-        ><span class="sk-expandable" data-packager="conda">conda install scikit-learn </span
+        ><span class="sk-expandable" data-packager="conda">conda install -c conda-forge scikit-learn </span
        ></code></pre></div>
 
 In order to check your installation you can use
@@ -132,14 +132,19 @@ If you must install scikit-learn and its dependencies with pip, you can install
 it as ``scikit-learn[alldeps]``.
 
 Scikit-learn plotting capabilities (i.e., functions start with "plot\_"
-and classes end with "Display") require Matplotlib (>= 1.5.1). For running the
-examples Matplotlib >= 1.5.1 is required. A few examples require
-scikit-image >= 0.12.3, a few examples require pandas >= 0.18.0.
+and classes end with "Display") require Matplotlib. The examples require
+Matplotlib and some examples require scikit-image, pandas, or seaborn. The
+minimum version of Scikit-learn dependencies are listed below along with its
+purpose.
+
+.. include:: min_dependency_table.rst
 
 .. warning::
 
     Scikit-learn 0.20 was the last version to support Python 2.7 and Python 3.4.
-    Scikit-learn now requires Python 3.5 or newer.
+    Scikit-learn 0.21 supported Python 3.5-3.7.
+    Scikit-learn 0.22 supported Python 3.5-3.8.
+    Scikit-learn now requires Python 3.6 or newer.
 
 
 .. note::
@@ -218,14 +223,13 @@ command::
     $ sudo port install py36-scikit-learn
 
 
-Canopy and Anaconda for all supported platforms
------------------------------------------------
+Anaconda and Enthought Deployment Manager for all supported platforms
+---------------------------------------------------------------------
 
-`Canopy
-<https://www.enthought.com/products/canopy>`_ and `Anaconda
-<https://www.anaconda.com/download>`_ both ship a recent
-version of scikit-learn, in addition to a large set of scientific python
-library for Windows, Mac OSX and Linux.
+`Anaconda <https://www.anaconda.com/download>`_ and
+`Enthought Deployment Manager <https://assets.enthought.com/downloads/>`_
+both ship with scikit-learn in addition to a large set of scientific
+python library for Windows, Mac OSX and Linux.
 
 Anaconda offers scikit-learn as part of its free distribution.
 

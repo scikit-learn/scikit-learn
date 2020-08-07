@@ -3,14 +3,16 @@ import scipy.sparse as sp
 import warnings
 from abc import ABCMeta, abstractmethod
 
-from . import _libsvm as libsvm
-from .import _liblinear as liblinear
-from . import _libsvm_sparse as libsvm_sparse
+# mypy error: error: Module 'sklearn.svm' has no attribute '_libsvm'
+# (and same for other imports)
+from . import _libsvm as libsvm  # type: ignore
+from .import _liblinear as liblinear  # type: ignore
+from . import _libsvm_sparse as libsvm_sparse  # type: ignore
 from ..base import BaseEstimator, ClassifierMixin
 from ..preprocessing import LabelEncoder
 from ..utils.multiclass import _ovr_decision_function
 from ..utils import check_array, check_random_state
-from ..utils import column_or_1d, check_X_y
+from ..utils import column_or_1d
 from ..utils import compute_class_weight
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted, _check_large_sparse
@@ -75,7 +77,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                  tol, C, nu, epsilon, shrinking, probability, cache_size,
                  class_weight, verbose, max_iter, random_state):
 
-        if self._impl not in LIBSVM_IMPL:  # pragma: no cover
+        if self._impl not in LIBSVM_IMPL:
             raise ValueError("impl should be one of %s, %s was given" % (
                 LIBSVM_IMPL, self._impl))
 
@@ -110,7 +112,8 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features) \
+                or (n_samples, n_samples)
             Training vectors, where n_samples is the number of samples
             and n_features is the number of features.
             For kernel="precomputed", the expected shape of X is
@@ -144,12 +147,19 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             raise TypeError("Sparse precomputed kernels are not supported.")
         self._sparse = sparse and not callable(self.kernel)
 
+        if hasattr(self, 'decision_function_shape'):
+            if self.decision_function_shape not in ('ovr', 'ovo'):
+                raise ValueError(
+                    f"decision_function_shape must be either 'ovr' or 'ovo', "
+                    f"got {self.decision_function_shape}."
+                )
+
         if callable(self.kernel):
             check_consistent_length(X, y)
         else:
-            X, y = check_X_y(X, y, dtype=np.float64,
-                             order='C', accept_sparse='csr',
-                             accept_large_sparse=False)
+            X, y = self._validate_data(X, y, dtype=np.float64,
+                                       order='C', accept_sparse='csr',
+                                       accept_large_sparse=False)
 
         y = self._validate_targets(y)
 
@@ -200,7 +210,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self._gamma = self.gamma
 
         fit = self._sparse_fit if self._sparse else self._dense_fit
-        if self.verbose:  # pragma: no cover
+        if self.verbose:
             print('[LibSVM]', end='')
 
         seed = rnd.randint(np.iinfo('i').max)
@@ -533,7 +543,8 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         y_ = column_or_1d(y, warn=True)
         check_classification_targets(y)
         cls, y = np.unique(y_, return_inverse=True)
-        self.class_weight_ = compute_class_weight(self.class_weight, cls, y_)
+        self.class_weight_ = compute_class_weight(self.class_weight,
+                                                  classes=cls, y=y_)
         if len(cls) < 2:
             raise ValueError(
                 "The number of classes has to be greater than one; got %d"
@@ -916,7 +927,8 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
                              " in the data, but the data contains only one"
                              " class: %r" % classes_[0])
 
-        class_weight_ = compute_class_weight(class_weight, classes_, y)
+        class_weight_ = compute_class_weight(class_weight, classes=classes_,
+                                             y=y)
     else:
         class_weight_ = np.empty(0, dtype=np.float64)
         y_ind = y

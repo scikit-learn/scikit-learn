@@ -21,6 +21,7 @@ from abc import ABCMeta, abstractmethod
 
 
 import numpy as np
+from scipy.special import logsumexp
 
 from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize
@@ -28,10 +29,11 @@ from .preprocessing import LabelBinarizer
 from .preprocessing import label_binarize
 from .utils import check_X_y, check_array, deprecated
 from .utils.extmath import safe_sparse_dot
-from .utils.fixes import logsumexp
 from .utils.multiclass import _check_partial_fit_first_call
 from .utils.validation import check_is_fitted, check_non_negative, column_or_1d
 from .utils.validation import _check_sample_weight
+from .utils.validation import _deprecate_positional_args
+
 
 __all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB', 'ComplementNB',
            'CategoricalNB']
@@ -51,13 +53,9 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         predict_proba and predict_log_proba.
         """
 
+    @abstractmethod
     def _check_X(self, X):
         """To be overridden in subclasses with the actual checks."""
-        # Note that this is not marked @abstractmethod as long as the
-        # deprecated public alias sklearn.naive_bayes.BayesNB exists
-        # (until 0.24) to preserve backward compat for 3rd party projects
-        # with existing derived classes.
-        return X
 
     def predict(self, X):
         """
@@ -139,6 +137,8 @@ class GaussianNB(_BaseNB):
         Portion of the largest variance of all features that is added to
         variances for calculation stability.
 
+        .. versionadded:: 0.20
+
     Attributes
     ----------
     class_count_ : ndarray of shape (n_classes,)
@@ -177,7 +177,8 @@ class GaussianNB(_BaseNB):
     [1]
     """
 
-    def __init__(self, priors=None, var_smoothing=1e-9):
+    @_deprecate_positional_args
+    def __init__(self, *, priors=None, var_smoothing=1e-9):
         self.priors = priors
         self.var_smoothing = var_smoothing
 
@@ -203,6 +204,7 @@ class GaussianNB(_BaseNB):
         -------
         self : object
         """
+        X, y = self._validate_data(X, y)
         y = column_or_1d(y, warn=True)
         return self._partial_fit(X, y, np.unique(y), _refit=True,
                                  sample_weight=sample_weight)
@@ -472,7 +474,7 @@ class _BaseDiscreteNB(_BaseNB):
         return check_array(X, accept_sparse='csr')
 
     def _check_X_y(self, X, y):
-        return check_X_y(X, y, accept_sparse='csr')
+        return self._validate_data(X, y, accept_sparse='csr')
 
     def _update_class_log_prior(self, class_prior=None):
         n_classes = len(self.classes_)
@@ -644,18 +646,21 @@ class _BaseDiscreteNB(_BaseNB):
         self.feature_count_ = np.zeros((n_effective_classes, n_features),
                                        dtype=np.float64)
 
-    # XXX The following is a stopgap measure; we need to set the dimensions
-    # of class_log_prior_ and feature_log_prob_ correctly.
-    def _get_coef(self):
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute coef_ was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 0.26.")
+    @property
+    def coef_(self):
         return (self.feature_log_prob_[1:]
                 if len(self.classes_) == 2 else self.feature_log_prob_)
 
-    def _get_intercept(self):
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute intercept_ was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 0.26.")
+    @property
+    def intercept_(self):
         return (self.class_log_prior_[1:]
                 if len(self.classes_) == 2 else self.class_log_prior_)
-
-    coef_ = property(_get_coef)
-    intercept_ = property(_get_intercept)
 
     def _more_tags(self):
         return {'poor_score': True}
@@ -699,8 +704,11 @@ class MultinomialNB(_BaseDiscreteNB):
         Class labels known to the classifier
 
     coef_ : ndarray of shape (n_classes, n_features)
-        Mirrors ``feature_log_prob_`` for interpreting MultinomialNB
+        Mirrors ``feature_log_prob_`` for interpreting `MultinomialNB`
         as a linear model.
+
+        .. deprecated:: 0.24
+            ``coef_`` is deprecated in 0.24 and will be removed in 0.26.
 
     feature_count_ : ndarray of shape (n_classes, n_features)
         Number of samples encountered for each (class, feature)
@@ -711,9 +719,12 @@ class MultinomialNB(_BaseDiscreteNB):
         Empirical log probability of features
         given a class, ``P(x_i|y)``.
 
-    intercept_ : ndarray of shape (n_classes, )
-        Mirrors ``class_log_prior_`` for interpreting MultinomialNB
+    intercept_ : ndarray of shape (n_classes,)
+        Mirrors ``class_log_prior_`` for interpreting `MultinomialNB`
         as a linear model.
+
+        .. deprecated:: 0.24
+            ``intercept_`` is deprecated in 0.24 and will be removed in 0.26.
 
     n_features_ : int
         Number of features of each sample.
@@ -744,7 +755,8 @@ class MultinomialNB(_BaseDiscreteNB):
     https://nlp.stanford.edu/IR-book/html/htmledition/naive-bayes-text-classification-1.html
     """
 
-    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None):
+    @_deprecate_positional_args
+    def __init__(self, *, alpha=1.0, fit_prior=True, class_prior=None):
         self.alpha = alpha
         self.fit_prior = fit_prior
         self.class_prior = class_prior
@@ -781,6 +793,8 @@ class ComplementNB(_BaseDiscreteNB):
 
     Read more in the :ref:`User Guide <complement_naive_bayes>`.
 
+    .. versionadded:: 0.20
+
     Parameters
     ----------
     alpha : float, default=1.0
@@ -811,6 +825,13 @@ class ComplementNB(_BaseDiscreteNB):
     classes_ : ndarray of shape (n_classes,)
         Class labels known to the classifier
 
+    coef_ : ndarray of shape (n_classes, n_features)
+        Mirrors ``feature_log_prob_`` for interpreting `ComplementNB`
+        as a linear model.
+
+        .. deprecated:: 0.24
+            ``coef_`` is deprecated in 0.24 and will be removed in 0.26.
+
     feature_all_ : ndarray of shape (n_features,)
         Number of samples encountered for each feature during fitting. This
         value is weighted by the sample weight when provided.
@@ -821,6 +842,13 @@ class ComplementNB(_BaseDiscreteNB):
 
     feature_log_prob_ : ndarray of shape (n_classes, n_features)
         Empirical weights for class complements.
+
+    intercept_ : ndarray of shape (n_classes,)
+        Mirrors ``class_log_prior_`` for interpreting `ComplementNB`
+        as a linear model.
+
+        .. deprecated:: 0.24
+            ``coef_`` is deprecated in 0.24 and will be removed in 0.26.
 
     n_features_ : int
         Number of features of each sample.
@@ -846,7 +874,8 @@ class ComplementNB(_BaseDiscreteNB):
     https://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf
     """
 
-    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None,
+    @_deprecate_positional_args
+    def __init__(self, *, alpha=1.0, fit_prior=True, class_prior=None,
                  norm=False):
         self.alpha = alpha
         self.fit_prior = fit_prior
@@ -922,6 +951,10 @@ class BernoulliNB(_BaseDiscreteNB):
     classes_ : ndarray of shape (n_classes,)
         Class labels known to the classifier
 
+    coef_ : ndarray of shape (n_classes, n_features)
+        Mirrors ``feature_log_prob_`` for interpreting `BernoulliNB`
+        as a linear model.
+
     feature_count_ : ndarray of shape (n_classes, n_features)
         Number of samples encountered for each (class, feature)
         during fitting. This value is weighted by the sample weight when
@@ -929,6 +962,10 @@ class BernoulliNB(_BaseDiscreteNB):
 
     feature_log_prob_ : ndarray of shape (n_classes, n_features)
         Empirical log probability of features given a class, P(x_i|y).
+
+    intercept_ : ndarray of shape (n_classes,)
+        Mirrors ``class_log_prior_`` for interpreting `BernoulliNB`
+        as a linear model.
 
     n_features_ : int
         Number of features of each sample.
@@ -960,7 +997,8 @@ class BernoulliNB(_BaseDiscreteNB):
     naive Bayes -- Which naive Bayes? 3rd Conf. on Email and Anti-Spam (CEAS).
     """
 
-    def __init__(self, alpha=1.0, binarize=.0, fit_prior=True,
+    @_deprecate_positional_args
+    def __init__(self, *, alpha=1.0, binarize=.0, fit_prior=True,
                  class_prior=None):
         self.alpha = alpha
         self.binarize = binarize
@@ -1071,7 +1109,8 @@ class CategoricalNB(_BaseDiscreteNB):
     [3]
     """
 
-    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None):
+    @_deprecate_positional_args
+    def __init__(self, *, alpha=1.0, fit_prior=True, class_prior=None):
         self.alpha = alpha
         self.fit_prior = fit_prior
         self.class_prior = class_prior
@@ -1146,18 +1185,19 @@ class CategoricalNB(_BaseDiscreteNB):
         return super().partial_fit(X, y, classes,
                                    sample_weight=sample_weight)
 
+    def _more_tags(self):
+        return {'requires_positive_X': True}
+
     def _check_X(self, X):
         X = check_array(X, dtype='int', accept_sparse=False,
                         force_all_finite=True)
-        if np.any(X < 0):
-            raise ValueError("X must not contain negative values.")
+        check_non_negative(X, "CategoricalNB (input X)")
         return X
 
     def _check_X_y(self, X, y):
-        X, y = check_X_y(X, y, dtype='int', accept_sparse=False,
-                         force_all_finite=True)
-        if np.any(X < 0):
-            raise ValueError("X must not contain negative values.")
+        X, y = self._validate_data(X, y, dtype='int', accept_sparse=False,
+                                   force_all_finite=True)
+        check_non_negative(X, "CategoricalNB (input X)")
         return X, y
 
     def _init_counters(self, n_effective_classes, n_features):
@@ -1213,17 +1253,3 @@ class CategoricalNB(_BaseDiscreteNB):
             jll += self.feature_log_prob_[i][:, indices].T
         total_ll = jll + self.class_log_prior_
         return total_ll
-
-
-# TODO: remove in 0.24
-@deprecated("BaseNB is deprecated in version "
-            "0.22 and will be removed in version 0.24.")
-class BaseNB(_BaseNB):
-    pass
-
-
-# TODO: remove in 0.24
-@deprecated("BaseDiscreteNB is deprecated in version "
-            "0.22 and will be removed in version 0.24.")
-class BaseDiscreteNB(_BaseDiscreteNB):
-    pass

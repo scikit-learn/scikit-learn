@@ -10,10 +10,13 @@ from scipy.optimize import approx_fprime
 import pytest
 
 from sklearn.gaussian_process import GaussianProcessClassifier
-from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
+from sklearn.gaussian_process.kernels \
+    import RBF, ConstantKernel as C, WhiteKernel
 from sklearn.gaussian_process.tests._mini_sequence_kernel import MiniSeqKernel
+from sklearn.exceptions import ConvergenceWarning
 
-from sklearn.utils._testing import assert_almost_equal, assert_array_equal
+from sklearn.utils._testing \
+    import assert_almost_equal, assert_array_equal, assert_warns_message
 
 
 def f(x):
@@ -180,3 +183,60 @@ def test_multi_class_n_jobs(kernel):
     y_prob = gpc.predict_proba(X2)
     y_prob_2 = gpc_2.predict_proba(X2)
     assert_almost_equal(y_prob, y_prob_2)
+
+
+def test_warning_bounds():
+    kernel = RBF(length_scale_bounds=[1e-5, 1e-3])
+    gpc = GaussianProcessClassifier(kernel=kernel)
+    assert_warns_message(ConvergenceWarning, "The optimal value found for "
+                                             "dimension 0 of parameter "
+                                             "length_scale is close to "
+                                             "the specified upper bound "
+                                             "0.001. Increasing the bound "
+                                             "and calling fit again may "
+                                             "find a better value.",
+                         gpc.fit, X, y)
+
+    kernel_sum = (WhiteKernel(noise_level_bounds=[1e-5, 1e-3]) +
+                  RBF(length_scale_bounds=[1e3, 1e5]))
+    gpc_sum = GaussianProcessClassifier(kernel=kernel_sum)
+    with pytest.warns(None) as record:
+        gpc_sum.fit(X, y)
+
+    assert len(record) == 2
+    assert record[0].message.args[0] == ("The optimal value found for "
+                                         "dimension 0 of parameter "
+                                         "k1__noise_level is close to the "
+                                         "specified upper bound 0.001. "
+                                         "Increasing the bound and calling "
+                                         "fit again may find a better value.")
+
+    assert record[1].message.args[0] == ("The optimal value found for "
+                                         "dimension 0 of parameter "
+                                         "k2__length_scale is close to the "
+                                         "specified lower bound 1000.0. "
+                                         "Decreasing the bound and calling "
+                                         "fit again may find a better value.")
+
+    X_tile = np.tile(X, 2)
+    kernel_dims = RBF(length_scale=[1., 2.],
+                      length_scale_bounds=[1e1, 1e2])
+    gpc_dims = GaussianProcessClassifier(kernel=kernel_dims)
+
+    with pytest.warns(None) as record:
+        gpc_dims.fit(X_tile, y)
+
+    assert len(record) == 2
+    assert record[0].message.args[0] == ("The optimal value found for "
+                                         "dimension 0 of parameter "
+                                         "length_scale is close to the "
+                                         "specified upper bound 100.0. "
+                                         "Increasing the bound and calling "
+                                         "fit again may find a better value.")
+
+    assert record[1].message.args[0] == ("The optimal value found for "
+                                         "dimension 1 of parameter "
+                                         "length_scale is close to the "
+                                         "specified upper bound 100.0. "
+                                         "Increasing the bound and calling "
+                                         "fit again may find a better value.")
