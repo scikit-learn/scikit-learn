@@ -1345,6 +1345,7 @@ should be provided. Therefore, the `y_score` parameter is of size (n_samples,).
   >>> X, y = load_breast_cancer(return_X_y=True)
   >>> clf = LogisticRegression(solver="liblinear").fit(X, y)
   >>> clf.classes_
+  array([0, 1])
 
 We can use the probability estimates corresponding to `clf.classes_[1]`.
 
