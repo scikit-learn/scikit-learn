@@ -2664,6 +2664,8 @@ def _check_parameters_default_constructible_estimator(estimator):
     # test default-constructibility
     # get rid of deprecation warnings
 
+    Estimator = estimator.__class__
+
     with ignore_warnings(category=FutureWarning):
         # test cloning
         clone(estimator)
