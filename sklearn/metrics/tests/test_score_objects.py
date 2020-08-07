@@ -16,9 +16,18 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import ignore_warnings
 
 from sklearn.base import BaseEstimator
-from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
-                             log_loss, precision_score, recall_score,
-                             jaccard_score)
+from sklearn.metrics import (
+    average_precision_score,
+    brier_score_loss,
+    f1_score,
+    fbeta_score,
+    jaccard_score,
+    log_loss,
+    precision_score,
+    r2_score,
+    recall_score,
+    roc_auc_score,
+)
 from sklearn.metrics import cluster as cluster_module
 from sklearn.metrics import check_scoring
 from sklearn.metrics._scorer import (_PredictScorer, _passthrough_scorer,
@@ -751,7 +760,8 @@ def test_multiclass_roc_no_proba_scorer_errors(scorer_name):
         scorer(lr, X, y)
 
 
-def _make_imbalanced_string_dataset():
+@pytest.fixture
+def fitted_clf_predictions():
     from sklearn.datasets import load_breast_cancer
     from sklearn.utils import shuffle
 
@@ -770,38 +780,65 @@ def _make_imbalanced_string_dataset():
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, stratify=y, random_state=0,
     )
-    return X_train, X_test, y_train, y_test
-
-
-def test_xxx():
-    from sklearn.metrics import average_precision_score
-    X_train, X_test, y_train, y_test = _make_imbalanced_string_dataset()
-
     classifier = LogisticRegression().fit(X_train, y_train)
-    y_proba = classifier.predict_proba(X_test)
-    y_decision_function = classifier.decision_function(X_test)
+    y_pred_proba = classifier.predict_proba(X_test)
+    y_pred_decision = classifier.decision_function(X_test)
+
+    return classifier, X_test, y_test, y_pred_proba, y_pred_decision
+
+
+def test_average_precision_pos_label(fitted_clf_predictions):
+    clf, X_test, y_test, y_pred_proba, y_pred_decision = fitted_clf_predictions
 
     pos_label = "cancer"
-    y_proba = y_proba[:, 0]
-    y_decision_function *= -1
+    # we need to select the positive column or reverse the decision values
+    y_pred_proba = y_pred_proba[:, 0]
+    y_pred_decision = y_pred_decision * -1
+    assert clf.classes_[0] == pos_label
 
-    assert classifier.classes_[0] == pos_label
-
-    ap_proba = average_precision_score(y_test, y_proba, pos_label=pos_label)
+    # check that when calling the scoring function, probability estimates and
+    # decision values lead to the same results
+    ap_proba = average_precision_score(
+        y_test, y_pred_proba, pos_label=pos_label
+    )
     ap_decision_function = average_precision_score(
-        y_test, y_decision_function, pos_label=pos_label
+        y_test, y_pred_decision, pos_label=pos_label
     )
     assert ap_proba == pytest.approx(ap_decision_function)
 
+    # create a scorer which would require to pass a `pos_label`
+    # check that it fails if `pos_label` is not provided
     average_precision_scorer = make_scorer(
         average_precision_score, needs_threshold=True,
     )
-    with pytest.raises(ValueError):
-        average_precision_scorer(classifier, X_test, y_test)
+    err_msg = "pos_label=1 is invalid. Set it to a label in y_true."
+    with pytest.raises(ValueError, match=err_msg):
+        average_precision_scorer(clf, X_test, y_test)
 
+    # otherwise, the scorer should give the same results than calling the
+    # scoring function
     average_precision_scorer = make_scorer(
         average_precision_score, needs_threshold=True, pos_label=pos_label
     )
-    ap_scorer = average_precision_scorer(classifier, X_test, y_test)
+    ap_scorer = average_precision_scorer(clf, X_test, y_test)
 
     assert ap_scorer == pytest.approx(ap_proba)
+
+
+def test_brier_score_loss_pos_label(fitted_clf_predictions):
+    clf, X_test, y_test, y_pred_proba, y_pred_decision = fitted_clf_predictions
+
+    pos_label = "cancer"
+    # we need to select the positive column or reverse the decision values
+    y_pred_proba = y_pred_proba[:, 0]
+    y_pred_decision = y_pred_decision * -1
+    assert clf.classes_[0] == pos_label
+
+    print(brier_score_loss(y_test, y_pred_proba, pos_label=pos_label))
+    brier_scorer = make_scorer(
+        brier_score_loss,
+        needs_proba=True,
+        greater_is_better=False,
+        pos_label=pos_label,
+    )
+    print(brier_scorer(clf, X_test, y_test))
