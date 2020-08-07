@@ -38,5 +38,5 @@ plt.xlabel("Number of features selected")
 plt.ylabel("Cross validation score (nb of correct classifications)")
 plt.plot(range(min_features_to_select,
                len(rfecv.grid_scores_) + min_features_to_select)),
-               rfecv.grid_scores_)
+         rfecv.grid_scores_)
 plt.show()
