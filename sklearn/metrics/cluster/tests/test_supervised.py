@@ -62,13 +62,13 @@ def test_generalized_average():
 @ignore_warnings(category=FutureWarning)
 def test_perfect_matches():
     for score_func in score_funcs:
-        assert score_func([], []) == 1.0
-        assert score_func([0], [1]) == 1.0
-        assert score_func([0, 0, 0], [0, 0, 0]) == 1.0
-        assert score_func([0, 1, 0], [42, 7, 42]) == 1.0
-        assert score_func([0., 1., 0.], [42., 7., 42.]) == 1.0
-        assert score_func([0., 1., 2.], [42., 7., 2.]) == 1.0
-        assert score_func([0, 1, 2], [42, 7, 2]) == 1.0
+        assert score_func([], []) == pytest.approx(1.0)
+        assert score_func([0], [1]) == pytest.approx(1.0)
+        assert score_func([0, 0, 0], [0, 0, 0]) == pytest.approx(1.0)
+        assert score_func([0, 1, 0], [42, 7, 42]) == pytest.approx(1.0)
+        assert score_func([0., 1., 0.], [42., 7., 42.]) == pytest.approx(1.0)
+        assert score_func([0., 1., 2.], [42., 7., 2.]) == pytest.approx(1.0)
+        assert score_func([0, 1, 2], [42, 7, 2]) == pytest.approx(1.0)
     score_funcs_with_changing_means = [
         normalized_mutual_info_score,
         adjusted_mutual_info_score,
@@ -76,13 +76,17 @@ def test_perfect_matches():
     means = {"min", "geometric", "arithmetic", "max"}
     for score_func in score_funcs_with_changing_means:
         for mean in means:
-            assert score_func([], [], mean) == 1.0
-            assert score_func([0], [1], mean) == 1.0
-            assert score_func([0, 0, 0], [0, 0, 0], mean) == 1.0
-            assert score_func([0, 1, 0], [42, 7, 42], mean) == 1.0
-            assert score_func([0., 1., 0.], [42., 7., 42.], mean) == 1.0
-            assert score_func([0., 1., 2.], [42., 7., 2.], mean) == 1.0
-            assert score_func([0, 1, 2], [42, 7, 2], mean) == 1.0
+            assert score_func([], [], mean) == pytest.approx(1.0)
+            assert score_func([0], [1], mean) == pytest.approx(1.0)
+            assert score_func([0, 0, 0], [0, 0, 0], mean) == pytest.approx(1.0)
+            assert score_func(
+                [0, 1, 0], [42, 7, 42], mean) == pytest.approx(1.0)
+            assert score_func(
+                [0., 1., 0.], [42., 7., 42.], mean) == pytest.approx(1.0)
+            assert score_func(
+                [0., 1., 2.], [42., 7., 2.], mean) == pytest.approx(1.0)
+            assert score_func(
+                [0, 1, 2], [42, 7, 2], mean) == pytest.approx(1.0)
 
 
 def test_homogeneous_but_not_complete_labeling():
@@ -213,7 +217,7 @@ def test_adjusted_mutual_info_score():
     ami = adjusted_mutual_info_score(labels_a, labels_b)
     assert_almost_equal(ami, 0.27821, 5)
     ami = adjusted_mutual_info_score([1, 1, 2, 2], [2, 2, 3, 3])
-    assert ami == 1.0
+    assert ami == pytest.approx(1.0)
     # Test with a very large array
     a110 = np.array([list(labels_a) * 110]).flatten()
     b110 = np.array([list(labels_b) * 110]).flatten()
@@ -273,15 +277,19 @@ def test_exactly_zero_info_score():
     for i in np.logspace(1, 4, 4).astype(int):
         labels_a, labels_b = (np.ones(i, dtype=int),
                               np.arange(i, dtype=int))
-        assert normalized_mutual_info_score(labels_a, labels_b) == 0.0
-        assert v_measure_score(labels_a, labels_b) == 0.0
-        assert adjusted_mutual_info_score(labels_a, labels_b) == 0.0
-        assert normalized_mutual_info_score(labels_a, labels_b) == 0.0
+        assert normalized_mutual_info_score(
+            labels_a, labels_b) == pytest.approx(0.0)
+        assert v_measure_score(
+            labels_a, labels_b) == pytest.approx(0.0)
+        assert adjusted_mutual_info_score(
+            labels_a, labels_b) == pytest.approx(0.0)
+        assert normalized_mutual_info_score(
+            labels_a, labels_b) == pytest.approx(0.0)
         for method in ["min", "geometric", "arithmetic", "max"]:
-            assert adjusted_mutual_info_score(labels_a, labels_b,
-                                              method) == 0.0
-            assert normalized_mutual_info_score(labels_a, labels_b,
-                                                method) == 0.0
+            assert adjusted_mutual_info_score(
+                labels_a, labels_b,  method) == pytest.approx(0.0)
+            assert normalized_mutual_info_score(
+                labels_a, labels_b, method) == pytest.approx(0.0)
 
 
 def test_v_measure_and_mutual_information(seed=36):
