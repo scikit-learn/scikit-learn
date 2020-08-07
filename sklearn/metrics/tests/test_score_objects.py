@@ -829,16 +829,18 @@ def test_brier_score_loss_pos_label(fitted_clf_predictions):
     clf, X_test, y_test, y_pred_proba, y_pred_decision = fitted_clf_predictions
 
     pos_label = "cancer"
-    # we need to select the positive column or reverse the decision values
-    y_pred_proba = y_pred_proba[:, 0]
-    y_pred_decision = y_pred_decision * -1
     assert clf.classes_[0] == pos_label
 
-    print(brier_score_loss(y_test, y_pred_proba, pos_label=pos_label))
-    brier_scorer = make_scorer(
-        brier_score_loss,
-        needs_proba=True,
-        greater_is_better=False,
-        pos_label=pos_label,
+    # brier score loss is symmetric
+    brier_pos_cancer = brier_score_loss(
+        y_test, y_pred_proba[:, 0], pos_label="cancer"
     )
-    print(brier_scorer(clf, X_test, y_test))
+    brier_pos_not_cancer = brier_score_loss(
+        y_test, y_pred_proba[:, 1], pos_label="not cancer"
+    )
+    assert brier_pos_cancer == brier_pos_not_cancer
+
+    brier_scorer = make_scorer(
+        brier_score_loss, needs_proba=True, pos_label=pos_label,
+    )
+    assert brier_scorer(clf, X_test, y_test) == pytest.approx(brier_pos_cancer)
