@@ -1,10 +1,11 @@
+from copy import deepcopy
 import pickle
 import tempfile
 import shutil
 import os
 import numbers
 from unittest.mock import Mock
-from functools import partial
+from functools import partial, partialmethod
 
 import numpy as np
 import pytest
@@ -825,6 +826,25 @@ def test_average_precision_pos_label(fitted_clf_predictions):
     )
     ap_scorer = average_precision_scorer(clf, X_test, y_test)
 
+    assert ap_scorer == pytest.approx(ap_proba)
+
+    # The above scorer call is using `clf.decision_function`. We will force
+    # it to use `clf.predict_proba`.
+    clf_without_predict_proba = deepcopy(clf)
+
+    def _predict_proba(self, X):
+        raise NotImplementedError
+
+    clf_without_predict_proba.predict_proba = partial(
+        _predict_proba, clf_without_predict_proba
+    )
+    # sanity check
+    with pytest.raises(NotImplementedError):
+        clf_without_predict_proba.predict_proba(X_test)
+
+    ap_scorer = average_precision_scorer(
+        clf_without_predict_proba, X_test, y_test
+    )
     assert ap_scorer == pytest.approx(ap_proba)
 
 
