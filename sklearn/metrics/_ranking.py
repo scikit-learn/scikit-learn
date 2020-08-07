@@ -372,69 +372,38 @@ def roc_auc_score(y_true, y_score, *, average="macro", sample_weight=None,
 
     Examples
     --------
-    ROC-AUC can be computed in different problem. In binary case, both
-    probability estimates and non-thresholded decision values can be used:
+    Binary case:
 
     >>> from sklearn.datasets import load_breast_cancer
     >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.metrics import roc_auc_score
     >>> X, y = load_breast_cancer(return_X_y=True)
     >>> clf = LogisticRegression(solver="liblinear").fit(X, y)
-    >>> y_probability_estimates = clf.predict_proba(X)
-    >>> print(
-    ...     f"Shape of the probability estimates in binary case: "
-    ...     f"{y_probability_estimates.shape}"
-    ... )
-    Shape of the probability estimates in binary case: (569, 2)
-    >>> print(
-    ...     f"The labels learn by the classifierare: {clf.classes_}"
-    ... )
-    The labels learn by the classifierare: [0 1]
+    >>> roc_auc_score(y, clf.predict_proba(X)[:, 1])
+    0.99...
+    >>> roc_auc_score(y, clf.decision_function(X))
+    0.99...
 
-    In the binary case, we need to pass the probability estimates corresponding
-    to the greater label which is always `y_probability_estimates[:, 1]`
-    corresponding to `clf.classes_[1]`.
-
-    >>> print(
-    ...     f"ROC-AUC score using probability estimate: "
-    ...     f"{roc_auc_score(y, y_probability_estimates[:, 1])}"
-    ... )
-    ROC-AUC score using probability estimate: 0.99...
-
-    Otherwise, you can passed the decision values directly:
-
-    >>> y_decision_values = clf.decision_function(X)
-    >>> print(
-    ...     f"Shape of the non-thresholded decision values in binary case: "
-    ...     f"{y_decision_values.shape}"
-    ... )
-    Shape of the non-thresholded decision values in binary case: (569,)
-    >>> print(
-    ...     f"ROC-AUC score using non-thresholded decision values: "
-    ...     f"{roc_auc_score(y, y_decision_values)}"
-    ... )
-    ROC-AUC score using non-thresholded decision values: 0.99...
-
-    In the multiclass case, one need to pass probability estimates which
-    should sum to 1 across class. In addition, you need to specify the
-    `multi_class` strategy to use.
+    Multiclass case:
 
     >>> from sklearn.datasets import load_iris
     >>> X, y = load_iris(return_X_y=True)
     >>> clf = LogisticRegression(solver="liblinear").fit(X, y)
-    >>> y_probability_estimates = clf.predict_proba(X)
-    >>> print(
-    ...     f"Shape of the probability estimates in multiclass case: "
-    ...     f"{y_probability_estimates.shape}"
+    >>> roc_auc_score(y, clf.predict_proba(X), multi_class='ovr')
+    0.99...
+
+    Multilabel case:
+
+    >>> from sklearn.datasets import make_multilabel_classification
+    >>> from sklearn.multioutput import MultiOutputClassifier
+    >>> X, y = make_multilabel_classification(random_state=0)
+    >>> clf = MultiOutputClassifier(clf).fit(X, y)
+    >>> roc_auc_score(
+    ...     y,
+    ...     np.transpose([y_pred[:, 1] for y_pred in clf.predict_proba(X)]),
+    ...     average=None
     ... )
-    Shape of the probability estimates in multiclass case: (150, 3)
-    >>> y_probability_estimates.sum(axis=1)
-    array([1., 1., 1., 1., ...])
-    >>> print(
-    ...     f"ROC-AUC score using probability estimate: "
-    ...     f"{roc_auc_score(y, y_probability_estimates, multi_class='ovr')}"
-    ... )
-    ROC-AUC score using probability estimate: 0.99...
+    array([0.82..., 0.86..., 0.94..., 0.85... , 0.94...])
     """
 
     y_type = type_of_target(y_true)
