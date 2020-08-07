@@ -64,7 +64,8 @@ cdef void _map_num_col_to_bins(const X_DTYPE_C [:] data,
             # for known values, use binary search
             left, right = 0, binning_thresholds.shape[0]
             while left < right:
-                middle = (right + left - 1) // 2
+                # equal to (right + left - 1) // 2 but avoids overflow
+                middle = left + (right - left - 1) // 2
                 if data[i] <= binning_thresholds[middle]:
                     right = middle
                 else:

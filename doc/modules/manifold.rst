@@ -132,7 +132,7 @@ The Isomap algorithm comprises three stages:
    :math:`N \times N` isomap kernel.  For a dense solver, the cost is
    approximately :math:`O[d N^2]`.  This cost can often be improved using
    the ``ARPACK`` solver.  The eigensolver can be specified by the user
-   with the ``path_method`` keyword of ``Isomap``.  If unspecified, the
+   with the ``eigen_solver`` keyword of ``Isomap``.  If unspecified, the
    code attempts to choose the best algorithm for the input data.
 
 The overall complexity of Isomap is

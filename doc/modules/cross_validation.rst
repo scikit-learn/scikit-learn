@@ -116,16 +116,15 @@ a model and computing the score 5 consecutive times (with different splits each
 time)::
 
   >>> from sklearn.model_selection import cross_val_score
-  >>> clf = svm.SVC(kernel='linear', C=1)
+  >>> clf = svm.SVC(kernel='linear', C=1, random_state=42)
   >>> scores = cross_val_score(clf, X, y, cv=5)
   >>> scores
-  array([0.96..., 1.  ..., 0.96..., 0.96..., 1.        ])
+  array([0.96..., 1. , 0.96..., 0.96..., 1. ])
 
-The mean score and the 95\% confidence interval of the score estimate are hence
-given by::
+The mean score and the standard deviation are hence given by::
 
-  >>> print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
-  Accuracy: 0.98 (+/- 0.03)
+  >>> print("%0.2f accuracy with a standard deviation of %0.2f" % (scores.mean(), scores.std()))
+  0.98 accuracy with a standard deviation of 0.02
 
 By default, the score computed at each CV iteration is the ``score``
 method of the estimator. It is possible to change this by using the
@@ -744,6 +743,35 @@ e.g. when searching for hyperparameters.
 For example, when using a validation set, set the ``test_fold`` to 0 for all
 samples that are part of the validation set, and to -1 for all other samples.
 
+Using cross-validation iterators to split train and test
+--------------------------------------------------------
+
+The above group cross-validation functions may also be useful for spitting a
+dataset into training and testing subsets. Note that the convenience
+function :func:`train_test_split` is a wrapper around :func:`ShuffleSplit`
+and thus only allows for stratified splitting (using the class labels)
+and cannot account for groups.
+
+To perform the train and test split, use the indices for the train and test
+subsets yielded by the generator output by the `split()` method of the
+cross-validation splitter. For example::
+
+  >>> import numpy as np
+  >>> from sklearn.model_selection import GroupShuffleSplit
+
+  >>> X = np.array([0.1, 0.2, 2.2, 2.4, 2.3, 4.55, 5.8, 0.001])
+  >>> y = np.array(["a", "b", "b", "b", "c", "c", "c", "a"])
+  >>> groups = np.array([1, 1, 2, 2, 3, 3, 4, 4])
+  >>> train_indx, test_indx = next(
+  ...     GroupShuffleSplit(random_state=7).split(X, y, groups)
+  ... )
+  >>> X_train, X_test, y_train, y_test = \
+  ...     X[train_indx], X[test_indx], y[train_indx], y[test_indx]
+  >>> X_train.shape, X_test.shape
+  ((6,), (2,))
+  >>> np.unique(groups[train_indx]), np.unique(groups[test_indx])
+  (array([1, 2, 4]), array([3]))
+
 .. _timeseries_cv:
 
 Cross validation of time series data
@@ -782,7 +810,7 @@ Example of 3-split time series cross-validation on a dataset with 6 samples::
   >>> y = np.array([1, 2, 3, 4, 5, 6])
   >>> tscv = TimeSeriesSplit(n_splits=3)
   >>> print(tscv)
-  TimeSeriesSplit(max_train_size=None, n_splits=3)
+  TimeSeriesSplit(gap=0, max_train_size=None, n_splits=3, test_size=None)
   >>> for train, test in tscv.split(X):
   ...     print("%s %s" % (train, test))
   [0 1 2] [3]

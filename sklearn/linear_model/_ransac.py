@@ -65,7 +65,7 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
 
     Parameters
     ----------
-    base_estimator : object, optional
+    base_estimator : object, default=None
         Base estimator object which implements the following methods:
 
          * `fit(X, y)`: Fit model to given training data and target values.
@@ -77,13 +77,13 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
            which is used to compute residual error using loss function.
 
         If `base_estimator` is None, then
-        ``base_estimator=sklearn.linear_model.LinearRegression()`` is used for
+        :class:`~sklearn.linear_model.LinearRegression` is used for
         target values of dtype float.
 
         Note that the current implementation only supports regression
         estimators.
 
-    min_samples : int (>= 1) or float ([0, 1]), optional
+    min_samples : int (>= 1) or float ([0, 1]), default=None
         Minimum number of samples chosen randomly from original data. Treated
         as an absolute number of samples for `min_samples >= 1`, treated as a
         relative number `ceil(min_samples * X.shape[0]`) for
@@ -92,17 +92,17 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
         ``sklearn.linear_model.LinearRegression()`` estimator is assumed and
         `min_samples` is chosen as ``X.shape[1] + 1``.
 
-    residual_threshold : float, optional
+    residual_threshold : float, default=None
         Maximum residual for a data sample to be classified as an inlier.
         By default the threshold is chosen as the MAD (median absolute
         deviation) of the target values `y`.
 
-    is_data_valid : callable, optional
+    is_data_valid : callable, default=None
         This function is called with the randomly selected data before the
         model is fitted to it: `is_data_valid(X, y)`. If its return value is
         False the current randomly chosen sub-sample is skipped.
 
-    is_model_valid : callable, optional
+    is_model_valid : callable, default=None
         This function is called with the estimated model and the randomly
         selected data: `is_model_valid(model, X, y)`. If its return value is
         False the current randomly chosen sub-sample is skipped.
@@ -110,23 +110,23 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
         with `is_data_valid`. `is_model_valid` should therefore only be used if
         the estimated model is needed for making the rejection decision.
 
-    max_trials : int, optional
+    max_trials : int, default=100
         Maximum number of iterations for random sample selection.
 
-    max_skips : int, optional
+    max_skips : int, default=np.inf
         Maximum number of iterations that can be skipped due to finding zero
         inliers or invalid data defined by ``is_data_valid`` or invalid models
         defined by ``is_model_valid``.
 
         .. versionadded:: 0.19
 
-    stop_n_inliers : int, optional
+    stop_n_inliers : int, default=np.inf
         Stop iteration if at least this number of inliers are found.
 
-    stop_score : float, optional
+    stop_score : float, default=np.inf
         Stop iteration if score is greater equal than this threshold.
 
-    stop_probability : float in range [0, 1], optional
+    stop_probability : float in range [0, 1], default=0.99
         RANSAC iteration stops if at least one outlier-free set of the training
         data is sampled in RANSAC. This requires to generate at least N
         samples (iterations)::
@@ -137,7 +137,7 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
         as 0.99 (the default) and e is the current fraction of inliers w.r.t.
         the total number of samples.
 
-    loss : string, callable, optional, default "absolute_loss"
+    loss : string, callable, default='absolute_loss'
         String inputs, "absolute_loss" and "squared_loss" are supported which
         find the absolute loss and squared loss per sample
         respectively.
@@ -502,3 +502,11 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
         check_is_fitted(self)
 
         return self.estimator_.score(X, y)
+
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_sample_weights_invariance':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }

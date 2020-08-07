@@ -260,3 +260,59 @@ give you clues as to the source of your memory error.
 
 For more information on valgrind and the array of options it has, see the
 tutorials and documentation on the `valgrind web site <http://valgrind.org>`_.
+
+.. _arm64_dev_env:
+
+Building and testing for the ARM64 platform on a x86_64 machine
+===============================================================
+
+ARM-based machines are a popular target for mobile, edge or other low-energy
+deployments (including in the cloud, for instance on Scaleway or AWS Graviton).
+
+Here are instructions to setup a local dev environment to reproduce
+ARM-specific bugs or test failures on a x86_64 host laptop or workstation. This
+is based on QEMU user mode emulation using docker for convenience (see
+https://github.com/multiarch/qemu-user-static).
+
+.. note::
+
+    The following instructions are illustrated for ARM64 but they also apply to
+    ppc64le, after changing the Docker image and Miniforge paths appropriately.
+
+Prepare a folder on the host filesystem and download the necessary tools and
+source code::
+
+    mkdir arm64
+    pushd arm64
+    wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-aarch64.sh
+    git clone https://github.com/scikit-learn/scikit-learn.git
+
+Use docker to install QEMU user mode and run an ARM64v8 container with access
+to your shared folder under the `/io` mount point::
+
+    docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+    docker run -v`pwd`:/io --rm -it arm64v8/ubuntu /bin/bash
+
+In the container, install miniforge3 for the ARM64 (a.k.a. aarch64)
+architecture::
+
+    bash Miniforge3-Linux-aarch64.sh
+    # Choose to install miniforge3 under: `/io/miniforge3`
+
+Whenever you restart a new container, you will need to reinit the conda env
+previously installed under `/io/miniforge3`::
+
+    /io/miniforge3/bin/conda init
+    source /root/.bashrc
+
+as the `/root` home folder is part of the ephemeral docker container. Every
+file or directory stored under `/io` is persistent on the other hand.
+
+You can then build scikit-learn as usual (you will need to install compiler
+tools and dependencies using apt or conda as usual). Building scikit-learn
+takes a lot of time because of the emulation layer, however it needs to be
+done only once if you put the scikit-learn folder under the `/io` mount
+point.
+
+Then use pytest to run only the tests of the module you are interested in
+debugging.

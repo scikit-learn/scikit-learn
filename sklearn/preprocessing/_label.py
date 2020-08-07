@@ -24,6 +24,7 @@ from ..utils.validation import _num_samples
 from ..utils.validation import _deprecate_positional_args
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
+from ..utils._encode import _encode, _unique
 
 
 __all__ = [
@@ -32,144 +33,6 @@ __all__ = [
     'LabelEncoder',
     'MultiLabelBinarizer',
 ]
-
-
-def _encode_numpy(values, uniques=None, encode=False, check_unknown=True):
-    # only used in _encode below, see docstring there for details
-    if uniques is None:
-        if encode:
-            uniques, encoded = np.unique(values, return_inverse=True)
-            return uniques, encoded
-        else:
-            # unique sorts
-            return np.unique(values)
-    if encode:
-        if check_unknown:
-            diff = _encode_check_unknown(values, uniques)
-            if diff:
-                raise ValueError("y contains previously unseen labels: %s"
-                                 % str(diff))
-        encoded = np.searchsorted(uniques, values)
-        return uniques, encoded
-    else:
-        return uniques
-
-
-def _encode_python(values, uniques=None, encode=False):
-    # only used in _encode below, see docstring there for details
-    if uniques is None:
-        uniques = sorted(set(values))
-        uniques = np.array(uniques, dtype=values.dtype)
-    if encode:
-        table = {val: i for i, val in enumerate(uniques)}
-        try:
-            encoded = np.array([table[v] for v in values])
-        except KeyError as e:
-            raise ValueError("y contains previously unseen labels: %s"
-                             % str(e))
-        return uniques, encoded
-    else:
-        return uniques
-
-
-def _encode(values, uniques=None, encode=False, check_unknown=True):
-    """Helper function to factorize (find uniques) and encode values.
-
-    Uses pure python method for object dtype, and numpy method for
-    all other dtypes.
-    The numpy method has the limitation that the `uniques` need to
-    be sorted. Importantly, this is not checked but assumed to already be
-    the case. The calling method needs to ensure this for all non-object
-    values.
-
-    Parameters
-    ----------
-    values : array
-        Values to factorize or encode.
-    uniques : array, optional
-        If passed, uniques are not determined from passed values (this
-        can be because the user specified categories, or because they
-        already have been determined in fit).
-    encode : bool, default False
-        If True, also encode the values into integer codes based on `uniques`.
-    check_unknown : bool, default True
-        If True, check for values in ``values`` that are not in ``unique``
-        and raise an error. This is ignored for object dtype, and treated as
-        True in this case. This parameter is useful for
-        _BaseEncoder._transform() to avoid calling _encode_check_unknown()
-        twice.
-
-    Returns
-    -------
-    uniques
-        If ``encode=False``. The unique values are sorted if the `uniques`
-        parameter was None (and thus inferred from the data).
-    (uniques, encoded)
-        If ``encode=True``.
-
-    """
-    if values.dtype == object:
-        try:
-            res = _encode_python(values, uniques, encode)
-        except TypeError:
-            types = sorted(t.__qualname__
-                           for t in set(type(v) for v in values))
-            raise TypeError("Encoders require their input to be uniformly "
-                            f"strings or numbers. Got {types}")
-        return res
-    else:
-        return _encode_numpy(values, uniques, encode,
-                             check_unknown=check_unknown)
-
-
-def _encode_check_unknown(values, uniques, return_mask=False):
-    """
-    Helper function to check for unknowns in values to be encoded.
-
-    Uses pure python method for object dtype, and numpy method for
-    all other dtypes.
-
-    Parameters
-    ----------
-    values : array
-        Values to check for unknowns.
-    uniques : array
-        Allowed uniques values.
-    return_mask : bool, default False
-        If True, return a mask of the same shape as `values` indicating
-        the valid values.
-
-    Returns
-    -------
-    diff : list
-        The unique values present in `values` and not in `uniques` (the
-        unknown values).
-    valid_mask : boolean array
-        Additionally returned if ``return_mask=True``.
-
-    """
-    if values.dtype == object:
-        uniques_set = set(uniques)
-        diff = list(set(values) - uniques_set)
-        if return_mask:
-            if diff:
-                valid_mask = np.array([val in uniques_set for val in values])
-            else:
-                valid_mask = np.ones(len(values), dtype=bool)
-            return diff, valid_mask
-        else:
-            return diff
-    else:
-        unique_values = np.unique(values)
-        diff = list(np.setdiff1d(unique_values, uniques, assume_unique=True))
-        if return_mask:
-            if diff:
-                valid_mask = np.in1d(values, uniques)
-            else:
-                valid_mask = np.ones(len(values), dtype=bool)
-            return diff, valid_mask
-        else:
-            return diff
 
 
 class LabelEncoder(TransformerMixin, BaseEstimator):
@@ -237,7 +100,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
         self : returns an instance of self.
         """
         y = column_or_1d(y, warn=True)
-        self.classes_ = _encode(y)
+        self.classes_ = _unique(y)
         return self
 
     def fit_transform(self, y):
@@ -253,7 +116,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
         y : array-like of shape [n_samples]
         """
         y = column_or_1d(y, warn=True)
-        self.classes_, y = _encode(y, encode=True)
+        self.classes_, y = _unique(y, return_inverse=True)
         return y
 
     def transform(self, y):
@@ -274,8 +137,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
         if _num_samples(y) == 0:
             return np.array([])
 
-        _, y = _encode(y, uniques=self.classes_, encode=True)
-        return y
+        return _encode(y, uniques=self.classes_)
 
     def inverse_transform(self, y):
         """Transform labels back to original encoding.
@@ -642,7 +504,7 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1,
             if sparse_output:
                 return sp.csr_matrix((n_samples, 1), dtype=int)
             else:
-                Y = np.zeros((len(y), 1), dtype=np.int)
+                Y = np.zeros((len(y), 1), dtype=int)
                 Y += neg_label
                 return Y
         elif len(classes) >= 3:
@@ -767,12 +629,12 @@ def _inverse_binarize_thresholding(y, output_type, classes, threshold):
         if threshold > 0:
             if y.format not in ('csr', 'csc'):
                 y = y.tocsr()
-            y.data = np.array(y.data > threshold, dtype=np.int)
+            y.data = np.array(y.data > threshold, dtype=int)
             y.eliminate_zeros()
         else:
-            y = np.array(y.toarray() > threshold, dtype=np.int)
+            y = np.array(y.toarray() > threshold, dtype=int)
     else:
-        y = np.array(y > threshold, dtype=np.int)
+        y = np.array(y > threshold, dtype=int)
 
     # Inverse transform data
     if output_type == "binary":
@@ -803,18 +665,19 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    classes : array-like of shape [n_classes] (optional)
+    classes : array-like of shape (n_classes,), default=None
         Indicates an ordering for the class labels.
         All entries should be unique (cannot contain duplicate classes).
 
-    sparse_output : boolean (default: False),
+    sparse_output : bool, default=False
         Set to true if output binary array is desired in CSR sparse format
 
     Attributes
     ----------
-    classes_ : array of labels
-        A copy of the `classes` parameter where provided,
-        or otherwise, the sorted set of classes found when fitting.
+    classes_ : ndarray of shape (n_classes,)
+        A copy of the `classes` parameter when provided.
+        Otherwise it corresponds to the sorted set of classes found
+        when fitting.
 
     Examples
     --------
@@ -883,7 +746,7 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
                              "them to MultiLabelBinarizer.")
         else:
             classes = self.classes
-        dtype = np.int if all(isinstance(c, int) for c in classes) else object
+        dtype = int if all(isinstance(c, int) for c in classes) else object
         self.classes_ = np.empty(len(classes), dtype=dtype)
         self.classes_[:] = classes
         return self
@@ -918,7 +781,7 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
         tmp = sorted(class_mapping, key=class_mapping.get)
 
         # (make safe for tuples)
-        dtype = np.int if all(isinstance(c, int) for c in tmp) else object
+        dtype = int if all(isinstance(c, int) for c in tmp) else object
         class_mapping = np.empty(len(tmp), dtype=dtype)
         class_mapping[:] = tmp
         self.classes_, inverse = np.unique(class_mapping, return_inverse=True)
