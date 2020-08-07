@@ -404,6 +404,10 @@ def roc_auc_score(y_true, y_score, *, average="macro", sample_weight=None,
     ...     average=None
     ... )
     array([0.82..., 0.86..., 0.94..., 0.85... , 0.94...])
+    >>> from sklearn.linear_model import RidgeClassifierCV
+    >>> clf = RidgeClassifierCV().fit(X, y)
+    >>> roc_auc_score(y, clf.decision_function(X), average=None)
+    array([0.81..., 0.84... , 0.93..., 0.87..., 0.94...])
     """
 
     y_type = type_of_target(y_true)
