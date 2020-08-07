@@ -277,7 +277,9 @@ def roc_auc_score(y_true, y_score, *, average="macro", sample_weight=None,
         * In the multilabel case, it corresponds to an array of shape
           (n_samples, n_classes). Probability estimates are provided by the
           `predict_proba` method and the non-thresholded decision values by
-          the `decision_function` method;
+          the `decision_function` method. The probability estimates correspond
+          to the **probability of the class with the greater label for each
+          output** of the classifier;
         * In the multiclass case, it corresponds to an array of shape
           (n_samples, n_classes) of probability estimates provided by the
           `predict_proba` method. The probability estimates **must**
