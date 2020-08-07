@@ -5,7 +5,7 @@ import shutil
 import os
 import numbers
 from unittest.mock import Mock
-from functools import partial, partialmethod
+from functools import partial
 
 import numpy as np
 import pytest

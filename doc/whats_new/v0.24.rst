@@ -268,6 +268,11 @@ Changelog
   class to be used when computing the roc auc statistics.
   :pr:`17651` by :user:`Clara Matos <claramatos>`.
 
+- |Fix| Fix a bug which was not selected the appropriate probability estimates
+  or reversing the decision values if `pos_label` was provided and it was not
+  corresponding to `classifier.classes_[1]`.
+  :pr:`#18114` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
