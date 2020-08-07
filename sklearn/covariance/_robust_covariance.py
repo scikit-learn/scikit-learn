@@ -439,8 +439,8 @@ class MinCovDet(EmpiricalCovariance):
         The proportion of points to be included in the support of the raw
         MCD estimate. Default is None, which implies that the minimum
         value of support_fraction will be used within the algorithm:
-        `(n_sample + n_features + 1) / 2`. The parameter must be in the range
-        (0, 1].
+        `(n_sample + n_features + 1) / 2`. If 1, simplifies to
+        EmpiricalCovariance. The parameter must be in the range (0, 1].
 
     random_state : int or RandomState instance, default=None
         Determines the pseudo random number generator for shuffling the data.
@@ -535,6 +535,11 @@ class MinCovDet(EmpiricalCovariance):
         self : object
         """
         X = self._validate_data(X, ensure_min_samples=2, estimator='MinCovDet')
+        if (self.support_fraction and
+                int(self.support_fraction * len(X)) == len(X)):
+            self = super().fit(X, y)
+            self.dist_ = self.mahalanobis(X)
+            return self
         random_state = check_random_state(self.random_state)
         n_samples, n_features = X.shape
         # check that the empirical covariance is full rank
