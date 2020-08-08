@@ -455,6 +455,8 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         self.order_ = self.order
         if self.order_ is None:
             self.order_ = np.array(range(Y.shape[1]))
+        elif isinstance(self.order_, tuple):
+            self.order_ = np.array(self.order_)
         elif isinstance(self.order_, str):
             if self.order_ == 'random':
                 self.order_ = random_state.permutation(Y.shape[1])
