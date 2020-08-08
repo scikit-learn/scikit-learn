@@ -1215,83 +1215,69 @@ def test_check_sparse_pandas_sp_format(sp_format):
     assert_allclose_dense_sparse(sp_mat, result)
 
 
-def make_types_table():
+def new_pandas_version():
     pd = pytest.importorskip("pandas")
-
-    ntp = np.core.numerictypes.allTypes
-    inpt = [{'np_name': it[0], 'np_type': it[1]} for it in ntp.items()]
-    dall = pd.DataFrame(inpt)
-
-    dall.index = dall['np_name']
-    dall.drop(['generic', 'void0', 'void', 'flexible', 'integer',
-               'signedinteger', 'unsignedinteger', 'character',
-               'inexact', 'floating', 'number'], inplace=True)
-
-    dall = dall[(dall['np_type'] != np.complexfloating) &
-                (dall['np_type'] != np.complex128) &
-                (dall['np_type'] != np.complex256) &
-                (dall['np_type'] != np.complex64)]
-
-    dall['dtype'] = dall['np_type'].map(np.dtype)
-    dall['dtype_name'] = dall['dtype'].map(lambda x: x.name)
-
-    dall = dall.reindex(columns=['dtype_name', 'dtype', 'np_name', 'np_type'])
-    num_types = (lambda x: x[(x.dtype_name.str.startswith('bool')) |
-                 (x.dtype_name.str.startswith('float')) |
-                 (x.dtype_name.str.startswith('int')) |
-                 (x.dtype_name.str.startswith('uint'))
-                 ])(dall).copy()
-    num_types.sort_values(by='dtype_name', inplace=True)
-    num_types.index = list(range(num_types.shape[0]))
-
-    return num_types
+    modv = getattr(pd, '_version')
+    dct = modv.get_versions()
+    ver = dct['version']
+    vnums = [int(n) for n in ver.split('.')]
+    is_new = vnums[0] > 1 or (vnums[0] == 1 and vnums[1] > 0)
+    return is_new
 
 
-@pytest.mark.parametrize('dt_name',
-                         ['bool', 'float', 'int', 'uint'])
-@pytest.mark.parametrize('types_tbl', [make_types_table()],
-                         ids=['dtypes'])
-def test_check__pandas_sparse_invalid_coo_matrix_numerics(dt_name, types_tbl):
-    df = types_tbl[types_tbl.dtype_name.str.startswith(dt_name)]
+@pytest.mark.skipif(new_pandas_version(),
+                    reason="issue of generating an object dtype "
+                    "coo_matrix from a DataFrame with extension "
+                    "arrays with different numeric types was fixed"
+                    " in pandas 1.1.0")
+@pytest.mark.parametrize('ntype1, ntype2', [
+    ("longdouble", "float16"),
+    ("float16", "float32"),
+    ("float32", "double"),
+    ("int16", "int32"),
+    ("int32", "long"),
+    ("byte", "uint16"),
+    ("ushort", " uint32"),
+    ("uint32,", "uint64"),
+    ("uint8", "int8"),
+])
+def test_check_pandas_sparse_invalid(ntype1, ntype2):
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame({'col1': pd.arrays.SparseArray([0, 1, 0],
+                                                     dtype=ntype1),
+                       'col2': pd.arrays.SparseArray([1, 0, 1],
+                                                     dtype=ntype2)})
+    with pytest.raises(ValueError,
+                       match="Pandas DataFrame with mixed "
+                             "sparse extension arrays"):
+        check_array(df, **{'accept_sparse': ['csr', 'csc'],
+                           'ensure_min_features': 2})
 
-    def tester_df(ntype1, ntype2):
-        pd = pytest.importorskip("pandas")
-        tf = pd.DataFrame({'col1': pd.arrays.SparseArray([0, 1, 0],
-                                                         dtype=ntype1),
-                           'col2': pd.arrays.SparseArray([1, 0, 1],
-                                                         dtype=ntype2)})
-        return tf
 
-    def new_pandas_version():
-        pd = pytest.importorskip("pandas")
-        modv = getattr(pd, '_version')
-        dct = modv.get_versions()
-        ver = dct['version']
-        vnums = [int(n) for n in ver.split('.')]
-        is_new = vnums[0] > 1 or (vnums[0] == 1 and vnums[1] > 0)
-        return is_new
-
-    def do_test(one, two):
-        tdf = tester_df(one['np_name'], two['np_name'])
-        if (one['dtype_name'] == two['dtype_name']
-           or new_pandas_version()):
-            check_array(tdf, **{'accept_sparse': ['csr', 'csc'],
-                        'ensure_min_features': 2})
-        else:
-            with pytest.raises(ValueError,
-                               match="Pandas DataFrame with mixed "
-                                     "sparse extension arrays"):
-                check_array(tdf, **{'accept_sparse': ['csr', 'csc'],
-                            'ensure_min_features': 2})
-
-    for i in df.index[:-1]:
-        do_test(df.loc[i], df.loc[i + 1])
-
-    if df.index[-1] < types_tbl.index[-1]:
-        first = df.loc[df.index[-1]]
-        second = types_tbl.loc[df.index[-1] + 1]
-        do_test(first, second)
-    else:
-        first = types_tbl.loc[types_tbl.index[0]]
-        second = df.loc[df.index[-1]]
-        do_test(first, second)
+@pytest.mark.parametrize('ntype1, ntype2', [
+    ("float128", "longfloat"),
+    ("longfloat", "longdouble"),
+    ("float16", "half"),
+    ("single", "float32"),
+    ("double", "float64"),
+    ("int8", "byte"),
+    ("short", "int16"),
+    ("intc", "int32"),
+    ("int0", "long"),
+    ("int", "long"),
+    ("int64", "longlong"),
+    ("int_", "intp"),
+    ("ubyte", "uint8"),
+    ("uint16", "ushort"),
+    ("uintc", "uint32"),
+    ("uint", "uint64"),
+    ("uintp", "ulonglong")
+])
+def test_check_pandas_sparse_valid(ntype1, ntype2):
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame({'col1': pd.arrays.SparseArray([0, 1, 0],
+                                                     dtype=ntype1),
+                       'col2': pd.arrays.SparseArray([1, 0, 1],
+                                                     dtype=ntype2)})
+    check_array(df, **{'accept_sparse': ['csr', 'csc'],
+                       'ensure_min_features': 2})
