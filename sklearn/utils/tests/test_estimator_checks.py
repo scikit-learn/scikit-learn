@@ -113,6 +113,26 @@ class RaisesErrorInSetParams(BaseEstimator):
         return self
 
 
+class HasMutableParameters(BaseEstimator):
+    def __init__(self, p=object()):
+        self.p = p
+
+    def fit(self, X, y=None):
+        X, y = self._validate_data(X, y)
+        return self
+
+
+class HasImmutableParameters(BaseEstimator):
+    # Note that object is an uninitialized class, thus immutable.
+    def __init__(self, p=42, q=np.int32(42), r=object):
+        self.p = p
+        self.q = q
+        self.r = r
+
+    def fit(self, X, y=None):
+        X, y = self._validate_data(X, y)
+        return self
+
 class ModifiesValueInsteadOfRaisingError(BaseEstimator):
     def __init__(self, p=0):
         self.p = p
@@ -381,6 +401,15 @@ def test_check_estimator():
     assert_raises_regex(TypeError, msg, check_estimator, object)
     msg = "object has no attribute '_get_tags'"
     assert_raises_regex(AttributeError, msg, check_estimator, object())
+    msg = (
+        "Parameter 'p' of estimator 'HasMutableParameters' is of type "
+        "object which is not allowed"
+    )
+    # check that the "default_constructible" test checks for mutable parameters
+    check_estimator(HasImmutableParameters())  # should pass
+    assert_raises_regex(
+        AssertionError, msg, check_estimator, HasMutableParameters()
+    )
     # check that values returned by get_params match set_params
     msg = "get_params result does not match what was passed to set_params"
     assert_raises_regex(AssertionError, msg, check_estimator,
