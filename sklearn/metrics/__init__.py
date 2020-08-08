@@ -152,6 +152,7 @@ __all__ = [
     'RocCurveDisplay',
     'roc_auc_score',
     'roc_curve',
+    'mcc_f1_curve',
     'SCORERS',
     'silhouette_samples',
     'silhouette_score',
