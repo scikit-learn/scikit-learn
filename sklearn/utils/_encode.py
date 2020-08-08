@@ -49,9 +49,7 @@ def _unique(values, *, return_inverse=False):
 
 
 def _extract_missing(values, none_is_missing=True):
-    """Extract missing values from `values`. If none_is_missing
-    is True, then None and nan are considered missing. If none_is_missing
-    is False, then only nans are considered missing.
+    """Extract missing values from `values`.
 
     Parameters
     ----------
@@ -89,6 +87,8 @@ def _extract_missing(values, none_is_missing=True):
         if len(missing_values) == 1:
             output_missing_values = [None]
         else:
+            # If there is more than one missing value, then it has to be
+            # float('nan') or np.nan
             output_missing_values = [None, np.nan]
     else:
         output_missing_values = [np.nan]
