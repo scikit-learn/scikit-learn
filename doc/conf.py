@@ -40,7 +40,8 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.imgconverter',
     'sphinx_gallery.gen_gallery',
-    'sphinx_issues'
+    'sphinx_issues',
+    'add_toctree_functions',
 ]
 
 # this is needed for some reason...

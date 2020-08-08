@@ -227,10 +227,9 @@ estimator during the construction and exposes an estimator API::
     0.943...
 
 
-By default, the :class:`GridSearchCV` uses a 3-fold cross-validation. However,
+By default, the :class:`GridSearchCV` uses a 5-fold cross-validation. However,
 if it detects that a classifier is passed, rather than a regressor, it uses
-a stratified 3-fold. The default will change to a 5-fold cross-validation in
-version 0.22.
+a stratified 5-fold.
 
 .. topic:: Nested cross-validation
 
