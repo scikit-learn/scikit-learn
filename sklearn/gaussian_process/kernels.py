@@ -796,8 +796,8 @@ class Sum(KernelOperator):
             is evaluated instead.
 
         eval_gradient : bool, default=False
-            Determines whether the gradient with respect to the log of the kernel
-            hyperparameter is determined.
+            Determines whether the gradient with respect to the log of
+            the kernel hyperparameter is determined.
 
         Returns
         -------
@@ -894,8 +894,8 @@ class Product(KernelOperator):
             is evaluated instead.
 
         eval_gradient : bool, default=False
-            Determines whether the gradient with respect to the log of the kernel
-            hyperparameter is determined.
+            Determines whether the gradient with respect to the log of
+            the kernel hyperparameter is determined.
 
         Returns
         -------
@@ -1072,8 +1072,8 @@ class Exponentiation(Kernel):
             is evaluated instead.
 
         eval_gradient : bool, default=False
-            Determines whether the gradient with respect to the log of the kernel
-            hyperparameter is determined.
+            Determines whether the gradient with respect to the log of
+            the kernel hyperparameter is determined.
 
         Returns
         -------
@@ -1200,8 +1200,9 @@ class ConstantKernel(StationaryKernelMixin, GenericKernelMixin,
             is evaluated instead.
 
         eval_gradient : bool, default=False
-            Determines whether the gradient with respect to the log of the kernel
-            hyperparameter is determined. Only supported when Y is None.
+            Determines whether the gradient with respect to the log of
+            the kernel hyperparameter is determined.
+            Only supported when Y is None.
 
         Returns
         -------
@@ -1319,8 +1320,9 @@ class WhiteKernel(StationaryKernelMixin, GenericKernelMixin,
             is evaluated instead.
 
         eval_gradient : bool, default=False
-            Determines whether the gradient with respect to the log of the kernel
-            hyperparameter is determined. Only supported when Y is None.
+            Determines whether the gradient with respect to the log of
+            the kernel hyperparameter is determined.
+            Only supported when Y is None.
 
         Returns
         -------
@@ -1466,8 +1468,9 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
             if evaluated instead.
 
         eval_gradient : bool, default=False
-            Determines whether the gradient with respect to the log of the kernel
-            hyperparameter is determined. Only supported when Y is None.
+            Determines whether the gradient with respect to the log of
+            the kernel hyperparameter is determined.
+            Only supported when Y is None.
 
         Returns
         -------
@@ -1620,8 +1623,9 @@ class Matern(RBF):
             if evaluated instead.
 
         eval_gradient : bool, default=False
-            Determines whether the gradient with respect to the log of the kernel
-            hyperparameter is determined. Only supported when Y is None.
+            Determines whether the gradient with respect to the log of
+            the kernel hyperparameter is determined.
+            Only supported when Y is None.
 
         Returns
         -------
@@ -1809,8 +1813,9 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
             if evaluated instead.
 
         eval_gradient : bool, default=False
-            Determines whether the gradient with respect to the log of the kernel
-            hyperparameter is determined. Only supported when Y is None.
+            Determines whether the gradient with respect to the log of
+            the kernel hyperparameter is determined.
+            Only supported when Y is None.
 
         Returns
         -------
@@ -1954,8 +1959,9 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
             if evaluated instead.
 
         eval_gradient : bool, default=False
-            Determines whether the gradient with respect to the log of the kernel
-            hyperparameter is determined. Only supported when Y is None.
+            Determines whether the gradient with respect to the log of
+            the kernel hyperparameter is determined.
+            Only supported when Y is None.
 
         Returns
         -------
@@ -2086,8 +2092,9 @@ class DotProduct(Kernel):
             if evaluated instead.
 
         eval_gradient : bool, default=False
-            Determines whether the gradient with respect to the log of the kernel
-            hyperparameter is determined. Only supported when Y is None.
+            Determines whether the gradient with respect to the log of
+            the kernel hyperparameter is determined.
+            Only supported when Y is None.
 
         Returns
         -------
@@ -2240,8 +2247,9 @@ class PairwiseKernel(Kernel):
             if evaluated instead.
 
         eval_gradient : bool, default=False
-            Determines whether the gradient with respect to the log of the kernel
-            hyperparameter is determined. Only supported when Y is None.
+            Determines whether the gradient with respect to the log of
+            the kernel hyperparameter is determined.
+            Only supported when Y is None.
 
         Returns
         -------
