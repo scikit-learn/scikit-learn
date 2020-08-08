@@ -622,7 +622,7 @@ class OrdinalEncoder(_BaseEncoder):
     dtype : number type, default np.float64
         Desired dtype of output.
 
-    handle_unknown : {'error', 'use_encoded_value}', default='error'
+    handle_unknown : {'error', 'use_encoded_value'}, default='error'
         When set to 'error' an error will be raised in case an unknown
         categorical feature is present during transform. When set to
         'use_encoded_value', the encoded value of unknown categories will be

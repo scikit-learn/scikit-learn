@@ -76,6 +76,13 @@ Changelog
   `init_size_`, are deprecated and will be removed in 0.26. :pr:`17864` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+:mod:`sklearn.compose`
+......................
+
+- |FIX| :class:`compose.ColumnTransformer` will skip transformers the
+  column selector is a list of bools that are False. :pr:`17616` by
+  `Thomas Fan`_.
+
 :mod:`sklearn.covariance`
 .........................
 
