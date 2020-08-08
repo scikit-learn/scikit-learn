@@ -462,10 +462,8 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         return self._fit(X)
 
     def _fit(self, X):
-        # partial_fit is called for the first time or fit is called
-        partial_fit = getattr(self, 'partial_fit_')
         has_root = getattr(self, 'root_', None)
-        first_call = getattr(self, 'fit_') or (partial_fit and not has_root)
+        first_call = self.fit_ or self.partial_fit and not has_root
 
         X = self._validate_data(X, accept_sparse='csr', copy=self.copy,
                                 reset=first_call)
@@ -476,6 +474,8 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
             raise ValueError("Branching_factor should be greater than one.")
         n_samples, n_features = X.shape
 
+        # If partial_fit is called for the first time or fit is called, we
+        # start a new tree.
         if first_call:
             # The first root is the leaf. Manipulate this object throughout.
             self.root_ = _CFNode(threshold=threshold,
