@@ -12,6 +12,7 @@ from math import sqrt
 from ..metrics import pairwise_distances_argmin
 from ..metrics.pairwise import euclidean_distances
 from ..base import TransformerMixin, ClusterMixin, BaseEstimator
+from ..utils import check_array
 from ..utils.extmath import row_norms
 from ..utils.validation import check_is_fitted, _deprecate_positional_args
 from ..exceptions import ConvergenceWarning
@@ -561,6 +562,15 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         else:
             return self._fit(X)
 
+    def _check_fit(self, X):
+        check_is_fitted(self)
+
+        if (hasattr(self, 'subcluster_centers_') and
+                X.shape[1] != self.subcluster_centers_.shape[1]):
+            raise ValueError(
+                "Training data and predicted data do "
+                "not have same number of features.")
+
     def predict(self, X):
         """
         Predict data using the ``centroids_`` of subclusters.
@@ -577,8 +587,8 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         labels : ndarray of shape(n_samples,)
             Labelled data.
         """
-        check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse='csr', reset=False)
+        X = check_array(X, accept_sparse='csr')
+        self._check_fit(X)
         kwargs = {'Y_norm_squared': self._subcluster_norms}
         return self.subcluster_labels_[
                 pairwise_distances_argmin(X,
