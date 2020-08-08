@@ -215,11 +215,11 @@ def _check_unknown(values, known_values, return_mask=False):
     if values.dtype.kind in 'UO':
         values_set = set(values)
         values_set, nan_in_values = _extract_missing(values_set,
-                                                   none_is_missing=False)
+                                                     none_is_missing=False)
 
         uniques_set = set(known_values)
         uniques_set, nan_in_uniques = _extract_missing(uniques_set,
-                                                     none_is_missing=False)
+                                                       none_is_missing=False)
         diff = values_set - uniques_set
         is_missing_in_uniques = bool(nan_in_uniques)
 
