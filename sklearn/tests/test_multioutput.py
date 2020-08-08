@@ -602,6 +602,7 @@ def test_regressor_chain_w_fit_params():
     for est in model.estimators_:
         assert est.sample_weight_ is weight
 
+
 def test_classifier_chain_tuple_order():
     X = [[1, 2, 3], [4, 5, 6], [1.5, 2.5, 3.5]]
     y = [[3, 2], [2, 3], [3, 2]]
