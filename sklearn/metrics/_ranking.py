@@ -893,9 +893,9 @@ def mcc_f1_curve(y_true, y_score, *, pos_label=None, sample_weight=None,
     fps, tps, thresholds = _binary_clf_curve(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight)
 
-    ps = tps + fps   # Array of total positive predictions
-    p = tps[-1]      # No of positives in ground truth
-    n = fps[-1]      # No of negatives in ground truth
+    ps = tps + fps              # Array of total positive predictions
+    p = tps[-1]                 # No of positives in ground truth
+    n = fps[-1]                 # No of negatives in ground truth
 
     if p == 0:
         raise ValueError("No positive samples in y_true, "

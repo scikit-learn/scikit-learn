@@ -428,11 +428,12 @@ def test_mcc_f1_curve():
 
 def _mcc_f1_calc(y_true, probas_pred, thresholds):
     # Alternative calculation of (unit-normalized) MCC and F1 scores
-    pp = probas_pred; ts = thresholds
+    pp = probas_pred
+    ts = thresholds
     tps = np.array([np.logical_and(pp >= t, y_true == 1).sum() for t in ts])
     fps = np.array([np.logical_and(pp >= t, y_true == 0).sum() for t in ts])
-    tns = np.array([np.logical_and(pp <  t, y_true == 0).sum() for t in ts])
-    fns = np.array([np.logical_and(pp <  t, y_true == 1).sum() for t in ts])
+    tns = np.array([np.logical_and(pp < t, y_true == 0).sum() for t in ts])
+    fns = np.array([np.logical_and(pp < t, y_true == 1).sum() for t in ts])
 
     with np.errstate(divide='ignore', invalid='ignore'):
         f1s = 2*tps / (2*tps + fps + fns)
@@ -440,7 +441,7 @@ def _mcc_f1_calc(y_true, probas_pred, thresholds):
         d = np.sqrt((tps+fps)*(tps+fns)*(tns+fps)*(tns+fns))
         d = np.array([1 if di == 0 else di for di in d])
         mccs = (tps*tns - fps*fns) / d
-        mccs = (mccs + 1) / 2 # Unit-normalize MCC
+        mccs = (mccs + 1) / 2   # Unit-normalize MCC
 
     return mccs, f1s
 
