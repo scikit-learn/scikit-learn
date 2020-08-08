@@ -1237,8 +1237,8 @@ def new_pandas_version():
     ("int16", "int32"),
     ("int32", "long"),
     ("byte", "uint16"),
-    ("ushort", " uint32"),
-    ("uint32,", "uint64"),
+    ("ushort", "uint32"),
+    ("uint32", "uint64"),
     ("uint8", "int8"),
 ])
 def test_check_pandas_sparse_invalid(ntype1, ntype2):
