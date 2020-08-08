@@ -48,22 +48,42 @@ def _unique(values, *, return_inverse=False):
     return uniques
 
 
-def _split_missing(items, none_is_missing=True):
-    """Split items into a set and a list of missing values. If none_is_missing
+def _extract_missing(values, none_is_missing=True):
+    """Extract missing values from `values`. If none_is_missing
     is True, then None and nan are considered missing. If none_is_missing
     is False, then only nans are considered missing.
+
+    Parameters
+    ----------
+    values: set
+        Set of values to extract missing from.
+
+    none_is_missing: bool, default=True
+        IF True, then `None`, `np.nan`, and `float('nan')` are considered
+        missing. If False, then only `np.nan` and `float('nan')` are
+        considered missing.
+
+    Returns
+    -------
+    output: set
+        Set with missing values extracted
+
+    missing_values: list
+        List of missing values found in `values`. `float('nan')` will be
+        considered `np.nan`.
     """
     def is_missing(value):
         if none_is_missing:
             return value is None or is_scalar_nan(value)
         return is_scalar_nan(value)
 
-    # Return items without missing items
-    missing_values = [value for value in items if is_missing(value)]
+    values_with_is_missing = [(value, is_missing(value)) for value in values]
 
-    if not missing_values:
-        return items, []
+    if not any(missing for _, missing in values_with_is_missing):
+        return values, []
 
+    missing_values = [value
+                      for value, missing in values_with_is_missing if missing]
     # Enforces an order where None always comes first
     if None in missing_values:
         if len(missing_values) == 1:
@@ -74,7 +94,9 @@ def _split_missing(items, none_is_missing=True):
         output_missing_values = [np.nan]
 
     # create set without the missing values
-    output = set(value for value in items if not is_missing(value))
+    output = set(value
+                 for value, missing in values_with_is_missing
+                 if not missing)
     return output, output_missing_values
 
 
@@ -103,7 +125,7 @@ def _unique_python(values, *, return_inverse):
     # Only used in `_uniques`, see docstring there for details
     try:
         uniques_set = set(values)
-        uniques_set, missing_values = _split_missing(uniques_set)
+        uniques_set, missing_values = _extract_missing(uniques_set)
 
         uniques = sorted(uniques_set)
         uniques.extend(missing_values)
@@ -192,11 +214,11 @@ def _check_unknown(values, known_values, return_mask=False):
 
     if values.dtype.kind in 'UO':
         values_set = set(values)
-        values_set, nan_in_values = _split_missing(values_set,
+        values_set, nan_in_values = _extract_missing(values_set,
                                                    none_is_missing=False)
 
         uniques_set = set(known_values)
-        uniques_set, nan_in_uniques = _split_missing(uniques_set,
+        uniques_set, nan_in_uniques = _extract_missing(uniques_set,
                                                      none_is_missing=False)
         diff = values_set - uniques_set
         is_missing_in_uniques = bool(nan_in_uniques)
