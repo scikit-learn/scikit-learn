@@ -1052,7 +1052,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         y : array-like of shape (n_samples,)
             The target values.
 
-        classes : array of shape (n_classes) or None
+        classes : array of shape (n_classes,), default=None
             Classes across all calls to partial_fit.
             Can be obtained via `np.unique(y_all)`, where y_all is the
             target vector of the entire dataset.
