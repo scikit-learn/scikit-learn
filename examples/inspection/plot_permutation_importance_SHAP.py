@@ -10,15 +10,21 @@ trained on tabular data.
 
 Permutation importance uses the decrease in model score, after shuffling
 the values of a feature, to measure how important each feature is. It can
-be calculated using :func:`~sklearn.inspection.permutation_importance`. SHAP
-calculates the contribution of each feature to the prediction output
-by the model, using game theory. It is based on Shapley values, which attribute
-a portion of the prediction value to each feature in a fair way.
-SHAP calculates the contribution of each feature for a particular
-sample and uses the average across samples represent the average contribution
-of a feature in a model. The authors of SHAP implement it in the
-Python library `SHAP <https://github.com/slundberg/shap>`_ which supports
-scikit-learn estimators.
+be calculated using :func:`~sklearn.inspection.permutation_importance`.
+Shapley values represent the contribution of each feature to the prediction
+output by the model, using game theory. These values satisfy a number of
+good properties and are thus deemed a fair way to 'split' the prediction output
+between the features (for more on the properties see).
+These values are computationally very expensive to calculate. SHAP are
+a way to estimate these values using an additive model that is a linear
+function of features.
+SHAP allows for the calculation of the contribution of each feature for
+individual samples. The average across samples is generally used to
+represent the average contribution of a feature in a model. The authors of
+SHAP implement a number of versions it in the Python library
+`SHAP <https://github.com/slundberg/shap>`_. In this example we will discuss
+the use of KernalSHAP and TreeSHAP, both of which support scikit-learn
+estimators.
 
 In practice, both methods will generally order features similarly in terms
 of their importance in a model. However, there are some important
@@ -128,8 +134,8 @@ plt.show()
 #   permutations would need to be performed on transformed features meaning
 #   the importance values would need to be interpreted in the transformed
 #   feature space.
-# * Permutation importances are error ratios is returned, where 1 means no
-#   difference between error with and without permutating. This means
+# * Permutation importances are error ratios, where 1 means no
+#   difference between error with and without permutation. This means
 #   these values are comparable between different models and problems.
 #
 # **Disadvantages**
@@ -148,10 +154,46 @@ plt.show()
 #   :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance_multicollinear.py`
 #   for an example of this effect.
 #
-# Kernal SHAP
+# KernalSHAP
 # ^^^^^^^^^^^
 #
-# -
+# KernalSHAP is a kernal-based method to estimate Shapley values.
+# It calculates the prediction output with different subsets of the
+# features 'missing'. Missingness is simulated by using a 'background' (e.g.,
+# average) value for that feature. These predictions are then used to fit a
+# linear model whose predictions match that of the original model as closely
+# as possible. The coefficients of the linear model are the Shapley values.
+#
+# This is much more computationally expensive than permutation importance
+# as the number of possible combinations of features quickly becomes very
+# large as the number of features increases. However, this does enable SHAP
+# to account for interaction effects between features.
+#
+# First, we will instantiate ``KernalSHAP`` using our fitted regressor,
+# ``reg`` and some 'background' data, used to simulate missingness.
+# If your dataset is small (e.g., training data is <100 samples) you can use
+# the whole training subset for the background data. Since our dataset is
+# larger than this, we will use  to summary values-
+#
+#
+
+from shap import KernalSHAP
+from shap import
+
+kernal_ex = KernalSHAP(reg, )
+
+
+# %%
+# Next we will calculate Shapley values using the testing subset.
+#
+
+
+
+
+# Explain background data. Show expected value. shap value show individual
+# make plot-
+
+
 
 
 # %%
@@ -167,10 +209,7 @@ plt.show()
 # * The method is very computationally expensive, especially when there are
 #   are a large number of features.
 # * This method also assumes independence between features. Again, the result
-#   is that 'contributions' will be split between correlated features. For
-#   example, adding a feature that is closely correlated to an existing
-#   feature will result in a decrease in the contribution of the original
-#   feature.
+#   is that 'contributions' will be split between correlated features.
 
 # Tree SHAP
 # ^^^^^^^^^
@@ -185,4 +224,4 @@ plt.show()
 # sample and calculating the effect of withholding a feature. Since this effect
 # depends on the other features in the model, it calculates this difference
 # (with and without the feature) for all possible combinations of the other
-# features. This difference is averaged across all samples to 
+# features. This difference is averaged across all samples to
