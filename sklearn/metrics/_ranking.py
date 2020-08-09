@@ -1469,7 +1469,7 @@ def top_k_accuracy_score(y_true, y_score, *, k=2, normalize=True,
         labels in ``y_true``.
 
     k : int, default=2
-        Number of guesses allowed to find the correct label.
+        Number of most likely outcomes considered to find the correct label.
 
     normalize : bool, default=True
         If `True`, return the fraction of correctly classified samples.
@@ -1578,7 +1578,7 @@ def top_k_accuracy_score(y_true, y_score, *, k=2, normalize=True,
             y_pred = (y_score > threshold).astype(np.int)
             hits = y_pred == y_true_encoded
         else:
-            hits = [True] * len(y_score)
+            hits = np.ones_like(y_score, dtype=np.bool_)
     elif y_type == 'multiclass':
         sorted_pred = np.argsort(y_score, axis=1, kind='mergesort')[:, ::-1]
         hits = (y_true_encoded == sorted_pred[:, :k].T).any(axis=0)
