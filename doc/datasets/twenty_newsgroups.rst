@@ -91,21 +91,22 @@ example that extract `TF-IDF`_ vectors of unigram tokens
 from a subset of 20news::
 
   >>> from sklearn.feature_extraction.text import TfidfVectorizer
+  >>> from sklearn.feature_extraction import stop_words
   >>> categories = ['alt.atheism', 'talk.religion.misc',
   ...               'comp.graphics', 'sci.space']
   >>> newsgroups_train = fetch_20newsgroups(subset='train',
   ...                                       categories=categories)
-  >>> vectorizer = TfidfVectorizer()
+  >>> vectorizer = TfidfVectorizer(stop_words=stop_words.ENGLISH_STOP_WORDS)
   >>> vectors = vectorizer.fit_transform(newsgroups_train.data)
   >>> vectors.shape
-  (2034, 34118)
+  (2034, 33814)
 
 The extracted TF-IDF vectors are very sparse, with an average of 159 non-zero
 components by sample in a more than 30000-dimensional space
 (less than .5% non-zero features)::
 
   >>> vectors.nnz / float(vectors.shape[0])
-  159.01327433628319
+  114.78072763028516
 
 :func:`sklearn.datasets.fetch_20newsgroups_vectorized` is a function which returns
 ready-to-use tfidf features instead of file names.
@@ -133,7 +134,7 @@ which is fast to train and achieves a decent F-score::
   >>> clf.fit(vectors, newsgroups_train.target)
   >>> pred = clf.predict(vectors_test)
   >>> metrics.f1_score(newsgroups_test.target, pred, average='macro')
-  0.88213592402729568
+  0.8837627249807346
 
 (The example :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py` shuffles
 the training and test data, instead of segmenting by time, and in that case
@@ -183,7 +184,7 @@ blocks, and quotation blocks respectively.
   >>> vectors_test = vectorizer.transform(newsgroups_test.data)
   >>> pred = clf.predict(vectors_test)
   >>> metrics.f1_score(pred, newsgroups_test.target, average='macro')
-  0.77310350681274775
+  0.7710518415127214
 
 This classifier lost over a lot of its F-score, just because we removed
 metadata that has little to do with topic classification.
@@ -198,7 +199,7 @@ It loses even more if we also strip this metadata from the training data:
   >>> vectors_test = vectorizer.transform(newsgroups_test.data)
   >>> pred = clf.predict(vectors_test)
   >>> metrics.f1_score(newsgroups_test.target, pred, average='macro')
-  0.76995175184521725
+  0.7660805229714445
 
 Some other classifiers cope better with this harder version of the task. Try
 running :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py` with and without
