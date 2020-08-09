@@ -60,6 +60,7 @@ Scoring                                Function                                 
 **Classification**
 'accuracy'                             :func:`metrics.accuracy_score`
 'balanced_accuracy'                    :func:`metrics.balanced_accuracy_score`
+'top_k_accuracy'                       :func:`metrics.top_k_accuracy_score`
 'average_precision'                    :func:`metrics.average_precision_score`
 'neg_brier_score'                      :func:`metrics.brier_score_loss`
 'f1'                                   :func:`metrics.f1_score`                           for binary targets
