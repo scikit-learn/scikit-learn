@@ -243,8 +243,7 @@ THRESHOLDED_METRICS = {
     "ndcg_score": ndcg_score,
     "dcg_score": dcg_score,
 
-    "top_k_accuracy_score": top_k_accuracy_score,
-    "top_k_accuracy_score_binary": partial(top_k_accuracy_score, k=1)
+    "top_k_accuracy_score": top_k_accuracy_score
 }
 
 ALL_METRICS = dict()
@@ -275,8 +274,7 @@ METRIC_UNDEFINED_BINARY = {
     "label_ranking_loss",
     "label_ranking_average_precision_score",
     "dcg_score",
-    "ndcg_score",
-    "top_k_accuracy_score"
+    "ndcg_score"
 }
 
 # Those metrics don't support multiclass inputs
@@ -383,7 +381,6 @@ METRICS_WITH_LABELS = {
 METRICS_WITH_NORMALIZE_OPTION = {
     "accuracy_score",
     "top_k_accuracy_score",
-    "top_k_accuracy_score_binary",
     "zero_one_loss",
 }
 
@@ -771,8 +768,7 @@ def test_thresholded_invariance_string_vs_numbers_labels(name):
 
     with ignore_warnings():
         metric = THRESHOLDED_METRICS[name]
-        if (name not in METRIC_UNDEFINED_BINARY or
-                name == 'top_k_accuracy_score'):
+        if name not in METRIC_UNDEFINED_BINARY:
             # Ugly, but handle case with a pos_label and label
             metric_str = metric
             if name in METRICS_WITH_POS_LABEL:
@@ -1184,6 +1180,10 @@ def test_averaging_multilabel_all_ones(name):
 def check_sample_weight_invariance(name, metric, y1, y2):
     rng = np.random.RandomState(0)
     sample_weight = rng.randint(1, 10, size=len(y1))
+
+    # top_k_accuracy_score always lead to a perfect score for k > 1 in the
+    # binary case
+    metric = partial(metric, k=1) if name == "top_k_accuracy_score" else metric
 
     # check that unit weights gives the same score as no weight
     unweighted_score = metric(y1, y2, sample_weight=None)
