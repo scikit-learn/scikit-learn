@@ -569,10 +569,9 @@ def check_array(array, accept_sparse=False, *, accept_large_sparse=True,
         # DataFrame.sparse only supports `to_coo`
         array = array.sparse.to_coo()
         if array.dtype == np.dtype('object'):
-            def is_sparse_df_with_mixed_types(df):
-                dtps = set([dt.subtype.name for dt in df.dtypes])
-                return len(dtps) > 1
-            if is_sparse_df_with_mixed_types(array_orig):
+            unique_dtypes = set([dt.subtype.name for dt in
+                                 array_orig.dtypes])
+            if len(unique_dtypes) > 1:
                 raise ValueError(
                     "Pandas DataFrame with mixed sparse extension arrays "
                     "generated a sparse matrix with object dtype which "

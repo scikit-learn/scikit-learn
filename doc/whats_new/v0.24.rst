@@ -357,6 +357,11 @@ Changelog
   cases support the `binary_only` estimator tag.
   :pr:`17812` by :user:`Bruno Charron <brcharron>`.
 
+- |Fix| Raise ValueError with clear error message in :func:`check_array`
+  for sparse DataFrames with mixed types.
+  :pr:`17992` by :user:`Thomas J. Fan <thomasjpfan>` and
+  :user:`Alex Shacked <alexshacked>`.
+
 Code and Documentation Contributors
 -----------------------------------
 

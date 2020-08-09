@@ -45,6 +45,7 @@ from sklearn.utils.validation import (
     _allclose_dense_sparse,
     FLOAT_DTYPES)
 from sklearn.utils.validation import _check_fit_params
+from sklearn.utils.fixes import parse_version
 
 import sklearn
 
@@ -1225,11 +1226,6 @@ def new_pandas_version():
     return is_new
 
 
-@pytest.mark.skipif(new_pandas_version(),
-                    reason="issue of generating an object dtype "
-                    "coo_matrix from a DataFrame with extension "
-                    "arrays with different numeric types was fixed"
-                    " in pandas 1.1.0")
 @pytest.mark.parametrize('ntype1, ntype2', [
     ("longdouble", "float16"),
     ("float16", "float32"),
@@ -1243,6 +1239,12 @@ def new_pandas_version():
 ])
 def test_check_pandas_sparse_invalid(ntype1, ntype2):
     pd = pytest.importorskip("pandas")
+    if parse_version(pd.__version__) >= parse_version('1.1'):
+        pytest.skip("issue of generating an object dtype coo_matrix"
+                    " from a DataFrame with extension arrays with"
+                    " different numeric types was fixed in pandas"
+                    " 1.1.0")
+
     df = pd.DataFrame({'col1': pd.arrays.SparseArray([0, 1, 0],
                                                      dtype=ntype1),
                        'col2': pd.arrays.SparseArray([1, 0, 1],
