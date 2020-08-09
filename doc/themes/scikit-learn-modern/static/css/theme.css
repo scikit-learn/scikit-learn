@@ -511,6 +511,10 @@ div.sk-sidebar-toc-logo {
   height: 52px;
 }
 
+.sk-toc-active {
+  font-weight: bold;
+}
+
 div.sk-sidebar-toc-wrapper {
   font-size: 0.9rem;
   width: 252px;
@@ -549,7 +553,6 @@ div.sk-sidebar-toc ul ul {
 }
 
 div.sk-sidebar-toc ul ul ul {
-  list-style: square;
   margin-left: 1rem;
 }
 
