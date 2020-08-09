@@ -1216,16 +1216,6 @@ def test_check_sparse_pandas_sp_format(sp_format):
     assert_allclose_dense_sparse(sp_mat, result)
 
 
-def new_pandas_version():
-    pd = pytest.importorskip("pandas")
-    modv = getattr(pd, '_version')
-    dct = modv.get_versions()
-    ver = dct['version']
-    vnums = [int(n) for n in ver.split('.')]
-    is_new = vnums[0] > 1 or (vnums[0] == 1 and vnums[1] > 0)
-    return is_new
-
-
 @pytest.mark.parametrize('ntype1, ntype2', [
     ("longdouble", "float16"),
     ("float16", "float32"),
@@ -1238,7 +1228,7 @@ def new_pandas_version():
     ("uint8", "int8"),
 ])
 def test_check_pandas_sparse_invalid(ntype1, ntype2):
-    pd = pytest.importorskip("pandas")
+    pd = pytest.importorskip("pandas", minversion="0.25.0")
     if parse_version(pd.__version__) >= parse_version('1.1'):
         pytest.skip("issue of generating an object dtype coo_matrix"
                     " from a DataFrame with extension arrays with"
@@ -1276,7 +1266,7 @@ def test_check_pandas_sparse_invalid(ntype1, ntype2):
     ("uintp", "ulonglong")
 ])
 def test_check_pandas_sparse_valid(ntype1, ntype2):
-    pd = pytest.importorskip("pandas")
+    pd = pytest.importorskip("pandas", minversion="0.25.0")
     df = pd.DataFrame({'col1': pd.arrays.SparseArray([0, 1, 0],
                                                      dtype=ntype1),
                        'col2': pd.arrays.SparseArray([1, 0, 1],
