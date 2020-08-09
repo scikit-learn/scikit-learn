@@ -75,13 +75,11 @@ def _extract_missing(values, none_is_missing=True):
             return value is None or is_scalar_nan(value)
         return is_scalar_nan(value)
 
-    values_with_is_missing = [(value, is_missing(value)) for value in values]
+    missing_values = {value for value in values if is_missing(value)}
 
-    if not any(missing for _, missing in values_with_is_missing):
+    if not missing_values:
         return values, []
 
-    missing_values = [value
-                      for value, missing in values_with_is_missing if missing]
     # Enforces an order where None always comes first
     if None in missing_values:
         if len(missing_values) == 1:
@@ -94,9 +92,7 @@ def _extract_missing(values, none_is_missing=True):
         output_missing_values = [np.nan]
 
     # create set without the missing values
-    output = set(value
-                 for value, missing in values_with_is_missing
-                 if not missing)
+    output = values - missing_values
     return output, output_missing_values
 
 
