@@ -17,6 +17,7 @@ from ..utils import (as_float_array, check_array, check_X_y, safe_sqr,
                      safe_mask)
 from ..utils.extmath import safe_sparse_dot, row_norms
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _deprecate_positional_args
 from ._base import SelectorMixin
 
 
@@ -50,7 +51,7 @@ def f_oneway(*args):
 
     Parameters
     ----------
-    *args : array_like, sparse matrices
+    *args : array-like, sparse matrices
         sample1, sample2... The sample measurements should be given as
         arguments.
 
@@ -145,7 +146,7 @@ def f_classif(X, y):
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
     """
-    X, y = check_X_y(X, y, ['csr', 'csc', 'coo'])
+    X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'])
     args = [X[safe_mask(X, y == k)] for k in np.unique(y)]
     return f_oneway(*args)
 
@@ -228,7 +229,8 @@ def chi2(X, y):
     return _chisquare(observed, expected)
 
 
-def f_regression(X, y, center=True):
+@_deprecate_positional_args
+def f_regression(X, y, *, center=True):
     """Univariate linear regression tests.
 
     Linear model for testing the individual effect of each of many regressors.
@@ -252,7 +254,7 @@ def f_regression(X, y, center=True):
     y : array of shape(n_samples).
         The data matrix
 
-    center : True, bool,
+    center : bool, default=True
         If true, X and y will be centered.
 
     Returns
@@ -276,7 +278,8 @@ def f_regression(X, y, center=True):
     SelectPercentile: Select features based on percentile of the highest
         scores.
     """
-    X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float64)
+    X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
+                     dtype=np.float64)
     n_samples = X.shape[0]
 
     # compute centered values
@@ -362,6 +365,9 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
     def _check_params(self, X, y):
         pass
 
+    def _more_tags(self):
+        return {'requires_y': True}
+
 
 ######################################################################
 # Specific filters
@@ -373,13 +379,15 @@ class SelectPercentile(_BaseFilter):
 
     Parameters
     ----------
-    score_func : callable
+    score_func : callable, default=f_classif
         Function taking two arrays X and y, and returning a pair of arrays
         (scores, pvalues) or a single array with scores.
         Default is f_classif (see below "See also"). The default function only
         works with classification tasks.
 
-    percentile : int, optional, default=10
+        .. versionadded:: 0.18
+
+    percentile : int, default=10
         Percent of features to keep.
 
     Attributes
@@ -417,11 +425,12 @@ class SelectPercentile(_BaseFilter):
     SelectFpr: Select features based on a false positive rate test.
     SelectFdr: Select features based on an estimated false discovery rate.
     SelectFwe: Select features based on family-wise error rate.
-    GenericUnivariateSelect: Univariate feature selector with configurable mode.
+    GenericUnivariateSelect: Univariate feature selector with configurable
+        mode.
     """
-
-    def __init__(self, score_func=f_classif, percentile=10):
-        super().__init__(score_func)
+    @_deprecate_positional_args
+    def __init__(self, score_func=f_classif, *, percentile=10):
+        super().__init__(score_func=score_func)
         self.percentile = percentile
 
     def _check_params(self, X, y):
@@ -434,9 +443,9 @@ class SelectPercentile(_BaseFilter):
 
         # Cater for NaNs
         if self.percentile == 100:
-            return np.ones(len(self.scores_), dtype=np.bool)
+            return np.ones(len(self.scores_), dtype=bool)
         elif self.percentile == 0:
-            return np.zeros(len(self.scores_), dtype=np.bool)
+            return np.zeros(len(self.scores_), dtype=bool)
 
         scores = _clean_nans(self.scores_)
         threshold = np.percentile(scores, 100 - self.percentile)
@@ -456,13 +465,15 @@ class SelectKBest(_BaseFilter):
 
     Parameters
     ----------
-    score_func : callable
+    score_func : callable, default=f_classif
         Function taking two arrays X and y, and returning a pair of arrays
         (scores, pvalues) or a single array with scores.
         Default is f_classif (see below "See also"). The default function only
         works with classification tasks.
 
-    k : int or "all", optional, default=10
+        .. versionadded:: 0.18
+
+    k : int or "all", default=10
         Number of top features to select.
         The "all" option bypasses selection, for use in a parameter search.
 
@@ -497,15 +508,17 @@ class SelectKBest(_BaseFilter):
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
     mutual_info_regression: Mutual information for a continuous target.
-    SelectPercentile: Select features based on percentile of the highest scores.
+    SelectPercentile: Select features based on percentile of the highest
+        scores.
     SelectFpr: Select features based on a false positive rate test.
     SelectFdr: Select features based on an estimated false discovery rate.
     SelectFwe: Select features based on family-wise error rate.
-    GenericUnivariateSelect: Univariate feature selector with configurable mode.
+    GenericUnivariateSelect: Univariate feature selector with configurable
+        mode.
     """
-
-    def __init__(self, score_func=f_classif, k=10):
-        super().__init__(score_func)
+    @_deprecate_positional_args
+    def __init__(self, score_func=f_classif, *, k=10):
+        super().__init__(score_func=score_func)
         self.k = k
 
     def _check_params(self, X, y):
@@ -541,13 +554,13 @@ class SelectFpr(_BaseFilter):
 
     Parameters
     ----------
-    score_func : callable
+    score_func : callable, default=f_classif
         Function taking two arrays X and y, and returning a pair of arrays
         (scores, pvalues).
         Default is f_classif (see below "See also"). The default function only
         works with classification tasks.
 
-    alpha : float, optional
+    alpha : float, default=5e-2
         The highest p-value for features to be kept.
 
     Attributes
@@ -576,15 +589,17 @@ class SelectFpr(_BaseFilter):
     mutual_info_classif:
     f_regression: F-value between label/feature for regression tasks.
     mutual_info_regression: Mutual information between features and the target.
-    SelectPercentile: Select features based on percentile of the highest scores.
+    SelectPercentile: Select features based on percentile of the highest
+        scores.
     SelectKBest: Select features based on the k highest scores.
     SelectFdr: Select features based on an estimated false discovery rate.
     SelectFwe: Select features based on family-wise error rate.
-    GenericUnivariateSelect: Univariate feature selector with configurable mode.
+    GenericUnivariateSelect: Univariate feature selector with configurable
+        mode.
     """
-
-    def __init__(self, score_func=f_classif, alpha=5e-2):
-        super().__init__(score_func)
+    @_deprecate_positional_args
+    def __init__(self, score_func=f_classif, *, alpha=5e-2):
+        super().__init__(score_func=score_func)
         self.alpha = alpha
 
     def _get_support_mask(self):
@@ -603,13 +618,13 @@ class SelectFdr(_BaseFilter):
 
     Parameters
     ----------
-    score_func : callable
+    score_func : callable, default=f_classif
         Function taking two arrays X and y, and returning a pair of arrays
         (scores, pvalues).
         Default is f_classif (see below "See also"). The default function only
         works with classification tasks.
 
-    alpha : float, optional
+    alpha : float, default=5e-2
         The highest uncorrected p-value for features to keep.
 
     Examples
@@ -642,15 +657,17 @@ class SelectFdr(_BaseFilter):
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
     mutual_info_regression: Mutual information for a contnuous target.
-    SelectPercentile: Select features based on percentile of the highest scores.
+    SelectPercentile: Select features based on percentile of the highest
+        scores.
     SelectKBest: Select features based on the k highest scores.
     SelectFpr: Select features based on a false positive rate test.
     SelectFwe: Select features based on family-wise error rate.
-    GenericUnivariateSelect: Univariate feature selector with configurable mode.
+    GenericUnivariateSelect: Univariate feature selector with configurable
+        mode.
     """
-
-    def __init__(self, score_func=f_classif, alpha=5e-2):
-        super().__init__(score_func)
+    @_deprecate_positional_args
+    def __init__(self, score_func=f_classif, *, alpha=5e-2):
+        super().__init__(score_func=score_func)
         self.alpha = alpha
 
     def _get_support_mask(self):
@@ -672,13 +689,13 @@ class SelectFwe(_BaseFilter):
 
     Parameters
     ----------
-    score_func : callable
+    score_func : callable, default=f_classif
         Function taking two arrays X and y, and returning a pair of arrays
         (scores, pvalues).
         Default is f_classif (see below "See also"). The default function only
         works with classification tasks.
 
-    alpha : float, optional
+    alpha : float, default=5e-2
         The highest uncorrected p-value for features to keep.
 
     Examples
@@ -705,15 +722,17 @@ class SelectFwe(_BaseFilter):
     f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
-    SelectPercentile: Select features based on percentile of the highest scores.
+    SelectPercentile: Select features based on percentile of the highest
+        scores.
     SelectKBest: Select features based on the k highest scores.
     SelectFpr: Select features based on a false positive rate test.
     SelectFdr: Select features based on an estimated false discovery rate.
-    GenericUnivariateSelect: Univariate feature selector with configurable mode.
+    GenericUnivariateSelect: Univariate feature selector with configurable
+        mode.
     """
-
-    def __init__(self, score_func=f_classif, alpha=5e-2):
-        super().__init__(score_func)
+    @_deprecate_positional_args
+    def __init__(self, score_func=f_classif, *, alpha=5e-2):
+        super().__init__(score_func=score_func)
         self.alpha = alpha
 
     def _get_support_mask(self):
@@ -735,15 +754,15 @@ class GenericUnivariateSelect(_BaseFilter):
 
     Parameters
     ----------
-    score_func : callable
+    score_func : callable, default=f_classif
         Function taking two arrays X and y, and returning a pair of arrays
         (scores, pvalues). For modes 'percentile' or 'kbest' it can return
         a single array scores.
 
-    mode : {'percentile', 'k_best', 'fpr', 'fdr', 'fwe'}
+    mode : {'percentile', 'k_best', 'fpr', 'fdr', 'fwe'}, default='percentile'
         Feature selection mode.
 
-    param : float or int depending on the feature selection mode
+    param : float or int depending on the feature selection mode, default=1e-5
         Parameter of the corresponding mode.
 
     Attributes
@@ -761,7 +780,7 @@ class GenericUnivariateSelect(_BaseFilter):
     >>> X, y = load_breast_cancer(return_X_y=True)
     >>> X.shape
     (569, 30)
-    >>> transformer = GenericUnivariateSelect(chi2, 'k_best', param=20)
+    >>> transformer = GenericUnivariateSelect(chi2, mode='k_best', param=20)
     >>> X_new = transformer.fit_transform(X, y)
     >>> X_new.shape
     (569, 20)
@@ -773,7 +792,8 @@ class GenericUnivariateSelect(_BaseFilter):
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
     mutual_info_regression: Mutual information for a continuous target.
-    SelectPercentile: Select features based on percentile of the highest scores.
+    SelectPercentile: Select features based on percentile of the highest
+        scores.
     SelectKBest: Select features based on the k highest scores.
     SelectFpr: Select features based on a false positive rate test.
     SelectFdr: Select features based on an estimated false discovery rate.
@@ -786,8 +806,9 @@ class GenericUnivariateSelect(_BaseFilter):
                         'fdr': SelectFdr,
                         'fwe': SelectFwe}
 
-    def __init__(self, score_func=f_classif, mode='percentile', param=1e-5):
-        super().__init__(score_func)
+    @_deprecate_positional_args
+    def __init__(self, score_func=f_classif, *, mode='percentile', param=1e-5):
+        super().__init__(score_func=score_func)
         self.mode = mode
         self.param = param
 

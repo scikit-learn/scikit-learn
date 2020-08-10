@@ -17,6 +17,7 @@ from .kernels import RBF, ConstantKernel as C
 from ..utils import check_random_state
 from ..utils.validation import check_array
 from ..utils.optimize import _check_optimize_result
+from ..utils.validation import _deprecate_positional_args
 
 
 class GaussianProcessRegressor(MultiOutputMixin,
@@ -92,7 +93,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
         must be finite. Note that n_restarts_optimizer == 0 implies that one
         run is performed.
 
-    normalize_y : boolean, optional (default: False)
+    normalize_y : bool, default=False
         Whether the target values y are normalized, the mean and variance of
         the target values are set equal to 0 and 1 respectively. This is
         recommended for cases where zero-mean, unit-variance priors are used.
@@ -149,7 +150,8 @@ class GaussianProcessRegressor(MultiOutputMixin,
     (array([653.0..., 592.1...]), array([316.6..., 316.6...]))
 
     """
-    def __init__(self, kernel=None, alpha=1e-10,
+    @_deprecate_positional_args
+    def __init__(self, kernel=None, *, alpha=1e-10,
                  optimizer="fmin_l_bfgs_b", n_restarts_optimizer=0,
                  normalize_y=False, copy_X_train=True, random_state=None):
         self.kernel = kernel
@@ -249,6 +251,8 @@ class GaussianProcessRegressor(MultiOutputMixin,
             # likelihood
             lml_values = list(map(itemgetter(1), optima))
             self.kernel_.theta = optima[np.argmin(lml_values)][0]
+            self.kernel_._check_bounds_params()
+
             self.log_marginal_likelihood_value_ = -np.min(lml_values)
         else:
             self.log_marginal_likelihood_value_ = \
@@ -292,12 +296,12 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
         return_cov : bool, default=False
             If True, the covariance of the joint predictive distribution at
-            the query points is returned along with the mean
+            the query points is returned along with the mean.
 
         Returns
         -------
         y_mean : ndarray of shape (n_samples, [n_output_dims])
-            Mean of predictive distribution a query points
+            Mean of predictive distribution a query points.
 
         y_std : ndarray of shape (n_samples,), optional
             Standard deviation of predictive distribution at query points.

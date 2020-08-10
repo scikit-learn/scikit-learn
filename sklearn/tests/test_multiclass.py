@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.sparse as sp
+import pytest
 
 from re import escape
 
@@ -9,11 +10,13 @@ from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import assert_raises_regexp
+from sklearn.utils._mocking import CheckingClassifier
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
 from sklearn.utils.multiclass import (check_classification_targets,
                                       type_of_target)
+from sklearn.utils import check_array
 from sklearn.utils import shuffle
 
 from sklearn.metrics import precision_score
@@ -703,6 +706,32 @@ def test_ecoc_float_y():
     ovo = OutputCodeClassifier(LinearSVC(), code_size=-1)
     assert_raise_message(ValueError, "code_size should be greater than 0,"
                          " got -1", ovo.fit, X, y)
+
+
+def test_ecoc_delegate_sparse_base_estimator():
+    # Non-regression test for
+    # https://github.com/scikit-learn/scikit-learn/issues/17218
+    X, y = iris.data, iris.target
+    X_sp = sp.csc_matrix(X)
+
+    # create an estimator that does not support sparse input
+    base_estimator = CheckingClassifier(
+        check_X=check_array,
+        check_X_params={"ensure_2d": True, "accept_sparse": False},
+    )
+    ecoc = OutputCodeClassifier(base_estimator, random_state=0)
+
+    with pytest.raises(TypeError, match="A sparse matrix was passed"):
+        ecoc.fit(X_sp, y)
+
+    ecoc.fit(X, y)
+    with pytest.raises(TypeError, match="A sparse matrix was passed"):
+        ecoc.predict(X_sp)
+
+    # smoke test to check when sparse input should be supported
+    ecoc = OutputCodeClassifier(LinearSVC(random_state=0))
+    ecoc.fit(X_sp, y).predict(X_sp)
+    assert len(ecoc.estimators_) == 4
 
 
 def test_pairwise_indices():

@@ -16,7 +16,7 @@ from sklearn.utils._testing import assert_array_almost_equal
 # make IterativeImputer available
 from sklearn.experimental import enable_iterative_imputer  # noqa
 
-from sklearn.datasets import load_boston
+from sklearn.datasets import load_diabetes
 from sklearn.impute import MissingIndicator
 from sklearn.impute import SimpleImputer, IterativeImputer
 from sklearn.dummy import DummyRegressor
@@ -48,14 +48,14 @@ def _check_statistics(X, X_true,
         assert_ae = assert_array_almost_equal
 
     # Normal matrix
-    imputer = SimpleImputer(missing_values, strategy=strategy)
+    imputer = SimpleImputer(missing_values=missing_values, strategy=strategy)
     X_trans = imputer.fit(X).transform(X.copy())
     assert_ae(imputer.statistics_, statistics,
               err_msg=err_msg.format(False))
     assert_ae(X_trans, X_true, err_msg=err_msg.format(False))
 
     # Sparse matrix
-    imputer = SimpleImputer(missing_values, strategy=strategy)
+    imputer = SimpleImputer(missing_values=missing_values, strategy=strategy)
     imputer.fit(sparse.csc_matrix(X))
     X_trans = imputer.transform(sparse.csc_matrix(X.copy()))
 
@@ -947,7 +947,7 @@ def test_iterative_imputer_early_stopping():
 def test_iterative_imputer_catch_warning():
     # check that we catch a RuntimeWarning due to a division by zero when a
     # feature is constant in the dataset
-    X, y = load_boston(return_X_y=True)
+    X, y = load_diabetes(return_X_y=True)
     n_samples, n_features = X.shape
 
     # simulate that a feature only contain one category during fit
@@ -1343,6 +1343,25 @@ def test_simple_imputation_add_indicator_sparse_matrix(arr_type):
 
 
 @pytest.mark.parametrize(
+    'strategy, expected',
+    [('most_frequent', 'b'), ('constant', 'missing_value')]
+)
+def test_simple_imputation_string_list(strategy, expected):
+    X = [['a', 'b'],
+         ['c', np.nan]]
+
+    X_true = np.array([
+        ['a', 'b'],
+        ['c', expected]
+    ], dtype=object)
+
+    imputer = SimpleImputer(strategy=strategy)
+    X_trans = imputer.fit_transform(X)
+
+    assert_array_equal(X_trans, X_true)
+
+
+@pytest.mark.parametrize(
     "order, idx_order",
     [
         ("ascending", [3, 4, 2, 0, 1]),
@@ -1364,3 +1383,68 @@ def test_imputation_order(order, idx_order):
                                random_state=0).fit(X)
         idx = [x.feat_idx for x in trs.imputation_sequence_]
         assert idx == idx_order
+
+
+@pytest.mark.parametrize("missing_value", [-1, np.nan])
+def test_simple_imputation_inverse_transform(missing_value):
+    # Test inverse_transform feature for np.nan
+    X_1 = np.array([
+        [9, missing_value, 3, -1],
+        [4, -1, 5, 4],
+        [6, 7, missing_value, -1],
+        [8, 9, 0, missing_value]
+    ])
+
+    X_2 = np.array([
+        [5, 4, 2, 1],
+        [2, 1, missing_value, 3],
+        [9, missing_value, 7, 1],
+        [6, 4, 2, missing_value]
+    ])
+
+    X_3 = np.array([
+        [1, missing_value, 5, 9],
+        [missing_value, 4, missing_value, missing_value],
+        [2, missing_value, 7, missing_value],
+        [missing_value, 3, missing_value, 8]
+    ])
+
+    X_4 = np.array([
+        [1, 1, 1, 3],
+        [missing_value, 2, missing_value, 1],
+        [2, 3, 3, 4],
+        [missing_value, 4, missing_value, 2]
+    ])
+
+    imputer = SimpleImputer(missing_values=missing_value, strategy='mean',
+                            add_indicator=True)
+
+    X_1_trans = imputer.fit_transform(X_1)
+    X_1_inv_trans = imputer.inverse_transform(X_1_trans)
+
+    X_2_trans = imputer.transform(X_2)  # test on new data
+    X_2_inv_trans = imputer.inverse_transform(X_2_trans)
+
+    assert_array_equal(X_1_inv_trans, X_1)
+    assert_array_equal(X_2_inv_trans, X_2)
+
+    for X in [X_3, X_4]:
+        X_trans = imputer.fit_transform(X)
+        X_inv_trans = imputer.inverse_transform(X_trans)
+        assert_array_equal(X_inv_trans, X)
+
+
+@pytest.mark.parametrize("missing_value", [-1, np.nan])
+def test_simple_imputation_inverse_transform_exceptions(missing_value):
+    X_1 = np.array([
+        [9, missing_value, 3, -1],
+        [4, -1, 5, 4],
+        [6, 7, missing_value, -1],
+        [8, 9, 0, missing_value]
+    ])
+
+    imputer = SimpleImputer(missing_values=missing_value, strategy="mean")
+    X_1_trans = imputer.fit_transform(X_1)
+    with pytest.raises(ValueError,
+                       match=f"Got 'add_indicator={imputer.add_indicator}'"):
+        imputer.inverse_transform(X_1_trans)

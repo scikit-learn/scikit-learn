@@ -153,6 +153,31 @@ def test_classification_report_dictionary_output():
     assert type(expected_report['macro avg']['support']) == int
 
 
+def test_classification_report_output_dict_empty_input():
+    report = classification_report(y_true=[], y_pred=[], output_dict=True)
+    expected_report = {'accuracy': 0.0,
+                       'macro avg': {'f1-score': np.nan,
+                                     'precision': np.nan,
+                                     'recall': np.nan,
+                                     'support': 0},
+                       'weighted avg': {'f1-score': 0.0,
+                                        'precision': 0.0,
+                                        'recall': 0.0,
+                                        'support': 0}}
+    assert isinstance(report, dict)
+    # assert the 2 dicts are equal.
+    assert report.keys() == expected_report.keys()
+    for key in expected_report:
+        if key == 'accuracy':
+            assert isinstance(report[key], float)
+            assert report[key] == expected_report[key]
+        else:
+            assert report[key].keys() == expected_report[key].keys()
+            for metric in expected_report[key]:
+                assert_almost_equal(expected_report[key][metric],
+                                    report[key][metric])
+
+
 @pytest.mark.parametrize('zero_division', ["warn", 0, 1])
 def test_classification_report_zero_division_warning(zero_division):
     y_true, y_pred = ["a", "b", "c"], ["a", "b", "d"]
@@ -638,7 +663,7 @@ def test_matthews_corrcoef_against_jurman():
         for k in range(N)
     ])
     mcc_jurman = cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
-    mcc_ours = matthews_corrcoef(y_true, y_pred, sample_weight)
+    mcc_ours = matthews_corrcoef(y_true, y_pred, sample_weight=sample_weight)
 
     assert_almost_equal(mcc_ours, mcc_jurman, 10)
 
@@ -654,7 +679,7 @@ def test_matthews_corrcoef():
     y_true_inv = ["b" if i == "a" else "a" for i in y_true]
     assert_almost_equal(matthews_corrcoef(y_true, y_true_inv), -1)
 
-    y_true_inv2 = label_binarize(y_true, ["a", "b"])
+    y_true_inv2 = label_binarize(y_true, classes=["a", "b"])
     y_true_inv2 = np.where(y_true_inv2, 'a', 'b')
     assert_almost_equal(matthews_corrcoef(y_true, y_true_inv2), -1)
 
@@ -725,7 +750,8 @@ def test_matthews_corrcoef_multiclass():
     y_true = [0, 0, 1, 1, 2]
     y_pred = [1, 1, 0, 0, 2]
     sample_weight = [1, 1, 1, 1, 0]
-    assert_almost_equal(matthews_corrcoef(y_true, y_pred, sample_weight), -1)
+    assert_almost_equal(matthews_corrcoef(y_true, y_pred,
+                                          sample_weight=sample_weight), -1)
 
     # For the zero vector case, the corrcoef cannot be calculated and should
     # result in a RuntimeWarning
@@ -734,7 +760,7 @@ def test_matthews_corrcoef_multiclass():
     sample_weight = [1, 1, 0, 0]
     mcc = assert_warns_message(RuntimeWarning, 'invalid value encountered',
                                matthews_corrcoef, y_true, y_pred,
-                               sample_weight)
+                               sample_weight=sample_weight)
 
     # But will output 0
     assert_almost_equal(mcc, 0.)
@@ -927,7 +953,7 @@ def test_confusion_matrix_error(labels, err_msg):
 )
 def test_confusion_matrix_on_zero_length_input(labels):
     expected_n_classes = len(labels) if labels else 0
-    expected = np.zeros((expected_n_classes, expected_n_classes), dtype=np.int)
+    expected = np.zeros((expected_n_classes, expected_n_classes), dtype=int)
     cm = confusion_matrix([], [], labels=labels)
     assert_array_equal(cm, expected)
 

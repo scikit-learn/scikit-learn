@@ -19,6 +19,7 @@ from ..exceptions import ConvergenceWarning
 from ..utils import check_random_state, check_array
 from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
 from ..utils.validation import check_is_fitted, check_non_negative
+from ..utils.validation import _deprecate_positional_args
 
 EPSILON = np.finfo(np.float32).eps
 
@@ -99,7 +100,7 @@ def _beta_divergence(X, W, H, beta, square_root=False):
         # Avoid the creation of the dense np.dot(W, H) if X is sparse.
         if sp.issparse(X):
             norm_X = np.dot(X.data, X.data)
-            norm_WH = trace_dot(np.dot(np.dot(W.T, W), H), H)
+            norm_WH = trace_dot(np.linalg.multi_dot([W.T, W, H]), H)
             cross_prod = trace_dot((X * H.T), W)
             res = (norm_X + norm_WH - 2. * cross_prod) / 2.
         else:
@@ -628,7 +629,7 @@ def _multiplicative_update_h(X, W, H, beta_loss, l1_reg_H, l2_reg_H, gamma):
     """update H in Multiplicative Update NMF"""
     if beta_loss == 2:
         numerator = safe_sparse_dot(W.T, X)
-        denominator = np.dot(np.dot(W.T, W), H)
+        denominator = np.linalg.multi_dot([W.T, W, H])
 
     else:
         # Numerator
@@ -840,7 +841,8 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
     return W, H, n_iter
 
 
-def non_negative_factorization(X, W=None, H=None, n_components=None,
+@_deprecate_positional_args
+def non_negative_factorization(X, W=None, H=None, n_components=None, *,
                                init=None, update_H=True, solver='cd',
                                beta_loss='frobenius', tol=1e-4,
                                max_iter=200, alpha=0., l1_ratio=0.,
@@ -909,7 +911,8 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
             (generally faster, less accurate alternative to NNDSVDa
             for when sparsity is not desired)
 
-        - 'custom': use custom matrices W and H
+        - 'custom': use custom matrices W and H if `update_H=True`. If
+          `update_H=False`, then only custom matrix H is used.
 
         .. versionchanged:: 0.23
             The default value of `init` changed from 'random' to None in 0.23.
@@ -1078,7 +1081,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
 
 
 class NMF(TransformerMixin, BaseEstimator):
-    r"""Non-Negative Matrix Factorization (NMF)
+    """Non-Negative Matrix Factorization (NMF)
 
     Find two non-negative matrices (W, H) whose product approximates the non-
     negative matrix X. This factorization can be used for example for
@@ -1094,8 +1097,8 @@ class NMF(TransformerMixin, BaseEstimator):
 
     Where::
 
-        ||A||_Fro^2 = \sum_{i,j} A_{ij}^2 (Frobenius norm)
-        ||vec(A)||_1 = \sum_{i,j} abs(A_{ij}) (Elementwise L1 norm)
+        ||A||_Fro^2 = \\sum_{i,j} A_{ij}^2 (Frobenius norm)
+        ||vec(A)||_1 = \\sum_{i,j} abs(A_{ij}) (Elementwise L1 norm)
 
     For multiplicative-update ('mu') solver, the Frobenius norm
     (0.5 * ||X - WH||_Fro^2) can be changed into another beta-divergence loss,
@@ -1195,6 +1198,13 @@ class NMF(TransformerMixin, BaseEstimator):
         .. versionadded:: 0.17
            *shuffle* parameter used in the Coordinate Descent solver.
 
+    regularization : {'both', 'components', 'transformation', None}, \
+                     default='both'
+        Select whether the regularization affects the components (H), the
+        transformation (W), both or none of them.
+
+        .. versionadded:: 0.24
+
     Attributes
     ----------
     components_ : array, [n_components, n_features]
@@ -1232,11 +1242,11 @@ class NMF(TransformerMixin, BaseEstimator):
     Fevotte, C., & Idier, J. (2011). Algorithms for nonnegative matrix
     factorization with the beta-divergence. Neural Computation, 23(9).
     """
-
-    def __init__(self, n_components=None, init=None, solver='cd',
+    @_deprecate_positional_args
+    def __init__(self, n_components=None, *, init=None, solver='cd',
                  beta_loss='frobenius', tol=1e-4, max_iter=200,
                  random_state=None, alpha=0., l1_ratio=0., verbose=0,
-                 shuffle=False):
+                 shuffle=False, regularization='both'):
         self.n_components = n_components
         self.init = init
         self.solver = solver
@@ -1248,6 +1258,7 @@ class NMF(TransformerMixin, BaseEstimator):
         self.l1_ratio = l1_ratio
         self.verbose = verbose
         self.shuffle = shuffle
+        self.regularization = regularization
 
     def _more_tags(self):
         return {'requires_positive_X': True}
@@ -1282,7 +1293,7 @@ class NMF(TransformerMixin, BaseEstimator):
             X=X, W=W, H=H, n_components=self.n_components, init=self.init,
             update_H=True, solver=self.solver, beta_loss=self.beta_loss,
             tol=self.tol, max_iter=self.max_iter, alpha=self.alpha,
-            l1_ratio=self.l1_ratio, regularization='both',
+            l1_ratio=self.l1_ratio, regularization=self.regularization,
             random_state=self.random_state, verbose=self.verbose,
             shuffle=self.shuffle)
 
@@ -1331,9 +1342,10 @@ class NMF(TransformerMixin, BaseEstimator):
             X=X, W=None, H=self.components_, n_components=self.n_components_,
             init=self.init, update_H=False, solver=self.solver,
             beta_loss=self.beta_loss, tol=self.tol, max_iter=self.max_iter,
-            alpha=self.alpha, l1_ratio=self.l1_ratio, regularization='both',
-            random_state=self.random_state, verbose=self.verbose,
-            shuffle=self.shuffle)
+            alpha=self.alpha, l1_ratio=self.l1_ratio,
+            regularization=self.regularization,
+            random_state=self.random_state,
+            verbose=self.verbose, shuffle=self.shuffle)
 
         return W
 

@@ -112,28 +112,28 @@ class _CFNode:
 
     Attributes
     ----------
-    subclusters_ : array-like
-        list of subclusters for a particular CFNode.
+    subclusters_ : list
+        List of subclusters for a particular CFNode.
 
     prev_leaf_ : _CFNode
-        prev_leaf. Useful only if is_leaf is True.
+        Useful only if is_leaf is True.
 
     next_leaf_ : _CFNode
         next_leaf. Useful only if is_leaf is True.
         the final subclusters.
 
-    init_centroids_ : ndarray, shape (branching_factor + 1, n_features)
-        manipulate ``init_centroids_`` throughout rather than centroids_ since
+    init_centroids_ : ndarray of shape (branching_factor + 1, n_features)
+        Manipulate ``init_centroids_`` throughout rather than centroids_ since
         the centroids are just a view of the ``init_centroids_`` .
 
-    init_sq_norm_ : ndarray, shape (branching_factor + 1,)
+    init_sq_norm_ : ndarray of shape (branching_factor + 1,)
         manipulate init_sq_norm_ throughout. similar to ``init_centroids_``.
 
-    centroids_ : ndarray
-        view of ``init_centroids_``.
+    centroids_ : ndarray of shape (branching_factor + 1, n_features)
+        View of ``init_centroids_``.
 
-    squared_norm_ : ndarray
-        view of ``init_sq_norm_``.
+    squared_norm_ : ndarray of shape (branching_factor + 1,)
+        View of ``init_sq_norm_``.
 
     """
     def __init__(self, *, threshold, branching_factor, is_leaf, n_features):
@@ -249,7 +249,7 @@ class _CFSubcluster:
 
     Parameters
     ----------
-    linear_sum : ndarray, shape (n_features,), optional
+    linear_sum : ndarray of shape (n_features,), default=None
         Sample. This is kept optional to allow initialization of empty
         subclusters.
 
@@ -265,7 +265,7 @@ class _CFSubcluster:
     squared_sum_ : float
         Sum of the squared l2 norms of all samples belonging to a subcluster.
 
-    centroid_ : ndarray
+    centroid_ : ndarray of shape (branching_factor + 1, n_features)
         Centroid of the subcluster. Prevent recomputing of centroids when
         ``CFNode.centroids_`` is called.
 
@@ -273,7 +273,7 @@ class _CFSubcluster:
         Child Node of the subcluster. Once a given _CFNode is set as the child
         of the _CFNode, it is set to ``self.child_``.
 
-    sq_norm_ : ndarray
+    sq_norm_ : ndarray of shape (branching_factor + 1,)
         Squared norm of the subcluster. Used to prevent recomputing when
         pairwise minimum distances are computed.
     """
@@ -380,14 +380,14 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
     dummy_leaf_ : _CFNode
         Start pointer to all the leaves.
 
-    subcluster_centers_ : ndarray,
+    subcluster_centers_ : ndarray
         Centroids of all subclusters read directly from the leaves.
 
-    subcluster_labels_ : ndarray,
+    subcluster_labels_ : ndarray
         Labels assigned to the centroids of the subclusters after
         they are clustered globally.
 
-    labels_ : ndarray, shape (n_samples,)
+    labels_ : ndarray of shape (n_samples,)
         Array of labels assigned to the input data.
         if partial_fit is used instead of fit, they are assigned to the
         last batch of data.
@@ -448,7 +448,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Input data.
 
         y : Ignored
@@ -523,7 +523,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        leaves : array-like
+        leaves : list of shape (n_leaves,)
             List of the leaf nodes.
         """
         leaf_ptr = self.dummy_leaf_.next_leaf_
@@ -539,7 +539,8 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features), None
+        X : {array-like, sparse matrix} of shape (n_samples, n_features), \
+            default=None
             Input data. If X is not provided, only the global clustering
             step is done.
 
@@ -577,12 +578,12 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Input data.
 
         Returns
         -------
-        labels : ndarray, shape(n_samples)
+        labels : ndarray of shape(n_samples,)
             Labelled data.
         """
         X = check_array(X, accept_sparse='csr')
@@ -603,12 +604,12 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Input data.
 
         Returns
         -------
-        X_trans : {array-like, sparse matrix}, shape (n_samples, n_clusters)
+        X_trans : {array-like, sparse matrix} of shape (n_samples, n_clusters)
             Transformed data.
         """
         check_is_fitted(self)

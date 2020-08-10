@@ -105,9 +105,12 @@ imputation round are returned.
 
 .. note::
 
-   This estimator is still **experimental** for now: the predictions
-   and the API might change without any deprecation cycle. To use it,
-   you need to explicitly import ``enable_iterative_imputer``.
+   This estimator is still **experimental** for now: default parameters or
+   details of behaviour might change without any deprecation cycle. Resolving
+   the following issues would help stabilize :class:`IterativeImputer`:
+   convergence criteria (:issue:`14338`), default estimators (:issue:`13286`),
+   and use of random state (:issue:`15611`). To use it, you need to explicitly
+   import ``enable_iterative_imputer``.
 
 ::
 
@@ -216,9 +219,9 @@ neighbors of samples with missing values::
            [5.5, 6. , 5. ],
            [8. , 8. , 7. ]])
 
-.. [OL2001] Olga Troyanskaya, Michael Cantor, Gavin Sherlock, Pat Brown, 
-    Trevor Hastie, Robert Tibshirani, David Botstein and Russ B. Altman, 
-    Missing value estimation methods for DNA microarrays, BIOINFORMATICS 
+.. [OL2001] Olga Troyanskaya, Michael Cantor, Gavin Sherlock, Pat Brown,
+    Trevor Hastie, Robert Tibshirani, David Botstein and Russ B. Altman,
+    Missing value estimation methods for DNA microarrays, BIOINFORMATICS
     Vol. 17 no. 6, 2001 Pages 520-525.
 
 .. _missing_indicator:
@@ -282,7 +285,7 @@ some missing values to it.
   >>> from sklearn.pipeline import FeatureUnion, make_pipeline
   >>> from sklearn.tree import DecisionTreeClassifier
   >>> X, y = load_iris(return_X_y=True)
-  >>> mask = np.random.randint(0, 2, size=X.shape).astype(np.bool)
+  >>> mask = np.random.randint(0, 2, size=X.shape).astype(bool)
   >>> X[mask] = np.nan
   >>> X_train, X_test, y_train, _ = train_test_split(X, y, test_size=100,
   ...                                                random_state=0)
@@ -310,4 +313,3 @@ wrap this in a :class:`Pipeline` with a classifier (e.g., a
   >>> results = clf.predict(X_test)
   >>> results.shape
   (100,)
-
