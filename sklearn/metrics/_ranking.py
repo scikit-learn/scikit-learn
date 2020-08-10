@@ -501,7 +501,7 @@ def _multiclass_roc_auc_score(y_true, y_score, labels,
                                      sample_weight=sample_weight)
 
 
-def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
+def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None, sample_fp_weight=None):
     """Calculate true and false positives per binary classification threshold.
 
     Parameters
@@ -517,6 +517,9 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
+
+    sample_fp_weight : array-like of shape (n_samples,), default=None
+        Sample weights applied to false positive results
 
     Returns
     -------
@@ -549,6 +552,8 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
 
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight)
+    if sample_fp_weight is not None:
+        sample_fp_weight = column_or_1d(sample_fp_weight)
 
     # ensure binary classification if pos_label is not specified
     # classes.dtype.kind in ('O', 'U', 'S') is required to avoid
@@ -583,6 +588,13 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     else:
         weight = 1.
 
+    if sample_fp_weight is not None:
+        fp_weight = sample_fp_weight[desc_score_indices]
+    elif sample_weight is not None:
+        fp_weight = weight
+    else:
+        fp_weight = 1.
+
     # y_score typically has many tied values. Here we extract
     # the indices associated with the distinct values. We also
     # concatenate a value for the end of the curve.
@@ -591,10 +603,10 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
 
     # accumulate the true positives with decreasing threshold
     tps = stable_cumsum(y_true * weight)[threshold_idxs]
-    if sample_weight is not None:
+    if sample_weight is not None or sample_fp_weight is not None:
         # express fps as a cumsum to ensure fps is increasing even in
         # the presence of floating point errors
-        fps = stable_cumsum((1 - y_true) * weight)[threshold_idxs]
+        fps = stable_cumsum((1 - y_true) * fp_weight)[threshold_idxs]
     else:
         fps = 1 + threshold_idxs - tps
     return fps, tps, y_score[threshold_idxs]
@@ -602,7 +614,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
 
 @_deprecate_positional_args
 def precision_recall_curve(y_true, probas_pred, *, pos_label=None,
-                           sample_weight=None):
+                           sample_weight=None, sample_fp_weight=None):
     """Compute precision-recall pairs for different probability thresholds.
 
     Note: this implementation is restricted to the binary classification task.
@@ -638,6 +650,9 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None,
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
+
+    sample_fp_weight : array-like of shape (n_samples,), default=None
+        Sample weights for False-Positives to differentiate from True Positives
 
     Returns
     -------
@@ -680,7 +695,9 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None,
     """
     fps, tps, thresholds = _binary_clf_curve(y_true, probas_pred,
                                              pos_label=pos_label,
-                                             sample_weight=sample_weight)
+                                             sample_weight=sample_weight,
+                                             sample_fp_weight=sample_fp_weight
+                                             )
 
     precision = tps / (tps + fps)
     precision[np.isnan(precision)] = 0
@@ -695,7 +712,7 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None,
 
 @_deprecate_positional_args
 def roc_curve(y_true, y_score, *, pos_label=None, sample_weight=None,
-              drop_intermediate=True):
+              drop_intermediate=True, sample_fp_weights=None):
     """Compute Receiver operating characteristic (ROC).
 
     Note: this implementation is restricted to the binary classification task.
@@ -781,7 +798,9 @@ def roc_curve(y_true, y_score, *, pos_label=None, sample_weight=None,
 
     """
     fps, tps, thresholds = _binary_clf_curve(
-        y_true, y_score, pos_label=pos_label, sample_weight=sample_weight)
+        y_true, y_score, pos_label=pos_label, sample_weight=sample_weight,
+        sample_fp_weight=sample_fp_weights
+    )
 
     # Attempt to drop thresholds corresponding to points in between and
     # collinear with other points. These are always suboptimal and do not
