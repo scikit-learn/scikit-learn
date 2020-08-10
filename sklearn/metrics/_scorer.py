@@ -129,7 +129,7 @@ class _BaseScorer:
 
     @staticmethod
     def _check_pos_label(pos_label, classes):
-        if pos_label not in classes:
+        if pos_label not in list(classes):
             raise ValueError(
                 f"pos_label should be present in the target when the "
                 f"classifier was trained. Got pos_label={pos_label} while the "
