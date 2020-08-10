@@ -72,6 +72,11 @@ Changelog
   :user:`Emilie Delattre <EmilieDel>`, and
   :user:`Francesco Casalegno <FrancescoCasalegno>`.
 
+- |Enhancement| :class:`cluster.SpectralClustering` and
+  :func:`cluster.spectral_clustering` have a new keyword argument `verbose`.
+  When set to `True`, additional messages will be displayed which can aid with
+  debugging. :pr:`18052` by :user:`Sean O. Stalley <sstalley>`.
+
 - |API| :class:`cluster.MiniBatchKMeans` attributes, `counts_` and
   `init_size_`, are deprecated and will be removed in 0.26. :pr:`17864` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
