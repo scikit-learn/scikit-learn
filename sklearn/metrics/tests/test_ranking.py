@@ -770,7 +770,8 @@ def test_binary_clf_curve():
         assert_array_almost_equal(p, [2, 2])
         assert_array_almost_equal(r, [0, 2])
 
-        p, r, _ = _binary_clf_curve(y_true, y_score, sample_weight=[2, 2], sample_fp_weight=[3, 3])
+        p, r, _ = _binary_clf_curve(y_true, y_score, sample_weight=[2, 2],
+                                    sample_fp_weight=[3, 3])
         assert_array_almost_equal(p, [3, 3])
         assert_array_almost_equal(r, [0, 2])
 
