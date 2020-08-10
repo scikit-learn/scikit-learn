@@ -26,7 +26,9 @@ from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import label_ranking_loss
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
-from sklearn.metrics._ranking import _ndcg_sample_scores, _dcg_sample_scores, _binary_clf_curve
+from sklearn.metrics._ranking import (
+    _ndcg_sample_scores, _dcg_sample_scores, _binary_clf_curve
+)
 from sklearn.metrics import ndcg_score, dcg_score
 
 from sklearn.exceptions import UndefinedMetricWarning
