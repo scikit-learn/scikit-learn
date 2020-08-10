@@ -501,7 +501,8 @@ def _multiclass_roc_auc_score(y_true, y_score, labels,
                                      sample_weight=sample_weight)
 
 
-def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None, sample_fp_weight=None):
+def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None,
+                      sample_fp_weight=None):
     """Calculate true and false positives per binary classification threshold.
 
     Parameters
