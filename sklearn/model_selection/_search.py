@@ -736,6 +736,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                             pre_dispatch=self.pre_dispatch)
 
         fit_and_score_kwargs = dict(scorer=scorers,
+                                    fit_params=fit_params,
                                     return_train_score=self.return_train_score,
                                     return_n_test_samples=True,
                                     return_times=True,
@@ -759,7 +760,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                           " totalling {2} fits".format(
                               n_splits, n_candidates, n_candidates * n_splits))
 
-                fit_and_score_kwargs['fit_params'] = fit_params
                 out = parallel(delayed(_fit_and_score)(clone(base_estimator),
                                                        X, y,
                                                        train=train, test=test,
