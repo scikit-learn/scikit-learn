@@ -12,16 +12,18 @@ Permutation importance uses the decrease in model score, after shuffling
 the values of a feature, to measure how important each feature is. It can
 be calculated using :func:`~sklearn.inspection.permutation_importance`.
 Shapley values represent the contribution of each feature to the prediction
-output by the model, using game theory. These values satisfy a number of
-good properties and are thus deemed a fair way to 'split' the prediction output
-between the features (for more on the properties see).
-These values are computationally very expensive to calculate. SHAP are
+output by the model, using game theory. It is calculated as the average
+marginal contribution of each feature, across all possible feature subset
+combinations. These values satisfy a number of good properties and are thus
+deemed a fair way to 'split' the prediction output between the features (for
+more on the properties see).
+These values are computationally very expensive to calculate. SHAP offers
 a way to estimate these values using an additive model that is a linear
 function of features.
-SHAP allows for the calculation of the contribution of each feature for
-individual samples. The average across samples is generally used to
-represent the average contribution of a feature in a model. The authors of
-SHAP implement a number of versions it in the Python library
+SHAP calculates of the contribution of each feature for individual samples.
+The average of these contributions across samples can then be used to
+indicate the 'importance' of a feature in a model. The authors of SHAP
+implement a number of versions it in the Python library
 `SHAP <https://github.com/slundberg/shap>`_. In this example we will discuss
 the use of KernalSHAP and TreeSHAP, both of which support scikit-learn
 estimators.
@@ -43,7 +45,7 @@ outlined below.
 #
 # We will use the :ref:`california_housing_dataset` for this example. In this
 # dataset the target is the median house price (in $100,000's) for a district
-# and the features consist of various information about each district. We
+# and the 8 features consist of various information about each district. We
 # will only use a subset of the data to speed up computation.
 
 import pandas as pd
@@ -152,76 +154,139 @@ plt.show()
 # * Permutation importance assumes independence between features. The effect
 #   is that the 'importance' is split between correlated features. See
 #   :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance_multicollinear.py`
-#   for an example of this effect.
+#   for an example of this.
 #
 # KernalSHAP
 # ^^^^^^^^^^^
 #
-# KernalSHAP is a kernal-based method to estimate Shapley values.
-# It calculates the prediction output with different subsets of the
-# features 'missing'. Missingness is simulated by using a 'background' (e.g.,
-# average) value for that feature. These predictions are then used to fit a
-# linear model whose predictions match that of the original model as closely
-# as possible. The coefficients of the linear model are the Shapley values.
+# KernalSHAP is a kernal-based method to estimate Shapley values for
+# individual samples.
+# First, it calculates the predictions for a sample when different subsets of
+# the features are 'missing'. Missingness is simulated by using a 'background'
+# (e.g., average) value for that feature. These predictions are then used to
+# fit a linear model whose predictions match that of the original model as
+# closely as possible. The coefficients of the linear 'explanation' model are
+# the Shapley values. The linear explanation model equation is:
+#
+# .. math::
+#   g(z')=\phi_0 + \sum_{i=1}^{M} \phi_i z'
+#
+# where :math:`g(z')` is the explanatory model, :math:`\phi_0` is the model
+# prediction when all features are 'missing', :math:`M` is the number of
+# possible subset sizes (n_features - 1), :math:`z'\in\{0,1\}^M`
+# (denotes the presence or absence of a feature) and :math:`\phi_i` is the
+# estimated Shapley value.
 #
 # This is much more computationally expensive than permutation importance
-# as the number of possible combinations of features quickly becomes very
-# large as the number of features increases. However, this does enable SHAP
-# to account for interaction effects between features.
+# particularly as the number of possible combinations of features for all
+# feature subsets sizes quickly becomes very large as the number of features
+# increases. However, this does enable SHAP to account for interaction effects
+# between features.
 #
 # First, we will instantiate ``KernalSHAP`` using our fitted regressor,
-# ``reg`` and some 'background' data, used to simulate missingness.
+# ``reg`` and some background data, which will be used to simulate missingness.
 # If your dataset is small (e.g., training data is <100 samples) you can use
-# the whole training subset for the background data. Since our dataset is
-# larger than this, we will use  to summary values-
-#
-#
+# the whole training subset for the background data. Our data is larger than
+# this so we must summarize it in some way, otherwise omputation will be
+# too slow. For simplicity, we will use the
+# median values of our features but SHAP offers a ``kmeans`` function that
+# can summarize each feature with ``k`` means.
 
-from shap import KernalSHAP
-from shap import
+import shap
 
-kernal_ex = KernalSHAP(reg, )
-
-
-# %%
-# Next we will calculate Shapley values using the testing subset.
-#
-
-
-
-
-# Explain background data. Show expected value. shap value show individual
-# make plot-
-
-
-
+med = X_train.median().values.reshape((1,X_train.shape[1]))
+explainer = shap.KernelExplainer(reg.predict, med)
 
 # %%
+# ``explainer`` stores various information about the data as attributes. Of
+# interest is ``expected_value``. This represents :math:`phi_0` in our
+# equation above.
+
+explainer.expected_value
+
+# %%
+# Can you work out how this value was calculated?
+#
+# It is the prediction output by our model when using the background
+# values we gave it.
+
+reg.predict(med)
+
+# %%
+# Next we will calculate Shapley values using the testing subset, the
+# computationally expensive step.
+
+shap_values = explainer.shap_values(X_test, l1_reg='aic')
+
+# %%
+# Let's look at the Shapley values of one sample. There are 8 Shapley values,
+# one for each feature.
+
+shap_values[0, :]
+
+# %%
+# The Shapley values should sum to the difference between the
+# prediction output by our our model ``reg`` and  the ``expected_value`
+# (depending on how well the linear model was able to be fit).
+
+print(f'The sum of Shapley values: {shap_values[0, :].sum()}')
+prediction = reg.predict(X_test.iloc[0, :].values.reshape(1, -1))
+print(f'Difference between prediction and expected value: '
+      f'{prediction - explainer.expected_value}')
+
+# %%
+# We can also plot the Shapley values:
+
+shap.summary_plot(shap_values, X_test)
+
+# %%
+# In the plot above, each dot represents the Shapley value of one sample,
+# for that feature. The features are ordered from most important at the top
+# to least important at the bottom. Note that the dots cluster around 0
+# (no contribution) more and more as you go down.
+#
+# Additionally, if you compare with the permutation importance plot, you will
+# notice that the order of the features is roughly the same.
+#
 # **Advantages**
 #
 # * This method allows you to compute feature importances for individual
 #   samples.
-# * Interaction effects are dealt with better than in permutation importances.
-#   Contribution of each feature add up to the overall prediction.
+# * Interaction effects are accounted for, unlike in permutation importances.
+#   For each sample, the contribution of each feature add up to the overall
+#   prediction, as shown above.
 #
 # **Disadvantages**
 #
-# * The method is very computationally expensive, especially when there are
+# * The method is very computationally expensive, especially when there
 #   are a large number of features.
 # * This method also assumes independence between features. Again, the result
 #   is that 'contributions' will be split between correlated features.
 
-# Tree SHAP
-# ^^^^^^^^^
-
-
+# TreeSHAP
+# ^^^^^^^^
 #
-# Both permutation importance and SHAP assume independence between features.
+# TreeSHAP is another variant of SHAP designed for tree-based models. It is
+# much faster than KernalSHAP and uses conditional expectation instead of
+# the marginal expectation. For a single tree, the expectation conditioned
+# on a subset of features is the average value of all 'reachable' nodes,
+# weighted by the number of samples in each node. 'Reachable' means
+# nodes that are not contradicted by the values of the features present.
+# For example, if a node split on a feature that was missing, both child
+# nodes would be reachable. Conversely, if a node split on a feature
+# that is present, only the child that satisfies the split is 'reachable'.
+# The difference between the conditional expectation of feature subsets
+# with and without the feature of interest is used to estimate the
+# Shapley values.
 #
-# estimate the effect of
-# withholding the feature of interest on the prediction output. It does this by
-# taking a
-# sample and calculating the effect of withholding a feature. Since this effect
-# depends on the other features in the model, it calculates this difference
-# (with and without the feature) for all possible combinations of the other
-# features. This difference is averaged across all samples to
+# The major advantage of TreeSHAP is it's speed. Compared to KernalSHAP,
+# which computes Shapley values in exponential time, TreeSHAP does this
+# in polynomial time. The Shapley values estimated can be problematic though.
+# Features that do not affect the prediction can get a non-zero TreeSHAP
+# Shapley value. This happens when the feature of no importance is
+# correlated with another feature that has influence on the prediction.
+
+explainer = shap.TreeExplainer(reg)
+shap_values = explainer.shap_values(X_test)
+
+shap.summary_plot(shap_values, X_test)
