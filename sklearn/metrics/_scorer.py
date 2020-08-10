@@ -154,7 +154,7 @@ class _BaseScorer:
                 # y_pred is multi_class. This case is supported when label is
                 # provided.
                 raise ValueError(err_msg)
-            else:
+            elif not support_multi_class:
                 raise ValueError(err_msg)
 
         return y_pred
@@ -270,10 +270,9 @@ class _ProbaScorer(_BaseScorer):
         y_type = type_of_target(y)
         y_pred = method_caller(clf, "predict_proba", X)
         if y_type == "binary":
-            if y_pred.shape[1] == 2:
-                self._select_proba(
-                    y_pred, clf.classes_, support_multi_class=True
-                )
+            y_pred = self._select_proba(
+                y_pred, clf.classes_, support_multi_class=True
+            )
         if sample_weight is not None:
             return self._sign * self._score_func(y, y_pred,
                                                  sample_weight=sample_weight,
@@ -332,7 +331,7 @@ class _ThresholdScorer(_BaseScorer):
                     y_pred = np.vstack([p for p in y_pred]).T
                 elif y_type == "binary" and "pos_label" in self._kwargs:
                     self._check_pos_label(
-                        self._kwargs["pos_label"], clf.classes
+                        self._kwargs["pos_label"], clf.classes_
                     )
                     if self._kwargs["pos_label"] == clf.classes_[0]:
                         # The positive class is not the `pos_label` seen by the
