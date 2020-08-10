@@ -26,7 +26,7 @@ from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import label_ranking_loss
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
-from sklearn.metrics._ranking import _ndcg_sample_scores, _dcg_sample_scores
+from sklearn.metrics._ranking import _ndcg_sample_scores, _dcg_sample_scores, _binary_clf_curve
 from sklearn.metrics import ndcg_score, dcg_score
 
 from sklearn.exceptions import UndefinedMetricWarning
@@ -753,6 +753,26 @@ def test_precision_recall_curve_errors():
     # Contains non-binary labels
     with pytest.raises(ValueError):
         precision_recall_curve([0, 1, 2], [[0.0], [1.0], [1.0]])
+
+
+def test_binary_clf_curve():
+    with np.errstate(all="raise"):
+        # Binary classification
+        y_true = [0, 1]
+        y_score = [0, 1]
+        p, r, _ = _binary_clf_curve(y_true, y_score)
+        assert_array_almost_equal(p, [0, 1])
+        assert_array_almost_equal(r, [1, 1])
+
+        y_true = [0, 1]
+        y_score = [1, 0]
+        p, r, _ = _binary_clf_curve(y_true, y_score, sample_weight=[2, 2])
+        assert_array_almost_equal(p, [2, 2])
+        assert_array_almost_equal(r, [0, 2])
+
+        p, r, _ = _binary_clf_curve(y_true, y_score, sample_weight=[2, 2], sample_fp_weight=[3, 3])
+        assert_array_almost_equal(p, [3, 3])
+        assert_array_almost_equal(r, [0, 2])
 
 
 def test_precision_recall_curve_toydata():
