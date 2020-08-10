@@ -229,16 +229,16 @@ def test_random_search(max_resources, n_candidates, expected_n_candidates_):
         assert sh.n_resources_[-1] == max_resources
 
 
-@pytest.mark.parametrize('Est', (HalvingRandomSearchCV, HalvingGridSearchCV))
-def test_groups_not_supported(Est):
-    base_estimator = FastClassifier()
-    param_grid = {'a': [1]}
-    sh = Est(base_estimator, param_grid)
-    X, y = make_classification(n_samples=10)
-    groups = [0] * 10
+# @pytest.mark.parametrize('Est', (HalvingRandomSearchCV, HalvingGridSearchCV))
+# def test_groups_not_supported(Est):
+#     base_estimator = FastClassifier()
+#     param_grid = {'a': [1]}
+#     sh = Est(base_estimator, param_grid)
+#     X, y = make_classification(n_samples=10)
+#     groups = [0] * 10
 
-    with pytest.raises(ValueError, match="groups are not supported"):
-        sh.fit(X, y, groups)
+#     with pytest.raises(ValueError, match="groups are not supported"):
+#         sh.fit(X, y, groups)
 
 
 @pytest.mark.parametrize('Est', (HalvingGridSearchCV, HalvingRandomSearchCV))

@@ -6,14 +6,30 @@ import numpy as np
 from ._search import _check_param_grid
 from ._search import BaseSearchCV
 from . import ParameterGrid, ParameterSampler
-from ..utils import check_random_state, _safe_indexing
-from ..utils.validation import _num_samples, _check_fit_params
+from ..utils import check_random_state
+from ..utils.validation import _num_samples
 from ..base import is_classifier
 from ._split import check_cv
 from ..utils import resample
 
 
 __all__ = ['HalvingGridSearchCV', 'HalvingRandomSearchCV']
+
+
+class _TrainingFractionMetaSplitter:
+    """Splitter that subsamples the trainsets according to a given fraction"""
+    def __init__(self, *, base_cv, fraction, random_state):
+        self.base_cv = base_cv
+        self.fraction = fraction
+        self.random_state = check_random_state(random_state)
+
+    def split(self, X, y, groups=None):
+        for train_idx, test_idx in self.base_cv.split(X, y, groups):
+            train_idx = resample(
+                train_idx, replace=False, random_state=self.random_state,
+                n_samples=int(self.fraction * train_idx.shape[0])
+            )
+            yield train_idx, test_idx
 
 
 def _refit_callable(results):
@@ -57,8 +73,8 @@ class BaseSuccessiveHalving(BaseSearchCV):
 
     def _check_input_parameters(self, X, y, groups):
 
-        if groups is not None:
-            raise ValueError('groups are not supported.')
+        # if groups is not None:
+        #     raise ValueError('groups are not supported.')
 
         if self.scoring is not None and not (isinstance(self.scoring, str)
                                              or callable(self.scoring)):
@@ -117,7 +133,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 cv = check_cv(self.cv, y,
                               classifier=is_classifier(self.estimator))
                 n_splits = cv.get_n_splits(X, y, groups)
-
                 # please see https://gph.is/1KjihQe for a justification
                 magic_factor = 2
                 self.min_resources_ = n_splits * magic_factor
@@ -168,6 +183,8 @@ class BaseSuccessiveHalving(BaseSearchCV):
             groups=groups,
         )
 
+        self._n_samples_orig = _num_samples(X)
+
         super().fit(X, y=y, groups=None, **fit_params)
 
         # Set best_score_: BaseSearchCV does not set it, as refit is a callable
@@ -176,9 +193,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
 
         return self
 
-    def _run_search(self, evaluate_candidates, X, y, **fit_params):
-        rng = check_random_state(self.random_state)
-
+    def _run_search(self, evaluate_candidates):
         candidate_params = self._generate_candidate_params()
 
         if self.resource != 'n_samples' and any(
@@ -257,14 +272,11 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 print(f'resource_iter: {resource_iter}')
 
             if self.resource == 'n_samples':
-                # Subsample X and y as well as fit_params
-                stratify = y if is_classifier(self.estimator) else None
-                indices = resample(np.arange(X.shape[0]), replace=False,
-                                   random_state=rng, stratify=stratify,
-                                   n_samples=resource_iter)
-                X_iter = _safe_indexing(X, indices)
-                y_iter = _safe_indexing(y, indices)
-                fit_params_iter = _check_fit_params(X, fit_params, indices)
+                # subsampling will be done in cv.split()
+                cv = _TrainingFractionMetaSplitter(
+                    base_cv=self._checked_cv_orig,
+                    fraction=resource_iter / self._n_samples_orig,
+                    random_state=self.random_state)
 
             else:
                 # Need copy so that the resource_iter of next iteration does
@@ -272,14 +284,15 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 candidate_params = [c.copy() for c in candidate_params]
                 for candidate in candidate_params:
                     candidate[self.resource] = resource_iter
-                X_iter, y_iter = X, y
-                fit_params_iter = fit_params
+                cv = self._checked_cv_orig
 
             more_results = {'iter': [iter_i] * n_candidates,
                             'resource_iter': [resource_iter] * n_candidates}
-            results = evaluate_candidates(candidate_params, X_iter, y_iter,
-                                          more_results=more_results,
-                                          **fit_params_iter)
+            # results = evaluate_candidates(candidate_params, X_iter, y_iter,
+            #                               more_results=more_results,
+            #                               **fit_params_iter)
+            results = evaluate_candidates(candidate_params, cv,
+                                          more_results=more_results)
 
             n_candidates_to_keep = ceil(n_candidates / self.ratio)
             candidate_params = self._top_k(results,

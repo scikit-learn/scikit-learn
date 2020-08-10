@@ -621,7 +621,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         self._check_is_fitted("classes_")
         return self.best_estimator_.classes_
 
-    def _run_search(self, evaluate_candidates, X, y, **fit_params):
+    def _run_search(self, evaluate_candidates):
         """Repeatedly calls `evaluate_candidates` to conduct a search.
 
         This method, implemented in sub-classes, makes it possible to
@@ -712,8 +712,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             Parameters passed to the ``fit`` method of the estimator
         """
         estimator = self.estimator
-        cv = check_cv(self.cv, y, classifier=is_classifier(estimator))
-
+        self._checked_cv_orig = check_cv(self.cv, y,
+                                         classifier=is_classifier(estimator))
         refit_metric = "score"
 
         if callable(self.scoring):
@@ -728,7 +728,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         X, y, groups = indexable(X, y, groups)
         fit_params = _check_fit_params(X, fit_params)
 
-        n_splits = cv.get_n_splits(X, y, groups)
+        n_splits = self._checked_cv_orig.get_n_splits(X, y, groups)
 
         base_estimator = clone(self.estimator)
 
@@ -748,9 +748,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             all_out = []
             all_more_results = defaultdict(list)
 
-            def evaluate_candidates(candidate_params, X, y,
-                                    more_results=None,
-                                    **fit_params):
+            def evaluate_candidates(candidate_params, cv=None,
+                                    more_results=None):
+                cv = cv or self._checked_cv_orig
                 candidate_params = list(candidate_params)
                 n_candidates = len(candidate_params)
 
@@ -806,7 +806,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
                 return results
 
-            self._run_search(evaluate_candidates, X, y, **fit_params)
+            self._run_search(evaluate_candidates)
 
             # multimetric is determined here because in the case of a callable
             # self.scoring the return type is only known after calling
@@ -1243,9 +1243,9 @@ class GridSearchCV(BaseSearchCV):
         self.param_grid = param_grid
         _check_param_grid(param_grid)
 
-    def _run_search(self, evaluate_candidates, X, y, **fit_params):
+    def _run_search(self, evaluate_candidates):
         """Search all candidates in param_grid"""
-        evaluate_candidates(ParameterGrid(self.param_grid), X, y, **fit_params)
+        evaluate_candidates(ParameterGrid(self.param_grid))
 
 
 class RandomizedSearchCV(BaseSearchCV):
@@ -1575,8 +1575,8 @@ class RandomizedSearchCV(BaseSearchCV):
             pre_dispatch=pre_dispatch, error_score=error_score,
             return_train_score=return_train_score)
 
-    def _run_search(self, evaluate_candidates, X, y, **fit_params):
+    def _run_search(self, evaluate_candidates):
         """Search n_iter candidates from param_distributions"""
         evaluate_candidates(ParameterSampler(
             self.param_distributions, self.n_iter,
-            random_state=self.random_state), X, y, **fit_params)
+            random_state=self.random_state))
