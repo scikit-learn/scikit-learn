@@ -127,6 +127,38 @@ class _BaseScorer:
         self._score_func = score_func
         self._sign = sign
 
+    @staticmethod
+    def _check_pos_label(pos_label, classes):
+        if pos_label not in classes:
+            raise ValueError(
+                f"pos_label should be present in the target when the "
+                f"classifier was trained. Got pos_label={pos_label} while the "
+                f"possible classes are {classes}."
+            )
+
+    def _select_proba(self, y_pred, classes, support_multi_class):
+        """Select the column of y_pred when probabilities are provided."""
+        if y_pred.shape[1] == 2:
+            pos_label = self._kwargs.get("pos_label", classes[1])
+            self._check_pos_label(pos_label, classes)
+            col_idx = np.flatnonzero(classes == pos_label)[0]
+            y_pred = y_pred[:, col_idx]
+        else:
+            err_msg = (
+                f"Got predict_proba of shape {y_pred.shape}, but need "
+                f"classifier with two classes for {self._score_func.__name__} "
+                f"scoring"
+            )
+            if support_multi_class and y_pred.shape[1] == 1:
+                # In _ProbaScorer, y_true can be tagged as binary while the
+                # y_pred is multi_class. This case is supported when label is
+                # provided.
+                raise ValueError(err_msg)
+            else:
+                raise ValueError(err_msg)
+
+        return y_pred
+
     def __repr__(self):
         kwargs_string = "".join([", %s=%s" % (str(k), str(v))
                                  for k, v in self._kwargs.items()])
@@ -239,14 +271,9 @@ class _ProbaScorer(_BaseScorer):
         y_pred = method_caller(clf, "predict_proba", X)
         if y_type == "binary":
             if y_pred.shape[1] == 2:
-                pos_label = self._kwargs.get("pos_label", clf.classes_[1])
-                col_idx = np.flatnonzero(clf.classes_ == pos_label)[0]
-                y_pred = y_pred[:, col_idx]
-            elif y_pred.shape[1] == 1:  # not multiclass
-                raise ValueError('got predict_proba of shape {},'
-                                 ' but need classifier with two'
-                                 ' classes for {} scoring'.format(
-                                     y_pred.shape, self._score_func.__name__))
+                self._select_proba(
+                    y_pred, clf.classes_, support_multi_class=True
+                )
         if sample_weight is not None:
             return self._sign * self._score_func(y, y_pred,
                                                  sample_weight=sample_weight,
@@ -303,31 +330,22 @@ class _ThresholdScorer(_BaseScorer):
                 if isinstance(y_pred, list):
                     # For multi-output multi-class estimator
                     y_pred = np.vstack([p for p in y_pred]).T
-                elif (
-                    y_type == "binary"
-                    and "pos_label" in self._kwargs
-                    and self._kwargs["pos_label"] == clf.classes_[0]
-                ):
-                    # The positive class is not the `pos_label` seen by the
-                    # classifier and we need to inverse the predictions
-                    y_pred *= -1
+                elif y_type == "binary" and "pos_label" in self._kwargs:
+                    self._check_pos_label(
+                        self._kwargs["pos_label"], clf.classes
+                    )
+                    if self._kwargs["pos_label"] == clf.classes_[0]:
+                        # The positive class is not the `pos_label` seen by the
+                        # classifier and we need to inverse the predictions
+                        y_pred *= -1
 
             except (NotImplementedError, AttributeError):
                 y_pred = method_caller(clf, "predict_proba", X)
 
                 if y_type == "binary":
-                    if y_pred.shape[1] == 2:
-                        pos_label = self._kwargs.get(
-                            "pos_label", clf.classes_[1]
-                        )
-                        col_idx = np.flatnonzero(clf.classes_ == pos_label)[0]
-                        y_pred = y_pred[:, col_idx]
-                    else:
-                        raise ValueError('got predict_proba of shape {},'
-                                         ' but need classifier with two'
-                                         ' classes for {} scoring'.format(
-                                             y_pred.shape,
-                                             self._score_func.__name__))
+                    y_pred = self._select_proba(
+                        y_pred, clf.classes_, support_multi_class=False,
+                    )
                 elif isinstance(y_pred, list):
                     y_pred = np.vstack([p[:, -1] for p in y_pred]).T
 

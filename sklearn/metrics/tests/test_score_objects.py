@@ -870,3 +870,24 @@ def test_brier_score_loss_pos_label(fitted_clf_predictions):
         brier_score_loss, needs_proba=True, pos_label=pos_label,
     )
     assert brier_scorer(clf, X_test, y_test) == pytest.approx(brier_pos_cancer)
+
+
+@pytest.mark.parametrize(
+    "scorer",
+    [
+        make_scorer(
+            average_precision_score, needs_threshold=True, pos_label="xxx"
+        ),
+        make_scorer(brier_score_loss, needs_proba=True, pos_label="xxx"),
+    ],
+    ids=["ThresholdScorer", "ProbaScorer"],
+)
+def test_scorer_select_proba_error(scorer):
+    X, y = make_classification(
+        n_classes=2, n_informative=3, n_samples=20, random_state=0
+    )
+    lr = LogisticRegression(multi_class="multinomial").fit(X, y)
+
+    err_msg = "pos_label should be present in the target"
+    with pytest.raises(ValueError, match=err_msg):
+        scorer(lr, X, y)
