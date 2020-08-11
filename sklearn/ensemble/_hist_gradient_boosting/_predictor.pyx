@@ -43,23 +43,13 @@ cdef class TreePredictor:
 
     def get_n_leaf_nodes(self):
         """Return number of leaves."""
-        cdef:
-            int n_leaf_nodes = 0
-            node_struct node
-
-        for node in self.nodes:
-            n_leaf_nodes += node.is_leaf
-        return n_leaf_nodes
+        cdef node_struct node
+        return sum(node.is_leaf for node in self.nodes)
 
     def get_max_depth(self):
         """Return maximum depth among all leaves."""
-        cdef:
-            int max_depth = 0
-            node_struct node
-
-        for node in self.nodes:
-            max_depth = max(node.depth, max_depth)
-        return max_depth
+        cdef node_struct node
+        return max(node.depth for node in self.nodes)
 
     def predict(self, const X_DTYPE_C [:, :] X):
         """Predict raw values for non-binned data.
