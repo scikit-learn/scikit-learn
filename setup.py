@@ -8,8 +8,12 @@ import sys
 import os
 import platform
 import shutil
+
+# We need to import setuptools before because it monkey-patches distutils
+import setuptools  # noqa
 from distutils.command.clean import clean as Clean
 from distutils.command.sdist import sdist
+
 from pkg_resources import parse_version
 import traceback
 import importlib
@@ -51,9 +55,7 @@ import sklearn._build_utils.min_dependencies as min_deps  # noqa
 
 VERSION = sklearn.__version__
 
-# Optional setuptools features
-# We need to import setuptools early, if we want setuptools features,
-# as it monkey-patches the 'setup' function
+
 # For some commands, use setuptools
 SETUPTOOLS_COMMANDS = {
     'develop', 'release', 'bdist_egg', 'bdist_rpm',
@@ -62,8 +64,6 @@ SETUPTOOLS_COMMANDS = {
     '--single-version-externally-managed',
 }
 if SETUPTOOLS_COMMANDS.intersection(sys.argv):
-    import setuptools
-
     extra_setuptools_args = dict(
         zip_safe=False,  # the package can run out of an .egg file
         include_package_data=True,
@@ -257,11 +257,11 @@ def setup_package():
                                                     'dist_info',
                                                     '--version',
                                                     'clean'))):
-        # For these actions, NumPy is not required
-        #
-        # They are required to succeed without Numpy for example when
+        # These actions are required to succeed without Numpy for example when
         # pip is used to install Scikit-learn when Numpy is not yet present in
         # the system.
+
+        # These commands use setup from setuptools
         from setuptools import setup
 
         metadata['version'] = VERSION
@@ -276,7 +276,8 @@ def setup_package():
 
         check_package_status('scipy', min_deps.SCIPY_MIN_VERSION)
 
-        import setuptools  # noqa
+        # These commands require the setup from numpy.distutils because they
+        # may use numpy.distutils compiler classes.
         from numpy.distutils.core import setup
 
         metadata['configuration'] = configuration

@@ -1,6 +1,6 @@
 ---
 name: Usage question
-about: If you have a usage question
+about: If you have a usage question please use another channel
 title: ''
 labels: Question
 assignees: ''
@@ -15,6 +15,12 @@ assignees: ''
 - **For more information, see User Questions: http://scikit-learn.org/stable/support.html#user-question**
 
 The issue tracker is used only to report issues and feature requests. For
-questions, please use either of the above platforms. Most question issues are
-closed without an answer on this issue tracker. Thanks for your understanding.
+questions, please use either of the above platforms. **Issues that are
+usage questions are closed without an answer.**
+Indeed, this issue tracker is a tool used for the development of
+scikit-learn. The additional activity created by usage questions impedes
+this development.
+
+Thank you for your understanding.
+
 -->

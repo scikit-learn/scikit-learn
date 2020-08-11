@@ -1,4 +1,5 @@
 """Testing for Spectral Clustering methods"""
+import re
 
 import numpy as np
 from scipy import sparse
@@ -248,3 +249,20 @@ def test_n_components():
     labels_diff_ncomp = SpectralClustering(n_components=2,
                                            random_state=0).fit(X).labels_
     assert not np.array_equal(labels, labels_diff_ncomp)
+
+
+@pytest.mark.parametrize('assign_labels', ('kmeans', 'discretize'))
+def test_verbose(assign_labels, capsys):
+    # Check verbose mode of KMeans for better coverage.
+    X, y = make_blobs(n_samples=20, random_state=0,
+                      centers=[[1, 1], [-1, -1]], cluster_std=0.01)
+
+    SpectralClustering(n_clusters=2, random_state=42, verbose=1).fit(X)
+
+    captured = capsys.readouterr()
+
+    assert re.search(r"Computing label assignment using", captured.out)
+
+    if assign_labels == "kmeans":
+        assert re.search(r"Initialization complete", captured.out)
+        assert re.search(r"Iteration [0-9]+, inertia", captured.out)
