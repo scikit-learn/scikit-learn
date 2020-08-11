@@ -49,7 +49,10 @@ def _format_docstring_annotation(annotation):
         first = ', '.join(values[:-1])
         return f'{first} or {values[-1]}'
     elif class_name == 'Literal':
-        values = ', '.join(repr(t) for t in annotation.__args__)
+        items = [repr(t) for t in annotation.__args__]
+        if len(items) == 1:
+            return items[0]
+        values = ', '.join(items)
         return f'{{{values}}}'
     elif class_name == 'List':
         values = ', '.join(_format_docstring_annotation(t)

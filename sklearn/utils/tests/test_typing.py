@@ -49,6 +49,7 @@ def test_get_annotation_class_name(annotation, expected_class):
     (Optional[BaseEstimator], 'estimator instance or None'),
     (Union[int, float], 'int or float'),
     (Literal['cat', 'dog'], '{\'cat\', \'dog\'}'),
+    (Literal['cat'], '\'cat\''),
     (RandomState, 'int, RandomState instance or None')
 ])
 def test_format_docstring_annotation(annotation, expected_str):
