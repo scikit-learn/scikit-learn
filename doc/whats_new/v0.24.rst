@@ -303,11 +303,12 @@ Changelog
   :pr:`17233` by :user:`Zolisa Bleki <zoj613>`.
 
 :mod:`sklearn.multioutput`
-.........................
+..........................
 
 - |Fix| A fix to allow :class:`multioutput.ClassifierChain` to accept
   ``order`` as a tuple.
-  :pr:`18124` by :user:`Gus Brocchini <boldloop>` and :user:`Amanda Dsouza <amy12xx>`.
+  :pr:`18124` by :user:`Gus Brocchini <boldloop>` and
+  :user:`Amanda Dsouza <amy12xx>`.
 
 :mod:`sklearn.naive_bayes`
 ..........................
