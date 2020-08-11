@@ -32,11 +32,6 @@ In practice, both methods will generally order features similarly in terms
 of their importance in a model. However, there are some important
 differences and practical considerations when using the methods, which are
 outlined below.
-
-.. topic:: References:
-
-   [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32,
-       2001. https://doi.org/10.1023/A:1010933404324
 """
 
 # %%
@@ -268,25 +263,67 @@ shap.summary_plot(shap_values, X_test)
 #
 # TreeSHAP is another variant of SHAP designed for tree-based models. It is
 # much faster than KernalSHAP and uses conditional expectation instead of
-# the marginal expectation. For a single tree, the expectation conditioned
+# marginal expectation. For a single tree, the expectation conditioned
 # on a subset of features is the average value of all 'reachable' nodes,
 # weighted by the number of samples in each node. 'Reachable' means
 # nodes that are not contradicted by the values of the features present.
-# For example, if a node split on a feature that was missing, both child
-# nodes would be reachable. Conversely, if a node split on a feature
-# that is present, only the child that satisfies the split is 'reachable'.
-# The difference between the conditional expectation of feature subsets
-# with and without the feature of interest is used to estimate the
+# For example, if a node splits on a feature that is missing, both child
+# nodes are reachable. Conversely, if a node splits on a feature
+# that is present, only the child that satisfies the split condition is
+# 'reachable'. The difference between the conditional expectation of feature
+# subsets with and without the feature of interest is used to estimate
 # Shapley values.
 #
 # The major advantage of TreeSHAP is it's speed. Compared to KernalSHAP,
 # which computes Shapley values in exponential time, TreeSHAP does this
-# in polynomial time. The Shapley values estimated can be problematic though.
-# Features that do not affect the prediction can get a non-zero TreeSHAP
-# Shapley value. This happens when the feature of no importance is
-# correlated with another feature that has influence on the prediction.
+# in polynomial time.
+#
+# Below we calculate Shapley values using ``TreeExplainer``. We do not have
+# to provide a 'background' dataset as the model can use the number of
+# training samples at each node/leaf of the tree. This information is
+# stored in the tree model.
 
 explainer = shap.TreeExplainer(reg)
 shap_values = explainer.shap_values(X_test)
 
 shap.summary_plot(shap_values, X_test)
+
+# %%
+# Note that the order of features is exactly the same as that calculated
+# with KernalShap. TreeSHAP is able to calculate Shapley values much faster
+# though.
+#
+# TreeSHAP Shapley values do have some problems:
+#
+# * It is sensitive to the degree of sparsity, which often arises when
+#   features are continuous. This means that the calucalted Shapley values
+#   "are very sensitive to noise in the data".
+# * A 'dummy' feature, which is not used by the model but is correlated
+#   to a 'useful' feature, can have a non-zero Shapley value.
+#
+# References
+# ----------
+#
+# .. topic:: References:
+#
+#   .. [1] Lundberg, Scott M., and Su-In Lee. `"A unified approach to
+#          interpreting model predictions."
+#          <https://arxiv.org/pdf/1903.10464.pdf>`_ Advances in Neural
+#          Information Processing Systems. 2017.
+#   .. [2] Lundberg, Scott M., Gabriel G. Erion, and Su-In Lee. `"Consistent
+#          individualized feature attribution for tree ensembles."
+#          <https://arxiv.org/pdf/1802.03888.pdf>`_ arXiv
+#          preprint arXiv:1802.03888 (2018).
+#   .. [3] Sundararajan, Mukund, and Amir Najmi. `"The many Shapley values
+#          for model explanation."
+#          <https://arxiv.org/pdf/1908.08474.pdf>` arXiv preprint
+#          arXiv:1908.08474 (2019).
+#   .. [4] Aas, Kjersti, Martin Jullum, and Anders Løland. `"Explaining
+#          individual predictions when features are dependent: More accurate
+#          approximations to Shapley values."
+#          <https://arxiv.org/pdf/1903.10464.pdf>`_ arXiv preprint
+#          arXiv:1903.10464 (2019).
+#   .. [5] Molnar, Christoph. "Interpretable machine learning. A Guide for
+#          Making Black Box Models Explainable", 2019.
+#          https://christophm.github.io/interpretable-ml-book/
+#
