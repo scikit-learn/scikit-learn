@@ -577,19 +577,15 @@ def make_scorer(score_func, *, greater_is_better=True, needs_proba=False,
     `needs_threshold=True`, the score function is supposed to accept the
     output of :term:`decision_function`.
     """
-    if isinstance(score_func, str):
-        base_scorer = get_scorer(score_func)
-        return base_scorer.__class__(
-            score_func=base_scorer._score_func,
-            sign=base_scorer._sign,
-            kwargs=kwargs
+    if isinstance(score_func, (str, _BaseScorer)):
+        base_scorer = (
+            get_scorer(score_func)
+            if isinstance(score_func, str)
+            else score_func
         )
-    elif isinstance(score_func, _BaseScorer):
-        return score_func.__class__(
-            score_func=score_func._score_func,
-            sign=score_func._sign,
-            kwargs=kwargs
-        )
+        cls = base_scorer.__class__
+        score_func = base_scorer._score_func
+        sign = base_scorer._sign
     else:
         sign = 1 if greater_is_better else -1
         if needs_proba and needs_threshold:
@@ -603,7 +599,7 @@ def make_scorer(score_func, *, greater_is_better=True, needs_proba=False,
             cls = _ThresholdScorer
         else:
             cls = _PredictScorer
-        return cls(score_func, sign, kwargs)
+    return cls(score_func, sign, kwargs)
 
 
 # Standard regression scores
