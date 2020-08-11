@@ -182,11 +182,13 @@ conda create -n $CONDA_ENV_NAME --yes --quiet \
 source activate testenv
 pip install sphinx-gallery
 pip install numpydoc
-pip install shap
 
 # Build and install scikit-learn in dev mode
 python setup.py build_ext --inplace -j 3
 python setup.py develop
+
+# Install after scikit-learn to avoid circular import
+pip install shap
 
 export OMP_NUM_THREADS=1
 
