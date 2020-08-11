@@ -1538,14 +1538,14 @@ Here is a small example of usage of this function:::
 
 The Brier score can be used to assess how well a classifier is calibrated
 however, a lower Brier score does not always mean a better calibration.
-This is because the Brier score is a combination of calibration
-loss and refinement loss. Calibration loss is defined as the mean squared
+This is because the Brier score can be decomposed as the sum of calibration
+loss and refinement loss [3]_. Calibration loss is defined as the mean squared
 deviation from empirical probabilities derived from the slope of ROC segments.
 Refinement loss can be defined as the expected optimal loss as measured by
 the area under the optimal cost curve. Refinement loss can change
 independently from calibration loss, thus a lower Brier score does not
-necessarily mean a better calibrated model. Only when refinement loss remains
-the same does a lower Brier score always mean better calibration.
+necessarily mean a better calibrated model. "Only when refinement loss remains
+the same does a lower Brier score always mean better calibration" [2]_,[3]_.
 
 .. topic:: Example:
 
@@ -1555,9 +1555,19 @@ the same does a lower Brier score always mean better calibration.
 
 .. topic:: References:
 
-  * G. Brier, `Verification of forecasts expressed in terms of probability
-    <ftp://ftp.library.noaa.gov/docs.lib/htdocs/rescue/mwr/078/mwr-078-01-0001.pdf>`_,
-    Monthly weather review 78.1 (1950)
+  .. [1] G. Brier, `Verification of forecasts expressed in terms of probability
+         <ftp://ftp.library.noaa.gov/docs.lib/htdocs/rescue/mwr/078/mwr-078-01-0001.pdf>`_,
+         Monthly weather review 78.1 (1950)
+
+  .. [2] Khosrow-Pour, M. "Machine learning: concepts, methodologies, tools
+         and applications." Hershey, PA: Information Science Reference (2012).
+
+  .. [3] Flach, Peter, and Edson Matsubara. `"On classification, ranking, and
+         probability estimation."
+         <https://drops.dagstuhl.de/opus/volltexte/2008/1382/>`_ Dagstuhl
+         Seminar Proceedings. Schloss Dagstuhl-Leibniz-Zentrum fr Informatik,
+         2008.
+
 
 .. _multilabel_ranking_metrics:
 
