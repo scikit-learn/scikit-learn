@@ -283,12 +283,11 @@ plt.tight_layout()
 #
 # Below we calculate Shapley values using ``TreeExplainer``. We do not have
 # to provide a 'background' dataset as the model can use the number of
-# training samples at each node/leaf of the tree. This information is
+# training samples at each node/leaf of the tree (setting
+# ``feature_perturbation="tree_path_dependent"``). This information is
 # stored in the tree model.
 
-explainer = shap.TreeExplainer(
-    reg, feature_perturbation = "tree_path_dependent"
-)
+explainer = shap.TreeExplainer(reg, feature_perturbation="tree_path_dependent")
 shap_values = explainer.shap_values(X_test)
 
 shap.summary_plot(shap_values, X_test, show=False)
