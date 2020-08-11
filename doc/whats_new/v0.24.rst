@@ -282,7 +282,7 @@ Changelog
 
 - |Enhancement| Allow to pass a scorer or a string to create a new scorer in
   :func:`metrics.make_scorer`.
-  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`18141` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.model_selection`
 ..............................
