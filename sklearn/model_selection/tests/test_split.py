@@ -1546,7 +1546,7 @@ def test_nested_cv():
            StratifiedShuffleSplit(n_splits=3, random_state=0)]
 
     for inner_cv, outer_cv in combinations_with_replacement(cvs, 2):
-        gs = GridSearchCV(Ridge(solver="eigen"), param_grid={'alpha': [1, .1]},
+        gs = GridSearchCV(Ridge(), param_grid={'alpha': [1, .1]},
                           cv=inner_cv, error_score='raise')
         cross_val_score(gs, X=X, y=y, groups=groups, cv=outer_cv,
                         fit_params={'groups': groups})
@@ -1616,7 +1616,6 @@ def test_leave_p_out_empty_trainset():
 @pytest.mark.parametrize('Klass', (KFold, StratifiedKFold))
 def test_random_state_shuffle_false(Klass):
     # passing a non-default random_state when shuffle=False makes no sense
-    # TODO 0.24: raise a ValueError instead of a warning
-    with pytest.warns(FutureWarning,
-                      match='has no effect since shuffle is False'):
+    with pytest.raises(ValueError,
+                       match='has no effect since shuffle is False'):
         Klass(3, shuffle=False, random_state=0)

@@ -6,7 +6,6 @@
 import numpy as np
 from ..base import BaseEstimator, TransformerMixin
 from ..neighbors import NearestNeighbors, kneighbors_graph
-from ..utils.deprecation import deprecated
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _deprecate_positional_args
 from ..utils.graph import graph_shortest_path
@@ -23,13 +22,13 @@ class Isomap(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    n_neighbors : integer
+    n_neighbors : int, default=5
         number of neighbors to consider for each point.
 
-    n_components : integer
+    n_components : int, default=2
         number of coordinates for the manifold
 
-    eigen_solver : ['auto'|'arpack'|'dense'|'randomized']
+    eigen_solver : {'auto', 'arpack', 'dense', 'randomized'}, default='auto'
         'auto' : Attempt to choose the most efficient solver
         for the given problem.
 
@@ -43,11 +42,11 @@ class Isomap(TransformerMixin, BaseEstimator):
 
         .. versionchanged:: 0.24
 
-    tol : float
+    tol : float, default=0
         Convergence tolerance passed to arpack or lobpcg.
         not used if eigen_solver == 'dense'.
 
-    max_iter : integer
+    max_iter : int, default=None
         Maximum number of iterations for the arpack solver.
         not used if eigen_solver == 'dense'.
 
@@ -57,7 +56,7 @@ class Isomap(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
-    path_method : string ['auto'|'FW'|'D']
+    path_method : {'auto', 'FW', 'D'}, default='auto'
         Method to use in finding shortest path.
 
         'auto' : attempt to choose the best algorithm automatically.
@@ -66,7 +65,8 @@ class Isomap(TransformerMixin, BaseEstimator):
 
         'D' : Dijkstra's algorithm.
 
-    neighbors_algorithm : string ['auto'|'brute'|'kd_tree'|'ball_tree']
+    neighbors_algorithm : {'auto', 'brute', 'kd_tree', 'ball_tree'}, \
+                          default='auto'
         Algorithm to use for nearest neighbors search,
         passed to neighbors.NearestNeighbors instance.
 
@@ -189,16 +189,6 @@ class Isomap(TransformerMixin, BaseEstimator):
                                      n_jobs=self.n_jobs)
 
         self.embedding_ = self.kernel_pca_.fit_transform(G)
-
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `training_data_` was deprecated in version 0.22 and"
-        " will be removed in 0.24."
-    )
-    @property
-    def training_data_(self):
-        check_is_fitted(self)
-        return self.nbrs_._fit_X
 
     def reconstruction_error(self):
         """Compute the reconstruction error for the embedding.

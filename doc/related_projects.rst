@@ -41,6 +41,18 @@ enhance the functionality of scikit-learn's estimators.
   operators to design a machine learning pipeline, including data and feature
   preprocessors as well as the estimators. Works as a drop-in replacement for a
   scikit-learn estimator.
+  
+- `Featuretools <https://github.com/FeatureLabs/featuretools>`_
+  A framework to perform automated feature engineering. It can be used for 
+  transforming temporal and relational datasets into feature matrices for 
+  machine learning.
+
+- `Neuraxle <https://github.com/Neuraxio/Neuraxle>`_
+  A library for building neat pipelines, providing the right abstractions to
+  both ease research, development, and deployment of machine learning
+  applications. Compatible with deep learning frameworks and scikit-learn API,
+  it can stream minibatches, use data checkpoints, build funky pipelines, and
+  serialize models with custom per-step savers.
 
 **Experimentation frameworks**
 
@@ -146,6 +158,9 @@ and tasks.
 - `mlxtend <https://github.com/rasbt/mlxtend>`_ Includes a number of additional
   estimators as well as model visualization utilities.
 
+- `scikit-lego <https://github.com/koaning/scikit-lego>`_ A number of scikit-learn compatible 
+  custom transformers, models and metrics, focusing on solving practical industry tasks.
+
 **Other regression and classification**
 
 - `xgboost <https://github.com/dmlc/xgboost>`_ Optimised gradient boosted decision
@@ -209,6 +224,12 @@ and tasks.
 - `imbalanced-learn
   <https://github.com/scikit-learn-contrib/imbalanced-learn>`_ Various
   methods to under- and over-sample datasets.
+
+- `Feature-engine <https://github.com/solegalli/feature_engine>`_ A library
+  of sklearn compatible transformers for missing data imputation, categorical
+  encoding, variable transformation, discretization, outlier handling and more.
+  Feature-engine allows the application of preprocessing steps to selected groups
+  of variables and it is fully compatible with the Scikit-learn Pipeline.
 
 Statistical learning with Python
 --------------------------------
