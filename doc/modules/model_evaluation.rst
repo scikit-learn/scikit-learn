@@ -1505,7 +1505,7 @@ for binary classes. Quoting Wikipedia:
 This function returns a score of the mean square difference between the actual
 outcome and the predicted probability of the possible outcome. The actual
 outcome has to be 1 or 0 (true or false), while the predicted probability of
-the actual outcome can be a value between 0 and 1.
+the actual outcome can be a value between 0 and 1 [1]_.
 
 The Brier score loss is also between 0 to 1 and the lower the score (the mean
 square difference is smaller), the more accurate the prediction is. It can be
