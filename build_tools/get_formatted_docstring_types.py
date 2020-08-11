@@ -4,7 +4,7 @@ import argparse
 import inspect
 
 
-from sklearn.utils._typing import get_annotations
+from sklearn.utils._typing import get_docstring_annotations
 
 
 parser = argparse.ArgumentParser(
@@ -24,8 +24,8 @@ obj = getattr(import_module(module), obj_str)
 print("Parameters")
 print("----------")
 if inspect.isclass(obj):
-    formatted_annotations = get_annotations(obj.__init__)
+    formatted_annotations = get_docstring_annotations(obj.__init__)
 else:  # function
-    formatted_annotations = get_annotations(obj)
+    formatted_annotations = get_docstring_annotations(obj)
 for name, annotation in formatted_annotations.items():
     print(f"{name} : {annotation}")

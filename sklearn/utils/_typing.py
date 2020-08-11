@@ -1,4 +1,5 @@
 import inspect
+import numbers
 
 from typing import Union
 from typing import Any
@@ -30,7 +31,7 @@ def _get_annotation_class_name(annotation):
     return annotation.__class__.__qualname__.lstrip('_')
 
 
-def _format_annotation(annotation):
+def _format_docstring_annotation(annotation):
     """Convert annotation to docstring."""
     class_name = _get_annotation_class_name(annotation)
 
@@ -41,7 +42,7 @@ def _format_annotation(annotation):
     elif class_name == 'RandomState':
         return 'RandomState instance'
     elif class_name == 'Union':
-        values = [_format_annotation(t) for t in annotation.__args__]
+        values = [_format_docstring_annotation(t) for t in annotation.__args__]
         if len(values) == 2:
             return ' or '.join(values)
         # greater than 2
@@ -51,14 +52,14 @@ def _format_annotation(annotation):
         values = ', '.join(repr(t) for t in annotation.__args__)
         return f'{{{values}}}'
     elif class_name == 'List':
-        values = ', '.join(_format_annotation(t)
+        values = ', '.join(_format_docstring_annotation(t)
                            for t in annotation.__args__)
         return f'list of {values}'
 
     return class_name
 
 
-def get_annotations(obj):
+def get_docstring_annotations(obj):
     """Get human readable docstring for types for a obj with annotations.
 
     Parameters
@@ -81,8 +82,13 @@ def get_annotations(obj):
 
     output = {}
     for name, annotation in annotations.items():
-        anno = _format_annotation(annotation)
+        anno = _format_docstring_annotation(annotation)
         if name in defaults:
-            anno += f", default={repr(defaults[name])}"
+            default = defaults[name]
+            if (isinstance(default, numbers.Real) and
+                    not isinstance(default, numbers.Integral)):
+                anno += ", default="
+            else:
+                anno += f", default={repr(default)}"
         output[name] = anno
     return output

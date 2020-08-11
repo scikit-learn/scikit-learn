@@ -12,8 +12,8 @@ import numpy as np
 from sklearn.base import BaseEstimator
 from sklearn.utils._typing import RandomState
 from sklearn.utils._typing import _get_annotation_class_name
-from sklearn.utils._typing import _format_annotation
-from sklearn.utils._typing import get_annotations
+from sklearn.utils._typing import _format_docstring_annotation
+from sklearn.utils._typing import get_docstring_annotations
 
 
 @pytest.mark.parametrize("annotation, expected_class", [
@@ -51,24 +51,26 @@ def test_get_annotation_class_name(annotation, expected_class):
     (Literal['cat', 'dog'], '{\'cat\', \'dog\'}'),
     (RandomState, 'int, RandomState instance or None')
 ])
-def test_format_annotation(annotation, expected_str):
-    assert _format_annotation(annotation) == expected_str
+def test_format_docstring_annotation(annotation, expected_str):
+    assert _format_docstring_annotation(annotation) == expected_str
 
 
 class TestObject:
     def __init__(self,
                  estimator: BaseEstimator,
                  num: int = 10, union_num: Union[int, float] = 1.4,
+                 float_num: float = 1e-4,
                  pet: Literal['cat', 'dog'] = 'dog',
                  random_state: RandomState = None):
         pass
 
 
-def test_get_annotations():
-    annotations = get_annotations(TestObject.__init__)
+def test_get_docstring_annotations():
+    annotations = get_docstring_annotations(TestObject.__init__)
     assert annotations['estimator'] == 'estimator instance'
     assert annotations['num'] == 'int, default=10'
-    assert annotations['union_num'] == 'int or float, default=1.4'
+    assert annotations['float_num'] == 'float, default='
+    assert annotations['union_num'] == 'int or float, default='
     assert annotations['pet'] == '{\'cat\', \'dog\'}, default=\'dog\''
     assert annotations['random_state'] == ('int, RandomState instance or None'
                                            ', default=None')

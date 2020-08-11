@@ -1055,7 +1055,7 @@ class LogisticRegression(LinearClassifierMixin,
         l2 penalty with liblinear solver. Prefer dual=False when
         n_samples > n_features.
 
-    tol : float, default=0.0001
+    tol : float, default=1e-4
         Tolerance for stopping criteria.
 
     C : float, default=1.0
