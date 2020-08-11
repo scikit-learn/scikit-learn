@@ -558,6 +558,8 @@ def make_scorer(score_func, *, greater_is_better=True, needs_proba=False,
 
     Examples
     --------
+    You can create a scorer from a callable function:
+
     >>> from sklearn.metrics import fbeta_score, make_scorer
     >>> ftwo_scorer = make_scorer(fbeta_score, beta=2)
     >>> ftwo_scorer
@@ -566,6 +568,23 @@ def make_scorer(score_func, *, greater_is_better=True, needs_proba=False,
     >>> from sklearn.svm import LinearSVC
     >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]},
     ...                     scoring=ftwo_scorer)
+
+    Otherwise, you can use a string avoiding to pass the parameters required
+    by `make_scorer`:
+
+    >>> from sklearn.datasets import load_breast_cancer
+    >>> X, y = load_breast_cancer(return_X_y=True)
+    >>> roc_auc_scorer = make_scorer("roc_auc")
+    >>> clf = LinearSVC().fit(X, y)
+    >>> roc_auc_scorer(clf, X, y)
+    0.98...
+
+    Similarly, you can use a scorer obtained with :func:`get_scorer`:
+
+    >>> from sklearn.metrics import get_scorer
+    >>> roc_auc_scorer = get_scorer("roc_auc")
+    >>> roc_auc_scorer(clf, X, y)
+    0.98...
 
     Notes
     -----
