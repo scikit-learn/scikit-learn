@@ -656,7 +656,7 @@ cdef class Tree:
         if (node_ndarray.dtype != NODE_DTYPE):
             # possible mismatch of big/little endian due to serialization
             # on a different architecture. Try swapping the byte order.  
-            node_ndarray = node_ndarray.byteswap().newbyteorder();
+            node_ndarray = node_ndarray.byteswap().newbyteorder()
             if (node_ndarray.dtype != NODE_DTYPE):
                 raise ValueError('Did not recognise loaded array dytpe')
 
