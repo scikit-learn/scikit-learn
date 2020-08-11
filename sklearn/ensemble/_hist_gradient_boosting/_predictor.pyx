@@ -21,6 +21,7 @@ from .common cimport node_struct
 np.import_array()
 
 
+@cython.final
 cdef class TreePredictor:
     """Tree class used for predictions.
 
