@@ -12,16 +12,16 @@ Logistic Regression
 
 import numbers
 import warnings
+from typing import Union
+from typing import Optional
+from typing_extensions import Literal
 
 import numpy as np
 from scipy import optimize, sparse
 from scipy.special import expit, logsumexp
 from joblib import Parallel, delayed, effective_n_jobs
 
-from ..utils._typing import Literal
 from ..utils._typing import RandomState
-from typing import Union
-from typing import Optional
 from ._base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
 from ._sag import sag_solver
 from ..preprocessing import LabelEncoder, LabelBinarizer

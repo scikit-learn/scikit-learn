@@ -2,7 +2,6 @@ import inspect
 
 from typing import Union
 from typing import Any
-from typing_extensions import Literal  # noqa
 
 import numpy as np
 
