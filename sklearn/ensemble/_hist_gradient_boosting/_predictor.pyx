@@ -21,8 +21,55 @@ from .common cimport node_struct
 np.import_array()
 
 
+cdef class PredictorNodes:
+    def __init__(self, int node_cnt):
+        self._nodes.resize(node_cnt)
+
+    cdef node_struct* get(self, int node_idx) nogil:
+        return &self._nodes[node_idx]
+
+    cdef int get_size(self) nogil:
+        return self._nodes.size()
+
+    @property
+    def nodes(self):
+        return self._nodes
+
+    def get_n_leaf_nodes(self):
+        cdef:
+            int n_leaf_nodes = 0
+            node_struct node
+
+        for node in self._nodes:
+            n_leaf_nodes += node.is_leaf
+        return n_leaf_nodes
+
+    def get_max_depth(self):
+        cdef:
+            int max_depth = 0
+            node_struct node
+
+        for node in self._nodes:
+            if node.depth > max_depth:
+                max_depth = node.depth
+        return max_depth
+
+    def _set_node(self, int node_idx, unsigned int left=0,
+                  unsigned int right=0, Y_DTYPE_C value=0.,
+                  unsigned char is_leaf=False,
+                  unsigned int feature_idx=0, X_DTYPE_C threshold=0.0):
+        cdef:
+            node_struct * node = &self._nodes[node_idx]
+        node.left = left
+        node.right = right
+        node.value = value
+        node.feature_idx = feature_idx
+        node.threshold = threshold
+        node.is_leaf = is_leaf
+
+
 def _predict_from_numeric_data(
-        node_struct [:] nodes,
+        PredictorNodes nodes,
         const X_DTYPE_C [:, :] numeric_data,
         Y_DTYPE_C [:] out):
 
@@ -34,14 +81,14 @@ def _predict_from_numeric_data(
 
 
 cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
-        node_struct [:] nodes,
+        PredictorNodes nodes,
         const X_DTYPE_C [:, :] numeric_data,
         const int row) nogil:
     # Need to pass the whole array and the row index, else prange won't work.
     # See issue Cython #2798
 
     cdef:
-        node_struct node = nodes[0]
+        node_struct * node = nodes.get(0)
 
     while True:
         if node.is_leaf:
@@ -49,18 +96,18 @@ cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
 
         if isnan(numeric_data[row, node.feature_idx]):
             if node.missing_go_to_left:
-                node = nodes[node.left]
+                node = nodes.get(node.left)
             else:
-                node = nodes[node.right]
+                node = nodes.get(node.right)
         else:
             if numeric_data[row, node.feature_idx] <= node.threshold:
-                node = nodes[node.left]
+                node = nodes.get(node.left)
             else:
-                node = nodes[node.right]
+                node = nodes.get(node.right)
 
 
 def _predict_from_binned_data(
-        node_struct [:] nodes,
+        PredictorNodes nodes,
         const X_BINNED_DTYPE_C [:, :] binned_data,
         const unsigned char missing_values_bin_idx,
         Y_DTYPE_C [:] out):
@@ -74,7 +121,7 @@ def _predict_from_binned_data(
 
 
 cdef inline Y_DTYPE_C _predict_one_from_binned_data(
-        node_struct [:] nodes,
+        PredictorNodes nodes,
         const X_BINNED_DTYPE_C [:, :] binned_data,
         const int row,
         const unsigned char missing_values_bin_idx) nogil:
@@ -82,24 +129,24 @@ cdef inline Y_DTYPE_C _predict_one_from_binned_data(
     # See issue Cython #2798
 
     cdef:
-        node_struct node = nodes[0]
+        node_struct * node = nodes.get(0)
 
     while True:
         if node.is_leaf:
             return node.value
         if binned_data[row, node.feature_idx] ==  missing_values_bin_idx:
             if node.missing_go_to_left:
-                node = nodes[node.left]
+                node = nodes.get(node.left)
             else:
-                node = nodes[node.right]
+                node = nodes.get(node.right)
         else:
             if binned_data[row, node.feature_idx] <= node.bin_threshold:
-                node = nodes[node.left]
+                node = nodes.get(node.left)
             else:
-                node = nodes[node.right]
+                node = nodes.get(node.right)
 
 def _compute_partial_dependence(
-    node_struct [:] nodes,
+    PredictorNodes nodes,
     const X_DTYPE_C [:, ::1] X,
     int [:] target_features,
     Y_DTYPE_C [:] out):
@@ -120,8 +167,8 @@ def _compute_partial_dependence(
 
     Parameters
     ----------
-    nodes : view on array of PREDICTOR_RECORD_DTYPE, shape (n_nodes)
-        The array representing the predictor tree.
+    nodes : PredictorNodes
+        Object represent the predictor tree.
     X : view on 2d ndarray, shape (n_samples, n_target_features)
         The grid points on which the partial dependence should be
         evaluated.
@@ -135,9 +182,9 @@ def _compute_partial_dependence(
 
     cdef:
         unsigned int current_node_idx
-        unsigned int [:] node_idx_stack = np.zeros(shape=nodes.shape[0],
+        unsigned int [:] node_idx_stack = np.zeros(shape=nodes.get_size(),
                                                    dtype=np.uint32)
-        Y_DTYPE_C [::1] weight_stack = np.zeros(shape=nodes.shape[0],
+        Y_DTYPE_C [::1] weight_stack = np.zeros(shape=nodes.get_size(),
                                                 dtype=Y_DTYPE)
         node_struct * current_node  # pointer to avoid copying attributes
 
@@ -161,7 +208,7 @@ def _compute_partial_dependence(
             # pop the stack
             stack_size -= 1
             current_node_idx = node_idx_stack[stack_size]
-            current_node = &nodes[current_node_idx]
+            current_node = nodes.get(current_node_idx)
 
             if current_node.is_leaf:
                 out[sample_idx] += (weight_stack[stack_size] *
@@ -190,7 +237,7 @@ def _compute_partial_dependence(
                     # push left child
                     node_idx_stack[stack_size] = current_node.left
                     left_sample_frac = (
-                        <Y_DTYPE_C> nodes[current_node.left].count /
+                        <Y_DTYPE_C> nodes.get(current_node.left).count /
                         current_node.count)
                     current_weight = weight_stack[stack_size]
                     weight_stack[stack_size] = current_weight * left_sample_frac

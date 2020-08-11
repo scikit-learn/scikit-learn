@@ -157,8 +157,9 @@ def test_predictor_from_grower():
     # Check that the node structure can be converted into a predictor
     # object to perform predictions at scale
     predictor = grower.make_predictor()
-    assert predictor.nodes.shape[0] == 5
-    assert predictor.nodes['is_leaf'].sum() == 3
+    nodes = predictor.nodes
+    assert len(nodes) == 5
+    assert sum(node['is_leaf'] for node in nodes) == 3
 
     # Probe some predictions for each leaf of the tree
     # each group of 3 samples corresponds to a condition in _make_training_data
@@ -225,9 +226,10 @@ def test_min_samples_leaf(n_samples, min_samples_leaf, n_bins,
             if node['is_leaf']:
                 assert node['count'] >= min_samples_leaf
     else:
-        assert predictor.nodes.shape[0] == 1
-        assert predictor.nodes[0]['is_leaf']
-        assert predictor.nodes[0]['count'] == n_samples
+        nodes = predictor.nodes
+        assert len(nodes) == 1
+        assert nodes[0]['is_leaf']
+        assert nodes[0]['count'] == n_samples
 
 
 @pytest.mark.parametrize('n_samples, min_samples_leaf', [

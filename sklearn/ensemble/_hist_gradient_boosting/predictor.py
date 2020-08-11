@@ -16,19 +16,23 @@ class TreePredictor:
 
     Parameters
     ----------
-    nodes : ndarray of PREDICTOR_RECORD_DTYPE
+    nodes : PredictorNodes
         The nodes of the tree.
     """
     def __init__(self, nodes):
-        self.nodes = nodes
+        self._nodes = nodes
+
+    @property
+    def nodes(self):
+        return self._nodes.nodes
 
     def get_n_leaf_nodes(self):
         """Return number of leaves."""
-        return int(self.nodes['is_leaf'].sum())
+        return self._nodes.get_n_leaf_nodes()
 
     def get_max_depth(self):
         """Return maximum depth among all leaves."""
-        return int(self.nodes['depth'].max())
+        return self._nodes.get_max_depth()
 
     def predict(self, X):
         """Predict raw values for non-binned data.
@@ -44,7 +48,7 @@ class TreePredictor:
             The raw predicted values.
         """
         out = np.empty(X.shape[0], dtype=Y_DTYPE)
-        _predict_from_numeric_data(self.nodes, X, out)
+        _predict_from_numeric_data(self._nodes, X, out)
         return out
 
     def predict_binned(self, X, missing_values_bin_idx):
@@ -65,7 +69,7 @@ class TreePredictor:
             The raw predicted values.
         """
         out = np.empty(X.shape[0], dtype=Y_DTYPE)
-        _predict_from_binned_data(self.nodes, X, missing_values_bin_idx, out)
+        _predict_from_binned_data(self._nodes, X, missing_values_bin_idx, out)
         return out
 
     def compute_partial_dependence(self, grid, target_features, out):
@@ -83,4 +87,4 @@ class TreePredictor:
             The value of the partial dependence function on each grid
             point.
         """
-        _compute_partial_dependence(self.nodes, grid, target_features, out)
+        _compute_partial_dependence(self._nodes, grid, target_features, out)
