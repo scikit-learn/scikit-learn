@@ -603,7 +603,10 @@ def test_regressor_chain_w_fit_params():
         assert est.sample_weight_ is weight
 
 
-def test_classifier_chain_tuple_order():
+@pytest.mark.parametrize(
+    'y_type', [list, np.array, tuple], ids=['list', 'ndarray', 'tuple']
+)
+def test_classifier_chain_tuple_order(y_type):
     X = [[1, 2, 3], [4, 5, 6], [1.5, 2.5, 3.5]]
     y = [[3, 2], [2, 3], [3, 2]]
     order = [1, 0]
