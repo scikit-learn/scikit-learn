@@ -24,7 +24,7 @@ for individual samples. The average of these contributions across samples
 can then be used to indicate the 'importance' of a feature in a model.
 Several versions of SHAP are implemented in the Python library
 `SHAP <https://github.com/slundberg/shap>`_. In this example we will discuss
-the use of KernalSHAP [1]_ and TreeSHAP [2]_, both of which support
+the use of KernelSHAP [1]_ and TreeSHAP [2]_, both of which support
 scikit-learn estimators.
 
 In practice, both methods will generally order features similarly in terms
@@ -150,10 +150,10 @@ plt.show()
 #   :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance_multicollinear.py`
 #   for an example of this.
 #
-# KernalSHAP
+# KernelSHAP
 # ^^^^^^^^^^^
 #
-# KernalSHAP is a kernal-based method to estimate Shapley values for
+# KernelSHAP is a kernel-based method to estimate Shapley values for
 # individual samples.
 # First, it calculates the predictions for a sample when different subsets of
 # the features are 'missing'. Missingness is simulated by using a 'background'
@@ -177,7 +177,7 @@ plt.show()
 # increases. However, this does enable SHAP to account for interaction effects
 # between features.
 #
-# First, we will instantiate ``KernalSHAP`` using our fitted regressor,
+# First, we will instantiate ``KernelSHAP`` using our fitted regressor,
 # ``reg`` and some background data, which will be used to simulate missingness.
 # If your dataset is small (e.g., training data is <100 samples) you can use
 # the whole training subset for the background data. Our data is larger than
@@ -267,7 +267,7 @@ plt.tight_layout()
 # ^^^^^^^^
 #
 # TreeSHAP is another variant of SHAP designed for tree-based models. It is
-# much faster than KernalSHAP and uses conditional expectation instead of
+# much faster than KernelSHAP and uses conditional expectation instead of
 # marginal expectation. For a single tree, the expectation conditioned
 # on a subset of features is the average value of all 'reachable' nodes,
 # weighted by the number of samples in each node. 'Reachable' means
@@ -279,7 +279,7 @@ plt.tight_layout()
 # subsets with and without the feature of interest is used to estimate
 # Shapley values.
 #
-# The major advantage of TreeSHAP is it's speed. Compared to KernalSHAP,
+# The major advantage of TreeSHAP is it's speed. Compared to KernelSHAP,
 # which computes Shapley values in exponential time, TreeSHAP does this
 # in polynomial time [2]_.
 #
@@ -288,7 +288,7 @@ plt.tight_layout()
 # training samples at each node/leaf of the tree. This information is
 # stored in the tree model. Note that the background dataset is used
 # differently here. Here it provides the distribution of the features used
-# to calculated expected values.-
+# to calculated expected values.
 
 explainer = shap.TreeExplainer(reg, feature_perturbation="tree_path_dependent")
 shap_values = explainer.shap_values(X_test)
@@ -298,7 +298,7 @@ plt.tight_layout()
 
 # %%
 # Note that the order of features is exactly the same as that calculated
-# with KernalShap. TreeSHAP is able to calculate Shapley values much faster
+# with KernelShap. TreeSHAP is able to calculate Shapley values much faster
 # though.
 #
 # TreeSHAP Shapley values do have some problems:
