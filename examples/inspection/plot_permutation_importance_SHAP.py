@@ -189,7 +189,7 @@ plt.show()
 
 import shap
 
-med = X_train.median().values.reshape((1,X_train.shape[1]))
+med = X_train.median().values.reshape((1, X_train.shape[1]))
 explainer = shap.KernelExplainer(reg.predict, med)
 
 # %%
@@ -326,4 +326,3 @@ shap.summary_plot(shap_values, X_test)
 #   .. [5] Molnar, Christoph. "Interpretable machine learning. A Guide for
 #          Making Black Box Models Explainable", 2019.
 #          https://christophm.github.io/interpretable-ml-book/
-#
