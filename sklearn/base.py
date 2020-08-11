@@ -20,7 +20,6 @@ from .utils.validation import check_array
 from .utils._estimator_html_repr import estimator_html_repr
 from .utils.validation import _deprecate_positional_args
 
-
 _DEFAULT_TAGS = {
     'non_deterministic': False,
     'requires_positive_X': False,
