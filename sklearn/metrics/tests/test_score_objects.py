@@ -767,7 +767,7 @@ def fitted_clf_predictions():
     from sklearn.utils import shuffle
 
     X, y = load_breast_cancer(return_X_y=True)
-    # create an highly imbalanced
+    # create an highly imbalanced classification task
     idx_positive = np.flatnonzero(y == 1)
     idx_negative = np.flatnonzero(y == 0)
     idx_selected = np.hstack([idx_negative, idx_positive[:25]])
