@@ -19,6 +19,7 @@ cdef packed struct hist_struct:
 
 
 cdef packed struct node_struct:
+    # struct for predictor tree nodes
     Y_DTYPE_C value
     unsigned int count
     unsigned int feature_idx

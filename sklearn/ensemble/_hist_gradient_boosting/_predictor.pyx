@@ -27,24 +27,19 @@ cdef class TreePredictor:
 
     Parameters
     ----------
-    nodes_cnt : int
+    n_nodes : int
         Number of nodes in tree.
     """
-    def __init__(self, int node_cnt):
-        self._nodes.resize(node_cnt)
+    def __init__(self, int n_nodes):
+        self.nodes.resize(n_nodes)
 
     cdef node_struct* get(self, int node_idx) nogil:
         """Get reference to node."""
-        return &self._nodes[node_idx]
+        return &self.nodes[node_idx]
 
-    cdef int get_size(self) nogil:
+    cdef int get_n_nodes(self) nogil:
         """Get number of nodes in tree."""
-        return self._nodes.size()
-
-    @property
-    def nodes(self):
-        """Return nodes as a list of dicts."""
-        return self._nodes
+        return self.nodes.size()
 
     def get_n_leaf_nodes(self):
         """Return number of leaves."""
@@ -52,7 +47,7 @@ cdef class TreePredictor:
             int n_leaf_nodes = 0
             node_struct node
 
-        for node in self._nodes:
+        for node in self.nodes:
             n_leaf_nodes += node.is_leaf
         return n_leaf_nodes
 
@@ -62,12 +57,11 @@ cdef class TreePredictor:
             int max_depth = 0
             node_struct node
 
-        for node in self._nodes:
-            if node.depth > max_depth:
-                max_depth = node.depth
+        for node in self.nodes:
+            max_depth = max(node.depth, max_depth)
         return max_depth
 
-    def predict(self, X):
+    def predict(self, const X_DTYPE_C [:, :] X):
         """Predict raw values for non-binned data.
 
         Parameters
@@ -80,11 +74,16 @@ cdef class TreePredictor:
         y : ndarray, shape (n_samples,)
             The raw predicted values.
         """
-        out = np.empty(X.shape[0], dtype=Y_DTYPE)
-        _predict_from_numeric_data(self, X, out)
-        return out
+        cdef:
+            int i
+            Y_DTYPE_C [:] out = np.empty(X.shape[0], dtype=Y_DTYPE)
 
-    def predict_binned(self, X, missing_values_bin_idx):
+        for i in prange(X.shape[0], schedule='static', nogil=True):
+            out[i] = _predict_one_from_numeric_data(self, X, i)
+        return np.asarray(out)
+
+    def predict_binned(self, const X_BINNED_DTYPE_C [:, :] X,
+                       const unsigned char missing_values_bin_idx):
         """Predict raw values for binned data.
 
         Parameters
@@ -101,9 +100,14 @@ cdef class TreePredictor:
         y : ndarray, shape (n_samples,)
             The raw predicted values.
         """
-        out = np.empty(X.shape[0], dtype=Y_DTYPE)
-        _predict_from_binned_data(self, X, missing_values_bin_idx, out)
-        return out
+        cdef:
+            int i
+            Y_DTYPE_C [:] out = np.empty(X.shape[0], dtype=Y_DTYPE)
+
+        for i in prange(X.shape[0], schedule='static', nogil=True):
+            out[i] = _predict_one_from_binned_data(self, X, i,
+                                                   missing_values_bin_idx)
+        return np.asarray(out)
 
     def compute_partial_dependence(self, grid, target_features, out):
         """Fast partial dependence computation.
@@ -126,27 +130,15 @@ cdef class TreePredictor:
                   unsigned int right=0, Y_DTYPE_C value=0.,
                   unsigned char is_leaf=False,
                   unsigned int feature_idx=0, X_DTYPE_C threshold=0.0):
-        """Used for testing purposes."""
+        """Used for testing for setting the value of a node."""
         cdef:
-            node_struct * node = &self._nodes[node_idx]
+            node_struct * node = &self.nodes[node_idx]
         node.left = left
         node.right = right
         node.value = value
         node.feature_idx = feature_idx
         node.threshold = threshold
         node.is_leaf = is_leaf
-
-
-def _predict_from_numeric_data(
-        TreePredictor tree,
-        const X_DTYPE_C [:, :] numeric_data,
-        Y_DTYPE_C [:] out):
-
-    cdef:
-        int i
-
-    for i in prange(numeric_data.shape[0], schedule='static', nogil=True):
-        out[i] = _predict_one_from_numeric_data(tree, numeric_data, i)
 
 
 cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
@@ -173,21 +165,6 @@ cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
                 node = tree.get(node.left)
             else:
                 node = tree.get(node.right)
-
-
-def _predict_from_binned_data(
-        TreePredictor tree,
-        const X_BINNED_DTYPE_C [:, :] binned_data,
-        const unsigned char missing_values_bin_idx,
-        Y_DTYPE_C [:] out):
-
-    cdef:
-        int i
-
-    for i in prange(binned_data.shape[0], schedule='static', nogil=True):
-        out[i] = _predict_one_from_binned_data(tree, binned_data, i,
-                                               missing_values_bin_idx)
-
 
 cdef inline Y_DTYPE_C _predict_one_from_binned_data(
         TreePredictor tree,
@@ -237,7 +214,7 @@ def _compute_partial_dependence(
     Parameters
     ----------
     tree : TreePredictor
-        Object represent the predictor tree.
+        Object representing the predictor tree.
     X : view on 2d ndarray, shape (n_samples, n_target_features)
         The grid points on which the partial dependence should be
         evaluated.
@@ -251,9 +228,9 @@ def _compute_partial_dependence(
 
     cdef:
         unsigned int current_node_idx
-        unsigned int [:] node_idx_stack = np.zeros(shape=tree.get_size(),
+        unsigned int [:] node_idx_stack = np.zeros(shape=tree.get_n_nodes(),
                                                    dtype=np.uint32)
-        Y_DTYPE_C [::1] weight_stack = np.zeros(shape=tree.get_size(),
+        Y_DTYPE_C [::1] weight_stack = np.zeros(shape=tree.get_n_nodes(),
                                                 dtype=Y_DTYPE)
         node_struct * current_node  # pointer to avoid copying attributes
 
