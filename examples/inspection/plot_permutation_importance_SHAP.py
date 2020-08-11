@@ -168,7 +168,7 @@ plt.show()
 # where :math:`g(z')` is the explanatory model, :math:`\phi_0` is the model
 # prediction when all features are 'missing', :math:`M` is the number of
 # possible subset sizes (n_features - 1), :math:`z'\in\{0,1\}^M`
-# (denotes the presence or absence of a feature) and :math:`\phi_i` is the
+# (denotes the presence or absence of each feature) and :math:`\phi_i` is the
 # estimated Shapley value.
 #
 # This is much more computationally expensive than permutation importance
@@ -193,7 +193,7 @@ explainer = shap.KernelExplainer(reg.predict, med)
 
 # %%
 # ``explainer`` stores various information about the data as attributes. Of
-# interest is ``expected_value``. This represents :math:`phi_0` in our
+# interest is ``expected_value``. This represents :math:`\phi_0` in our
 # equation above.
 
 explainer.expected_value
@@ -207,14 +207,16 @@ explainer.expected_value
 reg.predict(med)
 
 # %%
-# Next we will calculate Shapley values using the testing subset, the
+# Next we will calculate Shapley values using the testing subset This is the
 # computationally expensive step.
 
 shap_values = explainer.shap_values(X_test, l1_reg='aic')
 
 # %%
 # Let's look at the Shapley values of one sample. There are 8 Shapley values,
-# one for each feature.
+# one for each feature. '0' means that the feature did not contribute to the
+# prediction output. A negative value 'pushes' the prediction lower and a
+# positive value pushes the prediction higher.
 
 shap_values[0, :]
 
@@ -224,7 +226,7 @@ shap_values[0, :]
 # (depending on how well the linear model was able to be fit).
 
 print(f'The sum of Shapley values: {shap_values[0, :].sum()}')
-prediction = reg.predict(X_test.iloc[0, :].values.reshape(1, -1))
+prediction = reg.predict(X_test.iloc[0, :].values.reshape(1, -1))[0]
 print(f'Difference between prediction and expected value: '
       f'{prediction - explainer.expected_value}')
 
@@ -257,7 +259,7 @@ plt.tight_layout()
 #
 # * The method is very computationally expensive, especially when there
 #   are a large number of features.
-# * This method also assumes independence between features [4]. Similar to
+# * This method also assumes independence between features [4]_. Similar to
 #   permutation importance, the result is that 'contributions' will be split
 #   between correlated features.
 #
@@ -279,13 +281,14 @@ plt.tight_layout()
 #
 # The major advantage of TreeSHAP is it's speed. Compared to KernalSHAP,
 # which computes Shapley values in exponential time, TreeSHAP does this
-# in polynomial time [2].
+# in polynomial time [2]_.
 #
 # Below we calculate Shapley values using ``TreeExplainer``. We do not have
 # to provide a 'background' dataset as the model can use the number of
-# training samples at each node/leaf of the tree (setting
-# ``feature_perturbation="tree_path_dependent"``). This information is
-# stored in the tree model.
+# training samples at each node/leaf of the tree. This information is
+# stored in the tree model. Note that the background dataset is used
+# differently here. Here it provides the distribution of the features used
+# to calculated expected values.-
 
 explainer = shap.TreeExplainer(reg, feature_perturbation="tree_path_dependent")
 shap_values = explainer.shap_values(X_test)
@@ -302,9 +305,9 @@ plt.tight_layout()
 #
 # * They are sensitive to the degree of sparsity, which often arises when
 #   features are continuous. This means that the calucalted Shapley values
-#   "are very sensitive to noise in the data" [3].
+#   "are very sensitive to noise in the data" [3]_.
 # * A 'dummy' feature, which is not used by the model but is correlated
-#   to a 'useful' feature, can have a non-zero Shapley value [3].
+#   to a 'useful' feature, can have a non-zero Shapley value [3]_.
 #
 # References
 # ----------
