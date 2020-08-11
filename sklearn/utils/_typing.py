@@ -87,6 +87,8 @@ def get_docstring_annotations(obj):
             default = defaults[name]
             if (isinstance(default, numbers.Real) and
                     not isinstance(default, numbers.Integral)):
+                # For floats the representation can vary, i.e:
+                # default=np.inf or default=1e-4
                 anno += ", default="
             else:
                 anno += f", default={repr(default)}"
