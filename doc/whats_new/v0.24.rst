@@ -280,6 +280,10 @@ Changelog
   class to be used when computing the roc auc statistics.
   :pr:`17651` by :user:`Clara Matos <claramatos>`.
 
+- |Enhancement| Allow to pass a scorer or a string to create a new scorer in
+  :func:`metrics.make_scorer`.
+  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
