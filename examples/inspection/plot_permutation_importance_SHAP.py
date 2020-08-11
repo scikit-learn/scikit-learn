@@ -4,7 +4,7 @@ Permutation Importance vs SHAP
 ==============================
 
 In this example, we will compare :ref:`permutation_importance` with SHAP
-(**SH**apley **A**dditive ex**P**lanations). Both are model-agnostic
+(**SH**\ apley **A**\ dditive ex**P**\ lanations). Both are model-agnostic
 model interpretation methods used to evaluate feature importances for models
 trained on tabular data.
 
@@ -16,17 +16,16 @@ output by the model, using game theory. It is calculated as the average
 marginal contribution of each feature, across all possible feature subset
 combinations. These values satisfy a number of good properties and are thus
 deemed a fair way to 'split' the prediction output between the features (for
-more on the properties see).
+more on these properties see [1]_ and [5]_).
 These values are computationally very expensive to calculate. SHAP offers
 a way to estimate these values using an additive model that is a linear
-function of features.
-SHAP calculates of the contribution of each feature for individual samples.
-The average of these contributions across samples can then be used to
-indicate the 'importance' of a feature in a model. The authors of SHAP
-implement a number of versions it in the Python library
+function of features. SHAP calculates of the contribution of each feature
+for individual samples. The average of these contributions across samples
+can then be used to indicate the 'importance' of a feature in a model.
+Several versions of SHAP are implemented in the Python library
 `SHAP <https://github.com/slundberg/shap>`_. In this example we will discuss
-the use of KernalSHAP and TreeSHAP, both of which support scikit-learn
-estimators.
+the use of KernalSHAP [1]_ and TreeSHAP [2]_, both of which support
+scikit-learn estimators.
 
 In practice, both methods will generally order features similarly in terms
 of their importance in a model. However, there are some important
@@ -78,7 +77,7 @@ reg.fit(X_train, y_train)
 #
 # First, we will calculate permutation importances on the test subset
 # using the default score metric of
-# :class:`~sklearn.ensemble.RandomForestRegressor`, :ref:`R^2 <r2_score>`.
+# :class:`~sklearn.ensemble.RandomForestRegressor`: :ref:`R^2 <r2_score>`.
 # The values of each feature will be permuted ``n_repeats=10`` times and the
 # decrease in R^2 value for each permutation is shown below with boxplots.
 
@@ -123,7 +122,7 @@ plt.show()
 # * Permutation importances are easy to interpret and provide information on
 #   the global importance of each feature.
 # * :func:`~sklearn.inspection.permutation_importance` can accept both
-#   an estimator and a :class:`sklearn.pipeline.Pipeline`. When given a
+#   an estimator and a :class:`~sklearn.pipeline.Pipeline`. When given a
 #   pipeline (that includes feature transformations), permutations are
 #   performed on the original feature values. This means that
 #   the importances are interpretable in the original feature space. If
@@ -232,7 +231,10 @@ print(f'Difference between prediction and expected value: '
 # %%
 # We can also plot the Shapley values:
 
-shap.summary_plot(shap_values, X_test)
+import matplotlib.pyplot as plt
+
+shap.summary_plot(shap_values, X_test, show=False)
+plt.tight_layout()
 
 # %%
 # In the plot above, each dot represents the Shapley value of one sample,
@@ -255,9 +257,10 @@ shap.summary_plot(shap_values, X_test)
 #
 # * The method is very computationally expensive, especially when there
 #   are a large number of features.
-# * This method also assumes independence between features. Again, the result
-#   is that 'contributions' will be split between correlated features.
-
+# * This method also assumes independence between features [4]. Similar to
+#   permutation importance, the result is that 'contributions' will be split
+#   between correlated features.
+#
 # TreeSHAP
 # ^^^^^^^^
 #
@@ -276,17 +279,20 @@ shap.summary_plot(shap_values, X_test)
 #
 # The major advantage of TreeSHAP is it's speed. Compared to KernalSHAP,
 # which computes Shapley values in exponential time, TreeSHAP does this
-# in polynomial time.
+# in polynomial time [2].
 #
 # Below we calculate Shapley values using ``TreeExplainer``. We do not have
 # to provide a 'background' dataset as the model can use the number of
 # training samples at each node/leaf of the tree. This information is
 # stored in the tree model.
 
-explainer = shap.TreeExplainer(reg)
+explainer = shap.TreeExplainer(
+    reg, feature_perturbation = "tree_path_dependent"
+)
 shap_values = explainer.shap_values(X_test)
 
-shap.summary_plot(shap_values, X_test)
+shap.summary_plot(shap_values, X_test, show=False)
+plt.tight_layout()
 
 # %%
 # Note that the order of features is exactly the same as that calculated
@@ -295,11 +301,11 @@ shap.summary_plot(shap_values, X_test)
 #
 # TreeSHAP Shapley values do have some problems:
 #
-# * It is sensitive to the degree of sparsity, which often arises when
+# * They are sensitive to the degree of sparsity, which often arises when
 #   features are continuous. This means that the calucalted Shapley values
-#   "are very sensitive to noise in the data".
+#   "are very sensitive to noise in the data" [3].
 # * A 'dummy' feature, which is not used by the model but is correlated
-#   to a 'useful' feature, can have a non-zero Shapley value.
+#   to a 'useful' feature, can have a non-zero Shapley value [3].
 #
 # References
 # ----------
@@ -316,7 +322,7 @@ shap.summary_plot(shap_values, X_test)
 #          preprint arXiv:1802.03888 (2018).
 #   .. [3] Sundararajan, Mukund, and Amir Najmi. `"The many Shapley values
 #          for model explanation."
-#          <https://arxiv.org/pdf/1908.08474.pdf>` arXiv preprint
+#          <https://arxiv.org/pdf/1908.08474.pdf>`_ arXiv preprint
 #          arXiv:1908.08474 (2019).
 #   .. [4] Aas, Kjersti, Martin Jullum, and Anders Løland. `"Explaining
 #          individual predictions when features are dependent: More accurate
