@@ -273,20 +273,23 @@ def roc_auc_score(y_true, y_score, *, average="macro", sample_weight=None,
           **probability of the class with the greater label**,
           i.e. `estimator.classes_[1]` and thus
           `estimator.predict_proba(X, y)[:, 1]`. The decision values
-          corresponds to the output of `estimator.decision_function(X, y)`;
-        * In the multilabel case, it corresponds to an array of shape
-          (n_samples, n_classes). Probability estimates are provided by the
-          `predict_proba` method and the non-thresholded decision values by
-          the `decision_function` method. The probability estimates correspond
-          to the **probability of the class with the greater label for each
-          output** of the classifier;
+          corresponds to the output of `estimator.decision_function(X, y)`.
+          See more information in the :ref:`User guide <roc_auc_binary>`;
         * In the multiclass case, it corresponds to an array of shape
           (n_samples, n_classes) of probability estimates provided by the
           `predict_proba` method. The probability estimates **must**
           sum to 1 across the possible classes. In addition, the order of the
           class scores must correspond to the order of ``labels``,
           if provided, or else to the numerical or lexicographical order of
-          the labels in ``y_true``.
+          the labels in ``y_true``. See more information in the
+          :ref:`User guide <roc_auc_multiclass>`;
+          * In the multilabel case, it corresponds to an array of shape
+          (n_samples, n_classes). Probability estimates are provided by the
+          `predict_proba` method and the non-thresholded decision values by
+          the `decision_function` method. The probability estimates correspond
+          to the **probability of the class with the greater label for each
+          output** of the classifier. See more information in the
+          :ref:`User guide <roc_auc_multilabel>`.
 
     average : {'micro', 'macro', 'samples', 'weighted'} or None, \
             default='macro'
@@ -402,7 +405,9 @@ def roc_auc_score(y_true, y_score, *, average="macro", sample_weight=None,
     >>> clf = MultiOutputClassifier(clf).fit(X, y)
     >>> roc_auc_score(
     ...     y,
-    ...     np.transpose([y_pred[:, 1] for y_pred in clf.predict_proba(X)]),
+    ...     np.transpose([
+    ...         y_pred[:, 1] for y_pred in clf.predict_proba(X)
+    ...     ]),
     ...     average=None
     ... )
     array([0.82..., 0.86..., 0.94..., 0.85... , 0.94...])
