@@ -538,7 +538,7 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, l1_reg_W=0,
 
 
 def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
-                             H_sum=None, HHt=None, XHt=None, update_H=True):
+                             H_sum=None, HHt=None, XHt=None, update_H=False):
     """update W in Multiplicative Update NMF"""
     if beta_loss == 2:
         # Numerator
@@ -616,6 +616,12 @@ def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
                 WHHt = np.dot(WH, H.T)
             denominator = WHHt
 
+    print("numerator\n")
+    print(numerator)
+
+    print("denominator:\n")
+    print(denominator)
+
     # Add L1 and L2 regularization
     if l1_reg_W > 0:
         denominator += l1_reg_W
@@ -638,6 +644,7 @@ def _multiplicative_update_h(X, W, H, A, B,
     H_old = H.copy()
     H_old[H_old == 0] = EPSILON
 
+    print("H!!!!")
     """update H in Multiplicative Update NMF"""
     if beta_loss == 2:
         numerator = safe_sparse_dot(W.T, X)
@@ -735,7 +742,7 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
                                batch_size=1024,
                                max_iter=200, tol=1e-4,
                                l1_reg_W=0, l1_reg_H=0, l2_reg_W=0, l2_reg_H=0,
-                               update_H=True, verbose=0):
+                               update_H=False, verbose=0):
     """Compute Non-negative Matrix Factorization with Multiplicative Update
 
     The objective function is _beta_divergence(X, WH) and is minimized with an
@@ -834,6 +841,7 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
 
     # used for the convergence criterion
     error_at_init = _beta_divergence(X, W, H, beta_loss, square_root=True)
+    print("Error at init " + str(error_at_init))
     previous_error = error_at_init
 
     H_sum, HHt, XHt = None, None, None
@@ -849,39 +857,45 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
                     X[slice], W[slice], H, beta_loss, l1_reg_W, l2_reg_W,
                     gamma, H_sum, HHt, XHt, update_H)
                 W[slice] *= delta_W
-            # necessary for stability with beta_loss < 1
-            if beta_loss < 1:
-                W[slice][W[slice] < np.finfo(np.float64).eps] = 0.
+                print("delta_W:\n")
+                print(delta_W)
+                # necessary for stability with beta_loss < 1
+                if beta_loss < 1:
+                    W[slice][W[slice] < np.finfo(np.float64).eps] = 0.
 
-            # update H
-            if update_H:
-                for j in range(max_iter_update_h_):
-                    H, A, B = _multiplicative_update_h(X[slice],
-                                                             W[slice], H, A, B,
-                                                             beta_loss,
-                                                             l1_reg_H,
-                                                             l2_reg_H, gamma)
+                # update H
+                if update_H:
+                    for j in range(max_iter_update_h_):
+                        H, A, B = _multiplicative_update_h(X[slice],
+                                                           W[slice], H, A, B,
+                                                           beta_loss,
+                                                           l1_reg_H,
+                                                           l2_reg_H, gamma)
                     #H *= delta_H
 
-                # These values will be recomputed since H changed
-                H_sum, HHt, XHt = None, None, None
+                        # These values will be recomputed since H changed
+                        H_sum, HHt, XHt = None, None, None
 
-                # necessary for stability with beta_loss < 1
-                if beta_loss <= 1:
-                    H[H < np.finfo(np.float64).eps] = 0.
+                        # necessary for stability with beta_loss < 1
+                        if beta_loss <= 1:
+                            H[H < np.finfo(np.float64).eps] = 0.
 
         n_iter += i
  
         # test convergence criterion every 10 iterations
-        if tol > 0 and n_iter % 10 == 0:
+        if tol > 0 and n_iter % 1 == 0:
             error = _beta_divergence(X, W, H, beta_loss,
                                      square_root=True)
+            #print("W :")
+            #print(W)
+            print("Error " + str(error))
             if verbose:
                 iter_time = time.time()
                 print("Epoch %02d reached after %.3f seconds, error: %f" %
                       (n_iter, iter_time - start_time, error))
 
-            if abs(previous_error - error) / error_at_init < tol:
+            if ((previous_error - error) / error_at_init < tol) and \
+               ((previous_error - error) > 0) :
                 print((previous_error - error) / error_at_init)
                 break
             previous_error = error
