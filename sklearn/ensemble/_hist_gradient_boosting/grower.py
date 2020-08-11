@@ -13,12 +13,11 @@ import numbers
 
 from .splitting import Splitter
 from .histogram import HistogramBuilder
-from .predictor import TreePredictor
 from .utils import sum_parallel
 from .common import Y_DTYPE
 from .common import MonotonicConstraint
 from ._grower import _fill_predictor_node_array
-from ._predictor import PredictorNodes
+from ._predictor import TreePredictor
 
 
 EPS = np.finfo(Y_DTYPE).eps  # to avoid zero division errors
@@ -516,10 +515,10 @@ class TreeGrower:
         -------
         A TreePredictor object.
         """
-        predictor_nodes = PredictorNodes(self.n_nodes)
+        predictor_nodes = TreePredictor(self.n_nodes)
         _fill_predictor_node_array(predictor_nodes, self.root,
                                    bin_thresholds, self.n_bins_non_missing)
-        return TreePredictor(predictor_nodes)
+        return predictor_nodes
 
 
 def _fill_predictor_node_arry(predictor_nodes, grower_node,

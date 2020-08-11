@@ -6,8 +6,7 @@ import pytest
 
 from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
 from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
-from sklearn.ensemble._hist_gradient_boosting.predictor import TreePredictor
-from sklearn.ensemble._hist_gradient_boosting._predictor import PredictorNodes
+from sklearn.ensemble._hist_gradient_boosting._predictor import TreePredictor
 from sklearn.ensemble._hist_gradient_boosting.common import (
     G_H_DTYPE, ALMOST_INF)
 
@@ -54,19 +53,18 @@ def test_infinite_values_and_thresholds(threshold, expected_predictions):
     # nan), the +inf sample will go to the left child.
 
     X = np.array([-np.inf, 10, 20,  np.inf]).reshape(-1, 1)
-    predictor_nodes = PredictorNodes(3)
+    predictor = TreePredictor(3)
 
     # We just construct a simple tree with 1 root and 2 children
     # parent node
-    predictor_nodes._set_node(0, left=1, right=2, feature_idx=0,
-                              threshold=threshold)
+    predictor._set_node(0, left=1, right=2, feature_idx=0,
+                        threshold=threshold)
     # left child
-    predictor_nodes._set_node(1, is_leaf=True, value=0)
+    predictor._set_node(1, is_leaf=True, value=0)
 
     # right child
-    predictor_nodes._set_node(2, is_leaf=True, value=1)
+    predictor._set_node(2, is_leaf=True, value=1)
 
-    predictor = TreePredictor(predictor_nodes)
     predictions = predictor.predict(X)
 
     assert np.all(predictions == expected_predictions)

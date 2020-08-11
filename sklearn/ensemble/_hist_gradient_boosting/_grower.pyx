@@ -6,11 +6,11 @@ import numpy as np
 cimport numpy as np
 
 from .common cimport node_struct
-from ._predictor cimport PredictorNodes
+from ._predictor cimport TreePredictor
 
 np.import_array()
 
-def _fill_predictor_node_array(PredictorNodes predictor_nodes,
+def _fill_predictor_node_array(TreePredictor predictor_nodes,
                                grower_node,  # TreeNode
                                list bin_thresholds,
                                const np.npy_uint32[:] n_bins_non_missing,
