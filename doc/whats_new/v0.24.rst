@@ -72,9 +72,21 @@ Changelog
   :user:`Emilie Delattre <EmilieDel>`, and
   :user:`Francesco Casalegno <FrancescoCasalegno>`.
 
+- |Enhancement| :class:`cluster.SpectralClustering` and
+  :func:`cluster.spectral_clustering` have a new keyword argument `verbose`.
+  When set to `True`, additional messages will be displayed which can aid with
+  debugging. :pr:`18052` by :user:`Sean O. Stalley <sstalley>`.
+
 - |API| :class:`cluster.MiniBatchKMeans` attributes, `counts_` and
   `init_size_`, are deprecated and will be removed in 0.26. :pr:`17864` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.compose`
+......................
+
+- |FIX| :class:`compose.ColumnTransformer` will skip transformers the
+  column selector is a list of bools that are False. :pr:`17616` by
+  `Thomas Fan`_.
 
 :mod:`sklearn.covariance`
 .........................
@@ -113,6 +125,12 @@ Changelog
 - |Enhancement| :func:`decomposition.FactorAnalysis` now supports the optional
   argument `rotation`, which can take the value `None`, `'varimax'` or `'quartimax'.`
   :pr:`11064` by :user:`Jona Sassenhagen <jona-sassenhagen>`.
+
+- |Enhancement| :class:`decomposition.NMF` now supports the optional parameter
+  `regularization`, which can take the values `None`, `components`,
+  `transformation` or `both`, in accordance with
+  :func:`decomposition.NMF.non_negative_factorization`.
+  :pr:`17414` by :user:`Bharat Raghunathan <Bharat123rox>`.
 
 :mod:`sklearn.ensemble`
 .......................
@@ -203,6 +221,20 @@ Changelog
 - |Enhancement| :class:`isotonic.IsotonicRegression` now accepts 2darray with 1 feature as
   input array. :pr:`17379` by :user:`Jiaxiang <fujiaxiang>`.
 
+:mod:`sklearn.linear_model`
+...........................
+
+- |Feature| :class:`linear_model.LinearRegression` now forces coefficients
+  to be all positive when ``positive`` is set to ``True``.
+  :pr:`17578` by :user:`Joseph Knox <jknox13>`, :user:`Nelle Varoquaux <NelleV>`
+  and :user:`Chiara Marmo <cmarmo>`.
+
+- |Enhancement| :class:`linear_model.RidgeCV` now supports finding an optimal
+  regularization value `alpha` for each target separately by setting
+  ``alpha_per_target=True``. This is only supported when using the default
+  efficient leave-one-out cross-validation scheme ``cv=None``. :pr:`6624` by
+  :user:`Marijn van Vliet <wmvanvliet>`.
+
 :mod:`sklearn.manifold`
 .......................
 
@@ -211,6 +243,10 @@ Changelog
   behavior. Distances will be squared by default in 0.26, and this parameter
   will be removed in 0.28. :pr:`17662` by
   :user:`Joshua Newton <joshuacwnewton>`.
+
+- |Efficiency| Fixed :issue:`10493`. Improve Local Linear Embedding (LLE) 
+  that raised `MemoryError` exception when used with large inputs.
+  :pr:`17997` by :user:`Bertrand Maisonneuve <bmaisonn>`.
 
 :mod:`sklearn.metrics`
 ......................
@@ -313,6 +349,16 @@ Changelog
 :mod:`sklearn.preprocessing`
 ............................
 
+- |Feature| Add a new ``handle_unknown`` parameter with a
+  ``use_encoded_value`` option, along with a new ``unknown_value`` parameter,
+  to :class:`preprocessing.OrdinalEncoder` to allow unknown categories during
+  transform and set the encoded value of the unknown categories.
+  :pr:`17406` by :user:`Felix Wick <FelixWick>`.
+
+- |Feature| Add ``clip`` parameter to :class:`preprocessing.MinMaxScaler`,
+  which clips the transformed values of test data to ``feature_range``.
+  :pr:`17833` by :user:`Yashika Sharma <yashika51>`.
+
 - |Enhancement| Verbose output of :class:`model_selection.GridSearchCV` has
   been improved for readability. :pr:`16935` by :user:`Raghav Rajagopalan
   <raghavrv>` and :user:`Chiara Marmo <cmarmo>`.
@@ -325,10 +371,6 @@ Changelog
 - |Enhancement| Add `dtype` parameter to
   :class:`preprocessing.KBinsDiscretizer`.
   :pr:`16335` by :user:`Arthur Imbert <Henley13>`.
-
-- |Enhancement| Add ``clip`` parameter to :class:`preprocessing.MinMaxScaler`,
-  which clips the transformed values of test data to ``feature_range``.
-  :pr:`17833` by :user:`Yashika Sharma <yashika51>`.
 
 :mod:`sklearn.svm`
 ..................

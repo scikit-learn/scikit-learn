@@ -145,7 +145,6 @@ jobs:
       py36_ubuntu_atlas_32bit:
         DISTRIB: 'ubuntu-32'
         PYTHON_VERSION: '3.6'
-        PANDAS_VERSION: 'none'
         JOBLIB_VERSION: 'min'
         # temporary pin pytest due to unknown failure with pytest 5.4 and
         # python 3.6
