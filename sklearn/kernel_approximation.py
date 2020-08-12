@@ -139,7 +139,7 @@ class PolynomialSampler(BaseEstimator, TransformerMixin):
         """
 
         check_is_fitted(self)
-        X = check_array(X, accept_sparse="csc")
+        X = self._validate_data(X, accept_sparse="csc")
 
         X_gamma = np.sqrt(self.gamma) * X
 
