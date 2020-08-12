@@ -99,21 +99,21 @@ for k in out_dims:
     ny_svm_scores.append(100*score_avg/n_test)
 
 # Show results
-plt.figure(figsize=(6, 4))
-plt.title("Accuracy results")
-plt.plot(out_dims, ps_svm_scores, label="PolynomialSampler + linear SVM",
+fig, ax = plt.subplots(figsize=(6, 4))
+ax.set_title("Accuracy results")
+ax.plot(out_dims, ps_svm_scores, label="PolynomialSampler + linear SVM",
          c="orange")
-plt.plot(out_dims, ny_svm_scores, label="Nystroem + linear SVM",
+ax.plot(out_dims, ny_svm_scores, label="Nystroem + linear SVM",
          c="blue")
-plt.plot([out_dims[0], out_dims[-1]], [lsvm_score, lsvm_score],
+ax.plot([out_dims[0], out_dims[-1]], [lsvm_score, lsvm_score],
          label="Linear SVM", c="black", dashes=[2, 2])
-plt.plot([out_dims[0], out_dims[-1]], [ksvm_score, ksvm_score],
+ax.plot([out_dims[0], out_dims[-1]], [ksvm_score, ksvm_score],
          label="Poly-kernel SVM", c="red", dashes=[2, 2])
-plt.legend()
-plt.xlabel("N_components for PolynomialSampler and Nystroem")
-plt.ylabel("Accuracy (%)")
-plt.xlim([out_dims[0], out_dims[-1]])
-plt.tight_layout()
+ax.legend()
+ax.set_xlabel("N_components for PolynomialSampler and Nystroem")
+ax.set_ylabel("Accuracy (%)")
+ax.set_xlim([out_dims[0], out_dims[-1]])
+fig.tight_layout()
 
 # Now lets evaluate the scalability of PolynomialSampler vs Nystroem
 # First we generate some fake data with a lot of samples
