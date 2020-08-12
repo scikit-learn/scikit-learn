@@ -3,7 +3,7 @@ import warnings
 import numpy as np
 
 from ..base import MetaEstimatorMixin, clone, BaseEstimator
-from ..utils.validation import check_X_y, check_array, check_is_fitted
+from ..utils.validation import check_is_fitted
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils import safe_mask
 
@@ -159,10 +159,12 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         self.base_estimator_ = clone(self.base_estimator)
 
         if self.max_iter is not None and self.max_iter < 0:
-            raise ValueError(f"max_iter must be >= 0 or None, got {self.max_iter}")
+            raise ValueError("max_iter must be >= 0 or None,"
+                             f" got {self.max_iter}")
 
         if not (0 <= self.threshold < 1):
-            raise ValueError(f"threshold must be in [0,1), got {self.threshold}")
+            raise ValueError("threshold must be in [0,1),"
+                             f" got {self.threshold}")
 
         if self.criterion not in ['threshold', 'k_best']:
             raise ValueError(f"criterion must be either 'threshold' "
@@ -234,7 +236,8 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
                 break
 
             if self.verbose:
-                print(f"End of iteration {self.n_iter_}, added {selected_full.shape[0]} new labels.")
+                print(f"End of iteration {self.n_iter_},"
+                      f" added {selected_full.shape[0]} new labels.")
 
         if self.n_iter_ == self.max_iter:
             self.termination_condition_ = "max_iter"
