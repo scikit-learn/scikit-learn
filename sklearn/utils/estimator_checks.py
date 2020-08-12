@@ -1481,7 +1481,7 @@ def check_estimators_dtypes(name, estimator_orig, strict_mode=True):
                 getattr(estimator, method)(X_train)
 
 
-def check_estimators_preserve_dtypes(name, estimator_orig):
+def check_estimators_preserve_dtypes(name, estimator_orig, strict_mode=True):
 
     if isinstance(estimator_orig, MetaEstimatorMixin):
         if hasattr(estimator_orig, 'estimator'):
@@ -1508,7 +1508,7 @@ def check_estimators_preserve_dtypes(name, estimator_orig):
     X = X.astype(np.float32)
 
     Xts = []
-    in_out_types = tags_estimator_orig["preserve_dtype"]
+    in_out_types = tags_estimator_orig["preserves_dtype"]
     for dtype in in_out_types:
         X_cast = X.astype(dtype)
         estimator = clone(estimator_orig)
