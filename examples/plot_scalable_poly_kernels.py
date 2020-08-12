@@ -142,6 +142,8 @@ print(f"Kernel-SVM score on raw featrues: {ksvm_score:.2f}%")
 # but its training time is much larger and, most importantly, will grow
 # much faster if the number of training samples increases.
 
+N_COMPONENTS = [250, 500, 1000, 2000]
+
 fig, ax = plt.subplots(figsize=(7, 7))
 ax.scatter([results["LSVM"]["time"], ], [results["LSVM"]["score"], ],
            label="Linear SVM", c="green", marker="^")
@@ -149,7 +151,7 @@ ax.scatter([results["LSVM"]["time"], ], [results["LSVM"]["score"], ],
 ax.scatter([results["LSVM + PS(250)"]["time"], ],
            [results["LSVM + PS(250)"]["score"], ],
            label="Linear SVM + PolynomialSampler", c="blue")
-for n_components in [250, 500, 1000, 2000]:  # preferably define N_COMPONENTS above
+for n_components in N_COMPONENTS:
     ax.scatter([results[f"LSVM + PS({n_components})"]["time"], ],
                [results[f"LSVM + PS({n_components})"]["score"], ],
                c="blue")
