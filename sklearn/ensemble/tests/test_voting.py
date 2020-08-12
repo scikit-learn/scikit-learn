@@ -28,6 +28,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.dummy import DummyRegressor
 
+
 # Load datasets
 iris = datasets.load_iris()
 X, y = iris.data[:, 1:3], iris.target
