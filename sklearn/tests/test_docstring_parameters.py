@@ -191,10 +191,8 @@ def test_fit_docstring_attributes(name, Estimator):
     if Estimator.__name__ in IGNORED or Estimator.__name__.startswith('_'):
         pytest.skip("Estimator cannot be fit easily to test fit attributes")
 
-    est = _construct_instance(Estimator)
-
-    if Estimator.__name__.endswith("SearchCV"):
-        est = est[0]
+    # Get a single instance
+    est = _construct_instance(Estimator, return_multiple_instances=False)
 
     if Estimator.__name__ == 'SelectKBest':
         est.k = 2

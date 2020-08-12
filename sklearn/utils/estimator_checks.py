@@ -328,13 +328,19 @@ def _get_check_estimator_ids(obj):
             return re.sub(r"\s", "", str(obj))
 
 
-def _construct_instance(Estimator):
+def _construct_instance(Estimator, return_multiple_instances=False):
     """Construct Estimator instance or tuple of instances when possible.
 
     Parameters
     ----------
     Estimator : estimator class
         The class of the estimator to be constructed.
+
+    return_multiple_instances : bool, default=False
+        When `Estimator` accommodates both a regressor or a classifier, a tuple
+        multiple instances could be constructed. This parameter allows to
+        restrict to a single instance, making the checking less exhaustive
+        but allowing to get a uniform output.
 
     Returns
     -------
@@ -343,8 +349,8 @@ def _construct_instance(Estimator):
 
         * an estimator instance constructed with the required parameters;
         * a tuple of estimator instances when the Estimator class can be
-          constructed with several base estimator
-          (regressor, classifier, transformer, etc.).
+          constructed with several base estimator (regressor, classifier,
+          transformer, etc.) and that `return_multiple_instances=True`.
 
     Notes
     -----
@@ -358,11 +364,9 @@ def _construct_instance(Estimator):
                 estimator = Estimator(Ridge())
             else:
                 estimator = Estimator(LinearDiscriminantAnalysis())
-        elif any(
-            [
-                req_param.startswith("param_")
-                for req_param in required_parameters
-            ]
+        elif required_parameters in (
+            ["estimator", "param_grid"],
+            ["estimator", "param_distributions"],
         ):
             # dealing with SearchCV objects (i.e. GridSearchCV and
             # RandomizedSearchCV)
@@ -380,6 +384,9 @@ def _construct_instance(Estimator):
             raise SkipTest(msg)
     else:
         estimator = Estimator()
+
+    if not return_multiple_instances and isinstance(estimator, tuple):
+        return estimator[0]
     return estimator
 
 
@@ -2754,7 +2761,7 @@ def _check_parameters_default_constructible_estimator(estimator):
 
 def check_parameters_default_constructible(name, Estimator, strict_mode=True):
     # test default-constructibility
-    # get rid of deprecation warnings
+    # ignore deprecation warnings
 
     Estimator = Estimator.__class__
 

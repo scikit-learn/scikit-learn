@@ -71,7 +71,9 @@ def _tested_estimators():
         if issubclass(Estimator, BiclusterMixin):
             continue
         try:
-            estimator = _construct_instance(Estimator)
+            estimator = _construct_instance(
+                Estimator, return_multiple_instances=True
+            )
         except SkipTest:
             continue
 
