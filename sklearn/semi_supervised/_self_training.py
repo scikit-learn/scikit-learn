@@ -72,6 +72,9 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
     base_estimator_ : estimator object
         The fitted estimator.
 
+    classes_ : array or list of array of shape (n_classes,)
+        Class labels for each output. (Taken from the trained base_estimator_)
+
     transduction_ : array, shape=(n_samples,)
         The labels used for the final fit of the classifier, including
         pseudo-labels added during fit.
