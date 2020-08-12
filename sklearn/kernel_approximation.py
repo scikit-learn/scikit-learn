@@ -33,7 +33,7 @@ class PolynomialSampler(BaseEstimator, TransformerMixin):
         K(X, Y) = (gamma * <X, Y> + coef0)^degree
 
     by efficiently computing a Count Sketch of the outer product of a
-    vector with itself. Read more in the
+    vector with itself using Fast Fourier Transforms (FFT). Read more in the
     :ref:`User Guide <polynomial_kernel_approx>`.
 
     Parameters
