@@ -1,0 +1,15 @@
+name: "Pull Request Labeler"
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: thomasjpfan/labeler@v2.4.6
+      continue-on-error: true
+      if: github.repository == 'scikit-learn/scikit-learn'
+      with:
+        repo-token: "${{ secrets.GITHUB_TOKEN }}"
+        max-labels: "3"

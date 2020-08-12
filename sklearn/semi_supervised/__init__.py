@@ -5,7 +5,7 @@ amounts of unlabeled data for classification tasks. This module includes Label
 Propagation.
 """
 
-from .label_propagation import LabelPropagation, LabelSpreading
+from ._label_propagation import LabelPropagation, LabelSpreading
 from ._self_training import SelfTrainingClassifier
 
 __all__ = ['SelfTrainingClassifier', 'LabelPropagation', 'LabelSpreading']

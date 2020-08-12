@@ -13,23 +13,41 @@ env:
   global:
     # Directory where tests are run from
     - TEST_DIR=/tmp/sklearn
-    - OMP_NUM_THREADS=4
-    - OPENBLAS_NUM_THREADS=4
+    - OMP_NUM_THREADS=2
+    - OPENBLAS_NUM_THREADS=2
+    - PYTEST_VERSION=latest
 
 matrix:
   include:
     # Linux environment to test scikit-learn against numpy and scipy master
     # installed from their CI wheels in a virtualenv with the Python
     # interpreter provided by travis.
-    -  python: 3.7
-       env: DISTRIB="scipy-dev" CHECK_WARNINGS="true"
-       if: type = cron OR commit_message =~ /\[scipy-dev\]/
+    - python: 3.7
+      env:
+        - CHECK_WARNINGS="true"
+        - CI_CPU_COUNT="3"
+      if: type = cron OR commit_message =~ /\[scipy-dev\]/
+
+    # As above but build scikit-learn with Intel C compiler (ICC).
+    - python: 3.7
+      env:
+        - CHECK_WARNING="true"
+        - BUILD_WITH_ICC="true"
+        - CI_CPU_COUNT="3"
+      if: type = cron OR commit_message =~ /\[icc-build\]/
+
+    - python: 3.7
+      env:
+        - CI_CPU_COUNT="8"
+      os: linux
+      arch: arm64
+      if: type = cron OR commit_message =~ /\[arm64\]/
 
 install: source build_tools/travis/install.sh
 script:
-  - bash build_tools/travis/test_script.sh
-  - bash build_tools/travis/test_docs.sh
-  - bash build_tools/travis/test_pytest_soft_dependency.sh
+  - bash build_tools/travis/test_script.sh || travis_terminate 1
+  - bash build_tools/travis/test_docs.sh || travis_terminate 1
+  - bash build_tools/travis/test_pytest_soft_dependency.sh || travis_terminate 1
 after_success: source build_tools/travis/after_success.sh
 notifications:
   webhooks:

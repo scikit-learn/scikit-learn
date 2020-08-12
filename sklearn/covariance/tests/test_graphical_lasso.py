@@ -1,16 +1,18 @@
 """ Test the graphical_lasso module.
 """
 import sys
+import pytest
 
 import numpy as np
 from scipy import linalg
 
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_less
+from numpy.testing import assert_allclose
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_less
 
 from sklearn.covariance import (graphical_lasso, GraphicalLasso,
                                 GraphicalLassoCV, empirical_covariance)
-from sklearn.datasets.samples_generator import make_sparse_spd_matrix
+from sklearn.datasets import make_sparse_spd_matrix
 from io import StringIO
 from sklearn.utils import check_random_state
 from sklearn import datasets
@@ -148,3 +150,61 @@ def test_graphical_lasso_cv(random_state=1):
 
     # Smoke test with specified alphas
     GraphicalLassoCV(alphas=[0.8, 0.5], tol=1e-1, n_jobs=1).fit(X)
+
+
+# TODO: Remove in 0.26 when grid_scores_ is deprecated
+def test_graphical_lasso_cv_grid_scores_and_cv_alphas_deprecated():
+    splits = 4
+    n_alphas = 5
+    n_refinements = 3
+    true_cov = np.array([[0.8, 0.0, 0.2, 0.0],
+                         [0.0, 0.4, 0.0, 0.0],
+                         [0.2, 0.0, 0.3, 0.1],
+                         [0.0, 0.0, 0.1, 0.7]])
+    rng = np.random.RandomState(0)
+    X = rng.multivariate_normal(mean=[0, 0, 0, 0], cov=true_cov, size=200)
+    cov = GraphicalLassoCV(cv=splits, alphas=n_alphas,
+                           n_refinements=n_refinements).fit(X)
+
+    total_alphas = n_refinements * n_alphas + 1
+    msg = (r"The grid_scores_ attribute is deprecated in version 0\.24 in "
+           r"favor of cv_results_ and will be removed in version 0\.26")
+    with pytest.warns(FutureWarning, match=msg):
+        assert cov.grid_scores_.shape == (total_alphas, splits)
+
+    msg = (r"The cv_alphas_ attribute is deprecated in version 0\.24 in "
+           r"favor of cv_results_\['alpha'\] and will be removed in version "
+           r"0\.26")
+    with pytest.warns(FutureWarning, match=msg):
+        assert len(cov.cv_alphas_) == total_alphas
+
+
+def test_graphical_lasso_cv_scores():
+    splits = 4
+    n_alphas = 5
+    n_refinements = 3
+    true_cov = np.array([[0.8, 0.0, 0.2, 0.0],
+                         [0.0, 0.4, 0.0, 0.0],
+                         [0.2, 0.0, 0.3, 0.1],
+                         [0.0, 0.0, 0.1, 0.7]])
+    rng = np.random.RandomState(0)
+    X = rng.multivariate_normal(mean=[0, 0, 0, 0], cov=true_cov, size=200)
+    cov = GraphicalLassoCV(cv=splits, alphas=n_alphas,
+                           n_refinements=n_refinements).fit(X)
+
+    cv_results = cov.cv_results_
+    # alpha and one for each split
+
+    total_alphas = n_refinements * n_alphas + 1
+    keys = ['alphas']
+    split_keys = ['split{}_score'.format(i) for i in range(splits)]
+    for key in keys + split_keys:
+        assert key in cv_results
+        assert len(cv_results[key]) == total_alphas
+
+    cv_scores = np.asarray([cov.cv_results_[key] for key in split_keys])
+    expected_mean = cv_scores.mean(axis=0)
+    expected_std = cv_scores.std(axis=0)
+
+    assert_allclose(cov.cv_results_["mean_score"], expected_mean)
+    assert_allclose(cov.cv_results_["std_score"], expected_std)

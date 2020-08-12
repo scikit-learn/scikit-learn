@@ -48,10 +48,12 @@ from .utils import check_random_state
 from .utils.validation import _num_samples
 from .utils.validation import check_is_fitted
 from .utils.validation import check_X_y, check_array
+from .utils.validation import _deprecate_positional_args
 from .utils.multiclass import (_check_partial_fit_first_call,
                                check_classification_targets,
                                _ovr_decision_function)
 from .utils.metaestimators import _safe_split, if_delegate_has_method
+from .exceptions import NotFittedError
 
 from joblib import Parallel, delayed
 
@@ -129,9 +131,9 @@ class _ConstantPredictor(BaseEstimator):
                          X.shape[0], axis=0)
 
 
-class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
-                          MultiOutputMixin):
-    """One-vs-the-rest (OvR) multiclass/multilabel strategy
+class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
+                          MetaEstimatorMixin, BaseEstimator):
+    """One-vs-the-rest (OvR) multiclass strategy.
 
     Also known as one-vs-all, this strategy consists in fitting one classifier
     per class. For each classifier, the class is fitted against all the other
@@ -142,41 +144,87 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
     corresponding classifier. This is the most commonly used strategy for
     multiclass classification and is a fair default choice.
 
-    This strategy can also be used for multilabel learning, where a classifier
-    is used to predict multiple labels for instance, by fitting on a 2-d matrix
-    in which cell [i, j] is 1 if sample i has label j and 0 otherwise.
-
-    In the multilabel learning literature, OvR is also known as the binary
-    relevance method.
+    OneVsRestClassifier can also be used for multilabel classification. To use
+    this feature, provide an indicator matrix for the target `y` when calling
+    `.fit`. In other words, the target labels should be formatted as a 2D
+    binary (0/1) matrix, where [i, j] == 1 indicates the presence of label j
+    in sample i. This estimator uses the binary relevance method to perform
+    multilabel classification, which involves training one binary classifier
+    independently for each label.
 
     Read more in the :ref:`User Guide <ovr_classification>`.
 
     Parameters
     ----------
     estimator : estimator object
-        An estimator object implementing `fit` and one of `decision_function`
-        or `predict_proba`.
+        An estimator object implementing :term:`fit` and one of
+        :term:`decision_function` or :term:`predict_proba`.
 
-    n_jobs : int or None, optional (default=None)
-        The number of jobs to use for the computation.
+    n_jobs : int, default=None
+        The number of jobs to use for the computation: the `n_classes`
+        one-vs-rest problems are computed in parallel.
+
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
+
+        .. versionchanged:: v0.20
+           `n_jobs` default changed from 1 to None
 
     Attributes
     ----------
     estimators_ : list of `n_classes` estimators
         Estimators used for predictions.
 
+    coef_ : ndarray of shape (1, n_features) or (n_classes, n_features)
+        Coefficient of the features in the decision function. This attribute
+        exists only if the ``estimators_`` defines ``coef_``.
+
+    intercept_ : ndarray of shape (1, 1) or (n_classes, 1)
+        If ``y`` is binary, the shape is ``(1, 1)`` else ``(n_classes, 1)``
+        This attribute exists only if the ``estimators_`` defines
+        ``intercept_``.
+
     classes_ : array, shape = [`n_classes`]
         Class labels.
+
+    n_classes_ : int
+        Number of classes.
+
     label_binarizer_ : LabelBinarizer object
         Object used to transform multiclass labels to binary labels and
         vice-versa.
+
     multilabel_ : boolean
         Whether a OneVsRestClassifier is a multilabel classifier.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.multiclass import OneVsRestClassifier
+    >>> from sklearn.svm import SVC
+    >>> X = np.array([
+    ...     [10, 10],
+    ...     [8, 10],
+    ...     [-5, 5.5],
+    ...     [-5.4, 5.5],
+    ...     [-20, -20],
+    ...     [-15, -20]
+    ... ])
+    >>> y = np.array([0, 0, 1, 1, 2, 2])
+    >>> clf = OneVsRestClassifier(SVC()).fit(X, y)
+    >>> clf.predict([[-19, -20], [9, 9], [-5, 5]])
+    array([2, 0, 1])
+
+    See Also
+    --------
+    sklearn.multioutput.MultiOutputClassifier : Alternate way of extending an
+        estimator for multilabel classification.
+    sklearn.preprocessing.MultiLabelBinarizer : Transform iterable of iterables
+        to binary indicator matrix.
     """
-    def __init__(self, estimator, n_jobs=None):
+    @_deprecate_positional_args
+    def __init__(self, estimator, *, n_jobs=None):
         self.estimator = estimator
         self.n_jobs = n_jobs
 
@@ -185,10 +233,10 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
 
         Parameters
         ----------
-        X : (sparse) array-like, shape = [n_samples, n_features]
+        X : (sparse) array-like of shape (n_samples, n_features)
             Data.
 
-        y : (sparse) array-like, shape = [n_samples, ], [n_samples, n_classes]
+        y : (sparse) array-like of shape (n_samples,) or (n_samples, n_classes)
             Multi-class targets. An indicator matrix turns on multilabel
             classification.
 
@@ -225,10 +273,10 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
 
         Parameters
         ----------
-        X : (sparse) array-like, shape = [n_samples, n_features]
+        X : (sparse) array-like of shape (n_samples, n_features)
             Data.
 
-        y : (sparse) array-like, shape = [n_samples, ], [n_samples, n_classes]
+        y : (sparse) array-like of shape (n_samples,) or (n_samples, n_classes)
             Multi-class targets. An indicator matrix turns on multilabel
             classification.
 
@@ -277,12 +325,12 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
 
         Parameters
         ----------
-        X : (sparse) array-like, shape = [n_samples, n_features]
+        X : (sparse) array-like of shape (n_samples, n_features)
             Data.
 
         Returns
         -------
-        y : (sparse) array-like, shape = [n_samples, ], [n_samples, n_classes].
+        y : (sparse) array-like of shape (n_samples,) or (n_samples, n_classes)
             Predicted multi-class targets.
         """
         check_is_fitted(self)
@@ -329,11 +377,11 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------
-        T : (sparse) array-like, shape = [n_samples, n_classes]
+        T : (sparse) array-like of shape (n_samples, n_classes)
             Returns the probability of the sample for each class in the model,
             where classes are ordered as they are in `self.classes_`.
         """
@@ -360,11 +408,15 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------
-        T : array-like, shape = [n_samples, n_classes]
+        T : array-like of shape (n_samples, n_classes)
+
+            .. versionchanged:: 0.19
+                output shape changed to ``(n_samples,)`` to conform to
+                scikit-learn conventions for binary classification.
         """
         check_is_fitted(self)
         if len(self.estimators_) == 1:
@@ -409,12 +461,25 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
     def _first_estimator(self):
         return self.estimators_[0]
 
+    @property
+    def n_features_in_(self):
+        # For consistency with other estimators we raise a AttributeError so
+        # that hasattr() fails if the OVR estimator isn't fitted.
+        try:
+            check_is_fitted(self)
+        except NotFittedError as nfe:
+            raise AttributeError(
+                "{} object has no n_features_in_ attribute."
+                .format(self.__class__.__name__)
+            ) from nfe
+        return self.estimators_[0].n_features_in_
+
 
 def _fit_ovo_binary(estimator, X, y, i, j):
     """Fit a single binary estimator (one-vs-one)."""
     cond = np.logical_or(y == i, y == j)
     y = y[cond]
-    y_binary = np.empty(y.shape, np.int)
+    y_binary = np.empty(y.shape, int)
     y_binary[y == i] = 0
     y_binary[y == j] = 1
     indcond = np.arange(X.shape[0])[cond]
@@ -435,7 +500,7 @@ def _partial_fit_ovo_binary(estimator, X, y, i, j):
     return estimator
 
 
-class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
+class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     """One-vs-one multiclass strategy
 
     This strategy consists in fitting one classifier per class pair.
@@ -453,11 +518,13 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     Parameters
     ----------
     estimator : estimator object
-        An estimator object implementing `fit` and one of `decision_function`
-        or `predict_proba`.
+        An estimator object implementing :term:`fit` and one of
+        :term:`decision_function` or :term:`predict_proba`.
 
-    n_jobs : int or None, optional (default=None)
-        The number of jobs to use for the computation.
+    n_jobs : int, default=None
+        The number of jobs to use for the computation: the `n_classes * (
+        n_classes - 1) / 2` OVO problems are computed in parallel.
+
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -471,14 +538,28 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         Array containing labels.
 
     n_classes_ : int
-        Number of classes 
+        Number of classes
 
     pairwise_indices_ : list, length = ``len(estimators_)``, or ``None``
         Indices of samples used when training the estimators.
         ``None`` when ``estimator`` does not have ``_pairwise`` attribute.
-    """
 
-    def __init__(self, estimator, n_jobs=None):
+    Examples
+    --------
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.model_selection import train_test_split
+    >>> from sklearn.multiclass import OneVsOneClassifier
+    >>> from sklearn.svm import LinearSVC
+    >>> X, y = load_iris(return_X_y=True)
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ...     X, y, test_size=0.33, shuffle=True, random_state=0)
+    >>> clf = OneVsOneClassifier(
+    ...     LinearSVC(random_state=0)).fit(X_train, y_train)
+    >>> clf.predict(X_test[:10])
+    array([2, 1, 0, 2, 0, 2, 0, 1, 1, 1])
+    """
+    @_deprecate_positional_args
+    def __init__(self, estimator, *, n_jobs=None):
         self.estimator = estimator
         self.n_jobs = n_jobs
 
@@ -487,17 +568,17 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         Parameters
         ----------
-        X : (sparse) array-like, shape = [n_samples, n_features]
+        X : (sparse) array-like of shape (n_samples, n_features)
             Data.
 
-        y : array-like, shape = [n_samples]
+        y : array-like of shape (n_samples,)
             Multi-class targets.
 
         Returns
         -------
         self
         """
-        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc'])
+        X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc'])
         check_classification_targets(y)
 
         self.classes_ = np.unique(y)
@@ -527,10 +608,10 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         Parameters
         ----------
-        X : (sparse) array-like, shape = [n_samples, n_features]
+        X : (sparse) array-like of shape (n_samples, n_features)
             Data.
 
-        y : array-like, shape = [n_samples]
+        y : array-like of shape (n_samples,)
             Multi-class targets.
 
         classes : array, shape (n_classes, )
@@ -562,7 +643,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                 delayed(_partial_fit_ovo_binary)(
                     estimator, X, y, self.classes_[i], self.classes_[j])
                 for estimator, (i, j) in zip(self.estimators_,
-                                              (combinations)))
+                                             (combinations)))
 
         self.pairwise_indices_ = None
 
@@ -577,7 +658,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         Parameters
         ----------
-        X : (sparse) array-like, shape = [n_samples, n_features]
+        X : (sparse) array-like of shape (n_samples, n_features)
             Data.
 
         Returns
@@ -587,7 +668,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         """
         Y = self.decision_function(X)
         if self.n_classes_ == 2:
-            return self.classes_[(Y > 0).astype(np.int)]
+            return self.classes_[(Y > 0).astype(int)]
         return self.classes_[Y.argmax(axis=1)]
 
     def decision_function(self, X):
@@ -600,11 +681,15 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------
-        Y : array-like, shape = [n_samples, n_classes]
+        Y : array-like of shape (n_samples, n_classes)
+
+            .. versionchanged:: 0.19
+                output shape changed to ``(n_samples,)`` to conform to
+                scikit-learn conventions for binary classification.
         """
         check_is_fitted(self)
 
@@ -634,7 +719,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         return getattr(self.estimator, "_pairwise", False)
 
 
-class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
+class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     """(Error-Correcting) Output-Code multiclass strategy
 
     Output-code based strategies consist in representing each class with a
@@ -651,8 +736,8 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     Parameters
     ----------
     estimator : estimator object
-        An estimator object implementing `fit` and one of `decision_function`
-        or `predict_proba`.
+        An estimator object implementing :term:`fit` and one of
+        :term:`decision_function` or :term:`predict_proba`.
 
     code_size : float
         Percentage of the number of classes to be used to create the code book.
@@ -660,14 +745,15 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         one-vs-the-rest. A number greater than 1 will require more classifiers
         than one-vs-the-rest.
 
-    random_state : int, RandomState instance or None, optional, default: None
-        The generator used to initialize the codebook.  If int, random_state is
-        the seed used by the random number generator; If RandomState instance,
-        random_state is the random number generator; If None, the random number
-        generator is the RandomState instance used by `np.random`.
+    random_state : int, RandomState instance, default=None
+        The generator used to initialize the codebook.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
-    n_jobs : int or None, optional (default=None)
-        The number of jobs to use for the computation.
+    n_jobs : int, default=None
+        The number of jobs to use for the computation: the multiclass problems
+        are computed in parallel.
+
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -682,6 +768,20 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
     code_book_ : numpy array of shape [n_classes, code_size]
         Binary array containing the code of each class.
+
+    Examples
+    --------
+    >>> from sklearn.multiclass import OutputCodeClassifier
+    >>> from sklearn.ensemble import RandomForestClassifier
+    >>> from sklearn.datasets import make_classification
+    >>> X, y = make_classification(n_samples=100, n_features=4,
+    ...                            n_informative=2, n_redundant=0,
+    ...                            random_state=0, shuffle=False)
+    >>> clf = OutputCodeClassifier(
+    ...     estimator=RandomForestClassifier(random_state=0),
+    ...     random_state=0).fit(X, y)
+    >>> clf.predict([[0, 0, 0, 0]])
+    array([1])
 
     References
     ----------
@@ -701,8 +801,8 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
        Hastie T., Tibshirani R., Friedman J., page 606 (second-edition)
        2008.
     """
-
-    def __init__(self, estimator, code_size=1.5, random_state=None,
+    @_deprecate_positional_args
+    def __init__(self, estimator, *, code_size=1.5, random_state=None,
                  n_jobs=None):
         self.estimator = estimator
         self.code_size = code_size
@@ -714,7 +814,7 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         Parameters
         ----------
-        X : (sparse) array-like, shape = [n_samples, n_features]
+        X : (sparse) array-like of shape (n_samples, n_features)
             Data.
 
         y : numpy array of shape [n_samples]
@@ -724,7 +824,7 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         -------
         self
         """
-        X, y = check_X_y(X, y)
+        X, y = self._validate_data(X, y, accept_sparse=True)
         if self.code_size <= 0:
             raise ValueError("code_size should be greater than 0, got {0}"
                              "".format(self.code_size))
@@ -750,7 +850,7 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         classes_index = {c: i for i, c in enumerate(self.classes_)}
 
         Y = np.array([self.code_book_[classes_index[y[i]]]
-                      for i in range(X.shape[0])], dtype=np.int)
+                      for i in range(X.shape[0])], dtype=int)
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_binary)(self.estimator, X, Y[:, i])
@@ -763,7 +863,7 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         Parameters
         ----------
-        X : (sparse) array-like, shape = [n_samples, n_features]
+        X : (sparse) array-like of shape (n_samples, n_features)
             Data.
 
         Returns
@@ -772,7 +872,7 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             Predicted multi-class targets.
         """
         check_is_fitted(self)
-        X = check_array(X)
+        X = check_array(X, accept_sparse=True)
         Y = np.array([_predict_binary(e, X) for e in self.estimators_]).T
         pred = euclidean_distances(Y, self.code_book_).argmin(axis=1)
         return self.classes_[pred]

@@ -1,3 +1,7 @@
+.. Places parent toc into the sidebar
+
+:parenttoc: True
+
 .. include:: includes/big_toc_css.rst
 
 .. _supervised-learning:
@@ -6,6 +10,7 @@ Supervised learning
 -----------------------
 
 .. toctree::
+    :maxdepth: 2
 
     modules/linear_model
     modules/lda_qda.rst

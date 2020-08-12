@@ -5,15 +5,13 @@ from re import finditer, search
 from textwrap import dedent
 
 from numpy.random import RandomState
+import pytest
 
 from sklearn.base import is_classifier
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.tree import export_graphviz, plot_tree, export_text
 from io import StringIO
-from sklearn.utils.testing import (assert_raises,
-                                   assert_raises_regex,
-                                   assert_raise_message)
 from sklearn.exceptions import NotFittedError
 
 # toy sample
@@ -217,7 +215,8 @@ def test_graphviz_errors():
 
     # Check not-fitted decision tree error
     out = StringIO()
-    assert_raises(NotFittedError, export_graphviz, clf, out)
+    with pytest.raises(NotFittedError):
+        export_graphviz(clf, out)
 
     clf.fit(X, y)
 
@@ -225,29 +224,30 @@ def test_graphviz_errors():
     # mismatches with number of features
     message = ("Length of feature_names, "
                "1 does not match number of features, 2")
-    assert_raise_message(ValueError, message, export_graphviz, clf, None,
-                         feature_names=["a"])
+    with pytest.raises(ValueError, match=message):
+        export_graphviz(clf, None, feature_names=["a"])
 
     message = ("Length of feature_names, "
                "3 does not match number of features, 2")
-    assert_raise_message(ValueError, message, export_graphviz, clf, None,
-                         feature_names=["a", "b", "c"])
+    with pytest.raises(ValueError, match=message):
+        export_graphviz(clf, None, feature_names=["a", "b", "c"])
 
     # Check error when argument is not an estimator
     message = "is not an estimator instance"
-    assert_raise_message(TypeError, message,
-                         export_graphviz, clf.fit(X, y).tree_)
+    with pytest.raises(TypeError, match=message):
+        export_graphviz(clf.fit(X, y).tree_)
 
     # Check class_names error
     out = StringIO()
-    assert_raises(IndexError, export_graphviz, clf, out, class_names=[])
+    with pytest.raises(IndexError):
+        export_graphviz(clf, out, class_names=[])
 
     # Check precision error
     out = StringIO()
-    assert_raises_regex(ValueError, "should be greater or equal",
-                        export_graphviz, clf, out, precision=-1)
-    assert_raises_regex(ValueError, "should be an integer",
-                        export_graphviz, clf, out, precision="1")
+    with pytest.raises(ValueError, match="should be greater or equal"):
+        export_graphviz(clf, out, precision=-1)
+    with pytest.raises(ValueError, match="should be an integer"):
+        export_graphviz(clf, out, precision="1")
 
 
 def test_friedman_mse_in_graphviz():
@@ -303,29 +303,29 @@ def test_precision():
             # check impurity
             for finding in finditer(pattern, dot_data):
                 assert (len(search(r"\.\d+", finding.group()).group()) ==
-                             precision + 1)
+                        precision + 1)
             # check threshold
             for finding in finditer(r"<= \d+\.\d+", dot_data):
                 assert (len(search(r"\.\d+", finding.group()).group()) ==
-                             precision + 1)
+                        precision + 1)
 
 
 def test_export_text_errors():
     clf = DecisionTreeClassifier(max_depth=2, random_state=0)
     clf.fit(X, y)
 
-    assert_raise_message(ValueError,
-                         "max_depth bust be >= 0, given -1",
-                         export_text, clf, max_depth=-1)
-    assert_raise_message(ValueError,
-                         "feature_names must contain 2 elements, got 1",
-                         export_text, clf, feature_names=['a'])
-    assert_raise_message(ValueError,
-                         "decimals must be >= 0, given -1",
-                         export_text, clf, decimals=-1)
-    assert_raise_message(ValueError,
-                         "spacing must be > 0, given 0",
-                         export_text, clf, spacing=0)
+    err_msg = "max_depth bust be >= 0, given -1"
+    with pytest.raises(ValueError, match=err_msg):
+        export_text(clf, max_depth=-1)
+    err_msg = "feature_names must contain 2 elements, got 1"
+    with pytest.raises(ValueError, match=err_msg):
+        export_text(clf, feature_names=['a'])
+    err_msg = "decimals must be >= 0, given -1"
+    with pytest.raises(ValueError, match=err_msg):
+        export_text(clf, decimals=-1)
+    err_msg = "spacing must be > 0, given 0"
+    with pytest.raises(ValueError, match=err_msg):
+        export_text(clf, spacing=0)
 
 
 def test_export_text():
@@ -448,3 +448,22 @@ def test_plot_tree_gini(pyplot):
                                    "samples = 6\nvalue = [3, 3]")
     assert nodes[1].get_text() == "gini = 0.0\nsamples = 3\nvalue = [3, 0]"
     assert nodes[2].get_text() == "gini = 0.0\nsamples = 3\nvalue = [0, 3]"
+
+
+# FIXME: to be removed in 0.25
+def test_plot_tree_rotate_deprecation(pyplot):
+    tree = DecisionTreeClassifier()
+    tree.fit(X, y)
+    # test that a warning is raised when rotate is used.
+    match = ("'rotate' has no effect and is deprecated in 0.23. "
+             "It will be removed in 0.25.")
+    with pytest.warns(FutureWarning, match=match):
+        plot_tree(tree, rotate=True)
+
+
+def test_not_fitted_tree(pyplot):
+
+    # Testing if not fitted tree throws the correct error
+    clf = DecisionTreeRegressor()
+    with pytest.raises(NotFittedError):
+        plot_tree(clf)

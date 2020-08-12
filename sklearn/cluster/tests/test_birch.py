@@ -7,17 +7,17 @@ import numpy as np
 import pytest
 
 from sklearn.cluster.tests.common import generate_clustered_data
-from sklearn.cluster.birch import Birch
-from sklearn.cluster.hierarchical import AgglomerativeClustering
+from sklearn.cluster import Birch
+from sklearn.cluster import AgglomerativeClustering
 from sklearn.datasets import make_blobs
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import ElasticNet
 from sklearn.metrics import pairwise_distances_argmin, v_measure_score
 
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_warns
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_warns
 
 
 def test_n_samples_leaves_roots():
@@ -159,3 +159,11 @@ def test_threshold():
     brc = Birch(threshold=5.0, n_clusters=None)
     brc.fit(X)
     check_threshold(brc, 5.)
+
+
+def test_birch_n_clusters_long_int():
+    # Check that birch supports n_clusters with np.int64 dtype, for instance
+    # coming from np.arange. #16484
+    X, _ = make_blobs(random_state=0)
+    n_clusters = np.int64(5)
+    Birch(n_clusters=n_clusters).fit(X)

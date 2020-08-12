@@ -10,13 +10,13 @@ def configuration(parent_package="", top_path=None):
     if os.name == 'posix':
         libraries.append('m')
 
-    config.add_extension("_online_lda",
-                         sources=["_online_lda.pyx"],
+    config.add_extension("_online_lda_fast",
+                         sources=["_online_lda_fast.pyx"],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 
-    config.add_extension('cdnmf_fast',
-                         sources=['cdnmf_fast.pyx'],
+    config.add_extension('_cdnmf_fast',
+                         sources=['_cdnmf_fast.pyx'],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 

@@ -33,8 +33,9 @@ Some advantages of decision trees are:
     - The cost of using the tree (i.e., predicting data) is logarithmic in the
       number of data points used to train the tree.
 
-    - Able to handle both numerical and categorical data. Other techniques
-      are usually specialised in analysing datasets that have only one type
+    - Able to handle both numerical and categorical data. However scikit-learn 
+      implementation does not support categorical variables for now. Other 
+      techniques are usually specialised in analysing datasets that have only one type
       of variable. See :ref:`algorithms <tree_algorithms>` for more
       information.
 
@@ -56,9 +57,9 @@ The disadvantages of decision trees include:
 
     - Decision-tree learners can create over-complex trees that do not
       generalise the data well. This is called overfitting. Mechanisms
-      such as pruning (not currently supported), setting the minimum
-      number of samples required at a leaf node or setting the maximum
-      depth of the tree are necessary to avoid this problem.
+      such as pruning, setting the minimum number of samples required
+      at a leaf node or setting the maximum depth of the tree are
+      necessary to avoid this problem.
 
     - Decision trees can be unstable because small variations in the
       data might result in a completely different tree being generated.
@@ -91,8 +92,8 @@ Classification
 classification on a dataset.
 
 As with other classifiers, :class:`DecisionTreeClassifier` takes as input two arrays:
-an array X, sparse or dense, of size ``[n_samples, n_features]``  holding the
-training samples, and an array Y of integer values, size ``[n_samples]``,
+an array X, sparse or dense, of shape ``(n_samples, n_features)`` holding the
+training samples, and an array Y of integer values, shape ``(n_samples,)``,
 holding the class labels for the training samples::
 
     >>> from sklearn import tree
@@ -106,8 +107,13 @@ After being fitted, the model can then be used to predict the class of samples::
     >>> clf.predict([[2., 2.]])
     array([1])
 
-Alternatively, the probability of each class can be predicted, which is the
-fraction of training samples of the same class in a leaf::
+In case that there are multiple classes with the same and highest
+probability, the classifier will predict the class with the lowest index
+amongst those classes.
+
+As an alternative to outputting a specific class, the probability of each class
+can be predicted, which is the fraction of training samples of the class in a 
+leaf::
 
     >>> clf.predict_proba([[2., 2.]])
     array([[0., 1.]])
@@ -124,10 +130,10 @@ Using the Iris dataset, we can construct a tree as follows::
     >>> clf = tree.DecisionTreeClassifier()
     >>> clf = clf.fit(X, y)
 
-Once trained, you can plot the tree with the plot_tree function::
+Once trained, you can plot the tree with the :func:`plot_tree` function::
 
 
-    >>> tree.plot_tree(clf.fit(iris.data, iris.target)) # doctest: +SKIP
+    >>> tree.plot_tree(clf) # doctest: +SKIP
 
 .. figure:: ../auto_examples/tree/images/sphx_glr_plot_iris_dtc_002.png
    :target: ../auto_examples/tree/plot_iris_dtc.html
@@ -136,14 +142,11 @@ Once trained, you can plot the tree with the plot_tree function::
 
 We can also export the tree in `Graphviz
 <https://www.graphviz.org/>`_ format using the :func:`export_graphviz`
-exporter. If you use the `conda <https://conda.io>`_ package manager, the graphviz binaries  
+exporter. If you use the `conda <https://conda.io>`_ package manager, the graphviz binaries
+and the python package can be installed with `conda install python-graphviz`.
 
-and the python package can be installed with 
-
-    conda install python-graphviz
-   
 Alternatively binaries for graphviz can be downloaded from the graphviz project homepage,
-and the Python wrapper installed from pypi with `pip install graphviz`. 
+and the Python wrapper installed from pypi with `pip install graphviz`.
 
 Below is an example graphviz export of the above tree trained on the entire
 iris dataset; the results are saved in an output file `iris.pdf`::
@@ -188,7 +191,7 @@ of external libraries and is more compact:
 
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.tree import DecisionTreeClassifier
-    >>> from sklearn.tree.export import export_text
+    >>> from sklearn.tree import export_text
     >>> iris = load_iris()
     >>> decision_tree = DecisionTreeClassifier(random_state=0, max_depth=2)
     >>> decision_tree = decision_tree.fit(iris.data, iris.target)
@@ -244,7 +247,7 @@ Multi-output problems
 =====================
 
 A multi-output problem is a supervised learning problem with several outputs
-to predict, that is when Y is a 2d array of size ``[n_samples, n_outputs]``.
+to predict, that is when Y is a 2d array of shape ``(n_samples, n_outputs)``.
 
 When there is no correlation between the outputs, a very simple way to solve
 this kind of problem is to build n independent models, i.e. one for each
@@ -265,7 +268,7 @@ multi-output problems. This requires the following changes:
 This module offers support for multi-output problems by implementing this
 strategy in both :class:`DecisionTreeClassifier` and
 :class:`DecisionTreeRegressor`. If a decision tree is fit on an output array Y
-of size ``[n_samples, n_outputs]`` then the resulting estimator will:
+of shape ``(n_samples, n_outputs)`` then the resulting estimator will:
 
   * Output n_output values upon ``predict``;
 
@@ -283,19 +286,19 @@ X is a single real value and the outputs Y are the sine and cosine of X.
    :align: center
 
 The use of multi-output trees for classification is demonstrated in
-:ref:`sphx_glr_auto_examples_plot_multioutput_face_completion.py`. In this example, the inputs
+:ref:`sphx_glr_auto_examples_miscellaneous_plot_multioutput_face_completion.py`. In this example, the inputs
 X are the pixels of the upper half of faces and the outputs Y are the pixels of
 the lower half of those faces.
 
-.. figure:: ../auto_examples/images/sphx_glr_plot_multioutput_face_completion_001.png
-   :target: ../auto_examples/plot_multioutput_face_completion.html
+.. figure:: ../auto_examples/miscellaneous/images/sphx_glr_plot_multioutput_face_completion_001.png
+   :target: ../auto_examples/miscellaneous/plot_multioutput_face_completion.html
    :scale: 75
    :align: center
 
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_tree_plot_tree_regression_multioutput.py`
- * :ref:`sphx_glr_auto_examples_plot_multioutput_face_completion.py`
+ * :ref:`sphx_glr_auto_examples_miscellaneous_plot_multioutput_face_completion.py`
 
 .. topic:: References:
 
@@ -319,17 +322,6 @@ largest reduction in entropy.  This has a cost of
 :math:`O(n_{features}n_{samples}\log(n_{samples}))` at each node, leading to a
 total cost over the entire trees (by summing the cost at each node) of
 :math:`O(n_{features}n_{samples}^{2}\log(n_{samples}))`.
-
-Scikit-learn offers a more efficient implementation for the construction of
-decision trees.  A naive implementation (as above) would recompute the class
-label histograms (for classification) or the means (for regression) at for each
-new split point along a given feature. Presorting the feature over all
-relevant samples, and retaining a running label count, will reduce the complexity
-at each node to :math:`O(n_{features}\log(n_{samples}))`, which results in a
-total cost of :math:`O(n_{features}n_{samples}\log(n_{samples}))`. This is an option
-for all tree based algorithms. By default it is turned on for gradient boosting,
-where in general it makes training faster, but turned off for all other algorithms as
-it tends to slow down training when training deep trees.
 
 
 Tips on practical use
@@ -391,7 +383,6 @@ Tips on practical use
     most of the samples.
 
 
-
 .. _tree_algorithms:
 
 Tree algorithms: ID3, C4.5, C5.0 and CART
@@ -425,7 +416,7 @@ it differs in that it supports numerical target variables (regression) and
 does not compute rule sets. CART constructs binary trees using the feature
 and threshold that yield the largest information gain at each node.
 
-scikit-learn uses an optimised version of the CART algorithm; however, scikit-learn 
+scikit-learn uses an optimised version of the CART algorithm; however, scikit-learn
 implementation does not support categorical variables for now.
 
 .. _ID3: https://en.wikipedia.org/wiki/ID3_algorithm
@@ -511,8 +502,8 @@ If the target is a continuous value, then for node :math:`m`,
 representing a region :math:`R_m` with :math:`N_m` observations, common
 criteria to minimise as for determining locations for future
 splits are Mean Squared Error, which minimizes the L2 error
-using mean values at terminal nodes, and Mean Absolute Error, which 
-minimizes the L1 error using median values at terminal nodes. 
+using mean values at terminal nodes, and Mean Absolute Error, which
+minimizes the L1 error using median values at terminal nodes.
 
 Mean Squared Error:
 
@@ -526,9 +517,9 @@ Mean Absolute Error:
 
 .. math::
 
-    \bar{y}_m = \frac{1}{N_m} \sum_{i \in N_m} y_i
+    median(y)_m = \underset{i \in N_m}{\mathrm{median}}(y_i)
 
-    H(X_m) = \frac{1}{N_m} \sum_{i \in N_m} |y_i - \bar{y}_m|
+    H(X_m) = \frac{1}{N_m} \sum_{i \in N_m} |y_i - median(y)_m|
 
 where :math:`X_m` is the training data in node :math:`m`
 
@@ -546,9 +537,9 @@ a given tree :math:`T`:
 
 .. math::
 
-  R_\alpha(T) = R(T) + \alpha|T|
+  R_\alpha(T) = R(T) + \alpha|\widetilde{T}|
 
-where :math:`|T|` is the number of terminal nodes in :math:`T` and :math:`R(T)`
+where :math:`|\widetilde{T}|` is the number of terminal nodes in :math:`T` and :math:`R(T)`
 is traditionally defined as the total misclassification rate of the terminal
 nodes. Alternatively, scikit-learn uses the total sample weighted impurity of
 the terminal nodes for :math:`R(T)`. As shown above, the impurity of a node
@@ -571,7 +562,7 @@ be pruned. This process stops when the pruned tree's minimal
 .. topic:: Examples:
 
     * :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
-  
+
 .. topic:: References:
 
     .. [BRE] L. Breiman, J. Friedman, R. Olshen, and C. Stone. Classification

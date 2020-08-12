@@ -1,18 +1,19 @@
 import numpy as np
+import pytest
 import scipy.sparse as sp
+from scipy.special import comb
 from numpy.testing import assert_array_almost_equal
 
-from sklearn.utils.fixes import comb
-from sklearn.utils.random import random_choice_csc, sample_without_replacement
+from sklearn.utils.random import _random_choice_csc, sample_without_replacement
 from sklearn.utils._random import _our_rand_r_py
-from sklearn.utils.testing import assert_raises
 
 
 ###############################################################################
 # test custom sampling without replacement algorithm
 ###############################################################################
 def test_invalid_sample_without_replacement_algorithm():
-    assert_raises(ValueError, sample_without_replacement, 5, 4, "unknown")
+    with pytest.raises(ValueError):
+        sample_without_replacement(5, 4, "unknown")
 
 
 def test_sample_without_replacement_algorithms():
@@ -33,8 +34,10 @@ def test_sample_without_replacement_algorithms():
 def check_edge_case_of_sample_int(sample_without_replacement):
 
     # n_population < n_sample
-    assert_raises(ValueError, sample_without_replacement, 0, 1)
-    assert_raises(ValueError, sample_without_replacement, 1, 2)
+    with pytest.raises(ValueError):
+        sample_without_replacement(0, 1)
+    with pytest.raises(ValueError):
+        sample_without_replacement(1, 2)
 
     # n_population == n_samples
     assert sample_without_replacement(0, 0).shape == (0, )
@@ -46,8 +49,10 @@ def check_edge_case_of_sample_int(sample_without_replacement):
     assert sample_without_replacement(5, 1).shape == (1, )
 
     # n_population < 0 or n_samples < 0
-    assert_raises(ValueError, sample_without_replacement, -1, 5)
-    assert_raises(ValueError, sample_without_replacement, 5, -1)
+    with pytest.raises(ValueError):
+        sample_without_replacement(-1, 5)
+    with pytest.raises(ValueError):
+        sample_without_replacement(5, -1)
 
 
 def check_sample_int(sample_without_replacement):
@@ -103,7 +108,7 @@ def test_random_choice_csc(n_samples=10000, random_state=24):
     classes = [np.array([0, 1]),  np.array([0, 1, 2])]
     class_probabilities = [np.array([0.5, 0.5]), np.array([0.6, 0.1, 0.3])]
 
-    got = random_choice_csc(n_samples, classes, class_probabilities,
+    got = _random_choice_csc(n_samples, classes, class_probabilities,
                             random_state)
     assert sp.issparse(got)
 
@@ -115,7 +120,7 @@ def test_random_choice_csc(n_samples=10000, random_state=24):
     classes = [[0, 1],  [1, 2]]  # test for array-like support
     class_probabilities = [np.array([0.5, 0.5]), np.array([0, 1/2, 1/2])]
 
-    got = random_choice_csc(n_samples=n_samples,
+    got = _random_choice_csc(n_samples=n_samples,
                             classes=classes,
                             random_state=random_state)
     assert sp.issparse(got)
@@ -128,7 +133,7 @@ def test_random_choice_csc(n_samples=10000, random_state=24):
     classes = [np.array([0, 1]),  np.array([0, 1, 2])]
     class_probabilities = [np.array([1.0, 0.0]), np.array([0.0, 1.0, 0.0])]
 
-    got = random_choice_csc(n_samples, classes, class_probabilities,
+    got = _random_choice_csc(n_samples, classes, class_probabilities,
                             random_state)
     assert sp.issparse(got)
 
@@ -141,7 +146,7 @@ def test_random_choice_csc(n_samples=10000, random_state=24):
     classes = [[1],  [0]]  # test for array-like support
     class_probabilities = [np.array([0.0, 1.0]), np.array([1.0])]
 
-    got = random_choice_csc(n_samples=n_samples,
+    got = _random_choice_csc(n_samples=n_samples,
                             classes=classes,
                             random_state=random_state)
     assert sp.issparse(got)
@@ -155,26 +160,26 @@ def test_random_choice_csc_errors():
     # the length of an array in classes and class_probabilities is mismatched
     classes = [np.array([0, 1]),  np.array([0, 1, 2, 3])]
     class_probabilities = [np.array([0.5, 0.5]), np.array([0.6, 0.1, 0.3])]
-    assert_raises(ValueError, random_choice_csc, 4, classes,
-                  class_probabilities, 1)
+    with pytest.raises(ValueError):
+        _random_choice_csc(4, classes, class_probabilities, 1)
 
     # the class dtype is not supported
     classes = [np.array(["a", "1"]),  np.array(["z", "1", "2"])]
     class_probabilities = [np.array([0.5, 0.5]), np.array([0.6, 0.1, 0.3])]
-    assert_raises(ValueError, random_choice_csc, 4, classes,
-                  class_probabilities, 1)
+    with pytest.raises(ValueError):
+        _random_choice_csc(4, classes, class_probabilities, 1)
 
     # the class dtype is not supported
     classes = [np.array([4.2, 0.1]),  np.array([0.1, 0.2, 9.4])]
     class_probabilities = [np.array([0.5, 0.5]), np.array([0.6, 0.1, 0.3])]
-    assert_raises(ValueError, random_choice_csc, 4, classes,
-                  class_probabilities, 1)
+    with pytest.raises(ValueError):
+        _random_choice_csc(4, classes, class_probabilities, 1)
 
     # Given probabilities don't sum to 1
     classes = [np.array([0, 1]),  np.array([0, 1, 2])]
     class_probabilities = [np.array([0.5, 0.6]), np.array([0.6, 0.1, 0.3])]
-    assert_raises(ValueError, random_choice_csc, 4, classes,
-                  class_probabilities, 1)
+    with pytest.raises(ValueError):
+        _random_choice_csc(4, classes, class_probabilities, 1)
 
 
 def test_our_rand_r():

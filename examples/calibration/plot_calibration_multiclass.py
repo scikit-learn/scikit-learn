@@ -39,8 +39,7 @@ from sklearn.metrics import log_loss
 np.random.seed(0)
 
 # Generate data
-X, y = make_blobs(n_samples=1000, n_features=2, random_state=42,
-                  cluster_std=5.0)
+X, y = make_blobs(n_samples=1000, random_state=42, cluster_std=5.0)
 X_train, y_train = X[:600], y[:600]
 X_valid, y_valid = X[600:800], y[600:800]
 X_train_valid, y_train_valid = X[:800], y[:800]
