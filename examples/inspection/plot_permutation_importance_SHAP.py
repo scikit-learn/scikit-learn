@@ -4,7 +4,7 @@ Permutation Importance vs SHAP
 ==============================
 
 In this example, we will compare :ref:`permutation_importance` with SHAP
-(**SH**\ apley **A**\ dditive ex**P**\ lanations). Both are model-agnostic
+(**SH**\ apley **A**\ dditive ex\ **P**\ lanations). Both are model-agnostic
 model interpretation methods used to evaluate feature importances for models
 trained on tabular data.
 
@@ -19,7 +19,7 @@ deemed a fair way to 'split' the prediction output between the features (for
 more on these properties see [1]_ and [5]_).
 These values are computationally very expensive to calculate. SHAP offers
 a way to estimate these values using an additive model that is a linear
-function of features. SHAP calculates of the contribution of each feature
+function of features. SHAP calculates the contribution of each feature
 for individual samples. The average of these contributions across samples
 can then be used to indicate the 'importance' of a feature in a model.
 Several versions of SHAP are implemented in the Python library
