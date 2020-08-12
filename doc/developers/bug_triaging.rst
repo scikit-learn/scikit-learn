@@ -43,6 +43,13 @@ The following actions are typically useful:
    <http://gael-varoquaux.info/programming/technical-discussions-are-hard-a-few-tips.html>`_
    explores how to lead online discussions in the context of open source.
 
+Working on PR to help review
+----------------------------
+
+Reviewing code is also encouraged. Contributors and users are welcome to
+participate to the review process following our :ref:`review guidelines
+<code_review>`.
+
 Triaging operations for members of the core and triage teams
 -------------------------------------------------------------
 
@@ -51,8 +58,8 @@ can do the following important tasks:
 
 - Update labels for issues and PRs
 
-- Follow up on stalled PRs, to see if they must be relabeled as
-  stalled and needing help (this is typically very important in the context
+- :ref:`Determine if a PR must be relabeled as stalled <stalled_pull_request>`
+  and needing help (this is typically very important in the context
   of sprints, where the risk is to create many unfinished PRs)
 
 - Triage issues:
