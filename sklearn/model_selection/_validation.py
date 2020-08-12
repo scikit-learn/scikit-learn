@@ -1291,6 +1291,8 @@ def learning_curve(estimator, X, y, *, groups=None,
         Stratification is done by using y as the class labels.
         If shuffle=False or y is None, then stratify must be False.
 
+        .. versionadded:: 0.24
+
     random_state : int or RandomState instance, default=None
         Used when ``shuffle`` is True. Pass an int for reproducible
         output across multiple function calls.
