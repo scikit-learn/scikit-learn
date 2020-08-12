@@ -628,9 +628,9 @@ General Concepts
         sample and each column to a training sample.
 
         Use of precomputed X is usually indicated by setting a ``metric``,
-        ``affinity`` or ``kernel`` parameter to the string 'precomputed'.  An
-        estimator should mark itself as being :term:`_pairwise` if this is the
-        case.
+        ``affinity`` or ``kernel`` parameter to the string 'precomputed'. If
+        this is the case, then the estimator should set the `pairwise`
+        estimator tag as True.
 
     rectangular
         Data that can be represented as a matrix with :term:`samples` on the
