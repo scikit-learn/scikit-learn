@@ -166,9 +166,8 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         self.n_jobs = n_jobs
         self.copy_X = copy_X
 
-    @property
-    def _pairwise(self):
-        return self.kernel == "precomputed"
+    def _more_tags(self):
+        return {'pairwise': self.kernel == 'precomputed'}
 
     def _get_kernel(self, X, Y=None):
         if callable(self.kernel):

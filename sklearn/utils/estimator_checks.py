@@ -68,9 +68,7 @@ def _yield_checks(estimator):
     yield check_sample_weights_not_an_array
     yield check_sample_weights_list
     yield check_sample_weights_shape
-    if (has_fit_parameter(estimator, "sample_weight")
-            and not (hasattr(estimator, "_pairwise")
-                     and estimator._pairwise)):
+    if has_fit_parameter(estimator, "sample_weight") and not tags["pairwise"]:
         # We skip pairwise because the data is not pairwise
         yield partial(check_sample_weights_invariance, kind='ones')
         yield partial(check_sample_weights_invariance, kind='zeros')
@@ -675,7 +673,7 @@ class _NotAnArray:
 
 
 def _is_pairwise(estimator):
-    """Returns True if estimator has a _pairwise attribute set to True.
+    """Returns True if estimator has pairwise tag set to True.
 
     Parameters
     ----------
@@ -685,9 +683,9 @@ def _is_pairwise(estimator):
     Returns
     -------
     out : bool
-        True if _pairwise is set to True and False otherwise.
+        True if pairwise tag is set to True and False otherwise.
     """
-    return bool(getattr(estimator, "_pairwise", False))
+    return estimator._get_tags().get("pairwise", False)
 
 
 def _is_pairwise_metric(estimator):
@@ -872,8 +870,7 @@ def check_sample_weights_shape(name, estimator_orig, strict_mode=True):
     # check that estimators raise an error if sample_weight
     # shape mismatches the input
     if (has_fit_parameter(estimator_orig, "sample_weight") and
-            not (hasattr(estimator_orig, "_pairwise")
-                 and estimator_orig._pairwise)):
+            not estimator_orig._get_tags().get("pairwise", False)):
         estimator = clone(estimator_orig)
         X = np.array([[1, 3], [1, 3], [1, 3], [1, 3],
                       [2, 1], [2, 1], [2, 1], [2, 1],
@@ -2725,17 +2722,18 @@ def _enforce_estimator_tags_y(estimator, y):
 
 
 def _enforce_estimator_tags_x(estimator, X):
-    # Estimators with a `_pairwise` tag only accept
+    # Estimators `pairwise` tag set to `True` only accept
     # X of shape (`n_samples`, `n_samples`)
-    if hasattr(estimator, '_pairwise'):
+    tags = estimator._get_tags()
+    if tags['pairwise']:
         X = X.dot(X.T)
     # Estimators with `1darray` in `X_types` tag only accept
     # X of shape (`n_samples`,)
-    if '1darray' in estimator._get_tags()['X_types']:
+    if '1darray' in tags['X_types']:
         X = X[:, 0]
     # Estimators with a `requires_positive_X` tag only accept
     # strictly positive data
-    if estimator._get_tags()['requires_positive_X']:
+    if tags['requires_positive_X']:
         X -= X.min()
     return X
 

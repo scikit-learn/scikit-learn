@@ -452,10 +452,10 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
                 "Base estimator doesn't have an intercept_ attribute.")
         return np.array([e.intercept_.ravel() for e in self.estimators_])
 
-    @property
-    def _pairwise(self):
+    def _more_tags(self):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
-        return getattr(self.estimator, "_pairwise", False)
+        estimator_tags = self.estimator._get_tags()
+        return {'pairwise': estimator_tags.get('pairwise', False)}
 
     @property
     def _first_estimator(self):
@@ -542,7 +542,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
     pairwise_indices_ : list, length = ``len(estimators_)``, or ``None``
         Indices of samples used when training the estimators.
-        ``None`` when ``estimator`` does not have ``_pairwise`` attribute.
+        ``None`` when ``estimator``'s `pairwise` tag is False.
 
     Examples
     --------
@@ -592,8 +592,9 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             for i in range(n_classes) for j in range(i + 1, n_classes)))))
 
         self.estimators_ = estimators_indices[0]
+        pairwise = self._get_tags().get('pairwise')
         self.pairwise_indices_ = (
-            estimators_indices[1] if self._pairwise else None)
+            estimators_indices[1] if pairwise else None)
 
         return self
 
@@ -713,10 +714,10 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     def n_classes_(self):
         return len(self.classes_)
 
-    @property
-    def _pairwise(self):
+    def _more_tags(self):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
-        return getattr(self.estimator, "_pairwise", False)
+        estimator_tags = self.estimator._get_tags()
+        return {'pairwise': estimator_tags.get('pairwise', True)}
 
 
 class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):

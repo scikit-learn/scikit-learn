@@ -613,10 +613,10 @@ class Pipeline(_BaseComposition):
     def classes_(self):
         return self.steps[-1][-1].classes_
 
-    @property
-    def _pairwise(self):
+    def _more_tags(self):
         # check if first estimator expects pairwise input
-        return getattr(self.steps[0][1], '_pairwise', False)
+        estimator_tags = self.steps[0][1]._get_tags()
+        return {'pairwise': estimator_tags.get('pairwise', False)}
 
     @property
     def n_features_in_(self):

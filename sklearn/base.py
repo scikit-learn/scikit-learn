@@ -37,6 +37,7 @@ _DEFAULT_TAGS = {
     'binary_only': False,
     'requires_fit': True,
     'requires_y': False,
+    'pairwise': False
     }
 
 

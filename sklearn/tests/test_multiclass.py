@@ -756,10 +756,10 @@ def test_pairwise_attribute():
 
     for MultiClassClassifier in [OneVsRestClassifier, OneVsOneClassifier]:
         ovr_false = MultiClassClassifier(clf_notprecomputed)
-        assert not ovr_false._pairwise
+        assert not ovr_false._get_tags()['pairwise']
 
         ovr_true = MultiClassClassifier(clf_precomputed)
-        assert ovr_true._pairwise
+        assert ovr_true._get_tags()['pairwise']
 
 
 def test_pairwise_cross_val_score():

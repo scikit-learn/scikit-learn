@@ -384,9 +384,8 @@ class MDS(BaseEstimator):
         self.n_jobs = n_jobs
         self.random_state = random_state
 
-    @property
-    def _pairwise(self):
-        return self.kernel == "precomputed"
+    def _more_tags(self):
+        return {'pairwise': self.metric == 'precomputed'}
 
     def fit(self, X, y=None, init=None):
         """

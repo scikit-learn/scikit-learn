@@ -594,8 +594,8 @@ def test_check_no_attributes_set_in_init():
 
 
 def test_check_estimator_pairwise():
-    # check that check_estimator() works on estimator with _pairwise
-    # kernel or metric
+    # check that check_estimator() works on estimator with pairwise tag set to
+    # True kernel or metric
 
     # test precomputed kernel
     est = SVC(kernel='precomputed')

@@ -2266,9 +2266,8 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
 
         return K
 
-    @property
-    def _pairwise(self):
-        return True
+    def _more_tags(self):
+        return {'pairwise': True}
 
 
 def add_dummy_feature(X, value=1.0):

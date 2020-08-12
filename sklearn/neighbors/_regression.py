@@ -155,10 +155,9 @@ class KNeighborsRegressor(KNeighborsMixin,
               metric_params=metric_params, n_jobs=n_jobs, **kwargs)
         self.weights = _check_weights(weights)
 
-    @property
-    def _pairwise(self):
+    def _more_tags(self):
         # For cross-validation routines to split data correctly
-        return self.metric == 'precomputed'
+        return {'pairwise': self.metric == 'precomputed'}
 
     def fit(self, X, y):
         """Fit the k-nearest neighbors regressor from the training dataset.

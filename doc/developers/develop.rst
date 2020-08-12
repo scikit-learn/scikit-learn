@@ -221,9 +221,9 @@ Pairwise Attributes
 ^^^^^^^^^^^^^^^^^^^
 
 An estimator that accepts ``X`` of shape ``(n_samples, n_samples)`` and defines
-a :term:`_pairwise` property equal to ``True`` allows for cross-validation of
+a `pairwise` estimator tag equal to ``True`` allows for cross-validation of
 the dataset, e.g. when ``X`` is a precomputed kernel matrix. Specifically,
-the :term:`_pairwise` property is used by ``utils.metaestimators._safe_split``
+the `pairwise` estimator tag is used by ``utils.metaestimators._safe_split``
 to slice rows and columns.
 
 Universal attributes
@@ -495,6 +495,16 @@ no_validation (default=False)
 
 non_deterministic (default=False)
     whether the estimator is not deterministic given a fixed ``random_state``
+
+pairwise (default=False)
+    This boolean attribute indicates whether the data (`X`) :term:`fit` and
+    similar methods consists of pairwise measures over samples rather than a
+    feature representation for each sample.  It is usually `True` where an
+    estimator has a `metric` or `affinity` or `kernel` parameter with value
+    'precomputed'. Its primary purpose is that when a :term:`meta-estimator`
+    extracts a sub-sample of data intended for a pairwise estimator, the data
+    needs to be indexed on both axes, while other data is indexed only on the
+    first axis.
 
 poor_score (default=False)
     whether the estimator fails to provide a "reasonable" test-set score, which

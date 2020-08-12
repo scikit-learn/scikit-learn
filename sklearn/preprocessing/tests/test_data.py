@@ -2141,15 +2141,15 @@ def test_center_kernel():
 def test_cv_pipeline_precomputed():
     # Cross-validate a regression on four coplanar points with the same
     # value. Use precomputed kernel to ensure Pipeline with KernelCenterer
-    # is treated as a _pairwise operation.
+    # is treated as a pairwise operation.
     X = np.array([[3, 0, 0], [0, 3, 0], [0, 0, 3], [1, 1, 1]])
     y_true = np.ones((4,))
     K = X.dot(X.T)
     kcent = KernelCenterer()
     pipeline = Pipeline([("kernel_centerer", kcent), ("svr", SVR())])
 
-    # did the pipeline set the _pairwise attribute?
-    assert pipeline._pairwise
+    # did the pipeline set the pairwise attribute?
+    assert pipeline._get_tags()['pairwise']
 
     # test cross-validation, score should be almost perfect
     # NB: this test is pretty vacuous -- it's mainly to test integration

@@ -424,10 +424,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     def _estimator_type(self):
         return self.estimator._estimator_type
 
-    @property
-    def _pairwise(self):
+    def _more_tags(self):
         # allows cross-validation to see 'precomputed' metrics
-        return getattr(self.estimator, '_pairwise', False)
+        estimator_tags = self.estimator._get_tags()
+        return {'pairwise': estimator_tags.get('pairwise', False)}
 
     def score(self, X, y=None):
         """Returns the score on the given data, if the estimator has been refit.

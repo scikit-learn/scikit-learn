@@ -515,10 +515,9 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         return self
 
-    @property
-    def _pairwise(self):
+    def _more_tags(self):
         # For cross-validation routines to split data correctly
-        return self.metric == 'precomputed'
+        return {'pairwise': self.metric == 'precomputed'}
 
 
 def _tree_query_parallel_helper(tree, *args, **kwargs):

@@ -102,10 +102,9 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         self.max_iter = max_iter
         self.random_state = random_state
 
-    @property
-    def _pairwise(self):
+    def _more_tags(self):
         # Used by cross_val_score.
-        return self.kernel == "precomputed"
+        return {'pairwise': self.kernel == 'precomputed'}
 
     def fit(self, X, y, sample_weight=None):
         """Fit the SVM model according to the given training data.
