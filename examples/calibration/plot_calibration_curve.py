@@ -6,8 +6,9 @@ Probability Calibration curves
 When performing classification one often wants to predict not only the class
 label, but also the associated probability. This probability gives some
 kind of confidence on the prediction. This example demonstrates how to
-visualize how well calibrated the predicted probabilities are and how to
-calibrate an uncalibrated classifier.
+visualize how well calibrated the predicted probabilities are using calibration
+curves, also known as reliability diagrams. Calibration of an uncalibrated
+classifier will also be demonstrated.
 """
 
 # %%

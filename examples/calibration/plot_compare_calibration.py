@@ -82,7 +82,7 @@ y_test = y[train_samples:]
 #   more and return probabilities closer to 0 or 1 typically.
 #
 # * we use naively calibrated (min-max scaled to [0,1])
-#   :term:`decision_function` scores to show the performance of
+#   :term:`decision_function` values to show the performance of
 #   :class:`~sklearn.svm.LinearSVC`. :class:`~sklearn.svm.LinearSVC` shows an
 #   even more sigmoid curve than the
 #   :class:`~sklearn.ensemble.RandomForestClassifier`, which is typical for

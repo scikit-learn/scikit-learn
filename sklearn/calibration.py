@@ -859,7 +859,8 @@ class CalibrationDisplay:
 def plot_calibration_curve(estimator, X, y, *,
                            n_bins=5, strategy='uniform',
                            name=None, ref_line=True, ax=None, **kwargs):
-    """Plot calibration curve for binary classifiers.
+    """Plot calibration curve, also known as reliability diagrams, for binary
+    classifiers.
 
     The average predicted probability for each bin is plotted on the x-axis
     and the fraction of positive classes in each bin is plotted on the y-axis.
