@@ -1717,8 +1717,9 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     def _compute_counts(self, X, y):
         n_samples = _num_samples(X)
         y = check_array(y, ensure_2d=False, dtype=None)
-        n_train, n_test = _validate_shuffle_split(n_samples, self.test_size,
-                                                  self.train_size)
+        n_train, n_test = _validate_shuffle_split(
+            n_samples, self.test_size, self.train_size,
+            default_test_size=self._default_test_size)
         if y.ndim == 2:
             # for multi-label y, map each distinct row to a string repr
             # using join because str(row) uses an ellipsis if len(row) > 1000
