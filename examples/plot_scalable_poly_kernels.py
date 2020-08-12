@@ -112,8 +112,9 @@ for n_components in [250, 500, 1000, 2000]:
     ps_lsvm_time /= n_runs
     ps_lsvm_score /= n_runs
 
-    results[f"LSVM + PS({n_components})"] = \
-        {"time": ps_lsvm_time, "score": ps_lsvm_score}
+    results[f"LSVM + PS({n_components})"] = {
+        "time": ps_lsvm_time, "score": ps_lsvm_score
+    }
     print(f"Linear SVM score on {n_components} PolynomialSampler " +
           f"features: {ps_lsvm_score:.2f}%")
 
