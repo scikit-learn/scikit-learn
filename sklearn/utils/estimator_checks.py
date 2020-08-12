@@ -1541,8 +1541,10 @@ def check_estimators_preserve_dtypes(name, estimator_orig):
             Xts[i],
             Xts[0],
             rtol=1e-4,
-            err_msg=(f'dtype_in: {in_out_types[i].__name__} '
-                     f'dtype_ground_truth: {in_out_types[0].__name__)}\n')
+            err_msg=(
+                f"dtype_in: {in_out_types[i].__name__} "
+                f"dtype_ground_truth: {in_out_types[0].__name__}\n"
+            ),
         )
 
 
