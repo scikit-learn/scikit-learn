@@ -13,7 +13,10 @@ import warnings
 import numpy as np
 import scipy.sparse as sp
 from scipy.linalg import svd
-from scipy import fftpack
+try:
+    from scipy.fft import fft, ifft
+except ImportError:   # scipy < 1.4
+    from scipy.fftpack import fft, ifft
 
 from .base import BaseEstimator
 from .base import TransformerMixin
@@ -177,11 +180,9 @@ class PolynomialSampler(BaseEstimator, TransformerMixin):
 
         # For each same, compute a count sketch of phi(x) using the polynomial
         # multiplication (via FFT) of p count sketches of x.
-        count_sketches_fft = fftpack.fft(count_sketches, axis=2,
-                                         overwrite_x=True)
+        count_sketches_fft = fft(count_sketches, axis=2, overwrite_x=True)
         count_sketches_fft_prod = np.prod(count_sketches_fft, axis=1)
-        data_sketch = np.real(fftpack.ifft(count_sketches_fft_prod,
-                                           overwrite_x=True))
+        data_sketch = np.real(ifft(count_sketches_fft_prod, overwrite_x=True))
 
         return data_sketch
 
