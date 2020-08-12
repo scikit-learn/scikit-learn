@@ -1556,20 +1556,19 @@ lower Brier score always mean better calibration" [Bella2012]_, [Flach2008]_.
 .. topic:: References:
 
   .. [Brier1950] G. Brier, `Verification of forecasts expressed in terms of
-     probability
-     <ftp://ftp.library.noaa.gov/docs.lib/htdocs/rescue/mwr/078/mwr-078-01-0001.pdf>`_,
-     Monthly weather review 78.1 (1950)
+    probability
+    <ftp://ftp.library.noaa.gov/docs.lib/htdocs/rescue/mwr/078/mwr-078-01-0001.pdf>`_,
+    Monthly weather review 78.1 (1950)
 
   .. [Bella2012] Bella, Ferri, Hernández-Orallo, and Ramírez-Quintana
-     `"Calibration of Machine Learning Models"
-         <http://dmip.webs.upv.es/papers/BFHRHandbook2010.pdf>`_
-         in Khosrow-Pour, M. "Machine learning: concepts, methodologies, tools
-         and applications." Hershey, PA: Information Science Reference (2012).
+    `"Calibration of Machine Learning Models"
+    <http://dmip.webs.upv.es/papers/BFHRHandbook2010.pdf>`_
+    in Khosrow-Pour, M. "Machine learning: concepts, methodologies, tools
+    and applications." Hershey, PA: Information Science Reference (2012).
 
   .. [Flach2008] Flach, Peter, and Edson Matsubara. `"On classification, ranking,
-     and probability estimation."
-     <https://drops.dagstuhl.de/opus/volltexte/2008/1382/>`_ Dagstuhl
-     Seminar Proceedings. Schloss Dagstuhl-Leibniz-Zentrum fr Informatik (2008).
+    and probability estimation." <https://drops.dagstuhl.de/opus/volltexte/2008/1382/>`_
+    Dagstuhl Seminar Proceedings. Schloss Dagstuhl-Leibniz-Zentrum fr Informatik (2008).
 
 .. _multilabel_ranking_metrics:
 
