@@ -297,15 +297,14 @@ Changelog
 :mod:`sklearn.multiclass`
 .........................
 
-- |Fix| A fix to allow :class:`multiclass.` to accept
+- |Fix| A fix to allow :class:`multiclass.OutputCodeClassifier` to accept
   sparse input data in its `fit` and `predict` methods. The check for
   validity of the input is now delegated to the base estimator.
   :pr:`17233` by :user:`Zolisa Bleki <zoj613>`.
 
-- |Enhancement| :class:`multiclass.OneVsRestClassifier` and 
-  :class:`multiclass.OneVsOneClassifier` now accpets the inputs
-  with missing values. Hence, estimators which can handle missing
-  values (may be a pipeline with imputation step) can be used as
+- |Enhancement| :class:`multiclass.OneVsOneClassifier` now accpets
+  the inputs with missing values. Hence, estimators which can handle
+  missing values (may be a pipeline with imputation step) can be used as
   a estimator for multiclass wrappers. 
   :pr:`17987` by :user:`Venkatachalam N <venkyyuvy>`.
 
