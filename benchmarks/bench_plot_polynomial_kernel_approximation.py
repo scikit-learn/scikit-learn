@@ -57,19 +57,19 @@ from sklearn.kernel_approximation import Nystroem, PolynomialSampler
 from sklearn.pipeline import Pipeline
 
 # Split data in train and test sets
-X, Y = load_digits()["data"], load_digits()["target"]
-X_train, X_test, Y_train, Y_test = train_test_split(X, Y, train_size=0.7)
+X, y = load_digits()["data"], load_digits()["target"]
+X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.7)
 
 # Set the range of n_components for our experiments
 out_dims = range(20, 400, 20)
 
 # Evaluate Linear SVM
-lsvm = LinearSVC().fit(X_train, Y_train)
-lsvm_score = 100*lsvm.score(X_test, Y_test)
+lsvm = LinearSVC().fit(X_train, y_train)
+lsvm_score = 100*lsvm.score(X_test, y_test)
 
 # Evaluate kernelized SVM
-ksvm = SVC(kernel="poly", degree=2, gamma=1.).fit(X_train, Y_train)
-ksvm_score = 100*ksvm.score(X_test, Y_test)
+ksvm = SVC(kernel="poly", degree=2, gamma=1.).fit(X_train, y_train)
+ksvm_score = 100*ksvm.score(X_test, y_test)
 
 # Evaluate PolynomialSampler + LinearSVM
 ps_svm_scores = []
@@ -82,7 +82,7 @@ for k in out_dims:
         ps_svm = Pipeline([("PS", PolynomialSampler(degree=2,
                                                     n_components=k)),
                            ("SVM", LinearSVC())])
-        score_avg += ps_svm.fit(X_train, Y_train).score(X_test, Y_test)
+        score_avg += ps_svm.fit(X_train, y_train).score(X_test, y_test)
     ps_svm_scores.append(100*score_avg/n_test)
 
 # Evaluate Nystroem + LinearSVM
@@ -95,7 +95,7 @@ for k in out_dims:
         ny_svm = Pipeline([("NY", Nystroem(kernel="poly", gamma=1., degree=2,
                                            coef0=0, n_components=k)),
                            ("SVM", LinearSVC())])
-        score_avg += ny_svm.fit(X_train, Y_train).score(X_test, Y_test)
+        score_avg += ny_svm.fit(X_train, y_train).score(X_test, y_test)
     ny_svm_scores.append(100*score_avg/n_test)
 
 # Show results
