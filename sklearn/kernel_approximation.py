@@ -143,7 +143,7 @@ class PolynomialSampler(BaseEstimator, TransformerMixin):
 
         X_gamma = np.sqrt(self.gamma) * X
 
-        if sp.issparse(X) and self.coef0 != 0:
+        if sp.issparse(X_gamma) and self.coef0 != 0:
             X_gamma = sp.hstack([X_gamma, np.sqrt(self.coef0) *
                                  np.ones((X_gamma.shape[0], 1))],
                                 format="csc")
