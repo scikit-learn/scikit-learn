@@ -1505,7 +1505,7 @@ for binary classes. Quoting Wikipedia:
 This function returns a score of the mean square difference between the actual
 outcome and the predicted probability of the possible outcome. The actual
 outcome has to be 1 or 0 (true or false), while the predicted probability of
-the actual outcome can be a value between 0 and 1 [1]_.
+the actual outcome can be a value between 0 and 1 [Brier1950]_.
 
 The Brier score loss is also between 0 to 1 and the lower the score (the mean
 square difference is smaller), the more accurate the prediction is. It can be
@@ -1537,15 +1537,15 @@ Here is a small example of usage of this function:::
     0.0
 
 The Brier score can be used to assess how well a classifier is calibrated
-however, a lower Brier score does not always mean a better calibration.
-This is because the Brier score can be decomposed as the sum of calibration
-loss and refinement loss [3]_. Calibration loss is defined as the mean squared
+however, a lower Brier score does not always mean a better calibration. This is
+because the Brier score can be decomposed as the sum of calibration loss and
+refinement loss [Bella2012]_. Calibration loss is defined as the mean squared
 deviation from empirical probabilities derived from the slope of ROC segments.
-Refinement loss can be defined as the expected optimal loss as measured by
-the area under the optimal cost curve. Refinement loss can change
-independently from calibration loss, thus a lower Brier score does not
-necessarily mean a better calibrated model. "Only when refinement loss remains
-the same does a lower Brier score always mean better calibration" [2]_,[3]_.
+Refinement loss can be defined as the expected optimal loss as measured by the
+area under the optimal cost curve. Refinement loss can change independently
+from calibration loss, thus a lower Brier score does not necessarily mean a
+better calibrated model. "Only when refinement loss remains the same does a
+lower Brier score always mean better calibration" [Bella2012]_, [Flach2008]_.
 
 .. topic:: Example:
 
@@ -1555,22 +1555,21 @@ the same does a lower Brier score always mean better calibration" [2]_,[3]_.
 
 .. topic:: References:
 
-  .. [1] G. Brier, `Verification of forecasts expressed in terms of probability
-         <ftp://ftp.library.noaa.gov/docs.lib/htdocs/rescue/mwr/078/mwr-078-01-0001.pdf>`_,
-         Monthly weather review 78.1 (1950)
+  .. [Brier1950] G. Brier, `Verification of forecasts expressed in terms of
+     probability
+     <ftp://ftp.library.noaa.gov/docs.lib/htdocs/rescue/mwr/078/mwr-078-01-0001.pdf>`_,
+     Monthly weather review 78.1 (1950)
 
-  .. [2] Bella, Ferri, Hernández-Orallo, and Ramírez-Quintana
-         `"Calibration of Machine Learning Models"
+  .. [Bella2012] Bella, Ferri, Hernández-Orallo, and Ramírez-Quintana
+     `"Calibration of Machine Learning Models"
          <http://dmip.webs.upv.es/papers/BFHRHandbook2010.pdf>`_
          in Khosrow-Pour, M. "Machine learning: concepts, methodologies, tools
          and applications." Hershey, PA: Information Science Reference (2012).
 
-  .. [3] Flach, Peter, and Edson Matsubara. `"On classification, ranking, and
-         probability estimation."
-         <https://drops.dagstuhl.de/opus/volltexte/2008/1382/>`_ Dagstuhl
-         Seminar Proceedings. Schloss Dagstuhl-Leibniz-Zentrum fr Informatik,
-         2008.
-
+  .. [Flach2008] Flach, Peter, and Edson Matsubara. `"On classification, ranking,
+     and probability estimation."
+     <https://drops.dagstuhl.de/opus/volltexte/2008/1382/>`_ Dagstuhl
+     Seminar Proceedings. Schloss Dagstuhl-Leibniz-Zentrum fr Informatik (2008).
 
 .. _multilabel_ranking_metrics:
 
