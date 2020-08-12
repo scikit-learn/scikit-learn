@@ -1391,7 +1391,7 @@ def learning_curve(estimator, X, y, *, groups=None,
                         _compute_counts(X=train, y=y[train])
                     cur_train_indices, useless = next(cvi._split_from_counts(
                         class_counts, n_classes, n_test, n_train, y_indices))
-                    cur_train = safe_indexing(train, cur_train_indices)
+                    cur_train = _safe_indexing(train, cur_train_indices)
                 else:
                     cur_train = train[:n_train_samples]
                 train_test_proportions.append((cur_train, test))
