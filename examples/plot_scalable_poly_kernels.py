@@ -58,9 +58,9 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=5_000,
 # the LIBSVM webpage, and then normalize to unit length as done in the
 # original Tensor Sketch paper [1].
 
-mm = MinMaxScaler().fit(X_train)
-X_train = normalize(mm.transform(X_train))
-X_test = normalize(mm.transform(X_test))
+mm = make_pipeline(MinMaxScaler(), Normalizer())
+X_train = mm.fit_transform(X_train)
+X_test = mm.transform(X_test)
 
 
 ##############################################################################
