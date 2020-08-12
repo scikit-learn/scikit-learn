@@ -110,7 +110,7 @@ class PolynomialSampler(BaseEstimator, TransformerMixin):
             Returns the transformer.
         """
 
-        X = check_array(X, accept_sparse="csc")
+        X = self._validate_data(X, accept_sparse="csc")
         random_state = check_random_state(self.random_state)
 
         n_features = X.shape[1]
