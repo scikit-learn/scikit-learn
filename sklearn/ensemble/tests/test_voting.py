@@ -27,8 +27,6 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.dummy import DummyRegressor
-from sklearn.impute import SimpleImputer
-from sklearn.pipeline import make_pipeline
 
 # Load datasets
 iris = datasets.load_iris()
@@ -549,20 +547,3 @@ def test_voting_verbose(estimator, capsys):
 
     estimator.fit(X, y)
     assert re.match(pattern, capsys.readouterr()[0])
-
-
-@pytest.mark.parametrize(
-    "voting_meta_model, est, X, y",
-    [(VotingClassifier, LogisticRegression,
-      X, y),
-     (VotingRegressor, LinearRegression,
-      X_r, y_r)]
-)
-def test_voting_support_missing_values(voting_meta_model, est, X, y):
-    # introduce some missing values in X
-    X = X.copy()
-    mask = np.random.choice([1, 0], X.shape, p=[.1, .9]).astype(bool)
-    X[mask] = np.nan
-    pipe = make_pipeline(SimpleImputer(), est())
-    meta_est = voting_meta_model(estimators=[('pipe1', pipe), ('pipe2', pipe)])
-    meta_est.fit(X, y).score(X, y)

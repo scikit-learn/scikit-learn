@@ -31,9 +31,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import scale
-from sklearn.pipeline import make_pipeline
 
 from sklearn.ensemble import StackingClassifier
 from sklearn.ensemble import StackingRegressor
@@ -524,20 +522,3 @@ def test_stacking_without_n_features_in(make_dataset, Stacking, Estimator):
     msg = "'MyEstimator' object has no attribute 'n_features_in_'"
     with pytest.raises(AttributeError, match=msg):
         stacker.n_features_in_
-
-
-@pytest.mark.parametrize(
-    "stacker, est, X, y",
-    [(StackingClassifier, LogisticRegression,
-      X_iris, y_iris),
-     (StackingRegressor, LinearRegression,
-      X_diabetes, y_diabetes)]
-)
-def test_stacking_support_missing_values(stacker, est, X, y):
-    # introduce some missing values in X
-    X = X.copy()
-    mask = np.random.choice([1, 0], X.shape, p=[.1, .9]).astype(bool)
-    X[mask] = np.nan
-    pipe = make_pipeline(SimpleImputer(), est())
-    meta_est = stacker(estimators=[('pipe1', pipe), ('pipe2', pipe)])
-    meta_est.fit(X, y).score(X, y)

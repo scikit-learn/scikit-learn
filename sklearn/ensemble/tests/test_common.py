@@ -1,4 +1,5 @@
 import pytest
+import numpy as np
 
 from sklearn.base import clone
 from sklearn.base import ClassifierMixin
@@ -6,13 +7,21 @@ from sklearn.base import is_classifier
 
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_regression
-
+from sklearn.datasets import load_iris, load_diabetes
+from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression, LinearRegression
 from sklearn.svm import LinearSVC, LinearSVR, SVC, SVR
+from sklearn.pipeline import make_pipeline
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 
 from sklearn.ensemble import StackingClassifier, StackingRegressor
 from sklearn.ensemble import VotingClassifier, VotingRegressor
+
+iris = load_iris()
+X, y = iris.data[:, 1:3], iris.target
+
+X_r, y_r = load_diabetes(return_X_y=True)
+
 
 
 @pytest.mark.parametrize(
@@ -170,3 +179,24 @@ def test_ensemble_heterogeneous_estimators_all_dropped(X, y, estimator):
     estimator.set_params(lr='drop')
     with pytest.raises(ValueError, match="All estimators are dropped."):
         estimator.fit(X, y)
+
+
+@pytest.mark.parametrize(
+     "meta_est, est, X, y",
+     [(StackingClassifier, LogisticRegression,
+       X, y),
+      (StackingRegressor, LinearRegression,
+       X_r, y_r),
+      (VotingClassifier, LogisticRegression,
+       X, y),
+      (VotingRegressor, LinearRegression,
+       X_r, y_r)]
+ )
+def test_support_missing_values(meta_est, est, X, y):
+    # introduce some missing values in X
+    X = X.copy()
+    mask = np.random.choice([1, 0], X.shape, p=[.1, .9]).astype(bool)
+    X[mask] = np.nan
+    pipe = make_pipeline(SimpleImputer(), est())
+    ensemble = meta_est(estimators=[('pipe1', pipe), ('pipe2', pipe)])
+    ensemble.fit(X, y).score(X, y)
