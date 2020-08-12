@@ -174,7 +174,7 @@ The TensorSketch [PP2013]_ method, as implemented in :class:`PolynomialSampler`,
 scalable, input data independent method for polynomial kernel approximation.
 It is based on the concept of Count sketch, a dimensionality reduction technique
 similar to feature hashing, which instead uses several independent hash functions.
-TensorSketch obtains a Count Sketch [CCF2002]_ of the outer product of two
+TensorSketch obtains a Count Sketch [WIKICS]_[CCF2002]_ of the outer product of two
 vectors (or a vector with itself), which can be used as an approximation of the
 polynomial kernel feature space. In particular, instead of explicitly computing
 the outer product, TensorSketch computes the Count Sketch of the vectors and then
@@ -252,3 +252,5 @@ or store training examples.
     .. [CCF2002] `"Finding frequent items in data streams"
       <http://www.cs.princeton.edu/courses/archive/spring04/cos598B/bib/CharikarCF.pdf>`_
       Charikar, M., Chen, K., & Farach-Colton - 2002
+    .. [WIKICS] `"Wikipedia: Count sketch"
+      <https://en.wikipedia.org/wiki/Count_sketch>`_
