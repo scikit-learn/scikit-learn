@@ -58,11 +58,11 @@ iterate until all samples have labels.
 
 .. topic:: References
 
-..  [1] David Yarowsky. 1995. Unsupervised word sense disambiguation rivaling
-    supervised methods. In Proceedings of the 33rd annual meeting on
-    Association for Computational Linguistics (ACL '95). Association for
-    Computational Linguistics, Stroudsburg, PA, USA, 189-196. DOI:
-    https://doi.org/10.3115/981658.981684
+    .. [1] David Yarowsky. 1995. Unsupervised word sense disambiguation rivaling
+       supervised methods. In Proceedings of the 33rd annual meeting on
+       Association for Computational Linguistics (ACL '95). Association for
+       Computational Linguistics, Stroudsburg, PA, USA, 189-196. DOI:
+       https://doi.org/10.3115/981658.981684
 
 .. _label_propagation:
 
