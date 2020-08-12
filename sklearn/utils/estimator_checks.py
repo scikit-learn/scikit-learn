@@ -2766,7 +2766,9 @@ def check_parameters_default_constructible(name, Estimator, strict_mode=True):
     Estimator = Estimator.__class__
 
     with ignore_warnings(category=FutureWarning):
-        estimator = _construct_instance(Estimator)
+        estimator = _construct_instance(
+            Estimator, return_multiple_instances=True
+        )
         if isinstance(estimator, tuple):
             for e in estimator:
                 _check_parameters_default_constructible_estimator(e)
