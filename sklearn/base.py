@@ -578,6 +578,9 @@ class ClusterMixin:
         self.fit(X)
         return self.labels_
 
+    def _more_tags(self):
+        return {"preserves_dtype": []}
+
 
 class BiclusterMixin:
     """Mixin class for all bicluster estimators in scikit-learn"""

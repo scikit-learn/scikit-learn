@@ -211,11 +211,8 @@ def _yield_transformer_checks(transformer):
     yield check_transformer_general
     # it's not possible to preserve dtypes in transform with clustering
     # same for MissingIndicator
-    if (
-        not isinstance(transformer, (ClusterMixin, MissingIndicator))
-        and tags["preserves_dtype"]
-    ):
-        yield check_estimators_preserve_dtypes
+    if tags["preserves_dtype"]:
+        yield check_transformer_preserve_dtypes
     yield partial(check_transformer_general, readonly_memmap=True)
     if not transformer._get_tags()["stateless"]:
         yield check_transformers_unfitted
@@ -1481,43 +1478,27 @@ def check_estimators_dtypes(name, estimator_orig, strict_mode=True):
                 getattr(estimator, method)(X_train)
 
 
-def check_estimators_preserve_dtypes(name, estimator_orig, strict_mode=True):
+def check_transformer_preserve_dtypes(
+    name, transformer_orig, strict_mode=True
+):
+    X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
+                      random_state=0, n_features=2, cluster_std=0.1)
+    X = StandardScaler().fit_transform(X)
+    X -= X.min()
+    X = _pairwise_estimator_convert_X(X, transformer_orig)
 
-    if isinstance(estimator_orig, MetaEstimatorMixin):
-        if hasattr(estimator_orig, 'estimator'):
-            base_estimator = estimator_orig.estimator
-        elif hasattr(estimator_orig, 'base_estimator'):
-            base_estimator = estimator_orig.base_estimator
-    else:
-        base_estimator = estimator_orig
-    if is_regressor(base_estimator):
-        X, y = make_regression(n_samples=50, n_features=5)
-    else:
-        X, y = make_classification(n_samples=50, n_features=5)
-
-    tags_base_estimator = base_estimator._get_tags()
-    tags_estimator_orig = estimator_orig._get_tags()
-
-    # SkewedChi2Sampler requires values values larger than -skewedness
-    if tags_base_estimator["requires_positive_X"] or isinstance(
-        base_estimator, SkewedChi2Sampler
-    ):
-        X = np.absolute(X)
-    y = _enforce_estimator_tags_y(base_estimator, y)
-    X = _pairwise_estimator_convert_X(X, estimator_orig)
-    X = X.astype(np.float32)
+    tags_transformer = transformer_orig._get_tags()
 
     Xts = []
-    in_out_types = tags_estimator_orig["preserves_dtype"]
+    in_out_types = tags_transformer["preserves_dtype"]
     for dtype in in_out_types:
         X_cast = X.astype(dtype)
-        estimator = clone(estimator_orig)
-        set_random_state(estimator)
-        if hasattr(estimator, 'fit_transform'):
-            X_trans = estimator.fit_transform(X_cast, y)
-        elif hasattr(estimator, 'fit'):
-            estimator.fit(X_cast, y)
-            X_trans = estimator.transform(X_cast)
+        transformer = clone(transformer_orig)
+        set_random_state(transformer)
+        if hasattr(transformer, 'fit_transform'):
+            X_trans = transformer.fit_transform(X_cast, y)
+        else:
+            X_trans = transformer.fit(X_cast, y).transform(X_cast)
 
         if sparse.issparse(X_trans):
             X_trans = X_trans.toarray()
