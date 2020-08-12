@@ -1336,7 +1336,7 @@ F1 score, ROC doesn't require optimizing a threshold for each label.
 .. _roc_auc_binary:
 
 Binary case
-```````````
+^^^^^^^^^^^
 
 In the **binary case**, you can either provide the probability estimates, using
 the `classifier.predict_proba()` method, or the non-thresholded decision values
@@ -1367,8 +1367,8 @@ Otherwise, we can use the non-thresholded decision values
 
 .. _roc_auc_multiclass:
 
-Multiclass case
-```````````````
+Multi-class case
+^^^^^^^^^^^^^^^^
 
 The :func:`roc_auc_score` function can also be used in **multi-class
 classification**. Two averaging strategies are currently supported: the
@@ -1428,7 +1428,7 @@ to the given limit.
 .. _roc_auc_multilabel:
 
 Multi-label case
-```````````````
+^^^^^^^^^^^^^^^^
 
 In **multi-label classification**, the :func:`roc_auc_score` function is
 extended by averaging over the labels as :ref:`above <average>`. In this case,
