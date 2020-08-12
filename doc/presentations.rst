@@ -9,7 +9,7 @@ New to Scientific Python?
 ==========================
 For those that are still new to the scientific Python ecosystem, we highly
 recommend the `Python Scientific Lecture Notes
-<http://www.scipy-lectures.org/>`_. This will help you find your footing a
+<https://www.scipy-lectures.org/>`_. This will help you find your footing a
 bit and will definitely improve your scikit-learn experience.  A basic
 understanding of NumPy arrays is recommended to make the most of scikit-learn.
 
@@ -19,7 +19,7 @@ External Tutorials
 There are several online tutorials available which are geared toward
 specific subject areas:
 
-- `Machine Learning for NeuroImaging in Python <http://nilearn.github.io/>`_
+- `Machine Learning for NeuroImaging in Python <https://nilearn.github.io/>`_
 - `Machine Learning for Astronomical Data Analysis <https://github.com/astroML/sklearn_tutorial>`_
 
 .. _videos:
@@ -40,7 +40,7 @@ Videos
     A three minute video from a very early stage of scikit-learn, explaining the
     basic idea and approach we are following.
 
-- `Introduction to statistical learning with scikit-learn <http://archive.org/search.php?query=scikit-learn>`_
+- `Introduction to statistical learning with scikit-learn <https://archive.org/search.php?query=scikit-learn>`_
   by `Gael Varoquaux`_ at SciPy 2011
 
     An extensive tutorial, consisting of four sessions of one hour.
@@ -50,8 +50,8 @@ Videos
     section :ref:`stat_learn_tut_index`.
 
 - `Statistical Learning for Text Classification with scikit-learn and NLTK
-  <http://www.pyvideo.org/video/417/pycon-2011--statistical-machine-learning-for-text>`_
-  (and `slides <http://www.slideshare.net/ogrisel/statistical-machine-learning-for-text-classification-with-scikitlearn-and-nltk>`_)
+  <https://pyvideo.org/video/417/pycon-2011--statistical-machine-learning-for-text>`_
+  (and `slides <https://www.slideshare.net/ogrisel/statistical-machine-learning-for-text-classification-with-scikitlearn-and-nltk>`_)
   by `Olivier Grisel`_ at PyCon 2011
 
     Thirty minute introduction to text classification. Explains how to
@@ -74,5 +74,5 @@ Videos
 
 
 .. _Gael Varoquaux: http://gael-varoquaux.info
-.. _Jake Vanderplas: http://staff.washington.edu/jakevdp
+.. _Jake Vanderplas: https://staff.washington.edu/jakevdp
 .. _Olivier Grisel: https://twitter.com/ogrisel

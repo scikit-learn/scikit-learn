@@ -21,7 +21,7 @@ Why scikit?
 ------------
 There are multiple scikits, which are scientific toolboxes built around SciPy.
 You can find a list at `<https://scikits.appspot.com/scikits>`_.
-Apart from scikit-learn, another popular one is `scikit-image <http://scikit-image.org/>`_.
+Apart from scikit-learn, another popular one is `scikit-image <https://scikit-image.org/>`_.
 
 How can I contribute to scikit-learn?
 -----------------------------------------
@@ -33,9 +33,9 @@ of scikit-learn directly regarding contributing to scikit-learn.
 What's the best way to get help on scikit-learn usage?
 --------------------------------------------------------------
 **For general machine learning questions**, please use
-`Cross Validated <http://stats.stackexchange.com>`_ with the ``[machine-learning]`` tag.
+`Cross Validated <https://stats.stackexchange.com/>`_ with the ``[machine-learning]`` tag.
 
-**For scikit-learn usage questions**, please use `Stack Overflow <http://stackoverflow.com/questions/tagged/scikit-learn>`_
+**For scikit-learn usage questions**, please use `Stack Overflow <https://stackoverflow.com/questions/tagged/scikit-learn>`_
 with the ``[scikit-learn]`` and ``[python]`` tags. You can alternatively use the `mailing list
 <https://mail.python.org/mailman/listinfo/scikit-learn>`_.
 
@@ -50,7 +50,7 @@ shell with scikit-learn installed. Do not forget to include the import statement
 
 More guidance to write good reproduction code snippets can be found at:
 
-http://stackoverflow.com/help/mcve
+https://stackoverflow.com/help/mcve
 
 If your problem raises an exception that you do not understand (even after googling it),
 please make sure to include the full traceback that you obtain when running the
@@ -66,17 +66,20 @@ might be found.
 **Please do not email any authors directly to ask for assistance, report bugs,
 or for any other issue related to scikit-learn.**
 
+How should I save, export or deploy estimators for production?
+--------------------------------------------------------------
+
+See :ref:`model_persistence`.
+
 How can I create a bunch object?
 ------------------------------------------------
 
-Don't make a bunch object! They are not part of the scikit-learn API. Bunch
-objects are just a way to package some numpy arrays. As a scikit-learn user you
-only ever need numpy arrays to feed your model with data.
+Bunch objects are sometimes used as an output for functions and methods. They
+extend dictionaries by enabling values to be accessed by key,
+`bunch["value_key"]`, or by an attribute, `bunch.value_key`.
 
-For instance to train a classifier, all you need is a 2D array ``X`` for the
-input variables and a 1D array ``y`` for the target variables. The array ``X``
-holds the features as columns and samples as rows . The array ``y`` contains
-integer values to encode the class membership of each sample in ``X``.
+They should not be used as an input; therefore you almost never need to create
+a ``Bunch`` object, unless you are extending the scikit-learn's API.
 
 How can I load my own datasets into a format usable by scikit-learn?
 --------------------------------------------------------------------
@@ -94,7 +97,7 @@ What are the inclusion criteria for new algorithms ?
 ----------------------------------------------------
 
 We only consider well-established algorithms for inclusion. A rule of thumb is
-at least 3 years since publication, 200+ citations and wide use and
+at least 3 years since publication, 200+ citations, and wide use and
 usefulness. A technique that provides a clear-cut improvement (e.g. an
 enhanced data structure or a more efficient approximation technique) on
 a widely-used method will also be considered for inclusion.
@@ -111,19 +114,28 @@ improvements, if any, with benchmarks and/or plots. It is expected that the
 proposed algorithm should outperform the methods that are already implemented
 in scikit-learn at least in some areas.
 
-Also note that your implementation need not be in scikit-learn to be used
+Inclusion of a new algorithm speeding up an existing model is easier if:
+
+- it does not introduce new hyper-parameters (as it makes the library
+  more future-proof),
+- it is easy to document clearly when the contribution improves the speed
+  and when it does not, for instance "when n_features >>
+  n_samples",
+- benchmarks clearly show a speed up.
+
+Also, note that your implementation need not be in scikit-learn to be used
 together with scikit-learn tools. You can implement your favorite algorithm
 in a scikit-learn compatible way, upload it to GitHub and let us know. We
 will be happy to list it under :ref:`related_projects`. If you already have
 a package on GitHub following the scikit-learn API, you may also be
 interested to look at `scikit-learn-contrib
-<http://scikit-learn-contrib.github.io>`_.
+<https://scikit-learn-contrib.github.io>`_.
 
 .. _selectiveness:
 
 Why are you so selective on what algorithms you include in scikit-learn?
 ------------------------------------------------------------------------
-Code is maintenance cost, and we need to balance the amount of
+Code comes with maintenance cost, and we need to balance the amount of
 code we have with the size of the team (and add to this the fact that
 complexity scales non linearly with the number of features).
 The package relies on core developers using their free time to
@@ -156,12 +168,12 @@ would likely collapse under its own weight.
 There are two project with API similar to scikit-learn that
 do structured prediction:
 
-* `pystruct <http://pystruct.github.io/>`_ handles general structured
+* `pystruct <https://pystruct.github.io/>`_ handles general structured
   learning (focuses on SSVMs on arbitrary graph structures with
   approximate inference; defines the notion of sample as an instance of
   the graph structure)
 
-* `seqlearn <http://larsmans.github.io/seqlearn/>`_ handles sequences only
+* `seqlearn <https://larsmans.github.io/seqlearn/>`_ handles sequences only
   (focuses on exact inference; has HMMs, but mostly for the sake of
   completeness; treats a feature vector as a sample and uses an offset encoding
   for the dependencies between feature vectors)
@@ -179,7 +191,7 @@ careful choice of algorithms.
 Do you support PyPy?
 --------------------
 
-In case you didn't know, `PyPy <http://pypy.org/>`_ is an alternative
+In case you didn't know, `PyPy <https://pypy.org/>`_ is an alternative
 Python implementation with a built-in just-in-time compiler. Experimental
 support for PyPy3-v5.10+ has been added, which requires Numpy 1.14.0+,
 and scipy 1.1.0+.
@@ -238,7 +250,7 @@ Why do I sometime get a crash/freeze with n_jobs > 1 under OSX or Linux?
 
 Several scikit-learn tools such as ``GridSearchCV`` and ``cross_val_score``
 rely internally on Python's `multiprocessing` module to parallelize execution
-onto several Python processes by passing ``n_jobs > 1`` as argument.
+onto several Python processes by passing ``n_jobs > 1`` as an argument.
 
 The problem is that Python ``multiprocessing`` does a ``fork`` system call
 without following it with an ``exec`` system call for performance reasons. Many
@@ -285,23 +297,20 @@ documentation <https://docs.python.org/3/library/multiprocessing.html#contexts-a
 
 .. _faq_mkl_threading:
 
-Why does my job use more cores than specified with n_jobs under OSX or Linux?
------------------------------------------------------------------------------
+Why does my job use more cores than specified with n_jobs?
+----------------------------------------------------------
 
-This happens when vectorized numpy operations are handled by libraries such
-as MKL or OpenBLAS.
+This is because ``n_jobs`` only controls the number of jobs for
+routines that are parallelized with ``joblib``, but parallel code can come
+from other sources:
 
-While scikit-learn adheres to the limit set by ``n_jobs``,
-numpy operations vectorized using MKL (or OpenBLAS) will make use of multiple
-threads within each scikit-learn job (thread or process).
+- some routines may be parallelized with OpenMP (for code written in C or
+  Cython).
+- scikit-learn relies a lot on numpy, which in turn may rely on numerical
+  libraries like MKL, OpenBLAS or BLIS which can provide parallel
+  implementations.
 
-The number of threads used by the BLAS library can be set via an environment
-variable. For example, to set the maximum number of threads to some integer
-value ``N``, the following environment variables should be set:
-
-* For MKL: ``export MKL_NUM_THREADS=N``
-
-* For OpenBLAS: ``export OPENBLAS_NUM_THREADS=N``
+For more details, please refer to our :ref:`Parallelism notes <parallelism>`.
 
 
 Why is there no support for deep or reinforcement learning / Will there be support for deep or reinforcement learning in scikit-learn?
@@ -316,6 +325,14 @@ scikit-learn seeks to achieve.
 
 You can find more information about addition of gpu support at
 `Will you add GPU support?`_.
+
+Note that scikit-learn currently implements a simple multilayer perceptron
+in `sklearn.neural_network`. We will only accept bug fixes for this module.
+If you want to implement more complex deep learning models, please turn to
+popular deep learning frameworks such as
+`tensorflow <https://www.tensorflow.org/>`_,
+`keras <https://keras.io/>`_
+and `pytorch <https://pytorch.org/>`_.
 
 Why is my pull request not getting any attention?
 -------------------------------------------------
@@ -374,3 +391,23 @@ efficient to process for most operations. Extensive work would also be needed
 to support Pandas categorical types. Restricting input to homogeneous
 types therefore reduces maintenance cost and encourages usage of efficient
 data structures.
+
+Do you plan to implement transform for target y in a pipeline?
+----------------------------------------------------------------------------
+Currently transform only works for features X in a pipeline. 
+There's a long-standing discussion about 
+not being able to transform y in a pipeline.
+Follow on github issue
+`#4143 <https://github.com/scikit-learn/scikit-learn/issues/4143>`_.
+Meanwhile check out
+:class:`sklearn.compose.TransformedTargetRegressor`,
+`pipegraph <https://github.com/mcasl/PipeGraph>`_,
+`imbalanced-learn <https://github.com/scikit-learn-contrib/imbalanced-learn>`_.
+Note that Scikit-learn solved for the case where y 
+has an invertible transformation applied before training 
+and inverted after prediction. Scikit-learn intends to solve for
+use cases where y should be transformed at training time 
+and not at test time, for resampling and similar uses, 
+like at imbalanced learn. 
+In general, these use cases can be solved 
+with a custom meta estimator rather than a Pipeline

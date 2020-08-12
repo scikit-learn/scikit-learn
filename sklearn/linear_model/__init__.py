@@ -1,41 +1,35 @@
 """
-The :mod:`sklearn.linear_model` module implements generalized linear models. It
-includes Ridge regression, Bayesian Regression, Lasso and Elastic Net
-estimators computed with Least Angle Regression and coordinate descent. It also
-implements Stochastic Gradient Descent related algorithms.
+The :mod:`sklearn.linear_model` module implements a variety of linear models.
 """
 
 # See http://scikit-learn.sourceforge.net/modules/sgd.html and
 # http://scikit-learn.sourceforge.net/modules/linear_model.html for
 # complete documentation.
 
-from .base import LinearRegression
+from ._base import LinearRegression
+from ._bayes import BayesianRidge, ARDRegression
+from ._least_angle import (Lars, LassoLars, lars_path, lars_path_gram, LarsCV,
+                           LassoLarsCV, LassoLarsIC)
+from ._coordinate_descent import (Lasso, ElasticNet, LassoCV, ElasticNetCV,
+                                  lasso_path, enet_path, MultiTaskLasso,
+                                  MultiTaskElasticNet, MultiTaskElasticNetCV,
+                                  MultiTaskLassoCV)
+from ._glm import (PoissonRegressor,
+                   GammaRegressor, TweedieRegressor)
+from ._huber import HuberRegressor
+from ._sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
+from ._stochastic_gradient import SGDClassifier, SGDRegressor
+from ._ridge import (Ridge, RidgeCV, RidgeClassifier, RidgeClassifierCV,
+                     ridge_regression)
+from ._logistic import LogisticRegression, LogisticRegressionCV
+from ._omp import (orthogonal_mp, orthogonal_mp_gram,
+                   OrthogonalMatchingPursuit, OrthogonalMatchingPursuitCV)
+from ._passive_aggressive import PassiveAggressiveClassifier
+from ._passive_aggressive import PassiveAggressiveRegressor
+from ._perceptron import Perceptron
 
-from .bayes import BayesianRidge, ARDRegression
-from .least_angle import (Lars, LassoLars, lars_path, LarsCV, LassoLarsCV,
-                          LassoLarsIC)
-from .coordinate_descent import (Lasso, ElasticNet, LassoCV, ElasticNetCV,
-                                 lasso_path, enet_path, MultiTaskLasso,
-                                 MultiTaskElasticNet, MultiTaskElasticNetCV,
-                                 MultiTaskLassoCV)
-from .huber import HuberRegressor
-from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
-from .stochastic_gradient import SGDClassifier, SGDRegressor
-from .ridge import (Ridge, RidgeCV, RidgeClassifier, RidgeClassifierCV,
-                    ridge_regression)
-from .logistic import (LogisticRegression, LogisticRegressionCV,
-                       logistic_regression_path)
-from .omp import (orthogonal_mp, orthogonal_mp_gram, OrthogonalMatchingPursuit,
-                  OrthogonalMatchingPursuitCV)
-from .passive_aggressive import PassiveAggressiveClassifier
-from .passive_aggressive import PassiveAggressiveRegressor
-from .perceptron import Perceptron
-
-from .randomized_l1 import (RandomizedLasso, RandomizedLogisticRegression,
-                            lasso_stability_path)
-
-from .ransac import RANSACRegressor
-from .theil_sen import TheilSenRegressor
+from ._ransac import RANSACRegressor
+from ._theil_sen import TheilSenRegressor
 
 __all__ = ['ARDRegression',
            'BayesianRidge',
@@ -65,8 +59,6 @@ __all__ = ['ARDRegression',
            'PassiveAggressiveClassifier',
            'PassiveAggressiveRegressor',
            'Perceptron',
-           'RandomizedLasso',
-           'RandomizedLogisticRegression',
            'Ridge',
            'RidgeCV',
            'RidgeClassifier',
@@ -77,10 +69,12 @@ __all__ = ['ARDRegression',
            'TheilSenRegressor',
            'enet_path',
            'lars_path',
+           'lars_path_gram',
            'lasso_path',
-           'lasso_stability_path',
-           'logistic_regression_path',
            'orthogonal_mp',
            'orthogonal_mp_gram',
            'ridge_regression',
-           'RANSACRegressor']
+           'RANSACRegressor',
+           'PoissonRegressor',
+           'GammaRegressor',
+           'TweedieRegressor']

@@ -1,14 +1,10 @@
-from __future__ import print_function
-
 from collections import defaultdict
 from time import time
-
-import six
 
 import numpy as np
 from numpy import random as nr
 
-from sklearn.cluster.k_means_ import KMeans, MiniBatchKMeans
+from sklearn.cluster import KMeans, MiniBatchKMeans
 
 
 def compute_bench(samples_range, features_range):
@@ -97,22 +93,22 @@ if __name__ == '__main__':
     from mpl_toolkits.mplot3d import axes3d  # register the 3d projection
     import matplotlib.pyplot as plt
 
-    samples_range = np.linspace(50, 150, 5).astype(np.int)
-    features_range = np.linspace(150, 50000, 5).astype(np.int)
-    chunks = np.linspace(500, 10000, 15).astype(np.int)
+    samples_range = np.linspace(50, 150, 5).astype(int)
+    features_range = np.linspace(150, 50000, 5).astype(int)
+    chunks = np.linspace(500, 10000, 15).astype(int)
 
     results = compute_bench(samples_range, features_range)
     results_2 = compute_bench_2(chunks)
 
-    max_time = max([max(i) for i in [t for (label, t) in six.iteritems(results)
+    max_time = max([max(i) for i in [t for (label, t) in results.items()
                                      if "speed" in label]])
     max_inertia = max([max(i) for i in [
-        t for (label, t) in six.iteritems(results)
+        t for (label, t) in results.items()
         if "speed" not in label]])
 
     fig = plt.figure('scikit-learn K-Means benchmark results')
     for c, (label, timings) in zip('brcy',
-                                   sorted(six.iteritems(results))):
+                                   sorted(results.items())):
         if 'speed' in label:
             ax = fig.add_subplot(2, 2, 1, projection='3d')
             ax.set_zlim3d(0.0, max_time * 1.1)
@@ -129,7 +125,7 @@ if __name__ == '__main__':
 
     i = 0
     for c, (label, timings) in zip('br',
-                                   sorted(six.iteritems(results_2))):
+                                   sorted(results_2.items())):
         i += 1
         ax = fig.add_subplot(2, 2, i + 2)
         y = np.asarray(timings)
