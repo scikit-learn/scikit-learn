@@ -59,7 +59,7 @@ can do the following important tasks:
 - Update labels for issues and PRs
 
 - :ref:`Determine if a PR must be relabeled as stalled <stalled_pull_request>`
-  and needing help (this is typically very important in the context
+  or needs help (this is typically very important in the context
   of sprints, where the risk is to create many unfinished PRs)
 
 - Triage issues:
