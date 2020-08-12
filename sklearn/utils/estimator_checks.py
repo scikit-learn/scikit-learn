@@ -1486,47 +1486,49 @@ def check_transformer_preserve_dtypes(
     X = StandardScaler().fit_transform(X)
     X -= X.min()
     X = _pairwise_estimator_convert_X(X, transformer_orig)
+    assert X.dtype == np.float64
 
-    tags_transformer = transformer_orig._get_tags()
-
-    Xts = []
-    in_out_types = tags_transformer["preserves_dtype"]
-    for dtype in in_out_types:
-        X_cast = X.astype(dtype)
-        transformer = clone(transformer_orig)
+    def _fit_and_transform(transformer, X, y):
+        transformer = clone(transformer)
         set_random_state(transformer)
         if hasattr(transformer, 'fit_transform'):
-            X_trans = transformer.fit_transform(X_cast, y)
+            X_trans = transformer.fit_transform(X, y)
         else:
-            X_trans = transformer.fit(X_cast, y).transform(X_cast)
+            X_trans = transformer.fit(X, y).transform(X)
 
         if sparse.issparse(X_trans):
+            # toarray() will preserve the dtype
             X_trans = X_trans.toarray()
-        # Cross Decompostion returns a tuple of (x_scores, y_scores)
-        # when given y with fit_transform
+
         if isinstance(X_trans, tuple):
+            # cross-decompostion returns a tuple of (x_scores, y_scores)
+            # when given y with fit_transform; only check the first element
             X_trans = X_trans[0]
-        # FIXME: should we check that the dtype of some attributes are the
-        # same than dtype and check that the value of attributes
-        # between 32bit and 64bit are close
+        return X_trans
+
+    # keep 64 floating-point precision transform as a reference
+    X_trans_float_64 = _fit_and_transform(transformer_orig, X, y)
+
+    tags_transformer = transformer_orig._get_tags()
+    for dtype in tags_transformer["preserves_dtype"]:
+        X_cast = X.astype(dtype)
+        X_trans = _fit_and_transform(transformer_orig, X_cast, y)
+
+        # check that the output dtype is preserved
         assert X_trans.dtype == dtype, (
             f'Estimator transform dtype: {X_trans.dtype} - '
             f'original/expected dtype: {dtype.__name__}'
         )
-        Xts.append(X_trans)
 
-    # We assume the transformer is on float64 input correct and
-    # compare all other inputs against them.
-    for i in range(1, len(Xts)):
-        assert_allclose(
-            Xts[i],
-            Xts[0],
-            rtol=1e-4,
-            err_msg=(
-                f"dtype_in: {in_out_types[i].__name__} "
-                f"dtype_ground_truth: {in_out_types[0].__name__}\n"
-            ),
-        )
+        # check that the transformed array is consistent with the 64 bits
+        # transformed array.
+        assert_allclose(X_trans, X_trans_float_64, rtol=1e-4, err_msg=(
+            f"Transformed array with input dtype {dtype.__name__} is not "
+            f"consistent with reference array of dtype {X.dtype}"
+        ))
+
+        # TODO: some attributes of the transformer should as well preserve
+        # dtypes. We should come with the checks.
 
 
 @ignore_warnings(category=FutureWarning)
