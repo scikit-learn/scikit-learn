@@ -244,7 +244,7 @@ Changelog
   will be removed in 0.28. :pr:`17662` by
   :user:`Joshua Newton <joshuacwnewton>`.
 
-- |Efficiency| Fixed :issue:`10493`. Improve Local Linear Embedding (LLE) 
+- |Efficiency| Fixed :issue:`10493`. Improve Local Linear Embedding (LLE)
   that raised `MemoryError` exception when used with large inputs.
   :pr:`17997` by :user:`Bertrand Maisonneuve <bmaisonn>`.
 
@@ -371,6 +371,14 @@ Changelog
 - |Enhancement| Add `dtype` parameter to
   :class:`preprocessing.KBinsDiscretizer`.
   :pr:`16335` by :user:`Arthur Imbert <Henley13>`.
+
+:mod:`sklearn.semi_supervised`
+..............................
+
+- |MajorFeature| Added :class:`semi_supervised.SelfTrainingClassifier`, a
+  meta-classifier that allows any supervised classifier to function as a
+  semi-supervised classifier that can learn from unlabeled data. :issue:`11682`
+  by :user:`Oliver Rausch <orausch>` and :user:`Patrice Becker <pr0duktiv>`.
 
 :mod:`sklearn.svm`
 ..................

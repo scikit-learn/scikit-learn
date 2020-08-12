@@ -957,14 +957,6 @@ Support for Python 3.4 and below has been officially dropped.
   the value of `X` inplace.
   :pr:`13459` by :user:`Hunter McGushion <HunterMcGushion>`.
 
-:mod:`sklearn.semi_supervised`
-..............................
-
-- |MajorFeature| Added :class:`semi_supervised.SelfTrainingClassifier`, a 
-  meta-classifier that allows any supervised classifier to function as a 
-  semi-supervised classifier that can learn from unlabeled data. :issue:`11682`
-  by :user:`Oliver Rausch <orausch>` and :user:`Patrice Becker <pr0duktiv>`.
-  
 :mod:`sklearn.svm`
 ..................
 
