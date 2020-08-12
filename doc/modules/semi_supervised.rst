@@ -17,11 +17,11 @@ labeled points and a large amount of unlabeled points.
 
 .. topic:: Unlabeled entries in `y`
 
-    It is important to assign an identifier to unlabeled points along with the
-    labeled data when training the model with the ``fit`` method. The
-    identifier that this implementation uses is the integer value :math:`-1`.
-    Note that for string labels, the dtype of `y` should be object so that it
-    can contain both strings and integers.
+   It is important to assign an identifier to unlabeled points along with the
+   labeled data when training the model with the ``fit`` method. The
+   identifier that this implementation uses is the integer value :math:`-1`.
+   Note that for string labels, the dtype of `y` should be object so that it
+   can contain both strings and integers.
 
 .. note::
 
