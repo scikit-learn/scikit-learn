@@ -33,8 +33,9 @@ Some advantages of decision trees are:
     - The cost of using the tree (i.e., predicting data) is logarithmic in the
       number of data points used to train the tree.
 
-    - Able to handle both numerical and categorical data. Other techniques
-      are usually specialised in analysing datasets that have only one type
+    - Able to handle both numerical and categorical data. However scikit-learn 
+      implementation does not support categorical variables for now. Other 
+      techniques are usually specialised in analysing datasets that have only one type
       of variable. See :ref:`algorithms <tree_algorithms>` for more
       information.
 
@@ -536,9 +537,9 @@ a given tree :math:`T`:
 
 .. math::
 
-  R_\alpha(T) = R(T) + \alpha|T|
+  R_\alpha(T) = R(T) + \alpha|\widetilde{T}|
 
-where :math:`|T|` is the number of terminal nodes in :math:`T` and :math:`R(T)`
+where :math:`|\widetilde{T}|` is the number of terminal nodes in :math:`T` and :math:`R(T)`
 is traditionally defined as the total misclassification rate of the terminal
 nodes. Alternatively, scikit-learn uses the total sample weighted impurity of
 the terminal nodes for :math:`R(T)`. As shown above, the impurity of a node
