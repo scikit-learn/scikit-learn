@@ -105,7 +105,6 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
     >>> svc = SVC(probability=True, gamma="auto")
     >>> self_training_model = SelfTrainingClassifier(svc)
     >>> self_training_model.fit(iris.data, iris.target)
-    ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     SelfTrainingClassifier(...)
 
     References
