@@ -25,10 +25,10 @@ print(__doc__)
 import matplotlib.pyplot as plt
 from sklearn.datasets import fetch_covtype
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import normalize, MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, Normalizer
 from sklearn.svm import LinearSVC
 from sklearn.kernel_approximation import PolynomialSampler
-from sklearn.pipeline import Pipeline
+from sklearn.pipeline import Pipeline, make_pipeline
 import time
 
 ##############################################################################
