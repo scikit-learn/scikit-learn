@@ -39,8 +39,7 @@ import time
 # classification problem to match the version of the dataset in the
 # LIBSVM webpage [2], which was the one used in [1].
 
-data = fetch_covtype()
-X, y = data["data"], data["target"]
+X, y = fetch_covtype(return_X_y=True)
 
 y[y != 2] = 0
 y[y == 2] = 1  # We will try to separate class 2 from the other 6 classes.
