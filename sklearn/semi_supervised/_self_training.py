@@ -1,10 +1,11 @@
+import warnings
+
 import numpy as np
 
 from ..base import MetaEstimatorMixin, clone, BaseEstimator
 from ..utils.validation import check_X_y, check_array, check_is_fitted
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils import safe_mask
-import warnings
 
 __all__ = ["SelfTrainingClassifier"]
 
@@ -47,6 +48,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         probabilities above `threshold` are added to the dataset. If 'k_best',
         the `k_best` pseudo-labels with highest prediction probabilities are
         added to the dataset.
+        The 'threshold' criterion assumes a well calibrated classifier.
 
     threshold : float, optional (default=0.75)
         The decision threshold for use with `criterion`='threshold'.
@@ -54,7 +56,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
 
     k_best : int, optional (default=10)
         The amount of samples to add in each iteration. Only used when
-        `criterion`='k_best'.
+        `criterion` is k_best'.
 
     max_iter : int or ``None``, optional (default=10)
         Maximum number of iterations allowed. Should be greater than or equal

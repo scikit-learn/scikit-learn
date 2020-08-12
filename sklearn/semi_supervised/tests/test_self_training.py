@@ -1,9 +1,10 @@
-import numpy as np
-import pytest
-from io import StringIO
+from math import ceil
 import sys
 
-from sklearn.utils.testing import assert_array_equal
+import numpy as np
+from numpy.testing import assert_array_equal
+import pytest
+
 from sklearn.exceptions import NotFittedError
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.neighbors import KNeighborsClassifier
@@ -11,7 +12,6 @@ from sklearn.svm import SVC
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_iris, make_blobs
 from sklearn.metrics import accuracy_score
-from math import ceil
 
 # Author: Oliver Rausch <rauscho@ethz.ch>
 # License: BSD 3 clause
@@ -274,27 +274,25 @@ def test_strings_dtype():
 
 
 @pytest.mark.parametrize("verbose", [True, False])
-def test_verbose(verbose):
-    old_stdout = sys.stdout
-    sys.stdout = output = StringIO()
+def test_verbose(capsys, verbose):
 
     clf = SelfTrainingClassifier(KNeighborsClassifier(), verbose=verbose)
     clf.fit(X_train, y_train_missing_labels)
 
-    sys.stdout = old_stdout
+    captured = capsys.readouterr()
+
     if verbose:
-        assert 'iteration' in output.getvalue()
+        assert 'iteration' in captured.out
     else:
-        assert 'iteration' not in output.getvalue()
+        assert 'iteration' not in captured.out
 
 
-def test_verbose_k_best():
+def test_verbose_k_best(capsys):
     st = SelfTrainingClassifier(KNeighborsClassifier(n_neighbors=1),
                                 criterion='k_best',
                                 k_best=10, verbose=True,
                                 max_iter=None)
-    old_stdout = sys.stdout
-    sys.stdout = output = StringIO()
+
     y_train_only_one_label = np.copy(y_train)
     y_train_only_one_label[1:] = -1
     n_samples = y_train.shape[0]
@@ -302,13 +300,14 @@ def test_verbose_k_best():
     n_expected_iter = ceil((n_samples - 1) / 10)
     st.fit(X_train, y_train_only_one_label)
 
-    sys.stdout = old_stdout
+    captured = capsys.readouterr()
+
     msg = 'End of iteration {}, added {} new labels.'
     for i in range(1, n_expected_iter):
-        assert msg.format(i, 10) in output.getvalue()
+        assert msg.format(i, 10) in captured.out
 
     assert msg.format(n_expected_iter,
-                      (n_samples - 1) % 10) in output.getvalue()
+                      (n_samples - 1) % 10) in captured.out
 
 
 def test_k_best_selects_best():
