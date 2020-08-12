@@ -144,22 +144,22 @@ print(f"Kernel-SVM score on raw featrues: {ksvm_score:.2f}%")
 
 fig, ax = plt.subplots(figsize=(7, 7))
 ax.scatter([results["LSVM"]["time"], ], [results["LSVM"]["score"], ],
-            label="Linear SVM", c="green", marker="^")
+           label="Linear SVM", c="green", marker="^")
 
 ax.scatter([results["LSVM + PS(250)"]["time"], ],
-            [results["LSVM + PS(250)"]["score"], ],
-            label="Linear SVM + PolynomialSampler", c="blue")
+           [results["LSVM + PS(250)"]["score"], ],
+           label="Linear SVM + PolynomialSampler", c="blue")
 for n_components in [250, 500, 1000, 2000]:  # preferably define N_COMPONENTS above
     ax.scatter([results[f"LSVM + PS({n_components})"]["time"], ],
                [results[f"LSVM + PS({n_components})"]["score"], ],
                c="blue")
-	ax.annotate(f"n_comp.={n_components}",
-				 (results[f"LSVM + PS({n_components})"]["time"],
-                  results[f"LSVM + PS({n_components})"]["score"]),
-            	 xytext=(-30, 10), textcoords="offset pixels")
+    ax.annotate(f"n_comp.={n_components}",
+                (results[f"LSVM + PS({n_components})"]["time"],
+                 results[f"LSVM + PS({n_components})"]["score"]),
+                xytext=(-30, 10), textcoords="offset pixels")
 
 ax.scatter([results["KSVM"]["time"], ], [results["KSVM"]["score"], ],
-            label="Kernel SVM", c="red", marker="x")
+           label="Kernel SVM", c="red", marker="x")
 
 ax.set_xlabel("Training time (s)")
 ax.set_ylabel("Accurary (%)")
