@@ -202,6 +202,26 @@ Here is an example of building custom scorers, and of using the
     >>> score(clf, X, y)
     -0.69...
 
+You can as well used predefined metrics, shown in the table above, where the
+parameters `greater_is_better`, `needs_proba`, and `needs_threshold` will not
+be required. Only the additional scoring function parameters should be given if
+there is any::
+
+    >>> precision_scorer = make_scorer("precision", average="micro")
+    >>> from sklearn.datasets import make_classification
+    >>> X, y = make_classification(
+    ...     n_classes=3, n_informative=3, random_state=0
+    ... )
+    >>> clf.fit(X, y)
+    DummyClassifier(random_state=0, strategy='most_frequent')
+    >>> precision_scorer(clf, X, y)
+    0.35...
+
+Similarly, you can use a scorer to create a new scorer::
+
+    >>> new_scorer = make_scorer(precision_scorer, average="macro")
+    >>> new_scorer(clf, X, y)
+    0.11...
 
 .. _diy_scoring:
 
