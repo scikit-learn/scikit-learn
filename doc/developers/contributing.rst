@@ -55,11 +55,11 @@ find a typo in the documentation, or have made improvements, do not hesitate to
 send an email to the mailing list or preferably submit a GitHub pull request.
 Full documentation can be found under the doc/ directory.
 
-But there are many other ways to help. In particular answering queries on the
-`issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_,
-investigating bugs, and :ref:`reviewing other developers' pull requests
-<code_review>` are very valuable contributions that decrease the burden on the
-project maintainers.
+But there are many other ways to help. In particular helping to
+:ref:`improve, triage, and investigate issues <bug_triaging>` and
+:ref:`reviewing other developers' pull requests <code_review>` are very
+valuable contributions that decrease the burden on the project
+maintainers.
 
 Another way to contribute is to report issues you're facing, and give a "thumbs
 up" on issues that others reported and that are relevant to you.  It also helps
@@ -172,6 +172,9 @@ feedback:
   appropriate code blocks**.  See `Creating and highlighting code blocks
   <https://help.github.com/articles/creating-and-highlighting-code-blocks>`_
   for more details.
+
+If you want to help curate issues, read :ref:`the following
+<bug_triaging>`.
 
 Contributing code
 =================

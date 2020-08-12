@@ -391,6 +391,10 @@ Changelog
   :meth:`tree.DecisionTreeRegressor.fit`, and has not effect.
   :pr:`17614` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
+- |Fix| Allow serialized tree based models to be unpickled on a machine
+  with different endianness.
+  :pr:`17644` by :user:`Qi Zhang <qzhang90>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
