@@ -142,41 +142,28 @@ print(f"Kernel-SVM score on raw featrues: {ksvm_score:.2f}%")
 # but its training time is much larger and, most importantly, will grow
 # much faster if the number of training samples increases.
 
-plt.figure(figsize=(7, 7))
-plt.scatter([results["LSVM"]["time"], ], [results["LSVM"]["score"], ],
+fig, ax = plt.subplots(figsize=(7, 7))
+ax.scatter([results["LSVM"]["time"], ], [results["LSVM"]["score"], ],
             label="Linear SVM", c="green", marker="^")
 
-plt.scatter([results["LSVM + PS(250)"]["time"], ],
+ax.scatter([results["LSVM + PS(250)"]["time"], ],
             [results["LSVM + PS(250)"]["score"], ],
             label="Linear SVM + PolynomialSampler", c="blue")
-plt.scatter([results["LSVM + PS(500)"]["time"], ],
-            [results["LSVM + PS(500)"]["score"], ],
-            c="blue")
-plt.scatter([results["LSVM + PS(1000)"]["time"], ],
-            [results["LSVM + PS(1000)"]["score"], ],
-            c="blue")
-plt.scatter([results["LSVM + PS(2000)"]["time"], ],
-            [results["LSVM + PS(2000)"]["score"], ],
-            c="blue")
-plt.annotate("n_comp.=250", (results["LSVM + PS(250)"]["time"],
-                             results["LSVM + PS(250)"]["score"]),
-             xytext=(-30, 10), textcoords="offset pixels")
-plt.annotate("n_comp.=500", (results["LSVM + PS(500)"]["time"],
-                             results["LSVM + PS(500)"]["score"]),
-             xytext=(-30, 10), textcoords="offset pixels")
-plt.annotate("n_comp.=1000", (results["LSVM + PS(1000)"]["time"],
-                              results["LSVM + PS(1000)"]["score"]),
-             xytext=(-30, 10), textcoords="offset pixels")
-plt.annotate("n_comp.=2000", (results["LSVM + PS(2000)"]["time"],
-                              results["LSVM + PS(2000)"]["score"]),
-             xytext=(-30, 10), textcoords="offset pixels")
+for n_components in [250, 500, 1000, 2000]:  # preferably define N_COMPONENTS above
+    ax.scatter([results[f"LSVM + PS({n_components})"]["time"], ],
+               [results[f"LSVM + PS({n_components})"]["score"], ],
+               c="blue")
+	ax.annotate(f"n_comp.={n_components}",
+				 (results[f"LSVM + PS({n_components})"]["time"],
+                  results[f"LSVM + PS({n_components})"]["score"]),
+            	 xytext=(-30, 10), textcoords="offset pixels")
 
-plt.scatter([results["KSVM"]["time"], ], [results["KSVM"]["score"], ],
+ax.scatter([results["KSVM"]["time"], ], [results["KSVM"]["score"], ],
             label="Kernel SVM", c="red", marker="x")
 
-plt.xlabel("Training time (s)")
-plt.ylabel("Accurary (%)")
-plt.legend()
+ax.set_xlabel("Training time (s)")
+ax.set_ylabel("Accurary (%)")
+ax.legend()
 plt.show()
 
 ##############################################################################
