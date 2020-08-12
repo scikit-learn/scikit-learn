@@ -38,10 +38,7 @@ from ..base import (
     is_regressor,
     is_outlier_detector,
     RegressorMixin,
-    MetaEstimatorMixin,
 )
-from ..impute import MissingIndicator
-from ..kernel_approximation import SkewedChi2Sampler
 
 from ..metrics import accuracy_score, adjusted_rand_score, f1_score
 from ..random_projection import BaseRandomProjection
@@ -62,7 +59,6 @@ from ..preprocessing import scale
 from ..datasets import (
     load_iris,
     make_blobs,
-    make_classification,
     make_multilabel_classification,
     make_regression,
 )
