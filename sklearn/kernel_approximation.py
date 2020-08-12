@@ -38,19 +38,19 @@ class PolynomialSampler(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    gamma : float
+    gamma : float, default=1.0
         Parameter of the polynomial kernel whose feature map
         will be approximated.
 
-    degree : int
+    degree : int, default=2
         Degree of the polynomial kernel whose feature map
         will be approximated.
 
-    coef0 : int
+    coef0 : int, default=0
         Constant term of the polynomial kernel whose feature map
         will be approximated.
 
-    n_components : int
+    n_components : int, default=100
         Dimensionality of the output feature space.
 
     random_state : int, RandomState instance, default=None
