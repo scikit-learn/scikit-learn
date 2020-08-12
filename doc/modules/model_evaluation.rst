@@ -1559,7 +1559,10 @@ the same does a lower Brier score always mean better calibration" [2]_,[3]_.
          <ftp://ftp.library.noaa.gov/docs.lib/htdocs/rescue/mwr/078/mwr-078-01-0001.pdf>`_,
          Monthly weather review 78.1 (1950)
 
-  .. [2] Khosrow-Pour, M. "Machine learning: concepts, methodologies, tools
+  .. [2] Bella, Ferri, Hernández-Orallo, and Ramírez-Quintana
+         `"Calibration of Machine Learning Models"
+         <http://dmip.webs.upv.es/papers/BFHRHandbook2010.pdf>`_
+         in Khosrow-Pour, M. "Machine learning: concepts, methodologies, tools
          and applications." Hershey, PA: Information Science Reference (2012).
 
   .. [3] Flach, Peter, and Edson Matsubara. `"On classification, ranking, and
