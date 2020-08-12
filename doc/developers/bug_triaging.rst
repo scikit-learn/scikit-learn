@@ -43,7 +43,7 @@ The following actions are typically useful:
    <http://gael-varoquaux.info/programming/technical-discussions-are-hard-a-few-tips.html>`_
    explores how to lead online discussions in the context of open source.
 
-Working on PR to help review
+Working on PRs to help review
 ----------------------------
 
 Reviewing code is also encouraged. Contributors and users are welcome to
