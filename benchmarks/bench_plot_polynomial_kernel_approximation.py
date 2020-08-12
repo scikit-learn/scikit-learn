@@ -102,13 +102,13 @@ for k in out_dims:
 fig, ax = plt.subplots(figsize=(6, 4))
 ax.set_title("Accuracy results")
 ax.plot(out_dims, ps_svm_scores, label="PolynomialSampler + linear SVM",
-         c="orange")
+        c="orange")
 ax.plot(out_dims, ny_svm_scores, label="Nystroem + linear SVM",
-         c="blue")
+        c="blue")
 ax.plot([out_dims[0], out_dims[-1]], [lsvm_score, lsvm_score],
-         label="Linear SVM", c="black", dashes=[2, 2])
+        label="Linear SVM", c="black", dashes=[2, 2])
 ax.plot([out_dims[0], out_dims[-1]], [ksvm_score, ksvm_score],
-         label="Poly-kernel SVM", c="red", dashes=[2, 2])
+        label="Poly-kernel SVM", c="red", dashes=[2, 2])
 ax.legend()
 ax.set_xlabel("N_components for PolynomialSampler and Nystroem")
 ax.set_ylabel("Accuracy (%)")
