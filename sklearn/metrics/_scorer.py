@@ -575,7 +575,7 @@ def make_scorer(score_func, *, greater_is_better=True, needs_proba=False,
     >>> from sklearn.datasets import load_breast_cancer
     >>> X, y = load_breast_cancer(return_X_y=True)
     >>> roc_auc_scorer = make_scorer("roc_auc")
-    >>> clf = LinearSVC().fit(X, y)
+    >>> clf = LinearSVC(random_state=0).fit(X, y)
     >>> roc_auc_scorer(clf, X, y)
     0.98...
 
