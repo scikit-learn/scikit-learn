@@ -149,7 +149,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         self : object
             returns an instance of self.
         """
-        X, y = check_X_y(X, y)
+        X, y = self._validate_data(X, y)
 
         if self.base_estimator is None:
             raise ValueError("base_estimator cannot be None!")
@@ -157,17 +157,14 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         self.base_estimator_ = clone(self.base_estimator)
 
         if self.max_iter is not None and self.max_iter < 0:
-            msg = "max_iter must be >= 0 or None, got {}".format(self.max_iter)
-            raise ValueError(msg)
+            raise ValueError(f"max_iter must be >= 0 or None, got {self.max_iter}")
 
-        if not 0 <= self.threshold < 1:
-            msg = "threshold must be in [0,1), got {}".format(self.threshold)
-            raise ValueError(msg)
+        if not (0 <= self.threshold < 1):
+            raise ValueError(f"threshold must be in [0,1), got {self.threshold}")
 
         if self.criterion not in ['threshold', 'k_best']:
-            raise ValueError("criterion must be either 'threshold' "
-                             "or 'k_best', got "
-                             "{}".format(self.criterion))
+            raise ValueError(f"criterion must be either 'threshold' "
+                             f"or 'k_best', got {self.criterion}.")
 
         if y.dtype.kind in ['U', 'S']:
             raise ValueError("y has dtype string. If you wish to predict on "
@@ -235,8 +232,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
                 break
 
             if self.verbose:
-                msg = "End of iteration {}, added {} new labels."
-                print(msg.format(self.n_iter_, selected_full.shape[0]))
+                print(f"End of iteration {self.n_iter_}, added {selected_full.shape[0]} new labels.")
 
         if self.n_iter_ == self.max_iter:
             self.termination_condition_ = "max_iter"
@@ -264,7 +260,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             array with predicted labels
         """
         check_is_fitted(self)
-        X = check_array(X)
+        X = self._validate_data(X)
         return self.base_estimator_.predict(X)
 
     def predict_proba(self, X):
