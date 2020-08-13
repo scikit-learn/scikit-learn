@@ -1705,7 +1705,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
         If None, the negative mean squared error if cv is 'auto' or None
-        (i.e. when using leave-one-out cross-validation), and r2 score 
+        (i.e. when using leave-one-out cross-validation), and r2 score
         otherwise.
 
     cv : int, cross-validation generator or an iterable, default=None
