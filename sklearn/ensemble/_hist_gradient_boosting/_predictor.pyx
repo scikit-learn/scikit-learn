@@ -33,10 +33,6 @@ cdef class TreePredictor:
     def __init__(self, int n_nodes):
         self.nodes.resize(n_nodes)
 
-    cdef node_struct* get(self, int node_idx) nogil:
-        """Get reference to node."""
-        return &self.nodes[node_idx]
-
     def get_n_leaf_nodes(self):
         """Return number of leaves."""
         cdef node_struct node
@@ -181,7 +177,7 @@ cdef class TreePredictor:
                 # pop the stack
                 stack_size -= 1
                 current_node_idx = node_idx_stack[stack_size]
-                current_node = self.get(current_node_idx)
+                current_node = &self.nodes[current_node_idx]
 
                 if current_node.is_leaf:
                     out[sample_idx] += (weight_stack[stack_size] *
@@ -210,7 +206,7 @@ cdef class TreePredictor:
                         # push left child
                         node_idx_stack[stack_size] = current_node.left
                         left_sample_frac = (
-                            <Y_DTYPE_C> self.get(current_node.left).count /
+                            <Y_DTYPE_C> self.nodes[current_node.left].count /
                             current_node.count)
                         current_weight = weight_stack[stack_size]
                         weight_stack[stack_size] = current_weight * left_sample_frac

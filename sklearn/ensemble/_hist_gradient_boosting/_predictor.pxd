@@ -8,5 +8,7 @@ from .common cimport node_struct
 from libcpp.vector cimport vector
 
 cdef class TreePredictor:
+    # Python access to nodes will create a new container and copy the data into
+    # it.
+    # https://cython.readthedocs.io/en/latest/src/userguide/wrapping_CPlusPlus.html#standard-library
     cdef public vector[node_struct] nodes
-    cdef node_struct* get(self, int node_idx) nogil

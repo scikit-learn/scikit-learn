@@ -515,7 +515,7 @@ class TreeGrower:
         -------
         A TreePredictor object.
         """
-        predictor_nodes = TreePredictor(self.n_nodes)
-        _fill_predictor_node_array(predictor_nodes, self.root,
+        tree_predictor = TreePredictor(self.n_nodes)
+        _fill_predictor_node_array(tree_predictor, self.root,
                                    bin_thresholds, self.n_bins_non_missing)
-        return predictor_nodes
+        return tree_predictor

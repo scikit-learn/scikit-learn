@@ -11,14 +11,16 @@ from ._predictor cimport TreePredictor
 
 np.import_array()
 
-def _fill_predictor_node_array(TreePredictor predictor_nodes,
+def _fill_predictor_node_array(TreePredictor tree_predictor,
                                grower_node,  # TreeNode
                                list bin_thresholds,
                                const np.npy_uint32[:] n_bins_non_missing,
                                int next_free_idx=0):
-    """Helper used in make_predictor to set the TreePredictor fields."""
+    """Helper used in make_predictor to set the TreePredictor fields. This
+    function needs to be in Cython because we need Cython access to the
+    nodes."""
     cdef:
-        node_struct * node = predictor_nodes.get(next_free_idx)
+        node_struct * node = &tree_predictor.nodes[next_free_idx]
         int feature_idx
         int bin_idx
 
@@ -54,14 +56,14 @@ def _fill_predictor_node_array(TreePredictor predictor_nodes,
         next_free_idx += 1
         node.left = next_free_idx
         next_free_idx = _fill_predictor_node_array(
-            predictor_nodes, grower_node.left_child,
+            tree_predictor, grower_node.left_child,
             bin_thresholds=bin_thresholds,
             n_bins_non_missing=n_bins_non_missing,
             next_free_idx=next_free_idx)
 
         node.right = next_free_idx
         return _fill_predictor_node_array(
-            predictor_nodes, grower_node.right_child,
+            tree_predictor, grower_node.right_child,
             bin_thresholds=bin_thresholds,
             n_bins_non_missing=n_bins_non_missing,
             next_free_idx=next_free_idx)
