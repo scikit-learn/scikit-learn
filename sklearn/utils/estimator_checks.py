@@ -1493,10 +1493,7 @@ def check_transformer_preserve_dtypes(
     def _fit_and_transform(transformer, X, y):
         transformer = clone(transformer)
         set_random_state(transformer)
-        if hasattr(transformer, 'fit_transform'):
-            X_trans = transformer.fit_transform(X, y)
-        else:
-            X_trans = transformer.fit(X, y).transform(X)
+        X_trans = transformer.fit_transform(X, y)
 
         if sparse.issparse(X_trans):
             # toarray() will preserve the dtype
