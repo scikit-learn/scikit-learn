@@ -157,7 +157,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         "will be removed in version 0.26")
     @property
     def _estimator_type(self):
-        return self.estimator_._estimator_type
+        return self.estimator._estimator_type
 
     @property
     def classes_(self):
