@@ -25,7 +25,7 @@ Y /= Y.sum(axis=1)[:, np.newaxis]
 def test_polynomial_sampler_raises_if_degree_lower_than_one(degree):
     with pytest.raises(ValueError, match=f'degree={degree} should be >=1.'):
         # approximate kernel mapping
-        _ = PolynomialSampler(degree=degree)
+        PolynomialSampler(degree=degree)
 
 
 @pytest.mark.parametrize('X', [X, csr_matrix(X)])
