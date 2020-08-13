@@ -121,7 +121,7 @@ Changelog
   between 32-bits and 64-bits data input when the kernel has small positive
   eigenvalues. Small positive eigenvalues were not correctly discarded for
   32-bits data.
-  :pr:`xxxx` by :user:`Sylvain Marié <smarie>`.
+  :pr:`18149` by :user:`Sylvain Marié <smarie>`.
 
 - |Fix| Fix :class:`decomposition.SparseCoder` such that it follows
   scikit-learn API and support cloning. The attribute `components_` is
