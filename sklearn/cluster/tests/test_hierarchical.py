@@ -801,4 +801,5 @@ def test_single_linkage_with_large_values():
     # does not get caught in an infinite loop, eventually
     # causing a MemoryError
     X = (10e+305)*np.random.rand(50,2)
-    assert(isinstance(AgglomerativeClustering(linkage="single").fit(X) , AgglomerativeClustering))
+    clusterer = AgglomerativeClustering(linkage="single")
+    assert(isinstance(clusterer.fit(X), AgglomerativeClustering))
