@@ -397,6 +397,8 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
             (init, (None, 'random', 'nndsvd', 'nndsvda', 'nndsvdar')))
     A = H.copy()
     B = np.ones((n_components, n_features))
+    print("initialize H:")
+    print(H)
     return W, H, A, B
 
 
@@ -864,6 +866,7 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
                     W[slice][W[slice] < np.finfo(np.float64).eps] = 0.
 
                 # update H
+                print(f"{update_H=}")
                 if update_H:
                     for j in range(max_iter_update_h_):
                         H, A, B = _multiplicative_update_h(X[slice],
@@ -911,7 +914,7 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
 
 @_deprecate_positional_args
 def non_negative_factorization(X, W=None, H=None, n_components=None, *,
-                               init=None, update_H=True, solver='cd',
+                               init=None, update_H=False, solver='cd',
                                beta_loss='frobenius', tol=1e-4,
                                max_iter=200, alpha=0., l1_ratio=0.,
                                regularization=None, random_state=None,
@@ -1154,7 +1157,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
 
 @_deprecate_positional_args
 def non_negative_factorization_online(X, W=None, H=None, n_components=None, *,
-                                      init=None, update_H=True, solver='mu',
+                                      init=None, update_H=False, solver='mu',
                                       A=None, B=None, batch_size=1024,
                                       beta_loss='kullback-leibler', tol=1e-4,
                                       max_iter=200, alpha=0., l1_ratio=0.,
@@ -1571,7 +1574,7 @@ class NMF(TransformerMixin, BaseEstimator):
 
         W, H, n_iter_ = non_negative_factorization(
             X=X, W=W, H=H, n_components=self.n_components, init=self.init,
-            update_H=True, solver=self.solver, beta_loss=self.beta_loss,
+            update_H=False, solver=self.solver, beta_loss=self.beta_loss,
             tol=self.tol, max_iter=self.max_iter, alpha=self.alpha,
             l1_ratio=self.l1_ratio, regularization=self.regularization,
             random_state=self.random_state, verbose=self.verbose,
@@ -1856,7 +1859,7 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
         W, H, A, B, n_iter_ = non_negative_factorization_online(
             X=X, W=W, H=H, A=None, B=None, n_components=self.n_components,
             batch_size=self.batch_size, init=self.init,
-            update_H=True, solver=self.solver, beta_loss=self.beta_loss,
+            update_H=False, solver=self.solver, beta_loss=self.beta_loss,
             tol=self.tol, max_iter=self.max_iter, alpha=self.alpha,
             l1_ratio=self.l1_ratio, regularization='both',
             random_state=self.random_state, verbose=self.verbose,
@@ -1900,7 +1903,7 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
                 A=self._components_numerator, B=self._components_denominator,
                 n_components=self.n_components,
                 batch_size=self.batch_size, init='custom',
-                update_H=True, solver=self.solver, beta_loss=self.beta_loss,
+                update_H=False, solver=self.solver, beta_loss=self.beta_loss,
                 tol=0, max_iter=1, alpha=self.alpha,
                 l1_ratio=self.l1_ratio, regularization='both',
                 random_state=self.random_state, verbose=self.verbose,
