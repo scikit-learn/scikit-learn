@@ -14,6 +14,7 @@ from ..utils.metaestimators import if_delegate_has_method
 from ..utils.metaestimators import _safe_split
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _deprecate_positional_args
+from ..utils.deprecation import deprecated
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
@@ -148,6 +149,15 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         self.step = step
         self.importance_getter = importance_getter
         self.verbose = verbose
+
+    # TODO: Remove in version 0.26 when _estimator_type is deprecated
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "_estimator_type is deprecated and "
+        "will be removed in version 0.26")
+    @property
+    def _estimator_type(self):
+        return self.estimator_._estimator_type
 
     @property
     def classes_(self):

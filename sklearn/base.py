@@ -19,6 +19,7 @@ from .utils.validation import check_X_y
 from .utils.validation import check_array
 from .utils._estimator_html_repr import estimator_html_repr
 from .utils.validation import _deprecate_positional_args
+from ..utils.deprecation import deprecated
 
 _DEFAULT_TAGS = {
     'non_deterministic': False,
@@ -466,6 +467,15 @@ class BaseEstimator:
 class ClassifierMixin:
     """Mixin class for all classifiers in scikit-learn."""
 
+    # TODO: Remove in version 0.26 when _estimator_type is deprecated
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "_estimator_type is deprecated and "
+        "will be removed in version 0.26")
+    @property
+    def _estimator_type(self):
+        return "classifier"
+
     def score(self, X, y, sample_weight=None):
         """
         Return the mean accuracy on the given test data and labels.
@@ -499,6 +509,15 @@ class ClassifierMixin:
 
 class RegressorMixin:
     """Mixin class for all regression estimators in scikit-learn."""
+
+    # TODO: Remove in version 0.26 when _estimator_type is deprecated
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "_estimator_type is deprecated and "
+        "will be removed in version 0.26")
+    @property
+    def _estimator_type(self):
+        return "regressor"
 
     def score(self, X, y, sample_weight=None):
         """Return the coefficient of determination R^2 of the prediction.
@@ -551,6 +570,15 @@ class RegressorMixin:
 
 class ClusterMixin:
     """Mixin class for all cluster estimators in scikit-learn."""
+
+    # TODO: Remove in version 0.26 when _estimator_type is deprecated
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "_estimator_type is deprecated and "
+        "will be removed in version 0.26")
+    @property
+    def _estimator_type(self):
+        return "clusterer"
 
     def fit_predict(self, X, y=None):
         """
@@ -693,6 +721,15 @@ class TransformerMixin:
 class DensityMixin:
     """Mixin class for all density estimators in scikit-learn."""
 
+    # TODO: Remove in version 0.26 when _estimator_type is deprecated
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "_estimator_type is deprecated and "
+        "will be removed in version 0.26")
+    @property
+    def _estimator_type(self):
+        return "DensityEstimator"
+
     def score(self, X, y=None):
         """Return the score of the model on the data X
 
@@ -715,6 +752,15 @@ class DensityMixin:
 
 class OutlierMixin:
     """Mixin class for all outlier detection estimators in scikit-learn."""
+
+    # TODO: Remove in version 0.26 when _estimator_type is deprecated
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "_estimator_type is deprecated and "
+        "will be removed in version 0.26")
+    @property
+    def _estimator_type(self):
+        return "outlier_detector"
 
     def fit_predict(self, X, y=None):
         """Perform fit on X and returns labels for X.

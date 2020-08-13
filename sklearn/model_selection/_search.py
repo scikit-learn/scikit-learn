@@ -420,6 +420,15 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         self.error_score = error_score
         self.return_train_score = return_train_score
 
+    # TODO: Remove in version 0.26 when _estimator_type is deprecated
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "_estimator_type is deprecated and "
+        "will be removed in version 0.26")
+    @property
+    def _estimator_type(self):
+        return self.estimator_._estimator_type
+
     @property
     def _pairwise(self):
         # allows cross-validation to see 'precomputed' metrics

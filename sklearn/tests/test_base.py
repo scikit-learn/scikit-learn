@@ -543,6 +543,19 @@ def test_repr_html_wraps():
         assert "<style>" in output
 
 
+# TODO: Remove in version 0.26 when _estimator_type is deprecated
+@pytest.mark.parametrize("Estimator", [DecisionTreeClassifier,
+                                       DecisionTreeRegressor,
+                                       KMeans,
+                                       BayesianGaussianMixture,
+                                       IsolationForest])
+def test_estimator_type_deprecated(Estimator):
+    # Assert that _estimator_type is deprecated
+    est = Estimator()
+    with pytest.warns(FutureWarning, match="_estimator_type is deprecated"):
+        getattr(est, "_estimator_type")
+
+
 @pytest.mark.parametrize(
     "Estimator, estimator_type",
     [(DecisionTreeClassifier, "classifier"),

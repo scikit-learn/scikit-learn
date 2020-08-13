@@ -2022,6 +2022,20 @@ def test_scalar_fit_param_compat(SearchCV, param_search):
     model.fit(X_train, y_train, **fit_params)
 
 
+# TODO: Remove in version 0.26 when _estimator_type is deprecated
+@pytest.mark.parametrize("Estimator", [DecisionTreeClassifier,
+                                       DecisionTreeRegressor,
+                                       KMeans,
+                                       BayesianGaussianMixture,
+                                       IsolationForest])
+@pytest.mark.parametrize("SearchCV", [GridSearchCV, RandomizedSearchCV])
+def test_estimator_type_deprecated(SearchCV, Estimator):
+    # Assert that _estimator_type is deprecated
+    search = SearchCV(Estimator(), {})
+    with pytest.warns(FutureWarning, match="_estimator_type is deprecated"):
+        getattr(search, "_estimator_type")
+
+
 @pytest.mark.parametrize(
     "Estimator, estimator_type",
     [(DecisionTreeClassifier, "classifier"),

@@ -287,6 +287,9 @@ def test_rfe_estimator_tags():
     score = cross_val_score(rfe, iris.data, iris.target)
     assert score.min() > .7
 
+    # TODO: Remove in version 0.26 when _estimator_type is deprecated
+    assert rfe._estimator_type == "classifier"
+
 
 def test_rfe_min_step():
     n_features = 10
@@ -490,6 +493,15 @@ def test_multioutput(ClsRFE):
     clf = RandomForestClassifier(n_estimators=5)
     rfe_test = ClsRFE(clf)
     rfe_test.fit(X, y)
+
+
+# TODO: Remove in version 0.26 when _estimator_type is deprecated
+@pytest.mark.parametrize("Estimator", [SVC, SVR])
+def test_estimator_type_deprecated(Estimator):
+    # Assert that _estimator_type is deprecated
+    rfe = RFE(Estimator())
+    with pytest.warns(FutureWarning, match="_estimator_type is deprecated"):
+        getattr(rfe, "_estimator_type")
 
 
 @pytest.mark.parametrize(

@@ -211,6 +211,15 @@ class Pipeline(_BaseComposition):
             return self.named_steps[ind]
         return est
 
+    # TODO: Remove in version 0.26 when _estimator_type is deprecated
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "_estimator_type is deprecated and "
+        "will be removed in version 0.26")
+    @property
+     def _estimator_type(self):
+         return self.steps[-1][1]._estimator_type
+
     @property
     def named_steps(self):
         # Use Bunch object to improve autocomplete

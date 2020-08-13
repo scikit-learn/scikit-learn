@@ -1226,6 +1226,18 @@ def test_feature_union_fit_params():
     t.fit_transform(X, y, a=0)
 
 
+@pytest.mark.parametrize("Estimator", [DecisionTreeClassifier,
+                                       DecisionTreeRegressor,
+                                       KMeans,
+                                       BayesianGaussianMixture,
+                                       IsolationForest])
+def test_estimator_type_deprecated(Estimator):
+    # Assert that _estimator_type is deprecated
+    pipeline = Pipeline([('est', Estimator())])
+    with pytest.warns(FutureWarning, match="_estimator_type is deprecated"):
+        getattr(pipeline, "_estimator_type")
+
+
 @pytest.mark.parametrize(
     "Estimator,estimator_type",
     [(DecisionTreeClassifier, "classifier"),
