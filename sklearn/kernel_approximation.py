@@ -92,10 +92,6 @@ class PolynomialSampler(BaseEstimator, TransformerMixin):
 
     def __init__(self, *, gamma=1., degree=2, coef0=0, n_components=100,
                  random_state=None):
-
-        if not degree >= 1:
-            raise ValueError(f"degree={degree} should be >=1.")
-
         self.gamma = gamma
         self.degree = degree
         self.coef0 = coef0
@@ -119,6 +115,8 @@ class PolynomialSampler(BaseEstimator, TransformerMixin):
         self : object
             Returns the transformer.
         """
+        if not self.degree >= 1:
+            raise ValueError(f"degree={self.degree} should be >=1.")
 
         X = self._validate_data(X, accept_sparse="csc")
         random_state = check_random_state(self.random_state)
