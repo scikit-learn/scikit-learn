@@ -22,8 +22,9 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-- item
-- item
+- |Fix| :class:`decomposition.KernelPCA` behaviour is now more consistent
+  between 32-bits and 64-bits data when the kernel has small positive
+  eigenvalues.
 
 Details are listed in the changelog below.
 
@@ -115,6 +116,12 @@ Changelog
 
 :mod:`sklearn.decomposition`
 ............................
+
+- |Fix| :class:`decomposition.KernelPCA` behaviour is now more consistent
+  between 32-bits and 64-bits data input when the kernel has small positive
+  eigenvalues. Small positive eigenvalues were not correctly discarded for
+  32-bits data.
+  :pr:`18149` by :user:`Sylvain Marié <smarie>`.
 
 - |Fix| Fix :class:`decomposition.SparseCoder` such that it follows
   scikit-learn API and support cloning. The attribute `components_` is
