@@ -54,7 +54,11 @@ class PolynomialSampler(BaseEstimator, TransformerMixin):
         will be approximated.
 
     n_components : int, default=100
-        Dimensionality of the output feature space.
+        Dimensionality of the output feature space. Usually, n_components
+        should be greater than the number of features in input samples in
+        order to achieve good performance. The optimal score / run time
+        balance is typically achieved around n_components = 10 * n_features,
+        but this depends on the specific dataset being used.
 
     random_state : int, RandomState instance, default=None
         Determines random number generation for indexHash and bitHash
