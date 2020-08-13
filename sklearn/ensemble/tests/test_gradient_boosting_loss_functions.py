@@ -62,7 +62,7 @@ def test_sample_weight_smoke():
     pred = rng.rand(100)
 
     # least squares
-    loss = LeastSquaresError(1)
+    loss = LeastSquaresError()
     loss_wo_sw = loss(y, pred)
     loss_w_sw = loss(y, pred, np.ones(pred.shape[0], dtype=np.float32))
     assert_almost_equal(loss_wo_sw, loss_w_sw)
@@ -81,16 +81,16 @@ def test_sample_weight_init_estimators():
         if Loss is None:
             continue
         if issubclass(Loss, RegressionLossFunction):
-            k = 1
             y = reg_y
+            loss = Loss()
         else:
             k = 2
             y = clf_y
             if Loss.is_multi_class:
                 # skip multiclass
                 continue
+            loss = Loss(k)
 
-        loss = Loss(k)
         init_est = loss.init_estimator()
         init_est.fit(X, y)
         out = loss.get_init_raw_predictions(X, init_est)
@@ -110,7 +110,7 @@ def test_quantile_loss_function():
     # There was a sign problem when evaluating the function
     # for negative values of 'ytrue - ypred'
     x = np.asarray([-1.0, 0.0, 1.0])
-    y_found = QuantileLossFunction(1, 0.9)(x, np.zeros_like(x))
+    y_found = QuantileLossFunction(0.9)(x, np.zeros_like(x))
     y_expected = np.asarray([0.1, 0.0, 0.9]).mean()
     np.testing.assert_allclose(y_found, y_expected)
 
@@ -127,9 +127,9 @@ def test_sample_weight_deviance():
         if Loss is None:
             continue
         if issubclass(Loss, RegressionLossFunction):
-            k = 1
             y = reg_y
             p = reg_y
+            loss = Loss()
         else:
             k = 2
             y = clf_y
@@ -141,8 +141,8 @@ def test_sample_weight_deviance():
                 p = np.zeros((y.shape[0], k), dtype=np.float64)
                 for i in range(k):
                     p[:, i] = y == i
+            loss = Loss(k)
 
-        loss = Loss(k)
         deviance_w_w = loss(y, p, sample_weight)
         deviance_wo_w = loss(y, p)
         assert deviance_wo_w == deviance_w_w
@@ -201,10 +201,10 @@ def test_init_raw_predictions_shapes():
     n_samples = 100
     X = rng.normal(size=(n_samples, 5))
     y = rng.normal(size=n_samples)
-    for loss in (LeastSquaresError(n_classes=1),
-                 LeastAbsoluteError(n_classes=1),
-                 QuantileLossFunction(n_classes=1),
-                 HuberLossFunction(n_classes=1)):
+    for loss in (LeastSquaresError(),
+                 LeastAbsoluteError(),
+                 QuantileLossFunction(),
+                 HuberLossFunction()):
         init_estimator = loss.init_estimator().fit(X, y)
         raw_predictions = loss.get_init_raw_predictions(y, init_estimator)
         assert raw_predictions.shape == (n_samples, 1)
@@ -237,7 +237,7 @@ def test_init_raw_predictions_values():
     y = rng.normal(size=n_samples)
 
     # Least squares loss
-    loss = LeastSquaresError(n_classes=1)
+    loss = LeastSquaresError()
     init_estimator = loss.init_estimator().fit(X, y)
     raw_predictions = loss.get_init_raw_predictions(y, init_estimator)
     # Make sure baseline prediction is the mean of all targets
@@ -245,7 +245,7 @@ def test_init_raw_predictions_values():
 
     # Least absolute and huber loss
     for Loss in (LeastAbsoluteError, HuberLossFunction):
-        loss = Loss(n_classes=1)
+        loss = Loss()
         init_estimator = loss.init_estimator().fit(X, y)
         raw_predictions = loss.get_init_raw_predictions(y, init_estimator)
         # Make sure baseline prediction is the median of all targets
@@ -253,7 +253,7 @@ def test_init_raw_predictions_values():
 
     # Quantile loss
     for alpha in (.1, .5, .9):
-        loss = QuantileLossFunction(n_classes=1, alpha=alpha)
+        loss = QuantileLossFunction(alpha=alpha)
         init_estimator = loss.init_estimator().fit(X, y)
         raw_predictions = loss.get_init_raw_predictions(y, init_estimator)
         # Make sure baseline prediction is the alpha-quantile of all targets
@@ -294,8 +294,8 @@ def test_init_raw_predictions_values():
 @pytest.mark.parametrize('seed', range(5))
 def test_lad_equals_quantile_50(seed):
     # Make sure quantile loss with alpha = .5 is equivalent to LAD
-    lad = LeastAbsoluteError(n_classes=1)
-    ql = QuantileLossFunction(n_classes=1, alpha=0.5)
+    lad = LeastAbsoluteError()
+    ql = QuantileLossFunction(alpha=0.5)
 
     n_samples = 50
     rng = np.random.RandomState(seed)

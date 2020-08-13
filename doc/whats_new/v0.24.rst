@@ -147,6 +147,10 @@ Changelog
   which allows monitoring of each stage.
   :pr:`16985` by :user:`Hao Chun Chang <haochunchang>`.
 
+- |API|: The parameter ``n_classes_`` is now deprecated in
+  :class:`ensemble.GradientBoostingRegressor` and returns `1`.
+  :pr:`17702` by :user:`Simona Maggio <simonamaggio>`.
+
 :mod:`sklearn.exceptions`
 .........................
 
