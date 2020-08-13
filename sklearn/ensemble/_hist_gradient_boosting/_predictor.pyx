@@ -197,7 +197,7 @@ cdef class TreePredictor:
 
                     if is_target_feature:
                         # In this case, we push left or right child on stack
-                        if [sample_idx, feature_idx] <= current_node.threshold:
+                        if grid[sample_idx, feature_idx] <= current_node.threshold:
                             node_idx_stack[stack_size] = current_node.left
                         else:
                             node_idx_stack[stack_size] = current_node.right
