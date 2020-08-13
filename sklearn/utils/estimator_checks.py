@@ -1524,10 +1524,15 @@ def check_transformer_preserve_dtypes(
 
         # check that the transformed array is consistent with the 64 bits
         # transformed array.
-        assert_allclose(X_trans, X_trans_float_64, rtol=5e-4, err_msg=(
-            f"Transformed array with input dtype {dtype.__name__} is not "
-            f"consistent with reference array of dtype {X.dtype}"
-        ))
+        assert_allclose(
+            X_trans,
+            X_trans_float_64,
+            atol=1e-10, rtol=5e-4,
+            err_msg=(
+                f"Transformed array with input dtype {dtype.__name__} is not "
+                f"consistent with reference array of dtype {X.dtype}"
+            )
+        )
 
         # TODO: some attributes of the transformer should as well preserve
         # dtypes. We should come with the checks.
