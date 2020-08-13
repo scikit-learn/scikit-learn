@@ -143,7 +143,6 @@ def _beta_divergence(X, W, H, beta, square_root=False):
     elif beta == 0:
         div = X_data / WH_data
         res = np.sum(div) - np.product(X.shape) - np.sum(np.log(div))
-
     # beta-divergence, beta not in (0, 1, 2)
     else:
         if sp.issparse(X):
@@ -397,8 +396,6 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
             (init, (None, 'random', 'nndsvd', 'nndsvda', 'nndsvdar')))
     A = H.copy()
     B = np.ones((n_components, n_features))
-    print("initialize H:")
-    print(H)
     return W, H, A, B
 
 
@@ -540,7 +537,7 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, l1_reg_W=0,
 
 
 def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
-                             H_sum=None, HHt=None, XHt=None, update_H=False):
+                             H_sum=None, HHt=None, XHt=None, update_H=True):
     """update W in Multiplicative Update NMF"""
     if beta_loss == 2:
         # Numerator
@@ -618,12 +615,6 @@ def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
                 WHHt = np.dot(WH, H.T)
             denominator = WHHt
 
-    print("numerator\n")
-    print(numerator)
-
-    print("denominator:\n")
-    print(denominator)
-
     # Add L1 and L2 regularization
     if l1_reg_W > 0:
         denominator += l1_reg_W
@@ -646,7 +637,6 @@ def _multiplicative_update_h(X, W, H, A, B,
     H_old = H.copy()
     H_old[H_old == 0] = EPSILON
 
-    print("H!!!!")
     """update H in Multiplicative Update NMF"""
     if beta_loss == 2:
         numerator = safe_sparse_dot(W.T, X)
@@ -733,7 +723,7 @@ def _multiplicative_update_h(X, W, H, A, B,
         rho = .99
         A *= rho
         B *= rho
-        A += numerator * H_old
+        A += numerator
         B += denominator
         H = np.divide(A, B)
 
@@ -744,7 +734,7 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
                                batch_size=1024,
                                max_iter=200, tol=1e-4,
                                l1_reg_W=0, l1_reg_H=0, l2_reg_W=0, l2_reg_H=0,
-                               update_H=False, verbose=0):
+                               update_H=True, verbose=0):
     """Compute Non-negative Matrix Factorization with Multiplicative Update
 
     The objective function is _beta_divergence(X, WH) and is minimized with an
@@ -823,11 +813,12 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
 
     n_samples = X.shape[0]
     max_iter_update_h_ = 1
-    max_iter_update_w_ = 1
+    max_iter_update_w_ = 5
 
     if batch_size is None:
         batch_size = n_samples
         max_iter_update_w_ = 1
+        max_iter_update_h_ = 1
     #else:
     #    beta_loss = 'itakura-saito'
 
@@ -843,7 +834,6 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
 
     # used for the convergence criterion
     error_at_init = _beta_divergence(X, W, H, beta_loss, square_root=True)
-    print("Error at init " + str(error_at_init))
     previous_error = error_at_init
 
     H_sum, HHt, XHt = None, None, None
@@ -859,14 +849,11 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
                     X[slice], W[slice], H, beta_loss, l1_reg_W, l2_reg_W,
                     gamma, H_sum, HHt, XHt, update_H)
                 W[slice] *= delta_W
-                print("delta_W:\n")
-                print(delta_W)
                 # necessary for stability with beta_loss < 1
                 if beta_loss < 1:
                     W[slice][W[slice] < np.finfo(np.float64).eps] = 0.
 
                 # update H
-                print(f"{update_H=}")
                 if update_H:
                     for j in range(max_iter_update_h_):
                         H, A, B = _multiplicative_update_h(X[slice],
@@ -874,7 +861,6 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
                                                            beta_loss,
                                                            l1_reg_H,
                                                            l2_reg_H, gamma)
-                    #H *= delta_H
 
                         # These values will be recomputed since H changed
                         H_sum, HHt, XHt = None, None, None
@@ -882,6 +868,8 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
                         # necessary for stability with beta_loss < 1
                         if beta_loss <= 1:
                             H[H < np.finfo(np.float64).eps] = 0.
+                n_iter += j
+            n_iter += j
 
         n_iter += i
  
@@ -889,9 +877,6 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
         if tol > 0 and n_iter % 1 == 0:
             error = _beta_divergence(X, W, H, beta_loss,
                                      square_root=True)
-            #print("W :")
-            #print(W)
-            print("Error " + str(error))
             if verbose:
                 iter_time = time.time()
                 print("Epoch %02d reached after %.3f seconds, error: %f" %
@@ -899,7 +884,6 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
 
             if ((previous_error - error) / error_at_init < tol) and \
                ((previous_error - error) > 0) :
-                print((previous_error - error) / error_at_init)
                 break
             previous_error = error
 
@@ -914,7 +898,7 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
 
 @_deprecate_positional_args
 def non_negative_factorization(X, W=None, H=None, n_components=None, *,
-                               init=None, update_H=False, solver='cd',
+                               init=None, update_H=True, solver='cd',
                                beta_loss='frobenius', tol=1e-4,
                                max_iter=200, alpha=0., l1_ratio=0.,
                                regularization=None, random_state=None,
@@ -1157,7 +1141,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
 
 @_deprecate_positional_args
 def non_negative_factorization_online(X, W=None, H=None, n_components=None, *,
-                                      init=None, update_H=False, solver='mu',
+                                      init=None, update_H=True, solver='mu',
                                       A=None, B=None, batch_size=1024,
                                       beta_loss='kullback-leibler', tol=1e-4,
                                       max_iter=200, alpha=0., l1_ratio=0.,
@@ -1574,7 +1558,7 @@ class NMF(TransformerMixin, BaseEstimator):
 
         W, H, n_iter_ = non_negative_factorization(
             X=X, W=W, H=H, n_components=self.n_components, init=self.init,
-            update_H=False, solver=self.solver, beta_loss=self.beta_loss,
+            update_H=True, solver=self.solver, beta_loss=self.beta_loss,
             tol=self.tol, max_iter=self.max_iter, alpha=self.alpha,
             l1_ratio=self.l1_ratio, regularization=self.regularization,
             random_state=self.random_state, verbose=self.verbose,
@@ -1623,7 +1607,7 @@ class NMF(TransformerMixin, BaseEstimator):
 
         W, _, n_iter_ = non_negative_factorization(
             X=X, W=None, H=self.components_, n_components=self.n_components_,
-            init=self.init, update_H=False, solver=self.solver,
+            init=self.init, update_H=True, solver=self.solver,
             beta_loss=self.beta_loss, tol=self.tol, max_iter=self.max_iter,
             alpha=self.alpha, l1_ratio=self.l1_ratio,
             regularization=self.regularization,
@@ -1859,7 +1843,7 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
         W, H, A, B, n_iter_ = non_negative_factorization_online(
             X=X, W=W, H=H, A=None, B=None, n_components=self.n_components,
             batch_size=self.batch_size, init=self.init,
-            update_H=False, solver=self.solver, beta_loss=self.beta_loss,
+            update_H=True, solver=self.solver, beta_loss=self.beta_loss,
             tol=self.tol, max_iter=self.max_iter, alpha=self.alpha,
             l1_ratio=self.l1_ratio, regularization='both',
             random_state=self.random_state, verbose=self.verbose,
@@ -1903,7 +1887,7 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
                 A=self._components_numerator, B=self._components_denominator,
                 n_components=self.n_components,
                 batch_size=self.batch_size, init='custom',
-                update_H=False, solver=self.solver, beta_loss=self.beta_loss,
+                update_H=True, solver=self.solver, beta_loss=self.beta_loss,
                 tol=0, max_iter=1, alpha=self.alpha,
                 l1_ratio=self.l1_ratio, regularization='both',
                 random_state=self.random_state, verbose=self.verbose,
@@ -1944,7 +1928,7 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
             X=X, W=None, H=self.components_, A=None, B=None,
             n_components=self.n_components_,
             batch_size=self.batch_size,
-            init=self.init, update_H=False, solver=self.solver,
+            init=self.init, update_H=True, solver=self.solver,
             beta_loss=self.beta_loss, tol=self.tol, max_iter=self.max_iter,
             alpha=self.alpha, l1_ratio=self.l1_ratio, regularization='both',
             random_state=self.random_state, verbose=self.verbose,
