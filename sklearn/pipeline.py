@@ -22,7 +22,7 @@ from .utils.metaestimators import if_delegate_has_method
 from .utils import Bunch, _print_elapsed_time
 from .utils.validation import check_memory
 from .utils.validation import _deprecate_positional_args
-from ..utils import deprecated
+from .utils import deprecated
 
 from .utils.metaestimators import _BaseComposition
 
