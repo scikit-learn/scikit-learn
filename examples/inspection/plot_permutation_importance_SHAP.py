@@ -290,7 +290,7 @@ plt.tight_layout()
 # differently here. Here it provides the distribution of the features used
 # to calculated expected values.
 
-explainer = shap.TreeExplainer(reg, feature_perturbation="tree_path_dependent")
+explainer = shap.TreeExplainer(reg)
 shap_values = explainer.shap_values(X_test)
 
 shap.summary_plot(shap_values, X_test, show=False)
