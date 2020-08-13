@@ -1328,7 +1328,7 @@ def test_attr_error_raised_if_not_fitted():
     # test raise AttributeError if not fitted
     msg = (
         f"{GradientBoostingRegressor.__name__} object has no n_classes_ "
-        f" attribute."
+        f"attribute."
     )
     with pytest.raises(AttributeError, match=msg):
         gbr.n_classes_
