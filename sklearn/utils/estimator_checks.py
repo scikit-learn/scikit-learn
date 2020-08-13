@@ -1477,6 +1477,8 @@ def check_estimators_dtypes(name, estimator_orig, strict_mode=True):
 def check_transformer_preserve_dtypes(
     name, transformer_orig, strict_mode=True
 ):
+    # check that dtype are preserved meaning if input X is of some dtype
+    # X_transformed should be from the same dtype.
     X, y = make_blobs(
         n_samples=30,
         centers=[[0, 0, 0], [1, 1, 1]],
