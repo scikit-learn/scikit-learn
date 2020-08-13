@@ -89,7 +89,9 @@ class PolynomialSampler(BaseEstimator, TransformerMixin):
     def __init__(self, *, gamma=1., degree=2, coef0=0, n_components=100,
                  random_state=None):
 
-        assert degree >= 1, f"degree={degree} should be >=1."
+        if not degree >= 1:
+            raise ValueError(f"degree={degree} should be >=1.")
+
         self.gamma = gamma
         self.degree = degree
         self.coef0 = coef0
