@@ -10,4 +10,3 @@ from libcpp.vector cimport vector
 cdef class TreePredictor:
     cdef public vector[node_struct] nodes
     cdef node_struct* get(self, int node_idx) nogil
-    cdef int get_n_nodes(self) nogil

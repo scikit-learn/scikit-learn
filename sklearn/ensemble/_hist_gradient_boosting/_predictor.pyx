@@ -37,10 +37,6 @@ cdef class TreePredictor:
         """Get reference to node."""
         return &self.nodes[node_idx]
 
-    cdef int get_n_nodes(self) nogil:
-        """Get number of nodes in tree."""
-        return self.nodes.size()
-
     def get_n_leaf_nodes(self):
         """Return number of leaves."""
         cdef node_struct node
@@ -160,8 +156,8 @@ cdef class TreePredictor:
         cdef:
             unsigned int current_node_idx
             unsigned int [:] node_idx_stack = np.zeros(
-                shape=self.get_n_nodes(), dtype=np.uint32)
-            Y_DTYPE_C [::1] weight_stack = np.zeros(shape=self.get_n_nodes(),
+                shape=self.nodes.size(), dtype=np.uint32)
+            Y_DTYPE_C [::1] weight_stack = np.zeros(shape=self.nodes.size(),
                                                     dtype=Y_DTYPE)
             node_struct * current_node  # pointer to avoid copying attributes
 
