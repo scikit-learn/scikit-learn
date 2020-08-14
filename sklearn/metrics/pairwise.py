@@ -63,7 +63,7 @@ def _return_float_dtype(X, Y):
 @_deprecate_positional_args
 def check_pairwise_arrays(X, Y, *, precomputed=False, dtype=None,
                           accept_sparse='csr', force_all_finite=True,
-                          copy=False):
+                          copy=False, ensure_2d=True):
     """ Set X and Y appropriately and checks inputs
 
     If Y is None, it is set as a pointer to X (i.e. not a copy).
@@ -121,6 +121,11 @@ def check_pairwise_arrays(X, Y, *, precomputed=False, dtype=None,
 
         .. versionadded:: 0.22
 
+    ensure_2d: bool, default=True
+        Whether to ensure that input array has to be two dimensional
+
+        .. versionadded:: 0.24
+
     Returns
     -------
     safe_X : {array-like, sparse matrix}, shape (n_samples_a, n_features)
@@ -133,12 +138,7 @@ def check_pairwise_arrays(X, Y, *, precomputed=False, dtype=None,
     """
     X, Y, dtype_float = _return_float_dtype(X, Y)
 
-    ensure_2d = True
     estimator = 'check_pairwise_arrays'
-    if dtype is None:
-        dtype = dtype_float
-    elif dtype == str:
-        ensure_2d = False
 
     if Y is X or Y is None:
         X = Y = check_array(X, accept_sparse=accept_sparse, dtype=dtype,
@@ -1382,11 +1382,11 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
 
 
 def _pairwise_callable(X, Y, metric, force_all_finite=True,
-                       dtype=None, **kwds):
+                       dtype=None, ensure_2d=True, **kwds):
     """Handle the callable case for pairwise_{distances,kernels}
     """
     X, Y = check_pairwise_arrays(X, Y, force_all_finite=force_all_finite,
-                                 dtype=dtype)
+                                 dtype=dtype,  ensure_2d=ensure_2d)
 
     if X is Y:
         # Only calculate metric for upper triangle
@@ -1640,7 +1640,7 @@ def pairwise_distances_chunked(X, Y=None, *, reduce_func=None,
 @_deprecate_positional_args
 def pairwise_distances(X, Y=None, metric="euclidean", *, n_jobs=None,
                        force_all_finite=True,
-                       dtype=None, **kwds):
+                       dtype=None, ensure_2d=True, **kwds):
     """ Compute the distance matrix from a vector array X and optional Y.
 
     This method takes either a vector array or a distance matrix, and returns
@@ -1728,6 +1728,11 @@ def pairwise_distances(X, Y=None, metric="euclidean", *, n_jobs=None,
 
         .. versionadded:: 0.24
 
+    ensure_2d: bool, default=True
+        Whether to ensure that input array has to be two dimensional
+
+        .. versionadded:: 0.24
+
     **kwds : optional keyword parameters
         Any further parameters are passed directly to the distance function.
         If using a scipy.spatial.distance metric, the parameters are still
@@ -1771,7 +1776,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", *, n_jobs=None,
         func = PAIRWISE_DISTANCE_FUNCTIONS[metric]
     elif callable(metric):
         func = partial(_pairwise_callable, metric=metric,
-                       dtype=dtype,
+                       dtype=dtype, ensure_2d=ensure_2d,
                        force_all_finite=force_all_finite, **kwds)
     else:
         if issparse(X) or issparse(Y):
