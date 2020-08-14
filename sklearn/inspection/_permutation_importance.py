@@ -10,6 +10,12 @@ from ..utils import check_array
 from ..utils.validation import _deprecate_positional_args
 
 
+def _weights_scorer(scorer, estimator, X, y, sample_weight):
+    if sample_weight is not None:
+        return scorer(estimator, X, y, sample_weight)
+    return scorer(estimator, X, y)
+
+
 def _calculate_permutation_scores(estimator, X, y, sample_weight, col_idx,
                                   random_state, n_repeats, scorer):
     """Calculate score when `col_idx` is permuted."""
@@ -32,7 +38,9 @@ def _calculate_permutation_scores(estimator, X, y, sample_weight, col_idx,
             X_permuted.iloc[:, col_idx] = col
         else:
             X_permuted[:, col_idx] = X_permuted[shuffling_idx, col_idx]
-        feature_score = scorer(estimator, X_permuted, y, sample_weight)
+        feature_score = _weights_scorer(
+            scorer, estimator, X_permuted, y, sample_weight
+        )
         scores[n_round] = feature_score
 
     return scores
@@ -134,7 +142,7 @@ def permutation_importance(estimator, X, y, *, scoring=None, n_repeats=5,
     random_seed = random_state.randint(np.iinfo(np.int32).max + 1)
 
     scorer = check_scoring(estimator, scoring=scoring)
-    baseline_score = scorer(estimator, X, y, sample_weight)
+    baseline_score = _weights_scorer(scorer, estimator, X, y, sample_weight)
 
     scores = Parallel(n_jobs=n_jobs)(delayed(_calculate_permutation_scores)(
         estimator, X, y, sample_weight, col_idx, random_seed, n_repeats, scorer

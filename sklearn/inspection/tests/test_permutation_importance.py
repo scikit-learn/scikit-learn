@@ -403,3 +403,35 @@ def test_permutation_importance_sample_weight():
                                 sample_weight=w)
     x1_x2_imp_ratio_w = pi.importances_mean[0] / pi.importances_mean[1]
     assert x1_x2_imp_ratio_w / x1_x2_imp_ratio_w_none == pytest.approx(2, 0.01)
+
+
+def test_permutation_importance_no_weights_scoring_function():
+    # Creating a scorer function that does not takes sample_weight
+    def my_scorer(estimator, X, y):
+        return 1
+
+    # Creating some data and estimator for the permutation test
+    x = np.array([[1, 2], [3, 4]])
+    y = np.array([1, 2])
+    w = np.array([1, 1])
+    lr = LinearRegression()
+    lr.fit(x, y)
+
+    # test that permutation_importance does not return error when
+    # sample_weight is None
+    try:
+        permutation_importance(lr, x, y, random_state=1,
+                               scoring=my_scorer,
+                               n_repeats=1)
+    except TypeError:
+        pytest.fail("permutation_test raised an error when using a scorer "
+                    "function that does not accept sample_weight even though "
+                    "sample_weight was None")
+
+    # test that permutation_importance raise exception when sample_weight is
+    # not None
+    with pytest.raises(TypeError):
+        permutation_importance(lr, x, y, random_state=1,
+                               scoring=my_scorer,
+                               n_repeats=1,
+                               sample_weight=w)
