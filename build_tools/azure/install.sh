@@ -50,8 +50,8 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
 
 elif [[ "$DISTRIB" == "ubuntu-32" ]]; then
     apt-get update
-    # apt-get install -y python3-dev python3-scipy python3-matplotlib libatlas3-base libatlas-base-dev python3-virtualenv python3-pandas
-    apt-get install -y python3-dev python3-scipy python3-matplotlib liblapack3 liblapack-dev libblas3 libblas-dev python3-virtualenv python3-pandas
+    apt-get install -y python3-dev python3-scipy python3-matplotlib libatlas3-base libatlas-base-dev python3-virtualenv python3-pandas
+    # apt-get install -y python3-dev python3-scipy python3-matplotlib liblapack3 liblapack-dev libblas3 libblas-dev python3-virtualenv python3-pandas
     python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
     source $VIRTUALENV/bin/activate
     python -m pip install $(get_dep cython $CYTHON_VERSION) \
