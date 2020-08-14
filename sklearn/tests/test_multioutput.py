@@ -606,17 +606,18 @@ def test_regressor_chain_w_fit_params():
 
 
 @pytest.mark.parametrize(
-    "wrapper, est",
+    'MultiOutputEstimator, Estimator',
     [(MultiOutputClassifier, LogisticRegression),
      (MultiOutputRegressor, Ridge)]
 )
-def test_support_missing_values(wrapper, est):
-    # introduce some missing values in X
+def test_support_missing_values(MultiOutputEstimator, Estimator):
+    # smoke test to check that pipeline MultioutputEstimators are letting
+    # the validation of missing values to
+    # the underlying pipeline, regressor or classifier
     rng = np.random.RandomState(42)
     X, y = rng.random((50, 2)), rng.binomial(1, 0.5, (50, 3))
     mask = rng.choice([1, 0], X.shape, p=[.01, .99]).astype(bool)
     X[mask] = np.nan
 
-    pipe = make_pipeline(SimpleImputer(), est())
-    meta_est = wrapper(pipe)
-    meta_est.fit(X, y).score(X, y)
+    pipe = make_pipeline(SimpleImputer(), Estimator())
+    MultiOutputEstimator(pipe).fit(X, y).score(X, y)

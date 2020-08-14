@@ -778,7 +778,12 @@ def test_pairwise_cross_val_score():
         assert_array_equal(score_precomputed, score_linear)
 
 
-def test_support_missing_values():
+@pytest.mark.parametrize("MultiClassClassifier",
+                         [OneVsRestClassifier, OneVsOneClassifier])
+def test_support_missing_values(MultiClassClassifier):
+    # smoke test to check that pipeline OvR and OvO classifiers are letting
+    # the validation of missing values to
+    # the underlying pipeline or classifiers
     rng = np.random.RandomState(42)
     X, y = iris.data, iris.target
     mask = rng.choice([1, 0], X.shape, p=[.1, .9]).astype(bool)
@@ -786,6 +791,4 @@ def test_support_missing_values():
     lr = make_pipeline(SimpleImputer(),
                        LogisticRegression(random_state=rng))
 
-    for MultiClassClassifier in [OneVsRestClassifier, OneVsOneClassifier]:
-        clf = MultiClassClassifier(lr).fit(X, y)
-        clf.score(X, y)
+    MultiClassClassifier(lr).fit(X, y).score(X, y)

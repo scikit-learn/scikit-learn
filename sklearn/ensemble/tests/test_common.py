@@ -1,5 +1,5 @@
-import pytest
 import numpy as np
+import pytest
 
 from sklearn.base import clone
 from sklearn.base import ClassifierMixin
@@ -18,10 +18,9 @@ from sklearn.ensemble import StackingClassifier, StackingRegressor
 from sklearn.ensemble import VotingClassifier, VotingRegressor
 
 iris = load_iris()
-X, y = iris.data[:, 1:3], iris.target
+X, y = iris.data, iris.target
 
 X_r, y_r = load_diabetes(return_X_y=True)
-
 
 
 @pytest.mark.parametrize(
@@ -182,7 +181,7 @@ def test_ensemble_heterogeneous_estimators_all_dropped(X, y, estimator):
 
 
 @pytest.mark.parametrize(
-     "meta_est, est, X, y",
+     "Ensemble, Estimator, X, y",
      [(StackingClassifier, LogisticRegression,
        X, y),
       (StackingRegressor, LinearRegression,
@@ -192,11 +191,15 @@ def test_ensemble_heterogeneous_estimators_all_dropped(X, y, estimator):
       (VotingRegressor, LinearRegression,
        X_r, y_r)]
  )
-def test_support_missing_values(meta_est, est, X, y):
-    # introduce some missing values in X
+# FIXME: we should move this test in `estimator_checks` once we are able
+# to construct meta-estimator instances
+def test_heterogeneous_ensemble_support_missing_values(Ensemble,
+                                                       Estimator, X, y):
+    # check that Voting and Stacking predictor delegate the missing values
+    # validation to the underlying estimator.
     X = X.copy()
     mask = np.random.choice([1, 0], X.shape, p=[.1, .9]).astype(bool)
     X[mask] = np.nan
-    pipe = make_pipeline(SimpleImputer(), est())
-    ensemble = meta_est(estimators=[('pipe1', pipe), ('pipe2', pipe)])
+    pipe = make_pipeline(SimpleImputer(), Estimator())
+    ensemble = Ensemble(estimators=[('pipe1', pipe), ('pipe2', pipe)])
     ensemble.fit(X, y).score(X, y)
