@@ -85,7 +85,11 @@ python -m pip install $(get_dep threadpoolctl $THREADPOOLCTL_VERSION) \
                       $(get_dep pytest-xdist $PYTEST_XDIST_VERSION)
 
 if [[ "$COVERAGE" == "true" ]]; then
-    python -m pip install codecov pytest-cov
+    python -m pip install codecov
+    # TODO: Remove when pytest-cov 2.10.1 is released
+    # Use master pytest-cov until 2.10.1 is released that fixes a bug with
+    # pytest-xdist 2.0.0
+    python -m pip install git+https://github.com/pytest-dev/pytest-cov
 fi
 
 if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
