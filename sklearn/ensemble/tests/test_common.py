@@ -17,8 +17,7 @@ from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.ensemble import StackingClassifier, StackingRegressor
 from sklearn.ensemble import VotingClassifier, VotingRegressor
 
-iris = load_iris()
-X, y = iris.data, iris.target
+X, y = load_iris(return_X_y=True)
 
 X_r, y_r = load_diabetes(return_X_y=True)
 
