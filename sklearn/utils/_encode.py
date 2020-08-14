@@ -222,10 +222,9 @@ def _check_unknown(values, known_values, return_mask=False):
         nan_in_diff = nan_in_values and not nan_in_uniques
 
         def is_valid(value):
-            value_in_set = value in uniques_set
-            if nan_in_uniques and is_scalar_nan(value):
-                return is_missing_in_uniques
-            return value_in_set
+            if value in uniques_set:
+                return True
+            return is_missing_in_uniques and is_scalar_nan(value)
 
         if return_mask:
             if diff or nan_in_diff:
@@ -234,12 +233,12 @@ def _check_unknown(values, known_values, return_mask=False):
                 valid_mask = np.ones(len(values), dtype=bool)
 
         # ensure that None is at the end
-        none_in_diff = None in diff
-        if none_in_diff:
+        if None in diff:
             diff.remove(None)
-        diff = list(diff)
-        if none_in_diff:
+            diff = list(diff)
             diff.append(None)
+        else:
+            diff = list(diff)
 
         if nan_in_diff:
             diff.append(np.nan)

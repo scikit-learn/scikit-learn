@@ -173,8 +173,8 @@ def test_unique_util_missing_values_numeric():
     assert_array_equal(encoded, expected_inverse)
 
 
-def test_unique_util_with_both_missing_values():
-    # test for both types of missing values for object dtype
+def test_unique_util_with_all_missing_values():
+    # test for all types of missing values for object dtype
     values = np.array([np.nan, 'a', 'c', 'c', None, float('nan'),
                        None], dtype=object)
 
