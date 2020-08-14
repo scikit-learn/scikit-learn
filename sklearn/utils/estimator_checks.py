@@ -1475,12 +1475,16 @@ def check_estimators_empty_data_messages(name, estimator_orig,
                        "check_array in train.".format(name)):
         e.fit(X_zero_samples, [])
 
-    X_zero_features = np.empty(0).reshape(3, 0)
+    X_zero_features = np.empty(0).reshape(12, 0)
     # the following y should be accepted by both classifiers and regressors
     # and ignored by unsupervised models
-    y = _enforce_estimator_tags_y(e, np.array([1, 0, 1]))
-    msg = (r"0 feature\(s\) \(shape=\(3, 0\)\) while a minimum of \d* "
-           "is required.")
+    y = _enforce_estimator_tags_y(
+        e, np.array([1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0])
+    )
+    msg = (
+        r"0 feature\(s\) \(shape=\(\d*, 0\)\) while a minimum of \d* "
+        "is required."
+    )
     assert_raises_regex(ValueError, msg, e.fit, X_zero_features, y)
 
 

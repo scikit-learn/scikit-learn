@@ -902,6 +902,12 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         return results
 
+    def _more_tags(self):
+        return {
+            "_xfail_checks": {"check_supervised_y_2d":
+                              "DataConversionWarning not caught"}
+        }
+
 
 class GridSearchCV(BaseSearchCV):
     """Exhaustive search over specified parameter values for an estimator.
@@ -1176,6 +1182,9 @@ class GridSearchCV(BaseSearchCV):
         This is present only if ``refit`` is not False.
 
         .. versionadded:: 0.20
+
+    multimetric_ : bool
+        Whether or not the scorers passed compute several metrics.
 
     Notes
     -----
@@ -1494,6 +1503,9 @@ class RandomizedSearchCV(BaseSearchCV):
         This is present only if ``refit`` is not False.
 
         .. versionadded:: 0.20
+
+    multimetric_ : bool
+        Whether or not the scorers passed compute several metrics.
 
     Notes
     -----

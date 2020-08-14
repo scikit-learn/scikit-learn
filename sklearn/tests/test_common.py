@@ -25,11 +25,16 @@ from sklearn.utils.estimator_checks import check_estimator
 import sklearn
 from sklearn.base import BiclusterMixin
 
+from sklearn.decomposition import PCA
 from sklearn.decomposition import NMF
-from sklearn.utils.validation import check_non_negative, check_array
 from sklearn.linear_model._base import LinearClassifierMixin
 from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import Ridge
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import RandomizedSearchCV
+from sklearn.pipeline import make_pipeline
 from sklearn.svm import NuSVC
+
 from sklearn.utils import IS_PYPY
 from sklearn.utils._testing import SkipTest
 from sklearn.utils.estimator_checks import (
@@ -37,7 +42,9 @@ from sklearn.utils.estimator_checks import (
     _set_checking_parameters,
     _get_check_estimator_ids,
     check_class_weight_balanced_linear_classifier,
-    parametrize_with_checks)
+    parametrize_with_checks,
+)
+from sklearn.utils.validation import check_non_negative, check_array
 
 
 def test_all_estimator_no_base_class():
@@ -268,3 +275,40 @@ def test_strict_mode_check_estimator():
 def test_strict_mode_parametrize_with_checks(estimator, check):
     # Ideally we should assert that the strict checks are Xfailed...
     check(estimator)
+
+
+def _generate_search_cv_instances():
+    for SearchCV, (Estimator, param_to_tune) in zip(
+        [GridSearchCV, RandomizedSearchCV],
+        [
+            (Ridge, {"alpha": [0.1, 1.0]}),
+            (LogisticRegression, {"C": [0.1, 1.0]}),
+        ],
+    ):
+        yield SearchCV(Estimator(), param_to_tune)
+
+    for SearchCV, (Estimator, param_to_tune) in zip(
+        [GridSearchCV, RandomizedSearchCV],
+        [
+            (Ridge, {"ridge__alpha": [0.1, 1.0]}),
+            (LogisticRegression, {"logisticregression__C": [0.1, 1.0]}),
+        ],
+    ):
+        yield SearchCV(make_pipeline(PCA(), Estimator()), param_to_tune)
+
+
+@parametrize_with_checks(list(_generate_search_cv_instances()))
+def test_search_cv(estimator, check, request):
+    # Common tests for SearchCV instances
+    # We have separate test because this estimator can accept both wide range
+    # of predictors (classifier, regressor, pipeline)
+    with ignore_warnings(
+        category=(
+            FutureWarning,
+            ConvergenceWarning,
+            UserWarning,
+            FutureWarning,
+        )
+    ):
+        estimator.set_params(error_score="raise")
+        check(estimator)
