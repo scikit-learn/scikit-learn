@@ -6,6 +6,8 @@ the gradients and hessians of the training data.
 """
 # Author: Nicolas Hug
 
+from memory_profiler import profile
+
 from heapq import heappush, heappop
 import numpy as np
 from timeit import default_timer as time
@@ -485,6 +487,7 @@ class TreeGrower:
             if should_split_right:
                 self._compute_best_split_and_push(right_child_node)
             self.total_find_split_time += time() - tic
+        del node.histograms
 
         return left_child_node, right_child_node
 
