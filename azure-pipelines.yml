@@ -146,6 +146,9 @@ jobs:
         DISTRIB: 'ubuntu-32'
         PYTHON_VERSION: '3.6'
         JOBLIB_VERSION: 'min'
+        # Do not use pytest xdist because of a bug in pytest-xdist==2.0
+        # in this 32bit docker container
+        PYTEST_XDIST_VERSION: 'none'
         # temporary pin pytest due to unknown failure with pytest 5.4 and
         # python 3.6
         PYTEST_VERSION: 'min'
