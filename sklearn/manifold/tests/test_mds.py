@@ -62,3 +62,11 @@ def test_MDS():
                     [4, 2, 1, 0]])
     mds_clf = mds.MDS(metric=False, n_jobs=3, dissimilarity="precomputed")
     mds_clf.fit(sim)
+
+
+# TODO: Remove in 0.26
+def test_MDS_pairwise_deprecated():
+    mds_clf = mds.MDS(metric='precomputed')
+    msg = r"Attribute _pairwise was deprecated in version 0\.24"
+    with pytest.warns(FutureWarning, match=msg):
+        mds_clf._pairwise

@@ -11,6 +11,7 @@ import warnings
 from ..exceptions import ConvergenceWarning
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import as_float_array, check_array, check_random_state
+from ..utils.deprecation import deprecated
 from ..utils.validation import check_is_fitted, _deprecate_positional_args
 from ..metrics import euclidean_distances
 from ..metrics import pairwise_distances_argmin
@@ -372,6 +373,14 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         self.preference = preference
         self.affinity = affinity
         self.random_state = random_state
+
+    # TODO: Remove in 0.26
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 0.26.")
+    @property
+    def _pairwise(self):
+        return self.affinity == "precomputed"
 
     def _more_tags(self):
         return {'pairwise': self.affinity == 'precomputed'}

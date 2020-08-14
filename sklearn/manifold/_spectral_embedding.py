@@ -21,6 +21,7 @@ from ..utils.fixes import lobpcg
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph, NearestNeighbors
 from ..utils.validation import _deprecate_positional_args
+from ..utils.deprecation import deprecated
 
 
 def _graph_connected_component(graph, node_id):
@@ -463,8 +464,17 @@ class SpectralEmbedding(BaseEstimator):
         self.n_jobs = n_jobs
 
     def _more_tags(self):
-        return {'pairwise': self.affinity in ("precomputed",
-                                              "precomputed_nearest_neighbors")}
+        return {'pairwise': self.affinity in ["precomputed",
+                                              "precomputed_nearest_neighbors"]}
+
+    # TODO: Remove in 0.26
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 0.26.")
+    @property
+    def _pairwise(self):
+        return self.affinity == ["precomputed",
+                                 "precomputed_nearest_neighbors"]
 
     def _get_affinity_matrix(self, X, Y=None):
         """Calculate the affinity matrix from data
