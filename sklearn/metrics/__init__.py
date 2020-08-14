@@ -24,7 +24,6 @@ from ._classification import f1_score
 from ._classification import fbeta_score
 from ._classification import hamming_loss
 from ._classification import hinge_loss
-from ._classification import jaccard_similarity_score
 from ._classification import jaccard_score
 from ._classification import log_loss
 from ._classification import matthews_corrcoef
@@ -48,7 +47,6 @@ from .cluster import fowlkes_mallows_score
 from .cluster import silhouette_samples
 from .cluster import silhouette_score
 from .cluster import calinski_harabasz_score
-from .cluster import calinski_harabaz_score
 from .cluster import v_measure_score
 from .cluster import davies_bouldin_score
 
@@ -66,6 +64,7 @@ from ._regression import mean_absolute_error
 from ._regression import mean_squared_error
 from ._regression import mean_squared_log_error
 from ._regression import median_absolute_error
+from ._regression import mean_absolute_percentage_error
 from ._regression import r2_score
 from ._regression import mean_tweedie_deviance
 from ._regression import mean_poisson_deviance
@@ -93,7 +92,6 @@ __all__ = [
     'auc',
     'average_precision_score',
     'balanced_accuracy_score',
-    'calinski_harabaz_score',
     'calinski_harabasz_score',
     'check_scoring',
     'classification_report',
@@ -117,7 +115,6 @@ __all__ = [
     'homogeneity_completeness_v_measure',
     'homogeneity_score',
     'jaccard_score',
-    'jaccard_similarity_score',
     'label_ranking_average_precision_score',
     'label_ranking_loss',
     'log_loss',
@@ -132,6 +129,7 @@ __all__ = [
     'mean_gamma_deviance',
     'mean_tweedie_deviance',
     'median_absolute_error',
+    'mean_absolute_percentage_error',
     'multilabel_confusion_matrix',
     'mutual_info_score',
     'ndcg_score',

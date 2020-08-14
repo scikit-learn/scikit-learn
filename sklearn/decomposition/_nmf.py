@@ -19,6 +19,7 @@ from ..exceptions import ConvergenceWarning
 from ..utils import check_random_state, check_array
 from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
 from ..utils.validation import check_is_fitted, check_non_negative
+from ..utils.validation import _deprecate_positional_args
 
 EPSILON = np.finfo(np.float32).eps
 
@@ -99,7 +100,7 @@ def _beta_divergence(X, W, H, beta, square_root=False):
         # Avoid the creation of the dense np.dot(W, H) if X is sparse.
         if sp.issparse(X):
             norm_X = np.dot(X.data, X.data)
-            norm_WH = trace_dot(np.dot(np.dot(W.T, W), H), H)
+            norm_WH = trace_dot(np.linalg.multi_dot([W.T, W, H]), H)
             cross_prod = trace_dot((X * H.T), W)
             res = (norm_X + norm_WH - 2. * cross_prod) / 2.
         else:
@@ -287,11 +288,10 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
     eps : float
         Truncate all values less then this in output to zero.
 
-    random_state : int, RandomState instance or None, optional, default: None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``random`` == 'nndsvdar' or 'random'.
+    random_state : int, RandomState instance, default=None
+        Used when ``init`` == 'nndsvdar' or 'random'. Pass an int for
+        reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -326,18 +326,18 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
     if init == 'random':
         avg = np.sqrt(X.mean() / n_components)
         rng = check_random_state(random_state)
-        H = avg * rng.randn(n_components, n_features)
-        W = avg * rng.randn(n_samples, n_components)
-        # we do not write np.abs(H, out=H) to stay compatible with
-        # numpy 1.5 and earlier where the 'out' keyword is not
-        # supported as a kwarg on ufuncs
-        np.abs(H, H)
-        np.abs(W, W)
+        H = avg * rng.randn(n_components, n_features).astype(X.dtype,
+                                                             copy=False)
+        W = avg * rng.randn(n_samples, n_components).astype(X.dtype,
+                                                            copy=False)
+        np.abs(H, out=H)
+        np.abs(W, out=W)
         return W, H
 
     # NNDSVD initialization
     U, S, V = randomized_svd(X, n_components, random_state=random_state)
-    W, H = np.zeros(U.shape), np.zeros(V.shape)
+    W = np.zeros_like(U)
+    H = np.zeros_like(V)
 
     # The leading singular triplet is non-negative
     # so it can be used as is for initialization.
@@ -472,11 +472,11 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, l1_reg_W=0,
     shuffle : boolean, default: False
         If true, randomize the order of coordinates in the CD solver.
 
-    random_state : int, RandomState instance or None, optional, default: None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance, default=None
+        Used to randomize the coordinates in the CD solver, when
+        ``shuffle`` is set to ``True``. Pass an int for reproducible
+        results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -502,7 +502,7 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, l1_reg_W=0,
 
     rng = check_random_state(random_state)
 
-    for n_iter in range(max_iter):
+    for n_iter in range(1, max_iter + 1):
         violation = 0.
 
         # Update W
@@ -513,7 +513,7 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, l1_reg_W=0,
             violation += _update_coordinate_descent(X.T, Ht, W, l1_reg_H,
                                                     l2_reg_H, shuffle, rng)
 
-        if n_iter == 0:
+        if n_iter == 1:
             violation_init = violation
 
         if violation_init == 0:
@@ -629,7 +629,7 @@ def _multiplicative_update_h(X, W, H, beta_loss, l1_reg_H, l2_reg_H, gamma):
     """update H in Multiplicative Update NMF"""
     if beta_loss == 2:
         numerator = safe_sparse_dot(W.T, X)
-        denominator = np.dot(np.dot(W.T, W), H)
+        denominator = np.linalg.multi_dot([W.T, W, H])
 
     else:
         # Numerator
@@ -841,8 +841,9 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
     return W, H, n_iter
 
 
-def non_negative_factorization(X, W=None, H=None, n_components=None,
-                               init='warn', update_H=True, solver='cd',
+@_deprecate_positional_args
+def non_negative_factorization(X, W=None, H=None, n_components=None, *,
+                               init=None, update_H=True, solver='cd',
                                beta_loss='frobenius', tol=1e-4,
                                max_iter=200, alpha=0., l1_ratio=0.,
                                regularization=None, random_state=None,
@@ -891,10 +892,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
 
     init : None | 'random' | 'nndsvd' | 'nndsvda' | 'nndsvdar' | 'custom'
         Method used to initialize the procedure.
-        Default: 'random'.
-
-        The default value will change from 'random' to None in version 0.23
-        to make it consistent with decomposition.NMF.
+        Default: None.
 
         Valid options:
 
@@ -913,7 +911,11 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
             (generally faster, less accurate alternative to NNDSVDa
             for when sparsity is not desired)
 
-        - 'custom': use custom matrices W and H
+        - 'custom': use custom matrices W and H if `update_H=True`. If
+          `update_H=False`, then only custom matrix H is used.
+
+        .. versionchanged:: 0.23
+            The default value of `init` changed from 'random' to None in 0.23.
 
     update_H : boolean, default: True
         Set to True, both W and H will be estimated from initial guesses.
@@ -963,11 +965,11 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
         Select whether the regularization affects the components (H), the
         transformation (W), both or none of them.
 
-    random_state : int, RandomState instance or None, optional, default: None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance, default=None
+        Used for NMF initialisation (when ``init`` == 'nndsvdar' or
+        'random'), and in Coordinate Descent. Pass an int for reproducible
+        results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     verbose : integer, default: 0
         The verbosity level.
@@ -1004,8 +1006,8 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     Fevotte, C., & Idier, J. (2011). Algorithms for nonnegative matrix
     factorization with the beta-divergence. Neural Computation, 23(9).
     """
-
-    X = check_array(X, accept_sparse=('csr', 'csc'), dtype=float)
+    X = check_array(X, accept_sparse=('csr', 'csc'),
+                    dtype=[np.float64, np.float32])
     check_non_negative(X, "NMF (input X)")
     beta_loss = _check_string_param(solver, regularization, beta_loss, init)
 
@@ -1028,25 +1030,25 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
         raise ValueError("Tolerance for stopping criteria must be "
                          "positive; got (tol=%r)" % tol)
 
-    if init == "warn":
-        if n_components < n_features:
-            warnings.warn("The default value of init will change from "
-                          "random to None in 0.23 to make it consistent "
-                          "with decomposition.NMF.", FutureWarning)
-        init = "random"
-
     # check W and H, or initialize them
     if init == 'custom' and update_H:
         _check_init(H, (n_components, n_features), "NMF (input H)")
         _check_init(W, (n_samples, n_components), "NMF (input W)")
+        if H.dtype != X.dtype or W.dtype != X.dtype:
+            raise TypeError("H and W should have the same dtype as X. Got "
+                            "H.dtype = {} and W.dtype = {}."
+                            .format(H.dtype, W.dtype))
     elif not update_H:
         _check_init(H, (n_components, n_features), "NMF (input H)")
+        if H.dtype != X.dtype:
+            raise TypeError("H should have the same dtype as X. Got H.dtype = "
+                            "{}.".format(H.dtype))
         # 'mu' solver should not be initialized by zeros
         if solver == 'mu':
             avg = np.sqrt(X.mean() / n_components)
-            W = np.full((n_samples, n_components), avg)
+            W = np.full((n_samples, n_components), avg, dtype=X.dtype)
         else:
-            W = np.zeros((n_samples, n_components))
+            W = np.zeros((n_samples, n_components), dtype=X.dtype)
     else:
         W, H = _initialize_nmf(X, n_components, init=init,
                                random_state=random_state)
@@ -1072,14 +1074,14 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
         raise ValueError("Invalid solver parameter '%s'." % solver)
 
     if n_iter == max_iter and tol > 0:
-        warnings.warn("Maximum number of iteration %d reached. Increase it to"
+        warnings.warn("Maximum number of iterations %d reached. Increase it to"
                       " improve convergence." % max_iter, ConvergenceWarning)
 
     return W, H, n_iter
 
 
 class NMF(TransformerMixin, BaseEstimator):
-    r"""Non-Negative Matrix Factorization (NMF)
+    """Non-Negative Matrix Factorization (NMF)
 
     Find two non-negative matrices (W, H) whose product approximates the non-
     negative matrix X. This factorization can be used for example for
@@ -1095,8 +1097,8 @@ class NMF(TransformerMixin, BaseEstimator):
 
     Where::
 
-        ||A||_Fro^2 = \sum_{i,j} A_{ij}^2 (Frobenius norm)
-        ||vec(A)||_1 = \sum_{i,j} abs(A_{ij}) (Elementwise L1 norm)
+        ||A||_Fro^2 = \\sum_{i,j} A_{ij}^2 (Frobenius norm)
+        ||vec(A)||_1 = \\sum_{i,j} abs(A_{ij}) (Elementwise L1 norm)
 
     For multiplicative-update ('mu') solver, the Frobenius norm
     (0.5 * ||X - WH||_Fro^2) can be changed into another beta-divergence loss,
@@ -1163,11 +1165,11 @@ class NMF(TransformerMixin, BaseEstimator):
     max_iter : integer, default: 200
         Maximum number of iterations before timing out.
 
-    random_state : int, RandomState instance or None, optional, default: None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance, default=None
+        Used for initialisation (when ``init`` == 'nndsvdar' or
+        'random'), and in Coordinate Descent. Pass an int for reproducible
+        results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     alpha : double, default: 0.
         Constant that multiplies the regularization terms. Set it to zero to
@@ -1195,6 +1197,13 @@ class NMF(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.17
            *shuffle* parameter used in the Coordinate Descent solver.
+
+    regularization : {'both', 'components', 'transformation', None}, \
+                     default='both'
+        Select whether the regularization affects the components (H), the
+        transformation (W), both or none of them.
+
+        .. versionadded:: 0.24
 
     Attributes
     ----------
@@ -1233,11 +1242,11 @@ class NMF(TransformerMixin, BaseEstimator):
     Fevotte, C., & Idier, J. (2011). Algorithms for nonnegative matrix
     factorization with the beta-divergence. Neural Computation, 23(9).
     """
-
-    def __init__(self, n_components=None, init=None, solver='cd',
+    @_deprecate_positional_args
+    def __init__(self, n_components=None, *, init=None, solver='cd',
                  beta_loss='frobenius', tol=1e-4, max_iter=200,
                  random_state=None, alpha=0., l1_ratio=0., verbose=0,
-                 shuffle=False):
+                 shuffle=False, regularization='both'):
         self.n_components = n_components
         self.init = init
         self.solver = solver
@@ -1249,6 +1258,7 @@ class NMF(TransformerMixin, BaseEstimator):
         self.l1_ratio = l1_ratio
         self.verbose = verbose
         self.shuffle = shuffle
+        self.regularization = regularization
 
     def _more_tags(self):
         return {'requires_positive_X': True}
@@ -1276,13 +1286,14 @@ class NMF(TransformerMixin, BaseEstimator):
         W : array, shape (n_samples, n_components)
             Transformed data.
         """
-        X = check_array(X, accept_sparse=('csr', 'csc'), dtype=float)
+        X = self._validate_data(X, accept_sparse=('csr', 'csc'),
+                                dtype=[np.float64, np.float32])
 
         W, H, n_iter_ = non_negative_factorization(
             X=X, W=W, H=H, n_components=self.n_components, init=self.init,
             update_H=True, solver=self.solver, beta_loss=self.beta_loss,
             tol=self.tol, max_iter=self.max_iter, alpha=self.alpha,
-            l1_ratio=self.l1_ratio, regularization='both',
+            l1_ratio=self.l1_ratio, regularization=self.regularization,
             random_state=self.random_state, verbose=self.verbose,
             shuffle=self.shuffle)
 
@@ -1331,9 +1342,10 @@ class NMF(TransformerMixin, BaseEstimator):
             X=X, W=None, H=self.components_, n_components=self.n_components_,
             init=self.init, update_H=False, solver=self.solver,
             beta_loss=self.beta_loss, tol=self.tol, max_iter=self.max_iter,
-            alpha=self.alpha, l1_ratio=self.l1_ratio, regularization='both',
-            random_state=self.random_state, verbose=self.verbose,
-            shuffle=self.shuffle)
+            alpha=self.alpha, l1_ratio=self.l1_ratio,
+            regularization=self.regularization,
+            random_state=self.random_state,
+            verbose=self.verbose, shuffle=self.shuffle)
 
         return W
 

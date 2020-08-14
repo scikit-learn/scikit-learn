@@ -56,6 +56,27 @@ is a traditional numerical feature::
   >>> vec.get_feature_names()
   ['city=Dubai', 'city=London', 'city=San Francisco', 'temperature']
 
+:class:`DictVectorizer` accepts multiple string values for one
+feature, like, e.g., multiple categories for a movie.
+
+Assume a database classifies each movie using some categories (not mandatories)
+and its year of release.
+
+    >>> movie_entry = [{'category': ['thriller', 'drama'], 'year': 2003},
+    ...                {'category': ['animation', 'family'], 'year': 2011},
+    ...                {'year': 1974}]
+    >>> vec.fit_transform(movie_entry).toarray()
+    array([[0.000e+00, 1.000e+00, 0.000e+00, 1.000e+00, 2.003e+03],
+           [1.000e+00, 0.000e+00, 1.000e+00, 0.000e+00, 2.011e+03],
+           [0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 1.974e+03]])
+    >>> vec.get_feature_names() == ['category=animation', 'category=drama',
+    ...                             'category=family', 'category=thriller',
+    ...                             'year']
+    True
+    >>> vec.transform({'category': ['thriller'],
+    ...                'unseen_feature': '3'}).toarray()
+    array([[0., 0., 0., 1., 0.]])
+
 :class:`DictVectorizer` is also a useful representation transformation
 for training sequence classifiers in Natural Language Processing models
 that typically work by extracting feature windows around a particular
@@ -1019,7 +1040,7 @@ The :class:`PatchExtractor` class works in the same way as
 implemented as an estimator, so it can be used in pipelines. See::
 
     >>> five_images = np.arange(5 * 4 * 4 * 3).reshape(5, 4, 4, 3)
-    >>> patches = image.PatchExtractor((2, 2)).transform(five_images)
+    >>> patches = image.PatchExtractor(patch_size=(2, 2)).transform(five_images)
     >>> patches.shape
     (45, 2, 2, 3)
 
