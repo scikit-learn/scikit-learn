@@ -32,7 +32,6 @@ IF "%PYTEST_XDIST%" == "true" (
 
 if "%COVERAGE%" == "true" (
     pip install coverage codecov
-    pip install coverage codecov
     REM Use master pytest-cov until 2.10.1 is released that fixes a bug with
     REM  pytest-xdist 2.0.0
     pip install git+https://github.com/pytest-dev/pytest-cov
