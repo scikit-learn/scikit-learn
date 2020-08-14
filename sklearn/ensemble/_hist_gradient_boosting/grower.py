@@ -487,7 +487,12 @@ class TreeGrower:
             if should_split_right:
                 self._compute_best_split_and_push(right_child_node)
             self.total_find_split_time += time() - tic
+
+            for child in [left_child_node, right_child_node]:
+                if child.is_leaf:
+                    del child.histograms
         del node.histograms
+
 
         return left_child_node, right_child_node
 
