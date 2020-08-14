@@ -2614,14 +2614,11 @@ def check_estimators_data_not_an_array(name, estimator_orig, X, y, obj_type,
     assert_allclose(pred1, pred2, atol=1e-2, err_msg=name)
 
 
-def check_parameters_default_constructible(name, Estimator, strict_mode=True):
+def check_parameters_default_constructible(name, estimator, strict_mode=True):
     # test default-constructibility
     # get rid of deprecation warnings
 
-    Estimator = Estimator.__class__
-
     with ignore_warnings(category=FutureWarning):
-        estimator = _construct_instance(Estimator)
         # test cloning
         clone(estimator)
         # test __repr__
