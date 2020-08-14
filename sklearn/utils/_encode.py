@@ -56,6 +56,7 @@ class MissingValues(NamedTuple):
     none: bool
 
     def to_list(self):
+        """Convert tuple to a list where None is always first."""
         output = []
         if self.none:
             output.append(None)
@@ -86,7 +87,6 @@ def _extract_missing(values):
     if not missing_values_set:
         return values, MissingValues(nan=False, none=False)
 
-    # Enforces an order where None always comes first
     if None in missing_values_set:
         if len(missing_values_set) == 1:
             output_missing_values = MissingValues(nan=False, none=True)
