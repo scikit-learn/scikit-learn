@@ -1620,7 +1620,7 @@ class _BaseRidgeCV(LinearModel):
         -----
         When sample_weight is provided, the selected hyperparameter may depend
         on whether we use leave-one-out cross-validation (cv=None or cv='auto')
-        or another form of cross-validation, because only generalized
+        or another form of cross-validation, because only leave-one-out
         cross-validation takes the sample weights into account when computing
         the validation score.
         """

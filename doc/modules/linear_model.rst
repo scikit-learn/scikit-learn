@@ -176,7 +176,7 @@ This method has the same order of complexity as
 
 
 Setting the regularization parameter: leave-one-out Cross-Validation
-------------------------------------------------------------------
+--------------------------------------------------------------------
 
 :class:`RidgeCV` implements ridge regression with built-in
 cross-validation of the alpha parameter. The object works in the same way
