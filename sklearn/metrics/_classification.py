@@ -2384,23 +2384,24 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     """Compute the Brier score.
 
     The smaller the Brier score, the better, hence the naming with "loss".
-    Across all items in a set N predictions, the Brier score measures the
-    mean squared difference between (1) the predicted probability assigned
-    to the possible outcomes for item i, and (2) the actual outcome.
-    Therefore, the lower the Brier score is for a set of predictions, the
-    better the predictions are calibrated. Note that the Brier score always
+    The Brier score measures the mean squared difference between the predicted
+    probability and the actual outcome. The Brier score always
     takes on a value between zero and one, since this is the largest
     possible difference between a predicted probability (which must be
     between zero and one) and the actual outcome (which can take on values
-    of only 0 and 1). The Brier loss is composed of refinement loss and
+    of only 0 and 1). It can be decomposed is the sum of refinement loss and
     calibration loss.
+
     The Brier score is appropriate for binary and categorical outcomes that
     can be structured as true or false, but is inappropriate for ordinal
     variables which can take on three or more values (this is because the
     Brier score assumes that all possible outcomes are equivalently
     "distant" from one another). Which label is considered to be the positive
-    label is controlled via the parameter pos_label, which defaults to 1.
-    Read more in the :ref:`User Guide <calibration>`.
+    label is controlled via the parameter `pos_label`, which defaults to
+    the greater label unless `y_true` is all 0 or all -1, in which case
+    `pos_label` defaults to 1.
+
+    Read more in the :ref:`User Guide <brier_score_loss>`.
 
     Parameters
     ----------

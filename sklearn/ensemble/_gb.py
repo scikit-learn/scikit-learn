@@ -29,6 +29,7 @@ from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..base import BaseEstimator
 from ..base import is_classifier
+from ..utils import deprecated
 
 from ._gradient_boosting import predict_stages
 from ._gradient_boosting import predict_stage
@@ -165,9 +166,13 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         self.n_iter_no_change = n_iter_no_change
         self.tol = tol
 
+    @abstractmethod
+    def _validate_y(self, y, sample_weight=None):
+        """Called by fit to validate y"""
+
     def _fit_stage(self, i, X, y, raw_predictions, sample_weight, sample_mask,
                    random_state, X_csc=None, X_csr=None):
-        """Fit another stage of ``n_classes_`` trees to the boosting model. """
+        """Fit another stage of ``_n_classes`` trees to the boosting model. """
 
         assert sample_mask.dtype == bool
         loss = self.loss_
@@ -240,10 +245,12 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         else:
             loss_class = _gb_losses.LOSS_FUNCTIONS[self.loss]
 
-        if self.loss in ('huber', 'quantile'):
-            self.loss_ = loss_class(self.n_classes_, self.alpha)
-        else:
+        if is_classifier(self):
             self.loss_ = loss_class(self.n_classes_)
+        elif self.loss in ("huber", "quantile"):
+            self.loss_ = loss_class(self.alpha)
+        else:
+            self.loss_ = loss_class()
 
         if not (0.0 < self.subsample <= 1.0):
             raise ValueError("subsample must be in (0,1] but "
@@ -265,11 +272,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         if isinstance(self.max_features, str):
             if self.max_features == "auto":
-                # if is_classification
-                if self.n_classes_ > 1:
+                if is_classifier(self):
                     max_features = max(1, int(np.sqrt(self.n_features_)))
                 else:
-                    # is regression
                     max_features = self.n_features_
             elif self.max_features == "sqrt":
                 max_features = max(1, int(np.sqrt(self.n_features_)))
@@ -405,7 +410,11 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         sample_weight = _check_sample_weight(sample_weight, X)
 
         y = column_or_1d(y, warn=True)
-        y = self._validate_y(y, sample_weight)
+
+        if is_classifier(self):
+            y = self._validate_y(y, sample_weight)
+        else:
+            y = self._validate_y(y)
 
         if self.n_iter_no_change is not None:
             stratify = y if is_classifier(self) else None
@@ -415,7 +424,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                                  test_size=self.validation_fraction,
                                  stratify=stratify))
             if is_classifier(self):
-                if self.n_classes_ != np.unique(y).shape[0]:
+                if self._n_classes != np.unique(y).shape[0]:
                     # We choose to error here. The problem is that the init
                     # estimator would be trained on y, which has some missing
                     # classes now, so its predictions would not have the
@@ -710,15 +719,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         averaged_predictions *= self.learning_rate
 
         return averaged_predictions
-
-    def _validate_y(self, y, sample_weight):
-        # 'sample_weight' is not utilised but is used for
-        # consistency with similar method _validate_y of GBC
-        self.n_classes_ = 1
-        if y.dtype.kind == 'O':
-            y = y.astype(DOUBLE)
-        # Default implementation
-        return y
 
     def apply(self, X):
         """Apply trees in the ensemble to X, return leaf indices.
@@ -1096,7 +1096,9 @@ shape (n_estimators, ``loss_.K``)
                              "trimmed classes with zero weights, while a "
                              "minimum of 2 classes are required."
                              % n_trim_classes)
-        self.n_classes_ = len(self.classes_)
+        self._n_classes = len(self.classes_)
+        # expose n_classes_ attribute
+        self.n_classes_ = self._n_classes
         return y
 
     def decision_function(self, X):
@@ -1507,7 +1509,11 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         The collection of fitted sub-estimators.
 
     n_classes_ : int
-        The number of classes, set to 1 in regression tasks.
+        The number of classes, set to 1 for regressors.
+
+        .. deprecated:: 0.24
+            Attribute ``n_classes_`` was deprecated in version 0.24 and
+            will be removed in 0.26.
 
     n_estimators_ : int
         The number of estimators as selected by early stopping (if
@@ -1589,6 +1595,11 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
             validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, tol=tol, ccp_alpha=ccp_alpha)
 
+    def _validate_y(self, y, sample_weight=None):
+        if y.dtype.kind == 'O':
+            y = y.astype(DOUBLE)
+        return y
+
     def predict(self, X):
         """Predict regression target for X.
 
@@ -1651,3 +1662,18 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         leaves = super().apply(X)
         leaves = leaves.reshape(X.shape[0], self.estimators_.shape[0])
         return leaves
+
+    # FIXME: to be removed in 0.26
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute n_classes_ was deprecated "  # type: ignore
+                "in version 0.24 and will be removed in 0.26.")
+    @property
+    def n_classes_(self):
+        try:
+            check_is_fitted(self)
+        except NotFittedError as nfe:
+            raise AttributeError(
+                "{} object has no n_classes_ attribute."
+                .format(self.__class__.__name__)
+            ) from nfe
+        return 1
