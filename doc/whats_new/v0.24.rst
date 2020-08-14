@@ -22,8 +22,9 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-- item
-- item
+- |Fix| :class:`decomposition.KernelPCA` behaviour is now more consistent
+  between 32-bits and 64-bits data when the kernel has small positive
+  eigenvalues.
 
 Details are listed in the changelog below.
 
@@ -72,6 +73,11 @@ Changelog
   :user:`Emilie Delattre <EmilieDel>`, and
   :user:`Francesco Casalegno <FrancescoCasalegno>`.
 
+- |Enhancement| :class:`cluster.SpectralClustering` and
+  :func:`cluster.spectral_clustering` have a new keyword argument `verbose`.
+  When set to `True`, additional messages will be displayed which can aid with
+  debugging. :pr:`18052` by :user:`Sean O. Stalley <sstalley>`.
+
 - |API| :class:`cluster.MiniBatchKMeans` attributes, `counts_` and
   `init_size_`, are deprecated and will be removed in 0.26. :pr:`17864` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
@@ -111,6 +117,12 @@ Changelog
 :mod:`sklearn.decomposition`
 ............................
 
+- |Fix| :class:`decomposition.KernelPCA` behaviour is now more consistent
+  between 32-bits and 64-bits data input when the kernel has small positive
+  eigenvalues. Small positive eigenvalues were not correctly discarded for
+  32-bits data.
+  :pr:`18149` by :user:`Sylvain Marié <smarie>`.
+
 - |Fix| Fix :class:`decomposition.SparseCoder` such that it follows
   scikit-learn API and support cloning. The attribute `components_` is
   deprecated in 0.24 and will be removed in 0.26. This attribute was
@@ -134,6 +146,10 @@ Changelog
   :class:`ensemble.HistGradientClassifier` now support `staged_predict`,
   which allows monitoring of each stage.
   :pr:`16985` by :user:`Hao Chun Chang <haochunchang>`.
+
+- |API|: The parameter ``n_classes_`` is now deprecated in
+  :class:`ensemble.GradientBoostingRegressor` and returns `1`.
+  :pr:`17702` by :user:`Simona Maggio <simonamaggio>`.
 
 :mod:`sklearn.exceptions`
 .........................
@@ -207,6 +223,10 @@ Changelog
   plotting Individual Conditional Expectation (ICE) curves controlled by the
   ``kind`` parameter.
   :pr:`16619` by :user:`Madhura Jayratne <madhuracj>`.
+
+- |Feature| Add `sample_weight` parameter to
+  :func:`inspection.permutation_importance`. :pr:`16906` by
+  :user:`Roei Kahny <RoeiKa>`.
 
 :mod:`sklearn.isotonic`
 .......................
@@ -389,6 +409,10 @@ Changelog
   :meth:`tree.DecisionTreeClassifier.fit` and
   :meth:`tree.DecisionTreeRegressor.fit`, and has not effect.
   :pr:`17614` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
+
+- |Fix| Allow serialized tree based models to be unpickled on a machine
+  with different endianness.
+  :pr:`17644` by :user:`Qi Zhang <qzhang90>`.
 
 Code and Documentation Contributors
 -----------------------------------
