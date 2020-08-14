@@ -1,3 +1,5 @@
+from typing import NamedTuple
+
 import numpy as np
 from . import is_scalar_nan
 
@@ -48,7 +50,21 @@ def _unique(values, *, return_inverse=False):
     return uniques
 
 
-def _extract_missing(values, none_is_missing=True):
+class MissingValues(NamedTuple):
+    """Data class for missing data information"""
+    nan: bool
+    none: bool
+
+    def to_list(self):
+        output = []
+        if self.none:
+            output.append(None)
+        if self.nan:
+            output.append(np.nan)
+        return output
+
+
+def _extract_missing(values):
     """Extract missing values from `values`.
 
     Parameters
@@ -56,43 +72,33 @@ def _extract_missing(values, none_is_missing=True):
     values: set
         Set of values to extract missing from.
 
-    none_is_missing: bool, default=True
-        IF True, then `None`, `np.nan`, and `float('nan')` are considered
-        missing. If False, then only `np.nan` and `float('nan')` are
-        considered missing.
-
     Returns
     -------
     output: set
-        Set with missing values extracted
+        Set with missing values extracted.
 
-    missing_values: list
-        List of missing values found in `values`. `float('nan')` will be
-        considered `np.nan`.
+    missing_values: MissingValues
+        Object with missing value information.
     """
-    def is_missing(value):
-        if none_is_missing:
-            return value is None or is_scalar_nan(value)
-        return is_scalar_nan(value)
+    missing_values_set = {value for value in values
+                          if value is None or is_scalar_nan(value)}
 
-    missing_values = {value for value in values if is_missing(value)}
-
-    if not missing_values:
-        return values, []
+    if not missing_values_set:
+        return values, MissingValues(nan=False, none=False)
 
     # Enforces an order where None always comes first
-    if None in missing_values:
-        if len(missing_values) == 1:
-            output_missing_values = [None]
+    if None in missing_values_set:
+        if len(missing_values_set) == 1:
+            output_missing_values = MissingValues(nan=False, none=True)
         else:
             # If there is more than one missing value, then it has to be
             # float('nan') or np.nan
-            output_missing_values = [None, np.nan]
+            output_missing_values = MissingValues(nan=True, none=True)
     else:
-        output_missing_values = [np.nan]
+        output_missing_values = MissingValues(nan=True, none=False)
 
     # create set without the missing values
-    output = values - missing_values
+    output = values - missing_values_set
     return output, output_missing_values
 
 
@@ -124,7 +130,7 @@ def _unique_python(values, *, return_inverse):
         uniques_set, missing_values = _extract_missing(uniques_set)
 
         uniques = sorted(uniques_set)
-        uniques.extend(missing_values)
+        uniques.extend(missing_values.to_list())
         uniques = np.array(uniques, dtype=values.dtype)
     except TypeError:
         types = sorted(t.__qualname__
@@ -210,36 +216,29 @@ def _check_unknown(values, known_values, return_mask=False):
 
     if values.dtype.kind in 'UO':
         values_set = set(values)
-        values_set, nan_in_values = _extract_missing(values_set,
-                                                     none_is_missing=False)
+        values_set, missing_in_values = _extract_missing(values_set)
 
         uniques_set = set(known_values)
-        uniques_set, nan_in_uniques = _extract_missing(uniques_set,
-                                                       none_is_missing=False)
+        uniques_set, missing_in_uniques = _extract_missing(uniques_set)
         diff = values_set - uniques_set
-        is_missing_in_uniques = bool(nan_in_uniques)
 
-        nan_in_diff = nan_in_values and not nan_in_uniques
+        nan_in_diff = missing_in_values.nan and not missing_in_uniques.nan
+        none_in_diff = missing_in_values.none and not missing_in_uniques.none
 
         def is_valid(value):
-            if value in uniques_set:
-                return True
-            return is_missing_in_uniques and is_scalar_nan(value)
+            return (value in uniques_set or
+                    missing_in_uniques.none and value is None or
+                    missing_in_uniques.nan and is_scalar_nan(value))
 
         if return_mask:
-            if diff or nan_in_diff:
+            if diff or nan_in_diff or none_in_diff:
                 valid_mask = np.array([is_valid(value) for value in values])
             else:
                 valid_mask = np.ones(len(values), dtype=bool)
 
-        # ensure that None is at the end
-        if None in diff:
-            diff.remove(None)
-            diff = list(diff)
+        diff = list(diff)
+        if none_in_diff:
             diff.append(None)
-        else:
-            diff = list(diff)
-
         if nan_in_diff:
             diff.append(np.nan)
     else:
