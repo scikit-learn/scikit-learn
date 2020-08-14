@@ -221,10 +221,15 @@ Pairwise Attributes
 ^^^^^^^^^^^^^^^^^^^
 
 An estimator that accepts ``X`` of shape ``(n_samples, n_samples)`` and defines
-a `pairwise` estimator tag equal to ``True`` allows for cross-validation of
+a :term:`_pairwise` property equal to ``True`` allows for cross-validation of
 the dataset, e.g. when ``X`` is a precomputed kernel matrix. Specifically,
-the `pairwise` estimator tag is used by ``utils.metaestimators._safe_split``
+the :term:`_pairwise` property is used by ``utils.metaestimators._safe_split``
 to slice rows and columns.
+
+.. deprecated:: 0.24
+
+    The _pairwise attribute is deprecated in 0.24. From 0.26 and onward,
+    the `pairwise` estimator tag should be used instead.
 
 Universal attributes
 ^^^^^^^^^^^^^^^^^^^^

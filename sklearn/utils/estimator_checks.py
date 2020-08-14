@@ -61,6 +61,9 @@ CROSS_DECOMPOSITION = ['PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']
 def _yield_checks(estimator):
     name = estimator.__class__.__name__
     tags = estimator._get_tags()
+    with ignore_warnings(category=FutureWarning):
+        pairwise = _is_pairwise(estimator)
+
     yield check_no_attributes_set_in_init
     yield check_estimators_dtypes
     yield check_fit_score_takes_y
@@ -68,7 +71,7 @@ def _yield_checks(estimator):
     yield check_sample_weights_not_an_array
     yield check_sample_weights_list
     yield check_sample_weights_shape
-    if has_fit_parameter(estimator, "sample_weight") and not tags["pairwise"]:
+    if has_fit_parameter(estimator, "sample_weight") and not pairwise:
         # We skip pairwise because the data is not pairwise
         yield partial(check_sample_weights_invariance, kind='ones')
         yield partial(check_sample_weights_invariance, kind='zeros')
@@ -90,7 +93,7 @@ def _yield_checks(estimator):
         # Test that all estimators check their input for NaN's and infs
         yield check_estimators_nan_inf
 
-    if _is_pairwise(estimator):
+    if pairwise:
         # Check that pairwise estimator throws error on non-square input
         yield check_nonsquare_error
 
@@ -672,8 +675,14 @@ class _NotAnArray:
             func.__name__))
 
 
+# TODO: Check the pairwise estimator tag in 0.26
 def _is_pairwise(estimator):
-    """Returns True if estimator has pairwise tag set to True.
+    """Returns True if estimator has a _pairwise attribute set to True.
+
+    .. deprecated:: 0.24
+
+        The _pairwise attribute is deprecated in 0.24. From 0.26 and onward,
+        this function will check for the pairwise estimator tag.
 
     Parameters
     ----------
@@ -683,9 +692,9 @@ def _is_pairwise(estimator):
     Returns
     -------
     out : bool
-        True if pairwise tag is set to True and False otherwise.
+        True if _pairwise is set to True and False otherwise.
     """
-    return estimator._get_tags().get("pairwise", False)
+    return bool(getattr(estimator, "_pairwise", False))
 
 
 def _is_pairwise_metric(estimator):
@@ -710,8 +719,10 @@ def _pairwise_estimator_convert_X(X, estimator, kernel=linear_kernel):
 
     if _is_pairwise_metric(estimator):
         return pairwise_distances(X, metric='euclidean')
-    if _is_pairwise(estimator):
-        return kernel(X, X)
+
+    with ignore_warnings(category=FutureWarning):
+        if _is_pairwise(estimator):
+            return kernel(X, X)
 
     return X
 
@@ -870,7 +881,7 @@ def check_sample_weights_shape(name, estimator_orig, strict_mode=True):
     # check that estimators raise an error if sample_weight
     # shape mismatches the input
     if (has_fit_parameter(estimator_orig, "sample_weight") and
-            not estimator_orig._get_tags().get("pairwise", False)):
+            not _is_pairwise(estimator_orig)):
         estimator = clone(estimator_orig)
         X = np.array([[1, 3], [1, 3], [1, 3], [1, 3],
                       [2, 1], [2, 1], [2, 1], [2, 1],
@@ -2722,18 +2733,19 @@ def _enforce_estimator_tags_y(estimator, y):
 
 
 def _enforce_estimator_tags_x(estimator, X):
-    # Estimators `pairwise` tag set to `True` only accept
+    # Estimators with a `_pairwise` tag only accept
     # X of shape (`n_samples`, `n_samples`)
-    tags = estimator._get_tags()
-    if tags['pairwise']:
+    with ignore_warnings(category=FutureWarning):
+        pairwise = _is_pairwise(estimator)
+    if pairwise:
         X = X.dot(X.T)
     # Estimators with `1darray` in `X_types` tag only accept
     # X of shape (`n_samples`,)
-    if '1darray' in tags['X_types']:
+    if '1darray' in estimator._get_tags()['X_types']:
         X = X[:, 0]
     # Estimators with a `requires_positive_X` tag only accept
     # strictly positive data
-    if tags['requires_positive_X']:
+    if estimator._get_tags()['requires_positive_X']:
         X -= X.min()
     return X
 

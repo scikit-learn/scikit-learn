@@ -21,6 +21,7 @@ from scipy.special import boxcox
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
+from ..utils.deprecation import deprecated
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
@@ -2268,6 +2269,14 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
 
     def _more_tags(self):
         return {'pairwise': True}
+
+    # TODO: Remove in 0.26
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 0.26.")
+    @property
+    def _pairwise(self):
+        return True
 
 
 def add_dummy_feature(X, value=1.0):

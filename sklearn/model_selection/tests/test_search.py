@@ -1912,6 +1912,25 @@ def test_search_cv_pairwise_property_delegated_to_base_estimator(pairwise):
     assert pairwise == cv._get_tags()['pairwise'], attr_message
 
 
+# TODO: Remove in 0.26
+@ignore_warnings(category=FutureWarning)
+def test_search_cv__pairwise_property_delegated_to_base_estimator():
+    """
+    Test implementation of BaseSearchCV has the _pairwise property
+    which matches the _pairwise property of its estimator.
+    This test make sure _pairwise is delegated to the base estimator.
+
+    Non-regression test for issue #13920.
+    """
+    est = BaseEstimator()
+    attr_message = "BaseSearchCV _pairwise property must match estimator"
+
+    for _pairwise_setting in [True, False]:
+        setattr(est, '_pairwise', _pairwise_setting)
+        cv = GridSearchCV(est, {'n_neighbors': [10]})
+        assert _pairwise_setting == cv._pairwise, attr_message
+
+
 def test_search_cv_pairwise_property_equivalence_of_precomputed():
     """
     Test implementation of BaseSearchCV has the pairwise tag

@@ -45,6 +45,7 @@ from .base import MetaEstimatorMixin, is_regressor
 from .preprocessing import LabelBinarizer
 from .metrics.pairwise import euclidean_distances
 from .utils import check_random_state
+from .utils.deprecation import deprecated
 from .utils.validation import _num_samples
 from .utils.validation import check_is_fitted
 from .utils.validation import check_X_y, check_array
@@ -452,6 +453,15 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
                 "Base estimator doesn't have an intercept_ attribute.")
         return np.array([e.intercept_.ravel() for e in self.estimators_])
 
+    # TODO: Remove in 0.26
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 0.26.")
+    @property
+    def _pairwise(self):
+        """Indicate if wrapped estimator is using a precomputed Gram matrix"""
+        return getattr(self.estimator, "_pairwise", False)
+
     def _more_tags(self):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
         estimator_tags = self.estimator._get_tags()
@@ -544,6 +554,12 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         Indices of samples used when training the estimators.
         ``None`` when ``estimator``'s `pairwise` tag is False.
 
+        .. deprecated:: 0.24
+
+            The _pairwise attribute is deprecated in 0.24. From 0.26 and
+            onward, `pairwise_indices_` will use the pairwise estimator tag
+            instead.
+
     Examples
     --------
     >>> from sklearn.datasets import load_iris
@@ -592,7 +608,12 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             for i in range(n_classes) for j in range(i + 1, n_classes)))))
 
         self.estimators_ = estimators_indices[0]
-        pairwise = self._get_tags().get('pairwise')
+
+        # TODO: Starting from 0.26, this should use the pairwise estimator tag.
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', category=FutureWarning)
+            pairwise = getattr(self.estimator, "_pairwise", False)
+
         self.pairwise_indices_ = (
             estimators_indices[1] if pairwise else None)
 
@@ -713,6 +734,19 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     @property
     def n_classes_(self):
         return len(self.classes_)
+
+    # TODO: Remove in 0.26
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 0.26.")
+    @property
+    def _pairwise(self):
+        """Indicate if wrapped estimator is using a precomputed Gram matrix"""
+        estimator_tags = self.estimator._get_tags()
+        try:
+            return estimator_tags["pairwise"]
+        except KeyError:
+            return getattr(self.estimator, "_pairwise", False)
 
     def _more_tags(self):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
