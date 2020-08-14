@@ -10,8 +10,14 @@ from ..utils import check_array
 from ..utils.validation import _deprecate_positional_args
 
 
-def _calculate_permutation_scores(estimator, X, y, col_idx, random_state,
-                                  n_repeats, scorer):
+def _weights_scorer(scorer, estimator, X, y, sample_weight):
+    if sample_weight is not None:
+        return scorer(estimator, X, y, sample_weight)
+    return scorer(estimator, X, y)
+
+
+def _calculate_permutation_scores(estimator, X, y, sample_weight, col_idx,
+                                  random_state, n_repeats, scorer):
     """Calculate score when `col_idx` is permuted."""
     random_state = check_random_state(random_state)
 
@@ -32,7 +38,9 @@ def _calculate_permutation_scores(estimator, X, y, col_idx, random_state,
             X_permuted.iloc[:, col_idx] = col
         else:
             X_permuted[:, col_idx] = X_permuted[shuffling_idx, col_idx]
-        feature_score = scorer(estimator, X_permuted, y)
+        feature_score = _weights_scorer(
+            scorer, estimator, X_permuted, y, sample_weight
+        )
         scores[n_round] = feature_score
 
     return scores
@@ -40,7 +48,7 @@ def _calculate_permutation_scores(estimator, X, y, col_idx, random_state,
 
 @_deprecate_positional_args
 def permutation_importance(estimator, X, y, *, scoring=None, n_repeats=5,
-                           n_jobs=None, random_state=None):
+                           n_jobs=None, random_state=None, sample_weight=None):
     """Permutation importance for feature evaluation [BRE]_.
 
     The :term:`estimator` is required to be a fitted estimator. `X` can be the
@@ -87,6 +95,9 @@ def permutation_importance(estimator, X, y, *, scoring=None, n_repeats=5,
         Pass an int to get reproducible results across function calls.
         See :term: `Glossary <random_state>`.
 
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights used in scoring.
+
     Returns
     -------
     result : :class:`~sklearn.utils.Bunch`
@@ -131,10 +142,10 @@ def permutation_importance(estimator, X, y, *, scoring=None, n_repeats=5,
     random_seed = random_state.randint(np.iinfo(np.int32).max + 1)
 
     scorer = check_scoring(estimator, scoring=scoring)
-    baseline_score = scorer(estimator, X, y)
+    baseline_score = _weights_scorer(scorer, estimator, X, y, sample_weight)
 
     scores = Parallel(n_jobs=n_jobs)(delayed(_calculate_permutation_scores)(
-        estimator, X, y, col_idx, random_seed, n_repeats, scorer
+        estimator, X, y, sample_weight, col_idx, random_seed, n_repeats, scorer
     ) for col_idx in range(X.shape[1]))
 
     importances = baseline_score - np.array(scores)

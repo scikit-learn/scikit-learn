@@ -220,6 +220,10 @@ Changelog
   ``kind`` parameter.
   :pr:`16619` by :user:`Madhura Jayratne <madhuracj>`.
 
+- |Feature| Add `sample_weight` parameter to
+  :func:`inspection.permutation_importance`. :pr:`16906` by
+  :user:`Roei Kahny <RoeiKa>`.
+
 :mod:`sklearn.isotonic`
 .......................
 
