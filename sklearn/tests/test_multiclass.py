@@ -30,9 +30,10 @@ from sklearn.linear_model import (LinearRegression, Lasso, ElasticNet, Ridge,
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.model_selection import GridSearchCV, cross_val_score
 from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.impute import SimpleImputer
 from sklearn import svm
 from sklearn import datasets
-from sklearn.impute import SimpleImputer
+
 iris = datasets.load_iris()
 rng = np.random.RandomState(0)
 perm = rng.permutation(iris.target.size)

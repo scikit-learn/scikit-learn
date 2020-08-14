@@ -1223,10 +1223,11 @@ def test_feature_union_fit_params():
     t.fit_transform(X, y, a=0)
 
 
-def test_missing_values_leniency():
+def test_pipeline_missing_values_leniency():
+    # check that pipeline let the missing values validation to
+    # the underlying transformers and predictors.
     X, y = iris.data, iris.target
     mask = np.random.choice([1, 0], X.shape, p=[.1, .9]).astype(bool)
     X[mask] = np.nan
-    pipe = make_pipeline(
-            SimpleImputer(), LogisticRegression()).fit(X, y)
-    assert pipe.score(X, y) > 0.4
+    pipe = make_pipeline(SimpleImputer(), LogisticRegression())
+    assert pipe.fit(X, y).score(X, y) > 0.4
