@@ -6,7 +6,6 @@ the gradients and hessians of the training data.
 """
 # Author: Nicolas Hug
 
-from memory_profiler import profile
 
 from heapq import heappush, heappop
 import numpy as np
