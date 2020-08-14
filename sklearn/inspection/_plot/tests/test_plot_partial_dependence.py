@@ -310,7 +310,7 @@ def test_plot_partial_dependence_with_used_axes(pyplot, clf_diabetes,
 
     msg = "The ax was already used in a matplotlib plot function"
     with pytest.raises(ValueError, match=msg):
-        plot_partial_dependence(clf_diabetes, diabetes.data, ['CRIM', 'ZN'],
+        plot_partial_dependence(clf_diabetes, diabetes.data, ['age', 'bmi'],
                                 grid_resolution=grid_resolution,
                                 feature_names=diabetes.feature_names, ax=ax)
 
@@ -328,7 +328,7 @@ def test_plot_partial_dependence_used_by_another_display_obj(
     msg = ("The ax was already used by another display object which is not "
            "an instance of PartialDependenceDisplay")
     with pytest.raises(ValueError, match=msg):
-        plot_partial_dependence(clf_diabetes, diabetes.data, ['CRIM', 'ZN'],
+        plot_partial_dependence(clf_diabetes, diabetes.data, ['age', 'bmi'],
                                 grid_resolution=5,
                                 feature_names=diabetes.feature_names, ax=ax)
 

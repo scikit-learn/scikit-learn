@@ -631,7 +631,7 @@ class PartialDependenceDisplay:
             else:
                 n_cols = None
 
-            self.bounding_ax_ = None
+            self.bounding_ax_ = getattr(self, "bounding_ax_", None)
             self.figure_ = ax.ravel()[0].figure
             self.axes_ = ax
             if self.kind == 'average':
