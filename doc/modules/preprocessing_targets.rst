@@ -18,7 +18,7 @@ LabelBinarizer
 --------------
 
 :class:`LabelBinarizer` is a utility class to help create a :term:`label
-indicator matrix` from a list of multiclass labels::
+indicator matrix` from a list of :term:`multiclass` labels::
 
     >>> from sklearn import preprocessing
     >>> lb = preprocessing.LabelBinarizer()
@@ -41,12 +41,12 @@ indicator matrix` from a list of multiclass labels::
     support other types of data.
 
 For more information about multiclass classification, refer to
-:ref:`multiclass`.
+:ref:`multiclass_classification`.
 
 MultiLabelBinarizer
 -------------------
 
-In multilabel learning, the joint set of binary classification tasks is
+In :term:`multilabel` learning, the joint set of binary classification tasks is
 expressed with a label binary indicator array: each sample is one row of a 2d
 array of shape (n_samples, n_classes) with binary values: the one, i.e. the non
 zero elements, corresponds to the subset of labels. An array such as
@@ -68,7 +68,7 @@ labels and the indicator format::
            [1, 1, 1, 0, 0]])
 
 For more information about multilabel classification, refer to
-:ref:`multiclass`.
+:ref:`multilabel_classification`.
 
 Label encoding
 ==============
