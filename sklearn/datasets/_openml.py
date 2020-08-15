@@ -912,7 +912,7 @@ def fetch_openml(
     # obtain the data
     url = _DATA_FILE.format(data_description['file_id'])
     bunch = _download_data_to_bunch(url, return_sparse, data_home,
-                                    as_frame=as_frame,
+                                    as_frame=bool(as_frame),
                                     features_list=features_list, shape=shape,
                                     target_columns=target_columns,
                                     data_columns=data_columns,
