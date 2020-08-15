@@ -615,7 +615,7 @@ def test_support_missing_values(MultiOutputEstimator, Estimator):
     # the validation of missing values to
     # the underlying pipeline, regressor or classifier
     rng = np.random.RandomState(42)
-    X, y = rng.random((50, 2)), rng.binomial(1, 0.5, (50, 3))
+    X, y = rng.randn(50, 2), rng.binomial(1, 0.5, (50, 3))
     mask = rng.choice([1, 0], X.shape, p=[.01, .99]).astype(bool)
     X[mask] = np.nan
 

@@ -309,7 +309,7 @@ Changelog
   :pr:`17987` by :user:`Venkatachalam N <venkyyuvy>`.
 
 :mod:`sklearn.multioutput`
-.........................
+..........................
 
 - |Enhancement| :class:`multioutput.MultiOutputClassifier` and 
   :class:`multioutput.MultiOutputRegressor` now accpets the inputs
