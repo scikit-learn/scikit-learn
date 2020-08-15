@@ -15,6 +15,7 @@ better.
 # License: BSD 3 clause
 
 
+import warnings
 from math import log
 
 import numpy as np
@@ -22,9 +23,10 @@ from scipy import sparse as sp
 from scipy.special import comb
 
 from ._expected_mutual_info_fast import expected_mutual_information
-from ...utils.validation import check_array, check_consistent_length
-from ...utils.validation import _deprecate_positional_args
 from ...utils.fixes import _astype_copy_false
+from ...utils.multiclass import type_of_target
+from ...utils.validation import _deprecate_positional_args
+from ...utils.validation import check_array, check_consistent_length
 
 
 def _comb2(n):
@@ -47,9 +49,19 @@ def check_clusterings(labels_true, labels_pred):
     labels_true = check_array(
         labels_true, ensure_2d=False, ensure_min_samples=0, dtype=None,
     )
+
     labels_pred = check_array(
         labels_pred, ensure_2d=False, ensure_min_samples=0, dtype=None,
     )
+
+    type_label = type_of_target(labels_true)
+    type_pred = type_of_target(labels_pred)
+
+    if 'continuous' in (type_pred, type_label):
+        msg = f'Clustering metrics expects discrete values but received' \
+              f' {type_label} values for label, and {type_pred} values ' \
+              f'for target'
+        warnings.warn(msg, UserWarning)
 
     # input checks
     if labels_true.ndim != 1:
@@ -856,6 +868,7 @@ def normalized_mutual_info_score(labels_true, labels_pred, *,
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     classes = np.unique(labels_true)
     clusters = np.unique(labels_pred)
+
     # Special limit cases: no clustering since the data is not split.
     # This is a perfect match hence return 1.0.
     if (classes.shape[0] == clusters.shape[0] == 1 or

@@ -416,11 +416,11 @@ def dump_svmlight_file(X, y, f, *, zero_based=True, comment=None,
         If file-like, data will be written to f. f should be opened in binary
         mode.
 
-    zero_based : boolean, optional
+    zero_based : boolean, default=True
         Whether column indices should be written zero-based (True) or one-based
         (False).
 
-    comment : string, optional
+    comment : string, default=None
         Comment to insert at the top of the file. This should be either a
         Unicode string, which will be encoded as UTF-8, or an ASCII byte
         string.
@@ -428,11 +428,11 @@ def dump_svmlight_file(X, y, f, *, zero_based=True, comment=None,
         the file as having been dumped by scikit-learn. Note that not all
         tools grok comments in SVMlight files.
 
-    query_id : array-like of shape (n_samples,)
+    query_id : array-like of shape (n_samples,), default=None
         Array containing pairwise preference constraints (qid in svmlight
         format).
 
-    multilabel : boolean, optional
+    multilabel : boolean, default=False
         Samples may have several labels each (see
         https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html)
 
