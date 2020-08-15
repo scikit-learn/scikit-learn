@@ -1,0 +1,15 @@
+name: Pull Request Regex Title Labeler
+on:
+  pull_request_target:
+    types: [opened]
+
+jobs:
+
+  labeler:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check Labels
+      id: labeler
+      uses: jimschubert/labeler-action@v2
+      with:
+        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
