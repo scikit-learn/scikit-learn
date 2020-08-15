@@ -10,6 +10,7 @@ jobs:
     steps:
     - name: Check Labels
       id: labeler
+      continue-on-error: true
       uses: jimschubert/labeler-action@v2
       with:
         GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
