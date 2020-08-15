@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 from sklearn import neighbors, datasets
 
+
 n_neighbors = 15
 
 # import some data to play with
@@ -50,23 +51,23 @@ for weights in ['uniform', 'distance']:
 
     # Plot also the training points
     scatter = plt.scatter(X[:, 0], X[:, 1], c=y, cmap=cmap_bold,
-                edgecolor='k', s=20)
+                          edgecolor='k', s=20)
     plt.xlim(xx.min(), xx.max())
     plt.ylim(yy.min(), yy.max())
     plt.title("3-Class classification (k = %i, weights = '%s')"
               % (n_neighbors, weights))
-    
+
     plt.xlabel(iris.feature_names[0])
     plt.ylabel(iris.feature_names[1])
 
     ax = plt.gca()
 
     # produce a legend with the unique colors from the scatter
-    legend1 = ax.legend(*scatter.legend_elements(),
-                    loc="best", title="Classes")
-    
+    legend = ax.legend(*scatter.legend_elements(),
+                        loc="best", title="Classes")
+
     # update legend entries [0,1,2] to labels
     for idx, label in enumerate(list(iris.target_names)):
-      legend1.get_texts()[idx].set_text(label)
+        legend.get_texts()[idx].set_text(label)
 
 plt.show()
