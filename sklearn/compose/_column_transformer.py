@@ -639,7 +639,14 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             return np.hstack(Xs)
 
     def _sk_visual_block_(self):
-        names, transformers, name_details = zip(*self.transformers)
+        if isinstance(self.remainder, str) and self.remainder == 'drop':
+            transformers = self.transformers
+        else:
+            # 'passthrough' or estimator
+            transformers = chain(self.transformers,
+                                 [('remainder', self.remainder, '')])
+
+        names, transformers, name_details = zip(*transformers)
         return _VisualBlock('parallel', transformers,
                             names=names, name_details=name_details)
 

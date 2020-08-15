@@ -1381,3 +1381,25 @@ def test_feature_names_empty_columns(empty_col):
 
     ct.fit(df)
     assert ct.get_feature_names() == ['ohe__x0_a', 'ohe__x0_b', 'ohe__x1_z']
+
+
+@pytest.mark.parametrize('remainder', ["passthrough", StandardScaler()])
+def test_sk_visual_block_remainder(remainder):
+    # remainder='passthrough' or an estimator will be shown in repr_html
+    ohe = OneHotEncoder()
+    ct = ColumnTransformer(transformers=[('ohe', ohe, ["col1", "col2"])],
+                           remainder=remainder)
+    visual_block = ct._sk_visual_block_()
+    assert visual_block.names == ('ohe', 'remainder')
+    assert visual_block.name_details == (['col1', 'col2'], '')
+    assert visual_block.estimators == (ohe, remainder)
+
+
+def test_sk_visual_block_remainder_drop():
+    # remainder='drop' is not shown in repr_html
+    ohe = OneHotEncoder()
+    ct = ColumnTransformer(transformers=[('ohe', ohe, ["col1", "col2"])])
+    visual_block = ct._sk_visual_block_()
+    assert visual_block.names == ('ohe',)
+    assert visual_block.name_details == (['col1', 'col2'],)
+    assert visual_block.estimators == (ohe,)
