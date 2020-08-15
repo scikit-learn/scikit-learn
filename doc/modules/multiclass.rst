@@ -31,16 +31,16 @@ guide.
 |                              | Number of targets     | Target cardinality      | Valid                                            |
 |                              |                       |                         | :func:`~sklearn.utils.multiclass.type_of_target` |
 +==============================+=======================+=========================+==================================================+
-| Multiclass                   |  1                    | >2                      | - 'multiclass'                                   |
+| Multiclass                   |  1                    | >2                      | 'multiclass'                                     |
 | classification               |                       |                         |                                                  |
 +------------------------------+-----------------------+-------------------------+--------------------------------------------------+
-| Multilabel                   | >1                    |  2 (0 or 1)             | - 'multilabel-indicator'                         |
+| Multilabel                   | >1                    |  2 (0 or 1)             | 'multilabel-indicator'                           |
 | classification               |                       |                         |                                                  |
 +------------------------------+-----------------------+-------------------------+--------------------------------------------------+
-| Multiclass-multioutput       | >1                    | >2                      | - 'multiclass-multioutput'                       |
+| Multiclass-multioutput       | >1                    | >2                      | 'multiclass-multioutput'                         |
 | classification               |                       |                         |                                                  |
 +------------------------------+-----------------------+-------------------------+--------------------------------------------------+
-| Multioutput                  | >1                    | Continuous              | - 'continuous-multioutput'                       |
+| Multioutput                  | >1                    | Continuous              | 'continuous-multioutput'                         |
 | regression                   |                       |                         |                                                  |
 +------------------------------+-----------------------+-------------------------+--------------------------------------------------+
 
