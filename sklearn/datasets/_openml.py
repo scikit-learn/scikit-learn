@@ -696,7 +696,7 @@ def fetch_openml(
     target_column: Optional[Union[str, List]] = 'default-target',
     cache: bool = True,
     return_X_y: bool = False,
-    as_frame='auto'
+    as_frame: Union[str, bool] = 'auto'
 ):
     """Fetch dataset from openml by name or dataset id.
 
