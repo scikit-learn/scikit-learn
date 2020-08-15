@@ -114,6 +114,10 @@ Changelog
   `data` and `frame` members are pandas DataFrames, and the `target` member is
   a pandas Series. :pr:`17491` by :user:`Alex Liang <tianchuliang>`.
 
+- |API| The default value of `as_frame` in :func:`datasets.fetch_openml` is
+  changed from False to 'auto'.
+  :pr:`17610` by :user:`Jiaxiang <fujiaxiang>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
