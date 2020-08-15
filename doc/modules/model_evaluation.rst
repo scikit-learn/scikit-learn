@@ -1513,7 +1513,7 @@ This function returns the mean squared error of the actual outcome
 The Brier score loss is also between 0 to 1 and the lower the score (the mean
 square difference is smaller), the more accurate the prediction is.
 
-Here is a small example of usage of this function:::
+Here is a small example of usage of this function: ::
 
     >>> import numpy as np
     >>> from sklearn.metrics import brier_score_loss
