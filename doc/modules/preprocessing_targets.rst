@@ -14,11 +14,11 @@ model in the original (untransformed) space.
 Label binarization
 ==================
 
-Multiclass classification
--------------------------
+LabelBinarizer
+--------------
 
-:class:`LabelBinarizer` is a utility class to help create a label indicator
-matrix from a list of multi-class labels::
+:class:`LabelBinarizer` is a utility class to help create a :term:`label
+indicator matrix` from a list of multiclass labels::
 
     >>> from sklearn import preprocessing
     >>> lb = preprocessing.LabelBinarizer()
@@ -30,14 +30,24 @@ matrix from a list of multi-class labels::
     array([[1, 0, 0, 0],
            [0, 0, 0, 1]])
 
+.. warning::
+
+    Label indicator matrices are intended for multilabel classification
+    (rather than multiclass classification). However, LabelBinarizer
+    repurposes this format for multiclass data to enable multiclass
+    classification in estimators that only support binary data.
+    Depending on your situation, you could consider using the
+    :term:`multiclass` target representation instead for estimators which
+    support other types of data.
+
 For more information about multiclass classification, refer to
 :ref:`multiclass`.
 
-Multilabel classification
--------------------------
+MultiLabelBinarizer
+-------------------
 
 In multilabel learning, the joint set of binary classification tasks is
-expressed with label binary indicator array: each sample is one row of a 2d
+expressed with a label binary indicator array: each sample is one row of a 2d
 array of shape (n_samples, n_classes) with binary values: the one, i.e. the non
 zero elements, corresponds to the subset of labels. An array such as
 ``np.array([[1, 0, 0], [0, 1, 1], [0, 0, 0]])`` represents label 0 in the first
