@@ -573,7 +573,7 @@ class CompoundKernel(Kernel):
 
         eval_gradient : bool, default=False
             Determines whether the gradient with respect to the log of the
-            kernel hyperparameter is determined.
+            kernel hyperparameter is computed.
 
         Returns
         -------
@@ -797,7 +797,7 @@ class Sum(KernelOperator):
 
         eval_gradient : bool, default=False
             Determines whether the gradient with respect to the log of
-            the kernel hyperparameter is determined.
+            the kernel hyperparameter is computed.
 
         Returns
         -------
@@ -895,7 +895,7 @@ class Product(KernelOperator):
 
         eval_gradient : bool, default=False
             Determines whether the gradient with respect to the log of
-            the kernel hyperparameter is determined.
+            the kernel hyperparameter is computed.
 
         Returns
         -------
@@ -1073,7 +1073,7 @@ class Exponentiation(Kernel):
 
         eval_gradient : bool, default=False
             Determines whether the gradient with respect to the log of
-            the kernel hyperparameter is determined.
+            the kernel hyperparameter is computed.
 
         Returns
         -------
@@ -1201,7 +1201,7 @@ class ConstantKernel(StationaryKernelMixin, GenericKernelMixin,
 
         eval_gradient : bool, default=False
             Determines whether the gradient with respect to the log of
-            the kernel hyperparameter is determined.
+            the kernel hyperparameter is computed.
             Only supported when Y is None.
 
         Returns
@@ -1321,7 +1321,7 @@ class WhiteKernel(StationaryKernelMixin, GenericKernelMixin,
 
         eval_gradient : bool, default=False
             Determines whether the gradient with respect to the log of
-            the kernel hyperparameter is determined.
+            the kernel hyperparameter is computed.
             Only supported when Y is None.
 
         Returns
@@ -1469,7 +1469,7 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
         eval_gradient : bool, default=False
             Determines whether the gradient with respect to the log of
-            the kernel hyperparameter is determined.
+            the kernel hyperparameter is computed.
             Only supported when Y is None.
 
         Returns
@@ -1624,7 +1624,7 @@ class Matern(RBF):
 
         eval_gradient : bool, default=False
             Determines whether the gradient with respect to the log of
-            the kernel hyperparameter is determined.
+            the kernel hyperparameter is computed.
             Only supported when Y is None.
 
         Returns
@@ -1814,7 +1814,7 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
         eval_gradient : bool, default=False
             Determines whether the gradient with respect to the log of
-            the kernel hyperparameter is determined.
+            the kernel hyperparameter is computed.
             Only supported when Y is None.
 
         Returns
@@ -1960,7 +1960,7 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
         eval_gradient : bool, default=False
             Determines whether the gradient with respect to the log of
-            the kernel hyperparameter is determined.
+            the kernel hyperparameter is computed.
             Only supported when Y is None.
 
         Returns
@@ -2093,7 +2093,7 @@ class DotProduct(Kernel):
 
         eval_gradient : bool, default=False
             Determines whether the gradient with respect to the log of
-            the kernel hyperparameter is determined.
+            the kernel hyperparameter is computed.
             Only supported when Y is None.
 
         Returns
@@ -2248,7 +2248,7 @@ class PairwiseKernel(Kernel):
 
         eval_gradient : bool, default=False
             Determines whether the gradient with respect to the log of
-            the kernel hyperparameter is determined.
+            the kernel hyperparameter is computed.
             Only supported when Y is None.
 
         Returns
