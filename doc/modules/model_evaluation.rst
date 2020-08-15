@@ -19,7 +19,7 @@ predictions:
   :class:`model_selection.GridSearchCV`) rely on an internal *scoring* strategy.
   This is discussed in the section :ref:`scoring_parameter`.
 
-* **Metric functions**: The :mod:`metrics` module implements functions
+* **Metric functions**: The :mod:`sklearn.metrics` module implements functions
   assessing prediction error for specific purposes. These metrics are detailed
   in sections on :ref:`classification_metrics`,
   :ref:`multilabel_ranking_metrics`, :ref:`regression_metrics` and
@@ -117,7 +117,7 @@ Usage examples:
 
 .. note::
 
-    The values listed by the ValueError exception correspond to the functions measuring
+    The values listed by the ``ValueError`` exception correspond to the functions measuring
     prediction accuracy described in the following sections.
     The scorer objects for those functions are stored in the dictionary
     ``sklearn.metrics.SCORERS``.
@@ -138,7 +138,7 @@ measuring a prediction error given ground truth and prediction:
 - functions ending with ``_error`` or ``_loss`` return a
   value to minimize, the lower the better.  When converting
   into a scorer object using :func:`make_scorer`, set
-  the ``greater_is_better`` parameter to False (True by default; see the
+  the ``greater_is_better`` parameter to ``False`` (``True`` by default; see the
   parameter description below).
 
 Metrics available for various machine learning tasks are detailed in sections
@@ -1088,7 +1088,7 @@ be encoded as a 1-of-K binary indicator matrix :math:`Y`,
 i.e., :math:`y_{i,k} = 1` if sample :math:`i` has label :math:`k`
 taken from a set of :math:`K` labels.
 Let :math:`P` be a matrix of probability estimates,
-with :math:`p_{i,k} = \operatorname{Pr}(t_{i,k} = 1)`.
+with :math:`p_{i,k} = \operatorname{Pr}(y_{i,k} = 1)`.
 Then the log loss of the whole set is
 
 .. math::
@@ -1496,28 +1496,22 @@ Brier score loss
 
 The :func:`brier_score_loss` function computes the
 `Brier score <https://en.wikipedia.org/wiki/Brier_score>`_
-for binary classes. Quoting Wikipedia:
+for binary classes [Brier1950]_. Quoting Wikipedia:
 
     "The Brier score is a proper score function that measures the accuracy of
     probabilistic predictions. It is applicable to tasks in which predictions
     must assign probabilities to a set of mutually exclusive discrete outcomes."
 
-This function returns a score of the mean square difference between the actual
-outcome and the predicted probability of the possible outcome. The actual
-outcome has to be 1 or 0 (true or false), while the predicted probability of
-the actual outcome can be a value between 0 and 1 [Brier1950]_.
-
-The Brier score loss is also between 0 to 1 and the lower the score (the mean
-square difference is smaller), the more accurate the prediction is. It can be
-thought of as a measure of the "calibration" of a set of probabilistic
-predictions.
+This function returns the mean squared error of the actual outcome
+:math:`y \in \{0,1\}` and the predicted probability estimate
+:math:`p = \operatorname{Pr}(y = 1)` (``predict_proba``) as score:
 
 .. math::
 
-   BS = \frac{1}{N} \sum_{t=1}^{N}(f_t - o_t)^2
+   BS = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}} - 1}(y_i - p_i)^2
 
-where : :math:`N` is the total number of predictions, :math:`f_t` is the
-predicted probability of the actual outcome :math:`o_t`.
+The Brier score loss is also between 0 to 1 and the lower the score (the mean
+square difference is smaller), the more accurate the prediction is.
 
 Here is a small example of usage of this function:::
 
@@ -1536,9 +1530,10 @@ Here is a small example of usage of this function:::
     >>> brier_score_loss(y_true, y_prob > 0.5)
     0.0
 
-The Brier score can be used to assess how well a classifier is calibrated
-however, a lower Brier score does not always mean a better calibration. This is
-because the Brier score can be decomposed as the sum of calibration loss and
+The Brier score can be used to assess how well a classifier is calibrated.
+However, a lower Brier score does not always mean a better calibration. This is
+because, by analogy with the bias-variance decomposition of the mean squared
+error, the Brier score can be decomposed, as the sum of calibration loss and
 refinement loss [Bella2012]_. Calibration loss is defined as the mean squared
 deviation from empirical probabilities derived from the slope of ROC segments.
 Refinement loss can be defined as the expected optimal loss as measured by the
