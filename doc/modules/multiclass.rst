@@ -112,6 +112,7 @@ can provide additional strategies beyond what is built-in:
   - :class:`sklearn.neighbors.RadiusNeighborsClassifier`
   - :class:`sklearn.ensemble.RandomForestClassifier`
 
+.. _multiclass_classification:
 
 Multiclass classification
 =========================
@@ -334,6 +335,8 @@ Below is an example of multiclass learning using Output-Codes::
       Hastie T., Tibshirani R., Friedman J., page 606 (second-edition)
       2008.
 
+.. _multilabel_classification:
+
 Multilabel classification
 =========================
 
@@ -381,6 +384,8 @@ An example of the same ``y`` in sparse matrix form:
     (0, 3)	1
     (1, 2)	1
     (1, 3)	1
+
+.. _multioutputclassfier:
 
 MultiOutputClassifier
 ---------------------
@@ -452,6 +457,8 @@ averaged together.
     Jesse Read, Bernhard Pfahringer, Geoff Holmes, Eibe Frank,
         "Classifier Chains for Multi-label Classification", 2009.
 
+.. _multiclass_multioutput_classification:
+
 Multiclass-multioutput classification
 =====================================
 
@@ -495,6 +502,8 @@ A valid representation of :term:`multioutput` `y` is a dense matrix of shape
    ['orange' 'orange']
    ['pear' 'green']]
 
+.. _multioutput_regression:
+
 Multioutput regression
 ======================
 
@@ -521,6 +530,8 @@ A valid representation of :term:`multioutput` `y` is a dense matrix of shape
   [[ 31.4  94. ]
    [ 40.5 109. ]
    [ 25.   30. ]]
+
+.. _multioutputregressor:
 
 MultiOutputRegressor
 --------------------
