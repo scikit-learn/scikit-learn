@@ -93,6 +93,9 @@ def test_column_transformer():
         (slice(0, 2), X_res_both),
         # boolean mask
         (np.array([True, False]), X_res_first),
+        ([True, False], X_res_first),
+        (np.array([True, True]), X_res_both),
+        ([True, True], X_res_both),
     ]
 
     for selection, res in cases:
@@ -166,6 +169,7 @@ def test_column_transformer_dataframe():
         # boolean mask
         (np.array([True, False]), X_res_first),
         (pd.Series([True, False], index=['first', 'second']), X_res_first),
+        ([True, False], X_res_first),
     ]
 
     for selection, res in cases:
@@ -254,9 +258,12 @@ def test_column_transformer_dataframe():
 
 
 @pytest.mark.parametrize("pandas", [True, False], ids=['pandas', 'numpy'])
-@pytest.mark.parametrize("column", [[], np.array([False, False])],
-                         ids=['list', 'bool'])
-def test_column_transformer_empty_columns(pandas, column):
+@pytest.mark.parametrize("column_selection", [[], np.array([False, False]),
+                                              [False, False]],
+                         ids=['list', 'bool', 'bool_int'])
+@pytest.mark.parametrize("callable_column", [False, True])
+def test_column_transformer_empty_columns(pandas, column_selection,
+                                          callable_column):
     # test case that ensures that the column transformer does also work when
     # a given transformer doesn't have any columns to work on
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
@@ -268,34 +275,39 @@ def test_column_transformer_empty_columns(pandas, column):
     else:
         X = X_array
 
+    if callable_column:
+        column = lambda X: column_selection  # noqa
+    else:
+        column = column_selection
+
     ct = ColumnTransformer([('trans1', Trans(), [0, 1]),
-                            ('trans2', Trans(), column)])
+                            ('trans2', TransRaise(), column)])
     assert_array_equal(ct.fit_transform(X), X_res_both)
     assert_array_equal(ct.fit(X).transform(X), X_res_both)
     assert len(ct.transformers_) == 2
-    assert isinstance(ct.transformers_[1][1], Trans)
+    assert isinstance(ct.transformers_[1][1], TransRaise)
 
-    ct = ColumnTransformer([('trans1', Trans(), column),
+    ct = ColumnTransformer([('trans1', TransRaise(), column),
                             ('trans2', Trans(), [0, 1])])
     assert_array_equal(ct.fit_transform(X), X_res_both)
     assert_array_equal(ct.fit(X).transform(X), X_res_both)
     assert len(ct.transformers_) == 2
-    assert isinstance(ct.transformers_[0][1], Trans)
+    assert isinstance(ct.transformers_[0][1], TransRaise)
 
-    ct = ColumnTransformer([('trans', Trans(), column)],
+    ct = ColumnTransformer([('trans', TransRaise(), column)],
                            remainder='passthrough')
     assert_array_equal(ct.fit_transform(X), X_res_both)
     assert_array_equal(ct.fit(X).transform(X), X_res_both)
     assert len(ct.transformers_) == 2  # including remainder
-    assert isinstance(ct.transformers_[0][1], Trans)
+    assert isinstance(ct.transformers_[0][1], TransRaise)
 
     fixture = np.array([[], [], []])
-    ct = ColumnTransformer([('trans', Trans(), column)],
+    ct = ColumnTransformer([('trans', TransRaise(), column)],
                            remainder='drop')
     assert_array_equal(ct.fit_transform(X), fixture)
     assert_array_equal(ct.fit(X).transform(X), fixture)
     assert len(ct.transformers_) == 2  # including remainder
-    assert isinstance(ct.transformers_[0][1], Trans)
+    assert isinstance(ct.transformers_[0][1], TransRaise)
 
 
 def test_column_transformer_sparse_array():

@@ -1546,7 +1546,7 @@ def test_nested_cv():
            StratifiedShuffleSplit(n_splits=3, random_state=0)]
 
     for inner_cv, outer_cv in combinations_with_replacement(cvs, 2):
-        gs = GridSearchCV(Ridge(solver="eigen"), param_grid={'alpha': [1, .1]},
+        gs = GridSearchCV(Ridge(), param_grid={'alpha': [1, .1]},
                           cv=inner_cv, error_score='raise')
         cross_val_score(gs, X=X, y=y, groups=groups, cv=outer_cv,
                         fit_params={'groups': groups})

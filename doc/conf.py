@@ -41,7 +41,7 @@ extensions = [
     'sphinx.ext.imgconverter',
     'sphinx_gallery.gen_gallery',
     'sphinx_issues',
-    'custom_autosummary_new_suffix'
+    'add_toctree_functions',
 ]
 
 # this is needed for some reason...
@@ -431,8 +431,26 @@ def generate_min_dependency_table(app):
     output.write('\n')
     output = output.getvalue()
 
-    with (Path('.') / 'min_dependency.rst').open('w') as f:
+    with (Path('.') / 'min_dependency_table.rst').open('w') as f:
         f.write(output)
+
+
+def generate_min_dependency_substitutions(app):
+    """Generate min dependency substitutions for docs."""
+    from sklearn._build_utils.min_dependencies import dependent_packages
+
+    output = StringIO()
+
+    for package, (version, _) in dependent_packages.items():
+        package = package.capitalize()
+        output.write(f'.. |{package}MinVersion| replace:: {version}')
+        output.write('\n')
+
+    output = output.getvalue()
+
+    with (Path('.') / 'min_dependency_substitutions.rst').open('w') as f:
+        f.write(output)
+
 
 # Config for sphinx_issues
 
@@ -442,6 +460,7 @@ issues_github_path = 'scikit-learn/scikit-learn'
 
 def setup(app):
     app.connect('builder-inited', generate_min_dependency_table)
+    app.connect('builder-inited', generate_min_dependency_substitutions)
     # to hide/show the prompt in code examples:
     app.connect('build-finished', make_carousel_thumbs)
     app.connect('build-finished', filter_search_index)
@@ -457,15 +476,11 @@ warnings.filterwarnings("ignore", category=UserWarning,
                         message='Matplotlib is currently using agg, which is a'
                                 ' non-GUI backend, so cannot show the figure.')
 
-# Used by custom extension: `custom_autosummary_new_suffix` to change the
-# suffix of the following functions. This works around the issue with
-# `sklearn.cluster.dbscan` overlapping with `sklearn.cluster.DBSCAN`  on
-# case insensitive file systems.
-custom_autosummary_names_with_new_suffix = {
-    'sklearn.cluster.dbscan',
-    'sklearn.cluster.optics',
-    'sklearn.covariance.oas',
-    'sklearn.decomposition.fastica'
+
+# maps functions with a class name that is indistinguishable when case is
+# ignore to another filename
+autosummary_filename_map = {
+    "sklearn.cluster.dbscan": "dbscan-function",
+    "sklearn.covariance.oas": "oas-function",
+    "sklearn.decomposition.fastica": "fastica-function",
 }
-custom_autosummary_new_suffix = '-lowercase.rst'
-custom_autosummary_generated_dirname = os.path.join('modules', 'generated')
