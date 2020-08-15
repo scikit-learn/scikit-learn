@@ -601,3 +601,13 @@ def test_regressor_chain_w_fit_params():
 
     for est in model.estimators_:
         assert est.sample_weight_ is weight
+
+
+# check if MultiOutputRegressor accepts sparse 'y' input PR#16800
+def test_multioutput_use_sparse_y():
+    X = sp.csr_matrix((13, 5))
+    y = sp.csr_matrix((13, 2))
+
+    m_reg = MultiOutputRegressor(SGDRegressor())
+    with pytest.warns(UserWarning):
+        m_reg.fit(X, y)
