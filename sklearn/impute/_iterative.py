@@ -131,7 +131,7 @@ class IterativeImputer(_BaseImputer):
         selection of estimator features if n_nearest_features is not None, the
         ``imputation_order`` if ``random``, and the sampling from posterior if
         ``sample_posterior`` is True. If the estimator has a `random_state`,
-        but it's set to None, will set it to this value too. Use an integer
+        and it's set to None, will set it to this value too. Use an integer
         for determinism.
         See :term:`the Glossary <random_state>`.
 

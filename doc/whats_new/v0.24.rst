@@ -215,6 +215,11 @@ Changelog
   with `add_indicator=True`.
   :pr:`17612` by :user:`Srimukh Sripada <d3b0unce>`
 
+- |Enhancement| :class:`impute.IterativeImputer` will set the estimator's
+  `random_state` to the same `random_state` that was passed to the imputer
+  instead of a `RandomState`, allowing to use it with more external classes.
+  :pr:`15636` by :user:`David Cortes <david-cortes>`.
+
 :mod:`sklearn.inspection`
 .........................
 
@@ -227,14 +232,6 @@ Changelog
 - |Feature| Add `sample_weight` parameter to
   :func:`inspection.permutation_importance`. :pr:`16906` by
   :user:`Roei Kahny <RoeiKa>`.
-
-:mod:`sklearn.impute`
-...............................
-
-- |Enhancement| :class:`impute.IterativeImputer` Will set the estimator's
-  `random_state` to the same `random_state` that was passed to the imputer
-  instead of a `RandomState`, allowing to use it with more external classes.
-  :pr:`15636` by :user:`David Cortes <david-cortes>`.
 
 :mod:`sklearn.isotonic`
 .......................
