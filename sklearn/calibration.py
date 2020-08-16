@@ -52,8 +52,9 @@ def _fit_calibrated_classifer(estimator, X, y, train, test,
     # _CalibratedClassifier) and sample_weight_base_estimator (used
     # for the base estimator).
     if sample_weight_base_estimator is not None:
+        swbe = _safe_indexing(sample_weight_base_estimator, train)
         estimator.fit(X[train], y[train],
-                      sample_weight=_safe_indexing(sample_weight_base_estimator, train),
+                      sample_weight=swbe,
                       **fit_params_train)
     else:
         estimator.fit(X[train], y[train], **fit_params_train)
