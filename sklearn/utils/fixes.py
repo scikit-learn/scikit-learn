@@ -42,7 +42,7 @@ else:
 
 
 def _object_dtype_isnan(X):
-    return X != X
+    return np.isnan(X)
 
 
 # TODO: replace by copy=False, when only scipy > 1.1 is supported.
