@@ -610,7 +610,6 @@ def test_classifier_chain_tuple_order(order_type):
     X = [[1, 2, 3], [4, 5, 6], [1.5, 2.5, 3.5]]
     y = [[3, 2], [2, 3], [3, 2]]
     order = order_type([1, 0])
-    
 
     chain = ClassifierChain(RandomForestClassifier(), order=order)
     chain.fit(X, y)
