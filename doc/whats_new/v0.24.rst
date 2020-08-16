@@ -324,8 +324,8 @@ Changelog
 :mod:`sklearn.multioutput`
 ..........................
 
-- |Fix| A fix to allow :class:`multioutput.ClassifierChain` to accept
-  ``order`` as a tuple.
+- |Fix| A fix to accept tuples for the ``order`` parameter 
+  in :class:`multioutput.ClassifierChain`.
   :pr:`18124` by :user:`Gus Brocchini <boldloop>` and
   :user:`Amanda Dsouza <amy12xx>`.
 
