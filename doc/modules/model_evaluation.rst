@@ -430,7 +430,7 @@ where :math:`1(x)` is the `indicator function
   >>> accuracy_score(y_true, y_pred, normalize=False)
   2
 
-In the multilabel case with binary label indicators: ::
+In the multilabel case with binary label indicators::
 
   >>> accuracy_score(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
   0.5
@@ -685,7 +685,7 @@ where :math:`1(x)` is the `indicator function
   >>> hamming_loss(y_true, y_pred)
   0.25
 
-In the multilabel case with binary label indicators: ::
+In the multilabel case with binary label indicators::
 
   >>> hamming_loss(np.array([[0, 1], [1, 1]]), np.zeros((2, 2)))
   0.75
@@ -966,7 +966,7 @@ naively set-wise measure applying natively to binary targets, and extended to
 apply to multilabel and multiclass through the use of `average` (see
 :ref:`above <average>`).
 
-In the binary case: ::
+In the binary case::
 
   >>> import numpy as np
   >>> from sklearn.metrics import jaccard_score
@@ -977,7 +977,7 @@ In the binary case: ::
   >>> jaccard_score(y_true[0], y_pred[0])
   0.6666...
 
-In the multilabel case with binary label indicators: ::
+In the multilabel case with binary label indicators::
 
   >>> jaccard_score(y_true, y_pred, average='samples')
   0.5833...
@@ -987,7 +987,7 @@ In the multilabel case with binary label indicators: ::
   array([0.5, 0.5, 1. ])
 
 Multiclass problems are binarized and treated like the corresponding
-multilabel problem: ::
+multilabel problem::
 
   >>> y_pred = [0, 2, 1, 2]
   >>> y_true = [0, 1, 2, 2]
@@ -1475,7 +1475,7 @@ where :math:`1(x)` is the `indicator function
   1
 
 In the multilabel case with binary label indicators, where the first label
-set [0,1] has an error: ::
+set [0,1] has an error::
 
   >>> zero_one_loss(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
   0.5
@@ -1504,16 +1504,16 @@ for binary classes [Brier1950]_. Quoting Wikipedia:
 
 This function returns the mean squared error of the actual outcome
 :math:`y \in \{0,1\}` and the predicted probability estimate
-:math:`p = \operatorname{Pr}(y = 1)` (``predict_proba``) as score:
+:math:`p = \operatorname{Pr}(y = 1)` (:term:`predict_proba`) as outputted by:
 
 .. math::
 
    BS = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}} - 1}(y_i - p_i)^2
 
-The Brier score loss is also between 0 to 1 and the lower the score (the mean
+The Brier score loss is also between 0 to 1 and the lower the value (the mean
 square difference is smaller), the more accurate the prediction is.
 
-Here is a small example of usage of this function: ::
+Here is a small example of usage of this function::
 
     >>> import numpy as np
     >>> from sklearn.metrics import brier_score_loss
@@ -1531,16 +1531,17 @@ Here is a small example of usage of this function: ::
     0.0
 
 The Brier score can be used to assess how well a classifier is calibrated.
-However, a lower Brier score does not always mean a better calibration. This is
-because, by analogy with the bias-variance decomposition of the mean squared
-error, the Brier score can be decomposed, as the sum of calibration loss and
-refinement loss [Bella2012]_. Calibration loss is defined as the mean squared
-deviation from empirical probabilities derived from the slope of ROC segments.
-Refinement loss can be defined as the expected optimal loss as measured by the
-area under the optimal cost curve. Refinement loss can change independently
-from calibration loss, thus a lower Brier score does not necessarily mean a
-better calibrated model. "Only when refinement loss remains the same does a
-lower Brier score always mean better calibration" [Bella2012]_, [Flach2008]_.
+However, a lower Brier score loss does not always mean a better calibration.
+This is because, by analogy with the bias-variance decomposition of the mean
+squared error, the Brier score can be decomposed as the sum of calibration
+loss and refinement loss [Bella2012]_. Calibration loss is defined as the mean
+squared deviation from empirical probabilities derived from the slope of ROC
+segments. Refinement loss can be defined as the expected optimal loss as
+measured by the area under the optimal cost curve. Refinement loss can change
+independently from calibration loss, thus a lower Brier score loss does not
+necessarily mean a better calibrated model. "Only when refinement loss remains
+the same does a lower Brier score loss always mean better calibration"
+[Bella2012]_, [Flach2008]_.
 
 .. topic:: Example:
 
