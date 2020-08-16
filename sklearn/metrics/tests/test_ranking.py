@@ -1,4 +1,6 @@
+from examples.model_selection.plot_det import y_test
 import re
+from numpy.testing._private.utils import assert_allclose
 import pytest
 import numpy as np
 import warnings
@@ -954,8 +956,8 @@ def test_detection_error_tradeoff_curve_toydata(y_true, y_score,
     # Check on a batch of small examples.
     fpr, fnr, _ = detection_error_tradeoff_curve(y_true, y_score)
 
-    assert_array_almost_equal(fpr, expected_fpr)
-    assert_array_almost_equal(fnr, expected_fnr)
+    assert_allclose(fpr, expected_fpr)
+    assert_allclose(fnr, expected_fnr)
 
 
 @pytest.mark.parametrize("y_true,y_score,expected_fpr,expected_fnr", [
@@ -973,13 +975,13 @@ def test_detection_error_tradeoff_curve_tie_handling(y_true, y_score,
                                                      expected_fnr):
     fpr, fnr, _ = detection_error_tradeoff_curve(y_true, y_score)
 
-    assert_array_almost_equal(fpr, expected_fpr)
-    assert_array_almost_equal(fnr, expected_fnr)
+    assert_allclose(fpr, expected_fpr)
+    assert_allclose(fnr, expected_fnr)
 
 
 def test_detection_error_tradeoff_curve_sanity_check():
     # Exactly duplicated inputs yield the same result.
-    assert_array_almost_equal(
+    assert_allclose(
         detection_error_tradeoff_curve([0, 0, 1], [0, 0.5, 1]),
         detection_error_tradeoff_curve(
             [0, 0, 0, 0, 1, 1], [0, 0, 0.5, 0.5, 1, 1])
@@ -995,9 +997,9 @@ def test_detection_error_tradeoff_curve_constant_scores(y_score):
         y_score=np.full(6, y_score)
     )
 
-    assert_array_almost_equal(fpr, [1])
-    assert_array_almost_equal(fnr, [0])
-    assert_array_almost_equal(threshold, [y_score])
+    assert_allclose(fpr, [1])
+    assert_allclose(fnr, [0])
+    assert_allclose(threshold, [y_score])
 
 
 @pytest.mark.parametrize("y_true", [
@@ -1013,23 +1015,21 @@ def test_detection_error_tradeoff_curve_perfect_scores(y_true):
         y_score=y_true
     )
 
-    assert_array_almost_equal(fpr, [0])
-    assert_array_almost_equal(fnr, [0])
+    assert_allclose(fpr, [0])
+    assert_allclose(fnr, [0])
 
 
-def test_detection_error_tradeoff_curve_bad_input():
+@pytest.mark.parametrize(
+    "y_true, y_pred, err_msg",
+    [([0, 1], [0, 0.5, 1], "inconsistent numbers of samples"),
+     ([0, 1, 1], [0, 0.5], "inconsistent numbers of samples"),
+     ([0, 0, 0], [0, 0.5, 1], "Only one class present in y_true"),
+     ([1, 1, 1], [0, 0.5, 1], "Only one class present in y_true")]
+)
+def test_detection_error_tradeoff_curve_bad_input(y_true, y_pred, err_msg):
     # input variables with inconsistent numbers of samples
-    assert_raises(ValueError, detection_error_tradeoff_curve,
-                  [0, 1], [0, 0.5, 1])
-    assert_raises(ValueError, detection_error_tradeoff_curve,
-                  [0, 1, 1], [0, 0.5])
-
-    # When the y_true values are all the same a detection error tradeoff cannot
-    # be computed.
-    assert_raises(ValueError, detection_error_tradeoff_curve,
-                  [0, 0, 0], [0, 0.5, 1])
-    assert_raises(ValueError, detection_error_tradeoff_curve,
-                  [1, 1, 1], [0, 0.5, 1])
+    with pytest.raises(ValueError, match=err_msg):
+        detection_error_tradeoff_curve(y_true, y_pred)
 
 
 def check_lrap_toy(lrap_score):
