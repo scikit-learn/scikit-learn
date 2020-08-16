@@ -1,6 +1,4 @@
-from examples.model_selection.plot_det import y_test
 import re
-from numpy.testing._private.utils import assert_allclose
 import pytest
 import numpy as np
 import warnings
@@ -15,10 +13,10 @@ from sklearn.random_projection import _sparse_random_matrix
 from sklearn.utils.validation import check_array, check_consistent_length
 from sklearn.utils.validation import check_random_state
 
+from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_warns
 
 from sklearn.metrics import auc
