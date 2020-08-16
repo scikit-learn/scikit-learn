@@ -306,6 +306,7 @@ Some of these are restricted to the binary classification case:
 
    precision_recall_curve
    roc_curve
+   detection_error_tradeoff_curve
 
 
 Others also work in the multiclass case:
@@ -1437,6 +1438,93 @@ to the given limit.
        In Data Mining, 2001.
        Proceedings IEEE International Conference, pp. 131-138.
 
+.. _det_curve:
+
+Detection error tradeoff (DET)
+------------------------------
+
+The function :func:`detection_error_tradeoff_curve` computes the
+detection error tradeoff curve (DET) curve [WikipediaDET2017]_.
+Quoting Wikipedia:
+
+  "A detection error tradeoff (DET) graph is a graphical plot of error rates for
+  binary classification systems, plotting false reject rate vs. false accept
+  rate. The x- and y-axes are scaled non-linearly by their standard normal
+  deviates (or just by logarithmic transformation), yielding tradeoff curves
+  that are more linear than ROC curves, and use most of the image area to
+  highlight the differences of importance in the critical operating region."
+
+DET curves are a variation of receiver operating characteristic (ROC) curves
+where False Negative Rate is plotted on the ordinate instead of True Positive
+Rate.
+DET curves are commonly plotted in normal deviate scale by transformation with
+:math:`\phi^{-1}` (with :math:`\phi` being the cumulative distribution
+function).
+The resulting performance curves explicitly visualize the tradeoff of error
+types for given classification algorithms.
+See [Martin1997]_ for examples and further motivation.
+
+This figure compares the ROC and DET curves of two example classifiers on the
+same classification task:
+
+.. image:: ../auto_examples/model_selection/images/sphx_glr_plot_det_001.png
+   :target: ../auto_examples/model_selection/plot_det.html
+   :scale: 75
+   :align: center
+
+**Properties:**
+
+* DET curves form a linear curve in normal deviate scale if the detection
+  scores are normally (or close-to normally) distributed.
+  It was shown by [Navratil2007]_ that the reverse it not necessarily true and even more
+  general distributions are able produce linear DET curves.
+
+* The normal deviate scale transformation spreads out the points such that a
+  comparatively larger space of plot is occupied.
+  Therefore curves with similar classification performance might be easier to
+  distinguish on a DET plot.
+
+* With False Negative Rate being "inverse" to True Positive Rate the point
+  of perfection for DET curves is the origin (in contrast to the top left corner
+  for ROC curves).
+
+**Applications and limitations:**
+
+DET curves are intuitive to read and hence allow quick visual assessment of a
+classifier's performance.
+Additionally DET curves can be consulted for threshold analysis and operating
+point selection.
+This is particularly helpful if a comparison of error types is required.
+
+One the other hand DET curves do not provide their metric as a single number.
+Therefore for either automated evaluation or comparison to other
+classification tasks metrics like the derived area under ROC curve might be
+better suited.
+
+.. topic:: Examples:
+
+  * See :ref:`sphx_glr_auto_examples_model_selection_plot_det.py`
+    for an example comparison between receiver operating characteristic (ROC)
+    curves and Detection error tradeoff (DET) curves.
+
+.. topic:: References:
+
+  .. [WikipediaDET2017] Wikipedia contributors. Detection error tradeoff.
+     Wikipedia, The Free Encyclopedia. September 4, 2017, 23:33 UTC.
+     Available at: https://en.wikipedia.org/w/index.php?title=Detection_error_tradeoff&oldid=798982054.
+     Accessed February 19, 2018.
+
+  .. [Martin1997] A. Martin, G. Doddington, T. Kamm, M. Ordowski, and M. Przybocki,
+     `The DET Curve in Assessment of Detection Task Performance
+     <http://www.dtic.mil/docs/citations/ADA530509>`_,
+     NIST 1997.
+
+  .. [Navratil2007] J. Navractil and D. Klusacek,
+     "`On Linear DETs,
+     <http://www.research.ibm.com/CBG/papers/icassp07_navratil.pdf>`_"
+     2007 IEEE International Conference on Acoustics,
+     Speech and Signal Processing - ICASSP '07, Honolulu,
+     HI, 2007, pp. IV-229-IV-232.
 
 .. _zero_one_loss:
 

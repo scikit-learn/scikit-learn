@@ -270,6 +270,11 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
+- |Feature| Added :func:`metrics.detection_error_tradeoff_curve` to compute
+  Detection Error Tradeoff curve classification metric.
+  :pr:`10591` by :user:`Jeremy Karnowski <jkarnows>` and
+  :user:`Daniel Mohns <dmohns>`.
+
 - |Feature| Added :func:`metrics.mean_absolute_percentage_error` metric and
   the associated scorer for regression problems. :issue:`10708` fixed with the
   PR :pr:`15007` by :user:`Ashutosh Hathidara <ashutosh1919>`. The scorer and
