@@ -53,10 +53,7 @@ Changelog
   parallelization via `joblib.Parallel` using argument `n_jobs`.
   :pr:`17107` by :user:`Julien Jerphanion <jjerphan>`.
 
-:mod:`sklearn.calibrator`
-.........................
-
-- |Enhancement| Allow :class:`calibrator.CalibratedClassifierCV` use with
+- |Enhancement| Allow :class:`calibration.CalibratedClassifierCV` use with
   prefit :class:`pipeline.Pipeline` where data is not `X` is not array-like,
   sparse matrix or dataframe at the start. :pr:`17546` by
   :user:`Lucy Liu <lucyleeow>`.
