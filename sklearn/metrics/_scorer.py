@@ -18,9 +18,13 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 # License: Simplified BSD
 
-from collections.abc import Iterable
-from functools import partial
+from abc import ABCMeta, abstractmethod
 from collections import Counter
+from collections import namedtuple
+from collections.abc import Iterable
+from copy import deepcopy
+from functools import partial
+from inspect import signature
 
 import numpy as np
 
@@ -614,6 +618,7 @@ roc_auc_scorer = make_scorer(roc_auc_score, greater_is_better=True,
                              needs_threshold=True)
 average_precision_scorer = make_scorer(average_precision_score,
                                        needs_threshold=True)
+roc_auc_multiclass_scorer = make_scorer(roc_auc_score, needs_proba=True)
 roc_auc_ovo_scorer = make_scorer(roc_auc_score, needs_proba=True,
                                  multi_class='ovo')
 roc_auc_ovo_weighted_scorer = make_scorer(roc_auc_score, needs_proba=True,
@@ -686,3 +691,259 @@ for name, metric in [('precision', precision_score),
         qualified_name = '{0}_{1}'.format(name, average)
         SCORERS[qualified_name] = make_scorer(metric, pos_label=None,
                                               average=average)
+
+
+ScorerProperty = namedtuple(
+    "ScorerProperty", ["scorer", "target_type_supported"],
+)
+
+REGRESSION_SCORERS_PROPERTY = dict(
+    explained_variance=ScorerProperty(
+        scorer=explained_variance_scorer,
+        target_type_supported=("continuous", "continuous-multioutput",),
+    ),
+    r2=ScorerProperty(
+        scorer=r2_scorer,
+        target_type_supported=("continuous", "continuous-multioutput",),
+    ),
+    max_error=ScorerProperty(
+        scorer=max_error_scorer,
+        target_type_supported=("continuous",),
+    ),
+    neg_median_absolute_error=ScorerProperty(
+        scorer=neg_median_absolute_error_scorer,
+        target_type_supported=("continuous", "continuous-multioutput",),
+    ),
+    neg_mean_absolute_error=ScorerProperty(
+        scorer=neg_mean_absolute_error_scorer,
+        target_type_supported=("continuous", "continuous-multioutput",),
+    ),
+    neg_mean_absolute_percentage_error=ScorerProperty(
+        scorer=neg_mean_absolute_percentage_error_scorer,
+        target_type_supported=("continuous", "continuous-multioutput",),
+    ),
+    neg_mean_squared_error=ScorerProperty(
+        scorer=neg_mean_squared_error_scorer,
+        target_type_supported=("continuous", "continuous-multioutput",),
+    ),
+    neg_mean_squared_log_error=ScorerProperty(
+        scorer=neg_mean_squared_log_error_scorer,
+        target_type_supported=("continuous", "continuous-multioutput",),
+    ),
+    neg_root_mean_squared_error=ScorerProperty(
+        scorer=neg_root_mean_squared_error_scorer,
+        target_type_supported=("continuous", "continuous-multioutput",),
+    ),
+    neg_mean_poisson_deviance=ScorerProperty(
+        scorer=neg_mean_poisson_deviance_scorer,
+        target_type_supported=("continuous",),
+    ),
+    neg_mean_gamma_deviance=ScorerProperty(
+        scorer=neg_mean_gamma_deviance_scorer,
+        target_type_supported=("continuous",),
+    ),
+)
+
+CLASSIFICATION_SCORERS_PROPERTY = dict(
+    accuracy=ScorerProperty(
+        scorer=accuracy_scorer,
+        target_type_supported=(
+            "binary", "multiclass", "multilabel-indicator",
+        ),
+    ),
+    roc_auc=ScorerProperty(
+        scorer=roc_auc_scorer,
+        target_type_supported=("binary",)
+    ),
+    roc_auc_multiclass=ScorerProperty(
+        scorer=roc_auc_multiclass_scorer,
+        target_type_supported={
+            "multiclass": {
+                "multi_class": ("ovr", "ovo"),
+                "average": ("macro", "weighted")
+            },
+            # FIXME: it seems that we don't support which is not clear from the
+            # documentation
+            # "multilabel-indicator": {
+            #     "average": ("micro", "macro", "samples", "weighted", None)
+            # },
+        },
+    ),
+    balanced_accuracy=ScorerProperty(
+        scorer=balanced_accuracy_scorer,
+        target_type_supported=("binary", "multiclass",),
+    ),
+    jaccard=ScorerProperty(
+        scorer=make_scorer(jaccard_score),
+        target_type_supported={
+            "binary": {
+                "average": (
+                    "binary", "micro", "macro", "weighted", None
+                ),
+                "requires_pos_label": True,
+            },
+            "multiclass": {
+                "average": ("micro", "macro", "weighted", None),
+            },
+            "multilabel-indicator": {
+                "average": ("micro", "macro", "samples", "weighted", None),
+            },
+        },
+    ),
+    average_precision=ScorerProperty(
+        scorer=average_precision_scorer,
+        target_type_supported={
+            "binary": {
+                "requires_pos_label": True,
+            },
+            "multilabel-indicator": {
+                "average": ("micro", "macro", "samples", "weighted", None),
+            },
+        }
+    ),
+    neg_log_loss=ScorerProperty(
+        scorer=neg_log_loss_scorer,
+        target_type_supported=("binary", "multiclass"),
+    ),
+    neg_brier_score=ScorerProperty(
+        scorer=neg_brier_score_scorer,
+        target_type_supported={
+            "binary": {
+                "requires_pos_label": True,
+            }
+        },
+    ),
+    precision_score=ScorerProperty(
+        scorer=make_scorer(precision_score),
+        target_type_supported={
+            "binary": {
+                "requires_pos_label": True,
+            },
+            "multilabel-indicator": {
+                "average": ("micro", "macro", "samples", "weighted", None),
+            },
+        }
+    ),
+    recall_score=ScorerProperty(
+        scorer=make_scorer(recall_score),
+        target_type_supported={
+            "binary": {
+                "requires_pos_label": True,
+            },
+            "multilabel-indicator": {
+                "average": ("micro", "macro", "samples", "weighted", None),
+            },
+        }
+    ),
+    f1_score=ScorerProperty(
+        scorer=make_scorer(f1_score),
+        target_type_supported={
+            "binary": {
+                "requires_pos_label": True,
+            },
+            "multilabel-indicator": {
+                "average": ("micro", "macro", "samples", "weighted", None),
+            },
+        }
+    ),
+)
+
+
+class _BaseApplicableScorers(metaclass=ABCMeta):
+    @abstractmethod
+    def __init__(self, **scorers_params):
+        self.scorers_params = scorers_params
+
+    @abstractmethod
+    def __call__(self, y):
+        target_type = type_of_target(y)
+        if target_type not in self._target_type:
+            raise ValueError(
+                f"The factory {self.__class__.__name__} only support "
+                f"'{', '.join(self._target_type)}'. Got 'y' of the following "
+                f"target type: '{target_type}'."
+            )
+        return target_type
+
+
+class get_regression_scorers(_BaseApplicableScorers):
+    def __init__(self, **scorers_params):
+        super().__init__(**scorers_params)
+        self._target_type = ("continuous", "continuous-multioutput")
+
+    def __call__(self, y):
+        target_type = super().__call__(y)
+        scorers = {}
+        for name, props in REGRESSION_SCORERS_PROPERTY.items():
+            if target_type in props.target_type_supported:
+                scorers[name] = deepcopy(props.scorer)
+                scorer_sig = signature(scorers[name]._score_func)
+                for param_name, param_value in self.scorers_params.items():
+                    if param_name in scorer_sig.parameters:
+                        scorers[name]._kwargs[param_name] = param_value
+
+        if not scorers:
+            raise ValueError(
+                "No compatible scorer with the target 'y' was found."
+            )
+        return scorers
+
+
+class get_classification_scorers(_BaseApplicableScorers):
+    def __init__(self, **scorers_params):
+        super().__init__(
+            scorers_params=scorers_params,
+        )
+        self._target_type = ("binary", "multiclass", "multilabel-indicator")
+
+    def __call__(self, y):
+        from ..model_selection import ParameterGrid
+        target_type = super().__call__(y)
+        scorers = {}
+        for name, props in CLASSIFICATION_SCORERS_PROPERTY.items():
+            if target_type not in props.target_type_supported:
+                # early skipping since the metric does not support this target
+                # type
+                continue
+            if (isinstance(props.target_type_supported, dict) and
+                    props.target_type_supported[target_type] is not None):
+                # When the properties are stored as a dictionary, we need to
+                # create qualified metrics
+                params_to_define = deepcopy(
+                    props.target_type_supported[target_type]
+                )
+                # pos_label is a specific parameters for which we will return
+                # all possible combination if the user does not provide it in
+                # score_params
+                requires_pos_label = params_to_define.pop(
+                    "requires_pos_label", False
+                )
+                if (requires_pos_label and
+                        "pos_label" not in self.scorers_params):
+                    params_to_define["pos_label"] = np.unique(y).tolist()
+                for params in ParameterGrid(params_to_define):
+                    qualified_name = (
+                        f"{name}_"
+                        f"{'_'.join(str(val) for val in params.values())}"
+                    )
+                    scorers[qualified_name] = deepcopy(props.scorer)
+                    for param_name, param_value in params.items():
+                        scorers[qualified_name]._kwargs[param_name] = \
+                            param_value
+            else:
+                # otherwise we have a simple metric
+                qualified_name = name
+                scorers[qualified_name] = deepcopy(props.scorer)
+
+            # once the metric created, we need to set the potential parameters
+            # passed in score_params when it applies
+            scorer_sig = signature(scorers[qualified_name]._score_func)
+            for param_name, param_value in self.scorers_params.items():
+                if param_name in scorer_sig.parameters:
+                    scorers[qualified_name]._kwargs[param_name] = param_value
+
+        if not scorers:
+            raise ValueError(
+                "No compatible scorer with the target 'y' was found."
+            )
+        return scorers

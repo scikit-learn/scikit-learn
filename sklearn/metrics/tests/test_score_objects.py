@@ -25,17 +25,25 @@ from sklearn.metrics._scorer import (_PredictScorer, _passthrough_scorer,
                                      _MultimetricScorer,
                                      _check_multimetric_scoring)
 from sklearn.metrics import accuracy_score
-from sklearn.metrics import make_scorer, get_scorer, SCORERS
+from sklearn.metrics import (
+    get_classification_scorers,
+    get_regression_scorers,
+    get_scorer,
+    make_scorer,
+    SCORERS
+)
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import make_pipeline
 from sklearn.cluster import KMeans
 from sklearn.linear_model import Ridge, LogisticRegression, Perceptron
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
-from sklearn.datasets import make_blobs
-from sklearn.datasets import make_classification, make_regression
-from sklearn.datasets import make_multilabel_classification
+from sklearn.datasets import load_breast_cancer
 from sklearn.datasets import load_diabetes
+from sklearn.datasets import make_blobs
+from sklearn.datasets import make_classification
+from sklearn.datasets import make_multilabel_classification
+from sklearn.datasets import make_regression
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.model_selection import GridSearchCV
 from sklearn.multiclass import OneVsRestClassifier
@@ -747,3 +755,63 @@ def test_multiclass_roc_no_proba_scorer_errors(scorer_name):
     msg = "'Perceptron' object has no attribute 'predict_proba'"
     with pytest.raises(AttributeError, match=msg):
         scorer(lr, X, y)
+
+
+def _parametrize_scorers_from_target(estimator_data_ids):
+    check_scorers, check_scorers_ids = zip(*[
+        ((Estimator, X, np.abs(y) - np.min(y), scorer),
+         f"{scorer_name}-{problem_id}")
+        for problem_id, get_scorer_func, Estimator, X, y in estimator_data_ids
+        for scorer_name, scorer in get_scorer_func()(y).items()
+    ])
+
+    return pytest.mark.parametrize(
+        "Estimator, X, y, scorer", check_scorers, ids=check_scorers_ids,
+    )
+
+
+@pytest.mark.filterwarnings(
+    "ignore::sklearn.exceptions.UndefinedMetricWarning"
+)
+@_parametrize_scorers_from_target(
+    [("binary", get_classification_scorers, LogisticRegression,
+      *make_classification(n_classes=2)),
+     ("multiclass", get_classification_scorers, LogisticRegression,
+      *make_classification(n_classes=3, n_clusters_per_class=1)),
+     ("multilabel", get_classification_scorers, DecisionTreeClassifier,
+      *make_multilabel_classification()),
+     ("continuous", get_regression_scorers, Ridge,
+      *make_regression(n_targets=1)),
+     ("continuous-multioutput", get_regression_scorers, Ridge,
+      *make_regression(n_targets=2))]
+)
+def test_get_scorers_smoke_test(Estimator, X, y, scorer):
+    # smoke test to check that we can use the score on the registered problem
+    estimator = Estimator().fit(X, y)
+    scorer(estimator, X, y)
+
+
+def test_get_applicable_scorers_passing_scoring_params():
+    # check that we can pass scoring parameters when getting the score
+    breast_cancer = load_breast_cancer()
+    X = breast_cancer.data
+    y = breast_cancer.target_names[breast_cancer.target].astype("object")
+
+    scorers = get_classification_scorers(
+        y, average="macro", pos_label="malignant"
+    )
+    average_precision_scorer = scorers["average_precision"]
+    assert "pos_label" in average_precision_scorer._kwargs
+    assert average_precision_scorer._kwargs["pos_label"] == "malignant"
+
+    estimator = GridSearchCV(
+        DecisionTreeClassifier(), param_grid={"max_depth": [3, 5]},
+        scoring=average_precision_scorer,
+    )
+    estimator.fit(X, y)
+
+    # check that if we don't provide any pos_label, the grid-search will raise
+    # an error
+    with pytest.raises(ValueError, match="pos_label=1 is invalid"):
+        estimator.set_params(scoring=make_scorer(average_precision_score))
+        estimator.fit(X, y)
