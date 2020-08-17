@@ -453,12 +453,11 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         random_state = check_random_state(self.random_state)
         check_array(X, accept_sparse=True)
         self.order_ = self.order
+        if isinstance(self.order_, tuple):
+            self.order_ = np.array(self.order_)
+
         if self.order_ is None:
             self.order_ = np.array(range(Y.shape[1]))
-        elif isinstance(self.order_, tuple):
-            self.order_ = np.array(self.order_)
-            if sorted(self.order_) != list(range(Y.shape[1])):
-                raise ValueError("invalid order")
         elif isinstance(self.order_, str):
             if self.order_ == 'random':
                 self.order_ = random_state.permutation(Y.shape[1])
