@@ -641,8 +641,16 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     def _sk_visual_block_(self):
         if isinstance(self.remainder, str) and self.remainder == 'drop':
             transformers = self.transformers
+        elif hasattr(self, "_remainder"):
+            remainder_columns = self._remainder[2]
+            if hasattr(self, '_df_columns'):
+                remainder_columns = (
+                    self._df_columns[remainder_columns].tolist()
+                )
+            transformers = chain(self.transformers,
+                                 [('remainder', self.remainder,
+                                   remainder_columns)])
         else:
-            # 'passthrough' or estimator
             transformers = chain(self.transformers,
                                  [('remainder', self.remainder, '')])
 
