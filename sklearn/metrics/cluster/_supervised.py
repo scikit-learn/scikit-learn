@@ -111,7 +111,7 @@ def contingency_matrix(labels_true, labels_pred, *, eps=None, sparse=False,
     dtype : numeric data type, optional.
         Defaults to np.int, but see the notes on ``eps`` below.
 
-        .. versionadded:: 0.22.2
+        .. versionadded:: 0.24
 
     Returns
     -------
