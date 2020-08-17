@@ -868,6 +868,7 @@ The "lbfgs" solver is used by default for its robustness. For large datasets
 the "saga" solver is usually faster.
 For large dataset, you may also consider using :class:`SGDClassifier`
 with 'log' loss, which might be even faster but requires more tuning.
+The "trust-ncg" solver is useful for sparse datasets.
 
 .. topic:: Examples:
 
