@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 from pytest import approx
 
+from sklearn.preprocessing import OneHotEncoder
 from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
 from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
 from sklearn.ensemble._hist_gradient_boosting.common import X_BINNED_DTYPE
@@ -430,3 +431,59 @@ def test_grow_tree_categories():
     expected_cat_bitset = [10] + [0] * 7
     cat_bitset = predictor.predictor_bitset.get_binned_categories(0)
     np.testing.assert_array_equal(cat_bitset, expected_cat_bitset)
+
+
+@pytest.mark.parametrize('min_samples_leaf', (1, 20))
+@pytest.mark.parametrize('n_unique_categories', (2, 10, 100))
+@pytest.mark.parametrize('target', ('binary', 'random', 'equal'))
+def test_ohe_equivalence(min_samples_leaf, n_unique_categories, target):
+    # Make sure that native categorical splits are equivalent to using a OHE,
+    # when given enough depth
+
+    rng = np.random.RandomState(0)
+    n_samples = 10_000
+    X_binned = rng.randint(0, n_unique_categories,
+                           size=(n_samples, 1), dtype=np.uint8)
+
+    X_ohe = OneHotEncoder(sparse=False).fit_transform(X_binned)
+    X_ohe = np.asfortranarray(X_ohe).astype(np.uint8)
+
+    if target == 'equal':
+        gradients = X_binned.reshape(-1)
+    elif target == 'binary':
+        gradients = (X_binned % 2).reshape(-1)
+    else:
+        gradients = rng.randn(n_samples)
+    gradients = gradients.astype(G_H_DTYPE)
+
+    hessians = np.ones(shape=1, dtype=G_H_DTYPE)
+
+    grower_params = {
+        'min_samples_leaf': min_samples_leaf,
+        'max_depth': None,
+        'max_leaf_nodes': None,
+    }
+
+    grower = TreeGrower(X_binned, gradients, hessians, is_categorical=[True],
+                        **grower_params)
+    grower.grow()
+    # we pass undefined bin_thresholds because we won't use predict()
+    predictor = grower.make_predictor(
+        bin_thresholds=list(np.zeros((1, n_unique_categories)))
+    )
+    preds = predictor.predict_binned(X_binned, missing_values_bin_idx=255)
+
+    grower_ohe = TreeGrower(X_ohe, gradients, hessians, **grower_params)
+    grower_ohe.grow()
+    predictor_ohe = grower_ohe.make_predictor(
+        bin_thresholds=list(np.zeros((X_ohe.shape[1], n_unique_categories)))
+    )
+    preds_ohe = predictor_ohe.predict_binned(X_ohe, missing_values_bin_idx=255)
+
+    assert predictor.get_max_depth() <= predictor_ohe.get_max_depth()
+    if target == 'binary' and n_unique_categories > 2:
+        assert len(predictor.nodes) == 3
+        # OHE needs more splits to achieve the same predictions
+        assert predictor.get_max_depth() < predictor_ohe.get_max_depth()
+
+    np.testing.assert_allclose(preds, preds_ohe)
