@@ -706,7 +706,7 @@ Plotting
 
    kernel_approximation.AdditiveChi2Sampler
    kernel_approximation.Nystroem
-   kernel_approximation.PolynomialSampler
+   kernel_approximation.PolynomialCountSketch
    kernel_approximation.RBFSampler
    kernel_approximation.SkewedChi2Sampler
 

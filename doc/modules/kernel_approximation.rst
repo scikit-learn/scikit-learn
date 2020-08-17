@@ -170,7 +170,7 @@ Intuitively, the feature space of the polynomial kernel of degree `d`
 consists of all possible degree-`d` products among input features, which enables
 learning algorithms using this kernel to account for interactions between features.
 
-The TensorSketch [PP2013]_ method, as implemented in :class:`PolynomialSampler`, is a
+The TensorSketch [PP2013]_ method, as implemented in :class:`PolynomialCountSketch`, is a
 scalable, input data independent method for polynomial kernel approximation.
 It is based on the concept of Count sketch [WIKICS]_ [CCF2002]_ , a dimensionality
 reduction technique similar to feature hashing, which instead uses several

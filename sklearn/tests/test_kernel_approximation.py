@@ -10,7 +10,7 @@ from sklearn.kernel_approximation import RBFSampler
 from sklearn.kernel_approximation import AdditiveChi2Sampler
 from sklearn.kernel_approximation import SkewedChi2Sampler
 from sklearn.kernel_approximation import Nystroem
-from sklearn.kernel_approximation import PolynomialSampler
+from sklearn.kernel_approximation import PolynomialCountSketch
 from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel, chi2_kernel
 
 # generate data
@@ -22,9 +22,9 @@ Y /= Y.sum(axis=1)[:, np.newaxis]
 
 
 @pytest.mark.parametrize('degree', [-1, 0])
-def test_polynomial_sampler_raises_if_degree_lower_than_one(degree):
+def test_polynomial_count_sketch_raises_if_degree_lower_than_one(degree):
     with pytest.raises(ValueError, match=f'degree={degree} should be >=1.'):
-        ps_transform = PolynomialSampler(degree=degree)
+        ps_transform = PolynomialCountSketch(degree=degree)
         ps_transform.fit(X, Y)
 
 
@@ -33,17 +33,17 @@ def test_polynomial_sampler_raises_if_degree_lower_than_one(degree):
 @pytest.mark.parametrize('gamma', [0.1, 1, 2.5])
 @pytest.mark.parametrize('degree', [1, 2, 3])
 @pytest.mark.parametrize('coef0', [0, 1, 2.5])
-def test_polynomial_sampler(X, Y, gamma, degree, coef0):
-    # test that PolynomialSampler approximates polynomial
+def test_polynomial_count_sketch(X, Y, gamma, degree, coef0):
+    # test that PolynomialCountSketch approximates polynomial
     # kernel on random data
 
     # compute exact kernel
     kernel = polynomial_kernel(X, Y, gamma=gamma, degree=degree, coef0=coef0)
 
     # approximate kernel mapping
-    ps_transform = PolynomialSampler(n_components=5000, gamma=gamma,
-                                     coef0=coef0, degree=degree,
-                                     random_state=42)
+    ps_transform = PolynomialCountSketch(n_components=5000, gamma=gamma,
+                                         coef0=coef0, degree=degree,
+                                         random_state=42)
     X_trans = ps_transform.fit_transform(X)
     Y_trans = ps_transform.transform(Y)
     kernel_approx = np.dot(X_trans, Y_trans.T)

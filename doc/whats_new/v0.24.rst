@@ -224,8 +224,9 @@ Changelog
 :mod:`sklearn.kernel_approximation`
 ...................................
 
-- |Feature| Added class :class:`kernel_approximation.PolynomialSampler` which implements the
-  Tensor Sketch algorithm for polynomial kernel feature map approximation.
+- |Feature| Added class :class:`kernel_approximation.PolynomialCountSketch`
+  which implements the Tensor Sketch algorithm for polynomial kernel feature
+  map approximation.
   :pr:`13003` by :user:`Daniel López Sánchez <lopeLH>`.
 
 

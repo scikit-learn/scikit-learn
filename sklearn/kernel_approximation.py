@@ -27,7 +27,7 @@ from .metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
 from .utils.validation import check_non_negative, _deprecate_positional_args
 
 
-class PolynomialSampler(BaseEstimator, TransformerMixin):
+class PolynomialCountSketch(BaseEstimator, TransformerMixin):
     """Polynomial kernel approximation via Tensor Sketch.
 
     Implements Tensor Sketch, which approximates the feature map
@@ -77,11 +77,11 @@ class PolynomialSampler(BaseEstimator, TransformerMixin):
 
     Examples
     --------
-    >>> from sklearn.kernel_approximation import PolynomialSampler
+    >>> from sklearn.kernel_approximation import PolynomialCountSketch
     >>> from sklearn.linear_model import SGDClassifier
     >>> X = [[0, 0], [1, 1], [1, 0], [0, 1]]
     >>> y = [0, 0, 1, 1]
-    >>> ps = PolynomialSampler(degree=3, random_state=1)
+    >>> ps = PolynomialCountSketch(degree=3, random_state=1)
     >>> X_features = ps.fit_transform(X)
     >>> clf = SGDClassifier(max_iter=10, tol=1e-3)
     >>> clf.fit(X_features, y)
