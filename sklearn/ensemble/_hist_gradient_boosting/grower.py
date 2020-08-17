@@ -552,7 +552,7 @@ def _fill_predictor_node_array(predictor_nodes, grower_node,
             # Split is on the last non-missing bin: it's a "split on nans". All
             # nans go to the right, the rest go to the left.
             node['num_threshold'] = np.inf
-        elif num_thresholds is not None:
+        else:
             node['num_threshold'] = num_thresholds[feature_idx][bin_idx]
 
         next_free_idx += 1
