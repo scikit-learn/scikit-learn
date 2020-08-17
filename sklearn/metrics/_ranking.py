@@ -226,7 +226,7 @@ def detection_error_tradeoff_curve(y_true, y_score, pos_label=None,
     classification task.
 
     Read more in the :ref:`User Guide <det_curve>`.
-    
+
     .. versionadded:: 0.24
 
     Parameters
@@ -266,6 +266,7 @@ def detection_error_tradeoff_curve(y_true, y_score, pos_label=None,
     See Also
     --------
     roc_curve : Compute Receiver operating characteristic (ROC) curve
+
     precision_recall_curve : Compute precision-recall curve
 
     Examples
@@ -752,6 +753,9 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None,
     --------
     average_precision_score : Compute average precision from prediction scores
 
+    detection_error_tradeoff_curve: Compute error rates for different \
+        probability thresholds
+
     roc_curve : Compute Receiver operating characteristic (ROC) curve
 
     plot_precision_recall_curve :
@@ -840,8 +844,11 @@ def roc_curve(y_true, y_score, *, pos_label=None, sample_weight=None,
         fpr and tpr. `thresholds[0]` represents no instances being predicted
         and is arbitrarily set to `max(y_score) + 1`.
 
-    See also
+    See Also
     --------
+    detection_error_tradeoff_curve: Compute error rates for different \
+        probability thresholds
+
     roc_auc_score : Compute the area under the ROC curve
 
     plot_roc_curve : Plot Receiver operating characteristic (ROC) curve
