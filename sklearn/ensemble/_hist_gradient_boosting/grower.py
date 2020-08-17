@@ -504,16 +504,13 @@ class TreeGrower:
             node = self.splittable_nodes.pop()
             self._finalize_leaf(node)
 
-    def make_predictor(self, num_thresholds=None):
+    def make_predictor(self, num_thresholds):
         """Make a TreePredictor object out of the current tree.
 
         Parameters
         ----------
-        num_thresholds : array-like of floats (default=None)
-            The real-valued thresholds of each bin. Passing None is only
-            useful in unit tests where the BinMapper isn't used. In this
-            case, only the 'bin_threshold' field of the nodes will be set and
-            the 'num_threshold' field will be undefined.
+        num_thresholds : array-like of floats
+            The real-valued thresholds of each bin.
 
         Returns
         -------
