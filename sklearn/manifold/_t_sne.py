@@ -37,7 +37,7 @@ def _joint_probabilities(distances, desired_perplexity, verbose):
 
     Parameters
     ----------
-    distances : array, shape (n_samples * (n_samples-1) / 2,)
+    distances : ndarray of shape (n_samples * (n_samples-1) / 2,)
         Distances of samples are stored as condensed matrices, i.e.
         we omit the diagonal and duplicate entries and store everything
         in a one-dimensional array.
@@ -50,7 +50,7 @@ def _joint_probabilities(distances, desired_perplexity, verbose):
 
     Returns
     -------
-    P : array, shape (n_samples * (n_samples-1) / 2,)
+    P : ndarray of shape (n_samples * (n_samples-1) / 2,)
         Condensed joint probability matrix.
     """
     # Compute conditional probabilities such that they approximately match
@@ -74,9 +74,10 @@ def _joint_probabilities_nn(distances, desired_perplexity, verbose):
 
     Parameters
     ----------
-    distances : CSR sparse matrix, shape (n_samples, n_samples)
+    distances : sparse matrix of shape (n_samples, n_samples)
         Distances of samples to its n_neighbors nearest neighbors. All other
         distances are left to zero (and are not materialized in memory).
+        Matrix should be of CSR format.
 
     desired_perplexity : float
         Desired perplexity of the joint probability distributions.
@@ -86,8 +87,9 @@ def _joint_probabilities_nn(distances, desired_perplexity, verbose):
 
     Returns
     -------
-    P : csr sparse matrix, shape (n_samples, n_samples)
-        Condensed joint probability matrix with only nearest neighbors.
+    P : sparse matrix of shape (n_samples, n_samples)
+        Condensed joint probability matrix with only nearest neighbors. Matrix
+        will be of CSR format.
     """
     t0 = time()
     # Compute conditional probabilities such that they approximately match
@@ -126,10 +128,10 @@ def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
 
     Parameters
     ----------
-    params : array, shape (n_params,)
+    params : ndarray of shape (n_params,)
         Unraveled embedding.
 
-    P : array, shape (n_samples * (n_samples-1) / 2,)
+    P : ndarray of shape (n_samples * (n_samples-1) / 2,)
         Condensed joint probability matrix.
 
     degrees_of_freedom : int
@@ -141,12 +143,12 @@ def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
     n_components : int
         Dimension of the embedded space.
 
-    skip_num_points : int (optional, default:0)
+    skip_num_points : int, default=0
         This does not compute the gradient for points with indices below
         `skip_num_points`. This is useful when computing transforms of new
         data where you'd like to keep the old data fixed.
 
-    compute_error: bool (optional, default:True)
+    compute_error: bool, default=True
         If False, the kl_divergence is not computed and returns NaN.
 
     Returns
@@ -154,7 +156,7 @@ def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
     kl_divergence : float
         Kullback-Leibler divergence of p_ij and q_ij.
 
-    grad : array, shape (n_params,)
+    grad : ndarray of shape (n_params,)
         Unraveled gradient of the Kullback-Leibler divergence with respect to
         the embedding.
     """
@@ -197,16 +199,16 @@ def _kl_divergence_bh(params, P, degrees_of_freedom, n_samples, n_components,
     """t-SNE objective function: KL divergence of p_ijs and q_ijs.
 
     Uses Barnes-Hut tree methods to calculate the gradient that
-    runs in O(NlogN) instead of O(N^2)
+    runs in O(NlogN) instead of O(N^2).
 
     Parameters
     ----------
-    params : array, shape (n_params,)
+    params : ndarray of shape (n_params,)
         Unraveled embedding.
 
-    P : csr sparse matrix, shape (n_samples, n_sample)
+    P : sparse matrix of shape (n_samples, n_sample)
         Sparse approximate joint probability matrix, computed only for the
-        k nearest-neighbors and symmetrized.
+        k nearest-neighbors and symmetrized. Matrix should be of CSR format.
 
     degrees_of_freedom : int
         Degrees of freedom of the Student's-t distribution.
@@ -217,7 +219,7 @@ def _kl_divergence_bh(params, P, degrees_of_freedom, n_samples, n_components,
     n_components : int
         Dimension of the embedded space.
 
-    angle : float (default: 0.5)
+    angle : float, default=0.5
         This is the trade-off between speed and accuracy for Barnes-Hut T-SNE.
         'angle' is the angular size (referred to as theta in [3]) of a distant
         node as measured from a point. If this size is below 'angle' then it is
@@ -226,18 +228,18 @@ def _kl_divergence_bh(params, P, degrees_of_freedom, n_samples, n_components,
         in the range of 0.2 - 0.8. Angle less than 0.2 has quickly increasing
         computation time and angle greater 0.8 has quickly increasing error.
 
-    skip_num_points : int (optional, default:0)
+    skip_num_points : int, default=0
         This does not compute the gradient for points with indices below
         `skip_num_points`. This is useful when computing transforms of new
         data where you'd like to keep the old data fixed.
 
-    verbose : int
+    verbose : int, default=False
         Verbosity level.
 
-    compute_error: bool (optional, default:True)
+    compute_error: bool, default=True
         If False, the kl_divergence is not computed and returns NaN.
 
-    num_threads : int (optional, default:1)
+    num_threads : int, default=1
         Number of threads used to compute the gradient. This is set here to
         avoid calling _openmp_effective_n_threads for each gradient step.
 
@@ -246,7 +248,7 @@ def _kl_divergence_bh(params, P, degrees_of_freedom, n_samples, n_components,
     kl_divergence : float
         Kullback-Leibler divergence of p_ij and q_ij.
 
-    grad : array, shape (n_params,)
+    grad : ndarray of shape (n_params,)
         Unraveled gradient of the Kullback-Leibler divergence with respect to
         the embedding.
     """
@@ -278,13 +280,13 @@ def _gradient_descent(objective, p0, it, n_iter,
 
     Parameters
     ----------
-    objective : function or callable
+    objective : callable
         Should return a tuple of cost and gradient for a given parameter
         vector. When expensive to compute, the cost can optionally
         be None and can be computed every n_iter_check steps using
         the objective_error function.
 
-    p0 : array-like, shape (n_params,)
+    p0 : array-like of shape (n_params,)
         Initial parameter vector.
 
     it : int
@@ -302,7 +304,7 @@ def _gradient_descent(objective, p0, it, n_iter,
         Maximum number of iterations without progress before we abort the
         optimization.
 
-    momentum : float, within (0.0, 1.0), default=0.8
+    momentum : float within (0.0, 1.0), default=0.8
         The momentum generates a weight for previous gradients that decays
         exponentially.
 
@@ -331,7 +333,7 @@ def _gradient_descent(objective, p0, it, n_iter,
 
     Returns
     -------
-    p : array, shape (n_params,)
+    p : ndarray of shape (n_params,)
         Optimum parameters.
 
     error : float
@@ -424,17 +426,17 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric='euclidean'):
 
     Parameters
     ----------
-    X : array, shape (n_samples, n_features) or (n_samples, n_samples)
+    X : ndarray of shape (n_samples, n_features) or (n_samples, n_samples)
         If the metric is 'precomputed' X must be a square distance
         matrix. Otherwise it contains a sample per row.
 
-    X_embedded : array, shape (n_samples, n_components)
+    X_embedded : ndarray of shape (n_samples, n_components)
         Embedding of the training data in low-dimensional space.
 
     n_neighbors : int, default=5
         Number of neighbors k that will be considered.
 
-    metric : string, or callable, default='euclidean'
+    metric : str or callable, default='euclidean'
         Which metric to use for computing pairwise distances between samples
         from the original input space. If metric is 'precomputed', X must be a
         matrix of pairwise distances or squared distances. Otherwise, see the
@@ -499,7 +501,7 @@ class TSNE(BaseEstimator):
     n_components : int, default=2
         Dimension of the embedded space.
 
-    perplexity : float, default=30
+    perplexity : float, default=30.0
         The perplexity is related to the number of nearest neighbors that
         is used in other manifold learning algorithms. Larger datasets
         usually require a larger perplexity. Consider selecting a value
@@ -540,7 +542,7 @@ class TSNE(BaseEstimator):
         If the gradient norm is below this threshold, the optimization will
         be stopped.
 
-    metric : string or callable, default='euclidean'
+    metric : str or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
         allowed by scipy.spatial.distance.pdist for its metric parameter, or
@@ -552,7 +554,8 @@ class TSNE(BaseEstimator):
         the distance between them. The default is "euclidean" which is
         interpreted as squared euclidean distance.
 
-    init : string or numpy array, default="random"
+    init : {'random', 'pca'} or ndarray of shape (n_samples, n_components), \
+            default='random'
         Initialization of embedding. Possible options are 'random', 'pca',
         and a numpy array of shape (n_samples, n_components).
         PCA initialization cannot be used with precomputed distances and is
@@ -561,13 +564,13 @@ class TSNE(BaseEstimator):
     verbose : int, default=0
         Verbosity level.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int or RandomState instance, default=None
         Determines the random number generator. Pass an int for reproducible
         results across multiple function calls. Note that different
         initializations might result in different local minima of the cost
         function. See :term: `Glossary <random_state>`.
 
-    method : string, default='barnes_hut'
+    method : str, default='barnes_hut'
         By default the gradient calculation algorithm uses Barnes-Hut
         approximation running in O(NlogN) time. method='exact'
         will run on the slower, but exact, algorithm in O(N^2) time. The
@@ -588,7 +591,7 @@ class TSNE(BaseEstimator):
         in the range of 0.2 - 0.8. Angle less than 0.2 has quickly increasing
         computation time and angle greater 0.8 has quickly increasing error.
 
-    n_jobs : int or None, default=None
+    n_jobs : int, default=None
         The number of parallel jobs to run for neighbors search. This parameter
         has no impact when ``metric="precomputed"`` or
         (``metric="euclidean"`` and ``method="exact"``).
@@ -598,7 +601,7 @@ class TSNE(BaseEstimator):
 
         .. versionadded:: 0.22
 
-    square_distances : {True, 'legacy'}, default='legacy'
+    square_distances : True or 'legacy', default='legacy'
         Whether TSNE should square the distance values. ``'legacy'`` means
         that distance values are squared only when ``metric="euclidean"``.
         ``True`` means that distance values are squared for all metrics.
@@ -613,7 +616,7 @@ class TSNE(BaseEstimator):
 
     Attributes
     ----------
-    embedding_ : array-like, shape (n_samples, n_components)
+    embedding_ : array-like of shape (n_samples, n_components)
         Stores the embedding vectors.
 
     kl_divergence_ : float
@@ -910,7 +913,7 @@ class TSNE(BaseEstimator):
 
         Parameters
         ----------
-        X : array, shape (n_samples, n_features) or (n_samples, n_samples)
+        X : ndarray of shape (n_samples, n_features) or (n_samples, n_samples)
             If the metric is 'precomputed' X must be a square distance
             matrix. Otherwise it contains a sample per row. If the method
             is 'exact', X may be a sparse matrix of type 'csr', 'csc'
@@ -921,7 +924,7 @@ class TSNE(BaseEstimator):
 
         Returns
         -------
-        X_new : array, shape (n_samples, n_components)
+        X_new : ndarray of shape (n_samples, n_components)
             Embedding of the training data in low-dimensional space.
         """
         embedding = self._fit(X)
@@ -933,7 +936,7 @@ class TSNE(BaseEstimator):
 
         Parameters
         ----------
-        X : array, shape (n_samples, n_features) or (n_samples, n_samples)
+        X : ndarray of shape (n_samples, n_features) or (n_samples, n_samples)
             If the metric is 'precomputed' X must be a square distance
             matrix. Otherwise it contains a sample per row. If the method
             is 'exact', X may be a sparse matrix of type 'csr', 'csc'
