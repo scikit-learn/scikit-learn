@@ -77,6 +77,8 @@ from ._scorer import make_scorer
 from ._scorer import SCORERS
 from ._scorer import get_scorer
 
+from ._plot.det_curve import plot_det_curve
+from ._plot.det_curve import DetCurveDisplay
 from ._plot.roc_curve import plot_roc_curve
 from ._plot.roc_curve import RocCurveDisplay
 from ._plot.precision_recall_curve import plot_precision_recall_curve
@@ -105,6 +107,7 @@ __all__ = [
     'coverage_error',
     'dcg_score',
     'davies_bouldin_score',
+    'DetCurveDisplay',
     'detection_error_tradeoff_curve',
     'euclidean_distances',
     'explained_variance_score',
@@ -142,6 +145,7 @@ __all__ = [
     'pairwise_distances_chunked',
     'pairwise_kernels',
     'plot_confusion_matrix',
+    'plot_det_curve',
     'plot_precision_recall_curve',
     'plot_roc_curve',
     'PrecisionRecallDisplay',
