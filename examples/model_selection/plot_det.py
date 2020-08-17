@@ -9,8 +9,8 @@ for the same classification task.
 
 DET curves are commonly plotted in normal deviate scale.
 To achieve this we transform the errors rates as returned by the
-``detection_error_tradeoff_curve`` function and the axis scale using
-``scipy.stats.norm``.
+:func:`~sklearn.metrics.detection_error_tradeoff_curve` function and the axis
+scale using :func:`scipy.stats.norm`.
 
 The point of this example is to demonstrate two properties of DET curves,
 namely:
@@ -44,7 +44,7 @@ example plot over other classifiers available in scikit-learn.
 
     - This example is loosely based on
       :ref:`sphx_glr_auto_examples_classification_plot_classifier_comparison.py`
-      .
+      example.
 
 """
 import matplotlib.pyplot as plt
@@ -77,7 +77,7 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=.4, random_state=0)
 
 # prepare plots
-fig, [ax_roc, ax_det] = plt.subplots(1, 2, figsize=(10, 5))
+fig, [ax_roc, ax_det] = plt.subplots(1, 2, figsize=(11, 5))
 
 # first prepare the ROC curve
 ax_roc.grid(linestyle='--')

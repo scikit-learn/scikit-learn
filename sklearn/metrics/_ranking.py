@@ -133,7 +133,7 @@ def average_precision_score(y_true, y_score, *, average="macro", pos_label=1,
     y_score : ndarray of shape (n_samples,) or (n_samples, n_classes)
         Target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
-        (as returned by "decision_function" on some classifiers).
+        (as returned by :term:`decision_function` on some classifiers).
 
     average : {'micro', 'samples', 'weighted', 'macro'} or None, \
             default='macro'
