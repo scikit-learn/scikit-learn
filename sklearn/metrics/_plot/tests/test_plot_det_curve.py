@@ -1,3 +1,4 @@
+from numpy.core.fromnumeric import shape
 import pytest
 import numpy as np
 from numpy.testing import assert_allclose
@@ -160,46 +161,3 @@ def test_plot_det_curve_estimator_name_multiple_calls(pyplot, data_binary):
     clf_name = "another_name"
     disp.plot(name=clf_name)
     assert clf_name in disp.line_.get_label()
-
-
-@pytest.mark.parametrize(
-    "response_method", ["predict_proba", "decision_function"]
-)
-def test_plot_det_curve_pos_label(pyplot, response_method):
-    # check that we can provide the positive label and display the proper
-    # statistics
-    X, y = load_breast_cancer(return_X_y=True)
-    # create an highly imbalanced
-    idx_positive = np.flatnonzero(y == 1)
-    idx_negative = np.flatnonzero(y == 0)
-    idx_selected = np.hstack([idx_negative, idx_positive[:25]])
-    X, y = X[idx_selected], y[idx_selected]
-    X, y = shuffle(X, y, random_state=42)
-    # only use 2 features to make the problem even harder
-    X = X[:, :2]
-    y = np.array(
-        ["cancer" if c == 1 else "not cancer" for c in y], dtype=object
-    )
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, stratify=y, random_state=0,
-    )
-
-    classifier = LogisticRegression()
-    classifier.fit(X_train, y_train)
-
-    # sanity check to be sure the positive class is classes_[0] and that we
-    # are betrayed by the class imbalance
-    assert classifier.classes_.tolist() == ["cancer", "not cancer"]
-
-    disp = plot_det_curve(
-        classifier, X_test, y_test, pos_label="cancer",
-        response_method=response_method
-    )
-
-    disp = plot_det_curve(
-        classifier, X_test, y_test,
-        response_method=response_method,
-    )
-
-    # TODO: make some checks
-    assert disp
