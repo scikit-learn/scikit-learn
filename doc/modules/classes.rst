@@ -946,6 +946,7 @@ details.
    metrics.cohen_kappa_score
    metrics.confusion_matrix
    metrics.dcg_score
+   metrics.detection_error_tradeoff_curve
    metrics.f1_score
    metrics.fbeta_score
    metrics.hamming_loss
