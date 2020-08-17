@@ -8,6 +8,11 @@ of :term:`predict_proba` can be directly interpreted as a confidence level.
 For instance, a well calibrated (binary) classifier should classify the samples
 such that for the samples to which it gave a :term:`predict_proba` value close
 to 0.8, approximately 80% actually belong to the positive class.
+
+In this example we will compare the calibration of four different
+models, :ref:`Logistic_regression`, :ref:`gaussian_naive_bayes`,
+:ref:`Random Forest Classifier <forest>` and :ref:`Linear SVM
+<svm_classification>`.
 """
 
 # %%
@@ -33,11 +38,11 @@ from sklearn.calibration import plot_calibration_curve
 # We will use a synthetic binary classification dataset with 100,000 samples
 # and 20 features. Of the 20 features, only 2 are informative, 2 are
 # redundant (random combinations of the informative features) and the
-# remaining 16 are 'useless' (random numbers). Of the 100,000 samples,
+# remaining 16 are uninformative (random numbers). Of the 100,000 samples,
 # 100 will be used for model fitting and the remaining for testing.
 
 X, y = make_classification(
-  n_samples=100000, n_features=20, n_informative=2, n_redundant=2,
+  n_samples=100_000, n_features=20, n_informative=2, n_redundant=2,
   random_state=42
 )
 
@@ -78,12 +83,13 @@ y_test = y[train_samples:]
 #   effect most strongly with random forests because the base-level trees
 #   trained with random forests have relatively high variance due to feature
 #   subsetting." As a result, the calibration curve shows a characteristic
-#   sigmoid shape, indicating that the classifier could trust its "intuition"
-#   more and return probabilities closer to 0 or 1 typically.
+#   sigmoid shape, indicating that the classifier is under-confident
+#   and could return probabilities closer to 0 or 1.
 #
-# * we use naively calibrated (min-max scaled to [0,1])
-#   :term:`decision_function` values to show the performance of
-#   :class:`~sklearn.svm.LinearSVC`. :class:`~sklearn.svm.LinearSVC` shows an
+# * To show the performance of :class:`~sklearn.svm.LinearSVC`, we naively
+#   scale the output of the :term:`decision_function` into [0, 1] by applying
+#   min-max scaling, since SVC does not output probabilities by default.
+#   :class:`~sklearn.svm.LinearSVC` shows an
 #   even more sigmoid curve than the
 #   :class:`~sklearn.ensemble.RandomForestClassifier`, which is typical for
 #   maximum-margin methods [1]_ as they focus on difficult to classify samples
@@ -104,7 +110,10 @@ class NaivelyCalibratedLinearSVC(LinearSVC):
         """Min-max scale output of `decision_function` to [0,1]."""
         df = self.decision_function(X)
         calibrated_df = (df - self.df_min_) / (self.df_max_ - self.df_min_)
-        return np.clip(calibrated_df, 0, 1)
+        proba_pos_class = np.clip(calibrated_df, 0, 1)
+        proba_neg_class = 1 - proba_pos_class
+        proba = np.c_[proba_neg_class, proba_pos_class]
+        return proba
 
 
 # Create classifiers

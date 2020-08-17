@@ -913,7 +913,7 @@ def plot_calibration_curve(estimator, X, y, *,
 
     Examples
     --------
-    >>> import matplotlib.pyplot as plt                     # doctest: +SKIP
+    >>> import matplotlib.pyplot as plt
     >>> from sklearn import (datasets, calibration, model_selection,
     ...                      linear_model)
     >>> X, y = datasets.make_classification(random_state=0)
@@ -922,8 +922,8 @@ def plot_calibration_curve(estimator, X, y, *,
     >>> clf = linear_model.LogisticRegression(random_state=0)
     >>> clf.fit(X_train, y_train)
     LogisticRegression(random_state=0)
-    >>> metrics.plot_calibration_curve(clf, X_test, y_test)  # doctest: +SKIP
-    >>> plt.show()                                           # doctest: +SKIP
+    >>> calibration.plot_calibration_curve(clf, X_test, y_test)
+    >>> plt.show()
     """
     check_matplotlib_support("plot_calibration_curve")
     binary_error = "Only binary classification is supported."
@@ -932,19 +932,18 @@ def plot_calibration_curve(estimator, X, y, *,
         raise ValueError("The 'estimator' parameter should be a fitted binary "
                          "classifier")
 
-    try:
-        prediction_method = _check_classifier_response_method(
-            estimator, response_method='predict_proba'
-        )
-    except ValueError:
-        raise ValueError("Response method 'predict_proba' not defined in "
-                         f"{estimator.__class__.__name__}")
+    prediction_method = _check_classifier_response_method(
+        estimator, response_method='predict_proba'
+    )
 
     y_prob = prediction_method(X)
 
     if not len(estimator.classes_) == 2:
         raise ValueError(binary_error)
-    if y_prob.ndim != 1:
+    if y_prob.ndim == 1:
+        raise ValueError("'estimator.predict_proba' needs to return a 2d "
+                         "array.")
+    else:
         if y_prob.shape[1] != 2:
             raise ValueError(binary_error)
         else:

@@ -38,10 +38,10 @@ from sklearn.calibration import CalibratedClassifierCV, plot_calibration_curve
 # We will use a synthetic binary classification dataset with 100,000 samples
 # and 20 features. Of the 20 features, only 2 are informative, 10 are
 # redundant (random combinations of the informative features) and the
-# remaining 8 are 'useless' (random numbers). Of the 100,000 samples, 1,000
+# remaining 8 are uninformative (random numbers). Of the 100,000 samples, 1,000
 # will be used for model fitting and the rest for testing.
 
-X, y = make_classification(n_samples=100000, n_features=20, n_informative=2,
+X, y = make_classification(n_samples=100_000, n_features=20, n_informative=2,
                            n_redundant=10, random_state=42)
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.99,
@@ -55,8 +55,8 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.99,
 #
 # * :class:`~sklearn.linear_model.LogisticRegression` (used as baseline
 #   since very often, properly regularized logistic regression is well
-#   calibrated by default thanks to the use of log-loss)
-# * Raw :class:`~sklearn.naive_bayes.GaussianNB`
+#   calibrated by default thanks to the use of the log-loss)
+# * Uncalibrated :class:`~sklearn.naive_bayes.GaussianNB`
 # * :class:`~sklearn.naive_bayes.GaussianNB` with isotonic and sigmoid
 #   calibration (see :ref:`User Guide <calibration>`)
 #
@@ -107,7 +107,8 @@ plt.tight_layout()
 plt.show()
 
 # %%
-# Raw :class:`~sklearn.naive_bayes.GaussianNB` performs very badly because of
+# Uncalibrated :class:`~sklearn.naive_bayes.GaussianNB` is poorly calibrated
+# because of
 # the redundant features which violate the assumption of feature-independence
 # and result in an overly confident classifier, which is indicated by the
 # typical transposed-sigmoid curve. Calibration of the probabilities of
@@ -118,9 +119,9 @@ plt.show()
 # attributed to the fact that we have plenty of calibration data such that the
 # greater flexibility of the non-parametric model can be exploited.
 #
-# Below we show the Brier score, log loss, precision, recall and F1 score (see
+# Below we show the Brier loss, log loss, precision, recall and F1 score (see
 # :ref:`User Guide <precision_recall_f_measure_metrics>`). Notice that
-# although calibration improves the Brier score (a metric composed of
+# although calibration improves the Brier loss (a metric composed of
 # calibration loss and refinement loss) and :ref:`log_loss`, it does not
 # significantly alter the prediction accuracy measures (precision, recall and
 # F1 score).
@@ -152,7 +153,7 @@ for i, (clf, name) in enumerate(clf_list):
     f1.append(f1_score(y_test, y_pred))
 
 score_df = pd.DataFrame(
-    data={'Brier score': brier, 'Log loss': logloss, 'Precision': precision,
+    data={'Brier loss': brier, 'Log loss': logloss, 'Precision': precision,
           'Recall': recall, 'F1': f1},
     index=index,
 )
@@ -162,8 +163,9 @@ score_df.round(3)
 # Next, we will compare:
 #
 # * :class:`~sklearn.linear_model.LogisticRegression` (baseline)
-# * :class:`~sklearn.svm.LinearSVC` (:term:`decision_function` scores
-#   min-max scaled to [0,1], since they are not proper probabilities)
+# * Uncalibrated :class:`~sklearn.svm.LinearSVC`. Since SVC does not output
+#   probabilities by default, we naively scale the output of the
+#   :term:`decision_function` into [0, 1] by applying min-max scaling.
 # * :class:`~sklearn.svm.LinearSVC` with isotonic and sigmoid
 #   calibration (see :ref:`User Guide <calibration>`)
 #
@@ -180,28 +182,17 @@ class NaivelyCalibratedLinearSVC(LinearSVC):
         self.df_max_ = df.max()
 
     def predict_proba(self, X):
-        """Min-max scale output of `decision_function` to [0,1].
-
-        Parameters
-        ----------
-        X : ndarray of shape (n_samples, n_features)
-            The data.
-
-        Returns
-        -------
-        proba : ndarray of shape (n_samples, 2)
-            Predicted probabilities of the 2 classes.
-        """
+        """Min-max scale output of `decision_function` to [0,1]."""
         df = self.decision_function(X)
         calibrated_df = (df - self.df_min_) / (self.df_max_ - self.df_min_)
-        proba_class1 = np.clip(calibrated_df, 0, 1)
-        proba_class0 = 1 - proba_class1
-        proba = np.c_[proba_class0, proba_class1]
+        proba_pos_class = np.clip(calibrated_df, 0, 1)
+        proba_neg_class = 1 - proba_pos_class
+        proba = np.c_[proba_neg_class, proba_pos_class]
         return proba
 
 
 lr = LogisticRegression(C=1.)
-svc = NaivelyCalibratedLinearSVC(max_iter=10000)
+svc = NaivelyCalibratedLinearSVC(max_iter=10_000)
 svc_isotonic = CalibratedClassifierCV(svc, cv=2, method='isotonic')
 svc_sigmoid = CalibratedClassifierCV(svc, cv=2, method='sigmoid')
 
@@ -252,7 +243,7 @@ plt.show()
 # Both kinds of calibration (sigmoid and isotonic) can fix this issue and
 # yield nearly identical results.
 #
-# As before, we show the Brier score, precision, recall and F1 score below.
+# As before, we show the Brier loss, precision, recall and F1 score below.
 
 index = []
 brier = []
@@ -276,7 +267,7 @@ for i, (clf, name) in enumerate(clf_list):
     f1.append(f1_score(y_test, y_pred))
 
 score_df = pd.DataFrame(
-    data={'Brier score': brier, 'Log loss': logloss, 'Precision': precision,
+    data={'Brier loss': brier, 'Log loss': logloss, 'Precision': precision,
           'Recall': recall, 'F1': f1},
     index=index,
 )
