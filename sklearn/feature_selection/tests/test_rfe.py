@@ -280,6 +280,8 @@ def test_rfecv_grid_scores_size():
         assert rfecv.n_features_ >= min_features_to_select
 
 
+# TODO: Remove decorator in version 0.26 when _estimator_type is deprecated
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_rfe_estimator_tags():
     rfe = RFE(SVC(kernel='linear'))
     # make sure that cross-validation is stratified
