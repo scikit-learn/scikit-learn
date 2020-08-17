@@ -1019,15 +1019,48 @@ def test_detection_error_tradeoff_curve_perfect_scores(y_true):
 
 @pytest.mark.parametrize(
     "y_true, y_pred, err_msg",
-    [([0, 1], [0, 0.5, 1], "inconsistent numbers of samples"),
-     ([0, 1, 1], [0, 0.5], "inconsistent numbers of samples"),
-     ([0, 0, 0], [0, 0.5, 1], "Only one class present in y_true"),
-     ([1, 1, 1], [0, 0.5, 1], "Only one class present in y_true")]
+    [
+        ([0, 1], [0, 0.5, 1], "inconsistent numbers of samples"),
+        ([0, 1, 1], [0, 0.5], "inconsistent numbers of samples"),
+        ([0, 0, 0], [0, 0.5, 1], "Only one class present in y_true"),
+        ([1, 1, 1], [0, 0.5, 1], "Only one class present in y_true"),
+        (
+            ["cancer", "cancer", "not cancer"],
+            [0.2, 0.3, 0.8],
+            "pos_label is not specified",
+        ),
+    ],
 )
 def test_detection_error_tradeoff_curve_bad_input(y_true, y_pred, err_msg):
     # input variables with inconsistent numbers of samples
     with pytest.raises(ValueError, match=err_msg):
         detection_error_tradeoff_curve(y_true, y_pred)
+
+
+def test_detection_error_tradeoff_curve_pos_label():
+    y_true = ["cancer"] * 3 + ["not cancer"] * 7
+    y_pred_pos_not_cancer = np.array(
+        [0.1, 0.4, 0.6, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.9]
+    )
+    y_pred_pos_cancer = 1 - y_pred_pos_not_cancer
+
+    fpr_pos_cancer, fnr_pos_cancer, th_pos_cancer = \
+        detection_error_tradeoff_curve(
+            y_true, y_pred_pos_cancer, pos_label="cancer",
+        )
+    fpr_pos_not_cancer, fnr_pos_not_cancer, th_pos_not_cancer = \
+        detection_error_tradeoff_curve(
+            y_true, y_pred_pos_not_cancer, pos_label="not cancer",
+        )
+
+    # check that the first threshold will change depending which label we
+    # consider positive
+    assert th_pos_cancer[0] == pytest.approx(0.4)
+    assert th_pos_not_cancer[0] == pytest.approx(0.2)
+
+    # check for the symmetry of the fpr and fnr
+    assert_allclose(fpr_pos_cancer, fnr_pos_not_cancer[::-1])
+    assert_allclose(fnr_pos_cancer, fpr_pos_not_cancer[::-1])
 
 
 def check_lrap_toy(lrap_score):

@@ -282,7 +282,6 @@ def detection_error_tradeoff_curve(y_true, y_score, pos_label=None,
     array([0. , 0.5, 0.5])
     >>> thresholds
     array([0.35, 0.4 , 0.8 ])
-
     """
     if len(np.unique(y_true)) != 2:
         raise ValueError("Only one class present in y_true. Detection error "
