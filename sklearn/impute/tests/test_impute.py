@@ -17,7 +17,6 @@ from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.experimental import enable_iterative_imputer  # noqa
 
 from sklearn.datasets import load_diabetes
-from sklearn.base import BaseEstimator
 from sklearn.impute import MissingIndicator
 from sklearn.impute import SimpleImputer, IterativeImputer
 from sklearn.dummy import DummyRegressor
