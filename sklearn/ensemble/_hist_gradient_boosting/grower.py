@@ -176,6 +176,7 @@ class TreeGrower:
         The shrinkage parameter to apply to the leaves values, also known as
         learning rate.
     """
+
     def __init__(self, X_binned, gradients, hessians, max_leaf_nodes=None,
                  max_depth=None, min_samples_leaf=20, min_gain_to_split=0.,
                  n_bins=256, n_bins_non_missing=None, has_missing_values=False,
@@ -503,13 +504,16 @@ class TreeGrower:
             node = self.splittable_nodes.pop()
             self._finalize_leaf(node)
 
-    def make_predictor(self, bin_thresholds=None):
+    def make_predictor(self, num_thresholds=None):
         """Make a TreePredictor object out of the current tree.
 
         Parameters
         ----------
-        bin_thresholds : array-like of floats, optional (default=None)
-            The actual thresholds values of each bin.
+        num_thresholds : array-like of floats (default=None)
+            The real-valued thresholds of each bin. Passing None is only
+            useful in unit tests where the BinMapper isn't used. In this
+            case, only the 'bin_threshold' field of the nodes will be set and
+            the 'num_threshold' field will be undefined.
 
         Returns
         -------
@@ -517,12 +521,12 @@ class TreeGrower:
         """
         predictor_nodes = np.zeros(self.n_nodes, dtype=PREDICTOR_RECORD_DTYPE)
         _fill_predictor_node_array(predictor_nodes, self.root,
-                                   bin_thresholds, self.n_bins_non_missing)
+                                   num_thresholds, self.n_bins_non_missing)
         return TreePredictor(predictor_nodes)
 
 
 def _fill_predictor_node_array(predictor_nodes, grower_node,
-                               bin_thresholds, n_bins_non_missing,
+                               num_thresholds, n_bins_non_missing,
                                next_free_idx=0):
     """Helper used in make_predictor to set the TreePredictor fields."""
     node = predictor_nodes[next_free_idx]
@@ -550,22 +554,22 @@ def _fill_predictor_node_array(predictor_nodes, grower_node,
         if split_info.bin_idx == n_bins_non_missing[feature_idx] - 1:
             # Split is on the last non-missing bin: it's a "split on nans". All
             # nans go to the right, the rest go to the left.
-            node['threshold'] = np.inf
-        elif bin_thresholds is not None:
-            node['threshold'] = bin_thresholds[feature_idx][bin_idx]
+            node['num_threshold'] = np.inf
+        elif num_thresholds is not None:
+            node['num_threshold'] = num_thresholds[feature_idx][bin_idx]
 
         next_free_idx += 1
 
         node['left'] = next_free_idx
         next_free_idx = _fill_predictor_node_array(
             predictor_nodes, grower_node.left_child,
-            bin_thresholds=bin_thresholds,
+            num_thresholds=num_thresholds,
             n_bins_non_missing=n_bins_non_missing,
             next_free_idx=next_free_idx)
 
         node['right'] = next_free_idx
         return _fill_predictor_node_array(
             predictor_nodes, grower_node.right_child,
-            bin_thresholds=bin_thresholds,
+            num_thresholds=num_thresholds,
             n_bins_non_missing=n_bins_non_missing,
             next_free_idx=next_free_idx)

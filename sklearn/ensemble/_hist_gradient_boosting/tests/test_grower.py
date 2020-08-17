@@ -218,7 +218,7 @@ def test_min_samples_leaf(n_samples, min_samples_leaf, n_bins,
                         max_leaf_nodes=n_samples)
     grower.grow()
     predictor = grower.make_predictor(
-        bin_thresholds=mapper.bin_thresholds_)
+        num_thresholds=mapper.bin_thresholds_)
 
     if n_samples >= min_samples_leaf:
         for node in predictor.nodes:
@@ -382,11 +382,11 @@ def test_split_on_nan_with_infinite_values():
     grower.grow()
 
     predictor = grower.make_predictor(
-        bin_thresholds=bin_mapper.bin_thresholds_
+        num_thresholds=bin_mapper.bin_thresholds_
     )
 
     # sanity check: this was a split on nan
-    assert predictor.nodes[0]['threshold'] == np.inf
+    assert predictor.nodes[0]['num_threshold'] == np.inf
     assert predictor.nodes[0]['bin_threshold'] == n_bins_non_missing - 1
 
     # Make sure in particular that the +inf sample is mapped to the left child
