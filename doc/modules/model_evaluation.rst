@@ -1533,7 +1533,7 @@ Here is a small example of usage of this function::
 The Brier score can be used to assess how well a classifier is calibrated.
 However, a lower Brier score loss does not always mean a better calibration.
 This is because, by analogy with the bias-variance decomposition of the mean
-squared error, the Brier score can be decomposed as the sum of calibration
+squared error, the Brier score loss can be decomposed as the sum of calibration
 loss and refinement loss [Bella2012]_. Calibration loss is defined as the mean
 squared deviation from empirical probabilities derived from the slope of ROC
 segments. Refinement loss can be defined as the expected optimal loss as
