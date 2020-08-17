@@ -226,6 +226,8 @@ def detection_error_tradeoff_curve(y_true, y_score, pos_label=None,
     classification task.
 
     Read more in the :ref:`User Guide <det_curve>`.
+    
+    .. versionadded:: 0.24
 
     Parameters
     ----------
