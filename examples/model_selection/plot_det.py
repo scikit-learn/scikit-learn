@@ -80,6 +80,7 @@ X_train, X_test, y_train, y_test = train_test_split(
 fig, [ax_roc, ax_det] = plt.subplots(1, 2, figsize=(11, 5))
 
 # first prepare the ROC curve
+ax_roc.set_title('Receiver Operating Characteristic (ROC) curves')
 ax_roc.grid(linestyle='--')
 
 # second prepare the DET curve
