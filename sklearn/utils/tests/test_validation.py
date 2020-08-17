@@ -1200,7 +1200,7 @@ def test_check_fit_params(indices):
 def test_check_sparse_pandas_sp_format(sp_format):
     # check_array converts pandas dataframe with only sparse arrays into
     # sparse matrix
-    pd = pytest.importorskip("pandas")
+    pd = pytest.importorskip("pandas", minversion="0.25.0")
     sp_mat = _sparse_random_matrix(10, 3)
 
     sdf = pd.DataFrame.sparse.from_spmatrix(sp_mat)

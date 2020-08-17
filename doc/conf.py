@@ -40,7 +40,8 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.imgconverter',
     'sphinx_gallery.gen_gallery',
-    'sphinx_issues'
+    'sphinx_issues',
+    'add_toctree_functions',
 ]
 
 # this is needed for some reason...
@@ -474,3 +475,12 @@ linkcode_resolve = make_linkcode_resolve('sklearn',
 warnings.filterwarnings("ignore", category=UserWarning,
                         message='Matplotlib is currently using agg, which is a'
                                 ' non-GUI backend, so cannot show the figure.')
+
+
+# maps functions with a class name that is indistinguishable when case is
+# ignore to another filename
+autosummary_filename_map = {
+    "sklearn.cluster.dbscan": "dbscan-function",
+    "sklearn.covariance.oas": "oas-function",
+    "sklearn.decomposition.fastica": "fastica-function",
+}

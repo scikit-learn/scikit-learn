@@ -1053,6 +1053,8 @@ def permutation_test_score(estimator, X, y, *, groups=None, cv=None,
     and targets or the estimator was not able to use the dependency to
     give good predictions.
 
+    Read more in the :ref:`User Guide <permutation_test_score>`.
+
     Parameters
     ----------
     estimator : estimator object implementing 'fit'
