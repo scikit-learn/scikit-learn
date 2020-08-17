@@ -1,4 +1,3 @@
-from numpy.core.fromnumeric import shape
 import pytest
 import numpy as np
 from numpy.testing import assert_allclose
@@ -6,18 +5,14 @@ from numpy.testing import assert_allclose
 from sklearn.base import ClassifierMixin
 from sklearn.compose import make_column_transformer
 from sklearn.datasets import load_iris
-from sklearn.datasets import load_breast_cancer
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.utils import shuffle
 from sklearn.tree import DecisionTreeClassifier
 
 from sklearn.metrics import detection_error_tradeoff_curve
 from sklearn.metrics import plot_det_curve
-from sklearn.metrics import DetCurveDisplay
 
 
 @pytest.fixture(scope="module")
