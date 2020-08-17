@@ -130,9 +130,7 @@ class IterativeImputer(_BaseImputer):
         The seed of the pseudo random number generator to use. Randomizes
         selection of estimator features if n_nearest_features is not None, the
         ``imputation_order`` if ``random``, and the sampling from posterior if
-        ``sample_posterior`` is True. If the estimator has a `random_state`,
-        and it's set to None, will set it to this value too. Use an integer
-        for determinism.
+        ``sample_posterior`` is True. Use an integer for determinism.
         See :term:`the Glossary <random_state>`.
 
     add_indicator : boolean, default=False
@@ -585,13 +583,6 @@ class IterativeImputer(_BaseImputer):
             self._estimator = BayesianRidge()
         else:
             self._estimator = clone(self.estimator)
-
-        if (
-            hasattr(self._estimator, "random_state")
-            and self._estimator.random_state is None
-            and self.random_state is not None
-        ):
-            self._estimator.set_params(random_state=self.random_state)
 
         self.imputation_sequence_ = []
 

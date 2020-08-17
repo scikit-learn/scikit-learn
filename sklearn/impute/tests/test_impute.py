@@ -1070,50 +1070,6 @@ def test_iterative_imputer_skip_non_missing(skip_complete):
 
 
 @pytest.mark.parametrize(
-    "rs_imputer, rs_estimator, rs_expect",
-    [(None, None, None),
-     (401, None, 401),
-     (np.random.RandomState(seed=402), None, "RandomState"),
-     (None, 403, 403),
-     (404, 405, 405),
-     (np.random.RandomState(seed=406), 407, 407),
-     (None, "string", "string"),
-     (408, "string", "string"),
-     (np.random.RandomState(seed=409), "string", "string")]
-)
-def test_iterative_imputer_set_estimator_random_state(
-    rs_imputer, rs_estimator, rs_expect
-):
-    # Check that the estimator's random_state is set to the imputer's
-    # random_state if a value is passed to the imputer's but not to
-    # the estimator's random_state
-    class ZeroPredictor(BaseEstimator):
-        def __init__(self, random_state=None, rs_expect=None):
-            self.rs_expect = rs_expect
-            self.random_state = random_state
-
-        def fit(self, X, y):
-            if self.rs_expect == "RandomState":
-                rng_state_est = self.random_state.get_state()
-                rng_state_imp = rs_imputer.get_state()
-                assert rng_state_est[0] == rng_state_imp[0]
-                assert_array_equal(rng_state_est[1], rng_state_imp[1])
-                assert_array_equal(rng_state_est[2:], rng_state_imp[2:])
-            else:
-                assert self.random_state == self.rs_expect
-
-        def predict(self, X):
-            return np.zeros(X.shape[0])
-
-    X = np.ones((10, 3), dtype=float)
-    X[[1, 2, 3], 0] = np.nan
-    X[[4, 5, 6], 1] = np.nan
-    estimator = ZeroPredictor(rs_estimator, rs_expect)
-    imputer = IterativeImputer(estimator=estimator, random_state=rs_imputer)
-    imputer.fit_transform(X)
-
-
-@pytest.mark.parametrize(
     "X_fit, X_trans, params, msg_err",
     [(np.array([[-1, 1], [1, 2]]), np.array([[-1, 1], [1, -1]]),
       {'features': 'missing-only', 'sparse': 'auto'},
