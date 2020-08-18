@@ -13,7 +13,6 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 from sklearn import neighbors, datasets
 
-
 n_neighbors = 15
 
 # import some data to play with
@@ -21,7 +20,6 @@ iris = datasets.load_iris()
 
 # we only take the first two features. We could avoid this ugly
 # slicing by using a two-dim dataset
-# sepal length and sepal width (cm)
 X = iris.data[:, :2]
 y = iris.target
 
@@ -62,11 +60,9 @@ for weights in ['uniform', 'distance']:
 
     ax = plt.gca()
 
-    # produce a legend with the unique colors from the scatter
     legend = ax.legend(*scatter.legend_elements(),
                         loc="best", title="Classes")
 
-    # update legend entries [0,1,2] to labels
     for idx, label in enumerate(list(iris.target_names)):
         legend.get_texts()[idx].set_text(label)
 
