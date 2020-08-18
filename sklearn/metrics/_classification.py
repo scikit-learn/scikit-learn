@@ -2381,9 +2381,9 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
 
 @_deprecate_positional_args
 def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
-    """Compute the Brier score.
+    """Compute the Brier score loss.
 
-    The smaller the Brier score, the better, hence the naming with "loss".
+    The smaller the Brier score loss, the better, hence the naming with "loss".
     The Brier score measures the mean squared difference between the predicted
     probability and the actual outcome. The Brier score always
     takes on a value between zero and one, since this is the largest
@@ -2422,7 +2422,7 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     Returns
     -------
     score : float
-        Brier score
+        Brier score loss
 
     Examples
     --------
