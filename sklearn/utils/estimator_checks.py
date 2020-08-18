@@ -205,8 +205,6 @@ def _yield_transformer_checks(transformer):
         yield check_transformer_data_not_an_array
     # these don't actually fit the data, so don't raise errors
     yield check_transformer_general
-    # it's not possible to preserve dtypes in transform with clustering
-    # same for MissingIndicator
     if tags["preserves_dtype"]:
         yield check_transformer_preserve_dtypes
     yield partial(check_transformer_general, readonly_memmap=True)
