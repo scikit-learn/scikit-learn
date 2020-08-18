@@ -3,6 +3,7 @@
 
 from abc import ABC, abstractmethod
 from functools import partial
+import gc
 
 import numpy as np
 from timeit import default_timer as time
@@ -391,6 +392,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 _update_raw_predictions(raw_predictions[k, :], grower)
                 toc_pred = time()
                 acc_prediction_time += toc_pred - tic_pred
+                del grower
+                gc.collect()
 
             should_early_stop = False
             if self.do_early_stopping_:

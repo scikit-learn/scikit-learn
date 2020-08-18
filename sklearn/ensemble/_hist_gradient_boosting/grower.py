@@ -492,7 +492,6 @@ class TreeGrower:
                     del child.histograms
         del node.histograms
 
-
         return left_child_node, right_child_node
 
     def _finalize_leaf(self, node):
