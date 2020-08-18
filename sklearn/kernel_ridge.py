@@ -144,7 +144,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 "version 0.24 and will be removed in 0.26.")
     @property
     def _pairwise(self):
-        return self.kernel == 'precomputed'
+        return self.kernel == "precomputed"
 
     def fit(self, X, y, sample_weight=None):
         """Fit Kernel Ridge regression model

@@ -394,7 +394,7 @@ class MDS(BaseEstimator):
                 "version 0.24 and will be removed in 0.26.")
     @property
     def _pairwise(self):
-        return self.metric == 'precomputed'
+        return self.metric == "precomputed"
 
     def fit(self, X, y=None, init=None):
         """

@@ -167,16 +167,16 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         self.n_jobs = n_jobs
         self.copy_X = copy_X
 
+    def _more_tags(self):
+        return {'pairwise': self.kernel == 'precomputed'}
+
     # TODO: Remove in 0.26
     # mypy error: Decorated property not supported
     @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
                 "version 0.24 and will be removed in 0.26.")
     @property
     def _pairwise(self):
-        return self.kernel == 'precomputed'
-
-    def _more_tags(self):
-        return {'pairwise': self.kernel == 'precomputed'}
+        return self.kernel == "precomputed"
 
     def _get_kernel(self, X, Y=None):
         if callable(self.kernel):
