@@ -61,7 +61,7 @@ for weights in ['uniform', 'distance']:
     ax = plt.gca()
 
     legend = ax.legend(*scatter.legend_elements(),
-                        loc="best", title="Classes")
+                       loc="best", title="Classes")
 
     for idx, label in enumerate(list(iris.target_names)):
         legend.get_texts()[idx].set_text(label)
