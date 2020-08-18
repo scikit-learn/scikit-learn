@@ -186,18 +186,20 @@ class PCA(_BasePCA):
 
         .. versionadded:: 0.18.0
 
-    tol : float >= 0.0, default=0.0
+    tol : float, default=0.0
         Tolerance for singular values computed by svd_solver == 'arpack'.
+        Must be of range [0.0, infinity).
 
         .. versionadded:: 0.18.0
 
-    iterated_power : int >= 0, or 'auto', default='auto'
+    iterated_power : int or 'auto', default='auto'
         Number of iterations for the power method computed by
         svd_solver == 'randomized'.
+        Must be of range [0, infinity).
 
         .. versionadded:: 0.18.0
 
-    random_state : int, default=None
+    random_state : int or RandomState instance, default=None
         Used when the 'arpack' or 'randomized' solvers are used. Pass an int
         for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -336,11 +338,11 @@ class PCA(_BasePCA):
 
         Parameters
         ----------
-        X : ndarray of shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : default=None
+        y : None
             Ignored variable.
 
         Returns
@@ -356,16 +358,16 @@ class PCA(_BasePCA):
 
         Parameters
         ----------
-        X : ndarray of shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : default=None
+        y : None
             Ignored variable.
 
         Returns
         -------
-        X_new : ndarray of shape (n_samples, n_components)
+        X_new : array-like of shape (n_samples, n_components)
             Transformed values.
 
         Notes
@@ -573,12 +575,12 @@ class PCA(_BasePCA):
 
         Parameters
         ----------
-        X : array, shape(n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The data.
 
         Returns
         -------
-        ll : array, shape (n_samples,)
+        ll : array-like of shape (n_samples,)
             Log-likelihood of each sample under the current model.
         """
         check_is_fitted(self)
@@ -601,7 +603,7 @@ class PCA(_BasePCA):
 
         Parameters
         ----------
-        X : array, shape(n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The data.
 
         y : None
