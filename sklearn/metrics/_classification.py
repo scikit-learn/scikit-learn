@@ -41,6 +41,8 @@ from ..utils.validation import _deprecate_positional_args
 from ..utils.sparsefuncs import count_nonzero
 from ..exceptions import UndefinedMetricWarning
 
+from ._base import _check_ambiguity_pos_label
+
 
 def _check_zero_division(zero_division):
     if isinstance(zero_division, str) and zero_division == "warn":
@@ -2451,10 +2453,13 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     assert_all_finite(y_prob)
     check_consistent_length(y_true, y_prob, sample_weight)
 
-    labels = np.unique(y_true)
-    if len(labels) > 2:
-        raise ValueError("Only binary classification is supported. "
-                         "Labels in y_true: %s." % labels)
+    y_type = type_of_target(y_true)
+    if y_type != "binary":
+        raise ValueError(
+            f"Only binary classification is supported. The type of the target "
+            f"is {y_type}."
+        )
+
     if y_prob.max() > 1:
         raise ValueError("y_prob contains values greater than 1.")
     if y_prob.min() < 0:
@@ -2465,11 +2470,14 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     # otherwise pos_label is set to the greater label
     # (different from precision_recall_curve/roc_curve,
     # the purpose is to keep backward compatibility).
-    if pos_label is None:
-        if (np.array_equal(labels, [0]) or
-                np.array_equal(labels, [-1])):
-            pos_label = 1
+    try:
+        pos_label = _check_ambiguity_pos_label(pos_label, y_true)
+    except ValueError:
+        classes = np.unique(y_true)
+        if classes.dtype.kind not in ('O', 'U', 'S'):
+            # for backward compatibility
+            pos_label = classes[-1]
         else:
-            pos_label = y_true.max()
+            raise
     y_true = np.array(y_true == pos_label, int)
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
