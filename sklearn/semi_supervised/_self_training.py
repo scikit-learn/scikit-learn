@@ -51,7 +51,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         The 'threshold' criterion assumes a well calibrated classifier.
 
     threshold : float, optional (default=0.75)
-        The decision threshold for use with `criterion`='threshold'.
+        The decision threshold for use with `criterion='threshold'`.
         Should be in [0, 1).
 
     k_best : int, optional (default=10)
@@ -73,7 +73,8 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         The fitted estimator.
 
     classes_ : array or list of array of shape (n_classes,)
-        Class labels for each output. (Taken from the trained base_estimator_)
+        Class labels for each output. (Taken from the trained
+        ``base_estimator_``)
 
     transduction_ : array, shape=(n_samples,)
         The labels used for the final fit of the classifier, including
