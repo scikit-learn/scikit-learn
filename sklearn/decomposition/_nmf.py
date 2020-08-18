@@ -633,9 +633,11 @@ def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
 
 
 def _multiplicative_update_h(X, W, H, A, B,
-                             beta_loss, l1_reg_H, l2_reg_H, gamma):
+                             beta_loss, l1_reg_H, l2_reg_H, gamma, rho):
     H_old = H.copy()
     H_old[H_old == 0] = EPSILON
+
+    batch_size = X.shape[0]
 
     """update H in Multiplicative Update NMF"""
     if beta_loss == 2:
@@ -718,9 +720,6 @@ def _multiplicative_update_h(X, W, H, A, B,
     H = H_old * delta_H
 
     if A is not None and B is not None:
-        #r = .1
-        #rho = r ** (1 / 2000)
-        rho = .99
         A *= rho
         B *= rho
         A += numerator
@@ -813,7 +812,7 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
 
     n_samples = X.shape[0]
     max_iter_update_h_ = 1
-    max_iter_update_w_ = 5
+    max_iter_update_w_ = 1
 
     if batch_size is None:
         batch_size = n_samples
@@ -822,6 +821,10 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
     #else:
     #    beta_loss = 'itakura-saito'
 
+    r = .7 # forgetting factor
+    rho = r ** (batch_size / n_samples)
+
+    print(f"{rho= }")
     beta_loss = _beta_loss_to_float(beta_loss)
 
     # gamma for Maximization-Minimization (MM) algorithm [Fevotte 2011]
@@ -859,8 +862,8 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
                         H, A, B = _multiplicative_update_h(X[slice],
                                                            W[slice], H, A, B,
                                                            beta_loss,
-                                                           l1_reg_H,
-                                                           l2_reg_H, gamma)
+                                                           l1_reg_H, l2_reg_H,
+                                                           gamma, rho)
 
                         # These values will be recomputed since H changed
                         H_sum, HHt, XHt = None, None, None
