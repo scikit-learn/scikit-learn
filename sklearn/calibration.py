@@ -35,7 +35,7 @@ from .utils.validation import _deprecate_positional_args
 
 def _fit_calibrated_classifer(estimator, X, y, train, test,
                               method, classes, sample_weight=None,
-                              sample_weight_base_estimator=None, **fit_params):
+                              base_estimator_uses_sw=False, **fit_params):
     """Fit calibrated classifier for a given dataset split.
 
     Returns
@@ -45,17 +45,12 @@ def _fit_calibrated_classifer(estimator, X, y, train, test,
     """
     fit_params_train = {}
     for key, val in fit_params.items():
-        check_consistent_length(y, val)
         fit_params_train[key] = _safe_indexing(val, train)
 
-    # Differentiate between sample_weight (used for the
-    # _CalibratedClassifier) and sample_weight_base_estimator (used
-    # for the base estimator).
-    if sample_weight_base_estimator is not None:
-        swbe = _safe_indexing(sample_weight_base_estimator, train)
-        estimator.fit(X[train], y[train],
-                      sample_weight=swbe,
-                      **fit_params_train)
+    if base_estimator_uses_sw:
+        swbe = _safe_indexing(sample_weight, train)
+        estimator.fit(
+            X[train], y[train], sample_weight=swbe, **fit_params_train)
     else:
         estimator.fit(X[train], y[train], **fit_params_train)
 
@@ -235,6 +230,9 @@ class CalibratedClassifierCV(ClassifierMixin,
         """
         X, y = indexable(X, y)
 
+        for key, val in fit_params.items():
+            check_consistent_length(y, val)
+
         self.calibrated_classifiers_ = []
         if self.base_estimator is None:
             # we want all classifiers that don't expose a random_state
@@ -282,7 +280,7 @@ class CalibratedClassifierCV(ClassifierMixin,
             cv = check_cv(self.cv, y, classifier=True)
             fit_parameters = signature(base_estimator.fit).parameters
             base_estimator_supports_sw = "sample_weight" in fit_parameters
-            sample_weight_base_estimator = None
+            base_estimator_uses_sw = False
             if sample_weight is not None:
                 sample_weight = _check_sample_weight(sample_weight, X)
 
@@ -292,7 +290,7 @@ class CalibratedClassifierCV(ClassifierMixin,
                                   "sample weights will only be used for the "
                                   "calibration itself." % estimator_name)
                 else:
-                    sample_weight_base_estimator = sample_weight
+                    base_estimator_uses_sw = True
 
             parallel = Parallel(n_jobs=self.n_jobs)
 
@@ -304,7 +302,7 @@ class CalibratedClassifierCV(ClassifierMixin,
                     method=self.method,
                     classes=self.classes_,
                     sample_weight=sample_weight,
-                    sample_weight_base_estimator=sample_weight_base_estimator,
+                    base_estimator_uses_sw=base_estimator_uses_sw,
                     **fit_params
                 ) for train, test in cv.split(X, y))
         return self

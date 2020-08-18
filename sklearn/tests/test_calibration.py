@@ -478,3 +478,23 @@ def test_calibration_with_fit_params(fit_params_as_list):
     pc_clf = CalibratedClassifierCV(clf)
 
     pc_clf.fit(X, y, **fit_params)
+
+
+def test_calibration_with_fit_params_inconsistent_length():
+    """fit_params having different length than data should raise the
+    correct error message
+
+    """
+    n_samples = 100
+    X, y = make_classification(n_samples=2 * n_samples, n_features=6,
+                               random_state=42)
+
+    fit_params = {'a': y[:5]}
+    clf = CheckingClassifier(expected_fit_params=fit_params)
+    pc_clf = CalibratedClassifierCV(clf)
+
+    msg = (
+        r"Found input variables with inconsistent numbers of "
+        r"samples: \[200, 5\]")
+    with pytest.raises(ValueError, match=msg):
+        pc_clf.fit(X, y, **fit_params)
