@@ -61,8 +61,7 @@ CROSS_DECOMPOSITION = ['PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']
 def _yield_checks(estimator):
     name = estimator.__class__.__name__
     tags = estimator._get_tags()
-    with ignore_warnings(category=FutureWarning):
-        pairwise = _is_pairwise(estimator)
+    pairwise = tags.get('pairwise', False)
 
     yield check_no_attributes_set_in_init
     yield check_estimators_dtypes
@@ -677,12 +676,7 @@ class _NotAnArray:
 
 # TODO: Check the pairwise estimator tag in 0.26
 def _is_pairwise(estimator):
-    """Returns True if estimator has a _pairwise attribute set to True.
-
-    .. deprecated:: 0.24
-
-        The _pairwise attribute is deprecated in 0.24. From 0.26 and onward,
-        this function will check for the pairwise estimator tag.
+    """Returns True if estimator has the pairwise tag set to True.
 
     Parameters
     ----------
@@ -692,9 +686,9 @@ def _is_pairwise(estimator):
     Returns
     -------
     out : bool
-        True if _pairwise is set to True and False otherwise.
+        True if the pairwise tag is set to True and False otherwise.
     """
-    return bool(getattr(estimator, "_pairwise", False))
+    return estimator._get_tags().get("pairwise", False)
 
 
 def _is_pairwise_metric(estimator):
@@ -719,10 +713,8 @@ def _pairwise_estimator_convert_X(X, estimator, kernel=linear_kernel):
 
     if _is_pairwise_metric(estimator):
         return pairwise_distances(X, metric='euclidean')
-
-    with ignore_warnings(category=FutureWarning):
-        if _is_pairwise(estimator):
-            return kernel(X, X)
+    if _is_pairwise(estimator):
+        return kernel(X, X)
 
     return X
 
