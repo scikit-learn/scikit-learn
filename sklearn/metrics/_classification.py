@@ -1483,15 +1483,23 @@ def precision_recall_fscore_support(y_true, y_pred, *, beta=1.0, labels=None,
     if average == 'weighted':
         weights = true_sum
         if weights.sum() == 0:
-            zero_division_value = 0.0 if zero_division in ["warn", 0] else 1.0
+            zero_division_value = np.float64(1.0)
+            if zero_division in ["warn", 0]:
+                zero_division_value = np.float64(0.0)
             # precision is zero_division if there are no positive predictions
             # recall is zero_division if there are no positive labels
             # fscore is zero_division if all labels AND predictions are
             # negative
-            return (zero_division_value if pred_sum.sum() == 0 else 0,
-                    zero_division_value,
-                    zero_division_value if pred_sum.sum() == 0 else 0,
-                    None)
+            if pred_sum.sum() == 0:
+                return (zero_division_value,
+                        zero_division_value,
+                        zero_division_value,
+                        None)
+            else:
+                return (np.float64(0.0),
+                        zero_division_value,
+                        np.float64(0.0),
+                        None)
 
     elif average == 'samples':
         weights = sample_weight
@@ -2123,17 +2131,19 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
 @_deprecate_positional_args
 def log_loss(y_true, y_pred, *, eps=1e-15, normalize=True, sample_weight=None,
              labels=None):
-    """Log loss, aka logistic loss or cross-entropy loss.
+    r"""Log loss, aka logistic loss or cross-entropy loss.
 
     This is the loss function used in (multinomial) logistic regression
     and extensions of it such as neural networks, defined as the negative
     log-likelihood of a logistic model that returns ``y_pred`` probabilities
     for its training data ``y_true``.
     The log loss is only defined for two or more labels.
-    For a single sample with true label yt in {0,1} and
-    estimated probability yp that yt = 1, the log loss is
+    For a single sample with true label :math:`y \in \{0,1\}` and
+    and a probability estimate :math:`p = \operatorname{Pr}(y = 1)`, the log
+    loss is:
 
-        -log P(yt|yp) = -(yt log(yp) + (1 - yt) log(1 - yp))
+    .. math::
+        L_{\log}(y, p) = -(y \log (p) + (1 - y) \log (1 - p))
 
     Read more in the :ref:`User Guide <log_loss>`.
 
@@ -2371,26 +2381,27 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
 
 @_deprecate_positional_args
 def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
-    """Compute the Brier score.
+    """Compute the Brier score loss.
 
-    The smaller the Brier score, the better, hence the naming with "loss".
-    Across all items in a set N predictions, the Brier score measures the
-    mean squared difference between (1) the predicted probability assigned
-    to the possible outcomes for item i, and (2) the actual outcome.
-    Therefore, the lower the Brier score is for a set of predictions, the
-    better the predictions are calibrated. Note that the Brier score always
+    The smaller the Brier score loss, the better, hence the naming with "loss".
+    The Brier score measures the mean squared difference between the predicted
+    probability and the actual outcome. The Brier score always
     takes on a value between zero and one, since this is the largest
     possible difference between a predicted probability (which must be
     between zero and one) and the actual outcome (which can take on values
-    of only 0 and 1). The Brier loss is composed of refinement loss and
+    of only 0 and 1). It can be decomposed is the sum of refinement loss and
     calibration loss.
+
     The Brier score is appropriate for binary and categorical outcomes that
     can be structured as true or false, but is inappropriate for ordinal
     variables which can take on three or more values (this is because the
     Brier score assumes that all possible outcomes are equivalently
     "distant" from one another). Which label is considered to be the positive
-    label is controlled via the parameter pos_label, which defaults to 1.
-    Read more in the :ref:`User Guide <calibration>`.
+    label is controlled via the parameter `pos_label`, which defaults to
+    the greater label unless `y_true` is all 0 or all -1, in which case
+    `pos_label` defaults to 1.
+
+    Read more in the :ref:`User Guide <brier_score_loss>`.
 
     Parameters
     ----------
@@ -2411,7 +2422,7 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     Returns
     -------
     score : float
-        Brier score
+        Brier score loss
 
     Examples
     --------
