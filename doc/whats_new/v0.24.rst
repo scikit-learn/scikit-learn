@@ -237,6 +237,15 @@ Changelog
 - |Enhancement| :class:`isotonic.IsotonicRegression` now accepts 2darray with 1 feature as
   input array. :pr:`17379` by :user:`Jiaxiang <fujiaxiang>`.
 
+:mod:`sklearn.kernel_approximation`
+...................................
+
+- |Feature| Added class :class:`kernel_approximation.PolynomialCountSketch`
+  which implements the Tensor Sketch algorithm for polynomial kernel feature
+  map approximation.
+  :pr:`13003` by :user:`Daniel López Sánchez <lopeLH>`.
+
+
 :mod:`sklearn.linear_model`
 ...........................
 
@@ -250,6 +259,7 @@ Changelog
   ``alpha_per_target=True``. This is only supported when using the default
   efficient leave-one-out cross-validation scheme ``cv=None``. :pr:`6624` by
   :user:`Marijn van Vliet <wmvanvliet>`.
+
 
 :mod:`sklearn.manifold`
 .......................
