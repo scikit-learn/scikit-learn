@@ -2417,9 +2417,14 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
         Sample weights.
 
     pos_label : int or str, default=None
-        Label of the positive class.
-        Defaults to the greater label unless y_true is all 0 or all -1
-        in which case pos_label defaults to 1.
+        Label of the positive class. `pos_label` will be infered in the
+        following manner:
+
+        * if `y_true` in {-1, 1} or {0, 1}, `pos_label` defaults to 1;
+        * else if `y_true` contains string, an error will be raised and
+          `pos_label` should be explicitely specified;
+        * otherwise, `pos_label` defaults to the greater label,
+          i.e. `np.unique(y_true)[-1]`.
 
     Returns
     -------
@@ -2465,17 +2470,13 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     if y_prob.min() < 0:
         raise ValueError("y_prob contains values less than 0.")
 
-    # if pos_label=None, when y_true is in {-1, 1} or {0, 1},
-    # pos_label is set to 1 (consistent with precision_recall_curve/roc_curve),
-    # otherwise pos_label is set to the greater label
-    # (different from precision_recall_curve/roc_curve,
-    # the purpose is to keep backward compatibility).
     try:
         pos_label = _check_ambiguity_pos_label(pos_label, y_true)
     except ValueError:
         classes = np.unique(y_true)
         if classes.dtype.kind not in ('O', 'U', 'S'):
-            # for backward compatibility
+            # for backward compatibility, if classes are not string then
+            # `pos_label` will correspond to the greater label
             pos_label = classes[-1]
         else:
             raise
