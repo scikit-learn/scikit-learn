@@ -4,7 +4,6 @@ from itertools import product
 from itertools import chain
 from itertools import permutations
 import warnings
-import re
 
 import numpy as np
 from scipy import linalg
