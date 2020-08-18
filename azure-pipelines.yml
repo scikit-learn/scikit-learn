@@ -146,6 +146,8 @@ jobs:
         DISTRIB: 'ubuntu-32'
         PYTHON_VERSION: '3.6'
         JOBLIB_VERSION: 'min'
+        # disable pytest xdist due to unknown bug with 32-bit container
+        PYTEST_XDIST_VERSION: 'none'
         # temporary pin pytest due to unknown failure with pytest 5.4 and
         # python 3.6
         PYTEST_VERSION: 'min'
