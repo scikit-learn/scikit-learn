@@ -131,9 +131,7 @@ class _BaseScorer:
     def _check_pos_label(pos_label, classes):
         if pos_label not in list(classes):
             raise ValueError(
-                f"pos_label should be present in the target when the "
-                f"classifier was trained. Got pos_label={pos_label} while the "
-                f"possible classes are {classes}."
+                f"pos_label={pos_label} is not a valid label: {classes}"
             )
 
     def _select_proba(self, y_pred, classes, support_multi_class):
@@ -334,8 +332,9 @@ class _ThresholdScorer(_BaseScorer):
                         self._kwargs["pos_label"], clf.classes_
                     )
                     if self._kwargs["pos_label"] == clf.classes_[0]:
-                        # The positive class is not the `pos_label` seen by the
-                        # classifier and we need to inverse the predictions
+                        # The implicit positive class of the binary classifier
+                        # does not match `pos_label`: we need to invert the
+                        # predictions
                         y_pred *= -1
 
             except (NotImplementedError, AttributeError):

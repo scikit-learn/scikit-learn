@@ -762,7 +762,32 @@ def test_multiclass_roc_no_proba_scorer_errors(scorer_name):
 
 
 @pytest.fixture
-def fitted_clf_predictions():
+def string_labeled_classification_problem():
+    """Train a classifier on binary problem with string target.
+
+    The classifier is trained on a binary classification problem where the
+    minority class of interest has a string label that is intentionally not the
+    greatest class label using the lexicographic order.
+
+    In addition, the dataset is imbalanced to better identify problems when
+    using non-symmetric performance metrics such as f1-score, average precision
+    and so on.
+
+    Returns
+    -------
+    classifier : estimator object
+        Trained classifier on the binary problem.
+    X_test : ndarray of shape (n_samples, n_features)
+        Data to be used as testing set in tests.
+    y_test : ndarray of shape (n_samples,), dtype=object
+        Binary target where labels are strings.
+    y_pred : ndarray of shape (n_samples,), dtype=object
+        Prediction of `classifier` when predicting for `X_test`.
+    y_pred_proba : ndarray of shape (n_samples, 2), dtype=np.float64
+        Probabilities of `classifier` when predicting for `X_test`.
+    y_pred_decision : ndarray of shape (n_samples,), dtype=np.float64
+        Decision function values of `classifier` when predicting on `X_test`.
+    """
     from sklearn.datasets import load_breast_cancer
     from sklearn.utils import shuffle
 
@@ -789,12 +814,12 @@ def fitted_clf_predictions():
     return classifier, X_test, y_test, y_pred, y_pred_proba, y_pred_decision
 
 
-def test_average_precision_pos_label(fitted_clf_predictions):
+def test_average_precision_pos_label(string_labeled_classification_problem):
     # check that _ThresholdScorer will lead to the right score when passing
     # `pos_label`. Currently, only `average_precision_score` is defined to
     # be such a scorer.
     clf, X_test, y_test, _, y_pred_proba, y_pred_decision = \
-        fitted_clf_predictions
+        string_labeled_classification_problem
 
     pos_label = "cancer"
     # we need to select the positive column or reverse the decision values
@@ -850,11 +875,12 @@ def test_average_precision_pos_label(fitted_clf_predictions):
     assert ap_scorer == pytest.approx(ap_proba)
 
 
-def test_brier_score_loss_pos_label(fitted_clf_predictions):
+def test_brier_score_loss_pos_label(string_labeled_classification_problem):
     # check that _ProbaScorer leads to the right score when `pos_label` is
     # provided. Currently only the `brier_score_loss` is defined to be such
     # a scorer.
-    clf, X_test, y_test, _, y_pred_proba, _ = fitted_clf_predictions
+    clf, X_test, y_test, _, y_pred_proba, _ = \
+        string_labeled_classification_problem
 
     pos_label = "cancer"
     assert clf.classes_[0] == pos_label
@@ -877,10 +903,12 @@ def test_brier_score_loss_pos_label(fitted_clf_predictions):
 @pytest.mark.parametrize(
     "score_func", [f1_score, precision_score, recall_score, jaccard_score]
 )
-def test_non_symmetric_metric_pos_label(score_func, fitted_clf_predictions):
+def test_non_symmetric_metric_pos_label(
+    score_func, string_labeled_classification_problem
+):
     # check that _PredictScorer leads to the right score when `pos_label` is
     # provided. We check for all possible metric supported.
-    clf, X_test, y_test, y_pred, _, _ = fitted_clf_predictions
+    clf, X_test, y_test, y_pred, _, _ = string_labeled_classification_problem
 
     pos_label = "cancer"
     assert clf.classes_[0] == pos_label
@@ -901,8 +929,9 @@ def test_non_symmetric_metric_pos_label(score_func, fitted_clf_predictions):
             average_precision_score, needs_threshold=True, pos_label="xxx"
         ),
         make_scorer(brier_score_loss, needs_proba=True, pos_label="xxx"),
+        make_scorer(f1_score, pos_label="xxx")
     ],
-    ids=["ThresholdScorer", "ProbaScorer"],
+    ids=["ThresholdScorer", "ProbaScorer", "PredictScorer"],
 )
 def test_scorer_select_proba_error(scorer):
     # check that we raise the the proper error when passing an unknown
@@ -912,6 +941,6 @@ def test_scorer_select_proba_error(scorer):
     )
     lr = LogisticRegression(multi_class="multinomial").fit(X, y)
 
-    err_msg = "pos_label should be present in the target"
+    err_msg = "is not a valid label"
     with pytest.raises(ValueError, match=err_msg):
         scorer(lr, X, y)
