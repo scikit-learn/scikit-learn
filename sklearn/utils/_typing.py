@@ -45,11 +45,15 @@ def _format_docstring_annotation(annotation):
         values = [_format_docstring_annotation(t) for t in annotation.__args__]
         if len(values) == 2:
             return ' or '.join(values)
-        # greater than 2
         first = ', '.join(values[:-1])
         return f'{first} or {values[-1]}'
     elif class_name == 'Literal':
-        items = [repr(t) for t in annotation.__args__]
+        if hasattr(annotation, '__values__'):
+            # For Python == 3.6 support
+            args = annotation.__values__
+        else:
+            args = annotation.__args__
+        items = [repr(t) for t in args]
         if len(items) == 1:
             return items[0]
         values = ', '.join(items)
