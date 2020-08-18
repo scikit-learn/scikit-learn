@@ -218,6 +218,94 @@ def average_precision_score(y_true, y_score, *, average="macro", pos_label=1,
                                  average, sample_weight=sample_weight)
 
 
+def detection_error_tradeoff_curve(y_true, y_score, pos_label=None,
+                                   sample_weight=None):
+    """Compute error rates for different probability thresholds.
+
+    Note: This metrics is used for ranking evaluation of a binary
+    classification task.
+
+    Read more in the :ref:`User Guide <det_curve>`.
+
+    Parameters
+    ----------
+    y_true : array, shape = [n_samples]
+        True targets of binary classification in range {-1, 1} or {0, 1}.
+
+    y_score : array, shape = [n_samples]
+        Estimated probabilities or decision function.
+
+    pos_label : int, optional (default=None)
+        The label of the positive class
+
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights.
+
+    Returns
+    -------
+    fpr : array, shape = [n_thresholds]
+        False positive rate (FPR) such that element i is the false positive
+        rate of predictions with score >= thresholds[i]. This is occasionally
+        referred to as false acceptance propability or fall-out.
+
+    fnr : array, shape = [n_thresholds]
+        False negative rate (FNR) such that element i is the false negative
+        rate of predictions with score >= thresholds[i]. This is occasionally
+        referred to as false rejection or miss rate.
+
+    thresholds : array, shape = [n_thresholds]
+        Decreasing score values.
+
+    See also
+    --------
+    roc_curve : Compute Receiver operating characteristic (ROC) curve
+    precision_recall_curve : Compute precision-recall curve
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics import detection_error_tradeoff_curve
+    >>> y_true = np.array([0, 0, 1, 1])
+    >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
+    >>> fpr, fnr, thresholds = detection_error_tradeoff_curve(y_true, y_scores)
+    >>> fpr
+    array([0.5, 0.5, 0. ])
+    >>> fnr
+    array([0. , 0.5, 0.5])
+    >>> thresholds
+    array([0.35, 0.4 , 0.8 ])
+
+    """
+    if len(np.unique(y_true)) != 2:
+        raise ValueError("Only one class present in y_true. Detection error "
+                         "tradeoff curve is not defined in that case.")
+
+    fps, tps, thresholds = _binary_clf_curve(y_true, y_score,
+                                             pos_label=pos_label,
+                                             sample_weight=sample_weight)
+
+    fns = tps[-1] - tps
+    p_count = tps[-1]
+    n_count = fps[-1]
+
+    # start with false positives zero
+    first_ind = (
+        fps.searchsorted(fps[0], side='right') - 1
+        if fps.searchsorted(fps[0], side='right') > 0
+        else None
+    )
+    # stop with false negatives zero
+    last_ind = tps.searchsorted(tps[-1]) + 1
+    sl = slice(first_ind, last_ind)
+
+    # reverse the output such that list of false positives is decreasing
+    return (
+        fps[sl][::-1] / n_count,
+        fns[sl][::-1] / p_count,
+        thresholds[sl][::-1]
+    )
+
+
 def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None):
     """Binary roc auc score."""
     if len(np.unique(y_true)) != 2:

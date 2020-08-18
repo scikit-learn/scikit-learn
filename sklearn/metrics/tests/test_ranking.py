@@ -16,11 +16,13 @@ from sklearn.utils.validation import check_random_state
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_warns
 
 from sklearn.metrics import auc
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import coverage_error
+from sklearn.metrics import detection_error_tradeoff_curve
 from sklearn.metrics import label_ranking_average_precision_score
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import label_ranking_loss
@@ -923,6 +925,111 @@ def test_score_scale_invariance():
     assert pr_auc == pr_auc_scaled_up
     assert pr_auc == pr_auc_scaled_down
     assert pr_auc == pr_auc_shifted
+
+
+@pytest.mark.parametrize("y_true,y_score,expected_fpr,expected_fnr", [
+    ([0, 0, 1], [0, 0.5, 1], [0], [0]),
+    ([0, 0, 1], [0, 0.25, 0.5], [0], [0]),
+    ([0, 0, 1], [0.5, 0.75, 1], [0], [0]),
+    ([0, 0, 1], [0.25, 0.5, 0.75], [0], [0]),
+    ([0, 1, 0], [0, 0.5, 1], [0.5], [0]),
+    ([0, 1, 0], [0, 0.25, 0.5], [0.5], [0]),
+    ([0, 1, 0], [0.5, 0.75, 1], [0.5], [0]),
+    ([0, 1, 0], [0.25, 0.5, 0.75], [0.5], [0]),
+    ([0, 1, 1], [0, 0.5, 1], [0.0], [0]),
+    ([0, 1, 1], [0, 0.25, 0.5], [0], [0]),
+    ([0, 1, 1], [0.5, 0.75, 1], [0], [0]),
+    ([0, 1, 1], [0.25, 0.5, 0.75], [0], [0]),
+    ([1, 0, 0], [0, 0.5, 1], [1, 1, 0.5], [0, 1, 1]),
+    ([1, 0, 0], [0, 0.25, 0.5], [1, 1, 0.5], [0, 1, 1]),
+    ([1, 0, 0], [0.5, 0.75, 1], [1, 1, 0.5], [0, 1, 1]),
+    ([1, 0, 0], [0.25, 0.5, 0.75], [1, 1, 0.5], [0, 1, 1]),
+    ([1, 0, 1], [0, 0.5, 1], [1, 1, 0], [0, 0.5, 0.5]),
+    ([1, 0, 1], [0, 0.25, 0.5], [1, 1, 0], [0, 0.5, 0.5]),
+    ([1, 0, 1], [0.5, 0.75, 1], [1, 1, 0], [0, 0.5, 0.5]),
+    ([1, 0, 1], [0.25, 0.5, 0.75], [1, 1, 0], [0, 0.5, 0.5]),
+])
+def test_detection_error_tradeoff_curve_toydata(y_true, y_score,
+                                                expected_fpr, expected_fnr):
+    # Check on a batch of small examples.
+    fpr, fnr, _ = detection_error_tradeoff_curve(y_true, y_score)
+
+    assert_array_almost_equal(fpr, expected_fpr)
+    assert_array_almost_equal(fnr, expected_fnr)
+
+
+@pytest.mark.parametrize("y_true,y_score,expected_fpr,expected_fnr", [
+    ([1, 0], [0.5, 0.5], [1], [0]),
+    ([0, 1], [0.5, 0.5], [1], [0]),
+    ([0, 0, 1], [0.25, 0.5, 0.5], [0.5], [0]),
+    ([0, 1, 0], [0.25, 0.5, 0.5], [0.5], [0]),
+    ([0, 1, 1], [0.25, 0.5, 0.5], [0], [0]),
+    ([1, 0, 0], [0.25, 0.5, 0.5], [1], [0]),
+    ([1, 0, 1], [0.25, 0.5, 0.5], [1], [0]),
+    ([1, 1, 0], [0.25, 0.5, 0.5], [1], [0]),
+])
+def test_detection_error_tradeoff_curve_tie_handling(y_true, y_score,
+                                                     expected_fpr,
+                                                     expected_fnr):
+    fpr, fnr, _ = detection_error_tradeoff_curve(y_true, y_score)
+
+    assert_array_almost_equal(fpr, expected_fpr)
+    assert_array_almost_equal(fnr, expected_fnr)
+
+
+def test_detection_error_tradeoff_curve_sanity_check():
+    # Exactly duplicated inputs yield the same result.
+    assert_array_almost_equal(
+        detection_error_tradeoff_curve([0, 0, 1], [0, 0.5, 1]),
+        detection_error_tradeoff_curve(
+            [0, 0, 0, 0, 1, 1], [0, 0, 0.5, 0.5, 1, 1])
+    )
+
+
+@pytest.mark.parametrize("y_score", [
+    (0), (0.25), (0.5), (0.75), (1)
+])
+def test_detection_error_tradeoff_curve_constant_scores(y_score):
+    fpr, fnr, threshold = detection_error_tradeoff_curve(
+        y_true=[0, 1, 0, 1, 0, 1],
+        y_score=np.full(6, y_score)
+    )
+
+    assert_array_almost_equal(fpr, [1])
+    assert_array_almost_equal(fnr, [0])
+    assert_array_almost_equal(threshold, [y_score])
+
+
+@pytest.mark.parametrize("y_true", [
+    ([0, 0, 0, 0, 0, 1]),
+    ([0, 0, 0, 0, 1, 1]),
+    ([0, 0, 0, 1, 1, 1]),
+    ([0, 0, 1, 1, 1, 1]),
+    ([0, 1, 1, 1, 1, 1]),
+])
+def test_detection_error_tradeoff_curve_perfect_scores(y_true):
+    fpr, fnr, _ = detection_error_tradeoff_curve(
+        y_true=y_true,
+        y_score=y_true
+    )
+
+    assert_array_almost_equal(fpr, [0])
+    assert_array_almost_equal(fnr, [0])
+
+
+def test_detection_error_tradeoff_curve_bad_input():
+    # input variables with inconsistent numbers of samples
+    assert_raises(ValueError, detection_error_tradeoff_curve,
+                  [0, 1], [0, 0.5, 1])
+    assert_raises(ValueError, detection_error_tradeoff_curve,
+                  [0, 1, 1], [0, 0.5])
+
+    # When the y_true values are all the same a detection error tradeoff cannot
+    # be computed.
+    assert_raises(ValueError, detection_error_tradeoff_curve,
+                  [0, 0, 0], [0, 0.5, 1])
+    assert_raises(ValueError, detection_error_tradeoff_curve,
+                  [1, 1, 1], [0, 0.5, 1])
 
 
 def check_lrap_toy(lrap_score):
