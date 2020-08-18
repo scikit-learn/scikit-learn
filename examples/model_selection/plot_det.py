@@ -8,7 +8,7 @@ detection error tradeoff (DET) curves for different classification algorithms
 for the same classification task.
 
 DET curves are commonly plotted in normal deviate scale.
-To achieve this we transform the errors rates as returned by the
+To achieve this we transform the error rates as returned by the
 :func:`~sklearn.metrics.detection_error_tradeoff_curve` function and the axis
 scale using :func:`scipy.stats.norm`.
 
