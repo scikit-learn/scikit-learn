@@ -171,7 +171,9 @@ cdef class Criterion:
         return (- self.weighted_n_right * impurity_right
                 - self.weighted_n_left * impurity_left)
 
-    cdef double impurity_improvement(self, double impurity) nogil:
+    cdef double impurity_improvement(self, double impurity_parent,
+                                     double impurity_left,
+                                     double impurity_right) nogil:
         """Compute the improvement in impurity
 
         This method computes the improvement in impurity when a split occurs.
@@ -186,24 +188,25 @@ cdef class Criterion:
 
         Parameters
         ----------
-        impurity : double
-            The initial impurity of the node before the split
+        impurity_parent : double
+            The initial impurity of the parent node before the split
+
+        impurity_parent : double
+            The impurity of the left child
+
+        impurity_parent : double
+            The impurity of the right child
 
         Return
         ------
         double : improvement in impurity after the split occurs
         """
 
-        cdef double impurity_left
-        cdef double impurity_right
-
-        self.children_impurity(&impurity_left, &impurity_right)
-
         return ((self.weighted_n_node_samples / self.weighted_n_samples) *
-                (impurity - (self.weighted_n_right / 
-                             self.weighted_n_node_samples * impurity_right)
-                          - (self.weighted_n_left / 
-                             self.weighted_n_node_samples * impurity_left)))
+                (impurity_parent - (self.weighted_n_right / 
+                                    self.weighted_n_node_samples * impurity_right)
+                                 - (self.weighted_n_left / 
+                                    self.weighted_n_node_samples * impurity_left)))
 
 
 cdef class ClassificationCriterion(Criterion):
@@ -1305,23 +1308,3 @@ cdef class FriedmanMSE(MSE):
                 self.weighted_n_left * total_sum_right)
 
         return diff * diff / (self.weighted_n_left * self.weighted_n_right)
-
-    cdef double impurity_improvement(self, double impurity) nogil:
-        cdef double* sum_left = self.sum_left
-        cdef double* sum_right = self.sum_right
-
-        cdef double total_sum_left = 0.0
-        cdef double total_sum_right = 0.0
-
-        cdef SIZE_t k
-        cdef double diff = 0.0
-
-        for k in range(self.n_outputs):
-            total_sum_left += sum_left[k]
-            total_sum_right += sum_right[k]
-
-        diff = (self.weighted_n_right * total_sum_left -
-                self.weighted_n_left * total_sum_right) / self.n_outputs
-
-        return (diff * diff / (self.weighted_n_left * self.weighted_n_right *
-                               self.weighted_n_node_samples))
