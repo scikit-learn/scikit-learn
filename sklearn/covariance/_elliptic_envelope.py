@@ -5,6 +5,7 @@
 import numpy as np
 from . import MinCovDet
 from ..utils.validation import check_is_fitted, check_array
+from ..utils.validation import _deprecate_positional_args
 from ..metrics import accuracy_score
 from ..base import OutlierMixin
 
@@ -66,6 +67,23 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
         such a way we obtain the expected number of outliers (samples with
         decision function < 0) in training.
 
+        .. versionadded:: 0.20
+
+    raw_location_ : ndarray of shape (n_features,)
+        The raw robust estimated location before correction and re-weighting.
+
+    raw_covariance_ : ndarray of shape (n_features, n_features)
+        The raw robust estimated covariance before correction and re-weighting.
+
+    raw_support_ : ndarray of shape (n_samples,)
+        A mask of the observations that have been used to compute
+        the raw robust estimates of location and shape, before correction
+        and re-weighting.
+
+    dist_ : ndarray of shape (n_samples,)
+        Mahalanobis distances of the training set (on which :meth:`fit` is
+        called) observations.
+
     Examples
     --------
     >>> import numpy as np
@@ -102,7 +120,8 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
        minimum covariance determinant estimator" Technometrics 41(3), 212
        (1999)
     """
-    def __init__(self, store_precision=True, assume_centered=False,
+    @_deprecate_positional_args
+    def __init__(self, *, store_precision=True, assume_centered=False,
                  support_fraction=None, contamination=0.1,
                  random_state=None):
         super().__init__(
