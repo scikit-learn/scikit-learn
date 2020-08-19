@@ -35,6 +35,13 @@ def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer):
         X_train, y_train, lambda estimator, features:
         _score(estimator, X_test[:, features], y_test, scorer)).scores_
 
+def std_interval(array):
+    '''
+    Return the standard diviation intercval of an arrary.
+    '''
+    mean = np.mean(array)
+    std = np.std(array)
+    return(mean-std,mean+std)
 
 class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     """Feature ranking with recursive feature elimination.
@@ -451,6 +458,11 @@ class RFECV(RFE):
         return importance for each feature.
 
         .. versionadded:: 0.24
+        
+    active_feature_size_selection: bool, default='False'
+        if True, rankings will generate for every feature and will enable
+        selected_feature_size parameter in the adjust_feature_size method.
+        if False, normal rfecv will be performed.
 
     Attributes
     ----------
@@ -515,7 +527,7 @@ class RFECV(RFE):
     @_deprecate_positional_args
     def __init__(self, estimator, *, step=1, min_features_to_select=1,
                  cv=None, scoring=None, verbose=0, n_jobs=None,
-                 importance_getter='auto'):
+                 importance_getter='auto', active_feature_size_selection=False):
         self.estimator = estimator
         self.step = step
         self.importance_getter = importance_getter
@@ -524,6 +536,7 @@ class RFECV(RFE):
         self.verbose = verbose
         self.n_jobs = n_jobs
         self.min_features_to_select = min_features_to_select
+        self.active_feature_size_selection = active_feature_size_selection
 
     def fit(self, X, y, groups=None):
         """Fit the RFE model and automatically tune the number of selected
@@ -597,9 +610,18 @@ class RFECV(RFE):
         scores = np.sum(scores, axis=0)
         scores_rev = scores[::-1]
         argmax_idx = len(scores) - np.argmax(scores_rev) - 1
-        n_features_to_select = max(
-            n_features - (argmax_idx * step),
-            self.min_features_to_select)
+        
+        #Set the minimum number of features to 1 
+        #in order to record the ranking for every feature
+        if self.active_feature_size_selection:
+            n_features_to_select = 1
+
+        #If active_feature_size_selection is False
+        #Nothing will be changed  
+        else:
+            n_features_to_select = max(
+                n_features - (argmax_idx * step),
+                self.min_features_to_select)
 
         # Re-execute an elimination with best_k over the whole set
         rfe = RFE(estimator=self.estimator,
@@ -619,4 +641,96 @@ class RFECV(RFE):
         # Fixing a normalization error, n is equal to get_n_splits(X, y) - 1
         # here, the scores are normalized by get_n_splits(X, y)
         self.grid_scores_ = scores[::-1] / cv.get_n_splits(X, y, groups)
+        
+        # Set attributes to optimal feature size if active_feature_size_selection is true
+        if self.active_feature_size_selection:
+            self.ranking_original = self.ranking_
+            optimal_feature_size = list(self.grid_scores_).index(np.max(self.grid_scores_))+1
+            self.ranking_ = np.array([i-optimal_feature_size+1 if i>optimal_feature_size else 1 for i in self.ranking_original])
+            self.support_ = np.array([True if i==1 else False for i in self.ranking_])
+            self.n_features_ = list(self.ranking_).count(1)
+            
         return self
+    
+    def adjust_feature_size(self, selected_feature_size = None):
+        '''
+        Adjust the feature size customizablly with visualization.
+        (from 1 to the full feature size)
+        (With updated ranking_, support_, n_features attributes)
+
+        Parameters
+        ----------        
+        selected_feature_size : int, (default=None)
+            The chosen number of features selected. If the number is greater 
+            than the full feature size or if the variable is set to None, only 
+            the optimal feature size will be shown.
+            
+        Examples
+        --------
+        The following example shows how to chose the custom feature size with 
+        the adjust_feature_size function (Minimal feature size first)
+
+        # Import library
+        from sklearn.ensemble import RandomForestClassifier
+        from sklearn.datasets import make_classification
+
+        # Make data
+        X, y = make_classification(n_samples=50,
+                                   n_features=30,
+                                   n_informative=5,
+                                   n_redundant=0,
+                                   n_repeated=0,
+                                   n_classes=2,
+                                   random_state=0,
+                                   shuffle=False)
+
+        # Build a random forest model and perform the RFE with 5-fold cross validation
+        clf = RandomForestClassifier(random_state=0)
+        rfecv = RFECV(estimator=clf, step=1, cv=StratifiedKFold(5),
+                      scoring='roc_auc',n_jobs=-1,active_feature_size_selection=True)
+        rfecv.fit(X, y)
+
+        # Adjust the feature size to maximize your need
+        rfecv.adjust_feature_size(selected_feature_size=26)
+        rfecv.adjust_feature_size(selected_feature_size=15)
+
+        # Access the updated attitbute
+        print(rfecv.ranking_)
+        '''
+        #calculate mean score, standard deviation, score intervals and optimal feature_size
+        optimal_feature_size = list(self.grid_scores_).index(np.max(self.grid_scores_))+1
+        score_lower,score_upper = zip(*[std_interval(row) for row in list(zip(*self.scores))[::-1]])
+        n_features_selected = range(1, len(self.grid_scores_) + 1)
+        
+        # Visualize 
+        plt.figure(figsize=(9, 6))
+        plt.plot(n_features_selected, self.grid_scores_, color='#14213d',
+                    label=r'Mean score',
+                    lw=2, alpha=.8)
+        plt.fill_between(n_features_selected, score_lower, score_upper, color='#90a8c3', alpha=.2,
+                            label=r'$\pm$ 1 std. dev.')
+
+        if selected_feature_size and self.active_feature_size_selection:
+            #Requires self.active_feature_size_selection to be True
+            #change attribute
+                self.ranking_ = np.array([i-selected_feature_size+1 if i>selected_feature_size else 1 for i in self.ranking_original])
+                self.support_ = np.array([True if i==1 else False for i in self.ranking_])
+                self.n_features_ = list(self.ranking_).count(1)
+                #plot
+                selected_size_score = self.grid_scores_[selected_feature_size-1]
+                plt.axvline(x=selected_feature_size, linestyle='--', lw=2, color='#b2182b',
+                        label='Selected feature size \n(score = %0.3f) \n(feature size = %i)' % (selected_size_score,selected_feature_size), alpha=.8)
+                plt.axvline(x=optimal_feature_size, linestyle='--', lw=2, color='#d7b9d5',
+                        label='Optimal feature size \n(score = %0.3f) \n(feature size = %i)' % (np.max(self.grid_scores_),optimal_feature_size), alpha=.8)
+
+        else:
+            if not self.active_feature_size_selection and selected_feature_size:
+                print('In order to select feature size, please set active_feature_size_selection to True')
+            plt.axvline(x=optimal_feature_size, linestyle='--', lw=2, color='#b2182b',
+                    label='Optimal feature size \n(score = %0.3f) \n(feature size = %i)' % (np.max(self.grid_scores_),optimal_feature_size), alpha=.8)
+
+        plt.xlabel("Number of features selected")
+        plt.ylabel("Cross validation score (nb of correct classifications)")
+        plt.title(f'Recursive Feature Elimination with Cross Validation')
+        plt.legend(loc="lower right",labelspacing=1.3)
+        plt.show()
