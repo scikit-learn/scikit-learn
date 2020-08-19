@@ -1693,8 +1693,8 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         self._default_test_size = 0.1
 
     def _iter_indices(self, X, y, groups=None):
-        class_counts, n_classes, n_test, n_train, y_indices = self.\
-            _compute_counts(X, y)
+        class_counts, n_classes, n_test, n_train, y_indices = \
+            self._compute_counts(X, y)
         if np.min(class_counts) < 2:
             raise ValueError("The least populated class in y has only 1"
                              " member, which is too few. The minimum"
@@ -1718,8 +1718,11 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         n_samples = _num_samples(X)
         y = check_array(y, ensure_2d=False, dtype=None)
         n_train, n_test = _validate_shuffle_split(
-            n_samples, self.test_size, self.train_size,
-            default_test_size=self._default_test_size)
+            n_samples,
+            self.test_size,
+            self.train_size,
+            default_test_size=self._default_test_size
+        )
         if y.ndim == 2:
             # for multi-label y, map each distinct row to a string repr
             # using join because str(row) uses an ellipsis if len(row) > 1000
@@ -1729,8 +1732,9 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         class_counts = np.bincount(y_indices)
         return class_counts, n_classes, n_test, n_train, y_indices
 
-    def _split_from_counts(self, class_counts, n_classes, n_test, n_train,
-                           y_indices):
+    def _split_from_counts(
+        self, class_counts, n_classes, n_test, n_train, y_indices
+    ):
         # Find the sorted list of instances for each class:
         # (np.unique above performs a sort, so code is O(n logn) already)
         class_indices = np.split(np.argsort(y_indices, kind='mergesort'),

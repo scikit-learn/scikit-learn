@@ -1284,14 +1284,13 @@ def learning_curve(estimator, X, y, *, groups=None,
         Whether to shuffle training data before taking prefixes of it
         based on``train_sizes``.
 
-    stratify : bool, default=None
-        Whether to split training data into subsets of varying sizes
-        (during each iteration of cross-validation) in a stratified fashion;
-        when True, each training set will be sampled such that the proportion
-        of each class matches the full training data (for the current iteration
-        of cross-validation) as well as possible.
-        Stratification is done by using y as the class labels.
-        If shuffle=False or y is None, then stratify must be False.
+    stratify : bool, default=False
+        Whether to split training data into subsets of varying sizes in a
+        stratified fashion during each iteration of cross-validation.
+        If `True`, each training set will be sampled such that the proportion
+        of each class is as close as possible to the full training data.
+        The class proportion is computed using `y`.
+        If `shuffle=False` or `y` is `None`, then `stratify` should be `False`.
 
         .. versionadded:: 0.24
 
@@ -1342,14 +1341,15 @@ def learning_curve(estimator, X, y, *, groups=None,
                          "to exploit incremental learning")
     if stratify:
         if not shuffle:
-            raise ValueError(
-                "Stratification is not implemented for shuffle=False")
+            raise NotImplementedError(
+                "Stratification is not implemented when shuffle=False")
         elif y is None:
             raise ValueError(
-                "Stratification is meaningless for y=None")
+                "Cannot stratify the training set when y is None")
         # we need to use random_seed, i.e. integer, not RandomState instance,
         # in order to make training subsets growing, not disjoint
-        random_seed = check_random_state(random_state).randint(2**31)
+        MAX_INT = np.iinfo(np.int32).max
+        random_seed = check_random_state(random_state).randint(MAX_INT)
     X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
@@ -1371,7 +1371,8 @@ def learning_curve(estimator, X, y, *, groups=None,
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
                         verbose=verbose)
 
-    if shuffle and not stratify:  # if stratify, we shuffle at each iteration
+    if shuffle and not stratify:
+        # if stratify, we shuffle at each iteration
         rng = check_random_state(random_state)
         cv_iter = ((rng.permutation(train), test) for train, test in cv_iter)
 
@@ -1386,15 +1387,23 @@ def learning_curve(estimator, X, y, *, groups=None,
         for train, test in cv_iter:
             for n_train_samples in train_sizes_abs:
                 if stratify and n_train_samples < n_max_training_samples:
-                    cvi = StratifiedShuffleSplit(test_size=None,
-                                                 train_size=n_train_samples,
-                                                 random_state=random_seed)
+                    cvi = StratifiedShuffleSplit(
+                        test_size=None,
+                        train_size=n_train_samples,
+                        random_state=random_seed
+                    )
                     # Test size can be too small to pass validation checks
-                    # in cv.split() method, therefore we call private methods
-                    class_counts, n_classes, n_test, n_train, y_indices = cvi.\
-                        _compute_counts(X=train, y=y[train])
-                    cur_train_indices, useless = next(cvi._split_from_counts(
-                        class_counts, n_classes, n_test, n_train, y_indices))
+                    # in cv.split() method, then we call the private methods
+                    class_counts, n_classes, n_test, n_train, y_indices = \
+                        cvi._compute_counts(
+                            X=train, y=_safe_indexing(y, train)
+                        )
+                    cur_train_indices, _ = next(
+                        cvi._split_from_counts(
+                            class_counts, n_classes,
+                            n_test, n_train, y_indices
+                        )
+                    )
                     cur_train = _safe_indexing(train, cur_train_indices)
                 else:
                     cur_train = train[:n_train_samples]
