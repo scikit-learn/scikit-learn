@@ -1229,25 +1229,23 @@ def test_check_sparse_pandas_sp_format(sp_format):
 ])
 def test_check_pandas_sparse_invalid(ntype1, ntype2):
     pd = pytest.importorskip("pandas", minversion="0.25.0")
-    if parse_version(pd.__version__) >= parse_version('1.1'):
-        pytest.skip("issue of generating an object dtype coo_matrix"
-                    " from a DataFrame with extension arrays with"
-                    " different numeric types was fixed in pandas"
-                    " 1.1.0")
-
     df = pd.DataFrame({'col1': pd.arrays.SparseArray([0, 1, 0],
                                                      dtype=ntype1),
                        'col2': pd.arrays.SparseArray([1, 0, 1],
                                                      dtype=ntype2)})
-    with pytest.raises(ValueError,
-                       match="Pandas DataFrame with mixed "
-                             "sparse extension arrays"):
+
+    if parse_version(pd.__version__) < parse_version('1.1'):
+        with pytest.raises(ValueError,
+                           match="Pandas DataFrame with mixed "
+                                 "sparse extension arrays"):
+            check_array(df, **{'accept_sparse': ['csr', 'csc'],
+                               'ensure_min_features': 2})
+    else:
         check_array(df, **{'accept_sparse': ['csr', 'csc'],
                            'ensure_min_features': 2})
 
 
 @pytest.mark.parametrize('ntype1, ntype2', [
-    ("float128", "longfloat"),
     ("longfloat", "longdouble"),
     ("float16", "half"),
     ("single", "float32"),
