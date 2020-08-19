@@ -503,7 +503,7 @@ def test_plot_calibration_curve_no_predict_proba(pyplot, data_binary):
     X, y = data_binary
     clf = LinearSVC().fit(X, y)
 
-    msg = "Response method 'predict_proba' not defined in"
+    msg = "response method predict_proba is not defined in"
     with pytest.raises(ValueError, match=msg):
         plot_calibration_curve(clf, X, y)
 
