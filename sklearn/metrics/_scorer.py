@@ -30,7 +30,7 @@ from . import (r2_score, median_absolute_error, max_error, mean_absolute_error,
                f1_score, roc_auc_score, average_precision_score,
                precision_score, recall_score, log_loss,
                balanced_accuracy_score, explained_variance_score,
-               brier_score_loss, jaccard_score)
+               brier_score_loss, jaccard_score, mean_absolute_percentage_error)
 
 from .cluster import adjusted_rand_score
 from .cluster import homogeneity_score
@@ -144,7 +144,7 @@ class _BaseScorer:
             Trained estimator to use for scoring. Must have a predict_proba
             method; the output of that is used to compute the score.
 
-        X : array-like or sparse matrix
+        X : {array-like, sparse matrix}
             Test data that will be fed to estimator.predict.
 
         y_true : array-like
@@ -180,7 +180,7 @@ class _PredictScorer(_BaseScorer):
             Trained estimator to use for scoring. Must have a predict_proba
             method; the output of that is used to compute the score.
 
-        X : array-like or sparse matrix
+        X : {array-like, sparse matrix}
             Test data that will be fed to estimator.predict.
 
         y_true : array-like
@@ -219,14 +219,14 @@ class _ProbaScorer(_BaseScorer):
             Trained classifier to use for scoring. Must have a predict_proba
             method; the output of that is used to compute the score.
 
-        X : array-like or sparse matrix
+        X : {array-like, sparse matrix}
             Test data that will be fed to clf.predict_proba.
 
         y : array-like
             Gold standard target values for X. These must be class labels,
             not probabilities.
 
-        sample_weight : array-like, optional (default=None)
+        sample_weight : array-like, default=None
             Sample weights.
 
         Returns
@@ -271,7 +271,7 @@ class _ThresholdScorer(_BaseScorer):
             decision_function method or a predict_proba method; the output of
             that is used to compute the score.
 
-        X : array-like or sparse matrix
+        X : {array-like, sparse matrix}
             Test data that will be fed to clf.decision_function or
             clf.predict_proba.
 
@@ -279,7 +279,7 @@ class _ThresholdScorer(_BaseScorer):
             Gold standard target values for X. These must be class labels,
             not decision function values.
 
-        sample_weight : array-like, optional (default=None)
+        sample_weight : array-like, default=None
             Sample weights.
 
         Returns
@@ -335,8 +335,8 @@ def get_scorer(scoring):
 
     Parameters
     ----------
-    scoring : str | callable
-        scoring method as string. If callable it is returned as is.
+    scoring : str or callable
+        Scoring method as string. If callable it is returned as is.
 
     Returns
     -------
@@ -423,7 +423,7 @@ def check_scoring(estimator, scoring=None, *, allow_none=False):
                          " None. %r was passed" % scoring)
 
 
-def _check_multimetric_scoring(estimator, scoring=None):
+def _check_multimetric_scoring(estimator, scoring):
     """Check the scoring parameter in cases when multiple metrics are allowed
 
     Parameters
@@ -431,91 +431,66 @@ def _check_multimetric_scoring(estimator, scoring=None):
     estimator : sklearn estimator instance
         The estimator for which the scoring will be applied.
 
-    scoring : str, callable, list, tuple or dict, default=None
+    scoring : list, tuple or dict
         A single string (see :ref:`scoring_parameter`) or a callable
         (see :ref:`scoring`) to evaluate the predictions on the test set.
 
         For evaluating multiple metrics, either give a list of (unique) strings
         or a dict with names as keys and callables as values.
 
-        NOTE that when using custom scorers, each scorer should return a single
-        value. Metric functions returning a list/array of values can be wrapped
-        into multiple scorers that return one value each.
-
         See :ref:`multimetric_grid_search` for an example.
-
-        If None the estimator's score method is used.
-        The return value in that case will be ``{'score': <default_scorer>}``.
-        If the estimator's score method is not available, a ``TypeError``
-        is raised.
 
     Returns
     -------
     scorers_dict : dict
         A dict mapping each scorer name to its validated scorer.
-
-    is_multimetric : bool
-        True if scorer is a list/tuple or dict of callables
-        False if scorer is None/str/callable
     """
-    if callable(scoring) or scoring is None or isinstance(scoring,
-                                                          str):
-        scorers = {"score": check_scoring(estimator, scoring=scoring)}
-        return scorers, False
-    else:
-        err_msg_generic = ("scoring should either be a single string or "
-                           "callable for single metric evaluation or a "
-                           "list/tuple of strings or a dict of scorer name "
-                           "mapped to the callable for multiple metric "
-                           "evaluation. Got %s of type %s"
-                           % (repr(scoring), type(scoring)))
+    err_msg_generic = (
+        f"scoring is invalid (got {scoring!r}). Refer to the "
+        "scoring glossary for details: "
+        "https://scikit-learn.org/stable/glossary.html#term-scoring")
 
-        if isinstance(scoring, (list, tuple, set)):
-            err_msg = ("The list/tuple elements must be unique "
-                       "strings of predefined scorers. ")
-            invalid = False
-            try:
-                keys = set(scoring)
-            except TypeError:
-                invalid = True
-            if invalid:
-                raise ValueError(err_msg)
-
-            if len(keys) != len(scoring):
-                raise ValueError(err_msg + "Duplicate elements were found in"
-                                 " the given list. %r" % repr(scoring))
-            elif len(keys) > 0:
-                if not all(isinstance(k, str) for k in keys):
-                    if any(callable(k) for k in keys):
-                        raise ValueError(err_msg +
-                                         "One or more of the elements were "
-                                         "callables. Use a dict of score name "
-                                         "mapped to the scorer callable. "
-                                         "Got %r" % repr(scoring))
-                    else:
-                        raise ValueError(err_msg +
-                                         "Non-string types were found in "
-                                         "the given list. Got %r"
-                                         % repr(scoring))
-                scorers = {scorer: check_scoring(estimator, scoring=scorer)
-                           for scorer in scoring}
-            else:
-                raise ValueError(err_msg +
-                                 "Empty list was given. %r" % repr(scoring))
-
-        elif isinstance(scoring, dict):
+    if isinstance(scoring, (list, tuple, set)):
+        err_msg = ("The list/tuple elements must be unique "
+                   "strings of predefined scorers. ")
+        invalid = False
+        try:
             keys = set(scoring)
+        except TypeError:
+            invalid = True
+        if invalid:
+            raise ValueError(err_msg)
+
+        if len(keys) != len(scoring):
+            raise ValueError(f"{err_msg} Duplicate elements were found in"
+                             f" the given list. {scoring!r}")
+        elif len(keys) > 0:
             if not all(isinstance(k, str) for k in keys):
-                raise ValueError("Non-string types were found in the keys of "
-                                 "the given dict. scoring=%r" % repr(scoring))
-            if len(keys) == 0:
-                raise ValueError("An empty dict was passed. %r"
-                                 % repr(scoring))
-            scorers = {key: check_scoring(estimator, scoring=scorer)
-                       for key, scorer in scoring.items()}
+                if any(callable(k) for k in keys):
+                    raise ValueError(f"{err_msg} One or more of the elements "
+                                     "were callables. Use a dict of score "
+                                     "name mapped to the scorer callable. "
+                                     f"Got {scoring!r}")
+                else:
+                    raise ValueError(f"{err_msg} Non-string types were found "
+                                     f"in the given list. Got {scoring!r}")
+            scorers = {scorer: check_scoring(estimator, scoring=scorer)
+                       for scorer in scoring}
         else:
-            raise ValueError(err_msg_generic)
-        return scorers, True
+            raise ValueError(f"{err_msg} Empty list was given. {scoring!r}")
+
+    elif isinstance(scoring, dict):
+        keys = set(scoring)
+        if not all(isinstance(k, str) for k in keys):
+            raise ValueError("Non-string types were found in the keys of "
+                             f"the given dict. scoring={scoring!r}")
+        if len(keys) == 0:
+            raise ValueError(f"An empty dict was passed. {scoring!r}")
+        scorers = {key: check_scoring(estimator, scoring=scorer)
+                   for key, scorer in scoring.items()}
+    else:
+        raise ValueError(err_msg_generic)
+    return scorers
 
 
 @_deprecate_positional_args
@@ -536,12 +511,12 @@ def make_scorer(score_func, *, greater_is_better=True, needs_proba=False,
         Score function (or loss function) with signature
         ``score_func(y, y_pred, **kwargs)``.
 
-    greater_is_better : boolean, default=True
+    greater_is_better : bool, default=True
         Whether score_func is a score function (default), meaning high is good,
         or a loss function, meaning low is good. In the latter case, the
         scorer object will sign-flip the outcome of the score_func.
 
-    needs_proba : boolean, default=False
+    needs_proba : bool, default=False
         Whether score_func requires predict_proba to get probability estimates
         out of a classifier.
 
@@ -549,7 +524,7 @@ def make_scorer(score_func, *, greater_is_better=True, needs_proba=False,
         a 1D `y_pred` (i.e., probability of the positive class, shape
         `(n_samples,)`).
 
-    needs_threshold : boolean, default=False
+    needs_threshold : bool, default=False
         Whether score_func takes a continuous decision certainty.
         This only works for binary classification using estimators that
         have either a decision_function or predict_proba method.
@@ -614,6 +589,9 @@ neg_mean_squared_log_error_scorer = make_scorer(mean_squared_log_error,
                                                 greater_is_better=False)
 neg_mean_absolute_error_scorer = make_scorer(mean_absolute_error,
                                              greater_is_better=False)
+neg_mean_absolute_percentage_error_scorer = make_scorer(
+    mean_absolute_percentage_error, greater_is_better=False
+)
 neg_median_absolute_error_scorer = make_scorer(median_absolute_error,
                                                greater_is_better=False)
 neg_root_mean_squared_error_scorer = make_scorer(mean_squared_error,
@@ -674,6 +652,7 @@ SCORERS = dict(explained_variance=explained_variance_scorer,
                max_error=max_error_scorer,
                neg_median_absolute_error=neg_median_absolute_error_scorer,
                neg_mean_absolute_error=neg_mean_absolute_error_scorer,
+               neg_mean_absolute_percentage_error=neg_mean_absolute_percentage_error_scorer,  # noqa
                neg_mean_squared_error=neg_mean_squared_error_scorer,
                neg_mean_squared_log_error=neg_mean_squared_log_error_scorer,
                neg_root_mean_squared_error=neg_root_mean_squared_error_scorer,

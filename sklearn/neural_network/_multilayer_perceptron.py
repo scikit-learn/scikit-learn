@@ -894,6 +894,12 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     out_activation_ : str
         Name of the output activation function.
 
+    loss_curve_ : list of shape (n_iters,)
+        Loss value evaluated at the end of each training step.
+
+    t_ : int
+        Mathematically equals `n_iters * X.shape[0]`, it means
+        `time_step` and it is used by optimizer's learning rate scheduler.
 
     Examples
     --------
@@ -991,7 +997,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
         # This downcast to bool is to prevent upcasting when working with
         # float32 data
-        y = self._label_binarizer.transform(y).astype(np.bool)
+        y = self._label_binarizer.transform(y).astype(bool)
         return X, y
 
     def predict(self, X):
@@ -1023,7 +1029,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         X : ndarray or sparse matrix of shape (n_samples, n_features)
             The input data.
 
-        y : ndarray, shape (n_samples,) or (n_samples, n_outputs)
+        y : ndarray of shape (n_samples,) or (n_samples, n_outputs)
             The target values (class labels in classification, real numbers in
             regression).
 
@@ -1040,13 +1046,13 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input data.
 
-        y : array-like, shape (n_samples,)
+        y : array-like of shape (n_samples,)
             The target values.
 
-        classes : array, shape (n_classes), default None
+        classes : array of shape (n_classes,), default=None
             Classes across all calls to partial_fit.
             Can be obtained via `np.unique(y_all)`, where y_all is the
             target vector of the entire dataset.
@@ -1312,6 +1318,13 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
     out_activation_ : str
         Name of the output activation function.
+
+    loss_curve_ : list of shape (n_iters,)
+        Loss value evaluated at the end of each training step.
+
+    t_ : int
+        Mathematically equals `n_iters * X.shape[0]`, it means
+        `time_step` and it is used by optimizer's learning rate scheduler.
 
     Examples
     --------

@@ -34,7 +34,6 @@ from sklearn.decomposition import NMF
 from sklearn.linear_model import MultiTaskElasticNet, LogisticRegression
 from sklearn.svm import SVC, NuSVC
 from sklearn.neighbors import KNeighborsRegressor
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.validation import check_array
 from sklearn.utils import all_estimators
 from sklearn.exceptions import SkipTestWarning
@@ -113,6 +112,26 @@ class RaisesErrorInSetParams(BaseEstimator):
         X, y = self._validate_data(X, y)
         return self
 
+
+class HasMutableParameters(BaseEstimator):
+    def __init__(self, p=object()):
+        self.p = p
+
+    def fit(self, X, y=None):
+        X, y = self._validate_data(X, y)
+        return self
+
+
+class HasImmutableParameters(BaseEstimator):
+    # Note that object is an uninitialized class, thus immutable.
+    def __init__(self, p=42, q=np.int32(42), r=object):
+        self.p = p
+        self.q = q
+        self.r = r
+
+    def fit(self, X, y=None):
+        X, y = self._validate_data(X, y)
+        return self
 
 class ModifiesValueInsteadOfRaisingError(BaseEstimator):
     def __init__(self, p=0):
@@ -307,11 +326,19 @@ class EstimatorInconsistentForPandas(BaseEstimator):
         return np.array([self.value_] * X.shape[0])
 
 
-class UntaggedBinaryClassifier(DecisionTreeClassifier):
+class UntaggedBinaryClassifier(SGDClassifier):
     # Toy classifier that only supports binary classification, will fail tests.
-    def fit(self, X, y, sample_weight=None):
-        super().fit(X, y, sample_weight)
-        if np.all(self.n_classes_ > 2):
+    def fit(self, X, y, coef_init=None, intercept_init=None,
+            sample_weight=None):
+        super().fit(X, y, coef_init, intercept_init, sample_weight)
+        if len(self.classes_) > 2:
+            raise ValueError('Only 2 classes are supported')
+        return self
+
+    def partial_fit(self, X, y, classes=None, sample_weight=None):
+        super().partial_fit(X=X, y=y, classes=classes,
+                            sample_weight=sample_weight)
+        if len(self.classes_) > 2:
             raise ValueError('Only 2 classes are supported')
         return self
 
@@ -374,6 +401,15 @@ def test_check_estimator():
     assert_raises_regex(TypeError, msg, check_estimator, object)
     msg = "object has no attribute '_get_tags'"
     assert_raises_regex(AttributeError, msg, check_estimator, object())
+    msg = (
+        "Parameter 'p' of estimator 'HasMutableParameters' is of type "
+        "object which is not allowed"
+    )
+    # check that the "default_constructible" test checks for mutable parameters
+    check_estimator(HasImmutableParameters())  # should pass
+    assert_raises_regex(
+        AssertionError, msg, check_estimator, HasMutableParameters()
+    )
     # check that values returned by get_params match set_params
     msg = "get_params result does not match what was passed to set_params"
     assert_raises_regex(AssertionError, msg, check_estimator,

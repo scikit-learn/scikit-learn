@@ -39,12 +39,12 @@ def _modified_weiszfeld_step(X, x_old):
         Training vector, where n_samples is the number of samples and
         n_features is the number of features.
 
-    x_old : array, shape = [n_features]
+    x_old : ndarray of shape = (n_features,)
         Current start vector.
 
     Returns
     -------
-    x_new : array, shape = [n_features]
+    x_new : ndarray of shape (n_features,)
         New iteration step.
 
     References
@@ -88,15 +88,15 @@ def _spatial_median(X, max_iter=300, tol=1.e-3):
         Training vector, where n_samples is the number of samples and
         n_features is the number of features.
 
-    max_iter : int, optional
-        Maximum number of iterations.  Default is 300.
+    max_iter : int, default=300
+        Maximum number of iterations.
 
-    tol : float, optional
-        Stop the algorithm if spatial_median has converged. Default is 1.e-3.
+    tol : float, default=1.e-3
+        Stop the algorithm if spatial_median has converged.
 
     Returns
     -------
-    spatial_median : array, shape = [n_features]
+    spatial_median : ndarray of shape = (n_features,)
         Spatial median.
 
     n_iter : int
@@ -161,10 +161,10 @@ def _lstsq(X, y, indices, fit_intercept):
         Design matrix, where n_samples is the number of samples and
         n_features is the number of features.
 
-    y : array, shape = [n_samples]
+    y : ndarray of shape (n_samples,)
         Target vector, where n_samples is the number of samples.
 
-    indices : array, shape = [n_subpopulation, n_subsamples]
+    indices : ndarray of shape (n_subpopulation, n_subsamples)
         Indices of all subsamples with respect to the chosen subpopulation.
 
     fit_intercept : bool
@@ -172,7 +172,7 @@ def _lstsq(X, y, indices, fit_intercept):
 
     Returns
     -------
-    weights : array, shape = [n_subpopulation, n_features + intercept]
+    weights : ndarray of shape (n_subpopulation, n_features + intercept)
         Solution matrix of n_subpopulation solved least square problems.
     """
     fit_intercept = int(fit_intercept)
@@ -209,11 +209,11 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
 
     Parameters
     ----------
-    fit_intercept : boolean, default=True
+    fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations.
 
-    copy_X : boolean, default=True
+    copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
     max_subpopulation : int, default=1e4
@@ -240,24 +240,24 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
     tol : float, default=1.e-3
         Tolerance when calculating spatial median.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int or RandomState instance, default=None
         A random number generator instance to define the state of the random
         permutations generator. Pass an int for reproducible output across
         multiple function calls.
         See :term:`Glossary <random_state>`
 
-    n_jobs : int or None, default=None
+    n_jobs : int, default=None
         Number of CPUs to use during the cross validation.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    verbose : boolean, default=False
+    verbose : bool, default=False
         Verbose mode when fitting the model.
 
     Attributes
     ----------
-    coef_ : array, shape = (n_features)
+    coef_ : ndarray of shape (n_features,)
         Coefficients of the regression model (median of distribution).
 
     intercept_ : float
@@ -347,10 +347,10 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
 
         Parameters
         ----------
-        X : numpy array of shape [n_samples, n_features]
-            Training data
-        y : numpy array of shape [n_samples]
-            Target values
+        X : ndarray of shape (n_samples, n_features)
+            Training data.
+        y : ndarray of shape (n_samples,)
+            Target values.
 
         Returns
         -------
