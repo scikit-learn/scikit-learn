@@ -1,5 +1,6 @@
 
 from functools import partial
+from inspect import signature
 from itertools import product
 from itertools import chain
 from itertools import permutations
@@ -1412,3 +1413,42 @@ def test_thresholded_metric_permutation_invariance(name):
 
         current_score = metric(y_true_perm, y_score_perm)
         assert_almost_equal(score, current_score)
+
+
+@pytest.mark.parametrize(
+    "metric",
+    [
+        average_precision_score,
+        brier_score_loss,
+        f1_score,
+        fbeta_score,
+        jaccard_score,
+        precision_recall_curve,
+        precision_score,
+        recall_score,
+        roc_curve,
+    ],
+)
+def test_metrics_pos_label_error_str(metric):
+    # check that the error message if `pos_label` is not specified and the
+    # targets is made of strings.
+    rng = np.random.RandomState(42)
+    y1 = np.array(["spam"] * 3 + ["eggs"] * 2, dtype=object)
+    y2 = rng.randint(0, 2, size=y1.size)
+
+    err_msg_pos_label_None = (
+        "y_true takes value in {'eggs', 'spam'} and pos_label is not "
+        "specified: either make y_true take value in {0, 1} or {-1, 1} or "
+        "pass pos_label explicit"
+    )
+    err_msg_pos_label_1 = "pos_label=1 is invalid. Set it to a label in y_true"
+
+    pos_label_default = signature(metric).parameters["pos_label"].default
+
+    err_msg = (
+        err_msg_pos_label_1
+        if pos_label_default == 1
+        else err_msg_pos_label_None
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        metric(y1, y2)
