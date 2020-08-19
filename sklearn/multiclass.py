@@ -612,7 +612,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         # TODO: Starting from 0.26, this should use the pairwise estimator tag.
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', category=FutureWarning)
-            pairwise = getattr(self.estimator, "_pairwise", False)
+            pairwise = self._pairwise
 
         self.pairwise_indices_ = (
             estimators_indices[1] if pairwise else None)
@@ -742,11 +742,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     @property
     def _pairwise(self):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
-        estimator_tags = self.estimator._get_tags()
-        try:
-            return estimator_tags["pairwise"]
-        except KeyError:
-            return getattr(self.estimator, "_pairwise", False)
+        return getattr(self.estimator, "_pairwise", False)
 
     def _more_tags(self):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""

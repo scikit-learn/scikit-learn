@@ -61,7 +61,7 @@ CROSS_DECOMPOSITION = ['PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']
 def _yield_checks(estimator):
     name = estimator.__class__.__name__
     tags = estimator._get_tags()
-    pairwise = tags.get('pairwise', False)
+    pairwise = _is_pairwise(estimator)
 
     yield check_no_attributes_set_in_init
     yield check_estimators_dtypes
@@ -674,7 +674,6 @@ class _NotAnArray:
             func.__name__))
 
 
-# TODO: Check the pairwise estimator tag in 0.26
 def _is_pairwise(estimator):
     """Returns True if estimator has the pairwise tag set to True.
 
@@ -2725,11 +2724,9 @@ def _enforce_estimator_tags_y(estimator, y):
 
 
 def _enforce_estimator_tags_x(estimator, X):
-    # Estimators with a `_pairwise` tag only accept
+    # Pairwise estimators only accept
     # X of shape (`n_samples`, `n_samples`)
-    with ignore_warnings(category=FutureWarning):
-        pairwise = _is_pairwise(estimator)
-    if pairwise:
+    if _is_pairwise(estimator):
         X = X.dot(X.T)
     # Estimators with `1darray` in `X_types` tag only accept
     # X of shape (`n_samples`,)
