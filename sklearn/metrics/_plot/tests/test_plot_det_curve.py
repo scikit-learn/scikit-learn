@@ -11,7 +11,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier
 
-from sklearn.metrics import detection_error_tradeoff_curve
+from sklearn.metrics import det_curve
 from sklearn.metrics import plot_det_curve
 
 
@@ -98,7 +98,7 @@ def test_plot_det_curve(
     if y_pred.ndim == 2:
         y_pred = y_pred[:, 1]
 
-    fpr, fnr, _ = detection_error_tradeoff_curve(
+    fpr, fnr, _ = det_curve(
         y, y_pred, sample_weight=sample_weight, pos_label=pos_label,
     )
 

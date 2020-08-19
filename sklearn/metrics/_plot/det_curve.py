@@ -2,7 +2,7 @@ import scipy as sp
 
 from .base import _get_response
 
-from .. import detection_error_tradeoff_curve
+from .. import det_curve
 
 from ...utils import check_matplotlib_support
 
@@ -189,11 +189,8 @@ def plot_det_curve(
         X, estimator, response_method, pos_label=pos_label
     )
 
-    fpr, fnr, _ = detection_error_tradeoff_curve(
-        y,
-        y_pred,
-        pos_label=pos_label,
-        sample_weight=sample_weight,
+    fpr, fnr, _ = det_curve(
+        y, y_pred, pos_label=pos_label, sample_weight=sample_weight,
     )
 
     name = estimator.__class__.__name__ if name is None else name
