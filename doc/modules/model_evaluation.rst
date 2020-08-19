@@ -1447,15 +1447,15 @@ The function :func:`detection_error_tradeoff_curve` computes the
 detection error tradeoff curve (DET) curve [WikipediaDET2017]_.
 Quoting Wikipedia:
 
-  "A detection error tradeoff (DET) graph is a graphical plot of error rates for
-  binary classification systems, plotting false reject rate vs. false accept
-  rate. The x- and y-axes are scaled non-linearly by their standard normal
-  deviates (or just by logarithmic transformation), yielding tradeoff curves
-  that are more linear than ROC curves, and use most of the image area to
-  highlight the differences of importance in the critical operating region."
+  "A detection error tradeoff (DET) graph is a graphical plot of error rates
+  for binary classification systems, plotting false reject rate vs. false
+  accept rate. The x- and y-axes are scaled non-linearly by their standard
+  normal deviates (or just by logarithmic transformation), yielding tradeoff
+  curves that are more linear than ROC curves, and use most of the image area
+  to highlight the differences of importance in the critical operating region."
 
 DET curves are a variation of receiver operating characteristic (ROC) curves
-where False Negative Rate is plotted on the ordinate instead of True Positive
+where False Negative Rate is plotted on the y-axis instead of True Positive
 Rate.
 DET curves are commonly plotted in normal deviate scale by transformation with
 :math:`\phi^{-1}` (with :math:`\phi` being the cumulative distribution
@@ -1476,8 +1476,8 @@ same classification task:
 
 * DET curves form a linear curve in normal deviate scale if the detection
   scores are normally (or close-to normally) distributed.
-  It was shown by [Navratil2007]_ that the reverse it not necessarily true and even more
-  general distributions are able produce linear DET curves.
+  It was shown by [Navratil2007]_ that the reverse it not necessarily true and
+  even more general distributions are able produce linear DET curves.
 
 * The normal deviate scale transformation spreads out the points such that a
   comparatively larger space of plot is occupied.
@@ -1485,8 +1485,8 @@ same classification task:
   distinguish on a DET plot.
 
 * With False Negative Rate being "inverse" to True Positive Rate the point
-  of perfection for DET curves is the origin (in contrast to the top left corner
-  for ROC curves).
+  of perfection for DET curves is the origin (in contrast to the top left
+  corner for ROC curves).
 
 **Applications and limitations:**
 
