@@ -28,7 +28,7 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (precision_score, recall_score, f1_score,
-                             brier_score_loss, log_loss)
+                             brier_score_loss, log_loss, roc_auc_score)
 from sklearn.calibration import CalibratedClassifierCV, plot_calibration_curve
 
 # %%
@@ -119,8 +119,9 @@ plt.show()
 # attributed to the fact that we have plenty of calibration data such that the
 # greater flexibility of the non-parametric model can be exploited.
 #
-# Below we show the Brier loss, log loss, precision, recall and F1 score (see
-# :ref:`User Guide <precision_recall_f_measure_metrics>`). Notice that
+# Below we show the Brier loss, log loss, precision, recall, F1 score (see
+# :ref:`User Guide <precision_recall_f_measure_metrics>`) and :ref:`ROC AUC
+# <roc_metrics>`. Notice that
 # although calibration improves the Brier loss (a metric composed of
 # calibration loss and refinement loss) and :ref:`log_loss`, it does not
 # significantly alter the prediction accuracy measures (precision, recall and
@@ -130,6 +131,9 @@ plt.show()
 # graph). Calibration should however, make the predicted probabilities more
 # accurate and thus more useful for making allocation decisions under
 # uncertainty.
+# Further, ROC AUC, should not change at all because calibration is a
+# monotonic transformation. Indeed, no rank metrics are affected by
+# calibration.
 
 index = []
 brier = []
@@ -137,6 +141,7 @@ logloss = []
 precision = []
 recall = []
 f1 = []
+roc_auc = []
 
 for i, (clf, name) in enumerate(clf_list):
     clf.fit(X_train, y_train)
@@ -151,10 +156,11 @@ for i, (clf, name) in enumerate(clf_list):
     precision.append(precision_score(y_test, y_pred))
     recall.append(recall_score(y_test, y_pred))
     f1.append(f1_score(y_test, y_pred))
+    roc_auc.append(roc_auc_score(y_test, y_pred))
 
 score_df = pd.DataFrame(
     data={'Brier loss': brier, 'Log loss': logloss, 'Precision': precision,
-          'Recall': recall, 'F1': f1},
+          'Recall': recall, 'F1': f1, 'ROC AUC': roc_auc},
     index=index,
 )
 score_df.round(3)
@@ -251,6 +257,7 @@ logloss = []
 precision = []
 recall = []
 f1 = []
+roc_auc = []
 
 for i, (clf, name) in enumerate(clf_list):
     clf.fit(X_train, y_train)
@@ -265,10 +272,11 @@ for i, (clf, name) in enumerate(clf_list):
     precision.append(precision_score(y_test, y_pred))
     recall.append(recall_score(y_test, y_pred))
     f1.append(f1_score(y_test, y_pred))
+    roc_auc.append(roc_auc_score(y_test, y_pred))
 
 score_df = pd.DataFrame(
     data={'Brier loss': brier, 'Log loss': logloss, 'Precision': precision,
-          'Recall': recall, 'F1': f1},
+          'Recall': recall, 'F1': f1, 'ROC AUC': roc_auc},
     index=index,
 )
 score_df.round(3)
