@@ -224,7 +224,7 @@ def detection_error_tradeoff_curve(y_true, y_score, pos_label=None,
 
     .. note::
        This metric is used for evaluation of ranking and error tradeoffs of
-       a binary.
+       a binary classification task.
 
     Read more in the :ref:`User Guide <det_curve>`.
 
