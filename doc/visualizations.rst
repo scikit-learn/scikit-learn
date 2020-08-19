@@ -78,7 +78,7 @@ Functions
 
    inspection.plot_partial_dependence
    metrics.plot_confusion_matrix
-   metrics.plot_det
+   metrics.plot_det_curve
    metrics.plot_precision_recall_curve
    metrics.plot_roc_curve
 
