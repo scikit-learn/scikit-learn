@@ -1412,3 +1412,27 @@ def test_thresholded_metric_permutation_invariance(name):
 
         current_score = metric(y_true_perm, y_score_perm)
         assert_almost_equal(score, current_score)
+
+
+@pytest.mark.parametrize(
+    "metric",
+    [
+        roc_curve,
+        precision_recall_curve,
+        brier_score_loss,
+    ],
+)
+def test_classification_pos_label_error_with_string(metric):
+    # check that we raise a consistent error if pos_label is not provided
+    # when the target is composed of strings
+    random_state = check_random_state(0)
+    y1 = np.array(["eggs"] * 2 + ["spam"] * 3, dtype=object)
+    y2 = random_state.randint(0, 2, size=(5,))
+
+    err_msg = (
+        "y_true takes value in {'eggs', 'spam'} and pos_label is not "
+        "specified: either make y_true take value in {0, 1} or {-1, 1} or "
+        "pass pos_label explicit"
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        metric(y1, y2)
