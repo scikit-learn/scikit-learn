@@ -36,7 +36,7 @@ def _assess_dimension(spectrum, rank, n_samples):
 
     Parameters
     ----------
-    spectrum : array of shape (n_features)
+    spectrum : ndarray of shape (n_features,)
         Data spectrum.
     rank : int
         Tested rank value. It should be strictly lower than n_features,
@@ -47,7 +47,7 @@ def _assess_dimension(spectrum, rank, n_samples):
 
     Returns
     -------
-    ll : float,
+    ll : float
         The log-likelihood
 
     Notes
@@ -130,7 +130,7 @@ class PCA(_BasePCA):
 
     Parameters
     ----------
-    n_components : int, float, None or str
+    n_components : int, float or str, default=None
         Number of components to keep.
         if n_components is not set all components are kept::
 
@@ -156,7 +156,7 @@ class PCA(_BasePCA):
         fit(X).transform(X) will not yield the expected results,
         use fit_transform(X) instead.
 
-    whiten : bool, optional (default False)
+    whiten : bool, default=False
         When True (False by default) the `components_` vectors are multiplied
         by the square root of n_samples and then divided by the singular values
         to ensure uncorrelated outputs with unit component-wise variances.
@@ -166,7 +166,7 @@ class PCA(_BasePCA):
         improve the predictive accuracy of the downstream estimators by
         making their data respect some hard-wired assumptions.
 
-    svd_solver : str {'auto', 'full', 'arpack', 'randomized'}
+    svd_solver : {'auto', 'full', 'arpack', 'randomized'}, default='auto'
         If auto :
             The solver is selected by a default policy based on `X.shape` and
             `n_components`: if the input data is larger than 500x500 and the
@@ -186,18 +186,20 @@ class PCA(_BasePCA):
 
         .. versionadded:: 0.18.0
 
-    tol : float >= 0, optional (default .0)
+    tol : float, default=0.0
         Tolerance for singular values computed by svd_solver == 'arpack'.
+        Must be of range [0.0, infinity).
 
         .. versionadded:: 0.18.0
 
-    iterated_power : int >= 0, or 'auto', (default 'auto')
+    iterated_power : int or 'auto', default='auto'
         Number of iterations for the power method computed by
         svd_solver == 'randomized'.
+        Must be of range [0, infinity).
 
         .. versionadded:: 0.18.0
 
-    random_state : int, RandomState instance, default=None
+    random_state : int or RandomState instance, default=None
         Used when the 'arpack' or 'randomized' solvers are used. Pass an int
         for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -206,12 +208,12 @@ class PCA(_BasePCA):
 
     Attributes
     ----------
-    components_ : array, shape (n_components, n_features)
+    components_ : ndarray of shape (n_components, n_features)
         Principal axes in feature space, representing the directions of
         maximum variance in the data. The components are sorted by
         ``explained_variance_``.
 
-    explained_variance_ : array, shape (n_components,)
+    explained_variance_ : ndarray of shape (n_components,)
         The amount of variance explained by each of the selected components.
 
         Equal to n_components largest eigenvalues
@@ -219,20 +221,20 @@ class PCA(_BasePCA):
 
         .. versionadded:: 0.18
 
-    explained_variance_ratio_ : array, shape (n_components,)
+    explained_variance_ratio_ : ndarray of shape (n_components,)
         Percentage of variance explained by each of the selected components.
 
         If ``n_components`` is not set then all components are stored and the
         sum of the ratios is equal to 1.0.
 
-    singular_values_ : array, shape (n_components,)
+    singular_values_ : ndarray of shape (n_components,)
         The singular values corresponding to each of the selected components.
         The singular values are equal to the 2-norms of the ``n_components``
         variables in the lower-dimensional space.
 
         .. versionadded:: 0.19
 
-    mean_ : array, shape (n_features,)
+    mean_ : ndarray of shape (n_features,)
         Per-feature empirical mean, estimated from the training set.
 
         Equal to `X.mean(axis=0)`.
@@ -336,7 +338,7 @@ class PCA(_BasePCA):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
@@ -356,7 +358,7 @@ class PCA(_BasePCA):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
@@ -365,7 +367,7 @@ class PCA(_BasePCA):
 
         Returns
         -------
-        X_new : array-like, shape (n_samples, n_components)
+        X_new : array-like of shape (n_samples, n_components)
             Transformed values.
 
         Notes
@@ -573,12 +575,12 @@ class PCA(_BasePCA):
 
         Parameters
         ----------
-        X : array, shape(n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The data.
 
         Returns
         -------
-        ll : array, shape (n_samples,)
+        ll : array-like of shape (n_samples,)
             Log-likelihood of each sample under the current model.
         """
         check_is_fitted(self)
@@ -601,7 +603,7 @@ class PCA(_BasePCA):
 
         Parameters
         ----------
-        X : array, shape(n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The data.
 
         y : None
