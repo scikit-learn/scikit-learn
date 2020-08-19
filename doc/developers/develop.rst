@@ -659,7 +659,7 @@ Here's a simple example of code using some of the above guidelines::
         ----------
         X : array-like of shape (n_samples, n_features)
             An array representing the data.
-        random_state : RandomState or int, default=0
+        random_state : int or RandomState instance, default=0
             The seed of the pseudo random number generator that selects a
             random sample. Pass an int for reproducible output across multiple
             function calls.
