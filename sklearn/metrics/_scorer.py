@@ -134,6 +134,18 @@ class _BaseScorer:
                 f"pos_label={pos_label} is not a valid label: {classes}"
             )
 
+    def _check_decision_function(self, y_pred, classes):
+        """Reverse the decision function depending of pos_label."""
+        pos_label = self._kwargs.get("pos_label", classes[1])
+        self._check_pos_label(pos_label, classes)
+        if pos_label == classes[0]:
+            # The implicit positive class of the binary classifier
+            # does not match `pos_label`: we need to invert the
+            # predictions
+            y_pred *= -1
+
+        return y_pred
+
     def _select_proba(self, y_pred, classes, support_multi_class):
         """Select the column of y_pred when probabilities are provided."""
         if y_pred.shape[1] == 2:
@@ -327,15 +339,10 @@ class _ThresholdScorer(_BaseScorer):
                 if isinstance(y_pred, list):
                     # For multi-output multi-class estimator
                     y_pred = np.vstack([p for p in y_pred]).T
-                elif y_type == "binary" and "pos_label" in self._kwargs:
-                    self._check_pos_label(
-                        self._kwargs["pos_label"], clf.classes_
+                elif y_type == "binary":
+                    y_pred = self._check_decision_function(
+                        y_pred, clf.classes_
                     )
-                    if self._kwargs["pos_label"] == clf.classes_[0]:
-                        # The implicit positive class of the binary classifier
-                        # does not match `pos_label`: we need to invert the
-                        # predictions
-                        y_pred *= -1
 
             except (NotImplementedError, AttributeError):
                 y_pred = method_caller(clf, "predict_proba", X)

@@ -9,6 +9,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import balanced_accuracy_score
 from sklearn.metrics import f1_score
 from sklearn.metrics import fbeta_score
+from sklearn.metrics import make_scorer
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
@@ -26,49 +27,37 @@ class MockNoPredictorClassifier(BaseEstimator):
         return self
 
 
-@pytest.mark.parametrize(
-    "Estimator, params, err_type, err_msg",
-    [
-        (LogisticRegression, {"method": "xxx"}, ValueError,
-         "'method' should be one of"),
-        (MockNoPredictorClassifier, {"method": "auto"}, TypeError,
-         "'base_estimator' must implement one of the"),
-        (SVC, {"method": "predict_proba"}, TypeError,
-         "'base_estimator' does not implement predict_proba"),
-        (LogisticRegression,
-         {"objective_metric": "accuracy", "objective_value": 0.5}, ValueError,
-         "When 'objective_metric' is a scoring function"),
-        (LogisticRegression, {"cv": 1.5}, ValueError, "Got 1.5"),
-        (LogisticRegression, {"refit": False}, ValueError,
-         "When cv has several folds, refit cannot be False"),
-        (LogisticRegression, {"cv": "prefit", "refit": True}, ValueError,
-         "When cv='prefit', refit cannot be True."),
-        (LogisticRegression, {"n_threshold": -10}, ValueError,
-         "'n_threshold' should be a strictly positive integer."),
-        (LogisticRegression, {"n_threshold": 10.5}, ValueError,
-         "'n_threshold' should be a strictly positive integer."),
-    ]
-)
-def test_cutoffclassifier_valid_params_error(Estimator, params, err_type,
-                                             err_msg):
-    # check that the proper errors are raised with wrong parameters
-    X, y = make_classification(n_samples=200, n_features=6, random_state=42,
-                               n_classes=2)
-    with pytest.raises(err_type, match=err_msg):
-        clf = CutoffClassifier(base_estimator=Estimator(), **params)
-        clf.fit(X, y)
-
-
-def test_cutoffclassifier_error_pos_label():
-    # check that we raise when the classes are not in {0, 1} or {-1, 1}
-    X, y = load_breast_cancer(return_X_y=True)
-    y += 1
-    err_msg = "'y_true' takes value in 1, 2 and 'pos_label' is not specified"
-    with pytest.raises(ValueError, match=err_msg):
-        CutoffClassifier(
-            base_estimator=make_pipeline(StandardScaler(),
-                                         LogisticRegression())
-        ).fit(X, y)
+# @pytest.mark.parametrize(
+#     "Estimator, params, err_type, err_msg",
+#     [
+#         (LogisticRegression, {"method": "xxx"}, ValueError,
+#          "'method' should be one of"),
+#         (MockNoPredictorClassifier, {"method": "auto"}, TypeError,
+#          "'base_estimator' must implement one of the"),
+#         (SVC, {"method": "predict_proba"}, TypeError,
+#          "'base_estimator' does not implement predict_proba"),
+#         (LogisticRegression,
+#          {"objective_metric": "accuracy", "objective_value": 0.5}, ValueError,
+#          "When 'objective_metric' is a scoring function"),
+#         (LogisticRegression, {"cv": 1.5}, ValueError, "Got 1.5"),
+#         (LogisticRegression, {"refit": False}, ValueError,
+#          "When cv has several folds, refit cannot be False"),
+#         (LogisticRegression, {"cv": "prefit", "refit": True}, ValueError,
+#          "When cv='prefit', refit cannot be True."),
+#         (LogisticRegression, {"n_threshold": -10}, ValueError,
+#          "'n_threshold' should be a strictly positive integer."),
+#         (LogisticRegression, {"n_threshold": 10.5}, ValueError,
+#          "'n_threshold' should be a strictly positive integer."),
+#     ]
+# )
+# def test_cutoffclassifier_valid_params_error(Estimator, params, err_type,
+#                                              err_msg):
+#     # check that the proper errors are raised with wrong parameters
+#     X, y = make_classification(n_samples=200, n_features=6, random_state=42,
+#                                n_classes=2)
+#     with pytest.raises(err_type, match=err_msg):
+#         clf = CutoffClassifier(base_estimator=Estimator(), **params)
+#         clf.fit(X, y)
 
 
 def test_cutoffclassifier_not_binary():
@@ -76,9 +65,23 @@ def test_cutoffclassifier_not_binary():
     X, y = load_iris(return_X_y=True)
     with pytest.raises(ValueError, match="Expected target of binary type."):
         CutoffClassifier(
-            base_estimator=make_pipeline(StandardScaler(),
-                                         LogisticRegression())
+            base_estimator=make_pipeline(
+                StandardScaler(), LogisticRegression()
+            )
         ).fit(X, y)
+
+
+def test_cutoffclassifier_xxx():
+    # check that an objective value of 0 give opposite predictions in with
+    # tpr and tnr
+    X, y = load_breast_cancer(return_X_y=True)
+    # replaces y by some strings
+    classes = np.array(["healthy", "cancer"], dtype=object)
+    y = classes[y]
+    clf = CutoffClassifier(
+        base_estimator=make_pipeline(StandardScaler(), LogisticRegression()),
+    )
+    y_pred_tpr = clf.fit(X, y).predict(X)
 
 
 def test_cutoffclassifier_limit_tpr_tnr():
@@ -97,10 +100,9 @@ def test_cutoffclassifier_limit_tpr_tnr():
 
 
 @pytest.mark.parametrize(
-    "method",
-    ["auto", "decision_function", "predict_proba"]
+    "response_method", ["auto", "decision_function", "predict_proba"]
 )
-def test_cutoffclassifier_with_objective_value(method):
+def test_cutoffclassifier_with_objective_value(response_method):
     # check that we can optimize a given metric as a callable
     X, y = load_breast_cancer(return_X_y=True)
     # remove feature to degrade performances
@@ -118,8 +120,8 @@ def test_cutoffclassifier_with_objective_value(method):
     lr = make_pipeline(StandardScaler(), LogisticRegression()).fit(X, y)
     model = CutoffClassifier(
         base_estimator=lr,
-        objective_metric=balanced_accuracy_score,
-        method=method,
+        objective_metric="balanced_accuracy",
+        response_method=response_method,
     )
     score_optimized = balanced_accuracy_score(y, model.fit(X, y).predict(X))
     score_baseline = balanced_accuracy_score(y, lr.predict(X))
@@ -133,11 +135,10 @@ def test_cutoffclassifier_metric_with_parameter():
     X, y = load_breast_cancer(return_X_y=True)
     lr = make_pipeline(StandardScaler(), LogisticRegression()).fit(X, y)
     model_fbeta = CutoffClassifier(
-        base_estimator=lr, objective_metric=fbeta_score,
-        objective_metric_params={"beta": 1}
+        base_estimator=lr, objective_metric=make_scorer(fbeta_score, beta=1),
     ).fit(X, y)
     model_f1 = CutoffClassifier(
-        base_estimator=lr, objective_metric=f1_score,
+        base_estimator=lr, objective_metric=make_scorer(f1_score),
     ).fit(X, y)
 
     assert (model_fbeta.decision_threshold_ ==
@@ -186,12 +187,15 @@ def test_cutoffclassifier_pretrained_estimator():
 
 
 @pytest.mark.parametrize(
-    "method",
-    ["auto", "decision_function", "predict_proba"]
+    "response_method", ["auto", "decision_function", "predict_proba"]
 )
-@pytest.mark.parametrize("metric", [balanced_accuracy_score, f1_score])
+@pytest.mark.parametrize(
+    "metric",
+    [make_scorer(balanced_accuracy_score),
+     make_scorer(f1_score, pos_label="cancer")]
+)
 @pytest.mark.parametrize("dtype", [None, object])
-def test_cutoffclassifier_with_string_targets(method, dtype, metric):
+def test_cutoffclassifier_with_string_targets(response_method, dtype, metric):
     # check that targets represented by str are properly managed
     # check with several metrics to be sure that `pos_label` is properly
     # dispatched
@@ -204,8 +208,7 @@ def test_cutoffclassifier_with_string_targets(method, dtype, metric):
     model = CutoffClassifier(
         base_estimator=make_pipeline(StandardScaler(), LogisticRegression()),
         objective_metric=metric,
-        pos_label="cancer",
-        method=method,
+        response_method=response_method,
     ).fit(X, y)
     assert_array_equal(np.sort(model.classes_), np.sort(classes))
     y_pred = model.predict(X[[0], :])
