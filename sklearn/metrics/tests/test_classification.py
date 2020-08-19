@@ -2262,8 +2262,8 @@ def test_brier_score_loss():
     y_true = np.array([0, 1, 2, 0])
     y_pred = np.array([0.8, 0.6, 0.4, 0.2])
     error_message = (
-        "Only binary classification is supported. Labels in y_true: "
-        "\[0 1 2\]"
+        r"Only binary classification is supported. Labels in y_true: "
+        r"\[0 1 2\]"
     )
 
     with pytest.raises(ValueError, match=error_message):
