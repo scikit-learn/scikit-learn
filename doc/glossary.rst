@@ -964,7 +964,9 @@ Class APIs and Estimator Types
 
     resampler
     resamplers
-        An estimator supporting :term:`fit_resample`.
+        An estimator supporting :term:`fit_resample`. This can be used in a
+        :class:`ResampledTrainer` to resample, augment or reduce the training
+        dataset passed to another estimator.
 
     vectorizer
     vectorizers
@@ -1236,9 +1238,25 @@ Methods
         this results in :term:`data leakage`.
 
     ``fit_resample``
-        A method on :term:`resamplers` which fits the estimator on a passed
-        dataset, and returns a new dataset. In the new dataset, samples may be
-        removed or added.
+        A method whose presence in an estimator is sufficient and necessary for
+        it to be a :term:`resampler`.
+        When called it should fit the estimator and return a new
+        dataset. In the new dataset, samples may be removed, added or modified.
+        In contrast to :term:`fit_transform`:
+        * X, y, and any other sample-aligned data may be generated;
+        * the samples in the returned dataset need not have any alignment or
+          correspondence to the input dataset.
+
+        This method has the signature ``fit_resample(X, y, **kw)`` and returns
+        a 3-tuple ``X_new, y_new, kw_new`` where ``kw_new`` is a dict mapping
+        names to data-aligned values that should be passed as fit parameters
+        to the subsequent estimator. Any keyword arguments passed in should be
+        resampled and returned, and if the resampler is not capable of
+        resampling the keyword arguments, it should raise a TypeError.
+
+        Ordinarily, this method is only called by a :class:`ResampledTrainer`,
+        which acts like a specialised pipeline for cases when the training data
+        should be augmented or resampled.
 
     ``get_feature_names``
         Primarily for :term:`feature extractors`, but also used for other
