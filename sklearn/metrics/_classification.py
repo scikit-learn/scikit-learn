@@ -1251,7 +1251,7 @@ def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
                          str(average_options))
 
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
-    present_labels = unique_labels(y_true, y_pred)
+    present_labels = unique_labels(y_true, y_pred).tolist()
     if average == 'binary':
         if y_type == 'binary':
             if pos_label not in present_labels:
