@@ -1074,9 +1074,7 @@ class _IdentityClassifier(LinearClassifierMixin):
 
 
 class _RidgeGCV(LinearModel):
-    """Ridge regression with built-in Generalized Cross-Validation.
-
-    It allows efficient Leave-One-Out cross-validation.
+    """Ridge regression with built-in Leave-one-out Cross-Validation.
 
     This class is not intended to be used directly. Use RidgeCV instead.
 
@@ -1621,8 +1619,8 @@ class _BaseRidgeCV(LinearModel):
         Notes
         -----
         When sample_weight is provided, the selected hyperparameter may depend
-        on whether we use generalized cross-validation (cv=None or cv='auto')
-        or another form of cross-validation, because only generalized
+        on whether we use leave-one-out cross-validation (cv=None or cv='auto')
+        or another form of cross-validation, because only leave-one-out
         cross-validation takes the sample weights into account when computing
         the validation score.
         """
@@ -1672,7 +1670,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
 
     See glossary entry for :term:`cross-validation estimator`.
 
-    By default, it performs Generalized Cross-Validation, which is a form of
+    By default, it performs Leave-One-Out Cross-Validation, which is a form of
     efficient Leave-One-Out cross-validation.
 
     Read more in the :ref:`User Guide <ridge_regression>`.
@@ -1687,7 +1685,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         Alpha corresponds to ``1 / (2C)`` in other linear models such as
         :class:`~sklearn.linear_model.LogisticRegression` or
         :class:`~sklearn.svm.LinearSVC`.
-        If using generalized cross-validation, alphas must be positive.
+        If using Leave-One-Out cross-validation, alphas must be positive.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
@@ -1707,14 +1705,14 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
         If None, the negative mean squared error if cv is 'auto' or None
-        (i.e. when using generalized cross-validation), and r2 score otherwise.
+        (i.e. when using leave-one-out cross-validation), and r2 score
+        otherwise.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
         - None, to use the efficient Leave-One-Out cross-validation
-          (also known as Generalized Cross-Validation).
         - integer, to specify the number of folds.
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
@@ -1728,7 +1726,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
 
     gcv_mode : {'auto', 'svd', eigen'}, default='auto'
         Flag indicating which strategy to use when performing
-        Generalized Cross-Validation. Options are::
+        Leave-One-Out Cross-Validation. Options are::
 
             'auto' : use 'svd' if n_samples > n_features, otherwise use 'eigen'
             'svd' : force use of singular value decomposition of X when X is
@@ -1742,7 +1740,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         Flag indicating if the cross-validation values corresponding to
         each alpha should be stored in the ``cv_values_`` attribute (see
         below). This flag is only compatible with ``cv=None`` (i.e. using
-        Generalized Cross-Validation).
+        Leave-One-Out Cross-Validation).
 
     alpha_per_target : bool, default=False
         Flag indicating whether to optimize the alpha value (picked from the
@@ -1798,9 +1796,8 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
     See glossary entry for :term:`cross-validation estimator`.
 
-    By default, it performs Generalized Cross-Validation, which is a form of
-    efficient Leave-One-Out cross-validation. Currently, only the n_features >
-    n_samples case is handled efficiently.
+    By default, it performs Leave-One-Out Cross-Validation. Currently,
+    only the n_features > n_samples case is handled efficiently.
 
     Read more in the :ref:`User Guide <ridge_regression>`.
 
@@ -1857,7 +1854,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         Flag indicating if the cross-validation values corresponding to
         each alpha should be stored in the ``cv_values_`` attribute (see
         below). This flag is only compatible with ``cv=None`` (i.e. using
-        Generalized Cross-Validation).
+        Leave-One-Out Cross-Validation).
 
     Attributes
     ----------
