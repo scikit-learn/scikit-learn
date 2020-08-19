@@ -15,8 +15,13 @@ from scipy.sparse import coo_matrix
 
 from sklearn.random_projection import _sparse_random_matrix
 
+from sklearn.dummy import DummyRegressor
+
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_poisson_deviance
+
+from sklearn.model_selection import train_test_split
 
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
@@ -1990,6 +1995,42 @@ def test_poisson_zero_nodes():
     reg = DecisionTreeRegressor(criterion="poisson", random_state=1)
     reg.fit(X, y)
     assert np.all(reg.predict(X) > 0)
+
+
+def test_poisson_vs_mse():
+    # For Poisson distributed target, Poisson loss should give better results
+    # than least squares measured in Poisson deviance as metric.
+    # Compare to
+    # sklearn/ensemble/_hist_gradient_boosting/tests/test_gradient_boosting.py
+    rng = np.random.RandomState(42)
+    n_train, n_test, n_features = 1000, 100, 10
+    X = datasets.make_low_rank_matrix(n_samples=n_train + n_test,
+                                      n_features=n_features, random_state=rng)
+    # We create a log-linear Poisson model and downscale coef as it will get
+    # exponentiated.
+    coef = rng.uniform(low=-2, high=2, size=n_features) / np.max(X, axis=0)
+    y = rng.poisson(lam=np.exp(X @ coef))
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=n_test,
+                                                        random_state=11)
+    tree_poi = DecisionTreeRegressor(criterion="poisson",
+                                     min_samples_split=10,
+                                     random_state=22)
+    tree_mse = DecisionTreeRegressor(criterion="mse",
+                                     min_samples_split=10,
+                                     random_state=33)
+
+    tree_poi.fit(X_train, y_train)
+    tree_mse.fit(X_train, y_train)
+    dummy = DummyRegressor(strategy="mean").fit(X_train, y_train)
+
+    for X, y in [(X_train, y_train), (X_test, y_test)]:
+        metric_poi = mean_poisson_deviance(y, tree_poi.predict(X))
+        # mse might produce non-positive predictions => clip
+        metric_mse = mean_poisson_deviance(y, np.clip(tree_mse.predict(X),
+                                                      1e-15, None))
+        metric_dummy = mean_poisson_deviance(y, dummy.predict(X))
+        assert metric_poi < metric_mse
+        assert metric_poi < metric_dummy
 
 
 # TODO: Remove in v0.26
