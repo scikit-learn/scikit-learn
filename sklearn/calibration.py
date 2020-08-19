@@ -922,7 +922,7 @@ def plot_calibration_curve(estimator, X, y, *,
     >>> clf = linear_model.LogisticRegression(random_state=0)
     >>> clf.fit(X_train, y_train)
     LogisticRegression(random_state=0)
-    >>> calibration.plot_calibration_curve(clf, X_test, y_test)
+    >>> viz = calibration.plot_calibration_curve(clf, X_test, y_test)
     >>> plt.show()
     """
     check_matplotlib_support("plot_calibration_curve")
