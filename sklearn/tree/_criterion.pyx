@@ -1338,11 +1338,14 @@ cdef class Poisson(RegressionCriterion):
         1/n * sum(y_true * log(y_true/y_pred)
     """
     # FIXME in 0.25:
-    # min_impurity_split with default = 0 forces to use a non-negative
+    # min_impurity_split with default = 0 forces us to use a non-negative
     # impurity like the Poisson deviance. Without this restriction, one could
-    # throw away the 'constant' terms and just use
-    # Poisson loss = - 1/n * sum(y_i * log(y_pred))
-    #              = - mean(y_i) * log(mean(y_i))
+    # throw away the 'constant' term sum(y_true * log(y_true)) and just use
+    # Poisson loss = - 1/n * sum(y_true * log(y_pred))
+    #              = - 1/n * sum(y_true * log(mean(y_true))
+    #              = - mean(y_true) * log(mean(y_true))
+    # With this trick, as for MSE, children_impurity would only need to go over
+    # left xor right split, not both.
     # This could be faster.
 
     cdef double node_impurity(self) nogil:
@@ -1399,8 +1402,8 @@ cdef class Poisson(RegressionCriterion):
             else:
                 y_mean_left = self.sum_left[k] / self.weighted_n_left
                 y_mean_right = self.sum_right[k] / self.weighted_n_right
-                proxy_impurity_left += y_mean_left * log(y_mean_left)
-                proxy_impurity_right += y_mean_right * log(y_mean_right)
+                proxy_impurity_left -= y_mean_left * log(y_mean_left)
+                proxy_impurity_right -= y_mean_right * log(y_mean_right)
 
         return - proxy_impurity_left - proxy_impurity_right
 
@@ -1409,7 +1412,7 @@ cdef class Poisson(RegressionCriterion):
         """Evaluate the impurity in children nodes.
 
         i.e. the impurity of the left child (samples[start:pos]) and the
-        impurity the right child (samples[pos:end]) for Poisson.
+        impurity of the right child (samples[pos:end]) for Poisson.
         """
         cdef const DOUBLE_t[:, ::1] y = self.y
 

@@ -299,7 +299,7 @@ def test_diabetes_underfit(name, Tree, criterion, max_depth, max_loss):
     )
     reg.fit(diabetes.data, diabetes.target)
     loss = mean_squared_error(diabetes.target, reg.predict(diabetes.data))
-    assert loss < max_loss and loss > 0, (
+    assert 0 < loss < max_loss, (
         f"Failed with {name}, criterion = {criterion} and loss = {loss}"
     )
 
@@ -1985,6 +1985,8 @@ def test_poisson_zero_nodes():
     X = [[0, 0], [0, 1], [0, 2], [0, 3],
          [1, 0], [1, 2], [1, 2], [1, 3]]
     y = [0, 0, 0, 0, 1, 2, 3, 4]
+    # Note that X[:, 0] == 0 is a 100% indicator for y == 0. The tree could
+    # easily learn that.
     reg = DecisionTreeRegressor(criterion="poisson", random_state=1)
     reg.fit(X, y)
     assert np.all(reg.predict(X) > 0)

@@ -33,8 +33,8 @@ Some advantages of decision trees are:
     - The cost of using the tree (i.e., predicting data) is logarithmic in the
       number of data points used to train the tree.
 
-    - Able to handle both numerical and categorical data. However scikit-learn 
-      implementation does not support categorical variables for now. Other 
+    - Able to handle both numerical and categorical data. However scikit-learn
+      implementation does not support categorical variables for now. Other
       techniques are usually specialised in analysing datasets that have only one type
       of variable. See :ref:`algorithms <tree_algorithms>` for more
       information.
@@ -66,9 +66,9 @@ The disadvantages of decision trees include:
       This problem is mitigated by using decision trees within an
       ensemble.
 
-    - Predictions of decision trees are neither smooth nor continuous for
-      continuous features, but piecewise constant approximations as seen in the
-      above figure.
+    - Predictions of decision trees are neither smooth nor continuous, but
+      piecewise constant approximations as seen in the above figure. Therefore,
+      they are not good at extrapolation.
 
     - The problem of learning an optimal decision tree is known to be
       NP-complete under several aspects of optimality and even for simple
@@ -116,7 +116,7 @@ probability, the classifier will predict the class with the lowest index
 amongst those classes.
 
 As an alternative to outputting a specific class, the probability of each class
-can be predicted, which is the fraction of training samples of the class in a 
+can be predicted, which is the fraction of training samples of the class in a
 leaf::
 
     >>> clf.predict_proba([[2., 2.]])
@@ -507,11 +507,11 @@ Regression criteria
 
 If the target is a continuous value, then for node :math:`m`,
 representing a region :math:`R_m` with :math:`N_m` observations, common
-criteria to minimise as for determining locations for future
-splits are Mean Squared Error (or L2 error) and Poisson deviance, which set the
-predicted value of terminal nodes to the mean values of the node, as well as
-Mean Absolute Error (or L1 error), which sets the predicted value of terminal
-nodes to the median.
+criteria to minimize as for determining locations for future splits are Mean
+Squared Error (MSE or L2 error), Poisson deviance as well as Mean Absolute
+Error (MAE or L1 error). MSE and Poisson deviance both set the predicted value
+of terminal nodes to the learned mean value of the node whereas the MAE sets
+the predicted value of terminal nodes to the median.
 
 Mean Squared Error:
 
