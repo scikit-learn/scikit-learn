@@ -240,11 +240,11 @@ def _check_ambiguity_pos_label(pos_label, y_true):
                  np.array_equal(classes, [-1]) or
                  np.array_equal(classes, [1])))):
         classes_repr = ", ".join(repr(c) for c in classes)
-        raise ValueError("y_true takes value in {{{classes_repr}}} and "
-                         "pos_label is not specified: either make y_true "
-                         "take value in {{0, 1}} or {{-1, 1}} or "
-                         "pass pos_label explicitly.".format(
-                             classes_repr=classes_repr))
+        raise ValueError(
+            f"y_true takes value in {{{classes_repr}}} and pos_label is not "
+            f"specified: either make y_true take value in {{0, 1}} or "
+            f"{{-1, 1}} or pass pos_label explicitly."
+        )
     elif pos_label is None:
         pos_label = 1.0
 
