@@ -71,7 +71,7 @@ class DetCurveDisplay:
         display : :class:`~sklearn.metrics.plot.DetCurveDisplay`
             Object that stores computed values.
         """
-        check_matplotlib_support('RocCurveDisplay.plot')
+        check_matplotlib_support('DetCurveDisplay.plot')
 
         name = self.estimator_name if name is None else name
         line_kwargs = {} if name is None else {"label": name}
@@ -183,7 +183,7 @@ def plot_det_curve(
     Examples
     --------
     """
-    check_matplotlib_support('plot_roc_curve')
+    check_matplotlib_support('plot_det_curve')
 
     y_pred, pos_label = _get_response(
         X, estimator, response_method, pos_label=pos_label

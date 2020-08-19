@@ -1100,6 +1100,7 @@ See the :ref:`visualizations` section of the user guide for further details.
    :template: function.rst
 
    metrics.plot_confusion_matrix
+   metrics.plot_det
    metrics.plot_precision_recall_curve
    metrics.plot_roc_curve
 
@@ -1108,6 +1109,7 @@ See the :ref:`visualizations` section of the user guide for further details.
    :template: class.rst
 
    metrics.ConfusionMatrixDisplay
+   metrics.DetCurveDisplay
    metrics.PrecisionRecallDisplay
    metrics.RocCurveDisplay
 
