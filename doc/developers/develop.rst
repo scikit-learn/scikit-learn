@@ -156,11 +156,11 @@ the predict method.
 ============= ======================================================
 Parameters
 ============= ======================================================
-X             array-like, shape (n_samples, n_features)
+X             array-like of shape (n_samples, n_features)
 
-y             array, shape (n_samples,)
+y             array-like of shape (n_samples,)
 
-kwargs        optional data-dependent parameters.
+kwargs        optional data-dependent parameters
 ============= ======================================================
 
 ``X.shape[0]`` should be the same as ``y.shape[0]``. If this requisite
@@ -654,20 +654,20 @@ Here's a simple example of code using some of the above guidelines::
 
     def choose_random_sample(X, random_state=0):
         """
-        Choose a random point from X
+        Choose a random point from X.
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
-            array representing the data
-        random_state : RandomState or an int seed (0 by default)
-            A random number generator instance to define the state of the
-            random permutations generator.
+        X : array-like of shape (n_samples, n_features)
+            An array representing the data.
+        random_state : RandomState or int, default=0
+            A random number generator instance or an int seed to define
+            the state of the random permutations generator.
 
         Returns
         -------
-        x : numpy array, shape (n_features,)
-            A random point selected from X
+        x : ndarray of shape (n_features,)
+            A random point selected from X.
         """
         X = check_array(X)
         random_state = check_random_state(random_state)
