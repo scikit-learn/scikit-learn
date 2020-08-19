@@ -86,6 +86,9 @@ Changelog
   column selector is a list of bools that are False. :pr:`17616` by
   `Thomas Fan`_.
 
+- |FIX| :class:`compose.ColumnTransformer` now displays the remainder in the
+  diagram display. :pr:`18167` by `Thomas Fan`_.
+
 :mod:`sklearn.covariance`
 .........................
 
