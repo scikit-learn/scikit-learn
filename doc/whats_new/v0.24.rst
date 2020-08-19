@@ -22,8 +22,9 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-- item
-- item
+- |Fix| :class:`decomposition.KernelPCA` behaviour is now more consistent
+  between 32-bits and 64-bits data when the kernel has small positive
+  eigenvalues.
 
 Details are listed in the changelog below.
 
@@ -52,10 +53,7 @@ Changelog
   parallelization via `joblib.Parallel` using argument `n_jobs`.
   :pr:`17107` by :user:`Julien Jerphanion <jjerphan>`.
 
-:mod:`sklearn.calibrator`
-.........................
-
-- |Enhancement| Allow :class:`calibrator.CalibratedClassifierCV` use with
+- |Enhancement| Allow :class:`calibration.CalibratedClassifierCV` use with
   prefit :class:`pipeline.Pipeline` where data is not `X` is not array-like,
   sparse matrix or dataframe at the start. :pr:`17546` by
   :user:`Lucy Liu <lucyleeow>`.
@@ -88,6 +86,9 @@ Changelog
   column selector is a list of bools that are False. :pr:`17616` by
   `Thomas Fan`_.
 
+- |FIX| :class:`compose.ColumnTransformer` now displays the remainder in the
+  diagram display. :pr:`18167` by `Thomas Fan`_.
+
 :mod:`sklearn.covariance`
 .........................
 
@@ -113,8 +114,18 @@ Changelog
   `data` and `frame` members are pandas DataFrames, and the `target` member is
   a pandas Series. :pr:`17491` by :user:`Alex Liang <tianchuliang>`.
 
+- |API| The default value of `as_frame` in :func:`datasets.fetch_openml` is
+  changed from False to 'auto'.
+  :pr:`17610` by :user:`Jiaxiang <fujiaxiang>`.
+
 :mod:`sklearn.decomposition`
 ............................
+
+- |Fix| :class:`decomposition.KernelPCA` behaviour is now more consistent
+  between 32-bits and 64-bits data input when the kernel has small positive
+  eigenvalues. Small positive eigenvalues were not correctly discarded for
+  32-bits data.
+  :pr:`18149` by :user:`Sylvain Marié <smarie>`.
 
 - |Fix| Fix :class:`decomposition.SparseCoder` such that it follows
   scikit-learn API and support cloning. The attribute `components_` is
@@ -139,6 +150,10 @@ Changelog
   :class:`ensemble.HistGradientClassifier` now support `staged_predict`,
   which allows monitoring of each stage.
   :pr:`16985` by :user:`Hao Chun Chang <haochunchang>`.
+
+- |API|: The parameter ``n_classes_`` is now deprecated in
+  :class:`ensemble.GradientBoostingRegressor` and returns `1`.
+  :pr:`17702` by :user:`Simona Maggio <simonamaggio>`.
 
 :mod:`sklearn.exceptions`
 .........................
@@ -209,6 +224,10 @@ Changelog
   ``kind`` parameter.
   :pr:`16619` by :user:`Madhura Jayratne <madhuracj>`.
 
+- |Feature| Add `sample_weight` parameter to
+  :func:`inspection.permutation_importance`. :pr:`16906` by
+  :user:`Roei Kahny <RoeiKa>`.
+
 :mod:`sklearn.isotonic`
 .......................
 
@@ -220,6 +239,15 @@ Changelog
 
 - |Enhancement| :class:`isotonic.IsotonicRegression` now accepts 2darray with 1 feature as
   input array. :pr:`17379` by :user:`Jiaxiang <fujiaxiang>`.
+
+:mod:`sklearn.kernel_approximation`
+...................................
+
+- |Feature| Added class :class:`kernel_approximation.PolynomialCountSketch`
+  which implements the Tensor Sketch algorithm for polynomial kernel feature
+  map approximation.
+  :pr:`13003` by :user:`Daniel López Sánchez <lopeLH>`.
+
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -235,6 +263,7 @@ Changelog
   efficient leave-one-out cross-validation scheme ``cv=None``. :pr:`6624` by
   :user:`Marijn van Vliet <wmvanvliet>`.
 
+
 :mod:`sklearn.manifold`
 .......................
 
@@ -244,12 +273,17 @@ Changelog
   will be removed in 0.28. :pr:`17662` by
   :user:`Joshua Newton <joshuacwnewton>`.
 
-- |Efficiency| Fixed :issue:`10493`. Improve Local Linear Embedding (LLE) 
+- |Efficiency| Fixed :issue:`10493`. Improve Local Linear Embedding (LLE)
   that raised `MemoryError` exception when used with large inputs.
   :pr:`17997` by :user:`Bertrand Maisonneuve <bmaisonn>`.
 
 :mod:`sklearn.metrics`
 ......................
+
+- |Feature| Added :func:`metrics.detection_error_tradeoff_curve` to compute
+  Detection Error Tradeoff curve classification metric.
+  :pr:`10591` by :user:`Jeremy Karnowski <jkarnows>` and
+  :user:`Daniel Mohns <dmohns>`.
 
 - |Feature| Added :func:`metrics.mean_absolute_percentage_error` metric and
   the associated scorer for regression problems. :issue:`10708` fixed with the
@@ -301,6 +335,14 @@ Changelog
   sparse input data in its `fit` and `predict` methods. The check for
   validity of the input is now delegated to the base estimator.
   :pr:`17233` by :user:`Zolisa Bleki <zoj613>`.
+
+:mod:`sklearn.multioutput`
+..........................
+
+- |Fix| A fix to accept tuples for the ``order`` parameter 
+  in :class:`multioutput.ClassifierChain`.
+  :pr:`18124` by :user:`Gus Brocchini <boldloop>` and
+  :user:`Amanda Dsouza <amy12xx>`.
 
 :mod:`sklearn.naive_bayes`
 ..........................
@@ -390,6 +432,10 @@ Changelog
   :meth:`tree.DecisionTreeClassifier.fit` and
   :meth:`tree.DecisionTreeRegressor.fit`, and has not effect.
   :pr:`17614` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
+
+- |Fix| Allow serialized tree based models to be unpickled on a machine
+  with different endianness.
+  :pr:`17644` by :user:`Qi Zhang <qzhang90>`.
 
 Code and Documentation Contributors
 -----------------------------------
