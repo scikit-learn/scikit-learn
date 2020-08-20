@@ -111,7 +111,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         If ``n_samples > subsample``, then ``sub_samples`` samples will be
         randomly chosen to compute the quantiles. If ``None``, the whole data
         is used.
-    random_state: int, RandomState instance, default=None
+    random_state: int, RandomState instance or None, default=None
         Pseudo-random number generator to control the random sub-sampling.
         Pass an int for reproducible output across multiple
         function calls.
