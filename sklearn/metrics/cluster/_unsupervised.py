@@ -176,7 +176,7 @@ def silhouette_samples(X, labels, *, metric='euclidean', **kwds):
     Parameters
     ----------
     X : array-like of shape (n_samples_a, n_samples_a) if metric == \
-            "precomputed", (n_samples_a, n_features) otherwise
+            "precomputed" or (n_samples_a, n_features) otherwise
         An array of pairwise distances between samples, or a feature array.
 
     labels : array-like of shape (n_samples,)
