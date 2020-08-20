@@ -16,8 +16,9 @@ from itertools import combinations
 
 import numpy as np
 
-from ..base import is_classifier, is_regressor
-from ..utils import check_array, check_consistent_length
+from ..base import is_classifier
+from ..utils import check_array
+from ..utils import check_consistent_length
 from ..utils.multiclass import type_of_target
 
 
@@ -208,10 +209,10 @@ def _check_classifier_response_method(estimator, response_method):
 
     Parameters
     ----------
-    estimator: object
-        Classifier to check
+    estimator : estimator instance
+        Classifier to check.
 
-    response_method: {'auto', 'predict_proba', 'decision_function', 'predict'}
+    response_method : {'auto', 'predict_proba', 'decision_function', 'predict'}
         Specifies whether to use :term:`predict_proba` or
         :term:`decision_function` as the target response. If set to 'auto',
         :term:`predict_proba` is tried first and if it does not exist
@@ -219,8 +220,8 @@ def _check_classifier_response_method(estimator, response_method):
 
     Returns
     -------
-    prediction_method: callable
-        prediction method of estimator
+    prediction_method : callable
+        Prediction method of estimator.
     """
 
     possible_response_methods = (
@@ -301,13 +302,7 @@ def _get_response(
         The class considered as the positive class when computing
         the metrics.
     """
-    if is_regressor(estimator):
-        if response_method not in ("predict", "auto"):
-            raise ValueError(
-                f"{estimator.__class__.__name__} should be a classifier"
-            )
-        return estimator.predict(X), None
-    else:
+    if is_classifier(estimator):
         y_type = type_of_target(y_true)
         classes = estimator.classes_
         prediction_method = _check_classifier_response_method(
@@ -341,5 +336,11 @@ def _get_response(
                 pos_label = pos_label if pos_label is not None else classes[-1]
                 if pos_label == classes[0]:
                     y_pred *= -1
+    else:
+        if response_method not in ("predict", "auto"):
+            raise ValueError(
+                f"{estimator.__class__.__name__} should be a classifier"
+            )
+        y_pred, pos_label = estimator.predict(X), None
 
     return y_pred, pos_label

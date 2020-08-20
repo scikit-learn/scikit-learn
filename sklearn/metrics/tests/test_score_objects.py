@@ -147,12 +147,14 @@ class EstimatorWithoutFit:
 class EstimatorWithFit(BaseEstimator):
     """Dummy estimator to test scoring validators"""
     def fit(self, X, y):
+        self.classes_ = np.unique(y)
         return self
 
 
 class EstimatorWithFitAndScore:
     """Dummy estimator to test scoring validators"""
     def fit(self, X, y):
+        self.classes_ = np.unique(y)
         return self
 
     def score(self, X, y):
@@ -162,6 +164,7 @@ class EstimatorWithFitAndScore:
 class EstimatorWithFitAndPredict:
     """Dummy estimator to test scoring validators"""
     def fit(self, X, y):
+        self.classes_ = np.unique(y)
         self.y = y
         return self
 
@@ -616,13 +619,18 @@ def test_multimetric_scorer_calls_method_once(scorers, expected_predict_count,
     X, y = np.array([[1], [1], [0], [0], [0]]), np.array([0, 1, 1, 1, 0])
 
     mock_est = Mock()
+    mock_est._estimator_type = "classifier"
     fit_func = Mock(return_value=mock_est)
+    fit_func.__name__ = "fit"
     predict_func = Mock(return_value=y)
+    predict_func.__name__ = "predict"
 
     pos_proba = np.random.rand(X.shape[0])
     proba = np.c_[1 - pos_proba, pos_proba]
     predict_proba_func = Mock(return_value=proba)
+    predict_proba_func.__name__ = "predict_proba"
     decision_function_func = Mock(return_value=pos_proba)
+    decision_function_func.__name__ = "decision_function"
 
     mock_est.fit = fit_func
     mock_est.predict = predict_func
@@ -756,8 +764,8 @@ def test_multiclass_roc_no_proba_scorer_errors(scorer_name):
     X, y = make_classification(n_classes=3, n_informative=3, n_samples=20,
                                random_state=0)
     lr = Perceptron().fit(X, y)
-    msg = "'Perceptron' object has no attribute 'predict_proba'"
-    with pytest.raises(AttributeError, match=msg):
+    msg = "response method predict_proba is not defined in Perceptron"
+    with pytest.raises(ValueError, match=msg):
         scorer(lr, X, y)
 
 
@@ -842,7 +850,7 @@ def test_average_precision_pos_label(string_labeled_classification_problem):
     average_precision_scorer = make_scorer(
         average_precision_score, needs_threshold=True,
     )
-    err_msg = "pos_label=1 is invalid. Set it to a label in y_true."
+    err_msg = "pos_label"
     with pytest.raises(ValueError, match=err_msg):
         average_precision_scorer(clf, X_test, y_test)
 
@@ -941,6 +949,6 @@ def test_scorer_select_proba_error(scorer):
     )
     lr = LogisticRegression(multi_class="multinomial").fit(X, y)
 
-    err_msg = "is not a valid label"
+    err_msg = "pos_label"
     with pytest.raises(ValueError, match=err_msg):
         scorer(lr, X, y)

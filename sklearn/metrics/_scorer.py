@@ -213,7 +213,9 @@ class _PredictScorer(_BaseScorer):
         score : float
             Score function applied to prediction of estimator on X.
         """
-        y_pred, _ = method_caller(estimator, X, y_true, response_method="predict")
+        y_pred, _ = method_caller(
+            estimator, X, y_true, response_method="predict"
+        )
         if sample_weight is not None:
             return self._sign * self._score_func(
                 y_true, y_pred, sample_weight=sample_weight, **self._kwargs
