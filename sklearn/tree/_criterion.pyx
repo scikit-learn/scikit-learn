@@ -1355,23 +1355,8 @@ cdef class Poisson(RegressionCriterion):
         i.e. the impurity of samples[start:end]. The smaller the impurity the
         better.
         """
-        cdef double* sum_total = self.sum_total
-        cdef double y_mean = 0.
-        cdef double impurity = 0.
-        cdef SIZE_t i, p, k
-        cdef DOUBLE_t w = 1.0
-
-        for k in range(self.n_outputs):
-            y_mean = sum_total[k] / self.weighted_n_node_samples
-            for p in range(self.start, self.end):
-                i = self.samples[p]
-
-                if self.sample_weight != NULL:
-                    w = self.sample_weight[i]
-
-                impurity += w * xlogy(self.y[i, k], self.y[i, k] / y_mean)
-
-        return impurity / (self.weighted_n_node_samples * self.n_outputs)
+        return self.poisson_loss(self.start, self.end, self.sum_total,
+                                 self.weighted_n_node_samples)
 
     cdef double proxy_impurity_improvement(self) nogil:
         """Compute a proxy of the impurity reduction.
@@ -1424,26 +1409,33 @@ cdef class Poisson(RegressionCriterion):
         cdef DOUBLE_t y_mean = 0.
         cdef DOUBLE_t w = 1.0
 
-        impurity_left[0] = 0.
-        for k in range(self.n_outputs):
-            y_mean = self.sum_left[k] / self.weighted_n_left
-            for p in range(start, pos):
+        impurity_left[0] = self.poisson_loss(start, pos, self.sum_left,
+                                             self.weighted_n_left)
+
+        impurity_right[0] = self.poisson_loss(pos, end, self.sum_right,
+                                              self.weighted_n_right)
+
+    cdef inline DOUBLE_t poisson_loss(self,
+                                      SIZE_t start,
+                                      SIZE_t end,
+                                      DOUBLE_t* y_sum,
+                                      DOUBLE_t weight_sum) nogil:
+        """Helper function to compute Poisson loss (~deviance)."""
+        cdef const DOUBLE_t[:, ::1] y = self.y
+        cdef DOUBLE_t* weight = self.sample_weight
+
+        cdef DOUBLE_t y_mean = 0.
+        cdef DOUBLE_t poisson_loss = 0.
+        cdef DOUBLE_t w = 1.0
+        cdef SIZE_t n_outputs = self.n_outputs
+
+        for k in range(n_outputs):
+            y_mean = y_sum[k] / weight_sum
+            for p in range(start, end):
                 i = self.samples[p]
 
-                if self.sample_weight != NULL:
-                    w = self.sample_weight[i]
+                if weight != NULL:
+                    w = weight[i]
 
-                impurity_left[0] += w * xlogy(y[i, k], y[i, k] / y_mean)
-        impurity_left[0] /= self.weighted_n_left * self.n_outputs
-
-        impurity_right[0] = 0.
-        for k in range(self.n_outputs):
-            y_mean = self.sum_right[k] / self.weighted_n_right
-            for p in range(pos, end):
-                i = self.samples[p]
-
-                if self.sample_weight != NULL:
-                    w = self.sample_weight[i]
-
-                impurity_right[0] += w * xlogy(y[i, k], y[i, k] / y_mean)
-        impurity_right[0] /= self.weighted_n_right * self.n_outputs
+                poisson_loss += w * xlogy(y[i, k], y[i, k] / y_mean)
+        return poisson_loss / (weight_sum * n_outputs)
