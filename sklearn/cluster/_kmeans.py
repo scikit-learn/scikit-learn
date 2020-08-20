@@ -15,23 +15,30 @@ import warnings
 
 import numpy as np
 import scipy.sparse as sp
-from joblib import Parallel, delayed, effective_n_jobs
+from threadpoolctl import threadpool_limits
 
 from ..base import BaseEstimator, ClusterMixin, TransformerMixin
 from ..metrics.pairwise import euclidean_distances
-from ..metrics.pairwise import pairwise_distances_argmin_min
-from ..utils.extmath import row_norms, squared_norm, stable_cumsum
+from ..utils.extmath import row_norms, stable_cumsum
 from ..utils.sparsefuncs_fast import assign_rows_csr
 from ..utils.sparsefuncs import mean_variance_axis
-from ..utils.validation import _num_samples
+from ..utils.validation import _deprecate_positional_args
 from ..utils import check_array
 from ..utils import gen_batches
 from ..utils import check_random_state
+from ..utils import deprecated
 from ..utils.validation import check_is_fitted, _check_sample_weight
-from ..utils.validation import FLOAT_DTYPES
+from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..exceptions import ConvergenceWarning
-from . import _k_means_fast as _k_means
-from ._k_means_elkan import k_means_elkan
+from ._k_means_fast import _inertia_dense
+from ._k_means_fast import _inertia_sparse
+from ._k_means_fast import _mini_batch_update_csr
+from ._k_means_lloyd import lloyd_iter_chunked_dense
+from ._k_means_lloyd import lloyd_iter_chunked_sparse
+from ._k_means_elkan import init_bounds_dense
+from ._k_means_elkan import init_bounds_sparse
+from ._k_means_elkan import elkan_iter_chunked_dense
+from ._k_means_elkan import elkan_iter_chunked_sparse
 
 
 ###############################################################################
@@ -43,21 +50,21 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
 
     Parameters
     ----------
-    X : array or sparse matrix, shape (n_samples, n_features)
+    X : {ndarray, sparse matrix} of shape (n_samples, n_features)
         The data to pick seeds for. To avoid memory copy, the input data
         should be double precision (dtype=np.float64).
 
-    n_clusters : integer
+    n_clusters : int
         The number of seeds to choose
 
-    x_squared_norms : array, shape (n_samples,)
+    x_squared_norms : ndarray of shape (n_samples,)
         Squared Euclidean norm of each data point.
 
     random_state : RandomState instance
         The generator used to initialize the centers.
         See :term:`Glossary <random_state>`.
 
-    n_local_trials : integer, optional
+    n_local_trials : int, default=None
         The number of seeding trials for each center (except the first),
         of which the one reducing inertia the most is greedily chosen.
         Set to None to make the number of trials depend logarithmically
@@ -137,21 +144,10 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
 ###############################################################################
 # K-means batch estimation by EM (expectation maximization)
 
-def _validate_center_shape(X, n_centers, centers):
-    """Check if centers is compatible with X and n_centers"""
-    if len(centers) != n_centers:
-        raise ValueError('The shape of the initial centers (%s) '
-                         'does not match the number of clusters %i'
-                         % (centers.shape, n_centers))
-    if centers.shape[1] != X.shape[1]:
-        raise ValueError(
-            "The number of features of the initial centers %s "
-            "does not match the number of features of the data %s."
-            % (centers.shape[1], X.shape[1]))
-
-
 def _tolerance(X, tol):
     """Return a tolerance which is independent of the dataset"""
+    if tol == 0:
+        return 0
     if sp.issparse(X):
         variances = mean_variance_axis(X, axis=0)[1]
     else:
@@ -159,32 +155,18 @@ def _tolerance(X, tol):
     return np.mean(variances) * tol
 
 
-def _check_normalize_sample_weight(sample_weight, X):
-    """Set sample_weight if None, and check for correct dtype"""
-
-    sample_weight_was_none = sample_weight is None
-
-    sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
-    if not sample_weight_was_none:
-        # normalize the weights to sum up to n_samples
-        # an array of 1 (i.e. samples_weight is None) is already normalized
-        n_samples = len(sample_weight)
-        scale = n_samples / sample_weight.sum()
-        sample_weight *= scale
-    return sample_weight
-
-
-def k_means(X, n_clusters, sample_weight=None, init='k-means++',
-            precompute_distances='auto', n_init=10, max_iter=300,
+@_deprecate_positional_args
+def k_means(X, n_clusters, *, sample_weight=None, init='k-means++',
+            precompute_distances='deprecated', n_init=10, max_iter=300,
             verbose=False, tol=1e-4, random_state=None, copy_x=True,
-            n_jobs=None, algorithm="auto", return_n_iter=False):
+            n_jobs='deprecated', algorithm="auto", return_n_iter=False):
     """K-means clustering algorithm.
 
     Read more in the :ref:`User Guide <k_means>`.
 
     Parameters
     ----------
-    X : array-like or sparse matrix, shape (n_samples, n_features)
+    X : {array-like, sparse} matrix of shape (n_samples, n_features)
         The observations to cluster. It must be noted that the data
         will be converted to C ordering, which will cause a memory copy
         if the given data is not C-contiguous.
@@ -193,25 +175,26 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
         The number of clusters to form as well as the number of
         centroids to generate.
 
-    sample_weight : array-like, shape (n_samples,), optional
+    sample_weight : array-like of shape (n_samples,), default=None
         The weights for each observation in X. If None, all observations
-        are assigned equal weight (default: None)
+        are assigned equal weight
 
-    init : {'k-means++', 'random', or ndarray, or a callable}, optional
-        Method for initialization, default to 'k-means++':
+    init : {'k-means++', 'random'}, callable or array-like of shape \
+            (n_clusters, n_features), default='k-means++'
+        Method for initialization:
 
         'k-means++' : selects initial cluster centers for k-mean
         clustering in a smart way to speed up convergence. See section
         Notes in k_init for more details.
 
-        'random': choose k observations (rows) at random from data for
-        the initial centroids.
+        'random': choose `n_clusters` observations (rows) at random from data
+        for the initial centroids.
 
-        If an ndarray is passed, it should be of shape (n_clusters, n_features)
+        If an array is passed, it should be of shape (n_clusters, n_features)
         and gives the initial centers.
 
-        If a callable is passed, it should take arguments X, k and
-        and a random state and return an initialization.
+        If a callable is passed, it should take arguments X, n_clusters and a
+        random state and return an initialization.
 
     precompute_distances : {'auto', True, False}
         Precompute distances (faster but takes more memory).
@@ -224,57 +207,71 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
 
         False : never precompute distances
 
-    n_init : int, optional, default: 10
+        .. deprecated:: 0.23
+            'precompute_distances' was deprecated in version 0.23 and will be
+            removed in 0.25. It has no effect.
+
+    n_init : int, default=10
         Number of time the k-means algorithm will be run with different
         centroid seeds. The final results will be the best output of
         n_init consecutive runs in terms of inertia.
 
-    max_iter : int, optional, default 300
+    max_iter : int, default=300
         Maximum number of iterations of the k-means algorithm to run.
 
-    verbose : boolean, optional
+    verbose : bool, default=False
         Verbosity mode.
 
-    tol : float, optional
-        The relative increment in the results before declaring convergence.
+    tol : float, default=1e-4
+        Relative tolerance with regards to Frobenius norm of the difference
+        in the cluster centers of two consecutive iterations to declare
+        convergence.
 
     random_state : int, RandomState instance, default=None
         Determines random number generation for centroid initialization. Use
         an int to make the randomness deterministic.
         See :term:`Glossary <random_state>`.
 
-    copy_x : bool, optional
+    copy_x : bool, default=True
         When pre-computing distances it is more numerically accurate to center
-        the data first.  If copy_x is True (default), then the original data is
-        not modified, ensuring X is C-contiguous.  If False, the original data
-        is modified, and put back before the function returns, but small
-        numerical differences may be introduced by subtracting and then adding
-        the data mean, in this case it will also not ensure that data is
-        C-contiguous which may cause a significant slowdown.
+        the data first. If copy_x is True (default), then the original data is
+        not modified. If False, the original data is modified, and put back
+        before the function returns, but small numerical differences may be
+        introduced by subtracting and then adding the data mean. Note that if
+        the original data is not C-contiguous, a copy will be made even if
+        copy_x is False. If the original data is sparse, but not in CSR format,
+        a copy will be made even if copy_x is False.
 
-    n_jobs : int or None, optional (default=None)
-        The number of jobs to use for the computation. This works by computing
-        each of the n_init runs in parallel.
+    n_jobs : int, default=None
+        The number of OpenMP threads to use for the computation. Parallelism is
+        sample-wise on the main cython loop which assigns each sample to its
+        closest center.
 
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-        for more details.
+        ``None`` or ``-1`` means using all processors.
 
-    algorithm : "auto", "full" or "elkan", default="auto"
+        .. deprecated:: 0.23
+            ``n_jobs`` was deprecated in version 0.23 and will be removed in
+            0.25.
+
+    algorithm : {"auto", "full", "elkan"}, default="auto"
         K-means algorithm to use. The classical EM-style algorithm is "full".
-        The "elkan" variation is more efficient by using the triangle
-        inequality, but currently doesn't support sparse data. "auto" chooses
-        "elkan" for dense data and "full" for sparse data.
+        The "elkan" variation is more efficient on data with well-defined
+        clusters, by using the triangle inequality. However it's more memory
+        intensive due to the allocation of an extra array of shape
+        (n_samples, n_clusters).
 
-    return_n_iter : bool, optional
+        For now "auto" (kept for backward compatibiliy) chooses "elkan" but it
+        might change in the future for a better heuristic.
+
+    return_n_iter : bool, default=False
         Whether or not to return the number of iterations.
 
     Returns
     -------
-    centroid : float ndarray with shape (k, n_features)
+    centroid : ndarray of shape (n_clusters, n_features)
         Centroids found at the last iteration of k-means.
 
-    label : integer ndarray with shape (n_samples,)
+    label : ndarray of shape (n_samples,)
         label[i] is the code or index of the centroid the
         i'th observation is closest to.
 
@@ -286,7 +283,6 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
         Number of iterations corresponding to the best results.
         Returned only if `return_n_iter` is set to True.
     """
-
     est = KMeans(
         n_clusters=n_clusters, init=init, n_init=n_init, max_iter=max_iter,
         verbose=verbose, precompute_distances=precompute_distances, tol=tol,
@@ -299,95 +295,49 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
         return est.cluster_centers_, est.labels_, est.inertia_
 
 
-def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
-                         init='k-means++', verbose=False, x_squared_norms=None,
-                         random_state=None, tol=1e-4,
-                         precompute_distances=True):
-    if sp.issparse(X):
-        raise TypeError("algorithm='elkan' not supported for sparse input X")
-    random_state = check_random_state(random_state)
-    if x_squared_norms is None:
-        x_squared_norms = row_norms(X, squared=True)
-    # init
-    centers = _init_centroids(X, n_clusters, init, random_state=random_state,
-                              x_squared_norms=x_squared_norms)
-    centers = np.ascontiguousarray(centers)
-    if verbose:
-        print('Initialization complete')
-
-    checked_sample_weight = _check_normalize_sample_weight(sample_weight, X)
-    centers, labels, n_iter = k_means_elkan(X, checked_sample_weight,
-                                            n_clusters, centers, tol=tol,
-                                            max_iter=max_iter, verbose=verbose)
-    if sample_weight is None:
-        inertia = np.sum((X - centers[labels]) ** 2, dtype=np.float64)
-    else:
-        sq_distances = np.sum((X - centers[labels]) ** 2, axis=1,
-                              dtype=np.float64) * checked_sample_weight
-        inertia = np.sum(sq_distances, dtype=np.float64)
-    return labels, inertia, centers, n_iter
-
-
-def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
-                         init='k-means++', verbose=False, x_squared_norms=None,
-                         random_state=None, tol=1e-4,
-                         precompute_distances=True):
-    """A single run of k-means, assumes preparation completed prior.
+def _kmeans_single_elkan(X, sample_weight, centers_init, max_iter=300,
+                         verbose=False, x_squared_norms=None, tol=1e-4,
+                         n_threads=1):
+    """A single run of k-means elkan, assumes preparation completed prior.
 
     Parameters
     ----------
-    X : array-like of floats, shape (n_samples, n_features)
-        The observations to cluster.
+    X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        The observations to cluster. If sparse matrix, must be in CSR format.
 
-    n_clusters : int
-        The number of clusters to form as well as the number of
-        centroids to generate.
-
-    sample_weight : array-like, shape (n_samples,)
+    sample_weight : array-like of shape (n_samples,)
         The weights for each observation in X.
 
-    max_iter : int, optional, default 300
+    centers_init : ndarray of shape (n_clusters, n_features)
+        The initial centers.
+
+    max_iter : int, default=300
         Maximum number of iterations of the k-means algorithm to run.
 
-    init : {'k-means++', 'random', or ndarray, or a callable}, optional
-        Method for initialization, default to 'k-means++':
-
-        'k-means++' : selects initial cluster centers for k-mean
-        clustering in a smart way to speed up convergence. See section
-        Notes in k_init for more details.
-
-        'random': choose k observations (rows) at random from data for
-        the initial centroids.
-
-        If an ndarray is passed, it should be of shape (k, p) and gives
-        the initial centers.
-
-        If a callable is passed, it should take arguments X, k and
-        and a random state and return an initialization.
-
-    tol : float, optional
-        The relative increment in the results before declaring convergence.
-
-    verbose : boolean, optional
+    verbose : bool, default=False
         Verbosity mode
 
-    x_squared_norms : array
+    x_squared_norms : array-like, default=None
         Precomputed x_squared_norms.
 
-    precompute_distances : boolean, default: True
-        Precompute distances (faster but takes more memory).
+    tol : float, default=1e-4
+        Relative tolerance with regards to Frobenius norm of the difference
+        in the cluster centers of two consecutive iterations to declare
+        convergence.
+        It's not advised to set `tol=0` since convergence might never be
+        declared due to rounding errors. Use a very small number instead.
 
-    random_state : int, RandomState instance, default=None
-        Determines random number generation for centroid initialization. Use
-        an int to make the randomness deterministic.
-        See :term:`Glossary <random_state>`.
+    n_threads : int, default=1
+        The number of OpenMP threads to use for the computation. Parallelism is
+        sample-wise on the main cython loop which assigns each sample to its
+        closest center.
 
     Returns
     -------
-    centroid : float ndarray with shape (k, n_features)
+    centroid : ndarray of shape (n_clusters, n_features)
         Centroids found at the last iteration of k-means.
 
-    label : integer ndarray with shape (n_samples,)
+    label : ndarray of shape (n_samples,)
         label[i] is the code or index of the centroid the
         i'th observation is closest to.
 
@@ -398,251 +348,254 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
     n_iter : int
         Number of iterations run.
     """
-    random_state = check_random_state(random_state)
+    n_samples = X.shape[0]
+    n_clusters = centers_init.shape[0]
 
-    sample_weight = _check_normalize_sample_weight(sample_weight, X)
+    # Buffers to avoid new allocations at each iteration.
+    centers = centers_init
+    centers_new = np.zeros_like(centers)
+    weight_in_clusters = np.zeros(n_clusters, dtype=X.dtype)
+    labels = np.full(n_samples, -1, dtype=np.int32)
+    labels_old = labels.copy()
+    center_half_distances = euclidean_distances(centers) / 2
+    distance_next_center = np.partition(np.asarray(center_half_distances),
+                                        kth=1, axis=0)[1]
+    upper_bounds = np.zeros(n_samples, dtype=X.dtype)
+    lower_bounds = np.zeros((n_samples, n_clusters), dtype=X.dtype)
+    center_shift = np.zeros(n_clusters, dtype=X.dtype)
 
-    best_labels, best_inertia, best_centers = None, None, None
-    # init
-    centers = _init_centroids(X, n_clusters, init, random_state=random_state,
-                              x_squared_norms=x_squared_norms)
-    if verbose:
-        print("Initialization complete")
+    if sp.issparse(X):
+        init_bounds = init_bounds_sparse
+        elkan_iter = elkan_iter_chunked_sparse
+        _inertia = _inertia_sparse
+    else:
+        init_bounds = init_bounds_dense
+        elkan_iter = elkan_iter_chunked_dense
+        _inertia = _inertia_dense
 
-    # Allocate memory to store the distances for each sample to its
-    # closer center for reallocation in case of ties
-    distances = np.zeros(shape=(X.shape[0],), dtype=X.dtype)
+    init_bounds(X, centers, center_half_distances,
+                labels, upper_bounds, lower_bounds)
 
-    # iterations
+    strict_convergence = False
+
     for i in range(max_iter):
-        centers_old = centers.copy()
-        # labels assignment is also called the E-step of EM
-        labels, inertia = \
-            _labels_inertia(X, sample_weight, x_squared_norms, centers,
-                            precompute_distances=precompute_distances,
-                            distances=distances)
+        elkan_iter(X, sample_weight, centers, centers_new,
+                   weight_in_clusters, center_half_distances,
+                   distance_next_center, upper_bounds, lower_bounds,
+                   labels, center_shift, n_threads)
 
-        # computation of the means is also called the M-step of EM
-        if sp.issparse(X):
-            centers = _k_means._centers_sparse(X, sample_weight, labels,
-                                               n_clusters, distances)
-        else:
-            centers = _k_means._centers_dense(X, sample_weight, labels,
-                                              n_clusters, distances)
+        # compute new pairwise distances between centers and closest other
+        # center of each center for next iterations
+        center_half_distances = euclidean_distances(centers_new) / 2
+        distance_next_center = np.partition(
+            np.asarray(center_half_distances), kth=1, axis=0)[1]
 
         if verbose:
-            print("Iteration %2d, inertia %.3f" % (i, inertia))
+            inertia = _inertia(X, sample_weight, centers, labels)
+            print(f"Iteration {i}, inertia {inertia}")
 
-        if best_inertia is None or inertia < best_inertia:
-            best_labels = labels.copy()
-            best_centers = centers.copy()
-            best_inertia = inertia
+        centers, centers_new = centers_new, centers
 
-        center_shift_total = squared_norm(centers_old - centers)
-        if center_shift_total <= tol:
+        if np.array_equal(labels, labels_old):
+            # First check the labels for strict convergence.
             if verbose:
-                print("Converged at iteration %d: "
-                      "center shift %e within tolerance %e"
-                      % (i, center_shift_total, tol))
+                print(f"Converged at iteration {i}: strict convergence.")
+            strict_convergence = True
             break
+        else:
+            # No strict convergence, check for tol based convergence.
+            center_shift_tot = (center_shift**2).sum()
+            if center_shift_tot <= tol:
+                if verbose:
+                    print(f"Converged at iteration {i}: center shift "
+                          f"{center_shift_tot} within tolerance {tol}.")
+                break
 
-    if center_shift_total > 0:
-        # rerun E-step in case of non-convergence so that predicted labels
-        # match cluster centers
-        best_labels, best_inertia = \
-            _labels_inertia(X, sample_weight, x_squared_norms, best_centers,
-                            precompute_distances=precompute_distances,
-                            distances=distances)
+        labels_old[:] = labels
 
-    return best_labels, best_inertia, best_centers, i + 1
+    if not strict_convergence:
+        # rerun E-step so that predicted labels match cluster centers
+        elkan_iter(X, sample_weight, centers, centers, weight_in_clusters,
+                   center_half_distances, distance_next_center,
+                   upper_bounds, lower_bounds, labels, center_shift,
+                   n_threads, update_centers=False)
+
+    inertia = _inertia(X, sample_weight, centers, labels)
+
+    return labels, inertia, centers, i + 1
 
 
-def _labels_inertia_precompute_dense(X, sample_weight, x_squared_norms,
-                                     centers, distances):
-    """Compute labels and inertia using a full distance matrix.
-
-    This will overwrite the 'distances' array in-place.
+def _kmeans_single_lloyd(X, sample_weight, centers_init, max_iter=300,
+                         verbose=False, x_squared_norms=None, tol=1e-4,
+                         n_threads=1):
+    """A single run of k-means lloyd, assumes preparation completed prior.
 
     Parameters
     ----------
-    X : numpy array, shape (n_sample, n_features)
-        Input data.
+    X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        The observations to cluster. If sparse matrix, must be in CSR format.
 
-    sample_weight : array-like, shape (n_samples,)
+    sample_weight : ndarray of shape (n_samples,)
         The weights for each observation in X.
 
-    x_squared_norms : numpy array, shape (n_samples,)
-        Precomputed squared norms of X.
+    centers_init : ndarray of shape (n_clusters, n_features)
+        The initial centers.
 
-    centers : numpy array, shape (n_clusters, n_features)
-        Cluster centers which data is assigned to.
+    max_iter : int, default=300
+        Maximum number of iterations of the k-means algorithm to run.
 
-    distances : numpy array, shape (n_samples,)
-        Pre-allocated array in which distances are stored.
+    verbose : bool, default=False
+        Verbosity mode
+
+    x_squared_norms : ndarray of shape (n_samples,), default=None
+        Precomputed x_squared_norms.
+
+    tol : float, default=1e-4
+        Relative tolerance with regards to Frobenius norm of the difference
+        in the cluster centers of two consecutive iterations to declare
+        convergence.
+        It's not advised to set `tol=0` since convergence might never be
+        declared due to rounding errors. Use a very small number instead.
+
+    n_threads : int, default=1
+        The number of OpenMP threads to use for the computation. Parallelism is
+        sample-wise on the main cython loop which assigns each sample to its
+        closest center.
 
     Returns
     -------
-    labels : numpy array, dtype=np.int, shape (n_samples,)
-        Indices of clusters that samples are assigned to.
+    centroid : ndarray of shape (n_clusters, n_features)
+        Centroids found at the last iteration of k-means.
+
+    label : ndarray of shape (n_samples,)
+        label[i] is the code or index of the centroid the
+        i'th observation is closest to.
 
     inertia : float
-        Sum of squared distances of samples to their closest cluster center.
+        The final value of the inertia criterion (sum of squared distances to
+        the closest centroid for all observations in the training set).
 
+    n_iter : int
+        Number of iterations run.
     """
-    n_samples = X.shape[0]
+    n_clusters = centers_init.shape[0]
 
-    # Breakup nearest neighbor distance computation into batches to prevent
-    # memory blowup in the case of a large number of samples and clusters.
-    # TODO: Once PR #7383 is merged use check_inputs=False in metric_kwargs.
-    labels, mindist = pairwise_distances_argmin_min(
-        X=X, Y=centers, metric='euclidean', metric_kwargs={'squared': True})
-    # cython k-means code assumes int32 inputs
-    labels = labels.astype(np.int32, copy=False)
-    if n_samples == distances.shape[0]:
-        # distances will be changed in-place
-        distances[:] = mindist
-    inertia = (mindist * sample_weight).sum()
-    return labels, inertia
+    # Buffers to avoid new allocations at each iteration.
+    centers = centers_init
+    centers_new = np.zeros_like(centers)
+    labels = np.full(X.shape[0], -1, dtype=np.int32)
+    labels_old = labels.copy()
+    weight_in_clusters = np.zeros(n_clusters, dtype=X.dtype)
+    center_shift = np.zeros(n_clusters, dtype=X.dtype)
+
+    if sp.issparse(X):
+        lloyd_iter = lloyd_iter_chunked_sparse
+        _inertia = _inertia_sparse
+    else:
+        lloyd_iter = lloyd_iter_chunked_dense
+        _inertia = _inertia_dense
+
+    strict_convergence = False
+
+    # Threadpoolctl context to limit the number of threads in second level of
+    # nested parallelism (i.e. BLAS) to avoid oversubsciption.
+    with threadpool_limits(limits=1, user_api="blas"):
+        for i in range(max_iter):
+            lloyd_iter(X, sample_weight, x_squared_norms, centers, centers_new,
+                       weight_in_clusters, labels, center_shift, n_threads)
+
+            if verbose:
+                inertia = _inertia(X, sample_weight, centers, labels)
+                print(f"Iteration {i}, inertia {inertia}.")
+
+            centers, centers_new = centers_new, centers
+
+            if np.array_equal(labels, labels_old):
+                # First check the labels for strict convergence.
+                if verbose:
+                    print(f"Converged at iteration {i}: strict convergence.")
+                strict_convergence = True
+                break
+            else:
+                # No strict convergence, check for tol based convergence.
+                center_shift_tot = (center_shift**2).sum()
+                if center_shift_tot <= tol:
+                    if verbose:
+                        print(f"Converged at iteration {i}: center shift "
+                              f"{center_shift_tot} within tolerance {tol}.")
+                    break
+
+            labels_old[:] = labels
+
+        if not strict_convergence:
+            # rerun E-step so that predicted labels match cluster centers
+            lloyd_iter(X, sample_weight, x_squared_norms, centers, centers,
+                       weight_in_clusters, labels, center_shift, n_threads,
+                       update_centers=False)
+
+    inertia = _inertia(X, sample_weight, centers, labels)
+
+    return labels, inertia, centers, i + 1
 
 
 def _labels_inertia(X, sample_weight, x_squared_norms, centers,
-                    precompute_distances=True, distances=None):
+                    n_threads=None):
     """E step of the K-means EM algorithm.
 
     Compute the labels and the inertia of the given samples and centers.
-    This will compute the distances in-place.
 
     Parameters
     ----------
-    X : float64 array-like or CSR sparse matrix, shape (n_samples, n_features)
-        The input samples to assign to the labels.
+    X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        The input samples to assign to the labels. If sparse matrix, must
+        be in CSR format.
 
-    sample_weight : array-like, shape (n_samples,)
+    sample_weight : ndarray of shape (n_samples,)
         The weights for each observation in X.
 
-    x_squared_norms : array, shape (n_samples,)
+    x_squared_norms : ndarray of shape (n_samples,)
         Precomputed squared euclidean norm of each data point, to speed up
         computations.
 
-    centers : float array, shape (k, n_features)
+    centers : ndarray of shape (n_clusters, n_features)
         The cluster centers.
 
-    precompute_distances : boolean, default: True
-        Precompute distances (faster but takes more memory).
-
-    distances : float array, shape (n_samples,)
-        Pre-allocated array to be filled in with each sample's distance
-        to the closest center.
+    n_threads : int, default=None
+        The number of OpenMP threads to use for the computation. Parallelism is
+        sample-wise on the main cython loop which assigns each sample to its
+        closest center.
 
     Returns
     -------
-    labels : int array of shape(n)
-        The resulting assignment
+    labels : ndarray of shape (n_samples,)
+        The resulting assignment.
 
     inertia : float
         Sum of squared distances of samples to their closest cluster center.
     """
     n_samples = X.shape[0]
-    sample_weight = _check_normalize_sample_weight(sample_weight, X)
-    # set the default value of centers to -1 to be able to detect any anomaly
-    # easily
-    labels = np.full(n_samples, -1, np.int32)
-    if distances is None:
-        distances = np.zeros(shape=(0,), dtype=X.dtype)
-    # distances will be changed in-place
+    n_clusters = centers.shape[0]
+
+    n_threads = _openmp_effective_n_threads(n_threads)
+
+    labels = np.full(n_samples, -1, dtype=np.int32)
+    weight_in_clusters = np.zeros(n_clusters, dtype=centers.dtype)
+    center_shift = np.zeros_like(weight_in_clusters)
+
     if sp.issparse(X):
-        inertia = _k_means._assign_labels_csr(
-            X, sample_weight, x_squared_norms, centers, labels,
-            distances=distances)
+        _labels = lloyd_iter_chunked_sparse
+        _inertia = _inertia_sparse
     else:
-        if precompute_distances:
-            return _labels_inertia_precompute_dense(X, sample_weight,
-                                                    x_squared_norms, centers,
-                                                    distances)
-        inertia = _k_means._assign_labels_array(
-            X, sample_weight, x_squared_norms, centers, labels,
-            distances=distances)
+        _labels = lloyd_iter_chunked_dense
+        _inertia = _inertia_dense
+
+    _labels(X, sample_weight, x_squared_norms, centers, centers,
+            weight_in_clusters, labels, center_shift, n_threads,
+            update_centers=False)
+
+    inertia = _inertia(X, sample_weight, centers, labels)
+
     return labels, inertia
-
-
-def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
-                    init_size=None):
-    """Compute the initial centroids
-
-    Parameters
-    ----------
-
-    X : array, shape (n_samples, n_features)
-
-    k : int
-        number of centroids
-
-    init : {'k-means++', 'random' or ndarray or callable} optional
-        Method for initialization
-
-    random_state : int, RandomState instance, default=None
-        Determines random number generation for centroid initialization. Use
-        an int to make the randomness deterministic.
-        See :term:`Glossary <random_state>`.
-
-    x_squared_norms : array, shape (n_samples,), optional
-        Squared euclidean norm of each data point. Pass it if you have it at
-        hands already to avoid it being recomputed here. Default: None
-
-    init_size : int, optional
-        Number of samples to randomly sample for speeding up the
-        initialization (sometimes at the expense of accuracy): the
-        only algorithm is initialized by running a batch KMeans on a
-        random subset of the data. This needs to be larger than k.
-
-    Returns
-    -------
-    centers : array, shape(k, n_features)
-    """
-    random_state = check_random_state(random_state)
-    n_samples = X.shape[0]
-
-    if x_squared_norms is None:
-        x_squared_norms = row_norms(X, squared=True)
-
-    if init_size is not None and init_size < n_samples:
-        if init_size < k:
-            warnings.warn(
-                "init_size=%d should be larger than k=%d. "
-                "Setting it to 3*k" % (init_size, k),
-                RuntimeWarning, stacklevel=2)
-            init_size = 3 * k
-        init_indices = random_state.randint(0, n_samples, init_size)
-        X = X[init_indices]
-        x_squared_norms = x_squared_norms[init_indices]
-        n_samples = X.shape[0]
-    elif n_samples < k:
-        raise ValueError(
-            "n_samples=%d should be larger than k=%d" % (n_samples, k))
-
-    if isinstance(init, str) and init == 'k-means++':
-        centers = _k_init(X, k, random_state=random_state,
-                          x_squared_norms=x_squared_norms)
-    elif isinstance(init, str) and init == 'random':
-        seeds = random_state.permutation(n_samples)[:k]
-        centers = X[seeds]
-    elif hasattr(init, '__array__'):
-        # ensure that the centers have the same dtype as X
-        # this is a requirement of fused types of cython
-        centers = np.array(init, dtype=X.dtype)
-    elif callable(init):
-        centers = init(X, k, random_state=random_state)
-        centers = np.asarray(centers, dtype=X.dtype)
-    else:
-        raise ValueError("the init parameter for the k-means should "
-                         "be 'k-means++' or 'random' or an ndarray, "
-                         "'%s' (type '%s') was passed." % (init, type(init)))
-
-    if sp.issparse(centers):
-        centers = centers.toarray()
-
-    _validate_center_shape(X, k, centers)
-    return centers
 
 
 class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
@@ -657,19 +610,22 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         The number of clusters to form as well as the number of
         centroids to generate.
 
-    init : {'k-means++', 'random'} or ndarray of shape \
+    init : {'k-means++', 'random'}, callable or array-like of shape \
             (n_clusters, n_features), default='k-means++'
-        Method for initialization, defaults to 'k-means++':
+        Method for initialization:
 
         'k-means++' : selects initial cluster centers for k-mean
         clustering in a smart way to speed up convergence. See section
         Notes in k_init for more details.
 
-        'random': choose k observations (rows) at random from data for
-        the initial centroids.
+        'random': choose `n_clusters` observations (rows) at random from data
+        for the initial centroids.
 
-        If an ndarray is passed, it should be of shape (n_clusters, n_features)
+        If an array is passed, it should be of shape (n_clusters, n_features)
         and gives the initial centers.
+
+        If a callable is passed, it should take arguments X, n_clusters and a
+        random state and return an initialization.
 
     n_init : int, default=10
         Number of time the k-means algorithm will be run with different
@@ -681,9 +637,11 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         single run.
 
     tol : float, default=1e-4
-        Relative tolerance with regards to inertia to declare convergence.
+        Relative tolerance with regards to Frobenius norm of the difference
+        in the cluster centers of two consecutive iterations to declare
+        convergence.
 
-    precompute_distances : 'auto' or bool, default='auto'
+    precompute_distances : {'auto', True, False}, default='auto'
         Precompute distances (faster but takes more memory).
 
         'auto' : do not precompute distances if n_samples * n_clusters > 12
@@ -693,6 +651,10 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         True : always precompute distances.
 
         False : never precompute distances.
+
+        .. deprecated:: 0.23
+            'precompute_distances' was deprecated in version 0.22 and will be
+            removed in 0.25. It has no effect.
 
     verbose : int, default=0
         Verbosity mode.
@@ -704,26 +666,37 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
     copy_x : bool, default=True
         When pre-computing distances it is more numerically accurate to center
-        the data first.  If copy_x is True (default), then the original data is
-        not modified, ensuring X is C-contiguous.  If False, the original data
-        is modified, and put back before the function returns, but small
-        numerical differences may be introduced by subtracting and then adding
-        the data mean, in this case it will also not ensure that data is
-        C-contiguous which may cause a significant slowdown.
+        the data first. If copy_x is True (default), then the original data is
+        not modified. If False, the original data is modified, and put back
+        before the function returns, but small numerical differences may be
+        introduced by subtracting and then adding the data mean. Note that if
+        the original data is not C-contiguous, a copy will be made even if
+        copy_x is False. If the original data is sparse, but not in CSR format,
+        a copy will be made even if copy_x is False.
 
     n_jobs : int, default=None
-        The number of jobs to use for the computation. This works by computing
-        each of the n_init runs in parallel.
+        The number of OpenMP threads to use for the computation. Parallelism is
+        sample-wise on the main cython loop which assigns each sample to its
+        closest center.
 
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-        for more details.
+        ``None`` or ``-1`` means using all processors.
+
+        .. deprecated:: 0.23
+            ``n_jobs`` was deprecated in version 0.23 and will be removed in
+            0.25.
 
     algorithm : {"auto", "full", "elkan"}, default="auto"
         K-means algorithm to use. The classical EM-style algorithm is "full".
-        The "elkan" variation is more efficient by using the triangle
-        inequality, but currently doesn't support sparse data. "auto" chooses
-        "elkan" for dense data and "full" for sparse data.
+        The "elkan" variation is more efficient on data with well-defined
+        clusters, by using the triangle inequality. However it's more memory
+        intensive due to the allocation of an extra array of shape
+        (n_samples, n_clusters).
+
+        For now "auto" (kept for backward compatibiliy) chooses "elkan" but it
+        might change in the future for a better heuristic.
+
+        .. versionchanged:: 0.18
+            Added Elkan algorithm
 
     Attributes
     ----------
@@ -741,7 +714,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
     n_iter_ : int
         Number of iterations run.
 
-    See Also
+    See also
     --------
 
     MiniBatchKMeans
@@ -788,11 +761,11 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
     array([[10.,  2.],
            [ 1.,  2.]])
     """
-
-    def __init__(self, n_clusters=8, init='k-means++', n_init=10,
-                 max_iter=300, tol=1e-4, precompute_distances='auto',
+    @_deprecate_positional_args
+    def __init__(self, n_clusters=8, *, init='k-means++', n_init=10,
+                 max_iter=300, tol=1e-4, precompute_distances='deprecated',
                  verbose=0, random_state=None, copy_x=True,
-                 n_jobs=None, algorithm='auto'):
+                 n_jobs='deprecated', algorithm='auto'):
 
         self.n_clusters = n_clusters
         self.init = init
@@ -806,93 +779,189 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         self.n_jobs = n_jobs
         self.algorithm = algorithm
 
+    def _check_params(self, X):
+        # precompute_distances
+        if self.precompute_distances != 'deprecated':
+            warnings.warn("'precompute_distances' was deprecated in version "
+                          "0.23 and will be removed in 0.25. It has no "
+                          "effect", FutureWarning)
+
+        # n_jobs
+        if self.n_jobs != 'deprecated':
+            warnings.warn("'n_jobs' was deprecated in version 0.23 and will be"
+                          " removed in 0.25.", FutureWarning)
+            self._n_threads = self.n_jobs
+        else:
+            self._n_threads = None
+        self._n_threads = _openmp_effective_n_threads(self._n_threads)
+
+        # n_init
+        if self.n_init <= 0:
+            raise ValueError(
+                f"n_init should be > 0, got {self.n_init} instead.")
+        self._n_init = self.n_init
+
+        # max_iter
+        if self.max_iter <= 0:
+            raise ValueError(
+                f"max_iter should be > 0, got {self.max_iter} instead.")
+
+        # n_clusters
+        if X.shape[0] < self.n_clusters:
+            raise ValueError(f"n_samples={X.shape[0]} should be >= "
+                             f"n_clusters={self.n_clusters}.")
+
+        # tol
+        self._tol = _tolerance(X, self.tol)
+
+        # algorithm
+        if self.algorithm not in ("auto", "full", "elkan"):
+            raise ValueError(f"Algorithm must be 'auto', 'full' or 'elkan', "
+                             f"got {self.algorithm} instead.")
+
+        self._algorithm = self.algorithm
+        if self._algorithm == "auto":
+            self._algorithm = "full" if self.n_clusters == 1 else "elkan"
+        if self._algorithm == "elkan" and self.n_clusters == 1:
+            warnings.warn("algorithm='elkan' doesn't make sense for a single "
+                          "cluster. Using 'full' instead.", RuntimeWarning)
+            self._algorithm = "full"
+
+        # init
+        if not (hasattr(self.init, '__array__') or callable(self.init)
+                or (isinstance(self.init, str)
+                    and self.init in ["k-means++", "random"])):
+            raise ValueError(
+                f"init should be either 'k-means++', 'random', a ndarray or a "
+                f"callable, got '{self.init}' instead.")
+
+        if hasattr(self.init, '__array__') and self._n_init != 1:
+            warnings.warn(
+                f"Explicit initial center position passed: performing only"
+                f" one init in {self.__class__.__name__} instead of "
+                f"n_init={self._n_init}.", RuntimeWarning, stacklevel=2)
+            self._n_init = 1
+
+    def _validate_center_shape(self, X, centers):
+        """Check if centers is compatible with X and n_clusters"""
+        if centers.shape[0] != self.n_clusters:
+            raise ValueError(
+                f"The shape of the initial centers {centers.shape} does not "
+                f"match the number of clusters {self.n_clusters}.")
+        if centers.shape[1] != X.shape[1]:
+            raise ValueError(
+                f"The shape of the initial centers {centers.shape} does not "
+                f"match the number of features of the data {X.shape[1]}.")
+
     def _check_test_data(self, X):
-        X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES)
+        X = check_array(X, accept_sparse='csr', dtype=[np.float64, np.float32],
+                        order='C', accept_large_sparse=False)
         n_samples, n_features = X.shape
         expected_n_features = self.cluster_centers_.shape[1]
         if not n_features == expected_n_features:
-            raise ValueError("Incorrect number of features. "
-                             "Got %d features, expected %d" % (
-                                 n_features, expected_n_features))
+            raise ValueError(
+                f"Incorrect number of features. Got {n_features} features, "
+                f"expected {expected_n_features}.")
 
         return X
+
+    def _init_centroids(self, X, x_squared_norms, init, random_state,
+                        init_size=None):
+        """Compute the initial centroids
+
+        Parameters
+        ----------
+        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+            The input samples.
+
+        x_squared_norms : ndarray of shape (n_samples,)
+            Squared euclidean norm of each data point. Pass it if you have it
+            at hands already to avoid it being recomputed here.
+
+        init : {'k-means++', 'random'}, callable or ndarray of shape \
+                (n_clusters, n_features)
+            Method for initialization.
+
+        random_state : RandomState instance
+            Determines random number generation for centroid initialization.
+            See :term:`Glossary <random_state>`.
+
+        init_size : int, default=None
+            Number of samples to randomly sample for speeding up the
+            initialization (sometimes at the expense of accuracy).
+
+        Returns
+        -------
+        centers : ndarray of shape (n_clusters, n_features)
+        """
+        n_samples = X.shape[0]
+        n_clusters = self.n_clusters
+
+        if init_size is not None and init_size < n_samples:
+            init_indices = random_state.randint(0, n_samples, init_size)
+            X = X[init_indices]
+            x_squared_norms = x_squared_norms[init_indices]
+            n_samples = X.shape[0]
+
+        if isinstance(init, str) and init == 'k-means++':
+            centers = _k_init(X, n_clusters, random_state=random_state,
+                              x_squared_norms=x_squared_norms)
+        elif isinstance(init, str) and init == 'random':
+            seeds = random_state.permutation(n_samples)[:n_clusters]
+            centers = X[seeds]
+        elif hasattr(init, '__array__'):
+            centers = init
+        elif callable(init):
+            centers = init(X, n_clusters, random_state=random_state)
+            centers = check_array(
+                centers, dtype=X.dtype, copy=False, order='C')
+            self._validate_center_shape(X, centers)
+
+        if sp.issparse(centers):
+            centers = centers.toarray()
+
+        return centers
 
     def fit(self, X, y=None, sample_weight=None):
         """Compute k-means clustering.
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape=(n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training instances to cluster. It must be noted that the data
             will be converted to C ordering, which will cause a memory
             copy if the given data is not C-contiguous.
+            If a sparse matrix is passed, a copy will be made if it's not in
+            CSR format.
 
         y : Ignored
             Not used, present here for API consistency by convention.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
-            are assigned equal weight (default: None).
+            are assigned equal weight.
+
+            .. versionadded:: 0.20
 
         Returns
         -------
         self
             Fitted estimator.
         """
+        X = self._validate_data(X, accept_sparse='csr',
+                                dtype=[np.float64, np.float32],
+                                order='C', copy=self.copy_x,
+                                accept_large_sparse=False)
+
+        self._check_params(X)
         random_state = check_random_state(self.random_state)
-
-        n_init = self.n_init
-        if n_init <= 0:
-            raise ValueError("Invalid number of initializations."
-                             " n_init=%d must be bigger than zero." % n_init)
-
-        if self.max_iter <= 0:
-            raise ValueError(
-                'Number of iterations should be a positive number,'
-                ' got %d instead' % self.max_iter
-            )
-
-        # avoid forcing order when copy_x=False
-        order = "C" if self.copy_x else None
-        X = check_array(X, accept_sparse='csr', dtype=[np.float64, np.float32],
-                        order=order, copy=self.copy_x)
-        # verify that the number of samples given is larger than k
-        if _num_samples(X) < self.n_clusters:
-            raise ValueError("n_samples=%d should be >= n_clusters=%d" % (
-                _num_samples(X), self.n_clusters))
-
-        tol = _tolerance(X, self.tol)
-
-        # If the distances are precomputed every job will create a matrix of
-        # shape (n_clusters, n_samples). To stop KMeans from eating up memory
-        # we only activate this if the created matrix is guaranteed to be
-        # under 100MB. 12 million entries consume a little under 100MB if they
-        # are of type double.
-        precompute_distances = self.precompute_distances
-        if precompute_distances == 'auto':
-            n_samples = X.shape[0]
-            precompute_distances = (self.n_clusters * n_samples) < 12e6
-        elif isinstance(precompute_distances, bool):
-            pass
-        else:
-            raise ValueError(
-                "precompute_distances should be 'auto' or True/False"
-                ", but a value of %r was passed" %
-                precompute_distances
-            )
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         # Validate init array
         init = self.init
         if hasattr(init, '__array__'):
-            init = check_array(init, dtype=X.dtype.type, copy=True)
-            _validate_center_shape(X, self.n_clusters, init)
-
-            if n_init != 1:
-                warnings.warn(
-                    'Explicit initial center position passed: '
-                    'performing only one init in k-means instead of n_init=%d'
-                    % n_init, RuntimeWarning, stacklevel=2)
-                n_init = 1
+            init = check_array(init, dtype=X.dtype, copy=True, order='C')
+            self._validate_center_shape(X, init)
 
         # subtract of mean of x for more accurate distance computations
         if not sp.issparse(X):
@@ -906,60 +975,33 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         # precompute squared norms of data points
         x_squared_norms = row_norms(X, squared=True)
 
-        best_labels, best_inertia, best_centers = None, None, None
-        algorithm = self.algorithm
-        if self.n_clusters == 1:
-            # elkan doesn't make sense for a single cluster, full will produce
-            # the right result.
-            algorithm = "full"
-        if algorithm == "auto":
-            algorithm = "full" if sp.issparse(X) else 'elkan'
-        if algorithm == "full":
+        if self._algorithm == "full":
             kmeans_single = _kmeans_single_lloyd
-        elif algorithm == "elkan":
+        else:
             kmeans_single = _kmeans_single_elkan
-        else:
-            raise ValueError("Algorithm must be 'auto', 'full' or 'elkan', got"
-                             " %s" % str(algorithm))
 
-        seeds = random_state.randint(np.iinfo(np.int32).max, size=n_init)
-        if effective_n_jobs(self.n_jobs) == 1:
-            # For a single thread, less memory is needed if we just store one
-            # set of the best results (as opposed to one set per run per
-            # thread).
-            for seed in seeds:
-                # run a k-means once
-                labels, inertia, centers, n_iter_ = kmeans_single(
-                    X, sample_weight, self.n_clusters,
-                    max_iter=self.max_iter, init=init, verbose=self.verbose,
-                    precompute_distances=precompute_distances, tol=tol,
-                    x_squared_norms=x_squared_norms, random_state=seed)
-                # determine if these results are the best so far
-                if best_inertia is None or inertia < best_inertia:
-                    best_labels = labels.copy()
-                    best_centers = centers.copy()
-                    best_inertia = inertia
-                    best_n_iter = n_iter_
-        else:
-            # parallelisation of k-means runs
-            results = Parallel(n_jobs=self.n_jobs, verbose=0)(
-                delayed(kmeans_single)(
-                    X, sample_weight, self.n_clusters,
-                    max_iter=self.max_iter, init=init,
-                    verbose=self.verbose, tol=tol,
-                    precompute_distances=precompute_distances,
-                    x_squared_norms=x_squared_norms,
-                    # Change seed to ensure variety
-                    random_state=seed
-                )
-                for seed in seeds)
-            # Get results with the lowest inertia
-            labels, inertia, centers, n_iters = zip(*results)
-            best = np.argmin(inertia)
-            best_labels = labels[best]
-            best_inertia = inertia[best]
-            best_centers = centers[best]
-            best_n_iter = n_iters[best]
+        best_inertia = None
+
+        for i in range(self._n_init):
+            # Initialize centers
+            centers_init = self._init_centroids(
+                X, x_squared_norms=x_squared_norms, init=init,
+                random_state=random_state)
+            if self.verbose:
+                print("Initialization complete")
+
+            # run a k-means once
+            labels, inertia, centers, n_iter_ = kmeans_single(
+                X, sample_weight, centers_init, max_iter=self.max_iter,
+                verbose=self.verbose, tol=self._tol,
+                x_squared_norms=x_squared_norms, n_threads=self._n_threads)
+
+            # determine if these results are the best so far
+            if best_inertia is None or inertia < best_inertia:
+                best_labels = labels
+                best_centers = centers
+                best_inertia = inertia
+                best_n_iter = n_iter_
 
         if not sp.issparse(X):
             if not self.copy_x:
@@ -972,8 +1014,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
                 "Number of distinct clusters ({}) found smaller than "
                 "n_clusters ({}). Possibly due to duplicate points "
                 "in X.".format(distinct_clusters, self.n_clusters),
-                ConvergenceWarning, stacklevel=2
-            )
+                ConvergenceWarning, stacklevel=2)
 
         self.cluster_centers_ = best_centers
         self.labels_ = best_labels
@@ -995,13 +1036,13 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         y : Ignored
             Not used, present here for API consistency by convention.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
-            are assigned equal weight (default: None).
+            are assigned equal weight.
 
         Returns
         -------
-        labels : array, shape [n_samples,]
+        labels : ndarray of shape (n_samples,)
             Index of the cluster each sample belongs to.
         """
         return self.fit(X, sample_weight=sample_weight).labels_
@@ -1019,13 +1060,13 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         y : Ignored
             Not used, present here for API consistency by convention.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
-            are assigned equal weight (default: None).
+            are assigned equal weight.
 
         Returns
         -------
-        X_new : array, shape [n_samples, k]
+        X_new : array of shape (n_samples, n_clusters)
             X transformed in the new space.
         """
         # Currently, this just skips a copy of the data if it is not in
@@ -1048,7 +1089,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
         Returns
         -------
-        X_new : array, shape [n_samples, k]
+        X_new : ndarray of shape (n_samples, n_clusters)
             X transformed in the new space.
         """
         check_is_fitted(self)
@@ -1072,21 +1113,23 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             New data to predict.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
-            are assigned equal weight (default: None).
+            are assigned equal weight.
 
         Returns
         -------
-        labels : array, shape [n_samples,]
+        labels : ndarray of shape (n_samples,)
             Index of the cluster each sample belongs to.
         """
         check_is_fitted(self)
 
         X = self._check_test_data(X)
         x_squared_norms = row_norms(X, squared=True)
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+
         return _labels_inertia(X, sample_weight, x_squared_norms,
-                               self.cluster_centers_)[0]
+                               self.cluster_centers_, self._n_threads)[0]
 
     def score(self, X, y=None, sample_weight=None):
         """Opposite of the value of X on the K-means objective.
@@ -1099,9 +1142,9 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         y : Ignored
             Not used, present here for API consistency by convention.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
-            are assigned equal weight (default: None).
+            are assigned equal weight.
 
         Returns
         -------
@@ -1112,8 +1155,18 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
         X = self._check_test_data(X)
         x_squared_norms = row_norms(X, squared=True)
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+
         return -_labels_inertia(X, sample_weight, x_squared_norms,
                                 self.cluster_centers_)[1]
+
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_sample_weights_invariance':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }
 
 
 def _mini_batch_step(X, sample_weight, x_squared_norms, centers, weight_sums,
@@ -1126,23 +1179,23 @@ def _mini_batch_step(X, sample_weight, x_squared_norms, centers, weight_sums,
     Parameters
     ----------
 
-    X : array, shape (n_samples, n_features)
+    X : ndarray of shape (n_samples, n_features)
         The original data array.
 
-    sample_weight : array-like, shape (n_samples,)
+    sample_weight : array-like of shape (n_samples,)
         The weights for each observation in X.
 
-    x_squared_norms : array, shape (n_samples,)
+    x_squared_norms : ndarray of shape (n_samples,)
         Squared euclidean norm of each data point.
 
-    centers : array, shape (k, n_features)
+    centers : ndarray of shape (k, n_features)
         The cluster centers. This array is MODIFIED IN PLACE
 
-    counts : array, shape (k,)
+    counts : ndarray of shape (k,)
          The vector in which we keep track of the numbers of elements in a
          cluster. This array is MODIFIED IN PLACE
 
-    distances : array, dtype float, shape (n_samples), optional
+    distances : ndarray of shape (n_samples,), dtype=float, default=None
         If not None, should be a pre-allocated array that will be used to store
         the distances of each sample to its closest center.
         May not be None when random_reassign is True.
@@ -1153,18 +1206,18 @@ def _mini_batch_step(X, sample_weight, x_squared_norms, centers, weight_sums,
         an int to make the randomness deterministic.
         See :term:`Glossary <random_state>`.
 
-    random_reassign : boolean, optional
+    random_reassign : bool, default=None
         If True, centers with very low counts are randomly reassigned
         to observations.
 
-    reassignment_ratio : float, optional
+    reassignment_ratio : float, default=None
         Control the fraction of the maximum number of counts for a
         center to be reassigned. A higher value means that low count
         centers are more likely to be reassigned, which means that the
         model will take longer to converge, but should converge in a
         better clustering.
 
-    verbose : bool, optional, default False
+    verbose : bool, default=False
         Controls the verbosity.
 
     compute_squared_diff : bool
@@ -1178,14 +1231,13 @@ def _mini_batch_step(X, sample_weight, x_squared_norms, centers, weight_sums,
     inertia : float
         Sum of squared distances of samples to their closest cluster center.
 
-    squared_diff : numpy array, shape (n_clusters,)
+    squared_diff : ndarray of shape (n_clusters,)
         Squared distances between previous and updated cluster centers.
 
     """
     # Perform label assignment to nearest centers
     nearest_center, inertia = _labels_inertia(X, sample_weight,
-                                              x_squared_norms, centers,
-                                              distances=distances)
+                                              x_squared_norms, centers)
 
     if random_reassign and reassignment_ratio > 0:
         random_state = check_random_state(random_state)
@@ -1220,7 +1272,7 @@ def _mini_batch_step(X, sample_weight, x_squared_norms, centers, weight_sums,
     # implementation for the sparse CSR representation completely written in
     # cython
     if sp.issparse(X):
-        return inertia, _k_means._mini_batch_update_csr(
+        return inertia, _mini_batch_update_csr(
             X, sample_weight, x_squared_norms, centers, weight_sums,
             nearest_center, old_center_buffer, compute_squared_diff)
 
@@ -1339,19 +1391,22 @@ class MiniBatchKMeans(KMeans):
         The number of clusters to form as well as the number of
         centroids to generate.
 
-    init : {'k-means++', 'random'} or ndarray of shape \
+    init : {'k-means++', 'random'}, callable or array-like of shape \
             (n_clusters, n_features), default='k-means++'
-        Method for initialization
+        Method for initialization:
 
         'k-means++' : selects initial cluster centers for k-mean
         clustering in a smart way to speed up convergence. See section
         Notes in k_init for more details.
 
-        'random': choose k observations (rows) at random from data for
-        the initial centroids.
+        'random': choose `n_clusters` observations (rows) at random from data
+        for the initial centroids.
 
-        If an ndarray is passed, it should be of shape (n_clusters, n_features)
+        If an array is passed, it should be of shape (n_clusters, n_features)
         and gives the initial centers.
+
+        If a callable is passed, it should take arguments X, n_clusters and a
+        random state and return an initialization.
 
     max_iter : int, default=100
         Maximum number of iterations over the complete dataset before
@@ -1425,6 +1480,21 @@ class MiniBatchKMeans(KMeans):
         defined as the sum of square distances of samples to their nearest
         neighbor.
 
+    n_iter_ : int
+        Number of batches processed.
+
+    counts_ : ndarray of shape (n_clusters,)
+        Weigth sum of each cluster.
+
+        .. deprecated:: 0.24
+           This attribute is deprecated in 0.24 and will be removed in 0.26.
+
+    init_size_ : int
+        The effective number of samples used for the initialization.
+
+        .. deprecated:: 0.24
+           This attribute is deprecated in 0.24 and will be removed in 0.26.
+
     See Also
     --------
     KMeans
@@ -1466,8 +1536,8 @@ class MiniBatchKMeans(KMeans):
     >>> kmeans.predict([[0, 0], [4, 4]])
     array([1, 0], dtype=int32)
     """
-
-    def __init__(self, n_clusters=8, init='k-means++', max_iter=100,
+    @_deprecate_positional_args
+    def __init__(self, n_clusters=8, *, init='k-means++', max_iter=100,
                  batch_size=100, verbose=0, compute_labels=True,
                  random_state=None, tol=0.0, max_no_improvement=10,
                  init_size=None, n_init=3, reassignment_ratio=0.01):
@@ -1482,12 +1552,68 @@ class MiniBatchKMeans(KMeans):
         self.init_size = init_size
         self.reassignment_ratio = reassignment_ratio
 
+    @deprecated("The attribute 'counts_' is deprecated in 0.24"  # type: ignore
+                " and will be removed in 0.26.")
+    @property
+    def counts_(self):
+        return self._counts
+
+    @deprecated("The attribute 'init_size_' is deprecated in "  # type: ignore
+                "0.24 and will be removed in 0.26.")
+    @property
+    def init_size_(self):
+        return self._init_size
+
+    @deprecated("The attribute 'random_state_' is deprecated "  # type: ignore
+                "in 0.24 and will be removed in 0.26.")
+    @property
+    def random_state_(self):
+        return getattr(self, "_random_state", None)
+
+    def _check_params(self, X):
+        super()._check_params(X)
+
+        # max_no_improvement
+        if self.max_no_improvement is not None and self.max_no_improvement < 0:
+            raise ValueError(
+                f"max_no_improvement should be >= 0, got "
+                f"{self.max_no_improvement} instead.")
+
+        # batch_size
+        if self.batch_size <= 0:
+            raise ValueError(
+                f"batch_size should be > 0, got {self.batch_size} instead.")
+
+        # init_size
+        if self.init_size is not None and self.init_size <= 0:
+            raise ValueError(
+                f"init_size should be > 0, got {self.init_size} instead.")
+        self._init_size = self.init_size
+        if self._init_size is None:
+            self._init_size = 3 * self.batch_size
+            if self._init_size < self.n_clusters:
+                self._init_size = 3 * self.n_clusters
+        elif self._init_size < self.n_clusters:
+            warnings.warn(
+                f"init_size={self._init_size} should be larger than "
+                f"n_clusters={self.n_clusters}. Setting it to "
+                f"min(3*n_clusters, n_samples)",
+                RuntimeWarning, stacklevel=2)
+            self._init_size = 3 * self.n_clusters
+        self._init_size = min(self._init_size, X.shape[0])
+
+        # reassignment_ratio
+        if self.reassignment_ratio < 0:
+            raise ValueError(
+                f"reassignment_ratio should be >= 0, got "
+                f"{self.reassignment_ratio} instead.")
+
     def fit(self, X, y=None, sample_weight=None):
         """Compute the centroids on X by chunking it into mini-batches.
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape=(n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training instances to cluster. It must be noted that the data
             will be converted to C ordering, which will cause a memory copy
             if the given data is not C-contiguous.
@@ -1495,35 +1621,31 @@ class MiniBatchKMeans(KMeans):
         y : Ignored
             Not used, present here for API consistency by convention.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
             are assigned equal weight (default: None).
+
+            .. versionadded:: 0.20
 
         Returns
         -------
         self
         """
+        X = self._validate_data(X, accept_sparse='csr',
+                                dtype=[np.float64, np.float32],
+                                order='C', accept_large_sparse=False)
+
+        self._check_params(X)
         random_state = check_random_state(self.random_state)
-        X = check_array(X, accept_sparse="csr", order='C',
-                        dtype=[np.float64, np.float32])
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+
+        # Validate init array
+        init = self.init
+        if hasattr(init, '__array__'):
+            init = check_array(init, dtype=X.dtype, copy=True, order='C')
+            self._validate_center_shape(X, init)
+
         n_samples, n_features = X.shape
-        if n_samples < self.n_clusters:
-            raise ValueError("n_samples=%d should be >= n_clusters=%d"
-                             % (n_samples, self.n_clusters))
-
-        sample_weight = _check_normalize_sample_weight(sample_weight, X)
-
-        n_init = self.n_init
-        if hasattr(self.init, '__array__'):
-            self.init = np.ascontiguousarray(self.init, dtype=X.dtype)
-            if n_init != 1:
-                warnings.warn(
-                    'Explicit initial center position passed: '
-                    'performing only one init in MiniBatchKMeans instead of '
-                    'n_init=%d'
-                    % self.n_init, RuntimeWarning, stacklevel=2)
-                n_init = 1
-
         x_squared_norms = row_norms(X, squared=True)
 
         if self.tol > 0.0:
@@ -1543,24 +1665,18 @@ class MiniBatchKMeans(KMeans):
         n_batches = int(np.ceil(float(n_samples) / self.batch_size))
         n_iter = int(self.max_iter * n_batches)
 
-        init_size = self.init_size
-        if init_size is None:
-            init_size = 3 * self.batch_size
-        if init_size > n_samples:
-            init_size = n_samples
-        self.init_size_ = init_size
-
-        validation_indices = random_state.randint(0, n_samples, init_size)
+        validation_indices = random_state.randint(0, n_samples,
+                                                  self._init_size)
         X_valid = X[validation_indices]
         sample_weight_valid = sample_weight[validation_indices]
         x_squared_norms_valid = x_squared_norms[validation_indices]
 
         # perform several inits with random sub-sets
         best_inertia = None
-        for init_idx in range(n_init):
+        for init_idx in range(self._n_init):
             if self.verbose:
                 print("Init %d/%d with method: %s"
-                      % (init_idx + 1, n_init, self.init))
+                      % (init_idx + 1, self._n_init, init))
             weight_sums = np.zeros(self.n_clusters, dtype=sample_weight.dtype)
 
             # TODO: once the `k_means` function works with sparse input we
@@ -1568,11 +1684,11 @@ class MiniBatchKMeans(KMeans):
 
             # Initialize the centers using only a fraction of the data as we
             # expect n_samples to be very large when using MiniBatchKMeans
-            cluster_centers = _init_centroids(
-                X, self.n_clusters, self.init,
+            cluster_centers = self._init_centroids(
+                X, x_squared_norms=x_squared_norms,
+                init=init,
                 random_state=random_state,
-                x_squared_norms=x_squared_norms,
-                init_size=init_size)
+                init_size=self._init_size)
 
             # Compute the label assignment on the init dataset
             _mini_batch_step(
@@ -1588,10 +1704,10 @@ class MiniBatchKMeans(KMeans):
                                          cluster_centers)
             if self.verbose:
                 print("Inertia for init %d/%d: %f"
-                      % (init_idx + 1, n_init, inertia))
+                      % (init_idx + 1, self._n_init, inertia))
             if best_inertia is None or inertia < best_inertia:
                 self.cluster_centers_ = cluster_centers
-                self.counts_ = weight_sums
+                self._counts = weight_sums
                 best_inertia = inertia
 
         # Empty context to be used inplace by the convergence check routine
@@ -1608,7 +1724,7 @@ class MiniBatchKMeans(KMeans):
             batch_inertia, centers_squared_diff = _mini_batch_step(
                 X[minibatch_indices], sample_weight[minibatch_indices],
                 x_squared_norms[minibatch_indices],
-                self.cluster_centers_, self.counts_,
+                self.cluster_centers_, self._counts,
                 old_center_buffer, tol > 0.0, distances=distances,
                 # Here we randomly choose whether to perform
                 # random reassignment: the choice is done as a function
@@ -1616,7 +1732,7 @@ class MiniBatchKMeans(KMeans):
                 # counts, in order to force this reassignment to happen
                 # every once in a while
                 random_reassign=((iteration_idx + 1)
-                                 % (10 + int(self.counts_.min())) == 0),
+                                 % (10 + int(self._counts.min())) == 0),
                 random_state=random_state,
                 reassignment_ratio=self.reassignment_ratio,
                 verbose=self.verbose)
@@ -1644,15 +1760,15 @@ class MiniBatchKMeans(KMeans):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Input data.
 
-        sample_weight : array-like, shape (n_samples,)
+        sample_weight : array-like of shape (n_samples,)
             The weights for each observation in X.
 
         Returns
         -------
-        labels : array, shape (n_samples,)
+        labels : ndarray of shape (n_samples,)
             Cluster labels for each point.
 
         inertia : float
@@ -1660,7 +1776,7 @@ class MiniBatchKMeans(KMeans):
         """
         if self.verbose:
             print('Computing label assignment and total inertia')
-        sample_weight = _check_normalize_sample_weight(sample_weight, X)
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
         x_squared_norms = row_norms(X, squared=True)
         slices = gen_batches(X.shape[0], self.batch_size)
         results = [_labels_inertia(X[s], sample_weight[s], x_squared_norms[s],
@@ -1680,7 +1796,7 @@ class MiniBatchKMeans(KMeans):
         y : Ignored
             Not used, present here for API consistency by convention.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
             are assigned equal weight (default: None).
 
@@ -1688,31 +1804,37 @@ class MiniBatchKMeans(KMeans):
         -------
         self
         """
+        is_first_call_to_partial_fit = not hasattr(self, 'cluster_centers_')
 
-        X = check_array(X, accept_sparse="csr", order="C",
-                        dtype=[np.float64, np.float32])
-        n_samples, n_features = X.shape
-        if hasattr(self.init, '__array__'):
-            self.init = np.ascontiguousarray(self.init, dtype=X.dtype)
+        X = self._validate_data(X, accept_sparse='csr',
+                                dtype=[np.float64, np.float32],
+                                order='C', accept_large_sparse=False,
+                                reset=is_first_call_to_partial_fit)
 
-        if n_samples == 0:
-            return self
-
-        sample_weight = _check_normalize_sample_weight(sample_weight, X)
+        self._random_state = getattr(self, "_random_state",
+                                     check_random_state(self.random_state))
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         x_squared_norms = row_norms(X, squared=True)
-        self.random_state_ = getattr(self, "random_state_",
-                                     check_random_state(self.random_state))
-        if (not hasattr(self, 'counts_')
-                or not hasattr(self, 'cluster_centers_')):
-            # this is the first call partial_fit on this object:
-            # initialize the cluster centers
-            self.cluster_centers_ = _init_centroids(
-                X, self.n_clusters, self.init,
-                random_state=self.random_state_,
-                x_squared_norms=x_squared_norms, init_size=self.init_size)
 
-            self.counts_ = np.zeros(self.n_clusters,
+        if is_first_call_to_partial_fit:
+            # this is the first call to partial_fit on this object
+            self._check_params(X)
+
+            # Validate init array
+            init = self.init
+            if hasattr(init, '__array__'):
+                init = check_array(init, dtype=X.dtype, copy=True, order='C')
+                self._validate_center_shape(X, init)
+
+            # initialize the cluster centers
+            self.cluster_centers_ = self._init_centroids(
+                X, x_squared_norms=x_squared_norms,
+                init=init,
+                random_state=self._random_state,
+                init_size=self._init_size)
+
+            self._counts = np.zeros(self.n_clusters,
                                     dtype=sample_weight.dtype)
             random_reassign = False
             distances = None
@@ -1720,15 +1842,15 @@ class MiniBatchKMeans(KMeans):
             # The lower the minimum count is, the more we do random
             # reassignment, however, we don't want to do random
             # reassignment too often, to allow for building up counts
-            random_reassign = self.random_state_.randint(
-                10 * (1 + self.counts_.min())) == 0
+            random_reassign = self._random_state.randint(
+                10 * (1 + self._counts.min())) == 0
             distances = np.zeros(X.shape[0], dtype=X.dtype)
 
         _mini_batch_step(X, sample_weight, x_squared_norms,
-                         self.cluster_centers_, self.counts_,
+                         self.cluster_centers_, self._counts,
                          np.zeros(0, dtype=X.dtype), 0,
                          random_reassign=random_reassign, distances=distances,
-                         random_state=self.random_state_,
+                         random_state=self._random_state,
                          reassignment_ratio=self.reassignment_ratio,
                          verbose=self.verbose)
 
@@ -1750,16 +1872,24 @@ class MiniBatchKMeans(KMeans):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             New data to predict.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
             are assigned equal weight (default: None).
 
         Returns
         -------
-        labels : array, shape [n_samples,]
+        labels : ndarray of shape (n_samples,)
             Index of the cluster each sample belongs to.
         """
         check_is_fitted(self)
 
         X = self._check_test_data(X)
         return self._labels_inertia_minibatch(X, sample_weight)[0]
+
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_sample_weights_invariance':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }

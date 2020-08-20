@@ -17,6 +17,7 @@ from .predictor import TreePredictor
 from .utils import sum_parallel
 from .common import PREDICTOR_RECORD_DTYPE
 from .common import Y_DTYPE
+from .common import MonotonicConstraint
 
 
 EPS = np.finfo(Y_DTYPE).eps  # to avoid zero division errors
@@ -71,7 +72,6 @@ class TreeNode:
     split_info = None
     left_child = None
     right_child = None
-    value = None
     histograms = None
     sibling = None
     parent = None
@@ -88,13 +88,25 @@ class TreeNode:
     partition_stop = 0
 
     def __init__(self, depth, sample_indices, sum_gradients,
-                 sum_hessians, parent=None):
+                 sum_hessians, parent=None, value=None):
         self.depth = depth
         self.sample_indices = sample_indices
         self.n_samples = sample_indices.shape[0]
         self.sum_gradients = sum_gradients
         self.sum_hessians = sum_hessians
         self.parent = parent
+        self.value = value
+        self.is_leaf = False
+        self.set_children_bounds(float('-inf'), float('+inf'))
+
+    def set_children_bounds(self, lower, upper):
+        """Set children values bounds to respect monotonic constraints."""
+
+        # These are bounds for the node's *children* values, not the node's
+        # value. The bounds are used in the splitter when considering potential
+        # left and right child.
+        self.children_lower_bound = lower
+        self.children_upper_bound = upper
 
     def __lt__(self, other_node):
         """Comparison for priority queue.
@@ -135,7 +147,8 @@ class TreeGrower:
         maximum limit.
     max_depth : int or None, optional (default=None)
         The maximum depth of each tree. The depth of a tree is the number of
-        nodes to go from the root to the deepest leaf.
+        edges to go from the root to the deepest leaf.
+        Depth isn't constrained by default.
     min_samples_leaf : int, optional (default=20)
         The minimum number of samples per leaf.
     min_gain_to_split : float, optional (default=0.)
@@ -166,8 +179,8 @@ class TreeGrower:
     def __init__(self, X_binned, gradients, hessians, max_leaf_nodes=None,
                  max_depth=None, min_samples_leaf=20, min_gain_to_split=0.,
                  n_bins=256, n_bins_non_missing=None, has_missing_values=False,
-                 l2_regularization=0., min_hessian_to_split=1e-3,
-                 shrinkage=1.):
+                 monotonic_cst=None, l2_regularization=0.,
+                 min_hessian_to_split=1e-3, shrinkage=1.):
 
         self._validate_parameters(X_binned, max_leaf_nodes, max_depth,
                                   min_samples_leaf, min_gain_to_split,
@@ -188,17 +201,42 @@ class TreeGrower:
             has_missing_values = [has_missing_values] * X_binned.shape[1]
         has_missing_values = np.asarray(has_missing_values, dtype=np.uint8)
 
+        if monotonic_cst is None:
+            self.with_monotonic_cst = False
+            monotonic_cst = np.full(shape=X_binned.shape[1],
+                                    fill_value=MonotonicConstraint.NO_CST,
+                                    dtype=np.int8)
+        else:
+            self.with_monotonic_cst = True
+            monotonic_cst = np.asarray(monotonic_cst, dtype=np.int8)
+
+            if monotonic_cst.shape[0] != X_binned.shape[1]:
+                raise ValueError(
+                    "monotonic_cst has shape {} but the input data "
+                    "X has {} features.".format(
+                        monotonic_cst.shape[0], X_binned.shape[1]
+                    )
+                )
+            if np.any(monotonic_cst < -1) or np.any(monotonic_cst > 1):
+                raise ValueError(
+                    "monotonic_cst must be None or an array-like of "
+                    "-1, 0 or 1."
+                    )
+
         hessians_are_constant = hessians.shape[0] == 1
         self.histogram_builder = HistogramBuilder(
             X_binned, n_bins, gradients, hessians, hessians_are_constant)
         missing_values_bin_idx = n_bins - 1
         self.splitter = Splitter(
             X_binned, n_bins_non_missing, missing_values_bin_idx,
-            has_missing_values, l2_regularization, min_hessian_to_split,
+            has_missing_values, monotonic_cst,
+            l2_regularization, min_hessian_to_split,
             min_samples_leaf, min_gain_to_split, hessians_are_constant)
         self.n_bins_non_missing = n_bins_non_missing
         self.max_leaf_nodes = max_leaf_nodes
         self.has_missing_values = has_missing_values
+        self.monotonic_cst = monotonic_cst
+        self.l2_regularization = l2_regularization
         self.n_features = X_binned.shape[1]
         self.max_depth = max_depth
         self.min_samples_leaf = min_samples_leaf
@@ -230,9 +268,9 @@ class TreeGrower:
         if max_leaf_nodes is not None and max_leaf_nodes <= 1:
             raise ValueError('max_leaf_nodes={} should not be'
                              ' smaller than 2'.format(max_leaf_nodes))
-        if max_depth is not None and max_depth <= 1:
+        if max_depth is not None and max_depth < 1:
             raise ValueError('max_depth={} should not be'
-                             ' smaller than 2'.format(max_depth))
+                             ' smaller than 1'.format(max_depth))
         if min_samples_leaf < 1:
             raise ValueError('min_samples_leaf={} should '
                              'not be smaller than 1'.format(min_samples_leaf))
@@ -251,6 +289,20 @@ class TreeGrower:
         while self.splittable_nodes:
             self.split_next()
 
+        self._apply_shrinkage()
+
+    def _apply_shrinkage(self):
+        """Multiply leaves values by shrinkage parameter.
+
+        This must be done at the very end of the growing process. If this were
+        done during the growing process e.g. in finalize_leaf(), then a leaf
+        would be shrunk but its sibling would potentially not be (if it's a
+        non-leaf), which would lead to a wrong computation of the 'middle'
+        value needed to enforce the monotonic constraints.
+        """
+        for leaf in self.finalized_leaves:
+            leaf.value *= self.shrinkage
+
     def _intilialize_root(self, gradients, hessians, hessians_are_constant):
         """Initialize root node and finalize it if needed."""
         n_samples = self.X_binned.shape[0]
@@ -264,7 +316,8 @@ class TreeGrower:
             depth=depth,
             sample_indices=self.splitter.partition,
             sum_gradients=sum_gradients,
-            sum_hessians=sum_hessians
+            sum_hessians=sum_hessians,
+            value=0
         )
 
         self.root.partition_start = 0
@@ -293,7 +346,8 @@ class TreeGrower:
 
         node.split_info = self.splitter.find_node_split(
             node.n_samples, node.histograms, node.sum_gradients,
-            node.sum_hessians)
+            node.sum_hessians, node.value, node.children_lower_bound,
+            node.children_upper_bound)
 
         if node.split_info.gain <= 0:  # no valid split
             self._finalize_leaf(node)
@@ -328,12 +382,17 @@ class TreeGrower:
                                    sample_indices_left,
                                    node.split_info.sum_gradient_left,
                                    node.split_info.sum_hessian_left,
-                                   parent=node)
+                                   parent=node,
+                                   value=node.split_info.value_left,
+                                   )
         right_child_node = TreeNode(depth,
                                     sample_indices_right,
                                     node.split_info.sum_gradient_right,
                                     node.split_info.sum_hessian_right,
-                                    parent=node)
+                                    parent=node,
+                                    value=node.split_info.value_right,
+                                    )
+
         left_child_node.sibling = right_child_node
         right_child_node.sibling = left_child_node
         node.right_child = right_child_node
@@ -354,11 +413,6 @@ class TreeGrower:
 
         self.n_nodes += 2
 
-        if self.max_depth is not None and depth == self.max_depth:
-            self._finalize_leaf(left_child_node)
-            self._finalize_leaf(right_child_node)
-            return left_child_node, right_child_node
-
         if (self.max_leaf_nodes is not None
                 and n_leaf_nodes == self.max_leaf_nodes):
             self._finalize_leaf(left_child_node)
@@ -366,15 +420,39 @@ class TreeGrower:
             self._finalize_splittable_nodes()
             return left_child_node, right_child_node
 
+        if self.max_depth is not None and depth == self.max_depth:
+            self._finalize_leaf(left_child_node)
+            self._finalize_leaf(right_child_node)
+            return left_child_node, right_child_node
+
         if left_child_node.n_samples < self.min_samples_leaf * 2:
             self._finalize_leaf(left_child_node)
         if right_child_node.n_samples < self.min_samples_leaf * 2:
             self._finalize_leaf(right_child_node)
 
-        # Compute histograms of childs, and compute their best possible split
+        if self.with_monotonic_cst:
+            # Set value bounds for respecting monotonic constraints
+            # See test_nodes_values() for details
+            if (self.monotonic_cst[node.split_info.feature_idx] ==
+                    MonotonicConstraint.NO_CST):
+                lower_left = lower_right = node.children_lower_bound
+                upper_left = upper_right = node.children_upper_bound
+            else:
+                mid = (left_child_node.value + right_child_node.value) / 2
+                if (self.monotonic_cst[node.split_info.feature_idx] ==
+                        MonotonicConstraint.POS):
+                    lower_left, upper_left = node.children_lower_bound, mid
+                    lower_right, upper_right = mid, node.children_upper_bound
+                else:  # NEG
+                    lower_left, upper_left = mid, node.children_upper_bound
+                    lower_right, upper_right = node.children_lower_bound, mid
+            left_child_node.set_children_bounds(lower_left, upper_left)
+            right_child_node.set_children_bounds(lower_right, upper_right)
+
+        # Compute histograms of children, and compute their best possible split
         # (if needed)
-        should_split_left = left_child_node.value is None  # node isn't a leaf
-        should_split_right = right_child_node.value is None
+        should_split_left = not left_child_node.is_leaf
+        should_split_right = not right_child_node.is_leaf
         if should_split_left or should_split_right:
 
             # We will compute the histograms of both nodes even if one of them
@@ -411,17 +489,9 @@ class TreeGrower:
         return left_child_node, right_child_node
 
     def _finalize_leaf(self, node):
-        """Compute the prediction value that minimizes the objective function.
+        """Make node a leaf of the tree being grown."""
 
-        This sets the node.value attribute (node is a leaf iff node.value is
-        not None).
-
-        See Equation 5 of:
-        XGBoost: A Scalable Tree Boosting System, T. Chen, C. Guestrin, 2016
-        https://arxiv.org/abs/1603.02754
-        """
-        node.value = -self.shrinkage * node.sum_gradients / (
-            node.sum_hessians + self.splitter.l2_regularization + EPS)
+        node.is_leaf = True
         self.finalized_leaves.append(node)
 
     def _finalize_splittable_nodes(self):
@@ -463,10 +533,11 @@ def _fill_predictor_node_array(predictor_nodes, grower_node,
     else:
         node['gain'] = -1
 
-    if grower_node.value is not None:
+    node['value'] = grower_node.value
+
+    if grower_node.is_leaf:
         # Leaf node
         node['is_leaf'] = True
-        node['value'] = grower_node.value
         return next_free_idx + 1
     else:
         # Decision node

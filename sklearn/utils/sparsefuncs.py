@@ -5,6 +5,7 @@
 # License: BSD 3 clause
 import scipy.sparse as sp
 import numpy as np
+from .validation import _deprecate_positional_args
 
 from .sparsefuncs_fast import (
     csr_mean_variance_axis0 as _csr_mean_var_axis0,
@@ -98,7 +99,8 @@ def mean_variance_axis(X, axis):
         _raise_typeerror(X)
 
 
-def incr_mean_variance_axis(X, axis, last_mean, last_var, last_n):
+@_deprecate_positional_args
+def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n):
     """Compute incremental mean and variance along an axix on a CSR or
     CSC matrix.
 

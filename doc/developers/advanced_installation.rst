@@ -1,6 +1,8 @@
 
 .. _advanced-installation:
 
+.. include:: ../min_dependency_substitutions.rst
+
 ==================================================
 Installing the development version of scikit-learn
 ==================================================
@@ -26,7 +28,7 @@ Installing a nightly build is the quickest way to:
 
 ::
 
-  pip install --pre -f https://sklearn-nightly.scdn8.secure.raxcdn.com scikit-learn
+  pip install --pre --extra-index https://pypi.anaconda.org/scipy-wheels-nightly/simple scikit-learn
 
 
 .. _install_bleeding_edge:
@@ -43,7 +45,7 @@ feature, code or documentation improvement).
    `scikit-learn repository <https://github.com/scikit-learn/scikit-learn>`_ on
    Github.::
 
-        git clone git://github.com/scikit-learn/scikit-learn.git
+        git clone git://github.com/scikit-learn/scikit-learn.git  # add --depth 1 if your connection is slow
         cd scikit-learn
 
    If you plan on submitting a pull-request, you should clone from your fork
@@ -59,7 +61,7 @@ feature, code or documentation improvement).
 #. Install Cython_ and build the project with pip in :ref:`editable_mode`::
 
         pip install cython
-        pip install --verbose --editable .
+        pip install --verbose --no-build-isolation --editable .
 
 #. Check that the installed scikit-learn has a version number ending with
    `.dev0`::
@@ -71,8 +73,11 @@ feature, code or documentation improvement).
 
 .. note::
 
-    You will have to re-run the ``pip install --editable .`` command every time
-    the source code of a Cython file is updated (ending in `.pyx` or `.pxd`).
+    You will have to run the ``pip install --no-build-isolation --editable .``
+    command every time the source code of a Cython file is updated
+    (ending in `.pyx` or `.pxd`). Use the ``--no-build-isolation`` flag to
+    avoid compiling the whole project each time, only the files you have
+    modified.
 
 Dependencies
 ------------
@@ -83,10 +88,11 @@ Runtime dependencies
 Scikit-learn requires the following dependencies both at build time and at
 runtime:
 
-- Python (>= 3.5),
-- NumPy (>= 1.11),
-- SciPy (>= 0.17),
-- Joblib (>= 0.11).
+- Python (>= 3.6),
+- NumPy (>= |NumpyMinVersion|),
+- SciPy (>= |ScipyMinVersion|),
+- Joblib (>= |JoblibMinVersion|),
+- threadpoolctl (>= |ThreadpoolctlMinVersion|).
 
 Those dependencies are **automatically installed by pip** if they were missing
 when building scikit-learn from source.
@@ -107,7 +113,7 @@ Building Scikit-learn also requires:
     # - sklearn/_build_utils/__init__.py
     # - advanced installation guide
 
-- Cython >= 0.28.5
+- Cython >= |CythonMinVersion|
 - A C/C++ compiler and a matching OpenMP_ runtime library. See the
   :ref:`platform system specific instructions
   <platform_specific_instructions>` for more details.
@@ -131,9 +137,7 @@ Test dependencies
 
 Running tests requires:
 
-.. |PytestMinVersion| replace:: 4.6.2
-
-- pytest >=\ |PytestMinVersion|
+- pytest >= |PytestMinVersion|
 
 Some tests also require `pandas <https://pandas.pydata.org>`_.
 
@@ -152,9 +156,9 @@ Editable mode
 
 If you run the development version, it is cumbersome to reinstall the package
 each time you update the sources. Therefore it is recommended that you install
-in with the ``pip install --editable .`` command, which allows you to edit the
-code in-place. This builds the extension in place and creates a link to the
-development directory (see `the pip docs
+in with the ``pip install --no-build-isolation --editable .`` command, which
+allows you to edit the code in-place. This builds the extension in place and
+creates a link to the development directory (see `the pip docs
 <https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs>`_).
 
 This is fundamentally similar to using the command ``python setup.py develop``
@@ -207,7 +211,7 @@ environment variables in the current command prompt.
 
 Finally, build scikit-learn from this command prompt::
 
-    pip install --verbose --editable .
+    pip install --verbose --no-build-isolation --editable .
 
 .. _compiler_macos:
 
@@ -237,10 +241,10 @@ It is recommended to use a dedicated `conda environment`_ to build
 scikit-learn from source::
 
     conda create -n sklearn-dev python numpy scipy cython joblib pytest \
-        conda-forge::compilers conda-forge::llvm-openmp
+        "conda-forge::compilers>=1.0.4,!=1.1.0" conda-forge::llvm-openmp
     conda activate sklearn-dev
     make clean
-    pip install --verbose --editable .
+    pip install --verbose --no-build-isolation --editable .
 
 .. note::
 
@@ -252,7 +256,9 @@ scikit-learn from source::
 You can check that the custom compilers are properly installed from conda
 forge using the following command::
 
-    conda list compilers llvm-openmp
+    conda list 
+
+which should include ``compilers`` and ``llvm-openmp``.
 
 The compilers meta-package will automatically set custom environment
 variables::
@@ -300,7 +306,7 @@ Finally, build scikit-learn in verbose mode (to check for the presence of the
 ``-fopenmp`` flag in the compiler commands)::
 
     make clean
-    pip install --verbose --editable .
+    pip install --verbose --no-build-isolation --editable .
 
 .. _compiler_linux:
 
@@ -349,7 +355,7 @@ in the user folder using conda::
 
     conda create -n sklearn-dev numpy scipy joblib cython conda-forge::compilers
     conda activate sklearn-dev
-    pip install --verbose --editable .
+    pip install --verbose --no-build-isolation --editable .
 
 .. _compiler_freebsd:
 
@@ -372,7 +378,7 @@ can set the environment variables to these locations::
 
 Finally, build the package using the standard command::
 
-    pip install --verbose --editable .
+    pip install --verbose --no-build-isolation --editable .
 
 For the upcoming FreeBSD 12.1 and 11.3 versions, OpenMP will be included in
 the base system and these steps will not be necessary.
@@ -382,3 +388,53 @@ the base system and these steps will not be necessary.
 .. _Homebrew: https://brew.sh
 .. _virtualenv: https://docs.python.org/3/tutorial/venv.html
 .. _conda environment: https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
+
+Alternative compilers
+=====================
+
+The command::
+
+    pip install --verbose --editable .
+
+will build scikit-learn using your default C/C++ compiler. If you want to build
+scikit-learn with another compiler handled by ``distutils`` or by
+``numpy.distutils``, use the following command::
+
+    python setup.py build_ext --compiler=<compiler> -i build_clib --compiler=<compiler>
+
+To see the list of available compilers run::
+
+    python setup.py build_ext --help-compiler
+
+If your compiler is not listed here, you can specify it via the ``CC`` and
+``LDSHARED`` environment variables (does not work on windows)::
+
+    CC=<compiler> LDSHARED="<compiler> -shared" python setup.py build_ext -i
+
+Building with Intel C Compiler (ICC) using oneAPI on Linux
+----------------------------------------------------------
+
+Intel provides access to all of its oneAPI toolkits and packages through a
+public APT repository. First you need to get and install the public key of this
+repository::
+
+    wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+    sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+    rm GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+
+Then, add the oneAPI repository to your APT repositories::
+
+    sudo add-apt-repository "deb https://apt.repos.intel.com/oneapi all main"
+    sudo apt-get update
+
+Install ICC, packaged under the name ``intel-oneapi-icc``::
+
+    sudo apt-get install intel-oneapi-icc
+
+Before using ICC, you need to set up environment variables::
+
+    source /opt/intel/inteloneapi/setvars.sh
+
+Finally, you can build scikit-learn. For example on Linux x86_64::
+
+    python setup.py build_ext --compiler=intelem -i build_clib --compiler=intelem

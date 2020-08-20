@@ -12,10 +12,7 @@ from pytest import importorskip
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.utils._testing import assert_raises
-from sklearn.utils._testing import assert_raises_regex
 from sklearn.utils._testing import assert_no_warnings
-from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import SkipTest
 from sklearn.utils._testing import assert_array_equal
@@ -53,7 +50,6 @@ import sklearn
 
 from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
 
-from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import TempMemmap
 
 
@@ -67,10 +63,10 @@ def test_as_float_array():
     X = X.astype(np.int64)
     X2 = as_float_array(X, copy=True)
     # Checking that the array wasn't overwritten
-    assert as_float_array(X, False) is not X
+    assert as_float_array(X, copy=False) is not X
     assert X2.dtype == np.float64
     # Test int dtypes <= 32bit
-    tested_dtypes = [np.bool,
+    tested_dtypes = [bool,
                      np.int8, np.int16, np.int32,
                      np.uint8, np.uint16, np.uint32]
     for dtype in tested_dtypes:
@@ -166,7 +162,7 @@ def test_ordering():
     [np.asarray, sp.csr_matrix]
 )
 def test_check_array_force_all_finite_valid(value, force_all_finite, retype):
-    X = retype(np.arange(4).reshape(2, 2).astype(np.float))
+    X = retype(np.arange(4).reshape(2, 2).astype(float))
     X[0, 0] = value
     X_checked = check_array(X, force_all_finite=force_all_finite,
                             accept_sparse=True)
@@ -187,7 +183,7 @@ def test_check_array_force_all_finite_valid(value, force_all_finite, retype):
 )
 def test_check_array_force_all_finiteinvalid(value, force_all_finite,
                                              match_msg, retype):
-    X = retype(np.arange(4).reshape(2, 2).astype(np.float))
+    X = retype(np.arange(4).reshape(2, 2).astype(float))
     X[0, 0] = value
     with pytest.raises(ValueError, match=match_msg):
         check_array(X, force_all_finite=force_all_finite,
@@ -215,7 +211,7 @@ def test_check_array_force_all_finite_object():
       "Input contains NaN, infinity or a value too large for.*int"),
      (np.array([[1, np.inf]]),
       "Input contains NaN, infinity or a value too large for.*int"),
-     (np.array([[1, np.nan]], dtype=np.object),
+     (np.array([[1, np.nan]], dtype=object),
       "cannot convert float NaN to integer")]
 )
 @pytest.mark.parametrize("force_all_finite", [True, False])
@@ -224,7 +220,7 @@ def test_check_array_force_all_finite_object_unsafe_casting(
     # casting a float array containing NaN or inf to int dtype should
     # raise an error irrespective of the force_all_finite parameter.
     with pytest.raises(ValueError, match=err_msg):
-        check_array(X, dtype=np.int, force_all_finite=force_all_finite)
+        check_array(X, dtype=int, force_all_finite=force_all_finite)
 
 
 @ignore_warnings
@@ -233,29 +229,35 @@ def test_check_array():
     # raise error on sparse inputs
     X = [[1, 2], [3, 4]]
     X_csr = sp.csr_matrix(X)
-    assert_raises(TypeError, check_array, X_csr)
+    with pytest.raises(TypeError):
+        check_array(X_csr)
+
     # ensure_2d=False
     X_array = check_array([0, 1, 2], ensure_2d=False)
     assert X_array.ndim == 1
     # ensure_2d=True with 1d array
-    assert_raise_message(ValueError, 'Expected 2D array, got 1D array instead',
-                         check_array, [0, 1, 2], ensure_2d=True)
+    with pytest.raises(ValueError, match="Expected 2D array,"
+                                         " got 1D array instead"):
+        check_array([0, 1, 2], ensure_2d=True)
+
     # ensure_2d=True with scalar array
-    assert_raise_message(ValueError,
-                         'Expected 2D array, got scalar array instead',
-                         check_array, 10, ensure_2d=True)
+    with pytest.raises(ValueError, match="Expected 2D array,"
+                                         " got scalar array instead"):
+        check_array(10, ensure_2d=True)
+
     # don't allow ndim > 3
     X_ndim = np.arange(8).reshape(2, 2, 2)
-    assert_raises(ValueError, check_array, X_ndim)
+    with pytest.raises(ValueError):
+        check_array(X_ndim)
     check_array(X_ndim, allow_nd=True)  # doesn't raise
 
     # dtype and order enforcement.
     X_C = np.arange(4).reshape(2, 2).copy("C")
     X_F = X_C.copy("F")
-    X_int = X_C.astype(np.int)
-    X_float = X_C.astype(np.float)
+    X_int = X_C.astype(int)
+    X_float = X_C.astype(float)
     Xs = [X_C, X_F, X_int, X_float]
-    dtypes = [np.int32, np.int, np.float, np.float32, None, np.bool, object]
+    dtypes = [np.int32, int, float, np.float32, None, bool, object]
     orders = ['C', 'F', None]
     copys = [True, False]
 
@@ -284,8 +286,8 @@ def test_check_array():
     X_csc = sp.csc_matrix(X_C)
     X_coo = X_csc.tocoo()
     X_dok = X_csc.todok()
-    X_int = X_csc.astype(np.int)
-    X_float = X_csc.astype(np.float)
+    X_int = X_csc.astype(int)
+    X_float = X_csc.astype(float)
 
     Xs = [X_csc, X_coo, X_dok, X_int, X_float]
     accept_sparses = [['csr', 'coo'], ['coo', 'dok']]
@@ -295,6 +297,7 @@ def test_check_array():
             X_checked = check_array(X, dtype=dtype,
                                     accept_sparse=accept_sparse, copy=copy)
         if (dtype is object or sp.isspmatrix_dok(X)) and len(w):
+            # XXX unreached code as of v0.22
             message = str(w[0].message)
             messages = ["object dtype is not supported by sparse matrices",
                         "Can't check dok sparse matrix for nan or inf."]
@@ -323,8 +326,10 @@ def test_check_array():
     X_dense = check_array([[1, 2], [3, 4]])
     assert isinstance(X_dense, np.ndarray)
     # raise on too deep lists
-    assert_raises(ValueError, check_array, X_ndim.tolist())
+    with pytest.raises(ValueError):
+        check_array(X_ndim.tolist())
     check_array(X_ndim.tolist(), allow_nd=True)  # doesn't raise
+
     # convert weird stuff to arrays
     X_no_array = _NotAnArray(X_dense)
     result = check_array(X_no_array)
@@ -344,10 +349,41 @@ def test_check_array():
             check_array(X, dtype="numeric")
 
 
+@pytest.mark.parametrize("pd_dtype", ["Int8", "Int16", "UInt8", "UInt16"])
+@pytest.mark.parametrize("dtype, expected_dtype", [
+    ([np.float32, np.float64], np.float32),
+    (np.float64, np.float64),
+    ("numeric", np.float64),
+])
+def test_check_array_pandas_na_support(pd_dtype, dtype, expected_dtype):
+    # Test pandas IntegerArray with pd.NA
+    pd = pytest.importorskip('pandas', minversion="1.0")
+
+    X_np = np.array([[1, 2, 3, np.nan, np.nan],
+                     [np.nan, np.nan, 8, 4, 6],
+                     [1, 2, 3, 4, 5]]).T
+
+    # Creates dataframe with IntegerArrays with pd.NA
+    X = pd.DataFrame(X_np, dtype=pd_dtype, columns=['a', 'b', 'c'])
+    # column c has no nans
+    X['c'] = X['c'].astype('float')
+    X_checked = check_array(X, force_all_finite='allow-nan', dtype=dtype)
+    assert_allclose(X_checked, X_np)
+    assert X_checked.dtype == expected_dtype
+
+    X_checked = check_array(X, force_all_finite=False, dtype=dtype)
+    assert_allclose(X_checked, X_np)
+    assert X_checked.dtype == expected_dtype
+
+    msg = "Input contains NaN, infinity"
+    with pytest.raises(ValueError, match=msg):
+        check_array(X, force_all_finite=True)
+
+
 def test_check_array_pandas_dtype_object_conversion():
     # test that data-frame like objects with dtype object
     # get converted
-    X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.object)
+    X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=object)
     X_df = MockDataFrame(X)
     assert check_array(X_df).dtype.kind == "f"
     assert check_array(X_df, ensure_2d=False).dtype.kind == "f"
@@ -454,24 +490,23 @@ def test_check_array_accept_sparse_type_exception():
     invalid_type = SVR()
 
     msg = ("A sparse matrix was passed, but dense data is required. "
-           "Use X.toarray() to convert to a dense numpy array.")
-    assert_raise_message(TypeError, msg,
-                         check_array, X_csr, accept_sparse=False)
+           r"Use X.toarray\(\) to convert to a dense numpy array.")
+    with pytest.raises(TypeError, match=msg):
+        check_array(X_csr, accept_sparse=False)
 
     msg = ("Parameter 'accept_sparse' should be a string, "
-           "boolean or list of strings. You provided 'accept_sparse={}'.")
-    assert_raise_message(ValueError, msg.format(invalid_type),
-                         check_array, X_csr, accept_sparse=invalid_type)
+           "boolean or list of strings. You provided 'accept_sparse=.*'.")
+    with pytest.raises(ValueError, match=msg):
+        check_array(X_csr, accept_sparse=invalid_type)
 
     msg = ("When providing 'accept_sparse' as a tuple or list, "
            "it must contain at least one string value.")
-    assert_raise_message(ValueError, msg.format([]),
-                         check_array, X_csr, accept_sparse=[])
-    assert_raise_message(ValueError, msg.format(()),
-                         check_array, X_csr, accept_sparse=())
-
-    assert_raise_message(TypeError, "SVR",
-                         check_array, X_csr, accept_sparse=[invalid_type])
+    with pytest.raises(ValueError, match=msg):
+        check_array(X_csr, accept_sparse=[])
+    with pytest.raises(ValueError, match=msg):
+        check_array(X_csr, accept_sparse=())
+    with pytest.raises(TypeError, match="SVR"):
+        check_array(X_csr, accept_sparse=[invalid_type])
 
 
 def test_check_array_accept_sparse_no_exception():
@@ -502,57 +537,64 @@ def test_check_array_accept_large_sparse_raise_exception(X_64bit):
     # When large sparse are not allowed
     msg = ("Only sparse matrices with 32-bit integer indices "
            "are accepted. Got int64 indices.")
-    assert_raise_message(ValueError, msg,
-                         check_array, X_64bit,
-                         accept_sparse=True,
-                         accept_large_sparse=False)
+    with pytest.raises(ValueError, match=msg):
+        check_array(X_64bit, accept_sparse=True, accept_large_sparse=False)
 
 
 def test_check_array_min_samples_and_features_messages():
     # empty list is considered 2D by default:
-    msg = "0 feature(s) (shape=(1, 0)) while a minimum of 1 is required."
-    assert_raise_message(ValueError, msg, check_array, [[]])
+    msg = r"0 feature\(s\) \(shape=\(1, 0\)\) while a minimum of 1 is" \
+          " required."
+    with pytest.raises(ValueError, match=msg):
+        check_array([[]])
 
     # If considered a 1D collection when ensure_2d=False, then the minimum
     # number of samples will break:
-    msg = "0 sample(s) (shape=(0,)) while a minimum of 1 is required."
-    assert_raise_message(ValueError, msg, check_array, [], ensure_2d=False)
+    msg = r"0 sample\(s\) \(shape=\(0,\)\) while a minimum of 1 is required."
+    with pytest.raises(ValueError, match=msg):
+        check_array([], ensure_2d=False)
 
     # Invalid edge case when checking the default minimum sample of a scalar
-    msg = "Singleton array array(42) cannot be considered a valid collection."
-    assert_raise_message(TypeError, msg, check_array, 42, ensure_2d=False)
+    msg = r"Singleton array array\(42\) cannot be considered a valid" \
+          " collection."
+    with pytest.raises(TypeError, match=msg):
+        check_array(42, ensure_2d=False)
 
     # Simulate a model that would need at least 2 samples to be well defined
     X = np.ones((1, 10))
     y = np.ones(1)
-    msg = "1 sample(s) (shape=(1, 10)) while a minimum of 2 is required."
-    assert_raise_message(ValueError, msg, check_X_y, X, y,
-                         ensure_min_samples=2)
+    msg = r"1 sample\(s\) \(shape=\(1, 10\)\) while a minimum of 2 is" \
+          " required."
+    with pytest.raises(ValueError, match=msg):
+        check_X_y(X, y, ensure_min_samples=2)
 
     # The same message is raised if the data has 2 dimensions even if this is
     # not mandatory
-    assert_raise_message(ValueError, msg, check_X_y, X, y,
-                         ensure_min_samples=2, ensure_2d=False)
+    with pytest.raises(ValueError, match=msg):
+        check_X_y(X, y, ensure_min_samples=2, ensure_2d=False)
 
     # Simulate a model that would require at least 3 features (e.g. SelectKBest
     # with k=3)
     X = np.ones((10, 2))
     y = np.ones(2)
-    msg = "2 feature(s) (shape=(10, 2)) while a minimum of 3 is required."
-    assert_raise_message(ValueError, msg, check_X_y, X, y,
-                         ensure_min_features=3)
+    msg = r"2 feature\(s\) \(shape=\(10, 2\)\) while a minimum of 3 is" \
+          " required."
+    with pytest.raises(ValueError, match=msg):
+        check_X_y(X, y, ensure_min_features=3)
 
     # Only the feature check is enabled whenever the number of dimensions is 2
     # even if allow_nd is enabled:
-    assert_raise_message(ValueError, msg, check_X_y, X, y,
-                         ensure_min_features=3, allow_nd=True)
+    with pytest.raises(ValueError, match=msg):
+        check_X_y(X, y, ensure_min_features=3, allow_nd=True)
 
     # Simulate a case where a pipeline stage as trimmed all the features of a
     # 2D dataset.
     X = np.empty(0).reshape(10, 0)
     y = np.ones(10)
-    msg = "0 feature(s) (shape=(10, 0)) while a minimum of 1 is required."
-    assert_raise_message(ValueError, msg, check_X_y, X, y)
+    msg = r"0 feature\(s\) \(shape=\(10, 0\)\) while a minimum of 1 is" \
+          " required."
+    with pytest.raises(ValueError, match=msg):
+        check_X_y(X, y)
 
     # nd-data is not checked for any minimum number of features by default:
     X = np.ones((10, 0, 28, 28))
@@ -564,41 +606,41 @@ def test_check_array_min_samples_and_features_messages():
 
 def test_check_array_complex_data_error():
     X = np.array([[1 + 2j, 3 + 4j, 5 + 7j], [2 + 3j, 4 + 5j, 6 + 7j]])
-    assert_raises_regex(
-        ValueError, "Complex data not supported", check_array, X)
+    with pytest.raises(ValueError, match="Complex data not supported"):
+        check_array(X)
 
     # list of lists
     X = [[1 + 2j, 3 + 4j, 5 + 7j], [2 + 3j, 4 + 5j, 6 + 7j]]
-    assert_raises_regex(
-        ValueError, "Complex data not supported", check_array, X)
+    with pytest.raises(ValueError, match="Complex data not supported"):
+        check_array(X)
 
     # tuple of tuples
     X = ((1 + 2j, 3 + 4j, 5 + 7j), (2 + 3j, 4 + 5j, 6 + 7j))
-    assert_raises_regex(
-        ValueError, "Complex data not supported", check_array, X)
+    with pytest.raises(ValueError, match="Complex data not supported"):
+        check_array(X)
 
     # list of np arrays
     X = [np.array([1 + 2j, 3 + 4j, 5 + 7j]),
          np.array([2 + 3j, 4 + 5j, 6 + 7j])]
-    assert_raises_regex(
-        ValueError, "Complex data not supported", check_array, X)
+    with pytest.raises(ValueError, match="Complex data not supported"):
+        check_array(X)
 
     # tuple of np arrays
     X = (np.array([1 + 2j, 3 + 4j, 5 + 7j]),
          np.array([2 + 3j, 4 + 5j, 6 + 7j]))
-    assert_raises_regex(
-        ValueError, "Complex data not supported", check_array, X)
+    with pytest.raises(ValueError, match="Complex data not supported"):
+        check_array(X)
 
     # dataframe
     X = MockDataFrame(
         np.array([[1 + 2j, 3 + 4j, 5 + 7j], [2 + 3j, 4 + 5j, 6 + 7j]]))
-    assert_raises_regex(
-        ValueError, "Complex data not supported", check_array, X)
+    with pytest.raises(ValueError, match="Complex data not supported"):
+        check_array(X)
 
     # sparse matrix
     X = sp.coo_matrix([[0, 1 + 2j], [0, 0]])
-    assert_raises_regex(
-        ValueError, "Complex data not supported", check_array, X)
+    with pytest.raises(ValueError, match="Complex data not supported"):
+        check_array(X)
 
 
 def test_has_fit_parameter():
@@ -631,13 +673,16 @@ def test_check_symmetric():
                    'bsr': sp.bsr_matrix(arr_asym)}
 
     # check error for bad inputs
-    assert_raises(ValueError, check_symmetric, arr_bad)
+    with pytest.raises(ValueError):
+        check_symmetric(arr_bad)
 
     # check that asymmetric arrays are properly symmetrized
     for arr_format, arr in test_arrays.items():
         # Check for warnings and errors
-        assert_warns(UserWarning, check_symmetric, arr)
-        assert_raises(ValueError, check_symmetric, arr, raise_exception=True)
+        with pytest.warns(UserWarning):
+            check_symmetric(arr)
+        with pytest.raises(ValueError):
+            check_symmetric(arr, raise_exception=True)
 
         output = check_symmetric(arr, raise_warning=False)
         if sp.issparse(output):
@@ -649,15 +694,19 @@ def test_check_symmetric():
 
 def test_check_is_fitted():
     # Check is TypeError raised when non estimator instance passed
-    assert_raises(TypeError, check_is_fitted, ARDRegression)
-    assert_raises(TypeError, check_is_fitted, "SVR")
+    with pytest.raises(TypeError):
+        check_is_fitted(ARDRegression)
+    with pytest.raises(TypeError):
+        check_is_fitted("SVR")
 
     ard = ARDRegression()
     svr = SVR()
 
     try:
-        assert_raises(NotFittedError, check_is_fitted, ard)
-        assert_raises(NotFittedError, check_is_fitted, svr)
+        with pytest.raises(NotFittedError):
+            check_is_fitted(ard)
+        with pytest.raises(NotFittedError):
+            check_is_fitted(svr)
     except ValueError:
         assert False, "check_is_fitted failed with ValueError"
 
@@ -729,18 +778,19 @@ def test_check_consistent_length():
     check_consistent_length([1], [2], [3], [4], [5])
     check_consistent_length([[1, 2], [[1, 2]]], [1, 2], ['a', 'b'])
     check_consistent_length([1], (2,), np.array([3]), sp.csr_matrix((1, 2)))
-    assert_raises_regex(ValueError, 'inconsistent numbers of samples',
-                        check_consistent_length, [1, 2], [1])
-    assert_raises_regex(TypeError, r"got <\w+ 'int'>",
-                        check_consistent_length, [1, 2], 1)
-    assert_raises_regex(TypeError, r"got <\w+ 'object'>",
-                        check_consistent_length, [1, 2], object())
+    with pytest.raises(ValueError, match="inconsistent numbers of samples"):
+        check_consistent_length([1, 2], [1])
+    with pytest.raises(TypeError, match=r"got <\w+ 'int'>"):
+        check_consistent_length([1, 2], 1)
+    with pytest.raises(TypeError, match=r"got <\w+ 'object'>"):
+        check_consistent_length([1, 2], object())
 
-    assert_raises(TypeError, check_consistent_length, [1, 2], np.array(1))
+    with pytest.raises(TypeError):
+        check_consistent_length([1, 2], np.array(1))
+
     # Despite ensembles having __len__ they must raise TypeError
-    assert_raises_regex(TypeError, 'Expected sequence or array-like',
-                        check_consistent_length, [1, 2],
-                        RandomForestRegressor())
+    with pytest.raises(TypeError, match="Expected sequence or array-like"):
+        check_consistent_length([1, 2], RandomForestRegressor())
     # XXX: We should have a test with a string, but what is correct behaviour?
 
 
@@ -758,11 +808,13 @@ def test_check_dataframe_fit_attribute():
 
 def test_suppress_validation():
     X = np.array([0, np.inf])
-    assert_raises(ValueError, assert_all_finite, X)
+    with pytest.raises(ValueError):
+        assert_all_finite(X)
     sklearn.set_config(assume_finite=True)
     assert_all_finite(X)
     sklearn.set_config(assume_finite=False)
-    assert_raises(ValueError, assert_all_finite, X)
+    with pytest.raises(ValueError):
+        assert_all_finite(X)
 
 
 def test_check_array_series():
@@ -794,7 +846,7 @@ def test_check_dataframe_mixed_float_dtypes():
     expected_array = np.array(
         [[1.0, 0.0, 1.0],
          [2.0, 0.1, 0.0],
-         [3.0, 2.1, 1.0]], dtype=np.float)
+         [3.0, 2.1, 1.0]], dtype=float)
     assert_allclose_dense_sparse(array, expected_array)
 
 
@@ -816,14 +868,16 @@ def test_check_memory():
     dummy = DummyMemory()
     memory = check_memory(dummy)
     assert memory is dummy
-    assert_raises_regex(ValueError, "'memory' should be None, a string or"
-                        " have the same interface as joblib.Memory."
-                        " Got memory='1' instead.", check_memory, 1)
+
+    msg = "'memory' should be None, a string or have the same interface as" \
+          " joblib.Memory. Got memory='1' instead."
+    with pytest.raises(ValueError, match=msg):
+        check_memory(1)
     dummy = WrongDummyMemory()
-    assert_raises_regex(ValueError, "'memory' should be None, a string or"
-                        " have the same interface as joblib.Memory."
-                        " Got memory='{}' instead.".format(dummy),
-                        check_memory, dummy)
+    msg = "'memory' should be None, a string or have the same interface as" \
+          " joblib.Memory. Got memory='{}' instead.".format(dummy)
+    with pytest.raises(ValueError, match=msg):
+        check_memory(dummy)
 
 
 @pytest.mark.parametrize('copy', [True, False])
@@ -851,13 +905,15 @@ def test_check_non_negative(retype):
 
     A[0, 0] = -1
     X = retype(A)
-    assert_raises_regex(ValueError, "Negative ", check_non_negative, X, "")
+    with pytest.raises(ValueError, match="Negative "):
+        check_non_negative(X, "")
 
 
 def test_check_X_y_informative_error():
     X = np.ones((2, 2))
     y = None
-    assert_raise_message(ValueError, "y cannot be None", check_X_y, X, y)
+    with pytest.raises(ValueError, match="y cannot be None"):
+        check_X_y(X, y)
 
 
 def test_retrieve_samples_from_non_standard_shape():
@@ -887,7 +943,8 @@ def test_check_scalar_valid(x, target_type, min_val, max_val):
     """Test that check_scalar returns no error/warning if valid inputs are
     provided"""
     with pytest.warns(None) as record:
-        check_scalar(x, "test_name", target_type, min_val, max_val)
+        check_scalar(x, "test_name", target_type=target_type,
+                     min_val=min_val, max_val=max_val)
     assert len(record) == 0
 
 
@@ -1018,7 +1075,7 @@ def test_check_sample_weight():
     assert sample_weight.dtype == np.float32
 
     # int dtype will be converted to float64 instead
-    X = np.ones((5, 2), dtype=np.int)
+    X = np.ones((5, 2), dtype=int)
     sample_weight = _check_sample_weight(None, X, dtype=X.dtype)
     assert sample_weight.dtype == np.float64
 
@@ -1071,6 +1128,15 @@ def test_deprecate_positional_args_warns_for_function():
     with pytest.warns(FutureWarning,
                       match=r"Pass b=2 as keyword args"):
         f2(1, 2)
+
+    # The * is place before a keyword only argument without a default value
+    @_deprecate_positional_args
+    def f3(a, *, b, c=1, d=1):
+        pass
+
+    with pytest.warns(FutureWarning,
+                      match=r"Pass b=2 as keyword args"):
+        f3(1, 2)
 
 
 def test_deprecate_positional_args_warns_for_class():
@@ -1128,3 +1194,22 @@ def test_check_fit_params(indices):
         result['sparse-col'],
         _safe_indexing(fit_params['sparse-col'], indices_)
     )
+
+
+@pytest.mark.parametrize('sp_format', [True, 'csr', 'csc', 'coo', 'bsr'])
+def test_check_sparse_pandas_sp_format(sp_format):
+    # check_array converts pandas dataframe with only sparse arrays into
+    # sparse matrix
+    pd = pytest.importorskip("pandas", minversion="0.25.0")
+    sp_mat = _sparse_random_matrix(10, 3)
+
+    sdf = pd.DataFrame.sparse.from_spmatrix(sp_mat)
+    result = check_array(sdf, accept_sparse=sp_format)
+
+    if sp_format is True:
+        # by default pandas converts to coo when accept_sparse is True
+        sp_format = 'coo'
+
+    assert sp.issparse(result)
+    assert result.format == sp_format
+    assert_allclose_dense_sparse(sp_mat, result)

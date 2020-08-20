@@ -4,7 +4,6 @@
 import numpy as np
 from ..base import BaseEstimator
 from ._base import SelectorMixin
-from ..utils import check_array
 from ..utils.sparsefuncs import mean_variance_axis, min_max_axis
 from ..utils.validation import check_is_fitted
 
@@ -19,7 +18,7 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
 
     Parameters
     ----------
-    threshold : float, optional
+    threshold : float, default=0
         Features with a training-set variance lower than this threshold will
         be removed. The default is to keep all features with non-zero variance,
         i.e. remove the features that have the same value in all samples.
@@ -32,6 +31,7 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
     Notes
     -----
     Allows NaN in the input.
+    Raises ValueError if no feature in X meets the variance threshold.
 
     Examples
     --------
@@ -57,7 +57,7 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Sample vectors from which to compute variances.
 
-        y : any
+        y : any, default=None
             Ignored. This parameter exists only for compatibility with
             sklearn.pipeline.Pipeline.
 
@@ -65,8 +65,9 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
         -------
         self
         """
-        X = check_array(X, ('csr', 'csc'), dtype=np.float64,
-                        force_all_finite='allow-nan')
+        X = self._validate_data(X, accept_sparse=('csr', 'csc'),
+                                dtype=np.float64,
+                                force_all_finite='allow-nan')
 
         if hasattr(X, "toarray"):   # sparse matrix
             _, self.variances_ = mean_variance_axis(X, axis=0)
