@@ -191,10 +191,10 @@ cdef class Criterion:
         impurity_parent : double
             The initial impurity of the parent node before the split
 
-        impurity_parent : double
+        impurity_left : double
             The impurity of the left child
 
-        impurity_parent : double
+        impurity_right : double
             The impurity of the right child
 
         Return
