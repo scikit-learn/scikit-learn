@@ -869,7 +869,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         in the range [0.7, 1.0) to automatically detect and filter stop
         words based on intra corpus document frequency of terms.
 
-    token_pattern : string
+    token_pattern : string, default=r"(?u)/b/w/w+/b"
         Regular expression denoting what constitutes a "token", only used
         if ``analyzer == 'word'``. The default regexp select tokens of 2
         or more alphanumeric characters (punctuation is completely ignored
@@ -1206,13 +1206,14 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
             if max_doc_count < min_doc_count:
                 raise ValueError(
                     "max_df corresponds to < documents than min_df")
+            if max_features is not None:
+                X = self._sort_features(X, vocabulary)
             X, self.stop_words_ = self._limit_features(X, vocabulary,
                                                        max_doc_count,
                                                        min_doc_count,
                                                        max_features)
-
-            X = self._sort_features(X, vocabulary)
-
+            if max_features is None:
+                X = self._sort_features(X, vocabulary)
             self.vocabulary_ = vocabulary
 
         return X

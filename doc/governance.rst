@@ -22,9 +22,18 @@ Roles And Responsibilities
 
 Contributors
 ------------
+
 Contributors are community members who contribute in concrete ways to the
 project. Anyone can become a contributor, and contributions can take many forms
 – not only code – as detailed in the :ref:`contributors guide <contributing>`.
+
+Triage team
+------------
+
+The triage team is composed of community members who have permission on
+github to edit, label and close issues. :ref:`Their work <bug_triaging>` is
+crucial to improve the communication in the project and limit the crowding
+of the issue tracker.
 
 Core developers
 ---------------

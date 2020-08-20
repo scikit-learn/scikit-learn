@@ -17,6 +17,7 @@ from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_no_warnings
+from sklearn.utils._testing import ignore_warnings
 
 from sklearn.naive_bayes import GaussianNB, BernoulliNB
 from sklearn.naive_bayes import MultinomialNB, ComplementNB
@@ -30,7 +31,7 @@ y = np.array([1, 1, 1, 2, 2, 2])
 # A bit more random tests
 rng = np.random.RandomState(0)
 X1 = rng.normal(size=(10, 3))
-y1 = (rng.normal(size=(10)) > 0).astype(np.int)
+y1 = (rng.normal(size=(10)) > 0).astype(int)
 
 # Data is 6 random integer points in a 100 dimensional space classified to
 # three classes.
@@ -193,6 +194,17 @@ def test_gnb_naive_bayes_scale_invariance():
     assert_array_equal(labels[1], labels[2])
 
 
+# TODO: Remove in version 0.26
+@pytest.mark.parametrize("cls", [MultinomialNB, ComplementNB, BernoulliNB,
+                                 CategoricalNB])
+def test_discretenb_deprecated_coef_intercept(cls):
+    est = cls().fit(X2, y2)
+
+    for att in ["coef_", "intercept_"]:
+        with pytest.warns(FutureWarning):
+            hasattr(est, att)
+
+
 @pytest.mark.parametrize("cls", [MultinomialNB, BernoulliNB, CategoricalNB])
 def test_discretenb_prior(cls):
     # Test whether class priors are properly set.
@@ -307,6 +319,8 @@ def test_discretenb_input_check_partial_fit(cls):
     assert_raises(ValueError, clf.predict, X2[:, :-1])
 
 
+# TODO: Remove in version 0.26
+@ignore_warnings(category=FutureWarning)
 def test_discretenb_predict_proba():
     # Test discrete NB classes' probability scores
 
@@ -409,6 +423,8 @@ def test_discretenb_sample_weight_multiclass(cls):
     assert_array_equal(clf.predict(X), [0, 1, 1, 2])
 
 
+# TODO: Remove in version 0.26
+@ignore_warnings(category=FutureWarning)
 @pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB])
 def test_discretenb_coef_intercept_shape(cls):
     # coef_ and intercept_ should have shapes as in other linear models.
@@ -501,6 +517,8 @@ def test_mnb_prior_unobserved_targets():
     assert clf.predict([[1, 1]]) == 2
 
 
+# TODO: Remove in version 0.26
+@ignore_warnings(category=FutureWarning)
 def test_mnb_sample_weight():
     clf = MultinomialNB()
     clf.fit([[1, 2], [1, 2], [1, 0]],

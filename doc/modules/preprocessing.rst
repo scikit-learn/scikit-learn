@@ -791,5 +791,5 @@ error with a ``filterwarnings``::
   ...                         category=UserWarning, append=False)
 
 For a full code example that demonstrates using a :class:`FunctionTransformer`
-to do custom feature selection,
-see :ref:`sphx_glr_auto_examples_preprocessing_plot_function_transformer.py`
+to extract features from text data see 
+:ref:`sphx_glr_auto_examples_compose_plot_column_transformer.py`

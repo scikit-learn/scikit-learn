@@ -681,7 +681,7 @@ def test_euclidean_distances(dtype, x_array_constr, y_array_constr):
     distances = euclidean_distances(X, Y)
 
     # the default rtol=1e-7 is too close to the float32 precision
-    # and fails due too rounding errors.
+    # and fails due to rounding errors.
     assert_allclose(distances, expected, rtol=1e-6)
     assert distances.dtype == dtype
 
@@ -702,7 +702,7 @@ def test_euclidean_distances_sym(dtype, x_array_constr):
     distances = euclidean_distances(X)
 
     # the default rtol=1e-7 is too close to the float32 precision
-    # and fails due too rounding errors.
+    # and fails due to rounding errors.
     assert_allclose(distances, expected, rtol=1e-6)
     assert distances.dtype == dtype
 
@@ -729,7 +729,7 @@ def test_euclidean_distances_upcast(batch_size, x_array_constr,
     distances = np.sqrt(np.maximum(distances, 0))
 
     # the default rtol=1e-7 is too close to the float32 precision
-    # and fails due too rounding errors.
+    # and fails due to rounding errors.
     assert_allclose(distances, expected, rtol=1e-6)
 
 
@@ -749,7 +749,7 @@ def test_euclidean_distances_upcast_sym(batch_size, x_array_constr):
     distances = np.sqrt(np.maximum(distances, 0))
 
     # the default rtol=1e-7 is too close to the float32 precision
-    # and fails due too rounding errors.
+    # and fails due to rounding errors.
     assert_allclose(distances, expected, rtol=1e-6)
 
 
@@ -979,7 +979,7 @@ def test_chi_square_kernel():
     K_add = additive_chi2_kernel(X, Y)
     gamma = 0.1
     K = chi2_kernel(X, Y, gamma=gamma)
-    assert K.dtype == np.float
+    assert K.dtype == float
     for i, x in enumerate(X):
         for j, y in enumerate(Y):
             chi2 = -np.sum((x - y) ** 2 / (x + y))
@@ -1004,7 +1004,7 @@ def test_chi_square_kernel():
     X = rng.random_sample((10, 4)).astype(np.int32)
     K = chi2_kernel(X, X)
     assert np.isfinite(K).all()
-    assert K.dtype == np.float
+    assert K.dtype == float
 
     # check that kernel of similar things is greater than dissimilar ones
     X = [[.3, .7], [1., 0]]
@@ -1240,16 +1240,16 @@ def test_check_preserve_type():
     assert XB_checked.dtype == np.float32
 
     # mismatched A
-    XA_checked, XB_checked = check_pairwise_arrays(XA.astype(np.float),
+    XA_checked, XB_checked = check_pairwise_arrays(XA.astype(float),
                                                    XB)
-    assert XA_checked.dtype == np.float
-    assert XB_checked.dtype == np.float
+    assert XA_checked.dtype == float
+    assert XB_checked.dtype == float
 
     # mismatched B
     XA_checked, XB_checked = check_pairwise_arrays(XA,
-                                                   XB.astype(np.float))
-    assert XA_checked.dtype == np.float
-    assert XB_checked.dtype == np.float
+                                                   XB.astype(float))
+    assert XA_checked.dtype == float
+    assert XB_checked.dtype == float
 
 
 @pytest.mark.parametrize("n_jobs", [1, 2])
@@ -1294,3 +1294,47 @@ def test_pairwise_distances_data_derived_params(n_jobs, metric, dist_function,
 
         assert_allclose(dist, expected_dist_explicit_params)
         assert_allclose(dist, expected_dist_default_params)
+
+
+@pytest.mark.parametrize(
+        'metric', [
+            'braycurtis', 'canberra', 'chebyshev',
+            'correlation', 'hamming', 'mahalanobis', 'minkowski', 'seuclidean',
+            'sqeuclidean', 'cityblock', 'cosine', 'euclidean'])
+@pytest.mark.parametrize(
+        "dtype",
+        [np.float32, np.float64])
+@pytest.mark.parametrize("y_is_x", [True, False], ids=["Y is X", "Y is not X"])
+def test_numeric_pairwise_distances_datatypes(metric, dtype, y_is_x):
+    # Check that pairwise distances gives the same result as pdist and cdist
+    # regardless of input datatype when using any scipy metric for comparing
+    # numeric vectors
+    #
+    # This test is necessary because pairwise_distances used to throw an
+    # error when using metric='seuclidean' and the input data was not
+    # of type np.float64 (#15730)
+
+    rng = np.random.RandomState(0)
+
+    X = rng.random_sample((5, 4)).astype(dtype)
+
+    params = {}
+    if y_is_x:
+        Y = X
+        expected_dist = squareform(pdist(X, metric=metric))
+    else:
+        Y = rng.random_sample((5, 4)).astype(dtype)
+        expected_dist = cdist(X, Y, metric=metric)
+        # precompute parameters for seuclidean & mahalanobis when x is not y
+        if metric == 'seuclidean':
+            params = {'V': np.var(np.vstack([X, Y]),
+                                  axis=0, ddof=1, dtype=np.float64)}
+        elif metric == 'mahalanobis':
+            params = {'VI': np.linalg.inv(np.cov(np.vstack([X, Y]).T)).T}
+
+    dist = pairwise_distances(X, Y, metric=metric, **params)
+
+    # the default rtol=1e-7 is too close to the float32 precision
+    # and fails due to rounding errors
+    rtol = 1e-5 if dtype is np.float32 else 1e-7
+    assert_allclose(dist, expected_dist, rtol=rtol)
