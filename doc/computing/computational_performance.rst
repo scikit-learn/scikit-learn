@@ -4,6 +4,8 @@
 
 .. _computational_performance:
 
+.. currentmodule:: sklearn
+
 Computational Performance
 =========================
 
@@ -196,7 +198,7 @@ For :mod:`sklearn.ensemble` of trees (e.g. RandomForest, GBT,
 ExtraTrees etc) the number of trees and their depth play the most
 important role. Latency and throughput should scale linearly with the number
 of trees. In this case we used directly the ``n_estimators`` parameter of
-:class:`~ensemble.gradient_boosting.GradientBoostingRegressor`.
+:class:`~ensemble.GradientBoostingRegressor`.
 
 .. |gbt_model_complexity| image::  ../auto_examples/applications/images/sphx_glr_plot_model_complexity_influence_003.png
     :target: ../auto_examples/applications/plot_model_complexity_influence.html
@@ -312,7 +314,7 @@ memory to 128 MiB::
   ...     pass  # do chunked work here
 
 An example of a chunked operation adhering to this setting is
-:func:`~metric.pairwise_distances_chunked`, which facilitates computing
+:func:`~metrics.pairwise_distances_chunked`, which facilitates computing
 row-wise reductions of a pairwise distance matrix.
 
 Model Compression
