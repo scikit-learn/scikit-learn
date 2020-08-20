@@ -19,7 +19,7 @@
     </div>
     <div>
     <a href='https://github.com/thomasjpfan'><img src='https://avatars2.githubusercontent.com/u/5402633?v=4' class='avatar' /></a> <br />
-    <p>Thomas J Fan</p>
+    <p>Thomas J. Fan</p>
     </div>
     <div>
     <a href='https://github.com/agramfort'><img src='https://avatars2.githubusercontent.com/u/161052?v=4' class='avatar' /></a> <br />
@@ -44,6 +44,10 @@
     <div>
     <a href='https://github.com/glemaitre'><img src='https://avatars2.githubusercontent.com/u/7454015?v=4' class='avatar' /></a> <br />
     <p>Guillaume Lemaitre</p>
+    </div>
+    <div>
+    <a href='https://github.com/lorentzenchr'><img src='https://avatars2.githubusercontent.com/u/15324633?v=4' class='avatar' /></a> <br />
+    <p>Christian Lorentzen</p>
     </div>
     <div>
     <a href='https://github.com/jmetzen'><img src='https://avatars1.githubusercontent.com/u/1116263?v=4' class='avatar' /></a> <br />
