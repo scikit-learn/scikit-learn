@@ -62,9 +62,13 @@ y_test = y[train_samples:]
 #
 # * :class:`~sklearn.naive_bayes.GaussianNB` tends to push
 #   probabilities to 0 or 1 (see histogram). This is mainly
-#   because it makes the assumption that features are conditionally independent
-#   given the class, which is not the case in this dataset which contains 2
-#   redundant features.
+#   because the naive Bayes equation only provides correct estimate of
+#   probabilities when the assumption that features are conditionally
+#   independent holds [2]_. However, features tend to be positively correlated
+#   and is the case with this dataset, which contains 2 features
+#   generated as random linear combinations of the informative features. These
+#   correlated features are effectively being 'counted twice', resulting in
+#   pushing the predicted probabilities towards 0 and 1 [3].
 #
 # * :class:`~sklearn.ensemble.RandomForestClassifier` shows the opposite
 #   behavior: the histograms show peaks at approx. 0.2 and 0.9 probability,
@@ -165,3 +169,12 @@ plt.show()
 # .. [1] `Predicting Good Probabilities with Supervised Learning
 #        <https://dl.acm.org/doi/pdf/10.1145/1102351.1102430>`_,
 #        A. Niculescu-Mizil & R. Caruana, ICML 2005
+# .. [2] `Beyond independence: Conditions for the optimality of the simple
+#        bayesian classifier
+#        <https://www.ics.uci.edu/~pazzani/Publications/mlc96-pedro.pdf>`_
+#        Domingos, P., & Pazzani, M., Proc. 13th Intl. Conf. Machine Learning.
+#        1996.
+# .. [3] `Obtaining calibrated probability estimates from decision trees and
+#        naive Bayesian classifiers
+#        <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.29.3039&rep=rep1&type=pdf>`_
+#        Zadrozny, Bianca, and Charles Elkan. Icml. Vol. 1. 2001.
