@@ -33,8 +33,9 @@ Some advantages of decision trees are:
     - The cost of using the tree (i.e., predicting data) is logarithmic in the
       number of data points used to train the tree.
 
-    - Able to handle both numerical and categorical data. Other techniques
-      are usually specialised in analysing datasets that have only one type
+    - Able to handle both numerical and categorical data. However scikit-learn 
+      implementation does not support categorical variables for now. Other 
+      techniques are usually specialised in analysing datasets that have only one type
       of variable. See :ref:`algorithms <tree_algorithms>` for more
       information.
 
@@ -91,8 +92,8 @@ Classification
 classification on a dataset.
 
 As with other classifiers, :class:`DecisionTreeClassifier` takes as input two arrays:
-an array X, sparse or dense, of size ``[n_samples, n_features]``  holding the
-training samples, and an array Y of integer values, size ``[n_samples]``,
+an array X, sparse or dense, of shape ``(n_samples, n_features)`` holding the
+training samples, and an array Y of integer values, shape ``(n_samples,)``,
 holding the class labels for the training samples::
 
     >>> from sklearn import tree
@@ -106,8 +107,13 @@ After being fitted, the model can then be used to predict the class of samples::
     >>> clf.predict([[2., 2.]])
     array([1])
 
-Alternatively, the probability of each class can be predicted, which is the
-fraction of training samples of the same class in a leaf::
+In case that there are multiple classes with the same and highest
+probability, the classifier will predict the class with the lowest index
+amongst those classes.
+
+As an alternative to outputting a specific class, the probability of each class
+can be predicted, which is the fraction of training samples of the class in a 
+leaf::
 
     >>> clf.predict_proba([[2., 2.]])
     array([[0., 1.]])
@@ -241,7 +247,7 @@ Multi-output problems
 =====================
 
 A multi-output problem is a supervised learning problem with several outputs
-to predict, that is when Y is a 2d array of size ``[n_samples, n_outputs]``.
+to predict, that is when Y is a 2d array of shape ``(n_samples, n_outputs)``.
 
 When there is no correlation between the outputs, a very simple way to solve
 this kind of problem is to build n independent models, i.e. one for each
@@ -262,7 +268,7 @@ multi-output problems. This requires the following changes:
 This module offers support for multi-output problems by implementing this
 strategy in both :class:`DecisionTreeClassifier` and
 :class:`DecisionTreeRegressor`. If a decision tree is fit on an output array Y
-of size ``[n_samples, n_outputs]`` then the resulting estimator will:
+of shape ``(n_samples, n_outputs)`` then the resulting estimator will:
 
   * Output n_output values upon ``predict``;
 
@@ -375,7 +381,6 @@ Tips on practical use
     predict. Training time can be orders of magnitude faster for a sparse
     matrix input compared to a dense matrix when features have zero values in
     most of the samples.
-
 
 
 .. _tree_algorithms:
@@ -532,9 +537,9 @@ a given tree :math:`T`:
 
 .. math::
 
-  R_\alpha(T) = R(T) + \alpha|T|
+  R_\alpha(T) = R(T) + \alpha|\widetilde{T}|
 
-where :math:`|T|` is the number of terminal nodes in :math:`T` and :math:`R(T)`
+where :math:`|\widetilde{T}|` is the number of terminal nodes in :math:`T` and :math:`R(T)`
 is traditionally defined as the total misclassification rate of the terminal
 nodes. Alternatively, scikit-learn uses the total sample weighted impurity of
 the terminal nodes for :math:`R(T)`. As shown above, the impurity of a node

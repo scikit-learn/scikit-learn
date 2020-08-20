@@ -289,7 +289,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
         return loss, coef_grads, intercept_grads
 
-    def _initialize(self, y, layer_units):
+    def _initialize(self, y, layer_units, dtype):
         # set all attributes, allocate weights etc for first call
         # Initialize parameters
         self.n_iter_ = 0
@@ -315,7 +315,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
         for i in range(self.n_layers_ - 1):
             coef_init, intercept_init = self._init_coef(layer_units[i],
-                                                        layer_units[i + 1])
+                                                        layer_units[i + 1],
+                                                        dtype)
             self.coefs_.append(coef_init)
             self.intercepts_.append(intercept_init)
 
@@ -328,7 +329,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             else:
                 self.best_loss_ = np.inf
 
-    def _init_coef(self, fan_in, fan_out):
+    def _init_coef(self, fan_in, fan_out, dtype):
         # Use the initialization method recommended by
         # Glorot et al.
         factor = 6.
@@ -341,6 +342,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                                                (fan_in, fan_out))
         intercept_init = self._random_state.uniform(-init_bound, init_bound,
                                                     fan_out)
+        coef_init = coef_init.astype(dtype, copy=False)
+        intercept_init = intercept_init.astype(dtype, copy=False)
         return coef_init, intercept_init
 
     def _fit(self, X, y, incremental=False):
@@ -357,6 +360,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                              hidden_layer_sizes)
 
         X, y = self._validate_input(X, y, incremental)
+
         n_samples, n_features = X.shape
 
         # Ensure y is 2D
@@ -374,17 +378,19 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         if not hasattr(self, 'coefs_') or (not self.warm_start and not
                                            incremental):
             # First time training the model
-            self._initialize(y, layer_units)
+            self._initialize(y, layer_units, X.dtype)
 
         # Initialize lists
         activations = [X] + [None] * (len(layer_units) - 1)
         deltas = [None] * (len(activations) - 1)
 
-        coef_grads = [np.empty((n_fan_in_, n_fan_out_)) for n_fan_in_,
+        coef_grads = [np.empty((n_fan_in_, n_fan_out_), dtype=X.dtype)
+                      for n_fan_in_,
                       n_fan_out_ in zip(layer_units[:-1],
                                         layer_units[1:])]
 
-        intercept_grads = [np.empty(n_fan_out_) for n_fan_out_ in
+        intercept_grads = [np.empty(n_fan_out_, dtype=X.dtype)
+                           for n_fan_out_ in
                            layer_units[1:]]
 
         # Run the Stochastic optimization solver
@@ -888,6 +894,12 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     out_activation_ : str
         Name of the output activation function.
 
+    loss_curve_ : list of shape (n_iters,)
+        Loss value evaluated at the end of each training step.
+
+    t_ : int
+        Mathematically equals `n_iters * X.shape[0]`, it means
+        `time_step` and it is used by optimizer's learning rate scheduler.
 
     Examples
     --------
@@ -960,7 +972,8 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
     def _validate_input(self, X, y, incremental):
         X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc'],
-                                   multi_output=True)
+                                   multi_output=True,
+                                   dtype=(np.float64, np.float32))
         if y.ndim == 2 and y.shape[1] == 1:
             y = column_or_1d(y, warn=True)
 
@@ -982,7 +995,9 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
                                  " `self.classes_` has %s. 'y' has %s." %
                                  (self.classes_, classes))
 
-        y = self._label_binarizer.transform(y)
+        # This downcast to bool is to prevent upcasting when working with
+        # float32 data
+        y = self._label_binarizer.transform(y).astype(bool)
         return X, y
 
     def predict(self, X):
@@ -1014,7 +1029,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         X : ndarray or sparse matrix of shape (n_samples, n_features)
             The input data.
 
-        y : ndarray, shape (n_samples,) or (n_samples, n_outputs)
+        y : ndarray of shape (n_samples,) or (n_samples, n_outputs)
             The target values (class labels in classification, real numbers in
             regression).
 
@@ -1031,13 +1046,13 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input data.
 
-        y : array-like, shape (n_samples,)
+        y : array-like of shape (n_samples,)
             The target values.
 
-        classes : array, shape (n_classes), default None
+        classes : array of shape (n_classes,), default=None
             Classes across all calls to partial_fit.
             Can be obtained via `np.unique(y_all)`, where y_all is the
             target vector of the entire dataset.
@@ -1304,6 +1319,13 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     out_activation_ : str
         Name of the output activation function.
 
+    loss_curve_ : list of shape (n_iters,)
+        Loss value evaluated at the end of each training step.
+
+    t_ : int
+        Mathematically equals `n_iters * X.shape[0]`, it means
+        `time_step` and it is used by optimizer's learning rate scheduler.
+
     Examples
     --------
     >>> from sklearn.neural_network import MLPRegressor
@@ -1393,7 +1415,8 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
     def _validate_input(self, X, y, incremental):
         X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc'],
-                                   multi_output=True, y_numeric=True)
+                                   multi_output=True, y_numeric=True,
+                                   dtype=(np.float64, np.float32))
         if y.ndim == 2 and y.shape[1] == 1:
             y = column_or_1d(y, warn=True)
         return X, y
