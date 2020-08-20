@@ -184,7 +184,7 @@ Changelog
   :user:`Marija Vlajic Wheeler <marijavlajic>`.
 
 - |Efficiency| Reduce memory footprint in
-:func:`feature_selection.mutual_info_classif`
+  :func:`feature_selection.mutual_info_classif`
   and :func:`feature_selection.mutual_info_regression` by calling
   :class:`neighbors.KDTree` for counting nearest neighbors. :pr:`17878` by
   :user:`Noel Rogers <noelano>`.
