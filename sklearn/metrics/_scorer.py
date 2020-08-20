@@ -21,9 +21,11 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 from collections.abc import Iterable
 from functools import partial
 from collections import Counter
+from inspect import signature
 
 import numpy as np
 
+from ._base import _get_response
 from . import (r2_score, median_absolute_error, max_error, mean_absolute_error,
                mean_squared_error, mean_squared_log_error,
                mean_poisson_deviance, mean_gamma_deviance, accuracy_score,
@@ -46,16 +48,17 @@ from ..utils.validation import _deprecate_positional_args
 from ..base import is_regressor
 
 
-def _cached_call(cache, estimator, method, *args, **kwargs):
+def _cached_call(cache, estimator, *args, **kwargs):
     """Call estimator with method and args and kwargs."""
+    response_method = kwargs["response_method"]
     if cache is None:
-        return getattr(estimator, method)(*args, **kwargs)
+        return _get_response(estimator, *args, **kwargs)
 
     try:
-        return cache[method]
+        return cache[response_method]
     except KeyError:
-        result = getattr(estimator, method)(*args, **kwargs)
-        cache[method] = result
+        result = _get_response(estimator, *args, **kwargs)
+        cache[response_method] = result
         return result
 
 
@@ -83,8 +86,9 @@ class _MultimetricScorer:
 
         for name, scorer in self._scorers.items():
             if isinstance(scorer, _BaseScorer):
-                score = scorer._score(cached_call, estimator,
-                                      *args, **kwargs)
+                score = scorer._score(
+                    cached_call, estimator, *args, **kwargs
+                )
             else:
                 score = scorer(estimator, *args, **kwargs)
             scores[name] = score
@@ -127,35 +131,15 @@ class _BaseScorer:
         self._score_func = score_func
         self._sign = sign
 
-    @staticmethod
-    def _check_pos_label(pos_label, classes):
-        if pos_label not in list(classes):
-            raise ValueError(
-                f"pos_label={pos_label} is not a valid label: {classes}"
-            )
-
-    def _select_proba(self, y_pred, classes, support_multi_class):
-        """Select the column of y_pred when probabilities are provided."""
-        if y_pred.shape[1] == 2:
-            pos_label = self._kwargs.get("pos_label", classes[1])
-            self._check_pos_label(pos_label, classes)
-            col_idx = np.flatnonzero(classes == pos_label)[0]
-            y_pred = y_pred[:, col_idx]
+    def _get_pos_label(self):
+        score_func_params = signature(self._score_func).parameters
+        if "pos_label" in self._kwargs:
+            pos_label = self._kwargs["pos_label"]
+        elif "pos_label" in score_func_params:
+            pos_label = score_func_params["pos_label"].default
         else:
-            err_msg = (
-                f"Got predict_proba of shape {y_pred.shape}, but need "
-                f"classifier with two classes for {self._score_func.__name__} "
-                f"scoring"
-            )
-            if support_multi_class and y_pred.shape[1] == 1:
-                # In _ProbaScorer, y_true can be tagged as binary while the
-                # y_pred is multi_class. This case is supported when label is
-                # provided.
-                raise ValueError(err_msg)
-            elif not support_multi_class:
-                raise ValueError(err_msg)
-
-        return y_pred
+            pos_label = None
+        return pos_label
 
     def __repr__(self):
         kwargs_string = "".join([", %s=%s" % (str(k), str(v))
@@ -188,8 +172,13 @@ class _BaseScorer:
         score : float
             Score function applied to prediction of estimator on X.
         """
-        return self._score(partial(_cached_call, None), estimator, X, y_true,
-                           sample_weight=sample_weight)
+        return self._score(
+            partial(_cached_call, None),
+            estimator,
+            X,
+            y_true,
+            sample_weight=sample_weight
+        )
 
     def _factory_args(self):
         """Return non-default make_scorer arguments for repr."""
@@ -224,15 +213,15 @@ class _PredictScorer(_BaseScorer):
         score : float
             Score function applied to prediction of estimator on X.
         """
-
-        y_pred = method_caller(estimator, "predict", X)
+        y_pred, _ = method_caller(estimator, X, y_true, response_method="predict")
         if sample_weight is not None:
-            return self._sign * self._score_func(y_true, y_pred,
-                                                 sample_weight=sample_weight,
-                                                 **self._kwargs)
+            return self._sign * self._score_func(
+                y_true, y_pred, sample_weight=sample_weight, **self._kwargs
+            )
         else:
-            return self._sign * self._score_func(y_true, y_pred,
-                                                 **self._kwargs)
+            return self._sign * self._score_func(
+                y_true, y_pred, **self._kwargs
+            )
 
 
 class _ProbaScorer(_BaseScorer):
@@ -264,17 +253,19 @@ class _ProbaScorer(_BaseScorer):
         score : float
             Score function applied to prediction of estimator on X.
         """
+        y_pred, _ = method_caller(
+            clf,
+            X,
+            y,
+            response_method="predict_proba",
+            pos_label=self._get_pos_label(),
+            support_multi_class=True,
+        )
 
-        y_type = type_of_target(y)
-        y_pred = method_caller(clf, "predict_proba", X)
-        if y_type == "binary":
-            y_pred = self._select_proba(
-                y_pred, clf.classes_, support_multi_class=True
-            )
         if sample_weight is not None:
-            return self._sign * self._score_func(y, y_pred,
-                                                 sample_weight=sample_weight,
-                                                 **self._kwargs)
+            return self._sign * self._score_func(
+                y, y_pred, sample_weight=sample_weight, **self._kwargs
+            )
         else:
             return self._sign * self._score_func(y, y_pred, **self._kwargs)
 
@@ -319,38 +310,38 @@ class _ThresholdScorer(_BaseScorer):
             raise ValueError("{0} format is not supported".format(y_type))
 
         if is_regressor(clf):
-            y_pred = method_caller(clf, "predict", X)
+            y_pred, _ = method_caller(clf, X, y, response_method="predict")
         else:
+            pos_label = self._get_pos_label()
             try:
-                y_pred = method_caller(clf, "decision_function", X)
+                y_pred, _ = method_caller(
+                    clf,
+                    X,
+                    y,
+                    response_method="decision_function",
+                    pos_label=pos_label,
+                )
 
                 if isinstance(y_pred, list):
                     # For multi-output multi-class estimator
                     y_pred = np.vstack([p for p in y_pred]).T
-                elif y_type == "binary" and "pos_label" in self._kwargs:
-                    self._check_pos_label(
-                        self._kwargs["pos_label"], clf.classes_
-                    )
-                    if self._kwargs["pos_label"] == clf.classes_[0]:
-                        # The implicit positive class of the binary classifier
-                        # does not match `pos_label`: we need to invert the
-                        # predictions
-                        y_pred *= -1
 
-            except (NotImplementedError, AttributeError):
-                y_pred = method_caller(clf, "predict_proba", X)
+            except (NotImplementedError, AttributeError, ValueError):
+                y_pred, _ = method_caller(
+                    clf,
+                    X,
+                    y,
+                    response_method="predict_proba",
+                    pos_label=pos_label,
+                )
 
-                if y_type == "binary":
-                    y_pred = self._select_proba(
-                        y_pred, clf.classes_, support_multi_class=False,
-                    )
-                elif isinstance(y_pred, list):
+                if isinstance(y_pred, list):
                     y_pred = np.vstack([p[:, -1] for p in y_pred]).T
 
         if sample_weight is not None:
-            return self._sign * self._score_func(y, y_pred,
-                                                 sample_weight=sample_weight,
-                                                 **self._kwargs)
+            return self._sign * self._score_func(
+                y, y_pred, sample_weight=sample_weight, **self._kwargs
+            )
         else:
             return self._sign * self._score_func(y, y_pred, **self._kwargs)
 

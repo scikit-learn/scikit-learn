@@ -1,4 +1,4 @@
-from .base import _get_response
+from .._base import _get_response
 
 from .. import average_precision_score
 from .. import precision_recall_curve

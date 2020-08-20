@@ -16,6 +16,7 @@ from itertools import combinations
 
 import numpy as np
 
+from ..base import is_classifier, is_regressor
 from ..utils import check_array, check_consistent_length
 from ..utils.multiclass import type_of_target
 
@@ -200,3 +201,145 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score,
         pair_scores[ix] = (a_true_score + b_true_score) / 2
 
     return np.average(pair_scores, weights=prevalence)
+
+
+def _check_classifier_response_method(estimator, response_method):
+    """Return prediction method from the response_method
+
+    Parameters
+    ----------
+    estimator: object
+        Classifier to check
+
+    response_method: {'auto', 'predict_proba', 'decision_function', 'predict'}
+        Specifies whether to use :term:`predict_proba` or
+        :term:`decision_function` as the target response. If set to 'auto',
+        :term:`predict_proba` is tried first and if it does not exist
+        :term:`decision_function` is tried next and :term:`predict` last.
+
+    Returns
+    -------
+    prediction_method: callable
+        prediction method of estimator
+    """
+
+    possible_response_methods = (
+        "predict", "predict_proba", "decision_function", "auto"
+    )
+    if response_method not in possible_response_methods:
+        raise ValueError(
+            f"response_method must be one of "
+            f"{','.join(possible_response_methods)}."
+        )
+
+    error_msg = "response method {} is not defined in {}"
+    if response_method != "auto":
+        prediction_method = getattr(estimator, response_method, None)
+        if prediction_method is None:
+            raise ValueError(
+                error_msg.format(response_method, estimator.__class__.__name__)
+            )
+    else:
+        predict_proba = getattr(estimator, 'predict_proba', None)
+        decision_function = getattr(estimator, 'decision_function', None)
+        predict = getattr(estimator, 'predict', None)
+        prediction_method = predict_proba or decision_function or predict
+        if prediction_method is None:
+            raise ValueError(
+                error_msg.format(
+                    "decision_function, predict_proba or predict",
+                    estimator.__class__.__name__
+                )
+            )
+
+    return prediction_method
+
+
+def _get_response(
+    estimator,
+    X,
+    y_true,
+    response_method,
+    pos_label=None,
+    support_multi_class=False,
+):
+    """Return response and positive label.
+
+    Parameters
+    ----------
+    estimator : estimator instance
+        Fitted classifier or a fitted :class:`~sklearn.pipeline.Pipeline`
+        in which the last estimator is a classifier.
+
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        Input values.
+
+    y_true : array-like of shape (n_samples,)
+        The true label.
+
+    response_method: {'auto', 'predict_proba', 'decision_function', 'predict'}
+        Specifies whether to use :term:`predict_proba` or
+        :term:`decision_function` as the target response. If set to 'auto',
+        :term:`predict_proba` is tried first and if it does not exist
+        :term:`decision_function` is tried next and :term:`predict` last.
+
+    pos_label : str or int, default=None
+        The class considered as the positive class when computing
+        the metrics. By default, `estimators.classes_[1]` is
+        considered as the positive class.
+
+    support_multi_class : bool, default=False
+        ...
+
+    Returns
+    -------
+    y_pred : ndarray of shape (n_samples,)
+        Target scores calculated from the provided response_method
+        and pos_label.
+
+    pos_label : str or int
+        The class considered as the positive class when computing
+        the metrics.
+    """
+    if is_regressor(estimator):
+        if response_method not in ("predict", "auto"):
+            raise ValueError(
+                f"{estimator.__class__.__name__} should be a classifier"
+            )
+        return estimator.predict(X), None
+    else:
+        y_type = type_of_target(y_true)
+        classes = estimator.classes_
+        prediction_method = _check_classifier_response_method(
+            estimator, response_method
+        )
+        y_pred = prediction_method(X)
+
+        if pos_label is not None and pos_label not in classes:
+            raise ValueError(
+                f"The class provided by 'pos_label' is unknown. Got "
+                f"{pos_label} instead of one of {classes}."
+            )
+
+        if prediction_method.__name__ == "predict_proba":
+            if y_type == "binary":
+                pos_label = pos_label if pos_label is not None else classes[-1]
+                if y_pred.shape[1] == 2:
+                    col_idx = np.flatnonzero(classes == pos_label)[0]
+                    y_pred = y_pred[:, col_idx]
+                else:
+                    err_msg = (
+                        f"Got predict_proba of shape {y_pred.shape}, but need "
+                        f"classifier with two classes"
+                    )
+                    if support_multi_class and y_pred.shape[1] == 1:
+                        raise ValueError(err_msg)
+                    elif not support_multi_class:
+                        raise ValueError(err_msg)
+        elif prediction_method.__name__ == "decision_function":
+            if y_type == "binary":
+                pos_label = pos_label if pos_label is not None else classes[-1]
+                if pos_label == classes[0]:
+                    y_pred *= -1
+
+    return y_pred, pos_label
