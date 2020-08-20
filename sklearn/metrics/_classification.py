@@ -687,8 +687,8 @@ def jaccard_score(y_true, y_pred, *, labels=None, pos_label=1,
 
     zero_division : "warn", 0 or 1, default="warn"
         Sets the value to return when there is a zero division, i.e. when there
-        there are no negative values in predictions and labels. If set to "warn",
-        this acts as 0, but warnings are also raised.
+        there are no negative values in predictions and labels. If set to
+        "warn", this acts as 0, but warnings are also raised.
 
     Returns
     -------
