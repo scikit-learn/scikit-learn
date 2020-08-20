@@ -114,21 +114,22 @@ then
     exit 0
 fi
 
-if [[ "$CIRCLE_BRANCH" =~ ^master$|^[0-9]+\.[0-9]+\.X$ && -z "$CI_PULL_REQUEST" ]]
-then
-    # PDF linked into HTML
-    make_args="dist LATEXMKOPTS=-halt-on-error"
-elif [[ "$build_type" =~ ^QUICK ]]
-then
-    make_args=html-noplot
-elif [[ "$build_type" =~ ^'BUILD: detected examples' ]]
-then
-    # pattern for examples to run is the last line of output
-    pattern=$(echo "$build_type" | tail -n 1)
-    make_args="html EXAMPLES_PATTERN=$pattern"
-else
-    make_args=html
-fi
+# if [[ "$CIRCLE_BRANCH" =~ ^master$|^[0-9]+\.[0-9]+\.X$ && -z "$CI_PULL_REQUEST" ]]
+# then
+#     # PDF linked into HTML
+#     make_args="dist LATEXMKOPTS=-halt-on-error"
+# elif [[ "$build_type" =~ ^QUICK ]]
+# then
+#     make_args=html-noplot
+# elif [[ "$build_type" =~ ^'BUILD: detected examples' ]]
+# then
+#     # pattern for examples to run is the last line of output
+#     pattern=$(echo "$build_type" | tail -n 1)
+#     make_args="html EXAMPLES_PATTERN=$pattern"
+# else
+#     make_args=html
+# fi
+make_args="dist LATEXMKOPTS=-halt-on-error"
 
 make_args="SPHINXOPTS=-T $make_args"  # show full traceback on exception
 
