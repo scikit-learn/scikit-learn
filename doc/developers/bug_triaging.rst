@@ -80,7 +80,7 @@ can do the following important tasks:
 welcoming and polite when triaging.
 
 See the github description for `roles in the organization
-<https://docs.github.com/en/github/setting-up-and-managing-organizations-and-teams/repository-permission-levels-for-an-organization>`_
+<https://docs.github.com/en/github/setting-up-and-managing-organizations-and-teams/repository-permission-levels-for-an-organization>`_.
 
 .. topic:: Closing issues: a tough call
 
@@ -122,7 +122,6 @@ The following workflow [1]_ is a good way to approach issue triaging:
    slightly different example, add it to the original issue as a comment
    or an edit to the original post.
 
-
 #. Make sure that the title accurately reflects the issue. If you have the
    necessary permissions edit it yourself if it's not clear.
 
@@ -150,21 +149,5 @@ The following workflow [1]_ is a good way to approach issue triaging:
    An additional useful step can be to tag the corresponding module e.g.
    `sklearn.linear_models` when relevant.
 
-Becoming a member of the scikit-learn triage team
---------------------------------------------------
-
-Any contributor may become a member of the scikit-learn triage team, after
-showing some continuity in participating to scikit-learn
-development (with pull requests and reviews).
-Any core developer are welcome to propose a scikit-learn contributor to the
-triage team [2]_. Without objections from other core developers, the
-contributor will be added to the triage team.
-
-For every new triager, it would be great to announce them in the mailing list.
-Triagers are welcome to participate to `monthly core developer meetings
-<https://github.com/scikit-learn/administrative/tree/master/meeting_notes>`_.
-
 .. [1] Adapted from the pandas project `maintainers guide
        <https://dev.pandas.io/docs/development/maintaining.html>`_
-.. [2] Adapted from the python `developers guide
-       <https://devguide.python.org/triaging/#becoming-a-member-of-the-python-triage-team>`_
