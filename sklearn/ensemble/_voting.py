@@ -110,7 +110,7 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
         X_new : ndarray array of shape (n_samples, n_features_new)
             Transformed array.
         """
-        super().fit_transform(X, y=None, **fit_params)
+        super().fit_transform(X, y, **fit_params)
 
     @property
     def n_features_in_(self):
