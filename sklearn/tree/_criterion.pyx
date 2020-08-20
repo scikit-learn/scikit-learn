@@ -1308,3 +1308,25 @@ cdef class FriedmanMSE(MSE):
                 self.weighted_n_left * total_sum_right)
 
         return diff * diff / (self.weighted_n_left * self.weighted_n_right)
+
+    cdef double impurity_improvement(self, double impurity_parent, double
+                                     impurity_left, double impurity_right) nogil:
+        # Note: none of the arguments are used here
+        cdef double* sum_left = self.sum_left
+        cdef double* sum_right = self.sum_right
+
+        cdef double total_sum_left = 0.0
+        cdef double total_sum_right = 0.0
+
+        cdef SIZE_t k
+        cdef double diff = 0.0
+
+        for k in range(self.n_outputs):
+            total_sum_left += sum_left[k]
+            total_sum_right += sum_right[k]
+
+        diff = (self.weighted_n_right * total_sum_left -
+                self.weighted_n_left * total_sum_right) / self.n_outputs
+
+        return (diff * diff / (self.weighted_n_left * self.weighted_n_right *
+                               self.weighted_n_node_samples))
