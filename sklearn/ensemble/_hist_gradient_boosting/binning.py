@@ -141,7 +141,6 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         is less than ``n_bins - 1`` for a given feature, then there are
         empty (and unused) bins.
     """
-
     def __init__(self, n_bins=256, subsample=int(2e5), random_state=None):
         self.n_bins = n_bins
         self.subsample = subsample
