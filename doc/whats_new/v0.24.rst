@@ -172,6 +172,10 @@ Changelog
 :mod:`sklearn.feature_selection`
 ................................
 
+- |Feature| Added :class:`feature_selection.SequentialFeatureSelector`
+  which implements forward and backward sequential feature selection.
+  :pr:`6545` by `Sebastian Raschka`_ and :pr:`17159` by `Nicolas Hug`_.
+
 - |Feature| A new parameter `importance_getter` was added to
   :class:`feature_selection.RFE`, :class:`feature_selection.RFECV` and
   :class:`feature_selection.SelectFromModel`, allowing the user to specify an
