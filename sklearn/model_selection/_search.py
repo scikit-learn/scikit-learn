@@ -263,15 +263,18 @@ class ParameterSampler:
         self.random_state = random_state
         self.param_distributions = param_distributions
 
-    def __iter__(self):
-        # check if all distributions are given as lists
-        # in this case we want to sample without replacement
-        all_lists = all(
+    def _is_all_lists(self):
+        return all(
             all(not hasattr(v, "rvs") for v in dist.values())
-            for dist in self.param_distributions)
+            for dist in self.param_distributions
+        )
+
+    def __iter__(self):
         rng = check_random_state(self.random_state)
 
-        if all_lists:
+        # if all distributions are given as lists, we want to sample without
+        # replacement
+        if self._is_all_lists():
             # look up sampled parameter settings in parameter grid
             param_grid = ParameterGrid(self.param_distributions)
             grid_size = len(param_grid)
@@ -303,7 +306,11 @@ class ParameterSampler:
 
     def __len__(self):
         """Number of points that will be sampled."""
-        return self.n_iter
+        if self._is_all_lists():
+            grid_size = len(ParameterGrid(self.param_distributions))
+            return min(self.n_iter, grid_size)
+        else:
+            return self.n_iter
 
 
 # FIXME Remove fit_grid_point in 0.25

@@ -330,6 +330,10 @@ Changelog
   :pr:`17478` by :user:`Teon Brooks <teonbrooks>` and
   :user:`Mohamed Maskani <maskani-moh>`.
 
+- |Fix| Fixed the `len` of :class:`model_selection.ParameterSampler` when
+  all distributions are lists and `n_iter` is more than the number of unique
+  parameter combinations. :pr:`18222` by `Nicolas Hug`_.
+
 :mod:`sklearn.multiclass`
 .........................
 
