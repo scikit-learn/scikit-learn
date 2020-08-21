@@ -155,7 +155,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
            [-0.48],
            [ 1.48]])
 
-    See also
+    See Also
     --------
     RFE : Recursive feature elimination based on importance weights.
     RFECV : Recursive feature elimination with built-in cross-validated
