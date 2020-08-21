@@ -181,6 +181,22 @@ def test_resample_stratify_sparse_error():
                         stratify=stratify)
 
 
+def test_resample_none_support():
+    # Make sure passing None as an array is OK.
+    X = np.arange(100)
+    y = groups = None
+
+    X, y, groups = resample(X, y, groups, n_samples=50)
+    assert y is groups is None
+
+    # first array may be None
+    y, X, groups = resample(y, X, groups, n_samples=50)
+    assert y is groups is None
+
+    assert resample(None) is None
+    assert resample(None, None) == (None, None)
+
+
 def test_safe_mask():
     random_state = check_random_state(0)
     X = random_state.rand(5, 4)

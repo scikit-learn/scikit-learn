@@ -428,7 +428,8 @@ def resample(*arrays,
     *arrays : sequence of array-like of shape (n_samples,) or \
             (n_samples, n_outputs)
         Indexable data-structures can be arrays, lists, dataframes or scipy
-        sparse matrices with consistent first dimension.
+        sparse matrices with consistent first dimension. For convenience, an
+        array can be None, in which case it will be left untouched.
 
     replace : bool, default=True
         Implements resampling with replacement. If False, this will implement
@@ -507,8 +508,12 @@ def resample(*arrays,
     if len(arrays) == 0:
         return None
 
-    first = arrays[0]
-    n_samples = first.shape[0] if hasattr(first, 'shape') else len(first)
+    try:
+        first = next(a for a in arrays if a is not None)
+        n_samples = first.shape[0] if hasattr(first, 'shape') else len(first)
+    except StopIteration:
+        # All arrays are None, just return them
+        return arrays if len(arrays) > 1 else None
 
     if max_n_samples is None:
         max_n_samples = n_samples
@@ -557,7 +562,8 @@ def resample(*arrays,
 
     # convert sparse matrices to CSR for row-based indexing
     arrays = [a.tocsr() if issparse(a) else a for a in arrays]
-    resampled_arrays = [_safe_indexing(a, indices) for a in arrays]
+    resampled_arrays = [_safe_indexing(a, indices) if a is not None else a
+                        for a in arrays]
     if len(resampled_arrays) == 1:
         # syntactic sugar for the unit argument case
         return resampled_arrays[0]
