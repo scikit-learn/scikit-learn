@@ -42,44 +42,44 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    n_components : int, default = 2
+    n_components : int, default=2
         Desired dimensionality of output data.
         Must be strictly less than the number of features.
         The default value is useful for visualisation. For LSA, a value of
         100 is recommended.
 
-    algorithm : string, default = "randomized"
+    algorithm : {'arpack', 'randomized'}, default='randomized'
         SVD solver to use. Either "arpack" for the ARPACK wrapper in SciPy
         (scipy.sparse.linalg.svds), or "randomized" for the randomized
         algorithm due to Halko (2009).
 
-    n_iter : int, optional (default 5)
+    n_iter : int, default=5
         Number of iterations for randomized SVD solver. Not used by ARPACK. The
         default is larger than the default in
         :func:`~sklearn.utils.extmath.randomized_svd` to handle sparse
         matrices that may have large slowly decaying spectrum.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int or RandomState instance, default=None
         Used during randomized svd. Pass an int for reproducible results across
         multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    tol : float, optional
+    tol : float, default=0.
         Tolerance for ARPACK. 0 means machine precision. Ignored by randomized
         SVD solver.
 
     Attributes
     ----------
-    components_ : array, shape (n_components, n_features)
+    components_ : ndarray of shape (n_components, n_features)
 
-    explained_variance_ : array, shape (n_components,)
+    explained_variance_ : ndarray of shape (n_components,)
         The variance of the training samples transformed by a projection to
         each component.
 
-    explained_variance_ratio_ : array, shape (n_components,)
+    explained_variance_ratio_ : ndarray of shape (n_components,)
         Percentage of variance explained by each of the selected components.
 
-    singular_values_ : array, shape (n_components,)
+    singular_values_ : ndarray od shape (n_components,)
         The singular values corresponding to each of the selected components.
         The singular values are equal to the 2-norms of the ``n_components``
         variables in the lower-dimensional space.
@@ -132,7 +132,7 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data.
 
         y : Ignored
@@ -150,14 +150,14 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data.
 
         y : Ignored
 
         Returns
         -------
-        X_new : array, shape (n_samples, n_components)
+        X_new : ndarray of shape (n_samples, n_components)
             Reduced version of X. This will always be a dense array.
         """
         X = self._validate_data(X, accept_sparse=['csr', 'csc'],
@@ -203,12 +203,12 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             New data.
 
         Returns
         -------
-        X_new : array, shape (n_samples, n_components)
+        X_new : ndarray of shape (n_samples, n_components)
             Reduced version of X. This will always be a dense array.
         """
         X = check_array(X, accept_sparse=['csr', 'csc'])
@@ -222,12 +222,12 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_components)
+        X : array-like of shape (n_samples, n_components)
             New data.
 
         Returns
         -------
-        X_original : array, shape (n_samples, n_features)
+        X_original : ndarray of shape (n_samples, n_features)
             Note that this is always a dense array.
         """
         X = check_array(X)

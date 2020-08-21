@@ -35,10 +35,10 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior,
 
     Parameters
     ----------
-    X : array-like or sparse matrix, shape=(n_samples, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Document word matrix.
 
-    exp_topic_word_distr : dense matrix, shape=(n_topics, n_features)
+    exp_topic_word_distr : ndarray of shape (n_topics, n_features)
         Exponential value of expectation of log topic word distribution.
         In the literature, this is `exp(E[log(beta)])`.
 
@@ -52,7 +52,7 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior,
     mean_change_tol : float
         Stopping tolerance for updating document topic distribution in E-setp.
 
-    cal_sstats : boolean
+    cal_sstats : bool
         Parameter that indicate to calculate sufficient statistics or not.
         Set `cal_sstats` to `True` when we need to run M-step.
 
@@ -140,23 +140,23 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    n_components : int, optional (default=10)
+    n_components : int, default=10
         Number of topics.
 
         .. versionchanged:: 0.19
             ``n_topics`` was renamed to ``n_components``
 
-    doc_topic_prior : float, optional (default=None)
+    doc_topic_prior : float, default=None
         Prior of document topic distribution `theta`. If the value is None,
         defaults to `1 / n_components`.
         In [1]_, this is called `alpha`.
 
-    topic_word_prior : float, optional (default=None)
+    topic_word_prior : float, default=None
         Prior of topic word distribution `beta`. If the value is None, defaults
         to `1 / n_components`.
         In [1]_, this is called `eta`.
 
-    learning_method : 'batch' | 'online', default='batch'
+    learning_method : {'batch', 'online'}, default='batch'
         Method used to update `_component`. Only used in :meth:`fit` method.
         In general, if the data size is large, the online update will be much
         faster than the batch update.
@@ -174,26 +174,26 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         .. versionchanged:: 0.20
             The default learning method is now ``"batch"``.
 
-    learning_decay : float, optional (default=0.7)
+    learning_decay : float, default=0.7
         It is a parameter that control learning rate in the online learning
         method. The value should be set between (0.5, 1.0] to guarantee
         asymptotic convergence. When the value is 0.0 and batch_size is
         ``n_samples``, the update method is same as batch learning. In the
         literature, this is called kappa.
 
-    learning_offset : float, optional (default=10.)
+    learning_offset : float, default=10.
         A (positive) parameter that downweights early iterations in online
         learning.  It should be greater than 1.0. In the literature, this is
         called tau_0.
 
-    max_iter : integer, optional (default=10)
+    max_iter : int, default=10
         The maximum number of iterations.
 
-    batch_size : int, optional (default=128)
+    batch_size : int, default=128
         Number of documents to use in each EM iteration. Only used in online
         learning.
 
-    evaluate_every : int, optional (default=0)
+    evaluate_every : int, default=0
         How often to evaluate perplexity. Only used in `fit` method.
         set it to 0 or negative number to not evaluate perplexity in
         training at all. Evaluating perplexity can help you check convergence
@@ -201,30 +201,30 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         Evaluating perplexity in every iteration might increase training time
         up to two-fold.
 
-    total_samples : int, optional (default=1e6)
+    total_samples : int, default=1e6
         Total number of documents. Only used in the :meth:`partial_fit` method.
 
-    perp_tol : float, optional (default=1e-1)
+    perp_tol : float, default=1e-1
         Perplexity tolerance in batch learning. Only used when
         ``evaluate_every`` is greater than 0.
 
-    mean_change_tol : float, optional (default=1e-3)
+    mean_change_tol : float, default=1e-3
         Stopping tolerance for updating document topic distribution in E-step.
 
-    max_doc_update_iter : int (default=100)
+    max_doc_update_iter : int, default=100
         Max number of iterations for updating document topic distribution in
         the E-step.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         The number of jobs to use in the E-step.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    verbose : int, optional (default=0)
+    verbose : int, default=0
         Verbosity level.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int or RandomState instance, default=None
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
@@ -366,19 +366,19 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape=(n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Document word matrix.
 
-        cal_sstats : boolean
+        cal_sstats : bool
             Parameter that indicate whether to calculate sufficient statistics
             or not. Set ``cal_sstats`` to True when we need to run M-step.
 
-        random_init : boolean
+        random_init : bool
             Parameter that indicate whether to initialize document topic
             distribution randomly in the E-step. Set it to True in training
             steps.
 
-        parallel : joblib.Parallel (optional)
+        parallel : joblib.Parallel, default=None
             Pre-initialized instance of joblib.Parallel.
 
         Returns
@@ -431,23 +431,23 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape=(n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Document word matrix.
 
-        total_samples : integer
+        total_samples : int
             Total number of documents. It is only used when
             batch_update is `False`.
 
-        batch_update : boolean
+        batch_update : bool
             Parameter that controls updating method.
             `True` for batch learning, `False` for online learning.
 
-        parallel : joblib.Parallel
+        parallel : joblib.Parallel, default=None
             Pre-initialized instance of joblib.Parallel
 
         Returns
         -------
-        doc_topic_distr : array, shape=(n_samples, n_components)
+        doc_topic_distr : ndarray of shape (n_samples, n_components)
             Unnormalized document topic distribution.
         """
 
@@ -497,7 +497,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape=(n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Document word matrix.
 
         y : Ignored
@@ -551,7 +551,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape=(n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Document word matrix.
 
         y : Ignored
@@ -620,12 +620,12 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape=(n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Document word matrix.
 
         Returns
         -------
-        doc_topic_distr : shape=(n_samples, n_components)
+        doc_topic_distr : ndarray of shape (n_samples, n_components)
             Document topic distribution for X.
         """
         check_is_fitted(self)
@@ -654,12 +654,12 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape=(n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Document word matrix.
 
         Returns
         -------
-        doc_topic_distr : shape=(n_samples, n_components)
+        doc_topic_distr : ndarray of shape (n_samples, n_components)
             Document topic distribution for X.
         """
         doc_topic_distr = self._unnormalized_transform(X)
@@ -675,14 +675,14 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape=(n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Document word matrix.
 
-        doc_topic_distr : array, shape=(n_samples, n_components)
+        doc_topic_distr : ndarray of shape (n_samples, n_components)
             Document topic distribution. In the literature, this is called
             gamma.
 
-        sub_sampling : boolean, optional, (default=False)
+        sub_sampling : bool, default=False
             Compensate for subsampling of documents.
             It is used in calculate bound in online learning.
 
@@ -747,7 +747,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape=(n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Document word matrix.
 
         y : Ignored
@@ -773,10 +773,11 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Document word matrix.
 
-        doc_topic_distr : None or array, shape=(n_samples, n_components)
+        doc_topic_distr : ndarray of shape (n_samples, n_components), \
+                default=None
             Document topic distribution.
             If it is None, it will be generated by applying transform on X.
 
@@ -824,7 +825,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Document word matrix.
 
         sub_sampling : bool

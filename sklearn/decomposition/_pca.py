@@ -342,8 +342,7 @@ class PCA(_BasePCA):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : None
-            Ignored variable.
+        y : Ignored
 
         Returns
         -------
@@ -362,12 +361,11 @@ class PCA(_BasePCA):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : None
-            Ignored variable.
+        y : Ignored
 
         Returns
         -------
-        X_new : array-like of shape (n_samples, n_components)
+        X_new : ndarray of shape (n_samples, n_components)
             Transformed values.
 
         Notes
@@ -580,7 +578,7 @@ class PCA(_BasePCA):
 
         Returns
         -------
-        ll : array-like of shape (n_samples,)
+        ll : ndarray of shape (n_samples,)
             Log-likelihood of each sample under the current model.
         """
         check_is_fitted(self)
@@ -606,8 +604,7 @@ class PCA(_BasePCA):
         X : array-like of shape (n_samples, n_features)
             The data.
 
-        y : None
-            Ignored variable.
+        y : Ignored
 
         Returns
         -------

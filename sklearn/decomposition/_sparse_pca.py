@@ -23,56 +23,56 @@ class SparsePCA(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    n_components : int,
+    n_components : int, default=None
         Number of sparse atoms to extract.
 
-    alpha : float,
+    alpha : float, default=1
         Sparsity controlling parameter. Higher values lead to sparser
         components.
 
-    ridge_alpha : float,
+    ridge_alpha : float, default=0.01
         Amount of ridge shrinkage to apply in order to improve
         conditioning when calling the transform method.
 
-    max_iter : int,
+    max_iter : int, default=1000
         Maximum number of iterations to perform.
 
-    tol : float,
+    tol : float, default=1e-8
         Tolerance for the stopping condition.
 
-    method : {'lars', 'cd'}
+    method : {'lars', 'cd'}, default='lars'
         lars: uses the least angle regression method to solve the lasso problem
         (linear_model.lars_path)
         cd: uses the coordinate descent method to compute the
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         Number of parallel jobs to run.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    U_init : array of shape (n_samples, n_components),
+    U_init : ndarray of shape (n_samples, n_components), default=None
         Initial values for the loadings for warm restart scenarios.
 
-    V_init : array of shape (n_components, n_features),
+    V_init : ndarray of shape (n_components, n_features), default=None
         Initial values for the components for warm restart scenarios.
 
-    verbose : int
+    verbose : int or bool, default=False
         Controls the verbosity; the higher, the more messages. Defaults to 0.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int or RandomState instance, default=None
         Used during dictionary learning. Pass an int for reproducible results
         across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
-    components_ : array, [n_components, n_features]
+    components_ : ndarray of shape (n_components, n_features)
         Sparse components extracted from the data.
 
-    error_ : array
+    error_ : ndarray
         Vector of errors at each iteration.
 
     n_components_ : int
@@ -83,7 +83,7 @@ class SparsePCA(TransformerMixin, BaseEstimator):
     n_iter_ : int
         Number of iterations run.
 
-    mean_ : array, shape (n_features,)
+    mean_ : ndarray of shape (n_features,)
         Per-feature empirical mean, estimated from the training set.
         Equal to ``X.mean(axis=0)``.
 
@@ -130,7 +130,7 @@ class SparsePCA(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
 
@@ -186,13 +186,13 @@ class SparsePCA(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array of shape (n_samples, n_features)
+        X : ndarray of shape (n_samples, n_features)
             Test data to be transformed, must have the same number of
             features as the data used to train the model.
 
         Returns
         -------
-        X_new array, shape (n_samples, n_components)
+        X_new : ndarray of shape (n_samples, n_components)
             Transformed data.
         """
         check_is_fitted(self)
@@ -217,46 +217,46 @@ class MiniBatchSparsePCA(SparsePCA):
 
     Parameters
     ----------
-    n_components : int,
+    n_components : int, default=None
         number of sparse atoms to extract
 
-    alpha : int,
+    alpha : int, default=1
         Sparsity controlling parameter. Higher values lead to sparser
         components.
 
-    ridge_alpha : float,
+    ridge_alpha : float, default=0.01
         Amount of ridge shrinkage to apply in order to improve
         conditioning when calling the transform method.
 
-    n_iter : int,
+    n_iter : int, default=100
         number of iterations to perform for each mini batch
 
-    callback : callable or None, optional (default: None)
+    callback : callable, default=None
         callable that gets invoked every five iterations
 
-    batch_size : int,
+    batch_size : int, default=3
         the number of features to take in each mini batch
 
-    verbose : int
+    verbose : int or bool, default=False
         Controls the verbosity; the higher, the more messages. Defaults to 0.
 
-    shuffle : boolean,
+    shuffle : bool, default=True
         whether to shuffle the data before splitting it in batches
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         Number of parallel jobs to run.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    method : {'lars', 'cd'}
+    method : {'lars', 'cd'}, default='lars'
         lars: uses the least angle regression method to solve the lasso problem
         (linear_model.lars_path)
         cd: uses the coordinate descent method to compute the
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int or RandomState instance, default=None
         Used for random shuffling when ``shuffle`` is set to ``True``,
         during online dictionary learning. Pass an int for reproducible results
         across multiple function calls.
@@ -264,7 +264,7 @@ class MiniBatchSparsePCA(SparsePCA):
 
     Attributes
     ----------
-    components_ : array, [n_components, n_features]
+    components_ : ndarray of shape (n_components, n_features)
         Sparse components extracted from the data.
 
     n_components_ : int
@@ -275,7 +275,7 @@ class MiniBatchSparsePCA(SparsePCA):
     n_iter_ : int
         Number of iterations run.
 
-    mean_ : array, shape (n_features,)
+    mean_ : ndarray of shape (n_features,)
         Per-feature empirical mean, estimated from the training set.
         Equal to ``X.mean(axis=0)``.
 
@@ -320,7 +320,7 @@ class MiniBatchSparsePCA(SparsePCA):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
 
