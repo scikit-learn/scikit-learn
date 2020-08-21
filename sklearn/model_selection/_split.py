@@ -2235,3 +2235,10 @@ def _build_repr(self):
         params[key] = value
 
     return '%s(%s)' % (class_name, _pprint(params, offset=len(class_name)))
+
+
+def _yields_constant_splits(cv):
+    # return True if calling cv.split() always returns the same splits
+    shuffle = getattr(cv, 'shuffle', True)
+    random_state = getattr(cv, 'random_state', 0)
+    return isinstance(random_state, numbers.Integral) or not shuffle

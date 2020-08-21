@@ -6,22 +6,22 @@ import numpy as np
 from ._search import _check_param_grid
 from ._search import BaseSearchCV
 from . import ParameterGrid, ParameterSampler
-from ..utils import check_random_state
 from ..utils.validation import _num_samples
 from ..base import is_classifier
-from ._split import check_cv
+from ._split import check_cv, _yields_constant_splits
 from ..utils import resample
 
 
 __all__ = ['HalvingGridSearchCV', 'HalvingRandomSearchCV']
 
 
-class _TrainingFractionMetaSplitter:
-    """Splitter that subsamples the trainsets according to a given fraction"""
-    def __init__(self, *, base_cv, fraction, random_state):
+class _SubsampleMetaSplitter:
+    """Splitter that subsamples a given fraction of the dataset"""
+    def __init__(self, *, base_cv, fraction, subsample_test, random_state):
         self.base_cv = base_cv
         self.fraction = fraction
-        self.random_state = check_random_state(random_state)
+        self.subsample_test = subsample_test
+        self.random_state = random_state
 
     def split(self, X, y, groups=None):
         for train_idx, test_idx in self.base_cv.split(X, y, groups):
@@ -29,6 +29,11 @@ class _TrainingFractionMetaSplitter:
                 train_idx, replace=False, random_state=self.random_state,
                 n_samples=int(self.fraction * train_idx.shape[0])
             )
+            if self.subsample_test:
+                test_idx = resample(
+                    test_idx, replace=False, random_state=self.random_state,
+                    n_samples=int(self.fraction * test_idx.shape[0])
+                )
             yield train_idx, test_idx
 
 
@@ -73,14 +78,21 @@ class BaseSuccessiveHalving(BaseSearchCV):
 
     def _check_input_parameters(self, X, y, groups):
 
-        # if groups is not None:
-        #     raise ValueError('groups are not supported.')
-
         if self.scoring is not None and not (isinstance(self.scoring, str)
                                              or callable(self.scoring)):
             raise ValueError('scoring parameter must be a string, '
                              'a callable or None. Multimetric scoring is not '
                              'supported.')
+
+        # We need to enforce that successive calls to cv.split() yield the same
+        # splits: see https://github.com/scikit-learn/scikit-learn/issues/15149
+        cv = check_cv(self.cv, y, classifier=is_classifier(self.estimator))
+        if not _yields_constant_splits(cv):
+            raise ValueError(
+                "The cv parameter must yield consistent folds across "
+                "calls to split(). Set its random_state to an int, or set "
+                "shuffle=False."
+            )
 
         if (self.resource != 'n_samples'
                 and self.resource not in self.estimator.get_params()):
@@ -130,8 +142,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
         self.min_resources_ = self.min_resources
         if self.min_resources_ in ('smallest', 'exhaust'):
             if self.resource == 'n_samples':
-                cv = check_cv(self.cv, y,
-                              classifier=is_classifier(self.estimator))
                 n_splits = cv.get_n_splits(X, y, groups)
                 # please see https://gph.is/1KjihQe for a justification
                 magic_factor = 2
@@ -273,10 +283,12 @@ class BaseSuccessiveHalving(BaseSearchCV):
 
             if self.resource == 'n_samples':
                 # subsampling will be done in cv.split()
-                cv = _TrainingFractionMetaSplitter(
+                cv = _SubsampleMetaSplitter(
                     base_cv=self._checked_cv_orig,
                     fraction=resource_iter / self._n_samples_orig,
-                    random_state=self.random_state)
+                    subsample_test=True,
+                    random_state=self.random_state
+                )
 
             else:
                 # Need copy so that the resource_iter of next iteration does
@@ -349,6 +361,12 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+    random_state : int, RandomState instance or None, default=None
+        Pseudo random number generator state used for subsampling the dataset
+        when `resources != 'n_samples'`. Ignored otherwise.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
+
     pre_dispatch : int, or string, optional
         Controls the number of jobs that get dispatched during parallel
         execution. Reducing this number can be useful to avoid an
@@ -380,6 +398,13 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
+
+        .. note::
+            Due to implementation details, the folds produced by `cv` must be
+            the same across multiple calls to `cv.split()`. For
+            built-in `scikit-learn` iterators, this can be achieved by
+            deactivating shuffling (`shuffle=False`), or by setting the
+            `cv`'s `random_state` parameter to an integer.
 
     refit : boolean, default=True
         If True, refit an estimator using the best found parameters on the
@@ -654,6 +679,14 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs' (default)
 
+    random_state : int, RandomState instance or None, default=None
+        Pseudo random number generator state used for subsampling the dataset
+        when `resources != 'n_samples'`. Also used for random uniform
+        sampling from lists of possible values instead of scipy.stats
+        distributions.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
+
     cv : int, cross-validation generator or an iterable, default=5
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
@@ -668,6 +701,13 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
+
+        .. note::
+            Due to implementation details, the folds produced by `cv` must be
+            the same across multiple calls to `cv.split()`. For
+            built-in `scikit-learn` iterators, this can be achieved by
+            deactivating shuffling (`shuffle=False`), or by setting the
+            `cv`'s `random_state` parameter to an integer.
 
     refit : boolean, default=True
         If True, refit an estimator using the best found parameters on the

@@ -1,10 +1,14 @@
 import pytest
 from scipy.stats import norm, randint
+import numpy as np
 
 from sklearn.datasets import make_classification
 from sklearn.dummy import DummyClassifier
 from sklearn.model_selection import HalvingGridSearchCV
 from sklearn.model_selection import HalvingRandomSearchCV
+from sklearn.model_selection import KFold, ShuffleSplit
+from sklearn.model_selection._search_successive_halving import (
+    _SubsampleMetaSplitter)
 
 
 class FastClassifier(DummyClassifier):
@@ -275,6 +279,8 @@ def test_random_search_discrete_distributions(param_distributions,
      "max_resources can only be 'auto' if resource='n_samples'"),
     ({'min_resources': 15, 'max_resources': 14},
      "min_resources_=15 is greater than max_resources_=14"),
+    ({'cv': KFold(shuffle=True)}, "must yield consistent folds"),
+    ({'cv': ShuffleSplit()}, "must yield consistent folds"),
 ])
 def test_input_errors(Est, params, expected_error_message):
     base_estimator = FastClassifier()
@@ -304,3 +310,60 @@ def test_input_errors_randomized(params, expected_error_message):
 
     with pytest.raises(ValueError, match=expected_error_message):
         sh.fit(X, y)
+
+
+@pytest.mark.parametrize(
+    'fraction, subsample_test, expected_train_size, expected_test_size', [
+        (.5, True, 40, 10),
+        (.5, False, 40, 20),
+        (.2, True, 16, 4),
+        (.2, False, 16, 20)])
+def test_subsample_splitter_shapes(fraction, subsample_test,
+                                   expected_train_size, expected_test_size):
+    # Make sure splits returned by SubsampleMetaSplitter are of appropriate
+    # size
+
+    n_samples = 100
+    X, y = make_classification(n_samples)
+    cv = _SubsampleMetaSplitter(base_cv=KFold(5), fraction=fraction,
+                                subsample_test=subsample_test,
+                                random_state=None)
+
+    for train, test in cv.split(X, y):
+        assert train.shape[0] == expected_train_size
+        assert test.shape[0] == expected_test_size
+        if subsample_test:
+            assert train.shape[0] + test.shape[0] == int(n_samples * fraction)
+        else:
+            assert test.shape[0] == n_samples // cv.base_cv.get_n_splits()
+
+
+@pytest.mark.parametrize('subsample_test', (True, False))
+def test_subsample_splitter_determinism(subsample_test):
+    # Make sure _SubsampleMetaSplitter is consistent across calls to split():
+    # - we're OK having training sets differ (they're always samples with a
+    #   different fraction anyway)
+    # - when we don't subsample the test set, we want it to be always the same.
+    #   This check is the most important. This is ensured by the determinism
+    #   of the base_cv.
+
+    # Note: we could force both train and test splits to be always the same if
+    # we drew an int seed in _SubsampleMetaSplitter.__init__
+
+    n_samples = 100
+    X, y = make_classification(n_samples)
+    cv = _SubsampleMetaSplitter(base_cv=KFold(5), fraction=.5,
+                                subsample_test=subsample_test,
+                                random_state=None)
+
+    folds_a = list(cv.split(X, y, groups=None))
+    folds_b = list(cv.split(X, y, groups=None))
+
+    for (train_a, test_a), (train_b, test_b) in zip(folds_a, folds_b):
+        assert not np.all(train_a == train_b)
+
+        if subsample_test:
+            assert not np.all(test_a == test_b)
+        else:
+            assert np.all(test_a == test_b)
+            assert np.all(X[test_a] == X[test_b])
