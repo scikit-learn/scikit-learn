@@ -768,8 +768,9 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
         Returns
         -------
         y_indicator : {ndarray, sparse matrix} of shape (n_samples, n_classes)
-            A matrix such that `y_indicator[i, j] = 1` i.f.f. `classes_[j]` is in
-            `y[i]`, and 0 otherwise. Sparse matrix will be of CSR format.
+            A matrix such that `y_indicator[i, j] = 1` i.f.f. `classes_[j]`
+            is in `y[i]`, and 0 otherwise. Sparse matrix will be of CSR
+            format.
         """
         self._cached_dict = None
 
