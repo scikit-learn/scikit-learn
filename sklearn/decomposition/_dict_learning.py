@@ -236,10 +236,11 @@ def sparse_encode(X, dictionary, *, gram=None, cov=None,
         * `'threshold'`: squashes to zero all coefficients less than
           regularization from the projection `dictionary * data'`.
 
-    n_nonzero_coefs : int, default=int(n_features / 10)
+    n_nonzero_coefs : int, default=None
         Number of nonzero coefficients to target in each column of the
         solution. This is only used by `algorithm='lars'` and `algorithm='omp'`
-        and is overridden by `alpha` in the `omp` case.
+        and is overridden by `alpha` in the `omp` case. If `None`, then
+        `n_nonzero_coefs=int(n_features / 10)`.
 
     alpha : float, default=None
         If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`, `alpha` is the
@@ -249,6 +250,7 @@ def sparse_encode(X, dictionary, *, gram=None, cov=None,
         If `algorithm='omp'`, `alpha` is the tolerance parameter: the value of
         the reconstruction error targeted. In this case, it overrides
         `n_nonzero_coefs`.
+        If `None`, default to 1.
 
     copy_cov : bool, default=True
         Whether to copy the precomputed covariance matrix; if `False`, it may
@@ -977,12 +979,13 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         - `'threshold'`: squashes to zero all coefficients less than alpha from
           the projection ``dictionary * X'``.
 
-    transform_n_nonzero_coefs : int, default=int(0.1 * n_features)
+    transform_n_nonzero_coefs : int, default=None
         Number of nonzero coefficients to target in each column of the
         solution. This is only used by `algorithm='lars'` and `algorithm='omp'`
-        and is overridden by `alpha` in the `omp` case.
+        and is overridden by `alpha` in the `omp` case. If `None`, then
+        `transform_n_nonzero_coefs=int(n_features / 10)`.
 
-    transform_alpha : float, default=1.
+    transform_alpha : float, default=None
         If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`, `alpha` is the
         penalty applied to the L1 norm.
         If `algorithm='threshold'`, `alpha` is the absolute value of the
@@ -990,6 +993,7 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         If `algorithm='omp'`, `alpha` is the tolerance parameter: the value of
         the reconstruction error targeted. In this case, it overrides
         `n_nonzero_coefs`.
+        If `None`, default to 1.
 
     split_sign : bool, default=False
         Whether to split the sparse feature vector into the concatenation of
@@ -1177,12 +1181,13 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         .. versionadded:: 0.17
            *lasso_cd* coordinate descent method to improve speed.
 
-    transform_n_nonzero_coefs : int, default=int(0.1*n_features)
+    transform_n_nonzero_coefs : int, default=None
         Number of nonzero coefficients to target in each column of the
         solution. This is only used by `algorithm='lars'` and `algorithm='omp'`
-        and is overridden by `alpha` in the `omp` case.
+        and is overridden by `alpha` in the `omp` case. If `None`, then
+        `transform_n_nonzero_coefs=int(n_features / 10)`.
 
-    transform_alpha : float, default=1.0
+    transform_alpha : float, default=None
         If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`, `alpha` is the
         penalty applied to the L1 norm.
         If `algorithm='threshold'`, `alpha` is the absolute value of the
@@ -1190,6 +1195,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         If `algorithm='omp'`, `alpha` is the tolerance parameter: the value of
         the reconstruction error targeted. In this case, it overrides
         `n_nonzero_coefs`.
+        If `None`, default to 1.0
 
     n_jobs : int or None, default=None
         Number of parallel jobs to run.
@@ -1415,12 +1421,13 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         - `'threshold'`: squashes to zero all coefficients less than alpha from
           the projection ``dictionary * X'``.
 
-    transform_n_nonzero_coefs : int, ``0.1 * n_features`` by default
+    transform_n_nonzero_coefs : int, default=None
         Number of nonzero coefficients to target in each column of the
         solution. This is only used by `algorithm='lars'` and `algorithm='omp'`
-        and is overridden by `alpha` in the `omp` case.
+        and is overridden by `alpha` in the `omp` case. If `None`, then
+        `transform_n_nonzero_coefs=int(n_features / 10)`.
 
-    transform_alpha : float, 1. by default
+    transform_alpha : float, default=None
         If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`, `alpha` is the
         penalty applied to the L1 norm.
         If `algorithm='threshold'`, `alpha` is the absolute value of the
@@ -1428,6 +1435,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         If `algorithm='omp'`, `alpha` is the tolerance parameter: the value of
         the reconstruction error targeted. In this case, it overrides
         `n_nonzero_coefs`.
+        If `None`, default to 1.
 
     verbose : bool, default=False
         To control the verbosity of the procedure.
@@ -1480,7 +1488,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         The number of iteration on data batches that has been
         performed before.
 
-    random_state_ : RandomState
+    random_state_ : RandomState instance
         RandomState instance that is generated either from a seed, the random
         number generattor or by `np.random`.
 
