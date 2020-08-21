@@ -30,10 +30,23 @@ SOLVE_TRIANGULAR_ARGS = {'check_finite': False}
 
 
 @_deprecate_positional_args
-def lars_path(X, y, Xy=None, *, Gram=None, max_iter=500, alpha_min=0,
-              method='lars', copy_X=True, eps=np.finfo(float).eps,
-              copy_Gram=True, verbose=0, return_path=True,
-              return_n_iter=False, positive=False):
+def lars_path(
+    X,
+    y,
+    Xy=None,
+    *,
+    Gram=None,
+    max_iter=500,
+    alpha_min=0,
+    method="lar",
+    copy_X=True,
+    eps=np.finfo(float).eps,
+    copy_Gram=True,
+    verbose=0,
+    return_path=True,
+    return_n_iter=False,
+    positive=False
+):
     """Compute Least Angle Regression or Lasso path using LARS algorithm [1]
 
     The optimization objective for the case method='lasso' is::
@@ -72,8 +85,8 @@ def lars_path(X, y, Xy=None, *, Gram=None, max_iter=500, alpha_min=0,
         Minimum correlation along the path. It corresponds to the
         regularization parameter alpha parameter in the Lasso.
 
-    method : {'lars', 'lasso'}, default='lars'
-        Specifies the returned model. Select ``'lars'`` for Least Angle
+    method : {'lar', 'lasso'}, default='lar'
+        Specifies the returned model. Select ``'lar'`` for Least Angle
         Regression, ``'lasso'`` for the Lasso.
 
     copy_X : bool, default=True
@@ -162,10 +175,22 @@ def lars_path(X, y, Xy=None, *, Gram=None, max_iter=500, alpha_min=0,
 
 
 @_deprecate_positional_args
-def lars_path_gram(Xy, Gram, *, n_samples, max_iter=500, alpha_min=0,
-                   method='lars', copy_X=True, eps=np.finfo(float).eps,
-                   copy_Gram=True, verbose=0, return_path=True,
-                   return_n_iter=False, positive=False):
+def lars_path_gram(
+    Xy,
+    Gram,
+    *,
+    n_samples,
+    max_iter=500,
+    alpha_min=0,
+    method="lar",
+    copy_X=True,
+    eps=np.finfo(float).eps,
+    copy_Gram=True,
+    verbose=0,
+    return_path=True,
+    return_n_iter=False,
+    positive=False
+):
     """lars_path in the sufficient stats mode [1]
 
     The optimization objective for the case method='lasso' is::
@@ -195,8 +220,8 @@ def lars_path_gram(Xy, Gram, *, n_samples, max_iter=500, alpha_min=0,
         Minimum correlation along the path. It corresponds to the
         regularization parameter alpha parameter in the Lasso.
 
-    method : {'lars', 'lasso'}, default='lars'
-        Specifies the returned model. Select ``'lars'`` for Least Angle
+    method : {'lar', 'lasso'}, default='lar'
+        Specifies the returned model. Select ``'lar'`` for Least Angle
         Regression, ``'lasso'`` for the Lasso.
 
     copy_X : bool, default=True
@@ -280,10 +305,23 @@ def lars_path_gram(Xy, Gram, *, n_samples, max_iter=500, alpha_min=0,
         return_n_iter=return_n_iter, positive=positive)
 
 
-def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
-                      alpha_min=0, method='lars', copy_X=True,
-                      eps=np.finfo(float).eps, copy_Gram=True, verbose=0,
-                      return_path=True, return_n_iter=False, positive=False):
+def _lars_path_solver(
+    X,
+    y,
+    Xy=None,
+    Gram=None,
+    n_samples=None,
+    max_iter=500,
+    alpha_min=0,
+    method="lar",
+    copy_X=True,
+    eps=np.finfo(float).eps,
+    copy_Gram=True,
+    verbose=0,
+    return_path=True,
+    return_n_iter=False,
+    positive=False,
+):
     """Compute Least Angle Regression or Lasso path using LARS algorithm [1]
 
     The optimization objective for the case method='lasso' is::
@@ -297,26 +335,26 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
 
     Parameters
     ----------
-    X : None or ndarray, of shape (n_samples, n_features)
+    X : None or ndarray of shape (n_samples, n_features)
         Input data. Note that if X is None then Gram must be specified,
         i.e., cannot be None or False.
 
-    y : None or ndarray, of shape (n_samples,)
+    y : None or ndarray of shape (n_samples,)
         Input targets.
 
     Xy : array-like of shape (n_samples,) or (n_samples, n_targets), \
             default=None
-        Xy = np.dot(X.T, y) that can be precomputed. It is useful
+        `Xy = np.dot(X.T, y)` that can be precomputed. It is useful
         only when the Gram matrix is precomputed.
 
     Gram : None, 'auto' or array-like of shape (n_features, n_features), \
             default=None
-        Precomputed Gram matrix (X' * X), if ``'auto'``, the Gram
+        Precomputed Gram matrix `(X' * X)`, if ``'auto'``, the Gram
         matrix is precomputed from the given X, if there are more samples
         than features.
 
     n_samples : int or float, default=None
-        Equivalent size of sample.
+        Equivalent size of sample. If `None`, it will be `n_samples`.
 
     max_iter : int, default=500
         Maximum number of iterations to perform, set to infinity for no limit.
@@ -325,8 +363,8 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
         Minimum correlation along the path. It corresponds to the
         regularization parameter alpha parameter in the Lasso.
 
-    method : {'lars', 'lasso'}, default='lars'
-        Specifies the returned model. Select ``'lars'`` for Least Angle
+    method : {'lar', 'lasso'}, default='lar'
+        Specifies the returned model. Select ``'lar'`` for Least Angle
         Regression, ``'lasso'`` for the Lasso.
 
     copy_X : bool, default=True
@@ -400,11 +438,10 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
            <https://en.wikipedia.org/wiki/Lasso_(statistics)>`_
 
     """
-    if method == 'lars' and positive:
+    if method == "lar" and positive:
         raise ValueError(
-                "Positive constraint not supported for 'lars' "
-                "coding method."
-            )
+            "Positive constraint not supported for 'lar' " "coding method."
+        )
 
     n_samples = n_samples if n_samples is not None else y.size
 
@@ -665,7 +702,7 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
             # some coefficients have changed sign
             idx = np.where(z == z_pos)[0][::-1]
 
-            # update the sign, important for LARS
+            # update the sign, important for LAR
             sign_active[idx] = -sign_active[idx]
 
             if method == 'lasso':
@@ -764,7 +801,7 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
 # Estimator classes
 
 class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
-    """Least Angle Regression model a.k.a. LARS
+    """Least Angle Regression model a.k.a. LAR
 
     Read more in the :ref:`User Guide <least_angle_regression>`.
 
@@ -822,17 +859,18 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
 
     Attributes
     ----------
-    alphas_ : array-like of shape (n_alphas + 1,) | list of n_targets such \
-            arrays
+    alphas_ : array-like of shape (n_alphas + 1,) or list of thereof of \
+            shape (n_targets,)
         Maximum of covariances (in absolute value) at each iteration. \
         ``n_alphas`` is either ``n_nonzero_coefs`` or ``n_features``, \
         whichever is smaller.
 
-    active_ : list of length n_alphas or list of n_targets such lists
+    active_ : list of shape (n_alphas,) or list of thereof of shape \
+            (n_targets,)
         Indices of active variables at the end of the path.
 
-    coef_path_ : array-like of shape (n_features, n_alphas + 1) \
-        | list of n_targets such arrays
+    coef_path_ : array-like of shape (n_features, n_alphas + 1) or list of \
+            thereof of shape (n_targets,)
         The varying values of the coefficients along the path. It is not
         present if the ``fit_path`` parameter is ``False``.
 
@@ -861,7 +899,8 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
     sklearn.decomposition.sparse_encode
 
     """
-    method = 'lars'
+
+    method = "lar"
     positive = False
 
     @_deprecate_positional_args
@@ -1065,24 +1104,25 @@ class LassoLars(Lars):
         `y` values, to satisfy the model's assumption of
         one-at-a-time computations. Might help with stability.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for jittering. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`. Ignored if `jitter` is None.
 
     Attributes
     ----------
-    alphas_ : array-like of shape (n_alphas + 1,) | list of n_targets such \
-            arrays
+    alphas_ : array-like of shape (n_alphas + 1,) or list of thereof of shape \
+            (n_targets,)
         Maximum of covariances (in absolute value) at each iteration. \
         ``n_alphas`` is either ``max_iter``, ``n_features``, or the number of \
         nodes in the path with correlation greater than ``alpha``, whichever \
         is smaller.
 
-    active_ : list of length n_alphas or list of n_targets such lists
+    active_ : list of length n_alphas or list of thereof of shape (n_targets,)
         Indices of active variables at the end of the path.
 
-    coef_path_ : array-like of shape (n_features, n_alphas + 1) or list
+    coef_path_ : array-like of shape (n_features, n_alphas + 1) or list of \
+            thereof of shape (n_targets,)
         If a list is passed it's expected to be one of n_targets such arrays.
         The varying values of the coefficients along the path. It is not
         present if the ``fit_path`` parameter is ``False``.
@@ -1093,7 +1133,7 @@ class LassoLars(Lars):
     intercept_ : float or array-like of shape (n_targets,)
         Independent term in decision function.
 
-    n_iter_ : array-like or int.
+    n_iter_ : array-like or int
         The number of iterations taken by lars_path to find the
         grid of alphas for each target.
 
@@ -1177,8 +1217,8 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
         Whether X_train, X_test, y_train and y_test should be copied;
         if False, they may be overwritten.
 
-    method : {'lars' , 'lasso'}, default='lars'
-        Specifies the returned model. Select ``'lars'`` for Least Angle
+    method : {'lar' , 'lasso'}, default='lar'
+        Specifies the returned model. Select ``'lar'`` for Least Angle
         Regression, ``'lasso'`` for the Lasso.
 
     verbose : bool or int, default=False
@@ -1332,7 +1372,7 @@ class LarsCV(Lars):
 
     Attributes
     ----------
-    active_ : list of length n_alphas or list of n_targets such lists
+    active_ : list of length n_alphas or list of thereof of shape (n_targets,)
         Indices of active variables at the end of the path.
 
     coef_ : array-like of shape (n_features,)
@@ -1378,7 +1418,7 @@ class LarsCV(Lars):
     lars_path, LassoLars, LassoLarsCV
     """
 
-    method = 'lars'
+    method = "lar"
 
     @_deprecate_positional_args
     def __init__(self, *, fit_intercept=True, verbose=False, max_iter=500,
