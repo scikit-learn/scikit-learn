@@ -57,12 +57,4 @@ for weights in ['uniform', 'distance']:
     plt.xlabel(iris.feature_names[0])
     plt.ylabel(iris.feature_names[1])
 
-    ax = plt.gca()
-
-    legend = ax.legend(*scatter.legend_elements(),
-                       loc="best", title="Classes")
-
-    for idx, label in enumerate(list(iris.target_names)):
-        legend.get_texts()[idx].set_text(label)
-
 plt.show()
