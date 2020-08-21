@@ -1098,8 +1098,17 @@ class NMF(TransformerMixin, BaseEstimator):
 
             0.5 * ||X - WH||_{Fro}^2 + alpha * l1_{ratio} * ||vec(W)||_1
 
-        ||A||_Fro^2 = \\sum_{i,j} A_{ij}^2 (Frobenius norm)
-        ||vec(A)||_1 = \\sum_{i,j} abs(A_{ij}) (Elementwise L1 norm)
+            + alpha * l1_{ratio} * ||vec(H)||_1
+
+            + 0.5 * alpha * (1 - l1_{ratio}) * ||W||_{Fro}^2
+
+            + 0.5 * alpha * (1 - l1_{ratio}) * ||H||_{Fro}^2
+
+    Where:
+
+    :math:`||A||_{Fro}^2 = \\sum_{i,j} A_{ij}^2` (Frobenius norm)
+
+    :math:`||vec(A)||_1 = \\sum_{i,j} abs(A_{ij})` (Elementwise L1 norm)
 
     For multiplicative-update ('mu') solver, the Frobenius norm
     (:math:`0.5 * ||X - WH||_{Fro}^2`) can be changed into another
