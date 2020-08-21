@@ -23,7 +23,7 @@ def _find_binning_thresholds(data, max_bins, subsample, random_state):
 
     Parameters
     ----------
-    data : array-like, shape (n_samples, n_features)
+    data : array-like of shape (n_samples, n_features)
         The data to bin.
     max_bins: int
         The maximum number of bins to use for non-missing values. If for a
@@ -42,7 +42,7 @@ def _find_binning_thresholds(data, max_bins, subsample, random_state):
 
     Return
     ------
-    binning_thresholds: list of arrays
+    binning_thresholds: list of ndarray
         For each feature, stores the increasing numeric values that can
         be used to separate the bins. Thus ``len(binning_thresholds) ==
         n_features``.
@@ -100,18 +100,18 @@ class _BinMapper(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    n_bins : int, optional (default=256)
+    n_bins : int, default=256
         The maximum number of bins to use (including the bin for missing
         values). Non-missing values are binned on ``max_bins = n_bins - 1``
         bins. The last bin is always reserved for missing values. If for a
         given feature the number of unique values is less than ``max_bins``,
         then those unique values will be used to compute the bin thresholds,
         instead of the quantiles.
-    subsample : int or None, optional (default=2e5)
+    subsample : int or None, default=2e5
         If ``n_samples > subsample``, then ``sub_samples`` samples will be
         randomly chosen to compute the quantiles. If ``None``, the whole data
         is used.
-    random_state: int, RandomState instance or None
+    random_state: int, RandomState instance or None, default=None
         Pseudo-random number generator to control the random sub-sampling.
         Pass an int for reproducible output across multiple
         function calls.
@@ -119,15 +119,15 @@ class _BinMapper(TransformerMixin, BaseEstimator):
 
     Attributes
     ----------
-    bin_thresholds_ : list of arrays
+    bin_thresholds_ : list of ndarray
         For each feature, gives the real-valued bin threhsolds. There are
         ``max_bins - 1`` thresholds, where ``max_bins = n_bins - 1`` is the
         number of bins used for non-missing values.
-    n_bins_non_missing_ : array of uint32
+    n_bins_non_missing_ : ndarray, dtype=np.uint32
         For each feature, gives the number of bins actually used for
         non-missing values. For features with a lot of unique values, this is
         equal to ``n_bins - 1``.
-    missing_values_bin_idx_ : uint8
+    missing_values_bin_idx_ : np.uint8
         The index of the bin where missing values are mapped. This is a
         constant across all features. This corresponds to the last bin, and
         it is always equal to ``n_bins - 1``. Note that if ``n_bins_missing_``
@@ -147,7 +147,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The data to bin.
         y: None
             Ignored.
@@ -182,12 +182,12 @@ class _BinMapper(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The data to bin.
 
         Returns
         -------
-        X_binned : array-like, shape (n_samples, n_features)
+        X_binned : array-like of shape (n_samples, n_features)
             The binned data (fortran-aligned).
         """
         X = check_array(X, dtype=[X_DTYPE], force_all_finite=False)
