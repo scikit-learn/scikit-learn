@@ -1,5 +1,5 @@
 import pytest
-from scipy.stats import norm
+from scipy.stats import norm, randint
 
 from sklearn.datasets import make_classification
 from sklearn.dummy import DummyClassifier
@@ -202,14 +202,14 @@ def test_resource_parameter(Est):
 
 
 @pytest.mark.parametrize(
-    'max_resources, n_candidates, expected_n_candidates_', [
+    'max_resources, n_candidates, expected_n_candidates', [
         (512, 'exhaust', 128),  # generate exactly as much as needed
         (32, 'exhaust', 8),
         (32, 8, 8),
         (32, 7, 7),  # ask for less than what we could
         (32, 9, 9),  # ask for more than 'reasonable'
     ])
-def test_random_search(max_resources, n_candidates, expected_n_candidates_):
+def test_random_search(max_resources, n_candidates, expected_n_candidates):
     # Test random search and make sure the number of generated candidates is
     # as expected
 
@@ -222,23 +222,33 @@ def test_random_search(max_resources, n_candidates, expected_n_candidates_):
                                max_resources=max_resources, ratio=2,
                                min_resources=4)
     sh.fit(X, y)
-    assert sh.n_candidates_[0] == expected_n_candidates_
+    assert sh.n_candidates_[0] == expected_n_candidates
     if n_candidates == 'exhaust':
         # Make sure 'exhaust' makes the last iteration use as much resources as
         # we can
         assert sh.n_resources_[-1] == max_resources
 
 
-# @pytest.mark.parametrize('Est', (HalvingRandomSearchCV, HalvingGridSearchCV))
-# def test_groups_not_supported(Est):
-#     base_estimator = FastClassifier()
-#     param_grid = {'a': [1]}
-#     sh = Est(base_estimator, param_grid)
-#     X, y = make_classification(n_samples=10)
-#     groups = [0] * 10
+@pytest.mark.parametrize('param_distributions, expected_n_candidates', [
+    ({'a': [1, 2]}, 2),  # all lists, sample less than n_candidates
+    ({'a': randint(1, 3)}, 10),  # not all list, respect n_candidates
+])
+def test_random_search_discrete_distributions(param_distributions,
+                                              expected_n_candidates):
+    # Make sure random search samples the appropriate number of candidates when
+    # we ask for more than what's possible. How many parameters are sampled
+    # depends whether the distributions are 'all lists' or not (see
+    # ParameterSampler for details). This is somewhat redundant with the checks
+    # in ParameterSampler but interaction bugs were discovered during
+    # developement of SH
 
-#     with pytest.raises(ValueError, match="groups are not supported"):
-#         sh.fit(X, y, groups)
+    n_samples = 1024
+    X, y = make_classification(n_samples=n_samples, random_state=0)
+    base_estimator = FastClassifier()
+    sh = HalvingRandomSearchCV(base_estimator, param_distributions,
+                               n_candidates=10)
+    sh.fit(X, y)
+    assert sh.n_candidates_[0] == expected_n_candidates
 
 
 @pytest.mark.parametrize('Est', (HalvingGridSearchCV, HalvingRandomSearchCV))
