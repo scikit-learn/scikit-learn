@@ -25,15 +25,18 @@ def _find_binning_thresholds(data, max_bins, subsample, random_state):
     ----------
     data : array-like of shape (n_samples, n_features)
         The data to bin.
+
     max_bins: int
         The maximum number of bins to use for non-missing values. If for a
         given feature the number of unique values is less than ``max_bins``,
         then those unique values will be used to compute the bin thresholds,
         instead of the quantiles.
+
     subsample : int or None
         If ``n_samples > subsample``, then ``sub_samples`` samples will be
         randomly chosen to compute the quantiles. If ``None``, the whole data
         is used.
+
     random_state: int, RandomState instance or None
         Pseudo-random number generator to control the random sub-sampling.
         Pass an int for reproducible output across multiple
@@ -107,10 +110,12 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         given feature the number of unique values is less than ``max_bins``,
         then those unique values will be used to compute the bin thresholds,
         instead of the quantiles.
+
     subsample : int or None, default=2e5
         If ``n_samples > subsample``, then ``sub_samples`` samples will be
         randomly chosen to compute the quantiles. If ``None``, the whole data
         is used.
+
     random_state: int, RandomState instance or None, default=None
         Pseudo-random number generator to control the random sub-sampling.
         Pass an int for reproducible output across multiple
@@ -120,13 +125,15 @@ class _BinMapper(TransformerMixin, BaseEstimator):
     Attributes
     ----------
     bin_thresholds_ : list of ndarray
-        For each feature, gives the real-valued bin threhsolds. There are
+        For each feature, gives the real-valued bin thresholds. There are
         ``max_bins - 1`` thresholds, where ``max_bins = n_bins - 1`` is the
         number of bins used for non-missing values.
+
     n_bins_non_missing_ : ndarray, dtype=np.uint32
         For each feature, gives the number of bins actually used for
         non-missing values. For features with a lot of unique values, this is
         equal to ``n_bins - 1``.
+
     missing_values_bin_idx_ : np.uint8
         The index of the bin where missing values are mapped. This is a
         constant across all features. This corresponds to the last bin, and
