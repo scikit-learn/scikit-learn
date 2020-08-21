@@ -439,7 +439,7 @@ class SimpleImputer(_BaseImputer):
         # Delete the invalid columns if strategy is not constant
         if self.strategy == "constant":
             valid_statistics = statistics
-            valid_statistics_indexes = slice(None)
+            valid_statistics_indexes = None
         else:
             # same as np.isnan but also works for object dtypes
             invalid_mask = _get_mask(statistics, np.nan)
@@ -463,10 +463,10 @@ class SimpleImputer(_BaseImputer):
             else:
                 # if invalid statistics are eliminated recompute mask
                 # else use the mask compued before eliminating invalid mask
-                if not isinstance(valid_statistics_indexes, slice):
-                    mask = _get_mask(X.data, self.missing_values)
-                else:
+                if valid_statistics_indexes is None:
                     mask = missing_mask.data
+                else:
+                    mask = _get_mask(X.data, self.missing_values)
                 indexes = np.repeat(
                     np.arange(len(X.indptr) - 1, dtype=int),
                     np.diff(X.indptr))[mask]
@@ -475,7 +475,10 @@ class SimpleImputer(_BaseImputer):
                                                                 copy=False)
         else:
             # use mask computed before eliminating invalid mask
-            mask_valid_features = missing_mask[:, valid_statistics_indexes]
+            if valid_statistics_indexes is None:
+                mask_valid_features = missing_mask
+            else:
+                mask_valid_features = missing_mask[:, valid_statistics_indexes]
             n_missing = np.sum(mask_valid_features, axis=0)
             values = np.repeat(valid_statistics, n_missing)
             coordinates = np.where(mask_valid_features.transpose())[::-1]
