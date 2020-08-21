@@ -202,6 +202,19 @@ Here is an example of building custom scorers, and of using the
     >>> score(clf, X, y)
     -0.69...
 
+You can still set any of the additional scoring function parameters once the
+scorer has been created using the method `set_kwargs`::
+
+    >>> def my_custom_loss_func(y_true, y_pred, *, pulling_func=np.max):
+    ...    diff = pulling_func(np.abs(y_true, y_pred))
+    ...    return np.log1p(diff)
+    ...
+    >>> score = make_scorer(my_custom_loss_func, greater_is_better=False)
+    >>> score(clf, X, y)
+    -0.69...
+    >>> _ = score.set_kwargs(pulling_func=np.mean)
+    >>> score(clf, X, y)
+    -0.40...
 
 .. _diy_scoring:
 

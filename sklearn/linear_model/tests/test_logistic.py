@@ -122,14 +122,14 @@ def test_logistic_cv_mock_scorer():
     assert lr.C_[0] == Cs[2]
 
     # scorer called 8 times (cv*len(Cs))
-    assert mock_scorer.calls == cv * len(Cs)
+    assert lr._scorer.calls == cv * len(Cs)
 
     # reset mock_scorer
-    mock_scorer.calls = 0
+    lr._scorer.calls = 0
     custom_score = lr.score(X, lr.predict(X))
 
     assert custom_score == mock_scorer.scores[0]
-    assert mock_scorer.calls == 1
+    assert lr._scorer.calls == 1
 
 
 def test_logistic_cv_score_does_not_warn_by_default():

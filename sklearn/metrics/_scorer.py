@@ -18,9 +18,11 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 # License: Simplified BSD
 
-from collections.abc import Iterable
-from functools import partial
 from collections import Counter
+from collections.abc import Iterable
+from copy import deepcopy
+from functools import partial
+from inspect import signature
 
 import numpy as np
 
@@ -164,6 +166,38 @@ class _BaseScorer:
     def _factory_args(self):
         """Return non-default make_scorer arguments for repr."""
         return ""
+
+    def set_kwargs(self, **kwargs):
+        """Set the parameters which will be given to the scoring function.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Additional scoring function parameters.
+
+        Returns
+        -------
+        self : object
+            Scorer instance.
+        """
+        if not kwargs:
+            return self
+
+        signature_score_func = signature(self._score_func)
+        params_score_func = set(
+            [name for name, param in signature_score_func.parameters.items()
+             if param.kind == param.KEYWORD_ONLY]
+        )
+
+        unknown_params = (set(kwargs.keys()) - params_score_func)
+        if unknown_params:
+            raise ValueError(
+                f"Unknown parameters provided: {unknown_params}. The scoring "
+                f"function takes only the parameters {params_score_func}."
+            )
+
+        self._kwargs.update(kwargs)
+        return self
 
 
 class _PredictScorer(_BaseScorer):
@@ -328,8 +362,8 @@ class _ThresholdScorer(_BaseScorer):
         return ", needs_threshold=True"
 
 
-def get_scorer(scoring):
-    """Get a scorer from string.
+def get_scorer(scoring, **kwargs):
+    """Get a scorer from string or a callable.
 
     Read more in the :ref:`User Guide <scoring_parameter>`.
 
@@ -338,18 +372,69 @@ def get_scorer(scoring):
     scoring : str or callable
         Scoring method as string. If callable it is returned as is.
 
+    **kwargs : dict
+        Additional parameters that will be passed to later on when calling the
+        scorer.
+
     Returns
     -------
     scorer : callable
         The scorer.
+
+    Examples
+    --------
+    :func:`get_scorer` allows to fetch a callable instance which can be used
+    for getting a score given `X` and `y`. When a string is provided, the
+    scorer pre-built in scikit-learn is returned:
+
+    >>> from sklearn.metrics import get_scorer
+    >>> scorer = get_scorer("f1")
+
+    However, this scorer can sometimes not be used on some specific target. For
+    instance, the F1 score cannot be used on multi-class problems without
+    providing the average parameter, otherwise the result will be ambiguous.
+
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.dummy import DummyClassifier
+    >>> X, y = load_iris(return_X_y=True)
+    >>> classifier = DummyClassifier().fit(X, y)
+    >>> try:
+    ...     scorer(classifier, X, y)
+    ... except ValueError as e:
+    ...     print(e)
+    Target is multiclass but average='binary'. Please choose another average
+    setting, one of [None, 'micro', 'macro', 'weighted'].
+
+    In this case, there are several solutions to overcome this problem.
+    First, you can used a string to get the qualified metric:
+
+    >>> scorer = get_scorer("f1_micro")
+    >>> scorer(classifier, X, y)
+    0.333...
+
+    Otherwise, one can set the additional parameters to pass to the scoring
+    function by setting the keyword arguments of the scorer.
+
+    >>> scorer = get_scorer("f1")
+    >>> _ = scorer.set_kwargs(average="micro")
+    >>> scorer(classifier, X, y)
+    0.333...
+
+    Finally, we could have directly pass the additional parameters when calling
+    :func:`get_scorer`.
+
+    >>> scorer = get_scorer("f1", average="micro")
+    >>> scorer(classifier, X, y)
+    0.333...
     """
     if isinstance(scoring, str):
         try:
-            scorer = SCORERS[scoring]
+            scorer = deepcopy(SCORERS[scoring]).set_kwargs(**kwargs)
         except KeyError:
-            raise ValueError('%r is not a valid scoring value. '
-                             'Use sorted(sklearn.metrics.SCORERS.keys()) '
-                             'to get valid options.' % scoring)
+            raise ValueError(
+                f"'{scoring}' is not a valid scoring value. Use "
+                f"sorted(sklearn.metrics.SCORERS.keys()) to get valid options."
+            )
     else:
         scorer = scoring
     return scorer

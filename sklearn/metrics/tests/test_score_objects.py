@@ -21,11 +21,17 @@ from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
                              jaccard_score)
 from sklearn.metrics import cluster as cluster_module
 from sklearn.metrics import check_scoring
-from sklearn.metrics._scorer import (_PredictScorer, _passthrough_scorer,
-                                     _MultimetricScorer,
-                                     _check_multimetric_scoring)
+from sklearn.metrics._scorer import (
+    _check_multimetric_scoring,
+    _passthrough_scorer,
+    _MultimetricScorer,
+    _PredictScorer,
+    _ProbaScorer,
+    _ThresholdScorer,
+)
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import make_scorer, get_scorer, SCORERS
+from sklearn.dummy import DummyClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import make_pipeline
@@ -747,3 +753,88 @@ def test_multiclass_roc_no_proba_scorer_errors(scorer_name):
     msg = "'Perceptron' object has no attribute 'predict_proba'"
     with pytest.raises(AttributeError, match=msg):
         scorer(lr, X, y)
+
+
+def test_get_scorer_copy_sklearn_scorers():
+    # Part of non-regression tests for:
+    # https://github.com/scikit-learn/scikit-learn/issues/17942
+    # check that with internal scikit-learn scorers, we should make sure that
+    # we make a deep copy and that a change should not have any impact on the
+    # scorer
+    accuracy_scorer = get_scorer("accuracy")
+    assert accuracy_scorer is not SCORERS["accuracy"]
+
+
+def test_get_scorer_copy_custom_scorers():
+    # Part of non-regression tests for:
+    # https://github.com/scikit-learn/scikit-learn/issues/17942
+    # check that we don't return a deep copy for the custom scorer
+    accuracy_scorer = make_scorer(accuracy_score)
+
+    accuracy_scorer._kwargs["mutable_list"] = [1, 2, 3, 4]
+    accuracy_scorer_with_copy = get_scorer(accuracy_scorer)
+    assert accuracy_scorer is accuracy_scorer_with_copy
+
+    assert (
+        accuracy_scorer_with_copy._kwargs["mutable_list"]
+        is accuracy_scorer._kwargs["mutable_list"]
+    )
+
+
+@pytest.mark.parametrize(
+    "Scorer", [_PredictScorer, _ProbaScorer, _ThresholdScorer]
+)
+def test_scorer_set_kwargs(Scorer):
+    # check that one can set the additional parameters to pass to the scoring
+    # function once the wrapper created.
+
+    def scoring_func(y_true, y_pred, *, returned_value=0):
+        return returned_value
+
+    scorer = make_scorer(scoring_func)
+
+    rng = np.random.RandomState(42)
+    X, y = rng.randn(5, 2), rng.randint(2, size=5)
+
+    estimator = DummyClassifier().fit(X, y)
+    assert scorer(estimator, X, y) == 0
+
+    scorer.set_kwargs(returned_value=1)
+    assert scorer(estimator, X, y) == 1
+
+
+@pytest.mark.parametrize(
+    "Scorer", [_PredictScorer, _ProbaScorer, _ThresholdScorer]
+)
+def test_scorer_set_kwargs_unknown_param(Scorer):
+    # check that we raise an error if a parameter passed is not in the
+    # signature of the scoring func
+
+    def scoring_func(y_true, y_pred, *, returned_value=0):
+        return returned_value
+
+    scorer = make_scorer(scoring_func)
+
+    rng = np.random.RandomState(42)
+    X, y = rng.randn(5, 2), rng.randint(2, size=5)
+
+    estimator = DummyClassifier().fit(X, y)
+    assert scorer(estimator, X, y) == 0
+
+    err_msg = "Unknown parameters provided: "
+    with pytest.raises(ValueError, match=err_msg):
+        scorer.set_kwargs(unknown_param=1)
+
+
+def test_get_scorer_kwargs():
+    # check that we can pass argument to get the scorer
+    scorer_kwargs = get_scorer("f1", average="micro")
+    scorer_micro = get_scorer("f1_micro")
+
+    X, y = make_classification(
+        n_classes=3, n_clusters_per_class=1, random_state=0
+    )
+    classifier = DummyClassifier().fit(X, y)
+    assert scorer_kwargs(classifier, X, y) == pytest.approx(
+        scorer_micro(classifier, X, y)
+    )
