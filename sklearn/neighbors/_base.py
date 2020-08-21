@@ -68,14 +68,15 @@ def _get_weights(dist, weights):
     Parameters
     ----------
     dist : ndarray
-        The input distances
+        The input distances.
+
     weights : {'uniform', 'distance' or a callable}
-        The kind of weighting used
+        The kind of weighting used.
 
     Returns
     -------
     weights_arr : array of the same shape as ``dist``
-        if ``weights == 'uniform'``, then returns None
+        If ``weights == 'uniform'``, then returns None.
     """
     if weights in (None, 'uniform'):
         return None
@@ -111,19 +112,20 @@ def _is_sorted_by_data(graph):
 
     The non-zero entries are stored in graph.data and graph.indices.
     For each row (or sample), the non-zero entries can be either:
-        - sorted by indices, as after graph.sort_indices()
-        - sorted by data, as after _check_precomputed(graph)
+        - sorted by indices, as after graph.sort_indices();
+        - sorted by data, as after _check_precomputed(graph);
         - not sorted.
 
     Parameters
     ----------
-    graph : CSR sparse matrix, shape (n_samples, n_samples)
-        Neighbors graph as given by kneighbors_graph or radius_neighbors_graph
+    graph : sparse matrix of shape (n_samples, n_samples)
+        Neighbors graph as given by `kneighbors_graph` or
+        `radius_neighbors_graph`. Matrix should be of format CSR format.
 
     Returns
     -------
-    res : boolean
-        Whether input graph is sorted by data
+    res : bool
+        Whether input graph is sorted by data.
     """
     assert graph.format == 'csr'
     out_of_order = graph.data[:-1] > graph.data[1:]
@@ -195,21 +197,22 @@ def _kneighbors_from_graph(graph, n_neighbors, return_distance):
 
     Parameters
     ----------
-    graph : CSR sparse matrix, shape (n_samples, n_samples)
-        Neighbors graph as given by kneighbors_graph or radius_neighbors_graph
+    graph : sparse matrix of shape (n_samples, n_samples)
+        Neighbors graph as given by `kneighbors_graph` or
+        `radius_neighbors_graph`. Matrix should be of format CSR format.
 
     n_neighbors : int
         Number of neighbors required for each sample.
 
-    return_distance : boolean
-        If False, distances will not be returned
+    return_distance : bool
+        Whether or not to return the distances.
 
     Returns
     -------
-    neigh_dist : array, shape (n_samples, n_neighbors)
-        Distances to nearest neighbors. Only present if return_distance=True.
+    neigh_dist : ndarray of shape (n_samples, n_neighbors)
+        Distances to nearest neighbors. Only present if `return_distance=True`.
 
-    neigh_ind : array, shape (n_samples, n_neighbors)
+    neigh_ind : ndarray of shape (n_samples, n_neighbors)
         Indices of nearest neighbors.
     """
     n_samples = graph.shape[0]
@@ -245,21 +248,22 @@ def _radius_neighbors_from_graph(graph, radius, return_distance):
 
     Parameters
     ----------
-    graph : CSR sparse matrix, shape (n_samples, n_samples)
-        Neighbors graph as given by kneighbors_graph or radius_neighbors_graph
+    graph : sparse matrix of shape (n_samples, n_samples)
+        Neighbors graph as given by `kneighbors_graph` or
+        `radius_neighbors_graph`. Matrix should be of format CSR format.
 
-    radius : float > 0
-        Radius of neighborhoods.
+    radius : float
+        Radius of neighborhoods which should be strictly positive.
 
-    return_distance : boolean
-        If False, distances will not be returned
+    return_distance : bool
+        Whether or not to return the distances.
 
     Returns
     -------
-    neigh_dist : array, shape (n_samples,) of arrays
-        Distances to nearest neighbors. Only present if return_distance=True.
+    neigh_dist : ndarray of shape (n_samples,) of arrays
+        Distances to nearest neighbors. Only present if `return_distance=True`.
 
-    neigh_ind :array, shape (n_samples,) of arrays
+    neigh_ind : ndarray of shape (n_samples,) of arrays
         Indices of nearest neighbors.
     """
     assert graph.format == 'csr'
@@ -541,17 +545,25 @@ class KNeighborsMixin:
 
         Parameters
         ----------
-        dist : array of shape (n_samples_chunk, n_samples)
+        dist : ndarray of shape (n_samples_chunk, n_samples)
+            The distance matrix.
+
         start : int
             The index in X which the first row of dist corresponds to.
+
         n_neighbors : int
+            Number of neighbors required for each sample.
+
         return_distance : bool
+            Whether or not to return the distances.
 
         Returns
         -------
-        dist : array of shape (n_samples_chunk, n_neighbors), optional
-            Returned only if return_distance
+        dist : array of shape (n_samples_chunk, n_neighbors)
+            Returned only if `return_distance=True`.
+
         neigh : array of shape (n_samples_chunk, n_neighbors)
+            The neighbors indices.
         """
         sample_range = np.arange(dist.shape[0])[:, None]
         neigh_ind = np.argpartition(dist, n_neighbors - 1, axis=1)
@@ -575,25 +587,26 @@ class KNeighborsMixin:
         Parameters
         ----------
         X : array-like, shape (n_queries, n_features), \
-                or (n_queries, n_indexed) if metric == 'precomputed'
+            or (n_queries, n_indexed) if metric == 'precomputed',
+                default=None
             The query point or points.
             If not provided, neighbors of each indexed point are returned.
             In this case, the query point is not considered its own neighbor.
 
-        n_neighbors : int
-            Number of neighbors to get (default is the value
-            passed to the constructor).
+        n_neighbors : int, default=None
+            Number of neighbors required for each sample. The default is the
+            value passed to the constructor.
 
-        return_distance : boolean, optional. Defaults to True.
-            If False, distances will not be returned
+        return_distance : bool, default=True
+            Whether or not to return the distances.
 
         Returns
         -------
-        neigh_dist : array, shape (n_queries, n_neighbors)
+        neigh_dist : ndarray of shape (n_queries, n_neighbors)
             Array representing the lengths to points, only present if
             return_distance=True
 
-        neigh_ind : array, shape (n_queries, n_neighbors)
+        neigh_ind : ndarray of shape (n_queries, n_neighbors)
             Indices of the nearest points in the population matrix.
 
         Examples
@@ -618,7 +631,6 @@ class KNeighborsMixin:
         >>> neigh.kneighbors(X, return_distance=False)
         array([[1],
                [2]]...)
-
         """
         check_is_fitted(self)
 
@@ -748,26 +760,31 @@ class KNeighborsMixin:
 
         Parameters
         ----------
-        X : array-like, shape (n_queries, n_features), \
-                or (n_queries, n_indexed) if metric == 'precomputed'
+        X : array-like of shape (n_queries, n_features), \
+                or (n_queries, n_indexed) if metric == 'precomputed', \
+                default=None
             The query point or points.
             If not provided, neighbors of each indexed point are returned.
             In this case, the query point is not considered its own neighbor.
+            For ``metric='precomputed'`` the shape should be
+            (n_queries, n_indexed). Otherwise the shape should be
+            (n_queries, n_features).
 
-        n_neighbors : int
-            Number of neighbors for each sample.
-            (default is value passed to the constructor).
+        n_neighbors : int, default=None
+            Number of neighbors for each sample. The default is the value
+            passed to the constructor.
 
-        mode : {'connectivity', 'distance'}, optional
+        mode : {'connectivity', 'distance'}, default='connectivity'
             Type of returned matrix: 'connectivity' will return the
             connectivity matrix with ones and zeros, in 'distance' the
             edges are Euclidean distance between points.
 
         Returns
         -------
-        A : sparse graph in CSR format, shape = [n_queries, n_samples_fit]
-            n_samples_fit is the number of samples in the fitted data
-            A[i, j] is assigned the weight of edge that connects i to j.
+        A : sparse-matrix of shape (n_queries, n_samples_fit)
+            `n_samples_fit` is the number of samples in the fitted data
+            `A[i, j]` is assigned the weight of edge that connects `i` to `j`.
+            The matrix is of CSR format.
 
         Examples
         --------
@@ -782,7 +799,7 @@ class KNeighborsMixin:
                [0., 1., 1.],
                [1., 0., 1.]])
 
-        See also
+        See Also
         --------
         NearestNeighbors.radius_neighbors_graph
         """
@@ -839,17 +856,25 @@ class RadiusNeighborsMixin:
 
         Parameters
         ----------
-        dist : array of shape (n_samples_chunk, n_samples)
+        dist : ndarray of shape (n_samples_chunk, n_samples)
+            The distance matrix.
+
         start : int
             The index in X which the first row of dist corresponds to.
+
         radius : float
+            The radius considered when making the nearest neighbors search.
+
         return_distance : bool
+            Whether or not to return the distances.
 
         Returns
         -------
-        dist : list of n_samples_chunk 1d arrays, optional
-            Returned only if return_distance
-        neigh : list of n_samples_chunk 1d arrays
+        dist : list of ndarray of shape (n_samples_chunk,)
+            Returned only if `return_distance=True`.
+
+        neigh : list of ndarray of shape (n_samples_chunk,)
+            The neighbors indices.
         """
         neigh_ind = [np.where(d <= radius)[0] for d in dist]
 
@@ -878,34 +903,34 @@ class RadiusNeighborsMixin:
 
         Parameters
         ----------
-        X : array-like, (n_samples, n_features), optional
+        X : array-like of (n_samples, n_features), default=None
             The query point or points.
             If not provided, neighbors of each indexed point are returned.
             In this case, the query point is not considered its own neighbor.
 
-        radius : float
-            Limiting distance of neighbors to return.
-            (default is the value passed to the constructor).
+        radius : float, default=None
+            Limiting distance of neighbors to return. The default is the value
+            passed to the constructor.
 
-        return_distance : boolean, optional. Defaults to True.
-            If False, distances will not be returned.
+        return_distance : bool, default=True
+            Whether or not to return the distances.
 
-        sort_results : boolean, optional. Defaults to False.
+        sort_results : bool, default=False
             If True, the distances and indices will be sorted before being
-            returned. If False, the results will not be sorted. If
-            return_distance == False, setting sort_results = True will
+            returned. If `False`, the results will not be sorted. If
+            `return_distance=False`, setting `sort_results=True` will
             result in an error.
 
             .. versionadded:: 0.22
 
         Returns
         -------
-        neigh_dist : array, shape (n_samples,) of arrays
+        neigh_dist : ndarray of shape (n_samples,) of arrays
             Array representing the distances to each point, only present if
-            return_distance=True. The distance values are computed according
+            `return_distance=True`. The distance values are computed according
             to the ``metric`` constructor parameter.
 
-        neigh_ind : array, shape (n_samples,) of arrays
+        neigh_ind : ndarray of shape (n_samples,) of arrays
             An array of arrays of indices of the approximate nearest points
             from the population matrix that lie within a ball of size
             ``radius`` around the query points.
@@ -1053,16 +1078,16 @@ class RadiusNeighborsMixin:
             If not provided, neighbors of each indexed point are returned.
             In this case, the query point is not considered its own neighbor.
 
-        radius : float
-            Radius of neighborhoods.
-            (default is the value passed to the constructor).
+        radius : float, default=None
+            Radius of neighborhoods. The default is the value passed to the
+            constructor.
 
-        mode : {'connectivity', 'distance'}, optional
+        mode : {'connectivity', 'distance'}, default='connectivity'
             Type of returned matrix: 'connectivity' will return the
             connectivity matrix with ones and zeros, in 'distance' the
             edges are Euclidean distance between points.
 
-        sort_results : boolean, optional. Defaults to False.
+        sort_results : bool, default=False
             If True, the distances and indices will be sorted before being
             returned. If False, the results will not be sorted.
             Only used with mode='distance'.
@@ -1071,9 +1096,10 @@ class RadiusNeighborsMixin:
 
         Returns
         -------
-        A : sparse graph in CSR format, shape = [n_queries, n_samples_fit]
-            n_samples_fit is the number of samples in the fitted data
-            A[i, j] is assigned the weight of edge that connects i to j.
+        A : sparse-matrix of shape (n_queries, n_samples_fit)
+            `n_samples_fit` is the number of samples in the fitted data
+            `A[i, j]` is assigned the weight of edge that connects `i` to `j`.
+            The matrix if of format CSR.
 
         Examples
         --------
@@ -1088,7 +1114,7 @@ class RadiusNeighborsMixin:
                [0., 1., 0.],
                [1., 0., 1.]])
 
-        See also
+        See Also
         --------
         kneighbors_graph
         """
