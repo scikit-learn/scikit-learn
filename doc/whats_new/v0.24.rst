@@ -320,6 +320,12 @@ Changelog
   class to be used when computing the roc auc statistics.
   :pr:`17651` by :user:`Clara Matos <claramatos>`.
 
+- |Fix| Fixed a bug in
+  :func:`metrics.jaccard_score` which recommended the `zero_division`
+  parameter when called with no true or predicted samples.
+  :pr:`17826` by :user:`Richard Decal <crypdick>` and
+  :user:`Joseph Willard <josephwillard>`
+
 :mod:`sklearn.model_selection`
 ..............................
 
