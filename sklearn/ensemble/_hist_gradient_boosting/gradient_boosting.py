@@ -342,6 +342,14 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             sample_weight=sample_weight_train
         )
 
+        def del_hists(node):
+            if node is None:
+                return
+            if getattr(node, 'histograms', None) is not None:
+                del node.histograms
+            del_hists(node.left_child)
+            del_hists(node.right_child)
+
         for iteration in range(begin_at_stage, self.max_iter):
 
             if self.verbose:
@@ -392,8 +400,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 _update_raw_predictions(raw_predictions[k, :], grower)
                 toc_pred = time()
                 acc_prediction_time += toc_pred - tic_pred
+
+                del_hists(grower.root)
                 del grower
-                gc.collect()
 
             should_early_stop = False
             if self.do_early_stopping_:
