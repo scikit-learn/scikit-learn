@@ -174,10 +174,10 @@ L1-based feature selection
 :ref:`Linear models <linear_model>` penalized with the L1 norm have
 sparse solutions: many of their estimated coefficients are zero. When the goal
 is to reduce the dimensionality of the data to use with another classifier,
-they can be used along with :class:`feature_selection.SelectFromModel`
+they can be used along with :class:`~feature_selection.SelectFromModel`
 to select the non-zero coefficients. In particular, sparse estimators useful
-for this purpose are the :class:`linear_model.Lasso` for regression, and
-of :class:`linear_model.LogisticRegression` and :class:`svm.LinearSVC`
+for this purpose are the :class:`~linear_model.Lasso` for regression, and
+of :class:`~linear_model.LogisticRegression` and :class:`~svm.LinearSVC`
 for classification::
 
   >>> from sklearn.svm import LinearSVC
@@ -235,7 +235,7 @@ Tree-based feature selection
 Tree-based estimators (see the :mod:`sklearn.tree` module and forest
 of trees in the :mod:`sklearn.ensemble` module) can be used to compute
 impurity-based feature importances, which in turn can be used to discard irrelevant
-features (when coupled with the :class:`sklearn.feature_selection.SelectFromModel`
+features (when coupled with the :class:`~feature_selection.SelectFromModel`
 meta-transformer)::
 
   >>> from sklearn.ensemble import ExtraTreesClassifier
@@ -267,7 +267,7 @@ Feature selection as part of a pipeline
 
 Feature selection is usually used as a pre-processing step before doing
 the actual learning. The recommended way to do this in scikit-learn is
-to use a :class:`sklearn.pipeline.Pipeline`::
+to use a :class:`~pipeline.Pipeline`::
 
   clf = Pipeline([
     ('feature_selection', SelectFromModel(LinearSVC(penalty="l1"))),
@@ -275,11 +275,11 @@ to use a :class:`sklearn.pipeline.Pipeline`::
   ])
   clf.fit(X, y)
 
-In this snippet we make use of a :class:`sklearn.svm.LinearSVC`
-coupled with :class:`sklearn.feature_selection.SelectFromModel`
+In this snippet we make use of a :class:`~svm.LinearSVC`
+coupled with :class:`~feature_selection.SelectFromModel`
 to evaluate feature importances and select the most relevant features.
-Then, a :class:`sklearn.ensemble.RandomForestClassifier` is trained on the
+Then, a :class:`~ensemble.RandomForestClassifier` is trained on the
 transformed output, i.e. using only relevant features. You can perform
 similar operations with the other feature selection methods and also
 classifiers that provide a way to evaluate feature importances of course.
-See the :class:`sklearn.pipeline.Pipeline` examples for more details.
+See the :class:`~pipeline.Pipeline` examples for more details.
