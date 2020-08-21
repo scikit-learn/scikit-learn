@@ -164,8 +164,8 @@ def plot_det_curve(
     response_method : {'predict_proba', 'decision_function', 'auto'} \
             default='auto'
         Specifies whether to use :term:`predict_proba` or
-        :term:`decision_function` as the predicted target response. If set to 'auto',
-        :term:`predict_proba` is tried first and if it does not exist
+        :term:`decision_function` as the predicted target response. If set to
+        'auto', :term:`predict_proba` is tried first and if it does not exist
         :term:`decision_function` is tried next.
 
     name : str, default=None
