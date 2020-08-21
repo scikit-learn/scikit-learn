@@ -196,11 +196,7 @@ def fastica(X, n_components=None, *, algorithm="parallel", whiten=True,
     max_iter : int, default=200
         Maximum number of iterations to perform.
 
-<<<<<<< HEAD
-    tol : float, default=1e-4
-=======
     tol : float, default=1e-04
->>>>>>> origin/master
         A positive scalar giving the tolerance at which the
         un-mixing matrix is considered to have converged.
 
