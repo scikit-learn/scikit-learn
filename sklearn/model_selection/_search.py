@@ -722,8 +722,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             Parameters passed to the ``fit`` method of the estimator
         """
         estimator = self.estimator
-        self._checked_cv_orig = check_cv(self.cv, y,
-                                         classifier=is_classifier(estimator))
         refit_metric = "score"
 
         if callable(self.scoring):
@@ -738,7 +736,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         X, y, groups = indexable(X, y, groups)
         fit_params = _check_fit_params(X, fit_params)
 
-        n_splits = self._checked_cv_orig.get_n_splits(X, y, groups)
+        cv_orig = check_cv(self.cv, y, classifier=is_classifier(estimator))
+        n_splits = cv_orig.get_n_splits(X, y, groups)
 
         base_estimator = clone(self.estimator)
 
@@ -761,7 +760,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
             def evaluate_candidates(candidate_params, cv=None,
                                     more_results=None):
-                cv = cv or self._checked_cv_orig
+                cv = cv or cv_orig
                 candidate_params = list(candidate_params)
                 n_candidates = len(candidate_params)
 

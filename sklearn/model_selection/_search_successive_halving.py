@@ -48,6 +48,18 @@ def _refit_callable(results):
     return last_iter_indices[best_idx]
 
 
+def _top_k(results, k, iter_i):
+    # Return the best candidates of a given iteration
+    iteration, mean_test_score, params = (
+        np.asarray(a) for a in (results['iter'],
+                                results['mean_test_score'],
+                                results['params'])
+    )
+    iter_indices = np.flatnonzero(iteration == iter_i)
+    sorted_indices = np.argsort(mean_test_score[iter_indices])
+    return np.array(params[iter_indices][sorted_indices[-k:]])
+
+
 class BaseSuccessiveHalving(BaseSearchCV):
     """Implements successive halving.
 
@@ -85,8 +97,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
 
         # We need to enforce that successive calls to cv.split() yield the same
         # splits: see https://github.com/scikit-learn/scikit-learn/issues/15149
-        cv = check_cv(self.cv, y, classifier=is_classifier(self.estimator))
-        if not _yields_constant_splits(cv):
+        if not _yields_constant_splits(self._checked_cv_orig):
             raise ValueError(
                 "The cv parameter must yield consistent folds across "
                 "calls to split(). Set its random_state to an int, or set "
@@ -141,7 +152,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
         self.min_resources_ = self.min_resources
         if self.min_resources_ in ('smallest', 'exhaust'):
             if self.resource == 'n_samples':
-                n_splits = cv.get_n_splits(X, y, groups)
+                n_splits = self._checked_cv_orig.get_n_splits(X, y, groups)
                 # please see https://gph.is/1KjihQe for a justification
                 magic_factor = 2
                 self.min_resources_ = n_splits * magic_factor
@@ -186,6 +197,9 @@ class BaseSuccessiveHalving(BaseSearchCV):
         **fit_params : dict of string -> object
             Parameters passed to the ``fit`` method of the estimator
         """
+        self._checked_cv_orig = check_cv(
+            self.cv, y, classifier=is_classifier(self.estimator))
+
         self._check_input_parameters(
             X=X,
             y=y,
@@ -304,22 +318,12 @@ class BaseSuccessiveHalving(BaseSearchCV):
                                           more_results=more_results)
 
             n_candidates_to_keep = ceil(n_candidates / self.ratio)
-            candidate_params = self._top_k(results,
-                                           n_candidates_to_keep,
-                                           iter_i)
+            candidate_params = _top_k(results, n_candidates_to_keep, iter_i)
 
         self.n_remaining_candidates_ = len(candidate_params)
         self.n_required_iterations_ = n_required_iterations
         self.n_possible_iterations_ = n_possible_iterations
         self.n_iterations_ = n_iterations
-
-    def _top_k(self, results, k, iter_i):
-        # Return the best candidates of a given iteration
-        # We need to filter out candidates from the previous iterations
-        # when sorting
-        iter_indices = np.flatnonzero(np.array(results['iter']) == iter_i)
-        sorted_indices = np.argsort(results['mean_test_score'][iter_indices])
-        return np.array(results['params'])[sorted_indices[-k:]]
 
     @abstractmethod
     def _generate_candidate_params(self):

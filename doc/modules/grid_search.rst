@@ -348,9 +348,9 @@ terms of the number of estimators of a random forest::
     >>> X, y = make_classification(n_samples=1000, random_state=0)
     >>> sh = HalvingGridSearchCV(base_estimator, param_grid, cv=5,
     ...                          ratio=2, resource='n_estimators',
-    ...                          max_resources=30, random_state=0).fit(X, y)
+    ...                          max_resources=30).fit(X, y)
     >>> sh.best_estimator_
-    RandomForestClassifier(max_depth=5, n_estimators=24, random_state=0)
+    RandomForestClassifier(max_depth=3, n_estimators=24, random_state=0)
 
 Note that it is not possible to budget on a parameter that is part of the
 parameter grid.

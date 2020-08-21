@@ -8,7 +8,7 @@ from sklearn.model_selection import HalvingGridSearchCV
 from sklearn.model_selection import HalvingRandomSearchCV
 from sklearn.model_selection import KFold, ShuffleSplit
 from sklearn.model_selection._search_successive_halving import (
-    _SubsampleMetaSplitter)
+    _SubsampleMetaSplitter, _top_k, _refit_callable)
 
 
 class FastClassifier(DummyClassifier):
@@ -341,7 +341,7 @@ def test_subsample_splitter_shapes(fraction, subsample_test,
 @pytest.mark.parametrize('subsample_test', (True, False))
 def test_subsample_splitter_determinism(subsample_test):
     # Make sure _SubsampleMetaSplitter is consistent across calls to split():
-    # - we're OK having training sets differ (they're always samples with a
+    # - we're OK having training sets differ (they're always sampled with a
     #   different fraction anyway)
     # - when we don't subsample the test set, we want it to be always the same.
     #   This check is the most important. This is ensured by the determinism
@@ -367,3 +367,37 @@ def test_subsample_splitter_determinism(subsample_test):
         else:
             assert np.all(test_a == test_b)
             assert np.all(X[test_a] == X[test_b])
+
+
+@pytest.mark.parametrize('k, iter_i, expected', [
+    (1, 0, ['c']),
+    (2, 0, ['a', 'c']),
+    (4, 0, ['d', 'b', 'a', 'c']),
+    (10, 0, ['d', 'b', 'a', 'c']),
+
+    (1, 1, ['e']),
+    (2, 1, ['f', 'e']),
+    (10, 1, ['f', 'e']),
+
+    (1, 2, ['i']),
+    (10, 2, ['g', 'h', 'i']),
+])
+def test_top_k(k, iter_i, expected):
+
+    results = {  # this isn't a 'real world' result dict
+        'iter': [0, 0, 0, 0, 1, 1, 2, 2, 2],
+        'mean_test_score': [4, 3, 5, 1, 11, 10, 5, 6, 9],
+        'params': ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'],
+    }
+    got = _top_k(results, k=k, iter_i=iter_i)
+    assert np.all(got == expected)
+
+
+def test_refit_callable():
+
+    results = {  # this isn't a 'real world' result dict
+        'iter': np.array([0, 0, 0, 0, 1, 1, 2, 2, 2]),
+        'mean_test_score': np.array([4, 3, 5, 1, 11, 10, 5, 6, 9]),
+        'params': np.array(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i']),
+    }
+    assert _refit_callable(results) == 8  # index of 'i'
