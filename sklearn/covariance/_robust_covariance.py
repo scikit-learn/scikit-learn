@@ -9,7 +9,6 @@ Here are implemented estimators that are resistant to outliers.
 # License: BSD 3 clause
 
 import warnings
-import numbers
 import numpy as np
 from scipy import linalg
 from scipy.stats import chi2
@@ -181,132 +180,6 @@ def _c_step(X, n_support, random_state, remaining_iterations=30,
     return results
 
 
-def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
-                      verbose=False,
-                      cov_computation_method=empirical_covariance,
-                      random_state=None):
-    """Finds the best pure subset of observations to compute MCD from it.
-
-    The purpose of this function is to find the best sets of n_support
-    observations with respect to a minimization of their covariance
-    matrix determinant. Equivalently, it removes n_samples-n_support
-    observations to construct what we call a pure data set (i.e. not
-    containing outliers). The list of the observations of the pure
-    data set is referred to as the `support`.
-
-    Starting from a random support, the pure data set is found by the
-    c_step procedure introduced by Rousseeuw and Van Driessen in
-    [RV]_.
-
-    Parameters
-    ----------
-    X : array-like of shape (n_samples, n_features)
-        Data (sub)set in which we look for the n_support purest observations.
-
-    n_support : int
-        The number of samples the pure data set must contain.
-        This parameter must be in the range `[(n + p + 1)/2] < n_support < n`.
-
-    n_trials : int or tuple of shape (2,)
-        Number of different initial sets of observations from which to
-        run the algorithm. This parameter should be a strictly positive
-        integer.
-        Instead of giving a number of trials to perform, one can provide a
-        list of initial estimates that will be used to iteratively run
-        c_step procedures. In this case:
-        - n_trials[0]: array-like, shape (n_trials, n_features)
-          is the list of `n_trials` initial location estimates
-        - n_trials[1]: array-like, shape (n_trials, n_features, n_features)
-          is the list of `n_trials` initial covariances estimates
-
-    select : int, default=1
-        Number of best candidates results to return. This parameter must be
-        a strictly positive integer.
-
-    n_iter : int, default=30
-        Maximum number of iterations for the c_step procedure.
-        (2 is enough to be close to the final solution. "Never" exceeds 20).
-        This parameter must be a strictly positive integer.
-
-    verbose : bool, default False
-        Control the output verbosity.
-
-    cov_computation_method : callable, \
-            default=:func:`sklearn.covariance.empirical_covariance`
-        The function which will be used to compute the covariance.
-        Must return an array of shape (n_features, n_features).
-
-    random_state : int or RandomState instance, default=None
-        Determines the pseudo random number generator for shuffling the data.
-        Pass an int for reproducible results across multiple function calls.
-        See :term: `Glossary <random_state>`.
-
-    See Also
-    ---------
-    c_step
-
-    Returns
-    -------
-    best_locations : ndarray of shape (select, n_features)
-        The `select` location estimates computed from the `select` best
-        supports found in the data set (`X`).
-
-    best_covariances : ndarray of shape (select, n_features, n_features)
-        The `select` covariance estimates computed from the `select`
-        best supports found in the data set (`X`).
-
-    best_supports : ndarray of shape (select, n_samples)
-        The `select` best supports found in the data set (`X`).
-
-    References
-    ----------
-    .. [RV] A Fast Algorithm for the Minimum Covariance Determinant
-        Estimator, 1999, American Statistical Association and the American
-        Society for Quality, TECHNOMETRICS
-    """
-    random_state = check_random_state(random_state)
-
-    if isinstance(n_trials, numbers.Integral):
-        run_from_estimates = False
-    elif isinstance(n_trials, tuple):
-        run_from_estimates = True
-        estimates_list = n_trials
-        n_trials = estimates_list[0].shape[0]
-    else:
-        raise TypeError("Invalid 'n_trials' parameter, expected tuple or "
-                        " integer, got %s (%s)" % (n_trials, type(n_trials)))
-
-    # compute `n_trials` location and shape estimates candidates in the subset
-    all_estimates = []
-    if not run_from_estimates:
-        # perform `n_trials` computations from random initial supports
-        for j in range(n_trials):
-            all_estimates.append(
-                _c_step(
-                    X, n_support, remaining_iterations=n_iter, verbose=verbose,
-                    cov_computation_method=cov_computation_method,
-                    random_state=random_state))
-    else:
-        # perform computations from every given initial estimates
-        for j in range(n_trials):
-            initial_estimates = (estimates_list[0][j], estimates_list[1][j])
-            all_estimates.append(_c_step(
-                X, n_support, remaining_iterations=n_iter,
-                initial_estimates=initial_estimates, verbose=verbose,
-                cov_computation_method=cov_computation_method,
-                random_state=random_state))
-    all_locs_sub, all_covs_sub, all_dets_sub, all_supports_sub, all_ds_sub = \
-        zip(*all_estimates)
-    # find the `n_best` best results among the `n_trials` ones
-    index_best = np.argsort(all_dets_sub)[:select]
-    best_locations = np.asarray(all_locs_sub)[index_best]
-    best_covariances = np.asarray(all_covs_sub)[index_best]
-    best_supports = np.asarray(all_supports_sub)[index_best]
-    best_ds = np.asarray(all_ds_sub)[index_best]
-
-    return best_locations, best_covariances, best_supports, best_ds
-
-
 def fast_mcd(X, support_fraction=None,
              cov_computation_method=empirical_covariance,
              random_state=None):
@@ -324,7 +197,7 @@ def fast_mcd(X, support_fraction=None,
         MCD estimate. Default is `None`, which implies that the minimum
         value of `support_fraction` will be used within the algorithm:
         `(n_sample + n_features + 1) / 2`. This parameter must be in the
-        range (0, 1).
+        range (0, 1].
 
     cov_computation_method : callable, \
             default=:func:`sklearn.covariance.empirical_covariance`
@@ -356,7 +229,7 @@ def fast_mcd(X, support_fraction=None,
     for Quality, TECHNOMETRICS".
     The principle is to compute robust estimates and random subsets before
     pooling them into a larger subsets, and finally into the full data set.
-    Depending on the size of the initial sample, we have one, two or three
+    Depending on the size of the initial sample, we have two or three
     such computation levels.
 
     Note that only raw estimates are returned. If one is interested in
@@ -384,133 +257,155 @@ def fast_mcd(X, support_fraction=None,
         n_support = int(np.ceil(0.5 * (n_samples + n_features + 1)))
     else:
         n_support = int(support_fraction * n_samples)
+    if n_features == 1:
+        return _fast_mcd_1_dim(X, n_support)
+    elif n_samples <= 1500:
+        return _fast_mcd_p_dim(
+            X, n_support, cov_computation_method, random_state)
+    else:
+        return _fast_mcd_p_dim_in_subsets(
+            X, n_support, cov_computation_method, random_state)
 
+
+def _fast_mcd_1_dim(X, n_support):
     # 1-dimensional case quick computation
     # (Rousseeuw, P. J. and Leroy, A. M. (2005) References, in Robust
     #  Regression and Outlier Detection, John Wiley & Sons, chapter 4)
-    if n_features == 1:
-        if n_support < n_samples:
-            # find the sample shortest halves
-            X_sorted = np.sort(np.ravel(X))
-            diff = X_sorted[n_support:] - X_sorted[:(n_samples - n_support)]
-            halves_start = np.where(diff == np.min(diff))[0]
-            # take the middle points' mean to get the robust location estimate
-            location = 0.5 * (X_sorted[n_support + halves_start] +
-                              X_sorted[halves_start]).mean()
-            support = np.zeros(n_samples, dtype=bool)
-            X_centered = X - location
-            support[np.argsort(np.abs(X_centered), 0)[:n_support]] = True
-            covariance = np.asarray([[np.var(X[support])]])
-            location = np.array([location])
-            # get precision matrix in an optimized way
-            precision = linalg.pinvh(covariance)
-            dist = (np.dot(X_centered, precision) * (X_centered)).sum(axis=1)
-        else:
-            support = np.ones(n_samples, dtype=bool)
-            covariance = np.asarray([[np.var(X)]])
-            location = np.asarray([np.mean(X)])
-            X_centered = X - location
-            # get precision matrix in an optimized way
-            precision = linalg.pinvh(covariance)
-            dist = (np.dot(X_centered, precision) * (X_centered)).sum(axis=1)
-    # Starting FastMCD algorithm for p-dimensional case
-    if (n_samples > 500) and (n_features > 1):
-        # 1. Find candidate supports on subsets
-        # a. split the set in subsets of size ~ 300
+    n_samples = len(X)
+    if n_support < n_samples:
+        # find the sample shortest halves
+        X_sorted = np.sort(np.ravel(X))
+        diff = X_sorted[n_support:] - X_sorted[:(n_samples - n_support)]
+        halves_start = np.where(diff == np.min(diff))[0]
+        # take the middle points' mean to get the robust location estimate
+        location = 0.5 * (X_sorted[n_support + halves_start] +
+                          X_sorted[halves_start]).mean()
+        support = np.zeros(n_samples, dtype=bool)
+        X_centered = X - location
+        support[np.argsort(np.abs(X_centered), 0)[:n_support]] = True
+        covariance = np.asarray([[np.var(X[support])]])
+        location = np.array([location])
+    else:
+        support = np.ones(n_samples, dtype=bool)
+        covariance = np.asarray([[np.var(X)]])
+        location = np.asarray([np.mean(X)])
+        X_centered = X - location
+    # get precision matrix in an optimized way
+    precision = linalg.pinvh(covariance)
+    dist = (np.dot(X_centered, precision) * (X_centered)).sum(axis=1)
+    return location, covariance, support, dist
+
+
+def _fast_mcd_p_dim(X, n_support, cov_computation_method, random_state):
+    n_samples = len(X)
+    samples_shuffle = random_state.permutation(n_samples)
+    # Select 10 best candidates for each subset
+    n_best_sub = 10
+    if n_samples > 500:
+        # Split the set into subsets of size ~ 300
         n_subsets = n_samples // 300
+        # Perform at least ~500 total trials
+        n_trials = max(10, 500 // n_subsets)
         n_samples_subsets = n_samples // n_subsets
-        samples_shuffle = random_state.permutation(n_samples)
         h_subset = int(np.ceil(n_samples_subsets *
-                       (n_support / float(n_samples))))
-        # b. perform a total of 500 trials
-        n_trials_tot = 500
-        # c. select 10 best (location, covariance) for each subset
-        n_best_sub = 10
-        n_trials = max(10, n_trials_tot // n_subsets)
-        n_best_tot = n_subsets * n_best_sub
-        all_best_locations = np.zeros((n_best_tot, n_features))
-        try:
-            all_best_covariances = np.zeros((n_best_tot, n_features,
-                                             n_features))
-        except MemoryError:
-            # The above is too big. Let's try with something much small
-            # (and less optimal)
-            n_best_tot = 10
-            all_best_covariances = np.zeros((n_best_tot, n_features,
-                                             n_features))
-            n_best_sub = 2
-        for i in range(n_subsets):
-            low_bound = i * n_samples_subsets
-            high_bound = low_bound + n_samples_subsets
-            current_subset = X[samples_shuffle[low_bound:high_bound]]
-            best_locations_sub, best_covariances_sub, _, _ = select_candidates(
-                current_subset, h_subset, n_trials,
-                select=n_best_sub, n_iter=2,
-                cov_computation_method=cov_computation_method,
-                random_state=random_state)
-            subset_slice = np.arange(i * n_best_sub, (i + 1) * n_best_sub)
-            all_best_locations[subset_slice] = best_locations_sub
-            all_best_covariances[subset_slice] = best_covariances_sub
-        # 2. Pool the candidate supports into a merged set
-        # (possibly the full dataset)
-        n_samples_merged = min(1500, n_samples)
-        h_merged = int(np.ceil(n_samples_merged *
-                       (n_support / float(n_samples))))
-        if n_samples > 1500:
-            n_best_merged = 10
-        else:
-            n_best_merged = 1
-        # find the best couples (location, covariance) on the merged set
-        selection = random_state.permutation(n_samples)[:n_samples_merged]
-        locations_merged, covariances_merged, supports_merged, d = \
-            select_candidates(
-                X[selection], h_merged,
-                n_trials=(all_best_locations, all_best_covariances),
-                select=n_best_merged,
-                cov_computation_method=cov_computation_method,
-                random_state=random_state)
-        # 3. Finally get the overall best (locations, covariance) couple
-        if n_samples < 1500:
-            # directly get the best couple (location, covariance)
-            location = locations_merged[0]
-            covariance = covariances_merged[0]
-            support = np.zeros(n_samples, dtype=bool)
-            dist = np.zeros(n_samples)
-            support[selection] = supports_merged[0]
-            dist[selection] = d[0]
-        else:
-            # select the best couple on the full dataset
-            locations_full, covariances_full, supports_full, d = \
-                select_candidates(
-                    X, n_support,
-                    n_trials=(locations_merged, covariances_merged),
-                    select=1,
-                    cov_computation_method=cov_computation_method,
-                    random_state=random_state)
-            location = locations_full[0]
-            covariance = covariances_full[0]
-            support = supports_full[0]
-            dist = d[0]
-    elif n_features > 1:
-        # 1. Find the 10 best couples (location, covariance)
-        # considering two iterations
+                               (n_support / float(n_samples))))
+    else:
+        n_subsets = 1
         n_trials = 30
-        n_best = 10
-        locations_best, covariances_best, _, _ = select_candidates(
-            X, n_support, n_trials=n_trials, select=n_best, n_iter=2,
+        n_samples_subsets = n_samples
+        h_subset = n_support
+
+    best_det = np.inf
+    for i in range(n_subsets):
+        # 1. Search for best (location, covariance)-candidates in each subset
+        low_bound = i * n_samples_subsets
+        high_bound = low_bound + n_samples_subsets
+        current_subset = X[samples_shuffle[low_bound:high_bound]]
+        best_det_sub = np.full(n_best_sub, np.inf)
+        best_cand_sub = [None] * n_best_sub
+        for _ in range(n_trials):
+            loc, cov, det, supp, dist = _c_step(
+                current_subset, h_subset, remaining_iterations=2,
+                cov_computation_method=cov_computation_method,
+                random_state=random_state)
+            worst_idx = np.argmax(best_det_sub)
+            if det < best_det_sub[worst_idx]:
+                best_det_sub[worst_idx] = det
+                best_cand_sub[worst_idx] = (loc, cov, supp, dist)
+        # 2. Finish search on full X to find the best (location, covariance)
+        for loc, cov, _, _ in best_cand_sub:
+            loc, cov, det, supp, dist = _c_step(
+                X, n_support, remaining_iterations=30,
+                initial_estimates=(loc, cov),
+                cov_computation_method=cov_computation_method,
+                random_state=random_state)
+            if det < best_det:
+                best_det = det
+                best_cand = (loc, cov, supp, dist)
+    return best_cand
+
+
+def _fast_mcd_p_dim_in_subsets(
+        X, n_support, cov_computation_method, random_state):
+    n_samples = len(X)
+    samples_shuffle = random_state.permutation(n_samples)
+    # Select 10 best candidates for each subset
+    n_best_sub = 10
+    # Split the set into subsets of size ~ 300
+    n_subsets = n_samples // 300
+    # Perform at least ~500 total trials
+    n_trials = max(10, 500 // n_subsets)
+    n_samples_subsets = n_samples // n_subsets
+    n_support_sub = int(np.ceil(n_samples_subsets *
+                                (n_support / float(n_samples))))
+
+    selection = samples_shuffle[:1500]
+    n_support_merged = int(np.ceil(1500 *
+                           (n_support / float(n_samples))))
+    n_best_merged = 10
+
+    best_det_merged = np.full(n_best_merged, np.inf)
+    best_cand_merged = [None] * n_best_merged
+    for i in range(n_subsets):
+        # 1. Search for best (location, covariance)-candidates in each subset
+        low_bound = i * n_samples_subsets
+        high_bound = low_bound + n_samples_subsets
+        current_subset = X[samples_shuffle[low_bound:high_bound]]
+        best_det_sub = np.full(n_best_sub, np.inf)
+        best_cand_sub = [None] * n_best_sub
+        for _ in range(n_trials):
+            loc, cov, det, supp, dist = _c_step(
+                current_subset, n_support_sub, remaining_iterations=2,
+                cov_computation_method=cov_computation_method,
+                random_state=random_state)
+            worst_idx = np.argmax(best_det_sub)
+            if det < best_det_sub[worst_idx]:
+                best_det_sub[worst_idx] = det
+                best_cand_sub[worst_idx] = (loc, cov, supp, dist)
+
+        # 2. Continue search on larger selection of X for smaller candidate set
+        for loc, cov, _, _ in best_cand_sub:
+            loc, cov, det, supp, dist = _c_step(
+                X[selection], n_support_merged, remaining_iterations=30,
+                initial_estimates=(loc, cov),
+                cov_computation_method=cov_computation_method,
+                random_state=random_state)
+            worst_idx = np.argmax(best_det_merged)
+            if det < best_det_merged[worst_idx]:
+                best_det_merged[worst_idx] = det
+                best_cand_merged[worst_idx] = (loc, cov, supp, dist)
+    # 3. Finish search on full X to find the best (location, covariance)
+    best_det = np.inf
+    for loc, cov, _, _ in best_cand_merged:
+        loc, cov, det, supp, dist = _c_step(
+            X, n_support, remaining_iterations=30,
+            initial_estimates=(loc, cov),
             cov_computation_method=cov_computation_method,
             random_state=random_state)
-        # 2. Select the best couple on the full dataset amongst the 10
-        locations_full, covariances_full, supports_full, d = select_candidates(
-            X, n_support, n_trials=(locations_best, covariances_best),
-            select=1, cov_computation_method=cov_computation_method,
-            random_state=random_state)
-        location = locations_full[0]
-        covariance = covariances_full[0]
-        support = supports_full[0]
-        dist = d[0]
-
-    return location, covariance, support, dist
+        if det < best_det:
+            best_det = det
+            best_cand = loc, cov, supp, dist
+    return best_cand
 
 
 class MinCovDet(EmpiricalCovariance):
@@ -544,8 +439,8 @@ class MinCovDet(EmpiricalCovariance):
         The proportion of points to be included in the support of the raw
         MCD estimate. Default is None, which implies that the minimum
         value of support_fraction will be used within the algorithm:
-        `(n_sample + n_features + 1) / 2`. The parameter must be in the range
-        (0, 1).
+        `(n_sample + n_features + 1) / 2`. If 1, simplifies to
+        EmpiricalCovariance. The parameter must be in the range (0, 1].
 
     random_state : int or RandomState instance, default=None
         Determines the pseudo random number generator for shuffling the data.
@@ -640,6 +535,11 @@ class MinCovDet(EmpiricalCovariance):
         self : object
         """
         X = self._validate_data(X, ensure_min_samples=2, estimator='MinCovDet')
+        if (self.support_fraction and
+                int(self.support_fraction * len(X)) == len(X)):
+            self = super().fit(X, y)
+            self.dist_ = self.mahalanobis(X)
+            return self
         random_state = check_random_state(self.random_state)
         n_samples, n_features = X.shape
         # check that the empirical covariance is full rank
