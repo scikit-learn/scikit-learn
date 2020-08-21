@@ -8,7 +8,7 @@ from ...utils import check_matplotlib_support
 
 
 class DetCurveDisplay:
-    """DET Curve visualization.
+    """DET curve visualization.
 
     It is recommend to use :func:`~sklearn.metrics.plot_det_curve` to create a
     visualizer. All parameters are stored as attributes.
