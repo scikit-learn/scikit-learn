@@ -4,6 +4,8 @@
 Contributing
 ============
 
+.. currentmodule:: sklearn
+
 This project is a community effort, and everyone is welcome to
 contribute.
 
@@ -55,11 +57,11 @@ find a typo in the documentation, or have made improvements, do not hesitate to
 send an email to the mailing list or preferably submit a GitHub pull request.
 Full documentation can be found under the doc/ directory.
 
-But there are many other ways to help. In particular answering queries on the
-`issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_,
-investigating bugs, and :ref:`reviewing other developers' pull requests
-<code_review>` are very valuable contributions that decrease the burden on the
-project maintainers.
+But there are many other ways to help. In particular helping to
+:ref:`improve, triage, and investigate issues <bug_triaging>` and
+:ref:`reviewing other developers' pull requests <code_review>` are very
+valuable contributions that decrease the burden on the project
+maintainers.
 
 Another way to contribute is to report issues you're facing, and give a "thumbs
 up" on issues that others reported and that are relevant to you.  It also helps
@@ -172,6 +174,9 @@ feedback:
   appropriate code blocks**.  See `Creating and highlighting code blocks
   <https://help.github.com/articles/creating-and-highlighting-code-blocks>`_
   for more details.
+
+If you want to help curate issues, read :ref:`the following
+<bug_triaging>`.
 
 Contributing code
 =================
@@ -396,9 +401,9 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    the keywords (e.g., ``See also #1234``).
 
 9. PRs should often substantiate the change, through benchmarks of
-   performance and efficiency or through examples of usage. Examples also
-   illustrate the features and intricacies of the library to users. Have a
-   look at other examples in the `examples/
+   performance and efficiency (see :ref:`monitoring_performances`) or through
+   examples of usage. Examples also illustrate the features and intricacies of
+   the library to users. Have a look at other examples in the `examples/
    <https://github.com/scikit-learn/scikit-learn/tree/master/examples>`_
    directory for reference. Examples should demonstrate why the new
    functionality is useful in practice and, if possible, compare it to other
@@ -427,9 +432,9 @@ You can check for common programming errors with the following tools:
   see also :ref:`testing_coverage`
 
 * A moderate use of type annotations is encouraged but is not mandatory. See
-  [mypy quickstart](https://mypy.readthedocs.io/en/latest/getting_started.html)
-  for an introduction, as well as [pandas contributing documentation](
-  https://pandas.pydata.org/pandas-docs/stable/development/contributing.html#type-hints)
+  `mypy quickstart <https://mypy.readthedocs.io/en/latest/getting_started.html>`_
+  for an introduction, as well as `pandas contributing documentation
+  <https://pandas.pydata.org/pandas-docs/stable/development/contributing.html#type-hints>`_
   for style guidelines. Whether you add type annotation or not::
 
     mypy --ignore-missing-import sklearn
@@ -442,8 +447,7 @@ You can check for common programming errors with the following tools:
   - on properties with decorators
 
 Bonus points for contributions that include a performance analysis with
-a benchmark script and profiling output (please report on the mailing
-list or on the GitHub issue).
+a benchmark script and profiling output (see :ref:`monitoring_performances`).
 
 Also check out the :ref:`performance-howto` guide for more details on
 profiling and Cython optimizations.
@@ -478,9 +482,10 @@ message, the following actions are taken.
     ====================== ===================
     Commit Message Marker  Action Taken by CI
     ---------------------- -------------------
-    [scipy-dev]            Add a Travis build with our dependencies (numpy, scipy, etc ...) development builds
     [ci skip]              CI is skipped completely
     [lint skip]            Azure pipeline skips linting
+    [scipy-dev]            Add a Travis build with our dependencies (numpy, scipy, etc ...) development builds
+    [arm64]                Add a Travis build for the ARM64 / aarch64 little endian architecture
     [doc skip]             Docs are not built
     [doc quick]            Docs built, but excludes example gallery plots
     [doc build]            Docs built including example gallery plots
@@ -526,7 +531,7 @@ Stalled and Unclaimed Issues
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Generally speaking, issues which are up for grabs will have a
-`"help wanted" <https://github.com/scikit-learn/scikit-learn/labels/help%20wanted>`__ .
+`"help wanted" <https://github.com/scikit-learn/scikit-learn/labels/help%20wanted>`_.
 tag. However, not all issues which need contributors will have this tag,
 as the "help wanted" tag is not always up-to-date with the state
 of the issue. Contributors can find issues which are still up for grabs
@@ -586,7 +591,7 @@ underestimate how easy an issue is to solve!
     we use the help wanted tag to mark Pull Requests which have been abandoned
     by their original contributor and are available for someone to pick up where the original
     contributor left off. The list of issues with the help wanted tag can be found
-    `here <https://github.com/scikit-learn/scikit-learn/labels/help%20wanted>`__ .
+    `here <https://github.com/scikit-learn/scikit-learn/labels/help%20wanted>`_.
 
     Note that not all issues which need contributors will have this tag.
 
@@ -809,6 +814,99 @@ To test code coverage, you need to install the `coverage
     write or adapt a test specifically for these lines.
 
 3. Loop.
+
+.. _monitoring_performances:
+
+Monitoring performance
+======================
+
+*This section is heavily inspired from the* `pandas documentation 
+<https://pandas.pydata.org/docs/development/contributing.html#running-the-performance-test-suite>`_.
+
+When proposing changes to the existing code base, it's important to make sure
+that they don't introduce performance regressions. Scikit-learn uses
+`asv benchmarks <https://github.com/airspeed-velocity/asv>`_ to monitor the
+performance of a selection of common estimators and functions. The benchmark
+suite can be found in the `scikit-learn/asv_benchmarks` directory.
+
+To use all features of asv, you will need either `conda` or `virtualenv`. For
+more details please check the `asv installation webpage
+<https://asv.readthedocs.io/en/latest/installing.html>`_.
+
+First of all you need to install the development version of asv::
+
+  pip install git+https://github.com/airspeed-velocity/asv
+
+and change your directory to `asv_benchmarks/`::
+
+  cd asv_benchmarks/
+
+The benchmark suite is configured to run against your local clone of
+scikit-learn. Make sure it is up to date::
+
+  git fetch upstream
+
+In the benchmark suite, the benchmarks are organized following the same
+structure as scikit-learn. For example, you can compare the performance of a
+specific estimator between upstream/master and the branch you are working on::
+
+  asv continuous -b LogisticRegression upstream/master HEAD
+
+The command uses conda by default for creating the benchmark environments. If
+you want to use virtualenv instead, use the `-E` flag::
+
+  asv continuous -E virtualenv -b LogisticRegression upstream/master HEAD
+
+You can also specify a whole module to benchmark::
+
+  asv continuous -b linear_model upstream/master HEAD
+
+You can replace `HEAD` by any local branch. By default it will only report the
+benchmarks that have change by at least 10%. You can control this ratio with
+the `-f` flag.
+
+To run the full benchmark suite, simply remove the `-b` flag ::
+
+  asv continuous upstream/master HEAD
+
+However this can take up to two hours. The `-b` flag also accepts a regular
+expression for a more complex subset of benchmarks to run.
+
+To run the benchmarks without comparing to another branch, use the `run`
+command::
+
+  asv run -b linear_model HEAD^!
+
+You can also run the benchmark suite using the version of scikit-learn already
+installed in your current Python environment::
+
+  asv run --python=same
+
+It's particulary useful when you installed scikit-learn in editable mode to
+avoid creating a new environment each time you run the benchmarks. By default
+the results are not saved when using an existing installation. To save the
+results you must specify a commit hash::
+
+  asv run --python=same --set-commit-hash=<commit hash>
+
+Benchmarks are saved and organized by machine, environment and commit. To see
+the list of all saved benchmarks::
+
+  asv show
+
+and to see the report of a specific run::
+
+  asv show <commit hash>
+
+When running benchmarks for a pull request you're working on please report the
+results on github.
+
+The benchmark suite supports additional configurable options which can be set
+in the `benchmarks/config.json` configuration file. For example, the benchmarks
+can run for a provided list of values for the `n_jobs` parameter.
+
+More information on how to write a benchmark and how to use asv can be found in
+the `asv documentation <https://asv.readthedocs.io/en/latest/index.html>`_.
 
 Issue Tracker Tags
 ==================
@@ -1069,17 +1167,17 @@ make this task easier and faster (in no particular order).
   is performed, especially at the beginning of the :term:`fit` methods.
   Sometimes, only a very small portion of the code is doing the actual job.
   For example looking at the ``fit()`` method of
-  :class:`sklearn.linear_model.LinearRegression`, what you're looking for
+  :class:`~linear_model.LinearRegression`, what you're looking for
   might just be the call the ``scipy.linalg.lstsq``, but it is buried into
   multiple lines of input checking and the handling of different kinds of
   parameters.
 - Due to the use of `Inheritance
   <https://en.wikipedia.org/wiki/Inheritance_(object-oriented_programming)>`_,
   some methods may be implemented in parent classes. All estimators inherit
-  at least from :class:`BaseEstimator <sklearn.base.BaseEstimator>`, and
-  from a ``Mixin`` class (e.g. :class:`ClassifierMixin
-  <sklearn.base.ClassifierMixin>`) that enables default behaviour depending
-  on the nature of the estimator (classifier, regressor, transformer, etc.).
+  at least from :class:`~base.BaseEstimator`, and
+  from a ``Mixin`` class (e.g. :class:`~base.ClassifierMixin`) that enables default
+  behaviour depending on the nature of the estimator (classifier, regressor,
+  transformer, etc.).
 - Sometimes, reading the tests for a given function will give you an idea of
   what its intended purpose is. You can use ``git grep`` (see below) to find
   all the tests written for a function. Most tests for a specific
