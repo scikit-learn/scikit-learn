@@ -91,7 +91,7 @@ See the github description for `roles in the organization
 A typical workflow for triaging issues
 ----------------------------------------
 
-The following workflow [*]_ is a good way to approach issue triaging:
+The following workflow [1]_ is a good way to approach issue triaging:
 
 #. Thank the reporter for opening an issue
 
@@ -148,5 +148,5 @@ The following workflow [*]_ is a good way to approach issue triaging:
    An additional useful step can be to tag the corresponding module e.g.
    `sklearn.linear_models` when relevant.
 
-.. [*] Adapted from the pandas project `maintainers guide
+.. [1] Adapted from the pandas project `maintainers guide
        <https://dev.pandas.io/docs/development/maintaining.html>`_
