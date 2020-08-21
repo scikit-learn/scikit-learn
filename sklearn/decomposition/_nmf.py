@@ -1098,17 +1098,8 @@ class NMF(TransformerMixin, BaseEstimator):
 
             0.5 * ||X - WH||_{Fro}^2 + alpha * l1_{ratio} * ||vec(W)||_1
 
-            + alpha * l1_{ratio} * ||vec(H)||_1
-
-            + 0.5 * alpha * (1 - l1_{ratio}) * ||W||_{Fro}^2
-
-            + 0.5 * alpha * (1 - l1_{ratio}) * ||H||_{Fro}^2
-
-    Where:
-
-    :math:`||A||_{Fro}^2 = \\sum_{i,j} A_{ij}^2` (Frobenius norm)
-
-    :math:`||vec(A)||_1 = \\sum_{i,j} abs(A_{ij})` (Elementwise L1 norm)
+        ||A||_Fro^2 = \\sum_{i,j} A_{ij}^2 (Frobenius norm)
+        ||vec(A)||_1 = \\sum_{i,j} abs(A_{ij}) (Elementwise L1 norm)
 
     For multiplicative-update ('mu') solver, the Frobenius norm
     (:math:`0.5 * ||X - WH||_{Fro}^2`) can be changed into another
@@ -1208,6 +1199,13 @@ class NMF(TransformerMixin, BaseEstimator):
         .. versionadded:: 0.17
            *shuffle* parameter used in the Coordinate Descent solver.
 
+    regularization : {'both', 'components', 'transformation', None}, \
+                     default='both'
+        Select whether the regularization affects the components (H), the
+        transformation (W), both or none of them.
+
+        .. versionadded:: 0.24
+
     Attributes
     ----------
     components_ : ndarray of shape (n_components, n_features)
@@ -1249,7 +1247,7 @@ class NMF(TransformerMixin, BaseEstimator):
     def __init__(self, n_components=None, *, init=None, solver='cd',
                  beta_loss='frobenius', tol=1e-4, max_iter=200,
                  random_state=None, alpha=0., l1_ratio=0., verbose=0,
-                 shuffle=False):
+                 shuffle=False, regularization='both'):
         self.n_components = n_components
         self.init = init
         self.solver = solver
@@ -1261,6 +1259,7 @@ class NMF(TransformerMixin, BaseEstimator):
         self.l1_ratio = l1_ratio
         self.verbose = verbose
         self.shuffle = shuffle
+        self.regularization = regularization
 
     def _more_tags(self):
         return {'requires_positive_X': True}
@@ -1295,7 +1294,7 @@ class NMF(TransformerMixin, BaseEstimator):
             X=X, W=W, H=H, n_components=self.n_components, init=self.init,
             update_H=True, solver=self.solver, beta_loss=self.beta_loss,
             tol=self.tol, max_iter=self.max_iter, alpha=self.alpha,
-            l1_ratio=self.l1_ratio, regularization='both',
+            l1_ratio=self.l1_ratio, regularization=self.regularization,
             random_state=self.random_state, verbose=self.verbose,
             shuffle=self.shuffle)
 
@@ -1344,9 +1343,10 @@ class NMF(TransformerMixin, BaseEstimator):
             X=X, W=None, H=self.components_, n_components=self.n_components_,
             init=self.init, update_H=False, solver=self.solver,
             beta_loss=self.beta_loss, tol=self.tol, max_iter=self.max_iter,
-            alpha=self.alpha, l1_ratio=self.l1_ratio, regularization='both',
-            random_state=self.random_state, verbose=self.verbose,
-            shuffle=self.shuffle)
+            alpha=self.alpha, l1_ratio=self.l1_ratio,
+            regularization=self.regularization,
+            random_state=self.random_state,
+            verbose=self.verbose, shuffle=self.shuffle)
 
         return W
 

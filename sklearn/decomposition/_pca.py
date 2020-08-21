@@ -47,7 +47,7 @@ def _assess_dimension(spectrum, rank, n_samples):
 
     Returns
     -------
-    ll : float,
+    ll : float
         The log-likelihood
 
     Notes
@@ -188,12 +188,14 @@ class PCA(_BasePCA):
 
     tol : float, default=0.0
         Tolerance for singular values computed by svd_solver == 'arpack'.
+        Must be of range [0.0, infinity).
 
         .. versionadded:: 0.18.0
 
     iterated_power : int or 'auto', default='auto'
         Number of iterations for the power method computed by
         svd_solver == 'randomized'.
+        Must be of range [0, infinity).
 
         .. versionadded:: 0.18.0
 
@@ -571,7 +573,7 @@ class PCA(_BasePCA):
 
         Parameters
         ----------
-        X : ndarray of shape(n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The data.
 
         Returns
@@ -599,7 +601,7 @@ class PCA(_BasePCA):
 
         Parameters
         ----------
-        X : ndarray of shape(n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The data.
 
         y : Ignored
