@@ -47,7 +47,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
 
     Attributes
     ----------
-    classes_ : ndarray of shape (n_class,)
+    classes_ : ndarray of shape (n_classes,)
         Holds the label for each class.
 
     Examples
@@ -204,7 +204,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
     Attributes
     ----------
 
-    classes_ : ndarray of shape (n_class,)
+    classes_ : ndarray of shape (n_classes,)
         Holds the label for each class.
 
     y_type_ : str
@@ -309,7 +309,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         y : {ndarray, sparse matrix} of shape (n_samples,) or \
-            (n_samples, n_classes)
+                (n_samples, n_classes)
             Target values. The 2-d matrix should only contain 0 and 1,
             represents multilabel classification. Sparse matrix can be
             CSR, CSC, COO, DOK, or LIL.
@@ -317,7 +317,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
         Returns
         -------
         Y : {ndarray, sparse matrix} of shape (n_samples, n_classes)
-            Shape will be [n_samples, 1] for binary problems. Sparse matrix
+            Shape will be (n_samples, 1) for binary problems. Sparse matrix
             will be of CSR format.
         """
         return self.fit(y).transform(y)
@@ -331,7 +331,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         y : {array, sparse matrix} of shape (n_samples,) or \
-            (n_samples, n_classes)
+                (n_samples, n_classes)
             Target values. The 2-d matrix should only contain 0 and 1,
             represents multilabel classification. Sparse matrix can be
             CSR, CSC, COO, DOK, or LIL.
@@ -339,7 +339,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
         Returns
         -------
         Y : {ndarray, sparse matrix} of shape (n_samples, n_classes)
-            Shape will be [n_samples, 1] for binary problems. Sparse matrix
+            Shape will be (n_samples, 1) for binary problems. Sparse matrix
             will be of CSR format.
         """
         check_is_fitted(self)
@@ -441,7 +441,7 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1,
     Returns
     -------
     Y : {ndarray, sparse matrix} of shape (n_samples, n_classes)
-        Shape will be [n_samples, 1] for binary problems. Sparse matrix will
+        Shape will be (n_samples, 1) for binary problems. Sparse matrix will
         be of CSR format.
 
     Examples
@@ -674,7 +674,7 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
         All entries should be unique (cannot contain duplicate classes).
 
     sparse_output : bool, default=False
-        Set to true if output binary array is desired in CSR sparse format.
+        Set to True if output binary array is desired in CSR sparse format.
 
     Attributes
     ----------
@@ -768,7 +768,7 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
         Returns
         -------
         y_indicator : {ndarray, sparse matrix} of shape (n_samples, n_classes)
-            A matrix such that `y_indicator[i, j] = 1` iff `classes_[j]` is in
+            A matrix such that `y_indicator[i, j] = 1` i.f.f. `classes_[j]` is in
             `y[i]`, and 0 otherwise. Sparse matrix will be of CSR format.
         """
         self._cached_dict = None
