@@ -63,7 +63,7 @@ class DetCurveDisplay:
             created.
 
         name : str, default=None
-            Name of DET Curve for labeling. If `None`, use the name of the
+            Name of DET curve for labeling. If `None`, use the name of the
             estimator.
 
         Returns
