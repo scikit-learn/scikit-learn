@@ -188,10 +188,12 @@ def test_resample_none_support():
 
     X, y, groups = resample(X, y, groups, n_samples=50)
     assert y is groups is None
+    assert X.shape[0] == 50
 
     # first array may be None
     y, X, groups = resample(y, X, groups, n_samples=50)
     assert y is groups is None
+    assert X.shape[0] == 50
 
     assert resample(None) is None
     assert resample(None, None) == (None, None)
