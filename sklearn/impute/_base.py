@@ -461,8 +461,8 @@ class SimpleImputer(_BaseImputer):
                                  "== 0 and input is sparse. Provide a dense "
                                  "array instead.")
             else:
-                # if invalid statistics are eliminated recompute mask
-                # else use the mask compued before eliminating invalid mask
+                # if no invalid statistics are found, use the mask computed
+                # before, else recompute mask
                 if valid_statistics_indexes is None:
                     mask = missing_mask.data
                 else:
