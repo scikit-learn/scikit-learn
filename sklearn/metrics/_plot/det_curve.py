@@ -46,6 +46,17 @@ class DetCurveDisplay:
 
     Examples
     --------
+    >>> import matplotlib.pyplot as plt  # doctest: +SKIP
+    >>> import numpy as np
+    >>> from sklearn import metrics
+    >>> y = np.array([0, 0, 1, 1])
+    >>> pred = np.array([0.1, 0.4, 0.35, 0.8])
+    >>> fpr, fnr, thresholds = metrics.det_curve(y, pred)
+    >>> display = metrics.DetCurveDisplay(
+    ...     fpr=fpr, fnr=fnr, estimator_name='example estimator'
+    ... )
+    >>> display.plot()  # doctest: +SKIP
+    >>> plt.show()      # doctest: +SKIP
     """
     def __init__(self, *, fpr, fnr, estimator_name=None, pos_label=None):
         self.fpr = fpr
@@ -182,6 +193,16 @@ def plot_det_curve(
 
     Examples
     --------
+    >>> import matplotlib.pyplot as plt  # doctest: +SKIP
+    >>> from sklearn import datasets, metrics, model_selection, svm
+    >>> X, y = datasets.make_classification(random_state=0)
+    >>> X_train, X_test, y_train, y_test = model_selection.train_test_split(
+    ...     X, y, random_state=0)
+    >>> clf = svm.SVC(random_state=0)
+    >>> clf.fit(X_train, y_train)
+    SVC(random_state=0)
+    >>> metrics.plot_det_curve(clf, X_test, y_test)  # doctest: +SKIP
+    >>> plt.show()                                   # doctest: +SKIP
     """
     check_matplotlib_support('plot_det_curve')
 
