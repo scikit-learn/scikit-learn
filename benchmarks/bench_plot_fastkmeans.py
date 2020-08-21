@@ -93,9 +93,9 @@ if __name__ == '__main__':
     from mpl_toolkits.mplot3d import axes3d  # register the 3d projection
     import matplotlib.pyplot as plt
 
-    samples_range = np.linspace(50, 150, 5).astype(np.int)
-    features_range = np.linspace(150, 50000, 5).astype(np.int)
-    chunks = np.linspace(500, 10000, 15).astype(np.int)
+    samples_range = np.linspace(50, 150, 5).astype(int)
+    features_range = np.linspace(150, 50000, 5).astype(int)
+    chunks = np.linspace(500, 10000, 15).astype(int)
 
     results = compute_bench(samples_range, features_range)
     results_2 = compute_bench_2(chunks)

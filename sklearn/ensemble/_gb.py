@@ -29,6 +29,7 @@ from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..base import BaseEstimator
 from ..base import is_classifier
+from ..utils import deprecated
 
 from ._gradient_boosting import predict_stages
 from ._gradient_boosting import predict_stage
@@ -165,11 +166,15 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         self.n_iter_no_change = n_iter_no_change
         self.tol = tol
 
-    def _fit_stage(self, i, X, y, raw_predictions, sample_weight, sample_mask,
-                   random_state, X_idx_sorted, X_csc=None, X_csr=None):
-        """Fit another stage of ``n_classes_`` trees to the boosting model. """
+    @abstractmethod
+    def _validate_y(self, y, sample_weight=None):
+        """Called by fit to validate y"""
 
-        assert sample_mask.dtype == np.bool
+    def _fit_stage(self, i, X, y, raw_predictions, sample_weight, sample_mask,
+                   random_state, X_csc=None, X_csr=None):
+        """Fit another stage of ``_n_classes`` trees to the boosting model. """
+
+        assert sample_mask.dtype == bool
         loss = self.loss_
         original_y = y
 
@@ -207,7 +212,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
             X = X_csr if X_csr is not None else X
             tree.fit(X, residual, sample_weight=sample_weight,
-                     check_input=False, X_idx_sorted=X_idx_sorted)
+                     check_input=False)
 
             # update tree leaves
             loss.update_terminal_regions(
@@ -240,10 +245,12 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         else:
             loss_class = _gb_losses.LOSS_FUNCTIONS[self.loss]
 
-        if self.loss in ('huber', 'quantile'):
-            self.loss_ = loss_class(self.n_classes_, self.alpha)
-        else:
+        if is_classifier(self):
             self.loss_ = loss_class(self.n_classes_)
+        elif self.loss in ("huber", "quantile"):
+            self.loss_ = loss_class(self.alpha)
+        else:
+            self.loss_ = loss_class()
 
         if not (0.0 < self.subsample <= 1.0):
             raise ValueError("subsample must be in (0,1] but "
@@ -265,11 +272,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         if isinstance(self.max_features, str):
             if self.max_features == "auto":
-                # if is_classification
-                if self.n_classes_ > 1:
+                if is_classifier(self):
                     max_features = max(1, int(np.sqrt(self.n_features_)))
                 else:
-                    # is regression
                     max_features = self.n_features_
             elif self.max_features == "sqrt":
                 max_features = max(1, int(np.sqrt(self.n_features_)))
@@ -306,7 +311,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             self.init_ = self.loss_.init_estimator()
 
         self.estimators_ = np.empty((self.n_estimators, self.loss_.K),
-                                    dtype=np.object)
+                                    dtype=object)
         self.train_score_ = np.zeros((self.n_estimators,), dtype=np.float64)
         # do oob?
         if self.subsample < 1.0:
@@ -316,7 +321,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
     def _clear_state(self):
         """Clear the state of the gradient boosting model. """
         if hasattr(self, 'estimators_'):
-            self.estimators_ = np.empty((0, 0), dtype=np.object)
+            self.estimators_ = np.empty((0, 0), dtype=object)
         if hasattr(self, 'train_score_'):
             del self.train_score_
         if hasattr(self, 'oob_improvement_'):
@@ -405,7 +410,11 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         sample_weight = _check_sample_weight(sample_weight, X)
 
         y = column_or_1d(y, warn=True)
-        y = self._validate_y(y, sample_weight)
+
+        if is_classifier(self):
+            y = self._validate_y(y, sample_weight)
+        else:
+            y = self._validate_y(y)
 
         if self.n_iter_no_change is not None:
             stratify = y if is_classifier(self) else None
@@ -415,7 +424,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                                  test_size=self.validation_fraction,
                                  stratify=stratify))
             if is_classifier(self):
-                if self.n_classes_ != np.unique(y).shape[0]:
+                if self._n_classes != np.unique(y).shape[0]:
                     # We choose to error here. The problem is that the init
                     # estimator would be trained on y, which has some missing
                     # classes now, so its predictions would not have the
@@ -482,12 +491,10 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             raw_predictions = self._raw_predict(X)
             self._resize_state()
 
-        X_idx_sorted = None
-
         # fit the boosting stages
         n_stages = self._fit_stages(
             X, y, raw_predictions, sample_weight, self._rng, X_val, y_val,
-            sample_weight_val, begin_at_stage, monitor, X_idx_sorted)
+            sample_weight_val, begin_at_stage, monitor)
 
         # change shape of arrays after fit (early-stopping or additional ests)
         if n_stages != self.estimators_.shape[0]:
@@ -501,7 +508,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
     def _fit_stages(self, X, y, raw_predictions, sample_weight, random_state,
                     X_val, y_val, sample_weight_val,
-                    begin_at_stage=0, monitor=None, X_idx_sorted=None):
+                    begin_at_stage=0, monitor=None):
         """Iteratively fits the stages.
 
         For each stage it computes the progress (OOB, train score)
@@ -511,7 +518,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         """
         n_samples = X.shape[0]
         do_oob = self.subsample < 1.0
-        sample_mask = np.ones((n_samples, ), dtype=np.bool)
+        sample_mask = np.ones((n_samples, ), dtype=bool)
         n_inbag = max(1, int(self.subsample * n_samples))
         loss_ = self.loss_
 
@@ -544,7 +551,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             # fit next stage of trees
             raw_predictions = self._fit_stage(
                 i, X, y, raw_predictions, sample_weight, sample_mask,
-                random_state, X_idx_sorted, X_csc, X_csr)
+                random_state, X_csc, X_csr)
 
             # track deviance (= loss)
             if do_oob:
@@ -713,15 +720,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         return averaged_predictions
 
-    def _validate_y(self, y, sample_weight):
-        # 'sample_weight' is not utilised but is used for
-        # consistency with similar method _validate_y of GBC
-        self.n_classes_ = 1
-        if y.dtype.kind == 'O':
-            y = y.astype(DOUBLE)
-        # Default implementation
-        return y
-
     def apply(self, X):
         """Apply trees in the ensemble to X, return leaf indices.
 
@@ -773,13 +771,13 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     Parameters
     ----------
     loss : {'deviance', 'exponential'}, default='deviance'
-        loss function to be optimized. 'deviance' refers to
+        The loss function to be optimized. 'deviance' refers to
         deviance (= logistic regression) for classification
         with probabilistic outputs. For loss 'exponential' gradient
         boosting recovers the AdaBoost algorithm.
 
     learning_rate : float, default=0.1
-        learning rate shrinks the contribution of each tree by `learning_rate`.
+        Learning rate shrinks the contribution of each tree by `learning_rate`.
         There is a trade-off between learning_rate and n_estimators.
 
     n_estimators : int, default=100
@@ -836,7 +834,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         equal weight when sample_weight is not provided.
 
     max_depth : int, default=3
-        maximum depth of the individual regression estimators. The maximum
+        The maximum depth of the individual regression estimators. The maximum
         depth limits the number of nodes in the tree. Tune this parameter
         for best performance; the best value depends on the interaction
         of the input variables.
@@ -1008,6 +1006,23 @@ shape (n_estimators, ``loss_.K``)
     max_features_ : int
         The inferred value of max_features.
 
+
+    See Also
+    --------
+    sklearn.ensemble.HistGradientBoostingClassifier : Histogram-based Gradient
+        Boosting Classification Tree.
+    sklearn.tree.DecisionTreeClassifier : A decision tree classifier.
+    sklearn.ensemble.RandomForestClassifier : A meta-estimator that fits a
+        number of decision tree classifiers on various sub-samples of the
+        dataset and uses averaging to improve the predictive accuracy and
+        control over-fitting.
+    sklearn.ensemble.AdaBoostClassifier : A meta-estimator that begins by
+        fitting a classifier on the original dataset and then fits additional
+        copies of the classifier on the same dataset where the weights of
+        incorrectly classified instances are adjusted such that subsequent
+        classifiers focus more on difficult cases.
+
+
     Notes
     -----
     The features are always randomly permuted at each split. Therefore,
@@ -1016,28 +1031,6 @@ shape (n_estimators, ``loss_.K``)
     identical for several splits enumerated during the search of the best
     split. To obtain a deterministic behaviour during fitting,
     ``random_state`` has to be fixed.
-
-    Examples
-    --------
-    >>> from sklearn.datasets import make_classification
-    >>> from sklearn.ensemble import GradientBoostingClassifier
-    >>> from sklearn.model_selection import train_test_split
-    >>> X, y = make_classification(random_state=0)
-    >>> X_train, X_test, y_train, y_test = train_test_split(
-    ...     X, y, random_state=0)
-    >>> clf = GradientBoostingClassifier(random_state=0)
-    >>> clf.fit(X_train, y_train)
-    GradientBoostingClassifier(random_state=0)
-    >>> clf.predict(X_test[:2])
-    array([1, 0])
-    >>> clf.score(X_test, y_test)
-    0.88
-
-    See also
-    --------
-    sklearn.ensemble.HistGradientBoostingClassifier,
-    sklearn.tree.DecisionTreeClassifier, RandomForestClassifier
-    AdaBoostClassifier
 
     References
     ----------
@@ -1048,6 +1041,23 @@ shape (n_estimators, ``loss_.K``)
 
     T. Hastie, R. Tibshirani and J. Friedman.
     Elements of Statistical Learning Ed. 2, Springer, 2009.
+
+    Examples
+    --------
+    The following example shows how to fit a gradient boosting classifier with
+    100 decision stumps as weak learners.
+
+    >>> from sklearn.datasets import make_hastie_10_2
+    >>> from sklearn.ensemble import GradientBoostingClassifier
+
+    >>> X, y = make_hastie_10_2(random_state=0)
+    >>> X_train, X_test = X[:2000], X[2000:]
+    >>> y_train, y_test = y[:2000], y[2000:]
+
+    >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
+    ...     max_depth=1, random_state=0).fit(X_train, y_train)
+    >>> clf.score(X_test, y_test)
+    0.913...
     """
 
     _SUPPORTED_LOSS = ('deviance', 'exponential')
@@ -1086,7 +1096,9 @@ shape (n_estimators, ``loss_.K``)
                              "trimmed classes with zero weights, while a "
                              "minimum of 2 classes are required."
                              % n_trim_classes)
-        self.n_classes_ = len(self.classes_)
+        self._n_classes = len(self.classes_)
+        # expose n_classes_ attribute
+        self.n_classes_ = self._n_classes
         return y
 
     def decision_function(self, X):
@@ -1276,14 +1288,14 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     Parameters
     ----------
     loss : {'ls', 'lad', 'huber', 'quantile'}, default='ls'
-        loss function to be optimized. 'ls' refers to least squares
+        Loss function to be optimized. 'ls' refers to least squares
         regression. 'lad' (least absolute deviation) is a highly robust
         loss function solely based on order information of the input
         variables. 'huber' is a combination of the two. 'quantile'
         allows quantile regression (use `alpha` to specify the quantile).
 
     learning_rate : float, default=0.1
-        learning rate shrinks the contribution of each tree by `learning_rate`.
+        Learning rate shrinks the contribution of each tree by `learning_rate`.
         There is a trade-off between learning_rate and n_estimators.
 
     n_estimators : int, default=100
@@ -1340,7 +1352,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         equal weight when sample_weight is not provided.
 
     max_depth : int, default=3
-        maximum depth of the individual regression estimators. The maximum
+        Maximum depth of the individual regression estimators. The maximum
         depth limits the number of nodes in the tree. Tune this parameter
         for best performance; the best value depends on the interaction
         of the input variables.
@@ -1496,11 +1508,30 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     estimators_ : ndarray of DecisionTreeRegressor of shape (n_estimators, 1)
         The collection of fitted sub-estimators.
 
+    n_classes_ : int
+        The number of classes, set to 1 for regressors.
+
+        .. deprecated:: 0.24
+            Attribute ``n_classes_`` was deprecated in version 0.24 and
+            will be removed in 0.26.
+
+    n_estimators_ : int
+        The number of estimators as selected by early stopping (if
+        ``n_iter_no_change`` is specified). Otherwise it is set to
+        ``n_estimators``.
+
     n_features_ : int
         The number of data features.
 
     max_features_ : int
         The inferred value of max_features.
+
+    See Also
+    --------
+    sklearn.ensemble.HistGradientBoostingRegressor : Histogram-based
+        Gradient Boosting Classification Tree.
+    sklearn.tree.DecisionTreeRegressor : A decision tree regressor.
+    sklearn.tree.RandomForestRegressor : A random forest regressor.
 
     Notes
     -----
@@ -1526,11 +1557,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     array([-61...])
     >>> reg.score(X_test, y_test)
     0.4...
-
-    See also
-    --------
-    sklearn.ensemble.HistGradientBoostingRegressor,
-    sklearn.tree.DecisionTreeRegressor, RandomForestRegressor
 
     References
     ----------
@@ -1568,6 +1594,11 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
             max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
             validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, tol=tol, ccp_alpha=ccp_alpha)
+
+    def _validate_y(self, y, sample_weight=None):
+        if y.dtype.kind == 'O':
+            y = y.astype(DOUBLE)
+        return y
 
     def predict(self, X):
         """Predict regression target for X.
@@ -1631,3 +1662,18 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         leaves = super().apply(X)
         leaves = leaves.reshape(X.shape[0], self.estimators_.shape[0])
         return leaves
+
+    # FIXME: to be removed in 0.26
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute n_classes_ was deprecated "  # type: ignore
+                "in version 0.24 and will be removed in 0.26.")
+    @property
+    def n_classes_(self):
+        try:
+            check_is_fitted(self)
+        except NotFittedError as nfe:
+            raise AttributeError(
+                "{} object has no n_classes_ attribute."
+                .format(self.__class__.__name__)
+            ) from nfe
+        return 1

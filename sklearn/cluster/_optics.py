@@ -84,7 +84,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
 
     p : int, default=2
         Parameter for the Minkowski metric from
-        :class:`sklearn.metrics.pairwise_distances`. When p = 1, this is
+        :class:`~sklearn.metrics.pairwise_distances`. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
@@ -244,7 +244,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
         self : instance of OPTICS
             The instance.
         """
-        X = self._validate_data(X, dtype=np.float)
+        X = self._validate_data(X, dtype=float)
 
         if self.cluster_method not in ['dbscan', 'xi']:
             raise ValueError("cluster_method should be one of"
@@ -391,7 +391,7 @@ def compute_optics_graph(X, *, min_samples, max_eps, metric, p, metric_params,
 
     p : int, default=2
         Parameter for the Minkowski metric from
-        :class:`sklearn.metrics.pairwise_distances`. When p = 1, this is
+        :class:`~sklearn.metrics.pairwise_distances`. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
@@ -664,10 +664,10 @@ def _extend_region(steep_point, xward_point, start, min_samples):
 
     Parameters
     ----------
-    steep_point : ndarray of shape (n_samples,), dtype=np.bool
+    steep_point : ndarray of shape (n_samples,), dtype=bool
         True if the point is steep downward (upward).
 
-    xward_point : ndarray of shape (n_samples,), dtype=np.bool
+    xward_point : ndarray of shape (n_samples,), dtype=bool
         True if the point is an upward (respectively downward) point.
 
     start : int

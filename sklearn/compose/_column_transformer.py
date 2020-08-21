@@ -639,7 +639,22 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             return np.hstack(Xs)
 
     def _sk_visual_block_(self):
-        names, transformers, name_details = zip(*self.transformers)
+        if isinstance(self.remainder, str) and self.remainder == 'drop':
+            transformers = self.transformers
+        elif hasattr(self, "_remainder"):
+            remainder_columns = self._remainder[2]
+            if hasattr(self, '_df_columns'):
+                remainder_columns = (
+                    self._df_columns[remainder_columns].tolist()
+                )
+            transformers = chain(self.transformers,
+                                 [('remainder', self.remainder,
+                                   remainder_columns)])
+        else:
+            transformers = chain(self.transformers,
+                                 [('remainder', self.remainder, '')])
+
+        names, transformers, name_details = zip(*transformers)
         return _VisualBlock('parallel', transformers,
                             names=names, name_details=name_details)
 
@@ -648,7 +663,7 @@ def _check_X(X):
     """Use check_array only on lists and other non-array-likes / sparse"""
     if hasattr(X, '__array__') or sparse.issparse(X):
         return X
-    return check_array(X, force_all_finite='allow-nan', dtype=np.object)
+    return check_array(X, force_all_finite='allow-nan', dtype=object)
 
 
 def _is_empty_column_selection(column):
@@ -660,7 +675,9 @@ def _is_empty_column_selection(column):
     if hasattr(column, 'dtype') and np.issubdtype(column.dtype, np.bool_):
         return not column.any()
     elif hasattr(column, '__len__'):
-        return len(column) == 0
+        return (len(column) == 0 or
+                all(isinstance(col, bool) for col in column)
+                and not any(column))
     else:
         return False
 
@@ -677,7 +694,11 @@ def _get_transformer_list(estimators):
     return transformer_list
 
 
-def make_column_transformer(*transformers, **kwargs):
+def make_column_transformer(*transformers,
+                            remainder='drop',
+                            sparse_threshold=0.3,
+                            n_jobs=None,
+                            verbose=False):
     """Construct a ColumnTransformer from the given transformers.
 
     This is a shorthand for the ColumnTransformer constructor; it does not
@@ -764,13 +785,6 @@ def make_column_transformer(*transformers, **kwargs):
     """
     # transformer_weights keyword is not passed through because the user
     # would need to know the automatically generated names of the transformers
-    n_jobs = kwargs.pop('n_jobs', None)
-    remainder = kwargs.pop('remainder', 'drop')
-    sparse_threshold = kwargs.pop('sparse_threshold', 0.3)
-    verbose = kwargs.pop('verbose', False)
-    if kwargs:
-        raise TypeError('Unknown keyword arguments: "{}"'
-                        .format(list(kwargs.keys())[0]))
     transformer_list = _get_transformer_list(transformers)
     return ColumnTransformer(transformer_list, n_jobs=n_jobs,
                              remainder=remainder,

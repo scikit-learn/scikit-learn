@@ -997,7 +997,7 @@ class SGDClassifier(BaseSGDClassifier):
         (clip(decision_function(X), -1, 1) + 1) / 2. For other loss functions
         it is necessary to perform proper probability calibration by wrapping
         the classifier with
-        :class:`sklearn.calibration.CalibratedClassifierCV` instead.
+        :class:`~sklearn.calibration.CalibratedClassifierCV` instead.
 
         Parameters
         ----------
@@ -1098,7 +1098,7 @@ class SGDClassifier(BaseSGDClassifier):
     def _more_tags(self):
         return {
             '_xfail_checks': {
-                'check_sample_weights_invariance(kind=zeros)':
+                'check_sample_weights_invariance':
                 'zero sample_weight is not equivalent to removing samples',
             }
         }
@@ -1588,7 +1588,7 @@ class SGDRegressor(BaseSGDRegressor):
     def _more_tags(self):
         return {
             '_xfail_checks': {
-                'check_sample_weights_invariance(kind=zeros)':
+                'check_sample_weights_invariance':
                 'zero sample_weight is not equivalent to removing samples',
             }
         }

@@ -29,7 +29,7 @@ until the validation score did not improve by at least ``tol`` during the last
 at the attribute ``n_iter_``.
 
 This example illustrates how the early stopping can used in the
-:class:`sklearn.linear_model.SGDClassifier` model to achieve almost the same
+:class:`~sklearn.linear_model.SGDClassifier` model to achieve almost the same
 accuracy as compared to a model built without early stopping. This can
 significantly reduce training time. Note that scores differ between the
 stopping criteria even from early iterations because some of the training data

@@ -1948,3 +1948,16 @@ def check_apply_path_readonly(name):
 @pytest.mark.parametrize("name", ALL_TREES)
 def test_apply_path_readonly_all_trees(name):
     check_apply_path_readonly(name)
+
+
+# TODO: Remove in v0.26
+@pytest.mark.parametrize("TreeEstimator", [DecisionTreeClassifier,
+                                           DecisionTreeRegressor])
+def test_X_idx_sorted_deprecated(TreeEstimator):
+    X_idx_sorted = np.argsort(X, axis=0)
+
+    tree = TreeEstimator()
+
+    with pytest.warns(FutureWarning,
+                      match="The parameter 'X_idx_sorted' is deprecated"):
+        tree.fit(X, y, X_idx_sorted=X_idx_sorted)
