@@ -78,7 +78,7 @@ def fetch_kddcup99(*, subset=None, data_home=None, shuffle=False,
     shuffle : bool, default=False
         Whether to shuffle dataset.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for dataset shuffling and for
         selection of abnormal samples if `subset='SA'`. Pass an int for
         reproducible output across multiple function calls.
@@ -200,12 +200,12 @@ def _fetch_brute_kddcup99(data_home=None,
     dataset : :class:`~sklearn.utils.Bunch`
         Dictionary-like object, with the following attributes.
 
-        data : numpy array of shape (494021, 41)
+        data : ndarray of shape (494021, 41)
             Each row corresponds to the 41 features in the dataset.
-        target : numpy array of shape (494021,)
+        target : ndarray of shape (494021,)
             Each value corresponds to one of the 21 attack types or to the
             label 'normal.'.
-        DESCR : string
+        DESCR : str
             Description of the kddcup99 dataset.
 
     """
