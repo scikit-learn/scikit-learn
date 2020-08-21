@@ -56,8 +56,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
     Zohar Karnin, Tomer Koren, Oren Somekh
     """
     def __init__(self, estimator, *, scoring=None,
-                 n_jobs=None, refit=True, cv=5, verbose=0,
-                 pre_dispatch='2*n_jobs', random_state=None,
+                 n_jobs=None, refit=True, cv=5, verbose=0, random_state=None,
                  error_score=np.nan, return_train_score=True,
                  max_resources='auto', min_resources='exhaust',
                  resource='n_samples', ratio=3, aggressive_elimination=False):
@@ -65,7 +64,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
         refit = _refit_callable if refit else False
         super().__init__(estimator, scoring=scoring,
                          n_jobs=n_jobs, refit=refit, cv=cv,
-                         verbose=verbose, pre_dispatch=pre_dispatch,
+                         verbose=verbose,
                          error_score=error_score,
                          return_train_score=return_train_score)
 
@@ -350,87 +349,18 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         in the list are explored. This enables searching over any sequence
         of parameter settings.
 
-    scoring : string, callable, or None, default=None
-        A single string (see :ref:`scoring_parameter`) or a callable
-        (see :ref:`scoring`) to evaluate the predictions on the test set.
-        If None, the estimator's score method is used.
+    ratio : int or float, default=3
+        The 'halving' parameter, which determines the proportion of candidates
+        that are selected for each subsequent iteration. For example,
+        ``ratio=3`` means that only one third of the candidates are selected.
 
-    n_jobs : int or None, default=None
-        Number of jobs to run in parallel.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-        for more details.
-
-    random_state : int, RandomState instance or None, default=None
-        Pseudo random number generator state used for subsampling the dataset
-        when `resources != 'n_samples'`. Ignored otherwise.
-        Pass an int for reproducible output across multiple function calls.
-        See :term:`Glossary <random_state>`.
-
-    pre_dispatch : int, or string, optional
-        Controls the number of jobs that get dispatched during parallel
-        execution. Reducing this number can be useful to avoid an
-        explosion of memory consumption when more jobs get dispatched
-        than CPUs can process. This parameter can be:
-
-            - None, in which case all the jobs are immediately
-              created and spawned. Use this for lightweight and
-              fast-running jobs, to avoid delays due to on-demand
-              spawning of the jobs
-
-            - An int, giving the exact number of total jobs that are
-              spawned
-
-            - A string, giving an expression as a function of n_jobs,
-              as in '2*n_jobs' (default)
-
-    cv : int, cross-validation generator or iterable, default=5
-        Determines the cross-validation splitting strategy.
-        Possible inputs for cv are:
-
-        - integer, to specify the number of folds in a `(Stratified)KFold`,
-        - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
-
-        For integer/None inputs, if the estimator is a classifier and ``y`` is
-        either binary or multiclass, :class:`StratifiedKFold` is used. In all
-        other cases, :class:`KFold` is used.
-
-        Refer :ref:`User Guide <cross_validation>` for the various
-        cross-validation strategies that can be used here.
-
-        .. note::
-            Due to implementation details, the folds produced by `cv` must be
-            the same across multiple calls to `cv.split()`. For
-            built-in `scikit-learn` iterators, this can be achieved by
-            deactivating shuffling (`shuffle=False`), or by setting the
-            `cv`'s `random_state` parameter to an integer.
-
-    refit : boolean, default=True
-        If True, refit an estimator using the best found parameters on the
-        whole dataset.
-
-        The refitted estimator is made available at the ``best_estimator_``
-        attribute and permits using ``predict`` directly on this
-        ``GridSearchCV`` instance.
-
-    verbose : integer
-        Controls the verbosity: the higher, the more messages.
-
-    error_score : 'raise' or numeric
-        Value to assign to the score if an error occurs in estimator fitting.
-        If set to 'raise', the error is raised. If a numeric value is given,
-        FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error. Default is ``np.nan``
-
-    return_train_score : boolean, default=False
-        If ``False``, the ``cv_results_`` attribute will not include training
-        scores.
-        Computing training scores is used to get insights on how different
-        parameter settings impact the overfitting/underfitting trade-off.
-        However computing the scores on the training set can be computationally
-        expensive and is not strictly required to select the parameters that
-        yield the best generalization performance.
+    resource : ``'n_samples'`` or str, default='n_samples'
+        Defines the resource that increases with each iteration. By default,
+        the resource is the number of samples. It can also be set to any
+        parameter of the base estimator that accepts positive integer
+        values, e.g. 'n_iterations' or 'n_estimators' for a gradient
+        boosting estimator. In this case ``max_resources`` cannot be 'auto'
+        and must be set explicitly.
 
     max_resources : int, default='auto'
         The maximum amount of resource that any candidate is allowed to use
@@ -459,19 +389,6 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         Note that the amount of resources used at each iteration is always a
         multiple of ``min_resources``.
 
-    resource : ``'n_samples'`` or str, default='n_samples'
-        Defines the resource that increases with each iteration. By default,
-        the resource is the number of samples. It can also be set to any
-        parameter of the base estimator that accepts positive integer
-        values, e.g. 'n_iterations' or 'n_estimators' for a gradient
-        boosting estimator. In this case ``max_resources`` cannot be 'auto'
-        and must be set explicitly.
-
-    ratio : int or float, default=3
-        The 'halving' parameter, which determines the proportion of candidates
-        that are selected for each subsequent iteration. For example,
-        ``ratio=3`` means that only one third of the candidates are selected.
-
     aggressive_elimination : bool, default=False
         This is only relevant in cases where there isn't enough resources to
         reduce the candidates to at most `ratio` in the last iteration. If
@@ -480,6 +397,71 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         This is ``False`` by default, which means that the last iteration may
         evaluate more than ``ratio`` candidates. See
         :ref:`aggressive_elimination` for more details.
+
+    cv : int, cross-validation generator or iterable, default=5
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+
+        - integer, to specify the number of folds in a `(Stratified)KFold`,
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
+
+        For integer/None inputs, if the estimator is a classifier and ``y`` is
+        either binary or multiclass, :class:`StratifiedKFold` is used. In all
+        other cases, :class:`KFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
+
+        .. note::
+            Due to implementation details, the folds produced by `cv` must be
+            the same across multiple calls to `cv.split()`. For
+            built-in `scikit-learn` iterators, this can be achieved by
+            deactivating shuffling (`shuffle=False`), or by setting the
+            `cv`'s `random_state` parameter to an integer.
+
+    scoring : string, callable, or None, default=None
+        A single string (see :ref:`scoring_parameter`) or a callable
+        (see :ref:`scoring`) to evaluate the predictions on the test set.
+        If None, the estimator's score method is used.
+
+    refit : bool, default=True
+        If True, refit an estimator using the best found parameters on the
+        whole dataset.
+
+        The refitted estimator is made available at the ``best_estimator_``
+        attribute and permits using ``predict`` directly on this
+        ``GridSearchCV`` instance.
+
+    error_score : 'raise' or numeric
+        Value to assign to the score if an error occurs in estimator fitting.
+        If set to 'raise', the error is raised. If a numeric value is given,
+        FitFailedWarning is raised. This parameter does not affect the refit
+        step, which will always raise the error. Default is ``np.nan``
+
+    return_train_score : bool, default=False
+        If ``False``, the ``cv_results_`` attribute will not include training
+        scores.
+        Computing training scores is used to get insights on how different
+        parameter settings impact the overfitting/underfitting trade-off.
+        However computing the scores on the training set can be computationally
+        expensive and is not strictly required to select the parameters that
+        yield the best generalization performance.
+
+    random_state : int, RandomState instance or None, default=None
+        Pseudo random number generator state used for subsampling the dataset
+        when `resources != 'n_samples'`. Ignored otherwise.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
+
+    n_jobs : int or None, default=None
+        Number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+
+    verbose : int
+        Controls the verbosity: the higher, the more messages.
 
     Attributes
     ----------
@@ -570,14 +552,6 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
     The parameters selected are those that maximize the score of the held-out
     data, according to the scoring parameter.
 
-    If `n_jobs` was set to a value higher than one, the data is copied for each
-    parameter setting(and not `n_jobs` times). This is done for efficiency
-    reasons if individual jobs take very little time, but may raise errors if
-    the dataset is large and not enough memory is available.  A workaround in
-    this case is to set `pre_dispatch`. Then, the memory is copied only
-    `pre_dispatch` many times. A reasonable value for `pre_dispatch` is `2 *
-    n_jobs`.
-
     Examples
     --------
 
@@ -598,15 +572,14 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
     """
     _required_parameters = ["estimator", "param_grid"]
 
-    def __init__(self, estimator, param_grid, *, scoring=None,
-                 n_jobs=None, refit=True, verbose=0, cv=5,
-                 pre_dispatch='2*n_jobs', random_state=None,
-                 error_score=np.nan, return_train_score=True,
-                 max_resources='auto', min_resources='exhaust',
-                 resource='n_samples', ratio=3, aggressive_elimination=False):
+    def __init__(self, estimator, param_grid, *,
+                 ratio=3, resource='n_samples', max_resources='auto',
+                 min_resources='exhaust', aggressive_elimination=False,
+                 cv=5, scoring=None, refit=True, error_score=np.nan,
+                 return_train_score=True, random_state=None, n_jobs=None,
+                 verbose=0):
         super().__init__(estimator, scoring=scoring,
                          n_jobs=n_jobs, refit=refit, verbose=verbose, cv=cv,
-                         pre_dispatch=pre_dispatch,
                          random_state=random_state, error_score=error_score,
                          return_train_score=return_train_score,
                          max_resources=max_resources, resource=resource,
@@ -651,89 +624,18 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         `min_resources`, `max_resources` and `ratio`. In this case,
         `min_resources` cannot be 'exhaust'.
 
-    scoring : string, callable, or None, default=None
-        A single string (see :ref:`scoring_parameter`) or a callable
-        (see :ref:`scoring`) to evaluate the predictions on the test set.
-        If None, the estimator's score method is used.
+    ratio : int or float, default=3
+        The 'halving' parameter, which determines the proportion of candidates
+        that are selected for each subsequent iteration. For example,
+        ``ratio=3`` means that only one third of the candidates are selected.
 
-    n_jobs : int or None, default=None
-        Number of jobs to run in parallel.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-        for more details.
-
-    pre_dispatch : int, or string, optional
-        Controls the number of jobs that get dispatched during parallel
-        execution. Reducing this number can be useful to avoid an
-        explosion of memory consumption when more jobs get dispatched
-        than CPUs can process. This parameter can be:
-
-            - None, in which case all the jobs are immediately
-              created and spawned. Use this for lightweight and
-              fast-running jobs, to avoid delays due to on-demand
-              spawning of the jobs
-
-            - An int, giving the exact number of total jobs that are
-              spawned
-
-            - A string, giving an expression as a function of n_jobs,
-              as in '2*n_jobs' (default)
-
-    random_state : int, RandomState instance or None, default=None
-        Pseudo random number generator state used for subsampling the dataset
-        when `resources != 'n_samples'`. Also used for random uniform
-        sampling from lists of possible values instead of scipy.stats
-        distributions.
-        Pass an int for reproducible output across multiple function calls.
-        See :term:`Glossary <random_state>`.
-
-    cv : int, cross-validation generator or an iterable, default=5
-        Determines the cross-validation splitting strategy.
-        Possible inputs for cv are:
-
-        - integer, to specify the number of folds in a `(Stratified)KFold`,
-        - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
-
-        For integer/None inputs, if the estimator is a classifier and ``y`` is
-        either binary or multiclass, :class:`StratifiedKFold` is used. In all
-        other cases, :class:`KFold` is used.
-
-        Refer :ref:`User Guide <cross_validation>` for the various
-        cross-validation strategies that can be used here.
-
-        .. note::
-            Due to implementation details, the folds produced by `cv` must be
-            the same across multiple calls to `cv.split()`. For
-            built-in `scikit-learn` iterators, this can be achieved by
-            deactivating shuffling (`shuffle=False`), or by setting the
-            `cv`'s `random_state` parameter to an integer.
-
-    refit : boolean, default=True
-        If True, refit an estimator using the best found parameters on the
-        whole dataset.
-
-        The refitted estimator is made available at the ``best_estimator_``
-        attribute and permits using ``predict`` directly on this
-        ``GridSearchCV`` instance.
-
-    verbose : integer
-        Controls the verbosity: the higher, the more messages.
-
-    error_score : 'raise' or numeric
-        Value to assign to the score if an error occurs in estimator fitting.
-        If set to 'raise', the error is raised. If a numeric value is given,
-        FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error. Default is ``np.nan``
-
-    return_train_score : boolean, default=False
-        If ``False``, the ``cv_results_`` attribute will not include training
-        scores.
-        Computing training scores is used to get insights on how different
-        parameter settings impact the overfitting/underfitting trade-off.
-        However computing the scores on the training set can be computationally
-        expensive and is not strictly required to select the parameters that
-        yield the best generalization performance.
+    resource : ``'n_samples'`` or str, default='n_samples'
+        Defines the resource that increases with each iteration. By default,
+        the resource is the number of samples. It can also be set to any
+        parameter of the base estimator that accepts positive integer
+        values, e.g. 'n_iterations' or 'n_estimators' for a gradient
+        boosting estimator. In this case ``max_resources`` cannot be 'auto'
+        and must be set explicitly.
 
     max_resources : int, default='auto'
         The maximum number of resources that any candidate is allowed to use
@@ -762,19 +664,6 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         Note that the amount of resources used at each iteration is always a
         multiple of ``min_resources``.
 
-    resource : ``'n_samples'`` or str, default='n_samples'
-        Defines the resource that increases with each iteration. By default,
-        the resource is the number of samples. It can also be set to any
-        parameter of the base estimator that accepts positive integer
-        values, e.g. 'n_iterations' or 'n_estimators' for a gradient
-        boosting estimator. In this case ``max_resources`` cannot be 'auto'
-        and must be set explicitly.
-
-    ratio : int or float, default=3
-        The 'halving' parameter, which determines the proportion of candidates
-        that are selected for each subsequent iteration. For example,
-        ``ratio=3`` means that only one third of the candidates are selected.
-
     aggressive_elimination : bool, default=False
         This is only relevant in cases where there isn't enough resources to
         reduce the candidates to at most `ratio` in the last iteration. If
@@ -783,6 +672,73 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         This is ``False`` by default, which means that the last iteration may
         evaluate more than ``ratio`` candidates. See
         :ref:`aggressive_elimination` for more details.
+
+    cv : int, cross-validation generator or an iterable, default=5
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+
+        - integer, to specify the number of folds in a `(Stratified)KFold`,
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
+
+        For integer/None inputs, if the estimator is a classifier and ``y`` is
+        either binary or multiclass, :class:`StratifiedKFold` is used. In all
+        other cases, :class:`KFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
+
+        .. note::
+            Due to implementation details, the folds produced by `cv` must be
+            the same across multiple calls to `cv.split()`. For
+            built-in `scikit-learn` iterators, this can be achieved by
+            deactivating shuffling (`shuffle=False`), or by setting the
+            `cv`'s `random_state` parameter to an integer.
+
+    scoring : string, callable, or None, default=None
+        A single string (see :ref:`scoring_parameter`) or a callable
+        (see :ref:`scoring`) to evaluate the predictions on the test set.
+        If None, the estimator's score method is used.
+
+    refit : bool, default=True
+        If True, refit an estimator using the best found parameters on the
+        whole dataset.
+
+        The refitted estimator is made available at the ``best_estimator_``
+        attribute and permits using ``predict`` directly on this
+        ``GridSearchCV`` instance.
+
+    error_score : 'raise' or numeric
+        Value to assign to the score if an error occurs in estimator fitting.
+        If set to 'raise', the error is raised. If a numeric value is given,
+        FitFailedWarning is raised. This parameter does not affect the refit
+        step, which will always raise the error. Default is ``np.nan``
+
+    return_train_score : bool, default=False
+        If ``False``, the ``cv_results_`` attribute will not include training
+        scores.
+        Computing training scores is used to get insights on how different
+        parameter settings impact the overfitting/underfitting trade-off.
+        However computing the scores on the training set can be computationally
+        expensive and is not strictly required to select the parameters that
+        yield the best generalization performance.
+
+    random_state : int, RandomState instance or None, default=None
+        Pseudo random number generator state used for subsampling the dataset
+        when `resources != 'n_samples'`. Also used for random uniform
+        sampling from lists of possible values instead of scipy.stats
+        distributions.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
+
+    n_jobs : int or None, default=None
+        Number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+
+    verbose : int
+        Controls the verbosity: the higher, the more messages.
 
     Attributes
     ----------
@@ -873,14 +829,6 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
     The parameters selected are those that maximize the score of the held-out
     data, according to the scoring parameter.
 
-    If `n_jobs` was set to a value higher than one, the data is copied for each
-    parameter setting(and not `n_jobs` times). This is done for efficiency
-    reasons if individual jobs take very little time, but may raise errors if
-    the dataset is large and not enough memory is available.  A workaround in
-    this case is to set `pre_dispatch`. Then, the memory is copied only
-    `pre_dispatch` many times. A reasonable value for `pre_dispatch` is `2 *
-    n_jobs`.
-
     Examples
     --------
 
@@ -905,12 +853,11 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
     _required_parameters = ["estimator", "param_distributions"]
 
     def __init__(self, estimator, param_distributions, *,
-                 n_candidates='exhaust', scoring=None, n_jobs=None,
-                 refit=True, verbose=0, cv=5, pre_dispatch='2*n_jobs',
-                 random_state=None, error_score=np.nan,
-                 return_train_score=True, max_resources='auto',
-                 min_resources='smallest', resource='n_samples', ratio=3,
-                 aggressive_elimination=False):
+                 n_candidates='exhaust', ratio=3, resource='n_samples',
+                 max_resources='auto', min_resources='smallest',
+                 aggressive_elimination=False, cv=5, scoring=None,
+                 refit=True, error_score=np.nan, return_train_score=True,
+                 random_state=None, n_jobs=None, verbose=0):
         super().__init__(estimator, scoring=scoring,
                          n_jobs=n_jobs, refit=refit, verbose=verbose, cv=cv,
                          random_state=random_state, error_score=error_score,
