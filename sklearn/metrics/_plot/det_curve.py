@@ -176,7 +176,7 @@ def plot_det_curve(
 
     See Also
     --------
-    roc_auc_score : Compute the area under the ROC curve
+    det_curve : Compute error rates for different probability thresholds
 
     roc_curve : Compute Receiver operating characteristic (ROC) curve
 
