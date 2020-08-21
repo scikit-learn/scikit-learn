@@ -50,7 +50,7 @@ for weights in ['uniform', 'distance']:
 
     # Plot also the training points
     sns.scatterplot(x=X[:, 0], y=X[:, 1], hue=iris.target_names[y],
-                    palette=cmap_bold, alpha=1.0, edgecolor="black"))
+                    palette=cmap_bold, alpha=1.0, edgecolor="black")
     plt.xlim(xx.min(), xx.max())
     plt.ylim(yy.min(), yy.max())
     plt.title("3-Class classification (k = %i, weights = '%s')"
