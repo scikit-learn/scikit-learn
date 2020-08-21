@@ -220,7 +220,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
             )
 
         # n_possible_iterations is the number of iterations that we can
-        # actually do starting from min_resources and without exceeding the
+        # actually do starting from min_resources and without exceeding
         # max_resources. Depending on max_resources and the number of
         # candidates, this may be higher or smaller than
         # n_required_iterations.
@@ -288,9 +288,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
 
             more_results = {'iter': [iter_i] * n_candidates,
                             'resource_iter': [resource_iter] * n_candidates}
-            # results = evaluate_candidates(candidate_params, X_iter, y_iter,
-            #                               more_results=more_results,
-            #                               **fit_params_iter)
+
             results = evaluate_candidates(candidate_params, cv,
                                           more_results=more_results)
 
@@ -308,12 +306,9 @@ class BaseSuccessiveHalving(BaseSearchCV):
         # Return the best candidates of a given iteration
         # We need to filter out candidates from the previous iterations
         # when sorting
-
-        best_candidates_indices = np.argsort(results['mean_test_score'])[::-1]
-        best_candidates_indices = [idx for idx in best_candidates_indices
-                                   if results['iter'][idx] == iter_i]
-        best_candidates_indices = best_candidates_indices[:k]
-        return [results['params'][idx] for idx in best_candidates_indices]
+        iter_indices = np.flatnonzero(np.array(results['iter']) == iter_i)
+        sorted_indices = np.argsort(results['mean_test_score'][iter_indices])
+        return np.array(results['params'])[sorted_indices[-k:]]
 
     @abstractmethod
     def _generate_candidate_params(self):
