@@ -8,7 +8,7 @@ from ...utils import check_matplotlib_support
 
 
 class DetCurveDisplay:
-    """DET Curve visualization.
+    """DET curve visualization.
 
     It is recommend to use :func:`~sklearn.metrics.plot_det_curve` to create a
     visualizer. All parameters are stored as attributes.
@@ -74,7 +74,7 @@ class DetCurveDisplay:
             created.
 
         name : str, default=None
-            Name of DET Curve for labeling. If `None`, use the name of the
+            Name of DET curve for labeling. If `None`, use the name of the
             estimator.
 
         Returns
@@ -164,12 +164,12 @@ def plot_det_curve(
     response_method : {'predict_proba', 'decision_function', 'auto'} \
             default='auto'
         Specifies whether to use :term:`predict_proba` or
-        :term:`decision_function` as the target response. If set to 'auto',
+        :term:`decision_function` as the predicted target response. If set to 'auto',
         :term:`predict_proba` is tried first and if it does not exist
         :term:`decision_function` is tried next.
 
     name : str, default=None
-        Name of ROC Curve for labeling. If `None`, use the name of the
+        Name of DET curve for labeling. If `None`, use the name of the
         estimator.
 
     ax : matplotlib axes, default=None
@@ -187,9 +187,9 @@ def plot_det_curve(
 
     See Also
     --------
-    roc_auc_score : Compute the area under the ROC curve
+    det_curve : Compute error rates for different probability thresholds
 
-    roc_curve : Compute Receiver operating characteristic (ROC) curve
+   plot_roc_curve : Plot Receiver operating characteristic (ROC) curve
 
     Examples
     --------

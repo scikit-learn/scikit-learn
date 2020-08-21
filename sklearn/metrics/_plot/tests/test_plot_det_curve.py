@@ -46,7 +46,7 @@ def test_plot_det_curve_error_non_binary(pyplot, data):
               "defined in MyClassifier"),
      ("bad_method", "response_method must be 'predict_proba', "
                     "'decision_function' or 'auto'")])
-def test_plot_roc_curve_error_no_response(
+def test_plot_det_curve_error_no_response(
     pyplot, data_binary, response_method, msg
 ):
     X, y = data_binary
@@ -143,7 +143,7 @@ def test_plot_det_curve_not_fitted_errors(pyplot, data_binary, clf):
 
 def test_plot_det_curve_estimator_name_multiple_calls(pyplot, data_binary):
     # non-regression test checking that the `name` used when calling
-    # `plot_roc_curve` is used as well when calling `disp.plot()`
+    # `plot_det_curve` is used as well when calling `disp.plot()`
     X, y = data_binary
     clf_name = "my hand-crafted name"
     clf = LogisticRegression().fit(X, y)
