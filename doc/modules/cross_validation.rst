@@ -856,3 +856,63 @@ Cross validation and model selection
 Cross validation iterators can also be used to directly perform model
 selection using Grid Search for the optimal hyperparameters of the
 model. This is the topic of the next section: :ref:`grid_search`.
+
+.. _permutation_test_score:
+
+Permutation test score
+======================
+
+:func:`~sklearn.model_selection.permutation_test_score` offers another way
+to evaluate the performance of classifiers. It provides a permutation-based
+p-value, which represents how likely an observed performance of the
+classifier would be obtained by chance. The null hypothesis in this test is
+that the classifier fails to leverage any statistical dependency between the
+features and the labels to make correct predictions on left out data.
+:func:`~sklearn.model_selection.permutation_test_score` generates a null
+distribution by calculating `n_permutations` different permutations of the
+data. In each permutation the labels are randomly shuffled, thereby removing
+any dependency between the features and the labels. The p-value output
+is the fraction of permutations for which the average cross-validation score
+obtained by the model is better than the cross-validation score obtained by
+the model using the original data. For reliable results ``n_permutations``
+should typically be larger than 100 and ``cv`` between 3-10 folds.
+
+A low p-value provides evidence that the dataset contains real dependency
+between features and labels and the classifier was able to utilize this
+to obtain good results. A high p-value could be due to a lack of dependency
+between features and labels (there is no difference in feature values between
+the classes) or because the classifier was not able to use the dependency in
+the data. In the latter case, using a more appropriate classifier that
+is able to utilize the structure in the data, would result in a low
+p-value.
+
+Cross-validation provides information about how well a classifier generalizes,
+specifically the range of expected errors of the classifier. However, a
+classifier trained on a high dimensional dataset with no structure may still
+perform better than expected on cross-validation, just by chance.
+This can typically happen with small datasets with less than a few hundred
+samples.
+:func:`~sklearn.model_selection.permutation_test_score` provides information
+on whether the classifier has found a real class structure and can help in
+evaluating the performance of the classifier.
+
+It is important to note that this test has been shown to produce low
+p-values even if there is only weak structure in the data because in the
+corresponding permutated datasets there is absolutely no structure. This
+test is therefore only able to show when the model reliably outperforms
+random guessing.
+
+Finally, :func:`~sklearn.model_selection.permutation_test_score` is computed
+using brute force and interally fits ``(n_permutations + 1) * n_cv`` models.
+It is therefore only tractable with small datasets for which fitting an
+individual model is very fast.
+
+.. topic:: Examples
+
+    * :ref:`sphx_glr_auto_examples_feature_selection_plot_permutation_test_for_classification.py`
+
+.. topic:: References:
+
+ * Ojala and Garriga. `Permutation Tests for Studying Classifier Performance
+   <http://www.jmlr.org/papers/volume11/ojala10a/ojala10a.pdf>`_.
+   J. Mach. Learn. Res. 2010.
