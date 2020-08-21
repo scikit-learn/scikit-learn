@@ -350,7 +350,7 @@ terms of the number of estimators of a random forest::
     ...                          ratio=2, resource='n_estimators',
     ...                          max_resources=30).fit(X, y)
     >>> sh.best_estimator_
-    RandomForestClassifier(max_depth=3, n_estimators=24, random_state=0)
+    RandomForestClassifier(max_depth=5, n_estimators=24, random_state=0)
 
 Note that it is not possible to budget on a parameter that is part of the
 parameter grid.
