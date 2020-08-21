@@ -363,12 +363,12 @@ def multilabel_confusion_matrix(y_true, y_pred, *, sample_weight=None,
 
     Parameters
     ----------
-    y_true : 1d array-like, or label indicator array / sparse matrix
-        of shape (n_samples, n_outputs) or (n_samples,)
+    y_true : {array-like, sparse matrix} of shape (n_samples, n_outputs) or \
+            (n_samples,)
         Ground truth (correct) target values.
 
-    y_pred : 1d array-like, or label indicator array / sparse matrix
-        of shape (n_samples, n_outputs) or (n_samples,)
+    y_pred : {array-like, sparse matrix} of shape (n_samples, n_outputs) or \
+            (n_samples,)
         Estimated targets as returned by a classifier
 
     sample_weight : array-like of shape (n_samples,), default=None
@@ -383,7 +383,7 @@ def multilabel_confusion_matrix(y_true, y_pred, *, sample_weight=None,
 
     Returns
     -------
-    multi_confusion : array, shape (n_outputs, 2, 2)
+    multi_confusion : ndarray of shape (n_outputs, 2, 2)
         A 2x2 confusion matrix corresponding to each output in the input.
         When calculating class-wise multi_confusion (default), then
         n_outputs = n_labels; when calculating sample-wise multi_confusion
@@ -391,7 +391,7 @@ def multilabel_confusion_matrix(y_true, y_pred, *, sample_weight=None,
         the results will be returned in the order specified in ``labels``,
         otherwise the results will be returned in sorted order by default.
 
-    See also
+    See Also
     --------
     confusion_matrix
 
@@ -437,7 +437,6 @@ def multilabel_confusion_matrix(y_true, y_pred, *, sample_weight=None,
     <BLANKLINE>
            [[2, 1],
             [1, 2]]])
-
     """
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if sample_weight is not None:
