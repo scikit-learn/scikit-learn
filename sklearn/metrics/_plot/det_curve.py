@@ -158,7 +158,7 @@ def plot_det_curve(
         :term:`decision_function` is tried next.
 
     name : str, default=None
-        Name of ROC Curve for labeling. If `None`, use the name of the
+        Name of DET curve for labeling. If `None`, use the name of the
         estimator.
 
     ax : matplotlib axes, default=None
