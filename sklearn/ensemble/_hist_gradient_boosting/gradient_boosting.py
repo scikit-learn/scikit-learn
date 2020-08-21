@@ -3,7 +3,6 @@
 
 from abc import ABC, abstractmethod
 from functools import partial
-import gc
 
 import numpy as np
 from timeit import default_timer as time
