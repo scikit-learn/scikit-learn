@@ -189,7 +189,7 @@ def plot_det_curve(
     --------
     det_curve : Compute error rates for different probability thresholds
 
-   plot_roc_curve : Plot Receiver operating characteristic (ROC) curve
+    plot_roc_curve : Plot Receiver operating characteristic (ROC) curve
 
     Examples
     --------
