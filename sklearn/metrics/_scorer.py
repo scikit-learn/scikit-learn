@@ -18,9 +18,9 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 # License: Simplified BSD
 
+from collections import Counter
 from collections.abc import Iterable
 from functools import partial
-from collections import Counter
 
 import numpy as np
 
@@ -507,9 +507,21 @@ def make_scorer(score_func, *, greater_is_better=True, needs_proba=False,
 
     Parameters
     ----------
-    score_func : callable,
-        Score function (or loss function) with signature
-        ``score_func(y, y_pred, **kwargs)``.
+    scoring : str or callable
+        This parameter can be:
+
+        * a string (see model evaluation documentation). The parameters
+          `greater_is_better`, `needs_proba`, and `needs_threshold` will be
+          ignored and inferred from the base scorers. However, you can pass any
+          additional parameters required by the scoring function as `**kwargs`;
+        * a scorer callable object originally constructed with
+          :func:`make_scorer` or returned by :func:`get_scorer`. In this case,
+          the parameters `greater_is_better`, `needs_proba`, and
+          `needs_threshold` will be ignored and inferred from the base scorers.
+          However, you can pass any additional parameters required by the
+          scoring function as `**kwargs`;
+        * a scorer callable object / function with signature
+          `scorer(estimator, X, y)`.
 
     greater_is_better : bool, default=True
         Whether score_func is a score function (default), meaning high is good,
@@ -546,6 +558,8 @@ def make_scorer(score_func, *, greater_is_better=True, needs_proba=False,
 
     Examples
     --------
+    You can create a scorer from a callable function:
+
     >>> from sklearn.metrics import fbeta_score, make_scorer
     >>> ftwo_scorer = make_scorer(fbeta_score, beta=2)
     >>> ftwo_scorer
@@ -554,6 +568,23 @@ def make_scorer(score_func, *, greater_is_better=True, needs_proba=False,
     >>> from sklearn.svm import LinearSVC
     >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]},
     ...                     scoring=ftwo_scorer)
+
+    Otherwise, you can use a string avoiding to pass the parameters required
+    by `make_scorer`:
+
+    >>> from sklearn.datasets import load_breast_cancer
+    >>> X, y = load_breast_cancer(return_X_y=True)
+    >>> roc_auc_scorer = make_scorer("roc_auc")
+    >>> clf = LinearSVC(random_state=0).fit(X, y)
+    >>> roc_auc_scorer(clf, X, y)
+    0.98...
+
+    Similarly, you can use a scorer obtained with :func:`get_scorer`:
+
+    >>> from sklearn.metrics import get_scorer
+    >>> roc_auc_scorer = get_scorer("roc_auc")
+    >>> roc_auc_scorer(clf, X, y)
+    0.98...
 
     Notes
     -----
@@ -565,16 +596,28 @@ def make_scorer(score_func, *, greater_is_better=True, needs_proba=False,
     `needs_threshold=True`, the score function is supposed to accept the
     output of :term:`decision_function`.
     """
-    sign = 1 if greater_is_better else -1
-    if needs_proba and needs_threshold:
-        raise ValueError("Set either needs_proba or needs_threshold to True,"
-                         " but not both.")
-    if needs_proba:
-        cls = _ProbaScorer
-    elif needs_threshold:
-        cls = _ThresholdScorer
+    if isinstance(score_func, (str, _BaseScorer)):
+        base_scorer = (
+            get_scorer(score_func)
+            if isinstance(score_func, str)
+            else score_func
+        )
+        cls = base_scorer.__class__
+        score_func = base_scorer._score_func
+        sign = base_scorer._sign
     else:
-        cls = _PredictScorer
+        sign = 1 if greater_is_better else -1
+        if needs_proba and needs_threshold:
+            raise ValueError(
+                "Set either needs_proba or needs_threshold to True, but not "
+                "both."
+            )
+        if needs_proba:
+            cls = _ProbaScorer
+        elif needs_threshold:
+            cls = _ThresholdScorer
+        else:
+            cls = _PredictScorer
     return cls(score_func, sign, kwargs)
 
 

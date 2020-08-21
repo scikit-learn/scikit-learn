@@ -747,3 +747,34 @@ def test_multiclass_roc_no_proba_scorer_errors(scorer_name):
     msg = "'Perceptron' object has no attribute 'predict_proba'"
     with pytest.raises(AttributeError, match=msg):
         scorer(lr, X, y)
+
+
+@pytest.mark.parametrize(
+    "scoring",
+    ["roc_auc", get_scorer("roc_auc")],
+    ids=["str", "scorer_instance"],
+)
+def test_make_scorer_from_str_or_base_scorer(scoring):
+    # check that we can create a scorer from a string or a previous scorer
+    base_scorer = get_scorer(scoring) if isinstance(scoring, str) else scoring
+    scorer = make_scorer(scoring)
+
+    # check that we have a different object but with the same parameter values
+    assert scorer is not base_scorer
+    assert scorer._score_func == base_scorer._score_func
+    assert scorer._sign == base_scorer._sign
+    assert scorer._kwargs == base_scorer._kwargs
+
+    # check that the parameters of `make_scorer` do not have any effect when
+    # passing a string. The following would have raised an error because a
+    # scorer cannot be a _ProbaScorer and a _ThresholdScorer at the same time.
+    scorer = make_scorer(
+        scoring,
+        greater_is_better=False,
+        needs_threshold=True,
+        needs_proba=True,
+    )
+
+    # check that we can overwrite the scoring function parameters
+    scorer = make_scorer(scoring, multi_class="ovo")
+    assert scorer._kwargs == {"multi_class": "ovo"}
