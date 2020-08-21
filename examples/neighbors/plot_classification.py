@@ -48,8 +48,7 @@ for weights in ['uniform', 'distance']:
     plt.contourf(xx, yy, Z, cmap=cmap_light)
 
     # Plot also the training points
-    scatter = plt.scatter(X[:, 0], X[:, 1], c=y, cmap=cmap_bold,
-                          edgecolor='k', s=20)
+    sns.scatterplot(x=X[:, 0], y=X[:, 1], hue=iris.target_names[y])
     plt.xlim(xx.min(), xx.max())
     plt.ylim(yy.min(), yy.max())
     plt.title("3-Class classification (k = %i, weights = '%s')"
