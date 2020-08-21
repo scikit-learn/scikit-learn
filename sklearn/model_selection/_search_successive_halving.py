@@ -191,8 +191,10 @@ class BaseSuccessiveHalving(BaseSearchCV):
             Target relative to X for classification or regression;
             None for unsupervised learning.
 
-        groups : None
-            Groups are not supported
+        groups : array-like of shape (n_samples,), default=None
+            Group labels for the samples used while splitting the dataset into
+            train/test set. Only used in conjunction with a "Group" :term:`cv`
+            instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
 
         **fit_params : dict of string -> object
             Parameters passed to the ``fit`` method of the estimator
