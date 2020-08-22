@@ -1,4 +1,4 @@
-"""Kernel Principal Components Analysis"""
+"""Kernel Principal Components Analysis."""
 
 # Author: Mathieu Blondel <mathieu@mblondel.org>
 # License: BSD 3 clause
@@ -18,7 +18,7 @@ from ..utils.validation import _deprecate_positional_args
 
 
 class KernelPCA(TransformerMixin, BaseEstimator):
-    """Kernel Principal component analysis (KPCA)
+    """Kernel Principal component analysis (KPCA).
 
     Non-linear dimensionality reduction through the use of kernels (see
     :ref:`metrics`).
@@ -78,7 +78,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         When n_components is None, this parameter is ignored and components
         with zero eigenvalues are removed regardless.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Used when ``eigen_solver`` == 'arpack'. Pass an int for reproducible
         results across multiple function calls.
         See :term:`Glossary <random_state>`.
