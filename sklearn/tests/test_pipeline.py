@@ -1234,5 +1234,5 @@ def test_feature_union_warns_unknown_transformer_weight():
     expected_msg = ('Attempting to weight transformer "transformer", '
                     'but it is not present in transformer_list.')
     fu = FeatureUnion(transformer_list, transformer_weights=weights)
-    with pytest.warns(UserWarning, match=expected_msg):
+    with pytest.raises(KeyError, match=expected_msg):
         fu.fit(X, y)

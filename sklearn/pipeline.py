@@ -13,7 +13,6 @@ from collections import defaultdict
 from itertools import islice
 
 import numpy as np
-import warnings
 from scipy import sparse
 from joblib import Parallel, delayed
 
@@ -876,10 +875,9 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         transformer_names = set(name for name, _ in self.transformer_list)
         for name in self.transformer_weights:
             if name not in transformer_names:
-                warnings.warn(
-                    'Attempting to weight transformer "{0}", but it is '
-                    'not present in transformer_list.'.format(name),
-                    UserWarning
+                raise KeyError(
+                    f'Attempting to weight transformer "{name}", '
+                    'but it is not present in transformer_list.'
                 )
 
     def _iter(self):
