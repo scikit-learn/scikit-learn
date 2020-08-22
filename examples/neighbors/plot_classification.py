@@ -9,6 +9,7 @@ It will plot the decision boundaries for each class.
 print(__doc__)
 
 import matplotlib.pyplot as plt
+import seaborn as sns
 from matplotlib.colors import ListedColormap
 from sklearn import neighbors, datasets
 from sklearn.inspection import plot_decision_boundary
@@ -25,7 +26,7 @@ y = iris.target
 
 # Create color maps
 cmap_light = ListedColormap(['orange', 'cyan', 'cornflowerblue'])
-cmap_bold = ListedColormap(['darkorange', 'c', 'darkblue'])
+cmap_bold = ['darkorange', 'c', 'darkblue']
 
 for weights in ['uniform', 'distance']:
     # we create an instance of Neighbours Classifier and fit the data.
@@ -37,9 +38,11 @@ for weights in ['uniform', 'distance']:
                            response_method='predict', plot_method='pcolormesh')
 
     # Plot also the training points
-    plt.scatter(X[:, 0], X[:, 1], c=y, cmap=cmap_bold,
-                edgecolor='k', s=20)
+    sns.scatterplot(x=X[:, 0], y=X[:, 1], hue=iris.target_names[y],
+                    palette=cmap_bold, alpha=1.0, edgecolor="black")
     plt.title("3-Class classification (k = %i, weights = '%s')"
               % (n_neighbors, weights))
+    plt.xlabel(iris.feature_names[0])
+    plt.ylabel(iris.feature_names[1])
 
 plt.show()
