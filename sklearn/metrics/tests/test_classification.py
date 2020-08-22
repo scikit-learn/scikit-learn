@@ -2128,8 +2128,10 @@ def test_hinge_loss_multiclass_missing_labels_only_two_unq_in_y_true():
     ])
     np.clip(dummy_losses, 0, None, out=dummy_losses)
     dummy_hinge_loss = np.mean(dummy_losses)
-    assert (hinge_loss(y_true, pred_decision, labels=labels) ==
-            dummy_hinge_loss)
+    assert_almost_equal(
+        hinge_loss(y_true, pred_decision, labels=labels),
+        dummy_hinge_loss
+    )
 
 
 def test_hinge_loss_multiclass_invariance_lists():
