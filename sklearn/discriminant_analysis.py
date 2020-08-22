@@ -701,8 +701,8 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
 
     Attributes
     ----------
-    covariance_ : list of len n_classes of ndarray
-    of shape (n_features, n_features)
+    covariance_ : list of len n_classes of ndarray \
+            of shape (n_features, n_features)
         For each class, gives the covariance matrix estimated using the
         samples of that class. The estimations are unbiased. Only present if
         `store_covariance` is True.
