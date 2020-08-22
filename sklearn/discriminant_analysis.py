@@ -201,8 +201,8 @@ class LinearDiscriminantAnalysis(LinearClassifierMixin,
           - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
           - float between 0 and 1: fixed shrinkage parameter.
 
-        Shrinkage parameter is ignored if  `covariance_estimator`\
-    is not None.
+        Shrinkage parameter is ignored if  `covariance_estimator`
+        is not None.
 
         Note that shrinkage works only with 'lsqr' and 'eigen' solvers.
 
@@ -334,8 +334,8 @@ class LinearDiscriminantAnalysis(LinearClassifierMixin,
               - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
               - float between 0 and 1: fixed shrinkage parameter.
 
-            Shrinkage parameter is ignored if  `covariance_estimator` is \
-        not None
+            Shrinkage parameter is ignored if  `covariance_estimator` i
+            not None
 
         covariance_estimator : estimator, default=None
             If not None, `covariance_estimator` is used to estimate
@@ -387,8 +387,8 @@ class LinearDiscriminantAnalysis(LinearClassifierMixin,
               - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
               - float between 0 and 1: fixed shrinkage constant.
 
-            Shrinkage parameter is ignored if  `covariance_estimator` is\
-        not None
+            Shrinkage parameter is ignored if  `covariance_estimator` i
+            not None
 
         covariance_estimator : estimator, default=None
             If not None, `covariance_estimator` is used to estimate
@@ -701,8 +701,8 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
 
     Attributes
     ----------
-    covariance_ : list of len n_classes of ndarray \
-            of shape (n_features, n_features)
+    covariance_ : list of len n_classes of ndarray
+    of shape (n_features, n_features)
         For each class, gives the covariance matrix estimated using the
         samples of that class. The estimations are unbiased. Only present if
         `store_covariance` is True.
