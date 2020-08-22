@@ -57,26 +57,26 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    n_components : int | None
+    n_components : int, default=None
         Dimensionality of latent space, the number of components
         of ``X`` that are obtained after ``transform``.
         If None, n_components is set to the number of features.
 
-    tol : float
+    tol : float, defaul=1e-2
         Stopping tolerance for log-likelihood increase.
 
-    copy : bool
+    copy : bool, default=True
         Whether to make a copy of X. If ``False``, the input X gets overwritten
         during fitting.
 
-    max_iter : int
+    max_iter : int, default=1000
         Maximum number of iterations.
 
-    noise_variance_init : None | array, shape=(n_features,)
+    noise_variance_init : ndarray of shape (n_features,), default=None
         The initial guess of the noise variance for each feature.
         If None, it defaults to np.ones(n_features)
 
-    svd_method : {'lapack', 'randomized'}
+    svd_method : {'lapack', 'randomized'}, default='randomized'
         Which SVD method to use. If 'lapack' use standard SVD from
         scipy.linalg, if 'randomized' use fast ``randomized_svd`` function.
         Defaults to 'randomized'. For most applications 'randomized' will
@@ -85,11 +85,11 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         `iterated_power`. If this is not sufficient, for maximum precision
         you should choose 'lapack'.
 
-    iterated_power : int, optional
+    iterated_power : int, default=3
         Number of iterations for the power method. 3 by default. Only used
         if ``svd_method`` equals 'randomized'
 
-    rotation : None | 'varimax' | 'quartimax'
+    rotation : {'varimax', 'quartimax'}, default=None
         If not None, apply the indicated rotation. Currently, varimax and
         quartimax are implemented. See
         `"The varimax criterion for analytic rotation in factor analysis"
@@ -98,26 +98,26 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
-    random_state : int, RandomState instance, default=0
+    random_state : int or RandomState instance, default=0
         Only used when ``svd_method`` equals 'randomized'. Pass an int for
         reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
-    components_ : array, [n_components, n_features]
+    components_ : ndarray of shape (n_components, n_features)
         Components with maximum variance.
 
-    loglike_ : list, [n_iterations]
+    loglike_ : list of shape (n_iterations,)
         The log likelihood at each iteration.
 
-    noise_variance_ : array, shape=(n_features,)
+    noise_variance_ : ndarray of shape (n_features,)
         The estimated noise variance for each feature.
 
     n_iter_ : int
         Number of iterations run.
 
-    mean_ : array, shape (n_features,)
+    mean_ : ndarray of shape (n_features,)
         Per-feature empirical mean, estimated from the training set.
 
     Examples
@@ -171,7 +171,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data.
 
         y : Ignored
@@ -269,12 +269,12 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data.
 
         Returns
         -------
-        X_new : array-like, shape (n_samples, n_components)
+        X_new : ndarray of shape (n_samples, n_components)
             The latent variables of X.
         """
         check_is_fitted(self)
@@ -298,7 +298,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        cov : array, shape (n_features, n_features)
+        cov : ndarray of shape (n_features, n_features)
             Estimated covariance of data.
         """
         check_is_fitted(self)
@@ -312,7 +312,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        precision : array, shape (n_features, n_features)
+        precision : ndarray of shape (n_features, n_features)
             Estimated precision of data.
         """
         check_is_fitted(self)
@@ -341,12 +341,12 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array, shape (n_samples, n_features)
+        X : ndarray of shape (n_samples, n_features)
             The data
 
         Returns
         -------
-        ll : array, shape (n_samples,)
+        ll : ndarray of shape (n_samples,)
             Log-likelihood of each sample under the current model
         """
         check_is_fitted(self)
@@ -364,7 +364,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array, shape (n_samples, n_features)
+        X : ndarray of shape (n_samples, n_features)
             The data
 
         y : Ignored

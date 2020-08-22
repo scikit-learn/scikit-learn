@@ -30,37 +30,37 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True,
 
     Parameters
     ----------
-    X : array, shape (n_samples, n_features)
+    X : ndarray of shape (n_samples, n_features)
         Input dictionary. Columns are assumed to have unit norm.
 
-    y : array, shape (n_samples,)
-        Input targets
+    y : ndarray of shape (n_samples,)
+        Input targets.
 
     n_nonzero_coefs : int
-        Targeted number of non-zero elements
+        Targeted number of non-zero elements.
 
-    tol : float
+    tol : float, default=None
         Targeted squared error, if not None overrides n_nonzero_coefs.
 
-    copy_X : bool, optional
+    copy_X : bool, default=True
         Whether the design matrix X must be copied by the algorithm. A false
         value is only helpful if X is already Fortran-ordered, otherwise a
         copy is made anyway.
 
-    return_path : bool, optional. Default: False
+    return_path : bool, default=False
         Whether to return every value of the nonzero coefficients along the
         forward path. Useful for cross-validation.
 
     Returns
     -------
-    gamma : array, shape (n_nonzero_coefs,)
-        Non-zero elements of the solution
+    gamma : ndarray of shape (n_nonzero_coefs,)
+        Non-zero elements of the solution.
 
-    idx : array, shape (n_nonzero_coefs,)
+    idx : ndarray of shape (n_nonzero_coefs,)
         Indices of the positions of the elements in gamma within the solution
-        vector
+        vector.
 
-    coef : array, shape (n_features, n_nonzero_coefs)
+    coef : ndarray of shape (n_features, n_nonzero_coefs)
         The first k values of column k correspond to the coefficient value
         for the active features at that step. The lower left triangle contains
         garbage. Only returned if ``return_path=True``.
@@ -145,44 +145,44 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
 
     Parameters
     ----------
-    Gram : array, shape (n_features, n_features)
-        Gram matrix of the input data matrix
+    Gram : ndarray of shape (n_features, n_features)
+        Gram matrix of the input data matrix.
 
-    Xy : array, shape (n_features,)
-        Input targets
+    Xy : ndarray of shape (n_features,)
+        Input targets.
 
     n_nonzero_coefs : int
-        Targeted number of non-zero elements
+        Targeted number of non-zero elements.
 
-    tol_0 : float
+    tol_0 : float, default=None
         Squared norm of y, required if tol is not None.
 
-    tol : float
+    tol : float, default=None
         Targeted squared error, if not None overrides n_nonzero_coefs.
 
-    copy_Gram : bool, optional
+    copy_Gram : bool, default=True
         Whether the gram matrix must be copied by the algorithm. A false
         value is only helpful if it is already Fortran-ordered, otherwise a
         copy is made anyway.
 
-    copy_Xy : bool, optional
+    copy_Xy : bool, default=True
         Whether the covariance vector Xy must be copied by the algorithm.
         If False, it may be overwritten.
 
-    return_path : bool, optional. Default: False
+    return_path : bool, default=False
         Whether to return every value of the nonzero coefficients along the
         forward path. Useful for cross-validation.
 
     Returns
     -------
-    gamma : array, shape (n_nonzero_coefs,)
-        Non-zero elements of the solution
+    gamma : ndarray of shape (n_nonzero_coefs,)
+        Non-zero elements of the solution.
 
-    idx : array, shape (n_nonzero_coefs,)
+    idx : ndarray of shape (n_nonzero_coefs,)
         Indices of the positions of the elements in gamma within the solution
-        vector
+        vector.
 
-    coefs : array, shape (n_features, n_nonzero_coefs)
+    coefs : ndarray of shape (n_features, n_nonzero_coefs)
         The first k values of column k correspond to the coefficient value
         for the active features at that step. The lower left triangle contains
         garbage. Only returned if ``return_path=True``.
@@ -267,7 +267,7 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
 def orthogonal_mp(X, y, *, n_nonzero_coefs=None, tol=None, precompute=False,
                   copy_X=True, return_path=False,
                   return_n_iter=False):
-    r"""Orthogonal Matching Pursuit (OMP)
+    r"""Orthogonal Matching Pursuit (OMP).
 
     Solves n_targets Orthogonal Matching Pursuit problems.
     An instance of the problem has the form:
@@ -283,11 +283,11 @@ def orthogonal_mp(X, y, *, n_nonzero_coefs=None, tol=None, precompute=False,
 
     Parameters
     ----------
-    X : array, shape (n_samples, n_features)
+    X : ndarray of shape (n_samples, n_features)
         Input data. Columns are assumed to have unit norm.
 
-    y : array, shape (n_samples,) or (n_samples, n_targets)
-        Input targets
+    y : ndarray of shape (n_samples,) or (n_samples, n_targets)
+        Input targets.
 
     n_nonzero_coefs : int, default=None
         Desired number of non-zero entries in the solution. If None (by
@@ -296,7 +296,7 @@ def orthogonal_mp(X, y, *, n_nonzero_coefs=None, tol=None, precompute=False,
     tol : float, default=None
         Maximum norm of the residual. If not None, overrides n_nonzero_coefs.
 
-    precompute : {True, False, 'auto'}, default=False
+    precompute : 'auto' or bool, default=False
         Whether to perform precomputations. Improves performance when n_targets
         or n_samples is very large.
 
@@ -314,7 +314,7 @@ def orthogonal_mp(X, y, *, n_nonzero_coefs=None, tol=None, precompute=False,
 
     Returns
     -------
-    coef : array, shape (n_features,) or (n_features, n_targets)
+    coef : ndarray of shape (n_features,) or (n_features, n_targets)
         Coefficients of the OMP solution. If `return_path=True`, this contains
         the whole coefficient path. In this case its shape is
         (n_features, n_features) or (n_features, n_targets, n_features) and
@@ -412,7 +412,7 @@ def orthogonal_mp_gram(Gram, Xy, *, n_nonzero_coefs=None, tol=None,
                        norms_squared=None, copy_Gram=True,
                        copy_Xy=True, return_path=False,
                        return_n_iter=False):
-    """Gram Orthogonal Matching Pursuit (OMP)
+    """Gram Orthogonal Matching Pursuit (OMP).
 
     Solves n_targets Orthogonal Matching Pursuit problems using only
     the Gram matrix X.T * X and the product X.T * y.
@@ -421,11 +421,11 @@ def orthogonal_mp_gram(Gram, Xy, *, n_nonzero_coefs=None, tol=None,
 
     Parameters
     ----------
-    Gram : array, shape (n_features, n_features)
-        Gram matrix of the input data: X.T * X
+    Gram : ndarray of shape (n_features, n_features)
+        Gram matrix of the input data: X.T * X.
 
-    Xy : array, shape (n_features,) or (n_features, n_targets)
-        Input targets multiplied by X: X.T * y
+    Xy : ndarray of shape (n_features,) or (n_features, n_targets)
+        Input targets multiplied by X: X.T * y.
 
     n_nonzero_coefs : int, default=None
         Desired number of non-zero entries in the solution. If None (by
@@ -434,7 +434,7 @@ def orthogonal_mp_gram(Gram, Xy, *, n_nonzero_coefs=None, tol=None,
     tol : float, default=None
         Maximum norm of the residual. If not None, overrides n_nonzero_coefs.
 
-    norms_squared : array-like, shape (n_targets,), default=None
+    norms_squared : array-like of shape (n_targets,), default=None
         Squared L2 norms of the lines of y. Required if tol is not None.
 
     copy_Gram : bool, default=True
@@ -455,7 +455,7 @@ def orthogonal_mp_gram(Gram, Xy, *, n_nonzero_coefs=None, tol=None,
 
     Returns
     -------
-    coef : array, shape (n_features,) or (n_features, n_targets)
+    coef : ndarray of shape (n_features,) or (n_features, n_targets)
         Coefficients of the OMP solution. If `return_path=True`, this contains
         the whole coefficient path. In this case its shape is
         (n_features, n_features) or (n_features, n_targets, n_features) and
@@ -544,7 +544,7 @@ def orthogonal_mp_gram(Gram, Xy, *, n_nonzero_coefs=None, tol=None,
 
 
 class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
-    """Orthogonal Matching Pursuit model (OMP)
+    """Orthogonal Matching Pursuit model (OMP).
 
     Read more in the :ref:`User Guide <omp>`.
 
@@ -557,12 +557,12 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
     tol : float, default=None
         Maximum norm of the residual. If not None, overrides n_nonzero_coefs.
 
-    fit_intercept : boolean, default=True
+    fit_intercept : bool, default=True
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
-    normalize : boolean, default=True
+    normalize : bool, default=True
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -570,7 +570,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    precompute : {True, False, 'auto'}, default='auto'
+    precompute : 'auto' or bool, default='auto'
         Whether to use a precomputed Gram and Xy matrix to speed up
         calculations. Improves performance when :term:`n_targets` or
         :term:`n_samples` is very large. Note that if you already have such
@@ -578,11 +578,11 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
 
     Attributes
     ----------
-    coef_ : array, shape (n_features,) or (n_targets, n_features)
-        parameter vector (w in the formula)
+    coef_ : ndarray of shape (n_features,) or (n_targets, n_features)
+        Parameter vector (w in the formula).
 
-    intercept_ : float or array, shape (n_targets,)
-        independent term in decision function.
+    intercept_ : float or ndarray of shape (n_targets,)
+        Independent term in decision function.
 
     n_iter_ : int or array-like
         Number of active features across every target.
@@ -634,10 +634,10 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data.
 
-        y : array-like, shape (n_samples,) or (n_samples, n_targets)
+        y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values. Will be cast to X's dtype if necessary
 
 
@@ -683,32 +683,32 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
 
 def _omp_path_residues(X_train, y_train, X_test, y_test, copy=True,
                        fit_intercept=True, normalize=True, max_iter=100):
-    """Compute the residues on left-out data for a full LARS path
+    """Compute the residues on left-out data for a full LARS path.
 
     Parameters
     ----------
-    X_train : array, shape (n_samples, n_features)
-        The data to fit the LARS on
+    X_train : ndarray of shape (n_samples, n_features)
+        The data to fit the LARS on.
 
-    y_train : array, shape (n_samples)
-        The target variable to fit LARS on
+    y_train : ndarray of shape (n_samples)
+        The target variable to fit LARS on.
 
-    X_test : array, shape (n_samples, n_features)
-        The data to compute the residues on
+    X_test : ndarray of shape (n_samples, n_features)
+        The data to compute the residues on.
 
-    y_test : array, shape (n_samples)
-        The target variable to compute the residues on
+    y_test : ndarray of shape (n_samples)
+        The target variable to compute the residues on.
 
-    copy : boolean, optional
+    copy : bool, default=True
         Whether X_train, X_test, y_train and y_test should be copied.  If
         False, they may be overwritten.
 
-    fit_intercept : boolean
-        whether to calculate the intercept for this model. If set
+    fit_intercept : bool, default=True
+        Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
-    normalize : boolean, optional, default True
+    normalize : bool, default=True
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -716,14 +716,14 @@ def _omp_path_residues(X_train, y_train, X_test, y_test, copy=True,
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    max_iter : integer, optional
+    max_iter : int, default=100
         Maximum numbers of iterations to perform, therefore maximum features
         to include. 100 by default.
 
     Returns
     -------
-    residues : array, shape (n_samples, max_features)
-        Residues of the prediction on the test data
+    residues : ndarray of shape (n_samples, max_features)
+        Residues of the prediction on the test data.
     """
 
     if copy:
@@ -767,17 +767,17 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
 
     Parameters
     ----------
-    copy : bool, optional
+    copy : bool, default=True
         Whether the design matrix X must be copied by the algorithm. A false
         value is only helpful if X is already Fortran-ordered, otherwise a
         copy is made anyway.
 
-    fit_intercept : boolean, optional
+    fit_intercept : bool, default=True
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
-    normalize : boolean, optional, default True
+    normalize : bool, default=True
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -785,11 +785,11 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    max_iter : integer, optional
+    max_iter : int, default=None
         Maximum numbers of iterations to perform, therefore maximum features
         to include. 10% of ``n_features`` but at least 5 if available.
 
-    cv : int, cross-validation generator or an iterable, optional
+    cv : int, cross-validation generator or iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
@@ -806,21 +806,21 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         Number of CPUs to use during the cross validation.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    verbose : boolean or integer, optional
-        Sets the verbosity amount
+    verbose : bool or int, default=False
+        Sets the verbosity amount.
 
     Attributes
     ----------
-    intercept_ : float or array, shape (n_targets,)
+    intercept_ : float or ndarray of shape (n_targets,)
         Independent term in decision function.
 
-    coef_ : array, shape (n_features,) or (n_targets, n_features)
+    coef_ : ndarray of shape (n_features,) or (n_targets, n_features)
         Parameter vector (w in the problem formulation).
 
     n_nonzero_coefs_ : int
@@ -874,11 +874,11 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             Training data.
 
-        y : array-like, shape [n_samples]
-            Target values. Will be cast to X's dtype if necessary
+        y : array-like of shape (n_samples,)
+            Target values. Will be cast to X's dtype if necessary.
 
         Returns
         -------
