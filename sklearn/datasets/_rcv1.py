@@ -132,11 +132,11 @@ def fetch_rcv1(*, data_home=None, subset='all', download_if_missing=True,
     dataset : :class:`~sklearn.utils.Bunch`
         Dictionary-like object, with the following attributes.
 
-        data : scipy csr array of shape (804414, 47236), dtype=np.float64
-            The array has 0.16% of non zero values.
-        target : scipy csr array of shape (804414, 103), dtype=np.uint8
+        data : sparse matrix of shape (804414, 47236), dtype=np.float64
+            The array has 0.16% of non zero values. Will be of CSR format.
+        target : sparse matrix of shape (804414, 103), dtype=np.uint8
             Each sample has a value of 1 in its categories, and 0 in others.
-            The array has 3.15% of non zero values.
+            The array has 3.15% of non zero values. Will be of CSR format.
         sample_id : ndarray of shape (804414,), dtype=np.uint32,
             Identification number of each sample, as ordered in dataset.data.
         target_names : ndarray of shape (103,), dtype=object
