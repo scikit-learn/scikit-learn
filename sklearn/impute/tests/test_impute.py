@@ -1069,18 +1069,12 @@ def test_iterative_imputer_skip_non_missing(skip_complete):
 
 
 @pytest.mark.parametrize(
-    "rs_imputer, rs_estimator",
-    [
-        (None, None),
-        (1, None),
-        (np.random.RandomState(seed=1), None),
-        (None, 1),
-        (1, 1),
-        (np.random.RandomState(seed=1), 1),
-        (None, np.random.RandomState(seed=1)),
-        (1, np.random.RandomState(seed=1)),
-        (np.random.RandomState(seed=1), np.random.RandomState(seed=1))
-    ]
+    "rs_imputer",
+    [None, 1, np.random.RandomState(seed=1)]
+)
+@pytest.mark.parametrize(
+    "rs_estimator",
+    [None, 1, np.random.RandomState(seed=1)]
 )
 def test_iterative_imputer_dont_set_random_state(rs_imputer, rs_estimator):
     class ZeroEstimator:
