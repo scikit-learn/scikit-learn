@@ -1,4 +1,4 @@
-"""Spectral Embedding"""
+"""Spectral Embedding."""
 
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 #         Wei LI <kuantkid@gmail.com>
@@ -173,7 +173,7 @@ def spectral_embedding(adjacency, *, n_components=8, eigen_solver=None,
         but may also lead to instabilities. If None, then ``'arpack'`` is
         used.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines the random number generator used for the initialization of
         the lobpcg eigenvectors decomposition when ``solver`` == 'amg'. Pass
         an int for reproducible results across multiple function calls.
@@ -391,7 +391,7 @@ class SpectralEmbedding(BaseEstimator):
         Kernel coefficient for rbf kernel. If None, gamma will be set to
         1/n_features.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines the random number generator used for the initialization of
         the lobpcg eigenvectors when ``solver`` == 'amg'.  Pass an int for
         reproducible results across multiple function calls.
