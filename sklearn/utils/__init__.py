@@ -1097,7 +1097,7 @@ def all_estimators(type_filter=None):
     This function crawls the module and gets all classes that inherit
     from BaseEstimator. Classes that are defined in test-modules are not
     included.
-    By default meta_estimators such as GridSearchCV are also not included.
+    By default meta_estimators such as GridSearchCV are also included.
 
     Parameters
     ----------
