@@ -1,4 +1,4 @@
-""" Non-negative matrix factorization
+""" Non-negative matrix factorization.
 """
 # Author: Vlad Niculae
 #         Lars Buitinck
@@ -25,14 +25,14 @@ EPSILON = np.finfo(np.float32).eps
 
 
 def norm(x):
-    """Dot product-based Euclidean norm implementation
+    """Dot product-based Euclidean norm implementation.
 
     See: http://fseoane.net/blog/2011/computing-the-vector-norm/
 
     Parameters
     ----------
     x : array-like
-        Vector for which to compute the norm
+        Vector for which to compute the norm.
     """
     return sqrt(squared_norm(x))
 
@@ -43,9 +43,9 @@ def trace_dot(X, Y):
     Parameters
     ----------
     X : array-like
-        First matrix
+        First matrix.
     Y : array-like
-        Second matrix
+        Second matrix.
     """
     return np.dot(X.ravel(), Y.ravel())
 
@@ -85,7 +85,7 @@ def _beta_divergence(X, W, H, beta, square_root=False):
     Returns
     -------
         res : float
-            Beta divergence of X and np.dot(X, H)
+            Beta divergence of X and np.dot(X, H).
     """
     beta = _beta_loss_to_float(beta)
 
@@ -187,7 +187,7 @@ def _special_sparse_dot(W, H, X):
 
 
 def _compute_regularization(alpha, l1_ratio, regularization):
-    """Compute L1 and L2 regularization coefficients for W and H"""
+    """Compute L1 and L2 regularization coefficients for W and H."""
     alpha_H = 0.
     alpha_W = 0.
     if regularization in ('both', 'components'):
@@ -233,7 +233,7 @@ def _check_string_param(solver, regularization, beta_loss, init):
 
 
 def _beta_loss_to_float(beta_loss):
-    """Convert string beta_loss to float"""
+    """Convert string beta_loss to float."""
     allowed_beta_loss = {'frobenius': 2,
                          'kullback-leibler': 1,
                          'itakura-saito': 0}
@@ -252,7 +252,7 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
     """Algorithms for NMF initialization.
 
     Computes an initial guess for the non-negative
-    rank k matrix approximation for X: X = WH
+    rank k matrix approximation for X: X = WH.
 
     Parameters
     ----------
@@ -288,7 +288,7 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
     eps : float, default=1e-6
         Truncate all values less then this in output to zero.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Used when ``init`` == 'nndsvdar' or 'random'. Pass an int for
         reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -296,10 +296,10 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
     Returns
     -------
     W : array-like of shape (n_samples, n_components)
-        Initial guesses for solving X ~= WH
+        Initial guesses for solving X ~= WH.
 
     H : array-like of shape (n_components, n_features)
-        Initial guesses for solving X ~= WH
+        Initial guesses for solving X ~= WH.
 
     References
     ----------
@@ -395,11 +395,11 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
 
 def _update_coordinate_descent(X, W, Ht, l1_reg, l2_reg, shuffle,
                                random_state):
-    """Helper function for _fit_coordinate_descent
+    """Helper function for _fit_coordinate_descent.
 
     Update W to minimize the objective function, iterating once over all
     coordinates. By symmetry, to update H, one can call
-    _update_coordinate_descent(X.T, Ht, W, ...)
+    _update_coordinate_descent(X.T, Ht, W, ...).
 
     """
     n_components = Ht.shape[1]
@@ -472,7 +472,7 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, l1_reg_W=0,
     shuffle : bool, default=False
         If true, randomize the order of coordinates in the CD solver.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Used to randomize the coordinates in the CD solver, when
         ``shuffle`` is set to ``True``. Pass an int for reproducible
         results across multiple function calls.
@@ -532,7 +532,7 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, l1_reg_W=0,
 
 def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
                              H_sum=None, HHt=None, XHt=None, update_H=True):
-    """update W in Multiplicative Update NMF"""
+    """Update W in Multiplicative Update NMF."""
     if beta_loss == 2:
         # Numerator
         if XHt is None:
@@ -626,7 +626,7 @@ def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
 
 
 def _multiplicative_update_h(X, W, H, beta_loss, l1_reg_H, l2_reg_H, gamma):
-    """update H in Multiplicative Update NMF"""
+    """Update H in Multiplicative Update NMF."""
     if beta_loss == 2:
         numerator = safe_sparse_dot(W.T, X)
         denominator = np.linalg.multi_dot([W.T, W, H])
@@ -711,7 +711,7 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
                                max_iter=200, tol=1e-4,
                                l1_reg_W=0, l1_reg_H=0, l2_reg_W=0, l2_reg_H=0,
                                update_H=True, verbose=0):
-    """Compute Non-negative Matrix Factorization with Multiplicative Update
+    """Compute Non-negative Matrix Factorization with Multiplicative Update.
 
     The objective function is _beta_divergence(X, WH) and is minimized with an
     alternating minimization of W and H. Each minimization is done with a
@@ -849,7 +849,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
                                max_iter=200, alpha=0., l1_ratio=0.,
                                regularization=None, random_state=None,
                                verbose=0, shuffle=False):
-    """Compute Non-negative Matrix Factorization (NMF)
+    """Compute Non-negative Matrix Factorization (NMF).
 
     Find two non-negative matrices (W, H) whose product approximates the non-
     negative matrix X. This factorization can be used for example for
@@ -970,7 +970,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
         Select whether the regularization affects the components (H), the
         transformation (W), both or none of them.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Used for NMF initialisation (when ``init`` == 'nndsvdar' or
         'random'), and in Coordinate Descent. Pass an int for reproducible
         results across multiple function calls.
@@ -1086,7 +1086,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
 
 
 class NMF(TransformerMixin, BaseEstimator):
-    """Non-Negative Matrix Factorization (NMF)
+    """Non-Negative Matrix Factorization (NMF).
 
     Find two non-negative matrices (W, H) whose product approximates the non-
     negative matrix X. This factorization can be used for example for
@@ -1175,7 +1175,7 @@ class NMF(TransformerMixin, BaseEstimator):
     max_iter : int, default=200
         Maximum number of iterations before timing out.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Used for initialisation (when ``init`` == 'nndsvdar' or
         'random'), and in Coordinate Descent. Pass an int for reproducible
         results across multiple function calls.
@@ -1334,17 +1334,17 @@ class NMF(TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X):
-        """Transform the data X according to the fitted NMF model
+        """Transform the data X according to the fitted NMF model.
 
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Data matrix to be transformed by the model
+            Data matrix to be transformed by the model.
 
         Returns
         -------
         W : ndarray of shape (n_samples, n_components)
-            Transformed data
+            Transformed data.
         """
         check_is_fitted(self)
 
@@ -1365,12 +1365,12 @@ class NMF(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         W : {ndarray, sparse matrix} of shape (n_samples, n_components)
-            Transformed data matrix
+            Transformed data matrix.
 
         Returns
         -------
         X : {ndarray, sparse matrix} of shape (n_samples, n_features)
-            Data matrix of original shape
+            Data matrix of original shape.
 
         .. versionadded:: 0.18
         """

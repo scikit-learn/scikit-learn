@@ -1,4 +1,4 @@
-""" Principal Component Analysis
+""" Principal Component Analysis.
 """
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
@@ -48,7 +48,7 @@ def _assess_dimension(spectrum, rank, n_samples):
     Returns
     -------
     ll : float
-        The log-likelihood
+        The log-likelihood.
 
     Notes
     -----
@@ -199,7 +199,7 @@ class PCA(_BasePCA):
 
         .. versionadded:: 0.18.0
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Used when the 'arpack' or 'randomized' solvers are used. Pass an int
         for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -428,7 +428,7 @@ class PCA(_BasePCA):
                              "".format(self._fit_svd_solver))
 
     def _fit_full(self, X, n_components):
-        """Fit the model by computing full SVD on X"""
+        """Fit the model by computing full SVD on X."""
         n_samples, n_features = X.shape
 
         if n_components == 'mle':
@@ -495,7 +495,7 @@ class PCA(_BasePCA):
 
     def _fit_truncated(self, X, n_components, svd_solver):
         """Fit the model by computing truncated SVD (by ARPACK or randomized)
-        on X
+        on X.
         """
         n_samples, n_features = X.shape
 

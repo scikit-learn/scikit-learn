@@ -1,4 +1,4 @@
-"""Matrix factorization with Sparse PCA"""
+"""Matrix factorization with Sparse PCA."""
 # Author: Vlad Niculae, Gael Varoquaux, Alexandre Gramfort
 # License: BSD 3 clause
 
@@ -13,7 +13,7 @@ from ._dict_learning import dict_learning, dict_learning_online
 
 
 class SparsePCA(TransformerMixin, BaseEstimator):
-    """Sparse Principal Components Analysis (SparsePCA)
+    """Sparse Principal Components Analysis (SparsePCA).
 
     Finds the set of sparse components that can optimally reconstruct
     the data.  The amount of sparseness is controllable by the coefficient
@@ -62,7 +62,7 @@ class SparsePCA(TransformerMixin, BaseEstimator):
     verbose : int or bool, default=False
         Controls the verbosity; the higher, the more messages. Defaults to 0.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Used during dictionary learning. Pass an int for reproducible results
         across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -256,7 +256,7 @@ class MiniBatchSparsePCA(SparsePCA):
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Used for random shuffling when ``shuffle`` is set to ``True``,
         during online dictionary learning. Pass an int for reproducible results
         across multiple function calls.
