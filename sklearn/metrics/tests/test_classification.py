@@ -2106,6 +2106,10 @@ def test_hinge_loss_multiclass_with_missing_labels():
 
 
 def test_hinge_loss_multiclass_missing_labels_only_two_unq_in_y_true():
+    # non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/17630
+    # check that we can compute the hinge loss when providing an array
+    # with labels allowing to not have all labels in y_true
     pred_decision = np.array([
         [+0.36, -0.17, -0.58],
         [-0.15, -0.58, -0.48],
