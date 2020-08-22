@@ -792,6 +792,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     transformer_weights : dict, default=None
         Multiplicative weights for features per transformer.
         Keys are transformer names, values the weights.
+        Raises KeyError if key not present in ``transformer_list``.
 
     verbose : bool, default=False
         If True, the time elapsed while fitting each transformer will be
