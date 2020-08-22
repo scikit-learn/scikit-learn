@@ -327,7 +327,7 @@ You can find more information about addition of gpu support at
 `Will you add GPU support?`_.
 
 Note that scikit-learn currently implements a simple multilayer perceptron
-in `sklearn.neural_network`. We will only accept bug fixes for this module.
+in :mod:`sklearn.neural_network`. We will only accept bug fixes for this module.
 If you want to implement more complex deep learning models, please turn to
 popular deep learning frameworks such as
 `tensorflow <https://www.tensorflow.org/>`_,
@@ -400,7 +400,7 @@ not being able to transform y in a pipeline.
 Follow on github issue
 `#4143 <https://github.com/scikit-learn/scikit-learn/issues/4143>`_.
 Meanwhile check out
-:class:`sklearn.compose.TransformedTargetRegressor`,
+:class:`~compose.TransformedTargetRegressor`,
 `pipegraph <https://github.com/mcasl/PipeGraph>`_,
 `imbalanced-learn <https://github.com/scikit-learn-contrib/imbalanced-learn>`_.
 Note that Scikit-learn solved for the case where y 

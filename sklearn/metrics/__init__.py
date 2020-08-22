@@ -7,6 +7,7 @@ and pairwise metrics and distance computations.
 from ._ranking import auc
 from ._ranking import average_precision_score
 from ._ranking import coverage_error
+from ._ranking import detection_error_tradeoff_curve
 from ._ranking import dcg_score
 from ._ranking import label_ranking_average_precision_score
 from ._ranking import label_ranking_loss
@@ -104,6 +105,7 @@ __all__ = [
     'coverage_error',
     'dcg_score',
     'davies_bouldin_score',
+    'detection_error_tradeoff_curve',
     'euclidean_distances',
     'explained_variance_score',
     'f1_score',

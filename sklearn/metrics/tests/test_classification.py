@@ -153,6 +153,31 @@ def test_classification_report_dictionary_output():
     assert type(expected_report['macro avg']['support']) == int
 
 
+def test_classification_report_output_dict_empty_input():
+    report = classification_report(y_true=[], y_pred=[], output_dict=True)
+    expected_report = {'accuracy': 0.0,
+                       'macro avg': {'f1-score': np.nan,
+                                     'precision': np.nan,
+                                     'recall': np.nan,
+                                     'support': 0},
+                       'weighted avg': {'f1-score': 0.0,
+                                        'precision': 0.0,
+                                        'recall': 0.0,
+                                        'support': 0}}
+    assert isinstance(report, dict)
+    # assert the 2 dicts are equal.
+    assert report.keys() == expected_report.keys()
+    for key in expected_report:
+        if key == 'accuracy':
+            assert isinstance(report[key], float)
+            assert report[key] == expected_report[key]
+        else:
+            assert report[key].keys() == expected_report[key].keys()
+            for metric in expected_report[key]:
+                assert_almost_equal(expected_report[key][metric],
+                                    report[key][metric])
+
+
 @pytest.mark.parametrize('zero_division', ["warn", 0, 1])
 def test_classification_report_zero_division_warning(zero_division):
     y_true, y_pred = ["a", "b", "c"], ["a", "b", "d"]
@@ -1382,6 +1407,35 @@ def test_average_binary_jaccard_score(recwarn):
 
     assert not list(recwarn)
 
+
+def test_jaccard_score_zero_division_warning():
+    # check that we raised a warning with default behavior if a zero division
+    # happens
+    y_true = np.array([[1, 0, 1], [0, 0, 0]])
+    y_pred = np.array([[0, 0, 0], [0, 0, 0]])
+    msg = ('Jaccard is ill-defined and being set to 0.0 in '
+           'samples with no true or predicted labels.'
+           ' Use `zero_division` parameter to control this behavior.')
+    with pytest.warns(UndefinedMetricWarning, match=msg):
+        score = jaccard_score(
+            y_true, y_pred, average='samples', zero_division='warn'
+        )
+        assert score == pytest.approx(0.0)
+
+
+@pytest.mark.parametrize(
+    "zero_division, expected_score", [(0, 0), (1, 0.5)]
+)
+def test_jaccard_score_zero_division_set_value(zero_division, expected_score):
+    # check that we don't issue warning by passing the zero_division parameter
+    y_true = np.array([[1, 0, 1], [0, 0, 0]])
+    y_pred = np.array([[0, 0, 0], [0, 0, 0]])
+    with pytest.warns(None) as record:
+        score = jaccard_score(
+            y_true, y_pred, average="samples", zero_division=zero_division
+        )
+    assert score == pytest.approx(expected_score)
+    assert len(record) == 0
 
 @ignore_warnings
 def test_precision_recall_f1_score_multilabel_1():

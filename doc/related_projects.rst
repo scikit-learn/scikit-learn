@@ -200,7 +200,7 @@ and tasks.
   Dirichlet allocation in Cython which uses `Gibbs sampling
   <https://en.wikipedia.org/wiki/Gibbs_sampling>`_ to sample from the true
   posterior distribution. (scikit-learn's
-  :class:`sklearn.decomposition.LatentDirichletAllocation` implementation uses
+  :class:`~sklearn.decomposition.LatentDirichletAllocation` implementation uses
   `variational inference
   <https://en.wikipedia.org/wiki/Variational_Bayesian_methods>`_ to sample from
   a tractable approximation of a topic model's posterior distribution.)
@@ -224,6 +224,12 @@ and tasks.
 - `imbalanced-learn
   <https://github.com/scikit-learn-contrib/imbalanced-learn>`_ Various
   methods to under- and over-sample datasets.
+
+- `Feature-engine <https://github.com/solegalli/feature_engine>`_ A library
+  of sklearn compatible transformers for missing data imputation, categorical
+  encoding, variable transformation, discretization, outlier handling and more.
+  Feature-engine allows the application of preprocessing steps to selected groups
+  of variables and it is fully compatible with the Scikit-learn Pipeline.
 
 Statistical learning with Python
 --------------------------------
