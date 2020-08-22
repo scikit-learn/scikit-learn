@@ -227,6 +227,11 @@ Changelog
   class to be used when computing the roc auc statistics.
   :pr:`17651` by :user:`Clara Matos <claramatos>`.
 
+- |Fix| bug in :func:`metrics.hinge_loss` where ``hinge_loss`` fails when
+  ``y_true`` is missing some labels that are provided explictly in the
+  ``labels`` parameter.
+  :pr:`17935` by :user:`Cary Goltermann <Ultramann>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
