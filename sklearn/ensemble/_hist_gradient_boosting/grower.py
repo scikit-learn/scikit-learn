@@ -259,7 +259,7 @@ class TreeGrower:
 
         if histogram_pool is None:
             self.histogram_pool = HistogramsPool(n_features=self.n_features,
-                                                  n_bins=n_bins)
+                                                 n_bins=n_bins)
         else:
             self.histogram_pool = histogram_pool
 
