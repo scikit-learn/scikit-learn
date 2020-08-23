@@ -147,7 +147,7 @@ class TreeGrower:
         loss w.r.t the predictions, evaluated at iteration ``i - 1``.
     histogram_pool : HistogramsPool, default=None
         A cache to hold the created histograms between growers. If None, a
-        local cache is used.
+        new pool cache is created.
     max_leaf_nodes : int or None, optional (default=None)
         The maximum number of leaves for each tree. If None, there is no
         maximum limit.
@@ -347,7 +347,7 @@ class TreeGrower:
             self._finalize_leaf(self.root)
             return
 
-        histograms_ref = self.histogram_pool.get_new_histograms()
+        histograms_ref = self.histogram_pool.get()
         self.root.histograms_ref = histograms_ref
         self.histogram_builder.compute_histograms_brute(
             self.root.sample_indices, histograms_ref())
@@ -489,13 +489,13 @@ class TreeGrower:
             # smallest number of samples, and the subtraction trick O(n_bins)
             # on the other one.
             tic = time()
-            small_hist_ref = self.histogram_pool.get_new_histograms()
+            small_hist_ref = self.histogram_pool.get()
             smallest_child.histograms_ref = small_hist_ref
             small_hist = small_hist_ref()
             self.histogram_builder.compute_histograms_brute(
                 smallest_child.sample_indices, small_hist)
 
-            large_hist_ref = self.histogram_pool.get_new_histograms()
+            large_hist_ref = self.histogram_pool.get()
             largest_child.histograms_ref = large_hist_ref
             parent_histogram = node.histograms_ref()
 
