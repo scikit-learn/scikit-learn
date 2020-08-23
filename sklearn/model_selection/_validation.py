@@ -411,7 +411,7 @@ def cross_val_score(estimator, X, y=None, *, groups=None, scoring=None,
 
     Returns
     -------
-    scores : array of float, shape=(len(list(cv)),)
+    scores : ndarray of float of shape=(len(list(cv)),)
         Array of scores of the estimator for each run of the cross validation.
 
     Examples
@@ -1294,7 +1294,7 @@ def learning_curve(estimator, X, y, *, groups=None,
 
         .. versionadded:: 0.24
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Used when ``shuffle`` is True. Pass an int for reproducible
         output across multiple function calls.
         See :term:`Glossary <random_state>`.

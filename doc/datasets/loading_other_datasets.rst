@@ -20,9 +20,6 @@ and pipelines on 2D data.
 
 .. autosummary::
 
-   :toctree: ../modules/generated/
-   :template: function.rst
-
    load_sample_images
    load_sample_image
 
