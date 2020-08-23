@@ -59,9 +59,9 @@ def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
 
       (1 - eps) ||u - v||^2 < ||p(u) - p(v)||^2 < (1 + eps) ||u - v||^2
 
-    Where u and v are any rows taken from a dataset of shape [n_samples,
-    n_features], eps is in ]0, 1[ and p is a projection by a random Gaussian
-    N(0, 1) matrix with shape [n_components, n_features] (or a sparse
+    Where u and v are any rows taken from a dataset of shape (n_samples,
+    n_features), eps is in ]0, 1[ and p is a projection by a random Gaussian
+    N(0, 1) matrix of shape (n_components, n_features) (or a sparse
     Achlioptas matrix).
 
     The minimum number of components to guarantee the eps-embedding is
