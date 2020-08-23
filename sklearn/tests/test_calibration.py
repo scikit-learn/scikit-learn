@@ -512,7 +512,6 @@ def test_calibration_without_sample_weight_base_estimator():
                                random_state=42)
     sample_weight = np.ones_like(y)
 
-
     class ClfWithoutSampleWeight(CheckingClassifier):
         def fit(self, X, y, **fit_params):
             assert 'sample_weight' not in fit_params
