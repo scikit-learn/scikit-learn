@@ -43,6 +43,7 @@ from sklearn.linear_model import Ridge
 
 from sklearn.model_selection._split import _validate_shuffle_split
 from sklearn.model_selection._split import _build_repr
+from sklearn.model_selection._split import _yields_constant_splits
 
 from sklearn.datasets import load_digits
 from sklearn.datasets import make_classification
@@ -1656,5 +1657,4 @@ def test_random_state_shuffle_false(Klass):
     (StratifiedShuffleSplit(random_state=np.random.RandomState(0)), False),
 ])
 def test_yields_constant_splits(cv, expected):
-    from sklearn.model_selection._split import _yields_constant_splits
     assert _yields_constant_splits(cv) == expected
