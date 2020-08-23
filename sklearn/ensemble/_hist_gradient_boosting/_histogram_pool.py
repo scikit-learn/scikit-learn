@@ -1,5 +1,3 @@
-import weakref
-
 import numpy as np
 from .common import HISTOGRAM_DTYPE
 
@@ -28,7 +26,7 @@ class HistogramsPool:
         self.used_pool = []
 
     def get(self):
-        """Return a weakref to a histograms."""
+        """Return a histograms object used by grower."""
         if self.avaliable_pool:
             histograms = self.avaliable_pool.pop()
         else:
@@ -36,4 +34,4 @@ class HistogramsPool:
                 shape=(self.n_features, self.n_bins), dtype=HISTOGRAM_DTYPE
             )
         self.used_pool.append(histograms)
-        return weakref.ref(histograms)
+        return histograms

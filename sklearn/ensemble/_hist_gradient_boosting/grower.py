@@ -75,7 +75,7 @@ class TreeNode:
     split_info = None
     left_child = None
     right_child = None
-    histograms_ref = None
+    histograms = None
     sibling = None
     parent = None
 
@@ -347,10 +347,9 @@ class TreeGrower:
             self._finalize_leaf(self.root)
             return
 
-        histograms_ref = self.histogram_pool.get()
-        self.root.histograms_ref = histograms_ref
+        self.root.histograms = self.histogram_pool.get()
         self.histogram_builder.compute_histograms_brute(
-            self.root.sample_indices, histograms_ref())
+            self.root.sample_indices, self.root.histograms)
         self._compute_best_split_and_push(self.root)
 
     def _compute_best_split_and_push(self, node):
@@ -361,7 +360,7 @@ class TreeGrower:
         (best gain = 0), or if no split would satisfy the constraints,
         (min_hessians_to_split, min_gain_to_split, min_samples_leaf)
         """
-        node_histograms = node.histograms_ref()
+        node_histograms = node.histograms
         node.split_info = self.splitter.find_node_split(
             node.n_samples, node_histograms, node.sum_gradients,
             node.sum_hessians, node.value, node.children_lower_bound,
@@ -489,18 +488,14 @@ class TreeGrower:
             # smallest number of samples, and the subtraction trick O(n_bins)
             # on the other one.
             tic = time()
-            small_hist_ref = self.histogram_pool.get()
-            smallest_child.histograms_ref = small_hist_ref
-            small_hist = small_hist_ref()
+            smallest_child.histograms = self.histogram_pool.get()
             self.histogram_builder.compute_histograms_brute(
-                smallest_child.sample_indices, small_hist)
+                smallest_child.sample_indices, smallest_child.histograms)
 
-            large_hist_ref = self.histogram_pool.get()
-            largest_child.histograms_ref = large_hist_ref
-            parent_histogram = node.histograms_ref()
-
+            largest_child.histograms = self.histogram_pool.get()
             self.histogram_builder.compute_histograms_subtraction(
-                parent_histogram, small_hist, large_hist_ref())
+                node.histograms, smallest_child.histograms,
+                largest_child.histograms)
             self.total_compute_hist_time += time() - tic
 
             tic = time()

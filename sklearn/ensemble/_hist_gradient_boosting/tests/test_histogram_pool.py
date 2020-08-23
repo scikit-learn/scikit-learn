@@ -12,16 +12,14 @@ def test_histograms_pool():
     n_features, n_bins = 20, 5
     pool = HistogramsPool(n_features=n_features, n_bins=n_bins)
 
-    histograms1_ref = pool.get()
-    histograms1 = histograms1_ref()
+    histograms1 = pool.get()
     assert histograms1.shape == (n_features, n_bins)
     histograms1[:] = 1
 
     assert pool.used_pool == [histograms1]
     assert pool.avaliable_pool == []
 
-    histograms2_ref = pool.get()
-    histograms2 = histograms2_ref()
+    histograms2 = pool.get()
     histograms2[:] = 2
 
     assert histograms2.shape == (n_features, n_bins)
@@ -39,8 +37,7 @@ def test_histograms_pool():
     for histograms, key in product(pool.avaliable_pool, keys):
         assert_allclose(histograms[key], 0)
 
-    histograms3_ref = pool.get()
-    histograms3 = histograms3_ref()
+    histograms3 = pool.get()
     assert histograms3.shape == (n_features, n_bins)
 
     # only histograms1 is in the avaliable pool
