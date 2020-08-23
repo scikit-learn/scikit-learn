@@ -61,8 +61,6 @@ class TreeNode:
         The left child of the node. None for leaves.
     right_child : TreeNode or None
         The right child of the node. None for leaves.
-    histograms_ref : weakref to histograms.
-        Weak reference to a histogram.
     value : float or None
         The value of the leaf, as computed in finalize_leaf(). None for
         non-leaf nodes.
@@ -360,9 +358,9 @@ class TreeGrower:
         (best gain = 0), or if no split would satisfy the constraints,
         (min_hessians_to_split, min_gain_to_split, min_samples_leaf)
         """
-        node_histograms = node.histograms
+
         node.split_info = self.splitter.find_node_split(
-            node.n_samples, node_histograms, node.sum_gradients,
+            node.n_samples, node.histograms, node.sum_gradients,
             node.sum_hessians, node.value, node.children_lower_bound,
             node.children_upper_bound)
 
