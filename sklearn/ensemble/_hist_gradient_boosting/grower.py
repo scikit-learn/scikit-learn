@@ -145,7 +145,7 @@ class TreeGrower:
     hessians : ndarray, shape (n_samples,)
         The hessians of each training sample. Those are the hessians of the
         loss w.r.t the predictions, evaluated at iteration ``i - 1``.
-    histogram_pool : HistogramsPools, default=None
+    histogram_pool : HistogramsPool, default=None
         A cache to hold the created histograms between growers. If None, a
         local cache is used.
     max_leaf_nodes : int or None, optional (default=None)
@@ -495,9 +495,9 @@ class TreeGrower:
                 smallest_child.sample_indices, small_hist)
 
             large_idx, large_hist = self.histogram_pool.get_new_histograms()
+            largest_child.histograms_idx = large_idx
             parent_histogram = self.histogram_pool[node.histograms_idx]
 
-            largest_child.histograms_idx = large_idx
             self.histogram_builder.compute_histograms_subtraction(
                 parent_histogram, small_hist, large_hist)
             self.total_compute_hist_time += time() - tic

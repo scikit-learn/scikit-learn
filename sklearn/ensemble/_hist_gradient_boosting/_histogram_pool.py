@@ -9,7 +9,7 @@ class HistogramsPool:
         self.n_bins = n_bins
         self.pool = []
         self.used_indices = set()
-        self.avaliable_indies = set()
+        self.available_indices = set()
 
     def reset(self):
         """Reset the pool."""
@@ -18,12 +18,12 @@ class HistogramsPool:
             self.pool[used_idx].fill(0)
 
         self.used_indices = set()
-        self.avaliable_indies = set(range(len(self.pool)))
+        self.available_indices = set(range(len(self.pool)))
 
     def get_new_histograms(self):
         """Return a histograms and its location in the pool."""
-        if self.avaliable_indies:
-            idx = self.avaliable_indies.pop()
+        if self.available_indices:
+            idx = self.available_indices.pop()
             histograms = self.pool[idx]
         else:
             histograms = np.zeros(
