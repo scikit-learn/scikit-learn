@@ -13,14 +13,14 @@ class HistogramsCache:
     def reset(self):
         """Reset the cache."""
         self.unused_histograms_indices = set(range(len(self.cache)))
+        for histograms in self.cache:
+            histograms.fill(0)
 
     def get_new_histograms(self):
         """Return a histograms and its location in the cache."""
         if self.unused_histograms_indices:
             index = self.unused_histograms_indices.pop()
-            histograms = self.cache[index]
-            histograms.fill(0)
-            return index, histograms
+            return index, self.cache[index]
 
         # all histograms are used
         histograms = np.zeros(

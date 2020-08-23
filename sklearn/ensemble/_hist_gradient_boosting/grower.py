@@ -495,7 +495,7 @@ class TreeGrower:
                 smallest_child.sample_indices, small_hist)
 
             large_idx, large_hist = self.histogram_cache.get_new_histograms()
-            parent_histogram = self.histogram_cache[node.histograms]
+            parent_histogram = self.histogram_cache[node.histograms_idx]
 
             largest_child.histograms_idx = large_idx
             self.histogram_builder.compute_histograms_subtraction(
