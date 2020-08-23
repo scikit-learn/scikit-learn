@@ -151,7 +151,7 @@ Changelog
   which allows monitoring of each stage.
   :pr:`16985` by :user:`Hao Chun Chang <haochunchang>`.
 
-- |Enhancement| :class:`ensemble.HistGradientBoostingRegressor` and
+- |Efficiency| :class:`ensemble.HistGradientBoostingRegressor` and
   :class:`ensemble.HistGradientClassifier` have been improved to have lower
   memory usage in `fit`. :pr:`18242` by `Thomas Fan`_.
 
