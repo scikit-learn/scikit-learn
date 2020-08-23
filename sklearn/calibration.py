@@ -280,7 +280,8 @@ class CalibratedClassifierCV(ClassifierMixin,
             cv = check_cv(self.cv, y, classifier=True)
             fit_parameters = signature(base_estimator.fit).parameters
             base_estimator_supports_sw = "sample_weight" in fit_parameters
-            base_estimator_uses_sw = False
+            base_estimator_uses_sw = (
+                sample_weight is not None and base_estimator_supports_sw)
             if sample_weight is not None:
                 sample_weight = _check_sample_weight(sample_weight, X)
 
@@ -289,8 +290,6 @@ class CalibratedClassifierCV(ClassifierMixin,
                     warnings.warn("Since %s does not support sample_weights, "
                                   "sample weights will only be used for the "
                                   "calibration itself." % estimator_name)
-                else:
-                    base_estimator_uses_sw = True
 
             parallel = Parallel(n_jobs=self.n_jobs)
 
