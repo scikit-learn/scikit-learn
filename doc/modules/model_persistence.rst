@@ -11,10 +11,12 @@ you some hints on how to persist a scikit-learn model.
 .. note::
 
    Remember that, once exported in a persistent format, the model should only
-   be used for predictions and it shouldn not be refitted.
+   be used for predictions and cannot necessarily be refitted as information
+   about the original hyper-parameters might not have been exported
+   (depending on the serialization method).
 
-Binary serialization
---------------------
+Python specific serialization
+-----------------------------
 
 It is possible to save a model in scikit-learn by using Python's built-in
 persistence model, namely `pickle
@@ -84,7 +86,10 @@ same range as before.
 
 Since a model internal representation may be different on two different
 architectures, dumping a model on one architecture and loading it on
-another architecture is not supported.
+another architecture is not a supported behaviour, even if it might work
+on some cases.
+To overcome the issue of portability, pickle models are often deployed in
+production using containers, like docker.
 
 If you want to know more about these issues and explore other possible
 serialization methods, please refer to this
@@ -94,11 +99,21 @@ serialization methods, please refer to this
 Interoperable formats
 ---------------------
 
-For production and quality control needs, exporting the model in `Predictive
-Model Markup Language (PMML)
-<http://dmg.org/pmml/v4-4-1/GeneralStructure.html>`_ or `Open Neural Network
-Exchange <https://onnx.ai/>`_ format
-would be a better approach than using `pickle`.
+For reproducibility and quality control needs, when different architectures
+and environments should be taken into account, exporting the model in
+`Open Neural Network
+Exchange <https://onnx.ai/>`_ format or `Predictive Model Markup Language
+(PMML) <http://dmg.org/pmml/v4-4-1/GeneralStructure.html>`_ format
+might be a better approach than using `pickle` alone.
+
+ONNX is a binary serialization of the model. It has been developed to improve
+the usability of the interoperable representation of data models.
+It aims to facilitate the conversion of the data
+models between different machine learning frameworks, and to improve their
+portability on different computing architectures. More details are available
+from the `ONNX tutorial <https://onnx.ai/get-started.html>`_.
+To convert scikit-learn model to ONNX a specific tool `sklearn-onnx
+<http://onnx.ai/sklearn-onnx/>`_ has been developed. 
 
 PMML is an extension of the `XML
 <https://fr.wikipedia.org/wiki/Extensible_Markup_Language>`_ document standard
@@ -107,9 +122,6 @@ Being human and machine readable,
 PMML is a good option for model validation on different platforms and
 long term archiving. On the other hand, as XML in general, its verbosity does
 not help in production when performance is critical.
-
-ONNX has been developed to improve the usability of the interoperable
-representation of data models. It aims to facilitate the conversion of the data
-models between different machine learning frameworks, and to improve their
-portability on different computing architectures. More details are available
-from the `ONNX tutorial <https://onnx.ai/get-started.html>`_. 
+To convert scikit-learn model to PMML you can use for example `sklearn2pmml
+<https://github.com/jpmml/sklearn2pmml>`_ distributed under the Affero GPLv3
+license.
