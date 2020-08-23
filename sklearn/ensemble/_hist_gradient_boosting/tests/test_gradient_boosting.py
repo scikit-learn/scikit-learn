@@ -20,6 +20,7 @@ from sklearn.ensemble._hist_gradient_boosting.loss import _LOSSES
 from sklearn.ensemble._hist_gradient_boosting.loss import LeastSquares
 from sklearn.ensemble._hist_gradient_boosting.loss import BinaryCrossEntropy
 from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
+from sklearn.ensemble._hist_gradient_boosting.common import HISTOGRAM_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
 from sklearn.utils import shuffle
 
@@ -673,8 +674,10 @@ def test_sum_hessians_are_sample_weight(loss_name):
     # Build histogram
     grower = TreeGrower(X_binned, gradients[0], hessians[0],
                         n_bins=bin_mapper.n_bins)
-    histograms = grower.histogram_builder.compute_histograms_brute(
-        grower.root.sample_indices)
+    histograms = np.zeros(shape=(n_features, bin_mapper.n_bins),
+                          dtype=HISTOGRAM_DTYPE)
+    grower.histogram_builder.compute_histograms_brute(
+        grower.root.sample_indices, histograms)
 
     for feature_idx in range(n_features):
         for bin_idx in range(bin_mapper.n_bins):

@@ -4,6 +4,7 @@ import pytest
 from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
 from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common import X_BINNED_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.common import HISTOGRAM_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common import MonotonicConstraint
 from sklearn.ensemble._hist_gradient_boosting.splitting import (
     Splitter,
@@ -311,7 +312,8 @@ def test_bounded_value_min_gain_to_split():
                         min_hessian_to_split, min_samples_leaf,
                         min_gain_to_split, hessians_are_constant)
 
-    histograms = builder.compute_histograms_brute(sample_indices)
+    histograms = np.zeros(shape=(1, n_bins), dtype=HISTOGRAM_DTYPE)
+    builder.compute_histograms_brute(sample_indices, histograms)
 
     # Since the gradient array is [1, 1, 100, 1, 1]
     # the max possible gain happens on the 3rd bin (or equivalently in the 2nd)

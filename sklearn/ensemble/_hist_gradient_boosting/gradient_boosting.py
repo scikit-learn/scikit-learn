@@ -18,6 +18,7 @@ from ...metrics import check_scoring
 from ...model_selection import train_test_split
 from ...preprocessing import LabelEncoder
 from ._gradient_boosting import _update_raw_predictions
+from ._histogram_cache import HistogramsCache
 from .common import Y_DTYPE, X_DTYPE, X_BINNED_DTYPE
 
 from .binning import _BinMapper
@@ -340,6 +341,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             prediction_dim=self.n_trees_per_iteration_,
             sample_weight=sample_weight_train
         )
+        histogram_cache = HistogramsCache(n_features=self._n_features,
+                                         n_bins=n_bins)
 
         for iteration in range(begin_at_stage, self.max_iter):
 
@@ -360,6 +363,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             for k in range(self.n_trees_per_iteration_):
                 grower = TreeGrower(
                     X_binned_train, gradients[k, :], hessians[k, :],
+                    histogram_cache=histogram_cache,
                     n_bins=n_bins,
                     n_bins_non_missing=self._bin_mapper.n_bins_non_missing_,
                     has_missing_values=has_missing_values,

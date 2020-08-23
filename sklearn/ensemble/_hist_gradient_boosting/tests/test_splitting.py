@@ -61,7 +61,9 @@ def test_histogram_split(n_bins):
                                 min_samples_leaf, min_gain_to_split,
                                 hessians_are_constant)
 
-            histograms = builder.compute_histograms_brute(sample_indices)
+            histograms = np.zeros(shape=(X_binned.shape[1], n_bins),
+                                  dtype=HISTOGRAM_DTYPE)
+            builder.compute_histograms_brute(sample_indices, histograms)
             value = compute_node_value(sum_gradients, sum_hessians,
                                        -np.inf, np.inf, l2_regularization)
             split_info = splitter.find_node_split(
@@ -125,7 +127,9 @@ def test_gradient_and_hessian_sanity(constant_hessian):
                         min_hessian_to_split, min_samples_leaf,
                         min_gain_to_split, constant_hessian)
 
-    hists_parent = builder.compute_histograms_brute(sample_indices)
+    hists_parent = np.zeros(shape=(X_binned.shape[1], n_bins),
+                            dtype=HISTOGRAM_DTYPE)
+    builder.compute_histograms_brute(sample_indices, hists_parent)
     value_parent = compute_node_value(sum_gradients, sum_hessians,
                                       -np.inf, np.inf, l2_regularization)
     si_parent = splitter.find_node_split(n_samples, hists_parent,
@@ -134,11 +138,16 @@ def test_gradient_and_hessian_sanity(constant_hessian):
     sample_indices_left, sample_indices_right, _ = splitter.split_indices(
         si_parent, sample_indices)
 
-    hists_left = builder.compute_histograms_brute(sample_indices_left)
+    hists_left = np.zeros(shape=(X_binned.shape[1], n_bins),
+                          dtype=HISTOGRAM_DTYPE)
+    builder.compute_histograms_brute(sample_indices_left, hists_left)
     value_left = compute_node_value(si_parent.sum_gradient_left,
                                     si_parent.sum_hessian_left,
                                     -np.inf, np.inf, l2_regularization)
-    hists_right = builder.compute_histograms_brute(sample_indices_right)
+
+    hists_right = np.zeros(shape=(X_binned.shape[1], n_bins),
+                           dtype=HISTOGRAM_DTYPE)
+    builder.compute_histograms_brute(sample_indices_right, hists_right)
     value_right = compute_node_value(si_parent.sum_gradient_right,
                                      si_parent.sum_hessian_right,
                                      -np.inf, np.inf, l2_regularization)
@@ -241,7 +250,9 @@ def test_split_indices():
 
     assert np.all(sample_indices == splitter.partition)
 
-    histograms = builder.compute_histograms_brute(sample_indices)
+    histograms = np.zeros(shape=(X_binned.shape[1], n_bins),
+                          dtype=HISTOGRAM_DTYPE)
+    builder.compute_histograms_brute(sample_indices, histograms)
     value = compute_node_value(sum_gradients, sum_hessians,
                                -np.inf, np.inf, l2_regularization)
     si_root = splitter.find_node_split(n_samples, histograms,
@@ -301,7 +312,9 @@ def test_min_gain_to_split():
                         min_hessian_to_split, min_samples_leaf,
                         min_gain_to_split, hessians_are_constant)
 
-    histograms = builder.compute_histograms_brute(sample_indices)
+    histograms = np.zeros(shape=(X_binned.shape[1], n_bins),
+                          dtype=HISTOGRAM_DTYPE)
+    builder.compute_histograms_brute(sample_indices, histograms)
     value = compute_node_value(sum_gradients, sum_hessians,
                                -np.inf, np.inf, l2_regularization)
     split_info = splitter.find_node_split(n_samples, histograms,
@@ -445,7 +458,9 @@ def test_splitting_missing_values(X_binned, all_gradients,
                         min_samples_leaf, min_gain_to_split,
                         hessians_are_constant)
 
-    histograms = builder.compute_histograms_brute(sample_indices)
+    histograms = np.zeros(shape=(X_binned.shape[1], n_bins),
+                          dtype=HISTOGRAM_DTYPE)
+    builder.compute_histograms_brute(sample_indices, histograms)
     value = compute_node_value(sum_gradients, sum_hessians,
                                -np.inf, np.inf, l2_regularization)
     split_info = splitter.find_node_split(n_samples, histograms,
