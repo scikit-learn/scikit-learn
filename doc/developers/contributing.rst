@@ -744,6 +744,7 @@ In general have the following in mind:
     8. When the default is ``None``, ``None`` only needs to be specified at the
        end with ``default=None``. Be sure to include in the docstring, what it
        means for the parameter or attribute to be ``None``.
+
 * For unwritten formatting rules, try to follow existing good works:
 
     * For "References" in docstrings, see the Silhouette Coefficient
