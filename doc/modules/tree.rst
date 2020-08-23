@@ -527,6 +527,10 @@ Half Poisson deviance:
     H(Q_m) = \frac{1}{N_m} \sum_{y \in Q_m} (y \log\frac{y}{\bar{y}_m}
     - y + \bar{y}_m)
 
+Setting `criterion="poisson"` might be a good choice if your target is a count
+or a frequency (count per some unit). In any case, :math:`y >= 0` is a
+necessary condition to use this criterion.
+
 Mean Absolute Error:
 
 .. math::
