@@ -81,6 +81,9 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
     expected_fit_params : list of str, default=None
         A list of the expected parameters given when calling `fit`.
 
+    expected_sample_weight : bool (default=False)
+        Whether to check if a valid sample_weight was passed to `fit`.
+
     Attributes
     ----------
     classes_ : int
@@ -113,7 +116,8 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
 
     def __init__(self, *, check_y=None, check_y_params=None,
                  check_X=None, check_X_params=None, methods_to_check="all",
-                 foo_param=0, expected_fit_params=None):
+                 foo_param=0, expected_fit_params=None,
+                 expected_sample_weight=None):
         self.check_y = check_y
         self.check_y_params = check_y_params
         self.check_X = check_X
@@ -121,6 +125,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         self.methods_to_check = methods_to_check
         self.foo_param = foo_param
         self.expected_fit_params = expected_fit_params
+        self.expected_sample_weight = expected_sample_weight
 
     def _check_X_y(self, X, y=None, should_be_fitted=True):
         """Validate X and y and make extra check.
@@ -157,7 +162,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
                 y = checked_y
         return X, y
 
-    def fit(self, X, y, **fit_params):
+    def fit(self, X, y, sample_weight=None, **fit_params):
         """Fit classifier.
 
         Parameters
@@ -169,6 +174,9 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         y : array-like of shape (n_samples, n_output) or (n_samples,), optional
             Target relative to X for classification or regression;
             None for unsupervised learning.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights. If None, then samples are equally weighted.
 
         **fit_params : dict of string -> object
             Parameters passed to the ``fit`` method of the estimator
@@ -196,6 +204,13 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
                         f'Fit parameter {key} has length {_num_samples(value)}'
                         f'; expected {_num_samples(X)}.'
                     )
+        if self.expected_sample_weight:
+            if sample_weight is None:
+                raise AssertionError("Expected sample_weight to be passed")
+            if len(sample_weight) != _num_samples(X):
+                raise AssertionError(
+                    f'Expected sample_weight to have length {_num_samples(X)},'
+                    f' got length {len(sample_weight)} instead.')
 
         return self
 

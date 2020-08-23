@@ -466,7 +466,7 @@ def test_calibration_with_fit_params(fit_params_as_list):
 
     """
     n_samples = 100
-    X, y = make_classification(n_samples=2 * n_samples, n_features=6,
+    X, y = make_classification(n_samples=n_samples, n_features=6,
                                random_state=42)
 
     if fit_params_as_list:
@@ -474,10 +474,55 @@ def test_calibration_with_fit_params(fit_params_as_list):
     else:
         fit_params = {'a': y, 'b': y}
 
-    clf = CheckingClassifier(expected_fit_params=fit_params)
+    clf = CheckingClassifier(expected_fit_params=['a', 'b'])
     pc_clf = CalibratedClassifierCV(clf)
 
     pc_clf.fit(X, y, **fit_params)
+
+
+@pytest.mark.parametrize('sample_weight', [
+    [1.0] * 100,
+    np.ones(100),
+])
+def test_calibration_with_sample_weight_base_estimator(sample_weight):
+    """Tests that sample_weight is passed to the underlying base
+    estimator
+
+    """
+    n_samples = 100
+    X, y = make_classification(n_samples=n_samples, n_features=6,
+                               random_state=42)
+
+    clf = CheckingClassifier(expected_sample_weight=True)
+    pc_clf = CalibratedClassifierCV(clf)
+
+    pc_clf.fit(X, y, sample_weight=sample_weight)
+
+
+def test_calibration_without_sample_weight_base_estimator():
+    """Check that even if the base_estimator doesn't support
+    sample_weight, fitting with sample_weight still works
+
+    There should be a warning, since the sample_weight is not passed
+    on to the base_estimator.
+
+    """
+    n_samples = 100
+    X, y = make_classification(n_samples=n_samples, n_features=6,
+                               random_state=42)
+    sample_weight = np.ones_like(y)
+
+
+    class ClfWithoutSampleWeight(CheckingClassifier):
+        def fit(self, X, y, **fit_params):
+            assert 'sample_weight' not in fit_params
+            return super().fit(X, y, **fit_params)
+
+    clf = ClfWithoutSampleWeight()
+    pc_clf = CalibratedClassifierCV(clf)
+
+    with pytest.warns(UserWarning):
+        pc_clf.fit(X, y, sample_weight=sample_weight)
 
 
 def test_calibration_with_fit_params_inconsistent_length():
