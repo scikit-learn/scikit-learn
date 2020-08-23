@@ -8,26 +8,32 @@ class HistogramsPool:
         self.n_features = n_features
         self.n_bins = n_bins
         self.pool = []
-        self.unused_histograms_indices = set()
+        self.used_indices = set()
+        self.avaliable_indies = set()
 
     def reset(self):
         """Reset the pool."""
-        self.unused_histograms_indices = set(range(len(self.pool)))
-        for histograms in self.pool:
-            histograms.fill(0)
+        # Only set histograms that were used to zero
+        for used_idx in self.used_indices:
+            self.pool[used_idx].fill(0)
+
+        self.used_indices = set()
+        self.avaliable_indies = set(range(len(self.pool)))
 
     def get_new_histograms(self):
-        """Return a histograms and its location in the cache."""
-        if self.unused_histograms_indices:
-            index = self.unused_histograms_indices.pop()
-            return index, self.pool[index]
+        """Return a histograms and its location in the pool."""
+        if self.avaliable_indies:
+            idx = self.avaliable_indies.pop()
+            histograms = self.pool[idx]
+        else:
+            histograms = np.zeros(
+                shape=(self.n_features, self.n_bins), dtype=HISTOGRAM_DTYPE
+            )
+            self.pool.append(histograms)
+            idx = len(self.pool) - 1
 
-        # all histograms are used
-        histograms = np.zeros(
-            shape=(self.n_features, self.n_bins), dtype=HISTOGRAM_DTYPE
-        )
-        self.pool.append(histograms)
-        return len(self.pool) - 1, histograms
+        self.used_indices.add(idx)
+        return idx, histograms
 
     def __getitem__(self, idx):
         """Get element from the pool."""
