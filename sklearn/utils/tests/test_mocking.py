@@ -138,10 +138,12 @@ def test_checking_classifier_with_params(iris):
 def test_checking_classifier_fit_params(iris):
     # check the error raised when the number of samples is not the one expected
     X, y = iris
-    clf = CheckingClassifier(expected_fit_params=["sample_weight"])
+    clf = CheckingClassifier(expected_sample_weight=True)
     sample_weight = np.ones(len(X) // 2)
 
-    with pytest.raises(AssertionError, match="Fit parameter sample_weight"):
+    msg = (f'Expected sample_weight to have length {len(X)},'
+           f' got length {len(X) // 2} instead.')
+    with pytest.raises(AssertionError, match=msg):
         clf.fit(X, y, sample_weight=sample_weight)
 
 
