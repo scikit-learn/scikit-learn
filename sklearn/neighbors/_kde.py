@@ -85,6 +85,7 @@ class KernelDensity(BaseEstimator):
     Examples
     --------
     Compute a gaussian kernel density estimate with a fixed bandwidth.
+
     >>> import numpy as np
     >>> rng = np.random.RandomState(42)
     >>> X = rng.random_sample((100, 3))
@@ -284,7 +285,7 @@ class KernelDensity(BaseEstimator):
     def _more_tags(self):
         return {
             '_xfail_checks': {
-                'check_sample_weights_invariance(kind=zeros)':
+                'check_sample_weights_invariance':
                 'sample_weight must have positive values',
             }
         }

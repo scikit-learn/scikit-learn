@@ -22,7 +22,7 @@ from ..utils.validation import _deprecate_positional_args
 
 
 def _generate_hypercube(samples, dimensions, rng):
-    """Returns distinct binary samples of length dimensions
+    """Returns distinct binary samples of length dimensions.
     """
     if dimensions > 30:
         return np.hstack([rng.randint(2, size=(samples, dimensions - 30)),
@@ -115,11 +115,11 @@ def make_classification(n_samples=100, n_features=20, *, n_informative=2,
         If True, the clusters are put on the vertices of a hypercube. If
         False, the clusters are put on the vertices of a random polytope.
 
-    shift : float, array of shape (n_features,) or None, default=0.0
+    shift : float, ndarray of shape (n_features,) or None, default=0.0
         Shift features by the specified value. If None, then features
         are shifted by a random value drawn in [-class_sep, class_sep].
 
-    scale : float, array of shape (n_features,) or None, default=1.0
+    scale : float, ndarray of shape (n_features,) or None, default=1.0
         Multiply features by the specified value. If None, then features
         are scaled by a random value drawn in [1, 100]. Note that scaling
         happens after shifting.
@@ -127,17 +127,17 @@ def make_classification(n_samples=100, n_features=20, *, n_informative=2,
     shuffle : bool, default=True
         Shuffle the samples and the features.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Returns
     -------
-    X : array of shape [n_samples, n_features]
+    X : ndarray of shape (n_samples, n_features)
         The generated samples.
 
-    y : array of shape [n_samples]
+    y : ndarray of shape (n_samples,)
         The integer labels for class membership of each sample.
 
     Notes
@@ -315,8 +315,8 @@ def make_multilabel_classification(n_samples=100, n_features=20, *,
         .. versionadded:: 0.17
            parameter to allow *sparse* output.
 
-    return_indicator : 'dense' (default) | 'sparse' | False
-        If ``dense`` return ``Y`` in the dense binary indicator format. If
+    return_indicator : {'dense', 'sparse'} or False, default='dense'
+        If ``'dense'`` return ``Y`` in the dense binary indicator format. If
         ``'sparse'`` return ``Y`` in the sparse binary indicator format.
         ``False`` returns a list of lists of labels.
 
@@ -325,24 +325,24 @@ def make_multilabel_classification(n_samples=100, n_features=20, *,
         probabilities of features given classes, from which the data was
         drawn.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Returns
     -------
-    X : array of shape [n_samples, n_features]
+    X : ndarray of shape (n_samples, n_features)
         The generated samples.
 
-    Y : array or sparse CSR matrix of shape [n_samples, n_classes]
-        The label sets.
+    Y : {ndarray, sparse matrix} of shape (n_samples, n_classes)
+        The label sets. Sparse matrix should be of CSR format.
 
-    p_c : array, shape [n_classes]
+    p_c : ndarray of shape (n_classes,)
         The probability of each class being drawn. Only returned if
         ``return_distributions=True``.
 
-    p_w_c : array, shape [n_features, n_classes]
+    p_w_c : ndarray of shape (n_features, n_classes)
         The probability of each feature being drawn given each class.
         Only returned if ``return_distributions=True``.
 
@@ -443,17 +443,17 @@ def make_hastie_10_2(n_samples=12000, *, random_state=None):
     n_samples : int, default=12000
         The number of samples.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Returns
     -------
-    X : array of shape [n_samples, 10]
+    X : ndarray of shape (n_samples, 10)
         The input samples.
 
-    y : array of shape [n_samples]
+    y : ndarray of shape (n_samples,)
         The output values.
 
     References
@@ -536,20 +536,20 @@ def make_regression(n_samples=100, n_features=100, *, n_informative=10,
     coef : bool, default=False
         If True, the coefficients of the underlying linear model are returned.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Returns
     -------
-    X : array of shape [n_samples, n_features]
+    X : ndarray of shape (n_samples, n_features)
         The input samples.
 
-    y : array of shape [n_samples] or [n_samples, n_targets]
+    y : ndarray of shape (n_samples,) or (n_samples, n_targets)
         The output values.
 
-    coef : array of shape (n_features,) or (n_features, n_targets)
+    coef : ndarray of shape (n_features,) or (n_features, n_targets)
         The coefficient of the underlying linear model. It is returned only if
         coef is True.
     """
@@ -611,7 +611,7 @@ def make_circles(n_samples=100, *, shuffle=True, noise=None, random_state=None,
 
     Parameters
     ----------
-    n_samples : int or tuple of 2 int, default=100
+    n_samples : int or tuple of shape (2,), dtype=int, default=100
         If int, it is the total number of points generated.
         For odd numbers, the inner circle will have one point more than the
         outer circle.
@@ -624,7 +624,7 @@ def make_circles(n_samples=100, *, shuffle=True, noise=None, random_state=None,
     noise : float, default=None
         Standard deviation of Gaussian noise added to the data.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for dataset shuffling and noise.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -634,10 +634,10 @@ def make_circles(n_samples=100, *, shuffle=True, noise=None, random_state=None,
 
     Returns
     -------
-    X : array of shape [n_samples, 2]
+    X : ndarray of shape (n_samples, 2)
         The generated samples.
 
-    y : array of shape [n_samples]
+    y : ndarray of shape (n_samples,)
         The integer labels (0 or 1) for class membership of each sample.
     """
 
@@ -685,7 +685,7 @@ def make_moons(n_samples=100, *, shuffle=True, noise=None, random_state=None):
 
     Parameters
     ----------
-    n_samples : int or tuple of 2 int, default=100
+    n_samples : int or tuple of shape (2,), dtype=int, default=100
         If int, the total number of points generated.
         If two-element tuple, number of points in each of two moons.
 
@@ -695,7 +695,7 @@ def make_moons(n_samples=100, *, shuffle=True, noise=None, random_state=None):
     noise : float, default=None
         Standard deviation of Gaussian noise added to the data.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for dataset shuffling and noise.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -762,13 +762,13 @@ def make_blobs(n_samples=100, n_features=2, *, centers=None, cluster_std=1.0,
     n_features : int, default=2
         The number of features for each sample.
 
-    centers : int or array of shape (n_centers, n_features), default=None
+    centers : int or ndarray of shape (n_centers, n_features), default=None
         The number of centers to generate, or the fixed center locations.
         If n_samples is an int and centers is None, 3 centers are generated.
         If n_samples is array-like, centers must be
         either None or an array of length equal to the length of n_samples.
 
-    cluster_std : float or array-like of floats, default=1.0
+    cluster_std : float or array-like of float, default=1.0
         The standard deviation of the clusters.
 
     center_box : tuple of float (min, max), default=(-10.0, 10.0)
@@ -778,7 +778,7 @@ def make_blobs(n_samples=100, n_features=2, *, centers=None, cluster_std=1.0,
     shuffle : bool, default=True
         Shuffle the samples.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -790,13 +790,13 @@ def make_blobs(n_samples=100, n_features=2, *, centers=None, cluster_std=1.0,
 
     Returns
     -------
-    X : array of shape [n_samples, n_features]
+    X : ndarray of shape (n_samples, n_features)
         The generated samples.
 
-    y : array of shape [n_samples]
+    y : ndarray of shape (n_samples,)
         The integer labels for cluster membership of each sample.
 
-    centers : array, shape [n_centers, n_features]
+    centers : ndarray of shape (n_centers, n_features)
         The centers of each cluster. Only returned if
         ``return_centers=True``.
 
@@ -901,7 +901,7 @@ def make_blobs(n_samples=100, n_features=2, *, centers=None, cluster_std=1.0,
 @_deprecate_positional_args
 def make_friedman1(n_samples=100, n_features=10, *, noise=0.0,
                    random_state=None):
-    """Generate the "Friedman #1" regression problem
+    """Generate the "Friedman #1" regression problem.
 
     This dataset is described in Friedman [1] and Breiman [2].
 
@@ -929,17 +929,17 @@ def make_friedman1(n_samples=100, n_features=10, *, noise=0.0,
     noise : float, default=0.0
         The standard deviation of the gaussian noise applied to the output.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for dataset noise. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Returns
     -------
-    X : array of shape [n_samples, n_features]
+    X : ndarray of shape (n_samples, n_features)
         The input samples.
 
-    y : array of shape [n_samples]
+    y : ndarray of shape (n_samples,)
         The output values.
 
     References
@@ -964,7 +964,7 @@ def make_friedman1(n_samples=100, n_features=10, *, noise=0.0,
 
 @_deprecate_positional_args
 def make_friedman2(n_samples=100, *, noise=0.0, random_state=None):
-    """Generate the "Friedman #2" regression problem
+    """Generate the "Friedman #2" regression problem.
 
     This dataset is described in Friedman [1] and Breiman [2].
 
@@ -991,17 +991,17 @@ def make_friedman2(n_samples=100, *, noise=0.0, random_state=None):
     noise : float, default=0.0
         The standard deviation of the gaussian noise applied to the output.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for dataset noise. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Returns
     -------
-    X : array of shape [n_samples, 4]
+    X : ndarray of shape (n_samples, 4)
         The input samples.
 
-    y : array of shape [n_samples]
+    y : ndarray of shape (n_samples,)
         The output values.
 
     References
@@ -1030,7 +1030,7 @@ def make_friedman2(n_samples=100, *, noise=0.0, random_state=None):
 
 @_deprecate_positional_args
 def make_friedman3(n_samples=100, *, noise=0.0, random_state=None):
-    """Generate the "Friedman #3" regression problem
+    """Generate the "Friedman #3" regression problem.
 
     This dataset is described in Friedman [1] and Breiman [2].
 
@@ -1057,17 +1057,17 @@ def make_friedman3(n_samples=100, *, noise=0.0, random_state=None):
     noise : float, default=0.0
         The standard deviation of the gaussian noise applied to the output.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for dataset noise. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Returns
     -------
-    X : array of shape [n_samples, 4]
+    X : ndarray of shape (n_samples, 4)
         The input samples.
 
-    y : array of shape [n_samples]
+    y : ndarray of shape (n_samples,)
         The output values.
 
     References
@@ -1096,7 +1096,7 @@ def make_friedman3(n_samples=100, *, noise=0.0, random_state=None):
 @_deprecate_positional_args
 def make_low_rank_matrix(n_samples=100, n_features=100, *, effective_rank=10,
                          tail_strength=0.5, random_state=None):
-    """Generate a mostly low rank matrix with bell-shaped singular values
+    """Generate a mostly low rank matrix with bell-shaped singular values.
 
     Most of the variance can be explained by a bell-shaped curve of width
     effective_rank: the low rank part of the singular values profile is::
@@ -1134,14 +1134,14 @@ def make_low_rank_matrix(n_samples=100, n_features=100, *, effective_rank=10,
         The relative importance of the fat noisy tail of the singular values
         profile. The value should be between 0 and 1.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Returns
     -------
-    X : array of shape [n_samples, n_features]
+    X : ndarray of shape (n_samples, n_features)
         The matrix.
     """
     generator = check_random_state(random_state)
@@ -1177,31 +1177,31 @@ def make_sparse_coded_signal(n_samples, *, n_components, n_features,
     Parameters
     ----------
     n_samples : int
-        number of samples to generate
+        Number of samples to generate
 
     n_components : int
-        number of components in the dictionary
+        Number of components in the dictionary
 
     n_features : int
-        number of features of the dataset to generate
+        Number of features of the dataset to generate
 
     n_nonzero_coefs : int
-        number of active (non-zero) coefficients in each sample
+        Number of active (non-zero) coefficients in each sample
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Returns
     -------
-    data : array of shape [n_features, n_samples]
+    data : ndarray of shape (n_features, n_samples)
         The encoded signal (Y).
 
-    dictionary : array of shape [n_features, n_components]
+    dictionary : ndarray of shape (n_features, n_components)
         The dictionary with normalized components (D).
 
-    code : array of shape [n_components, n_samples]
+    code : ndarray of shape (n_components, n_samples)
         The sparse code such that each column of this matrix has exactly
         n_nonzero_coefs non-zero items (X).
 
@@ -1229,7 +1229,7 @@ def make_sparse_coded_signal(n_samples, *, n_components, n_features,
 @_deprecate_positional_args
 def make_sparse_uncorrelated(n_samples=100, n_features=10, *,
                              random_state=None):
-    """Generate a random regression problem with sparse uncorrelated design
+    """Generate a random regression problem with sparse uncorrelated design.
 
     This dataset is described in Celeux et al [1]. as::
 
@@ -1249,17 +1249,17 @@ def make_sparse_uncorrelated(n_samples=100, n_features=10, *,
     n_features : int, default=10
         The number of features.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Returns
     -------
-    X : array of shape [n_samples, n_features]
+    X : ndarray of shape (n_samples, n_features)
         The input samples.
 
-    y : array of shape [n_samples]
+    y : ndarray of shape (n_samples,)
         The output values.
 
     References
@@ -1290,14 +1290,14 @@ def make_spd_matrix(n_dim, *, random_state=None):
     n_dim : int
         The matrix dimension.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Returns
     -------
-    X : array of shape [n_dim, n_dim]
+    X : ndarray of shape (n_dim, n_dim)
         The random symmetric, positive-definite matrix.
 
     See also
@@ -1323,7 +1323,7 @@ def make_sparse_spd_matrix(dim=1, *, alpha=0.95, norm_diag=False,
 
     Parameters
     ----------
-    dim : integer, default=1
+    dim : int, default=1
         The size of the random matrix to generate.
 
     alpha : float, default=0.95
@@ -1340,7 +1340,7 @@ def make_sparse_spd_matrix(dim=1, *, alpha=0.95, norm_diag=False,
     largest_coef : float, default=0.9
         The value of the largest coefficient between 0 and 1.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -1402,17 +1402,17 @@ def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None):
     noise : float, default=0.0
         The standard deviation of the gaussian noise.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Returns
     -------
-    X : array of shape [n_samples, 3]
+    X : ndarray of shape (n_samples, 3)
         The points.
 
-    t : array of shape [n_samples]
+    t : ndarray of shape (n_samples,)
         The univariate position of the sample according to the main dimension
         of the points in the manifold.
 
@@ -1455,17 +1455,17 @@ def make_s_curve(n_samples=100, *, noise=0.0, random_state=None):
     noise : float, default=0.0
         The standard deviation of the gaussian noise.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Returns
     -------
-    X : array of shape [n_samples, 3]
+    X : ndarray of shape (n_samples, 3)
         The points.
 
-    t : array of shape [n_samples]
+    t : ndarray of shape (n_samples,)
         The univariate position of the sample according to the main dimension
         of the points in the manifold.
     """
@@ -1488,7 +1488,7 @@ def make_s_curve(n_samples=100, *, noise=0.0, random_state=None):
 def make_gaussian_quantiles(*, mean=None, cov=1., n_samples=100,
                             n_features=2, n_classes=3,
                             shuffle=True, random_state=None):
-    r"""Generate isotropic Gaussian and label samples by quantile
+    r"""Generate isotropic Gaussian and label samples by quantile.
 
     This classification dataset is constructed by taking a multi-dimensional
     standard normal distribution and defining classes separated by nested
@@ -1499,7 +1499,7 @@ def make_gaussian_quantiles(*, mean=None, cov=1., n_samples=100,
 
     Parameters
     ----------
-    mean : array of shape (n_features,), default=None
+    mean : ndarray of shape (n_features,), default=None
         The mean of the multi-dimensional normal distribution.
         If None then use the origin (0, 0, ...).
 
@@ -1519,17 +1519,17 @@ def make_gaussian_quantiles(*, mean=None, cov=1., n_samples=100,
     shuffle : bool, default=True
         Shuffle the samples.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Returns
     -------
-    X : array of shape [n_samples, n_features]
+    X : ndarray of shape (n_samples, n_features)
         The generated samples.
 
-    y : array of shape [n_samples]
+    y : ndarray of shape (n_samples,)
         The integer labels for quantile membership of each sample.
 
     Notes
@@ -1590,10 +1590,10 @@ def make_biclusters(shape, n_clusters, *, noise=0.0, minval=10,
 
     Parameters
     ----------
-    shape : iterable (n_rows, n_cols)
+    shape : iterable of shape (n_rows, n_cols)
         The shape of the result.
 
-    n_clusters : integer
+    n_clusters : int
         The number of biclusters.
 
     noise : float, default=0.0
@@ -1608,20 +1608,20 @@ def make_biclusters(shape, n_clusters, *, noise=0.0, minval=10,
     shuffle : bool, default=True
         Shuffle the samples.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Returns
     -------
-    X : array of shape `shape`
+    X : ndarray of shape `shape`
         The generated array.
 
-    rows : array of shape (n_clusters, X.shape[0],)
+    rows : ndarray of shape (n_clusters, X.shape[0])
         The indicators for cluster membership of each row.
 
-    cols : array of shape (n_clusters, X.shape[1],)
+    cols : ndarray of shape (n_clusters, X.shape[1])
         The indicators for cluster membership of each column.
 
     References
@@ -1682,10 +1682,10 @@ def make_checkerboard(shape, n_clusters, *, noise=0.0, minval=10,
 
     Parameters
     ----------
-    shape : tuple (n_rows, n_cols)
+    shape : tuple of shape (n_rows, n_cols)
         The shape of the result.
 
-    n_clusters : int or array-like (n_row_clusters, n_column_clusters)
+    n_clusters : int or array-like or shape (n_row_clusters, n_column_clusters)
         The number of row and column clusters.
 
     noise : float, default=0.0
@@ -1700,20 +1700,20 @@ def make_checkerboard(shape, n_clusters, *, noise=0.0, minval=10,
     shuffle : bool, default=True
         Shuffle the samples.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Returns
     -------
-    X : array of shape `shape`
+    X : ndarray of shape `shape`
         The generated array.
 
-    rows : array of shape (n_clusters, X.shape[0],)
+    rows : ndarray of shape (n_clusters, X.shape[0])
         The indicators for cluster membership of each row.
 
-    cols : array of shape (n_clusters, X.shape[1],)
+    cols : ndarray of shape (n_clusters, X.shape[1])
         The indicators for cluster membership of each column.
 
 

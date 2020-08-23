@@ -363,12 +363,12 @@ def multilabel_confusion_matrix(y_true, y_pred, *, sample_weight=None,
 
     Parameters
     ----------
-    y_true : 1d array-like, or label indicator array / sparse matrix
-        of shape (n_samples, n_outputs) or (n_samples,)
+    y_true : {array-like, sparse matrix} of shape (n_samples, n_outputs) or \
+            (n_samples,)
         Ground truth (correct) target values.
 
-    y_pred : 1d array-like, or label indicator array / sparse matrix
-        of shape (n_samples, n_outputs) or (n_samples,)
+    y_pred : {array-like, sparse matrix} of shape (n_samples, n_outputs) or \
+            (n_samples,)
         Estimated targets as returned by a classifier
 
     sample_weight : array-like of shape (n_samples,), default=None
@@ -383,7 +383,7 @@ def multilabel_confusion_matrix(y_true, y_pred, *, sample_weight=None,
 
     Returns
     -------
-    multi_confusion : array, shape (n_outputs, 2, 2)
+    multi_confusion : ndarray of shape (n_outputs, 2, 2)
         A 2x2 confusion matrix corresponding to each output in the input.
         When calculating class-wise multi_confusion (default), then
         n_outputs = n_labels; when calculating sample-wise multi_confusion
@@ -391,7 +391,7 @@ def multilabel_confusion_matrix(y_true, y_pred, *, sample_weight=None,
         the results will be returned in the order specified in ``labels``,
         otherwise the results will be returned in sorted order by default.
 
-    See also
+    See Also
     --------
     confusion_matrix
 
@@ -437,7 +437,6 @@ def multilabel_confusion_matrix(y_true, y_pred, *, sample_weight=None,
     <BLANKLINE>
            [[2, 1],
             [1, 2]]])
-
     """
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if sample_weight is not None:
@@ -627,7 +626,7 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None,
 
 @_deprecate_positional_args
 def jaccard_score(y_true, y_pred, *, labels=None, pos_label=1,
-                  average='binary', sample_weight=None):
+                  average='binary', sample_weight=None, zero_division="warn"):
     """Jaccard similarity coefficient score
 
     The Jaccard index [1], or Jaccard similarity coefficient, defined as
@@ -684,6 +683,11 @@ def jaccard_score(y_true, y_pred, *, labels=None, pos_label=1,
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
+
+    zero_division : "warn", {0.0, 1.0}, default="warn"
+        Sets the value to return when there is a zero division, i.e. when there
+        there are no negative values in predictions and labels. If set to
+        "warn", this acts like 0, but a warning is also raised.
 
     Returns
     -------
@@ -750,7 +754,8 @@ def jaccard_score(y_true, y_pred, *, labels=None, pos_label=1,
         denominator = np.array([denominator.sum()])
 
     jaccard = _prf_divide(numerator, denominator, 'jaccard',
-                          'true or predicted', average, ('jaccard',))
+                          'true or predicted', average, ('jaccard',),
+                          zero_division=zero_division)
     if average is None:
         return jaccard
     if average == 'weighted':
@@ -2381,26 +2386,27 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
 
 @_deprecate_positional_args
 def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
-    """Compute the Brier score.
+    """Compute the Brier score loss.
 
-    The smaller the Brier score, the better, hence the naming with "loss".
-    Across all items in a set N predictions, the Brier score measures the
-    mean squared difference between (1) the predicted probability assigned
-    to the possible outcomes for item i, and (2) the actual outcome.
-    Therefore, the lower the Brier score is for a set of predictions, the
-    better the predictions are calibrated. Note that the Brier score always
+    The smaller the Brier score loss, the better, hence the naming with "loss".
+    The Brier score measures the mean squared difference between the predicted
+    probability and the actual outcome. The Brier score always
     takes on a value between zero and one, since this is the largest
     possible difference between a predicted probability (which must be
     between zero and one) and the actual outcome (which can take on values
-    of only 0 and 1). The Brier loss is composed of refinement loss and
+    of only 0 and 1). It can be decomposed is the sum of refinement loss and
     calibration loss.
+
     The Brier score is appropriate for binary and categorical outcomes that
     can be structured as true or false, but is inappropriate for ordinal
     variables which can take on three or more values (this is because the
     Brier score assumes that all possible outcomes are equivalently
     "distant" from one another). Which label is considered to be the positive
-    label is controlled via the parameter pos_label, which defaults to 1.
-    Read more in the :ref:`User Guide <calibration>`.
+    label is controlled via the parameter `pos_label`, which defaults to
+    the greater label unless `y_true` is all 0 or all -1, in which case
+    `pos_label` defaults to 1.
+
+    Read more in the :ref:`User Guide <brier_score_loss>`.
 
     Parameters
     ----------
@@ -2421,7 +2427,7 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     Returns
     -------
     score : float
-        Brier score
+        Brier score loss
 
     Examples
     --------

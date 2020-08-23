@@ -385,12 +385,14 @@ equivalent call to ``__call__``: ``np.diag(k(X, X)) == k.diag(X)``
 Kernels are parameterized by a vector :math:`\theta` of hyperparameters. These
 hyperparameters can for instance control length-scales or periodicity of a
 kernel (see below). All kernels support computing analytic gradients 
-of the kernel's auto-covariance with respect to :math:`\theta` via setting
-``eval_gradient=True`` in the ``__call__`` method. This gradient is used by the
-Gaussian process (both regressor and classifier) in computing the gradient
-of the log-marginal-likelihood, which in turn is used to determine the
-value of :math:`\theta`, which maximizes the log-marginal-likelihood,  via
-gradient ascent. For each hyperparameter, the initial value and the
+of the kernel's auto-covariance with respect to :math:`log(\theta)` via setting
+``eval_gradient=True`` in the ``__call__`` method.
+That is, a ``(len(X), len(X), len(theta))`` array is returned where the entry
+``[i, j, l]`` contains :math:`\frac{\partial k_\theta(x_i, x_j)}{\partial log(\theta_l)}`.
+This gradient is used by the Gaussian process (both regressor and classifier)
+in computing the gradient of the log-marginal-likelihood, which in turn is used
+to determine the value of :math:`\theta`, which maximizes the log-marginal-likelihood,
+via gradient ascent. For each hyperparameter, the initial value and the
 bounds need to be specified when creating an instance of the kernel. The
 current value of :math:`\theta` can be get and set via the property
 ``theta`` of the kernel object. Moreover, the bounds of the hyperparameters can be

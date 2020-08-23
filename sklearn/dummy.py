@@ -33,7 +33,8 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
     Parameters
     ----------
-    strategy : str, default="prior"
+    strategy : {"stratified", "most_frequent", "prior", "uniform", \
+            "constant"}, default="prior"
         Strategy to use to generate predictions.
 
         * "stratified": generates predictions by respecting the training
@@ -51,7 +52,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
              The default value of `strategy` has changed to "prior" in version
              0.24.
 
-    random_state : int, RandomState instance or None, optional, default=None
+    random_state : int or RandomState instance or None, default=None
         Controls the randomness to generate the predictions when
         ``strategy='stratified'`` or ``strategy='uniform'``.
         Pass an int for reproducible output across multiple function calls.
@@ -63,19 +64,19 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
     Attributes
     ----------
-    classes_ : array or list of array of shape (n_classes,)
+    classes_ : ndarray of shape (n_classes,) or list thereof
         Class labels for each output.
 
-    n_classes_ : array or list of array of shape (n_classes,)
+    n_classes_ : int or list of int
         Number of label for each output.
 
-    class_prior_ : array or list of array of shape (n_classes,)
+    class_prior_ : ndarray of shape (n_classes,) or list thereof
         Probability of each class for each output.
 
-    n_outputs_ : int,
+    n_outputs_ : int
         Number of outputs.
 
-    sparse_output_ : bool,
+    sparse_output_ : bool
         True if the array returned from predict is to be in sparse CSC format.
         Is automatically set to True if the input y is passed in sparse format.
 
@@ -105,8 +106,8 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, object with finite length or shape}
-            Training data, requires length = n_samples
+        X : array-like of shape (n_samples, n_features)
+            Training data.
 
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             Target values.
@@ -190,8 +191,8 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, object with finite length or shape}
-            Training data, requires length = n_samples
+        X : array-like of shape (n_samples, n_features)
+            Test data.
 
         Returns
         -------
@@ -266,12 +267,12 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, object with finite length or shape}
-            Training data, requires length = n_samples
+        X : array-like of shape (n_samples, n_features)
+            Test data.
 
         Returns
         -------
-        P : array-like or list of array-lke of shape (n_samples, n_classes)
+        P : ndarray of shape (n_samples, n_classes) or list thereof
             Returns the probability of the sample for each class in
             the model, where classes are ordered arithmetically, for each
             output.
@@ -334,7 +335,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
         Returns
         -------
-        P : array-like or list of array-like of shape (n_samples, n_classes)
+        P : ndarray of shape (n_samples, n_classes) or list thereof
             Returns the log probability of the sample for each class in
             the model, where classes are ordered arithmetically for each
             output.
@@ -363,9 +364,8 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, None}
-            Test samples with shape = (n_samples, n_features) or
-            None. Passing None as test samples gives the same result
+        X : None or array-like of shape (n_samples, n_features)
+            Test samples. Passing None as test samples gives the same result
             as passing real test samples, since DummyClassifier
             operates independently of the sampled observations.
 
@@ -400,7 +400,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     Parameters
     ----------
-    strategy : str
+    strategy : {"mean", "median", "quantile", "constant"}, default="mean"
         Strategy to use to generate predictions.
 
         * "mean": always predicts the mean of the training set
@@ -421,11 +421,11 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     Attributes
     ----------
-    constant_ : array, shape (1, n_outputs)
+    constant_ : ndarray of shape (1, n_outputs)
         Mean or median or quantile of the training targets or constant value
         given by the user.
 
-    n_outputs_ : int,
+    n_outputs_ : int
         Number of outputs.
 
     Examples
@@ -453,8 +453,8 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, object with finite length or shape}
-            Training data, requires length = n_samples
+        X : array-like of shape (n_samples, n_features)
+            Training data.
 
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             Target values.
@@ -534,10 +534,10 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, object with finite length or shape}
-            Training data, requires length = n_samples
+        X : array-like of shape (n_samples, n_features)
+            Test data.
 
-        return_std : boolean, optional
+        return_std : bool, default=False
             Whether to return the standard deviation of posterior prediction.
             All zeros in this case.
 
@@ -580,13 +580,8 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, None}
-            Test samples with shape = (n_samples, n_features) or None.
-            For some estimators this may be a
-            precomputed kernel matrix instead, shape = (n_samples,
-            n_samples_fitted], where n_samples_fitted is the number of
-            samples used in the fitting for the estimator.
-            Passing None as test samples gives the same result
+        X : None or array-like of shape (n_samples, n_features)
+            Test samples. Passing None as test samples gives the same result
             as passing real test samples, since DummyRegressor
             operates independently of the sampled observations.
 
