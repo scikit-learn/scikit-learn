@@ -1408,6 +1408,35 @@ def test_average_binary_jaccard_score(recwarn):
     assert not list(recwarn)
 
 
+def test_jaccard_score_zero_division_warning():
+    # check that we raised a warning with default behavior if a zero division
+    # happens
+    y_true = np.array([[1, 0, 1], [0, 0, 0]])
+    y_pred = np.array([[0, 0, 0], [0, 0, 0]])
+    msg = ('Jaccard is ill-defined and being set to 0.0 in '
+           'samples with no true or predicted labels.'
+           ' Use `zero_division` parameter to control this behavior.')
+    with pytest.warns(UndefinedMetricWarning, match=msg):
+        score = jaccard_score(
+            y_true, y_pred, average='samples', zero_division='warn'
+        )
+        assert score == pytest.approx(0.0)
+
+
+@pytest.mark.parametrize(
+    "zero_division, expected_score", [(0, 0), (1, 0.5)]
+)
+def test_jaccard_score_zero_division_set_value(zero_division, expected_score):
+    # check that we don't issue warning by passing the zero_division parameter
+    y_true = np.array([[1, 0, 1], [0, 0, 0]])
+    y_pred = np.array([[0, 0, 0], [0, 0, 0]])
+    with pytest.warns(None) as record:
+        score = jaccard_score(
+            y_true, y_pred, average="samples", zero_division=zero_division
+        )
+    assert score == pytest.approx(expected_score)
+    assert len(record) == 0
+
 @ignore_warnings
 def test_precision_recall_f1_score_multilabel_1():
     # Test precision_recall_f1_score on a crafted multilabel example

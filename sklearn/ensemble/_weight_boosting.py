@@ -1,4 +1,4 @@
-"""Weight Boosting
+"""Weight Boosting.
 
 This module contains weight boosting estimators for both classification and
 regression.
@@ -322,7 +322,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         The SAMME.R algorithm typically converges faster than SAMME,
         achieving a lower test error with fewer boosting iterations.
 
-    random_state : int or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the random seed given at each `base_estimator` at each
         boosting iteration.
         Thus, it is only used when `base_estimator` exposes a `random_state`.
@@ -482,7 +482,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         sample_weight : array-like of shape (n_samples,)
             The current sample weights.
 
-        random_state : RandomState
+        random_state : RandomState instance
             The RandomState instance used if the base estimator accepts a
             `random_state` attribute.
 
@@ -905,7 +905,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         The loss function to use when updating the weights after each
         boosting iteration.
 
-    random_state : int or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the random seed given at each `base_estimator` at each
         boosting iteration.
         Thus, it is only used when `base_estimator` exposes a `random_state`.

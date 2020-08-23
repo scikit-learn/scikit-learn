@@ -302,7 +302,6 @@ to the overall score, through the ``sample_weight`` parameter.
 Some of these are restricted to the binary classification case:
 
 .. autosummary::
-   :template: function.rst
 
    precision_recall_curve
    roc_curve
@@ -312,7 +311,6 @@ Some of these are restricted to the binary classification case:
 Others also work in the multiclass case:
 
 .. autosummary::
-   :template: function.rst
 
    balanced_accuracy_score
    cohen_kappa_score
@@ -325,7 +323,6 @@ Others also work in the multiclass case:
 Some also work in the multilabel case:
 
 .. autosummary::
-   :template: function.rst
 
    accuracy_score
    classification_report
@@ -344,7 +341,6 @@ Some also work in the multilabel case:
 And some work with binary and multilabel (but not multiclass) problems:
 
 .. autosummary::
-   :template: function.rst
 
    average_precision_score
 
@@ -748,7 +744,6 @@ Several functions allow you to analyze the precision, recall and F-measures
 score:
 
 .. autosummary::
-   :template: function.rst
 
    average_precision_score
    f1_score

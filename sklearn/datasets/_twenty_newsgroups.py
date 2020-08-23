@@ -1,4 +1,4 @@
-"""Caching loader for the 20 newsgroups text classification dataset
+"""Caching loader for the 20 newsgroups text classification dataset.
 
 
 The description of the dataset is available on the official website at:
@@ -95,7 +95,7 @@ def strip_newsgroup_header(text):
 
     Parameters
     ----------
-    text : string
+    text : str
         The text from which to remove the signature block.
     """
     _before, _blankline, after = text.partition('\n\n')
@@ -114,7 +114,7 @@ def strip_newsgroup_quoting(text):
 
     Parameters
     ----------
-    text : string
+    text : str
         The text from which to remove the signature block.
     """
     good_lines = [line for line in text.split('\n')
@@ -132,7 +132,7 @@ def strip_newsgroup_footer(text):
 
     Parameters
     ----------
-    text : string
+    text : str
         The text from which to remove the signature block.
     """
     lines = text.strip().split('\n')
@@ -186,7 +186,7 @@ def fetch_20newsgroups(*, data_home=None, subset='train', categories=None,
         make the assumption that the samples are independent and identically
         distributed (i.i.d.), such as stochastic gradient descent.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for dataset shuffling. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -219,15 +219,15 @@ def fetch_20newsgroups(*, data_home=None, subset='train', categories=None,
     bunch : :class:`~sklearn.utils.Bunch`
         Dictionary-like object, with the following attributes.
 
-        data : list, length [n_samples]
+        data : list of shape (n_samples,)
             The data list to learn.
-        target: array, shape [n_samples]
+        target: ndarray of shape (n_samples,)
             The target labels.
-        filenames: list, length [n_samples]
+        filenames: list of shape (n_samples,)
             The path to the location of the data.
         DESCR: str
             The full description of the dataset.
-        target_names: list, length [n_classes]
+        target_names: list of shape (n_classes,)
             The names of target classes.
 
     (data, target) : tuple if `return_X_y=True`
@@ -396,11 +396,11 @@ def fetch_20newsgroups_vectorized(*, subset="train", remove=(), data_home=None,
     bunch : :class:`~sklearn.utils.Bunch`
         Dictionary-like object, with the following attributes.
 
-        data: sparse matrix, shape [n_samples, n_features]
+        data: sparse matrix of shape (n_samples, n_features)
             The data matrix to learn.
-        target: array, shape [n_samples]
+        target: ndarray of shape (n_samples,)
             The target labels.
-        target_names: list, length [n_classes]
+        target_names: list of shape (n_classes,)
             The names of target classes.
         DESCR: str
             The full description of the dataset.
