@@ -18,7 +18,7 @@ from .utils import sum_parallel
 from .common import PREDICTOR_RECORD_DTYPE
 from .common import Y_DTYPE
 from .common import MonotonicConstraint
-from ._histogram_cache import HistogramsCache
+from ._histogram_pool import HistogramsPool
 
 
 EPS = np.finfo(Y_DTYPE).eps  # to avoid zero division errors
@@ -145,7 +145,7 @@ class TreeGrower:
     hessians : ndarray, shape (n_samples,)
         The hessians of each training sample. Those are the hessians of the
         loss w.r.t the predictions, evaluated at iteration ``i - 1``.
-    histogram_cache : HistogramsCaches, default=None
+    histogram_pool : HistogramsPools, default=None
         A cache to hold the created histograms between growers. If None, a
         local cache is used.
     max_leaf_nodes : int or None, optional (default=None)
@@ -183,7 +183,7 @@ class TreeGrower:
         learning rate.
     """
 
-    def __init__(self, X_binned, gradients, hessians, histogram_cache=None,
+    def __init__(self, X_binned, gradients, hessians, histogram_pool=None,
                  max_leaf_nodes=None,
                  max_depth=None, min_samples_leaf=20, min_gain_to_split=0.,
                  n_bins=256, n_bins_non_missing=None, has_missing_values=False,
@@ -257,13 +257,13 @@ class TreeGrower:
         self.total_compute_hist_time = 0.  # time spent computing histograms
         self.total_apply_split_time = 0.  # time spent splitting nodes
 
-        if histogram_cache is None:
-            self.histogram_cache = HistogramsCache(n_features=self.n_features,
+        if histogram_pool is None:
+            self.histogram_pool = HistogramsPool(n_features=self.n_features,
                                                   n_bins=n_bins)
         else:
-            self.histogram_cache = histogram_cache
+            self.histogram_pool = histogram_pool
 
-        self.histogram_cache.reset()
+        self.histogram_pool.reset()
         self._intilialize_root(gradients, hessians, hessians_are_constant)
         self.n_nodes = 1
 
@@ -347,7 +347,7 @@ class TreeGrower:
             self._finalize_leaf(self.root)
             return
 
-        idx, histograms = self.histogram_cache.get_new_histograms()
+        idx, histograms = self.histogram_pool.get_new_histograms()
         self.root.histograms_idx = idx
         self.histogram_builder.compute_histograms_brute(
             self.root.sample_indices, histograms)
@@ -361,7 +361,7 @@ class TreeGrower:
         (best gain = 0), or if no split would satisfy the constraints,
         (min_hessians_to_split, min_gain_to_split, min_samples_leaf)
         """
-        node_histograms = self.histogram_cache[node.histograms_idx]
+        node_histograms = self.histogram_pool[node.histograms_idx]
         node.split_info = self.splitter.find_node_split(
             node.n_samples, node_histograms, node.sum_gradients,
             node.sum_hessians, node.value, node.children_lower_bound,
@@ -489,13 +489,13 @@ class TreeGrower:
             # smallest number of samples, and the subtraction trick O(n_bins)
             # on the other one.
             tic = time()
-            small_idx, small_hist = self.histogram_cache.get_new_histograms()
+            small_idx, small_hist = self.histogram_pool.get_new_histograms()
             smallest_child.histograms_idx = small_idx
             self.histogram_builder.compute_histograms_brute(
                 smallest_child.sample_indices, small_hist)
 
-            large_idx, large_hist = self.histogram_cache.get_new_histograms()
-            parent_histogram = self.histogram_cache[node.histograms_idx]
+            large_idx, large_hist = self.histogram_pool.get_new_histograms()
+            parent_histogram = self.histogram_pool[node.histograms_idx]
 
             largest_child.histograms_idx = large_idx
             self.histogram_builder.compute_histograms_subtraction(
