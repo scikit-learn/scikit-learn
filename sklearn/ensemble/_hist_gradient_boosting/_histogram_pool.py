@@ -1,3 +1,5 @@
+import weakref
+
 import numpy as np
 from .common import HISTOGRAM_DTYPE
 
@@ -7,34 +9,24 @@ class HistogramsPool:
     def __init__(self, n_features, n_bins):
         self.n_features = n_features
         self.n_bins = n_bins
-        self.pool = []
-        self.used_indices = set()
-        self.available_indices = set()
+        self.avaliable_pool = []
+        self.used_pool = []
 
     def reset(self):
         """Reset the pool."""
         # Only set histograms that were used to zero
-        for used_idx in self.used_indices:
-            self.pool[used_idx].fill(0)
-
-        self.used_indices = set()
-        self.available_indices = set(range(len(self.pool)))
+        for histograms in self.used_pool:
+            histograms.fill(0)
+        self.avaliable_pool.extend(self.used_pool)
+        self.used_pool = []
 
     def get_new_histograms(self):
-        """Return a histograms and its location in the pool."""
-        if self.available_indices:
-            idx = self.available_indices.pop()
-            histograms = self.pool[idx]
+        """Return a weakref to a histograms."""
+        if self.avaliable_pool:
+            histograms = self.avaliable_pool.pop()
         else:
             histograms = np.zeros(
                 shape=(self.n_features, self.n_bins), dtype=HISTOGRAM_DTYPE
             )
-            self.pool.append(histograms)
-            idx = len(self.pool) - 1
-
-        self.used_indices.add(idx)
-        return idx, histograms
-
-    def __getitem__(self, idx):
-        """Get element from the pool."""
-        return self.pool[idx]
+        self.used_pool.append(histograms)
+        return weakref.ref(histograms)
