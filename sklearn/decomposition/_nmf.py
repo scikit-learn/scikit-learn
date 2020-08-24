@@ -632,8 +632,8 @@ def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
     return delta_W, H_sum, HHt, XHt
 
 
-def _multiplicative_update_h(X, W, H, A, B,
-                             beta_loss, l1_reg_H, l2_reg_H, gamma, rho):
+def _multiplicative_update_h(X, W, H, A, B, beta_loss, l1_reg_H, l2_reg_H,
+                             slice_index, gamma, rho):
     H_old = H.copy()
     H_old[H_old == 0] = EPSILON
 
@@ -711,6 +711,17 @@ def _multiplicative_update_h(X, W, H, A, B,
         denominator = denominator + l2_reg_H * H
     denominator[denominator == 0] = EPSILON
 
+    if A is not None and B is not None:
+        if slice_index > 0:
+            A *= rho
+            B *= rho
+            A += numerator
+            B += denominator
+
+        H = np.divide(A, B)
+
+        return H, A, B
+
     numerator /= denominator
     delta_H = numerator
     # gamma is in ]0, 1]
@@ -719,15 +730,7 @@ def _multiplicative_update_h(X, W, H, A, B,
 
     H = H_old * delta_H
 
-    if A is not None and B is not None:
-        A *= rho
-        B *= rho
-        A += numerator
-        B += denominator
-        H = np.divide(A, B)
-
     return H, A, B
-
 
 def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
                                batch_size=1024,
@@ -822,11 +825,8 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
     #else:
     #    beta_loss = 'itakura-saito'
 
-    r = .7 # forgetting factor
-    #rho = r ** (batch_size / n_samples)
-    rho = 0.99999
+    r = 1 # forgetting factor
 
-    print(f"{rho= }")
     beta_loss = _beta_loss_to_float(beta_loss)
 
     # gamma for Maximization-Minimization (MM) algorithm [Fevotte 2011]
@@ -843,7 +843,13 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
 
     H_sum, HHt, XHt = None, None, None
 
-    for n_iter in range(1, max_iter + 1):
+    for n_iter in range(1, max_iter+1):
+        if n_iter == 1:
+            rho = 0
+        else:
+            rho = r ** (batch_size / n_samples)
+            #rho = 0.99999
+        print(f"{rho= }")
         for i, slice in enumerate(gen_batches(n=n_samples,
                                               batch_size=batch_size)):
 
@@ -865,7 +871,7 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
                                                            W[slice], H, A, B,
                                                            beta_loss,
                                                            l1_reg_H, l2_reg_H,
-                                                           gamma, rho)
+                                                           i, gamma, rho)
 
                         # These values will be recomputed since H changed
                         H_sum, HHt, XHt = None, None, None
@@ -887,8 +893,7 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
                 print("Epoch %02d reached after %.3f seconds, error: %f" %
                       (n_iter, iter_time - start_time, error))
 
-            if ((previous_error - error) / error_at_init < tol) and \
-               ((previous_error - error) > 0) :
+            if ((previous_error - error) / error_at_init < tol):
                 break
             previous_error = error
 
