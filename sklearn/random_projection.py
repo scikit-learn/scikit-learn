@@ -78,7 +78,7 @@ def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
 
     Parameters
     ----------
-    n_samples : int or array-like of thereof
+    n_samples : int or array-like of int
         Number of samples that should be a integer greater than 0. If an array
         is given, it will compute a safe number of components array-wise.
 
@@ -90,7 +90,7 @@ def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
 
     Returns
     -------
-    n_components : int or ndarray of thereof
+    n_components : int or ndarray of int
         The minimal number of components to guarantee with good probability
         an eps-embedding with n_samples.
 
