@@ -1242,8 +1242,7 @@ def test_check_pandas_sparse_invalid(ntype1, ntype2):
         with pytest.raises(ValueError, match=err_msg):
             check_array(df, **{'accept_sparse': ['csr', 'csc']})
     else:
-        check_array(df, **{'accept_sparse': ['csr', 'csc'],
-                           'ensure_min_features': 2})
+        check_array(df, **{'accept_sparse': ['csr', 'csc']})
 
 
 @pytest.mark.parametrize(
