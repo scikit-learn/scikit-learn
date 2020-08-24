@@ -1231,6 +1231,10 @@ def test_check_sparse_pandas_sp_format(sp_format):
     ]
 )
 def test_check_pandas_sparse_invalid(ntype1, ntype2):
+    """check that we raise an error with dataframe having
+    sparse extension arrays with unsupported mixed dtype
+    and pandas version below 1.1. pandas versions 1.1 and
+    above fixed this issue so no error will be raised."""
     pd = pytest.importorskip("pandas", minversion="0.25.0")
     df = pd.DataFrame({'col1': pd.arrays.SparseArray([0, 1, 0],
                                                      dtype=ntype1),
@@ -1242,6 +1246,8 @@ def test_check_pandas_sparse_invalid(ntype1, ntype2):
         with pytest.raises(ValueError, match=err_msg):
             check_array(df, **{'accept_sparse': ['csr', 'csc']})
     else:
+        # pandas fixed this issue at 1.1 so from here on,
+        # no error will be raised.
         check_array(df, **{'accept_sparse': ['csr', 'csc']})
 
 
