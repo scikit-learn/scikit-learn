@@ -1246,27 +1246,27 @@ def test_check_pandas_sparse_invalid(ntype1, ntype2):
 
 
 @pytest.mark.parametrize(
-    "ntype1, ntype2",
+    "ntype1, ntype2, expected_dtype",
     [
-        ("longfloat", "longdouble"),
-        ("float16", "half"),
-        ("single", "float32"),
-        ("double", "float64"),
-        ("int8", "byte"),
-        ("short", "int16"),
-        ("intc", "int32"),
-        ("int0", "long"),
-        ("int", "long"),
-        ("int64", "longlong"),
-        ("int_", "intp"),
-        ("ubyte", "uint8"),
-        ("uint16", "ushort"),
-        ("uintc", "uint32"),
-        ("uint", "uint64"),
-        ("uintp", "ulonglong"),
+        ("longfloat", "longdouble", "float128"),
+        ("float16", "half", "float16"),
+        ("single", "float32", "float32"),
+        ("double", "float64", "float64"),
+        ("int8", "byte", "int8"),
+        ("short", "int16", "int16"),
+        ("intc", "int32", "int32"),
+        ("int0", "long", "int64"),
+        ("int", "long", "int64"),
+        ("int64", "longlong", "int64"),
+        ("int_", "intp", "int64"),
+        ("ubyte", "uint8", "uint8"),
+        ("uint16", "ushort", "uint16"),
+        ("uintc", "uint32", "uint32"),
+        ("uint", "uint64", "uint64"),
+        ("uintp", "ulonglong", "uint64"),
     ]
 )
-def test_check_pandas_sparse_valid(ntype1, ntype2):
+def test_check_pandas_sparse_valid(ntype1, ntype2, expected_dtype):
     # check that we support the conversion of sparse dataframe with mixed
     # type which can be converted safely.
     pd = pytest.importorskip("pandas", minversion="0.25.0")
@@ -1274,5 +1274,5 @@ def test_check_pandas_sparse_valid(ntype1, ntype2):
                                                      dtype=ntype1),
                        'col2': pd.arrays.SparseArray([1, 0, 1],
                                                      dtype=ntype2)})
-    check_array(df, **{'accept_sparse': ['csr', 'csc'],
-                       'ensure_min_features': 2})
+    arr = check_array(df, **{'accept_sparse': ['csr', 'csc']})
+    assert arr.dtype.name == expected_dtype
