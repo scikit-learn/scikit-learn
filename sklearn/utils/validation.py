@@ -569,8 +569,9 @@ def check_array(array, accept_sparse=False, *, accept_large_sparse=True,
         # DataFrame.sparse only supports `to_coo`
         array = array.sparse.to_coo()
         if array.dtype == np.dtype('object'):
-            unique_dtypes = set([dt.subtype.name for dt in
-                                 array_orig.dtypes])
+            unique_dtypes = set(
+                [dt.subtype.name for dt in array_orig.dtypes]
+            )
             if len(unique_dtypes) > 1:
                 raise ValueError(
                     "Pandas DataFrame with mixed sparse extension arrays "
