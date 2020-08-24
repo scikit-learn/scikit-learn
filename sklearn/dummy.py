@@ -67,7 +67,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
     classes_ : ndarray of shape (n_classes,) or list thereof
         Class labels for each output.
 
-    n_classes_ : int or list thereof
+    n_classes_ : int or list of int
         Number of label for each output.
 
     class_prior_ : ndarray of shape (n_classes,) or list thereof
