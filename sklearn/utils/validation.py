@@ -1183,7 +1183,7 @@ def _check_psd_eigenvalues(lambdas, enable_warnings=False):
     significant_imag_ratio = 1e-5
     significant_neg_ratio = 1e-5 if is_double_precision else 5e-3
     significant_neg_value = 1e-10 if is_double_precision else 1e-6
-    small_pos_ratio = 1e-12
+    small_pos_ratio = 1e-12 if is_double_precision else 1e-7
 
     # Check that there are no significant imaginary parts
     if not np.isreal(lambdas).all():

@@ -601,3 +601,28 @@ def test_regressor_chain_w_fit_params():
 
     for est in model.estimators_:
         assert est.sample_weight_ is weight
+
+
+@pytest.mark.parametrize("order_type", [list, np.array, tuple])
+def test_classifier_chain_tuple_order(order_type):
+    X = [[1, 2, 3], [4, 5, 6], [1.5, 2.5, 3.5]]
+    y = [[3, 2], [2, 3], [3, 2]]
+    order = order_type([1, 0])
+
+    chain = ClassifierChain(RandomForestClassifier(), order=order)
+
+    chain.fit(X, y)
+    X_test = [[1.5, 2.5, 3.5]]
+    y_test = [[3, 2]]
+    assert_array_almost_equal(chain.predict(X_test), y_test)
+
+
+def test_classifier_chain_tuple_invalid_order():
+    X = [[1, 2, 3], [4, 5, 6], [1.5, 2.5, 3.5]]
+    y = [[3, 2], [2, 3], [3, 2]]
+    order = tuple([1, 2])
+
+    chain = ClassifierChain(RandomForestClassifier(), order=order)
+
+    with pytest.raises(ValueError, match='invalid order'):
+        chain.fit(X, y)

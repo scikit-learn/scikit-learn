@@ -2661,26 +2661,50 @@ def check_parameters_default_constructible(name, Estimator, strict_mode=True):
             assert init_param.default != init_param.empty, (
                 "parameter %s for %s has no default value"
                 % (init_param.name, type(estimator).__name__))
-            if type(init_param.default) is type:
-                assert init_param.default in [np.float64, np.int64]
-            else:
-                assert (type(init_param.default) in
-                        [str, int, float, bool, tuple, type(None),
-                         np.float64, types.FunctionType, joblib.Memory])
+            allowed_types = {
+                str,
+                int,
+                float,
+                bool,
+                tuple,
+                type(None),
+                type,
+                types.FunctionType,
+                joblib.Memory,
+            }
+            # Any numpy numeric such as np.int32.
+            allowed_types.update(np.core.numerictypes.allTypes.values())
+            assert type(init_param.default) in allowed_types, (
+                    f"Parameter '{init_param.name}' of estimator "
+                    f"'{Estimator.__name__}' is of type "
+                    f"{type(init_param.default).__name__} which is not "
+                    f"allowed. All init parameters have to be immutable to "
+                    f"make cloning possible. Therefore we restrict the set of "
+                    f"legal types to "
+                    f"{set(type.__name__ for type in allowed_types)}."
+            )
             if init_param.name not in params.keys():
                 # deprecated parameter, not in get_params
-                assert init_param.default is None
+                assert init_param.default is None, (
+                    f"Estimator parameter '{init_param.name}' of estimator "
+                    f"'{Estimator.__name__}' is not returned by get_params. "
+                    f"If it is deprecated, set its default value to None."
+                )
                 continue
 
             param_value = params[init_param.name]
             if isinstance(param_value, np.ndarray):
                 assert_array_equal(param_value, init_param.default)
             else:
+                failure_text = (
+                    f"Parameter {init_param.name} was mutated on init. All "
+                    f"parameters must be stored unchanged."
+                )
                 if is_scalar_nan(param_value):
                     # Allows to set default parameters to np.nan
-                    assert param_value is init_param.default, init_param.name
+                    assert param_value is init_param.default, failure_text
                 else:
-                    assert param_value == init_param.default, init_param.name
+                    assert param_value == init_param.default, failure_text
 
 
 def _enforce_estimator_tags_y(estimator, y):

@@ -38,7 +38,7 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
         Data set in which we look for the n_support observations whose
         scatter matrix has minimum determinant.
 
-    n_support : int,
+    n_support : int
         Number of observations to compute the robust estimates of location
         and covariance from. This parameter must be greater than
         `n_samples / 2`.
@@ -55,7 +55,7 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
         - initial_estimates[0]: an initial location estimate
         - initial_estimates[1]: an initial covariance estimate
 
-    verbose : bool, defaut=False
+    verbose : bool, default=False
         Verbose mode.
 
     cov_computation_method : callable, \
@@ -63,7 +63,7 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
         The function which will be used to compute the covariance.
         Must return array of shape (n_features, n_features).
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines the pseudo random number generator for shuffling the data.
         Pass an int for reproducible results across multiple function calls.
         See :term: `Glossary <random_state>`.
@@ -236,7 +236,7 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
         The function which will be used to compute the covariance.
         Must return an array of shape (n_features, n_features).
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines the pseudo random number generator for shuffling the data.
         Pass an int for reproducible results across multiple function calls.
         See :term: `Glossary <random_state>`.
@@ -331,7 +331,7 @@ def fast_mcd(X, support_fraction=None,
         The function which will be used to compute the covariance.
         Must return an array of shape (n_features, n_features).
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines the pseudo random number generator for shuffling the data.
         Pass an int for reproducible results across multiple function calls.
         See :term: `Glossary <random_state>`.
@@ -547,7 +547,7 @@ class MinCovDet(EmpiricalCovariance):
         `(n_sample + n_features + 1) / 2`. The parameter must be in the range
         (0, 1).
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines the pseudo random number generator for shuffling the data.
         Pass an int for reproducible results across multiple function calls.
         See :term: `Glossary <random_state>`.
