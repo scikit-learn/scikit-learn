@@ -1245,24 +1245,27 @@ def test_check_pandas_sparse_invalid(ntype1, ntype2):
                            'ensure_min_features': 2})
 
 
-@pytest.mark.parametrize('ntype1, ntype2', [
-    ("longfloat", "longdouble"),
-    ("float16", "half"),
-    ("single", "float32"),
-    ("double", "float64"),
-    ("int8", "byte"),
-    ("short", "int16"),
-    ("intc", "int32"),
-    ("int0", "long"),
-    ("int", "long"),
-    ("int64", "longlong"),
-    ("int_", "intp"),
-    ("ubyte", "uint8"),
-    ("uint16", "ushort"),
-    ("uintc", "uint32"),
-    ("uint", "uint64"),
-    ("uintp", "ulonglong")
-])
+@pytest.mark.parametrize(
+    "ntype1, ntype2",
+    [
+        ("longfloat", "longdouble"),
+        ("float16", "half"),
+        ("single", "float32"),
+        ("double", "float64"),
+        ("int8", "byte"),
+        ("short", "int16"),
+        ("intc", "int32"),
+        ("int0", "long"),
+        ("int", "long"),
+        ("int64", "longlong"),
+        ("int_", "intp"),
+        ("ubyte", "uint8"),
+        ("uint16", "ushort"),
+        ("uintc", "uint32"),
+        ("uint", "uint64"),
+        ("uintp", "ulonglong"),
+    ]
+)
 def test_check_pandas_sparse_valid(ntype1, ntype2):
     pd = pytest.importorskip("pandas", minversion="0.25.0")
     df = pd.DataFrame({'col1': pd.arrays.SparseArray([0, 1, 0],
