@@ -57,7 +57,7 @@ class LossFunction(metaclass=ABCMeta):
 
     @abstractmethod
     def negative_gradient(self, y, raw_predictions, **kargs):
-        """Compute the half of negative gradient.
+        """Compute the negative gradient.
 
         Parameters
         ----------

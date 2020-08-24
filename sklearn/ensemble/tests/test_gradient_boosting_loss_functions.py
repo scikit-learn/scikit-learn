@@ -40,8 +40,9 @@ def test_binomial_deviance():
     # - We use y = {0, 1}, ESL (10.18) uses z in {-1, 1}, hence y=2*y-1
     # - ESL 2*f = pred_raw, hence the factor 2 of ESL disappears.
     # - Deviance = -2*loglike + .., hence a factor of 2 in front.
-    def alt_dev(y, pred):
-        return 2*np.mean(np.logaddexp(0.0, -(2.0 * y - 1) * pred))
+    def alt_dev(y, raw_pred):
+        z = 2 * y - 1
+        return 2 * np.mean(np.log(1 + np.exp(-z * raw_pred)))
 
     test_data = product(
         (np.array([0.0, 0.0, 0.0]), np.array([1.0, 1.0, 1.0])),
@@ -52,8 +53,9 @@ def test_binomial_deviance():
 
     # check the negative gradient against altenative formula from ESLII
     # Note: negative_gradient is half the negative gradient.
-    def alt_ng(y, pred):
-        return (2 * y - 1) / (1 + np.exp((2 * y - 1) * pred))
+    def alt_ng(y, raw_pred):
+        z = 2 * y - 1
+        return z / (1 + np.exp(z * raw_pred))
 
     for datum in test_data:
         assert_almost_equal(bd.negative_gradient(*datum), alt_ng(*datum))
