@@ -20,8 +20,6 @@ class HistogramsPool:
     def reset(self):
         """Reset the pool."""
         # Only set histograms that were used to zero
-        for histograms in self.used_pool:
-            histograms.fill(0)
         self.avaliable_pool.extend(self.used_pool)
         self.used_pool = []
 
@@ -30,7 +28,7 @@ class HistogramsPool:
         if self.avaliable_pool:
             histograms = self.avaliable_pool.pop()
         else:
-            histograms = np.zeros(
+            histograms = np.empty(
                 shape=(self.n_features, self.n_bins), dtype=HISTOGRAM_DTYPE
             )
         self.used_pool.append(histograms)

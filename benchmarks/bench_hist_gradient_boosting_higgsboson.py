@@ -14,6 +14,7 @@ from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.ensemble._hist_gradient_boosting.utils import (
     get_equivalent_estimator)
+from memory_profiler import memory_usage
 
 
 parser = argparse.ArgumentParser()
@@ -99,8 +100,9 @@ est = HistGradientBoostingClassifier(loss='binary_crossentropy',
                                      early_stopping=False,
                                      random_state=0,
                                      verbose=1)
-fit(est, data_train, target_train, 'sklearn')
-predict(est, data_test, target_test)
+mems = memory_usage((fit, (est, data_train, target_train, 'sklearn')))
+print(f"{max(mems):.2f}, {max(mems) - min(mems):.2f} MB")
+# predict(est, data_test, target_test)
 
 if args.lightgbm:
     est = get_equivalent_estimator(est, lib='lightgbm')

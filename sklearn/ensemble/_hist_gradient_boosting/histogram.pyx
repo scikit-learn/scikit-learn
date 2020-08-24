@@ -170,6 +170,13 @@ cdef class HistogramBuilder:
                 self.ordered_hessians[:n_samples]
             unsigned char hessians_are_constant = \
                 self.hessians_are_constant
+            unsigned int bin_idx = 0
+
+        # initialize histograms to 0 here
+        for bin_idx in range(self.n_bins):
+            histograms[feature_idx, bin_idx].sum_gradients = 0.
+            histograms[feature_idx, bin_idx].sum_hessians = 0.
+            histograms[feature_idx, bin_idx].count = 0
 
         if root_node:
             if hessians_are_constant:
