@@ -823,7 +823,8 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
     #    beta_loss = 'itakura-saito'
 
     r = .7 # forgetting factor
-    rho = r ** (batch_size / n_samples)
+    #rho = r ** (batch_size / n_samples)
+    rho = 0.99999
 
     print(f"{rho= }")
     beta_loss = _beta_loss_to_float(beta_loss)
@@ -859,7 +860,7 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
 
                 # update H
                 if update_H:
-                    for j in range(max_iter_update_h_):
+                    for jj in range(max_iter_update_h_):
                         H, A, B = _multiplicative_update_h(X[slice],
                                                            W[slice], H, A, B,
                                                            beta_loss,
@@ -872,7 +873,7 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
                         # necessary for stability with beta_loss < 1
                         if beta_loss <= 1:
                             H[H < np.finfo(np.float64).eps] = 0.
-                n_iter += j
+                n_iter += jj
             n_iter += j
 
         n_iter += i
