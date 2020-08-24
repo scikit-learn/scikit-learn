@@ -33,7 +33,7 @@ class TreeNode:
     ----------
     depth : int
         The depth of the node, i.e. its distance from the root.
-    sample_indices : ndarray of unsigned int of shape (n_samples_at_node,)
+    sample_indices : ndarray of shape (n_samples_at_node,), dtype=np.uint
         The indices of the samples at the node.
     sum_gradients : float
         The sum of the gradients of the samples at the node.
@@ -46,7 +46,7 @@ class TreeNode:
     ----------
     depth : int
         The depth of the node, i.e. its distance from the root.
-    sample_indices : ndarray of unsigned int of shape (n_samples_at_node,)
+    sample_indices : ndarray of shape (n_samples_at_node,), dtype=np.uint
         The indices of the samples at the node.
     sum_gradients : float
         The sum of the gradients of the samples at the node.
@@ -163,7 +163,7 @@ class TreeGrower:
         is equal to ``n_bins - 1``. If it's an int, all features are
         considered to have the same number of bins. If None, all features
         are considered to have ``n_bins - 1`` bins.
-    has_missing_values : bool or ndarray of bool, default=False
+    has_missing_values : bool or ndarray, dtype=bool, default=False
         Whether each feature contains missing values (in the training data).
         If it's a bool, the same value is used for all features.
     monotonic_cst : array-like of int of shape (n_features), default=None
