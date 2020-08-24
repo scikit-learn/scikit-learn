@@ -696,7 +696,7 @@ def fetch_openml(
     target_column: Optional[Union[str, List]] = 'default-target',
     cache: bool = True,
     return_X_y: bool = False,
-    as_frame: bool = False
+    as_frame: Union[str, bool] = 'auto'
 ):
     """Fetch dataset from openml by name or dataset id.
 
@@ -713,7 +713,8 @@ def fetch_openml(
     .. note:: EXPERIMENTAL
 
         The API is experimental (particularly the return value structure),
-        and might have small backward-incompatible changes in future releases.
+        and might have small backward-incompatible changes without notice
+        or warning in future releases.
 
     Parameters
     ----------
@@ -752,16 +753,21 @@ def fetch_openml(
         If True, returns ``(data, target)`` instead of a Bunch object. See
         below for more information about the `data` and `target` objects.
 
-    as_frame : bool or 'auto', default=False
+    as_frame : bool or 'auto', default='auto'
         If True, the data is a pandas DataFrame including columns with
         appropriate dtypes (numeric, string or categorical). The target is
         a pandas DataFrame or Series depending on the number of target_columns.
         The Bunch will contain a ``frame`` attribute with the target and the
         data. If ``return_X_y`` is True, then ``(data, target)`` will be pandas
         DataFrames or Series as describe above.
+
         If as_frame is 'auto', the data and target will be converted to
         DataFrame or Series as if as_frame is set to True, unless the dataset
         is stored in sparse format.
+
+        .. versionchanged:: 0.24
+           The default value of `as_frame` changed from `False` to `'auto'`
+           in 0.24.
 
     Returns
     -------
@@ -906,7 +912,7 @@ def fetch_openml(
     # obtain the data
     url = _DATA_FILE.format(data_description['file_id'])
     bunch = _download_data_to_bunch(url, return_sparse, data_home,
-                                    as_frame=as_frame,
+                                    as_frame=bool(as_frame),
                                     features_list=features_list, shape=shape,
                                     target_columns=target_columns,
                                     data_columns=data_columns,

@@ -148,19 +148,19 @@ The ``fit()`` method takes the training data as arguments, which can be one
 array in the case of unsupervised learning, or two arrays in the case
 of supervised learning.
 
-Note that the model is fitted using X and y, but the object holds no
-reference to X and y. There are, however, some exceptions to this, as in
+Note that the model is fitted using ``X`` and ``y``, but the object holds no
+reference to ``X`` and ``y``. There are, however, some exceptions to this, as in
 the case of precomputed kernels where this data must be stored for use by
 the predict method.
 
 ============= ======================================================
 Parameters
 ============= ======================================================
-X             array-like, shape (n_samples, n_features)
+X             array-like of shape (n_samples, n_features)
 
-y             array, shape (n_samples,)
+y             array-like of shape (n_samples,)
 
-kwargs        optional data-dependent parameters.
+kwargs        optional data-dependent parameters
 ============= ======================================================
 
 ``X.shape[0]`` should be the same as ``y.shape[0]``. If this requisite
@@ -653,21 +653,22 @@ Here's a simple example of code using some of the above guidelines::
     from sklearn.utils import check_array, check_random_state
 
     def choose_random_sample(X, random_state=0):
-        """
-        Choose a random point from X
+        """Choose a random point from X.
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
-            array representing the data
-        random_state : RandomState or an int seed (0 by default)
-            A random number generator instance to define the state of the
-            random permutations generator.
+        X : array-like of shape (n_samples, n_features)
+            An array representing the data.
+        random_state : int or RandomState instance, default=0
+            The seed of the pseudo random number generator that selects a
+            random sample. Pass an int for reproducible output across multiple
+            function calls.
+            See :term:`Glossary <random_state>`.
 
         Returns
         -------
-        x : numpy array, shape (n_features,)
-            A random point selected from X
+        x : ndarray of shape (n_features,)
+            A random point selected from X.
         """
         X = check_array(X)
         random_state = check_random_state(random_state)
