@@ -1216,17 +1216,20 @@ def test_check_sparse_pandas_sp_format(sp_format):
     assert_allclose_dense_sparse(sp_mat, result)
 
 
-@pytest.mark.parametrize('ntype1, ntype2', [
-    ("longdouble", "float16"),
-    ("float16", "float32"),
-    ("float32", "double"),
-    ("int16", "int32"),
-    ("int32", "long"),
-    ("byte", "uint16"),
-    ("ushort", "uint32"),
-    ("uint32", "uint64"),
-    ("uint8", "int8"),
-])
+@pytest.mark.parametrize(
+    "ntype1, ntype2",
+    [
+        ("longdouble", "float16"),
+        ("float16", "float32"),
+        ("float32", "double"),
+        ("int16", "int32"),
+        ("int32", "long"),
+        ("byte", "uint16"),
+        ("ushort", "uint32"),
+        ("uint32", "uint64"),
+        ("uint8", "int8"),
+    ]
+)
 def test_check_pandas_sparse_invalid(ntype1, ntype2):
     pd = pytest.importorskip("pandas", minversion="0.25.0")
     df = pd.DataFrame({'col1': pd.arrays.SparseArray([0, 1, 0],
