@@ -576,7 +576,9 @@ def check_array(array, accept_sparse=False, *, accept_large_sparse=True,
                 raise ValueError(
                     "Pandas DataFrame with mixed sparse extension arrays "
                     "generated a sparse matrix with object dtype which "
-                    "can not be converted to a scipy sparse matrix")
+                    "can not be converted to a scipy sparse matrix."
+                    "Sparse extension arrays should all have the same "
+                    "numeric type.")
 
     if sp.issparse(array):
         _ensure_no_complex_data(array)
