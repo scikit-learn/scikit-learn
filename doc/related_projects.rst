@@ -200,7 +200,7 @@ and tasks.
   Dirichlet allocation in Cython which uses `Gibbs sampling
   <https://en.wikipedia.org/wiki/Gibbs_sampling>`_ to sample from the true
   posterior distribution. (scikit-learn's
-  :class:`sklearn.decomposition.LatentDirichletAllocation` implementation uses
+  :class:`~sklearn.decomposition.LatentDirichletAllocation` implementation uses
   `variational inference
   <https://en.wikipedia.org/wiki/Variational_Bayesian_methods>`_ to sample from
   a tractable approximation of a topic model's posterior distribution.)

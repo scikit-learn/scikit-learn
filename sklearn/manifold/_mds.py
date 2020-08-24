@@ -1,5 +1,5 @@
 """
-Multi-dimensional Scaling (MDS)
+Multi-dimensional Scaling (MDS).
 """
 
 # author: Nelle Varoquaux <nelle.varoquaux@gmail.com>
@@ -49,7 +49,7 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
         Relative tolerance with respect to stress at which to declare
         convergence.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines the random number generator used to initialize the centers.
         Pass an int for reproducible results across multiple function calls.
         See :term: `Glossary <random_state>`.
@@ -196,7 +196,7 @@ def smacof(dissimilarities, *, metric=True, n_components=2, init=None,
         Relative tolerance with respect to stress at which to declare
         convergence.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines the random number generator used to initialize the centers.
         Pass an int for reproducible results across multiple function calls.
         See :term: `Glossary <random_state>`.
@@ -311,7 +311,7 @@ class MDS(BaseEstimator):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines the random number generator used to initialize the centers.
         Pass an int for reproducible results across multiple function calls.
         See :term: `Glossary <random_state>`.

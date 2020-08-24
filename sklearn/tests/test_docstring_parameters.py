@@ -187,7 +187,7 @@ def test_fit_docstring_attributes(name, Estimator):
                'SelectFromModel', 'SparseCoder', 'SparseRandomProjection',
                'SpectralBiclustering', 'StackingClassifier',
                'StackingRegressor', 'TfidfVectorizer', 'VotingClassifier',
-               'VotingRegressor'}
+               'VotingRegressor', 'SequentialFeatureSelector'}
     if Estimator.__name__ in IGNORED or Estimator.__name__.startswith('_'):
         pytest.skip("Estimator cannot be fit easily to test fit attributes")
 

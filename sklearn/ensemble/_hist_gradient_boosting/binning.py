@@ -35,7 +35,9 @@ def _find_binning_threshold(col_data, max_bins):
     Return
     ------
     binning_thresholds: ndarray
-        The increasing numeric values that can be used to separate the bins.
+        For each feature, stores the increasing numeric values that can
+        be used to separate the bins. Thus ``len(binning_thresholds) ==
+        n_features``.
     """
     # ignore missing values when computing bin thresholds
     missing_mask = np.isnan(col_data)
@@ -118,7 +120,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    n_bins : int, optional (default=256)
+    n_bins : int, default=256
         The maximum number of bins to use (including the bin for missing
         values). Non-missing values are binned on ``max_bins = n_bins - 1``
         bins. The last bin is always reserved for missing values. If for a
@@ -137,7 +139,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         categories are kept. The infrequent categories will be consider
         missing. During ``transform`` time, unknown categories will also be
         considered missing.
-    random_state: int, RandomState instance or None
+    random_state: int, RandomState instance or None, default=None
         Pseudo-random number generator to control the random sub-sampling.
         Pass an int for reproducible output across multiple
         function calls.
@@ -145,7 +147,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
 
     Attributes
     ----------
-    bin_thresholds_ : list of arrays
+    bin_thresholds_ : list of ndarray
         TODO: do we really need this for categorical features?
         For each feature, each array indicates how to map a feature into a
         binned feature. The semantic and size depends on the nature of the
@@ -159,7 +161,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
           value to the raw category value. The size of the array is equal to
           ``min(max_bins, category_cardinality)`` where we ignore negative
           categories and missing values in the cardinality.
-    n_bins_non_missing_ : array of uint32
+    n_bins_non_missing_ : ndarray, dtype=np.uint32
         For each feature, gives the number of bins actually used for
         non-missing values. For features with a lot of unique values, this is
         equal to ``n_bins - 1``.
@@ -167,7 +169,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         Indicator for categorical features.
     category_mapper_ : CategoryMapper
         Object used to map raw categories into bins.
-    missing_values_bin_idx_ : uint8
+    missing_values_bin_idx_ : np.uint8
         The index of the bin where missing values are mapped. This is a
         constant across all features. This corresponds to the last bin, and
         it is always equal to ``n_bins - 1``. Note that if ``n_bins_missing_``
@@ -189,7 +191,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The data to bin.
         y: None
             Ignored.
@@ -247,12 +249,12 @@ class _BinMapper(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The data to bin.
 
         Returns
         -------
-        X_binned : array-like, shape (n_samples, n_features)
+        X_binned : array-like of shape (n_samples, n_features)
             The binned data (fortran-aligned).
         """
         X = check_array(X, dtype=[X_DTYPE], force_all_finite=False)
