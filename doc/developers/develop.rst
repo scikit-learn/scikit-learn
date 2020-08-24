@@ -497,9 +497,12 @@ non_deterministic (default=False)
     whether the estimator is not deterministic given a fixed ``random_state``
 
 preserves_dtype (default=``[np.float64]``)
-    whether an estimator preserves the specified dtypes if given as input.
-    Possible options are a combination of `np.float16`, `np.float32` and
-    `np.float64`.
+    dtypes for `X` that an estimator will preserve. Possible options are a
+    combination of `np.float16`, `np.float32`, and `np.float64`. If this list
+    is empty, then the estimator it not expected to preserve the dtype. The
+    first value in the list is considered as the default dtype, corresponding
+    to the dtype of the output when the input dtype is not going to be
+    preserved.
 
 poor_score (default=False)
     whether the estimator fails to provide a "reasonable" test-set score, which

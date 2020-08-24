@@ -1486,16 +1486,11 @@ def check_transformer_preserve_dtypes(
     X = StandardScaler().fit_transform(X)
     X -= X.min()
     X = _pairwise_estimator_convert_X(X, transformer_orig)
-    assert X.dtype == np.float64
 
     def _fit_and_transform(transformer, X, y):
         transformer = clone(transformer)
         set_random_state(transformer)
         X_trans = transformer.fit_transform(X, y)
-
-        if sparse.issparse(X_trans):
-            # toarray() will preserve the dtype
-            X_trans = X_trans.toarray()
 
         if isinstance(X_trans, tuple):
             # cross-decompostion returns a tuple of (x_scores, y_scores)
@@ -1503,11 +1498,18 @@ def check_transformer_preserve_dtypes(
             X_trans = X_trans[0]
         return X_trans
 
-    # keep 64 floating-point precision transform as a reference
-    X_trans_float_64 = _fit_and_transform(transformer_orig, X, y)
-
     tags_transformer = transformer_orig._get_tags()
-    for dtype in tags_transformer["preserves_dtype"]:
+    transformer_default_dtype = tags_transformer["preserves_dtype"][0]
+    X = X.astype(transformer_default_dtype)
+
+    # keep the default dtype as a reference
+    X_trans_default = _fit_and_transform(transformer_orig, X, y)
+    assert X_trans_default.dtype == transformer_default_dtype, (
+            f'Estimator transform dtype: {X_trans_default.dtype} - '
+            f'original/expected dtype: {transformer_default_dtype.__name__}'
+        )
+
+    for dtype in tags_transformer["preserves_dtype"][1:]:
         X_cast = X.astype(dtype)
         X_trans = _fit_and_transform(transformer_orig, X_cast, y)
 
@@ -1517,11 +1519,11 @@ def check_transformer_preserve_dtypes(
             f'original/expected dtype: {dtype.__name__}'
         )
 
-        # check that the transformed array is consistent with the 64 bits
+        # check that the transformed array is consistent with the default
         # transformed array.
-        assert_allclose(
+        assert_allclose_dense_sparse(
             X_trans,
-            X_trans_float_64,
+            X_trans_default,
             atol=1e-10, rtol=5e-4,
             err_msg=(
                 f"Transformed array with input dtype {dtype.__name__} is not "
