@@ -1,7 +1,7 @@
 """
 Testing for the gradient boosting loss functions and initial estimators.
 """
-
+from itertools import product
 import numpy as np
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_allclose
@@ -34,23 +34,26 @@ def test_binomial_deviance():
     assert_almost_equal(bd(np.array([1.0, 0.0, 0.0]),
                            np.array([100.0, -100.0, -100.0])), 0)
 
-    # check if same results as alternative definition of deviance (from ESLII)
+    # check if same results as alternative definition of deviance, from ESLII
+    # Eq. (10.18): -loglike = log(1 + exp(-2*z*f))
+    # Note:
+    # - We use y = {0, 1}, ESL (10.18) uses z in {-1, 1}, hence y=2*y-1
+    # - ESL 2*f = pred_raw, hence the factor 2 of ESL disappears.
+    # - Deviance = -2*loglike + .., hence a factor of 2 in front.
     def alt_dev(y, pred):
-        return np.mean(np.logaddexp(0.0, -2.0 * (2.0 * y - 1) * pred))
+        return 2*np.mean(np.logaddexp(0.0, -(2.0 * y - 1) * pred))
 
-    test_data = [(np.array([1.0, 1.0, 1.0]), np.array([100.0, 100.0, 100.0])),
-                 (np.array([0.0, 0.0, 0.0]), np.array([100.0, 100.0, 100.0])),
-                 (np.array([0.0, 0.0, 0.0]),
-                  np.array([-100.0, -100.0, -100.0])),
-                 (np.array([1.0, 1.0, 1.0]),
-                  np.array([-100.0, -100.0, -100.0]))]
+    test_data = product(
+        (np.array([0.0, 0.0, 0.0]), np.array([1.0, 1.0, 1.0])),
+        (np.array([-5.0, -5.0, -5.0]), np.array([3.0, 3.0, 3.0])))
 
     for datum in test_data:
         assert_almost_equal(bd(*datum), alt_dev(*datum))
 
-    # check the gradient against the
+    # check the negative gradient against altenative formula from ESLII
+    # Note: negative_gradient is half the negative gradient.
     def alt_ng(y, pred):
-        return (2 * y - 1) / (1 + np.exp(2 * (2 * y - 1) * pred))
+        return (2 * y - 1) / (1 + np.exp((2 * y - 1) * pred))
 
     for datum in test_data:
         assert_almost_equal(bd.negative_gradient(*datum), alt_ng(*datum))
