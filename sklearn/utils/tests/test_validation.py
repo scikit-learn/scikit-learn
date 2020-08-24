@@ -1270,6 +1270,8 @@ def test_check_pandas_sparse_invalid(ntype1, ntype2):
     ]
 )
 def test_check_pandas_sparse_valid(ntype1, ntype2):
+    # check that we support the conversion of sparse dataframe with mixed
+    # type which can be converted safely.
     pd = pytest.importorskip("pandas", minversion="0.25.0")
     df = pd.DataFrame({'col1': pd.arrays.SparseArray([0, 1, 0],
                                                      dtype=ntype1),
