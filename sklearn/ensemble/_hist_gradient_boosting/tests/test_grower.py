@@ -482,7 +482,6 @@ def test_ohe_equivalence(min_samples_leaf, n_unique_categories, target):
 
     assert predictor.get_max_depth() <= predictor_ohe.get_max_depth()
     if target == 'binary' and n_unique_categories > 2:
-        assert len(predictor.nodes) == 3
         # OHE needs more splits to achieve the same predictions
         assert predictor.get_max_depth() < predictor_ohe.get_max_depth()
 
