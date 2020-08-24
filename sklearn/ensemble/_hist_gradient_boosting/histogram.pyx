@@ -117,7 +117,7 @@ cdef class HistogramBuilder:
             The indices of the samples at the node to split.
 
         histograms : ndarray of HISTOGRAM_DTYPE, shape (n_features, n_bins)
-            The computed histograms of the current node.
+            Where the histograms of the current node will be stored.
         """
         cdef:
             int n_samples
@@ -219,7 +219,7 @@ cdef class HistogramBuilder:
                 shape (n_features, n_bins)
             The histograms of the sibling.
         histograms : ndarray of HISTOGRAM_DTYPE, shape(n_features, n_bins)
-            The computed histograms of the current node.
+            Where the histograms of the current node will be stored.
         """
 
         cdef:

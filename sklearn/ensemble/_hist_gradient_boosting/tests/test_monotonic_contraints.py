@@ -312,7 +312,7 @@ def test_bounded_value_min_gain_to_split():
                         min_hessian_to_split, min_samples_leaf,
                         min_gain_to_split, hessians_are_constant)
 
-    histograms = np.zeros(shape=(1, n_bins), dtype=HISTOGRAM_DTYPE)
+    histograms = np.empty(shape=(1, n_bins), dtype=HISTOGRAM_DTYPE)
     builder.compute_histograms_brute(sample_indices, histograms)
 
     # Since the gradient array is [1, 1, 100, 1, 1]

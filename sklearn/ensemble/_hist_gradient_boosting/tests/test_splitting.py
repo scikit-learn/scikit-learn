@@ -61,7 +61,7 @@ def test_histogram_split(n_bins):
                                 min_samples_leaf, min_gain_to_split,
                                 hessians_are_constant)
 
-            histograms = np.zeros(shape=(X_binned.shape[1], n_bins),
+            histograms = np.empty(shape=(X_binned.shape[1], n_bins),
                                   dtype=HISTOGRAM_DTYPE)
             builder.compute_histograms_brute(sample_indices, histograms)
             value = compute_node_value(sum_gradients, sum_hessians,
@@ -127,7 +127,7 @@ def test_gradient_and_hessian_sanity(constant_hessian):
                         min_hessian_to_split, min_samples_leaf,
                         min_gain_to_split, constant_hessian)
 
-    hists_parent = np.zeros(shape=(X_binned.shape[1], n_bins),
+    hists_parent = np.empty(shape=(X_binned.shape[1], n_bins),
                             dtype=HISTOGRAM_DTYPE)
     builder.compute_histograms_brute(sample_indices, hists_parent)
     value_parent = compute_node_value(sum_gradients, sum_hessians,
@@ -138,14 +138,14 @@ def test_gradient_and_hessian_sanity(constant_hessian):
     sample_indices_left, sample_indices_right, _ = splitter.split_indices(
         si_parent, sample_indices)
 
-    hists_left = np.zeros(shape=(X_binned.shape[1], n_bins),
+    hists_left = np.empty(shape=(X_binned.shape[1], n_bins),
                           dtype=HISTOGRAM_DTYPE)
     builder.compute_histograms_brute(sample_indices_left, hists_left)
     value_left = compute_node_value(si_parent.sum_gradient_left,
                                     si_parent.sum_hessian_left,
                                     -np.inf, np.inf, l2_regularization)
 
-    hists_right = np.zeros(shape=(X_binned.shape[1], n_bins),
+    hists_right = np.empty(shape=(X_binned.shape[1], n_bins),
                            dtype=HISTOGRAM_DTYPE)
     builder.compute_histograms_brute(sample_indices_right, hists_right)
     value_right = compute_node_value(si_parent.sum_gradient_right,
@@ -250,7 +250,7 @@ def test_split_indices():
 
     assert np.all(sample_indices == splitter.partition)
 
-    histograms = np.zeros(shape=(X_binned.shape[1], n_bins),
+    histograms = np.empty(shape=(X_binned.shape[1], n_bins),
                           dtype=HISTOGRAM_DTYPE)
     builder.compute_histograms_brute(sample_indices, histograms)
     value = compute_node_value(sum_gradients, sum_hessians,
@@ -312,7 +312,7 @@ def test_min_gain_to_split():
                         min_hessian_to_split, min_samples_leaf,
                         min_gain_to_split, hessians_are_constant)
 
-    histograms = np.zeros(shape=(X_binned.shape[1], n_bins),
+    histograms = np.empty(shape=(X_binned.shape[1], n_bins),
                           dtype=HISTOGRAM_DTYPE)
     builder.compute_histograms_brute(sample_indices, histograms)
     value = compute_node_value(sum_gradients, sum_hessians,
@@ -458,7 +458,7 @@ def test_splitting_missing_values(X_binned, all_gradients,
                         min_samples_leaf, min_gain_to_split,
                         hessians_are_constant)
 
-    histograms = np.zeros(shape=(X_binned.shape[1], n_bins),
+    histograms = np.empty(shape=(X_binned.shape[1], n_bins),
                           dtype=HISTOGRAM_DTYPE)
     builder.compute_histograms_brute(sample_indices, histograms)
     value = compute_node_value(sum_gradients, sum_hessians,
