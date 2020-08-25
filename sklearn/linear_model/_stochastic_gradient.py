@@ -163,22 +163,22 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
                         'squared_epsilon_insensitive'):
                 args = (self.epsilon, )
             return loss_class(*args)
-        except KeyError:
-            raise ValueError("The loss %s is not supported. " % loss)
+        except KeyError as e:
+            raise ValueError("The loss %s is not supported. " % loss) from e
 
     def _get_learning_rate_type(self, learning_rate):
         try:
             return LEARNING_RATE_TYPES[learning_rate]
-        except KeyError:
+        except KeyError as e:
             raise ValueError("learning rate %s "
-                             "is not supported. " % learning_rate)
+                             "is not supported. " % learning_rate) from e
 
     def _get_penalty_type(self, penalty):
         penalty = str(penalty).lower()
         try:
             return PENALTY_TYPES[penalty]
-        except KeyError:
-            raise ValueError("Penalty %s is not supported. " % penalty)
+        except KeyError as e:
+            raise ValueError("Penalty %s is not supported. " % penalty) from e
 
     def _allocate_parameter_mem(self, n_classes, n_features, coef_init=None,
                                 intercept_init=None):
