@@ -391,7 +391,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
         n_samples : int, default=1
             The number of samples drawn from the Gaussian process
 
-        random_state : int, RandomState instance, default=0
+        random_state : int, RandomState instance or None, default=0
             Determines random number generation to randomly draw samples.
             Pass an int for reproducible results across multiple function
             calls.
