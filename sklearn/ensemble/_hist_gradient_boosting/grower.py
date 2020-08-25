@@ -134,7 +134,7 @@ class TreeGrower:
 
     Parameters
     ----------
-    X_binned : ndarray of int of shape (n_samples, n_features)
+    X_binned : ndarray of shape (n_samples, n_features), dtype=np.uint8
         The binned input samples. Must be Fortran-aligned.
     gradients : ndarray of shape (n_samples,)
         The gradients of each training sample. Those are the gradients of the
