@@ -1076,17 +1076,13 @@ considered as a single category. When predicting, categories that were unknown
 during fit time, will be consider missing. If the cardinality of a categorical
 feature is greater than `max_bins`, then the top `max_bins` categories based on
 cardinality will be kept, and the less frequent categories will be considered
-as missing. 
+as missing.
 
 To enable categorical support, a boolean mask can be passed to the
 `categorical_features` parameter. In the following, the first feature will be
 treated as categorical and the second feature as nummerical::
 
   >>> gbdt = HistGradientBoostingClassifier(categorical_features=[True, False])
-
-Another way to enable categorical support is to pass `'pandas'` to the
-`categorical` parameter, and pass a pandas dataframe to `fit`. This will infer
-the categorical features using pandas' categorical dtype during `fit`.
 
 .. topic:: Examples:
 
