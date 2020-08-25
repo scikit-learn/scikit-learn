@@ -11,7 +11,7 @@ import shutil
 from glob import glob
 import textwrap
 
-VCOMP140_SRC_PATH = "C:\\Windows\System32\\vcomp140.dll"
+VCOMP140_SRC_PATH = "C:\\Windows\System32\\vcomp140.dll"  # noqa
 TARGET_FOLDER_GLOB_PATTERN = "build/lib.*/sklearn"
 
 
