@@ -60,7 +60,7 @@ print(f"Number of features: {data.shape[1]}")
 print(f"Number of categorical features: {n_categorical_features}")
 print(f"Number of numerical features: {n_numerical_features}")
 
-categorical_features = np.flatnonzero(data.dtypes == 'category')
+categorical_features = np.flatnonzero(is_categorical)
 for i in categorical_features:
     data.iloc[:, i] = data.iloc[:, i].cat.codes
 
@@ -84,5 +84,5 @@ predict(est, data_test, target_test)
 if args.lightgbm:
     est = get_equivalent_estimator(est, lib='lightgbm')
     fit(est, data_train, target_train, 'lightgbm',
-        categorical_feature=is_categorical.index.tolist())
+        categorical_feature=is_categorical[is_categorical].index.tolist())
     predict(est, data_test, target_test)
