@@ -830,7 +830,10 @@ def _is_pairwise(estimator):
         has_pairwise_attribute = hasattr(estimator, '_pairwise')
         pairwise_attribute = getattr(estimator, '_pairwise', False)
 
-    pairwise_tag = estimator._get_tags().get('pairwise', False)
+    if hasattr(estimator, '_get_tags') and callable(estimator._get_tags):
+        pairwise_tag = estimator._get_tags().get('pairwise', False)
+    else:
+        pairwise_tag = False
 
     if has_pairwise_attribute:
         if pairwise_attribute != pairwise_tag:
