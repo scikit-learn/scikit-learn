@@ -462,7 +462,7 @@ Changelog
   :pr:`17614` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
 :mod:`sklearn.utils`
-.........................
+....................
 
 - |Fix| Raise ValueError with clear error message in :func:`check_array`
   for sparse DataFrames with mixed types.
