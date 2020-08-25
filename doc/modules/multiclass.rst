@@ -49,68 +49,70 @@ built-in, grouped by strategy. You don't need the meta-estimators provided by
 this section if you're using one of these estimators. However, meta-estimators
 can provide additional strategies beyond what is built-in:
 
+.. currentmodule:: sklearn
+
 - **Inherently multiclass:**
 
-  - :class:`sklearn.naive_bayes.BernoulliNB`
-  - :class:`sklearn.tree.DecisionTreeClassifier`
-  - :class:`sklearn.tree.ExtraTreeClassifier`
-  - :class:`sklearn.ensemble.ExtraTreesClassifier`
-  - :class:`sklearn.naive_bayes.GaussianNB`
-  - :class:`sklearn.neighbors.KNeighborsClassifier`
-  - :class:`sklearn.semi_supervised.LabelPropagation`
-  - :class:`sklearn.semi_supervised.LabelSpreading`
-  - :class:`sklearn.discriminant_analysis.LinearDiscriminantAnalysis`
-  - :class:`sklearn.svm.LinearSVC` (setting multi_class="crammer_singer")
-  - :class:`sklearn.linear_model.LogisticRegression` (setting multi_class="multinomial")
-  - :class:`sklearn.linear_model.LogisticRegressionCV` (setting multi_class="multinomial")
-  - :class:`sklearn.neural_network.MLPClassifier`
-  - :class:`sklearn.neighbors.NearestCentroid`
-  - :class:`sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`
-  - :class:`sklearn.neighbors.RadiusNeighborsClassifier`
-  - :class:`sklearn.ensemble.RandomForestClassifier`
-  - :class:`sklearn.linear_model.RidgeClassifier`
-  - :class:`sklearn.linear_model.RidgeClassifierCV`
+  - :class:`naive_bayes.BernoulliNB`
+  - :class:`tree.DecisionTreeClassifier`
+  - :class:`tree.ExtraTreeClassifier`
+  - :class:`ensemble.ExtraTreesClassifier`
+  - :class:`naive_bayes.GaussianNB`
+  - :class:`neighbors.KNeighborsClassifier`
+  - :class:`semi_supervised.LabelPropagation`
+  - :class:`semi_supervised.LabelSpreading`
+  - :class:`discriminant_analysis.LinearDiscriminantAnalysis`
+  - :class:`svm.LinearSVC` (setting multi_class="crammer_singer")
+  - :class:`linear_model.LogisticRegression` (setting multi_class="multinomial")
+  - :class:`linear_model.LogisticRegressionCV` (setting multi_class="multinomial")
+  - :class:`neural_network.MLPClassifier`
+  - :class:`neighbors.NearestCentroid`
+  - :class:`discriminant_analysis.QuadraticDiscriminantAnalysis`
+  - :class:`neighbors.RadiusNeighborsClassifier`
+  - :class:`ensemble.RandomForestClassifier`
+  - :class:`linear_model.RidgeClassifier`
+  - :class:`linear_model.RidgeClassifierCV`
 
 
 - **Multiclass as One-Vs-One:**
 
-  - :class:`sklearn.svm.NuSVC`
-  - :class:`sklearn.svm.SVC`.
-  - :class:`sklearn.gaussian_process.GaussianProcessClassifier` (setting multi_class = "one_vs_one")
+  - :class:`svm.NuSVC`
+  - :class:`svm.SVC`.
+  - :class:`gaussian_process.GaussianProcessClassifier` (setting multi_class = "one_vs_one")
 
 
 - **Multiclass as One-Vs-The-Rest:**
 
-  - :class:`sklearn.ensemble.GradientBoostingClassifier`
-  - :class:`sklearn.gaussian_process.GaussianProcessClassifier` (setting multi_class = "one_vs_rest")
-  - :class:`sklearn.svm.LinearSVC` (setting multi_class="ovr")
-  - :class:`sklearn.linear_model.LogisticRegression` (setting multi_class="ovr")
-  - :class:`sklearn.linear_model.LogisticRegressionCV` (setting multi_class="ovr")
-  - :class:`sklearn.linear_model.SGDClassifier`
-  - :class:`sklearn.linear_model.Perceptron`
-  - :class:`sklearn.linear_model.PassiveAggressiveClassifier`
+  - :class:`ensemble.GradientBoostingClassifier`
+  - :class:`gaussian_process.GaussianProcessClassifier` (setting multi_class = "one_vs_rest")
+  - :class:`svm.LinearSVC` (setting multi_class="ovr")
+  - :class:`linear_model.LogisticRegression` (setting multi_class="ovr")
+  - :class:`linear_model.LogisticRegressionCV` (setting multi_class="ovr")
+  - :class:`linear_model.SGDClassifier`
+  - :class:`linear_model.Perceptron`
+  - :class:`linear_model.PassiveAggressiveClassifier`
 
 
 - **Support multilabel:**
 
-  - :class:`sklearn.tree.DecisionTreeClassifier`
-  - :class:`sklearn.tree.ExtraTreeClassifier`
-  - :class:`sklearn.ensemble.ExtraTreesClassifier`
-  - :class:`sklearn.neighbors.KNeighborsClassifier`
-  - :class:`sklearn.neural_network.MLPClassifier`
-  - :class:`sklearn.neighbors.RadiusNeighborsClassifier`
-  - :class:`sklearn.ensemble.RandomForestClassifier`
-  - :class:`sklearn.linear_model.RidgeClassifierCV`
+  - :class:`tree.DecisionTreeClassifier`
+  - :class:`tree.ExtraTreeClassifier`
+  - :class:`ensemble.ExtraTreesClassifier`
+  - :class:`neighbors.KNeighborsClassifier`
+  - :class:`neural_network.MLPClassifier`
+  - :class:`neighbors.RadiusNeighborsClassifier`
+  - :class:`ensemble.RandomForestClassifier`
+  - :class:`linear_model.RidgeClassifierCV`
 
 
 - **Support multiclass-multioutput:**
 
-  - :class:`sklearn.tree.DecisionTreeClassifier`
-  - :class:`sklearn.tree.ExtraTreeClassifier`
-  - :class:`sklearn.ensemble.ExtraTreesClassifier`
-  - :class:`sklearn.neighbors.KNeighborsClassifier`
-  - :class:`sklearn.neighbors.RadiusNeighborsClassifier`
-  - :class:`sklearn.ensemble.RandomForestClassifier`
+  - :class:`tree.DecisionTreeClassifier`
+  - :class:`tree.ExtraTreeClassifier`
+  - :class:`ensemble.ExtraTreesClassifier`
+  - :class:`neighbors.KNeighborsClassifier`
+  - :class:`neighbors.RadiusNeighborsClassifier`
+  - :class:`ensemble.RandomForestClassifier`
 
 .. _multiclass_classification:
 
