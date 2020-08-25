@@ -221,6 +221,10 @@ Changelog
   with `add_indicator=True`.
   :pr:`17612` by :user:`Srimukh Sripada <d3b0unce>`.
 
+- |Fix| :class:`impute.IterativeImputer` will not attempt to set the
+  estimator's `random_state` attribute, allowing to use it with more external classes.
+  :pr:`15636` by :user:`David Cortes <david-cortes>`.
+
 :mod:`sklearn.inspection`
 .........................
 
