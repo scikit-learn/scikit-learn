@@ -166,7 +166,7 @@ class TreeGrower:
     has_missing_values : bool or ndarray, dtype=bool, default=False
         Whether each feature contains missing values (in the training data).
         If it's a bool, the same value is used for all features.
-    monotonic_cst : array-like of int of shape (n_features), default=None
+    monotonic_cst : array-like of shape (n_features,), dtype=int, default=None
         Indicates the monotonic constraint to enforce on each feature. -1, 1
         and 0 respectively correspond to a positive constraint, negative
         constraint and no constraint. Read more in the :ref:`User Guide
