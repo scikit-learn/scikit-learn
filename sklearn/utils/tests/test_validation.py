@@ -1280,5 +1280,5 @@ def test_check_pandas_sparse_valid(ntype1, ntype2, expected_dtype):
                                                      dtype=ntype1),
                        'col2': pd.arrays.SparseArray([1, 0, 1],
                                                      dtype=ntype2)})
-    arr = check_array(df, **{'accept_sparse': ['csr', 'csc']})
+    arr = check_array(df, accept_sparse=['csr', 'csc'])
     assert arr.dtype.name == expected_dtype
