@@ -1,6 +1,6 @@
 """
-Multiclass and multilabel classification strategies
-===================================================
+Multiclass classification strategies
+====================================
 
 This module implements multiclass learning algorithms:
     - one-vs-the-rest / one-vs-all

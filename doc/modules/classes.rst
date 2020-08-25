@@ -1211,8 +1211,8 @@ Model validation
 
 .. _multiclass_ref:
 
-:mod:`sklearn.multiclass`: Multiclass and multilabel classification
-===================================================================
+:mod:`sklearn.multiclass`: Multiclass classification
+====================================================
 
 .. automodule:: sklearn.multiclass
    :no-members:
