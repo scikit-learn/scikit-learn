@@ -13,7 +13,7 @@ from sklearn.ensemble._hist_gradient_boosting.utils import (
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--n-leaf-nodes', type=int, default=31)
-parser.add_argument('--n-trees', type=int, default=50)
+parser.add_argument('--n-trees', type=int, default=40)
 parser.add_argument('--lightgbm', action="store_true", default=False)
 parser.add_argument('--learning-rate', type=float, default=1.)
 parser.add_argument('--max-bins', type=int, default=255)
