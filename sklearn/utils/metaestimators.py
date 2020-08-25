@@ -3,7 +3,6 @@
 #         Andreas Mueller
 # License: BSD
 from typing import List, Any
-import warnings
 
 from abc import ABCMeta, abstractmethod
 from operator import attrgetter
@@ -12,6 +11,7 @@ import numpy as np
 
 from ..utils import _safe_indexing
 from ..base import BaseEstimator
+from ..base import _is_pairwise
 
 __all__ = ['if_delegate_has_method']
 
@@ -195,12 +195,7 @@ def _safe_split(estimator, X, y, indices, train_indices=None):
         Indexed targets.
 
     """
-    # TODO: Starting from 0.26, this should use the pairwise estimator tag.
-    with warnings.catch_warnings():
-        warnings.filterwarnings('ignore', category=FutureWarning)
-        pairwise = getattr(estimator, '_pairwise', False)
-
-    if pairwise:
+    if _is_pairwise(estimator):
         if not hasattr(X, "shape"):
             raise ValueError("Precomputed kernels or affinity matrices have "
                              "to be passed as arrays or sparse matrices.")

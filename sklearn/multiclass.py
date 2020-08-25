@@ -42,6 +42,7 @@ import itertools
 from .base import BaseEstimator, ClassifierMixin, clone, is_classifier
 from .base import MultiOutputMixin
 from .base import MetaEstimatorMixin, is_regressor
+from .base import _is_pairwise
 from .preprocessing import LabelBinarizer
 from .metrics.pairwise import euclidean_distances
 from .utils import check_random_state
@@ -609,11 +610,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         self.estimators_ = estimators_indices[0]
 
-        # TODO: Starting from 0.26, this should use the pairwise estimator tag.
-        with warnings.catch_warnings():
-            warnings.filterwarnings('ignore', category=FutureWarning)
-            pairwise = self._pairwise
-
+        pairwise = _is_pairwise(self)
         self.pairwise_indices_ = (
             estimators_indices[1] if pairwise else None)
 

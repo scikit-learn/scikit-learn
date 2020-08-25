@@ -32,7 +32,7 @@ from ..discriminant_analysis import LinearDiscriminantAnalysis
 from ..linear_model import Ridge
 
 from ..base import (clone, ClusterMixin, is_classifier, is_regressor,
-                    RegressorMixin, is_outlier_detector)
+                    RegressorMixin, is_outlier_detector, _is_pairwise)
 
 from ..metrics import accuracy_score, adjusted_rand_score, f1_score
 from ..random_projection import BaseRandomProjection
@@ -672,22 +672,6 @@ class _NotAnArray:
             return True
         raise TypeError("Don't want to call array_function {}!".format(
             func.__name__))
-
-
-def _is_pairwise(estimator):
-    """Returns True if estimator has the pairwise tag set to True.
-
-    Parameters
-    ----------
-    estimator : object
-        Estimator object to test.
-
-    Returns
-    -------
-    out : bool
-        True if the pairwise tag is set to True and False otherwise.
-    """
-    return estimator._get_tags().get("pairwise", False)
 
 
 def _is_pairwise_metric(estimator):
