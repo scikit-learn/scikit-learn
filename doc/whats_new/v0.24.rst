@@ -473,6 +473,14 @@ Changelog
   :meth:`tree.DecisionTreeRegressor.fit`, and has not effect.
   :pr:`17614` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
+:mod:`sklearn.utils`
+....................
+
+- |Fix| Raise ValueError with clear error message in :func:`check_array`
+  for sparse DataFrames with mixed types.
+  :pr:`17992` by :user:`Thomas J. Fan <thomasjpfan>` and
+  :user:`Alex Shacked <alexshacked>`.
+
 - |Fix| Allow serialized tree based models to be unpickled on a machine
   with different endianness.
   :pr:`17644` by :user:`Qi Zhang <qzhang90>`.
