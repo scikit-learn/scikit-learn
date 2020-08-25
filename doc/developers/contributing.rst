@@ -721,7 +721,7 @@ Finally, follow the formatting rules below to make it consistently good:
 
     sample_weight : array-like of shape (n_samples,), default=None
 
-    multioutput_array : ndarray of shape (n_samples, n_classes) or list of thereof
+    multioutput_array : ndarray of shape (n_samples, n_classes) or list thereof
 
 In general have the following in mind:
 
@@ -736,8 +736,10 @@ In general have the following in mind:
     5. Specify ``dataframe`` when "frame-like" features are being used, such
        as the column names.
     6. When specifying the data type of a list, use ``of`` as a delimiter:
-       ``list of int``. If the data type was also mentioned as possible output,
-       you can use ``list of thereof`` to be more concise.
+       ``list of int``. When the parameter supports arrays giving details about
+       the shape and/or data type and a list of such arrays, you should use
+       ``list thereof`` to be concise; e.g.
+       ``array-like of shape (n_samples,) or list thereof``.
     7. When specifying the dtype of an ndarray, use e.g. ``dtype=np.int32``
        after defining the shape:
        ``ndarray of shape (n_samples,), dtype=np.int32``.
