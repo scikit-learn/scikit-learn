@@ -416,6 +416,14 @@ Changelog
   :class:`neural_network.MLPRegressor`.
   :pr:`17759` by :user:`Srimukh Sripada <d3b0unce>`.
 
+:mod:`sklearn.pipeline`
+.......................
+
+- |Enhancement| References to transformers passed through ``transformer_weights``
+  to :class:`pipeline.FeatureUnion` that aren't present in ``transformer_list``
+  will raise a ``ValueError``.
+  :pr:`17876` by :user:`Cary Goltermann <Ultramann>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
