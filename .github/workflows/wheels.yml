@@ -19,8 +19,10 @@ jobs:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
+      # Avoid that the wheel builder for a system is cancelled if another fails
+      fail-fast: false
       matrix:
-        os: [windows-latest, ubuntu-latest] # , macos-latest]
+        os: [windows-latest, ubuntu-latest, macos-latest]
 
     steps:
       - name: Checkout scikit-learn
@@ -39,7 +41,11 @@ jobs:
           CIBW_SKIP: pp* *p27* *p35*
           CIBW_TEST_REQUIRES: pytest pandas
           CIBW_TEST_COMMAND: pytest --pyargs sklearn
+        # Embed the vcomp dll before generating the Windows wheel
         run: |
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            echo "::set-env name=CIBW_BEFORE_ALL::python ../../build_tools/vendor_vcomp140.py"
+          fi
           python -m cibuildwheel --output-dir wheelhouse
           ls -l wheelhouse/*.whl
 
