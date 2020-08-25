@@ -626,7 +626,7 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None,
 
 @_deprecate_positional_args
 def jaccard_score(y_true, y_pred, *, labels=None, pos_label=1,
-                  average='binary', sample_weight=None):
+                  average='binary', sample_weight=None, zero_division="warn"):
     """Jaccard similarity coefficient score
 
     The Jaccard index [1], or Jaccard similarity coefficient, defined as
@@ -683,6 +683,11 @@ def jaccard_score(y_true, y_pred, *, labels=None, pos_label=1,
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
+
+    zero_division : "warn", {0.0, 1.0}, default="warn"
+        Sets the value to return when there is a zero division, i.e. when there
+        there are no negative values in predictions and labels. If set to
+        "warn", this acts like 0, but a warning is also raised.
 
     Returns
     -------
@@ -749,7 +754,8 @@ def jaccard_score(y_true, y_pred, *, labels=None, pos_label=1,
         denominator = np.array([denominator.sum()])
 
     jaccard = _prf_divide(numerator, denominator, 'jaccard',
-                          'true or predicted', average, ('jaccard',))
+                          'true or predicted', average, ('jaccard',),
+                          zero_division=zero_division)
     if average is None:
         return jaccard
     if average == 'weighted':
@@ -2340,7 +2346,7 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     check_consistent_length(y_true, pred_decision, sample_weight)
     pred_decision = check_array(pred_decision, ensure_2d=False)
     y_true = column_or_1d(y_true)
-    y_true_unique = np.unique(y_true)
+    y_true_unique = np.unique(labels if labels is not None else y_true)
     if y_true_unique.size > 2:
         if (labels is None and pred_decision.ndim > 1 and
                 (np.size(y_true_unique) != pred_decision.shape[1])):
