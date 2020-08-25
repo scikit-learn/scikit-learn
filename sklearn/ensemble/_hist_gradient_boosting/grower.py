@@ -525,7 +525,7 @@ class TreeGrower:
             node = self.splittable_nodes.pop()
             self._finalize_leaf(node)
 
-    def make_predictor(self, num_thresholds=None, is_categorical=None):
+    def make_predictor(self, num_thresholds, is_categorical=None):
         """Make a TreePredictor object out of the current tree.
 
         Parameters
@@ -578,11 +578,10 @@ def _fill_predictor_node_array(predictor_nodes, predictor_bitset, grower_node,
             node['num_threshold'] = np.inf
         else:
             bins = num_thresholds[feature_idx]
+            node['num_threshold'] = bins[bin_idx]
             if split_info.is_categorical:
                 predictor_bitset.insert_categories_bitset(
                     next_free_idx, bins, split_info.cat_bitset)
-            else:  # numerical
-                node['num_threshold'] = bins[bin_idx]
 
         next_free_idx += 1
 

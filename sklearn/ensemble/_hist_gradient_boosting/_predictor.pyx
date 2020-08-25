@@ -71,7 +71,7 @@ cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
                 node_idx = node.right
         else:
             if numeric_data[row, node.feature_idx] <= node.num_threshold:
-                node = nodes[node.left]
+                node_idx = node.left
             else:
                 node_idx = node.right
         node = nodes[node_idx]

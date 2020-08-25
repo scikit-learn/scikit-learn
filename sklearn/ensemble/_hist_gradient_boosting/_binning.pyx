@@ -43,7 +43,6 @@ def _map_to_bins(const X_DTYPE_C [:, :] data,
     """
     cdef:
         int feature_idx
-        X_DTYPE_C [:] binning_threshold
 
     for feature_idx in range(data.shape[1]):
         if is_categorical[feature_idx]:
@@ -51,8 +50,8 @@ def _map_to_bins(const X_DTYPE_C [:, :] data,
                                  category_mapper, missing_values_bin_idx,
                                  binned[:, feature_idx])
         else:
-            bins = binning_thresholds[feature_idx]
-            _map_num_col_to_bins(data[:, feature_idx], bins,
+            _map_num_col_to_bins(data[:, feature_idx],
+                                 binning_thresholds[feature_idx],
                                  missing_values_bin_idx,
                                  binned[:, feature_idx])
 

@@ -160,7 +160,7 @@ def test_predictor_from_grower():
     # object to perform predictions at scale
     # We pass undefined num_thresholds because we won't use predict() anyway
     predictor = grower.make_predictor(
-        num_thresholds=np.zeros((X_binned.shape[1], n_bins))
+        num_thresholds=list(np.zeros((X_binned.shape[1], n_bins)))
     )
     assert predictor.nodes.shape[0] == 5
     assert predictor.nodes['is_leaf'].sum() == 3
@@ -346,7 +346,7 @@ def test_missing_value_predict_only():
 
     # We pass undefined num_thresholds because we won't use predict() anyway
     predictor = grower.make_predictor(
-        num_thresholds=np.zeros((X_binned.shape[1], X_binned.max() + 1))
+        num_thresholds=list(np.zeros((X_binned.shape[1], X_binned.max() + 1)))
     )
 
     # go from root to a leaf, always following node with the most samples.
@@ -422,8 +422,8 @@ def test_grow_tree_categories():
     grower.grow()
     assert grower.n_nodes == 3
 
-    bin_thresholds = [np.array([4.0, 10.0], dtype=X_DTYPE)]
-    predictor = grower.make_predictor(bin_thresholds=bin_thresholds)
+    num_thresholds = [np.array([4.0, 10.0], dtype=X_DTYPE)]
+    predictor = grower.make_predictor(num_thresholds=num_thresholds)
     root = predictor.nodes[0]
     assert root['count'] == 23
     assert root['depth'] == 0
@@ -475,14 +475,14 @@ def test_ohe_equivalence(min_samples_leaf, n_unique_categories, target):
     grower.grow()
     # we pass undefined bin_thresholds because we won't use predict()
     predictor = grower.make_predictor(
-        bin_thresholds=list(np.zeros((1, n_unique_categories)))
+        num_thresholds=list(np.zeros((1, n_unique_categories)))
     )
     preds = predictor.predict_binned(X_binned, missing_values_bin_idx=255)
 
     grower_ohe = TreeGrower(X_ohe, gradients, hessians, **grower_params)
     grower_ohe.grow()
     predictor_ohe = grower_ohe.make_predictor(
-        bin_thresholds=list(np.zeros((X_ohe.shape[1], n_unique_categories)))
+        num_thresholds=list(np.zeros((X_ohe.shape[1], n_unique_categories)))
     )
     preds_ohe = predictor_ohe.predict_binned(X_ohe, missing_values_bin_idx=255)
 
