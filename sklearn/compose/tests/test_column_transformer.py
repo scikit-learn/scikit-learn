@@ -514,12 +514,13 @@ def test_column_transformer_invalid_columns(remainder):
     ct = ColumnTransformer([('trans', Trans(), col)], remainder=remainder)
     ct.fit(X_array)
     X_array_more = np.array([[0, 1, 2], [2, 4, 6], [3, 6, 9]]).T
-    msg = ("Given feature/column names or counts do not match the ones for "
-           "the data given during fit.")
-    with pytest.raises(RuntimeError, match=msg):
+    msg = ("X has 3 features, but ColumnTransformer is expecting 2 features "
+           "as input.")
+    with pytest.raises(ValueError, match=msg):
         ct.transform(X_array_more)
     X_array_fewer = np.array([[0, 1, 2], ]).T
-    err_msg = 'Number of features'
+    err_msg = ("X has 1 features, but ColumnTransformer is expecting 2 "
+               "features as input.")
     with pytest.raises(ValueError, match=err_msg):
         ct.transform(X_array_fewer)
 
@@ -1186,16 +1187,18 @@ def test_column_transformer_reordered_column_names_remainder(explicit_colname):
                            remainder=Trans())
 
     tf.fit(X_fit_df)
-    err_msg = ("Given feature/column names or counts do not match the ones "
-               "for the data given during fit.")
+    err_msg = ("Given feature/column names do not match the ones for the "
+               "data given during fit.")
     with pytest.raises(RuntimeError, match=err_msg):
         tf.transform(X_trans_df)
 
     # RuntimeError for added columns
     X_extended_df = X_fit_df.copy()
     X_extended_df['third'] = [3, 6, 9]
-    with pytest.raises(RuntimeError, match=err_msg):
-        tf.transform(X_extended_df)  # No error should be raised, for now
+    err_msg = ("X has 3 features, but ColumnTransformer is expecting 2 "
+               "features as input.")
+    with pytest.raises(ValueError, match=err_msg):
+        tf.transform(X_extended_df)
 
     # No 'columns' AttributeError when transform input is a numpy array
     X_array = X_fit_array.copy()
@@ -1217,15 +1220,15 @@ def test_feature_name_validation():
     tf = ColumnTransformer([('bycol', Trans(), ['a', 'b'])])
     tf.fit(df)
 
-    msg = ("Given feature/column names or counts do not match the ones for "
-           "the data given during fit.")
-    with pytest.raises(RuntimeError, match=msg):
+    msg = ("X has 3 features, but ColumnTransformer is expecting 2 features "
+           "as input.")
+    with pytest.raises(ValueError, match=msg):
         tf.transform(df_extra)
 
     tf = ColumnTransformer([('bycol', Trans(), [0])])
     tf.fit(df)
 
-    with pytest.raises(RuntimeError, match=msg):
+    with pytest.raises(ValueError, match=msg):
         tf.transform(X_extra)
 
     with warnings.catch_warnings(record=True) as warns:
@@ -1235,7 +1238,7 @@ def test_feature_name_validation():
     tf = ColumnTransformer([('bycol', Trans(), ['a'])],
                            remainder=Trans())
     tf.fit(df)
-    with pytest.raises(RuntimeError, match=msg):
+    with pytest.raises(ValueError, match=msg):
         tf.transform(df_extra)
 
 
