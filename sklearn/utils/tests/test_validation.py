@@ -1244,7 +1244,7 @@ def test_check_pandas_sparse_invalid(ntype1, ntype2):
     if parse_version(pd.__version__) < parse_version('1.1'):
         err_msg = "Pandas DataFrame with mixed sparse extension arrays"
         with pytest.raises(ValueError, match=err_msg):
-            check_array(df, **{'accept_sparse': ['csr', 'csc']})
+            check_array(df, accept_sparse=['csr', 'csc'])
     else:
         # pandas fixed this issue at 1.1 so from here on,
         # no error will be raised.
