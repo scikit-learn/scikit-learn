@@ -1069,6 +1069,32 @@ def test_iterative_imputer_skip_non_missing(skip_complete):
 
 
 @pytest.mark.parametrize(
+    "rs_imputer",
+    [None, 1, np.random.RandomState(seed=1)]
+)
+@pytest.mark.parametrize(
+    "rs_estimator",
+    [None, 1, np.random.RandomState(seed=1)]
+)
+def test_iterative_imputer_dont_set_random_state(rs_imputer, rs_estimator):
+    class ZeroEstimator:
+        def __init__(self, random_state):
+            self.random_state = random_state
+
+        def fit(self, *args, **kgards):
+            return self
+
+        def predict(self, X):
+            return np.zeros(X.shape[0])
+
+    estimator = ZeroEstimator(random_state=rs_estimator)
+    imputer = IterativeImputer(random_state=rs_imputer)
+    X_train = np.zeros((10, 3))
+    imputer.fit(X_train)
+    assert estimator.random_state == rs_estimator
+
+
+@pytest.mark.parametrize(
     "X_fit, X_trans, params, msg_err",
     [(np.array([[-1, 1], [1, 2]]), np.array([[-1, 1], [1, -1]]),
       {'features': 'missing-only', 'sparse': 'auto'},
