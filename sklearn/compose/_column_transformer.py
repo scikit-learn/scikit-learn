@@ -414,30 +414,16 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     def _validate_features(self, n_features, feature_names):
         """Ensures feature counts and names are the same during fit and
         transform.
-
-        TODO: It should raise an error from v0.24
         """
 
         if ((self._feature_names_in is None or feature_names is None)
                 and self._n_features == n_features):
             return
 
-        neg_col_present = np.any([_is_negative_indexing(col)
-                                  for col in self._columns])
-        if neg_col_present and self._n_features != n_features:
-            raise RuntimeError("At least one negative column was used to "
-                               "indicate columns, and the new data's number "
-                               "of columns does not match the data given "
-                               "during fit. "
-                               "Please make sure the data during fit and "
-                               "transform have the same number of columns.")
-
         if (self._n_features != n_features or
                 np.any(self._feature_names_in != np.asarray(feature_names))):
-            warnings.warn("Given feature/column names or counts do not match "
-                          "the ones for the data given during fit. This will "
-                          "fail from v0.24.",
-                          FutureWarning)
+            raise RuntimeError("Given feature/column names or counts do not "
+                               "match the ones for the data given during fit.")
 
     def _log_message(self, name, idx, total):
         if not self.verbose:
@@ -583,21 +569,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                              'transformer. Transformer n_features is {0} '
                              'and input n_features is {1}.'
                              .format(self._n_features, X.shape[1]))
-
-        # No column reordering allowed for named cols combined with remainder
-        # TODO: remove this mechanism in 0.24, once we enforce strict column
-        # name order and count. See #14237 for details.
-        if (self._remainder[2] is not None and
-                hasattr(self, '_df_columns') and
-                self._has_str_cols and
-                hasattr(X, 'columns')):
-            n_cols_fit = len(self._df_columns)
-            n_cols_transform = len(X.columns)
-            if (n_cols_transform >= n_cols_fit and
-                    any(X.columns[:n_cols_fit] != self._df_columns)):
-                raise ValueError('Column ordering must be equal for fit '
-                                 'and for transform when using the '
-                                 'remainder keyword')
 
         # TODO: also call _check_n_features(reset=False) in 0.24
         self._validate_features(X.shape[1], X_feature_names)
@@ -790,16 +761,6 @@ def make_column_transformer(*transformers,
                              remainder=remainder,
                              sparse_threshold=sparse_threshold,
                              verbose=verbose)
-
-
-def _is_negative_indexing(key):
-    # TODO: remove in v0.24
-    def is_neg(x): return isinstance(x, numbers.Integral) and x < 0
-    if isinstance(key, slice):
-        return is_neg(key.start) or is_neg(key.stop)
-    elif _determine_key_type(key) == 'int':
-        return np.any(np.asarray(key) < 0)
-    return False
 
 
 class make_column_selector:
