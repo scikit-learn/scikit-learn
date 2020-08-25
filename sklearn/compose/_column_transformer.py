@@ -6,10 +6,8 @@ different columns.
 # Author: Andreas Mueller
 #         Joris Van den Bossche
 # License: BSD
-import warnings
 from itertools import chain
 
-import numbers
 import numpy as np
 from scipy import sparse
 from joblib import Parallel, delayed
