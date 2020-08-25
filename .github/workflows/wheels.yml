@@ -48,6 +48,7 @@ jobs:
           fi
           python -m cibuildwheel --output-dir wheelhouse
           ls -l wheelhouse/*.whl
+        shell: bash
 
       - name: Store artifacts
         uses: actions/upload-artifact@v2
