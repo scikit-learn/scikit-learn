@@ -839,5 +839,5 @@ def _is_pairwise(estimator):
                           "estimator instead", FutureWarning)
         return pairwise_attribute
 
-    # use pairwise tag if the attribute is not present
+    # use pairwise tag when the attribute is not present
     return pairwise_tag
