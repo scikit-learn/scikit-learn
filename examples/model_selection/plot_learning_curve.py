@@ -34,10 +34,11 @@ def plot_learning_curve(estimator, title, X, y, axes=None, ylim=None, cv=None,
 
     Parameters
     ----------
-    estimator : object type that implements the "fit" and "predict" methods
-        An object of that type which is cloned for each validation.
+    estimator : estimator instance
+        An estimator instance implementing `fit` and `predict` methods which
+        will be cloned for each validation.
 
-    title : string
+    title : str
         Title for the chart.
 
     X : array-like of shape (n_samples, n_features)
@@ -78,12 +79,12 @@ def plot_learning_curve(estimator, title, X, y, axes=None, ylim=None, cv=None,
 
     train_sizes : array-like of shape (n_ticks,), dtype=float, int
         Relative or absolute numbers of training examples that will be used to
-        generate the learning curve. If the ``dtype`` is float, it is regarded as a
-        fraction of the maximum size of the training set (that is determined
-        by the selected validation method), i.e. it has to be within (0, 1].
-        Otherwise it is interpreted as absolute sizes of the training sets.
-        Note that for classification the number of samples usually have to
-        be big enough to contain at least one sample from each class.
+        generate the learning curve. If the ``dtype`` is float, it is regarded
+        as a fraction of the maximum size of the training set (that is
+        determined by the selected validation method), i.e. it has to be within
+        (0, 1]. Otherwise it is interpreted as absolute sizes of the training
+        sets. Note that for classification the number of samples usually have
+        to be big enough to contain at least one sample from each class.
         (default: np.linspace(0.1, 1.0, 5))
     """
     if axes is None:
