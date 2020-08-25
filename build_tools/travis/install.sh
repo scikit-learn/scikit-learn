@@ -14,6 +14,12 @@
 set -e
 
 # Fail fast
+echo "CPU Arch: ${TRAVIS_CPU_ARCH}"
+
+# jq is used in travis_fastfail.sh, it's already pre-installed in non arm64
+# environments
+sudo apt-get install jq
+
 build_tools/travis/travis_fastfail.sh
 
 # Imports get_dep
@@ -35,9 +41,14 @@ ccache --max-size 100M --show-stats
 # If Travvis has language=generic, deactivate does not exist. `|| :` will pass.
 deactivate || :
 
+
 # Install miniconda
-fname=Miniconda3-latest-Linux-x86_64.sh
-wget https://repo.continuum.io/miniconda/$fname -O miniconda.sh
+if [[ "$TRAVIS_CPU_ARCH" == "arm64" ]]; then
+    wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-aarch64.sh -O miniconda.sh
+else
+    fname=Miniconda3-latest-Linux-x86_64.sh
+    wget https://repo.continuum.io/miniconda/$fname -O miniconda.sh
+fi
 MINICONDA_PATH=$HOME/miniconda
 chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
 export PATH=$MINICONDA_PATH/bin:$PATH
@@ -45,18 +56,25 @@ conda update --yes conda
 
 # Create environment and install dependencies
 conda create -n testenv --yes python=3.7
+
 source activate testenv
 
-pip install --upgrade pip setuptools
-echo "Installing numpy and scipy master wheels"
-dev_anaconda_url=https://pypi.anaconda.org/scipy-wheels-nightly/simple
-pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url numpy scipy pandas
-pip install --pre cython
-echo "Installing joblib master"
-pip install https://github.com/joblib/joblib/archive/master.zip
-echo "Installing pillow master"
-pip install https://github.com/python-pillow/Pillow/archive/master.zip
-pip install $(get_dep pytest $PYTEST_VERSION) pytest-cov
+if [[ "$TRAVIS_CPU_ARCH" == "amd64" ]]; then
+    pip install --upgrade pip setuptools
+    echo "Installing numpy and scipy master wheels"
+    dev_anaconda_url=https://pypi.anaconda.org/scipy-wheels-nightly/simple
+    pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url numpy scipy pandas
+    pip install --pre cython
+    echo "Installing joblib master"
+    pip install https://github.com/joblib/joblib/archive/master.zip
+    echo "Installing pillow master"
+    pip install https://github.com/python-pillow/Pillow/archive/master.zip
+else
+    conda install -y scipy numpy pandas cython
+    pip install joblib threadpoolctl
+fi
+
+pip install $(get_dep pytest $PYTEST_VERSION) pytest-cov pytest-xdist
 
 # Build scikit-learn in the install.sh script to collapse the verbose
 # build output in the travis output when it succeeds.
@@ -76,11 +94,11 @@ if [[ "$BUILD_WITH_ICC" == "true" ]]; then
     # The build_clib command is implicitly used to build libsvm-skl. To compile
     # with a different compiler we also need to specify the compiler for this
     # command.
-    python setup.py build_ext --compiler=intelem -i -j 3 build_clib --compiler=intelem
+    python setup.py build_ext --compiler=intelem -i -j "${CI_CPU_COUNT}" build_clib --compiler=intelem
 else
     # Use setup.py instead of `pip install -e .` to be able to pass the -j flag
     # to speed-up the building multicore CI machines.
-    python setup.py build_ext --inplace -j 3
+    python setup.py build_ext --inplace -j "${CI_CPU_COUNT}"
 fi
 
 python setup.py develop
