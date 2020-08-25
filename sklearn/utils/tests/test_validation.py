@@ -1248,7 +1248,7 @@ def test_check_pandas_sparse_invalid(ntype1, ntype2):
     else:
         # pandas fixed this issue at 1.1 so from here on,
         # no error will be raised.
-        check_array(df, **{'accept_sparse': ['csr', 'csc']})
+        check_array(df, accept_sparse=['csr', 'csc'])
 
 
 @pytest.mark.parametrize(
