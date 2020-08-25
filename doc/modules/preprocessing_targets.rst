@@ -30,15 +30,13 @@ indicator matrix` from a list of :term:`multiclass` labels::
     array([[1, 0, 0, 0],
            [0, 0, 0, 1]])
 
+Using this format can enable multiclass classification in estimators
+that support the label indicator matrix format.
+
 .. warning::
 
-    Label indicator matrices are intended for multilabel classification
-    (rather than multiclass classification). However, LabelBinarizer
-    repurposes this format for multiclass data to enable multiclass
-    classification in estimators that only support binary data.
-    Depending on your situation, you could consider using the
-    :term:`multiclass` target representation instead for estimators which
-    support other types of data.
+    LabelBinarizer is not needed if you are using an estimator that
+    already supports :term:`multiclass` data.
 
 For more information about multiclass classification, refer to
 :ref:`multiclass_classification`.
