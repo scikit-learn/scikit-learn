@@ -16,13 +16,11 @@ from sklearn.utils.validation import _num_samples
 from sklearn.utils.validation import check_random_state
 from sklearn.utils import shuffle
 
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_less
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_less
+from sklearn.utils._testing import ignore_warnings
 
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import average_precision_score
@@ -31,6 +29,7 @@ from sklearn.metrics import brier_score_loss
 from sklearn.metrics import cohen_kappa_score
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import coverage_error
+from sklearn.metrics import detection_error_tradeoff_curve
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import f1_score
 from sklearn.metrics import fbeta_score
@@ -43,6 +42,7 @@ from sklearn.metrics import log_loss
 from sklearn.metrics import max_error
 from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import mean_absolute_percentage_error
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import mean_tweedie_deviance
 from sklearn.metrics import mean_poisson_deviance
@@ -59,7 +59,7 @@ from sklearn.metrics import zero_one_loss
 from sklearn.metrics import ndcg_score
 from sklearn.metrics import dcg_score
 
-from sklearn.metrics.base import _average_binary_score
+from sklearn.metrics._base import _average_binary_score
 
 
 # Note toward developers about metric testing
@@ -100,13 +100,14 @@ REGRESSION_METRICS = {
     "mean_absolute_error": mean_absolute_error,
     "mean_squared_error": mean_squared_error,
     "median_absolute_error": median_absolute_error,
+    "mean_absolute_percentage_error": mean_absolute_percentage_error,
     "explained_variance_score": explained_variance_score,
     "r2_score": partial(r2_score, multioutput='variance_weighted'),
-    "mean_normal_deviance": partial(mean_tweedie_deviance, p=0),
+    "mean_normal_deviance": partial(mean_tweedie_deviance, power=0),
     "mean_poisson_deviance": mean_poisson_deviance,
     "mean_gamma_deviance": mean_gamma_deviance,
     "mean_compound_poisson_deviance":
-    partial(mean_tweedie_deviance, p=1.4),
+    partial(mean_tweedie_deviance, power=1.4),
 }
 
 CLASSIFICATION_METRICS = {
@@ -117,7 +118,7 @@ CLASSIFICATION_METRICS = {
     "unnormalized_accuracy_score": partial(accuracy_score, normalize=False),
 
     # `confusion_matrix` returns absolute values and hence behaves unnormalized
-    # . Naming it with an unnormalized_ prefix is neccessary for this module to
+    # . Naming it with an unnormalized_ prefix is necessary for this module to
     # skip sample_weight scaling checks which will fail for unnormalized
     # metrics.
     "unnormalized_confusion_matrix": confusion_matrix,
@@ -205,6 +206,7 @@ def precision_recall_curve_padded_thresholds(*args, **kwargs):
 CURVE_METRICS = {
     "roc_curve": roc_curve,
     "precision_recall_curve": precision_recall_curve_padded_thresholds,
+    "detection_error_tradeoff_curve": detection_error_tradeoff_curve,
 }
 
 THRESHOLDED_METRICS = {
@@ -301,6 +303,7 @@ METRIC_UNDEFINED_MULTICLASS = {
     # curves
     "roc_curve",
     "precision_recall_curve",
+    "detection_error_tradeoff_curve",
 }
 
 # Metric undefined with "binary" or "multiclass" input
@@ -322,6 +325,7 @@ THRESHOLDED_METRICS_WITH_AVERAGING = {
 METRICS_WITH_POS_LABEL = {
     "roc_curve",
     "precision_recall_curve",
+    "detection_error_tradeoff_curve",
 
     "brier_score_loss",
 
@@ -352,8 +356,7 @@ METRICS_WITH_LABELS = {
     "normalized_confusion_matrix",
     "roc_curve",
     "precision_recall_curve",
-
-    "hamming_loss",
+    "detection_error_tradeoff_curve",
 
     "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
     "jaccard_score",
@@ -428,8 +431,8 @@ MULTILABELS_METRICS = {
 
 # Regression metrics with "multioutput-continuous" format support
 MULTIOUTPUT_METRICS = {
-    "mean_absolute_error", "mean_squared_error", "r2_score",
-    "explained_variance_score"
+    "mean_absolute_error", "median_absolute_error", "mean_squared_error",
+    "r2_score", "explained_variance_score", "mean_absolute_percentage_error"
 }
 
 # Symmetric with respect to their input arguments y_true and y_pred
@@ -466,6 +469,7 @@ NOT_SYMMETRIC_METRICS = {
     "normalized_confusion_matrix",
     "roc_curve",
     "precision_recall_curve",
+    "detection_error_tradeoff_curve",
 
     "precision_score", "recall_score", "f2_score", "f0.5_score",
 
@@ -476,7 +480,7 @@ NOT_SYMMETRIC_METRICS = {
     "macro_f0.5_score", "macro_f2_score", "macro_precision_score",
     "macro_recall_score", "log_loss", "hinge_loss",
     "mean_gamma_deviance", "mean_poisson_deviance",
-    "mean_compound_poisson_deviance"
+    "mean_compound_poisson_deviance", "mean_absolute_percentage_error"
 }
 
 
@@ -556,9 +560,9 @@ def test_not_symmetric_metric(name):
     metric = ALL_METRICS[name]
 
     # use context manager to supply custom error message
-    with assert_raises(AssertionError) as cm:
+    with pytest.raises(AssertionError):
         assert_array_equal(metric(y_true, y_pred), metric(y_pred, y_true))
-        cm.msg = ("%s seems to be symmetric" % name)
+        raise ValueError("%s seems to be symmetric" % name)
 
 
 @pytest.mark.parametrize(
@@ -681,18 +685,25 @@ def test_format_invariance_with_1d_vectors(name):
                                 "list and np-array-column" % name)
 
         # These mix representations aren't allowed
-        assert_raises(ValueError, metric, y1_1d, y2_row)
-        assert_raises(ValueError, metric, y1_row, y2_1d)
-        assert_raises(ValueError, metric, y1_list, y2_row)
-        assert_raises(ValueError, metric, y1_row, y2_list)
-        assert_raises(ValueError, metric, y1_column, y2_row)
-        assert_raises(ValueError, metric, y1_row, y2_column)
+        with pytest.raises(ValueError):
+            metric(y1_1d, y2_row)
+        with pytest.raises(ValueError):
+            metric(y1_row, y2_1d)
+        with pytest.raises(ValueError):
+            metric(y1_list, y2_row)
+        with pytest.raises(ValueError):
+            metric(y1_row, y2_list)
+        with pytest.raises(ValueError):
+            metric(y1_column, y2_row)
+        with pytest.raises(ValueError):
+            metric(y1_row, y2_column)
 
         # NB: We do not test for y1_row, y2_row as these may be
         # interpreted as multilabel or multioutput data.
         if (name not in (MULTIOUTPUT_METRICS | THRESHOLDED_MULTILABEL_METRICS |
                          MULTILABELS_METRICS)):
-            assert_raises(ValueError, metric, y1_row, y2_row)
+            with pytest.raises(ValueError):
+                metric(y1_row, y2_row)
 
 
 @pytest.mark.parametrize(
@@ -776,8 +787,10 @@ def test_thresholded_invariance_string_vs_numbers_labels(name):
                                        "invariance test".format(name))
         else:
             # TODO those metrics doesn't support string label yet
-            assert_raises(ValueError, metric, y1_str, y2)
-            assert_raises(ValueError, metric, y1_str.astype('O'), y2)
+            with pytest.raises(ValueError):
+                metric(y1_str, y2)
+            with pytest.raises(ValueError):
+                metric(y1_str.astype('O'), y2)
 
 
 invalids = [([0, 1], [np.inf, np.inf]),
@@ -791,19 +804,17 @@ invalids = [([0, 1], [np.inf, np.inf]),
 def test_regression_thresholded_inf_nan_input(metric):
 
     for y_true, y_score in invalids:
-        assert_raise_message(ValueError,
-                             "contains NaN, infinity",
-                             metric, y_true, y_score)
+        with pytest.raises(ValueError, match="contains NaN, infinity"):
+            metric(y_true, y_score)
 
 
 @pytest.mark.parametrize('metric', CLASSIFICATION_METRICS.values())
 def test_classification_inf_nan_input(metric):
     # Classification metrics all raise a mixed input exception
     for y_true, y_score in invalids:
-        assert_raise_message(ValueError,
-                             "Input contains NaN, infinity or a "
-                             "value too large",
-                             metric, y_true, y_score)
+        err_msg = "Input contains NaN, infinity or a value too large"
+        with pytest.raises(ValueError, match=err_msg):
+            metric(y_true, y_score)
 
 
 @ignore_warnings
@@ -853,7 +864,8 @@ def test_multioutput_number_of_output_differ(name):
     y_pred = np.array([[0, 0], [1, 0], [0, 0]])
 
     metric = ALL_METRICS[name]
-    assert_raises(ValueError, metric, y_true, y_pred)
+    with pytest.raises(ValueError):
+        metric(y_true, y_pred)
 
 
 @pytest.mark.parametrize('name', sorted(MULTIOUTPUT_METRICS))
@@ -894,6 +906,12 @@ def test_multilabel_representation_invariance():
     y1_sparse_indicator = sp.coo_matrix(y1)
     y2_sparse_indicator = sp.coo_matrix(y2)
 
+    y1_list_array_indicator = list(y1)
+    y2_list_array_indicator = list(y2)
+
+    y1_list_list_indicator = [list(a) for a in y1_list_array_indicator]
+    y2_list_list_indicator = [list(a) for a in y2_list_array_indicator]
+
     for name in MULTILABELS_METRICS:
         metric = ALL_METRICS[name]
 
@@ -909,13 +927,24 @@ def test_multilabel_representation_invariance():
                         measure,
                         err_msg="%s failed representation invariance between "
                                 "dense and sparse indicator formats." % name)
+        assert_almost_equal(metric(y1_list_list_indicator,
+                                   y2_list_list_indicator),
+                            measure,
+                            err_msg="%s failed representation invariance  "
+                                    "between dense array and list of list "
+                                    "indicator formats." % name)
+        assert_almost_equal(metric(y1_list_array_indicator,
+                                   y2_list_array_indicator),
+                            measure,
+                            err_msg="%s failed representation invariance  "
+                                    "between dense and list of array "
+                                    "indicator formats." % name)
 
 
 @pytest.mark.parametrize('name', sorted(MULTILABELS_METRICS))
 def test_raise_value_error_multilabel_sequences(name):
     # make sure the multilabel-sequence format raises ValueError
     multilabel_sequences = [
-        [[0, 1]],
         [[1], [2], [0, 1]],
         [(), (2), (0, 1)],
         [[]],
@@ -924,7 +953,8 @@ def test_raise_value_error_multilabel_sequences(name):
 
     metric = ALL_METRICS[name]
     for seq in multilabel_sequences:
-        assert_raises(ValueError, metric, seq, seq)
+        with pytest.raises(ValueError):
+            metric(seq, seq)
 
 
 @pytest.mark.parametrize('name', sorted(METRICS_WITH_NORMALIZE_OPTION))
@@ -1031,8 +1061,10 @@ def _check_averaging(metric, y_true, y_pred, y_true_binarize, y_pred_binarize,
                         np.mean([metric(y_true_binarize[i], y_pred_binarize[i])
                                  for i in range(n_samples)]))
 
-    assert_raises(ValueError, metric, y_true, y_pred, average="unknown")
-    assert_raises(ValueError, metric, y_true, y_pred, average="garbage")
+    with pytest.raises(ValueError):
+        metric(y_true, y_pred, average="unknown")
+    with pytest.raises(ValueError):
+        metric(y_true, y_pred, average="garbage")
 
 
 def check_averaging(name, y_true, y_true_binarize, y_pred, y_pred_binarize,
@@ -1140,11 +1172,11 @@ def check_sample_weight_invariance(name, metric, y1, y2):
     weighted_score = metric(y1, y2, sample_weight=sample_weight)
 
     # use context manager to supply custom error message
-    with assert_raises(AssertionError) as cm:
+    with pytest.raises(AssertionError):
         assert_allclose(unweighted_score, weighted_score)
-        cm.msg = ("Unweighted and weighted scores are unexpectedly almost "
-                  "equal (%s) and (%s) for %s" % (unweighted_score,
-                                                  weighted_score, name))
+        raise ValueError("Unweighted and weighted scores are unexpectedly "
+                         "almost equal (%s) and (%s) "
+                         "for %s" % (unweighted_score, weighted_score, name))
 
     # check that sample_weight can be a list
     weighted_score_list = metric(y1, y2,
@@ -1192,13 +1224,13 @@ def check_sample_weight_invariance(name, metric, y1, y2):
 
     # Check that if number of samples in y_true and sample_weight are not
     # equal, meaningful error is raised.
-    error_message = ("Found input variables with inconsistent numbers of "
-                     "samples: [{}, {}, {}]".format(
+    error_message = (r"Found input variables with inconsistent numbers of "
+                     r"samples: \[{}, {}, {}\]".format(
                          _num_samples(y1), _num_samples(y2),
                          _num_samples(sample_weight) * 2))
-    assert_raise_message(ValueError, error_message, metric, y1, y2,
-                         sample_weight=np.hstack([sample_weight,
-                                                  sample_weight]))
+    with pytest.raises(ValueError, match=error_message):
+        metric(y1, y2, sample_weight=np.hstack([sample_weight,
+                                                sample_weight]))
 
 
 @pytest.mark.parametrize(
@@ -1347,7 +1379,15 @@ def test_thresholded_multilabel_multioutput_permutations_invariance(name):
         y_true_perm = y_true[:, perm]
 
         current_score = metric(y_true_perm, y_score_perm)
-        assert_almost_equal(score, current_score)
+        if metric == mean_absolute_percentage_error:
+            assert np.isfinite(current_score)
+            assert current_score > 1e6
+            # Here we are not comparing the values in case of MAPE because
+            # whenever y_true value is exactly zero, the MAPE value doesn't
+            # signify anything. Thus, in this case we are just expecting
+            # very large finite value.
+        else:
+            assert_almost_equal(score, current_score)
 
 
 @pytest.mark.parametrize(

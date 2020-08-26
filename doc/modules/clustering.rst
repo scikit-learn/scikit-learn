@@ -19,11 +19,11 @@ data can be found in the ``labels_`` attribute.
 
     One important thing to note is that the algorithms implemented in
     this module can take different kinds of matrix as input. All the
-    methods accept standard data matrices of shape ``[n_samples, n_features]``.
+    methods accept standard data matrices of shape ``(n_samples, n_features)``.
     These can be obtained from the classes in the :mod:`sklearn.feature_extraction`
     module. For :class:`AffinityPropagation`, :class:`SpectralClustering`
     and :class:`DBSCAN` one can also input similarity matrices of shape
-    ``[n_samples, n_samples]``. These can be obtained from the functions
+    ``(n_samples, n_samples)``. These can be obtained from the functions
     in the :mod:`sklearn.metrics.pairwise` module.
 
 Overview of clustering methods
@@ -205,22 +205,16 @@ computing cluster centers and values of inertia. For example, assigning a
 weight of 2 to a sample is equivalent to adding a duplicate of that sample
 to the dataset :math:`X`.
 
-A parameter can be given to allow K-means to be run in parallel, called
-``n_jobs``. Giving this parameter a positive value uses that many processors
-(default: 1). A value of -1 uses all available processors, with -2 using one
-less, and so on. Parallelization generally speeds up computation at the cost of
-memory (in this case, multiple copies of centroids need to be stored, one for
-each job).
-
-.. warning::
-
-    The parallel version of K-Means is broken on OS X when `numpy` uses the
-    `Accelerate` Framework. This is expected behavior: `Accelerate` can be called
-    after a fork but you need to execv the subprocess with the Python binary
-    (which multiprocessing does not do under posix).
-
 K-means can be used for vector quantization. This is achieved using the
 transform method of a trained model of :class:`KMeans`.
+
+Low-level parallelism
+---------------------
+
+:class:`KMeans` benefits from OpenMP based parallelism through Cython. Small
+chunks of data (256 samples) are processed in parallel, which in addition
+yields a low memory footprint. For more details on how to control the number of
+threads, please refer to our :ref:`parallelism` notes.
 
 .. topic:: Examples:
 
@@ -434,21 +428,24 @@ given sample.
 Spectral clustering
 ===================
 
-:class:`SpectralClustering` does a low-dimension embedding of the
-affinity matrix between samples, followed by a KMeans in the low
-dimensional space. It is especially efficient if the affinity matrix is
-sparse and the `pyamg <https://github.com/pyamg/pyamg>`_ module is installed.
-SpectralClustering requires the number of clusters to be specified. It
-works well for a small number of clusters but is not advised when using
-many clusters.
+:class:`SpectralClustering` performs a low-dimension embedding of the
+affinity matrix between samples, followed by clustering, e.g., by KMeans,
+of the components of the eigenvectors in the low dimensional space.
+It is especially computationally efficient if the affinity matrix is sparse
+and the `amg` solver is used for the eigenvalue problem (Note, the `amg` solver
+requires that the `pyamg <https://github.com/pyamg/pyamg>`_ module is installed.)
 
-For two clusters, it solves a convex relaxation of the `normalised
-cuts <https://people.eecs.berkeley.edu/~malik/papers/SM-ncut.pdf>`_ problem on
-the similarity graph: cutting the graph in two so that the weight of the
-edges cut is small compared to the weights of the edges inside each
-cluster. This criteria is especially interesting when working on images:
-graph vertices are pixels, and edges of the similarity graph are a
-function of the gradient of the image.
+The present version of SpectralClustering requires the number of clusters
+to be specified in advance. It works well for a small number of clusters,
+but is not advised for many clusters.
+
+For two clusters, SpectralClustering solves a convex relaxation of the
+`normalised cuts <https://people.eecs.berkeley.edu/~malik/papers/SM-ncut.pdf>`_
+problem on the similarity graph: cutting the graph in two so that the weight of
+the edges cut is small compared to the weights of the edges inside each
+cluster. This criteria is especially interesting when working on images, where
+graph vertices are pixels, and weights of the edges of the similarity graph are
+computed using a function of a gradient of the image.
 
 
 .. |noisy_img| image:: ../auto_examples/cluster/images/sphx_glr_plot_segmentation_toy_001.png
@@ -495,12 +492,11 @@ Different label assignment strategies
 
 Different label assignment strategies can be used, corresponding to the
 ``assign_labels`` parameter of :class:`SpectralClustering`.
-The ``"kmeans"`` strategy can match finer details of the data, but it can be
-more unstable. In particular, unless you control the ``random_state``, it
-may not be reproducible from run-to-run, as it depends on a random
-initialization. On the other hand, the ``"discretize"`` strategy is 100%
-reproducible, but it tends to create parcels of fairly even and
-geometrical shape.
+``"kmeans"`` strategy can match finer details, but can be unstable.
+In particular, unless you control the ``random_state``, it may not be
+reproducible from run-to-run, as it depends on random initialization.
+The alternative ``"discretize"`` strategy is 100% reproducible, but tends
+to create parcels of fairly even and geometrical shape.
 
 =====================================  =====================================
  ``assign_labels="kmeans"``              ``assign_labels="discretize"``
@@ -511,7 +507,7 @@ geometrical shape.
 Spectral Clustering Graphs
 --------------------------
 
-Spectral Clustering can also be used to cluster graphs by their spectral
+Spectral Clustering can also be used to partition graphs via their spectral
 embeddings.  In this case, the affinity matrix is the adjacency matrix of the
 graph, and SpectralClustering is initialized with `affinity='precomputed'`::
 
@@ -538,6 +534,10 @@ graph, and SpectralClustering is initialized with `affinity='precomputed'`::
    <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.19.8100>`_
    Andrew Y. Ng, Michael I. Jordan, Yair Weiss, 2001
 
+ * `"Preconditioned Spectral Clustering for Stochastic
+   Block Partition Streaming Graph Challenge"
+   <https://arxiv.org/abs/1708.07481>`_
+   David Zhuzhunashvili, Andrew Knyazev
 
 .. _hierarchical_clustering:
 
@@ -769,7 +769,7 @@ core sample, and is at least ``eps`` in distance from any core sample, is
 considered an outlier by the algorithm.
 
 While the parameter ``min_samples`` primarily controls how tolerant the
-algorithm is towards noise (on noisy and large data sets it may be desiable
+algorithm is towards noise (on noisy and large data sets it may be desirable
 to increase this parameter), the parameter ``eps`` is *crucial to choose
 appropriately* for the data set and distance function and usually cannot be
 left at the default value. It controls the local neighborhood of the points.
@@ -777,7 +777,7 @@ When chosen too small, most data will not be clustered at all (and labeled
 as ``-1`` for "noise"). When chosen too large, it causes close clusters to
 be merged into one cluster, and eventually the entire data set to be returned
 as a single cluster. Some heuristics for choosing this parameter have been
-discussed in literature, for example based on a knee in the nearest neighbor
+discussed in the literature, for example based on a knee in the nearest neighbor
 distances plot (as discussed in the references below).
 
 In the figure below, the color indicates cluster membership, with large circles
@@ -821,7 +821,7 @@ by black points below.
 
     This implementation is by default not memory efficient because it constructs
     a full pairwise similarity matrix in the case where kd-trees or ball-trees cannot
-    be used (e.g., with sparse matrices). This matrix will consume n^2 floats.
+    be used (e.g., with sparse matrices). This matrix will consume :math:`n^2` floats.
     A couple of mechanisms for getting around this are:
 
     - Use :ref:`OPTICS <optics>` clustering in conjunction with the
@@ -926,8 +926,8 @@ represented as children of a larger parent cluster.
     `HDBSCAN <https://hdbscan.readthedocs.io>`_. The HDBSCAN implementation is
     multithreaded, and has better algorithmic runtime complexity than OPTICS,
     at the cost of worse memory scaling. For extremely large datasets that
-    exhaust system memory using HDBSCAN, OPTICS will maintain *n* (as opposed
-    to *n^2*) memory scaling; however, tuning of the ``max_eps`` parameter
+    exhaust system memory using HDBSCAN, OPTICS will maintain :math:`n` (as opposed
+    to :math:`n^2`) memory scaling; however, tuning of the ``max_eps`` parameter
     will likely need to be used to give a solution in a reasonable amount of
     wall time.
 
@@ -942,10 +942,10 @@ represented as children of a larger parent cluster.
 Birch
 =====
 
-The :class:`Birch` builds a tree called the Characteristic Feature Tree (CFT)
+The :class:`Birch` builds a tree called the Clustering Feature Tree (CFT)
 for the given data. The data is essentially lossy compressed to a set of
-Characteristic Feature nodes (CF Nodes). The CF Nodes have a number of
-subclusters called Characteristic Feature subclusters (CF Subclusters)
+Clustering Feature nodes (CF Nodes). The CF Nodes have a number of
+subclusters called Clustering Feature subclusters (CF Subclusters)
 and these CF Subclusters located in the non-terminal CF Nodes
 can have CF Nodes as children.
 
@@ -953,7 +953,7 @@ The CF Subclusters hold the necessary information for clustering which prevents
 the need to hold the entire input data in memory. This information includes:
 
 - Number of samples in a subcluster.
-- Linear Sum - A n-dimensional vector holding the sum of all samples
+- Linear Sum - An n-dimensional vector holding the sum of all samples
 - Squared Sum - Sum of the squared L2 norm of all samples.
 - Centroids - To avoid recalculation linear sum / n_samples.
 - Squared norm of the centroids.
@@ -1038,7 +1038,7 @@ classification algorithm. In particular any evaluation metric should not
 take the absolute values of the cluster labels into account but rather
 if this clustering define separations of the data similar to some ground
 truth set of classes or satisfying some assumption such that members
-belong to the same class are more similar that members of different
+belong to the same class are more similar than members of different
 classes according to some similarity metric.
 
 .. currentmodule:: sklearn.metrics
@@ -1384,7 +1384,7 @@ Their harmonic mean called **V-measure** is computed by
   >>> metrics.v_measure_score(labels_true, labels_pred)
   0.51...
 
-This function's formula is as follows:::
+This function's formula is as follows:
 
 .. math:: v = \frac{(1 + \beta) \times \text{homogeneity} \times \text{completeness}}{(\beta \times \text{homogeneity} + \text{completeness})}
 
@@ -1633,9 +1633,7 @@ Silhouette Coefficient for each sample.
   >>> from sklearn import metrics
   >>> from sklearn.metrics import pairwise_distances
   >>> from sklearn import datasets
-  >>> dataset = datasets.load_iris()
-  >>> X = dataset.data
-  >>> y = dataset.target
+  >>> X, y = datasets.load_iris(return_X_y=True)
 
 In normal usage, the Silhouette Coefficient is applied to the results of a
 cluster analysis.
@@ -1683,6 +1681,7 @@ Drawbacks
 Calinski-Harabasz Index
 -----------------------
 
+
 If the ground truth labels are not known, the Calinski-Harabasz index
 (:func:`sklearn.metrics.calinski_harabasz_score`) - also known as the Variance 
 Ratio Criterion - can be used to evaluate the model, where a higher 
@@ -1695,9 +1694,7 @@ sum of distances squared):
   >>> from sklearn import metrics
   >>> from sklearn.metrics import pairwise_distances
   >>> from sklearn import datasets
-  >>> dataset = datasets.load_iris()
-  >>> X = dataset.data
-  >>> y = dataset.target
+  >>> X, y = datasets.load_iris(return_X_y=True)
 
 In normal usage, the Calinski-Harabasz index is applied to the results of a
 cluster analysis:
@@ -1812,7 +1809,7 @@ this index, similarity is defined as a measure :math:`R_{ij}` that trades off:
   the centroid of that cluster -- also know as cluster diameter.
 - :math:`d_{ij}`, the distance between cluster centroids :math:`i` and :math:`j`.
 
-A simple choice to construct :math:`R_ij` so that it is nonnegative and
+A simple choice to construct :math:`R_{ij}` so that it is nonnegative and
 symmetric is:
 
 .. math::

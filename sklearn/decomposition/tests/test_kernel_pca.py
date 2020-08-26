@@ -2,15 +2,18 @@ import numpy as np
 import scipy.sparse as sp
 import pytest
 
-from sklearn.utils.testing import (assert_array_almost_equal,
+from sklearn.utils._testing import (assert_array_almost_equal,
                                    assert_allclose)
 
 from sklearn.decomposition import PCA, KernelPCA
 from sklearn.datasets import make_circles
+from sklearn.datasets import make_blobs
 from sklearn.linear_model import Perceptron
 from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.utils.validation import _check_psd_eigenvalues
 
 
 def test_kernel_pca():
@@ -214,8 +217,6 @@ def test_kernel_pca_invalid_kernel():
         kpca.fit(X_fit)
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_gridsearch_pipeline():
     # Test if we can do a grid-search to find parameters to separate
     # circles with a perceptron model.
@@ -230,8 +231,6 @@ def test_gridsearch_pipeline():
     assert grid_search.best_score_ == 1
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_gridsearch_pipeline_precomputed():
     # Test if we can do a grid-search to find parameters to separate
     # circles with a perceptron model using a precomputed kernel.
@@ -247,8 +246,6 @@ def test_gridsearch_pipeline_precomputed():
     assert grid_search.best_score_ == 1
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_nested_circles():
     # Test the linear separability of the first 2D KPCA transform
     X, y = make_circles(n_samples=400, factor=.3, noise=.05,
@@ -270,3 +267,50 @@ def test_nested_circles():
     # The data is perfectly linearly separable in that space
     train_score = Perceptron(max_iter=5).fit(X_kpca, y).score(X_kpca, y)
     assert train_score == 1.0
+
+
+def test_kernel_conditioning():
+    """ Test that ``_check_psd_eigenvalues`` is correctly called
+    Non-regression test for issue #12140 (PR #12145)"""
+
+    # create a pathological X leading to small non-zero eigenvalue
+    X = [[5, 1],
+         [5+1e-8, 1e-8],
+         [5+1e-8, 0]]
+    kpca = KernelPCA(kernel="linear", n_components=2,
+                     fit_inverse_transform=True)
+    kpca.fit(X)
+
+    # check that the small non-zero eigenvalue was correctly set to zero
+    assert kpca.lambdas_.min() == 0
+    assert np.all(kpca.lambdas_ == _check_psd_eigenvalues(kpca.lambdas_))
+
+
+@pytest.mark.parametrize("kernel",
+                         ["linear", "poly", "rbf", "sigmoid", "cosine"])
+def test_kernel_pca_inverse_transform(kernel):
+    X, *_ = make_blobs(n_samples=100, n_features=4, centers=[[1, 1, 1, 1]],
+                       random_state=0)
+
+    kp = KernelPCA(n_components=2, kernel=kernel, fit_inverse_transform=True)
+    X_trans = kp.fit_transform(X)
+    X_inv = kp.inverse_transform(X_trans)
+    assert_allclose(X, X_inv)
+
+
+def test_32_64_decomposition_shape():
+    """ Test that the decomposition is similar for 32 and 64 bits data """
+    # see https://github.com/scikit-learn/scikit-learn/issues/18146
+    X, y = make_blobs(
+        n_samples=30,
+        centers=[[0, 0, 0], [1, 1, 1]],
+        random_state=0,
+        cluster_std=0.1
+    )
+    X = StandardScaler().fit_transform(X)
+    X -= X.min()
+
+    # Compare the shapes (corresponds to the number of non-zero eigenvalues)
+    kpca = KernelPCA()
+    assert (kpca.fit_transform(X).shape ==
+            kpca.fit_transform(X.astype(np.float32)).shape)

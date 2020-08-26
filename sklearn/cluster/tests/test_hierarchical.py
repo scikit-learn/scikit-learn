@@ -14,25 +14,26 @@ import numpy as np
 from scipy import sparse
 from scipy.cluster import hierarchy
 
-from sklearn.metrics.cluster.supervised import adjusted_rand_score
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import ignore_warnings
+from sklearn.metrics.cluster import adjusted_rand_score
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import ignore_warnings
 
 from sklearn.cluster import ward_tree
 from sklearn.cluster import AgglomerativeClustering, FeatureAgglomeration
-from sklearn.cluster.hierarchical import (_hc_cut, _TREE_BUILDERS,
-                                          linkage_tree, _fix_connectivity)
+from sklearn.cluster._agglomerative import (_hc_cut, _TREE_BUILDERS,
+                                            linkage_tree,
+                                            _fix_connectivity)
 from sklearn.feature_extraction.image import grid_to_graph
 from sklearn.metrics.pairwise import PAIRED_DISTANCES, cosine_distances,\
     manhattan_distances, pairwise_distances
 from sklearn.metrics.cluster import normalized_mutual_info_score
-from sklearn.neighbors.graph import kneighbors_graph
-from sklearn.cluster._hierarchical import average_merge, max_merge
-from sklearn.utils.fast_dict import IntFloatDict
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_warns
+from sklearn.neighbors import kneighbors_graph
+from sklearn.cluster._hierarchical_fast import average_merge, max_merge
+from sklearn.utils._fast_dict import IntFloatDict
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_warns
 from sklearn.datasets import make_moons, make_circles
 
 
@@ -66,23 +67,23 @@ def test_linkage_misc():
 def test_structured_linkage_tree():
     # Check that we obtain the correct solution for structured linkage trees.
     rng = np.random.RandomState(0)
-    mask = np.ones([10, 10], dtype=np.bool)
+    mask = np.ones([10, 10], dtype=bool)
     # Avoiding a mask with only 'True' entries
     mask[4:7, 4:7] = 0
     X = rng.randn(50, 100)
     connectivity = grid_to_graph(*mask.shape)
     for tree_builder in _TREE_BUILDERS.values():
         children, n_components, n_leaves, parent = \
-            tree_builder(X.T, connectivity)
+            tree_builder(X.T, connectivity=connectivity)
         n_nodes = 2 * X.shape[1] - 1
         assert len(children) + n_leaves == n_nodes
         # Check that ward_tree raises a ValueError with a connectivity matrix
         # of the wrong shape
         with pytest.raises(ValueError):
-            tree_builder(X.T, np.ones((4, 4)))
+            tree_builder(X.T, connectivity=np.ones((4, 4)))
         # Check that fitting with no samples raises an error
         with pytest.raises(ValueError):
-            tree_builder(X.T[:0], connectivity)
+            tree_builder(X.T[:0], connectivity=connectivity)
 
 
 def test_unstructured_linkage_tree():
@@ -111,11 +112,12 @@ def test_unstructured_linkage_tree():
 def test_height_linkage_tree():
     # Check that the height of the results of linkage tree is sorted.
     rng = np.random.RandomState(0)
-    mask = np.ones([10, 10], dtype=np.bool)
+    mask = np.ones([10, 10], dtype=bool)
     X = rng.randn(50, 100)
     connectivity = grid_to_graph(*mask.shape)
     for linkage_func in _TREE_BUILDERS.values():
-        children, n_nodes, n_leaves, parent = linkage_func(X.T, connectivity)
+        children, n_nodes, n_leaves, parent = linkage_func(
+            X.T, connectivity=connectivity)
         n_nodes = 2 * X.shape[1] - 1
         assert len(children) + n_leaves == n_nodes
 
@@ -141,11 +143,42 @@ def test_zero_cosine_linkage_tree():
     assert_raise_message(ValueError, msg, linkage_tree, X, affinity='cosine')
 
 
+@pytest.mark.parametrize('n_clusters, distance_threshold',
+                         [(None, 0.5), (10, None)])
+@pytest.mark.parametrize('compute_distances', [True, False])
+@pytest.mark.parametrize('linkage', ["ward", "complete", "average", "single"])
+def test_agglomerative_clustering_distances(n_clusters,
+                                            compute_distances,
+                                            distance_threshold,
+                                            linkage):
+    # Check that when `compute_distances` is True or `distance_threshold` is
+    # given, the fitted model has an attribute `distances_`.
+    rng = np.random.RandomState(0)
+    mask = np.ones([10, 10], dtype=bool)
+    n_samples = 100
+    X = rng.randn(n_samples, 50)
+    connectivity = grid_to_graph(*mask.shape)
+
+    clustering = AgglomerativeClustering(n_clusters=n_clusters,
+                                         connectivity=connectivity,
+                                         linkage=linkage,
+                                         distance_threshold=distance_threshold,
+                                         compute_distances=compute_distances)
+    clustering.fit(X)
+    if compute_distances or (distance_threshold is not None):
+        assert hasattr(clustering, 'distances_')
+        n_children = clustering.children_.shape[0]
+        n_nodes = n_children + 1
+        assert clustering.distances_.shape == (n_nodes-1, )
+    else:
+        assert not hasattr(clustering, 'distances_')
+
+
 def test_agglomerative_clustering():
     # Check that we obtain the correct number of clusters with
     # agglomerative clustering.
     rng = np.random.RandomState(0)
-    mask = np.ones([10, 10], dtype=np.bool)
+    mask = np.ones([10, 10], dtype=bool)
     n_samples = 100
     X = rng.randn(n_samples, 50)
     connectivity = grid_to_graph(*mask.shape)
@@ -234,7 +267,7 @@ def test_agglomerative_clustering():
 def test_ward_agglomeration():
     # Check that we obtain the correct solution in a simplistic case
     rng = np.random.RandomState(0)
-    mask = np.ones([10, 10], dtype=np.bool)
+    mask = np.ones([10, 10], dtype=bool)
     X = rng.randn(50, 100)
     connectivity = grid_to_graph(*mask.shape)
     agglo = FeatureAgglomeration(n_clusters=5, connectivity=connectivity)
@@ -280,7 +313,7 @@ def assess_same_labelling(cut1, cut2):
     assert (co_clust[0] == co_clust[1]).all()
 
 
-def test_scikit_vs_scipy():
+def test_sparse_scikit_vs_scipy():
     # Test scikit linkage with full connectivity (i.e. unstructured) vs scipy
     n, p, k = 10, 5, 3
     rng = np.random.RandomState(0)
@@ -296,8 +329,9 @@ def test_scikit_vs_scipy():
 
             out = hierarchy.linkage(X, method=linkage)
 
-            children_ = out[:, :2].astype(np.int, copy=False)
-            children, _, n_leaves, _ = _TREE_BUILDERS[linkage](X, connectivity)
+            children_ = out[:, :2].astype(int, copy=False)
+            children, _, n_leaves, _ = _TREE_BUILDERS[linkage](
+                X, connectivity=connectivity)
 
             # Sort the order of child nodes per row for consistency
             children.sort(axis=1)
@@ -312,6 +346,33 @@ def test_scikit_vs_scipy():
     # Test error management in _hc_cut
     with pytest.raises(ValueError):
         _hc_cut(n_leaves + 1, children, n_leaves)
+
+
+# Make sure our custom mst_linkage_core gives
+# the same results as scipy's builtin
+@pytest.mark.parametrize('seed', range(5))
+def test_vector_scikit_single_vs_scipy_single(seed):
+    n_samples, n_features, n_clusters = 10, 5, 3
+    rng = np.random.RandomState(seed)
+    X = .1 * rng.normal(size=(n_samples, n_features))
+    X -= 4. * np.arange(n_samples)[:, np.newaxis]
+    X -= X.mean(axis=1)[:, np.newaxis]
+
+    out = hierarchy.linkage(X, method='single')
+    children_scipy = out[:, :2].astype(int)
+
+    children, _, n_leaves, _ = _TREE_BUILDERS['single'](X)
+
+    # Sort the order of child nodes per row for consistency
+    children.sort(axis=1)
+    assert_array_equal(children, children_scipy,
+                       'linkage tree differs'
+                       ' from scipy impl for'
+                       ' single linkage.')
+
+    cut = _hc_cut(n_clusters, children, n_leaves)
+    cut_scipy = _hc_cut(n_clusters, children_scipy, n_leaves)
+    assess_same_labelling(cut, cut_scipy)
 
 
 def test_identical_points():
@@ -617,7 +678,7 @@ def test_agglomerative_clustering_with_distance_threshold(linkage):
     # Check that we obtain the correct number of clusters with
     # agglomerative clustering with distance_threshold.
     rng = np.random.RandomState(0)
-    mask = np.ones([10, 10], dtype=np.bool)
+    mask = np.ones([10, 10], dtype=bool)
     n_samples = 100
     X = rng.randn(n_samples, 50)
     connectivity = grid_to_graph(*mask.shape)
@@ -725,15 +786,11 @@ def test_dist_threshold_invalid_parameters():
                                 compute_full_tree=False).fit(X)
 
 
-def test_n_components_deprecation():
-    # Test that a Deprecation warning is thrown when n_components_
-    # attribute is accessed
-
-    X = np.array([[1, 2], [1, 4], [1, 0], [4, 2]])
-    agc = AgglomerativeClustering().fit(X)
-
-    match = ("``n_components_`` attribute was deprecated "
-             "in favor of ``n_connected_components_``")
-    with pytest.warns(DeprecationWarning, match=match):
-        n = agc.n_components_
-    assert n == agc.n_connected_components_
+def test_invalid_shape_precomputed_dist_matrix():
+    # Check that an error is raised when affinity='precomputed'
+    # and a non square matrix is passed (PR #16257).
+    rng = np.random.RandomState(0)
+    X = rng.rand(5, 3)
+    with pytest.raises(ValueError, match="Distance matrix should be square, "):
+        AgglomerativeClustering(affinity='precomputed',
+                                linkage='complete').fit(X)

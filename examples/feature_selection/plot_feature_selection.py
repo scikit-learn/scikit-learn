@@ -62,8 +62,7 @@ selector.fit(X_train, y_train)
 scores = -np.log10(selector.pvalues_)
 scores /= scores.max()
 plt.bar(X_indices - .45, scores, width=.2,
-        label=r'Univariate score ($-Log(p_{value})$)', color='darkorange',
-        edgecolor='black')
+        label=r'Univariate score ($-Log(p_{value})$)')
 
 # #############################################################################
 # Compare to the weights of an SVM
@@ -75,8 +74,7 @@ print('Classification accuracy without selecting features: {:.3f}'
 svm_weights = np.abs(clf[-1].coef_).sum(axis=0)
 svm_weights /= svm_weights.sum()
 
-plt.bar(X_indices - .25, svm_weights, width=.2, label='SVM weight',
-        color='navy', edgecolor='black')
+plt.bar(X_indices - .25, svm_weights, width=.2, label='SVM weight')
 
 clf_selected = make_pipeline(
         SelectKBest(f_classif, k=4), MinMaxScaler(), LinearSVC()
@@ -89,8 +87,7 @@ svm_weights_selected = np.abs(clf_selected[-1].coef_).sum(axis=0)
 svm_weights_selected /= svm_weights_selected.sum()
 
 plt.bar(X_indices[selector.get_support()] - .05, svm_weights_selected,
-        width=.2, label='SVM weights after selection', color='c',
-        edgecolor='black')
+        width=.2, label='SVM weights after selection')
 
 
 plt.title("Comparing feature selection")

@@ -3,19 +3,24 @@
 
 import pytest
 import numpy as np
+from numpy.testing import assert_allclose
 from scipy import sparse
 
 from sklearn.base import BaseEstimator
-from sklearn.model_selection import LeaveOneOut
+from sklearn.model_selection import LeaveOneOut, train_test_split
 
-from sklearn.utils.testing import (assert_array_almost_equal,
-                                   assert_almost_equal,
-                                   assert_array_equal,
-                                   assert_raises, ignore_warnings)
+from sklearn.utils._testing import (assert_array_almost_equal,
+                                    assert_almost_equal,
+                                    assert_array_equal,
+                                    assert_raises, ignore_warnings)
+from sklearn.exceptions import NotFittedError
 from sklearn.datasets import make_classification, make_blobs
+from sklearn.preprocessing import LabelBinarizer
+from sklearn.model_selection import KFold
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.svm import LinearSVC
+from sklearn.feature_extraction import DictVectorizer
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import brier_score_loss, log_loss
@@ -58,7 +63,7 @@ def test_calibration():
 
             # Check that brier score has improved after calibration
             assert (brier_score_loss(y_test, prob_pos_clf) >
-                           brier_score_loss(y_test, prob_pos_pc_clf))
+                    brier_score_loss(y_test, prob_pos_pc_clf))
 
             # Check invariance against relabeling [0, 1] -> [1, 2]
             pc_clf.fit(this_X_train, y_train + 1, sample_weight=sw_train)
@@ -84,8 +89,8 @@ def test_calibration():
                 # Isotonic calibration is not invariant against relabeling
                 # but should improve in both cases
                 assert (brier_score_loss(y_test, prob_pos_clf) >
-                               brier_score_loss((y_test + 1) % 2,
-                                                prob_pos_pc_clf_relabeled))
+                        brier_score_loss((y_test + 1) % 2,
+                                         prob_pos_pc_clf_relabeled))
 
         # Check failure cases:
         # only "isotonic" and "sigmoid" should be accepted as methods
@@ -97,6 +102,30 @@ def test_calibration():
         clf_base_regressor = \
             CalibratedClassifierCV(RandomForestRegressor(), method="sigmoid")
         assert_raises(RuntimeError, clf_base_regressor.fit, X_train, y_train)
+
+
+def test_calibration_default_estimator():
+    # Check base_estimator default is LinearSVC
+    X, y = make_classification(n_samples=100, n_features=6, random_state=42)
+    calib_clf = CalibratedClassifierCV(cv=2)
+    calib_clf.fit(X, y)
+
+    base_est = calib_clf.calibrated_classifiers_[0].base_estimator
+    assert isinstance(base_est, LinearSVC)
+
+
+def test_calibration_cv_splitter():
+    # Check when `cv` is a CV splitter
+    X, y = make_classification(n_samples=100, n_features=6, random_state=42)
+
+    splits = 5
+    kfold = KFold(n_splits=splits)
+    calib_clf = CalibratedClassifierCV(cv=kfold)
+    assert isinstance(calib_clf.cv, KFold)
+    assert calib_clf.cv.n_splits == splits
+
+    calib_clf.fit(X, y)
+    assert len(calib_clf.calibrated_classifiers_) == splits
 
 
 def test_sample_weight():
@@ -122,6 +151,28 @@ def test_sample_weight():
 
         diff = np.linalg.norm(probs_with_sw - probs_without_sw)
         assert diff > 0.1
+
+
+@pytest.mark.parametrize("method", ['sigmoid', 'isotonic'])
+def test_parallel_execution(method):
+    """Test parallel calibration"""
+    X, y = make_classification(random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
+
+    base_estimator = LinearSVC(random_state=42)
+
+    cal_clf_parallel = CalibratedClassifierCV(base_estimator,
+                                              method=method, n_jobs=2)
+    cal_clf_parallel.fit(X_train, y_train)
+    probs_parallel = cal_clf_parallel.predict_proba(X_test)
+
+    cal_clf_sequential = CalibratedClassifierCV(base_estimator,
+                                                method=method,
+                                                n_jobs=1)
+    cal_clf_sequential.fit(X_train, y_train)
+    probs_sequential = cal_clf_sequential.predict_proba(X_test)
+
+    assert_allclose(probs_parallel, probs_sequential)
 
 
 def test_calibration_multiclass():
@@ -198,6 +249,11 @@ def test_calibration_prefit():
 
     # Naive-Bayes
     clf = MultinomialNB()
+    # Check error if clf not prefit
+    unfit_clf = CalibratedClassifierCV(clf, cv="prefit")
+    with pytest.raises(NotFittedError):
+        unfit_clf.fit(X_calib, y_calib)
+
     clf.fit(X_train, y_train, sw_train)
     prob_pos_clf = clf.predict_proba(X_test)[:, 1]
 
@@ -217,7 +273,7 @@ def test_calibration_prefit():
                                    np.array([0, 1])[np.argmax(y_prob, axis=1)])
 
                 assert (brier_score_loss(y_test, prob_pos_clf) >
-                               brier_score_loss(y_test, prob_pos_pc_clf))
+                        brier_score_loss(y_test, prob_pos_pc_clf))
 
 
 def test_sigmoid_calibration():
@@ -320,7 +376,7 @@ def test_calibration_less_classes():
                                  proba[:, i + 1:]]))
 
 
-@ignore_warnings(category=(DeprecationWarning, FutureWarning))
+@ignore_warnings(category=FutureWarning)
 @pytest.mark.parametrize('X', [np.random.RandomState(42).randn(15, 5, 2),
                                np.random.RandomState(42).randn(15, 5, 2, 6)])
 def test_calibration_accepts_ndarray(X):
@@ -341,3 +397,61 @@ def test_calibration_accepts_ndarray(X):
     calibrated_clf = CalibratedClassifierCV(MockTensorClassifier())
     # we should be able to fit this classifier with no error
     calibrated_clf.fit(X, y)
+
+
+@pytest.fixture
+def text_data():
+    text_data = [
+        {'state': 'NY', 'age': 'adult'},
+        {'state': 'TX', 'age': 'adult'},
+        {'state': 'VT', 'age': 'child'},
+    ]
+    text_labels = [1, 0, 1]
+    return text_data, text_labels
+
+
+@pytest.fixture
+def text_data_pipeline(text_data):
+    X, y = text_data
+    pipeline_prefit = Pipeline([
+        ('vectorizer', DictVectorizer()),
+        ('clf', RandomForestClassifier())
+    ])
+    return pipeline_prefit.fit(X, y)
+
+
+def test_calibration_pipeline(text_data, text_data_pipeline):
+    # Test that calibration works in prefit pipeline with transformer,
+    # where `X` is not array-like, sparse matrix or dataframe at the start.
+    # See https://github.com/scikit-learn/scikit-learn/issues/8710
+    X, y = text_data
+    clf = text_data_pipeline
+    calib_clf = CalibratedClassifierCV(clf, cv='prefit')
+    calib_clf.fit(X, y)
+    # Check attributes are obtained from fitted estimator
+    assert_array_equal(calib_clf.classes_, clf.classes_)
+    msg = "'CalibratedClassifierCV' object has no attribute"
+    with pytest.raises(AttributeError, match=msg):
+        calib_clf.n_features_in_
+
+
+@pytest.mark.parametrize('clf, cv', [
+    pytest.param(LinearSVC(C=1), 2),
+    pytest.param(LinearSVC(C=1), 'prefit'),
+])
+def test_calibration_attributes(clf, cv):
+    # Check that `n_features_in_` and `classes_` attributes created properly
+    X, y = make_classification(n_samples=10, n_features=5,
+                               n_classes=2, random_state=7)
+    if cv == 'prefit':
+        clf = clf.fit(X, y)
+    calib_clf = CalibratedClassifierCV(clf, cv=cv)
+    calib_clf.fit(X, y)
+
+    if cv == 'prefit':
+        assert_array_equal(calib_clf.classes_, clf.classes_)
+        assert calib_clf.n_features_in_ == clf.n_features_in_
+    else:
+        classes = LabelBinarizer().fit(y).classes_
+        assert_array_equal(calib_clf.classes_, classes)
+        assert calib_clf.n_features_in_ == X.shape[1]

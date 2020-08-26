@@ -7,16 +7,17 @@ from math import sqrt
 import numpy as np
 from sklearn import neighbors
 
+import pytest
 from numpy.testing import assert_array_equal
 
 from sklearn import metrics
 from sklearn.metrics import roc_auc_score
 
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raises_regex
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_raises_regex
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks import check_outlier_corruption
 
@@ -214,12 +215,12 @@ def test_novelty_true_common_tests():
     check_estimator(neighbors.LocalOutlierFactor(novelty=True))
 
 
-def test_predicted_outlier_number():
+@pytest.mark.parametrize('expected_outliers', [30, 53])
+def test_predicted_outlier_number(expected_outliers):
     # the number of predicted outliers should be equal to the number of
     # expected outliers unless there are ties in the abnormality scores.
     X = iris.data
     n_samples = X.shape[0]
-    expected_outliers = 30
     contamination = float(expected_outliers)/n_samples
 
     clf = neighbors.LocalOutlierFactor(contamination=contamination)

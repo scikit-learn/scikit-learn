@@ -12,9 +12,9 @@ from sklearn.ensemble._hist_gradient_boosting.histogram import (
     _build_histogram_root,
     _subtract_histograms
 )
-from sklearn.ensemble._hist_gradient_boosting.types import HISTOGRAM_DTYPE
-from sklearn.ensemble._hist_gradient_boosting.types import G_H_DTYPE
-from sklearn.ensemble._hist_gradient_boosting.types import X_BINNED_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.common import HISTOGRAM_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.common import X_BINNED_DTYPE
 
 
 @pytest.mark.parametrize(
@@ -164,7 +164,7 @@ def test_hist_subtraction(constant_hessian):
         _build_histogram(0, sample_indices, binned_feature,
                          ordered_gradients, ordered_hessians, hist_parent)
 
-    mask = rng.randint(0, 2, n_samples).astype(np.bool)
+    mask = rng.randint(0, 2, n_samples).astype(bool)
 
     sample_indices_left = sample_indices[mask]
     ordered_gradients_left = ordered_gradients[mask]

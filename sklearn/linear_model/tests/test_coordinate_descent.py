@@ -6,25 +6,106 @@ import numpy as np
 import pytest
 from scipy import interpolate, sparse
 from copy import deepcopy
+import joblib
 
-from sklearn.datasets import load_boston
+from sklearn.base import is_classifier
+from sklearn.datasets import load_diabetes
+from sklearn.datasets import make_regression
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raises_regex
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import TempMemmap
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_raises_regex
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import TempMemmap
+from sklearn.utils.fixes import parse_version
 
-from sklearn.linear_model.coordinate_descent import Lasso, \
-    LassoCV, ElasticNet, ElasticNetCV, MultiTaskLasso, MultiTaskElasticNet, \
-    MultiTaskElasticNetCV, MultiTaskLassoCV, lasso_path, enet_path
-from sklearn.linear_model import LassoLarsCV, lars_path
+from sklearn.linear_model import (
+    ARDRegression,
+    BayesianRidge,
+    ElasticNet,
+    ElasticNetCV,
+    enet_path,
+    Lars,
+    lars_path,
+    Lasso,
+    LassoCV,
+    LassoLars,
+    LassoLarsCV,
+    LassoLarsIC,
+    lasso_path,
+    LinearRegression,
+    MultiTaskElasticNet,
+    MultiTaskElasticNetCV,
+    MultiTaskLasso,
+    MultiTaskLassoCV,
+    OrthogonalMatchingPursuit,
+    Ridge,
+    RidgeClassifier,
+    RidgeCV,
+)
+
+from sklearn.linear_model._coordinate_descent import _set_order
 from sklearn.utils import check_array
+
+
+@pytest.mark.parametrize('l1_ratio', (-1, 2, None, 10, 'something_wrong'))
+def test_l1_ratio_param_invalid(l1_ratio):
+    # Check that correct error is raised when l1_ratio in ElasticNet
+    # is outside the correct range
+    X = np.array([[-1.], [0.], [1.]])
+    Y = [-1, 0, 1]       # just a straight line
+
+    msg = "l1_ratio must be between 0 and 1; got l1_ratio="
+    clf = ElasticNet(alpha=0.1, l1_ratio=l1_ratio)
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(X, Y)
+
+
+@pytest.mark.parametrize('order', ['C', 'F'])
+@pytest.mark.parametrize('input_order', ['C', 'F'])
+def test_set_order_dense(order, input_order):
+    """Check that _set_order returns arrays with promised order."""
+    X = np.array([[0], [0], [0]], order=input_order)
+    y = np.array([0, 0, 0], order=input_order)
+    X2, y2 = _set_order(X, y, order=order)
+    if order == 'C':
+        assert X2.flags['C_CONTIGUOUS']
+        assert y2.flags['C_CONTIGUOUS']
+    elif order == 'F':
+        assert X2.flags['F_CONTIGUOUS']
+        assert y2.flags['F_CONTIGUOUS']
+
+    if order == input_order:
+        assert X is X2
+        assert y is y2
+
+
+@pytest.mark.parametrize('order', ['C', 'F'])
+@pytest.mark.parametrize('input_order', ['C', 'F'])
+def test_set_order_sparse(order, input_order):
+    """Check that _set_order returns sparse matrices in promised format."""
+    X = sparse.coo_matrix(np.array([[0], [0], [0]]))
+    y = sparse.coo_matrix(np.array([0, 0, 0]))
+    sparse_format = "csc" if input_order == "F" else "csr"
+    X = X.asformat(sparse_format)
+    y = X.asformat(sparse_format)
+    X2, y2 = _set_order(X, y, order=order)
+    if order == 'C':
+        assert sparse.isspmatrix_csr(X2)
+        assert sparse.isspmatrix_csr(y2)
+    elif order == 'F':
+        assert sparse.isspmatrix_csc(X2)
+        assert sparse.isspmatrix_csc(y2)
 
 
 def test_lasso_zero():
@@ -171,11 +252,8 @@ def test_lasso_cv():
 
 
 def test_lasso_cv_with_some_model_selection():
-    from sklearn.pipeline import make_pipeline
-    from sklearn.preprocessing import StandardScaler
-    from sklearn.model_selection import StratifiedKFold
+    from sklearn.model_selection import ShuffleSplit
     from sklearn import datasets
-    from sklearn.linear_model import LassoCV
 
     diabetes = datasets.load_diabetes()
     X = diabetes.data
@@ -183,7 +261,7 @@ def test_lasso_cv_with_some_model_selection():
 
     pipe = make_pipeline(
         StandardScaler(),
-        LassoCV(cv=StratifiedKFold())
+        LassoCV(cv=ShuffleSplit(random_state=0))
     )
     pipe.fit(X, y)
 
@@ -203,6 +281,140 @@ def test_lasso_cv_positive_constraint():
                               positive=True, cv=2, n_jobs=1)
     clf_constrained.fit(X, y)
     assert min(clf_constrained.coef_) >= 0
+
+
+@pytest.mark.parametrize(
+    "LinearModel, params",
+    [(Lasso, {"tol": 1e-16, "alpha": 0.1}),
+     (LassoLars, {"alpha": 0.1}),
+     (RidgeClassifier, {"solver": 'sparse_cg', "alpha": 0.1}),
+     (ElasticNet, {"tol": 1e-16, 'l1_ratio': 1, "alpha": 0.1}),
+     (ElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.1}),
+     (Ridge, {"solver": 'sparse_cg', 'tol': 1e-12, "alpha": 0.1}),
+     (BayesianRidge, {}),
+     (ARDRegression, {}),
+     (OrthogonalMatchingPursuit, {}),
+     (MultiTaskElasticNet, {"tol": 1e-16, 'l1_ratio': 1, "alpha": 0.1}),
+     (MultiTaskElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.1}),
+     (MultiTaskLasso, {"tol": 1e-16, "alpha": 0.1}),
+     (Lars, {}),
+     (LinearRegression, {}),
+     (LassoLarsIC, {})]
+ )
+def test_model_pipeline_same_as_normalize_true(LinearModel, params):
+    # Test that linear models (LinearModel) set with normalize set to True are
+    # doing the same as the same linear model preceeded by StandardScaler
+    # in the pipeline and with normalize set to False
+
+    # normalize is True
+    model_name = LinearModel.__name__
+    model_normalize = LinearModel(normalize=True, fit_intercept=True, **params)
+
+    pipeline = make_pipeline(
+        StandardScaler(),
+        LinearModel(normalize=False, fit_intercept=True, **params)
+    )
+
+    is_multitask = model_normalize._get_tags().get("multioutput_only", False)
+
+    # prepare the data
+    n_samples, n_features = 100, 2
+    rng = np.random.RandomState(0)
+    w = rng.randn(n_features)
+    X = rng.randn(n_samples, n_features)
+    X += 20  # make features non-zero mean
+    y = X.dot(w)
+
+    # make classes out of regression
+    if is_classifier(model_normalize):
+        y[y > np.mean(y)] = -1
+        y[y > 0] = 1
+    if is_multitask:
+        y = np.stack((y, y), axis=1)
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
+
+    if 'alpha' in params:
+        model_normalize.set_params(alpha=params['alpha'])
+        if model_name in ['Lasso', 'LassoLars', 'MultiTaskLasso']:
+            new_params = dict(
+                alpha=params['alpha'] * np.sqrt(X_train.shape[0]))
+        if model_name in ['Ridge', 'RidgeClassifier']:
+            new_params = dict(alpha=params['alpha'] * X_train.shape[0])
+    if model_name in ['ElasticNet', 'MultiTaskElasticNet']:
+        if params['l1_ratio'] == 1:
+            new_params = dict(
+                alpha=params['alpha'] * np.sqrt(X_train.shape[0]))
+        if params['l1_ratio'] == 0:
+            new_params = dict(alpha=params['alpha'] * X_train.shape[0])
+
+    if 'new_params' in locals():
+        pipeline[1].set_params(**new_params)
+
+    model_normalize.fit(X_train, y_train)
+    y_pred_normalize = model_normalize.predict(X_test)
+
+    pipeline.fit(X_train, y_train)
+    y_pred_standardize = pipeline.predict(X_test)
+
+    assert_allclose(
+        model_normalize.coef_ * pipeline[0].scale_, pipeline[1].coef_)
+    assert pipeline[1].intercept_ == pytest.approx(y_train.mean())
+    assert (model_normalize.intercept_ ==
+            pytest.approx(y_train.mean() -
+                          model_normalize.coef_.dot(X_train.mean(0))))
+    assert_allclose(y_pred_normalize, y_pred_standardize)
+
+
+@pytest.mark.parametrize(
+    "LinearModel, params",
+    [(Lasso, {"tol": 1e-16, "alpha": 0.1}),
+     (LassoCV, {"tol": 1e-16}),
+     (ElasticNetCV, {}),
+     (RidgeClassifier, {"solver": 'sparse_cg', "alpha": 0.1}),
+     (ElasticNet, {"tol": 1e-16, 'l1_ratio': 1, "alpha": 0.01}),
+     (ElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.01}),
+     (Ridge, {"solver": 'sparse_cg', 'tol': 1e-12, "alpha": 0.1}),
+     (LinearRegression, {}),
+     (RidgeCV, {})]
+ )
+def test_model_pipeline_same_dense_and_sparse(LinearModel, params):
+    # Test that linear model preceeded by StandardScaler in the pipeline and
+    # with normalize set to False gives the same y_pred and the same .coef_
+    # given X sparse or dense
+
+    model_dense = make_pipeline(
+        StandardScaler(with_mean=False),
+        LinearModel(normalize=False, **params)
+    )
+
+    model_sparse = make_pipeline(
+        StandardScaler(with_mean=False),
+        LinearModel(normalize=False, **params)
+    )
+
+    # prepare the data
+    rng = np.random.RandomState(0)
+    n_samples = 200
+    n_features = 2
+    X = rng.randn(n_samples, n_features)
+    X[X < 0.1] = 0.
+
+    X_sparse = sparse.csr_matrix(X)
+    y = rng.rand(n_samples)
+
+    if is_classifier(model_dense):
+        y = np.sign(y)
+
+    model_dense.fit(X, y)
+    model_sparse.fit(X_sparse, y)
+
+    assert_allclose(model_sparse[1].coef_, model_dense[1].coef_)
+    y_pred_dense = model_dense.predict(X)
+    y_pred_sparse = model_sparse.predict(X_sparse)
+    assert_allclose(y_pred_dense, y_pred_sparse)
+
+    assert_allclose(model_dense[1].intercept_, model_sparse[1].intercept_)
 
 
 def test_lasso_path_return_models_vs_new_return_gives_same_coefficients():
@@ -229,7 +441,6 @@ def test_lasso_path_return_models_vs_new_return_gives_same_coefficients():
         decimal=1)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of multioutput')  # 0.23
 def test_enet_path():
     # We use a large number of samples and of informative features so that
     # the l1_ratio selected is more toward ridge than lasso
@@ -555,7 +766,7 @@ def test_warm_start_convergence():
 
 
 def test_warm_start_convergence_with_regularizer_decrement():
-    X, y = load_boston(return_X_y=True)
+    X, y = load_diabetes(return_X_y=True)
 
     # Train a model to converge on a lightly regularized problem
     final_alpha = 1e-5
@@ -841,9 +1052,9 @@ def test_convergence_warnings():
     X = random_state.standard_normal((1000, 500))
     y = random_state.standard_normal((1000, 3))
 
-    # check that the model fails to converge
+    # check that the model fails to converge (a negative dual gap cannot occur)
     with pytest.warns(ConvergenceWarning):
-        MultiTaskElasticNet(max_iter=1, tol=0).fit(X, y)
+        MultiTaskElasticNet(max_iter=1, tol=-1).fit(X, y)
 
     # check that the model converges w/o warnings
     with pytest.warns(None) as record:
@@ -864,3 +1075,142 @@ def test_sparse_input_convergence_warning():
         Lasso(max_iter=1000).fit(sparse.csr_matrix(X, dtype=np.float32), y)
 
     assert not record.list
+
+
+@pytest.mark.parametrize("precompute, inner_precompute", [
+    (True, True),
+    ('auto', False),
+    (False, False),
+])
+def test_lassoCV_does_not_set_precompute(monkeypatch, precompute,
+                                         inner_precompute):
+    X, y, _, _ = build_dataset()
+    calls = 0
+
+    class LassoMock(Lasso):
+        def fit(self, X, y):
+            super().fit(X, y)
+            nonlocal calls
+            calls += 1
+            assert self.precompute == inner_precompute
+
+    monkeypatch.setattr("sklearn.linear_model._coordinate_descent.Lasso",
+                        LassoMock)
+    clf = LassoCV(precompute=precompute)
+    clf.fit(X, y)
+    assert calls > 0
+
+
+def test_multi_task_lasso_cv_dtype():
+    n_samples, n_features = 10, 3
+    rng = np.random.RandomState(42)
+    X = rng.binomial(1, .5, size=(n_samples, n_features))
+    X = X.astype(int)  # make it explicit that X is int
+    y = X[:, [0, 0]].copy()
+    est = MultiTaskLassoCV(n_alphas=5, fit_intercept=True).fit(X, y)
+    assert_array_almost_equal(est.coef_, [[1, 0, 0]] * 2, decimal=3)
+
+
+@pytest.mark.parametrize('fit_intercept', [True, False])
+@pytest.mark.parametrize('alpha', [0.01])
+@pytest.mark.parametrize('normalize', [False, True])
+@pytest.mark.parametrize('precompute', [False, True])
+def test_enet_sample_weight_consistency(fit_intercept, alpha, normalize,
+                                        precompute):
+    """Test that the impact of sample_weight is consistent."""
+    rng = np.random.RandomState(0)
+    n_samples, n_features = 10, 5
+
+    X = rng.rand(n_samples, n_features)
+    y = rng.rand(n_samples)
+    params = dict(alpha=alpha, fit_intercept=fit_intercept,
+                  precompute=precompute, tol=1e-6, l1_ratio=0.5)
+
+    reg = ElasticNet(**params).fit(X, y)
+    coef = reg.coef_.copy()
+    if fit_intercept:
+        intercept = reg.intercept_
+
+    # sample_weight=np.ones(..) should be equivalent to sample_weight=None
+    sample_weight = np.ones_like(y)
+    reg.fit(X, y, sample_weight=sample_weight)
+    assert_allclose(reg.coef_, coef, rtol=1e-6)
+    if fit_intercept:
+        assert_allclose(reg.intercept_, intercept)
+
+    # sample_weight=None should be equivalent to sample_weight = number
+    sample_weight = 123.
+    reg.fit(X, y, sample_weight=sample_weight)
+    assert_allclose(reg.coef_, coef, rtol=1e-6)
+    if fit_intercept:
+        assert_allclose(reg.intercept_, intercept)
+
+    # scaling of sample_weight should have no effect, cf. np.average()
+    sample_weight = 2 * np.ones_like(y)
+    reg.fit(X, y, sample_weight=sample_weight)
+    assert_allclose(reg.coef_, coef, rtol=1e-6)
+    if fit_intercept:
+        assert_allclose(reg.intercept_, intercept)
+
+    # setting one element of sample_weight to 0 is equivalent to removing
+    # the corresponding sample
+    sample_weight = np.ones_like(y)
+    sample_weight[-1] = 0
+    reg.fit(X, y, sample_weight=sample_weight)
+    coef1 = reg.coef_.copy()
+    if fit_intercept:
+        intercept1 = reg.intercept_
+    reg.fit(X[:-1], y[:-1])
+    assert_allclose(reg.coef_, coef1, rtol=1e-6)
+    if fit_intercept:
+        assert_allclose(reg.intercept_, intercept1)
+
+    # check that multiplying sample_weight by 2 is equivalent
+    # to repeating corresponding samples twice
+    if sparse.issparse(X):
+        X = X.toarray()
+
+    X2 = np.concatenate([X, X[:n_samples//2]], axis=0)
+    y2 = np.concatenate([y, y[:n_samples//2]])
+    sample_weight_1 = np.ones(len(y))
+    sample_weight_1[:n_samples//2] = 2
+
+    reg1 = ElasticNet(**params).fit(
+            X, y, sample_weight=sample_weight_1
+    )
+
+    reg2 = ElasticNet(**params).fit(
+            X2, y2, sample_weight=None
+    )
+    assert_allclose(reg1.coef_, reg2.coef_)
+
+
+def test_enet_sample_weight_sparse():
+    reg = ElasticNet()
+    X = sparse.csc_matrix(np.zeros((3, 2)))
+    y = np.array([-1, 0, 1])
+    sw = np.array([1, 2, 3])
+    with pytest.raises(ValueError, match="Sample weights do not.*support "
+                                         "sparse matrices"):
+        reg.fit(X, y, sample_weight=sw, check_input=True)
+
+
+@pytest.mark.parametrize("backend", ["loky", "threading"])
+@pytest.mark.parametrize("estimator",
+                         [ElasticNetCV, MultiTaskElasticNetCV,
+                          LassoCV, MultiTaskLassoCV])
+def test_linear_models_cv_fit_for_all_backends(backend, estimator):
+    # LinearModelsCV.fit performs inplace operations on input data which is
+    # memmapped when using loky backend, causing an error due to unexpected
+    # behavior of fancy indexing of read-only memmaps (cf. numpy#14132).
+
+    if (parse_version(joblib.__version__) < parse_version('0.12')
+            and backend == 'loky'):
+        pytest.skip('loky backend does not exist in joblib <0.12')
+
+    # Create a problem sufficiently large to cause memmapping (1MB).
+    n_targets = 1 + (estimator in (MultiTaskElasticNetCV, MultiTaskLassoCV))
+    X, y = make_regression(20000, 10, n_targets=n_targets)
+
+    with joblib.parallel_backend(backend=backend):
+        estimator(n_jobs=2, cv=3).fit(X, y)
