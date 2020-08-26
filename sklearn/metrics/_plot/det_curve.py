@@ -30,8 +30,6 @@ class DetCurveDisplay:
 
     pos_label : str or int, default=None
         The label of the positive class.
-        When `pos_label=None`, if `y_true` is in {-1, 1} or {0, 1},
-        `pos_label` is set to 1, otherwise an error will be raised.
 
     Attributes
     ----------
