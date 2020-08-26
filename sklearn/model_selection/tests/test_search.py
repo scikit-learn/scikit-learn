@@ -25,6 +25,8 @@ from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
 
 from scipy.stats import bernoulli, expon, uniform
+from scipy.stats.distributions import norm
+
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.base import clone
@@ -1748,6 +1750,24 @@ def test_random_search_bad_cv():
                              'inconsistent results. Expected \\d+ '
                              'splits, got \\d+'):
         ridge.fit(X[:train_size], y[:train_size])
+
+
+def test_inf_warnings_in_GridSearchCV():
+
+    X = norm(-1, 0.5).rvs(100, random_state=np.random.RandomState(28))
+    kernel = 'epanechnikov'
+    steps = 10
+    lower = 0.0194867441113
+    upper = 0.0974337205567
+    bandwidth_range = np.linspace(lower, upper, steps)
+    grid = GridSearchCV(KernelDensity(kernel=kernel),
+                        {'bandwidth': bandwidth_range},
+                        cv=20
+                        )
+
+    with pytest.warns(UserWarning,
+                      match='One or more of the test scores are not finite\\d+'):
+        grid.fit(X[:, np.newaxis])
 
 
 def test_callable_multimetric_confusion_matrix():
