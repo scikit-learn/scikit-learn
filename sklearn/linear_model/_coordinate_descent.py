@@ -399,8 +399,9 @@ def enet_path(X, y, *, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         (Only allowed when ``y.ndim == 1``).
 
     check_input : bool, default=True
-        Skip input validation checks, including the Gram matrix when provided
-        assuming there are handled by the caller when check_input=False.
+        If set to False, the input validation checks are skipped (including the
+        Gram matrix when provided). It is assumed that they are handled
+        by the caller.
 
     **params : kwargs
         Keyword arguments passed to the coordinate descent solver.
@@ -651,9 +652,9 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     coef_ : ndarray of shape (n_features,) or (n_targets, n_features)
         parameter vector (w in the cost function formula)
 
-    sparse_coef_ : sparse matrix of shape (n_features, 1) or \
-            (n_targets, n_features)
-        ``sparse_coef_`` is a readonly property derived from ``coef_``
+    sparse_coef_ : sparse matrix of shape (n_features,) or \
+            (n_tasks, n_features)
+        sparse representation of the `coef_`.
 
     intercept_ : float or ndarray of shape (n_targets,)
         independent term in decision function.
@@ -661,6 +662,10 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     n_iter_ : list of int
         number of iterations run by the coordinate descent solver to reach
         the specified tolerance.
+
+    dual_gap_ : float or ndarray of shape (n_targets,)
+        Given param alpha, the dual gaps at the end of the optimization,
+        same shape as each observation of y.
 
     Examples
     --------
@@ -750,6 +755,11 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         if isinstance(self.precompute, str):
             raise ValueError('precompute should be one of True, False or'
                              ' array-like. Got %r' % self.precompute)
+
+        if (not isinstance(self.l1_ratio, numbers.Number) or
+                self.l1_ratio < 0 or self.l1_ratio > 1):
+            raise ValueError("l1_ratio must be between 0 and 1; "
+                             f"got l1_ratio={self.l1_ratio}")
 
         # Remember if X is copied
         X_copied = False
@@ -967,6 +977,10 @@ class Lasso(ElasticNet):
     ----------
     coef_ : ndarray of shape (n_features,) or (n_targets, n_features)
         parameter vector (w in the cost function formula)
+
+    dual_gap_ : float or ndarray of shape (n_targets,)
+        Given param alpha, the dual gaps at the end of the optimization,
+        same shape as each observation of y.
 
     sparse_coef_ : sparse matrix of shape (n_features, 1) or \
             (n_targets, n_features)
@@ -1643,6 +1657,9 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
     alphas_ : ndarray of shape (n_alphas,) or (n_l1_ratio, n_alphas)
         The grid of alphas used for fitting, for each l1_ratio.
 
+    dual_gap_ : float
+        The dual gaps at the end of the optimization for the optimal alpha.
+
     n_iter_ : int
         number of iterations run by the coordinate descent solver to reach
         the specified tolerance for the optimal alpha.
@@ -1817,6 +1834,16 @@ class MultiTaskElasticNet(Lasso):
     n_iter_ : int
         number of iterations run by the coordinate descent solver to reach
         the specified tolerance.
+
+    dual_gap_ : float
+        The dual gaps at the end of the optimization.
+
+    eps_ : float
+        The tolerance scaled scaled by the variance of the target `y`.
+
+    sparse_coef_ : sparse matrix of shape (n_features,) or \
+            (n_tasks, n_features)
+        sparse representation of the `coef_`.
 
     Examples
     --------
@@ -2007,6 +2034,16 @@ class MultiTaskLasso(MultiTaskElasticNet):
         number of iterations run by the coordinate descent solver to reach
         the specified tolerance.
 
+    dual_gap_ : ndarray of shape (n_alphas,)
+        The dual gaps at the end of the optimization for each alpha.
+
+    eps_ : float
+        The tolerance scaled scaled by the variance of the target `y`.
+
+    sparse_coef_ : sparse matrix of shape (n_features,) or \
+            (n_tasks, n_features)
+        sparse representation of the `coef_`.
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -2184,6 +2221,9 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         number of iterations run by the coordinate descent solver to reach
         the specified tolerance for the optimal alpha.
 
+    dual_gap_ : float
+        The dual gap at the end of the optimization for the optimal alpha.
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -2360,6 +2400,9 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     n_iter_ : int
         number of iterations run by the coordinate descent solver to reach
         the specified tolerance for the optimal alpha.
+
+    dual_gap_ : float
+        The dual gap at the end of the optimization for the optimal alpha.
 
     Examples
     --------

@@ -33,20 +33,20 @@ def test_regression_dataset(n_bins):
                         n_bins_non_missing=mapper.n_bins_non_missing_)
     grower.grow()
 
-    predictor = grower.make_predictor(bin_thresholds=mapper.bin_thresholds_)
+    predictor = grower.make_predictor(num_thresholds=mapper.bin_thresholds_)
 
     assert r2_score(y_train, predictor.predict(X_train)) > 0.82
     assert r2_score(y_test, predictor.predict(X_test)) > 0.67
 
 
-@pytest.mark.parametrize('threshold, expected_predictions', [
+@pytest.mark.parametrize('num_threshold, expected_predictions', [
     (-np.inf, [0, 1, 1, 1]),
     (10, [0, 0, 1, 1]),
     (20, [0, 0, 0, 1]),
     (ALMOST_INF, [0, 0, 0, 1]),
     (np.inf, [0, 0, 0, 0]),
 ])
-def test_infinite_values_and_thresholds(threshold, expected_predictions):
+def test_infinite_values_and_thresholds(num_threshold, expected_predictions):
     # Make sure infinite values and infinite thresholds are handled properly.
     # In particular, if a value is +inf and the threshold is ALMOST_INF the
     # sample should go to the right child. If the threshold is inf (split on
@@ -60,7 +60,7 @@ def test_infinite_values_and_thresholds(threshold, expected_predictions):
     nodes[0]['left'] = 1
     nodes[0]['right'] = 2
     nodes[0]['feature_idx'] = 0
-    nodes[0]['threshold'] = threshold
+    nodes[0]['num_threshold'] = num_threshold
 
     # left child
     nodes[1]['is_leaf'] = True

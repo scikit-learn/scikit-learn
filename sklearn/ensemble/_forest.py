@@ -567,7 +567,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         self.classes_ = []
         self.n_classes_ = []
 
-        y_store_unique_indices = np.zeros(y.shape, dtype=np.int)
+        y_store_unique_indices = np.zeros(y.shape, dtype=int)
         for k in range(self.n_outputs_):
             classes_k, y_store_unique_indices[:, k] = \
                 np.unique(y[:, k], return_inverse=True)
@@ -1009,7 +1009,7 @@ class RandomForestClassifier(ForestClassifier):
         context. ``-1`` means using all processors. See :term:`Glossary
         <n_jobs>` for more details.
 
-    random_state : int or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls both the randomness of the bootstrapping of the samples used
         when building trees (if ``bootstrap=True``) and the sampling of the
         features to consider when looking for the best split at each node
@@ -1331,7 +1331,7 @@ class RandomForestRegressor(ForestRegressor):
         context. ``-1`` means using all processors. See :term:`Glossary
         <n_jobs>` for more details.
 
-    random_state : int or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls both the randomness of the bootstrapping of the samples used
         when building trees (if ``bootstrap=True``) and the sampling of the
         features to consider when looking for the best split at each node
@@ -1613,7 +1613,7 @@ class ExtraTreesClassifier(ForestClassifier):
         context. ``-1`` means using all processors. See :term:`Glossary
         <n_jobs>` for more details.
 
-    random_state : int, RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls 3 sources of randomness:
 
         - the bootstrapping of the samples used when building trees
@@ -1930,7 +1930,7 @@ class ExtraTreesRegressor(ForestRegressor):
         context. ``-1`` means using all processors. See :term:`Glossary
         <n_jobs>` for more details.
 
-    random_state : int or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls 3 sources of randomness:
 
         - the bootstrapping of the samples used when building trees
@@ -2186,7 +2186,7 @@ class RandomTreesEmbedding(BaseForest):
         context. ``-1`` means using all processors. See :term:`Glossary
         <n_jobs>` for more details.
 
-    random_state : int or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the generation of the random `y` used to fit the trees
         and the draw of the splits for each feature at the trees' nodes.
         See :term:`Glossary <random_state>` for details.
@@ -2201,8 +2201,24 @@ class RandomTreesEmbedding(BaseForest):
 
     Attributes
     ----------
-    estimators_ : list of DecisionTreeClassifier
+    base_estimator_ : DecisionTreeClassifier instance
+        The child estimator template used to create the collection of fitted
+        sub-estimators.
+
+    estimators_ : list of DecisionTreeClassifier instances
         The collection of fitted sub-estimators.
+
+    feature_importances_ : ndarray of shape (n_features,)
+        The feature importances (the higher, the more important the feature).
+
+    n_features_ : int
+        The number of features when ``fit`` is performed.
+
+    n_outputs_ : int
+        The number of outputs when ``fit`` is performed.
+
+    one_hot_encoder_ : OneHotEncoder instance
+        One-hot encoder used to create the sparse embedding.
 
     References
     ----------

@@ -164,9 +164,9 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
             predictions.append(pred)
             # average over samples
             averaged_predictions.append(np.mean(pred, axis=0))
-        except NotFittedError:
+        except NotFittedError as e:
             raise ValueError(
-                "'estimator' parameter must be a fitted estimator")
+                "'estimator' parameter must be a fitted estimator") from e
 
     n_samples = X.shape[0]
 
@@ -397,7 +397,7 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
     # Use check_array only on lists and other non-array-likes / sparse. Do not
     # convert DataFrame into a NumPy array.
     if not(hasattr(X, '__array__') or sparse.issparse(X)):
-        X = check_array(X, force_all_finite='allow-nan', dtype=np.object)
+        X = check_array(X, force_all_finite='allow-nan', dtype=object)
 
     accepted_responses = ('auto', 'predict_proba', 'decision_function')
     if response_method not in accepted_responses:

@@ -285,7 +285,7 @@ some missing values to it.
   >>> from sklearn.pipeline import FeatureUnion, make_pipeline
   >>> from sklearn.tree import DecisionTreeClassifier
   >>> X, y = load_iris(return_X_y=True)
-  >>> mask = np.random.randint(0, 2, size=X.shape).astype(np.bool)
+  >>> mask = np.random.randint(0, 2, size=X.shape).astype(bool)
   >>> X[mask] = np.nan
   >>> X_train, X_test, y_train, _ = train_test_split(X, y, test_size=100,
   ...                                                random_state=0)
