@@ -1,6 +1,7 @@
 # Author: Mathieu Blondel
 # License: BSD 3 clause
 
+from ..utils.validation import _deprecate_positional_args
 from ._stochastic_gradient import BaseSGDClassifier
 
 
@@ -96,19 +97,23 @@ class Perceptron(BaseSGDClassifier):
 
     Attributes
     ----------
-    coef_ : ndarray of shape = [1, n_features] if n_classes == 2 else \
-        [n_classes, n_features]
+    classes_ : ndarray of shape (n_classes,)
+        The unique classes labels.
+
+    coef_ : ndarray of shape (1, n_features) if n_classes == 2 else \
+            (n_classes, n_features)
         Weights assigned to the features.
 
-    intercept_ : ndarray of shape = [1] if n_classes == 2 else [n_classes]
+    intercept_ : ndarray of shape (1,) if n_classes == 2 else (n_classes,)
         Constants in decision function.
+
+    loss_function_ : concrete LossFunction
+        The function that determines the loss, or difference between the
+        output of the algorithm and the target values.
 
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.
         For multiclass fits, it is the maximum over every binary fit.
-
-    classes_ : ndarray of shape (n_classes,)
-        The unique classes labels.
 
     t_ : int
         Number of weight updates performed during training.
@@ -143,8 +148,8 @@ class Perceptron(BaseSGDClassifier):
 
     https://en.wikipedia.org/wiki/Perceptron and references therein.
     """
-
-    def __init__(self, penalty=None, alpha=0.0001, fit_intercept=True,
+    @_deprecate_positional_args
+    def __init__(self, *, penalty=None, alpha=0.0001, fit_intercept=True,
                  max_iter=1000, tol=1e-3, shuffle=True, verbose=0, eta0=1.0,
                  n_jobs=None, random_state=0, early_stopping=False,
                  validation_fraction=0.1, n_iter_no_change=5,
