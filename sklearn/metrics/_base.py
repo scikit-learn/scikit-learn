@@ -233,7 +233,7 @@ def _check_ambiguity_pos_label(pos_label, y_true):
     # when elements in the two arrays are not comparable.
     classes = np.unique(y_true)
     if (pos_label is None and (
-            classes.dtype.kind in ('O', 'U', 'S') or
+            classes.dtype.kind in 'OUS' or
             not (np.array_equal(classes, [0, 1]) or
                  np.array_equal(classes, [-1, 1]) or
                  np.array_equal(classes, [0]) or
