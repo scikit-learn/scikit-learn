@@ -120,7 +120,9 @@ Changelog
 
 - |Enhancement| :func:`datasets.fetch_20newsgroups_vectorized` now supports
   loading as a pandas ``DataFrame`` by setting ``as_frame=True``. Requires
-  pandas v0.25 or newer. :pr:`17499` by :user:`Brigitta Sipőcz <bsipocz>`.
+  pandas v0.25 or newer.
+  :pr:`17499` by :user:`Brigitta Sipőcz <bsipocz>` and
+  :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.decomposition`
 ............................
