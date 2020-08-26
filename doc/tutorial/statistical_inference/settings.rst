@@ -42,16 +42,16 @@ needs to be preprocessed in order to be used by scikit-learn.
         ...            cmap=plt.cm.gray_r) #doctest: +SKIP
         <matplotlib.image.AxesImage object at ...>
     
+    .. image:: /auto_examples/datasets/images/sphx_glr_plot_digits_last_image_001.png
+        :target: ../../auto_examples/datasets/plot_digits_last_image.html
+        :align: center
+
     To use this dataset with scikit-learn, we transform each 8x8 image into a
     feature vector of length 64 ::
 
         >>> data = digits.images.reshape(
         ...     (digits.images.shape[0], -1)
         ... )
-
-    .. image:: /auto_examples/datasets/images/sphx_glr_plot_digits_last_image_001.png
-        :target: ../../auto_examples/datasets/plot_digits_last_image.html
-        :align: center
 
 Estimators objects
 ===================
