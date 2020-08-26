@@ -52,7 +52,7 @@ def _set_random_states(estimator, random_state=None):
         Estimator with potential randomness managed by random_state
         parameters.
 
-    random_state : int or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Pseudo-random number generator to control the generation of the random
         integers. Pass an int for reproducible output across multiple function
         calls.
