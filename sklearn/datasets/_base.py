@@ -6,14 +6,14 @@ Base IO code for all datasets
 #               2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #               2010 Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
-import os
 import csv
+import hashlib
+import os
 import shutil
 from collections import namedtuple
+from distutils.version import LooseVersion
 from os import environ, listdir, makedirs
 from os.path import dirname, exists, expanduser, isdir, join, splitext
-import hashlib
-from distutils.version import LooseVersion
 
 from ..utils import Bunch
 from ..utils import check_random_state
@@ -45,8 +45,8 @@ def get_data_home(data_home=None):
 
     Parameters
     ----------
-    data_home : str | None
-        The path to scikit-learn data dir.
+    data_home : str, default=None
+        The path to scikit-learn data directory.
     """
     if data_home is None:
         data_home = environ.get('SCIKIT_LEARN_DATA',
@@ -62,8 +62,8 @@ def clear_data_home(data_home=None):
 
     Parameters
     ----------
-    data_home : str | None
-        The path to scikit-learn data dir.
+    data_home : str, default=None
+        The path to scikit-learn data directory.
     """
     data_home = get_data_home(data_home)
     shutil.rmtree(data_home)
@@ -76,11 +76,13 @@ def _convert_data_dataframe(caller_name, data, target,
         data_df = pd.DataFrame(data, columns=feature_names)
     else:
         if LooseVersion(pd.__version__) < '0.25':
-            raise ValueError("Loading sparse datasets as a DataFrame requires "
-                             "Pandas v0.25+.")
-        else:
-            data_df = pd.DataFrame.sparse.from_spmatrix(data,
-                                                        columns=feature_names)
+            raise ValueError(
+                "Loading sparse datasets as a DataFrame requires Pandas "
+                "v0.25+."
+            )
+        data_df = pd.DataFrame.sparse.from_spmatrix(
+            data, columns=feature_names
+        )
 
     target_df = pd.DataFrame(target, columns=target_names)
     combined_df = pd.concat([data_df, target_df], axis=1)

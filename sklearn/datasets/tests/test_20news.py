@@ -9,9 +9,13 @@ import pytest
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.utils._testing import assert_allclose_dense_sparse
+from sklearn.datasets.tests.test_common import check_as_frame
+from sklearn.datasets.tests.test_common import check_pandas_dependency_message
 from sklearn.datasets.tests.test_common import check_return_X_y
+from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.preprocessing import normalize
+
+from sklearn.datasets import fetch_20newsgroups_vectorized
 
 
 def test_20news(fetch_20newsgroups_fxt):
@@ -103,15 +107,20 @@ def test_20news_asframe(fetch_20newsgroups_vectorized_fxt):
         assert "DataFrame requires Pandas v0.25+." in str(err.args[0])
     else:
         frame = bunch.frame
+        check_as_frame(
+            frame,
+            partial(fetch_20newsgroups_vectorized),
+        )
 
         assert frame.shape == (11314, 130108)
-        assert isinstance(bunch.data, pd.DataFrame)
-        assert isinstance(bunch.target, pd.Series)
-
         assert isinstance(bunch.frame.dtypes[0], pd.SparseDtype)
 
         # Check a small subset of features
         for expected_feature in ['beginner', 'beginners', 'beginning',
                                  'beginnings', 'begins', 'begley', 'begone']:
             assert expected_feature in frame.keys()
-            assert 'Category_class' in frame.keys()
+            assert 'category_class' in frame.keys()
+
+
+def test_as_frame_no_pandas():
+    check_pandas_dependency_message(fetch_20newsgroups_vectorized)

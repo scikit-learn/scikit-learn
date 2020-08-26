@@ -39,10 +39,10 @@ import joblib
 
 from . import get_data_home
 from . import load_files
+from ._base import _convert_data_dataframe
 from ._base import _pkl_filepath
 from ._base import _fetch_remote
 from ._base import RemoteFileMetadata
-from ._base import _convert_data_dataframe
 from ..feature_extraction.text import CountVectorizer
 from .. import preprocessing
 from ..utils import check_random_state, Bunch
@@ -233,7 +233,6 @@ def fetch_20newsgroups(*, data_home=None, subset='train', categories=None,
 
     (data, target) : tuple if `return_X_y=True`
         .. versionadded:: 0.22
-
     """
 
     data_home = get_data_home(data_home=data_home)
@@ -331,8 +330,8 @@ def fetch_20newsgroups(*, data_home=None, subset='train', categories=None,
 def fetch_20newsgroups_vectorized(*, subset="train", remove=(), data_home=None,
                                   download_if_missing=True, return_X_y=False,
                                   normalize=True, as_frame=False):
-    """Load the 20 newsgroups dataset and vectorize it into token counts \
-(classification).
+    """Load the 20 newsgroups dataset and vectorize it into token counts
+    (classification).
 
     Download it if necessary.
 
@@ -396,8 +395,13 @@ def fetch_20newsgroups_vectorized(*, subset="train", remove=(), data_home=None,
 
     as_frame : bool, default=False
         If True, the data is a pandas DataFrame including columns with
-        appropriate dtypes (numeric, string or categorical). The target is
-        a pandas DataFrame or Series depending on the number of target_columns.
+        appropriate dtypes (numeric, string, or categorical). The target is
+        a pandas DataFrame or Series depending on the number of
+        `target_columns`.
+
+        .. note::
+            Since the dataset is sparse, loading it as a pandas DataFrame
+            requires pandas 0.25+.
 
         .. versionadded:: 0.24
 
@@ -406,17 +410,17 @@ def fetch_20newsgroups_vectorized(*, subset="train", remove=(), data_home=None,
     bunch : :class:`~sklearn.utils.Bunch`
         Dictionary-like object, with the following attributes.
 
-        data: sparse matrix, shape [n_samples, n_features]
-            The data matrix to learn.
-            If ``as_frame`` is True, ``data`` is a pandas object.
-        target: array, shape [n_samples]
-            The target labels.
-        target_names: list, length [n_classes]
+        data: {sparse matrix, dataframe} of shape (n_samples, n_features)
+            The data matrix to learn. If ``as_frame`` is `True`, ``data`` is
+            a pandas DataFrame.
+        target: {ndarray, dataframe} of shape (n_samples,)
+            The target labels. If ``as_frame`` is `True`, ``target`` is a
+            pandas DataFrame.
+        target_names: list of shape (n_classes,)
             The names of target classes.
-            If ``as_frame`` is True, ``target`` is a pandas object.
         DESCR: str
             The full description of the dataset.
-        frame : pandas DataFrame
+        frame: dataframe of shape (n_samples, n_features + 1)
             Only present when `as_frame=True`. DataFrame with ``data`` and
             ``target``.
 
@@ -425,7 +429,6 @@ def fetch_20newsgroups_vectorized(*, subset="train", remove=(), data_home=None,
     (data, target) : tuple if ``return_X_y`` is True
 
         .. versionadded:: 0.20
-
     """
     data_home = get_data_home(data_home=data_home)
     filebase = '20newsgroup_vectorized'
@@ -488,7 +491,7 @@ def fetch_20newsgroups_vectorized(*, subset="train", remove=(), data_home=None,
         fdescr = rst_file.read()
 
     frame = None
-    target_name = ['Category_class', ]
+    target_name = ['category_class']
 
     if as_frame:
         frame, data, target = _convert_data_dataframe(
@@ -497,7 +500,8 @@ def fetch_20newsgroups_vectorized(*, subset="train", remove=(), data_home=None,
             target,
             feature_names,
             target_names=target_name,
-            sparse_data=True)
+            sparse_data=True
+        )
 
     if return_X_y:
         return data, target
