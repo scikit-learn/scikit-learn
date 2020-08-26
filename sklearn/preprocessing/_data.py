@@ -61,9 +61,10 @@ __all__ = [
 
 
 def _handle_zeros_in_scale(scale, copy=True):
-    ''' Makes sure that whenever scale is zero, we handle it correctly.
+    """Makes sure that whenever scale is zero, we handle it correctly.
 
-    This happens in most scalers when we have constant features.'''
+    This happens in most scalers when we have constant features.
+    """
 
     # if we are fitting on 1D arrays, scale might be a scalar
     if np.isscalar(scale):
@@ -80,7 +81,7 @@ def _handle_zeros_in_scale(scale, copy=True):
 
 @_deprecate_positional_args
 def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
-    """Standardize a dataset along any axis
+    """Standardize a dataset along any axis.
 
     Center to the mean and component wise scale to unit variance.
 
@@ -243,6 +244,10 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         Set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array).
 
+    clip: bool, default=False
+        Set to True to clip transformed values of held-out data to
+        provided `feature range`.
+
     Attributes
     ----------
     min_ : ndarray of shape (n_features,)
@@ -311,9 +316,10 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
     """
 
     @_deprecate_positional_args
-    def __init__(self, feature_range=(0, 1), *, copy=True):
+    def __init__(self, feature_range=(0, 1), *, copy=True, clip=False):
         self.feature_range = feature_range
         self.copy = copy
+        self.clip = clip
 
     def _reset(self):
         """Reset internal data-dependent state of the scaler, if necessary.
@@ -427,6 +433,8 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
 
         X *= self.scale_
         X += self.min_
+        if self.clip:
+            np.clip(X, self.feature_range[0], self.feature_range[1], out=X)
         return X
 
     def inverse_transform(self, X):
@@ -1519,7 +1527,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    degree : integer, default=2
+    degree : int, default=2
         The degree of the polynomial features.
 
     interaction_only : bool, default=False
@@ -2004,7 +2012,7 @@ class Normalizer(TransformerMixin, BaseEstimator):
 
 @_deprecate_positional_args
 def binarize(X, *, threshold=0.0, copy=True):
-    """Boolean thresholding of array-like or scipy.sparse matrix
+    """Boolean thresholding of array-like or scipy.sparse matrix.
 
     Read more in the :ref:`User Guide <preprocessing_binarization>`.
 
@@ -2053,7 +2061,7 @@ def binarize(X, *, threshold=0.0, copy=True):
 
 
 class Binarizer(TransformerMixin, BaseEstimator):
-    """Binarize data (set feature values to 0 or 1) according to a threshold
+    """Binarize data (set feature values to 0 or 1) according to a threshold.
 
     Values greater than the threshold map to 1, while values less than
     or equal to the threshold map to 0. With the default threshold of 0,
@@ -2112,7 +2120,7 @@ class Binarizer(TransformerMixin, BaseEstimator):
         self.copy = copy
 
     def fit(self, X, y=None):
-        """Do nothing and return the estimator unchanged
+        """Do nothing and return the estimator unchanged.
 
         This method is just there to implement the usual API and hence
         work in pipelines.
@@ -2134,7 +2142,7 @@ class Binarizer(TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X, copy=None):
-        """Binarize each element of X
+        """Binarize each element of X.
 
         Parameters
         ----------
@@ -2159,7 +2167,7 @@ class Binarizer(TransformerMixin, BaseEstimator):
 
 
 class KernelCenterer(TransformerMixin, BaseEstimator):
-    """Center a kernel matrix
+    """Center a kernel matrix.
 
     Let K(x, z) be a kernel defined by phi(x)^T phi(z), where phi is a
     function mapping x to a Hilbert space. KernelCenterer centers (i.e.,
@@ -2172,10 +2180,10 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
     Attributes
     ----------
     K_fit_rows_ : array of shape (n_samples,)
-        Average of each column of kernel matrix
+        Average of each column of kernel matrix.
 
     K_fit_all_ : float
-        Average of kernel matrix
+        Average of kernel matrix.
 
     Examples
     --------
@@ -2367,7 +2375,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         computational efficiency. Note that the subsampling procedure may
         differ for value-identical sparse and dense matrices.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for subsampling and smoothing
         noise.
         Please see ``subsample`` for more details.
@@ -2568,7 +2576,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         return self
 
     def _transform_col(self, X_col, quantiles, inverse):
-        """Private function to transform a single feature"""
+        """Private function to transform a single feature."""
 
         output_distribution = self.output_distribution
 
@@ -2638,7 +2646,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
 
     def _check_inputs(self, X, in_fit, accept_sparse_negative=False,
                       copy=False):
-        """Check inputs before fit and transform"""
+        """Check inputs before fit and transform."""
         # In theory reset should be equal to `in_fit`, but there are tests
         # checking the input number of feature and they expect a specific
         # string, which is not the same one raised by check_n_features. So we
@@ -2669,7 +2677,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         return X
 
     def _check_is_fitted(self, X):
-        """Check the inputs before transforming"""
+        """Check the inputs before transforming."""
         check_is_fitted(self)
         # check that the dimension of X are adequate with the fitted data
         if X.shape[1] != self.quantiles_.shape[1]:
@@ -2693,7 +2701,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         Returns
         -------
         X : ndarray of shape (n_samples, n_features)
-            Projected data
+            Projected data.
         """
 
         if sparse.issparse(X):
@@ -2815,7 +2823,7 @@ def quantile_transform(X, *, axis=0, n_quantiles=1000,
         computational efficiency. Note that the subsampling procedure may
         differ for value-identical sparse and dense matrices.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for subsampling and smoothing
         noise.
         Please see ``subsample`` for more details.
@@ -3096,7 +3104,7 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         Returns
         -------
         X : ndarray of shape (n_samples, n_features)
-            The original data
+            The original data.
         """
         check_is_fitted(self)
         X = self._check_input(X, in_fit=False, check_shape=True)

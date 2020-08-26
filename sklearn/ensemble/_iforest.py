@@ -93,7 +93,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         :obj:`joblib.parallel_backend` context. ``-1`` means using all
         processors. See :term:`Glossary <n_jobs>` for more details.
 
-    random_state : int or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the pseudo-randomness of the selection of the feature
         and split values for each branching step and each tree in the forest.
 
@@ -112,10 +112,17 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
     Attributes
     ----------
-    estimators_ : list of DecisionTreeClassifier
+    base_estimator_ : ExtraTreeRegressor instance
+        The child estimator template used to create the collection of
+        fitted sub-estimators.
+
+    estimators_ : list of ExtraTreeRegressor instances
         The collection of fitted sub-estimators.
 
-    estimators_samples_ : list of arrays
+    estimators_features_ : list of ndarray
+        The subset of drawn features for each base estimator.
+
+    estimators_samples_ : list of ndarray
         The subset of drawn samples (i.e., the in-bag samples) for each base
         estimator.
 
@@ -134,8 +141,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
         .. versionadded:: 0.20
 
-    estimators_features_ : list of arrays
-        The subset of drawn features for each base estimator.
+    n_features_ : int
+        The number of features when ``fit`` is performed.
 
     Notes
     -----
@@ -450,7 +457,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
     def _more_tags(self):
         return {
             '_xfail_checks': {
-                'check_sample_weights_invariance(kind=zeros)':
+                'check_sample_weights_invariance':
                 'zero sample_weight is not equivalent to removing samples',
             }
         }

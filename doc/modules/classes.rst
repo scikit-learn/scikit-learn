@@ -433,14 +433,12 @@ Samples generator
    :toctree: generated/
    :template: class.rst
 
-   exceptions.ChangedBehaviorWarning
    exceptions.ConvergenceWarning
    exceptions.DataConversionWarning
    exceptions.DataDimensionalityWarning
    exceptions.EfficiencyWarning
    exceptions.FitFailedWarning
    exceptions.NotFittedError
-   exceptions.NonBLASDotWarning
    exceptions.UndefinedMetricWarning
 
 
@@ -547,6 +545,7 @@ From text
    feature_selection.SelectFdr
    feature_selection.SelectFromModel
    feature_selection.SelectFwe
+   feature_selection.SequentialFeatureSelector
    feature_selection.RFE
    feature_selection.RFECV
    feature_selection.VarianceThreshold
@@ -708,6 +707,7 @@ Plotting
 
    kernel_approximation.AdditiveChi2Sampler
    kernel_approximation.Nystroem
+   kernel_approximation.PolynomialCountSketch
    kernel_approximation.RBFSampler
    kernel_approximation.SkewedChi2Sampler
 
@@ -900,7 +900,7 @@ Miscellaneous
     manifold.smacof
     manifold.spectral_embedding
     manifold.trustworthiness
-	
+
 
 .. _metrics_ref:
 
@@ -948,6 +948,7 @@ details.
    metrics.cohen_kappa_score
    metrics.confusion_matrix
    metrics.dcg_score
+   metrics.detection_error_tradeoff_curve
    metrics.f1_score
    metrics.fbeta_score
    metrics.hamming_loss
@@ -981,6 +982,7 @@ details.
    metrics.mean_squared_error
    metrics.mean_squared_log_error
    metrics.median_absolute_error
+   metrics.mean_absolute_percentage_error
    metrics.r2_score
    metrics.mean_poisson_deviance
    metrics.mean_gamma_deviance

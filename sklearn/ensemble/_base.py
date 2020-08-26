@@ -52,7 +52,7 @@ def _set_random_states(estimator, random_state=None):
         Estimator with potential randomness managed by random_state
         parameters.
 
-    random_state : int or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Pseudo-random number generator to control the generation of the random
         integers. Pass an int for reproducible output across multiple function
         calls.
@@ -179,7 +179,7 @@ def _partition_estimators(n_estimators, n_jobs):
 
     # Partition estimators between jobs
     n_estimators_per_job = np.full(n_jobs, n_estimators // n_jobs,
-                                   dtype=np.int)
+                                   dtype=int)
     n_estimators_per_job[:n_estimators % n_jobs] += 1
     starts = np.cumsum(n_estimators_per_job)
 

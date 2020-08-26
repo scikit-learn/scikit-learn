@@ -29,6 +29,7 @@ from sklearn.metrics import brier_score_loss
 from sklearn.metrics import cohen_kappa_score
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import coverage_error
+from sklearn.metrics import detection_error_tradeoff_curve
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import f1_score
 from sklearn.metrics import fbeta_score
@@ -41,6 +42,7 @@ from sklearn.metrics import log_loss
 from sklearn.metrics import max_error
 from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import mean_absolute_percentage_error
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import mean_tweedie_deviance
 from sklearn.metrics import mean_poisson_deviance
@@ -98,6 +100,7 @@ REGRESSION_METRICS = {
     "mean_absolute_error": mean_absolute_error,
     "mean_squared_error": mean_squared_error,
     "median_absolute_error": median_absolute_error,
+    "mean_absolute_percentage_error": mean_absolute_percentage_error,
     "explained_variance_score": explained_variance_score,
     "r2_score": partial(r2_score, multioutput='variance_weighted'),
     "mean_normal_deviance": partial(mean_tweedie_deviance, power=0),
@@ -203,6 +206,7 @@ def precision_recall_curve_padded_thresholds(*args, **kwargs):
 CURVE_METRICS = {
     "roc_curve": roc_curve,
     "precision_recall_curve": precision_recall_curve_padded_thresholds,
+    "detection_error_tradeoff_curve": detection_error_tradeoff_curve,
 }
 
 THRESHOLDED_METRICS = {
@@ -299,6 +303,7 @@ METRIC_UNDEFINED_MULTICLASS = {
     # curves
     "roc_curve",
     "precision_recall_curve",
+    "detection_error_tradeoff_curve",
 }
 
 # Metric undefined with "binary" or "multiclass" input
@@ -320,6 +325,7 @@ THRESHOLDED_METRICS_WITH_AVERAGING = {
 METRICS_WITH_POS_LABEL = {
     "roc_curve",
     "precision_recall_curve",
+    "detection_error_tradeoff_curve",
 
     "brier_score_loss",
 
@@ -350,6 +356,7 @@ METRICS_WITH_LABELS = {
     "normalized_confusion_matrix",
     "roc_curve",
     "precision_recall_curve",
+    "detection_error_tradeoff_curve",
 
     "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
     "jaccard_score",
@@ -425,7 +432,7 @@ MULTILABELS_METRICS = {
 # Regression metrics with "multioutput-continuous" format support
 MULTIOUTPUT_METRICS = {
     "mean_absolute_error", "median_absolute_error", "mean_squared_error",
-    "r2_score", "explained_variance_score"
+    "r2_score", "explained_variance_score", "mean_absolute_percentage_error"
 }
 
 # Symmetric with respect to their input arguments y_true and y_pred
@@ -462,6 +469,7 @@ NOT_SYMMETRIC_METRICS = {
     "normalized_confusion_matrix",
     "roc_curve",
     "precision_recall_curve",
+    "detection_error_tradeoff_curve",
 
     "precision_score", "recall_score", "f2_score", "f0.5_score",
 
@@ -472,7 +480,7 @@ NOT_SYMMETRIC_METRICS = {
     "macro_f0.5_score", "macro_f2_score", "macro_precision_score",
     "macro_recall_score", "log_loss", "hinge_loss",
     "mean_gamma_deviance", "mean_poisson_deviance",
-    "mean_compound_poisson_deviance"
+    "mean_compound_poisson_deviance", "mean_absolute_percentage_error"
 }
 
 
@@ -1371,7 +1379,15 @@ def test_thresholded_multilabel_multioutput_permutations_invariance(name):
         y_true_perm = y_true[:, perm]
 
         current_score = metric(y_true_perm, y_score_perm)
-        assert_almost_equal(score, current_score)
+        if metric == mean_absolute_percentage_error:
+            assert np.isfinite(current_score)
+            assert current_score > 1e6
+            # Here we are not comparing the values in case of MAPE because
+            # whenever y_true value is exactly zero, the MAPE value doesn't
+            # signify anything. Thus, in this case we are just expecting
+            # very large finite value.
+        else:
+            assert_almost_equal(score, current_score)
 
 
 @pytest.mark.parametrize(
