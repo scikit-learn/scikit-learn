@@ -737,12 +737,18 @@ In general have the following in mind:
        as the column names.
     6. When specifying the data type of a list, use ``of`` as a delimiter:
        ``list of int``. When the parameter supports arrays giving details about
-       the shape and/or data type and a list of such arrays, you should use
-       ``list thereof`` to be concise; e.g.
-       ``array-like of shape (n_samples,) or list thereof``.
+       the shape and/or data type and a list of such arrays, you can use one
+       of:
+
+      * ``array-like of shape (n_samples,) or list thereof``;
+      * ``array-like of shape (n_samples,) or list of these``;
+      * ``array-like of shape (n_samples,) or list of such arrays``.
+
     7. When specifying the dtype of an ndarray, use e.g. ``dtype=np.int32``
        after defining the shape:
-       ``ndarray of shape (n_samples,), dtype=np.int32``.
+       ``ndarray of shape (n_samples,), dtype=np.int32``. You can specify
+       multiple dtype as a set:
+       ``array-like of shape (n_samples,), dtype={int, float}``.
     8. When the default is ``None``, ``None`` only needs to be specified at the
        end with ``default=None``. Be sure to include in the docstring, what it
        means for the parameter or attribute to be ``None``.
