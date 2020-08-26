@@ -76,6 +76,7 @@ a code {
 
 img {
    max-width: 100%;
+   border-radius: 0.25rem;
 }
 
 span.highlighted {
@@ -511,10 +512,6 @@ div.sk-sidebar-toc-logo {
   height: 52px;
 }
 
-.sk-toc-active {
-  font-weight: bold;
-}
-
 div.sk-sidebar-toc-wrapper {
   font-size: 0.9rem;
   width: 252px;
@@ -553,6 +550,7 @@ div.sk-sidebar-toc ul ul {
 }
 
 div.sk-sidebar-toc ul ul ul {
+  list-style: square;
   margin-left: 1rem;
 }
 
@@ -837,10 +835,6 @@ div.highlight:hover span.copybutton {
 
 div.highlight:hover span.copybutton:hover {
     background-color: #20252B;
-}
-
-div.body img.align-center {
-  max-width: 800px;
 }
 
 div.body img {
@@ -1213,12 +1207,30 @@ div.sk-sponsor-div, div.sk-testimonial-div {
   align-items: center;
 }
 
-div.sk-sponsor-div-box, div.sk-testimonial-div-box {
+div.sk-sponsor-div-box, div.sk-testimonial-div-box,
+div.sk-doc-div-box {
   width: 100%;
+}
+
+div.sk-doc-div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+div.sk-doc-div-box {
+  padding: 0.30rem;
+  overflow: auto;
 }
 
 @media screen and (min-width: 500px) {
   div.sk-sponsor-div-box, div.sk-testimonial-div-box {
+    width: 50%;
+  }
+}
+
+@media screen and (min-width: 1200px) {
+  div.sk-doc-div-box {
     width: 50%;
   }
 }
