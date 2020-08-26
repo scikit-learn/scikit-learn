@@ -344,31 +344,16 @@ application of Occam's razor: *prefer simpler models*.
 Classification
 ---------------
 
-.. raw :: html
-
-   <div class="sk-doc-div">
-     <div class="sk-doc-div-box">
-
 For classification, as in the labeling
 `iris <https://en.wikipedia.org/wiki/Iris_flower_data_set>`_ task, linear
 regression is not the right approach as it will give too much weight to
 data far from the decision frontier. A linear approach is to fit a sigmoid
 function or **logistic** function:
 
-.. raw :: html
-
-     </div>
-     <div class="sk-doc-div-box">
-
 .. image:: /auto_examples/linear_model/images/sphx_glr_plot_logistic_001.png
    :target: ../../auto_examples/linear_model/plot_logistic.html
    :scale: 70
    :align: center
-
-.. raw :: html
-
-     </div>
-   </div>
 
 .. math::
 
@@ -432,33 +417,11 @@ the separating line (less regularization).
 
 .. currentmodule :: sklearn.svm
 
-.. |svm_margin_unreg| image:: /auto_examples/svm/images/sphx_glr_plot_svm_margin_001.png
+.. image:: /auto_examples/svm/images/sphx_glr_plot_svm_margin_001.png
    :target: ../../auto_examples/svm/plot_svm_margin.html
 
 .. |svm_margin_reg| image:: /auto_examples/svm/images/sphx_glr_plot_svm_margin_002.png
    :target: ../../auto_examples/svm/plot_svm_margin.html
-
-.. raw :: html
-
-   <div class="sk-doc-div">
-     <div class="sk-doc-div-box">
-      <h4>Unregularized SVM</h4>
-
-|svm_margin_unreg|
-
-.. raw :: html
-
-     </div>
-     <div class="sk-doc-div-box">
-      <h4>Regularized SVM (default)</h4>
-
-|svm_margin_reg|
-
-.. raw :: html
-
-     </div>
-    </div>
-
 
 .. topic:: Example:
 
@@ -492,35 +455,19 @@ build a decision function that is not linear but may be polynomial instead.
 This is done using the *kernel trick* that can be seen as
 creating a decision energy by positioning *kernels* on observations:
 
-.. |svm_kernel_linear| image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_001.png
+.. figure:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_001.png
    :target: ../../auto_examples/svm/plot_svm_kernels.html
 
-.. |svm_kernel_poly| image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_002.png
-   :target: ../../auto_examples/svm/plot_svm_kernels.html
-
-.. |svm_kernel_rbf| image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_003.png
-   :target: ../../auto_examples/svm/plot_svm_kernels.html
-
-.. raw :: html
-
-   <div class="sk-doc-div">
-     <div class="sk-doc-div-box">
-      <h4>Linear kernel</h4>
-
-|svm_kernel_linear|
-
+   **Linear kernel**
+   
 ::
 
     >>> svc = svm.SVC(kernel='linear')
 
+.. figure:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_002.png
+   :target: ../../auto_examples/svm/plot_svm_kernels.html
 
-.. raw :: html
-
-     </div>
-     <div class="sk-doc-div-box">
-      <h4>Polynomial kernel</h4>
-
-|svm_kernel_poly|
+   **Polynomial kernel**
 
 ::
 
@@ -528,24 +475,18 @@ creating a decision energy by positioning *kernels* on observations:
     ...               degree=3)
     >>> # degree: polynomial degree
 
-.. raw :: html
+      <h4></h4>
 
-     </div>
-     <div class="sk-doc-div-box">
-      <h4>RBF kernel (Radial Basis Function)</h4>
+.. figure:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_003.png
+   :target: ../../auto_examples/svm/plot_svm_kernels.html
 
-|svm_kernel_rbf|
+   **RBF kernel (Radial Basis Function)**
 
 ::
 
     >>> svc = svm.SVC(kernel='rbf')
     >>> # gamma: inverse of size of
     >>> # radial kernel
-
-.. raw :: html
-
-     </div>
-    </div>
 
 .. topic:: **Interactive example**
 
