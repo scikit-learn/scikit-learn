@@ -1070,6 +1070,16 @@ class CategoricalNB(_BaseDiscreteNB):
         Prior probabilities of the classes. If specified the priors are not
         adjusted according to the data.
 
+    min_categories : int or array-like of shape (n_features,), default=None
+        Minimum number of categories per feature.
+
+        - integer: Sets the minimum number of categories per feature to
+          `n_categories` for each features.
+        - array-like: shape (n_features,) where `n_categories[i]` holds the
+          minimum number of categories for the ith column of the input.
+        - None (default): Determines the number of categories automatically
+          from the training data.
+
     Attributes
     ----------
     category_count_ : list of arrays of shape (n_features,)
@@ -1095,6 +1105,10 @@ class CategoricalNB(_BaseDiscreteNB):
     n_features_ : int
         Number of features of each sample.
 
+    n_categories_ : ndarray of shape (n_features,), dtype=int
+        Number of categories for each feature. This value is
+        inferred from the data or set by the minimum number of categories.
+
     Examples
     --------
     >>> import numpy as np
@@ -1110,10 +1124,12 @@ class CategoricalNB(_BaseDiscreteNB):
     """
 
     @_deprecate_positional_args
-    def __init__(self, *, alpha=1.0, fit_prior=True, class_prior=None):
+    def __init__(self, *, alpha=1.0, fit_prior=True, class_prior=None,
+                 min_categories=None):
         self.alpha = alpha
         self.fit_prior = fit_prior
         self.class_prior = class_prior
+        self.min_categories = min_categories
 
     def fit(self, X, y, sample_weight=None):
         """Fit Naive Bayes classifier according to X, y
@@ -1205,6 +1221,30 @@ class CategoricalNB(_BaseDiscreteNB):
         self.category_count_ = [np.zeros((n_effective_classes, 0))
                                 for _ in range(n_features)]
 
+    @staticmethod
+    def _validate_n_categories(X, min_categories):
+        # rely on max for n_categories categories are encoded between 0...n-1
+        n_categories_X = X.max(axis=0) + 1
+        min_categories_ = np.array(min_categories)
+        if min_categories is not None:
+            if not np.issubdtype(min_categories_.dtype, np.signedinteger):
+                raise ValueError(
+                    f"'min_categories' should have integral type. Got "
+                    f"{min_categories_.dtype} instead."
+                )
+            n_categories_ = np.maximum(n_categories_X,
+                                       min_categories_,
+                                       dtype=np.int)
+            if n_categories_.shape != n_categories_X.shape:
+                raise ValueError(
+                    f"'min_categories' should have shape ({X.shape[1]},"
+                    f") when an array-like is provided. Got"
+                    f" {min_categories_.shape} instead."
+                )
+            return n_categories_
+        else:
+            return n_categories_X
+
     def _count(self, X, Y):
         def _update_cat_count_dims(cat_count, highest_feature):
             diff = highest_feature + 1 - cat_count.shape[1]
@@ -1225,10 +1265,12 @@ class CategoricalNB(_BaseDiscreteNB):
                 cat_count[j, indices] += counts[indices]
 
         self.class_count_ += Y.sum(axis=0)
+        self.n_categories_ = self._validate_n_categories(
+            X, self.min_categories)
         for i in range(self.n_features_):
             X_feature = X[:, i]
             self.category_count_[i] = _update_cat_count_dims(
-                self.category_count_[i], X_feature.max())
+                self.category_count_[i], self.n_categories_[i] - 1)
             _update_cat_count(X_feature, Y,
                               self.category_count_[i],
                               self.class_count_.shape[0])

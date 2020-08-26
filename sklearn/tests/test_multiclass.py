@@ -781,6 +781,8 @@ def test_pairwise_cross_val_score():
 
 @pytest.mark.parametrize("MultiClassClassifier",
                          [OneVsRestClassifier, OneVsOneClassifier])
+# FIXME: we should move this test in `estimator_checks` once we are able
+# to construct meta-estimator instances
 def test_support_missing_values(MultiClassClassifier):
     # smoke test to check that pipeline OvR and OvO classifiers are letting
     # the validation of missing values to

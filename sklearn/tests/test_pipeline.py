@@ -1231,3 +1231,19 @@ def test_pipeline_missing_values_leniency():
     X[mask] = np.nan
     pipe = make_pipeline(SimpleImputer(), LogisticRegression())
     assert pipe.fit(X, y).score(X, y) > 0.4
+
+
+def test_feature_union_warns_unknown_transformer_weight():
+    # Warn user when transformer_weights containers a key not present in
+    # transformer_list
+    X = [[1, 2], [3, 4], [5, 6]]
+    y = [0, 1, 2]
+
+    transformer_list = [('transf', Transf())]
+    # Transformer weights dictionary with incorrect name
+    weights = {'transformer': 1}
+    expected_msg = ('Attempting to weight transformer "transformer", '
+                    'but it is not present in transformer_list.')
+    union = FeatureUnion(transformer_list, transformer_weights=weights)
+    with pytest.raises(ValueError, match=expected_msg):
+        union.fit(X, y)
