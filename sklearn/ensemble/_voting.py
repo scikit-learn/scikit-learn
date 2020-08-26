@@ -100,17 +100,20 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
         ----------
         X : {array-like, sparse matrix, dataframe} of shape \
                 (n_samples, n_features)
-            Input samples.
+            Input samples
+
         y : ndarray of shape (n_samples,), default=None
             Target values (None for unsupervised transformations).
+
         **fit_params : dict
             Additional fit parameters.
+
         Returns
         -------
         X_new : ndarray array of shape (n_samples, n_features_new)
             Transformed array.
         """
-        super().fit_transform(X, y, **fit_params)
+        return super().fit_transform(X, y, **fit_params)
 
     @property
     def n_features_in_(self):
