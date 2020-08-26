@@ -15,7 +15,7 @@ from ..metrics import euclidean_distances
 from ..utils import check_random_state, check_array, check_symmetric
 from ..isotonic import IsotonicRegression
 from ..utils.validation import _deprecate_positional_args
-from ..utils._parallel import delayed
+from ..utils.fixes import delayed
 
 
 def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,

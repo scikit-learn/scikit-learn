@@ -21,7 +21,7 @@ from ..utils import check_random_state, gen_batches, gen_even_slices
 from ..utils.validation import check_non_negative
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _deprecate_positional_args
-from ..utils._parallel import delayed
+from ..utils.fixes import delayed
 
 from ._online_lda_fast import (mean_change, _dirichlet_expectation_1d,
                                _dirichlet_expectation_2d)

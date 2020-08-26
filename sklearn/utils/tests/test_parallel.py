@@ -7,7 +7,7 @@ import joblib
 from numpy.testing import assert_array_equal
 
 from sklearn._config import config_context, get_config
-from sklearn.utils._parallel import delayed
+from sklearn.utils.fixes import delayed
 
 
 def get_working_memory():

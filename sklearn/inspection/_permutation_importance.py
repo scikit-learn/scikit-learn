@@ -7,7 +7,7 @@ from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import check_array
 from ..utils.validation import _deprecate_positional_args
-from ..utils._parallel import delayed
+from ..utils.fixes import delayed
 
 
 def _weights_scorer(scorer, estimator, X, y, sample_weight):

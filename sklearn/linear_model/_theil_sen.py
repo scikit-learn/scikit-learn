@@ -21,7 +21,7 @@ from ._base import LinearModel
 from ..base import RegressorMixin
 from ..utils import check_random_state
 from ..utils.validation import _deprecate_positional_args
-from ..utils._parallel import delayed
+from ..utils.fixes import delayed
 from ..exceptions import ConvergenceWarning
 
 _EPSILON = np.finfo(np.double).eps

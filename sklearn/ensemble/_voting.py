@@ -33,7 +33,7 @@ from ..utils.validation import column_or_1d
 from ..utils.validation import _deprecate_positional_args
 from ..exceptions import NotFittedError
 from ..utils._estimator_html_repr import _VisualBlock
-from ..utils._parallel import delayed
+from ..utils.fixes import delayed
 
 
 class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):

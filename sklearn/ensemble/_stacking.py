@@ -33,7 +33,7 @@ from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils.validation import column_or_1d
 from ..utils.validation import _deprecate_positional_args
-from ..utils._parallel import delayed
+from ..utils.fixes import delayed
 
 
 class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,

@@ -25,7 +25,7 @@ from ..utils.fixes import _astype_copy_false, _joblib_parallel_args
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.validation import column_or_1d
 from ..utils.validation import _deprecate_positional_args
-from ..utils._parallel import delayed
+from ..utils.fixes import delayed
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
 from . import _cd_fast as cd_fast  # type: ignore

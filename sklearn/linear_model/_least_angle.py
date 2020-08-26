@@ -25,7 +25,7 @@ from ..utils import check_random_state
 from ..model_selection import check_cv
 from ..exceptions import ConvergenceWarning
 from ..utils.validation import _deprecate_positional_args
-from ..utils._parallel import delayed
+from ..utils.fixes import delayed
 
 SOLVE_TRIANGULAR_ARGS = {'check_finite': False}
 

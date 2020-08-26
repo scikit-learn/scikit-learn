@@ -13,7 +13,7 @@ from contextlib import suppress
 
 from math import log
 import numpy as np
-from joblib import delayed, Parallel
+from joblib import Parallel
 
 from scipy.special import expit
 from scipy.special import xlogy
@@ -24,6 +24,7 @@ from .base import (BaseEstimator, ClassifierMixin, RegressorMixin, clone,
                    MetaEstimatorMixin)
 from .preprocessing import label_binarize, LabelBinarizer
 from .utils import check_array, indexable, column_or_1d
+from .utils.fixes import delayed
 from .utils.validation import check_is_fitted, check_consistent_length
 from .utils.validation import _check_sample_weight
 from .pipeline import Pipeline
