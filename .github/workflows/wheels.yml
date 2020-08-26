@@ -9,13 +9,13 @@ on:
     tags:
       # Final releases, release candidates and post-releases build
       - "[0-9]+.[0-9]+.[0-9]+(rc[0-9]+)?(.post[0-9]+)?"
-  pull_request:
-    branches:
-      - master
-      - "[0-9]+.[0-9]+.X"
 
 jobs:
   build_wheels:
+    # Add a commit marker to trigger the wheel builder when needed
+    if: {{ github.event_name == "schedule" ||
+           github.event_name == "push" ||
+           endsWith(github.event.head_commit.message, "[wheel-build]") }}
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -27,7 +27,7 @@ jobs:
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
 
       - name: Setup Python
         uses: actions/setup-python@v2
@@ -57,6 +57,10 @@ jobs:
           path: wheelhouse/*.whl 
 
   build_sdist:
+    # Add a commit marker to trigger the source distribution build when needed
+    if: {{ github.event. == "cron" ||
+           github.event. == "tag" ||
+           endsWith(github.event.head_commit.message, "[source-build]") }}
     name: Source distribution
     runs-on: ubuntu-latest
 
