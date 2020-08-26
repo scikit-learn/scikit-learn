@@ -44,7 +44,7 @@ jobs:
           CIBW_TEST_COMMAND: pytest --pyargs sklearn
           # Embed vcomp140.dll before generating the Windows
           # wheel and after building the package from source
-          CIBW_BEFORE_BUILD_WINDOWS: pip install --no-clean . &&
+          CIBW_BEFORE_BUILD_WINDOWS: pip install numpy scipy cython &&
                                      python setup.py build &&
                                      python build_tools/github/vendor_vcomp140.py
         run: |
