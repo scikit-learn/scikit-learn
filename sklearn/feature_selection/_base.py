@@ -5,7 +5,6 @@
 # License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
-from functools import wraps
 from warnings import warn
 from operator import attrgetter
 
