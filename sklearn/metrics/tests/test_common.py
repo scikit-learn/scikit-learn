@@ -1442,20 +1442,16 @@ def test_metrics_consistent_type_error(metric_name):
         (roc_curve, True),
     ],
 )
-@pytest.mark.parametrize("dtype_y_str", [None, object])
+@pytest.mark.parametrize("dtype_y_str", [str, object])
 def test_metrics_pos_label_error_str(metric, y_pred_threshold, dtype_y_str):
     # check that the error message if `pos_label` is not specified and the
     # targets is made of strings.
     rng = np.random.RandomState(42)
-    y1 = np.array(["spam"] * 3 + ["eggs"] * 2)
-    if dtype_y_str is not None:
-        y1 = y1.astype(dtype_y_str)
+    y1 = np.array(["spam"] * 3 + ["eggs"] * 2, dtype=dtype_y_str)
     y2 = rng.randint(0, 2, size=y1.size)
 
     if not y_pred_threshold:
-        y2 = np.array(["spam", "eggs"])[y2]
-        if dtype_y_str is not None:
-            y2 = y2.astype(dtype_y_str)
+        y2 = np.array(["spam", "eggs"], dtype=dtype_y_str)[y2]
 
     err_msg_pos_label_None = (
         "y_true takes value in {'eggs', 'spam'} and pos_label is not "
@@ -1464,7 +1460,7 @@ def test_metrics_pos_label_error_str(metric, y_pred_threshold, dtype_y_str):
     )
     err_msg_pos_label_1 = (
         r"pos_label=1 is not a valid label. It should be one of "
-        r"\['eggs', 'spam'\]"
+        r"\['eggs' 'spam'\]"
     )
 
     pos_label_default = signature(metric).parameters["pos_label"].default
