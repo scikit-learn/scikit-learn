@@ -31,34 +31,15 @@ The dataset used in this example is a preprocessed excerpt of the
 
 .. literalinclude:: ../../auto_examples/applications/plot_face_recognition.py
 
-.. |prediction| image:: ../../images/plot_face_recognition_1.png
+.. figure:: ../../images/plot_face_recognition_1.png
    :scale: 50
 
-.. |eigenfaces| image:: ../../images/plot_face_recognition_2.png
+   **Prediction**
+
+.. figure:: ../../images/plot_face_recognition_2.png
    :scale: 50
 
-.. raw :: html
-
-   <div class="sk-doc-div">
-    <div class="sk-doc-div-box">
-
-     <h4>Prediction</h4>
-
-|prediction|
-
-.. raw :: html
-
-    </div>
-      <div class="sk-doc-div-box">
-
-     <h4>Eigenfaces</h4>
-
-|eigenfaces|
-
-.. raw :: html
-
-     </div>
-    </div>
+   **Eigenfaces**
 
 Expected results for the top 5 most represented people in the dataset::
 

@@ -38,11 +38,6 @@ Nearest neighbor and the curse of dimensionality
 
 .. topic:: Classifying irises:
 
-    .. raw :: html
-
-       <div class="sk-doc-div">
-         <div class="sk-doc-div-box">
-
     The iris dataset is a classification task consisting in identifying 3
     different types of irises (Setosa, Versicolour, and Virginica) from
     their petal and sepal length and width::
@@ -55,21 +50,10 @@ Nearest neighbor and the curse of dimensionality
         >>> np.unique(iris_y)
         array([0, 1, 2])
 
-    .. raw :: html
-
-         </div>
-         <div class="sk-doc-div-box">
-
     .. image:: /auto_examples/datasets/images/sphx_glr_plot_iris_dataset_001.png
         :target: ../../auto_examples/datasets/plot_iris_dataset.html
         :align: center
 	:scale: 50
-
-    .. raw :: html
-
-         </div>
-       </div>
-
 
 k-Nearest neighbors classifier
 -------------------------------
@@ -173,11 +157,6 @@ in its simplest form, fits a linear model to the data set by adjusting
 a set of parameters in order to make the sum of the squared residuals
 of the model as small as possible.
 
-.. raw :: html
-
-   <div class="sk-doc-div">
-     <div class="sk-doc-div-box">
-
 Linear models: :math:`y = X\beta + \epsilon`
 
  * :math:`X`: data
@@ -185,20 +164,10 @@ Linear models: :math:`y = X\beta + \epsilon`
  * :math:`\beta`: Coefficients
  * :math:`\epsilon`: Observation noise
 
-.. raw :: html
-
-     </div>
-     <div class="sk-doc-div-box">
-
 .. image:: /auto_examples/linear_model/images/sphx_glr_plot_ols_001.png
    :target: ../../auto_examples/linear_model/plot_ols.html
    :scale: 50
    :align: center
-
-.. raw :: html
-
-     </div>
-   </div>
 
 ::
 
@@ -230,11 +199,6 @@ Shrinkage
 If there are few data points per dimension, noise in the observations
 induces high variance:
 
-.. raw :: html
-
-   <div class="sk-doc-div">
-     <div class="sk-doc-div-box">
-
 ::
 
     >>> X = np.c_[ .5, 1].T
@@ -252,31 +216,14 @@ induces high variance:
     ...     plt.plot(test, regr.predict(test)) # doctest: +SKIP
     ...     plt.scatter(this_X, y, s=3)  # doctest: +SKIP
 
-.. raw :: html
-
-     </div>
-     <div class="sk-doc-div-box">
-
 .. image:: /auto_examples/linear_model/images/sphx_glr_plot_ols_ridge_variance_001.png
    :target: ../../auto_examples/linear_model/plot_ols_ridge_variance.html
    :align: center
-
-.. raw :: html
-
-     </div>
-    </div>
-
 
 A solution in high-dimensional statistical learning is to *shrink* the
 regression coefficients to zero: any two randomly chosen set of
 observations are likely to be uncorrelated. This is called :class:`Ridge`
 regression:
-
-.. raw :: html
-
-   <div class="sk-doc-div">
-     <div class="sk-doc-div-box">
-
 
 ::
 
@@ -291,20 +238,9 @@ regression:
     ...     plt.plot(test, regr.predict(test)) # doctest: +SKIP
     ...     plt.scatter(this_X, y, s=3) # doctest: +SKIP
 
-.. raw :: html
-
-     </div>
-     <div class="sk-doc-div-box">
-
 .. image:: /auto_examples/linear_model/images/sphx_glr_plot_ols_ridge_variance_002.png
    :target: ../../auto_examples/linear_model/plot_ols_ridge_variance.html
    :align: center
-
-.. raw :: html
-
-     </div>
-   </div>
-
 
 This is an example of **bias/variance tradeoff**: the larger the ridge
 ``alpha`` parameter, the higher the bias and the lower the variance.

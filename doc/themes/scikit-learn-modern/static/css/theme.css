@@ -77,6 +77,7 @@ a code {
 img {
    max-width: 100%;
    border-radius: 0.25rem;
+   padding: 0.5rem
 }
 
 span.highlighted {
@@ -1207,30 +1208,13 @@ div.sk-sponsor-div, div.sk-testimonial-div {
   align-items: center;
 }
 
-div.sk-sponsor-div-box, div.sk-testimonial-div-box,
-div.sk-doc-div-box {
+div.sk-sponsor-div-box, div.sk-testimonial-div-box
+{
   width: 100%;
-}
-
-div.sk-doc-div {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-div.sk-doc-div-box {
-  padding: 0.30rem;
-  overflow: auto;
 }
 
 @media screen and (min-width: 500px) {
   div.sk-sponsor-div-box, div.sk-testimonial-div-box {
-    width: 50%;
-  }
-}
-
-@media screen and (min-width: 1200px) {
-  div.sk-doc-div-box {
     width: 50%;
   }
 }
