@@ -568,6 +568,17 @@ def check_array(array, accept_sparse=False, *, accept_large_sparse=True,
     if hasattr(array, 'sparse') and array.ndim > 1:
         # DataFrame.sparse only supports `to_coo`
         array = array.sparse.to_coo()
+        if array.dtype == np.dtype('object'):
+            unique_dtypes = set(
+                [dt.subtype.name for dt in array_orig.dtypes]
+            )
+            if len(unique_dtypes) > 1:
+                raise ValueError(
+                    "Pandas DataFrame with mixed sparse extension arrays "
+                    "generated a sparse matrix with object dtype which "
+                    "can not be converted to a scipy sparse matrix."
+                    "Sparse extension arrays should all have the same "
+                    "numeric type.")
 
     if sp.issparse(array):
         _ensure_no_complex_data(array)

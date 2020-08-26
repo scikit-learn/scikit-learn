@@ -1489,6 +1489,7 @@ def test_parameters_sampler_replacement():
     assert len(samples) == 8
     for values in ParameterGrid(params):
         assert values in samples
+    assert len(ParameterSampler(params, n_iter=1000)) == 8
 
     # test sampling without replacement in a large grid
     params = {'a': range(10), 'b': range(10), 'c': range(10)}

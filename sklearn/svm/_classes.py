@@ -88,7 +88,7 @@ class LinearSVC(LinearClassifierMixin,
         per-process runtime setting in liblinear that, if enabled, may not work
         properly in a multithreaded context.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the pseudo random number generation for shuffling the data for
         the dual coordinate descent (if ``dual=True``). When ``dual=False`` the
         underlying implementation of :class:`LinearSVC` is not random and
@@ -313,7 +313,7 @@ class LinearSVR(RegressorMixin, LinearModel):
         per-process runtime setting in liblinear that, if enabled, may not work
         properly in a multithreaded context.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the pseudo random number generation for shuffling the data.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -552,7 +552,7 @@ class SVC(BaseSVC):
 
         .. versionadded:: 0.22
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the pseudo random number generation for shuffling the data for
         probability estimates. Ignored when `probability` is False.
         Pass an int for reproducible output across multiple function calls.
@@ -564,7 +564,7 @@ class SVC(BaseSVC):
         Multipliers of parameter C for each class.
         Computed based on the ``class_weight`` parameter.
 
-    classes_ : array of shape (n_classes,)
+    classes_ : ndarray of shape (n_classes,)
         The classes labels.
 
     coef_ : ndarray of shape (n_classes * (n_classes - 1) / 2, n_features)
@@ -775,7 +775,7 @@ class NuSVC(BaseSVC):
 
         .. versionadded:: 0.22
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the pseudo random number generation for shuffling the data for
         probability estimates. Ignored when `probability` is False.
         Pass an int for reproducible output across multiple function calls.
