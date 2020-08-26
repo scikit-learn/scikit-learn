@@ -28,8 +28,8 @@ def test_binomial_deviance():
     assert (bd(np.array([0.]), np.array([0.])) ==
             bd(np.array([1.]), np.array([0.])))
 
-    bd(np.array([1., 1, 1]), np.array([100., 100, 100])) == approx(0)
-    bd(np.array([1., 0, 0]), np.array([100., -100, -100])) == approx(0)
+    assert bd(np.array([1., 1, 1]), np.array([100., 100, 100])) == approx(0)
+    assert bd(np.array([1., 0, 0]), np.array([100., -100, -100])) == approx(0)
 
     # check if same results as alternative definition of deviance, from ESLII
     # Eq. (10.18): -loglike = log(1 + exp(-2*z*f))
@@ -46,7 +46,7 @@ def test_binomial_deviance():
         (np.array([-5., -5, -5]), np.array([3., 3, 3])))
 
     for datum in test_data:
-        bd(*datum) == approx(alt_dev(*datum))
+        assert bd(*datum) == approx(alt_dev(*datum))
 
     # check the negative gradient against altenative formula from ESLII
     # Note: negative_gradient is half the negative gradient.
@@ -55,7 +55,7 @@ def test_binomial_deviance():
         return z / (1 + np.exp(z * raw_pred))
 
     for datum in test_data:
-        bd.negative_gradient(*datum) == approx(alt_ng(*datum))
+        assert bd.negative_gradient(*datum) == approx(alt_ng(*datum))
 
 
 def test_sample_weight_smoke():
