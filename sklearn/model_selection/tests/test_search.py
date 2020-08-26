@@ -1766,7 +1766,7 @@ def test_inf_warnings_in_GridSearchCV():
                         )
 
     with pytest.warns(UserWarning,
-                      match='One or more of the test scores are not finite\\d+'):
+                      match='One or more of the test scores are infinite\\d+'):
         grid.fit(X[:, np.newaxis])
 
 

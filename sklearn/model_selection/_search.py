@@ -865,7 +865,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             results['mean_%s' % key_name] = array_means
 
             if (np.isinf(array_means)).any():
-                warnings.warn("One or more of the test scores are not finite {}"
+                warnings.warn("One or more of the test scores are infinite {}"
                               .format(array_means), category=UserWarning)
 
             # Weighted std is not directly available in numpy
