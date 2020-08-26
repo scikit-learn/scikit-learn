@@ -43,7 +43,7 @@ jobs:
           CIBW_TEST_REQUIRES: pytest pandas
           CIBW_TEST_COMMAND: pytest --pyargs sklearn
           # Embed the vcomp dll before generating the Windows wheel
-          CIBW_BEFORE_BUILD_WINDOWS: python ../../build_tools/vendor_vcomp140.py
+          CIBW_BEFORE_BUILD_WINDOWS: python build_tools/vendor_vcomp140.py
         run: |
           python -m cibuildwheel --output-dir wheelhouse
           ls -l wheelhouse/*.whl
