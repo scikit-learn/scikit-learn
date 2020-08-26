@@ -19,7 +19,8 @@ jobs:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
-      # Avoid that the wheel builder for a system is cancelled if another fails
+      # Avoid that the wheel builder for a
+      # runner is cancelled if other fails
       fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
@@ -35,20 +36,21 @@ jobs:
         run: |
           python -m pip install cibuildwheel
 
+      - name: Embed vcomp dll
+      - run: |
+          echo "::set-env name=CIBW_BEFORE_ALL::"
+
       - name: Build and test wheels
         env:
           # Build the wheels for Python 3.6 and newer
           CIBW_SKIP: pp* *p27* *p35*
           CIBW_TEST_REQUIRES: pytest pandas
           CIBW_TEST_COMMAND: pytest --pyargs sklearn
-        # Embed the vcomp dll before generating the Windows wheel
+          # Embed the vcomp dll before generating the Windows wheel
+          CIBW_BEFORE_BUILD_WINDOWS: python ../../build_tools/vendor_vcomp140.py
         run: |
-          if [ "$RUNNER_OS" == "Windows" ]; then
-            echo "::set-env name=CIBW_BEFORE_ALL::python ../../build_tools/vendor_vcomp140.py"
-          fi
           python -m cibuildwheel --output-dir wheelhouse
           ls -l wheelhouse/*.whl
-        shell: bash
 
       - name: Store artifacts
         uses: actions/upload-artifact@v2
