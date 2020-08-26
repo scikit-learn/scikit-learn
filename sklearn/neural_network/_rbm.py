@@ -56,7 +56,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
     verbose : int, default=0
         The verbosity level. The default, zero, means silent mode.
 
-    random_state : integer or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for:
 
         - Gibbs sampling from visible and hidden layers.
@@ -70,17 +70,17 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
     Attributes
     ----------
-    intercept_hidden_ : array-like, shape (n_components,)
+    intercept_hidden_ : array-like of shape (n_components,)
         Biases of the hidden units.
 
-    intercept_visible_ : array-like, shape (n_features,)
+    intercept_visible_ : array-like of shape (n_features,)
         Biases of the visible units.
 
-    components_ : array-like, shape (n_components, n_features)
+    components_ : array-like of shape (n_components, n_features)
         Weight matrix, where n_features in the number of
         visible units and n_components is the number of hidden units.
 
-    h_samples_ : array-like, shape (batch_size, n_components)
+    h_samples_ : array-like of shape (batch_size, n_components)
         Hidden Activation sampled from the model distribution,
         where batch_size in the number of examples per minibatch and
         n_components is the number of hidden units.
@@ -159,7 +159,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         v : ndarray of shape (n_samples, n_features)
             Values of the visible layer to sample from.
 
-        rng : RandomState
+        rng : RandomState instance
             Random number generator to use.
 
         Returns
@@ -178,7 +178,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         h : ndarray of shape (n_samples, n_components)
             Values of the hidden layer to sample from.
 
-        rng : RandomState
+        rng : RandomState instance
             Random number generator to use.
 
         Returns
@@ -274,7 +274,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         v_pos : ndarray of shape (n_samples, n_features)
             The data to use for training.
 
-        rng : RandomState
+        rng : RandomState instance
             Random number generator to use for sampling.
         """
         h_pos = self._mean_hiddens(v_pos)

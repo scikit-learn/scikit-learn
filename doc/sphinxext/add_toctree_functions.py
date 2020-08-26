@@ -150,3 +150,5 @@ def docutils_node_to_jinja(list_item, only_pages=False, numbered=False):
 
 def setup(app):
     app.connect("html-page-context", add_toctree_functions)
+
+    return {'parallel_read_safe': True, 'parallel_write_safe': True}

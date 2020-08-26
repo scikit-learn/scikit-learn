@@ -16,9 +16,6 @@ They can be loaded using the following functions:
 
 .. autosummary::
 
-   :toctree: ../modules/generated/
-   :template: function.rst
-
    fetch_olivetti_faces
    fetch_20newsgroups
    fetch_20newsgroups_vectorized
