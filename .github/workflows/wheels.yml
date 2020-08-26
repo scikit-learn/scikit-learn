@@ -13,11 +13,14 @@ on:
 jobs:
   build_wheels:
     # Add a commit marker to trigger the wheel builder when needed
-    if: {{ github.event_name == "schedule" ||
-           github.event_name == "push" ||
-           endsWith(github.event.head_commit.message, "[wheel-build]") }}
+    if: >-
+      github.event_name == "schedule" ||
+      github.event_name == "push" ||
+      endsWith(github.event.head_commit.message, "[wheel-build]") }}
+
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+
     strategy:
       # Avoid that the wheel builder for a
       # runner is cancelled if other fails
@@ -58,9 +61,11 @@ jobs:
 
   build_sdist:
     # Add a commit marker to trigger the source distribution build when needed
-    if: {{ github.event. == "cron" ||
-           github.event. == "tag" ||
-           endsWith(github.event.head_commit.message, "[source-build]") }}
+    if: >-
+      github.event. == "cron" ||
+      github.event. == "tag" ||
+      endsWith(github.event.head_commit.message, "[source-build]")
+
     name: Source distribution
     runs-on: ubuntu-latest
 
