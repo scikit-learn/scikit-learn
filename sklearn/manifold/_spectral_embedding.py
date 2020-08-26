@@ -216,10 +216,10 @@ def spectral_embedding(adjacency, *, n_components=8, eigen_solver=None,
 
     try:
         from pyamg import smoothed_aggregation_solver
-    except ImportError:
+    except ImportError as e:
         if eigen_solver == "amg":
             raise ValueError("The eigen_solver was set to 'amg', but pyamg is "
-                             "not available.")
+                             "not available.") from e
 
     if eigen_solver is None:
         eigen_solver = 'arpack'
