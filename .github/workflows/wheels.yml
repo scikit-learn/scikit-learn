@@ -41,16 +41,18 @@ jobs:
           # Build the wheels for Python 3.6 and newer
           CIBW_SKIP: pp* *p27* *p35*
           CIBW_TEST_REQUIRES: pytest pandas
-          # CIBW_TEST_COMMAND: pytest --pyargs sklearn
-          CIBW_TEST_COMMAND: pytest sklearn/decomposition/tests/test_kernel_pca.py::test_32_64_decomposition_shape -vs
+          CIBW_TEST_COMMAND: pytest --pyargs sklearn
           # Embed vcomp140.dll before generating the Windows
           # wheel and after building the package from source
-          CIBW_BEFORE_BUILD_WINDOWS: pip install numpy scipy cython &&
-                                     python setup.py build &&
-                                     python build_tools/github/vendor_vcomp140.py
+          # CIBW_BEFORE_BUILD_WINDOWS: pip install numpy scipy cython &&
+          #                            python setup.py build &&
+          #                            python build_tools/github/vendor_vcomp140.py
+        # run: |
+        # python -m cibuildwheel --output-dir wheelhouse
+        # ls -l wheelhouse/*.whl
         run: |
-          python -m cibuildwheel --output-dir wheelhouse
-          ls -l wheelhouse/*.whl
+          pip install .
+          pytest sklearn/decomposition/tests/test_kernel_pca.py::test_32_64_decomposition_shape -vs
 
       - name: Store artifacts
         uses: actions/upload-artifact@v2
