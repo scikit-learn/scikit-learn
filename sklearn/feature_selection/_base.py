@@ -5,6 +5,7 @@
 # License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
+from functools import wraps
 from warnings import warn
 from operator import attrgetter
 
@@ -15,7 +16,6 @@ from ..base import TransformerMixin
 from ..utils import check_array
 from ..utils import safe_mask
 from ..utils import safe_sqr
-from ..utils._array_transformer import _ArrayTransformer
 
 
 class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
@@ -75,7 +75,7 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         X_r : array of shape [n_samples, n_selected_features]
             The input samples with only the selected features.
         """
-        wrapper = _ArrayTransformer(X)
+        X_orig = X
         tags = self._get_tags()
         X = check_array(X, dtype=None, accept_sparse='csr',
                         force_all_finite=not tags.get('allow_nan', True))
@@ -94,7 +94,7 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
             return feature_names_in[_safe_mask]
 
         out = X[:, _safe_mask]
-        return wrapper.transform(out, get_feature_names_out)
+        return self._make_array_out(out, X_orig, get_feature_names_out)
 
     def inverse_transform(self, X):
         """

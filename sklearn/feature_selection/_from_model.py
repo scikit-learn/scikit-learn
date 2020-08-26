@@ -229,6 +229,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         if self.prefit:
             raise NotFittedError(
                 "Since 'prefit=True', call transform directly")
+        self._check_feature_names(X)
         self.estimator_ = clone(self.estimator)
         self.estimator_.fit(X, y, **fit_params)
         return self
@@ -264,7 +265,9 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
             raise NotFittedError(
                 "Since 'prefit=True', call transform directly")
         if not hasattr(self, "estimator_"):
+            self._check_feature_names(X)
             self.estimator_ = clone(self.estimator)
+
         self.estimator_.partial_fit(X, y, **fit_params)
         return self
 

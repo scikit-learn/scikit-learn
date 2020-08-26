@@ -16,6 +16,7 @@ from joblib import Parallel, delayed
 
 from ..base import clone, TransformerMixin
 from ..utils._estimator_html_repr import _VisualBlock
+from ..utils._array_out import _get_feature_names
 from ..pipeline import _fit_transform_one, _transform_one, _name_estimators
 from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
@@ -26,7 +27,6 @@ from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_array, check_is_fitted
 from ..utils.validation import _deprecate_positional_args
 from .._config import get_config
-from ..utils._array_transformer import _ManyArrayTransformer
 
 
 __all__ = [
@@ -420,7 +420,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         TODO: It should raise an error from v0.24
         """
 
-        if ((self._feature_names_in is None or feature_names is None)
+        if ((self.feature_names_in_ is None or feature_names is None)
                 and self._n_features == n_features):
             return
 
@@ -435,7 +435,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                                "transform have the same number of columns.")
 
         if (self._n_features != n_features or
-                np.any(self._feature_names_in != np.asarray(feature_names))):
+                np.any(self.feature_names_in_ != np.asarray(feature_names))):
             warnings.warn("Given feature/column names or counts do not match "
                           "the ones for the data given during fit. This will "
                           "fail from v0.24.",
@@ -519,11 +519,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             sparse matrices.
 
         """
-        # TODO: this should be `feature_names_in_` when we start having it
-        if hasattr(X, "columns"):
-            self._feature_names_in = np.asarray(X.columns)
-        else:
-            self._feature_names_in = None
+        self._check_feature_names(X)
+        X_orig = X
         X = _check_X(X)
         # set n_features_in_ attribute
         self._check_n_features(X, reset=True)
@@ -540,13 +537,13 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         Xs, transformers = zip(*result)
 
-        wrapper = _ManyArrayTransformer(Xs)
         # determine if concatenated output will be sparse or not
         self._check_sparse_output(Xs)
         self._update_fitted_transformers(transformers)
         self._validate_output(Xs)
 
-        return wrapper.transform(self._hstack(list(Xs)))
+        output = self._hstack(Xs)
+        return self._make_array_out(output, Xs, X_orig)
 
     def _check_sparse_output(self, Xs):
         def _get_Xtype(X):
@@ -604,6 +601,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         """
         check_is_fitted(self)
+        X_orig = X
         X = _check_X(X)
         if hasattr(X, "columns"):
             X_feature_names = np.asarray(X.columns)
@@ -641,8 +639,19 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             # All transformers are None
             return np.zeros((X.shape[0], 0))
 
-        wrapper = _ManyArrayTransformer(Xs)
-        return wrapper.transform(self._hstack(list(Xs)))
+        output = self._hstack(Xs)
+        return self._make_array_out(output, Xs, X_orig)
+
+    def _make_array_out(self, X_out, Xs, X_orig):
+        def get_feature_names_out():
+            feature_names = [_get_feature_names(X) for X in Xs]
+            feature_names_out = np.concatenate(feature_names)
+            if feature_names_out.size != X_out.shape[1]:
+                return None
+            return feature_names_out
+
+        return super()._make_array_out(X_out, X_orig,
+                                       get_feature_names_out)
 
     def _hstack(self, Xs):
         """Stacks Xs horizontally.

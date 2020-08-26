@@ -31,7 +31,6 @@ from ._hash import FeatureHasher
 from ._stop_words import ENGLISH_STOP_WORDS
 from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
 from ..utils import _IS_32BIT
-from ..utils._array_transformer import _ArrayTransformer
 from ..utils.fixes import _astype_copy_false
 from ..exceptions import NotFittedError
 from ..utils.validation import _deprecate_positional_args
@@ -1193,7 +1192,6 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
         vocabulary, X = self._count_vocab(raw_documents,
                                           self.fixed_vocabulary_)
-        wrapper = _ArrayTransformer(X, needs_feature_names_in=False)
 
         if self.binary:
             X.data.fill(1)
@@ -1219,10 +1217,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
                 X = self._sort_features(X, vocabulary)
             self.vocabulary_ = vocabulary
 
-        def get_output_feature_names():
-            return self.get_feature_names()
-
-        return wrapper.transform(X, get_output_feature_names)
+        return self._make_array_out(X, raw_documents, self.get_feature_names)
 
     def transform(self, raw_documents):
         """Transform documents to document-term matrix.
@@ -1248,15 +1243,10 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         # use the same matrix-building strategy as fit_transform
         _, X = self._count_vocab(raw_documents, fixed_vocab=True)
 
-        wrapper = _ArrayTransformer(X, needs_feature_names_in=False)
-
         if self.binary:
             X.data.fill(1)
 
-        def get_output_feature_names():
-            return self.get_feature_names()
-
-        return wrapper.transform(X, get_output_feature_names)
+        return self._make_array_out(X, raw_documents, self.get_feature_names)
 
     def inverse_transform(self, X):
         """Return terms per document with nonzero entries in X.
@@ -1435,7 +1425,7 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
         X : sparse matrix of shape n_samples, n_features)
             A matrix of term/token counts.
         """
-        X = check_array(X, accept_sparse=('csr', 'csc'))
+        X = self._validate_data(X, accept_sparse=('csr', 'csc'))
         if not sp.issparse(X):
             X = sp.csr_matrix(X)
         dtype = X.dtype if X.dtype in FLOAT_DTYPES else np.float64
@@ -1475,7 +1465,7 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
         -------
         vectors : sparse matrix of shape (n_samples, n_features)
         """
-        wrapper = _ArrayTransformer(X)
+        X_orig = X
         X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES, copy=copy)
         if not sp.issparse(X):
             X = sp.csr_matrix(X, dtype=np.float64)
@@ -1504,7 +1494,7 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
         if self.norm:
             X = normalize(X, norm=self.norm, copy=False)
 
-        return wrapper.transform(X)
+        return self._make_array_out(X, X_orig)
 
     @property
     def idf_(self):

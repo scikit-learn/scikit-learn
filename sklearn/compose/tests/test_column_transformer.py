@@ -16,6 +16,7 @@ from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import assert_almost_equal
 
 from sklearn.base import BaseEstimator
+from sklearn import config_context
 from sklearn.compose import (
     ColumnTransformer, make_column_transformer, make_column_selector
 )
@@ -1433,3 +1434,18 @@ def test_sk_visual_block_remainder_fitted_numpy(remainder):
     assert visual_block.names == ('scale', 'remainder')
     assert visual_block.name_details == ([0, 2], [1])
     assert visual_block.estimators == (scaler, remainder)
+
+
+def test_column_transformer_array_out_pandas():
+    # simple check for column transformer and array_out
+    pd = pytest.importorskip('pandas')
+    df = pd.DataFrame({"cat": ["a", "b", "c"],
+                       "num": [1, 2, 3]})
+    ct = ColumnTransformer(transformers=[
+        ('scale', StandardScaler(), ['num']),
+        ('encode', OneHotEncoder(), ['cat'])
+    ])
+    with config_context(array_out='pandas'):
+        df_out = ct.fit_transform(df)
+    assert_array_equal(df_out.columns,
+                       ['num', 'cat_a', 'cat_b', 'cat_c'])

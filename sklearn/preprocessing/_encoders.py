@@ -9,7 +9,6 @@ import numbers
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.validation import check_is_fitted
-from ..utils._array_transformer import _ArrayTransformer
 from ..utils.validation import _deprecate_positional_args
 
 from ..utils._encode import _encode, _check_unknown, _unique
@@ -73,6 +72,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         return X[:, feature_idx]
 
     def _fit(self, X, handle_unknown='error'):
+        self._check_feature_names(X)
         X_list, n_samples, n_features = self._check_X(X)
 
         if self.categories != 'auto':
@@ -425,7 +425,7 @@ class OneHotEncoder(_BaseEncoder):
             Transformed input.
         """
         check_is_fitted(self)
-        wrapper = _ArrayTransformer(X)
+        X_orig = X
         # validation of X happens in _check_X called by _transform
         X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown)
 
@@ -470,7 +470,7 @@ class OneHotEncoder(_BaseEncoder):
         if not self.sparse:
             out = out.toarray()
 
-        return wrapper.transform(out, self.get_feature_names)
+        return self._make_array_out(out, X_orig, self.get_feature_names)
 
     def inverse_transform(self, X):
         """
@@ -737,13 +737,13 @@ class OrdinalEncoder(_BaseEncoder):
         X_out : sparse matrix or a 2-d array
             Transformed input.
         """
-        wrapper = _ArrayTransformer(X)
         X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown)
 
         # create separate category for unknown values
         if self.handle_unknown == 'use_encoded_value':
             X_int[~X_mask] = self.unknown_value
-        return wrapper.transform(X_int.astype(self.dtype, copy=False))
+        out = X_int.astype(self.dtype, copy=False)
+        return self._make_array_out(out, X)
 
     def inverse_transform(self, X):
         """

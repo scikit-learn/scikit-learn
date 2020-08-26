@@ -6,6 +6,7 @@
 import copy
 import warnings
 from collections import defaultdict
+from functools import partial
 import platform
 import inspect
 import re
@@ -19,6 +20,8 @@ from .utils.validation import check_X_y
 from .utils.validation import check_array
 from .utils._estimator_html_repr import estimator_html_repr
 from .utils.validation import _deprecate_positional_args
+from .utils._array_out import _get_feature_names, _make_array_out
+
 
 _DEFAULT_TAGS = {
     'non_deterministic': False,
@@ -377,6 +380,32 @@ class BaseEstimator:
                                        self.n_features_in_)
                 )
 
+    def _check_feature_names(self, X, reset=True):
+        """Set the `feature_names_in_` attribute, or check against it.
+
+        Parameters
+        ----------
+        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+            The input samples.
+        reset : bool, default=True
+            If True, the `n_feature_names_` attribute is set to the feature
+            names of `X`.
+            Else, the attribute must already exist and the function checks
+            that it is equal to the feature names of `X`.
+        """
+        feature_names = _get_feature_names(X)
+        if reset:
+            self.feature_names_in_ = feature_names
+            return
+
+        if (not hasattr(self, 'feature_names_in_') or
+                self.feature_names_in_ is None):
+            return
+
+        if np.any(feature_names != self.feature_names_in_):
+            raise ValueError("The feature names of X does not match the "
+                             "feature_names_in_ attribute")
+
     def _validate_data(self, X, y=None, reset=True,
                        validate_separately=False, **check_params):
         """Validate input data and set or check the `n_features_in_` attribute.
@@ -407,7 +436,7 @@ class BaseEstimator:
         out : {ndarray, sparse matrix} or tuple of these
             The validated input. A tuple is returned if `y` is not None.
         """
-
+        self._check_feature_names(X, reset=reset)
         if y is None:
             if self._get_tags()['requires_y']:
                 raise ValueError(
@@ -461,6 +490,30 @@ class BaseEstimator:
         if get_config()["display"] == 'diagram':
             output["text/html"] = estimator_html_repr(self)
         return output
+
+    def _make_array_out(self, X_out, X_orig, get_feature_names_out=None):
+        array_out = get_config()['array_out']
+        if array_out == 'default':
+            return X_out
+
+        if get_feature_names_out is None:
+            def get_feature_names_out(names):
+                return names
+
+        parameters = inspect.signature(get_feature_names_out).parameters
+        if parameters:
+            if hasattr(self, "feature_names_in_"):
+                feature_names_in = self.feature_names_in_
+            else:
+                feature_names_in = _get_feature_names(X_orig)
+
+            if feature_names_in is None and self.n_features_in_ is not None:
+                feature_names_in = [f'X{i}'
+                                    for i in range(self.n_features_in_)]
+            get_feature_names_out = partial(get_feature_names_out,
+                                            feature_names_in)
+
+        return _make_array_out(X_out, X_orig, get_feature_names_out)
 
 
 class ClassifierMixin:

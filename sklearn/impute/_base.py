@@ -17,7 +17,6 @@ from ..utils.validation import FLOAT_DTYPES
 from ..utils.validation import _deprecate_positional_args
 from ..utils._mask import _get_mask
 from ..utils import is_scalar_nan
-from ..utils._array_transformer import _ArrayTransformer
 
 
 def _check_inputs_dtype(X, missing_values):
@@ -419,8 +418,8 @@ class SimpleImputer(_BaseImputer):
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             The input data to complete.
         """
-        wrapper = _ArrayTransformer(X)
         check_is_fitted(self)
+        X_orig = X
 
         X = self._validate_input(X, in_fit=False)
         X_indicator = super()._transform_indicator(X)
@@ -480,7 +479,7 @@ class SimpleImputer(_BaseImputer):
             return np.r_[imputed_names, indicator_names]
 
         out = super()._concatenate_indicator(X, X_indicator)
-        return wrapper.transform(out, get_feature_names_out)
+        return self._make_array_out(out, X_orig, get_feature_names_out)
 
     def inverse_transform(self, X):
         """Convert the data back to the original representation.
@@ -764,8 +763,8 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             will be boolean.
 
         """
-        wrapper = _ArrayTransformer(X)
         check_is_fitted(self)
+        X_orig = X
         X = self._validate_input(X, in_fit=False)
 
         if X.shape[1] != self._n_features:
@@ -784,7 +783,8 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             if self.features_.size < self._n_features:
                 imputer_mask = imputer_mask[:, self.features_]
 
-        return wrapper.transform(imputer_mask, self._get_feature_names_out)
+        return self._make_array_out(imputer_mask, X_orig,
+                                    self._get_feature_names_out)
 
     def fit_transform(self, X, y=None):
         """Generate missing values indicator for X.
@@ -802,13 +802,13 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             will be boolean.
 
         """
-        wrapper = _ArrayTransformer(X)
         imputer_mask = self._fit(X, y)
 
         if self.features_.size < self._n_features:
             imputer_mask = imputer_mask[:, self.features_]
 
-        return wrapper.transform(imputer_mask, self._get_feature_names_out)
+        return self._make_array_out(imputer_mask, X,
+                                    self._get_feature_names_out)
 
     def _get_feature_names_out(self, feature_names_in):
         if feature_names_in is None:

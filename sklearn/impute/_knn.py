@@ -14,7 +14,6 @@ from ..utils import check_array
 from ..utils import is_scalar_nan
 from ..utils._mask import _get_mask
 from ..utils.validation import check_is_fitted
-from ..utils._array_transformer import _ArrayTransformer
 from ..utils.validation import _deprecate_positional_args
 
 
@@ -206,9 +205,8 @@ class KNNImputer(_BaseImputer):
             The imputed dataset. `n_output_features` is the number of features
             that is not always missing during `fit`.
         """
-        wrapper = _ArrayTransformer(X)
-
         check_is_fitted(self)
+        X_orig = X
         if not is_scalar_nan(self.missing_values):
             force_all_finite = True
         else:
@@ -237,7 +235,7 @@ class KNNImputer(_BaseImputer):
             # No missing values in X
             # Remove columns where the training data is all nan
             out = X[:, valid_mask]
-            return wrapper.transform(out, get_output_feature_names)
+            return self._make_array_out(out, X_orig, get_output_feature_names)
 
         row_missing_idx = np.flatnonzero(mask.any(axis=1))
 
@@ -310,4 +308,4 @@ class KNNImputer(_BaseImputer):
             pass
 
         out = super()._concatenate_indicator(X[:, valid_mask], X_indicator)
-        return wrapper.transform(out, get_output_feature_names)
+        return self._make_array_out(out, X_orig, get_output_feature_names)

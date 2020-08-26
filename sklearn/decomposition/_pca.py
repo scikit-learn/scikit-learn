@@ -25,7 +25,6 @@ from ..utils import check_array
 from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
-from ..utils._array_transformer import _ArrayTransformer
 from ..utils.validation import _deprecate_positional_args
 
 
@@ -374,7 +373,7 @@ class PCA(_BasePCA):
         This method returns a Fortran-ordered array. To convert it to a
         C-ordered array, use 'np.ascontiguousarray'.
         """
-        wrapper = _ArrayTransformer(X, needs_feature_names_in=False)
+        X_orig = X
         U, S, Vt = self._fit(X)
         U = U[:, :self.n_components_]
 
@@ -388,7 +387,7 @@ class PCA(_BasePCA):
         def get_feature_names_out():
             return [f'pca{i}' for i in range(U.shape[1])]
 
-        return wrapper.transform(U, get_feature_names_out)
+        return self._make_array_out(U, X_orig, get_feature_names_out)
 
     def _fit(self, X):
         """Dispatch to the right submethod depending on the chosen solver."""
