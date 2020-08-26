@@ -41,7 +41,8 @@ jobs:
           # Build the wheels for Python 3.6 and newer
           CIBW_SKIP: pp* *p27* *p35*
           CIBW_TEST_REQUIRES: pytest pandas
-          CIBW_TEST_COMMAND: pytest --pyargs sklearn
+          # CIBW_TEST_COMMAND: pytest --pyargs sklearn
+          CIBW_TEST_COMMAND: pytest --pyargs sklearn/decomposition/tests/test_kernel_pca.py::test_32_64_decomposition_shape -vs
           # Embed vcomp140.dll before generating the Windows
           # wheel and after building the package from source
           CIBW_BEFORE_BUILD_WINDOWS: pip install numpy scipy cython &&

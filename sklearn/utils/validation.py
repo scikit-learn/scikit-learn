@@ -1170,6 +1170,7 @@ def _check_psd_eigenvalues(lambdas, enable_warnings=False):
     array([5., 0.])
 
     """
+    print(lambdas)
 
     lambdas = np.array(lambdas)
     is_double_precision = lambdas.dtype == np.float64
