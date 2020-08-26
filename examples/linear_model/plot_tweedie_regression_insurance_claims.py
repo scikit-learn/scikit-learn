@@ -16,7 +16,7 @@ insurer to compensate for a loss covered by the insurance. The *claim amount*
 is the amount of money that the insurer must pay. The *exposure* is the
 duration of the insurance coverage of a given policy, in years.
 
-Here our goal goal is to predict the expected
+Here our goal is to predict the expected
 value, i.e. the mean, of the total claim amount per exposure unit also
 referred to as the pure premium.
 
@@ -73,7 +73,7 @@ def load_mtpl2(n_samples=100000):
     """
     # freMTPL2freq dataset from https://www.openml.org/d/41214
     df_freq = fetch_openml(data_id=41214, as_frame=True)['data']
-    df_freq['IDpol'] = df_freq['IDpol'].astype(np.int)
+    df_freq['IDpol'] = df_freq['IDpol'].astype(int)
     df_freq.set_index('IDpol', inplace=True)
 
     # freMTPL2sev dataset from https://www.openml.org/d/41215
@@ -86,7 +86,7 @@ def load_mtpl2(n_samples=100000):
     df["ClaimAmount"].fillna(0, inplace=True)
 
     # unquote string fields
-    for column_name in df.columns[df.dtypes.values == np.object]:
+    for column_name in df.columns[df.dtypes.values == object]:
         df[column_name] = df[column_name].str.strip("'")
     return df.iloc[:n_samples]
 

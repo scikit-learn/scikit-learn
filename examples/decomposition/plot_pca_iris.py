@@ -49,7 +49,7 @@ for name, label in [('Setosa', 0), ('Versicolour', 1), ('Virginica', 2)]:
               horizontalalignment='center',
               bbox=dict(alpha=.5, edgecolor='w', facecolor='w'))
 # Reorder the labels to have colors matching the cluster results
-y = np.choose(y, [1, 2, 0]).astype(np.float)
+y = np.choose(y, [1, 2, 0]).astype(float)
 ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=y, cmap=plt.cm.nipy_spectral,
            edgecolor='k')
 

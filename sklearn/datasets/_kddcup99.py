@@ -66,11 +66,11 @@ def fetch_kddcup99(*, subset=None, data_home=None, shuffle=False,
 
     Parameters
     ----------
-    subset : None, 'SA', 'SF', 'http', 'smtp'
+    subset : {'SA', 'SF', 'http', 'smtp'}, default=None
         To return the corresponding classical subsets of kddcup 99.
         If None, return the entire kddcup 99 dataset.
 
-    data_home : string, optional
+    data_home : str, default=None
         Specify another download and cache folder for the datasets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
         .. versionadded:: 0.19
@@ -78,7 +78,7 @@ def fetch_kddcup99(*, subset=None, data_home=None, shuffle=False,
     shuffle : bool, default=False
         Whether to shuffle dataset.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for dataset shuffling and for
         selection of abnormal samples if `subset='SA'`. Pass an int for
         reproducible output across multiple function calls.
@@ -91,7 +91,7 @@ def fetch_kddcup99(*, subset=None, data_home=None, shuffle=False,
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
-    return_X_y : boolean, default=False.
+    return_X_y : bool, default=False
         If True, returns ``(data, target)`` instead of a Bunch object. See
         below for more information about the `data` and `target` object.
 
@@ -184,11 +184,11 @@ def _fetch_brute_kddcup99(data_home=None,
 
     Parameters
     ----------
-    data_home : string, optional
+    data_home : str, default=None
         Specify another download and cache folder for the datasets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
-    download_if_missing : boolean, default=True
+    download_if_missing : bool, default=True
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
@@ -200,12 +200,12 @@ def _fetch_brute_kddcup99(data_home=None,
     dataset : :class:`~sklearn.utils.Bunch`
         Dictionary-like object, with the following attributes.
 
-        data : numpy array of shape (494021, 41)
+        data : ndarray of shape (494021, 41)
             Each row corresponds to the 41 features in the dataset.
-        target : numpy array of shape (494021,)
+        target : ndarray of shape (494021,)
             Each value corresponds to one of the 21 attack types or to the
             label 'normal.'.
-        DESCR : string
+        DESCR : str
             Description of the kddcup99 dataset.
 
     """

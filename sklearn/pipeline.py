@@ -792,6 +792,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     transformer_weights : dict, default=None
         Multiplicative weights for features per transformer.
         Keys are transformer names, values the weights.
+        Raises ValueError if key not present in ``transformer_list``.
 
     verbose : bool, default=False
         If True, the time elapsed while fitting each transformer will be
@@ -867,6 +868,18 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
                 raise TypeError("All estimators should implement fit and "
                                 "transform. '%s' (type %s) doesn't" %
                                 (t, type(t)))
+
+    def _validate_transformer_weights(self):
+        if not self.transformer_weights:
+            return
+
+        transformer_names = set(name for name, _ in self.transformer_list)
+        for name in self.transformer_weights:
+            if name not in transformer_names:
+                raise ValueError(
+                    f'Attempting to weight transformer "{name}", '
+                    'but it is not present in transformer_list.'
+                )
 
     def _iter(self):
         """
@@ -946,11 +959,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         Xs, transformers = zip(*results)
         self._update_transformer_list(transformers)
 
-        if any(sparse.issparse(f) for f in Xs):
-            Xs = sparse.hstack(Xs).tocsr()
-        else:
-            Xs = np.hstack(Xs)
-        return Xs
+        return self._hstack(Xs)
 
     def _log_message(self, name, idx, total):
         if not self.verbose:
@@ -961,6 +970,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         """Runs func in parallel on X and y"""
         self.transformer_list = list(self.transformer_list)
         self._validate_transformers()
+        self._validate_transformer_weights()
         transformers = list(self._iter())
 
         return Parallel(n_jobs=self.n_jobs)(delayed(func)(
@@ -991,6 +1001,10 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         if not Xs:
             # All transformers are None
             return np.zeros((X.shape[0], 0))
+
+        return self._hstack(Xs)
+
+    def _hstack(self, Xs):
         if any(sparse.issparse(f) for f in Xs):
             Xs = sparse.hstack(Xs).tocsr()
         else:
