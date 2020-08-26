@@ -143,6 +143,37 @@ def test_zero_cosine_linkage_tree():
     assert_raise_message(ValueError, msg, linkage_tree, X, affinity='cosine')
 
 
+@pytest.mark.parametrize('n_clusters, distance_threshold',
+                         [(None, 0.5), (10, None)])
+@pytest.mark.parametrize('compute_distances', [True, False])
+@pytest.mark.parametrize('linkage', ["ward", "complete", "average", "single"])
+def test_agglomerative_clustering_distances(n_clusters,
+                                            compute_distances,
+                                            distance_threshold,
+                                            linkage):
+    # Check that when `compute_distances` is True or `distance_threshold` is
+    # given, the fitted model has an attribute `distances_`.
+    rng = np.random.RandomState(0)
+    mask = np.ones([10, 10], dtype=bool)
+    n_samples = 100
+    X = rng.randn(n_samples, 50)
+    connectivity = grid_to_graph(*mask.shape)
+
+    clustering = AgglomerativeClustering(n_clusters=n_clusters,
+                                         connectivity=connectivity,
+                                         linkage=linkage,
+                                         distance_threshold=distance_threshold,
+                                         compute_distances=compute_distances)
+    clustering.fit(X)
+    if compute_distances or (distance_threshold is not None):
+        assert hasattr(clustering, 'distances_')
+        n_children = clustering.children_.shape[0]
+        n_nodes = n_children + 1
+        assert clustering.distances_.shape == (n_nodes-1, )
+    else:
+        assert not hasattr(clustering, 'distances_')
+
+
 def test_agglomerative_clustering():
     # Check that we obtain the correct number of clusters with
     # agglomerative clustering.

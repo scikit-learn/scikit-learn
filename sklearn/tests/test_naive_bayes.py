@@ -17,6 +17,7 @@ from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_no_warnings
+from sklearn.utils._testing import ignore_warnings
 
 from sklearn.naive_bayes import GaussianNB, BernoulliNB
 from sklearn.naive_bayes import MultinomialNB, ComplementNB
@@ -193,6 +194,17 @@ def test_gnb_naive_bayes_scale_invariance():
     assert_array_equal(labels[1], labels[2])
 
 
+# TODO: Remove in version 0.26
+@pytest.mark.parametrize("cls", [MultinomialNB, ComplementNB, BernoulliNB,
+                                 CategoricalNB])
+def test_discretenb_deprecated_coef_intercept(cls):
+    est = cls().fit(X2, y2)
+
+    for att in ["coef_", "intercept_"]:
+        with pytest.warns(FutureWarning):
+            hasattr(est, att)
+
+
 @pytest.mark.parametrize("cls", [MultinomialNB, BernoulliNB, CategoricalNB])
 def test_discretenb_prior(cls):
     # Test whether class priors are properly set.
@@ -307,6 +319,8 @@ def test_discretenb_input_check_partial_fit(cls):
     assert_raises(ValueError, clf.predict, X2[:, :-1])
 
 
+# TODO: Remove in version 0.26
+@ignore_warnings(category=FutureWarning)
 def test_discretenb_predict_proba():
     # Test discrete NB classes' probability scores
 
@@ -409,6 +423,8 @@ def test_discretenb_sample_weight_multiclass(cls):
     assert_array_equal(clf.predict(X), [0, 1, 1, 2])
 
 
+# TODO: Remove in version 0.26
+@ignore_warnings(category=FutureWarning)
 @pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB])
 def test_discretenb_coef_intercept_shape(cls):
     # coef_ and intercept_ should have shapes as in other linear models.
@@ -501,6 +517,8 @@ def test_mnb_prior_unobserved_targets():
     assert clf.predict([[1, 1]]) == 2
 
 
+# TODO: Remove in version 0.26
+@ignore_warnings(category=FutureWarning)
 def test_mnb_sample_weight():
     clf = MultinomialNB()
     clf.fit([[1, 2], [1, 2], [1, 0]],
@@ -658,6 +676,7 @@ def test_categoricalnb():
     clf = CategoricalNB(alpha=1, fit_prior=False)
 
     clf.fit(X3, y3)
+    assert_array_equal(clf.n_categories_, np.array([3, 6]))
 
     # Check error is raised for X with negative entries
     X = np.array([[0, -1]])
@@ -689,6 +708,7 @@ def test_categoricalnb():
     clf = CategoricalNB(alpha=1, fit_prior=False)
     clf.fit(X, y)
     assert_array_equal(clf.predict(np.array([[0, 0]])), np.array([1]))
+    assert_array_equal(clf.n_categories_, np.array([2, 2]))
 
     for factor in [1., 0.3, 5, 0.0001]:
         X = np.array([[0, 0], [0, 1], [0, 0], [1, 1]])
@@ -697,6 +717,62 @@ def test_categoricalnb():
         clf = CategoricalNB(alpha=1, fit_prior=False)
         clf.fit(X, y, sample_weight=sample_weight)
         assert_array_equal(clf.predict(np.array([[0, 0]])), np.array([2]))
+        assert_array_equal(clf.n_categories_, np.array([2, 2]))
+
+
+@pytest.mark.parametrize(
+    "min_categories, exp_X1_count, exp_X2_count, new_X, exp_n_categories_",
+    [
+        # check min_categories with int > observed categories
+        (3, np.array([[2, 0, 0], [1, 1, 0]]), np.array([[1, 1, 0], [1, 1, 0]]),
+         np.array([[0, 2]]), np.array([3, 3]),
+         ),
+        # check with list input
+        ([3, 4], np.array([[2, 0, 0], [1, 1, 0]]),
+         np.array([[1, 1, 0, 0], [1, 1, 0, 0]]), np.array([[0, 3]]),
+         np.array([3, 4]),
+         ),
+        # check min_categories with min less than actual
+        ([1, np.array([[2, 0], [1, 1]]), np.array([[1, 1], [1, 1]]),
+          np.array([[0, 1]]), np.array([2, 2])]
+         ),
+    ]
+)
+def test_categoricalnb_with_min_categories(min_categories, exp_X1_count,
+                                           exp_X2_count, new_X,
+                                           exp_n_categories_):
+    X_n_categories = np.array([[0, 0], [0, 1], [0, 0], [1, 1]])
+    y_n_categories = np.array([1, 1, 2, 2])
+    expected_prediction = np.array([1])
+
+    clf = CategoricalNB(alpha=1, fit_prior=False,
+                        min_categories=min_categories)
+    clf.fit(X_n_categories, y_n_categories)
+    X1_count, X2_count = clf.category_count_
+    assert_array_equal(X1_count, exp_X1_count)
+    assert_array_equal(X2_count, exp_X2_count)
+    predictions = clf.predict(new_X)
+    assert_array_equal(predictions, expected_prediction)
+    assert_array_equal(clf.n_categories_, exp_n_categories_)
+
+
+@pytest.mark.parametrize(
+    "min_categories, error_msg",
+    [
+        ('bad_arg', "'min_categories' should have integral"),
+        ([[3, 2], [2, 4]], "'min_categories' should have shape"),
+        (1., "'min_categories' should have integral"),
+     ]
+)
+def test_categoricalnb_min_categories_errors(min_categories, error_msg):
+
+    X = np.array([[0, 0], [0, 1], [0, 0], [1, 1]])
+    y = np.array([1, 1, 2, 2])
+
+    clf = CategoricalNB(alpha=1, fit_prior=False,
+                        min_categories=min_categories)
+    with pytest.raises(ValueError, match=error_msg):
+        clf.fit(X, y)
 
 
 def test_alpha():

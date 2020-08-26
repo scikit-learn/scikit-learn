@@ -4,6 +4,7 @@ import sys
 import warnings
 import tempfile
 import os
+import re
 from time import sleep
 
 import pytest
@@ -52,13 +53,14 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics import precision_score
 from sklearn.metrics import r2_score
+from sklearn.metrics import mean_squared_error
 from sklearn.metrics import check_scoring
 
 from sklearn.linear_model import Ridge, LogisticRegression, SGDClassifier
 from sklearn.linear_model import PassiveAggressiveClassifier, RidgeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.svm import SVC
+from sklearn.svm import SVC, LinearSVC
 from sklearn.cluster import KMeans
 
 from sklearn.impute import SimpleImputer
@@ -317,8 +319,8 @@ def test_cross_validate_invalid_scoring_param():
                         cross_validate, estimator, X, y,
                         scoring=[[make_scorer(precision_score)]])
 
-    error_message_regexp = (".*should either be.*string or callable.*for "
-                            "single.*.*dict.*for multi.*")
+    error_message_regexp = (".*scoring is invalid.*Refer to the scoring "
+                            "glossary for details:.*")
 
     # Empty dict should raise invalid scoring error
     assert_raises_regex(ValueError, "An empty dict",
@@ -341,16 +343,6 @@ def test_cross_validate_invalid_scoring_param():
                         "binary and continuous targets",
                         cross_validate, estimator, X, y,
                         scoring={"foo": multiclass_scorer})
-
-    multivalued_scorer = make_scorer(confusion_matrix)
-
-    # Multiclass Scorers that return multiple values are not supported yet
-    assert_raises_regex(ValueError, "scoring must return a number, got",
-                        cross_validate, SVC(), X, y,
-                        scoring=multivalued_scorer)
-    assert_raises_regex(ValueError, "scoring must return a number, got",
-                        cross_validate, SVC(), X, y,
-                        scoring={"foo": multivalued_scorer})
 
     assert_raises_regex(ValueError, "'mse' is not a valid scoring value.",
                         cross_validate, SVC(), X, y, scoring="mse")
@@ -463,9 +455,16 @@ def check_cross_validate_multi_metric(clf, X, y, scores):
     # Test multimetric evaluation when scoring is a list / dict
     (train_mse_scores, test_mse_scores, train_r2_scores,
      test_r2_scores, fitted_estimators) = scores
+
+    def custom_scorer(clf, X, y):
+        y_pred = clf.predict(X)
+        return {'r2': r2_score(y, y_pred),
+                'neg_mean_squared_error': -mean_squared_error(y, y_pred)}
+
     all_scoring = (('r2', 'neg_mean_squared_error'),
                    {'r2': make_scorer(r2_score),
-                    'neg_mean_squared_error': 'neg_mean_squared_error'})
+                    'neg_mean_squared_error': 'neg_mean_squared_error'},
+                   custom_scorer)
 
     keys_sans_train = {'test_r2', 'test_neg_mean_squared_error',
                        'fit_time', 'score_time'}
@@ -1727,16 +1726,16 @@ def three_params_scorer(i, j, k):
 @pytest.mark.parametrize(
     "train_score, scorer, verbose, split_prg, cdt_prg, expected", [
      (False, three_params_scorer, 2, (1, 3), (0, 1),
-      "[CV] END ...................................................."
-      " total time=   0.0s"),
+      r"\[CV\] END ...................................................."
+      r" total time=   0.\ds"),
      (True, {'sc1': three_params_scorer, 'sc2': three_params_scorer}, 3,
       (1, 3), (0, 1),
-      "[CV 2/3] END  sc1: (train=3.421, test=3.421) sc2: "
-      "(train=3.421, test=3.421) total time=   0.0s"),
+      r"\[CV 2/3\] END  sc1: \(train=3.421, test=3.421\) sc2: "
+      r"\(train=3.421, test=3.421\) total time=   0.\ds"),
      (False, {'sc1': three_params_scorer, 'sc2': three_params_scorer}, 10,
       (1, 3), (0, 1),
-      "[CV 2/3; 1/1] END ....... sc1: (test=3.421) sc2: (test=3.421)"
-      " total time=   0.0s")
+      r"\[CV 2/3; 1/1\] END ....... sc1: \(test=3.421\) sc2: \(test=3.421\)"
+      r" total time=   0.\ds")
     ])
 def test_fit_and_score_verbosity(capsys, train_score, scorer, verbose,
                                  split_prg, cdt_prg, expected):
@@ -1751,12 +1750,11 @@ def test_fit_and_score_verbosity(capsys, train_score, scorer, verbose,
                             'candidate_progress': cdt_prg}
     _fit_and_score(*fit_and_score_args, **fit_and_score_kwargs)
     out, _ = capsys.readouterr()
-    print(out)
     outlines = out.split('\n')
     if len(outlines) > 2:
-        assert outlines[1] == expected
+        assert re.match(expected, outlines[1])
     else:
-        assert outlines[0] == expected
+        assert re.match(expected, outlines[0])
 
 
 def test_score():
@@ -1767,3 +1765,20 @@ def test_score():
     fit_and_score_args = [None, None, None, two_params_scorer]
     assert_raise_message(ValueError, error_message,
                          _score, *fit_and_score_args)
+
+
+def test_callable_multimetric_confusion_matrix_cross_validate():
+    def custom_scorer(clf, X, y):
+        y_pred = clf.predict(X)
+        cm = confusion_matrix(y, y_pred)
+        return {'tn': cm[0, 0], 'fp': cm[0, 1], 'fn': cm[1, 0], 'tp': cm[1, 1]}
+
+    X, y = make_classification(n_samples=40, n_features=4,
+                               random_state=42)
+    est = LinearSVC(random_state=42)
+    est.fit(X, y)
+    cv_results = cross_validate(est, X, y, cv=5, scoring=custom_scorer)
+
+    score_names = ['tn', 'fp', 'fn', 'tp']
+    for name in score_names:
+        assert "test_{}".format(name) in cv_results
