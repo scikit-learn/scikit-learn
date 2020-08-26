@@ -970,3 +970,100 @@ def export_text(decision_tree, *, feature_names=None, max_depth=10,
 
     print_tree_recurse(0, 1)
     return export_text.report
+
+def export_relations(decision_tree, features, return_type="json"):
+    """Build a json/dataframe report showing the correlations derived from a decision tree.
+    Note that backwards compatibility may not be supported.
+    Parameters
+    ----------
+    decision_tree : object
+        The decision tree estimator to be exported.
+        It can be an instance of DecisionTreeClassifier or DecisionTreeRegressor.
+    feature_names : list of str, default=None
+        A list of length n_features containing the feature names.
+        If None generic names will be used ("feature_0", "feature_1", ...).
+    return_type : "dataframe" or "json", default = "json"
+    --------
+    Output:
+    report : json or pandas dataframe containing all the correlations in the decision tree.
+    --------
+    Examples
+    --------
+    >>> from sklearn.tree import DecisionTreeClassifier
+    >>> from sklearn.tree import export_text
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.tree import export_relations
+    >>> data, Target = load_iris(return_X_y = True, as_frame = True)
+    >>> clf = DecisionTreeClassifier(random_state = 0, max_depth = 5).fit(data, Target)
+    >>> relations = export_relations(decision_tree= clf, features = list(data.columns.values), return_type= "json")
+    >>> relations
+    {
+    '1': {'Description': 'petal width (cm) <= 0.8', 'Weight': array([50.,  0.,  0.])},
+
+    '2': {'Description': 'petal width (cm) > 0.8' , 'Weight': array([ 0., 50., 50.])},
+
+    '3': {'Description': 'petal width (cm) > 0.8  & petal width (cm) <= 1.75', 'Weight': array([ 0., 49.,  5.])},
+
+    '12': {'Description': 'petal width (cm) > 0.8 & petal width (cm) > 1.75' , 'Weight': array([ 0.,  1., 45.])},
+
+    '4': {'Description': 'petal width (cm) > 0.8 & petal width (cm) <= 1.75 & petal length (cm) <= 4.95', 'Weight': array([ 0., 47.,  1.])},
+
+    '7': {'Description': 'petal width (cm) > 0.8 & petal width (cm) <= 1.75 & petal length (cm) > 4.95', 'Weight': array([0., 2., 4.])},
+
+    '5': {'Description': 'petal width (cm) > 0.8 & petal width (cm) <= 1.75 & petal length (cm) <= 4.95 & petal width (cm) <= 1.65',  'Weight': array([ 0., 47.,  0.])},
+
+    '6': {'Description': 'petal width (cm) > 0.8 & petal width (cm) <= 1.75 & petal length (cm) <= 4.95 & petal width (cm) > 1.65',  'Weight': array([0., 0., 1.])},
+
+    ... etc
+    }
+
+    """
+
+    Relation = dict()
+    Relation['0'] = {'Description': None, 'Weight': None}
+    #
+    Relation = ask_node(decision_tree, features, Relation)
+    #
+    del Relation['0']
+    del Relation['-1']
+    #
+    if return_type == "dataframe":
+        import pandas as pd
+        pd.set_option('max_colwidth', None)
+        return pd.DataFrame(Relation).T
+    elif return_type == "json":
+        return Relation
+
+
+    def ask_node(decision_tree, features, Relation=None, node_index=0):
+        #
+        if node_index >= 0:
+            current_node_name = features[decision_tree.tree_.feature[node_index]]
+            current_threshold = decision_tree.tree_.threshold[node_index]
+            #
+            left_id = decision_tree.tree_.children_left[node_index]
+            left_value = decision_tree.tree_.value[left_id][0]
+            #
+            right_id = decision_tree.tree_.children_right[node_index]
+            right_value = decision_tree.tree_.value[right_id][0]
+            #
+            if Relation[str(node_index)]['Description'] == None:
+                temp_left_description = current_node_name + ' <= ' + str(round(current_threshold, 3))
+                temp_right_description = current_node_name + ' > ' + str(round(current_threshold, 3))
+            else:
+                temp_left_description = Relation[str(node_index)]['Description'] + ' & ' + current_node_name + ' <= ' + str(
+                    round(current_threshold, 3))
+                temp_right_description = Relation[str(node_index)]['Description'] + ' & ' + current_node_name + ' > ' + str(
+                    round(current_threshold, 3))
+            #
+            Relation[str(left_id)] = {'Description': temp_left_description, 'Weight': left_value}
+            Relation[str(right_id)] = {'Description': temp_right_description, 'Weight': right_value}
+            #
+
+            if left_id > 0:
+                ask_node(decision_tree, features, Relation, left_id)
+            if right_id > 0:
+                ask_node(decision_tree, features, Relation, right_id)
+            #
+            return Relation
+
