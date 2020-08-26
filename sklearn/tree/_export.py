@@ -971,8 +971,10 @@ def export_text(decision_tree, *, feature_names=None, max_depth=10,
     print_tree_recurse(0, 1)
     return export_text.report
 
+
 def export_relations(decision_tree, features, return_type="json"):
-    """Build a json/dataframe report showing the correlations derived from a decision tree.
+    """ Build a json/dataframe report showing the correlations derived from
+    a decision tree.
     Note that backwards compatibility may not be supported.
     Parameters
     ----------
@@ -998,21 +1000,33 @@ def export_relations(decision_tree, features, return_type="json"):
     >>> relations = export_relations(decision_tree= clf, features = list(data.columns.values), return_type= "json")
     >>> relations
     {
-    '1': {'Description': 'petal width (cm) <= 0.8', 'Weight': array([50.,  0.,  0.])},
+    '1': {'Description': 'petal width (cm) <= 0.8',
+     'Weight': array([50.,  0.,  0.])},
 
-    '2': {'Description': 'petal width (cm) > 0.8' , 'Weight': array([ 0., 50., 50.])},
+    '2': {'Description': 'petal width (cm) > 0.8' ,
+     'Weight': array([ 0., 50., 50.])},
 
-    '3': {'Description': 'petal width (cm) > 0.8  & petal width (cm) <= 1.75', 'Weight': array([ 0., 49.,  5.])},
+    '3': {'Description': 'petal width (cm) > 0.8  & petal width (cm) <= 1.75',
+     'Weight': array([ 0., 49.,  5.])},
 
-    '12': {'Description': 'petal width (cm) > 0.8 & petal width (cm) > 1.75' , 'Weight': array([ 0.,  1., 45.])},
+    '12': {'Description': 'petal width (cm) > 0.8 & petal width (cm) > 1.75' ,
+     'Weight': array([ 0.,  1., 45.])},
 
-    '4': {'Description': 'petal width (cm) > 0.8 & petal width (cm) <= 1.75 & petal length (cm) <= 4.95', 'Weight': array([ 0., 47.,  1.])},
+    '4': {'Description': 'petal width (cm) > 0.8 & petal width (cm) <= 1.75 &
+    petal length (cm) <= 4.95',
+     'Weight': array([ 0., 47.,  1.])},
 
-    '7': {'Description': 'petal width (cm) > 0.8 & petal width (cm) <= 1.75 & petal length (cm) > 4.95', 'Weight': array([0., 2., 4.])},
+    '7': {'Description': 'petal width (cm) > 0.8 & petal width (cm) <= 1.75 &
+     petal length (cm) > 4.95',
+      'Weight': array([0., 2., 4.])},
 
-    '5': {'Description': 'petal width (cm) > 0.8 & petal width (cm) <= 1.75 & petal length (cm) <= 4.95 & petal width (cm) <= 1.65',  'Weight': array([ 0., 47.,  0.])},
+    '5': {'Description': 'petal width (cm) > 0.8 & petal width (cm) <= 1.75 &
+     petal length (cm) <= 4.95 & petal width (cm) <= 1.65',
+       'Weight': array([ 0., 47.,  0.])},
 
-    '6': {'Description': 'petal width (cm) > 0.8 & petal width (cm) <= 1.75 & petal length (cm) <= 4.95 & petal width (cm) > 1.65',  'Weight': array([0., 0., 1.])},
+    '6': {'Description': 'petal width (cm) > 0.8 & petal width (cm) <= 1.75 &
+     petal length (cm) <= 4.95 & petal width (cm) > 1.65',
+       'Weight': array([0., 0., 1.])},
 
     ... etc
     }
