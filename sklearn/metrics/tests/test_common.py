@@ -1422,11 +1422,14 @@ def test_thresholded_metric_permutation_invariance(name):
         brier_score_loss,
     ],
 )
-def test_classification_pos_label_error_with_string(metric):
+@pytest.mark.parametrize("dtype", [None, object])
+def test_classification_pos_label_error_with_string(metric, dtype):
     # check that we raise a consistent error if pos_label is not provided
     # when the target is composed of strings
     random_state = check_random_state(0)
-    y1 = np.array(["eggs"] * 2 + ["spam"] * 3, dtype=object)
+    y1 = np.array(["eggs"] * 2 + ["spam"] * 3)
+    if dtype is not None:
+        y1 = y1.astype(dtype)
     y2 = random_state.randint(0, 2, size=(5,))
 
     err_msg = (
