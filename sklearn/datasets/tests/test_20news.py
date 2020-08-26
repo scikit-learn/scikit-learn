@@ -97,7 +97,7 @@ def test_20news_normalization(fetch_20newsgroups_vectorized_fxt):
     assert np.allclose(np.linalg.norm(X_norm.todense(), axis=1), 1)
 
 
-def test_20news_asframe(fetch_20newsgroups_vectorized_fxt):
+def test_20news_as_frame(fetch_20newsgroups_vectorized_fxt):
     pd = pytest.importorskip('pandas')
 
     try:
@@ -108,8 +108,8 @@ def test_20news_asframe(fetch_20newsgroups_vectorized_fxt):
     else:
         frame = bunch.frame
         check_as_frame(
-            frame,
-            partial(fetch_20newsgroups_vectorized),
+            bunch,
+            partial(fetch_20newsgroups_vectorized_fxt),
         )
 
         assert frame.shape == (11314, 130108)
