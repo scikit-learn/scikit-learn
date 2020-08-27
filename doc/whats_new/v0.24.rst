@@ -122,7 +122,7 @@ Changelog
   loading as a pandas ``DataFrame`` by setting ``as_frame=True``. Requires
   pandas v0.25 or newer.
   :pr:`17499` by :user:`Brigitta Sipőcz <bsipocz>` and
-  :user:`Guillaume Lemaitre <glemaitre>`.
+  `Guillaume Lemaitre`_.
 
 :mod:`sklearn.decomposition`
 ............................

@@ -411,11 +411,11 @@ def fetch_20newsgroups_vectorized(*, subset="train", remove=(), data_home=None,
         Dictionary-like object, with the following attributes.
 
         data: {sparse matrix, dataframe} of shape (n_samples, n_features)
-            The data matrix to learn. If ``as_frame`` is `True`, ``data`` is
-            a pandas DataFrame.
-        target: {ndarray, dataframe} of shape (n_samples,)
+            The input data matrix. If ``as_frame`` is `True`, ``data`` is
+            a pandas DataFrame with sparse columns.
+        target: {ndarray, series} of shape (n_samples,)
             The target labels. If ``as_frame`` is `True`, ``target`` is a
-            pandas DataFrame.
+            pandas Series.
         target_names: list of shape (n_classes,)
             The names of target classes.
         DESCR: str
@@ -427,6 +427,8 @@ def fetch_20newsgroups_vectorized(*, subset="train", remove=(), data_home=None,
             .. versionadded:: 0.24
 
     (data, target) : tuple if ``return_X_y`` is True
+        `data` and `target` would be of the format defined in the `Bunch`
+        description above.
 
         .. versionadded:: 0.20
     """

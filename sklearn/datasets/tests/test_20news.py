@@ -119,7 +119,7 @@ def test_20news_as_frame(fetch_20newsgroups_vectorized_fxt):
         for expected_feature in ['beginner', 'beginners', 'beginning',
                                  'beginnings', 'begins', 'begley', 'begone']:
             assert expected_feature in frame.keys()
-            assert 'category_class' in frame.keys()
+        assert 'category_class' in frame.keys()
 
 
 def test_as_frame_no_pandas():
