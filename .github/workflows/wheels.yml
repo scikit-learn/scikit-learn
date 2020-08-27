@@ -27,10 +27,6 @@ jobs:
         os: [windows-latest, ubuntu-latest, macos-latest]
 
     steps:
-      - name: Check version
-        run: |
-          uname -a
-
       - name: Checkout scikit-learn
         uses: actions/checkout@v2
 
