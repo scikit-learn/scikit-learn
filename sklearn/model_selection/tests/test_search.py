@@ -1752,18 +1752,22 @@ def test_random_search_bad_cv():
         ridge.fit(X[:train_size], y[:train_size])
 
 
-def test_inf_warnings_in_GridSearchCV():
-
+def test_gridserchcv_raise_warning_with_non_finite_score():
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/10529
+    # Check that we raise a UserWarning when a non-finite score is
+    # computed in the GridSearchCV
     X = norm(-1, 0.5).rvs(100, random_state=np.random.RandomState(28))
     kernel = 'epanechnikov'
     steps = 10
     lower = 0.0194867441113
     upper = 0.0974337205567
     bandwidth_range = np.linspace(lower, upper, steps)
-    grid = GridSearchCV(KernelDensity(kernel=kernel),
-                        {'bandwidth': bandwidth_range},
-                        cv=20
-                        )
+    grid = GridSearchCV(
+        KernelDensity(kernel=kernel),
+        param_grid={'bandwidth': bandwidth_range},
+        cv=20,
+    )
 
     with pytest.warns(UserWarning,
                       match='One or more of the test scores are infinite'):
