@@ -1758,7 +1758,7 @@ def test_random_search_bad_cv():
      (True, ("One or more of the test scores are non-finite",
             "One or more of the train scores are non-finite"))]
 )
-def test_gridsearchcv_raise_warning_with_non_finite_score():
+def test_gridsearchcv_raise_warning_with_non_finite_score(return_train_score, regex_str):
     # Non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/10529
     # Check that we raise a UserWarning when a non-finite score is
