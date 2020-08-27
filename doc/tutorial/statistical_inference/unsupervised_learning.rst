@@ -53,25 +53,25 @@ algorithms. The simplest clustering algorithm is :ref:`k_means`.
     .. figure:: /auto_examples/cluster/images/sphx_glr_plot_cluster_iris_003.png
        :target: ../../auto_examples/cluster/plot_cluster_iris.html
        :scale: 63
+       :align: center
 
        **Bad initialization**
 
     .. figure:: /auto_examples/cluster/images/sphx_glr_plot_cluster_iris_001.png
        :target: ../../auto_examples/cluster/plot_cluster_iris.html
        :scale: 63
+       :align: center
 
        **8 clusters**
 
     .. figure:: /auto_examples/cluster/images/sphx_glr_plot_cluster_iris_004.png
        :target: ../../auto_examples/cluster/plot_cluster_iris.html
        :scale: 63
+       :align: center
 
        **Ground truth**
 
     **Don't over-interpret clustering results**
-
-
-
 
 .. topic:: **Application example: vector quantization**
 

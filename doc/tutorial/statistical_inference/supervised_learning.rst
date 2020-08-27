@@ -44,9 +44,7 @@ Nearest neighbor and the curse of dimensionality
 
         >>> import numpy as np
         >>> from sklearn import datasets
-        >>> iris_X, iris_y = datasets.load_iris(
-        ...     return_X_y=True
-        ... )
+        >>> iris_X, iris_y = datasets.load_iris(return_X_y=True)
         >>> np.unique(iris_y)
         array([0, 1, 2])
 
@@ -175,7 +173,7 @@ Linear models: :math:`y = X\beta + \epsilon`
     >>> regr = linear_model.LinearRegression()
     >>> regr.fit(diabetes_X_train, diabetes_y_train)
     LinearRegression()
-    >>> print(regr.coef_)  # doctest: +SKIP
+    >>> print(regr.coef_)
     [   0.30349955 -237.63931533  510.53060544  327.73698041 -814.13170937
       492.81458798  102.84845219  184.60648906  743.51961675   76.09517222]
 
@@ -397,7 +395,7 @@ This is known as :class:`LogisticRegression`.
    .. literalinclude:: ../../auto_examples/exercises/plot_digits_classification_exercise.py
        :lines: 15-19
 
-   :download:`Solution <../../auto_examples/exercises/plot_digits_classification_exercise.py>`
+   A solution can be downloaded :download:`here <../../auto_examples/exercises/plot_digits_classification_exercise.py>`.
 
 
 Support vector machines (SVMs)
@@ -417,11 +415,15 @@ the separating line (less regularization).
 
 .. currentmodule :: sklearn.svm
 
-.. image:: /auto_examples/svm/images/sphx_glr_plot_svm_margin_001.png
+.. figure:: /auto_examples/svm/images/sphx_glr_plot_svm_margin_001.png
+   :target: ../../auto_examples/svm/plot_svm_margin.html
+   
+   **Unregularized SVM**
+
+.. figure:: /auto_examples/svm/images/sphx_glr_plot_svm_margin_002.png
    :target: ../../auto_examples/svm/plot_svm_margin.html
 
-.. |svm_margin_reg| image:: /auto_examples/svm/images/sphx_glr_plot_svm_margin_002.png
-   :target: ../../auto_examples/svm/plot_svm_margin.html
+   **Regularized SVM (default)**
 
 .. topic:: Example:
 
@@ -475,8 +477,6 @@ creating a decision energy by positioning *kernels* on observations:
     ...               degree=3)
     >>> # degree: polynomial degree
 
-      <h4></h4>
-
 .. figure:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_003.png
    :target: ../../auto_examples/svm/plot_svm_kernels.html
 
@@ -494,10 +494,10 @@ creating a decision energy by positioning *kernels* on observations:
    ``svm_gui.py``; add data points of both classes with right and left button,
    fit the model and change parameters and data.
 
-.. image:: /auto_examples/datasets/images/sphx_glr_plot_iris_dataset_001.png
-    :target: ../../auto_examples/datasets/plot_iris_dataset.html
-    :align: center
-    :scale: 70
+   .. image:: /auto_examples/datasets/images/sphx_glr_plot_iris_dataset_001.png
+      :target: ../../auto_examples/datasets/plot_iris_dataset.html
+      :align: center
+      :scale: 70
 
 .. topic:: **Exercise**
    :class: green
@@ -515,4 +515,4 @@ creating a decision energy by positioning *kernels* on observations:
    .. literalinclude:: ../../auto_examples/exercises/plot_iris_exercise.py
        :lines: 18-23
 
-   :download:`Solution <../../auto_examples/exercises/plot_iris_exercise.py>`
+   A solution can be downloaded :download:`here <../../auto_examples/exercises/plot_iris_exercise.py>`
