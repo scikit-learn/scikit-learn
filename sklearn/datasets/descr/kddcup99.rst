@@ -79,8 +79,8 @@ General KDD structure :
 :func:`sklearn.datasets.fetch_kddcup99` will load the kddcup99 dataset; it
 returns a dictionary-like object with the feature matrix in the ``data`` member
 and the target values in ``target``. The "as_frame" optional argument converts
-``data`` and ``target`` members as pandas DataFrame. The dataset will be
-downloaded from the web if necessary.
+``data`` into a pandas DataFrame and ``target`` into a pandas Series. The
+dataset will be downloaded from the web if necessary.
 
 .. topic: References
 
