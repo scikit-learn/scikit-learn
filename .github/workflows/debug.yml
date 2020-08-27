@@ -1,8 +1,6 @@
 name: Debugging
 
-on:
-  pull_request:
-    - master
+on: pull_request
 
 jobs:
   test:
