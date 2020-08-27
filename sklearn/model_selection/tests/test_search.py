@@ -1753,7 +1753,7 @@ def test_random_search_bad_cv():
 
 
 @pytest.mark.parametrize(
-    "return_train_score, regex_str",
+    "return_train_score, expected_msgs",
     [(False, ('One or more of the test scores are non-finite')),
      (True, ("One or more of the test scores are non-finite",
             "One or more of the train scores are non-finite"))]
