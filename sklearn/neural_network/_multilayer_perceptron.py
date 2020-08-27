@@ -379,6 +379,11 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                                            incremental):
             # First time training the model
             self._initialize(y, layer_units, X.dtype)
+        # In case we are warm starting but aren't incremental, the
+        # above routine is not called and the n_iter_ counter is not reset,
+        # do it here.
+        if not incremental:
+            self.n_iter_ = 0
 
         # Initialize lists
         activations = [X] + [None] * (len(layer_units) - 1)
@@ -977,17 +982,18 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         if y.ndim == 2 and y.shape[1] == 1:
             y = column_or_1d(y, warn=True)
 
-        if not incremental:
-            self._label_binarizer = LabelBinarizer()
-            self._label_binarizer.fit(y)
-            self.classes_ = self._label_binarizer.classes_
-        elif self.warm_start:
+        if self.warm_start and (incremental or hasattr(self, "classes_")):
             classes = unique_labels(y)
             if set(classes) != set(self.classes_):
                 raise ValueError("warm_start can only be used where `y` has "
                                  "the same classes as in the previous "
                                  "call to fit. Previously got %s, `y` has %s" %
                                  (self.classes_, classes))
+
+        if not incremental:
+            self._label_binarizer = LabelBinarizer()
+            self._label_binarizer.fit(y)
+            self.classes_ = self._label_binarizer.classes_
         else:
             classes = unique_labels(y)
             if len(np.setdiff1d(classes, self.classes_, assume_unique=True)):
@@ -1037,8 +1043,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         -------
         self : returns a trained MLP model.
         """
-        return self._fit(X, y, incremental=(self.warm_start and
-                                            hasattr(self, "classes_")))
+        return self._fit(X, y, incremental=False)
 
     @property
     def partial_fit(self):
