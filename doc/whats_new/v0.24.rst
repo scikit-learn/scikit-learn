@@ -221,6 +221,10 @@ Changelog
   with `add_indicator=True`.
   :pr:`17612` by :user:`Srimukh Sripada <d3b0unce>`.
 
+- |Fix| :class:`impute.IterativeImputer` will not attempt to set the
+  estimator's `random_state` attribute, allowing to use it with more external classes.
+  :pr:`15636` by :user:`David Cortes <david-cortes>`.
+
 :mod:`sklearn.inspection`
 .........................
 
@@ -357,6 +361,12 @@ Changelog
   validity of the input is now delegated to the base estimator.
   :pr:`17233` by :user:`Zolisa Bleki <zoj613>`.
 
+- |Enhancement| :class:`multiclass.OneVsOneClassifier` now accepts
+  the inputs with missing values. Hence, estimators which can handle
+  missing values (may be a pipeline with imputation step) can be used as
+  a estimator for multiclass wrappers. 
+  :pr:`17987` by :user:`Venkatachalam N <venkyyuvy>`.
+
 :mod:`sklearn.multioutput`
 ..........................
 
@@ -364,6 +374,13 @@ Changelog
   in :class:`multioutput.ClassifierChain`.
   :pr:`18124` by :user:`Gus Brocchini <boldloop>` and
   :user:`Amanda Dsouza <amy12xx>`.
+
+- |Enhancement| :class:`multioutput.MultiOutputClassifier` and 
+  :class:`multioutput.MultiOutputRegressor` now accepts the inputs
+  with missing values. Hence, estimators which can handle missing
+  values (may be a pipeline with imputation step, HistGradientBoosting
+  estimators) can be used as a estimator for multiclass wrappers. 
+  :pr:`17987` by :user:`Venkatachalam N <venkyyuvy>`.
 
 :mod:`sklearn.naive_bayes`
 ..........................
@@ -416,6 +433,14 @@ Changelog
   :class:`neural_network.MLPRegressor`.
   :pr:`17759` by :user:`Srimukh Sripada <d3b0unce>`.
 
+:mod:`sklearn.pipeline`
+.......................
+
+- |Enhancement| References to transformers passed through ``transformer_weights``
+  to :class:`pipeline.FeatureUnion` that aren't present in ``transformer_list``
+  will raise a ``ValueError``.
+  :pr:`17876` by :user:`Cary Goltermann <Ultramann>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
@@ -460,6 +485,14 @@ Changelog
   :meth:`tree.DecisionTreeClassifier.fit` and
   :meth:`tree.DecisionTreeRegressor.fit`, and has not effect.
   :pr:`17614` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
+
+:mod:`sklearn.utils`
+....................
+
+- |Fix| Raise ValueError with clear error message in :func:`check_array`
+  for sparse DataFrames with mixed types.
+  :pr:`17992` by :user:`Thomas J. Fan <thomasjpfan>` and
+  :user:`Alex Shacked <alexshacked>`.
 
 - |Fix| Allow serialized tree based models to be unpickled on a machine
   with different endianness.

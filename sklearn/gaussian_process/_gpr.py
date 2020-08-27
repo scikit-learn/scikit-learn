@@ -1,4 +1,4 @@
-"""Gaussian processes regression. """
+"""Gaussian processes regression."""
 
 # Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 # Modified by: Pete Green <p.l.green@liverpool.ac.uk>
@@ -108,7 +108,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
         which might cause predictions to change if the data is modified
         externally.
 
-    random_state : int or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation used to initialize the centers.
         Pass an int for reproducible results across multiple function calls.
         See :term: `Glossary <random_state>`.
@@ -391,7 +391,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
         n_samples : int, default=1
             The number of samples drawn from the Gaussian process
 
-        random_state : int, RandomState, default=0
+        random_state : int, RandomState instance or None, default=0
             Determines random number generation to randomly draw samples.
             Pass an int for reproducible results across multiple function
             calls.
