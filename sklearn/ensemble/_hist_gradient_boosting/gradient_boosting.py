@@ -102,20 +102,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             self.is_categorical_ = None
             return
 
-        # check for pandas dataframe
-        if (isinstance(self.categorical_features, str) and
-                self.categorical_features == 'pandas'):
-            # is pandas dataframe
-            if not hasattr(X_orig, "dtypes"):
-                raise ValueError("categorical_features='pandas' can only be "
-                                 "used with a pandas dataframe")
-            cat_features_input = np.asarray(X_orig.dtypes == 'category')
-        else:
-            cat_features_input = np.asarray(self.categorical_features)
+        cat_features_input = np.asarray(self.categorical_features)
 
         if cat_features_input.dtype.kind not in ('i', 'b'):
             raise ValueError("categorical_features must be an array-like of "
-                             "bool, array-like of ints, or 'pandas'")
+                             "bools or array-like of ints.")
 
         # check for categorical features as indices
         if cat_features_input.dtype.kind == 'i':
@@ -163,12 +154,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # time spent predicting X for gradient and hessians update
         acc_prediction_time = 0.
         X_orig = X
-        use_pd_categorical_encoding = (
-            isinstance(self.categorical_features, str) and
-            self.categorical_features == 'pandas')
         X, y = self._validate_data(
-            X, y, dtype=[X_DTYPE], force_all_finite=False,
-            use_pd_categorical_encoding=use_pd_categorical_encoding)
+            X, y, dtype=[X_DTYPE], force_all_finite=False
+        )
         y = self._encode_y(y)
         check_consistent_length(X, y)
         # Do not create unit sample weights by default to later skip some
@@ -703,12 +691,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         raw_predictions : array, shape (n_trees_per_iteration, n_samples)
             The raw predicted values.
         """
-        use_pd_categorical_encoding = (
-            isinstance(self.categorical_features, str) and
-            self.categorical_features == 'pandas')
         X = check_array(
-            X, dtype=[X_DTYPE, X_BINNED_DTYPE], force_all_finite=False,
-            use_pd_categorical_encoding=use_pd_categorical_encoding)
+            X, dtype=[X_DTYPE, X_BINNED_DTYPE], force_all_finite=False
+        )
         check_is_fitted(self)
         if X.shape[1] != self._n_features:
             raise ValueError(
@@ -911,13 +896,11 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         and 0 respectively correspond to a positive constraint, negative
         constraint and no constraint. Read more in the :ref:`User Guide
         <monotonic_cst_gbdt>`.
-    categorical_features : array-like of bool or int of shape (n_features) or \
-        `'pandas'`, default=None.
+    categorical_features : array-like of {bool, int} of shape (n_features), \
+            default=None.
         Indicates the categorical features.
 
         - None : no feature will be considered categorical.
-        - `'pandas'` : categorical features will be inferred using pandas
-          categorical dtypes.
         - boolean array-like : boolean mask indicating categorical features.
           The categories must have been already be numerical i.e. encoded by
           an :class:`~sklearn.preprocessing.OrdinalEncoder`.
@@ -1159,13 +1142,11 @@ class HistGradientBoostingClassifier(ClassifierMixin,
         and 0 respectively correspond to a positive constraint, negative
         constraint and no constraint. Read more in the :ref:`User Guide
         <monotonic_cst_gbdt>`.
-    categorical_features : array-like of bool or int of shape (n_features) or \
-        `'pandas'`, default=None.
+    categorical_features : array-like of {bool, int} of shape (n_features), \
+            default=None.
         Indicates the categorical features.
 
         - None : no feature will be considered categorical.
-        - `'pandas'` : categorical features will be inferred using pandas
-          categorical dtypes.
         - boolean array-like : boolean mask indicating categorical features.
           The categories must have been already be numerical i.e. encoded by
           an :class:`~sklearn.preprocessing.OrdinalEncoder`.

@@ -397,8 +397,7 @@ def _ensure_no_complex_data(array):
 def check_array(array, accept_sparse=False, *, accept_large_sparse=True,
                 dtype="numeric", order=None, copy=False, force_all_finite=True,
                 ensure_2d=True, allow_nd=False, ensure_min_samples=1,
-                ensure_min_features=1, estimator=None,
-                use_pd_categorical_encoding=False):
+                ensure_min_features=1, estimator=None):
 
     """Input validation on an array, list, sparse matrix or similar.
 
@@ -476,10 +475,6 @@ def check_array(array, accept_sparse=False, *, accept_large_sparse=True,
 
     estimator : str or estimator instance, default=None
         If passed, include the name of the estimator in warning messages.
-
-    use_pd_categorical_encoding : bool, default=False
-        If True and `X` is a pandas dataframe with categorical features, the
-        categorical features will use the encoding provided by pandas.
 
     Returns
     -------
@@ -584,21 +579,6 @@ def check_array(array, accept_sparse=False, *, accept_large_sparse=True,
                     "can not be converted to a scipy sparse matrix."
                     "Sparse extension arrays should all have the same "
                     "numeric type.")
-
-    if hasattr(array, 'dtypes') and use_pd_categorical_encoding:
-        orig_columns = array.columns
-        cat_mask = array.dtypes == 'category'
-        if np.any(cat_mask):
-
-            cat_dict = {}
-            for name in orig_columns[cat_mask]:
-                cat_dict[name] = array[name].cat.codes
-
-            # create new dataframe using category codes
-            import pandas as pd
-            cat_df = pd.DataFrame(cat_dict)
-            array = pd.concat((array.loc[:, ~cat_mask], cat_df),
-                              axis='columns')[orig_columns]
 
     if sp.issparse(array):
         _ensure_no_complex_data(array)
@@ -720,7 +700,7 @@ def check_X_y(X, y, accept_sparse=False, *, accept_large_sparse=True,
               dtype="numeric", order=None, copy=False, force_all_finite=True,
               ensure_2d=True, allow_nd=False, multi_output=False,
               ensure_min_samples=1, ensure_min_features=1, y_numeric=False,
-              estimator=None, use_pd_categorical_encoding=False):
+              estimator=None):
     """Input validation for standard estimators.
 
     Checks X and y for consistent length, enforces X to be 2D and y 1D. By
@@ -811,10 +791,6 @@ def check_X_y(X, y, accept_sparse=False, *, accept_large_sparse=True,
     estimator : str or estimator instance, default=None
         If passed, include the name of the estimator in warning messages.
 
-    use_pd_categorical_encoding : bool, default=False
-        If True and `X` is a pandas dataframe with categorical features, the
-        categorical features will use the encoding provided by pandas.
-
     Returns
     -------
     X_converted : object
@@ -833,8 +809,7 @@ def check_X_y(X, y, accept_sparse=False, *, accept_large_sparse=True,
                     ensure_2d=ensure_2d, allow_nd=allow_nd,
                     ensure_min_samples=ensure_min_samples,
                     ensure_min_features=ensure_min_features,
-                    estimator=estimator,
-                    use_pd_categorical_encoding=use_pd_categorical_encoding)
+                    estimator=estimator)
     if multi_output:
         y = check_array(y, accept_sparse='csr', force_all_finite=True,
                         ensure_2d=False, dtype=None)

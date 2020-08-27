@@ -840,60 +840,12 @@ def test_categorical_sanity(insert_missing, make_dataset, Est,
     est.predict(X_test)
 
 
-def test_categorical_pandas():
-    # Correctly intakes pandas dataframe for fitting and prediction
-
-    pd = pytest.importorskip("pandas")
-    n_samples, n_features = 5000, 20
-    X, y = make_regression(n_samples=n_samples, n_features=n_features,
-                           random_state=0)
-
-    # even indices are categorical
-    categorical = np.zeros(X.shape[1], dtype=bool)
-    categorical[::2] = 1
-
-    X[:, categorical] = KBinsDiscretizer(
-        encode='ordinal', n_bins=20).fit_transform(X[:, categorical])
-
-    df = pd.DataFrame(X,
-                      columns=[f'col_{i}' for i in range(n_features)])
-
-    # make columns pandas categoricals
-    categorical_indices = np.flatnonzero(categorical)
-    rng = np.random.RandomState(42)
-    for idx in categorical_indices:
-        df.iloc[:, idx] = df.iloc[:, idx].astype('category')
-
-        # insesrt some missing categories
-        mask = rng.binomial(1, 0.01, size=n_samples).astype(np.bool)
-        df.iloc[mask, idx] = np.nan
-
-    # uses strings for some categorical names
-    for idx in categorical_indices[::2]:
-        df.iloc[:, idx] = (df.iloc[:, 0].cat.rename_categories(
-            [f'cat_name_{i}' for i in range(20)]))
-
-    est = HistGradientBoostingRegressor(categorical_features='pandas',
-                                        random_state=0).fit(df, y)
-    assert_array_equal(est.is_categorical_, categorical)
-
-    y_pred = est.predict(df)
-    assert r2_score(y, y_pred) >= 0.7
-
-    X_test = np.zeros((1, X.shape[1]), dtype=float)
-    X_test[:, ::2] = 30  # unknown category
-    X_test[:, 10:] = np.nan  # sets the last 10 features to be missing
-
-    # Does not error when using a numpy array as input for predict
-    est.predict(X_test)
-
-
 @pytest.mark.parametrize('Est', (HistGradientBoostingClassifier,
                                  HistGradientBoostingRegressor))
 @pytest.mark.parametrize("categorical_features, monotonic_cst, expected_msg", [
     (["hello", "world"], None,
-     ("categorical_features must be an array-like of bool, array-like of "
-      "ints, or 'pandas'")),
+     ("categorical_features must be an array-like of bools or array-like of "
+      "ints.")),
     ([0, -1], None,
      (r"categorical_features set as integer indices must be in "
       r"\[0, n_features - 1\]")),
@@ -911,18 +863,4 @@ def test_categorical_spec_errors(Est, categorical_features, monotonic_cst,
               monotonic_cst=monotonic_cst)
 
     with pytest.raises(ValueError, match=expected_msg):
-        est.fit(X, y)
-
-
-@pytest.mark.parametrize("make_datasets, Est", [
-    (make_classification, HistGradientBoostingClassifier),
-    (make_regression, HistGradientBoostingRegressor)
-])
-def test_categorical_pandas_error_as_input(make_datasets, Est):
-    X, y = make_datasets(n_samples=100, random_state=0)
-    est = Est(categorical_features='pandas')
-
-    msg = ("categorical_features='pandas' can only be used with a pandas "
-           "dataframe")
-    with pytest.raises(ValueError, match=msg):
         est.fit(X, y)
