@@ -386,7 +386,7 @@ class MDS(BaseEstimator):
         self.random_state = random_state
 
     def _more_tags(self):
-        return {'pairwise': self.metric == 'precomputed'}
+        return {'pairwise': self.dissimilarity == 'precomputed'}
 
     # TODO: Remove in 0.26
     # mypy error: Decorated property not supported
@@ -394,7 +394,7 @@ class MDS(BaseEstimator):
                 "version 0.24 and will be removed in 0.26.")
     @property
     def _pairwise(self):
-        return self.metric == "precomputed"
+        return self.dissimilarity == "precomputed"
 
     def fit(self, X, y=None, init=None):
         """
