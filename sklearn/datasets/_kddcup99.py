@@ -90,7 +90,7 @@ def fetch_kddcup99(*, subset=None, data_home=None, shuffle=False,
         Whether to load only 10 percent of the data.
 
     download_if_missing : bool, default=True
-        If False, raise a OSError if the data is not locally available
+        If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
     return_X_y : bool, default=False
@@ -100,21 +100,24 @@ def fetch_kddcup99(*, subset=None, data_home=None, shuffle=False,
         .. versionadded:: 0.20
 
     as_frame : bool, default=False
-        If True, returns pandas Dataframe for the ``data`` and ``target``
-        objects in the Bunch return object; Bunch return object will also
+        If `True`, returns a pandas Dataframe for the ``data`` and ``target``
+        objects in the `Bunch` returned object; `Bunch` return object will also
         have a ``frame`` member.
 
         .. versionadded:: 0.24
+
     Returns
     -------
     data : :class:`~sklearn.utils.Bunch`
         Dictionary-like object, with the following attributes.
 
-        data : ndarray of shape (494021, 41)
-            The data matrix to learn.
-        target : ndarray of shape (494021,)
-            The regression target for each sample.
-        frame : dataframe of shape (494021, 41)
+        data : {ndarray, dataframe} of shape (494021, 41)
+            The data matrix to learn. If `as_frame=True`, `data` will be a
+            pandas DataFrame.
+        target : {ndarray, series} of shape (494021,)
+            The regression target for each sample. If `as_frame=True`, `target`
+            will be a pandas Series.
+        frame : dataframe of shape (494021, 42)
             Only present when `as_frame=True`. Contains `data` and `target`.
         DESCR : str
             The full description of the dataset.
@@ -128,13 +131,16 @@ def fetch_kddcup99(*, subset=None, data_home=None, shuffle=False,
         .. versionadded:: 0.20
     """
     data_home = get_data_home(data_home=data_home)
-    kddcup99, feature_names, target_names = _fetch_brute_kddcup99(
-                                     data_home=data_home,
-                                     percent10=percent10,
-                                     download_if_missing=download_if_missing)
+    kddcup99 = _fetch_brute_kddcup99(
+        data_home=data_home,
+        percent10=percent10,
+        download_if_missing=download_if_missing
+    )
 
     data = kddcup99.data
     target = kddcup99.target
+    feature_names = kddcup99.feature_names
+    target_names = kddcup99.target_names
 
     if subset == 'SA':
         s = target == b'normal.'
@@ -198,18 +204,18 @@ def fetch_kddcup99(*, subset=None, data_home=None, shuffle=False,
 
     frame = None
     if as_frame:
-        frame, data, target = _convert_data_dataframe("fetch_kddcup99",
-                                                      data,
-                                                      target,
-                                                      feature_names,
-                                                      target_names)
+        frame, data, target = _convert_data_dataframe(
+            "fetch_kddcup99", data, target, feature_names, target_names
+        )
 
-    return Bunch(data=data,
-                 target=target,
-                 frame=frame,
-                 target_names=target_names,
-                 feature_names=feature_names,
-                 DESCR=fdescr)
+    return Bunch(
+        data=data,
+        target=target,
+        frame=frame,
+        target_names=target_names,
+        feature_names=feature_names,
+        DESCR=fdescr,
+    )
 
 
 def _fetch_brute_kddcup99(data_home=None,
@@ -224,7 +230,7 @@ def _fetch_brute_kddcup99(data_home=None,
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
     download_if_missing : bool, default=True
-        If False, raise a OSError if the data is not locally available
+        If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
     percent10 : bool, default=True
@@ -240,6 +246,10 @@ def _fetch_brute_kddcup99(data_home=None,
         target : ndarray of shape (494021,)
             Each value corresponds to one of the 21 attack types or to the
             label 'normal.'.
+        feature_names : list
+            The names of the dataset columns
+        target_names: list
+            The names of the target columns
         DESCR : str
             Description of the kddcup99 dataset.
 
@@ -302,9 +312,9 @@ def _fetch_brute_kddcup99(data_home=None,
           ('dst_host_srv_rerror_rate', float),
           ('labels', 'S16')]
 
-    feature_names = [c[0] for c in dt]
-    target_names = feature_names[-1]
-    feature_names = feature_names[:-1]
+    column_names = [c[0] for c in dt]
+    target_names = column_names[-1]
+    feature_names = column_names[:-1]
     if download_if_missing and not available:
         _mkdirp(kddcup_dir)
         logger.info("Downloading %s" % archive.url)
@@ -335,14 +345,20 @@ def _fetch_brute_kddcup99(data_home=None,
         joblib.dump(y, targets_path, compress=0)
     elif not available:
         if not download_if_missing:
-            raise OSError("Data not found and `download_if_missing` is False")
+            raise IOError("Data not found and `download_if_missing` is False")
 
     try:
         X, y
     except NameError:
         X = joblib.load(samples_path)
         y = joblib.load(targets_path)
-    return Bunch(data=X, target=y), feature_names, [target_names]
+
+    return Bunch(
+        data=X,
+        target=y,
+        feature_names=feature_names,
+        target_names=[target_names],
+    )
 
 
 def _mkdirp(d):
