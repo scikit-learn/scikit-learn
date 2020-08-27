@@ -287,6 +287,9 @@ Changelog
   that raised `MemoryError` exception when used with large inputs.
   :pr:`17997` by :user:`Bertrand Maisonneuve <bmaisonn>`.
 
+- |Fix| :class:`manifold.MDS` now correctly sets its `_pairwise` attribute.
+  :pr:`18278` by `Thomas Fan`_.
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -364,7 +367,7 @@ Changelog
 - |Enhancement| :class:`multiclass.OneVsOneClassifier` now accepts
   the inputs with missing values. Hence, estimators which can handle
   missing values (may be a pipeline with imputation step) can be used as
-  a estimator for multiclass wrappers. 
+  a estimator for multiclass wrappers.
   :pr:`17987` by :user:`Venkatachalam N <venkyyuvy>`.
 
 :mod:`sklearn.multioutput`
@@ -375,11 +378,11 @@ Changelog
   :pr:`18124` by :user:`Gus Brocchini <boldloop>` and
   :user:`Amanda Dsouza <amy12xx>`.
 
-- |Enhancement| :class:`multioutput.MultiOutputClassifier` and 
+- |Enhancement| :class:`multioutput.MultiOutputClassifier` and
   :class:`multioutput.MultiOutputRegressor` now accepts the inputs
   with missing values. Hence, estimators which can handle missing
   values (may be a pipeline with imputation step, HistGradientBoosting
-  estimators) can be used as a estimator for multiclass wrappers. 
+  estimators) can be used as a estimator for multiclass wrappers.
   :pr:`17987` by :user:`Venkatachalam N <venkyyuvy>`.
 
 :mod:`sklearn.naive_bayes`

@@ -64,6 +64,11 @@ def test_MDS():
     mds_clf.fit(sim)
 
 
-def test_MDS_pairwise():
-    mds_clf = mds.MDS(dissimilarity="precomputed")
-    assert mds_clf._pairwise
+@pytest.mark.parametrize("dissimilarity, expected_pairwise", [
+   ("precomputed", True),
+   ("euclidean", False),
+])
+def test_MDS_pairwise(dissimilarity, expected_pairwise):
+    # _pairwise attribute is set correctly
+    mds_clf = mds.MDS(dissimilarity=dissimilarity)
+    assert mds_clf._pairwise == expected_pairwise
