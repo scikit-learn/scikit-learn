@@ -189,26 +189,6 @@ def test_pca_vs_spca():
     assert_allclose(results_test_pca, results_test_spca)
 
 
-@pytest.mark.parametrize("spca", [SparsePCA, MiniBatchSparsePCA])
-def test_spca_deprecation_warning(spca):
-    rng = np.random.RandomState(0)
-    Y, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)
-
-    warn_msg = "'normalize_components' has been deprecated in 0.22"
-    with pytest.warns(FutureWarning, match=warn_msg):
-        spca(normalize_components=True).fit(Y)
-
-
-@pytest.mark.parametrize("spca", [SparsePCA, MiniBatchSparsePCA])
-def test_spca_error_unormalized_components(spca):
-    rng = np.random.RandomState(0)
-    Y, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)
-
-    err_msg = "normalize_components=False is not supported starting "
-    with pytest.raises(NotImplementedError, match=err_msg):
-        spca(normalize_components=False).fit(Y)
-
-
 @pytest.mark.parametrize("SPCA", [SparsePCA, MiniBatchSparsePCA])
 @pytest.mark.parametrize("n_components", [None, 3])
 def test_spca_n_components_(SPCA, n_components):

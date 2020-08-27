@@ -90,7 +90,7 @@ class BaseCrossValidator(metaclass=ABCMeta):
         By default, delegates to _iter_test_indices(X, y, groups)
         """
         for test_index in self._iter_test_indices(X, y, groups):
-            test_mask = np.zeros(_num_samples(X), dtype=np.bool)
+            test_mask = np.zeros(_num_samples(X), dtype=bool)
             test_mask[test_index] = True
             yield test_mask
 
@@ -289,12 +289,10 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
                             " got {0}".format(shuffle))
 
         if not shuffle and random_state is not None:  # None is the default
-            # TODO 0.24: raise a ValueError instead of a warning
-            warnings.warn(
+            raise ValueError(
                 'Setting a random_state has no effect since shuffle is '
-                'False. This will raise an error in 0.24. You should leave '
+                'False. You should leave '
                 'random_state to its default (None), or set shuffle=True.',
-                FutureWarning
             )
 
         self.n_splits = n_splits
@@ -381,7 +379,7 @@ class KFold(_BaseKFold):
         Whether to shuffle the data before splitting into batches.
         Note that the samples within each split will not be shuffled.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         When `shuffle` is True, `random_state` affects the ordering of the
         indices, which controls the randomness of each fold. Otherwise, this
         parameter has no effect.
@@ -440,7 +438,7 @@ class KFold(_BaseKFold):
             check_random_state(self.random_state).shuffle(indices)
 
         n_splits = self.n_splits
-        fold_sizes = np.full(n_splits, n_samples // n_splits, dtype=np.int)
+        fold_sizes = np.full(n_splits, n_samples // n_splits, dtype=int)
         fold_sizes[:n_samples % n_splits] += 1
         current = 0
         for fold_size in fold_sizes:
@@ -589,7 +587,7 @@ class StratifiedKFold(_BaseKFold):
         Whether to shuffle each class's samples before splitting into batches.
         Note that the samples within each split will not be shuffled.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         When `shuffle` is True, `random_state` affects the ordering of the
         indices, which controls the randomness of each fold for each class.
         Otherwise, leave `random_state` as `None`.
@@ -1069,7 +1067,7 @@ class LeavePGroupsOut(BaseCrossValidator):
                 "present" % (self.n_groups, unique_groups, self.n_groups + 1))
         combi = combinations(range(len(unique_groups)), self.n_groups)
         for indices in combi:
-            test_index = np.zeros(_num_samples(X), dtype=np.bool)
+            test_index = np.zeros(_num_samples(X), dtype=bool)
             for l in unique_groups[np.array(indices)]:
                 test_index[groups == l] = True
             yield test_index
@@ -1142,7 +1140,7 @@ class _RepeatedSplits(metaclass=ABCMeta):
     n_repeats : int, default=10
         Number of times cross-validator needs to be repeated.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Passes `random_state` to the arbitrary repeating cross validator.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -1173,11 +1171,11 @@ class _RepeatedSplits(metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like of length n_samples
+        y : array-like of shape (n_samples,)
             The target variable for supervised learning problems.
 
         groups : array-like of shape (n_samples,), default=None
@@ -1247,7 +1245,7 @@ class RepeatedKFold(_RepeatedSplits):
     n_repeats : int, default=10
         Number of times cross-validator needs to be repeated.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the randomness of each repeated cross-validation instance.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -1302,7 +1300,7 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
     n_repeats : int, default=10
         Number of times cross-validator needs to be repeated.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the generation of the random states for each repetition.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -1445,7 +1443,7 @@ class ShuffleSplit(BaseShuffleSplit):
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test size.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the randomness of the training and testing indices produced.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -1546,7 +1544,7 @@ class GroupShuffleSplit(ShuffleSplit):
         int, represents the absolute number of train groups. If None,
         the value is automatically set to the complement of the test size.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the randomness of the training and testing indices produced.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -1658,7 +1656,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test size.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the randomness of the training and testing indices produced.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -1902,7 +1900,7 @@ class PredefinedSplit(BaseCrossValidator):
     """
 
     def __init__(self, test_fold):
-        self.test_fold = np.array(test_fold, dtype=np.int)
+        self.test_fold = np.array(test_fold, dtype=int)
         self.test_fold = column_or_1d(self.test_fold)
         self.unique_folds = np.unique(self.test_fold)
         self.unique_folds = self.unique_folds[self.unique_folds != -1]
@@ -1939,7 +1937,7 @@ class PredefinedSplit(BaseCrossValidator):
         """Generates boolean masks corresponding to test sets."""
         for f in self.unique_folds:
             test_index = np.where(self.test_fold == f)[0]
-            test_mask = np.zeros(len(self.test_fold), dtype=np.bool)
+            test_mask = np.zeros(len(self.test_fold), dtype=bool)
             test_mask[test_index] = True
             yield test_mask
 
@@ -2106,7 +2104,7 @@ def train_test_split(*arrays,
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test size.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the shuffling applied to the data before applying the split.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.

@@ -53,7 +53,7 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
         if self.weights is None:
             return None
         return [w for est, w in zip(self.estimators, self.weights)
-                if est[1] not in (None, 'drop')]
+                if est[1] != 'drop']
 
     def _predict(self, X):
         """Collect results from clf.predict calls."""
@@ -78,18 +78,42 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
                         message=self._log_message(names[idx],
                                                   idx + 1, len(clfs))
                 )
-                for idx, clf in enumerate(clfs) if clf not in (None, 'drop')
+                for idx, clf in enumerate(clfs) if clf != 'drop'
             )
 
         self.named_estimators_ = Bunch()
 
-        # Uses None or 'drop' as placeholder for dropped estimators
+        # Uses 'drop' as placeholder for dropped estimators
         est_iter = iter(self.estimators_)
         for name, est in self.estimators:
-            current_est = est if est in (None, 'drop') else next(est_iter)
+            current_est = est if est == 'drop' else next(est_iter)
             self.named_estimators_[name] = current_est
 
         return self
+
+    def fit_transform(self, X, y=None, **fit_params):
+        """Return class labels or probabilities for each estimator.
+
+        Return predictions for X for each estimator.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix, dataframe} of shape \
+                (n_samples, n_features)
+            Input samples
+
+        y : ndarray of shape (n_samples,), default=None
+            Target values (None for unsupervised transformations).
+
+        **fit_params : dict
+            Additional fit parameters.
+
+        Returns
+        -------
+        X_new : ndarray array of shape (n_samples, n_features_new)
+            Transformed array.
+        """
+        return super().fit_transform(X, y, **fit_params)
 
     @property
     def n_features_in_(self):
@@ -126,11 +150,8 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         using ``set_params``.
 
         .. versionchanged:: 0.21
-            ``'drop'`` is accepted.
-
-        .. deprecated:: 0.22
-           Using ``None`` to drop an estimator is deprecated in 0.22 and
-           support will be dropped in 0.24. Use the string ``'drop'`` instead.
+            ``'drop'`` is accepted. Using None was deprecated in 0.22 and
+            support was removed in 0.24.
 
     voting : {'hard', 'soft'}, default='hard'
         If 'hard', uses predicted class labels for majority rule voting.
@@ -376,11 +397,8 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         ``set_params``.
 
         .. versionchanged:: 0.21
-            ``'drop'`` is accepted.
-
-        .. deprecated:: 0.22
-           Using ``None`` to drop an estimator is deprecated in 0.22 and
-           support will be dropped in 0.24. Use the string ``'drop'`` instead.
+            ``'drop'`` is accepted. Using None was deprecated in 0.22 and
+            support was removed in 0.24.
 
     weights : array-like of shape (n_regressors,), default=None
         Sequence of weights (`float` or `int`) to weight the occurrences of

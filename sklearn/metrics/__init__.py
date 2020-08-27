@@ -7,6 +7,7 @@ and pairwise metrics and distance computations.
 from ._ranking import auc
 from ._ranking import average_precision_score
 from ._ranking import coverage_error
+from ._ranking import detection_error_tradeoff_curve
 from ._ranking import dcg_score
 from ._ranking import label_ranking_average_precision_score
 from ._ranking import label_ranking_loss
@@ -64,6 +65,7 @@ from ._regression import mean_absolute_error
 from ._regression import mean_squared_error
 from ._regression import mean_squared_log_error
 from ._regression import median_absolute_error
+from ._regression import mean_absolute_percentage_error
 from ._regression import r2_score
 from ._regression import mean_tweedie_deviance
 from ._regression import mean_poisson_deviance
@@ -103,6 +105,7 @@ __all__ = [
     'coverage_error',
     'dcg_score',
     'davies_bouldin_score',
+    'detection_error_tradeoff_curve',
     'euclidean_distances',
     'explained_variance_score',
     'f1_score',
@@ -128,6 +131,7 @@ __all__ = [
     'mean_gamma_deviance',
     'mean_tweedie_deviance',
     'median_absolute_error',
+    'mean_absolute_percentage_error',
     'multilabel_confusion_matrix',
     'mutual_info_score',
     'ndcg_score',

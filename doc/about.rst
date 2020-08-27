@@ -38,8 +38,18 @@ in the FAQ.
 
    :ref:`How you can contribute to the project <contributing>`
 
+Triage Team
+-----------
+
+The following people are active contributors who also help with
+:ref:`triaging issues <bug_triaging>`, PRs, and general
+maintenance:
+
+.. include:: triage_team.rst
+
 Emeritus Core Developers
 ------------------------
+
 The following people have been active contributors in the past, but are no
 longer active in the project:
 
