@@ -77,7 +77,7 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
         if self.add_indicator:
             self.indicator_ = MissingIndicator(
                 missing_values=self.missing_values, error_on_new=False)
-            self.indicator_._fit_precomputed(X)
+            self.indicator_._fit(X, precomputed=True)
         else:
             self.indicator_ = None
 
@@ -704,7 +704,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
 
         return X
 
-    def _fit(self, X, y=None):
+    def _fit(self, X, y=None, precomputed=False):
         """Fit the transformer on X.
 
         Parameters
@@ -712,6 +712,11 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Input data, where ``n_samples`` is the number of samples and
             ``n_features`` is the number of features.
+            If `precomputed` is True, then `X` is a mask of the
+            input data.
+
+        precomputed : bool
+            Whether the input data is a mask.
 
         Returns
         -------
@@ -720,13 +725,19 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             The imputer mask of the original data.
 
         """
-        if not hasattr(self, '_precomputed'):
+        if precomputed:
+            if not (hasattr(X, 'dtype') and X.dtype.kind == 'b'):
+                raise ValueError("precomputed is True but the input data is "
+                                 "not a mask")
+            self._precomputed = True
+        else:
             self._precomputed = False
 
         # Need not validate X again as it would have already been validated
         # in the Imputer calling MissingIndicator
         if not self._precomputed:
             X = self._validate_input(X, in_fit=True)
+
         self._n_features = X.shape[1]
 
         if self.features not in ('missing-only', 'all'):
@@ -742,25 +753,6 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         self.features_ = missing_features_info[1]
 
         return missing_features_info[0]
-
-    def _fit_precomputed(self, X):
-        """Fit the transformer on X.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}
-            Mask of input data.
-
-        Returns
-        -------
-        self : object
-            Returns self.
-        """
-        self._precomputed = False
-        if hasattr(X, 'dtype') and X.dtype.kind == 'b':
-            self._precomputed = True
-
-        return self._fit(X)
 
     def fit(self, X, y=None):
         """Fit the transformer on X.
@@ -801,7 +793,11 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         # Need not validate X again as it would have already been validated
         # in the Imputer calling MissingIndicator
         if not self._precomputed:
-            X = self._validate_input(X, in_fit=False)
+            X = self._validate_input(X, in_fit=True)
+        else:
+            if not (hasattr(X, 'dtype') and X.dtype.kind == 'b'):
+                raise ValueError("precomputed is True but the input data is "
+                                 "not a mask")
 
         if X.shape[1] != self._n_features:
             raise ValueError("X has a different number of features "
