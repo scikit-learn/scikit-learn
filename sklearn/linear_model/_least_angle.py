@@ -1766,12 +1766,11 @@ class LassoLarsIC(LassoLars):
     alpha_ : float
         the alpha parameter chosen by the information criterion
 
-    alphas_ : array-like of shape (n_alphas + 1,) or list of thereof of shape \
-            (n_targets,)
+    alphas_ : array-like of shape (n_alphas + 1,) or list thereof
         Maximum of covariances (in absolute value) at each iteration.
         ``n_alphas`` is either ``max_iter``, ``n_features`` or the
         number of nodes in the path with ``alpha >= alpha_min``, whichever
-        is smaller.
+        is smaller. If a list, it will be of length `n_targets`.
 
     n_iter_ : int
         number of iterations run by lars_path to find the grid of
