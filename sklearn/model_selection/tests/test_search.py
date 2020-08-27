@@ -1756,7 +1756,7 @@ def test_random_search_bad_cv():
     "return_train_score, regex_str",
     [(False, ('One or more of the test scores are non-finite')),
      (True, ("One or more of the test scores are non-finite",
-        "One or more of the train scores are non-finite"))]
+            "One or more of the train scores are non-finite"))]
 )
 def test_gridsearchcv_raise_warning_with_non_finite_score():
     # Non-regression test for:
@@ -1780,7 +1780,6 @@ def test_gridsearchcv_raise_warning_with_non_finite_score():
         grid.fit(X[:, np.newaxis])
 
     warnings = list(map(lambda warning: warning.message, warnings)).join(",")
-    # expected_msgs = regex_str.split(",")
     assert expected_msgs[0] in warnings
 
     if return_train_score:
