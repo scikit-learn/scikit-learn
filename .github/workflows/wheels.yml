@@ -20,7 +20,7 @@ jobs:
     if: >-
       github.event_name == 'schedule' ||
       github.event_name == 'push' ||
-      endsWith(github.event.head_commit.message, '[wheel-build]')
+      contains(github.event.head_commit.message, '[wheel-build]')
 
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -68,7 +68,7 @@ jobs:
     if: >-
       github.event_name == 'schedule' ||
       github.event_name == 'push' ||
-      endsWith(github.event.head_commit.message, '[source-build]')
+      contains(github.event.head_commit.message, '[source-build]')
 
     name: Source distribution
     runs-on: ubuntu-latest
