@@ -158,7 +158,7 @@ class CalibratedClassifierCV(ClassifierMixin,
         The class labels.
 
     calibrated_classifiers_ : list (len() equal to cv or 1 if `cv="prefit"` \
-                              or `ensemble=False`)
+            or `ensemble=False`)
         The list of classifier and calibrator pairs.
 
         - When `cv="prefit"`, the fitted `base_estimator` and fitted
