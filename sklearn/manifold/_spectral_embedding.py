@@ -44,8 +44,6 @@ def _graph_connected_component(graph, node_id):
         node.
     """
     n_node = graph.shape[0]
-    if isinstance(graph, np.matrix):
-        graph = graph.A
 
     if sparse.issparse(graph):
         # speed up row-wise access to boolean connection mask
@@ -89,7 +87,8 @@ def _graph_is_connected(graph):
         return n_connected_components == 1
     else:
         # dense graph, find all connected components start from node 0
-        return _graph_connected_component(graph, 0).sum() == graph.shape[0]
+        return _graph_connected_component(np.asarray(graph), 0).sum() == \
+                graph.shape[0]
 
 
 def _set_diag(laplacian, value, norm_laplacian):
