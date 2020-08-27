@@ -584,9 +584,6 @@ class IterativeImputer(_BaseImputer):
         else:
             self._estimator = clone(self.estimator)
 
-        if hasattr(self._estimator, 'random_state'):
-            self._estimator.random_state = self.random_state_
-
         self.imputation_sequence_ = []
 
         self.initial_imputer_ = None

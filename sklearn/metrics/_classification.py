@@ -2346,7 +2346,7 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     check_consistent_length(y_true, pred_decision, sample_weight)
     pred_decision = check_array(pred_decision, ensure_2d=False)
     y_true = column_or_1d(y_true)
-    y_true_unique = np.unique(y_true)
+    y_true_unique = np.unique(labels if labels is not None else y_true)
     if y_true_unique.size > 2:
         if (labels is None and pred_decision.ndim > 1 and
                 (np.size(y_true_unique) != pred_decision.shape[1])):
