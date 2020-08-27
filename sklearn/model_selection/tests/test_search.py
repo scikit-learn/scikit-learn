@@ -1752,7 +1752,13 @@ def test_random_search_bad_cv():
         ridge.fit(X[:train_size], y[:train_size])
 
 
-def test_gridserchcv_raise_warning_with_non_finite_score():
+@pytest.mark.parametrize(
+    "return_train_score, regex_str",
+    [(False, ('One or more of the test scores are non-finite')),
+     (True, ("One or more of the test scores are non-finite",
+        "One or more of the train scores are non-finite"))]
+)
+def test_gridsearchcv_raise_warning_with_non_finite_score():
     # Non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/10529
     # Check that we raise a UserWarning when a non-finite score is
@@ -1767,11 +1773,18 @@ def test_gridserchcv_raise_warning_with_non_finite_score():
         KernelDensity(kernel=kernel),
         param_grid={'bandwidth': bandwidth_range},
         cv=20,
+        return_train_score=return_train_score
     )
 
-    with pytest.warns(UserWarning,
-                      match='One or more of the test scores are infinite'):
+    with pytest.warns(UserWarning) as warnings:
         grid.fit(X[:, np.newaxis])
+
+    warnings = list(map(lambda warning: warning.message, warnings)).join(",")
+    # expected_msgs = regex_str.split(",")
+    assert expected_msgs[0] in warnings
+
+    if return_train_score:
+        assert expected_msgs[1] in warnings
 
 
 def test_callable_multimetric_confusion_matrix():
