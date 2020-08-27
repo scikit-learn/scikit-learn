@@ -20,7 +20,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
-           python-version: ${{ python-version }}
+           python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
         run: |
