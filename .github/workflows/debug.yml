@@ -29,4 +29,4 @@ jobs:
 
       - name: Test test_check_pandas_sparse_valid
         run: |
-          pytest sklearn/utils/tests/test_validation.py::test_check_pandas_sparse_valid --vs
+          pytest sklearn/utils/tests/test_validation.py::test_check_pandas_sparse_valid -vs
