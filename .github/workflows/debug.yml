@@ -1,0 +1,34 @@
+name: Debugging
+
+on:
+  pull_request:
+    - master
+
+jobs:
+  test:
+    name: Debug test_check_pandas_sparse_valid
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        python-version: [3.6, 3.7, 3.8]
+
+    steps:
+      - name: Checkout scikit-learn
+        uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+           python-version: ${{ python-version }}
+
+      - name: Install dependencies
+        run: |
+          pip install numpy scipy cython joblib threadpoolctl pytest
+          python setup.py develop
+
+      - name: Test test_check_pandas_sparse_valid
+        run: |
+          pytest sklearn/utils/tests/test_validation.py::test_check_pandas_sparse_valid --vs
