@@ -3,6 +3,7 @@ import pytest
 import numpy as np
 
 from sklearn.impute._base import _BaseImputer
+from sklearn.utils._mask import _get_mask
 
 
 @pytest.fixture
@@ -22,7 +23,8 @@ class NoFitIndicatorImputer(_BaseImputer):
 
 class NoTransformIndicatorImputer(_BaseImputer):
     def fit(self, X, y=None):
-        super()._fit_indicator(X)
+        mask = _get_mask(X, value_to_mask=np.nan)
+        super()._fit_indicator(mask)
         return self
 
     def transform(self, X, y=None):
