@@ -361,6 +361,12 @@ Changelog
   validity of the input is now delegated to the base estimator.
   :pr:`17233` by :user:`Zolisa Bleki <zoj613>`.
 
+- |Enhancement| :class:`multiclass.OneVsOneClassifier` now accepts
+  the inputs with missing values. Hence, estimators which can handle
+  missing values (may be a pipeline with imputation step) can be used as
+  a estimator for multiclass wrappers. 
+  :pr:`17987` by :user:`Venkatachalam N <venkyyuvy>`.
+
 :mod:`sklearn.multioutput`
 ..........................
 
@@ -368,6 +374,13 @@ Changelog
   in :class:`multioutput.ClassifierChain`.
   :pr:`18124` by :user:`Gus Brocchini <boldloop>` and
   :user:`Amanda Dsouza <amy12xx>`.
+
+- |Enhancement| :class:`multioutput.MultiOutputClassifier` and 
+  :class:`multioutput.MultiOutputRegressor` now accepts the inputs
+  with missing values. Hence, estimators which can handle missing
+  values (may be a pipeline with imputation step, HistGradientBoosting
+  estimators) can be used as a estimator for multiclass wrappers. 
+  :pr:`17987` by :user:`Venkatachalam N <venkyyuvy>`.
 
 :mod:`sklearn.naive_bayes`
 ..........................
