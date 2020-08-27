@@ -662,6 +662,17 @@ def test_warm_start():
             clf.fit(X, y_i)
 
 
+def test_warm_start_full_iteration():
+    X = X_iris
+    y = y_iris
+    max_iter = 3
+    clf = MLPClassifier(hidden_layer_sizes=2, solver='sgd',
+                        warm_start=True, max_iter=max_iter)
+    clf.fit(X, y)
+    clf.fit(X, y)
+    assert max_iter == clf.n_iter_
+
+
 def test_n_iter_no_change():
     # test n_iter_no_change using binary data set
     # the classifying fitting process is not prone to loss curve fluctuations
