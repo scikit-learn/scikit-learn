@@ -24,7 +24,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install numpy scipy cython joblib threadpoolctl pytest
+          pip install numpy scipy cython joblib threadpoolctl pytest pandas
           python setup.py develop
 
       - name: Test test_check_pandas_sparse_valid
