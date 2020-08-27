@@ -62,3 +62,8 @@ def test_MDS():
                     [4, 2, 1, 0]])
     mds_clf = mds.MDS(metric=False, n_jobs=3, dissimilarity="precomputed")
     mds_clf.fit(sim)
+
+
+def test_MDS_pairwise():
+    mds_clf = mds.MDS(dissimilarity="precomputed")
+    assert mds_clf._pairwise
