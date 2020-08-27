@@ -5,9 +5,9 @@ Developing scikit-learn estimators
 ==================================
 
 Whether you are proposing an estimator for inclusion in scikit-learn,
-developing a separate package compatible with scikit-learn, or 
-implementing custom components for your own projects, this chapter 
-details how to develop objects that safely interact with scikit-learn 
+developing a separate package compatible with scikit-learn, or
+implementing custom components for your own projects, this chapter
+details how to develop objects that safely interact with scikit-learn
 Pipelines and model selection tools.
 
 .. currentmodule:: sklearn
@@ -228,7 +228,7 @@ to slice rows and columns.
 
 .. deprecated:: 0.24
 
-    The _pairwise attribute is deprecated in 0.24. From 0.26 and onward,
+    The _pairwise attribute is deprecated in 0.24. From 0.26 onward,
     the `pairwise` estimator tag should be used instead.
 
 Universal attributes
@@ -591,10 +591,10 @@ closed-form solutions.
 Coding guidelines
 =================
 
-The following are some guidelines on how new code should be written for 
-inclusion in scikit-learn, and which may be appropriate to adopt in external 
-projects. Of course, there are special cases and there will be exceptions to 
-these rules. However, following these rules when submitting new code makes 
+The following are some guidelines on how new code should be written for
+inclusion in scikit-learn, and which may be appropriate to adopt in external
+projects. Of course, there are special cases and there will be exceptions to
+these rules. However, following these rules when submitting new code makes
 the review easier so new code can be integrated in less time.
 
 Uniformly formatted code makes it easier to share code ownership. The

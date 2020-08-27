@@ -377,7 +377,7 @@ General Concepts
                 .. deprecated:: 0.24
 
                     The _pairwise attribute is deprecated in 0.24. From 0.26
-                    and onward, the `pairwise` estimator tag should be used
+                    onward, the `pairwise` estimator tag should be used
                     instead.
 
         For more detailed info, see :ref:`estimator_tags`.

@@ -13,7 +13,6 @@ from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import ignore_warnings
 
 from sklearn.base import BaseEstimator, clone, is_classifier, _is_pairwise
-from sklearn.base import _DEFAULT_TAGS
 from sklearn.svm import SVC
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
@@ -541,6 +540,7 @@ def test_repr_html_wraps():
         assert "<style>" in output
 
 
+# TODO: Remove in 0.26 when the _pairwise attribute is removed
 def test_is_pairwise():
     # simple checks for _is_pairwise
     pca = KernelPCA(kernel='precomputed')
@@ -548,7 +548,7 @@ def test_is_pairwise():
         assert _is_pairwise(pca)
     assert not record
 
-    # has an attribute that is not consistent with the pairwise tag
+    # pairwise attribute that is not consistent with the pairwise tag
     class IncorrectTagPCA(KernelPCA):
         _pairwise = False
 
@@ -558,12 +558,13 @@ def test_is_pairwise():
     with pytest.warns(FutureWarning, match=msg):
         assert not _is_pairwise(pca)
 
-    # only _pairwise attribute is present and pairwise tag is not
+    # the _pairwise attribute is present and set to False while the pairwise
+    # tag is not present
     class FalsePairwise(BaseEstimator):
         _pairwise = False
 
         def _get_tags(self):
-            tags = _DEFAULT_TAGS.copy()
+            tags = super()._get_tags()
             del tags['pairwise']
             return tags
 
@@ -572,7 +573,8 @@ def test_is_pairwise():
         assert not _is_pairwise(false_pairwise)
     assert not record
 
-    # only _pairwise attribute is present and pairwise tag is not
+    # the _pairwise attribute is present and set to True while pairwise tag is
+    # not present
     class TruePairwise(FalsePairwise):
         _pairwise = True
 
