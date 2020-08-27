@@ -386,7 +386,7 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
         try:
             links = linkage(dists, optimal_ordering=True)
         except TypeError:
-            links = linkage(dists)
+            raise ValueError("Old version of Scipy")
         idx = leaves_list(links)
         cm = cm[idx, :]
         cm = cm[:, idx]
