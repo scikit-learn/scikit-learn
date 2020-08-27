@@ -494,11 +494,6 @@ creating a decision energy by positioning *kernels* on observations:
    ``svm_gui.py``; add data points of both classes with right and left button,
    fit the model and change parameters and data.
 
-   .. image:: /auto_examples/datasets/images/sphx_glr_plot_iris_dataset_001.png
-      :target: ../../auto_examples/datasets/plot_iris_dataset.html
-      :align: center
-      :scale: 70
-
 .. topic:: **Exercise**
    :class: green
 
@@ -514,5 +509,11 @@ creating a decision energy by positioning *kernels* on observations:
 
    .. literalinclude:: ../../auto_examples/exercises/plot_iris_exercise.py
        :lines: 18-23
+
+   .. image:: /auto_examples/datasets/images/sphx_glr_plot_iris_dataset_001.png
+      :target: ../../auto_examples/datasets/plot_iris_dataset.html
+      :align: center
+      :scale: 70
+
 
    A solution can be downloaded :download:`here <../../auto_examples/exercises/plot_iris_exercise.py>`
