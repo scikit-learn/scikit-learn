@@ -172,6 +172,10 @@ Changelog
 :mod:`sklearn.feature_selection`
 ................................
 
+- |Feature| Added :class:`feature_selection.SequentialFeatureSelector`
+  which implements forward and backward sequential feature selection.
+  :pr:`6545` by `Sebastian Raschka`_ and :pr:`17159` by `Nicolas Hug`_.
+
 - |Feature| A new parameter `importance_getter` was added to
   :class:`feature_selection.RFE`, :class:`feature_selection.RFECV` and
   :class:`feature_selection.SelectFromModel`, allowing the user to specify an
@@ -216,6 +220,10 @@ Changelog
   functionality to revert imputed data to original when instantiated
   with `add_indicator=True`.
   :pr:`17612` by :user:`Srimukh Sripada <d3b0unce>`.
+
+- |Fix| :class:`impute.IterativeImputer` will not attempt to set the
+  estimator's `random_state` attribute, allowing to use it with more external classes.
+  :pr:`15636` by :user:`David Cortes <david-cortes>`.
 
 :mod:`sklearn.inspection`
 .........................
@@ -316,6 +324,17 @@ Changelog
   class to be used when computing the roc auc statistics.
   :pr:`17651` by :user:`Clara Matos <claramatos>`.
 
+- |Fix| Fixed a bug in
+  :func:`metrics.jaccard_score` which recommended the `zero_division`
+  parameter when called with no true or predicted samples.
+  :pr:`17826` by :user:`Richard Decal <crypdick>` and
+  :user:`Joseph Willard <josephwillard>`
+
+- |Fix| bug in :func:`metrics.hinge_loss` where error occurs when
+  ``y_true`` is missing some labels that are provided explictly in the
+  ``labels`` parameter.
+  :pr:`17935` by :user:`Cary Goltermann <Ultramann>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
@@ -330,6 +349,10 @@ Changelog
   :pr:`17478` by :user:`Teon Brooks <teonbrooks>` and
   :user:`Mohamed Maskani <maskani-moh>`.
 
+- |Fix| Fixed the `len` of :class:`model_selection.ParameterSampler` when
+  all distributions are lists and `n_iter` is more than the number of unique
+  parameter combinations. :pr:`18222` by `Nicolas Hug`_.
+
 :mod:`sklearn.multiclass`
 .........................
 
@@ -338,6 +361,12 @@ Changelog
   validity of the input is now delegated to the base estimator.
   :pr:`17233` by :user:`Zolisa Bleki <zoj613>`.
 
+- |Enhancement| :class:`multiclass.OneVsOneClassifier` now accepts
+  the inputs with missing values. Hence, estimators which can handle
+  missing values (may be a pipeline with imputation step) can be used as
+  a estimator for multiclass wrappers. 
+  :pr:`17987` by :user:`Venkatachalam N <venkyyuvy>`.
+
 :mod:`sklearn.multioutput`
 ..........................
 
@@ -345,6 +374,13 @@ Changelog
   in :class:`multioutput.ClassifierChain`.
   :pr:`18124` by :user:`Gus Brocchini <boldloop>` and
   :user:`Amanda Dsouza <amy12xx>`.
+
+- |Enhancement| :class:`multioutput.MultiOutputClassifier` and 
+  :class:`multioutput.MultiOutputRegressor` now accepts the inputs
+  with missing values. Hence, estimators which can handle missing
+  values (may be a pipeline with imputation step, HistGradientBoosting
+  estimators) can be used as a estimator for multiclass wrappers. 
+  :pr:`17987` by :user:`Venkatachalam N <venkyyuvy>`.
 
 :mod:`sklearn.naive_bayes`
 ..........................
@@ -397,6 +433,14 @@ Changelog
   :class:`neural_network.MLPRegressor`.
   :pr:`17759` by :user:`Srimukh Sripada <d3b0unce>`.
 
+:mod:`sklearn.pipeline`
+.......................
+
+- |Enhancement| References to transformers passed through ``transformer_weights``
+  to :class:`pipeline.FeatureUnion` that aren't present in ``transformer_list``
+  will raise a ``ValueError``.
+  :pr:`17876` by :user:`Cary Goltermann <Ultramann>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
@@ -441,6 +485,14 @@ Changelog
   :meth:`tree.DecisionTreeClassifier.fit` and
   :meth:`tree.DecisionTreeRegressor.fit`, and has not effect.
   :pr:`17614` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
+
+:mod:`sklearn.utils`
+....................
+
+- |Fix| Raise ValueError with clear error message in :func:`check_array`
+  for sparse DataFrames with mixed types.
+  :pr:`17992` by :user:`Thomas J. Fan <thomasjpfan>` and
+  :user:`Alex Shacked <alexshacked>`.
 
 - |Fix| Allow serialized tree based models to be unpickled on a machine
   with different endianness.
