@@ -1780,7 +1780,7 @@ def test_gridsearchcv_raise_warning_with_non_finite_score(
     with pytest.warns(UserWarning) as warnings:
         grid.fit(X[:, np.newaxis])
 
-    warnings = ",".join(list(map(lambda warning: warning.message, warnings)))
+    warnings = ",".join(list(map(lambda warning: str(warning.message), warnings)))
     assert expected_msgs[0] in warnings
 
     if return_train_score:
