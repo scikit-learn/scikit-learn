@@ -412,7 +412,7 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
 
         Returns
         -------
-        T : array-like of shape (n_samples, n_classes) or (n_samples,) if \
+        T : array-like of shape (n_samples, n_classes) or (n_samples,) for \
             binary classification.
 
             .. versionchanged:: 0.19
@@ -688,7 +688,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         Returns
         -------
-        Y : array-like of shape (n_samples, n_classes) or (n_samples,) if \
+        Y : array-like of shape (n_samples, n_classes) or (n_samples,) for \
             binary classification.
 
             .. versionchanged:: 0.19
