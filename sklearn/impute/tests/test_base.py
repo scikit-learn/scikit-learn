@@ -33,7 +33,7 @@ class NoTransformIndicatorImputer(_BaseImputer):
 
 class NoPrecomputedMaskFit(_BaseImputer):
     def fit(self, X, y=None):
-        super()._fit_indicator(X)
+        self._fit_indicator(X)
         return self
     def transform(self, X):
         return self._concatenate_indicator(X, self._transform_indicator(X))
@@ -42,7 +42,7 @@ class NoPrecomputedMaskFit(_BaseImputer):
 class NoPrecomputedMaskTransform(_BaseImputer):
     def fit(self, X, y=None):
         mask = _get_mask(X, value_to_mask=np.nan)
-        super()._fit_indicator(X)
+        self._fit_indicator(mask)
         return self
     def transform(self, X):
         return self._concatenate_indicator(X, self._transform_indicator(X))
