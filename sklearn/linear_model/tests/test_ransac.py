@@ -512,4 +512,4 @@ def test_ransac_final_model_fit_sample_weight():
         sample_weight=sample_weight[mask_samples]
     )
 
-    assert_allclose(ransac.estimator_.coef_, final_model.coef_)
+    assert_allclose(ransac.estimator_.coef_, final_model.coef_, atol=1e-12)

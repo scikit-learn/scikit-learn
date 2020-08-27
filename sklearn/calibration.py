@@ -111,30 +111,6 @@ class CalibratedClassifierCV(ClassifierMixin,
 
         .. versionadded:: 0.24
 
-    pre_dispatch : int or str, default='2*n_jobs'
-        Controls the number of jobs that get dispatched during parallel
-        execution. Reducing this number can be useful to avoid an
-        explosion of memory consumption when more jobs get dispatched
-        than CPUs can process. This parameter can be:
-
-            - None, in which case all the jobs are immediately
-              created and spawned. Use this for lightweight and
-              fast-running jobs, to avoid delays due to on-demand
-              spawning of the jobs
-
-            - An int, giving the exact number of total jobs that are
-              spawned
-
-            - A str, giving an expression as a function of n_jobs,
-              as in '2*n_jobs'
-
-        .. versionadded:: 0.24
-
-    verbose : int, default=0
-        Controls the verbosity: the higher, the more messages.
-
-        .. versionadded:: 0.24
-
     ensemble : bool, default=True
         Determines how the calibrator is fitted when `cv` is not `'prefit'`.
         Ignored if `cv='prefit'`.
@@ -229,14 +205,11 @@ class CalibratedClassifierCV(ClassifierMixin,
     """
     @_deprecate_positional_args
     def __init__(self, base_estimator=None, *, method='sigmoid',
-                 cv=None, n_jobs=None, pre_dispatch='2*n_jobs',
-                 verbose=0, ensemble=True):
+                 cv=None, n_jobs=None, ensemble=True):
         self.base_estimator = base_estimator
         self.method = method
         self.cv = cv
         self.n_jobs = n_jobs
-        self.verbose = verbose
-        self.pre_dispatch = pre_dispatch
         self.ensemble = ensemble
 
     def fit(self, X, y, sample_weight=None):
@@ -326,8 +299,7 @@ class CalibratedClassifierCV(ClassifierMixin,
             cv = check_cv(self.cv, y, classifier=True)
 
             if self.ensemble:
-                parallel = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
-                                    pre_dispatch=self.pre_dispatch)
+                parallel = Parallel(n_jobs=self.n_jobs)
 
                 self.calibrated_classifiers_ = parallel(
                     delayed(_fit_classifier_calibrator_pair)(
@@ -341,8 +313,7 @@ class CalibratedClassifierCV(ClassifierMixin,
                 method_name = _get_prediction_method(this_estimator).__name__
                 pred_method = partial(
                     cross_val_predict, estimator=this_estimator, X=X, y=y,
-                    cv=cv, method=method_name, n_jobs=self.n_jobs,
-                    verbose=self.verbose, pre_dispatch=self.pre_dispatch
+                    cv=cv, method=method_name, n_jobs=self.n_jobs
                 )
                 predictions = _compute_predictions(pred_method, X, n_classes)
 
@@ -409,7 +380,7 @@ class CalibratedClassifierCV(ClassifierMixin,
     def _more_tags(self):
         return {
             '_xfail_checks': {
-                'check_sample_weights_invariance(kind=zeros)':
+                'check_sample_weights_invariance':
                 'zero sample_weight is not equivalent to removing samples',
             }
         }
