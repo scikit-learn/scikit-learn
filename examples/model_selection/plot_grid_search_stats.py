@@ -5,14 +5,13 @@ Statistical comparison of models using grid search
 
 This example illustrates how to statistically compare the performance of models
 trained and evaluated using :class:`~sklearn.model_selection.GridSearchCV`.
-
 """
 
-###############################################################################
+# %%
 # We will start by simulating moon shaped data (where the ideal separation
 # between classes is non-linear), adding to it a moderate degree of noise.
-# Datapoints will belong to one of two possible classes represented
-# by two features. We will simulate 50 samples for each class:
+# Datapoints will belong to one of two possible classes, each with two
+# features. We will simulate 50 samples for each class:
 
 print(__doc__)
 import matplotlib.pyplot as plt
@@ -27,8 +26,7 @@ sns.scatterplot(
 ).set_title("Data")
 plt.show()
 
-
-###############################################################################
+# %%
 # We will compare the performance of SVC estimators that vary on their `kernel`
 # parameter, to decide which choice of this hyper-parameter predicts our
 # simulated data best. We will evaluate the performance of the models using
@@ -58,8 +56,7 @@ search = GridSearchCV(
 )
 search.fit(X, y)
 
-
-###############################################################################
+# %%
 # We can now inspect the results of our search, sorted by their
 # `mean_test_score`:
 
@@ -78,19 +75,19 @@ results_df[
     ['params', 'rank_test_score', 'mean_test_score', 'std_test_score']
 ]
 
-
-###############################################################################
-# We can see that the estimator using the `rbf` kernel performed better,
-# closely followed by `linear`. Both estimators with a `poly` kernel performed
-# worse, with the one using a two degree polynomial achieving a much lower
-# perfomance than all other models.
+# %%
+# We can see that the estimator using the `'rbf'` kernel performed best,
+# closely followed by `'linear'`. Both estimators with a `'poly'` kernel
+# performed worse, with the one using a two degree polynomial achieving a much
+# lower perfomance than all other models.
 #
-# The output of `GridSearchCV` does not provide information on the certainty of
-# the differences between the models. To evaluate this, we need to conduct a
-# statistical test. Specifically, to contrast the performance of two models we
-# should statistically compare their AUC scores. There are 100 observations
-# (AUC scores) for each model as we repreated 10 times a 10-fold
-# cross-validation.
+# Usually, the analysis just ends here, but half the story is missing. **The
+# output of `GridSearchCV` does not provide information on the certainty of
+# the differences between the models. We don't know if these are statistically
+# significant.** To evaluate this, we need to conduct a statistical test.
+# Specifically, to contrast the performance of two models we should
+# statistically compare their AUC scores. There are 100 observations (AUC
+# scores) for each model as we repreated 10 times a 10-fold cross-validation.
 #
 # However, the scores of the models are not independent: we iteratively used
 # the same partitions of the data to evaluate them, increasing the correlation
@@ -118,21 +115,19 @@ plt.show()
 # print correlation of AUC scores across folds
 print(f"Correlation of models:\n {model_scores.transpose().corr()}")
 
-
-###############################################################################
+# %%
 # We can observe that the performance of the models highly depends on the fold.
 #
 # As a consequence, if we assume independence between observations we will be
 # underestimating the variance computed in our statistical tests, increasing
 # the number of false positive errors (i.e. detecting a significant difference
-# between models when such does no exist) [1]_.
+# between models when such does not exist) [1]_.
 #
 # Several methods have been developed to correct for the variance in these
 # cases. In this example we will explore one of these methods implemented
 # using two different statistical approaches: frequentist and Bayesian.
 
-
-###############################################################################
+# %%
 # Comparing two models: frequentist approach
 # ------------------------------------------
 #
@@ -224,7 +219,7 @@ def compute_corrected_ttest(differences, n, df, n_train, n_test):
 model_1_scores = model_scores.iloc[0].values  # scores of the best model
 model_2_scores = model_scores.iloc[1].values  # scores of the second-best model
 
-# compute the difference in performance between the models on each test set
+# %%
 differences = model_1_scores - model_2_scores
 
 n = differences.shape[0]  # number of test sets
@@ -236,8 +231,7 @@ t_stat, p_val = compute_corrected_ttest(differences, n, df, n_train, n_test)
 print(f"Corrected t-value: {t_stat:.3f}\n"
       f"Corrected p-value: {p_val:.3f}")
 
-
-###############################################################################
+# %%
 # We can compare the corrected t- and p-values with the uncorrected ones:
 
 t_stat_uncorrected = (
@@ -248,8 +242,7 @@ p_val_uncorrected = t.sf(np.abs(t_stat_uncorrected), df)
 print(f"Uncorrected t-value: {t_stat_uncorrected:.3f}\n"
       f"Uncorrected p-value: {p_val_uncorrected:.3f}")
 
-
-###############################################################################
+# %%
 # Using the conventional significance alpha level at `p=0.05`, we observe that
 # the uncorrected t-test concludes that the first model is significantly better
 # than the second.
@@ -260,8 +253,7 @@ print(f"Uncorrected t-value: {t_stat_uncorrected:.3f}\n"
 # conclude that the first and second model have an equivalent performance. If
 # we wanted to make this assertion we need to use a Bayesian approach.
 
-
-###############################################################################
+# %%
 # Comparing two models: Bayesian approach
 # ---------------------------------------
 # We can use Bayesian estimation to calculate the probability that the first
@@ -306,8 +298,7 @@ t_post = t(
     scale=correct_std(differences, n, n_train, n_test)
 )
 
-
-###############################################################################
+# %%
 # Let's plot the posterior distribution:
 
 x = np.linspace(t_post.ppf(0.001), t_post.ppf(0.999), 100)
@@ -320,8 +311,7 @@ plt.xlabel("Mean difference")
 plt.title("Posterior distribution")
 plt.show()
 
-
-###############################################################################
+# %%
 # We can calculate the probability that the first model is better than the
 # second by computing the area under the curve of the posterior distirbution
 # from zero to infinity. And also the reverse: we can calculate the probability
@@ -335,8 +325,7 @@ print(f"Probability of {model_scores.index[0]} being more accurate than "
 print(f"Probability of {model_scores.index[1]} being more accurate than "
       f"{model_scores.index[0]}: {1 - better_prob:.3f}")
 
-
-###############################################################################
+# %%
 # In contrast with the frequentist approach, we can compute the probability
 # that one model is better than the other.
 #
@@ -344,8 +333,7 @@ print(f"Probability of {model_scores.index[1]} being more accurate than "
 # Given our choice of priors we are in essence performing the same
 # computations, but we are allowed to make different assertions.
 
-
-###############################################################################
+# %%
 # Sometimes we are interested in determining the probabilities that our models
 # have an equivalent performance, where "equivalent" is defined in a practical
 # way. A default approach [4]_ is to define estimators as practically
@@ -370,8 +358,7 @@ rope_prob = t_post.cdf(rope_interval[1]) - t_post.cdf(rope_interval[0])
 print(f"Probability of {model_scores.index[0]} and {model_scores.index[1]} "
       f"being practically equivalent: {rope_prob:.3f}")
 
-
-###############################################################################
+# %%
 # We can plot how the posterior is distributed over the ROPE interval:
 
 x_rope = np.linspace(rope_interval[0], rope_interval[1], 100)
@@ -385,15 +372,13 @@ plt.xlabel("Mean difference")
 plt.title("Posterior distribution under the ROPE")
 plt.show()
 
-
-###############################################################################
+# %%
 # As suggested in [4]_, we can further interpret these probabilities using the
 # same criteria as the frequentist approach: Is the probability of falling
 # inside the ROPE bigger than 95% (alpha value of 5%)?  In that case we can
 # conclude that both models are practically equivalent.
 
-
-###############################################################################
+# %%
 # The Bayesian estimation approach also allows us to compute how uncertain we
 # are about our estimation of the difference. This can be calculated using
 # credible intervals which compute the range of values that have a particular
@@ -414,8 +399,7 @@ cred_int_df = pd.DataFrame(
 ).set_index('interval')
 cred_int_df
 
-
-###############################################################################
+# %%
 # Pairwise comparison of all models: frequentist approach
 # -------------------------------------------------------
 #
@@ -463,17 +447,15 @@ pairwise_comp_df = pd.DataFrame(
 ).round(3)
 pairwise_comp_df
 
-
-###############################################################################
+# %%
 # We observe that after correcting for multiple comparisons, the only model
-# that significantly differs from the others is `poly2`.
+# that significantly differs from the others is `'poly2'`.
 #
-# `rbf`, the model ranked first by
+# `'rbf'`, the model ranked first by
 # :class:`~sklearn.model_selection.GridSearchCV`, does not significantly
-# differ from `linear` or `poly3`.
+# differ from `'linear'` or `'poly3'`.
 
-
-###############################################################################
+# %%
 # Pairwise comparison of all models: Bayesian approach
 # ----------------------------------------------------
 #
@@ -507,25 +489,23 @@ pairwise_bayesian_df = (pd.DataFrame(
 pairwise_comp_df = pairwise_comp_df.join(pairwise_bayesian_df)
 pairwise_comp_df
 
-
-###############################################################################
+# %%
 # Using the Bayesian approach we can compute the probability that a model
 # performs better, worse or practically equivalent to another.
 #
 # Results show that the model ranked first by
-# :class:`~sklearn.model_selection.GridSearchCV` `rbf`, has approximately a
-# 6.8% chance of being worse than `linear`, and a 1.8% chance of being worse
-# than `poly3`.
+# :class:`~sklearn.model_selection.GridSearchCV` `'rbf'`, has approximately a
+# 6.8% chance of being worse than `'linear'`, and a 1.8% chance of being worse
+# than `'poly3'`.
 #
-# `rbf` and `linear` have a 43% probability of being practically equivalent,
-# while `rbf` and `poly3` have a 10% chance of being so.
+# `'rbf'` and `'linear'` have a 43% probability of being practically
+# equivalent, while `'rbf'` and `'poly3'` have a 10% chance of being so.
 #
 # Similarly to the conclusions obtained using the frequentist approach, all
-# models have a 100% probability of being better than `poly2`, and none have a
-# practically equivalent performance with the latter.
+# models have a 100% probability of being better than `'poly2'`, and none have
+# a practically equivalent performance with the latter.
 
-
-###############################################################################
+# %%
 # Take-home messages
 # ------------------
 # - When statistically comparing the performance of two models evaluated in
@@ -542,8 +522,7 @@ pairwise_comp_df
 # - If multiple models are statistically compared, a multiple comparisons
 #   correction is needed when using the frequentist approach.
 
-
-###############################################################################
+# %%
 # References:
 # ___________
 # .. [1] Dietterich, T. G. (1998). `Approximate statistical tests for comparing
