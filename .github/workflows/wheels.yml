@@ -23,8 +23,7 @@ jobs:
       - name: Check commit type
         uses: gsactions/commit-message-checker@v1
         with:
-          # Add a commit marker to trigger
-          # the wheel builder when needed
+          # Add a commit marker to build the wheels when needed
           pattern: "\[wheel\-build\]"
           flags: "gm"
           error: "BUILDER: [wheel-build] marker not found."
