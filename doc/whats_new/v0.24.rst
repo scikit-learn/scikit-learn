@@ -119,8 +119,7 @@ Changelog
   :pr:`17610` by :user:`Jiaxiang <fujiaxiang>`.
 
 - |Enhancement| :func:`datasets.fetch_20newsgroups_vectorized` now supports
-  loading as a pandas ``DataFrame`` by setting ``as_frame=True``. Requires
-  pandas v0.25 or newer.
+  loading as a pandas ``DataFrame`` by setting ``as_frame=True``.
   :pr:`17499` by :user:`Brigitta Sipőcz <bsipocz>` and
   `Guillaume Lemaitre`_.
 
