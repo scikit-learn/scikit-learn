@@ -15,19 +15,6 @@ on:
       - "[0-9]+.[0-9]+.X"
 
 jobs:
-  check_commit_message:
-    name: Check commit message
-    runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'pull_request' }} 
-    steps:
-      - name: Check commit type
-        uses: gsactions/commit-message-checker@v1
-        with:
-          # Add a commit marker to build the wheels when needed
-          pattern: '\[wheel\-build\]'
-          flags: "gm"
-          error: "BUILDER: [wheel-build] marker not found."
-
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
