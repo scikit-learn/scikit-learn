@@ -724,6 +724,7 @@ def _multiplicative_update_h(X, W, H, A, B, beta_loss, l1_reg_H, l2_reg_H,
 
     return delta_H, A, B
 
+
 def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
                                batch_size=1024,
                                max_iter=200, tol=1e-4,
@@ -814,10 +815,8 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
         batch_size = n_samples
         max_iter_update_w_ = 1
         max_iter_update_h_ = 1
-    #else:
-    #    beta_loss = 'itakura-saito'
 
-    r = 0.5 # forgetting factor
+    r = 0.5  # forgetting factor
     rho = r ** (batch_size / n_samples)
 
     beta_loss = _beta_loss_to_float(beta_loss)
@@ -853,12 +852,10 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
                 # update H
                 if update_H:
                     for jj in range(max_iter_update_h_):
-                        delta_H, A, B = _multiplicative_update_h(X[slice],
-                                                           W[slice], H, A, B,
-                                                           beta_loss,
-                                                           l1_reg_H, l2_reg_H,
-                                                           i, gamma, rho)
-                        H *= delta_H 
+                        delta_H, A, B = _multiplicative_update_h(
+                            X[slice], W[slice], H, A, B, beta_loss,
+                            l1_reg_H, l2_reg_H, i, gamma, rho)
+                        H *= delta_H
 
                         # These values will be recomputed since H changed
                         H_sum, HHt, XHt = None, None, None
@@ -870,7 +867,7 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
             n_iter += j
 
         n_iter += i
- 
+
         # test convergence criterion every 10 iterations
         if tol > 0 and n_iter % 1 == 0:
             error = _beta_divergence(X, W, H, beta_loss,
