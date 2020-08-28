@@ -60,7 +60,7 @@ def _one_vs_one_coef(dual_coef, n_support, support_vectors):
 
 
 class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
-    """Base class for estimators that use libsvm as backing library
+    """Base class for estimators that use libsvm as backing library.
 
     This implements support vector machine classification and regression.
 
@@ -121,7 +121,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         y : array-like of shape (n_samples,)
             Target values (class labels in classification, real numbers in
-            regression)
+            regression).
 
         sample_weight : array-like of shape (n_samples,), default=None
             Per-sample weights. Rescale C per sample. Higher weights
@@ -638,7 +638,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         ----------
         X : array-like of shape (n_samples, n_features)
             For kernel="precomputed", the expected shape of X is
-            [n_samples_test, n_samples_train]
+            (n_samples_test, n_samples_train).
 
         Returns
         -------
@@ -880,7 +880,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     tol : float
         Stopping condition.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the pseudo random number generation for shuffling the data.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.

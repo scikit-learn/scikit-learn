@@ -467,7 +467,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                         self._iter(fitted=fitted, replace_strings=True), 1))
         except ValueError as e:
             if "Expected 2D array, got 1D array instead" in str(e):
-                raise ValueError(_ERR_MSG_1DCOLUMN)
+                raise ValueError(_ERR_MSG_1DCOLUMN) from e
             else:
                 raise
 
@@ -629,9 +629,11 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                                             accept_sparse=True,
                                             force_all_finite=False)
                                 for X in Xs]
-            except ValueError:
-                raise ValueError("For a sparse output, all columns should"
-                                 " be a numeric or convertible to a numeric.")
+            except ValueError as e:
+                raise ValueError(
+                    "For a sparse output, all columns should "
+                    "be a numeric or convertible to a numeric."
+                ) from e
 
             return sparse.hstack(converted_Xs).tocsr()
         else:
@@ -639,7 +641,22 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             return np.hstack(Xs)
 
     def _sk_visual_block_(self):
-        names, transformers, name_details = zip(*self.transformers)
+        if isinstance(self.remainder, str) and self.remainder == 'drop':
+            transformers = self.transformers
+        elif hasattr(self, "_remainder"):
+            remainder_columns = self._remainder[2]
+            if hasattr(self, '_df_columns'):
+                remainder_columns = (
+                    self._df_columns[remainder_columns].tolist()
+                )
+            transformers = chain(self.transformers,
+                                 [('remainder', self.remainder,
+                                   remainder_columns)])
+        else:
+            transformers = chain(self.transformers,
+                                 [('remainder', self.remainder, '')])
+
+        names, transformers, name_details = zip(*transformers)
         return _VisualBlock('parallel', transformers,
                             names=names, name_details=name_details)
 
@@ -660,7 +677,9 @@ def _is_empty_column_selection(column):
     if hasattr(column, 'dtype') and np.issubdtype(column.dtype, np.bool_):
         return not column.any()
     elif hasattr(column, '__len__'):
-        return len(column) == 0
+        return (len(column) == 0 or
+                all(isinstance(col, bool) for col in column)
+                and not any(column))
     else:
         return False
 

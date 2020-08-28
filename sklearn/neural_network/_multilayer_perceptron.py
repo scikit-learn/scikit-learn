@@ -1029,7 +1029,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         X : ndarray or sparse matrix of shape (n_samples, n_features)
             The input data.
 
-        y : ndarray, shape (n_samples,) or (n_samples, n_outputs)
+        y : ndarray of shape (n_samples,) or (n_samples, n_outputs)
             The target values (class labels in classification, real numbers in
             regression).
 
@@ -1046,13 +1046,13 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input data.
 
-        y : array-like, shape (n_samples,)
+        y : array-like of shape (n_samples,)
             The target values.
 
-        classes : array, shape (n_classes), default None
+        classes : array of shape (n_classes,), default=None
             Classes across all calls to partial_fit.
             Can be obtained via `np.unique(y_all)`, where y_all is the
             target vector of the entire dataset.
