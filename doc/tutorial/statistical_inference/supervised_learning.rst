@@ -457,19 +457,18 @@ build a decision function that is not linear but may be polynomial instead.
 This is done using the *kernel trick* that can be seen as
 creating a decision energy by positioning *kernels* on observations:
 
-.. figure:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_001.png
-   :target: ../../auto_examples/svm/plot_svm_kernels.html
+Linear kernel
+^^^^^^^^^^^^^
 
-   **Linear kernel**
-   
 ::
 
     >>> svc = svm.SVC(kernel='linear')
 
-.. figure:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_002.png
+.. image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_001.png
    :target: ../../auto_examples/svm/plot_svm_kernels.html
 
-   **Polynomial kernel**
+Polynomial kernel
+^^^^^^^^^^^^^^^^^
 
 ::
 
@@ -477,16 +476,22 @@ creating a decision energy by positioning *kernels* on observations:
     ...               degree=3)
     >>> # degree: polynomial degree
 
-.. figure:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_003.png
+.. image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_002.png
    :target: ../../auto_examples/svm/plot_svm_kernels.html
 
-   **RBF kernel (Radial Basis Function)**
+RBF kernel (Radial Basis Function)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ::
 
     >>> svc = svm.SVC(kernel='rbf')
     >>> # gamma: inverse of size of
     >>> # radial kernel
+
+.. image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_003.png
+   :target: ../../auto_examples/svm/plot_svm_kernels.html
+
+
 
 .. topic:: **Interactive example**
 
