@@ -229,7 +229,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         Valid parameter keys can be listed with ``get_params()``. Note that you
         can directly set the parameters of the estimators contained in
-       `transformers` of `ColumnTransformer`.
+        `transformers` of `ColumnTransformer`.
 
         Returns
         -------
