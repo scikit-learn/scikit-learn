@@ -2,7 +2,6 @@
 or if specifically requested via environment variable
 (e.g. for travis cron job)."""
 from functools import partial
-from distutils.version import LooseVersion
 
 import pytest
 
@@ -100,26 +99,27 @@ def test_20news_normalization(fetch_20newsgroups_vectorized_fxt):
 def test_20news_as_frame(fetch_20newsgroups_vectorized_fxt):
     pd = pytest.importorskip('pandas')
 
-    try:
-        bunch = fetch_20newsgroups_vectorized_fxt(as_frame=True)
-    except ValueError as err:
-        assert LooseVersion(pd.__version__) < '0.25'
-        assert "DataFrame requires Pandas v0.25+." in str(err.args[0])
-    else:
-        frame = bunch.frame
-        check_as_frame(
-            bunch,
-            partial(fetch_20newsgroups_vectorized_fxt),
-        )
+    bunch = fetch_20newsgroups_vectorized_fxt(as_frame=True)
+    check_as_frame(
+        bunch, partial(fetch_20newsgroups_vectorized_fxt),
+    )
 
-        assert frame.shape == (11314, 130108)
-        assert isinstance(bunch.frame.dtypes[0], pd.SparseDtype)
+    frame = bunch.frame
+    assert frame.shape == (11314, 130108)
+    assert isinstance(bunch.frame.dtypes[0], pd.SparseDtype)
 
-        # Check a small subset of features
-        for expected_feature in ['beginner', 'beginners', 'beginning',
-                                 'beginnings', 'begins', 'begley', 'begone']:
-            assert expected_feature in frame.keys()
-        assert 'category_class' in frame.keys()
+    # Check a small subset of features
+    for expected_feature in [
+        "beginner",
+        "beginners",
+        "beginning",
+        "beginnings",
+        "begins",
+        "begley",
+        "begone",
+    ]:
+        assert expected_feature in frame.keys()
+    assert "category_class" in frame.keys()
 
 
 def test_as_frame_no_pandas():

@@ -11,7 +11,6 @@ import hashlib
 import os
 import shutil
 from collections import namedtuple
-from distutils.version import LooseVersion
 from os import environ, listdir, makedirs
 from os.path import dirname, exists, expanduser, isdir, join, splitext
 
@@ -75,11 +74,6 @@ def _convert_data_dataframe(caller_name, data, target,
     if not sparse_data:
         data_df = pd.DataFrame(data, columns=feature_names)
     else:
-        if LooseVersion(pd.__version__) < '0.25':
-            raise ValueError(
-                "Loading sparse datasets as a DataFrame requires Pandas "
-                "v0.25+."
-            )
         data_df = pd.DataFrame.sparse.from_spmatrix(
             data, columns=feature_names
         )

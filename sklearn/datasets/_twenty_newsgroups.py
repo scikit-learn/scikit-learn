@@ -399,10 +399,6 @@ def fetch_20newsgroups_vectorized(*, subset="train", remove=(), data_home=None,
         a pandas DataFrame or Series depending on the number of
         `target_columns`.
 
-        .. note::
-            Since the dataset is sparse, loading it as a pandas DataFrame
-            requires pandas 0.25+.
-
         .. versionadded:: 0.24
 
     Returns
