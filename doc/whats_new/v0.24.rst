@@ -354,7 +354,7 @@ Changelog
   parameter combinations. :pr:`18222` by `Nicolas Hug`_.
 
 - |Fix| A fix to raise warning when one or more CV splits of
-  :class:`GridSearchCV` results in inf or -inf.
+  :class:`GridSearchCV` results in non-finite scores.
   :pr:`18266` by :user:`Subrat Sahu <subrat93>`,
   :user:`Nirvan <Nirvan101>` and :user:`Arthur Book <ArthurBook>`.
 
