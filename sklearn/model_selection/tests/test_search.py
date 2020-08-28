@@ -1752,42 +1752,43 @@ def test_random_search_bad_cv():
         ridge.fit(X[:train_size], y[:train_size])
 
 
-@pytest.mark.parametrize(
-    "return_train_score, expected_msgs",
-    [(False, ('One or more of the test scores are non-finite')),
-     (True, ("One or more of the test scores are non-finite",
-             "One or more of the train scores are non-finite"))]
-)
-def test_gridsearchcv_raise_warning_with_non_finite_score(
-        return_train_score, expected_msgs):
+@pytest.mark.parametrize("return_train_score", [False, True])
+def test_gridsearchcv_raise_warning_with_non_finite_score(return_train_score):
     # Non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/10529
     # Check that we raise a UserWarning when a non-finite score is
     # computed in the GridSearchCV
-    X = norm(-1, 0.5).rvs(100, random_state=np.random.RandomState(28))
-    kernel = 'epanechnikov'
-    steps = 10
-    lower = 0.0194867441113
-    upper = 0.0974337205567
-    bandwidth_range = np.linspace(lower, upper, steps)
+    X, y = make_classification(n_classes=2, random_state=0)
+
+    class FailingScorer:
+        """Scorer that will fail for some split but not all."""
+        def __init__(self):
+            self.n_counts = 0
+
+        def __call__(self, estimator, X, y):
+            self.n_counts += 1
+            if self.n_counts % 5 == 0:
+                return np.nan
+            return 1
+
     grid = GridSearchCV(
-        KernelDensity(kernel=kernel),
-        param_grid={'bandwidth': bandwidth_range},
-        cv=20,
+        DecisionTreeClassifier(),
+        param_grid={"max_depth": [2, 3]},
+        scoring=FailingScorer(),
+        cv=3,
         return_train_score=return_train_score
     )
 
-    with pytest.warns(UserWarning) as warnings:
-        grid.fit(X[:, np.newaxis])
+    with pytest.warns(UserWarning) as warn_msg:
+        grid.fit(X, y)
 
-    warnings = list(map(lambda warning: str(warning.message), warnings))
-    warnings = ",".join(warnings)
-    assert expected_msgs[0] in warnings
-
-    if return_train_score:
-        assert expected_msgs[1] in warnings
-
-
+    set_with_warning = ["test", "train"] if return_train_score else ["test"]
+    assert len(warn_msg) == len(set_with_warning)
+    for msg, dataset in zip(warn_msg, set_with_warning):
+        assert (f"One or more of the {dataset} scores are non-finite" in
+                str(msg.message))
+    
+    
 def test_callable_multimetric_confusion_matrix():
     # Test callable with many metrics inserts the correct names and metrics
     # into the search cv object
