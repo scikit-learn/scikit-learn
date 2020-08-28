@@ -869,7 +869,7 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
         n_iter += i
 
         # test convergence criterion every 10 iterations
-        if tol > 0 and n_iter % 1 == 0:
+        if tol > 0 and n_iter % 10 == 0:
             error = _beta_divergence(X, W, H, beta_loss,
                                      square_root=True)
             if verbose:
