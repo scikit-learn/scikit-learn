@@ -18,7 +18,6 @@ jobs:
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    needs: check_commit_message
 
     strategy:
       # Avoid that the wheel builder for a
@@ -62,7 +61,6 @@ jobs:
   build_sdist:
     name: Source distribution
     runs-on: ubuntu-latest
-    needs: check_commit_message
 
     steps:
       - name: Checkout scikit-learn
