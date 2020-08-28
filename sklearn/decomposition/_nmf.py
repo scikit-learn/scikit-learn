@@ -634,10 +634,6 @@ def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
 
 def _multiplicative_update_h(X, W, H, A, B, beta_loss, l1_reg_H, l2_reg_H,
                              slice_index, gamma, rho):
-    H_old = H.copy()
-    H_old[H_old == 0] = EPSILON
-
-    batch_size = X.shape[0]
 
     """update H in Multiplicative Update NMF"""
     if beta_loss == 2:
@@ -717,10 +713,8 @@ def _multiplicative_update_h(X, W, H, A, B, beta_loss, l1_reg_H, l2_reg_H,
             B *= rho
             A += numerator
             B += denominator
-
-        H = np.divide(A, B)
-
-        return H, A, B
+            numerator = A
+            denominator = B
 
     numerator /= denominator
     delta_H = numerator
@@ -728,9 +722,7 @@ def _multiplicative_update_h(X, W, H, A, B, beta_loss, l1_reg_H, l2_reg_H,
     if gamma != 1:
         delta_H **= gamma
 
-    H = H_old * delta_H
-
-    return H, A, B
+    return delta_H, A, B
 
 def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
                                batch_size=1024,
@@ -825,7 +817,8 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
     #else:
     #    beta_loss = 'itakura-saito'
 
-    r = 1 # forgetting factor
+    r = 0.5 # forgetting factor
+    rho = r ** (batch_size / n_samples)
 
     beta_loss = _beta_loss_to_float(beta_loss)
 
@@ -844,15 +837,8 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
     H_sum, HHt, XHt = None, None, None
 
     for n_iter in range(1, max_iter+1):
-        if n_iter == 1:
-            rho = 0
-        else:
-            rho = r ** (batch_size / n_samples)
-            #rho = 0.99999
-        print(f"{rho= }")
         for i, slice in enumerate(gen_batches(n=n_samples,
                                               batch_size=batch_size)):
-
             # update W
             # H_sum, HHt and XHt are saved and reused if not update_H
             for j in range(max_iter_update_w_):
@@ -867,11 +853,12 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
                 # update H
                 if update_H:
                     for jj in range(max_iter_update_h_):
-                        H, A, B = _multiplicative_update_h(X[slice],
+                        delta_H, A, B = _multiplicative_update_h(X[slice],
                                                            W[slice], H, A, B,
                                                            beta_loss,
                                                            l1_reg_H, l2_reg_H,
                                                            i, gamma, rho)
+                        H *= delta_H 
 
                         # These values will be recomputed since H changed
                         H_sum, HHt, XHt = None, None, None
@@ -879,7 +866,7 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
                         # necessary for stability with beta_loss < 1
                         if beta_loss <= 1:
                             H[H < np.finfo(np.float64).eps] = 0.
-                n_iter += jj
+                    n_iter += jj
             n_iter += j
 
         n_iter += i
@@ -1626,7 +1613,7 @@ class NMF(TransformerMixin, BaseEstimator):
 
         W, _, n_iter_ = non_negative_factorization(
             X=X, W=None, H=self.components_, n_components=self.n_components_,
-            init=self.init, update_H=True, solver=self.solver,
+            init=self.init, update_H=False, solver=self.solver,
             beta_loss=self.beta_loss, tol=self.tol, max_iter=self.max_iter,
             alpha=self.alpha, l1_ratio=self.l1_ratio,
             regularization=self.regularization,
@@ -1947,7 +1934,7 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
             X=X, W=None, H=self.components_, A=None, B=None,
             n_components=self.n_components_,
             batch_size=self.batch_size,
-            init=self.init, update_H=True, solver=self.solver,
+            init=self.init, update_H=False, solver=self.solver,
             beta_loss=self.beta_loss, tol=self.tol, max_iter=self.max_iter,
             alpha=self.alpha, l1_ratio=self.l1_ratio, regularization='both',
             random_state=self.random_state, verbose=self.verbose,
