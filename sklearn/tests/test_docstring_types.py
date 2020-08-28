@@ -177,6 +177,7 @@ TYPING_IGNORED = {
     "SelectFwe",
     "SelectKBest",
     "SelectPercentile",
+    "SequentialFeatureSelector",
     "ShrunkCovariance",
     "SimpleImputer",
     "SkewedChi2Sampler",
