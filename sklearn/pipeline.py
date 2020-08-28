@@ -135,7 +135,7 @@ class Pipeline(_BaseComposition):
         """Set the parameters of this estimator.
 
         Valid parameter keys can be listed with ``get_params()``. Note that
-        you can directly set the parameters of estimator contained in `steps`.
+        you can directly set the parameters of the estimators contained in `steps`.
 
         Returns
         -------
@@ -853,7 +853,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         """Set the parameters of this estimator.
 
         Valid parameter keys can be listed with ``get_params()``. Note that
-        you can directly set the parameters of estimator contained in
+        you can directly set the parameters of the estimators contained in
         `tranformer_list`.
 
         Returns

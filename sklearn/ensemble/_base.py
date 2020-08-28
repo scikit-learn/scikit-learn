@@ -251,7 +251,7 @@ class _BaseHeterogeneousEnsemble(MetaEstimatorMixin, _BaseComposition,
         Set the parameters of an estimator from the ensemble.
 
         Valid parameter keys can be listed with `get_params()`. Note that you
-        can directly set the parameters of estimator contained in `estimators`.
+        can directly set the parameters of the estimators contained in `estimators`.
 
         Parameters
         ----------
