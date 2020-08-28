@@ -1800,7 +1800,7 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
                  batch_size=1024,
                  beta_loss='itakura-saito', tol=1e-4, max_iter=200,
                  random_state=None, alpha=0., l1_ratio=0., verbose=0,
-                 shuffle=False):
+                 shuffle=False, regularization='both'):
         self.n_components = n_components
         self.init = init
         self.solver = solver
@@ -1813,6 +1813,7 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
         self.l1_ratio = l1_ratio
         self.verbose = verbose
         self.shuffle = shuffle
+        self.regularization = regularization
 
     def _more_tags(self):
         return {'requires_positive_X': True}
@@ -1848,7 +1849,7 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
             batch_size=self.batch_size, init=self.init,
             update_H=True, solver=self.solver, beta_loss=self.beta_loss,
             tol=self.tol, max_iter=self.max_iter, alpha=self.alpha,
-            l1_ratio=self.l1_ratio, regularization='both',
+            l1_ratio=self.l1_ratio, regularization=self.regularization,
             random_state=self.random_state, verbose=self.verbose,
             shuffle=self.shuffle)
         # TODO internal iters for W
@@ -1892,7 +1893,7 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
                 batch_size=self.batch_size, init='custom',
                 update_H=True, solver=self.solver, beta_loss=self.beta_loss,
                 tol=0, max_iter=1, alpha=self.alpha,
-                l1_ratio=self.l1_ratio, regularization='both',
+                l1_ratio=self.l1_ratio, regularization=self.regularization,
                 random_state=self.random_state, verbose=self.verbose,
                 shuffle=self.shuffle)
 
@@ -1928,12 +1929,14 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
         check_is_fitted(self)
 
         W, _, _, _, n_iter_ = non_negative_factorization_online(
-            X=X, W=None, H=self.components_, A=None, B=None,
+            X=X, W=None, H=self.components_, A=self._components_numerator,
+            B=self._components_denominator,
             n_components=self.n_components_,
             batch_size=self.batch_size,
             init=self.init, update_H=False, solver=self.solver,
             beta_loss=self.beta_loss, tol=self.tol, max_iter=self.max_iter,
-            alpha=self.alpha, l1_ratio=self.l1_ratio, regularization='both',
+            alpha=self.alpha, l1_ratio=self.l1_ratio,
+            regularization=self.regularization,
             random_state=self.random_state, verbose=self.verbose,
             shuffle=self.shuffle)
 
