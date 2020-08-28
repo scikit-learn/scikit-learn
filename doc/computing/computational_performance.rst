@@ -4,6 +4,8 @@
 
 .. _computational_performance:
 
+.. currentmodule:: sklearn
+
 Computational Performance
 =========================
 
@@ -80,7 +82,7 @@ features are finite (not NaN or infinite) involves a full pass over the
 data. If you ensure that your data is acceptable, you may suppress
 checking for finiteness by setting the environment variable
 ``SKLEARN_ASSUME_FINITE`` to a non-empty string before importing
-scikit-learn, or configure it in Python with :func:`sklearn.set_config`.
+scikit-learn, or configure it in Python with :func:`set_config`.
 For more control than these global settings, a :func:`config_context`
 allows you to set this configuration within a specified context::
 
@@ -89,7 +91,7 @@ allows you to set this configuration within a specified context::
   ...     pass  # do learning/prediction here with reduced validation
 
 Note that this will affect all uses of
-:func:`sklearn.utils.assert_all_finite` within the context.
+:func:`~utils.assert_all_finite` within the context.
 
 Influence of the Number of Features
 ....................................
@@ -161,7 +163,7 @@ decision function that is applied at prediction time is the same (a dot product)
 , so latency should be equivalent.
 
 Here is an example using
-:class:`sklearn.linear_model.SGDClassifier` with the
+:class:`~linear_model.SGDClassifier` with the
 ``elasticnet`` penalty. The regularization strength is globally controlled by
 the ``alpha`` parameter. With a sufficiently high ``alpha``,
 one can then increase the ``l1_ratio`` parameter of ``elasticnet`` to
@@ -183,7 +185,7 @@ Latency and throughput should (asymptotically) grow linearly with the number
 of support vectors in a SVC or SVR model. The kernel will also influence the
 latency as it is used to compute the projection of the input vector once per
 support vector. In the following graph the ``nu`` parameter of
-:class:`sklearn.svm.NuSVR` was used to influence the number of
+:class:`~svm.NuSVR` was used to influence the number of
 support vectors.
 
 .. |nusvr_model_complexity| image::  ../auto_examples/applications/images/sphx_glr_plot_model_complexity_influence_002.png
@@ -196,7 +198,7 @@ For :mod:`sklearn.ensemble` of trees (e.g. RandomForest, GBT,
 ExtraTrees etc) the number of trees and their depth play the most
 important role. Latency and throughput should scale linearly with the number
 of trees. In this case we used directly the ``n_estimators`` parameter of
-:class:`sklearn.ensemble.gradient_boosting.GradientBoostingRegressor`.
+:class:`~ensemble.GradientBoostingRegressor`.
 
 .. |gbt_model_complexity| image::  ../auto_examples/applications/images/sphx_glr_plot_model_complexity_influence_003.png
     :target: ../auto_examples/applications/plot_model_complexity_influence.html
@@ -303,7 +305,7 @@ Some calculations when implemented using standard numpy vectorized operations
 involve using a large amount of temporary memory.  This may potentially exhaust
 system memory.  Where computations can be performed in fixed-memory chunks, we
 attempt to do so, and allow the user to hint at the maximum size of this
-working memory (defaulting to 1GB) using :func:`sklearn.set_config` or
+working memory (defaulting to 1GB) using :func:`set_config` or
 :func:`config_context`.  The following suggests to limit temporary working
 memory to 128 MiB::
 
@@ -312,7 +314,7 @@ memory to 128 MiB::
   ...     pass  # do chunked work here
 
 An example of a chunked operation adhering to this setting is
-:func:`metric.pairwise_distances_chunked`, which facilitates computing
+:func:`~metrics.pairwise_distances_chunked`, which facilitates computing
 row-wise reductions of a pairwise distance matrix.
 
 Model Compression

@@ -294,7 +294,7 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
         if _check_partial_fit_first_call(self, classes):
             if not hasattr(self.estimator, "partial_fit"):
                 raise ValueError(("Base estimator {0}, doesn't have "
-                                 "partial_fit method").format(self.estimator))
+                                  "partial_fit method").format(self.estimator))
             self.estimators_ = [clone(self.estimator) for _ in range
                                 (self.n_classes_)]
 
@@ -307,8 +307,8 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
 
         if len(np.setdiff1d(y, self.classes_)):
             raise ValueError(("Mini-batch contains {0} while classes " +
-                             "must be subset of {1}").format(np.unique(y),
-                                                             self.classes_))
+                              "must be subset of {1}").format(np.unique(y),
+                                                              self.classes_))
 
         Y = self.label_binarizer_.transform(y)
         Y = Y.tocsc()
@@ -412,7 +412,8 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
 
         Returns
         -------
-        T : array-like of shape (n_samples, n_classes)
+        T : array-like of shape (n_samples, n_classes) or (n_samples,) for \
+            binary classification.
 
             .. versionchanged:: 0.19
                 output shape changed to ``(n_samples,)`` to conform to
@@ -578,7 +579,8 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         -------
         self
         """
-        X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc'])
+        X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc'],
+                                   force_all_finite=False)
         check_classification_targets(y)
 
         self.classes_ = np.unique(y)
@@ -635,7 +637,8 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
                              "must be subset of {1}".format(np.unique(y),
                                                             self.classes_))
 
-        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc'])
+        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc'],
+                         force_all_finite=False)
         check_classification_targets(y)
         combinations = itertools.combinations(range(self.n_classes_), 2)
         self.estimators_ = Parallel(
@@ -685,7 +688,8 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         Returns
         -------
-        Y : array-like of shape (n_samples, n_classes)
+        Y : array-like of shape (n_samples, n_classes) or (n_samples,) for \
+            binary classification.
 
             .. versionchanged:: 0.19
                 output shape changed to ``(n_samples,)`` to conform to
