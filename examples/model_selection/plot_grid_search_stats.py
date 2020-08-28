@@ -123,9 +123,10 @@ print(f"Correlation of models:\n {model_scores.transpose().corr()}")
 # the number of false positive errors (i.e. detecting a significant difference
 # between models when such does not exist) [1]_.
 #
-# Several methods have been developed to correct for the variance in these
-# cases. In this example we will explore one of these methods implemented
-# using two different statistical approaches: frequentist and Bayesian.
+# Several methods have been developed to correct the variance for the
+# correlation in these cases. In this example we will explore one of these
+# methods implemented using two different statistical approaches: frequentist
+# and Bayesian.
 
 # %%
 # Comparing two models: frequentist approach
