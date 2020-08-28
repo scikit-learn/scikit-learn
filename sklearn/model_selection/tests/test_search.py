@@ -25,7 +25,6 @@ from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
 
 from scipy.stats import bernoulli, expon, uniform
-from scipy.stats.distributions import norm
 
 
 from sklearn.base import BaseEstimator, ClassifierMixin
@@ -1787,8 +1786,8 @@ def test_gridsearchcv_raise_warning_with_non_finite_score(return_train_score):
     for msg, dataset in zip(warn_msg, set_with_warning):
         assert (f"One or more of the {dataset} scores are non-finite" in
                 str(msg.message))
-    
-    
+
+
 def test_callable_multimetric_confusion_matrix():
     # Test callable with many metrics inserts the correct names and metrics
     # into the search cv object
