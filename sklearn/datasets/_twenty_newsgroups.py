@@ -408,7 +408,6 @@ def fetch_20newsgroups_vectorized(*, subset="train", remove=(), data_home=None,
         data: {sparse matrix, dataframe} of shape (n_samples, n_features)
             The input data matrix. If ``as_frame`` is `True`, ``data`` is
             a pandas DataFrame with sparse columns.
-
         target: {ndarray, series} of shape (n_samples,)
             The target labels. If ``as_frame`` is `True`, ``target`` is a
             pandas Series.
@@ -417,8 +416,8 @@ def fetch_20newsgroups_vectorized(*, subset="train", remove=(), data_home=None,
         DESCR: str
             The full description of the dataset.
         frame: dataframe of shape (n_samples, n_features + 1)
-            Only present when `as_frame=True`. Pandas DataFrame with ``data`` and
-            ``target``.
+            Only present when `as_frame=True`. Pandas DataFrame with ``data``
+            and ``target``.
 
             .. versionadded:: 0.24
 
