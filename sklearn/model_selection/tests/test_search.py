@@ -26,7 +26,6 @@ from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
 
 from scipy.stats import bernoulli, expon, uniform
 
-
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.base import clone
 from sklearn.exceptions import NotFittedError
