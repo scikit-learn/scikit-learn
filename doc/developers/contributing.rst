@@ -719,6 +719,8 @@ Finally, follow the formatting rules below to make it consistently good:
 
     typed_ndarray : ndarray of shape (n_samples,), dtype=np.int32
 
+    samples : ndarray of shape (n_samples,), dtype={np.int32, np.float32}
+
     sample_weight : array-like of shape (n_samples,), default=None
 
 In general have the following in mind:
