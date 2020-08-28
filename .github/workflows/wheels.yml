@@ -15,9 +15,24 @@ on:
       - "[0-9]+.[0-9]+.X"
 
 jobs:
+  check_commit_message:
+    name: Check commit message
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == "pull_request" }} 
+    steps:
+      - name: Check commit type
+        uses: gsactions/commit-message-checker@v1
+        with:
+          # Add a commit marker to trigger
+          # the wheel builder when needed
+          pattern: "\[wheel\-build\]"
+          flags: "gm"
+          error: "BUILDER: [wheel-build] marker not found."
+
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    needs: check_commit_message
 
     strategy:
       # Avoid that the wheel builder for a
@@ -61,6 +76,7 @@ jobs:
   build_sdist:
     name: Source distribution
     runs-on: ubuntu-latest
+    needs: check_commit_message
 
     steps:
       - name: Checkout scikit-learn
@@ -96,7 +112,7 @@ jobs:
     needs: [build_wheels, build_sdist]
 
     # The artifacts should not be uploaded on PRs
-    if: ${{ github.event_name != 'pull_request' }}
+    if: ${{ github.event_name != "pull_request" }}
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v2
