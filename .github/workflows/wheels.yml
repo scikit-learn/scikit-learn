@@ -18,7 +18,7 @@ jobs:
   check_commit_message:
     name: Check commit message
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == "pull_request" }} 
+    if: ${{ github.event_name == 'pull_request' }} 
     steps:
       - name: Check commit type
         uses: gsactions/commit-message-checker@v1
@@ -111,7 +111,7 @@ jobs:
     needs: [build_wheels, build_sdist]
 
     # The artifacts should not be uploaded on PRs
-    if: ${{ github.event_name != "pull_request" }}
+    if: ${{ github.event_name != 'pull_request' }}
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v2
