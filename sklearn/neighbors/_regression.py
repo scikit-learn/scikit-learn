@@ -14,15 +14,16 @@ import warnings
 
 import numpy as np
 
-from ._base import _get_weights, _check_weights, NeighborsBase, KNeighborsMixin
-from ._base import RadiusNeighborsMixin, SupervisedFloatMixin
+from ._base import _get_weights, _check_weights
+from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
 from ..base import RegressorMixin
 from ..utils import check_array
+from ..utils.validation import _deprecate_positional_args
 
 
-class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
-                          SupervisedFloatMixin,
-                          RegressorMixin):
+class KNeighborsRegressor(KNeighborsMixin,
+                          RegressorMixin,
+                          NeighborsBase):
     """Regression based on k-nearest neighbors.
 
     The target is predicted by local interpolation of the targets
@@ -34,10 +35,10 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
 
     Parameters
     ----------
-    n_neighbors : int, optional (default = 5)
+    n_neighbors : int, default=5
         Number of neighbors to use by default for :meth:`kneighbors` queries.
 
-    weights : str or callable
+    weights : {'uniform', 'distance'} or callable, default='uniform'
         weight function used in prediction.  Possible values:
 
         - 'uniform' : uniform weights.  All points in each neighborhood
@@ -51,7 +52,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
 
         Uniform weights are used by default.
 
-    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
+    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
         Algorithm used to compute the nearest neighbors:
 
         - 'ball_tree' will use :class:`BallTree`
@@ -63,30 +64,30 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         Note: fitting on sparse input will override the setting of
         this parameter, using brute force.
 
-    leaf_size : int, optional (default = 30)
+    leaf_size : int, default=30
         Leaf size passed to BallTree or KDTree.  This can affect the
         speed of the construction and query, as well as the memory
         required to store the tree.  The optimal value depends on the
         nature of the problem.
 
-    p : integer, optional (default = 2)
+    p : int, default=2
         Power parameter for the Minkowski metric. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
-    metric : string or callable, default 'minkowski'
+    metric : str or callable, default='minkowski'
         the distance metric to use for the tree.  The default metric is
         minkowski, and with p=2 is equivalent to the standard Euclidean
-        metric. See the documentation of the DistanceMetric class for a
+        metric. See the documentation of :class:`DistanceMetric` for a
         list of available metrics.
         If metric is "precomputed", X is assumed to be a distance matrix and
-        must be square during fit. X may be a :term:`Glossary <sparse graph>`,
+        must be square during fit. X may be a :term:`sparse graph`,
         in which case only "nonzero" elements may be considered neighbors.
 
-    metric_params : dict, optional (default = None)
+    metric_params : dict, default=None
         Additional keyword arguments for the metric function.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         The number of parallel jobs to run for neighbors search.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -95,7 +96,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
 
     Attributes
     ----------
-    effective_metric_ : string or callable
+    effective_metric_ : str or callable
         The distance metric to use. It will be same as the `metric` parameter
         or a synonym of it, e.g. 'euclidean' if the `metric` parameter set to
         'minkowski' and `p` parameter set to 2.
@@ -105,6 +106,9 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         will be same with `metric_params` parameter, but may also contain the
         `p` parameter value if the `effective_metric_` attribute is set to
         'minkowski'.
+
+    n_samples_fit_ : int
+        Number of samples in the fitted data.
 
     Examples
     --------
@@ -139,7 +143,8 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
     https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
-    def __init__(self, n_neighbors=5, weights='uniform',
+    @_deprecate_positional_args
+    def __init__(self, n_neighbors=5, *, weights='uniform',
                  algorithm='auto', leaf_size=30,
                  p=2, metric='minkowski', metric_params=None, n_jobs=None,
                  **kwargs):
@@ -155,19 +160,39 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         # For cross-validation routines to split data correctly
         return self.metric == 'precomputed'
 
+    def fit(self, X, y):
+        """Fit the k-nearest neighbors regressor from the training dataset.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
+                (n_samples, n_samples) if metric='precomputed'
+            Training data.
+
+        y : {array-like, sparse matrix} of shape (n_samples,) or \
+                (n_samples, n_outputs)
+            Target values.
+
+        Returns
+        -------
+        self : KNeighborsRegressor
+            The fitted k-nearest neighbors regressor.
+        """
+        return self._fit(X, y)
+
     def predict(self, X):
         """Predict the target for the provided data
 
         Parameters
         ----------
-        X : array-like, shape (n_queries, n_features), \
+        X : array-like of shape (n_queries, n_features), \
                 or (n_queries, n_indexed) if metric == 'precomputed'
             Test samples.
 
         Returns
         -------
-        y : array of int, shape = [n_queries] or [n_queries, n_outputs]
-            Target values
+        y : ndarray of shape (n_queries,) or (n_queries, n_outputs), dtype=int
+            Target values.
         """
         X = check_array(X, accept_sparse='csr')
 
@@ -195,9 +220,9 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         return y_pred
 
 
-class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
-                               SupervisedFloatMixin,
-                               RegressorMixin):
+class RadiusNeighborsRegressor(RadiusNeighborsMixin,
+                               RegressorMixin,
+                               NeighborsBase):
     """Regression based on neighbors within a fixed radius.
 
     The target is predicted by local interpolation of the targets
@@ -209,11 +234,11 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
 
     Parameters
     ----------
-    radius : float, optional (default = 1.0)
+    radius : float, default=1.0
         Range of parameter space to use by default for :meth:`radius_neighbors`
         queries.
 
-    weights : str or callable
+    weights : {'uniform', 'distance'} or callable, default='uniform'
         weight function used in prediction.  Possible values:
 
         - 'uniform' : uniform weights.  All points in each neighborhood
@@ -227,7 +252,7 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
 
         Uniform weights are used by default.
 
-    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
+    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
         Algorithm used to compute the nearest neighbors:
 
         - 'ball_tree' will use :class:`BallTree`
@@ -239,30 +264,30 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
         Note: fitting on sparse input will override the setting of
         this parameter, using brute force.
 
-    leaf_size : int, optional (default = 30)
+    leaf_size : int, default=30
         Leaf size passed to BallTree or KDTree.  This can affect the
         speed of the construction and query, as well as the memory
         required to store the tree.  The optimal value depends on the
         nature of the problem.
 
-    p : integer, optional (default = 2)
+    p : int, default=2
         Power parameter for the Minkowski metric. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
-    metric : string or callable, default 'minkowski'
+    metric : str or callable, default='minkowski'
         the distance metric to use for the tree.  The default metric is
         minkowski, and with p=2 is equivalent to the standard Euclidean
-        metric. See the documentation of the DistanceMetric class for a
+        metric. See the documentation of :class:`DistanceMetric` for a
         list of available metrics.
         If metric is "precomputed", X is assumed to be a distance matrix and
-        must be square during fit. X may be a :term:`Glossary <sparse graph>`,
+        must be square during fit. X may be a :term:`sparse graph`,
         in which case only "nonzero" elements may be considered neighbors.
 
-    metric_params : dict, optional (default = None)
+    metric_params : dict, default=None
         Additional keyword arguments for the metric function.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         The number of parallel jobs to run for neighbors search.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -270,7 +295,7 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
 
     Attributes
     ----------
-    effective_metric_ : string or callable
+    effective_metric_ : str or callable
         The distance metric to use. It will be same as the `metric` parameter
         or a synonym of it, e.g. 'euclidean' if the `metric` parameter set to
         'minkowski' and `p` parameter set to 2.
@@ -280,6 +305,9 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
         will be same with `metric_params` parameter, but may also contain the
         `p` parameter value if the `effective_metric_` attribute is set to
         'minkowski'.
+
+    n_samples_fit_ : int
+        Number of samples in the fitted data.
 
     Examples
     --------
@@ -307,7 +335,8 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
     https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
-    def __init__(self, radius=1.0, weights='uniform',
+    @_deprecate_positional_args
+    def __init__(self, radius=1.0, *, weights='uniform',
                  algorithm='auto', leaf_size=30,
                  p=2, metric='minkowski', metric_params=None, n_jobs=None,
                  **kwargs):
@@ -319,19 +348,40 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
               n_jobs=n_jobs, **kwargs)
         self.weights = _check_weights(weights)
 
+    def fit(self, X, y):
+        """Fit the radius neighbors regressor from the training dataset.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
+                (n_samples, n_samples) if metric='precomputed'
+            Training data.
+
+        y : {array-like, sparse matrix} of shape (n_samples,) or \
+                (n_samples, n_outputs)
+            Target values.
+
+        Returns
+        -------
+        self : RadiusNeighborsRegressor
+            The fitted radius neighbors regressor.
+        """
+        return self._fit(X, y)
+
     def predict(self, X):
         """Predict the target for the provided data
 
         Parameters
         ----------
-        X : array-like, shape (n_queries, n_features), \
+        X : array-like of shape (n_queries, n_features), \
                 or (n_queries, n_indexed) if metric == 'precomputed'
             Test samples.
 
         Returns
         -------
-        y : array of float, shape = [n_queries] or [n_queries, n_outputs]
-            Target values
+        y : ndarray of shape (n_queries,) or (n_queries, n_outputs), \
+                dtype=double
+            Target values.
         """
         X = check_array(X, accept_sparse='csr')
 

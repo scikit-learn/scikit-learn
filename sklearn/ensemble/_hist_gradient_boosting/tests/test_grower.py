@@ -134,6 +134,8 @@ def test_grow_tree(n_bins, constant_hessian, stopping_param, shrinkage):
     # All the leafs are pure, it is not possible to split any further:
     assert not grower.splittable_nodes
 
+    grower._apply_shrinkage()
+
     # Check the values of the leaves:
     assert grower.root.left_child.value == approx(shrinkage)
     assert grower.root.right_child.left_child.value == approx(shrinkage)
@@ -154,7 +156,10 @@ def test_predictor_from_grower():
 
     # Check that the node structure can be converted into a predictor
     # object to perform predictions at scale
-    predictor = grower.make_predictor()
+    # We pass undefined num_thresholds because we won't use predict() anyway
+    predictor = grower.make_predictor(
+        num_thresholds=np.zeros((X_binned.shape[1], n_bins))
+    )
     assert predictor.nodes.shape[0] == 5
     assert predictor.nodes['is_leaf'].sum() == 3
 
@@ -216,7 +221,7 @@ def test_min_samples_leaf(n_samples, min_samples_leaf, n_bins,
                         max_leaf_nodes=n_samples)
     grower.grow()
     predictor = grower.make_predictor(
-        bin_thresholds=mapper.bin_thresholds_)
+        num_thresholds=mapper.bin_thresholds_)
 
     if n_samples >= min_samples_leaf:
         for node in predictor.nodes:
@@ -257,7 +262,14 @@ def test_min_samples_leaf_root(n_samples, min_samples_leaf):
         assert len(grower.finalized_leaves) == 1
 
 
-@pytest.mark.parametrize('max_depth', [2, 3])
+def assert_is_stump(grower):
+    # To assert that stumps are created when max_depth=1
+    for leaf in (grower.root.left_child, grower.root.right_child):
+        assert leaf.left_child is None
+        assert leaf.right_child is None
+
+
+@pytest.mark.parametrize('max_depth', [1, 2, 3])
 def test_max_depth(max_depth):
     # Make sure max_depth parameter works as expected
     rng = np.random.RandomState(seed=0)
@@ -278,6 +290,9 @@ def test_max_depth(max_depth):
 
     depth = max(leaf.depth for leaf in grower.finalized_leaves)
     assert depth == max_depth
+
+    if max_depth == 1:
+        assert_is_stump(grower)
 
 
 def test_input_validation():
@@ -327,7 +342,10 @@ def test_missing_value_predict_only():
                         has_missing_values=False)
     grower.grow()
 
-    predictor = grower.make_predictor()
+    # We pass undefined num_thresholds because we won't use predict() anyway
+    predictor = grower.make_predictor(
+        num_thresholds=np.zeros((X_binned.shape[1], X_binned.max() + 1))
+    )
 
     # go from root to a leaf, always following node with the most samples.
     # That's the path nans are supposed to take
@@ -370,11 +388,11 @@ def test_split_on_nan_with_infinite_values():
     grower.grow()
 
     predictor = grower.make_predictor(
-        bin_thresholds=bin_mapper.bin_thresholds_
+        num_thresholds=bin_mapper.bin_thresholds_
     )
 
     # sanity check: this was a split on nan
-    assert predictor.nodes[0]['threshold'] == np.inf
+    assert predictor.nodes[0]['num_threshold'] == np.inf
     assert predictor.nodes[0]['bin_threshold'] == n_bins_non_missing - 1
 
     # Make sure in particular that the +inf sample is mapped to the left child
@@ -383,5 +401,5 @@ def test_split_on_nan_with_infinite_values():
     predictions = predictor.predict(X)
     predictions_binned = predictor.predict_binned(
         X_binned, missing_values_bin_idx=bin_mapper.missing_values_bin_idx_)
-    assert np.all(predictions == -gradients)
-    assert np.all(predictions_binned == -gradients)
+    np.testing.assert_allclose(predictions, -gradients)
+    np.testing.assert_allclose(predictions_binned, -gradients)

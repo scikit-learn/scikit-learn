@@ -19,7 +19,7 @@ PREDICTOR_RECORD_DTYPE = np.dtype([
     ('value', Y_DTYPE),
     ('count', np.uint32),
     ('feature_idx', np.uint32),
-    ('threshold', X_DTYPE),
+    ('num_threshold', X_DTYPE),
     ('missing_go_to_left', np.uint8),
     ('left', np.uint32),
     ('right', np.uint32),

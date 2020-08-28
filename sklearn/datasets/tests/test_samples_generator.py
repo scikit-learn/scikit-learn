@@ -79,7 +79,7 @@ def test_make_classification_informative_features():
                                                          (2, [1/2] * 2, 2),
                                                          (2, [3/4, 1/4], 2),
                                                          (10, [1/3] * 3, 10),
-                                                         (np.int(64), [1], 1)
+                                                         (int(64), [1], 1)
                                                          ]:
         n_classes = len(weights)
         n_clusters = n_classes * n_clusters_per_class
@@ -222,6 +222,18 @@ def test_make_multilabel_classification_return_indicator_sparse():
         assert sp.issparse(Y)
 
 
+@pytest.mark.parametrize(
+    "params, err_msg",
+    [
+        ({"n_classes": 0}, "'n_classes' should be an integer"),
+        ({"length": 0}, "'length' should be an integer")
+    ]
+)
+def test_make_multilabel_classification_valid_arguments(params, err_msg):
+    with pytest.raises(ValueError, match=err_msg):
+        make_multilabel_classification(**params)
+
+
 def test_make_hastie_10_2():
     X, y = make_hastie_10_2(n_samples=100, random_state=0)
     assert X.shape == (100, 10), "X shape mismatch"
@@ -310,6 +322,15 @@ def test_make_blobs_n_samples_centers_none(n_samples):
     assert X.shape == (sum(n_samples), 2), "X shape mismatch"
     assert all(np.bincount(y, minlength=len(n_samples)) == n_samples), \
         "Incorrect number of samples per blob"
+
+
+def test_make_blobs_return_centers():
+    n_samples = [10, 20]
+    n_features = 3
+    X, y, centers = make_blobs(n_samples=n_samples, n_features=n_features,
+                               return_centers=True, random_state=0)
+
+    assert centers.shape == (len(n_samples), n_features)
 
 
 def test_make_blobs_error():

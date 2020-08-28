@@ -7,6 +7,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from ..utils import IS_PYPY
+from ..utils.validation import _deprecate_positional_args
 from ..base import BaseEstimator, TransformerMixin
 
 if not IS_PYPY:
@@ -47,11 +48,11 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    n_features : integer, optional
+    n_features : int, default=2**20
         The number of features (columns) in the output matrices. Small numbers
         of features are likely to cause hash collisions, but large numbers
         will cause larger coefficient dimensions in linear learners.
-    input_type : string, optional, default "dict"
+    input_type : {"dict", "pair", "string"}, default="dict"
         Either "dict" (the default) to accept dictionaries over
         (feature_name, value); "pair" to accept pairs of (feature_name, value);
         or "string" to accept single strings.
@@ -60,14 +61,18 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
         The feature_name is hashed to find the appropriate column for the
         feature. The value's sign might be flipped in the output (but see
         non_negative, below).
-    dtype : numpy type, optional, default np.float64
+    dtype : numpy dtype, default=np.float64
         The type of feature values. Passed to scipy.sparse matrix constructors
         as the dtype argument. Do not set this to bool, np.boolean or any
         unsigned integer type.
-    alternate_sign : boolean, optional, default True
+    alternate_sign : bool, default=True
         When True, an alternating sign is added to the features as to
         approximately conserve the inner product in the hashed space even for
         small n_features. This approach is similar to sparse random projection.
+
+    .. versionchanged:: 0.19
+        ``alternate_sign`` replaces the now deprecated ``non_negative``
+        parameter.
 
     Examples
     --------
@@ -84,8 +89,8 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
     DictVectorizer : vectorizes string-valued features using a hash table.
     sklearn.preprocessing.OneHotEncoder : handles nominal/categorical features.
     """
-
-    def __init__(self, n_features=(2 ** 20), input_type="dict",
+    @_deprecate_positional_args
+    def __init__(self, n_features=(2 ** 20), *, input_type="dict",
                  dtype=np.float64, alternate_sign=True):
         self._validate_params(n_features, input_type)
 
@@ -101,7 +106,7 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
         if not isinstance(n_features, numbers.Integral):
             raise TypeError("n_features must be integral, got %r (%s)."
                             % (n_features, type(n_features)))
-        elif n_features < 1 or n_features >= 2 ** 31:
+        elif n_features < 1 or n_features >= np.iinfo(np.int32).max + 1:
             raise ValueError("Invalid number of features (%d)." % n_features)
 
         if input_type not in ("dict", "pair", "string"):
@@ -116,7 +121,7 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like
+        X : ndarray
 
         Returns
         -------
