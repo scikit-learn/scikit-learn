@@ -98,8 +98,8 @@ for bj in range(len(n_components)):
                   % (n_samples[i], n_features[j]))
             t0 = time()
             nmf = NMF(n_components=n_components[bj], random_state=1,
-                              beta_loss='kullback-leibler', solver='mu',
-                              max_iter=1000, alpha=.1, l1_ratio=.5).fit(tfidf)
+                      beta_loss='kullback-leibler', solver='mu',
+                      max_iter=1000, alpha=.1, l1_ratio=.5).fit(tfidf)
             timesKL[i] = time() - t0
             print("done in %0.3fs." % (timesKL[i]))
             lossKL[i] = nmf.reconstruction_err_
@@ -110,11 +110,13 @@ for bj in range(len(n_components)):
                   "tf-idf features, n_samples=%d and n_features=%d..."
                   % (n_samples[i], n_features[j]))
             t0 = time()
-            minibatch_nmf = MiniBatchNMF(n_components=n_components[bj],
-                                batch_size=batch_size,
-                                random_state=1, beta_loss='kullback-leibler',
-                                solver='mu', max_iter=1000, alpha=.1,
-                                l1_ratio=.5).fit(tfidf)
+            minibatch_nmf = MiniBatchNMF(
+                n_components=n_components[bj],
+                batch_size=batch_size,
+                random_state=1, beta_loss='kullback-leibler',
+                solver='mu', max_iter=1000, alpha=.1,
+                l1_ratio=.5
+            ).fit(tfidf)
             timesmbKL[i] = time() - t0
             print("done in %0.3fs." % (timesmbKL[i]))
             lossmbKL[i] = minibatch_nmf.reconstruction_err_
