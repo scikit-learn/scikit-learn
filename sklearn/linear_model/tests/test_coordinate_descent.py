@@ -11,7 +11,7 @@ import joblib
 from sklearn.base import is_classifier
 from sklearn.datasets import load_diabetes
 from sklearn.datasets import make_regression
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GroupKFold, train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
@@ -1167,9 +1167,6 @@ def test_enet_sample_weight_consistency(fit_intercept, alpha, normalize,
 
     # check that multiplying sample_weight by 2 is equivalent
     # to repeating corresponding samples twice
-    if sparse.issparse(X):
-        X = X.toarray()
-
     X2 = np.concatenate([X, X[:n_samples//2]], axis=0)
     y2 = np.concatenate([y, y[:n_samples//2]])
     sample_weight_1 = np.ones(len(y))
@@ -1185,7 +1182,8 @@ def test_enet_sample_weight_consistency(fit_intercept, alpha, normalize,
     assert_allclose(reg1.coef_, reg2.coef_)
 
 
-def test_enet_sample_weight_sparse():
+@pytest.mark.parametrize('estimator', (Lasso, ElasticNet))
+def test_enet_sample_weight_sparse(estimator):
     reg = ElasticNet()
     X = sparse.csc_matrix(np.zeros((3, 2)))
     y = np.array([-1, 0, 1])
@@ -1193,6 +1191,123 @@ def test_enet_sample_weight_sparse():
     with pytest.raises(ValueError, match="Sample weights do not.*support "
                                          "sparse matrices"):
         reg.fit(X, y, sample_weight=sw, check_input=True)
+
+
+@pytest.mark.parametrize('cv_weighted', [True, False])
+@pytest.mark.parametrize('fit_intercept', [True, False])
+def test_enet_cv_sample_weight_correctness(cv_weighted, fit_intercept):
+    """Test that ElasticNetCV with sample weights gives correct results."""
+    rng = np.random.RandomState(42)
+    n_splits, n_samples, n_features = 3, 10, 5
+    X = rng.rand(n_splits * n_samples, n_features)
+    beta = rng.rand(n_features)
+    beta[0:2] = 0
+    y = X @ beta + rng.rand(n_splits * n_samples)
+    sw = np.ones_like(y)
+
+    # Set alphas, otherwise the two cv models might use different ones.
+    if fit_intercept:
+        alphas = np.linspace(0.001, 0.01, num=91)
+    else:
+        alphas = np.linspace(0.01, 0.1, num=91)
+
+    # We weight the first fold 2 times more.
+    sw[:n_samples] = 2
+    groups_sw = np.r_[np.full(n_samples, 0), np.full(n_samples, 1),
+                      np.full(n_samples, 2)]
+    splits_sw = list(GroupKFold(n_splits=n_splits).split(X, groups=groups_sw))
+    reg_sw = ElasticNetCV(alphas=alphas, cv=splits_sw,
+                          fit_intercept=fit_intercept, cv_weighted=cv_weighted)
+    reg_sw.fit(X, y, sample_weight=sw)
+
+    # We repeate the first fold 2 times and provide splits ourselves
+    X = np.r_[X[0:n_samples], X]
+    y = np.r_[y[0:n_samples], y]
+    groups = np.r_[np.full(2*n_samples, 0), np.full(n_samples, 1),
+                   np.full(n_samples, 2)]
+    splits = list(GroupKFold(n_splits=n_splits).split(X, groups=groups))
+    reg = ElasticNetCV(alphas=alphas, cv=splits, fit_intercept=fit_intercept,
+                       cv_weighted=cv_weighted)
+    reg.fit(X, y)
+
+    # ensure that we chose meaningful alphas, i.e. not boundaries
+    assert alphas[0] < reg.alpha_ < alphas[-1]
+    assert reg_sw.alpha_ == reg.alpha_
+    assert_allclose(reg_sw.coef_, reg.coef_)
+    if fit_intercept is not None:
+        assert reg_sw.intercept_ == pytest.approx(reg.intercept_)
+    if cv_weighted:
+        # Note: The order of groups is shuffled, i.e. not the same. But why???
+        group_order_sw = []
+        for train, test in splits_sw:
+            group_order_sw.append(groups_sw[test][0])
+        group_order = []
+        for train, test in splits:
+            group_order.append(groups[test][0])
+        for i in range(3):
+            assert_allclose(reg_sw.mse_path_[:, group_order_sw[i]],
+                            reg.mse_path_[:, group_order[i]])
+
+# TODO: Compare ElasticNetCV to GridSearchCV
+
+
+@pytest.mark.parametrize('fit_intercept', [True, False])
+@pytest.mark.parametrize('l1_ratio', [0, 0.5, 1])
+@pytest.mark.parametrize('normalize', [False, True])
+@pytest.mark.parametrize('precompute', [False, True])
+@pytest.mark.parametrize('cv_weighted', [False, True])
+def test_enet_cv_sample_weight_consistency(fit_intercept, l1_ratio, normalize,
+                                           precompute, cv_weighted):
+    """Test that the impact of sample_weight is consistent."""
+    rng = np.random.RandomState(0)
+    n_samples, n_features = 10, 5
+
+    X = rng.rand(n_samples, n_features)
+    y = X.sum(axis=1) + rng.rand(n_samples)
+    params = dict(l1_ratio=l1_ratio, fit_intercept=fit_intercept,
+                  precompute=precompute, cv_weighted=cv_weighted,
+                  tol=1e-6, cv=3)
+
+    if l1_ratio == 0:
+        params.pop('l1_ratio', None)
+        reg = LassoCV(**params).fit(X, y)
+    else:
+        reg = ElasticNetCV(**params).fit(X, y)
+    coef = reg.coef_.copy()
+    if fit_intercept:
+        intercept = reg.intercept_
+
+    # sample_weight=np.ones(..) should be equivalent to sample_weight=None
+    sample_weight = np.ones_like(y)
+    reg.fit(X, y, sample_weight=sample_weight)
+    assert_allclose(reg.coef_, coef, rtol=1e-6)
+    if fit_intercept:
+        assert_allclose(reg.intercept_, intercept)
+
+    # sample_weight=None should be equivalent to sample_weight = number
+    sample_weight = 123.
+    reg.fit(X, y, sample_weight=sample_weight)
+    assert_allclose(reg.coef_, coef, rtol=1e-6)
+    if fit_intercept:
+        assert_allclose(reg.intercept_, intercept)
+
+    # scaling of sample_weight should have no effect, cf. np.average()
+    sample_weight = 2 * np.ones_like(y)
+    reg.fit(X, y, sample_weight=sample_weight)
+    assert_allclose(reg.coef_, coef, rtol=1e-6)
+    if fit_intercept:
+        assert_allclose(reg.intercept_, intercept)
+
+
+@pytest.mark.parametrize('estimator', (LassoCV, ElasticNetCV))
+def test_enet_cv_sample_weight_sparse(estimator):
+    reg = estimator()
+    X = sparse.csc_matrix(np.zeros((3, 2)))
+    y = np.array([-1, 0, 1])
+    sw = np.array([1, 2, 3])
+    with pytest.raises(ValueError, match="Sample weights do not.*support "
+                                         "sparse matrices"):
+        reg.fit(X, y, sample_weight=sw)
 
 
 @pytest.mark.parametrize("backend", ["loky", "threading"])
