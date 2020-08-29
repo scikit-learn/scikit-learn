@@ -360,6 +360,12 @@ Changelog
   all distributions are lists and `n_iter` is more than the number of unique
   parameter combinations. :pr:`18222` by `Nicolas Hug`_.
 
+- |Fix| A fix to raise warning when one or more CV splits of
+  :class:`model_selection.GridSearchCV` and
+  :class:`model_selection.RandomizedSearchCV` results in non-finite scores.
+  :pr:`18266` by :user:`Subrat Sahu <subrat93>`,
+  :user:`Nirvan <Nirvan101>` and :user:`Arthur Book <ArthurBook>`.
+
 :mod:`sklearn.multiclass`
 .........................
 
