@@ -8,7 +8,7 @@
 import sys
 import warnings
 import numbers
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 
 import numpy as np
 from scipy import sparse
@@ -22,9 +22,9 @@ from ..utils.validation import check_random_state
 from ..model_selection import check_cv
 from ..utils.extmath import safe_sparse_dot
 from ..utils.fixes import _astype_copy_false, _joblib_parallel_args
-from ..utils.validation import check_is_fitted, _check_sample_weight
-from ..utils.validation import column_or_1d
-from ..utils.validation import _deprecate_positional_args
+from ..utils.validation import (check_consistent_length, check_is_fitted,
+                                _check_sample_weight, column_or_1d,
+                                _deprecate_positional_args)
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
 from . import _cd_fast as cd_fast  # type: ignore
@@ -200,7 +200,7 @@ def lasso_path(X, y, *, eps=1e-3, n_alphas=100, alphas=None,
         can be sparse.
 
     y : {array-like, sparse matrix} of shape (n_samples,) or \
-        (n_samples, n_outputs)
+        (n_samples, n_targets)
         Target values
 
     eps : float, default=1e-3
@@ -220,7 +220,7 @@ def lasso_path(X, y, *, eps=1e-3, n_alphas=100, alphas=None,
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument.
 
-    Xy : array-like of shape (n_features,) or (n_features, n_outputs),\
+    Xy : array-like of shape (n_features,) or (n_features, n_targets),\
          default=None
         Xy = np.dot(X.T, y) that can be precomputed. It is useful
         only when the Gram matrix is precomputed.
@@ -250,7 +250,7 @@ def lasso_path(X, y, *, eps=1e-3, n_alphas=100, alphas=None,
         The alphas along the path where models are computed.
 
     coefs : ndarray of shape (n_features, n_alphas) or \
-            (n_outputs, n_features, n_alphas)
+            (n_targets, n_features, n_alphas)
         Coefficients along the path.
 
     dual_gaps : ndarray of shape (n_alphas,)
@@ -352,7 +352,7 @@ def enet_path(X, y, *, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         can be sparse.
 
     y : {array-like, sparse matrix} of shape (n_samples,) or \
-        (n_samples, n_outputs)
+        (n_samples, n_targets)
         Target values.
 
     l1_ratio : float, default=0.5
@@ -376,7 +376,7 @@ def enet_path(X, y, *, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument.
 
-    Xy : array-like of shape (n_features,) or (n_features, n_outputs),\
+    Xy : array-like of shape (n_features,) or (n_features, n_targets),\
          default=None
         Xy = np.dot(X.T, y) that can be precomputed. It is useful
         only when the Gram matrix is precomputed.
@@ -411,7 +411,7 @@ def enet_path(X, y, *, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         The alphas along the path where models are computed.
 
     coefs : ndarray of shape (n_features, n_alphas) or \
-            (n_outputs, n_features, n_alphas)
+            (n_targets, n_features, n_alphas)
         Coefficients along the path.
 
     dual_gaps : ndarray of shape (n_alphas,)
@@ -452,7 +452,7 @@ def enet_path(X, y, *, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     multi_output = False
     if y.ndim != 1:
         multi_output = True
-        _, n_outputs = y.shape
+        n_targets = y.shape[1]
 
     if multi_output and positive:
         raise ValueError('positive=True is not allowed for multi-output'
@@ -498,7 +498,7 @@ def enet_path(X, y, *, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     if not multi_output:
         coefs = np.empty((n_features, n_alphas), dtype=X.dtype)
     else:
-        coefs = np.empty((n_outputs, n_features, n_alphas),
+        coefs = np.empty((n_targets, n_features, n_alphas),
                          dtype=X.dtype)
 
     if coef_init is None:
@@ -652,7 +652,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         parameter vector (w in the cost function formula)
 
     sparse_coef_ : sparse matrix of shape (n_features,) or \
-            (n_tasks, n_features)
+            (n_targets, n_features)
         sparse representation of the `coef_`.
 
     intercept_ : float or ndarray of shape (n_targets,)
@@ -1144,8 +1144,8 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
     return this_mses
 
 
-class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
-    """Base class for iterative model fitting along a regularization path"""
+class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
+    """Base class for iterative model fitting along a regularization path."""
 
     @abstractmethod
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
@@ -1177,7 +1177,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
         """Bool indicating if class is meant for multidimensional target."""
 
     def fit(self, X, y):
-        """Fit linear model with coordinate descent
+        """Fit linear model with coordinate descent.
 
         Fit is on grid of alphas and best alpha estimated by cross-validation.
 
@@ -1237,8 +1237,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
                                                             check_y_params))
             copy_X = False
 
-        if y.shape[0] == 0:
-            raise ValueError("y has 0 samples: %r" % y)
+        check_consistent_length(X, y)
 
         if not self._is_multitask():
             if y.ndim > 1 and y.shape[1] > 1:
@@ -1257,10 +1256,6 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
 
         if self.selection not in ["random", "cyclic"]:
             raise ValueError("selection should be either random or cyclic.")
-
-        if X.shape[0] != y.shape[0]:
-            raise ValueError("X and y have inconsistent dimensions (%d != %d)"
-                             % (X.shape[0], y.shape[0]))
 
         # All LinearModelCV parameters except 'cv' are acceptable
         path_params = self.get_params()
@@ -1822,10 +1817,10 @@ class MultiTaskElasticNet(Lasso):
 
     Attributes
     ----------
-    intercept_ : ndarray of shape (n_tasks,)
+    intercept_ : ndarray of shape (n_targets,)
         Independent term in decision function.
 
-    coef_ : ndarray of shape (n_tasks, n_features)
+    coef_ : ndarray of shape (n_targets, n_features)
         Parameter vector (W in the cost function formula). If a 1D y is
         passed in at fit (non multi-task usage), ``coef_`` is then a 1D array.
         Note that ``coef_`` stores the transpose of ``W``, ``W.T``.
@@ -1841,7 +1836,7 @@ class MultiTaskElasticNet(Lasso):
         The tolerance scaled scaled by the variance of the target `y`.
 
     sparse_coef_ : sparse matrix of shape (n_features,) or \
-            (n_tasks, n_features)
+            (n_targets, n_features)
         sparse representation of the `coef_`.
 
     Examples
@@ -1892,7 +1887,7 @@ class MultiTaskElasticNet(Lasso):
         ----------
         X : ndarray of shape (n_samples, n_features)
             Data
-        y : ndarray of shape (n_samples, n_tasks)
+        y : ndarray of shape (n_samples, n_targets)
             Target. Will be cast to X's dtype if necessary
 
         Notes
@@ -1912,6 +1907,7 @@ class MultiTaskElasticNet(Lasso):
         check_y_params = dict(ensure_2d=False, order='F')
         X, y = self._validate_data(X, y, validate_separately=(check_X_params,
                                                               check_y_params))
+        check_consistent_length(X, y)
         y = y.astype(X.dtype)
 
         if hasattr(self, 'l1_ratio'):
@@ -1921,18 +1917,13 @@ class MultiTaskElasticNet(Lasso):
         if y.ndim == 1:
             raise ValueError("For mono-task outputs, use %s" % model_str)
 
-        n_samples, n_features = X.shape
-        _, n_tasks = y.shape
-
-        if n_samples != y.shape[0]:
-            raise ValueError("X and y have inconsistent dimensions (%d != %d)"
-                             % (n_samples, y.shape[0]))
+        (n_samples, n_features), n_targets = X.shape, y.shape[1]
 
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X, y, self.fit_intercept, self.normalize, copy=False)
 
         if not self.warm_start or not hasattr(self, "coef_"):
-            self.coef_ = np.zeros((n_tasks, n_features), dtype=X.dtype.type,
+            self.coef_ = np.zeros((n_targets, n_features), dtype=X.dtype.type,
                                   order='F')
 
         l1_reg = self.alpha * self.l1_ratio * n_samples
@@ -2022,11 +2013,11 @@ class MultiTaskLasso(MultiTaskElasticNet):
 
     Attributes
     ----------
-    coef_ : ndarray of shape (n_tasks, n_features)
+    coef_ : ndarray of shape (n_targets, n_features)
         Parameter vector (W in the cost function formula).
         Note that ``coef_`` stores the transpose of ``W``, ``W.T``.
 
-    intercept_ : ndarray of shape (n_tasks,)
+    intercept_ : ndarray of shape (n_targets,)
         independent term in decision function.
 
     n_iter_ : int
@@ -2040,7 +2031,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
         The tolerance scaled scaled by the variance of the target `y`.
 
     sparse_coef_ : sparse matrix of shape (n_features,) or \
-            (n_tasks, n_features)
+            (n_targets, n_features)
         sparse representation of the `coef_`.
 
     Examples
@@ -2196,10 +2187,10 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
 
     Attributes
     ----------
-    intercept_ : ndarray of shape (n_tasks,)
+    intercept_ : ndarray of shape (n_targets,)
         Independent term in decision function.
 
-    coef_ : ndarray of shape (n_tasks, n_features)
+    coef_ : ndarray of shape (n_targets, n_features)
         Parameter vector (W in the cost function formula).
         Note that ``coef_`` stores the transpose of ``W``, ``W.T``.
 
@@ -2380,10 +2371,10 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
 
     Attributes
     ----------
-    intercept_ : ndarray of shape (n_tasks,)
+    intercept_ : ndarray of shape (n_targets,)
         Independent term in decision function.
 
-    coef_ : ndarray of shape (n_tasks, n_features)
+    coef_ : ndarray of shape (n_targets, n_features)
         Parameter vector (W in the cost function formula).
         Note that ``coef_`` stores the transpose of ``W``, ``W.T``.
 
