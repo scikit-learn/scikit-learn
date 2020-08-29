@@ -4,7 +4,6 @@ import scipy.sparse as sp
 from scipy import linalg
 from sklearn.decomposition import NMF, non_negative_factorization
 from sklearn.decomposition import MiniBatchNMF
-from sklearn.decomposition import non_negative_factorization_online
 from sklearn.decomposition import _nmf as nmf  # For testing internals
 from scipy.sparse import csc_matrix
 
@@ -31,7 +30,9 @@ def test_convergence_warning(estimator, solver, regularization):
                            "Increase it to improve convergence.")
     A = np.ones((2, 2))
     with pytest.warns(ConvergenceWarning, match=convergence_warning):
-        estimator(solver=solver, regularization=regularization, max_iter=1).fit(A)
+        estimator(
+            solver=solver, regularization=regularization, max_iter=1
+        ).fit(A)
 
 
 def test_initialize_nn_output():
@@ -126,7 +127,7 @@ def test_nmf_fit_nn_output(estimator, solver, init, regularization):
     A = np.c_[5. - np.arange(1, 6),
               5. + np.arange(1, 6)]
     model = estimator(n_components=2, solver=solver, init=init,
-                regularization=regularization, random_state=0)
+                      regularization=regularization, random_state=0)
     transf = model.fit_transform(A)
     assert not((model.components_ < 0).any() or
                (transf < 0).any())
@@ -141,7 +142,7 @@ def test_nmf_fit_close(estimator, solver, regularization):
     rng = np.random.mtrand.RandomState(42)
     # Test that the fit is not too far away
     pnmf = estimator(5, solver=solver, init='nndsvdar', random_state=0,
-               regularization=regularization, max_iter=600)
+                     regularization=regularization, max_iter=600)
     X = np.abs(rng.randn(6, 5))
     assert pnmf.fit(X).reconstruction_err_ < 0.1
 
@@ -604,8 +605,8 @@ def test_nmf_close_minibatch_nmf():
     nmf = NMF(5, solver='mu', init='nndsvdar', random_state=0,
               max_iter=2000, beta_loss='kullback-leibler')
     mbnmf = MiniBatchNMF(5, solver='mu', init='nndsvdar', random_state=0,
-                        max_iter=2000, beta_loss='kullback-leibler',
-                        batch_size=48)
+                         max_iter=2000, beta_loss='kullback-leibler',
+                         batch_size=48)
     W = nmf.fit_transform(X)
     mbW = mbnmf.fit_transform(X)
     assert_array_almost_equal(W, mbW)
