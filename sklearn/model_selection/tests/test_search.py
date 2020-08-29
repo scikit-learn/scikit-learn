@@ -1778,7 +1778,6 @@ def test_searchcv_raise_warning_with_non_finite_score(
 
     grid = SearchCV(
         DecisionTreeClassifier(),
-        param_grid={"max_depth": [2, 3]},
         scoring=FailingScorer(),
         cv=3,
         return_train_score=return_train_score,
