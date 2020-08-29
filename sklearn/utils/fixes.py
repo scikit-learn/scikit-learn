@@ -202,6 +202,7 @@ def _take_along_axis(arr, indices, axis):
         return arr[fancy_index]
 
 
+# remove when https://github.com/joblib/joblib/issues/1071 is fixed
 def delayed(function, *args, **kwargs):
     """Wrapper around joblib.delayed to pass around the global configuration.
     """
