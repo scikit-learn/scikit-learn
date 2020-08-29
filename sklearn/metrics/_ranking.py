@@ -218,8 +218,7 @@ def average_precision_score(y_true, y_score, *, average="macro", pos_label=1,
                                  average, sample_weight=sample_weight)
 
 
-def detection_error_tradeoff_curve(y_true, y_score, pos_label=None,
-                                   sample_weight=None):
+def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
     """Compute error rates for different probability thresholds.
 
     .. note::
@@ -273,10 +272,10 @@ def detection_error_tradeoff_curve(y_true, y_score, pos_label=None,
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.metrics import detection_error_tradeoff_curve
+    >>> from sklearn.metrics import det_curve
     >>> y_true = np.array([0, 0, 1, 1])
     >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> fpr, fnr, thresholds = detection_error_tradeoff_curve(y_true, y_scores)
+    >>> fpr, fnr, thresholds = det_curve(y_true, y_scores)
     >>> fpr
     array([0.5, 0.5, 0. ])
     >>> fnr
@@ -747,14 +746,13 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None,
 
     thresholds : ndarray of shape (n_thresholds,)
         Increasing thresholds on the decision function used to compute
-        precision and recall. n_thresgolds <= len(np.unique(probas_pred)).
+        precision and recall. n_thresholds <= len(np.unique(probas_pred)).
 
     See also
     --------
     average_precision_score : Compute average precision from prediction scores
 
-    detection_error_tradeoff_curve: Compute error rates for different \
-        probability thresholds
+    det_curve: Compute error rates for different probability thresholds
 
     roc_curve : Compute Receiver operating characteristic (ROC) curve
 
@@ -846,8 +844,7 @@ def roc_curve(y_true, y_score, *, pos_label=None, sample_weight=None,
 
     See Also
     --------
-    detection_error_tradeoff_curve: Compute error rates for different \
-        probability thresholds
+    det_curve: Compute error rates for different probability thresholds
 
     roc_auc_score : Compute the area under the ROC curve
 
