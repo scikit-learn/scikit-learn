@@ -1751,7 +1751,13 @@ def test_random_search_bad_cv():
 
 
 @pytest.mark.parametrize("return_train_score", [False, True])
-def test_gridsearchcv_raise_warning_with_non_finite_score(return_train_score):
+@pytest.mark.parametrize(
+    "SearchCV, specialized_params",
+    [(GridSearchCV, {"param_grid": {"max_depth": [2, 3]}}),
+     (RandomizedSearchCV,
+      {"param_distributions": {"max_depth": [2, 3]}, "n_iter": 2})])
+def test_searchcv_raise_warning_with_non_finite_score(
+        SearchCV, specialized_params, return_train_score):
     # Non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/10529
     # Check that we raise a UserWarning when a non-finite score is
@@ -1760,6 +1766,7 @@ def test_gridsearchcv_raise_warning_with_non_finite_score(return_train_score):
 
     class FailingScorer:
         """Scorer that will fail for some split but not all."""
+
         def __init__(self):
             self.n_counts = 0
 
@@ -1769,12 +1776,13 @@ def test_gridsearchcv_raise_warning_with_non_finite_score(return_train_score):
                 return np.nan
             return 1
 
-    grid = GridSearchCV(
+    grid = SearchCV(
         DecisionTreeClassifier(),
         param_grid={"max_depth": [2, 3]},
         scoring=FailingScorer(),
         cv=3,
-        return_train_score=return_train_score
+        return_train_score=return_train_score,
+        **specialized_params
     )
 
     with pytest.warns(UserWarning) as warn_msg:
