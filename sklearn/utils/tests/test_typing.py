@@ -4,12 +4,12 @@ from typing import List
 from typing import Union
 from typing import Callable
 from typing import Optional
-from typing_extensions import Literal
 
 import pytest
 import numpy as np
 
 from sklearn.base import BaseEstimator
+from sklearn.utils.fixes import Literal
 from sklearn.utils._typing import RandomState
 from sklearn.utils._typing import _get_annotation_class_name
 from sklearn.utils._typing import _format_docstring_annotation

@@ -14,7 +14,6 @@ import numbers
 import warnings
 from typing import Union
 from typing import Optional
-from typing_extensions import Literal
 
 import numpy as np
 from scipy import optimize, sparse
@@ -36,6 +35,7 @@ from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.validation import _deprecate_positional_args
 from ..utils.multiclass import check_classification_targets
 from ..utils.fixes import _joblib_parallel_args
+from ..utils.fixes import Literal
 from ..model_selection import check_cv
 from ..metrics import get_scorer
 

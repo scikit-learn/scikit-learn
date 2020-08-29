@@ -27,6 +27,12 @@ except ImportError:
     # setuptools not installed
     parse_version = LooseVersion  # type: ignore
 
+try:
+    from typing import Literal  # noqa
+except ImportError:
+    # Python < 3.8
+    from typing_extension import Literal   # type: ignore  # noqa
+
 
 np_version = parse_version(np.__version__)
 sp_version = parse_version(scipy.__version__)
