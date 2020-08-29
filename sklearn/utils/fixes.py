@@ -31,7 +31,7 @@ try:
     from typing import Literal  # noqa
 except ImportError:
     # Python < 3.8
-    from typing_extension import Literal   # type: ignore  # noqa
+    from typing_extensions import Literal   # type: ignore  # noqa
 
 
 np_version = parse_version(np.__version__)
