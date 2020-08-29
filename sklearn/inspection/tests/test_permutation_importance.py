@@ -37,7 +37,8 @@ def test_array_function_not_called():
     rng = np.random.RandomState(42)
     permutation_importance(estimator, X, y, n_repeats=5,
                            random_state=rng, n_jobs=1)
-    
+
+
 @pytest.mark.parametrize("n_jobs", [1, 2])
 def test_permutation_importance_correlated_feature_regression(n_jobs):
     # Make sure that feature highly correlated to the target have a higher
