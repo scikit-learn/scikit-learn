@@ -3,6 +3,8 @@ import scipy.sparse as sp
 
 from scipy import linalg
 from sklearn.decomposition import NMF, non_negative_factorization
+from sklearn.decomposition import MiniBatchNMF
+from sklearn.decomposition import non_negative_factorization_online
 from sklearn.decomposition import _nmf as nmf  # For testing internals
 from scipy.sparse import csc_matrix
 
@@ -19,15 +21,17 @@ from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
 
 
-@pytest.mark.parametrize('solver', ['cd', 'mu'])
+@pytest.mark.parametrize(['estimator', 'solver'],
+                         [[NMF, 'cd'], [NMF, 'mu'],
+                          [MiniBatchNMF, 'mu']])
 @pytest.mark.parametrize('regularization',
                          [None, 'both', 'components', 'transformation'])
-def test_convergence_warning(solver, regularization):
+def test_convergence_warning(estimator, solver, regularization):
     convergence_warning = ("Maximum number of iterations 1 reached. "
                            "Increase it to improve convergence.")
     A = np.ones((2, 2))
     with pytest.warns(ConvergenceWarning, match=convergence_warning):
-        NMF(solver=solver, regularization=regularization, max_iter=1).fit(A)
+        estimator(solver=solver, regularization=regularization, max_iter=1).fit(A)
 
 
 def test_initialize_nn_output():
@@ -44,6 +48,8 @@ def test_parameter_checking():
     name = 'spam'
     msg = "Invalid solver parameter: got 'spam' instead of one of"
     assert_raise_message(ValueError, msg, NMF(solver=name).fit, A)
+    msg = "Invalid solver parameter: got 'spam' instead of one of"
+    assert_raise_message(ValueError, msg, MiniBatchNMF(solver=name).fit, A)
     msg = "Invalid init parameter: got 'spam' instead of one of"
     assert_raise_message(ValueError, msg, NMF(init=name).fit, A)
     msg = "Invalid regularization parameter: got 'spam' instead of one of"
@@ -51,6 +57,10 @@ def test_parameter_checking():
     msg = "Invalid beta_loss parameter: got 'spam' instead of one"
     assert_raise_message(ValueError, msg, NMF(solver='mu',
                                               beta_loss=name).fit, A)
+    msg = "Invalid beta_loss parameter: got 'spam' instead of one"
+    assert_raise_message(
+        ValueError, msg, MiniBatchNMF(solver='mu', beta_loss=name).fit, A
+    )
     msg = "Invalid beta_loss parameter: solver 'cd' does not handle "
     msg += "beta_loss = 1.0"
     assert_raise_message(ValueError, msg, NMF(solver='cd',
@@ -58,6 +68,7 @@ def test_parameter_checking():
 
     msg = "Negative values in data passed to"
     assert_raise_message(ValueError, msg, NMF().fit, -A)
+    assert_raise_message(ValueError, msg, MiniBatchNMF().fit, -A)
     assert_raise_message(ValueError, msg, nmf._initialize_nmf, -A,
                          2, 'nndsvd')
     clf = NMF(2, tol=0.1).fit(A)
@@ -68,6 +79,8 @@ def test_parameter_checking():
                "n_components <= min(n_samples, n_features)"
                .format(init))
         assert_raise_message(ValueError, msg, NMF(3, init=init).fit, A)
+        assert_raise_message(ValueError, msg,
+                             MiniBatchNMF(3, init=init).fit, A)
         assert_raise_message(ValueError, msg, nmf._initialize_nmf, A,
                              3, init)
 
@@ -101,29 +114,33 @@ def test_initialize_variants():
 
 # ignore UserWarning raised when both solver='mu' and init='nndsvd'
 @ignore_warnings(category=UserWarning)
-@pytest.mark.parametrize('solver', ('cd', 'mu'))
+@pytest.mark.parametrize(['estimator', 'solver'],
+                         [[NMF, 'cd'], [NMF, 'mu'],
+                          [MiniBatchNMF, 'mu']])
 @pytest.mark.parametrize('init',
                          (None, 'nndsvd', 'nndsvda', 'nndsvdar', 'random'))
 @pytest.mark.parametrize('regularization',
                          (None, 'both', 'components', 'transformation'))
-def test_nmf_fit_nn_output(solver, init, regularization):
+def test_nmf_fit_nn_output(estimator, solver, init, regularization):
     # Test that the decomposition does not contain negative values
     A = np.c_[5. - np.arange(1, 6),
               5. + np.arange(1, 6)]
-    model = NMF(n_components=2, solver=solver, init=init,
+    model = estimator(n_components=2, solver=solver, init=init,
                 regularization=regularization, random_state=0)
     transf = model.fit_transform(A)
     assert not((model.components_ < 0).any() or
                (transf < 0).any())
 
 
-@pytest.mark.parametrize('solver', ('cd', 'mu'))
+@pytest.mark.parametrize(['estimator', 'solver'],
+                         [[NMF, 'cd'], [NMF, 'mu'],
+                          [MiniBatchNMF, 'mu']])
 @pytest.mark.parametrize('regularization',
                          (None, 'both', 'components', 'transformation'))
-def test_nmf_fit_close(solver, regularization):
+def test_nmf_fit_close(estimator, solver, regularization):
     rng = np.random.mtrand.RandomState(42)
     # Test that the fit is not too far away
-    pnmf = NMF(5, solver=solver, init='nndsvdar', random_state=0,
+    pnmf = estimator(5, solver=solver, init='nndsvdar', random_state=0,
                regularization=regularization, max_iter=600)
     X = np.abs(rng.randn(6, 5))
     assert pnmf.fit(X).reconstruction_err_ < 0.1
@@ -577,3 +594,18 @@ def test_nmf_custom_init_dtype_error():
 
     with pytest.raises(TypeError, match="should have the same dtype as X"):
         non_negative_factorization(X, H=H, update_H=False)
+
+
+def test_nmf_close_minibatch_nmf():
+    # Test that the decomposition with standard and minbatch nmf
+    # gives close results
+    rng = np.random.mtrand.RandomState(42)
+    X = np.abs(rng.randn(48, 5))
+    nmf = NMF(5, solver='mu', init='nndsvdar', random_state=0,
+              max_iter=2000, beta_loss='kullback-leibler')
+    mbnmf = MiniBatchNMF(5, solver='mu', init='nndsvdar', random_state=0,
+                        max_iter=2000, beta_loss='kullback-leibler',
+                        batch_size=48)
+    W = nmf.fit_transform(X)
+    mbW = mbnmf.fit_transform(X)
+    assert_array_almost_equal(W, mbW)
