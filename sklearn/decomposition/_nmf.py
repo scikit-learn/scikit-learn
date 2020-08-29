@@ -1272,13 +1272,13 @@ def non_negative_factorization_online(X, W=None, H=None, n_components=None, *,
 
     References
     ----------
-    Cichocki, Andrzej, and P. H. A. N. Anh-Huy. "Fast local algorithms for
-    large scale nonnegative matrix and tensor factorizations."
-    IEICE transactions on fundamentals of electronics, communications and
-    computer sciences 92.3: 708-721, 2009.
-
     Fevotte, C., & Idier, J. (2011). Algorithms for nonnegative matrix
     factorization with the beta-divergence. Neural Computation, 23(9).
+
+    Lefevre, A., Bach, F., Fevotte, C. (2011). Online algorithms for
+    nonnegative matrix factorization with the Itakura-Saito divergence.
+    WASPA (https://doi.org/10.1109/ASPAA.2011.6082314,
+           https://hal.archives-ouvertes.fr/hal-00602050)
     """
     X = check_array(X, accept_sparse=('csr', 'csc'),
                     dtype=[np.float64, np.float32])
