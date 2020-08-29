@@ -1755,7 +1755,7 @@ def test_gridsearchcv_raise_warning_with_non_finite_score(return_train_score):
     # Non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/10529
     # Check that we raise a UserWarning when a non-finite score is
-    # computed in the GridSearchCV
+    # computed in the SearchCV
     X, y = make_classification(n_classes=2, random_state=0)
 
     class FailingScorer:
