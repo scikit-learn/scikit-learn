@@ -796,7 +796,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             # enet_path therefore sets alpha = n_samples * alpha
             # With sw, enet_path should set alpha = sum(sw) * alpha
             # Therefore, we rescale alpha = sum(sw) / n_samples * alpha
-            # Note: As we rescaled sample_weights to sum up to n_samples,
+            # Note: As we rescaled sample_weight to sum up to n_samples,
             #       we don't need this
             # alpha *= np.sum(sample_weight) / n_samples
 
@@ -1037,8 +1037,8 @@ class Lasso(ElasticNet):
 ###############################################################################
 # Functions for CV with paths functions
 
-def _path_residuals(X, y, train, test, path, path_params, alphas=None,
-                    l1_ratio=1, X_order=None, dtype=None):
+def _path_residuals(X, y, sample_weight, train, test, path, path_params,
+                    alphas=None, l1_ratio=1, X_order=None, dtype=None):
     """Returns the MSE for the models computed by 'path'
 
     Parameters
@@ -1048,6 +1048,9 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
 
     y : array-like of shape (n_samples,) or (n_samples, n_targets)
         Target values
+
+    sample_weight : None or array-like of shape (n_samples,)
+        Sample weight.
 
     train : list of indices
         The indices of the train set
@@ -1084,6 +1087,26 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
     y_train = y[train]
     X_test = X[test]
     y_test = y[test]
+    if sample_weight is None:
+        sw_train, sw_test = None, None
+    else:
+        sw_train = sample_weight[train]
+        sw_test = sample_weight[test]
+        n_samples = X_train.shape[0]
+        # simplify things by rescaling sw_train to sum up to n_samples on
+        # training set.
+        # => np.average(x, weights=sw) = np.mean(sw * x)
+        sw_train *= (n_samples / np.sum(sw_train))
+        # Objective function is:
+        # 1/2 * np.average(squared error, weights=sw) + alpha * penalty
+        # but coordinate descent minimizes:
+        # 1/2 * sum(squared error) + alpha * penalty
+        # enet_path therefore sets alpha = n_samples * alpha
+        # With sw, enet_path should set alpha = sum(sw) * alpha
+        # Therefore, we rescale alpha = sum(sw) / n_samples * alpha
+        # Note: As we rescaled sample_weight to sum up to n_samples,
+        #       we don't need this
+        # alpha *= np.sum(sample_weight) / n_samples
 
     if not sparse.issparse(X):
         for array, array_input in ((X_train, X), (y_train, y),
@@ -1105,7 +1128,7 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
 
     X_train, y_train, X_offset, y_offset, X_scale, precompute, Xy = \
         _pre_fit(X_train, y_train, None, precompute, normalize, fit_intercept,
-                 copy=False)
+                 copy=False, sample_weight=sw_train)
 
     path_params = path_params.copy()
     path_params['Xy'] = Xy
@@ -1139,9 +1162,12 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
     X_test_coefs = safe_sparse_dot(X_test, coefs)
     residues = X_test_coefs - y_test[:, :, np.newaxis]
     residues += intercepts
-    this_mses = ((residues ** 2).mean(axis=0)).mean(axis=0)
+    if sample_weight is None:
+        this_mses = ((residues ** 2).mean(axis=0))
+    else:
+        this_mses = np.average(residues ** 2, weights=sw_test, axis=0)
 
-    return this_mses
+    return this_mses.mean(axis=0)
 
 
 class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
@@ -1176,7 +1202,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
     def _is_multitask(self):
         """Bool indicating if class is meant for multidimensional target."""
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit linear model with coordinate descent.
 
         Fit is on grid of alphas and best alpha estimated by cross-validation.
@@ -1190,6 +1216,9 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
 
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values
+
+        sample_weight : float or array-like of shape (n_samples,), default=None
+            Sample weight.
         """
         # This makes sure that there is no duplication in memory.
         # Dealing right with copy_X is important in the following:
@@ -1252,6 +1281,15 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                 raise ValueError("For mono-task outputs, use "
                                  "%sCV" % self.__class__.__name__[9:])
 
+        if isinstance(sample_weight, numbers.Number):
+            sample_weight = None
+        if sample_weight is not None:
+            if sparse.issparse(X):
+                raise ValueError("Sample weights do not (yet) support "
+                                 "sparse matrices.")
+            sample_weight = _check_sample_weight(sample_weight, X,
+                                                 dtype=X.dtype)
+
         model = self._get_estimator()
 
         if self.selection not in ["random", "cyclic"]:
@@ -1298,7 +1336,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
 
         # We do a double for loop folded in one, in order to be able to
         # iterate in parallel on l1_ratio and folds
-        jobs = (delayed(_path_residuals)(X, y, train, test, self.path,
+        jobs = (delayed(_path_residuals)(X, y, sample_weight,
+                                         train, test, self.path,
                                          path_params, alphas=this_alphas,
                                          l1_ratio=this_l1_ratio, X_order='F',
                                          dtype=X.dtype.type)
@@ -1308,7 +1347,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                              **_joblib_parallel_args(prefer="threads"))(jobs)
         mse_paths = np.reshape(mse_paths, (n_l1_ratio, len(folds), -1))
         mean_mse = np.mean(mse_paths, axis=1)
-        self.mse_path_ = np.squeeze(np.rollaxis(mse_paths, 2, 1))
+        self.mse_path_ = np.squeeze(np.moveaxis(mse_paths, 2, 1))
         for l1_ratio, l1_alphas, mse_alphas in zip(l1_ratios, alphas,
                                                    mean_mse):
             i_best_alpha = np.argmin(mse_alphas)
@@ -1339,7 +1378,12 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         precompute = getattr(self, "precompute", None)
         if isinstance(precompute, str) and precompute == "auto":
             model.precompute = False
-        model.fit(X, y)
+        if sample_weight is None:
+            # MultiTaskElasticNetCV does not (yet) support sample_weight, even
+            # not sample_weight=None.
+            model.fit(X, y)
+        else:
+            model.fit(X, y, sample_weight=sample_weight)
         if not hasattr(self, 'l1_ratio'):
             del self.l1_ratio_
         self.coef_ = model.coef_
@@ -1347,6 +1391,16 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         self.dual_gap_ = model.dual_gap_
         self.n_iter_ = model.n_iter_
         return self
+
+    def _more_tags(self):
+        # Note: check_sample_weights_invariance(kind='ones') should work, but
+        # currently we can only mark a whole test as xfail.
+        return {
+            '_xfail_checks': {
+                'check_sample_weights_invariance':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }
 
 
 class LassoCV(RegressorMixin, LinearModelCV):
