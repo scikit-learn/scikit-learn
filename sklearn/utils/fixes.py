@@ -12,8 +12,7 @@ at which the fixe is no longer needed.
 
 from functools import update_wrapper
 from distutils.version import LooseVersion
-
-from joblib import delayed as joblib_delayed
+import functools
 
 import numpy as np
 import scipy.sparse as sp
@@ -203,10 +202,12 @@ def _take_along_axis(arr, indices, axis):
 
 
 # remove when https://github.com/joblib/joblib/issues/1071 is fixed
-def delayed(function, *args, **kwargs):
-    """Wrapper around joblib.delayed to pass around the global configuration.
-    """
-    return joblib_delayed(_FuncWrapper(function), *args, **kwargs)
+def delayed(function):
+    """Decorator used to capture the arguments of a function."""
+    @functools.wraps(function)
+    def delayed_function(*args, **kwargs):
+        return _FuncWrapper(function), args, kwargs
+    return delayed_function
 
 
 class _FuncWrapper:
