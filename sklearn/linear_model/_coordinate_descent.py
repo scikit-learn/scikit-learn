@@ -2357,6 +2357,22 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     def _more_tags(self):
         return {'multioutput_only': True}
 
+    # This is necessary as LinearModelCV now supports sample_weight while
+    # MultiTaskElasticNet does not (yet).
+    def fit(self, X, y):
+        """Fit MultiTaskElasticNet model with coordinate descent.
+
+        Fit is on grid of alphas and best alpha estimated by cross-validation.
+
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples, n_features)
+            Data
+        y : ndarray of shape (n_samples, n_targets)
+            Target. Will be cast to X's dtype if necessary
+        """
+        return super().fit(X, y)
+
 
 class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     """Multi-task Lasso model trained with L1/L2 mixed-norm as regularizer.
@@ -2533,3 +2549,19 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
 
     def _more_tags(self):
         return {'multioutput_only': True}
+
+    # This is necessary as LinearModelCV now supports sample_weight while
+    # MultiTaskElasticNet does not (yet).
+    def fit(self, X, y):
+        """Fit MultiTaskLasso model with coordinate descent.
+
+        Fit is on grid of alphas and best alpha estimated by cross-validation.
+
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples, n_features)
+            Data
+        y : ndarray of shape (n_samples, n_targets)
+            Target. Will be cast to X's dtype if necessary
+        """
+        return super().fit(X, y)
