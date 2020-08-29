@@ -305,7 +305,7 @@ Some of these are restricted to the binary classification case:
 
    precision_recall_curve
    roc_curve
-   detection_error_tradeoff_curve
+   det_curve
 
 
 Others also work in the multiclass case:
@@ -1438,7 +1438,7 @@ to the given limit.
 Detection error tradeoff (DET)
 ------------------------------
 
-The function :func:`detection_error_tradeoff_curve` computes the
+The function :func:`det_curve` computes the
 detection error tradeoff curve (DET) curve [WikipediaDET2017]_.
 Quoting Wikipedia:
 
