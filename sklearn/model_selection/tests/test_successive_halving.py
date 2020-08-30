@@ -504,6 +504,7 @@ def test_base_estimator_inputs(Est):
     passed_n_samples_fit = []
     passed_n_samples_predict = []
     passed_params = []
+
     class FastClassifierBookKeeping(FastClassifier):
 
         def fit(self, X, y):
