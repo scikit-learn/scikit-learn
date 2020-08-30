@@ -644,12 +644,18 @@ def test_partial_dependence_dataframe(estimator, preprocessor, features):
 
 @pytest.mark.parametrize(
     "features, expected_pd_shape",
-    [(0, (3, 10)),
-     (iris.feature_names[0], (3, 10)),
+    [
+     # (0, (3, 10)),
+     # (iris.feature_names[0], (3, 10)),
      ([0, 2], (3, 10, 10)),
      ([iris.feature_names[i] for i in (0, 2)], (3, 10, 10)),
-     ([True, False, True, False], (3, 10, 10))],
-    ids=['scalar-int', 'scalar-str', 'list-int', 'list-str', 'mask']
+     # ([True, False, True, False], (3, 10, 10))
+    ],
+    ids=[
+        # 'scalar-int', 'scalar-str',
+        'list-int', 'list-str',
+        # 'mask'
+    ]
 )
 def test_partial_dependence_feature_type(features, expected_pd_shape):
     # check all possible features type supported in PDP
