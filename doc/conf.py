@@ -458,10 +458,10 @@ def check_min_dependencies_readme(app):
     """Check min dependencies for README.rst."""
     from sklearn._build_utils.min_dependencies import dependent_packages
 
-    pattern = re.compile(r'(.. \|)' +
-                         r'(([A-Za-z]+-?)+)' +
+    pattern = re.compile(r'(\.\. \|)' +
+                         r'(([A-Za-z]+\-?)+)' +
                          r'(MinVersion\| replace::)' +
-                         r'( [0-9]+.[0-9]+(.[0-9]+)?)')
+                         r'( [0-9]+\.[0-9]+(\.[0-9]+)?)')
 
     with (Path('..') / 'README.rst').open('r') as f:
         for line in f:
