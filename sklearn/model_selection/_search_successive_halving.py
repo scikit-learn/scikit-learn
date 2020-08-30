@@ -397,11 +397,11 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
     aggressive_elimination : bool, default=False
         This is only relevant in cases where there isn't enough resources to
-        reduce the candidates to at most `ratio` in the last iteration. If
-        ``True``, then the search process will 'replay' the first iteration
-        for as long as needed until the number of candidates is small enough.
-        This is ``False`` by default, which means that the last iteration may
-        evaluate more than ``ratio`` candidates. See
+        reduce the remaining candidates to at most `ratio` after the last
+        iteration. If ``True``, then the search process will 'replay' the
+        first iteration for as long as needed until the number of candidates
+        is small enough. This is ``False`` by default, which means that the
+        last iteration may evaluate more than ``ratio`` candidates. See
         :ref:`aggressive_elimination` for more details.
 
     cv : int, cross-validation generator or iterable, default=5
@@ -471,16 +471,16 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
     Attributes
     ----------
+    n_resources_ : list of int
+        The amount of resources used at each iteration.
+
     n_candidates_ : list of int
         The number of candidate parameters that were evaluated at each
         iteration.
 
-    n_resources_ : list of int
-        The amount of resources used at each iteration.
-
     n_remaining_candidates_ : int
         The number of candidate parameters that are left after the last
-        iteration.
+        iteration. It corresponds to `ceil(n_candidates[-1] / ratio)`
 
     max_resources_ : int
         The maximum number of resources that any candidate is allowed to use
@@ -672,11 +672,11 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
     aggressive_elimination : bool, default=False
         This is only relevant in cases where there isn't enough resources to
-        reduce the candidates to at most `ratio` in the last iteration. If
-        ``True``, then the search process will 'replay' the first iteration
-        for as long as needed until the number of candidates is small enough.
-        This is ``False`` by default, which means that the last iteration may
-        evaluate more than ``ratio`` candidates. See
+        reduce the remaining candidates to at most `ratio` after the last
+        iteration. If ``True``, then the search process will 'replay' the
+        first iteration for as long as needed until the number of candidates
+        is small enough. This is ``False`` by default, which means that the
+        last iteration may evaluate more than ``ratio`` candidates. See
         :ref:`aggressive_elimination` for more details.
 
     cv : int, cross-validation generator or an iterable, default=5
@@ -748,16 +748,16 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
     Attributes
     ----------
+    n_resources_ : list of int
+        The amount of resources used at each iteration.
+
     n_candidates_ : list of int
         The number of candidate parameters that were evaluated at each
         iteration.
 
-    n_resources_ : list of int
-        The amount of resources used at each iteration.
-
     n_remaining_candidates_ : int
         The number of candidate parameters that are left after the last
-        iteration.
+        iteration. It corresponds to `ceil(n_candidates[-1] / ratio)`
 
     max_resources_ : int
         The maximum number of resources that any candidate is allowed to use

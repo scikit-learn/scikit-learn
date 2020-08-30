@@ -1,3 +1,5 @@
+from math import ceil
+
 import pytest
 from scipy.stats import norm, randint
 import numpy as np
@@ -37,28 +39,33 @@ class FastClassifier(DummyClassifier):
      'expected_n_required_iterations,'
      'expected_n_possible_iterations,'
      'expected_n_remaining_candidates,'
+     'expected_n_candidates,'
      'expected_n_resources,'), [
          # notice how it loops at the beginning
-         (True, 'limited', 4, 4, 3, 1, [20, 20, 60, 180]),
-         # no aggressive elimination: we end up with less iterations and more
-         # candidates at the end
-         (False, 'limited', 3, 4, 3, 3, [20, 60, 180]),
-         # When the amount of resource isn't limited, aggressive_elimination
-         # has no effect. Here the default min_resources='exhaust' will take
-         # over.
-         (True, 'unlimited', 4, 4, 4, 1, [37, 111, 333, 999]),
-         (False, 'unlimited', 4, 4, 4, 1, [37, 111, 333, 999]),
+         # also, the number of candidates evaluated at the last iteration is
+         # <= ratio
+         (True, 'limited', 4, 4, 3, 1, [60, 20, 7, 3], [20, 20, 60, 180]),
+         # no aggressive elimination: we end up with less iterations, and
+         # the number of candidates at the last iter is > ratio, which isn't
+         # ideal
+         (False, 'limited', 3, 4, 3, 3, [60, 20, 7], [20, 60, 180]),
+        #  # When the amount of resource isn't limited, aggressive_elimination
+        #  # has no effect. Here the default min_resources='exhaust' will take
+        #  # over.
+         (True, 'unlimited', 4, 4, 4, 1, [60, 20, 7, 3], [37, 111, 333, 999]),
+         (False, 'unlimited', 4, 4, 4, 1, [60, 20, 7, 3], [37, 111, 333, 999]),
      ]
 )
 def test_aggressive_elimination(
         Est, aggressive_elimination, max_resources, expected_n_iterations,
         expected_n_required_iterations, expected_n_possible_iterations,
-        expected_n_remaining_candidates, expected_n_resources):
+        expected_n_remaining_candidates, expected_n_candidates,
+        expected_n_resources):
     # Test the aggressive_elimination parameter.
 
     n_samples = 1000
     X, y = make_classification(n_samples=n_samples, random_state=0)
-    parameters = {'a': ('l1', 'l2'), 'b': list(range(30))}
+    param_grid = {'a': ('l1', 'l2'), 'b': list(range(30))}
     base_estimator = FastClassifier()
 
     if max_resources == 'limited':
@@ -66,10 +73,10 @@ def test_aggressive_elimination(
     else:
         max_resources = n_samples
 
-    sh = Est(base_estimator, parameters,
+    sh = Est(base_estimator, param_grid,
              aggressive_elimination=aggressive_elimination,
-             max_resources=max_resources, ratio=3,
-             verbose=True)  # just for test coverage
+             max_resources=max_resources, ratio=3)
+    sh.set_params(verbose=True)  # just for test coverage
 
     if Est is HalvingRandomSearchCV:
         # same number of candidates as with the grid
@@ -81,7 +88,9 @@ def test_aggressive_elimination(
     assert sh.n_required_iterations_ == expected_n_required_iterations
     assert sh.n_possible_iterations_ == expected_n_possible_iterations
     assert sh.n_resources_ == expected_n_resources
+    assert sh.n_candidates_ == expected_n_candidates
     assert sh.n_remaining_candidates_ == expected_n_remaining_candidates
+    assert ceil(sh.n_candidates_[-1] / sh.ratio) == sh.n_remaining_candidates_
 
 
 @pytest.mark.parametrize('Est', (HalvingGridSearchCV, HalvingRandomSearchCV))
@@ -117,10 +126,10 @@ def test_min_max_resources(
     # the number of resources used at each iteration
     n_samples = 1000
     X, y = make_classification(n_samples=n_samples, random_state=0)
-    parameters = {'a': [1, 2], 'b': [1, 2, 3]}
+    param_grid = {'a': [1, 2], 'b': [1, 2, 3]}
     base_estimator = FastClassifier()
 
-    sh = Est(base_estimator, parameters, ratio=3, min_resources=min_resources,
+    sh = Est(base_estimator, param_grid, ratio=3, min_resources=min_resources,
              max_resources=max_resources)
     if Est is HalvingRandomSearchCV:
         sh.set_params(n_candidates=6)  # same number as with the grid
@@ -157,11 +166,11 @@ def test_n_iterations(Est, max_resources, n_iterations, n_possible_iterations):
 
     n_samples = 1024
     X, y = make_classification(n_samples=n_samples, random_state=1)
-    parameters = {'a': [1, 2], 'b': list(range(10))}
+    param_grid = {'a': [1, 2], 'b': list(range(10))}
     base_estimator = FastClassifier()
     ratio = 2
 
-    sh = Est(base_estimator, parameters, cv=2, ratio=ratio,
+    sh = Est(base_estimator, param_grid, cv=2, ratio=ratio,
              max_resources=max_resources, min_resources=4)
     if Est is HalvingRandomSearchCV:
         sh.set_params(n_candidates=20)  # same as for HalvingGridSearchCV
@@ -177,9 +186,9 @@ def test_resource_parameter(Est):
 
     n_samples = 1000
     X, y = make_classification(n_samples=n_samples, random_state=0)
-    parameters = {'a': [1, 2], 'b': list(range(10))}
+    param_grid = {'a': [1, 2], 'b': list(range(10))}
     base_estimator = FastClassifier()
-    sh = Est(base_estimator, parameters, cv=2, resource='c',
+    sh = Est(base_estimator, param_grid, cv=2, resource='c',
              max_resources=10, ratio=3)
     sh.fit(X, y)
     assert set(sh.n_resources_) == set([1, 3, 9])
@@ -191,7 +200,7 @@ def test_resource_parameter(Est):
     with pytest.raises(
             ValueError,
             match='Cannot use resource=1234 which is not supported '):
-        sh = HalvingGridSearchCV(base_estimator, parameters, cv=2,
+        sh = HalvingGridSearchCV(base_estimator, param_grid, cv=2,
                                  resource='1234', max_resources=10)
         sh.fit(X, y)
 
@@ -199,8 +208,8 @@ def test_resource_parameter(Est):
             ValueError,
             match='Cannot use parameter c as the resource since it is part '
                   'of the searched parameters.'):
-        parameters = {'a': [1, 2], 'b': [1, 2], 'c': [1, 3]}
-        sh = HalvingGridSearchCV(base_estimator, parameters, cv=2,
+        param_grid = {'a': [1, 2], 'b': [1, 2], 'c': [1, 3]}
+        sh = HalvingGridSearchCV(base_estimator, param_grid, cv=2,
                                  resource='c', max_resources=10)
         sh.fit(X, y)
 
@@ -219,9 +228,9 @@ def test_random_search(max_resources, n_candidates, expected_n_candidates):
 
     n_samples = 1024
     X, y = make_classification(n_samples=n_samples, random_state=0)
-    parameters = {'a': norm, 'b': norm}
+    param_grid = {'a': norm, 'b': norm}
     base_estimator = FastClassifier()
-    sh = HalvingRandomSearchCV(base_estimator, parameters,
+    sh = HalvingRandomSearchCV(base_estimator, param_grid,
                                n_candidates=n_candidates, cv=2,
                                max_resources=max_resources, ratio=2,
                                min_resources=4)
