@@ -329,7 +329,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        Xt : array-like of shape (n_sample, n_features), dtype={int, float}
+        Xt : array-like of shape (n_samples, n_features), dtype={int, float}
             Transformed data in the binned space.
 
         Returns
