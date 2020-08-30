@@ -461,7 +461,7 @@ def check_min_dependencies_readme(app):
     pattern = re.compile(r'(.. \|)' +
                          r'(([A-Za-z]+-?)+)' +
                          r'(MinVersion\| replace::)' +
-                         r'( [0-9]+.[0-9]+(.[0-9])*)')
+                         r'( [0-9]+.[0-9]+(.[0-9]+)?)')
 
     with (Path('..') / 'README.rst').open('r') as f:
         for line in f:
