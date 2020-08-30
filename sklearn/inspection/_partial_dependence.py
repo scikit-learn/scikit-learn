@@ -59,11 +59,7 @@ def _grid_from_X(X, percentiles, grid_resolution, is_categorical):
         feature.
 
     is_categorical : array-like of boolean
-        Whether each target feature in `features` is categorical or not.
-        The list should be same size as `features`. If `None`, all features
-        are assumed to be continuous.
-
-        .. versionadded:: 0.24
+        Whether each column in `X` is categorical or not.
 
     Returns
     -------
