@@ -313,7 +313,8 @@ class GaussianProcessRegressor(MultiOutputMixin,
             fitted with normalize_y =True.
             Only returned when `return_std` is True.
 
-        y_cov : ndarray of shape (n_samples, n_samples, [n_output_dims]), optional
+        y_cov : ndarray of shape (n_samples, n_samples, [n_output_dims]),
+        optional
             Covariance of joint predictive distribution a query points.
             Identical for all output dimensions unless
             fitted with normalize_y =True.
