@@ -399,7 +399,8 @@ class BaseEstimator:
             return
 
         if (not hasattr(self, 'feature_names_in_') or
-                self.feature_names_in_ is None):
+                self.feature_names_in_ is None or
+                feature_names is None):
             return
 
         if np.any(feature_names != self.feature_names_in_):
@@ -496,20 +497,30 @@ class BaseEstimator:
         if array_out == 'default':
             return X_out
 
+        # TODO This can be removed when all estimators use `_validate_data`
+        # in transform to check for feature names
+        self._check_feature_names(X_orig, reset=False)
+
         if get_feature_names_out is None:
             def get_feature_names_out(names):
                 return names
 
+        # feature names in can have zero or one argument. For one argument
+        # it would be the input feature names
         parameters = inspect.signature(get_feature_names_out).parameters
         if parameters:
             if hasattr(self, "feature_names_in_"):
                 feature_names_in = self.feature_names_in_
             else:
+                # If there are no feature_names_in_ attribute use the
+                # feature names from the input are feature names
                 feature_names_in = _get_feature_names(X_orig)
 
-            if feature_names_in is None and self.n_features_in_ is not None:
-                feature_names_in = [f'X{i}'
-                                    for i in range(self.n_features_in_)]
+            # If there no feature names at this point, generate the
+            # feature names for the input features
+            if feature_names_in is None:
+                feature_names_in = np.array(
+                    [f'X{i}' for i in range(self.n_features_in_)])
             get_feature_names_out = partial(get_feature_names_out,
                                             feature_names_in)
 

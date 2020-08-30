@@ -37,7 +37,9 @@ from sklearn.utils.estimator_checks import (
     _set_checking_parameters,
     _get_check_estimator_ids,
     check_class_weight_balanced_linear_classifier,
-    parametrize_with_checks)
+    parametrize_with_checks,
+    check_array_out_pandas,
+    check_array_out_xarray)
 
 
 def test_all_estimator_no_base_class():
@@ -268,3 +270,17 @@ def test_strict_mode_check_estimator():
 def test_strict_mode_parametrize_with_checks(estimator, check):
     # Ideally we should assert that the strict checks are Xfailed...
     check(estimator)
+
+
+@pytest.mark.parametrize("name, Estimator",
+                         all_estimators(type_filter="transformer"))
+def test_array_out_pandas(name, Estimator):
+    estimator = _construct_instance(Estimator)
+    check_array_out_pandas(name, estimator)
+
+
+@pytest.mark.parametrize("name, Estimator",
+                         all_estimators(type_filter="transformer"))
+def test_array_out_xarray(name, Estimator):
+    estimator = _construct_instance(Estimator)
+    check_array_out_xarray(name, estimator)

@@ -2549,7 +2549,7 @@ def test_minmax_scaler_clip(feature_range):
     MaxAbsScaler, MinMaxScaler, Normalizer, PowerTransformer,
     QuantileTransformer, RobustScaler, StandardScaler
 ])
-def test_one_to_one_feature_mapping(Transformer):
+def test_one_to_one_feature_mapping_array_out(Transformer):
     pd = pytest.importorskip("pandas")
     n_samples, n_features = 1000, 10
     feature_names = [f'feat_{i}' for i in range(n_features)]
@@ -2561,7 +2561,6 @@ def test_one_to_one_feature_mapping(Transformer):
     with config_context(array_out='pandas'):
         df_trans = Transformer().fit_transform(df)
 
-    assert isinstance(df_trans, pd.DataFrame)
     assert_array_equal(df_trans.columns, df.columns)
 
 
@@ -2571,7 +2570,7 @@ def test_one_to_one_feature_mapping(Transformer):
     MaxAbsScaler(),
     Normalizer(),
     QuantileTransformer()])
-def test_one_to_one_feature_mapping_sparse(transformer):
+def test_one_to_one_feature_mapping_sparse_array_out(transformer):
     pd = pytest.importorskip("pandas")
     n_samples, n_features = 1000, 10
     feature_names = [f'feat_{i}' for i in range(n_features)]
@@ -2582,12 +2581,11 @@ def test_one_to_one_feature_mapping_sparse(transformer):
     with config_context(array_out='pandas'):
         df_trans = transformer.fit_transform(df)
 
-    assert isinstance(df_trans, pd.DataFrame)
     assert_array_equal(df_trans.columns, df.columns)
 
 
 @pytest.mark.parametrize("is_sparse", [True, False])
-def test_polynomial_feature_names_pandas(is_sparse):
+def test_polynomial_feature_names_pandas_array_out(is_sparse):
     pd = pytest.importorskip("pandas")
     X = np.arange(30).reshape(10, 3)
     feature_names = ["a", "b", "c"]
@@ -2604,5 +2602,4 @@ def test_polynomial_feature_names_pandas(is_sparse):
     with config_context(array_out='pandas'):
         df_trans = poly.transform(df)
 
-    assert isinstance(df_trans, pd.DataFrame)
     assert_array_equal(df_trans.columns, feature_names)

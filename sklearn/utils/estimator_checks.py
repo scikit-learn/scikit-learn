@@ -7,6 +7,7 @@ import re
 from copy import deepcopy
 from functools import partial, wraps
 from inspect import signature
+from itertools import product
 
 import numpy as np
 from scipy import sparse
@@ -3093,3 +3094,84 @@ def check_requires_y_none(name, estimator_orig, strict_mode=True):
 _FULLY_STRICT_CHECKS = set([
     'check_n_features_in',
 ])
+
+
+def _check_array_out_transformers(name, estimator_orig, array_out,
+                                  make_array, check_array_out):
+    rng = np.random.RandomState(0)
+    X_train_np = 3 * rng.uniform(size=(20, 5))
+    X_train_np = _pairwise_estimator_convert_X(X_train_np, estimator_orig)
+    X_train_np = _enforce_estimator_tags_x(estimator_orig, X_train_np)
+    y = X_train_np[:, 0]
+    y = _enforce_estimator_tags_y(estimator_orig, y)
+
+    index = np.arange(X_train_np.shape[0])
+    rng.shuffle(index)
+    column_names = [f"feature_{i}" for i in range(X_train_np.shape[1])]
+    X_train_array = make_array(X_train_np, column_names, index)
+
+    estimator = clone(estimator_orig)
+
+    # array_out will always output output_dtype regardless of the input
+    # types during training of transforming
+    X_train_product = product([X_train_np, X_train_array],
+                              [X_train_np, X_train_array])
+    for X_train_input, X_transform_input in X_train_product:
+        estimator.fit(X_train_input, y)
+        with config_context(array_out=array_out):
+            output = estimator.transform(X_transform_input)
+        check_array_out(output, X_transform_input)
+
+    # feature names are out of order
+    X_test_bad = make_array(X_train_np, column_names[::-1], index)
+    msg = ("The feature names of X does not match the feature_names_in_ "
+           "attribute")
+    with config_context(array_out=array_out):
+        assert_raise_message(ValueError, msg, estimator.transform, X_test_bad)
+
+
+def check_array_out_pandas(name, estimator_orig, strict_mode=True):
+    try:
+        import pandas as pd
+    except ImportError:
+        raise SkipTest("pandas is not installed: not testing for "
+                       "array_out with pandas")
+
+    def make_array(array, column_names, index):
+        return pd.DataFrame(array, columns=column_names,
+                            index=index)
+
+    def check_array_out(output, X_transform_input):
+        assert isinstance(output, pd.DataFrame)
+        # make sure the indices are the same if X_transform_input is a
+        # dataframe
+        if isinstance(X_transform_input, pd.DataFrame):
+            assert_array_equal(output.index, X_transform_input.index)
+
+    _check_array_out_transformers(name, estimator_orig, "pandas",
+                                  make_array, check_array_out)
+
+
+def check_array_out_xarray(name, estimator_orig, strict_mode=True):
+    try:
+        import xarray as xr
+    except ImportError:
+        raise SkipTest("xarray is not installed: not testing for "
+                       "array_out with xarray")
+
+    def make_array(array, column_names, index):
+        return xr.DataArray(array, dims=("index", "columns"),
+                            coords={"index": index, "columns": column_names})
+
+    def check_array_out(output, X_transform_input):
+        assert isinstance(output, xr.DataArray)
+        # make sure the indices are the same if X_transform_input is a
+        # dataframe
+        if isinstance(X_transform_input, xr.DataArray):
+            dims = X_transform_input.dims
+            X_transform_input_index = X_transform_input.coords[dims[0]]
+            output_index = output.coords[dims[0]]
+            assert_array_equal(X_transform_input_index, output_index)
+
+    _check_array_out_transformers(name, estimator_orig, "xarray",
+                                  make_array, check_array_out)

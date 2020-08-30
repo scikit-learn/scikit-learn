@@ -552,6 +552,7 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         msg = ("%(name)s is not fitted. Call fit to set the parameters before"
                " calling transform")
         check_is_fitted(self, msg=msg)
+        X_orig = X
 
         X = check_array(X, accept_sparse='csr')
         check_non_negative(X, 'X in AdditiveChi2Sampler.transform')
@@ -562,7 +563,12 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         # cosh(0) = 1.0
 
         transf = self._transform_sparse if sparse else self._transform_dense
-        return transf(X)
+        output = transf(X)
+
+        def get_feature_names_out():
+            return np.array([f"additivechi_{i}"
+                             for i in range(output.shape[1])])
+        return self._make_array_out(output, X_orig, get_feature_names_out)
 
     def _transform_dense(self, X):
         non_zero = (X != 0.0)
