@@ -568,6 +568,17 @@ def check_array(array, accept_sparse=False, *, accept_large_sparse=True,
     if hasattr(array, 'sparse') and array.ndim > 1:
         # DataFrame.sparse only supports `to_coo`
         array = array.sparse.to_coo()
+        if array.dtype == np.dtype('object'):
+            unique_dtypes = set(
+                [dt.subtype.name for dt in array_orig.dtypes]
+            )
+            if len(unique_dtypes) > 1:
+                raise ValueError(
+                    "Pandas DataFrame with mixed sparse extension arrays "
+                    "generated a sparse matrix with object dtype which "
+                    "can not be converted to a scipy sparse matrix."
+                    "Sparse extension arrays should all have the same "
+                    "numeric type.")
 
     if sp.issparse(array):
         _ensure_no_complex_data(array)
@@ -1119,8 +1130,8 @@ def _check_psd_eigenvalues(lambdas, enable_warnings=False):
       ``PositiveSpectrumWarning`` when ``enable_warnings=True``.
 
     Finally, all the positive eigenvalues that are too small (with a value
-    smaller than the maximum eigenvalue divided by 1e12) are set to zero.
-    This operation is traced with a ``PositiveSpectrumWarning`` when
+    smaller than the maximum eigenvalue multiplied by 1e-12 (2e-7)) are set to
+    zero. This operation is traced with a ``PositiveSpectrumWarning`` when
     ``enable_warnings=True``.
 
     Parameters
@@ -1183,7 +1194,7 @@ def _check_psd_eigenvalues(lambdas, enable_warnings=False):
     significant_imag_ratio = 1e-5
     significant_neg_ratio = 1e-5 if is_double_precision else 5e-3
     significant_neg_value = 1e-10 if is_double_precision else 1e-6
-    small_pos_ratio = 1e-12 if is_double_precision else 1e-7
+    small_pos_ratio = 1e-12 if is_double_precision else 2e-7
 
     # Check that there are no significant imaginary parts
     if not np.isreal(lambdas).all():

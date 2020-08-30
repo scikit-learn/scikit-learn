@@ -205,10 +205,10 @@ class ParameterSampler:
         If a list of dicts is given, first a dict is sampled uniformly, and
         then a parameter is sampled using that dict as above.
 
-    n_iter : integer
+    n_iter : int
         Number of parameter settings that are produced.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Pseudo random number generator state used for random uniform sampling
         from lists of possible values instead of scipy.stats distributions.
         Pass an int for reproducible output across multiple
@@ -490,7 +490,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         Returns
         -------
-        y_score : ndarray, shape (n_samples,)
+        y_score : ndarray of shape (n_samples,)
         """
         self._check_is_fitted('score_samples')
         return self.best_estimator_.score_samples(X)
@@ -889,6 +889,15 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
             array_means = np.average(array, axis=1, weights=weights)
             results['mean_%s' % key_name] = array_means
+
+            if (key_name.startswith(("train_", "test_")) and
+                    np.any(~np.isfinite(array_means))):
+                warnings.warn(
+                    f"One or more of the {key_name.split('_')[0]} scores "
+                    f"are non-finite: {array_means}",
+                    category=UserWarning
+                )
+
             # Weighted std is not directly available in numpy
             array_stds = np.sqrt(np.average((array -
                                              array_means[:, np.newaxis]) ** 2,
@@ -1055,7 +1064,7 @@ class GridSearchCV(BaseSearchCV):
         .. versionchanged:: 0.20
             Support for callable added.
 
-    verbose : integer
+    verbose : int
         Controls the verbosity: the higher, the more messages.
 
         - >1 : the computation time for each fold and parameter candidate is
@@ -1393,10 +1402,10 @@ class RandomizedSearchCV(BaseSearchCV):
         .. versionchanged:: 0.20
             Support for callable added.
 
-    verbose : integer
+    verbose : int
         Controls the verbosity: the higher, the more messages.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Pseudo random number generator state used for random uniform sampling
         from lists of possible values instead of scipy.stats distributions.
         Pass an int for reproducible output across multiple

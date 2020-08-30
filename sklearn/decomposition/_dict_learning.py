@@ -1,4 +1,4 @@
-""" Dictionary learning
+""" Dictionary learning.
 """
 # Author: Vlad Niculae, Gael Varoquaux, Alexandre Gramfort
 # License: BSD 3 clause
@@ -34,7 +34,7 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
                    regularization=None, copy_cov=True,
                    init=None, max_iter=1000, check_input=True, verbose=0,
                    positive=False):
-    """Generic sparse coding
+    """Generic sparse coding.
 
     Each column of the result is the solution to a Lasso problem.
 
@@ -375,7 +375,7 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
         Whether to compute and return the residual sum of squares corresponding
         to the computed solution.
 
-    random_state : int or RandomState instance or None, default=None
+    random_state : int, RandomState instance or None, default=None
         Used for randomly initializing the dictionary. Pass an int for
         reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -455,7 +455,7 @@ def dict_learning(X, n_components, *, alpha, max_iter=100, tol=1e-8,
 
     Parameters
     ----------
-    X : array of shape (n_samples, n_features)
+    X : ndarray of shape (n_samples, n_features)
         Data matrix.
 
     n_components : int
@@ -497,7 +497,7 @@ def dict_learning(X, n_components, *, alpha, max_iter=100, tol=1e-8,
     verbose : bool, default=False
         To control the verbosity of the procedure.
 
-    random_state : int or RandomState instance or None, default=None
+    random_state : int, RandomState instance or None, default=None
         Used for randomly initializing the dictionary. Pass an int for
         reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -704,7 +704,7 @@ def dict_learning_online(X, n_components=2, *, alpha=1, n_iter=100,
         Number of previous iterations completed on the dictionary used for
         initialization.
 
-    random_state : int or RandomState instance or None, default=None
+    random_state : int, RandomState instance or None, default=None
         Used for initializing the dictionary when ``dict_init`` is not
         specified, randomly shuffling the data when ``shuffle`` is set to
         ``True``, and updating the dictionary. Pass an int for reproducible
@@ -1102,13 +1102,13 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
 
         Parameters
         ----------
-        X : array of shape (n_samples, n_features)
+        X : ndarray of shape (n_samples, n_features)
             Test data to be transformed, must have the same number of
             features as the data used to train the model.
 
         Returns
         -------
-        X_new : array of shape (n_samples, n_components)
+        X_new : ndarray of shape (n_samples, n_components)
             Transformed data.
         """
         return super()._transform(X, self.dictionary)
@@ -1217,7 +1217,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         its negative part and its positive part. This can improve the
         performance of downstream classifiers.
 
-    random_state : int or RandomState instance or None, default=None
+    random_state : int, RandomState instance or None, default=None
         Used for initializing the dictionary when ``dict_init`` is not
         specified, randomly shuffling the data when ``shuffle`` is set to
         ``True``, and updating the dictionary. Pass an int for reproducible
@@ -1445,7 +1445,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         its negative part and its positive part. This can improve the
         performance of downstream classifiers.
 
-    random_state : int or RandomState instance or None, default=None
+    random_state : int, RandomState instance or None, default=None
         Used for initializing the dictionary when ``dict_init`` is not
         specified, randomly shuffling the data when ``shuffle`` is set to
         ``True``, and updating the dictionary. Pass an int for reproducible
@@ -1608,7 +1608,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         y : Ignored
 
-        iter_offset : integer, default=None
+        iter_offset : int, default=None
             The number of iteration on data batches that has been
             performed before this call to partial_fit. This is optional:
             if no number is passed, the memory of the object is

@@ -242,7 +242,7 @@ class KernelDensity(BaseEstimator):
         n_samples : int, default=1
             Number of samples to generate.
 
-        random_state : int or RandomState instance, default=None
+        random_state : int, RandomState instance or None, default=None
             Determines random number generation used to generate
             random samples. Pass an int for reproducible results
             across multiple function calls.

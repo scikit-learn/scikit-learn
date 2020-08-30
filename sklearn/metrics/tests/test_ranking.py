@@ -22,7 +22,7 @@ from sklearn.utils._testing import assert_warns
 from sklearn.metrics import auc
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import coverage_error
-from sklearn.metrics import detection_error_tradeoff_curve
+from sklearn.metrics import det_curve
 from sklearn.metrics import label_ranking_average_precision_score
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import label_ranking_loss
@@ -949,10 +949,10 @@ def test_score_scale_invariance():
     ([1, 0, 1], [0.5, 0.75, 1], [1, 1, 0], [0, 0.5, 0.5]),
     ([1, 0, 1], [0.25, 0.5, 0.75], [1, 1, 0], [0, 0.5, 0.5]),
 ])
-def test_detection_error_tradeoff_curve_toydata(y_true, y_score,
+def test_det_curve_toydata(y_true, y_score,
                                                 expected_fpr, expected_fnr):
     # Check on a batch of small examples.
-    fpr, fnr, _ = detection_error_tradeoff_curve(y_true, y_score)
+    fpr, fnr, _ = det_curve(y_true, y_score)
 
     assert_allclose(fpr, expected_fpr)
     assert_allclose(fnr, expected_fnr)
@@ -968,20 +968,20 @@ def test_detection_error_tradeoff_curve_toydata(y_true, y_score,
     ([1, 0, 1], [0.25, 0.5, 0.5], [1], [0]),
     ([1, 1, 0], [0.25, 0.5, 0.5], [1], [0]),
 ])
-def test_detection_error_tradeoff_curve_tie_handling(y_true, y_score,
+def test_det_curve_tie_handling(y_true, y_score,
                                                      expected_fpr,
                                                      expected_fnr):
-    fpr, fnr, _ = detection_error_tradeoff_curve(y_true, y_score)
+    fpr, fnr, _ = det_curve(y_true, y_score)
 
     assert_allclose(fpr, expected_fpr)
     assert_allclose(fnr, expected_fnr)
 
 
-def test_detection_error_tradeoff_curve_sanity_check():
+def test_det_curve_sanity_check():
     # Exactly duplicated inputs yield the same result.
     assert_allclose(
-        detection_error_tradeoff_curve([0, 0, 1], [0, 0.5, 1]),
-        detection_error_tradeoff_curve(
+        det_curve([0, 0, 1], [0, 0.5, 1]),
+        det_curve(
             [0, 0, 0, 0, 1, 1], [0, 0, 0.5, 0.5, 1, 1])
     )
 
@@ -989,8 +989,8 @@ def test_detection_error_tradeoff_curve_sanity_check():
 @pytest.mark.parametrize("y_score", [
     (0), (0.25), (0.5), (0.75), (1)
 ])
-def test_detection_error_tradeoff_curve_constant_scores(y_score):
-    fpr, fnr, threshold = detection_error_tradeoff_curve(
+def test_det_curve_constant_scores(y_score):
+    fpr, fnr, threshold = det_curve(
         y_true=[0, 1, 0, 1, 0, 1],
         y_score=np.full(6, y_score)
     )
@@ -1007,8 +1007,8 @@ def test_detection_error_tradeoff_curve_constant_scores(y_score):
     ([0, 0, 1, 1, 1, 1]),
     ([0, 1, 1, 1, 1, 1]),
 ])
-def test_detection_error_tradeoff_curve_perfect_scores(y_true):
-    fpr, fnr, _ = detection_error_tradeoff_curve(
+def test_det_curve_perfect_scores(y_true):
+    fpr, fnr, _ = det_curve(
         y_true=y_true,
         y_score=y_true
     )
@@ -1031,13 +1031,13 @@ def test_detection_error_tradeoff_curve_perfect_scores(y_true):
         ),
     ],
 )
-def test_detection_error_tradeoff_curve_bad_input(y_true, y_pred, err_msg):
+def test_det_curve_bad_input(y_true, y_pred, err_msg):
     # input variables with inconsistent numbers of samples
     with pytest.raises(ValueError, match=err_msg):
-        detection_error_tradeoff_curve(y_true, y_pred)
+        det_curve(y_true, y_pred)
 
 
-def test_detection_error_tradeoff_curve_pos_label():
+def test_det_curve_pos_label():
     y_true = ["cancer"] * 3 + ["not cancer"] * 7
     y_pred_pos_not_cancer = np.array(
         [0.1, 0.4, 0.6, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.9]
@@ -1045,11 +1045,11 @@ def test_detection_error_tradeoff_curve_pos_label():
     y_pred_pos_cancer = 1 - y_pred_pos_not_cancer
 
     fpr_pos_cancer, fnr_pos_cancer, th_pos_cancer = \
-        detection_error_tradeoff_curve(
+        det_curve(
             y_true, y_pred_pos_cancer, pos_label="cancer",
         )
     fpr_pos_not_cancer, fnr_pos_not_cancer, th_pos_not_cancer = \
-        detection_error_tradeoff_curve(
+        det_curve(
             y_true, y_pred_pos_not_cancer, pos_label="not cancer",
         )
 

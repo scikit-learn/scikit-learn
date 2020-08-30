@@ -582,12 +582,13 @@ class KNeighborsMixin:
 
     def kneighbors(self, X=None, n_neighbors=None, return_distance=True):
         """Finds the K-neighbors of a point.
+
         Returns indices of and distances to the neighbors of each point.
 
         Parameters
         ----------
         X : array-like, shape (n_queries, n_features), \
-            or (n_queries, n_indexed) if metric == 'precomputed',
+            or (n_queries, n_indexed) if metric == 'precomputed', \
                 default=None
             The query point or points.
             If not provided, neighbors of each indexed point are returned.
