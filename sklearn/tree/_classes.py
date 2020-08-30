@@ -381,7 +381,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         return self
 
     def _validate_X_predict(self, X, check_input):
-        """Validate X whenever one tries to predict, apply, predict_proba."""
+        """Validate the training data on predict (probabilities)."""
         if check_input:
             X = check_array(X, dtype=DTYPE, accept_sparse="csr")
             if issparse(X) and (X.indices.dtype != np.intc or
