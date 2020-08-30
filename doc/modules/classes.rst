@@ -545,6 +545,7 @@ From text
    feature_selection.SelectFdr
    feature_selection.SelectFromModel
    feature_selection.SelectFwe
+   feature_selection.SequentialFeatureSelector
    feature_selection.RFE
    feature_selection.RFECV
    feature_selection.VarianceThreshold
@@ -706,6 +707,7 @@ Plotting
 
    kernel_approximation.AdditiveChi2Sampler
    kernel_approximation.Nystroem
+   kernel_approximation.PolynomialCountSketch
    kernel_approximation.RBFSampler
    kernel_approximation.SkewedChi2Sampler
 
@@ -946,7 +948,7 @@ details.
    metrics.cohen_kappa_score
    metrics.confusion_matrix
    metrics.dcg_score
-   metrics.detection_error_tradeoff_curve
+   metrics.det_curve
    metrics.f1_score
    metrics.fbeta_score
    metrics.hamming_loss
@@ -1101,6 +1103,7 @@ See the :ref:`visualizations` section of the user guide for further details.
    :template: function.rst
 
    metrics.plot_confusion_matrix
+   metrics.plot_det_curve
    metrics.plot_precision_recall_curve
    metrics.plot_roc_curve
 
@@ -1109,6 +1112,7 @@ See the :ref:`visualizations` section of the user guide for further details.
    :template: class.rst
 
    metrics.ConfusionMatrixDisplay
+   metrics.DetCurveDisplay
    metrics.PrecisionRecallDisplay
    metrics.RocCurveDisplay
 
