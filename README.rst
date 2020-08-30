@@ -29,10 +29,10 @@
 .. |JoblibMinVersion| replace:: 0.11
 .. |ThreadpoolctlMinVersion| replace:: 2.0.0
 .. |MatplotlibMinVersion| replace:: 2.1.1
-.. |ScikitImageMinVersion| replace:: 0.13
+.. |Scikit-ImageMinVersion| replace:: 0.13
 .. |PandasMinVersion| replace:: 0.25.0
 .. |SeabornMinVersion| replace:: 0.9.0
-.. |PyTestMinVersion| replace:: 5.0.1
+.. |PytestMinVersion| replace:: 5.0.1
 
 .. image:: doc/logos/scikit-learn-logo.png
   :target: https://scikit-learn.org/
