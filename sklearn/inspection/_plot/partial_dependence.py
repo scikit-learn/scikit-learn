@@ -363,8 +363,8 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
         is_categorical = tmp_categorical
 
         if has_categorical and kind != 'average':
-            raise ValueError('It is not possible to display individual effects '
-                             'for categorical features.')
+            raise ValueError('It is not possible to display individual effects'
+                             ' for categorical features.')
 
     # compute predictions and/or averaged predictions
     pd_results = Parallel(n_jobs=n_jobs, verbose=verbose)(
