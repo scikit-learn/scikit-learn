@@ -131,7 +131,8 @@ def test_grid_from_X():
     grid_resolution = 100
     X = np.asarray([[1, 2],
                     [3, 4]])
-    grid, axes = _grid_from_X(X, percentiles, grid_resolution)
+    grid, axes = _grid_from_X(X, percentiles, grid_resolution,
+                              is_categorical=[False, False])
     assert_array_equal(grid, [[1, 2],
                               [1, 4],
                               [3, 2],
@@ -145,7 +146,8 @@ def test_grid_from_X():
 
     # n_unique_values > grid_resolution
     X = rng.normal(size=(20, 2))
-    grid, axes = _grid_from_X(X, percentiles, grid_resolution=grid_resolution)
+    grid, axes = _grid_from_X(X, percentiles, grid_resolution=grid_resolution,
+                              is_categorical=[False, False])
     assert grid.shape == (grid_resolution * grid_resolution, X.shape[1])
     assert np.asarray(axes).shape == (2, grid_resolution)
 
@@ -153,7 +155,8 @@ def test_grid_from_X():
     n_unique_values = 12
     X[n_unique_values - 1:, 0] = 12345
     rng.shuffle(X)  # just to make sure the order is irrelevant
-    grid, axes = _grid_from_X(X, percentiles, grid_resolution=grid_resolution)
+    grid, axes = _grid_from_X(X, percentiles, grid_resolution=grid_resolution,
+                              is_categorical=[False, False])
     assert grid.shape == (n_unique_values * grid_resolution, X.shape[1])
     # axes is a list of arrays of different shapes
     assert axes[0].shape == (n_unique_values,)
@@ -174,7 +177,8 @@ def test_grid_from_X_error(grid_resolution, percentiles, err_msg):
     X = np.asarray([[1, 2], [3, 4]])
     with pytest.raises(ValueError, match=err_msg):
         _grid_from_X(
-            X, grid_resolution=grid_resolution, percentiles=percentiles
+            X, grid_resolution=grid_resolution, percentiles=percentiles,
+            is_categorical=[False, False]
         )
 
 
