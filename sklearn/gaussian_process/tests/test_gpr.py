@@ -357,8 +357,12 @@ def test_y_multioutput():
     assert_almost_equal(y_pred_1d, y_pred_2d[:, 1] / 2)
 
     # Standard deviation and covariance do not depend on output
-    assert_almost_equal(y_std_1d, y_std_2d)
-    assert_almost_equal(y_cov_1d, y_cov_2d)
+    assert_almost_equal(y_std_1d, y_std_2d[:, 0])
+    assert_almost_equal(y_std_1d, y_std_2d[:, 1])
+
+    assert_almost_equal(y_cov_1d, y_cov_2d[:, :, 0])
+    assert_almost_equal(y_cov_1d, y_cov_2d[:, :, 1])
+
 
     y_sample_1d = gpr.sample_y(X2, n_samples=10)
     y_sample_2d = gpr_2d.sample_y(X2, n_samples=10)
@@ -536,3 +540,15 @@ def test_bound_check_fixed_hyperparameter():
                         periodicity_bounds="fixed")  # seasonal component
     kernel = k1 + k2
     GaussianProcessRegressor(kernel=kernel).fit(X, y)
+
+
+def test_y_normalized_multioutput():
+    # Test that GPR can deal with multi-dimensional target values when
+    # output is normalized
+    y_2d = np.vstack((y, y * 2)).T
+    kernel = RBF(length_scale=1.0)
+    gpr_2d = GaussianProcessRegressor(kernel=kernel, optimizer=None,
+                                      normalize_y=True)
+    gpr_2d.fit(X, y_2d)
+    y_pred_2d, y_std_2d = gpr_2d.predict(X2, return_std=True)
+    y_pred_2d, y_std_2d = gpr_2d.predict(X2, return_cov=True)

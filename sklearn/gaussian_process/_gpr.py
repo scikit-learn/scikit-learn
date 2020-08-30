@@ -201,8 +201,12 @@ class GaussianProcessRegressor(MultiOutputMixin,
             y = (y - self._y_train_mean) / self._y_train_std
 
         else:
-            self._y_train_mean = np.zeros(1)
-            self._y_train_std = 1
+            if y.ndim == 1:
+                self._y_train_mean = np.zeros(1)
+                self._y_train_std = 1
+            else:
+                self._y_train_mean = np.zeros(y.shape[1])
+                self._y_train_std = np.ones(y.shape[1])
 
         if np.iterable(self.alpha) \
            and self.alpha.shape[0] != y.shape[0]:
@@ -303,12 +307,16 @@ class GaussianProcessRegressor(MultiOutputMixin,
         y_mean : ndarray of shape (n_samples, [n_output_dims])
             Mean of predictive distribution a query points.
 
-        y_std : ndarray of shape (n_samples,), optional
+        y_std : ndarray of shape (n_samples, [n_output_dims]), optional
             Standard deviation of predictive distribution at query points.
+            Identical for all output dimensions unless
+            fitted with normalize_y =True.
             Only returned when `return_std` is True.
 
-        y_cov : ndarray of shape (n_samples, n_samples), optional
+        y_cov : ndarray of shape (n_samples, n_samples, [n_output_dims]), optional
             Covariance of joint predictive distribution a query points.
+            Identical for all output dimensions unless
+            fitted with normalize_y =True.
             Only returned when `return_cov` is True.
         """
         if return_std and return_cov:
@@ -348,7 +356,10 @@ class GaussianProcessRegressor(MultiOutputMixin,
                 y_cov = self.kernel_(X) - K_trans.dot(v)  # Line 6
 
                 # undo normalisation
-                y_cov = y_cov * self._y_train_std**2
+                if np.isscalar(self._y_train_std):
+                    y_cov = y_cov * self._y_train_std**2
+                else:
+                    y_cov = np.multiply.outer(y_cov, self._y_train_std.T**2)
 
                 return y_mean, y_cov
             elif return_std:
@@ -374,7 +385,10 @@ class GaussianProcessRegressor(MultiOutputMixin,
                     y_var[y_var_negative] = 0.0
 
                 # undo normalisation
-                y_var = y_var * self._y_train_std**2
+                if np.isscalar(self._y_train_std):
+                    y_var = y_var * self._y_train_std**2
+                else:
+                    y_var = np.outer(y_var, self._y_train_std**2)
 
                 return y_mean, np.sqrt(y_var)
             else:
@@ -410,7 +424,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
             y_samples = rng.multivariate_normal(y_mean, y_cov, n_samples).T
         else:
             y_samples = \
-                [rng.multivariate_normal(y_mean[:, i], y_cov,
+                [rng.multivariate_normal(y_mean[:, i], y_cov[:, :, i],
                                          n_samples).T[:, np.newaxis]
                  for i in range(y_mean.shape[1])]
             y_samples = np.hstack(y_samples)
