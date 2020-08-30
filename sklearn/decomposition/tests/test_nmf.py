@@ -4,6 +4,7 @@ import scipy.sparse as sp
 from scipy import linalg
 from sklearn.decomposition import NMF, non_negative_factorization
 from sklearn.decomposition import MiniBatchNMF
+from sklearn.decomposition import non_negative_factorization_online
 from sklearn.decomposition import _nmf as nmf  # For testing internals
 from scipy.sparse import csc_matrix
 
