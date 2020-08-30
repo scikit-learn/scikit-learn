@@ -28,5 +28,4 @@ User Guide
    data_transforms.rst
    datasets.rst
    computing.rst
-   modules/computing.rst
    common_pitfalls.rst

@@ -54,6 +54,8 @@ forgetting a transformation::
     ...
     >>> model = make_pipeline(StandardScaler(), LinearRegression())
     >>> model.fit(X_train, y_train)
+    Pipeline(steps=[('standardscaler', StandardScaler()),
+                    ('linearregression', LinearRegression())])
     >>> mean_squared_error(y_test, model.predict(X_test))
     0.90...
 
