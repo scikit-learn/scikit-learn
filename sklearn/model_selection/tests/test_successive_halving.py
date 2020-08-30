@@ -4,6 +4,7 @@ import pytest
 from scipy.stats import norm, randint
 import numpy as np
 
+from sklearn.model_selection._validation import _fit_and_score
 from sklearn.datasets import make_classification
 from sklearn.dummy import DummyClassifier
 from sklearn.model_selection import HalvingGridSearchCV
@@ -410,3 +411,145 @@ def test_refit_callable():
         'params': np.array(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i']),
     }
     assert _refit_callable(results) == 8  # index of 'i'
+
+
+@pytest.mark.parametrize('Est', (HalvingRandomSearchCV, HalvingGridSearchCV))
+def test_cv_results(monkeypatch, Est):
+    # test that the cv_results_ matches correctly the logic of the
+    # tournament: in particular that the candidates continued in each
+    # successive iteration are those that were best in the previous iteration
+    pd = pytest.importorskip('pandas')
+
+    rng = np.random.RandomState(0)
+
+    def fit_and_score_mock(*args, **kwargs):
+        # generate random scores: we want to avoid ties, which would otherwise
+        # mess with the ordering and with our checks
+        out = _fit_and_score(*args, **kwargs)
+        out['test_scores'] = rng.rand()
+        return out
+    monkeypatch.setattr("sklearn.model_selection._search._fit_and_score",
+                        fit_and_score_mock)
+
+    n_samples = 1000
+    X, y = make_classification(n_samples=n_samples, random_state=0)
+    param_grid = {'a': ('l1', 'l2'), 'b': list(range(30))}
+    base_estimator = FastClassifier()
+
+    sh = Est(base_estimator, param_grid, ratio=2)
+    if Est is HalvingRandomSearchCV:
+        # same number of candidates as with the grid
+        sh.set_params(n_candidates=2 * 30, min_resources='exhaust')
+
+    sh.fit(X, y)
+    df = pd.DataFrame(sh.cv_results_)
+
+    # just make sure we don't have ties
+    assert len(df['mean_test_score'].unique()) == len(df)
+
+    df['params_str'] = df['params'].apply(str)
+    table = df.pivot(index='params_str', columns='iter',
+                     values='mean_test_score')
+
+    # table looks like something like this:
+    # iter                    0      1       2        3   4   5
+    # params_str
+    # {'a': 'l2', 'b': 23} 0.75    NaN     NaN      NaN NaN NaN
+    # {'a': 'l1', 'b': 30} 0.90  0.875     NaN      NaN NaN NaN
+    # {'a': 'l1', 'b': 0}  0.75    NaN     NaN      NaN NaN NaN
+    # {'a': 'l2', 'b': 3}  0.85  0.925  0.9125  0.90625 NaN NaN
+    # {'a': 'l1', 'b': 5}  0.80    NaN     NaN      NaN NaN NaN
+    # ...
+
+    # where a NaN indicates that the candidate wasn't evaluated at a given
+    # iteration, because it wasn't part of the top-K at some previous
+    # iteration. We here make sure that candidates that aren't in the top-k at
+    # any given iteration are indeed not evaluated at the subsequent
+    # iterations.
+
+    n_iter = sh.n_iterations_
+    for it in range(n_iter - 1):
+        n_selected = sh.n_candidates_[it + 1]
+        table = table.sort_values(by=it)
+        not_selected = table[:-n_selected]
+        table = table[-n_selected:]
+
+        assert not_selected[range(it + 1, n_iter)].isna().all(axis=None)
+
+    # We now make sure that the best candidate is chosen only from the last
+    # iteration.
+    # We also make sure this is true even if there were higher scores in
+    # earlier rounds (this isn't generally the case, but worth ensuring it's
+    # possible).
+
+    last_iter = df['iter'].max()
+    idx_best_last_iter = (
+        df[df['iter'] == last_iter]['mean_test_score'].idxmax()
+    )
+    idx_best_all_iters = df['mean_test_score'].idxmax()
+
+    assert sh.best_params_ == df.iloc[idx_best_last_iter]['params']
+    assert (df.iloc[idx_best_last_iter]['mean_test_score'] <
+            df.iloc[idx_best_all_iters]['mean_test_score'])
+    assert (df.iloc[idx_best_last_iter]['params'] !=
+            df.iloc[idx_best_all_iters]['params'])
+
+
+@pytest.mark.parametrize('Est', (HalvingGridSearchCV, HalvingRandomSearchCV))
+def test_base_estimator_inputs(Est):
+    # make sure that the base estimators are passed the correct parameters and
+    # number of samples at each iteration.
+    pd = pytest.importorskip('pandas')
+
+    passed_n_samples_fit = []
+    passed_n_samples_predict = []
+    passed_params = []
+    class FastClassifierBookKeeping(FastClassifier):
+
+        def fit(self, X, y):
+            passed_n_samples_fit.append(X.shape[0])
+            return super().fit(X, y)
+
+        def predict(self, X):
+            passed_n_samples_predict.append(X.shape[0])
+            return super().predict(X)
+
+        def set_params(self, **params):
+            passed_params.append(params)
+            return super().set_params(**params)
+
+    n_samples = 1024
+    n_splits = 2
+    X, y = make_classification(n_samples=n_samples, random_state=0)
+    param_grid = {'a': ('l1', 'l2'), 'b': list(range(30))}
+    base_estimator = FastClassifierBookKeeping()
+
+    sh = Est(base_estimator, param_grid, ratio=2, cv=n_splits,
+             return_train_score=False, refit=False)
+    if Est is HalvingRandomSearchCV:
+        # same number of candidates as with the grid
+        sh.set_params(n_candidates=2 * 30, min_resources='exhaust')
+
+    sh.fit(X, y)
+
+    assert len(passed_n_samples_fit) == len(passed_n_samples_predict)
+    passed_n_samples = [x + y for (x, y) in zip(passed_n_samples_fit,
+                                                passed_n_samples_predict)]
+
+    # Lists are of length n_splits * n_iter * n_candidates_at_i.
+    # Each chunk of size n_splits corresponds to the n_splits folds for the
+    # same candidate at the same iteration, so they contain equal values. We
+    # subsample such that the lists are of length n_iter * n_candidates_at_it
+    passed_n_samples = passed_n_samples[::n_splits]
+    passed_params = passed_params[::n_splits]
+
+    df = pd.DataFrame(sh.cv_results_)
+
+    assert len(passed_params) == len(passed_n_samples) == len(df)
+
+    uniques, counts = np.unique(passed_n_samples, return_counts=True)
+    assert (sh.n_resources_ == uniques).all()
+    assert (sh.n_candidates_ == counts).all()
+
+    assert (df['params'] == passed_params).all()
+    assert (df['resource_iter'] == passed_n_samples).all()
