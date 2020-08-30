@@ -286,6 +286,12 @@ def test_non_negative_factorization_checking():
     assert_raise_message(ValueError, msg, nnmf, A, A, 0 * A, 2, init='custom',
                          regularization='spam')
 
+    # Test for online version: may be removed ...
+    nnmf = non_negative_factorization_online
+    msg = ("Number of components must be a positive integer; "
+           "got (n_components=1.5)")
+    assert_raise_message(ValueError, msg, nnmf, A, A, A, 1.5, init='random')
+
 
 def _beta_divergence_dense(X, W, H, beta):
     """Compute the beta-divergence of X and W.H for dense array only.
