@@ -4,6 +4,7 @@ from .._config import get_config
 
 
 def _get_feature_names(X):
+    """Get feature names of a dataframe or a dataarray."""
     if hasattr(X, "columns"):
         # pandas
         return np.array(X.columns, dtype=object)
@@ -13,7 +14,31 @@ def _get_feature_names(X):
 
 
 def _make_array_out(X_out, X_orig, get_feature_names_out):
+    """Construct array container based on global configuration.
+
+    Parameters
+    ----------
+    X_out: {ndarray, sparse matrix} of shape (n_samples, n_features_out)
+        Output data to be wrapped.
+
+    X_orig: array-like of shape (n_samples, n_features)
+        Original input data. For panda's DataFrames, this is used to get
+        the index. For xarray's DataArrays, this is used to get the name
+        of the dims and the coordinates for the first dims.
+
+    get_features_names_out: callable
+        Returns the feature names out. If the callable returns None, then
+        the feature names will be ["X0", "X1", ...].
+
+    Return
+    ------
+    array_out: {ndarray, sparse matrix, dataframe, dataarray} of shape \
+                (n_samples, n_features_out)
+        Wrapped array with feature names.
+    """
     array_out = get_config()['array_out']
+    if array_out not in ('default', 'pandas', 'xarray'):
+        raise ValueError("array_out must be 'default', 'pandas' or 'xarray'")
     if array_out == 'default':
         return X_out
 
@@ -30,7 +55,8 @@ def _make_array_out(X_out, X_orig, get_feature_names_out):
 
         return make_dataframe(X_out, columns=feature_names_out,
                               index=getattr(X_orig, "index", None))
-    elif array_out == 'xarray':
+    else:
+        # xarray
         import xarray as xr
         dims = getattr(X_orig, "dims", ("index", "columns"))
 
@@ -44,5 +70,3 @@ def _make_array_out(X_out, X_orig, get_feature_names_out):
             X_out = pydata_sparse.COO.from_scipy_sparse(X_out)
 
         return xr.DataArray(X_out, dims=dims, coords=coords)
-
-    return X_out

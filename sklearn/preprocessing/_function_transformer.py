@@ -125,6 +125,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         -------
         self
         """
+        self._check_feature_names(X)
         X = self._check_input(X)
         if (self.check_inverse and not (self.func is None or
                                         self.inverse_func is None)):
@@ -144,7 +145,8 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         X_out : array-like, shape (n_samples, n_features)
             Transformed input.
         """
-        return self._transform(X, func=self.func, kw_args=self.kw_args)
+        out = self._transform(X, func=self.func, kw_args=self.kw_args)
+        return self._make_array_out(out, X, 'class_name')
 
     def inverse_transform(self, X):
         """Transform X using the inverse function.

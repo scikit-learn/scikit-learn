@@ -148,6 +148,7 @@ class Isomap(TransformerMixin, BaseEstimator):
                                       n_jobs=self.n_jobs)
         self.nbrs_.fit(X)
         self.n_features_in_ = self.nbrs_.n_features_in_
+        self.feature_names_in_ = self.nbrs_.feature_names_in_
 
         self.kernel_pca_ = KernelPCA(n_components=self.n_components,
                                      kernel="precomputed",
@@ -227,7 +228,7 @@ class Isomap(TransformerMixin, BaseEstimator):
         X_new : array-like, shape (n_samples, n_components)
         """
         self._fit_transform(X)
-        return self.embedding_
+        return self._make_array_out(self.embedding_, X, 'class_name')
 
     def transform(self, X):
         """Transform X.
@@ -269,4 +270,5 @@ class Isomap(TransformerMixin, BaseEstimator):
         G_X **= 2
         G_X *= -0.5
 
-        return self.kernel_pca_.transform(G_X)
+        return self._make_array_out(self.kernel_pca_.transform(G_X),
+                                    X, 'class_name')

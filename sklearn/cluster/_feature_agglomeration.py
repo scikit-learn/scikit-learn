@@ -37,6 +37,7 @@ class AgglomerationTransform(TransformerMixin):
             The pooled values for each feature cluster.
         """
         check_is_fitted(self)
+        X_orig = X
 
         X = check_array(X)
         if len(self.labels_) != X.shape[1]:
@@ -52,7 +53,7 @@ class AgglomerationTransform(TransformerMixin):
             nX = [self.pooling_func(X[:, self.labels_ == l], axis=1)
                   for l in np.unique(self.labels_)]
             nX = np.array(nX).T
-        return nX
+        return self._make_array_out(nX, X_orig, 'class_name')
 
     def inverse_transform(self, Xred):
         """

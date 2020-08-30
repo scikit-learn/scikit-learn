@@ -495,13 +495,15 @@ class LinearDiscriminantAnalysis(LinearClassifierMixin,
                                       "solver (use 'svd' or 'eigen').")
         check_is_fitted(self)
 
+        X_orig = X
         X = check_array(X)
         if self.solver == 'svd':
             X_new = np.dot(X - self.xbar_, self.scalings_)
         elif self.solver == 'eigen':
             X_new = np.dot(X, self.scalings_)
 
-        return X_new[:, :self._max_components]
+        return self._make_array_out(X_new[:, :self._max_components], X_orig,
+                                    'class_name')
 
     def predict_proba(self, X):
         """Estimate probability.

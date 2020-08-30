@@ -272,15 +272,24 @@ def test_strict_mode_parametrize_with_checks(estimator, check):
     check(estimator)
 
 
-@pytest.mark.parametrize("name, Estimator",
-                         all_estimators(type_filter="transformer"))
-def test_array_out_pandas(name, Estimator):
-    estimator = _construct_instance(Estimator)
+def all_transformers_2d():
+    for name, Estimator in all_estimators(type_filter="transformer"):
+        try:
+            estimator = _construct_instance(Estimator)
+        except SkipTest:
+            continue
+
+        tags = estimator._get_tags()
+        if "2darray" in tags["X_types"]:
+            _set_checking_parameters(estimator)
+            yield name, estimator
+
+
+@pytest.mark.parametrize("name, estimator", all_transformers_2d())
+def test_array_out_pandas(name, estimator):
     check_array_out_pandas(name, estimator)
 
 
-@pytest.mark.parametrize("name, Estimator",
-                         all_estimators(type_filter="transformer"))
-def test_array_out_xarray(name, Estimator):
-    estimator = _construct_instance(Estimator)
+@pytest.mark.parametrize("name, estimator", all_transformers_2d())
+def test_array_out_xarray(name, estimator):
     check_array_out_xarray(name, estimator)

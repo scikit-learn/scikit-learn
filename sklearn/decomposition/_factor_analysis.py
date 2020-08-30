@@ -278,7 +278,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
             The latent variables of X.
         """
         check_is_fitted(self)
-
+        X_orig = X
         X = check_array(X)
         Ih = np.eye(len(self.components_))
 
@@ -289,7 +289,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         tmp = np.dot(X_transformed, Wpsi.T)
         X_transformed = np.dot(tmp, cov_z)
 
-        return X_transformed
+        return self._make_array_out(X_transformed, X_orig, 'class_name')
 
     def get_covariance(self):
         """Compute data covariance with the FactorAnalysis model.

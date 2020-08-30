@@ -435,7 +435,7 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         X += self.min_
         if self.clip:
             np.clip(X, self.feature_range[0], self.feature_range[1], out=X)
-        return self._make_array_out(X, X_orig)
+        return self._make_array_out(X, X_orig, 'one_to_one')
 
     def inverse_transform(self, X):
         """Undo the scaling of X according to feature_range.
@@ -860,7 +860,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
                 X -= self.mean_
             if self.with_std:
                 X /= self.scale_
-        return self._make_array_out(X, X_orig)
+        return self._make_array_out(X, X_orig, 'one_to_one')
 
     def inverse_transform(self, X, copy=None):
         """Scale back the data to the original representation
@@ -1072,7 +1072,7 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
             inplace_column_scale(X, 1.0 / self.scale_)
         else:
             X /= self.scale_
-        return self._make_array_out(X, X_orig)
+        return self._make_array_out(X, X_orig, 'one_to_one')
 
     def inverse_transform(self, X):
         """Scale back the data to the original representation
@@ -1378,7 +1378,7 @@ class RobustScaler(TransformerMixin, BaseEstimator):
                 X -= self.center_
             if self.with_scaling:
                 X /= self.scale_
-        return self._make_array_out(X, X_orig)
+        return self._make_array_out(X, X_orig, 'one_to_one')
 
     def inverse_transform(self, X):
         """Scale back the data to the original representation
@@ -2010,7 +2010,7 @@ class Normalizer(TransformerMixin, BaseEstimator):
         copy = copy if copy is not None else self.copy
         X = check_array(X, accept_sparse='csr')
         output = normalize(X, norm=self.norm, axis=1, copy=copy)
-        return self._make_array_out(output, X_orig)
+        return self._make_array_out(output, X_orig, 'one_to_one')
 
     def _more_tags(self):
         return {'stateless': True}
@@ -2166,7 +2166,9 @@ class Binarizer(TransformerMixin, BaseEstimator):
             Transformed array.
         """
         copy = copy if copy is not None else self.copy
-        return binarize(X, threshold=self.threshold, copy=copy)
+        X_orig = X
+        out = binarize(X, threshold=self.threshold, copy=copy)
+        return self._make_array_out(out, X_orig, 'one_to_one')
 
     def _more_tags(self):
         return {'stateless': True}
@@ -2261,7 +2263,7 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
         K_new : ndarray of shape (n_samples1, n_samples2)
         """
         check_is_fitted(self)
-
+        K_orig = K
         K = check_array(K, copy=copy, dtype=FLOAT_DTYPES)
 
         K_pred_cols = (np.sum(K, axis=1) /
@@ -2271,7 +2273,7 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
         K -= K_pred_cols
         K += self.K_fit_all_
 
-        return K
+        return self._make_array_out(K, K_orig, 'one_to_one')
 
     @property
     def _pairwise(self):
@@ -2651,7 +2653,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         return X_col
 
     def _check_inputs(self, X, in_fit, accept_sparse_negative=False,
-                      copy=False):
+                      copy=False, reset=None):
         """Check inputs before fit and transform."""
         # In theory reset should be equal to `in_fit`, but there are tests
         # checking the input number of feature and they expect a specific
@@ -2660,7 +2662,8 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         # the estimator anyway).
         # TODO: set reset=in_fit when addressing reset in
         # predict/transform/etc.
-        reset = True
+        if reset is None:
+            reset = True
 
         X = self._validate_data(X, reset=reset,
                                 accept_sparse='csc', copy=copy,
@@ -2742,11 +2745,12 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
             The projected data.
         """
         X_orig = X
-        X = self._check_inputs(X, in_fit=False, copy=self.copy)
+        X = self._check_inputs(X, in_fit=False, copy=self.copy,
+                               reset=False)
         self._check_is_fitted(X)
 
         output = self._transform(X, inverse=False)
-        return self._make_array_out(output, X_orig)
+        return self._make_array_out(output, X_orig, 'one_to_one')
 
     def inverse_transform(self, X):
         """Back-projection to the original space.
@@ -3023,7 +3027,7 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
 
     def fit_transform(self, X, y=None):
         output = self._fit(X, y, force_transform=True)
-        return self._make_array_out(output, X)
+        return self._make_array_out(output, X, 'one_to_one')
 
     def _fit(self, X, y=None, force_transform=False):
         X = self._check_input(X, in_fit=True, check_positive=True,
@@ -3071,7 +3075,7 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         check_is_fitted(self)
         X_orig = X
         X = self._check_input(X, in_fit=False, check_positive=True,
-                              check_shape=True)
+                              check_shape=True, reset=False)
 
         transform_function = {'box-cox': boxcox,
                               'yeo-johnson': self._yeo_johnson_transform
@@ -3083,7 +3087,7 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         if self.standardize:
             X = self._scaler.transform(X)
 
-        return self._make_array_out(X, X_orig)
+        return self._make_array_out(X, X_orig, 'one_to_one')
 
     def inverse_transform(self, X):
         """Apply the inverse power transformation using the fitted lambdas.
@@ -3223,7 +3227,7 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         return optimize.brent(_neg_log_likelihood, brack=(-2, 2))
 
     def _check_input(self, X, in_fit, check_positive=False, check_shape=False,
-                     check_method=False):
+                     check_method=False, reset=True):
         """Validate the input before fit and transform.
 
         Parameters
@@ -3241,7 +3245,8 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
             If True, check that the transformation method is valid.
         """
         X = self._validate_data(X, ensure_2d=True, dtype=FLOAT_DTYPES,
-                                copy=self.copy, force_all_finite='allow-nan')
+                                copy=self.copy, force_all_finite='allow-nan',
+                                reset=reset)
 
         with np.warnings.catch_warnings():
             np.warnings.filterwarnings(

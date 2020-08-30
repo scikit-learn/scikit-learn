@@ -1296,6 +1296,7 @@ class NMF(TransformerMixin, BaseEstimator):
         W : ndarray of shape (n_samples, n_components)
             Transformed data.
         """
+        X_orig = X
         X = self._validate_data(X, accept_sparse=('csr', 'csc'),
                                 dtype=[np.float64, np.float32])
 
@@ -1314,7 +1315,7 @@ class NMF(TransformerMixin, BaseEstimator):
         self.components_ = H
         self.n_iter_ = n_iter_
 
-        return W
+        return self._make_array_out(W, X_orig, 'class_name')
 
     def fit(self, X, y=None, **params):
         """Learn a NMF model for the data X.
@@ -1347,6 +1348,7 @@ class NMF(TransformerMixin, BaseEstimator):
             Transformed data.
         """
         check_is_fitted(self)
+        X_orig = X
 
         W, _, n_iter_ = non_negative_factorization(
             X=X, W=None, H=self.components_, n_components=self.n_components_,
@@ -1357,7 +1359,7 @@ class NMF(TransformerMixin, BaseEstimator):
             random_state=self.random_state,
             verbose=self.verbose, shuffle=self.shuffle)
 
-        return W
+        return self._make_array_out(W, X_orig, 'class_name')
 
     def inverse_transform(self, W):
         """Transform data back to its original space.

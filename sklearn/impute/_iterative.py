@@ -7,6 +7,7 @@ from scipy import stats
 import numpy as np
 
 from ..base import clone
+from .._config import config_context
 from ..exceptions import ConvergenceWarning
 from ..preprocessing import normalize
 from ..utils import (check_array, check_random_state, _safe_indexing,
@@ -505,9 +506,11 @@ class IterativeImputer(_BaseImputer):
                 missing_values=self.missing_values,
                 strategy=self.initial_strategy
             )
-            X_filled = self.initial_imputer_.fit_transform(X)
+            with config_context(array_out='default'):
+                X_filled = self.initial_imputer_.fit_transform(X)
         else:
-            X_filled = self.initial_imputer_.transform(X)
+            with config_context(array_out='default'):
+                X_filled = self.initial_imputer_.transform(X)
 
         valid_mask = np.flatnonzero(np.logical_not(
             np.isnan(self.initial_imputer_.statistics_)))
@@ -587,17 +590,21 @@ class IterativeImputer(_BaseImputer):
         self.imputation_sequence_ = []
 
         self.initial_imputer_ = None
+        X_orig = X
+        self._check_feature_names(X)
         super()._fit_indicator(X)
         X_indicator = super()._transform_indicator(X)
         X, Xt, mask_missing_values = self._initial_imputation(X)
         if self.max_iter == 0 or np.all(mask_missing_values):
             self.n_iter_ = 0
-            return super()._concatenate_indicator(Xt, X_indicator)
+            out = super()._concatenate_indicator(Xt, X_indicator)
+            return self._make_array_out(out, X_orig, lambda: None)
 
         # Edge case: a single feature. We return the initial ...
         if Xt.shape[1] == 1:
             self.n_iter_ = 0
-            return super()._concatenate_indicator(Xt, X_indicator)
+            out = super()._concatenate_indicator(Xt, X_indicator)
+            return self._make_array_out(out, X_orig, 'one_to_one')
 
         self._min_value = self._validate_limit(
             self.min_value, "min", X.shape[1])
@@ -666,7 +673,8 @@ class IterativeImputer(_BaseImputer):
                 warnings.warn("[IterativeImputer] Early stopping criterion not"
                               " reached.", ConvergenceWarning)
         Xt[~mask_missing_values] = X[~mask_missing_values]
-        return super()._concatenate_indicator(Xt, X_indicator)
+        out = super()._concatenate_indicator(Xt, X_indicator)
+        return self._make_array_out(out, X_orig, 'one_to_one')
 
     def transform(self, X):
         """Imputes all missing values in X.
@@ -685,12 +693,14 @@ class IterativeImputer(_BaseImputer):
              The imputed input data.
         """
         check_is_fitted(self)
-
+        X_orig = X
+        self._check_feature_names(X, reset=False)
         X_indicator = super()._transform_indicator(X)
         X, Xt, mask_missing_values = self._initial_imputation(X)
 
         if self.n_iter_ == 0 or np.all(mask_missing_values):
-            return super()._concatenate_indicator(Xt, X_indicator)
+            out = super()._concatenate_indicator(Xt, X_indicator)
+            return self._make_array_out(out, X_orig, lambda: None)
 
         imputations_per_round = len(self.imputation_sequence_) // self.n_iter_
         i_rnd = 0
@@ -716,7 +726,8 @@ class IterativeImputer(_BaseImputer):
 
         Xt[~mask_missing_values] = X[~mask_missing_values]
 
-        return super()._concatenate_indicator(Xt, X_indicator)
+        out = super()._concatenate_indicator(Xt, X_indicator)
+        return self._make_array_out(out, X_orig, lambda: None)
 
     def fit(self, X, y=None):
         """Fits the imputer on X and return self.

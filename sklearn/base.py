@@ -20,7 +20,8 @@ from .utils.validation import check_X_y
 from .utils.validation import check_array
 from .utils._estimator_html_repr import estimator_html_repr
 from .utils.validation import _deprecate_positional_args
-from .utils._array_out import _get_feature_names, _make_array_out
+from .utils._array_out import _get_feature_names
+from .utils._array_out import _make_array_out
 
 
 _DEFAULT_TAGS = {
@@ -492,7 +493,31 @@ class BaseEstimator:
             output["text/html"] = estimator_html_repr(self)
         return output
 
-    def _make_array_out(self, X_out, X_orig, get_feature_names_out=None):
+    def _make_array_out(self, X_out, X_orig, get_feature_names_out):
+        """Construct array container based on global configuration.
+
+        Parameters
+        ----------
+        X_out: {ndarray, sparse matrix} of shape (n_samples, n_features_out)
+            Output data to be wrapped.
+
+        X_orig: array-like of shape (n_samples, n_features)
+            Original input data. For panda's DataFrames, this is used to get
+            the index. For xarray's DataArrays, this is used to get the name
+            of the dims and the coordinates for the first dims.
+
+        get_feature_names_out: callable or {'one_to_one', 'class_name'}
+            Called to get the feature names out. If `one_to_one`, then the
+            feature_names_in will be used as feature name out. If `class_name`,
+            then the class name will be used as prefixes for the feature names
+            out.
+
+        Return
+        ------
+        array_out: {ndarray, sparse matrix, dataframe, dataarray} of shape \
+                   (n_samples, n_features_out)
+            Wrapped array with feature names.
+        """
         array_out = get_config()['array_out']
         if array_out == 'default':
             return X_out
@@ -501,13 +526,23 @@ class BaseEstimator:
         # in transform to check for feature names
         self._check_feature_names(X_orig, reset=False)
 
-        if get_feature_names_out is None:
-            def get_feature_names_out(names):
+        if callable(get_feature_names_out):
+            get_feature_names_out_callable = get_feature_names_out
+        elif get_feature_names_out == 'one-to-one':
+            def get_feature_names_out_callable(names):
                 return names
+        else:
+            # get_feature_names_out == 'class_name'
+            class_name = self.__class__.__name__.lower()
+
+            def get_feature_names_out_callable():
+                return np.array([f"{class_name}{i}"
+                                 for i in range(X_out.shape[1])])
 
         # feature names in can have zero or one argument. For one argument
         # it would be the input feature names
-        parameters = inspect.signature(get_feature_names_out).parameters
+        parameters = (inspect.signature(get_feature_names_out_callable)
+                      .parameters)
         if parameters:
             if hasattr(self, "feature_names_in_"):
                 feature_names_in = self.feature_names_in_
@@ -521,10 +556,10 @@ class BaseEstimator:
             if feature_names_in is None:
                 feature_names_in = np.array(
                     [f'X{i}' for i in range(self.n_features_in_)])
-            get_feature_names_out = partial(get_feature_names_out,
-                                            feature_names_in)
+            get_feature_names_out_callable = partial(
+                get_feature_names_out_callable, feature_names_in)
 
-        return _make_array_out(X_out, X_orig, get_feature_names_out)
+        return _make_array_out(X_out, X_orig, get_feature_names_out_callable)
 
 
 class ClassifierMixin:

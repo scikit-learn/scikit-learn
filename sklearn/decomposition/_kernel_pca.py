@@ -312,7 +312,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         if self.fit_inverse_transform:
             self._fit_inverse_transform(X_transformed, X)
 
-        return X_transformed
+        return self._make_array_out(X_transformed, X, 'class_name')
 
     def transform(self, X):
         """Transform X.
@@ -337,7 +337,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
                                        / np.sqrt(self.lambdas_[non_zeros]))
 
         # Project with a scalar product between K and the scaled eigenvectors
-        return np.dot(K, scaled_alphas)
+        return self._make_array_out(np.dot(K, scaled_alphas), X, 'class_name')
 
     def inverse_transform(self, X):
         """Transform X back to original space.

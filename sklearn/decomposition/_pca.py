@@ -384,10 +384,7 @@ class PCA(_BasePCA):
             # X_new = X * V = U * S * Vt * V = U * S
             U *= S[:self.n_components_]
 
-        def get_feature_names_out():
-            return [f'pca{i}' for i in range(U.shape[1])]
-
-        return self._make_array_out(U, X_orig, get_feature_names_out)
+        return self._make_array_out(U, X_orig, 'class_name')
 
     def _fit(self, X):
         """Dispatch to the right submethod depending on the chosen solver."""

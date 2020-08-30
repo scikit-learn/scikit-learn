@@ -160,6 +160,7 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
         X_new : ndarray of shape (n_samples, n_components)
             Reduced version of X. This will always be a dense array.
         """
+        X_orig = X
         X = self._validate_data(X, accept_sparse=['csr', 'csc'],
                                 ensure_min_features=2)
         random_state = check_random_state(self.random_state)
@@ -196,7 +197,7 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
         self.explained_variance_ratio_ = exp_var / full_var
         self.singular_values_ = Sigma  # Store the singular values.
 
-        return X_transformed
+        return self._make_array_out(X_transformed, X_orig, 'class_name')
 
     def transform(self, X):
         """Perform dimensionality reduction on X.
@@ -211,9 +212,11 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
         X_new : ndarray of shape (n_samples, n_components)
             Reduced version of X. This will always be a dense array.
         """
+        X_orig = X
         X = check_array(X, accept_sparse=['csr', 'csc'])
         check_is_fitted(self)
-        return safe_sparse_dot(X, self.components_.T)
+        return self._make_array_out(safe_sparse_dot(X, self.components_.T),
+                                    X_orig, 'class_name')
 
     def inverse_transform(self, X):
         """Transform X back to its original space.

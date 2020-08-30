@@ -147,7 +147,8 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
         """
 
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse="csc")
+        X_orig = X
+        X = self._validate_data(X, accept_sparse="csc", reset=False)
 
         X_gamma = np.sqrt(self.gamma) * X
 
@@ -189,7 +190,7 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
         count_sketches_fft_prod = np.prod(count_sketches_fft, axis=1)
         data_sketch = np.real(ifft(count_sketches_fft_prod, overwrite_x=True))
 
-        return data_sketch
+        return self._make_array_out(data_sketch, X_orig, 'class_name')
 
 
 class RBFSampler(TransformerMixin, BaseEstimator):
@@ -299,13 +300,13 @@ class RBFSampler(TransformerMixin, BaseEstimator):
         X_new : array-like, shape (n_samples, n_components)
         """
         check_is_fitted(self)
-
+        X_orig = X
         X = check_array(X, accept_sparse='csr')
         projection = safe_sparse_dot(X, self.random_weights_)
         projection += self.random_offset_
         np.cos(projection, projection)
         projection *= np.sqrt(2.) / np.sqrt(self.n_components)
-        return projection
+        return self._make_array_out(projection, X_orig, 'class_name')
 
 
 class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
@@ -416,7 +417,7 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
         X_new : array-like, shape (n_samples, n_components)
         """
         check_is_fitted(self)
-
+        X_orig = X
         X = as_float_array(X, copy=True)
         X = check_array(X, copy=False)
         if (X <= -self.skewedness).any():
@@ -429,7 +430,7 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
         projection += self.random_offset_
         np.cos(projection, projection)
         projection *= np.sqrt(2.) / np.sqrt(self.n_components)
-        return projection
+        return self._make_array_out(projection, X_orig, 'class_name')
 
 
 class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
@@ -565,10 +566,7 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         transf = self._transform_sparse if sparse else self._transform_dense
         output = transf(X)
 
-        def get_feature_names_out():
-            return np.array([f"additivechi_{i}"
-                             for i in range(output.shape[1])])
-        return self._make_array_out(output, X_orig, get_feature_names_out)
+        return self._make_array_out(output, X_orig, 'class_name')
 
     def _transform_dense(self, X):
         non_zero = (X != 0.0)
@@ -791,6 +789,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
             Transformed data.
         """
         check_is_fitted(self)
+        X_orig = X
         X = check_array(X, accept_sparse='csr')
 
         kernel_params = self._get_kernel_params()
@@ -798,7 +797,8 @@ class Nystroem(TransformerMixin, BaseEstimator):
                                     metric=self.kernel,
                                     filter_params=True,
                                     **kernel_params)
-        return np.dot(embedded, self.normalization_.T)
+        out = np.dot(embedded, self.normalization_.T)
+        return self._make_array_out(out, X_orig, 'class_name')
 
     def _get_kernel_params(self):
         params = self.kernel_params

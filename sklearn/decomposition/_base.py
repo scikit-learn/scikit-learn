@@ -132,10 +132,7 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         if self.whiten:
             X_transformed /= np.sqrt(self.explained_variance_)
 
-        def get_feature_names_out():
-            return [f'pca{i}' for i in range(X_transformed.shape[1])]
-        return self._make_array_out(X_transformed, X_orig,
-                                    get_feature_names_out)
+        return self._make_array_out(X_transformed, X_orig, 'class_name')
 
     def inverse_transform(self, X):
         """Transform data back to its original space.

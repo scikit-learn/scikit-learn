@@ -196,14 +196,14 @@ class SparsePCA(TransformerMixin, BaseEstimator):
             Transformed data.
         """
         check_is_fitted(self)
-
+        X_orig = X
         X = check_array(X)
         X = X - self.mean_
 
         U = ridge_regression(self.components_.T, X.T, self.ridge_alpha,
                              solver='cholesky')
 
-        return U
+        return self._make_array_out(U, X_orig, 'class_name')
 
 
 class MiniBatchSparsePCA(SparsePCA):

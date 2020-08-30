@@ -130,9 +130,11 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
             Latent representations of the data.
         """
         check_is_fitted(self)
+        X_orig = X
 
         X = check_array(X, accept_sparse='csr', dtype=(np.float64, np.float32))
-        return self._mean_hiddens(X)
+        out = self._mean_hiddens(X)
+        return self._make_array_out(out, X_orig, 'class_name')
 
     def _mean_hiddens(self, v):
         """Computes the probabilities P(h=1|v).

@@ -402,6 +402,7 @@ class BaseRandomProjection(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         X_new : {ndarray, sparse matrix} of shape (n_samples, n_components)
             Projected array.
         """
+        X_orig = X
         X = check_array(X, accept_sparse=['csr', 'csc'])
 
         check_is_fitted(self)
@@ -414,7 +415,7 @@ class BaseRandomProjection(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
 
         X_new = safe_sparse_dot(X, self.components_.T,
                                 dense_output=self.dense_output)
-        return X_new
+        return self._make_array_out(X_new, X_orig, 'class_name')
 
 
 class GaussianRandomProjection(BaseRandomProjection):

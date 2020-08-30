@@ -263,9 +263,11 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
         """
 
         check_is_fitted(self)
+        X_orig = X
         X = check_array(X)
 
-        return np.dot(X, self.components_.T)
+        return self._make_array_out(np.dot(X, self.components_.T), X_orig,
+                                    'class_name')
 
     def _validate_params(self, X, y):
         """Validate parameters as soon as :meth:`fit` is called.

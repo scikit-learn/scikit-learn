@@ -557,7 +557,8 @@ class FastICA(TransformerMixin, BaseEstimator):
         -------
         X_new : ndarray of shape (n_samples, n_components)
         """
-        return self._fit(X, compute_sources=True)
+        out = self._fit(X, compute_sources=True)
+        return self._make_array_out(out, X, 'class_name')
 
     def fit(self, X, y=None):
         """Fit the model to X.
@@ -594,12 +595,14 @@ class FastICA(TransformerMixin, BaseEstimator):
         X_new : ndarray of shape (n_samples, n_components)
         """
         check_is_fitted(self)
+        X_orig = X
 
         X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
         if self.whiten:
             X -= self.mean_
 
-        return np.dot(X, self.components_.T)
+        return self._make_array_out(np.dot(X, self.components_.T), X_orig,
+                                    'class_name')
 
     def inverse_transform(self, X, copy=True):
         """Transform the sources back to the mixed data (apply mixing matrix).

@@ -704,7 +704,7 @@ class LocallyLinearEmbedding(TransformerMixin,
         X_new : array-like, shape (n_samples, n_components)
         """
         self._fit_transform(X)
-        return self.embedding_
+        return self._make_array_out(self.embedding_, X, 'class_name')
 
     def transform(self, X):
         """
@@ -724,7 +724,7 @@ class LocallyLinearEmbedding(TransformerMixin,
         it together with methods that are not scale-invariant (like SVMs)
         """
         check_is_fitted(self)
-
+        X_orig = X
         X = check_array(X)
         ind = self.nbrs_.kneighbors(X, n_neighbors=self.n_neighbors,
                                     return_distance=False)
@@ -732,4 +732,4 @@ class LocallyLinearEmbedding(TransformerMixin,
         X_new = np.empty((X.shape[0], self.n_components))
         for i in range(X.shape[0]):
             X_new[i] = np.dot(self.embedding_[ind[i]].T, weights[i])
-        return X_new
+        return self._make_array_out(X_new, X_orig, 'class_name')

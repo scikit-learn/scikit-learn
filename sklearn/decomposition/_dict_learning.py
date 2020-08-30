@@ -906,6 +906,7 @@ class _BaseSparseCoding(TransformerMixin):
     def _transform(self, X, dictionary):
         """Private method allowing to accomodate both DictionaryLearning and
         SparseCoder."""
+        X_orig = X
         X = check_array(X)
 
         code = sparse_encode(
@@ -922,7 +923,7 @@ class _BaseSparseCoding(TransformerMixin):
             split_code[:, n_features:] = -np.minimum(code, 0)
             code = split_code
 
-        return code
+        return self._make_array_out(code, X_orig, 'class_name')
 
     def transform(self, X):
         """Encode the data as a sparse combination of the dictionary atoms.

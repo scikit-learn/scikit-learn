@@ -1073,7 +1073,8 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         # np.array or CSR format already.
         # XXX This skips _check_test_data, which may change the dtype;
         # we should refactor the input validation.
-        return self.fit(X, sample_weight=sample_weight)._transform(X)
+        out = self.fit(X, sample_weight=sample_weight)._transform(X)
+        return self._make_array_out(out, X, 'class_name')
 
     def transform(self, X):
         """Transform X to a cluster-distance space.
@@ -1093,9 +1094,9 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
             X transformed in the new space.
         """
         check_is_fitted(self)
-
+        X_orig = X
         X = self._check_test_data(X)
-        return self._transform(X)
+        return self._make_array_out(self._transform(X), X_orig, 'class_name')
 
     def _transform(self, X):
         """guts of transform method; no input validation"""

@@ -12,6 +12,7 @@ import warnings
 
 from . import OneHotEncoder
 
+from .._config import config_context
 from ..base import BaseEstimator, TransformerMixin
 from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
@@ -306,18 +307,19 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         np.clip(Xt, 0, self.n_bins_ - 1, out=Xt)
 
         if self.encode == 'ordinal':
-            return Xt
+            return self._make_array_out(Xt, X, 'one_to_one')
 
         dtype_init = None
         if 'onehot' in self.encode:
             dtype_init = self._encoder.dtype
             self._encoder.dtype = Xt.dtype
         try:
-            Xt_enc = self._encoder.transform(Xt)
+            with config_context(array_out='default'):
+                Xt_enc = self._encoder.transform(Xt)
         finally:
             # revert the initial dtype to avoid modifying self.
             self._encoder.dtype = dtype_init
-        return Xt_enc
+        return self._make_array_out(Xt_enc, X, 'one_to_one')
 
     def inverse_transform(self, Xt):
         """

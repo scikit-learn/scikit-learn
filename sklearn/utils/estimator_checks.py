@@ -3102,7 +3102,7 @@ def _check_array_out_transformers(name, estimator_orig, array_out,
     X_train_np = 3 * rng.uniform(size=(20, 5))
     X_train_np = _pairwise_estimator_convert_X(X_train_np, estimator_orig)
     X_train_np = _enforce_estimator_tags_x(estimator_orig, X_train_np)
-    y = X_train_np[:, 0]
+    y = X_train_np[:, 0].astype(int)
     y = _enforce_estimator_tags_y(estimator_orig, y)
 
     index = np.arange(X_train_np.shape[0])
@@ -3120,6 +3120,18 @@ def _check_array_out_transformers(name, estimator_orig, array_out,
         estimator.fit(X_train_input, y)
         with config_context(array_out=array_out):
             output = estimator.transform(X_transform_input)
+        check_array_out(output, X_transform_input)
+
+    # Using fit_transform with array_out always results in an data container
+    # that is array_out
+    for X_train_input in [X_train_np, X_train_array]:
+        with config_context(array_out=array_out):
+            output = estimator.fit_transform(X_transform_input, y)
+
+        # for cross_decomposition
+        if isinstance(output, tuple):
+            output = output[0]
+
         check_array_out(output, X_transform_input)
 
     # feature names are out of order

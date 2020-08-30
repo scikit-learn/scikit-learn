@@ -614,7 +614,8 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
             Transformed data.
         """
         check_is_fitted(self)
-        return euclidean_distances(X, self.subcluster_centers_)
+        out = euclidean_distances(X, self.subcluster_centers_)
+        return self._make_array_out(out, X, 'class_name')
 
     def _global_clustering(self, X=None):
         """

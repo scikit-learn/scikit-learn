@@ -344,8 +344,9 @@ class KNeighborsTransformer(KNeighborsMixin,
         """
         check_is_fitted(self)
         add_one = self.mode == 'distance'
-        return self.kneighbors_graph(X, mode=self.mode,
-                                     n_neighbors=self.n_neighbors + add_one)
+        out = self.kneighbors_graph(X, mode=self.mode,
+                                    n_neighbors=self.n_neighbors + add_one)
+        return self._make_array_out(out, X, 'class_name')
 
     def fit_transform(self, X, y=None):
         """Fit to data, then transform it.
@@ -518,8 +519,9 @@ class RadiusNeighborsTransformer(RadiusNeighborsMixin,
             The matrix is of CSR format.
         """
         check_is_fitted(self)
-        return self.radius_neighbors_graph(X, mode=self.mode,
-                                           sort_results=True)
+        out = self.radius_neighbors_graph(X, mode=self.mode,
+                                          sort_results=True)
+        return self._make_array_out(out, X, 'class_name')
 
     def fit_transform(self, X, y=None):
         """Fit to data, then transform it.

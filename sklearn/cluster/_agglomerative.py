@@ -1100,8 +1100,10 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         # save n_features_in_ attribute here to reset it after, because it will
         # be overridden in AgglomerativeClustering since we passed it X.T.
         n_features_in_ = self.n_features_in_
+        feature_names_in_ = self.feature_names_in_
         AgglomerativeClustering.fit(self, X.T, **params)
         self.n_features_in_ = n_features_in_
+        self.feature_names_in_ = feature_names_in_
         return self
 
     @property

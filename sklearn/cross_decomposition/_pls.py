@@ -434,12 +434,15 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         x_scores if Y is not given, (x_scores, y_scores) otherwise.
         """
         check_is_fitted(self)
+        X_orig = X
         X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
         # Normalize
         X -= self.x_mean_
         X /= self.x_std_
         # Apply rotation
         x_scores = np.dot(X, self.x_rotations_)
+
+        x_scores = self._make_array_out(x_scores, X_orig, 'class_name')
         if Y is not None:
             Y = check_array(Y, ensure_2d=False, copy=copy, dtype=FLOAT_DTYPES)
             if Y.ndim == 1:
@@ -957,9 +960,11 @@ class PLSSVD(TransformerMixin, BaseEstimator):
             n_targets is the number of response variables.
         """
         check_is_fitted(self)
+        X_orig = X
         X = check_array(X, dtype=np.float64)
         Xr = (X - self.x_mean_) / self.x_std_
         x_scores = np.dot(Xr, self.x_weights_)
+        x_scores = self._make_array_out(x_scores, X_orig, 'class_name')
         if Y is not None:
             Y = check_array(Y, ensure_2d=False, dtype=np.float64)
             if Y.ndim == 1:
