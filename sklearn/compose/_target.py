@@ -8,19 +8,21 @@ import numpy as np
 
 from ..base import BaseEstimator, RegressorMixin, clone
 from ..utils.validation import check_is_fitted
-from ..utils import check_array, safe_indexing
+from ..utils import check_array, _safe_indexing
 from ..preprocessing import FunctionTransformer
+from ..utils.validation import _deprecate_positional_args
+from ..exceptions import NotFittedError
 
 __all__ = ['TransformedTargetRegressor']
 
 
-class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
+class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
     """Meta-estimator to regress on a transformed target.
 
-    Useful for applying a non-linear transformation in regression
-    problems. This transformation can be given as a Transformer such as the
-    QuantileTransformer or as a function and its inverse such as ``log`` and
-    ``exp``.
+    Useful for applying a non-linear transformation to the target ``y`` in
+    regression problems. This transformation can be given as a Transformer
+    such as the QuantileTransformer or as a function and its inverse such as
+    ``log`` and ``exp``.
 
     The computation during ``fit`` is::
 
@@ -38,13 +40,16 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
 
         transformer.inverse_transform(regressor.predict(X))
 
-    Read more in the :ref:`User Guide <preprocessing_targets>`.
+    Read more in the :ref:`User Guide <transformed_target_regressor>`.
+
+    .. versionadded:: 0.20
 
     Parameters
     ----------
-    regressor : object, default=LinearRegression()
+    regressor : object, default=None
         Regressor object such as derived from ``RegressorMixin``. This
         regressor will automatically be cloned each time prior to fitting.
+        If regressor is ``None``, ``LinearRegression()`` is created and used.
 
     transformer : object, default=None
         Estimator object such as derived from ``TransformerMixin``. Cannot be
@@ -54,13 +59,13 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
         transformer will be cloned during fitting. Also, the transformer is
         restricting ``y`` to be a numpy array.
 
-    func : function, optional
+    func : function, default=None
         Function to apply to ``y`` before passing to ``fit``. Cannot be set at
         the same time as ``transformer``. The function needs to return a
         2-dimensional array. If ``func`` is ``None``, the function used will be
         the identity function.
 
-    inverse_func : function, optional
+    inverse_func : function, default=None
         Function to apply to the prediction of the regressor. Cannot be set at
         the same time as ``transformer`` as well. The function needs to return
         a 2-dimensional array. The inverse function is used to return
@@ -87,7 +92,7 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
     ...                                 func=np.log, inverse_func=np.exp)
     >>> X = np.arange(4).reshape(-1, 1)
     >>> y = np.exp(2 * X).ravel()
-    >>> tt.fit(X, y) # doctest: +ELLIPSIS
+    >>> tt.fit(X, y)
     TransformedTargetRegressor(...)
     >>> tt.score(X, y)
     1.0
@@ -104,7 +109,8 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
     <sphx_glr_auto_examples_compose_plot_transformed_target.py>`.
 
     """
-    def __init__(self, regressor=None, transformer=None,
+    @_deprecate_positional_args
+    def __init__(self, regressor=None, *, transformer=None,
                  func=None, inverse_func=None, check_inverse=True):
         self.regressor = regressor
         self.transformer = transformer
@@ -113,6 +119,12 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
         self.check_inverse = check_inverse
 
     def _fit_transformer(self, y):
+        """Check transformer and fit transformer.
+
+        Create the default transformer, fit it and make additional inverse
+        check on a subset (optional).
+
+        """
         if (self.transformer is not None and
                 (self.func is not None or self.inverse_func is not None)):
             raise ValueError("'transformer' and functions 'func'/"
@@ -133,7 +145,7 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
         self.transformer_.fit(y)
         if self.check_inverse:
             idx_selected = slice(None, None, max(1, y.shape[0] // 10))
-            y_sel = safe_indexing(y, idx_selected)
+            y_sel = _safe_indexing(y, idx_selected)
             y_sel_t = self.transformer_.transform(y_sel)
             if not np.allclose(y_sel,
                                self.transformer_.inverse_transform(y_sel_t)):
@@ -142,21 +154,22 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
                               " you are sure you want to proceed regardless"
                               ", set 'check_inverse=False'", UserWarning)
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, **fit_params):
         """Fit the model according to the given training data.
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training vector, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : array-like, shape (n_samples,)
+        y : array-like of shape (n_samples,)
             Target values.
 
-        sample_weight : array-like, shape (n_samples,) optional
-            Array of weights that are assigned to individual samples.
-            If not provided, then each sample is given unit weight.
+        **fit_params : dict
+            Parameters passed to the ``fit`` method of the underlying
+            regressor.
+
 
         Returns
         -------
@@ -177,23 +190,21 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
             y_2d = y
         self._fit_transformer(y_2d)
 
+        # transform y and convert back to 1d array if needed
+        y_trans = self.transformer_.transform(y_2d)
+        # FIXME: a FunctionTransformer can return a 1D array even when validate
+        # is set to True. Therefore, we need to check the number of dimension
+        # first.
+        if y_trans.ndim == 2 and y_trans.shape[1] == 1:
+            y_trans = y_trans.squeeze(axis=1)
+
         if self.regressor is None:
             from ..linear_model import LinearRegression
             self.regressor_ = LinearRegression()
         else:
             self.regressor_ = clone(self.regressor)
 
-        # transform y and convert back to 1d array if needed
-        y_trans = self.transformer_.fit_transform(y_2d)
-        # FIXME: a FunctionTransformer can return a 1D array even when validate
-        # is set to True. Therefore, we need to check the number of dimension
-        # first.
-        if y_trans.ndim == 2 and y_trans.shape[1] == 1:
-            y_trans = y_trans.squeeze(axis=1)
-        if sample_weight is None:
-            self.regressor_.fit(X, y_trans)
-        else:
-            self.regressor_.fit(X, y_trans, sample_weight=sample_weight)
+        self.regressor_.fit(X, y_trans, **fit_params)
 
         return self
 
@@ -205,16 +216,16 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Samples.
 
         Returns
         -------
-        y_hat : array, shape = (n_samples,)
+        y_hat : ndarray of shape (n_samples,)
             Predicted values.
 
         """
-        check_is_fitted(self, "regressor_")
+        check_is_fitted(self)
         pred = self.regressor_.predict(X)
         if pred.ndim == 1:
             pred_trans = self.transformer_.inverse_transform(
@@ -226,3 +237,20 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
             pred_trans = pred_trans.squeeze(axis=1)
 
         return pred_trans
+
+    def _more_tags(self):
+        return {'poor_score': True, 'no_validation': True}
+
+    @property
+    def n_features_in_(self):
+        # For consistency with other estimators we raise a AttributeError so
+        # that hasattr() returns False the estimator isn't fitted.
+        try:
+            check_is_fitted(self)
+        except NotFittedError as nfe:
+            raise AttributeError(
+                "{} object has no n_features_in_ attribute."
+                .format(self.__class__.__name__)
+            ) from nfe
+
+        return self.regressor_.n_features_in_

@@ -45,18 +45,15 @@ X, y = make_classification(n_samples=500, n_features=25,
 # error trajectory during training.
 ensemble_clfs = [
     ("RandomForestClassifier, max_features='sqrt'",
-        RandomForestClassifier(n_estimators=100,
-                               warm_start=True, oob_score=True,
+        RandomForestClassifier(warm_start=True, oob_score=True,
                                max_features="sqrt",
                                random_state=RANDOM_STATE)),
     ("RandomForestClassifier, max_features='log2'",
-        RandomForestClassifier(n_estimators=100,
-                               warm_start=True, max_features='log2',
+        RandomForestClassifier(warm_start=True, max_features='log2',
                                oob_score=True,
                                random_state=RANDOM_STATE)),
     ("RandomForestClassifier, max_features=None",
-        RandomForestClassifier(n_estimators=100,
-                               warm_start=True, max_features=None,
+        RandomForestClassifier(warm_start=True, max_features=None,
                                oob_score=True,
                                random_state=RANDOM_STATE))
 ]

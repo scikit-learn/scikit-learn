@@ -28,9 +28,9 @@ iris = datasets.load_iris()
 X = iris.data[:, :2]  # we only take the first two features.
 Y = iris.target
 
-logreg = LogisticRegression(C=1e5, solver='lbfgs', multi_class='multinomial')
+logreg = LogisticRegression(C=1e5)
 
-# we create an instance of Neighbours Classifier and fit the data.
+# Create an instance of Logistic Regression Classifier and fit the data.
 logreg.fit(X, Y)
 
 # Plot the decision boundary. For that, we will assign a color to each
