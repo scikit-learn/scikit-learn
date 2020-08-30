@@ -22,7 +22,8 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
                             grid_resolution=100, percentiles=(0.05, 0.95),
                             method='auto', n_jobs=None, verbose=0,
                             line_kw=None, contour_kw=None, ax=None,
-                            kind='average', subsample=1000):
+                            kind='average', subsample=1000,
+                            is_categorical=None):
     """Partial dependence (PD) and individual conditional expectation (ICE)
     plots.
 
@@ -209,6 +210,13 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
 
         .. versionadded:: 0.24
 
+    is_categorical : list of {boolean, pair of boolean}, default=None
+        Whether each target feature in `features` is categorical or not.
+        The list should be same size as `features`. If `None`, all features
+        are assumed to be continuous.
+
+        .. versionadded:: 0.24
+
     Returns
     -------
     display: :class:`~sklearn.inspection.PartialDependenceDisplay`
@@ -321,6 +329,43 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
                 f"the (0, 1) range."
             )
 
+    if is_categorical is None:
+        is_categorical = []
+        for fxs in features:
+            cats = (False,) if len(fxs) == 1 else (False, False)
+            is_categorical.append(cats)
+    else:
+        if len(features) != len(is_categorical):
+            raise ValueError('Parameter is_categorical should be the same '
+                             'size as features.')
+
+        tmp_categorical = []
+        has_categorical = False
+        for cats in is_categorical:
+            if isinstance(cats, bool):
+                cats = (cats,)
+            try:
+                cats = tuple(c for c in cats)
+            except TypeError as e:
+                raise ValueError(
+                    'Each entry in is_categorical must be either a boolean '
+                    'or an iterable of size at most 2.'
+                ) from e
+            if not 1 <= np.size(cats) <= 2:
+                raise ValueError('Each entry in is_categorical must be either '
+                                 'a boolean or an iterable of size at most 2.')
+            if np.size(cats) == 2 and (cats[0] is True or cats[1] is True):
+                raise ValueError('Contour plots are not supported for '
+                                 'categorical features.')
+            if cats[0] is True or (np.size(cats) == 2 and cats[1] is True):
+                has_categorical = True
+            tmp_categorical.append(cats)
+        is_categorical = tmp_categorical
+
+        if has_categorical and kind != 'average':
+            raise ValueError('It is not possible to display individual effects '
+                             'for categorical features.')
+
     # compute predictions and/or averaged predictions
     pd_results = Parallel(n_jobs=n_jobs, verbose=verbose)(
         delayed(partial_dependence)(estimator, X, fxs,
@@ -328,8 +373,9 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
                                     method=method,
                                     grid_resolution=grid_resolution,
                                     percentiles=percentiles,
-                                    kind=kind)
-        for fxs in features)
+                                    kind=kind,
+                                    is_categorical=cats)
+        for fxs, cats in zip(features, is_categorical))
 
     # For multioutput regression, we can only check the validity of target
     # now that we have the predictions.
@@ -362,10 +408,11 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
         pdp_lim[n_fx] = (min_pd, max_pd)
 
     deciles = {}
-    for fx in chain.from_iterable(features):
-        if fx not in deciles:
-            X_col = _safe_indexing(X, fx, axis=1)
-            deciles[fx] = mquantiles(X_col, prob=np.arange(0.1, 1.0, 0.1))
+    for fxs, cats in zip(features, is_categorical):
+        for fx, cat in zip(fxs, cats):
+            if not cat and fx not in deciles:
+                X_col = _safe_indexing(X, fx, axis=1)
+                deciles[fx] = mquantiles(X_col, prob=np.arange(0.1, 1.0, 0.1))
 
     display = PartialDependenceDisplay(pd_results=pd_results,
                                        features=features,
@@ -374,7 +421,8 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
                                        pdp_lim=pdp_lim,
                                        deciles=deciles,
                                        kind=kind,
-                                       subsample=subsample)
+                                       subsample=subsample,
+                                       is_categorical=is_categorical)
     return display.plot(ax=ax, n_cols=n_cols, line_kw=line_kw,
                         contour_kw=contour_kw)
 
@@ -453,6 +501,13 @@ class PartialDependenceDisplay:
 
         .. versionadded:: 0.24
 
+    is_categorical : list of (bool,) or list of (bool, bool)
+        Whether each target feature in `features` is categorical or not.
+        The list should be same size as `features`. If `None`, all features
+        are assumed to be continuous.
+
+        .. versionadded:: 0.24
+
     Attributes
     ----------
     bounding_ax_ : matplotlib Axes or None
@@ -501,7 +556,8 @@ class PartialDependenceDisplay:
     """
     @_deprecate_positional_args
     def __init__(self, pd_results, *, features, feature_names, target_idx,
-                 pdp_lim, deciles, kind='average', subsample=1000):
+                 pdp_lim, deciles, kind='average', subsample=1000,
+                 is_categorical=None):
         self.pd_results = pd_results
         self.features = features
         self.feature_names = feature_names
@@ -510,6 +566,7 @@ class PartialDependenceDisplay:
         self.deciles = deciles
         self.kind = kind
         self.subsample = subsample
+        self.is_categorical = is_categorical
 
     def _get_sample_count(self, n_samples):
         if isinstance(self.subsample, numbers.Integral):
@@ -520,7 +577,8 @@ class PartialDependenceDisplay:
             return ceil(n_samples * self.subsample)
         return n_samples
 
-    def plot(self, ax=None, n_cols=3, line_kw=None, contour_kw=None):
+    def plot(self, ax=None, n_cols=3, line_kw=None, contour_kw=None,
+             bar_kw=None):
         """Plot partial dependence plots.
 
         Parameters
@@ -547,6 +605,10 @@ class PartialDependenceDisplay:
             Dict with keywords passed to the `matplotlib.pyplot.contourf`
             call for two-way partial dependence plots.
 
+        bar_kw : dict, default=None
+            Dict with keywords passed to the `matplotlib.pyplot.bar` call.
+            For categorical partial dependence plots.
+
         Returns
         -------
         display: :class:`~sklearn.inspection.PartialDependenceDisplay`
@@ -563,6 +625,8 @@ class PartialDependenceDisplay:
             line_kw = {}
         if contour_kw is None:
             contour_kw = {}
+        if bar_kw is None:
+            bar_kw = {}
 
         if ax is None:
             _, ax = plt.subplots()
@@ -573,6 +637,9 @@ class PartialDependenceDisplay:
         default_line_kws = {'color': 'C0'}
         line_kw = {**default_line_kws, **line_kw}
         individual_line_kw = line_kw.copy()
+
+        default_bar_kws = {'color': 'C0'}
+        bar_kw = {**default_bar_kws, **bar_kw}
 
         if self.kind == 'individual' or self.kind == 'both':
             individual_line_kw['alpha'] = 0.3
@@ -609,6 +676,7 @@ class PartialDependenceDisplay:
                 self.lines_ = np.empty((n_rows, n_cols, n_sampled),
                                        dtype=object)
             self.contours_ = np.empty((n_rows, n_cols), dtype=object)
+            self.bars_ = np.empty((n_rows, n_cols), dtype=object)
 
             axes_ravel = self.axes_.ravel()
 
@@ -637,6 +705,7 @@ class PartialDependenceDisplay:
                 self.lines_ = np.empty(ax.shape + (n_sampled,),
                                        dtype=object)
             self.contours_ = np.empty_like(ax, dtype=object)
+            self.bars_ = np.empty_like(ax, dtype=object)
 
         # create contour levels for two-way plots
         if 2 in self.pdp_lim:
@@ -648,11 +717,15 @@ class PartialDependenceDisplay:
         # Create 1d views of these 2d arrays for easy indexing
         lines_ravel = self.lines_.ravel(order='C')
         contours_ravel = self.contours_.ravel(order='C')
+        bars_ravel = self.bars_.ravel(order='C')
         vlines_ravel = self.deciles_vlines_.ravel(order='C')
         hlines_ravel = self.deciles_hlines_.ravel(order='C')
 
-        for i, axi, fx, pd_result in zip(count(), self.axes_.ravel(),
-                                         self.features, self.pd_results):
+        for i, axi, fx, cat, pd_result in zip(count(),
+                                              self.axes_.ravel(),
+                                              self.features,
+                                              self.is_categorical,
+                                              self.pd_results):
 
             avg_preds = None
             preds = None
@@ -679,10 +752,17 @@ class PartialDependenceDisplay:
                             values[0], ins.ravel(), **individual_line_kw
                         )[0]
                 if self.kind == 'average':
-                    lines_ravel[i] = axi.plot(
-                        values[0], avg_preds[self.target_idx].ravel(),
-                        **line_kw
-                    )[0]
+                    if cat[0] is True:
+                        bars_ravel[1] = axi.bar(
+                            values[0], avg_preds[self.target_idx].ravel(),
+                            **bar_kw
+                        )[0]
+                        axi.tick_params(axis='x', rotation=90)
+                    else:
+                        lines_ravel[i] = axi.plot(
+                            values[0], avg_preds[self.target_idx].ravel(),
+                            **line_kw
+                        )[0]
                 elif self.kind == 'both':
                     lines_ravel[i] = axi.plot(
                         values[0], avg_preds[self.target_idx].ravel(),
@@ -705,8 +785,9 @@ class PartialDependenceDisplay:
             trans = transforms.blended_transform_factory(axi.transData,
                                                          axi.transAxes)
             ylim = axi.get_ylim()
-            vlines_ravel[i] = axi.vlines(self.deciles[fx[0]], 0, 0.05,
-                                         transform=trans, color='k')
+            if self.deciles.get(fx[0], None) is not None:
+                vlines_ravel[i] = axi.vlines(self.deciles[fx[0]], 0, 0.05,
+                                             transform=trans, color='k')
             axi.set_ylim(ylim)
 
             # Set xlabel if it is not already set

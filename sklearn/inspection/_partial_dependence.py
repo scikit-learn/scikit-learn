@@ -36,7 +36,7 @@ __all__ = [
 ]
 
 
-def _grid_from_X(X, percentiles, grid_resolution):
+def _grid_from_X(X, percentiles, grid_resolution, is_categorical):
     """Generate a grid of points based on the percentiles of X.
 
     The grid is a cartesian product between the columns of ``values``. The
@@ -57,6 +57,13 @@ def _grid_from_X(X, percentiles, grid_resolution):
     grid_resolution : int
         The number of equally spaced points to be placed on the grid for each
         feature.
+
+    is_categorical : array-like of boolean
+        Whether each target feature in `features` is categorical or not.
+        The list should be same size as `features`. If `None`, all features
+        are assumed to be continuous.
+
+        .. versionadded:: 0.24
 
     Returns
     -------
@@ -83,8 +90,8 @@ def _grid_from_X(X, percentiles, grid_resolution):
     values = []
     for feature in range(X.shape[1]):
         uniques = np.unique(_safe_indexing(X, feature, axis=1))
-        if uniques.shape[0] < grid_resolution:
-            # feature has low resolution use unique vals
+        if is_categorical[feature] or uniques.shape[0] < grid_resolution:
+            # feature is categorical or has low resolution use unique vals
             axis = uniques
         else:
             # create axis based on percentiles and grid resolution
@@ -206,7 +213,7 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
 @_deprecate_positional_args
 def partial_dependence(estimator, X, features, *, response_method='auto',
                        percentiles=(0.05, 0.95), grid_resolution=100,
-                       method='auto', kind='legacy'):
+                       method='auto', kind='legacy', is_categorical=None):
     """Partial dependence of ``features``.
 
     Partial dependence of a feature (or a set of features) corresponds to
@@ -310,6 +317,13 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
             `kind='legacy'` is deprecated and will be removed in version 0.26.
             `kind='average'` will be the new default. It is intended to migrate
             from the ndarray output to :class:`~sklearn.utils.Bunch` output.
+
+    is_categorical : array-like of boolean
+        Whether each target feature in `features` is categorical or not.
+        The list should be same size as `features`. If `None`, all features
+        are assumed to be continuous.
+
+        .. versionadded:: 0.24
 
 
     Returns
@@ -475,9 +489,16 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
         _get_column_indices(X, features), dtype=np.int32, order='C'
     ).ravel()
 
+    if is_categorical is None:
+        is_categorical = [False] * len(features)
+    else:
+        if len(features) != len(is_categorical):
+            raise ValueError('Parameter is_categorical should be the same '
+                             'size as features.')
+
     grid, values = _grid_from_X(
         _safe_indexing(X, features_indices, axis=1), percentiles,
-        grid_resolution
+        grid_resolution, is_categorical
     )
 
     if method == 'brute':
