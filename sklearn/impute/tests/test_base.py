@@ -75,15 +75,14 @@ def test_base_no_precomputed_mask_fit(data):
     with pytest.raises(ValueError, match=err_msg):
         imputer.fit(data)
     with pytest.raises(ValueError, match=err_msg):
-        imputer.fit(data).transform(data)
-    with pytest.raises(ValueError, match=err_msg):
         imputer.fit_transform(data)
 
 
 def test_base_no_precomputed_mask_transform(data):
     imputer = NoPrecomputedMaskTransform(add_indicator=True)
     err_msg = "precomputed is True but the input data is not a mask"
+    imputer.fit(data)
     with pytest.raises(ValueError, match=err_msg):
-        imputer.fit(data).transform(data)
+        imputer.transform(data)
     with pytest.raises(ValueError, match=err_msg):
         imputer.fit_transform(data)
