@@ -6,7 +6,6 @@ from numpy.testing import assert_array_equal
 
 from sklearn.base import BaseEstimator
 from sklearn.feature_selection._base import SelectorMixin
-from sklearn.utils import check_array
 
 
 class StepSelector(SelectorMixin, BaseEstimator):
