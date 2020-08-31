@@ -943,11 +943,11 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
 
     A :
 
-    .. versionadded:: 0.XX
+        .. versionadded:: 0.XX
 
     B :
 
-    .. versionadded:: 0.XX
+        .. versionadded:: 0.XX
 
     n_components : int, default=None
         Number of components, if n_components is not set all features
@@ -956,7 +956,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
     batch_size : int, default=None
         Number of samples per batch.
 
-    .. versionadded:: 0.XX
+        .. versionadded:: 0.XX
 
     init : {'random', 'nndsvd', 'nndsvda', 'nndsvdar', 'custom'}, default=None
         Method used to initialize the procedure.
