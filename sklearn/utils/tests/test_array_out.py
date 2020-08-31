@@ -18,7 +18,6 @@ def test_feature_names_no_names(X):
     assert _get_feature_names(X) is None
 
 
-
 @pytest.mark.parametrize("column_name", [
     "columns", "my_special_name"
 ])
