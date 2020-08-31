@@ -1494,7 +1494,7 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
         if self.norm:
             X = normalize(X, norm=self.norm, copy=False)
 
-        return self._make_array_out(X, X_orig)
+        return self._make_array_out(X, X_orig, 'one_to_one')
 
     @property
     def idf_(self):

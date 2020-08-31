@@ -319,7 +319,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         finally:
             # revert the initial dtype to avoid modifying self.
             self._encoder.dtype = dtype_init
-        return self._make_array_out(Xt_enc, X, 'one_to_one')
+
+        return self._make_array_out(Xt_enc, X, self._encoder.get_feature_names)
 
     def inverse_transform(self, Xt):
         """
