@@ -101,10 +101,12 @@ Changelog
 ..................................
 
 - |API| The bounds of the `n_components` parameter is now restricted:
+
   - into `[1, min(n_samples, n_features, n_targets)]`, for
     :class:`cross_decomposition.PLSSVD`, :class:`cross_decomposition.CCA`,
-    and :class:`cross_decomposition.PLSCanonical`
+    and :class:`cross_decomposition.PLSCanonical`.
   - into `[1, n_features]` or :class:`cross_decomposition.PLSRegression`.
+
   An error will be raised in 0.26. :pr:`17095` by `Nicolas Hug`_.
 
 - |API| For :class:`cross_decomposition.PLSSVD`,
