@@ -128,7 +128,7 @@ def test_as_frame_no_pandas():
     check_pandas_dependency_message(fetch_20newsgroups_vectorized)
 
 
-def test_outdated_pickle():
+def test_outdated_pickle(fetch_20newsgroups_vectorized_fxt):
     with patch("os.path.exists") as mock_is_exist:
         with patch("joblib.load") as mock_load:
             # mock that the dataset was cached
@@ -137,4 +137,4 @@ def test_outdated_pickle():
             mock_load.return_value = ("X", "y")
             err_msg = "The cached dataset located in"
             with pytest.raises(ValueError, match=err_msg):
-                fetch_20newsgroups_vectorized(as_frame=True)
+                fetch_20newsgroups_vectorized_fxt(as_frame=True)
