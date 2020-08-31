@@ -52,16 +52,10 @@ def test_fetch_kddcup99_shuffle(fetch_kddcup99_fxt):
     dataset_shuffled = fetch_kddcup99_fxt(
         random_state=0, subset='SA', shuffle=True, percent10=True,
     )
-    assert any(dataset_shuffled.target[-100:] == b'normal.')
+    assert set(dataset['target']) == set(dataset_shuffled['target'])
     assert dataset_shuffled.data.shape == dataset.data.shape
     assert dataset_shuffled.target.shape == dataset.target.shape
 
 
 def test_pandas_dependency_message(fetch_kddcup99_fxt, hide_available_pandas):
     check_pandas_dependency_message(fetch_kddcup99)
-
-
-def test_OSError_message(fetch_kddcup99_fxt):
-    expected_msg = ('Download kddcup99 to run this test')
-    with pytest.raises(OSError, match=expected_msg):
-        fetch_kddcup99_fxt(data_home="./", download_if_missing=False)
