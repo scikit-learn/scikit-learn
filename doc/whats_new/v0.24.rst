@@ -198,7 +198,7 @@ Changelog
 ...............................
 
 - |Enhancement| A new method
-  :class:`gaussian_process.Kernel._check_bounds_params` is called after
+  :meth:`gaussian_process.Kernel._check_bounds_params` is called after
   fitting a Gaussian Process and raises a ``ConvergenceWarning`` if the bounds
   of the hyperparameters are too tight.
   :issue:`12638` by :user:`Sylvain Lannuzel <SylvainLan>`.
