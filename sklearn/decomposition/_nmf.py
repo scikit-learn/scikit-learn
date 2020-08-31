@@ -1081,7 +1081,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
     Lefevre, A., Bach, F., Fevotte, C. (2011). Online algorithms for
     nonnegative matrix factorization with the Itakura-Saito divergence.
     WASPA (https://doi.org/10.1109/ASPAA.2011.6082314,
-           https://hal.archives-ouvertes.fr/hal-00602050)
+    https://hal.archives-ouvertes.fr/hal-00602050)
     """
     X = check_array(X, accept_sparse=('csr', 'csc'),
                     dtype=[np.float64, np.float32])
