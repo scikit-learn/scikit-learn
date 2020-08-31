@@ -893,6 +893,7 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
 @_deprecate_positional_args
 def non_negative_factorization(X, W=None, H=None, n_components=None, *,
                                init=None, update_H=True, solver='cd',
+                               A=None, B=None, batch_size=None,
                                beta_loss='frobenius', tol=1e-4,
                                max_iter=200, alpha=0., l1_ratio=0.,
                                regularization=None, random_state=None,
@@ -940,9 +941,22 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
         If init='custom', it is used as initial guess for the solution.
         If update_H=False, it is used as a constant, to solve for W only.
 
+    A :
+    
+    .. versionadded:: 0.XX
+
+    B :
+
+    .. versionadded:: 0.XX
+
     n_components : int, default=None
         Number of components, if n_components is not set all features
         are kept.
+
+    batch_size : int, default=None
+        Number of samples per batch.
+
+    .. versionadded:: 0.XX
 
     init : {'random', 'nndsvd', 'nndsvda', 'nndsvdar', 'custom'}, default=None
         Method used to initialize the procedure.
@@ -980,7 +994,8 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
         - 'cd' is a Coordinate Descent solver that uses Fast Hierarchical
             Alternating Least Squares (Fast HALS).
 
-        - 'mu' is a Multiplicative Update solver.
+        - 'mu' is a Multiplicative Update solver
+            (this is the defaulte when ``batch_size`` is not ``None``).
 
         .. versionadded:: 0.17
            Coordinate Descent solver.
@@ -1041,12 +1056,16 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
     n_iter : int
         Actual number of iterations.
 
+    A :
+    
+    B : 
+
     Examples
     --------
     >>> import numpy as np
     >>> X = np.array([[1,1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
     >>> from sklearn.decomposition import non_negative_factorization
-    >>> W, H, n_iter = non_negative_factorization(X, n_components=2,
+    >>> W, H, n_iter, _, _ = non_negative_factorization(X, n_components=2,
     ... init='random', random_state=0)
 
     References
@@ -1058,6 +1077,11 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
 
     Fevotte, C., & Idier, J. (2011). Algorithms for nonnegative matrix
     factorization with the beta-divergence. Neural Computation, 23(9).
+
+    Lefevre, A., Bach, F., Fevotte, C. (2011). Online algorithms for
+    nonnegative matrix factorization with the Itakura-Saito divergence.
+    WASPA (https://doi.org/10.1109/ASPAA.2011.6082314,
+           https://hal.archives-ouvertes.fr/hal-00602050)
     """
     X = check_array(X, accept_sparse=('csr', 'csc'),
                     dtype=[np.float64, np.float32])
@@ -1087,6 +1111,10 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
     if init == 'custom' and update_H:
         _check_init(H, (n_components, n_features), "NMF (input H)")
         _check_init(W, (n_samples, n_components), "NMF (input W)")
+        if batch_size is not None:
+            _check_init(A, (n_components, n_features), "NMF (input A)")
+            _check_init(B, (n_components, n_features), "NMF (input B)")
+
         if H.dtype != X.dtype or W.dtype != X.dtype:
             raise TypeError("H and W should have the same dtype as X. Got "
                             "H.dtype = {} and W.dtype = {}."
@@ -1103,13 +1131,20 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
         else:
             W = np.zeros((n_samples, n_components), dtype=X.dtype)
     else:
-        W, H, _, _ = _initialize_nmf(X, n_components, init=init,
-                                     random_state=random_state)
+        if batch_size is None:
+            W, H, _, _ = _initialize_nmf(X, n_components, init=init,
+                                         random_state=random_state)
+        else:
+            W, H, A, B = _initialize_nmf(X, n_components, init=init,
+                                         random_state=random_state)
 
     l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = _compute_regularization(
         alpha, l1_ratio, regularization)
 
     if solver == 'cd':
+        if batch_size is not None:
+            raise ValueError("Coordinate descent algorithm is not available "
+                             "for MiniBatchNMF. Please set solver to 'mu'.")
         W, H, n_iter = _fit_coordinate_descent(X, W, H, tol, max_iter,
                                                l1_reg_W, l1_reg_H,
                                                l2_reg_W, l2_reg_H,
@@ -1118,15 +1153,12 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
                                                shuffle=shuffle,
                                                random_state=random_state)
     elif solver == 'mu':
-        batch_size = None
-        A = None
-        B = None
         W, H, n_iter = _fit_multiplicative_update(X, W, H, A, B, beta_loss,
                                                   batch_size, max_iter,
                                                   tol, l1_reg_W, l1_reg_H,
                                                   l2_reg_W, l2_reg_H, update_H,
                                                   verbose)
-
+                                                  
     else:
         raise ValueError("Invalid solver parameter '%s'." % solver)
 
@@ -1134,214 +1166,10 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
         warnings.warn("Maximum number of iterations %d reached. Increase it to"
                       " improve convergence." % max_iter, ConvergenceWarning)
 
-    return W, H, n_iter
-
-
-@_deprecate_positional_args
-def non_negative_factorization_online(X, W=None, H=None, n_components=None, *,
-                                      init=None, update_H=True, solver='mu',
-                                      A=None, B=None, batch_size=1024,
-                                      beta_loss='kullback-leibler', tol=1e-4,
-                                      max_iter=200, alpha=0., l1_ratio=0.,
-                                      regularization=None, random_state=None,
-                                      verbose=0, shuffle=False):
-    r"""Compute Non-negative Matrix Factorization online (MiniBatchNMF)
-
-    Find two non-negative matrices (W, H) whose product approximates the non-
-    negative matrix X. This factorization can be used for example for
-    dimensionality reduction, source separation or topic extraction.
-
-    The objective function is minimized with an alternating minimization of W
-    and H. If H is given and update_H=False, it solves for W only.
-
-    Parameters
-    ----------
-    X : array-like, shape (n_samples, n_features)
-        Constant matrix.
-
-    W : array-like, shape (n_samples, n_components)
-        If init='custom', it is used as initial guess for the solution.
-
-    H : array-like, shape (n_components, n_features)
-        If init='custom', it is used as initial guess for the solution.
-        If update_H=False, it is used as a constant, to solve for W only.
-
-    A :
-
-    B :
-
-    n_components : integer
-        Number of components, if n_components is not set all features
-        are kept.
-
-    batch_size :
-
-    init : None | 'random' | 'nndsvd' | 'nndsvda' | 'nndsvdar' | 'custom'
-        Method used to initialize the procedure.
-        Default: None.
-
-        Valid options:
-
-        - None: 'nndsvd' if n_components < n_features, otherwise 'random'.
-
-        - 'random': non-negative random matrices, scaled with:
-            sqrt(X.mean() / n_components)
-
-        - 'nndsvd': Nonnegative Double Singular Value Decomposition (NNDSVD)
-            initialization (better for sparseness)
-
-        - 'nndsvda': NNDSVD with zeros filled with the average of X
-            (better when sparsity is not desired)
-
-        - 'nndsvdar': NNDSVD with zeros filled with small random values
-            (generally faster, less accurate alternative to NNDSVDa
-            for when sparsity is not desired)
-
-        - 'custom': use custom matrices W and H
-
-        .. versionchanged:: 0.23
-            The default value of `init` changed from 'random' to None in 0.23.
-
-    update_H : boolean, default: True
-        Set to True, both W and H will be estimated from initial guesses.
-        Set to False, only W will be estimated.
-
-    solver : 'mu'
-        Numerical solver to use:
-
-        - 'mu' is a Multiplicative Update solver.
-
-        .. versionadded:: 0.19
-           Multiplicative Update solver.
-
-    beta_loss : float or string, default 'itakura-saito'
-        Note that for beta_loss <= 0 (or 'itakura-saito'), the input
-        matrix X cannot contain zeros. Used only in 'mu' solver.
-
-    tol : float, default: 1e-4
-        Tolerance of the stopping condition.
-
-    max_iter : integer, default: 200
-        Maximum number of iterations before timing out.
-
-    alpha : double, default: 0.
-        Constant that multiplies the regularization terms.
-
-    l1_ratio : double, default: 0.
-        The regularization mixing parameter, with 0 <= l1_ratio <= 1.
-        For l1_ratio = 0 the penalty is an elementwise L2 penalty
-        (aka Frobenius Norm).
-        For l1_ratio = 1 it is an elementwise L1 penalty.
-        For 0 < l1_ratio < 1, the penalty is a combination of L1 and L2.
-
-    regularization : 'both' | 'components' | 'transformation' | None
-        Select whether the regularization affects the components (H), the
-        transformation (W), both or none of them.
-
-    random_state : int, RandomState instance, default=None
-        Used for NMF initialisation (when ``init`` == 'nndsvdar' or
-        'random'), and in Coordinate Descent. Pass an int for reproducible
-        results across multiple function calls.
-        See :term:`Glossary <random_state>`.
-
-    verbose : integer, default: 0
-        The verbosity level.
-
-    shuffle : boolean, default: False
-        If true, randomize the order of coordinates in the CD solver.
-
-    Returns
-    -------
-    W : array-like, shape (n_samples, n_components)
-        Solution to the non-negative least squares problem.
-
-    H : array-like, shape (n_components, n_features)
-        Solution to the non-negative least squares problem.
-
-    n_iter : int
-        Actual number of iterations.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> X = np.array([[1,1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
-    >>> from sklearn.decomposition import non_negative_factorization_online
-    >>> W, H, A, B, n_iter = non_negative_factorization_online(X,
-    ... n_components=2,
-    ... init='random', random_state=0)
-
-    References
-    ----------
-    Fevotte, C., & Idier, J. (2011). Algorithms for nonnegative matrix
-    factorization with the beta-divergence. Neural Computation, 23(9).
-
-    Lefevre, A., Bach, F., Fevotte, C. (2011). Online algorithms for
-    nonnegative matrix factorization with the Itakura-Saito divergence.
-    WASPA (https://doi.org/10.1109/ASPAA.2011.6082314,
-           https://hal.archives-ouvertes.fr/hal-00602050)
-    """
-    X = check_array(X, accept_sparse=('csr', 'csc'),
-                    dtype=[np.float64, np.float32])
-    check_non_negative(X, "NMF (input X)")
-    beta_loss = _check_string_param(solver, regularization, beta_loss, init)
-
-    n_samples, n_features = X.shape
-    if n_components is None:
-        n_components = n_features
-
-    if not isinstance(n_components, numbers.Integral) or n_components <= 0:
-        raise ValueError("Number of components must be a positive integer;"
-                         " got (n_components=%r)" % n_components)
-    if not isinstance(max_iter, numbers.Integral) or max_iter < 0:
-        raise ValueError("Maximum number of iterations must be a positive "
-                         "integer; got (max_iter=%r)" % max_iter)
-    if not isinstance(tol, numbers.Number) or tol < 0:
-        raise ValueError("Tolerance for stopping criteria must be "
-                         "positive; got (tol=%r)" % tol)
-
-    # check W and H, or initialize them
-    if init == 'custom' and update_H:
-        _check_init(H, (n_components, n_features), "NMF (input H)")
-        _check_init(A, (n_components, n_features), "NMF (input A)")
-        _check_init(B, (n_components, n_features), "NMF (input B)")
-        _check_init(W, (n_samples, n_components), "NMF (input W)")
-        if H.dtype != X.dtype or W.dtype != X.dtype:
-            raise TypeError("H and W should have the same dtype as X. Got "
-                            "H.dtype = {} and W.dtype = {}."
-                            .format(H.dtype, W.dtype))
-    elif not update_H:
-        _check_init(H, (n_components, n_features), "NMF (input H)")
-        if H.dtype != X.dtype:
-            raise TypeError("H should have the same dtype as X. Got H.dtype = "
-                            "{}.".format(H.dtype))
-        # the only solver available 'mu' solver
-        # should not be initialized by zeros
-        avg = np.sqrt(X.mean() / n_components)
-        W = np.full((n_samples, n_components), avg, dtype=X.dtype)
-        A = None
-        B = None
+    if batch_size is None:
+        return W, H, n_iter
     else:
-        W, H, A, B = _initialize_nmf(X, n_components, init=init,
-                                     random_state=random_state)
-
-    l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = _compute_regularization(
-        alpha, l1_ratio, regularization)
-
-    if solver == 'mu':
-        W, H, n_iter = _fit_multiplicative_update(X, W, H, A, B, beta_loss,
-                                                  batch_size, max_iter,
-                                                  tol, l1_reg_W, l1_reg_H,
-                                                  l2_reg_W, l2_reg_H, update_H,
-                                                  verbose)
-
-    else:
-        raise ValueError("Invalid solver parameter '%s'." % solver)
-
-    if n_iter == max_iter and tol > 0:
-        warnings.warn("Maximum number of iterations %d reached. Increase it to"
-                      " improve convergence." % max_iter, ConvergenceWarning)
-
-    return W, H, A, B, n_iter
+        return W, H, n_iter, A, B
 
 
 class NMF(TransformerMixin, BaseEstimator):
@@ -1696,7 +1524,7 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
 
         - 'custom': use custom matrices W and H
 
-    batch_size : int,
+    batch_size : int, default=1024
         number of samples in each mini-batch
 
     solver : 'mu'
@@ -1798,7 +1626,7 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
     @_deprecate_positional_args
     def __init__(self, n_components=None, init=None, solver='mu',
                  batch_size=1024,
-                 beta_loss='itakura-saito', tol=1e-4, max_iter=200,
+                 beta_loss='frobenius', tol=1e-4, max_iter=200,
                  random_state=None, alpha=0., l1_ratio=0., verbose=0,
                  shuffle=False, regularization='both'):
         self.n_components = n_components
@@ -1844,7 +1672,7 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
         X = self._validate_data(X, accept_sparse=('csr', 'csc'),
                                 dtype=[np.float64, np.float32])
 
-        W, H, A, B, n_iter_ = non_negative_factorization_online(
+        W, H, n_iter_, A, B = non_negative_factorization(
             X=X, W=W, H=H, A=None, B=None, n_components=self.n_components,
             batch_size=self.batch_size, init=self.init,
             update_H=True, solver=self.solver, beta_loss=self.beta_loss,
@@ -1886,7 +1714,7 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
             # W = np.maximum(1e-6, X.sum(axis=1).A)
             W = np.maximum(1e-6, np.dot(X, self._components_numerator))
             W /= W.sum(axis=1, keepdims=True)
-            W, H, A, B, n_iter_ = non_negative_factorization_online(
+            W, H, n_iter_, A, B = non_negative_factorization(
                 X=X, W=W, H=self.components_,
                 A=self._components_numerator, B=self._components_denominator,
                 n_components=self.n_components,

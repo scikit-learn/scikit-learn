@@ -2,9 +2,8 @@ import numpy as np
 import scipy.sparse as sp
 
 from scipy import linalg
-from sklearn.decomposition import NMF, non_negative_factorization
-from sklearn.decomposition import MiniBatchNMF
-from sklearn.decomposition import non_negative_factorization_online
+from sklearn.decomposition import NMF, MiniBatchNMF
+from sklearn.decomposition import non_negative_factorization
 from sklearn.decomposition import _nmf as nmf  # For testing internals
 from scipy.sparse import csc_matrix
 
@@ -62,6 +61,12 @@ def test_parameter_checking():
     msg = "Invalid beta_loss parameter: got 'spam' instead of one"
     assert_raise_message(
         ValueError, msg, MiniBatchNMF(solver='mu', beta_loss=name).fit, A
+    )
+    msg = ("Coordinate descent algorithm is not available for MiniBatchNMF. "
+           "Please set solver to 'mu'.")
+    assert_raise_message(
+        ValueError, msg,
+        MiniBatchNMF(solver='cd', beta_loss='frobenius').fit, A
     )
     msg = "Invalid beta_loss parameter: solver 'cd' does not handle "
     msg += "beta_loss = 1.0"
@@ -286,12 +291,6 @@ def test_non_negative_factorization_checking():
     msg = "Invalid regularization parameter: got 'spam' instead of one of"
     assert_raise_message(ValueError, msg, nnmf, A, A, 0 * A, 2, init='custom',
                          regularization='spam')
-
-    # Test for online version: may be removed ...
-    nnmf = non_negative_factorization_online
-    msg = ("Number of components must be a positive integer; "
-           "got (n_components=1.5)")
-    assert_raise_message(ValueError, msg, nnmf, A, A, A, 1.5, init='random')
 
 
 def _beta_divergence_dense(X, W, H, beta):

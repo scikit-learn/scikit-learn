@@ -5,8 +5,7 @@ this module can be regarded as dimensionality reduction techniques.
 """
 
 
-from ._nmf import (NMF, MiniBatchNMF, non_negative_factorization,
-                   non_negative_factorization_online)
+from ._nmf import (NMF, MiniBatchNMF, non_negative_factorization)
 from ._pca import PCA
 from ._incremental_pca import IncrementalPCA
 from ._kernel_pca import KernelPCA
@@ -36,7 +35,6 @@ __all__ = ['DictionaryLearning',
            'dict_learning_online',
            'fastica',
            'non_negative_factorization',
-           'non_negative_factorization_online',
            'randomized_svd',
            'sparse_encode',
            'FactorAnalysis',
