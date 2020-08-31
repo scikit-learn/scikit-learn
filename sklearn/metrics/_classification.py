@@ -244,7 +244,8 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
 
     See Also
     --------
-    plot_confusion_matrix : Plot Confusion Matrix
+    plot_confusion_matrix : Plot Confusion Matrix.
+    ConfusionMatrixDisplay : Confusion Matrix visualization.
 
     References
     ----------

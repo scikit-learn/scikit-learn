@@ -265,8 +265,9 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
 
     See Also
     --------
+    plot_det_curve : Plot detection error tradeoff (DET) curve.
+    DetCurveDisplay : DET curve visualization.
     roc_curve : Compute Receiver operating characteristic (ROC) curve
-
     precision_recall_curve : Compute precision-recall curve
 
     Examples
@@ -750,14 +751,12 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None,
 
     See also
     --------
-    average_precision_score : Compute average precision from prediction scores
-
-    det_curve: Compute error rates for different probability thresholds
-
-    roc_curve : Compute Receiver operating characteristic (ROC) curve
-
     plot_precision_recall_curve :
-        Plot Precision Recall Curve for binary classifiers
+        Plot Precision Recall Curve for binary classifiers.
+    PrecisionRecallDisplay : Precision Recall visualization.
+    average_precision_score : Compute average precision from prediction scores.
+    det_curve: Compute error rates for different probability thresholds.
+    roc_curve : Compute Receiver operating characteristic (ROC) curve.
 
     Examples
     --------
@@ -844,11 +843,10 @@ def roc_curve(y_true, y_score, *, pos_label=None, sample_weight=None,
 
     See Also
     --------
-    det_curve: Compute error rates for different probability thresholds
-
-    roc_auc_score : Compute the area under the ROC curve
-
-    plot_roc_curve : Plot Receiver operating characteristic (ROC) curve
+    plot_roc_curve : Plot Receiver operating characteristic (ROC) curve.
+    RocCurveDisplay : ROC Curve visualization.
+    det_curve: Compute error rates for different probability thresholds.
+    roc_auc_score : Compute the area under the ROC curve.
 
     Notes
     -----
