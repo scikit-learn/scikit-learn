@@ -888,7 +888,7 @@ def test_average_precision_score_pos_label_errors():
     # Raise an error when pos_label is not in binary y_true
     y_true = np.array([0, 1])
     y_pred = np.array([0, 1])
-    err_msg = r"pos_label=2 is not a valid label. It should be one of \[0 1\]"
+    err_msg = r"pos_label=2 is not a valid label. It should be one of \[0, 1\]"
     with pytest.raises(ValueError, match=err_msg):
         average_precision_score(y_true, y_pred, pos_label=2)
     # Raise an error for multilabel-indicator y_true with
