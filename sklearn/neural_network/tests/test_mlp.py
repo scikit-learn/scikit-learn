@@ -674,6 +674,7 @@ def test_warm_start_full_iteration(MLPEstimator):
     clf = MLPEstimator(hidden_layer_sizes=2, solver='sgd',
                        warm_start=True, max_iter=max_iter)
     clf.fit(X, y)
+    assert max_iter == clf.n_iter_
     clf.fit(X, y)
     assert max_iter == clf.n_iter_
 
