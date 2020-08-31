@@ -24,10 +24,11 @@ multidimensional variance direction in the Y space. In other words, PLS
 projects both `X` and `Y` into a lower-dimensional subspace such that the
 covariance between `tranformed(X)` and `transformed(Y)` is maximal.
 
-PLS draws similarities with Principal Component Regression, where the samples
-are first projected into a lower-dimensional subspace, and the targets `y`
-are predicted using `transformed(X)`. One issue with PCR is that the
-dimensionality reduction is unsupervized, and may lose some important
+PLS draws similarities with `Principal Component Regression
+<https://en.wikipedia.org/wiki/Principal_component_regression>`_ (PCR), where
+the samples are first projected into a lower-dimensional subspace, and the
+targets `y` are predicted using `transformed(X)`. One issue with PCR is that
+the dimensionality reduction is unsupervized, and may lose some important
 variables: PCR would keep the features with the most variance, but it's
 possible that features with a small variances are relevant from predicting
 the target. In a way, PLS allows for the same kind of dimensionality
@@ -51,7 +52,7 @@ algorithms. In [1]_, :class:`PLSCanonical` corresponds to "PLSW2A".
 
 Given two centered matrices :math:`X \in \mathbb{R}^{n \times d}` and
 :math:`Y \in \mathbb{R}^{n \times t}`, and a number of components :math:`K`,
-:class:`PLSCanonical` procedes as follows:
+:class:`PLSCanonical` proceeds as follows:
 
 Set :math:`X_1` to :math:`X` and :math:`Y_1` to :math:`Y`. Then, for each
 :math:`k \in [1, K]`:
