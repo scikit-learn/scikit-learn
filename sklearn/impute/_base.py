@@ -4,6 +4,7 @@
 
 import numbers
 import warnings
+from functools import partial
 
 import numpy as np
 import numpy.ma as ma
@@ -110,6 +111,15 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
                 )
 
         return hstack((X_imputed, X_indicator))
+
+    def _get_feature_names_out(self, feature_names_in, valid_mask):
+        imputed_names = feature_names_in[valid_mask]
+        if self.indicator_ is None:
+            return imputed_names
+
+        indicator_names = self.indicator_._get_feature_names_out(
+            feature_names_in)
+        return np.r_[imputed_names, indicator_names]
 
     def _more_tags(self):
         return {'allow_nan': is_scalar_nan(self.missing_values)}
@@ -469,15 +479,8 @@ class SimpleImputer(_BaseImputer):
             coordinates = np.where(mask.transpose())[::-1]
             X[coordinates] = values
 
-        def get_feature_names_out(feature_names_in):
-            imputed_names = feature_names_in[valid_mask]
-            if self.indicator_ is None:
-                return imputed_names
-
-            indicator_names = self.indicator_._get_feature_names_out(
-                feature_names_in)
-            return np.r_[imputed_names, indicator_names]
-
+        get_feature_names_out = partial(self._get_feature_names_out,
+                                        valid_mask=valid_mask)
         out = super()._concatenate_indicator(X, X_indicator)
         return self._make_array_out(out, X_orig, get_feature_names_out)
 
@@ -816,7 +819,8 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         if self.features_.size < self._n_features:
             feature_names_in = feature_names_in[self.features_]
 
-        feature_names_in = np.array([f'mask_{name}'
+        class_name = self.__class__.__name__.lower()
+        feature_names_in = np.array([f'{class_name}_{name}'
                                      for name in feature_names_in])
         return feature_names_in
 

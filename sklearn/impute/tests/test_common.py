@@ -3,6 +3,7 @@ import pytest
 import numpy as np
 from scipy import sparse
 
+from sklearn import config_context
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import assert_array_equal
@@ -113,3 +114,30 @@ def test_imputers_pandas_na_integer_array_support(imputer, add_indicator):
     X_trans = imputer.fit_transform(X_df)
 
     assert_allclose(X_trans_expected, X_trans)
+
+
+# ConvergenceWarning will be raised by the IterativeImputer
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
+@pytest.mark.parametrize("imputer", IMPUTERS,
+                         ids=lambda x: x.__class__.__name__)
+def test_imputer_array_out_indicator(imputer):
+    pd = pytest.importorskip("pandas")
+
+    X = np.array([
+        [np.nan, 1,      5,      np.nan, 1],
+        [2,      np.nan, 1,      np.nan, 2],
+        [6,      3,      np.nan, np.nan, 3],
+        [1,      2,      9,      np.nan, 4]
+    ])
+    names = np.array([f"feat_{i}" for i in range(X.shape[1])])
+    X = pd.DataFrame(X, columns=names)
+    imputer.set_params(missing_values=np.nan, add_indicator=True)
+
+    with config_context(array_out='pandas'):
+        X_trans = imputer.fit_transform(X)
+
+    assert isinstance(X_trans, pd.DataFrame)
+    feature_names_out = names[[0, 1, 2, 4]]
+    out_names = np.r_[feature_names_out,
+                      [f"missingindicator_{name}" for name in names[:4]]]
+    assert_array_equal(X_trans.columns, out_names)

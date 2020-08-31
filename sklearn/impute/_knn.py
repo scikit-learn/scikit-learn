@@ -1,6 +1,7 @@
 # Authors: Ashim Bhattarai <ashimb9@gmail.com>
 #          Thomas J Fan <thomasjpfan@gmail.com>
 # License: BSD 3 clause
+from functools import partial
 
 import numpy as np
 
@@ -223,19 +224,14 @@ class KNNImputer(_BaseImputer):
         mask_fit_X = self._mask_fit_X
         valid_mask = ~np.all(mask_fit_X, axis=0)
 
-        def get_output_feature_names(feature_names_in):
-            imputed_names = feature_names_in[valid_mask]
-            if self.indicator_ is None:
-                return imputed_names
-            indicator_names = self.indicator_._get_feature_names_out(
-                feature_names_in)
-            return np.r_[imputed_names, indicator_names]
+        get_feature_names_out = partial(self._get_feature_names_out,
+                                        valid_mask=valid_mask)
 
         if not np.any(mask):
             # No missing values in X
             # Remove columns where the training data is all nan
             out = X[:, valid_mask]
-            return self._make_array_out(out, X_orig, get_output_feature_names)
+            return self._make_array_out(out, X_orig, get_feature_names_out)
 
         row_missing_idx = np.flatnonzero(mask.any(axis=1))
 
@@ -308,4 +304,4 @@ class KNNImputer(_BaseImputer):
             pass
 
         out = super()._concatenate_indicator(X[:, valid_mask], X_indicator)
-        return self._make_array_out(out, X_orig, get_output_feature_names)
+        return self._make_array_out(out, X_orig, get_feature_names_out)
