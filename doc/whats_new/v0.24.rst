@@ -97,6 +97,35 @@ Changelog
   :class:`covariance.GraphicalLassoCV`. `cv_alphas_` and `grid_scores_` will be
   removed in version 0.26. :pr:`16392` by `Thomas Fan`_.
 
+:mod:`sklearn.cross_decomposition`
+..................................
+
+- |API| The bounds of the `n_components` parameter is now restricted:
+
+  - into `[1, min(n_samples, n_features, n_targets)]`, for
+    :class:`cross_decomposition.PLSSVD`, :class:`cross_decomposition.CCA`,
+    and :class:`cross_decomposition.PLSCanonical`.
+  - into `[1, n_features]` or :class:`cross_decomposition.PLSRegression`.
+
+  An error will be raised in 0.26. :pr:`17095` by `Nicolas Hug`_.
+
+- |API| For :class:`cross_decomposition.PLSSVD`,
+  :class:`cross_decomposition.CCA`, and
+  :class:`cross_decomposition.PLSCanonical`, the `x_scores_` and `y_scores_`
+  attributes were deprecated and will be removed in 0.26. They can be
+  retrieved by calling `transform` on the training data. The `norm_y_weights`
+  attribute will also be removed. :pr:`17095` by `Nicolas Hug`_.
+
+- |Fix| Fixed a bug in :class:`cross_decomposition.PLSSVD` which would
+  sometimes return components in the reversed order of importance.
+  :pr:`17095` by `Nicolas Hug`_.
+
+- |Fix| Fixed a bug in :class:`cross_decomposition.PLSSVD`,
+  :class:`cross_decomposition.CCA`, and
+  :class:`cross_decomposition.PLSCanonical`, which would lead to incorrect
+  predictions for `est.transform(Y)` when the training data is single-target.
+  :pr:`17095` by `Nicolas Hug`_.
+
 :mod:`sklearn.datasets`
 .......................
 
