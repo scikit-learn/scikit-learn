@@ -1432,7 +1432,10 @@ def test_metrics_consistent_type_error(metric_name):
     "metric, y_pred_threshold",
     [
         (average_precision_score, True),
-        (brier_score_loss, True),
+        # FIXME: `brier_score_loss` does not follow this convention.
+        # See discussion in:
+        # https://github.com/scikit-learn/scikit-learn/issues/18307
+        # (brier_score_loss, True),
         (f1_score, False),
         (partial(fbeta_score, beta=1), False),
         (jaccard_score, False),
