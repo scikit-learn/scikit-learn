@@ -743,7 +743,7 @@ class OrdinalEncoder(_BaseEncoder):
         if self.handle_unknown == 'use_encoded_value':
             X_int[~X_mask] = self.unknown_value
         out = X_int.astype(self.dtype, copy=False)
-        return self._make_array_out(out, X)
+        return self._make_array_out(out, X, 'one_to_one')
 
     def inverse_transform(self, X):
         """

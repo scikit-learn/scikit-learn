@@ -528,7 +528,7 @@ class BaseEstimator:
 
         if callable(get_feature_names_out):
             get_feature_names_out_callable = get_feature_names_out
-        elif get_feature_names_out == 'one-to-one':
+        elif get_feature_names_out == 'one_to_one':
             def get_feature_names_out_callable(names):
                 return names
         else:

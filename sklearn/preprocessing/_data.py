@@ -2685,9 +2685,8 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
 
         return X
 
-    def _check_is_fitted(self, X):
+    def _check_is_correctly_fitted(self, X):
         """Check the inputs before transforming."""
-        check_is_fitted(self)
         # check that the dimension of X are adequate with the fitted data
         if X.shape[1] != self.quantiles_.shape[1]:
             raise ValueError('X does not have the same number of features as'
@@ -2744,10 +2743,11 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         Xt : {ndarray, sparse matrix} of shape (n_samples, n_features)
             The projected data.
         """
+        check_is_fitted(self)
         X_orig = X
         X = self._check_inputs(X, in_fit=False, copy=self.copy,
                                reset=False)
-        self._check_is_fitted(X)
+        self._check_is_correctly_fitted(X)
 
         output = self._transform(X, inverse=False)
         return self._make_array_out(output, X_orig, 'one_to_one')
@@ -2768,9 +2768,10 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         Xt : {ndarray, sparse matrix} of (n_samples, n_features)
             The projected data.
         """
+        check_is_fitted(self)
         X = self._check_inputs(X, in_fit=False, accept_sparse_negative=True,
                                copy=self.copy)
-        self._check_is_fitted(X)
+        self._check_is_correctly_fitted(X)
 
         return self._transform(X, inverse=True)
 
