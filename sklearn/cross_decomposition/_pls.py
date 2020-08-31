@@ -899,8 +899,8 @@ class PLSSVD(TransformerMixin, BaseEstimator):
     """
 
     @_deprecate_positional_args
-    def __init__(self, n_components=2, *, scale=True, copy=True
-                 , random_state=None):
+    def __init__(self, n_components=2, *, scale=True, copy=True,
+                 random_state=None):
         self.n_components = n_components
         self.scale = scale
         self.copy = copy
