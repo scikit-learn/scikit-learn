@@ -106,7 +106,7 @@ def test_20news_as_frame(fetch_20newsgroups_vectorized_fxt):
 
     frame = bunch.frame
     assert frame.shape == (11314, 130108)
-    assert isinstance(bunch.frame.dtypes[0], pd.SparseDtype)
+    assert all([isinstance(col, pd.SparseDtype) for col in bunch.data.dtypes])
 
     # Check a small subset of features
     for expected_feature in [
@@ -120,6 +120,7 @@ def test_20news_as_frame(fetch_20newsgroups_vectorized_fxt):
     ]:
         assert expected_feature in frame.keys()
     assert "category_class" in frame.keys()
+    assert bunch.target.name == "category_class"
 
 
 def test_as_frame_no_pandas():
