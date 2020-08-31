@@ -34,7 +34,7 @@ def _line_search_wolfe12(f, fprime, xk, pk, gfk, old_fval, old_old_fval,
     Raises
     ------
     _LineSearchError
-        If no suitable step size is found
+        If no suitable step size is found.
 
     """
     ret = line_search_wolfe1(f, fprime, xk, pk, gfk,
@@ -61,10 +61,10 @@ def _cg(fhess_p, fgrad, maxiter, tol):
     ----------
     fhess_p : callable
         Function that takes the gradient as a parameter and returns the
-        matrix product of the Hessian and gradient
+        matrix product of the Hessian and gradient.
 
-    fgrad : ndarray, shape (n_features,) or (n_features + 1,)
-        Gradient vector
+    fgrad : ndarray of shape (n_features,) or (n_features + 1,)
+        Gradient vector.
 
     maxiter : int
         Number of CG iterations.
@@ -74,8 +74,8 @@ def _cg(fhess_p, fgrad, maxiter, tol):
 
     Returns
     -------
-    xsupi : ndarray, shape (n_features,) or (n_features + 1,)
-        Estimated solution
+    xsupi : ndarray of shape (n_features,) or (n_features + 1,)
+        Estimated solution.
     """
     xsupi = np.zeros(len(fgrad), dtype=fgrad.dtype)
     ri = fgrad
@@ -111,8 +111,8 @@ def _cg(fhess_p, fgrad, maxiter, tol):
     return xsupi
 
 
-def newton_cg(grad_hess, func, grad, x0, args=(), tol=1e-4,
-              maxiter=100, maxinner=200, line_search=True, warn=True):
+def _newton_cg(grad_hess, func, grad, x0, args=(), tol=1e-4,
+               maxiter=100, maxinner=200, line_search=True, warn=True):
     """
     Minimization of scalar function of one or more variables using the
     Newton-CG algorithm.
@@ -133,24 +133,24 @@ def newton_cg(grad_hess, func, grad, x0, args=(), tol=1e-4,
     x0 : array of float
         Initial guess.
 
-    args : tuple, optional
+    args : tuple, default=()
         Arguments passed to func_grad_hess, func and grad.
 
-    tol : float
+    tol : float, default=1e-4
         Stopping criterion. The iteration will stop when
         ``max{|g_i | i = 1, ..., n} <= tol``
         where ``g_i`` is the i-th component of the gradient.
 
-    maxiter : int
+    maxiter : int, default=100
         Number of Newton iterations.
 
-    maxinner : int
+    maxinner : int, default=200
         Number of CG iterations.
 
-    line_search : boolean
+    line_search : bool, default=True
         Whether to use a line search or not.
 
-    warn : boolean
+    warn : bool, default=True
         Whether to warn when didn't converge.
 
     Returns
@@ -173,7 +173,7 @@ def newton_cg(grad_hess, func, grad, x0, args=(), tol=1e-4,
         fgrad, fhess_p = grad_hess(xk, *args)
 
         absgrad = np.abs(fgrad)
-        if np.max(absgrad) < tol:
+        if np.max(absgrad) <= tol:
             break
 
         maggrad = np.sum(absgrad)
@@ -204,30 +204,42 @@ def newton_cg(grad_hess, func, grad, x0, args=(), tol=1e-4,
     return xk, k
 
 
-def _check_optimize_result(solver, result, max_iter=None):
+def _check_optimize_result(solver, result, max_iter=None,
+                           extra_warning_msg=None):
     """Check the OptimizeResult for successful convergence
 
     Parameters
     ----------
-    solver: str
-       solver name. Currently only `lbfgs` is supported.
-    result: OptimizeResult
-       result of the scipy.optimize.minimize function
-    max_iter: {int, None}
-       expected maximum number of iterations
+    solver : str
+       Solver name. Currently only `lbfgs` is supported.
+
+    result : OptimizeResult
+       Result of the scipy.optimize.minimize function.
+
+    max_iter : int, default=None
+       Expected maximum number of iterations.
+
+    extra_warning_msg : str, default=None
+        Extra warning message.
 
     Returns
     -------
-    n_iter: int
-       number of iterations
+    n_iter : int
+       Number of iterations.
     """
     # handle both scipy and scikit-learn solver names
     if solver == "lbfgs":
         if result.status != 0:
-            warnings.warn("{} failed to converge (status={}): {}. "
-                          "Increase the number of iterations."
-                          .format(solver, result.status, result.message),
-                          ConvergenceWarning, stacklevel=2)
+            warning_msg = (
+                "{} failed to converge (status={}):\n{}.\n\n"
+                "Increase the number of iterations (max_iter) "
+                "or scale the data as shown in:\n"
+                "    https://scikit-learn.org/stable/modules/"
+                "preprocessing.html"
+            ).format(solver, result.status, result.message.decode("latin1"))
+            if extra_warning_msg is not None:
+                warning_msg += "\n" + extra_warning_msg
+            warnings.warn(warning_msg, ConvergenceWarning, stacklevel=2)
         if max_iter is not None:
             # In scipy <= 1.0.0, nit may exceed maxiter for lbfgs.
             # See https://github.com/scipy/scipy/issues/7854

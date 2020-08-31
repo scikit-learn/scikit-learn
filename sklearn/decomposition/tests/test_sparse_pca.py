@@ -6,13 +6,12 @@ import pytest
 
 import numpy as np
 
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import if_safe_multiprocessing_with_blas
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import if_safe_multiprocessing_with_blas
 
 from sklearn.decomposition import SparsePCA, MiniBatchSparsePCA, PCA
 from sklearn.utils import check_random_state
-
 
 def generate_toy_data(n_components, n_samples, image_size, random_state=None):
     n_features = image_size[0] * image_size[1]
@@ -190,21 +189,16 @@ def test_pca_vs_spca():
     assert_allclose(results_test_pca, results_test_spca)
 
 
-@pytest.mark.parametrize("spca", [SparsePCA, MiniBatchSparsePCA])
-def test_spca_deprecation_warning(spca):
+@pytest.mark.parametrize("SPCA", [SparsePCA, MiniBatchSparsePCA])
+@pytest.mark.parametrize("n_components", [None, 3])
+def test_spca_n_components_(SPCA, n_components):
     rng = np.random.RandomState(0)
-    Y, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)
+    n_samples, n_features = 12, 10
+    X = rng.randn(n_samples, n_features)
 
-    warn_msg = "'normalize_components' has been deprecated in 0.22"
-    with pytest.warns(DeprecationWarning, match=warn_msg):
-        spca(normalize_components=True).fit(Y)
+    model = SPCA(n_components=n_components).fit(X)
 
-
-@pytest.mark.parametrize("spca", [SparsePCA, MiniBatchSparsePCA])
-def test_spca_error_unormalized_components(spca):
-    rng = np.random.RandomState(0)
-    Y, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)
-
-    err_msg = "normalize_components=False is not supported starting "
-    with pytest.raises(NotImplementedError, match=err_msg):
-        spca(normalize_components=False).fit(Y)
+    if n_components is not None:
+        assert model.n_components_ == n_components
+    else:
+        assert model.n_components_ == n_features

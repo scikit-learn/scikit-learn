@@ -20,7 +20,7 @@ can mitigate those limitations.
 
 .. topic:: References:
 
-   .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32,
+   [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32,
        2001. https://doi.org/10.1023/A:1010933404324
 """
 print(__doc__)
@@ -37,7 +37,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
 
 
-##############################################################################
+# %%
 # Data Loading and Feature Engineering
 # ------------------------------------
 # Let's use pandas to load a copy of the titanic dataset. The following shows
@@ -51,8 +51,9 @@ from sklearn.preprocessing import OneHotEncoder
 # - ``random_cat`` is a low cardinality categorical variable (3 possible
 #   values).
 X, y = fetch_openml("titanic", version=1, as_frame=True, return_X_y=True)
-X['random_cat'] = np.random.randint(3, size=X.shape[0])
-X['random_num'] = np.random.randn(X.shape[0])
+rng = np.random.RandomState(seed=42)
+X['random_cat'] = rng.randint(3, size=X.shape[0])
+X['random_num'] = rng.randn(X.shape[0])
 
 categorical_columns = ['pclass', 'sex', 'embarked', 'random_cat']
 numerical_columns = ['age', 'sibsp', 'parch', 'fare', 'random_num']
@@ -80,7 +81,7 @@ rf = Pipeline([
 ])
 rf.fit(X_train, y_train)
 
-##############################################################################
+# %%
 # Accuracy of the Model
 # ---------------------
 # Prior to inspecting the feature importances, it is important to check that
@@ -105,7 +106,7 @@ print("RF train accuracy: %0.3f" % rf.score(X_train, y_train))
 print("RF test accuracy: %0.3f" % rf.score(X_test, y_test))
 
 
-##############################################################################
+# %%
 # Tree's Feature Importance from Mean Decrease in Impurity (MDI)
 # --------------------------------------------------------------
 # The impurity-based feature importance ranks the numerical features to be the
@@ -140,7 +141,7 @@ fig.tight_layout()
 plt.show()
 
 
-##############################################################################
+# %%
 # As an alternative, the permutation importances of ``rf`` are computed on a
 # held out test set. This shows that the low cardinality categorical feature,
 # ``sex`` is the most important feature.
@@ -158,7 +159,7 @@ ax.set_title("Permutation Importances (test set)")
 fig.tight_layout()
 plt.show()
 
-##############################################################################
+# %%
 # It is also possible to compute the permutation importances on the training
 # set. This reveals that ``random_num`` gets a significantly higher importance
 # ranking than when computed on the test set. The difference between those two

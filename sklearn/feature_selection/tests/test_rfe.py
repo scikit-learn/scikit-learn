@@ -2,20 +2,26 @@
 Testing Recursive feature elimination
 """
 
+from operator import attrgetter
+import pytest
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 from scipy import sparse
 
-from sklearn.feature_selection.rfe import RFE, RFECV
+from sklearn.feature_selection import RFE, RFECV
 from sklearn.datasets import load_iris, make_friedman1
 from sklearn.metrics import zero_one_loss
-from sklearn.svm import SVC, SVR
+from sklearn.svm import SVC, SVR, LinearSVR
+from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import GroupKFold
+from sklearn.compose import TransformedTargetRegressor
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import ignore_warnings
 
 from sklearn.metrics import make_scorer
 from sklearn.metrics import get_scorer
@@ -29,8 +35,8 @@ class MockClassifier:
     def __init__(self, foo_param=0):
         self.foo_param = foo_param
 
-    def fit(self, X, Y):
-        assert len(X) == len(Y)
+    def fit(self, X, y):
+        assert len(X) == len(y)
         self.coef_ = np.ones(X.shape[1], dtype=np.float64)
         return self
 
@@ -41,18 +47,17 @@ class MockClassifier:
     decision_function = predict
     transform = predict
 
-    def score(self, X=None, Y=None):
-        if self.foo_param > 1:
-            score = 1.
-        else:
-            score = 0.
-        return score
+    def score(self, X=None, y=None):
+        return 0.
 
     def get_params(self, deep=True):
         return {'foo_param': self.foo_param}
 
     def set_params(self, **params):
         return self
+
+    def _get_tags(self):
+        return {}
 
 
 def test_rfe_features_importance():
@@ -102,6 +107,36 @@ def test_rfe():
     assert_array_almost_equal(rfe.predict(X), clf.predict(iris.data))
     assert rfe.score(X, y) == clf.score(iris.data, iris.target)
     assert_array_almost_equal(X_r, X_r_sparse.toarray())
+
+
+@pytest.mark.parametrize("n_features_to_select", [-1, 2.1])
+def test_rfe_invalid_n_features_errors(n_features_to_select):
+    clf = SVC(kernel="linear")
+
+    iris = load_iris()
+    rfe = RFE(estimator=clf, n_features_to_select=n_features_to_select,
+              step=0.1)
+    msg = f"n_features_to_select must be .+ Got {n_features_to_select}"
+    with pytest.raises(ValueError, match=msg):
+        rfe.fit(iris.data, iris.target)
+
+
+def test_rfe_percent_n_features():
+    # test that the results are the same
+    generator = check_random_state(0)
+    iris = load_iris()
+    X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
+    y = iris.target
+    # there are 10 features in the data. We select 40%.
+    clf = SVC(kernel="linear")
+    rfe_num = RFE(estimator=clf, n_features_to_select=4, step=0.1)
+    rfe_num.fit(X, y)
+
+    rfe_perc = RFE(estimator=clf, n_features_to_select=0.4, step=0.1)
+    rfe_perc.fit(X, y)
+
+    assert_array_equal(rfe_perc.ranking_, rfe_num.ranking_)
+    assert_array_equal(rfe_perc.support_, rfe_num.support_)
 
 
 def test_rfe_mockclassifier():
@@ -307,9 +342,9 @@ def test_number_of_subsets_of_features():
         rfe.fit(X, y)
         # this number also equals to the maximum of ranking_
         assert (np.max(rfe.ranking_) ==
-                     formula1(n_features, n_features_to_select, step))
+                formula1(n_features, n_features_to_select, step))
         assert (np.max(rfe.ranking_) ==
-                     formula2(n_features, n_features_to_select, step))
+                formula2(n_features, n_features_to_select, step))
 
     # In RFECV, 'fit' calls 'RFE._fit'
     # 'number_of_subsets_of_features' of RFE
@@ -331,9 +366,9 @@ def test_number_of_subsets_of_features():
         rfecv.fit(X, y)
 
         assert (rfecv.grid_scores_.shape[0] ==
-                     formula1(n_features, n_features_to_select, step))
+                formula1(n_features, n_features_to_select, step))
         assert (rfecv.grid_scores_.shape[0] ==
-                     formula2(n_features, n_features_to_select, step))
+                formula2(n_features, n_features_to_select, step))
 
 
 def test_rfe_cv_n_jobs():
@@ -369,3 +404,90 @@ def test_rfe_cv_groups():
     )
     est_groups.fit(X, y, groups=groups)
     assert est_groups.n_features_ > 0
+
+
+@pytest.mark.parametrize(
+    'importance_getter',
+    [attrgetter('regressor_.coef_'), 'regressor_.coef_'])
+@pytest.mark.parametrize('selector, expected_n_features',
+                         [(RFE, 5), (RFECV, 4)])
+def test_rfe_wrapped_estimator(importance_getter, selector,
+                               expected_n_features):
+    # Non-regression test for
+    # https://github.com/scikit-learn/scikit-learn/issues/15312
+    X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
+    estimator = LinearSVR(random_state=0)
+
+    log_estimator = TransformedTargetRegressor(regressor=estimator,
+                                               func=np.log,
+                                               inverse_func=np.exp)
+
+    selector = selector(log_estimator, importance_getter=importance_getter)
+    sel = selector.fit(X, y)
+    assert sel.support_.sum() == expected_n_features
+
+
+@pytest.mark.parametrize(
+    "importance_getter, err_type",
+    [("auto", ValueError),
+     ("random", AttributeError),
+     (lambda x: x.importance, AttributeError),
+     ([0], ValueError)]
+)
+@pytest.mark.parametrize("Selector", [RFE, RFECV])
+def test_rfe_importance_getter_validation(importance_getter, err_type,
+                                          Selector):
+    X, y = make_friedman1(n_samples=50, n_features=10, random_state=42)
+    estimator = LinearSVR()
+    log_estimator = TransformedTargetRegressor(
+        regressor=estimator, func=np.log, inverse_func=np.exp
+    )
+
+    with pytest.raises(err_type):
+        model = Selector(log_estimator, importance_getter=importance_getter)
+        model.fit(X, y)
+
+
+@pytest.mark.parametrize("cv", [
+    None,
+    5
+])
+def test_rfe_allow_nan_inf_in_x(cv):
+    iris = load_iris()
+    X = iris.data
+    y = iris.target
+
+    # add nan and inf value to X
+    X[0][0] = np.NaN
+    X[0][1] = np.Inf
+
+    clf = MockClassifier()
+    if cv is not None:
+        rfe = RFECV(estimator=clf, cv=cv)
+    else:
+        rfe = RFE(estimator=clf)
+    rfe.fit(X, y)
+    rfe.transform(X)
+
+
+def test_w_pipeline_2d_coef_():
+    pipeline = make_pipeline(StandardScaler(), LogisticRegression())
+
+    data, y = load_iris(return_X_y=True)
+    sfm = RFE(pipeline, n_features_to_select=2,
+              importance_getter='named_steps.logisticregression.coef_')
+
+    sfm.fit(data, y)
+    assert sfm.transform(data).shape[1] == 2
+
+
+@pytest.mark.parametrize('ClsRFE', [
+    RFE,
+    RFECV
+    ])
+def test_multioutput(ClsRFE):
+    X = np.random.normal(size=(10, 3))
+    y = np.random.randint(2, size=(10, 2))
+    clf = RandomForestClassifier(n_estimators=5)
+    rfe_test = ClsRFE(clf)
+    rfe_test.fit(X, y)

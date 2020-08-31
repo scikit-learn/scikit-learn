@@ -1,12 +1,13 @@
 
 import numpy as np
+import pytest
 from scipy.sparse import csr_matrix
 
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import (assert_array_equal, assert_almost_equal,
-                                   assert_raises)
-from sklearn.feature_selection.mutual_info_ import (
-    mutual_info_regression, mutual_info_classif, _compute_mi)
+from sklearn.utils._testing import assert_array_equal, assert_almost_equal
+from sklearn.feature_selection._mutual_info import _compute_mi
+from sklearn.feature_selection import (mutual_info_regression,
+                                       mutual_info_classif)
 
 
 def test_compute_mi_dd():
@@ -182,15 +183,16 @@ def test_mutual_info_options():
     X_csr = csr_matrix(X)
 
     for mutual_info in (mutual_info_regression, mutual_info_classif):
-        assert_raises(ValueError, mutual_info, X_csr, y,
-                      discrete_features=False)
-        assert_raises(ValueError, mutual_info, X, y,
-                      discrete_features='manual')
-        assert_raises(ValueError, mutual_info, X_csr, y,
-                      discrete_features=[True, False, True])
-        assert_raises(IndexError, mutual_info, X, y,
-                      discrete_features=[True, False, True, False])
-        assert_raises(IndexError, mutual_info, X, y, discrete_features=[1, 4])
+        with pytest.raises(ValueError):
+            mutual_info(X_csr, y, discrete_features=False)
+        with pytest.raises(ValueError):
+            mutual_info(X, y, discrete_features='manual')
+        with pytest.raises(ValueError):
+            mutual_info(X_csr, y, discrete_features=[True, False, True])
+        with pytest.raises(IndexError):
+            mutual_info(X, y, discrete_features=[True, False, True, False])
+        with pytest.raises(IndexError):
+            mutual_info(X, y, discrete_features=[1, 4])
 
         mi_1 = mutual_info(X, y, discrete_features='auto', random_state=0)
         mi_2 = mutual_info(X, y, discrete_features=False, random_state=0)

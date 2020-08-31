@@ -76,7 +76,7 @@ The ``preprocessing`` module further provides a utility class
 the mean and standard deviation on a training set so as to be
 able to later reapply the same transformation on the testing set.
 This class is hence suitable for use in the early steps of a
-:class:`sklearn.pipeline.Pipeline`::
+:class:`~sklearn.pipeline.Pipeline`::
 
   >>> scaler = preprocessing.StandardScaler().fit(X_train)
   >>> scaler
@@ -235,7 +235,7 @@ data.
   independently, since a downstream model can further make some assumption
   on the linear independence of the features.
 
-  To address this issue you can use :class:`sklearn.decomposition.PCA` with
+  To address this issue you can use :class:`~sklearn.decomposition.PCA` with
   ``whiten=True`` to further remove the linear correlation across features.
 
 .. topic:: Scaling a 1D array
@@ -290,8 +290,7 @@ with values between 0 and 1::
 
   >>> from sklearn.datasets import load_iris
   >>> from sklearn.model_selection import train_test_split
-  >>> iris = load_iris()
-  >>> X, y = iris.data, iris.target
+  >>> X, y = load_iris(return_X_y=True)
   >>> X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
   >>> quantile_transformer = preprocessing.QuantileTransformer(random_state=0)
   >>> X_train_trans = quantile_transformer.fit_transform(X_train)
@@ -333,7 +332,7 @@ The Yeo-Johnson transform is given by:
     x_i^{(\lambda)} =
     \begin{cases}
      [(x_i + 1)^\lambda - 1] / \lambda & \text{if } \lambda \neq 0, x_i \geq 0, \\[8pt]
-    \ln{(x_i) + 1} & \text{if } \lambda = 0, x_i \geq 0 \\[8pt]
+    \ln{(x_i + 1)} & \text{if } \lambda = 0, x_i \geq 0 \\[8pt]
     -[(-x_i + 1)^{2 - \lambda} - 1] / (2 - \lambda) & \text{if } \lambda \neq 2, x_i < 0, \\[8pt]
      - \ln (- x_i + 1) & \text{if } \lambda = 2, x_i < 0
     \end{cases}
@@ -434,7 +433,7 @@ The ``preprocessing`` module further provides a utility class
 the class is stateless as this operation treats samples independently).
 
 This class is hence suitable for use in the early steps of a
-:class:`sklearn.pipeline.Pipeline`::
+:class:`~sklearn.pipeline.Pipeline`::
 
   >>> normalizer = preprocessing.Normalizer().fit(X)  # fit does nothing
   >>> normalizer
@@ -560,11 +559,12 @@ parameter allows the user to specify a category for each feature to be dropped.
 This is useful to avoid co-linearity in the input matrix in some classifiers.
 Such functionality is useful, for example, when using non-regularized
 regression (:class:`LinearRegression <sklearn.linear_model.LinearRegression>`),
-since co-linearity would cause the covariance matrix to be non-invertible. 
-When this paramenter is not None, ``handle_unknown`` must be set to 
+since co-linearity would cause the covariance matrix to be non-invertible.
+When this parameter is not None, ``handle_unknown`` must be set to
 ``error``::
 
-    >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
+    >>> X = [['male', 'from US', 'uses Safari'],
+    ...      ['female', 'from Europe', 'uses Firefox']]
     >>> drop_enc = preprocessing.OneHotEncoder(drop='first').fit(X)
     >>> drop_enc.categories_
     [array(['female', 'male'], dtype=object), array(['from Europe', 'from US'], dtype=object), array(['uses Firefox', 'uses Safari'], dtype=object)]
@@ -572,8 +572,26 @@ When this paramenter is not None, ``handle_unknown`` must be set to
     array([[1., 1., 1.],
            [0., 0., 0.]])
 
-See :ref:`dict_feature_extraction` for categorical features that are represented
-as a dict, not as scalars.
+One might want to drop one of the two columns only for features with 2
+categories. In this case, you can set the parameter `drop='if_binary'`.
+
+    >>> X = [['male', 'US', 'Safari'],
+    ...      ['female', 'Europe', 'Firefox'],
+    ...      ['female', 'Asia', 'Chrome']]
+    >>> drop_enc = preprocessing.OneHotEncoder(drop='if_binary').fit(X)
+    >>> drop_enc.categories_
+    [array(['female', 'male'], dtype=object), array(['Asia', 'Europe', 'US'], dtype=object), array(['Chrome', 'Firefox', 'Safari'], dtype=object)]
+    >>> drop_enc.transform(X).toarray()
+    array([[1., 0., 0., 1., 0., 0., 1.],
+           [0., 0., 1., 0., 0., 1., 0.],
+           [0., 1., 0., 0., 1., 0., 0.]])
+
+In the transformed `X`, the first column is the encoding of the feature with
+categories "male"/"female", while the remaining 6 columns is the encoding of
+the 2 features with respectively 3 categories each.
+
+See :ref:`dict_feature_extraction` for categorical features that are
+represented as a dict, not as scalars.
 
 .. _preprocessing_discretization:
 
@@ -619,7 +637,7 @@ Based on these bin intervals, ``X`` is transformed as follows::
          [ 2., 0., 0.]])
 
 The resulting dataset contains ordinal attributes which can be further used
-in a :class:`sklearn.pipeline.Pipeline`.
+in a :class:`~sklearn.pipeline.Pipeline`.
 
 Discretization is similar to constructing histograms for continuous data.
 However, histograms focus on counting features which fall into particular
@@ -647,7 +665,7 @@ features to get boolean values**. This can be useful for downstream
 probabilistic estimators that make assumption that the input data
 is distributed according to a multi-variate `Bernoulli distribution
 <https://en.wikipedia.org/wiki/Bernoulli_distribution>`_. For instance,
-this is the case for the :class:`sklearn.neural_network.BernoulliRBM`.
+this is the case for the :class:`~sklearn.neural_network.BernoulliRBM`.
 
 It is also common among the text processing community to use binary
 feature values (probably to simplify the probabilistic reasoning) even
@@ -656,7 +674,7 @@ often perform slightly better in practice.
 
 As for the :class:`Normalizer`, the utility class
 :class:`Binarizer` is meant to be used in the early stages of
-:class:`sklearn.pipeline.Pipeline`. The ``fit`` method does nothing
+:class:`~sklearn.pipeline.Pipeline`. The ``fit`` method does nothing
 as each sample is treated independently of others::
 
   >>> X = [[ 1., -1.,  2.],
@@ -741,7 +759,7 @@ In some cases, only interaction terms among features are required, and it can be
 
 The features of X have been transformed from :math:`(X_1, X_2, X_3)` to :math:`(1, X_1, X_2, X_3, X_1X_2, X_1X_3, X_2X_3, X_1X_2X_3)`.
 
-Note that polynomial features are used implicitly in `kernel methods <https://en.wikipedia.org/wiki/Kernel_method>`_ (e.g., :class:`sklearn.svm.SVC`, :class:`sklearn.decomposition.KernelPCA`) when using polynomial :ref:`svm_kernels`.
+Note that polynomial features are used implicitly in `kernel methods <https://en.wikipedia.org/wiki/Kernel_method>`_ (e.g., :class:`~sklearn.svm.SVC`, :class:`~sklearn.decomposition.KernelPCA`) when using polynomial :ref:`svm_kernels`.
 
 See :ref:`sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py` for Ridge regression using created polynomial features.
 
@@ -773,5 +791,5 @@ error with a ``filterwarnings``::
   ...                         category=UserWarning, append=False)
 
 For a full code example that demonstrates using a :class:`FunctionTransformer`
-to do custom feature selection,
-see :ref:`sphx_glr_auto_examples_preprocessing_plot_function_transformer.py`
+to extract features from text data see 
+:ref:`sphx_glr_auto_examples_compose_plot_column_transformer.py`
