@@ -1009,12 +1009,14 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             classes = unique_labels(y)
             if self.warm_start:
                 if set(classes) != set(self.classes_):
-                    raise ValueError("warm_start can only be used where `y` has "
-                                     "the same classes as in the previous "
-                                     "call to fit. Previously got %s, `y` has %s" %
+                    raise ValueError("warm_start can only be used where `y` "
+                                     "has the same classes as in the previous "
+                                     "call to fit. Previously got %s, `y` has "
+                                     "%s" %
                                      (self.classes_, classes))
             else:
-                if len(np.setdiff1d(classes, self.classes_, assume_unique=True)):
+                if len(np.setdiff1d(classes, self.classes_,
+                                    assume_unique=True)):
                     raise ValueError("`y` has classes not in `self.classes_`."
                                      " `self.classes_` has %s. 'y' has %s." %
                                      (self.classes_, classes))
