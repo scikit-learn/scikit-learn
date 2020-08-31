@@ -368,6 +368,10 @@ The parameter `deep` will control whether or not the parameters of the
     subestimator__warm_start -> False
     subestimator -> LogisticRegression()
 
+Often, the `subestimator` has a name (as e.g. named steps in a
+:class:`~sklearn.pipeline.Pipeline` object), in which case the key should
+become `<name>__C`, `<name>__class_weight`, etc.
+
 While when `deep=False`, the output will be::
 
     >>> for param, value in my_estimator.get_params(deep=False).items():
