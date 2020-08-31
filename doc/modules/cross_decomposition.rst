@@ -22,7 +22,7 @@ covariance structures in these two spaces. They will try to find the
 multidimensional direction in the X space that explains the maximum
 multidimensional variance direction in the Y space. In other words, PLS
 projects both `X` and `Y` into a lower-dimensional subspace such that the
-covariance between `tranformed(X)` and `transformed(Y)` is maximal.
+covariance between `transformed(X)` and `transformed(Y)` is maximal.
 
 PLS draws similarities with `Principal Component Regression
 <https://en.wikipedia.org/wiki/Principal_component_regression>`_ (PCR), where
@@ -96,8 +96,8 @@ which corresponds to the `'nipals'` option of the `algorithm` parameter.
 Transforming data
 ^^^^^^^^^^^^^^^^^
 
-To transform :math:`X` into :math:`\top{X}`, we need to find a projection
-matrix :math:`P` such that :math:`\top{X} = XP`. We know that for the
+To transform :math:`X` into :math:`\bar{X}`, we need to find a projection
+matrix :math:`P` such that :math:`\bar{X} = XP`. We know that for the
 training data, :math:`\Xi = XP`, and :math:`X = \Xi \Gamma^T`. Setting
 :math:`P = U(\Gamma^T U)^{-1}` where :math:`U` is the matrix with the
 :math:`u_k` in the columns, we have :math:`XP = X U(\Gamma^T U)^{-1} = \Xi
@@ -115,7 +115,7 @@ coefficient matrix :math:`\beta \in R^{d \times t}` such that :math:`Y =
 X\beta`.
 
 The idea is to try to predict the transformed targets :math:`\Omega` as a
-function of the tranformed samples :math:`\Xi`, by computing :math:`\alpha
+function of the transformed samples :math:`\Xi`, by computing :math:`\alpha
 \in \mathbb{R}` such that :math:`\Omega = \alpha \Xi`.
 
 Then, we have :math:`Y = \Omega \Delta^T = \alpha \Xi \Delta^T`, and since
