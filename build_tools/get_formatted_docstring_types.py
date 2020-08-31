@@ -3,7 +3,7 @@ from importlib import import_module
 import argparse
 import inspect
 
-from sklearn.utils._typing import get_docstring_annotations
+from sklearn.utils.tests.test_typing import get_docstring_annotations
 
 parser = argparse.ArgumentParser(
     description=("Generates typed docstring for a specific scikit-learn "
