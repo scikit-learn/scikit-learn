@@ -113,7 +113,7 @@ def test_plot_partial_dependence(grid_resolution, pyplot, clf_diabetes,
     ('individual', False, 50, (1, 3, 50)),
     ('both', False, 50, (1, 3, 51)),
     ('individual', False, 0.5, (1, 3, 221)),
-    ('both', False, 0.5, (1, 3, 222))
+    ('both', False, 0.5, (1, 3, 222)),
     ('average', True, None, (1, 3)),
     ('individual', True, None, (1, 3, 442)),
     ('both', True, None, (1, 3, 443)),
