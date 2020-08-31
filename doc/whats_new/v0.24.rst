@@ -298,8 +298,8 @@ Changelog
   :pr:`10591` by :user:`Jeremy Karnowski <jkarnows>` and
   :user:`Daniel Mohns <dmohns>`.
 
-- |Feature| Added :func:`metrics.plot_det_curve` and :class:`DetCurveDisplay`
-  to ease the plot of DET curves.
+- |Feature| Added :func:`metrics.plot_det_curve` and
+  :class:`metrics.DetCurveDisplay` to ease the plot of DET curves.
   :pr:`18176` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Feature| Added :func:`metrics.mean_absolute_percentage_error` metric and
