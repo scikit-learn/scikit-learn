@@ -2561,7 +2561,11 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
                              " and {} samples.".format(self.n_quantiles,
                                                        self.subsample))
 
-        X = self._check_inputs(X, in_fit=True, copy=False)
+        X = self._validate_data(X, reset=True,
+                                accept_sparse='csc', copy=False,
+                                dtype=FLOAT_DTYPES,
+                                force_all_finite='allow-nan')
+        self._check_input(X)
         n_samples = X.shape[0]
 
         if self.n_quantiles > n_samples:
@@ -2652,23 +2656,9 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
 
         return X_col
 
-    def _check_inputs(self, X, in_fit, accept_sparse_negative=False,
-                      copy=False, reset=None):
-        """Check inputs before fit and transform."""
-        # In theory reset should be equal to `in_fit`, but there are tests
-        # checking the input number of feature and they expect a specific
-        # string, which is not the same one raised by check_n_features. So we
-        # don't check n_features_in_ here for now (it's done with adhoc code in
-        # the estimator anyway).
-        # TODO: set reset=in_fit when addressing reset in
-        # predict/transform/etc.
-        if reset is None:
-            reset = True
-
-        X = self._validate_data(X, reset=reset,
-                                accept_sparse='csc', copy=copy,
-                                dtype=FLOAT_DTYPES,
-                                force_all_finite='allow-nan')
+    def _check_input(self, X, accept_sparse_negative=False,
+                     check_quantiles=False):
+        """Check inputs before fit or transform."""
         # we only accept positive sparse matrix when ignore_implicit_zeros is
         # false and that we call fit or transform.
         with np.errstate(invalid='ignore'):  # hide NaN comparison warnings
@@ -2683,12 +2673,8 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
                              " or 'uniform'. Got '{}' instead.".format(
                                  self.output_distribution))
 
-        return X
-
-    def _check_is_correctly_fitted(self, X):
-        """Check the inputs before transforming."""
         # check that the dimension of X are adequate with the fitted data
-        if X.shape[1] != self.quantiles_.shape[1]:
+        if check_quantiles and X.shape[1] != self.quantiles_.shape[1]:
             raise ValueError('X does not have the same number of features as'
                              ' the previously fitted data. Got {} instead of'
                              ' {}.'.format(X.shape[1],
@@ -2743,12 +2729,10 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         Xt : {ndarray, sparse matrix} of shape (n_samples, n_features)
             The projected data.
         """
-        check_is_fitted(self)
         X_orig = X
-        X = self._check_inputs(X, in_fit=False, copy=self.copy,
-                               reset=False)
-        self._check_is_correctly_fitted(X)
-
+        X = check_array(X, accept_sparse='csc', copy=self.copy,
+                        dtype=FLOAT_DTYPES, force_all_finite='allow-nan')
+        self._check_input(X, check_quantiles=True)
         output = self._transform(X, inverse=False)
         return self._make_array_out(output, X_orig, 'one_to_one')
 
@@ -2769,9 +2753,10 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
             The projected data.
         """
         check_is_fitted(self)
-        X = self._check_inputs(X, in_fit=False, accept_sparse_negative=True,
-                               copy=self.copy)
-        self._check_is_correctly_fitted(X)
+        X = check_array(X, accept_sparse='csc', copy=self.copy,
+                        dtype=FLOAT_DTYPES, force_all_finite='allow-nan')
+        self._check_input(X, accept_sparse_negative=True,
+                          check_quantiles=True)
 
         return self._transform(X, inverse=True)
 
@@ -3031,8 +3016,10 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         return self._make_array_out(output, X, 'one_to_one')
 
     def _fit(self, X, y=None, force_transform=False):
-        X = self._check_input(X, in_fit=True, check_positive=True,
-                              check_method=True)
+        X = self._validate_data(X, ensure_2d=True, dtype=FLOAT_DTYPES,
+                                copy=self.copy, force_all_finite='allow-nan',
+                                reset=True)
+        self._check_input(X, check_positive=True, check_method=True)
 
         if not self.copy and not force_transform:  # if call from fit()
             X = X.copy()  # force copy so that fit does not change X inplace
@@ -3075,8 +3062,9 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
         X_orig = X
-        X = self._check_input(X, in_fit=False, check_positive=True,
-                              check_shape=True, reset=False)
+        X = check_array(X, ensure_2d=True, dtype=FLOAT_DTYPES,
+                        copy=self.copy, force_all_finite='allow-nan')
+        self._check_input(X, check_positive=True, check_shape=True)
 
         transform_function = {'box-cox': boxcox,
                               'yeo-johnson': self._yeo_johnson_transform
@@ -3122,7 +3110,9 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
             The original data.
         """
         check_is_fitted(self)
-        X = self._check_input(X, in_fit=False, check_shape=True)
+        X = check_array(X, ensure_2d=True, dtype=FLOAT_DTYPES,
+                        copy=self.copy, force_all_finite='allow-nan')
+        self._check_input(X, check_shape=True)
 
         if self.standardize:
             X = self._scaler.inverse_transform(X)
@@ -3227,9 +3217,9 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         # choosing bracket -2, 2 like for boxcox
         return optimize.brent(_neg_log_likelihood, brack=(-2, 2))
 
-    def _check_input(self, X, in_fit, check_positive=False, check_shape=False,
-                     check_method=False, reset=True):
-        """Validate the input before fit and transform.
+    def _check_input(self, X, check_positive=False, check_shape=False,
+                     check_method=False):
+        """Validate the input before fit or transform.
 
         Parameters
         ----------
@@ -3245,10 +3235,6 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         check_method : bool, default=False
             If True, check that the transformation method is valid.
         """
-        X = self._validate_data(X, ensure_2d=True, dtype=FLOAT_DTYPES,
-                                copy=self.copy, force_all_finite='allow-nan',
-                                reset=reset)
-
         with np.warnings.catch_warnings():
             np.warnings.filterwarnings(
                 'ignore', r'All-NaN (slice|axis) encountered')
@@ -3267,8 +3253,6 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
             raise ValueError("'method' must be one of {}, "
                              "got {} instead."
                              .format(valid_methods, self.method))
-
-        return X
 
     def _more_tags(self):
         return {'allow_nan': True}
