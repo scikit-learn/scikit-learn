@@ -138,6 +138,9 @@ def check_pairwise_arrays(X, Y, *, precomputed=False, dtype=None,
     """
     X, Y, dtype_float = _return_float_dtype(X, Y)
 
+    if dtype is None:
+        dtype = dtype_float
+
     estimator = 'check_pairwise_arrays'
 
     if Y is X or Y is None:
@@ -1723,8 +1726,10 @@ def pairwise_distances(X, Y=None, metric="euclidean", *, n_jobs=None,
            Accepts `pd.NA` and converts it into `np.nan`
 
     dtype : str, type, list of types, default=None
-        Data type required for X and Y. If None, the dtype will be an
+        Data type to be enforced for X and Y before applying distance
+        calculation. If None, the dtype will be an
         appropriate float type selected by _return_float_dtype.
+        Use this param, only when `metric` is callable.
 
         .. versionadded:: 0.24
 
