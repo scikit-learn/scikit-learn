@@ -293,10 +293,14 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
-- |Feature| Added :func:`metrics.detection_error_tradeoff_curve` to compute
-  Detection Error Tradeoff curve classification metric.
+- |Feature| Added :func:`metrics.det_curve` to compute Detection Error Tradeoff
+  curve classification metric.
   :pr:`10591` by :user:`Jeremy Karnowski <jkarnows>` and
   :user:`Daniel Mohns <dmohns>`.
+
+- |Feature| Added :func:`metrics.plot_det_curve` and :class:`DetCurveDisplay`
+  to ease the plot of DET curves.
+  :pr:`18176` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Feature| Added :func:`metrics.mean_absolute_percentage_error` metric and
   the associated scorer for regression problems. :issue:`10708` fixed with the
@@ -355,6 +359,12 @@ Changelog
 - |Fix| Fixed the `len` of :class:`model_selection.ParameterSampler` when
   all distributions are lists and `n_iter` is more than the number of unique
   parameter combinations. :pr:`18222` by `Nicolas Hug`_.
+
+- |Fix| A fix to raise warning when one or more CV splits of
+  :class:`model_selection.GridSearchCV` and
+  :class:`model_selection.RandomizedSearchCV` results in non-finite scores.
+  :pr:`18266` by :user:`Subrat Sahu <subrat93>`,
+  :user:`Nirvan <Nirvan101>` and :user:`Arthur Book <ArthurBook>`.
 
 :mod:`sklearn.multiclass`
 .........................
