@@ -2,7 +2,6 @@
 or if specifically requested via environment variable
 (e.g. for travis cron job)."""
 from functools import partial
-from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
