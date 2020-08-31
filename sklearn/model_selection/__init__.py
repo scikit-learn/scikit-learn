@@ -1,3 +1,5 @@
+import typing
+
 from ._split import BaseCrossValidator
 from ._split import KFold
 from ._split import GroupKFold
@@ -29,12 +31,16 @@ from ._search import ParameterGrid
 from ._search import ParameterSampler
 from ._search import fit_grid_point
 
-from ._search_successive_halving import HalvingGridSearchCV
-from ._search_successive_halving import HalvingRandomSearchCV
+if typing.TYPE_CHECKING:
+    # Avoid errors in type checkers (e.g. mypy) for experimental estimators.
+    # TODO: remove this check once the estimator is no longer experimental.
+    from ._search_successive_halving import (  # noqa
+        HalvingGridSearchCV, HalvingRandomSearchCV
+    )
 
-__all__ = ('BaseCrossValidator',
+
+__all__ = ['BaseCrossValidator',
            'GridSearchCV',
-           'HalvingGridSearchCV',
            'TimeSeriesSplit',
            'KFold',
            'GroupKFold',
@@ -49,7 +55,6 @@ __all__ = ('BaseCrossValidator',
            'ParameterSampler',
            'PredefinedSplit',
            'RandomizedSearchCV',
-           'HalvingRandomSearchCV',
            'ShuffleSplit',
            'StratifiedKFold',
            'StratifiedShuffleSplit',
@@ -61,4 +66,4 @@ __all__ = ('BaseCrossValidator',
            'learning_curve',
            'permutation_test_score',
            'train_test_split',
-           'validation_curve')
+           'validation_curve']

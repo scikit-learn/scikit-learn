@@ -210,6 +210,15 @@ resources is small. More control is available through tuning the
 ``min_resources`` parameter. Each parameter and their interactions are
 described in more details below.
 
+These estimators are still **experimental**: their predictions
+and their API might change without any deprecation cycle. To use them, you
+need to explicitly import ``enable_successive_halving``::
+
+  >>> # explicitly require this experimental feature
+  >>> from sklearn.experimental import enable_successive_halving # noqa
+  >>> # now you can import normally from model_selection
+  >>> from sklearn.model_selection import HalvingGridSearchCV
+
 .. topic:: Examples:
 
     * :ref:`sphx_glr_auto_examples_model_selection_plot_successive_halving_heatmap.py`
@@ -339,6 +348,7 @@ terms of the number of estimators of a random forest::
 
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.ensemble import RandomForestClassifier
+    >>> from sklearn.experimental import enable_successive_halving  # noqa
     >>> from sklearn.model_selection import HalvingGridSearchCV
     >>> import pandas as pd
     >>>
@@ -367,6 +377,7 @@ resources, some of them might be wasted (i.e. not used)::
 
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.svm import SVC
+    >>> from sklearn.experimental import enable_successive_halving  # noqa
     >>> from sklearn.model_selection import HalvingGridSearchCV
     >>> import pandas as pd
     >>> param_grid= {'kernel': ('linear', 'rbf'),
@@ -423,6 +434,7 @@ more than ``ratio`` candidates::
 
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.svm import SVC
+    >>> from sklearn.experimental import enable_successive_halving  # noqa
     >>> from sklearn.model_selection import HalvingGridSearchCV
     >>> import pandas as pd
     >>>

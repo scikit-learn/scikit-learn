@@ -341,6 +341,17 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
     Read more in the :ref:`User guide <successive_halving_user_guide>`.
 
+    .. note::
+
+      This estimator is still **experimental** for now: the predictions
+      and the API might change without any deprecation cycle. To use it,
+      you need to explicitly import ``enable_successive_halving``::
+
+        >>> # explicitly require this experimental feature
+        >>> from sklearn.experimental import enable_successive_halving # noqa
+        >>> # now you can import normally from model_selection
+        >>> from sklearn.model_selection import HalvingGridSearchCV
+
     Parameters
     ----------
     estimator : estimator object.
@@ -563,6 +574,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.ensemble import RandomForestClassifier
+    >>> from sklearn.experimental import enable_successive_halving  # noqa
     >>> from sklearn.model_selection import HalvingGridSearchCV
     ...
     >>> X, y = load_iris(return_X_y=True)
@@ -609,6 +621,17 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
     number of sampled candidates is determined by ``n_candidates``.
 
     Read more in the :ref:`User guide<successive_halving_user_guide>`.
+
+    .. note::
+
+      This estimator is still **experimental** for now: the predictions
+      and the API might change without any deprecation cycle. To use it,
+      you need to explicitly import ``enable_successive_halving``::
+
+        >>> # explicitly require this experimental feature
+        >>> from sklearn.experimental import enable_successive_halving # noqa
+        >>> # now you can import normally from model_selection
+        >>> from sklearn.model_selection import HalvingRandomSearchCV
 
     Parameters
     ----------
@@ -840,6 +863,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.ensemble import RandomForestClassifier
+    >>> from sklearn.experimental import enable_successive_halving  # noqa
     >>> from sklearn.model_selection import HalvingRandomSearchCV
     >>> from scipy.stats import randint
     ...
