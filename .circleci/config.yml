@@ -101,18 +101,6 @@ jobs:
           name: linting
           command: ./build_tools/circle/linting.sh
 
-  check-manifest:
-    docker:
-      - image: circleci/python:3.7.3-stretch
-    steps:
-      - checkout
-      - run:
-          name: dependencies
-          command: sudo pip install check-manifest scipy cython
-      - run:
-          name: check-manifest
-          command: check-manifest -v
-
   pypy3:
     docker:
       - image: pypy:3.6-7.2.0
@@ -175,7 +163,3 @@ workflows:
                 - master
     jobs:
       - pypy3
-
-  manifest:
-    jobs:
-      - check-manifest
