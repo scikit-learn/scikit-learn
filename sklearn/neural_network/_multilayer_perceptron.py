@@ -1027,24 +1027,6 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
         return self._label_binarizer.inverse_transform(y_pred)
 
-    def fit(self, X, y):
-        """Fit the model to data matrix X and target(s) y.
-
-        Parameters
-        ----------
-        X : ndarray or sparse matrix of shape (n_samples, n_features)
-            The input data.
-
-        y : ndarray of shape (n_samples,) or (n_samples, n_outputs)
-            The target values (class labels in classification, real numbers in
-            regression).
-
-        Returns
-        -------
-        self : returns a trained MLP model.
-        """
-        return self._fit(X, y, incremental=False)
-
     @property
     def partial_fit(self):
         """Update the model with a single iteration over the given data.
