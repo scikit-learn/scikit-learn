@@ -942,7 +942,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
         If update_H=False, it is used as a constant, to solve for W only.
 
     A :
-    
+
     .. versionadded:: 0.XX
 
     B :
@@ -1057,8 +1057,8 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
         Actual number of iterations.
 
     A :
-    
-    B : 
+
+    B :
 
     Examples
     --------
@@ -1158,7 +1158,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
                                                   tol, l1_reg_W, l1_reg_H,
                                                   l2_reg_W, l2_reg_H, update_H,
                                                   verbose)
-                                                  
+
     else:
         raise ValueError("Invalid solver parameter '%s'." % solver)
 
