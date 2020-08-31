@@ -120,10 +120,11 @@ def test_plot_partial_dependence(grid_resolution, pyplot, clf_diabetes,
     ('individual', True, 50, (1, 3, 50)),
     ('both', True, 50, (1, 3, 51)),
 ])
-def test_plot_partial_dependence_kind(pyplot, kind, subsample, shape,
+def test_plot_partial_dependence_kind(pyplot, kind, centered, subsample, shape,
                                       clf_diabetes, diabetes):
     disp = plot_partial_dependence(clf_diabetes, diabetes.data, [0, 1, 2],
-                                   kind=kind, subsample=subsample)
+                                   kind=kind, centered=centered,
+                                   subsample=subsample)
 
     assert disp.axes_.shape == (1, 3)
     assert disp.lines_.shape == shape
