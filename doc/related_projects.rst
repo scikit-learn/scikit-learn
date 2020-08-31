@@ -47,6 +47,13 @@ enhance the functionality of scikit-learn's estimators.
   transforming temporal and relational datasets into feature matrices for 
   machine learning.
 
+- `Neuraxle <https://github.com/Neuraxio/Neuraxle>`_
+  A library for building neat pipelines, providing the right abstractions to
+  both ease research, development, and deployment of machine learning
+  applications. Compatible with deep learning frameworks and scikit-learn API,
+  it can stream minibatches, use data checkpoints, build funky pipelines, and
+  serialize models with custom per-step savers.
+
 **Experimentation frameworks**
 
 - `REP <https://github.com/yandex/REP>`_ Environment for conducting data-driven
@@ -193,7 +200,7 @@ and tasks.
   Dirichlet allocation in Cython which uses `Gibbs sampling
   <https://en.wikipedia.org/wiki/Gibbs_sampling>`_ to sample from the true
   posterior distribution. (scikit-learn's
-  :class:`sklearn.decomposition.LatentDirichletAllocation` implementation uses
+  :class:`~sklearn.decomposition.LatentDirichletAllocation` implementation uses
   `variational inference
   <https://en.wikipedia.org/wiki/Variational_Bayesian_methods>`_ to sample from
   a tractable approximation of a topic model's posterior distribution.)
@@ -217,6 +224,12 @@ and tasks.
 - `imbalanced-learn
   <https://github.com/scikit-learn-contrib/imbalanced-learn>`_ Various
   methods to under- and over-sample datasets.
+
+- `Feature-engine <https://github.com/solegalli/feature_engine>`_ A library
+  of sklearn compatible transformers for missing data imputation, categorical
+  encoding, variable transformation, discretization, outlier handling and more.
+  Feature-engine allows the application of preprocessing steps to selected groups
+  of variables and it is fully compatible with the Scikit-learn Pipeline.
 
 Statistical learning with Python
 --------------------------------

@@ -269,8 +269,8 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
         if isinstance(fx, str):
             try:
                 fx = feature_names.index(fx)
-            except ValueError:
-                raise ValueError('Feature %s not in feature_names' % fx)
+            except ValueError as e:
+                raise ValueError('Feature %s not in feature_names' % fx) from e
         return int(fx)
 
     # convert features into a seq of int tuples
@@ -280,9 +280,11 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
             fxs = (fxs,)
         try:
             fxs = tuple(convert_feature(fx) for fx in fxs)
-        except TypeError:
-            raise ValueError('Each entry in features must be either an int, '
-                             'a string, or an iterable of size at most 2.')
+        except TypeError as e:
+            raise ValueError(
+                'Each entry in features must be either an int, '
+                'a string, or an iterable of size at most 2.'
+            ) from e
         if not 1 <= np.size(fxs) <= 2:
             raise ValueError('Each entry in features must be either an int, '
                              'a string, or an iterable of size at most 2.')
@@ -713,7 +715,8 @@ class PartialDependenceDisplay:
 
             if len(values) == 1:
                 if n_cols is None or i % n_cols == 0:
-                    axi.set_ylabel('Partial dependence')
+                    if not axi.get_ylabel():
+                        axi.set_ylabel('Partial dependence')
                 else:
                     axi.set_yticklabels([])
                 axi.set_ylim(self.pdp_lim[1])
