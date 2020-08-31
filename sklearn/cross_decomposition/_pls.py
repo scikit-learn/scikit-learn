@@ -887,7 +887,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
     ...     [11.9, 12.3]])
     >>> plsca = PLSSVD(n_components=2)
     >>> plsca.fit(X, Y)
-    PLSSVD(copy=True, n_components=2, random_state=None, scale=True)
+    PLSSVD()
     >>> X_c, Y_c = plsca.transform(X, Y)
     >>> X_c.shape, Y_c.shape
     ((4, 2), (4, 2))
