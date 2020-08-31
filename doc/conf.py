@@ -488,9 +488,9 @@ issues_github_path = 'scikit-learn/scikit-learn'
 
 
 def setup(app):
+    app.connect('builder-inited', check_min_dependencies_readme)
     app.connect('builder-inited', generate_min_dependency_table)
     app.connect('builder-inited', generate_min_dependency_substitutions)
-    app.connect('builder-inited', check_min_dependencies_readme)
     # to hide/show the prompt in code examples:
     app.connect('build-finished', make_carousel_thumbs)
     app.connect('build-finished', filter_search_index)
