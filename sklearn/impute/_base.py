@@ -324,8 +324,7 @@ class SimpleImputer(_BaseImputer):
 
     def _sparse_fit(self, X, strategy, missing_values, fill_value):
         """Fit the transformer on sparse data."""
-        missing_mask = _get_mask(X, missing_values,
-                                 sparse=True)
+        missing_mask = _get_mask(X, missing_values)
         mask_data = missing_mask.data
         n_implicit_zeros = X.shape[0] - np.diff(X.indptr)
 
@@ -434,7 +433,7 @@ class SimpleImputer(_BaseImputer):
                              % (X.shape[1], self.statistics_.shape[0]))
 
         # compute mask before eliminating invalid features
-        missing_mask = _get_mask(X, self.missing_values, sparse=sp.issparse(X))
+        missing_mask = _get_mask(X, self.missing_values)
 
         # Delete the invalid columns if strategy is not constant
         if self.strategy == "constant":
@@ -644,8 +643,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
 
         """
         if not self._precomputed:
-            imputer_mask = _get_mask(X, self.missing_values,
-                                     sparse=sp.issparse(X))
+            imputer_mask = _get_mask(X, self.missing_values)
         else:
             imputer_mask = X
 
