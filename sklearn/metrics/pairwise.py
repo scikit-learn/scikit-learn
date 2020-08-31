@@ -121,7 +121,7 @@ def check_pairwise_arrays(X, Y, *, precomputed=False, dtype=None,
 
         .. versionadded:: 0.22
 
-    ensure_2d: bool, default=True
+    ensure_2d : bool, default=True
         Whether to ensure that input array has to be two dimensional
 
         .. versionadded:: 0.24
