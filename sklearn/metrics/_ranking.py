@@ -208,8 +208,10 @@ def average_precision_score(y_true, y_score, *, average="macro", pos_label=1,
                          "multilabel-indicator y_true. Do not set "
                          "pos_label or set pos_label to 1.")
     elif y_type == "binary":
-        present_labels = np.unique(y_true)
-        if len(present_labels) == 2 and not np.isin(pos_label, present_labels):
+        # Convert to Python primitive type to avoid NumPy type / Python str
+        # comparison. See https://github.com/numpy/numpy/issues/6784
+        present_labels = np.unique(y_true).tolist()
+        if len(present_labels) == 2 and pos_label not in present_labels:
             raise ValueError(
                 f"pos_label={pos_label} is not a valid label. It should be "
                 f"one of {present_labels}"
