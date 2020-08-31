@@ -461,15 +461,26 @@ def test_cv_results(Est):
     # iteration. We here make sure that candidates that aren't in the top-k at
     # any given iteration are indeed not evaluated at the subsequent
     # iterations.
-
+    nan_mask = pd.isna(table)
     n_iter = sh.n_iterations_
     for it in range(n_iter - 1):
-        n_selected = sh.n_candidates_[it + 1]
-        table = table.sort_values(by=it)
-        not_selected = table[:-n_selected]
-        table = table[-n_selected:]
+        already_discarded_mask = nan_mask[it]
 
-        assert not_selected[range(it + 1, n_iter)].isna().all(axis=None)
+        # make sure that if a candidate is already discarded, we don't evaluate
+        # it later
+        assert (already_discarded_mask & nan_mask[it + 1] ==
+                already_discarded_mask).all()
+
+        # make sure that the number of discarded candidate is correct
+        discarded_now_mask = ~already_discarded_mask & nan_mask[it + 1]
+        kept_mask = ~already_discarded_mask & ~discarded_now_mask
+        assert kept_mask.sum() == sh.n_candidates_[it + 1]
+
+        # make sure that all discarded candidates have a lower score than the
+        # kept candidates
+        discarded_max_score = table[it].where(discarded_now_mask).max()
+        kept_min_score = table[it].where(kept_mask).min()
+        assert discarded_max_score < kept_min_score
 
     # We now make sure that the best candidate is chosen only from the last
     # iteration.
