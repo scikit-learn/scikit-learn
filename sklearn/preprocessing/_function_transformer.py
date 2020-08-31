@@ -146,7 +146,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
             Transformed input.
         """
         out = self._transform(X, func=self.func, kw_args=self.kw_args)
-        return self._make_array_out(out, X, 'class_name')
+        return self._make_array_out(out, X, 'one_to_one')
 
     def inverse_transform(self, X):
         """Transform X using the inverse function.

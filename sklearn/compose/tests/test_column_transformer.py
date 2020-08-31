@@ -1436,16 +1436,30 @@ def test_sk_visual_block_remainder_fitted_numpy(remainder):
     assert visual_block.estimators == (scaler, remainder)
 
 
-def test_column_transformer_array_out_pandas():
+@pytest.mark.parametrize("n_jobs", [1, 2])
+def test_column_transformer_array_out_pandas(n_jobs):
     # simple check for column transformer and array_out
     pd = pytest.importorskip('pandas')
     df = pd.DataFrame({"cat": ["a", "b", "c"],
-                       "num": [1, 2, 3]})
+                       "num": [1, 2, 3],
+                       'more': [3, 4, 5]})
     ct = ColumnTransformer(transformers=[
         ('scale', StandardScaler(), ['num']),
         ('encode', OneHotEncoder(), ['cat'])
-    ])
+    ], n_jobs=n_jobs)
     with config_context(array_out='pandas'):
         df_out = ct.fit_transform(df)
     assert_array_equal(df_out.columns,
-                       ['num', 'cat_a', 'cat_b', 'cat_c'])
+                       ['scale_num', 'encode_cat_a',
+                        'encode_cat_b', 'encode_cat_c'])
+
+    ct = ColumnTransformer(transformers=[
+        ('scale', StandardScaler(), ['num']),
+        ('encode', OneHotEncoder(), ['cat'])
+    ], n_jobs=n_jobs, remainder='passthrough')
+    with config_context(array_out='pandas'):
+        df_out = ct.fit_transform(df)
+    assert_array_equal(df_out.columns,
+                       ['scale_num', 'encode_cat_a',
+                        'encode_cat_b', 'encode_cat_c',
+                        'remainder_more'])

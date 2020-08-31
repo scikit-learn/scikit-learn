@@ -644,7 +644,13 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
     def _make_array_out(self, X_out, Xs, X_orig):
         def get_feature_names_out():
-            feature_names = [_get_feature_names(X) for X in Xs]
+            transformer_names = (name for name, _, _, _ in self._iter())
+            feature_names = []
+            for X, trans_name in zip(Xs, transformer_names):
+                inner_names = _get_feature_names(X)
+                inner_names = [f'{trans_name}_{name}' for name in inner_names]
+                feature_names.append(inner_names)
+
             feature_names_out = np.concatenate(feature_names)
             if feature_names_out.size != X_out.shape[1]:
                 return None

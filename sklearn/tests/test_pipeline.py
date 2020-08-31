@@ -12,6 +12,7 @@ import numpy as np
 from scipy import sparse
 import joblib
 
+from sklearn import config_context
 from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_raises_regex
 from sklearn.utils._testing import assert_raise_message
@@ -1247,3 +1248,31 @@ def test_feature_union_warns_unknown_transformer_weight():
     union = FeatureUnion(transformer_list, transformer_weights=weights)
     with pytest.raises(ValueError, match=expected_msg):
         union.fit(X, y)
+
+
+@pytest.mark.parametrize("n_jobs", [1, 2])
+def test_feature_union_array_out_pandas(n_jobs):
+    pd = pytest.importorskip('pandas')
+
+    X = iris.data
+    X -= X.mean(axis=0)
+    y = iris.target
+    X = pd.DataFrame(X, columns=iris.feature_names)
+    svd = TruncatedSVD(n_components=2, random_state=0)
+    select = SelectKBest(k=1)
+    fs = FeatureUnion([("svd", svd), ("select", select)], n_jobs=n_jobs)
+    fs.fit(X, y)
+
+    with config_context(array_out='pandas'):
+        df_out = fs.transform(X)
+
+    assert isinstance(df_out, pd.DataFrame)
+
+    with config_context(array_out='pandas'):
+        df_svd_out = fs.transformer_list[0][1].transform(X)
+        df_select_out = fs.transformer_list[1][1].transform(X)
+
+    expected_feature_names = (
+        [f"svd_{name}" for name in df_svd_out.columns] +
+        [f"select_{name}" for name in df_select_out.columns])
+    assert_array_equal(df_out.columns, expected_feature_names)

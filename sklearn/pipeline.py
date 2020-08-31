@@ -16,6 +16,7 @@ import numpy as np
 from scipy import sparse
 from joblib import Parallel, delayed
 
+from ._config import get_config
 from .base import clone, TransformerMixin
 from .utils._estimator_html_repr import _VisualBlock
 from .utils.metaestimators import if_delegate_has_method
@@ -25,6 +26,7 @@ from .utils.validation import _deprecate_positional_args
 
 from .utils.metaestimators import _BaseComposition
 from ._config import config_context
+from .utils._array_out import _get_feature_names
 
 __all__ = ['Pipeline', 'FeatureUnion', 'make_pipeline', 'make_union']
 
@@ -990,6 +992,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         return Parallel(n_jobs=self.n_jobs)(delayed(func)(
             transformer, X, y, weight,
             message_clsname='FeatureUnion',
+            config=get_config(),
             message=self._log_message(name, idx, len(transformers)),
             **fit_params) for idx, (name, transformer,
                                     weight) in enumerate(transformers, 1))
@@ -1009,14 +1012,35 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             hstack of results of transformers. sum_n_components is the
             sum of n_components (output dimension) over transformers.
         """
+        X_orig = X
         Xs = Parallel(n_jobs=self.n_jobs)(
-            delayed(_transform_one)(trans, X, None, weight)
+            delayed(_transform_one)(trans, X, None, weight,
+                                    get_config())
             for name, trans, weight in self._iter())
         if not Xs:
             # All transformers are None
-            return np.zeros((X.shape[0], 0))
+            return self._make_array_out(np.zeros((X.shape[0], 0)),
+                                        Xs, X_orig)
 
-        return self._hstack(Xs)
+        out = self._hstack(Xs)
+        return self._make_array_out(out, Xs, X_orig)
+
+    def _make_array_out(self, X_out, Xs, X_orig):
+        def get_feature_names_out():
+            transformer_names = (name for name, _ in self.transformer_list)
+            feature_names = []
+            for X, trans_name in zip(Xs, transformer_names):
+                inner_names = _get_feature_names(X)
+                inner_names = [f'{trans_name}_{name}' for name in inner_names]
+                feature_names.append(inner_names)
+
+            feature_names_out = np.concatenate(feature_names)
+            if feature_names_out.size != X_out.shape[1]:
+                return None
+            return feature_names_out
+
+        return super()._make_array_out(X_out, X_orig,
+                                       get_feature_names_out)
 
     def _hstack(self, Xs):
         if any(sparse.issparse(f) for f in Xs):
