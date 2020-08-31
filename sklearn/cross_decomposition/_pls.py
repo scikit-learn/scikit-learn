@@ -199,7 +199,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
                 # TODO: raise an error in 0.26
                 warnings.warn(
                     f"As of version 0.24, n_components({n_components}) should "
-                    f"be in [1, min(n_features, n_targets)] = "
+                    f"be in [1, min(n_features, n_samples, n_targets)] = "
                     f"[1, {rank_upper_bound}]. "
                     f"n_components={rank_upper_bound} will be used instead. "
                     f"In version 0.26, an error will be raised.",
@@ -308,7 +308,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         Y : array-like of shape (n_samples, n_targets), default=None
             Target vectors
 
-        copy : boolean, default=True
+        copy : bool, default=True
             Whether to copy X and Y, or perform in-place normalization.
 
         Returns
@@ -368,7 +368,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         X : array-like of shape (n_samples, n_features)
             Samples
 
-        copy : boolean, default=True
+        copy : bool, default=True
             Whether to copy X and Y, or perform in-place normalization.
 
         Notes
@@ -457,7 +457,7 @@ class PLSRegression(_PLS):
         Number of components to keep. Should be in `[1, min(n_samples,
         n_features, n_targets)]`.
 
-    scale : boolean, default=True
+    scale : bool, default=True
         Whether to scale `X` and `Y`.
 
     algorithm : {'nipals', 'svd'}, default='nipals'
@@ -474,7 +474,7 @@ class PLSRegression(_PLS):
         algorithm stops whenever the squared norm of `u_i - u_{i-1}` is less
         than `tol`, where `u` corresponds to the left singular vector.
 
-    copy : boolean, default=True
+    copy : bool, default=True
         Whether to copy `X` and `Y` in fit before applying centering, and
         potentially scaling. If False, these operations will be done inplace,
         modifying both arrays.
@@ -555,7 +555,7 @@ class PLSCanonical(_PLS):
         Number of components to keep. Should be in `[1, min(n_samples,
         n_features, n_targets)]`.
 
-    scale : boolean, default=True
+    scale : bool, default=True
         Whether to scale `X` and `Y`.
 
     algorithm : {'nipals', 'svd'}, default='nipals'
@@ -572,7 +572,7 @@ class PLSCanonical(_PLS):
         algorithm stops whenever the squared norm of `u_i - u_{i-1}` is less
         than `tol`, where `u` corresponds to the left singular vector.
 
-    copy : boolean, default=True
+    copy : bool, default=True
         Whether to copy `X` and `Y` in fit before applying centering, and
         potentially scaling. If False, these operations will be done inplace,
         modifying both arrays.
@@ -666,7 +666,7 @@ class CCA(_UnstableArchMixin, _PLS):
         Number of components to keep. Should be in `[1, min(n_samples,
         n_features, n_targets)]`.
 
-    scale : boolean, default=True
+    scale : bool, default=True
         Whether to scale `X` and `Y`.
 
     algorithm : {'nipals', 'svd'}, default='nipals'
@@ -683,7 +683,7 @@ class CCA(_UnstableArchMixin, _PLS):
         algorithm stops whenever the squared norm of `u_i - u_{i-1}` is less
         than `tol`, where `u` corresponds to the left singular vector.
 
-    copy : boolean, default=True
+    copy : bool, default=True
         Whether to copy `X` and `Y` in fit before applying centering, and
         potentially scaling. If False, these operations will be done inplace,
         modifying both arrays.
@@ -775,10 +775,10 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         The number of components to keep. Should be in `[1,
         min(n_samples, n_features, n_targets)]`.
 
-    scale : boolean, default=True
+    scale : bool, default=True
         Whether to scale `X` and `Y`.
 
-    copy : boolean, default=True
+    copy : bool, default=True
         Whether to copy `X` and `Y` in fit before applying centering, and
         potentially scaling. If False, these operations will be done inplace,
         modifying both arrays.
@@ -862,7 +862,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
             # TODO: raise an error in 0.26
             warnings.warn(
                 f"As of version 0.24, n_components({n_components}) should be "
-                f"in [1, min(n_features, n_targets)] = "
+                f"in [1, min(n_features, n_samples, n_targets)] = "
                 f"[1, {rank_upper_bound}]. "
                 f"n_components={rank_upper_bound} will be used instead. "
                 f"In version 0.26, an error will be raised.",

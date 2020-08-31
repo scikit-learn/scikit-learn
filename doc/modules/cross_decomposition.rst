@@ -32,7 +32,9 @@ the dimensionality reduction is unsupervized, and may lose some important
 variables: PCR would keep the features with the most variance, but it's
 possible that features with a small variances are relevant from predicting
 the target. In a way, PLS allows for the same kind of dimensionality
-reduction, but by taking into account the targets `y`.
+reduction, but by taking into account the targets `y`. An illustration of
+this fact is given in the following example:
+* :ref:`sphx_glr_auto_examples_cross_decomposition_plot_pcr_vs_pls.py`.
 
 Apart from CCA, the PLS estimators are particularly suited when the matrix of
 predictors has more variables than observations, and when there is
