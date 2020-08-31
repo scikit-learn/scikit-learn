@@ -60,7 +60,7 @@ scikit-learn 0.23 and later require Python 3.6 or newer.
 Scikit-learn plotting capabilities (i.e., functions start with ``plot_``
 and classes end with "Display") require Matplotlib (>= 2.1.1). For running the
 examples Matplotlib >= 2.1.1 is required. A few examples require
-scikit-image >= 0.13, a few examples require pandas >= 0.18.0, some examples
+scikit-image >= 0.13, a few examples require pandas >= 0.25.0, some examples
 require seaborn >= 0.9.0.
 
 User installation
@@ -73,7 +73,7 @@ the easiest way to install scikit-learn is using ``pip``   ::
 
 or ``conda``::
 
-    conda install scikit-learn
+    conda install -c conda-forge scikit-learn
 
 The documentation includes more detailed `installation instructions <https://scikit-learn.org/stable/install.html>`_.
 
@@ -118,7 +118,7 @@ Testing
 ~~~~~~~
 
 After installation, you can launch the test suite from outside the
-source directory (you will need to have ``pytest`` >= 3.3.0 installed)::
+source directory (you will need to have ``pytest`` >= 5.0.1 installed)::
 
     pytest sklearn
 
@@ -162,6 +162,8 @@ Communication
 
 - Mailing list: https://mail.python.org/mailman/listinfo/scikit-learn
 - IRC channel: ``#scikit-learn`` at ``webchat.freenode.net``
+- Gitter: https://gitter.im/scikit-learn/scikit-learn
+- Twitter: https://twitter.com/scikit_learn
 - Stack Overflow: https://stackoverflow.com/questions/tagged/scikit-learn
 - Website: https://scikit-learn.org
 

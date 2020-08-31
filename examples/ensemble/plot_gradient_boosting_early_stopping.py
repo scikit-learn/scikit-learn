@@ -25,7 +25,7 @@ The number of stages of the final model is available at the attribute
 ``n_estimators_``.
 
 This example illustrates how the early stopping can used in the
-:class:`sklearn.ensemble.GradientBoostingClassifier` model to achieve
+:class:`~sklearn.ensemble.GradientBoostingClassifier` model to achieve
 almost the same accuracy as compared to a model built without early stopping
 using many fewer estimators. This can significantly reduce training time,
 memory usage and prediction latency.
