@@ -1439,7 +1439,8 @@ class with the greater label for each output.
   >>> from sklearn.datasets import make_multilabel_classification
   >>> from sklearn.multioutput import MultiOutputClassifier
   >>> X, y = make_multilabel_classification(random_state=0)
-  >>> clf = MultiOutputClassifier(clf).fit(X, y)
+  >>> inner_clf = LogisticRegression(solver="liblinear", random_state=0)
+  >>> clf = MultiOutputClassifier(inner_clf).fit(X, y)
   >>> y_score = np.transpose([y_pred[:, 1] for y_pred in clf.predict_proba(X)])
   >>> roc_auc_score(y, y_score, average=None)
   array([0.82..., 0.86..., 0.94..., 0.85... , 0.94...])
