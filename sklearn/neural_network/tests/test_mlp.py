@@ -662,12 +662,17 @@ def test_warm_start():
             clf.fit(X, y_i)
 
 
-def test_warm_start_full_iteration():
+@pytest.mark.parametrize("MLPEstimator", [MLPClassifier, MLPRegressor])
+def test_warm_start_full_iteration(MLPEstimator):
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/16812
+    # Check that the MLP estimator accomplish `max_iter` with a
+    # warm started estimator.
     X = X_iris
     y = y_iris
     max_iter = 3
-    clf = MLPClassifier(hidden_layer_sizes=2, solver='sgd',
-                        warm_start=True, max_iter=max_iter)
+    clf = MLPEstimator(hidden_layer_sizes=2, solver='sgd',
+                       warm_start=True, max_iter=max_iter)
     clf.fit(X, y)
     clf.fit(X, y)
     assert max_iter == clf.n_iter_
