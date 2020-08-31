@@ -27,7 +27,7 @@ source build_tools/shared.sh
 
 if [[ "$DISTRIB" == "conda" ]]; then
 
-    TO_INSTALL="python=$PYTHON_VERSION pip blas[build=$BLAS]"
+    TO_INSTALL="python=$PYTHON_VERSION ccache pip blas[build=$BLAS]"
 
     TO_INSTALL="$TO_INSTALL $(get_dep numpy $NUMPY_VERSION)"
     TO_INSTALL="$TO_INSTALL $(get_dep scipy $SCIPY_VERSION)"
@@ -49,6 +49,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
         fi
     fi
 	make_conda $TO_INSTALL
+    setup_ccache
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     sudo add-apt-repository --remove ppa:ubuntu-toolchain-r/test
