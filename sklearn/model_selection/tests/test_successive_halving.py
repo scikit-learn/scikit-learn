@@ -437,14 +437,14 @@ def test_cv_results(Est):
         sh.set_params(n_candidates=2 * 30, min_resources='exhaust')
 
     sh.fit(X, y)
-    df = pd.DataFrame(sh.cv_results_)
+    cv_results_df = pd.DataFrame(sh.cv_results_)
 
     # just make sure we don't have ties
-    assert len(df['mean_test_score'].unique()) == len(df)
+    assert len(cv_results_df['mean_test_score'].unique()) == len(cv_results_df)
 
-    df['params_str'] = df['params'].apply(str)
-    table = df.pivot(index='params_str', columns='iter',
-                     values='mean_test_score')
+    cv_results_df['params_str'] = cv_results_df['params'].apply(str)
+    table = cv_results_df.pivot(index='params_str', columns='iter',
+                                values='mean_test_score')
 
     # table looks like something like this:
     # iter                    0      1       2        3   4   5
@@ -477,17 +477,18 @@ def test_cv_results(Est):
     # earlier rounds (this isn't generally the case, but worth ensuring it's
     # possible).
 
-    last_iter = df['iter'].max()
+    last_iter = cv_results_df['iter'].max()
     idx_best_last_iter = (
-        df[df['iter'] == last_iter]['mean_test_score'].idxmax()
+        cv_results_df[cv_results_df['iter'] == last_iter]
+        ['mean_test_score'].idxmax()
     )
-    idx_best_all_iters = df['mean_test_score'].idxmax()
+    idx_best_all_iters = cv_results_df['mean_test_score'].idxmax()
 
-    assert sh.best_params_ == df.iloc[idx_best_last_iter]['params']
-    assert (df.iloc[idx_best_last_iter]['mean_test_score'] <
-            df.iloc[idx_best_all_iters]['mean_test_score'])
-    assert (df.iloc[idx_best_last_iter]['params'] !=
-            df.iloc[idx_best_all_iters]['params'])
+    assert sh.best_params_ == cv_results_df.iloc[idx_best_last_iter]['params']
+    assert (cv_results_df.iloc[idx_best_last_iter]['mean_test_score'] <
+            cv_results_df.iloc[idx_best_all_iters]['mean_test_score'])
+    assert (cv_results_df.iloc[idx_best_last_iter]['params'] !=
+            cv_results_df.iloc[idx_best_all_iters]['params'])
 
 
 @pytest.mark.parametrize('Est', (HalvingGridSearchCV, HalvingRandomSearchCV))
@@ -539,13 +540,13 @@ def test_base_estimator_inputs(Est):
     passed_n_samples = passed_n_samples[::n_splits]
     passed_params = passed_params[::n_splits]
 
-    df = pd.DataFrame(sh.cv_results_)
+    cv_results_df = pd.DataFrame(sh.cv_results_)
 
-    assert len(passed_params) == len(passed_n_samples) == len(df)
+    assert len(passed_params) == len(passed_n_samples) == len(cv_results_df)
 
     uniques, counts = np.unique(passed_n_samples, return_counts=True)
     assert (sh.n_resources_ == uniques).all()
     assert (sh.n_candidates_ == counts).all()
 
-    assert (df['params'] == passed_params).all()
-    assert (df['resource_iter'] == passed_n_samples).all()
+    assert (cv_results_df['params'] == passed_params).all()
+    assert (cv_results_df['resource_iter'] == passed_n_samples).all()
