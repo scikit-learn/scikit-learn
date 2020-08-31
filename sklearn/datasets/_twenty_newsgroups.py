@@ -451,7 +451,15 @@ def fetch_20newsgroups_vectorized(*, subset="train", remove=(), data_home=None,
                                    download_if_missing=download_if_missing)
 
     if os.path.exists(target_file):
-        X_train, X_test, feature_names = joblib.load(target_file)
+        try:
+            X_train, X_test, feature_names = joblib.load(target_file)
+        except ValueError as e:
+            raise ValueError(
+                f"The cached dataset located in {target_file} was fetched "
+                f"with an older scikit-learn version and it is not compatible "
+                f"with the scikit-learn version imported. You need to "
+                f"manually delete the file: {target_file}."
+            ) from e
     else:
         vectorizer = CountVectorizer(dtype=np.int16)
         X_train = vectorizer.fit_transform(data_train.data).tocsr()

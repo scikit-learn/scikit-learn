@@ -2,6 +2,8 @@
 or if specifically requested via environment variable
 (e.g. for travis cron job)."""
 from functools import partial
+from unittest.mock import MagicMock
+from unittest.mock import patch
 
 import pytest
 
@@ -125,3 +127,15 @@ def test_20news_as_frame(fetch_20newsgroups_vectorized_fxt):
 
 def test_as_frame_no_pandas():
     check_pandas_dependency_message(fetch_20newsgroups_vectorized)
+
+
+def test_outdated_pickle():
+    with patch("os.path.exists") as mock_is_exist:
+        with patch("joblib.load") as mock_load:
+            # mock that the dataset was cached
+            mock_is_exist.return_value = True
+            # mock that we have an outdated pickle with only X and y returned
+            mock_load.return_value = ("X", "y")
+            err_msg = "The cached dataset located in"
+            with pytest.raises(ValueError, match=err_msg):
+                fetch_20newsgroups_vectorized(as_frame=True)
