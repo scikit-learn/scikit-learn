@@ -141,7 +141,15 @@ Changelog
 - |Enhancement| :func:`datasets.fetch_covtype` now now supports the optional
   argument `as_frame`; when it is set to True, the returned Bunch object's
   `data` and `frame` members are pandas DataFrames, and the `target` member is
-  a pandas Series. :pr:`17491` by :user:`Alex Liang <tianchuliang>`.
+  a pandas Series.
+  :pr:`17491` by :user:`Alex Liang <tianchuliang>`.
+
+- |Enhancement| :func:`datasets.fetch_kddcup99` now now supports the optional
+  argument `as_frame`; when it is set to True, the returned Bunch object's
+  `data` and `frame` members are pandas DataFrames, and the `target` member is
+  a pandas Series.
+  :pr:`18280` by :user:`Alex Liang <tianchuliang>` and
+  `Guillaume Lemaitre`_.
 
 - |API| The default value of `as_frame` in :func:`datasets.fetch_openml` is
   changed from False to 'auto'.
