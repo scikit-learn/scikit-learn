@@ -7,10 +7,9 @@ import numpy as np
 from scipy import linalg
 from scipy.sparse.linalg import eigsh
 
-from ..utils import check_random_state
 from ..utils.arpack import _init_arpack_v0
 from ..utils.extmath import svd_flip
-from ..utils.validation import check_is_fitted, check_array, _check_psd_eigenvalues
+from ..utils.validation import check_is_fitted, _check_psd_eigenvalues
 
 from ..exceptions import NotFittedError
 from ..base import BaseEstimator, TransformerMixin
