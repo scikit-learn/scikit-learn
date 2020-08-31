@@ -44,7 +44,7 @@ class ConfusionMatrixDisplay:
     See Also
     --------
     confusion_matrix :
-        Compute confusion matrix to evaluate the accuracy of a classification.
+        Compute Confusion Matrix to evaluate the accuracy of a classification.
     plot_confusion_matrix : Plot Confusion Matrix.
 
     Examples
