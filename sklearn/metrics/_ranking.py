@@ -29,7 +29,6 @@ from ..utils import assert_all_finite
 from ..utils import check_consistent_length
 from ..utils import column_or_1d, check_array
 from ..utils.multiclass import type_of_target
-from ..utils.multiclass import unique_labels
 from ..utils.extmath import stable_cumsum
 from ..utils.sparsefuncs import count_nonzero
 from ..utils.validation import _deprecate_positional_args
@@ -209,7 +208,7 @@ def average_precision_score(y_true, y_score, *, average="macro", pos_label=1,
                          "multilabel-indicator y_true. Do not set "
                          "pos_label or set pos_label to 1.")
     elif y_type == "binary":
-        present_labels = unique_labels(y_true)
+        present_labels = np.unique(y_true)
         if len(present_labels) == 2 and not np.isin(pos_label, present_labels):
             raise ValueError(
                 f"pos_label={pos_label} is not a valid label. It should be "
