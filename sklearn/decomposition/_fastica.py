@@ -27,7 +27,7 @@ __all__ = ['fastica', 'FastICA']
 
 def _gs_decorrelation(w, W, j):
     """
-    Orthonormalize w wrt the first j rows of W
+    Orthonormalize w wrt the first j rows of W.
 
     Parameters
     ----------
@@ -204,7 +204,7 @@ def fastica(X, n_components=None, *, algorithm="parallel", whiten=True,
         Initial un-mixing array of dimension (n.comp,n.comp).
         If None (default) then an array of normal r.v.'s is used.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Used to initialize ``w_init`` when not specified, with a
         normal distribution. Pass an int, for reproducible results
         across multiple function calls.
@@ -343,7 +343,7 @@ class FastICA(TransformerMixin, BaseEstimator):
     w_init : ndarray of shape (n_components, n_components), default=None
         The mixing matrix to be used to initialize the algorithm.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Used to initialize ``w_init`` when not specified, with a
         normal distribution. Pass an int, for reproducible results
         across multiple function calls.
