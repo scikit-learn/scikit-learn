@@ -110,9 +110,9 @@ The dataset is structured such that points nearby in index order are nearby
 in parameter space, leading to an approximately block-diagonal matrix of
 K-nearest neighbors.  Such a sparse graph is useful in a variety of
 circumstances which make use of spatial relationships between points for
-unsupervised learning: in particular, see :class:`sklearn.manifold.Isomap`,
-:class:`sklearn.manifold.LocallyLinearEmbedding`, and
-:class:`sklearn.cluster.SpectralClustering`.
+unsupervised learning: in particular, see :class:`~sklearn.manifold.Isomap`,
+:class:`~sklearn.manifold.LocallyLinearEmbedding`, and
+:class:`~sklearn.cluster.SpectralClustering`.
 
 KDTree and BallTree Classes
 ---------------------------
@@ -339,7 +339,7 @@ a *KD-tree* in high dimensions, though the actual performance is highly
 dependent on the structure of the training data.
 In scikit-learn, ball-tree-based
 neighbors searches are specified using the keyword ``algorithm = 'ball_tree'``,
-and are computed using the class :class:`sklearn.neighbors.BallTree`.
+and are computed using the class :class:`BallTree`.
 Alternatively, the user can work with the :class:`BallTree` class directly.
 
 .. topic:: References:
@@ -471,12 +471,12 @@ Nearest Centroid Classifier
 
 The :class:`NearestCentroid` classifier is a simple algorithm that represents
 each class by the centroid of its members. In effect, this makes it
-similar to the label updating phase of the :class:`sklearn.cluster.KMeans` algorithm.
+similar to the label updating phase of the :class:`~sklearn.cluster.KMeans` algorithm.
 It also has no parameters to choose, making it a good baseline classifier. It
 does, however, suffer on non-convex classes, as well as when classes have
 drastically different variances, as equal variance in all dimensions is
-assumed. See Linear Discriminant Analysis (:class:`sklearn.discriminant_analysis.LinearDiscriminantAnalysis`)
-and Quadratic Discriminant Analysis (:class:`sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`)
+assumed. See Linear Discriminant Analysis (:class:`~sklearn.discriminant_analysis.LinearDiscriminantAnalysis`)
+and Quadratic Discriminant Analysis (:class:`~sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`)
 for more complex methods that do not make this assumption. Usage of the default
 :class:`NearestCentroid` is simple:
 
@@ -706,8 +706,8 @@ are projected onto a linear subspace consisting of the directions which
 minimize the NCA objective. The desired dimensionality can be set using the
 parameter ``n_components``. For instance, the following figure shows a
 comparison of dimensionality reduction with Principal Component Analysis
-(:class:`sklearn.decomposition.PCA`), Linear Discriminant Analysis
-(:class:`sklearn.discriminant_analysis.LinearDiscriminantAnalysis`) and
+(:class:`~sklearn.decomposition.PCA`), Linear Discriminant Analysis
+(:class:`~sklearn.discriminant_analysis.LinearDiscriminantAnalysis`) and
 Neighborhood Component Analysis (:class:`NeighborhoodComponentsAnalysis`) on
 the Digits dataset, a dataset with size :math:`n_{samples} = 1797` and
 :math:`n_{features} = 64`. The data set is split into a training and a test set

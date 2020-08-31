@@ -1381,3 +1381,55 @@ def test_feature_names_empty_columns(empty_col):
 
     ct.fit(df)
     assert ct.get_feature_names() == ['ohe__x0_a', 'ohe__x0_b', 'ohe__x1_z']
+
+
+@pytest.mark.parametrize('remainder', ["passthrough", StandardScaler()])
+def test_sk_visual_block_remainder(remainder):
+    # remainder='passthrough' or an estimator will be shown in repr_html
+    ohe = OneHotEncoder()
+    ct = ColumnTransformer(transformers=[('ohe', ohe, ["col1", "col2"])],
+                           remainder=remainder)
+    visual_block = ct._sk_visual_block_()
+    assert visual_block.names == ('ohe', 'remainder')
+    assert visual_block.name_details == (['col1', 'col2'], '')
+    assert visual_block.estimators == (ohe, remainder)
+
+
+def test_sk_visual_block_remainder_drop():
+    # remainder='drop' is not shown in repr_html
+    ohe = OneHotEncoder()
+    ct = ColumnTransformer(transformers=[('ohe', ohe, ["col1", "col2"])])
+    visual_block = ct._sk_visual_block_()
+    assert visual_block.names == ('ohe',)
+    assert visual_block.name_details == (['col1', 'col2'],)
+    assert visual_block.estimators == (ohe,)
+
+
+@pytest.mark.parametrize('remainder', ["passthrough", StandardScaler()])
+def test_sk_visual_block_remainder_fitted_pandas(remainder):
+    # Remainder shows the columns after fitting
+    pd = pytest.importorskip('pandas')
+    ohe = OneHotEncoder()
+    ct = ColumnTransformer(transformers=[('ohe', ohe, ["col1", "col2"])],
+                           remainder=remainder)
+    df = pd.DataFrame({"col1": ["a", "b", "c"], "col2": ["z", "z", "z"],
+                       "col3": [1, 2, 3], "col4": [3, 4, 5]})
+    ct.fit(df)
+    visual_block = ct._sk_visual_block_()
+    assert visual_block.names == ('ohe', 'remainder')
+    assert visual_block.name_details == (['col1', 'col2'], ['col3', 'col4'])
+    assert visual_block.estimators == (ohe, remainder)
+
+
+@pytest.mark.parametrize('remainder', ["passthrough", StandardScaler()])
+def test_sk_visual_block_remainder_fitted_numpy(remainder):
+    # Remainder shows the indices after fitting
+    X = np.array([[1, 2, 3], [4, 5, 6]], dtype=float)
+    scaler = StandardScaler()
+    ct = ColumnTransformer(transformers=[('scale', scaler, [0, 2])],
+                           remainder=remainder)
+    ct.fit(X)
+    visual_block = ct._sk_visual_block_()
+    assert visual_block.names == ('scale', 'remainder')
+    assert visual_block.name_details == ([0, 2], [1])
+    assert visual_block.estimators == (scaler, remainder)

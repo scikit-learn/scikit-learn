@@ -76,7 +76,7 @@ The ``preprocessing`` module further provides a utility class
 the mean and standard deviation on a training set so as to be
 able to later reapply the same transformation on the testing set.
 This class is hence suitable for use in the early steps of a
-:class:`sklearn.pipeline.Pipeline`::
+:class:`~sklearn.pipeline.Pipeline`::
 
   >>> scaler = preprocessing.StandardScaler().fit(X_train)
   >>> scaler
@@ -235,7 +235,7 @@ data.
   independently, since a downstream model can further make some assumption
   on the linear independence of the features.
 
-  To address this issue you can use :class:`sklearn.decomposition.PCA` with
+  To address this issue you can use :class:`~sklearn.decomposition.PCA` with
   ``whiten=True`` to further remove the linear correlation across features.
 
 .. topic:: Scaling a 1D array
@@ -433,7 +433,7 @@ The ``preprocessing`` module further provides a utility class
 the class is stateless as this operation treats samples independently).
 
 This class is hence suitable for use in the early steps of a
-:class:`sklearn.pipeline.Pipeline`::
+:class:`~sklearn.pipeline.Pipeline`::
 
   >>> normalizer = preprocessing.Normalizer().fit(X)  # fit does nothing
   >>> normalizer
@@ -637,7 +637,7 @@ Based on these bin intervals, ``X`` is transformed as follows::
          [ 2., 0., 0.]])
 
 The resulting dataset contains ordinal attributes which can be further used
-in a :class:`sklearn.pipeline.Pipeline`.
+in a :class:`~sklearn.pipeline.Pipeline`.
 
 Discretization is similar to constructing histograms for continuous data.
 However, histograms focus on counting features which fall into particular
@@ -665,7 +665,7 @@ features to get boolean values**. This can be useful for downstream
 probabilistic estimators that make assumption that the input data
 is distributed according to a multi-variate `Bernoulli distribution
 <https://en.wikipedia.org/wiki/Bernoulli_distribution>`_. For instance,
-this is the case for the :class:`sklearn.neural_network.BernoulliRBM`.
+this is the case for the :class:`~sklearn.neural_network.BernoulliRBM`.
 
 It is also common among the text processing community to use binary
 feature values (probably to simplify the probabilistic reasoning) even
@@ -674,7 +674,7 @@ often perform slightly better in practice.
 
 As for the :class:`Normalizer`, the utility class
 :class:`Binarizer` is meant to be used in the early stages of
-:class:`sklearn.pipeline.Pipeline`. The ``fit`` method does nothing
+:class:`~sklearn.pipeline.Pipeline`. The ``fit`` method does nothing
 as each sample is treated independently of others::
 
   >>> X = [[ 1., -1.,  2.],
@@ -759,7 +759,7 @@ In some cases, only interaction terms among features are required, and it can be
 
 The features of X have been transformed from :math:`(X_1, X_2, X_3)` to :math:`(1, X_1, X_2, X_3, X_1X_2, X_1X_3, X_2X_3, X_1X_2X_3)`.
 
-Note that polynomial features are used implicitly in `kernel methods <https://en.wikipedia.org/wiki/Kernel_method>`_ (e.g., :class:`sklearn.svm.SVC`, :class:`sklearn.decomposition.KernelPCA`) when using polynomial :ref:`svm_kernels`.
+Note that polynomial features are used implicitly in `kernel methods <https://en.wikipedia.org/wiki/Kernel_method>`_ (e.g., :class:`~sklearn.svm.SVC`, :class:`~sklearn.decomposition.KernelPCA`) when using polynomial :ref:`svm_kernels`.
 
 See :ref:`sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py` for Ridge regression using created polynomial features.
 

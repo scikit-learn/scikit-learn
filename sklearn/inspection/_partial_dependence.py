@@ -164,9 +164,9 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
             predictions.append(pred)
             # average over samples
             averaged_predictions.append(np.mean(pred, axis=0))
-        except NotFittedError:
+        except NotFittedError as e:
             raise ValueError(
-                "'estimator' parameter must be a fitted estimator")
+                "'estimator' parameter must be a fitted estimator") from e
 
     n_samples = X.shape[0]
 
