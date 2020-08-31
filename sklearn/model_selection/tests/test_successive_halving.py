@@ -4,7 +4,6 @@ import pytest
 from scipy.stats import norm, randint
 import numpy as np
 
-from sklearn.model_selection._validation import _fit_and_score
 from sklearn.datasets import make_classification
 from sklearn.dummy import DummyClassifier
 from sklearn.model_selection import HalvingGridSearchCV
@@ -414,7 +413,7 @@ def test_refit_callable():
 
 
 @pytest.mark.parametrize('Est', (HalvingRandomSearchCV, HalvingGridSearchCV))
-def test_cv_results(monkeypatch, Est):
+def test_cv_results(Est):
     # test that the cv_results_ matches correctly the logic of the
     # tournament: in particular that the candidates continued in each
     # successive iteration are those that were best in the previous iteration
@@ -422,21 +421,17 @@ def test_cv_results(monkeypatch, Est):
 
     rng = np.random.RandomState(0)
 
-    def fit_and_score_mock(*args, **kwargs):
-        # generate random scores: we want to avoid ties, which would otherwise
-        # mess with the ordering and with our checks
-        out = _fit_and_score(*args, **kwargs)
-        out['test_scores'] = rng.rand()
-        return out
-    monkeypatch.setattr("sklearn.model_selection._search._fit_and_score",
-                        fit_and_score_mock)
-
     n_samples = 1000
     X, y = make_classification(n_samples=n_samples, random_state=0)
     param_grid = {'a': ('l1', 'l2'), 'b': list(range(30))}
     base_estimator = FastClassifier()
 
-    sh = Est(base_estimator, param_grid, ratio=2)
+    # generate random scores: we want to avoid ties, which would otherwise
+    # mess with the ordering and make testing harder
+    def scorer(est, X, y):
+        return rng.rand()
+
+    sh = Est(base_estimator, param_grid, ratio=2, scoring=scorer)
     if Est is HalvingRandomSearchCV:
         # same number of candidates as with the grid
         sh.set_params(n_candidates=2 * 30, min_resources='exhaust')
