@@ -30,6 +30,8 @@ from .utils.validation import check_non_negative, _deprecate_positional_args
 class PolynomialCountSketch(BaseEstimator, TransformerMixin):
     """Polynomial kernel approximation via Tensor Sketch.
 
+    .. versionadded:: 0.24
+
     Implements Tensor Sketch, which approximates the feature map
     of the polynomial kernel::
 
