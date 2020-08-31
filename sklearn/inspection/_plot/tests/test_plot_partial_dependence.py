@@ -106,14 +106,19 @@ def test_plot_partial_dependence(grid_resolution, pyplot, clf_diabetes,
 
 
 @pytest.mark.filterwarnings("ignore:A Bunch will be returned")
-@pytest.mark.parametrize("kind, subsample, shape", [
-    ('average', None, (1, 3)),
-    ('individual', None, (1, 3, 442)),
-    ('both', None, (1, 3, 443)),
-    ('individual', 50, (1, 3, 50)),
-    ('both', 50, (1, 3, 51)),
-    ('individual', 0.5, (1, 3, 221)),
-    ('both', 0.5, (1, 3, 222))
+@pytest.mark.parametrize("kind, centered, subsample, shape", [
+    ('average', False, None, (1, 3)),
+    ('individual', False, None, (1, 3, 442)),
+    ('both', False, None, (1, 3, 443)),
+    ('individual', False, 50, (1, 3, 50)),
+    ('both', False, 50, (1, 3, 51)),
+    ('individual', False, 0.5, (1, 3, 221)),
+    ('both', False, 0.5, (1, 3, 222))
+    ('average', True, None, (1, 3)),
+    ('individual', True, None, (1, 3, 442)),
+    ('both', True, None, (1, 3, 443)),
+    ('individual', True, 50, (1, 3, 50)),
+    ('both', True, 50, (1, 3, 51)),
 ])
 def test_plot_partial_dependence_kind(pyplot, kind, subsample, shape,
                                       clf_diabetes, diabetes):

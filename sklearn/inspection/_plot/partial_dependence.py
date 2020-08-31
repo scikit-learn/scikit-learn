@@ -22,13 +22,15 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
                             grid_resolution=100, percentiles=(0.05, 0.95),
                             method='auto', n_jobs=None, verbose=0,
                             line_kw=None, contour_kw=None, ax=None,
-                            kind='average', subsample=1000):
+                            kind='average', centered=False, subsample=1000):
     """Partial dependence (PD) and individual conditional expectation (ICE)
     plots.
 
     Partial dependence plots, individual conditional expectation plots or an
     overlay of both of them can be plotted by setting the ``kind``
     parameter.
+    Centered ICE (cICE) plots or centered PDP-Plots can be plotted by setting
+    the ``centered`` parameter.
     The ``len(features)`` plots are arranged in a grid with ``n_cols``
     columns. Two-way partial dependence plots are plotted as contour plots. The
     deciles of the feature values will be shown with tick marks on the x-axes
@@ -196,6 +198,12 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
        ``kind='average'``. Plotting individual dependencies requires using the
        slower ``method='brute'`` option.
 
+       .. versionadded:: 0.24
+
+    centered : bool, default=False
+        Center the plotted line(s). Anchor for centering is the first value on
+        the x-axis.
+
         .. versionadded:: 0.24
 
     subsample : float, int or None, default=1000
@@ -353,8 +361,13 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
     for pdp in pd_results:
         values = pdp["values"]
         preds = (pdp.average if kind == 'average' else pdp.individual)
-        min_pd = preds[target_idx].min()
-        max_pd = preds[target_idx].max()
+        center_diff = (
+            0 if not centered
+            else preds[target_idx, 0] if kind == 'average'
+            else preds[target_idx, :, 0, None]
+        )
+        min_pd = (preds[target_idx] - center_diff).min()
+        max_pd = (preds[target_idx] - center_diff).max()
         n_fx = len(values)
         old_min_pd, old_max_pd = pdp_lim.get(n_fx, (min_pd, max_pd))
         min_pd = min(min_pd, old_min_pd)
@@ -375,8 +388,8 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
                                        deciles=deciles,
                                        kind=kind,
                                        subsample=subsample)
-    return display.plot(ax=ax, n_cols=n_cols, line_kw=line_kw,
-                        contour_kw=contour_kw)
+    return display.plot(ax=ax, n_cols=n_cols, centered=centered,
+                        line_kw=line_kw, contour_kw=contour_kw)
 
 
 class PartialDependenceDisplay:
@@ -520,7 +533,8 @@ class PartialDependenceDisplay:
             return ceil(n_samples * self.subsample)
         return n_samples
 
-    def plot(self, ax=None, n_cols=3, line_kw=None, contour_kw=None):
+    def plot(self, ax=None, n_cols=3, centered=False,
+             line_kw=None, contour_kw=None):
         """Plot partial dependence plots.
 
         Parameters
@@ -538,6 +552,10 @@ class PartialDependenceDisplay:
         n_cols : int, default=3
             The maximum number of columns in the grid plot. Only active when
             `ax` is a single axes or `None`.
+
+        centered : bool, default=False
+            Center the plotted line(s). Anchor for centering is the first value
+            on the x-axis.
 
         line_kw : dict, default=None
             Dict with keywords passed to the `matplotlib.pyplot.plot` call.
@@ -674,16 +692,26 @@ class PartialDependenceDisplay:
                     sampled = ice_lines[np.random.choice(
                         ice_lines.shape[0], n_samples, replace=False
                     ), :]
+                    if centered:  # center ICE
+                        sampled -= sampled[:, 0, None]
                     for j, ins in enumerate(sampled):
                         lines_ravel[i * j + j] = axi.plot(
                             values[0], ins.ravel(), **individual_line_kw
                         )[0]
                 if self.kind == 'average':
+                    if centered:  # center PDP
+                        avg_preds[self.target_idx] -= (
+                            avg_preds[self.target_idx].ravel()[0]
+                        )
                     lines_ravel[i] = axi.plot(
                         values[0], avg_preds[self.target_idx].ravel(),
                         **line_kw
                     )[0]
                 elif self.kind == 'both':
+                    if centered:  # center PDP
+                        avg_preds[self.target_idx] -= (
+                            avg_preds[self.target_idx].ravel()[0]
+                        )
                     lines_ravel[i] = axi.plot(
                         values[0], avg_preds[self.target_idx].ravel(),
                         label='average', **line_kw
