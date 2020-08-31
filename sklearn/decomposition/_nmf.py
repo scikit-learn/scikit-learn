@@ -729,7 +729,7 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
                                batch_size=1024,
                                max_iter=200, tol=1e-4,
                                l1_reg_W=0, l1_reg_H=0, l2_reg_W=0, l2_reg_H=0,
-                               update_H=True, verbose=0):
+                               update_H=True, verbose=0, forget_factor=1.):
     """Compute Non-negative Matrix Factorization with Multiplicative Update.
 
     The objective function is _beta_divergence(X, WH) and is minimized with an
@@ -787,6 +787,10 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
     verbose : int, default=0
         The verbosity level.
 
+    forget_factor : float, default=1.
+        Amount of rescaling of past information. Its value is 1 for batch
+        NMF algorithm, it could be <1 for online NMF algorithm.
+
     Returns
     -------
     W : ndarray of shape (n_samples, n_components)
@@ -816,8 +820,9 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
         max_iter_update_w_ = 1
         max_iter_update_h_ = 1
 
-    r = 0.5  # forgetting factor
-    rho = r ** (batch_size / n_samples)
+    rho = 0.
+    if forget_factor is not None:
+        rho = forget_factor ** (batch_size / n_samples)
 
     beta_loss = _beta_loss_to_float(beta_loss)
 
@@ -897,7 +902,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
                                beta_loss='frobenius', tol=1e-4,
                                max_iter=200, alpha=0., l1_ratio=0.,
                                regularization=None, random_state=None,
-                               verbose=0, shuffle=False):
+                               verbose=0, shuffle=False, forget_factor=None):
     """Compute Non-negative Matrix Factorization (NMF).
 
     Find two non-negative matrices (W, H) whose product approximates the non-
@@ -954,7 +959,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
         are kept.
 
     batch_size : int, default=None
-        Number of samples per batch.
+        Number of samples per batch: only for MiniBatch implementation.
 
         .. versionadded:: 0.XX
 
@@ -1044,6 +1049,13 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
 
     shuffle : bool, default=False
         If true, randomize the order of coordinates in the CD solver.
+
+    forget_factor : float, default=None.
+        Amount of rescaling of past information. Its value is 1 for batch
+        NMF algorithm, it could be <1 for online NMF algorithm. Only for
+        MiniBatch implementation.
+
+        .. versionadded:: 0.XX
 
     Returns
     -------
@@ -1157,7 +1169,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
                                                   batch_size, max_iter,
                                                   tol, l1_reg_W, l1_reg_H,
                                                   l2_reg_W, l2_reg_H, update_H,
-                                                  verbose)
+                                                  verbose, forget_factor)
 
     else:
         raise ValueError("Invalid solver parameter '%s'." % solver)
@@ -1467,7 +1479,9 @@ class NMF(TransformerMixin, BaseEstimator):
 
 
 class MiniBatchNMF(TransformerMixin, BaseEstimator):
-    r"""Mini-Batch Non-Negative Matrix Factorization (NMF)
+    r"""Mini-Batch and online Non-Negative Matrix Factorization (NMF)
+
+    .. versionadded:: 0.XX
 
     Find two non-negative matrices (W, H) whose product approximates the non-
     negative matrix X. This factorization can be used for example for
@@ -1580,6 +1594,10 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
         .. versionadded:: 0.17
            *shuffle* parameter used in the Coordinate Descent solver.
 
+    forget_factor : float, default=1.
+        Amount of rescaling of past information. Its value is 1 for batch
+        NMF algorithm, it could be <1 for online NMF algorithm.
+
     Attributes
     ----------
     components_ : array, [n_components, n_features]
@@ -1628,7 +1646,7 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
                  batch_size=1024,
                  beta_loss='frobenius', tol=1e-4, max_iter=200,
                  random_state=None, alpha=0., l1_ratio=0., verbose=0,
-                 shuffle=False, regularization='both'):
+                 shuffle=False, regularization='both', forget_factor=1.):
         self.n_components = n_components
         self.init = init
         self.solver = solver
@@ -1642,6 +1660,7 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
         self.verbose = verbose
         self.shuffle = shuffle
         self.regularization = regularization
+        self.forget_factor = forget_factor
 
     def _more_tags(self):
         return {'requires_positive_X': True}
@@ -1679,7 +1698,7 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
             tol=self.tol, max_iter=self.max_iter, alpha=self.alpha,
             l1_ratio=self.l1_ratio, regularization=self.regularization,
             random_state=self.random_state, verbose=self.verbose,
-            shuffle=self.shuffle)
+            shuffle=self.shuffle, forget_factor=self.forget_factor)
         # TODO internal iters for W
         self.reconstruction_err_ = _beta_divergence(X, W, H, self.beta_loss,
                                                     square_root=True)
@@ -1723,7 +1742,7 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
                 tol=0, max_iter=1, alpha=self.alpha,
                 l1_ratio=self.l1_ratio, regularization=self.regularization,
                 random_state=self.random_state, verbose=self.verbose,
-                shuffle=self.shuffle)
+                shuffle=self.shuffle, forget_factor=self.forget_factor)
 
             # probably not necessary to compute at each time
             # self.reconstruction_err_ = _beta_divergence(X, W, H,
