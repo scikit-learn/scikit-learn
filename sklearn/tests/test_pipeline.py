@@ -32,7 +32,7 @@ from sklearn.cluster import KMeans
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.dummy import DummyRegressor
 from sklearn.decomposition import PCA, TruncatedSVD
-from sklearn.datasets import load_iris
+from sklearn.datasets import load_iris, make_classification
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
@@ -1253,11 +1253,9 @@ def test_feature_union_warns_unknown_transformer_weight():
 @pytest.mark.parametrize("n_jobs", [1, 2])
 def test_feature_union_array_out_pandas(n_jobs):
     pd = pytest.importorskip('pandas')
-
-    X = iris.data
-    X -= X.mean(axis=0)
-    y = iris.target
-    X = pd.DataFrame(X, columns=iris.feature_names)
+    X, y = make_classification(random_state=42)
+    column_names = [f'col{i}' for i in range(X.shape[1])]
+    X = pd.DataFrame(X, columns=column_names)
     svd = TruncatedSVD(n_components=2, random_state=0)
     select = SelectKBest(k=1)
     fs = FeatureUnion([("svd", svd), ("select", select)], n_jobs=n_jobs)
