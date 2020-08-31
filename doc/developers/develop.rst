@@ -340,8 +340,9 @@ estimator::
     >>> from sklearn.base import BaseEstimator
     >>> from sklearn.linear_model import LogisticRegression
     >>> class MyEstimator(BaseEstimator):
-    ...     def __init__(self, subestimator=None):
+    ...     def __init__(self, subestimator=None, my_extra_param="random"):
     ...         self.subestimator = subestimator
+    ...         self.my_extra_param = my_extra_param
 
 The parameter `deep` will control whether or not the parameters of the
 `subsestimator` should be reported. Thus when `deep=True`, the output will be::
@@ -349,6 +350,7 @@ The parameter `deep` will control whether or not the parameters of the
     >>> my_estimator = MyEstimator(subestimator=LogisticRegression())
     >>> for param, value in my_estimator.get_params(deep=True).items():
     ...     print(f"{param} -> {value}")
+    my_extra_param -> random
     subestimator__C -> 1.0
     subestimator__class_weight -> None
     subestimator__dual -> False
@@ -370,6 +372,7 @@ While when `deep=False`, the output will be::
 
     >>> for param, value in my_estimator.get_params(deep=False).items():
     ...     print(f"{param} -> {value}")
+    my_extra_param -> random
     subestimator -> LogisticRegression()
 
 The ``set_params`` on the other hand takes as input a dict of the form
