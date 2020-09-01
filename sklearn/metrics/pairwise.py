@@ -1733,7 +1733,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", *, n_jobs=None,
 
         .. versionadded:: 0.24
 
-    ensure_2d: bool, default=True
+    ensure_2d : bool, default=True
         Whether to ensure that input array has to be two dimensional
 
         .. versionadded:: 0.24
