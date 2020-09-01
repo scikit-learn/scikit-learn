@@ -8,7 +8,7 @@ jobs:
   one:
     runs-on: ubuntu-latest
     steps:
-    - if: github.event.comment.body == 'take'
+    - if: github.event.comment.body == 'take' && github.event.issue.unassigned
       name:
       run: |
         echo "Assigning issue ${{ github.event.issue.number }} to ${{ github.event.comment.user.login }}"
