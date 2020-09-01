@@ -39,6 +39,8 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
     vector with itself using Fast Fourier Transforms (FFT). Read more in the
     :ref:`User Guide <polynomial_kernel_approx>`.
 
+    .. versionadded:: 0.24
+
     Parameters
     ----------
     gamma : float, default=1.0

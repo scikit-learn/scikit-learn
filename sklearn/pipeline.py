@@ -118,6 +118,9 @@ class Pipeline(_BaseComposition):
     def get_params(self, deep=True):
         """Get parameters for this estimator.
 
+        Returns the parameters given in the constructor as well as the
+        estimators contained within the `steps` of the `Pipeline`.
+
         Parameters
         ----------
         deep : bool, default=True
@@ -134,7 +137,9 @@ class Pipeline(_BaseComposition):
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
 
-        Valid parameter keys can be listed with ``get_params()``.
+        Valid parameter keys can be listed with ``get_params()``. Note that
+        you can directly set the parameters of the estimators contained in
+        `steps`.
 
         Returns
         -------
@@ -844,6 +849,10 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     def get_params(self, deep=True):
         """Get parameters for this estimator.
 
+        Returns the parameters given in the constructor as well as the
+        estimators contained within the `transformer_list` of the
+        `FeatureUnion`.
+
         Parameters
         ----------
         deep : bool, default=True
@@ -860,7 +869,9 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
 
-        Valid parameter keys can be listed with ``get_params()``.
+        Valid parameter keys can be listed with ``get_params()``. Note that
+        you can directly set the parameters of the estimators contained in
+        `tranformer_list`.
 
         Returns
         -------

@@ -185,11 +185,13 @@ class KNNImputer(_BaseImputer):
         X = self._validate_data(X, accept_sparse=False, dtype=FLOAT_DTYPES,
                                 force_all_finite=force_all_finite,
                                 copy=self.copy)
-        super()._fit_indicator(X)
 
         _check_weights(self.weights)
         self._fit_X = X
         self._mask_fit_X = _get_mask(self._fit_X, self.missing_values)
+
+        super()._fit_indicator(self._mask_fit_X)
+
         return self
 
     def transform(self, X):
@@ -214,7 +216,6 @@ class KNNImputer(_BaseImputer):
             force_all_finite = "allow-nan"
         X = check_array(X, accept_sparse=False, dtype=FLOAT_DTYPES,
                         force_all_finite=force_all_finite, copy=self.copy)
-        X_indicator = super()._transform_indicator(X)
 
         if X.shape[1] != self._fit_X.shape[1]:
             raise ValueError("Incompatible dimension between the fitted "
@@ -226,7 +227,9 @@ class KNNImputer(_BaseImputer):
 
         get_feature_names_out = partial(self._get_feature_names_out,
                                         valid_mask=valid_mask)
+        X_indicator = super()._transform_indicator(mask)
 
+        # Removes columns where the training data is all nan
         if not np.any(mask):
             # No missing values in X
             # Remove columns where the training data is all nan
