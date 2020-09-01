@@ -900,7 +900,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
             Vt = Vt[:n_components]
         else:
             v0 = _init_arpack_v0(min(C.shape), self.random_state)
-            U, s, Vt = svds(C, k=self.n_components, v0 = v0)
+            U, s, Vt = svds(C, k=self.n_components, v0=v0)
 
         U, Vt = svd_flip(U, Vt)
         V = Vt.T
