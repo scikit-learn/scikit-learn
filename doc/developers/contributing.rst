@@ -437,7 +437,7 @@ You can check for common programming errors with the following tools:
   <https://pandas.pydata.org/pandas-docs/stable/development/contributing.html#type-hints>`_
   for style guidelines. Whether you add type annotation or not::
 
-    mypy --ignore-missing-import sklearn
+    mypy sklearn
 
   must not produce new errors in your pull request. Using `# type: ignore`
   annotation can be a workaround for a few cases that are not supported by
@@ -820,7 +820,7 @@ To test code coverage, you need to install the `coverage
 Monitoring performance
 ======================
 
-*This section is heavily inspired from the* `pandas documentation 
+*This section is heavily inspired from the* `pandas documentation
 <https://pandas.pydata.org/docs/development/contributing.html#running-the-performance-test-suite>`_.
 
 When proposing changes to the existing code base, it's important to make sure

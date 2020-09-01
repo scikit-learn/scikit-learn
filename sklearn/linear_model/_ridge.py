@@ -1749,6 +1749,8 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         fitting, the `alpha_` attribute will contain a value for each target.
         When set to `False`, a single alpha is used for all targets.
 
+        .. versionadded:: 0.24
+
     Attributes
     ----------
     cv_values_ : ndarray of shape (n_samples, n_alphas) or \

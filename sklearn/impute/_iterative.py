@@ -489,6 +489,11 @@ class IterativeImputer(_BaseImputer):
         mask_missing_values : ndarray, shape (n_samples, n_features)
             Input data's missing indicator matrix, where "n_samples" is the
             number of samples and "n_features" is the number of features.
+
+        X_missing_mask : ndarray, shape (n_samples, n_features)
+            Input data's mask matrix indicating missing datapoints, where
+            "n_samples" is the number of samples and "n_features" is the
+            number of features.
         """
         if is_scalar_nan(self.missing_values):
             force_all_finite = "allow-nan"
@@ -499,7 +504,8 @@ class IterativeImputer(_BaseImputer):
                                 force_all_finite=force_all_finite)
         _check_inputs_dtype(X, self.missing_values)
 
-        mask_missing_values = _get_mask(X, self.missing_values)
+        X_missing_mask = _get_mask(X, self.missing_values)
+        mask_missing_values = X_missing_mask.copy()
         if self.initial_imputer_ is None:
             self.initial_imputer_ = SimpleImputer(
                 missing_values=self.missing_values,
@@ -514,7 +520,7 @@ class IterativeImputer(_BaseImputer):
         Xt = X[:, valid_mask]
         mask_missing_values = mask_missing_values[:, valid_mask]
 
-        return Xt, X_filled, mask_missing_values
+        return Xt, X_filled, mask_missing_values, X_missing_mask
 
     @staticmethod
     def _validate_limit(limit, limit_type, n_features):
@@ -587,9 +593,12 @@ class IterativeImputer(_BaseImputer):
         self.imputation_sequence_ = []
 
         self.initial_imputer_ = None
-        super()._fit_indicator(X)
-        X_indicator = super()._transform_indicator(X)
-        X, Xt, mask_missing_values = self._initial_imputation(X)
+
+        X, Xt, mask_missing_values, complete_mask = self._initial_imputation(X)
+
+        super()._fit_indicator(complete_mask)
+        X_indicator = super()._transform_indicator(complete_mask)
+
         if self.max_iter == 0 or np.all(mask_missing_values):
             self.n_iter_ = 0
             return super()._concatenate_indicator(Xt, X_indicator)
@@ -686,8 +695,9 @@ class IterativeImputer(_BaseImputer):
         """
         check_is_fitted(self)
 
-        X_indicator = super()._transform_indicator(X)
-        X, Xt, mask_missing_values = self._initial_imputation(X)
+        X, Xt, mask_missing_values, complete_mask = self._initial_imputation(X)
+
+        X_indicator = super()._transform_indicator(complete_mask)
 
         if self.n_iter_ == 0 or np.all(mask_missing_values):
             return super()._concatenate_indicator(Xt, X_indicator)
