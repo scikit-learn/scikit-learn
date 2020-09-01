@@ -13,7 +13,7 @@ np.import_array()
 
 def _fill_predictor_node_array(TreePredictor tree_predictor,
                                grower_node,  # TreeNode
-                               list bin_thresholds,
+                               list num_thresholds,
                                const np.npy_uint32[:] n_bins_non_missing,
                                int next_free_idx=0):
     """Helper used in make_predictor to set the TreePredictor fields. This
@@ -49,21 +49,21 @@ def _fill_predictor_node_array(TreePredictor tree_predictor,
         if split_info.bin_idx == n_bins_non_missing[feature_idx] - 1:
             # Split is on the last non-missing bin: it's a "split on nans". All
             # nans go to the right, the rest go to the left.
-            node.threshold = np.inf
-        elif bin_thresholds is not None:
-            node.threshold = bin_thresholds[feature_idx][bin_idx]
+            node.num_threshold = np.inf
+        else:
+            node.num_threshold = num_thresholds[feature_idx][bin_idx]
 
         next_free_idx += 1
         node.left = next_free_idx
         next_free_idx = _fill_predictor_node_array(
             tree_predictor, grower_node.left_child,
-            bin_thresholds=bin_thresholds,
+            num_thresholds=num_thresholds,
             n_bins_non_missing=n_bins_non_missing,
             next_free_idx=next_free_idx)
 
         node.right = next_free_idx
         return _fill_predictor_node_array(
             tree_predictor, grower_node.right_child,
-            bin_thresholds=bin_thresholds,
+            num_thresholds=num_thresholds,
             n_bins_non_missing=n_bins_non_missing,
             next_free_idx=next_free_idx)

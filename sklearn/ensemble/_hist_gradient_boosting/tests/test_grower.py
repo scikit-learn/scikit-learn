@@ -158,7 +158,7 @@ def test_predictor_from_grower():
     # object to perform predictions at scale
     # We pass undefined num_thresholds because we won't use predict() anyway
     predictor = grower.make_predictor(
-        num_thresholds=np.zeros((X_binned.shape[1], n_bins))
+        num_thresholds=[np.zeros(n_bins)] * X_binned.shape[1]
     )
     nodes = predictor.nodes
     assert len(nodes) == 5
@@ -346,7 +346,7 @@ def test_missing_value_predict_only():
 
     # We pass undefined num_thresholds because we won't use predict() anyway
     predictor = grower.make_predictor(
-        num_thresholds=np.zeros((X_binned.shape[1], X_binned.max() + 1))
+        num_thresholds=[np.zeros(X_binned.max() + 1)] * X_binned.shape[1]
     )
 
     # go from root to a leaf, always following node with the most samples.

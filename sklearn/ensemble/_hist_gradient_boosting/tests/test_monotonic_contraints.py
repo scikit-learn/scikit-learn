@@ -178,7 +178,7 @@ def test_nodes_values(monotonic_cst, seed):
 
     # We pass undefined num_thresholds because we won't use predict() anyway
     predictor = grower.make_predictor(
-        num_thresholds=np.zeros((X_binned.shape[1], X_binned.max() + 1))
+        num_thresholds=[np.zeros(X_binned.max() + 1)] * X_binned.shape[1]
     )
 
     # The consistency of the bounds can only be checked on the tree grower
