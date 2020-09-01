@@ -1080,6 +1080,8 @@ class CategoricalNB(_BaseDiscreteNB):
         - None (default): Determines the number of categories automatically
           from the training data.
 
+        .. versionadded:: 0.24
+
     Attributes
     ----------
     category_count_ : list of arrays of shape (n_features,)

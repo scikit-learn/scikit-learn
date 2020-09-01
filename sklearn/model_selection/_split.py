@@ -769,9 +769,13 @@ class TimeSeriesSplit(_BaseKFold):
         ``n_samples // (n_splits + 1)``, which is the maximum allowed value
         with ``gap=0``.
 
+        .. versionadded:: 0.24
+
     gap : int, default=0
         Number of samples to exclude from the end of each train set before
         the test set.
+
+        .. versionadded:: 0.24
 
     Examples
     --------
