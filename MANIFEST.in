@@ -6,30 +6,27 @@ recursive-include sklearn/datasets *.csv *.csv.gz *.rst *.jpg *.txt *.arff.gz *.
 include COPYING
 include README.rst
 include pyproject.toml
-include .binder/postBuild
-include .binder/requirements.txt
-include .circleci/artifact_path
-include .circleci/config.yml
-include .mailmap
 include sklearn/externals/README
 include sklearn/svm/src/liblinear/COPYRIGHT
 include sklearn/svm/src/libsvm/LIBSVM_CHANGES
-
-# added by check_manifest.py
-include *.in
-include *.md
-include *.py
-include *.yaml
-include *.yml
-include .coveragerc
+include conftest.py
 include Makefile
-recursive-include asv_benchmarks *.json
-recursive-include asv_benchmarks *.py
-recursive-include benchmarks *.py
-recursive-include build_tools *.cmd
-recursive-include build_tools *.py
-recursive-include build_tools *.sh
-recursive-include build_tools *.yml
-recursive-include build_tools Makefile
-recursive-include maint_tools *.py
-recursive-include maint_tools *.sh
+include MANIFEST.in
+include .coveragerc
+
+# exclude from sdist
+recursive-exclude asv_benchmarks *
+recursive-exclude benchmarks *
+recursive-exclude build_tools *
+recursive-exclude maint_tools *
+recursive-exclude benchmarks *
+recursive-exclude .binder *
+recursive-exclude .circleci *
+exclude .codecov.yml
+exclude .mailmap
+exclude .pre-commit-config.yaml
+exclude azure-pipelines.yml
+exclude lgtm.yml
+exclude CODE_OF_CONDUCT.md
+exclude CONTRIBUTING.md
+exclude PULL_REQUEST_TEMPLATE.md
