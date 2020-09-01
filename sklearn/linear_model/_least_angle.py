@@ -861,9 +861,10 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
     ----------
     alphas_ : array-like of shape (n_alphas + 1,) or list of thereof of \
             shape (n_targets,)
-        Maximum of covariances (in absolute value) at each iteration. \
-        ``n_alphas`` is either ``n_nonzero_coefs`` or ``n_features``, \
-        whichever is smaller.
+        Maximum of covariances (in absolute value) at each iteration.
+        ``n_alphas`` is either ``max_iter``, ``n_features`` or the
+        number of nodes in the path with ``alpha >= alpha_min``, whichever
+        is smaller.
 
     active_ : list of shape (n_alphas,) or list of thereof of shape \
             (n_targets,)
@@ -1113,9 +1114,9 @@ class LassoLars(Lars):
     ----------
     alphas_ : array-like of shape (n_alphas + 1,) or list of thereof of shape \
             (n_targets,)
-        Maximum of covariances (in absolute value) at each iteration. \
-        ``n_alphas`` is either ``max_iter``, ``n_features``, or the number of \
-        nodes in the path with correlation greater than ``alpha``, whichever \
+        Maximum of covariances (in absolute value) at each iteration.
+        ``n_alphas`` is either ``max_iter``, ``n_features`` or the
+        number of nodes in the path with ``alpha >= alpha_min``, whichever
         is smaller.
 
     active_ : list of length n_alphas or list of thereof of shape (n_targets,)
@@ -1764,6 +1765,12 @@ class LassoLarsIC(LassoLars):
 
     alpha_ : float
         the alpha parameter chosen by the information criterion
+
+    alphas_ : array-like of shape (n_alphas + 1,) or list thereof
+        Maximum of covariances (in absolute value) at each iteration.
+        ``n_alphas`` is either ``max_iter``, ``n_features`` or the
+        number of nodes in the path with ``alpha >= alpha_min``, whichever
+        is smaller. If a list, it will be of length `n_targets`.
 
     n_iter_ : int
         number of iterations run by lars_path to find the grid of
