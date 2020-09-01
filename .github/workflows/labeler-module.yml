@@ -13,3 +13,4 @@ jobs:
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
         max-labels: "3"
+        configuration-path: ".github/labeler-module.yml"

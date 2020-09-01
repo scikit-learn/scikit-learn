@@ -74,7 +74,7 @@ cdef class TreePredictor:
                     else:
                         node = &self.nodes[node.right]
                 else:
-                    if X[row, node.feature_idx] <= node.threshold:
+                    if X[row, node.feature_idx] <= node.num_threshold:
                         node = &self.nodes[node.left]
                     else:
                         node = &self.nodes[node.right]
@@ -193,7 +193,7 @@ cdef class TreePredictor:
 
                     if is_target_feature:
                         # In this case, we push left or right child on stack
-                        if grid[sample_idx, feature_idx] <= current_node.threshold:
+                        if grid[sample_idx, feature_idx] <= current_node.num_threshold:
                             node_idx_stack[stack_size] = current_node.left
                         else:
                             node_idx_stack[stack_size] = current_node.right
@@ -227,7 +227,7 @@ cdef class TreePredictor:
     def _set_node(self, int node_idx, unsigned int left=0,
                   unsigned int right=0, Y_DTYPE_C value=0.,
                   unsigned char is_leaf=False,
-                  unsigned int feature_idx=0, X_DTYPE_C threshold=0.0):
+                  unsigned int feature_idx=0, X_DTYPE_C num_threshold=0.0):
         """Used for testing for setting the value of a node."""
         cdef:
             node_struct * node = &self.nodes[node_idx]
@@ -235,5 +235,5 @@ cdef class TreePredictor:
         node.right = right
         node.value = value
         node.feature_idx = feature_idx
-        node.threshold = threshold
+        node.num_threshold = num_threshold
         node.is_leaf = is_leaf
