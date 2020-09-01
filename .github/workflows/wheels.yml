@@ -16,8 +16,7 @@ on:
 
 jobs:
   build_wheels:
-    # Add a commit marker to trigger the build when it is needed
-    if: "contains(github.event.head_commit.message, '[build wheels]')"
+    # TODO: Add a commit marker to trigger the build when it is needed
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
 
@@ -61,8 +60,7 @@ jobs:
           path: wheelhouse/*.whl 
 
   build_sdist:
-    # Add a commit marker to trigger the build when it is needed
-    if: "contains(github.event.head_commit.message, '[build wheels]')"
+    # TODO: Add a commit marker to trigger the build when it is needed
     name: Source distribution
     runs-on: ubuntu-latest
 
