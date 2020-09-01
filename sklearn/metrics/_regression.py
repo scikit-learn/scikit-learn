@@ -81,6 +81,7 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
         Custom output weights if ``multioutput`` is array-like or
         just the corresponding argument if ``multioutput`` is a
         correct keyword.
+
     dtype: str or list, default="numeric"
         the dtype argument passed to check_array
     """
@@ -198,11 +199,11 @@ def mean_absolute_percentage_error(y_true, y_pred,
                                    multioutput='uniform_average'):
     """Mean absolute percentage error regression loss.
 
-    .. versionadded:: 0.24
-
     Note here that we do not represent the output as a percentage in range
     [0, 100]. Instead, we represent it in range [0, 1/eps]. Read more in the
     :ref:`User Guide <mean_absolute_percentage_error>`.
+
+    .. versionadded:: 0.24
 
     Parameters
     ----------

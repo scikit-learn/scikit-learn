@@ -30,8 +30,6 @@ from .utils.validation import check_non_negative, _deprecate_positional_args
 class PolynomialCountSketch(BaseEstimator, TransformerMixin):
     """Polynomial kernel approximation via Tensor Sketch.
 
-    .. versionadded:: 0.24
-
     Implements Tensor Sketch, which approximates the feature map
     of the polynomial kernel::
 
@@ -40,6 +38,8 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
     by efficiently computing a Count Sketch of the outer product of a
     vector with itself using Fast Fourier Transforms (FFT). Read more in the
     :ref:`User Guide <polynomial_kernel_approx>`.
+
+    .. versionadded:: 0.24
 
     Parameters
     ----------

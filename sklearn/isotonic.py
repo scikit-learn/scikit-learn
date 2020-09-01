@@ -303,7 +303,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
             Training data.
 
             .. versionchanged:: 0.24
-               Also accepts 2d array with 1 feature
+               Also accepts 2d array with 1 feature.
 
         y : array-like of shape (n_samples,)
             Training target.
@@ -350,7 +350,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
             Data to transform.
 
             .. versionchanged:: 0.24
-               Also accepts 2d array with 1 feature
+               Also accepts 2d array with 1 feature.
 
         Returns
         -------
