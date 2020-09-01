@@ -58,6 +58,11 @@ Changelog
   sparse matrix or dataframe at the start. :pr:`17546` by
   :user:`Lucy Liu <lucyleeow>`.
 
+- |Enhancement| Add ``class_weight`` to
+  :class:`calibration.CalibratedClassifierCV`, which enables putting weights
+  to classes when training the calibration methods (sigmoid or isotonic).
+  :pr:`17541` by :user:`Achille Mascia <amascia>`.
+
 :mod:`sklearn.cluster`
 ......................
 
@@ -547,14 +552,6 @@ Changelog
 - |Fix| Allow serialized tree based models to be unpickled on a machine
   with different endianness.
   :pr:`17644` by :user:`Qi Zhang <qzhang90>`.
-
-:mod:`sklearn.calibration`
-.........................
-
-- |Enhancement| Add ``class_weight`` to :class:`calibration.CalibratedClassifierCV`,
-  which enables putting weights to classes when training the calibration methods (sigmoid
-  or isotonic).
-  :pr:`17541` by :user:`Achille Mascia <amascia>`.
 
 Code and Documentation Contributors
 -----------------------------------

@@ -24,7 +24,6 @@ from .base import (BaseEstimator, ClassifierMixin, RegressorMixin, clone,
                    MetaEstimatorMixin)
 from .preprocessing import label_binarize, LabelBinarizer
 from .utils import check_array, indexable, column_or_1d, compute_class_weight
-from .utils._encode import _unique
 from .utils.validation import check_is_fitted, check_consistent_length
 from .utils.validation import _check_sample_weight
 from .pipeline import Pipeline
@@ -35,7 +34,8 @@ from .utils.validation import _deprecate_positional_args
 
 
 def _fit_calibrated_classifer(estimator, X, y, train, test, supports_sw,
-                              method, classes, sample_weight=None):
+                              method, classes, class_weight=None,
+                              sample_weight=None):
     """Fit calibrated classifier for a given dataset split.
 
     Returns
@@ -51,7 +51,8 @@ def _fit_calibrated_classifer(estimator, X, y, train, test, supports_sw,
 
     calibrated_classifier = _CalibratedClassifier(estimator,
                                                   method=method,
-                                                  classes=classes)
+                                                  classes=classes,
+                                                  class_weight=class_weight)
     sw = None if sample_weight is None else sample_weight[test]
     calibrated_classifier.fit(X[test], y[test], sample_weight=sw)
     return calibrated_classifier
@@ -118,24 +119,8 @@ class CalibratedClassifierCV(ClassifierMixin,
 
     class_weight : dict or 'balanced', default=None
         Weights associated with classes in the form ``{class_label: weight}``.
-        If not given, all classes are supposed to have weight one. For
-        multi-output problems, a list of dicts can be provided in the same
-        order as the columns of y.
 
-        Note that for multioutput (including multilabel) weights should be
-        defined for each class of every column in its own dict. For example,
-        for four-class multilabel classification weights should be
-        [{0: 1, 1: 1}, {0: 1, 1: 5}, {0: 1, 1: 1}, {0: 1, 1: 1}] instead of
-        [{1:1}, {2:5}, {3:1}, {4:1}].
-
-        The "balanced" mode uses the values of y to automatically adjust
-        weights inversely proportional to class frequencies in the input data
-        as ``n_samples / (n_classes * np.bincount(y))``.
-
-        For multi-output, the weights of each column of y will be multiplied.
-
-        Note that these weights will be multiplied with sample_weight (passed
-        through the fit method) if sample_weight is specified.
+        See :term:`Glossary <class_weight>` for more details.
 
      n_jobs : int, default=None
         Number of jobs to run in parallel.
@@ -310,26 +295,10 @@ class CalibratedClassifierCV(ClassifierMixin,
                                            method=self.method,
                                            classes=self.classes_,
                                            supports_sw=supports_sw,
+                                           class_weight=self.class_weight,
                                            sample_weight=sample_weight)
                                                     for train, test
                                                     in cv.split(X, y))
-
-
-            for train, test in cv.split(X, y):
-                this_estimator = clone(base_estimator)
-
-                if sample_weight is not None and base_estimator_supports_sw:
-                    this_estimator.fit(X[train], y[train],
-                                       sample_weight=sample_weight[train])
-                else:
-                    this_estimator.fit(X[train], y[train])
-
-                calibrated_classifier = _CalibratedClassifier(
-                    this_estimator, method=self.method, classes=self.classes_,
-                    class_weight=self.class_weight)
-                sw = None if sample_weight is None else sample_weight[test]
-                calibrated_classifier.fit(X[test], y[test], sample_weight=sw)
-                self.calibrated_classifiers_.append(calibrated_classifier)
 
         return self
 
@@ -417,14 +386,8 @@ class _CalibratedClassifier:
 
     class_weight : dict or 'balanced', default=None
         Weights associated with classes in the form ``{class_label: weight}``.
-        If not given, all classes are supposed to have weight one.
 
-        The "balanced" mode uses the values of y to automatically adjust
-        weights inversely proportional to class frequencies in the input data
-        as ``n_samples / (n_classes * np.bincount(y))``.
-
-        Note that these weights will be multiplied with sample_weight (passed
-        through the fit method) if sample_weight is specified.
+        See :term:`Glossary <class_weight>` for more details.
 
     See also
     --------
@@ -503,8 +466,8 @@ class _CalibratedClassifier:
                                              dtype=X.dtype)
         self.class_weight_ = compute_class_weight(self.class_weight,
                                                   self.classes_, y)
-        sample_weight *= self.class_weight_[
-            _unique(column_or_1d(y), return_inverse=True)[1]]
+        le = LabelEncoder()
+        sample_weight *= self.class_weight_[le.fit_transform(y)]
 
         Y = label_binarize(y, classes=self.classes_)
 
