@@ -1,9 +1,8 @@
 """Tests for the minimum dependencies in the README.rst file."""
 
 import re
-from os.path import join
+import os
 from packaging.version import parse
-from pathlib import Path
 
 import sklearn
 from sklearn._build_utils.min_dependencies import dependent_packages
@@ -17,7 +16,10 @@ def test_min_dependencies_readme():
                          r"(MinVersion\| replace::)" +
                          r"( [0-9]+\.[0-9]+(\.[0-9]+)?)")
 
-    with Path(join(sklearn.__path__[0], "..", "README.rst")).open("r") as f:
+    readme_path = os.path.abspath(os.path.join(sklearn.__path__[0], ".."))
+    readme_filename = os.path.join(readme_path, "README.rst")
+
+    with open(readme_filename, "r") as f:
         for line in f:
             if pattern.match(line):
                 dependency = pattern.sub(r"\2\5", line)
