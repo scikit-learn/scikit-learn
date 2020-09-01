@@ -85,7 +85,6 @@ def assert_warns(warning_class, func, *args, **kw):
 
     Returns
     -------
-
     result : the return value of `func`
 
     """
@@ -120,7 +119,7 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
     warning_class : the warning class
         The class to test for, e.g. UserWarning.
 
-    message : str | callable
+    message : str or callable
         The message or a substring of the message to test for. If callable,
         it takes a string as the argument and will trigger an AssertionError
         if the callable returns `False`.
@@ -180,9 +179,10 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
 
 
 def assert_warns_div0(func, *args, **kw):
-    """Assume that numpy's warning for divide by zero is raised
+    """Assume that numpy's warning for divide by zero is raised.
 
-    Handles the case of platforms that do not support warning on divide by zero
+    Handles the case of platforms that do not support warning on divide by
+    zero.
 
     Parameters
     ----------
@@ -237,9 +237,9 @@ def ignore_warnings(obj=None, category=Warning):
 
     Parameters
     ----------
-    obj : callable or None
+    obj : callable, default=None
         callable where you want to ignore the warnings.
-    category : warning class, defaults to Warning.
+    category : warning class, default=Warning
         The category to filter. If Warning, all categories will be muted.
 
     Examples
@@ -278,7 +278,7 @@ class _IgnoreWarnings:
 
     Parameters
     ----------
-    category : tuple of warning class, default to Warning
+    category : tuple of warning class, default=Warning
         The category to filter. By default, all the categories will be muted.
 
     """
@@ -376,21 +376,21 @@ def assert_allclose_dense_sparse(x, y, rtol=1e-07, atol=1e-9, err_msg=''):
 
     Parameters
     ----------
-    x : array-like or sparse matrix
+    x : {array-like, sparse matrix}
         First array to compare.
 
-    y : array-like or sparse matrix
+    y : {array-like, sparse matrix}
         Second array to compare.
 
-    rtol : float, optional
-        relative tolerance; see numpy.allclose
+    rtol : float, default=1e-07
+        relative tolerance; see numpy.allclose.
 
-    atol : float, optional
+    atol : float, default=1e-9
         absolute tolerance; see numpy.allclose. Note that the default here is
         more tolerant than the default for numpy.testing.assert_allclose, where
         atol=0.
 
-    err_msg : string, default=''
+    err_msg : str, default=''
         Error message to raise.
     """
     if sp.sparse.issparse(x) and sp.sparse.issparse(y):
@@ -415,8 +415,8 @@ def set_random_state(estimator, random_state=0):
     Parameters
     ----------
     estimator : object
-        The estimator
-    random_state : int, RandomState instance or None, optional, default=0
+        The estimator.
+    random_state : int, RandomState instance or None, default=0
         Pseudo random number generator state.
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -525,7 +525,7 @@ def create_memmap_backed_data(data, mmap_mode='r', return_folder=False):
 
 
 def _get_args(function, varargs=False):
-    """Helper to get function arguments"""
+    """Helper to get function arguments."""
 
     try:
         params = signature(function).parameters
@@ -545,7 +545,7 @@ def _get_args(function, varargs=False):
 
 
 def _get_func_name(func):
-    """Get function full name
+    """Get function full name.
 
     Parameters
     ----------
@@ -571,15 +571,15 @@ def _get_func_name(func):
 
 
 def check_docstring_parameters(func, doc=None, ignore=None):
-    """Helper to check docstring
+    """Helper to check docstring.
 
     Parameters
     ----------
     func : callable
         The function object to test.
-    doc : str, optional (default: None)
+    doc : str, default=None
         Docstring if it is passed manually to the test.
-    ignore : None | list
+    ignore : list, default=None
         Parameters to ignore.
 
     Returns
@@ -708,7 +708,7 @@ def assert_run_python_script(source_code, timeout=60):
     ----------
     source_code : str
         The Python source code to execute.
-    timeout : int
+    timeout : int, default=60
         Time in seconds before timeout.
     """
     fd, source_file = tempfile.mkstemp(suffix='_src_test_sklearn.py')

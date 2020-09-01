@@ -34,7 +34,7 @@ def _equal_similarities_and_preferences(S, preference):
 def affinity_propagation(S, *, preference=None, convergence_iter=15,
                          max_iter=200, damping=0.5, copy=True, verbose=False,
                          return_n_iter=False, random_state='warn'):
-    """Perform Affinity Propagation Clustering of data
+    """Perform Affinity Propagation Clustering of data.
 
     Read more in the :ref:`User Guide <affinity_propagation>`.
 
@@ -42,7 +42,7 @@ def affinity_propagation(S, *, preference=None, convergence_iter=15,
     ----------
 
     S : array-like of shape (n_samples, n_samples)
-        Matrix of similarities between points
+        Matrix of similarities between points.
 
     preference : array-like of shape (n_samples,) or float, default=None
         Preferences for each point - points with larger values of
@@ -65,15 +65,15 @@ def affinity_propagation(S, *, preference=None, convergence_iter=15,
 
     copy : bool, default=True
         If copy is False, the affinity matrix is modified inplace by the
-        algorithm, for memory efficiency
+        algorithm, for memory efficiency.
 
     verbose : bool, default=False
-        The verbosity level
+        The verbosity level.
 
     return_n_iter : bool, default=False
         Whether or not to return the number of iterations.
 
-    random_state : int or RandomState instance, default=0
+    random_state : int, RandomState instance or None, default=0
         Pseudo-random number generator to control the starting state.
         Use an int for reproducible results across function calls.
         See the :term:`Glossary <random_state>`.
@@ -85,13 +85,13 @@ def affinity_propagation(S, *, preference=None, convergence_iter=15,
     -------
 
     cluster_centers_indices : ndarray of shape (n_clusters,)
-        index of clusters centers
+        Index of clusters centers.
 
     labels : ndarray of shape (n_samples,)
-        cluster labels for each point
+        Cluster labels for each point.
 
     n_iter : int
-        number of iterations run. Returned only if `return_n_iter` is
+        Number of iterations run. Returned only if `return_n_iter` is
         set to True.
 
     Notes
@@ -292,7 +292,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     verbose : bool, default=False
         Whether to be verbose.
 
-    random_state : int or RandomState instance, default=0
+    random_state : int, RandomState instance or None, default=0
         Pseudo-random number generator to control the starting state.
         Use an int for reproducible results across function calls.
         See the :term:`Glossary <random_state>`.
@@ -303,13 +303,13 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     Attributes
     ----------
     cluster_centers_indices_ : ndarray of shape (n_clusters,)
-        Indices of cluster centers
+        Indices of cluster centers.
 
     cluster_centers_ : ndarray of shape (n_clusters, n_features)
         Cluster centers (if affinity != ``precomputed``).
 
     labels_ : ndarray of shape (n_samples,)
-        Labels of each point
+        Labels of each point.
 
     affinity_matrix_ : ndarray of shape (n_samples, n_samples)
         Stores the affinity matrix used in ``fit``.

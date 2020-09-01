@@ -101,6 +101,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin,
         self : object
         """
         X, y = check_X_y(X, y,
+                         force_all_finite=False,
                          multi_output=True,
                          accept_sparse=True)
 
@@ -153,7 +154,9 @@ class _MultiOutputEstimator(MetaEstimatorMixin,
             raise ValueError("The base estimator should implement"
                              " a fit method")
 
-        X, y = self._validate_data(X, y, multi_output=True, accept_sparse=True)
+        X, y = self._validate_data(X, y,
+                                   force_all_finite=False,
+                                   multi_output=True, accept_sparse=True)
 
         if is_classifier(self):
             check_classification_targets(y)
@@ -196,7 +199,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin,
             raise ValueError("The base estimator should implement"
                              " a predict method")
 
-        X = check_array(X, accept_sparse=True)
+        X = check_array(X, force_all_finite=False, accept_sparse=True)
 
         y = Parallel(n_jobs=self.n_jobs)(
             delayed(e.predict)(X)
