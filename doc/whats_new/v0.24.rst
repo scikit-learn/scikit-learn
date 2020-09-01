@@ -184,8 +184,8 @@ Changelog
 .......................
 
 - |Feature| :class:`ensemble.HistGradientBoostingRegressor` and
-  :class:`ensemble.HistGradientClassifier` now support `staged_predict`,
-  which allows monitoring of each stage.
+  :class:`ensemble.HistGradientBoostingClassifier` now support the
+  method `staged_predict`, which allows monitoring of each stage.
   :pr:`16985` by :user:`Hao Chun Chang <haochunchang>`.
 
 - |API|: The parameter ``n_classes_`` is now deprecated in
@@ -219,8 +219,9 @@ Changelog
   attribute name/path or a `callable` for extracting feature importance from
   the estimator.  :pr:`15361` by :user:`Venkatachalam N <venkyyuvy>`.
 
-- |Enhancement| Added the option for the number of n_features_to_select to be
-  given as a float representing the percentage of features to select.
+- |Enhancement| :class:`feature_selection.RFE` supports the option for the
+  number of `n_features_to_select` to be given as a float representing the
+  percentage of features to select.
   :pr:`17090` by :user:`Lisa Schwetlick <lschwetlick>` and
   :user:`Marija Vlajic Wheeler <marijavlajic>`.
 
@@ -234,7 +235,7 @@ Changelog
 ...............................
 
 - |Enhancement| A new method
-  :class:`gaussian_process.Kernel._check_bounds_params` is called after
+  :meth:`gaussian_process.Kernel._check_bounds_params` is called after
   fitting a Gaussian Process and raises a ``ConvergenceWarning`` if the bounds
   of the hyperparameters are too tight.
   :issue:`12638` by :user:`Sylvain Lannuzel <SylvainLan>`.
@@ -253,10 +254,9 @@ Changelog
   :pr:`17526` by :user:`Ayako YAGI <yagi-3>` and
   :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
-- |Feature| :class:`impute.SimpleImputer` now supports ``inverse_transform``
-  functionality to revert imputed data to original when instantiated
-  with `add_indicator=True`.
-  :pr:`17612` by :user:`Srimukh Sripada <d3b0unce>`.
+- |Feature| Added method :meth:`impute.SimpleImputer.inverse_transform` to
+  revert imputed data to original when instantiated with
+  ``add_indicator=True``. :pr:`17612` by :user:`Srimukh Sripada <d3b0unce>`.
 
 - |Fix| :class:`impute.IterativeImputer` will not attempt to set the
   estimator's `random_state` attribute, allowing to use it with more external classes.
@@ -284,7 +284,7 @@ Changelog
   :pr:`16289` by :user:`Masashi Kishimoto <kishimoto-banana>` and
   :user:`Olivier Grisel <ogrisel>`.
 
-- |Enhancement| :class:`isotonic.IsotonicRegression` now accepts 2darray with
+- |Enhancement| :class:`isotonic.IsotonicRegression` now accepts 2d array with
   1 feature as input array. :pr:`17379` by :user:`Jiaxiang <fujiaxiang>`.
 
 :mod:`sklearn.kernel_approximation`
@@ -335,8 +335,8 @@ Changelog
   :pr:`10591` by :user:`Jeremy Karnowski <jkarnows>` and
   :user:`Daniel Mohns <dmohns>`.
 
-- |Feature| Added :func:`metrics.plot_det_curve` and :class:`DetCurveDisplay`
-  to ease the plot of DET curves.
+- |Feature| Added :func:`metrics.plot_det_curve` and
+  :class:`metrics.DetCurveDisplay` to ease the plot of DET curves.
   :pr:`18176` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Feature| Added :func:`metrics.mean_absolute_percentage_error` metric and

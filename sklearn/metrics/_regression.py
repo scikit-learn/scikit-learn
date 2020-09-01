@@ -52,7 +52,7 @@ __ALL__ = [
 
 
 def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
-    """Check that y_true and y_pred belong to the same regression task
+    """Check that y_true and y_pred belong to the same regression task.
 
     Parameters
     ----------
@@ -81,9 +81,9 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
         Custom output weights if ``multioutput`` is array-like or
         just the corresponding argument if ``multioutput`` is a
         correct keyword.
+
     dtype: str or list, default="numeric"
         the dtype argument passed to check_array
-
     """
     check_consistent_length(y_true, y_pred)
     y_true = check_array(y_true, ensure_2d=False, dtype=dtype)
@@ -126,7 +126,7 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
 def mean_absolute_error(y_true, y_pred, *,
                         sample_weight=None,
                         multioutput='uniform_average'):
-    """Mean absolute error regression loss
+    """Mean absolute error regression loss.
 
     Read more in the :ref:`User Guide <mean_absolute_error>`.
 
@@ -197,11 +197,13 @@ def mean_absolute_error(y_true, y_pred, *,
 def mean_absolute_percentage_error(y_true, y_pred,
                                    sample_weight=None,
                                    multioutput='uniform_average'):
-    """Mean absolute percentage error regression loss
+    """Mean absolute percentage error regression loss.
 
     Note here that we do not represent the output as a percentage in range
     [0, 100]. Instead, we represent it in range [0, 1/eps]. Read more in the
     :ref:`User Guide <mean_absolute_percentage_error>`.
+
+    .. versionadded:: 0.24
 
     Parameters
     ----------
@@ -273,7 +275,7 @@ def mean_absolute_percentage_error(y_true, y_pred,
 def mean_squared_error(y_true, y_pred, *,
                        sample_weight=None,
                        multioutput='uniform_average', squared=True):
-    """Mean squared error regression loss
+    """Mean squared error regression loss.
 
     Read more in the :ref:`User Guide <mean_squared_error>`.
 
@@ -329,7 +331,6 @@ def mean_squared_error(y_true, y_pred, *,
     array([0.41666667, 1.        ])
     >>> mean_squared_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.825...
-
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
@@ -354,7 +355,7 @@ def mean_squared_error(y_true, y_pred, *,
 def mean_squared_log_error(y_true, y_pred, *,
                            sample_weight=None,
                            multioutput='uniform_average'):
-    """Mean squared logarithmic error regression loss
+    """Mean squared logarithmic error regression loss.
 
     Read more in the :ref:`User Guide <mean_squared_log_error>`.
 
@@ -403,7 +404,6 @@ def mean_squared_log_error(y_true, y_pred, *,
     array([0.00462428, 0.08377444])
     >>> mean_squared_log_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.060...
-
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
@@ -421,7 +421,7 @@ def mean_squared_log_error(y_true, y_pred, *,
 @_deprecate_positional_args
 def median_absolute_error(y_true, y_pred, *, multioutput='uniform_average',
                           sample_weight=None):
-    """Median absolute error regression loss
+    """Median absolute error regression loss.
 
     Median absolute error output is non-negative floating point. The best value
     is 0.0. Read more in the :ref:`User Guide <median_absolute_error>`.
@@ -473,7 +473,6 @@ def median_absolute_error(y_true, y_pred, *, multioutput='uniform_average',
     array([0.5, 1. ])
     >>> median_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.85
-
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
@@ -497,7 +496,7 @@ def median_absolute_error(y_true, y_pred, *, multioutput='uniform_average',
 def explained_variance_score(y_true, y_pred, *,
                              sample_weight=None,
                              multioutput='uniform_average'):
-    """Explained variance regression score function
+    """Explained variance regression score function.
 
     Best possible score is 1.0, lower values are worse.
 
@@ -549,7 +548,6 @@ def explained_variance_score(y_true, y_pred, *,
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
     >>> explained_variance_score(y_true, y_pred, multioutput='uniform_average')
     0.983...
-
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)

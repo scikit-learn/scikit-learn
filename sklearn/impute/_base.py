@@ -501,6 +501,8 @@ class SimpleImputer(_BaseImputer):
         indicator, and the imputation done at ``transform`` time won't be
         inverted.
 
+        .. versionadded:: 0.24
+
         Parameters
         ----------
         X : array-like of shape \
