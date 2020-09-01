@@ -894,11 +894,13 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         # components is smaller than rank(X) - 1. Hence, if we want to extract
         # all the components (C.shape[1]), we have to use another one. Else,
         # let's use arpacks to compute only the interesting components.
-        if self.n_components >= np.min(C.shape):
+        if n_components >= np.min(C.shape):
             U, s, Vt = svd(C, full_matrices=False)
+            U = U[:, :n_components]
+            Vt = Vt[:n_components]
         else:
             v0 = _init_arpack_v0(min(C.shape), self.random_state)
-            U, s, Vt = svds(C, k=self.n_components, v0=v0)
+            U, s, Vt = svds(C, k=n_components, v0=v0)
         # Deterministic output
         U, Vt = svd_flip(U, Vt)
         V = Vt.T
