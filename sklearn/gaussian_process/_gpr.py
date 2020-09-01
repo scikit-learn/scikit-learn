@@ -1,4 +1,4 @@
-"""Gaussian processes regression. """
+"""Gaussian processes regression."""
 
 # Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 # Modified by: Pete Green <p.l.green@liverpool.ac.uk>
@@ -93,7 +93,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
         must be finite. Note that n_restarts_optimizer == 0 implies that one
         run is performed.
 
-    normalize_y : boolean, optional (default: False)
+    normalize_y : bool, default=False
         Whether the target values y are normalized, the mean and variance of
         the target values are set equal to 0 and 1 respectively. This is
         recommended for cases where zero-mean, unit-variance priors are used.
@@ -108,7 +108,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
         which might cause predictions to change if the data is modified
         externally.
 
-    random_state : int or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation used to initialize the centers.
         Pass an int for reproducible results across multiple function calls.
         See :term: `Glossary <random_state>`.
@@ -296,12 +296,12 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
         return_cov : bool, default=False
             If True, the covariance of the joint predictive distribution at
-            the query points is returned along with the mean
+            the query points is returned along with the mean.
 
         Returns
         -------
         y_mean : ndarray of shape (n_samples, [n_output_dims])
-            Mean of predictive distribution a query points
+            Mean of predictive distribution a query points.
 
         y_std : ndarray of shape (n_samples,), optional
             Standard deviation of predictive distribution at query points.
@@ -391,7 +391,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
         n_samples : int, default=1
             The number of samples drawn from the Gaussian process
 
-        random_state : int, RandomState, default=0
+        random_state : int, RandomState instance or None, default=0
             Determines random number generation to randomly draw samples.
             Pass an int for reproducible results across multiple function
             calls.
