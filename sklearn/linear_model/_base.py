@@ -20,6 +20,7 @@ import warnings
 import numpy as np
 import scipy.sparse as sp
 from scipy import linalg
+from scipy import optimize
 from scipy import sparse
 from scipy.special import expit
 from joblib import Parallel, delayed
@@ -419,6 +420,12 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+    positive : bool, default=False
+        When set to ``True``, forces the coefficients to be positive. This
+        option is only supported for dense arrays.
+
+        .. versionadded:: 0.24
+
     Attributes
     ----------
     coef_ : array of shape (n_features, ) or (n_targets, n_features)
@@ -451,7 +458,8 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     Notes
     -----
     From the implementation point of view, this is just plain Ordinary
-    Least Squares (scipy.linalg.lstsq) wrapped as a predictor object.
+    Least Squares (scipy.linalg.lstsq) or Non Negative Least Squares
+    (scipy.optimize.nnls) wrapped as a predictor object.
 
     Examples
     --------
@@ -472,11 +480,12 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     """
     @_deprecate_positional_args
     def __init__(self, *, fit_intercept=True, normalize=False, copy_X=True,
-                 n_jobs=None):
+                 n_jobs=None, positive=False):
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.copy_X = copy_X
         self.n_jobs = n_jobs
+        self.positive = positive
 
     def fit(self, X, y, sample_weight=None):
         """
@@ -502,7 +511,10 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         """
 
         n_jobs_ = self.n_jobs
-        X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc', 'coo'],
+
+        accept_sparse = False if self.positive else ['csr', 'csc', 'coo']
+
+        X, y = self._validate_data(X, y, accept_sparse=accept_sparse,
                                    y_numeric=True, multi_output=True)
 
         if sample_weight is not None:
@@ -518,7 +530,16 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
             # Sample weight can be implemented via a simple rescaling.
             X, y = _rescale_data(X, y, sample_weight)
 
-        if sp.issparse(X):
+        if self.positive:
+            if y.ndim < 2:
+                self.coef_, self._residues = optimize.nnls(X, y)
+            else:
+                # scipy.optimize.nnls cannot handle y with shape (M, K)
+                outs = Parallel(n_jobs=n_jobs_)(
+                        delayed(optimize.nnls)(X, y[:, j])
+                        for j in range(y.shape[1]))
+                self.coef_, self._residues = map(np.vstack, zip(*outs))
+        elif sp.issparse(X):
             X_offset_scale = X_offset / X_scale
 
             def matvec(b):

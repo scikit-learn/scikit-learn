@@ -50,7 +50,8 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
 
 elif [[ "$DISTRIB" == "ubuntu-32" ]]; then
     apt-get update
-    apt-get install -y python3-dev python3-scipy python3-matplotlib libatlas3-base libatlas-base-dev python3-virtualenv
+    apt-get install -y python3-dev python3-scipy python3-matplotlib libatlas3-base libatlas-base-dev python3-virtualenv python3-pandas
+
     python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
     source $VIRTUALENV/bin/activate
     python -m pip install $(get_dep cython $CYTHON_VERSION) \
@@ -65,7 +66,8 @@ elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
 
     python -m pip install pandas matplotlib pyamg scikit-image xarray
     # do not install dependencies for lightgbm since it requires scikit-learn
-    python -m pip install lightgbm --no-deps
+    # and install a version less than 3.0.0 until the issue #18316 is solved.
+    python -m pip install "lightgbm<3.0.0" --no-deps
 elif [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
     make_conda "python=$PYTHON_VERSION"
     python -m pip install -U pip
