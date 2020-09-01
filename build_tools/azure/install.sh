@@ -19,7 +19,7 @@ setup_ccache() {
       ln -s $(which ccache) "/tmp/ccache/${name}"
     done
     export PATH="/tmp/ccache/:${PATH}"
-    ccache -M 1024M
+    ccache -M 256M
 }
 
 # imports get_dep
