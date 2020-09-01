@@ -4,7 +4,6 @@ import re
 import os
 from packaging.version import parse
 
-import sklearn
 from sklearn._build_utils.min_dependencies import dependent_packages
 
 
@@ -16,7 +15,7 @@ def test_min_dependencies_readme():
                          r"(MinVersion\| replace::)" +
                          r"( [0-9]+\.[0-9]+(\.[0-9]+)?)")
 
-    readme_path = os.path.abspath(os.path.join(sklearn.__path__[0], ".."))
+    readme_path = os.path.abspath(os.path.join("..", ".."))
     readme_filename = os.path.join(readme_path, "README.rst")
 
     with open(readme_filename, "r") as f:
