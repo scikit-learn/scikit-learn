@@ -1435,8 +1435,9 @@ def test_metrics_consistent_type_error(metric_name):
         # FIXME: `brier_score_loss` does not follow this convention.
         # See discussion in:
         # https://github.com/scikit-learn/scikit-learn/issues/18307
-        pytest.param(brier_score_loss, True,
-                     marks=pytest.mark.xfail(reason="#18307"),
+        pytest.param(
+            brier_score_loss, True, marks=pytest.mark.xfail(reason="#18307")
+        ),
         (f1_score, False),
         (partial(fbeta_score, beta=1), False),
         (jaccard_score, False),
