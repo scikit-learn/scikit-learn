@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - if: >-
-        github.event.comment.body == 'take' || github.event.comment.body == 'Take'
+        (github.event.comment.body == 'take' || github.event.comment.body == 'Take')
         && !github.event.issue.assignee
       name:
       run: |
