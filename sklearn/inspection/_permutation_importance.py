@@ -98,6 +98,8 @@ def permutation_importance(estimator, X, y, *, scoring=None, n_repeats=5,
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights used in scoring.
 
+        .. versionadded:: 0.24
+
     Returns
     -------
     result : :class:`~sklearn.utils.Bunch`
