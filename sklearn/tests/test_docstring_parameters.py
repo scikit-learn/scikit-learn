@@ -178,13 +178,15 @@ def test_fit_docstring_attributes(name, Estimator):
     doc = docscrape.ClassDoc(Estimator)
     attributes = doc['Attributes']
 
-    IGNORED = {'ClassifierChain', 'ColumnTransformer', 'CountVectorizer',
-               'DictVectorizer', 'FeatureUnion', 'GaussianRandomProjection',
-               'GridSearchCV', 'MultiOutputClassifier', 'MultiOutputRegressor',
+    IGNORED = {'CCA', 'ClassifierChain', 'ColumnTransformer',
+               'CountVectorizer', 'DictVectorizer', 'FeatureUnion',
+               'GaussianRandomProjection', 'GridSearchCV',
+               'MultiOutputClassifier', 'MultiOutputRegressor',
                'NoSampleWeightWrapper', 'OneVsOneClassifier',
-               'OutputCodeClassifier', 'Pipeline',
-               'RFE', 'RFECV', 'RandomizedSearchCV', 'RegressorChain',
-               'SelectFromModel', 'SparseCoder', 'SparseRandomProjection',
+               'OutputCodeClassifier', 'Pipeline', 'PLSCanonical',
+               'PLSRegression', 'PLSSVD', 'RFE', 'RFECV',
+               'RandomizedSearchCV', 'RegressorChain', 'SelectFromModel',
+               'SparseCoder', 'SparseRandomProjection',
                'SpectralBiclustering', 'StackingClassifier',
                'StackingRegressor', 'TfidfVectorizer', 'VotingClassifier',
                'VotingRegressor', 'SequentialFeatureSelector'}
@@ -198,6 +200,9 @@ def test_fit_docstring_attributes(name, Estimator):
 
     if Estimator.__name__ == 'DummyClassifier':
         est.strategy = "stratified"
+
+    if 'PLS' in Estimator.__name__ or 'CCA' in Estimator.__name__:
+        est.n_components = 1  # default = 2 is invalid for single target.
 
     # TO BE REMOVED for v0.25 (avoid FutureWarning)
     if Estimator.__name__ == 'AffinityPropagation':
@@ -217,7 +222,9 @@ def test_fit_docstring_attributes(name, Estimator):
     else:
         est.fit(X, y)
 
-    skipped_attributes = {'n_features_in_'}
+    skipped_attributes = {'n_features_in_',
+                          'x_scores_',  # For PLS, TODO remove in 0.26
+                          'y_scores_'}  # For PLS, TODO remove in 0.26
 
     for attr in attributes:
         if attr.name in skipped_attributes:

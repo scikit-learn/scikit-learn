@@ -482,6 +482,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         Only available if ``refit=True`` and the underlying estimator supports
         ``score_samples``.
 
+        .. versionadded:: 0.24
+
         Parameters
         ----------
         X : iterable
