@@ -689,15 +689,16 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     assert_all_finite(y_true)
     assert_all_finite(y_score)
 
+    # Ensure non-negative sample_weight
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight)
-
-    # Check to make sure sample_weight is strictly positive
-    _check_sample_weight(sample_weight, y_true, check_negative=True)
-    nonzero_weight_mask = sample_weight > 0
-    y_true = y_true[nonzero_weight_mask]
-    y_score = y_score[nonzero_weight_mask]
-    sample_weight = sample_weight[nonzero_weight_mask]
+        # Check to make sure sample_weight is non-negative and filter out
+        # zero-weighted samples, as they should not impact the score
+        _check_sample_weight(sample_weight, y_true, ensure_nonnegative=True)
+        nonzero_weight_mask = sample_weight > 0
+        y_true = y_true[nonzero_weight_mask]
+        y_score = y_score[nonzero_weight_mask]
+        sample_weight = sample_weight[nonzero_weight_mask]
     
     # ensure binary classification if pos_label is not specified
     # classes.dtype.kind in ('O', 'U', 'S') is required to avoid

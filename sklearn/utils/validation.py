@@ -1264,7 +1264,8 @@ def _check_psd_eigenvalues(lambdas, enable_warnings=False):
     return lambdas
 
 
-def _check_sample_weight(sample_weight, X, dtype=None, check_negative=False):
+def _check_sample_weight(sample_weight, X, dtype=None,
+                         ensure_nonnegative=False):
     """Validate sample weights.
 
     Note that passing sample_weight=None will output an array of ones.
@@ -1280,12 +1281,16 @@ def _check_sample_weight(sample_weight, X, dtype=None, check_negative=False):
     X : {ndarray, list, sparse matrix}
         Input data.
 
-    dtype: dtype
+    dtype : dtype
        dtype of the validated `sample_weight`.
        If None, and the input `sample_weight` is an array, the dtype of the
        input is preserved; otherwise an array with the default numpy dtype
        is be allocated.  If `dtype` is not one of `float32`, `float64`,
        `None`, the output will be of dtype `float64`.
+
+    ensure_nonnegative : bool, default=False
+        Check that `sample_weight` is non-negative, otherwise raise a value
+        error.
 
     Returns
     -------
@@ -1315,9 +1320,9 @@ def _check_sample_weight(sample_weight, X, dtype=None, check_negative=False):
             raise ValueError("sample_weight.shape == {}, expected {}!"
                              .format(sample_weight.shape, (n_samples,)))
     
-    if sample_weight is not None and check_negative:
+    if sample_weight is not None and ensure_nonnegative:
         if not np.all(sample_weight >= 0):
-            raise ValueError("Negative values in sample_weight are invalid")
+            raise ValueError("Sample weights must be non-negative")
 
     return sample_weight
 
