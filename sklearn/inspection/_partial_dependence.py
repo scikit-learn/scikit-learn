@@ -368,9 +368,10 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
     ...                    grid_resolution=2) # doctest: +SKIP
     (array([[-4.52...,  4.52...]]), [array([ 0.,  1.])])
 
-    See also
+    See Also
     --------
-    sklearn.inspection.plot_partial_dependence: Plot partial dependence
+    plot_partial_dependence : Plot Partial Dependence.
+    PartialDependenceDisplay : Partial Dependence visualization.
     """
     if not (is_classifier(estimator) or is_regressor(estimator)):
         raise ValueError(

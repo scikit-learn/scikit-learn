@@ -213,6 +213,11 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
     -------
     display: :class:`~sklearn.inspection.PartialDependenceDisplay`
 
+    See Also
+    --------
+    partial_dependence : Compute Partial Dependence values.
+    PartialDependenceDisplay : Partial Dependence visualization.
+
     Examples
     --------
     >>> from sklearn.datasets import make_friedman1
@@ -220,11 +225,6 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
     >>> X, y = make_friedman1()
     >>> clf = GradientBoostingRegressor(n_estimators=10).fit(X, y)
     >>> plot_partial_dependence(clf, X, [0, (0, 1)]) #doctest: +SKIP
-
-    See also
-    --------
-    sklearn.inspection.partial_dependence: Return raw partial
-      dependence values
     """
     check_matplotlib_support('plot_partial_dependence')  # noqa
     import matplotlib.pyplot as plt  # noqa
@@ -498,6 +498,10 @@ class PartialDependenceDisplay:
     figure_ : matplotlib Figure
         Figure containing partial dependence plots.
 
+    See Also
+    --------
+    partial_dependence : Compute Partial Dependence values.
+    plot_partial_dependence : Plot Partial Dependence.
     """
     @_deprecate_positional_args
     def __init__(self, pd_results, *, features, feature_names, target_idx,
