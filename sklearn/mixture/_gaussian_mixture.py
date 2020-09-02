@@ -10,8 +10,8 @@ from scipy import linalg
 
 from ._base import BaseMixture, _check_shape
 from ..utils import check_array
-from ..utils.validation import check_is_fitted
 from ..utils.extmath import row_norms
+from ..utils.validation import _deprecate_positional_args
 
 
 ###############################################################################
@@ -22,7 +22,7 @@ def _check_weights(weights, n_components):
 
     Parameters
     ----------
-    weights : array-like, shape (n_components,)
+    weights : array-like of shape (n_components,)
         The proportions of components of each mixture.
 
     n_components : int
@@ -55,7 +55,7 @@ def _check_means(means, n_components, n_features):
 
     Parameters
     ----------
-    means : array-like, shape (n_components, n_features)
+    means : array-like of shape (n_components, n_features)
         The centers of the current components.
 
     n_components : int
@@ -144,13 +144,13 @@ def _estimate_gaussian_covariances_full(resp, X, nk, means, reg_covar):
 
     Parameters
     ----------
-    resp : array-like, shape (n_samples, n_components)
+    resp : array-like of shape (n_samples, n_components)
 
-    X : array-like, shape (n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
 
-    nk : array-like, shape (n_components,)
+    nk : array-like of shape (n_components,)
 
-    means : array-like, shape (n_components, n_features)
+    means : array-like of shape (n_components, n_features)
 
     reg_covar : float
 
@@ -173,13 +173,13 @@ def _estimate_gaussian_covariances_tied(resp, X, nk, means, reg_covar):
 
     Parameters
     ----------
-    resp : array-like, shape (n_samples, n_components)
+    resp : array-like of shape (n_samples, n_components)
 
-    X : array-like, shape (n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
 
-    nk : array-like, shape (n_components,)
+    nk : array-like of shape (n_components,)
 
-    means : array-like, shape (n_components, n_features)
+    means : array-like of shape (n_components, n_features)
 
     reg_covar : float
 
@@ -201,13 +201,13 @@ def _estimate_gaussian_covariances_diag(resp, X, nk, means, reg_covar):
 
     Parameters
     ----------
-    responsibilities : array-like, shape (n_samples, n_components)
+    responsibilities : array-like of shape (n_samples, n_components)
 
-    X : array-like, shape (n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
 
-    nk : array-like, shape (n_components,)
+    nk : array-like of shape (n_components,)
 
-    means : array-like, shape (n_components, n_features)
+    means : array-like of shape (n_components, n_features)
 
     reg_covar : float
 
@@ -227,13 +227,13 @@ def _estimate_gaussian_covariances_spherical(resp, X, nk, means, reg_covar):
 
     Parameters
     ----------
-    responsibilities : array-like, shape (n_samples, n_components)
+    responsibilities : array-like of shape (n_samples, n_components)
 
-    X : array-like, shape (n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
 
-    nk : array-like, shape (n_components,)
+    nk : array-like of shape (n_components,)
 
-    means : array-like, shape (n_components, n_features)
+    means : array-like of shape (n_components, n_features)
 
     reg_covar : float
 
@@ -251,10 +251,10 @@ def _estimate_gaussian_parameters(X, resp, reg_covar, covariance_type):
 
     Parameters
     ----------
-    X : array-like, shape (n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
         The input data array.
 
-    resp : array-like, shape (n_samples, n_components)
+    resp : array-like of shape (n_samples, n_components)
         The responsibilities for each data sample in X.
 
     reg_covar : float
@@ -265,10 +265,10 @@ def _estimate_gaussian_parameters(X, resp, reg_covar, covariance_type):
 
     Returns
     -------
-    nk : array-like, shape (n_components,)
+    nk : array-like of shape (n_components,)
         The numbers of data samples in the current components.
 
-    means : array-like, shape (n_components, n_features)
+    means : array-like of shape (n_components, n_features)
         The centers of the current components.
 
     covariances : array-like
@@ -356,7 +356,7 @@ def _compute_log_det_cholesky(matrix_chol, covariance_type, n_features):
 
     Returns
     -------
-    log_det_precision_chol : array-like, shape (n_components,)
+    log_det_precision_chol : array-like of shape (n_components,)
         The determinant of the precision matrix for each component.
     """
     if covariance_type == 'full':
@@ -382,9 +382,9 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
 
     Parameters
     ----------
-    X : array-like, shape (n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
 
-    means : array-like, shape (n_components, n_features)
+    means : array-like of shape (n_components, n_features)
 
     precisions_chol : array-like
         Cholesky decompositions of the precision matrices.
@@ -444,10 +444,10 @@ class GaussianMixture(BaseMixture):
 
     Parameters
     ----------
-    n_components : int, defaults to 1.
+    n_components : int, default=1
         The number of mixture components.
 
-    covariance_type : {'full' (default), 'tied', 'diag', 'spherical'}
+    covariance_type : {'full', 'tied', 'diag', 'spherical'}, default='full'
         String describing the type of covariance parameters to use.
         Must be one of:
 
@@ -460,21 +460,21 @@ class GaussianMixture(BaseMixture):
         'spherical'
             each component has its own single variance
 
-    tol : float, defaults to 1e-3.
+    tol : float, default=1e-3
         The convergence threshold. EM iterations will stop when the
         lower bound average gain is below this threshold.
 
-    reg_covar : float, defaults to 1e-6.
+    reg_covar : float, default=1e-6
         Non-negative regularization added to the diagonal of covariance.
         Allows to assure that the covariance matrices are all positive.
 
-    max_iter : int, defaults to 100.
+    max_iter : int, default=100
         The number of EM iterations to perform.
 
-    n_init : int, defaults to 1.
+    n_init : int, default=1
         The number of initializations to perform. The best results are kept.
 
-    init_params : {'kmeans', 'random'}, defaults to 'kmeans'.
+    init_params : {'kmeans', 'random'}, default='kmeans'
         The method used to initialize the weights, the means and the
         precisions.
         Must be one of::
@@ -482,18 +482,19 @@ class GaussianMixture(BaseMixture):
             'kmeans' : responsibilities are initialized using kmeans.
             'random' : responsibilities are initialized randomly.
 
-    weights_init : array-like, shape (n_components, ), optional
-        The user-provided initial weights, defaults to None.
-        If it None, weights are initialized using the `init_params` method.
+    weights_init : array-like of shape (n_components, ), default=None
+        The user-provided initial weights.
+        If it is None, weights are initialized using the `init_params` method.
 
-    means_init : array-like, shape (n_components, n_features), optional
-        The user-provided initial means, defaults to None,
-        If it None, means are initialized using the `init_params` method.
+    means_init : array-like of shape (n_components, n_features), default=None
+        The user-provided initial means,
+        If it is None, means are initialized using the `init_params` method.
 
-    precisions_init : array-like, optional.
+    precisions_init : array-like, default=None
         The user-provided initial precisions (inverse of the covariance
-        matrices), defaults to None.
-        If it None, precisions are initialized using the 'init_params' method.
+        matrices).
+        If it is None, precisions are initialized using the 'init_params'
+        method.
         The shape depends on 'covariance_type'::
 
             (n_components,)                        if 'spherical',
@@ -501,13 +502,15 @@ class GaussianMixture(BaseMixture):
             (n_components, n_features)             if 'diag',
             (n_components, n_features, n_features) if 'full'
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None, default=None
+        Controls the random seed given to the method chosen to initialize the
+        parameters (see `init_params`).
+        In addition, it controls the generation of random samples from the
+        fitted distribution (see the method `sample`).
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
-    warm_start : bool, default to False.
+    warm_start : bool, default=False
         If 'warm_start' is True, the solution of the last fitting is used as
         initialization for the next call of fit(). This can speed up
         convergence when fit is called several times on similar problems.
@@ -515,21 +518,21 @@ class GaussianMixture(BaseMixture):
         occurs upon the first call.
         See :term:`the Glossary <warm_start>`.
 
-    verbose : int, default to 0.
+    verbose : int, default=0
         Enable verbose output. If 1 then it prints the current
         initialization and each iteration step. If greater than 1 then
         it prints also the log probability and the time needed
         for each step.
 
-    verbose_interval : int, default to 10.
+    verbose_interval : int, default=10
         Number of iteration done before the next print.
 
     Attributes
     ----------
-    weights_ : array-like, shape (n_components,)
+    weights_ : array-like of shape (n_components,)
         The weights of each mixture components.
 
-    means_ : array-like, shape (n_components, n_features)
+    means_ : array-like of shape (n_components, n_features)
         The mean of each mixture component.
 
     covariances_ : array-like
@@ -579,13 +582,25 @@ class GaussianMixture(BaseMixture):
         Lower bound value on the log-likelihood (of the training data with
         respect to the model) of the best fit of EM.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.mixture import GaussianMixture
+    >>> X = np.array([[1, 2], [1, 4], [1, 0], [10, 2], [10, 4], [10, 0]])
+    >>> gm = GaussianMixture(n_components=2, random_state=0).fit(X)
+    >>> gm.means_
+    array([[10.,  2.],
+           [ 1.,  2.]])
+    >>> gm.predict([[0, 0], [12, 3]])
+    array([1, 0])
+
     See Also
     --------
     BayesianGaussianMixture : Gaussian mixture model fit with a variational
         inference.
     """
-
-    def __init__(self, n_components=1, covariance_type='full', tol=1e-3,
+    @_deprecate_positional_args
+    def __init__(self, n_components=1, *, covariance_type='full', tol=1e-3,
                  reg_covar=1e-6, max_iter=100, n_init=1, init_params='kmeans',
                  weights_init=None, means_init=None, precisions_init=None,
                  random_state=None, warm_start=False,
@@ -629,9 +644,9 @@ class GaussianMixture(BaseMixture):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
 
-        resp : array-like, shape (n_samples, n_components)
+        resp : array-like of shape (n_samples, n_components)
         """
         n_samples, _ = X.shape
 
@@ -662,9 +677,9 @@ class GaussianMixture(BaseMixture):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
 
-        log_resp : array-like, shape (n_samples, n_components)
+        log_resp : array-like of shape (n_samples, n_components)
             Logarithm of the posterior probabilities (or responsibilities) of
             the point of each sample in X.
         """

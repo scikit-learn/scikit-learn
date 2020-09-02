@@ -2,13 +2,15 @@
 name: Bug report
 about: Create a report to help us reproduce and correct the bug
 title: ''
-labels: Bug
+labels: 'Bug: triage'
 assignees: ''
 
 ---
 
+<!--
 Before submitting a bug, please make sure the issue hasn't been already
 addressed by searching through the past issues.
+-->
 
 #### Describe the bug
 <!--

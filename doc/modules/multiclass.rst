@@ -60,16 +60,16 @@ regression is also supported.
   to each class, for every sample. Positive classes are indicated with 1 and
   negative classes with 0 or -1. It is thus comparable to running ``n_classes``
   binary classification tasks, for example with
-  :class:`sklearn.multioutput.MultiOutputClassifier`. This approach treats
+  :class:`~sklearn.multioutput.MultiOutputClassifier`. This approach treats
   each label independently whereas multilabel classifiers *may* treat the
-  multiple classes simultaneously, accounting for correlated behaviour amoung
+  multiple classes simultaneously, accounting for correlated behavior among
   them.
 
   For example, prediction of the topics relevant to a text document or video.
   The document or video may be about one of 'religion', 'politics', 'finance'
   or 'education', several of the topic classes or all of the topic classes.
 
-  Valid representation of :term:`multilabel` `y` is either dense (or sparse)
+  A valid representation of :term:`multilabel` `y` is an either dense or sparse
   :term:`binary` matrix of shape ``(n_samples, n_classes)``. Each column
   represents a class. The ``1``'s in each row denote the positive classes a
   sample has been labelled with. An example of a dense matrix ``y`` for 3
@@ -99,10 +99,10 @@ regression is also supported.
 
   For example, prediction of both wind speed and wind direction, in degrees,
   using data obtained at a certain location. Each sample would be data
-  obtained at one location and both wind speed and directtion would be
+  obtained at one location and both wind speed and direction would be
   output for each sample.
 
-  Valid representation of :term:`multilabel` `y` is dense matrix of shape
+  A valid representation of :term:`multioutput` `y` is a dense matrix of shape
   ``(n_samples, n_classes)`` of floats. A column wise concatenation of
   :term:`continuous` variables. An example of ``y`` for 3 samples:
 
@@ -130,8 +130,8 @@ regression is also supported.
   image of a fruit, a label is output for both properties and each label is
   one of the possible classes of the corresponding property.
 
-  Valid representation of :term:`multilabel` `y` is dense matrix of shape
-  ``(n_samples, n_classes)`` of floats. A column wise concatenation of 1d
+  A valid representation of :term:`multioutput` `y` is a dense matrix of shape
+  ``(n_samples, n_classes)`` of class labels. A column wise concatenation of 1d
   :term:`multiclass` variables. An example of ``y`` for 3 samples:
 
     >>> y = np.array([['apple', 'green'], ['orange', 'orange'], ['pear', 'green']])
@@ -140,7 +140,7 @@ regression is also supported.
      ['orange' 'orange']
      ['pear' 'green']]
 
-  Note that any classifiers handling multioutput-multiclass (also known as
+  Note that all classifiers handling multioutput-multiclass (also known as
   multitask classification) tasks, support the multilabel classification task
   as a special case. Multitask classification is similar to the multioutput
   classification task with different model formulations. For more information,
@@ -177,68 +177,70 @@ Below is a summary of the classifiers supported by scikit-learn
 grouped by strategy; you don't need the meta-estimators in this class
 if you're using one of these, unless you want custom multiclass behavior:
 
+.. currentmodule:: sklearn
+
 - **Inherently multiclass:**
 
-  - :class:`sklearn.naive_bayes.BernoulliNB`
-  - :class:`sklearn.tree.DecisionTreeClassifier`
-  - :class:`sklearn.tree.ExtraTreeClassifier`
-  - :class:`sklearn.ensemble.ExtraTreesClassifier`
-  - :class:`sklearn.naive_bayes.GaussianNB`
-  - :class:`sklearn.neighbors.KNeighborsClassifier`
-  - :class:`sklearn.semi_supervised.LabelPropagation`
-  - :class:`sklearn.semi_supervised.LabelSpreading`
-  - :class:`sklearn.discriminant_analysis.LinearDiscriminantAnalysis`
-  - :class:`sklearn.svm.LinearSVC` (setting multi_class="crammer_singer")
-  - :class:`sklearn.linear_model.LogisticRegression` (setting multi_class="multinomial")
-  - :class:`sklearn.linear_model.LogisticRegressionCV` (setting multi_class="multinomial")
-  - :class:`sklearn.neural_network.MLPClassifier`
-  - :class:`sklearn.neighbors.NearestCentroid`
-  - :class:`sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`
-  - :class:`sklearn.neighbors.RadiusNeighborsClassifier`
-  - :class:`sklearn.ensemble.RandomForestClassifier`
-  - :class:`sklearn.linear_model.RidgeClassifier`
-  - :class:`sklearn.linear_model.RidgeClassifierCV`
+  - :class:`naive_bayes.BernoulliNB`
+  - :class:`tree.DecisionTreeClassifier`
+  - :class:`tree.ExtraTreeClassifier`
+  - :class:`ensemble.ExtraTreesClassifier`
+  - :class:`naive_bayes.GaussianNB`
+  - :class:`neighbors.KNeighborsClassifier`
+  - :class:`semi_supervised.LabelPropagation`
+  - :class:`semi_supervised.LabelSpreading`
+  - :class:`discriminant_analysis.LinearDiscriminantAnalysis`
+  - :class:`svm.LinearSVC` (setting multi_class="crammer_singer")
+  - :class:`linear_model.LogisticRegression` (setting multi_class="multinomial")
+  - :class:`linear_model.LogisticRegressionCV` (setting multi_class="multinomial")
+  - :class:`neural_network.MLPClassifier`
+  - :class:`neighbors.NearestCentroid`
+  - :class:`discriminant_analysis.QuadraticDiscriminantAnalysis`
+  - :class:`neighbors.RadiusNeighborsClassifier`
+  - :class:`ensemble.RandomForestClassifier`
+  - :class:`linear_model.RidgeClassifier`
+  - :class:`linear_model.RidgeClassifierCV`
 
 
 - **Multiclass as One-Vs-One:**
 
-  - :class:`sklearn.svm.NuSVC`
-  - :class:`sklearn.svm.SVC`.
-  - :class:`sklearn.gaussian_process.GaussianProcessClassifier` (setting multi_class = "one_vs_one")
+  - :class:`svm.NuSVC`
+  - :class:`svm.SVC`.
+  - :class:`gaussian_process.GaussianProcessClassifier` (setting multi_class = "one_vs_one")
 
 
 - **Multiclass as One-Vs-The-Rest:**
 
-  - :class:`sklearn.ensemble.GradientBoostingClassifier`
-  - :class:`sklearn.gaussian_process.GaussianProcessClassifier` (setting multi_class = "one_vs_rest")
-  - :class:`sklearn.svm.LinearSVC` (setting multi_class="ovr")
-  - :class:`sklearn.linear_model.LogisticRegression` (setting multi_class="ovr")
-  - :class:`sklearn.linear_model.LogisticRegressionCV` (setting multi_class="ovr")
-  - :class:`sklearn.linear_model.SGDClassifier`
-  - :class:`sklearn.linear_model.Perceptron`
-  - :class:`sklearn.linear_model.PassiveAggressiveClassifier`
+  - :class:`ensemble.GradientBoostingClassifier`
+  - :class:`gaussian_process.GaussianProcessClassifier` (setting multi_class = "one_vs_rest")
+  - :class:`svm.LinearSVC` (setting multi_class="ovr")
+  - :class:`linear_model.LogisticRegression` (setting multi_class="ovr")
+  - :class:`linear_model.LogisticRegressionCV` (setting multi_class="ovr")
+  - :class:`linear_model.SGDClassifier`
+  - :class:`linear_model.Perceptron`
+  - :class:`linear_model.PassiveAggressiveClassifier`
 
 
 - **Support multilabel:**
 
-  - :class:`sklearn.tree.DecisionTreeClassifier`
-  - :class:`sklearn.tree.ExtraTreeClassifier`
-  - :class:`sklearn.ensemble.ExtraTreesClassifier`
-  - :class:`sklearn.neighbors.KNeighborsClassifier`
-  - :class:`sklearn.neural_network.MLPClassifier`
-  - :class:`sklearn.neighbors.RadiusNeighborsClassifier`
-  - :class:`sklearn.ensemble.RandomForestClassifier`
-  - :class:`sklearn.linear_model.RidgeClassifierCV`
+  - :class:`tree.DecisionTreeClassifier`
+  - :class:`tree.ExtraTreeClassifier`
+  - :class:`ensemble.ExtraTreesClassifier`
+  - :class:`neighbors.KNeighborsClassifier`
+  - :class:`neural_network.MLPClassifier`
+  - :class:`neighbors.RadiusNeighborsClassifier`
+  - :class:`ensemble.RandomForestClassifier`
+  - :class:`linear_model.RidgeClassifierCV`
 
 
 - **Support multiclass-multioutput:**
 
-  - :class:`sklearn.tree.DecisionTreeClassifier`
-  - :class:`sklearn.tree.ExtraTreeClassifier`
-  - :class:`sklearn.ensemble.ExtraTreesClassifier`
-  - :class:`sklearn.neighbors.KNeighborsClassifier`
-  - :class:`sklearn.neighbors.RadiusNeighborsClassifier`
-  - :class:`sklearn.ensemble.RandomForestClassifier`
+  - :class:`tree.DecisionTreeClassifier`
+  - :class:`tree.ExtraTreeClassifier`
+  - :class:`ensemble.ExtraTreesClassifier`
+  - :class:`neighbors.KNeighborsClassifier`
+  - :class:`neighbors.RadiusNeighborsClassifier`
+  - :class:`ensemble.RandomForestClassifier`
 
 
 .. warning::
@@ -257,9 +259,8 @@ zero elements, corresponds to the subset of labels. An array such as
 sample, labels 1 and 2 in the second sample, and no labels in the third sample.
 
 Producing multilabel data as a list of sets of labels may be more intuitive.
-The :class:`MultiLabelBinarizer <sklearn.preprocessing.MultiLabelBinarizer>`
-transformer can be used to convert between a collection of collections of
-labels and the indicator format.
+The :class:`~preprocessing.MultiLabelBinarizer` transformer can be used
+to convert between a collection of collections of labels and the indicator format.
 
   >>> from sklearn.preprocessing import MultiLabelBinarizer
   >>> y = [[2, 3, 4], [2], [0, 1, 3], [0, 1, 2, 3, 4], [0, 1, 2]]
@@ -311,15 +312,15 @@ To use this feature, feed the classifier an indicator matrix, in which cell
 [i, j] indicates the presence of label j in sample i.
 
 
-.. figure:: ../auto_examples/images/sphx_glr_plot_multilabel_001.png
-    :target: ../auto_examples/plot_multilabel.html
+.. figure:: ../auto_examples/miscellaneous/images/sphx_glr_plot_multilabel_001.png
+    :target: ../auto_examples/miscellaneous/plot_multilabel.html
     :align: center
     :scale: 75%
 
 
 .. topic:: Examples:
 
-    * :ref:`sphx_glr_auto_examples_plot_multilabel.py`
+    * :ref:`sphx_glr_auto_examples_miscellaneous_plot_multilabel.py`
 
 .. _ovo_classification:
 

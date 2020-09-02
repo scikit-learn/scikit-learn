@@ -78,8 +78,9 @@ General KDD structure :
 
 :func:`sklearn.datasets.fetch_kddcup99` will load the kddcup99 dataset; it
 returns a dictionary-like object with the feature matrix in the ``data`` member
-and the target values in ``target``. The dataset will be downloaded from the
-web if necessary.
+and the target values in ``target``. The "as_frame" optional argument converts
+``data`` into a pandas DataFrame and ``target`` into a pandas Series. The
+dataset will be downloaded from the web if necessary.
 
 .. topic: References
 
@@ -92,4 +93,3 @@ web if necessary.
            discounting learning algorithms. In Proceedings of the sixth
            ACM SIGKDD international conference on Knowledge discovery
            and data mining, pages 320-324. ACM Press, 2000.
-
