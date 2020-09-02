@@ -248,6 +248,8 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         Set to True to clip transformed values of held-out data to
         provided `feature range`.
 
+        .. versionadded:: 0.24
+
     Attributes
     ----------
     min_ : ndarray of shape (n_features,)

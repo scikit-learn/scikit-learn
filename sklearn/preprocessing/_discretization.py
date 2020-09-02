@@ -61,6 +61,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         consistent with input dtype. Only np.float32 and np.float64 are
         supported.
 
+        .. versionadded:: 0.24
+
     Attributes
     ----------
     n_bins_ : ndarray of shape (n_features,), dtype=np.int_

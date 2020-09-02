@@ -360,16 +360,31 @@ def roc_auc_score(y_true, y_score, *, average="macro", sample_weight=None,
         binary label indicators with shape (n_samples, n_classes).
 
     y_score : array-like of shape (n_samples,) or (n_samples, n_classes)
-        Target scores. In the binary and multilabel cases, these can be either
-        probability estimates or non-thresholded decision values (as returned
-        by `decision_function` on some classifiers). In the multiclass case,
-        these must be probability estimates which sum to 1. The binary
-        case expects a shape (n_samples,), and the scores must be the scores of
-        the class with the greater label. The multiclass and multilabel
-        cases expect a shape (n_samples, n_classes). In the multiclass case,
-        the order of the class scores must correspond to the order of
-        ``labels``, if provided, or else to the numerical or lexicographical
-        order of the labels in ``y_true``.
+        Target scores.
+
+        * In the binary case, it corresponds to an array of shape
+          `(n_samples,)`. Both probability estimates and non-thresholded
+          decision values can be provided. The probability estimates correspond
+          to the **probability of the class with the greater label**,
+          i.e. `estimator.classes_[1]` and thus
+          `estimator.predict_proba(X, y)[:, 1]`. The decision values
+          corresponds to the output of `estimator.decision_function(X, y)`.
+          See more information in the :ref:`User guide <roc_auc_binary>`;
+        * In the multiclass case, it corresponds to an array of shape
+          `(n_samples, n_classes)` of probability estimates provided by the
+          `predict_proba` method. The probability estimates **must**
+          sum to 1 across the possible classes. In addition, the order of the
+          class scores must correspond to the order of ``labels``,
+          if provided, or else to the numerical or lexicographical order of
+          the labels in ``y_true``. See more information in the
+          :ref:`User guide <roc_auc_multiclass>`;
+        * In the multilabel case, it corresponds to an array of shape
+          `(n_samples, n_classes)`. Probability estimates are provided by the
+          `predict_proba` method and the non-thresholded decision values by
+          the `decision_function` method. The probability estimates correspond
+          to the **probability of the class with the greater label for each
+          output** of the classifier. See more information in the
+          :ref:`User guide <roc_auc_multilabel>`.
 
     average : {'micro', 'macro', 'samples', 'weighted'} or None, \
             default='macro'
@@ -447,7 +462,7 @@ def roc_auc_score(y_true, y_score, *, average="macro", sample_weight=None,
             Machine Learning, 45(2), 171-186.
             <http://link.springer.com/article/10.1023/A:1010920819831>`_
 
-    See also
+    See Also
     --------
     average_precision_score : Area under the precision-recall curve
 
@@ -457,12 +472,43 @@ def roc_auc_score(y_true, y_score, *, average="macro", sample_weight=None,
 
     Examples
     --------
-    >>> import numpy as np
+    Binary case:
+
+    >>> from sklearn.datasets import load_breast_cancer
+    >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.metrics import roc_auc_score
-    >>> y_true = np.array([0, 0, 1, 1])
-    >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> roc_auc_score(y_true, y_scores)
-    0.75
+    >>> X, y = load_breast_cancer(return_X_y=True)
+    >>> clf = LogisticRegression(solver="liblinear", random_state=0).fit(X, y)
+    >>> roc_auc_score(y, clf.predict_proba(X)[:, 1])
+    0.99...
+    >>> roc_auc_score(y, clf.decision_function(X))
+    0.99...
+
+    Multiclass case:
+
+    >>> from sklearn.datasets import load_iris
+    >>> X, y = load_iris(return_X_y=True)
+    >>> clf = LogisticRegression(solver="liblinear").fit(X, y)
+    >>> roc_auc_score(y, clf.predict_proba(X), multi_class='ovr')
+    0.99...
+
+    Multilabel case:
+
+    >>> from sklearn.datasets import make_multilabel_classification
+    >>> from sklearn.multioutput import MultiOutputClassifier
+    >>> X, y = make_multilabel_classification(random_state=0)
+    >>> clf = MultiOutputClassifier(clf).fit(X, y)
+    >>> # get a list of n_output containing probability arrays of shape
+    >>> # (n_samples, n_classes)
+    >>> y_pred = clf.predict_proba(X)
+    >>> # extract the positive columns for each output
+    >>> y_pred = np.transpose([pred[:, 1] for pred in y_pred])
+    >>> roc_auc_score(y, y_pred, average=None)
+    array([0.82..., 0.86..., 0.94..., 0.85... , 0.94...])
+    >>> from sklearn.linear_model import RidgeClassifierCV
+    >>> clf = RidgeClassifierCV().fit(X, y)
+    >>> roc_auc_score(y, clf.decision_function(X), average=None)
+    array([0.81..., 0.84... , 0.93..., 0.87..., 0.94...])
     """
 
     y_type = type_of_target(y_true)
