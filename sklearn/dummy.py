@@ -52,7 +52,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
              The default value of `strategy` has changed to "prior" in version
              0.24.
 
-    random_state : int or RandomState instance or None, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the randomness to generate the predictions when
         ``strategy='stratified'`` or ``strategy='uniform'``.
         Pass an int for reproducible output across multiple function calls.
@@ -410,11 +410,11 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         * "constant": always predicts a constant value that is provided by
           the user.
 
-    constant : int or float or array-like of shape (n_outputs,)
+    constant : int or float or array-like of shape (n_outputs,), default=None
         The explicit constant as predicted by the "constant" strategy. This
         parameter is useful only for the "constant" strategy.
 
-    quantile : float in [0.0, 1.0]
+    quantile : float in [0.0, 1.0], default=None
         The quantile to predict using the "quantile" strategy. A quantile of
         0.5 corresponds to the median, while 0.0 to the minimum and 1.0 to the
         maximum.

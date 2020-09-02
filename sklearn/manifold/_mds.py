@@ -386,7 +386,7 @@ class MDS(BaseEstimator):
 
     @property
     def _pairwise(self):
-        return self.kernel == "precomputed"
+        return self.dissimilarity == "precomputed"
 
     def fit(self, X, y=None, init=None):
         """
