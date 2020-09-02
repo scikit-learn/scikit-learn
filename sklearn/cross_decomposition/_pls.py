@@ -896,8 +896,6 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         # let's use arpacks to compute only the interesting components.
         if n_components >= np.min(C.shape):
             U, s, Vt = svd(C, full_matrices=False)
-            U = U[:, :n_components]
-            Vt = Vt[:n_components]
         else:
             v0 = _init_arpack_v0(min(C.shape), self.random_state)
             U, s, Vt = svds(C, k=n_components, v0=v0)
