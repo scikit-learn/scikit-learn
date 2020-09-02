@@ -379,10 +379,9 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                                            incremental):
             # First time training the model
             self._initialize(y, layer_units, X.dtype)
-        # In case we are warm starting but aren't incremental, the
-        # above routine is not called and the n_iter_ counter is not reset,
-        # do it here.
-        if not incremental:
+        if self.warm_start and not incremental:
+            # only the number of iteration should be initialized since
+            # weights are already allocated due to the warm start.
             self.n_iter_ = 0
 
         # Initialize lists
@@ -1000,8 +999,10 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         #
         # Note the reliance on short-circuiting here, so that the second
         # or part implies that classes_ is defined.
-        if (not hasattr(self, "classes_")) or (not self.warm_start and
-                                               not incremental):
+        if (
+            (not hasattr(self, "classes_")) or
+            (not self.warm_start and not incremental)
+        ):
             self._label_binarizer = LabelBinarizer()
             self._label_binarizer.fit(y)
             self.classes_ = self._label_binarizer.classes_
@@ -1009,17 +1010,16 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             classes = unique_labels(y)
             if self.warm_start:
                 if set(classes) != set(self.classes_):
-                    raise ValueError("warm_start can only be used where `y` "
-                                     "has the same classes as in the previous "
-                                     "call to fit. Previously got %s, `y` has "
-                                     "%s" %
-                                     (self.classes_, classes))
-            else:
-                if len(np.setdiff1d(classes, self.classes_,
-                                    assume_unique=True)):
-                    raise ValueError("`y` has classes not in `self.classes_`."
-                                     " `self.classes_` has %s. 'y' has %s." %
-                                     (self.classes_, classes))
+                    raise ValueError(
+                        f"warm_start can only be used where `y` has the same "
+                        f"classes as in the previous call to fit. Previously "
+                        f"got {self.classes_}, `y` has {classes}"
+                    )
+            elif len(np.setdiff1d(classes, self.classes_, assume_unique=True)):
+                raise ValueError(
+                    f"`y` has classes not in `self.classes_`. "
+                    f"`self.classes_` has {self.classes_}. 'y' has {classes}."
+                )
 
         # This downcast to bool is to prevent upcasting when working with
         # float32 data

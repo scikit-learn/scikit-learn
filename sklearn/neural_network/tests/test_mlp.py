@@ -668,11 +668,11 @@ def test_warm_start_full_iteration(MLPEstimator):
     # https://github.com/scikit-learn/scikit-learn/issues/16812
     # Check that the MLP estimator accomplish `max_iter` with a
     # warm started estimator.
-    X = X_iris
-    y = y_iris
+    X, y = X_iris, y_iris
     max_iter = 3
-    clf = MLPEstimator(hidden_layer_sizes=2, solver='sgd',
-                       warm_start=True, max_iter=max_iter)
+    clf = MLPEstimator(
+        hidden_layer_sizes=2, solver='sgd', warm_start=True, max_iter=max_iter
+    )
     clf.fit(X, y)
     assert max_iter == clf.n_iter_
     clf.fit(X, y)
