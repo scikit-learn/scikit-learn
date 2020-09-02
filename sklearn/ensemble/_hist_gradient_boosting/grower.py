@@ -18,7 +18,7 @@ from .utils import sum_parallel
 from .common import PREDICTOR_RECORD_DTYPE
 from .common import Y_DTYPE
 from .common import MonotonicConstraint
-from ._histogram_pool import HistogramsPool
+from ._histogram_pool import HistogramPool
 
 
 EPS = np.finfo(Y_DTYPE).eps  # to avoid zero division errors
@@ -143,7 +143,7 @@ class TreeGrower:
     hessians : ndarray of shape (n_samples,)
         The hessians of each training sample. Those are the hessians of the
         loss w.r.t the predictions, evaluated at iteration ``i - 1``.
-    histogram_pool : HistogramsPool, default=None
+    histogram_pool : HistogramPool, default=None
         A cache to hold the created histograms between growers. If None, a
         new pool cache is created.
     max_leaf_nodes : int, default=None
@@ -261,7 +261,7 @@ class TreeGrower:
         self.total_apply_split_time = 0.  # time spent splitting nodes
 
         if histogram_pool is None:
-            self.histogram_pool = HistogramsPool(n_features=self.n_features,
+            self.histogram_pool = HistogramPool(n_features=self.n_features,
                                                  n_bins=n_bins)
         else:
             self.histogram_pool = histogram_pool

@@ -18,7 +18,7 @@ from ...metrics import check_scoring
 from ...model_selection import train_test_split
 from ...preprocessing import LabelEncoder
 from ._gradient_boosting import _update_raw_predictions
-from ._histogram_pool import HistogramsPool
+from ._histogram_pool import HistogramPool
 from .common import Y_DTYPE, X_DTYPE, X_BINNED_DTYPE
 
 from .binning import _BinMapper
@@ -341,7 +341,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             prediction_dim=self.n_trees_per_iteration_,
             sample_weight=sample_weight_train
         )
-        histogram_pool = HistogramsPool(n_features=self._n_features,
+        histogram_pool = HistogramPool(n_features=self._n_features,
                                         n_bins=n_bins)
 
         for iteration in range(begin_at_stage, self.max_iter):

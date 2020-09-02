@@ -1,12 +1,12 @@
 from sklearn.ensemble._hist_gradient_boosting._histogram_pool import (
-    HistogramsPool
+    HistogramPool
 )
 
 
 def test_histograms_pool():
-    # simple check how HistogramsPool manages state
+    # simple check how HistogramPool manages state
     n_features, n_bins = 20, 5
-    pool = HistogramsPool(n_features=n_features, n_bins=n_bins)
+    pool = HistogramPool(n_features=n_features, n_bins=n_bins)
 
     histograms1 = pool.get()
     assert histograms1.shape == (n_features, n_bins)

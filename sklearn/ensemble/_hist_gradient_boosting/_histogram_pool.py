@@ -2,15 +2,18 @@ import numpy as np
 from .common import HISTOGRAM_DTYPE
 
 
-class HistogramsPool:
-    """Histograms pool to be used by the growers.
+class HistogramPool:
+    """Histogram pool to be used by the growers.
 
     The pool allocates and returns histograms to the caller. When the `reset`
     method is called, all the previously allocated histograms will be available
     for the next grower to use. New histograms will be allocated when there are
-    no histograms left in the available_pool. HistogramsPool is used for memory
+    no histograms left in the available_pool. HistogramPool is used for memory
     allocation/management only. The computation of the histograms is done in
-    HistogramBuilder.
+    HistogramBuilder. Empirically, this strategy has proven to be more memory
+    efficient than allocating new histograms each time and relying on the
+    Python GC to keep the overall python process memory low when fitting GBRT
+    on datasets with many features and target classes.
     """
     def __init__(self, n_features, n_bins):
         self.n_features = n_features
@@ -24,7 +27,7 @@ class HistogramsPool:
         self.used_pool = []
 
     def get(self):
-        """Return a non-initialized histogram object."""
+        """Return a non-initialized array of histogram for one grower node."""
         if self.available_pool:
             histograms = self.available_pool.pop()
         else:

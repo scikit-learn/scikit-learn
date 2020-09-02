@@ -172,7 +172,12 @@ cdef class HistogramBuilder:
                 self.hessians_are_constant
             unsigned int bin_idx = 0
 
-        # initialize histograms to 0 here
+        # Initialize histograms to 0 here as we might recycle a previously
+        # allocated histogram via the histogram_pool of the grower for
+        # memory efficiency purpose.
+        # Also this delayed zero init happens in the openmp parallel
+        # section for each feature which yields a small additional
+        # performance improvement.
         for bin_idx in range(self.n_bins):
             histograms[feature_idx, bin_idx].sum_gradients = 0.
             histograms[feature_idx, bin_idx].sum_hessians = 0.
