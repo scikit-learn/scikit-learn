@@ -202,7 +202,7 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
 
     centered : bool, default=False
         Center the plotted line(s). Anchor for centering is the first value on
-        the x-axis.
+        the x-axis (x=x[0], y=0).
 
         .. versionadded:: 0.24
 
@@ -558,7 +558,7 @@ class PartialDependenceDisplay:
 
         centered : bool, default=False
             Center the plotted line(s). Anchor for centering is the first value
-            on the x-axis.
+            on the x-axis (x=x[0], y=0).
 
         line_kw : dict, default=None
             Dict with keywords passed to the `matplotlib.pyplot.plot` call.
