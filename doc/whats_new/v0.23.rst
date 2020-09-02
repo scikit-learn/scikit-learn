@@ -194,7 +194,7 @@ random sampling procedures.
   :func:`decomposition.non_negative_factorization` with float32 dtype input.
 - |Fix| :func:`decomposition.KernelPCA.inverse_transform`
 - |API| :class:`ensemble.HistGradientBoostingClassifier` and
-  :class:`ensemble.HistGradientBoostingRegrerssor`
+  :class:`ensemble.HistGradientBoostingRegressor`
 - |Fix| ``estimator_samples_`` in :class:`ensemble.BaggingClassifier`,
   :class:`ensemble.BaggingRegressor` and :class:`ensemble.IsolationForest`
 - |Fix| :class:`ensemble.StackingClassifier` and
@@ -406,7 +406,7 @@ Changelog
   :user:`Chiara Marmo <cmarmo>`.
 
 - |API| Fixed a bug in :class:`ensemble.HistGradientBoostingClassifier` and
-  :class:`ensemble.HistGradientBoostingRegrerssor` that would not respect the
+  :class:`ensemble.HistGradientBoostingRegressor` that would not respect the
   `max_leaf_nodes` parameter if the criteria was reached at the same time as
   the `max_depth` criteria. :pr:`16183` by `Nicolas Hug`_.
 
