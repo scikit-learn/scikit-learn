@@ -388,8 +388,10 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
                                        deciles=deciles,
                                        kind=kind,
                                        subsample=subsample)
-    return display.plot(ax=ax, n_cols=n_cols, centered=centered,
-                        line_kw=line_kw, contour_kw=contour_kw)
+    return display.plot(
+        ax=ax, n_cols=n_cols, centered=centered, line_kw=line_kw,
+        contour_kw=contour_kw
+    )
 
 
 class PartialDependenceDisplay:
@@ -533,8 +535,9 @@ class PartialDependenceDisplay:
             return ceil(n_samples * self.subsample)
         return n_samples
 
-    def plot(self, ax=None, n_cols=3, centered=False,
-             line_kw=None, contour_kw=None):
+    def plot(
+        self, ax=None, n_cols=3, centered=False, line_kw=None, contour_kw=None
+    ):
         """Plot partial dependence plots.
 
         Parameters
@@ -692,14 +695,14 @@ class PartialDependenceDisplay:
                     sampled = ice_lines[np.random.choice(
                         ice_lines.shape[0], n_samples, replace=False
                     ), :]
-                    if centered:  # center ICE
+                    if centered:
                         sampled -= sampled[:, 0, None]
                     for j, ins in enumerate(sampled):
                         lines_ravel[i * j + j] = axi.plot(
                             values[0], ins.ravel(), **individual_line_kw
                         )[0]
                 if self.kind == 'average':
-                    if centered:  # center PDP
+                    if centered:
                         avg_preds[self.target_idx] -= (
                             avg_preds[self.target_idx].ravel()[0]
                         )
@@ -708,7 +711,7 @@ class PartialDependenceDisplay:
                         **line_kw
                     )[0]
                 elif self.kind == 'both':
-                    if centered:  # center PDP
+                    if centered:
                         avg_preds[self.target_idx] -= (
                             avg_preds[self.target_idx].ravel()[0]
                         )
