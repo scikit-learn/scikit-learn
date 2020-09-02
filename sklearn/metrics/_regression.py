@@ -203,6 +203,8 @@ def mean_absolute_percentage_error(y_true, y_pred,
     [0, 100]. Instead, we represent it in range [0, 1/eps]. Read more in the
     :ref:`User Guide <mean_absolute_percentage_error>`.
 
+    .. versionadded:: 0.24
+
     Parameters
     ----------
     y_true : array-like of shape (n_samples,) or (n_samples, n_outputs)
@@ -329,7 +331,6 @@ def mean_squared_error(y_true, y_pred, *,
     array([0.41666667, 1.        ])
     >>> mean_squared_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.825...
-
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
@@ -403,7 +404,6 @@ def mean_squared_log_error(y_true, y_pred, *,
     array([0.00462428, 0.08377444])
     >>> mean_squared_log_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.060...
-
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
@@ -473,7 +473,6 @@ def median_absolute_error(y_true, y_pred, *, multioutput='uniform_average',
     array([0.5, 1. ])
     >>> median_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.85
-
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
@@ -549,7 +548,6 @@ def explained_variance_score(y_true, y_pred, *,
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
     >>> explained_variance_score(y_true, y_pred, multioutput='uniform_average')
     0.983...
-
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)

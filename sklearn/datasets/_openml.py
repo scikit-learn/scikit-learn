@@ -812,11 +812,12 @@ def fetch_openml(
         in 'target' are represented as NaN's (numerical target) or None
         (categorical target)
     """
-    data_home = get_data_home(data_home=data_home)
-    data_home = join(data_home, 'openml')
     if cache is False:
         # no caching will be applied
         data_home = None
+    else:
+        data_home = get_data_home(data_home=data_home)
+        data_home = join(data_home, 'openml')
 
     # check valid function arguments. data_id XOR (name, version) should be
     # provided
