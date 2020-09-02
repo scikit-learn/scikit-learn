@@ -148,9 +148,17 @@ class _BaseScorer:
                 f"scoring"
             )
             if support_multi_class and y_pred.shape[1] == 1:
-                # In _ProbaScorer, y_true can be tagged as binary while the
-                # y_pred is multi_class. This case is supported when label is
-                # provided.
+                # In _ProbaScorer, `y_true` can be tagged as binary while the
+                # `y_pred` is multi_class. This case is supported when `labels`
+                # is provided in the metric. E.g.:
+                # y_true = np.array([0, 1, 0, 1])
+                # y_score = np.array([[0.1 , 0.8 , 0.1 ],
+                #                     [0.3 , 0.4 , 0.3 ],
+                #                     [0.35, 0.5 , 0.15],
+                #                     [0.  , 0.2 , 0.8 ]])
+                # roc_auc_score(
+                #     y_true, y_score, labels=[0, 1, 2], multi_class='ovo'
+                # )
                 raise ValueError(err_msg)
             elif not support_multi_class:
                 raise ValueError(err_msg)
