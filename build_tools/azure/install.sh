@@ -66,7 +66,8 @@ elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
 
     python -m pip install pandas matplotlib pyamg scikit-image
     # do not install dependencies for lightgbm since it requires scikit-learn
-    python -m pip install lightgbm --no-deps
+    # and install a version less than 3.0.0 until the issue #18316 is solved.
+    python -m pip install "lightgbm<3.0.0" --no-deps
 elif [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
     make_conda "python=$PYTHON_VERSION"
     python -m pip install -U pip
