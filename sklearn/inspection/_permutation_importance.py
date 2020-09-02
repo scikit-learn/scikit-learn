@@ -1,4 +1,4 @@
-"""Permutation importance for estimators"""
+"""Permutation importance for estimators."""
 import numpy as np
 from joblib import Parallel
 from joblib import delayed

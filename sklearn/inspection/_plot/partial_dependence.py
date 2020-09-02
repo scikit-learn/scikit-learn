@@ -211,7 +211,7 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
 
     Returns
     -------
-    display: :class:`~sklearn.inspection.PartialDependenceDisplay`
+    display : :class:`~sklearn.inspection.PartialDependenceDisplay`
 
     See Also
     --------
@@ -380,7 +380,7 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
 
 
 class PartialDependenceDisplay:
-    """Partial Dependence Plot (PDP)
+    """Partial Dependence Plot (PDP).
 
     This can also display individual partial dependencies which are often
     referred to as: Individual Condition Expectation (ICE).
@@ -479,13 +479,16 @@ class PartialDependenceDisplay:
         `ax` is a list of axes, `vlines_[i]` corresponds to the i-th item in
         `ax`. Elements that are None correspond to a nonexisting axes or an
         axes that does not include a PDP plot.
+
         .. versionadded:: 0.23
+
     deciles_hlines_ : ndarray of matplotlib LineCollection
         If `ax` is an axes or None, `vlines_[i, j]` is the line collection
         representing the y axis deciles of the i-th row and j-th column. If
         `ax` is a list of axes, `vlines_[i]` corresponds to the i-th item in
         `ax`. Elements that are None correspond to a nonexisting axes or an
         axes that does not include a 2-way plot.
+
         .. versionadded:: 0.23
 
     contours_ : ndarray of matplotlib Artists
@@ -553,7 +556,7 @@ class PartialDependenceDisplay:
 
         Returns
         -------
-        display: :class:`~sklearn.inspection.PartialDependenceDisplay`
+        display : :class:`~sklearn.inspection.PartialDependenceDisplay`
         """
 
         check_matplotlib_support("plot_partial_dependence")

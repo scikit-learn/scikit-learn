@@ -1,10 +1,10 @@
-"""Metrics to assess performance on regression task
+"""Metrics to assess performance on regression task.
 
 Functions named as ``*_score`` return a scalar value to maximize: the higher
-the better
+the better.
 
 Function named as ``*_error`` or ``*_loss`` return a scalar value to minimize:
-the lower the better
+the lower the better.
 """
 
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
@@ -52,7 +52,7 @@ __ALL__ = [
 
 
 def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
-    """Check that y_true and y_pred belong to the same regression task
+    """Check that y_true and y_pred belong to the same regression task.
 
     Parameters
     ----------
@@ -68,7 +68,7 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
     -------
     type_true : one of {'continuous', continuous-multioutput'}
         The type of the true target data, as output by
-        'utils.multiclass.type_of_target'
+        'utils.multiclass.type_of_target'.
 
     y_true : array-like of shape (n_samples, n_outputs)
         Ground truth (correct) target values.
@@ -81,9 +81,9 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
         Custom output weights if ``multioutput`` is array-like or
         just the corresponding argument if ``multioutput`` is a
         correct keyword.
-    dtype: str or list, default="numeric"
-        the dtype argument passed to check_array
 
+    dtype : str or list, default="numeric"
+        the dtype argument passed to check_array.
     """
     check_consistent_length(y_true, y_pred)
     y_true = check_array(y_true, ensure_2d=False, dtype=dtype)
@@ -126,7 +126,7 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
 def mean_absolute_error(y_true, y_pred, *,
                         sample_weight=None,
                         multioutput='uniform_average'):
-    """Mean absolute error regression loss
+    """Mean absolute error regression loss.
 
     Read more in the :ref:`User Guide <mean_absolute_error>`.
 
@@ -197,7 +197,7 @@ def mean_absolute_error(y_true, y_pred, *,
 def mean_absolute_percentage_error(y_true, y_pred,
                                    sample_weight=None,
                                    multioutput='uniform_average'):
-    """Mean absolute percentage error regression loss
+    """Mean absolute percentage error regression loss.
 
     Note here that we do not represent the output as a percentage in range
     [0, 100]. Instead, we represent it in range [0, 1/eps]. Read more in the
@@ -273,7 +273,7 @@ def mean_absolute_percentage_error(y_true, y_pred,
 def mean_squared_error(y_true, y_pred, *,
                        sample_weight=None,
                        multioutput='uniform_average', squared=True):
-    """Mean squared error regression loss
+    """Mean squared error regression loss.
 
     Read more in the :ref:`User Guide <mean_squared_error>`.
 
@@ -354,7 +354,7 @@ def mean_squared_error(y_true, y_pred, *,
 def mean_squared_log_error(y_true, y_pred, *,
                            sample_weight=None,
                            multioutput='uniform_average'):
-    """Mean squared logarithmic error regression loss
+    """Mean squared logarithmic error regression loss.
 
     Read more in the :ref:`User Guide <mean_squared_log_error>`.
 
@@ -421,7 +421,7 @@ def mean_squared_log_error(y_true, y_pred, *,
 @_deprecate_positional_args
 def median_absolute_error(y_true, y_pred, *, multioutput='uniform_average',
                           sample_weight=None):
-    """Median absolute error regression loss
+    """Median absolute error regression loss.
 
     Median absolute error output is non-negative floating point. The best value
     is 0.0. Read more in the :ref:`User Guide <median_absolute_error>`.
@@ -497,7 +497,7 @@ def median_absolute_error(y_true, y_pred, *, multioutput='uniform_average',
 def explained_variance_score(y_true, y_pred, *,
                              sample_weight=None,
                              multioutput='uniform_average'):
-    """Explained variance regression score function
+    """Explained variance regression score function.
 
     Best possible score is 1.0, lower values are worse.
 
