@@ -208,10 +208,14 @@ def average_precision_score(y_true, y_score, *, average="macro", pos_label=1,
                          "multilabel-indicator y_true. Do not set "
                          "pos_label or set pos_label to 1.")
     elif y_type == "binary":
-        present_labels = np.unique(y_true)
+        # Convert to Python primitive type to avoid NumPy type / Python str
+        # comparison. See https://github.com/numpy/numpy/issues/6784
+        present_labels = np.unique(y_true).tolist()
         if len(present_labels) == 2 and pos_label not in present_labels:
-            raise ValueError("pos_label=%r is invalid. Set it to a label in "
-                             "y_true." % pos_label)
+            raise ValueError(
+                f"pos_label={pos_label} is not a valid label. It should be "
+                f"one of {present_labels}"
+            )
     average_precision = partial(_binary_uninterpolated_average_precision,
                                 pos_label=pos_label)
     return _average_binary_score(average_precision, y_true, y_score,
