@@ -393,6 +393,11 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         -------
         self : object
         """
+        if self.criterion == 'mae':
+            # TODO: This should raise an error from 0.26
+            warnings.warn("criterion='mae' was deprecated in version 0.24 and "
+                          "will be removed in version 0.26.", FutureWarning)
+
         # if not warmstart - clear the estimator state
         if not self.warm_start:
             self._clear_state()
@@ -802,6 +807,9 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         some cases.
 
         .. versionadded:: 0.18
+        .. deprecated:: 0.24
+            `criterion='mae'` is deprecated and will be removed in version
+            0.26.
 
     min_samples_split : int or float, default=2
         The minimum number of samples required to split an internal node:
@@ -1320,6 +1328,9 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         some cases.
 
         .. versionadded:: 0.18
+        .. deprecated:: 0.24
+            `criterion='mae'` is deprecated and will be removed in version
+            0.26.
 
     min_samples_split : int or float, default=2
         The minimum number of samples required to split an internal node:
