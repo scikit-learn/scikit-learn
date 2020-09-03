@@ -1,4 +1,4 @@
-"""Cython wrapper for MurmurHash3 non-cryptographic hash function
+"""Cython wrapper for MurmurHash3 non-cryptographic hash function.
 
 MurmurHash is an extensively tested and very fast hash function that has
 good distribution properties suitable for machine learning use cases
@@ -89,12 +89,12 @@ def murmurhash3_32(key, seed=0, positive=False):
     Parameters
     ----------
     key : int32, bytes, unicode or ndarray with dtype int32
-        the physical object to hash
+        The physical object to hash.
 
-    seed : int, optional default is 0
-        integer seed for the hashing algorithm.
+    seed : int, default=0
+        Integer seed for the hashing algorithm.
 
-    positive : boolean, optional default is False
+    positive : boolean, default=False
         True: the results is casted to an unsigned int
           from 0 to 2 ** 32 - 1
         False: the results is casted to a signed int
