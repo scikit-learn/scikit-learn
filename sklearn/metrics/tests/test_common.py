@@ -1,5 +1,6 @@
 
 from functools import partial
+from inspect import signature
 from itertools import product
 from itertools import chain
 from itertools import permutations
@@ -29,7 +30,7 @@ from sklearn.metrics import brier_score_loss
 from sklearn.metrics import cohen_kappa_score
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import coverage_error
-from sklearn.metrics import detection_error_tradeoff_curve
+from sklearn.metrics import det_curve
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import f1_score
 from sklearn.metrics import fbeta_score
@@ -206,7 +207,7 @@ def precision_recall_curve_padded_thresholds(*args, **kwargs):
 CURVE_METRICS = {
     "roc_curve": roc_curve,
     "precision_recall_curve": precision_recall_curve_padded_thresholds,
-    "detection_error_tradeoff_curve": detection_error_tradeoff_curve,
+    "det_curve": det_curve,
 }
 
 THRESHOLDED_METRICS = {
@@ -303,7 +304,7 @@ METRIC_UNDEFINED_MULTICLASS = {
     # curves
     "roc_curve",
     "precision_recall_curve",
-    "detection_error_tradeoff_curve",
+    "det_curve",
 }
 
 # Metric undefined with "binary" or "multiclass" input
@@ -325,7 +326,7 @@ THRESHOLDED_METRICS_WITH_AVERAGING = {
 METRICS_WITH_POS_LABEL = {
     "roc_curve",
     "precision_recall_curve",
-    "detection_error_tradeoff_curve",
+    "det_curve",
 
     "brier_score_loss",
 
@@ -356,7 +357,7 @@ METRICS_WITH_LABELS = {
     "normalized_confusion_matrix",
     "roc_curve",
     "precision_recall_curve",
-    "detection_error_tradeoff_curve",
+    "det_curve",
 
     "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
     "jaccard_score",
@@ -469,7 +470,7 @@ NOT_SYMMETRIC_METRICS = {
     "normalized_confusion_matrix",
     "roc_curve",
     "precision_recall_curve",
-    "detection_error_tradeoff_curve",
+    "det_curve",
 
     "precision_score", "recall_score", "f2_score", "f0.5_score",
 
@@ -1388,30 +1389,6 @@ def test_thresholded_multilabel_multioutput_permutations_invariance(name):
             # very large finite value.
         else:
             assert_almost_equal(score, current_score)
-
-
-@pytest.mark.parametrize(
-    'name',
-    sorted(set(THRESHOLDED_METRICS) - METRIC_UNDEFINED_BINARY_MULTICLASS))
-def test_thresholded_metric_permutation_invariance(name):
-    n_samples, n_classes = 100, 3
-    random_state = check_random_state(0)
-
-    y_score = random_state.rand(n_samples, n_classes)
-    temp = np.exp(-y_score)
-    y_score = temp / temp.sum(axis=-1).reshape(-1, 1)
-    y_true = random_state.randint(0, n_classes, size=n_samples)
-
-    metric = ALL_METRICS[name]
-    score = metric(y_true, y_score)
-    for perm in permutations(range(n_classes), n_classes):
-        inverse_perm = np.zeros(n_classes, dtype=int)
-        inverse_perm[list(perm)] = np.arange(n_classes)
-        y_score_perm = y_score[:, inverse_perm]
-        y_true_perm = np.take(perm, y_true)
-
-        current_score = metric(y_true_perm, y_score_perm)
-        assert_almost_equal(score, current_score)
 
 
 @pytest.mark.parametrize(
