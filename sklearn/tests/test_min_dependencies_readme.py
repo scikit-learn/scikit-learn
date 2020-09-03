@@ -20,6 +20,7 @@ def test_min_dependencies_readme():
                          r"( [0-9]+\.[0-9]+(\.[0-9]+)?)")
 
     readme_path = os.path.abspath(os.path.join(sklearn.__path__[0], ".."))
+    print(os.listdir(readme_path))
     readme_filename = os.path.join(readme_path, "README.rst")
 
     if not os.path.exists(readme_filename):

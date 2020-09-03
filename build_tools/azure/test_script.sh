@@ -37,10 +37,12 @@ if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
     TEST_CMD="$TEST_CMD -n2"
 fi
 
+echo $TEST_CMD
+
 mkdir -p $TEST_DIR
 cp setup.cfg $TEST_DIR
 cd $TEST_DIR
 
 set -x
-$TEST_CMD --pyargs sklearn
+$TEST_CMD --pyargs sklearn/tests/test_min_dependencies_readme.py --vs
 set +x
