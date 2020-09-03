@@ -35,19 +35,20 @@ import sphinx_gallery
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
     'sphinx.ext.autodoc', 'sphinx.ext.autosummary',
+    'matplotlib.sphinxext.plot_directive',
     'numpydoc',
     'sphinx.ext.linkcode', 'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
     'sphinx.ext.imgconverter',
-    'sphinx_gallery.gen_gallery',
+    # 'sphinx_gallery.gen_gallery',
     'sphinx_issues',
     'add_toctree_functions',
 ]
 
+
 # this is needed for some reason...
 # see https://github.com/numpy/numpydoc/issues/69
 numpydoc_class_members_toctree = False
-
 
 # For maths, use mathjax by default and svg if NO_MATHJAX env variable is set
 # (useful for viewing the doc offline)
@@ -64,6 +65,12 @@ autodoc_default_options = {
     'members': True,
     'inherited-members': True
 }
+
+# options for `matplotlib.sphinxext.plot_directive`
+plot_include_source = True
+plot_formats = [("png", 90)]
+plot_html_show_formats = False
+plot_html_show_source_link = False
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['templates']
