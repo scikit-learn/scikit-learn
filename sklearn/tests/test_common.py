@@ -278,23 +278,23 @@ def test_strict_mode_parametrize_with_checks(estimator, check):
 
 
 def _generate_search_cv_instances():
-    for SearchCV, (Estimator, param_to_tune) in zip(
+    for SearchCV, (Estimator, param_grid) in zip(
         [GridSearchCV, RandomizedSearchCV],
         [
             (Ridge, {"alpha": [0.1, 1.0]}),
             (LogisticRegression, {"C": [0.1, 1.0]}),
         ],
     ):
-        yield SearchCV(Estimator(), param_to_tune)
+        yield SearchCV(Estimator(), param_grid)
 
-    for SearchCV, (Estimator, param_to_tune) in zip(
+    for SearchCV, (Estimator, param_grid) in zip(
         [GridSearchCV, RandomizedSearchCV],
         [
             (Ridge, {"ridge__alpha": [0.1, 1.0]}),
             (LogisticRegression, {"logisticregression__C": [0.1, 1.0]}),
         ],
     ):
-        yield SearchCV(make_pipeline(PCA(), Estimator()), param_to_tune)
+        yield SearchCV(make_pipeline(PCA(), Estimator()), param_grid)
 
 
 @parametrize_with_checks(list(_generate_search_cv_instances()))
