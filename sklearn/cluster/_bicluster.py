@@ -15,6 +15,7 @@ from . import KMeans, MiniBatchKMeans
 from ..base import BaseEstimator, BiclusterMixin
 
 from ..utils.arpack import _init_arpack_v0
+from ..utils.validation import check_random_state
 from ..utils.extmath import (make_nonnegative, randomized_svd,
                              safe_sparse_dot)
 
@@ -139,7 +140,8 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
                                       **kwargs)
 
         elif self.svd_method == 'arpack':
-            v0 = _init_arpack_v0(min(array.shape), self.random_state)
+            random_state = check_random_state(self.random_state)
+            v0 = _init_arpack_v0(min(array.shape), random_state)
             u, _, vt = svds(array, k=n_components, ncv=self.n_svd_vecs, v0=v0)
             if np.any(np.isnan(vt)):
                 # some eigenvalues of A * A.T are negative, causing
@@ -148,12 +150,12 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
                 A = safe_sparse_dot(array.T, array)
                 # We have to renitialize v0 differently because the shape
                 # here can be different from the previous init
-                v0 = _init_arpack_v0(A.shape[0], self.random_state)
+                v0 = _init_arpack_v0(A.shape[0], random_state)
                 _, v = eigsh(A, ncv=self.n_svd_vecs, v0=v0)
                 vt = v.T
             if np.any(np.isnan(u)):
                 A = safe_sparse_dot(array, array.T)
-                v0 = _init_arpack_v0(A.shape[0], self.random_state)
+                v0 = _init_arpack_v0(A.shape[0], random_state)
                 _, u = eigsh(A, ncv=self.n_svd_vecs, v0=v0)
 
         assert_all_finite(u)
