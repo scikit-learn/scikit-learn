@@ -1319,7 +1319,7 @@ def _check_sample_weight(sample_weight, X, dtype=None,
         if sample_weight.shape != (n_samples,):
             raise ValueError("sample_weight.shape == {}, expected {}!"
                              .format(sample_weight.shape, (n_samples,)))
-    
+
     if sample_weight is not None and ensure_nonnegative:
         if not np.all(sample_weight >= 0):
             raise ValueError("Sample weights must be non-negative")

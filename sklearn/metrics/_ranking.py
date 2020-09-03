@@ -699,7 +699,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
         y_true = y_true[nonzero_weight_mask]
         y_score = y_score[nonzero_weight_mask]
         sample_weight = sample_weight[nonzero_weight_mask]
-    
+
     # ensure binary classification if pos_label is not specified
     # classes.dtype.kind in ('O', 'U', 'S') is required to avoid
     # triggering a FutureWarning by calling np.array_equal(a, b)
