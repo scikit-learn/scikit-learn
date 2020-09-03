@@ -513,10 +513,12 @@ class TreeGrower:
             for child in (left_child_node, right_child_node):
                 if child.is_leaf:
                     self.histogram_pool.release(child.histograms)
+                    child.histograms = None
 
-        # node.histograms is no longer needed: let's recycle it for memory
-        # efficiency.
+        # Free memory used by histograms as they are no longer needed for
+        # internal nodes once children histograms have been computed.
         self.histogram_pool.release(node.histograms)
+        node.histograms = None
 
         return left_child_node, right_child_node
 
