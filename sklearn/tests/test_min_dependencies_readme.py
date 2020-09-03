@@ -1,10 +1,10 @@
 """Tests for the minimum dependencies in the README.rst file."""
 
-import os
+
 import re
+from pathlib import Path
 from packaging.version import parse
 
-# import pytest
 import sklearn
 from sklearn._build_utils.min_dependencies import dependent_packages
 
@@ -19,16 +19,7 @@ def test_min_dependencies_readme():
                          r"(MinVersion\| replace::)" +
                          r"( [0-9]+\.[0-9]+(\.[0-9]+)?)")
 
-    readme_path = os.path.abspath(os.path.join(sklearn.__path__[0], ".."))
-    readme_filename = os.path.join(readme_path, "README.rst")
-
-    assert os.path.exists(readme_filename), os.listdir(readme_path)
-    # if not os.path.exists(readme_filename):
-    # Skip because the README.rst
-    # file is not found in Windows
-    # pytest.skip("README.rst is not available.")
-
-    with open(readme_filename, "r") as f:
+    with (Path(sklearn.__path__[0]).parents[0] / "README.rst").open("r") as f:
         for line in f:
             if pattern.match(line):
                 dependency = pattern.sub(r"\2\5", line)
