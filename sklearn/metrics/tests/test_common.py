@@ -1445,9 +1445,6 @@ def test_metrics_consistent_type_error(metric_name):
         (precision_score, False),
         (recall_score, False),
         (roc_curve, True),
-        roc_curve,
-        precision_recall_curve,
-        brier_score_loss,
     ],
 )
 @pytest.mark.parametrize("dtype_y_str", [str, object])
