@@ -69,16 +69,16 @@ def make_prediction(dataset=None, binary=False):
 
     # run classifier, get class probabilities and label predictions
     clf = svm.SVC(kernel='linear', probability=True, random_state=0)
-    probas_pred = clf.fit(X[:half], y[:half]).predict_proba(X[half:])
+    y_score = clf.fit(X[:half], y[:half]).predict_proba(X[half:])
 
     if binary:
         # only interested in probabilities of the positive case
         # XXX: do we really want a special API for the binary case?
-        probas_pred = probas_pred[:, 1]
+        y_score = y_score[:, 1]
 
     y_pred = clf.predict(X[half:])
     y_true = y[half:]
-    return y_true, y_pred, probas_pred
+    return y_true, y_pred, y_score
 
 
 ###############################################################################
@@ -179,14 +179,14 @@ def _partial_roc_auc_score(y_true, y_predict, max_fpr):
 @pytest.mark.parametrize('drop', [True, False])
 def test_roc_curve(drop):
     # Test Area under Receiver Operating Characteristic (ROC) curve
-    y_true, _, probas_pred = make_prediction(binary=True)
-    expected_auc = _auc(y_true, probas_pred)
+    y_true, _, y_score = make_prediction(binary=True)
+    expected_auc = _auc(y_true, y_score)
 
-    fpr, tpr, thresholds = roc_curve(y_true, probas_pred,
+    fpr, tpr, thresholds = roc_curve(y_true, y_score,
                                      drop_intermediate=drop)
     roc_auc = auc(fpr, tpr)
     assert_array_almost_equal(roc_auc, expected_auc, decimal=2)
-    assert_almost_equal(roc_auc, roc_auc_score(y_true, probas_pred))
+    assert_almost_equal(roc_auc, roc_auc_score(y_true, y_score))
     assert fpr.shape == tpr.shape
     assert fpr.shape == thresholds.shape
 
@@ -207,13 +207,13 @@ def test_roc_curve_end_points():
 def test_roc_returns_consistency():
     # Test whether the returned threshold matches up with tpr
     # make small toy dataset
-    y_true, _, probas_pred = make_prediction(binary=True)
-    fpr, tpr, thresholds = roc_curve(y_true, probas_pred)
+    y_true, _, y_score = make_prediction(binary=True)
+    fpr, tpr, thresholds = roc_curve(y_true, y_score)
 
     # use the given thresholds to determine the tpr
     tpr_correct = []
     for t in thresholds:
-        tp = np.sum((probas_pred >= t) & y_true)
+        tp = np.sum((y_score >= t) & y_true)
         p = np.sum(y_true)
         tpr_correct.append(1.0 * tp / p)
 
@@ -225,17 +225,17 @@ def test_roc_returns_consistency():
 
 def test_roc_curve_multi():
     # roc_curve not applicable for multi-class problems
-    y_true, _, probas_pred = make_prediction(binary=False)
+    y_true, _, y_score = make_prediction(binary=False)
 
     with pytest.raises(ValueError):
-        roc_curve(y_true, probas_pred)
+        roc_curve(y_true, y_score)
 
 
 def test_roc_curve_confidence():
     # roc_curve for confidence scores
-    y_true, _, probas_pred = make_prediction(binary=True)
+    y_true, _, y_score = make_prediction(binary=True)
 
-    fpr, tpr, thresholds = roc_curve(y_true, probas_pred - 0.5)
+    fpr, tpr, thresholds = roc_curve(y_true, y_score - 0.5)
     roc_auc = auc(fpr, tpr)
     assert_array_almost_equal(roc_auc, 0.90, decimal=2)
     assert fpr.shape == tpr.shape
@@ -244,7 +244,7 @@ def test_roc_curve_confidence():
 
 def test_roc_curve_hard():
     # roc_curve for hard decisions
-    y_true, pred, probas_pred = make_prediction(binary=True)
+    y_true, pred, y_score = make_prediction(binary=True)
 
     # always predict one
     trivial_pred = np.ones(y_true.shape)
@@ -745,13 +745,13 @@ def test_binary_clf_curve_zero_sample_weight(curve_func):
 
 
 def test_precision_recall_curve():
-    y_true, _, probas_pred = make_prediction(binary=True)
-    _test_precision_recall_curve(y_true, probas_pred)
+    y_true, _, y_score = make_prediction(binary=True)
+    _test_precision_recall_curve(y_true, y_score)
 
     # Use {-1, 1} for labels; make sure original labels aren't modified
     y_true[np.where(y_true == 0)] = -1
     y_true_copy = y_true.copy()
-    _test_precision_recall_curve(y_true, probas_pred)
+    _test_precision_recall_curve(y_true, y_score)
     assert_array_equal(y_true_copy, y_true)
 
     labels = [1, 0, 0, 1]
@@ -764,21 +764,20 @@ def test_precision_recall_curve():
     assert p.size == t.size + 1
 
 
-def _test_precision_recall_curve(y_true, probas_pred):
+def _test_precision_recall_curve(y_true, y_score):
     # Test Precision-Recall and aread under PR curve
-    p, r, thresholds = precision_recall_curve(y_true, probas_pred)
-    precision_recall_auc = _average_precision_slow(y_true, probas_pred)
+    p, r, thresholds = precision_recall_curve(y_true, y_score)
+    precision_recall_auc = _average_precision_slow(y_true, y_score)
     assert_array_almost_equal(precision_recall_auc, 0.859, 3)
     assert_array_almost_equal(precision_recall_auc,
-                              average_precision_score(y_true, probas_pred))
+                              average_precision_score(y_true, y_score))
     # `_average_precision` is not very precise in case of 0.5 ties: be tolerant
-    assert_almost_equal(_average_precision(y_true, probas_pred),
+    assert_almost_equal(_average_precision(y_true, y_score),
                         precision_recall_auc, decimal=2)
     assert p.size == r.size
     assert p.size == thresholds.size + 1
     # Smoke test in the case of proba having only one value
-    p, r, thresholds = precision_recall_curve(y_true,
-                                              np.zeros_like(probas_pred))
+    p, r, thresholds = precision_recall_curve(y_true, np.zeros_like(y_score))
     assert p.size == r.size
     assert p.size == thresholds.size + 1
 
@@ -934,20 +933,20 @@ def test_score_scale_invariance():
     # This test was expanded (added scaled_down) in response to github
     # issue #3864 (and others), where overly aggressive rounding was causing
     # problems for users with very small y_score values
-    y_true, _, probas_pred = make_prediction(binary=True)
+    y_true, _, y_score = make_prediction(binary=True)
 
-    roc_auc = roc_auc_score(y_true, probas_pred)
-    roc_auc_scaled_up = roc_auc_score(y_true, 100 * probas_pred)
-    roc_auc_scaled_down = roc_auc_score(y_true, 1e-6 * probas_pred)
-    roc_auc_shifted = roc_auc_score(y_true, probas_pred - 10)
+    roc_auc = roc_auc_score(y_true, y_score)
+    roc_auc_scaled_up = roc_auc_score(y_true, 100 * y_score)
+    roc_auc_scaled_down = roc_auc_score(y_true, 1e-6 * y_score)
+    roc_auc_shifted = roc_auc_score(y_true, y_score - 10)
     assert roc_auc == roc_auc_scaled_up
     assert roc_auc == roc_auc_scaled_down
     assert roc_auc == roc_auc_shifted
 
-    pr_auc = average_precision_score(y_true, probas_pred)
-    pr_auc_scaled_up = average_precision_score(y_true, 100 * probas_pred)
-    pr_auc_scaled_down = average_precision_score(y_true, 1e-6 * probas_pred)
-    pr_auc_shifted = average_precision_score(y_true, probas_pred - 10)
+    pr_auc = average_precision_score(y_true, y_score)
+    pr_auc_scaled_up = average_precision_score(y_true, 100 * y_score)
+    pr_auc_scaled_down = average_precision_score(y_true, 1e-6 * y_score)
+    pr_auc_shifted = average_precision_score(y_true, y_score - 10)
     assert pr_auc == pr_auc_scaled_up
     assert pr_auc == pr_auc_scaled_down
     assert pr_auc == pr_auc_shifted
