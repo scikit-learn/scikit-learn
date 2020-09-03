@@ -342,7 +342,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             sample_weight=sample_weight_train
         )
         histogram_pool = HistogramPool(n_features=self._n_features,
-                                        n_bins=n_bins)
+                                       n_bins=n_bins)
 
         for iteration in range(begin_at_stage, self.max_iter):
 
