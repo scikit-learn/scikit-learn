@@ -908,6 +908,7 @@ def test_non_symmetric_metric_pos_label(
 ):
     # check that _PredictScorer leads to the right score when `pos_label` is
     # provided. We check for all possible metric supported.
+    # Note: At some point we may end up having "scorer tags".
     clf, X_test, y_test, y_pred, _, _ = string_labeled_classification_problem
 
     pos_label = "cancer"
