@@ -430,10 +430,11 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
                        'single': None}  # Single linkage is handled differently
     try:
         join_func = linkage_choices[linkage]
-    except KeyError:
+    except KeyError as e:
         raise ValueError(
             'Unknown linkage option, linkage should be one '
-            'of %s, but %s was given' % (linkage_choices.keys(), linkage))
+            'of %s, but %s was given' % (linkage_choices.keys(), linkage)
+        ) from e
 
     if affinity == 'cosine' and np.any(~np.any(X, axis=1)):
         raise ValueError(
