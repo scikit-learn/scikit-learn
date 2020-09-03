@@ -38,9 +38,7 @@ class HistogramPool:
         return histograms
 
     def release(self, histograms):
-        # Find index of histograms based on physical equality rather than
-        # array equality as would self.used_pool.index(histograms) would
-        # do.
+        """Move a specific histogram array to the available pool"""
         for idx, h in enumerate(self.used_pool):
             if h is histograms:
                 break
