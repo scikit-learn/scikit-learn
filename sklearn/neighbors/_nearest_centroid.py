@@ -68,7 +68,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
-    See also
+    See Also
     --------
     sklearn.neighbors.KNeighborsClassifier: nearest neighbors classifier
 

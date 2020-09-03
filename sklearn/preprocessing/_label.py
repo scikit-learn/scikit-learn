@@ -78,7 +78,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
     >>> list(le.inverse_transform([2, 2, 1]))
     ['tokyo', 'tokyo', 'paris']
 
-    See also
+    See Also
     --------
     sklearn.preprocessing.OrdinalEncoder : Encode categorical features
         using an ordinal encoding scheme.
@@ -251,7 +251,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
            [0, 0, 1],
            [0, 1, 0]])
 
-    See also
+    See Also
     --------
     label_binarize : function to perform the transform operation of
         LabelBinarizer with fixed classes.
@@ -465,7 +465,7 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1,
            [0],
            [1]])
 
-    See also
+    See Also
     --------
     LabelBinarizer : class used to wrap the functionality of label_binarize and
         allow for fitting to classes independently of the transform operation
@@ -716,7 +716,7 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
     >>> mlb.classes_
     array(['comedy', 'sci-fi', 'thriller'], dtype=object)
 
-    See also
+    See Also
     --------
     sklearn.preprocessing.OneHotEncoder : encode categorical features
         using a one-hot aka one-of-K scheme.

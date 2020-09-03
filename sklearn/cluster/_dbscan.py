@@ -97,7 +97,7 @@ def dbscan(X, eps=0.5, *, min_samples=5, metric='minkowski',
     labels : ndarray of shape (n_samples,)
         Cluster labels for each point.  Noisy samples are given the label -1.
 
-    See also
+    See Also
     --------
     DBSCAN
         An estimator interface for this clustering algorithm.
@@ -232,7 +232,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
     >>> clustering
     DBSCAN(eps=3, min_samples=2)
 
-    See also
+    See Also
     --------
     OPTICS
         A similar clustering at multiple values of eps. Our implementation

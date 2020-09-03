@@ -794,7 +794,7 @@ def cross_val_predict(estimator, X, y=None, *, groups=None, cv=None,
             - If `estimator` is :term:`multioutput`, an extra dimension
               'n_outputs' is added to the end of each shape above.
 
-    See also
+    See Also
     --------
     cross_val_score : calculate score for each CV split
 

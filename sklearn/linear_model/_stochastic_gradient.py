@@ -1563,7 +1563,7 @@ class SGDRegressor(BaseSGDRegressor):
     Pipeline(steps=[('standardscaler', StandardScaler()),
                     ('sgdregressor', SGDRegressor())])
 
-    See also
+    See Also
     --------
     Ridge, ElasticNet, Lasso, sklearn.svm.SVR
 

@@ -144,7 +144,7 @@ class LeaveOneOut(BaseCrossValidator):
     TRAIN: [0] TEST: [1]
     [[1 2]] [[3 4]] [1] [2]
 
-    See also
+    See Also
     --------
     LeaveOneGroupOut
         For splitting the data according to explicit, domain-specific
@@ -414,7 +414,7 @@ class KFold(_BaseKFold):
     split. You can make the results identical by setting `random_state`
     to an integer.
 
-    See also
+    See Also
     --------
     StratifiedKFold
         Takes group information into account to avoid building folds with
@@ -491,7 +491,7 @@ class GroupKFold(_BaseKFold):
      [7 8]] [[1 2]
      [3 4]] [3 4] [1 2]
 
-    See also
+    See Also
     --------
     LeaveOneGroupOut
         For splitting the data according to explicit domain-specific
@@ -629,7 +629,7 @@ class StratifiedKFold(_BaseKFold):
     .. versionchanged:: 0.22
         The previous implementation did not follow the last constraint.
 
-    See also
+    See Also
     --------
     RepeatedStratifiedKFold: Repeats Stratified K-Fold n times.
     """
@@ -1050,7 +1050,7 @@ class LeavePGroupsOut(BaseCrossValidator):
     [[1 2]] [[3 4]
      [5 6]] [1] [2 1]
 
-    See also
+    See Also
     --------
     GroupKFold: K-fold iterator variant with non-overlapping groups.
     """
@@ -1277,7 +1277,7 @@ class RepeatedKFold(_RepeatedSplits):
     split. You can make the results identical by setting `random_state`
     to an integer.
 
-    See also
+    See Also
     --------
     RepeatedStratifiedKFold: Repeats Stratified K-Fold n times.
     """
@@ -1333,7 +1333,7 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
     split. You can make the results identical by setting `random_state`
     to an integer.
 
-    See also
+    See Also
     --------
     RepeatedKFold: Repeats K-Fold n times.
     """

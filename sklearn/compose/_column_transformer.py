@@ -145,7 +145,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     in the `passthrough` keyword. Those columns specified with `passthrough`
     are added at the right to the output of the transformers.
 
-    See also
+    See Also
     --------
     sklearn.compose.make_column_transformer : convenience function for
         combining the outputs of multiple transformer objects applied to
@@ -772,7 +772,7 @@ def make_column_transformer(*transformers,
     -------
     ct : ColumnTransformer
 
-    See also
+    See Also
     --------
     sklearn.compose.ColumnTransformer : Class that allows combining the
         outputs of multiple transformer objects used on column subsets
@@ -838,7 +838,7 @@ class make_column_selector:
         Callable for column selection to be used by a
         :class:`ColumnTransformer`.
 
-    See also
+    See Also
     --------
     sklearn.compose.ColumnTransformer : Class that allows combining the
         outputs of multiple transformer objects used on column subsets

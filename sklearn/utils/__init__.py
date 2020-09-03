@@ -497,7 +497,7 @@ def resample(*arrays,
       ...          random_state=0)
       [1, 1, 1, 0, 1]
 
-    See also
+    See Also
     --------
     :func:`sklearn.utils.shuffle`
     """
@@ -626,7 +626,7 @@ def shuffle(*arrays, random_state=None, n_samples=None):
       >>> shuffle(y, n_samples=2, random_state=0)
       array([0, 1])
 
-    See also
+    See Also
     --------
     :func:`sklearn.utils.resample`
     """

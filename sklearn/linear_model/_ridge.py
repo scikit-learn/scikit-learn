@@ -711,7 +711,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
 
         .. versionadded:: 0.17
 
-    See also
+    See Also
     --------
     RidgeClassifier : Ridge classifier
     RidgeCV : Ridge regression with built-in cross validation
@@ -1785,7 +1785,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
     >>> clf.score(X, y)
     0.5166...
 
-    See also
+    See Also
     --------
     Ridge : Ridge regression
     RidgeClassifier : Ridge classifier
@@ -1894,7 +1894,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     >>> clf.score(X, y)
     0.9630...
 
-    See also
+    See Also
     --------
     Ridge : Ridge regression
     RidgeClassifier : Ridge classifier

@@ -264,7 +264,7 @@ def euclidean_distances(X, Y=None, *, Y_norm_squared=None, squared=False,
     array([[1.        ],
            [1.41421356]])
 
-    See also
+    See Also
     --------
     paired_distances : distances betweens pairs of elements of X and Y.
     """
@@ -390,7 +390,7 @@ def nan_euclidean_distances(X, Y=None, *, squared=False,
       10, pp. 617 - 621, Oct. 1979.
       http://ieeexplore.ieee.org/abstract/document/4310090/
 
-    See also
+    See Also
     --------
     paired_distances : distances between pairs of elements of X and Y.
     """
@@ -578,7 +578,7 @@ def pairwise_distances_argmin_min(X, Y, *, axis=1, metric="euclidean",
         distances[i] is the distance between the i-th row in X and the
         argmin[i]-th row in Y.
 
-    See also
+    See Also
     --------
     sklearn.metrics.pairwise_distances
     sklearn.metrics.pairwise_distances_argmin
@@ -661,7 +661,7 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean",
     argmin : numpy.ndarray
         Y[argmin[i], :] is the row in Y that is closest to X[i, :].
 
-    See also
+    See Also
     --------
     sklearn.metrics.pairwise_distances
     sklearn.metrics.pairwise_distances_argmin_min
@@ -823,7 +823,7 @@ def cosine_distances(X, Y=None):
     -------
     distance matrix : ndarray of shape (n_samples_X, n_samples_Y)
 
-    See also
+    See Also
     --------
     sklearn.metrics.pairwise.cosine_similarity
     scipy.spatial.distance.cosine : dense matrices only
@@ -958,7 +958,7 @@ def paired_distances(X, Y, *, metric="euclidean", **kwds):
     >>> paired_distances(X, Y)
     array([0., 1.])
 
-    See also
+    See Also
     --------
     pairwise_distances : Computes the distance between every pair of samples
     """
@@ -1230,7 +1230,7 @@ def additive_chi2_kernel(X, Y=None):
       https://research.microsoft.com/en-us/um/people/manik/projects/trade-off/papers/ZhangIJCV06.pdf
 
 
-    See also
+    See Also
     --------
     chi2_kernel : The exponentiated version of the kernel, which is usually
         preferable.
@@ -1287,7 +1287,7 @@ def chi2_kernel(X, Y=None, gamma=1.):
       International Journal of Computer Vision 2007
       https://research.microsoft.com/en-us/um/people/manik/projects/trade-off/papers/ZhangIJCV06.pdf
 
-    See also
+    See Also
     --------
     additive_chi2_kernel : The additive version of this kernel
 
@@ -1730,7 +1730,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", *, n_jobs=None,
         If Y is not None, then D_{i, j} is the distance between the ith array
         from X and the jth array from Y.
 
-    See also
+    See Also
     --------
     pairwise_distances_chunked : performs the same calculation as this
         function, but returns a generator of chunks of the distance matrix, in

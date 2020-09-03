@@ -228,7 +228,7 @@ class LinearDiscriminantAnalysis(LinearClassifierMixin,
     classes_ : array-like of shape (n_classes,)
         Unique class labels.
 
-    See also
+    See Also
     --------
     sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis: Quadratic
         Discriminant Analysis
@@ -651,7 +651,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
-    See also
+    See Also
     --------
     sklearn.discriminant_analysis.LinearDiscriminantAnalysis: Linear
         Discriminant Analysis

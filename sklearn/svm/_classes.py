@@ -635,7 +635,7 @@ class SVC(BaseSVC):
 
     LinearSVC
         Scalable Linear Support Vector Machine for classification
-        implemented using liblinear. Check the See also section of
+        implemented using liblinear. Check the See Also section of
         LinearSVC for more comparison element.
 
     References

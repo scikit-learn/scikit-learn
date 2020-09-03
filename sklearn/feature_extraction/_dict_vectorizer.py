@@ -90,7 +90,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
     >>> v.transform({'foo': 4, 'unseen_feature': 3})
     array([[0., 0., 4.]])
 
-    See also
+    See Also
     --------
     FeatureHasher : performs vectorization using only a hash function.
     sklearn.preprocessing.OrdinalEncoder : handles nominal/categorical

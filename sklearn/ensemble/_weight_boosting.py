@@ -950,7 +950,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     >>> regr.score(X, y)
     0.9771...
 
-    See also
+    See Also
     --------
     AdaBoostClassifier, GradientBoostingRegressor,
     sklearn.tree.DecisionTreeRegressor

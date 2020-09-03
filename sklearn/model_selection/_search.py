@@ -84,7 +84,7 @@ class ParameterGrid:
     >>> ParameterGrid(grid)[1] == {'kernel': 'rbf', 'gamma': 1}
     True
 
-    See also
+    See Also
     --------
     :class:`GridSearchCV`:
         Uses :class:`ParameterGrid` to perform a full parallelized parameter

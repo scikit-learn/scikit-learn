@@ -714,7 +714,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
     n_iter_ : int
         Number of iterations run.
 
-    See also
+    See Also
     --------
 
     MiniBatchKMeans

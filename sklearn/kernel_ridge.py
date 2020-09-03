@@ -95,7 +95,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
       "Machine Learning: A Probabilistic Perspective", The MIT Press
       chapter 14.4.3, pp. 492-493
 
-    See also
+    See Also
     --------
     sklearn.linear_model.Ridge:
         Linear ridge regression.

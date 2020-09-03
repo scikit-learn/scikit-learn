@@ -157,7 +157,7 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
         The best performance is 1 with ``normalize == True`` and the number
         of samples with ``normalize == False``.
 
-    See also
+    See Also
     --------
     jaccard_score, hamming_loss, zero_one_loss
 
@@ -694,7 +694,7 @@ def jaccard_score(y_true, y_pred, *, labels=None, pos_label=1,
     score : float (if average is not None) or array of floats, shape =\
             [n_unique_labels]
 
-    See also
+    See Also
     --------
     accuracy_score, f_score, multilabel_confusion_matrix
 
@@ -897,7 +897,7 @@ def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
     the subset zero-one loss: for each sample, the entire set of labels must be
     correctly predicted, otherwise the loss for that sample is equal to one.
 
-    See also
+    See Also
     --------
     accuracy_score, hamming_loss, jaccard_score
 
@@ -1014,7 +1014,7 @@ def f1_score(y_true, y_pred, *, labels=None, pos_label=1, average='binary',
         F1 score of the positive class in binary classification or weighted
         average of the F1 scores of each class for the multiclass task.
 
-    See also
+    See Also
     --------
     fbeta_score, precision_recall_fscore_support, jaccard_score,
     multilabel_confusion_matrix
@@ -1140,7 +1140,7 @@ def fbeta_score(y_true, y_pred, *, beta, labels=None, pos_label=1,
         F-beta score of the positive class in binary classification or weighted
         average of the F-beta score of each class for the multiclass task.
 
-    See also
+    See Also
     --------
     precision_recall_fscore_support, multilabel_confusion_matrix
 
@@ -1601,7 +1601,7 @@ def precision_score(y_true, y_pred, *, labels=None, pos_label=1,
         Precision of the positive class in binary classification or weighted
         average of the precision of each class for the multiclass task.
 
-    See also
+    See Also
     --------
     precision_recall_fscore_support, multilabel_confusion_matrix
 
@@ -1719,7 +1719,7 @@ def recall_score(y_true, y_pred, *, labels=None, pos_label=1, average='binary',
         Recall of the positive class in binary classification or weighted
         average of the recall of each class for the multiclass task.
 
-    See also
+    See Also
     --------
     precision_recall_fscore_support, balanced_accuracy_score,
     multilabel_confusion_matrix
@@ -1793,7 +1793,7 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None,
     -------
     balanced_accuracy : float
 
-    See also
+    See Also
     --------
     recall_score, roc_auc_score
 
@@ -1907,7 +1907,7 @@ def classification_report(y_true, y_pred, *, labels=None, target_names=None,
         is also known as "sensitivity"; recall of the negative class is
         "specificity".
 
-    See also
+    See Also
     --------
     precision_recall_fscore_support, confusion_matrix,
     multilabel_confusion_matrix

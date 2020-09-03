@@ -221,7 +221,7 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
     >>> clf = GradientBoostingRegressor(n_estimators=10).fit(X, y)
     >>> plot_partial_dependence(clf, X, [0, (0, 1)]) #doctest: +SKIP
 
-    See also
+    See Also
     --------
     sklearn.inspection.partial_dependence: Return raw partial
       dependence values

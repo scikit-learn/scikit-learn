@@ -131,7 +131,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     -----
     Allows NaN/Inf in the input if the underlying estimator does as well.
 
-    See also
+    See Also
     --------
     RFECV : Recursive feature elimination with built-in cross-validated
         selection of the best number of features
@@ -508,7 +508,7 @@ class RFECV(RFE):
     >>> selector.ranking_
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
 
-    See also
+    See Also
     --------
     RFE : Recursive feature elimination
 

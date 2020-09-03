@@ -226,7 +226,7 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
     for Non-Strongly Convex Composite Objectives
     https://arxiv.org/abs/1407.0202
 
-    See also
+    See Also
     --------
     Ridge, SGDRegressor, ElasticNet, Lasso, SVR, and
     LogisticRegression, SGDClassifier, LinearSVC, Perceptron

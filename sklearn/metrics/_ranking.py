@@ -69,7 +69,7 @@ def auc(x, y):
     >>> metrics.auc(fpr, tpr)
     0.75
 
-    See also
+    See Also
     --------
     roc_auc_score : Compute the area under the ROC curve
     average_precision_score : Compute average precision from prediction scores
@@ -171,7 +171,7 @@ def average_precision_score(y_true, y_score, *, average="macro", pos_label=1,
            <https://en.wikipedia.org/w/index.php?title=Information_retrieval&
            oldid=793358396#Average_precision>`_
 
-    See also
+    See Also
     --------
     roc_auc_score : Compute the area under the ROC curve
 
@@ -794,7 +794,7 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None,
         Increasing thresholds on the decision function used to compute
         precision and recall. n_thresholds <= len(np.unique(probas_pred)).
 
-    See also
+    See Also
     --------
     average_precision_score : Compute average precision from prediction scores
 
@@ -1245,7 +1245,7 @@ def _dcg_sample_scores(y_true, y_score, k=None,
     discounted_cumulative_gain : ndarray of shape (n_samples,)
         The DCG score for each sample.
 
-    See also
+    See Also
     --------
     ndcg_score :
         The Discounted Cumulative Gain divided by the Ideal Discounted
@@ -1372,7 +1372,7 @@ def dcg_score(y_true, y_score, *, k=None,
     discounted_cumulative_gain : float
         The averaged sample DCG scores.
 
-    See also
+    See Also
     --------
     ndcg_score :
         The Discounted Cumulative Gain divided by the Ideal Discounted
@@ -1469,7 +1469,7 @@ def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False):
     normalized_discounted_cumulative_gain : ndarray of shape (n_samples,)
         The NDCG score for each sample (float in [0., 1.]).
 
-    See also
+    See Also
     --------
     dcg_score : Discounted Cumulative Gain (not normalized).
 
@@ -1525,7 +1525,7 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None,
     normalized_discounted_cumulative_gain : float in [0., 1.]
         The averaged NDCG scores for all samples.
 
-    See also
+    See Also
     --------
     dcg_score : Discounted Cumulative Gain (not normalized).
 
