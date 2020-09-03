@@ -101,7 +101,20 @@ def _check_targets(y_true, y_pred):
         y_true = column_or_1d(y_true)
         y_pred = column_or_1d(y_pred)
         if y_type == "binary":
-            unique_values = np.union1d(y_true, y_pred)
+            try:
+                unique_values = np.union1d(y_true, y_pred)
+            except TypeError as e:
+                # We expect y_true and y_pred to be of the same data type.
+                # If `y_true` was provided to the classifier as strings,
+                # `y_pred` given by the classifier will also be encoded with
+                # strings. So we raise a meaningful error
+                raise TypeError(
+                    f"Labels in y_true and y_pred should be of the same type. "
+                    f"Got y_true={np.unique(y_true)} and "
+                    f"y_pred={np.unique(y_pred)}. Make sure that the "
+                    f"predictions provided by the classifier coincides with "
+                    f"the true labels."
+                ) from e
             if len(unique_values) > 2:
                 y_type = "multiclass"
 
@@ -1257,13 +1270,17 @@ def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
                          str(average_options))
 
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
-    present_labels = unique_labels(y_true, y_pred)
+    # Convert to Python primitive type to avoid NumPy type / Python str
+    # comparison. See https://github.com/numpy/numpy/issues/6784
+    present_labels = unique_labels(y_true, y_pred).tolist()
     if average == 'binary':
         if y_type == 'binary':
             if pos_label not in present_labels:
                 if len(present_labels) >= 2:
-                    raise ValueError("pos_label=%r is not a valid label: "
-                                     "%r" % (pos_label, present_labels))
+                    raise ValueError(
+                        f"pos_label={pos_label} is not a valid label. It "
+                        f"should be one of {present_labels}"
+                    )
             labels = [pos_label]
         else:
             average_options = list(average_options)
