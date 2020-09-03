@@ -664,20 +664,34 @@ def test_auc_score_non_binary_class():
             roc_auc_score(y_true, y_pred)
 
 
-def test_binary_clf_curve_multiclass_error():
+@pytest.mark.parametrize("curve_func", [
+    det_curve,
+    precision_recall_curve,
+    roc_curve,
+])
+def test_binary_clf_curve_multiclass_error(curve_func):
     rng = check_random_state(404)
     y_true = rng.randint(0, 3, size=10)
     y_pred = rng.rand(10)
     msg = "multiclass format is not supported"
-
     with pytest.raises(ValueError, match=msg):
-        precision_recall_curve(y_true, y_pred)
-
-    with pytest.raises(ValueError, match=msg):
-        roc_curve(y_true, y_pred)
+        curve_func(y_true, y_pred)
 
 
 @pytest.mark.parametrize("curve_func", [
+    det_curve,
+    precision_recall_curve,
+    roc_curve,
+])
+def test_binary_clf_curve_nonnegative_sample_weight_error(curve_func):
+    # Contains negative sample weights
+    msg = "Sample weights must be non-negative"
+    with pytest.raises(ValueError, match=msg):
+        curve_func([0, 1], [0, 1], sample_weight=[1, -1])
+
+
+@pytest.mark.parametrize("curve_func", [
+    det_curve,
     precision_recall_curve,
     roc_curve,
 ])
@@ -689,10 +703,10 @@ def test_binary_clf_curve_implicit_pos_label(curve_func):
            "value in {0, 1} or {-1, 1} or pass pos_label "
            "explicitly.")
     with pytest.raises(ValueError, match=msg):
-        roc_curve(np.array(["a", "b"], dtype='<U1'), [0., 1.])
+        curve_func(np.array(["a", "b"], dtype='<U1'), [0., 1.])
 
     with pytest.raises(ValueError, match=msg):
-        roc_curve(np.array(["a", "b"], dtype=object), [0., 1.])
+        curve_func(np.array(["a", "b"], dtype=object), [0., 1.])
 
     # The error message is slightly different for bytes-encoded
     # class labels, but otherwise the behavior is the same:
@@ -701,15 +715,33 @@ def test_binary_clf_curve_implicit_pos_label(curve_func):
            "value in {0, 1} or {-1, 1} or pass pos_label "
            "explicitly.")
     with pytest.raises(ValueError, match=msg):
-        roc_curve(np.array([b"a", b"b"], dtype='<S1'), [0., 1.])
+        curve_func(np.array([b"a", b"b"], dtype='<S1'), [0., 1.])
 
     # Check that it is possible to use floating point class labels
     # that are interpreted similarly to integer class labels:
     y_pred = [0., 1., 0.2, 0.42]
-    int_curve = roc_curve([0, 1, 1, 0], y_pred)
-    float_curve = roc_curve([0., 1., 1., 0.], y_pred)
+    int_curve = curve_func([0, 1, 1, 0], y_pred)
+    float_curve = curve_func([0., 1., 1., 0.], y_pred)
     for int_curve_part, float_curve_part in zip(int_curve, float_curve):
         np.testing.assert_allclose(int_curve_part, float_curve_part)
+
+
+@pytest.mark.parametrize("curve_func", [
+    det_curve,
+    precision_recall_curve,
+    roc_curve,
+])
+def test_binary_clf_curve_zero_sample_weight(curve_func):
+    y_true = [0, 0, 1, 1, 1]
+    y_score = [0.1, 0.2, 0.3, 0.4, 0.5]
+    sample_weight = [1, 1, 1, 0.5, 0]
+
+    result_1 = curve_func(y_true, y_score, sample_weight=sample_weight)
+    result_2 = curve_func(y_true[:-1], y_score[:-1],
+                          sample_weight=sample_weight[:-1])
+
+    for arr_1, arr_2 in zip(result_1, result_2):
+        assert_allclose(arr_1, arr_2)
 
 
 def test_precision_recall_curve():
@@ -749,12 +781,6 @@ def _test_precision_recall_curve(y_true, probas_pred):
                                               np.zeros_like(probas_pred))
     assert p.size == r.size
     assert p.size == thresholds.size + 1
-
-
-def test_precision_recall_curve_errors():
-    # Contains non-binary labels
-    with pytest.raises(ValueError):
-        precision_recall_curve([0, 1, 2], [[0.0], [1.0], [1.0]])
 
 
 def test_precision_recall_curve_toydata():
@@ -949,8 +975,7 @@ def test_score_scale_invariance():
     ([1, 0, 1], [0.5, 0.75, 1], [1, 1, 0], [0, 0.5, 0.5]),
     ([1, 0, 1], [0.25, 0.5, 0.75], [1, 1, 0], [0, 0.5, 0.5]),
 ])
-def test_det_curve_toydata(y_true, y_score,
-                                                expected_fpr, expected_fnr):
+def test_det_curve_toydata(y_true, y_score, expected_fpr, expected_fnr):
     # Check on a batch of small examples.
     fpr, fnr, _ = det_curve(y_true, y_score)
 
