@@ -809,7 +809,8 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         .. versionadded:: 0.18
         .. deprecated:: 0.24
             `criterion='mae'` is deprecated and will be removed in version
-            0.26.
+            0.26. Use `criterion='friedman_mse'` or `'mse'` instead, as trees
+            should use a least-square criterion in Gradient Boosting.
 
     min_samples_split : int or float, default=2
         The minimum number of samples required to split an internal node:
@@ -1330,7 +1331,8 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         .. versionadded:: 0.18
         .. deprecated:: 0.24
             `criterion='mae'` is deprecated and will be removed in version
-            0.26.
+            0.26. The correct way of minimizing the absolute error is to use
+            `loss='lad'` instead.
 
     min_samples_split : int or float, default=2
         The minimum number of samples required to split an internal node:
