@@ -36,3 +36,15 @@ class HistogramPool:
             )
         self.used_pool.append(histograms)
         return histograms
+
+    def release(self, histograms):
+        # Find index of histograms based on physical equality rather than
+        # array equality as would self.used_pool.index(histograms) would
+        # do.
+        for idx, h in enumerate(self.used_pool):
+            if h is histograms:
+                break
+        else:
+            raise ValueError("Could not find histograms in used_pool")
+        self.used_pool.pop(idx)
+        self.available_pool.append(histograms)

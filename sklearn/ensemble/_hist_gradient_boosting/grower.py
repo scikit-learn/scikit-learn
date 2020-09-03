@@ -508,6 +508,11 @@ class TreeGrower:
                 self._compute_best_split_and_push(right_child_node)
             self.total_find_split_time += time() - tic
 
+        # node.histograms is no longer needed: let's recycle it for memory
+        # efficiency.
+        self.histogram_pool.release(node.histograms)
+        del node.histograms
+
         return left_child_node, right_child_node
 
     def _finalize_leaf(self, node):

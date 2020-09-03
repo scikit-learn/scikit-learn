@@ -1,6 +1,7 @@
 from sklearn.ensemble._hist_gradient_boosting._histogram_pool import (
     HistogramPool
 )
+import pytest
 
 
 def test_histograms_pool():
@@ -18,6 +19,14 @@ def test_histograms_pool():
     assert histograms2.shape == (n_features, n_bins)
     assert pool.used_pool == [histograms1, histograms2]
     assert pool.available_pool == []
+
+    pool.release(histograms1)
+    assert pool.used_pool == [histograms2]
+    assert pool.available_pool == [histograms1]
+
+    # Cannot release an already released histogram
+    with pytest.raises(ValueError):
+        pool.release(histograms1)
 
     # when pool is reset histograms in the used pool is moved to the
     # avaliable pool
