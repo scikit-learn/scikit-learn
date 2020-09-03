@@ -135,7 +135,9 @@ def test_plot_partial_dependence_kind(pyplot, kind, centered, subsample, shape,
     assert disp.contours_[0, 2] is None
 
     if centered:
-        assert all([line._y[0] == 0. for line in disp.lines_.ravel()])
+        assert all(
+            [ln._y[0] == 0. for ln in disp.lines_.ravel() if ln is not None]
+        )
 
 
 @pytest.mark.filterwarnings("ignore:A Bunch will be returned")
