@@ -39,10 +39,10 @@ class HistogramPool:
 
     def release(self, histograms):
         """Move a specific histogram array to the available pool"""
-        for idx, h in enumerate(self.used_pool):
-            if h is histograms:
-                break
-        else:
-            raise ValueError("Could not find histograms in used_pool")
+        try:
+            idx = next(idx for idx, h in enumerate(self.used_pool)
+                       if h is histograms)
+        except StopIteration as e:
+            raise ValueError("Could not find histograms in used_pool") from e
         self.used_pool.pop(idx)
         self.available_pool.append(histograms)
