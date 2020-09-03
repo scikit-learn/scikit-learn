@@ -683,18 +683,6 @@ def test_binary_clf_curve_multiclass_error(curve_func):
     precision_recall_curve,
     roc_curve,
 ])
-def test_binary_clf_curve_nonnegative_sample_weight_error(curve_func):
-    # Contains negative sample weights
-    msg = "Sample weights must be non-negative"
-    with pytest.raises(ValueError, match=msg):
-        curve_func([0, 1], [0, 1], sample_weight=[1, -1])
-
-
-@pytest.mark.parametrize("curve_func", [
-    det_curve,
-    precision_recall_curve,
-    roc_curve,
-])
 def test_binary_clf_curve_implicit_pos_label(curve_func):
     # Check that using string class labels raises an informative
     # error for any supported string dtype:
