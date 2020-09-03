@@ -842,7 +842,7 @@ def test_average_precision_pos_label(string_labeled_classification_problem):
     average_precision_scorer = make_scorer(
         average_precision_score, needs_threshold=True,
     )
-    err_msg = "pos_label=1 is invalid. Set it to a label in y_true."
+    err_msg = "pos_label=1 is not a valid label. It should be one of "
     with pytest.raises(ValueError, match=err_msg):
         average_precision_scorer(clf, X_test, y_test)
 
