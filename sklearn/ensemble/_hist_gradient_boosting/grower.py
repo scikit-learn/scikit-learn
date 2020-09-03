@@ -508,10 +508,15 @@ class TreeGrower:
                 self._compute_best_split_and_push(right_child_node)
             self.total_find_split_time += time() - tic
 
+            # Free memory used by histograms as they are no longer needed for
+            # leaf nodes once the optimal split has been found.
+            for child in (left_child_node, right_child_node):
+                if child.is_leaf:
+                    self.histogram_pool.release(child.histograms)
+
         # node.histograms is no longer needed: let's recycle it for memory
         # efficiency.
         self.histogram_pool.release(node.histograms)
-        del node.histograms
 
         return left_child_node, right_child_node
 
