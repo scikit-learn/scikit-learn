@@ -466,8 +466,6 @@ class PLSRegression(_PLS):
         cross-covariance matrix. 'nipals' uses the power method while 'svd'
         will compute the whole SVD.
 
-        .. versionadded:: 0.24
-
     max_iter : int, default=500
         The maximum number of iterations of the power method when
         `algorithm='nipals'`. Ignored otherwise.
@@ -675,8 +673,6 @@ class CCA(_UnstableArchMixin, _PLS):
         The algorithm used to estimate the first singular vectors of the
         cross-covariance matrix. 'nipals' uses the power method while 'svd'
         will compute the whole SVD.
-
-        .. versionadded:: 0.24
 
     max_iter : int, default=500
         the maximum number of iterations of the power method when
