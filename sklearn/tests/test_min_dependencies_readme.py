@@ -23,10 +23,10 @@ def test_min_dependencies_readme():
     print(os.listdir(readme_path))
     readme_filename = os.path.join(readme_path, "README.rst")
 
-    if not os.path.exists(readme_filename):
-        # Skip because the README.rst
-        # file is not found in Windows
-        pytest.skip("README.rst is not available.")
+    # if not os.path.exists(readme_filename):
+    # Skip because the README.rst
+    # file is not found in Windows
+    # pytest.skip("README.rst is not available.")
 
     with open(readme_filename, "r") as f:
         for line in f:
