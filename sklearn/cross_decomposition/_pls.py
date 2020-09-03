@@ -157,12 +157,12 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of predictors.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of predictors.
 
         Y : array-like of shape (n_samples,) or (n_samples, n_targets)
-            Target vectors, where n_samples is the number of samples and
-            n_targets is the number of response variables.
+            Target vectors, where `n_samples` is the number of samples and
+            `n_targets` is the number of response variables.
         """
 
         check_consistent_length(X, Y)
@@ -298,22 +298,22 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         return self
 
     def transform(self, X, Y=None, copy=True):
-        """Apply the dimension reduction
+        """Apply the dimension reduction.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Samples to transform
+            Samples to transform.
 
         Y : array-like of shape (n_samples, n_targets), default=None
-            Target vectors
+            Target vectors.
 
         copy : bool, default=True
-            Whether to copy X and Y, or perform in-place normalization.
+            Whether to copy `X` and `Y`, or perform in-place normalization.
 
         Returns
         -------
-        x_scores if Y is not given, (x_scores, y_scores) otherwise.
+        `x_scores` if `Y` is not given, `(x_scores, y_scores)` otherwise.
         """
         check_is_fitted(self)
         X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
@@ -339,8 +339,8 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         Parameters
         ----------
         X : array-like of shape (n_samples, n_components)
-            New data, where n_samples is the number of samples
-            and n_components is the number of pls components.
+            New data, where `n_samples` is the number of samples
+            and `n_components` is the number of pls components.
 
         Returns
         -------
@@ -348,7 +348,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
 
         Notes
         -----
-        This transformation will only be exact if n_components=n_features
+        This transformation will only be exact if `n_components=n_features`.
         """
         check_is_fitted(self)
         X = check_array(X, dtype=FLOAT_DTYPES)
@@ -361,20 +361,21 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         return X_reconstructed
 
     def predict(self, X, copy=True):
-        """Predict targets of given samples
+        """Predict targets of given samples.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Samples
+            Samples.
 
         copy : bool, default=True
-            Whether to copy X and Y, or perform in-place normalization.
+            Whether to copy `X` and `Y`, or perform in-place normalization.
 
         Notes
         -----
-        This call requires the estimation of a p x q matrix, which may
-        be an issue in high dimensional space.
+        This call requires the estimation of a matrix of shape
+        `(n_features, n_targets)`, which may be an issue in high dimensional
+        space.
         """
         check_is_fitted(self)
         X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
@@ -466,7 +467,7 @@ class PLSRegression(_PLS):
         will compute the whole SVD.
 
     max_iter : int, default=500
-        the maximum number of iterations of the power method when
+        The maximum number of iterations of the power method when
         `algorithm='nipals'`. Ignored otherwise.
 
     tol : real, default 1e-06
@@ -620,7 +621,6 @@ class PLSCanonical(_PLS):
     n_iter_ : list of shape (n_components,)
         Number of iterations of the power method, for each
         component. Empty if `algorithm='svd'`.
-
 
     Examples
     --------
@@ -841,10 +841,10 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training samples
+            Training samples.
 
         Y : array-like of shape (n_samples,) or (n_samples, n_targets)
-            Targets
+            Targets.
         """
         check_consistent_length(X, Y)
         X = self._validate_data(X, dtype=np.float64, copy=self.copy,
@@ -907,22 +907,22 @@ class PLSSVD(TransformerMixin, BaseEstimator):
 
     def transform(self, X, Y=None):
         """
-        Apply the dimensionality reduction
+        Apply the dimensionality reduction.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Samples to be transformed
+            Samples to be transformed.
 
         Y : array-like of shape (n_samples,) or (n_samples, n_targets), \
                 default=None
-            Targets
+            Targets.
 
         Returns
         -------
-        out : array-like or tuple of array-like:
-            The transformed data X_tranformed if Y is not None,
-            (X_transformed, Y_transformed) otherwise
+        out : array-like or tuple of array-like
+            The transformed data `X_tranformed` if `Y` is not None,
+            `(X_transformed, Y_transformed)` otherwise.
         """
         check_is_fitted(self)
         X = check_array(X, dtype=np.float64)
@@ -938,21 +938,21 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         return x_scores
 
     def fit_transform(self, X, y=None):
-        """Learn and apply the dimensionality reduction
+        """Learn and apply the dimensionality reduction.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training samples
+            Training samples.
 
         y : array-like of shape (n_samples,) or (n_samples, n_targets), \
                 default=None
-            Targets
+            Targets.
 
         Returns
         -------
-        out : array-like or tuple of array-like:
-            The transformed data X_tranformed if Y is not None,
-            (X_transformed, Y_transformed) otherwise
+        out : array-like or tuple of array-like
+            The transformed data `X_tranformed` if `Y` is not None,
+            `(X_transformed, Y_transformed)` otherwise.
         """
         return self.fit(X, y).transform(X, y)
