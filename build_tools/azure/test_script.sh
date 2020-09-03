@@ -44,5 +44,5 @@ cp setup.cfg $TEST_DIR
 cd $TEST_DIR
 
 set -x
-$TEST_CMD --pyargs sklearn/tests/test_min_dependencies_readme.py -vs
+$TEST_CMD --pyargs sklearn/tests/test_min_dependencies_readme.py
 set +x
