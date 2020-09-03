@@ -166,7 +166,7 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
         random_state = check_random_state(self.random_state)
 
         if self.algorithm == "arpack":
-            v0 = _init_arpack_v0(min(X.shape), self.random_state)
+            v0 = _init_arpack_v0(min(X.shape), random_state)
             U, Sigma, VT = svds(X, k=self.n_components, tol=self.tol, v0=v0)
             # svds doesn't abide by scipy.linalg.svd/randomized_svd
             # conventions, so reverse its outputs.
