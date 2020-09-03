@@ -529,7 +529,7 @@ class PCA(_BasePCA):
         X -= self.mean_
 
         if svd_solver == 'arpack':
-            v0 = _init_arpack_v0(min(X.shape), self.random_state)
+            v0 = _init_arpack_v0(min(X.shape), random_state)
             U, S, Vt = svds(X, k=n_components, tol=self.tol, v0=v0)
             # svds doesn't abide by scipy.linalg.svd/randomized_svd
             # conventions, so reverse its outputs.
