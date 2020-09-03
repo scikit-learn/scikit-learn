@@ -188,6 +188,13 @@ Changelog
   method `staged_predict`, which allows monitoring of each stage.
   :pr:`16985` by :user:`Hao Chun Chang <haochunchang>`.
 
+- |Efficiency| break cyclic references in the tree nodes used internally in
+  :class:`ensemble.HistGradientBoostingRegressor` and
+  :class:`ensemble.HistGradientBoostingClassifier` to allow for the timely
+  garbage collection of large intermediate datastructures and to improve memory
+  usage in `fit`. :pr:`18334` by `Olivier Grisel`_ `Nicolas Hug`_, `Thomas
+  Fan`_ and `Andreas Müller`_.
+
 - |API|: The parameter ``n_classes_`` is now deprecated in
   :class:`ensemble.GradientBoostingRegressor` and returns `1`.
   :pr:`17702` by :user:`Simona Maggio <simonamaggio>`.
