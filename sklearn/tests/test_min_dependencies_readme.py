@@ -4,7 +4,7 @@ import os
 import re
 from packaging.version import parse
 
-import pytest
+# import pytest
 import sklearn
 from sklearn._build_utils.min_dependencies import dependent_packages
 
