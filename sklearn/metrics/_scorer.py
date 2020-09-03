@@ -424,7 +424,7 @@ def check_scoring(estimator, scoring=None, *, allow_none=False):
 
 
 def _check_multimetric_scoring(estimator, scoring):
-    """Check the scoring parameter in cases when multiple metrics are allowed
+    """Check the scoring parameter in cases when multiple metrics are allowed.
 
     Parameters
     ----------
@@ -507,7 +507,7 @@ def make_scorer(score_func, *, greater_is_better=True, needs_proba=False,
 
     Parameters
     ----------
-    score_func : callable,
+    score_func : callable
         Score function (or loss function) with signature
         ``score_func(y, y_pred, **kwargs)``.
 
