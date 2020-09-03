@@ -45,6 +45,7 @@ from sklearn.utils.validation import (
     _allclose_dense_sparse,
     FLOAT_DTYPES)
 from sklearn.utils.validation import _check_fit_params
+from sklearn.utils.fixes import parse_version
 
 import sklearn
 
@@ -1213,3 +1214,71 @@ def test_check_sparse_pandas_sp_format(sp_format):
     assert sp.issparse(result)
     assert result.format == sp_format
     assert_allclose_dense_sparse(sp_mat, result)
+
+
+@pytest.mark.parametrize(
+    "ntype1, ntype2",
+    [
+        ("longdouble", "float16"),
+        ("float16", "float32"),
+        ("float32", "double"),
+        ("int16", "int32"),
+        ("int32", "long"),
+        ("byte", "uint16"),
+        ("ushort", "uint32"),
+        ("uint32", "uint64"),
+        ("uint8", "int8"),
+    ]
+)
+def test_check_pandas_sparse_invalid(ntype1, ntype2):
+    """check that we raise an error with dataframe having
+    sparse extension arrays with unsupported mixed dtype
+    and pandas version below 1.1. pandas versions 1.1 and
+    above fixed this issue so no error will be raised."""
+    pd = pytest.importorskip("pandas", minversion="0.25.0")
+    df = pd.DataFrame({'col1': pd.arrays.SparseArray([0, 1, 0],
+                                                     dtype=ntype1),
+                       'col2': pd.arrays.SparseArray([1, 0, 1],
+                                                     dtype=ntype2)})
+
+    if parse_version(pd.__version__) < parse_version('1.1'):
+        err_msg = "Pandas DataFrame with mixed sparse extension arrays"
+        with pytest.raises(ValueError, match=err_msg):
+            check_array(df, accept_sparse=['csr', 'csc'])
+    else:
+        # pandas fixed this issue at 1.1 so from here on,
+        # no error will be raised.
+        check_array(df, accept_sparse=['csr', 'csc'])
+
+
+@pytest.mark.parametrize(
+    "ntype1, ntype2, expected_subtype",
+    [
+        ("longfloat", "longdouble", np.floating),
+        ("float16", "half", np.floating),
+        ("single", "float32", np.floating),
+        ("double", "float64", np.floating),
+        ("int8", "byte", np.integer),
+        ("short", "int16", np.integer),
+        ("intc", "int32", np.integer),
+        ("int0", "long", np.integer),
+        ("int", "long", np.integer),
+        ("int64", "longlong", np.integer),
+        ("int_", "intp", np.integer),
+        ("ubyte", "uint8", np.unsignedinteger),
+        ("uint16", "ushort", np.unsignedinteger),
+        ("uintc", "uint32", np.unsignedinteger),
+        ("uint", "uint64", np.unsignedinteger),
+        ("uintp", "ulonglong", np.unsignedinteger)
+    ]
+)
+def test_check_pandas_sparse_valid(ntype1, ntype2, expected_subtype):
+    # check that we support the conversion of sparse dataframe with mixed
+    # type which can be converted safely.
+    pd = pytest.importorskip("pandas", minversion="0.25.0")
+    df = pd.DataFrame({'col1': pd.arrays.SparseArray([0, 1, 0],
+                                                     dtype=ntype1),
+                       'col2': pd.arrays.SparseArray([1, 0, 1],
+                                                     dtype=ntype2)})
+    arr = check_array(df, accept_sparse=['csr', 'csc'])
+    assert np.issubdtype(arr.dtype, expected_subtype)
