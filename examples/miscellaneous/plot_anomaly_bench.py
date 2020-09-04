@@ -35,6 +35,7 @@ from sklearn.preprocessing import LabelBinarizer
 print(__doc__)
 
 random_state = 1  # to control the random selection of anomalies in SA
+np.random.seed(random_state)
 
 # datasets
 datasets = ["http", "smtp", "SA", "SF", "forestcover",
