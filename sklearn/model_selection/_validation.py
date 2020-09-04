@@ -543,9 +543,11 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
             The estimator failed to fit.
     """
     if not isinstance(error_score, numbers.Number) and error_score != 'raise':
-        raise ValueError("error_score must be the string 'raise' or a"
-                         " numeric value. (Hint: if using 'raise', please"
-                         " make sure that it has been spelled correctly.)")
+        raise ValueError(
+            "error_score must be the string 'raise' or a numeric value. "
+            "(Hint: if using 'raise', please make sure that it has been "
+            "spelled correctly.)"
+        )
 
     progress_msg = ""
     if verbose > 2:
@@ -616,12 +618,12 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         result["fit_failed"] = False
 
         fit_time = time.time() - start_time
-        test_scores = _score(estimator, X_test, y_test, scorer,
-                             error_score)
+        test_scores = _score(estimator, X_test, y_test, scorer, error_score)
         score_time = time.time() - start_time - fit_time
         if return_train_score:
-            train_scores = _score(estimator, X_train, y_train, scorer,
-                                  error_score)
+            train_scores = _score(
+                estimator, X_train, y_train, scorer, error_score
+            )
 
     if verbose > 1:
         total_time = score_time + fit_time
@@ -662,34 +664,35 @@ def _score(estimator, X_test, y_test, scorer, error_score):
     Will return a dict of floats if `scorer` is a dict, otherwise a single
     float is returned.
     """
-    if not isinstance(error_score, numbers.Number) and error_score != 'raise':
-        raise ValueError("error_score must be the string 'raise' or a"
-                         " numeric value. (Hint: if using 'raise', please"
-                         " make sure that it has been spelled correctly.)")
-
     if isinstance(scorer, dict):
         # will cache method calls if needed. scorer() returns a dict
-        multi_scorer = _MultimetricScorer(**scorer)
-    else:
-        multi_scorer = scorer
+        scorer = _MultimetricScorer(**scorer)
+
     try:
         if y_test is None:
-            scores = multi_scorer(estimator, X_test)
+            scores = scorer(estimator, X_test)
         else:
-            scores = multi_scorer(estimator, X_test, y_test)
+            scores = scorer(estimator, X_test, y_test)
     except Exception:
         if error_score == 'raise':
             raise
         else:
-            scores = {name: error_score for name in scorer}
-            warnings.warn("Scoring failed. The score on this train-test "
-                          "partition for these parameters will be set "
-                          "to %f. Details: \n%s" %
-                          (error_score, format_exc()),
-                          UserWarning)
+            if hasattr(scorer, "get_scorers_name"):
+                scores = {
+                    name: error_score for name in scorer.get_scorers_name()
+                }
+            else:
+                scores = error_score
+            warnings.warn(
+                f"Scoring failed. The score on this train-test partition for "
+                f"these parameters will be set to {error_score}. Details: \n"
+                f"{format_exc()}",
+                UserWarning,
+            )
 
-    error_msg = ("scoring must return a number, got %s (%s) "
-                 "instead. (scorer=%s)")
+    error_msg = (
+        "scoring must return a number, got %s (%s) instead. (scorer=%s)"
+    )
     if isinstance(scores, dict):
         for name, score in scores.items():
             if hasattr(score, 'item'):
@@ -705,7 +708,7 @@ def _score(estimator, X_test, y_test, scorer, error_score):
                 # e.g. unwrap memmapped scalars
                 scores = scores.item()
         if not isinstance(scores, numbers.Number):
-            raise ValueError(error_msg % (scores, type(scores), multi_scorer))
+            raise ValueError(error_msg % (scores, type(scores), scorer))
     return scores
 
 
