@@ -39,7 +39,7 @@ from sklearn.utils.estimator_checks import (
     check_class_weight_balanced_linear_classifier,
     parametrize_with_checks,
     check_dataframe_column_names_consistency,
-    check_dataarray_column_name_consistency)
+    check_dataarray_column_names_consistency)
 
 
 def test_all_estimator_no_base_class():
@@ -322,4 +322,4 @@ def test_pandas_column_name_consistency(Estimator):
 def test_xarray_column_name_consistency(Estimator):
     estimator = _construct_instance(Estimator)
     _set_checking_parameters(estimator)
-    check_dataarray_column_name_consistency(Estimator.__name__, estimator)
+    check_dataarray_column_names_consistency(Estimator.__name__, estimator)

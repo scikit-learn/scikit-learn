@@ -3102,7 +3102,7 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
                                    "dataframe")
 
 
-def check_dataarray_column_name_consistency(name, estimator_orig):
+def check_dataarray_column_names_consistency(name, estimator_orig):
     try:
         import xarray as xr
     except ImportError:
@@ -3119,13 +3119,6 @@ def check_dataarray_column_name_consistency(name, estimator_orig):
 def _check_column_name_consistency(name, estimator_orig, construct_X,
                                    array_name):
     estimator = clone(estimator_orig)
-
-    tags = estimator._get_tags()
-    if "2darray" not in tags["X_types"]:
-        warnings.warn("Can't test estimator {} which requires input "
-                      " of type {}".format(name, tags["X_types"]),
-                      SkipTestWarning)
-        return
 
     X_orig, _ = make_regression(random_state=0, n_features=10)
     X_orig = _enforce_estimator_tags_x(estimator, X_orig)

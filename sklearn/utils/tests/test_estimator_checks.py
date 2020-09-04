@@ -23,6 +23,10 @@ from sklearn.utils.estimator_checks import check_fit_score_takes_y
 from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
 from sklearn.utils.estimator_checks import check_classifier_data_not_an_array
 from sklearn.utils.estimator_checks import check_regressor_data_not_an_array
+from sklearn.utils.estimator_checks import \
+    check_dataframe_column_names_consistency
+from sklearn.utils.estimator_checks import \
+    check_dataarray_column_names_consistency
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.estimator_checks import check_outlier_corruption
 from sklearn.utils.fixes import np_version, parse_version
@@ -620,6 +624,20 @@ def test_check_regressor_data_not_an_array():
                         check_regressor_data_not_an_array,
                         'estimator_name',
                         EstimatorInconsistentForPandas())
+
+
+def test_check_dataframe_column_names_consistency():
+    assert_raises_regex(ValueError,
+                        "Estimator does not have a feature_names_in_",
+                        check_dataframe_column_names_consistency,
+                        'estimator_name', BaseBadClassifier())
+
+
+def test_check_dataarray_column_name_consistency():
+    assert_raises_regex(ValueError,
+                        "Estimator does not have a feature_names_in_",
+                        check_dataarray_column_names_consistency,
+                        'estimator_name', BaseBadClassifier())
 
 
 def run_tests_without_pytest():
