@@ -381,7 +381,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         return self
 
     def _validate_X_predict(self, X, check_input):
-        """Validate X whenever one tries to predict, apply, predict_proba"""
+        """Validate the training data on predict (probabilities)."""
         if check_input:
             X = check_array(X, dtype=DTYPE, accept_sparse="csr")
             if issparse(X) and (X.indices.dtype != np.intc or
@@ -660,7 +660,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         valid partition of the node samples is found, even if it requires to
         effectively inspect more than ``max_features`` features.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the randomness of the estimator. The features are always
         randomly permuted at each split, even if ``splitter`` is set to
         ``"best"``. When ``max_features < n_features``, the algorithm will
@@ -765,7 +765,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
-    tree_ : Tree
+    tree_ : Tree instance
         The underlying Tree object. Please refer to
         ``help(sklearn.tree._tree.Tree)`` for attributes of Tree object and
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
@@ -782,6 +782,11 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     unpruned trees which can potentially be very large on some data sets. To
     reduce memory consumption, the complexity and size of the trees should be
     controlled by setting those parameter values.
+
+    The :meth:`predict` method operates using the :func:`numpy.argmax`
+    function on the outputs of :meth:`predict_proba`. This means that in
+    case the highest predicted probabilities are tied, the classifier will
+    predict the tied class with the lowest index in :term:`classes_`.
 
     References
     ----------
@@ -1037,7 +1042,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         valid partition of the node samples is found, even if it requires to
         effectively inspect more than ``max_features`` features.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the randomness of the estimator. The features are always
         randomly permuted at each split, even if ``splitter`` is set to
         ``"best"``. When ``max_features < n_features``, the algorithm will
@@ -1072,7 +1077,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float, (default=0)
+    min_impurity_split : float, default=0
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
@@ -1112,7 +1117,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
-    tree_ : Tree
+    tree_ : Tree instance
         The underlying Tree object. Please refer to
         ``help(sklearn.tree._tree.Tree)`` for attributes of Tree object and
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
@@ -1331,7 +1336,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         valid partition of the node samples is found, even if it requires to
         effectively inspect more than ``max_features`` features.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Used to pick randomly the `max_features` used at each split.
         See :term:`Glossary <random_state>` for details.
 
@@ -1358,7 +1363,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float, (default=0)
+    min_impurity_split : float, default=None
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
@@ -1428,7 +1433,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
-    tree_ : Tree
+    tree_ : Tree instance
         The underlying Tree object. Please refer to
         ``help(sklearn.tree._tree.Tree)`` for attributes of Tree object and
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
@@ -1582,7 +1587,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         valid partition of the node samples is found, even if it requires to
         effectively inspect more than ``max_features`` features.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Used to pick randomly the `max_features` used at each split.
         See :term:`Glossary <random_state>` for details.
 
@@ -1604,7 +1609,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float, (default=0)
+    min_impurity_split : float, default=None
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
@@ -1646,7 +1651,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
-    tree_ : Tree
+    tree_ : Tree instance
         The underlying Tree object. Please refer to
         ``help(sklearn.tree._tree.Tree)`` for attributes of Tree object and
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`

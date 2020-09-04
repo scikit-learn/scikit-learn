@@ -144,13 +144,11 @@ class LeaveOneOut(BaseCrossValidator):
     TRAIN: [0] TEST: [1]
     [[1 2]] [[3 4]] [1] [2]
 
-    See also
+    See Also
     --------
-    LeaveOneGroupOut
-        For splitting the data according to explicit, domain-specific
-        stratification of the dataset.
-
-    GroupKFold: K-fold iterator variant with non-overlapping groups.
+    LeaveOneGroupOut : For splitting the data according to explicit,
+        domain-specific stratification of the dataset.
+    GroupKFold : K-fold iterator variant with non-overlapping groups.
     """
 
     def _iter_test_indices(self, X, y=None, groups=None):
@@ -379,7 +377,7 @@ class KFold(_BaseKFold):
         Whether to shuffle the data before splitting into batches.
         Note that the samples within each split will not be shuffled.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         When `shuffle` is True, `random_state` affects the ordering of the
         indices, which controls the randomness of each fold. Otherwise, this
         parameter has no effect.
@@ -414,16 +412,15 @@ class KFold(_BaseKFold):
     split. You can make the results identical by setting `random_state`
     to an integer.
 
-    See also
+    See Also
     --------
-    StratifiedKFold
-        Takes group information into account to avoid building folds with
-        imbalanced class distributions (for binary or multiclass
+    StratifiedKFold : Takes group information into account to avoid building
+        folds with imbalanced class distributions (for binary or multiclass
         classification tasks).
 
-    GroupKFold: K-fold iterator variant with non-overlapping groups.
+    GroupKFold : K-fold iterator variant with non-overlapping groups.
 
-    RepeatedKFold: Repeats K-Fold n times.
+    RepeatedKFold : Repeats K-Fold n times.
     """
     @_deprecate_positional_args
     def __init__(self, n_splits=5, *, shuffle=False,
@@ -491,11 +488,10 @@ class GroupKFold(_BaseKFold):
      [7 8]] [[1 2]
      [3 4]] [3 4] [1 2]
 
-    See also
+    See Also
     --------
-    LeaveOneGroupOut
-        For splitting the data according to explicit domain-specific
-        stratification of the dataset.
+    LeaveOneGroupOut : For splitting the data according to explicit
+        domain-specific stratification of the dataset.
     """
     def __init__(self, n_splits=5):
         super().__init__(n_splits, shuffle=False, random_state=None)
@@ -587,7 +583,7 @@ class StratifiedKFold(_BaseKFold):
         Whether to shuffle each class's samples before splitting into batches.
         Note that the samples within each split will not be shuffled.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         When `shuffle` is True, `random_state` affects the ordering of the
         indices, which controls the randomness of each fold for each class.
         Otherwise, leave `random_state` as `None`.
@@ -629,9 +625,9 @@ class StratifiedKFold(_BaseKFold):
     .. versionchanged:: 0.22
         The previous implementation did not follow the last constraint.
 
-    See also
+    See Also
     --------
-    RepeatedStratifiedKFold: Repeats Stratified K-Fold n times.
+    RepeatedStratifiedKFold : Repeats Stratified K-Fold n times.
     """
     @_deprecate_positional_args
     def __init__(self, n_splits=5, *, shuffle=False, random_state=None):
@@ -769,9 +765,13 @@ class TimeSeriesSplit(_BaseKFold):
         ``n_samples // (n_splits + 1)``, which is the maximum allowed value
         with ``gap=0``.
 
+        .. versionadded:: 0.24
+
     gap : int, default=0
         Number of samples to exclude from the end of each train set before
         the test set.
+
+        .. versionadded:: 0.24
 
     Examples
     --------
@@ -1046,9 +1046,9 @@ class LeavePGroupsOut(BaseCrossValidator):
     [[1 2]] [[3 4]
      [5 6]] [1] [2 1]
 
-    See also
+    See Also
     --------
-    GroupKFold: K-fold iterator variant with non-overlapping groups.
+    GroupKFold : K-fold iterator variant with non-overlapping groups.
     """
 
     def __init__(self, n_groups):
@@ -1140,7 +1140,7 @@ class _RepeatedSplits(metaclass=ABCMeta):
     n_repeats : int, default=10
         Number of times cross-validator needs to be repeated.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Passes `random_state` to the arbitrary repeating cross validator.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -1171,11 +1171,11 @@ class _RepeatedSplits(metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like of length n_samples
+        y : array-like of shape (n_samples,)
             The target variable for supervised learning problems.
 
         groups : array-like of shape (n_samples,), default=None
@@ -1245,7 +1245,7 @@ class RepeatedKFold(_RepeatedSplits):
     n_repeats : int, default=10
         Number of times cross-validator needs to be repeated.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the randomness of each repeated cross-validation instance.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -1273,9 +1273,9 @@ class RepeatedKFold(_RepeatedSplits):
     split. You can make the results identical by setting `random_state`
     to an integer.
 
-    See also
+    See Also
     --------
-    RepeatedStratifiedKFold: Repeats Stratified K-Fold n times.
+    RepeatedStratifiedKFold : Repeats Stratified K-Fold n times.
     """
     @_deprecate_positional_args
     def __init__(self, *, n_splits=5, n_repeats=10, random_state=None):
@@ -1300,7 +1300,7 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
     n_repeats : int, default=10
         Number of times cross-validator needs to be repeated.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the generation of the random states for each repetition.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -1329,9 +1329,9 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
     split. You can make the results identical by setting `random_state`
     to an integer.
 
-    See also
+    See Also
     --------
-    RepeatedKFold: Repeats K-Fold n times.
+    RepeatedKFold : Repeats K-Fold n times.
     """
     @_deprecate_positional_args
     def __init__(self, *, n_splits=5, n_repeats=10, random_state=None):
@@ -1443,7 +1443,7 @@ class ShuffleSplit(BaseShuffleSplit):
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test size.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the randomness of the training and testing indices produced.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -1544,7 +1544,7 @@ class GroupShuffleSplit(ShuffleSplit):
         int, represents the absolute number of train groups. If None,
         the value is automatically set to the complement of the test size.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the randomness of the training and testing indices produced.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -1656,7 +1656,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test size.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the randomness of the training and testing indices produced.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -2104,7 +2104,7 @@ def train_test_split(*arrays,
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test size.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the shuffling applied to the data before applying the split.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
