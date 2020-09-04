@@ -113,7 +113,7 @@ def check_pairwise_arrays(X, Y, *, precomputed=False, dtype=None,
            ``force_all_finite`` accepts the string ``'allow-nan'``.
 
         .. versionchanged:: 0.23
-           Accepts `pd.NA` and converts it into `np.nan`
+           Accepts `pd.NA` and converts it into `np.nan`.
 
     copy : bool, default=False
         Whether a forced copy will be triggered. If copy=False, a copy might
@@ -251,6 +251,10 @@ def euclidean_distances(X, Y=None, *, Y_norm_squared=None, squared=False,
     -------
     distances : ndarray of shape (n_samples_X, n_samples_Y)
 
+    See Also
+    --------
+    paired_distances : Distances betweens pairs of elements of X and Y.
+
     Examples
     --------
     >>> from sklearn.metrics.pairwise import euclidean_distances
@@ -263,10 +267,6 @@ def euclidean_distances(X, Y=None, *, Y_norm_squared=None, squared=False,
     >>> euclidean_distances(X, [[0, 0]])
     array([[1.        ],
            [1.41421356]])
-
-    See also
-    --------
-    paired_distances : distances betweens pairs of elements of X and Y.
     """
     X, Y = check_pairwise_arrays(X, Y)
 
@@ -369,6 +369,10 @@ def nan_euclidean_distances(X, Y=None, *, squared=False,
     -------
     distances : ndarray of shape (n_samples_X, n_samples_Y)
 
+    See Also
+    --------
+    paired_distances : Distances between pairs of elements of X and Y.
+
     Examples
     --------
     >>> from sklearn.metrics.pairwise import nan_euclidean_distances
@@ -389,10 +393,6 @@ def nan_euclidean_distances(X, Y=None, *, squared=False,
       IEEE Transactions on Systems, Man, and Cybernetics, Volume: 9, Issue:
       10, pp. 617 - 621, Oct. 1979.
       http://ieeexplore.ieee.org/abstract/document/4310090/
-
-    See also
-    --------
-    paired_distances : distances between pairs of elements of X and Y.
     """
 
     force_all_finite = 'allow-nan' if is_scalar_nan(missing_values) else True
@@ -578,7 +578,7 @@ def pairwise_distances_argmin_min(X, Y, *, axis=1, metric="euclidean",
         distances[i] is the distance between the i-th row in X and the
         argmin[i]-th row in Y.
 
-    See also
+    See Also
     --------
     sklearn.metrics.pairwise_distances
     sklearn.metrics.pairwise_distances_argmin
@@ -661,7 +661,7 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean",
     argmin : numpy.ndarray
         Y[argmin[i], :] is the row in Y that is closest to X[i, :].
 
-    See also
+    See Also
     --------
     sklearn.metrics.pairwise_distances
     sklearn.metrics.pairwise_distances_argmin_min
@@ -704,7 +704,8 @@ def haversine_distances(X, Y=None):
     Examples
     --------
     We want to calculate the distance between the Ezeiza Airport
-    (Buenos Aires, Argentina) and the Charles de Gaulle Airport (Paris, France)
+    (Buenos Aires, Argentina) and the Charles de Gaulle Airport (Paris,
+    France).
 
     >>> from sklearn.metrics.pairwise import haversine_distances
     >>> from math import radians
@@ -818,15 +819,14 @@ def cosine_distances(X, Y=None):
             default=None
         Matrix `Y`.
 
-
     Returns
     -------
     distance matrix : ndarray of shape (n_samples_X, n_samples_Y)
 
-    See also
+    See Also
     --------
     sklearn.metrics.pairwise.cosine_similarity
-    scipy.spatial.distance.cosine : dense matrices only
+    scipy.spatial.distance.cosine : Dense matrices only.
     """
     # 1.0 - cosine_similarity(X, Y) without copy
     S = cosine_similarity(X, Y)
@@ -950,6 +950,10 @@ def paired_distances(X, Y, *, metric="euclidean", **kwds):
     -------
     distances : ndarray of shape (n_samples,)
 
+    See Also
+    --------
+    pairwise_distances : Computes the distance between every pair of samples.
+
     Examples
     --------
     >>> from sklearn.metrics.pairwise import paired_distances
@@ -957,10 +961,6 @@ def paired_distances(X, Y, *, metric="euclidean", **kwds):
     >>> Y = [[0, 1], [2, 1]]
     >>> paired_distances(X, Y)
     array([0., 1.])
-
-    See also
-    --------
-    pairwise_distances : Computes the distance between every pair of samples
     """
 
     if metric in PAIRED_DISTANCES:
@@ -1191,7 +1191,8 @@ def cosine_similarity(X, Y=None, dense_output=True):
 
 
 def additive_chi2_kernel(X, Y=None):
-    """Computes the additive chi-squared kernel between observations in X and Y
+    """Computes the additive chi-squared kernel between observations in X and
+    Y.
 
     The chi-squared kernel is computed between each pair of rows in X and Y.  X
     and Y have to be non-negative. This kernel is most commonly applied to
@@ -1221,6 +1222,14 @@ def additive_chi2_kernel(X, Y=None):
     -------
     kernel_matrix : ndarray of shape (n_samples_X, n_samples_Y)
 
+    See Also
+    --------
+    chi2_kernel : The exponentiated version of the kernel, which is usually
+        preferable.
+
+    sklearn.kernel_approximation.AdditiveChi2Sampler : A Fourier approximation
+        to this kernel.
+
     References
     ----------
     * Zhang, J. and Marszalek, M. and Lazebnik, S. and Schmid, C.
@@ -1228,15 +1237,6 @@ def additive_chi2_kernel(X, Y=None):
       categories: A comprehensive study
       International Journal of Computer Vision 2007
       https://research.microsoft.com/en-us/um/people/manik/projects/trade-off/papers/ZhangIJCV06.pdf
-
-
-    See also
-    --------
-    chi2_kernel : The exponentiated version of the kernel, which is usually
-        preferable.
-
-    sklearn.kernel_approximation.AdditiveChi2Sampler : A Fourier approximation
-        to this kernel.
     """
     if issparse(X) or issparse(Y):
         raise ValueError("additive_chi2 does not support sparse matrices.")
@@ -1279,6 +1279,13 @@ def chi2_kernel(X, Y=None, gamma=1.):
     -------
     kernel_matrix : ndarray of shape (n_samples_X, n_samples_Y)
 
+    See Also
+    --------
+    additive_chi2_kernel : The additive version of this kernel.
+
+    sklearn.kernel_approximation.AdditiveChi2Sampler : A Fourier approximation
+        to the additive version of this kernel.
+
     References
     ----------
     * Zhang, J. and Marszalek, M. and Lazebnik, S. and Schmid, C.
@@ -1286,13 +1293,6 @@ def chi2_kernel(X, Y=None, gamma=1.):
       categories: A comprehensive study
       International Journal of Computer Vision 2007
       https://research.microsoft.com/en-us/um/people/manik/projects/trade-off/papers/ZhangIJCV06.pdf
-
-    See also
-    --------
-    additive_chi2_kernel : The additive version of this kernel
-
-    sklearn.kernel_approximation.AdditiveChi2Sampler : A Fourier approximation
-        to the additive version of this kernel.
     """
     K = additive_chi2_kernel(X, Y)
     K *= gamma
@@ -1714,7 +1714,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", *, n_jobs=None,
            ``force_all_finite`` accepts the string ``'allow-nan'``.
 
         .. versionchanged:: 0.23
-           Accepts `pd.NA` and converts it into `np.nan`
+           Accepts `pd.NA` and converts it into `np.nan`.
 
     **kwds : optional keyword parameters
         Any further parameters are passed directly to the distance function.
@@ -1730,13 +1730,13 @@ def pairwise_distances(X, Y=None, metric="euclidean", *, n_jobs=None,
         If Y is not None, then D_{i, j} is the distance between the ith array
         from X and the jth array from Y.
 
-    See also
+    See Also
     --------
-    pairwise_distances_chunked : performs the same calculation as this
+    pairwise_distances_chunked : Performs the same calculation as this
         function, but returns a generator of chunks of the distance matrix, in
         order to limit memory usage.
     paired_distances : Computes the distances between corresponding
-                       elements of two arrays
+                       elements of two arrays.
     """
     if (metric not in _VALID_METRICS and
             not callable(metric) and metric != "precomputed"):
