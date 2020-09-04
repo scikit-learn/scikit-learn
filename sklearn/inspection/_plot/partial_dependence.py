@@ -753,7 +753,7 @@ class PartialDependenceDisplay:
                         )[0]
                 if self.kind == 'average':
                     if cat[0] is True:
-                        bars_ravel[1] = axi.bar(
+                        bars_ravel[i] = axi.bar(
                             values[0], avg_preds[self.target_idx].ravel(),
                             **bar_kw
                         )[0]
