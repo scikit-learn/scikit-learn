@@ -357,7 +357,7 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
             if np.size(cats) == 2 and (cats[0] is True or cats[1] is True):
                 raise ValueError('Contour plots are not supported for '
                                  'categorical features.')
-            if cats[0] is True or (np.size(cats) == 2 and cats[1] is True):
+            if cats[0] is True:
                 has_categorical = True
             tmp_categorical.append(cats)
         is_categorical = tmp_categorical
