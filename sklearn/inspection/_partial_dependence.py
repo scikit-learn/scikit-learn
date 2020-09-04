@@ -248,7 +248,7 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
         also to generate values for the complement features when the
         `method` is 'brute'.
 
-    features : array-like of {int, str}
+    features : array-like of {int, str} or tuple of 2 {int, str}
         The feature (e.g. `[0]`) or pair of interacting features
         (e.g. `[(0, 1)]`) for which the partial dependency should be computed.
 
@@ -486,9 +486,9 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
     ).ravel()
 
     if is_categorical is None:
-        is_categorical = [False] * len(features)
+        is_categorical = [False] * len(features_indices)
     else:
-        if len(features) != len(is_categorical):
+        if len(features_indices) != len(is_categorical):
             raise ValueError('Parameter is_categorical should be the same '
                              'size as features.')
 
