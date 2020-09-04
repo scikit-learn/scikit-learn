@@ -201,9 +201,21 @@ Changelog
   recycling previously allocated histogram datastructures instead of relying on
   the Python GC. :pr:`18242` by `Thomas Fan`_ `Olivier Grisel`_, `Nicolas Hug`_.
 
+- |Efficiency| Histogram initialization is now done in parallel in
+  :class:`ensemble.HistGradientBoostingRegressor` and
+  :class:`ensemble.HistGradientBoostingClassifier` which results in speed
+  improvement for problems that build a lot of nodes on multicore machines.
+  :pr:`18341` by `Olivier Grisel`_, `Nicolas Hug`_, `Thomas Fan`_, and
+  :user:`Egor Smirnov <SmirnovEgorRu>`.
+
 - |API|: The parameter ``n_classes_`` is now deprecated in
   :class:`ensemble.GradientBoostingRegressor` and returns `1`.
   :pr:`17702` by :user:`Simona Maggio <simonamaggio>`.
+
+- |API|: Mean absolute error ('mae') is now deprecated for the parameter
+  ``criterion`` in :class:`ensemble.GradientBoostingRegressor` and
+  :class:`ensemble.GradientBoostingClassifier`.
+  :pr:`18326` by :user:`Madhura Jayaratne <madhuracj>`.
 
 :mod:`sklearn.exceptions`
 .........................
