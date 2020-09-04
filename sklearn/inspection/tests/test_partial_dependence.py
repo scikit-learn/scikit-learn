@@ -743,4 +743,3 @@ def test_error_on_is_categorical_shape(features, is_categorical):
     with pytest.raises(ValueError, match="Parameter is_categorical should"):
         partial_dependence(est, X=X, features=features,
                            is_categorical=is_categorical)
-
