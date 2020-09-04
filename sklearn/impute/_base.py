@@ -184,7 +184,7 @@ class SimpleImputer(_BaseImputer):
         Indicator used to add binary indicators for missing values.
         ``None`` if add_indicator is False.
 
-    See also
+    See Also
     --------
     IterativeImputer : Multivariate imputation of missing values.
 

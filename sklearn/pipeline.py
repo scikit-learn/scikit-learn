@@ -80,8 +80,7 @@ class Pipeline(_BaseComposition):
 
     See Also
     --------
-    sklearn.pipeline.make_pipeline : Convenience function for simplified
-        pipeline construction.
+    make_pipeline : Convenience function for simplified pipeline construction.
 
     Examples
     --------
@@ -696,8 +695,8 @@ def make_pipeline(*steps, memory=None, verbose=False):
 
     See Also
     --------
-    sklearn.pipeline.Pipeline : Class for creating a pipeline of
-        transforms with a final estimator.
+    Pipeline : Class for creating a pipeline of transforms with a final
+        estimator.
 
     Examples
     --------
@@ -805,8 +804,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
     See Also
     --------
-    sklearn.pipeline.make_union : Convenience function for simplified
-        feature union construction.
+    make_union : Convenience function for simplified feature union
+        construction.
 
     Examples
     --------
@@ -1069,8 +1068,8 @@ def make_union(*transformers, n_jobs=None, verbose=False):
 
     See Also
     --------
-    sklearn.pipeline.FeatureUnion : Class for concatenating the results
-        of multiple transformer objects.
+    FeatureUnion : Class for concatenating the results of multiple transformer
+        objects.
 
     Examples
     --------

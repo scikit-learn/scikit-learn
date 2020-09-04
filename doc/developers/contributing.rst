@@ -689,12 +689,12 @@ opposed to how it works "under the hood".
 
 Finally, follow the formatting rules below to make it consistently good:
 
-* Add "See also" in docstrings for related classes/functions.
+* Add "See Also" in docstrings for related classes/functions.
 
-* "See also" in docstrings should be one line per reference,
+* "See Also" in docstrings should be one line per reference,
   with a colon and an explanation, for example::
 
-    See also
+    See Also
     --------
     SelectKBest : Select features based on the k highest scores.
     SelectFpr : Select features based on a false positive rate test.

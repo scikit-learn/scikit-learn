@@ -307,7 +307,7 @@ def _get_check_estimator_ids(obj):
     -------
     id : str or None
 
-    See also
+    See Also
     --------
     check_estimator
     """

@@ -632,7 +632,7 @@ class PLSCanonical(_PLS):
     PLSCanonical()
     >>> X_c, Y_c = plsca.transform(X, Y)
 
-    See also
+    See Also
     --------
     CCA
     PLSSVD
@@ -742,7 +742,7 @@ class CCA(_UnstableArchMixin, _PLS):
     CCA(n_components=1)
     >>> X_c, Y_c = cca.transform(X, Y)
 
-    See also
+    See Also
     --------
     PLSCanonical
     PLSSVD
@@ -824,7 +824,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
     >>> X_c.shape, Y_c.shape
     ((4, 2), (4, 2))
 
-    See also
+    See Also
     --------
     PLSCanonical
     CCA
