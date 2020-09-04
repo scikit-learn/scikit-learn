@@ -358,6 +358,10 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         """Check that the estimator is initialized, raising an error if not."""
         check_is_fitted(self)
 
+    @abstractmethod
+    def _warn_mae_for_criterion(self):
+        pass
+
     def fit(self, X, y, sample_weight=None, monitor=None):
         """Fit the gradient boosting model.
 
@@ -395,8 +399,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         """
         if self.criterion == 'mae':
             # TODO: This should raise an error from 0.26
-            warnings.warn("criterion='mae' was deprecated in version 0.24 and "
-                          "will be removed in version 0.26.", FutureWarning)
+            self._warn_mae_for_criterion()
 
         # if not warmstart - clear the estimator state
         if not self.warm_start:
@@ -1111,6 +1114,14 @@ shape (n_estimators, ``loss_.K``)
         self.n_classes_ = self._n_classes
         return y
 
+    def _warn_mae_for_criterion(self):
+        # TODO: This should raise an error from 0.26
+        warnings.warn("criterion='mae' was deprecated in version 0.24 and "
+                      "will be removed in version 0.26. Use "
+                      "criterion='friedman_mse' or 'mse' instead, as trees "
+                      "should use a least-square criterion in Gradient "
+                      "Boosting.", FutureWarning)
+
     def decision_function(self, X):
         """Compute the decision function of ``X``.
 
@@ -1613,6 +1624,13 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         if y.dtype.kind == 'O':
             y = y.astype(DOUBLE)
         return y
+
+    def _warn_mae_for_criterion(self):
+        # TODO: This should raise an error from 0.26
+        warnings.warn("criterion='mae' was deprecated in version 0.24 and "
+                      "will be removed in version 0.26. The correct way of "
+                      "minimizing the absolute error is to use loss='lad' "
+                      "instead.", FutureWarning)
 
     def predict(self, X):
         """Predict regression target for X.
