@@ -374,7 +374,7 @@ class _CalibratedClassifier:
             if None, then classes is extracted from the given target values
             in fit().
 
-    See also
+    See Also
     --------
     CalibratedClassifierCV
 

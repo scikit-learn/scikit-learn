@@ -100,7 +100,7 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
     >>> print(svd.singular_values_)
     [1.553... 1.512...  1.510... 1.370... 1.199...]
 
-    See also
+    See Also
     --------
     PCA
 

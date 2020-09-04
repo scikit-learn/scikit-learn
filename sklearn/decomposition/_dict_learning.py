@@ -1285,7 +1285,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009: Online dictionary learning
     for sparse coding (https://www.di.ens.fr/sierra/pdfs/icml09.pdf)
 
-    See also
+    See Also
     --------
     SparseCoder
     MiniBatchDictionaryLearning
@@ -1525,7 +1525,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009: Online dictionary learning
     for sparse coding (https://www.di.ens.fr/sierra/pdfs/icml09.pdf)
 
-    See also
+    See Also
     --------
     SparseCoder
     DictionaryLearning
