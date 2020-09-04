@@ -19,5 +19,5 @@ jobs:
           pip install check-manifest scipy cython
         shell: bash
       - run: |
-          check-manifest -v --ignore "sklearn/linear_model/_sag_fast.pyx,sklearn/utils/_seq_dataset.pxd,sklearn/utils/_seq_dataset.pyx"
+          check-manifest -v
         shell: bash
