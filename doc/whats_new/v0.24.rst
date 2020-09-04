@@ -195,6 +195,13 @@ Changelog
   usage in `fit`. :pr:`18334` by `Olivier Grisel`_ `Nicolas Hug`_, `Thomas
   Fan`_ and `Andreas Müller`_.
 
+- |Efficiency| Histogram initialization is now done in parallel in
+  :class:`ensemble.HistGradientBoostingRegressor` and
+  :class:`ensemble.HistGradientBoostingClassifier` which results in speed
+  improvement for problems that build a lot of nodes on multicore machines.
+  :pr:`18341` by `Olivier Grisel`_, `Nicolas Hug`_, `Thomas Fan`_, and
+  :user:`Egor Smirnov <SmirnovEgorRu>`.
+
 - |API|: The parameter ``n_classes_`` is now deprecated in
   :class:`ensemble.GradientBoostingRegressor` and returns `1`.
   :pr:`17702` by :user:`Simona Maggio <simonamaggio>`.
