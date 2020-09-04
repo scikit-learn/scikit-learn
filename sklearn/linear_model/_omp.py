@@ -325,12 +325,12 @@ def orthogonal_mp(X, y, *, n_nonzero_coefs=None, tol=None, precompute=False,
         Number of active features across every target. Returned only if
         `return_n_iter` is set to True.
 
-    See also
+    See Also
     --------
     OrthogonalMatchingPursuit
     orthogonal_mp_gram
     lars_path
-    decomposition.sparse_encode
+    sklearn.decomposition.sparse_encode
 
     Notes
     -----
@@ -466,12 +466,12 @@ def orthogonal_mp_gram(Gram, Xy, *, n_nonzero_coefs=None, tol=None,
         Number of active features across every target. Returned only if
         `return_n_iter` is set to True.
 
-    See also
+    See Also
     --------
     OrthogonalMatchingPursuit
     orthogonal_mp
     lars_path
-    decomposition.sparse_encode
+    sklearn.decomposition.sparse_encode
 
     Notes
     -----
@@ -610,14 +610,14 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
     Matching Pursuit Technical Report - CS Technion, April 2008.
     https://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
 
-    See also
+    See Also
     --------
     orthogonal_mp
     orthogonal_mp_gram
     lars_path
     Lars
     LassoLars
-    decomposition.sparse_encode
+    sklearn.decomposition.sparse_encode
     OrthogonalMatchingPursuitCV
     """
     @_deprecate_positional_args
@@ -845,7 +845,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
     >>> reg.predict(X[:1,])
     array([-78.3854...])
 
-    See also
+    See Also
     --------
     orthogonal_mp
     orthogonal_mp_gram
@@ -855,7 +855,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
     OrthogonalMatchingPursuit
     LarsCV
     LassoLarsCV
-    decomposition.sparse_encode
+    sklearn.decomposition.sparse_encode
 
     """
     @_deprecate_positional_args

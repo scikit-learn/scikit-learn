@@ -84,11 +84,10 @@ class ParameterGrid:
     >>> ParameterGrid(grid)[1] == {'kernel': 'rbf', 'gamma': 1}
     True
 
-    See also
+    See Also
     --------
-    :class:`GridSearchCV`:
-        Uses :class:`ParameterGrid` to perform a full parallelized parameter
-        search.
+    GridSearchCV : Uses :class:`ParameterGrid` to perform a full parallelized
+        parameter search.
     """
 
     def __init__(self, param_grid):
@@ -1210,16 +1209,12 @@ class GridSearchCV(BaseSearchCV):
 
     See Also
     ---------
-    :class:`ParameterGrid`:
-        generates all the combinations of a hyperparameter grid.
-
-    :func:`sklearn.model_selection.train_test_split`:
-        utility function to split the data into a development set usable
-        for fitting a GridSearchCV instance and an evaluation set for
-        its final evaluation.
-
-    :func:`sklearn.metrics.make_scorer`:
-        Make a scorer from a performance metric or loss function.
+    ParameterGrid : Generates all the combinations of a hyperparameter grid.
+    train_test_split : Utility function to split the data into a development
+        set usable for fitting a GridSearchCV instance and an evaluation set
+        for its final evaluation.
+    sklearn.metrics.make_scorer : Make a scorer from a performance metric or
+        loss function.
 
     """
     _required_parameters = ["estimator", "param_grid"]
@@ -1528,13 +1523,9 @@ class RandomizedSearchCV(BaseSearchCV):
 
     See Also
     --------
-    :class:`GridSearchCV`:
-        Does exhaustive search over a grid of parameters.
-
-    :class:`ParameterSampler`:
-        A generator over parameter settings, constructed from
+    GridSearchCV : Does exhaustive search over a grid of parameters.
+    ParameterSampler : A generator over parameter settings, constructed from
         param_distributions.
-
 
     Examples
     --------

@@ -169,7 +169,7 @@ class IterativeImputer(_BaseImputer):
         RandomState instance that is generated either from a seed, the random
         number generator or by `np.random`.
 
-    See also
+    See Also
     --------
     SimpleImputer : Univariate imputation of missing values.
 

@@ -219,15 +219,13 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
 
     See Also
     ---------
-    :func:`sklearn.model_selection.cross_val_score`:
-        Run cross-validation for single metric evaluation.
+    cross_val_score : Run cross-validation for single metric evaluation.
 
-    :func:`sklearn.model_selection.cross_val_predict`:
-        Get predictions from each split of cross-validation for diagnostic
-        purposes.
+    cross_val_predict : Get predictions from each split of cross-validation for
+        diagnostic purposes.
 
-    :func:`sklearn.metrics.make_scorer`:
-        Make a scorer from a performance metric or loss function.
+    sklearn.metrics.make_scorer : Make a scorer from a performance metric or
+        loss function.
 
     """
     X, y, groups = indexable(X, y, groups)
@@ -427,16 +425,14 @@ def cross_val_score(estimator, X, y=None, *, groups=None, scoring=None,
 
     See Also
     ---------
-    :func:`sklearn.model_selection.cross_validate`:
-        To run cross-validation on multiple metrics and also to return
-        train scores, fit times and score times.
+    cross_validate : To run cross-validation on multiple metrics and also to
+        return train scores, fit times and score times.
 
-    :func:`sklearn.model_selection.cross_val_predict`:
-        Get predictions from each split of cross-validation for diagnostic
-        purposes.
+    cross_val_predict : Get predictions from each split of cross-validation for
+        diagnostic purposes.
 
-    :func:`sklearn.metrics.make_scorer`:
-        Make a scorer from a performance metric or loss function.
+    sklearn.metrics.make_scorer : Make a scorer from a performance metric or
+        loss function.
 
     """
     # To ensure multimetric format is not supported
@@ -794,11 +790,11 @@ def cross_val_predict(estimator, X, y=None, *, groups=None, cv=None,
             - If `estimator` is :term:`multioutput`, an extra dimension
               'n_outputs' is added to the end of each shape above.
 
-    See also
+    See Also
     --------
-    cross_val_score : calculate score for each CV split
-
-    cross_validate : calculate one or more scores and timings for each CV split
+    cross_val_score : Calculate score for each CV split.
+    cross_validate : Calculate one or more scores and timings for each CV
+        split.
 
     Notes
     -----
