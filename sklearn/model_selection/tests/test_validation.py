@@ -1,12 +1,10 @@
 """Test the validation module"""
-
-from functools import partial
-from re import error
-import sys
-import warnings
-import tempfile
 import os
 import re
+import sys
+import tempfile
+import warnings
+from functools import partial
 from time import sleep
 
 import pytest
