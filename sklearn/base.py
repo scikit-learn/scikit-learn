@@ -411,10 +411,10 @@ class BaseEstimator:
         if (len(fitted_feature_names) != len(feature_names_in) or
                 np.any(fitted_feature_names != feature_names_in)):
             warnings.warn("The column names should match those that were "
-                          "passed during fit in the same order. Got "
-                          f"({feature_names_in}) expected "
-                          f"({fitted_feature_names}). Starting version 0.26, "
-                          "an error will be raised", FutureWarning)
+                          f"passed during fit. Got ({feature_names_in}) "
+                          f"expected ({fitted_feature_names}). Starting "
+                          "version 0.26, an error will be raised",
+                          FutureWarning)
 
     def _validate_data(self, X, y=None, reset=True,
                        validate_separately=False, **check_params):

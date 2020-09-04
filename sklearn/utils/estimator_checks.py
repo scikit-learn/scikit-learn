@@ -3150,9 +3150,8 @@ def _check_column_name_consistency(name, estimator_orig, construct_X,
     X_bad = construct_X(X, bad_names)
 
     expected_msg = ("The column names should match those that were passed "
-                    f"during fit(), in the same order. Got ({bad_names}) "
-                    f"expected ({names}). Starting version 0.26, an error "
-                    "will be raised")
+                    f"during fit. Got ({bad_names}) expected ({names}). "
+                    "Starting version 0.26, an error will be raised")
     for method in ("predict", "transform", "decision_function",
                    "predict_proba"):
         func = getattr(estimator, method, None)
