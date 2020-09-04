@@ -103,8 +103,8 @@ for dataset_idx, dataset_name in enumerate(datasets):
 
     if dataset_name in ["glass", "wdbc", "cardiotocography"]:
         dataset = fetch_openml(name=dataset_name, version=1)
-        X = dataset.data
-        y = dataset.target
+        X = dataset.data.values  # from dataframe to array
+        y = dataset.target.values
 
         if dataset_name == "glass":
             s = y == 'tableware'
@@ -119,7 +119,6 @@ for dataset_idx, dataset_name in enumerate(datasets):
             # downsampled to 39 points (9.8% outliers)
             idx = np.random.choice(
                 y_mal.shape[0], 39, replace=False)
-
             X_mal2 = X_mal[idx, :]
             y_mal2 = y_mal[idx]
             X = np.concatenate((X_ben, X_mal2), axis=0)
@@ -128,8 +127,6 @@ for dataset_idx, dataset_name in enumerate(datasets):
         if dataset_name == "cardiotocography":
             s = y == '3'
             y = s.astype(int)
-
-    X = X.astype(float)
 
     print("Estimator processing...")
     for model_name, model in models:
