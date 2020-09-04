@@ -15,7 +15,7 @@ from ..base import clone, is_classifier
 from ._base import LinearClassifierMixin, SparseCoefMixin
 from ._base import make_dataset
 from ..base import BaseEstimator, RegressorMixin
-from ..utils import check_array, check_random_state
+from ..utils import check_array, check_random_state, check_X_y
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
 from ..utils.validation import check_is_fitted, _check_sample_weight
@@ -64,7 +64,6 @@ class _ValidationScoreCallback:
         est = self.estimator
         est.coef_ = coef.reshape(1, -1)
         est.intercept_ = np.atleast_1d(intercept)
-        est.n_features_in_ = coef.size
         return est.score(self.X_val, self.y_val, self.sample_weight_val)
 
 
@@ -488,12 +487,12 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
                      loss, learning_rate, max_iter,
                      classes, sample_weight,
                      coef_init, intercept_init):
-        first_call = _check_partial_fit_first_call(self, classes)
-        X, y = self._validate_data(
-            X, y, accept_sparse='csr', dtype=np.float64,
-            order="C", accept_large_sparse=False, reset=first_call)
+        X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64,
+                         order="C", accept_large_sparse=False)
 
         n_samples, n_features = X.shape
+
+        _check_partial_fit_first_call(self, classes)
 
         n_classes = self.classes_.shape[0]
 

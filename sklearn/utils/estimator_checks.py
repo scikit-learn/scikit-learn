@@ -3098,7 +3098,8 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
 
     def _construct_dataframe(X, columns):
         return pd.DataFrame(X, columns=columns)
-    _check_column_name_consistency(name, estimator_orig, _construct_dataframe)
+    _check_column_name_consistency(name, estimator_orig, _construct_dataframe,
+                                   "dataframe")
 
 
 def check_dataarray_column_name_consistency(name, estimator_orig):
@@ -3111,10 +3112,12 @@ def check_dataarray_column_name_consistency(name, estimator_orig):
     def _construct_xarray(X, columns):
         return xr.DataArray(X, dims=('index', 'columns'),
                             coords={'columns': columns})
-    _check_column_name_consistency(name, estimator_orig, _construct_xarray)
+    _check_column_name_consistency(name, estimator_orig, _construct_xarray,
+                                   "xarray")
 
 
-def _check_column_name_consistency(name, estimator_orig, construct_X):
+def _check_column_name_consistency(name, estimator_orig, construct_X,
+                                   array_name):
     estimator = clone(estimator_orig)
 
     tags = estimator._get_tags()
@@ -3123,10 +3126,6 @@ def _check_column_name_consistency(name, estimator_orig, construct_X):
                       " of type {}".format(name, tags["X_types"]),
                       SkipTestWarning)
         return
-
-    set_random_state(estimator)
-    if 'warm_start' in estimator.get_params():
-        estimator.set_params(warm_start=False)
 
     X_orig, _ = make_regression(random_state=0, n_features=10)
     X_orig = _enforce_estimator_tags_x(estimator, X_orig)
@@ -3144,7 +3143,13 @@ def _check_column_name_consistency(name, estimator_orig, construct_X):
     y = _enforce_estimator_tags_y(estimator, y)
 
     estimator.fit(X, y)
-    if not hasattr(estimator, 'feature_names_in_'):
+
+    if not hasattr(estimator, "feature_names_in_"):
+        raise ValueError("Estimator does not have a feature_names_in_ "
+                         f"attribute after fitting with a {array_name}")
+
+    if estimator.feature_names_in_ is None:
+        # no names to check
         return
 
     assert_array_equal(estimator.feature_names_in_, names)
@@ -3162,6 +3167,7 @@ def _check_column_name_consistency(name, estimator_orig, construct_X):
             continue
         # TODO In 0.26, this will be an error.
         assert_warns_message(FutureWarning, expected_msg, func, X_bad)
+
 
 # set of checks that are completely strict, i.e. they have no non-strict part
 _FULLY_STRICT_CHECKS = set([

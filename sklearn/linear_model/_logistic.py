@@ -1000,7 +1000,6 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
             log_reg.coef_ = w
             log_reg.intercept_ = 0.
 
-        log_reg.n_features_in_ = X_train.shape[1]
         if scoring is None:
             scores.append(log_reg.score(X_test, y_test))
         else:

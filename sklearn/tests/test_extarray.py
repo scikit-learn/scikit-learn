@@ -3,7 +3,7 @@ import pytest
 import numpy as np
 from numpy.testing import assert_array_equal
 
-from sklearn.utils._extarray import _get_feature_names
+from sklearn.utils._array_out import _get_feature_names
 
 
 def _construct_array(array_type, column_names):

@@ -29,7 +29,6 @@ from sklearn.decomposition import NMF
 from sklearn.utils.validation import check_non_negative, check_array
 from sklearn.linear_model._base import LinearClassifierMixin
 from sklearn.linear_model import LogisticRegression
-from sklearn.linear_model import LinearRegression
 from sklearn.svm import NuSVC
 from sklearn.utils import IS_PYPY
 from sklearn.utils._testing import SkipTest
@@ -41,6 +40,7 @@ from sklearn.utils.estimator_checks import (
     parametrize_with_checks,
     check_dataframe_column_names_consistency,
     check_dataarray_column_name_consistency)
+
 
 def test_all_estimator_no_base_class():
     # test that all_estimators doesn't find abstract classes.
@@ -272,17 +272,54 @@ def test_strict_mode_parametrize_with_checks(estimator, check):
     check(estimator)
 
 
-@pytest.mark.parametrize('estimator', [LogisticRegression(),
-                                       LinearRegression()],
-                         ids=_set_check_estimator_ids)
-def test_pandas_column_name_consistency(estimator):
-    name = estimator.__class__.__name__
-    check_dataframe_column_names_consistency(name, estimator)
+column_name_modules_to_ignore = {
+    'calibration',
+    'cluster',
+    'compose',
+    'covariance',
+    'cross_decomposition',
+    'decomposition',
+    'discriminant_analysis',
+    'ensemble',
+    'feature_extraction',
+    'feature_selection',
+    'gaussian_process',
+    'isotonic',
+    'kernel_approximation',
+    'kernel_ridge',
+    'linear_model',
+    'manifold',
+    'mixture',
+    'model_selection',
+    'multiclass',
+    'multioutput',
+    'naive_bayes',
+    'neighbors',
+    'neural_network',
+    'pipeline',
+    'preprocessing',
+    'random_projection',
+    'semi_supervised',
+    'svm',
+    'tree',
+}
+
+column_name_estimators = [
+    est for _, est in all_estimators()
+    if est.__module__.split('.')[1] not in column_name_modules_to_ignore]
 
 
-@pytest.mark.parametrize('estimator', [LogisticRegression(),
-                                       LinearRegression()],
-                         ids=_set_check_estimator_ids)
-def test_xarray_column_name_consistency(estimator):
-    name = estimator.__class__.__name__
-    check_dataarray_column_name_consistency(name, estimator)
+@pytest.mark.parametrize('Estimator', column_name_estimators,
+                         ids=_get_check_estimator_ids)
+def test_pandas_column_name_consistency(Estimator):
+    estimator = _construct_instance(Estimator)
+    _set_checking_parameters(estimator)
+    check_dataframe_column_names_consistency(Estimator.__name__, estimator)
+
+
+@pytest.mark.parametrize('Estimator', column_name_estimators,
+                         ids=_get_check_estimator_ids)
+def test_xarray_column_name_consistency(Estimator):
+    estimator = _construct_instance(Estimator)
+    _set_checking_parameters(estimator)
+    check_dataarray_column_name_consistency(Estimator.__name__, estimator)
