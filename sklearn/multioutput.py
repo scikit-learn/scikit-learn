@@ -101,6 +101,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin,
         self : object
         """
         X, y = check_X_y(X, y,
+                         force_all_finite=False,
                          multi_output=True,
                          accept_sparse=True)
 
@@ -153,7 +154,9 @@ class _MultiOutputEstimator(MetaEstimatorMixin,
             raise ValueError("The base estimator should implement"
                              " a fit method")
 
-        X, y = self._validate_data(X, y, multi_output=True, accept_sparse=True)
+        X, y = self._validate_data(X, y,
+                                   force_all_finite=False,
+                                   multi_output=True, accept_sparse=True)
 
         if is_classifier(self):
             check_classification_targets(y)
@@ -196,7 +199,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin,
             raise ValueError("The base estimator should implement"
                              " a predict method")
 
-        X = check_array(X, accept_sparse=True)
+        X = check_array(X, force_all_finite=False, accept_sparse=True)
 
         y = Parallel(n_jobs=self.n_jobs)(
             delayed(e.predict)(X)
@@ -453,6 +456,9 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         random_state = check_random_state(self.random_state)
         check_array(X, accept_sparse=True)
         self.order_ = self.order
+        if isinstance(self.order_, tuple):
+            self.order_ = np.array(self.order_)
+
         if self.order_ is None:
             self.order_ = np.array(range(Y.shape[1]))
         elif isinstance(self.order_, str):

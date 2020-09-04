@@ -381,7 +381,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                                                     sample_weight_train)
 
                 predictor = grower.make_predictor(
-                    bin_thresholds=self._bin_mapper.bin_thresholds_
+                    num_thresholds=self._bin_mapper.bin_thresholds_
                 )
                 predictors[-1].append(predictor)
 
@@ -968,6 +968,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         This method allows monitoring (i.e. determine error on testing set)
         after each stage.
 
+        .. versionadded:: 0.24
+
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
@@ -1192,6 +1194,8 @@ class HistGradientBoostingClassifier(ClassifierMixin,
 
         This method allows monitoring (i.e. determine error on testing set)
         after each stage.
+
+        .. versionadded:: 0.24
 
         Parameters
         ----------

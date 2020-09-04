@@ -70,7 +70,7 @@ X_train, X_test, y_train, y_test = train_test_split(
 # Multi-layer perceptron
 # ......................
 #
-# Let's fit a :class:`sklearn.neural_network.MLPRegressor` and compute
+# Let's fit a :class:`~sklearn.neural_network.MLPRegressor` and compute
 # single-variable partial dependence plots.
 
 from time import time
@@ -131,7 +131,7 @@ display.figure_.subplots_adjust(hspace=0.3)
 # Gradient boosting
 # .................
 #
-# Let's now fit a :class:`sklearn.ensemble.HistGradientBoostingRegressor` and
+# Let's now fit a :class:`~sklearn.ensemble.HistGradientBoostingRegressor` and
 # compute the partial dependence on the same features.
 
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa

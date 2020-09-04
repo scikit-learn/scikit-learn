@@ -64,6 +64,9 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         to select. If float between 0 and 1, it is the fraction of features to
         select.
 
+        .. versionchanged:: 0.24
+           Added float values for fractions.
+
     step : int or float, default=1
         If greater than or equal to 1, then ``step`` corresponds to the
         (integer) number of features to remove at each iteration.
@@ -132,6 +135,10 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     --------
     RFECV : Recursive feature elimination with built-in cross-validated
         selection of the best number of features
+    SelectFromModel : Feature selection based on thresholds of importance
+        weights.
+    SequentialFeatureSelector : Sequential cross-validation based feature
+        selection. Does not rely on importance weights.
 
     References
     ----------

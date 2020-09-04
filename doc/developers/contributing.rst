@@ -4,6 +4,8 @@
 Contributing
 ============
 
+.. currentmodule:: sklearn
+
 This project is a community effort, and everyone is welcome to
 contribute.
 
@@ -55,11 +57,11 @@ find a typo in the documentation, or have made improvements, do not hesitate to
 send an email to the mailing list or preferably submit a GitHub pull request.
 Full documentation can be found under the doc/ directory.
 
-But there are many other ways to help. In particular answering queries on the
-`issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_,
-investigating bugs, and :ref:`reviewing other developers' pull requests
-<code_review>` are very valuable contributions that decrease the burden on the
-project maintainers.
+But there are many other ways to help. In particular helping to
+:ref:`improve, triage, and investigate issues <bug_triaging>` and
+:ref:`reviewing other developers' pull requests <code_review>` are very
+valuable contributions that decrease the burden on the project
+maintainers.
 
 Another way to contribute is to report issues you're facing, and give a "thumbs
 up" on issues that others reported and that are relevant to you.  It also helps
@@ -172,6 +174,9 @@ feedback:
   appropriate code blocks**.  See `Creating and highlighting code blocks
   <https://help.github.com/articles/creating-and-highlighting-code-blocks>`_
   for more details.
+
+If you want to help curate issues, read :ref:`the following
+<bug_triaging>`.
 
 Contributing code
 =================
@@ -432,7 +437,7 @@ You can check for common programming errors with the following tools:
   <https://pandas.pydata.org/pandas-docs/stable/development/contributing.html#type-hints>`_
   for style guidelines. Whether you add type annotation or not::
 
-    mypy --ignore-missing-import sklearn
+    mypy sklearn
 
   must not produce new errors in your pull request. Using `# type: ignore`
   annotation can be a workaround for a few cases that are not supported by
@@ -815,7 +820,7 @@ To test code coverage, you need to install the `coverage
 Monitoring performance
 ======================
 
-*This section is heavily inspired from the* `pandas documentation 
+*This section is heavily inspired from the* `pandas documentation
 <https://pandas.pydata.org/docs/development/contributing.html#running-the-performance-test-suite>`_.
 
 When proposing changes to the existing code base, it's important to make sure
@@ -1162,17 +1167,17 @@ make this task easier and faster (in no particular order).
   is performed, especially at the beginning of the :term:`fit` methods.
   Sometimes, only a very small portion of the code is doing the actual job.
   For example looking at the ``fit()`` method of
-  :class:`sklearn.linear_model.LinearRegression`, what you're looking for
+  :class:`~linear_model.LinearRegression`, what you're looking for
   might just be the call the ``scipy.linalg.lstsq``, but it is buried into
   multiple lines of input checking and the handling of different kinds of
   parameters.
 - Due to the use of `Inheritance
   <https://en.wikipedia.org/wiki/Inheritance_(object-oriented_programming)>`_,
   some methods may be implemented in parent classes. All estimators inherit
-  at least from :class:`BaseEstimator <sklearn.base.BaseEstimator>`, and
-  from a ``Mixin`` class (e.g. :class:`ClassifierMixin
-  <sklearn.base.ClassifierMixin>`) that enables default behaviour depending
-  on the nature of the estimator (classifier, regressor, transformer, etc.).
+  at least from :class:`~base.BaseEstimator`, and
+  from a ``Mixin`` class (e.g. :class:`~base.ClassifierMixin`) that enables default
+  behaviour depending on the nature of the estimator (classifier, regressor,
+  transformer, etc.).
 - Sometimes, reading the tests for a given function will give you an idea of
   what its intended purpose is. You can use ``git grep`` (see below) to find
   all the tests written for a function. Most tests for a specific
