@@ -4,12 +4,14 @@
 # enhancement of searching for the longest decreasing subsequence to
 # pool at each step.
 #
-# cython: language_level=3, boundscheck=False, wraparound=False, cdivision=True
+# cython: boundscheck=False, wraparound=False, cdivision=True
 
 import numpy as np
 cimport numpy as np
 cimport cython
 from cython cimport floating
+
+np.import_array()
 
 
 def _inplace_contiguous_isotonic_regression(floating[::1] y, floating[::1] w):

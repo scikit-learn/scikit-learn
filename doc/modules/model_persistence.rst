@@ -13,24 +13,21 @@ An alternative to pickling is to export the model to another format using one
 of the model export tools listed under :ref:`related_projects`. Unlike
 pickling, once exported you cannot recover the full Scikit-learn estimator
 object, but you can deploy the model for prediction, usually by using tools
-supporting open model interchange formats such as `ONNX`_ or `PMML`_.
+supporting open model interchange formats such as `ONNX <https://onnx.ai/>`_ or
+`PMML <http://dmg.org/pmml/v4-4/GeneralStructure.html>`_.
 
 Persistence example
 -------------------
 
 It is possible to save a model in scikit-learn by using Python's built-in
-persistence model, namely `pickle <https://docs.python.org/2/library/pickle.html>`_::
+persistence model, namely `pickle <https://docs.python.org/3/library/pickle.html>`_::
 
   >>> from sklearn import svm
   >>> from sklearn import datasets
-  >>> clf = svm.SVC(gamma='scale')
-  >>> iris = datasets.load_iris()
-  >>> X, y = iris.data, iris.target
-  >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-  SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-      decision_function_shape='ovr', degree=3, gamma='scale', kernel='rbf',
-      max_iter=-1, probability=False, random_state=None, shrinking=True,
-      tol=0.001, verbose=False)
+  >>> clf = svm.SVC()
+  >>> X, y= datasets.load_iris(return_X_y=True)
+  >>> clf.fit(X, y)
+  SVC()
 
   >>> import pickle
   >>> s = pickle.dumps(clf)

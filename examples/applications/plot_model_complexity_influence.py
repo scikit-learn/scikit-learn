@@ -6,69 +6,106 @@ Model Complexity Influence
 Demonstrate how model complexity influences both prediction accuracy and
 computational performance.
 
-The dataset is the Boston Housing dataset (resp. 20 Newsgroups) for
-regression (resp. classification).
+We will be using two datasets:
+    - :ref:`diabetes_dataset` for regression.
+      This dataset consists of 10 measurements taken from diabetes patients.
+      The task is to predict disease progression;
+    - :ref:`20newsgroups_dataset` for classification. This dataset consists of
+      newsgroup posts. The task is to predict on which topic (out of 20 topics)
+      the post is written about.
 
-For each class of models we make the model complexity vary through the choice
-of relevant model parameters and measure the influence on both computational
-performance (latency) and predictive power (MSE or Hamming Loss).
+We will model the complexity influence on three different estimators:
+    - :class:`~sklearn.linear_model.SGDClassifier` (for classification data)
+      which implements stochastic gradient descent learning;
+
+    - :class:`~sklearn.svm.NuSVR` (for regression data) which implements
+      Nu support vector regression;
+
+    - :class:`~sklearn.ensemble.GradientBoostingRegressor` (for regression
+      data) which builds an additive model in a forward stage-wise fashion.
+
+
+We make the model complexity vary through the choice of relevant model
+parameters in each of our selected models. Next, we will measure the influence
+on both computational performance (latency) and predictive power (MSE or
+Hamming Loss).
+
 """
 
 print(__doc__)
 
-# Author: Eustache Diemert <eustache@diemert.fr>
+# Authors: Eustache Diemert <eustache@diemert.fr>
+#          Maria Telenczuk <https://github.com/maikia>
+#          Guillaume Lemaitre <g.lemaitre58@gmail.com>
 # License: BSD 3 clause
 
 import time
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1.parasite_axes import host_subplot
-from mpl_toolkits.axisartist.axislines import Axes
-from scipy.sparse.csr import csr_matrix
 
 from sklearn import datasets
 from sklearn.utils import shuffle
 from sklearn.metrics import mean_squared_error
-from sklearn.svm.classes import NuSVR
-from sklearn.ensemble.gradient_boosting import GradientBoostingRegressor
-from sklearn.linear_model.stochastic_gradient import SGDClassifier
+from sklearn.svm import NuSVR
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import hamming_loss
-
-# #############################################################################
-# Routines
 
 
 # Initialize random generator
 np.random.seed(0)
 
+##############################################################################
+# Load the data
+# -------------
+#
+# First we load both datasets.
+#
+# .. note:: We are using
+#    :func:`~sklearn.datasets.fetch_20newsgroups_vectorized` to download 20
+#    newsgroups dataset. It returns ready-to-use features.
+#
+# .. note:: ``X`` of the 20 newsgroups dataset is a sparse matrix while ``X``
+#    of diabetes dataset is a numpy array.
+#
 
-def generate_data(case, sparse=False):
+
+def generate_data(case):
     """Generate regression/classification data."""
-    bunch = None
     if case == 'regression':
-        bunch = datasets.load_boston()
+        X, y = datasets.load_diabetes(return_X_y=True)
     elif case == 'classification':
-        bunch = datasets.fetch_20newsgroups_vectorized(subset='all')
-    X, y = shuffle(bunch.data, bunch.target)
+        X, y = datasets.fetch_20newsgroups_vectorized(subset='all',
+                                                      return_X_y=True)
+    X, y = shuffle(X, y)
     offset = int(X.shape[0] * 0.8)
     X_train, y_train = X[:offset], y[:offset]
     X_test, y_test = X[offset:], y[offset:]
-    if sparse:
-        X_train = csr_matrix(X_train)
-        X_test = csr_matrix(X_test)
-    else:
-        X_train = np.array(X_train)
-        X_test = np.array(X_test)
-    y_test = np.array(y_test)
-    y_train = np.array(y_train)
+
     data = {'X_train': X_train, 'X_test': X_test, 'y_train': y_train,
             'y_test': y_test}
     return data
 
 
+regression_data = generate_data('regression')
+classification_data = generate_data('classification')
+
+
+##############################################################################
+# Benchmark influence
+# -------------------
+# Next, we can calculate the influence of the parameters on the given
+# estimator. In each round, we will set the estimator with the new value of
+# ``changing_param`` and we will be collecting the prediction times, prediction
+# performance and complexities to see how those changes affect the estimator.
+# We will calculate the complexity using ``complexity_computer`` passed as a
+# parameter.
+#
+
+
 def benchmark_influence(conf):
     """
-    Benchmark influence of :changing_param: on both MSE and latency.
+    Benchmark influence of `changing_param` on both MSE and latency.
     """
     prediction_times = []
     prediction_powers = []
@@ -76,6 +113,7 @@ def benchmark_influence(conf):
     for param_value in conf['changing_param_values']:
         conf['tuned_params'][conf['changing_param']] = param_value
         estimator = conf['estimator'](**conf['tuned_params'])
+
         print("Benchmarking %s" % estimator)
         estimator.fit(conf['data']['X_train'], conf['data']['y_train'])
         conf['postfit_hook'](estimator)
@@ -95,37 +133,25 @@ def benchmark_influence(conf):
     return prediction_powers, prediction_times, complexities
 
 
-def plot_influence(conf, mse_values, prediction_times, complexities):
-    """
-    Plot influence of model complexity on both accuracy and latency.
-    """
-    plt.figure(figsize=(12, 6))
-    host = host_subplot(111, axes_class=Axes)
-    plt.subplots_adjust(right=0.75)
-    par1 = host.twinx()
-    host.set_xlabel('Model Complexity (%s)' % conf['complexity_label'])
-    y1_label = conf['prediction_performance_label']
-    y2_label = "Time (s)"
-    host.set_ylabel(y1_label)
-    par1.set_ylabel(y2_label)
-    p1, = host.plot(complexities, mse_values, 'b-', label="prediction error")
-    p2, = par1.plot(complexities, prediction_times, 'r-',
-                    label="latency")
-    host.legend(loc='upper right')
-    host.axis["left"].label.set_color(p1.get_color())
-    par1.axis["right"].label.set_color(p2.get_color())
-    plt.title('Influence of Model Complexity - %s' % conf['estimator'].__name__)
-    plt.show()
-
+##############################################################################
+# Choose parameters
+# -----------------
+#
+# We choose the parameters for each of our estimators by making
+# a dictionary with all the necessary values.
+# ``changing_param`` is the name of the parameter which will vary in each
+# estimator.
+# Complexity will be defined by the ``complexity_label`` and calculated using
+# `complexity_computer`.
+# Also note that depending on the estimator type we are passing
+# different data.
+#
 
 def _count_nonzero_coefficients(estimator):
     a = estimator.coef_.toarray()
     return np.count_nonzero(a)
 
-# #############################################################################
-# Main code
-regression_data = generate_data('regression')
-classification_data = generate_data('classification', sparse=True)
+
 configurations = [
     {'estimator': SGDClassifier,
      'tuned_params': {'penalty': 'elasticnet', 'alpha': 0.001, 'loss':
@@ -162,8 +188,81 @@ configurations = [
      'prediction_performance_label': 'MSE',
      'n_samples': 30},
 ]
+
+
+##############################################################################
+# Run the code and plot the results
+# ---------------------------------
+#
+# We defined all the functions required to run our benchmark. Now, we will loop
+# over the different configurations that we defined previously. Subsequently,
+# we can analyze the plots obtained from the benchmark:
+# Relaxing the `L1` penalty in the SGD classifier reduces the prediction error
+# but leads to an increase in the training time.
+# We can draw a similar analysis regarding the training time which increases
+# with the number of support vectors with a Nu-SVR. However, we observed that
+# there is an optimal number of support vectors which reduces the prediction
+# error. Indeed, too few support vectors lead to an under-fitted model while
+# too many support vectors lead to an over-fitted model.
+# The exact same conclusion can be drawn for the gradient-boosting model. The
+# only the difference with the Nu-SVR is that having too many trees in the
+# ensemble is not as detrimental.
+#
+
+def plot_influence(conf, mse_values, prediction_times, complexities):
+    """
+    Plot influence of model complexity on both accuracy and latency.
+    """
+
+    fig = plt.figure()
+    fig.subplots_adjust(right=0.75)
+
+    # first axes (prediction error)
+    ax1 = fig.add_subplot(111)
+    line1 = ax1.plot(complexities, mse_values, c='tab:blue', ls='-')[0]
+    ax1.set_xlabel('Model Complexity (%s)' % conf['complexity_label'])
+    y1_label = conf['prediction_performance_label']
+    ax1.set_ylabel(y1_label)
+
+    ax1.spines['left'].set_color(line1.get_color())
+    ax1.yaxis.label.set_color(line1.get_color())
+    ax1.tick_params(axis='y', colors=line1.get_color())
+
+    # second axes (latency)
+    ax2 = fig.add_subplot(111, sharex=ax1, frameon=False)
+    line2 = ax2.plot(complexities, prediction_times, c='tab:orange', ls='-')[0]
+    ax2.yaxis.tick_right()
+    ax2.yaxis.set_label_position("right")
+    y2_label = "Time (s)"
+    ax2.set_ylabel(y2_label)
+    ax1.spines['right'].set_color(line2.get_color())
+    ax2.yaxis.label.set_color(line2.get_color())
+    ax2.tick_params(axis='y', colors=line2.get_color())
+
+    plt.legend((line1, line2), ("prediction error", "latency"),
+               loc='upper right')
+
+    plt.title("Influence of varying '%s' on %s" % (conf['changing_param'],
+                                                   conf['estimator'].__name__))
+
+
 for conf in configurations:
     prediction_performances, prediction_times, complexities = \
         benchmark_influence(conf)
     plot_influence(conf, prediction_performances, prediction_times,
                    complexities)
+plt.show()
+
+
+##############################################################################
+# Conclusion
+# ----------
+#
+# As a conclusion, we can deduce the following insights:
+#
+# * a model which is more complex (or expressive) will require a larger
+#   training time;
+# * a more complex model does not guarantee to reduce the prediction error.
+#
+# These aspects are related to model generalization and avoiding model
+# under-fitting or over-fitting.

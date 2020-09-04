@@ -4,7 +4,7 @@ Parameter estimation using grid search with cross-validation
 ============================================================
 
 This examples shows how a classifier is optimized by cross-validation,
-which is done using the :class:`sklearn.model_selection.GridSearchCV` object
+which is done using the :class:`~sklearn.model_selection.GridSearchCV` object
 on a development set that comprises only half of the available labeled data.
 
 The performance of the selected hyper-parameters and trained model is
@@ -47,8 +47,9 @@ for score in scores:
     print("# Tuning hyper-parameters for %s" % score)
     print()
 
-    clf = GridSearchCV(SVC(), tuned_parameters, cv=5,
-                       scoring='%s_macro' % score)
+    clf = GridSearchCV(
+        SVC(), tuned_parameters, scoring='%s_macro' % score
+    )
     clf.fit(X_train, y_train)
 
     print("Best parameters set found on development set:")

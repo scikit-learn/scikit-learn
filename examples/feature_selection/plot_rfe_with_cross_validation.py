@@ -23,8 +23,11 @@ X, y = make_classification(n_samples=1000, n_features=25, n_informative=3,
 svc = SVC(kernel="linear")
 # The "accuracy" scoring is proportional to the number of correct
 # classifications
+
+min_features_to_select = 1  # Minimum number of features to consider
 rfecv = RFECV(estimator=svc, step=1, cv=StratifiedKFold(2),
-              scoring='accuracy')
+              scoring='accuracy',
+              min_features_to_select=min_features_to_select)
 rfecv.fit(X, y)
 
 print("Optimal number of features : %d" % rfecv.n_features_)
@@ -33,5 +36,7 @@ print("Optimal number of features : %d" % rfecv.n_features_)
 plt.figure()
 plt.xlabel("Number of features selected")
 plt.ylabel("Cross validation score (nb of correct classifications)")
-plt.plot(range(1, len(rfecv.grid_scores_) + 1), rfecv.grid_scores_)
+plt.plot(range(min_features_to_select,
+               len(rfecv.grid_scores_) + min_features_to_select),
+         rfecv.grid_scores_)
 plt.show()
