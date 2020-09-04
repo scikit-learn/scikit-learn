@@ -13,6 +13,18 @@ from sklearn.decomposition import NMF, MiniBatchNMF, non_negative_factorization
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 
+
+def get_optimal_w(X, H):
+    W, _, _ = non_negative_factorization(
+        X=X, W=None, H=H,
+        n_components=n_components,
+        init='custom', update_H=False, solver='mu',
+        beta_loss=beta_loss, tol=1e-4, max_iter=200, alpha=0.,
+        l1_ratio=0., regularization=None, random_state=None,
+        verbose=0, shuffle=False)
+    return W
+
+
 n_components = 10
 n_features = 500
 beta_loss = 'kullback-leibler'
@@ -60,17 +72,6 @@ X = X[n_test:n_train + n_test, :]
 max_iter_nmf = [1, 5, 10, 30, 50, 100]
 n_iter_minibatch_nmf = 50
 
-
-def get_optimal_w(X, H):
-    W, _, _ = non_negative_factorization(
-        X=X, W=None, H=H,
-        n_components=n_components,
-        init='custom', update_H=False, solver='mu',
-        beta_loss=beta_loss, tol=1e-4, max_iter=200, alpha=0.,
-        l1_ratio=0., regularization=None, random_state=None,
-        verbose=0, shuffle=False)
-    return W
-
 fig, ax = plt.subplots()
 plt.xscale('log')
 fontsize = 10
@@ -99,13 +100,13 @@ for batch_size in batch_sizes:
                        f'{batch_size= }'
                        f' {forget_factor= }'))
         handles.append(mlines.Line2D([], [], color=color[c], marker='o'))
- 
+
         for n_iter in range(n_iter_minibatch_nmf):
 
             for j, slice in enumerate(
                 gen_batches(n=n_train,
                             batch_size=batch_size)
-                ):
+                           ):
                 t0 = time()
                 minibatch_nmf.partial_fit(X[slice])
                 tf = time() - t0
