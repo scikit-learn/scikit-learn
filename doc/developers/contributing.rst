@@ -908,6 +908,8 @@ can run for a provided list of values for the `n_jobs` parameter.
 More information on how to write a benchmark and how to use asv can be found in
 the `asv documentation <https://asv.readthedocs.io/en/latest/index.html>`_.
 
+.. _issue_tracker_tags:
+
 Issue Tracker Tags
 ==================
 
