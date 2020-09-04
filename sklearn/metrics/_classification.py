@@ -170,7 +170,7 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
         The best performance is 1 with ``normalize == True`` and the number
         of samples with ``normalize == False``.
 
-    See also
+    See Also
     --------
     jaccard_score, hamming_loss, zero_one_loss
 

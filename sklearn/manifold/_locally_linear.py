@@ -99,7 +99,7 @@ def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3, n_jobs=None):
     A : sparse matrix in CSR format, shape = [n_samples, n_samples]
         A[i, j] is assigned the weight of edge that connects i to j.
 
-    See also
+    See Also
     --------
     sklearn.neighbors.kneighbors_graph
     sklearn.neighbors.radius_neighbors_graph

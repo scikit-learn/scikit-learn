@@ -150,9 +150,9 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
         :ref:`Pipeline <pipeline>` in order to prevent most risks of data
         leaking: `pipe = make_pipeline(StandardScaler(), LogisticRegression())`.
 
-    See also
+    See Also
     --------
-    StandardScaler: Performs scaling to unit variance using the``Transformer``
+    StandardScaler : Performs scaling to unit variance using the Transformer
         API (e.g. as part of a preprocessing
         :class:`~sklearn.pipeline.Pipeline`).
 
@@ -303,9 +303,9 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
     >>> print(scaler.transform([[2, 2]]))
     [[1.5 0. ]]
 
-    See also
+    See Also
     --------
-    minmax_scale: Equivalent function without the estimator API.
+    minmax_scale : Equivalent function without the estimator API.
 
     Notes
     -----
@@ -527,9 +527,9 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
         :ref:`Pipeline <pipeline>` in order to prevent most risks of data
         leaking: `pipe = make_pipeline(MinMaxScaler(), LogisticRegression())`.
 
-    See also
+    See Also
     --------
-    MinMaxScaler: Performs scaling to a given range using the``Transformer``
+    MinMaxScaler : Performs scaling to a given range using the Transformer
         API (e.g. as part of a preprocessing
         :class:`~sklearn.pipeline.Pipeline`).
 
@@ -654,12 +654,12 @@ class StandardScaler(TransformerMixin, BaseEstimator):
     >>> print(scaler.transform([[2, 2]]))
     [[3. 3.]]
 
-    See also
+    See Also
     --------
-    scale: Equivalent function without the estimator API.
+    scale : Equivalent function without the estimator API.
 
-    :class:`~sklearn.decomposition.PCA`: Further removes the linear correlation
-        across features with 'whiten=True'.
+    :class:`~sklearn.decomposition.PCA` : Further removes the linear 
+        correlation across features with 'whiten=True'.
 
     Notes
     -----
@@ -954,9 +954,9 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
            [ 1. ,  0. ,  0. ],
            [ 0. ,  1. , -0.5]])
 
-    See also
+    See Also
     --------
-    maxabs_scale: Equivalent function without the estimator API.
+    maxabs_scale : Equivalent function without the estimator API.
 
     Notes
     -----
@@ -1142,10 +1142,10 @@ def maxabs_scale(X, *, axis=0, copy=True):
         :ref:`Pipeline <pipeline>` in order to prevent most risks of data
         leaking: `pipe = make_pipeline(MaxAbsScaler(), LogisticRegression())`.
 
-    See also
+    See Also
     --------
-    MaxAbsScaler: Performs scaling to the [-1, 1] range using
-        the``Transformer`` API (e.g. as part of a preprocessing
+    MaxAbsScaler : Performs scaling to the [-1, 1] range using
+        the Transformer API (e.g. as part of a preprocessing
         :class:`~sklearn.pipeline.Pipeline`).
 
     Notes
@@ -1261,9 +1261,9 @@ class RobustScaler(TransformerMixin, BaseEstimator):
            [-1. ,  0. ,  0.4],
            [ 1. ,  0. , -1.6]])
 
-    See also
+    See Also
     --------
-    robust_scale: Equivalent function without the estimator API.
+    robust_scale : Equivalent function without the estimator API.
 
     :class:`~sklearn.decomposition.PCA`
         Further removes the linear correlation across features with
@@ -1492,9 +1492,9 @@ def robust_scale(X, *, axis=0, with_centering=True, with_scaling=True,
         :ref:`Pipeline <pipeline>` in order to prevent most risks of data
         leaking: `pipe = make_pipeline(RobustScaler(), LogisticRegression())`.
 
-    See also
+    See Also
     --------
-    RobustScaler: Performs centering and scaling using the ``Transformer`` API
+    RobustScaler : Performs centering and scaling using the Transformer API
         (e.g. as part of a preprocessing :class:`~sklearn.pipeline.Pipeline`).
     """
     X = check_array(X, accept_sparse=('csr', 'csc'), copy=False,
@@ -1840,9 +1840,9 @@ def normalize(X, norm='l2', *, axis=1, copy=True, return_norm=False):
         When X is sparse, a NotImplementedError will be raised
         for norm 'l1' or 'l2'.
 
-    See also
+    See Also
     --------
-    Normalizer: Performs normalization using the ``Transformer`` API
+    Normalizer : Performs normalization using the Transformer API
         (e.g. as part of a preprocessing :class:`~sklearn.pipeline.Pipeline`).
 
     Notes
@@ -1955,9 +1955,9 @@ class Normalizer(TransformerMixin, BaseEstimator):
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
 
-    See also
+    See Also
     --------
-    normalize: Equivalent function without the estimator API.
+    normalize : Equivalent function without the estimator API.
     """
 
     @_deprecate_positional_args
@@ -2039,9 +2039,9 @@ def binarize(X, *, threshold=0.0, copy=True):
     X_tr : {ndarray, sparse matrix} of shape (n_samples, n_features)
         The transformed data.
 
-    See also
+    See Also
     --------
-    Binarizer: Performs binarization using the ``Transformer`` API
+    Binarizer : Performs binarization using the Transformer API
         (e.g. as part of a preprocessing :class:`~sklearn.pipeline.Pipeline`).
     """
     X = check_array(X, accept_sparse=['csr', 'csc'], copy=copy)
@@ -2111,9 +2111,9 @@ class Binarizer(TransformerMixin, BaseEstimator):
     This estimator is stateless (besides constructor parameters), the
     fit method does nothing but is useful when used in a pipeline.
 
-    See also
+    See Also
     --------
-    binarize: Equivalent function without the estimator API.
+    binarize : Equivalent function without the estimator API.
     """
 
     @_deprecate_positional_args
@@ -2410,7 +2410,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
     >>> qt.fit_transform(X)
     array([...])
 
-    See also
+    See Also
     --------
     quantile_transform : Equivalent function without the estimator API.
     PowerTransformer : Perform mapping to a normal distribution using a power
@@ -2854,10 +2854,10 @@ def quantile_transform(X, *, axis=0, n_quantiles=1000,
     >>> quantile_transform(X, n_quantiles=10, random_state=0, copy=True)
     array([...])
 
-    See also
+    See Also
     --------
     QuantileTransformer : Performs quantile-based scaling using the
-        ``Transformer`` API (e.g. as part of a preprocessing
+        Transformer API (e.g. as part of a preprocessing
         :class:`~sklearn.pipeline.Pipeline`).
     power_transform : Maps data to a normal distribution using a
         power transformation.
@@ -2961,7 +2961,7 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
      [ 0.209... -0.707...]
      [ 1.106...  1.414...]]
 
-    See also
+    See Also
     --------
     power_transform : Equivalent function without the estimator API.
 
@@ -3330,10 +3330,10 @@ def power_transform(X, method='yeo-johnson', *, standardize=True, copy=True):
         leaking, e.g.: `pipe = make_pipeline(PowerTransformer(),
         LogisticRegression())`.
 
-    See also
+    See Also
     --------
     PowerTransformer : Equivalent transformation with the
-        ``Transformer`` API (e.g. as part of a preprocessing
+        Transformer API (e.g. as part of a preprocessing
         :class:`~sklearn.pipeline.Pipeline`).
 
     quantile_transform : Maps data to a standard normal distribution with
