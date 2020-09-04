@@ -39,8 +39,6 @@ class TreeNode:
         The sum of the gradients of the samples at the node.
     sum_hessians : float
         The sum of the hessians of the samples at the node.
-    parent : TreeNode, default=None
-        The parent of the node. None for root.
 
     Attributes
     ----------
@@ -52,8 +50,6 @@ class TreeNode:
         The sum of the gradients of the samples at the node.
     sum_hessians : float
         The sum of the hessians of the samples at the node.
-    parent : TreeNode or None
-        The parent of the node. None for root.
     split_info : SplitInfo or None
         The result of the split evaluation.
     left_child : TreeNode or None
@@ -73,8 +69,6 @@ class TreeNode:
     left_child = None
     right_child = None
     histograms = None
-    sibling = None
-    parent = None
 
     # start and stop indices of the node in the splitter.partition
     # array. Concretely,
@@ -88,13 +82,12 @@ class TreeNode:
     partition_stop = 0
 
     def __init__(self, depth, sample_indices, sum_gradients,
-                 sum_hessians, parent=None, value=None):
+                 sum_hessians, value=None):
         self.depth = depth
         self.sample_indices = sample_indices
         self.n_samples = sample_indices.shape[0]
         self.sum_gradients = sum_gradients
         self.sum_hessians = sum_hessians
-        self.parent = parent
         self.value = value
         self.is_leaf = False
         self.set_children_bounds(float('-inf'), float('+inf'))
@@ -388,19 +381,15 @@ class TreeGrower:
                                    sample_indices_left,
                                    node.split_info.sum_gradient_left,
                                    node.split_info.sum_hessian_left,
-                                   parent=node,
                                    value=node.split_info.value_left,
                                    )
         right_child_node = TreeNode(depth,
                                     sample_indices_right,
                                     node.split_info.sum_gradient_right,
                                     node.split_info.sum_hessian_right,
-                                    parent=node,
                                     value=node.split_info.value_right,
                                     )
 
-        left_child_node.sibling = right_child_node
-        right_child_node.sibling = left_child_node
         node.right_child = right_child_node
         node.left_child = left_child_node
 
@@ -491,6 +480,16 @@ class TreeGrower:
             if should_split_right:
                 self._compute_best_split_and_push(right_child_node)
             self.total_find_split_time += time() - tic
+
+            # Release memory used by histograms as they are no longer needed
+            # for leaf nodes since they won't be split.
+            for child in (left_child_node, right_child_node):
+                if child.is_leaf:
+                    del child.histograms
+
+        # Release memory used by histograms as they are no longer needed for
+        # internal nodes once children histograms have been computed.
+        del node.histograms
 
         return left_child_node, right_child_node
 
