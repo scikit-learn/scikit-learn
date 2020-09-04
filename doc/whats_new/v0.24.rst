@@ -199,7 +199,7 @@ Changelog
   :class:`ensemble.HistGradientBoostingRegressor` and
   :class:`ensemble.HistGradientBoostingClassifier` which results in speed
   improvement for problems that build a lot of nodes.
-   :pr:`18341` by `Olivier Grisel`_, `Nicolas Hug`_, `Thomas Fan`_.
+  :pr:`18341` by `Olivier Grisel`_, `Nicolas Hug`_, `Thomas Fan`_.
 
 - |API|: The parameter ``n_classes_`` is now deprecated in
   :class:`ensemble.GradientBoostingRegressor` and returns `1`.
