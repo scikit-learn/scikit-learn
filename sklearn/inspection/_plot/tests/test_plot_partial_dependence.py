@@ -11,6 +11,9 @@ from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.linear_model import LinearRegression
 from sklearn.utils._testing import _convert_container
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.pipeline import make_pipeline
 
 from sklearn.inspection import plot_partial_dependence
 
@@ -476,7 +479,25 @@ dummy_classification_data = make_classification(random_state=0)
      (dummy_classification_data, {'features': [1], 'subsample': -1},
       'When an integer, subsample=-1 should be positive.'),
      (dummy_classification_data, {'features': [1], 'subsample': 1.2},
-      r'When a floating-point, subsample=1.2 should be in the \(0, 1\) range')]
+      r'When a floating-point, subsample=1.2 should be in the \(0, 1\) range'),
+     (dummy_classification_data,
+      {'features': [1, 2], 'is_categorical': [True]},
+      'Parameter is_categorical should be the same'),
+     (dummy_classification_data,
+      {'features': [(1, 2)], 'is_categorical': [True]},
+      'Parameter is_categorical should be the same'),
+     (dummy_classification_data,
+      {'features': [1], 'is_categorical': [1]},
+      'Each entry in is_categorical must be either a boolean'),
+     (dummy_classification_data,
+      {'features': [1], 'is_categorical': [(True, True, True)]},
+      'Each entry in is_categorical must be either a boolean'),
+     (dummy_classification_data,
+      {'features': [(1, 2)], 'is_categorical': [(True, False)]},
+      'Contour plots are not supported for'),
+     (dummy_classification_data,
+      {'features': [1], 'is_categorical': [True], 'kind': 'individual'},
+      'It is not possible to display individual effects')]
 )
 def test_plot_partial_dependence_error(pyplot, data, params, err_msg):
     X, y = data
@@ -515,3 +536,29 @@ def test_plot_partial_dependence_does_not_override_ylabel(pyplot, clf_diabetes,
 
     assert axes[0].get_ylabel() == "Hello world"
     assert axes[1].get_ylabel() == "Partial dependence"
+
+
+def test_plot_partial_dependence_with_categorical(pyplot):
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame(['A', 'B', 'C', 'A', 'B'], columns=['col'])
+    y = np.array([1.2, .5, .1, 1.3, .45]).T
+
+    ct = ColumnTransformer([('e', OneHotEncoder(), ['col'])])
+    lr = LinearRegression()
+    pipe = make_pipeline(ct, lr)
+    pipe.fit(X, y)
+
+    disp = plot_partial_dependence(pipe, X, features=['col'],
+                                   is_categorical=[True])
+
+    assert disp.figure_ is pyplot.gcf()
+    assert disp.bars_.shape == (1, 1)
+    assert disp.bars_[0][0] is not None
+    assert disp.lines_.shape == (1, 1)
+    assert disp.lines_[0][0] is None
+    assert disp.contours_.shape == (1, 1)
+    assert disp.contours_[0][0] is None
+    assert disp.deciles_vlines_.shape == (1, 1)
+    assert disp.deciles_vlines_[0][0] is None
+    assert disp.deciles_hlines_.shape == (1, 1)
+    assert disp.deciles_hlines_[0][0] is None
