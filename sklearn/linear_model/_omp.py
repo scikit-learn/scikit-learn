@@ -330,7 +330,7 @@ def orthogonal_mp(X, y, *, n_nonzero_coefs=None, tol=None, precompute=False,
     OrthogonalMatchingPursuit
     orthogonal_mp_gram
     lars_path
-    decomposition.sparse_encode
+    sklearn.decomposition.sparse_encode
 
     Notes
     -----
@@ -471,7 +471,7 @@ def orthogonal_mp_gram(Gram, Xy, *, n_nonzero_coefs=None, tol=None,
     OrthogonalMatchingPursuit
     orthogonal_mp
     lars_path
-    decomposition.sparse_encode
+    sklearn.decomposition.sparse_encode
 
     Notes
     -----
@@ -617,7 +617,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
     lars_path
     Lars
     LassoLars
-    decomposition.sparse_encode
+    sklearn.decomposition.sparse_encode
     OrthogonalMatchingPursuitCV
     """
     @_deprecate_positional_args
@@ -855,7 +855,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
     OrthogonalMatchingPursuit
     LarsCV
     LassoLarsCV
-    decomposition.sparse_encode
+    sklearn.decomposition.sparse_encode
 
     """
     @_deprecate_positional_args

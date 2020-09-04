@@ -152,8 +152,8 @@ def make_classification(n_samples=100, n_features=20, *, n_informative=2,
 
     See Also
     --------
-    make_blobs: simplified variant
-    make_multilabel_classification: unrelated generator for multilabel tasks
+    make_blobs : Simplified variant.
+    make_multilabel_classification : Unrelated generator for multilabel tasks.
     """
     generator = check_random_state(random_state)
 
@@ -463,7 +463,7 @@ def make_hastie_10_2(n_samples=12000, *, random_state=None):
 
     See Also
     --------
-    make_gaussian_quantiles: a generalization of this dataset approach
+    make_gaussian_quantiles : A generalization of this dataset approach.
     """
     rs = check_random_state(random_state)
 
@@ -818,7 +818,7 @@ def make_blobs(n_samples=100, n_features=2, *, centers=None, cluster_std=1.0,
 
     See Also
     --------
-    make_classification: a more intricate variant
+    make_classification : A more intricate variant.
     """
     generator = check_random_state(random_state)
 

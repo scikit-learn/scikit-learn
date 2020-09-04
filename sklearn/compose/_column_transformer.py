@@ -147,10 +147,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
     See Also
     --------
-    sklearn.compose.make_column_transformer : convenience function for
+    make_column_transformer : Convenience function for
         combining the outputs of multiple transformer objects applied to
         column subsets of the original feature space.
-    sklearn.compose.make_column_selector : convenience function for selecting
+    make_column_selector : Convenience function for selecting
         columns based on datatype or the columns name with a regex pattern.
 
     Examples
@@ -774,7 +774,7 @@ def make_column_transformer(*transformers,
 
     See Also
     --------
-    sklearn.compose.ColumnTransformer : Class that allows combining the
+    ColumnTransformer : Class that allows combining the
         outputs of multiple transformer objects used on column subsets
         of the data into a single feature space.
 
@@ -840,7 +840,7 @@ class make_column_selector:
 
     See Also
     --------
-    sklearn.compose.ColumnTransformer : Class that allows combining the
+    ColumnTransformer : Class that allows combining the
         outputs of multiple transformer objects used on column subsets
         of the data into a single feature space.
 

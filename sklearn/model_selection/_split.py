@@ -146,11 +146,9 @@ class LeaveOneOut(BaseCrossValidator):
 
     See Also
     --------
-    LeaveOneGroupOut
-        For splitting the data according to explicit, domain-specific
-        stratification of the dataset.
-
-    GroupKFold: K-fold iterator variant with non-overlapping groups.
+    LeaveOneGroupOut : For splitting the data according to explicit,
+        domain-specific stratification of the dataset.
+    GroupKFold : K-fold iterator variant with non-overlapping groups.
     """
 
     def _iter_test_indices(self, X, y=None, groups=None):
@@ -416,14 +414,13 @@ class KFold(_BaseKFold):
 
     See Also
     --------
-    StratifiedKFold
-        Takes group information into account to avoid building folds with
-        imbalanced class distributions (for binary or multiclass
+    StratifiedKFold : Takes group information into account to avoid building
+        folds with imbalanced class distributions (for binary or multiclass
         classification tasks).
 
-    GroupKFold: K-fold iterator variant with non-overlapping groups.
+    GroupKFold : K-fold iterator variant with non-overlapping groups.
 
-    RepeatedKFold: Repeats K-Fold n times.
+    RepeatedKFold : Repeats K-Fold n times.
     """
     @_deprecate_positional_args
     def __init__(self, n_splits=5, *, shuffle=False,
@@ -493,9 +490,8 @@ class GroupKFold(_BaseKFold):
 
     See Also
     --------
-    LeaveOneGroupOut
-        For splitting the data according to explicit domain-specific
-        stratification of the dataset.
+    LeaveOneGroupOut : For splitting the data according to explicit
+        domain-specific stratification of the dataset.
     """
     def __init__(self, n_splits=5):
         super().__init__(n_splits, shuffle=False, random_state=None)
@@ -631,7 +627,7 @@ class StratifiedKFold(_BaseKFold):
 
     See Also
     --------
-    RepeatedStratifiedKFold: Repeats Stratified K-Fold n times.
+    RepeatedStratifiedKFold : Repeats Stratified K-Fold n times.
     """
     @_deprecate_positional_args
     def __init__(self, n_splits=5, *, shuffle=False, random_state=None):
@@ -1052,7 +1048,7 @@ class LeavePGroupsOut(BaseCrossValidator):
 
     See Also
     --------
-    GroupKFold: K-fold iterator variant with non-overlapping groups.
+    GroupKFold : K-fold iterator variant with non-overlapping groups.
     """
 
     def __init__(self, n_groups):
@@ -1279,7 +1275,7 @@ class RepeatedKFold(_RepeatedSplits):
 
     See Also
     --------
-    RepeatedStratifiedKFold: Repeats Stratified K-Fold n times.
+    RepeatedStratifiedKFold : Repeats Stratified K-Fold n times.
     """
     @_deprecate_positional_args
     def __init__(self, *, n_splits=5, n_repeats=10, random_state=None):
@@ -1335,7 +1331,7 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
 
     See Also
     --------
-    RepeatedKFold: Repeats K-Fold n times.
+    RepeatedKFold : Repeats K-Fold n times.
     """
     @_deprecate_positional_args
     def __init__(self, *, n_splits=5, n_repeats=10, random_state=None):

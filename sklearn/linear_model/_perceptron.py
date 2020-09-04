@@ -140,7 +140,6 @@ class Perceptron(BaseSGDClassifier):
 
     See Also
     --------
-
     SGDClassifier
 
     References

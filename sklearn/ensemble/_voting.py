@@ -199,7 +199,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
     See Also
     --------
-    VotingRegressor: Prediction voting regressor.
+    VotingRegressor : Prediction voting regressor.
 
     Examples
     --------
@@ -427,7 +427,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
 
     See Also
     --------
-    VotingClassifier: Soft Voting/Majority Rule classifier.
+    VotingClassifier : Soft Voting/Majority Rule classifier.
 
     Examples
     --------

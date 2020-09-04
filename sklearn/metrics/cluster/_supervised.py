@@ -228,7 +228,7 @@ def adjusted_rand_score(labels_true, labels_pred):
 
     See Also
     --------
-    adjusted_mutual_info_score: Adjusted Mutual Information
+    adjusted_mutual_info_score : Adjusted Mutual Information.
 
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
@@ -630,8 +630,8 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
 
     See Also
     --------
-    adjusted_mutual_info_score: Adjusted against chance Mutual Information
-    normalized_mutual_info_score: Normalized Mutual Information
+    adjusted_mutual_info_score : Adjusted against chance Mutual Information.
+    normalized_mutual_info_score : Normalized Mutual Information.
     """
     if contingency is None:
         labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
@@ -720,8 +720,8 @@ def adjusted_mutual_info_score(labels_true, labels_pred, *,
 
     See Also
     --------
-    adjusted_rand_score: Adjusted Rand Index
-    mutual_info_score: Mutual Information (not adjusted for chance)
+    adjusted_rand_score : Adjusted Rand Index.
+    mutual_info_score : Mutual Information (not adjusted for chance).
 
     Examples
     --------
@@ -838,10 +838,10 @@ def normalized_mutual_info_score(labels_true, labels_pred, *,
 
     See Also
     --------
-    v_measure_score: V-Measure (NMI with arithmetic mean option.)
-    adjusted_rand_score: Adjusted Rand Index
-    adjusted_mutual_info_score: Adjusted Mutual Information (adjusted
-        against chance)
+    v_measure_score : V-Measure (NMI with arithmetic mean option).
+    adjusted_rand_score : Adjusted Rand Index.
+    adjusted_mutual_info_score : Adjusted Mutual Information (adjusted
+        against chance).
 
     Examples
     --------

@@ -298,7 +298,6 @@ def lasso_path(X, y, *, eps=1e-3, n_alphas=100, alphas=None,
     [[0.         0.         0.46915237]
      [0.2159048  0.4425765  0.23668876]]
 
-
     See Also
     --------
     lars_path
@@ -692,8 +691,8 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     --------
     ElasticNetCV : Elastic net model with best model selection by
         cross-validation.
-    SGDRegressor: implements elastic net regression with incremental training.
-    SGDClassifier: implements logistic regression with elastic net penalty
+    SGDRegressor:  Implements elastic net regression with incremental training.
+    SGDClassifier : Implements logistic regression with elastic net penalty
         (``SGDClassifier(loss="log", penalty="elasticnet")``).
     """
     path = staticmethod(enet_path)
@@ -2057,7 +2056,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
 
     See Also
     --------
-    MultiTaskLasso : Multi-task L1/L2 Lasso with built-in cross-validation
+    MultiTaskLasso : Multi-task L1/L2 Lasso with built-in cross-validation.
     Lasso
     MultiTaskElasticNet
 

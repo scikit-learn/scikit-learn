@@ -63,8 +63,8 @@ def auc(x, y):
     --------
     roc_auc_score : Compute the area under the ROC curve.
     average_precision_score : Compute average precision from prediction scores.
-    precision_recall_curve :
-        Compute precision-recall pairs for different probability thresholds.
+    precision_recall_curve : Compute precision-recall pairs for different
+        probability thresholds.
 
     Examples
     --------
@@ -168,9 +168,8 @@ def average_precision_score(y_true, y_score, *, average="macro", pos_label=1,
     See Also
     --------
     roc_auc_score : Compute the area under the ROC curve.
-
-    precision_recall_curve :
-        Compute precision-recall pairs for different probability thresholds.
+    precision_recall_curve : Compute precision-recall pairs for different
+        probability thresholds.
 
     Notes
     -----
@@ -272,7 +271,7 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
     plot_det_curve : Plot detection error tradeoff (DET) curve.
     DetCurveDisplay : DET curve visualization.
     roc_curve : Compute Receiver operating characteristic (ROC) curve.
-    precision_recall_curve : Compute precision-recall curve.KAKA
+    precision_recall_curve : Compute precision-recall curve.
 
     Examples
     --------
@@ -799,8 +798,8 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None,
 
     See Also
     --------
-    plot_precision_recall_curve :
-        Plot Precision Recall Curve for binary classifiers.
+    plot_precision_recall_curve : Plot Precision Recall Curve for binary
+        classifiers.
     PrecisionRecallDisplay : Precision Recall visualization.
     average_precision_score : Compute average precision from prediction scores.
     det_curve: Compute error rates for different probability thresholds.
@@ -1245,8 +1244,7 @@ def _dcg_sample_scores(y_true, y_score, k=None,
 
     See Also
     --------
-    ndcg_score :
-        The Discounted Cumulative Gain divided by the Ideal Discounted
+    ndcg_score : The Discounted Cumulative Gain divided by the Ideal Discounted
         Cumulative Gain (the DCG obtained for a perfect ranking), in order to
         have a score between 0 and 1.
     """
@@ -1371,8 +1369,7 @@ def dcg_score(y_true, y_score, *, k=None,
 
     See Also
     --------
-    ndcg_score :
-        The Discounted Cumulative Gain divided by the Ideal Discounted
+    ndcg_score : The Discounted Cumulative Gain divided by the Ideal Discounted
         Cumulative Gain (the DCG obtained for a perfect ranking), in order to
         have a score between 0 and 1.
 

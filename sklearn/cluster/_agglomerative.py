@@ -418,7 +418,7 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
 
     See Also
     --------
-    ward_tree : hierarchical clustering with ward linkage
+    ward_tree : Hierarchical clustering with ward linkage.
     """
     X = np.asarray(X)
     if X.ndim == 1:

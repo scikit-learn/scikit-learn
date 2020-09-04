@@ -126,9 +126,8 @@ def strip_accents_unicode(s):
 
     See Also
     --------
-    strip_accents_ascii
-        Remove accentuated char for any unicode symbol that has a direct
-        ASCII equivalent.
+    strip_accents_ascii : Remove accentuated char for any unicode symbol that
+        has a direct ASCII equivalent.
     """
     try:
         # If `s` is ASCII-compatible, then it does not contain any accented
@@ -153,8 +152,7 @@ def strip_accents_ascii(s):
 
     See Also
     --------
-    strip_accents_unicode
-        Remove accentuated char for any unicode symbol.
+    strip_accents_unicode : Remove accentuated char for any unicode symbol.
     """
     nkfd_form = unicodedata.normalize('NFKD', s)
     return nkfd_form.encode('ASCII', 'ignore').decode('ASCII')

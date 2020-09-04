@@ -499,7 +499,7 @@ def resample(*arrays,
 
     See Also
     --------
-    :func:`sklearn.utils.shuffle`
+    shuffle
     """
     max_n_samples = n_samples
     random_state = check_random_state(random_state)
@@ -628,7 +628,7 @@ def shuffle(*arrays, random_state=None, n_samples=None):
 
     See Also
     --------
-    :func:`sklearn.utils.resample`
+    resample
     """
     return resample(*arrays, replace=False, n_samples=n_samples,
                     random_state=random_state)

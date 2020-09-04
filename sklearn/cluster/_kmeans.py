@@ -716,10 +716,8 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
     See Also
     --------
-
-    MiniBatchKMeans
-        Alternative online implementation that does incremental updates
-        of the centers positions using mini-batches.
+    MiniBatchKMeans : Alternative online implementation that does incremental
+        updates of the centers positions using mini-batches.
         For large scale learning (say n_samples > 10k) MiniBatchKMeans is
         probably much faster than the default batch implementation.
 
@@ -1497,8 +1495,7 @@ class MiniBatchKMeans(KMeans):
 
     See Also
     --------
-    KMeans
-        The classic implementation of the clustering method based on the
+    KMeans : The classic implementation of the clustering method based on the
         Lloyd's algorithm. It consumes the whole set of input data at each
         iteration.
 

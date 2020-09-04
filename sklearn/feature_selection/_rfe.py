@@ -134,7 +134,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     See Also
     --------
     RFECV : Recursive feature elimination with built-in cross-validated
-        selection of the best number of features
+        selection of the best number of features.
     SelectFromModel : Feature selection based on thresholds of importance
         weights.
     SequentialFeatureSelector : Sequential cross-validation based feature
@@ -510,7 +510,7 @@ class RFECV(RFE):
 
     See Also
     --------
-    RFE : Recursive feature elimination
+    RFE : Recursive feature elimination.
 
     References
     ----------

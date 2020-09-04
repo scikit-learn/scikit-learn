@@ -70,7 +70,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
 
     See Also
     --------
-    sklearn.neighbors.KNeighborsClassifier: nearest neighbors classifier
+    KNeighborsClassifier : Nearest neighbors classifier.
 
     Notes
     -----

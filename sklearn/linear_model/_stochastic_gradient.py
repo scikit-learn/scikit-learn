@@ -936,9 +936,9 @@ class SGDClassifier(BaseSGDClassifier):
 
     See Also
     --------
-    sklearn.svm.LinearSVC: Linear support vector classification.
-    LogisticRegression: Logistic regression.
-    Perceptron: Inherits from SGDClassifier. ``Perceptron()`` is equivalent to
+    sklearn.svm.LinearSVC : Linear support vector classification.
+    LogisticRegression : Logistic regression.
+    Perceptron : Inherits from SGDClassifier. ``Perceptron()`` is equivalent to
         ``SGDClassifier(loss="perceptron", eta0=1, learning_rate="constant",
         penalty=None)``.
 

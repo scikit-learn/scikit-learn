@@ -80,11 +80,9 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
 
     See Also
     --------
-    sklearn.preprocessing.OrdinalEncoder : Encode categorical features
-        using an ordinal encoding scheme.
-
-    sklearn.preprocessing.OneHotEncoder : Encode categorical features
-        as a one-hot numeric array.
+    OrdinalEncoder : Encode categorical features using an ordinal encoding
+        scheme.
+    OneHotEncoder : Encode categorical features as a one-hot numeric array.
     """
 
     def fit(self, y):
@@ -253,10 +251,10 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
 
     See Also
     --------
-    label_binarize : function to perform the transform operation of
+    label_binarize : Function to perform the transform operation of
         LabelBinarizer with fixed classes.
-    sklearn.preprocessing.OneHotEncoder : encode categorical features
-        using a one-hot aka one-of-K scheme.
+    OneHotEncoder : Encode categorical features using a one-hot aka one-of-K
+        scheme.
     """
 
     @_deprecate_positional_args
@@ -467,8 +465,8 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1,
 
     See Also
     --------
-    LabelBinarizer : class used to wrap the functionality of label_binarize and
-        allow for fitting to classes independently of the transform operation
+    LabelBinarizer : Class used to wrap the functionality of label_binarize and
+        allow for fitting to classes independently of the transform operation.
     """
     if not isinstance(y, list):
         # XXX Workaround that will be removed when list of list format is
@@ -718,8 +716,8 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
 
     See Also
     --------
-    sklearn.preprocessing.OneHotEncoder : encode categorical features
-        using a one-hot aka one-of-K scheme.
+    OneHotEncoder : Encode categorical features using a one-hot aka one-of-K
+        scheme.
     """
 
     @_deprecate_positional_args
