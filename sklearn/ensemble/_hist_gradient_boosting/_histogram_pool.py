@@ -10,8 +10,10 @@ class HistogramPool:
     for the next grower to use. New histograms will be allocated when there are
     no histograms left in the available_pool. HistogramPool is used for memory
     allocation/management only. The computation of the histograms is done in
-    HistogramBuilder. Empirically, this strategy has proven to be more memory
-    efficient than allocating new histograms each time and relying on the
+    HistogramBuilder.
+
+    Empirically, this strategy has proven to be more memory efficient (on macOS
+    in particular) than allocating new histograms each time and relying on the
     Python GC to keep the overall python process memory low when fitting GBRT
     on datasets with many features and target classes.
     """
