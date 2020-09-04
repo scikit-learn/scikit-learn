@@ -230,7 +230,7 @@ class LinearDiscriminantAnalysis(LinearClassifierMixin,
 
     See Also
     --------
-    QuadraticDiscriminantAnalysis: Quadratic Discriminant Analysis.
+    QuadraticDiscriminantAnalysis : Quadratic Discriminant Analysis.
 
     Examples
     --------

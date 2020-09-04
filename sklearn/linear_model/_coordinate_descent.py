@@ -691,7 +691,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     --------
     ElasticNetCV : Elastic net model with best model selection by
         cross-validation.
-    SGDRegressor:  Implements elastic net regression with incremental training.
+    SGDRegressor : Implements elastic net regression with incremental training.
     SGDClassifier : Implements logistic regression with elastic net penalty
         (``SGDClassifier(loss="log", penalty="elasticnet")``).
     """

@@ -134,7 +134,7 @@ def load_svmlight_file(f, *, n_features=None, dtype=np.float64,
 
     See Also
     --------
-    load_svmlight_files: Similar function for loading multiple files in this
+    load_svmlight_files : Similar function for loading multiple files in this
         format, enforcing the same number of features/columns on all of them.
 
     Examples
