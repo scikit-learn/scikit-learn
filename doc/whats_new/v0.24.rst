@@ -199,6 +199,11 @@ Changelog
   :class:`ensemble.GradientBoostingRegressor` and returns `1`.
   :pr:`17702` by :user:`Simona Maggio <simonamaggio>`.
 
+- |API|: Mean absolute error ('mae') is now deprecated for the parameter
+  ``criterion`` in :class:`ensemble.GradientBoostingRegressor` and
+  :class:`ensemble.GradientBoostingClassifier`.
+  :pr:`18326` by :user:`Madhura Jayaratne <madhuracj>`.
+
 :mod:`sklearn.exceptions`
 .........................
 
