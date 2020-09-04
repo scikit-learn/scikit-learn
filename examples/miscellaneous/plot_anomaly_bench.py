@@ -17,7 +17,7 @@ of the labels.
 Interpreting the ROC plot
 -------------------------
 The algorithm performance relates to how good the true positive rate (TPR)
-is at low value of the false positive rate (FPR). The better algorithm
+is at low value of the false positive rate (FPR). The better algorithms
 have the curve on the top-left of the plot and the area under curve (AUC)
 close to 1. The diagonal dashed line represents a random classification
 of outliers and inliers.
