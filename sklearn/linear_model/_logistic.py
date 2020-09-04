@@ -1737,7 +1737,7 @@ class LogisticRegressionCV(LogisticRegression,
     >>> clf.score(X, y)
     0.98...
 
-    See also
+    See Also
     --------
     LogisticRegression
 

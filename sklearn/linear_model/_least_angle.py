@@ -139,7 +139,7 @@ def lars_path(
         Number of iterations run. Returned only if return_n_iter is set
         to True.
 
-    See also
+    See Also
     --------
     lars_path_gram
     lasso_path
@@ -274,7 +274,7 @@ def lars_path_gram(
         Number of iterations run. Returned only if return_n_iter is set
         to True.
 
-    See also
+    See Also
     --------
     lars_path
     lasso_path
@@ -417,7 +417,7 @@ def _lars_path_solver(
         Number of iterations run. Returned only if return_n_iter is set
         to True.
 
-    See also
+    See Also
     --------
     lasso_path
     LassoLars
@@ -861,9 +861,10 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
     ----------
     alphas_ : array-like of shape (n_alphas + 1,) or list of thereof of \
             shape (n_targets,)
-        Maximum of covariances (in absolute value) at each iteration. \
-        ``n_alphas`` is either ``n_nonzero_coefs`` or ``n_features``, \
-        whichever is smaller.
+        Maximum of covariances (in absolute value) at each iteration.
+        ``n_alphas`` is either ``max_iter``, ``n_features`` or the
+        number of nodes in the path with ``alpha >= alpha_min``, whichever
+        is smaller.
 
     active_ : list of shape (n_alphas,) or list of thereof of shape \
             (n_targets,)
@@ -893,7 +894,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
     >>> print(reg.coef_)
     [ 0. -1.11...]
 
-    See also
+    See Also
     --------
     lars_path, LarsCV
     sklearn.decomposition.sparse_encode
@@ -1113,9 +1114,9 @@ class LassoLars(Lars):
     ----------
     alphas_ : array-like of shape (n_alphas + 1,) or list of thereof of shape \
             (n_targets,)
-        Maximum of covariances (in absolute value) at each iteration. \
-        ``n_alphas`` is either ``max_iter``, ``n_features``, or the number of \
-        nodes in the path with correlation greater than ``alpha``, whichever \
+        Maximum of covariances (in absolute value) at each iteration.
+        ``n_alphas`` is either ``max_iter``, ``n_features`` or the
+        number of nodes in the path with ``alpha >= alpha_min``, whichever
         is smaller.
 
     active_ : list of length n_alphas or list of thereof of shape (n_targets,)
@@ -1146,7 +1147,7 @@ class LassoLars(Lars):
     >>> print(reg.coef_)
     [ 0.         -0.963257...]
 
-    See also
+    See Also
     --------
     lars_path
     lasso_path
@@ -1413,7 +1414,7 @@ class LarsCV(Lars):
     >>> reg.predict(X[:1,])
     array([154.0842...])
 
-    See also
+    See Also
     --------
     lars_path, LassoLars, LassoLarsCV
     """
@@ -1660,7 +1661,7 @@ class LassoLarsCV(LarsCV):
     features are selected compared to the total number, for instance if
     there are very few samples compared to the number of features.
 
-    See also
+    See Also
     --------
     lars_path, LassoLars, LarsCV, LassoCV
     """
@@ -1765,6 +1766,12 @@ class LassoLarsIC(LassoLars):
     alpha_ : float
         the alpha parameter chosen by the information criterion
 
+    alphas_ : array-like of shape (n_alphas + 1,) or list thereof
+        Maximum of covariances (in absolute value) at each iteration.
+        ``n_alphas`` is either ``max_iter``, ``n_features`` or the
+        number of nodes in the path with ``alpha >= alpha_min``, whichever
+        is smaller. If a list, it will be of length `n_targets`.
+
     n_iter_ : int
         number of iterations run by lars_path to find the grid of
         alphas.
@@ -1796,7 +1803,7 @@ class LassoLarsIC(LassoLars):
     https://en.wikipedia.org/wiki/Akaike_information_criterion
     https://en.wikipedia.org/wiki/Bayesian_information_criterion
 
-    See also
+    See Also
     --------
     lars_path, LassoLars, LassoLarsCV
     """

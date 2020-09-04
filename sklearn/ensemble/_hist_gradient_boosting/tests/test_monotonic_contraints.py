@@ -100,30 +100,30 @@ def assert_children_values_bounded(grower, monotonic_cst):
     if monotonic_cst == MonotonicConstraint.NO_CST:
         return
 
-    def recursively_check_children_node_values(node):
+    def recursively_check_children_node_values(node, right_sibling=None):
         if node.is_leaf:
             return
-        if node is not grower.root and node is node.parent.left_child:
-            sibling = node.sibling  # on the right
-            middle = (node.value + sibling.value) / 2
+        if right_sibling is not None:
+            middle = (node.value + right_sibling.value) / 2
             if monotonic_cst == MonotonicConstraint.POS:
                 assert (node.left_child.value <=
                         node.right_child.value <=
                         middle)
-                if not sibling.is_leaf:
+                if not right_sibling.is_leaf:
                     assert (middle <=
-                            sibling.left_child.value <=
-                            sibling.right_child.value)
+                            right_sibling.left_child.value <=
+                            right_sibling.right_child.value)
             else:  # NEG
                 assert (node.left_child.value >=
                         node.right_child.value >=
                         middle)
-                if not sibling.is_leaf:
+                if not right_sibling.is_leaf:
                     assert (middle >=
-                            sibling.left_child.value >=
-                            sibling.right_child.value)
+                            right_sibling.left_child.value >=
+                            right_sibling.right_child.value)
 
-        recursively_check_children_node_values(node.left_child)
+        recursively_check_children_node_values(node.left_child,
+                                               right_sibling=node.right_child)
         recursively_check_children_node_values(node.right_child)
 
     recursively_check_children_node_values(grower.root)

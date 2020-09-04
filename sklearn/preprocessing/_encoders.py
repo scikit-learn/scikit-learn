@@ -241,15 +241,15 @@ class OneHotEncoder(_BaseEncoder):
 
     See Also
     --------
-    sklearn.preprocessing.OrdinalEncoder : Performs an ordinal (integer)
+    OrdinalEncoder : Performs an ordinal (integer)
       encoding of the categorical features.
     sklearn.feature_extraction.DictVectorizer : Performs a one-hot encoding of
       dictionary items (also handles string-valued features).
     sklearn.feature_extraction.FeatureHasher : Performs an approximate one-hot
       encoding of dictionary items or strings.
-    sklearn.preprocessing.LabelBinarizer : Binarizes labels in a one-vs-all
+    LabelBinarizer : Binarizes labels in a one-vs-all
       fashion.
-    sklearn.preprocessing.MultiLabelBinarizer : Transforms between iterable of
+    MultiLabelBinarizer : Transforms between iterable of
       iterables and a multilabel format, e.g. a (samples x classes) binary
       matrix indicating the presence of a class label.
 
@@ -648,10 +648,9 @@ class OrdinalEncoder(_BaseEncoder):
 
     See Also
     --------
-    sklearn.preprocessing.OneHotEncoder : Performs a one-hot encoding of
-      categorical features.
-    sklearn.preprocessing.LabelEncoder : Encodes target labels with values
-      between 0 and n_classes-1.
+    OneHotEncoder : Performs a one-hot encoding of categorical features.
+    LabelEncoder : Encodes target labels with values between 0 and
+        ``n_classes-1``.
 
     Examples
     --------

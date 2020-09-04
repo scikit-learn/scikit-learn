@@ -1038,6 +1038,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         This method allows monitoring (i.e. determine error on testing set)
         after each stage.
 
+        .. versionadded:: 0.24
+
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
@@ -1284,6 +1286,8 @@ class HistGradientBoostingClassifier(ClassifierMixin,
 
         This method allows monitoring (i.e. determine error on testing set)
         after each stage.
+
+        .. versionadded:: 0.24
 
         Parameters
         ----------
