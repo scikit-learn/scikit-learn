@@ -23,6 +23,7 @@ Base classes
 .. currentmodule:: sklearn
 
 .. autosummary::
+   :nosignatures:
    :toctree: generated/
    :template: class.rst
 
