@@ -162,6 +162,14 @@ def test_grid_from_X():
     assert axes[0].shape == (n_unique_values,)
     assert axes[1].shape == (grid_resolution,)
 
+    # categorical features
+    pd = pytest.importorskip('pandas')
+    X = pd.DataFrame(['A', 'B', 'C', 'A', 'B'])
+    grid, axes = _grid_from_X(X, percentiles, grid_resolution=grid_resolution,
+                              is_categorical=[True])
+    assert grid.shape == (3, X.shape[1])
+    assert axes[0].shape == (3,)
+
 
 @pytest.mark.parametrize(
     "grid_resolution, percentiles, err_msg",
@@ -721,3 +729,18 @@ def test_warning_for_kind_legacy():
 
     with pytest.warns(FutureWarning, match=err_msg):
         partial_dependence(est, X=X, features=[1, 2], kind='legacy')
+
+
+@pytest.mark.parametrize('features, is_categorical', [
+    ([1, 2], [False]),
+    (1, [False, False]),
+])
+def test_error_on_is_categorical_shape(features, is_categorical):
+    est = LogisticRegression()
+    (X, y), n_targets = binary_classification_data
+    est.fit(X, y)
+
+    with pytest.raises(ValueError, match="Parameter is_categorical should"):
+        partial_dependence(est, X=X, features=features,
+                           is_categorical=is_categorical)
+
