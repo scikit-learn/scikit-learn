@@ -1378,7 +1378,8 @@ def learning_curve(estimator, X, y, *, groups=None,
         out = parallel(delayed(_incremental_fit_estimator)(
             clone(estimator), X, y, classes, train, test, train_sizes_abs,
             scorer, verbose, return_times, error_score=error_score)
-            for train, test in cv_iter)
+            for train, test in cv_iter
+        )
         out = np.asarray(out).transpose((2, 1, 0))
     else:
         train_test_proportions = []
@@ -1390,7 +1391,8 @@ def learning_curve(estimator, X, y, *, groups=None,
             clone(estimator), X, y, scorer, train, test, verbose,
             parameters=None, fit_params=None, return_train_score=True,
             error_score=error_score, return_times=return_times)
-            for train, test in train_test_proportions)
+            for train, test in train_test_proportions
+        )
         results = _aggregate_score_dicts(results)
         train_scores = results["train_scores"].reshape(-1, n_unique_ticks).T
         test_scores = results["test_scores"].reshape(-1, n_unique_ticks).T
@@ -1491,10 +1493,12 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
 
         start_score = time.time()
 
-        test_scores.append(_score(estimator, X_test, y_test,
-                                  scorer, error_score))
-        train_scores.append(_score(estimator, X_train, y_train,
-                                   scorer, error_score))
+        test_scores.append(
+            _score(estimator, X_test, y_test, scorer, error_score)
+        )
+        train_scores.append(
+            _score(estimator, X_train, y_train, scorer, error_score)
+        )
 
         score_time = time.time() - start_score
         score_times.append(score_time)

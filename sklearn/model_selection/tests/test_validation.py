@@ -1,5 +1,7 @@
 """Test the validation module"""
 
+from functools import partial
+from re import error
 import sys
 import warnings
 import tempfile
@@ -1718,35 +1720,87 @@ def test_fit_and_score_working():
     assert result['parameters'] == fit_and_score_kwargs['parameters']
 
 
-def test_score_failing():
-    iris = load_iris()
-    X, y = iris.data, iris.target
-    clf = MockClassifier()
+def _failing_scorer(estimator, X, y, error_msg):
+    raise ValueError(error_msg)
 
-    # the warning message we're expecting to see
-    warning_message = ("Scoring failed. The score on this train-test "
-                       "partition for these parameters will be set to %f. "
-                       "Details: \n" % np.nan)
 
-    with pytest.warns(UserWarning, match=warning_message):
-        cross_val_score(clf, X, y, scoring='accuracy')
+@pytest.mark.filterwarnings("ignore:lbfgs failed to converge")
+@pytest.mark.parametrize("error_score", [np.nan, 0, "raise"])
+def test_cross_val_score_failing_scorer(error_score):
+    # check that an estimator can fail during scoring in `cross_val_score` and
+    # that we can optionally replaced it with `error_score`
+    X, y = load_iris(return_X_y=True)
+    clf = LogisticRegression(max_iter=5).fit(X, y)
 
-    error_message = ("Classification metrics can't handle a mix of "
-                     "binary and continuous targets")
+    error_msg = "This scorer is supposed to fail!!!"
+    failing_scorer = partial(_failing_scorer, error_msg=error_msg)
 
-    # Test if an exception is raised on error_score='raise'
-    with pytest.raises(ValueError, match=error_message):
-        cross_val_score(clf, X, y, scoring='accuracy', error_score='raise')
+    if error_score == "raise":
+        with pytest.raises(ValueError, match=error_msg):
+            cross_val_score(
+                clf, X, y, cv=3, scoring=failing_scorer,
+                error_score=error_score
+            )
+    else:
+        warning_msg = (
+            f"Scoring failed. The score on this train-test partition for "
+            f"these parameters will be set to {error_score}"
+        )
+        with pytest.warns(UserWarning, match=warning_msg):
+            scores = cross_val_score(
+                clf, X, y, cv=3, scoring=failing_scorer,
+                error_score=error_score
+            )
+            assert_allclose(scores, error_score)
 
-    error_message = ("error_score must be the string 'raise' or a"
-                     " numeric value. (Hint: if using 'raise', please"
-                     " make sure that it has been spelled correctly.)")
 
-    # Test if an exception is raised when error_score is invalid string
-    assert_raise_message(ValueError, error_message,
-                         cross_val_score, clf, X, y,
-                         scoring='accuracy',
-                         error_score='unvalid-string')
+@pytest.mark.filterwarnings("ignore:lbfgs failed to converge")
+@pytest.mark.parametrize("error_score", [np.nan, 0, "raise"])
+@pytest.mark.parametrize("return_train_score", [True, False])
+@pytest.mark.parametrize("with_multimetric", [False, True])
+def test_cross_validate_failing_scorer(
+    error_score, return_train_score, with_multimetric
+):
+    # check that an estimator can fail during scoring in `cross_validate` and
+    # that we can optionally replaced it with `error_score`
+    X, y = load_iris(return_X_y=True)
+    clf = LogisticRegression(max_iter=5).fit(X, y)
+
+    error_msg = "This scorer is supposed to fail!!!"
+    failing_scorer = partial(_failing_scorer, error_msg=error_msg)
+    if with_multimetric:
+        scoring = {"score_1": failing_scorer, "score_2": failing_scorer}
+    else:
+        scoring = failing_scorer
+
+    if error_score == "raise":
+        with pytest.raises(ValueError, match=error_msg):
+            cross_validate(
+                clf, X, y,
+                cv=3,
+                scoring=scoring,
+                return_train_score=return_train_score,
+                error_score=error_score
+            )
+    else:
+        warning_msg = (
+            f"Scoring failed. The score on this train-test partition for "
+            f"these parameters will be set to {error_score}"
+        )
+        with pytest.warns(UserWarning, match=warning_msg):
+            results = cross_validate(
+                clf, X, y,
+                cv=3,
+                scoring=scoring,
+                return_train_score=return_train_score,
+                error_score=error_score
+            )
+            for key in results:
+                if "_score" in key:
+                    # check the test (and optionally train score) for all
+                    # scorers that should be assigned to `error_score`.
+                    assert_allclose(results[key], error_score)
+
 
 
 def three_params_scorer(i, j, k):
