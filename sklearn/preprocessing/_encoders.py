@@ -540,10 +540,17 @@ class OneHotEncoder(_BaseEncoder):
             # drop will either be None or handle_unknown will be error. If
             # self.drop_idx_ is not None, then we can safely assume that all of
             # the nulls in each column are the dropped value
-            elif self.drop_idx_ is not None:
+            else:
                 dropped = np.asarray(sub.sum(axis=1) == 0).flatten()
                 if dropped.any():
-                    X_tr[dropped, i] = self.categories_[i][self.drop_idx_[i]]
+                    if self.drop_idx_ is None:
+                        msg = ("The follow samples do not have an inverse when"
+                               " drop=None and handle_unknown='error' because "
+                               "they are all zeros: {0}.")
+                        raise ValueError(msg.format(X[i]))
+                    X_tr[dropped, i] = self.categories_[i][
+                        self.drop_idx_[i]
+                    ]
 
             j += n_categories
 
