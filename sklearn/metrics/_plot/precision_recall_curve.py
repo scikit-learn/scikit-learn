@@ -46,6 +46,13 @@ class PrecisionRecallDisplay:
     figure_ : matplotlib Figure
         Figure containing the curve.
 
+    See Also
+    --------
+    precision_recall_curve :
+        Compute precision-recall pairs for different probability thresholds.
+    plot_precision_recall_curve :
+        Plot Precision Recall Curve for binary classifiers.
+
     Examples
     --------
     >>> from sklearn.datasets import make_classification
@@ -190,7 +197,8 @@ def plot_precision_recall_curve(estimator, X, y, *,
     See Also
     --------
     precision_recall_curve :
-        Compute precision-recall pairs for different probability thresholds
+        Compute precision-recall pairs for different probability thresholds.
+    PrecisionRecallDisplay : Precision Recall visualization.
     """
     check_matplotlib_support("plot_precision_recall_curve")
 
