@@ -172,7 +172,7 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
 def lasso_path(X, y, *, eps=1e-3, n_alphas=100, alphas=None,
                precompute='auto', Xy=None, copy_X=True, coef_init=None,
                verbose=False, return_n_iter=False, positive=False, **params):
-    """Compute Lasso path with coordinate descent
+    """Compute Lasso path with coordinate descent.
 
     The Lasso optimization function varies for mono and multi-outputs.
 
@@ -319,8 +319,7 @@ def enet_path(X, y, *, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
               precompute='auto', Xy=None, copy_X=True, coef_init=None,
               verbose=False, return_n_iter=False, positive=False,
               check_input=True, **params):
-    """
-    Compute elastic net path with coordinate descent.
+    """Compute elastic net path with coordinate descent.
 
     The elastic net optimization function varies for mono and multi-outputs.
 
@@ -877,11 +876,11 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
 
     @property
     def sparse_coef_(self):
-        """ sparse representation of the fitted ``coef_`` """
+        """Sparse representation of the fitted ``coef_``."""
         return sparse.csr_matrix(self.coef_)
 
     def _decision_function(self, X):
-        """Decision function of the linear model
+        """Decision function of the linear model.
 
         Parameters
         ----------
@@ -904,7 +903,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
 # Lasso model
 
 class Lasso(ElasticNet):
-    """Linear Model trained with L1 prior as regularizer (aka the Lasso)
+    """Linear Model trained with L1 prior as regularizer (aka the Lasso).
 
     The optimization objective for Lasso is::
 
@@ -1043,7 +1042,7 @@ class Lasso(ElasticNet):
 
 def _path_residuals(X, y, sample_weight, train, test, path, path_params,
                     alphas=None, l1_ratio=1, X_order=None, dtype=None):
-    """Returns the MSE for the models computed by 'path'
+    """Returns the MSE for the models computed by 'path'.
 
     Parameters
     ----------
@@ -1521,10 +1520,10 @@ class LassoCV(RegressorMixin, LinearModelCV):
         especially when tol is higher than 1e-4.
 
     cv_weighted : bool, default=False
-        If `True`, the MSE over folds is calculated as a weighted average,
-        weighted by sample_weight of the test fold. Here, sample_weight=None is
-        the same as `1` which means the weight is the number of observations in
-        the test folds.
+        If `True`, the MSE over test folds is calculated as a weighted average,
+        weighted by the sum of `sample_weight` of each test fold. Here,
+        `sample_weight=None` acts like `sample_weight=1`, which means the sum
+        of weights in the test fold is the number of observations.
 
     Attributes
     ----------
@@ -1711,10 +1710,10 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         especially when tol is higher than 1e-4.
 
     cv_weighted : bool, default=False
-        If `True`, the MSE over folds is calculated as a weighted average,
-        weighted by sample_weight of the test fold. Here, sample_weight=None is
-        the same as `1` which means the weight is the number of observations in
-        the test folds.
+        If `True`, the MSE over test folds is calculated as a weighted average,
+        weighted by the sum of `sample_weight` of each test fold. Here,
+        `sample_weight=None` acts like `sample_weight=1`, which means the sum
+        of weights in the test fold is the number of observations.
 
     Attributes
     ----------
@@ -1792,7 +1791,6 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
     --------
     enet_path
     ElasticNet
-
     """
     path = staticmethod(enet_path)
 
@@ -1969,7 +1967,7 @@ class MultiTaskElasticNet(Lasso):
         self.selection = selection
 
     def fit(self, X, y):
-        """Fit MultiTaskElasticNet model with coordinate descent
+        """Fit MultiTaskElasticNet model with coordinate descent.
 
         Parameters
         ----------
@@ -2277,8 +2275,8 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         especially when tol is higher than 1e-4.
 
     cv_weighted : bool, default=False
-        If `True`, the MSE over folds is calculated as a weighted average,
-        weighted by the number of observations in the test folds.
+        If `True`, the MSE over test folds is calculated as a weighted average,
+        weighted by the number of observations in each folds.
 
     Attributes
     ----------
@@ -2486,8 +2484,8 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         especially when tol is higher than 1e-4.
 
     cv_weighted : bool, default=False
-        If `True`, the MSE over folds is calculated as a weighted average,
-        weighted by the number of observations in the test folds.
+        If `True`, the MSE over test folds is calculated as a weighted average,
+        weighted by the number of observations in each folds.
 
     Attributes
     ----------

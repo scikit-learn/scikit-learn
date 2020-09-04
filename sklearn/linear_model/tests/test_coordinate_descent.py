@@ -1184,7 +1184,7 @@ def test_enet_sample_weight_consistency(fit_intercept, alpha, normalize,
 
 @pytest.mark.parametrize('estimator', (Lasso, ElasticNet))
 def test_enet_sample_weight_sparse(estimator):
-    reg = ElasticNet()
+    reg = estimator()
     X = sparse.csc_matrix(np.zeros((3, 2)))
     y = np.array([-1, 0, 1])
     sw = np.array([1, 2, 3])
@@ -1220,9 +1220,9 @@ def test_enet_cv_sample_weight_correctness(cv_weighted, fit_intercept):
                           fit_intercept=fit_intercept, cv_weighted=cv_weighted)
     reg_sw.fit(X, y, sample_weight=sw)
 
-    # We repeate the first fold 2 times and provide splits ourselves
-    X = np.r_[X[0:n_samples], X]
-    y = np.r_[y[0:n_samples], y]
+    # We repeat the first fold 2 times and provide splits ourselves
+    X = np.r_[X[:n_samples], X]
+    y = np.r_[y[:n_samples], y]
     groups = np.r_[np.full(2*n_samples, 0), np.full(n_samples, 1),
                    np.full(n_samples, 2)]
     splits = list(GroupKFold(n_splits=n_splits).split(X, groups=groups))
@@ -1239,10 +1239,10 @@ def test_enet_cv_sample_weight_correctness(cv_weighted, fit_intercept):
     if cv_weighted:
         # Note: The order of groups is shuffled, i.e. not the same. But why???
         group_order_sw = []
-        for train, test in splits_sw:
+        for _, test in splits_sw:
             group_order_sw.append(groups_sw[test][0])
         group_order = []
-        for train, test in splits:
+        for _, test in splits:
             group_order.append(groups[test][0])
         for i in range(3):
             assert_allclose(reg_sw.mse_path_[:, group_order_sw[i]],
