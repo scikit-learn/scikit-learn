@@ -128,6 +128,29 @@ display.figure_.suptitle(
 display.figure_.subplots_adjust(hspace=0.3)
 
 # %%
+# With an increasing number of ICE lines, it becomes increasingly difficult to
+# discern the specific lines. An approach to make the plots easier
+# interpretable, is to center all lines at an anchor point, typically the
+# first value on the x-axis. To plot the so-called cICE plots, set
+# `centered=True`
+#
+# As we can see in the following example, this will also center the PDP lines,
+# if `kind='both'` or `kind='average'` is set.
+
+print('Computing cICE plots...')
+tic = time()
+display = plot_partial_dependence(
+    est, X_train, features, kind="both", centered=True, subsample=50,
+    n_jobs=3, grid_resolution=20
+)
+print(f"done in {time() - tic:.3f}s")
+display.figure_.suptitle(
+    'Centered ICE and Partial dependence of house value on non-location '
+    'features\nfor the California housing dataset, with Gradient Boosting'
+)
+display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
+
+# %%
 # Gradient boosting
 # .................
 #

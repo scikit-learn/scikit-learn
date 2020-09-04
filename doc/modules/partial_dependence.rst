@@ -158,6 +158,16 @@ PDPs. They can be plotted together with
     >>> plot_partial_dependence(clf, X, features,
     ...     kind='both')  # doctest: +SKIP
 
+If there are too many lines in an ICE plot, it can be difficult to see
+differences between individual samples and interprete the model. Centering the
+ICE at the first value on the x-axis, produces cICE plots. This puts emphasis
+on the divergence of individual conditional expectations from the mean line,
+thus making it easier to explore heterogeneous relationships. cICE plots can
+be plotted by setting ``centered=True``:
+
+    >>> plot_partial_dependence(clf, X, features,
+    ...     kind='both', centered=True)  # doctest: +SKIP
+
 Mathematical Definition
 =======================
 
