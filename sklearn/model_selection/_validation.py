@@ -614,6 +614,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                           "Details: \n%s" %
                           (error_score, format_exc()),
                           FitFailedWarning)
+        result["fit_failed"] = True
     else:
         result["fit_failed"] = False
 
