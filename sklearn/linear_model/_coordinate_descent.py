@@ -735,6 +735,10 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             Allow to bypass several input checking.
             Don't use this parameter unless you know what you do.
 
+        Returns
+        -------
+        self : object
+
         Notes
         -----
 
@@ -1221,6 +1225,10 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
 
         sample_weight : float or array-like of shape (n_samples,), default=None
             Sample weight.
+
+        Returns
+        -------
+        self : object
         """
         # This makes sure that there is no duplication in memory.
         # Dealing right with copy_X is important in the following:
@@ -1970,9 +1978,12 @@ class MultiTaskElasticNet(Lasso):
         y : ndarray of shape (n_samples, n_targets)
             Target. Will be cast to X's dtype if necessary
 
+        Returns
+        -------
+        self : object
+
         Notes
         -----
-
         Coordinate descent is an algorithm that considers each column of
         data at a time hence it will automatically convert the X input
         as a Fortran-contiguous numpy array if necessary.
@@ -2370,6 +2381,10 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
             Data
         y : ndarray of shape (n_samples, n_targets)
             Target. Will be cast to X's dtype if necessary
+
+        Returns
+        -------
+        self : object
         """
         return super().fit(X, y)
 
@@ -2563,5 +2578,9 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
             Data
         y : ndarray of shape (n_samples, n_targets)
             Target. Will be cast to X's dtype if necessary
+
+        Returns
+        -------
+        self : object
         """
         return super().fit(X, y)
