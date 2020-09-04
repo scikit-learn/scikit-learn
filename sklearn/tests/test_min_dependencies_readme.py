@@ -31,12 +31,15 @@ def test_min_dependencies_readme():
 
     with readme_file.open("r") as f:
         for line in f:
-            if pattern.match(line):
-                dependency = pattern.sub(r"\2\5", line)
-                (package, version) = dependency.lower().split(" ")
+            matched = pattern.match(line)
 
-                if package in dependent_packages:
-                    version = parse_version(version)
-                    min_version = parse_version(dependent_packages[package][0])
+            if not matched:
+                continue
 
-                    assert version == min_version
+            (package, version) = (matched.group(2), matched.group(5))
+
+            if package in dependent_packages:
+                version = parse_version(version)
+                min_version = parse_version(dependent_packages[package][0])
+
+                assert version == min_version
