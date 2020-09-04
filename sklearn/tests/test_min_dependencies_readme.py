@@ -4,11 +4,11 @@
 import os
 import re
 from pathlib import Path
-from packaging.version import parse
 
 import pytest
 import sklearn
 from sklearn._build_utils.min_dependencies import dependent_packages
+from sklearn.utils.fixes import parse_version
 
 
 def test_min_dependencies_readme():
@@ -36,7 +36,7 @@ def test_min_dependencies_readme():
                 (package, version) = dependency.lower().split(" ")
 
                 if package in dependent_packages:
-                    version = parse(version)
-                    min_version = parse(dependent_packages[package][0])
+                    version = parse_version(version)
+                    min_version = parse_version(dependent_packages[package][0])
 
                     assert version == min_version
