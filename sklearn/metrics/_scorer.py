@@ -75,9 +75,6 @@ class _MultimetricScorer:
     def __init__(self, **scorers):
         self._scorers = scorers
 
-    def get_scorers_name(self):
-        return list(self._scorers.keys())
-
     def __call__(self, estimator, *args, **kwargs):
         """Evaluate predicted target values."""
         scores = {}

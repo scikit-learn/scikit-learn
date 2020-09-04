@@ -678,10 +678,8 @@ def _score(estimator, X_test, y_test, scorer, error_score):
         if error_score == 'raise':
             raise
         else:
-            if hasattr(scorer, "get_scorers_name"):
-                scores = {
-                    name: error_score for name in scorer.get_scorers_name()
-                }
+            if isinstance(scorer, _MultimetricScorer):
+                scores = {name: error_score for name in scorer._scorers}
             else:
                 scores = error_score
             warnings.warn(
