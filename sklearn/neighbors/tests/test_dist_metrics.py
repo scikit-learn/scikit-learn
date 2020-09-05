@@ -6,13 +6,12 @@ from numpy.testing import assert_array_almost_equal
 
 import pytest
 
-from distutils.version import LooseVersion
-from scipy import __version__ as scipy_version
 from scipy.spatial.distance import cdist
-from sklearn.neighbors.dist_metrics import DistanceMetric
+from sklearn.neighbors import DistanceMetric
 from sklearn.neighbors import BallTree
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import assert_raises_regex
+from sklearn.utils._testing import assert_raises_regex
+from sklearn.utils.fixes import sp_version, parse_version
 
 
 def dist_func(x1, x2, p):
@@ -106,7 +105,7 @@ def check_pdist_bool(metric, D_true):
     # Based on https://github.com/scipy/scipy/pull/7373
     # When comparing two all-zero vectors, scipy>=1.2.0 jaccard metric
     # was changed to return 0, instead of nan.
-    if metric == 'jaccard' and LooseVersion(scipy_version) < '1.2.0':
+    if metric == 'jaccard' and sp_version < parse_version('1.2.0'):
         D_true[np.isnan(D_true)] = 0
     assert_array_almost_equal(D12, D_true)
 
@@ -191,7 +190,7 @@ def test_bad_pyfunc_metric():
 
 def test_input_data_size():
     # Regression test for #6288
-    # Previoulsly, a metric requiring a particular input dimension would fail
+    # Previously, a metric requiring a particular input dimension would fail
     def custom_metric(x, y):
         assert x.shape[0] == 3
         return np.sum((x - y) ** 2)
@@ -199,6 +198,6 @@ def test_input_data_size():
     rng = check_random_state(0)
     X = rng.rand(10, 3)
 
-    pyfunc = DistanceMetric.get_metric("pyfunc", func=dist_func, p=2)
+    pyfunc = DistanceMetric.get_metric("pyfunc", func=custom_metric)
     eucl = DistanceMetric.get_metric("euclidean")
-    assert_array_almost_equal(pyfunc.pairwise(X), eucl.pairwise(X))
+    assert_array_almost_equal(pyfunc.pairwise(X), eucl.pairwise(X) ** 2)

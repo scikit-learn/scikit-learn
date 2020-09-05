@@ -76,6 +76,52 @@ def test_one_of_k():
     assert "version" not in names
 
 
+def test_iterable_value():
+    D_names = ['ham', 'spam', 'version=1', 'version=2', 'version=3']
+    X_expected = [[2.0, 0.0, 2.0, 1.0, 0.0],
+                  [0.0, 0.3, 0.0, 1.0, 0.0],
+                  [0.0, -1.0, 0.0, 0.0, 1.0]]
+    D_in = [{"version": ["1", "2", "1"], "ham": 2},
+            {"version": "2", "spam": .3},
+            {"version=3": True, "spam": -1}]
+    v = DictVectorizer()
+    X = v.fit_transform(D_in)
+    X = X.toarray()
+    assert_array_equal(X, X_expected)
+
+    D_out = v.inverse_transform(X)
+    assert D_out[0] == {"version=1": 2, "version=2": 1, "ham": 2}
+
+    names = v.get_feature_names()
+
+    assert names == D_names
+
+
+def test_iterable_not_string_error():
+    error_value = ("Unsupported type <class 'int'> in iterable value. "
+                   "Only iterables of string are supported.")
+    D2 = [{'foo': '1', 'bar': '2'},
+          {'foo': '3', 'baz': '1'},
+          {'foo': [1, 'three']}]
+    v = DictVectorizer(sparse=False)
+    with pytest.raises(TypeError) as error:
+        v.fit(D2)
+    assert str(error.value) == error_value
+
+
+def test_mapping_error():
+    error_value = ("Unsupported value type <class 'dict'> "
+                   "for foo: {'one': 1, 'three': 3}.\n"
+                   "Mapping objects are not supported.")
+    D2 = [{'foo': '1', 'bar': '2'},
+          {'foo': '3', 'baz': '1'},
+          {'foo': {'one': 1, 'three': 3}}]
+    v = DictVectorizer(sparse=False)
+    with pytest.raises(TypeError) as error:
+        v.fit(D2)
+    assert str(error.value) == error_value
+
+
 def test_unseen_or_no_features():
     D = [{"camelot": 0, "spamalot": 1}]
     for sparse in [True, False]:
@@ -110,3 +156,12 @@ def test_deterministic_vocabulary():
     v_2 = DictVectorizer().fit([d_shuffled])
 
     assert v_1.vocabulary_ == v_2.vocabulary_
+
+
+def test_n_features_in():
+    # For vectorizers, n_features_in_ does not make sense and does not exist.
+    dv = DictVectorizer()
+    assert not hasattr(dv, 'n_features_in_')
+    d = [{'foo': 1, 'bar': 2}, {'foo': 3, 'baz': 1}]
+    dv.fit(d)
+    assert not hasattr(dv, 'n_features_in_')

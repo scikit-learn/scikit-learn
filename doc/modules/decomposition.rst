@@ -24,7 +24,7 @@ that learns :math:`n` components in its ``fit`` method, and can be used on new
 data to project it on these components.
 
 PCA centers but does not scale the input data for each feature before
-applying the SVD. The optional parameter parameter ``whiten=True`` makes it
+applying the SVD. The optional parameter ``whiten=True`` makes it
 possible to project the data onto the singular space while scaling each
 component to unit variance. This is often useful if the models down-stream make
 strong assumptions on the isotropy of the signal: this is for example the case
@@ -43,7 +43,7 @@ features, projected on the 2 dimensions that explain most variance:
 The :class:`PCA` object also provides a
 probabilistic interpretation of the PCA that can give a likelihood of
 data based on the amount of variance it explains. As such it implements a
-`score` method that can be used in cross-validation:
+:term:`score` method that can be used in cross-validation:
 
 .. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_pca_vs_fa_model_selection_001.png
     :target: ../auto_examples/decomposition/plot_pca_vs_fa_model_selection.html
@@ -288,7 +288,8 @@ Truncated singular value decomposition and latent semantic analysis
 where :math:`k` is a user-specified parameter.
 
 When truncated SVD is applied to term-document matrices
-(as returned by ``CountVectorizer`` or ``TfidfVectorizer``),
+(as returned by :class:`~sklearn.feature_extraction.text.CountVectorizer` or
+:class:`~sklearn.feature_extraction.text.TfidfVectorizer`),
 this transformation is known as
 `latent semantic analysis <https://nlp.stanford.edu/IR-book/pdf/18lsi.pdf>`_
 (LSA), because it transforms such matrices
@@ -327,8 +328,7 @@ To also transform a test set :math:`X`, we multiply it with :math:`V_k`:
     but the singular values found are the same.
 
 :class:`TruncatedSVD` is very similar to :class:`PCA`, but differs
-in that it works on sample matrices :math:`X` directly
-instead of their covariance matrices.
+in that the matrix :math:`X` does not need to be centered.
 When the columnwise (per-feature) means of :math:`X`
 are subtracted from the feature values,
 truncated SVD on the resulting matrix is equivalent to PCA.
@@ -338,7 +338,7 @@ matrices without the need to densify them,
 as densifying may fill up memory even for medium-sized document collections.
 
 While the :class:`TruncatedSVD` transformer
-works with any (sparse) feature matrix,
+works with any feature matrix,
 using it on tf–idf matrices is recommended over raw frequency counts
 in an LSA/document processing setting.
 In particular, sublinear scaling and inverse document frequency
@@ -622,10 +622,17 @@ of heteroscedastic noise:
     :align: center
     :scale: 75%
 
+Factor Analysis is often followed by a rotation of the factors (with the
+parameter `rotation`), usually to improve interpretability. For example,
+Varimax rotation maximizes the sum of the variances of the squared loadings,
+i.e., it tends to produce sparser factors, which are influenced by only a few
+features each (the "simple structure"). See e.g., the first example below.
 
 .. topic:: Examples:
 
+    * :ref:`sphx_glr_auto_examples_decomposition_plot_varimax_fa.py`
     * :ref:`sphx_glr_auto_examples_decomposition_plot_pca_vs_fa_model_selection.py`
+
 
 .. _ICA:
 
@@ -752,9 +759,9 @@ and the regularized objective function is:
     + \frac{\alpha(1-\rho)}{2} ||W||_{\mathrm{Fro}} ^ 2
     + \frac{\alpha(1-\rho)}{2} ||H||_{\mathrm{Fro}} ^ 2
 
-:class:`NMF` regularizes both W and H. The public function
-:func:`non_negative_factorization` allows a finer control through the
-:attr:`regularization` attribute, and may regularize only W, only H, or both.
+:class:`NMF` regularizes both W and H by default. The :attr:`regularization`
+parameter allows for finer control, with which only W, only H,
+or both can be regularized.
 
 NMF with a beta-divergence
 --------------------------
@@ -959,6 +966,9 @@ when data can be fetched sequentially.
       <http://www.columbia.edu/~jwp2128/Papers/HoffmanBleiWangPaisley2013.pdf>`_
       M. Hoffman, D. Blei, C. Wang, J. Paisley, 2013
 
+    * `"The varimax criterion for analytic rotation in factor analysis"
+      <https://link.springer.com/article/10.1007%2FBF02289233>`_
+      H. F. Kaiser, 1958
 
 See also :ref:`nca_dim_reduction` for dimensionality reduction with
 Neighborhood Components Analysis.

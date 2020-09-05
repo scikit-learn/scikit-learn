@@ -1,170 +1,214 @@
 import pytest
 import numpy as np
-from numpy.testing import assert_approx_equal
+from numpy.testing import (assert_array_almost_equal, assert_array_equal,
+                           assert_allclose)
 
-from sklearn.utils.testing import (assert_array_almost_equal,
-                                   assert_array_equal, assert_raise_message,
-                                   assert_warns)
 from sklearn.datasets import load_linnerud
-from sklearn.cross_decomposition import pls_, CCA
-from sklearn.preprocessing import StandardScaler
+from sklearn.cross_decomposition._pls import (
+    _center_scale_xy,
+    _get_first_singular_vectors_power_method,
+    _get_first_singular_vectors_svd,
+    _svd_flip_1d
+)
+from sklearn.cross_decomposition import CCA
+from sklearn.cross_decomposition import PLSSVD, PLSRegression, PLSCanonical
+from sklearn.datasets import make_regression
 from sklearn.utils import check_random_state
+from sklearn.utils.extmath import svd_flip
 from sklearn.exceptions import ConvergenceWarning
 
 
-def test_pls():
+def assert_matrix_orthogonal(M):
+    K = np.dot(M.T, M)
+    assert_array_almost_equal(K, np.diag(np.diag(K)))
+
+
+def test_pls_canonical_basics():
+    # Basic checks for PLSCanonical
     d = load_linnerud()
     X = d.data
     Y = d.target
-    # 1) Canonical (symmetric) PLS (PLS 2 blocks canonical mode A)
-    # ===========================================================
-    # Compare 2 algo.: nipals vs. svd
-    # ------------------------------
-    pls_bynipals = pls_.PLSCanonical(n_components=X.shape[1])
-    pls_bynipals.fit(X, Y)
-    pls_bysvd = pls_.PLSCanonical(algorithm="svd", n_components=X.shape[1])
-    pls_bysvd.fit(X, Y)
-    # check equalities of loading (up to the sign of the second column)
-    assert_array_almost_equal(
-        pls_bynipals.x_loadings_,
-        pls_bysvd.x_loadings_, decimal=5,
-        err_msg="nipals and svd implementations lead to different x loadings")
 
-    assert_array_almost_equal(
-        pls_bynipals.y_loadings_,
-        pls_bysvd.y_loadings_, decimal=5,
-        err_msg="nipals and svd implementations lead to different y loadings")
+    pls = PLSCanonical(n_components=X.shape[1])
+    pls.fit(X, Y)
 
-    # Check PLS properties (with n_components=X.shape[1])
-    # ---------------------------------------------------
-    plsca = pls_.PLSCanonical(n_components=X.shape[1])
-    plsca.fit(X, Y)
-    T = plsca.x_scores_
-    P = plsca.x_loadings_
-    Wx = plsca.x_weights_
-    U = plsca.y_scores_
-    Q = plsca.y_loadings_
-    Wy = plsca.y_weights_
+    assert_matrix_orthogonal(pls.x_weights_)
+    assert_matrix_orthogonal(pls.y_weights_)
+    assert_matrix_orthogonal(pls._x_scores)
+    assert_matrix_orthogonal(pls._y_scores)
 
-    def check_ortho(M, err_msg):
-        K = np.dot(M.T, M)
-        assert_array_almost_equal(K, np.diag(np.diag(K)), err_msg=err_msg)
-
-    # Orthogonality of weights
-    # ~~~~~~~~~~~~~~~~~~~~~~~~
-    check_ortho(Wx, "x weights are not orthogonal")
-    check_ortho(Wy, "y weights are not orthogonal")
-
-    # Orthogonality of latent scores
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    check_ortho(T, "x scores are not orthogonal")
-    check_ortho(U, "y scores are not orthogonal")
-
-    # Check X = TP' and Y = UQ' (with (p == q) components)
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    # center scale X, Y
-    Xc, Yc, x_mean, y_mean, x_std, y_std =\
-        pls_._center_scale_xy(X.copy(), Y.copy(), scale=True)
-    assert_array_almost_equal(Xc, np.dot(T, P.T), err_msg="X != TP'")
-    assert_array_almost_equal(Yc, np.dot(U, Q.T), err_msg="Y != UQ'")
+    # Check X = TP' and Y = UQ'
+    T = pls._x_scores
+    P = pls.x_loadings_
+    U = pls._y_scores
+    Q = pls.y_loadings_
+    # Need to scale first
+    Xc, Yc, x_mean, y_mean, x_std, y_std = _center_scale_xy(
+        X.copy(), Y.copy(), scale=True)
+    assert_array_almost_equal(Xc, np.dot(T, P.T))
+    assert_array_almost_equal(Yc, np.dot(U, Q.T))
 
     # Check that rotations on training data lead to scores
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Xr = plsca.transform(X)
-    assert_array_almost_equal(Xr, plsca.x_scores_,
-                              err_msg="rotation on X failed")
-    Xr, Yr = plsca.transform(X, Y)
-    assert_array_almost_equal(Xr, plsca.x_scores_,
-                              err_msg="rotation on X failed")
-    assert_array_almost_equal(Yr, plsca.y_scores_,
-                              err_msg="rotation on Y failed")
+    Xt = pls.transform(X)
+    assert_array_almost_equal(Xt, pls._x_scores)
+    Xt, Yt = pls.transform(X, Y)
+    assert_array_almost_equal(Xt, pls._x_scores)
+    assert_array_almost_equal(Yt, pls._y_scores)
 
-    # "Non regression test" on canonical PLS
-    # --------------------------------------
-    # The results were checked against the R-package plspm
-    pls_ca = pls_.PLSCanonical(n_components=X.shape[1])
-    pls_ca.fit(X, Y)
-
-    x_weights = np.array(
-        [[-0.61330704,  0.25616119, -0.74715187],
-         [-0.74697144,  0.11930791,  0.65406368],
-         [-0.25668686, -0.95924297, -0.11817271]])
-    # x_weights_sign_flip holds columns of 1 or -1, depending on sign flip
-    # between R and python
-    x_weights_sign_flip = pls_ca.x_weights_ / x_weights
-
-    x_rotations = np.array(
-        [[-0.61330704,  0.41591889, -0.62297525],
-         [-0.74697144,  0.31388326,  0.77368233],
-         [-0.25668686, -0.89237972, -0.24121788]])
-    x_rotations_sign_flip = pls_ca.x_rotations_ / x_rotations
-
-    y_weights = np.array(
-        [[+0.58989127,  0.7890047,   0.1717553],
-         [+0.77134053, -0.61351791,  0.16920272],
-         [-0.23887670, -0.03267062,  0.97050016]])
-    y_weights_sign_flip = pls_ca.y_weights_ / y_weights
-
-    y_rotations = np.array(
-        [[+0.58989127,  0.7168115,  0.30665872],
-         [+0.77134053, -0.70791757,  0.19786539],
-         [-0.23887670, -0.00343595,  0.94162826]])
-    y_rotations_sign_flip = pls_ca.y_rotations_ / y_rotations
-
-    # x_weights = X.dot(x_rotation)
-    # Hence R/python sign flip should be the same in x_weight and x_rotation
-    assert_array_almost_equal(x_rotations_sign_flip, x_weights_sign_flip)
-    # This test that R / python give the same result up to column
-    # sign indeterminacy
-    assert_array_almost_equal(np.abs(x_rotations_sign_flip), 1, 4)
-    assert_array_almost_equal(np.abs(x_weights_sign_flip), 1, 4)
+    # Check that inverse_transform works
+    X_back = pls.inverse_transform(Xt)
+    assert_array_almost_equal(X_back, X)
 
 
-    assert_array_almost_equal(y_rotations_sign_flip, y_weights_sign_flip)
-    assert_array_almost_equal(np.abs(y_rotations_sign_flip), 1, 4)
-    assert_array_almost_equal(np.abs(y_weights_sign_flip), 1, 4)
-
-    # 2) Regression PLS (PLS2): "Non regression test"
-    # ===============================================
+def test_sanity_check_pls_regression():
+    # Sanity check for PLSRegression
     # The results were checked against the R-packages plspm, misOmics and pls
-    pls_2 = pls_.PLSRegression(n_components=X.shape[1])
-    pls_2.fit(X, Y)
 
-    x_weights = np.array(
+    d = load_linnerud()
+    X = d.data
+    Y = d.target
+
+    pls = PLSRegression(n_components=X.shape[1])
+    pls.fit(X, Y)
+
+    expected_x_weights = np.array(
         [[-0.61330704, -0.00443647,  0.78983213],
          [-0.74697144, -0.32172099, -0.58183269],
          [-0.25668686,  0.94682413, -0.19399983]])
-    x_weights_sign_flip = pls_2.x_weights_ / x_weights
 
-    x_loadings = np.array(
+    expected_x_loadings = np.array(
         [[-0.61470416, -0.24574278,  0.78983213],
          [-0.65625755, -0.14396183, -0.58183269],
          [-0.51733059,  1.00609417, -0.19399983]])
-    x_loadings_sign_flip = pls_2.x_loadings_ / x_loadings
 
-    y_weights = np.array(
+    expected_y_weights = np.array(
         [[+0.32456184,  0.29892183,  0.20316322],
          [+0.42439636,  0.61970543,  0.19320542],
          [-0.13143144, -0.26348971, -0.17092916]])
-    y_weights_sign_flip = pls_2.y_weights_ / y_weights
 
-    y_loadings = np.array(
+    expected_y_loadings = np.array(
         [[+0.32456184,  0.29892183,  0.20316322],
          [+0.42439636,  0.61970543,  0.19320542],
          [-0.13143144, -0.26348971, -0.17092916]])
-    y_loadings_sign_flip = pls_2.y_loadings_ / y_loadings
 
-    # x_loadings[:, i] = Xi.dot(x_weights[:, i]) \forall i
-    assert_array_almost_equal(x_loadings_sign_flip, x_weights_sign_flip, 4)
-    assert_array_almost_equal(np.abs(x_loadings_sign_flip), 1, 4)
-    assert_array_almost_equal(np.abs(x_weights_sign_flip), 1, 4)
+    assert_array_almost_equal(np.abs(pls.x_loadings_),
+                              np.abs(expected_x_loadings))
+    assert_array_almost_equal(np.abs(pls.x_weights_),
+                              np.abs(expected_x_weights))
+    assert_array_almost_equal(np.abs(pls.y_loadings_),
+                              np.abs(expected_y_loadings))
+    assert_array_almost_equal(np.abs(pls.y_weights_),
+                              np.abs(expected_y_weights))
 
-    assert_array_almost_equal(y_loadings_sign_flip, y_weights_sign_flip, 4)
-    assert_array_almost_equal(np.abs(y_loadings_sign_flip), 1, 4)
-    assert_array_almost_equal(np.abs(y_weights_sign_flip), 1, 4)
+    # The R / Python difference in the signs should be consistent across
+    # loadings, weights, etc.
+    x_loadings_sign_flip = np.sign(pls.x_loadings_ / expected_x_loadings)
+    x_weights_sign_flip = np.sign(pls.x_weights_ / expected_x_weights)
+    y_weights_sign_flip = np.sign(pls.y_weights_ / expected_y_weights)
+    y_loadings_sign_flip = np.sign(pls.y_loadings_ / expected_y_loadings)
+    assert_array_almost_equal(x_loadings_sign_flip, x_weights_sign_flip)
+    assert_array_almost_equal(y_loadings_sign_flip, y_weights_sign_flip)
 
-    # 3) Another non-regression test of Canonical PLS on random dataset
-    # =================================================================
+
+def test_sanity_check_pls_regression_constant_column_Y():
+    # Check behavior when the first column of Y is constant
+    # The results are checked against a modified version of plsreg2
+    # from the R-package plsdepot
+    d = load_linnerud()
+    X = d.data
+    Y = d.target
+    Y[:, 0] = 1
+    pls = PLSRegression(n_components=X.shape[1])
+    pls.fit(X, Y)
+
+    expected_x_weights = np.array(
+        [[-0.6273573, 0.007081799, 0.7786994],
+         [-0.7493417, -0.277612681, -0.6011807],
+         [-0.2119194, 0.960666981, -0.1794690]])
+
+    expected_x_loadings = np.array(
+        [[-0.6273512, -0.22464538, 0.7786994],
+         [-0.6643156, -0.09871193, -0.6011807],
+         [-0.5125877, 1.01407380, -0.1794690]])
+
+    expected_y_loadings = np.array(
+        [[0.0000000, 0.0000000, 0.0000000],
+         [0.4357300, 0.5828479, 0.2174802],
+         [-0.1353739, -0.2486423, -0.1810386]])
+
+    assert_array_almost_equal(np.abs(expected_x_weights),
+                              np.abs(pls.x_weights_))
+    assert_array_almost_equal(np.abs(expected_x_loadings),
+                              np.abs(pls.x_loadings_))
+    # For the PLSRegression with default parameters, y_loadings == y_weights
+    assert_array_almost_equal(np.abs(pls.y_loadings_),
+                              np.abs(expected_y_loadings))
+    assert_array_almost_equal(np.abs(pls.y_weights_),
+                              np.abs(expected_y_loadings))
+
+    x_loadings_sign_flip = np.sign(expected_x_loadings / pls.x_loadings_)
+    x_weights_sign_flip = np.sign(expected_x_weights / pls.x_weights_)
+    y_loadings_sign_flip = np.sign(expected_y_loadings / pls.y_loadings_)
+    assert_array_equal(x_loadings_sign_flip, x_weights_sign_flip)
+    assert_array_equal(x_loadings_sign_flip[1:], y_loadings_sign_flip[1:])
+
+
+def test_sanity_check_pls_canonical():
+    # Sanity check for PLSCanonical
+    # The results were checked against the R-package plspm
+
+    d = load_linnerud()
+    X = d.data
+    Y = d.target
+
+    pls = PLSCanonical(n_components=X.shape[1])
+    pls .fit(X, Y)
+
+    expected_x_weights = np.array(
+        [[-0.61330704,  0.25616119, -0.74715187],
+         [-0.74697144,  0.11930791,  0.65406368],
+         [-0.25668686, -0.95924297, -0.11817271]])
+
+    expected_x_rotations = np.array(
+        [[-0.61330704,  0.41591889, -0.62297525],
+         [-0.74697144,  0.31388326,  0.77368233],
+         [-0.25668686, -0.89237972, -0.24121788]])
+
+    expected_y_weights = np.array(
+        [[+0.58989127,  0.7890047,   0.1717553],
+         [+0.77134053, -0.61351791,  0.16920272],
+         [-0.23887670, -0.03267062,  0.97050016]])
+
+    expected_y_rotations = np.array(
+        [[+0.58989127,  0.7168115,  0.30665872],
+         [+0.77134053, -0.70791757,  0.19786539],
+         [-0.23887670, -0.00343595,  0.94162826]])
+
+    assert_array_almost_equal(np.abs(pls.x_rotations_),
+                              np.abs(expected_x_rotations))
+    assert_array_almost_equal(np.abs(pls.x_weights_),
+                              np.abs(expected_x_weights))
+    assert_array_almost_equal(np.abs(pls.y_rotations_),
+                              np.abs(expected_y_rotations))
+    assert_array_almost_equal(np.abs(pls.y_weights_),
+                              np.abs(expected_y_weights))
+
+    x_rotations_sign_flip = np.sign(pls.x_rotations_ / expected_x_rotations)
+    x_weights_sign_flip = np.sign(pls.x_weights_ / expected_x_weights)
+    y_rotations_sign_flip = np.sign(pls.y_rotations_ / expected_y_rotations)
+    y_weights_sign_flip = np.sign(pls.y_weights_ / expected_y_weights)
+    assert_array_almost_equal(x_rotations_sign_flip, x_weights_sign_flip)
+    assert_array_almost_equal(y_rotations_sign_flip, y_weights_sign_flip)
+
+    assert_matrix_orthogonal(pls.x_weights_)
+    assert_matrix_orthogonal(pls.y_weights_)
+
+    assert_matrix_orthogonal(pls._x_scores)
+    assert_matrix_orthogonal(pls._y_scores)
+
+
+def test_sanity_check_pls_canonical_random():
+    # Sanity check for PLSCanonical on random data
     # The results were checked against the R-package plspm
     n = 500
     p_noise = 10
@@ -181,10 +225,10 @@ def test_pls():
     Y = np.concatenate(
         (Y, rng.normal(size=q_noise * n).reshape(n, q_noise)), axis=1)
 
-    pls_ca = pls_.PLSCanonical(n_components=3)
-    pls_ca.fit(X, Y)
+    pls = PLSCanonical(n_components=3)
+    pls.fit(X, Y)
 
-    x_weights = np.array(
+    expected_x_weights = np.array(
         [[0.65803719,  0.19197924,  0.21769083],
          [0.7009113,  0.13303969, -0.15376699],
          [0.13528197, -0.68636408,  0.13856546],
@@ -199,10 +243,8 @@ def test_pls():
          [-0.03572177,  0.0945091,  0.3414855],
          [0.05584937, -0.02028961, -0.57682568],
          [0.05744254, -0.01482333, -0.17431274]])
-    x_weights_sign_flip = pls_ca.x_weights_ / x_weights
 
-
-    x_loadings = np.array(
+    expected_x_loadings = np.array(
         [[0.65649254,  0.1847647,  0.15270699],
          [0.67554234,  0.15237508, -0.09182247],
          [0.19219925, -0.67750975,  0.08673128],
@@ -217,9 +259,8 @@ def test_pls():
          [-0.05292828,  0.0953533,  0.31916881],
          [0.04031924, -0.01961045, -0.65174036],
          [0.06172484, -0.06597366, -0.1244497]])
-    x_loadings_sign_flip = pls_ca.x_loadings_ / x_loadings
 
-    y_weights = np.array(
+    expected_y_weights = np.array(
         [[0.66101097,  0.18672553,  0.22826092],
          [0.69347861,  0.18463471, -0.23995597],
          [0.14462724, -0.66504085,  0.17082434],
@@ -229,9 +270,8 @@ def test_pls():
          [-0.00917056,  0.04322147,  0.10062478],
          [-0.01909512,  0.06182718,  0.28830475],
          [0.01756709,  0.04797666,  0.32225745]])
-    y_weights_sign_flip = pls_ca.y_weights_ / y_weights
 
-    y_loadings = np.array(
+    expected_y_loadings = np.array(
         [[0.68568625,  0.1674376,  0.0969508],
          [0.68782064,  0.20375837, -0.1164448],
          [0.11712173, -0.68046903,  0.12001505],
@@ -241,89 +281,113 @@ def test_pls():
          [-0.02196918, -0.01377169,  0.09564505],
          [-0.03288952,  0.09039729,  0.31858973],
          [0.04287624,  0.05254676,  0.27836841]])
-    y_loadings_sign_flip = pls_ca.y_loadings_ / y_loadings
 
-    assert_array_almost_equal(x_loadings_sign_flip, x_weights_sign_flip, 4)
-    assert_array_almost_equal(np.abs(x_weights_sign_flip), 1, 4)
-    assert_array_almost_equal(np.abs(x_loadings_sign_flip), 1, 4)
+    assert_array_almost_equal(np.abs(pls.x_loadings_),
+                              np.abs(expected_x_loadings))
+    assert_array_almost_equal(np.abs(pls.x_weights_),
+                              np.abs(expected_x_weights))
+    assert_array_almost_equal(np.abs(pls.y_loadings_),
+                              np.abs(expected_y_loadings))
+    assert_array_almost_equal(np.abs(pls.y_weights_),
+                              np.abs(expected_y_weights))
 
-    assert_array_almost_equal(y_loadings_sign_flip, y_weights_sign_flip, 4)
-    assert_array_almost_equal(np.abs(y_weights_sign_flip), 1, 4)
-    assert_array_almost_equal(np.abs(y_loadings_sign_flip), 1, 4)
+    x_loadings_sign_flip = np.sign(pls.x_loadings_ / expected_x_loadings)
+    x_weights_sign_flip = np.sign(pls.x_weights_ / expected_x_weights)
+    y_weights_sign_flip = np.sign(pls.y_weights_ / expected_y_weights)
+    y_loadings_sign_flip = np.sign(pls.y_loadings_ / expected_y_loadings)
+    assert_array_almost_equal(x_loadings_sign_flip, x_weights_sign_flip)
+    assert_array_almost_equal(y_loadings_sign_flip, y_weights_sign_flip)
 
-    # Orthogonality of weights
-    # ~~~~~~~~~~~~~~~~~~~~~~~~
-    check_ortho(pls_ca.x_weights_, "x weights are not orthogonal")
-    check_ortho(pls_ca.y_weights_, "y weights are not orthogonal")
+    assert_matrix_orthogonal(pls.x_weights_)
+    assert_matrix_orthogonal(pls.y_weights_)
 
-    # Orthogonality of latent scores
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    check_ortho(pls_ca.x_scores_, "x scores are not orthogonal")
-    check_ortho(pls_ca.y_scores_, "y scores are not orthogonal")
+    assert_matrix_orthogonal(pls._x_scores)
+    assert_matrix_orthogonal(pls._y_scores)
 
 
 def test_convergence_fail():
+    # Make sure ConvergenceWarning is raised if max_iter is too small
     d = load_linnerud()
     X = d.data
     Y = d.target
-    pls_bynipals = pls_.PLSCanonical(n_components=X.shape[1],
-                                     max_iter=2, tol=1e-10)
-    assert_warns(ConvergenceWarning, pls_bynipals.fit, X, Y)
+    pls_nipals = PLSCanonical(n_components=X.shape[1], max_iter=2)
+    with pytest.warns(ConvergenceWarning):
+        pls_nipals.fit(X, Y)
 
 
-def test_PLSSVD():
-    # Let's check the PLSSVD doesn't return all possible component but just
-    # the specified number
+@pytest.mark.filterwarnings('ignore:.*scores_ was deprecated')  # 0.26
+@pytest.mark.parametrize('Est', (PLSSVD, PLSRegression, PLSCanonical))
+def test_attibutes_shapes(Est):
+    # Make sure attributes are of the correct shape depending on n_components
     d = load_linnerud()
     X = d.data
     Y = d.target
     n_components = 2
-    for clf in [pls_.PLSSVD, pls_.PLSRegression, pls_.PLSCanonical]:
-        pls = clf(n_components=n_components)
-        pls.fit(X, Y)
-        assert n_components == pls.y_scores_.shape[1]
+    pls = Est(n_components=n_components)
+    pls.fit(X, Y)
+    assert all(attr.shape[1] == n_components
+               for attr in (pls.x_scores_, pls.y_scores_, pls.x_weights_,
+                            pls.y_weights_))
 
 
-def test_univariate_pls_regression():
-    # Ensure 1d Y is correctly interpreted
+@pytest.mark.parametrize('Est', (PLSRegression, PLSCanonical, CCA))
+def test_univariate_equivalence(Est):
+    # Ensure 2D Y with 1 column is equivalent to 1D Y
     d = load_linnerud()
     X = d.data
     Y = d.target
 
-    clf = pls_.PLSRegression()
-    # Compare 1d to column vector
-    model1 = clf.fit(X, Y[:, 0]).coef_
-    model2 = clf.fit(X, Y[:, :1]).coef_
-    assert_array_almost_equal(model1, model2)
+    est = Est(n_components=1)
+    one_d_coeff = est.fit(X, Y[:, 0]).coef_
+    two_d_coeff = est.fit(X, Y[:, :1]).coef_
+
+    assert one_d_coeff.shape == two_d_coeff.shape
+    assert_array_almost_equal(one_d_coeff, two_d_coeff)
 
 
-def test_predict_transform_copy():
+@pytest.mark.parametrize('Est', (PLSRegression, PLSCanonical, CCA, PLSSVD))
+def test_copy(Est):
     # check that the "copy" keyword works
     d = load_linnerud()
     X = d.data
     Y = d.target
-    clf = pls_.PLSCanonical()
-    X_copy = X.copy()
-    Y_copy = Y.copy()
-    clf.fit(X, Y)
-    # check that results are identical with copy
-    assert_array_almost_equal(clf.predict(X), clf.predict(X.copy(), copy=False))
-    assert_array_almost_equal(clf.transform(X), clf.transform(X.copy(), copy=False))
+    X_orig = X.copy()
 
-    # check also if passing Y
-    assert_array_almost_equal(clf.transform(X, Y),
-                              clf.transform(X.copy(), Y.copy(), copy=False))
-    # check that copy doesn't destroy
-    # we do want to check exact equality here
-    assert_array_equal(X_copy, X)
-    assert_array_equal(Y_copy, Y)
-    # also check that mean wasn't zero before (to make sure we didn't touch it)
-    assert np.all(X.mean(axis=0) != 0)
+    # copy=True won't modify inplace
+    pls = Est(copy=True).fit(X, Y)
+    assert_array_equal(X, X_orig)
+
+    # copy=False will modify inplace
+    with pytest.raises(AssertionError):
+        Est(copy=False).fit(X, Y)
+        assert_array_almost_equal(X, X_orig)
+
+    if Est is PLSSVD:
+        return  # PLSSVD does not support copy param in predict or transform
+
+    X_orig = X.copy()
+    with pytest.raises(AssertionError):
+        pls.transform(X, Y, copy=False),
+        assert_array_almost_equal(X, X_orig)
+
+    X_orig = X.copy()
+    with pytest.raises(AssertionError):
+        pls.predict(X, copy=False),
+        assert_array_almost_equal(X, X_orig)
+
+    # Make sure copy=True gives same transform and predictions as predict=False
+    assert_array_almost_equal(pls.transform(X, Y, copy=True),
+                              pls.transform(X.copy(), Y.copy(), copy=False))
+    assert_array_almost_equal(pls.predict(X, copy=True),
+                              pls.predict(X.copy(), copy=False))
 
 
-def test_scale_and_stability():
-    # We test scale=True parameter
+@pytest.mark.parametrize('Est', (CCA, PLSCanonical, PLSRegression, PLSSVD))
+def test_scale_and_stability(Est):
+    # scale=True is equivalent to scale=False on centered/scaled data
     # This allows to check numerical stability over platforms as well
+
+    rng = np.random.RandomState(0)
 
     d = load_linnerud()
     X1 = d.data
@@ -332,7 +396,7 @@ def test_scale_and_stability():
     X1[:, -1] = 1.0
 
     # From bug #2821
-    # Test with X2, T2 s.t. clf.x_score[:, 1] == 0, clf.y_score[:, 1] == 0
+    # Test with X2, Y2 s.t. clf.x_score[:, 1] == 0, clf.y_score[:, 1] == 0
     # This test robustness of algorithm when dealing with value close to 0
     X2 = np.array([[0., 0., 1.],
                    [1., 0., 0.],
@@ -343,62 +407,127 @@ def test_scale_and_stability():
                    [6.2, 5.9],
                    [11.9, 12.3]])
 
-    for (X, Y) in [(X1, Y1), (X2, Y2)]:
+    # Non-regression for https://github.com/scikit-learn/scikit-learn/pull/7819
+    n_samples = 1000
+    n_targets = 5
+    n_features = 10
+    Q = rng.randn(n_targets, n_features)
+    Y3 = rng.randn(n_samples, n_targets)
+    X3 = np.dot(Y3, Q) + 2 * rng.randn(n_samples, n_features) + 1
+    X3 *= 1000
+
+    for (X, Y) in [(X1, Y1), (X2, Y2), (X3, Y3)]:
         X_std = X.std(axis=0, ddof=1)
         X_std[X_std == 0] = 1
         Y_std = Y.std(axis=0, ddof=1)
         Y_std[Y_std == 0] = 1
-
         X_s = (X - X.mean(axis=0)) / X_std
         Y_s = (Y - Y.mean(axis=0)) / Y_std
 
-        for clf in [CCA(), pls_.PLSCanonical(), pls_.PLSRegression(),
-                    pls_.PLSSVD()]:
-            clf.set_params(scale=True)
-            X_score, Y_score = clf.fit_transform(X, Y)
-            clf.set_params(scale=False)
-            X_s_score, Y_s_score = clf.fit_transform(X_s, Y_s)
-            assert_array_almost_equal(X_s_score, X_score)
-            assert_array_almost_equal(Y_s_score, Y_score)
-            # Scaling should be idempotent
-            clf.set_params(scale=True)
-            X_score, Y_score = clf.fit_transform(X_s, Y_s)
-            assert_array_almost_equal(X_s_score, X_score)
-            assert_array_almost_equal(Y_s_score, Y_score)
+        X_score, Y_score = Est(scale=True).fit_transform(X, Y)
+        X_s_score, Y_s_score = Est(scale=False).fit_transform(X_s, Y_s)
+
+        assert_array_almost_equal(X_s_score, X_score)
+        assert_array_almost_equal(Y_s_score, Y_score)
 
 
-def test_pls_errors():
-    d = load_linnerud()
-    X = d.data
-    Y = d.target
-    for clf in [pls_.PLSCanonical(), pls_.PLSRegression(),
-                pls_.PLSSVD()]:
-        clf.n_components = 4
-        assert_raise_message(ValueError, "Invalid number of components",
-                             clf.fit, X, Y)
+@pytest.mark.parametrize('Est', (PLSSVD, PLSCanonical, CCA))
+@pytest.mark.parametrize('n_components', (0, 4))
+def test_n_components_bounds(Est, n_components):
+    # n_components should be in [1, min(n_samples, n_features, n_targets)]
+    # TODO: catch error instead of warning in 0.26
+    rng = np.random.RandomState(0)
+    X = rng.randn(10, 5)
+    Y = rng.randn(10, 3)
+    est = Est(n_components=n_components)
+    with pytest.warns(FutureWarning,
+                      match="n_components=3 will be used instead"):
+        est.fit(X, Y)
+        # make sure upper bound of rank is used as a fallback
+        assert est.transform(X).shape[1] == 3
 
 
-@pytest.mark.filterwarnings('ignore: The default value of multioutput')  # 0.23
-def test_pls_scaling():
-    # sanity check for scale=True
-    n_samples = 1000
-    n_targets = 5
-    n_features = 10
+@pytest.mark.parametrize('n_components', (0, 6))
+def test_n_components_bounds_pls_regression(n_components):
+    # For PLSRegression, the upper bound for n_components is n_features
+    # TODO: catch error instead of warning in 0.26
+    rng = np.random.RandomState(0)
+    X = rng.randn(10, 5)
+    Y = rng.randn(10, 3)
+    est = PLSRegression(n_components=n_components)
+    with pytest.warns(FutureWarning,
+                      match="n_components=5 will be used instead"):
+        est.fit(X, Y)
+        # make sure upper bound of rank is used as a fallback
+        assert est.transform(X).shape[1] == 5
 
-    rng = check_random_state(0)
 
-    Q = rng.randn(n_targets, n_features)
-    Y = rng.randn(n_samples, n_targets)
-    X = np.dot(Y, Q) + 2 * rng.randn(n_samples, n_features) + 1
-    X *= 1000
-    X_scaled = StandardScaler().fit_transform(X)
+@pytest.mark.parametrize('Est', (PLSSVD, CCA, PLSCanonical))
+def test_scores_deprecations(Est):
+    # Make sure x_scores_ and y_scores_ are deprecated.
+    # It's not deprecated for PLSRegression because y_score_ is different from
+    # transform(Y_train)
+    # TODO: remove attributes and test in 0.26
+    rng = np.random.RandomState(0)
+    X = rng.randn(10, 5)
+    Y = rng.randn(10, 3)
+    est = Est().fit(X, Y)
+    with pytest.warns(FutureWarning, match="x_scores_ was deprecated"):
+        assert_allclose(est.x_scores_, est.transform(X))
+    with pytest.warns(FutureWarning, match="y_scores_ was deprecated"):
+        assert_allclose(est.y_scores_, est.transform(X, Y)[1])
 
-    pls = pls_.PLSRegression(n_components=5, scale=True)
 
-    pls.fit(X, Y)
-    score = pls.score(X, Y)
+@pytest.mark.parametrize('Est', (PLSRegression, PLSCanonical, CCA))
+def test_norm_y_weights_deprecation(Est):
+    rng = np.random.RandomState(0)
+    X = rng.randn(10, 5)
+    Y = rng.randn(10, 3)
+    est = Est().fit(X, Y)
+    with pytest.warns(FutureWarning, match="norm_y_weights was deprecated"):
+        est.norm_y_weights
 
-    pls.fit(X_scaled, Y)
-    score_scaled = pls.score(X_scaled, Y)
 
-    assert_approx_equal(score, score_scaled)
+@pytest.mark.parametrize('n_samples, n_features', [(100, 10), (100, 200)])
+@pytest.mark.parametrize('seed', range(10))
+def test_singular_value_helpers(n_samples, n_features, seed):
+    # Make sure SVD and power method give approximately the same results
+    X, Y = make_regression(n_samples, n_features, n_targets=5,
+                           random_state=seed)
+    u1, v1, _ = _get_first_singular_vectors_power_method(X, Y,
+                                                         norm_y_weights=True)
+    u2, v2 = _get_first_singular_vectors_svd(X, Y)
+
+    _svd_flip_1d(u1, v1)
+    _svd_flip_1d(u2, v2)
+
+    rtol = 1e-1
+    assert_allclose(u1, u2, rtol=rtol)
+    assert_allclose(v1, v2, rtol=rtol)
+
+
+def test_one_component_equivalence():
+    # PLSSVD, PLSRegression and PLSCanonical should all be equivalent when
+    # n_components is 1
+    X, Y = make_regression(100, 10, n_targets=5, random_state=0)
+    svd = PLSSVD(n_components=1).fit(X, Y).transform(X)
+    reg = PLSRegression(n_components=1).fit(X, Y).transform(X)
+    canonical = PLSCanonical(n_components=1).fit(X, Y).transform(X)
+
+    assert_allclose(svd, reg, rtol=1e-2)
+    assert_allclose(svd, canonical, rtol=1e-2)
+
+
+def test_svd_flip_1d():
+    # Make sure svd_flip_1d is equivalent to svd_flip
+    u = np.array([1, -4, 2])
+    v = np.array([1, 2, 3])
+
+    u_expected, v_expected = svd_flip(u.reshape(-1, 1), v.reshape(1, -1))
+    _svd_flip_1d(u, v)  # inplace
+
+    assert_allclose(u, u_expected.ravel())
+    assert_allclose(u, [-1, 4, -2])
+
+    assert_allclose(v, v_expected.ravel())
+    assert_allclose(v, [-1, -2, -3])

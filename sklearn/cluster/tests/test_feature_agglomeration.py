@@ -4,8 +4,8 @@ Tests for sklearn.cluster._feature_agglomeration
 # Authors: Sergul Aydore 2017
 import numpy as np
 from sklearn.cluster import FeatureAgglomeration
-from sklearn.utils.testing import assert_no_warnings
-from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_no_warnings
+from sklearn.utils._testing import assert_array_almost_equal
 
 
 def test_feature_agglomeration():
