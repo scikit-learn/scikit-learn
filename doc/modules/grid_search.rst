@@ -38,7 +38,7 @@ distribution. Both these tools have successive halving counterparts
 :class:`HalvingGridSearchCV` and :class:`HalvingRandomSearchCV`, which can be
 much faster at finding a good parameter combination.
 
-After describing these tools we detail, :ref:`best practices
+After describing these tools we detail :ref:`best practices
 <grid_search_tips>` applicable to these approaches. Some models allow for
 specialized, efficient parameter search strategies, outlined in
 :ref:`alternative_cv`.
@@ -202,7 +202,7 @@ the rate at which the number of candidates decreases. In each iteration, the
 number of resources per candidate is multiplied by ``ratio`` and the number
 of candidates is divided by the same ratio. Along with ``resource`` and
 ``min_resources``, ``ratio`` is the most important parameter to control the
-search in our implementation. ``ratio`` effectively controls the number of
+search in our implementation, though a value of 3 usually works well. ``ratio`` effectively controls the number of
 iterations in :class:`HalvingGridSearchCV` and the number of candidates (if
 'auto') and iterations in :class:`HalvingRandomSearchCV`.
 ``aggressive_elimination=True`` can also be used if the number of available
@@ -518,7 +518,7 @@ since it has reached the last iteration (3) with the highest score:
        `Non-stochastic Best Arm Identification and Hyperparameter
        Optimization <http://proceedings.mlr.press/v51/jamieson16.html>`_, in
        proc. of Machine Learning Research, 2016.
-    .. [2] L. Li, K. Jamieson, G. DeSalvo, A. Rostamizadeh, .A Talwalkar,
+    .. [2] L. Li, K. Jamieson, G. DeSalvo, A. Rostamizadeh, A. Talwalkar,
        `Hyperband: A Novel Bandit-Based Approach to Hyperparameter Optimization
        <https://arxiv.org/abs/1603.06560>`_, in Machine Learning Research
        18, 2018.
