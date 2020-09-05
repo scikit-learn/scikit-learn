@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 from scipy.stats import randint
 import numpy as np
 
+from sklearn.experimental import enable_successive_halving  # noqa
 from sklearn.model_selection import HalvingRandomSearchCV
 from sklearn.ensemble import RandomForestClassifier
 
@@ -39,10 +40,6 @@ param_dist = {"max_depth": [3, None],
 rsh = HalvingRandomSearchCV(
     estimator=clf,
     param_distributions=param_dist,
-    resource='n_samples',
-    max_resources='auto',  # max_resources=n_samples
-    n_candidates='exhaust',
-    cv=5,
     ratio=2,
     random_state=rng)
 rsh.fit(X, y)

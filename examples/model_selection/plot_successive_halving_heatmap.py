@@ -16,6 +16,7 @@ import pandas as pd
 from sklearn.svm import SVC
 from sklearn import datasets
 from sklearn.model_selection import GridSearchCV
+from sklearn.experimental import enable_successive_halving  # noqa
 from sklearn.model_selection import HalvingGridSearchCV
 
 
@@ -37,22 +38,13 @@ param_grid = {'gamma': gammas, 'C': Cs}
 clf = SVC(random_state=rng)
 
 tic = time()
-gsh = HalvingGridSearchCV(
-    estimator=clf,
-    param_grid=param_grid,
-    resource='n_samples',
-    max_resources='auto',  # max_resources=n_samples
-    cv=5,
-    ratio=2,
-    random_state=rng)
+gsh = HalvingGridSearchCV(estimator=clf, param_grid=param_grid, ratio=2,
+                          random_state=rng)
 gsh.fit(X, y)
 gsh_time = time() - tic
 
 tic = time()
-gs = GridSearchCV(
-    estimator=clf,
-    param_grid=param_grid,
-    cv=5)
+gs = GridSearchCV(estimator=clf, param_grid=param_grid)
 gs.fit(X, y)
 gs_time = time() - tic
 
@@ -66,15 +58,13 @@ def make_heatmap(ax, gs, is_sh=False, make_cbar=False):
     results['params_str'] = results.params.apply(str)
     if is_sh:
         # SH dataframe: get mean_test_score values for the highest iter
-        scores_matrix = (
-            results.sort_values('iter').groupby(['param_gamma', 'param_C'])
-            .last()['mean_test_score'].unstack()
+        scores_matrix = results.sort_values('iter').pivot_table(
+                index='param_gamma', columns='param_C',
+                values='mean_test_score', aggfunc='last'
         )
     else:
-        scores_matrix = (
-            results.set_index(['param_gamma', 'param_C'])['mean_test_score']
-            .unstack()
-        )
+        scores_matrix = results.pivot(index='param_gamma', columns='param_C',
+                                      values='mean_test_score')
 
     im = ax.imshow(scores_matrix)
 
@@ -91,11 +81,12 @@ def make_heatmap(ax, gs, is_sh=False, make_cbar=False):
              rotation_mode="anchor")
 
     if is_sh:
-        iterations = results.groupby(['param_gamma', 'param_C'])['iter'].max()
-        iterations_matrix = iterations.unstack().values
+        iterations = results.pivot_table(index='param_gamma',
+                                         columns='param_C', values='iter',
+                                         aggfunc='max').values
         for i in range(len(gammas)):
             for j in range(len(Cs)):
-                ax.text(j, i, iterations_matrix[i, j],
+                ax.text(j, i, iterations[i, j],
                         ha="center", va="center", color="w", fontsize=20)
 
     if make_cbar:
