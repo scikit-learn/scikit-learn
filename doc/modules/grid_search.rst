@@ -183,15 +183,15 @@ halving (SH) is like a tournament among candidate parameter combinations.
 SH is an iterative selection process where all candidates (the
 parameter combinations) are evaluated with a small amount of resources at
 the first iteration. Only some of these candidates are selected for the next
-iteration, which will be allocated more resources. What defines a resource is
-typically the number of samples to train on, but it can also be an arbitrary
-numeric parameter such as `n_estimators` in a random forest.
+iteration, which will be allocated more resources. For parameter tuning, the
+resource is typically the number of training samples, but it can also be an
+arbitrary numeric parameter such as `n_estimators` in a random forest.
 
-As illustrated in the figure below, only a small subset of candidates
+As illustrated in the figure below, only a subset of candidates
 'survive' until the last iteration. These are the candidates that have
-consistently ranked among the best candidates across all iterations. Each
-iteration is allocated an increasing amount of resources per candidate, here
-the number of samples.
+consistently ranked among the top-scoring candidates across all iterations.
+Each iteration is allocated an increasing amount of resources per candidate,
+here the number of samples.
 
 .. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_successive_halving_iterations_001.png
    :target: ../auto_examples/model_selection/plot_successive_halving_iterations.html
@@ -202,13 +202,13 @@ the rate at which the number of candidates decreases. In each iteration, the
 number of resources per candidate is multiplied by ``ratio`` and the number
 of candidates is divided by the same ratio. Along with ``resource`` and
 ``min_resources``, ``ratio`` is the most important parameter to control the
-search in our implementation, though a value of 3 usually works well. ``ratio`` effectively controls the number of
-iterations in :class:`HalvingGridSearchCV` and the number of candidates (if
-'auto') and iterations in :class:`HalvingRandomSearchCV`.
-``aggressive_elimination=True`` can also be used if the number of available
-resources is small. More control is available through tuning the
-``min_resources`` parameter. Each parameter and their interactions are
-described in more details below.
+search in our implementation, though a value of 3 usually works well.
+``ratio`` effectively controls the number of iterations in
+:class:`HalvingGridSearchCV` and the number of candidates (if 'auto') and
+iterations in :class:`HalvingRandomSearchCV`. ``aggressive_elimination=True``
+can also be used if the number of available resources is small. More control
+is available through tuning the ``min_resources`` parameter. Each parameter
+and their interactions are described in more details below.
 
 These estimators are still **experimental**: their predictions
 and their API might change without any deprecation cycle. To use them, you
@@ -242,20 +242,21 @@ samples: ``[10, 20, 40, 80, 160, 320, 640]``.
 
 But depending on the number of candidates, we might run less than 7
 iterations: if we start with a **small** number of candidates, the last
-iteration might use less than 640 samples, which is a waste of resources. For
-example if we start with 5 candidates, we only need 2 iterations: 5
-candidates for the first iteration, then `5 // 2 = 2` candidates at the
-second iteration, after which we know which candidate performs the best (so
-we don't need a third one). We would only be using at most 20 samples which
-is a waste since we have 1000 samples at our disposal.
-On the other hand, if we start with a **high** number of candidates, we might
-end up with a lot of candidates at the last iteration, which is not always
-ideal.
+iteration might use less than 640 samples, which means not using all the
+available resources (samples). For example if we start with 5 candidates, we
+only need 2 iterations: 5 candidates for the first iteration, then
+`5 // 2 = 2` candidates at the second iteration, after which we know which
+candidate performs the best (so we don't need a third one). We would only be
+using at most 20 samples which is a waste since we have 1000 samples at our
+disposal. On the other hand, if we start with a **high** number of
+candidates, we might end up with a lot of candidates at the last iteration,
+which may not always be ideal: it means that many candidates will run with
+the full resources, basically reducing the procedure to standard search.
 
 In the case of :class:`HalvingRandomSearchCV`, the number of candidates is set
-by default such that the maximum amount of resources is used at the last
-iteration. For :class:`HalvingGridSearchCV`, the number of candidates is
-determined by the `param_grid` parameter. Changing the value of
+by default such that the last iteration uses as much of the available
+resources as possible. For :class:`HalvingGridSearchCV`, the number of
+candidates is determined by the `param_grid` parameter. Changing the value of
 ``min_resources`` will impact the number of possible iterations, and as a
 result will also have an effect on the ideal number of candidates.
 
@@ -269,9 +270,13 @@ speed up the computation.
 
 Notice in the example above that the last iteration does not use the maximum
 amount of resources available: 1000 samples are available, yet only 640 are
-used, at most. By default, ``min_resources`` is set to a specific value such
-that the last iteration uses as many samples as possible. Please see
-:ref:`exhausting_the_resources` for details.
+used, at most. By default, both :class:`HalvingRandomSearchCV` and
+:class:`HalvingGridSearchCV` try to use as many resources as possible in the
+last iteration (with the constraint that this amount of resources must be a
+multiple of both `min_resources` and `ratio`). :class:`HalvingRandomSearchCV`
+achieves this by sampling the right amount of candidates, while
+:class:`HalvingGridSearchCV` achieves this by properly setting
+`min_resources`. Please see :ref:`exhausting_the_resources` for details.
 
 .. _amount_of_resource_and_number_of_candidates:
 
@@ -329,8 +334,10 @@ We can note that:
   candidates: the best candidate is the best out of these 2 candidates. It
   is not necessary to run an additional iteration, since it would only
   evaluate one candidate (namely the best one, which we have already
-  identified). For this reason, **in general, we want the last iteration to
-  run at most ``ratio`` candidates**.
+  identified). For this reason, in general, we want the last iteration to
+  run at most ``ratio`` candidates. If the last iteration evaluates more
+  than `ratio` candidates, then this last iteration reduces to a regular
+  search (as in :class:`RandomizedSearchCV` or :class:`GridSearchCV`).
 - each ``resource_iter`` is a multiple of both ``ratio`` and
   ``min_resources`` (which is confirmed by its definition above).
 
@@ -563,6 +570,9 @@ result in an error when using multiple metrics.
 See :ref:`sphx_glr_auto_examples_model_selection_plot_multi_metric_evaluation.py`
 for an example usage.
 
+:class:`HalvingRandomSearchCV` and :class:`HalvingGridSearchCV` do not support
+multimetric scoring.
+
 .. _composite_grid_search:
 
 Composite estimators and parameter spaces
@@ -628,9 +638,10 @@ utility function.
 Parallelism
 -----------
 
-The parameter search tools evaluate each parameter setting independently.
-Computations can be run in parallel if your OS supports it, by using the
-keyword ``n_jobs=-1``. See function signature for more details.
+The parameter search tools evaluate each parameter combination on each data
+fold independently. Computations can be run in parallel by using the keyword
+``n_jobs=-1``. See function signature for more details, and also the Glossary
+entry for :term:`n_jobs`.
 
 Robustness to failure
 ---------------------
