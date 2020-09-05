@@ -47,6 +47,12 @@ class RocCurveDisplay:
     figure_ : matplotlib Figure
         Figure containing the curve.
 
+    See Also
+    --------
+    roc_curve : Compute Receiver operating characteristic (ROC) curve.
+    plot_roc_curve : Plot Receiver operating characteristic (ROC) curve.
+    roc_auc_score : Compute the area under the ROC curve.
+
     Examples
     --------
     >>> import matplotlib.pyplot as plt  # doctest: +SKIP
@@ -184,9 +190,9 @@ def plot_roc_curve(estimator, X, y, *, sample_weight=None,
 
     See Also
     --------
-    roc_auc_score : Compute the area under the ROC curve
-
-    roc_curve : Compute Receiver operating characteristic (ROC) curve
+    roc_curve : Compute Receiver operating characteristic (ROC) curve.
+    RocCurveDisplay : ROC Curve visualization.
+    roc_auc_score : Compute the area under the ROC curve.
 
     Examples
     --------

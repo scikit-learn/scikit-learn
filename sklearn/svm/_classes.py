@@ -120,8 +120,7 @@ class LinearSVC(LinearClassifierMixin,
 
     See Also
     --------
-    SVC
-        Implementation of Support Vector Machine classifier using libsvm:
+    SVC : Implementation of Support Vector Machine classifier using libsvm:
         the kernel can be non-linear but its SMO algorithm does not
         scale to large number of samples as LinearSVC does.
 
@@ -133,8 +132,8 @@ class LinearSVC(LinearClassifierMixin,
         Finally SVC can fit dense data without memory copy if the input
         is C-contiguous. Sparse data will still incur memory copy though.
 
-    sklearn.linear_model.SGDClassifier
-        SGDClassifier can optimize the same cost function as LinearSVC
+    sklearn.linear_model.SGDClassifier : SGDClassifier can optimize the same
+        cost function as LinearSVC
         by adjusting the penalty and loss parameters. In addition it requires
         less memory, allows incremental (online) learning, and implements
         various loss functions and regularization regimes.
@@ -360,17 +359,15 @@ class LinearSVR(RegressorMixin, LinearModel):
 
     See Also
     --------
-    LinearSVC
-        Implementation of Support Vector Machine classifier using the
+    LinearSVC : Implementation of Support Vector Machine classifier using the
         same library as this class (liblinear).
 
-    SVR
-        Implementation of Support Vector Machine regression using libsvm:
+    SVR : Implementation of Support Vector Machine regression using libsvm:
         the kernel can be non-linear but its SMO algorithm does not
         scale to large number of samples as LinearSVC does.
 
-    sklearn.linear_model.SGDRegressor
-        SGDRegressor can optimize the same cost function as LinearSVR
+    sklearn.linear_model.SGDRegressor : SGDRegressor can optimize the same cost
+        function as LinearSVR
         by adjusting the penalty and loss parameters. In addition it requires
         less memory, allows incremental (online) learning, and implements
         various loss functions and regularization regimes.
@@ -630,12 +627,10 @@ class SVC(BaseSVC):
 
     See Also
     --------
-    SVR
-        Support Vector Machine for Regression implemented using libsvm.
+    SVR : Support Vector Machine for Regression implemented using libsvm.
 
-    LinearSVC
-        Scalable Linear Support Vector Machine for classification
-        implemented using liblinear. Check the See also section of
+    LinearSVC : Scalable Linear Support Vector Machine for classification
+        implemented using liblinear. Check the See Also section of
         LinearSVC for more comparison element.
 
     References
@@ -854,11 +849,9 @@ class NuSVC(BaseSVC):
 
     See Also
     --------
-    SVC
-        Support Vector Machine for classification using libsvm.
+    SVC : Support Vector Machine for classification using libsvm.
 
-    LinearSVC
-        Scalable linear Support Vector Machine for classification using
+    LinearSVC : Scalable linear Support Vector Machine for classification using
         liblinear.
 
     References
@@ -1022,12 +1015,10 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     See Also
     --------
-    NuSVR
-        Support Vector Machine for regression implemented using libsvm
+    NuSVR : Support Vector Machine for regression implemented using libsvm
         using a parameter to control the number of support vectors.
 
-    LinearSVR
-        Scalable Linear Support Vector Machine for regression
+    LinearSVR : Scalable Linear Support Vector Machine for regression
         implemented using liblinear.
 
     References
@@ -1193,12 +1184,11 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
     See Also
     --------
-    NuSVC
-        Support Vector Machine for classification implemented with libsvm
+    NuSVC : Support Vector Machine for classification implemented with libsvm
         with a parameter to control the number of support vectors.
 
-    SVR
-        epsilon Support Vector Machine for regression implemented with libsvm.
+    SVR : Epsilon Support Vector Machine for regression implemented with
+        libsvm.
 
     References
     ----------
