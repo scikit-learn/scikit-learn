@@ -544,10 +544,12 @@ class OneHotEncoder(_BaseEncoder):
                 dropped = np.asarray(sub.sum(axis=1) == 0).flatten()
                 if dropped.any():
                     if self.drop_idx_ is None:
-                        msg = ("The follow samples do not have an inverse when"
-                               " drop=None and handle_unknown='error' because "
-                               "they are all zeros: {0}.")
-                        raise ValueError(msg.format(X[i]))
+                        all_zero_samples = np.flatnonzero(dropped)
+                        msg = (f"Samples {all_zero_samples} can not be "
+                               "inverted when drop=None and "
+                               "handle_unknown='error' because they "
+                               "contain all zeros")
+                        raise ValueError(msg)
                     X_tr[dropped, i] = self.categories_[i][
                         self.drop_idx_[i]
                     ]

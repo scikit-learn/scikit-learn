@@ -263,9 +263,11 @@ def test_one_hot_encoder_inverse(sparse_, drop):
     enc = OneHotEncoder(sparse=sparse_)
     X_tr = enc.fit_transform(X)
     # make the second row of the first feature to be all zero
-    X_tr[1, 0] = 0
-    X_tr[1, 1] = 0
-    msg = r'Unknown value in row \d+'
+    X_tr[1, :] = 0
+
+    msg = r"Samples \[(\d )*\d\] can not be inverted when drop=None " \
+          r"and handle_unknown='error' because they contain all zeros"
+
     with pytest.raises(ValueError, match=msg):
         enc.inverse_transform(X_tr)
 
@@ -279,7 +281,6 @@ def test_one_hot_encoder_inverse(sparse_, drop):
     inverse_test_array = np.array([[0, 0, 0, 0, 0],
                                    [0, 0, 0, 0, 1],
                                    [0, 1, 0, 0, 0]])
-    msg = r'Unknown value in row \d+'
     with pytest.raises(ValueError, match=msg):
         ohe.inverse_transform(inverse_test_array)
 
