@@ -17,7 +17,5 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install check-manifest scipy cython
-        shell: bash
       - run: |
           check-manifest -v
-        shell: bash
