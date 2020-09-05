@@ -640,7 +640,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         collected evaluation results. This makes it possible to implement
         Bayesian optimization or more generally sequential model-based
         optimization by deriving from the BaseSearchCV abstract base class.
-        For example, Succesive Halving is implemented by calling
+        For example, Successive Halving is implemented by calling
         `evaluate_candidates` multiples times (once per iteration of the SH
         process), each time passing a different set of candidates with `X`
         and `y` of increasing sizes.
