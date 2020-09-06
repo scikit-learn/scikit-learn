@@ -1766,8 +1766,6 @@ def test_score():
     assert_raise_message(ValueError, error_message,
                          _score, *fit_and_score_args)
 
-
-# <<<<<<< HEAD
 def test_callable_multimetric_confusion_matrix_cross_validate():
     def custom_scorer(clf, X, y):
         y_pred = clf.predict(X)

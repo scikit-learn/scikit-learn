@@ -296,13 +296,15 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
             ret[key] = train_scores_dict[name]
 
     if return_predictions:
-        # import pdb; pdb.set_trace()
         if return_predictions == "predict":
             predictions = np.hstack(results["predictions"])
         else:
             predictions = np.vstack(results["predictions"])
         test_indices = np.hstack(results["test_indices"])
         ret['predictions'] = predictions[test_indices]
+
+    if return_predictions:
+        ret['predictions'] = predictions
 
     return ret
 
