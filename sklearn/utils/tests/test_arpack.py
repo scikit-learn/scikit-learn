@@ -1,6 +1,6 @@
 import numpy as np
 
-from sklearn.utils.arpack import _init_arpack_v0
+from sklearn.utils._arpack import _init_arpack_v0
 
 
 def test_init_arpack_v0():

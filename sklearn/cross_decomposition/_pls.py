@@ -16,7 +16,7 @@ from ..base import BaseEstimator, RegressorMixin, TransformerMixin
 from ..base import _UnstableArchMixin
 from ..base import MultiOutputMixin
 from ..utils import check_array, check_consistent_length
-from ..utils.arpack import _init_arpack_v0
+from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import svd_flip
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
 from ..utils.validation import _deprecate_positional_args

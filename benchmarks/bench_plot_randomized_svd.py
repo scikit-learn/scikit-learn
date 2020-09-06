@@ -74,7 +74,7 @@ from time import time
 from collections import defaultdict
 import os.path
 
-from sklearn.utils.arpack import _init_arpack_v0
+from sklearn.utils._arpack import _init_arpack_v0
 from sklearn.utils import gen_batches
 from sklearn.utils.validation import check_random_state
 from sklearn.utils.extmath import randomized_svd

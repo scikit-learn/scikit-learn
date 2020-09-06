@@ -11,7 +11,7 @@ from scipy.sparse.linalg import eigsh
 
 from ..base import BaseEstimator, TransformerMixin, _UnstableArchMixin
 from ..utils import check_random_state, check_array
-from ..utils.arpack import _init_arpack_v0
+from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES

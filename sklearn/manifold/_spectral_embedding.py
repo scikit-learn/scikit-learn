@@ -18,7 +18,7 @@ from ..base import BaseEstimator
 
 from ..utils import (check_random_state, check_array,
                      check_symmetric)
-from ..utils.arpack import _init_arpack_v0
+from ..utils._arpack import _init_arpack_v0
 
 from ..utils.extmath import _deterministic_vector_sign_flip
 from ..utils.fixes import lobpcg

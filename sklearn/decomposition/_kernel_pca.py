@@ -7,7 +7,7 @@ import numpy as np
 from scipy import linalg
 from scipy.sparse.linalg import eigsh
 
-from ..utils.arpack import _init_arpack_v0
+from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import svd_flip
 from ..utils.validation import check_is_fitted, _check_psd_eigenvalues
 
