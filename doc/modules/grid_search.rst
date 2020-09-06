@@ -197,18 +197,19 @@ here the number of samples.
    :target: ../auto_examples/model_selection/plot_successive_halving_iterations.html
    :align: center
 
-The ``ratio`` parameter controls the rate at which the resources grow, and
+We here briefly describe the main parameters, but each parameter and their
+interactions are described in more details in the sections below. The
+``ratio`` (> 1) parameter controls the rate at which the resources grow, and
 the rate at which the number of candidates decreases. In each iteration, the
 number of resources per candidate is multiplied by ``ratio`` and the number
 of candidates is divided by the same ratio. Along with ``resource`` and
 ``min_resources``, ``ratio`` is the most important parameter to control the
 search in our implementation, though a value of 3 usually works well.
 ``ratio`` effectively controls the number of iterations in
-:class:`HalvingGridSearchCV` and the number of candidates (if 'auto') and
+:class:`HalvingGridSearchCV` and the number of candidates (by default) and
 iterations in :class:`HalvingRandomSearchCV`. ``aggressive_elimination=True``
 can also be used if the number of available resources is small. More control
-is available through tuning the ``min_resources`` parameter. Each parameter
-and their interactions are described in more details below.
+is available through tuning the ``min_resources`` parameter.
 
 These estimators are still **experimental**: their predictions
 and their API might change without any deprecation cycle. To use them, you
@@ -218,6 +219,7 @@ need to explicitly import ``enable_successive_halving``::
   >>> from sklearn.experimental import enable_successive_halving  # noqa
   >>> # now you can import normally from model_selection
   >>> from sklearn.model_selection import HalvingGridSearchCV
+  >>> from sklearn.model_selection import HalvingRandomSearchCV
 
 .. topic:: Examples:
 
@@ -272,11 +274,12 @@ Notice in the example above that the last iteration does not use the maximum
 amount of resources available: 1000 samples are available, yet only 640 are
 used, at most. By default, both :class:`HalvingRandomSearchCV` and
 :class:`HalvingGridSearchCV` try to use as many resources as possible in the
-last iteration (with the constraint that this amount of resources must be a
-multiple of both `min_resources` and `ratio`). :class:`HalvingRandomSearchCV`
-achieves this by sampling the right amount of candidates, while
-:class:`HalvingGridSearchCV` achieves this by properly setting
-`min_resources`. Please see :ref:`exhausting_the_resources` for details.
+last iteration, with the constraint that this amount of resources must be a
+multiple of both `min_resources` and `ratio` (this constraint will be clear
+in the next section). :class:`HalvingRandomSearchCV` achieves this by
+sampling the right amount of candidates, while :class:`HalvingGridSearchCV`
+achieves this by properly setting `min_resources`. Please see
+:ref:`exhausting_the_resources` for details.
 
 .. _amount_of_resource_and_number_of_candidates:
 
