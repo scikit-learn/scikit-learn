@@ -536,6 +536,10 @@ Changelog
   :class:`preprocessing.KBinsDiscretizer`.
   :pr:`16335` by :user:`Arthur Imbert <Henley13>`.
 
+- |Fix| Raise error on :meth:`sklearn.preprocessing.OneHotEncoder.inverse_transform` on input cases
+  when it is expected in the case of ``handle_uknown='error'``.
+  :pr:`14982` by :user:`Kevin Winata <kwinata>`.
+
 :mod:`sklearn.svm`
 ..................
 
