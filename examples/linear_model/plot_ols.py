@@ -14,8 +14,6 @@ and the responses predicted by the linear approximation.
 
 The coefficients, residual sum of squares and the coefficient of
 determination are also calculated.
-
-
 """
 print(__doc__)
 
