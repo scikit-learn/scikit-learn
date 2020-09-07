@@ -1,4 +1,8 @@
-# Benchmark the expected loss using the Blog Authorship Corpus
+"""
+===========================================
+Benchmark Non-negative Matrix Factorization
+===========================================
+"""
 
 from time import time
 
