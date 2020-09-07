@@ -48,14 +48,14 @@ def _refit_callable(results):
     return last_iter_indices[best_idx]
 
 
-def _top_k(results, k, iter_i):
+def _top_k(results, k, itr):
     # Return the best candidates of a given iteration
     iteration, mean_test_score, params = (
         np.asarray(a) for a in (results['iter'],
                                 results['mean_test_score'],
                                 results['params'])
     )
-    iter_indices = np.flatnonzero(iteration == iter_i)
+    iter_indices = np.flatnonzero(iteration == itr)
     sorted_indices = np.argsort(mean_test_score[iter_indices])
     return np.array(params[iter_indices][sorted_indices[-k:]])
 
@@ -269,58 +269,58 @@ class BaseSuccessiveHalving(BaseSearchCV):
         self.n_resources_ = []
         self.n_candidates_ = []
 
-        for iter_i in range(n_iterations):
+        for itr in range(n_iterations):
 
-            power = iter_i  # default
+            power = itr  # default
             if self.aggressive_elimination:
-                # this will set resource_iter to the initial value (i.e. the
-                # value of resource_iter at the first iteration) for as many
+                # this will set n_resources to the initial value (i.e. the
+                # value of n_resources at the first iteration) for as many
                 # iterations as needed (while candidates are being
                 # eliminated), and then go on as usual.
                 power = max(
                     0,
-                    iter_i - n_required_iterations + n_possible_iterations
+                    itr - n_required_iterations + n_possible_iterations
                 )
 
-            resource_iter = int(self.ratio**power * self.min_resources_)
+            n_resources = int(self.ratio**power * self.min_resources_)
             # guard, probably not needed
-            resource_iter = min(resource_iter, self.max_resources_)
-            self.n_resources_.append(resource_iter)
+            n_resources = min(n_resources, self.max_resources_)
+            self.n_resources_.append(n_resources)
 
             n_candidates = len(candidate_params)
             self.n_candidates_.append(n_candidates)
 
             if self.verbose:
                 print('-' * 10)
-                print(f'iter_i: {iter_i}')
+                print(f'iter: {itr}')
                 print(f'n_candidates: {n_candidates}')
-                print(f'resource_iter: {resource_iter}')
+                print(f'n_resources: {n_resources}')
 
             if self.resource == 'n_samples':
                 # subsampling will be done in cv.split()
                 cv = _SubsampleMetaSplitter(
                     base_cv=self._checked_cv_orig,
-                    fraction=resource_iter / self._n_samples_orig,
+                    fraction=n_resources / self._n_samples_orig,
                     subsample_test=True,
                     random_state=self.random_state
                 )
 
             else:
-                # Need copy so that the resource_iter of next iteration does
+                # Need copy so that the n_resources of next iteration does
                 # not overwrite
                 candidate_params = [c.copy() for c in candidate_params]
                 for candidate in candidate_params:
-                    candidate[self.resource] = resource_iter
+                    candidate[self.resource] = n_resources
                 cv = self._checked_cv_orig
 
-            more_results = {'iter': [iter_i] * n_candidates,
-                            'resource_iter': [resource_iter] * n_candidates}
+            more_results = {'iter': [itr] * n_candidates,
+                            'n_resources': [n_resources] * n_candidates}
 
             results = evaluate_candidates(candidate_params, cv,
                                           more_results=more_results)
 
             n_candidates_to_keep = ceil(n_candidates / self.ratio)
-            candidate_params = _top_k(results, n_candidates_to_keep, iter_i)
+            candidate_params = _top_k(results, n_candidates_to_keep, itr)
 
         self.n_remaining_candidates_ = len(candidate_params)
         self.n_required_iterations_ = n_required_iterations

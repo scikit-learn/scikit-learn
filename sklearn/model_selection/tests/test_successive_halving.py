@@ -193,7 +193,7 @@ def test_resource_parameter(Est):
              max_resources=10, ratio=3)
     sh.fit(X, y)
     assert set(sh.n_resources_) == set([1, 3, 9])
-    for r_i, params, param_c in zip(sh.cv_results_['resource_iter'],
+    for r_i, params, param_c in zip(sh.cv_results_['n_resources'],
                                     sh.cv_results_['params'],
                                     sh.cv_results_['param_c']):
         assert r_i == params['c'] == param_c
@@ -379,7 +379,7 @@ def test_subsample_splitter_determinism(subsample_test):
             assert np.all(X[test_a] == X[test_b])
 
 
-@pytest.mark.parametrize('k, iter_i, expected', [
+@pytest.mark.parametrize('k, itr, expected', [
     (1, 0, ['c']),
     (2, 0, ['a', 'c']),
     (4, 0, ['d', 'b', 'a', 'c']),
@@ -392,14 +392,14 @@ def test_subsample_splitter_determinism(subsample_test):
     (1, 2, ['i']),
     (10, 2, ['g', 'h', 'i']),
 ])
-def test_top_k(k, iter_i, expected):
+def test_top_k(k, itr, expected):
 
     results = {  # this isn't a 'real world' result dict
         'iter': [0, 0, 0, 0, 1, 1, 2, 2, 2],
         'mean_test_score': [4, 3, 5, 1, 11, 10, 5, 6, 9],
         'params': ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'],
     }
-    got = _top_k(results, k=k, iter_i=iter_i)
+    got = _top_k(results, k=k, itr=itr)
     assert np.all(got == expected)
 
 
@@ -561,4 +561,4 @@ def test_base_estimator_inputs(Est):
     assert (sh.n_candidates_ == counts).all()
 
     assert (cv_results_df['params'] == passed_params).all()
-    assert (cv_results_df['resource_iter'] == passed_n_samples).all()
+    assert (cv_results_df['n_resources'] == passed_n_samples).all()

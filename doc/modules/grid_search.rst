@@ -287,21 +287,25 @@ Amount of resource and number of candidates at each iteration
 -------------------------------------------------------------
 
 At any iteration `i`, each candidate is allocated a given amount of resources
-which we denote `resource_iter`. This quantity is controlled by the
+which we denote `n_resources_i`. This quantity is controlled by the
 parameters ``ratio`` and ``min_resources`` as follows (`ratio` is strictly
 greater than 1)::
 
-    resource_iter = ratio**i * min_resources,
-
-where ``min_resources`` is the amount of resources used at the first
-iteration. ``ratio`` also defines the proportions of candidates that
-will be selected for the next iteration::
-
-    n_candidates_iter = n_candidates // (ratio ** i)
+    n_resources_i = ratio**i * min_resources,
 
 or equivalently::
 
-    n_candidates_at_i+1 = n_candidates_at_i // ratio
+    n_resources_{i+1} = n_resources_i * ratio
+
+where ``min_resources == n_resources_0`` is the amount of resources used at
+the first iteration. ``ratio`` also defines the proportions of candidates
+that will be selected for the next iteration::
+
+    n_candidates_i = n_candidates_0 // (ratio ** i)
+
+or equivalently::
+
+    n_candidates_{i+1} = n_candidates_i // ratio
 
 So in the first iteration, we use ``min_resources`` resources
 ``n_candidates`` times. In the second iteration, we use ``min_resources *
@@ -316,7 +320,7 @@ Here is an example with ``min_resources=3`` and ``ratio=2``, starting with
 70 candidates:
 
 +-----------------------+-----------------------+
-| ``resource_iter``     | ``n_candidates_at_i`` |
+| ``n_resources``     | ``n_candidates_i`` |
 +=======================+=======================+
 | 3 (=min_resources)    | 70 (=n_candidates)    |
 +-----------------------+-----------------------+
@@ -341,7 +345,7 @@ We can note that:
   run at most ``ratio`` candidates. If the last iteration evaluates more
   than `ratio` candidates, then this last iteration reduces to a regular
   search (as in :class:`RandomizedSearchCV` or :class:`GridSearchCV`).
-- each ``resource_iter`` is a multiple of both ``ratio`` and
+- each ``n_resources`` is a multiple of both ``ratio`` and
   ``min_resources`` (which is confirmed by its definition above).
 
 The amount of resources that is used at each iteration can be found in the
@@ -481,7 +485,7 @@ necessary using ``min_resources`` resources::
     [6, 3, 2]
 
 Notice that we end with 2 candidates at the last iteration since we have
-eliminated enough candidates during the first iterations, using ``resource_iter =
+eliminated enough candidates during the first iterations, using ``n_resources =
 min_resources = 20``.
 
 .. _successive_halving_cv_results:
@@ -499,7 +503,7 @@ additional information related to the successive halving process.
 Here is an example with some of the columns of a (truncated) dataframe:
 
 ====  ======  ===============  =================  =======================================================================================
-  ..    iter    resource_iter    mean_test_score  params
+  ..    iter    n_resources    mean_test_score  params
 ====  ======  ===============  =================  =======================================================================================
    0       0              125           0.983667  {'criterion': 'entropy', 'max_depth': None, 'max_features': 9, 'min_samples_split': 5}
    1       0              125           0.983667  {'criterion': 'gini', 'max_depth': None, 'max_features': 8, 'min_samples_split': 7}
@@ -514,7 +518,7 @@ Here is an example with some of the columns of a (truncated) dataframe:
 ====  ======  ===============  =================  =======================================================================================
 
 Each row corresponds to a given parameter combination (a candidate) and a given
-iteration. The iteration is given by the ``iter`` column. The ``resource_iter``
+iteration. The iteration is given by the ``iter`` column. The ``n_resources``
 column tells you how many resources were used.
 
 In the example above, the best parameter combination is ``{'criterion':
