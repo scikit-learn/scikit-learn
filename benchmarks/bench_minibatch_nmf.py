@@ -1,5 +1,3 @@
-from time import time
-
 from sklearn.decomposition._nmf import _beta_divergence
 from sklearn.utils import gen_batches
 
@@ -9,6 +7,8 @@ from bs4 import BeautifulSoup
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 from sklearn.decomposition import NMF, MiniBatchNMF, non_negative_factorization
+
+from time import time
 
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
