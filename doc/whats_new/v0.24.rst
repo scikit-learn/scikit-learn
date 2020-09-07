@@ -188,19 +188,24 @@ Changelog
   method `staged_predict`, which allows monitoring of each stage.
   :pr:`16985` by :user:`Hao Chun Chang <haochunchang>`.
 
-- |Efficiency| break cyclic references in the tree nodes used internally in
+- |Efficiency| Various improvements were made to 
   :class:`ensemble.HistGradientBoostingRegressor` and
-  :class:`ensemble.HistGradientBoostingClassifier` to allow for the timely
-  garbage collection of large intermediate datastructures and to improve memory
-  usage in `fit`. :pr:`18334` by `Olivier Grisel`_ `Nicolas Hug`_, `Thomas
-  Fan`_ and `Andreas Müller`_.
+  :class:`ensemble.HistGradientBoostingClassifier` which lead to less memory
+  usage, as well as faster training times:
 
-- |Efficiency| Histogram initialization is now done in parallel in
-  :class:`ensemble.HistGradientBoostingRegressor` and
-  :class:`ensemble.HistGradientBoostingClassifier` which results in speed
-  improvement for problems that build a lot of nodes on multicore machines.
-  :pr:`18341` by `Olivier Grisel`_, `Nicolas Hug`_, `Thomas Fan`_, and
-  :user:`Egor Smirnov <SmirnovEgorRu>`.
+  - break cyclic references in the tree nodes used internally to allow for
+    the timely garbage collection of large intermediate datastructures and to
+    improve memory usage in `fit`. :pr:`18334` by `Olivier Grisel`_ `Nicolas
+    Hug`_, `Thomas Fan`_ and `Andreas Müller`_.
+
+  - Histogram initialization is now done in parallel which results in speed
+    improvement on multicore machines, for problems that build a lot of nodes.
+    :pr:`18341` by `Olivier Grisel`_, `Nicolas Hug`_, `Thomas Fan`_, and
+    :user:`Egor Smirnov <SmirnovEgorRu>`.
+  
+  - Allocated histograms can be reused by other nodes of the same tree,
+    leading to less memory allocations. :pr:`14392` by `Olivier Grisel`_,
+    `Nicolas Hug`_, `Thomas Fan`_.
 
 - |API|: The parameter ``n_classes_`` is now deprecated in
   :class:`ensemble.GradientBoostingRegressor` and returns `1`.

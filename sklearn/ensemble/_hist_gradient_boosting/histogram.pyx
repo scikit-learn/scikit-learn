@@ -107,7 +107,7 @@ cdef class HistogramBuilder:
         # list of histograms that can be re-used for other nodes.
         self.available_histograms = []
 
-    def get_empty_histograms(HistogramBuilder self):
+    def allocate_or_reuse_hists(HistogramBuilder self):
         """Return a non-initialized histograms array.
 
         The array is allocated only if needed.
@@ -154,7 +154,7 @@ cdef class HistogramBuilder:
             G_H_DTYPE_C [::1] ordered_hessians = self.ordered_hessians
             G_H_DTYPE_C [::1] hessians = self.hessians
             # Histograms will be initialized to zero later within a prange
-            hist_struct [:, ::1] histograms = self.get_empty_histograms()
+            hist_struct [:, ::1] histograms = self.allocate_or_reuse_hists()
 
         with nogil:
             n_samples = sample_indices.shape[0]
@@ -252,7 +252,7 @@ cdef class HistogramBuilder:
         cdef:
             int feature_idx
             int n_features = self.n_features
-            hist_struct [:, ::1] histograms = self.get_empty_histograms()
+            hist_struct [:, ::1] histograms = self.allocate_or_reuse_hists()
 
         for feature_idx in prange(n_features, schedule='static', nogil=True):
             # Compute histogram of each feature
