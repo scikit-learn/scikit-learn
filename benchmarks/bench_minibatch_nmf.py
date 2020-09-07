@@ -46,7 +46,7 @@ n_test = 7000
 batch_sizes = [1000, 2000]
 forget_factors = [1.]
 random_state = 12
-color = ['b', 'g'] # , 'c', 'm', 'y', 'k']
+color = ['b', 'g']  # other possible colors ['c', 'm', 'y', 'k']
 markersize = [6, 10, 14]
 
 # Load the The Blog Authorship Corpus dataset
@@ -132,9 +132,11 @@ for n_train in ns_train:
                     if ((j % 11 == 9) and (n_iter <= 1)) or j == n_batch - 1:
                         time_nmf.append(total_time)
                         W = get_optimal_w(X_test, minibatch_nmf.components_)
-                        loss = _beta_divergence(X_test, W,
-                                                minibatch_nmf.components_,
-                                                minibatch_nmf.beta_loss) / n_test
+                        loss = _beta_divergence(
+                            X_test, W,
+                            minibatch_nmf.components_,
+                            minibatch_nmf.beta_loss
+                        ) / n_test
                         loss_nmf.append(loss)
                         plt.plot(time_nmf, loss_nmf, color=color[c], alpha=0.3,
                                  linestyle='-', marker='o',
