@@ -301,10 +301,11 @@ where ``min_resources == n_resources_0`` is the amount of resources used at
 the first iteration. ``ratio`` also defines the proportions of candidates
 that will be selected for the next iteration::
 
-    n_candidates_i = n_candidates_0 // (ratio ** i)
+    n_candidates_i = n_candidates // (ratio ** i)
 
 or equivalently::
 
+    n_candidates_0 = n_candidates
     n_candidates_{i+1} = n_candidates_i // ratio
 
 So in the first iteration, we use ``min_resources`` resources
@@ -320,7 +321,7 @@ Here is an example with ``min_resources=3`` and ``ratio=2``, starting with
 70 candidates:
 
 +-----------------------+-----------------------+
-| ``n_resources``     | ``n_candidates_i`` |
+| ``n_resources_i``     | ``n_candidates_i``    |
 +=======================+=======================+
 | 3 (=min_resources)    | 70 (=n_candidates)    |
 +-----------------------+-----------------------+
@@ -345,7 +346,7 @@ We can note that:
   run at most ``ratio`` candidates. If the last iteration evaluates more
   than `ratio` candidates, then this last iteration reduces to a regular
   search (as in :class:`RandomizedSearchCV` or :class:`GridSearchCV`).
-- each ``n_resources`` is a multiple of both ``ratio`` and
+- each ``n_resources_i`` is a multiple of both ``ratio`` and
   ``min_resources`` (which is confirmed by its definition above).
 
 The amount of resources that is used at each iteration can be found in the
@@ -503,7 +504,7 @@ additional information related to the successive halving process.
 Here is an example with some of the columns of a (truncated) dataframe:
 
 ====  ======  ===============  =================  =======================================================================================
-  ..    iter    n_resources    mean_test_score  params
+  ..    iter      n_resources    mean_test_score  params
 ====  ======  ===============  =================  =======================================================================================
    0       0              125           0.983667  {'criterion': 'entropy', 'max_depth': None, 'max_features': 9, 'min_samples_split': 5}
    1       0              125           0.983667  {'criterion': 'gini', 'max_depth': None, 'max_features': 8, 'min_samples_split': 7}
