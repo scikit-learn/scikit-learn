@@ -1,7 +1,11 @@
 """
-===========================================
-Benchmark Non-negative Matrix Factorization
-===========================================
+==================================================
+Benchmark Non-negative Online Matrix Factorization
+==================================================
+
+This is a benchmark of :class:`sklearn.decomposition.NMF` on a corpus
+of documents and extract additive models of the topic structure of the
+corpus.
 
 """
 
