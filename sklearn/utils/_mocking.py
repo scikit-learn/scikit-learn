@@ -166,9 +166,10 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
             Training vector, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : array-like of shape (n_samples, n_output) or (n_samples,), default=None
+        y : array-like of shape (n_samples, n_outputs) or (n_samples,), \
+                default=None
             Target relative to X for classification or regression;
-            None is for unsupervised learning.
+            None for unsupervised learning.
 
         **fit_params : dict of string -> object
             Parameters passed to the ``fit`` method of the estimator
