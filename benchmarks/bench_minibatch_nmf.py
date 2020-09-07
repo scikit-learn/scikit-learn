@@ -28,8 +28,8 @@ def get_optimal_w(X, H):
 n_components = 10
 n_features = 500
 beta_loss = 'kullback-leibler'
-n_train = 7000
-n_test = 12000
+n_train = 12000
+n_test = 7000
 batch_sizes = [1000, 2000, 4000]
 forget_factors = [1., 0.5]
 random_state = 12
