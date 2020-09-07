@@ -2,7 +2,12 @@
 ===========================================
 Benchmark Non-negative Matrix Factorization
 ===========================================
+
 """
+
+# Author: Patricio Cerda
+#         Chiara Marmo <chiara.marmo@inria.fr>
+# License: BSD 3 clause
 
 from time import time
 
