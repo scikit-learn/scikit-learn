@@ -41,12 +41,13 @@ def get_optimal_w(X, H):
 n_components = 10
 n_features = 500
 beta_loss = 'kullback-leibler'
-n_train = 12000
+ns_train = [4000, 8000, 12000]
 n_test = 7000
-batch_sizes = [1000, 2000, 4000]
-forget_factors = [1., 0.5]
+batch_sizes = [1000, 2000]
+forget_factors = [1.]
 random_state = 12
-color = ['b', 'g', 'c', 'm', 'y', 'k']
+color = ['b', 'g'] # , 'c', 'm', 'y', 'k']
+markersize = [6, 10, 14]
 
 # Load the The Blog Authorship Corpus dataset
 # from http://u.cs.biu.ac.il/~koppel/BlogCorpus.htm
@@ -79,9 +80,6 @@ t0 = time()
 X = tfidf_vectorizer.fit_transform(data)
 print("done in %0.3fs." % (time() - t0))
 
-X_test = X[:n_test, :]
-X = X[n_test:n_train + n_test, :]
-
 max_iter_nmf = [1, 5, 10, 30, 50, 100]
 n_iter_minibatch_nmf = 50
 
@@ -89,83 +87,93 @@ fig, ax = plt.subplots()
 plt.xscale('log')
 fontsize = 10
 
-c = 0
+s = 0
 labels = []
 handles = []
 
-for batch_size in batch_sizes:
+for n_train in ns_train:
 
-    n_batch = (n_train - 1) // batch_size + 1
+    c = 0
+    X_test = X[:n_test, :]
+    X_train = X[n_test:n_train + n_test, :]
 
-    for forget_factor in forget_factors:
+    for batch_size in batch_sizes:
 
-        minibatch_nmf = MiniBatchNMF(
-            n_components=n_components, beta_loss=beta_loss,
-            batch_size=batch_size,
-            solver='mu', random_state=random_state, max_iter=3,
-            forget_factor=forget_factor)
+        n_batch = (n_train - 1) // batch_size + 1
 
-        total_time = 0
-        time_nmf = []
-        loss_nmf = []
+        for forget_factor in forget_factors:
 
-        labels.append(('MiniBatchNMF '
-                       f'{batch_size= }'
-                       f' {forget_factor= }'))
-        handles.append(mlines.Line2D([], [], color=color[c], marker='o'))
+            minibatch_nmf = MiniBatchNMF(
+                n_components=n_components, beta_loss=beta_loss,
+                batch_size=batch_size,
+                solver='mu', random_state=random_state, max_iter=3,
+                forget_factor=forget_factor)
 
-        for n_iter in range(n_iter_minibatch_nmf):
+            total_time = 0
+            time_nmf = []
+            loss_nmf = []
 
-            for j, slice in enumerate(
-                gen_batches(n=n_train,
-                            batch_size=batch_size)
-                           ):
-                t0 = time()
-                minibatch_nmf.partial_fit(X[slice])
-                tf = time() - t0
-                total_time += tf
-                if ((j % 11 == 9) and (n_iter <= 1)) or j == n_batch - 1:
-                    time_nmf.append(total_time)
-                    W = get_optimal_w(X_test, minibatch_nmf.components_)
-                    loss = _beta_divergence(X_test, W,
-                                            minibatch_nmf.components_,
-                                            minibatch_nmf.beta_loss) / n_test
-                    loss_nmf.append(loss)
-                    plt.plot(time_nmf, loss_nmf, color=color[c], alpha=0.3,
-                             linestyle='-', marker='o',
-                             label=labels[-1])
-                    plt.pause(.01)
+            labels.append(('MiniBatchNMF '
+                           f'{batch_size= }'
+                           f' {n_train= }'))
+            handles.append(mlines.Line2D([], [], color=color[c],
+                           marker='o', markersize=markersize[s]))
 
-            print('Time MiniBatchNMF: %.1fs.' % total_time)
-            print('KL-div MiniBatchNMF: %.2f' % loss)
-            del W
+            for n_iter in range(n_iter_minibatch_nmf):
 
-        c += 1
+                for j, slice in enumerate(
+                    gen_batches(n=n_train,
+                                batch_size=batch_size)
+                               ):
+                    t0 = time()
+                    minibatch_nmf.partial_fit(X_train[slice])
+                    tf = time() - t0
+                    total_time += tf
+                    if ((j % 11 == 9) and (n_iter <= 1)) or j == n_batch - 1:
+                        time_nmf.append(total_time)
+                        W = get_optimal_w(X_test, minibatch_nmf.components_)
+                        loss = _beta_divergence(X_test, W,
+                                                minibatch_nmf.components_,
+                                                minibatch_nmf.beta_loss) / n_test
+                        loss_nmf.append(loss)
+                        plt.plot(time_nmf, loss_nmf, color=color[c], alpha=0.3,
+                                 linestyle='-', marker='o',
+                                 markersize=markersize[s],
+                                 label=labels[-1])
+                        plt.pause(.01)
 
-total_time = 0
-time_nmf = []
-loss_nmf = []
-for i, max_iter in enumerate(max_iter_nmf):
-    nmf = NMF(n_components=n_components, beta_loss=beta_loss,
-              solver='mu', max_iter=max_iter,
-              random_state=random_state, tol=0)
-    t0 = time()
-    nmf.fit(X)
-    tf = time() - t0
-    total_time += tf
-    time_nmf.append(total_time)
-    print('Time NMF: %.1fs.' % total_time)
-    W = get_optimal_w(X_test, nmf.components_)
-    loss = _beta_divergence(X_test, W, nmf.components_,
-                            nmf.beta_loss) / n_test
-    loss_nmf.append(loss)
-    print('KL-div NMF: %.2f' % loss)
-    plt.plot(time_nmf, loss_nmf, 'r', marker='o', label='NMF')
-    plt.pause(.01)
-    del W
+                print('Time MiniBatchNMF: %.1fs.' % total_time)
+                print('KL-div MiniBatchNMF: %.2f' % loss)
+                del W
 
-labels.append('NMF')
-handles.append(mlines.Line2D([], [], color='r', marker='o'))
+            c += 1
+
+    total_time = 0
+    time_nmf = []
+    loss_nmf = []
+    for i, max_iter in enumerate(max_iter_nmf):
+        nmf = NMF(n_components=n_components, beta_loss=beta_loss,
+                  solver='mu', max_iter=max_iter,
+                  random_state=random_state, tol=0)
+        t0 = time()
+        nmf.fit(X_train)
+        tf = time() - t0
+        total_time += tf
+        time_nmf.append(total_time)
+        print('Time NMF: %.1fs.' % total_time)
+        W = get_optimal_w(X_test, nmf.components_)
+        loss = _beta_divergence(X_test, W, nmf.components_,
+                                nmf.beta_loss) / n_test
+        loss_nmf.append(loss)
+        print('KL-div NMF: %.2f' % loss)
+        plt.plot(time_nmf, loss_nmf, 'r', marker='o', label='NMF')
+        plt.pause(.01)
+        del W
+
+    labels.append(f'NMF {n_train= }')
+    handles.append(mlines.Line2D([], [], color='r', marker='o',
+                                 markersize=markersize[s]))
+    s += 1
 
 plt.legend(handles=handles, labels=labels, fontsize=fontsize-2)
 plt.tick_params(axis='both', which='major', labelsize=fontsize-2)
