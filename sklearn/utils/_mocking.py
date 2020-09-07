@@ -168,7 +168,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
 
         y : array-like of shape (n_samples, n_output) or (n_samples,), default=None
             Target relative to X for classification or regression;
-            None is for unsupervised learning.
+            None for unsupervised learning.
 
         **fit_params : dict of string -> object
             Parameters passed to the ``fit`` method of the estimator
