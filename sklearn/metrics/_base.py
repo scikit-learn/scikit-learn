@@ -1,5 +1,5 @@
 """
-Common code for all metrics
+Common code for all metrics.
 
 """
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
@@ -22,7 +22,7 @@ from ..utils.multiclass import type_of_target
 
 def _average_binary_score(binary_metric, y_true, y_score, average,
                           sample_weight=None):
-    """Average a binary metric for multilabel classification
+    """Average a binary metric for multilabel classification.
 
     Parameters
     ----------
@@ -141,7 +141,7 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score,
     Parameters
     ----------
     binary_metric : callable
-        The binary metric function to use that accepts the following as input
+        The binary metric function to use that accepts the following as input:
             y_true_target : array, shape = [n_samples_target]
                 Some sub-array of y_true for a pair of classes designated
                 positive and negative in the one-vs-one scheme.
@@ -154,11 +154,11 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score,
 
     y_score : array-like of shape (n_samples, n_classes)
         Target scores corresponding to probability estimates of a sample
-        belonging to a particular class
+        belonging to a particular class.
 
     average : {'macro', 'weighted'}, default='macro'
         Determines the type of averaging performed on the pairwise binary
-        metric scores
+        metric scores:
         ``'macro'``:
             Calculate metrics for each label, and find their unweighted
             mean. This does not take label imbalance into account. Classes
@@ -170,7 +170,7 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score,
     Returns
     -------
     score : float
-        Average of the pairwise binary metric scores
+        Average of the pairwise binary metric scores.
     """
     check_consistent_length(y_true, y_score)
 

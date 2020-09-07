@@ -211,7 +211,12 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
 
     Returns
     -------
-    display: :class:`~sklearn.inspection.PartialDependenceDisplay`
+    display : :class:`~sklearn.inspection.PartialDependenceDisplay`
+
+    See Also
+    --------
+    partial_dependence : Compute Partial Dependence values.
+    PartialDependenceDisplay : Partial Dependence visualization.
 
     Examples
     --------
@@ -220,11 +225,6 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
     >>> X, y = make_friedman1()
     >>> clf = GradientBoostingRegressor(n_estimators=10).fit(X, y)
     >>> plot_partial_dependence(clf, X, [0, (0, 1)]) #doctest: +SKIP
-
-    See also
-    --------
-    sklearn.inspection.partial_dependence: Return raw partial
-      dependence values
     """
     check_matplotlib_support('plot_partial_dependence')  # noqa
     import matplotlib.pyplot as plt  # noqa
@@ -380,7 +380,7 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
 
 
 class PartialDependenceDisplay:
-    """Partial Dependence Plot (PDP)
+    """Partial Dependence Plot (PDP).
 
     This can also display individual partial dependencies which are often
     referred to as: Individual Condition Expectation (ICE).
@@ -479,13 +479,16 @@ class PartialDependenceDisplay:
         `ax` is a list of axes, `vlines_[i]` corresponds to the i-th item in
         `ax`. Elements that are None correspond to a nonexisting axes or an
         axes that does not include a PDP plot.
+
         .. versionadded:: 0.23
+
     deciles_hlines_ : ndarray of matplotlib LineCollection
         If `ax` is an axes or None, `vlines_[i, j]` is the line collection
         representing the y axis deciles of the i-th row and j-th column. If
         `ax` is a list of axes, `vlines_[i]` corresponds to the i-th item in
         `ax`. Elements that are None correspond to a nonexisting axes or an
         axes that does not include a 2-way plot.
+
         .. versionadded:: 0.23
 
     contours_ : ndarray of matplotlib Artists
@@ -498,6 +501,10 @@ class PartialDependenceDisplay:
     figure_ : matplotlib Figure
         Figure containing partial dependence plots.
 
+    See Also
+    --------
+    partial_dependence : Compute Partial Dependence values.
+    plot_partial_dependence : Plot Partial Dependence.
     """
     @_deprecate_positional_args
     def __init__(self, pd_results, *, features, feature_names, target_idx,
@@ -549,7 +556,7 @@ class PartialDependenceDisplay:
 
         Returns
         -------
-        display: :class:`~sklearn.inspection.PartialDependenceDisplay`
+        display : :class:`~sklearn.inspection.PartialDependenceDisplay`
         """
 
         check_matplotlib_support("plot_partial_dependence")

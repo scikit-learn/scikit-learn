@@ -157,7 +157,7 @@ class IncrementalPCA(_BasePCA):
     G. Golub and C. Van Loan. Matrix Computations, Third Edition, Chapter 5,
     Section 5.4.4, pp. 252-253.
 
-    See also
+    See Also
     --------
     PCA
     KernelPCA
