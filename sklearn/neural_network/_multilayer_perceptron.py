@@ -379,10 +379,6 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                                            incremental):
             # First time training the model
             self._initialize(y, layer_units, X.dtype)
-        if self.warm_start and not incremental:
-            # only the number of iteration should be initialized since
-            # weights are already allocated due to the warm start.
-            self.n_iter_ = 0
 
         # Initialize lists
         activations = [X] + [None] * (len(layer_units) - 1)

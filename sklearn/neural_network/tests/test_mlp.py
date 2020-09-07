@@ -676,7 +676,7 @@ def test_warm_start_full_iteration(MLPEstimator):
     clf.fit(X, y)
     assert max_iter == clf.n_iter_
     clf.fit(X, y)
-    assert max_iter == clf.n_iter_
+    assert 2 * max_iter == clf.n_iter_
 
 
 def test_n_iter_no_change():
