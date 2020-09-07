@@ -1019,22 +1019,19 @@ shape (n_estimators, ``loss_.K``)
     max_features_ : int
         The inferred value of max_features.
 
-
     See Also
     --------
-    sklearn.ensemble.HistGradientBoostingClassifier : Histogram-based Gradient
-        Boosting Classification Tree.
+    HistGradientBoostingClassifier : Histogram-based Gradient Boosting
+        Classification Tree.
     sklearn.tree.DecisionTreeClassifier : A decision tree classifier.
-    sklearn.ensemble.RandomForestClassifier : A meta-estimator that fits a
-        number of decision tree classifiers on various sub-samples of the
-        dataset and uses averaging to improve the predictive accuracy and
-        control over-fitting.
-    sklearn.ensemble.AdaBoostClassifier : A meta-estimator that begins by
-        fitting a classifier on the original dataset and then fits additional
-        copies of the classifier on the same dataset where the weights of
-        incorrectly classified instances are adjusted such that subsequent
-        classifiers focus more on difficult cases.
-
+    RandomForestClassifier : A meta-estimator that fits a number of decision
+        tree classifiers on various sub-samples of the dataset and uses
+        averaging to improve the predictive accuracy and control over-fitting.
+    AdaBoostClassifier : A meta-estimator that begins by fitting a classifier
+        on the original dataset and then fits additional copies of the
+        classifier on the same dataset where the weights of incorrectly
+        classified instances are adjusted such that subsequent classifiers
+        focus more on difficult cases.
 
     Notes
     -----
@@ -1553,8 +1550,8 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
     See Also
     --------
-    sklearn.ensemble.HistGradientBoostingRegressor : Histogram-based
-        Gradient Boosting Classification Tree.
+    HistGradientBoostingRegressor : Histogram-based Gradient Boosting
+        Classification Tree.
     sklearn.tree.DecisionTreeRegressor : A decision tree regressor.
     sklearn.tree.RandomForestRegressor : A random forest regressor.
 

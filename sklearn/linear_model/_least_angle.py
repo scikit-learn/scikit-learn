@@ -139,7 +139,7 @@ def lars_path(
         Number of iterations run. Returned only if return_n_iter is set
         to True.
 
-    See also
+    See Also
     --------
     lars_path_gram
     lasso_path
@@ -274,7 +274,7 @@ def lars_path_gram(
         Number of iterations run. Returned only if return_n_iter is set
         to True.
 
-    See also
+    See Also
     --------
     lars_path
     lasso_path
@@ -417,7 +417,7 @@ def _lars_path_solver(
         Number of iterations run. Returned only if return_n_iter is set
         to True.
 
-    See also
+    See Also
     --------
     lasso_path
     LassoLars
@@ -894,7 +894,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
     >>> print(reg.coef_)
     [ 0. -1.11...]
 
-    See also
+    See Also
     --------
     lars_path, LarsCV
     sklearn.decomposition.sparse_encode
@@ -1147,7 +1147,7 @@ class LassoLars(Lars):
     >>> print(reg.coef_)
     [ 0.         -0.963257...]
 
-    See also
+    See Also
     --------
     lars_path
     lasso_path
@@ -1414,7 +1414,7 @@ class LarsCV(Lars):
     >>> reg.predict(X[:1,])
     array([154.0842...])
 
-    See also
+    See Also
     --------
     lars_path, LassoLars, LassoLarsCV
     """
@@ -1661,7 +1661,7 @@ class LassoLarsCV(LarsCV):
     features are selected compared to the total number, for instance if
     there are very few samples compared to the number of features.
 
-    See also
+    See Also
     --------
     lars_path, LassoLars, LarsCV, LassoCV
     """
@@ -1803,7 +1803,7 @@ class LassoLarsIC(LassoLars):
     https://en.wikipedia.org/wiki/Akaike_information_criterion
     https://en.wikipedia.org/wiki/Bayesian_information_criterion
 
-    See also
+    See Also
     --------
     lars_path, LassoLars, LassoLarsCV
     """

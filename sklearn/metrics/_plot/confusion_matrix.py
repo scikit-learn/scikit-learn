@@ -43,8 +43,8 @@ class ConfusionMatrixDisplay:
 
     See Also
     --------
-    confusion_matrix :
-        Compute Confusion Matrix to evaluate the accuracy of a classification.
+    confusion_matrix : Compute Confusion Matrix to evaluate the accuracy of a
+        classification.
     plot_confusion_matrix : Plot Confusion Matrix.
 
     Examples
@@ -230,8 +230,8 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
 
     See Also
     --------
-    confusion_matrix :
-        Compute Confusion Matrix to evaluate the accuracy of a classification.
+    confusion_matrix : Compute Confusion Matrix to evaluate the accuracy of a
+        classification.
     ConfusionMatrixDisplay : Confusion Matrix visualization.
 
     Examples

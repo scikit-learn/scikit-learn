@@ -446,12 +446,12 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
     See Also
     --------
-    sklearn.linear_model.Ridge : Ridge regression addresses some of the
+    Ridge : Ridge regression addresses some of the
         problems of Ordinary Least Squares by imposing a penalty on the
         size of the coefficients with l2 regularization.
-    sklearn.linear_model.Lasso : The Lasso is a linear model that estimates
+    Lasso : The Lasso is a linear model that estimates
         sparse coefficients with l1 regularization.
-    sklearn.linear_model.ElasticNet : Elastic-Net is a linear regression
+    ElasticNet : Elastic-Net is a linear regression
         model trained with both l1 and l2 -norm regularization of the
         coefficients.
 

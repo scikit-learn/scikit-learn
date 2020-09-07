@@ -48,10 +48,10 @@ class PrecisionRecallDisplay:
 
     See Also
     --------
-    precision_recall_curve :
-        Compute precision-recall pairs for different probability thresholds.
-    plot_precision_recall_curve :
-        Plot Precision Recall Curve for binary classifiers.
+    precision_recall_curve : Compute precision-recall pairs for different
+        probability thresholds.
+    plot_precision_recall_curve : Plot Precision Recall Curve for binary
+        classifiers.
 
     Examples
     --------
@@ -196,8 +196,8 @@ def plot_precision_recall_curve(estimator, X, y, *,
 
     See Also
     --------
-    precision_recall_curve :
-        Compute precision-recall pairs for different probability thresholds.
+    precision_recall_curve : Compute precision-recall pairs for different
+        probability thresholds.
     PrecisionRecallDisplay : Precision Recall visualization.
     """
     check_matplotlib_support("plot_precision_recall_curve")
