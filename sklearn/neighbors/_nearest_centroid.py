@@ -146,7 +146,6 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
                 else:
                     self.centroids_[cur_class] = csc_median_axis_0(X[center_mask])
             else:
-                \]
                 if self.metric != 'euclidean':
                     warnings.warn("Averaging for metrics other than "
                                   "euclidean and manhattan not supported. "
