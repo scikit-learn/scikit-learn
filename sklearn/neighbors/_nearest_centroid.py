@@ -146,6 +146,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
                 else:
                     self.centroids_[cur_class] = csc_median_axis_0(X[center_mask])
             else:
+                \]
                 if self.metric != 'euclidean':
                     warnings.warn("Averaging for metrics other than "
                                   "euclidean and manhattan not supported. "
@@ -161,6 +162,9 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
             # Calculate deviation using the standard deviation of centroids.
             variance = (X - self.centroids_[y_ind]) ** 2
             variance = variance.sum(axis=0)
+            if np.sum(variance) == 0:
+                raise ValueError("All features have zero variance. "
+                                 "Division by zero.")
             s = np.sqrt(variance / (n_samples - n_classes))
             s += np.median(s)  # To deter outliers from affecting the results.
             mm = m.reshape(len(m), 1)  # Reshape to allow broadcasting.
