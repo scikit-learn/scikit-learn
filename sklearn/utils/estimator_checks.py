@@ -1487,52 +1487,22 @@ def check_transformer_preserve_dtypes(
     X -= X.min()
     X = _pairwise_estimator_convert_X(X, transformer_orig)
 
-    def _fit_and_transform(transformer, X, y):
-        transformer = clone(transformer)
+    for dtype in transformer_orig._get_tags()["preserves_dtype"]:
+        X_cast = X.astype(dtype)
+        transformer = clone(transformer_orig)
         set_random_state(transformer)
-        X_trans = transformer.fit_transform(X, y)
+        X_trans = transformer.fit_transform(X_cast, y)
 
         if isinstance(X_trans, tuple):
             # cross-decompostion returns a tuple of (x_scores, y_scores)
             # when given y with fit_transform; only check the first element
             X_trans = X_trans[0]
-        return X_trans
-
-    tags_transformer = transformer_orig._get_tags()
-    transformer_default_dtype = tags_transformer["preserves_dtype"][0]
-    X = X.astype(transformer_default_dtype)
-
-    # keep the default dtype as a reference
-    X_trans_default = _fit_and_transform(transformer_orig, X, y)
-    assert X_trans_default.dtype == transformer_default_dtype, (
-            f'Estimator transform dtype: {X_trans_default.dtype} - '
-            f'original/expected dtype: {transformer_default_dtype.__name__}'
-        )
-
-    for dtype in tags_transformer["preserves_dtype"][1:]:
-        X_cast = X.astype(dtype)
-        X_trans = _fit_and_transform(transformer_orig, X_cast, y)
 
         # check that the output dtype is preserved
         assert X_trans.dtype == dtype, (
             f'Estimator transform dtype: {X_trans.dtype} - '
             f'original/expected dtype: {dtype.__name__}'
         )
-
-        # check that the transformed array is consistent with the default
-        # transformed array.
-        assert_allclose_dense_sparse(
-            X_trans,
-            X_trans_default,
-            atol=1e-10, rtol=5e-4,
-            err_msg=(
-                f"Transformed array with input dtype {dtype.__name__} is not "
-                f"consistent with reference array of dtype {X.dtype}"
-            )
-        )
-
-        # TODO: some attributes of the transformer should as well preserve
-        # dtypes. We should come with the checks.
 
 
 @ignore_warnings(category=FutureWarning)

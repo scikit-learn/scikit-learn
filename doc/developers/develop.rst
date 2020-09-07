@@ -5,9 +5,9 @@ Developing scikit-learn estimators
 ==================================
 
 Whether you are proposing an estimator for inclusion in scikit-learn,
-developing a separate package compatible with scikit-learn, or 
-implementing custom components for your own projects, this chapter 
-details how to develop objects that safely interact with scikit-learn 
+developing a separate package compatible with scikit-learn, or
+implementing custom components for your own projects, this chapter
+details how to develop objects that safely interact with scikit-learn
 Pipelines and model selection tools.
 
 .. currentmodule:: sklearn
@@ -497,12 +497,12 @@ non_deterministic (default=False)
     whether the estimator is not deterministic given a fixed ``random_state``
 
 preserves_dtype (default=``[np.float64]``)
-    dtypes for `X` that an estimator will preserve. Possible options are a
-    combination of `np.float16`, `np.float32`, and `np.float64`. If this list
-    is empty, then the estimator it not expected to preserve the dtype. The
-    first value in the list is considered as the default dtype, corresponding
-    to the dtype of the output when the input dtype is not going to be
-    preserved.
+    applies only on transformers. It corresponds to the data types which will
+    be preserved such that `X_trans.dtype` is the same as `X.dtype` after
+    calling `transformer.transform(X)`. If this list is empty, then the
+    transformer is not expected to preserve the data type. The first value in
+    the list is considered as the default data type, corresponding to the data
+    type of the output when the input data type is not going to be preserved.
 
 poor_score (default=False)
     whether the estimator fails to provide a "reasonable" test-set score, which
