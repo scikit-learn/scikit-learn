@@ -47,39 +47,55 @@ scores = ['precision_macro', 'recall_macro']
 print("# Tuning hyper-parameters")
 print()
 
+# Returns the Best Index
+def refit_best_index(results):
+
+    # Set the Selected Index as -1
+    # As such, if we have no Scoring, then an error will be thrown
+    best_index = -1
+    # Set the Best Score as 0
+    best_score = 0
+    for score in scores:
+        print("Best parameters set found on development set %s:" % score)
+        print()
+        best_score_index = results["rank_test_%s" % score].argmin()
+        best_score_params = results["params"][best_score_index]
+        print()
+        print("Grid scores on development set:")
+        print()
+        means = results['mean_test_%s' % score]
+        stds = results['std_test_%s' % score]
+
+        # Check if this is the Biggest Index
+        if(best_score < means[best_score_index]):
+            best_score = means[best_score_index]
+            best_index = best_score_index
+
+        for mean, std, params in zip(means, stds, results['params']):
+            print("%0.3f (+/-%0.03f) for %r"
+                  % (mean, std * 2, params))
+        print()
+
+        print("Detailed classification report:")
+        print()
+        print("The model is trained on the full development set.")
+        print("The scores are computed on the full evaluation set.")
+        print()
+
+        best_estimator = clone(clf.estimator)
+        best_estimator.set_params(**best_score_params)
+        best_estimator.fit(X_train, y_train)
+        print("Best parameters set found on development set")
+        print(best_score_params)
+        y_true, y_pred = y_test, best_estimator.predict(X_test)
+        print(classification_report(y_true, y_pred))
+        print()
+    return best_index
+
 clf = GridSearchCV(
-    SVC(), tuned_parameters, scoring=scores, refit=False
+    SVC(), tuned_parameters, scoring=scores, refit=refit_best_index
 )
 clf.fit(X_train, y_train)
-best_estimator = clone(clf.estimator)
-
-for score in scores:
-    print("Best parameters set found on development set %s:" % score)
-    print()
-    best_index = clf.cv_results_["rank_test_%s" % score].argmin()
-    best_params = clf.cv_results_["params"][best_index]
-    print(best_params)
-    print()
-    print("Grid scores on development set:")
-    print()
-    means = clf.cv_results_['mean_test_%s' % score]
-    stds = clf.cv_results_['std_test_%s' % score]
-    for mean, std, params in zip(means, stds, clf.cv_results_['params']):
-        print("%0.3f (+/-%0.03f) for %r"
-              % (mean, std * 2, params))
-    print()
-
-    print("Detailed classification report:")
-    print()
-    print("The model is trained on the full development set.")
-    print("The scores are computed on the full evaluation set.")
-    print()
-    best_estimator.set_params(**best_params)
-    best_estimator.fit(X_train, y_train)
-
-    y_true, y_pred = y_test, best_estimator.predict(X_test)
-    print(classification_report(y_true, y_pred))
-    print()
 
 # Note the problem is too easy: the hyperparameter plateau is too flat and the
 # output model is the same for precision and recall with ties in quality.
