@@ -653,4 +653,3 @@ def test_minibatch_nmf_auxiliary_matrices():
     assert_array_equal(A2, A1)
     assert_array_equal(B2, B1)
     assert_array_equal(B2, np.ones(H1.shape))
-    
