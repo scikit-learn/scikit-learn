@@ -127,10 +127,10 @@ its original state at the beginning of `fit()`.
 
 .. note::
     Using `max_features=2, max_samples=10` is likely a poor choice in general
-    for a random forest. We here only use set these parameters for
-    illustration purposes: otherwise the scores would not significantly
-    differ. The variance of the fitted models can typically be reduced by
-    increasing the number of samples and features, or by using more trees.
+    for a random forest. We here only set these parameters for illustration
+    purposes: otherwise the scores would not significantly differ. The
+    variance of the fitted models can typically be reduced by increasing the
+    number of samples and features, or by using more trees.
 
 CV splitters
 ............
