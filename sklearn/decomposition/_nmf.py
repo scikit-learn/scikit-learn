@@ -729,7 +729,7 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
                                batch_size=1024,
                                max_iter=200, tol=1e-4,
                                l1_reg_W=0, l1_reg_H=0, l2_reg_W=0, l2_reg_H=0,
-                               update_H=True, verbose=0, forget_factor=1.):
+                               update_H=True, verbose=0, forget_factor=0.7):
     """Compute Non-negative Matrix Factorization with Multiplicative Update.
 
     The objective function is _beta_divergence(X, WH) and is minimized with an
@@ -747,9 +747,11 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
     H : array-like of shape (n_components, n_features)
         Initial guess for the solution.
 
-    A :
+    A : array-like of shape (n_components, n_features)
+        Initial guess for the numerator auxiliary function
 
-    B :
+    B : array-like of shape (n_components, n_features)
+        Initial guess for the denominator auxiliary function
 
     beta_loss : float or {'frobenius', 'kullback-leibler', \
             'itakura-saito'}, default='frobenius'
@@ -760,7 +762,8 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
         fits. Note that for beta_loss <= 0 (or 'itakura-saito'), the input
         matrix X cannot contain zeros.
 
-    batch_size :
+    batch_size : int, default=1024
+        number of samples in each mini-batch.
 
     max_iter : int, default=200
         Number of iterations.
@@ -787,7 +790,7 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
     verbose : int, default=0
         The verbosity level.
 
-    forget_factor : float, default=1.
+    forget_factor : float, default=0.7.
         Amount of rescaling of past information. Its value is 1 for batch
         NMF algorithm, it could be <1 for online NMF algorithm.
 
@@ -946,11 +949,15 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
         If init='custom', it is used as initial guess for the solution.
         If update_H=False, it is used as a constant, to solve for W only.
 
-    A :
+    A : array-like of shape (n_components, n_features), default=None
+        Initial guess for the numerator auxiliary function, only used in
+        :class:`sklearn.decomposition.MiniBatchNMF`.
 
         .. versionadded:: 0.XX
 
-    B :
+    B : array-like of shape (n_components, n_features), default=None
+        Initial guess for the denominator auxiliary function, only used in
+        :class:`sklearn.decomposition.MiniBatchNMF`.
 
         .. versionadded:: 0.XX
 
@@ -1068,9 +1075,13 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
     n_iter : int
         Actual number of iterations.
 
-    A :
+    A : array-like of shape (n_components, n_features)
+        Numerator auxiliary function, only used in
+        :class:`sklearn.decomposition.MiniBatchNMF`.
 
-    B :
+    B : array-like of shape (n_components, n_features)
+        Denominator auxiliary function, only used in
+        :class:`sklearn.decomposition.MiniBatchNMF`.
 
     Examples
     --------
@@ -1594,7 +1605,7 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
         .. versionadded:: 0.17
            *shuffle* parameter used in the Coordinate Descent solver.
 
-    forget_factor : float, default=1.
+    forget_factor : float, default=0.7.
         Amount of rescaling of past information. Its value is 1 for batch
         NMF algorithm, it could be <1 for online NMF algorithm.
 
@@ -1646,7 +1657,7 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
                  batch_size=1024,
                  beta_loss='frobenius', tol=1e-4, max_iter=200,
                  random_state=None, alpha=0., l1_ratio=0., verbose=0,
-                 shuffle=False, regularization='both', forget_factor=1.):
+                 shuffle=False, regularization='both', forget_factor=0.7):
         self.n_components = n_components
         self.init = init
         self.solver = solver
