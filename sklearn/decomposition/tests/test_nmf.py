@@ -623,7 +623,7 @@ def test_nmf_online_partial_fit():
     X = np.abs(rng.randn(48, 5))
     mbnmf1 = MiniBatchNMF(5, solver='mu', init='nndsvdar', random_state=0,
                           max_iter=1, beta_loss='kullback-leibler',
-                          batch_size=48)    
+                          batch_size=48)
     mbnmf2 = MiniBatchNMF(5, solver='mu', init='nndsvdar', random_state=0,
                           max_iter=1, beta_loss='kullback-leibler',
                           batch_size=48)
