@@ -1,6 +1,5 @@
 import numbers
 from itertools import chain
-from itertools import count
 from math import ceil
 
 import numpy as np
@@ -658,8 +657,9 @@ class PartialDependenceDisplay:
         vlines_ravel = self.deciles_vlines_.ravel(order='C')
         hlines_ravel = self.deciles_hlines_.ravel(order='C')
 
-        for i, axi, fx, pd_result in zip(count(), self.axes_.ravel(),
-                                         self.features, self.pd_results):
+        for pd_plot_idx, (axi, feature_idx, pd_result) in enumerate(
+            zip(self.axes_.ravel(), self.features, self.pd_results)
+        ):
 
             avg_preds = None
             preds = None
@@ -678,20 +678,23 @@ class PartialDependenceDisplay:
                         len(preds[self.target_idx])
                     )
                     ice_lines = preds[self.target_idx]
-                    sampled = ice_lines[np.random.choice(
-                        ice_lines.shape[0], n_samples, replace=False
-                    ), :]
+                    sampled = ice_lines[
+                        np.random.choice(
+                            ice_lines.shape[0], n_samples, replace=False
+                        ),
+                        :,
+                    ]
                     for j, ins in enumerate(sampled):
-                        lines_ravel[i * j + j] = axi.plot(
+                        lines_ravel[pd_plot_idx * j + j] = axi.plot(
                             values[0], ins.ravel(), **individual_line_kw
                         )[0]
                 if self.kind == 'average':
-                    lines_ravel[i] = axi.plot(
+                    lines_ravel[pd_plot_idx] = axi.plot(
                         values[0], avg_preds[self.target_idx].ravel(),
                         **line_kw
                     )[0]
                 elif self.kind == 'both':
-                    lines_ravel[i] = axi.plot(
+                    lines_ravel[pd_plot_idx] = axi.plot(
                         values[0], avg_preds[self.target_idx].ravel(),
                         label='average', **line_kw
                     )[0]
@@ -700,28 +703,40 @@ class PartialDependenceDisplay:
                 # contour plot
                 XX, YY = np.meshgrid(values[0], values[1])
                 Z = avg_preds[self.target_idx].T
-                CS = axi.contour(XX, YY, Z, levels=Z_level, linewidths=0.5,
-                                 colors='k')
-                contours_ravel[i] = axi.contourf(XX, YY, Z, levels=Z_level,
-                                                 vmax=Z_level[-1],
-                                                 vmin=Z_level[0],
-                                                 **contour_kw)
-                axi.clabel(CS, fmt='%2.2f', colors='k', fontsize=10,
-                           inline=True)
+                CS = axi.contour(
+                    XX, YY, Z, levels=Z_level, linewidths=0.5, colors="k"
+                )
+                contours_ravel[pd_plot_idx] = axi.contourf(
+                    XX,
+                    YY,
+                    Z,
+                    levels=Z_level,
+                    vmax=Z_level[-1],
+                    vmin=Z_level[0],
+                    **contour_kw,
+                )
+                axi.clabel(
+                    CS, fmt="%2.2f", colors="k", fontsize=10, inline=True
+                )
 
             trans = transforms.blended_transform_factory(axi.transData,
                                                          axi.transAxes)
             ylim = axi.get_ylim()
-            vlines_ravel[i] = axi.vlines(self.deciles[fx[0]], 0, 0.05,
-                                         transform=trans, color='k')
+            vlines_ravel[pd_plot_idx] = axi.vlines(
+                self.deciles[feature_idx[0]],
+                0,
+                0.05,
+                transform=trans,
+                color="k",
+            )
             axi.set_ylim(ylim)
 
             # Set xlabel if it is not already set
             if not axi.get_xlabel():
-                axi.set_xlabel(self.feature_names[fx[0]])
+                axi.set_xlabel(self.feature_names[feature_idx[0]])
 
             if len(values) == 1:
-                if n_cols is None or i % n_cols == 0:
+                if n_cols is None or pd_plot_idx % n_cols == 0:
                     if not axi.get_ylabel():
                         axi.set_ylabel('Partial dependence')
                 else:
@@ -732,9 +747,14 @@ class PartialDependenceDisplay:
                 trans = transforms.blended_transform_factory(axi.transAxes,
                                                              axi.transData)
                 xlim = axi.get_xlim()
-                hlines_ravel[i] = axi.hlines(self.deciles[fx[1]], 0, 0.05,
-                                             transform=trans, color='k')
+                hlines_ravel[pd_plot_idx] = axi.hlines(
+                    self.deciles[feature_idx[1]],
+                    0,
+                    0.05,
+                    transform=trans,
+                    color="k",
+                )
                 # hline erases xlim
-                axi.set_ylabel(self.feature_names[fx[1]])
+                axi.set_ylabel(self.feature_names[feature_idx[1]])
                 axi.set_xlim(xlim)
         return self
