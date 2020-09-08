@@ -4,7 +4,7 @@ Beta-divergence loss functions
 ==============================
 
 A plot that compares the various Beta-divergence loss functions supported by
-the Multiplicative-Update ('mu') solver in :class:`sklearn.decomposition.NMF`.
+the Multiplicative-Update ('mu') solver in :class:`~sklearn.decomposition.NMF`.
 """
 import numpy as np
 import matplotlib.pyplot as plt

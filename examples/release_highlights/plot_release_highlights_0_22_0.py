@@ -16,10 +16,10 @@ To install the latest version (with pip)::
 
 or with conda::
 
-    conda install scikit-learn
+    conda install -c conda-forge scikit-learn
 """
 
-##############################################################################
+# %%
 # New plotting API
 # ----------------
 #
@@ -54,7 +54,7 @@ rfc_disp.figure_.suptitle("ROC curve comparison")
 
 plt.show()
 
-############################################################################
+# %%
 # Stacking Classifier and Regressor
 # ---------------------------------
 # :class:`~ensemble.StackingClassifier` and
@@ -93,7 +93,7 @@ X_train, X_test, y_train, y_test = train_test_split(
 )
 clf.fit(X_train, y_train).score(X_test, y_test)
 
-##############################################################################
+# %%
 # Permutation-based feature importance
 # ------------------------------------
 #
@@ -122,7 +122,7 @@ ax.set_ylabel("Features")
 fig.tight_layout()
 plt.show()
 
-##############################################################################
+# %%
 # Native support for missing values for gradient boosting
 # -------------------------------------------------------
 #
@@ -133,7 +133,6 @@ plt.show()
 
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingClassifier
-import numpy as np
 
 X = np.array([0, 1, 2, np.nan]).reshape(-1, 1)
 y = [0, 0, 1, 1]
@@ -141,7 +140,7 @@ y = [0, 0, 1, 1]
 gbdt = HistGradientBoostingClassifier(min_samples_leaf=1).fit(X, y)
 print(gbdt.predict(X))
 
-############################################################################
+# %%
 # Precomputed sparse nearest neighbors graph
 # ------------------------------------------
 # Most estimators based on nearest neighbors graphs now accept precomputed
@@ -173,7 +172,7 @@ with TemporaryDirectory(prefix="sklearn_cache_") as tmpdir:
     estimator.set_params(isomap__n_neighbors=5)
     estimator.fit(X)
 
-##############################################################################
+# %%
 # KNN Based Imputation
 # ------------------------------------
 # We now support imputation for completing missing values using k-Nearest
@@ -189,14 +188,13 @@ with TemporaryDirectory(prefix="sklearn_cache_") as tmpdir:
 #
 # Read more in the :ref:`User Guide <knnimpute>`.
 
-import numpy as np
 from sklearn.impute import KNNImputer
 
 X = [[1, 2, np.nan], [3, 4, 3], [np.nan, 6, 5], [8, 8, 7]]
 imputer = KNNImputer(n_neighbors=2)
 print(imputer.fit_transform(X))
 
-#############################################################################
+# %%
 # Tree pruning
 # ------------
 #
@@ -214,7 +212,7 @@ rf = RandomForestClassifier(random_state=0, ccp_alpha=0.05).fit(X, y)
 print("Average number of nodes with pruning {:.1f}".format(
     np.mean([e.tree_.node_count for e in rf.estimators_])))
 
-############################################################################
+# %%
 # Retrieve dataframes from OpenML
 # -------------------------------
 # :func:`datasets.fetch_openml` can now return pandas dataframe and thus
@@ -225,7 +223,7 @@ from sklearn.datasets import fetch_openml
 titanic = fetch_openml('titanic', version=1, as_frame=True)
 print(titanic.data.head()[['pclass', 'embarked']])
 
-############################################################################
+# %%
 # Checking scikit-learn compatibility of an estimator
 # ---------------------------------------------------
 # Developers can check the compatibility of their scikit-learn compatible
@@ -248,7 +246,7 @@ from sklearn.utils.estimator_checks import parametrize_with_checks
 def test_sklearn_compatible_estimator(estimator, check):
     check(estimator)
 
-############################################################################
+# %%
 # ROC AUC now supports multiclass classification
 # ----------------------------------------------
 # The :func:`roc_auc_score` function can also be used in multi-class

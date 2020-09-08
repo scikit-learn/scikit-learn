@@ -108,8 +108,9 @@ def plot_tree(decision_tree, *, max_depth=None, feature_names=None,
 
     feature_names : list of strings, default=None
         Names of each of the features.
+        If None, generic names will be used ("X[0]", "X[1]", ...).
 
-    class_names : list of strings, bool or None, default=None
+    class_names : list of str or bool, default=None
         Names of each of the target classes in ascending numerical order.
         Only relevant for classification and not supported for multi-output.
         If ``True``, shows a symbolic representation of the class name.
@@ -686,60 +687,61 @@ def export_graphviz(decision_tree, out_file=None, *, max_depth=None,
     decision_tree : decision tree classifier
         The decision tree to be exported to GraphViz.
 
-    out_file : file object or string, optional (default=None)
+    out_file : object or str, default=None
         Handle or name of the output file. If ``None``, the result is
         returned as a string.
 
         .. versionchanged:: 0.20
             Default of out_file changed from "tree.dot" to None.
 
-    max_depth : int, optional (default=None)
+    max_depth : int, default=None
         The maximum depth of the representation. If None, the tree is fully
         generated.
 
-    feature_names : list of strings, optional (default=None)
+    feature_names : list of str, default=None
         Names of each of the features.
+        If None generic names will be used ("feature_0", "feature_1", ...).
 
-    class_names : list of strings, bool or None, optional (default=None)
+    class_names : list of str or bool, default=None
         Names of each of the target classes in ascending numerical order.
         Only relevant for classification and not supported for multi-output.
         If ``True``, shows a symbolic representation of the class name.
 
-    label : {'all', 'root', 'none'}, optional (default='all')
+    label : {'all', 'root', 'none'}, default='all'
         Whether to show informative labels for impurity, etc.
         Options include 'all' to show at every node, 'root' to show only at
         the top root node, or 'none' to not show at any node.
 
-    filled : bool, optional (default=False)
+    filled : bool, default=False
         When set to ``True``, paint nodes to indicate majority class for
         classification, extremity of values for regression, or purity of node
         for multi-output.
 
-    leaves_parallel : bool, optional (default=False)
+    leaves_parallel : bool, default=False
         When set to ``True``, draw all leaf nodes at the bottom of the tree.
 
-    impurity : bool, optional (default=True)
+    impurity : bool, default=True
         When set to ``True``, show the impurity at each node.
 
-    node_ids : bool, optional (default=False)
+    node_ids : bool, default=False
         When set to ``True``, show the ID number on each node.
 
-    proportion : bool, optional (default=False)
+    proportion : bool, default=False
         When set to ``True``, change the display of 'values' and/or 'samples'
         to be proportions and percentages respectively.
 
-    rotate : bool, optional (default=False)
+    rotate : bool, default=False
         When set to ``True``, orient tree left to right rather than top-down.
 
-    rounded : bool, optional (default=False)
+    rounded : bool, default=False
         When set to ``True``, draw node boxes with rounded corners and use
         Helvetica fonts instead of Times-Roman.
 
-    special_characters : bool, optional (default=False)
+    special_characters : bool, default=False
         When set to ``False``, ignore special characters for PostScript
         compatibility.
 
-    precision : int, optional (default=3)
+    precision : int, default=3
         Number of digits of precision for floating point in the values of
         impurity, threshold and value attributes of each node.
 
@@ -827,21 +829,21 @@ def export_text(decision_tree, *, feature_names=None, max_depth=10,
         It can be an instance of
         DecisionTreeClassifier or DecisionTreeRegressor.
 
-    feature_names : list, optional (default=None)
+    feature_names : list of str, default=None
         A list of length n_features containing the feature names.
         If None generic names will be used ("feature_0", "feature_1", ...).
 
-    max_depth : int, optional (default=10)
+    max_depth : int, default=10
         Only the first max_depth levels of the tree are exported.
         Truncated branches will be marked with "...".
 
-    spacing : int, optional (default=3)
+    spacing : int, default=3
         Number of spaces between edges. The higher it is, the wider the result.
 
-    decimals : int, optional (default=2)
+    decimals : int, default=2
         Number of decimal digits to display.
 
-    show_weights : bool, optional (default=False)
+    show_weights : bool, default=False
         If true the classification weights will be exported on each leaf.
         The classification weights are the number of samples each class.
 

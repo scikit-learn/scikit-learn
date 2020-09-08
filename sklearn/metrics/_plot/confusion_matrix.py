@@ -41,6 +41,12 @@ class ConfusionMatrixDisplay:
     figure_ : matplotlib Figure
         Figure containing the confusion matrix.
 
+    See Also
+    --------
+    confusion_matrix : Compute Confusion Matrix to evaluate the accuracy of a
+        classification.
+    plot_confusion_matrix : Plot Confusion Matrix.
+
     Examples
     --------
     >>> from sklearn.datasets import make_classification
@@ -65,7 +71,8 @@ class ConfusionMatrixDisplay:
 
     @_deprecate_positional_args
     def plot(self, *, include_values=True, cmap='viridis',
-             xticks_rotation='horizontal', values_format=None, ax=None):
+             xticks_rotation='horizontal', values_format=None,
+             ax=None, colorbar=True):
         """Plot visualization.
 
         Parameters
@@ -87,6 +94,9 @@ class ConfusionMatrixDisplay:
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is
             created.
+
+        colorbar : bool, default=True
+            Whether or not to add a colorbar to the plot.
 
         Returns
         -------
@@ -133,8 +143,8 @@ class ConfusionMatrixDisplay:
             display_labels = np.arange(n_classes)
         else:
             display_labels = self.display_labels
-
-        fig.colorbar(self.im_, ax=ax)
+        if colorbar:
+            fig.colorbar(self.im_, ax=ax)
         ax.set(xticks=np.arange(n_classes),
                yticks=np.arange(n_classes),
                xticklabels=display_labels,
@@ -156,7 +166,7 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
                           display_labels=None, include_values=True,
                           xticks_rotation='horizontal',
                           values_format=None,
-                          cmap='viridis', ax=None):
+                          cmap='viridis', ax=None, colorbar=True):
     """Plot Confusion Matrix.
 
     Read more in the :ref:`User Guide <confusion_matrix>`.
@@ -209,9 +219,20 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
         Axes object to plot on. If `None`, a new figure and axes is
         created.
 
+    colorbar : bool, default=True
+        Whether or not to add a colorbar to the plot.
+
+        .. versionadded:: 0.24
+
     Returns
     -------
     display : :class:`~sklearn.metrics.ConfusionMatrixDisplay`
+
+    See Also
+    --------
+    confusion_matrix : Compute Confusion Matrix to evaluate the accuracy of a
+        classification.
+    ConfusionMatrixDisplay : Confusion Matrix visualization.
 
     Examples
     --------
@@ -248,4 +269,4 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
                                   display_labels=display_labels)
     return disp.plot(include_values=include_values,
                      cmap=cmap, ax=ax, xticks_rotation=xticks_rotation,
-                     values_format=values_format)
+                     values_format=values_format, colorbar=colorbar)

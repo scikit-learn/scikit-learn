@@ -91,6 +91,30 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
 
         return self
 
+    def fit_transform(self, X, y=None, **fit_params):
+        """Return class labels or probabilities for each estimator.
+
+        Return predictions for X for each estimator.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix, dataframe} of shape \
+                (n_samples, n_features)
+            Input samples
+
+        y : ndarray of shape (n_samples,), default=None
+            Target values (None for unsupervised transformations).
+
+        **fit_params : dict
+            Additional fit parameters.
+
+        Returns
+        -------
+        X_new : ndarray array of shape (n_samples, n_features_new)
+            Transformed array.
+        """
+        return super().fit_transform(X, y, **fit_params)
+
     @property
     def n_features_in_(self):
         # For consistency with other estimators we raise a AttributeError so
@@ -175,7 +199,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
     See Also
     --------
-    VotingRegressor: Prediction voting regressor.
+    VotingRegressor : Prediction voting regressor.
 
     Examples
     --------
@@ -403,7 +427,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
 
     See Also
     --------
-    VotingClassifier: Soft Voting/Majority Rule classifier.
+    VotingClassifier : Soft Voting/Majority Rule classifier.
 
     Examples
     --------

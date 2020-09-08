@@ -114,7 +114,7 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
     copy_X : bool, default=True
@@ -298,8 +298,7 @@ def lasso_path(X, y, *, eps=1e-3, n_alphas=100, alphas=None,
     [[0.         0.         0.46915237]
      [0.2159048  0.4425765  0.23668876]]
 
-
-    See also
+    See Also
     --------
     lars_path
     Lasso
@@ -398,8 +397,9 @@ def enet_path(X, y, *, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         (Only allowed when ``y.ndim == 1``).
 
     check_input : bool, default=True
-        Skip input validation checks, including the Gram matrix when provided
-        assuming there are handled by the caller when check_input=False.
+        If set to False, the input validation checks are skipped (including the
+        Gram matrix when provided). It is assumed that they are handled
+        by the caller.
 
     **params : kwargs
         Keyword arguments passed to the coordinate descent solver.
@@ -604,7 +604,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
     precompute : bool or array-like of shape (n_features, n_features),\
@@ -650,9 +650,9 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     coef_ : ndarray of shape (n_features,) or (n_targets, n_features)
         parameter vector (w in the cost function formula)
 
-    sparse_coef_ : sparse matrix of shape (n_features, 1) or \
-            (n_targets, n_features)
-        ``sparse_coef_`` is a readonly property derived from ``coef_``
+    sparse_coef_ : sparse matrix of shape (n_features,) or \
+            (n_tasks, n_features)
+        sparse representation of the `coef_`.
 
     intercept_ : float or ndarray of shape (n_targets,)
         independent term in decision function.
@@ -660,6 +660,10 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     n_iter_ : list of int
         number of iterations run by the coordinate descent solver to reach
         the specified tolerance.
+
+    dual_gap_ : float or ndarray of shape (n_targets,)
+        Given param alpha, the dual gaps at the end of the optimization,
+        same shape as each observation of y.
 
     Examples
     --------
@@ -683,12 +687,12 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
 
-    See also
+    See Also
     --------
     ElasticNetCV : Elastic net model with best model selection by
         cross-validation.
-    SGDRegressor: implements elastic net regression with incremental training.
-    SGDClassifier: implements logistic regression with elastic net penalty
+    SGDRegressor : Implements elastic net regression with incremental training.
+    SGDClassifier : Implements logistic regression with elastic net penalty
         (``SGDClassifier(loss="log", penalty="elasticnet")``).
     """
     path = staticmethod(enet_path)
@@ -749,6 +753,11 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         if isinstance(self.precompute, str):
             raise ValueError('precompute should be one of True, False or'
                              ' array-like. Got %r' % self.precompute)
+
+        if (not isinstance(self.l1_ratio, numbers.Number) or
+                self.l1_ratio < 0 or self.l1_ratio > 1):
+            raise ValueError("l1_ratio must be between 0 and 1; "
+                             f"got l1_ratio={self.l1_ratio}")
 
         # Remember if X is copied
         X_copied = False
@@ -920,7 +929,7 @@ class Lasso(ElasticNet):
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
     precompute : 'auto', bool or array-like of shape (n_features, n_features),\
@@ -967,6 +976,10 @@ class Lasso(ElasticNet):
     coef_ : ndarray of shape (n_features,) or (n_targets, n_features)
         parameter vector (w in the cost function formula)
 
+    dual_gap_ : float or ndarray of shape (n_targets,)
+        Given param alpha, the dual gaps at the end of the optimization,
+        same shape as each observation of y.
+
     sparse_coef_ : sparse matrix of shape (n_features, 1) or \
             (n_targets, n_features)
         ``sparse_coef_`` is a readonly property derived from ``coef_``
@@ -989,7 +1002,7 @@ class Lasso(ElasticNet):
     >>> print(clf.intercept_)
     0.15...
 
-    See also
+    See Also
     --------
     lars_path
     lasso_path
@@ -1376,7 +1389,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
     precompute : 'auto', bool or array-like of shape (n_features, n_features),\
@@ -1483,7 +1496,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
 
-    See also
+    See Also
     --------
     lars_path
     lasso_path
@@ -1558,7 +1571,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
     precompute : 'auto', bool or array-like of shape (n_features, n_features),\
@@ -1642,6 +1655,9 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
     alphas_ : ndarray of shape (n_alphas,) or (n_l1_ratio, n_alphas)
         The grid of alphas used for fitting, for each l1_ratio.
 
+    dual_gap_ : float
+        The dual gaps at the end of the optimization for the optimal alpha.
+
     n_iter_ : int
         number of iterations run by the coordinate descent solver to reach
         the specified tolerance for the optimal alpha.
@@ -1689,7 +1705,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
 
         alpha = a + b and l1_ratio = a / (a + b).
 
-    See also
+    See Also
     --------
     enet_path
     ElasticNet
@@ -1771,7 +1787,7 @@ class MultiTaskElasticNet(Lasso):
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
     copy_X : bool, default=True
@@ -1817,6 +1833,16 @@ class MultiTaskElasticNet(Lasso):
         number of iterations run by the coordinate descent solver to reach
         the specified tolerance.
 
+    dual_gap_ : float
+        The dual gaps at the end of the optimization.
+
+    eps_ : float
+        The tolerance scaled scaled by the variance of the target `y`.
+
+    sparse_coef_ : sparse matrix of shape (n_features,) or \
+            (n_tasks, n_features)
+        sparse representation of the `coef_`.
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -1829,7 +1855,7 @@ class MultiTaskElasticNet(Lasso):
     >>> print(clf.intercept_)
     [0.0872422 0.0872422]
 
-    See also
+    See Also
     --------
     MultiTaskElasticNet : Multi-task L1/L2 ElasticNet with built-in
         cross-validation.
@@ -1961,7 +1987,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
     copy_X : bool, default=True
@@ -2006,6 +2032,16 @@ class MultiTaskLasso(MultiTaskElasticNet):
         number of iterations run by the coordinate descent solver to reach
         the specified tolerance.
 
+    dual_gap_ : ndarray of shape (n_alphas,)
+        The dual gaps at the end of the optimization for each alpha.
+
+    eps_ : float
+        The tolerance scaled scaled by the variance of the target `y`.
+
+    sparse_coef_ : sparse matrix of shape (n_features,) or \
+            (n_tasks, n_features)
+        sparse representation of the `coef_`.
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -2018,9 +2054,9 @@ class MultiTaskLasso(MultiTaskElasticNet):
     >>> print(clf.intercept_)
     [-0.41888636 -0.87382323]
 
-    See also
+    See Also
     --------
-    MultiTaskLasso : Multi-task L1/L2 Lasso with built-in cross-validation
+    MultiTaskLasso : Multi-task L1/L2 Lasso with built-in cross-validation.
     Lasso
     MultiTaskElasticNet
 
@@ -2103,7 +2139,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
     max_iter : int, default=1000
@@ -2183,6 +2219,9 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         number of iterations run by the coordinate descent solver to reach
         the specified tolerance for the optimal alpha.
 
+    dual_gap_ : float
+        The dual gap at the end of the optimization for the optimal alpha.
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -2196,7 +2235,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     >>> print(clf.intercept_)
     [0.00166409 0.00166409]
 
-    See also
+    See Also
     --------
     MultiTaskElasticNet
     ElasticNetCV
@@ -2284,7 +2323,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
     max_iter : int, default=1000
@@ -2360,6 +2399,9 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         number of iterations run by the coordinate descent solver to reach
         the specified tolerance for the optimal alpha.
 
+    dual_gap_ : float
+        The dual gap at the end of the optimization for the optimal alpha.
+
     Examples
     --------
     >>> from sklearn.linear_model import MultiTaskLassoCV
@@ -2374,7 +2416,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     >>> reg.predict(X[:1,])
     array([[153.7971...,  94.9015...]])
 
-    See also
+    See Also
     --------
     MultiTaskElasticNet
     ElasticNetCV
