@@ -47,9 +47,9 @@ scores = ['precision_macro', 'recall_macro']
 print("# Tuning hyper-parameters")
 print()
 
+
 # Returns the Best Index
 def refit_best_index(results):
-
     # Set the Selected Index as -1
     # As such, if we have no Scoring, then an error will be thrown
     best_index = -1
@@ -91,6 +91,7 @@ def refit_best_index(results):
         print(classification_report(y_true, y_pred))
         print()
     return best_index
+
 
 clf = GridSearchCV(
     SVC(), tuned_parameters, scoring=scores, refit=refit_best_index
