@@ -599,7 +599,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         will be removed from the resulting tokens.
         Only applies if ``analyzer == 'word'``.
 
-    token_pattern : string, default=r"(?u)/b/w/w+/b"
+    token_pattern : string, default=r"(?u)\b\w\w+\b"
         Regular expression denoting what constitutes a "token", only used
         if ``analyzer == 'word'``. The default regexp selects tokens of 2
         or more alphanumeric characters (punctuation is completely ignored
@@ -867,7 +867,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         in the range [0.7, 1.0) to automatically detect and filter stop
         words based on intra corpus document frequency of terms.
 
-    token_pattern : string, default=r"(?u)/b/w/w+/b"
+    token_pattern : string, default=r"(?u)\b\w\w+\b"
         Regular expression denoting what constitutes a "token", only used
         if ``analyzer == 'word'``. The default regexp select tokens of 2
         or more alphanumeric characters (punctuation is completely ignored
@@ -1592,7 +1592,7 @@ class TfidfVectorizer(CountVectorizer):
         in the range [0.7, 1.0) to automatically detect and filter stop
         words based on intra corpus document frequency of terms.
 
-    token_pattern : str, default=r"(?u)/b/w/w+/b"
+    token_pattern : str, default=r"(?u)\b\w\w+\b"
         Regular expression denoting what constitutes a "token", only used
         if ``analyzer == 'word'``. The default regexp selects tokens of 2
         or more alphanumeric characters (punctuation is completely ignored
