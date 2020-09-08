@@ -1774,7 +1774,7 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
             self.components_ = H
             self._components_numerator = A
             self._components_denominator = B
-            self.n_iter_ = n_iter_
+            self.n_iter_ += n_iter_
 
         else:
             self.fit_transform(X, **params)
