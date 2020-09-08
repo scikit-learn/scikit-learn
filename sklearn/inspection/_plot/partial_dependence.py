@@ -11,17 +11,33 @@ from .. import partial_dependence
 from ...base import is_regressor
 from ...utils import check_array
 from ...utils import check_matplotlib_support  # noqa
+from ...utils import check_random_state
 from ...utils import _safe_indexing
 from ...utils.validation import _deprecate_positional_args
 
 
 @_deprecate_positional_args
-def plot_partial_dependence(estimator, X, features, *, feature_names=None,
-                            target=None, response_method='auto', n_cols=3,
-                            grid_resolution=100, percentiles=(0.05, 0.95),
-                            method='auto', n_jobs=None, verbose=0,
-                            line_kw=None, contour_kw=None, ax=None,
-                            kind='average', subsample=1000):
+def plot_partial_dependence(
+    estimator,
+    X,
+    features,
+    *,
+    feature_names=None,
+    target=None,
+    response_method="auto",
+    n_cols=3,
+    grid_resolution=100,
+    percentiles=(0.05, 0.95),
+    method="auto",
+    n_jobs=None,
+    verbose=0,
+    line_kw=None,
+    contour_kw=None,
+    ax=None,
+    kind="average",
+    subsample=1000,
+    random_state=None,
+):
     """Partial dependence (PD) and individual conditional expectation (ICE)
     plots.
 
@@ -208,6 +224,12 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
 
         .. versionadded:: 0.24
 
+    random_state : int, RandomState instance or None, default=None
+        Controls the randomness of the selected samples when subsamples is not
+        `None`. See :term:`Glossary <random_state>` for details.
+
+        .. versionadded:: 0.24
+
     Returns
     -------
     display : :class:`~sklearn.inspection.PartialDependenceDisplay`
@@ -366,16 +388,20 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
             X_col = _safe_indexing(X, fx, axis=1)
             deciles[fx] = mquantiles(X_col, prob=np.arange(0.1, 1.0, 0.1))
 
-    display = PartialDependenceDisplay(pd_results=pd_results,
-                                       features=features,
-                                       feature_names=feature_names,
-                                       target_idx=target_idx,
-                                       pdp_lim=pdp_lim,
-                                       deciles=deciles,
-                                       kind=kind,
-                                       subsample=subsample)
-    return display.plot(ax=ax, n_cols=n_cols, line_kw=line_kw,
-                        contour_kw=contour_kw)
+    display = PartialDependenceDisplay(
+        pd_results=pd_results,
+        features=features,
+        feature_names=feature_names,
+        target_idx=target_idx,
+        pdp_lim=pdp_lim,
+        deciles=deciles,
+        kind=kind,
+        subsample=subsample,
+        random_state=random_state,
+    )
+    return display.plot(
+        ax=ax, n_cols=n_cols, line_kw=line_kw, contour_kw=contour_kw
+    )
 
 
 class PartialDependenceDisplay:
@@ -452,6 +478,12 @@ class PartialDependenceDisplay:
 
         .. versionadded:: 0.24
 
+    random_state : int, RandomState instance or None, default=None
+        Controls the randomness of the selected samples when subsamples is not
+        `None`. See :term:`Glossary <random_state>` for details.
+
+        .. versionadded:: 0.24
+
     Attributes
     ----------
     bounding_ax_ : matplotlib Axes or None
@@ -506,8 +538,19 @@ class PartialDependenceDisplay:
     plot_partial_dependence : Plot Partial Dependence.
     """
     @_deprecate_positional_args
-    def __init__(self, pd_results, *, features, feature_names, target_idx,
-                 pdp_lim, deciles, kind='average', subsample=1000):
+    def __init__(
+        self,
+        pd_results,
+        *,
+        features,
+        feature_names,
+        target_idx,
+        pdp_lim,
+        deciles,
+        kind="average",
+        subsample=1000,
+        random_state=None,
+    ):
         self.pd_results = pd_results
         self.features = features
         self.feature_names = feature_names
@@ -516,6 +559,7 @@ class PartialDependenceDisplay:
         self.deciles = deciles
         self.kind = kind
         self.subsample = subsample
+        self.random_state = random_state
 
     def _get_sample_count(self, n_samples):
         if isinstance(self.subsample, numbers.Integral):
@@ -565,6 +609,8 @@ class PartialDependenceDisplay:
         from matplotlib.ticker import ScalarFormatter  # noqa
         from matplotlib.gridspec import GridSpecFromSubplotSpec  # noqa
 
+        rng = check_random_state(self.random_state)
+
         if line_kw is None:
             line_kw = {}
         if contour_kw is None:
@@ -585,13 +631,17 @@ class PartialDependenceDisplay:
             individual_line_kw['linewidth'] = 0.5
 
         n_features = len(self.features)
-        n_sampled = 1
-        if self.kind == 'individual':
-            n_instances = len(self.pd_results[0].individual[0])
-            n_sampled = self._get_sample_count(n_instances)
-        elif self.kind == 'both':
-            n_instances = len(self.pd_results[0].individual[0])
-            n_sampled = self._get_sample_count(n_instances) + 1
+        if self.kind in ("individual", "both"):
+            n_ice_to_plot = self._get_sample_count(
+                len(self.pd_results[0].individual[0])
+            )
+            n_lines = (
+                n_ice_to_plot
+                if self.kind == "individual"
+                else n_ice_to_plot + 1
+            )
+        else:
+            n_lines = 1
 
         if isinstance(ax, plt.Axes):
             # If ax was set off, it has most likely been set to off
@@ -612,8 +662,7 @@ class PartialDependenceDisplay:
             if self.kind == 'average':
                 self.lines_ = np.empty((n_rows, n_cols), dtype=object)
             else:
-                self.lines_ = np.empty((n_rows, n_cols, n_sampled),
-                                       dtype=object)
+                self.lines_ = np.empty((n_rows, n_cols, n_lines), dtype=object)
             self.contours_ = np.empty((n_rows, n_cols), dtype=object)
 
             axes_ravel = self.axes_.ravel()
@@ -640,8 +689,7 @@ class PartialDependenceDisplay:
             if self.kind == 'average':
                 self.lines_ = np.empty_like(ax, dtype=object)
             else:
-                self.lines_ = np.empty(ax.shape + (n_sampled,),
-                                       dtype=object)
+                self.lines_ = np.empty(ax.shape + (n_lines,), dtype=object)
             self.contours_ = np.empty_like(ax, dtype=object)
 
         # create contour levels for two-way plots
@@ -673,32 +721,34 @@ class PartialDependenceDisplay:
                 preds = pd_result.individual
 
             if len(values) == 1:
-                if self.kind == 'individual' or self.kind == 'both':
-                    n_samples = self._get_sample_count(
-                        len(preds[self.target_idx])
-                    )
+                if self.kind in ("individual", "both"):
                     ice_lines = preds[self.target_idx]
-                    sampled = ice_lines[
-                        np.random.choice(
-                            ice_lines.shape[0], n_samples, replace=False
-                        ),
-                        :,
-                    ]
-                    for j, ins in enumerate(sampled):
-                        lines_ravel[pd_plot_idx * j + j] = axi.plot(
-                            values[0], ins.ravel(), **individual_line_kw
-                        )[0]
-                if self.kind == 'average':
-                    lines_ravel[pd_plot_idx] = axi.plot(
-                        values[0], avg_preds[self.target_idx].ravel(),
-                        **line_kw
+                    ice_lines_idx = rng.choice(
+                        ice_lines.shape[0], n_ice_to_plot, replace=False
+                    )
+                    ice_lines_subsampled = ice_lines[ice_lines_idx, :]
+                    for ice_idx, ice in enumerate(ice_lines_subsampled):
+                        lines_ravel[
+                            pd_plot_idx * n_lines + ice_idx
+                        ] = axi.plot(
+                            values[0], ice.ravel(), **individual_line_kw
+                        )[
+                            0
+                        ]
+                if self.kind in ("average", "both"):
+                    label = None if self.kind == "average" else "average"
+                    # the average is stored as the last line
+                    pd_line_idx = (
+                        pd_plot_idx
+                        if self.kind == "average"
+                        else pd_plot_idx * n_lines + n_ice_to_plot
+                    )
+                    lines_ravel[pd_line_idx] = axi.plot(
+                        values[0],
+                        avg_preds[self.target_idx].ravel(),
+                        label=label,
+                        **line_kw,
                     )[0]
-                elif self.kind == 'both':
-                    lines_ravel[pd_plot_idx] = axi.plot(
-                        values[0], avg_preds[self.target_idx].ravel(),
-                        label='average', **line_kw
-                    )[0]
-                    axi.legend()
             else:
                 # contour plot
                 XX, YY = np.meshgrid(values[0], values[1])
