@@ -186,6 +186,11 @@ General Concepts
         :class:`~pipeline.Pipeline` and
         :class:`~pipeline.FeatureUnion`.)
 
+        A "clone" here means a clone in the statistical sense: depending on
+        the `random_state` parameter of the estimator, the clone might
+        actually yield different results from the original estimator. More
+        details can be found in :ref:`randomness`.
+
     common tests
         This refers to the tests run on almost every estimator class in
         Scikit-learn to check they comply with basic API conventions.  They are
