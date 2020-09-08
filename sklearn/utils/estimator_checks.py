@@ -1170,7 +1170,7 @@ def check_methods_subset_invariance(name, estimator_orig, strict_mode=True):
 
 
 @ignore_warnings(category=FutureWarning)
-def check_methods_sample_order_invariance(name, estimator_orig):
+def check_methods_sample_order_invariance(name, estimator_orig, strict_mode=True):
     # check that method gives invariant results if applied
     # on a subset with different sample order
     rnd = np.random.RandomState(0)
