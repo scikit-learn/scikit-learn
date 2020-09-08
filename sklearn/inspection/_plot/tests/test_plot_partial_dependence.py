@@ -1,4 +1,3 @@
-from matplotlib.lines import Line2D
 import numpy as np
 from scipy.stats.mstats import mquantiles
 
