@@ -76,7 +76,8 @@ described later.
 Using None or `RandomState` instances
 -------------------------------------
 
-**Estimators**
+Estimators
+..........
 
 As described above, passing instances means that calling `fit()` multiple
 times will not yield the same results, even if the estimator is fitted on the
@@ -104,16 +105,17 @@ same data, with the same hyper-parameters::
 We can see from the snippet above that `rf.fit()` has produced different
 models, even if the data was the same. This is because the RNG of the
 estimator is consumed when `fit()` is called, and this consumed (mutaded) RNG
-will be used in the subsequent `fit`.
+will be used in the subsequent calls to `fit()`.
 
 If we had passed an int to the `random_state` parameter of the
 :class:`~sklearn.ensemble.RandomForestClassifier`, we would have obtained the
 same models, and thus the same scores each time. When we pass an int, the
 same RNG is used across all calls to `fit()`. What internally happens is that
-even though the RNG is consumed when `fit` is called, it is always reset to
-its original state at the beginning of `fit`.
+even though the RNG is consumed when `fit()` is called, it is always reset to
+its original state at the beginning of `fit()`.
 
-**CV splitters**
+CV splitters
+............
 
 Randomized cv splitters have a similar behavior when a `RandomState`
 instance is passed::
@@ -146,7 +148,10 @@ While the rules that govern the `random_state` parameter are seemingly simple,
 they do however have some subtle implications. In some cases, this can even
 lead to wrong conclusions.
 
-**Estimators**
+Estimators
+..........
+
+**Differences in cross-validation procedures**
 
 Depending on what is passed as the `random_state` parameter, estimators may
 behave very differently, especially in cross-validation procedures. Consider
@@ -168,9 +173,9 @@ the following snippet::
 We see that the cross-validated scores of `rf_inst` and `rf_123` are
 different, as should be expected since we didn't pass the same `random_state`
 parameter. However, the difference between these scores is more subtle that
-it may look, and **the cross-validation procedures that were performed by
-:func:`~sklearn.model_selection.cross_val_score` significantly differ in each
-case**:
+it may look, and **the cross-validation procedures that were performed by**
+:func:`~sklearn.model_selection.cross_val_score` **significantly differ in
+each case**:
 
 - Since `rf_123` was passed an int, every call to `fit()` uses the same RNG:
   the same (random) subset of features will be used across all folds to fit
@@ -181,7 +186,7 @@ case**:
 
 Here, neither procedure is inherently wrong, and one might prefer one over
 the other depending on the task at hand. It is however important to
-understand how these procedure differ.
+understand how these procedures differ.
 
 .. note::
     Here, :func:`~sklearn.model_selection.cross_val_score` will use a
@@ -190,6 +195,8 @@ understand how these procedure differ.
     instance to :func:`~sklearn.datasets.make_classification` isn't relevant
     for our illustration purpose: what matters is what we pass to the
     :class:`~sklearn.ensemble.RandomForestClassifier` estimator.
+
+**Cloning**
 
 Another subtle side effect of passing `RandomState` instances is how
 :func:`~sklearn.clone` will work::
@@ -218,7 +225,8 @@ internally (:class:`~sklearn.model_selection.GridSearchCV`,
 :class:`~sklearn.ensemble.StackingClassifier`,
 :class:`~sklearn.calibration.CalibratedClassifierCV`, etc.).
 
-**CV splitters**
+CV splitters
+............
 
 When passed a `RandomState` instance, cv splitters yield different splits
 each time `split()` is called. This can lead to dramatic mistakes when
