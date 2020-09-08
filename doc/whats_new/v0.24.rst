@@ -204,7 +204,7 @@ Changelog
     :user:`Egor Smirnov <SmirnovEgorRu>`.
   
   - Allocated histograms can be reused by other nodes of the same tree,
-    leading to less memory allocations. :pr:`14392` by `Olivier Grisel`_,
+    leading to fewer memory allocations. :pr:`14392` by `Olivier Grisel`_,
     `Nicolas Hug`_, `Thomas Fan`_.
 
 - |API|: The parameter ``n_classes_`` is now deprecated in
