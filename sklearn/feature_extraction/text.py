@@ -1594,8 +1594,7 @@ class TfidfVectorizer(CountVectorizer):
         in the range [0.7, 1.0) to automatically detect and filter stop
         words based on intra corpus document frequency of terms.
 
-    token_pattern : str, \
-        default=r"(?u)\b\w\w+\b"
+    token_pattern : str, default=r"(?u)\b\w\w+\b"
         Regular expression denoting what constitutes a "token", only used
         if ``analyzer == 'word'``. The default regexp selects tokens of 2
         or more alphanumeric characters (punctuation is completely ignored
