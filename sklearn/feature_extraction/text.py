@@ -504,8 +504,8 @@ class _VectorizerMixin:
 
 
 class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
-    """Convert a collection of text documents to a matrix of token occurrences
-
+    r"""Convert a collection of text documents to a matrix of token occurrences
+    
     It turns a collection of text documents into a scipy.sparse matrix holding
     token occurrence counts (or binary occurrence information), possibly
     normalized as token frequencies if norm='l1' or projected on the euclidean
@@ -599,8 +599,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         will be removed from the resulting tokens.
         Only applies if ``analyzer == 'word'``.
 
-    token_pattern : string, \
-        default=r"(?u)\b\w\w+\b"
+    token_pattern : str, default="r(?u)\b\w\w+\b"
         Regular expression denoting what constitutes a "token", only used
         if ``analyzer == 'word'``. The default regexp selects tokens of 2
         or more alphanumeric characters (punctuation is completely ignored
@@ -797,7 +796,7 @@ def _document_frequency(X):
 
 
 class CountVectorizer(_VectorizerMixin, BaseEstimator):
-    """Convert a collection of text documents to a matrix of token counts
+    r"""Convert a collection of text documents to a matrix of token counts
 
     This implementation produces a sparse representation of the counts using
     scipy.sparse.csr_matrix.
@@ -868,8 +867,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         in the range [0.7, 1.0) to automatically detect and filter stop
         words based on intra corpus document frequency of terms.
 
-    token_pattern : string, \
-        default=r"(?u)\b\w\w+\b"
+    token_pattern : str, default=r"(?u)\b\w\w+\b"
         Regular expression denoting what constitutes a "token", only used
         if ``analyzer == 'word'``. The default regexp select tokens of 2
         or more alphanumeric characters (punctuation is completely ignored
@@ -1511,7 +1509,7 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
 
 
 class TfidfVectorizer(CountVectorizer):
-    """Convert a collection of raw documents to a matrix of TF-IDF features.
+    r"""Convert a collection of raw documents to a matrix of TF-IDF features.
 
     Equivalent to :class:`CountVectorizer` followed by
     :class:`TfidfTransformer`.
@@ -1594,8 +1592,7 @@ class TfidfVectorizer(CountVectorizer):
         in the range [0.7, 1.0) to automatically detect and filter stop
         words based on intra corpus document frequency of terms.
 
-    token_pattern : str, \
-        default=r"(?u)\b\w\w+\b"
+    token_pattern : str, default=r"(?u)\b\w\w+\b"
         Regular expression denoting what constitutes a "token", only used
         if ``analyzer == 'word'``. The default regexp selects tokens of 2
         or more alphanumeric characters (punctuation is completely ignored
