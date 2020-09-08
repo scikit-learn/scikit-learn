@@ -73,6 +73,11 @@ This too would give us reproducible results across executions. However, using
 `RandomState` instances may have surprising and unwanted effects that will be
 described later.
 
+We do not recommend either setting the global `numpy` seed by calling
+`np.random.seed(0)`. See `here
+<https://stackoverflow.com/questions/5836335/consistently-create-same-random-numpy-array/5837352#comment6712034_5837352>`_
+for a discussion.
+
 Using None or `RandomState` instances
 -------------------------------------
 
@@ -105,7 +110,11 @@ same data, with the same hyper-parameters::
 We can see from the snippet above that `rf.fit()` has produced different
 models, even if the data was the same. This is because the RNG of the
 estimator is consumed when `fit()` is called, and this consumed (mutaded) RNG
-will be used in the subsequent calls to `fit()`.
+will be used in the subsequent calls to `fit()`. In addition, the `rng`
+object is shared across any object that uses it, and as a consequence, these
+object become somewhat inter-dependent. For example, two estimator that share
+the same `RandomState` instance will influence each-other, as we will see
+later when we discuss cloning.
 
 If we had passed an int to the `random_state` parameter of the
 :class:`~sklearn.ensemble.RandomForestClassifier`, we would have obtained the
@@ -213,7 +222,9 @@ in the strict sense, but rather clones in the statistical sense: `a` and `b`
 will still be different models, even after calling `fit(X, y)` on the same
 data. Moreover, `a` and `b` will influence each-other since they share the
 same internal RNG: calling `a.fit()` will consume `b`'s RNG, and calling
-`b.fit()` will consume `a`'s RNG, since they are the same.
+`b.fit()` will consume `a`'s RNG, since they are the same. This is true for
+any estimators that share a `random_state` parameter; it is not specific to
+clones.
 
 If an int were passed, `a` and `b` would be exact clones and they would not
 influence each other.
@@ -269,4 +280,4 @@ random_state=0)`.
     instance or an int to :func:`~sklearn.datasets.make_classification` or to
     the estimators is not relevant for our illustration purpose. It does
     however have an impact on the cross-validation procedure as explained
-    above, but it isn't what makes the comparison incorect.
+    above, but it isn't what makes the comparison incorrect.
