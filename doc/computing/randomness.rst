@@ -40,7 +40,7 @@ results, according to these rules:
     the safest option and it allows you to isolate different sources of
     variance in your analysis. Leaving the default (`None`) or using
     `RandomState` instances is sometimes useful to assess to statistical
-    significant of you results, but can also have surprising effects.
+    significant of your results, but can also have surprising effects.
 
 Getting reproducible results across multiple executions
 -------------------------------------------------------
