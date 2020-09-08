@@ -618,7 +618,7 @@ def test_nmf_close_minibatch_nmf():
     assert_array_almost_equal(W, mbW)
 
 
-def test_nmf_online_partial_fit():
+def test_minibatch_nmf_partial_fit():
     rng = np.random.mtrand.RandomState(42)
     X = np.abs(rng.randn(48, 5))
     mbnmf1 = MiniBatchNMF(5, solver='mu', init='nndsvdar', random_state=0,
@@ -634,3 +634,23 @@ def test_nmf_online_partial_fit():
     assert mbnmf1.n_iter_ == mbnmf2.n_iter_
     assert_array_almost_equal(mbnmf1.components_, mbnmf2.components_,
                               decimal=2)
+
+
+def test_minibatch_nmf_auxiliary_matrices():
+    rng = np.random.mtrand.RandomState(42)
+    X = np.abs(rng.randn(48, 5))
+
+    W1, H1, n_iter, A1, B1 = non_negative_factorization(
+        X, init='nndsvdar', solver='mu',
+        beta_loss='itakura-saito',
+        random_state=1, tol=1e-2, batch_size=48, max_iter=1)
+
+    W2, _, n_iter, A2, B2 = non_negative_factorization(
+        X, H=H1, A=A1, B=B1, init='nndsvdar', solver='mu',
+        beta_loss='itakura-saito', update_H=False,
+        random_state=1, tol=1e-2, batch_size=48, max_iter=1)
+
+    assert_array_equal(A2, A1)
+    assert_array_equal(B2, B1)
+    assert_array_equal(B2, np.ones(H1.shape))
+    
