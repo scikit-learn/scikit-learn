@@ -102,10 +102,16 @@ same data, with the same hyper-parameters::
     `score()` is not a random procedure. Only `fit()` has randomness.
 
 We can see from the snippet above that `rf.fit()` has produced different
-models, even if the data was the same. If we had passed an int to the
-`random_state` parameter of the
+models, even if the data was the same. This is because the RNG of the
+estimator is consumed when `fit()` is called, and this consumed (mutaded) RNG
+will be used in the subsequent `fit`.
+
+If we had passed an int to the `random_state` parameter of the
 :class:`~sklearn.ensemble.RandomForestClassifier`, we would have obtained the
-same models, and thus the same scores each time.
+same models, and thus the same scores each time. When we pass an int, the
+same RNG is used across all calls to `fit()`. What internally happens is that
+even though the RNG is consumed when `fit` is called, it is always reset to
+its original state at the beginning of `fit`.
 
 **CV splitters**
 
