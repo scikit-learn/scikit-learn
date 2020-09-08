@@ -680,14 +680,12 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         ::
 
-            def _run_search(self, evaluate_candidates, X, y, **fit_params):
+            def _run_search(self, evaluate_candidates):
                 'Try C=0.1 only if C=1 is better than C=10'
-                all_results = evaluate_candidates([{'C': 1}, {'C': 10}], X, y,
-                                                  **fit_params)
+                all_results = evaluate_candidates([{'C': 1}, {'C': 10}])
                 score = all_results['mean_test_score']
                 if score[0] < score[1]:
-                    evaluate_candidates([{'C': 0.1}], X, y,
-                                        **fit_params)
+                    evaluate_candidates([{'C': 0.1}])
         """
         raise NotImplementedError("_run_search not implemented.")
 

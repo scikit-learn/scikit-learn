@@ -1,5 +1,5 @@
 """
-Successive halving Iterations
+Successive Halving Iterations
 =============================
 
 This example illustrates how a successive halving search (
