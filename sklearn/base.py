@@ -36,6 +36,7 @@ _DEFAULT_TAGS = {
     'multioutput_only': False,
     'binary_only': False,
     'requires_fit': True,
+    'preserves_dtype': [np.float64],
     'requires_y': False,
     }
 
@@ -578,6 +579,9 @@ class ClusterMixin:
         # method is possible for a given clustering algorithm
         self.fit(X)
         return self.labels_
+
+    def _more_tags(self):
+        return {"preserves_dtype": []}
 
 
 class BiclusterMixin:

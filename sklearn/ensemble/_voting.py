@@ -133,6 +133,9 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
         names, estimators = zip(*self.estimators)
         return _VisualBlock('parallel', estimators, names=names)
 
+    def _more_tags(self):
+        return {"preserves_dtype": []}
+
 
 class VotingClassifier(ClassifierMixin, _BaseVoting):
     """Soft Voting/Majority Rule classifier for unfitted estimators.
