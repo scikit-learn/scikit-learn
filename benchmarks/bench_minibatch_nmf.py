@@ -1,19 +1,4 @@
 
-"""
-==================================================
-Benchmark Non-negative Online Matrix Factorization
-==================================================
-
-This is a benchmark of :class:`sklearn.decomposition.NMF` on a corpus
-of documents and extract additive models of the topic structure of the
-corpus.
-
-"""
-
-# Author: Patricio Cerda
-#         Chiara Marmo <chiara.marmo@inria.fr>
-# License: BSD 3 clause
-
 from time import time
 
 from sklearn.decomposition._nmf import _beta_divergence
