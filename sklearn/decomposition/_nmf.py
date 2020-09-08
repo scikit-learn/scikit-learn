@@ -1649,7 +1649,7 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
     Lefevre, A., Bach, F., Fevotte, C. (2011). Online algorithms for
     nonnegative matrix factorization with the Itakura-Saito divergence.
     WASPA (https://doi.org/10.1109/ASPAA.2011.6082314,
-           https://hal.archives-ouvertes.fr/hal-00602050)
+    https://hal.archives-ouvertes.fr/hal-00602050)
     """
 
     @_deprecate_positional_args
