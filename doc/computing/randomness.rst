@@ -298,14 +298,11 @@ to the CV plitter: `KFold(shuffle=True, random_state=0)`.
     above, but it isn't what makes the fold-to-fold comparison incorrect.
 
 .. note::
-    When using tools that performs model selection via cross-validation, e.g.
-    :class:`~sklearn.model_selection.GridSearchCV` and
-    :class:`~sklearn.model_selection.RandomizedSearchCV`, it is important to
-    understand that the variance of scores between parameter candidates may
-    come from different sources: the cross-validation variance, and the
-    estimation variance. The principled way to limit the cross-validation
-    variance is to use more folds, at the expense of running time. The more
-    data you have, the less this actually is a problem as variance will
-    automatically be reduced. Limiting estimation variance is
-    estimator-dependent, but here well, more data helps reducing the
-    variance.
+    When evaluating scores via cross-validation, it is important to
+    understand that the variance of scores between candidates may come from
+    different sources: the cross-validation variance, and the estimation
+    variance. The principled way to limit the cross-validation variance is to
+    use more folds, at the expense of running time. The more data you have,
+    the less this actually is a problem as variance will automatically be
+    reduced. Limiting estimation variance is estimator-dependent, but here
+    well, more data helps reducing the variance.
