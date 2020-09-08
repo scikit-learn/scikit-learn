@@ -505,7 +505,7 @@ class _VectorizerMixin:
 
 class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
     r"""Convert a collection of text documents to a matrix of token occurrences
-    
+
     It turns a collection of text documents into a scipy.sparse matrix holding
     token occurrence counts (or binary occurrence information), possibly
     normalized as token frequencies if norm='l1' or projected on the euclidean
