@@ -665,6 +665,16 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             It returns a dict of all results so far, formatted like
             ``cv_results_``.
 
+            Important note (relevant whether the default cv is used or not):
+            in randomized splitters, and unless the random_state parameter of
+            cv was set to an int, calling cv.split() multiple times will
+            yield different splits. Since cv.split() is called in
+            evaluate_candidates, this means that candidates will be evaluated
+            on different splits each time evaluate_candidates is called. This
+            might be a methodological issue depending on the search strategy
+            that you're implementing. To prevent randomized splitters from
+            being used, you may use _split._yields_constant_splits()
+
         Examples
         --------
 
