@@ -1572,6 +1572,9 @@ functions or non-estimator constructors.
         input ``random_state`` and return a :class:`~numpy.random.RandomState`
         instance.
 
+        For more details on how to control the randomness of scikit-learn
+        objects and avoid common pitfalls, you may refer to :ref:`randomness`.
+
     ``scoring``
         Specifies the score function to be maximized (usually by :ref:`cross
         validation <cross_validation>`), or -- in some cases -- multiple score

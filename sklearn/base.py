@@ -43,11 +43,16 @@ _DEFAULT_TAGS = {
 
 @_deprecate_positional_args
 def clone(estimator, *, safe=True):
-    """Constructs a new estimator with the same parameters.
+    """Constructs a new unfitted estimator with the same parameters.
 
     Clone does a deep copy of the model in an estimator
     without actually copying attached data. It yields a new estimator
-    with the same parameters that has not been fit on any data.
+    with the same parameters that has not been fitted on any data.
+
+    A "clone" here means a clone in the statistical sense: depending on the
+    `random_state` parameter of the estimator, the clone might actually yield
+    different results from the original estimator. More details can be found
+    in :ref:`randomness`.
 
     Parameters
     ----------
