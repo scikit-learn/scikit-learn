@@ -23,6 +23,7 @@ from ..externals._arff import ArffSparseDataType, ArffContainerType
 from . import get_data_home
 from urllib.error import HTTPError
 from ..utils import Bunch
+from ..utils import is_scalar_nan
 from ..utils import get_chunk_n_rows
 from ..utils import _chunk_generator
 from ..utils import check_pandas_support  # noqa
@@ -357,7 +358,10 @@ def _convert_arff_data_dataframe(
     for column in columns_to_keep:
         dtype = _feature_to_dtype(features_dict[column])
         if dtype == 'category':
-            dtype = pd.api.types.CategoricalDtype(attributes[column])
+            cats_without_missing = [cat for cat in attributes[column]
+                                    if cat is not None and
+                                    not is_scalar_nan(cat)]
+            dtype = pd.api.types.CategoricalDtype(cats_without_missing)
         df[column] = df[column].astype(dtype, copy=False)
     return (df, )
 
