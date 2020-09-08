@@ -202,7 +202,7 @@ each case**:
   the same (random) subset of features will be used across all folds to fit
   the random forest.
 - Since `rf_inst` was passed a `RandomState` instance, each call to `fit()`
-  starts from a different RNG, and the randomly sampled subset of feature
+  starts from a different RNG, and the randomly sampled subset of features
   will be different for each of the 5 folds of the CV procedure.
 
 Here, neither procedure is inherently wrong, and one might prefer one over
