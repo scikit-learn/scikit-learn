@@ -35,10 +35,12 @@ results, according to these rules:
 
 .. warning:: TLDR
 
-    Unless you know what you are doing, we strongly recommend to use integers
-    as the `random_state` parameter of estimators and cv splitters. Leaving
-    the default (`None`) or using `RandomState` instances is sometimes
-    useful, but can have surprising effects.
+    Unless you know what you are doing, we recommend to use integers as the
+    `random_state` parameter of estimators and cv splitters, as it is usually
+    the safest option and it allows you to isolate different sources of
+    variance in your analysis. Leaving the default (`None`) or using
+    `RandomState` instances is sometimes useful to assess to statistical
+    significant of you results, but can also have surprising effects.
 
 Getting reproducible results across multiple executions
 -------------------------------------------------------
@@ -52,17 +54,17 @@ accepts a `random_state` parameter::
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.model_selection import train_test_split
 
-    >>> rng = 0  # or any other integer
+    >>> rng = 42  # or any other integer
     >>> X, y = make_classification(random_state=rng)
     >>> rf = RandomForestClassifier(random_state=rng)
     >>> X_train, X_test, y_train, y_test = train_test_split(
     ...     X, y, random_state=rng)
     >>> rf.fit(X_train, y_train).score(X_test, y_test)
-    0.92
+    0.88
 
-We are now guaranteed that the result of this script will always be 0.92, no
-matter how many times we run it. However, changing the global `rng` variable
-should affect the results, as expected.
+We are now guaranteed that the result of this script will always be 0.88, no
+matter how many times we run it. Changing the global `rng` variable to a
+different value should affect the results, as expected.
 
 We could have used a `RandomState` instance instead of an integer::
 
@@ -123,6 +125,13 @@ same RNG is used across all calls to `fit()`. What internally happens is that
 even though the RNG is consumed when `fit()` is called, it is always reset to
 its original state at the beginning of `fit()`.
 
+.. note::
+    Using `max_features=2, max_samples=10` is likely a poor choice in general
+    for a random forest. We here only use set these parameters for
+    illustration purposes: otherwise the scores would not significantly
+    differ. The variance of the fitted models can typically be reduced by
+    increasing the number of samples and features, or by using more trees.
+
 CV splitters
 ............
 
@@ -144,10 +153,13 @@ instance is passed::
     [1 2 3 5 9] [0 4 6 7 8]
 
 We can see that the splits are different from the second time `split()` is
-called. This may lead to wrong results if you compare the performance of
+called. This may lead to unexpected results if you compare the performance of
 multiple estimators by calling `split()` many times: the estimators will not
-be evaluated on the same folds, and performances will not be comparable.
-Using an int is usually much safer.
+be evaluated on the same folds, and the scores on each fold will not be
+comparable. On average, if enough folds are used and with enough data, one
+can however expect that that mean score allows to conclude whether one
+estimator is better than another. In any case, passing an int makes score
+comparisons across folds meaningful, and is usually safer.
 
 
 Common pitfalls and subtleties
@@ -261,18 +273,21 @@ comparing the performance of different estimators::
     [0.85 0.7  0.95 0.8  0.85]
 
 Directly comparing the performance of the random forest vs the gradient
-boosting estimator would be a methodological mistake: **the splits on which
-the estimators are evaluated are different**. Indeed,
+boosting estimator on each fold would be a methodological mistake: **the
+splits on which the estimators are evaluated are different**. Indeed,
 :func:`~sklearn.model_selection.cross_val_score` will internally call
 `cv.split()` on the same :class:`~sklearn.model_selection.KFold` instance,
-but the splits will be different each time. This is relevant for any tool
-that performs model selection via cross-validation, including
+but the splits will be different each time. This is also true for any tool
+that performs model selection via cross-validation, e.g.
 :class:`~sklearn.model_selection.GridSearchCV` and
-:class:`~sklearn.model_selection.RandomizedSearchCV`.
+:class:`~sklearn.model_selection.RandomizedSearchCV`: scores are not
+comparable fold-to-fold across different calls to `search.fit()`, since
+`cv.split()` would have been called multiple times. Within a single call to
+`search.fit()`, however, fold-to-fold comparison is possible since the search
+estimator only calls `cv.split()` once.
 
-For comparable results, one should pass an int to
-:class:`~sklearn.model_selection.KFold`: `KFold(shuffle=True,
-random_state=0)`.
+For comparable fold-to-fold results in all scenarios, one should pass an int
+to the CV plitter: `KFold(shuffle=True, random_state=0)`.
 
 .. note::
     What matters in this example is what was passed to
@@ -280,4 +295,17 @@ random_state=0)`.
     instance or an int to :func:`~sklearn.datasets.make_classification` or to
     the estimators is not relevant for our illustration purpose. It does
     however have an impact on the cross-validation procedure as explained
-    above, but it isn't what makes the comparison incorrect.
+    above, but it isn't what makes the fold-to-fold comparison incorrect.
+
+.. note::
+    When using tools that performs model selection via cross-validation, e.g.
+    :class:`~sklearn.model_selection.GridSearchCV` and
+    :class:`~sklearn.model_selection.RandomizedSearchCV`, it is important to
+    understand that the variance of scores between parameter candidates may
+    come from different sources: the cross-validation variance, and the
+    estimation variance. The principled way to limit the cross-validation
+    variance is to use more folds, at the expense of running time. The more
+    data you have, the less this actually is a problem as variance will
+    automatically be reduced. Limiting estimation variance is
+    estimator-dependent, but here well, more data helps reducing the
+    variance.
