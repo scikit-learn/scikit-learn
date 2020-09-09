@@ -727,7 +727,10 @@ Tools for imputing missing values are discussed at :ref:`impute`.
 Generating polynomial features
 ==============================
 
-Often it's useful to add complexity to the model by considering nonlinear features of the input data. A simple and common method to use is polynomial features, which can get features' high-order and interaction terms. It is implemented in :class:`PolynomialFeatures`::
+Often it's useful to add complexity to the model by considering nonlinear
+features of the input data. A simple and common method to use is polynomial
+features, which can get features' high-order and interaction terms. It is
+implemented in :class:`PolynomialFeatures`::
 
     >>> import numpy as np
     >>> from sklearn.preprocessing import PolynomialFeatures
@@ -742,9 +745,11 @@ Often it's useful to add complexity to the model by considering nonlinear featur
            [ 1.,  2.,  3.,  4.,  6.,  9.],
            [ 1.,  4.,  5., 16., 20., 25.]])
 
-The features of X have been transformed from :math:`(X_1, X_2)` to :math:`(1, X_1, X_2, X_1^2, X_1X_2, X_2^2)`.
+The features of X have been transformed from :math:`(X_1, X_2)` to
+:math:`(1, X_1, X_2, X_1^2, X_1X_2, X_2^2)`.
 
-In some cases, only interaction terms among features are required, and it can be gotten with the setting ``interaction_only=True``::
+In some cases, only interaction terms among features are required, and it can
+be gotten with the setting ``interaction_only=True``::
 
     >>> X = np.arange(9).reshape(3, 3)
     >>> X
@@ -757,11 +762,51 @@ In some cases, only interaction terms among features are required, and it can be
            [  1.,   3.,   4.,   5.,  12.,  15.,  20.,  60.],
            [  1.,   6.,   7.,   8.,  42.,  48.,  56., 336.]])
 
-The features of X have been transformed from :math:`(X_1, X_2, X_3)` to :math:`(1, X_1, X_2, X_3, X_1X_2, X_1X_3, X_2X_3, X_1X_2X_3)`.
+The features of X have been transformed from :math:`(X_1, X_2, X_3)` to
+:math:`(1, X_1, X_2, X_3, X_1X_2, X_1X_3, X_2X_3, X_1X_2X_3)`.
 
-Note that polynomial features are used implicitly in `kernel methods <https://en.wikipedia.org/wiki/Kernel_method>`_ (e.g., :class:`~sklearn.svm.SVC`, :class:`~sklearn.decomposition.KernelPCA`) when using polynomial :ref:`svm_kernels`.
+Note that polynomial features are used implicitly in `kernel methods
+<https://en.wikipedia.org/wiki/Kernel_method>`_ (e.g., :class:`~sklearn.svm.SVC`,
+:class:`~sklearn.decomposition.KernelPCA`) when using polynomial :ref:`svm_kernels`.
 
-See :ref:`sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py` for Ridge regression using created polynomial features.
+See :ref:`sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py`
+for Ridge regression using created polynomial features.
+
+.. _spline_transformer:
+
+Spline transformer
+==================
+
+Another way to add nonlinear terms instead of polynomials of features is to
+generate spline basis functions for each feature with the
+:class:`SplineTransformer`. This won't give interaction
+terms, but might be otherwise more versatile, in particular at the boundaries
+of the fitted range::
+
+    >>> X = np.arange(5).reshape(5, 1)
+    >>> X
+    array([[0, 1],
+           [2, 3],
+           [4, 5],
+           [6, 7]])
+    >>> spline = SplineTransformer(degree=2, n_knots=3)
+    >>> spline.fit_transform(X)
+    array([[0.5 , 0.5 , 0.  , 0.  ],
+           [0.18, 0.74, 0.08, 0.  ],
+           [0.02, 0.66, 0.32, 0.  ],
+           [0.  , 0.32, 0.66, 0.02],
+           [0.  , 0.08, 0.74, 0.18],
+           [0.  , 0.  , 0.5 , 0.5 ]])
+
+As the `X` is sorted, one can easily see the banded matrix output. Only the
+three middle diagonals are non-zero for `degree=2`. The higher the degree, the
+more overlapping of the splines.
+
+.. topic:: References:
+
+    .. * Eilers, P., & Marx, B. (1996). Flexible Smoothing with B-splines and
+    Penalties. Statist. Sci. 11 (1996), no. 2, 89--121.
+    `doi:10.1214/ss/1038425655 <https://doi.org/10.1214/ss/1038425655>`_
 
 .. _function_transformer:
 
@@ -791,5 +836,5 @@ error with a ``filterwarnings``::
   ...                         category=UserWarning, append=False)
 
 For a full code example that demonstrates using a :class:`FunctionTransformer`
-to extract features from text data see 
+to extract features from text data see
 :ref:`sphx_glr_auto_examples_compose_plot_column_transformer.py`
