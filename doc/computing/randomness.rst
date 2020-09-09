@@ -19,9 +19,9 @@ The `random_state` parameter determines whether multiple calls to :term:`fit`
 (for estimators) or to :term:`split` (for cv spliters) will produce the same
 results, according to these rules:
 
-- If an int is passed, calling `fit()` or `split()` multiple times yields the
+- If an int is passed, calling `fit` or `split` multiple times yields the
   same results.
-- If `None` or a `RandomState` instance is passed: `fit()` and `split()` will
+- If `None` or a `RandomState` instance is passed: `fit` and `split` will
   yield different results each time they are called, producing an event chain
   of maximal entropy. `None` is the default value for all `random_state`
   parameters.
@@ -57,8 +57,8 @@ accepts a `random_state` parameter::
     >>> rng = 42  # or any other integer
     >>> X, y = make_classification(random_state=rng)
     >>> rf = RandomForestClassifier(random_state=rng)
-    >>> X_train, X_test, y_train, y_test = train_test_split(
-    ...     X, y, random_state=rng)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
+    ...                                                     random_state=rng)
     >>> rf.fit(X_train, y_train).score(X_test, y_test)
     0.88
 
@@ -86,7 +86,7 @@ Using None or `RandomState` instances
 Estimators
 ..........
 
-As described above, passing instances means that calling `fit()` multiple
+As described above, passing instances means that calling `fit` multiple
 times will not yield the same results, even if the estimator is fitted on the
 same data, with the same hyper-parameters::
 
@@ -99,20 +99,20 @@ same data, with the same hyper-parameters::
     >>> X, y = make_classification(random_state=rng)
     >>> rf = RandomForestClassifier(max_features=2, max_samples=10,
     ...                             random_state=rng)
-    >>> X_train, X_test, y_train, y_test = train_test_split(
-    ...     X, y, random_state=rng)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
+    ...                                                     random_state=rng)
     >>> rf.fit(X_train, y_train).score(X_test, y_test)
     0.76
     >>> rf.fit(X_train, y_train).score(X_test, y_test)
     0.8
 
 .. note::
-    `score()` is not a random procedure. Only `fit()` has randomness.
+    `score()` is not a random procedure. Only `fit` has randomness.
 
-We can see from the snippet above that `rf.fit()` has produced different
+We can see from the snippet above that `rf.fit` has produced different
 models, even if the data was the same. This is because the RNG of the
-estimator is consumed when `fit()` is called, and this consumed (mutaded) RNG
-will be used in the subsequent calls to `fit()`. In addition, the `rng`
+estimator is consumed when `fit` is called, and this consumed (mutaded) RNG
+will be used in the subsequent calls to `fit`. In addition, the `rng`
 object is shared across any object that uses it, and as a consequence, these
 object become somewhat inter-dependent. For example, two estimator that share
 the same `RandomState` instance will influence each-other, as we will see
@@ -121,9 +121,9 @@ later when we discuss cloning.
 If we had passed an int to the `random_state` parameter of the
 :class:`~sklearn.ensemble.RandomForestClassifier`, we would have obtained the
 same models, and thus the same scores each time. When we pass an int, the
-same RNG is used across all calls to `fit()`. What internally happens is that
-even though the RNG is consumed when `fit()` is called, it is always reset to
-its original state at the beginning of `fit()`.
+same RNG is used across all calls to `fit`. What internally happens is that
+even though the RNG is consumed when `fit` is called, it is always reset to
+its original state at the beginning of `fit`.
 
 .. note::
     Using `max_features=2, max_samples=10` is likely a poor choice in general
@@ -140,6 +140,7 @@ instance is passed::
 
     >>> from sklearn.model_selection import KFold
     >>> import numpy as np
+
     >>> X = np.arange(10)
     >>> rng = np.random.RandomState(0)
     >>> cv = KFold(n_splits=2, shuffle=True, random_state=rng)
@@ -152,9 +153,9 @@ instance is passed::
     [0 4 6 7 8] [1 2 3 5 9]
     [1 2 3 5 9] [0 4 6 7 8]
 
-We can see that the splits are different from the second time `split()` is
+We can see that the splits are different from the second time `split` is
 called. This may lead to unexpected results if you compare the performance of
-multiple estimators by calling `split()` many times: the estimators will not
+multiple estimators by calling `split` many times: the estimators will not
 be evaluated on the same folds, and the scores on each fold will not be
 comparable. On average, if enough folds are used and with enough data, one
 can however expect that that mean score allows to conclude whether one
@@ -182,7 +183,7 @@ the following snippet::
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.model_selection import cross_val_score
     >>> import numpy as np
-    >>> 
+
     >>> X, y = make_classification(random_state=0)
     >>> rf_inst = RandomForestClassifier(random_state=np.random.RandomState(0))
     >>> cross_val_score(rf_inst, X, y)
@@ -198,10 +199,10 @@ it may look, and **the cross-validation procedures that were performed by**
 :func:`~sklearn.model_selection.cross_val_score` **significantly differ in
 each case**:
 
-- Since `rf_123` was passed an int, every call to `fit()` uses the same RNG:
+- Since `rf_123` was passed an int, every call to `fit` uses the same RNG:
   the same (random) subset of features will be used across all folds to fit
   the random forest.
-- Since `rf_inst` was passed a `RandomState` instance, each call to `fit()`
+- Since `rf_inst` was passed a `RandomState` instance, each call to `fit`
   starts from a different RNG, and the randomly sampled subset of features
   will be different for each of the 5 folds of the CV procedure.
 
@@ -225,6 +226,7 @@ Another subtle side effect of passing `RandomState` instances is how
     >>> from sklearn import clone
     >>> from sklearn.ensemble import RandomForestClassifier
     >>> import numpy as np
+
     >>> rng = np.random.RandomState(0)
     >>> a = RandomForestClassifier(random_state=rng)
     >>> b = clone(a)
@@ -233,8 +235,8 @@ Since a `RandomState` instance was passed to `a`, `a` and `b` are not clones
 in the strict sense, but rather clones in the statistical sense: `a` and `b`
 will still be different models, even after calling `fit(X, y)` on the same
 data. Moreover, `a` and `b` will influence each-other since they share the
-same internal RNG: calling `a.fit()` will consume `b`'s RNG, and calling
-`b.fit()` will consume `a`'s RNG, since they are the same. This is true for
+same internal RNG: calling `a.fit` will consume `b`'s RNG, and calling
+`b.fit` will consume `a`'s RNG, since they are the same. This is true for
 any estimators that share a `random_state` parameter; it is not specific to
 clones.
 
@@ -252,7 +254,7 @@ CV splitters
 ............
 
 When passed a `RandomState` instance, cv splitters yield different splits
-each time `split()` is called. This can lead to dramatic mistakes when
+each time `split` is called. This can lead to dramatic mistakes when
 comparing the performance of different estimators::
 
     >>> from sklearn.ensemble import RandomForestClassifier
@@ -261,7 +263,7 @@ comparing the performance of different estimators::
     >>> from sklearn.model_selection import KFold
     >>> from sklearn.model_selection import cross_val_score
     >>> import numpy as np
-    >>> 
+
     >>> rng = np.random.RandomState(0)
     >>> X, y = make_classification(random_state=rng)
     >>> rf = RandomForestClassifier(random_state=rng)
@@ -276,15 +278,15 @@ Directly comparing the performance of the random forest vs the gradient
 boosting estimator on each fold would be a methodological mistake: **the
 splits on which the estimators are evaluated are different**. Indeed,
 :func:`~sklearn.model_selection.cross_val_score` will internally call
-`cv.split()` on the same :class:`~sklearn.model_selection.KFold` instance,
+`cv.split` on the same :class:`~sklearn.model_selection.KFold` instance,
 but the splits will be different each time. This is also true for any tool
 that performs model selection via cross-validation, e.g.
 :class:`~sklearn.model_selection.GridSearchCV` and
 :class:`~sklearn.model_selection.RandomizedSearchCV`: scores are not
-comparable fold-to-fold across different calls to `search.fit()`, since
-`cv.split()` would have been called multiple times. Within a single call to
-`search.fit()`, however, fold-to-fold comparison is possible since the search
-estimator only calls `cv.split()` once.
+comparable fold-to-fold across different calls to `search.fit`, since
+`cv.split` would have been called multiple times. Within a single call to
+`search.fit`, however, fold-to-fold comparison is possible since the search
+estimator only calls `cv.split` once.
 
 For comparable fold-to-fold results in all scenarios, one should pass an int
 to the CV plitter: `KFold(shuffle=True, random_state=0)`.
