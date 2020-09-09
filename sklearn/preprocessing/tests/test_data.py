@@ -89,7 +89,7 @@ def assert_correct_incr(i, batch_start, batch_stop, n, chunk_size,
         assert (i + 1) * chunk_size == n_samples_seen
     else:
         assert (i * chunk_size + (batch_stop - batch_start) ==
-                     n_samples_seen)
+                n_samples_seen)
 
 
 def test_polynomial_features():
@@ -1496,15 +1496,13 @@ def test_quantile_transform_bounds():
     transformer = QuantileTransformer()
     transformer.fit(X)
     assert (transformer.transform([[-10]]) ==
-                 transformer.transform([[np.min(X)]]))
+            transformer.transform([[np.min(X)]]))
     assert (transformer.transform([[10]]) ==
-                 transformer.transform([[np.max(X)]]))
+            transformer.transform([[np.max(X)]]))
     assert (transformer.inverse_transform([[-10]]) ==
-                 transformer.inverse_transform(
-                     [[np.min(transformer.references_)]]))
+            transformer.inverse_transform([[np.min(transformer.references_)]]))
     assert (transformer.inverse_transform([[10]]) ==
-                 transformer.inverse_transform(
-                     [[np.max(transformer.references_)]]))
+            transformer.inverse_transform([[np.max(transformer.references_)]]))
 
 
 def test_quantile_transform_and_inverse():
@@ -1809,9 +1807,9 @@ def test_maxabs_scaler_partial_fit():
                                   scaler_incr_csc.max_abs_)
         assert scaler_batch.n_samples_seen_ == scaler_incr.n_samples_seen_
         assert (scaler_batch.n_samples_seen_ ==
-                     scaler_incr_csr.n_samples_seen_)
+                scaler_incr_csr.n_samples_seen_)
         assert (scaler_batch.n_samples_seen_ ==
-                     scaler_incr_csc.n_samples_seen_)
+                scaler_incr_csc.n_samples_seen_)
         assert_array_almost_equal(scaler_batch.scale_, scaler_incr.scale_)
         assert_array_almost_equal(scaler_batch.scale_, scaler_incr_csr.scale_)
         assert_array_almost_equal(scaler_batch.scale_, scaler_incr_csc.scale_)
