@@ -641,13 +641,39 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         collected evaluation results. This makes it possible to implement
         Bayesian optimization or more generally sequential model-based
         optimization by deriving from the BaseSearchCV abstract base class.
+        For example, Successive Halving is implemented by calling
+        `evaluate_candidates` multiples times (once per iteration of the SH
+        process), each time passing a different set of candidates with `X`
+        and `y` of increasing sizes.
 
         Parameters
         ----------
         evaluate_candidates : callable
-            This callback accepts a list of candidates, where each candidate is
-            a dict of parameter settings. It returns a dict of all results so
-            far, formatted like ``cv_results_``.
+            This callback accepts:
+                - a list of candidates, where each candidate is a dict of
+                  parameter settings.
+                - an optional `cv` parameter which can be used to e.g.
+                  evaluate candidates on different dataset splits, or
+                  evaluate candidates on subsampled data (as done in the
+                  SucessiveHaling estimators). By default, the original `cv`
+                  parameter is used, and it is available as a private
+                  `_checked_cv_orig` attribute.
+                - an optional `more_results` dict. Each key will be added to
+                  the `cv_results_` attribute. Values should be lists of
+                  length `n_candidates`
+
+            It returns a dict of all results so far, formatted like
+            ``cv_results_``.
+
+            Important note (relevant whether the default cv is used or not):
+            in randomized splitters, and unless the random_state parameter of
+            cv was set to an int, calling cv.split() multiple times will
+            yield different splits. Since cv.split() is called in
+            evaluate_candidates, this means that candidates will be evaluated
+            on different splits each time evaluate_candidates is called. This
+            might be a methodological issue depending on the search strategy
+            that you're implementing. To prevent randomized splitters from
+            being used, you may use _split._yields_constant_splits()
 
         Examples
         --------
@@ -705,8 +731,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             Parameters passed to the ``fit`` method of the estimator
         """
         estimator = self.estimator
-        cv = check_cv(self.cv, y, classifier=is_classifier(estimator))
-
         refit_metric = "score"
 
         if callable(self.scoring):
@@ -721,7 +745,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         X, y, groups = indexable(X, y, groups)
         fit_params = _check_fit_params(X, fit_params)
 
-        n_splits = cv.get_n_splits(X, y, groups)
+        cv_orig = check_cv(self.cv, y, classifier=is_classifier(estimator))
+        n_splits = cv_orig.get_n_splits(X, y, groups)
 
         base_estimator = clone(self.estimator)
 
@@ -740,8 +765,11 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         with parallel:
             all_candidate_params = []
             all_out = []
+            all_more_results = defaultdict(list)
 
-            def evaluate_candidates(candidate_params):
+            def evaluate_candidates(candidate_params, cv=None,
+                                    more_results=None):
+                cv = cv or cv_orig
                 candidate_params = list(candidate_params)
                 n_candidates = len(candidate_params)
 
@@ -785,10 +813,15 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                     _insert_error_scores(out, self.error_score)
                 all_candidate_params.extend(candidate_params)
                 all_out.extend(out)
+                if more_results is not None:
+                    for key, value in more_results.items():
+                        all_more_results[key].extend(value)
 
                 nonlocal results
                 results = self._format_results(
-                    all_candidate_params, n_splits, all_out)
+                    all_candidate_params, n_splits, all_out,
+                    all_more_results)
+
                 return results
 
             self._run_search(evaluate_candidates)
@@ -844,11 +877,12 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         return self
 
-    def _format_results(self, candidate_params, n_splits, out):
+    def _format_results(self, candidate_params, n_splits, out,
+                        more_results=None):
         n_candidates = len(candidate_params)
         out = _aggregate_score_dicts(out)
 
-        results = {}
+        results = dict(more_results or {})
 
         def _store(key_name, array, weights=None, splits=False, rank=False):
             """A small helper to store the scores/times to the cv_results_"""
