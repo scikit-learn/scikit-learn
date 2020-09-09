@@ -159,7 +159,7 @@ PDPs. They can be plotted together with
     ...     kind='both')  # doctest: +SKIP
 
 If there are too many lines in an ICE plot, it can be difficult to see
-differences between individual samples and interprete the model. Centering the
+differences between individual samples and interpret the model. Centering the
 ICE at the first value on the x-axis, produces cICE plots. This puts emphasis
 on the divergence of individual conditional expectations from the mean line,
 thus making it easier to explore heterogeneous relationships. cICE plots can
