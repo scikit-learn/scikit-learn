@@ -615,7 +615,7 @@ def test_nmf_close_minibatch_nmf():
                          batch_size=48)
     W = nmf.fit_transform(X)
     mbW = mbnmf.fit_transform(X)
-    assert_array_almost_equal(W, mbW)
+    assert_array_almost_equal(W, mbW, decimal=2)
 
 
 def test_minibatch_nmf_partial_fit():
@@ -640,16 +640,25 @@ def test_minibatch_nmf_auxiliary_matrices():
     rng = np.random.mtrand.RandomState(42)
     X = np.abs(rng.randn(48, 5))
 
+    beta_loss = 'itakura-saito'
+
     W1, H1, n_iter, A1, B1 = non_negative_factorization(
         X, init='nndsvdar', solver='mu',
-        beta_loss='itakura-saito',
+        beta_loss=beta_loss,
         random_state=1, tol=1e-2, batch_size=48, max_iter=1)
 
-    W2, _, n_iter, A2, B2 = non_negative_factorization(
-        X, H=H1, A=A1, B=B1, init='nndsvdar', solver='mu',
-        beta_loss='itakura-saito', update_H=False,
-        random_state=1, tol=1e-2, batch_size=48, max_iter=1)
+    A = A1.copy()
+    B = B1.copy()
 
-    assert_array_equal(A2, A1)
-    assert_array_equal(B2, B1)
-    assert_array_equal(B2, np.ones(H1.shape))
+    delta_H, A2, B2 = nmf._multiplicative_update_h(
+        X, W1, H1, A1, B1, 0, 0, 0, 0, 1, 1
+    )
+
+    assert_array_equal(A, A2)
+    assert_array_equal(B, B2)
+
+    delta_H, A3, B3 = nmf._multiplicative_update_h(
+        X, W1, H1, A1, B1, 0, 0, 0, n_iter, 1, 1
+    )
+
+    assert np.sum((A-A3)**2., axis=(0, 1)) > 1e-3
