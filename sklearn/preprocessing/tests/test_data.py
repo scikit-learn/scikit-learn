@@ -47,12 +47,14 @@ from sklearn.preprocessing._data import add_dummy_feature
 from sklearn.preprocessing._data import PolynomialFeatures
 from sklearn.preprocessing._data import PowerTransformer
 from sklearn.preprocessing._data import power_transform
+from sklearn.preprocessing._data import SplineTransformer
 from sklearn.preprocessing._data import BOUNDS_THRESHOLD
 from sklearn.exceptions import NotFittedError
 
 from sklearn.base import clone
-from sklearn.pipeline import Pipeline
+from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import cross_val_predict
+from sklearn.pipeline import Pipeline
 from sklearn.svm import SVR
 from sklearn.utils import shuffle
 
@@ -2540,3 +2542,104 @@ def test_minmax_scaler_clip(feature_range):
         X_transformed,
         [[feature_range[0], feature_range[0],
           feature_range[1], feature_range[1]]])
+
+
+def test_spline_transformer_input_validation():
+    # test that we raise errors for invalid input
+    X = [[1], [2]]
+
+    for degree in [-1, 2.5, 'string']:
+        with pytest.raises(
+                ValueError, match="degree must be a non-negative integer."):
+            SplineTransformer(degree=degree).fit(X)
+
+    for n_knots in [1, 2.5, 'string']:
+        with pytest.raises(
+                ValueError, match="n_knots must be a positive integer >= 2."):
+            SplineTransformer(n_knots=n_knots).fit(X)
+
+    # test manual knot points, is numeric 2d array-like, right shape, strictly
+    # sorted.
+    for knots in ['string', [1, 2], [[1]], [[1, 5], [2, 6]], [[1, 1]],
+                  [[2, 1]]]:
+        with pytest.raises(ValueError):
+            SplineTransformer(knots=knots).fit(X)
+
+    for extrapolation in [None, True, 1, 'string']:
+        with pytest.raises(ValueError, match="extrapolation must be one of "
+                           "'error', 'constant', 'linear' or 'continue'."):
+            SplineTransformer(extrapolation=extrapolation).fit(X)
+
+    for include_bias in [None, 1, 'string']:
+        with pytest.raises(ValueError, match="include_bias must be bool."):
+            SplineTransformer(include_bias=include_bias).fit(X)
+
+    # Need at least 2 n_samples
+    with pytest.raises(ValueError):
+        SplineTransformer().fit([[1]])
+
+
+def test_spline_transformer_feature_names():
+    X = np.arange(20).reshape(10, 2)
+    splt = SplineTransformer(degree=3, n_knots=3, include_bias=True).fit(X)
+    feature_names = splt.get_feature_names()
+    assert_array_equal(feature_names,
+                       ['x0_sp_0', 'x0_sp_1', 'x0_sp_2', 'x0_sp_3', 'x0_sp_4',
+                        'x1_sp_0', 'x1_sp_1', 'x1_sp_2', 'x1_sp_3', 'x1_sp_4'])
+
+    splt = SplineTransformer(degree=3, n_knots=3, include_bias=False).fit(X)
+    feature_names = splt.get_feature_names(["a", "b"])
+    assert_array_equal(feature_names,
+                       ['a_sp_0', 'a_sp_1', 'a_sp_2', 'a_sp_3',
+                        'b_sp_0', 'b_sp_1', 'b_sp_2', 'b_sp_3'])
+
+
+@pytest.mark.parametrize(['bias', 'intercept'],
+                         [(True, False), (False, True)])
+def test_spline_transformer_linear_regression(bias, intercept):
+    # test that the splines fit a sinusodial curve pretty well
+    X = np.linspace(0, 10, 100)[:, None]
+    y = np.sin(X[:, 0]) + 2  # +2 to avoid the value 0 in assert_allclose
+    pipe = Pipeline(
+        [['spline', SplineTransformer(degree=3, n_knots=15, include_bias=bias,
+                                      extrapolation='constant')],
+         ['ols', LinearRegression(fit_intercept=intercept)]])
+    pipe.fit(X, y)
+    assert_allclose(pipe.predict(X), y, rtol=1e-3)
+
+
+@pytest.mark.parametrize(['bias', 'intercept'],
+                         [(True, False), (False, True)])
+@pytest.mark.parametrize('degree', [1, 2, 3, 4, 5])
+def test_spline_transformer_extrapolation(bias, intercept, degree):
+    # test that the spline extrapolation works correct
+    # we use a straight line for that
+    X = np.linspace(-1, 1, 100)[:, None]
+    y = X.squeeze()
+
+    # 'constant'
+    pipe = Pipeline(
+        [['spline', SplineTransformer(degree=degree, n_knots=4,
+                                      include_bias=bias,
+                                      extrapolation='constant')],
+         ['ols', LinearRegression(fit_intercept=intercept)]])
+    pipe.fit(X, y)
+    assert_allclose(pipe.predict([[-10], [5]]), [-1, 1])
+
+    # 'linear'
+    pipe = Pipeline(
+        [['spline', SplineTransformer(degree=degree, n_knots=4,
+                                      include_bias=bias,
+                                      extrapolation='linear')],
+         ['ols', LinearRegression(fit_intercept=intercept)]])
+    pipe.fit(X, y)
+    assert_allclose(pipe.predict([[-10], [5]]), [-10, 5])
+
+    # 'error'
+    splt = SplineTransformer(degree=degree, n_knots=4, include_bias=bias,
+                             extrapolation='error')
+    splt.fit(X)
+    with pytest.raises(ValueError):
+        splt.transform([[-10]])
+    with pytest.raises(ValueError):
+        splt.transform([[5]])
