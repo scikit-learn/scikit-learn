@@ -804,9 +804,9 @@ more overlapping of the splines.
 
 .. topic:: References:
 
-    .. * Eilers, P., & Marx, B. (1996). Flexible Smoothing with B-splines and
-    Penalties. Statist. Sci. 11 (1996), no. 2, 89--121.
-    `doi:10.1214/ss/1038425655 <https://doi.org/10.1214/ss/1038425655>`_
+    * Eilers, P., & Marx, B. (1996). Flexible Smoothing with B-splines and
+      Penalties. Statist. Sci. 11 (1996), no. 2, 89--121.
+      `doi:10.1214/ss/1038425655 <https://doi.org/10.1214/ss/1038425655>`_
 
 .. _function_transformer:
 
