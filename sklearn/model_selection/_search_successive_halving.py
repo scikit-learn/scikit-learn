@@ -71,7 +71,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
                  n_jobs=None, refit=True, cv=5, verbose=0, random_state=None,
                  error_score=np.nan, return_train_score=True,
                  max_resources='auto', min_resources='exhaust',
-                 resource='n_samples', ratio=3, aggressive_elimination=False):
+                 resource='n_samples', factor=3, aggressive_elimination=False):
 
         refit = _refit_callable if refit else False
         super().__init__(estimator, scoring=scoring,
@@ -83,7 +83,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
         self.random_state = random_state
         self.max_resources = max_resources
         self.resource = resource
-        self.ratio = ratio
+        self.factor = factor
         self.min_resources = min_resources
         self.aggressive_elimination = aggressive_elimination
 
@@ -230,9 +230,9 @@ class BaseSuccessiveHalving(BaseSearchCV):
             )
 
         # n_required_iterations is the number of iterations needed so that the
-        # last iterations evaluates less than `ratio` candidates.
+        # last iterations evaluates less than `factor` candidates.
         n_required_iterations = 1 + floor(log(len(candidate_params),
-                                              self.ratio))
+                                              self.factor))
 
         if self.min_resources == 'exhaust':
             # To exhaust the resources, we want to start with the biggest
@@ -241,7 +241,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
             last_iteration = n_required_iterations - 1
             self.min_resources_ = max(
                 self.min_resources_,
-                self.max_resources_ // self.ratio**last_iteration
+                self.max_resources_ // self.factor**last_iteration
             )
 
         # n_possible_iterations is the number of iterations that we can
@@ -250,7 +250,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
         # candidates, this may be higher or smaller than
         # n_required_iterations.
         n_possible_iterations = 1 + floor(log(
-            self.max_resources_ // self.min_resources_, self.ratio))
+            self.max_resources_ // self.min_resources_, self.factor))
 
         if self.aggressive_elimination:
             n_iterations = n_required_iterations
@@ -264,7 +264,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
             print(f'min_resources_: {self.min_resources_}')
             print(f'max_resources_: {self.max_resources_}')
             print(f'aggressive_elimination: {self.aggressive_elimination}')
-            print(f'ratio: {self.ratio}')
+            print(f'factor: {self.factor}')
 
         self.n_resources_ = []
         self.n_candidates_ = []
@@ -282,7 +282,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
                     itr - n_required_iterations + n_possible_iterations
                 )
 
-            n_resources = int(self.ratio**power * self.min_resources_)
+            n_resources = int(self.factor**power * self.min_resources_)
             # guard, probably not needed
             n_resources = min(n_resources, self.max_resources_)
             self.n_resources_.append(n_resources)
@@ -319,7 +319,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
             results = evaluate_candidates(candidate_params, cv,
                                           more_results=more_results)
 
-            n_candidates_to_keep = ceil(n_candidates / self.ratio)
+            n_candidates_to_keep = ceil(n_candidates / self.factor)
             candidate_params = _top_k(results, n_candidates_to_keep, itr)
 
         self.n_remaining_candidates_ = len(candidate_params)
@@ -366,10 +366,10 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         in the list are explored. This enables searching over any sequence
         of parameter settings.
 
-    ratio : int or float, default=3
+    factor : int or float, default=3
         The 'halving' parameter, which determines the proportion of candidates
         that are selected for each subsequent iteration. For example,
-        ``ratio=3`` means that only one third of the candidates are selected.
+        ``factor=3`` means that only one third of the candidates are selected.
 
     resource : ``'n_samples'`` or str, default='n_samples'
         Defines the resource that increases with each iteration. By default,
@@ -399,7 +399,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         - 'exhaust' will set `r0` such that the **last** iteration uses as
           much resources as possible. Namely, the last iteration will use the
           highest value smaller than ``max_resources`` that is a multiple of
-          both ``min_resources`` and ``ratio``. In general, using 'exhaust'
+          both ``min_resources`` and ``factor``. In general, using 'exhaust'
           leads to a more accurate estimator, but is slightly more time
           consuming.
 
@@ -408,11 +408,11 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
     aggressive_elimination : bool, default=False
         This is only relevant in cases where there isn't enough resources to
-        reduce the remaining candidates to at most `ratio` after the last
+        reduce the remaining candidates to at most `factor` after the last
         iteration. If ``True``, then the search process will 'replay' the
         first iteration for as long as needed until the number of candidates
         is small enough. This is ``False`` by default, which means that the
-        last iteration may evaluate more than ``ratio`` candidates. See
+        last iteration may evaluate more than ``factor`` candidates. See
         :ref:`aggressive_elimination` for more details.
 
     cv : int, cross-validation generator or iterable, default=5
@@ -491,7 +491,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
     n_remaining_candidates_ : int
         The number of candidate parameters that are left after the last
-        iteration. It corresponds to `ceil(n_candidates[-1] / ratio)`
+        iteration. It corresponds to `ceil(n_candidates[-1] / factor)`
 
     max_resources_ : int
         The maximum number of resources that any candidate is allowed to use
@@ -517,7 +517,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
     n_required_iterations_ : int
         The number of iterations that are required to end up with less than
-        ``ratio`` candidates at the last iteration, starting with
+        ``factor`` candidates at the last iteration, starting with
         ``min_resources_`` resources. This will be smaller than
         ``n_possible_iterations_`` when there isn't enough resources.
 
@@ -591,7 +591,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
     _required_parameters = ["estimator", "param_grid"]
 
     def __init__(self, estimator, param_grid, *,
-                 ratio=3, resource='n_samples', max_resources='auto',
+                 factor=3, resource='n_samples', max_resources='auto',
                  min_resources='exhaust', aggressive_elimination=False,
                  cv=5, scoring=None, refit=True, error_score=np.nan,
                  return_train_score=True, random_state=None, n_jobs=None,
@@ -601,7 +601,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
                          random_state=random_state, error_score=error_score,
                          return_train_score=return_train_score,
                          max_resources=max_resources, resource=resource,
-                         ratio=ratio, min_resources=min_resources,
+                         factor=factor, min_resources=min_resources,
                          aggressive_elimination=aggressive_elimination)
         self.param_grid = param_grid
         _check_param_grid(self.param_grid)
@@ -650,13 +650,13 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         The number of candidate parameters to sample, at the first
         iteration. Using 'exhaust' will sample enough candidates so that the
         last iteration uses as many resources as possible, based on
-        `min_resources`, `max_resources` and `ratio`. In this case,
+        `min_resources`, `max_resources` and `factor`. In this case,
         `min_resources` cannot be 'exhaust'.
 
-    ratio : int or float, default=3
+    factor : int or float, default=3
         The 'halving' parameter, which determines the proportion of candidates
         that are selected for each subsequent iteration. For example,
-        ``ratio=3`` means that only one third of the candidates are selected.
+        ``factor=3`` means that only one third of the candidates are selected.
 
     resource : ``'n_samples'`` or str, default='n_samples'
         Defines the resource that increases with each iteration. By default,
@@ -686,7 +686,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         - 'exhaust' will set `r0` such that the **last** iteration uses as
           much resources as possible. Namely, the last iteration will use the
           highest value smaller than ``max_resources`` that is a multiple of
-          both ``min_resources`` and ``ratio``. In general, using 'exhaust'
+          both ``min_resources`` and ``factor``. In general, using 'exhaust'
           leads to a more accurate estimator, but is slightly more time
           consuming. 'exhaust' isn't available when `n_candidates='exhaust'`.
 
@@ -695,11 +695,11 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
     aggressive_elimination : bool, default=False
         This is only relevant in cases where there isn't enough resources to
-        reduce the remaining candidates to at most `ratio` after the last
+        reduce the remaining candidates to at most `factor` after the last
         iteration. If ``True``, then the search process will 'replay' the
         first iteration for as long as needed until the number of candidates
         is small enough. This is ``False`` by default, which means that the
-        last iteration may evaluate more than ``ratio`` candidates. See
+        last iteration may evaluate more than ``factor`` candidates. See
         :ref:`aggressive_elimination` for more details.
 
     cv : int, cross-validation generator or an iterable, default=5
@@ -780,7 +780,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
     n_remaining_candidates_ : int
         The number of candidate parameters that are left after the last
-        iteration. It corresponds to `ceil(n_candidates[-1] / ratio)`
+        iteration. It corresponds to `ceil(n_candidates[-1] / factor)`
 
     max_resources_ : int
         The maximum number of resources that any candidate is allowed to use
@@ -806,7 +806,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
     n_required_iterations_ : int
         The number of iterations that are required to end up with less than
-        ``ratio`` candidates at the last iteration, starting with
+        ``factor`` candidates at the last iteration, starting with
         ``min_resources_`` resources. This will be smaller than
         ``n_possible_iterations_`` when there isn't enough resources.
 
@@ -883,7 +883,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
     _required_parameters = ["estimator", "param_distributions"]
 
     def __init__(self, estimator, param_distributions, *,
-                 n_candidates='exhaust', ratio=3, resource='n_samples',
+                 n_candidates='exhaust', factor=3, resource='n_samples',
                  max_resources='auto', min_resources='smallest',
                  aggressive_elimination=False, cv=5, scoring=None,
                  refit=True, error_score=np.nan, return_train_score=True,
@@ -893,7 +893,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
                          random_state=random_state, error_score=error_score,
                          return_train_score=return_train_score,
                          max_resources=max_resources, resource=resource,
-                         ratio=ratio, min_resources=min_resources,
+                         factor=factor, min_resources=min_resources,
                          aggressive_elimination=aggressive_elimination)
         self.param_distributions = param_distributions
         self.n_candidates = n_candidates

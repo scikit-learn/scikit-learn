@@ -199,13 +199,13 @@ here the number of samples.
 
 We here briefly describe the main parameters, but each parameter and their
 interactions are described in more details in the sections below. The
-``ratio`` (> 1) parameter controls the rate at which the resources grow, and
+``factor`` (> 1) parameter controls the rate at which the resources grow, and
 the rate at which the number of candidates decreases. In each iteration, the
-number of resources per candidate is multiplied by ``ratio`` and the number
-of candidates is divided by the same ratio. Along with ``resource`` and
-``min_resources``, ``ratio`` is the most important parameter to control the
+number of resources per candidate is multiplied by ``factor`` and the number
+of candidates is divided by the same factor. Along with ``resource`` and
+``min_resources``, ``factor`` is the most important parameter to control the
 search in our implementation, though a value of 3 usually works well.
-``ratio`` effectively controls the number of iterations in
+``factor`` effectively controls the number of iterations in
 :class:`HalvingGridSearchCV` and the number of candidates (by default) and
 iterations in :class:`HalvingRandomSearchCV`. ``aggressive_elimination=True``
 can also be used if the number of available resources is small. More control
@@ -229,7 +229,7 @@ need to explicitly import ``enable_successive_halving``::
 Choosing ``min_resources`` and the number of candidates
 -------------------------------------------------------
 
-Beside ``ratio``, the two main parameters that influence the behaviour of a
+Beside ``factor``, the two main parameters that influence the behaviour of a
 successive halving search are the ``min_resources`` parameter, and the
 number of candidates (or parameter combinations) that are evaluated.
 ``min_resources`` is the amount of resources allocated at the first
@@ -238,7 +238,7 @@ in :class:`HalvingRandomSearchCV`, and is determined from the ``param_grid``
 parameter of :class:`HalvingGridSearchCV`.
 
 Consider a case where the resource is the number of samples, and where we
-have 1000 samples. In theory, with ``min_resources=10`` and ``ratio=2``, we
+have 1000 samples. In theory, with ``min_resources=10`` and ``factor=2``, we
 are able to run **at most** 7 iterations with the following number of
 samples: ``[10, 20, 40, 80, 160, 320, 640]``.
 
@@ -275,7 +275,7 @@ amount of resources available: 1000 samples are available, yet only 640 are
 used, at most. By default, both :class:`HalvingRandomSearchCV` and
 :class:`HalvingGridSearchCV` try to use as many resources as possible in the
 last iteration, with the constraint that this amount of resources must be a
-multiple of both `min_resources` and `ratio` (this constraint will be clear
+multiple of both `min_resources` and `factor` (this constraint will be clear
 in the next section). :class:`HalvingRandomSearchCV` achieves this by
 sampling the right amount of candidates, while :class:`HalvingGridSearchCV`
 achieves this by properly setting `min_resources`. Please see
@@ -288,36 +288,36 @@ Amount of resource and number of candidates at each iteration
 
 At any iteration `i`, each candidate is allocated a given amount of resources
 which we denote `n_resources_i`. This quantity is controlled by the
-parameters ``ratio`` and ``min_resources`` as follows (`ratio` is strictly
+parameters ``factor`` and ``min_resources`` as follows (`factor` is strictly
 greater than 1)::
 
-    n_resources_i = ratio**i * min_resources,
+    n_resources_i = factor**i * min_resources,
 
 or equivalently::
 
-    n_resources_{i+1} = n_resources_i * ratio
+    n_resources_{i+1} = n_resources_i * factor
 
 where ``min_resources == n_resources_0`` is the amount of resources used at
-the first iteration. ``ratio`` also defines the proportions of candidates
+the first iteration. ``factor`` also defines the proportions of candidates
 that will be selected for the next iteration::
 
-    n_candidates_i = n_candidates // (ratio ** i)
+    n_candidates_i = n_candidates // (factor ** i)
 
 or equivalently::
 
     n_candidates_0 = n_candidates
-    n_candidates_{i+1} = n_candidates_i // ratio
+    n_candidates_{i+1} = n_candidates_i // factor
 
 So in the first iteration, we use ``min_resources`` resources
 ``n_candidates`` times. In the second iteration, we use ``min_resources *
-ratio`` resources ``n_candidates // ratio`` times. The third again
+factor`` resources ``n_candidates // factor`` times. The third again
 multiplies the resources per candidate and divides the number of candidates.
 This process stops when the maximum amount of resource per candidate is
 reached, or when we have identified the best candidate. The best candidate
-is identified at the iteration that is evaluating `ratio` or less candidates
+is identified at the iteration that is evaluating `factor` or less candidates
 (see just below for an explanation).
 
-Here is an example with ``min_resources=3`` and ``ratio=2``, starting with
+Here is an example with ``min_resources=3`` and ``factor=2``, starting with
 70 candidates:
 
 +-----------------------+-----------------------+
@@ -338,15 +338,15 @@ Here is an example with ``min_resources=3`` and ``ratio=2``, starting with
 
 We can note that:
 
-- the process stops at the first iteration which evaluates `ratio=2`
+- the process stops at the first iteration which evaluates `factor=2`
   candidates: the best candidate is the best out of these 2 candidates. It
   is not necessary to run an additional iteration, since it would only
   evaluate one candidate (namely the best one, which we have already
   identified). For this reason, in general, we want the last iteration to
-  run at most ``ratio`` candidates. If the last iteration evaluates more
-  than `ratio` candidates, then this last iteration reduces to a regular
+  run at most ``factor`` candidates. If the last iteration evaluates more
+  than `factor` candidates, then this last iteration reduces to a regular
   search (as in :class:`RandomizedSearchCV` or :class:`GridSearchCV`).
-- each ``n_resources_i`` is a multiple of both ``ratio`` and
+- each ``n_resources_i`` is a multiple of both ``factor`` and
   ``min_resources`` (which is confirmed by its definition above).
 
 The amount of resources that is used at each iteration can be found in the
@@ -372,7 +372,7 @@ terms of the number of estimators of a random forest::
     >>> base_estimator = RandomForestClassifier(random_state=0)
     >>> X, y = make_classification(n_samples=1000, random_state=0)
     >>> sh = HalvingGridSearchCV(base_estimator, param_grid, cv=5,
-    ...                          ratio=2, resource='n_estimators',
+    ...                          factor=2, resource='n_estimators',
     ...                          max_resources=30).fit(X, y)
     >>> sh.best_estimator_
     RandomForestClassifier(max_depth=5, n_estimators=24, random_state=0)
@@ -400,7 +400,7 @@ resources, some of them might be wasted (i.e. not used)::
     >>> base_estimator = SVC(gamma='scale')
     >>> X, y = make_classification(n_samples=1000)
     >>> sh = HalvingGridSearchCV(base_estimator, param_grid, cv=5,
-    ...                          ratio=2, min_resources=20).fit(X, y)
+    ...                          factor=2, min_resources=20).fit(X, y)
     >>> sh.n_resources_
     [20, 40, 80]
 
@@ -414,13 +414,13 @@ such that the last iteration can use as many resources as possible, within
 the `max_resources` limit::
 
     >>> sh = HalvingGridSearchCV(base_estimator, param_grid, cv=5,
-    ...                          ratio=2, min_resources='exhaust').fit(X, y)
+    ...                          factor=2, min_resources='exhaust').fit(X, y)
     >>> sh.n_resources_
     [250, 500, 1000]
 
 `min_resources` was here automatically set to 250, which results in the last
 iteration using all the resources. The exact value that is used depends on
-the number of candidate parameter, on `max_resources` and on `ratio`.
+the number of candidate parameter, on `max_resources` and on `factor`.
 
 For :class:`HalvingRandomSearchCV`, exhausting the resources can be done in 2
 ways:
@@ -441,11 +441,11 @@ candidate parameter, and is slightly more time-intensive.
 Aggressive elimination of candidates
 ------------------------------------
 
-Ideally, we want the last iteration to evaluate ``ratio`` candidates (see
+Ideally, we want the last iteration to evaluate ``factor`` candidates (see
 :ref:`amount_of_resource_and_number_of_candidates`). We then just have to
 pick the best one. When the number of available resources is small with
 respect to the number of candidates, the last iteration may have to evaluate
-more than ``ratio`` candidates::
+more than ``factor`` candidates::
 
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.svm import SVC
@@ -459,7 +459,7 @@ more than ``ratio`` candidates::
     >>> base_estimator = SVC(gamma='scale')
     >>> X, y = make_classification(n_samples=1000)
     >>> sh = HalvingGridSearchCV(base_estimator, param_grid, cv=5,
-    ...                          ratio=2, max_resources=40,
+    ...                          factor=2, max_resources=40,
     ...                          aggressive_elimination=False).fit(X, y)
     >>> sh.n_resources_
     [20, 40]
@@ -467,16 +467,16 @@ more than ``ratio`` candidates::
     [6, 3]
 
 Since we cannot use more than ``max_resources=40`` resources, the process
-has to stop at the second iteration which evaluates more than ``ratio=2``
+has to stop at the second iteration which evaluates more than ``factor=2``
 candidates.
 
 Using the ``aggressive_elimination`` parameter, you can force the search
-process to end up with less than ``ratio`` candidates at the last
+process to end up with less than ``factor`` candidates at the last
 iteration. To do this, the process will eliminate as many candidates as
 necessary using ``min_resources`` resources::
 
     >>> sh = HalvingGridSearchCV(base_estimator, param_grid, cv=5,
-    ...                            ratio=2,
+    ...                            factor=2,
     ...                            max_resources=40,
     ...                            aggressive_elimination=True,
     ...                            ).fit(X, y)

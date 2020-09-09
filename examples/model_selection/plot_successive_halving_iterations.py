@@ -40,7 +40,7 @@ param_dist = {"max_depth": [3, None],
 rsh = HalvingRandomSearchCV(
     estimator=clf,
     param_distributions=param_dist,
-    ratio=2,
+    factor=2,
     random_state=rng)
 rsh.fit(X, y)
 
