@@ -16,7 +16,7 @@ entry, and describes good practice and common pitfalls w.r.t. to this
 subtle parameter.
 
 The `random_state` parameter determines whether multiple calls to :term:`fit`
-(for estimators) or to :term:`split` (for cv spliters) will produce the same
+(for estimators) or to :term:`split` (for cv splitters) will produce the same
 results, according to these rules:
 
 - If an int is passed, calling `fit()` or `split()` multiple times yields the
