@@ -612,3 +612,6 @@ class PCA(_BasePCA):
             Average log-likelihood of the samples under the current model.
         """
         return np.mean(self.score_samples(X))
+
+    def _more_tags(self):
+        return {'preserves_dtype': [np.float64, np.float32]}
