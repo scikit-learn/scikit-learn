@@ -87,7 +87,6 @@ def _beta_divergence(X, W, H, beta, square_root=False):
         res : float
             Beta divergence of X and np.dot(X, H).
     """
-
     beta = _beta_loss_to_float(beta)
 
     # The method can be called with scalars
@@ -143,6 +142,7 @@ def _beta_divergence(X, W, H, beta, square_root=False):
     elif beta == 0:
         div = X_data / WH_data
         res = np.sum(div) - np.product(X.shape) - np.sum(np.log(div))
+
     # beta-divergence, beta not in (0, 1, 2)
     else:
         if sp.issparse(X):
@@ -389,6 +389,7 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
         raise ValueError(
             'Invalid init parameter: got %r instead of one of %r' %
             (init, (None, 'random', 'nndsvd', 'nndsvda', 'nndsvdar')))
+
     return W, H
 
 
@@ -566,6 +567,7 @@ def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
         # to avoid taking a negative power of zero
         if beta_loss - 2. < 0:
             WH_safe_X_data[WH_safe_X_data == 0] = EPSILON
+
         if beta_loss == 1:
             np.divide(X_data, WH_safe_X_data, out=WH_safe_X_data)
         elif beta_loss == 0:
@@ -710,6 +712,7 @@ def _multiplicative_update_h(X, W, H, A, B, beta_loss, l1_reg_H, l2_reg_H,
         # to avoid division by zero
         if beta_loss - 2. < 0:
             WH_safe_X_data[WH_safe_X_data == 0] = EPSILON
+
         if beta_loss == 1:
             np.divide(X_data, WH_safe_X_data, out=WH_safe_X_data)
         elif beta_loss == 0:
@@ -768,6 +771,7 @@ def _multiplicative_update_h(X, W, H, A, B, beta_loss, l1_reg_H, l2_reg_H,
 
     numerator /= denominator
     delta_H = numerator
+
     # gamma is in ]0, 1]
     if gamma != 1:
         delta_H **= gamma
@@ -893,7 +897,7 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
 
     H_sum, HHt, XHt = None, None, None
 
-    for n_iter in range(1, max_iter+1):
+    for n_iter in range(1, max_iter + 1):
         for i, slice in enumerate(gen_batches(n=n_samples,
                                               batch_size=batch_size)):
             # update W
@@ -924,14 +928,13 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
 
         # test convergence criterion every 10 iterations
         if tol > 0 and n_iter % 10 == 0:
-            error = _beta_divergence(X, W, H, beta_loss,
-                                     square_root=True)
+            error = _beta_divergence(X, W, H, beta_loss, square_root=True)
             if verbose:
                 iter_time = time.time()
                 print("Epoch %02d reached after %.3f seconds, error: %f" %
                       (n_iter, iter_time - start_time, error))
 
-            if ((previous_error - error) / error_at_init < tol):
+            if (previous_error - error) / error_at_init < tol:
                 break
             previous_error = error
 
