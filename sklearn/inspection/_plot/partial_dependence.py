@@ -226,7 +226,8 @@ def plot_partial_dependence(
 
     random_state : int, RandomState instance or None, default=None
         Controls the randomness of the selected samples when subsamples is not
-        `None`. See :term:`Glossary <random_state>` for details.
+        `None` and `kind` is either `'both'` or `'individual'`.
+        See :term:`Glossary <random_state>` for details.
 
         .. versionadded:: 0.24
 
@@ -728,13 +729,10 @@ class PartialDependenceDisplay:
                     )
                     ice_lines_subsampled = ice_lines[ice_lines_idx, :]
                     for ice_idx, ice in enumerate(ice_lines_subsampled):
-                        lines_ravel[
-                            pd_plot_idx * n_lines + ice_idx
-                        ] = axi.plot(
+                        line_idx = pd_plot_idx * n_lines + ice_idx
+                        lines_ravel[line_idx] = axi.plot(
                             values[0], ice.ravel(), **individual_line_kw
-                        )[
-                            0
-                        ]
+                        )[0]
                 if self.kind in ("average", "both"):
                     label = None if self.kind == "average" else "average"
                     # the average is stored as the last line
