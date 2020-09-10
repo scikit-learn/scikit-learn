@@ -1792,7 +1792,7 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
                 alpha=self.alpha, l1_ratio=self.l1_ratio,
                 regularization=self.regularization,
                 random_state=self.random_state,
-                verbose=self.verbose, shuffle=self.shuffle)
+                verbose=self.verbose)
 
             # Add 1 iteration to the current estimation
             W, H, n_iter_, A, B = non_negative_factorization(
