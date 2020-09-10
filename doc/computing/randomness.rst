@@ -33,7 +33,7 @@ results, according to these rules:
       `None` here, but everything that applies to instances also applies to
       using `None`.
 
-.. warning:: TLDR
+.. warning:: TL;DR
 
     Unless you know what you are doing, we recommend to use integers as the
     `random_state` parameter of estimators and cv splitters, as it is usually
@@ -101,6 +101,7 @@ same data, with the same hyper-parameters::
     ...                             random_state=rng)
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
     ...                                                     random_state=rng)
+
     >>> rf.fit(X_train, y_train).score(X_test, y_test)
     0.76
     >>> rf.fit(X_train, y_train).score(X_test, y_test)
@@ -126,11 +127,12 @@ even though the RNG is consumed when `fit` is called, it is always reset to
 its original state at the beginning of `fit`.
 
 .. note::
-    Using `max_features=2, max_samples=10` is likely a poor choice in general
-    for a random forest. We here only set these parameters for illustration
-    purposes: otherwise the scores would not significantly differ. The
-    variance of the fitted models can typically be reduced by increasing the
-    number of randomly drawn samples and features, or by using more trees.
+    Using `max_features=2, max_samples=10` is likely to be a poor choice in
+    general for a random forest. We here only set these parameters for
+    illustration purposes: otherwise the scores would not significantly
+    differ. The variance of the fitted models can typically be reduced by
+    increasing the number of randomly drawn samples and features, or by using
+    more trees.
 
 CV splitters
 ............
@@ -185,9 +187,11 @@ the following snippet::
     >>> import numpy as np
 
     >>> X, y = make_classification(random_state=0)
+
     >>> rf_inst = RandomForestClassifier(random_state=np.random.RandomState(0))
     >>> cross_val_score(rf_inst, X, y)
     array([0.9 , 0.95, 0.95, 0.9 , 0.9 ])
+
     >>> rf_123 = RandomForestClassifier(random_state=123)
     >>> cross_val_score(rf_123, X, y)
     array([0.85, 0.95, 0.95, 0.9 , 0.9 ])
@@ -269,6 +273,7 @@ comparing the performance of different estimators::
     >>> rf = RandomForestClassifier(random_state=rng)
     >>> gbdt = GradientBoostingClassifier(random_state=rng)
     >>> cv = KFold(shuffle=True, random_state=rng)
+
     >>> for est in (rf, gbdt):
     ...     print(cross_val_score(est, X, y, cv=cv))
     [0.85 0.95 0.9  0.95 0.95]
