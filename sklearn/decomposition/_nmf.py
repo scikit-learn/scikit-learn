@@ -330,11 +330,8 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
                                                              copy=False)
         W = avg * rng.randn(n_samples, n_components).astype(X.dtype,
                                                             copy=False)
-        # we do not write np.abs(H, out=H) to stay compatible with
-        # numpy 1.5 and earlier where the 'out' keyword is not
-        # supported as a kwarg on ufuncs
-        np.abs(H, H)
-        np.abs(W, W)
+        np.abs(H, out=H)
+        np.abs(W, out=W)
         return W, H
 
     # NNDSVD initialization
@@ -569,10 +566,8 @@ def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
         # to avoid taking a negative power of zero
         if beta_loss - 2. < 0:
             WH_safe_X_data[WH_safe_X_data == 0] = EPSILON
-
         if beta_loss == 1:
-            np.divide(X_data, WH_safe_X_data, out=WH_safe_X_data,
-                      where=(WH_safe_X_data != 0))
+            np.divide(X_data, WH_safe_X_data, out=WH_safe_X_data)
         elif beta_loss == 0:
             # speeds up computation time
             # refer to /numpy/numpy/issues/9363
@@ -715,10 +710,8 @@ def _multiplicative_update_h(X, W, H, A, B, beta_loss, l1_reg_H, l2_reg_H,
         # to avoid division by zero
         if beta_loss - 2. < 0:
             WH_safe_X_data[WH_safe_X_data == 0] = EPSILON
-
         if beta_loss == 1:
-            np.divide(X_data, WH_safe_X_data, out=WH_safe_X_data,
-                      where=(WH_safe_X_data != 0))
+            np.divide(X_data, WH_safe_X_data, out=WH_safe_X_data)
         elif beta_loss == 0:
             # speeds up computation time
             # refer to /numpy/numpy/issues/9363
@@ -786,7 +779,7 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
                                batch_size=None,
                                max_iter=200, tol=1e-4,
                                l1_reg_W=0, l1_reg_H=0, l2_reg_W=0, l2_reg_H=0,
-                               update_H=True, verbose=0, forget_factor=0.7):
+                               update_H=True, verbose=0, forget_factor=None):
     """Compute Non-negative Matrix Factorization with Multiplicative Update.
 
     The objective function is _beta_divergence(X, WH) and is minimized with an
@@ -850,9 +843,10 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
     verbose : int, default=0
         The verbosity level.
 
-    forget_factor : float, default=0.7.
+    forget_factor : float, default=None
         Amount of rescaling of past information. Its value is 1 for batch
         NMF algorithm, it could be <1 for online NMF algorithm.
+        When r<0.5 the solution is unstable.
 
     Returns
     -------
@@ -1111,8 +1105,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
         If true, randomize the order of coordinates in the CD solver.
 
     forget_factor : float, default=None.
-        Amount of rescaling of past information. Its value is 1 for batch
-        NMF algorithm, it could be <1 for online NMF algorithm. Only for
+        Amount of rescaling of past information. Only for
         MiniBatch implementation.
 
         .. versionadded:: 0.XX
