@@ -39,7 +39,7 @@ from ..utils._encode import _encode, _unique
 from ._base import (
     _average_binary_score,
     _average_multiclass_ovo_score,
-    _check_ambiguity_pos_label,
+    _check_pos_label_consistency,
 )
 
 
@@ -698,7 +698,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight)
 
-    pos_label = _check_ambiguity_pos_label(pos_label, y_true)
+    pos_label = _check_pos_label_consistency(pos_label, y_true)
 
     # make y_true a boolean vector
     y_true = (y_true == pos_label)

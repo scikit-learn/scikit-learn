@@ -202,7 +202,7 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score,
     return np.average(pair_scores, weights=prevalence)
 
 
-def _check_ambiguity_pos_label(pos_label, y_true):
+def _check_pos_label_consistency(pos_label, y_true):
     """Check if `pos_label` need to be specified or not.
 
     In binary classification, we fix `pos_label=1` if the labels are in the set
