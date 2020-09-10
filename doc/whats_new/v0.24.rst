@@ -412,6 +412,14 @@ Changelog
   :pr:`17478` by :user:`Teon Brooks <teonbrooks>` and
   :user:`Mohamed Maskani <maskani-moh>`.
 
+- |Feature| Added (experimental) parameter search estimators
+  :class:`model_selection.HalvingRandomSearchCV` and
+  :class:`model_selection.HalvingGridSearchCV` which implement Successive
+  Halving, and can be used as a drop-in replacements for
+  :class:`model_selection.RandomizedSearchCV` and
+  :class:`model_selection.GridSearchCV`. :pr:`13900` by `Nicolas Hug`_, `Joel
+  Nothman`_ and `Andreas Müller`_.
+
 - |Fix| Fixed the `len` of :class:`model_selection.ParameterSampler` when
   all distributions are lists and `n_iter` is more than the number of unique
   parameter combinations. :pr:`18222` by `Nicolas Hug`_.

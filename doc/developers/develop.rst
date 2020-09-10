@@ -539,6 +539,14 @@ no_validation (default=False)
 non_deterministic (default=False)
     whether the estimator is not deterministic given a fixed ``random_state``
 
+preserves_dtype (default=``[np.float64]``)
+    applies only on transformers. It corresponds to the data types which will
+    be preserved such that `X_trans.dtype` is the same as `X.dtype` after
+    calling `transformer.transform(X)`. If this list is empty, then the
+    transformer is not expected to preserve the data type. The first value in
+    the list is considered as the default data type, corresponding to the data
+    type of the output when the input data type is not going to be preserved.
+
 poor_score (default=False)
     whether the estimator fails to provide a "reasonable" test-set score, which
     currently for regression is an R2 of 0.5 on a subset of the boston housing
