@@ -48,7 +48,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
         passed, the kernel "1.0 * RBF(1.0)" is used as default. Note that
         the kernel's hyperparameters are optimized during fitting.
 
-    alpha : float, default=1e-10
+    alpha : float or ndarray of shape (n_samples,), default=1e-10
         Value added to the diagonal of the kernel matrix during fitting.
         This can prevent a potential numerical issue during fitting, by
         ensuring that the calculated values form a positive definite matrix.
