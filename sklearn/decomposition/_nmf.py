@@ -631,7 +631,69 @@ def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
 def _multiplicative_update_h(X, W, H, A, B, beta_loss, l1_reg_H, l2_reg_H,
                              slice_index, gamma, rho):
 
-    """update H in Multiplicative Update NMF"""
+    """update H in Multiplicative Update NMF.
+
+    Parameters
+    ----------
+    X : array-like of shape (n_samples, n_features)
+        Constant input matrix.
+
+    W : array-like of shape (n_samples, n_components)
+        Initial guess for the solution.
+
+    H : array-like of shape (n_components, n_features)
+        Initial guess for the solution.
+
+    A : array-like of shape (n_components, n_features)
+        Initial guess for the numerator auxiliary function.
+        Used in the batch case only.
+
+    B : array-like of shape (n_components, n_features)
+        Initial guess for the denominator auxiliary function.
+        Used in the batch case only.
+
+    beta_loss : float or {'frobenius', 'kullback-leibler', \
+            'itakura-saito'}, default='frobenius'
+        String must be in {'frobenius', 'kullback-leibler', 'itakura-saito'}.
+        Beta divergence to be minimized, measuring the distance between X
+        and the dot product WH. Note that values different from 'frobenius'
+        (or 2) and 'kullback-leibler' (or 1) lead to significantly slower
+        fits. Note that for beta_loss <= 0 (or 'itakura-saito'), the input
+        matrix X cannot contain zeros.
+
+    l1_reg_H : float, default=0.
+        L1 regularization parameter for H.
+
+    l2_reg_H : float, default=0.
+        L2 regularization parameter for H.
+
+    slice_index : int.
+        Index of the batch being processed. Used only in batch NMF.
+
+    gamma : float, default=1.
+        Exponent for Maximization-Minimization (MM) algorithm
+        [Fevotte 2011]
+
+    rho : float.
+        Scaling factor for past information for online and minibatch
+        algorithm.
+
+    Returns
+    -------
+    delta_H : ndarray of shape (n_components, n_features)
+        Multiplicative update for the matrix H.
+
+    A : array-like of shape (n_components, n_features)
+        Numerator auxiliary function, only used in
+        :class:`sklearn.decomposition.MiniBatchNMF`.
+        Only returned if `batch_size` is not `None`.
+
+    B : array-like of shape (n_components, n_features)
+        Denominator auxiliary function, only used in
+        :class:`sklearn.decomposition.MiniBatchNMF`.
+        Only returned if `batch_size` is not `None`.
+    """
+
     if beta_loss == 2:
         numerator = safe_sparse_dot(W.T, X)
         denominator = np.linalg.multi_dot([W.T, W, H])
