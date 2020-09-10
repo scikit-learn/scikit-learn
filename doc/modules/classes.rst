@@ -629,7 +629,7 @@ Kernels:
 
 .. _inspection_ref:
 
-:mod:`sklearn.inspection`: inspection
+:mod:`sklearn.inspection`: Inspection
 =====================================
 
 .. automodule:: sklearn.inspection
@@ -691,8 +691,8 @@ Plotting
 
 .. _kernel_approximation_ref:
 
-:mod:`sklearn.kernel_approximation` Kernel Approximation
-========================================================
+:mod:`sklearn.kernel_approximation`: Kernel Approximation
+=========================================================
 
 .. automodule:: sklearn.kernel_approximation
    :no-members:
@@ -714,8 +714,8 @@ Plotting
 
 .. _kernel_ridge_ref:
 
-:mod:`sklearn.kernel_ridge` Kernel Ridge Regression
-========================================================
+:mod:`sklearn.kernel_ridge`: Kernel Ridge Regression
+====================================================
 
 .. automodule:: sklearn.kernel_ridge
    :no-members:
@@ -1194,9 +1194,11 @@ Hyper-parameter optimizers
    :template: class.rst
 
    model_selection.GridSearchCV
+   model_selection.HalvingGridSearchCV
    model_selection.ParameterGrid
    model_selection.ParameterSampler
    model_selection.RandomizedSearchCV
+   model_selection.HalvingRandomSearchCV
 
 
 Model validation
@@ -1324,7 +1326,7 @@ Model validation
 .. _neural_network_ref:
 
 :mod:`sklearn.neural_network`: Neural network models
-=====================================================
+====================================================
 
 .. automodule:: sklearn.neural_network
    :no-members:
@@ -1450,7 +1452,7 @@ details.
 
 .. _semi_supervised_ref:
 
-:mod:`sklearn.semi_supervised` Semi-Supervised Learning
+:mod:`sklearn.semi_supervised`: Semi-Supervised Learning
 ========================================================
 
 .. automodule:: sklearn.semi_supervised

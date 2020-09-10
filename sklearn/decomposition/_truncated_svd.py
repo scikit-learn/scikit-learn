@@ -232,3 +232,6 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
         """
         X = check_array(X)
         return np.dot(X, self.components_)
+
+    def _more_tags(self):
+        return {'preserves_dtype': [np.float64, np.float32]}

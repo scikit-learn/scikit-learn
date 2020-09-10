@@ -31,8 +31,14 @@ from . import is_scalar_nan
 from ..discriminant_analysis import LinearDiscriminantAnalysis
 from ..linear_model import Ridge
 
-from ..base import (clone, ClusterMixin, is_classifier, is_regressor,
-                    RegressorMixin, is_outlier_detector)
+from ..base import (
+    clone,
+    ClusterMixin,
+    is_classifier,
+    is_regressor,
+    is_outlier_detector,
+    RegressorMixin,
+)
 
 from ..metrics import accuracy_score, adjusted_rand_score, f1_score
 from ..random_projection import BaseRandomProjection
@@ -50,9 +56,12 @@ from .import shuffle
 from .validation import has_fit_parameter, _num_samples
 from ..preprocessing import StandardScaler
 from ..preprocessing import scale
-from ..datasets import (load_iris, make_blobs,
-                        make_multilabel_classification, make_regression)
-
+from ..datasets import (
+    load_iris,
+    make_blobs,
+    make_multilabel_classification,
+    make_regression,
+)
 
 REGRESSION_DATASET = None
 CROSS_DECOMPOSITION = ['PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']
@@ -189,12 +198,15 @@ def _yield_regressor_checks(regressor):
 
 
 def _yield_transformer_checks(transformer):
+    tags = transformer._get_tags()
     # All transformers should either deal with sparse data or raise an
     # exception with type TypeError and an intelligible error message
-    if not transformer._get_tags()["no_validation"]:
+    if not tags["no_validation"]:
         yield check_transformer_data_not_an_array
     # these don't actually fit the data, so don't raise errors
     yield check_transformer_general
+    if tags["preserves_dtype"]:
+        yield check_transformer_preserve_dtypes
     yield partial(check_transformer_general, readonly_memmap=True)
     if not transformer._get_tags()["stateless"]:
         yield check_transformers_unfitted
@@ -1458,6 +1470,39 @@ def check_estimators_dtypes(name, estimator_orig, strict_mode=True):
         for method in methods:
             if hasattr(estimator, method):
                 getattr(estimator, method)(X_train)
+
+
+def check_transformer_preserve_dtypes(
+    name, transformer_orig, strict_mode=True
+):
+    # check that dtype are preserved meaning if input X is of some dtype
+    # X_transformed should be from the same dtype.
+    X, y = make_blobs(
+        n_samples=30,
+        centers=[[0, 0, 0], [1, 1, 1]],
+        random_state=0,
+        cluster_std=0.1,
+    )
+    X = StandardScaler().fit_transform(X)
+    X -= X.min()
+    X = _pairwise_estimator_convert_X(X, transformer_orig)
+
+    for dtype in transformer_orig._get_tags()["preserves_dtype"]:
+        X_cast = X.astype(dtype)
+        transformer = clone(transformer_orig)
+        set_random_state(transformer)
+        X_trans = transformer.fit_transform(X_cast, y)
+
+        if isinstance(X_trans, tuple):
+            # cross-decompostion returns a tuple of (x_scores, y_scores)
+            # when given y with fit_transform; only check the first element
+            X_trans = X_trans[0]
+
+        # check that the output dtype is preserved
+        assert X_trans.dtype == dtype, (
+            f'Estimator transform dtype: {X_trans.dtype} - '
+            f'original/expected dtype: {dtype.__name__}'
+        )
 
 
 @ignore_warnings(category=FutureWarning)
