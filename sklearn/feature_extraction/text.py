@@ -796,7 +796,7 @@ def _document_frequency(X):
 
 
 class CountVectorizer(_VectorizerMixin, BaseEstimator):
-    """Convert a collection of text documents to a matrix of token counts
+    r"""Convert a collection of text documents to a matrix of token counts
 
     This implementation produces a sparse representation of the counts using
     scipy.sparse.csr_matrix.
@@ -867,7 +867,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         in the range [0.7, 1.0) to automatically detect and filter stop
         words based on intra corpus document frequency of terms.
 
-    token_pattern : string, default=r"(?u)/b/w/w+/b"
+    token_pattern : string, default=r"(?u)\\b\\w\\w+\\b"
         Regular expression denoting what constitutes a "token", only used
         if ``analyzer == 'word'``. The default regexp select tokens of 2
         or more alphanumeric characters (punctuation is completely ignored
@@ -881,8 +881,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         unigrams and bigrams, and ``(2, 2)`` means only bigrams.
         Only applies if ``analyzer is not callable``.
 
-    analyzer : string, {'word', 'char', 'char_wb'} or callable, \
-            default='word'
+    analyzer : string, {'word', 'char', 'char_wb'} or callable, default='word'
         Whether the feature should be made of word n-gram or character
         n-grams.
         Option 'char_wb' creates character n-grams only from text inside
