@@ -151,6 +151,10 @@ Changelog
   :pr:`18280` by :user:`Alex Liang <tianchuliang>` and
   `Guillaume Lemaitre`_.
 
+- |Enhancement| :func:`datasets.fetch_openml` now supports categories with
+  missing values when returning a pandas dataframe. :pr:`18383` by
+  `Thomas Fan`_.
+
 - |API| The default value of `as_frame` in :func:`datasets.fetch_openml` is
   changed from False to 'auto'.
   :pr:`17610` by :user:`Jiaxiang <fujiaxiang>`.
