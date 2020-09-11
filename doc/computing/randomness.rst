@@ -19,12 +19,11 @@ The `random_state` parameter determines whether multiple calls to :term:`fit`
 (for estimators) or to :term:`split` (for cv splitters) will produce the same
 results, according to these rules:
 
-- If an int is passed, calling `fit` or `split` multiple times yields the
-  same results.
+- If an int is passed, calling `fit` or `split` multiple times always yields
+  the same results.
 - If `None` or a `RandomState` instance is passed: `fit` and `split` will
-  yield different results each time they are called, producing an event chain
-  of maximal entropy. `None` is the default value for all `random_state`
-  parameters.
+  yield different results each time they are called, maximising entropy.
+  `None` is the default value for all `random_state` parameters.
 
   .. note::
       Since passing `random_state=None` is equivalent to passing the global
@@ -75,7 +74,7 @@ This too would give us reproducible results across executions. However, using
 `RandomState` instances may have surprising and unwanted effects that will be
 described later.
 
-We do not recommend either setting the global `numpy` seed by calling
+We also do not recommend setting the global `numpy` seed by calling
 `np.random.seed(0)`. See `here
 <https://stackoverflow.com/questions/5836335/consistently-create-same-random-numpy-array/5837352#comment6712034_5837352>`_
 for a discussion.
@@ -111,13 +110,14 @@ same data, with the same hyper-parameters::
     `score()` is not a random procedure. Only `fit` has randomness.
 
 We can see from the snippet above that `rf.fit` has produced different
-models, even if the data was the same. This is because the RNG of the
-estimator is consumed when `fit` is called, and this consumed (mutaded) RNG
-will be used in the subsequent calls to `fit`. In addition, the `rng`
-object is shared across any object that uses it, and as a consequence, these
-object become somewhat inter-dependent. For example, two estimator that share
-the same `RandomState` instance will influence each-other, as we will see
-later when we discuss cloning.
+models, even if the data was the same. This is because the Random Number
+Generator (RNG) of the estimator is consumed (i.e. mutated) when `fit` is
+called, and this mutated RNG will be used in the subsequent calls to `fit`.
+In addition, the `rng` object is shared across any object that uses it, and
+as a consequence, these objects become somewhat inter-dependent. For example,
+two estimators that share the same `RandomState` instance will influence
+each other, as we will see later when we discuss cloning. This point is
+important to keep in mind when debugging.
 
 If we had passed an int to the `random_state` parameter of the
 :class:`~sklearn.ensemble.RandomForestClassifier`, we would have obtained the
@@ -157,8 +157,8 @@ instance is passed::
 
 We can see that the splits are different from the second time `split` is
 called. This may lead to unexpected results if you compare the performance of
-multiple estimators by calling `split` many times: the estimators will not
-be evaluated on the same folds, and the scores on each fold will not be
+multiple estimators by calling `split` many times: **the estimators will not
+be evaluated on the same folds**, and the scores on each fold will not be
 comparable. On average, if enough folds are used and with enough data, one
 can however expect that that mean score allows to conclude whether one
 estimator is better than another. In any case, passing an int makes score
@@ -258,8 +258,9 @@ CV splitters
 ............
 
 When passed a `RandomState` instance, cv splitters yield different splits
-each time `split` is called. This can lead to dramatic mistakes when
-comparing the performance of different estimators::
+each time `split` is called. When comparing different estimators, this can
+lead to overestimating the variance of the difference in performance between
+the estimators::
 
     >>> from sklearn.ensemble import RandomForestClassifier
     >>> from sklearn.ensemble import GradientBoostingClassifier
