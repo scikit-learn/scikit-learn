@@ -62,9 +62,7 @@ labels = [
     for i in range(rsh.n_iterations_)
 ]
 
-# TODO: Remove the following line when matplotlib fixes the issue:
-# "FixedFormatter should only be used together with FixedLocator"
-ax.set_xticks(list(range(len(labels))))
+ax.set_xticks(range(rsh.n_iterations_))
 ax.set_xticklabels(labels, rotation=45, multialignment='left')
 ax.set_title('Scores of candidates over iterations')
 ax.set_ylabel('mean test score', fontsize=15)
