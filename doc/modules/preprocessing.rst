@@ -688,13 +688,16 @@ It is possible to adjust the threshold of the binarizer::
          [1., 0., 0.],
          [0., 0., 0.]])
 
+As for the :class:`Normalizer` class, the preprocessing module
+provides a companion function :func:`binarize`
+to be used when the transformer API is not necessary.
 
 Note that the :class:`Binarizer` is similar to the :class:`KBinsDiscretizer`
 when ``k = 2``, and when the bin edge is at the value ``threshold``.
 
 .. topic:: Sparse input
 
-  :class:`Binarizer` accepts **both dense array-like
+  :func:`binarize` and :class:`Binarizer` accept **both dense array-like
   and sparse matrices from scipy.sparse as input**.
 
   For sparse input the data is **converted to the Compressed Sparse Rows
