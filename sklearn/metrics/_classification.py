@@ -2495,3 +2495,156 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
             pos_label = y_true.max()
     y_true = np.array(y_true == pos_label, int)
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
+
+
+@_deprecate_positional_args
+def krippendorff_alpha_score(score_matrix, level_of_measurement='nominal'):
+    """Krippendorff's alpha: a statistic that measures inter-rater(s) agreement.
+
+    This function computes Krippendorff's alpha score, that expresses the level
+    of agreement between two or more annotators base on given level of measurement for each unit.
+
+
+    .. math::
+        \alpha = 1 - (D_o - D_e)
+
+    where :math:`D_o` is the observed disagreement among values assigned to unit of analysis.
+    D_o = 0 means no disagreement between rater and indicates perfect reliability (\alpha = 1)
+    :math:`D_e` is expected disagreement under conditions of chance.
+
+    When no correlation exists between the units and their categorization, \alpha = 0. Alpha
+    can assume negative values when coders consistently agree to disagree.
+
+    Parameters
+    ----------
+    score_matrix : array of shape (n_raters,n_units)
+                    Labels assigned to units must be integet or float/normalized label (np.nan in case missing value).
+
+    level_of_measurement : ['nominal', 'ordinal', 'interval','ratio'], default ('nominal').
+                            nominal : named variables (categorical variable scale)
+                            ordinal : named and ordered variables
+                            interval : named, ordered and propotionate interval between variables
+                            ratio : named, ordered, propotionate, interval between variables and can accommodate absolute zero
+
+    Returns
+    -------
+    alpha : float
+        The alpha score has range of −1 to 1, where 1 indicates perfect agreement,
+        0 indicates no agreement beyond chance and negative values indicate inverse agreement.
+
+    References
+    ----------
+    .. [1]  K. Krippendorff (2011). "Computing Krippendorff's Alpha-Reliability".
+            <https://repository.upenn.edu/asc_papers/43/>
+    .. [2]  K. Krippendorff (2008). "Systematic and Random Disagreement and Reliability of Nominal Data".
+            <https://repository.upenn.edu/cgi/viewcontent.cgi?article=1211&context=asc_papers>.
+    .. [3]  Antonia Zapf, Stefanie Castell,Lars Morawietz,André Karch (2016).
+            "Measuring inter-rater reliability for nominal data – which coefficients and confidence intervals are appropriate?"
+            <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4974794/>
+    .. [4]  Knut De Swert (2012).
+            "Calculating inter-coder reliability in media content analysis using Krippendorff's Alpha"
+            <https://www.polcomm.org/wp-content/uploads/ICR01022012.pdf>
+
+    Examples
+    --------
+    >>> from sklearn.metrics import krippendorff_alpha_score
+    >>> score_matrix = [[1, 2, 3, 3, 2, 1, 3, 1, 2, np.nan, np.nan, np.nan],
+                        [1, 2, 3, 3, 2, 2, 3, 1, 2, 5, np.nan, 3],
+                        [np.nan, 3, 3, 3, 2, 3, 5, 2, 2, 5, 1, np.nan],
+                        [1, 2, 3, 3, 2, 5, 3, 1, 2, 5, 1, np.nan]]
+
+    >>> krippendorff_alpha_score(score_matrix, level_of_measurement='nominal')
+    0.6626297577854672
+
+    >>> krippendorff_alpha_score(score_matrix, level_of_measurement='ordinal')
+    0.737110566961763
+
+    >>> krippendorff_alpha_score(score_matrix, level_of_measurement='interval')
+    0.7028891763691246
+
+    >>> krippendorff_alpha_score(score_matrix, level_of_measurement='ratio')
+    0.7350550203791161
+    """
+
+    if score_matrix is None:
+        raise ValueError(
+            "input 2D array consist labels given by each annotator represented by colomns and annotators represented by rows")
+    if type(score_matrix) is not np.ndarray:
+        score_matrix = np.array(score_matrix)
+    if score_matrix.shape[0] < 2:
+        raise ValueError("Raters must more than 1, represented by rows")
+
+    domain = np.unique(score_matrix[~np.isnan(score_matrix)])
+
+    # get freq_matrix, how many times a labels/score appear in the same unit evaluation:
+    freq_matrix = list()
+    for unit in score_matrix.T:
+        freq = np.unique(unit[~np.isnan(unit)], return_counts=True)
+        maping_value_freq = dict(zip(freq[0], freq[1]))
+        freq_matrix.append([maping_value_freq[domain_value]
+                            if domain_value in maping_value_freq.keys() else 0
+                            for domain_value in domain])
+    freq_matrix = np.array(freq_matrix)
+
+    # remove column where label for related unit only given by one Rater
+    # (no other label given by other Rater, means agreement/disagreement between Rater unobservable in this units)
+    index_to_del = list()
+    index = 0
+    for unit in freq_matrix:
+        if len(unit[np.nonzero(unit)]) == 1 and unit[np.nonzero(unit)][0] == 1:
+            index_to_del.append(index)
+        index += 1
+    freq_matrix = np.delete(freq_matrix, index_to_del, axis=0)
+    if len(freq_matrix) == 0:
+        return np.nan
+
+    sum_per_domain = np.sum(unit for unit in freq_matrix)
+    sum_per_unit = np.sum(unit for unit in freq_matrix.T)
+
+    # Calculating coincidence matrix
+    coincidence_matrix = list()
+    for row_domain1 in range(len(domain)):
+        coincidence_matrix.append([np.sum(((freq_matrix.T[row_domain1]*freq_matrix.T[row_domain2]) /
+                                           (sum_per_unit-1)), axis=0) for row_domain2 in range(len(domain))])
+
+    coincidence_matrix = np.array(coincidence_matrix)
+
+    # calculating sigma square matrix base on given level of measurement
+    sigma_sqr_matrix = list()
+    for k_value in range(len(sum_per_domain)):
+        temp1 = list()
+        for c_value in range(len(sum_per_domain)):
+            if level_of_measurement == 'nominal':
+                if c_value == k_value:
+                    sigma = 0
+                else:
+                    sigma = 1
+            elif level_of_measurement == 'interval':
+                sigma = (domain[c_value] - domain[k_value])
+            elif level_of_measurement == 'ratio':
+                # incase zero devision
+                if c_value == 0 and k_value == 0:
+                    sigma = 0
+                else:
+                    sigma = ((domain[c_value]-domain[k_value]) /
+                             (domain[c_value]+domain[k_value]))
+            elif level_of_measurement == 'ordinal':
+                sigma = (np.sum(sum_per_domain[k_value:c_value+1])) - \
+                         ((sum_per_domain[k_value]+sum_per_domain[c_value])/2)
+            else:
+                raise ValueError('undefined level of measurement')
+            temp1.append(sigma**2)
+        sigma_sqr_matrix.append(temp1)
+    sigma_sqr_matrix = np.array(sigma_sqr_matrix)
+
+    # Calculating Do:
+    Do = np.sum(coincidence_matrix*sigma_sqr_matrix)
+
+    # calculating De :
+    sum_per_domain = sum_per_domain.reshape(-1, 1)
+    sum_per_domain = sum_per_domain.dot(sum_per_domain.T)
+    sum_per_domain = sum_per_domain / (np.sum(sum_per_unit)-1)
+    De = sum_per_domain*sigma_sqr_matrix
+    De = np.sum(De)
+
+    return 1-Do/De
