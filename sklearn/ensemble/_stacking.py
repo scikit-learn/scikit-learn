@@ -266,9 +266,9 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     is trained using cross-validated predictions of the base estimators using
     `cross_val_predict`.
 
-    .. versionadded:: 0.22
-
     Read more in the :ref:`User Guide <stacking>`.
+
+    .. versionadded:: 0.22
 
     Parameters
     ----------
@@ -540,9 +540,9 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
     is trained using cross-validated predictions of the base estimators using
     `cross_val_predict`.
 
-    .. versionadded:: 0.22
-
     Read more in the :ref:`User Guide <stacking>`.
+
+    .. versionadded:: 0.22
 
     Parameters
     ----------
