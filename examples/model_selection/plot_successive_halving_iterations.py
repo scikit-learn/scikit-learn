@@ -2,10 +2,11 @@
 Successive Halving Iterations
 =============================
 
-This example illustrates how a successive halving search (
-:class:`~sklearn.model_selection.HalvingGridSearchCV` and
-:class:`~sklearn.model_selection.HalvingRandomSearchCV`) iteratively chooses
-the best parameter combination out of multiple candidates.
+This example illustrates how a successive halving search
+(:class:`~sklearn.model_selection.HalvingGridSearchCV` and
+:class:`~sklearn.model_selection.HalvingRandomSearchCV`)
+iteratively chooses the best parameter combination out of
+multiple candidates.
 
 """
 import pandas as pd
@@ -60,6 +61,10 @@ labels = [
     f'n_candidates={rsh.n_candidates_[i]}'
     for i in range(rsh.n_iterations_)
 ]
+
+# TODO: Remove the following line when matplotlib fixes the issue:
+# "FixedFormatter should only be used together with FixedLocator"
+ax.set_xticks(list(range(len(labels))))
 ax.set_xticklabels(labels, rotation=45, multialignment='left')
 ax.set_title('Scores of candidates over iterations')
 ax.set_ylabel('mean test score', fontsize=15)
