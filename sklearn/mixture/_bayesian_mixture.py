@@ -259,6 +259,13 @@ class BayesianGaussianMixture(BaseMixture):
         The dirichlet concentration of each component on the weight
         distribution (Dirichlet).
 
+    mean_precision_prior : float | None, default=None.
+        The precision prior on the mean distribution (Gaussian).
+        Controls the extent of where means can be placed. Larger
+        values concentrate the cluster means around `mean_prior`.
+        The value of this attribute must be greater than 0.
+        If it is None, it is set to 1.
+
     mean_precision_prior_ : float
         The precision prior on the mean distribution (Gaussian).
         Controls the extent of where means can be placed.
