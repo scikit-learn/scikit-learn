@@ -24,7 +24,7 @@ class deprecated:
 
     Parameters
     ----------
-    extra : string, default=''
+    extra : str, default=''
           to be added to the deprecation messages
     """
 
