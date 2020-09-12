@@ -2588,10 +2588,27 @@ def test_spline_transformer_feature_names():
                         'x1_sp_0', 'x1_sp_1', 'x1_sp_2', 'x1_sp_3', 'x1_sp_4'])
 
     splt = SplineTransformer(degree=3, n_knots=3, include_bias=False).fit(X)
-    feature_names = splt.get_feature_names(["a", "b"])
+    feature_names = splt.get_feature_names(['a', 'b'])
     assert_array_equal(feature_names,
                        ['a_sp_0', 'a_sp_1', 'a_sp_2', 'a_sp_3',
                         'b_sp_0', 'b_sp_1', 'b_sp_2', 'b_sp_3'])
+
+
+@pytest.mark.parametrize('degree', range(1, 5))
+@pytest.mark.parametrize('n_knots', range(3, 5))
+@pytest.mark.parametrize('knots', ['uniform', 'quantile'])
+def test_spline_transformer_unity_decomposition(degree, n_knots, knots):
+    # test that the splines are decomposition of unity,
+    # i.e. sum up to 1 per row, if we stay in between boundaries.
+    X = np.linspace(0, 1, 100)[:, None]
+    # make the boundaries 0 and 1 part of X_train, for sure.
+    X_train = np.r_[[[0]], X[::2, :], [[1]]]
+    X_test = X[1::2, :]
+    splt = SplineTransformer(degree=degree, n_knots=n_knots, knots=knots,
+                             include_bias=True)
+    splt.fit(X_train)
+    for X in [X_train, X_test]:
+        assert_allclose(np.sum(splt.transform(X), axis=1), 1)
 
 
 @pytest.mark.parametrize(['bias', 'intercept'],
