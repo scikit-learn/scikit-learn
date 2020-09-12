@@ -25,6 +25,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import assert_all_finite, check_array
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
+from ..utils.fixes import np_version, parse_version
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
                                       inplace_csr_row_normalize_l2)
 from ..utils.sparsefuncs import (inplace_column_scale,
@@ -1806,8 +1807,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
 # TODO:
 # - sparse support (either scipy or own cython solution)?
-# - extrapolation (none, linear, cyclic)
-# - tests
+# - extrapolation (cyclic)
 class SplineTransformer(TransformerMixin, BaseEstimator):
     """Generate univariate B-spline bases for features.
 
@@ -1916,8 +1916,19 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             # knots == 'uniform':
             x_min = np.amin(X, axis=0)
             x_max = np.amax(X, axis=0)
-            knots = np.linspace(start=x_min, stop=x_max, num=n_knots,
-                                endpoint=True)
+
+            # FIXME: to be removed if min version becomes numpy 1.16
+            # start and stop arrays for linspace logspace and geomspace
+            # https://github.com/numpy/numpy/pull/12388
+            if np_version < parse_version('1.16'):
+                n_features = X.shape[1]
+                knots = np.empty((n_knots, n_features))
+                for j in range(n_features):
+                    knots[:, j] = np.linspace(start=x_min[j], stop=x_max[j],
+                                              num=n_knots, endpoint=True)
+            else:
+                knots = np.linspace(start=x_min, stop=x_max, num=n_knots,
+                                    endpoint=True)
 
         return knots
 
