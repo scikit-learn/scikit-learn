@@ -783,6 +783,8 @@ generate spline basis functions for each feature with the
 terms, but might be otherwise more versatile, in particular at the boundaries
 of the fitted range::
 
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import SplineTransformer
     >>> X = np.arange(5).reshape(5, 1)
     >>> X
     array([[0],
