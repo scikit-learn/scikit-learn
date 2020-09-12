@@ -318,15 +318,15 @@ samples.
 
 The following cross-validators can be used in such cases.
 
-**NOTE**
+.. note::
 
-While i.i.d. data is a common assumption in machine learning theory, it rarely
-holds in practice. If one knows that the samples have been generated using a
-time-dependent process, it is safer to
-use a :ref:`time-series aware cross-validation scheme <timeseries_cv>`.
-Similarly, if we know that the generative process has a group structure
-(samples collected from different subjects, experiments, measurement
-devices), it is safer to use :ref:`group-wise cross-validation <group_cv>`.
+  While i.i.d. data is a common assumption in machine learning theory, it rarely
+  holds in practice. If one knows that the samples have been generated using a
+  time-dependent process, it is safer to
+  use a :ref:`time-series aware cross-validation scheme <timeseries_cv>`.
+  Similarly, if we know that the generative process has a group structure
+  (samples collected from different subjects, experiments, measurement
+  devices), it is safer to use :ref:`group-wise cross-validation <group_cv>`.
 
 
 K-fold
