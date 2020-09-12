@@ -785,10 +785,11 @@ of the fitted range::
 
     >>> X = np.arange(5).reshape(5, 1)
     >>> X
-    array([[0, 1],
-           [2, 3],
-           [4, 5],
-           [6, 7]])
+    array([[0],
+           [1],
+           [2],
+           [3],
+           [4]])
     >>> spline = SplineTransformer(degree=2, n_knots=3)
     >>> spline.fit_transform(X)
     array([[0.5 , 0.5 , 0.  , 0.  ],
