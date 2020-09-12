@@ -2,6 +2,7 @@
 # cython: boundscheck=False
 # cython: wraparound=False
 # cython: language_level=3
+
 """This module contains routines and data structures to:
 
 - Find the best possible split of a node. For a given node, a split is
@@ -17,7 +18,7 @@ import numpy as np
 cimport numpy as np
 IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
     from openmp cimport omp_get_max_threads
-from libc.stdlib cimport malloc, free
+from libc.stdlib cimport malloc, free, qsort
 from libc.string cimport memcpy
 from numpy.math cimport INFINITY
 
@@ -25,7 +26,12 @@ from .common cimport X_BINNED_DTYPE_C
 from .common cimport Y_DTYPE_C
 from .common cimport hist_struct
 from .common import HISTOGRAM_DTYPE
+from .common cimport BITSET_INNER_DTYPE_C
+from .common cimport BITSET_DTYPE_C
 from .common cimport MonotonicConstraint
+from ._bitset cimport init_bitset
+from ._bitset cimport set_bitset
+from ._bitset cimport in_bitset
 
 np.import_array()
 
@@ -45,6 +51,15 @@ cdef struct split_info_struct:
     unsigned int n_samples_right
     Y_DTYPE_C value_left
     Y_DTYPE_C value_right
+    unsigned char is_categorical
+    BITSET_DTYPE_C cat_bitset
+
+
+# used in categorical splits for sorting categories by increasing values of
+# sum_gradients / sum_hessians
+cdef struct categorical_info:
+    X_BINNED_DTYPE_C bin_idx
+    Y_DTYPE_C value
 
 
 class SplitInfo:
@@ -57,9 +72,13 @@ class SplitInfo:
     feature_idx : int
         The index of the feature to be split.
     bin_idx : int
-        The index of the bin on which the split is made.
+        The index of the bin on which the split is made. Ignored if
+        ``is_categorical`` is True. ``cat_bitset`` will be used to determine
+        the split.
     missing_go_to_left : bool
-        Whether missing values should go to the left child.
+        Whether missing values should go to the left child. Ignored if
+        ``is_categorical`` is True. ``cat_bitset`` will be used to determine
+        the split.
     sum_gradient_left : float
         The sum of the gradients of all the samples in the left child.
     sum_hessian_left : float
@@ -72,11 +91,17 @@ class SplitInfo:
         The number of samples in the left child.
     n_samples_right : int
         The number of samples in the right child.
+    is_categorical : bool
+        Whether split is categorical.
+    cat_bitset : ndarray of shape=(8,), dtype=uint32 or None
+        Bitset representing the categories that go to the left. This is used
+        only when ``is_categorical`` is True.
     """
     def __init__(self, gain, feature_idx, bin_idx,
                  missing_go_to_left, sum_gradient_left, sum_hessian_left,
                  sum_gradient_right, sum_hessian_right, n_samples_left,
-                 n_samples_right, value_left, value_right):
+                 n_samples_right, value_left, value_right,
+                 is_categorical, cat_bitset):
         self.gain = gain
         self.feature_idx = feature_idx
         self.bin_idx = bin_idx
@@ -89,6 +114,8 @@ class SplitInfo:
         self.n_samples_right = n_samples_right
         self.value_left = value_left
         self.value_right = value_right
+        self.is_categorical = is_categorical
+        self.cat_bitset = cat_bitset
 
 
 @cython.final
@@ -114,6 +141,8 @@ cdef class Splitter:
     has_missing_values : ndarray, shape (n_features,)
         Whether missing values were observed in the training data, for each
         feature.
+    is_categorical : ndarray of bool of shape (n_features,)
+        Indicates categorical features.
     l2_regularization : float
         The L2 regularization parameter.
     min_hessian_to_split : float, default=1e-3
@@ -134,6 +163,7 @@ cdef class Splitter:
         const unsigned int [::1] n_bins_non_missing
         unsigned char missing_values_bin_idx
         const unsigned char [::1] has_missing_values
+        const unsigned char [::1] is_categorical
         const signed char [::1] monotonic_cst
         unsigned char hessians_are_constant
         Y_DTYPE_C l2_regularization
@@ -150,6 +180,7 @@ cdef class Splitter:
                  const unsigned int [::1] n_bins_non_missing,
                  const unsigned char missing_values_bin_idx,
                  const unsigned char [::1] has_missing_values,
+                 const unsigned char [::1] is_categorical,
                  const signed char [::1] monotonic_cst,
                  Y_DTYPE_C l2_regularization,
                  Y_DTYPE_C min_hessian_to_split=1e-3,
@@ -163,6 +194,7 @@ cdef class Splitter:
         self.missing_values_bin_idx = missing_values_bin_idx
         self.has_missing_values = has_missing_values
         self.monotonic_cst = monotonic_cst
+        self.is_categorical = is_categorical
         self.l2_regularization = l2_regularization
         self.min_hessian_to_split = min_hessian_to_split
         self.min_samples_leaf = min_samples_leaf
@@ -266,7 +298,10 @@ cdef class Splitter:
                 self.X_binned[:, feature_idx]
             unsigned int [::1] left_indices_buffer = self.left_indices_buffer
             unsigned int [::1] right_indices_buffer = self.right_indices_buffer
-
+            unsigned char is_categorical = split_info.is_categorical
+            BITSET_INNER_DTYPE_C [:] cat_bitset_tmp = \
+                split_info.cat_bitset
+            BITSET_DTYPE_C cat_bitset
             IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
                 int n_threads = omp_get_max_threads()
             ELSE:
@@ -289,6 +324,10 @@ cdef class Splitter:
             int [:] left_offset = np.zeros(n_threads, dtype=np.int32)
             int [:] right_offset = np.zeros(n_threads, dtype=np.int32)
 
+        # only set cat_bitset when is_categorical is True
+        if is_categorical:
+            cat_bitset = &cat_bitset_tmp[0]
+
         with nogil:
             for thread_idx in range(n_samples % n_threads):
                 sizes[thread_idx] += 1
@@ -310,7 +349,8 @@ cdef class Splitter:
                     turn_left = sample_goes_left(
                         missing_go_to_left,
                         missing_values_bin_idx, bin_idx,
-                        X_binned[sample_idx])
+                        X_binned[sample_idx], is_categorical,
+                        cat_bitset)
 
                     if turn_left:
                         left_indices_buffer[start + left_count] = sample_idx
@@ -410,6 +450,7 @@ cdef class Splitter:
             split_info_struct split_info
             split_info_struct * split_infos
             const unsigned char [::1] has_missing_values = self.has_missing_values
+            const unsigned char [::1] is_categorical = self.is_categorical
             const signed char [::1] monotonic_cst = self.monotonic_cst
 
         with nogil:
@@ -426,30 +467,43 @@ cdef class Splitter:
                 # (min_samples_leaf, etc) and the grower will later turn the
                 # node into a leaf.
                 split_infos[feature_idx].gain = -1
+                split_infos[feature_idx].is_categorical = \
+                    is_categorical[feature_idx]
 
-                # We will scan bins from left to right (in all cases), and if
-                # there are any missing values, we will also scan bins from
-                # right to left. This way, we can consider whichever case
-                # yields the best gain: either missing values go to the right
-                # (left to right scan) or to the left (right to left case).
-                # See algo 3 from the XGBoost paper
-                # https://arxiv.org/abs/1603.02754
-
-                self._find_best_bin_to_split_left_to_right(
-                    feature_idx, has_missing_values[feature_idx],
-                    histograms, n_samples, sum_gradients, sum_hessians,
-                    value, monotonic_cst[feature_idx],
-                    lower_bound, upper_bound, &split_infos[feature_idx])
-
-                if has_missing_values[feature_idx]:
-                    # We need to explore both directions to check whether
-                    # sending the nans to the left child would lead to a higher
-                    # gain
-                    self._find_best_bin_to_split_right_to_left(
-                        feature_idx, histograms, n_samples,
-                        sum_gradients, sum_hessians,
+                if is_categorical[feature_idx]:
+                    # While numerical features need to scan in both directions
+                    # when there are missing values, categorical features does
+                    # not need to do this because it treats missing values
+                    # as a native category
+                    self._find_best_bin_to_split_category(
+                        feature_idx, has_missing_values[feature_idx],
+                        histograms, n_samples, sum_gradients, sum_hessians,
+                        value, monotonic_cst[feature_idx], lower_bound,
+                        upper_bound, &split_infos[feature_idx])
+                else:
+                    # We will scan bins from left to right (in all cases), and
+                    # if there are any missing values, we will also scan bins
+                    # from right to left. This way, we can consider whichever
+                    # case yields the best gain: either missing values go to
+                    # the right (left to right scan) or to the left (right to
+                    # left case). See algo 3 from the XGBoost paper
+                    # https://arxiv.org/abs/1603.02754
+                    self._find_best_bin_to_split_left_to_right(
+                        feature_idx, has_missing_values[feature_idx],
+                        histograms, n_samples, sum_gradients, sum_hessians,
                         value, monotonic_cst[feature_idx],
                         lower_bound, upper_bound, &split_infos[feature_idx])
+
+                    if has_missing_values[feature_idx]:
+                        # We need to explore both directions to check whether
+                        # sending the nans to the left child would lead to a
+                        # higher gain
+                        self._find_best_bin_to_split_right_to_left(
+                            feature_idx, histograms, n_samples,
+                            sum_gradients, sum_hessians,
+                            value, monotonic_cst[feature_idx],
+                            lower_bound, upper_bound,
+                            &split_infos[feature_idx])
 
             # then compute best possible split among all features
             best_feature_idx = self._find_best_feature_to_split_helper(
@@ -469,7 +523,13 @@ cdef class Splitter:
             split_info.n_samples_right,
             split_info.value_left,
             split_info.value_right,
+            split_info.is_categorical,
+            None,  # will only be set if the splt is categorical
         )
+        # Only set bitset if the split is categorical
+        if split_info.is_categorical:
+            out.cat_bitset = np.asarray(split_info.cat_bitset, dtype=np.uint32)
+
         free(split_infos)
         return out
 
@@ -716,6 +776,197 @@ cdef class Splitter:
                 split_info.sum_gradient_right, split_info.sum_hessian_right,
                 lower_bound, upper_bound, self.l2_regularization)
 
+    @cython.initializedcheck(False)
+    cdef void _find_best_bin_to_split_category(
+            self,
+            unsigned int feature_idx,
+            unsigned char has_missing_values,
+            const hist_struct [:, ::1] histograms,  # IN
+            unsigned int n_samples,
+            Y_DTYPE_C sum_gradients,
+            Y_DTYPE_C sum_hessians,
+            Y_DTYPE_C value,
+            char monotonic_cst,
+            Y_DTYPE_C lower_bound,
+            Y_DTYPE_C upper_bound,
+            split_info_struct * split_info) nogil:  # OUT
+        """Find best split for categorical features. """
+
+        cdef:
+            unsigned int bin_idx
+            unsigned int end = self.n_bins_non_missing[feature_idx]
+            unsigned int missing_values_bin_idx = self.missing_values_bin_idx
+            categorical_info * cat_sorted_infos
+            unsigned int sorted_idx
+            unsigned int n_used_bin = 0
+            const hist_struct[::1] feature_hist = histograms[feature_idx, :]
+            Y_DTYPE_C sum_gradients_bin
+            Y_DTYPE_C sum_hessians_bin
+            Y_DTYPE_C loss_current_node
+            # Reduces the effect of noises in categorical features,
+            # especially for categoires with few data
+            # TODO: Make this user adjustable?
+            unsigned int MIN_CAT_SUPPORT = 10
+            # Used for find best split
+            unsigned int MAX_CAT_THRESHOLD = 32
+            unsigned int max_n_cat
+            BITSET_INNER_DTYPE_C[:] cat_split_tmp
+            # holds directional information
+            Y_DTYPE_C sum_gradient_left, sum_hessian_left
+            Y_DTYPE_C sum_gradient_right, sum_hessian_right
+            unsigned int n_samples_left, n_samples_right
+            unsigned int i
+            Y_DTYPE_C gain
+            Y_DTYPE_C best_gain = -1.0
+            unsigned char found_better_split = False
+            Y_DTYPE_C best_sum_hessian_left
+            Y_DTYPE_C best_sum_gradient_left
+            unsigned int best_n_samples_left
+            unsigned int best_sorted_thres
+            int direction, current_position
+            int best_direction
+            int[2] directions
+            int[2] start_positions
+
+        cat_sorted_infos = <categorical_info *> malloc(
+            (end + has_missing_values) * sizeof(categorical_info))
+
+        # fill cat_sorted_infos while filtering out categories based on
+        # MIN_CAT_SUPPORT
+        for bin_idx in range(end):
+            if feature_hist[bin_idx].count >= MIN_CAT_SUPPORT:
+                cat_sorted_infos[n_used_bin].bin_idx = bin_idx
+                sum_gradients_bin = feature_hist[bin_idx].sum_gradients
+                if self.hessians_are_constant:
+                    sum_hessians_bin = feature_hist[bin_idx].count
+                else:
+                    sum_hessians_bin = feature_hist[bin_idx].sum_hessians
+
+                cat_sorted_infos[n_used_bin].value = \
+                    sum_gradients_bin / (sum_hessians_bin + MIN_CAT_SUPPORT)
+                n_used_bin += 1
+
+        # check missing bin
+        if has_missing_values:
+            if feature_hist[missing_values_bin_idx].count >= MIN_CAT_SUPPORT:
+                cat_sorted_infos[n_used_bin].bin_idx = missing_values_bin_idx
+                sum_gradients_bin = \
+                    feature_hist[missing_values_bin_idx].sum_gradients
+                if self.hessians_are_constant:
+                    sum_hessians_bin = \
+                        feature_hist[missing_values_bin_idx].count
+                else:
+                    sum_hessians_bin = \
+                        feature_hist[missing_values_bin_idx].sum_hessians
+
+                cat_sorted_infos[n_used_bin].value = \
+                    sum_gradients_bin / (sum_hessians_bin + MIN_CAT_SUPPORT)
+                n_used_bin += 1
+
+        # not enough categories to form a split
+        if n_used_bin <= 1:
+            free(cat_sorted_infos)
+            return
+
+        qsort(cat_sorted_infos, n_used_bin, sizeof(categorical_info),
+              compare_cat_infos)
+
+        max_n_cat = min(MAX_CAT_THRESHOLD, (n_used_bin + 1) / 2)
+
+        directions[0], directions[1] = 1, -1
+        start_positions[0], start_positions[1] = 0, n_used_bin - 1
+        loss_current_node = _loss_from_value(value, sum_gradients)
+
+        for i in range(2):
+            direction, current_position = directions[i], start_positions[i]
+            sum_gradient_left, sum_hessian_left = 0., 0.
+            n_samples_left = 0
+
+            for sorted_idx in range(max_n_cat):
+                bin_idx = cat_sorted_infos[current_position].bin_idx;
+                current_position += direction
+
+                n_samples_left += feature_hist[bin_idx].count
+                n_samples_right = n_samples - n_samples_left
+
+                if self.hessians_are_constant:
+                    sum_hessian_left += feature_hist[bin_idx].count
+                else:
+                    sum_hessian_left += feature_hist[bin_idx].sum_hessians
+                sum_hessian_right = sum_hessians - sum_hessian_left
+
+                sum_gradient_left += feature_hist[bin_idx].sum_gradients
+                sum_gradient_right = sum_gradients - sum_gradient_left
+
+                if (n_samples_left < self.min_samples_leaf or
+                    sum_hessian_left < self.min_hessian_to_split):
+                    continue
+                if (n_samples_right < self.min_samples_leaf or
+                    sum_hessian_right < self.min_hessian_to_split):
+                    break
+
+                gain = _split_gain(sum_gradient_left, sum_hessian_left,
+                                    sum_gradient_right, sum_hessian_right,
+                                    loss_current_node, monotonic_cst,
+                                    lower_bound, upper_bound,
+                                    self.l2_regularization)
+                if gain > best_gain and gain > self.min_gain_to_split:
+                    found_better_split = True
+                    best_gain = gain
+                    best_direction = direction
+                    best_sorted_thres = sorted_idx
+                    best_sum_gradient_left = sum_gradient_left
+                    best_sum_hessian_left = sum_hessian_left
+                    best_n_samples_left = n_samples_left
+
+
+        if found_better_split:
+            split_info.gain = best_gain
+
+            # bin_idx is unused for categorical splits: cat_bitset is used
+            # instead and set below
+            split_info.bin_idx = 0
+
+            split_info.sum_gradient_left = best_sum_gradient_left
+            split_info.sum_gradient_right = sum_gradients - best_sum_gradient_left
+            split_info.sum_hessian_left = best_sum_hessian_left
+            split_info.sum_hessian_right = sum_hessians - best_sum_hessian_left
+            split_info.n_samples_left = best_n_samples_left
+            split_info.n_samples_right = n_samples - best_n_samples_left
+
+            # We recompute best values here but it's cheap
+            split_info.value_left = compute_node_value(
+                split_info.sum_gradient_left, split_info.sum_hessian_left,
+                lower_bound, upper_bound, self.l2_regularization)
+
+            split_info.value_right = compute_node_value(
+                split_info.sum_gradient_right, split_info.sum_hessian_right,
+                lower_bound, upper_bound, self.l2_regularization)
+
+            # create bitset with values from best_sorted_thres
+            init_bitset(split_info.cat_bitset)
+
+            if best_direction == 1:  # left
+                for i in range(best_sorted_thres + 1):
+                    bin_idx = cat_sorted_infos[i].bin_idx
+                    set_bitset(split_info.cat_bitset, bin_idx)
+            else:
+                for i in range(best_sorted_thres + 1):
+                    bin_idx = cat_sorted_infos[n_used_bin - 1 - i].bin_idx
+                    set_bitset(split_info.cat_bitset, bin_idx)
+
+            if has_missing_values:
+                split_info.missing_go_to_left = in_bitset(
+                    split_info.cat_bitset, missing_values_bin_idx)
+
+        free(cat_sorted_infos)
+
+
+cdef int compare_cat_infos(const void * a, const void * b) nogil:
+    cdef:
+        categorical_info a_info = (<categorical_info *>a)[0]
+        categorical_info b_info = (<categorical_info *>b)[0]
+    return 1 if a_info.value <= b_info.value else -1
 
 cdef inline Y_DTYPE_C _split_gain(
         Y_DTYPE_C sum_gradient_left,
@@ -781,17 +1032,23 @@ cdef inline unsigned char sample_goes_left(
         unsigned char missing_go_to_left,
         unsigned char missing_values_bin_idx,
         X_BINNED_DTYPE_C split_bin_idx,
-        X_BINNED_DTYPE_C bin_value) nogil:
+        X_BINNED_DTYPE_C bin_value,
+        unsigned char is_categorical,
+        BITSET_DTYPE_C cat_bitset) nogil:
     """Helper to decide whether sample should go to left or right child."""
 
-    return (
-        (
-            missing_go_to_left and
-            bin_value == missing_values_bin_idx
-        )
-        or (
-            bin_value <= split_bin_idx
-        ))
+    if is_categorical:
+        # missing value is encoded in cat_bitset
+        return in_bitset(cat_bitset, bin_value)
+    else:  # numerical
+        return (
+            (
+                missing_go_to_left and
+                bin_value == missing_values_bin_idx
+            )
+            or (
+                bin_value <= split_bin_idx
+            ))
 
 
 cpdef inline Y_DTYPE_C compute_node_value(

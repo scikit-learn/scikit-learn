@@ -16,76 +16,95 @@ from ._binning import _map_to_bins
 from .common import X_DTYPE, X_BINNED_DTYPE, ALMOST_INF
 
 
-def _find_binning_thresholds(data, max_bins, subsample, random_state):
+def _find_binning_threshold(col_data, max_bins):
     """Extract feature-wise quantiles from numerical data.
 
     Missing values are ignored for finding the thresholds.
 
     Parameters
     ----------
-    data : array-like of shape (n_samples, n_features)
-        The data to bin.
-
+    col_data : array-like, shape (n_features,)
+        The numerical feature to bin.
     max_bins: int
         The maximum number of bins to use for non-missing values. If for a
         given feature the number of unique values is less than ``max_bins``,
         then those unique values will be used to compute the bin thresholds,
-        instead of the quantiles.
-
-    subsample : int or None
-        If ``n_samples > subsample``, then ``sub_samples`` samples will be
-        randomly chosen to compute the quantiles. If ``None``, the whole data
-        is used.
-
-    random_state: int, RandomState instance or None
-        Pseudo-random number generator to control the random sub-sampling.
-        Pass an int for reproducible output across multiple
-        function calls.
-        See :term: `Glossary <random_state>`.
+        instead of the quantiles
 
     Return
     ------
-    binning_thresholds: list of ndarray
+    binning_thresholds: ndarray
         For each feature, stores the increasing numeric values that can
         be used to separate the bins. Thus ``len(binning_thresholds) ==
         n_features``.
     """
-    rng = check_random_state(random_state)
-    if subsample is not None and data.shape[0] > subsample:
-        subset = rng.choice(data.shape[0], subsample, replace=False)
-        data = data.take(subset, axis=0)
+    # ignore missing values when computing bin thresholds
+    missing_mask = np.isnan(col_data)
+    if missing_mask.any():
+        col_data = col_data[~missing_mask]
+    col_data = np.ascontiguousarray(col_data, dtype=X_DTYPE)
+    distinct_values = np.unique(col_data)
+    if len(distinct_values) <= max_bins:
+        midpoints = distinct_values[:-1] + distinct_values[1:]
+        midpoints *= .5
+    else:
+        # We sort again the data in this case. We could compute
+        # approximate midpoint percentiles using the output of
+        # np.unique(col_data, return_counts) instead but this is more
+        # work and the performance benefit will be limited because we
+        # work on a fixed-size subsample of the full data.
+        percentiles = np.linspace(0, 100, num=max_bins + 1)
+        percentiles = percentiles[1:-1]
+        midpoints = np.percentile(col_data, percentiles,
+                                  interpolation='midpoint').astype(X_DTYPE)
+        assert midpoints.shape[0] == max_bins - 1
 
-    binning_thresholds = []
-    for f_idx in range(data.shape[1]):
-        col_data = data[:, f_idx]
-        # ignore missing values when computing bin thresholds
-        missing_mask = np.isnan(col_data)
-        if missing_mask.any():
-            col_data = col_data[~missing_mask]
-        col_data = np.ascontiguousarray(col_data, dtype=X_DTYPE)
-        distinct_values = np.unique(col_data)
-        if len(distinct_values) <= max_bins:
-            midpoints = distinct_values[:-1] + distinct_values[1:]
-            midpoints *= .5
-        else:
-            # We sort again the data in this case. We could compute
-            # approximate midpoint percentiles using the output of
-            # np.unique(col_data, return_counts) instead but this is more
-            # work and the performance benefit will be limited because we
-            # work on a fixed-size subsample of the full data.
-            percentiles = np.linspace(0, 100, num=max_bins + 1)
-            percentiles = percentiles[1:-1]
-            midpoints = np.percentile(col_data, percentiles,
-                                      interpolation='midpoint').astype(X_DTYPE)
-            assert midpoints.shape[0] == max_bins - 1
+    # We avoid having +inf thresholds: +inf thresholds are only allowed in
+    # a "split on nan" situation.
+    np.clip(midpoints, a_min=None, a_max=ALMOST_INF, out=midpoints)
+    return midpoints
 
-        # We avoid having +inf thresholds: +inf thresholds are only allowed in
-        # a "split on nan" situation.
-        np.clip(midpoints, a_min=None, a_max=ALMOST_INF, out=midpoints)
 
-        binning_thresholds.append(midpoints)
+def _find_bin_categories(col_data, max_bins, feature_idx):
+    """Extract feature-wise categories from categorical data
 
-    return binning_thresholds
+    Missing values and negative values (considered missing) are ignored.
+
+    Parameters
+    ----------
+    col_data : array-like, shape (n_features,)
+        The categorical feature to bin.
+    max_bins: int
+        The maximum number of bins to be used for categories.
+    feature_idx: int
+        Used for error message if the categories' cardinality is greater than
+        max_bins.
+
+    Return
+    ------
+    bin: ndarray
+        Map from bin index to categorical value. The size of each array is
+        equal to minimum of `max_bins` and the categories' cardinality,
+        ignoring missing and negative values.
+    """
+    categories = np.unique(col_data)
+
+    # nans and negative values will be considered missing
+    missing = np.isnan(categories)
+    negative = categories < 0
+    both = missing | negative
+    if both.any():
+        categories = categories[~both]
+
+    if categories.size > max_bins:
+        raise ValueError(f"Categorical feature at index {feature_idx} is "
+                         f"expected to have a cardinality <= {max_bins}")
+
+    if (categories < 0).any() or (categories >= max_bins).any():
+        raise ValueError(f"Categorical feature at index {feature_idx} is "
+                         f"expected to be encoded with values <= {max_bins}")
+
+    return categories
 
 
 class _BinMapper(TransformerMixin, BaseEstimator):
@@ -109,13 +128,19 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         bins. The last bin is always reserved for missing values. If for a
         given feature the number of unique values is less than ``max_bins``,
         then those unique values will be used to compute the bin thresholds,
-        instead of the quantiles.
-
-    subsample : int or None, default=2e5
+        instead of the quantiles. For categorical features indicated by
+        ``is_categorical``, the docstring for ``is_categorical`` details on
+        this procedure.
+    subsample : int or None, optional (default=2e5)
         If ``n_samples > subsample``, then ``sub_samples`` samples will be
         randomly chosen to compute the quantiles. If ``None``, the whole data
         is used.
-
+    is_categorical : ndarray of bool of shape (n_features,), default=None
+        Indicates categorical features. If the cardinality of a categorical
+        feature is greater than ``n_bins``, then the ``n_bins`` most frequent
+        categories are kept. The infrequent categories will be consider
+        missing. During ``transform`` time, unknown categories will also be
+        considered missing.
     random_state: int, RandomState instance or None, default=None
         Pseudo-random number generator to control the random sub-sampling.
         Pass an int for reproducible output across multiple
@@ -125,15 +150,23 @@ class _BinMapper(TransformerMixin, BaseEstimator):
     Attributes
     ----------
     bin_thresholds_ : list of ndarray
-        For each feature, gives the real-valued bin thresholds. There are
-        ``max_bins - 1`` thresholds, where ``max_bins = n_bins - 1`` is the
-        number of bins used for non-missing values.
-
+        For each feature, each array indicates how to map a feature into a
+        binned feature. The semantic and size depends on the nature of the
+        feature:
+        - for real-valued features, the array corresponds to the real-valued
+          bin thresholds (the upper bound of each bin). There are ``max_bins
+          - 1`` thresholds, where ``max_bins = n_bins - 1`` is the number of
+          bins used for non-missing values.
+        - for categorical features, the array is a map from a binned category
+          value to the raw category value. The size of the array is equal to
+          ``min(max_bins, category_cardinality)`` where we ignore negative
+          categories and missing values in the cardinality.
     n_bins_non_missing_ : ndarray, dtype=np.uint32
         For each feature, gives the number of bins actually used for
         non-missing values. For features with a lot of unique values, this is
         equal to ``n_bins - 1``.
-
+    is_categorical_ : ndarray of shape (n_features,), dtype=np.uint8
+        Indicator for categorical features.
     missing_values_bin_idx_ : np.uint8
         The index of the bin where missing values are mapped. This is a
         constant across all features. This corresponds to the last bin, and
@@ -141,9 +174,11 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         is less than ``n_bins - 1`` for a given feature, then there are
         empty (and unused) bins.
     """
-    def __init__(self, n_bins=256, subsample=int(2e5), random_state=None):
+    def __init__(self, n_bins=256, subsample=int(2e5), is_categorical=None,
+                 random_state=None):
         self.n_bins = n_bins
         self.subsample = subsample
+        self.is_categorical = is_categorical
         self.random_state = random_state
 
     def fit(self, X, y=None):
@@ -170,16 +205,37 @@ class _BinMapper(TransformerMixin, BaseEstimator):
 
         X = check_array(X, dtype=[X_DTYPE], force_all_finite=False)
         max_bins = self.n_bins - 1
-        self.bin_thresholds_ = _find_binning_thresholds(
-            X, max_bins, subsample=self.subsample,
-            random_state=self.random_state)
 
-        self.n_bins_non_missing_ = np.array(
-            [thresholds.shape[0] + 1 for thresholds in self.bin_thresholds_],
-            dtype=np.uint32)
+        rng = check_random_state(self.random_state)
+        if self.subsample is not None and X.shape[0] > self.subsample:
+            subset = rng.choice(X.shape[0], self.subsample, replace=False)
+            X = X.take(subset, axis=0)
+
+        if self.is_categorical is None:
+            self.is_categorical_ = np.zeros(X.shape[1], dtype=np.uint8)
+        else:
+            self.is_categorical_ = np.asarray(self.is_categorical,
+                                              dtype=np.uint8)
 
         self.missing_values_bin_idx_ = self.n_bins - 1
 
+        bin_thresholds = []
+        n_bins_non_missing = []
+
+        for f_idx in range(X.shape[1]):
+            col_data = X[:, f_idx]
+
+            if self.is_categorical_[f_idx] == 0:
+                bins = _find_binning_threshold(col_data, max_bins)
+                n_bins_non_missing.append(bins.shape[0] + 1)
+            else:
+                bins = _find_bin_categories(col_data, max_bins, f_idx)
+                n_bins_non_missing.append(bins.shape[0])
+            bin_thresholds.append(bins)
+
+        self.bin_thresholds_ = bin_thresholds
+        self.n_bins_non_missing_ = np.array(n_bins_non_missing,
+                                            dtype=np.uint32)
         return self
 
     def transform(self, X):
@@ -205,7 +261,8 @@ class _BinMapper(TransformerMixin, BaseEstimator):
                 'to transform()'.format(self.n_bins_non_missing_.shape[0],
                                         X.shape[1])
             )
+
         binned = np.zeros_like(X, dtype=X_BINNED_DTYPE, order='F')
         _map_to_bins(X, self.bin_thresholds_, self.missing_values_bin_idx_,
-                     binned)
+                     self.is_categorical_, binned)
         return binned

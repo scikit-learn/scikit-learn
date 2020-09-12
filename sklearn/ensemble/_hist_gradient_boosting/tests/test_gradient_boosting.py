@@ -8,6 +8,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.base import clone, BaseEstimator, TransformerMixin
 from sklearn.base import is_regressor
 from sklearn.pipeline import make_pipeline
+from sklearn.metrics import r2_score, mean_squared_error
 from sklearn.metrics import mean_poisson_deviance
 from sklearn.dummy import DummyRegressor
 from sklearn.exceptions import NotFittedError
@@ -794,3 +795,110 @@ def test_staged_predict(HistGradientBoosting, X, y):
 
             assert_allclose(staged_predictions, pred_aux)
             assert staged_predictions.shape == pred_aux.shape
+
+
+@pytest.mark.parametrize("insert_missing", [False, True])
+@pytest.mark.parametrize("make_dataset, Est, metric", [
+    (make_regression, HistGradientBoostingRegressor, mean_squared_error),
+    (make_classification, HistGradientBoostingClassifier, r2_score)
+])
+@pytest.mark.parametrize("bool_categorical_parameter", [True, False])
+def test_categorical_sanity(insert_missing, make_dataset, Est,
+                            metric, bool_categorical_parameter):
+    # Test support categories with or without missing data
+    X, y = make_dataset(n_samples=2000, n_features=8, random_state=0)
+
+    # even indices are categorical
+    categorical = np.zeros(X.shape[1], dtype=bool)
+    categorical[::2] = True
+
+    X[:, categorical] = KBinsDiscretizer(
+        encode='ordinal', n_bins=20).fit_transform(X[:, categorical])
+
+    if insert_missing:
+        rng = np.random.RandomState(42)
+        mask = rng.binomial(1, 0.01, size=X.shape).astype(np.bool)
+        X[mask] = np.nan
+
+    if bool_categorical_parameter:
+        categorical_features = categorical
+    else:
+        categorical_features = np.flatnonzero(categorical)
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y,
+                                                        random_state=42)
+
+    est_cat = Est(max_iter=20, categorical_features=categorical_features,
+                  random_state=0).fit(X_train, y_train)
+    assert_array_equal(est_cat.is_categorical_, categorical)
+
+    est_no_cat = Est(max_iter=20, random_state=0).fit(X_train, y_train)
+
+    # Checks that test metric is an improvement
+    y_pred_cat = est_cat.predict(X_test)
+    y_pred_no_cat = est_no_cat.predict(X_test)
+    assert metric(y_test, y_pred_cat) >= metric(y_test, y_pred_no_cat)
+
+    X_test = np.zeros((1, X.shape[1]), dtype=float)
+    X_test[:, ::2] = 30  # unknown category
+    X_test[:, 5:] = np.nan  # sets remaining
+
+    # Does not error on unknown or missing categories
+    est_cat.predict(X_test)
+
+
+@pytest.mark.parametrize('Est', (HistGradientBoostingClassifier,
+                                 HistGradientBoostingRegressor))
+@pytest.mark.parametrize("categorical_features, monotonic_cst, expected_msg", [
+    (["hello", "world"], None,
+     ("categorical_features must be an array-like of bools or array-like of "
+      "ints.")),
+    ([0, -1], None,
+     (r"categorical_features set as integer indices must be in "
+      r"\[0, n_features - 1\]")),
+    ([True, True, False, False, True], None,
+     r"categorical_features set as a boolean mask must have shape "
+     r"\(n_features,\)"),
+    ([True, True, False, False], [0, -1, 0, 1],
+     "categorical features can not have monotonic constraints"),
+])
+def test_categorical_spec_errors(Est, categorical_features, monotonic_cst,
+                                 expected_msg):
+    # Test errors when categories are specified incorrectly
+    n_samples = 100
+    X, y = make_classification(random_state=0, n_features=4,
+                               n_samples=n_samples)
+    rng = np.random.RandomState(0)
+    X[:, 0] = rng.randint(0, 10, size=n_samples)
+    X[:, 1] = rng.randint(0, 10, size=n_samples)
+    est = Est(categorical_features=categorical_features,
+              monotonic_cst=monotonic_cst)
+
+    with pytest.raises(ValueError, match=expected_msg):
+        est.fit(X, y)
+
+
+@pytest.mark.parametrize('Est', (HistGradientBoostingClassifier,
+                                 HistGradientBoostingRegressor))
+def test_categorical_bad_encoding_errors(Est):
+    # Test errors when categories are encoded incorrectly
+    n_samples = 100
+    X, y = make_classification(random_state=0, n_features=4,
+                               n_samples=n_samples)
+    rng = np.random.RandomState(0)
+    X[:, 0] = rng.randint(0, 10, size=n_samples)
+
+    X[0, 0] = 300
+    est = Est(categorical_features=[True, False, False, False], max_bins=200)
+
+    msg = ("Categorical feature at index 0 is expected to be encoded with "
+           "values <= 200")
+    with pytest.raises(ValueError, match=msg):
+        est.fit(X, y)
+
+    X[:, 0] = rng.randint(0, 40, size=n_samples)
+    est = Est(categorical_features=[True, False, False, False], max_bins=10)
+    msg = ("Categorical feature at index 0 is expected to have a cardinality "
+           "<= 10")
+    with pytest.raises(ValueError, match=msg):
+        est.fit(X, y)

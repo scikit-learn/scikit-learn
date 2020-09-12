@@ -18,6 +18,7 @@ from ...metrics import check_scoring
 from ...model_selection import train_test_split
 from ...preprocessing import LabelEncoder
 from ._gradient_boosting import _update_raw_predictions
+from .predictor import _make_known_categories
 from .common import Y_DTYPE, X_DTYPE, X_BINNED_DTYPE
 
 from .binning import _BinMapper
@@ -32,7 +33,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
     @abstractmethod
     def __init__(self, loss, *, learning_rate, max_iter, max_leaf_nodes,
                  max_depth, min_samples_leaf, l2_regularization, max_bins,
-                 monotonic_cst, warm_start, early_stopping, scoring,
+                 categorical_features, monotonic_cst,
+                 warm_start, early_stopping, scoring,
                  validation_fraction, n_iter_no_change, tol, verbose,
                  random_state):
         self.loss = loss
@@ -44,6 +46,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self.l2_regularization = l2_regularization
         self.max_bins = max_bins
         self.monotonic_cst = monotonic_cst
+        self.categorical_features = categorical_features
         self.warm_start = warm_start
         self.early_stopping = early_stopping
         self.scoring = scoring
@@ -94,6 +97,39 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 'multiclass classification.'
                 )
 
+    def _check_categories(self, n_features, X_orig):
+        """Check and validate categories params in X"""
+        if self.categorical_features is None:
+            self.is_categorical_ = None
+            return
+
+        cat_features_input = np.asarray(self.categorical_features)
+
+        if cat_features_input.dtype.kind not in ('i', 'b'):
+            raise ValueError("categorical_features must be an array-like of "
+                             "bools or array-like of ints.")
+
+        # check for categorical features as indices
+        if cat_features_input.dtype.kind == 'i':
+            if (np.max(cat_features_input) >= n_features
+                    or np.min(cat_features_input) < 0):
+                raise ValueError("categorical_features set as integer "
+                                 "indices must be in [0, n_features - 1]")
+            cat_feats = np.zeros(n_features, dtype=bool)
+            cat_feats[cat_features_input] = True
+
+        if cat_features_input.dtype.kind == 'b':
+            if cat_features_input.shape[0] != n_features:
+                raise ValueError("categorical_features set as a boolean mask "
+                                 "must have shape (n_features,)")
+            cat_feats = cat_features_input
+
+        if np.any(cat_feats):
+            self.is_categorical_ = cat_feats
+        else:
+            # no categories
+            self.is_categorical_ = None
+
     def fit(self, X, y, sample_weight=None):
         """Fit the gradient boosting model.
 
@@ -118,8 +154,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         acc_compute_hist_time = 0.  # time spent computing histograms
         # time spent predicting X for gradient and hessians update
         acc_prediction_time = 0.
-        X, y = self._validate_data(X, y, dtype=[X_DTYPE],
-                                   force_all_finite=False)
+        X_orig = X
+        X, y = self._validate_data(
+            X, y, dtype=[X_DTYPE], force_all_finite=False
+        )
         y = self._encode_y(y)
         check_consistent_length(X, y)
         # Do not create unit sample weights by default to later skip some
@@ -140,9 +178,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                                             dtype='u8')
 
         self._validate_parameters()
-
-        # used for validation in predict
-        n_samples, self._n_features = X.shape
+        n_samples, self._n_features = X.shape  # used for validation in predict
+        self._check_categories(self._n_features, X_orig)
 
         # we need this stateful variable to tell raw_predict() that it was
         # called from fit() (this current method), and that the data it has
@@ -201,8 +238,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # actual total number of bins. Everywhere in the code, the
         # convention is that n_bins == max_bins + 1
         n_bins = self.max_bins + 1  # + 1 for missing values
-        self._bin_mapper = _BinMapper(n_bins=n_bins,
-                                      random_state=self._random_seed)
+        self._bin_mapper = _BinMapper(
+            n_bins=n_bins,
+            is_categorical=self.is_categorical_,
+            random_state=self._random_seed)
         X_binned_train = self._bin_data(X_train, is_training_data=True)
         if X_val is not None:
             X_binned_val = self._bin_data(X_val, is_training_data=False)
@@ -216,6 +255,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         if self.verbose:
             print("Fitting gradient boosted rounds:")
+
+        # Uses binned data to check for missing values
+        has_missing_values = (
+            X_binned_train == self._bin_mapper.missing_values_bin_idx_).any(
+                axis=0).astype(np.uint8)
 
         n_samples = X_binned_train.shape[0]
 
@@ -363,6 +407,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     n_bins=n_bins,
                     n_bins_non_missing=self._bin_mapper.n_bins_non_missing_,
                     has_missing_values=has_missing_values,
+                    is_categorical=self.is_categorical_,
                     monotonic_cst=self.monotonic_cst,
                     max_leaf_nodes=self.max_leaf_nodes,
                     max_depth=self.max_depth,
@@ -566,7 +611,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                                for score in recent_scores]
         return not any(recent_improvements)
 
-    def _bin_data(self, X, is_training_data):
+    def _bin_data(self, X, is_training_data, categorical_only=False):
         """Bin data X.
 
         If is_training_data, then set the _bin_mapper attribute.
@@ -581,7 +626,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if is_training_data:
             X_binned = self._bin_mapper.fit_transform(X)  # F-aligned array
         else:
-            X_binned = self._bin_mapper.transform(X)  # F-aligned array
+            # F-aligned array
+            X_binned = self._bin_mapper.transform(X)
             # We convert the array to C-contiguous since predicting is faster
             # with this layout (training is faster on F-arrays though)
             X_binned = np.ascontiguousarray(X_binned)
@@ -645,8 +691,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         raw_predictions : array, shape (n_trees_per_iteration, n_samples)
             The raw predicted values.
         """
-        X = check_array(X, dtype=[X_DTYPE, X_BINNED_DTYPE],
-                        force_all_finite=False)
+        X = check_array(
+            X, dtype=[X_DTYPE, X_BINNED_DTYPE], force_all_finite=False
+        )
         check_is_fitted(self)
         if X.shape[1] != self._n_features:
             raise ValueError(
@@ -667,6 +714,12 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
     def _predict_iterations(self, X, predictors, raw_predictions, is_binned):
         """Add the predictions of the predictors to raw_predictions."""
+        if not is_binned:
+            known_cat_bitset, orig_feat_to_known_cats_idx = \
+                _make_known_categories(self._bin_mapper.bin_thresholds_,
+                                       self._bin_mapper.is_categorical_)
+
+        # bin categorical features when predicting outside of training loop
         for predictors_of_ith_iteration in predictors:
             for k, predictor in enumerate(predictors_of_ith_iteration):
                 if is_binned:
@@ -675,7 +728,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                         missing_values_bin_idx=self._bin_mapper.missing_values_bin_idx_  # noqa
                     )
                 else:
-                    predict = predictor.predict
+                    predict = partial(
+                        predictor.predict,
+                        known_cat_bitset=known_cat_bitset,
+                        orig_feat_to_known_cats_idx=orig_feat_to_known_cats_idx)   # noqa
                 raw_predictions[k, :] += predict(X)
 
     def _staged_raw_predict(self, X):
@@ -848,6 +904,22 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         and 0 respectively correspond to a positive constraint, negative
         constraint and no constraint. Read more in the :ref:`User Guide
         <monotonic_cst_gbdt>`.
+    categorical_features : array-like of {bool, int} of shape (n_features), \
+            default=None.
+        Indicates the categorical features.
+
+        - None : no feature will be considered categorical.
+        - boolean array-like : boolean mask indicating categorical features.
+          The categories must have been already be numerical i.e. encoded by
+          an :class:`~sklearn.preprocessing.OrdinalEncoder`.
+        - integer array-like : integer indices indicating categorical
+          features. The categories must have been already be numerical i.e.
+          encoded by an :class:`~sklearn.preprocessing.OrdinalEncoder`.
+
+        If the number of categories is greater than ``max_bins``, then the top
+        ``max_bins`` categories based on cardinality are kept. Categories
+        encoded as negative number will be considered missing. Read more in
+        the :ref:`User Guide <categorical_support_gbdt>`.
     warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble. For results to be valid, the
@@ -909,6 +981,9 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         first entry is the score of the ensemble before the first iteration.
         Scores are computed according to the ``scoring`` parameter. Empty if
         no early stopping or if ``validation_fraction`` is None.
+    is_categorical_ : ndarray, shape (n_features, ) or None
+        Boolean mask for the categorical features. ``None`` if there are no
+        categorical features.
 
     Examples
     --------
@@ -929,7 +1004,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     def __init__(self, loss='least_squares', *, learning_rate=0.1,
                  max_iter=100, max_leaf_nodes=31, max_depth=None,
                  min_samples_leaf=20, l2_regularization=0., max_bins=255,
-                 monotonic_cst=None, warm_start=False, early_stopping='auto',
+                 categorical_features=None, monotonic_cst=None,
+                 warm_start=False, early_stopping='auto',
                  scoring='loss', validation_fraction=0.1,
                  n_iter_no_change=10, tol=1e-7,
                  verbose=0, random_state=None):
@@ -938,7 +1014,9 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
             max_leaf_nodes=max_leaf_nodes, max_depth=max_depth,
             min_samples_leaf=min_samples_leaf,
             l2_regularization=l2_regularization, max_bins=max_bins,
-            monotonic_cst=monotonic_cst, early_stopping=early_stopping,
+            monotonic_cst=monotonic_cst,
+            categorical_features=categorical_features,
+            early_stopping=early_stopping,
             warm_start=warm_start, scoring=scoring,
             validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, tol=tol, verbose=verbose,
@@ -1074,6 +1152,22 @@ class HistGradientBoostingClassifier(ClassifierMixin,
         and 0 respectively correspond to a positive constraint, negative
         constraint and no constraint. Read more in the :ref:`User Guide
         <monotonic_cst_gbdt>`.
+    categorical_features : array-like of {bool, int} of shape (n_features), \
+            default=None.
+        Indicates the categorical features.
+
+        - None : no feature will be considered categorical.
+        - boolean array-like : boolean mask indicating categorical features.
+          The categories must have been already be numerical i.e. encoded by
+          an :class:`~sklearn.preprocessing.OrdinalEncoder`.
+        - integer array-like : integer indices indicating categorical
+          features. The categories must have been already be numerical i.e.
+          encoded by an :class:`~sklearn.preprocessing.OrdinalEncoder`.
+
+        If the number of categories is greater than ``max_bins``, then the top
+        ``max_bins`` categories based on cardinality are kept. Categories
+        encoded as negative number will be considered missing. Read more in
+        the :ref:`User Guide <categorical_support_gbdt>`.
     warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble. For results to be valid, the
@@ -1138,6 +1232,9 @@ class HistGradientBoostingClassifier(ClassifierMixin,
         first entry is the score of the ensemble before the first iteration.
         Scores are computed according to the ``scoring`` parameter. Empty if
         no early stopping or if ``validation_fraction`` is None.
+    is_categorical_ : ndarray, shape (n_features, ) or None
+        Boolean mask for the categorical features. ``None`` if there are no
+        categorical features.
 
     Examples
     --------
@@ -1157,7 +1254,8 @@ class HistGradientBoostingClassifier(ClassifierMixin,
     @_deprecate_positional_args
     def __init__(self, loss='auto', *, learning_rate=0.1, max_iter=100,
                  max_leaf_nodes=31, max_depth=None, min_samples_leaf=20,
-                 l2_regularization=0., max_bins=255, monotonic_cst=None,
+                 l2_regularization=0., max_bins=255,
+                 categorical_features=None,  monotonic_cst=None,
                  warm_start=False, early_stopping='auto', scoring='loss',
                  validation_fraction=0.1, n_iter_no_change=10, tol=1e-7,
                  verbose=0, random_state=None):
@@ -1166,7 +1264,9 @@ class HistGradientBoostingClassifier(ClassifierMixin,
             max_leaf_nodes=max_leaf_nodes, max_depth=max_depth,
             min_samples_leaf=min_samples_leaf,
             l2_regularization=l2_regularization, max_bins=max_bins,
-            monotonic_cst=monotonic_cst, warm_start=warm_start,
+            categorical_features=categorical_features,
+            monotonic_cst=monotonic_cst,
+            warm_start=warm_start,
             early_stopping=early_stopping, scoring=scoring,
             validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, tol=tol, verbose=verbose,
