@@ -453,6 +453,8 @@ class GroupKFold(_BaseKFold):
     The folds are approximately balanced in the sense that the number of
     distinct groups is approximately the same in each fold.
 
+    Read more in the :ref:`User Guide <cross_validation>`.
+
     Parameters
     ----------
     n_splits : int, default=5
@@ -1523,6 +1525,7 @@ class GroupShuffleSplit(ShuffleSplit):
     Note: The parameters ``test_size`` and ``train_size`` refer to groups, and
     not to samples, as in ShuffleSplit.
 
+    Read more in the :ref:`User Guide <cross_validation>`.
 
     Parameters
     ----------
