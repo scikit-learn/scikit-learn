@@ -136,6 +136,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         sparse matrix or a dense numpy array, which depends on the output
         of the individual transformers and the `sparse_threshold` keyword.
 
+    transformers_output_ : dict
+        A dictionary from transformer names to column indices, recording the
+        columns produced by each transformer (if any).
+
     Notes
     -----
     The order of the columns in the transformed feature matrix follows the
@@ -417,6 +421,20 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                     "The output of the '{0}' transformer should be 2D (scipy "
                     "matrix, array, or pandas DataFrame).".format(name))
 
+    def _index_output(self, Xs):
+        """
+        Record which transformer produced which column.
+        """
+        idx_ = 0
+        self.transformers_output_ = {}
+        for idx, (name, trans, _, _) in enumerate(
+            self._iter(fitted=True, replace_strings=True)
+        ):
+            n_columns = Xs[idx].shape[1]
+            self.transformers_output_[name] = list(range(idx_, idx_ + n_columns))
+            idx_ += n_columns
+        return
+
     def _validate_features(self, n_features, feature_names):
         """Ensures feature counts and names are the same during fit and
         transform.
@@ -555,6 +573,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         self._update_fitted_transformers(transformers)
         self._validate_output(Xs)
+        self._index_output(Xs)
 
         return self._hstack(list(Xs))
 
