@@ -2015,9 +2015,9 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         knots = np.r_[linspace(base_knots[0] - degree * dist_min,
                                base_knots[0] - dist_min, num=degree),
                       base_knots,
-                      np.linspace(base_knots[-1] + dist_max,
-                                  base_knots[-1] + degree * dist_max,
-                                  num=degree)]
+                      linspace(base_knots[-1] + dist_max,
+                               base_knots[-1] + degree * dist_max,
+                               num=degree)]
 
         # With a diagonal coefficient matrix, we get back the spline basis
         # elements, i.e. the design matrix of the spline.
