@@ -1910,8 +1910,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             Knot positions (points) of base intercal.
         """
         if knots == 'quantile':
-            knots = np.quantile(X, np.linspace(start=0, stop=1, num=n_knots),
-                                axis=0)
+            knots = np.percentile(
+                X, 100 * np.linspace(start=0, stop=1, num=n_knots), axis=0)
         else:
             # knots == 'uniform':
             x_min = np.amin(X, axis=0)
