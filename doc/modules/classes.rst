@@ -1194,9 +1194,11 @@ Hyper-parameter optimizers
    :template: class.rst
 
    model_selection.GridSearchCV
+   model_selection.HalvingGridSearchCV
    model_selection.ParameterGrid
    model_selection.ParameterSampler
    model_selection.RandomizedSearchCV
+   model_selection.HalvingRandomSearchCV
 
 
 Model validation
