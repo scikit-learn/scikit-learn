@@ -366,7 +366,9 @@ def test_column_transformer_list():
     assert_array_equal(ct.fit_transform(X_list), expected_result)
     assert_array_equal(ct.fit(X_list).transform(X_list), expected_result)
 
-    assert ct.transformers_output_ == {'numerical': [0, 1], 'categorical': [2, 3]}
+    assert ct.transformers_output_ == {
+        'numerical': [0, 1], 'categorical': [2, 3]
+    }
 
 
 def test_column_transformer_sparse_stacking():

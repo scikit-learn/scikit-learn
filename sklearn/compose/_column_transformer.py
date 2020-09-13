@@ -431,7 +431,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             self._iter(fitted=True, replace_strings=True)
         ):
             n_columns = Xs[idx].shape[1]
-            self.transformers_output_[name] = list(range(idx_, idx_ + n_columns))
+            self.transformers_output_[name] = list(
+                range(idx_, idx_ + n_columns)
+            )
             idx_ += n_columns
         return
 
