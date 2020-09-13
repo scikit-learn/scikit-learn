@@ -2022,7 +2022,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         # With a diagonal coefficient matrix, we get back the spline basis
         # elements, i.e. the design matrix of the spline.
         # Note, BSpline appreciate C-contiguous arrays.
-        coef = np.eye(n_knots + self.degree - 1, dtype=np.float64, order='C')
+        coef = np.eye(n_knots + self.degree - 1, dtype=np.float64)
         extrapolate = self.extrapolation == "continue"
         bsplines = [BSpline(knots[:, i], coef, self.degree,
                             extrapolate=extrapolate)
