@@ -427,7 +427,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         """
         idx_ = 0
         self.transformers_output_ = {}
-        for idx, (name, trans, _, _) in enumerate(
+        for idx, (name, _, _, _) in enumerate(
             self._iter(fitted=True, replace_strings=True)
         ):
             n_columns = Xs[idx].shape[1]
