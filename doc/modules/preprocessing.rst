@@ -794,12 +794,11 @@ of the fitted range::
            [4]])
     >>> spline = SplineTransformer(degree=2, n_knots=3)
     >>> spline.fit_transform(X)
-    array([[0.5 , 0.5 , 0.  , 0.  ],
-           [0.18, 0.74, 0.08, 0.  ],
-           [0.02, 0.66, 0.32, 0.  ],
-           [0.  , 0.32, 0.66, 0.02],
-           [0.  , 0.08, 0.74, 0.18],
-           [0.  , 0.  , 0.5 , 0.5 ]])
+    array([[0.5  , 0.5  , 0.   , 0.   ],
+           [0.125, 0.75 , 0.125, 0.   ],
+           [0.   , 0.5  , 0.5  , 0.   ],
+           [0.   , 0.125, 0.75 , 0.125],
+           [0.   , 0.   , 0.5  , 0.5  ]])
 
 As the `X` is sorted, one can easily see the banded matrix output. Only the
 three middle diagonals are non-zero for `degree=2`. The higher the degree, the
