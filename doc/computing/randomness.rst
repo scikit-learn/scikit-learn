@@ -275,7 +275,7 @@ integer to the CV splitter: `cv = KFold(shuffle=True, random_state=0)`.
     :class:`~sklearn.naive_bayes.GaussianNB` are randomized estimators.
 
 General recommendations
-=======================
+-----------------------
 
 Getting reproducible results across multiple executions
 .......................................................
