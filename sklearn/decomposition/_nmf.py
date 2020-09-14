@@ -1698,10 +1698,10 @@ class MiniBatchNMF(NMF):
                  regularization='both', forget_factor=0.7):
 
         super().__init__(n_components=n_components, init=init, solver=solver,
-                 beta_loss=beta_loss, tol=tol, max_iter=max_iter,
-                 random_state=random_state, alpha=alpha, l1_ratio=l1_ratio,
-                 verbose=verbose, shuffle=False,
-                 regularization=regularization)
+                         beta_loss=beta_loss, tol=tol, max_iter=max_iter,
+                         random_state=random_state, alpha=alpha,
+                         l1_ratio=l1_ratio, verbose=verbose, shuffle=False,
+                         regularization=regularization)
 
         self.batch_size = batch_size
         self.forget_factor = forget_factor
