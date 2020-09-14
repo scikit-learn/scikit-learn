@@ -510,6 +510,11 @@ Changelog
   :class:`neural_network.MLPRegressor`.
   :pr:`17759` by :user:`Srimukh Sripada <d3b0unce>`.
 
+- |Fix| Fix method  :func:`fit` of :class:`neural_network.MLPClassifier`
+  not iterating to ``max_iter`` if warm started.
+  :pr:`18269` by :user:`Norbert Preining <norbusan>` and
+  :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.pipeline`
 .......................
 
