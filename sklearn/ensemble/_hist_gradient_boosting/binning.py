@@ -16,7 +16,7 @@ from ._binning import _map_to_bins
 from .common import X_DTYPE, X_BINNED_DTYPE, ALMOST_INF
 
 
-def _find_binning_threshold(col_data, max_bins):
+def _find_binning_thresholds(col_data, max_bins):
     """Extract feature-wise quantiles from numerical data.
 
     Missing values are ignored for finding the thresholds.
@@ -154,7 +154,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
             X = X.take(subset, axis=0)
 
         self.bin_thresholds_ = [
-            _find_binning_threshold(X[:, f_idx], max_bins)
+            _find_binning_thresholds(X[:, f_idx], max_bins)
             for f_idx in range(X.shape[1])]
 
         self.n_bins_non_missing_ = np.array(
