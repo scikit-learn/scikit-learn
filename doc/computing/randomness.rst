@@ -15,6 +15,23 @@ in the :term:`Glossary <random_state>`. This section expands on the glossary
 entry, and describes good practices and common pitfalls w.r.t. to this
 subtle parameter.
 
+.. note:: Recommendation summary
+
+    For an optimal statistical significance of cross-validation (CV) results,
+    pass `RandomState` instances when creating estimators, or leave
+    `random_state` to None. Passing integers to CV splitters is usually the
+    safest option, although `RandomState` instances are fine if you know what
+    you are doing. For both estimators and splitters, passing an integer vs
+    passing an instance (or None) leads to subtle but significant
+    differences, especially for CV procedures. These differences are
+    important to understand when reporting results.
+    
+    For reproducible results across executions, remove any use of
+    `random_state=None`.
+
+Using None and `RandomState` instances: reproducibility of `fit` and `split`
+----------------------------------------------------------------------------
+
 The `random_state` parameter determines whether multiple calls to :term:`fit`
 (for estimators) or to :term:`split` (for CV splitters) will produce the same
 results, according to these rules:
@@ -26,26 +43,7 @@ results, according to these rules:
   calls explores all sources of entropy. `None` is the default value for all
   `random_state` parameters.
 
-.. note:: Recommendation summary
-
-    For an optimal statistical significance of cross-validation results, pass
-    `RandomState` instances when creating estimators, or leave `random_state`
-    to None. Passing integers to CV splitters is usually the safest option,
-    although `RandomState` instances are fine if you know what you are doing.
-    For both estimators and splitters, passing an integer vs passing an
-    instance (or None) leads to subtle but significant differences,
-    especially for CV procedures. These differences are important to
-    understand when reporting results.
-    
-    For reproducible results across executions, remove any use of
-    `random_state=None`.
-
-Using None and `RandomState` instances
---------------------------------------
-
-We here illustrate the aforementionned rule: calling `fit` or `split`
-multiple times yields different results if None or a `RandomState` instance
-was used.
+We here illustrate these rules for both estimators and CV splitters.
 
 .. note::
     Since passing `random_state=None` is equivalent to passing the global
