@@ -200,7 +200,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
             # Remove mean and make unit variance
             # Moreover, add a very small number to the y_train.std to
             # avoid a divide by zero error.
-            if self._y_train_std == 0:
+            if self._y_train_std.all() == 0:
                 y = (y - self._y_train_mean) / (self._y_train_std + 1E-19)
             else:
                 y = (y - self._y_train_mean) / self._y_train_std
