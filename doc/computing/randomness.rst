@@ -282,9 +282,9 @@ Getting reproducible results across multiple executions
 
 In order to obtain reproducible (i.e. constant) results across multiple
 *program executions*, we need to remove all uses of `random_state=None`, which
-*is the default. The recommended way is to declare a `rng` variable at
-the top of the program, and pass it down to any object that accepts a
-`random_state` parameter::
+is the default. The recommended way is to declare a `rng` variable at the top
+of the program, and pass it down to any object that accepts a `random_state`
+parameter::
 
     >>> from sklearn.ensemble import RandomForestClassifier
     >>> from sklearn.datasets import make_classification
