@@ -2560,9 +2560,15 @@ def test_spline_transformer_input_validation():
 
     # test manual knot points, is numeric 2d array-like, right shape, strictly
     # sorted.
-    for knots in ['string', [1, 2], [[1]], [[1, 5], [2, 6]], [[1, 1]],
-                  [[2, 1]]]:
-        with pytest.raises(ValueError):
+    for knots, msg in (
+        ('string', "Expected 2D array, got scalar array instead:"),
+        ([1, 2], "Expected 2D array, got 1D array instead:"),
+        ([[1]], r"Number of knots, knots.shape\[0\], must be >= 2."),
+        ([[1, 5], [2, 6]], r"knots.shape\[1\] == n_features is violated."),
+        ([[1], [1], [2]], "knots must be sorted without duplicates."),
+        ([[2], [1]], "knots must be sorted without duplicates.")
+    ):
+        with pytest.raises(ValueError, match=msg):
             SplineTransformer(knots=knots).fit(X)
 
     for extrapolation in [None, True, 1, 'string']:

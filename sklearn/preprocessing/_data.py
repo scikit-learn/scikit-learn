@@ -1980,7 +1980,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                                  "2.")
             elif base_knots.shape[1] != n_features:
                 raise ValueError("knots.shape[1] == n_features is violated.")
-            elif not np.all(np.diff(base_knots) > 0):
+            elif not np.all(np.diff(base_knots, axis=0) > 0):
                 raise ValueError("knots must be sorted without duplicates.")
 
         if self.extrapolation not in ('error', 'constant', 'linear',
