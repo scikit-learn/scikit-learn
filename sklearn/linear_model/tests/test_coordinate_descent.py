@@ -11,7 +11,7 @@ import joblib
 from sklearn.base import is_classifier
 from sklearn.datasets import load_diabetes
 from sklearn.datasets import make_regression
-from sklearn.model_selection import GroupKFold, train_test_split
+from sklearn.model_selection import LeaveOneGroupOut, train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
@@ -1215,7 +1215,7 @@ def test_enet_cv_sample_weight_correctness(cv_weighted, fit_intercept):
     sw[:n_samples] = 2
     groups_sw = np.r_[np.full(n_samples, 0), np.full(n_samples, 1),
                       np.full(n_samples, 2)]
-    splits_sw = list(GroupKFold(n_splits=n_splits).split(X, groups=groups_sw))
+    splits_sw = list(LeaveOneGroupOut().split(X, groups=groups_sw))
     reg_sw = ElasticNetCV(alphas=alphas, cv=splits_sw,
                           fit_intercept=fit_intercept, cv_weighted=cv_weighted)
     reg_sw.fit(X, y, sample_weight=sw)
@@ -1225,7 +1225,7 @@ def test_enet_cv_sample_weight_correctness(cv_weighted, fit_intercept):
     y = np.r_[y[:n_samples], y]
     groups = np.r_[np.full(2*n_samples, 0), np.full(n_samples, 1),
                    np.full(n_samples, 2)]
-    splits = list(GroupKFold(n_splits=n_splits).split(X, groups=groups))
+    splits = list(LeaveOneGroupOut().split(X, groups=groups))
     reg = ElasticNetCV(alphas=alphas, cv=splits, fit_intercept=fit_intercept,
                        cv_weighted=cv_weighted)
     reg.fit(X, y)
@@ -1237,16 +1237,9 @@ def test_enet_cv_sample_weight_correctness(cv_weighted, fit_intercept):
     if fit_intercept is not None:
         assert reg_sw.intercept_ == pytest.approx(reg.intercept_)
     if cv_weighted:
-        # Note: The order of groups is shuffled, i.e. not the same. But why???
-        group_order_sw = []
-        for _, test in splits_sw:
-            group_order_sw.append(groups_sw[test][0])
-        group_order = []
-        for _, test in splits:
-            group_order.append(groups[test][0])
-        for i in range(3):
-            assert_allclose(reg_sw.mse_path_[:, group_order_sw[i]],
-                            reg.mse_path_[:, group_order[i]])
+        # Note: The order of groups from LeaveOneGroupOut is the same for both.
+        assert_allclose(reg_sw.mse_path_, reg.mse_path_)
+
 
 # TODO: Compare ElasticNetCV to GridSearchCV
 
