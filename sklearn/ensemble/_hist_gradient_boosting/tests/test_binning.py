@@ -59,7 +59,6 @@ def test_find_binning_thresholds_random_data():
 def test_find_binning_thresholds_low_n_bins():
     bin_thresholds = [_find_binning_threshold(DATA[:, i], max_bins=128)
                       for i in range(2)]
-    assert len(bin_thresholds) == 2
     for i in range(len(bin_thresholds)):
         assert bin_thresholds[i].shape == (127,)  # 128 - 1
         assert bin_thresholds[i].dtype == DATA.dtype
