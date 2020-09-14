@@ -29,8 +29,8 @@ subtle parameter.
     For reproducible results across executions, remove any use of
     `random_state=None`.
 
-Using None and `RandomState` instances: reproducibility of `fit` and `split`
-----------------------------------------------------------------------------
+Using None or `RandomState` instances, and repeated calls to `fit` and `split`
+------------------------------------------------------------------------------
 
 The `random_state` parameter determines whether multiple calls to :term:`fit`
 (for estimators) or to :term:`split` (for CV splitters) will produce the same
