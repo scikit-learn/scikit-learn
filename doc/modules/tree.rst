@@ -446,7 +446,7 @@ feature :math:`j` and threshold :math:`t_m`, partition the data into
 
     Q_m^{left}(\theta) = {(x, y) | x_j <= t_m}
 
-    Q_m^{right}(\theta) = Q_m \setminus Q_{left}(\theta)
+    Q_m^{right}(\theta) = Q_m \setminus Q_m^{left}(\theta)
 
 The quality of a candidate split of node :math:`m` is then computed using an
 impurity function or loss function :math:`H()`, the choice of which depends on
