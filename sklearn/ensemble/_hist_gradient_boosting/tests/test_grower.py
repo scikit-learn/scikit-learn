@@ -455,7 +455,6 @@ def test_grow_tree_categories():
     assert_array_equal(raw_categories[0], [2**9] + [0] * 7)
 
 
-
 @pytest.mark.parametrize('min_samples_leaf', (1, 20))
 @pytest.mark.parametrize('n_unique_categories', (2, 10, 100))
 @pytest.mark.parametrize('target', ('binary', 'random', 'equal'))
