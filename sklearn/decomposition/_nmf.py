@@ -1542,7 +1542,7 @@ class NMF(TransformerMixin, BaseEstimator):
         return np.dot(W, self.components_)
 
 
-class MiniBatchNMF(TransformerMixin, BaseEstimator):
+class MiniBatchNMF(NMF):
     r"""Mini-Batch and online Non-Negative Matrix Factorization (NMF)
 
     .. versionadded:: 0.XX
@@ -1696,22 +1696,15 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
                  beta_loss='frobenius', tol=1e-4, max_iter=200,
                  random_state=None, alpha=0., l1_ratio=0., verbose=0,
                  regularization='both', forget_factor=0.7):
-        self.n_components = n_components
-        self.init = init
-        self.solver = solver
-        self.batch_size = batch_size
-        self.beta_loss = beta_loss
-        self.tol = tol
-        self.max_iter = max_iter
-        self.random_state = random_state
-        self.alpha = alpha
-        self.l1_ratio = l1_ratio
-        self.verbose = verbose
-        self.regularization = regularization
-        self.forget_factor = forget_factor
 
-    def _more_tags(self):
-        return {'requires_positive_X': True}
+        super().__init__(n_components=n_components, init=init, solver=solver,
+                 beta_loss=beta_loss, tol=tol, max_iter=max_iter,
+                 random_state=random_state, alpha=alpha, l1_ratio=l1_ratio,
+                 verbose=verbose, shuffle=False,
+                 regularization=regularization)
+
+        self.batch_size = batch_size
+        self.forget_factor = forget_factor
 
     def fit_transform(self, X, y=None, W=None, H=None):
         """Learn a NMF model for the data X and returns the transformed data.
@@ -1759,28 +1752,11 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
 
         return W
 
-    def fit(self, X, y=None, **params):
-        """Learn a NMF model for the data X.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Data matrix to be decomposed
-
-        y : Ignored
-
-        Returns
-        -------
-        self
-        """
-        self.fit_transform(X, **params)
-        return self
-
     def partial_fit(self, X, y=None, **params):
         if hasattr(self, 'components_'):
 
             # Compute W given H and X using NMF.transform
-            W, _, n_iter_ = non_negative_factorization(
+            W, _, n_iter_, = non_negative_factorization(
                 X=X, W=None, H=self.components_,
                 n_components=self.n_components_,
                 init=self.init, update_H=False, solver=self.solver,
