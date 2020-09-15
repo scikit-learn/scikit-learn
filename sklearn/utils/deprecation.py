@@ -25,7 +25,7 @@ class deprecated:
     Parameters
     ----------
     extra : str, default=''
-          to be added to the deprecation messages
+          To be added to the deprecation messages.
     """
 
     # Adapted from https://wiki.python.org/moin/PythonDecoratorLibrary,
