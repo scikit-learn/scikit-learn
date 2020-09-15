@@ -892,7 +892,7 @@ def test_categorical_bad_encoding_errors(Est):
     est = Est(categorical_features=[True, False, False, False], max_bins=200)
 
     msg = ("Categorical feature at index 0 is expected to be encoded with "
-           "values <= 200")
+           "values < 200")
     with pytest.raises(ValueError, match=msg):
         est.fit(X, y)
 
