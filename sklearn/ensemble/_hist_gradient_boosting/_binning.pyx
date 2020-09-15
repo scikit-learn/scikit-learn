@@ -76,13 +76,10 @@ cdef void _map_num_col_to_bins(const X_DTYPE_C [:] data,
                 else:
                     left = middle + 1
 
-            if not is_categorical:
-                binned[i] = left
+            if is_categorical and binning_thresholds[left] != data[i]:
+                # categorical data needs the values to match exactly. When they
+                # don't, then the category is considered missing. This happens
+                # when a category isn't seen during fit but seen at transform.
+                binned[i] = missing_values_bin_idx
             else:
-                # categorical data needs the value of the bin to match exactly
-                # if it does not match exactl, then the category is considered
-                # missing
-                if binning_thresholds[left] == data[i]:
-                    binned[i] = left
-                else:
-                    binned[i] = missing_values_bin_idx
+                binned[i] = left
