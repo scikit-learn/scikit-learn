@@ -75,15 +75,16 @@ def _find_bin_categories(col_data, max_bins, feature_idx):
     col_data : array-like, shape (n_features,)
         The categorical feature to bin.
     max_bins: int
-        The maximum number of bins to be used for categories.
+        The maximum number of bins to be used for categories, ignoring
+        missing values.
     feature_idx: int
-        Used for error message if the categories' cardinality is greater than
+        Used for error message if the feature cardinality is greater than
         max_bins.
 
     Return
     ------
     bin: ndarray
-        Map from bin index to categorical value. The size of each array is
+        Map from bin index to categorical value. The size of the array is
         equal to minimum of `max_bins` and the categories' cardinality,
         ignoring missing and negative values.
     """
@@ -100,9 +101,9 @@ def _find_bin_categories(col_data, max_bins, feature_idx):
         raise ValueError(f"Categorical feature at index {feature_idx} is "
                          f"expected to have a cardinality <= {max_bins}")
 
-    if (categories < 0).any() or (categories >= max_bins).any():
+    if (categories >= max_bins).any():
         raise ValueError(f"Categorical feature at index {feature_idx} is "
-                         f"expected to be encoded with values <= {max_bins}")
+                         f"expected to be encoded with values < {max_bins}")
 
     return categories
 
