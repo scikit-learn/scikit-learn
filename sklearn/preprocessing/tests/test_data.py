@@ -49,6 +49,7 @@ from sklearn.preprocessing._data import PowerTransformer
 from sklearn.preprocessing._data import power_transform
 from sklearn.preprocessing._data import SplineTransformer
 from sklearn.preprocessing._data import BOUNDS_THRESHOLD
+from sklearn.preprocessing._discretization import KBinsDiscretizer
 from sklearn.exceptions import NotFittedError
 
 from sklearn.base import clone
@@ -2666,3 +2667,21 @@ def test_spline_transformer_extrapolation(bias, intercept, degree):
         splt.transform([[-10]])
     with pytest.raises(ValueError):
         splt.transform([[5]])
+
+
+def test_spline_transformer_kbindiscretizer():
+    # test that spline of degree=0 are equivalent to KBinsDiscretizer
+    rng = np.random.RandomState(97531)
+    X = rng.randn(200).reshape(200, 1)
+    n_bins = 5
+    n_knots = n_bins + 1
+
+    splt = SplineTransformer(degree=0, n_knots=n_knots, knots='quantile',
+                             include_bias=True)
+    splines = splt.fit_transform(X)
+
+    kbd = KBinsDiscretizer(n_bins=n_bins, encode='onehot-dense',
+                           strategy='quantile')
+    kbins = kbd.fit_transform(X)
+
+    assert_array_equal(splines, kbins)
