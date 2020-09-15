@@ -457,6 +457,7 @@ Samples generator
 
    experimental.enable_hist_gradient_boosting
    experimental.enable_iterative_imputer
+   experimental.enable_successive_halving
 
 
 .. _feature_extraction_ref:
