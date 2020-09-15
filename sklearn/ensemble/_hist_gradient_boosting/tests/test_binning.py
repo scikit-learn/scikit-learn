@@ -305,53 +305,57 @@ def test_infinite_values():
 
 
 @pytest.mark.parametrize("n_bins", [15, 256])
-def test_categorical_n_bins_greater_than_cardinality(n_bins):
+def test_categorical_feature(n_bins):
     # test when n_bins is large enough to hold all categories (+ missing
     # values bin which is always allocated)
-    X = np.array([[4] * 2 + [1] * 3 + [10] * 4 +
-                  [0] * 4 + [9] + [7] * 5], dtype=X_DTYPE).T
+    X = np.array([[4] * 500 +
+                  [1] * 3 +
+                  [10] * 4 +
+                  [0] * 4 +
+                  [13] +
+                  [7] * 5 +
+                  [-1] * 10 +
+                  [np.nan] * 2], dtype=X_DTYPE).T
 
     bin_mapper = _BinMapper(n_bins=n_bins,
                             is_categorical=np.array([True])).fit(X)
     assert bin_mapper.n_bins_non_missing_ == [6]
-    assert_allclose(bin_mapper.bin_thresholds_[0], [0, 1, 4, 7, 9, 10])
+    assert_array_equal(bin_mapper.bin_thresholds_[0], [0, 1, 4, 7, 10, 13])
 
     X_trans = bin_mapper.transform(
-        np.array([[10, 1, 9, np.nan, 7, 4, 100, 0]], dtype=X_DTYPE).T)
+        np.array([[10, 1, 13, np.nan, 7, 4, 100, 0]], dtype=X_DTYPE).T)
 
     # missing, and unknown values are mapped to the missing bin
     missing_val_bin = n_bins - 1
-    expected_trans = np.array([[5, 1, 4, missing_val_bin, 3,
+    expected_trans = np.array([[4, 1, 5, missing_val_bin, 3,
                                 2, missing_val_bin, 0]]).T
     assert_array_equal(X_trans, expected_trans)
 
 
 def test_categorical_n_bins_errors():
-    # test error when there is not enough bins
-    X = np.array([[0] * 2 + [1] * 3 + [2] + [3]], dtype=X_DTYPE).T
-
+    # test error when there is not enough bins or when values are >= n_bins
     bin_mapper = _BinMapper(n_bins=3, is_categorical=np.array([True]))
 
+    X = np.array([[0, 1, 2, 3]], dtype=X_DTYPE).T
     msg = ("Categorical feature at index 0 is expected to have a "
            "cardinality <= 2")
     with pytest.raises(ValueError, match=msg):
         bin_mapper.fit(X)
 
-    X = np.array([[0, 5]], dtype=X_DTYPE).T
+    X = np.array([[0, 2]], dtype=X_DTYPE).T
     msg = ("Categorical feature at index 0 is expected to be encoded with "
-           "values <= 2")
+           "values < 2")
     with pytest.raises(ValueError, match=msg):
         bin_mapper.fit(X)
 
+    # negative values or nans are ignored in the counts
+    X = np.array([[-1, -10, 0, 1, np.nan]], dtype=X_DTYPE).T
+    bin_mapper.fit(X)
 
-@pytest.mark.parametrize(
-    "n_bins, expected_n_bins_non_missing",
-    [(128, [10, 5]),
-     (256, [10, 5])]
-)
-def test_categorical_with_numerical_features(n_bins,
-                                             expected_n_bins_non_missing):
-    # check binmapper with mixed data
+
+@pytest.mark.parametrize("n_bins", (128, 256))
+def test_categorical_with_numerical_features(n_bins):
+    # basic check for binmapper with mixed data
     X1 = np.arange(10, 20).reshape(-1, 1)
     X2 = np.arange(10, 15).reshape(-1, 1)
     X2 = np.r_[X2, X2]
@@ -359,9 +363,9 @@ def test_categorical_with_numerical_features(n_bins,
 
     bin_mapper = _BinMapper(n_bins=n_bins,
                             is_categorical=np.array([False, True])).fit(X)
-    assert_array_equal(bin_mapper.n_bins_non_missing_,
-                       expected_n_bins_non_missing)
-    bin_thresholds = bin_mapper.bin_thresholds_
 
+    assert_array_equal(bin_mapper.n_bins_non_missing_, [10, 5])
+
+    bin_thresholds = bin_mapper.bin_thresholds_
     assert len(bin_thresholds) == 2
     assert_array_equal(bin_thresholds[1], np.arange(10, 15))
