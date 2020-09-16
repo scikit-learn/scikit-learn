@@ -646,7 +646,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             The raw predicted values.
         """
         is_binned = getattr(self, '_in_fit', False)
-        dtype = [X_BINNED_DTYPE] if is_binned else [X_DTYPE]
+        dtype = X_BINNED_DTYPE if is_binned else X_DTYPE
         X = check_array(X, dtype=dtype, force_all_finite=False)
         check_is_fitted(self)
         if X.shape[1] != self._n_features:
