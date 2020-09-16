@@ -187,17 +187,17 @@ an estimate for the covariance matrix). Setting this parameter to a value
 between these two extrema will estimate a shrunk version of the covariance
 matrix.
 
-The Ledoit and Wolf estimator of covariance may not always be the best choice.
-For example if the data are Gaussian distributed the
+The shrinked Ledoit and Wolf estimator of covariance may not always be the
+best choice. For example if the data is normally distributed, the
 Oracle Shrinkage Approximating estimator :class:`sklearn.covariance.OAS`
 yields a smaller Mean Squared Error than the one given by Ledoit and Wolf's
 formula used with shrinkage="auto".
 
 The covariance estimator can be chosen using with the ``covariance_estimator``
-parameter of the :class:`discriminant_analysis.LinearDiscriminantAnalysis` class.
-A covariance estimator should have a :term:`fit` method and
-a ``covariance_`` attribute like all covariance estimators in the
-:mod:`sklearn.covariance` package.
+parameter of the :class:`discriminant_analysis.LinearDiscriminantAnalysis`
+class. A covariance estimator should have a :term:`fit` method and a
+``covariance_`` attribute like all covariance estimators in the
+:mod:`sklearn.covariance` module.
 
 
 .. |shrinkage| image:: ../auto_examples/classification/images/sphx_glr_plot_lda_001.png
@@ -205,6 +205,11 @@ a ``covariance_`` attribute like all covariance estimators in the
         :scale: 75
 
 .. centered:: |shrinkage|
+
+.. topic:: Examples:
+
+    :ref:`sphx_glr_auto_examples_classification_plot_lda.py`: Comparison of LDA classifiers
+    with Empirical, Ledoit Wolf and OAS covariance estimator.
 
 Estimation algorithms
 =====================
@@ -243,11 +248,6 @@ within class scatter ratio. It can be used for both classification and
 transform, and it supports shrinkage. However, the 'eigen' solver needs to
 compute the covariance matrix, so it might not be suitable for situations with
 a high number of features.
-
-.. topic:: Examples:
-
-    :ref:`sphx_glr_auto_examples_classification_plot_lda.py`: Comparison of LDA classifiers
-    with Empirical, Ledoit Wolf and OAS covariance estimator.
 
 .. topic:: References:
 
