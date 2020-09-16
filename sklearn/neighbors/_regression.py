@@ -121,7 +121,7 @@ class KNeighborsRegressor(KNeighborsMixin,
     >>> print(neigh.predict([[1.5]]))
     [0.5]
 
-    See also
+    See Also
     --------
     NearestNeighbors
     RadiusNeighborsRegressor
@@ -320,7 +320,7 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin,
     >>> print(neigh.predict([[1.5]]))
     [0.5]
 
-    See also
+    See Also
     --------
     NearestNeighbors
     KNeighborsRegressor
