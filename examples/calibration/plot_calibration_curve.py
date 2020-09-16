@@ -242,9 +242,13 @@ plt.show()
 # behavior to :class:`~sklearn.naive_bayes.GaussianNB`; the calibration
 # curve has a sigmoid shape, which is typical for an under-confident
 # classifier. In the case of :class:`~sklearn.svm.LinearSVC`, this is caused
-# by the margin property of the hinge loss, which lets the model focus on
-# difficult samples that are close to the decision boundary (the support
-# vectors).
+# by the margin property of the hinge loss, which focuses on samples that are
+# close to the decision boundary (support vectors). Samples that are far
+# away from the decision boundary do not impact the hinge loss. It thus makes
+# sense that :class:`~sklearn.svm.LinearSVC` does not try to separate samples
+# in the high confidence region regions. This leads to flatter calibration
+# curves near 0 and 1 and is empirically shown with a variety of datasets
+# in Niculescu-Mizil & Caruana [1]_.
 #
 # Both kinds of calibration (sigmoid and isotonic) can fix this issue and
 # yield nearly identical results.
@@ -291,3 +295,10 @@ score_df.round(3)
 # (e.g., :class:`~sklearn.naive_bayes.GaussianNB`). Non-parametric
 # isotonic calibration can deal with both situations but may require more
 # data to produce good results.
+#
+# References
+# ----------
+#
+# .. [1] `Predicting Good Probabilities with Supervised Learning
+#        <https://dl.acm.org/doi/pdf/10.1145/1102351.1102430>`_,
+#        A. Niculescu-Mizil & R. Caruana, ICML 2005
