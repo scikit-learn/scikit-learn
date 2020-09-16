@@ -60,7 +60,7 @@ feature, code or documentation improvement).
 
 #. Install Cython_ and build the project with pip in :ref:`editable_mode`::
 
-        pip install cython
+        pip install cython numpy
         pip install --verbose --no-build-isolation --editable .
 
 #. Check that the installed scikit-learn has a version number ending with
@@ -327,7 +327,7 @@ Ubuntu::
 
 then proceed as usual::
 
-    pip3 install cython
+    pip3 install cython numpy
     pip3 install --verbose --editable .
 
 Cython and the pre-compiled wheels for the runtime dependencies (numpy, scipy
