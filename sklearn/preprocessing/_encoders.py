@@ -7,7 +7,7 @@ from scipy import sparse
 import numbers
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import check_array
+from ..utils import check_array, is_scalar_nan
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _deprecate_positional_args
 
@@ -700,12 +700,7 @@ class OrdinalEncoder(_BaseEncoder):
         self
         """
         if self.handle_unknown == 'use_encoded_value':
-            try:
-                isnan = np.isnan(self.unknown_value)
-            except TypeError:
-                isnan = False
-
-            if isnan:
+            if is_scalar_nan(self.unknown_value):
                 if np.dtype(self.dtype).kind not in ('f', 'O'):
                     raise ValueError(
                         f"When unknown_value is np.nan, dtype should be "
