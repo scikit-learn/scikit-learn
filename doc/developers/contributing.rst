@@ -206,6 +206,8 @@ then submit a "pull request" (PR).
 In the first few steps, we explain how to locally install scikit-learn, and
 how to set up your git repository:
 
+0.  build me
+
 1. `Create an account <https://github.com/join>`_ on
    GitHub if you do not already have one.
 
@@ -229,7 +231,7 @@ how to set up your git repository:
 
        $ pip install --no-build-isolation --editable .
 
-   for more details about advanced installation, see the
+   If you receive errors in building scikit-learn, follow steps 2-5 in the
    :ref:`install_bleeding_edge` section.
 
 .. _upstream:
