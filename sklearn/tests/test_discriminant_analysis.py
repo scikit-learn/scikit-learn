@@ -359,33 +359,29 @@ def test_lda_store_covariance():
     )
 
 
-def test_lda_shrinkage():
-    """
-    Test that shrunk covariance estimator and
-    shrinkage parameter behave the same
-    """
-    rng = np.random.RandomState(0)
+@pytest.mark.parametrize('seed', range(10))
+def test_lda_shrinkage(seed):
+    # Test that shrunk covariance estimator and shrinkage parameter behave the
+    # same
+    rng = np.random.RandomState(seed)
     X = rng.rand(100, 10)
-    Y = rng.randint(3, size=(100))
+    y = rng.randint(3, size=(100))
     c1 = LinearDiscriminantAnalysis(store_covariance=True, shrinkage=0.5,
                                     solver="lsqr")
     c2 = LinearDiscriminantAnalysis(
             store_covariance=True,
             covariance_estimator=ShrunkCovariance(shrinkage=0.5),
             solver="lsqr")
-    c1.fit(X, Y)
-    c2.fit(X, Y)
-    np.testing.assert_allclose(c1.means_, c2.means_)
-    np.testing.assert_allclose(c1.covariance_, c2.covariance_)
+    c1.fit(X, y)
+    c2.fit(X, y)
+    assert_allclose(c1.means_, c2.means_)
+    assert_allclose(c1.covariance_, c2.covariance_)
 
 
 def test_lda_ledoitwolf():
-    """
-    When shrinkage="auto" current implementation
-    uses ledoitwolf estimation of
-    covariance after standardizing the data.
-    This checks that it is indeed the case
-    """
+    # When shrinkage="auto" current implementation uses ledoitwolf estimation
+    # of covariance after standardizing the data. This checks that it is indeed
+    # the case
     class StandardizedLedoitWolf():
         def fit(self, X):
             sc = StandardScaler()  # standardize features
@@ -395,21 +391,23 @@ def test_lda_ledoitwolf():
             s = sc.scale_[:, np.newaxis] * s * sc.scale_[np.newaxis, :]
             self.covariance_ = s
 
-    X = np.random.rand(100, 10)
-    Y = np.random.randint(3, size=(100,))
+    rng = np.random.RandomState(0)
+    X = rng.rand(100, 10)
+    y = rng.randint(3, size=(100,))
     c1 = LinearDiscriminantAnalysis(
-            store_covariance=True,
-            shrinkage="auto",
-            solver="lsqr")
+        store_covariance=True,
+        shrinkage="auto",
+        solver="lsqr"
+    )
     c2 = LinearDiscriminantAnalysis(
-            store_covariance=True,
-            covariance_estimator=StandardizedLedoitWolf(),
-            solver="lsqr",
-            )
-    c1.fit(X, Y)
-    c2.fit(X, Y)
-    np.testing.assert_allclose(c1.means_, c2.means_)
-    np.testing.assert_allclose(c1.covariance_, c2.covariance_)
+        store_covariance=True,
+        covariance_estimator=StandardizedLedoitWolf(),
+        solver="lsqr"
+    )
+    c1.fit(X, y)
+    c2.fit(X, y)
+    assert_allclose(c1.means_, c2.means_)
+    assert_allclose(c1.covariance_, c2.covariance_)
 
 
 @pytest.mark.parametrize('n_features', [3, 5])
