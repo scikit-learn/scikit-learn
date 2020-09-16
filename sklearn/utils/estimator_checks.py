@@ -168,8 +168,8 @@ def check_supervised_y_no_nan(name, estimator_orig, strict_mode=True):
     y = np.full(10, np.inf)
     y = _enforce_estimator_tags_y(estimator, y)
 
-    errmsg = "Input contains NaN, infinity or a value too large for " \
-             "dtype('float64')."
+    errmsg = ("Input contains NaN, infinity or a value too large for "
+              r"dtype\('float64'\).")
     _assert_raises(ValueError, strict_mode, estimator.fit, X, y, msg=errmsg)
 
 
