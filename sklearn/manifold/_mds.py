@@ -20,7 +20,8 @@ from ..utils.validation import _deprecate_positional_args
 
 
 def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
-                   max_iter=300, verbose=0, eps=1e-3, random_state=None, weight=None):
+                   max_iter=300, verbose=0, eps=1e-3, random_state=None,
+                   weight=None):
     """Computes multidimensional scaling using SMACOF algorithm.
 
     Parameters
@@ -56,8 +57,9 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
         Pass an int for reproducible results across multiple function calls.
         See :term: `Glossary <random_state>`.
 
-    weight : symmetric ndarray of shape (n_samples, n_samples), default=None
-        weighting matrix of similarities. In default, all weights are 1.
+    weight : ndarray of shape (n_samples, n_samples), default=None
+        symmetric weighting matrix of similarities.
+        In default, all weights are 1.
 
     Returns
     -------
@@ -128,7 +130,7 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
             V = np.zeros((n_samples, n_samples))
             for nn in range(n_samples):
                 for mm in range(nn, n_samples):
-                    v = np.zeros((n_samples,1))
+                    v = np.zeros((n_samples, 1))
                     v[nn], v[mm] = 1, -1
                     V += weight[nn, mm] * np.dot(v, v.T)
             X = np.dot(np.linalg.pinv(V), np.dot(B, X))
@@ -221,8 +223,9 @@ def smacof(dissimilarities, *, metric=True, n_components=2, init=None,
     return_n_iter : bool, default=False
         Whether or not to return the number of iterations.
 
-    weight : symmetric ndarray of shape (n_samples, n_samples), default=None
-        weighting matrix of similarities. In default, all weights are 1.
+    weight : ndarray of shape (n_samples, n_samples), default=None
+        symmetric weighting matrix of similarities.
+        In default, all weights are 1.
 
     Returns
     -------
@@ -427,8 +430,9 @@ class MDS(BaseEstimator):
             algorithm. By default, the algorithm is initialized with a randomly
             chosen array.
 
-        weight : symmetric ndarray of shape (n_samples, n_samples), default=None
-            weighting matrix of similarities. In default, all weights are 1.
+        weight : ndarray of shape (n_samples, n_samples), default=None
+            symmetric weighting matrix of similarities.
+            In default, all weights are 1.
         """
         self.fit_transform(X, init=init, weight=weight)
         return self
@@ -450,9 +454,9 @@ class MDS(BaseEstimator):
             Starting configuration of the embedding to initialize the SMACOF
             algorithm. By default, the algorithm is initialized with a randomly
             chosen array.
-
-        weight : symmetric ndarray of shape (n_samples, n_samples), default=None
-            weighting matrix of similarities. In default, all weights are 1.
+        weight : ndarray of shape (n_samples, n_samples), default=None
+            symmetric weighting matrix of similarities.
+            In default, all weights are 1.
         """
         X = self._validate_data(X)
         if X.shape[0] == X.shape[1] and self.dissimilarity != "precomputed":
