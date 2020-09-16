@@ -449,7 +449,7 @@ def test_multilabel_binarizer_non_integer_labels():
         assert_array_equal(mlb.fit_transform(inp), indicator_mat)
         assert_array_equal(mlb.classes_, classes)
         indicator_mat_inv = np.array(mlb.inverse_transform(indicator_mat),
-            dtype=object)
+                                     dtype=object)
         assert_array_equal(indicator_mat_inv, inp)
 
         # fit().transform()
@@ -457,7 +457,7 @@ def test_multilabel_binarizer_non_integer_labels():
         assert_array_equal(mlb.fit(inp).transform(inp), indicator_mat)
         assert_array_equal(mlb.classes_, classes)
         indicator_mat_inv = np.array(mlb.inverse_transform(indicator_mat),
-            dtype=object)
+                                     dtype=object)
         assert_array_equal(indicator_mat_inv, inp)
 
     mlb = MultiLabelBinarizer()
