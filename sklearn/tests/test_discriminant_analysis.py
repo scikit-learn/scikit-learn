@@ -19,6 +19,7 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 from sklearn.discriminant_analysis import _cov
 from sklearn.covariance import ledoit_wolf
+from sklearn.cluster import KMeans
 
 from sklearn.covariance import ShrunkCovariance
 from sklearn.covariance import LedoitWolf
@@ -108,10 +109,19 @@ def test_lda_predict():
     # Test unknown solver
     clf = LinearDiscriminantAnalysis(solver="dummy")
     assert_raises(ValueError, clf.fit, X, y)
+
+    # test bad solver with covariance_estimator
     clf = LinearDiscriminantAnalysis(solver="svd",
                                      covariance_estimator=LedoitWolf())
-    with pytest.raises(NotImplementedError,
+    with pytest.raises(ValueError,
                        match="covariance estimator is not supported with svd"):
+        clf.fit(X, y)
+
+    # test bad covariance estimator
+    clf = LinearDiscriminantAnalysis(solver="lsqr",
+                                     covariance_estimator=KMeans(n_clusters=2))
+    with pytest.raises(ValueError,
+                       match="KMeans does not have a covariance_ attribute"):
         clf.fit(X, y)
 
 
