@@ -631,11 +631,12 @@ class OrdinalEncoder(_BaseEncoder):
 
         .. versionadded:: 0.24
 
-    unknown_value : int, default=None
+    unknown_value : int or np.nan, default=None
         When the parameter handle_unknown is set to 'use_encoded_value', this
         parameter is required and will set the encoded value of unknown
         categories. It has to be distinct from the values used to encode any of
-        the categories in `fit`.
+        the categories in `fit`. If set to np.nan, the `dtype` parameter must
+        be either a float dtype or `object`.
 
         .. versionadded:: 0.24
 
@@ -699,13 +700,25 @@ class OrdinalEncoder(_BaseEncoder):
         self
         """
         if self.handle_unknown == 'use_encoded_value':
-            if not isinstance(self.unknown_value, numbers.Integral):
-                raise TypeError(f"unknown_value should be an integer when "
-                                f"`handle_unknown is 'use_encoded_value'`, "
+            try:
+                isnan = np.isnan(self.unknown_value)
+            except TypeError:
+                isnan = False
+
+            if isnan:
+                if np.dtype(self.dtype).kind not in ('f', 'O'):
+                    raise ValueError(
+                        f"When unknown_value is np.nan, dtype should be "
+                        f"either float or object. Got {self.dtype}."
+                    )
+            elif not isinstance(self.unknown_value, numbers.Integral):
+                raise TypeError(f"unknown_value should be an integer or "
+                                f"np.nan when "
+                                f"handle_unknown is 'use_encoded_value', "
                                 f"got {self.unknown_value}.")
         elif self.unknown_value is not None:
             raise TypeError(f"unknown_value should only be set when "
-                            f"`handle_unknown is 'use_encoded_value'`, "
+                            f"handle_unknown is 'use_encoded_value', "
                             f"got {self.unknown_value}.")
 
         self._fit(X)
@@ -735,11 +748,12 @@ class OrdinalEncoder(_BaseEncoder):
             Transformed input.
         """
         X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown)
+        X_trans = X_int.astype(self.dtype, copy=False)
 
         # create separate category for unknown values
         if self.handle_unknown == 'use_encoded_value':
-            X_int[~X_mask] = self.unknown_value
-        return X_int.astype(self.dtype, copy=False)
+            X_trans[~X_mask] = self.unknown_value
+        return X_trans
 
     def inverse_transform(self, X):
         """
