@@ -206,8 +206,6 @@ then submit a "pull request" (PR).
 In the first few steps, we explain how to locally install scikit-learn, and
 how to set up your git repository:
 
-0.  build me
-
 1. `Create an account <https://github.com/join>`_ on
    GitHub if you do not already have one.
 
