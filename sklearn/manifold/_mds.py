@@ -5,6 +5,8 @@ Multi-dimensional Scaling (MDS).
 # author: Nelle Varoquaux <nelle.varoquaux@gmail.com>
 # License: BSD
 
+# weighted MDS option added by Baihan Lin <doerlbh@gmail.com>
+
 import numpy as np
 from joblib import Parallel, delayed, effective_n_jobs
 
@@ -409,7 +411,7 @@ class MDS(BaseEstimator):
         self.fit_transform(X, init=init)
         return self
 
-    def fit_transform(self, X, y=None, init=None):
+    def fit_transform(self, X, y=None, init=None, weight=None):
         """
         Fit the data from X, and returns the embedded coordinates.
 
@@ -426,6 +428,9 @@ class MDS(BaseEstimator):
             Starting configuration of the embedding to initialize the SMACOF
             algorithm. By default, the algorithm is initialized with a randomly
             chosen array.
+
+        weight: symmetric ndarray of shape (n_samples, n_samples), default=None	
+	            weighting matrix of similarities. In default, all weights are 1.
         """
         X = self._validate_data(X)
         if X.shape[0] == X.shape[1] and self.dissimilarity != "precomputed":
@@ -447,6 +452,6 @@ class MDS(BaseEstimator):
             n_components=self.n_components, init=init, n_init=self.n_init,
             n_jobs=self.n_jobs, max_iter=self.max_iter, verbose=self.verbose,
             eps=self.eps, random_state=self.random_state,
-            return_n_iter=True)
+            return_n_iter=True, weight=weight)
 
         return self.embedding_
