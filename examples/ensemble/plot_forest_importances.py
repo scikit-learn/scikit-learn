@@ -11,10 +11,10 @@ along with their inter-trees variability.
 As expected, the plot suggests that 3 features are informative, while the
 remaining are not.
 
-Warning: impurity-based feature importances can be misleading for high
-cardinality features (many unique values). See
-:func:`sklearn.inspection.permutation_importance` as an alternative.
-
+.. warning::
+    Impurity-based feature importances can be misleading for high cardinality
+    features (many unique values). See
+    :func:`sklearn.inspection.permutation_importance` as an alternative.
 """
 print(__doc__)
 

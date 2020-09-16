@@ -219,15 +219,13 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
 
     See Also
     ---------
-    :func:`sklearn.model_selection.cross_val_score`:
-        Run cross-validation for single metric evaluation.
+    cross_val_score : Run cross-validation for single metric evaluation.
 
-    :func:`sklearn.model_selection.cross_val_predict`:
-        Get predictions from each split of cross-validation for diagnostic
-        purposes.
+    cross_val_predict : Get predictions from each split of cross-validation for
+        diagnostic purposes.
 
-    :func:`sklearn.metrics.make_scorer`:
-        Make a scorer from a performance metric or loss function.
+    sklearn.metrics.make_scorer : Make a scorer from a performance metric or
+        loss function.
 
     """
     X, y, groups = indexable(X, y, groups)
@@ -411,7 +409,7 @@ def cross_val_score(estimator, X, y=None, *, groups=None, scoring=None,
 
     Returns
     -------
-    scores : array of float, shape=(len(list(cv)),)
+    scores : ndarray of float of shape=(len(list(cv)),)
         Array of scores of the estimator for each run of the cross validation.
 
     Examples
@@ -427,16 +425,14 @@ def cross_val_score(estimator, X, y=None, *, groups=None, scoring=None,
 
     See Also
     ---------
-    :func:`sklearn.model_selection.cross_validate`:
-        To run cross-validation on multiple metrics and also to return
-        train scores, fit times and score times.
+    cross_validate : To run cross-validation on multiple metrics and also to
+        return train scores, fit times and score times.
 
-    :func:`sklearn.model_selection.cross_val_predict`:
-        Get predictions from each split of cross-validation for diagnostic
-        purposes.
+    cross_val_predict : Get predictions from each split of cross-validation for
+        diagnostic purposes.
 
-    :func:`sklearn.metrics.make_scorer`:
-        Make a scorer from a performance metric or loss function.
+    sklearn.metrics.make_scorer : Make a scorer from a performance metric or
+        loss function.
 
     """
     # To ensure multimetric format is not supported
@@ -790,15 +786,15 @@ def cross_val_predict(estimator, X, y=None, *, groups=None, cv=None,
               'decision_function' and the target is binary: (n_samples,)
             - When `method` is one of {'predict_proba', 'predict_log_proba',
               'decision_function'} (unless special case above):
-              (n_samples, n_classes).
-            - If `estimator` is :term:`multioutput`, a third dimension
+              (n_samples, n_classes)
+            - If `estimator` is :term:`multioutput`, an extra dimension
               'n_outputs' is added to the end of each shape above.
 
-    See also
+    See Also
     --------
-    cross_val_score : calculate score for each CV split
-
-    cross_validate : calculate one or more scores and timings for each CV split
+    cross_val_score : Calculate score for each CV split.
+    cross_validate : Calculate one or more scores and timings for each CV
+        split.
 
     Notes
     -----
@@ -1039,9 +1035,21 @@ def _check_is_permutation(indices, n_samples):
 def permutation_test_score(estimator, X, y, *, groups=None, cv=None,
                            n_permutations=100, n_jobs=None, random_state=0,
                            verbose=0, scoring=None):
-    """Evaluate the significance of a cross-validated score with permutations
+    """Evaluates the significance of a cross-validated score using permutations
 
-    Read more in the :ref:`User Guide <cross_validation>`.
+    Permutes targets to generate 'randomized data' and compute the empirical
+    p-value against the null hypothesis that features and targets are
+    independent.
+
+    The p-value represents the fraction of randomized data sets where the
+    estimator performed as well or better than in the original data. A small
+    p-value suggests that there is a real dependency between features and
+    targets which has been used by the estimator to give good predictions.
+    A large p-value may be due to lack of real dependency between features
+    and targets or the estimator was not able to use the dependency to
+    give good predictions.
+
+    Read more in the :ref:`User Guide <permutation_test_score>`.
 
     Parameters
     ----------
@@ -1129,10 +1137,10 @@ def permutation_test_score(estimator, X, y, *, groups=None, cv=None,
     -----
     This function implements Test 1 in:
 
-        Ojala and Garriga. Permutation Tests for Studying Classifier
-        Performance.  The Journal of Machine Learning Research (2010)
-        vol. 11
-        `[pdf] <http://www.jmlr.org/papers/volume11/ojala10a/ojala10a.pdf>`_.
+        Ojala and Garriga. `Permutation Tests for Studying Classifier
+        Performance
+        <http://www.jmlr.org/papers/volume11/ojala10a/ojala10a.pdf>`_. The
+        Journal of Machine Learning Research (2010) vol. 11
 
     """
     X, y, groups = indexable(X, y, groups)
@@ -1271,7 +1279,7 @@ def learning_curve(estimator, X, y, *, groups=None,
         Whether to shuffle training data before taking prefixes of it
         based on``train_sizes``.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Used when ``shuffle`` is True. Pass an int for reproducible
         output across multiple function calls.
         See :term:`Glossary <random_state>`.

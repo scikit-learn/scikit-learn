@@ -228,10 +228,9 @@ class LinearDiscriminantAnalysis(LinearClassifierMixin,
     classes_ : array-like of shape (n_classes,)
         Unique class labels.
 
-    See also
+    See Also
     --------
-    sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis: Quadratic
-        Discriminant Analysis
+    QuadraticDiscriminantAnalysis : Quadratic Discriminant Analysis.
 
     Examples
     --------
@@ -651,10 +650,9 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
-    See also
+    See Also
     --------
-    sklearn.discriminant_analysis.LinearDiscriminantAnalysis: Linear
-        Discriminant Analysis
+    LinearDiscriminantAnalysis : Linear Discriminant Analysis.
     """
     @_deprecate_positional_args
     def __init__(self, *, priors=None, reg_param=0., store_covariance=False,

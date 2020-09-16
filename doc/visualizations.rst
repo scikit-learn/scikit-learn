@@ -1,3 +1,7 @@
+.. Places parent toc into the sidebar
+
+:parenttoc: True
+
 .. include:: includes/big_toc_css.rst
 
 .. _visualizations:
@@ -76,6 +80,7 @@ Functions
    calibration.plot_calibration_curve
    inspection.plot_partial_dependence
    metrics.plot_confusion_matrix
+   metrics.plot_det_curve
    metrics.plot_precision_recall_curve
    metrics.plot_roc_curve
 
@@ -90,5 +95,6 @@ Display Objects
    calibration.CalibrationDisplay
    inspection.PartialDependenceDisplay
    metrics.ConfusionMatrixDisplay
+   metrics.DetCurveDisplay
    metrics.PrecisionRecallDisplay
    metrics.RocCurveDisplay
