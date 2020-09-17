@@ -20,7 +20,7 @@ from ..utils.fixes import delayed
 
 
 def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
-                   max_iter=300, verbose=0, eps=1e-3, random_state=None):
+                   max_iter=300, verbose=0, eps=1e-3, random_state=None, weights=None):
     """Computes multidimensional scaling using SMACOF algorithm.
 
     Parameters
@@ -56,6 +56,11 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
         Pass an int for reproducible results across multiple function calls.
         See :term: `Glossary <random_state>`.
 
+    weights : ndarray of shape (n_samples, n_samples)
+        Weights of pairwise dissimilarities (0 indicates that this dissimilarity
+        is ignored, wheras non-zero positive value w_ij indicates strength of 
+        dissimilarity d_ij)
+
     Returns
     -------
     X : ndarray of shape (n_samples, n_components)
@@ -72,6 +77,13 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
 
     n_samples = dissimilarities.shape[0]
     random_state = check_random_state(random_state)
+    
+    if weights is None:
+       weights = np.ones(shape=(n_samples, n_samples), dtype=np.float)
+
+    V = -weights
+    V[np.diag_indices_from(V)] = np.sum(weights, 1) - weights[np.diag_indices_from(weights)]
+    Vinv = np.linalg.pinv(V)
 
     sim_flat = ((1 - np.tri(n_samples)) * dissimilarities).ravel()
     sim_flat_w = sim_flat[sim_flat != 0]
@@ -109,14 +121,14 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
                                    (disparities ** 2).sum())
 
         # Compute stress
-        stress = ((dis.ravel() - disparities.ravel()) ** 2).sum() / 2
+        stress = (weights.ravel() * (dis.ravel() - disparities.ravel()) ** 2).sum() / 2
 
         # Update X using the Guttman transform
         dis[dis == 0] = 1e-5
         ratio = disparities / dis
         B = - ratio
         B[np.arange(len(B)), np.arange(len(B))] += ratio.sum(axis=1)
-        X = 1. / n_samples * np.dot(B, X)
+        X = np.dot(Vinv, np.dot(B, X))
 
         dis = np.sqrt((X ** 2).sum(axis=1)).sum()
         if verbose >= 2:
@@ -135,7 +147,7 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
 @_deprecate_positional_args
 def smacof(dissimilarities, *, metric=True, n_components=2, init=None,
            n_init=8, n_jobs=None, max_iter=300, verbose=0, eps=1e-3,
-           random_state=None, return_n_iter=False):
+           random_state=None, return_n_iter=False, weights=None):
     """Computes multidimensional scaling using the SMACOF algorithm.
 
     The SMACOF (Scaling by MAjorizing a COmplicated Function) algorithm is a
@@ -205,6 +217,11 @@ def smacof(dissimilarities, *, metric=True, n_components=2, init=None,
 
     return_n_iter : bool, default=False
         Whether or not to return the number of iterations.
+    
+    weights : ndarray of shape (n_samples, n_samples)
+        Weights of pairwise dissimilarities (0 indicates that this dissimilarity
+        is ignored, wheras non-zero positive value w_ij indicates strength of 
+        dissimilarity d_ij)
 
     Returns
     -------
@@ -251,7 +268,7 @@ def smacof(dissimilarities, *, metric=True, n_components=2, init=None,
                 dissimilarities, metric=metric,
                 n_components=n_components, init=init,
                 max_iter=max_iter, verbose=verbose,
-                eps=eps, random_state=random_state)
+                eps=eps, random_state=random_state, weights=weights)
             if best_stress is None or stress < best_stress:
                 best_stress = stress
                 best_pos = pos.copy()
@@ -262,7 +279,7 @@ def smacof(dissimilarities, *, metric=True, n_components=2, init=None,
             delayed(_smacof_single)(
                 dissimilarities, metric=metric, n_components=n_components,
                 init=init, max_iter=max_iter, verbose=verbose, eps=eps,
-                random_state=seed)
+                random_state=seed, weights=weights)
             for seed in seeds)
         positions, stress, n_iters = zip(*results)
         best = np.argmin(stress)
@@ -348,6 +365,12 @@ class MDS(BaseEstimator):
     n_iter_ : int
         The number of iterations corresponding to the best stress.
 
+    weights : ndarray of shape (n_samples, n_samples)
+            Weights of pairwise dissimilarities (0 indicates that this dissimilarity
+            is ignored, wheras non-zero positive value w_ij indicates strength of 
+            dissimilarity d_ij). If no weights are specified, all dissimilarities are
+            fiven equal unity strength.
+
     Examples
     --------
     >>> from sklearn.datasets import load_digits
@@ -397,7 +420,7 @@ class MDS(BaseEstimator):
     def _pairwise(self):
         return self.dissimilarity == "precomputed"
 
-    def fit(self, X, y=None, init=None):
+    def fit(self, X, y=None, init=None, weights=None):
         """
         Computes the position of the points in the embedding space.
 
@@ -414,11 +437,16 @@ class MDS(BaseEstimator):
             Starting configuration of the embedding to initialize the SMACOF
             algorithm. By default, the algorithm is initialized with a randomly
             chosen array.
+            
+        weights : ndarray of shape (n_samples, n_samples)
+            Weights of pairwise dissimilarities (0 indicates that this dissimilarity
+            is ignored, wheras non-zero positive value w_ij indicates strength of 
+            dissimilarity d_ij)
         """
-        self.fit_transform(X, init=init)
+        self.fit_transform(X, init=init, weights=weights)
         return self
 
-    def fit_transform(self, X, y=None, init=None):
+    def fit_transform(self, X, y=None, init=None, weights=None):
         """
         Fit the data from X, and returns the embedded coordinates.
 
@@ -435,6 +463,11 @@ class MDS(BaseEstimator):
             Starting configuration of the embedding to initialize the SMACOF
             algorithm. By default, the algorithm is initialized with a randomly
             chosen array.
+            
+        weights : ndarray of shape (n_samples, n_samples)
+            Weights of pairwise dissimilarities (0 indicates that this dissimilarity
+            is ignored, wheras non-zero positive value w_ij indicates strength of 
+            dissimilarity d_ij)
         """
         X = self._validate_data(X)
         if X.shape[0] == X.shape[1] and self.dissimilarity != "precomputed":
@@ -456,6 +489,6 @@ class MDS(BaseEstimator):
             n_components=self.n_components, init=init, n_init=self.n_init,
             n_jobs=self.n_jobs, max_iter=self.max_iter, verbose=self.verbose,
             eps=self.eps, random_state=self.random_state,
-            return_n_iter=True)
+            return_n_iter=True, weights=weights)
 
         return self.embedding_
