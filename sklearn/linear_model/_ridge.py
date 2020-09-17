@@ -711,12 +711,12 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
 
         .. versionadded:: 0.17
 
-    See also
+    See Also
     --------
-    RidgeClassifier : Ridge classifier
-    RidgeCV : Ridge regression with built-in cross validation
+    RidgeClassifier : Ridge classifier.
+    RidgeCV : Ridge regression with built-in cross validation.
     :class:`~sklearn.kernel_ridge.KernelRidge` : Kernel ridge regression
-        combines ridge regression with the kernel trick
+        combines ridge regression with the kernel trick.
 
     Examples
     --------
@@ -1749,6 +1749,8 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         fitting, the `alpha_` attribute will contain a value for each target.
         When set to `False`, a single alpha is used for all targets.
 
+        .. versionadded:: 0.24
+
     Attributes
     ----------
     cv_values_ : ndarray of shape (n_samples, n_alphas) or \
@@ -1783,11 +1785,11 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
     >>> clf.score(X, y)
     0.5166...
 
-    See also
+    See Also
     --------
-    Ridge : Ridge regression
-    RidgeClassifier : Ridge classifier
-    RidgeClassifierCV : Ridge classifier with built-in cross validation
+    Ridge : Ridge regression.
+    RidgeClassifier : Ridge classifier.
+    RidgeClassifierCV : Ridge classifier with built-in cross validation.
     """
 
 
@@ -1892,11 +1894,11 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     >>> clf.score(X, y)
     0.9630...
 
-    See also
+    See Also
     --------
-    Ridge : Ridge regression
-    RidgeClassifier : Ridge classifier
-    RidgeCV : Ridge regression with built-in cross validation
+    Ridge : Ridge regression.
+    RidgeClassifier : Ridge classifier.
+    RidgeCV : Ridge regression with built-in cross validation.
 
     Notes
     -----

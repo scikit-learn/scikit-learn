@@ -629,8 +629,8 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
 
     See Also
     --------
-    RegressorChain: Equivalent for regression
-    MultioutputClassifier: Classifies each output independently rather than
+    RegressorChain : Equivalent for regression.
+    MultioutputClassifier : Classifies each output independently rather than
         chaining.
 
     References
@@ -796,10 +796,10 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
            [1., 1.],
            [2., 0.]])
 
-    See also
+    See Also
     --------
-    ClassifierChain: Equivalent for classification
-    MultioutputRegressor: Learns each output independently rather than
+    ClassifierChain : Equivalent for classification.
+    MultioutputRegressor : Learns each output independently rather than
         chaining.
 
     """

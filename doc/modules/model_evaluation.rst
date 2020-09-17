@@ -1326,21 +1326,48 @@ area under the roc curve, the curve information is summarized in one number.
 For more information see the `Wikipedia article on AUC
 <https://en.wikipedia.org/wiki/Receiver_operating_characteristic#Area_under_the_curve>`_.
 
-  >>> import numpy as np
-  >>> from sklearn.metrics import roc_auc_score
-  >>> y_true = np.array([0, 0, 1, 1])
-  >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
-  >>> roc_auc_score(y_true, y_scores)
-  0.75
-
-In multi-label classification, the :func:`roc_auc_score` function is
-extended by averaging over the labels as :ref:`above <average>`.
-
 Compared to metrics such as the subset accuracy, the Hamming loss, or the
 F1 score, ROC doesn't require optimizing a threshold for each label.
 
-The :func:`roc_auc_score` function can also be used in multi-class
-classification. Two averaging strategies are currently supported: the
+.. _roc_auc_binary:
+
+Binary case
+^^^^^^^^^^^
+
+In the **binary case**, you can either provide the probability estimates, using
+the `classifier.predict_proba()` method, or the non-thresholded decision values
+given by the `classifier.decision_function()` method. In the case of providing
+the probability estimates, the probability of the class with the
+"greater label" should be provided. The "greater label" corresponds to
+`classifier.classes_[1]` and thus `classifier.predict_proba(X)[:, 1]`.
+Therefore, the `y_score` parameter is of size (n_samples,).
+
+  >>> from sklearn.datasets import load_breast_cancer
+  >>> from sklearn.linear_model import LogisticRegression
+  >>> from sklearn.metrics import roc_auc_score
+  >>> X, y = load_breast_cancer(return_X_y=True)
+  >>> clf = LogisticRegression(solver="liblinear").fit(X, y)
+  >>> clf.classes_
+  array([0, 1])
+
+We can use the probability estimates corresponding to `clf.classes_[1]`.
+
+  >>> y_score = clf.predict_proba(X)[:, 1]
+  >>> roc_auc_score(y, y_score)
+  0.99...
+
+Otherwise, we can use the non-thresholded decision values
+
+  >>> roc_auc_score(y, clf.decision_function(X))
+  0.99...
+
+.. _roc_auc_multiclass:
+
+Multi-class case
+^^^^^^^^^^^^^^^^
+
+The :func:`roc_auc_score` function can also be used in **multi-class
+classification**. Two averaging strategies are currently supported: the
 one-vs-one algorithm computes the average of the pairwise ROC AUC scores, and
 the one-vs-rest algorithm computes the average of the ROC AUC scores for each
 class against all other classes. In both cases, the predicted labels are
@@ -1393,6 +1420,34 @@ to the given limit.
    :target: ../auto_examples/model_selection/plot_roc.html
    :scale: 75
    :align: center
+
+.. _roc_auc_multilabel:
+
+Multi-label case
+^^^^^^^^^^^^^^^^
+
+In **multi-label classification**, the :func:`roc_auc_score` function is
+extended by averaging over the labels as :ref:`above <average>`. In this case,
+you should provide a `y_score` of shape `(n_samples, n_classes)`. Thus, when
+using the probability estimates, one needs to select the probability of the
+class with the greater label for each output.
+
+  >>> from sklearn.datasets import make_multilabel_classification
+  >>> from sklearn.multioutput import MultiOutputClassifier
+  >>> X, y = make_multilabel_classification(random_state=0)
+  >>> inner_clf = LogisticRegression(solver="liblinear", random_state=0)
+  >>> clf = MultiOutputClassifier(inner_clf).fit(X, y)
+  >>> y_score = np.transpose([y_pred[:, 1] for y_pred in clf.predict_proba(X)])
+  >>> roc_auc_score(y, y_score, average=None)
+  array([0.82..., 0.86..., 0.94..., 0.85... , 0.94...])
+
+And the decision values do not require such processing.
+
+  >>> from sklearn.linear_model import RidgeClassifierCV
+  >>> clf = RidgeClassifierCV().fit(X, y)
+  >>> y_score = clf.decision_function(X)
+  >>> roc_auc_score(y, y_score, average=None)
+  array([0.81..., 0.84... , 0.93..., 0.87..., 0.94...])
 
 .. topic:: Examples:
 

@@ -437,7 +437,7 @@ You can check for common programming errors with the following tools:
   <https://pandas.pydata.org/pandas-docs/stable/development/contributing.html#type-hints>`_
   for style guidelines. Whether you add type annotation or not::
 
-    mypy --ignore-missing-import sklearn
+    mypy sklearn
 
   must not produce new errors in your pull request. Using `# type: ignore`
   annotation can be a workaround for a few cases that are not supported by
@@ -485,6 +485,7 @@ message, the following actions are taken.
     [ci skip]              CI is skipped completely
     [lint skip]            Azure pipeline skips linting
     [scipy-dev]            Add a Travis build with our dependencies (numpy, scipy, etc ...) development builds
+    [icc-build]            Add a Travis build with the Intel C compiler (ICC)
     [arm64]                Add a Travis build for the ARM64 / aarch64 little endian architecture
     [doc skip]             Docs are not built
     [doc quick]            Docs built, but excludes example gallery plots
@@ -689,12 +690,12 @@ opposed to how it works "under the hood".
 
 Finally, follow the formatting rules below to make it consistently good:
 
-* Add "See also" in docstrings for related classes/functions.
+* Add "See Also" in docstrings for related classes/functions.
 
-* "See also" in docstrings should be one line per reference,
+* "See Also" in docstrings should be one line per reference,
   with a colon and an explanation, for example::
 
-    See also
+    See Also
     --------
     SelectKBest : Select features based on the k highest scores.
     SelectFpr : Select features based on a false positive rate test.
@@ -820,7 +821,7 @@ To test code coverage, you need to install the `coverage
 Monitoring performance
 ======================
 
-*This section is heavily inspired from the* `pandas documentation 
+*This section is heavily inspired from the* `pandas documentation
 <https://pandas.pydata.org/docs/development/contributing.html#running-the-performance-test-suite>`_.
 
 When proposing changes to the existing code base, it's important to make sure
@@ -907,6 +908,8 @@ can run for a provided list of values for the `n_jobs` parameter.
 
 More information on how to write a benchmark and how to use asv can be found in
 the `asv documentation <https://asv.readthedocs.io/en/latest/index.html>`_.
+
+.. _issue_tracker_tags:
 
 Issue Tracker Tags
 ==================

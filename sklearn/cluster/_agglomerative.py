@@ -416,9 +416,9 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
         distances[i] refers to the distance between children[i][0] and
         children[i][1] when they are merged.
 
-    See also
+    See Also
     --------
-    ward_tree : hierarchical clustering with ward linkage
+    ward_tree : Hierarchical clustering with ward linkage.
     """
     X = np.asarray(X)
     if X.ndim == 1:

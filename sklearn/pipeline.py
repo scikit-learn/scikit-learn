@@ -81,8 +81,7 @@ class Pipeline(_BaseComposition):
 
     See Also
     --------
-    sklearn.pipeline.make_pipeline : Convenience function for simplified
-        pipeline construction.
+    make_pipeline : Convenience function for simplified pipeline construction.
 
     Examples
     --------
@@ -116,6 +115,9 @@ class Pipeline(_BaseComposition):
     def get_params(self, deep=True):
         """Get parameters for this estimator.
 
+        Returns the parameters given in the constructor as well as the
+        estimators contained within the `steps` of the `Pipeline`.
+
         Parameters
         ----------
         deep : bool, default=True
@@ -132,7 +134,9 @@ class Pipeline(_BaseComposition):
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
 
-        Valid parameter keys can be listed with ``get_params()``.
+        Valid parameter keys can be listed with ``get_params()``. Note that
+        you can directly set the parameters of the estimators contained in
+        `steps`.
 
         Returns
         -------
@@ -692,8 +696,8 @@ def make_pipeline(*steps, memory=None, verbose=False):
 
     See Also
     --------
-    sklearn.pipeline.Pipeline : Class for creating a pipeline of
-        transforms with a final estimator.
+    Pipeline : Class for creating a pipeline of transforms with a final
+        estimator.
 
     Examples
     --------
@@ -801,8 +805,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
     See Also
     --------
-    sklearn.pipeline.make_union : Convenience function for simplified
-        feature union construction.
+    make_union : Convenience function for simplified feature union
+        construction.
 
     Examples
     --------
@@ -829,6 +833,10 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     def get_params(self, deep=True):
         """Get parameters for this estimator.
 
+        Returns the parameters given in the constructor as well as the
+        estimators contained within the `transformer_list` of the
+        `FeatureUnion`.
+
         Parameters
         ----------
         deep : bool, default=True
@@ -845,7 +853,9 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
 
-        Valid parameter keys can be listed with ``get_params()``.
+        Valid parameter keys can be listed with ``get_params()``. Note that
+        you can directly set the parameters of the estimators contained in
+        `tranformer_list`.
 
         Returns
         -------
@@ -1059,8 +1069,8 @@ def make_union(*transformers, n_jobs=None, verbose=False):
 
     See Also
     --------
-    sklearn.pipeline.FeatureUnion : Class for concatenating the results
-        of multiple transformer objects.
+    FeatureUnion : Class for concatenating the results of multiple transformer
+        objects.
 
     Examples
     --------
