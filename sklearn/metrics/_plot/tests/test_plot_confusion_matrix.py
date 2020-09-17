@@ -10,6 +10,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC, SVR
+from sklearn.utils.multiclass import unique_labels
 
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import plot_confusion_matrix
@@ -314,3 +315,14 @@ def test_default_labels(pyplot, display_labels, expected_labels):
 
     assert_array_equal(x_ticks, expected_labels)
     assert_array_equal(y_ticks, expected_labels)
+
+    
+def test_error_on_dataset_with_labels_unseen_by_the_classifier(fitted_clf, data):
+    # shift the true labels to get values that are not present in 'fitted_clf.classes_'
+    X, y = data
+    y = y + 1
+    disp = plot_confusion_matrix(fitted_clf, X, y, labels=None, display_labels=None)
+    disp_labels = set([l.get_text() for l in disp.ax_.get_xticklabels()])
+    correct_labels = unique_labels(y, fitted_clf.predict(X))
+    correct_labels = set([str(lbl) for lbl in correct_labels])
+    assert len(disp_labels.difference(correct_labels)) == 0
