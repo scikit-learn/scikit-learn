@@ -640,6 +640,7 @@ def test_convert_container(constructor_name, container_type):
 
 
 def test_raises():
+    # Tests for the raises context manager
 
     # Proper type, no match
     with raises(TypeError):
