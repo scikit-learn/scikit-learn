@@ -104,7 +104,8 @@ def test_fit_transform_n_bins_array(strategy, expected):
 def test_invalid_n_features():
     est = KBinsDiscretizer(n_bins=3).fit(X)
     bad_X = np.arange(25).reshape(5, -1)
-    err_msg = "Incorrect number of features. Expecting 4, received 5"
+    err_msg = ("X has 5 features, but KBinsDiscretizer "
+               "is expecting 4 features as input.")
     with pytest.raises(ValueError, match=err_msg):
         est.transform(bad_X)
 

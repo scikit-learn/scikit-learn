@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
-
-# Author: Henry Lin <hlin117@gmail.com>
-#         Tom Dupré la Tour
+# Authors: Henry Lin <hlin117@gmail.com>
+#          Tom Dupré la Tour
+#          Juan Carlos Alfaro Jiménez <JuanCarlos.Alfaro@uclm.es>
 
 # License: BSD
 
@@ -13,12 +12,125 @@ import warnings
 from . import OneHotEncoder
 
 from ..base import BaseEstimator, TransformerMixin
+from ._mdlp_discretization import find_binning_thresholds
+from ._mdlp_discretization import DTYPE, ITYPE, SIZE, UINT8
+from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _deprecate_positional_args
 
 
-class KBinsDiscretizer(TransformerMixin, BaseEstimator):
+class _BaseDiscretizer(TransformerMixin, BaseEstimator):
+    """Base class for all discretizers."""
+
+    def _validate_dtype(self, X):
+        """Validate the output data type."""
+        supported_dtypes = (None, np.float32, np.float64)
+
+        if self.dtype is None:
+            output_dtype = X.dtype
+        elif self.dtype in supported_dtypes:
+            output_dtype = self.dtype
+        else:
+            raise ValueError("Valid options for 'dtype' are "
+                             f"type are {supported_dtypes}. "
+                             f"Got dtype={self.dtype}  instead.")
+
+        return output_dtype
+
+    def _validate_encode(self):
+        """Validate the method to encode the result."""
+        valid_encodes = ("onehot", "onehot-dense", "ordinal")
+
+        if self.encode not in valid_encodes:
+            raise ValueError("Valid options for 'encode' "
+                             f"are {valid_encodes}. Got "
+                             f"encode='{self.encode}' instead.")
+
+    def transform(self, X):
+        """Discretize the data.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features), dtype={int, float}
+            The data to discretize.
+
+        Returns
+        -------
+        Xt : {ndarray, sparse matrix}, dtype={np.float32, np.float64}
+            The data in the binned space. Will be a sparse matrix
+            if `self.encode="onehot"` and ndarray otherwise.
+        """
+        check_is_fitted(self)
+
+        # Check the input data and the attributes
+        dtype = (np.float64, np.float32) if self.dtype is None else self.dtype
+
+        Xt = self._validate_data(X, reset=False, copy=True, dtype=dtype)
+
+        bin_edges = self.bin_edges_
+
+        for jj in range(self.n_features_in_):
+            # Values close to a bin edge are susceptible to numeric
+            # instability. Thus, add epsilon to ensure these values
+            # are binned correctly w.r.t. to the decimal truncation
+            rtol = 1.e-5
+            atol = 1.e-8
+            eps = atol + rtol * np.abs(Xt[:, jj])
+            Xt[:, jj] = np.digitize(Xt[:, jj] + eps, bin_edges[jj][1:])
+
+        np.clip(Xt, 0, self.n_bins_ - 1, out=Xt)
+
+        if self.encode == "ordinal":
+            return Xt
+
+        dtype_init = None
+
+        if "onehot" in self.encode:
+            dtype_init = self._encoder.dtype
+            self._encoder.dtype = Xt.dtype
+        try:
+            Xt_enc = self._encoder.transform(Xt)
+        finally:
+            # Revert the initial type to avoid modifying
+            self._encoder.dtype = dtype_init
+
+        return Xt_enc
+
+    def inverse_transform(self, Xt):
+        """Transform discretized data back to original feature space.
+
+        Note that this function does not regenerate the
+        original data due to discretization rounding.
+
+        Parameters
+        ----------
+        Xt : array-like of shape (n_samples, n_features), dtype={int, float}
+            The transformed data in the binned space.
+
+        Returns
+        -------
+        Xinv : ndarray, dtype={np.float32, np.float64}
+            The data in the original feature space.
+        """
+        check_is_fitted(self)
+
+        if "onehot" in self.encode:
+            Xt = self._encoder.inverse_transform(Xt)
+
+        Xinv = self._validate_data(Xt,
+                                   copy=True,
+                                   dtype=(np.float64, np.float32))
+
+        for jj in range(self.n_features_in_):
+            bin_edges = self.bin_edges_[jj]
+            bin_centers = (bin_edges[1:] + bin_edges[:-1]) * 0.5
+            Xinv[:, jj] = bin_centers[np.int_(Xinv[:, jj])]
+
+        return Xinv
+
+
+class KBinsDiscretizer(_BaseDiscretizer):
     """
     Bin continuous data into intervals.
 
@@ -75,8 +187,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
     See Also
     --------
-    Binarizer : Class used to bin values as ``0`` or
-        ``1`` based on a parameter ``threshold``.
+    Binarizer : Class to bin values as `0` or `1` based on a ``threshold``.
+    MDLPDiscretizer : Class to bin values using the MDLP strategy.
 
     Notes
     -----
@@ -122,7 +234,6 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
            [-0.5,  2.5, -2.5, -0.5],
            [ 0.5,  3.5, -1.5,  0.5],
            [ 0.5,  3.5, -1.5,  1.5]])
-
     """
 
     @_deprecate_positional_args
@@ -152,23 +263,9 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         """
         X = self._validate_data(X, dtype='numeric')
 
-        supported_dtype = (np.float64, np.float32)
-        if self.dtype in supported_dtype:
-            output_dtype = self.dtype
-        elif self.dtype is None:
-            output_dtype = X.dtype
-        else:
-            raise ValueError(
-                f"Valid options for 'dtype' are "
-                f"{supported_dtype + (None,)}. Got dtype={self.dtype} "
-                f" instead."
-            )
+        output_dtype = self._validate_dtype(X)
+        self._validate_encode()
 
-        valid_encode = ('onehot', 'onehot-dense', 'ordinal')
-        if self.encode not in valid_encode:
-            raise ValueError("Valid options for 'encode' are {}. "
-                             "Got encode={!r} instead."
-                             .format(valid_encode, self.encode))
         valid_strategy = ('uniform', 'quantile', 'kmeans')
         if self.strategy not in valid_strategy:
             raise ValueError("Valid options for 'strategy' are {}. "
@@ -270,89 +367,177 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                              .format(KBinsDiscretizer.__name__, indices))
         return n_bins
 
-    def transform(self, X):
-        """
-        Discretize the data.
+
+class MDLPDiscretizer(_BaseDiscretizer):
+    """Bin continuous data into intervals using the MDLP strategy.
+
+    Read more in the :ref:`User Guide <preprocessing_discretization>`.
+
+    .. versionadded:: 0.24
+
+    Parameters
+    ----------
+    encode : {"onehot", "onehot-dense", "ordinal"}, default="onehot"
+        The method used to encode the transformed result.
+
+        onehot
+            Encode the transformed result with one-hot encoding
+            and return a sparse matrix. Ignored features are always
+            stacked to the right.
+
+        onehot-dense
+            Encode the transformed result with one-hot encoding
+            and return a dense array. Ignored features are always
+            stacked to the right.
+
+        ordinal
+            Return the bin identifier encoded as an integer value.
+
+    dtype : {np.float32, np.float64}, default=None
+        The desired data type for the output. If `None`, the output data
+        type is consistent with input data type. Only `np.float32` and
+        `np.float64` are supported.
+
+    Attributes
+    ----------
+    n_bins_ : ndarray of shape (n_features,), dtype=int
+        The number of bins per feature.
+
+    bin_edges_ : list of ndarray of shape (n_features,) of float64
+        The edges of each bin, containing arrays of varying
+        shapes, according to the attribute `n_bins_`.
+
+    Notes
+    -----
+    In bin edges for feature `i`, the first and last values are used only
+    for `inverse_transform`. During `transform`, they are extended to::
+
+        np.concatenate([-np.inf, bin_edges_[i][1:-1], np.inf])
+
+    If you only want to preprocess part of the features, you can combine
+    `MDLPDiscretizer` with :class:`~sklearn.compose.ColumnTransformer`.
+
+    Examples
+    --------
+    >>> X = [[-2, 1, -4,   -1],
+    ...      [-1, 2, -3, -0.5],
+    ...      [ 0, 3, -2,  0.5],
+    ...      [ 1, 4, -1,    2]]
+    >>> y = [0, 0, 0, 1]
+    >>> discretizer = MDLPDiscretizer(encode="ordinal")
+    >>> discretizer.fit(X, y)
+    MDLPDiscretizer(...)
+    >>> Xt = discretizer.transform(X)
+    >>> Xt
+    array([[ 0., 0., 0., 0.],
+           [ 0., 0., 0., 0.],
+           [ 0., 0., 0., 0.],
+           [ 1., 1., 1., 1.]])
+
+    Sometimes is useful to convert the data back into the original feature
+    space. The `inverse_transform` function converts the binned data into
+    the original feature space. Each value will be equal to the mean of
+    the two bin edges.
+
+    >>> discretizer.bin_edges_[0]
+    array([-2. ,  0.5,  1. ])
+    >>> discretizer.inverse_transform(Xt)
+    array([[-0.75 ,  2.25 , -2.75 ,  0.125],
+           [-0.75 ,  2.25 , -2.75 ,  0.125],
+           [-0.75 ,  2.25 , -2.75 ,  0.125],
+           [ 0.75 ,  3.75 , -1.25 ,  1.625]])
+    """
+
+    def __init__(self, encode="onehot", dtype=None):
+        self.encode = encode
+        self.dtype = dtype
+
+    def fit(self, X, y):
+        """Fit the discretizer to the training data and labels.
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features), dtype={int, float}
-            Data to be discretized.
+        X : array-like of shape (n_samples, n_features)
+            The data to determine the bins for each feature.
+
+        y : array-like of shape (n_samples, n_features)
+            The labels to determine the bins for each feature.
 
         Returns
         -------
-        Xt : {ndarray, sparse matrix}, dtype={np.float32, np.float64}
-            Data in the binned space. Will be a sparse matrix if
-            `self.encode='onehot'` and ndarray otherwise.
+        self : MDLPDiscretizer
+            The fitted discretizer to the training data and labels.
         """
-        check_is_fitted(self)
+        X, y = self._validate_data(X, y, multi_output=True)
 
-        # check input and attribute dtypes
-        dtype = (np.float64, np.float32) if self.dtype is None else self.dtype
-        Xt = check_array(X, copy=True, dtype=dtype)
+        # The discretizer is available only for classification
+        check_classification_targets(y)
 
-        n_features = self.n_bins_.shape[0]
-        if Xt.shape[1] != n_features:
-            raise ValueError("Incorrect number of features. Expecting {}, "
-                             "received {}.".format(n_features, Xt.shape[1]))
+        output_dtype = self._validate_dtype(X)
 
-        bin_edges = self.bin_edges_
-        for jj in range(Xt.shape[1]):
-            # Values which are close to a bin edge are susceptible to numeric
-            # instability. Add eps to X so these values are binned correctly
-            # with respect to their decimal truncation. See documentation of
-            # numpy.isclose for an explanation of ``rtol`` and ``atol``.
-            rtol = 1.e-5
-            atol = 1.e-8
-            eps = atol + rtol * np.abs(Xt[:, jj])
-            Xt[:, jj] = np.digitize(Xt[:, jj] + eps, bin_edges[jj][1:])
-        np.clip(Xt, 0, self.n_bins_ - 1, out=Xt)
+        if y.ndim == 1:
+            # Reshape is necessary to preserve the
+            # data contiguity against "np.newaxis"
+            y = np.reshape(y, (-1, 1))
 
-        if self.encode == 'ordinal':
-            return Xt
+        # Determine output settings
+        n_samples, n_outputs = y.shape
+        n_features = self.n_features_in_
 
-        dtype_init = None
-        if 'onehot' in self.encode:
-            dtype_init = self._encoder.dtype
-            self._encoder.dtype = Xt.dtype
-        try:
-            Xt_enc = self._encoder.transform(Xt)
-        finally:
-            # revert the initial dtype to avoid modifying self.
-            self._encoder.dtype = dtype_init
-        return Xt_enc
+        n_classes = np.zeros(n_outputs, dtype=SIZE)
+        y_encoded = np.zeros((n_samples, n_outputs), dtype=ITYPE)
 
-    def inverse_transform(self, Xt):
-        """
-        Transform discretized data back to original feature space.
+        for k in range(n_outputs):
+            classes_k, y_encoded[:, k] = np.unique(
+                y[:, k], return_inverse=True)
 
-        Note that this function does not regenerate the original data
-        due to discretization rounding.
+            n_classes[k] = classes_k.shape[0]
 
-        Parameters
-        ----------
-        Xt : array-like of shape (n_samples, n_features), dtype={int, float}
-            Transformed data in the binned space.
+        X = np.ascontiguousarray(X, dtype=DTYPE)
+        X_idx_sorted = np.argsort(X, axis=0)
+        y_encoded = np.ascontiguousarray(y_encoded, dtype=ITYPE)
 
-        Returns
-        -------
-        Xinv : ndarray, dtype={np.float32, np.float64}
-            Data in the original feature space.
-        """
-        check_is_fitted(self)
+        # Use a fixed-size number of bins for fast routines
+        max_bins = np.iinfo(UINT8).max
+        n_bins = np.ones(n_features, dtype=SIZE)
+        bin_edges = np.zeros((n_features, max_bins), dtype=DTYPE)
 
-        if 'onehot' in self.encode:
-            Xt = self._encoder.inverse_transform(Xt)
+        find_binning_thresholds(X, X_idx_sorted,
+                                y_encoded, n_outputs,
+                                n_classes, bin_edges, n_bins)
 
-        Xinv = check_array(Xt, copy=True, dtype=(np.float64, np.float32))
-        n_features = self.n_bins_.shape[0]
-        if Xinv.shape[1] != n_features:
-            raise ValueError("Incorrect number of features. Expecting {}, "
-                             "received {}.".format(n_features, Xinv.shape[1]))
+        self.n_bins_ = n_bins
+        self.bin_edges_ = np.zeros(self.n_features_in_, dtype=object)
 
-        for jj in range(n_features):
-            bin_edges = self.bin_edges_[jj]
-            bin_centers = (bin_edges[1:] + bin_edges[:-1]) * 0.5
-            Xinv[:, jj] = bin_centers[np.int_(Xinv[:, jj])]
+        for j in range(self.n_features_in_):
+            col_min, col_max = np.min(X[:, j]), np.max(X[:, j])
 
-        return Xinv
+            if col_min == col_max:
+                warnings.warn(f"Feature {j} is constant and "
+                              "will be replaced with 0.")
+
+                self.n_bins_[j] = 1
+                self.bin_edges_[j] = np.array([-np.inf, np.inf])
+
+                continue
+
+            # Sort the bin edges to get the corresponding order
+            self.bin_edges_[j] = np.sort(bin_edges[j, :n_bins[j] - 1])
+            self.bin_edges_[j] = np.concatenate([[col_min],
+                                                 self.bin_edges_[j],
+                                                 [col_max]])
+
+        # Fit an encoder with a "toy" dataset
+        # to use after the estimator is fitted
+        if "onehot" in self.encode:
+            categories = [np.arange(i) for i in self.n_bins_]
+            sparse = self.encode == "onehot"
+            X = np.zeros((1, self.n_bins_.shape[0]))
+
+            self._encoder = OneHotEncoder(sparse=sparse,
+                                          categories=categories,
+                                          dtype=output_dtype)
+
+            self._encoder.fit(X)
+
+        return self
