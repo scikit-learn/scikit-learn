@@ -1,7 +1,10 @@
 """Utilities for the neural network modules
 """
 
-# Author: Issam H. Laradji <issam.laradji@gmail.com>
+# Authors: Issam H. Laradji <issam.laradji@gmail.com> and 
+# Luca Parisi <luca.parisi@ieee.org> (only for 'm_arcsinh' and
+# its derivative 'inplace_m_arcsinh_derivative')
+
 # License: BSD 3 clause
 
 import numpy as np
@@ -23,7 +26,7 @@ def inplace_identity(X):
 
 
 def inplace_logistic(X):
-    """Compute the logistic function inplace.
+    """Compute the logistic function in place.
 
     Parameters
     ----------
@@ -34,7 +37,7 @@ def inplace_logistic(X):
 
 
 def inplace_tanh(X):
-    """Compute the hyperbolic tan function inplace.
+    """Compute the hyperbolic tan function in place.
 
     Parameters
     ----------
@@ -43,9 +46,27 @@ def inplace_tanh(X):
     """
     np.tanh(X, out=X)
 
+    
+def m_arcsinh(X):
+    """Compute a modified arcsinh (m-arcsinh) hyperbolic function 
+	in place.
+
+    Further details on this function are available at:  
+    https://arxiv.org/abs/2009.07530 
+    (Parisi, L., 2020; License: http://creativecommons.org/licenses/by/4.0/). 
+    If you are using this function, please cite this paper as follows: 
+    arXiv:2009.07530 [cs.LG].
+
+    Parameters
+    ----------
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        The input data.
+    """
+    return (1/3*np.arcsinh(X))*(1/4*np.sqrt(np.abs(X)))
+
 
 def inplace_relu(X):
-    """Compute the rectified linear unit function inplace.
+    """Compute the rectified linear unit function in place.
 
     Parameters
     ----------
@@ -56,7 +77,7 @@ def inplace_relu(X):
 
 
 def inplace_softmax(X):
-    """Compute the K-way softmax function inplace.
+    """Compute the K-way softmax function in place.
 
     Parameters
     ----------
@@ -71,6 +92,7 @@ def inplace_softmax(X):
 ACTIVATIONS = {'identity': inplace_identity,
                'tanh': inplace_tanh,
                'logistic': inplace_logistic,
+               'm_arcsinh': m_arcsinh,
                'relu': inplace_relu,
                'softmax': inplace_softmax}
 
@@ -85,7 +107,7 @@ def inplace_identity_derivative(Z, delta):
         the forward pass.
 
     delta : {array-like}, shape (n_samples, n_features)
-         The backpropagated error signal to be modified inplace.
+         The backpropagated error signal to be modified in place.
     """
     # Nothing to do
 
@@ -103,7 +125,7 @@ def inplace_logistic_derivative(Z, delta):
         the forward pass.
 
     delta : {array-like}, shape (n_samples, n_features)
-         The backpropagated error signal to be modified inplace.
+         The backpropagated error signal to be modified in place.
     """
     delta *= Z
     delta *= (1 - Z)
@@ -122,11 +144,35 @@ def inplace_tanh_derivative(Z, delta):
         function during the forward pass.
 
     delta : {array-like}, shape (n_samples, n_features)
-         The backpropagated error signal to be modified inplace.
+         The backpropagated error signal to be modified in place.
     """
     delta *= (1 - Z ** 2)
 
+  
+def inplace_m_arcsinh_derivative(Z, delta):
+    """Apply the derivative of the hyperbolic m-arcsinh function.
 
+    It exploits the fact that the derivative is a relatively 
+    simple function of the output value from hyperbolic m-arcsinh.
+
+    Further details on this function are available at:  
+    https://arxiv.org/abs/2009.07530 
+    (Parisi, L., 2020; License: http://creativecommons.org/licenses/by/4.0/). 
+    If you are using this function, please cite this paper as follows: 
+    arXiv:2009.07530 [cs.LG].
+
+    Parameters
+    ----------
+    Z : {array-like, sparse matrix}, shape (n_samples, n_features)
+        The data which was output from the hyperbolic tangent activation
+        function during the forward pass.
+
+    delta : {array-like}, shape (n_samples, n_features)
+         The backpropagated error signal to be modified in place.
+    """
+    delta *= (np.sqrt(np.abs(Z))/(12*np.sqrt(Z**2+1)) + (Z*np.arcsinh(Z))/(24*np.abs(Z)**(3/2)))
+
+    
 def inplace_relu_derivative(Z, delta):
     """Apply the derivative of the relu function.
 
@@ -140,7 +186,7 @@ def inplace_relu_derivative(Z, delta):
         function during the forward pass.
 
     delta : {array-like}, shape (n_samples, n_features)
-         The backpropagated error signal to be modified inplace.
+         The backpropagated error signal to be modified in place.
     """
     delta[Z == 0] = 0
 
@@ -148,6 +194,7 @@ def inplace_relu_derivative(Z, delta):
 DERIVATIVES = {'identity': inplace_identity_derivative,
                'tanh': inplace_tanh_derivative,
                'logistic': inplace_logistic_derivative,
+               'm_arcsinh': inplace_m_arcsinh_derivative,
                'relu': inplace_relu_derivative}
 
 
