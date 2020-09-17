@@ -5,8 +5,6 @@ import numpy as np
 import scipy.sparse as sp
 import joblib
 
-from io import StringIO
-
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils import deprecated
 from sklearn.utils._testing import (assert_raises_regex,
