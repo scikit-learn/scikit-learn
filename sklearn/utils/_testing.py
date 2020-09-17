@@ -806,8 +806,8 @@ def raises(expected_exp_type, match=None, may_pass=False, err_msg=None):
 
     Attributes
     ----------
-    matched : bool
-        True if an exception was raised an a match was found, False otherwise.
+    raised_and_matched : bool
+        True if an exception was raised and a match was found, False otherwise.
     """
     return _Raises(expected_exp_type, match, may_pass, err_msg)
 
@@ -823,7 +823,7 @@ class _Raises(contextlib.AbstractContextManager):
         self.matches = [match] if isinstance(match, str) else match
         self.may_pass = may_pass
         self.err_msg = err_msg
-        self.matched = False
+        self.raised_and_matched = False
 
     def __exit__(self, exp_type, exp_value, _):
         # see
@@ -857,6 +857,6 @@ class _Raises(contextlib.AbstractContextManager):
             assert any(
                 re.search(match, str(exp_value)) for match in self.matches
             ), err_msg
-            self.matched = True
+            self.raised_and_matched = True
 
         return True

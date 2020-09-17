@@ -1,7 +1,5 @@
 import types
 import warnings
-import sys
-import traceback
 import pickle
 import re
 from copy import deepcopy
