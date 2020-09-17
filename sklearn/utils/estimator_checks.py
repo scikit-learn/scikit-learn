@@ -1234,7 +1234,7 @@ def check_fit2d_1feature(name, estimator_orig, strict_mode=True):
     y = _enforce_estimator_tags_y(estimator, y)
     set_random_state(estimator, 1)
 
-    msgs = ["1 feature(s)", "n_features = 1", "n_features=1"]
+    msgs = [r"1 feature\(s\)", "n_features = 1", "n_features=1"]
 
     with raises(ValueError, match=msgs, may_pass=True):
         estimator.fit(X, y)
