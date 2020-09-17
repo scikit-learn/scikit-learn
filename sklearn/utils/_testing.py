@@ -774,18 +774,20 @@ def _convert_container(container, constructor_name, columns_name=None):
         return slice(container[0], container[1])
 
 
-def raises(expected_exp_type, match=None, may_pass=False, failure_msg=None):
+def raises(expected_exp_type, match=None, may_pass=False, err_msg=None):
     """Context manager to ensure exceptions are raised within a code block.
 
     This is similar to and inspired from pytest.raises, but supports a few
-    other cases. This is only intended to be used in estimator_checks.py
-    where we don't want to use pytest. pytest.raises should be used
-    anywhere else.
+    other cases.
+
+    This is only intended to be used in estimator_checks.py where we don't
+    want to use pytest. In the rest of the code base, just use pytest.raises
+    instead.
 
     Parameters
     ----------
     excepted_exp_type : Exception or list of Exception
-        The exception that should be raised by the block. If a list, the code
+        The exception that should be raised by the block. If a list, the block
         should raise one of the exceptions.
     match : str or list of str, default=None
         A regex that the exception message should match. If a list, one of
@@ -794,20 +796,25 @@ def raises(expected_exp_type, match=None, may_pass=False, failure_msg=None):
         If True, the block is allowed to not raise an exception. Useful in
         cases where some estimators may support a feature but others must
         fail with an appropriate error message.
-    failure_msg : str, default=None
+    err_msg : str, default=None
         If the context manager fails (e.g. the block fails to raise the
         proper exception, or fails to match), then an AssertionError is
         raised with this message. By default, an AssertionError is raised
         with a default error message (depends on the kind of failure). Use
         this to indicate how users should fix their estimators to pass the
         checks.
+
+    Attributes
+    ----------
+    matched : bool
+        True if an exception was raised an a match was found, False otherwise.
     """
-    return _Raises(expected_exp_type, match, may_pass, failure_msg)
+    return _Raises(expected_exp_type, match, may_pass, err_msg)
 
 
 class _Raises(contextlib.AbstractContextManager):
     # see raises() for parameters
-    def __init__(self, expected_exp_type, match, may_pass, failure_msg):
+    def __init__(self, expected_exp_type, match, may_pass, err_msg):
         self.expected_exp_types = (
             expected_exp_type
             if isinstance(expected_exp_type, Iterable)
@@ -815,7 +822,8 @@ class _Raises(contextlib.AbstractContextManager):
         )
         self.matches = [match] if isinstance(match, str) else match
         self.may_pass = may_pass
-        self.failure_msg = failure_msg
+        self.err_msg = err_msg
+        self.matched = False
 
     def __exit__(self, exp_type, exp_value, _):
         # see
@@ -826,8 +834,7 @@ class _Raises(contextlib.AbstractContextManager):
                 return True  # CM is happy
             else:
                 err_msg = (
-                    self.failure_msg
-                    or f"DID NOT RAISE {self.expected_exp_types}"
+                    self.err_msg or f"DID NOT RAISE {self.expected_exp_types}"
                 )
                 raise AssertionError(err_msg)
 
@@ -835,13 +842,13 @@ class _Raises(contextlib.AbstractContextManager):
             issubclass(exp_type, expected_type)
             for expected_type in self.expected_exp_types
         ):
-            if self.failure_msg is not None:
-                raise AssertionError(self.failure_msg)
+            if self.err_msg is not None:
+                raise AssertionError(self.err_msg)
             else:
                 return False  # will re-raise the original exception
 
         if self.matches is not None:
-            err_msg = self.failure_msg or (
+            err_msg = self.err_msg or (
                 "The error message should contain one of the following "
                 "patterns:\n{}\nGot {}".format(
                     "\n".join(self.matches), str(exp_value)
@@ -850,5 +857,6 @@ class _Raises(contextlib.AbstractContextManager):
             assert any(
                 re.search(match, str(exp_value)) for match in self.matches
             ), err_msg
+            self.matched = True
 
         return True

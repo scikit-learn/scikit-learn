@@ -157,18 +157,16 @@ def check_supervised_y_no_nan(name, estimator_orig, strict_mode=True):
     y = np.full(10, np.inf)
     y = _enforce_estimator_tags_y(estimator, y)
 
-    errmsg = "Input contains NaN, infinity or a value too large for " \
-             "dtype('float64')."
-    try:
+    match = (
+        "Input contains NaN, infinity or a value too large for "
+        r"dtype\('float64'\)."
+    )
+    err_msg = (
+        f"Estimator {name} should have raised error on fitting "
+        "array y with NaN value."
+    )
+    with raises(ValueError, match=match, err_msg=err_msg):
         estimator.fit(X, y)
-    except ValueError as e:
-        if str(e) != errmsg:
-            raise ValueError("Estimator {0} raised error as expected, but "
-                             "does not match expected error message"
-                             .format(name))
-    else:
-        raise ValueError("Estimator {0} should have raised error on fitting "
-                         "array y with NaN value.".format(name))
 
 
 def _yield_regressor_checks(regressor):
@@ -782,7 +780,26 @@ def check_estimator_sparse_data(name, estimator_orig, strict_mode=True):
             if name in ['Scaler', 'StandardScaler']:
                 estimator.set_params(with_mean=False)
         # fit and predict
-        try:
+        if "64" in matrix_format:
+            err_msg = (
+                f"Estimator {name} doesn't seem to support "
+                f"{matrix_format} matrix, "
+                "and is not failing gracefully, e.g. by using "
+                "check_array(X, accept_large_sparse=False)"
+            )
+        else:
+            err_msg = (
+                f"Estimator {name} doesn't seem to fail gracefully on "
+                "sparse data: error message state explicitly that "
+                "sparse input is not supported if this is not"
+                " the case."
+            )
+        with raises(
+            (TypeError, ValueError),
+            match="sparse",
+            may_pass=True,
+            err_msg=err_msg,
+        ):
             with ignore_warnings(category=FutureWarning):
                 estimator.fit(X, y)
             if hasattr(estimator, "predict"):
@@ -798,24 +815,6 @@ def check_estimator_sparse_data(name, estimator_orig, strict_mode=True):
                 else:
                     expected_probs_shape = (X.shape[0], 4)
                 assert probs.shape == expected_probs_shape
-        except (TypeError, ValueError) as e:
-            if 'sparse' not in repr(e).lower():
-                if "64" in matrix_format:
-                    msg = ("Estimator %s doesn't seem to support %s matrix, "
-                           "and is not failing gracefully, e.g. by using "
-                           "check_array(X, accept_large_sparse=False)")
-                    raise AssertionError(msg % (name, matrix_format))
-                else:
-                    print("Estimator %s doesn't seem to fail gracefully on "
-                          "sparse data: error message state explicitly that "
-                          "sparse input is not supported if this is not"
-                          " the case." % name)
-                    raise
-        except Exception:
-            print("Estimator %s doesn't seem to fail gracefully on "
-                  "sparse data: it should raise a TypeError if sparse input "
-                  "is explicitly not supported." % name)
-            raise
 
 
 @ignore_warnings(category=FutureWarning)
@@ -1301,7 +1300,7 @@ def check_transformers_unfitted(name, transformer, strict_mode=True):
     transformer = clone(transformer)
     with raises(
         (AttributeError, ValueError),
-        failure_msg="The unfitted "
+        err_msg="The unfitted "
         "transformer {} does not raise an error when "
         "transform is called. Perhaps use "
         "check_is_fitted in transform.".format(name),
@@ -1381,7 +1380,7 @@ def _check_transformer(name, transformer_orig, X, y, strict_mode=True):
             # If it's not an array, it does not have a 'T' property
             with raises(
                 ValueError,
-                failure_msg="The transformer {} does "
+                err_msg="The transformer {} does "
                 "not raise an error when the number of "
                 "features in transform is different from"
                 " the number of features in "
@@ -1515,7 +1514,7 @@ def check_estimators_empty_data_messages(name, estimator_orig,
     # validated first. Let us test the type of exception only:
     with raises(
         ValueError,
-        failure_msg="The estimator {} does not"
+        err_msg="The estimator {} does not"
         " raise an error when an empty data is used "
         "to train. Perhaps use "
         "check_array in train.".format(name),
@@ -1556,51 +1555,30 @@ def check_estimators_nan_inf(name, estimator_orig, strict_mode=True):
             estimator = clone(estimator_orig)
             set_random_state(estimator, 1)
             # try to fit
-            try:
+            with raises(
+                ValueError, match=["inf", "NaN"], err_msg=error_string_fit
+            ):
                 estimator.fit(X_train, y)
-            except ValueError as e:
-                if 'inf' not in repr(e) and 'NaN' not in repr(e):
-                    print(error_string_fit, estimator, e)
-                    traceback.print_exc(file=sys.stdout)
-                    raise e
-            except Exception as exc:
-                print(error_string_fit, estimator, exc)
-                traceback.print_exc(file=sys.stdout)
-                raise exc
-            else:
-                raise AssertionError(error_string_fit, estimator)
             # actually fit
             estimator.fit(X_train_finite, y)
 
             # predict
             if hasattr(estimator, "predict"):
-                try:
+                with raises(
+                    ValueError,
+                    match=["inf", "NaN"],
+                    err_msg=error_string_predict,
+                ):
                     estimator.predict(X_train)
-                except ValueError as e:
-                    if 'inf' not in repr(e) and 'NaN' not in repr(e):
-                        print(error_string_predict, estimator, e)
-                        traceback.print_exc(file=sys.stdout)
-                        raise e
-                except Exception as exc:
-                    print(error_string_predict, estimator, exc)
-                    traceback.print_exc(file=sys.stdout)
-                else:
-                    raise AssertionError(error_string_predict, estimator)
 
             # transform
             if hasattr(estimator, "transform"):
-                try:
+                with raises(
+                    ValueError,
+                    match=["inf", "NaN"],
+                    err_msg=error_string_transform,
+                ):
                     estimator.transform(X_train)
-                except ValueError as e:
-                    if 'inf' not in repr(e) and 'NaN' not in repr(e):
-                        print(error_string_transform, estimator, e)
-                        traceback.print_exc(file=sys.stdout)
-                        raise e
-                except Exception as exc:
-                    print(error_string_transform, estimator, exc)
-                    traceback.print_exc(file=sys.stdout)
-                else:
-                    raise AssertionError(error_string_transform, estimator)
 
 
 @ignore_warnings
@@ -1612,7 +1590,7 @@ def check_nonsquare_error(name, estimator_orig, strict_mode=True):
 
     with raises(
         ValueError,
-        failure_msg="The pairwise estimator {}"
+        err_msg="The pairwise estimator {}"
         " does not raise an error on non-square data".format(name),
     ):
         estimator.fit(X, y)
@@ -1684,7 +1662,7 @@ def check_estimators_partial_fit_n_features(name, estimator_orig,
 
     with raises(
         ValueError,
-        failure_msg="The estimator {} does not raise an"
+        err_msg="The estimator {} does not raise an"
         " error when the number of features"
         " changes between calls to "
         "partial_fit.".format(name),
@@ -1861,26 +1839,18 @@ def check_classifiers_one_label(name, classifier_orig, strict_mode=True):
     # catch deprecation warnings
     with ignore_warnings(category=FutureWarning):
         classifier = clone(classifier_orig)
-        # try to fit
-        try:
+        with raises(
+            ValueError, match="class", may_pass=True, err_msg=error_string_fit
+        ) as cm:
             classifier.fit(X_train, y)
-        except ValueError as e:
-            if 'class' not in repr(e):
-                print(error_string_fit, classifier, e)
-                traceback.print_exc(file=sys.stdout)
-                raise e
-            else:
-                return
-        except Exception as exc:
-            print(error_string_fit, classifier, exc)
-            traceback.print_exc(file=sys.stdout)
-            raise exc
-        # predict
-        try:
-            assert_array_equal(classifier.predict(X_test), y)
-        except Exception as exc:
-            print(error_string_predict, classifier, exc)
-            raise exc
+
+        if cm.matched:
+            # ValueError was raised with proper error message
+            return
+
+        assert_array_equal(
+            classifier.predict(X_test), y, err_msg=error_string_predict
+        )
 
 
 @ignore_warnings  # Warnings are raised by decision function
@@ -1920,7 +1890,7 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False,
         if not tags["no_validation"]:
             with raises(
                 ValueError,
-                failure_msg="The classifier {} does not "
+                err_msg="The classifier {} does not "
                     "raise an error when incorrect/malformed input "
                     "data for fit is passed. The number of training "
                     "examples is not the same as the number of labels. "
@@ -1951,13 +1921,11 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False,
             if _is_pairwise(classifier):
                 with raises(
                     ValueError,
-                    failure_msg=msg_pairwise.format(name, "predict"),
+                    err_msg=msg_pairwise.format(name, "predict"),
                 ):
                     classifier.predict(X.reshape(-1, 1))
             else:
-                with raises(
-                    ValueError, failure_msg=msg.format(name, "predict")
-                ):
+                with raises(ValueError, err_msg=msg.format(name, "predict")):
                     classifier.predict(X.T)
         if hasattr(classifier, "decision_function"):
             try:
@@ -1979,7 +1947,7 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False,
                     if _is_pairwise(classifier):
                         with raises(
                             ValueError,
-                            failure_msg=msg_pairwise.format(
+                            err_msg=msg_pairwise.format(
                                 name, "decision_function"
                             ),
                         ):
@@ -1987,7 +1955,7 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False,
                     else:
                         with raises(
                             ValueError,
-                            failure_msg=msg.format(name, "decision_function"),
+                            err_msg=msg.format(name, "decision_function"),
                         ):
                             classifier.decision_function(X.T)
             except NotImplementedError:
@@ -2006,13 +1974,13 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False,
                 if _is_pairwise(classifier_orig):
                     with raises(
                         ValueError,
-                        failure_msg=msg_pairwise.format(name, "predict_proba"),
+                        err_msg=msg_pairwise.format(name, "predict_proba"),
                     ):
                         classifier.predict_proba(X.reshape(-1, 1))
                 else:
                     with raises(
                         ValueError,
-                        failure_msg=msg.format(name, "predict_proba"),
+                        err_msg=msg.format(name, "predict_proba"),
                     ):
                         classifier.predict_proba(X.T)
             if hasattr(classifier, "predict_log_proba"):
@@ -2373,7 +2341,7 @@ def check_regressors_train(name, regressor_orig, readonly_memmap=False,
     # raises error on malformed input for fit
     with raises(
         ValueError,
-        failure_msg="The classifier {} does not"
+        err_msg="The classifier {} does not"
         " raise an error when incorrect/malformed input "
         "data for fit is passed. The number of training "
         "examples is not the same as the number of "
