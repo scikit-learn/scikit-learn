@@ -975,11 +975,8 @@ def check_dtype_object(name, estimator_orig, strict_mode=True):
     if hasattr(estimator, "transform"):
         estimator.transform(X)
 
-    try:
+    with raises(Exception, match="Unknown label type"):
         estimator.fit(X, y.astype(object))
-    except Exception as e:
-        if "Unknown label type" not in str(e):
-            raise
 
     if 'string' not in tags['X_types']:
         X[0, 0] = {'foo': 'bar'}
@@ -1208,11 +1205,8 @@ def check_fit2d_1sample(name, estimator_orig, strict_mode=True):
     msgs = ["1 sample", "n_samples = 1", "n_samples=1", "one sample",
             "1 class", "one class"]
 
-    try:
+    with raises(ValueError, match=msgs):
         estimator.fit(X, y)
-    except ValueError as e:
-        if all(msg not in repr(e) for msg in msgs):
-            raise e
 
 
 @ignore_warnings
@@ -1242,11 +1236,8 @@ def check_fit2d_1feature(name, estimator_orig, strict_mode=True):
 
     msgs = ["1 feature(s)", "n_features = 1", "n_features=1"]
 
-    try:
+    with raises(ValueError, match=msgs):
         estimator.fit(X, y)
-    except ValueError as e:
-        if all(msg not in repr(e) for msg in msgs):
-            raise e
 
 
 @ignore_warnings
