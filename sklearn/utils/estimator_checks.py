@@ -898,7 +898,7 @@ def check_sample_weights_shape(name, estimator_orig, strict_mode=True):
         estimator.fit(X, y, sample_weight=np.ones(len(y)))
 
         with raises(ValueError):
-            estimator.fit(X, y, sample_weight=np.ones(2*len(y)))
+            estimator.fit(X, y, sample_weight=np.ones(2 * len(y)))
 
         with raises(ValueError):
             estimator.fit(X, y, sample_weight=np.ones((len(y), 2)))
@@ -1308,10 +1308,13 @@ def check_transformers_unfitted(name, transformer, strict_mode=True):
     X, y = _regression_dataset()
 
     transformer = clone(transformer)
-    with raises((AttributeError, ValueError), failure_msg="The unfitted "
-                       "transformer {} does not raise an error when "
-                       "transform is called. Perhaps use "
-                       "check_is_fitted in transform.".format(name)):
+    with raises(
+        (AttributeError, ValueError),
+        failure_msg="The unfitted "
+        "transformer {} does not raise an error when "
+        "transform is called. Perhaps use "
+        "check_is_fitted in transform.".format(name),
+    ):
         transformer.transform(X)
 
 
@@ -1385,11 +1388,14 @@ def _check_transformer(name, transformer_orig, X, y, strict_mode=True):
            X.ndim == 2 and X.shape[1] > 1:
 
             # If it's not an array, it does not have a 'T' property
-            with raises(ValueError, failure_msg="The transformer {} does "
-                               "not raise an error when the number of "
-                               "features in transform is different from"
-                               " the number of features in "
-                               "fit.".format(name)):
+            with raises(
+                ValueError,
+                failure_msg="The transformer {} does "
+                "not raise an error when the number of "
+                "features in transform is different from"
+                " the number of features in "
+                "fit.".format(name),
+            ):
                 transformer.transform(X[:, :-1])
 
 
@@ -1516,10 +1522,13 @@ def check_estimators_empty_data_messages(name, estimator_orig,
     X_zero_samples = np.empty(0).reshape(0, 3)
     # The precise message can change depending on whether X or y is
     # validated first. Let us test the type of exception only:
-    with raises(ValueError, failure_msg="The estimator {} does not"
-                       " raise an error when an empty data is used "
-                       "to train. Perhaps use "
-                       "check_array in train.".format(name)):
+    with raises(
+        ValueError,
+        failure_msg="The estimator {} does not"
+        " raise an error when an empty data is used "
+        "to train. Perhaps use "
+        "check_array in train.".format(name),
+    ):
         e.fit(X_zero_samples, [])
 
     X_zero_features = np.empty(0).reshape(3, 0)
@@ -1610,9 +1619,11 @@ def check_nonsquare_error(name, estimator_orig, strict_mode=True):
     X, y = make_blobs(n_samples=20, n_features=10)
     estimator = clone(estimator_orig)
 
-    with raises(ValueError, failure_msg="The pairwise estimator {}"
-                       " does not raise an error on non-square data"
-                       .format(name)):
+    with raises(
+        ValueError,
+        failure_msg="The pairwise estimator {}"
+        " does not raise an error on non-square data".format(name),
+    ):
         estimator.fit(X, y)
 
 
@@ -1680,10 +1691,13 @@ def check_estimators_partial_fit_n_features(name, estimator_orig,
     except NotImplementedError:
         return
 
-    with raises(ValueError, failure_msg="The estimator {} does not raise an"
-                           " error when the number of features"
-                           " changes between calls to "
-                           "partial_fit.".format(name)):
+    with raises(
+        ValueError,
+        failure_msg="The estimator {} does not raise an"
+        " error when the number of features"
+        " changes between calls to "
+        "partial_fit.".format(name),
+    ):
         estimator.partial_fit(X[:, :-1], y)
 
 
@@ -1944,11 +1958,15 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False,
 
         if not tags["no_validation"]:
             if _is_pairwise(classifier):
-                with raises(ValueError, failure_msg=msg_pairwise.format(name, "predict")):
+                with raises(
+                    ValueError,
+                    failure_msg=msg_pairwise.format(name, "predict"),
+                ):
                     classifier.predict(X.reshape(-1, 1))
             else:
-                with raises(ValueError,
-                                   failure_msg=msg.format(name, "predict")):
+                with raises(
+                    ValueError, failure_msg=msg.format(name, "predict")
+                ):
                     classifier.predict(X.T)
         if hasattr(classifier, "decision_function"):
             try:
@@ -1968,12 +1986,18 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False,
                 # raises error on malformed input for decision_function
                 if not tags["no_validation"]:
                     if _is_pairwise(classifier):
-                        with raises(ValueError, failure_msg=msg_pairwise.format(
-                                name, "decision_function")):
+                        with raises(
+                            ValueError,
+                            failure_msg=msg_pairwise.format(
+                                name, "decision_function"
+                            ),
+                        ):
                             classifier.decision_function(X.reshape(-1, 1))
                     else:
-                        with raises(ValueError, failure_msg=msg.format(
-                                name, "decision_function")):
+                        with raises(
+                            ValueError,
+                            failure_msg=msg.format(name, "decision_function"),
+                        ):
                             classifier.decision_function(X.T)
             except NotImplementedError:
                 pass
@@ -1989,12 +2013,16 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False,
             if not tags["no_validation"]:
                 # raises error on malformed input for predict_proba
                 if _is_pairwise(classifier_orig):
-                    with raises(ValueError, failure_msg=msg_pairwise.format(
-                            name, "predict_proba")):
+                    with raises(
+                        ValueError,
+                        failure_msg=msg_pairwise.format(name, "predict_proba"),
+                    ):
                         classifier.predict_proba(X.reshape(-1, 1))
                 else:
-                    with raises(ValueError, failure_msg=msg.format(
-                            name, "predict_proba")):
+                    with raises(
+                        ValueError,
+                        failure_msg=msg.format(name, "predict_proba"),
+                    ):
                         classifier.predict_proba(X.T)
             if hasattr(classifier, "predict_log_proba"):
                 # predict_log_proba is a transformation of predict_proba
@@ -2352,11 +2380,14 @@ def check_regressors_train(name, regressor_orig, readonly_memmap=False,
         regressor.C = 0.01
 
     # raises error on malformed input for fit
-    with raises(ValueError, failure_msg="The classifier {} does not"
-                       " raise an error when incorrect/malformed input "
-                       "data for fit is passed. The number of training "
-                       "examples is not the same as the number of "
-                       "labels. Perhaps use check_X_y in fit.".format(name)):
+    with raises(
+        ValueError,
+        failure_msg="The classifier {} does not"
+        " raise an error when incorrect/malformed input "
+        "data for fit is passed. The number of training "
+        "examples is not the same as the number of "
+        "labels. Perhaps use check_X_y in fit.".format(name),
+    ):
         regressor.fit(X, y[:-1])
     # fit
     set_random_state(regressor)

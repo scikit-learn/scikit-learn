@@ -776,7 +776,7 @@ def _convert_container(container, constructor_name, columns_name=None):
 
 def raises(expected_exp_type, match=None, may_pass=False, failure_msg=None):
     """Similar to pytest.raises
-    
+
     Allows match to be a list of correct patterns
     If may_pass=True the body of the CM doesn't have to raise and exception
     failure_msg will be printed to the user if anything goes wrong
@@ -786,35 +786,45 @@ def raises(expected_exp_type, match=None, may_pass=False, failure_msg=None):
 
 class _Raises(contextlib.AbstractContextManager):
     def __init__(self, expected_exp_type, match, may_pass, failure_msg):
-        self.expected_exp_types = expected_exp_type if isinstance(expected_exp_type, Iterable) else [expected_exp_type]
+        self.expected_exp_types = (
+            expected_exp_type
+            if isinstance(expected_exp_type, Iterable)
+            else [expected_exp_type]
+        )
         self.matches = [match] if isinstance(match, str) else match
         self.may_pass = may_pass
         self.failure_msg = failure_msg
-        
+
     def __exit__(self, exp_type, exp_value, _):
-        
+
         if exp_type is None:
             if self.may_pass:
                 return True
             else:
-                err_msg = (self.failure_msg or
-                           f"DID NOT RAISE {self.expected_exp_type}")
+                err_msg = (
+                    self.failure_msg
+                    or f"DID NOT RAISE {self.expected_exp_type}"
+                )
                 raise AssertionError(err_msg)
-            
-        if not any(issubclass(exp_type, expected_type)
-                   for expected_type in self.expected_exp_types):
+
+        if not any(
+            issubclass(exp_type, expected_type)
+            for expected_type in self.expected_exp_types
+        ):
             if self.failure_msg is not None:
                 raise AssertionError(self.failure_msg)
             else:
                 return False  # will re-raise the exception
-        
+
         if self.matches is not None:
             err_msg = self.failure_msg or (
                 "The error message should contain one of the following "
-                "patterns:\n{}\nGot {}".format('\n'.join(self.matches),
-                                               str(exp_value))
+                "patterns:\n{}\nGot {}".format(
+                    "\n".join(self.matches), str(exp_value)
+                )
             )
-            assert any(re.search(match, str(exp_value))
-                       for match in self.matches), err_msg
-        
+            assert any(
+                re.search(match, str(exp_value)) for match in self.matches
+            ), err_msg
+
         return True
