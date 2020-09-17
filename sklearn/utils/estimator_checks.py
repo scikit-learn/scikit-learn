@@ -794,7 +794,7 @@ def check_estimator_sparse_data(name, estimator_orig, strict_mode=True):
             )
         with raises(
             (TypeError, ValueError),
-            match="sparse",
+            match=["sparse", "Sparse"],
             may_pass=True,
             err_msg=err_msg,
         ):
