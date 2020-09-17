@@ -614,28 +614,27 @@ def test_ordinal_encoder_handle_unknowns_raise():
         enc.fit(X)
 
 
-@pytest.mark.parametrize('dtype', (float, object))
-def test_ordinal_encoder_handle_unknowns_nan(dtype):
+def test_ordinal_encoder_handle_unknowns_nan():
+    # Make sure unknown_value=np.nan properly works
+
     enc = OrdinalEncoder(handle_unknown='use_encoded_value',
-                         unknown_value=np.nan, dtype=dtype)
+                         unknown_value=np.nan)
 
     X_fit = np.array([[1], [2], [3]])
     enc.fit(X_fit)
     X_trans = enc.transform([[1], [2], [4]])
-    assert X_trans.dtype == dtype
-    # Convert to float because assert_array_equal fails when comparing object
-    # dtypes arrays that contain nans
-    X_trans = X_trans.astype(float)
     assert_array_equal(X_trans, [[0], [1], [np.nan]])
 
 
-def test_ordinal_encoder_handle_unknowns_nan_int():
+def test_ordinal_encoder_handle_unknowns_nan_non_float_dtype():
+    # Make sure an error is raised when unknown_value=np.nan and the dtype
+    # isn't a float dtype
     enc = OrdinalEncoder(handle_unknown='use_encoded_value',
                          unknown_value=np.nan, dtype=int)
 
     X_fit = np.array([[1], [2], [3]])
     with pytest.raises(ValueError,
-                       match="dtype should be either float or object"):
+                       match="dtype parameter should be a float dtype"):
         enc.fit(X_fit)
 
 

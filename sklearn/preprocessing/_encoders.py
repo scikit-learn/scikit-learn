@@ -636,7 +636,7 @@ class OrdinalEncoder(_BaseEncoder):
         parameter is required and will set the encoded value of unknown
         categories. It has to be distinct from the values used to encode any of
         the categories in `fit`. If set to np.nan, the `dtype` parameter must
-        be either a float dtype or `object`.
+        be a float dtype.
 
         .. versionadded:: 0.24
 
@@ -701,10 +701,11 @@ class OrdinalEncoder(_BaseEncoder):
         """
         if self.handle_unknown == 'use_encoded_value':
             if is_scalar_nan(self.unknown_value):
-                if np.dtype(self.dtype).kind not in ('f', 'O'):
+                if np.dtype(self.dtype).kind != 'f':
                     raise ValueError(
-                        f"When unknown_value is np.nan, dtype should be "
-                        f"either float or object. Got {self.dtype}."
+                        f"When unknown_value is np.nan, the dtype "
+                        "parameter should be "
+                        f"a float dtype. Got {self.dtype}."
                     )
             elif not isinstance(self.unknown_value, numbers.Integral):
                 raise TypeError(f"unknown_value should be an integer or "
