@@ -188,10 +188,14 @@ between these two extrema will estimate a shrunk version of the covariance
 matrix.
 
 The shrinked Ledoit and Wolf estimator of covariance may not always be the
-best choice. For example if the data is normally distributed, the
+best choice. For example if the distribution of the data
+is normally distributed, the
 Oracle Shrinkage Approximating estimator :class:`sklearn.covariance.OAS`
 yields a smaller Mean Squared Error than the one given by Ledoit and Wolf's
-formula used with shrinkage="auto".
+formula used with shrinkage="auto". In LDA, the data are assumed to be gaussian
+conditionally to the class. If these assumptions hold, using LDA with
+the OAS estimator of covariance will yield a better classification 
+accuracy than if Ledoit and Wolf or the empirical covariance estimator is used.
 
 The covariance estimator can be chosen using with the ``covariance_estimator``
 parameter of the :class:`discriminant_analysis.LinearDiscriminantAnalysis`
