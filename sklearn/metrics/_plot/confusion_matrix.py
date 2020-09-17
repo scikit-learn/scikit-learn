@@ -41,6 +41,12 @@ class ConfusionMatrixDisplay:
     figure_ : matplotlib Figure
         Figure containing the confusion matrix.
 
+    See Also
+    --------
+    confusion_matrix : Compute Confusion Matrix to evaluate the accuracy of a
+        classification.
+    plot_confusion_matrix : Plot Confusion Matrix.
+
     Examples
     --------
     >>> from sklearn.datasets import make_classification
@@ -224,8 +230,9 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
 
     See Also
     --------
-    confusion_matrix :
-        Compute confusion matrix to evaluate the accuracy of a classification
+    confusion_matrix : Compute Confusion Matrix to evaluate the accuracy of a
+        classification.
+    ConfusionMatrixDisplay : Confusion Matrix visualization.
 
     Examples
     --------

@@ -145,7 +145,7 @@ def _class_cov(X, y, priors, shrinkage=None, covariance_estimator=None):
         covariance estimator (with potential shrinkage).
         The object should have a fit method and a ``covariance_`` attribute
         like the estimators in sklearn.covariance.
-        if None the shrinkage parameter drives the estimate.
+        If None, the shrinkage parameter drives the estimate.
 
         .. versionadded:: 0.24
 
@@ -201,9 +201,7 @@ class LinearDiscriminantAnalysis(LinearClassifierMixin,
           - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
           - float between 0 and 1: fixed shrinkage parameter.
 
-        Shrinkage parameter is ignored if  `covariance_estimator`
-        is not None.
-
+        This should be left to None if `covariance_estimator` is used.
         Note that shrinkage works only with 'lsqr' and 'eigen' solvers.
 
     priors : array-like of shape (n_classes,), default=None
@@ -231,7 +229,7 @@ class LinearDiscriminantAnalysis(LinearClassifierMixin,
 
         .. versionadded:: 0.17
 
-    covariance_estimator : estimator, default=None
+    covariance_estimator : covariance estimator, default=None
         If not None, `covariance_estimator` is used to estimate
         the covariance matrices instead of relying on the empirical
         covariance estimator (with potential shrinkage).
@@ -239,6 +237,7 @@ class LinearDiscriminantAnalysis(LinearClassifierMixin,
         like the estimators in :mod:`sklearn.covariance`.
         if None the shrinkage parameter drives the estimate.
 
+        This should be left to None if `shrinkage` is used.
         Note that `covariance_estimator` works only with 'lsqr' and 'eigen'
         solvers.
 
@@ -281,10 +280,9 @@ class LinearDiscriminantAnalysis(LinearClassifierMixin,
     classes_ : array-like of shape (n_classes,)
         Unique class labels.
 
-    See also
+    See Also
     --------
-    sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis: Quadratic
-        Discriminant Analysis
+    QuadraticDiscriminantAnalysis : Quadratic Discriminant Analysis.
 
     Examples
     --------
@@ -548,7 +546,7 @@ class LinearDiscriminantAnalysis(LinearClassifierMixin,
             if self.shrinkage is not None:
                 raise NotImplementedError('shrinkage not supported')
             if self.covariance_estimator is not None:
-                raise NotImplementedError(
+                raise ValueError(
                         'covariance estimator '
                         'is not supported '
                         'with svd solver. Try another solver')
@@ -744,10 +742,9 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
-    See also
+    See Also
     --------
-    sklearn.discriminant_analysis.LinearDiscriminantAnalysis: Linear
-        Discriminant Analysis
+    LinearDiscriminantAnalysis : Linear Discriminant Analysis.
     """
     @_deprecate_positional_args
     def __init__(self, *, priors=None, reg_param=0., store_covariance=False,

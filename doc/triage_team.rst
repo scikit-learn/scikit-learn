@@ -6,6 +6,10 @@
       img.avatar {border-radius: 10px;}
     </style>
     <div>
+    <a href='https://github.com/alfaro96'><img src='https://avatars1.githubusercontent.com/u/32649176?v=4' class='avatar' /></a> <br />
+    <p>Juan Carlos Alfaro Jiménez</p>
+    </div>
+    <div>
     <a href='https://github.com/cmarmo'><img src='https://avatars3.githubusercontent.com/u/1662261?v=4' class='avatar' /></a> <br />
     <p>Chiara Marmo</p>
     </div>

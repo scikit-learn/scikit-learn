@@ -175,13 +175,12 @@ This method has the same order of complexity as
 .. between these
 
 
-Setting the regularization parameter: generalized Cross-Validation
-------------------------------------------------------------------
+Setting the regularization parameter: leave-one-out Cross-Validation
+--------------------------------------------------------------------
 
 :class:`RidgeCV` implements ridge regression with built-in
 cross-validation of the alpha parameter. The object works in the same way
-as GridSearchCV except that it defaults to Generalized Cross-Validation
-(GCV), an efficient form of leave-one-out cross-validation::
+as GridSearchCV except that it defaults to Leave-One-Out Cross-Validation::
 
     >>> import numpy as np
     >>> from sklearn import linear_model
@@ -194,7 +193,7 @@ as GridSearchCV except that it defaults to Generalized Cross-Validation
 
 Specifying the value of the :term:`cv` attribute will trigger the use of
 cross-validation with :class:`~sklearn.model_selection.GridSearchCV`, for
-example `cv=10` for 10-fold cross-validation, rather than Generalized
+example `cv=10` for 10-fold cross-validation, rather than Leave-One-Out
 Cross-Validation.
 
 .. topic:: References

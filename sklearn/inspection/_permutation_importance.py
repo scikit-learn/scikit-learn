@@ -1,4 +1,4 @@
-"""Permutation importance for estimators"""
+"""Permutation importance for estimators."""
 import numpy as np
 from joblib import Parallel
 from joblib import delayed
@@ -97,6 +97,8 @@ def permutation_importance(estimator, X, y, *, scoring=None, n_repeats=5,
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights used in scoring.
+
+        .. versionadded:: 0.24
 
     Returns
     -------
