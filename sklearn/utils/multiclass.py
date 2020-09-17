@@ -137,8 +137,16 @@ def is_multilabel(y):
     >>> is_multilabel(np.array([[1, 0, 0]]))
     True
     """
+    import warnings
+
     if hasattr(y, '__array__') or isinstance(y, Sequence):
-        y = np.asarray(y)
+        with warnings.catch_warnings():
+            warnings.simplefilter('error', np.VisibleDeprecationWarning)
+            try:
+                y = np.asarray(y)
+            except np.VisibleDeprecationWarning:
+                y = np.array(y, dtype=object)
+
     if not (hasattr(y, "shape") and y.ndim == 2 and y.shape[1] > 1):
         return False
 
@@ -236,6 +244,8 @@ def type_of_target(y):
     >>> type_of_target(np.array([[0, 1], [1, 1]]))
     'multilabel-indicator'
     """
+    import warnings
+
     valid = ((isinstance(y, (Sequence, spmatrix)) or hasattr(y, '__array__'))
              and not isinstance(y, str))
 
@@ -250,7 +260,12 @@ def type_of_target(y):
     if is_multilabel(y):
         return 'multilabel-indicator'
 
-    y = np.asarray(y)
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', np.VisibleDeprecationWarning)
+        try:
+            y = np.asarray(y)
+        except np.VisibleDeprecationWarning:
+            y = np.asarray(y, dtype=object)
 
     # The old sequence of sequences format
     try:
