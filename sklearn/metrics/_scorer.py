@@ -508,7 +508,7 @@ def make_scorer(score_func, *, greater_is_better=True, needs_proba=False,
     and returns a callable that scores an estimator's output.
     The signature of the call is `(estimator, X, y)` where `estimator`
     is the model to be evaluated, `X` is the data and `y` is the
-    ground truth labeling (or `None in the case of unsupervised models).
+    ground truth labeling (or `None` in the case of unsupervised models).
 
     Read more in the :ref:`User Guide <scoring>`.
 
