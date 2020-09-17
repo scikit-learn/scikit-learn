@@ -776,7 +776,7 @@ def _convert_container(container, constructor_name, columns_name=None):
 
 def raises(expected_exp_type, match=None, may_pass=False, failure_msg=None):
     """Context manager to ensure exceptions are raised within a code block.
-    
+
     This is similar to and inspired from pytest.raises, but supports a few
     other cases. This is only intended to be used in estimator_checks.py
     where we don't want to use pytest. pytest.raises should be used
