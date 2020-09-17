@@ -317,12 +317,16 @@ def test_default_labels(pyplot, display_labels, expected_labels):
     assert_array_equal(y_ticks, expected_labels)
 
     
-def test_error_on_dataset_with_labels_unseen_by_the_classifier(fitted_clf, data):
-    # shift the true labels to get values that are not present in 'fitted_clf.classes_'
+def test_error_on_a_dataset_with_unseen_labels(fitted_clf, data):
     X, y = data
+    
+    # get values that are not present in 'fitted_clf.classes_'
     y = y + 1
-    disp = plot_confusion_matrix(fitted_clf, X, y, labels=None, display_labels=None)
-    disp_labels = set([l.get_text() for l in disp.ax_.get_xticklabels()])
-    correct_labels = unique_labels(y, fitted_clf.predict(X))
-    correct_labels = set([str(lbl) for lbl in correct_labels])
-    assert len(disp_labels.difference(correct_labels)) == 0
+    disp = plot_confusion_matrix(fitted_clf, X, y,
+                                 labels=None, display_labels=None)
+    
+    disp_labels = set([tick.get_text() for tick in disp.ax_.get_xticklabels()])
+    expected_labels = unique_labels(y, fitted_clf.predict(X))
+    expected_labels = set([str(label) for label in correct_labels])
+    
+    assert len(disp_labels.difference(expected_labels)) == 0
