@@ -975,7 +975,7 @@ def check_dtype_object(name, estimator_orig, strict_mode=True):
     if hasattr(estimator, "transform"):
         estimator.transform(X)
 
-    with raises(Exception, match="Unknown label type"):
+    with raises(Exception, match="Unknown label type", may_pass=True):
         estimator.fit(X, y.astype(object))
 
     if 'string' not in tags['X_types']:
@@ -1205,7 +1205,7 @@ def check_fit2d_1sample(name, estimator_orig, strict_mode=True):
     msgs = ["1 sample", "n_samples = 1", "n_samples=1", "one sample",
             "1 class", "one class"]
 
-    with raises(ValueError, match=msgs):
+    with raises(ValueError, match=msgs, may_pass=True):
         estimator.fit(X, y)
 
 
@@ -1236,7 +1236,7 @@ def check_fit2d_1feature(name, estimator_orig, strict_mode=True):
 
     msgs = ["1 feature(s)", "n_features = 1", "n_features=1"]
 
-    with raises(ValueError, match=msgs):
+    with raises(ValueError, match=msgs, may_pass=True):
         estimator.fit(X, y)
 
 

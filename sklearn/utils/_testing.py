@@ -803,7 +803,7 @@ class _Raises(contextlib.AbstractContextManager):
             else:
                 err_msg = (
                     self.failure_msg
-                    or f"DID NOT RAISE {self.expected_exp_type}"
+                    or f"DID NOT RAISE {self.expected_exp_types}"
                 )
                 raise AssertionError(err_msg)
 
