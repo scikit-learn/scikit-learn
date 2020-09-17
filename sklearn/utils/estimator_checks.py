@@ -1842,7 +1842,7 @@ def check_classifiers_one_label(name, classifier_orig, strict_mode=True):
         ) as cm:
             classifier.fit(X_train, y)
 
-        if cm.matched:
+        if cm.raised_and_matched:
             # ValueError was raised with proper error message
             return
 
