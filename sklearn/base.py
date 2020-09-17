@@ -49,10 +49,12 @@ def clone(estimator, *, safe=True):
     without actually copying attached data. It yields a new estimator
     with the same parameters that has not been fitted on any data.
 
-    A "clone" here means a clone in the statistical sense: depending on the
-    `random_state` parameter of the estimator, the clone might actually yield
-    different results from the original estimator. More details can be found
-    in :ref:`randomness`.
+    If the estimtor's `random_state` parameter is an integer (or if the
+    estimator doesn't have a `random_state` parameter), an *exact clone* is
+    returned: the clone and the original estimator will give the exact same
+    results. Otherwise, *statistical clone* is returned: the clone might
+    yield different results from the original estimator. More details can be
+    found in :ref:`randomness`.
 
     Parameters
     ----------
