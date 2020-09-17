@@ -25,7 +25,8 @@ from sklearn.utils._testing import (
     TempMemmap,
     create_memmap_backed_data,
     _delete_folder,
-    _convert_container)
+    _convert_container,
+    raises)
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
@@ -635,3 +636,54 @@ def test_convert_container(constructor_name, container_type):
     container = [0, 1]
     assert isinstance(_convert_container(container, constructor_name),
                       container_type)
+
+
+def test_raises():
+        
+    # Proper type, no match
+    with raises(TypeError):
+        raise TypeError()
+        
+    # Proper type, proper match
+    with raises(TypeError, match='how are you'):
+        raise TypeError('hello how are you')
+        
+    # Proper type, proper match with multiple patterns
+    with raises(TypeError, match=['not this one', 'how are you']):
+        raise TypeError('hello how are you')
+        
+    # bad type, no match
+    with pytest.raises(ValueError, match="this will be raised"):
+        with raises(TypeError):
+            raise ValueError("this will be raised")
+
+    # Bad type, no match, with a failure_msg
+    with pytest.raises(AssertionError, match='the failure message'):
+        with raises(TypeError, failure_msg='the failure message'):
+            raise ValueError()
+            
+    # bad type, with match (is ignored anyway)
+    with pytest.raises(ValueError, match="this will be raised"):
+        with raises(TypeError, match="this is ignored"):
+            raise ValueError("this will be raised")
+        
+    # proper type but bad match
+    with pytest.raises(AssertionError,
+                       match='should contain one of the following patterns'):
+        with raises(TypeError, match='hello'):
+            raise TypeError("Bad message")
+
+    # proper type but bad match, with failure_msg
+    with pytest.raises(AssertionError, match='the failure message'):
+        with raises(TypeError, match='hello',
+                    failure_msg='the failure message'):
+            raise TypeError("Bad message")
+            
+    # no raise with default may_pass=False
+    with pytest.raises(AssertionError, match='DID NOT RAISE'):
+        with raises(TypeError):
+            pass
+
+    # no raise with may_pass=True
+    with raises(TypeError, match='hello', may_pass=True):
+        pass  # still OK
