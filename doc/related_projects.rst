@@ -234,13 +234,13 @@ and tasks.
 **Topological Data Analysis**
 
 - `giotto-tda <https://github.com/giotto-ai/giotto-tda>`_ A library collecting
-  state-of-the-art implementations of several algorithms in Topological Data Analysis.
-  It offers a scikit-learn–compatible API, a suite of tools to transform various kinds
-  of data inputs (point clouds, graphs, time-series, images, etc.) into forms suitable
-  for computations of topological features, and components dedicated to extracting
-  rich sets of scalar features of topological origin, which can be used alongside other
-  feature extraction methods in scikit-learn and/or in the context of complex
-  scikit-learn pipelines.
+  state-of-the-art implementations of several algorithms in `Topological Data Analysis
+  <https://en.wikipedia.org/wiki/Topological_data_analysis>`_. It offers a
+  scikit-learn–compatible API, a suite of tools to transform various kinds of data
+  inputs (point clouds, graphs, time-series, images, etc.) into forms suitable for
+  computations of topological features, and components dedicated to extracting rich 
+  ets of scalar features of topological origin, which can be used alongside other feature
+  extraction methods in scikit-learn and/or in the context of complex scikit-learn pipelines.
 
 Statistical learning with Python
 --------------------------------
