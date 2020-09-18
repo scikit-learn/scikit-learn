@@ -38,10 +38,13 @@ performance to be around 0.5. However, since the feature selection step
 
 **Right**
 
-To ensure that features selection is performed using only the train dataset
+To ensure that feature selection is performed using only the train dataset
 we will use a :class:`~sklearn.pipeline.Pipeline` to chain together the
-feature selection and model. The accuracy score is now what we would expect
-for the data, close to chance::
+feature selection and model. Feeding our pipeline into
+:func:`~sklearn.model_selection.cross_val_score` ensures that only the
+training data is used for feature selection (and when fitting our model).
+The test data will only be used for calculating the accuracy score. The
+score is now what we would expect for the data, close to chance::
 
     >>> from sklearn.pipeline import make_pipeline
     >>> pipeline = make_pipeline(SelectKBest(k=25), GradientBoostingClassifier())
