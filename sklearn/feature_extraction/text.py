@@ -30,9 +30,10 @@ from ..preprocessing import normalize
 from ._hash import FeatureHasher
 from ._stop_words import ENGLISH_STOP_WORDS
 from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
-from ..utils import _IS_32BIT, deprecated
+from ..utils import _IS_32BIT
 from ..utils.fixes import _astype_copy_false
 from ..exceptions import NotFittedError
+from ..utils.validation import _deprecate_positional_args
 
 
 __all__ = ['HashingVectorizer',
@@ -125,9 +126,8 @@ def strip_accents_unicode(s):
 
     See Also
     --------
-    strip_accents_ascii
-        Remove accentuated char for any unicode symbol that has a direct
-        ASCII equivalent.
+    strip_accents_ascii : Remove accentuated char for any unicode symbol that
+        has a direct ASCII equivalent.
     """
     try:
         # If `s` is ASCII-compatible, then it does not contain any accented
@@ -152,8 +152,7 @@ def strip_accents_ascii(s):
 
     See Also
     --------
-    strip_accents_unicode
-        Remove accentuated char for any unicode symbol.
+    strip_accents_unicode : Remove accentuated char for any unicode symbol.
     """
     nkfd_form = unicodedata.normalize('NFKD', s)
     return nkfd_form.encode('ASCII', 'ignore').decode('ASCII')
@@ -504,12 +503,6 @@ class _VectorizerMixin:
                               " since 'analyzer' != 'word'")
 
 
-@deprecated("VectorizerMixin is deprecated in version "
-            "0.22 and will be removed in version 0.24.")
-class VectorizerMixin(_VectorizerMixin):
-    pass
-
-
 class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
     """Convert a collection of text documents to a matrix of token occurrences
 
@@ -677,8 +670,8 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
     CountVectorizer, TfidfVectorizer
 
     """
-
-    def __init__(self, input='content', encoding='utf-8',
+    @_deprecate_positional_args
+    def __init__(self, *, input='content', encoding='utf-8',
                  decode_error='strict', strip_accents=None,
                  lowercase=True, preprocessor=None, tokenizer=None,
                  stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
@@ -852,7 +845,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         Convert all characters to lowercase before tokenizing.
 
     preprocessor : callable, default=None
-        Override the preprocessing (string transformation) stage while
+        Override the preprocessing (strip_accents and lowercase) stage while
         preserving the tokenizing and n-grams generation steps.
         Only applies if ``analyzer is not callable``.
 
@@ -874,7 +867,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         in the range [0.7, 1.0) to automatically detect and filter stop
         words based on intra corpus document frequency of terms.
 
-    token_pattern : string
+    token_pattern : string, default=r"(?u)/b/w/w+/b"
         Regular expression denoting what constitutes a "token", only used
         if ``analyzer == 'word'``. The default regexp select tokens of 2
         or more alphanumeric characters (punctuation is completely ignored
@@ -999,8 +992,8 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
     when pickling. This attribute is provided only for introspection and can
     be safely removed using delattr or set to None before pickling.
     """
-
-    def __init__(self, input='content', encoding='utf-8',
+    @_deprecate_positional_args
+    def __init__(self, *, input='content', encoding='utf-8',
                  decode_error='strict', strip_accents=None,
                  lowercase=True, preprocessor=None, tokenizer=None,
                  stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
@@ -1211,13 +1204,14 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
             if max_doc_count < min_doc_count:
                 raise ValueError(
                     "max_df corresponds to < documents than min_df")
+            if max_features is not None:
+                X = self._sort_features(X, vocabulary)
             X, self.stop_words_ = self._limit_features(X, vocabulary,
                                                        max_doc_count,
                                                        min_doc_count,
                                                        max_features)
-
-            X = self._sort_features(X, vocabulary)
-
+            if max_features is None:
+                X = self._sort_features(X, vocabulary)
             self.vocabulary_ = vocabulary
 
         return X
@@ -1374,6 +1368,8 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
         The inverse document frequency (IDF) vector; only defined
         if  ``use_idf`` is True.
 
+        .. versionadded:: 0.20
+
     Examples
     --------
     >>> from sklearn.feature_extraction.text import TfidfTransformer
@@ -1409,8 +1405,8 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
                    Introduction to Information Retrieval. Cambridge University
                    Press, pp. 118-120.
     """
-
-    def __init__(self, norm='l2', use_idf=True, smooth_idf=True,
+    @_deprecate_positional_args
+    def __init__(self, *, norm='l2', use_idf=True, smooth_idf=True,
                  sublinear_tf=False):
         self.norm = norm
         self.use_idf = use_idf
@@ -1715,8 +1711,8 @@ class TfidfVectorizer(CountVectorizer):
     >>> print(X.shape)
     (4, 9)
     """
-
-    def __init__(self, input='content', encoding='utf-8',
+    @_deprecate_positional_args
+    def __init__(self, *, input='content', encoding='utf-8',
                  decode_error='strict', strip_accents=None, lowercase=True,
                  preprocessor=None, tokenizer=None, analyzer='word',
                  stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
@@ -1840,7 +1836,7 @@ class TfidfVectorizer(CountVectorizer):
         # we set copy to False
         return self._tfidf.transform(X, copy=False)
 
-    def transform(self, raw_documents, copy="deprecated"):
+    def transform(self, raw_documents):
         """Transform documents to document-term matrix.
 
         Uses the vocabulary and document frequencies (df) learned by fit (or
@@ -1851,15 +1847,6 @@ class TfidfVectorizer(CountVectorizer):
         raw_documents : iterable
             An iterable which yields either str, unicode or file objects.
 
-        copy : bool, default=True
-            Whether to copy X and operate on the copy or perform in-place
-            operations.
-
-            .. deprecated:: 0.22
-               The `copy` parameter is unused and was deprecated in version
-               0.22 and will be removed in 0.24. This parameter will be
-               ignored.
-
         Returns
         -------
         X : sparse matrix of (n_samples, n_features)
@@ -1867,12 +1854,6 @@ class TfidfVectorizer(CountVectorizer):
         """
         check_is_fitted(self, msg='The TF-IDF vectorizer is not fitted')
 
-        # FIXME Remove copy parameter support in 0.24
-        if copy != "deprecated":
-            msg = ("'copy' param is unused and has been deprecated since "
-                   "version 0.22. Backward compatibility for 'copy' will "
-                   "be removed in 0.24.")
-            warnings.warn(msg, FutureWarning)
         X = super().transform(raw_documents)
         return self._tfidf.transform(X, copy=False)
 

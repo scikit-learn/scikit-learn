@@ -381,7 +381,7 @@ def test_min_gain_to_split():
          3,  # cut on bin_idx=3
          False),  # missing values go to right
 
-        ([6, 6, 6, 6, 0, 1, 2, 3, 4, 5],  # 4 <=> missing
+        ([6, 6, 6, 6, 0, 1, 2, 3, 4, 5],  # 6 <=> missing
          [1, 1, 1, 1, 5, 5, 5, 5, 5, 5],
          True,  # missing values
          6,  # n_bins_non_missing

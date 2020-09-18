@@ -465,6 +465,5 @@ def test_not_fitted_tree(pyplot):
 
     # Testing if not fitted tree throws the correct error
     clf = DecisionTreeRegressor()
-    out = StringIO()
     with pytest.raises(NotFittedError):
-        plot_tree(clf, out)
+        plot_tree(clf)
