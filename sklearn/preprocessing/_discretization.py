@@ -131,8 +131,7 @@ class _BaseDiscretizer(TransformerMixin, BaseEstimator):
 
 
 class KBinsDiscretizer(_BaseDiscretizer):
-    """
-    Bin continuous data into intervals.
+    """Bin continuous data into intervals using a given number of bins.
 
     Read more in the :ref:`User Guide <preprocessing_discretization>`.
 
@@ -403,7 +402,7 @@ class MDLPDiscretizer(_BaseDiscretizer):
     n_bins_ : ndarray of shape (n_features,), dtype=int
         The number of bins per feature.
 
-    bin_edges_ : list of ndarray of shape (n_features,) of float64
+    bin_edges_ : list of ndarray of shape (n_features,) of dtype=float
         The edges of each bin, containing arrays of varying
         shapes, according to the attribute `n_bins_`.
 
@@ -465,7 +464,7 @@ class MDLPDiscretizer(_BaseDiscretizer):
         X : array-like of shape (n_samples, n_features)
             The data to determine the bins for each feature.
 
-        y : array-like of shape (n_samples, n_features)
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             The labels to determine the bins for each feature.
 
         Returns
