@@ -18,4 +18,4 @@ example.
 .. toctree::
     :maxdepth: 2
 
-    pitfalls/feature_selection
+    pitfalls/data_leakage

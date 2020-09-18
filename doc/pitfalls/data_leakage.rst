@@ -1,15 +1,44 @@
-.. _wrong_feature_selection:
+.. _data_leakage:
 
-================================
-Feature selection using all data
-================================
+============
+Data leakage
+============
+
+Data leakage occurs when information that would not be available at prediction
+time, is used when building the model. This results in overly optimstic
+performance estimates, for example from :ref:`cross_validation`, but
+poorer performance when the model is asked to predict on actually novel data,
+for example during production.
+
+A common cause is not keeping the test and train data subsets separate. Test
+data should never be used to make choices about the model but this may
+accidently occur during :ref:`preprocessing` or :ref:`grid_search`.
+
+Although both train and test data subsets should undergo the same preprocessing
+transformation, it is important that stateful transformations use only the
+training subset to determine the 'state'. For example, if you have a
+normalization step whereby you divide by the average value, the average should
+be the average of the train subset, **not** the average of all the data. If the
+test subset was included in the average calculation, information from the test
+subset is influencing the model. Other types of preprocessing such as
+:ref:`impute` and :ref:`polynomial_features` should also only utilize train
+data.
+
+Including the test data when finding the best model hyperparameters will
+also inadvertantly introduce information from the test data into the model.
+Practically, this means that only the train data subset should be fed into the
+`fit` method of ref:`hyper_parameter_optimizers`.
+
+Examples of common data leakage pitfalls are detailed below.
+
+Data leakage during feature selection
+=====================================
 
 A number of :ref:`feature_selection` functions are available in scikit-learn.
 They can help remove irrelevant, redundant and noisy features as well as
 improve your model build time and performance. Feature selection should
-**only** use the training data. Indeed, test data should never be used to make
-choices about the model. Including the test data in feature selection will
-optimistically bias your model.
+**only** use the training data. Including the test data in feature selection
+will optimistically bias your model.
 
 To demonstrate we will create a binary classification problem with
 1000 randomly generated features::
@@ -52,3 +81,5 @@ score is now what we would expect for the data, close to chance::
     >>> scores = cross_val_score(pipeline, X, y, cv=5)
     >>> print(f"Mean Accuracy: {scores.mean()}")
     Mean Accuracy: 0.495
+
+
