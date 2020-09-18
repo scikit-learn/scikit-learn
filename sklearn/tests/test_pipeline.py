@@ -564,13 +564,24 @@ def test_pipeline_slice():
         memory="123",
         verbose=True,
     )
-    pipe2 = pipe[:-1]
-    assert isinstance(pipe2, Pipeline)
-    assert pipe2.steps == pipe.steps[:-1]
-    assert 2 == len(pipe2.named_steps)
-    assert pipe2.memory == pipe.memory
-    assert pipe2.verbose == pipe.verbose
-    assert_raises(ValueError, lambda: pipe[::-1])
+    pipe_slice = pipe[:-1]
+    # Test class
+    assert isinstance(pipe_slice, Pipeline)
+    # Test steps
+    assert pipe_slice.steps == pipe.steps[:-1]
+    # Test named_steps attribute
+    assert list(pipe_slice.named_steps.items()) == list(
+        pipe.named_steps.items())[:-1]
+    # Test the rest of the parameters
+    pipe_params = pipe.get_params(deep=False)
+    pipe_slice_params = pipe_slice.get_params(deep=False)
+    del pipe_params["steps"]
+    del pipe_slice_params["steps"]
+    assert pipe_params == pipe_slice_params
+    # Test exception
+    msg = "Pipeline slicing only supports a step of 1"
+    with pytest.raises(ValueError, match=msg):
+        pipe[::-1]
 
 
 def test_pipeline_index():
