@@ -51,4 +51,4 @@ score is now what we would expect for the data, close to chance::
     ...                          GradientBoostingClassifier(random_state=1))
     >>> scores = cross_val_score(pipeline, X, y, cv=5)
     >>> print(f"Mean Accuracy: {scores.mean()}")
-    Mean Accuracy:0.495
+    Mean Accuracy: 0.495
