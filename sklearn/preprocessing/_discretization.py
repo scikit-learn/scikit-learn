@@ -187,7 +187,7 @@ class KBinsDiscretizer(_BaseDiscretizer):
 
     See Also
     --------
-    Binarizer : Class to bin values as `0` or `1` based on a ``threshold``.
+    Binarizer : Class to bin values as `0` or `1` based on a threshold.
     MDLPDiscretizer : Class to bin values using the MDLP strategy.
 
     Notes
@@ -406,6 +406,11 @@ class MDLPDiscretizer(_BaseDiscretizer):
     bin_edges_ : list of ndarray of shape (n_features,) of float64
         The edges of each bin, containing arrays of varying
         shapes, according to the attribute `n_bins_`.
+
+    See Also
+    --------
+    Binarizer : Class to bin values as `0` or `1` based on a threshold.
+    KBinsDiscretizer : Class to bin values using a given number of intervals.
 
     Notes
     -----
