@@ -8,6 +8,7 @@
 # License: BSD
 
 
+import numpy as np
 from libc.math cimport log, pow
 from libc.math cimport INFINITY
 from libc.stdlib cimport calloc, free, realloc
@@ -15,7 +16,6 @@ from libc.string cimport memcpy, memset
 from numpy import float64 as DTYPE
 from numpy import int32 as ITYPE
 from numpy import intp as SIZE
-from numpy import uint8 as UINT8
 
 
 # =============================================================================
@@ -25,18 +25,19 @@ from numpy import uint8 as UINT8
 # Initial size for the stack
 cdef SIZE_t INITIAL_STACK_SIZE = 10
 
+# Maximum bin size
+cdef SIZE_t MAX_BINS = 255
+
 
 # =============================================================================
 # Functions
 # =============================================================================
 
-def find_binning_thresholds(DTYPE_t[:, :] X,
-                            SIZE_t[:, :] X_idx_sorted,
-                            ITYPE_t[:, :] y,
+def find_binning_thresholds(const DTYPE_t[:, :] X,
+                            const SIZE_t[:, :] X_idx_sorted,
+                            const ITYPE_t[:, :] y,
                             SIZE_t n_outputs,
-                            SIZE_t[:] n_classes,
-                            DTYPE_t[:, :] bin_edges,
-                            SIZE_t[:] n_bins):
+                            SIZE_t[:] n_classes):
     """Find the thresholds used to discretize the data."""
     cdef SIZE_t n_samples = X.shape[0]
     cdef SIZE_t n_features = X.shape[1]
@@ -45,9 +46,19 @@ def find_binning_thresholds(DTYPE_t[:, :] X,
     cdef DTYPE_t* sum_total = NULL
     cdef SIZE_t sum_stride = 0
 
+    cdef np.ndarray[SIZE_t, ndim=1] n_bins
+    cdef np.ndarray[DTYPE_t, ndim=2] bin_edges
+    cdef np.ndarray[object, ndim=1] bin_edges_output
+
     cdef SIZE_t label
     cdef SIZE_t output
     cdef SIZE_t feature
+
+    n_bins = np.ones(n_features, dtype=SIZE)
+
+    # Need to use a maximum number of bins to initialize the view
+    bin_edges = np.zeros((n_features, MAX_BINS), dtype=DTYPE)
+    bin_edges_output = np.zeros(n_features, dtype=object)
 
     # Compute the maximal stride of all targets
     for output in range(n_outputs):
@@ -57,7 +68,8 @@ def find_binning_thresholds(DTYPE_t[:, :] X,
     n_elements = n_outputs * sum_stride
     safe_calloc(&sum_total, n_elements)
 
-    # Compute the sum of the count of each label
+    # Compute the sum of the count of each label to cache
+    # the results and avoid intermediate computations
     for sample in range(n_samples):
         for output in range(n_outputs):
             label = y[sample, output]
@@ -69,17 +81,23 @@ def find_binning_thresholds(DTYPE_t[:, :] X,
                                  n_outputs, n_classes,
                                  bin_edges, n_bins)
 
+        # The cut points must be sorted because of the stack
+        bin_edges_output[feature] = np.sort(
+            bin_edges[feature, :n_bins[feature] - 1])
+
     free(sum_total)
 
+    return bin_edges_output, n_bins
 
-cdef SIZE_t _find_binning_thresholds(DTYPE_t[:, :] X,
+
+cdef SIZE_t _find_binning_thresholds(const DTYPE_t[:, :] X,
                                      SIZE_t feature,
-                                     SIZE_t[:, :] X_idx_sorted,
-                                     ITYPE_t[:, :] y,
+                                     const SIZE_t[:, :] X_idx_sorted,
+                                     const ITYPE_t[:, :] y,
                                      DTYPE_t* sum_total,
                                      SIZE_t sum_stride,
                                      SIZE_t n_outputs,
-                                     SIZE_t[:] n_classes,
+                                     const SIZE_t[:] n_classes,
                                      DTYPE_t[:, :] bin_edges,
                                      SIZE_t[:] n_bins):
     """Find the thresholds used to discretize the feature data."""
@@ -147,16 +165,16 @@ cdef SIZE_t _find_binning_thresholds(DTYPE_t[:, :] X,
         free(sum_right)
 
 
-cdef SIZE_t find_cut_point(DTYPE_t[:, :] X,
+cdef SIZE_t find_cut_point(const DTYPE_t[:, :] X,
                            SIZE_t feature,
-                           SIZE_t[:, :] X_idx_sorted,
-                           ITYPE_t[:, :] y,
+                           const SIZE_t[:, :] X_idx_sorted,
+                           const ITYPE_t[:, :] y,
                            DTYPE_t* sum_total,
                            DTYPE_t** sum_left,
                            DTYPE_t** sum_right,
                            SIZE_t sum_stride,
                            SIZE_t n_outputs,
-                           SIZE_t[:] n_classes,
+                           const SIZE_t[:] n_classes,
                            SIZE_t start,
                            SIZE_t end) nogil except -1:
     """Find the cut point between the start and end points."""
@@ -262,14 +280,14 @@ cdef SIZE_t find_cut_point(DTYPE_t[:, :] X,
 
 
 cdef void update_statistics(SIZE_t feature,
-                            SIZE_t[:, :] X_idx_sorted,
-                            ITYPE_t[:, :] y,
+                            const SIZE_t[:, :] X_idx_sorted,
+                            const ITYPE_t[:, :] y,
                             DTYPE_t* sum_total,
                             DTYPE_t** sum_left,
                             DTYPE_t** sum_right,
                             SIZE_t sum_stride,
                             SIZE_t n_outputs,
-                            SIZE_t[:] n_classes,
+                            const SIZE_t[:] n_classes,
                             SIZE_t pos,
                             SIZE_t new_pos) nogil:
     """Update the left and right part statistics."""
@@ -304,7 +322,7 @@ cdef BOOL_t is_split_accepted(DTYPE_t* sum_total,
                               DTYPE_t* sum_right,
                               SIZE_t sum_stride,
                               SIZE_t n_outputs,
-                              SIZE_t[:] n_classes,
+                              const SIZE_t[:] n_classes,
                               SIZE_t start,
                               SIZE_t pos,
                               SIZE_t end) nogil:
@@ -380,9 +398,9 @@ cdef BOOL_t is_split_accepted(DTYPE_t* sum_total,
     return gain > (log2(n_samples_node - 1) + delta) / n_samples_node
 
 
-cdef DTYPE_t get_threshold(DTYPE_t[:, :] X,
+cdef DTYPE_t get_threshold(const DTYPE_t[:, :] X,
                            SIZE_t feature,
-                           SIZE_t[:, :] X_idx_sorted,
+                           const SIZE_t[:, :] X_idx_sorted,
                            SIZE_t cut_point) nogil:
     """Get the threshold corresponding to a cut point."""
     return (X[X_idx_sorted[cut_point - 1, feature], feature]

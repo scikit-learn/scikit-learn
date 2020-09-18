@@ -13,7 +13,7 @@ from . import OneHotEncoder
 
 from ..base import BaseEstimator, TransformerMixin
 from ._mdlp_discretization import find_binning_thresholds
-from ._mdlp_discretization import DTYPE, ITYPE, SIZE, UINT8
+from ._mdlp_discretization import DTYPE, ITYPE, SIZE
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
@@ -428,7 +428,7 @@ class MDLPDiscretizer(_BaseDiscretizer):
     >>> discretizer.fit(X, y)
     MDLPDiscretizer(...)
     >>> Xt = discretizer.transform(X)
-    >>> Xt
+    >>> Xt  # doctest: +SKIP
     array([[ 0., 0., 0., 0.],
            [ 0., 0., 0., 0.],
            [ 0., 0., 0., 0.],
@@ -497,34 +497,33 @@ class MDLPDiscretizer(_BaseDiscretizer):
         X_idx_sorted = np.argsort(X, axis=0)
         y_encoded = np.ascontiguousarray(y_encoded, dtype=ITYPE)
 
-        # Use a fixed-size number of bins for fast routines
-        max_bins = np.iinfo(UINT8).max
-        n_bins = np.ones(n_features, dtype=SIZE)
-        bin_edges = np.zeros((n_features, max_bins), dtype=DTYPE)
-
-        find_binning_thresholds(X, X_idx_sorted,
-                                y_encoded, n_outputs,
-                                n_classes, bin_edges, n_bins)
+        bin_edges, n_bins = find_binning_thresholds(X,
+                                                    X_idx_sorted,
+                                                    y_encoded,
+                                                    n_outputs,
+                                                    n_classes)
 
         self.n_bins_ = n_bins
-        self.bin_edges_ = np.zeros(self.n_features_in_, dtype=object)
+        self.bin_edges_ = np.zeros(n_features, dtype=object)
 
-        for j in range(self.n_features_in_):
+        for j in range(n_features):
             col_min, col_max = np.min(X[:, j]), np.max(X[:, j])
 
-            if col_min == col_max:
-                warnings.warn(f"Feature {j} is constant and "
-                              "will be replaced with 0.")
+            if col_min == col_max or self.n_bins_[j] == 1:
+                if col_min == col_max:
+                    warnings.warn(f"Feature {j} is constant and "
+                                  "it will be replaced with 0.")
+                else:
+                    warnings.warn("No bin edges found for feature "
+                                  f"{j}. It will be replaced with 0.")
 
                 self.n_bins_[j] = 1
                 self.bin_edges_[j] = np.array([-np.inf, np.inf])
 
                 continue
 
-            # Sort the bin edges to get the corresponding order
-            self.bin_edges_[j] = np.sort(bin_edges[j, :n_bins[j] - 1])
             self.bin_edges_[j] = np.concatenate([[col_min],
-                                                 self.bin_edges_[j],
+                                                 bin_edges[j],
                                                  [col_max]])
 
         # Fit an encoder with a "toy" dataset
