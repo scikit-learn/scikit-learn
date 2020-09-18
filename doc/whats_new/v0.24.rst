@@ -590,12 +590,13 @@ Changelog
 :mod:`sklearn.utils`
 ....................
 
-- New :func:`utils._init_arpack_v0` which goal is to be used each time eigs,
-  eigsh or svds from scipy.sparse.linalg is called. It initializes the v0
+- |Fix| In ``fit`` and ``fit_transform`` methods of Spectral bi-clustering 
+  algorithms :class:`SpectralCoclustering` and :class:`SpectralBiclustering`, 
+  estimator :class:`PLSSVD`, and dimensionality reduction algorithms 
+  :class:`KernelPCA`, :class:`PCA`, :class:`TruncatedSVD` now initializes the v0
   parameter correctly with value sampled from the uniform distribution in
   [-1, 1] to avoid convergence issues with another initialization.
-  :issue:`11524` by :user:`Ivan Panico <FollowKenny>`
-  and :user:`Gaurav Desai <gauravkdesai>`
+  :issue:`11524` by :user:`Gaurav Desai <gauravkdesai>`
 
 Code and Documentation Contributors
 -----------------------------------
