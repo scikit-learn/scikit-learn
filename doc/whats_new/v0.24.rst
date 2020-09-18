@@ -180,6 +180,13 @@ Changelog
   :func:`decomposition.NMF.non_negative_factorization`.
   :pr:`17414` by :user:`Bharat Raghunathan <Bharat123rox>`.
 
+:mod:`sklearn.discriminant_analysis`
+....................................
+
+- |Enhancement| :class:`discriminant_analysis.LinearDiscriminantAnalysis` can
+  now use custom covariance estimate by setting the `covariance_estimator`
+  parameter. :pr:`14446` by :user:`Hugo Richard <hugorichard>`
+
 :mod:`sklearn.ensemble`
 .......................
 
