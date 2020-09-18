@@ -31,8 +31,8 @@ performance to be around 0.5. However, since the feature selection step
     >>> from sklearn.model_selection import cross_val_score
     >>> from sklearn.ensemble import GradientBoostingClassifier
     >>> X_selected = SelectKBest(k=25).fit_transform(X, y)
-    >>> scores = cross_val_score(GradientBoostingClassifier(), X_selected,
-    ...                          y, cv=5)
+    >>> scores = cross_val_score(GradientBoostingClassifier(random_state=1),
+    ...                          X_selected, y, cv=5)
     >>> print(f"Mean cross-validation accuracy: {scores.mean()}")
     Mean cross-validation accuracy: 0.775
 
@@ -47,7 +47,8 @@ The test data will only be used for calculating the accuracy score. The
 score is now what we would expect for the data, close to chance::
 
     >>> from sklearn.pipeline import make_pipeline
-    >>> pipeline = make_pipeline(SelectKBest(k=25), GradientBoostingClassifier())
+    >>> pipeline = make_pipeline(SelectKBest(k=25),
+    ...                          GradientBoostingClassifier(random_state=1))
     >>> scores = cross_val_score(pipeline, X, y, cv=5)
     >>> print(f"Mean Accuracy: {scores.mean()}")
-    Mean Accuracy:0.51
+    Mean Accuracy:0.495
