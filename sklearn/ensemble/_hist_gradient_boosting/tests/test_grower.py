@@ -405,9 +405,9 @@ def test_split_on_nan_with_infinite_values():
     assert predictor.nodes[0]['num_threshold'] == np.inf
     assert predictor.nodes[0]['bin_threshold'] == n_bins_non_missing - 1
 
-    known_cat_bitset, orig_feat_to_known_cats_idx = \
-        _make_known_categories(bin_mapper.bin_thresholds_,
-                               bin_mapper.is_categorical_)
+    result = bin_mapper.make_known_categories()
+    known_cat_bitset = result['known_cat_bitset']
+    orig_feat_to_known_cats_idx = result['orig_feat_to_known_cats_idx']
 
     # Make sure in particular that the +inf sample is mapped to the left child
     # Note that lightgbm "fails" here and will assign the inf sample to the
