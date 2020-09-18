@@ -578,7 +578,7 @@ def _assert_threshold_equals_bitset(expected_thresholds, bitset):
         # missing values should go to the left bin with 22 samples but
         # this is done in the grower
         ([0, 1, 2, 3] * 11,  # X_binned
-         [1, 20, 1, 1] * 11,  # all_gradients
+         [20, 1, 20, 20] * 11,  # all_gradients
          [1],  # expected_categories_left
          4,  # n_bins_non_missing
          4,  # missing_values_bin_idx
@@ -587,7 +587,7 @@ def _assert_threshold_equals_bitset(expected_thresholds, bitset):
         # 5 categories where the left node has more samples
         # the grower would add the missing value bin to go to the left
         ([0, 1, 2, 3, 4] * 11 + [1] * 50,  # X_binned
-         [1, 10, 1, 1, 1] * 11 + [10] * 50,  # all_gradients
+         [10, 1, 10, 10, 10] * 11 + [1] * 50,  # all_gradients
          [1],  # expected_categories_left
          5,  # n_bins_non_missing
          5,  # missing_values_bin_idx
@@ -595,7 +595,7 @@ def _assert_threshold_equals_bitset(expected_thresholds, bitset):
 
         # 4 categories (including missing value)
         ([0, 1, 2] * 11 + [9] * 11,  # X_binned
-         [1, 5, 1] * 11 + [1] * 11,  # all_gradients
+         [5, 1, 5] * 11 + [5] * 11,  # all_gradients
          [1],  # expected_categories_left
          3,  # n_bins_non_missing
          9,  # missing_values_bin_idx
@@ -603,7 +603,7 @@ def _assert_threshold_equals_bitset(expected_thresholds, bitset):
 
         # split is on the missing value
         ([0, 1, 2, 3, 4] * 11 + [255] * 12,  # X_binned
-         [1, 1, 1, 1, 1] * 11 + [20] * 12,  # all_gradients
+         [20, 20, 20, 20, 20] * 11 + [1] * 12,  # all_gradients
          [255],  # expected_categories_left
          5,  # n_bins_non_missing
          255,  # missing_values_bin_idx
@@ -611,7 +611,7 @@ def _assert_threshold_equals_bitset(expected_thresholds, bitset):
 
         # split on even categories
         (list(range(60)) * 12,  # X_binned
-         [1, 10] * 360,  # all_gradients
+         [10, 1] * 360,  # all_gradients
          list(range(1, 60, 2)),  # expected_categories_left
          59,  # n_bins_non_missing
          59,  # missing_values_bin_idx
@@ -619,7 +619,7 @@ def _assert_threshold_equals_bitset(expected_thresholds, bitset):
 
         # split on every 8 categories
         (list(range(256)) * 12,  # X_binned
-         [1, 1, 1, 1, 1, 1, 1, 10] * 384,  # all_gradients
+         [10, 10, 10, 10, 10, 10, 10, 1] * 384,  # all_gradients
          list(range(7, 256, 8)),  # expected_categories_left
          255,  # n_bins_non_missing
          255,  # missing_values_bin_idx

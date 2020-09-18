@@ -425,7 +425,7 @@ def test_grow_tree_categories():
     X_binned = np.array([[0, 1] * 11 + [1]], dtype=X_BINNED_DTYPE).T
     X_binned = np.asfortranarray(X_binned)
 
-    all_gradients = np.array([1, 10] * 11 + [1], dtype=G_H_DTYPE)
+    all_gradients = np.array([10, 1] * 11 + [1], dtype=G_H_DTYPE)
     all_hessians = np.ones(1, dtype=G_H_DTYPE)
     is_categorical = np.ones(1, dtype=np.uint8)
 
