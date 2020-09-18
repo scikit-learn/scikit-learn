@@ -25,6 +25,15 @@ random sampling procedures.
 - |Fix| :class:`decomposition.KernelPCA` behaviour is now more consistent
   between 32-bits and 64-bits data when the kernel has small positive
   eigenvalues.
+- |Fix| In ``fit`` and ``fit_transform`` methods of Spectral bi-clustering 
+  algorithms :class:`sklearn.cluster.SpectralCoclustering` and 
+  :class:`sklearn.cluster.SpectralBiclustering`, and dimensionality reduction 
+  algorithms :class:`sklearn.decomposition.KernelPCA`, 
+  :class:`sklearn.decomposition.PCA`, 
+  :class:`sklearn.decomposition.TruncatedSVD` now initializes the v0
+  parameter correctly with value sampled from the uniform distribution in
+  [-1, 1] to avoid convergence issues with another initialization.
+
 
 Details are listed in the changelog below.
 
@@ -590,12 +599,11 @@ Changelog
 :mod:`sklearn.utils`
 ....................
 
-- |Fix| In ``fit`` and ``fit_transform`` methods of Spectral bi-clustering 
-  algorithms :class:`SpectralCoclustering` and :class:`SpectralBiclustering`, 
-  estimator :class:`PLSSVD`, and dimensionality reduction algorithms 
-  :class:`KernelPCA`, :class:`PCA`, :class:`TruncatedSVD` now initializes the v0
-  parameter correctly with value sampled from the uniform distribution in
-  [-1, 1] to avoid convergence issues with another initialization.
+- |Fix| :class:`sklearn.cross_decomposition.PLSSVD` now accepts `random_state' 
+  optional parameter. This parameter is used in ``fit`` and ``fit_transform`` 
+  methods and initializes the v0 parameter correctly with value sampled from 
+  the uniform distribution in [-1, 1] to avoid convergence issues with another 
+  initialization.
   :issue:`11524` by :user:`Gaurav Desai <gauravkdesai>`
 
 Code and Documentation Contributors
