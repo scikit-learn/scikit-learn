@@ -2,18 +2,18 @@ import pytest
 import numpy as np
 from numpy.testing import assert_allclose
 
-from sklearn.ensemble._hist_gradient_boosting._bitset import set_bitset_mv
-from sklearn.ensemble._hist_gradient_boosting._bitset import set_raw_bitset_mv
+from sklearn.ensemble._hist_gradient_boosting._bitset import set_bitset_memoryview
+from sklearn.ensemble._hist_gradient_boosting._bitset import set_raw_bitset_memoryview
 
 
 @pytest.mark.parametrize("expected_bitset, values_to_insert", [
     (np.array([2**0 + 2**4, 2**1, 0], dtype=np.uint32), [0, 4, 33]),
     (np.array([2**31, 2**0, 2**15], dtype=np.uint32), [31, 32, 79])
 ])
-def test_set_bitset_mv(expected_bitset, values_to_insert):
+def test_set_bitset_memoryview(expected_bitset, values_to_insert):
     bitset = np.zeros(3, dtype=np.uint32)
     for value in values_to_insert:
-        set_bitset_mv(bitset, value)
+        set_bitset_memoryview(bitset, value)
     assert_allclose(expected_bitset, bitset)
 
 
@@ -31,5 +31,5 @@ def test_set_bitset_mv(expected_bitset, values_to_insert):
     ])
 def test_raw_bitset_mv(expected_raw_bitset, binned_bitset, categories):
     raw_bitset = np.zeros(2, dtype=np.uint32)
-    set_raw_bitset_mv(raw_bitset, binned_bitset, categories)
+    set_raw_bitset_memoryview(raw_bitset, binned_bitset, categories)
     assert_allclose(expected_raw_bitset, raw_bitset)

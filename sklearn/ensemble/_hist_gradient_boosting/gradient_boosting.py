@@ -18,7 +18,6 @@ from ...metrics import check_scoring
 from ...model_selection import train_test_split
 from ...preprocessing import LabelEncoder
 from ._gradient_boosting import _update_raw_predictions
-from .predictor import _make_known_categories
 from .common import Y_DTYPE, X_DTYPE, X_BINNED_DTYPE
 
 from .binning import _BinMapper
@@ -715,9 +714,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
     def _predict_iterations(self, X, predictors, raw_predictions, is_binned):
         """Add the predictions of the predictors to raw_predictions."""
         if not is_binned:
-            known_cat_bitset, orig_feat_to_known_cats_idx = \
-                _make_known_categories(self._bin_mapper.bin_thresholds_,
-                                       self._bin_mapper.is_categorical_)
+            result = self._bin_mapper.make_known_categories()
+            known_cat_bitset = result['known_cat_bitset']
+            orig_feat_to_known_cats_idx = result['orig_feat_to_known_cats_idx']
 
         # bin categorical features when predicting outside of training loop
         for predictors_of_ith_iteration in predictors:
@@ -906,7 +905,9 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         <monotonic_cst_gbdt>`.
     categorical_features : array-like of {bool, int} of shape (n_features), \
             default=None.
-        Indicates the categorical features.
+        Indicates the categorical features. The cardinality of the categorical
+        features must be less than `max_bins` and be encoded with values less
+        than `max_bins`.
 
         - None : no feature will be considered categorical.
         - boolean array-like : boolean mask indicating categorical features.
@@ -916,10 +917,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
           features. The categories must have been already be numerical i.e.
           encoded by an :class:`~sklearn.preprocessing.OrdinalEncoder`.
 
-        If the number of categories is greater than ``max_bins``, then the top
-        ``max_bins`` categories based on cardinality are kept. Categories
-        encoded as negative number will be considered missing. Read more in
-        the :ref:`User Guide <categorical_support_gbdt>`.
+        Read more in the :ref:`User Guide <categorical_support_gbdt>`.
     warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble. For results to be valid, the
@@ -1154,7 +1152,9 @@ class HistGradientBoostingClassifier(ClassifierMixin,
         <monotonic_cst_gbdt>`.
     categorical_features : array-like of {bool, int} of shape (n_features), \
             default=None.
-        Indicates the categorical features.
+        Indicates the categorical features. The cardinality of the categorical
+        features must be less than `max_bins` and be encoded with values less
+        than `max_bins`.
 
         - None : no feature will be considered categorical.
         - boolean array-like : boolean mask indicating categorical features.
@@ -1164,10 +1164,7 @@ class HistGradientBoostingClassifier(ClassifierMixin,
           features. The categories must have been already be numerical i.e.
           encoded by an :class:`~sklearn.preprocessing.OrdinalEncoder`.
 
-        If the number of categories is greater than ``max_bins``, then the top
-        ``max_bins`` categories based on cardinality are kept. Categories
-        encoded as negative number will be considered missing. Read more in
-        the :ref:`User Guide <categorical_support_gbdt>`.
+        Read more in the :ref:`User Guide <categorical_support_gbdt>`.
     warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble. For results to be valid, the

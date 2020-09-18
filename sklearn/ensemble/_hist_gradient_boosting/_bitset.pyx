@@ -43,7 +43,7 @@ cdef unsigned char in_bitset_mv(const BITSET_INNER_DTYPE_C[:] bitset,
     return (bitset[i1] >> i2) & 1
 
 
-def set_bitset_mv(BITSET_INNER_DTYPE_C[:] bitset,  # OUT
+def set_bitset_memoryview(BITSET_INNER_DTYPE_C[:] bitset,  # OUT
                   X_BINNED_DTYPE_C val):
     cdef:
         unsigned int i1 = val // 32
@@ -53,7 +53,7 @@ def set_bitset_mv(BITSET_INNER_DTYPE_C[:] bitset,  # OUT
     bitset[i1] |= (1 << i2)
 
 
-def set_raw_bitset_mv(BITSET_INNER_DTYPE_C[:] raw_bitset,  # OUT
+def set_raw_bitset_memoryview(BITSET_INNER_DTYPE_C[:] raw_bitset,  # OUT
                       BITSET_INNER_DTYPE_C[:] binned_bitset,
                       X_DTYPE_C[:] categories):
     cdef:
@@ -67,4 +67,4 @@ def set_raw_bitset_mv(BITSET_INNER_DTYPE_C[:] raw_bitset,  # OUT
             index = 32 * i + j
             if index >= n_categories:
                 continue
-            set_bitset_mv(raw_bitset, <X_BINNED_DTYPE_C>categories[index])
+            set_bitset_memoryview(raw_bitset, <X_BINNED_DTYPE_C>categories[index])

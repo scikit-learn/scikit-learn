@@ -12,8 +12,6 @@ from sklearn.ensemble._hist_gradient_boosting.common import Y_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common import \
     X_BITSET_INNER_DTYPE
-from sklearn.ensemble._hist_gradient_boosting.predictor import \
-    _make_known_categories
 
 
 def _make_training_data(n_bins=256, constant_hessian=True):

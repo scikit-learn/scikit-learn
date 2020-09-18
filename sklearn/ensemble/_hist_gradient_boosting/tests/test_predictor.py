@@ -11,10 +11,8 @@ from sklearn.ensemble._hist_gradient_boosting.predictor import TreePredictor
 from sklearn.ensemble._hist_gradient_boosting.common import (
     G_H_DTYPE, PREDICTOR_RECORD_DTYPE, ALMOST_INF, X_BINNED_DTYPE,
     X_BITSET_INNER_DTYPE, X_DTYPE)
-from sklearn.ensemble._hist_gradient_boosting.predictor import \
-    _make_known_categories
 from sklearn.ensemble._hist_gradient_boosting._bitset import (
-    set_bitset_mv, set_raw_bitset_mv)
+    set_bitset_memoryview, set_raw_bitset_memoryview)
 
 
 @pytest.mark.parametrize('n_bins', [200, 256])
@@ -142,9 +140,9 @@ def test_categorical_predictor(bins_go_left, expected_predictions):
     binned_cat_bitsets = np.zeros((1, 8), dtype=X_BITSET_INNER_DTYPE)
     raw_categorical_bitsets = np.zeros((1, 8), dtype=X_BITSET_INNER_DTYPE)
     for go_left in bins_go_left:
-        set_bitset_mv(binned_cat_bitsets[0], go_left)
+        set_bitset_memoryview(binned_cat_bitsets[0], go_left)
 
-    set_raw_bitset_mv(raw_categorical_bitsets[0], binned_cat_bitsets[0],
+    set_raw_bitset_memoryview(raw_categorical_bitsets[0], binned_cat_bitsets[0],
                       category_bins)
 
     predictor = TreePredictor(nodes, binned_cat_bitsets,
@@ -155,8 +153,10 @@ def test_categorical_predictor(bins_go_left, expected_predictions):
                                                  missing_values_bin_idx=6)
     assert_allclose(prediction_binned, expected_predictions)
 
-    known_cat_bitset, orig_feat_to_known_cats_idx = \
-        _make_known_categories([category_bins], np.array([1], dtype=np.uint8))
+    # manually construct bitset
+    known_cat_bitset = np.zeros((8, 1), dtype=np.uint32)
+    known_cat_bitset[0, 0] = np.sum(2**category_bins, dtype=np.uint32)
+    orig_feat_to_known_cats_idx = np.array([0], dtype=np.uint8)
 
     # Check with un-binned data
     predictions = predictor.predict(category_bins.reshape(-1, 1),
@@ -176,31 +176,3 @@ def test_categorical_predictor(bins_go_left, expected_predictions):
                                     known_cat_bitset,
                                     orig_feat_to_known_cats_idx)
     assert_allclose(predictions, [1, 1])
-
-
-def test_make_known_categories():
-    num_thresholds = [
-        np.array([14.0, 30.0, 40.0], dtype=X_DTYPE),
-        np.array([2.0, 4.0, 10.0, 240.0], dtype=X_DTYPE),
-        np.array([30.0, 70.0, 180.0], dtype=X_DTYPE)
-    ]
-    is_categorical = np.array([0, 1, 1], dtype=np.uint8)
-
-    known_cat_bitset, orig_feat_to_known_cat_idx = _make_known_categories(
-        num_thresholds, is_categorical)
-
-    expected_orig_feat_to_known = np.array([0, 0, 1], dtype=np.uint8)
-    assert_allclose(expected_orig_feat_to_known, orig_feat_to_known_cat_idx)
-
-    expected_cat_bitset = np.zeros((2, 8), dtype=np.uint32)
-
-    # [2, 4, 10, 240]
-    expected_cat_bitset[0, 0] = 2**2 + 2**4 + 2**10
-    expected_cat_bitset[0, 7] = 2**16
-
-    # [30, 70, 180]
-    expected_cat_bitset[1, 0] = 2**30
-    expected_cat_bitset[1, 2] = 2**6
-    expected_cat_bitset[1, 5] = 2**20
-
-    assert_allclose(expected_cat_bitset, known_cat_bitset)

@@ -19,8 +19,8 @@ from .common import PREDICTOR_RECORD_DTYPE
 from .common import X_BITSET_INNER_DTYPE
 from .common import Y_DTYPE
 from .common import MonotonicConstraint
-from ._bitset import set_bitset_mv
-from ._bitset import set_raw_bitset_mv
+from ._bitset import set_bitset_memoryview
+from ._bitset import set_raw_bitset_memoryview
 
 EPS = np.finfo(Y_DTYPE).eps  # to avoid zero division errors
 
@@ -426,7 +426,7 @@ class TreeGrower:
             # For binned predictions with categorical splits.
             if (node.split_info.is_categorical and
                     node.split_info.missing_go_to_left):
-                set_bitset_mv(node.split_info.cat_bitset,
+                set_bitset_memoryview(node.split_info.cat_bitset,
                               self.missing_values_bin_idx)
 
         self.n_nodes += 2
@@ -596,7 +596,7 @@ def _fill_predictor_node_array(predictor_nodes, binned_categorical_bitsets,
                 node['category_bitset_idx'] = next_free_categorical_idx
                 binned_categorical_bitsets[next_free_categorical_idx] = \
                     split_info.cat_bitset
-                set_raw_bitset_mv(
+                set_raw_bitset_memoryview(
                     raw_categorical_bitsets[next_free_categorical_idx],
                     split_info.cat_bitset, bins)
                 next_free_categorical_idx += 1

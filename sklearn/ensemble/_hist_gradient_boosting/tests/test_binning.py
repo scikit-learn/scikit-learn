@@ -314,7 +314,6 @@ def test_categorical_feature(n_bins):
                   [0] * 4 +
                   [13] +
                   [7] * 5 +
-                  [-1] * 10 +
                   [np.nan] * 2], dtype=X_DTYPE).T
 
     bin_mapper = _BinMapper(n_bins=n_bins,
@@ -349,7 +348,7 @@ def test_categorical_n_bins_errors():
         bin_mapper.fit(X)
 
     # negative values or nans are ignored in the counts
-    X = np.array([[-1, -10, 0, 1, np.nan]], dtype=X_DTYPE).T
+    X = np.array([[0, 1, np.nan]], dtype=X_DTYPE).T
     bin_mapper.fit(X)
 
 
@@ -369,3 +368,34 @@ def test_categorical_with_numerical_features(n_bins):
     bin_thresholds = bin_mapper.bin_thresholds_
     assert len(bin_thresholds) == 2
     assert_array_equal(bin_thresholds[1], np.arange(10, 15))
+
+
+def test_make_known_categories():
+    X = np.array([[14.0, 2.0, 30.0],
+                  [30.0, 4.0, 70.0],
+                  [40.0, 10.0, 180.0],
+                  [40.0, 240.0, 180.0]], dtype=X_DTYPE)
+
+    bin_mapper = _BinMapper(n_bins=256,
+                            is_categorical=np.array([False, True, True]))
+    bin_mapper.fit(X)
+
+    result = bin_mapper.make_known_categories()
+    known_cat_bitset = result['known_cat_bitset']
+    orig_feat_to_known_cats_idx = result['orig_feat_to_known_cats_idx']
+
+    expected_orig_feat_to_known = np.array([0, 0, 1], dtype=np.uint8)
+    assert_allclose(expected_orig_feat_to_known, orig_feat_to_known_cats_idx)
+
+    expected_cat_bitset = np.zeros((2, 8), dtype=np.uint32)
+
+    # [2, 4, 10, 240]
+    expected_cat_bitset[0, 0] = 2**2 + 2**4 + 2**10
+    expected_cat_bitset[0, 7] = 2**16
+
+    # [30, 70, 180]
+    expected_cat_bitset[1, 0] = 2**30
+    expected_cat_bitset[1, 2] = 2**6
+    expected_cat_bitset[1, 5] = 2**20
+
+    assert_allclose(expected_cat_bitset, known_cat_bitset)

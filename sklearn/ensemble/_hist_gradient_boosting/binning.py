@@ -13,7 +13,8 @@ from ...utils import check_random_state, check_array
 from ...base import BaseEstimator, TransformerMixin
 from ...utils.validation import check_is_fitted
 from ._binning import _map_to_bins
-from .common import X_DTYPE, X_BINNED_DTYPE, ALMOST_INF
+from .common import X_DTYPE, X_BINNED_DTYPE, ALMOST_INF, X_BITSET_INNER_DTYPE
+from ._bitset import set_bitset_memoryview
 
 
 def _find_binning_threshold(col_data, max_bins):
@@ -66,9 +67,9 @@ def _find_binning_threshold(col_data, max_bins):
 
 
 def _find_bin_categories(col_data, max_bins, feature_idx):
-    """Extract feature-wise categories from categorical data
+    """Extract feature-wise categories from categorical data.
 
-    Missing values and negative values (considered missing) are ignored.
+    Missing values are ignored.
 
     Parameters
     ----------
@@ -86,16 +87,14 @@ def _find_bin_categories(col_data, max_bins, feature_idx):
     bin: ndarray
         Map from bin index to categorical value. The size of the array is
         equal to minimum of `max_bins` and the categories' cardinality,
-        ignoring missing and negative values.
+        ignoring missing values.
     """
     categories = np.unique(col_data)
 
-    # nans and negative values will be considered missing
+    # nans will be considered missing
     missing = np.isnan(categories)
-    negative = categories < 0
-    both = missing | negative
-    if both.any():
-        categories = categories[~both]
+    if missing.any():
+        categories = categories[~missing]
 
     if categories.size > max_bins:
         raise ValueError(f"Categorical feature at index {feature_idx} is "
@@ -139,9 +138,8 @@ class _BinMapper(TransformerMixin, BaseEstimator):
     is_categorical : ndarray of bool of shape (n_features,), default=None
         Indicates categorical features. If the cardinality of a categorical
         feature is greater than ``n_bins``, then the ``n_bins`` most frequent
-        categories are kept. The infrequent categories will be consider
-        missing. During ``transform`` time, unknown categories will also be
-        considered missing.
+        categories are kept. During ``transform`` time, unknown categories will
+        be considered missing.
     random_state: int, RandomState instance or None, default=None
         Pseudo-random number generator to control the random sub-sampling.
         Pass an int for reproducible output across multiple
@@ -160,8 +158,8 @@ class _BinMapper(TransformerMixin, BaseEstimator):
           bins used for non-missing values.
         - for categorical features, the array is a map from a binned category
           value to the raw category value. The size of the array is equal to
-          ``min(max_bins, category_cardinality)`` where we ignore negative
-          categories and missing values in the cardinality.
+          ``min(max_bins, category_cardinality)`` where we ignore missing
+          values in the cardinality.
     n_bins_non_missing_ : ndarray, dtype=np.uint32
         For each feature, gives the number of bins actually used for
         non-missing values. For features with a lot of unique values, this is
@@ -267,3 +265,36 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         _map_to_bins(X, self.bin_thresholds_, self.missing_values_bin_idx_,
                      self.is_categorical_, binned)
         return binned
+
+    def make_known_categories(self):
+        """Create a mapping from original feature indices to known categorical
+        indices and a bitset for known categories.
+
+        Returns
+        -------
+        result: dict
+            Dictionary with items:
+            - `known_cat_bitset` : ndarray of shape (n_categorical, 8)
+                Bitset for known categories.
+            - `orig_feat_to_known_cat_idx`: ndarray of shape (n_features,)
+                Maps from original feature indies to known categorical
+                indices.
+        """
+
+        n_features = len(self.bin_thresholds_)
+        categorical_indices = np.flatnonzero(self.is_categorical_)
+        orig_feat_to_known_cats_idx = np.zeros(n_features, dtype=np.uint8)
+
+        orig_feat_to_known_cats_idx[categorical_indices] = \
+            np.arange(categorical_indices.size, dtype=np.uint8)
+
+        known_cat_bitset = np.zeros((categorical_indices.size, 8),
+                                    dtype=X_BITSET_INNER_DTYPE)
+        for idx, cat_idx in enumerate(categorical_indices):
+            for num in self.bin_thresholds_[cat_idx]:
+                set_bitset_memoryview(known_cat_bitset[idx], num)
+
+        return {
+            'known_cat_bitset': known_cat_bitset,
+            'orig_feat_to_known_cats_idx': orig_feat_to_known_cats_idx
+        }
