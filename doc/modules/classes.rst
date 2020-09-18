@@ -1392,6 +1392,7 @@ details.
    preprocessing.Binarizer
    preprocessing.FunctionTransformer
    preprocessing.KBinsDiscretizer
+   preprocessing.MDLPDiscretizer
    preprocessing.KernelCenterer
    preprocessing.LabelBinarizer
    preprocessing.LabelEncoder
