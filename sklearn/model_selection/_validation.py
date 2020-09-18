@@ -382,15 +382,7 @@ def cross_val_score(estimator, X, y=None, *, groups=None, scoring=None,
     fit_params : dict, default=None
         Parameters to pass to the fit method of the estimator.
 
-<<<<<<< HEAD
-<<<<<<< HEAD
     pre_dispatch : int or str, default='2*n_jobs'
-=======
-    pre_dispatch : int, or str, default='2*n_jobs'
->>>>>>> More parameter documentation improved in model_selection._validation submodule.
-=======
-    pre_dispatch : int or str, default='2*n_jobs'
->>>>>>> Update _validation.py
         Controls the number of jobs that get dispatched during parallel
         execution. Reducing this number can be useful to avoid an
         explosion of memory consumption when more jobs get dispatched
