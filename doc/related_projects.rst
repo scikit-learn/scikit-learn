@@ -231,6 +231,17 @@ and tasks.
   Feature-engine allows the application of preprocessing steps to selected groups
   of variables and it is fully compatible with the Scikit-learn Pipeline.
 
+**Topological Data Analysis**
+
+- `giotto-tda <https://github.com/giotto-ai/giotto-tda>`_ A library collecting
+  state-of-the-art implementations of several algorithms in Topological Data Analysis.
+  It offers a scikit-learn–compatible API, a suite of tools to transform various kinds
+  of data inputs (point clouds, graphs, time-series, images, etc.) into forms suitable
+  for computations of topological features, and components dedicated to extracting
+  rich sets of scalar features of topological origin, which can be used alongside other
+  feature extraction methods in scikit-learn and/or in the context of complex
+  scikit-learn pipelines.
+
 Statistical learning with Python
 --------------------------------
 Other packages useful for data analysis and machine learning.
