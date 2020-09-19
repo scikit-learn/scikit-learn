@@ -14,6 +14,8 @@ from ...utils import check_array
 from ...utils import check_matplotlib_support  # noqa
 from ...utils import _safe_indexing
 from ...utils.validation import _deprecate_positional_args
+from ...utils._plot import _check_axes_has_been_used
+from ...utils._plot import _check_axes_has_display_object
 
 
 @_deprecate_positional_args
@@ -595,14 +597,17 @@ class PartialDependenceDisplay:
             n_sampled = self._get_sample_count(n_instances) + 1
 
         if isinstance(ax, plt.Axes):
-            # If ax was set off, it has most likely been set to off
-            # by a previous call to plot.
-            if not ax.axison:
-                raise ValueError("The ax was already used in another plot "
-                                 "function, please set ax=display.axes_ "
-                                 "instead")
+            disp_obj = _check_axes_has_display_object(self, ax)
 
-            ax.set_axis_off()
+            # axes was used by another PartialDependenceDisplay for plotting
+            if disp_obj != self:
+                self.bounding_ax_ = disp_obj.bounding_ax_
+                # ax is set to be an array-like
+                ax = disp_obj.axes_
+
+        if isinstance(ax, plt.Axes):
+            _check_axes_has_been_used(ax)
+
             self.bounding_ax_ = ax
             self.figure_ = ax.figure
 
@@ -635,7 +640,7 @@ class PartialDependenceDisplay:
             else:
                 n_cols = None
 
-            self.bounding_ax_ = None
+            self.bounding_ax_ = getattr(self, "bounding_ax_", None)
             self.figure_ = ax.ravel()[0].figure
             self.axes_ = ax
             if self.kind == 'average':

@@ -1,8 +1,10 @@
 import numpy as np
+import weakref
 from scipy.stats.mstats import mquantiles
 
 import pytest
 from numpy.testing import assert_allclose
+from numpy.testing import assert_array_equal
 
 from sklearn.datasets import load_diabetes
 from sklearn.datasets import load_iris
@@ -11,6 +13,7 @@ from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.linear_model import LinearRegression
 from sklearn.utils._testing import _convert_container
+from sklearn.utils._plot import _SKLEARN_AX_DISP_OBJ_REF_KEY
 
 from sklearn.inspection import plot_partial_dependence
 
@@ -298,34 +301,87 @@ def test_plot_partial_dependence_incorrent_num_axes(pyplot, clf_diabetes,
             disp.plot(ax=ax_format)
 
 
+def test_plot_partial_dependence_with_used_axes(pyplot, clf_diabetes,
+                                                diabetes):
+    # When the axes was drawn on plot_partial_dependence should fail
+    grid_resolution = 5
+    fig, ax = pyplot.subplots()
+    ax.plot([0, 1, 2], [1, 2, 3])
+
+    msg = "The ax was already used in a matplotlib plot function"
+    with pytest.raises(ValueError, match=msg):
+        plot_partial_dependence(clf_diabetes, diabetes.data, ['age', 'bmi'],
+                                grid_resolution=grid_resolution,
+                                feature_names=diabetes.feature_names, ax=ax)
+
+
+def test_plot_partial_dependence_used_by_another_display_obj(
+        pyplot, clf_diabetes, diabetes):
+    fig, ax = pyplot.subplots()
+
+    class DisplayMock:
+        pass
+
+    obj = DisplayMock()
+    setattr(ax, _SKLEARN_AX_DISP_OBJ_REF_KEY, weakref.ref(obj))
+
+    msg = ("The ax was already used by another display object which is not "
+           "an instance of PartialDependenceDisplay")
+    with pytest.raises(ValueError, match=msg):
+        plot_partial_dependence(clf_diabetes, diabetes.data, ['age', 'bmi'],
+                                grid_resolution=5,
+                                feature_names=diabetes.feature_names, ax=ax)
+
+
 @pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 def test_plot_partial_dependence_with_same_axes(pyplot, clf_diabetes,
                                                 diabetes):
     # The first call to plot_partial_dependence will create two new axes to
     # place in the space of the passed in axes, which results in a total of
     # three axes in the figure.
-    # Currently the API does not allow for the second call to
-    # plot_partial_dependence to use the same axes again, because it will
-    # create two new axes in the space resulting in five axes. To get the
-    # expected behavior one needs to pass the generated axes into the second
-    # call:
-    # disp1 = plot_partial_dependence(...)
-    # disp2 = plot_partial_dependence(..., ax=disp1.axes_)
+    # The second call will plot on the axes created by the first call to
+    # plot_partial_dependence
 
-    grid_resolution = 25
+    grid_resolution = 5
     fig, ax = pyplot.subplots()
-    plot_partial_dependence(clf_diabetes, diabetes.data, ['age', 'bmi'],
-                            grid_resolution=grid_resolution,
-                            feature_names=diabetes.feature_names, ax=ax)
+    disp1 = plot_partial_dependence(clf_diabetes, diabetes.data,
+                                    ['age', 'bmi'],
+                                    grid_resolution=grid_resolution,
+                                    feature_names=diabetes.feature_names,
+                                    ax=ax)
 
-    msg = ("The ax was already used in another plot function, please set "
-           "ax=display.axes_ instead")
+    axs = fig.get_axes()
+    assert len(axs) == 3
 
-    with pytest.raises(ValueError, match=msg):
-        plot_partial_dependence(clf_diabetes, diabetes.data,
-                                ['age', 'bmi'],
-                                grid_resolution=grid_resolution,
-                                feature_names=diabetes.feature_names, ax=ax)
+    disp2 = plot_partial_dependence(clf_diabetes, diabetes.data,
+                                    ['age', 'bmi'],
+                                    grid_resolution=grid_resolution,
+                                    feature_names=diabetes.feature_names,
+                                    ax=ax)
+
+    axs = fig.get_axes()
+    assert len(axs) == 3
+
+    assert_array_equal(disp1.axes_, disp2.axes_)
+    assert disp1.figure_ == disp2.figure_
+    assert disp1.bounding_ax_ == disp2.bounding_ax_
+
+
+def test_plot_partial_dependence_with_weak_ref(pyplot,
+                                               clf_diabetes, diabetes):
+    # When original display object is deleted, the weakref from the axes
+    # is set to None
+    grid_resolution = 5
+    fig, ax = pyplot.subplots()
+    disp = plot_partial_dependence(clf_diabetes, diabetes.data,
+                                   ['age', 'bmi'],
+                                   grid_resolution=grid_resolution,
+                                   feature_names=diabetes.feature_names, ax=ax)
+
+    display_ref = getattr(ax, _SKLEARN_AX_DISP_OBJ_REF_KEY)
+    assert isinstance(display_ref(), disp.__class__)
+    del disp
+    assert display_ref() is None
 
 
 @pytest.mark.filterwarnings("ignore:A Bunch will be returned")

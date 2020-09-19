@@ -106,18 +106,16 @@ mlp_disp.plot(ax=[ax1, ax2], line_kw={"label": "Multi-layer Perceptron",
 ax1.legend()
 ax2.legend()
 
-# %%
-# `tree_disp.axes_` is a numpy array container the axes used to draw the
-# partial dependence plots. This can be passed to `mlp_disp` to have the same
-# affect of drawing the plots on top of each other. Furthermore, the
-# `mlp_disp.figure_` stores the figure, which allows for resizing the figure
-# after calling `plot`. In this case `tree_disp.axes_` has two dimensions, thus
+##############################################################################
+# A single axes object can can be pass to `mlp_disp.plot` and `tree_disp.plot`
+# to have the same affect of drawing the plots on the same axes.
+# In this case `tree_disp.axes_` has two dimensions, thus
 # `plot` will only show the y label and y ticks on the left most plot.
 
-tree_disp.plot(line_kw={"label": "Decision Tree"})
+fig, ax = plt.subplots(figsize=(10, 6))
+tree_disp.plot(line_kw={"label": "Decision Tree"}, ax=ax)
 mlp_disp.plot(line_kw={"label": "Multi-layer Perceptron", "color": "red"},
-              ax=tree_disp.axes_)
-tree_disp.figure_.set_size_inches(10, 6)
+              ax=ax)
 tree_disp.axes_[0, 0].legend()
 tree_disp.axes_[0, 1].legend()
 plt.show()
@@ -126,10 +124,8 @@ plt.show()
 # Plotting partial dependence for one feature
 # ===========================================
 #
-# Here, we plot the partial dependence curves for a single feature, "age", on
-# the same axes. In this case, `tree_disp.axes_` is passed into the second
-# plot function.
-tree_disp = plot_partial_dependence(tree, X, ["age"])
-mlp_disp = plot_partial_dependence(mlp, X, ["age"],
-                                   ax=tree_disp.axes_,
+# Here, we plot the partial dependence curves for a single feature, "LSTAT", on
+# the same axes.
+tree_disp = plot_partial_dependence(tree, X, ["age"], ax=ax)
+mlp_disp = plot_partial_dependence(mlp, X, ["age"], ax=ax,
                                    line_kw={"color": "red"})
