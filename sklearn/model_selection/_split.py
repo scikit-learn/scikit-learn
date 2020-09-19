@@ -2239,6 +2239,13 @@ def _build_repr(self):
 
 def _yields_constant_splits(cv):
     # Return True if calling cv.split() always returns the same splits
+    if isinstance(cv, numbers.Integral):
+        return True
+    if isinstance(cv, Iterable):
+        # This will be up to users to enforce.
+        return True
+
+    # We got an instance
     # We assume that if a cv doesn't have a shuffle parameter, it shuffles by
     # default (e.g. ShuffleSplit). If it actually doesn't shuffle (e.g.
     # LeaveOneOut), then it won't have a random_state parameter anyway, in

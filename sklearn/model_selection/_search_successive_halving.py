@@ -435,7 +435,8 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
             the same across multiple calls to `cv.split()`. For
             built-in `scikit-learn` iterators, this can be achieved by
             deactivating shuffling (`shuffle=False`), or by setting the
-            `cv`'s `random_state` parameter to an integer.
+            `cv`'s `random_state` parameter to an integer. If you pass an
+            iterable, this is up to you to enforce.
 
     scoring : string, callable, or None, default=None
         A single string (see :ref:`scoring_parameter`) or a callable

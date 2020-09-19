@@ -1638,6 +1638,8 @@ def test_random_state_shuffle_false(Klass):
     (LeaveOneGroupOut(), True),
     (LeavePGroupsOut(n_groups=2), True),
     (LeavePOut(p=2), True),
+    (5, True),
+    ([], True),  # some iterable
 
     (KFold(shuffle=True, random_state=None), False),
     (KFold(shuffle=True, random_state=None), False),

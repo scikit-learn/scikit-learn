@@ -9,6 +9,7 @@ from ._base import SelectorMixin
 from ..base import BaseEstimator, MetaEstimatorMixin, clone
 from ..utils.validation import check_is_fitted
 from ..model_selection import cross_val_score
+from ..model_selection._split import _yields_constant_splits
 
 
 class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
@@ -63,6 +64,14 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
+
+        .. note::
+            Due to implementation details, the folds produced by `cv` must be
+            the same across multiple calls to `cv.split()`. For
+            built-in `scikit-learn` iterators, this can be achieved by
+            deactivating shuffling (`shuffle=False`), or by setting the
+            `cv`'s `random_state` parameter to an integer. If you pass an
+            iterable, this is up to you to enforce.
 
     n_jobs : int, default=None
         Number of jobs to run in parallel. When evaluating a new feature to
@@ -162,6 +171,14 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
             raise ValueError(
                 "direction must be either 'forward' or 'backward'. "
                 f"Got {self.direction}."
+            )
+
+        # We need score of candidate features to be compared on the same splits
+        if not _yields_constant_splits(self.cv):
+            raise ValueError(
+                "The cv parameter must yield consistent folds across "
+                "calls to split(). Set its random_state to an int, or set "
+                "shuffle=False."
             )
 
         cloned_estimator = clone(self.estimator)

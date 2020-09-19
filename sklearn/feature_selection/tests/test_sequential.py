@@ -4,6 +4,7 @@ import numpy as np
 from numpy.testing import assert_array_equal
 
 from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import KFold
 from sklearn.pipeline import make_pipeline
 from sklearn.feature_selection import SequentialFeatureSelector
 from sklearn.datasets import make_regression
@@ -132,3 +133,14 @@ def test_pipeline_support():
     pipe = make_pipeline(StandardScaler(), sfs)
     pipe.fit(X, y)
     pipe.transform(X)
+
+
+@pytest.mark.parametrize('random_state', (None, np.random.RandomState(0)))
+def test_cv_same_splits(random_state):
+    # Make sure that cvs that yield different splits are not allowed
+
+    cv = KFold(shuffle=True, random_state=random_state)
+
+    X, y = make_regression()
+    with pytest.raises(ValueError, match='must yield consistent folds'):
+        SequentialFeatureSelector(LinearRegression(), cv=cv).fit(X, y)
