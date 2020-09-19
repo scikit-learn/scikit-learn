@@ -173,7 +173,8 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
                 f"Got {self.direction}."
             )
 
-        # We need score of candidate features to be compared on the same splits
+        # We need the scores of the candidate features to be compared on the
+        # same splits
         if not _yields_constant_splits(self.cv):
             raise ValueError(
                 "The cv parameter must yield consistent folds across "
