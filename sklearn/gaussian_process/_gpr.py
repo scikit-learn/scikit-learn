@@ -196,14 +196,16 @@ class GaussianProcessRegressor(MultiOutputMixin,
         if self.normalize_y:
             self._y_train_mean = np.mean(y, axis=0)
             self._y_train_std = np.std(y, axis=0)
-
-            # Remove mean and make unit variance
-            # Moreover, add a very small number to the y_train.std to
-            # avoid a divide by zero error.
-            if self._y_train_std.all() == 0:
-                y = (y - self._y_train_mean) / (self._y_train_std + 1E-19)
+            # assign _y_train.std to 1 when _y_train.std is zero
+            # to avoid divide by zero error
+            if np.iterable(self._y_train_std):
+                self._y_train_std = np.asarray(
+                        [std if std else 1 for std in self._y_train_std])
             else:
-                y = (y - self._y_train_mean) / self._y_train_std
+                self._y_train_std = \
+                    self._y_train_std if self._y_train_std else 1
+            # Remove mean and make unit variance
+            y = (y - self._y_train_mean) / self._y_train_std
         else:
             self._y_train_mean = np.zeros(1)
             self._y_train_std = 1
