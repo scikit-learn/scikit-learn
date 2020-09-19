@@ -2,8 +2,10 @@ import pytest
 import numpy as np
 from numpy.testing import assert_allclose
 
-from sklearn.ensemble._hist_gradient_boosting._bitset import set_bitset_memoryview
-from sklearn.ensemble._hist_gradient_boosting._bitset import set_raw_bitset_memoryview
+from sklearn.ensemble._hist_gradient_boosting._bitset import (
+    set_bitset_memoryview,
+    set_raw_bitset_memoryview
+)
 
 
 @pytest.mark.parametrize("expected_bitset, values_to_insert", [

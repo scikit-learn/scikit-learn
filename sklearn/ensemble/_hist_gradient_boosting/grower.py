@@ -427,7 +427,7 @@ class TreeGrower:
             if (node.split_info.is_categorical and
                     node.split_info.missing_go_to_left):
                 set_bitset_memoryview(node.split_info.cat_bitset,
-                              self.missing_values_bin_idx)
+                                      self.missing_values_bin_idx)
 
         self.n_nodes += 2
         self.n_categorical += node.split_info.is_categorical

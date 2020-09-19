@@ -142,8 +142,8 @@ def test_categorical_predictor(bins_go_left, expected_predictions):
     for go_left in bins_go_left:
         set_bitset_memoryview(binned_cat_bitsets[0], go_left)
 
-    set_raw_bitset_memoryview(raw_categorical_bitsets[0], binned_cat_bitsets[0],
-                      category_bins)
+    set_raw_bitset_memoryview(raw_categorical_bitsets[0],
+                              binned_cat_bitsets[0], category_bins)
 
     predictor = TreePredictor(nodes, binned_cat_bitsets,
                               raw_categorical_bitsets)
