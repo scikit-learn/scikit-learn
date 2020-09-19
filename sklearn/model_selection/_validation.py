@@ -156,8 +156,10 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
         .. versionadded:: 0.20
 
     return_predictions : {'predict_proba', 'predict'}, default=None
-        Return cross-validation predictions for the dataset. 'predict' returns
-        the predictions whereas 'predict_proba' returns class probabilities.
+        What predictions to return. If 'predict', return output of
+        :term:`predict` and if 'predict_proba', return output of
+        :term:`predict_proba`.
+        If None, do not return predictions.
 
         .. versionadded:: 0.24
 
@@ -546,8 +548,11 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         Whether to return the fitted estimator.
 
     return_predictions : {'predict_proba', 'predict'}, default=None
-        Return cross-validation predictions for the dataset. 'predict' returns
-        the predictions whereas 'predict_proba' returns class probabilities.
+        What predictions to return. If 'predict', return output of
+        :term:`predict` and if 'predict_proba', return output of
+        :term:`predict_proba`. The test set indices are also returned under a
+        separate dict key.
+        If None, do not return predictions or test data indices.
 
     Returns
     -------
@@ -569,11 +574,11 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
             The fitted estimator.
         fit_failed : bool
             The estimator failed to fit.
-        test_indices : int
-            Indices of cv split test set
+        test_indices : array-like of shape (n_test_samples,)
+            Indices of test samples.
         predictions : float
             Predicted class or predicted class probability of
-            cv split test set
+            test samples.
     """
     progress_msg = ""
     if verbose > 2:
