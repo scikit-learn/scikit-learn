@@ -504,7 +504,7 @@ class _VectorizerMixin:
 
 
 class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
-    """Convert a collection of text documents to a matrix of token occurrences
+    r"""Convert a collection of text documents to a matrix of token occurrences
 
     It turns a collection of text documents into a scipy.sparse matrix holding
     token occurrence counts (or binary occurrence information), possibly
@@ -796,7 +796,7 @@ def _document_frequency(X):
 
 
 class CountVectorizer(_VectorizerMixin, BaseEstimator):
-    """Convert a collection of text documents to a matrix of token counts
+    r"""Convert a collection of text documents to a matrix of token counts
 
     This implementation produces a sparse representation of the counts using
     scipy.sparse.csr_matrix.
@@ -1509,7 +1509,7 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
 
 
 class TfidfVectorizer(CountVectorizer):
-    """Convert a collection of raw documents to a matrix of TF-IDF features.
+    r"""Convert a collection of raw documents to a matrix of TF-IDF features.
 
     Equivalent to :class:`CountVectorizer` followed by
     :class:`TfidfTransformer`.
