@@ -613,8 +613,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         only bigrams.
         Only applies if ``analyzer is not callable``.
 
-    analyzer : string, {'word', 'char', 'char_wb'} or callable, \
-            default='word'
+    analyzer : string, {'word', 'char', 'char_wb'} or callable, default='word'
         Whether the feature should be made of word or character n-grams.
         Option 'char_wb' creates character n-grams only from text inside
         word boundaries; n-grams at the edges of words are padded with space.
@@ -881,8 +880,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         unigrams and bigrams, and ``(2, 2)`` means only bigrams.
         Only applies if ``analyzer is not callable``.
 
-    analyzer : string, {'word', 'char', 'char_wb'} or callable, \
-            default='word'
+    analyzer : string, {'word', 'char', 'char_wb'} or callable, default='word'
         Whether the feature should be made of word n-gram or character
         n-grams.
         Option 'char_wb' creates character n-grams only from text inside
