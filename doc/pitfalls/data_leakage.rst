@@ -15,7 +15,7 @@ data should never be used to make choices about the model but this may
 accidently occur during :ref:`preprocessing` or :ref:`grid_search`.
 
 Although both train and test data subsets should undergo the same preprocessing
-transformation, it is important that stateful transformations use only the
+transformation, it is important that stateful transformations only use the
 training subset to determine the 'state'. For example, if you have a
 normalization step whereby you divide by the average value, the average should
 be the average of the train subset, **not** the average of all the data. If the
@@ -26,10 +26,10 @@ data.
 
 Including the test data when finding the best model hyperparameters will
 also inadvertantly introduce information from the test data into the model.
-Practically, this means that only the train data subset should be fed into the
-`fit` method of ref:`hyper_parameter_optimizers`.
+Practically, in scikit-learn, this means that only the train data subset
+should be fed into the `fit` method of ref:`hyper_parameter_optimizers`.
 
-Examples of common data leakage pitfalls are detailed below.
+Some examples of common data leakage pitfalls are detailed below.
 
 Data leakage during feature selection
 =====================================
@@ -82,4 +82,69 @@ score is now what we would expect for the data, close to chance::
     >>> print(f"Mean Accuracy: {scores.mean()}")
     Mean Accuracy: 0.495
 
+Data leakage during imputation
+==============================
 
+There are a number of methods to impute missing values in data. For example,
+:class:`~sklearn.impute.SimpleImputer` allows you to replace missing values
+with the mean of that feature. Only the train data should be used to
+calculate this mean value as including the test data in the mean calculation
+will introduce information about the test data into the model.
+
+To demonstrate this, we will use the :ref:`diabetes_dataset` and artificially
+introduce 0.1 * `n_samples` missing values::
+
+    >>> import numpy as np
+    >>> from sklearn.datasets import load_iris
+    >>> X, y = load_iris(return_X_y=True)
+    >>> rng = np.random.RandomState(42)
+    >>> n_samples = X.shape[0]
+    >>> n_features = X.shape[1]
+    >>> n_missing = int(n_samples * 0.1)
+    >>> missing_samples = np.zeros(n_samples, dtype=np.bool)
+    >>> missing_samples[: n_missing] = True
+    >>> rng.shuffle(missing_samples)
+    >>> missing_samples.shape
+    >>> missing_features = rng.randint(0, n_features, n_missing)
+    >>> X_missing = X.copy()
+    >>> X_missing[missing_samples, missing_features] = np.nan
+
+**Wrong**
+
+Using all the data to calculate the feature means, to replace the missing
+values with, results in a very high accuracy::
+
+    >>> from sklearn.impute import SimpleImputer
+    >>> from sklearn.ensemble import GradientBoostingClassifier
+    >>> X_impute = SimpleImputer().fit_transform(X_missing)
+    >>> scores = cross_val_score(GradientBoostingClassifier(random_state=1),
+    ...                          X_impute, y, cv=5)
+    >>> print(f"Mean Accuracy: {scores.mean():.2f}")
+    Mean Accuracy: 0.95
+
+**Right**
+
+Using a :class:`~sklearn.pipeline.Pipeline` to chain together the imputation
+and model ensures that only the train data subset is using for imputation.
+This results in a much lower accuracy::
+
+    >>> from sklearn.pipeline import make_pipeline
+    >>> pipeline = make_pipeline(SimpleImputer(),
+    ...                          GradientBoostingClassifier(random_state=1))
+    >>> scores = cross_val_score(pipeline, X_impute, y, cv=5)
+    >>> print(f"Mean Accuracy: {scores.mean():.2f}")
+    Mean Accuracy: 0.32
+
+Pipelines
+=========
+
+You may have noticed a common theme in our examples. Both the 'Right' examples
+use the :ref:`pipeline <pipeline>`, which helps prevent data leakage by
+only using the training data to calculate preprocessing statistics. Conversely,
+both the 'Wrong' examples used the :term:`fit_transform` method.
+Care needs to be taken when using the `fit_transform` method of preprocessors.
+This is because it combines the `fit` method, which should be performed on only
+the train subset, and the `transform` method which is generally performed on
+the whole dataset, as the train and test subsets should be preprocessed in the
+same way. Scikit-learn pipelines ensure that the appropriate method is
+performed on the correct data subset.
