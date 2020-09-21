@@ -66,47 +66,6 @@ def _find_binning_threshold(col_data, max_bins):
     return midpoints
 
 
-def _find_bin_categories(col_data, max_bins, feature_idx):
-    """Extract feature-wise categories from categorical data.
-
-    Missing values are ignored.
-
-    Parameters
-    ----------
-    col_data : array-like, shape (n_features,)
-        The categorical feature to bin.
-    max_bins: int
-        The maximum number of bins to be used for categories, ignoring
-        missing values.
-    feature_idx: int
-        Used for error message if the feature cardinality is greater than
-        max_bins.
-
-    Return
-    ------
-    bin: ndarray
-        Map from bin index to categorical value. The size of the array is
-        equal to minimum of `max_bins` and the categories' cardinality,
-        ignoring missing values.
-    """
-    categories = np.unique(col_data)
-
-    # nans will be considered missing
-    missing = np.isnan(categories)
-    if missing.any():
-        categories = categories[~missing]
-
-    if categories.size > max_bins:
-        raise ValueError(f"Categorical feature at index {feature_idx} is "
-                         f"expected to have a cardinality <= {max_bins}")
-
-    if (categories >= max_bins).any():
-        raise ValueError(f"Categorical feature at index {feature_idx} is "
-                         f"expected to be encoded with values < {max_bins}")
-
-    return categories
-
-
 class _BinMapper(TransformerMixin, BaseEstimator):
     """Transformer that maps a dataset into integer-valued bins.
 
@@ -174,10 +133,11 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         empty (and unused) bins.
     """
     def __init__(self, n_bins=256, subsample=int(2e5), is_categorical=None,
-                 random_state=None):
+                 known_categories=None, random_state=None):
         self.n_bins = n_bins
         self.subsample = subsample
         self.is_categorical = is_categorical
+        self.known_categories = known_categories
         self.random_state = random_state
 
     def fit(self, X, y=None):
@@ -216,20 +176,36 @@ class _BinMapper(TransformerMixin, BaseEstimator):
             self.is_categorical_ = np.asarray(self.is_categorical,
                                               dtype=np.uint8)
 
+        known_categories = self.known_categories
+        if known_categories is None:
+            known_categories = [None] * X.shape[1]
+
+        for f_idx, (is_categorical, cats) in enumerate(zip(
+                self.is_categorical_,
+                known_categories)):
+            if is_categorical and cats is None:
+                raise ValueError(
+                    f"Known categories for feature {f_idx} must be provided."
+                )
+            if cats is not None and not is_categorical:
+                raise ValueError(
+                    f"Feature {f_idx} isn't marked as a categorical feature, "
+                    f"but categories where passed."
+                )
+
         self.missing_values_bin_idx_ = self.n_bins - 1
 
         bin_thresholds = []
         n_bins_non_missing = []
 
         for f_idx in range(X.shape[1]):
-            col_data = X[:, f_idx]
-
-            if self.is_categorical_[f_idx] == 0:
-                bins = _find_binning_threshold(col_data, max_bins)
+            if not self.is_categorical_[f_idx]:
+                bins = _find_binning_threshold(X[:, f_idx], max_bins)
                 n_bins_non_missing.append(bins.shape[0] + 1)
             else:
-                bins = _find_bin_categories(col_data, max_bins, f_idx)
+                bins = known_categories[f_idx]
                 n_bins_non_missing.append(bins.shape[0])
+
             bin_thresholds.append(bins)
 
         self.bin_thresholds_ = bin_thresholds
@@ -285,8 +261,8 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         categorical_indices = np.flatnonzero(self.is_categorical_)
         orig_feat_to_known_cats_idx = np.zeros(n_features, dtype=np.uint8)
 
-        orig_feat_to_known_cats_idx[categorical_indices] = \
-            np.arange(categorical_indices.size, dtype=np.uint8)
+        orig_feat_to_known_cats_idx[categorical_indices] = np.arange(
+            categorical_indices.size, dtype=np.uint8)
 
         known_cat_bitset = np.zeros((categorical_indices.size, 8),
                                     dtype=X_BITSET_INNER_DTYPE)

@@ -315,41 +315,21 @@ def test_categorical_feature(n_bins):
                   [13] +
                   [7] * 5 +
                   [np.nan] * 2], dtype=X_DTYPE).T
+    known_categories = [np.unique(X[~np.isnan(X)])]
 
     bin_mapper = _BinMapper(n_bins=n_bins,
-                            is_categorical=np.array([True])).fit(X)
+                            is_categorical=np.array([True]),
+                            known_categories=known_categories).fit(X)
     assert bin_mapper.n_bins_non_missing_ == [6]
     assert_array_equal(bin_mapper.bin_thresholds_[0], [0, 1, 4, 7, 10, 13])
 
     X_trans = bin_mapper.transform(
-        np.array([[10, 1, 13, np.nan, 7, 4, 100, 0]], dtype=X_DTYPE).T)
+        np.array([[10, 1, 13, np.nan, 7, 4, 0]], dtype=X_DTYPE).T)
 
     # missing, and unknown values are mapped to the missing bin
     missing_val_bin = n_bins - 1
-    expected_trans = np.array([[4, 1, 5, missing_val_bin, 3,
-                                2, missing_val_bin, 0]]).T
+    expected_trans = np.array([[4, 1, 5, missing_val_bin, 3, 2, 0]]).T
     assert_array_equal(X_trans, expected_trans)
-
-
-def test_categorical_n_bins_errors():
-    # test error when there is not enough bins or when values are >= n_bins
-    bin_mapper = _BinMapper(n_bins=3, is_categorical=np.array([True]))
-
-    X = np.array([[0, 1, 2, 3]], dtype=X_DTYPE).T
-    msg = ("Categorical feature at index 0 is expected to have a "
-           "cardinality <= 2")
-    with pytest.raises(ValueError, match=msg):
-        bin_mapper.fit(X)
-
-    X = np.array([[0, 2]], dtype=X_DTYPE).T
-    msg = ("Categorical feature at index 0 is expected to be encoded with "
-           "values < 2")
-    with pytest.raises(ValueError, match=msg):
-        bin_mapper.fit(X)
-
-    # negative values or nans are ignored in the counts
-    X = np.array([[0, 1, np.nan]], dtype=X_DTYPE).T
-    bin_mapper.fit(X)
 
 
 @pytest.mark.parametrize("n_bins", (128, 256))
@@ -359,9 +339,11 @@ def test_categorical_with_numerical_features(n_bins):
     X2 = np.arange(10, 15).reshape(-1, 1)
     X2 = np.r_[X2, X2]
     X = np.c_[X1, X2]
+    known_categories = [None, np.unique(X2)]
 
     bin_mapper = _BinMapper(n_bins=n_bins,
-                            is_categorical=np.array([False, True])).fit(X)
+                            is_categorical=np.array([False, True]),
+                            known_categories=known_categories).fit(X)
 
     assert_array_equal(bin_mapper.n_bins_non_missing_, [10, 5])
 
@@ -371,13 +353,14 @@ def test_categorical_with_numerical_features(n_bins):
 
 
 def test_make_known_categories():
-    X = np.array([[14.0, 2.0, 30.0],
-                  [30.0, 4.0, 70.0],
-                  [40.0, 10.0, 180.0],
-                  [40.0, 240.0, 180.0]], dtype=X_DTYPE)
+    X = np.array([[14, 2, 30],
+                  [30, 4, 70],
+                  [40, 10, 180],
+                  [40, 240, 180]], dtype=X_DTYPE)
 
     bin_mapper = _BinMapper(n_bins=256,
-                            is_categorical=np.array([False, True, True]))
+                            is_categorical=np.array([False, True, True]),
+                            known_categories=[None, X[:, 1], X[:, 2]])
     bin_mapper.fit(X)
 
     result = bin_mapper.make_known_categories()

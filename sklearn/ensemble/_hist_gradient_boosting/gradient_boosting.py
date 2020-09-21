@@ -96,8 +96,17 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 'multiclass classification.'
                 )
 
-    def _check_categories(self, n_features, X_orig):
-        """Check and validate categories params in X"""
+    def _check_categories(self, n_features, X):
+        """Check and validate categories params in X
+
+        Return
+        ------
+        known_categories : list of size n_features or None
+            The list contains, for each feature:
+                - an array of shape (n_categories,) with the unique cat values
+                - None if the feature is not categrical
+            None if no feature is categorical.
+        """
         if self.categorical_features is None:
             self.is_categorical_ = None
             return
@@ -125,6 +134,36 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         if np.any(cat_feats):
             self.is_categorical_ = cat_feats
+
+            # compute the known categories in the training data. We need to do
+            # that here instead of in the BinMapper because in case of early
+            # stopping, the mapper only gets a fraction of the training data.
+            known_categories = []
+
+            for f_idx in range(n_features):
+                if self.is_categorical_[f_idx]:
+                    categories = np.unique(X[:, f_idx])
+                    missing = np.isnan(categories)
+                    if missing.any():
+                        categories = categories[~missing]
+
+                    if categories.size > self.max_bins:
+                        raise ValueError(
+                            f"Categorical feature at index {f_idx} is "
+                            f"expected to have a "
+                            f"cardinality <= {self.max_bins}"
+                        )
+
+                    if (categories >= self.max_bins).any():
+                        raise ValueError(
+                            f"Categorical feature at index {f_idx} is "
+                            f"expected to be encoded with "
+                            f"values < {self.max_bins}"
+                        )
+                else:
+                    categories = None
+                known_categories.append(categories)
+            return known_categories
         else:
             # no categories
             self.is_categorical_ = None
@@ -153,7 +192,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         acc_compute_hist_time = 0.  # time spent computing histograms
         # time spent predicting X for gradient and hessians update
         acc_prediction_time = 0.
-        X_orig = X
         X, y = self._validate_data(
             X, y, dtype=[X_DTYPE], force_all_finite=False
         )
@@ -178,7 +216,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         self._validate_parameters()
         n_samples, self._n_features = X.shape  # used for validation in predict
-        self._check_categories(self._n_features, X_orig)
+        known_categories = self._check_categories(self._n_features, X)
 
         # we need this stateful variable to tell raw_predict() that it was
         # called from fit() (this current method), and that the data it has
@@ -240,6 +278,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self._bin_mapper = _BinMapper(
             n_bins=n_bins,
             is_categorical=self.is_categorical_,
+            known_categories=known_categories,
             random_state=self._random_seed)
         X_binned_train = self._bin_data(X_train, is_training_data=True)
         if X_val is not None:
@@ -613,7 +652,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
     def _bin_data(self, X, is_training_data, categorical_only=False):
         """Bin data X.
 
-        If is_training_data, then set the _bin_mapper attribute.
+        If is_training_data, then fit the _bin_mapper attribute.
         Else, the binned data is converted to a C-contiguous array.
         """
 

@@ -902,3 +902,30 @@ def test_categorical_bad_encoding_errors(Est):
            "<= 10")
     with pytest.raises(ValueError, match=msg):
         est.fit(X, y)
+
+
+@pytest.mark.parametrize('Est', (HistGradientBoostingClassifier,
+                                 HistGradientBoostingRegressor))
+def test_categorical_n_bins_errors(Est):
+    # test error when there is not enough bins or when values are >= n_bins
+
+    gb = Est(categorical_features=[True], max_bins=2)
+
+    X = np.array([[0, 1, 2]]).T
+    y = np.arange(3)
+    msg = ("Categorical feature at index 0 is expected to have a "
+           "cardinality <= 2")
+    with pytest.raises(ValueError, match=msg):
+        gb.fit(X, y)
+
+    X = np.array([[0, 2]]).T
+    y = np.arange(2)
+    msg = ("Categorical feature at index 0 is expected to be encoded with "
+           "values < 2")
+    with pytest.raises(ValueError, match=msg):
+        gb.fit(X, y)
+
+    # nans are ignored in the counts
+    X = np.array([[0, 1, np.nan]]).T
+    y = np.arange(3)
+    gb.fit(X, y)
