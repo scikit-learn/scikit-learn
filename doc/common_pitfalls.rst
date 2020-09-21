@@ -11,7 +11,7 @@ Common pitfalls
 ===============
 
 The purpose of this chapter is to illustrate some common pitfalls and
-anti-patterns that occur when using ``scikit-learn``. It provides
+anti-patterns that occur when using scikit-learn. It provides
 examples of what **not** to do, along with a corresponding correct
 example.
 
