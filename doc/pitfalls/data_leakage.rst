@@ -58,9 +58,9 @@ performance to be around 0.5. However, since the feature selection step
 
     >>> from sklearn.feature_selection import SelectKBest
     >>> from sklearn.model_selection import cross_val_score
-    >>> from sklearn.ensemble import GradientBoostingRegressor
+    >>> from sklearn.ensemble import GradientBoostingClassifier
     >>> X_selected = SelectKBest(k=25).fit_transform(X, y)
-    >>> scores = cross_val_score(GradientBoostingRegressor(random_state=1),
+    >>> scores = cross_val_score(GradientBoostingClassifier(random_state=1),
     ...                          X_selected, y)
     >>> print(f"Mean cross-validation accuracy: {scores.mean()}")
     Mean cross-validation accuracy: 0.775
@@ -77,7 +77,7 @@ score is now what we would expect for the data, close to chance::
 
     >>> from sklearn.pipeline import make_pipeline
     >>> pipeline = make_pipeline(SelectKBest(k=25),
-    ...                          GradientBoostingRegressor(random_state=1))
+    ...                          GradientBoostingClassifier(random_state=1))
     >>> scores = cross_val_score(pipeline, X, y)
     >>> print(f"Mean Accuracy: {scores.mean()}")
     Mean Accuracy: 0.495
@@ -114,9 +114,9 @@ Using all the data to calculate the feature means, to replace the missing
 values with, results in a very high accuracy::
 
     >>> from sklearn.impute import SimpleImputer
-    >>> from sklearn.ensemble import GradientBoostingClassifier
+    >>> from sklearn.ensemble import GradientBoostingRegressor
     >>> X_impute = SimpleImputer().fit_transform(X_missing)
-    >>> scores = cross_val_score(GradientBoostingClassifier(random_state=1),
+    >>> scores = cross_val_score(GradientBoostingRegressor(random_state=1),
     ...                          X_impute, y)
     >>> print(f"Mean R^2: {scores.mean():.3f}+/-{scores.std():.2f}")
     Mean R^2: 0.811+/-0.09
@@ -129,8 +129,8 @@ This results in a much lower accuracy::
 
     >>> from sklearn.pipeline import make_pipeline
     >>> pipeline = make_pipeline(SimpleImputer(),
-    ...                          GradientBoostingClassifier(random_state=1))
-    >>> scores = cross_val_score(pipeline, X_impute, y)
+    ...                          GradientBoostingRegressor(random_state=1))
+    >>> scores = cross_val_score(pipeline, X_missing, y)
     >>> print(f"Mean R^2: {scores.mean():.3f}+/-{scores.std():.2f}")
     Mean R^2: 0.796+/-0.08
 
