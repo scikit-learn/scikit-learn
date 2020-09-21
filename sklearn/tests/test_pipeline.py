@@ -558,7 +558,8 @@ def test_pipeline_fit_transform():
     assert_array_almost_equal(X_trans, X_trans2)
 
 
-@pytest.mark.parametrize("start, end", [(0, 1), (0, 2), (1, 2), (1, 3)])
+@pytest.mark.parametrize("start, end", [(0, 1), (0, 2), (1, 2), (1, 3),
+                                        (None, 1), (1, None), (None, None)])
 def test_pipeline_slice(start, end):
     pipe = Pipeline(
         [("transf1", Transf()), ("transf2", Transf()), ("clf", FitParamT())],
