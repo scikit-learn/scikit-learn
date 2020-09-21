@@ -207,8 +207,10 @@ class Pipeline(_BaseComposition):
         """
         if isinstance(ind, slice):
             if ind.step not in (1, None):
-                raise ValueError('Pipeline slicing only supports a step of 1')
-            return self.__class__(self.steps[ind])
+                raise ValueError("Pipeline slicing only supports a step of 1")
+            return self.__class__(
+                self.steps[ind], memory=self.memory, verbose=self.verbose
+            )
         try:
             name, est = self.steps[ind]
         except TypeError:
