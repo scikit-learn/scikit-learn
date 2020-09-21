@@ -594,9 +594,11 @@ def _set_checking_parameters(estimator):
         # LinearSVR, LinearSVC
         if estimator.__class__.__name__ in ['LinearSVR', 'LinearSVC']:
             estimator.set_params(max_iter=20)
-        # NMF
+        # NMF and MiniBatchNMF
         if estimator.__class__.__name__ == 'NMF':
             estimator.set_params(max_iter=100)
+        if estimator.__class__.__name__ == 'MiniBatchNMF':
+            estimator.set_params(max_iter=100000)
         # MLP
         if estimator.__class__.__name__ in ['MLPClassifier', 'MLPRegressor']:
             estimator.set_params(max_iter=100)
