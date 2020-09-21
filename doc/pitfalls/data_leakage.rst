@@ -6,8 +6,8 @@ Data leakage
 
 Data leakage occurs when information that would not be available at prediction
 time, is used when building the model. This results in overly optimstic
-performance estimates, for example from :ref:`cross_validation
-<cross valudation>`, but poorer performance when the model is asked to predict
+performance estimates, for example from :ref:`cross validation
+<cross_validation>`, but poorer performance when the model is asked to predict
 on actually novel data, for example during production.
 
 A common cause is not keeping the test and train data subsets separate. Test
