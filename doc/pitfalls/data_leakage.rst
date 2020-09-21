@@ -114,12 +114,12 @@ Using all the data to calculate the feature means, to replace the missing
 values with, results in a very high accuracy::
 
     >>> from sklearn.impute import SimpleImputer
-    >>> from sklearn.ensemble import GradientBoostingRegressor
+    >>> from sklearn.ensemble import GradientBoostingClassifier
     >>> X_impute = SimpleImputer().fit_transform(X_missing)
-    >>> scores = cross_val_score(GradientBoostingRegressor(random_state=1),
+    >>> scores = cross_val_score(GradientBoostingClassifier(random_state=1),
     ...                          X_impute, y)
-    >>> print(f"Mean R^2: {scores.mean():.3f}+/-{scores.std():.2f}")
-    Mean R^2: 0.811+/-0.09
+    >>> print(f"Mean accuracy: {scores.mean():.3f}+/-{scores.std():.2f}")
+    Mean accuracy: 0.811+/-0.09
 
 **Right**
 
@@ -129,10 +129,10 @@ This results in a much lower accuracy::
 
     >>> from sklearn.pipeline import make_pipeline
     >>> pipeline = make_pipeline(SimpleImputer(),
-    ...                          GradientBoostingRegressor(random_state=1))
+    ...                          GradientBoostingClassifier(random_state=1))
     >>> scores = cross_val_score(pipeline, X_missing, y)
-    >>> print(f"Mean R^2: {scores.mean():.3f}+/-{scores.std():.2f}")
-    Mean R^2: 0.796+/-0.08
+    >>> print(f"Mean accuracy: {scores.mean():.3f}+/-{scores.std():.2f}")
+    Mean accuracy: 0.796+/-0.08
 
 Pipelines
 =========
