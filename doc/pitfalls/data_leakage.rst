@@ -119,7 +119,7 @@ values with, results in a very high accuracy::
     >>> scores = cross_val_score(GradientBoostingClassifier(random_state=1),
     ...                          X_impute, y)
     >>> print(f"Mean accuracy: {scores.mean():.3f}+/-{scores.std():.2f}")
-    Mean accuracy: 0.811+/-0.09
+    Mean accuracy: 0.949+/-0.02
 
 **Right**
 
