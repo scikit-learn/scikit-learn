@@ -142,7 +142,7 @@ use the :ref:`pipeline <pipeline>`, which helps prevent data leakage by
 only using the training data to calculate preprocessing statistics. Conversely,
 both the 'Wrong' examples used the :term:`fit_transform` method.
 Care needs to be taken when using the `fit_transform` method of preprocessors.
-This is because it combines the `fit` method, which should be performed on only
+This is because it combines the `fit` method, which should only be performed on
 the train subset, and the `transform` method which is generally performed on
 the whole dataset, as the train and test subsets should be preprocessed in the
 same way. Scikit-learn pipelines ensure that the appropriate method is
