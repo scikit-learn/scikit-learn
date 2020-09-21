@@ -27,7 +27,7 @@ data.
 Including the test data when finding the best model hyperparameters will
 also inadvertantly introduce information from the test data into the model.
 Practically, in scikit-learn, this means that only the train data subset
-should be fed into the `fit` method of ref:`hyper_parameter_optimizers`.
+should be fed into the `fit` method of :ref:`hyper_parameter_optimizers`.
 
 Some examples of common data leakage pitfalls are detailed below.
 
