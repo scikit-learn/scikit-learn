@@ -92,7 +92,7 @@ calculate this mean value as including the test data in the mean calculation
 will introduce information about the test data into the model.
 
 To demonstrate this, we will use the :ref:`diabetes_dataset` and artificially
-introduce 0.1 * `n_samples` missing values::
+introduce (n_samples * 0.75) missing values::
 
     >>> import numpy as np
     >>> from sklearn.datasets import load_iris
@@ -100,7 +100,7 @@ introduce 0.1 * `n_samples` missing values::
     >>> rng = np.random.RandomState(42)
     >>> n_samples = X.shape[0]
     >>> n_features = X.shape[1]
-    >>> n_missing = int(n_samples * 0.1)
+    >>> n_missing = int(n_samples * 0.75)
     >>> missing_samples = np.zeros(n_samples, dtype=np.bool)
     >>> missing_samples[: n_missing] = True
     >>> rng.shuffle(missing_samples)
@@ -118,8 +118,8 @@ values with, results in a very high accuracy::
     >>> X_impute = SimpleImputer().fit_transform(X_missing)
     >>> scores = cross_val_score(GradientBoostingClassifier(random_state=1),
     ...                          X_impute, y, cv=5)
-    >>> print(f"Mean Accuracy: {scores.mean():.2f}")
-    Mean Accuracy: 0.95
+    >>> print(f"Mean Accuracy: {scores.mean():.3f}+/-{scores.std():.2f}")
+    Mean Accuracy: 0.960+/-0.03
 
 **Right**
 
@@ -131,8 +131,8 @@ This results in a much lower accuracy::
     >>> pipeline = make_pipeline(SimpleImputer(),
     ...                          GradientBoostingClassifier(random_state=1))
     >>> scores = cross_val_score(pipeline, X_impute, y, cv=5)
-    >>> print(f"Mean Accuracy: {scores.mean():.2f}")
-    Mean Accuracy: 0.32
+    >>> print(f"Mean Accuracy: {scores.mean():.3f}+/-{scores.std():.2f}")
+    Mean Accuracy: 0.953+/-0.02
 
 Pipelines
 =========
