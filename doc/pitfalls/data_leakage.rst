@@ -104,7 +104,6 @@ introduce 0.1 * `n_samples` missing values::
     >>> missing_samples = np.zeros(n_samples, dtype=np.bool)
     >>> missing_samples[: n_missing] = True
     >>> rng.shuffle(missing_samples)
-    >>> missing_samples.shape
     >>> missing_features = rng.randint(0, n_features, n_missing)
     >>> X_missing = X.copy()
     >>> X_missing[missing_samples, missing_features] = np.nan
