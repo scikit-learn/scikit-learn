@@ -146,7 +146,7 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
 
         .. versionadded:: 0.20
 
-    error_score : 'raise' or numeric
+    error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
         If a numeric value is given, FitFailedWarning is raised. This parameter
