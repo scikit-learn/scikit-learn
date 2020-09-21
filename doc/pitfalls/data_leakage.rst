@@ -6,9 +6,9 @@ Data leakage
 
 Data leakage occurs when information that would not be available at prediction
 time, is used when building the model. This results in overly optimstic
-performance estimates, for example from :ref:`cross_validation`, but
-poorer performance when the model is asked to predict on actually novel data,
-for example during production.
+performance estimates, for example from :ref:`cross_validation
+<cross valudation>`, but poorer performance when the model is asked to predict
+on actually novel data, for example during production.
 
 A common cause is not keeping the test and train data subsets separate. Test
 data should never be used to make choices about the model but this may
@@ -61,7 +61,7 @@ performance to be around 0.5. However, since the feature selection step
     >>> from sklearn.ensemble import GradientBoostingClassifier
     >>> X_selected = SelectKBest(k=25).fit_transform(X, y)
     >>> scores = cross_val_score(GradientBoostingClassifier(random_state=1),
-    ...                          X_selected, y, cv=5)
+    ...                          X_selected, y)
     >>> print(f"Mean cross-validation accuracy: {scores.mean()}")
     Mean cross-validation accuracy: 0.775
 
@@ -78,7 +78,7 @@ score is now what we would expect for the data, close to chance::
     >>> from sklearn.pipeline import make_pipeline
     >>> pipeline = make_pipeline(SelectKBest(k=25),
     ...                          GradientBoostingClassifier(random_state=1))
-    >>> scores = cross_val_score(pipeline, X, y, cv=5)
+    >>> scores = cross_val_score(pipeline, X, y)
     >>> print(f"Mean Accuracy: {scores.mean()}")
     Mean Accuracy: 0.495
 
@@ -91,12 +91,12 @@ with the mean of that feature. Only the train data should be used to
 calculate this mean value as including the test data in the mean calculation
 will introduce information about the test data into the model.
 
-To demonstrate this, we will use the :ref:`diabetes_dataset` and artificially
-introduce (n_samples * 0.75) missing values::
+To demonstrate this, we will use the :ref:`breast_cancer_dataset` and
+artificially introduce (n_samples * 0.75) missing values::
 
     >>> import numpy as np
-    >>> from sklearn.datasets import load_iris
-    >>> X, y = load_iris(return_X_y=True)
+    >>> from sklearn.datasets import load_breast_cancer
+    >>> X, y = load_breast_cancer(return_X_y=True)
     >>> rng = np.random.RandomState(42)
     >>> n_samples = X.shape[0]
     >>> n_features = X.shape[1]
@@ -117,9 +117,9 @@ values with, results in a very high accuracy::
     >>> from sklearn.ensemble import GradientBoostingClassifier
     >>> X_impute = SimpleImputer().fit_transform(X_missing)
     >>> scores = cross_val_score(GradientBoostingClassifier(random_state=1),
-    ...                          X_impute, y, cv=5)
-    >>> print(f"Mean Accuracy: {scores.mean():.3f}+/-{scores.std():.2f}")
-    Mean Accuracy: 0.960+/-0.03
+    ...                          X_impute, y)
+    >>> print(f"Mean R^2: {scores.mean():.3f}+/-{scores.std():.2f}")
+    Mean R^2: 0.811+/-0.09
 
 **Right**
 
@@ -130,9 +130,9 @@ This results in a much lower accuracy::
     >>> from sklearn.pipeline import make_pipeline
     >>> pipeline = make_pipeline(SimpleImputer(),
     ...                          GradientBoostingClassifier(random_state=1))
-    >>> scores = cross_val_score(pipeline, X_impute, y, cv=5)
-    >>> print(f"Mean Accuracy: {scores.mean():.3f}+/-{scores.std():.2f}")
-    Mean Accuracy: 0.953+/-0.02
+    >>> scores = cross_val_score(pipeline, X_impute, y)
+    >>> print(f"Mean R^2: {scores.mean():.3f}+/-{scores.std():.2f}")
+    Mean R^2: 0.796+/-0.08
 
 Pipelines
 =========
@@ -141,9 +141,9 @@ You may have noticed a common theme in our examples. Both the 'Right' examples
 use the :ref:`pipeline <pipeline>`, which helps prevent data leakage by
 only using the training data to calculate preprocessing statistics. Conversely,
 both the 'Wrong' examples used the :term:`fit_transform` method.
-Care needs to be taken when using the `fit_transform` method of preprocessors.
-This is because it combines the `fit` method, which should only be performed on
-the train subset, and the `transform` method which is generally performed on
-the whole dataset, as the train and test subsets should be preprocessed in the
-same way. Scikit-learn pipelines ensure that the appropriate method is
-performed on the correct data subset.
+Care needs to be taken when using the :term:`fit_transform` method of
+preprocessors. This is because it combines the `fit` method, which should
+only be performed on the train subset, and the :term:`transform` method which
+is generally performed on the whole dataset, as the train and test subsets
+should be preprocessed in the same way. Scikit-learn pipelines ensure that
+the appropriate method is performed on the correct data subset.
