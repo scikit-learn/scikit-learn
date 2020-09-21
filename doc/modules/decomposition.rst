@@ -833,6 +833,29 @@ stored components::
     * :ref:`sphx_glr_auto_examples_applications_plot_topics_extraction_with_nmf_lda.py`
     * :ref:`sphx_glr_auto_examples_decomposition_plot_beta_divergence.py`
 
+.. _MiniBatchNMF:
+
+Mini-batch Non Negative Matrix Factorization
+--------------------------------------------
+
+:class:`MiniBatchNMF` [7]_ implements a faster, but less accurate
+version of the non negative matrix factorization, better suited for
+large datasets.
+
+By default, :class:`MiniBatchNMF` divides the data into
+mini-batches and optimizes in an online manner by cycling over the mini-batches
+for the specified number of iterations. The ``batch_size`` parameter controls
+the size of the batches.
+In order to speed up the mini-batch algorithm it is also possible to scale
+past batches, giving them less importance than newer batches. This is done
+introducing a so called forgetting factor defined in the ``forget_factor``
+parameter.
+
+The estimator also implements ``partial_fit``, which updates the factorization
+by iterating only once over a mini-batch. This can be used for online learning
+when the data is not readily available from the start, or for when the data
+does not fit into the memory.
+
 .. topic:: References:
 
     .. [1] `"Learning the parts of objects by non-negative matrix factorization"
@@ -857,6 +880,10 @@ stored components::
       <https://arxiv.org/pdf/1010.1763.pdf>`_
       C. Fevotte, J. Idier, 2011
 
+    .. [7] `"Online algorithms for nonnegative matrix factorization with the
+      Itakura-Saito divergence"
+      <https://hal.archives-ouvertes.fr/hal-00602050>`_
+      A. Lefevre, F. Bach, C. Fevotte, 2011
 
 .. _LatentDirichletAllocation:
 

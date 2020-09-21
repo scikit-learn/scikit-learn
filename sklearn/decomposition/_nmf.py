@@ -1571,7 +1571,7 @@ class MiniBatchNMF(NMF):
     The objective function is minimized with an alternating minimization of W
     and H.
 
-    Read more in the :ref:`User Guide <NMF>`.
+    Read more in the :ref:`User Guide <MiniBatchNMF>`.
 
     Parameters
     ----------
@@ -1579,7 +1579,7 @@ class MiniBatchNMF(NMF):
         Number of components, if n_components is not set all features
         are kept.
 
-    init : None | 'random' | 'nndsvd' |  'nndsvda' | 'nndsvdar' | 'custom'
+    init : {'random', 'nndsvd', 'nndsvda', 'nndsvdar', 'custom'}, default=None
         Method used to initialize the procedure.
         Default: None.
         Valid options:
