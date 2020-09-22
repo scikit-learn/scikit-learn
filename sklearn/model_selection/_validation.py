@@ -18,13 +18,14 @@ from contextlib import suppress
 
 import numpy as np
 import scipy.sparse as sp
-from joblib import Parallel, delayed, logger
+from joblib import Parallel, logger
 
 from ..base import is_classifier, clone
 from ..utils import indexable, check_random_state, _safe_indexing
 from ..utils.validation import _check_fit_params
 from ..utils.validation import _num_samples
 from ..utils.validation import _deprecate_positional_args
+from ..utils.fixes import delayed
 from ..utils.metaestimators import _safe_split
 from ..metrics import check_scoring
 from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
@@ -146,7 +147,7 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
 
         .. versionadded:: 0.20
 
-    error_score : 'raise' or numeric
+    error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
         If a numeric value is given, FitFailedWarning is raised. This parameter

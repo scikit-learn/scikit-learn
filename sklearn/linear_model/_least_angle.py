@@ -15,7 +15,7 @@ import warnings
 import numpy as np
 from scipy import linalg, interpolate
 from scipy.linalg.lapack import get_lapack_funcs
-from joblib import Parallel, delayed
+from joblib import Parallel
 
 from ._base import LinearModel
 from ..base import RegressorMixin, MultiOutputMixin
@@ -25,6 +25,7 @@ from ..utils import check_random_state
 from ..model_selection import check_cv
 from ..exceptions import ConvergenceWarning
 from ..utils.validation import _deprecate_positional_args
+from ..utils.fixes import delayed
 
 SOLVE_TRIANGULAR_ARGS = {'check_finite': False}
 
