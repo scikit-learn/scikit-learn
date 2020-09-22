@@ -32,12 +32,13 @@ from ._validation import _aggregate_score_dicts
 from ._validation import _insert_error_scores
 from ._validation import _normalize_score_results
 from ..exceptions import NotFittedError
-from joblib import Parallel, delayed
+from joblib import Parallel
 from ..utils import check_random_state
 from ..utils.random import sample_without_replacement
 from ..utils.validation import indexable, check_is_fitted, _check_fit_params
 from ..utils.validation import _deprecate_positional_args
 from ..utils.metaestimators import if_delegate_has_method
+from ..utils.fixes import delayed
 from ..metrics._scorer import _check_multimetric_scoring
 from ..metrics import check_scoring
 from ..utils import deprecated
