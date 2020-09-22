@@ -142,7 +142,7 @@ You may have noticed a common theme in our examples. Both the 'Right' examples
 use the :ref:`pipeline <pipeline>`, which helps prevent data leakage by
 only using the training data to calculate preprocessing statistics. Conversely,
 both the 'Wrong' examples used the :term:`fit_transform` method of the
-preprocessor.
+preprocessing estimator.
 Care needs to be taken when using the :term:`fit_transform` method. This is
 because it combines the `fit` method, which should
 only be performed on the train subset, and the :term:`transform` method which
