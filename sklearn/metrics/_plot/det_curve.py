@@ -5,6 +5,7 @@ from .base import _get_response
 from .. import det_curve
 
 from ...utils import check_matplotlib_support
+from ...utils.validation import _deprecate_positional_args
 
 
 class DetCurveDisplay:
@@ -61,12 +62,14 @@ class DetCurveDisplay:
     >>> display.plot()  # doctest: +SKIP
     >>> plt.show()      # doctest: +SKIP
     """
+    @_deprecate_positional_args
     def __init__(self, *, fpr, fnr, estimator_name=None, pos_label=None):
         self.fpr = fpr
         self.fnr = fnr
         self.estimator_name = estimator_name
         self.pos_label = pos_label
 
+    @_deprecate_positional_args
     def plot(self, ax=None, *, name=None, **kwargs):
         """Plot visualization.
 
@@ -129,6 +132,7 @@ class DetCurveDisplay:
         return self
 
 
+@_deprecate_positional_args
 def plot_det_curve(
     estimator,
     X,
