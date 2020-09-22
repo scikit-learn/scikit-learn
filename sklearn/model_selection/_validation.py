@@ -1337,14 +1337,12 @@ def learning_curve(estimator, X, y, *, groups=None,
         raise ValueError("An estimator must support the partial_fit interface "
                          "to exploit incremental learning")
     if stratify:
-        if not shuffle:
-            raise NotImplementedError(
-                "Stratification is not implemented when shuffle=False")
-        elif y is None:
+        if not shuffle or y is None:
             raise ValueError(
-                "Cannot stratify the training set when y is None")
+                "If shuffle=False or y is None, then stratify should be False."
+            )
         # we need to use random_seed, i.e. integer, not RandomState instance,
-        # in order to make training subsets growing, not disjoint
+        # so that the each training set is a super set of the previous one
         MAX_INT = np.iinfo(np.int32).max
         random_seed = check_random_state(random_state).randint(MAX_INT)
     X, y, groups = indexable(X, y, groups)

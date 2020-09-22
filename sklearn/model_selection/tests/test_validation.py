@@ -1328,6 +1328,23 @@ def test_learning_curve_with_stratify():
                    shuffle=True, stratify=True, random_state=0)
 
 
+def test_learning_curve_with_stratify_error():
+    n_samples = 30
+    n_splits = 3
+    X, y = make_classification(n_samples=n_samples, n_features=1,
+                               n_informative=1, n_redundant=0, n_classes=2,
+                               n_clusters_per_class=1, random_state=0)
+    estimator = MockImprovingEstimator(n_samples * ((n_splits - 1) / n_splits))
+    with pytest.raises(
+        ValueError,
+        match="If shuffle=False or y is None, then stratify should be False."
+    ):
+        train_sizes, train_scores, test_scores, fit_times, score_times = \
+            learning_curve(estimator, X, y, cv=KFold(n_splits=n_splits),
+                           train_sizes=np.linspace(0.1, 1.0, 10),
+                           shuffle=False, stratify=True)
+
+
 def test_validation_curve():
     X, y = make_classification(n_samples=2, n_features=1, n_informative=1,
                                n_redundant=0, n_classes=2,

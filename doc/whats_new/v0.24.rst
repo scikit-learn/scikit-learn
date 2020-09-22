@@ -411,7 +411,8 @@ Changelog
 - |Feature| Add `stratify` parameter to :func:`model_selection.learning_curve`
   to support stratified splits of training data during each iteration of
   cross-validation.
-  :issue:`11054` by :user:`Nikita Astrakhantsev <astrakhantsev>`.
+  :pr:`18144` by :user:`Nikita Astrakhantsev <astrakhantsev>` and
+  :user:`Chiara Marmo <cmarmo>`.
 
 - |Enhancement| :class:`model_selection.TimeSeriesSplit` has two new keyword
   arguments `test_size` and `gap`. `test_size` allows the out-of-sample
