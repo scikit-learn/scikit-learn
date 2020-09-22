@@ -125,48 +125,48 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                                  "indices must be in [0, n_features - 1]")
             cat_feats = np.zeros(n_features, dtype=bool)
             cat_feats[cat_features_input] = True
-
-        if cat_features_input.dtype.kind == 'b':
+        else:
             if cat_features_input.shape[0] != n_features:
                 raise ValueError("categorical_features set as a boolean mask "
                                  "must have shape (n_features,)")
             cat_feats = cat_features_input
 
-        if np.any(cat_feats):
-            self.is_categorical_ = cat_feats
-
-            # compute the known categories in the training data. We need to do
-            # that here instead of in the BinMapper because in case of early
-            # stopping, the mapper only gets a fraction of the training data.
-            known_categories = []
-
-            for f_idx in range(n_features):
-                if self.is_categorical_[f_idx]:
-                    categories = np.unique(X[:, f_idx])
-                    missing = np.isnan(categories)
-                    if missing.any():
-                        categories = categories[~missing]
-
-                    if categories.size > self.max_bins:
-                        raise ValueError(
-                            f"Categorical feature at index {f_idx} is "
-                            f"expected to have a "
-                            f"cardinality <= {self.max_bins}"
-                        )
-
-                    if (categories >= self.max_bins).any():
-                        raise ValueError(
-                            f"Categorical feature at index {f_idx} is "
-                            f"expected to be encoded with "
-                            f"values < {self.max_bins}"
-                        )
-                else:
-                    categories = None
-                known_categories.append(categories)
-            return known_categories
-        else:
+        if not np.any(cat_feats):
             # no categories
             self.is_categorical_ = None
+            return
+
+        self.is_categorical_ = cat_feats
+
+        # compute the known categories in the training data. We need to do
+        # that here instead of in the BinMapper because in case of early
+        # stopping, the mapper only gets a fraction of the training data.
+        known_categories = []
+
+        for f_idx in range(n_features):
+            if self.is_categorical_[f_idx]:
+                categories = np.unique(X[:, f_idx])
+                missing = np.isnan(categories)
+                if missing.any():
+                    categories = categories[~missing]
+
+                if categories.size > self.max_bins:
+                    raise ValueError(
+                        f"Categorical feature at index {f_idx} is "
+                        f"expected to have a "
+                        f"cardinality <= {self.max_bins}"
+                    )
+
+                if (categories >= self.max_bins).any():
+                    raise ValueError(
+                        f"Categorical feature at index {f_idx} is "
+                        f"expected to be encoded with "
+                        f"values < {self.max_bins}"
+                    )
+            else:
+                categories = None
+            known_categories.append(categories)
+        return known_categories
 
     def fit(self, X, y, sample_weight=None):
         """Fit the gradient boosting model.

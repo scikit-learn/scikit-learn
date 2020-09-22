@@ -176,18 +176,19 @@ class _BinMapper(TransformerMixin, BaseEstimator):
             self.is_categorical_ = np.asarray(self.is_categorical,
                                               dtype=np.uint8)
 
+        n_features = X.shape[1]
         known_categories = self.known_categories
         if known_categories is None:
-            known_categories = [None] * X.shape[1]
+            known_categories = [None] * n_features
 
-        for f_idx, (is_categorical, cats) in enumerate(zip(
-                self.is_categorical_,
-                known_categories)):
-            if is_categorical and cats is None:
+        for f_idx in range(n_features):
+            is_categorical = self.is_categorical_[f_idx]
+            known_cats = known_categories[f_idx]
+            if is_categorical and known_cats is None:
                 raise ValueError(
                     f"Known categories for feature {f_idx} must be provided."
                 )
-            if cats is not None and not is_categorical:
+            if not is_categorical and known_cats is not None:
                 raise ValueError(
                     f"Feature {f_idx} isn't marked as a categorical feature, "
                     f"but categories where passed."
@@ -198,7 +199,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         bin_thresholds = []
         n_bins_non_missing = []
 
-        for f_idx in range(X.shape[1]):
+        for f_idx in range(n_features):
             if not self.is_categorical_[f_idx]:
                 bins = _find_binning_threshold(X[:, f_idx], max_bins)
                 n_bins_non_missing.append(bins.shape[0] + 1)
