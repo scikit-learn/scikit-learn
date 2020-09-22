@@ -10,4 +10,4 @@ cdef void set_bitset(BITSET_DTYPE_C bitset, X_BINNED_DTYPE_C val) nogil
 
 cdef unsigned char in_bitset(BITSET_DTYPE_C bitset, X_BINNED_DTYPE_C val) nogil
 
-cdef unsigned char in_bitset_mv(const BITSET_INNER_DTYPE_C[:] bitset, X_BINNED_DTYPE_C val) nogil
+cdef unsigned char in_bitset_memoryview(const BITSET_INNER_DTYPE_C[:] bitset, X_BINNED_DTYPE_C val) nogil

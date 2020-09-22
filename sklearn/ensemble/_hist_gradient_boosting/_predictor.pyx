@@ -20,7 +20,7 @@ from .common cimport BITSET_INNER_DTYPE_C
 from .common cimport BITSET_DTYPE_C
 from .common cimport node_struct
 from ._bitset cimport in_bitset
-from ._bitset cimport in_bitset_mv
+from ._bitset cimport in_bitset_memoryview
 
 np.import_array()
 
@@ -70,12 +70,12 @@ cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
                 node_idx = node.right
         elif node.is_categorical:
             categorical_idx = orig_feature_to_known_cats_idx[node.feature_idx]
-            if not in_bitset_mv(
+            if not in_bitset_memoryview(
                     known_categorical_bitsets[categorical_idx],
                     <X_BINNED_DTYPE_C>numeric_data[row, node.feature_idx]):
                 # treat unknown categories as missing.
                 node_idx = node.left if node.missing_go_to_left else node.right
-            elif in_bitset_mv(
+            elif in_bitset_memoryview(
                     raw_categorical_bitsets[node.category_bitset_idx],
                     <X_BINNED_DTYPE_C>numeric_data[row, node.feature_idx]):
                 node_idx = node.left
@@ -124,7 +124,7 @@ cdef inline Y_DTYPE_C _predict_one_from_binned_data(
             return node.value
 
         if node.is_categorical:
-            if in_bitset_mv(binned_categorical_bitsets[node.category_bitset_idx],
+            if in_bitset_memoryview(binned_categorical_bitsets[node.category_bitset_idx],
                             binned_data[row, node.feature_idx]):
                 node_idx = node.left
             else:

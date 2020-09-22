@@ -34,7 +34,7 @@ cdef inline unsigned char in_bitset(BITSET_DTYPE_C bitset,
     return (bitset[i1] >> i2) & 1
 
 
-cdef unsigned char in_bitset_mv(const BITSET_INNER_DTYPE_C[:] bitset,
+cdef unsigned char in_bitset_memoryview(const BITSET_INNER_DTYPE_C[:] bitset,
                                 X_BINNED_DTYPE_C val) nogil:
     cdef:
         unsigned int i1 = val // 32
