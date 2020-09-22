@@ -91,8 +91,9 @@ with the mean of that feature. Only the train data should be used to
 calculate this mean value as including the test data in the mean calculation
 will introduce information about the test data into the model.
 
-To demonstrate this, we will use the :ref:`breast_cancer_dataset` and
-artificially introduce missing values. ::
+To demonstrate this, we will use the :ref:`diabetes_dataset` and
+artificially introduce missing values. We introduce a large number of
+missing values to make the effect more pronounced::
 
     >>> import numpy as np
     >>> from sklearn.datasets import load_diabetes
@@ -119,8 +120,8 @@ values with, results in a very high accuracy::
     >>> X_impute = SimpleImputer().fit_transform(X_missing)
     >>> scores = cross_val_score(GradientBoostingRegressor(random_state=1),
     ...                          X_impute, y)
-    >>> print(f"Mean accuracy: {scores.mean():.3f}+/-{scores.std():.2f}")
-    Mean accuracy: 0.412+/-0.06
+    >>> print(f"Mean R^2: {scores.mean():.3f}+/-{scores.std():.2f}")
+    Mean R^2: 0.412+/-0.06
 
 **Right**
 
@@ -132,8 +133,8 @@ This results in a much lower accuracy::
     >>> pipeline = make_pipeline(SimpleImputer(),
     ...                          GradientBoostingRegressor(random_state=1))
     >>> scores = cross_val_score(pipeline, X_missing, y)
-    >>> print(f"Mean accuracy: {scores.mean():.3f}+/-{scores.std():.2f}")
-    Mean accuracy: 0.421+/-0.07
+    >>> print(f"Mean R^2: {scores.mean():.3f}+/-{scores.std():.2f}")
+    Mean R^2: 0.421+/-0.07
 
 Use pipelines
 =============
