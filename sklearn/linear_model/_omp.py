@@ -11,12 +11,13 @@ from math import sqrt
 import numpy as np
 from scipy import linalg
 from scipy.linalg.lapack import get_lapack_funcs
-from joblib import Parallel, delayed
+from joblib import Parallel
 
 from ._base import LinearModel, _pre_fit
 from ..base import RegressorMixin, MultiOutputMixin
 from ..utils import as_float_array, check_array
 from ..utils.validation import _deprecate_positional_args
+from ..utils.fixes import delayed
 from ..model_selection import check_cv
 
 premature = """ Orthogonal matching pursuit ended prematurely due to linear

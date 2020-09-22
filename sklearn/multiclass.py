@@ -53,9 +53,10 @@ from .utils.multiclass import (_check_partial_fit_first_call,
                                check_classification_targets,
                                _ovr_decision_function)
 from .utils.metaestimators import _safe_split, if_delegate_has_method
+from .utils.fixes import delayed
 from .exceptions import NotFittedError
 
-from joblib import Parallel, delayed
+from joblib import Parallel
 
 __all__ = [
     "OneVsRestClassifier",
