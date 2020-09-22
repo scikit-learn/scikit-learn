@@ -63,6 +63,8 @@ print(f"Number of numerical features: {n_numerical_features}")
 categorical_features = np.flatnonzero(is_categorical)
 for i in categorical_features:
     data.iloc[:, i] = data.iloc[:, i].cat.codes
+    # encode missing values as nan
+    data.iloc[data.iloc[:, i] == -1, i] = np.nan
 
 data_train, data_test, target_train, target_test = train_test_split(
     data, target, test_size=.2, random_state=0)
