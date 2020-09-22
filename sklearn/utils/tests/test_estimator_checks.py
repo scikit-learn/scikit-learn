@@ -674,7 +674,7 @@ def test_check_fit2d_1sample():
         def fit(self, X, y):
             if X.shape[0] == 1:
                 raise ValueError("non informative error message")
-            return super().fit(X, y)
+
     assert_raises_regex(
         AssertionError,
         "The error message should contain one of the following",
@@ -691,7 +691,6 @@ def test_check_fit2d_1feature():
         def fit(self, X, y):
             if X.shape[1] == 1:
                 raise ValueError("non informative error message")
-            return super().fit(X, y)
 
     assert_raises_regex(
         AssertionError,
