@@ -95,8 +95,8 @@ To demonstrate this, we will use the :ref:`breast_cancer_dataset` and
 artificially introduce missing values. ::
 
     >>> import numpy as np
-    >>> from sklearn.datasets import load_wine
-    >>> X, y = load_wine(return_X_y=True)
+    >>> from sklearn.datasets import load_diabetes
+    >>> X, y = load_diabetes(return_X_y=True)
     >>> rng = np.random.RandomState(42)
     >>> n_samples = X.shape[0]
     >>> n_features = X.shape[1]
@@ -114,13 +114,13 @@ Using all the data to calculate the feature means, to replace the missing
 values with, results in a very high accuracy::
 
     >>> from sklearn.impute import SimpleImputer
-    >>> from sklearn.ensemble import GradientBoostingClassifier
+    >>> from sklearn.ensemble import GradientBoostingRegressor
     >>> from sklearn.model_selection import cross_val_score
     >>> X_impute = SimpleImputer().fit_transform(X_missing)
-    >>> scores = cross_val_score(GradientBoostingClassifier(random_state=1),
+    >>> scores = cross_val_score(GradientBoostingRegressor(random_state=1),
     ...                          X_impute, y)
     >>> print(f"Mean accuracy: {scores.mean():.3f}+/-{scores.std():.2f}")
-    Mean accuracy: 0.955+/-0.03
+    Mean accuracy: 0.412+/-0.06
 
 **Right**
 
@@ -130,10 +130,10 @@ This results in a much lower accuracy::
 
     >>> from sklearn.pipeline import make_pipeline
     >>> pipeline = make_pipeline(SimpleImputer(),
-    ...                          GradientBoostingClassifier(random_state=1))
+    ...                          GradientBoostingRegressor(random_state=1))
     >>> scores = cross_val_score(pipeline, X_missing, y)
     >>> print(f"Mean accuracy: {scores.mean():.3f}+/-{scores.std():.2f}")
-    Mean accuracy: 0.950+/-0.03
+    Mean accuracy: 0.421+/-0.07
 
 Use pipelines
 =============
