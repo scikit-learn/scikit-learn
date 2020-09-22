@@ -8,13 +8,6 @@ After training a scikit-learn model, it is desirable to have a way to persist
 the model for future use without having to retrain. The following sections give
 you some hints on how to persist a scikit-learn model.
 
-.. note::
-
-   Remember that, once exported in a persistent format, the model should only
-   be used for predictions and cannot necessarily be refitted as information
-   about the original hyper-parameters might not have been exported
-   (depending on the serialization method).
-
 Python specific serialization
 -----------------------------
 
@@ -105,6 +98,8 @@ and environments should be taken into account, exporting the model in
 Exchange <https://onnx.ai/>`_ format or `Predictive Model Markup Language
 (PMML) <http://dmg.org/pmml/v4-4-1/GeneralStructure.html>`_ format
 might be a better approach than using `pickle` alone.
+These are helpful where you may want to use your model for prediction in a
+different environment from where the model was trained.
 
 ONNX is a binary serialization of the model. It has been developed to improve
 the usability of the interoperable representation of data models.
@@ -115,8 +110,8 @@ from the `ONNX tutorial <https://onnx.ai/get-started.html>`_.
 To convert scikit-learn model to ONNX a specific tool `sklearn-onnx
 <http://onnx.ai/sklearn-onnx/>`_ has been developed. 
 
-PMML is an extension of the `XML
-<https://fr.wikipedia.org/wiki/Extensible_Markup_Language>`_ document standard
+PMML is an implementation of the `XML
+<https://en.wikipedia.org/wiki/XML>`_ document standard
 defined to represent data models together with the data used to generate them.
 Being human and machine readable,
 PMML is a good option for model validation on different platforms and
