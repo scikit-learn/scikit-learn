@@ -31,18 +31,30 @@ print(f"Number of categorical featuers: {n_categorical_features}")
 print(f"Number of numerical featuers: {n_numerical_features}")
 
 ##############################################################################
-# Create gradient boosting estimator with one hot encoding
-# --------------------------------------------------------
-# Next, we create a pipeline that will one hot encode the categorical features
-# and let rest of the numerical data to passthrough:
+# Create gradient boosting estimator with feature dropped
+# ------------------------------------------------------------------
+# As a baseline, we create a estimator where the categorical features are
+# dropped:
 
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.pipeline import make_pipeline
 from sklearn.compose import make_column_transformer
 from sklearn.compose import make_column_selector
+
+preprocessor = make_column_transformer(
+    ('drop', make_column_selector(dtype_include='category')),
+    remainder='passthrough')
+hist_dropped = make_pipeline(
+    preprocessor, HistGradientBoostingRegressor(random_state=42))
+
+##############################################################################
+# Create gradient boosting estimator with one hot encoding
+# --------------------------------------------------------
+# Next, we create a pipeline that will one hot encode the categorical features
+# and let rest of the numerical data to passthrough:
+
 from sklearn.preprocessing import OneHotEncoder
-from sklearn.preprocessing import OrdinalEncoder
 
 preprocessor = make_column_transformer(
     (OneHotEncoder(sparse=False, handle_unknown='ignore'),
@@ -57,6 +69,8 @@ hist_one_hot = make_pipeline(preprocessor,
 # ------------------------------------------------------------------
 # The :class:`~ensemble.HistGradientBoostingRegressor` has native support
 # for categorical features using the `categorical_features` parameter:
+
+from sklearn.preprocessing import OrdinalEncoder
 
 preprocessor = make_column_transformer(
     (OrdinalEncoder(handle_unknown='use_encoded_value', unknown_value=-1),
@@ -80,20 +94,21 @@ from sklearn.model_selection import cross_validate
 import matplotlib.pyplot as plt
 import numpy as np
 
-one_hot_result = cross_validate(hist_one_hot, X, y, cv=3)
+dropped_result = cross_validate(hist_dropped, X, y, cv=3)
 native_result = cross_validate(hist_native, X, y, cv=3)
+one_hot_result = cross_validate(hist_one_hot, X, y, cv=3)
 
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 8))
 
-plot_info = [('fit_time', 'Fit times (s)', ax1),
-             ('test_score', 'Test Scores (r2 score)', ax2)]
+plot_info = [('fit_time', 'Fit times (s)', ax1, None),
+             ('test_score', 'Test Scores (r2 score)', ax2, (0.5, 1.0))]
 
-x, width = np.arange(2), 0.9
-for key, title, ax in plot_info:
-    items = [native_result[key], one_hot_result[key]]
+x, width = np.arange(3), 0.9
+for key, title, ax, y_limit in plot_info:
+    items = [native_result[key], dropped_result[key], one_hot_result[key]]
     ax.bar(x, [np.mean(item) for item in items],
            width, yerr=[np.std(item) for item in items],
-           color=['b', 'r'])
-    ax.set(xlabel='Split number', title=title, xticks=[0, 1],
-           xticklabels=['Native', "One Hot"])
+           color=['b', 'r', 'g'])
+    ax.set(xlabel='Type of model', title=title, xticks=x,
+           xticklabels=['Native', "Dropped", "One Hot"], ylim=y_limit)
 plt.show()
