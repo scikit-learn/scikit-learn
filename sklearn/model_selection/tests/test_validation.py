@@ -1312,8 +1312,8 @@ def test_learning_curve_with_stratify():
 
     # Check that stratify indeed makes strata with almost equal counts of ones
     # (i.e. differing by not more than 1)
-    assert(max_diff_in_ones_between_strata(X, y, stratify=False) > 1)
-    assert(max_diff_in_ones_between_strata(X, y, stratify=True) <= 1)
+    assert max_diff_in_ones_between_strata(X, y, stratify=False) > 1
+    assert max_diff_in_ones_between_strata(X, y, stratify=True) <= 1
 
     # Check that each iteration contains growing subsets of instances by
     # comparing actual difference with max natural one, i.e. caused by
