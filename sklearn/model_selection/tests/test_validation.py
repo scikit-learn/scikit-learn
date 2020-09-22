@@ -1343,6 +1343,15 @@ def test_learning_curve_with_stratify_error():
             learning_curve(estimator, X, y, cv=KFold(n_splits=n_splits),
                            train_sizes=np.linspace(0.1, 1.0, 10),
                            shuffle=False, stratify=True)
+    y = None
+    with pytest.raises(
+        ValueError,
+        match="If shuffle=False or y is None, then stratify should be False."
+    ):
+        train_sizes, train_scores, test_scores, fit_times, score_times = \
+            learning_curve(estimator, X, y, cv=KFold(n_splits=n_splits),
+                           train_sizes=np.linspace(0.1, 1.0, 10),
+                           shuffle=True, stratify=True)
 
 
 def test_validation_curve():
