@@ -774,7 +774,7 @@ def _convert_container(container, constructor_name, columns_name=None):
         return slice(container[0], container[1])
 
 
-def raises(expected_exp_type, match=None, may_pass=False, err_msg=None):
+def raises(expected_exc_type, match=None, may_pass=False, err_msg=None):
     """Context manager to ensure exceptions are raised within a code block.
 
     This is similar to and inspired from pytest.raises, but supports a few
@@ -786,7 +786,7 @@ def raises(expected_exp_type, match=None, may_pass=False, err_msg=None):
 
     Parameters
     ----------
-    excepted_exp_type : Exception or list of Exception
+    excepted_exc_type : Exception or list of Exception
         The exception that should be raised by the block. If a list, the block
         should raise one of the exceptions.
     match : str or list of str, default=None
@@ -809,38 +809,38 @@ def raises(expected_exp_type, match=None, may_pass=False, err_msg=None):
     raised_and_matched : bool
         True if an exception was raised and a match was found, False otherwise.
     """
-    return _Raises(expected_exp_type, match, may_pass, err_msg)
+    return _Raises(expected_exc_type, match, may_pass, err_msg)
 
 
 class _Raises(contextlib.AbstractContextManager):
     # see raises() for parameters
-    def __init__(self, expected_exp_type, match, may_pass, err_msg):
-        self.expected_exp_types = (
-            expected_exp_type
-            if isinstance(expected_exp_type, Iterable)
-            else [expected_exp_type]
+    def __init__(self, expected_exc_type, match, may_pass, err_msg):
+        self.expected_exc_types = (
+            expected_exc_type
+            if isinstance(expected_exc_type, Iterable)
+            else [expected_exc_type]
         )
         self.matches = [match] if isinstance(match, str) else match
         self.may_pass = may_pass
         self.err_msg = err_msg
         self.raised_and_matched = False
 
-    def __exit__(self, exp_type, exp_value, _):
+    def __exit__(self, exc_type, exc_value, _):
         # see
         # https://docs.python.org/2.5/whatsnew/pep-343.html#SECTION000910000000000000000
 
-        if exp_type is None:  # No exception was raised in the block
+        if exc_type is None:  # No exception was raised in the block
             if self.may_pass:
                 return True  # CM is happy
             else:
                 err_msg = (
-                    self.err_msg or f"DID NOT RAISE {self.expected_exp_types}"
+                    self.err_msg or f"DID NOT RAISE {self.expected_exc_types}"
                 )
                 raise AssertionError(err_msg)
 
         if not any(
-            issubclass(exp_type, expected_type)
-            for expected_type in self.expected_exp_types
+            issubclass(exc_type, expected_type)
+            for expected_type in self.expected_exc_types
         ):
             if self.err_msg is not None:
                 raise AssertionError(self.err_msg)
@@ -851,11 +851,11 @@ class _Raises(contextlib.AbstractContextManager):
             err_msg = self.err_msg or (
                 "The error message should contain one of the following "
                 "patterns:\n{}\nGot {}".format(
-                    "\n".join(self.matches), str(exp_value)
+                    "\n".join(self.matches), str(exc_value)
                 )
             )
             assert any(
-                re.search(match, str(exp_value)) for match in self.matches
+                re.search(match, str(exc_value)) for match in self.matches
             ), err_msg
             self.raised_and_matched = True
 
