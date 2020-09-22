@@ -169,7 +169,7 @@ You can also provide custom feature names for a more human readable format using
  * :ref:`sphx_glr_auto_examples_svm_plot_svm_anova.py`
  * :ref:`sphx_glr_auto_examples_compose_plot_compare_reduction.py`
 
-.. topic:: See also:
+.. topic:: See Also:
 
  * :ref:`composite_grid_search`
 
@@ -351,7 +351,7 @@ and the feature matrices they output are concatenated side-by-side into a
 larger matrix.
 
 When you want to apply different transformations to each field of the data,
-see the related class :class:`sklearn.compose.ColumnTransformer`
+see the related class :class:`~sklearn.compose.ColumnTransformer`
 (see :ref:`user guide <column_transformer>`).
 
 :class:`FeatureUnion` serves the same purposes as :class:`Pipeline` -
@@ -362,7 +362,7 @@ create complex models.
 
 (A :class:`FeatureUnion` has no way of checking whether two transformers
 might produce identical features. It only produces a union when the
-feature sets are disjoint, and making sure they are the caller's
+feature sets are disjoint, and making sure they are is the caller's
 responsibility.)
 
 
@@ -437,10 +437,8 @@ preprocessing or a specific feature extraction method::
   ...      'user_rating': [4, 5, 4, 3]})
 
 For this data, we might want to encode the ``'city'`` column as a categorical
-variable using :class:`preprocessing.OneHotEncoder
-<sklearn.preprocessing.OneHotEncoder>` but apply a
-:class:`feature_extraction.text.CountVectorizer
-<sklearn.feature_extraction.text.CountVectorizer>` to the ``'title'`` column.
+variable using :class:`~sklearn.preprocessing.OneHotEncoder` but apply a
+:class:`~sklearn.feature_extraction.text.CountVectorizer` to the ``'title'`` column.
 As we might use multiple feature extraction methods on the same column, we give
 each transformer a unique name, say ``'city_category'`` and ``'title_bow'``.
 By default, the remaining rating columns are ignored (``remainder='drop'``)::
@@ -474,7 +472,7 @@ By default, the remaining rating columns are ignored (``remainder='drop'``)::
 In the above example, the
 :class:`~sklearn.feature_extraction.text.CountVectorizer` expects a 1D array as
 input and therefore the columns were specified as a string (``'title'``).
-However, :class:`preprocessing.OneHotEncoder <sklearn.preprocessing.OneHotEncoder>`
+However, :class:`~sklearn.preprocessing.OneHotEncoder`
 as most of other transformers expects 2D data, therefore in that case you need
 to specify the column as a list of strings (``['city']``).
 
@@ -558,7 +556,7 @@ Visualizing Composite Estimators
 Estimators can be displayed with a HTML representation when shown in a
 jupyter notebook. This can be useful to diagnose or visualize a Pipeline with
 many estimators. This visualization is activated by setting the
-`display` option in :func:`sklearn.set_config`::
+`display` option in :func:`~sklearn.set_config`::
 
   >>> from sklearn import set_config
   >>> set_config(display='diagram')   # doctest: +SKIP

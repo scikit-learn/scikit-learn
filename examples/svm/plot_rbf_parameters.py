@@ -16,7 +16,7 @@ against maximization of the decision function's margin. For larger values of
 ``C``, a smaller margin will be accepted if the decision function is better at
 classifying all training points correctly. A lower ``C`` will encourage a
 larger margin, therefore a simpler decision function, at the cost of training
-accuracy. In other words``C`` behaves as a regularization parameter in the
+accuracy. In other words ``C`` behaves as a regularization parameter in the
 SVM.
 
 The first plot is a visualization of the decision function for a variety of

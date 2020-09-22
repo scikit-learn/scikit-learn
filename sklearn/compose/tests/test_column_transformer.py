@@ -94,6 +94,9 @@ def test_column_transformer():
         (slice(0, 2), X_res_both),
         # boolean mask
         (np.array([True, False]), X_res_first),
+        ([True, False], X_res_first),
+        (np.array([True, True]), X_res_both),
+        ([True, True], X_res_both),
     ]
 
     for selection, res in cases:
@@ -167,6 +170,7 @@ def test_column_transformer_dataframe():
         # boolean mask
         (np.array([True, False]), X_res_first),
         (pd.Series([True, False], index=['first', 'second']), X_res_first),
+        ([True, False], X_res_first),
     ]
 
     for selection, res in cases:
@@ -255,9 +259,12 @@ def test_column_transformer_dataframe():
 
 
 @pytest.mark.parametrize("pandas", [True, False], ids=['pandas', 'numpy'])
-@pytest.mark.parametrize("column", [[], np.array([False, False])],
-                         ids=['list', 'bool'])
-def test_column_transformer_empty_columns(pandas, column):
+@pytest.mark.parametrize("column_selection", [[], np.array([False, False]),
+                                              [False, False]],
+                         ids=['list', 'bool', 'bool_int'])
+@pytest.mark.parametrize("callable_column", [False, True])
+def test_column_transformer_empty_columns(pandas, column_selection,
+                                          callable_column):
     # test case that ensures that the column transformer does also work when
     # a given transformer doesn't have any columns to work on
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
@@ -269,34 +276,39 @@ def test_column_transformer_empty_columns(pandas, column):
     else:
         X = X_array
 
+    if callable_column:
+        column = lambda X: column_selection  # noqa
+    else:
+        column = column_selection
+
     ct = ColumnTransformer([('trans1', Trans(), [0, 1]),
-                            ('trans2', Trans(), column)])
+                            ('trans2', TransRaise(), column)])
     assert_array_equal(ct.fit_transform(X), X_res_both)
     assert_array_equal(ct.fit(X).transform(X), X_res_both)
     assert len(ct.transformers_) == 2
-    assert isinstance(ct.transformers_[1][1], Trans)
+    assert isinstance(ct.transformers_[1][1], TransRaise)
 
-    ct = ColumnTransformer([('trans1', Trans(), column),
+    ct = ColumnTransformer([('trans1', TransRaise(), column),
                             ('trans2', Trans(), [0, 1])])
     assert_array_equal(ct.fit_transform(X), X_res_both)
     assert_array_equal(ct.fit(X).transform(X), X_res_both)
     assert len(ct.transformers_) == 2
-    assert isinstance(ct.transformers_[0][1], Trans)
+    assert isinstance(ct.transformers_[0][1], TransRaise)
 
-    ct = ColumnTransformer([('trans', Trans(), column)],
+    ct = ColumnTransformer([('trans', TransRaise(), column)],
                            remainder='passthrough')
     assert_array_equal(ct.fit_transform(X), X_res_both)
     assert_array_equal(ct.fit(X).transform(X), X_res_both)
     assert len(ct.transformers_) == 2  # including remainder
-    assert isinstance(ct.transformers_[0][1], Trans)
+    assert isinstance(ct.transformers_[0][1], TransRaise)
 
     fixture = np.array([[], [], []])
-    ct = ColumnTransformer([('trans', Trans(), column)],
+    ct = ColumnTransformer([('trans', TransRaise(), column)],
                            remainder='drop')
     assert_array_equal(ct.fit_transform(X), fixture)
     assert_array_equal(ct.fit(X).transform(X), fixture)
     assert len(ct.transformers_) == 2  # including remainder
-    assert isinstance(ct.transformers_[0][1], Trans)
+    assert isinstance(ct.transformers_[0][1], TransRaise)
 
 
 def test_column_transformer_sparse_array():
@@ -564,7 +576,8 @@ def test_make_column_transformer_kwargs():
     # invalid keyword parameters should raise an error message
     assert_raise_message(
         TypeError,
-        'Unknown keyword arguments: "transformer_weights"',
+        "make_column_transformer() got an unexpected "
+        "keyword argument 'transformer_weights'",
         make_column_transformer, (scaler, 'first'), (norm, ['second']),
         transformer_weights={'pca': 10, 'Transf': 1}
     )
@@ -1283,25 +1296,25 @@ def test_n_features_in():
 @pytest.mark.parametrize('cols, pattern, include, exclude', [
     (['col_int', 'col_float'], None, np.number, None),
     (['col_int', 'col_float'], None, None, object),
-    (['col_int', 'col_float'], None, [np.int, np.float], None),
-    (['col_str'], None, [np.object], None),
-    (['col_str'], None, np.object, None),
+    (['col_int', 'col_float'], None, [int, float], None),
+    (['col_str'], None, [object], None),
+    (['col_str'], None, object, None),
     (['col_float'], None, float, None),
     (['col_float'], 'at$', [np.number], None),
-    (['col_int'], None, [np.int], None),
+    (['col_int'], None, [int], None),
     (['col_int'], '^col_int', [np.number], None),
     (['col_float', 'col_str'], 'float|str', None, None),
-    (['col_str'], '^col_s', None, [np.int]),
-    ([], 'str$', np.float, None),
-    (['col_int', 'col_float', 'col_str'], None, [np.number, np.object], None),
+    (['col_str'], '^col_s', None, [int]),
+    ([], 'str$', float, None),
+    (['col_int', 'col_float', 'col_str'], None, [np.number, object], None),
 ])
 def test_make_column_selector_with_select_dtypes(cols, pattern, include,
                                                  exclude):
     pd = pytest.importorskip('pandas')
 
     X_df = pd.DataFrame({
-        'col_int': np.array([0, 1, 2], dtype=np.int),
-        'col_float': np.array([0.0, 1.0, 2.0], dtype=np.float),
+        'col_int': np.array([0, 1, 2], dtype=int),
+        'col_float': np.array([0.0, 1.0, 2.0], dtype=float),
         'col_str': ["one", "two", "three"],
     }, columns=['col_int', 'col_float', 'col_str'])
 
@@ -1315,8 +1328,8 @@ def test_column_transformer_with_make_column_selector():
     # Functional test for column transformer + column selector
     pd = pytest.importorskip('pandas')
     X_df = pd.DataFrame({
-        'col_int': np.array([0, 1, 2], dtype=np.int),
-        'col_float': np.array([0.0, 1.0, 2.0], dtype=np.float),
+        'col_int': np.array([0, 1, 2], dtype=int),
+        'col_float': np.array([0.0, 1.0, 2.0], dtype=float),
         'col_cat': ["one", "two", "one"],
         'col_str': ["low", "middle", "high"]
     }, columns=['col_int', 'col_float', 'col_cat', 'col_str'])
@@ -1351,8 +1364,8 @@ def test_make_column_selector_pickle():
     pd = pytest.importorskip('pandas')
 
     X_df = pd.DataFrame({
-        'col_int': np.array([0, 1, 2], dtype=np.int),
-        'col_float': np.array([0.0, 1.0, 2.0], dtype=np.float),
+        'col_int': np.array([0, 1, 2], dtype=int),
+        'col_float': np.array([0.0, 1.0, 2.0], dtype=float),
         'col_str': ["one", "two", "three"],
     }, columns=['col_int', 'col_float', 'col_str'])
 
@@ -1363,7 +1376,7 @@ def test_make_column_selector_pickle():
 
 
 @pytest.mark.parametrize(
-    'empty_col', [[], np.array([], dtype=np.int), lambda x: []],
+    'empty_col', [[], np.array([], dtype=int), lambda x: []],
     ids=['list', 'array', 'callable']
 )
 def test_feature_names_empty_columns(empty_col):
@@ -1381,3 +1394,55 @@ def test_feature_names_empty_columns(empty_col):
     ct.fit(df)
     assert ct.get_feature_names() == ['ohe__col1_a', 'ohe__col1_b',
                                       'ohe__col2_z']
+
+
+@pytest.mark.parametrize('remainder', ["passthrough", StandardScaler()])
+def test_sk_visual_block_remainder(remainder):
+    # remainder='passthrough' or an estimator will be shown in repr_html
+    ohe = OneHotEncoder()
+    ct = ColumnTransformer(transformers=[('ohe', ohe, ["col1", "col2"])],
+                           remainder=remainder)
+    visual_block = ct._sk_visual_block_()
+    assert visual_block.names == ('ohe', 'remainder')
+    assert visual_block.name_details == (['col1', 'col2'], '')
+    assert visual_block.estimators == (ohe, remainder)
+
+
+def test_sk_visual_block_remainder_drop():
+    # remainder='drop' is not shown in repr_html
+    ohe = OneHotEncoder()
+    ct = ColumnTransformer(transformers=[('ohe', ohe, ["col1", "col2"])])
+    visual_block = ct._sk_visual_block_()
+    assert visual_block.names == ('ohe',)
+    assert visual_block.name_details == (['col1', 'col2'],)
+    assert visual_block.estimators == (ohe,)
+
+
+@pytest.mark.parametrize('remainder', ["passthrough", StandardScaler()])
+def test_sk_visual_block_remainder_fitted_pandas(remainder):
+    # Remainder shows the columns after fitting
+    pd = pytest.importorskip('pandas')
+    ohe = OneHotEncoder()
+    ct = ColumnTransformer(transformers=[('ohe', ohe, ["col1", "col2"])],
+                           remainder=remainder)
+    df = pd.DataFrame({"col1": ["a", "b", "c"], "col2": ["z", "z", "z"],
+                       "col3": [1, 2, 3], "col4": [3, 4, 5]})
+    ct.fit(df)
+    visual_block = ct._sk_visual_block_()
+    assert visual_block.names == ('ohe', 'remainder')
+    assert visual_block.name_details == (['col1', 'col2'], ['col3', 'col4'])
+    assert visual_block.estimators == (ohe, remainder)
+
+
+@pytest.mark.parametrize('remainder', ["passthrough", StandardScaler()])
+def test_sk_visual_block_remainder_fitted_numpy(remainder):
+    # Remainder shows the indices after fitting
+    X = np.array([[1, 2, 3], [4, 5, 6]], dtype=float)
+    scaler = StandardScaler()
+    ct = ColumnTransformer(transformers=[('scale', scaler, [0, 2])],
+                           remainder=remainder)
+    ct.fit(X)
+    visual_block = ct._sk_visual_block_()
+    assert visual_block.names == ('scale', 'remainder')
+    assert visual_block.name_details == ([0, 2], [1])
+    assert visual_block.estimators == (scaler, remainder)

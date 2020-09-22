@@ -116,16 +116,15 @@ a model and computing the score 5 consecutive times (with different splits each
 time)::
 
   >>> from sklearn.model_selection import cross_val_score
-  >>> clf = svm.SVC(kernel='linear', C=1)
+  >>> clf = svm.SVC(kernel='linear', C=1, random_state=42)
   >>> scores = cross_val_score(clf, X, y, cv=5)
   >>> scores
-  array([0.96..., 1.  ..., 0.96..., 0.96..., 1.        ])
+  array([0.96..., 1. , 0.96..., 0.96..., 1. ])
 
-The mean score and the 95\% confidence interval of the score estimate are hence
-given by::
+The mean score and the standard deviation are hence given by::
 
-  >>> print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
-  Accuracy: 0.98 (+/- 0.03)
+  >>> print("%0.2f accuracy with a standard deviation of %0.2f" % (scores.mean(), scores.std()))
+  0.98 accuracy with a standard deviation of 0.02
 
 By default, the score computed at each CV iteration is the ``score``
 method of the estimator. It is possible to change this by using the
@@ -744,6 +743,35 @@ e.g. when searching for hyperparameters.
 For example, when using a validation set, set the ``test_fold`` to 0 for all
 samples that are part of the validation set, and to -1 for all other samples.
 
+Using cross-validation iterators to split train and test
+--------------------------------------------------------
+
+The above group cross-validation functions may also be useful for spitting a
+dataset into training and testing subsets. Note that the convenience
+function :func:`train_test_split` is a wrapper around :func:`ShuffleSplit`
+and thus only allows for stratified splitting (using the class labels)
+and cannot account for groups.
+
+To perform the train and test split, use the indices for the train and test
+subsets yielded by the generator output by the `split()` method of the
+cross-validation splitter. For example::
+
+  >>> import numpy as np
+  >>> from sklearn.model_selection import GroupShuffleSplit
+
+  >>> X = np.array([0.1, 0.2, 2.2, 2.4, 2.3, 4.55, 5.8, 0.001])
+  >>> y = np.array(["a", "b", "b", "b", "c", "c", "c", "a"])
+  >>> groups = np.array([1, 1, 2, 2, 3, 3, 4, 4])
+  >>> train_indx, test_indx = next(
+  ...     GroupShuffleSplit(random_state=7).split(X, y, groups)
+  ... )
+  >>> X_train, X_test, y_train, y_test = \
+  ...     X[train_indx], X[test_indx], y[train_indx], y[test_indx]
+  >>> X_train.shape, X_test.shape
+  ((6,), (2,))
+  >>> np.unique(groups[train_indx]), np.unique(groups[test_indx])
+  (array([1, 2, 4]), array([3]))
+
 .. _timeseries_cv:
 
 Cross validation of time series data
@@ -828,3 +856,63 @@ Cross validation and model selection
 Cross validation iterators can also be used to directly perform model
 selection using Grid Search for the optimal hyperparameters of the
 model. This is the topic of the next section: :ref:`grid_search`.
+
+.. _permutation_test_score:
+
+Permutation test score
+======================
+
+:func:`~sklearn.model_selection.permutation_test_score` offers another way
+to evaluate the performance of classifiers. It provides a permutation-based
+p-value, which represents how likely an observed performance of the
+classifier would be obtained by chance. The null hypothesis in this test is
+that the classifier fails to leverage any statistical dependency between the
+features and the labels to make correct predictions on left out data.
+:func:`~sklearn.model_selection.permutation_test_score` generates a null
+distribution by calculating `n_permutations` different permutations of the
+data. In each permutation the labels are randomly shuffled, thereby removing
+any dependency between the features and the labels. The p-value output
+is the fraction of permutations for which the average cross-validation score
+obtained by the model is better than the cross-validation score obtained by
+the model using the original data. For reliable results ``n_permutations``
+should typically be larger than 100 and ``cv`` between 3-10 folds.
+
+A low p-value provides evidence that the dataset contains real dependency
+between features and labels and the classifier was able to utilize this
+to obtain good results. A high p-value could be due to a lack of dependency
+between features and labels (there is no difference in feature values between
+the classes) or because the classifier was not able to use the dependency in
+the data. In the latter case, using a more appropriate classifier that
+is able to utilize the structure in the data, would result in a low
+p-value.
+
+Cross-validation provides information about how well a classifier generalizes,
+specifically the range of expected errors of the classifier. However, a
+classifier trained on a high dimensional dataset with no structure may still
+perform better than expected on cross-validation, just by chance.
+This can typically happen with small datasets with less than a few hundred
+samples.
+:func:`~sklearn.model_selection.permutation_test_score` provides information
+on whether the classifier has found a real class structure and can help in
+evaluating the performance of the classifier.
+
+It is important to note that this test has been shown to produce low
+p-values even if there is only weak structure in the data because in the
+corresponding permutated datasets there is absolutely no structure. This
+test is therefore only able to show when the model reliably outperforms
+random guessing.
+
+Finally, :func:`~sklearn.model_selection.permutation_test_score` is computed
+using brute force and interally fits ``(n_permutations + 1) * n_cv`` models.
+It is therefore only tractable with small datasets for which fitting an
+individual model is very fast.
+
+.. topic:: Examples
+
+    * :ref:`sphx_glr_auto_examples_feature_selection_plot_permutation_test_for_classification.py`
+
+.. topic:: References:
+
+ * Ojala and Garriga. `Permutation Tests for Studying Classifier Performance
+   <http://www.jmlr.org/papers/volume11/ojala10a/ojala10a.pdf>`_.
+   J. Mach. Learn. Res. 2010.
