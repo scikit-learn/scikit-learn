@@ -13,13 +13,14 @@ import time
 
 import numpy as np
 from scipy import linalg
-from joblib import Parallel, delayed
+from joblib import Parallel
 
 from . import empirical_covariance, EmpiricalCovariance, log_likelihood
 
 from ..exceptions import ConvergenceWarning
 from ..utils.validation import check_random_state
 from ..utils.validation import _deprecate_positional_args
+from ..utils.fixes import delayed
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
 from ..linear_model import _cd_fast as cd_fast  # type: ignore
 from ..linear_model import lars_path_gram
