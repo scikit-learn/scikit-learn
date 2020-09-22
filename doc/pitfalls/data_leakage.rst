@@ -100,7 +100,7 @@ artificially introduce missing values. ::
     >>> rng = np.random.RandomState(42)
     >>> n_samples = X.shape[0]
     >>> n_features = X.shape[1]
-    >>> n_missing = int(n_samples * 0.5)
+    >>> n_missing = int(n_samples * 0.75)
     >>> missing_samples = np.zeros(n_samples, dtype=np.bool)
     >>> missing_samples[: n_missing] = True
     >>> rng.shuffle(missing_samples)
