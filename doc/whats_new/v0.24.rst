@@ -530,6 +530,11 @@ Changelog
   will raise a ``ValueError``.
   :pr:`17876` by :user:`Cary Goltermann <Ultramann>`.
 
+- |Fix| A slice of a :class:`pipeline.Pipeline` now inherits the parameters of
+  the original pipeline (`memory` and `verbose`).
+  :pr:`18429` by :user:`Albert Villanova del Moral <albertvillanova>` and
+  :user:`Paweł Biernat <pwl>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
