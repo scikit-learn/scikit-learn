@@ -5,9 +5,9 @@ Data leakage
 ============
 
 Data leakage occurs when information that would not be available at prediction
-time, is used when building the model. This results in overly optimstic
+time, is used when building the model. This results in overly optimsitic
 performance estimates, for example from :ref:`cross validation
-<cross_validation>`, but poorer performance when the model is asked to predict
+<cross_validation>`, but poorer performance when the model is used
 on actually novel data, for example during production.
 
 A common cause is not keeping the test and train data subsets separate. Test
@@ -141,9 +141,10 @@ Use pipelines
 You may have noticed a common theme in our examples. Both the 'Right' examples
 use the :ref:`pipeline <pipeline>`, which helps prevent data leakage by
 only using the training data to calculate preprocessing statistics. Conversely,
-both the 'Wrong' examples used the :term:`fit_transform` method.
-Care needs to be taken when using the :term:`fit_transform` method of
-preprocessors. This is because it combines the `fit` method, which should
+both the 'Wrong' examples used the :term:`fit_transform` method of the
+preprocessor.
+Care needs to be taken when using the :term:`fit_transform` method. This is
+because it combines the `fit` method, which should
 only be performed on the train subset, and the :term:`transform` method which
 is generally performed on the whole dataset, as the train and test subsets
 should be preprocessed in the same way. Scikit-learn pipelines ensure that
