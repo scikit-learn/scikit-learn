@@ -92,15 +92,15 @@ calculate this mean value as including the test data in the mean calculation
 will introduce information about the test data into the model.
 
 To demonstrate this, we will use the :ref:`breast_cancer_dataset` and
-artificially introduce (n_samples * 0.75) missing values::
+artificially introduce missing values. ::
 
     >>> import numpy as np
-    >>> from sklearn.datasets import load_breast_cancer
-    >>> X, y = load_breast_cancer(return_X_y=True)
+    >>> from sklearn.datasets import load_wine
+    >>> X, y = load_wine(return_X_y=True)
     >>> rng = np.random.RandomState(42)
     >>> n_samples = X.shape[0]
     >>> n_features = X.shape[1]
-    >>> n_missing = int(n_samples * 0.75)
+    >>> n_missing = int(n_samples * 0.5)
     >>> missing_samples = np.zeros(n_samples, dtype=np.bool)
     >>> missing_samples[: n_missing] = True
     >>> rng.shuffle(missing_samples)
@@ -115,11 +115,12 @@ values with, results in a very high accuracy::
 
     >>> from sklearn.impute import SimpleImputer
     >>> from sklearn.ensemble import GradientBoostingClassifier
+    >>> from sklearn.model_selection import cross_val_score
     >>> X_impute = SimpleImputer().fit_transform(X_missing)
     >>> scores = cross_val_score(GradientBoostingClassifier(random_state=1),
     ...                          X_impute, y)
     >>> print(f"Mean accuracy: {scores.mean():.3f}+/-{scores.std():.2f}")
-    Mean accuracy: 0.949+/-0.02
+    Mean accuracy: 0.955+/-0.03
 
 **Right**
 
@@ -132,10 +133,10 @@ This results in a much lower accuracy::
     ...                          GradientBoostingClassifier(random_state=1))
     >>> scores = cross_val_score(pipeline, X_missing, y)
     >>> print(f"Mean accuracy: {scores.mean():.3f}+/-{scores.std():.2f}")
-    Mean accuracy: 0.796+/-0.08
+    Mean accuracy: 0.950+/-0.03
 
-Pipelines
-=========
+Use pipelines
+=============
 
 You may have noticed a common theme in our examples. Both the 'Right' examples
 use the :ref:`pipeline <pipeline>`, which helps prevent data leakage by
