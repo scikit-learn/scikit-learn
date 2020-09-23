@@ -69,11 +69,17 @@ def _find_binning_threshold(col_data, max_bins):
 class _BinMapper(TransformerMixin, BaseEstimator):
     """Transformer that maps a dataset into integer-valued bins.
 
-    The bins are created in a feature-wise fashion, using quantiles so that
-    each bins contains approximately the same number of samples.
+    For continuous features, the bins are created in a feature-wise fashion,
+    using quantiles so that each bins contains approximately the same number
+    of samples. For large datasets, quantiles are computed on a subset of the
+    data to speed-up the binning, but the quantiles should remain stable.
 
-    For large datasets, quantiles are computed on a subset of the data to
-    speed-up the binning, but the quantiles should remain stable.
+    For categorical features, the raw categorical values are expected to be
+    in [0, 254] (this is not validated here though) and each category
+    corresponds to a bin. All categorical values must be known at
+    initialization: transform() doesn't know how to bin unknown categorical
+    values. Note that transform() is only used on non-training data in the
+    case of early stopping.
 
     Features with a small number of values may be binned into less than
     ``n_bins`` bins. The last bin (at index ``n_bins - 1``) is always reserved
@@ -95,10 +101,12 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         randomly chosen to compute the quantiles. If ``None``, the whole data
         is used.
     is_categorical : ndarray of bool of shape (n_features,), default=None
-        Indicates categorical features. If the cardinality of a categorical
-        feature is greater than ``n_bins``, then the ``n_bins`` most frequent
-        categories are kept. During ``transform`` time, unknown categories will
-        be considered missing.
+        Indicates categorical features. By default, all features are
+        considered continuous.
+    known_categories : list of {ndarray, None} of shape (n_features,), \
+            default=none
+        For each categorical feature, the array indicates the set of unique
+        categorical values. For continuous feature, the entry should be None.
     random_state: int, RandomState instance or None, default=None
         Pseudo-random number generator to control the random sub-sampling.
         Pass an int for reproducible output across multiple
@@ -196,20 +204,21 @@ class _BinMapper(TransformerMixin, BaseEstimator):
 
         self.missing_values_bin_idx_ = self.n_bins - 1
 
-        bin_thresholds = []
+        self.bin_thresholds_ = []
         n_bins_non_missing = []
 
         for f_idx in range(n_features):
             if not self.is_categorical_[f_idx]:
-                bins = _find_binning_threshold(X[:, f_idx], max_bins)
-                n_bins_non_missing.append(bins.shape[0] + 1)
+                thresholds = _find_binning_threshold(X[:, f_idx], max_bins)
+                n_bins_non_missing.append(thresholds.shape[0] + 1)
             else:
-                bins = known_categories[f_idx]
-                n_bins_non_missing.append(bins.shape[0])
+                # Since there are at most max_bins categories and since values
+                # are < 254, the bins *are* the categorical values.
+                thresholds = known_categories[f_idx]
+                n_bins_non_missing.append(thresholds.shape[0])
 
-            bin_thresholds.append(bins)
+            self.bin_thresholds_.append(thresholds)
 
-        self.bin_thresholds_ = bin_thresholds
         self.n_bins_non_missing_ = np.array(n_bins_non_missing,
                                             dtype=np.uint32)
         return self
@@ -218,6 +227,11 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         """Bin data X.
 
         Missing values will be mapped to the last bin.
+
+        For categorical features, the mapping will be incorrect for unknown
+        categories. Since the BinMapper is given known_categories of the
+        entire training data (i.e. before the call to train_test_split() in
+        case of early-stopping), this never happens.
 
         Parameters
         ----------
