@@ -37,7 +37,8 @@ from sklearn.utils.estimator_checks import (
     _set_checking_parameters,
     _get_check_estimator_ids,
     check_class_weight_balanced_linear_classifier,
-    parametrize_with_checks)
+    parametrize_with_checks,
+    check_transformer_get_output_names)
 
 
 def test_all_estimator_no_base_class():
@@ -66,8 +67,8 @@ def test_get_check_estimator_ids(val, expected):
     assert _get_check_estimator_ids(val) == expected
 
 
-def _tested_estimators():
-    for name, Estimator in all_estimators():
+def _tested_estimators(type_filter=None):
+    for name, Estimator in all_estimators(type_filter):
         if issubclass(Estimator, BiclusterMixin):
             continue
         try:
@@ -268,3 +269,14 @@ def test_strict_mode_check_estimator():
 def test_strict_mode_parametrize_with_checks(estimator, check):
     # Ideally we should assert that the strict checks are Xfailed...
     check(estimator)
+
+
+@pytest.mark.parametrize(
+    "transformer",
+    [est for est in _tested_estimators('transformer')
+     if "2darray" in est._get_tags()["X_types"] and
+     not est._get_tags()["no_validation"]],
+    ids=_get_check_estimator_ids)
+def test_transformers_get_output_names(transformer):
+    check_transformer_get_output_names(type(transformer).__name__,
+                                       transformer)

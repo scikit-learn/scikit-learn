@@ -1333,15 +1333,6 @@ def _check_transformer(name, transformer_orig, X, y, strict_mode=True):
     transformer_clone = clone(transformer)
     X_pred = transformer_clone.fit_transform(X, y=y_)
 
-    input_features = ['feature%d' % i for i in range(n_features)]
-    if hasattr(transformer_clone, 'get_output_names'):
-        feature_names = transformer_clone.get_output_names(input_features)
-        if feature_names is not None:
-            if isinstance(X_pred, tuple):
-                assert len(feature_names) == X_pred[0].shape[1]
-            else:
-                assert len(feature_names) == X_pred.shape[1]
-
     if isinstance(X_pred, tuple):
         for x_pred in X_pred:
             assert x_pred.shape[0] == n_samples
@@ -3147,3 +3138,36 @@ def check_requires_y_none(name, estimator_orig, strict_mode=True):
 _FULLY_STRICT_CHECKS = set([
     'check_n_features_in',
 ])
+
+
+def check_transformer_get_output_names(name, transformer_orig,
+                                       strict_mode=True):
+    X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
+                      random_state=0, n_features=2, cluster_std=0.1)
+    X = StandardScaler().fit_transform(X)
+    X -= X.min()
+    X = _pairwise_estimator_convert_X(X, transformer_orig)
+
+    n_samples, n_features = np.asarray(X).shape
+    transformer = clone(transformer_orig)
+    _set_checking_parameters(transformer)
+    set_random_state(transformer)
+
+    y_ = y
+    if name in CROSS_DECOMPOSITION:
+        y_ = np.c_[np.asarray(y), np.asarray(y)]
+        y_[::2, 1] *= 2
+
+    X_pred = transformer.fit_transform(X, y=y_)
+
+    input_features = ['feature%d' % i for i in range(n_features)]
+    feature_names = transformer.get_output_names(input_features)
+    assert feature_names is not None
+    if isinstance(X_pred, tuple):
+        assert len(feature_names) == X_pred[0].shape[1], (
+            f"Expected {X_pred[0].shape[1]} feature names, got "
+            f"{len(feature_names)}")
+    else:
+        assert len(feature_names) == X_pred.shape[1], (
+            f"Expected {X_pred.shape[1]} feature names, got "
+            f"{len(feature_names)}")

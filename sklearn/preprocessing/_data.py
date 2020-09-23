@@ -32,6 +32,7 @@ from ..utils.sparsefuncs import (inplace_column_scale,
 from ..utils.validation import (check_is_fitted, check_random_state,
                                 FLOAT_DTYPES, _deprecate_positional_args)
 from ..utils.deprecation import deprecated
+from ..utils._feature_names import _make_feature_names
 
 from ._csr_polynomial_expansion import _csr_polynomial_expansion
 
@@ -2288,6 +2289,22 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
         K += self.K_fit_all_
 
         return K
+
+    def get_output_names(self, input_features=None):
+        """Get output feature names.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Not used, present here for API consistency by convention.
+
+        Returns
+        -------
+        output_feature_names : list of str
+            Feature names for transformer output.
+        """
+        return _make_feature_names(n_features=self.K_fit_rows_.shape[0],
+                                   prefix=type(self).__name__.lower())
 
     @property
     def _pairwise(self):

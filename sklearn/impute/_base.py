@@ -504,13 +504,13 @@ class SimpleImputer(_BaseImputer):
 
         Returns
         -------
-        feature_names : ndarray of str
+        feature_names : list of str
             Transformed feature names.
         """
-        check_is_fitted(self, 'statistics_')
+        check_is_fitted(self)
         input_features = _make_feature_names(self.statistics_.shape[0],
                                              input_features=input_features)
-        return np.array(input_features)[self._valid_mask]
+        return np.array(input_features)[self._valid_mask].tolist()
 
     def inverse_transform(self, X):
         """Convert the data back to the original representation.

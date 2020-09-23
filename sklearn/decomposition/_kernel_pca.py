@@ -15,6 +15,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import KernelCenterer
 from ..metrics.pairwise import pairwise_kernels
 from ..utils.validation import _deprecate_positional_args
+from ..utils._feature_names import _make_feature_names
 
 
 class KernelPCA(TransformerMixin, BaseEstimator):
@@ -363,6 +364,22 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         n_samples = self.X_transformed_fit_.shape[0]
         K.flat[::n_samples + 1] += self.alpha
         return np.dot(K, self.dual_coef_)
+
+    def get_output_names(self, input_features=None):
+        """Get output feature names.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Not used, present here for API consistency by convention.
+
+        Returns
+        -------
+        output_feature_names : list of str
+            Feature names for transformer output.
+        """
+        return _make_feature_names(n_features=self.lambdas_.shape[0],
+                                   prefix=type(self).__name__.lower())
 
     def _more_tags(self):
         return {'preserves_dtype': [np.float64, np.float32]}

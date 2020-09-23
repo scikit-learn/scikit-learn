@@ -720,12 +720,31 @@ class TransformerMixin:
             # n_components could be auto or None
             # this is more likely to be an int
             n_features = self.n_components_
-        elif hasattr(self, 'components_'):
+        if hasattr(self, 'components_'):
             n_features = self.components_.shape[0]
         elif hasattr(self, 'n_components') and self.n_components is not None:
             n_features = self.n_components
         else:
             return None
+        return _make_feature_names(n_features=n_features,
+                                   prefix=type(self).__name__.lower())
+
+
+class _ComponentsMixin:
+    def get_output_names(self, input_features=None):
+        """Get output feature names.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Not used, present here for API consistency by convention.
+
+        Returns
+        -------
+        output_feature_names : list of str
+            Feature names for transformer output.
+        """
+        n_features = self.components_.shape[0]
         return _make_feature_names(n_features=n_features,
                                    prefix=type(self).__name__.lower())
 

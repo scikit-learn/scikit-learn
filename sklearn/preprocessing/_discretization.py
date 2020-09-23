@@ -356,3 +356,19 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             Xinv[:, jj] = bin_centers[np.int_(Xinv[:, jj])]
 
         return Xinv
+
+    def get_output_names(self, input_features=None):
+        """Get output feature names.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Input features. If None, they are generated as
+            x0, x1, ..., xn_features.
+
+        Returns
+        -------
+        output_feature_names : list of str
+            Feature names for transformer output.
+        """
+        return self._encoder.get_feature_names(input_features)
