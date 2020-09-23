@@ -32,7 +32,28 @@ from ..exceptions import DataConversionWarning
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
 
-def _deprecate_positional_args(f):
+def _deprecate_positional_args(version="0.25"):
+    """Decorator for methods that issues warnings for positional arguments.
+
+    Using the keyword-only argument syntax in pep 3102, arguments after the
+    * will issue a warning when passed as a positional argument.
+
+    Parameters
+    ----------
+    version : callable or str, default="0.25"
+        The version when positional arguments will result in error. If
+        callable, then "0.25" will be used for error message.
+    """
+    if callable(version):
+        # func was passed directly via the version argument
+        return _inner_deprecate_positional_args(version, version="0.25")
+
+    def decorating_function(func):
+        return _inner_deprecate_positional_args(func, version=version)
+    return decorating_function
+
+
+def _inner_deprecate_positional_args(f, version):
     """Decorator for methods that issues warnings for positional arguments.
 
     Using the keyword-only argument syntax in pep 3102, arguments after the
@@ -42,6 +63,9 @@ def _deprecate_positional_args(f):
     ----------
     f : callable
         Function to check arguments on.
+
+    version : str
+        The version when positional arguments will result in error.
     """
     sig = signature(f)
     kwonly_args = []
@@ -63,10 +87,10 @@ def _deprecate_positional_args(f):
         args_msg = ['{}={}'.format(name, arg)
                     for name, arg in zip(kwonly_args[:extra_args],
                                          args[-extra_args:])]
-        warnings.warn("Pass {} as keyword args. From version 0.25 "
-                      "passing these as positional arguments will "
-                      "result in an error".format(", ".join(args_msg)),
-                      FutureWarning)
+        args_msg = ", ".join(args_msg)
+        warnings.warn(f"Pass {args_msg} as keyword args. From version "
+                      f"{version} passing these as positional arguments will "
+                      "result in an error", FutureWarning)
         kwargs.update(zip(sig.parameters, args))
         return f(**kwargs)
     return inner_f
@@ -1280,7 +1304,7 @@ def _check_sample_weight(sample_weight, X, dtype=None):
     X : {ndarray, list, sparse matrix}
         Input data.
 
-    dtype: dtype, default=None
+    dtype: dtype
        dtype of the validated `sample_weight`.
        If None, and the input `sample_weight` is an array, the dtype of the
        input is preserved; otherwise an array with the default numpy dtype

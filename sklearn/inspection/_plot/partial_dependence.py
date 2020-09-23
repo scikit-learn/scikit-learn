@@ -528,7 +528,7 @@ class PartialDependenceDisplay:
             return ceil(n_samples * self.subsample)
         return n_samples
 
-    @_deprecate_positional_args
+    @_deprecate_positional_args(version="0.26")
     def plot(self, *, ax=None, n_cols=3, line_kw=None, contour_kw=None):
         """Plot partial dependence plots.
 
