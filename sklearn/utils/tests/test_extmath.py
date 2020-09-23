@@ -488,22 +488,22 @@ def test_incremental_weighted_mean_and_variance():
     high_mean = 1e7
     low_var = 1e-8
     high_var = 1e5
-    normal_mean = 0.0
-    normal_var = 1.0
+    zero_mean = 0.0
+    one_var = 1.0
     size = (100, 20)
 
     rng = np.random.RandomState(42)
     normal_weight = \
-        rng.normal(loc=normal_mean, scale=normal_var, size=(size[0],))
+        rng.normal(loc=zero_mean, scale=one_var, size=(size[0],))
     almost_zero_weight = \
-        rng.normal(loc=normal_mean, scale=low_var, size=(size[0],))
+        rng.normal(loc=zero_mean, scale=low_var, size=(size[0],))
     almost_ones_weight = rng.normal(loc=1.0, scale=low_var, size=(size[0],))
-    just_weight = rng.normal(loc=10.0, scale=normal_var, size=(size[0],))
-    high_weight = rng.normal(loc=high_mean, scale=normal_var, size=(size[0],))
+    just_weight = rng.normal(loc=10.0, scale=one_var, size=(size[0],))
+    high_weight = rng.normal(loc=high_mean, scale=one_var, size=(size[0],))
     ones_weight = np.ones(size[0])
 
-    means = [normal_mean, high_mean, -high_mean]
-    vars = [normal_var, low_var, high_var]
+    means = [zero_mean, high_mean, -high_mean]
+    vars = [one_var, low_var, high_var]
     weights = [normal_weight, almost_ones_weight,
                just_weight, almost_zero_weight, high_weight]
     means_vars_weights = \

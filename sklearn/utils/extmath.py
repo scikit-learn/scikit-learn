@@ -711,7 +711,7 @@ def _incremental_weighted_mean_and_var(X, sample_weight,
 
     last_mean : array-like of shape: (n_features,)
 
-    last_variance : array-like of shape: (n_features,)
+    last_variance : None or array-like of shape: (n_features,)
 
     last_weight_sum : array-like of shape (n_features,)
 
@@ -738,9 +738,12 @@ def _incremental_weighted_mean_and_var(X, sample_weight,
     # last = stats until now
     # new = the current increment
     # updated = the aggregated stats
-
+    if sample_weight is None:
+        return _incremental_mean_and_var(X, last_mean, last_variance,
+                                         last_weight_sum)
     nan_mask = np.isnan(X)
     sample_weight_T = np.reshape(sample_weight, (1, -1))
+    # new_weight_sum with shape (n_features,)
     new_weight_sum = \
         _safe_accumulator_op(np.dot, sample_weight_T, ~nan_mask).ravel()
     total_weight_sum = _safe_accumulator_op(np.sum, sample_weight, axis=0)
@@ -762,15 +765,15 @@ def _incremental_weighted_mean_and_var(X, sample_weight,
             _safe_accumulator_op(
                 np.average, X_0, weights=sample_weight, axis=0)
         new_variance *= total_weight_sum / new_weight_sum
-        new_element = (
+        new_term = (
                 new_weight_sum *
                 (new_variance +
                  (new_mean - updated_mean) ** 2))
-        last_element = (
+        last_term = (
                 last_weight_sum *
                 (last_variance +
                  (last_mean - updated_mean) ** 2))
-        updated_variance = (new_element + last_element) / updated_weight_sum
+        updated_variance = (new_term + last_term) / updated_weight_sum
 
     return updated_mean, updated_variance, updated_weight_sum
 
