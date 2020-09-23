@@ -860,7 +860,7 @@ def test_categorical_sanity(insert_missing, make_dataset, Est,
      r"categorical_features set as a boolean mask must have shape "
      r"\(n_features,\)"),
     ([True, True, False, False], [0, -1, 0, 1],
-     "categorical features can not have monotonic constraints"),
+     "categorical features cannot have monotonic constraints"),
 ])
 def test_categorical_spec_errors(Est, categorical_features, monotonic_cst,
                                  expected_msg):
