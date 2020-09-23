@@ -8,6 +8,7 @@ import numbers
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
+from ..utils.deprecation import deprecated
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _deprecate_positional_args
 
@@ -558,6 +559,8 @@ class OneHotEncoder(_BaseEncoder):
 
         return X_tr
 
+    @deprecated("get_feature_names is deprecated in 0.24 and will be removed "
+                "in 0.26. You can use get_output_names instead")
     def get_feature_names(self, input_features=None):
         """
         Return feature names for output features.

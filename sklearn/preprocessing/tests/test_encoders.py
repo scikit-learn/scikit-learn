@@ -773,3 +773,13 @@ def test_encoders_does_not_support_none_values(Encoder):
     with pytest.raises(TypeError, match="Encoders require their input to be "
                                         "uniformly strings or numbers."):
         Encoder().fit(values)
+
+
+# TODO: Remove in 0.26 when get_feature_names is removed
+def test_one_hot_encoder_get_feature_names_deprecated():
+    X = np.array([['cat', 'dot']], dtype=object).T
+    enc = OneHotEncoder().fit(X)
+
+    msg = "get_feature_names is deprecated in 0.24"
+    with pytest.warns(FutureWarning, match=msg):
+        enc.get_feature_names()
