@@ -18,14 +18,14 @@ from ._bitset import set_bitset_memoryview
 
 
 def _find_binning_threshold(col_data, max_bins):
-    """Extract feature-wise quantiles from numerical data.
+    """Extract quantiles from a continuous feature.
 
     Missing values are ignored for finding the thresholds.
 
     Parameters
     ----------
     col_data : array-like, shape (n_features,)
-        The numerical feature to bin.
+        The continuous feature to bin.
     max_bins: int
         The maximum number of bins to use for non-missing values. If for a
         given feature the number of unique values is less than ``max_bins``,
@@ -34,10 +34,11 @@ def _find_binning_threshold(col_data, max_bins):
 
     Return
     ------
-    binning_thresholds: ndarray
-        For each feature, stores the increasing numeric values that can
-        be used to separate the bins. Thus ``len(binning_thresholds) ==
-        n_features``.
+    thresholds: ndarray of shape(min(max_bins, n_unique_values) - 1,)
+        The increasing numeric values that can be used to separate the bins.
+        A given value x is mapped into bin value i iff
+        thresholds[i - 1] < x <= thresholds[i]
+
     """
     # ignore missing values when computing bin thresholds
     missing_mask = np.isnan(col_data)
@@ -213,7 +214,8 @@ class _BinMapper(TransformerMixin, BaseEstimator):
                 n_bins_non_missing.append(thresholds.shape[0] + 1)
             else:
                 # Since there are at most max_bins categories and since values
-                # are < 254, the thresholds *are* the categorical values.
+                # are < 254, the thresholds *are* the unique categorical
+                # values.
                 thresholds = known_categories[f_idx]
                 n_bins_non_missing.append(thresholds.shape[0])
 
@@ -254,7 +256,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
 
         binned = np.zeros_like(X, dtype=X_BINNED_DTYPE, order='F')
         _map_to_bins(X, self.bin_thresholds_, self.missing_values_bin_idx_,
-                     self.is_categorical_, binned)
+                     binned)
         return binned
 
     def make_known_categories(self):
