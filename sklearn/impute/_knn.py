@@ -322,4 +322,10 @@ class KNNImputer(_BaseImputer):
         check_is_fitted(self)
         input_features = _make_feature_names(self._valid_mask.shape[0],
                                              input_features=input_features)
-        return np.array(input_features)[self._valid_mask].tolist()
+        output = np.array(input_features)[self._valid_mask].tolist()
+        if not self.add_indicator:
+            return output
+        missing_names = self.indicator_.get_output_names(input_features)
+        missing_names = [f'missingindicator__{name}' for name in
+                         missing_names]
+        return output + missing_names

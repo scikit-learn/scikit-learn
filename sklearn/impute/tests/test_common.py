@@ -113,3 +113,31 @@ def test_imputers_pandas_na_integer_array_support(imputer, add_indicator):
     X_trans = imputer.fit_transform(X_df)
 
     assert_allclose(X_trans_expected, X_trans)
+
+
+# ConvergenceWarning will be raised by the IterativeImputer
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
+@pytest.mark.parametrize("marker", [np.nan, -1, 0])
+@pytest.mark.parametrize("imputer", IMPUTERS)
+def test_imputers_marker(marker, imputer):
+    X = np.array([
+        [marker, 1,      5,      marker, 1],
+        [2,      marker, 1,      marker, 2],
+        [6,      3,      marker, marker, 3],
+        [1,      2,      9,      marker, 4]
+    ])
+    imputer.set_params(missing_values=marker, add_indicator=False)
+    feature_names_in = [f'feat{i}' for i in range(X.shape[1])]
+    expected_features_out = ['feat0', 'feat1', 'feat2', 'feat4']
+    imputer.fit(X)
+    assert_array_equal(imputer.get_output_names(feature_names_in),
+                       expected_features_out)
+
+    imputer.set_params(missing_values=marker, add_indicator=True)
+    expected_features_out = (
+        ['feat0', 'feat1', 'feat2', 'feat4'] +
+        [f'missingindicator__feat{i}' for i in range(X.shape[1])])
+
+    imputer.fit(X)
+    assert_array_equal(imputer.get_output_names(feature_names_in),
+                       expected_features_out)

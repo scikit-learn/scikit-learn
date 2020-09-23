@@ -510,7 +510,13 @@ class SimpleImputer(_BaseImputer):
         check_is_fitted(self)
         input_features = _make_feature_names(self.statistics_.shape[0],
                                              input_features=input_features)
-        return np.array(input_features)[self._valid_mask].tolist()
+        output = np.array(input_features)[self._valid_mask].tolist()
+        if not self.add_indicator:
+            return output
+        missing_names = self.indicator_.get_output_names(input_features)
+        missing_names = [f'missingindicator__{name}' for name in
+                         missing_names]
+        return output + missing_names
 
     def inverse_transform(self, X):
         """Convert the data back to the original representation.
@@ -885,5 +891,4 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             Feature names for transformer output.
         """
         return _make_feature_names(
-            n_features=len(self.features_),
-            prefix=type(self).__name__.lower())
+            n_features=len(self.features_), input_features=input_features)
