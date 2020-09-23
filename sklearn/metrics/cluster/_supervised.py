@@ -735,10 +735,10 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
-        A clustering of the data into disjoint subsets.
+        A clustering of the data into disjoint subsets (U).
 
     labels_pred : int array-like of shape (n_samples,)
-        A clustering of the data into disjoint subsets.
+        A clustering of the data into disjoint subsets (V).
 
     contingency : {ndarray, sparse matrix} of shape \
             (n_classes_true, n_classes_pred), default=None
@@ -749,7 +749,7 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     Returns
     -------
     mi : float
-       Mutual information, a non-negative value
+       Mutual information, a non-negative value, measured in nats using the natural logarithm
 
     Notes
     -----
@@ -823,10 +823,10 @@ def adjusted_mutual_info_score(labels_true, labels_pred, *,
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
-        A clustering of the data into disjoint subsets.
+        A clustering of the data into disjoint subsets (U).
 
     labels_pred : int array-like of shape (n_samples,)
-        A clustering of the data into disjoint subsets.
+        A clustering of the data into disjoint subsets (V).
 
     average_method : str, default='arithmetic'
         How to compute the normalizer in the denominator. Possible options
@@ -843,7 +843,8 @@ def adjusted_mutual_info_score(labels_true, labels_pred, *,
     ami: float (upperlimited by 1.0)
        The AMI returns a value of 1 when the two partitions are identical
        (ie perfectly matched). Random partitions (independent labellings) have
-       an expected AMI around 0 on average hence can be negative.
+       an expected AMI around 0 on average hence can be negative. The value is
+       in adjusted nats (based on the natural logarithm).
 
     See Also
     --------
@@ -959,7 +960,8 @@ def normalized_mutual_info_score(labels_true, labels_pred, *,
     Returns
     -------
     nmi : float
-       score between 0.0 and 1.0. 1.0 stands for perfectly complete labeling
+       score between 0.0 and 1.0 in normalized nats (based on the natural 
+       logarithm). 1.0 stands for perfectly complete labeling.
 
     See Also
     --------
