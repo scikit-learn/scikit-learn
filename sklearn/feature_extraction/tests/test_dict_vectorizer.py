@@ -177,3 +177,14 @@ def test_n_features_in():
     d = [{'foo': 1, 'bar': 2}, {'foo': 3, 'baz': 1}]
     dv.fit(d)
     assert not hasattr(dv, 'n_features_in_')
+
+
+# TODO: Remove in 0.26 when get_feature_names is removed
+def test_feature_union_get_feature_names_deprecated():
+    D_in = [{"version": "1", "ham": 2},
+            {"version": "2", "spam": .3}]
+    v = DictVectorizer().fit(D_in)
+
+    msg = "get_feature_names is deprecated in 0.24"
+    with pytest.warns(FutureWarning, match=msg):
+        v.get_feature_names()
