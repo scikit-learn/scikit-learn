@@ -72,12 +72,12 @@ class SplitInfo:
     feature_idx : int
         The index of the feature to be split.
     bin_idx : int
-        The index of the bin on which the split is made. Ignored if
-        ``is_categorical`` is True. ``cat_bitset`` will be used to determine
+        The index of the bin on which the split is made. Should be ignored if
+        `is_categorical` is True: `cat_bitset` will be used to determine
         the split.
     missing_go_to_left : bool
-        Whether missing values should go to the left child. Ignored if
-        ``is_categorical`` is True. ``cat_bitset`` will be used to determine
+        Whether missing values should go to the left child. Should be ignored
+        if `is_categorical` is True: `cat_bitset` will be used to determine
         the split.
     sum_gradient_left : float
         The sum of the gradients of all the samples in the left child.
@@ -92,10 +92,10 @@ class SplitInfo:
     n_samples_right : int
         The number of samples in the right child.
     is_categorical : bool
-        Whether split is categorical.
+        Whether the split is done on a categorical feature.
     cat_bitset : ndarray of shape=(8,), dtype=uint32 or None
         Bitset representing the categories that go to the left. This is used
-        only when ``is_categorical`` is True.
+        only when `is_categorical` is True.
     """
     def __init__(self, gain, feature_idx, bin_idx,
                  missing_go_to_left, sum_gradient_left, sum_hessian_left,
@@ -299,8 +299,7 @@ cdef class Splitter:
             unsigned int [::1] left_indices_buffer = self.left_indices_buffer
             unsigned int [::1] right_indices_buffer = self.right_indices_buffer
             unsigned char is_categorical = split_info.is_categorical
-            BITSET_INNER_DTYPE_C [:] cat_bitset_tmp = \
-                split_info.cat_bitset
+            BITSET_INNER_DTYPE_C [:] cat_bitset_tmp = split_info.cat_bitset
             BITSET_DTYPE_C cat_bitset
             IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
                 int n_threads = omp_get_max_threads()
@@ -471,10 +470,6 @@ cdef class Splitter:
                     is_categorical[feature_idx]
 
                 if is_categorical[feature_idx]:
-                    # While numerical features need to scan in both directions
-                    # when there are missing values, categorical features does
-                    # not need to do this because it treats missing values
-                    # as a native category
                     self._find_best_bin_to_split_category(
                         feature_idx, has_missing_values[feature_idx],
                         histograms, n_samples, sum_gradients, sum_hessians,
@@ -488,6 +483,9 @@ cdef class Splitter:
                     # the right (left to right scan) or to the left (right to
                     # left case). See algo 3 from the XGBoost paper
                     # https://arxiv.org/abs/1603.02754
+                    # Note: for the categorical features above. this isn't
+                    # needed since missing values are considered a native
+                    # category.
                     self._find_best_bin_to_split_left_to_right(
                         feature_idx, has_missing_values[feature_idx],
                         histograms, n_samples, sum_gradients, sum_hessians,
@@ -1019,7 +1017,7 @@ cdef inline unsigned char sample_goes_left(
     if is_categorical:
         # missing value is encoded in cat_bitset
         return in_bitset(cat_bitset, bin_value)
-    else:  # numerical
+    else:
         return (
             (
                 missing_go_to_left and
