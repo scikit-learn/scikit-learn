@@ -363,3 +363,6 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         n_samples = self.X_transformed_fit_.shape[0]
         K.flat[::n_samples + 1] += self.alpha
         return np.dot(K, self.dual_coef_)
+
+    def _more_tags(self):
+        return {'preserves_dtype': [np.float64, np.float32]}

@@ -17,7 +17,7 @@ from abc import abstractmethod
 
 import numpy as np
 
-from joblib import Parallel, delayed
+from joblib import Parallel
 
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
@@ -33,6 +33,7 @@ from ..utils.validation import column_or_1d
 from ..utils.validation import _deprecate_positional_args
 from ..exceptions import NotFittedError
 from ..utils._estimator_html_repr import _VisualBlock
+from ..utils.fixes import delayed
 
 
 class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
@@ -133,6 +134,9 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
         names, estimators = zip(*self.estimators)
         return _VisualBlock('parallel', estimators, names=names)
 
+    def _more_tags(self):
+        return {"preserves_dtype": []}
+
 
 class VotingClassifier(ClassifierMixin, _BaseVoting):
     """Soft Voting/Majority Rule classifier for unfitted estimators.
@@ -199,7 +203,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
     See Also
     --------
-    VotingRegressor: Prediction voting regressor.
+    VotingRegressor : Prediction voting regressor.
 
     Examples
     --------
@@ -427,7 +431,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
 
     See Also
     --------
-    VotingClassifier: Soft Voting/Majority Rule classifier.
+    VotingClassifier : Soft Voting/Majority Rule classifier.
 
     Examples
     --------

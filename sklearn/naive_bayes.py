@@ -1080,6 +1080,8 @@ class CategoricalNB(_BaseDiscreteNB):
         - None (default): Determines the number of categories automatically
           from the training data.
 
+        .. versionadded:: 0.24
+
     Attributes
     ----------
     category_count_ : list of arrays of shape (n_features,)
@@ -1108,6 +1110,8 @@ class CategoricalNB(_BaseDiscreteNB):
     n_categories_ : ndarray of shape (n_features,), dtype=int
         Number of categories for each feature. This value is
         inferred from the data or set by the minimum number of categories.
+
+        .. versionadded:: 0.24
 
     Examples
     --------

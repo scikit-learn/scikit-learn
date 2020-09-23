@@ -406,7 +406,7 @@ class SpectralEmbedding(BaseEstimator):
         Number of nearest neighbors for nearest_neighbors graph building.
         If None, n_neighbors will be set to max(n_samples/10, 1).
 
-    n_jobs : int, default=None)
+    n_jobs : int, default=None
         The number of parallel jobs to run.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
