@@ -677,7 +677,7 @@ def make_circles(n_samples=100, *, shuffle=True, noise=None, random_state=None,
 
 
 @_deprecate_positional_args
-def make_moons(n_samples=100, *, shuffle=True, noise=None, random_state=None):
+def make_moons(n_samples=100, *, radius, width, distance=0.5, shuffle=True, noise=None, random_state=None):
     """Make two interleaving half circles.
 
     A simple toy dataset to visualize clustering and classification
@@ -709,6 +709,9 @@ def make_moons(n_samples=100, *, shuffle=True, noise=None, random_state=None):
         The integer labels (0 or 1) for class membership of each sample.
     """
 
+    if n_samples%2 != 0:
+        n_samples += 1
+    
     if isinstance(n_samples, numbers.Integral):
         n_samples_out = n_samples // 2
         n_samples_in = n_samples - n_samples_out
@@ -720,11 +723,13 @@ def make_moons(n_samples=100, *, shuffle=True, noise=None, random_state=None):
                              'a two-element tuple.') from e
 
     generator = check_random_state(random_state)
+    
+    radius_new = (radius-width/2)
 
-    outer_circ_x = np.cos(np.linspace(0, np.pi, n_samples_out))
-    outer_circ_y = np.sin(np.linspace(0, np.pi, n_samples_out))
-    inner_circ_x = 1 - np.cos(np.linspace(0, np.pi, n_samples_in))
-    inner_circ_y = 1 - np.sin(np.linspace(0, np.pi, n_samples_in)) - .5
+    outer_circ_x = radius_new * np.cos(np.linspace(0, np.pi, n_samples_out))
+    outer_circ_y = radius_new * np.sin(np.linspace(0, np.pi, n_samples_out))
+    inner_circ_x = 1 - radius_new * np.cos(np.linspace(0, np.pi, n_samples_in)) + radius
+    inner_circ_y = 1 - radius_new * np.sin(np.linspace(0, np.pi, n_samples_in)) - distance
 
     X = np.vstack([np.append(outer_circ_x, inner_circ_x),
                    np.append(outer_circ_y, inner_circ_y)]).T
