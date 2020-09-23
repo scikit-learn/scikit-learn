@@ -23,6 +23,17 @@
 .. |DOI| image:: https://zenodo.org/badge/21369/scikit-learn/scikit-learn.svg
 .. _DOI: https://zenodo.org/badge/latestdoi/21369/scikit-learn/scikit-learn
 
+.. |PythonMinVersion| replace:: 3.6
+.. |NumPyMinVersion| replace:: 1.13.3
+.. |SciPyMinVersion| replace:: 0.19.1
+.. |JoblibMinVersion| replace:: 0.11
+.. |ThreadpoolctlMinVersion| replace:: 2.0.0
+.. |MatplotlibMinVersion| replace:: 2.1.1
+.. |Scikit-ImageMinVersion| replace:: 0.13
+.. |PandasMinVersion| replace:: 0.25.0
+.. |SeabornMinVersion| replace:: 0.9.0
+.. |PytestMinVersion| replace:: 5.0.1
+
 .. image:: doc/logos/scikit-learn-logo.png
   :target: https://scikit-learn.org/
 
@@ -46,22 +57,23 @@ Dependencies
 
 scikit-learn requires:
 
-- Python (>= 3.6)
-- NumPy (>= 1.13.3)
-- SciPy (>= 0.19.1)
-- joblib (>= 0.11)
-- threadpoolctl (>= 2.0.0)
+- Python (>= |PythonMinVersion|)
+- NumPy (>= |NumPyMinVersion|)
+- SciPy (>= |SciPyMinVersion|)
+- joblib (>= |JoblibMinVersion|)
+- threadpoolctl (>= |ThreadpoolctlMinVersion|)
 
 =======
 
 **Scikit-learn 0.20 was the last version to support Python 2.7 and Python 3.4.**
 scikit-learn 0.23 and later require Python 3.6 or newer.
 
-Scikit-learn plotting capabilities (i.e., functions start with ``plot_``
-and classes end with "Display") require Matplotlib (>= 2.1.1). For running the
-examples Matplotlib >= 2.1.1 is required. A few examples require
-scikit-image >= 0.13, a few examples require pandas >= 0.25.0, some examples
-require seaborn >= 0.9.0.
+Scikit-learn plotting capabilities (i.e., functions start with ``plot_`` and
+classes end with "Display") require Matplotlib (>= |MatplotlibMinVersion|).
+For running the examples Matplotlib >= |MatplotlibMinVersion| is required.
+A few examples require scikit-image >= |ScikitImageMinVersion|, a few examples
+require pandas >= |PandasMinVersion|, some examples require seaborn >=
+|SeabornMinVersion|.
 
 User installation
 ~~~~~~~~~~~~~~~~~
@@ -117,8 +129,8 @@ To learn more about making a contribution to scikit-learn, please see our
 Testing
 ~~~~~~~
 
-After installation, you can launch the test suite from outside the
-source directory (you will need to have ``pytest`` >= 5.0.1 installed)::
+After installation, you can launch the test suite from outside the source
+directory (you will need to have ``pytest`` >= |PyTestMinVersion| installed)::
 
     pytest sklearn
 
