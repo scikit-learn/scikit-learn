@@ -190,6 +190,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         if known_categories is None:
             known_categories = [None] * n_features
 
+        # validate is_categorical and known_categories parameters
         for f_idx in range(n_features):
             is_categorical = self.is_categorical_[f_idx]
             known_cats = known_categories[f_idx]
@@ -200,7 +201,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
             if not is_categorical and known_cats is not None:
                 raise ValueError(
                     f"Feature {f_idx} isn't marked as a categorical feature, "
-                    f"but categories where passed."
+                    f"but categories were passed."
                 )
 
         self.missing_values_bin_idx_ = self.n_bins - 1
