@@ -232,7 +232,8 @@ class TreeGrower:
         else:
             is_categorical = np.asarray(is_categorical, dtype=np.uint8)
 
-        if np.any(np.logical_and(is_categorical == 1, monotonic_cst != 0)):
+        if np.any(np.logical_and(is_categorical == 1,
+                                 monotonic_cst != MonotonicConstraint.NO_CST)):
             raise ValueError("categorical features can not have monotonic "
                              "constraints")
 
