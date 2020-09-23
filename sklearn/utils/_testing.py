@@ -488,7 +488,7 @@ class TempMemmap:
     Parameters
     ----------
     data
-    mmap_mode
+    mmap_mode : str, default='r'
     """
     def __init__(self, data, mmap_mode='r'):
         self.mmap_mode = mmap_mode
@@ -508,8 +508,8 @@ def create_memmap_backed_data(data, mmap_mode='r', return_folder=False):
     Parameters
     ----------
     data
-    mmap_mode
-    return_folder
+    mmap_mode : str, default='r'
+    return_folder :  bool, default=False
     """
     temp_folder = tempfile.mkdtemp(prefix='sklearn_testing_')
     atexit.register(functools.partial(_delete_folder, temp_folder, warn=True))
