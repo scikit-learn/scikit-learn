@@ -384,7 +384,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             feature_names.extend([name + "__" + f for f in
                                   trans.get_feature_names()])
         return feature_names
-        return feature_names
 
     def get_output_names(self, input_features=None):
         """Get output feature names for transformation.

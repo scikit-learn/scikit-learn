@@ -1474,3 +1474,16 @@ def test_simple_imputation_inverse_transform_exceptions(missing_value):
     with pytest.raises(ValueError,
                        match=f"Got 'add_indicator={imputer.add_indicator}'"):
         imputer.inverse_transform(X_1_trans)
+
+
+@pytest.mark.parametrize(
+    "features, expected_names",
+    [("missing-only", ["feat0", "feat2"]),
+     ("all", ["feat0", "feat1", "feat2"])])
+def test_missing_indicator_get_output_names(features, expected_names):
+    # output names are correct for missing indicator
+    X = np.array([[1, 0, np.nan],
+                  [np.nan, 1, 1]])
+    indicator = MissingIndicator(features=features).fit(X)
+    assert_array_equal(indicator.get_output_names(["feat0", "feat1", "feat2"]),
+                       expected_names)

@@ -890,5 +890,6 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         output_feature_names : list of str
             Feature names for transformer output.
         """
-        return _make_feature_names(
-            n_features=len(self.features_), input_features=input_features)
+        names = _make_feature_names(
+            n_features=self._n_features, input_features=input_features)
+        return [names[i] for i in self.features_]
