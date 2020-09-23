@@ -136,7 +136,7 @@ def test_imputers_marker(marker, imputer):
     imputer.set_params(missing_values=marker, add_indicator=True)
     expected_features_out = (
         ['feat0', 'feat1', 'feat2', 'feat4'] +
-        [f'missingindicator__feat{i}' for i in range(X.shape[1])])
+        [f'missingindicator__feat{i}' for i in [0, 1, 2, 3]])
 
     imputer.fit(X)
     assert_array_equal(imputer.get_output_names(feature_names_in),
