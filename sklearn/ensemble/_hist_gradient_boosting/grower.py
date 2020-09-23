@@ -234,7 +234,7 @@ class TreeGrower:
 
         if np.any(np.logical_and(is_categorical == 1,
                                  monotonic_cst != MonotonicConstraint.NO_CST)):
-            raise ValueError("categorical features can not have monotonic "
+            raise ValueError("categorical features cannot have monotonic "
                              "constraints")
 
         hessians_are_constant = hessians.shape[0] == 1
@@ -264,7 +264,7 @@ class TreeGrower:
         self.total_find_split_time = 0.  # time spent finding the best splits
         self.total_compute_hist_time = 0.  # time spent computing histograms
         self.total_apply_split_time = 0.  # time spent splitting nodes
-        self.n_categorical = 0
+        self.n_categorical_splits = 0
         self._intilialize_root(gradients, hessians, hessians_are_constant)
         self.n_nodes = 1
 
@@ -431,7 +431,7 @@ class TreeGrower:
                                       self.missing_values_bin_idx)
 
         self.n_nodes += 2
-        self.n_categorical += node.split_info.is_categorical
+        self.n_categorical_splits += node.split_info.is_categorical
 
         if (self.max_leaf_nodes is not None
                 and n_leaf_nodes == self.max_leaf_nodes):
@@ -546,9 +546,9 @@ class TreeGrower:
         A TreePredictor object.
         """
         predictor_nodes = np.zeros(self.n_nodes, dtype=PREDICTOR_RECORD_DTYPE)
-        binned_categorical_bitsets = np.zeros((self.n_categorical, 8),
+        binned_categorical_bitsets = np.zeros((self.n_categorical_splits, 8),
                                               dtype=X_BITSET_INNER_DTYPE)
-        raw_categorical_bitsets = np.zeros((self.n_categorical, 8),
+        raw_categorical_bitsets = np.zeros((self.n_categorical_splits, 8),
                                            dtype=X_BITSET_INNER_DTYPE)
         _fill_predictor_node_array(predictor_nodes, binned_categorical_bitsets,
                                    raw_categorical_bitsets,
