@@ -560,12 +560,16 @@ def test_hashing_vectorizer():
         assert_almost_equal(np.linalg.norm(X[0].data, 1), 1.0)
 
 
-def test_feature_names():
+# TODO: Remove in 0.26 when get_feature_names is removed.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.parametrize("get_names", ["get_feature_names",
+                                       "get_output_names"])
+def test_feature_names(get_names):
     cv = CountVectorizer(max_df=0.5)
 
     # test for Value error on unfitted/empty vocabulary
     with pytest.raises(ValueError):
-        cv.get_feature_names()
+        getattr(cv, get_names)()
     assert not cv.fixed_vocabulary_
 
     # test for vocabulary learned from data
@@ -573,7 +577,7 @@ def test_feature_names():
     n_samples, n_features = X.shape
     assert len(cv.vocabulary_) == n_features
 
-    feature_names = cv.get_feature_names()
+    feature_names = getattr(cv, get_names)()
     assert len(feature_names) == n_features
     assert_array_equal(['beer', 'burger', 'celeri', 'coke', 'pizza',
                         'salad', 'sparkling', 'tomato', 'water'],
@@ -587,7 +591,7 @@ def test_feature_names():
              'salad', 'sparkling', 'tomato', 'water']
 
     cv = CountVectorizer(vocabulary=vocab)
-    feature_names = cv.get_feature_names()
+    feature_names = getattr(cv, get_names)()
     assert_array_equal(['beer', 'burger', 'celeri', 'coke', 'pizza', 'salad',
                         'sparkling', 'tomato', 'water'], feature_names)
     assert cv.fixed_vocabulary_
@@ -609,7 +613,11 @@ def test_vectorizer_max_features(Vectorizer):
     assert vectorizer.stop_words_ == expected_stop_words
 
 
-def test_count_vectorizer_max_features():
+# TODO: Remove in 0.26 when get_feature_names is removed.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.parametrize("get_names", ["get_feature_names",
+                                       "get_output_names"])
+def test_count_vectorizer_max_features(get_names):
     # Regression test: max_features didn't work correctly in 0.14.
 
     cv_1 = CountVectorizer(max_features=1)
@@ -620,9 +628,9 @@ def test_count_vectorizer_max_features():
     counts_3 = cv_3.fit_transform(JUNK_FOOD_DOCS).sum(axis=0)
     counts_None = cv_None.fit_transform(JUNK_FOOD_DOCS).sum(axis=0)
 
-    features_1 = cv_1.get_feature_names()
-    features_3 = cv_3.get_feature_names()
-    features_None = cv_None.get_feature_names()
+    features_1 = getattr(cv_1, get_names)()
+    features_3 = getattr(cv_3, get_names)()
+    features_None = getattr(cv_None, get_names)()
 
     # The most common feature is "the", with frequency 7.
     assert 7 == counts_1.max()
@@ -681,12 +689,16 @@ def test_vectorizer_min_df():
     assert len(vect.stop_words_) == 5
 
 
-def test_count_binary_occurrences():
+# TODO: Remove in 0.26 when get_feature_names is removed.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.parametrize("get_names", ["get_feature_names",
+                                       "get_output_names"])
+def test_count_binary_occurrences(get_names):
     # by default multiple occurrences are counted as longs
     test_data = ['aaabc', 'abbde']
     vect = CountVectorizer(analyzer='char', max_df=1.0)
     X = vect.fit_transform(test_data).toarray()
-    assert_array_equal(['a', 'b', 'c', 'd', 'e'], vect.get_feature_names())
+    assert_array_equal(['a', 'b', 'c', 'd', 'e'], getattr(vect, get_names)())
     assert_array_equal([[3, 1, 1, 0, 0],
                         [1, 2, 0, 1, 1]], X)
 
@@ -921,7 +933,11 @@ def test_pickling_built_processors(factory):
     assert result == expected
 
 
-def test_countvectorizer_vocab_sets_when_pickling():
+# TODO: Remove in 0.26 when get_feature_names is removed.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.parametrize("get_names", ["get_feature_names",
+                                       "get_output_names"])
+def test_countvectorizer_vocab_sets_when_pickling(get_names):
     # ensure that vocabulary of type set is coerced to a list to
     # preserve iteration ordering after deserialization
     rng = np.random.RandomState(0)
@@ -933,10 +949,14 @@ def test_countvectorizer_vocab_sets_when_pickling():
         unpickled_cv = pickle.loads(pickle.dumps(cv))
         cv.fit(ALL_FOOD_DOCS)
         unpickled_cv.fit(ALL_FOOD_DOCS)
-        assert cv.get_feature_names() == unpickled_cv.get_feature_names()
+        assert getattr(cv, get_names)() == getattr(unpickled_cv, get_names)()
 
 
-def test_countvectorizer_vocab_dicts_when_pickling():
+# TODO: Remove in 0.26 when get_feature_names is removed.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.parametrize("get_names", ["get_feature_names",
+                                       "get_output_names"])
+def test_countvectorizer_vocab_dicts_when_pickling(get_names):
     rng = np.random.RandomState(0)
     vocab_words = np.array(['beer', 'burger', 'celeri', 'coke', 'pizza',
                             'salad', 'sparkling', 'tomato', 'water'])
@@ -949,7 +969,7 @@ def test_countvectorizer_vocab_dicts_when_pickling():
         unpickled_cv = pickle.loads(pickle.dumps(cv))
         cv.fit(ALL_FOOD_DOCS)
         unpickled_cv.fit(ALL_FOOD_DOCS)
-        assert cv.get_feature_names() == unpickled_cv.get_feature_names()
+        assert getattr(cv, get_names)() == getattr(unpickled_cv, get_names)()
 
 
 def test_stop_words_removal():

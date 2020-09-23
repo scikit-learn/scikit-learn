@@ -704,28 +704,19 @@ class TransformerMixin:
 
         Parameters
         ----------
-        input_features : list of string or None, default=None
-            String names of the input features.
+        input_features : array-like of str or None, default=None
+            Not used, present here for API consistency by convention.
 
         Returns
         -------
-        output_feature_names : list of string
+        output_feature_names : list of str
             Feature names for transformer output.
         """
         # generate feature names from class name by default
         # would be much less guessing if we stored the number
         # of output features.
         # Ideally this would be done in each class.
-        if hasattr(self, 'n_clusters'):
-            # this is before n_components_
-            # because n_components_ means something else
-            # in agglomerative clustering
-            n_features = self.n_clusters
-        elif hasattr(self, '_max_components'):
-            # special case for LinearDiscriminantAnalysis
-            n_components = self.n_components or np.inf
-            n_features = min(self._max_components, n_components)
-        elif hasattr(self, 'n_components_'):
+        if hasattr(self, 'n_components_'):
             # n_components could be auto or None
             # this is more likely to be an int
             n_features = self.n_components_

@@ -132,7 +132,11 @@ def test_one_hot_encoder_dtype_pandas(output_dtype):
     assert_array_equal(oh.fit(X_df).transform(X_df), X_expected)
 
 
-def test_one_hot_encoder_feature_names():
+# TODO: Remove in 0.26 when get_feature_names is removed.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.parametrize("get_names", ["get_feature_names",
+                                       "get_output_names"])
+def test_one_hot_encoder_feature_names(get_names):
     enc = OneHotEncoder()
     X = [['Male', 1, 'girl', 2, 3],
          ['Female', 41, 'girl', 1, 10],
@@ -140,7 +144,7 @@ def test_one_hot_encoder_feature_names():
          ['Male', 91, 'girl', 21, 30]]
 
     enc.fit(X)
-    feature_names = enc.get_feature_names()
+    feature_names = getattr(enc, get_names)()
     assert isinstance(feature_names, np.ndarray)
 
     assert_array_equal(['x0_Female', 'x0_Male',
@@ -150,8 +154,8 @@ def test_one_hot_encoder_feature_names():
                         'x4_3',
                         'x4_10', 'x4_30'], feature_names)
 
-    feature_names2 = enc.get_feature_names(['one', 'two',
-                                            'three', 'four', 'five'])
+    feature_names2 = getattr(enc, get_names)(['one', 'two',
+                                              'three', 'four', 'five'])
 
     assert_array_equal(['one_Female', 'one_Male',
                         'two_1', 'two_41', 'two_51', 'two_91',
@@ -160,16 +164,20 @@ def test_one_hot_encoder_feature_names():
                         'five_3', 'five_10', 'five_30'], feature_names2)
 
     with pytest.raises(ValueError, match="input_features should have length"):
-        enc.get_feature_names(['one', 'two'])
+        getattr(enc, get_names)(['one', 'two'])
 
 
-def test_one_hot_encoder_feature_names_unicode():
+# TODO: Remove in 0.26 when get_feature_names is removed.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.parametrize("get_names", ["get_feature_names",
+                                       "get_output_names"])
+def test_one_hot_encoder_feature_names_unicode(get_names):
     enc = OneHotEncoder()
     X = np.array([['c❤t1', 'dat2']], dtype=object).T
     enc.fit(X)
-    feature_names = enc.get_feature_names()
+    feature_names = getattr(enc, get_names)()
     assert_array_equal(['x0_c❤t1', 'x0_dat2'], feature_names)
-    feature_names = enc.get_feature_names(input_features=['n👍me'])
+    feature_names = getattr(enc, get_names)(input_features=['n👍me'])
     assert_array_equal(['n👍me_c❤t1', 'n👍me_dat2'], feature_names)
 
 
@@ -269,20 +277,24 @@ def test_one_hot_encoder_inverse_if_binary():
 
 
 # check that resetting drop option without refitting does not throw an error
+# TODO: Remove in 0.26 when get_feature_names is removed.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.parametrize("get_names", ["get_feature_names",
+                                       "get_output_names"])
 @pytest.mark.parametrize('drop', ['if_binary', 'first', None])
 @pytest.mark.parametrize('reset_drop', ['if_binary', 'first', None])
-def test_one_hot_encoder_drop_reset(drop, reset_drop):
+def test_one_hot_encoder_drop_reset(get_names, drop, reset_drop):
     X = np.array([['Male', 1],
                   ['Female', 3],
                   ['Female', 2]], dtype=object)
     ohe = OneHotEncoder(drop=drop, sparse=False)
     ohe.fit(X)
     X_tr = ohe.transform(X)
-    feature_names = ohe.get_feature_names()
+    feature_names = getattr(ohe, get_names)()
     ohe.set_params(drop=reset_drop)
     assert_array_equal(ohe.inverse_transform(X_tr), X)
     assert_allclose(ohe.transform(X), X_tr)
-    assert_array_equal(ohe.get_feature_names(), feature_names)
+    assert_array_equal(getattr(ohe, get_names)(), feature_names)
 
 
 @pytest.mark.parametrize("method", ['fit', 'fit_transform'])
@@ -403,18 +415,22 @@ def test_one_hot_encoder_pandas():
     assert_allclose(Xtr, [[1, 0, 1, 0], [0, 1, 0, 1]])
 
 
+# TODO: Remove in 0.26 when get_feature_names is removed.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.parametrize("get_names", ["get_feature_names",
+                                       "get_output_names"])
 @pytest.mark.parametrize("drop, expected_names",
                          [('first', ['x0_c', 'x2_b']),
                           ('if_binary', ['x0_c', 'x1_2', 'x2_b']),
                           (['c', 2, 'b'], ['x0_b', 'x2_a'])],
                          ids=['first', 'binary', 'manual'])
-def test_one_hot_encoder_feature_names_drop(drop, expected_names):
+def test_one_hot_encoder_feature_names_drop(get_names, drop, expected_names):
     X = [['c', 2, 'a'],
          ['b', 2, 'b']]
 
     ohe = OneHotEncoder(drop=drop)
     ohe.fit(X)
-    feature_names = ohe.get_feature_names()
+    feature_names = getattr(ohe, get_names)()
     assert isinstance(feature_names, np.ndarray)
     assert_array_equal(expected_names, feature_names)
 

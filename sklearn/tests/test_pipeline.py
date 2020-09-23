@@ -1397,3 +1397,14 @@ def test_feature_union_warns_unknown_transformer_weight():
     union = FeatureUnion(transformer_list, transformer_weights=weights)
     with pytest.raises(ValueError, match=expected_msg):
         union.fit(X, y)
+
+
+# TODO: Remove in 0.26 when get_feature_names is removed
+def test_feature_union_get_feature_names_deprecated():
+    msg = "get_feature_names is deprecated in 0.24"
+    mult2 = Mult(2)
+    mult2.get_feature_names = lambda: ['x2']
+
+    ft = FeatureUnion([('m2', mult2)])
+    with pytest.warns(FutureWarning, match=msg):
+        ft.get_feature_names()

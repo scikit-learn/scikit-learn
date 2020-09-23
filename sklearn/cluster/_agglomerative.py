@@ -20,6 +20,7 @@ from ..neighbors import DistanceMetric
 from ..neighbors._dist_metrics import METRIC_MAPPING
 from ..utils import check_array
 from ..utils._fast_dict import IntFloatDict
+from ..utils._feature_names import _make_feature_names
 from ..utils.fixes import _astype_copy_false
 from ..utils.validation import _deprecate_positional_args, check_memory
 # mypy error: Module 'sklearn.cluster' has no attribute '_hierarchical_fast'
@@ -944,6 +945,22 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
             Cluster labels.
         """
         return super().fit_predict(X, y)
+
+    def get_output_names(self, input_features=None):
+        """Get output feature names.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Not used, present here for API consistency by convention.
+
+        Returns
+        -------
+        output_feature_names : list of str
+            Feature names for transformer output.
+        """
+        return _make_feature_names(n_features=self.n_clusters,
+                                   prefix=type(self).__name__.lower())
 
 
 class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):

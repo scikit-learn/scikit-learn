@@ -43,7 +43,11 @@ def test_dictvectorizer(sparse, dtype, sort, iterable):
                      sorted(v.feature_names_))
 
 
-def test_feature_selection():
+# TODO: Remove in 0.26 when get_feature_names is removed.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.parametrize("get_names", ["get_feature_names",
+                                       "get_output_names"])
+def test_feature_selection(get_names):
     # make two feature dicts with two useful features and a bunch of useless
     # ones, in terms of chi2
     d1 = dict([("useless%d" % i, 10) for i in range(20)],
@@ -57,10 +61,14 @@ def test_feature_selection():
         sel = SelectKBest(chi2, k=2).fit(X, [0, 1])
 
         v.restrict(sel.get_support(indices=indices), indices=indices)
-        assert v.get_feature_names() == ["useful1", "useful2"]
+        assert getattr(v, get_names)() == ["useful1", "useful2"]
 
 
-def test_one_of_k():
+# TODO: Remove in 0.26 when get_feature_names is removed.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.parametrize("get_names", ["get_feature_names",
+                                       "get_output_names"])
+def test_one_of_k(get_names):
     D_in = [{"version": "1", "ham": 2},
             {"version": "2", "spam": .3},
             {"version=3": True, "spam": -1}]
@@ -71,12 +79,16 @@ def test_one_of_k():
     D_out = v.inverse_transform(X)
     assert D_out[0] == {"version=1": 1, "ham": 2}
 
-    names = v.get_feature_names()
+    names = getattr(v, get_names)()
     assert "version=2" in names
     assert "version" not in names
 
 
-def test_iterable_value():
+# TODO: Remove in 0.26 when get_feature_names is removed.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.parametrize("get_names", ["get_feature_names",
+                                       "get_output_names"])
+def test_iterable_value(get_names):
     D_names = ['ham', 'spam', 'version=1', 'version=2', 'version=3']
     X_expected = [[2.0, 0.0, 2.0, 1.0, 0.0],
                   [0.0, 0.3, 0.0, 1.0, 0.0],
@@ -92,7 +104,7 @@ def test_iterable_value():
     D_out = v.inverse_transform(X)
     assert D_out[0] == {"version=1": 2, "version=2": 1, "ham": 2}
 
-    names = v.get_feature_names()
+    names = getattr(v, get_names)()
 
     assert names == D_names
 

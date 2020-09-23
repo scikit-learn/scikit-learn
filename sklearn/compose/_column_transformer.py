@@ -25,6 +25,7 @@ from ..utils import _determine_key_type
 from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_array, check_is_fitted
 from ..utils.validation import _deprecate_positional_args
+from ..utils.deprecation import deprecated
 from ..utils.fixes import delayed
 
 
@@ -349,6 +350,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         return Bunch(**{name: trans for name, trans, _
                         in self.transformers_})
 
+    @deprecated("get_feature_names is deprecated in 0.24 and will be removed "
+                "in 0.26. You can use get_output_names instead")
     def get_feature_names(self):
         """Get feature names from all transformers.
 

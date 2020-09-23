@@ -125,23 +125,27 @@ def test_polynomial_features():
                                       interact.n_input_features_)
 
 
-def test_polynomial_feature_names():
+# TODO: Remove in 0.26 when get_feature_names is removed.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.parametrize("get_names", ["get_feature_names",
+                                       "get_output_names"])
+def test_polynomial_feature_names(get_names):
     X = np.arange(30).reshape(10, 3)
     poly = PolynomialFeatures(degree=2, include_bias=True).fit(X)
-    feature_names = poly.get_feature_names()
+    feature_names = getattr(poly, get_names)()
     assert_array_equal(['1', 'x0', 'x1', 'x2', 'x0^2', 'x0 x1',
                         'x0 x2', 'x1^2', 'x1 x2', 'x2^2'],
                        feature_names)
 
     poly = PolynomialFeatures(degree=3, include_bias=False).fit(X)
-    feature_names = poly.get_feature_names(["a", "b", "c"])
+    feature_names = getattr(poly, get_names)(["a", "b", "c"])
     assert_array_equal(['a', 'b', 'c', 'a^2', 'a b', 'a c', 'b^2',
                         'b c', 'c^2', 'a^3', 'a^2 b', 'a^2 c',
                         'a b^2', 'a b c', 'a c^2', 'b^3', 'b^2 c',
                         'b c^2', 'c^3'], feature_names)
     # test some unicode
     poly = PolynomialFeatures(degree=1, include_bias=True).fit(X)
-    feature_names = poly.get_feature_names(
+    feature_names = getattr(poly, get_names)(
         ["\u0001F40D", "\u262E", "\u05D0"])
     assert_array_equal(["1", "\u0001F40D", "\u262E", "\u05D0"],
                        feature_names)

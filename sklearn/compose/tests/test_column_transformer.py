@@ -662,17 +662,21 @@ def test_column_transformer_cloning():
     assert hasattr(ct.transformers_[0][1], 'mean_')
 
 
-def test_column_transformer_get_feature_names():
+# TODO: Remove in 0.26 when get_feature_names is removed.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.parametrize("get_names", ["get_feature_names",
+                                       "get_output_names"])
+def test_column_transformer_get_feature_names(get_names):
     X_array = np.array([[0., 1., 2.], [2., 4., 6.]]).T
     ct = ColumnTransformer([('trans', Trans(), [0, 1])])
     # raise correct error when not fitted
     with pytest.raises(NotFittedError):
-        ct.get_feature_names()
+        getattr(ct, get_names)()
     # raise correct error when no feature names are available
     ct.fit(X_array)
     assert_raise_message(AttributeError,
                          "Transformer trans (type Trans) does not provide "
-                         "get_feature_names", ct.get_feature_names)
+                         f"{get_names}", getattr(ct, get_names))
 
     # if some transformers support and some don't
     ct = ColumnTransformer([('trans', Trans(), [0, 1]),
@@ -680,7 +684,7 @@ def test_column_transformer_get_feature_names():
     ct.fit(X_array)
     assert_raise_message(AttributeError,
                          "Transformer trans (type Trans) does not provide "
-                         "get_feature_names", ct.get_feature_names)
+                         f"{get_names}", getattr(ct, get_names))
 
     # inside a pipeline
     make_pipeline(ct).fit(X_array)
@@ -691,46 +695,50 @@ def test_column_transformer_get_feature_names():
     ct = ColumnTransformer(
         [('col' + str(i), DictVectorizer(), i) for i in range(2)])
     ct.fit(X)
-    assert ct.get_feature_names() == ['col0__a', 'col0__b', 'col1__c']
+    assert getattr(ct, get_names)() == ['col0__a', 'col0__b', 'col1__c']
 
     # drop transformer
     ct = ColumnTransformer(
         [('col0', DictVectorizer(), 0), ('col1', 'drop', 1)])
     ct.fit(X)
-    assert ct.get_feature_names() == ['col0__a', 'col0__b']
+    assert getattr(ct, get_names)() == ['col0__a', 'col0__b']
 
     # passthrough transformer
     ct = ColumnTransformer([('trans', 'passthrough', [0, 1])])
     ct.fit(X)
-    assert ct.get_feature_names() == ['x0', 'x1']
+    assert getattr(ct, get_names)() == ['x0', 'x1']
 
     ct = ColumnTransformer([('trans', DictVectorizer(), 0)],
                            remainder='passthrough')
     ct.fit(X)
-    assert ct.get_feature_names() == ['trans__a', 'trans__b', 'x1']
+    assert getattr(ct, get_names)() == ['trans__a', 'trans__b', 'x1']
 
     ct = ColumnTransformer([('trans', 'passthrough', [1])],
                            remainder='passthrough')
     ct.fit(X)
-    assert ct.get_feature_names() == ['x1', 'x0']
+    assert getattr(ct, get_names)() == ['x1', 'x0']
 
     ct = ColumnTransformer([('trans', 'passthrough', lambda x: [1])],
                            remainder='passthrough')
     ct.fit(X)
-    assert ct.get_feature_names() == ['x1', 'x0']
+    assert getattr(ct, get_names)() == ['x1', 'x0']
 
     ct = ColumnTransformer([('trans', 'passthrough', np.array([False, True]))],
                            remainder='passthrough')
     ct.fit(X)
-    assert ct.get_feature_names() == ['x1', 'x0']
+    assert getattr(ct, get_names)() == ['x1', 'x0']
 
     ct = ColumnTransformer([('trans', 'passthrough', slice(1, 2))],
                            remainder='passthrough')
     ct.fit(X)
-    assert ct.get_feature_names() == ['x1', 'x0']
+    assert getattr(ct, get_names)() == ['x1', 'x0']
 
 
-def test_column_transformer_get_feature_names_dataframe():
+# TODO: Remove in 0.26 when get_feature_names is removed.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.parametrize("get_names", ["get_feature_names",
+                                       "get_output_names"])
+def test_column_transformer_get_feature_names_dataframe(get_names):
     # passthough transformer with a dataframe
     pd = pytest.importorskip('pandas')
     X = np.array([[{'a': 1, 'b': 2}, {'a': 3, 'b': 4}],
@@ -739,42 +747,42 @@ def test_column_transformer_get_feature_names_dataframe():
 
     ct = ColumnTransformer([('trans', 'passthrough', ['col0', 'col1'])])
     ct.fit(X_df)
-    assert ct.get_feature_names() == ['col0', 'col1']
+    assert getattr(ct, get_names)() == ['col0', 'col1']
 
     ct = ColumnTransformer([('trans', 'passthrough', [0, 1])])
     ct.fit(X_df)
-    assert ct.get_feature_names() == ['col0', 'col1']
+    assert getattr(ct, get_names)() == ['col0', 'col1']
 
     ct = ColumnTransformer([('col0', DictVectorizer(), 0)],
                            remainder='passthrough')
     ct.fit(X_df)
-    assert ct.get_feature_names() == ['col0__a', 'col0__b', 'col1']
+    assert getattr(ct, get_names)() == ['col0__a', 'col0__b', 'col1']
 
     ct = ColumnTransformer([('trans', 'passthrough', ['col1'])],
                            remainder='passthrough')
     ct.fit(X_df)
-    assert ct.get_feature_names() == ['col1', 'col0']
+    assert getattr(ct, get_names)() == ['col1', 'col0']
 
     ct = ColumnTransformer([('trans', 'passthrough',
                              lambda x: x[['col1']].columns)],
                            remainder='passthrough')
     ct.fit(X_df)
-    assert ct.get_feature_names() == ['col1', 'col0']
+    assert getattr(ct, get_names)() == ['col1', 'col0']
 
     ct = ColumnTransformer([('trans', 'passthrough', np.array([False, True]))],
                            remainder='passthrough')
     ct.fit(X_df)
-    assert ct.get_feature_names() == ['col1', 'col0']
+    assert getattr(ct, get_names)() == ['col1', 'col0']
 
     ct = ColumnTransformer([('trans', 'passthrough', slice(1, 2))],
                            remainder='passthrough')
     ct.fit(X_df)
-    assert ct.get_feature_names() == ['col1', 'col0']
+    assert getattr(ct, get_names)() == ['col1', 'col0']
 
     ct = ColumnTransformer([('trans', 'passthrough', [1])],
                            remainder='passthrough')
     ct.fit(X_df)
-    assert ct.get_feature_names() == ['col1', 'col0']
+    assert getattr(ct, get_names)() == ['col1', 'col0']
 
 
 def test_column_transformer_special_strings():
@@ -1375,11 +1383,15 @@ def test_make_column_selector_pickle():
     assert_array_equal(selector(X_df), selector_picked(X_df))
 
 
+# TODO: Remove in 0.26 when get_feature_names is removed.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.parametrize("get_names", ["get_feature_names",
+                                       "get_output_names"])
 @pytest.mark.parametrize(
     'empty_col', [[], np.array([], dtype=int), lambda x: []],
     ids=['list', 'array', 'callable']
 )
-def test_feature_names_empty_columns(empty_col):
+def test_feature_names_empty_columns(empty_col, get_names):
     pd = pytest.importorskip('pandas')
 
     df = pd.DataFrame({"col1": ["a", "a", "b"], "col2": ["z", "z", "z"]})
@@ -1392,8 +1404,8 @@ def test_feature_names_empty_columns(empty_col):
     )
 
     ct.fit(df)
-    assert ct.get_feature_names() == ['ohe__col1_a', 'ohe__col1_b',
-                                      'ohe__col2_z']
+    assert getattr(ct, get_names)() == ['ohe__col1_a', 'ohe__col1_b',
+                                        'ohe__col2_z']
 
 
 @pytest.mark.parametrize('remainder', ["passthrough", StandardScaler()])
@@ -1446,3 +1458,14 @@ def test_sk_visual_block_remainder_fitted_numpy(remainder):
     assert visual_block.names == ('scale', 'remainder')
     assert visual_block.name_details == ([0, 2], [1])
     assert visual_block.estimators == (scaler, remainder)
+
+
+# TODO: Remove in 0.26 when get_feature_names is removed
+def test_column_transformers_get_feature_names_deprecated():
+    X = np.array([[0, 1], [2, 4]])
+    ct = ColumnTransformer([('trans', 'passthrough', [0, 1])])
+    ct.fit(X)
+
+    msg = "get_feature_names is deprecated in 0.24"
+    with pytest.warns(FutureWarning, match=msg):
+        ct.get_feature_names()

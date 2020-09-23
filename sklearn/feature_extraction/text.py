@@ -963,7 +963,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
     ... ]
     >>> vectorizer = CountVectorizer()
     >>> X = vectorizer.fit_transform(corpus)
-    >>> print(vectorizer.get_feature_names())
+    >>> print(vectorizer.get_output_names())
     ['and', 'document', 'first', 'is', 'one', 'second', 'the', 'third', 'this']
     >>> print(X.toarray())
     [[0 1 1 1 0 0 1 0 1]
@@ -972,7 +972,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
      [0 1 1 1 0 0 1 0 1]]
     >>> vectorizer2 = CountVectorizer(analyzer='word', ngram_range=(2, 2))
     >>> X2 = vectorizer2.fit_transform(corpus)
-    >>> print(vectorizer2.get_feature_names())
+    >>> print(vectorizer2.get_output_names())
     ['and this', 'document is', 'first document', 'is the', 'is this',
     'second document', 'the first', 'the second', 'the third', 'third one',
      'this document', 'this is', 'this the']
@@ -1719,7 +1719,7 @@ class TfidfVectorizer(CountVectorizer):
     ... ]
     >>> vectorizer = TfidfVectorizer()
     >>> X = vectorizer.fit_transform(corpus)
-    >>> print(vectorizer.get_feature_names())
+    >>> print(vectorizer.get_output_names())
     ['and', 'document', 'first', 'is', 'one', 'second', 'the', 'third', 'this']
     >>> print(X.shape)
     (4, 9)

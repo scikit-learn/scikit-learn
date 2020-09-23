@@ -416,11 +416,11 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         >>> D = [{'foo': 1, 'bar': 2}, {'foo': 3, 'baz': 1}]
         >>> X = v.fit_transform(D)
         >>> support = SelectKBest(chi2, k=2).fit(X, [0, 1])
-        >>> v.get_feature_names()
+        >>> v.get_output_names()
         ['bar', 'baz', 'foo']
         >>> v.restrict(support.get_support())
         DictVectorizer()
-        >>> v.get_feature_names()
+        >>> v.get_output_names()
         ['bar', 'foo']
         """
         if not indices:
