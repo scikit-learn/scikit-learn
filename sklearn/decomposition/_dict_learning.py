@@ -1666,7 +1666,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self.iter_offset_ = iter_offset + 1
         return self
 
-
     def get_output_names(self, input_features=None):
         """Get output feature names.
 
