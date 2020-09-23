@@ -96,26 +96,30 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 'multiclass classification.'
                 )
 
-    def _check_categories(self, n_features, X):
-        """Check and validate categories params in X
+    def _check_categories(self, X):
+        """Check and validate categorical features in X
 
         Return
         ------
+        is_categorical : ndarray of shape (n_features,) or None, dtype=bool
+            Indicates whether a feature is categorical. If no feature is
+            categorical, this is None.
         known_categories : list of size n_features or None
             The list contains, for each feature:
                 - an array of shape (n_categories,) with the unique cat values
-                - None if the feature is not categrical
+                - None if the feature is not categorical
             None if no feature is categorical.
         """
         if self.categorical_features is None:
-            self.is_categorical_ = None
-            return
+            return None, None
 
         cat_features_input = np.asarray(self.categorical_features)
 
         if cat_features_input.dtype.kind not in ('i', 'b'):
             raise ValueError("categorical_features must be an array-like of "
                              "bools or array-like of ints.")
+
+        n_features = X.shape[1]
 
         # check for categorical features as indices
         if cat_features_input.dtype.kind == 'i':
@@ -131,12 +135,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                                  "must have shape (n_features,)")
             cat_feats = cat_features_input
 
-        if not np.any(cat_feats):
-            # no categories
-            self.is_categorical_ = None
-            return
+        is_categorical = cat_feats
 
-        self.is_categorical_ = cat_feats
+        if not np.any(is_categorical):
+            return None, None
 
         # compute the known categories in the training data. We need to do
         # that here instead of in the BinMapper because in case of early
@@ -144,7 +146,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         known_categories = []
 
         for f_idx in range(n_features):
-            if self.is_categorical_[f_idx]:
+            if is_categorical[f_idx]:
                 categories = np.unique(X[:, f_idx])
                 missing = np.isnan(categories)
                 if missing.any():
@@ -166,7 +168,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             else:
                 categories = None
             known_categories.append(categories)
-        return known_categories
+
+        return is_categorical, known_categories
 
     def fit(self, X, y, sample_weight=None):
         """Fit the gradient boosting model.
@@ -216,7 +219,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         self._validate_parameters()
         n_samples, self._n_features = X.shape  # used for validation in predict
-        known_categories = self._check_categories(self._n_features, X)
+
+        self.is_categorical_, known_categories = self._check_categories(X)
 
         # we need this stateful variable to tell raw_predict() that it was
         # called from fit() (this current method), and that the data it has
