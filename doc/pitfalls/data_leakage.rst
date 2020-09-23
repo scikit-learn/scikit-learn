@@ -5,24 +5,26 @@ Data leakage
 ============
 
 Data leakage occurs when information that would not be available at prediction
-time, is used when building the model. This results in overly optimsitic
+time is used when building the model. This results in overly optimsitic
 performance estimates, for example from :ref:`cross validation
-<cross_validation>`, but poorer performance when the model is used
+<cross_validation>`, and thus poorer performance when the model is used
 on actually novel data, for example during production.
 
-A common cause is not keeping the test and train data subsets separate. Test
-data should never be used to make choices about the model but this may
-accidently occur during :ref:`preprocessing` or :ref:`grid_search`.
+A common cause is not keeping the test and train data subsets separate.
+Test data should never be used to make choices about the model.
+The general rule is to never call `fit` on testing data. While this may
+sound obvious, this is easy to miss in some cases, for example when applying
+some pre-processing steps.
 
 Although both train and test data subsets should undergo the same preprocessing
-transformation, it is important that stateful transformations only use the
-training subset to determine the 'state'. For example, if you have a
-normalization step whereby you divide by the average value, the average should
+transformation, it is important that these transformations are only learnt
+from the training data. For example, if you have a
+normalization step where you divide by the average value, the average should
 be the average of the train subset, **not** the average of all the data. If the
 test subset was included in the average calculation, information from the test
 subset is influencing the model. Other types of preprocessing such as
-:ref:`impute` and :ref:`polynomial_features` should also only utilize train
-data.
+:ref:`impute` (see :ref:`data_leakage_imputation` below) and
+:ref:`polynomial_features` should also only utilize train data.
 
 Including the test data when finding the best model hyperparameters will
 also inadvertantly introduce information from the test data into the model.
@@ -36,25 +38,27 @@ Data leakage during feature selection
 
 A number of :ref:`feature_selection` functions are available in scikit-learn.
 They can help remove irrelevant, redundant and noisy features as well as
-improve your model build time and performance. Feature selection should
+improve your model build time and performance. As with any other type of
+preprocessing, feature selection should
 **only** use the training data. Including the test data in feature selection
 will optimistically bias your model.
 
-To demonstrate we will create a binary classification problem with
+To demonstrate we will create this binary classification problem with
 1000 randomly generated features::
 
-    >>> from numpy.random import default_rng
+    >>> import numpy as np
     >>> n_samples, n_features, n_classes = 200, 10000, 2
-    >>> rng = default_rng(42)
+    >>> rng = np.random.RandomState(42)
     >>> X = rng.standard_normal((n_samples, n_features))
     >>> y = rng.choice(n_classes, n_samples)
 
 **Wrong**
 
 Using all the data to perform feature selection results in an accuracy score
-much higher than chance. Since our `X` and `y` are independent, we expect
-performance to be around 0.5. However, since the feature selection step
-'sees' the test data, the model has an unfair advantange.
+much higher than chance, even though our targets are completely random.
+This randomness means that our `X` and `y` are independent and we thus expect
+the accuracy to be around 0.5. However, since the feature selection step
+'sees' the test data, the model has an unfair advantage.
 
     >>> from sklearn.feature_selection import SelectKBest
     >>> from sklearn.model_selection import cross_val_score
@@ -68,7 +72,7 @@ performance to be around 0.5. However, since the feature selection step
 **Right**
 
 To ensure that feature selection is performed using only the train dataset
-we will use a :class:`~sklearn.pipeline.Pipeline` to chain together the
+we will use the :class:`~sklearn.pipeline.Pipeline` to chain together the
 feature selection and model. Feeding our pipeline into
 :func:`~sklearn.model_selection.cross_val_score` ensures that only the
 training data is used for feature selection (and when fitting our model).
@@ -82,13 +86,15 @@ score is now what we would expect for the data, close to chance::
     >>> print(f"Mean Accuracy: {scores.mean()}")
     Mean Accuracy: 0.495
 
+.. _data_leakage_imputation:
+
 Data leakage during imputation
 ==============================
 
 There are a number of methods to impute missing values in data. For example,
 :class:`~sklearn.impute.SimpleImputer` allows you to replace missing values
 with the mean of that feature. Only the train data should be used to
-calculate this mean value as including the test data in the mean calculation
+calculate this mean value, as including the test data in the mean calculation
 will introduce information about the test data into the model.
 
 To demonstrate this, we will use the :ref:`diabetes_dataset` and
@@ -99,11 +105,10 @@ missing values to make the effect more pronounced::
     >>> from sklearn.datasets import load_diabetes
     >>> X, y = load_diabetes(return_X_y=True)
     >>> rng = np.random.RandomState(42)
-    >>> n_samples = X.shape[0]
-    >>> n_features = X.shape[1]
+    >>> n_samples, n_features = X.shape
     >>> n_missing = int(n_samples * 0.75)
     >>> missing_samples = np.zeros(n_samples, dtype=np.bool)
-    >>> missing_samples[: n_missing] = True
+    >>> missing_samples[:n_missing] = True
     >>> rng.shuffle(missing_samples)
     >>> missing_features = rng.randint(0, n_features, n_missing)
     >>> X_missing = X.copy()
@@ -112,7 +117,7 @@ missing values to make the effect more pronounced::
 **Wrong**
 
 Using all the data to calculate the feature means, to replace the missing
-values with, results in a very high accuracy::
+values with, results in a high accuracy::
 
     >>> from sklearn.impute import SimpleImputer
     >>> from sklearn.ensemble import GradientBoostingRegressor
@@ -127,7 +132,7 @@ values with, results in a very high accuracy::
 
 Using a :class:`~sklearn.pipeline.Pipeline` to chain together the imputation
 and model ensures that only the train data subset is using for imputation.
-This results in a much lower accuracy::
+This results in a much lower :math:`R^2` score::
 
     >>> from sklearn.pipeline import make_pipeline
     >>> pipeline = make_pipeline(SimpleImputer(),
