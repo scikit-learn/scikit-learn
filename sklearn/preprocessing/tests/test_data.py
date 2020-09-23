@@ -2546,3 +2546,12 @@ def test_minmax_scaler_clip(feature_range):
         X_transformed,
         [[feature_range[0], feature_range[0],
           feature_range[1], feature_range[1]]])
+
+
+# TODO: Remove in 0.26 when get_feature_names is removed
+def test_get_feature_names_deprecated():
+    X = np.arange(30).reshape(10, 3)
+    poly = PolynomialFeatures(degree=2, include_bias=False).fit(X)
+    msg = "get_feature_names is deprecated in 0.24"
+    with pytest.warns(FutureWarning, match=msg):
+        poly.get_feature_names()

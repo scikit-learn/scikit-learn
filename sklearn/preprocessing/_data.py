@@ -31,6 +31,7 @@ from ..utils.sparsefuncs import (inplace_column_scale,
                                  min_max_axis)
 from ..utils.validation import (check_is_fitted, check_random_state,
                                 FLOAT_DTYPES, _deprecate_positional_args)
+from ..utils.deprecation import deprecated
 
 from ._csr_polynomial_expansion import _csr_polynomial_expansion
 
@@ -1617,6 +1618,8 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         return np.vstack([np.bincount(c, minlength=self.n_input_features_)
                           for c in combinations])
 
+    @deprecated("get_feature_names is deprecated in 0.24 and will be removed "
+                "in 0.26. You can use get_output_names instead")
     def get_feature_names(self, input_features=None):
         """
         Return feature names for output features
@@ -1631,7 +1634,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         -------
         output_feature_names : list of str of shape (n_output_features,)
         """
-        return self.get_output_names(input_features=input_features)
+        return self.get_output_names(input_features)
 
     def get_output_names(self, input_features=None):
         """Get output feature names for transformation.

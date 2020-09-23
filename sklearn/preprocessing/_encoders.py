@@ -573,7 +573,7 @@ class OneHotEncoder(_BaseEncoder):
         output_feature_names : ndarray of shape (n_output_features,)
             Array of feature names.
         """
-        feature_names = self.get_output_names(input_features=input_features)
+        feature_names = self.get_output_names(input_features)
         return np.array(feature_names, dtype=object)
 
     def get_output_names(self, input_features=None):

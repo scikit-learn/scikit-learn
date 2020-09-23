@@ -973,7 +973,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
                                      % (str(name), type(trans).__name__))
             feature_names.extend(
                 [name + "__" + f for f in
-                 trans.get_output_names(input_features=input_features)])
+                 trans.get_output_names(input_features)])
         return feature_names
 
     def fit(self, X, y=None, **fit_params):
