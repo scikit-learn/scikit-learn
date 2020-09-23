@@ -1,49 +1,54 @@
-"""Permutation importance for estimators"""
+"""Permutation importance for estimators."""
 import numpy as np
 from joblib import Parallel
-from joblib import delayed
 
 from ..metrics import check_scoring
+from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import check_array
-from ..utils import Bunch
+from ..utils.validation import _deprecate_positional_args
+from ..utils.fixes import delayed
 
 
-def _safe_column_setting(X, col_idx, values):
-    """Set column on X using `col_idx`"""
-    if hasattr(X, "iloc"):
-        X.iloc[:, col_idx] = values
-    else:
-        X[:, col_idx] = values
+def _weights_scorer(scorer, estimator, X, y, sample_weight):
+    if sample_weight is not None:
+        return scorer(estimator, X, y, sample_weight)
+    return scorer(estimator, X, y)
 
 
-def _safe_column_indexing(X, col_idx):
-    """Return column from X using `col_idx`"""
-    if hasattr(X, "iloc"):
-        return X.iloc[:, col_idx].values
-    else:
-        return X[:, col_idx]
-
-
-def _calculate_permutation_scores(estimator, X, y, col_idx, random_state,
-                                  n_repeats, scorer):
+def _calculate_permutation_scores(estimator, X, y, sample_weight, col_idx,
+                                  random_state, n_repeats, scorer):
     """Calculate score when `col_idx` is permuted."""
-    original_feature = _safe_column_indexing(X, col_idx).copy()
-    temp = original_feature.copy()
+    random_state = check_random_state(random_state)
 
+    # Work on a copy of X to to ensure thread-safety in case of threading based
+    # parallelism. Furthermore, making a copy is also useful when the joblib
+    # backend is 'loky' (default) or the old 'multiprocessing': in those cases,
+    # if X is large it will be automatically be backed by a readonly memory map
+    # (memmap). X.copy() on the other hand is always guaranteed to return a
+    # writable data-structure whose columns can be shuffled inplace.
+    X_permuted = X.copy()
     scores = np.zeros(n_repeats)
+    shuffling_idx = np.arange(X.shape[0])
     for n_round in range(n_repeats):
-        random_state.shuffle(temp)
-        _safe_column_setting(X, col_idx, temp)
-        feature_score = scorer(estimator, X, y)
+        random_state.shuffle(shuffling_idx)
+        if hasattr(X_permuted, "iloc"):
+            col = X_permuted.iloc[shuffling_idx, col_idx]
+            col.index = X_permuted.index
+            X_permuted.iloc[:, col_idx] = col
+        else:
+            X_permuted[:, col_idx] = X_permuted[shuffling_idx, col_idx]
+        feature_score = _weights_scorer(
+            scorer, estimator, X_permuted, y, sample_weight
+        )
         scores[n_round] = feature_score
 
-    _safe_column_setting(X, col_idx, original_feature)
     return scores
 
 
-def permutation_importance(estimator, X, y, scoring=None, n_repeats=5,
-                           n_jobs=None, random_state=None):
+@_deprecate_positional_args
+def permutation_importance(estimator, X, y, *, scoring=None, n_repeats=5,
+                           n_jobs=None, random_state=None, sample_weight=None):
     """Permutation importance for feature evaluation [BRE]_.
 
     The :term:`estimator` is required to be a fitted estimator. `X` can be the
@@ -78,19 +83,27 @@ def permutation_importance(estimator, X, y, scoring=None, n_repeats=5,
         Number of times to permute a feature.
 
     n_jobs : int or None, default=None
-        The number of jobs to use for the computation.
+        Number of jobs to run in parallel. The computation is done by computing
+        permutation score for each columns and parallelized over the columns.
         `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
         `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    random_state : int, RandomState instance, or None, default=None
+    random_state : int, RandomState instance, default=None
         Pseudo-random number generator to control the permutations of each
-        feature. See :term:`random_state`.
+        feature.
+        Pass an int to get reproducible results across function calls.
+        See :term: `Glossary <random_state>`.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights used in scoring.
+
+        .. versionadded:: 0.24
 
     Returns
     -------
-    result : Bunch
-        Dictionary-like object, with attributes:
+    result : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
 
         importances_mean : ndarray, shape (n_features, )
             Mean of feature importance over `n_repeats`.
@@ -103,21 +116,38 @@ def permutation_importance(estimator, X, y, scoring=None, n_repeats=5,
     ----------
     .. [BRE] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32,
              2001. https://doi.org/10.1023/A:1010933404324
+
+    Examples
+    --------
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> from sklearn.inspection import permutation_importance
+    >>> X = [[1, 9, 9],[1, 9, 9],[1, 9, 9],
+    ...      [0, 9, 9],[0, 9, 9],[0, 9, 9]]
+    >>> y = [1, 1, 1, 0, 0, 0]
+    >>> clf = LogisticRegression().fit(X, y)
+    >>> result = permutation_importance(clf, X, y, n_repeats=10,
+    ...                                 random_state=0)
+    >>> result.importances_mean
+    array([0.4666..., 0.       , 0.       ])
+    >>> result.importances_std
+    array([0.2211..., 0.       , 0.       ])
     """
-    if hasattr(X, "iloc"):
-        X = X.copy()  # Dataframe
-    else:
-        X = check_array(X, force_all_finite='allow-nan', dtype=np.object,
-                        copy=True)
+    if not hasattr(X, "iloc"):
+        X = check_array(X, force_all_finite='allow-nan', dtype=None)
 
+    # Precompute random seed from the random state to be used
+    # to get a fresh independent RandomState instance for each
+    # parallel call to _calculate_permutation_scores, irrespective of
+    # the fact that variables are shared or not depending on the active
+    # joblib backend (sequential, thread-based or process-based).
     random_state = check_random_state(random_state)
-    scorer = check_scoring(estimator, scoring=scoring)
+    random_seed = random_state.randint(np.iinfo(np.int32).max + 1)
 
-    baseline_score = scorer(estimator, X, y)
-    scores = np.zeros((X.shape[1], n_repeats))
+    scorer = check_scoring(estimator, scoring=scoring)
+    baseline_score = _weights_scorer(scorer, estimator, X, y, sample_weight)
 
     scores = Parallel(n_jobs=n_jobs)(delayed(_calculate_permutation_scores)(
-        estimator, X, y, col_idx, random_state, n_repeats, scorer
+        estimator, X, y, sample_weight, col_idx, random_seed, n_repeats, scorer
     ) for col_idx in range(X.shape[1]))
 
     importances = baseline_score - np.array(scores)

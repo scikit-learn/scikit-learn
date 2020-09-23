@@ -7,9 +7,9 @@ from scipy import optimize
 
 from ..base import BaseEstimator, RegressorMixin
 from ._base import LinearModel
-from ..utils import check_X_y
 from ..utils import axis0_safe_slice
 from ..utils.validation import _check_sample_weight
+from ..utils.validation import _deprecate_positional_args
 from ..utils.extmath import safe_sparse_dot
 from ..utils.optimize import _check_optimize_result
 
@@ -25,10 +25,10 @@ def _huber_loss_and_gradient(w, X, y, epsilon, alpha, sample_weight=None):
         w[-1] gives the scale factor and if the intercept is fit w[-2]
         gives the intercept factor.
 
-    X : ndarray, shape (n_samples, n_features)
+    X : ndarray of shape (n_samples, n_features)
         Input data.
 
-    y : ndarray, shape (n_samples,)
+    y : ndarray of shape (n_samples,)
         Target vector.
 
     epsilon : float
@@ -37,7 +37,7 @@ def _huber_loss_and_gradient(w, X, y, epsilon, alpha, sample_weight=None):
     alpha : float
         Regularization parameter.
 
-    sample_weight : ndarray, shape (n_samples,), optional
+    sample_weight : ndarray of shape (n_samples,), default=None
         Weight assigned to each sample.
 
     Returns
@@ -142,29 +142,29 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
     Parameters
     ----------
-    epsilon : float, greater than 1.0, default 1.35
+    epsilon : float, greater than 1.0, default=1.35
         The parameter epsilon controls the number of samples that should be
         classified as outliers. The smaller the epsilon, the more robust it is
         to outliers.
 
-    max_iter : int, default 100
+    max_iter : int, default=100
         Maximum number of iterations that
         ``scipy.optimize.minimize(method="L-BFGS-B")`` should run for.
 
-    alpha : float, default 0.0001
+    alpha : float, default=0.0001
         Regularization parameter.
 
-    warm_start : bool, default False
+    warm_start : bool, default=False
         This is useful if the stored attributes of a previously used model
         has to be reused. If set to False, then the coefficients will
         be rewritten for every call to fit.
         See :term:`the Glossary <warm_start>`.
 
-    fit_intercept : bool, default True
+    fit_intercept : bool, default=True
         Whether or not to fit the intercept. This can be set to False
         if the data is already centered around the origin.
 
-    tol : float, default 1e-5
+    tol : float, default=1e-05
         The iteration will stop when
         ``max{|proj g_i | i = 1, ..., n}`` <= ``tol``
         where pg_i is the i-th component of the projected gradient.
@@ -205,7 +205,7 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     >>> y[:4] = rng.uniform(10, 20, 4)
     >>> huber = HuberRegressor().fit(X, y)
     >>> huber.score(X, y)
-    -7.284608623514573
+    -7.284...
     >>> huber.predict(X[:1,])
     array([806.7200...])
     >>> linear = LinearRegression().fit(X, y)
@@ -223,8 +223,8 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     .. [2] Art B. Owen (2006), A robust hybrid of lasso and ridge regression.
            https://statweb.stanford.edu/~owen/reports/hhu.pdf
     """
-
-    def __init__(self, epsilon=1.35, max_iter=100, alpha=0.0001,
+    @_deprecate_positional_args
+    def __init__(self, *, epsilon=1.35, max_iter=100, alpha=0.0001,
                  warm_start=False, fit_intercept=True, tol=1e-05):
         self.epsilon = epsilon
         self.max_iter = max_iter
@@ -252,7 +252,7 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         -------
         self : object
         """
-        X, y = check_X_y(
+        X, y = self._validate_data(
             X, y, copy=False, accept_sparse=['csr'], y_numeric=True,
             dtype=[np.float64, np.float32])
 

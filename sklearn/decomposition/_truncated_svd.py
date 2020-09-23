@@ -14,6 +14,9 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, check_random_state
 from ..utils.extmath import randomized_svd, safe_sparse_dot, svd_flip
 from ..utils.sparsefuncs import mean_variance_axis
+from ..utils.validation import _deprecate_positional_args
+from ..utils.validation import check_is_fitted
+
 
 __all__ = ["TruncatedSVD"]
 
@@ -24,60 +27,59 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
     This transformer performs linear dimensionality reduction by means of
     truncated singular value decomposition (SVD). Contrary to PCA, this
     estimator does not center the data before computing the singular value
-    decomposition. This means it can work with scipy.sparse matrices
+    decomposition. This means it can work with sparse matrices
     efficiently.
 
     In particular, truncated SVD works on term count/tf-idf matrices as
-    returned by the vectorizers in sklearn.feature_extraction.text. In that
-    context, it is known as latent semantic analysis (LSA).
+    returned by the vectorizers in :mod:`sklearn.feature_extraction.text`. In
+    that context, it is known as latent semantic analysis (LSA).
 
     This estimator supports two algorithms: a fast randomized SVD solver, and
-    a "naive" algorithm that uses ARPACK as an eigensolver on (X * X.T) or
-    (X.T * X), whichever is more efficient.
+    a "naive" algorithm that uses ARPACK as an eigensolver on `X * X.T` or
+    `X.T * X`, whichever is more efficient.
 
     Read more in the :ref:`User Guide <LSA>`.
 
     Parameters
     ----------
-    n_components : int, default = 2
+    n_components : int, default=2
         Desired dimensionality of output data.
         Must be strictly less than the number of features.
         The default value is useful for visualisation. For LSA, a value of
         100 is recommended.
 
-    algorithm : string, default = "randomized"
+    algorithm : {'arpack', 'randomized'}, default='randomized'
         SVD solver to use. Either "arpack" for the ARPACK wrapper in SciPy
         (scipy.sparse.linalg.svds), or "randomized" for the randomized
         algorithm due to Halko (2009).
 
-    n_iter : int, optional (default 5)
+    n_iter : int, default=5
         Number of iterations for randomized SVD solver. Not used by ARPACK. The
         default is larger than the default in
-        `~sklearn.utils.extmath.randomized_svd` to handle sparse matrices that
-        may have large slowly decaying spectrum.
+        :func:`~sklearn.utils.extmath.randomized_svd` to handle sparse
+        matrices that may have large slowly decaying spectrum.
 
-    random_state : int, RandomState instance or None, optional, default = None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None, default=None
+        Used during randomized svd. Pass an int for reproducible results across
+        multiple function calls.
+        See :term:`Glossary <random_state>`.
 
-    tol : float, optional
+    tol : float, default=0.
         Tolerance for ARPACK. 0 means machine precision. Ignored by randomized
         SVD solver.
 
     Attributes
     ----------
-    components_ : array, shape (n_components, n_features)
+    components_ : ndarray of shape (n_components, n_features)
 
-    explained_variance_ : array, shape (n_components,)
+    explained_variance_ : ndarray of shape (n_components,)
         The variance of the training samples transformed by a projection to
         each component.
 
-    explained_variance_ratio_ : array, shape (n_components,)
+    explained_variance_ratio_ : ndarray of shape (n_components,)
         Percentage of variance explained by each of the selected components.
 
-    singular_values_ : array, shape (n_components,)
+    singular_values_ : ndarray od shape (n_components,)
         The singular values corresponding to each of the selected components.
         The singular values are equal to the 2-norms of the ``n_components``
         variables in the lower-dimensional space.
@@ -86,7 +88,6 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
     --------
     >>> from sklearn.decomposition import TruncatedSVD
     >>> from scipy.sparse import random as sparse_random
-    >>> from sklearn.random_projection import sparse_random_matrix
     >>> X = sparse_random(100, 100, density=0.01, format='csr',
     ...                   random_state=42)
     >>> svd = TruncatedSVD(n_components=5, n_iter=7, random_state=42)
@@ -99,7 +100,7 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
     >>> print(svd.singular_values_)
     [1.553... 1.512...  1.510... 1.370... 1.199...]
 
-    See also
+    See Also
     --------
     PCA
 
@@ -117,7 +118,8 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
     class to data once, then keep the instance around to do transformations.
 
     """
-    def __init__(self, n_components=2, algorithm="randomized", n_iter=5,
+    @_deprecate_positional_args
+    def __init__(self, n_components=2, *, algorithm="randomized", n_iter=5,
                  random_state=None, tol=0.):
         self.algorithm = algorithm
         self.n_components = n_components
@@ -130,7 +132,7 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data.
 
         y : Ignored
@@ -148,18 +150,18 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data.
 
         y : Ignored
 
         Returns
         -------
-        X_new : array, shape (n_samples, n_components)
+        X_new : ndarray of shape (n_samples, n_components)
             Reduced version of X. This will always be a dense array.
         """
-        X = check_array(X, accept_sparse=['csr', 'csc'],
-                        ensure_min_features=2)
+        X = self._validate_data(X, accept_sparse=['csr', 'csc'],
+                                ensure_min_features=2)
         random_state = check_random_state(self.random_state)
 
         if self.algorithm == "arpack":
@@ -201,15 +203,16 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             New data.
 
         Returns
         -------
-        X_new : array, shape (n_samples, n_components)
+        X_new : ndarray of shape (n_samples, n_components)
             Reduced version of X. This will always be a dense array.
         """
-        X = check_array(X, accept_sparse='csr')
+        X = check_array(X, accept_sparse=['csr', 'csc'])
+        check_is_fitted(self)
         return safe_sparse_dot(X, self.components_.T)
 
     def inverse_transform(self, X):
@@ -219,13 +222,16 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_components)
+        X : array-like of shape (n_samples, n_components)
             New data.
 
         Returns
         -------
-        X_original : array, shape (n_samples, n_features)
+        X_original : ndarray of shape (n_samples, n_features)
             Note that this is always a dense array.
         """
         X = check_array(X)
         return np.dot(X, self.components_)
+
+    def _more_tags(self):
+        return {'preserves_dtype': [np.float64, np.float32]}

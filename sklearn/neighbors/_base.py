@@ -7,7 +7,6 @@
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
 from functools import partial
-from distutils.version import LooseVersion
 
 import warnings
 from abc import ABCMeta, abstractmethod
@@ -16,17 +15,21 @@ import numbers
 import numpy as np
 from scipy.sparse import csr_matrix, issparse
 import joblib
-from joblib import Parallel, delayed, effective_n_jobs
+from joblib import Parallel, effective_n_jobs
 
 from ._ball_tree import BallTree
 from ._kd_tree import KDTree
 from ..base import BaseEstimator, MultiOutputMixin
+from ..base import is_classifier
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
-from ..utils import check_X_y, check_array, gen_even_slices
+from ..utils import check_array, gen_even_slices
+from ..utils import _to_object_array
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils.validation import check_non_negative
+from ..utils.fixes import delayed
+from ..utils.fixes import parse_version
 from ..exceptions import DataConversionWarning, EfficiencyWarning
 
 VALID_METRICS = dict(ball_tree=BallTree.valid_metrics,
@@ -66,14 +69,15 @@ def _get_weights(dist, weights):
     Parameters
     ----------
     dist : ndarray
-        The input distances
+        The input distances.
+
     weights : {'uniform', 'distance' or a callable}
-        The kind of weighting used
+        The kind of weighting used.
 
     Returns
     -------
     weights_arr : array of the same shape as ``dist``
-        if ``weights == 'uniform'``, then returns None
+        If ``weights == 'uniform'``, then returns None.
     """
     if weights in (None, 'uniform'):
         return None
@@ -109,19 +113,20 @@ def _is_sorted_by_data(graph):
 
     The non-zero entries are stored in graph.data and graph.indices.
     For each row (or sample), the non-zero entries can be either:
-        - sorted by indices, as after graph.sort_indices()
-        - sorted by data, as after _check_precomputed(graph)
+        - sorted by indices, as after graph.sort_indices();
+        - sorted by data, as after _check_precomputed(graph);
         - not sorted.
 
     Parameters
     ----------
-    graph : CSR sparse matrix, shape (n_samples, n_samples)
-        Neighbors graph as given by kneighbors_graph or radius_neighbors_graph
+    graph : sparse matrix of shape (n_samples, n_samples)
+        Neighbors graph as given by `kneighbors_graph` or
+        `radius_neighbors_graph`. Matrix should be of format CSR format.
 
     Returns
     -------
-    res : boolean
-        Whether input graph is sorted by data
+    res : bool
+        Whether input graph is sorted by data.
     """
     assert graph.format == 'csr'
     out_of_order = graph.data[:-1] > graph.data[1:]
@@ -193,21 +198,22 @@ def _kneighbors_from_graph(graph, n_neighbors, return_distance):
 
     Parameters
     ----------
-    graph : CSR sparse matrix, shape (n_samples, n_samples)
-        Neighbors graph as given by kneighbors_graph or radius_neighbors_graph
+    graph : sparse matrix of shape (n_samples, n_samples)
+        Neighbors graph as given by `kneighbors_graph` or
+        `radius_neighbors_graph`. Matrix should be of format CSR format.
 
     n_neighbors : int
         Number of neighbors required for each sample.
 
-    return_distance : boolean
-        If False, distances will not be returned
+    return_distance : bool
+        Whether or not to return the distances.
 
     Returns
     -------
-    neigh_dist : array, shape (n_samples, n_neighbors)
-        Distances to nearest neighbors. Only present if return_distance=True.
+    neigh_dist : ndarray of shape (n_samples, n_neighbors)
+        Distances to nearest neighbors. Only present if `return_distance=True`.
 
-    neigh_ind : array, shape (n_samples, n_neighbors)
+    neigh_ind : ndarray of shape (n_samples, n_neighbors)
         Indices of nearest neighbors.
     """
     n_samples = graph.shape[0]
@@ -243,26 +249,27 @@ def _radius_neighbors_from_graph(graph, radius, return_distance):
 
     Parameters
     ----------
-    graph : CSR sparse matrix, shape (n_samples, n_samples)
-        Neighbors graph as given by kneighbors_graph or radius_neighbors_graph
+    graph : sparse matrix of shape (n_samples, n_samples)
+        Neighbors graph as given by `kneighbors_graph` or
+        `radius_neighbors_graph`. Matrix should be of format CSR format.
 
-    radius : float > 0
-        Radius of neighborhoods.
+    radius : float
+        Radius of neighborhoods which should be strictly positive.
 
-    return_distance : boolean
-        If False, distances will not be returned
+    return_distance : bool
+        Whether or not to return the distances.
 
     Returns
     -------
-    neigh_dist : array, shape (n_samples,) of arrays
-        Distances to nearest neighbors. Only present if return_distance=True.
+    neigh_dist : ndarray of shape (n_samples,) of arrays
+        Distances to nearest neighbors. Only present if `return_distance=True`.
 
-    neigh_ind :array, shape (n_samples,) of arrays
+    neigh_ind : ndarray of shape (n_samples,) of arrays
         Indices of nearest neighbors.
     """
     assert graph.format == 'csr'
 
-    no_filter_needed = graph.data.max() <= radius
+    no_filter_needed = bool(graph.data.max() <= radius)
 
     if no_filter_needed:
         data, indices, indptr = graph.data, graph.indices, graph.indptr
@@ -276,8 +283,8 @@ def _radius_neighbors_from_graph(graph, radius, return_distance):
     indices = indices.astype(np.intp, copy=no_filter_needed)
 
     if return_distance:
-        neigh_dist = np.array(np.split(data, indptr[1:-1]))
-    neigh_ind = np.array(np.split(indices, indptr[1:-1]))
+        neigh_dist = _to_object_array(np.split(data, indptr[1:-1]))
+    neigh_ind = _to_object_array(np.split(indices, indptr[1:-1]))
 
     if return_distance:
         return neigh_dist, neigh_ind
@@ -335,9 +342,10 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                              % (self.metric, alg_check))
 
         if self.metric_params is not None and 'p' in self.metric_params:
-            warnings.warn("Parameter p is found in metric_params. "
-                          "The corresponding parameter from __init__ "
-                          "is ignored.", SyntaxWarning, stacklevel=3)
+            if self.p is not None:
+                warnings.warn("Parameter p is found in metric_params. "
+                              "The corresponding parameter from __init__ "
+                              "is ignored.", SyntaxWarning, stacklevel=3)
             effective_p = self.metric_params['p']
         else:
             effective_p = self.p
@@ -345,7 +353,45 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if self.metric in ['wminkowski', 'minkowski'] and effective_p < 1:
             raise ValueError("p must be greater than one for minkowski metric")
 
-    def _fit(self, X):
+    def _fit(self, X, y=None):
+        if self._get_tags()["requires_y"]:
+            if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
+                X, y = self._validate_data(X, y, accept_sparse="csr",
+                                           multi_output=True)
+
+            if is_classifier(self):
+                # Classification targets require a specific format
+                if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
+                    if y.ndim != 1:
+                        warnings.warn("A column-vector y was passed when a "
+                                      "1d array was expected. Please change "
+                                      "the shape of y to (n_samples,), for "
+                                      "example using ravel().",
+                                      DataConversionWarning, stacklevel=2)
+
+                    self.outputs_2d_ = False
+                    y = y.reshape((-1, 1))
+                else:
+                    self.outputs_2d_ = True
+
+                check_classification_targets(y)
+                self.classes_ = []
+                self._y = np.empty(y.shape, dtype=int)
+                for k in range(self._y.shape[1]):
+                    classes, self._y[:, k] = np.unique(
+                        y[:, k], return_inverse=True)
+                    self.classes_.append(classes)
+
+                if not self.outputs_2d_:
+                    self.classes_ = self.classes_[0]
+                    self._y = self._y.ravel()
+            else:
+                self._y = y
+
+        else:
+            if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
+                X = self._validate_data(X, accept_sparse='csr')
+
         self._check_algorithm_metric()
         if self.metric_params is None:
             self.effective_metric_params_ = {}
@@ -395,8 +441,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         if self.effective_metric_ == 'precomputed':
             X = _check_precomputed(X)
-        else:
-            X = check_array(X, accept_sparse='csr')
+            self.n_features_in_ = X.shape[1]
 
         n_samples = X.shape[0]
         if n_samples == 0:
@@ -431,11 +476,13 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self.n_samples_fit_ = X.shape[0]
 
         if self._fit_method == 'auto':
-            # A tree approach is better for small number of neighbors,
-            # and KDTree is generally faster when available
-            if ((self.n_neighbors is None or
-                 self.n_neighbors < self._fit_X.shape[0] // 2) and
-                    self.metric != 'precomputed'):
+            # A tree approach is better for small number of neighbors or small
+            # number of features, with KDTree generally faster when available
+            if (self.metric == 'precomputed' or self._fit_X.shape[1] > 15 or
+                    (self.n_neighbors is not None and
+                     self.n_neighbors >= self._fit_X.shape[0] // 2)):
+                self._fit_method = 'brute'
+            else:
                 if self.effective_metric_ in VALID_METRICS['kd_tree']:
                     self._fit_method = 'kd_tree'
                 elif (callable(self.effective_metric_) or
@@ -443,8 +490,6 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     self._fit_method = 'ball_tree'
                 else:
                     self._fit_method = 'brute'
-            else:
-                self._fit_method = 'brute'
 
         if self._fit_method == 'ball_tree':
             self._tree = BallTree(X, self.leaf_size,
@@ -501,17 +546,25 @@ class KNeighborsMixin:
 
         Parameters
         ----------
-        dist : array of shape (n_samples_chunk, n_samples)
+        dist : ndarray of shape (n_samples_chunk, n_samples)
+            The distance matrix.
+
         start : int
             The index in X which the first row of dist corresponds to.
+
         n_neighbors : int
+            Number of neighbors required for each sample.
+
         return_distance : bool
+            Whether or not to return the distances.
 
         Returns
         -------
-        dist : array of shape (n_samples_chunk, n_neighbors), optional
-            Returned only if return_distance
+        dist : array of shape (n_samples_chunk, n_neighbors)
+            Returned only if `return_distance=True`.
+
         neigh : array of shape (n_samples_chunk, n_neighbors)
+            The neighbors indices.
         """
         sample_range = np.arange(dist.shape[0])[:, None]
         neigh_ind = np.argpartition(dist, n_neighbors - 1, axis=1)
@@ -530,35 +583,37 @@ class KNeighborsMixin:
 
     def kneighbors(self, X=None, n_neighbors=None, return_distance=True):
         """Finds the K-neighbors of a point.
+
         Returns indices of and distances to the neighbors of each point.
 
         Parameters
         ----------
         X : array-like, shape (n_queries, n_features), \
-                or (n_queries, n_indexed) if metric == 'precomputed'
+            or (n_queries, n_indexed) if metric == 'precomputed', \
+                default=None
             The query point or points.
             If not provided, neighbors of each indexed point are returned.
             In this case, the query point is not considered its own neighbor.
 
-        n_neighbors : int
-            Number of neighbors to get (default is the value
-            passed to the constructor).
+        n_neighbors : int, default=None
+            Number of neighbors required for each sample. The default is the
+            value passed to the constructor.
 
-        return_distance : boolean, optional. Defaults to True.
-            If False, distances will not be returned
+        return_distance : bool, default=True
+            Whether or not to return the distances.
 
         Returns
         -------
-        neigh_dist : array, shape (n_queries, n_neighbors)
+        neigh_dist : ndarray of shape (n_queries, n_neighbors)
             Array representing the lengths to points, only present if
             return_distance=True
 
-        neigh_ind : array, shape (n_queries, n_neighbors)
+        neigh_ind : ndarray of shape (n_queries, n_neighbors)
             Indices of the nearest points in the population matrix.
 
         Examples
         --------
-        In the following example, we construct a NeighborsClassifier
+        In the following example, we construct a NearestNeighbors
         class from an array representing our data set and ask who's
         the closest point to [1,1,1]
 
@@ -578,7 +633,6 @@ class KNeighborsMixin:
         >>> neigh.kneighbors(X, return_distance=False)
         array([[1],
                [2]]...)
-
         """
         check_is_fitted(self)
 
@@ -647,12 +701,10 @@ class KNeighborsMixin:
                     "%s does not work with sparse matrices. Densify the data, "
                     "or set algorithm='brute'" % self._fit_method)
             old_joblib = (
-                    LooseVersion(joblib.__version__) < LooseVersion('0.12'))
+                    parse_version(joblib.__version__) < parse_version('0.12'))
             if old_joblib:
                 # Deal with change of API in joblib
-                check_pickle = False if old_joblib else None
-                delayed_query = delayed(_tree_query_parallel_helper,
-                                        check_pickle=check_pickle)
+                delayed_query = delayed(_tree_query_parallel_helper)
                 parallel_kwargs = {"backend": "threading"}
             else:
                 delayed_query = delayed(_tree_query_parallel_helper)
@@ -708,26 +760,31 @@ class KNeighborsMixin:
 
         Parameters
         ----------
-        X : array-like, shape (n_queries, n_features), \
-                or (n_queries, n_indexed) if metric == 'precomputed'
+        X : array-like of shape (n_queries, n_features), \
+                or (n_queries, n_indexed) if metric == 'precomputed', \
+                default=None
             The query point or points.
             If not provided, neighbors of each indexed point are returned.
             In this case, the query point is not considered its own neighbor.
+            For ``metric='precomputed'`` the shape should be
+            (n_queries, n_indexed). Otherwise the shape should be
+            (n_queries, n_features).
 
-        n_neighbors : int
-            Number of neighbors for each sample.
-            (default is value passed to the constructor).
+        n_neighbors : int, default=None
+            Number of neighbors for each sample. The default is the value
+            passed to the constructor.
 
-        mode : {'connectivity', 'distance'}, optional
+        mode : {'connectivity', 'distance'}, default='connectivity'
             Type of returned matrix: 'connectivity' will return the
             connectivity matrix with ones and zeros, in 'distance' the
             edges are Euclidean distance between points.
 
         Returns
         -------
-        A : sparse graph in CSR format, shape = [n_queries, n_samples_fit]
-            n_samples_fit is the number of samples in the fitted data
-            A[i, j] is assigned the weight of edge that connects i to j.
+        A : sparse-matrix of shape (n_queries, n_samples_fit)
+            `n_samples_fit` is the number of samples in the fitted data
+            `A[i, j]` is assigned the weight of edge that connects `i` to `j`.
+            The matrix is of CSR format.
 
         Examples
         --------
@@ -742,7 +799,7 @@ class KNeighborsMixin:
                [0., 1., 1.],
                [1., 0., 1.]])
 
-        See also
+        See Also
         --------
         NearestNeighbors.radius_neighbors_graph
         """
@@ -799,17 +856,25 @@ class RadiusNeighborsMixin:
 
         Parameters
         ----------
-        dist : array of shape (n_samples_chunk, n_samples)
+        dist : ndarray of shape (n_samples_chunk, n_samples)
+            The distance matrix.
+
         start : int
             The index in X which the first row of dist corresponds to.
+
         radius : float
+            The radius considered when making the nearest neighbors search.
+
         return_distance : bool
+            Whether or not to return the distances.
 
         Returns
         -------
-        dist : list of n_samples_chunk 1d arrays, optional
-            Returned only if return_distance
-        neigh : list of n_samples_chunk 1d arrays
+        dist : list of ndarray of shape (n_samples_chunk,)
+            Returned only if `return_distance=True`.
+
+        neigh : list of ndarray of shape (n_samples_chunk,)
+            The neighbors indices.
         """
         neigh_ind = [np.where(d <= radius)[0] for d in dist]
 
@@ -838,34 +903,34 @@ class RadiusNeighborsMixin:
 
         Parameters
         ----------
-        X : array-like, (n_samples, n_features), optional
+        X : array-like of (n_samples, n_features), default=None
             The query point or points.
             If not provided, neighbors of each indexed point are returned.
             In this case, the query point is not considered its own neighbor.
 
-        radius : float
-            Limiting distance of neighbors to return.
-            (default is the value passed to the constructor).
+        radius : float, default=None
+            Limiting distance of neighbors to return. The default is the value
+            passed to the constructor.
 
-        return_distance : boolean, optional. Defaults to True.
-            If False, distances will not be returned.
+        return_distance : bool, default=True
+            Whether or not to return the distances.
 
-        sort_results : boolean, optional. Defaults to False.
+        sort_results : bool, default=False
             If True, the distances and indices will be sorted before being
-            returned. If False, the results will not be sorted. If
-            return_distance == False, setting sort_results = True will
+            returned. If `False`, the results will not be sorted. If
+            `return_distance=False`, setting `sort_results=True` will
             result in an error.
 
             .. versionadded:: 0.22
 
         Returns
         -------
-        neigh_dist : array, shape (n_samples,) of arrays
+        neigh_dist : ndarray of shape (n_samples,) of arrays
             Array representing the distances to each point, only present if
-            return_distance=True. The distance values are computed according
+            `return_distance=True`. The distance values are computed according
             to the ``metric`` constructor parameter.
 
-        neigh_ind : array, shape (n_samples,) of arrays
+        neigh_ind : ndarray of shape (n_samples,) of arrays
             An array of arrays of indices of the approximate nearest points
             from the population matrix that lie within a ball of size
             ``radius`` around the query points.
@@ -940,17 +1005,12 @@ class RadiusNeighborsMixin:
                 neigh_dist_chunks, neigh_ind_chunks = zip(*chunked_results)
                 neigh_dist_list = sum(neigh_dist_chunks, [])
                 neigh_ind_list = sum(neigh_ind_chunks, [])
-                # See https://github.com/numpy/numpy/issues/5456
-                # to understand why this is initialized this way.
-                neigh_dist = np.empty(len(neigh_dist_list), dtype='object')
-                neigh_dist[:] = neigh_dist_list
-                neigh_ind = np.empty(len(neigh_ind_list), dtype='object')
-                neigh_ind[:] = neigh_ind_list
+                neigh_dist = _to_object_array(neigh_dist_list)
+                neigh_ind = _to_object_array(neigh_ind_list)
                 results = neigh_dist, neigh_ind
             else:
                 neigh_ind_list = sum(chunked_results, [])
-                results = np.empty(len(neigh_ind_list), dtype='object')
-                results[:] = neigh_ind_list
+                results = _to_object_array(neigh_ind_list)
 
         elif self._fit_method in ['ball_tree', 'kd_tree']:
             if issparse(X):
@@ -959,7 +1019,7 @@ class RadiusNeighborsMixin:
                     "or set algorithm='brute'" % self._fit_method)
 
             n_jobs = effective_n_jobs(self.n_jobs)
-            if LooseVersion(joblib.__version__) < LooseVersion('0.12'):
+            if parse_version(joblib.__version__) < parse_version('0.12'):
                 # Deal with change of API in joblib
                 delayed_query = delayed(_tree_query_radius_parallel_helper,
                                         check_pickle=False)
@@ -1018,16 +1078,16 @@ class RadiusNeighborsMixin:
             If not provided, neighbors of each indexed point are returned.
             In this case, the query point is not considered its own neighbor.
 
-        radius : float
-            Radius of neighborhoods.
-            (default is the value passed to the constructor).
+        radius : float, default=None
+            Radius of neighborhoods. The default is the value passed to the
+            constructor.
 
-        mode : {'connectivity', 'distance'}, optional
+        mode : {'connectivity', 'distance'}, default='connectivity'
             Type of returned matrix: 'connectivity' will return the
             connectivity matrix with ones and zeros, in 'distance' the
             edges are Euclidean distance between points.
 
-        sort_results : boolean, optional. Defaults to False.
+        sort_results : bool, default=False
             If True, the distances and indices will be sorted before being
             returned. If False, the results will not be sorted.
             Only used with mode='distance'.
@@ -1036,9 +1096,10 @@ class RadiusNeighborsMixin:
 
         Returns
         -------
-        A : sparse graph in CSR format, shape = [n_queries, n_samples_fit]
-            n_samples_fit is the number of samples in the fitted data
-            A[i, j] is assigned the weight of edge that connects i to j.
+        A : sparse-matrix of shape (n_queries, n_samples_fit)
+            `n_samples_fit` is the number of samples in the fitted data
+            `A[i, j]` is assigned the weight of edge that connects `i` to `j`.
+            The matrix if of format CSR.
 
         Examples
         --------
@@ -1053,7 +1114,7 @@ class RadiusNeighborsMixin:
                [0., 1., 0.],
                [1., 0., 1.]])
 
-        See also
+        See Also
         --------
         kneighbors_graph
         """
@@ -1090,79 +1151,3 @@ class RadiusNeighborsMixin:
 
         return csr_matrix((A_data, A_ind, A_indptr),
                           shape=(n_queries, n_samples_fit))
-
-
-class SupervisedFloatMixin:
-    def fit(self, X, y):
-        """Fit the model using X as training data and y as target values
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix, BallTree, KDTree}
-            Training data. If array or matrix, shape [n_samples, n_features],
-            or [n_samples, n_samples] if metric='precomputed'.
-
-        y : {array-like, sparse matrix}
-            Target values, array of float values, shape = [n_samples]
-             or [n_samples, n_outputs]
-        """
-        if not isinstance(X, (KDTree, BallTree)):
-            X, y = check_X_y(X, y, "csr", multi_output=True)
-        self._y = y
-        return self._fit(X)
-
-
-class SupervisedIntegerMixin:
-    def fit(self, X, y):
-        """Fit the model using X as training data and y as target values
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix, BallTree, KDTree}
-            Training data. If array or matrix, shape [n_samples, n_features],
-            or [n_samples, n_samples] if metric='precomputed'.
-
-        y : {array-like, sparse matrix}
-            Target values of shape = [n_samples] or [n_samples, n_outputs]
-
-        """
-        if not isinstance(X, (KDTree, BallTree)):
-            X, y = check_X_y(X, y, "csr", multi_output=True)
-
-        if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
-            if y.ndim != 1:
-                warnings.warn("A column-vector y was passed when a 1d array "
-                              "was expected. Please change the shape of y to "
-                              "(n_samples, ), for example using ravel().",
-                              DataConversionWarning, stacklevel=2)
-
-            self.outputs_2d_ = False
-            y = y.reshape((-1, 1))
-        else:
-            self.outputs_2d_ = True
-
-        check_classification_targets(y)
-        self.classes_ = []
-        self._y = np.empty(y.shape, dtype=np.int)
-        for k in range(self._y.shape[1]):
-            classes, self._y[:, k] = np.unique(y[:, k], return_inverse=True)
-            self.classes_.append(classes)
-
-        if not self.outputs_2d_:
-            self.classes_ = self.classes_[0]
-            self._y = self._y.ravel()
-
-        return self._fit(X)
-
-
-class UnsupervisedMixin:
-    def fit(self, X, y=None):
-        """Fit the model using X as training data
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix, BallTree, KDTree}
-            Training data. If array or matrix, shape [n_samples, n_features],
-            or [n_samples, n_samples] if metric='precomputed'.
-        """
-        return self._fit(X)

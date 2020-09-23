@@ -1,4 +1,4 @@
-"""Spectral Embedding"""
+"""Spectral Embedding."""
 
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 #         Wei LI <kuantkid@gmail.com>
@@ -20,34 +20,35 @@ from ..utils.extmath import _deterministic_vector_sign_flip
 from ..utils.fixes import lobpcg
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph, NearestNeighbors
+from ..utils.validation import _deprecate_positional_args
 
 
 def _graph_connected_component(graph, node_id):
     """Find the largest graph connected components that contains one
-    given node
+    given node.
 
     Parameters
     ----------
-    graph : array-like, shape: (n_samples, n_samples)
-        adjacency matrix of the graph, non-zero weight means an edge
-        between the nodes
+    graph : array-like of shape (n_samples, n_samples)
+        Adjacency matrix of the graph, non-zero weight means an edge
+        between the nodes.
 
     node_id : int
-        The index of the query node of the graph
+        The index of the query node of the graph.
 
     Returns
     -------
-    connected_components_matrix : array-like, shape: (n_samples,)
+    connected_components_matrix : array-like of shape (n_samples,)
         An array of bool value indicating the indexes of the nodes
         belonging to the largest connected components of the given query
-        node
+        node.
     """
     n_node = graph.shape[0]
     if sparse.issparse(graph):
         # speed up row-wise access to boolean connection mask
         graph = graph.tocsr()
-    connected_nodes = np.zeros(n_node, dtype=np.bool)
-    nodes_to_explore = np.zeros(n_node, dtype=np.bool)
+    connected_nodes = np.zeros(n_node, dtype=bool)
+    nodes_to_explore = np.zeros(n_node, dtype=bool)
     nodes_to_explore[node_id] = True
     for _ in range(n_node):
         last_num_component = connected_nodes.sum()
@@ -66,18 +67,18 @@ def _graph_connected_component(graph, node_id):
 
 
 def _graph_is_connected(graph):
-    """ Return whether the graph is connected (True) or Not (False)
+    """ Return whether the graph is connected (True) or Not (False).
 
     Parameters
     ----------
-    graph : array-like or sparse matrix, shape: (n_samples, n_samples)
-        adjacency matrix of the graph, non-zero weight means an edge
-        between the nodes
+    graph : {array-like, sparse matrix} of shape (n_samples, n_samples)
+        Adjacency matrix of the graph, non-zero weight means an edge
+        between the nodes.
 
     Returns
     -------
     is_connected : bool
-        True means the graph is fully connected and False means not
+        True means the graph is fully connected and False means not.
     """
     if sparse.isspmatrix(graph):
         # sparse graph, find all the connected components
@@ -90,20 +91,22 @@ def _graph_is_connected(graph):
 
 def _set_diag(laplacian, value, norm_laplacian):
     """Set the diagonal of the laplacian matrix and convert it to a
-    sparse format well suited for eigenvalue decomposition
+    sparse format well suited for eigenvalue decomposition.
 
     Parameters
     ----------
-    laplacian : array or sparse matrix
-        The graph laplacian
+    laplacian : {ndarray, sparse matrix}
+        The graph laplacian.
+
     value : float
-        The value of the diagonal
+        The value of the diagonal.
+
     norm_laplacian : bool
-        Whether the value of the diagonal should be changed or not
+        Whether the value of the diagonal should be changed or not.
 
     Returns
     -------
-    laplacian : array or sparse matrix
+    laplacian : {array, sparse matrix}
         An array of matrix in a form that is well suited to fast
         eigenvalue decomposition, depending on the band width of the
         matrix.
@@ -132,7 +135,8 @@ def _set_diag(laplacian, value, norm_laplacian):
     return laplacian
 
 
-def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
+@_deprecate_positional_args
+def spectral_embedding(adjacency, *, n_components=8, eigen_solver=None,
                        random_state=None, eigen_tol=0.0,
                        norm_laplacian=True, drop_first=True):
     """Project the sample on the first eigenvectors of the graph Laplacian.
@@ -157,33 +161,32 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
 
     Parameters
     ----------
-    adjacency : array-like or sparse graph, shape: (n_samples, n_samples)
+    adjacency : {array-like, sparse graph} of shape (n_samples, n_samples)
         The adjacency matrix of the graph to embed.
 
-    n_components : integer, optional, default 8
+    n_components : int, default=8
         The dimension of the projection subspace.
 
-    eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}, default None
+    eigen_solver : {'arpack', 'lobpcg', 'amg'}, default=None
         The eigenvalue decomposition strategy to use. AMG requires pyamg
         to be installed. It can be faster on very large, sparse problems,
-        but may also lead to instabilities.
+        but may also lead to instabilities. If None, then ``'arpack'`` is
+        used.
 
-    random_state : int, RandomState instance or None, optional, default: None
-        A pseudo random number generator used for the initialization of the
-        lobpcg eigenvectors decomposition.  If int, random_state is the seed
-        used by the random number generator; If RandomState instance,
-        random_state is the random number generator; If None, the random number
-        generator is the RandomState instance used by `np.random`. Used when
-        ``solver`` == 'amg'.
+    random_state : int, RandomState instance or None, default=None
+        Determines the random number generator used for the initialization of
+        the lobpcg eigenvectors decomposition when ``solver`` == 'amg'. Pass
+        an int for reproducible results across multiple function calls.
+        See :term: `Glossary <random_state>`.
 
-    eigen_tol : float, optional, default=0.0
+    eigen_tol : float, default=0.0
         Stopping criterion for eigendecomposition of the Laplacian matrix
         when using arpack eigen_solver.
 
-    norm_laplacian : bool, optional, default=True
+    norm_laplacian : bool, default=True
         If True, then compute normalized Laplacian.
 
-    drop_first : bool, optional, default=True
+    drop_first : bool, default=True
         Whether to drop the first eigenvector. For spectral embedding, this
         should be True as the first eigenvector should be constant vector for
         connected graph, but for spectral clustering, this should be kept as
@@ -191,7 +194,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
 
     Returns
     -------
-    embedding : array, shape=(n_samples, n_components)
+    embedding : ndarray of shape (n_samples, n_components)
         The reduced samples.
 
     Notes
@@ -213,10 +216,10 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
 
     try:
         from pyamg import smoothed_aggregation_solver
-    except ImportError:
+    except ImportError as e:
         if eigen_solver == "amg":
             raise ValueError("The eigen_solver was set to 'amg', but pyamg is "
-                             "not available.")
+                             "not available.") from e
 
     if eigen_solver is None:
         eigen_solver = 'arpack'
@@ -301,7 +304,8 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         # matrix to the solver and afterward set it back to the original.
         diag_shift = 1e-5 * sparse.eye(laplacian.shape[0])
         laplacian += diag_shift
-        ml = smoothed_aggregation_solver(check_array(laplacian, 'csr'))
+        ml = smoothed_aggregation_solver(check_array(laplacian,
+                                                     accept_sparse='csr'))
         laplacian -= diag_shift
 
         M = ml.aspreconditioner()
@@ -364,10 +368,12 @@ class SpectralEmbedding(BaseEstimator):
 
     Parameters
     ----------
-    n_components : integer, default: 2
+    n_components : int, default=2
         The dimension of the projected subspace.
 
-    affinity : string or callable, default : "nearest_neighbors"
+    affinity : {'nearest_neighbors', 'rbf', 'precomputed', \
+                'precomputed_nearest_neighbors'} or callable, \
+                default='nearest_neighbors'
         How to construct the affinity matrix.
          - 'nearest_neighbors' : construct the affinity matrix by computing a
            graph of nearest neighbors.
@@ -381,25 +387,26 @@ class SpectralEmbedding(BaseEstimator):
            the function takes in data matrix (n_samples, n_features)
            and return affinity matrix (n_samples, n_samples).
 
-    gamma : float, optional, default : 1/n_features
-        Kernel coefficient for rbf kernel.
+    gamma : float, default=None
+        Kernel coefficient for rbf kernel. If None, gamma will be set to
+        1/n_features.
 
-    random_state : int, RandomState instance or None, optional, default: None
-        A pseudo random number generator used for the initialization of the
-        lobpcg eigenvectors.  If int, random_state is the seed used by the
-        random number generator; If RandomState instance, random_state is the
-        random number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`. Used when ``solver`` ==
-        'amg'.
+    random_state : int, RandomState instance or None, default=None
+        Determines the random number generator used for the initialization of
+        the lobpcg eigenvectors when ``solver`` == 'amg'.  Pass an int for
+        reproducible results across multiple function calls.
+        See :term: `Glossary <random_state>`.
 
-    eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}
+    eigen_solver : {'arpack', 'lobpcg', 'amg'}, default=None
         The eigenvalue decomposition strategy to use. AMG requires pyamg
         to be installed. It can be faster on very large, sparse problems.
+        If None, then ``'arpack'`` is used.
 
-    n_neighbors : int, default : max(n_samples/10 , 1)
+    n_neighbors : int, default=None
         Number of nearest neighbors for nearest_neighbors graph building.
+        If None, n_neighbors will be set to max(n_samples/10, 1).
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         The number of parallel jobs to run.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -407,11 +414,10 @@ class SpectralEmbedding(BaseEstimator):
 
     Attributes
     ----------
-
-    embedding_ : array, shape = (n_samples, n_components)
+    embedding_ : ndarray of shape (n_samples, n_components)
         Spectral embedding of the training matrix.
 
-    affinity_matrix_ : array, shape = (n_samples, n_samples)
+    affinity_matrix_ : ndarray of shape (n_samples, n_samples)
         Affinity_matrix constructed from samples or precomputed.
 
     n_neighbors_ : int
@@ -444,8 +450,8 @@ class SpectralEmbedding(BaseEstimator):
       Jianbo Shi, Jitendra Malik
       http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324
     """
-
-    def __init__(self, n_components=2, affinity="nearest_neighbors",
+    @_deprecate_positional_args
+    def __init__(self, n_components=2, *, affinity="nearest_neighbors",
                  gamma=None, random_state=None, eigen_solver=None,
                  n_neighbors=None, n_jobs=None):
         self.n_components = n_components
@@ -465,12 +471,12 @@ class SpectralEmbedding(BaseEstimator):
         """Calculate the affinity matrix from data
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training vector, where n_samples is the number of samples
             and n_features is the number of features.
 
             If affinity is "precomputed"
-            X : array-like, shape (n_samples, n_samples),
+            X : array-like of shape (n_samples, n_samples),
             Interpret X as precomputed adjacency graph computed from
             samples.
 
@@ -478,7 +484,7 @@ class SpectralEmbedding(BaseEstimator):
 
         Returns
         -------
-        affinity_matrix, shape (n_samples, n_samples)
+        affinity_matrix of shape (n_samples, n_samples)
         """
         if self.affinity == 'precomputed':
             self.affinity_matrix_ = X
@@ -520,7 +526,7 @@ class SpectralEmbedding(BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training vector, where n_samples is the number of samples
             and n_features is the number of features.
 
@@ -529,14 +535,16 @@ class SpectralEmbedding(BaseEstimator):
             Interpret X as precomputed adjacency graph computed from
             samples.
 
+        y : Ignored
+
         Returns
         -------
         self : object
             Returns the instance itself.
         """
 
-        X = check_array(X, accept_sparse='csr', ensure_min_samples=2,
-                        estimator=self)
+        X = self._validate_data(X, accept_sparse='csr', ensure_min_samples=2,
+                                estimator=self)
 
         random_state = check_random_state(self.random_state)
         if isinstance(self.affinity, str):
@@ -561,18 +569,20 @@ class SpectralEmbedding(BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training vector, where n_samples is the number of samples
             and n_features is the number of features.
 
             If affinity is "precomputed"
-            X : {array-like, sparse matrix}, shape (n_samples, n_samples),
+            X : {array-like, sparse matrix} of shape (n_samples, n_samples),
             Interpret X as precomputed adjacency graph computed from
             samples.
 
+        y : Ignored
+
         Returns
         -------
-        X_new : array-like, shape (n_samples, n_components)
+        X_new : array-like of shape (n_samples, n_components)
         """
         self.fit(X)
         return self.embedding_

@@ -14,22 +14,26 @@ from ..utils import check_random_state, check_array
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
+from ..utils.validation import _deprecate_positional_args
 from ..neighbors import NearestNeighbors
 
 
-def barycenter_weights(X, Z, reg=1e-3):
+def barycenter_weights(X, Y, indices, reg=1e-3):
     """Compute barycenter weights of X from Y along the first axis
 
-    We estimate the weights to assign to each point in Y[i] to recover
+    We estimate the weights to assign to each point in Y[indices] to recover
     the point X[i]. The barycenter weights sum to 1.
 
     Parameters
     ----------
     X : array-like, shape (n_samples, n_dim)
 
-    Z : array-like, shape (n_samples, n_neighbors, n_dim)
+    Y : array-like, shape (n_samples, n_dim)
 
-    reg : float, optional
+    indices : array-like, shape (n_samples, n_dim)
+            Indices of the points in Y used to compute the barycenter
+
+    reg : float, default=1e-3
         amount of regularization to add for the problem to be
         well-posed in the case of n_neighbors > n_dim
 
@@ -42,27 +46,30 @@ def barycenter_weights(X, Z, reg=1e-3):
     See developers note for more information.
     """
     X = check_array(X, dtype=FLOAT_DTYPES)
-    Z = check_array(Z, dtype=FLOAT_DTYPES, allow_nd=True)
+    Y = check_array(Y, dtype=FLOAT_DTYPES)
+    indices = check_array(indices, dtype=int)
 
-    n_samples, n_neighbors = X.shape[0], Z.shape[1]
+    n_samples, n_neighbors = indices.shape
+    assert X.shape[0] == n_samples
+
     B = np.empty((n_samples, n_neighbors), dtype=X.dtype)
     v = np.ones(n_neighbors, dtype=X.dtype)
 
     # this might raise a LinalgError if G is singular and has trace
     # zero
-    for i, A in enumerate(Z.transpose(0, 2, 1)):
-        C = A.T - X[i]  # broadcasting
+    for i, ind in enumerate(indices):
+        A = Y[ind]
+        C = A - X[i]  # broadcasting
         G = np.dot(C, C.T)
         trace = np.trace(G)
         if trace > 0:
             R = reg * trace
         else:
             R = reg
-        G.flat[::Z.shape[1] + 1] += R
+        G.flat[::n_neighbors + 1] += R
         w = solve(G, v, sym_pos=True)
         B[i, :] = w / np.sum(w)
     return B
-
 
 def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3, n_jobs=None):
     """Computes the barycenter weighted graph of k-Neighbors for points in X
@@ -76,12 +83,12 @@ def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3, n_jobs=None):
     n_neighbors : int
         Number of neighbors for each sample.
 
-    reg : float, optional
+    reg : float, default=1e-3
         Amount of regularization when solving the least-squares
         problem. Only relevant if mode='barycenter'. If None, use the
         default.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         The number of parallel jobs to run for neighbors search.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -92,16 +99,16 @@ def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3, n_jobs=None):
     A : sparse matrix in CSR format, shape = [n_samples, n_samples]
         A[i, j] is assigned the weight of edge that connects i to j.
 
-    See also
+    See Also
     --------
     sklearn.neighbors.kneighbors_graph
     sklearn.neighbors.radius_neighbors_graph
     """
-    knn = NearestNeighbors(n_neighbors + 1, n_jobs=n_jobs).fit(X)
+    knn = NearestNeighbors(n_neighbors=n_neighbors + 1, n_jobs=n_jobs).fit(X)
     X = knn._fit_X
     n_samples = knn.n_samples_fit_
     ind = knn.kneighbors(X, return_distance=False)[:, 1:]
-    data = barycenter_weights(X, X[ind], reg=reg)
+    data = barycenter_weights(X, X, ind, reg=reg)
     indptr = np.arange(0, n_samples * n_neighbors + 1, n_neighbors)
     return csr_matrix((data.ravel(), ind.ravel(), indptr),
                       shape=(n_samples, n_samples))
@@ -117,13 +124,13 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
     M : {array, matrix, sparse matrix, LinearOperator}
         Input covariance matrix: should be symmetric positive semi-definite
 
-    k : integer
+    k : int
         Number of eigenvalues/vectors to return
 
-    k_skip : integer, optional
+    k_skip : int, default=1
         Number of low eigenvalues to skip.
 
-    eigen_solver : string, {'auto', 'arpack', 'dense'}
+    eigen_solver : {'auto', 'arpack', 'dense'}, default='arpack'
         auto : algorithm will attempt to choose the best method for input data
         arpack : use arnoldi iteration in shift-invert mode.
                     For this method, M may be a dense matrix, sparse matrix,
@@ -135,20 +142,18 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
                     or matrix type.  This method should be avoided for
                     large problems.
 
-    tol : float, optional
+    tol : float, default=1e-6
         Tolerance for 'arpack' method.
         Not used if eigen_solver=='dense'.
 
-    max_iter : int
+    max_iter : int, default=100
         Maximum number of iterations for 'arpack' method.
         Not used if eigen_solver=='dense'
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``solver`` == 'arpack'.
-
+    random_state : int, RandomState instance, default=None
+        Determines the random number generator when ``solver`` == 'arpack'.
+        Pass an int for reproducible results across multiple function calls.
+        See :term: `Glossary <random_state>`.
     """
     if eigen_solver == 'auto':
         if M.shape[0] > 200 and k + k_skip < 10:
@@ -164,14 +169,14 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
             eigen_values, eigen_vectors = eigsh(M, k + k_skip, sigma=0.0,
                                                 tol=tol, maxiter=max_iter,
                                                 v0=v0)
-        except RuntimeError as msg:
-            raise ValueError("Error in determining null-space with ARPACK. "
-                             "Error message: '%s'. "
-                             "Note that method='arpack' can fail when the "
-                             "weight matrix is singular or otherwise "
-                             "ill-behaved.  method='dense' is recommended. "
-                             "See online documentation for more information."
-                             % msg)
+        except RuntimeError as e:
+            raise ValueError(
+                "Error in determining null-space with ARPACK. Error message: "
+                "'%s'. Note that eigen_solver='arpack' can fail when the "
+                "weight matrix is singular or otherwise ill-behaved. In that "
+                "case, eigen_solver='dense' is recommended. See online "
+                "documentation for more information." % e
+            ) from e
 
         return eigen_vectors[:, k_skip:], np.sum(eigen_values[k_skip:])
     elif eigen_solver == 'dense':
@@ -185,10 +190,11 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
         raise ValueError("Unrecognized eigen_solver '%s'" % eigen_solver)
 
 
+@_deprecate_positional_args
 def locally_linear_embedding(
-        X, n_neighbors, n_components, reg=1e-3, eigen_solver='auto', tol=1e-6,
-        max_iter=100, method='standard', hessian_tol=1E-4, modified_tol=1E-12,
-        random_state=None, n_jobs=None):
+        X, *, n_neighbors, n_components, reg=1e-3, eigen_solver='auto',
+        tol=1e-6, max_iter=100, method='standard', hessian_tol=1E-4,
+        modified_tol=1E-12, random_state=None, n_jobs=None):
     """Perform a Locally Linear Embedding analysis on the data.
 
     Read more in the :ref:`User Guide <locally_linear_embedding>`.
@@ -199,17 +205,17 @@ def locally_linear_embedding(
         Sample data, shape = (n_samples, n_features), in the form of a
         numpy array or a NearestNeighbors object.
 
-    n_neighbors : integer
+    n_neighbors : int
         number of neighbors to consider for each point.
 
-    n_components : integer
+    n_components : int
         number of coordinates for the manifold.
 
-    reg : float
+    reg : float, default=1e-3
         regularization constant, multiplies the trace of the local covariance
         matrix of the distances.
 
-    eigen_solver : string, {'auto', 'arpack', 'dense'}
+    eigen_solver : {'auto', 'arpack', 'dense'}, default='auto'
         auto : algorithm will attempt to choose the best method for input data
 
         arpack : use arnoldi iteration in shift-invert mode.
@@ -223,14 +229,14 @@ def locally_linear_embedding(
                     or matrix type.  This method should be avoided for
                     large problems.
 
-    tol : float, optional
+    tol : float, default=1e-6
         Tolerance for 'arpack' method
         Not used if eigen_solver=='dense'.
 
-    max_iter : integer
+    max_iter : int, default=100
         maximum number of iterations for the arpack solver.
 
-    method : {'standard', 'hessian', 'modified', 'ltsa'}
+    method : {'standard', 'hessian', 'modified', 'ltsa'}, default='standard'
         standard : use the standard locally linear embedding algorithm.
                    see reference [1]_
         hessian  : use the Hessian eigenmap method.  This method requires
@@ -241,21 +247,20 @@ def locally_linear_embedding(
         ltsa     : use local tangent space alignment algorithm
                    see reference [4]_
 
-    hessian_tol : float, optional
+    hessian_tol : float, default=1e-4
         Tolerance for Hessian eigenmapping method.
         Only used if method == 'hessian'
 
-    modified_tol : float, optional
+    modified_tol : float, default=1e-12
         Tolerance for modified LLE method.
         Only used if method == 'modified'
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``solver`` == 'arpack'.
+    random_state : int, RandomState instance, default=None
+        Determines the random number generator when ``solver`` == 'arpack'.
+        Pass an int for reproducible results across multiple function calls.
+        See :term: `Glossary <random_state>`.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         The number of parallel jobs to run for neighbors search.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -526,17 +531,17 @@ class LocallyLinearEmbedding(TransformerMixin,
 
     Parameters
     ----------
-    n_neighbors : integer
+    n_neighbors : int, default=5
         number of neighbors to consider for each point.
 
-    n_components : integer
+    n_components : int, default=2
         number of coordinates for the manifold
 
-    reg : float
+    reg : float, default=1e-3
         regularization constant, multiplies the trace of the local covariance
         matrix of the distances.
 
-    eigen_solver : string, {'auto', 'arpack', 'dense'}
+    eigen_solver : {'auto', 'arpack', 'dense'}, default='auto'
         auto : algorithm will attempt to choose the best method for input data
 
         arpack : use arnoldi iteration in shift-invert mode.
@@ -550,15 +555,15 @@ class LocallyLinearEmbedding(TransformerMixin,
                     or matrix type.  This method should be avoided for
                     large problems.
 
-    tol : float, optional
+    tol : float, default=1e-6
         Tolerance for 'arpack' method
         Not used if eigen_solver=='dense'.
 
-    max_iter : integer
+    max_iter : int, default=100
         maximum number of iterations for the arpack solver.
         Not used if eigen_solver=='dense'.
 
-    method : string ('standard', 'hessian', 'modified' or 'ltsa')
+    method : {'standard', 'hessian', 'modified', 'ltsa'}, default='standard'
         standard : use the standard locally linear embedding algorithm.  see
                    reference [1]
         hessian  : use the Hessian eigenmap method. This method requires
@@ -569,25 +574,25 @@ class LocallyLinearEmbedding(TransformerMixin,
         ltsa     : use local tangent space alignment algorithm
                    see reference [4]
 
-    hessian_tol : float, optional
+    hessian_tol : float, default=1e-4
         Tolerance for Hessian eigenmapping method.
         Only used if ``method == 'hessian'``
 
-    modified_tol : float, optional
+    modified_tol : float, default=1e-12
         Tolerance for modified LLE method.
         Only used if ``method == 'modified'``
 
-    neighbors_algorithm : string ['auto'|'brute'|'kd_tree'|'ball_tree']
+    neighbors_algorithm : {'auto', 'brute', 'kd_tree', 'ball_tree'}, \
+                          default='auto'
         algorithm to use for nearest neighbors search,
         passed to neighbors.NearestNeighbors instance
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``eigen_solver`` == 'arpack'.
+    random_state : int, RandomState instance, default=None
+        Determines the random number generator when
+        ``eigen_solver`` == 'arpack'. Pass an int for reproducible results
+        across multiple function calls. See :term: `Glossary <random_state>`.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         The number of parallel jobs to run.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -632,8 +637,8 @@ class LocallyLinearEmbedding(TransformerMixin,
         dimensionality reduction via tangent space alignment.
         Journal of Shanghai Univ.  8:406 (2004)
     """
-
-    def __init__(self, n_neighbors=5, n_components=2, reg=1E-3,
+    @_deprecate_positional_args
+    def __init__(self, *, n_neighbors=5, n_components=2, reg=1E-3,
                  eigen_solver='auto', tol=1E-6, max_iter=100,
                  method='standard', hessian_tol=1E-4, modified_tol=1E-12,
                  neighbors_algorithm='auto', random_state=None, n_jobs=None):
@@ -651,16 +656,17 @@ class LocallyLinearEmbedding(TransformerMixin,
         self.n_jobs = n_jobs
 
     def _fit_transform(self, X):
-        self.nbrs_ = NearestNeighbors(self.n_neighbors,
+        self.nbrs_ = NearestNeighbors(n_neighbors=self.n_neighbors,
                                       algorithm=self.neighbors_algorithm,
                                       n_jobs=self.n_jobs)
 
         random_state = check_random_state(self.random_state)
-        X = check_array(X, dtype=float)
+        X = self._validate_data(X, dtype=float)
         self.nbrs_.fit(X)
         self.embedding_, self.reconstruction_error_ = \
             locally_linear_embedding(
-                self.nbrs_, self.n_neighbors, self.n_components,
+                X=self.nbrs_, n_neighbors=self.n_neighbors,
+                n_components=self.n_components,
                 eigen_solver=self.eigen_solver, tol=self.tol,
                 max_iter=self.max_iter, method=self.method,
                 hessian_tol=self.hessian_tol, modified_tol=self.modified_tol,
@@ -722,8 +728,7 @@ class LocallyLinearEmbedding(TransformerMixin,
         X = check_array(X)
         ind = self.nbrs_.kneighbors(X, n_neighbors=self.n_neighbors,
                                     return_distance=False)
-        weights = barycenter_weights(X, self.nbrs_._fit_X[ind],
-                                     reg=self.reg)
+        weights = barycenter_weights(X, self.nbrs_._fit_X, ind, reg=self.reg)
         X_new = np.empty((X.shape[0], self.n_components))
         for i in range(X.shape[0]):
             X_new[i] = np.dot(self.embedding_[ind[i]].T, weights[i])
