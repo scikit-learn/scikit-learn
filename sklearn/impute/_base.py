@@ -494,18 +494,18 @@ class SimpleImputer(_BaseImputer):
     def _more_tags(self):
         return {'allow_nan': True}
 
-    def get_feature_names(self, input_features=None):
-        """Get feature names for transformation.
+    def get_output_names(self, input_features=None):
+        """Get output feature names for transformation.
 
         Parameters
         ----------
-        input_features : array-like of string
+        input_features : array-like of str
             Input feature names.
 
         Returns
         -------
-        feature_names : array-like of string
-            Transformed feature names
+        feature_names : ndarray of str
+            Transformed feature names.
         """
         check_is_fitted(self, 'statistics_')
         input_features = _make_feature_names(self.statistics_.shape[0],
@@ -871,17 +871,17 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             "preserves_dtype": [],
         }
 
-    def get_feature_names(self, input_features=None):
-        """Get output feature names.
+    def get_output_names(self, input_features=None):
+        """Get output feature names for transformation.
 
         Parameters
         ----------
-        input_features : list of string or None
-            String names of the input features.
+        input_features : array-like of str or None, default=None
+            Not used, present here for API consistency by convention.
 
         Returns
         -------
-        output_feature_names : list of string
+        output_feature_names : list of str
             Feature names for transformer output.
         """
         return _make_feature_names(

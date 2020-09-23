@@ -11,15 +11,14 @@ def _make_feature_names(n_features, prefix='x', input_features=None):
         Number of feature names to generate
     prefix : str, default='x'
         Prefix for each feature name.
-    input_features : array-like of string
+    input_features : array-like of str
         Optional existing input features, returned unchanged if not None.
 
     Returns
     -------
-    feature_names : list of str
+    feature_names : array-like of str
         Generated feature names of length n_features.
     """
     if input_features is not None:
         return input_features
-    return ["{}{}".format(prefix, i)
-            for i in range(n_features)]
+    return [f"{prefix}{i}" for i in range(n_features)]

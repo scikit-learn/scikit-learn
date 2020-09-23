@@ -573,6 +573,26 @@ class OneHotEncoder(_BaseEncoder):
         output_feature_names : ndarray of shape (n_output_features,)
             Array of feature names.
         """
+        feature_names = self.get_output_names(input_features=input_features)
+        return np.array(feature_names, dtype=object)
+
+    def get_output_names(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Returns input_features as this transformation
+        doesn't add or drop features.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Input features. If None, they are generated as
+            x0, x1, ..., xn_features.
+
+        Returns
+        -------
+        feature_names : array-like of str
+            Transformed feature names.
+        """
         check_is_fitted(self)
         cats = self.categories_
         if input_features is None:
@@ -590,8 +610,7 @@ class OneHotEncoder(_BaseEncoder):
             if self.drop_idx_ is not None and self.drop_idx_[i] is not None:
                 names.pop(self.drop_idx_[i])
             feature_names.extend(names)
-
-        return np.array(feature_names, dtype=object)
+        return feature_names
 
 
 class OrdinalEncoder(_BaseEncoder):

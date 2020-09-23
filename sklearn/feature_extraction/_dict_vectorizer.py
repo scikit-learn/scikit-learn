@@ -376,6 +376,21 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         """
         return self.feature_names_
 
+    def get_output_names(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Not used, present here for API consistency by convention.
+
+        Returns
+        -------
+        output_feature_names : list of str
+            Feature names for transformer output.
+        """
+        return self.feature_names_
+
     def restrict(self, support, indices=False):
         """Restrict the features to those in support using feature selection.
 

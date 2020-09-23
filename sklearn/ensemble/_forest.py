@@ -2374,12 +2374,3 @@ class RandomTreesEmbedding(BaseForest):
         """
         check_is_fitted(self)
         return self.one_hot_encoder_.transform(self.apply(X))
-
-    def get_feature_names(self, input_features=None):
-        """Feature names - not implemented yet.
-
-        Parameters
-        ----------
-        input_features : list of strings or None
-        """
-        return None

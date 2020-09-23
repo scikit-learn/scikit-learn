@@ -699,12 +699,12 @@ class TransformerMixin:
             # fit method of arity 2 (supervised transformation)
             return self.fit(X, y, **fit_params).transform(X)
 
-    def get_feature_names(self, input_features=None):
+    def get_output_names(self, input_features=None):
         """Get output feature names.
 
         Parameters
         ----------
-        input_features : list of string or None
+        input_features : list of string or None, default=None
             String names of the input features.
 
         Returns
@@ -787,30 +787,30 @@ class OutlierMixin:
         return self.fit(X).predict(X)
 
 
-class OneToOneMixin(object):
+class OneToOneMixin:
     """Provides get_feature_names for simple transformers
 
     Assumes there's a 1-to-1 correspondence between input features
     and output features.
     """
 
-    def get_feature_names(self, input_features=None):
-        """Get feature names for transformation.
+    def get_output_names(self, input_features=None):
+        """Get output feature names for transformation.
 
         Returns input_features as this transformation
         doesn't add or drop features.
 
         Parameters
         ----------
-        input_features : array-like of string
-            Input feature names.
+        input_features : array-like of str or None, default=None
+            Input features. If None, they are generated as
+            x0, x1, ..., xn_features.
 
         Returns
         -------
-        feature_names : array-like of string
-            Transformed feature names
+        feature_names : array-like of str
+            Transformed feature names.
         """
-
         return _make_feature_names(self.n_features_in_,
                                    input_features=input_features)
 

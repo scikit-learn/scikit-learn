@@ -126,14 +126,19 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         Xt[:, support] = X
         return Xt
 
-    def get_feature_names(self, input_features=None):
+    def get_output_names(self, input_features=None):
         """Mask feature names according to selected features.
 
         Parameters
         ----------
-        input_features : list of string or None
-            Input features to select from. If none, they are generated as
+        input_features : list of str or None, default=None
+            Input features to select from. If None, they are generated as
             x0, x1, ..., xn.
+
+        Returns
+        -------
+        output_feature_names : ndarray of str
+            Feature names for transformer output.
         """
         mask = self.get_support()
         input_features = _make_feature_names(mask.shape[0],

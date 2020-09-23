@@ -657,17 +657,17 @@ class LinearDiscriminantAnalysis(LinearClassifierMixin,
         # Only override for the doc
         return super().decision_function(X)
 
-    def get_feature_names(self, input_features=None):
-        """Get output feature names.
+    def get_output_names(self, input_features=None):
+        """Get output feature names for transformation.
 
         Parameters
         ----------
-        input_features : list of string or None
-            String names of the input features.
+        input_features : array-like of str or None, default=None
+            Not used, present here for API consistency by convention.
 
         Returns
         -------
-        output_feature_names : list of string
+        output_feature_names : list of str
             Feature names for transformer output.
         """
         n_components = self.n_components or np.inf

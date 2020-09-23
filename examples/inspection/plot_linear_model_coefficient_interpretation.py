@@ -208,7 +208,7 @@ _ = plt.ylim([0, 27])
 
 feature_names = (model.named_steps['columntransformer']
                       .named_transformers_['onehotencoder']
-                      .get_feature_names(input_features=categorical_columns))
+                      .get_output_names(input_features=categorical_columns))
 feature_names = np.concatenate(
     [feature_names, numerical_columns])
 

@@ -19,7 +19,7 @@ from joblib import Parallel
 from .base import clone, TransformerMixin
 from .utils._estimator_html_repr import _VisualBlock
 from .utils.metaestimators import if_delegate_has_method
-from .utils import Bunch, _print_elapsed_time
+from .utils import Bunch, _print_elapsed_time, deprecated
 from .utils.validation import check_memory
 from .utils.validation import _deprecate_positional_args
 from .utils.fixes import delayed
@@ -625,8 +625,8 @@ class Pipeline(_BaseComposition):
         # check if first estimator expects pairwise input
         return getattr(self.steps[0][1], '_pairwise', False)
 
-    def get_feature_names(self, input_features=None):
-        """Get feature names for transformation.
+    def get_output_names(self, input_features=None):
+        """Get output feature names for transformation.
 
         Transform input features using the pipeline.
         If the last step is a transformer, it's included
@@ -634,8 +634,8 @@ class Pipeline(_BaseComposition):
 
         Parameters
         ----------
-        input_features : array-like of string
-            Input feature names.
+        input_features : array-like of str or None, default=None
+            Input features.
 
         Returns
         -------
@@ -643,17 +643,14 @@ class Pipeline(_BaseComposition):
             Transformed feature names
         """
         feature_names = input_features
-        for i, name, transform in self._iter():
-            if not hasattr(transform, "get_feature_names"):
+        for _, name, transform in self._iter():
+            if not hasattr(transform, "get_output_names"):
                 raise TypeError(
-                    "Estimator {} does provide get_feature_names. "
-                    "Did you mean to call Pipeline[:-1].get_feature_names"
+                    "Estimator {} does provide get_output_names. "
+                    "Did you mean to call Pipeline[:-1].get_output_names"
                     "()?".format(name))
-            try:
-                feature_names = transform.get_feature_names(
-                    input_features=feature_names)
-            except TypeError:
-                feature_names = transform.get_feature_names()
+            feature_names = transform.get_output_names(
+                input_features=feature_names)
         return feature_names
 
     @property
@@ -935,6 +932,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
                 for name, trans in self.transformer_list
                 if trans != 'drop')
 
+    @deprecated("get_feature_names is deprecated in 0.24 and will be removed "
+                "in 0.26. You can use get_output_names instead")
     def get_feature_names(self):
         """Get feature names from all transformers.
 
@@ -951,6 +950,30 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
                                      % (str(name), type(trans).__name__))
             feature_names.extend([name + "__" + f for f in
                                   trans.get_feature_names()])
+        return feature_names
+
+    def get_output_names(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Input features.
+
+        Returns
+        -------
+        output_feature_names : list of str
+            Transformed feature names.
+        """
+        feature_names = []
+        for name, trans, _ in self._iter():
+            if not hasattr(trans, 'get_output_names'):
+                raise AttributeError("Transformer %s (type %s) does not "
+                                     "provide get_output_names."
+                                     % (str(name), type(trans).__name__))
+            feature_names.extend(
+                [name + "__" + f for f in
+                 trans.get_output_names(input_features=input_features)])
         return feature_names
 
     def fit(self, X, y=None, **fit_params):

@@ -1283,9 +1283,22 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         feature_names : list
             A list of feature names.
         """
+        return self.get_output_names()
 
+    def get_output_names(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Not used, present here for API consistency by convention.
+
+        Returns
+        -------
+        output_feature_names : list of str
+            Feature names for transformer output.
+        """
         self._check_vocabulary()
-
         return [t for t, i in sorted(self.vocabulary_.items(),
                                      key=itemgetter(1))]
 

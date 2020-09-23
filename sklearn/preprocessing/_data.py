@@ -23,6 +23,7 @@ from ..base import BaseEstimator, OneToOneMixin, TransformerMixin
 from ..utils import check_array
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
+from ..utils._feature_names import _make_feature_names
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
                                       inplace_csr_row_normalize_l2)
 from ..utils.sparsefuncs import (inplace_column_scale,
@@ -1630,9 +1631,24 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         -------
         output_feature_names : list of str of shape (n_output_features,)
         """
+        return self.get_output_names(input_features=input_features)
+
+    def get_output_names(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Input features. If None, they are generated as
+            x0, x1, ..., xn_features.
+
+        Returns
+        -------
+        feature_names : array-like of str
+            Transformed feature names.
+        """
         powers = self.powers_
-        if input_features is None:
-            input_features = ['x%d' % i for i in range(powers.shape[1])]
+        input_features = _make_feature_names(n_features=powers.shape[1])
         feature_names = []
         for row in powers:
             inds = np.where(row)[0]

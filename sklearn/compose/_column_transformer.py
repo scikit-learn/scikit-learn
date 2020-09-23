@@ -386,6 +386,45 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                                  more_names])
         return feature_names
 
+    def get_output_names(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Not used, present here for API consistency by convention.
+
+        Returns
+        -------
+        output_feature_names : list of str
+            Transformed feature names.
+        """
+        check_is_fitted(self)
+        feature_names = []
+        for name, trans, column, _ in self._iter(fitted=True):
+            if trans == 'drop' or (
+                    hasattr(column, '__len__') and not len(column)):
+                continue
+            if trans == 'passthrough':
+                if hasattr(self, '_df_columns'):
+                    if ((not isinstance(column, slice))
+                            and all(isinstance(col, str) for col in column)):
+                        feature_names.extend(column)
+                    else:
+                        feature_names.extend(self._df_columns[column])
+                else:
+                    indices = np.arange(self._n_features)
+                    feature_names.extend(['x%d' % i for i in indices[column]])
+                continue
+            if not hasattr(trans, 'get_output_names'):
+                raise AttributeError("Transformer %s (type %s) does not "
+                                     "provide get_output_names."
+                                     % (str(name), type(trans).__name__))
+            more_names = trans.get_output_names(input_features=column)
+            feature_names.extend([name + "__" + f for f in
+                                 more_names])
+        return feature_names
+
     def _update_fitted_transformers(self, transformers):
         # transformers are fitted; excludes 'drop' cases
         fitted_transformers = iter(transformers)
