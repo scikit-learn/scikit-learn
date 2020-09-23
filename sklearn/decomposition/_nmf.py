@@ -17,6 +17,7 @@ from ._cdnmf_fast import _update_cdnmf_fast
 from ..base import BaseEstimator, TransformerMixin
 from ..exceptions import ConvergenceWarning
 from ..utils import check_random_state, check_array
+from ..utils._feature_names import _make_feature_names
 from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
 from ..utils.validation import check_is_fitted, check_non_negative
 from ..utils.validation import _deprecate_positional_args
@@ -1376,3 +1377,19 @@ class NMF(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
         return np.dot(W, self.components_)
+
+    def get_output_names(self, input_features=None):
+        """Get output feature names.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Not used, present here for API consistency by convention.
+
+        Returns
+        -------
+        output_feature_names : list of str
+            Feature names for transformer output.
+        """
+        return _make_feature_names(n_features=self.n_components_,
+                                   prefix=type(self).__name__.lower())

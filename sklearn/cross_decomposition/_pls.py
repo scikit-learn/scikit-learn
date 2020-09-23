@@ -20,6 +20,7 @@ from ..utils.validation import check_is_fitted, FLOAT_DTYPES
 from ..utils.validation import _deprecate_positional_args
 from ..exceptions import ConvergenceWarning
 from ..utils.deprecation import deprecated
+from ..utils._feature_names import _make_feature_names
 
 __all__ = ['PLSCanonical', 'PLSRegression', 'PLSSVD']
 
@@ -440,6 +441,22 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
     def _more_tags(self):
         return {'poor_score': True,
                 'requires_y': False}
+
+    def get_output_names(self, input_features=None):
+        """Get output feature names.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Not used, present here for API consistency by convention.
+
+        Returns
+        -------
+        output_feature_names : list of str
+            Feature names for transformer output.
+        """
+        return _make_feature_names(n_features=self.n_components,
+                                   prefix=type(self).__name__.lower())
 
 
 class PLSRegression(_PLS):
@@ -956,3 +973,19 @@ class PLSSVD(TransformerMixin, BaseEstimator):
             `(X_transformed, Y_transformed)` otherwise.
         """
         return self.fit(X, y).transform(X, y)
+
+    def get_output_names(self, input_features=None):
+        """Get output feature names.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Not used, present here for API consistency by convention.
+
+        Returns
+        -------
+        output_feature_names : list of str
+            Feature names for transformer output.
+        """
+        return _make_feature_names(n_features=self.n_components,
+                                   prefix=type(self).__name__.lower())

@@ -21,6 +21,7 @@ from ..utils import check_array, as_float_array, check_random_state
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
 from ..utils.validation import _deprecate_positional_args
+from ..utils._feature_names import _make_feature_names
 
 __all__ = ['fastica', 'FastICA']
 
@@ -624,3 +625,19 @@ class FastICA(TransformerMixin, BaseEstimator):
             X += self.mean_
 
         return X
+
+    def get_output_names(self, input_features=None):
+        """Get output feature names.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Not used, present here for API consistency by convention.
+
+        Returns
+        -------
+        output_feature_names : list of str
+            Feature names for transformer output.
+        """
+        return _make_feature_names(n_features=self.components_.shape[0],
+                                   prefix=type(self).__name__.lower())
