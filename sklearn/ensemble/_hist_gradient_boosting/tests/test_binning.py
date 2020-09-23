@@ -306,8 +306,9 @@ def test_infinite_values():
 
 @pytest.mark.parametrize("n_bins", [15, 256])
 def test_categorical_feature(n_bins):
-    # test when n_bins is large enough to hold all categories (+ missing
-    # values bin which is always allocated)
+    # Basic test for categorical features
+    # we make sure that categories are mapped into [0, n_categories - 1] and
+    # that nans are mapped to the last bin
     X = np.array([[4] * 500 +
                   [1] * 3 +
                   [10] * 4 +
@@ -323,13 +324,15 @@ def test_categorical_feature(n_bins):
     assert bin_mapper.n_bins_non_missing_ == [6]
     assert_array_equal(bin_mapper.bin_thresholds_[0], [0, 1, 4, 7, 10, 13])
 
-    X_trans = bin_mapper.transform(
-        np.array([[10, 1, 13, np.nan, 7, 4, 0]], dtype=X_DTYPE).T)
+    X = np.array([[0, 1, 4, np.nan, 7, 10, 13]], dtype=X_DTYPE).T
+    expected_trans = np.array([[0, 1, 2, n_bins - 1, 3, 4, 5]]).T
+    assert_array_equal(bin_mapper.transform(X), expected_trans)
 
-    # missing, and unknown values are mapped to the missing bin
-    missing_val_bin = n_bins - 1
-    expected_trans = np.array([[4, 1, 5, missing_val_bin, 3, 2, 0]]).T
-    assert_array_equal(X_trans, expected_trans)
+    # For unknown categories, the mapping is incorrect. This never happens in
+    # practice. This check is only for illustration purpose.
+    X = np.array([[-1, 100]], dtype=X_DTYPE).T
+    expected_trans = np.array([[0, 6]]).T
+    assert_array_equal(bin_mapper.transform(X), expected_trans)
 
 
 @pytest.mark.parametrize("n_bins", (128, 256))

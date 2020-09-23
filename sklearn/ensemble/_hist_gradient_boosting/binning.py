@@ -213,7 +213,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
                 n_bins_non_missing.append(thresholds.shape[0] + 1)
             else:
                 # Since there are at most max_bins categories and since values
-                # are < 254, the bins *are* the categorical values.
+                # are < 254, the thresholds *are* the categorical values.
                 thresholds = known_categories[f_idx]
                 n_bins_non_missing.append(thresholds.shape[0])
 
