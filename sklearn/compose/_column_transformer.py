@@ -381,12 +381,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 raise AttributeError("Transformer %s (type %s) does not "
                                      "provide get_feature_names."
                                      % (str(name), type(trans).__name__))
-            try:
-                more_names = trans.get_feature_names(input_features=column)
-            except TypeError:
-                more_names = trans.get_feature_names()
             feature_names.extend([name + "__" + f for f in
-                                 more_names])
+                                  trans.get_feature_names()])
+        return feature_names
         return feature_names
 
     def get_output_names(self, input_features=None):
@@ -423,9 +420,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 raise AttributeError("Transformer %s (type %s) does not "
                                      "provide get_output_names."
                                      % (str(name), type(trans).__name__))
-            more_names = trans.get_output_names(input_features=column)
-            feature_names.extend([name + "__" + f for f in
-                                 more_names])
+            feature_names.extend(
+                [name + "__" + f
+                 for f in trans.get_output_names(input_features=column)])
         return feature_names
 
     def _update_fitted_transformers(self, transformers):
