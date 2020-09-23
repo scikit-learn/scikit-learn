@@ -589,21 +589,21 @@ def test_ordinal_encoder_handle_unknowns_raise():
     X = np.array([['a', 'x'], ['b', 'y']], dtype=object)
 
     enc = OrdinalEncoder(handle_unknown='use_encoded_value')
-    msg = ("unknown_value should be an integer when `handle_unknown is "
-           "'use_encoded_value'`, got None.")
+    msg = ("unknown_value should be an integer or np.nan when handle_unknown "
+           "is 'use_encoded_value', got None.")
     with pytest.raises(TypeError, match=msg):
         enc.fit(X)
 
     enc = OrdinalEncoder(unknown_value=-2)
-    msg = ("unknown_value should only be set when `handle_unknown is "
-           "'use_encoded_value'`, got -2.")
+    msg = ("unknown_value should only be set when handle_unknown is "
+           "'use_encoded_value', got -2.")
     with pytest.raises(TypeError, match=msg):
         enc.fit(X)
 
     enc = OrdinalEncoder(handle_unknown='use_encoded_value',
                          unknown_value='bla')
-    msg = ("unknown_value should be an integer when `handle_unknown is "
-           "'use_encoded_value'`, got bla.")
+    msg = ("unknown_value should be an integer or np.nan when handle_unknown "
+           "is 'use_encoded_value', got bla.")
     with pytest.raises(TypeError, match=msg):
         enc.fit(X)
 
@@ -612,6 +612,30 @@ def test_ordinal_encoder_handle_unknowns_raise():
            "used for encoding the seen categories.")
     with pytest.raises(ValueError, match=msg):
         enc.fit(X)
+
+
+def test_ordinal_encoder_handle_unknowns_nan():
+    # Make sure unknown_value=np.nan properly works
+
+    enc = OrdinalEncoder(handle_unknown='use_encoded_value',
+                         unknown_value=np.nan)
+
+    X_fit = np.array([[1], [2], [3]])
+    enc.fit(X_fit)
+    X_trans = enc.transform([[1], [2], [4]])
+    assert_array_equal(X_trans, [[0], [1], [np.nan]])
+
+
+def test_ordinal_encoder_handle_unknowns_nan_non_float_dtype():
+    # Make sure an error is raised when unknown_value=np.nan and the dtype
+    # isn't a float dtype
+    enc = OrdinalEncoder(handle_unknown='use_encoded_value',
+                         unknown_value=np.nan, dtype=int)
+
+    X_fit = np.array([[1], [2], [3]])
+    with pytest.raises(ValueError,
+                       match="dtype parameter should be a float dtype"):
+        enc.fit(X_fit)
 
 
 def test_ordinal_encoder_raise_categories_shape():

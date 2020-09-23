@@ -43,8 +43,8 @@ class ConfusionMatrixDisplay:
 
     See Also
     --------
-    confusion_matrix :
-        Compute Confusion Matrix to evaluate the accuracy of a classification.
+    confusion_matrix : Compute Confusion Matrix to evaluate the accuracy of a
+        classification.
     plot_confusion_matrix : Plot Confusion Matrix.
 
     Examples
@@ -65,6 +65,7 @@ class ConfusionMatrixDisplay:
     ...                               display_labels=clf.classes_)
     >>> disp.plot() # doctest: +SKIP
     """
+    @_deprecate_positional_args
     def __init__(self, confusion_matrix, *, display_labels=None):
         self.confusion_matrix = confusion_matrix
         self.display_labels = display_labels
@@ -230,8 +231,8 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
 
     See Also
     --------
-    confusion_matrix :
-        Compute Confusion Matrix to evaluate the accuracy of a classification.
+    confusion_matrix : Compute Confusion Matrix to evaluate the accuracy of a
+        classification.
     ConfusionMatrixDisplay : Confusion Matrix visualization.
 
     Examples
