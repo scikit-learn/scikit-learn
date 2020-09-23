@@ -542,7 +542,8 @@ Changelog
   ``use_encoded_value`` option, along with a new ``unknown_value`` parameter,
   to :class:`preprocessing.OrdinalEncoder` to allow unknown categories during
   transform and set the encoded value of the unknown categories.
-  :pr:`17406` by :user:`Felix Wick <FelixWick>`.
+  :pr:`17406` by :user:`Felix Wick <FelixWick>` and :pr:`18406` by
+  `Nicolas Hug`_.
 
 - |Feature| Add ``clip`` parameter to :class:`preprocessing.MinMaxScaler`,
   which clips the transformed values of test data to ``feature_range``.
