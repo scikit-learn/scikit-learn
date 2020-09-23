@@ -145,7 +145,9 @@ def test_one_hot_encoder_feature_names(get_names):
 
     enc.fit(X)
     feature_names = getattr(enc, get_names)()
-    assert isinstance(feature_names, np.ndarray)
+
+    if get_names == 'get_feature_names':
+        assert isinstance(feature_names, np.ndarray)
 
     assert_array_equal(['x0_Female', 'x0_Male',
                         'x1_1', 'x1_41', 'x1_51', 'x1_91',
@@ -431,7 +433,8 @@ def test_one_hot_encoder_feature_names_drop(get_names, drop, expected_names):
     ohe = OneHotEncoder(drop=drop)
     ohe.fit(X)
     feature_names = getattr(ohe, get_names)()
-    assert isinstance(feature_names, np.ndarray)
+    if get_names == 'get_feature_names':
+        assert isinstance(feature_names, np.ndarray)
     assert_array_equal(expected_names, feature_names)
 
 

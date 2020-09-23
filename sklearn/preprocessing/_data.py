@@ -1651,7 +1651,8 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             Transformed feature names.
         """
         powers = self.powers_
-        input_features = _make_feature_names(n_features=powers.shape[1])
+        input_features = _make_feature_names(n_features=powers.shape[1],
+                                             input_features=input_features)
         feature_names = []
         for row in powers:
             inds = np.where(row)[0]

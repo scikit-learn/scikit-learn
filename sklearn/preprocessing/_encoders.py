@@ -276,8 +276,7 @@ class OneHotEncoder(_BaseEncoder):
     array([['Male', 1],
            [None, 2]], dtype=object)
     >>> enc.get_output_names(['gender', 'group'])
-    array(['gender_Female', 'gender_Male', 'group_1', 'group_2', 'group_3'],
-      dtype=object)
+    ['gender_Female', 'gender_Male', 'group_1', 'group_2', 'group_3']
 
     One can always drop the first column for each feature:
 
