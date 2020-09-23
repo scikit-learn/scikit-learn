@@ -1368,3 +1368,11 @@ def test_tie_breaking_sample_order_invariance():
     vocab1 = vec.fit(['hello', 'world']).vocabulary_
     vocab2 = vec.fit(['world', 'hello']).vocabulary_
     assert vocab1 == vocab2
+
+
+# TODO: Remove in 0.26 when get_feature_names is removed
+def test_get_feature_names_deprecated():
+    cv = CountVectorizer(max_df=0.5).fit(ALL_FOOD_DOCS)
+    msg = "get_feature_names is deprecated in 0.24"
+    with pytest.warns(FutureWarning, match=msg):
+        cv.get_feature_names()

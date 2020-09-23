@@ -30,6 +30,7 @@ from ..preprocessing import normalize
 from ._hash import FeatureHasher
 from ._stop_words import ENGLISH_STOP_WORDS
 from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
+from ..utils.deprecation import deprecated
 from ..utils import _IS_32BIT
 from ..utils.fixes import _astype_copy_false
 from ..exceptions import NotFittedError
@@ -1275,6 +1276,8 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         return [inverse_vocabulary[X[i, :].nonzero()[1]].ravel()
                 for i in range(n_samples)]
 
+    @deprecated("get_feature_names is deprecated in 0.24 and will be removed "
+                "in 0.26. You can use get_output_names instead")
     def get_feature_names(self):
         """Array mapping from feature integer indices to feature name.
 
