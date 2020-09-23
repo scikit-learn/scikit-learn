@@ -195,9 +195,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         acc_compute_hist_time = 0.  # time spent computing histograms
         # time spent predicting X for gradient and hessians update
         acc_prediction_time = 0.
-        X, y = self._validate_data(
-            X, y, dtype=[X_DTYPE], force_all_finite=False
-        )
+        X, y = self._validate_data(X, y, dtype=[X_DTYPE],
+                                   force_all_finite=False)
         y = self._encode_y(y)
         check_consistent_length(X, y)
         # Do not create unit sample weights by default to later skip some
@@ -218,7 +217,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                                             dtype='u8')
 
         self._validate_parameters()
-        n_samples, self._n_features = X.shape  # used for validation in predict
+
+        # used for validation in predict
+        n_samples, self._n_features = X.shape
 
         self.is_categorical_, known_categories = self._check_categories(X)
 
@@ -297,11 +298,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         if self.verbose:
             print("Fitting gradient boosted rounds:")
-
-        # Uses binned data to check for missing values
-        has_missing_values = (
-            X_binned_train == self._bin_mapper.missing_values_bin_idx_).any(
-                axis=0).astype(np.uint8)
 
         n_samples = X_binned_train.shape[0]
 
@@ -653,7 +649,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                                for score in recent_scores]
         return not any(recent_improvements)
 
-    def _bin_data(self, X, is_training_data, categorical_only=False):
+    def _bin_data(self, X, is_training_data):
         """Bin data X.
 
         If is_training_data, then fit the _bin_mapper attribute.
@@ -668,8 +664,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if is_training_data:
             X_binned = self._bin_mapper.fit_transform(X)  # F-aligned array
         else:
-            # F-aligned array
-            X_binned = self._bin_mapper.transform(X)
+            X_binned = self._bin_mapper.transform(X)  # F-aligned array
             # We convert the array to C-contiguous since predicting is faster
             # with this layout (training is faster on F-arrays though)
             X_binned = np.ascontiguousarray(X_binned)
@@ -733,9 +728,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         raw_predictions : array, shape (n_trees_per_iteration, n_samples)
             The raw predicted values.
         """
-        X = check_array(
-            X, dtype=[X_DTYPE, X_BINNED_DTYPE], force_all_finite=False
-        )
+        X = check_array(X, dtype=[X_DTYPE, X_BINNED_DTYPE],
+                        force_all_finite=False)
         check_is_fitted(self)
         if X.shape[1] != self._n_features:
             raise ValueError(
@@ -948,17 +942,15 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         <monotonic_cst_gbdt>`.
     categorical_features : array-like of {bool, int} of shape (n_features), \
             default=None.
-        Indicates the categorical features. The cardinality of the categorical
-        features must be less than `max_bins` and be encoded with values less
-        than `max_bins`.
+        Indicates the categorical features.
 
         - None : no feature will be considered categorical.
         - boolean array-like : boolean mask indicating categorical features.
-          The categories must have been already be numerical i.e. encoded by
-          an :class:`~sklearn.preprocessing.OrdinalEncoder`.
         - integer array-like : integer indices indicating categorical
-          features. The categories must have been already be numerical i.e.
-          encoded by an :class:`~sklearn.preprocessing.OrdinalEncoder`.
+          features.
+
+        For each categorical feature, there must be at most `max_bins` unique
+        categories, and each categorical value must be in [0, max_bins -1].
 
         Read more in the :ref:`User Guide <categorical_support_gbdt>`.
     warm_start : bool, default=False
@@ -1195,17 +1187,15 @@ class HistGradientBoostingClassifier(ClassifierMixin,
         <monotonic_cst_gbdt>`.
     categorical_features : array-like of {bool, int} of shape (n_features), \
             default=None.
-        Indicates the categorical features. The cardinality of the categorical
-        features must be less than `max_bins` and be encoded with values less
-        than `max_bins`.
+        Indicates the categorical features.
 
         - None : no feature will be considered categorical.
         - boolean array-like : boolean mask indicating categorical features.
-          The categories must have been already be numerical i.e. encoded by
-          an :class:`~sklearn.preprocessing.OrdinalEncoder`.
         - integer array-like : integer indices indicating categorical
-          features. The categories must have been already be numerical i.e.
-          encoded by an :class:`~sklearn.preprocessing.OrdinalEncoder`.
+          features.
+
+        For each categorical feature, there must be at most `max_bins` unique
+        categories, and each categorical value must be in [0, max_bins -1].
 
         Read more in the :ref:`User Guide <categorical_support_gbdt>`.
     warm_start : bool, default=False

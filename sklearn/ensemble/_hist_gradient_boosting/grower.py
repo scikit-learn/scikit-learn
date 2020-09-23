@@ -183,8 +183,8 @@ class TreeGrower:
                  max_depth=None, min_samples_leaf=20, min_gain_to_split=0.,
                  n_bins=256, n_bins_non_missing=None, has_missing_values=False,
                  is_categorical=None, monotonic_cst=None,
-                 l2_regularization=0.,
-                 min_hessian_to_split=1e-3, shrinkage=1.):
+                 l2_regularization=0., min_hessian_to_split=1e-3,
+                 shrinkage=1.):
 
         self._validate_parameters(X_binned, max_leaf_nodes, max_depth,
                                   min_samples_leaf, min_gain_to_split,
