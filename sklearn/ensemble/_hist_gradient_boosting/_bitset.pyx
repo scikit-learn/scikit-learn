@@ -53,18 +53,13 @@ def set_bitset_memoryview(BITSET_INNER_DTYPE_C[:] bitset,  # OUT
     bitset[i1] |= (1 << i2)
 
 
-def set_raw_bitset_memoryview(BITSET_INNER_DTYPE_C[:] raw_bitset,  # OUT
-                      BITSET_INNER_DTYPE_C[:] binned_bitset,
-                      X_DTYPE_C[:] categories):
+def set_raw_bitset_from_binned_bitset(BITSET_INNER_DTYPE_C[:] raw_bitset,  # OUT
+                                      BITSET_INNER_DTYPE_C[:] binned_bitset,
+                                      X_DTYPE_C[:] raw_categories):
+    """Set the raw_bitset from the values of the binned bitset"""
     cdef:
-        int i, j, index
-        int n_categories = categories.shape[0]
-
-    for i in range(binned_bitset.shape[0]):
-        for j in range(32):
-            if not (binned_bitset[i] >> j) & 1:
-                continue
-            index = 32 * i + j
-            if index >= n_categories:
-                continue
-            set_bitset_memoryview(raw_bitset, <X_BINNED_DTYPE_C>categories[index])
+        int binned_cat_value, raw_cat_value
+    
+    for binned_cat_value, raw_cat_value in enumerate(raw_categories):
+        if in_bitset_memoryview(binned_bitset, binned_cat_value):
+            set_bitset_memoryview(raw_bitset, raw_cat_value)

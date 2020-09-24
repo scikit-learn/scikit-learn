@@ -4,7 +4,7 @@ from numpy.testing import assert_allclose
 
 from sklearn.ensemble._hist_gradient_boosting._bitset import (
     set_bitset_memoryview,
-    set_raw_bitset_memoryview
+    set_raw_bitset_from_binned_bitset
 )
 
 
@@ -33,5 +33,5 @@ def test_set_bitset_memoryview(expected_bitset, values_to_insert):
     ])
 def test_raw_bitset_mv(expected_raw_bitset, binned_bitset, categories):
     raw_bitset = np.zeros(2, dtype=np.uint32)
-    set_raw_bitset_memoryview(raw_bitset, binned_bitset, categories)
+    set_raw_bitset_from_binned_bitset(raw_bitset, binned_bitset, categories)
     assert_allclose(expected_raw_bitset, raw_bitset)

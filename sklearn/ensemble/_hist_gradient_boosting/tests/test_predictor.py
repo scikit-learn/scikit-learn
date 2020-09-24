@@ -12,7 +12,7 @@ from sklearn.ensemble._hist_gradient_boosting.common import (
     G_H_DTYPE, PREDICTOR_RECORD_DTYPE, ALMOST_INF, X_BINNED_DTYPE,
     X_BITSET_INNER_DTYPE, X_DTYPE)
 from sklearn.ensemble._hist_gradient_boosting._bitset import (
-    set_bitset_memoryview, set_raw_bitset_memoryview)
+    set_bitset_memoryview, set_raw_bitset_from_binned_bitset)
 
 
 @pytest.mark.parametrize('n_bins', [200, 256])
@@ -142,8 +142,8 @@ def test_categorical_predictor(bins_go_left, expected_predictions):
     for go_left in bins_go_left:
         set_bitset_memoryview(binned_cat_bitsets[0], go_left)
 
-    set_raw_bitset_memoryview(raw_categorical_bitsets[0],
-                              binned_cat_bitsets[0], category_bins)
+    set_raw_bitset_from_binned_bitset(raw_categorical_bitsets[0],
+                                      binned_cat_bitsets[0], category_bins)
 
     predictor = TreePredictor(nodes, binned_cat_bitsets,
                               raw_categorical_bitsets)

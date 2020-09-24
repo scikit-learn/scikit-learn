@@ -20,7 +20,7 @@ from .common import X_BITSET_INNER_DTYPE
 from .common import Y_DTYPE
 from .common import MonotonicConstraint
 from ._bitset import set_bitset_memoryview
-from ._bitset import set_raw_bitset_memoryview
+from ._bitset import set_raw_bitset_from_binned_bitset
 
 EPS = np.finfo(Y_DTYPE).eps  # to avoid zero division errors
 
@@ -599,8 +599,10 @@ def _fill_predictor_arrays(predictor_nodes, binned_left_cat_bitsets,
         node['bitset_idx'] = next_free_bitset_idx
         binned_left_cat_bitsets[next_free_bitset_idx] = (
             split_info.left_cat_bitset)
-        set_raw_bitset_memoryview(raw_left_cat_bitsets[next_free_bitset_idx],
-                                  split_info.left_cat_bitset, categories)
+        set_raw_bitset_from_binned_bitset(
+            raw_left_cat_bitsets[next_free_bitset_idx],
+            split_info.left_cat_bitset, categories
+        )
         next_free_bitset_idx += 1
     else:
         node['num_threshold'] = binning_thresholds[feature_idx][bin_idx]
