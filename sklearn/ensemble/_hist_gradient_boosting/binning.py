@@ -286,8 +286,9 @@ class _BinMapper(TransformerMixin, BaseEstimator):
 
         known_cat_bitsets = np.zeros((n_categorical_features, 8),
                                      dtype=X_BITSET_INNER_DTYPE)
-        for idx, f_idx in enumerate(categorical_features_indices):
+        for mapped_f_idx, f_idx in enumerate(categorical_features_indices):
             for raw_cat_val in known_categories[f_idx]:
-                set_bitset_memoryview(known_cat_bitsets[idx], raw_cat_val)
+                set_bitset_memoryview(known_cat_bitsets[mapped_f_idx],
+                                      raw_cat_val)
 
         return known_cat_bitsets, f_idx_map
