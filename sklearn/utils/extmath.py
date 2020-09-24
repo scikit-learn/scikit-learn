@@ -694,48 +694,57 @@ def _incremental_weighted_mean_and_var(X, sample_weight,
                                        last_mean,
                                        last_variance,
                                        last_weight_sum):
-    """Calculate weighted mean and variance batch update.
-
-    last_mean and last_variance are statistics computed at the last step
-    by the function. Both must be initialized to 0.0. In case no scaling
-    is required last_variance can be None. The mean is always required and
-    returned because necessary for the calculation of the variance.
-    last_weight sum is the sum of weights encountered until now.
+    """Calculate weighted mean and weighted variance incremental update.
 
     Parameters
     ----------
-    X : array-like, shape (n_samples, n_features)
-        Data to use for statistics update
+    X : array-like of shape (n_samples, n_features)
+        Data to use for mean and variance update.
 
-    sample_weight : array-like of shape (n_samples,)
+    sample_weight : array-like of shape (n_samples,) or None
+        Sample weights. If None, then samples are equally weighted.
 
-    last_mean : array-like of shape: (n_features,)
+    last_mean : array-like of shape (n_features,)
+        Mean before the incremental update.
 
-    last_variance : None or array-like of shape: (n_features,)
+    last_variance : array-like of shape (n_features,) or None
+        Variance before the incremental update.
+        If None, variance update is not computed (in case scaling is not
+        required).
 
     last_weight_sum : array-like of shape (n_features,)
+        Sum of weights before the incremental update.
 
     Returns
     -------
     updated_mean : array of shape (n_features,)
 
-    updated_variance : array of shape (n_features,)
-        If None, only mean is computed
+    updated_variance : array of shape (n_features,) or None
+        If None, only mean is computed.
 
     updated_weight_sum : array of shape (n_features,)
 
     Notes
     -----
-    NaNs in X are ignored.
+    NaNs in `X` are ignored.
+
+    `last_mean` and `last_variance` are statistics computed at the last step
+    by the function. Both must be initialized to 0.0.
+    The mean is always required (`last_mean`) and returned (`updated_mean`),
+    whereas the variance can be None (`last_variance` and `updated_variance`).
+
+    For further details on the algorithm to perform the computation in a
+    numerically stable way, see [Finch2009]_, Sections 4 and 5.
 
     References
     ----------
-    Tony Finch
-    "Incremental calculation of weighted mean and variance"
-    University of Cambridge Computing Service, February 2009
+    .. [Finch2009] `Tony Finch,
+       "Incremental calculation of weighted mean and variance",
+       University of Cambridge Computing Service, February 2009.
+       <https://fanf2.user.srcf.net/hermes/doc/antiforgery/stats.pdf>`_
 
     """
-    # last = stats until now
+    # last = stats before the increment
     # new = the current increment
     # updated = the aggregated stats
     if sample_weight is None:
