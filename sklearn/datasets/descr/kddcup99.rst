@@ -5,7 +5,7 @@ Kddcup 99 dataset
 
 The KDD Cup '99 dataset was created by processing the tcpdump portions
 of the 1998 DARPA Intrusion Detection System (IDS) Evaluation dataset,
-created by MIT Lincoln Lab [1]_. The artificial data (described on the `dataset's
+created by MIT Lincoln Lab [2]_. The artificial data (described on the `dataset's
 homepage <https://kdd.ics.uci.edu/databases/kddcup99/kddcup99.html>`_) was
 generated using a closed network and hand-injected attacks to produce a
 large number of different types of attack with normal activity in the
@@ -23,7 +23,7 @@ We thus transform the KDD Data set into two different data sets: SA and SF.
 -SA is obtained by simply selecting all the normal data, and a small
 proportion of abnormal data to gives an anomaly proportion of 1%.
 
-- SF is obtained as in [2]_
+- SF is obtained as in [3]_
 by simply picking up the data whose attribute logged_in is positive, thus
 focusing on the intrusion attack, which gives a proportion of 0.3% of
 attack.
@@ -84,11 +84,11 @@ dataset will be downloaded from the web if necessary.
 
 .. topic:: References
 
-    .. [1] Analysis and Results of the 1999 DARPA Off-Line Intrusion
+    .. [2] Analysis and Results of the 1999 DARPA Off-Line Intrusion
            Detection Evaluation Richard Lippmann, Joshua W. Haines,
            David J. Fried, Jonathan Korba, Kumar Das
 
-    .. [2] K. Yamanishi, J.-I. Takeuchi, G. Williams, and P. Milne. Online
+    .. [3] K. Yamanishi, J.-I. Takeuchi, G. Williams, and P. Milne. Online
            unsupervised outlier detection using finite mixtures with
            discounting learning algorithms. In Proceedings of the sixth
            ACM SIGKDD international conference on Knowledge discovery
