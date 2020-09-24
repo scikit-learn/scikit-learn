@@ -325,8 +325,6 @@ def test_error_on_a_dataset_with_unseen_labels(pyplot, fitted_clf, data):
     disp = plot_confusion_matrix(fitted_clf, X, y,
                                  labels=None, display_labels=None)
 
-    disp_labels = set([tick.get_text() for tick in disp.ax_.get_xticklabels()])
-    expected_labels = unique_labels(y, fitted_clf.predict(X))
-    expected_labels = set([str(label) for label in expected_labels])
-
-    assert len(disp_labels.difference(expected_labels)) == 0
+    display_labels = [tick.get_text() for tick in disp.ax_.get_xticklabels()]
+    expected_labels = [f'{i}' for range(n_classes + 1)]
+    assert_array_equal(expected_labels, display_labels)
