@@ -138,7 +138,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
     .. Christopher M. Bishop: Pattern Recognition and Machine Learning,
         Chapter 12.2.4
 
-    See also
+    See Also
     --------
     PCA: Principal component analysis is also a latent linear variable model
         which however assumes equal noise variance for each feature.

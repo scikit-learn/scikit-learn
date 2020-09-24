@@ -103,7 +103,7 @@ class SparsePCA(TransformerMixin, BaseEstimator):
     >>> np.mean(transformer.components_ == 0)
     0.9666...
 
-    See also
+    See Also
     --------
     PCA
     MiniBatchSparsePCA
@@ -296,7 +296,7 @@ class MiniBatchSparsePCA(SparsePCA):
     >>> np.mean(transformer.components_ == 0)
     0.94
 
-    See also
+    See Also
     --------
     PCA
     SparsePCA

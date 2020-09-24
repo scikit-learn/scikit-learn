@@ -375,7 +375,7 @@ class LabelPropagation(BaseLabelPropagation):
 
     See Also
     --------
-    LabelSpreading : Alternate label propagation strategy more robust to noise
+    LabelSpreading : Alternate label propagation strategy more robust to noise.
     """
 
     _variant = 'propagation'
@@ -489,7 +489,7 @@ class LabelSpreading(BaseLabelPropagation):
 
     See Also
     --------
-    LabelPropagation : Unregularized graph based semi-supervised learning
+    LabelPropagation : Unregularized graph based semi-supervised learning.
     """
 
     _variant = 'spreading'

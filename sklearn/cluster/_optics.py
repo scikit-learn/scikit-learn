@@ -179,8 +179,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
 
     See Also
     --------
-    DBSCAN
-        A similar clustering for a specified neighborhood radius (eps).
+    DBSCAN : A similar clustering for a specified neighborhood radius (eps).
         Our implementation is optimized for runtime.
 
     References
