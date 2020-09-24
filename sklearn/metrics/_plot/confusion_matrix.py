@@ -262,20 +262,7 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
 
     if display_labels is None:
         if labels is None:
-            try:
-                display_labels = unique_labels(y_true, y_pred)
-            except TypeError as e:
-                # We expect y_true and y_pred to be of the same data type.
-                # If `y_true` was provided to the classifier as strings,
-                # `y_pred` given by the classifier will also be encoded with
-                # strings. So we raise a meaningful error
-                raise TypeError(
-                    f"Labels in y_true and y_pred should be of the same type. "
-                    f"Got y_true={np.unique(y_true)} and "
-                    f"y_pred={np.unique(y_pred)}. Make sure that the "
-                    f"predictions provided by the classifier coincides with "
-                    f"the true labels."
-                ) from e
+            display_labels = unique_labels(y_true, y_pred)
         else:
             display_labels = labels
 
