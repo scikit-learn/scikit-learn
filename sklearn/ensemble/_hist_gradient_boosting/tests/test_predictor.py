@@ -38,7 +38,7 @@ def test_regression_dataset(n_bins):
     grower.grow()
 
     predictor = grower.make_predictor(
-        num_thresholds=mapper.bin_thresholds_)
+        binning_thresholds=mapper.bin_thresholds_)
 
     known_cat_bitset = np.zeros((0, 8), dtype=X_BITSET_INNER_DTYPE)
     orig_feat_to_known_cats_idx = np.zeros(0, dtype=np.uint8)

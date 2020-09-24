@@ -427,7 +427,7 @@ class TreeGrower:
             # For binned predictions with categorical splits.
             if (node.split_info.is_categorical and
                     node.split_info.missing_go_to_left):
-                set_bitset_memoryview(node.split_info.cat_bitset,
+                set_bitset_memoryview(node.split_info.left_cat_bitset,
                                       self.missing_values_bin_idx)
 
         self.n_nodes += 2
@@ -533,37 +533,41 @@ class TreeGrower:
             node = self.splittable_nodes.pop()
             self._finalize_leaf(node)
 
-    def make_predictor(self, num_thresholds):
+    def make_predictor(self, binning_thresholds):
         """Make a TreePredictor object out of the current tree.
 
         Parameters
         ----------
-        num_thresholds : array-like of floats
-            The real-valued thresholds of each bin.
+        binning_thresholds : array-like of floats
+            Corresponds to the bin_thresholds_ attribute of the BinMapper.
+            For each feature, this stores:
+
+            - the bin frontiers for continuous features
+            - the unique raw category values for categorical features
 
         Returns
         -------
         A TreePredictor object.
         """
         predictor_nodes = np.zeros(self.n_nodes, dtype=PREDICTOR_RECORD_DTYPE)
-        binned_categorical_bitsets = np.zeros((self.n_categorical_splits, 8),
-                                              dtype=X_BITSET_INNER_DTYPE)
-        raw_categorical_bitsets = np.zeros((self.n_categorical_splits, 8),
+        binned_left_cat_bitsets = np.zeros((self.n_categorical_splits, 8),
                                            dtype=X_BITSET_INNER_DTYPE)
-        _fill_predictor_node_array(predictor_nodes, binned_categorical_bitsets,
-                                   raw_categorical_bitsets,
-                                   self.root, num_thresholds,
-                                   self.n_bins_non_missing)
-        return TreePredictor(predictor_nodes, binned_categorical_bitsets,
-                             raw_categorical_bitsets)
+        raw_left_cat_bitsets = np.zeros((self.n_categorical_splits, 8),
+                                        dtype=X_BITSET_INNER_DTYPE)
+        _fill_predictor_arrays(predictor_nodes, binned_left_cat_bitsets,
+                               raw_left_cat_bitsets,
+                               self.root, binning_thresholds,
+                               self.n_bins_non_missing)
+        return TreePredictor(predictor_nodes, binned_left_cat_bitsets,
+                             raw_left_cat_bitsets)
 
 
-def _fill_predictor_node_array(predictor_nodes, binned_categorical_bitsets,
-                               raw_categorical_bitsets,
-                               grower_node, num_thresholds, n_bins_non_missing,
-                               next_free_idx=0, next_free_categorical_idx=0):
+def _fill_predictor_arrays(predictor_nodes, binned_left_cat_bitsets,
+                           raw_left_cat_bitsets, grower_node,
+                           binning_thresholds, n_bins_non_missing,
+                           next_free_node_idx=0, next_free_bitset_idx=0):
     """Helper used in make_predictor to set the TreePredictor fields."""
-    node = predictor_nodes[next_free_idx]
+    node = predictor_nodes[next_free_node_idx]
     node['count'] = grower_node.n_samples
     node['depth'] = grower_node.depth
     if grower_node.split_info is not None:
@@ -576,50 +580,45 @@ def _fill_predictor_node_array(predictor_nodes, binned_categorical_bitsets,
     if grower_node.is_leaf:
         # Leaf node
         node['is_leaf'] = True
-        return next_free_idx + 1, next_free_categorical_idx
+        return next_free_node_idx + 1, next_free_bitset_idx
+
+    split_info = grower_node.split_info
+    feature_idx, bin_idx = split_info.feature_idx, split_info.bin_idx
+    node['feature_idx'] = feature_idx
+    node['bin_threshold'] = bin_idx
+    node['missing_go_to_left'] = split_info.missing_go_to_left
+    node['is_categorical'] = split_info.is_categorical
+
+    if split_info.bin_idx == n_bins_non_missing[feature_idx] - 1:
+        # Split is on the last non-missing bin: it's a "split on nans".
+        # All nans go to the right, the rest go to the left.
+        # Note: for categorical splits, bin_idx is 0 and we rely on the bitset
+        node['num_threshold'] = np.inf
+    elif split_info.is_categorical:
+        categories = binning_thresholds[feature_idx]
+        node['bitset_idx'] = next_free_bitset_idx
+        binned_left_cat_bitsets[next_free_bitset_idx] = (
+            split_info.left_cat_bitset)
+        set_raw_bitset_memoryview(raw_left_cat_bitsets[next_free_bitset_idx],
+                                  split_info.left_cat_bitset, categories)
+        next_free_bitset_idx += 1
     else:
-        # Decision node
-        split_info = grower_node.split_info
-        feature_idx, bin_idx = split_info.feature_idx, split_info.bin_idx
-        node['feature_idx'] = feature_idx
-        node['bin_threshold'] = bin_idx
-        node['missing_go_to_left'] = split_info.missing_go_to_left
-        node['is_categorical'] = split_info.is_categorical
+        node['num_threshold'] = binning_thresholds[feature_idx][bin_idx]
 
-        if split_info.bin_idx == n_bins_non_missing[feature_idx] - 1:
-            # Split is on the last non-missing bin: it's a "split on nans".
-            # All nans go to the right, the rest go to the left.
-            node['num_threshold'] = np.inf
-        else:
-            bins = num_thresholds[feature_idx]
-            node['num_threshold'] = bins[bin_idx]
-            if split_info.is_categorical:
-                node['category_bitset_idx'] = next_free_categorical_idx
-                binned_categorical_bitsets[next_free_categorical_idx] = \
-                    split_info.cat_bitset
-                set_raw_bitset_memoryview(
-                    raw_categorical_bitsets[next_free_categorical_idx],
-                    split_info.cat_bitset, bins)
-                next_free_categorical_idx += 1
+    next_free_node_idx += 1
 
-        next_free_idx += 1
+    node['left'] = next_free_node_idx
+    next_free_node_idx, next_free_bitset_idx = _fill_predictor_arrays(
+        predictor_nodes, binned_left_cat_bitsets, raw_left_cat_bitsets,
+        grower_node.left_child, binning_thresholds=binning_thresholds,
+        n_bins_non_missing=n_bins_non_missing,
+        next_free_node_idx=next_free_node_idx,
+        next_free_bitset_idx=next_free_bitset_idx)
 
-        node['left'] = next_free_idx
-        next_free_idx, next_free_categorical_idx = _fill_predictor_node_array(
-            predictor_nodes, binned_categorical_bitsets,
-            raw_categorical_bitsets,
-            grower_node.left_child,
-            num_thresholds=num_thresholds,
-            n_bins_non_missing=n_bins_non_missing,
-            next_free_idx=next_free_idx,
-            next_free_categorical_idx=next_free_categorical_idx)
-
-        node['right'] = next_free_idx
-        return _fill_predictor_node_array(
-            predictor_nodes, binned_categorical_bitsets,
-            raw_categorical_bitsets,
-            grower_node.right_child,
-            num_thresholds=num_thresholds,
-            n_bins_non_missing=n_bins_non_missing,
-            next_free_idx=next_free_idx,
-            next_free_categorical_idx=next_free_categorical_idx)
+    node['right'] = next_free_node_idx
+    return _fill_predictor_arrays(
+        predictor_nodes, binned_left_cat_bitsets, raw_left_cat_bitsets,
+        grower_node.right_child, binning_thresholds=binning_thresholds,
+        n_bins_non_missing=n_bins_non_missing,
+        next_free_node_idx=next_free_node_idx,
+        next_free_bitset_idx=next_free_bitset_idx)

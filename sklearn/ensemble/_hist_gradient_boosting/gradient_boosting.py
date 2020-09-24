@@ -464,7 +464,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                                                     sample_weight_train)
 
                 predictor = grower.make_predictor(
-                    num_thresholds=self._bin_mapper.bin_thresholds_
+                    binning_thresholds=self._bin_mapper.bin_thresholds_
                 )
                 predictors[-1].append(predictor)
 

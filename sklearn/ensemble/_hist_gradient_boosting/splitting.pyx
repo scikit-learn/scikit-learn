@@ -52,7 +52,7 @@ cdef struct split_info_struct:
     Y_DTYPE_C value_left
     Y_DTYPE_C value_right
     unsigned char is_categorical
-    BITSET_DTYPE_C cat_bitset
+    BITSET_DTYPE_C left_cat_bitset
 
 
 # used in categorical splits for sorting categories by increasing values of
@@ -73,7 +73,7 @@ class SplitInfo:
         The index of the feature to be split.
     bin_idx : int
         The index of the bin on which the split is made. Should be ignored if
-        `is_categorical` is True: `cat_bitset` will be used to determine
+        `is_categorical` is True: `left_cat_bitset` will be used to determine
         the split.
     missing_go_to_left : bool
         Whether missing values should go to the left child.
@@ -91,7 +91,7 @@ class SplitInfo:
         The number of samples in the right child.
     is_categorical : bool
         Whether the split is done on a categorical feature.
-    cat_bitset : ndarray of shape=(8,), dtype=uint32 or None
+    left_cat_bitset : ndarray of shape=(8,), dtype=uint32 or None
         Bitset representing the categories that go to the left. This is used
         only when `is_categorical` is True. Note that missing values are part
         of that bitset, so there is redundancy with missing_go_to_left.
@@ -100,7 +100,7 @@ class SplitInfo:
                  missing_go_to_left, sum_gradient_left, sum_hessian_left,
                  sum_gradient_right, sum_hessian_right, n_samples_left,
                  n_samples_right, value_left, value_right,
-                 is_categorical, cat_bitset):
+                 is_categorical, left_cat_bitset):
         self.gain = gain
         self.feature_idx = feature_idx
         self.bin_idx = bin_idx
@@ -114,7 +114,7 @@ class SplitInfo:
         self.value_left = value_left
         self.value_right = value_right
         self.is_categorical = is_categorical
-        self.cat_bitset = cat_bitset
+        self.left_cat_bitset = left_cat_bitset
 
 
 @cython.final
@@ -298,8 +298,8 @@ cdef class Splitter:
             unsigned int [::1] left_indices_buffer = self.left_indices_buffer
             unsigned int [::1] right_indices_buffer = self.right_indices_buffer
             unsigned char is_categorical = split_info.is_categorical
-            BITSET_INNER_DTYPE_C [:] cat_bitset_tmp = split_info.cat_bitset
-            BITSET_DTYPE_C cat_bitset
+            BITSET_INNER_DTYPE_C [:] cat_bitset_tmp = split_info.left_cat_bitset
+            BITSET_DTYPE_C left_cat_bitset
             IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
                 int n_threads = omp_get_max_threads()
             ELSE:
@@ -322,9 +322,9 @@ cdef class Splitter:
             int [:] left_offset = np.zeros(n_threads, dtype=np.int32)
             int [:] right_offset = np.zeros(n_threads, dtype=np.int32)
 
-        # only set cat_bitset when is_categorical is True
+        # only set left_cat_bitset when is_categorical is True
         if is_categorical:
-            cat_bitset = &cat_bitset_tmp[0]
+            left_cat_bitset = &cat_bitset_tmp[0]
 
         with nogil:
             for thread_idx in range(n_samples % n_threads):
@@ -348,7 +348,7 @@ cdef class Splitter:
                         missing_go_to_left,
                         missing_values_bin_idx, bin_idx,
                         X_binned[sample_idx], is_categorical,
-                        cat_bitset)
+                        left_cat_bitset)
 
                     if turn_left:
                         left_indices_buffer[start + left_count] = sample_idx
@@ -525,7 +525,7 @@ cdef class Splitter:
         )
         # Only set bitset if the split is categorical
         if split_info.is_categorical:
-            out.cat_bitset = np.asarray(split_info.cat_bitset, dtype=np.uint32)
+            out.left_cat_bitset = np.asarray(split_info.left_cat_bitset, dtype=np.uint32)
 
         free(split_infos)
         return out
@@ -908,7 +908,7 @@ cdef class Splitter:
         if found_better_split:
             split_info.gain = best_gain
 
-            # split_info.bin_idx is unused for categorical splits: cat_bitset
+            # split_info.bin_idx is unused for categorical splits: left_cat_bitset
             # is used instead and set below
             split_info.bin_idx = 0
 
@@ -929,17 +929,17 @@ cdef class Splitter:
                 lower_bound, upper_bound, self.l2_regularization)
 
             # create bitset with values from best_sorted_thres
-            init_bitset(split_info.cat_bitset)
+            init_bitset(split_info.left_cat_bitset)
 
             for i in range(best_sorted_thres + 1):
                 bin_idx = cat_infos[i].bin_idx
-                set_bitset(split_info.cat_bitset, bin_idx)
+                set_bitset(split_info.left_cat_bitset, bin_idx)
 
             if has_missing_values:
                 # TODO: there should be a test that removing this line breaks
                 # something. missing_go_to_left will be used during prediction.
                 split_info.missing_go_to_left = in_bitset(
-                    split_info.cat_bitset, missing_values_bin_idx)
+                    split_info.left_cat_bitset, missing_values_bin_idx)
 
         free(cat_infos)
 
@@ -1013,12 +1013,12 @@ cdef inline unsigned char sample_goes_left(
         X_BINNED_DTYPE_C split_bin_idx,
         X_BINNED_DTYPE_C bin_value,
         unsigned char is_categorical,
-        BITSET_DTYPE_C cat_bitset) nogil:
+        BITSET_DTYPE_C left_cat_bitset) nogil:
     """Helper to decide whether sample should go to left or right child."""
 
     if is_categorical:
-        # missing value is encoded in cat_bitset
-        return in_bitset(cat_bitset, bin_value)
+        # missing value is encoded in left_cat_bitset
+        return in_bitset(left_cat_bitset, bin_value)
     else:
         return (
             (

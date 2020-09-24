@@ -34,7 +34,9 @@ cdef packed struct node_struct:
     unsigned char is_leaf
     X_BINNED_DTYPE_C bin_threshold
     unsigned char is_categorical
-    unsigned int category_bitset_idx
+    # The index of the bitset in the Predictor's bitset arrays. Only used if
+    # is_categorical is True
+    unsigned int bitset_idx
 
 cpdef enum MonotonicConstraint:
     NO_CST = 0

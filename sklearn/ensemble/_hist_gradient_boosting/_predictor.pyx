@@ -28,8 +28,8 @@ np.import_array()
 def _predict_from_data(
         node_struct [:] nodes,
         const X_DTYPE_C [:, :] numeric_data,
-        const BITSET_INNER_DTYPE_C [:, :] raw_categorical_bitsets,
-        const BITSET_INNER_DTYPE_C [:, :] known_categorical_bitsets,
+        const BITSET_INNER_DTYPE_C [:, :] raw_left_cat_bitsets,
+        const BITSET_INNER_DTYPE_C [:, :] known_cat_bitsets,
         const X_BINNED_DTYPE_C [:] orig_feature_to_known_cats_idx,
         Y_DTYPE_C [:] out):
 
@@ -39,16 +39,16 @@ def _predict_from_data(
     # for i in prange(numeric_data.shape[0], schedule='static', nogil=True):
     for i in range(numeric_data.shape[0]):
         out[i] = _predict_one_from_numeric_data(
-            nodes, numeric_data, raw_categorical_bitsets,
-            known_categorical_bitsets,
+            nodes, numeric_data, raw_left_cat_bitsets,
+            known_cat_bitsets,
             orig_feature_to_known_cats_idx, i)
 
 
 cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
         node_struct [:] nodes,
         const X_DTYPE_C [:, :] numeric_data,
-        const BITSET_INNER_DTYPE_C [:, :] raw_categorical_bitsets,
-        const BITSET_INNER_DTYPE_C [:, :] known_categorical_bitsets,
+        const BITSET_INNER_DTYPE_C [:, :] raw_left_cat_bitsets,
+        const BITSET_INNER_DTYPE_C [:, :] known_cat_bitsets,
         const X_BINNED_DTYPE_C [:] orig_feature_to_known_cats_idx,
         const int row) nogil:
     # Need to pass the whole array and the row index, else prange won't work.
@@ -71,12 +71,12 @@ cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
         elif node.is_categorical:
             categorical_idx = orig_feature_to_known_cats_idx[node.feature_idx]
             if not in_bitset_memoryview(
-                    known_categorical_bitsets[categorical_idx],
+                    known_cat_bitsets[categorical_idx],
                     <X_BINNED_DTYPE_C>numeric_data[row, node.feature_idx]):
                 # treat unknown categories as missing.
                 node_idx = node.left if node.missing_go_to_left else node.right
             elif in_bitset_memoryview(
-                    raw_categorical_bitsets[node.category_bitset_idx],
+                    raw_left_cat_bitsets[node.bitset_idx],
                     <X_BINNED_DTYPE_C>numeric_data[row, node.feature_idx]):
                 node_idx = node.left
             else:
@@ -92,7 +92,7 @@ cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
 def _predict_from_binned_data(
         node_struct [:] nodes,
         const X_BINNED_DTYPE_C [:, :] binned_data,
-        BITSET_INNER_DTYPE_C [:, :] binned_categorical_bitsets,
+        BITSET_INNER_DTYPE_C [:, :] binned_left_cat_bitsets,
         const unsigned char missing_values_bin_idx,
         Y_DTYPE_C [:] out):
 
@@ -102,14 +102,14 @@ def _predict_from_binned_data(
     for i in prange(binned_data.shape[0], schedule='static', nogil=True):
         out[i] = _predict_one_from_binned_data(nodes,
                                                binned_data,
-                                               binned_categorical_bitsets, i,
+                                               binned_left_cat_bitsets, i,
                                                missing_values_bin_idx)
 
 
 cdef inline Y_DTYPE_C _predict_one_from_binned_data(
         node_struct [:] nodes,
         const X_BINNED_DTYPE_C [:, :] binned_data,
-        const BITSET_INNER_DTYPE_C [:, :] binned_categorical_bitsets,
+        const BITSET_INNER_DTYPE_C [:, :] binned_left_cat_bitsets,
         const int row,
         const unsigned char missing_values_bin_idx) nogil:
     # Need to pass the whole array and the row index, else prange won't work.
@@ -124,7 +124,7 @@ cdef inline Y_DTYPE_C _predict_one_from_binned_data(
             return node.value
 
         if node.is_categorical:
-            if in_bitset_memoryview(binned_categorical_bitsets[node.category_bitset_idx],
+            if in_bitset_memoryview(binned_left_cat_bitsets[node.bitset_idx],
                             binned_data[row, node.feature_idx]):
                 node_idx = node.left
             else:

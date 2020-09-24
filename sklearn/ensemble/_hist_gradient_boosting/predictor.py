@@ -18,19 +18,19 @@ class TreePredictor:
     ----------
     nodes : ndarray of PREDICTOR_RECORD_DTYPE
         The nodes of the tree.
-    binned_categorical_bitsets : ndarray of shape (n_categorical, 8), \
+    binned_left_cat_bitsets : ndarray of shape (n_categorical_splits, 8), \
             dtype=uint32
         Bitset for binned categorical used in predict_binned.
-    raw_categorical_bitsets : ndarray of shape (n_categorical, 8), \
+    raw_left_cat_bitsets : ndarray of shape (n_categorical_splits, 8), \
             dtype=uint32
         Bitset for raw categorical used in predict.
 
     """
-    def __init__(self, nodes, binned_categorical_bitsets,
-                 raw_categorical_bitsets):
+    def __init__(self, nodes, binned_left_cat_bitsets,
+                 raw_left_cat_bitsets):
         self.nodes = nodes
-        self.binned_categorical_bitsets = binned_categorical_bitsets
-        self.raw_categorical_bitsets = raw_categorical_bitsets
+        self.binned_left_cat_bitsets = binned_left_cat_bitsets
+        self.raw_left_cat_bitsets = raw_left_cat_bitsets
 
     def get_n_leaf_nodes(self):
         """Return number of leaves."""
@@ -49,7 +49,8 @@ class TreePredictor:
         X : ndarray, shape (n_samples, n_features)
             The input samples.
 
-        known_cat_bitset : ndarray of shape (n_categorical, 8)
+        known_cat_bitset : ndarray of shape (n_categorical_splits, 8)
+            XXX TODO: shape is incorrect
             Bitset for known categories.
 
         orig_idx_to_cat_idx : ndarray of shape (n_features,)
@@ -62,7 +63,7 @@ class TreePredictor:
             The raw predicted values.
         """
         out = np.empty(X.shape[0], dtype=Y_DTYPE)
-        _predict_from_data(self.nodes, X, self.raw_categorical_bitsets,
+        _predict_from_data(self.nodes, X, self.raw_left_cat_bitsets,
                            known_cat_bitset, orig_feat_to_known_cats_idx, out)
         return out
 
@@ -85,7 +86,7 @@ class TreePredictor:
         """
         out = np.empty(X.shape[0], dtype=Y_DTYPE)
         _predict_from_binned_data(self.nodes, X,
-                                  self.binned_categorical_bitsets,
+                                  self.binned_left_cat_bitsets,
                                   missing_values_bin_idx, out)
         return out
 

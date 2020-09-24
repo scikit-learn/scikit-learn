@@ -29,7 +29,9 @@ PREDICTOR_RECORD_DTYPE = np.dtype([
     ('is_leaf', np.uint8),
     ('bin_threshold', X_BINNED_DTYPE),
     ('is_categorical', np.uint8),
-    ('category_bitset_idx', np.uint32)
+    # The index of the bitset in the Predictor's bitset arrays. Only used if
+    # is_categorical is True
+    ('bitset_idx', np.uint32)
 ])
 
 ALMOST_INF = 1e300  # see LightGBM AvoidInf()
