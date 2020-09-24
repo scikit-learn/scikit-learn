@@ -316,7 +316,8 @@ def test_default_labels(pyplot, display_labels, expected_labels):
     assert_array_equal(y_ticks, expected_labels)
 
 
-def test_error_on_a_dataset_with_unseen_labels(pyplot, fitted_clf, data):
+def test_error_on_a_dataset_with_unseen_labels(pyplot, fitted_clf, data,
+                                               n_classes):
     X, y = data
 
     # get values that are not present in 'fitted_clf.classes_'
