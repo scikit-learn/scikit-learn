@@ -454,8 +454,12 @@ def test_logistic_sigmoid():
     assert_array_almost_equal(log_logistic(extreme_x), [-100, 0])
 
 
-def test_incremental_weighted_mean_and_variance_simple():
-    rng = np.random.RandomState(42)
+@pytest.fixture()
+def rng():
+    return np.random.RandomState(42)
+
+
+def test_incremental_weighted_mean_and_variance_simple(rng):
     mult = 10
     X = rng.rand(1000, 20)*mult
     sample_weight = rng.rand(X.shape[0]) * mult
@@ -491,7 +495,7 @@ def _weights():
 @pytest.mark.parametrize("mean", [0, 1e7, -1e7])
 @pytest.mark.parametrize("var", [1, 1e-8, 1e5])
 @pytest.mark.parametrize("weight", _weights())
-def test_incremental_weighted_mean_and_variance(mean, var, weight):
+def test_incremental_weighted_mean_and_variance(mean, var, weight, rng):
 
     # Testing of correctness and numerical stability
     def test(X, sample_weight, expected_mean, expected_var):
@@ -509,7 +513,6 @@ def test_incremental_weighted_mean_and_variance(mean, var, weight):
             assert_allclose(last_var, expected_var, atol=1e-6)
 
     size = (100, 20)
-    rng = np.random.RandomState(42)
 
     # Compare to weighted average: np.average
     X = rng.normal(loc=mean, scale=var, size=size)
