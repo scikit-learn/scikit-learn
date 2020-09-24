@@ -694,7 +694,7 @@ def _incremental_weighted_mean_and_var(X, sample_weight,
                                        last_mean,
                                        last_variance,
                                        last_weight_sum):
-    """Calculate weighted mean and variance batch update
+    """Calculate weighted mean and variance batch update.
 
     last_mean and last_variance are statistics computed at the last step
     by the function. Both must be initialized to 0.0. In case no scaling
