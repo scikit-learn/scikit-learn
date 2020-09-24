@@ -10,7 +10,6 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC, SVR
-from sklearn.utils.multiclass import unique_labels
 
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import plot_confusion_matrix
