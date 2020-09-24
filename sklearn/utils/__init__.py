@@ -13,6 +13,7 @@ import numbers
 import platform
 import struct
 import timeit
+import copy
 from pathlib import Path
 
 import warnings
@@ -31,7 +32,8 @@ from .validation import (as_float_array,
                          check_random_state, column_or_1d, check_array,
                          check_consistent_length, check_X_y, indexable,
                          check_symmetric, check_scalar,
-                         _deprecate_positional_args)
+                         _deprecate_positional_args,
+                         _validate_required_props)
 from .. import get_config
 
 
@@ -1196,22 +1198,67 @@ def _empty_metadata_request():
                  fit_transform={})
 
 
+def _standardize_method_request(method_request):
+    method_request = copy.deepcopy(method_request)
+    if isinstance(method_request, str):
+        method_request = {method_request}
+    if isinstance(method_request, (set, list)):
+        method_request = {x: {x} for x in method_request}
+    for param, dest in method_request.items():
+        if isinstance(dest, str):
+            dest = {dest}
+            method_request[param] = dest
+        if not isinstance(dest, set):
+            raise ValueError(f"Cannot standardize {method_request}")
+    return method_request
+
+
 def _standardize_metadata_request(request):
     res = _empty_metadata_request()
     for method in res.keys():
         m_props = request.get(method, {})
-        if isinstance(m_props, str):
-            m_props = {m_props}
-        if isinstance(m_props, (set, list)):
-            m_props = {x: {x} for x in m_props}
-        for param, dest in m_props.items():
-            if isinstance(dest, str):
-                dest = {dest}
-                m_props[param] = dest
-            if not isinstance(dest, set):
-                raise ValueError(f"Cannot standardize {request}")
-
+        try:
+            m_props = _standardize_method_request(m_props)
+        except ValueError:
+            raise ValueError(f"Cannot standardize {request}")
         res[method] = m_props
+    return res
+
+
+def _check_method_props(required_props, props, validate=True):
+    """Maps the given props to what ``obj``'s ``method`` needs.
+
+    Parameters
+    ----------
+    required_props: dict of {str: set(str)}
+        required properties as ``{'given_property': 'method_property'}.
+        This can be ``self.get_metadata_request().fit`` for instance.
+
+    props: dict of {str: data}
+        A dictionary with required props as keys and provided ones as values.
+        This can be the ``kwargs`` passed to ``fit`` as ``**kwargs`` for
+        example.
+
+    validate: bool, default=True
+        If ``True``, it'll make sure all provided props are requested.
+
+    Returns
+    -------
+    mapping: dict
+        A mapping with keys as required props and values as provided ones,
+        which can be used to be passed as ``**kwargs`` to the _method_.
+    """
+    props = {} if props is None else props
+    required_props = {} if required_props is None else required_props
+    required_props = _standardize_method_request(required_props)
+    props = {key: value for key, value in props.items() if value is not None}
+    if validate:
+        _validate_required_props(required_props, props)
+    print("props:", props)
+    print("required_props: ", required_props)
+    res = {value: props[key] for key, values
+           in required_props.items() if key in props
+           for value in values}
     return res
 
 

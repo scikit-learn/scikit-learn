@@ -36,14 +36,13 @@ from joblib import Parallel
 from ..utils import (check_random_state, _get_props_from_objs,
                      _empty_metadata_request, _merge_metadata_requests)
 from ..utils.random import sample_without_replacement
-from ..utils.validation import (indexable, check_is_fitted, _check_fit_params,
-                                _check_method_props)
+from ..utils.validation import indexable, check_is_fitted, _check_fit_params
 from ..utils.validation import _deprecate_positional_args
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.fixes import delayed
 from ..metrics._scorer import _check_multimetric_scoring
 from ..metrics import check_scoring
-from ..utils import deprecated
+from ..utils import deprecated, _check_method_props
 
 __all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
            'ParameterSampler', 'RandomizedSearchCV']

@@ -44,7 +44,7 @@ from .cluster import fowlkes_mallows_score
 
 from ..utils.multiclass import type_of_target
 from ..base import is_regressor, _MetadataRequest, _MetadataConsumer
-from ..utils.validation import _check_method_props
+from ..utils import _check_method_props
 from ..utils.validation import _deprecate_positional_args
 
 

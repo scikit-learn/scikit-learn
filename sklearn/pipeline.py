@@ -21,10 +21,10 @@ from .base import clone, TransformerMixin
 from .utils._estimator_html_repr import _VisualBlock
 from .utils.metaestimators import if_delegate_has_method
 from .utils import Bunch, _print_elapsed_time
-from .utils.validation import (check_memory, _check_method_props,
+from .utils.validation import (check_memory,
                                _validate_required_props,
                                _deprecate_positional_args)
-from .utils import _get_props_from_objs
+from .utils import _get_props_from_objs, _check_method_props
 from .utils.fixes import delayed
 from .utils.metaestimators import _BaseComposition
 

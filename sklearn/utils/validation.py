@@ -1418,36 +1418,3 @@ def _validate_required_props(required_props, given_props):
         raise ValueError("Requested properties are: {}, but {} "
                          "provided".format(list(required_props),
                                            list(given_props)))
-
-
-def _check_method_props(required_props, props, validate=True):
-    """Maps the given props to what ``obj``'s ``method`` needs.
-
-    Parameters
-    ----------
-    required_props: dict of {str: set(str)}
-        required properties as ``{'given_property': 'method_property'}.
-        This can be ``self.get_metadata_request().fit`` for instance.
-
-    props: dict of {str: data}
-        A dictionary with required props as keys and provided ones as values.
-        This can be the ``kwargs`` passed to ``fit`` as ``**kwargs`` for
-        example.
-
-    validate: bool, default=True
-        If ``True``, it'll make sure all provided props are requested.
-
-    Returns
-    -------
-    mapping: dict
-        A mapping with keys as required props and values as provided ones,
-        which can be used to be passed as ``**kwargs`` to the _method_.
-    """
-    props = {} if props is None else props
-    required_props = {} if required_props is None else required_props
-    props = {key: value for key, value in props.items() if value is not None}
-    if validate:
-        _validate_required_props(required_props, props)
-    res = {value: props[key] for key, value
-           in required_props.items() if key in props}
-    return res

@@ -14,7 +14,7 @@ from ..utils.metaestimators import if_delegate_has_method
 from ..utils.metaestimators import _safe_split
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _deprecate_positional_args
-from ..utils.validation import _check_method_props
+from ..utils import _check_method_props
 from ..utils.fixes import delayed
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
