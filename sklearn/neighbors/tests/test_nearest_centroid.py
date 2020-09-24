@@ -151,8 +151,9 @@ def test_manhattan_metric():
 def test_features_zero_var():
     # Test that features with 0 variance throw error
 
-    X = np.array([[0, 0], [0, 0], [0, 0], [0, 0], [0, 0]])
-    y = np.array([1, 0, 0, 1, 0])
+    X = np.empty((10, 2))
+    X[:, 0] = -0.13725701
+    X[:, 1] = -0.9853293
     clf = NearestCentroid(shrink_threshold=0.1)
     with assert_raises(ValueError):
         clf.fit(X, y)
