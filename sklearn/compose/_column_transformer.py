@@ -12,7 +12,7 @@ from itertools import chain
 import numbers
 import numpy as np
 from scipy import sparse
-from joblib import Parallel, delayed
+from joblib import Parallel
 
 from ..base import clone, TransformerMixin
 from ..utils._estimator_html_repr import _VisualBlock
@@ -25,6 +25,7 @@ from ..utils import _determine_key_type
 from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_array, check_is_fitted
 from ..utils.validation import _deprecate_positional_args
+from ..utils.fixes import delayed
 
 
 __all__ = [
@@ -145,12 +146,12 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     in the `passthrough` keyword. Those columns specified with `passthrough`
     are added at the right to the output of the transformers.
 
-    See also
+    See Also
     --------
-    sklearn.compose.make_column_transformer : convenience function for
+    make_column_transformer : Convenience function for
         combining the outputs of multiple transformer objects applied to
         column subsets of the original feature space.
-    sklearn.compose.make_column_selector : convenience function for selecting
+    make_column_selector : Convenience function for selecting
         columns based on datatype or the columns name with a regex pattern.
 
     Examples
@@ -207,6 +208,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     def get_params(self, deep=True):
         """Get parameters for this estimator.
 
+        Returns the parameters given in the constructor as well as the
+        estimators contained within the `transformers` of the
+        `ColumnTransformer`.
+
         Parameters
         ----------
         deep : bool, default=True
@@ -223,7 +228,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
 
-        Valid parameter keys can be listed with ``get_params()``.
+        Valid parameter keys can be listed with ``get_params()``. Note that you
+        can directly set the parameters of the estimators contained in
+        `transformers` of `ColumnTransformer`.
 
         Returns
         -------
@@ -467,7 +474,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                         self._iter(fitted=fitted, replace_strings=True), 1))
         except ValueError as e:
             if "Expected 2D array, got 1D array instead" in str(e):
-                raise ValueError(_ERR_MSG_1DCOLUMN)
+                raise ValueError(_ERR_MSG_1DCOLUMN) from e
             else:
                 raise
 
@@ -629,9 +636,11 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                                             accept_sparse=True,
                                             force_all_finite=False)
                                 for X in Xs]
-            except ValueError:
-                raise ValueError("For a sparse output, all columns should"
-                                 " be a numeric or convertible to a numeric.")
+            except ValueError as e:
+                raise ValueError(
+                    "For a sparse output, all columns should "
+                    "be a numeric or convertible to a numeric."
+                ) from e
 
             return sparse.hstack(converted_Xs).tocsr()
         else:
@@ -639,7 +648,22 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             return np.hstack(Xs)
 
     def _sk_visual_block_(self):
-        names, transformers, name_details = zip(*self.transformers)
+        if isinstance(self.remainder, str) and self.remainder == 'drop':
+            transformers = self.transformers
+        elif hasattr(self, "_remainder"):
+            remainder_columns = self._remainder[2]
+            if hasattr(self, '_df_columns'):
+                remainder_columns = (
+                    self._df_columns[remainder_columns].tolist()
+                )
+            transformers = chain(self.transformers,
+                                 [('remainder', self.remainder,
+                                   remainder_columns)])
+        else:
+            transformers = chain(self.transformers,
+                                 [('remainder', self.remainder, '')])
+
+        names, transformers, name_details = zip(*transformers)
         return _VisualBlock('parallel', transformers,
                             names=names, name_details=name_details)
 
@@ -749,9 +773,9 @@ def make_column_transformer(*transformers,
     -------
     ct : ColumnTransformer
 
-    See also
+    See Also
     --------
-    sklearn.compose.ColumnTransformer : Class that allows combining the
+    ColumnTransformer : Class that allows combining the
         outputs of multiple transformer objects used on column subsets
         of the data into a single feature space.
 
@@ -815,9 +839,9 @@ class make_column_selector:
         Callable for column selection to be used by a
         :class:`ColumnTransformer`.
 
-    See also
+    See Also
     --------
-    sklearn.compose.ColumnTransformer : Class that allows combining the
+    ColumnTransformer : Class that allows combining the
         outputs of multiple transformer objects used on column subsets
         of the data into a single feature space.
 

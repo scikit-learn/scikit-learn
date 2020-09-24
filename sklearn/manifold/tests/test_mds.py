@@ -70,3 +70,12 @@ def test_MDS_pairwise_deprecated():
     msg = r"Attribute _pairwise was deprecated in version 0\.24"
     with pytest.warns(FutureWarning, match=msg):
         mds_clf._pairwise
+
+@pytest.mark.parametrize("dissimilarity, expected_pairwise", [
+   ("precomputed", True),
+   ("euclidean", False),
+])
+def test_MDS_pairwise(dissimilarity, expected_pairwise):
+    # _pairwise attribute is set correctly
+    mds_clf = mds.MDS(dissimilarity=dissimilarity)
+    assert mds_clf._pairwise == expected_pairwise

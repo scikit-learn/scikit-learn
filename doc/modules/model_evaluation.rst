@@ -302,17 +302,15 @@ to the overall score, through the ``sample_weight`` parameter.
 Some of these are restricted to the binary classification case:
 
 .. autosummary::
-   :template: function.rst
 
    precision_recall_curve
    roc_curve
-   detection_error_tradeoff_curve
+   det_curve
 
 
 Others also work in the multiclass case:
 
 .. autosummary::
-   :template: function.rst
 
    balanced_accuracy_score
    cohen_kappa_score
@@ -325,7 +323,6 @@ Others also work in the multiclass case:
 Some also work in the multilabel case:
 
 .. autosummary::
-   :template: function.rst
 
    accuracy_score
    classification_report
@@ -344,7 +341,6 @@ Some also work in the multilabel case:
 And some work with binary and multilabel (but not multiclass) problems:
 
 .. autosummary::
-   :template: function.rst
 
    average_precision_score
 
@@ -748,7 +744,6 @@ Several functions allow you to analyze the precision, recall and F-measures
 score:
 
 .. autosummary::
-   :template: function.rst
 
    average_precision_score
    f1_score
@@ -1331,21 +1326,48 @@ area under the roc curve, the curve information is summarized in one number.
 For more information see the `Wikipedia article on AUC
 <https://en.wikipedia.org/wiki/Receiver_operating_characteristic#Area_under_the_curve>`_.
 
-  >>> import numpy as np
-  >>> from sklearn.metrics import roc_auc_score
-  >>> y_true = np.array([0, 0, 1, 1])
-  >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
-  >>> roc_auc_score(y_true, y_scores)
-  0.75
-
-In multi-label classification, the :func:`roc_auc_score` function is
-extended by averaging over the labels as :ref:`above <average>`.
-
 Compared to metrics such as the subset accuracy, the Hamming loss, or the
 F1 score, ROC doesn't require optimizing a threshold for each label.
 
-The :func:`roc_auc_score` function can also be used in multi-class
-classification. Two averaging strategies are currently supported: the
+.. _roc_auc_binary:
+
+Binary case
+^^^^^^^^^^^
+
+In the **binary case**, you can either provide the probability estimates, using
+the `classifier.predict_proba()` method, or the non-thresholded decision values
+given by the `classifier.decision_function()` method. In the case of providing
+the probability estimates, the probability of the class with the
+"greater label" should be provided. The "greater label" corresponds to
+`classifier.classes_[1]` and thus `classifier.predict_proba(X)[:, 1]`.
+Therefore, the `y_score` parameter is of size (n_samples,).
+
+  >>> from sklearn.datasets import load_breast_cancer
+  >>> from sklearn.linear_model import LogisticRegression
+  >>> from sklearn.metrics import roc_auc_score
+  >>> X, y = load_breast_cancer(return_X_y=True)
+  >>> clf = LogisticRegression(solver="liblinear").fit(X, y)
+  >>> clf.classes_
+  array([0, 1])
+
+We can use the probability estimates corresponding to `clf.classes_[1]`.
+
+  >>> y_score = clf.predict_proba(X)[:, 1]
+  >>> roc_auc_score(y, y_score)
+  0.99...
+
+Otherwise, we can use the non-thresholded decision values
+
+  >>> roc_auc_score(y, clf.decision_function(X))
+  0.99...
+
+.. _roc_auc_multiclass:
+
+Multi-class case
+^^^^^^^^^^^^^^^^
+
+The :func:`roc_auc_score` function can also be used in **multi-class
+classification**. Two averaging strategies are currently supported: the
 one-vs-one algorithm computes the average of the pairwise ROC AUC scores, and
 the one-vs-rest algorithm computes the average of the ROC AUC scores for each
 class against all other classes. In both cases, the predicted labels are
@@ -1399,6 +1421,34 @@ to the given limit.
    :scale: 75
    :align: center
 
+.. _roc_auc_multilabel:
+
+Multi-label case
+^^^^^^^^^^^^^^^^
+
+In **multi-label classification**, the :func:`roc_auc_score` function is
+extended by averaging over the labels as :ref:`above <average>`. In this case,
+you should provide a `y_score` of shape `(n_samples, n_classes)`. Thus, when
+using the probability estimates, one needs to select the probability of the
+class with the greater label for each output.
+
+  >>> from sklearn.datasets import make_multilabel_classification
+  >>> from sklearn.multioutput import MultiOutputClassifier
+  >>> X, y = make_multilabel_classification(random_state=0)
+  >>> inner_clf = LogisticRegression(solver="liblinear", random_state=0)
+  >>> clf = MultiOutputClassifier(inner_clf).fit(X, y)
+  >>> y_score = np.transpose([y_pred[:, 1] for y_pred in clf.predict_proba(X)])
+  >>> roc_auc_score(y, y_score, average=None)
+  array([0.82..., 0.86..., 0.94..., 0.85... , 0.94...])
+
+And the decision values do not require such processing.
+
+  >>> from sklearn.linear_model import RidgeClassifierCV
+  >>> clf = RidgeClassifierCV().fit(X, y)
+  >>> y_score = clf.decision_function(X)
+  >>> roc_auc_score(y, y_score, average=None)
+  array([0.81..., 0.84... , 0.93..., 0.87..., 0.94...])
+
 .. topic:: Examples:
 
   * See :ref:`sphx_glr_auto_examples_model_selection_plot_roc.py`
@@ -1443,19 +1493,19 @@ to the given limit.
 Detection error tradeoff (DET)
 ------------------------------
 
-The function :func:`detection_error_tradeoff_curve` computes the
+The function :func:`det_curve` computes the
 detection error tradeoff curve (DET) curve [WikipediaDET2017]_.
 Quoting Wikipedia:
 
-  "A detection error tradeoff (DET) graph is a graphical plot of error rates for
-  binary classification systems, plotting false reject rate vs. false accept
-  rate. The x- and y-axes are scaled non-linearly by their standard normal
-  deviates (or just by logarithmic transformation), yielding tradeoff curves
-  that are more linear than ROC curves, and use most of the image area to
-  highlight the differences of importance in the critical operating region."
+  "A detection error tradeoff (DET) graph is a graphical plot of error rates
+  for binary classification systems, plotting false reject rate vs. false
+  accept rate. The x- and y-axes are scaled non-linearly by their standard
+  normal deviates (or just by logarithmic transformation), yielding tradeoff
+  curves that are more linear than ROC curves, and use most of the image area
+  to highlight the differences of importance in the critical operating region."
 
 DET curves are a variation of receiver operating characteristic (ROC) curves
-where False Negative Rate is plotted on the ordinate instead of True Positive
+where False Negative Rate is plotted on the y-axis instead of True Positive
 Rate.
 DET curves are commonly plotted in normal deviate scale by transformation with
 :math:`\phi^{-1}` (with :math:`\phi` being the cumulative distribution
@@ -1476,8 +1526,8 @@ same classification task:
 
 * DET curves form a linear curve in normal deviate scale if the detection
   scores are normally (or close-to normally) distributed.
-  It was shown by [Navratil2007]_ that the reverse it not necessarily true and even more
-  general distributions are able produce linear DET curves.
+  It was shown by [Navratil2007]_ that the reverse it not necessarily true and
+  even more general distributions are able produce linear DET curves.
 
 * The normal deviate scale transformation spreads out the points such that a
   comparatively larger space of plot is occupied.
@@ -1485,8 +1535,8 @@ same classification task:
   distinguish on a DET plot.
 
 * With False Negative Rate being "inverse" to True Positive Rate the point
-  of perfection for DET curves is the origin (in contrast to the top left corner
-  for ROC curves).
+  of perfection for DET curves is the origin (in contrast to the top left
+  corner for ROC curves).
 
 **Applications and limitations:**
 

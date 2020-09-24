@@ -1,4 +1,4 @@
-"""Kernel Principal Components Analysis"""
+"""Kernel Principal Components Analysis."""
 
 # Author: Mathieu Blondel <mathieu@mblondel.org>
 # License: BSD 3 clause
@@ -19,7 +19,7 @@ from ..utils.validation import _deprecate_positional_args
 
 
 class KernelPCA(TransformerMixin, BaseEstimator):
-    """Kernel Principal component analysis (KPCA)
+    """Kernel Principal component analysis (KPCA).
 
     Non-linear dimensionality reduction through the use of kernels (see
     :ref:`metrics`).
@@ -35,9 +35,9 @@ class KernelPCA(TransformerMixin, BaseEstimator):
             'rbf', 'sigmoid', 'cosine', 'precomputed'}, default='linear'
         Kernel used for PCA.
 
-    gamma : float, default=1/n_features
+    gamma : float, default=None
         Kernel coefficient for rbf, poly and sigmoid kernels. Ignored by other
-        kernels.
+        kernels. If ``gamma`` is ``None``, then it is set to ``1/n_features``.
 
     degree : int, default=3
         Degree for poly kernels. Ignored by other kernels.
@@ -79,7 +79,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         When n_components is None, this parameter is ignored and components
         with zero eigenvalues are removed regardless.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Used when ``eigen_solver`` == 'arpack'. Pass an int for reproducible
         results across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -276,7 +276,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
 
@@ -304,13 +304,13 @@ class KernelPCA(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
 
         Returns
         -------
-        X_new : array-like, shape (n_samples, n_components)
+        X_new : ndarray of shape (n_samples, n_components)
         """
         self.fit(X, **params)
 
@@ -327,11 +327,11 @@ class KernelPCA(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
 
         Returns
         -------
-        X_new : array-like, shape (n_samples, n_components)
+        X_new : ndarray of shape (n_samples, n_components)
         """
         check_is_fitted(self)
 
@@ -352,11 +352,11 @@ class KernelPCA(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_components)
+        X : {array-like, sparse matrix} of shape (n_samples, n_components)
 
         Returns
         -------
-        X_new : array-like, shape (n_samples, n_features)
+        X_new : ndarray of shape (n_samples, n_features)
 
         References
         ----------
@@ -371,3 +371,6 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         n_samples = self.X_transformed_fit_.shape[0]
         K.flat[::n_samples + 1] += self.alpha
         return np.dot(K, self.dual_coef_)
+
+    def _more_tags(self):
+        return {'preserves_dtype': [np.float64, np.float32]}

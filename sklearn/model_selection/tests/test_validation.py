@@ -4,6 +4,7 @@ import sys
 import warnings
 import tempfile
 import os
+import re
 from time import sleep
 
 import pytest
@@ -1725,16 +1726,16 @@ def three_params_scorer(i, j, k):
 @pytest.mark.parametrize(
     "train_score, scorer, verbose, split_prg, cdt_prg, expected", [
      (False, three_params_scorer, 2, (1, 3), (0, 1),
-      "[CV] END ...................................................."
-      " total time=   0.0s"),
+      r"\[CV\] END ...................................................."
+      r" total time=   0.\ds"),
      (True, {'sc1': three_params_scorer, 'sc2': three_params_scorer}, 3,
       (1, 3), (0, 1),
-      "[CV 2/3] END  sc1: (train=3.421, test=3.421) sc2: "
-      "(train=3.421, test=3.421) total time=   0.0s"),
+      r"\[CV 2/3\] END  sc1: \(train=3.421, test=3.421\) sc2: "
+      r"\(train=3.421, test=3.421\) total time=   0.\ds"),
      (False, {'sc1': three_params_scorer, 'sc2': three_params_scorer}, 10,
       (1, 3), (0, 1),
-      "[CV 2/3; 1/1] END ....... sc1: (test=3.421) sc2: (test=3.421)"
-      " total time=   0.0s")
+      r"\[CV 2/3; 1/1\] END ....... sc1: \(test=3.421\) sc2: \(test=3.421\)"
+      r" total time=   0.\ds")
     ])
 def test_fit_and_score_verbosity(capsys, train_score, scorer, verbose,
                                  split_prg, cdt_prg, expected):
@@ -1749,12 +1750,11 @@ def test_fit_and_score_verbosity(capsys, train_score, scorer, verbose,
                             'candidate_progress': cdt_prg}
     _fit_and_score(*fit_and_score_args, **fit_and_score_kwargs)
     out, _ = capsys.readouterr()
-    print(out)
     outlines = out.split('\n')
     if len(outlines) > 2:
-        assert outlines[1] == expected
+        assert re.match(expected, outlines[1])
     else:
-        assert outlines[0] == expected
+        assert re.match(expected, outlines[0])
 
 
 def test_score():
