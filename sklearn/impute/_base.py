@@ -576,7 +576,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
           features containing missing values during fit time.
         - If "all", the imputer mask will represent all features.
 
-    sparse : boolean or "auto", default="auto"
+    sparse : bool or "auto", default="auto"
         Whether the imputer mask format should be sparse or dense.
 
         - If "auto" (default), the imputer mask will be of same type as
@@ -584,7 +584,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         - If True, the imputer mask will be a sparse matrix.
         - If False, the imputer mask will be a numpy array.
 
-    error_on_new : boolean, default=True
+    error_on_new : bool, default=True
         If True, transform will raise an error when there are features with
         missing values in transform that have no missing values in fit. This is
         applicable only when ``features="missing-only"``.
