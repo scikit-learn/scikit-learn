@@ -19,7 +19,7 @@ like `flake8` to ignore the import, which appears as unused.
 from ..preprocessing._discretization import MDLPDiscretizer
 from .. import preprocessing
 
-# Use settattr to avoid "mypy" errors when monkeypatching
+# Use settattr to avoid mypy errors when monkeypatching
 setattr(preprocessing, "MDLPDiscretizer", MDLPDiscretizer)
 
 preprocessing.__all__ += ["MDLPDiscretizer"]

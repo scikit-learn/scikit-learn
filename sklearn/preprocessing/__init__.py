@@ -3,6 +3,8 @@ The :mod:`sklearn.preprocessing` module includes scaling, centering,
 normalization, binarization methods.
 """
 
+import typing
+
 from ._function_transformer import FunctionTransformer
 
 from ._data import Binarizer
@@ -34,6 +36,12 @@ from ._label import LabelEncoder
 from ._label import MultiLabelBinarizer
 
 from ._discretization import KBinsDiscretizer
+
+
+if typing.TYPE_CHECKING:
+    # Avoid errors in type checkers (e.g. mypy) for experimental estimators
+    # TODO: Remove this check once the estimator is no longer experimental
+    from ._discretization import MDLPDiscretizer
 
 
 __all__ = [
