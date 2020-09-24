@@ -1411,7 +1411,7 @@ def _check_method_props(required_props, props, validate=True):
 
     Parameters
     ----------
-    required_props: dict of {str: str}
+    required_props: dict of {str: set(str)}
         required properties as ``{'given_property': 'method_property'}.
         This can be ``self.get_metadata_request().fit`` for instance.
 
@@ -1419,9 +1419,6 @@ def _check_method_props(required_props, props, validate=True):
         A dictionary with required props as keys and provided ones as values.
         This can be the ``kwargs`` passed to ``fit`` as ``**kwargs`` for
         example.
-
-    method: str
-        The method for which this mapping is done.
 
     validate: bool, default=True
         If ``True``, it'll make sure all provided props are requested.
