@@ -82,7 +82,7 @@ and the target values in ``target``. The "as_frame" optional argument converts
 ``data`` into a pandas DataFrame and ``target`` into a pandas Series. The
 dataset will be downloaded from the web if necessary.
 
-.. topic: References
+.. topic:: References
 
     .. [1] Analysis and Results of the 1999 DARPA Off-Line Intrusion
            Detection Evaluation Richard Lippmann, Joshua W. Haines,
