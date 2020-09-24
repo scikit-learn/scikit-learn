@@ -155,3 +155,4 @@ def test_features_zero_var():
     clf = NearestCentroid(shrink_threshold=0.1)
     with assert_raises(ValueError):
         clf.fit(X, y)
+        
