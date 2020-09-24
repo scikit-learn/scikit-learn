@@ -154,6 +154,9 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
                 self.centroids_[cur_class] = X[center_mask].mean(axis=0)
 
         if self.shrink_threshold:
+            if np.ptp(X).sum() == 0:
+                raise ValueError("All features have zero variance. "
+                                 "Division by zero.")
             dataset_centroid_ = np.mean(X, axis=0)
 
             # m parameter for determining deviation
@@ -161,9 +164,6 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
             # Calculate deviation using the standard deviation of centroids.
             variance = (X - self.centroids_[y_ind]) ** 2
             variance = variance.sum(axis=0)
-            if np.sum(variance) == 0:
-                raise ValueError("All features have zero variance. "
-                                 "Division by zero.")
             s = np.sqrt(variance / (n_samples - n_classes))
             s += np.median(s)  # To deter outliers from affecting the results.
             mm = m.reshape(len(m), 1)  # Reshape to allow broadcasting.
