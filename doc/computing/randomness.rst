@@ -17,14 +17,14 @@ subtle parameter.
 
 .. note:: Recommendation summary
 
-    For an optimal statistical significance of cross-validation (CV) results,
-    pass `RandomState` instances when creating estimators, or leave
-    `random_state` to None. Passing integers to CV splitters is usually the
-    safest option, although `RandomState` instances are fine if you know what
-    you are doing. For both estimators and splitters, passing an integer vs
-    passing an instance (or None) leads to subtle but significant
-    differences, especially for CV procedures. These differences are
-    important to understand when reporting results.
+    For an optimal robustness of cross-validation (CV) results, pass
+    `RandomState` instances when creating estimators, or leave `random_state`
+    to None. Passing integers to CV splitters is usually the safest option,
+    although `RandomState` instances are fine if you know what you are doing.
+    For both estimators and splitters, passing an integer vs passing an
+    instance (or None) leads to subtle but significant differences,
+    especially for CV procedures. These differences are important to
+    understand when reporting results.
     
     For reproducible results across executions, remove any use of
     `random_state=None`.
@@ -167,9 +167,10 @@ each case**:
   starts from a different RNG. As a result, the random subset of features
   will be different for each folds.
 
-While having a constant estimator RNG across folds isn't inherently wrong,
-results are more significant if we allow the estimator RNG to vary for each
-fold, so passing an instance may be preferable (more on this later).
+While having a constant estimator RNG across folds isn't inherently wrong, we
+usually want CV results that are robust w.r.t. the estimator's randomness. As
+a result, passing an instance instead of an integer may be preferable, since
+it will allow the estimator RNG to vary for each fold.
 
 .. note::
     Here, :func:`~sklearn.model_selection.cross_val_score` will use a
@@ -304,8 +305,8 @@ matter how many times we run it. Changing the global `rng` variable to a
 different value should affect the results, as expected.
 
 It is also possible to declare the `rng` variable as an integer. This may
-however lead to less significant cross-validation results, as we will see in
-the next section.
+however lead to less robust cross-validation results, as we will see in the
+next section.
 
 .. note::
     We do not recommend setting the global `numpy` seed by calling
@@ -313,8 +314,8 @@ the next section.
     <https://stackoverflow.com/questions/5836335/consistently-create-same-random-numpy-array/5837352#comment6712034_5837352>`_
     for a discussion.
 
-Significance of cross-validation results
-........................................
+Robustness of cross-validation results
+......................................
 
 When we evaluate a randomized estimator performance by cross-validation, we
 want to make sure that the estimator can yield accurate predictions for new
@@ -334,12 +335,12 @@ initialization.
 When we pass an integer, the estimator will use the same RNG on each fold: if
 we get a good (or bad) CV performance, it might just be because we got lucky
 (or unlucky) with that specific seed. Passing instances leads to more
-significant CV results, and makes the comparison between various algorithms
+robust CV results, and makes the comparison between various algorithms
 fairer. It also helps limiting the temptation to treat the estimator's RNG as
 a hyper-parameter that can be tuned.
 
 Whether we pass `RandomState` instances or integers to CV splitters has no
-impact on significance, as long as `split` is only called once. When `split`
+impact on robustness, as long as `split` is only called once. When `split`
 is called multiple times, fold-to-fold comparison isn't possible anymore. As
 a result, passing integer to CV splitters is usually safer and covers most
 use-cases.

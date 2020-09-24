@@ -186,7 +186,7 @@ General Concepts
         :class:`~pipeline.Pipeline` and
         :class:`~pipeline.FeatureUnion`.)
 
-        If the estimtor's `random_state` parameter is an integer (or if the
+        If the estimator's `random_state` parameter is an integer (or if the
         estimator doesn't have a `random_state` parameter), an *exact clone*
         is returned: the clone and the original estimator will give the exact
         same results. Otherwise, *statistical clone* is returned: the clone
