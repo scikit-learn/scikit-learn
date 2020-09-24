@@ -322,8 +322,7 @@ def test_error_on_a_dataset_with_unseen_labels(pyplot, fitted_clf, data,
 
     # get values that are not present in 'fitted_clf.classes_'
     y = y + 1
-    disp = plot_confusion_matrix(fitted_clf, X, y,
-                                 labels=None, display_labels=None)
+    disp = plot_confusion_matrix(fitted_clf, X, y)
 
     display_labels = [tick.get_text() for tick in disp.ax_.get_xticklabels()]
     expected_labels = [f'{i}' for i in range(n_classes + 1)]
