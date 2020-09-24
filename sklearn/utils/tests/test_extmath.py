@@ -480,7 +480,7 @@ def test_incremental_weighted_mean_and_variance_simple(rng):
 def test_incremental_weighted_mean_and_variance(mean, var, loc, scale, rng):
 
     # Testing of correctness and numerical stability
-    def test(X, sample_weight, expected_mean, expected_var):
+    def _assert(X, sample_weight, expected_mean, expected_var):
         n = X.shape[0]
         for chunk_size in [1, n//10 + 1, n//4 + 1, n//2 + 1, n]:
             last_mean, last_weight_sum, last_var = 0, 0, 0
@@ -502,14 +502,14 @@ def test_incremental_weighted_mean_and_variance(mean, var, loc, scale, rng):
     expected_mean = _safe_accumulator_op(np.average, X, weights=weight, axis=0)
     expected_var = _safe_accumulator_op(
         np.average, (X - expected_mean) ** 2, weights=weight, axis=0)
-    test(X, weight, expected_mean, expected_var)
+    _assert(X, weight, expected_mean, expected_var)
 
     # Compare to unweighted mean: np.mean
     X = rng.normal(loc=mean, scale=var, size=size)
     ones_weight = np.ones(size[0])
     expected_mean = _safe_accumulator_op(np.mean, X, axis=0)
     expected_var = _safe_accumulator_op(np.var, X, axis=0)
-    test(X, ones_weight, expected_mean, expected_var)
+    _assert(X, ones_weight, expected_mean, expected_var)
 
 
 def test_incremental_weighted_mean_and_variance_ignore_nan():
