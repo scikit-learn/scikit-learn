@@ -1,10 +1,10 @@
-"""Metrics to assess performance on classification task given scores
+"""Metrics to assess performance on classification task given scores.
 
 Functions named as ``*_score`` return a scalar value to maximize: the higher
-the better
+the better.
 
 Function named as ``*_error`` or ``*_loss`` return a scalar value to minimize:
-the lower the better
+the lower the better.
 """
 
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
@@ -40,7 +40,7 @@ from ._base import _average_binary_score, _average_multiclass_ovo_score
 
 
 def auc(x, y):
-    """Compute Area Under the Curve (AUC) using the trapezoidal rule
+    """Compute Area Under the Curve (AUC) using the trapezoidal rule.
 
     This is a general function, given points on a curve.  For computing the
     area under the ROC-curve, see :func:`roc_auc_score`.  For an alternative
@@ -49,15 +49,22 @@ def auc(x, y):
 
     Parameters
     ----------
-    x : array, shape = [n]
+    x : ndarray of shape (n,)
         x coordinates. These must be either monotonic increasing or monotonic
         decreasing.
-    y : array, shape = [n]
+    y : ndarray of shape, (n,)
         y coordinates.
 
     Returns
     -------
     auc : float
+
+    See Also
+    --------
+    roc_auc_score : Compute the area under the ROC curve.
+    average_precision_score : Compute average precision from prediction scores.
+    precision_recall_curve : Compute precision-recall pairs for different
+        probability thresholds.
 
     Examples
     --------
@@ -68,13 +75,6 @@ def auc(x, y):
     >>> fpr, tpr, thresholds = metrics.roc_curve(y, pred, pos_label=2)
     >>> metrics.auc(fpr, tpr)
     0.75
-
-    See also
-    --------
-    roc_auc_score : Compute the area under the ROC curve
-    average_precision_score : Compute average precision from prediction scores
-    precision_recall_curve :
-        Compute precision-recall pairs for different probability thresholds
     """
     check_consistent_length(x, y)
     x = column_or_1d(x)
@@ -105,7 +105,7 @@ def auc(x, y):
 @_deprecate_positional_args
 def average_precision_score(y_true, y_score, *, average="macro", pos_label=1,
                             sample_weight=None):
-    """Compute average precision (AP) from prediction scores
+    """Compute average precision (AP) from prediction scores.
 
     AP summarizes a precision-recall curve as the weighted mean of precisions
     achieved at each threshold, with the increase in recall from the previous
@@ -127,13 +127,13 @@ def average_precision_score(y_true, y_score, *, average="macro", pos_label=1,
 
     Parameters
     ----------
-    y_true : array, shape = [n_samples] or [n_samples, n_classes]
+    y_true : ndarray of shape (n_samples,) or (n_samples, n_classes)
         True binary labels or binary label indicators.
 
-    y_score : array, shape = [n_samples] or [n_samples, n_classes]
+    y_score : ndarray of shape (n_samples,) or (n_samples, n_classes)
         Target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
-        (as returned by "decision_function" on some classifiers).
+        (as returned by :term:`decision_function` on some classifiers).
 
     average : {'micro', 'samples', 'weighted', 'macro'} or None, \
             default='macro'
@@ -165,18 +165,23 @@ def average_precision_score(y_true, y_score, *, average="macro", pos_label=1,
     -------
     average_precision : float
 
+    See Also
+    --------
+    roc_auc_score : Compute the area under the ROC curve.
+    precision_recall_curve : Compute precision-recall pairs for different
+        probability thresholds.
+
+    Notes
+    -----
+    .. versionchanged:: 0.19
+      Instead of linearly interpolating between operating points, precisions
+      are weighted by the change in recall since the last operating point.
+
     References
     ----------
     .. [1] `Wikipedia entry for the Average precision
            <https://en.wikipedia.org/w/index.php?title=Information_retrieval&
            oldid=793358396#Average_precision>`_
-
-    See also
-    --------
-    roc_auc_score : Compute the area under the ROC curve
-
-    precision_recall_curve :
-        Compute precision-recall pairs for different probability thresholds
 
     Examples
     --------
@@ -186,12 +191,6 @@ def average_precision_score(y_true, y_score, *, average="macro", pos_label=1,
     >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
     >>> average_precision_score(y_true, y_scores)
     0.83...
-
-    Notes
-    -----
-    .. versionchanged:: 0.19
-      Instead of linearly interpolating between operating points, precisions
-      are weighted by the change in recall since the last operating point.
     """
     def _binary_uninterpolated_average_precision(
             y_true, y_score, pos_label=1, sample_weight=None):
@@ -208,18 +207,118 @@ def average_precision_score(y_true, y_score, *, average="macro", pos_label=1,
                          "multilabel-indicator y_true. Do not set "
                          "pos_label or set pos_label to 1.")
     elif y_type == "binary":
-        present_labels = np.unique(y_true)
+        # Convert to Python primitive type to avoid NumPy type / Python str
+        # comparison. See https://github.com/numpy/numpy/issues/6784
+        present_labels = np.unique(y_true).tolist()
         if len(present_labels) == 2 and pos_label not in present_labels:
-            raise ValueError("pos_label=%r is invalid. Set it to a label in "
-                             "y_true." % pos_label)
+            raise ValueError(
+                f"pos_label={pos_label} is not a valid label. It should be "
+                f"one of {present_labels}"
+            )
     average_precision = partial(_binary_uninterpolated_average_precision,
                                 pos_label=pos_label)
     return _average_binary_score(average_precision, y_true, y_score,
                                  average, sample_weight=sample_weight)
 
 
+def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
+    """Compute error rates for different probability thresholds.
+
+    .. note::
+       This metric is used for evaluation of ranking and error tradeoffs of
+       a binary classification task.
+
+    Read more in the :ref:`User Guide <det_curve>`.
+
+    .. versionadded:: 0.24
+
+    Parameters
+    ----------
+    y_true : ndarray of shape (n_samples,)
+        True binary labels. If labels are not either {-1, 1} or {0, 1}, then
+        pos_label should be explicitly given.
+
+    y_score : ndarray of shape of (n_samples,)
+        Target scores, can either be probability estimates of the positive
+        class, confidence values, or non-thresholded measure of decisions
+        (as returned by "decision_function" on some classifiers).
+
+    pos_label : int or str, default=None
+        The label of the positive class.
+        When ``pos_label=None``, if `y_true` is in {-1, 1} or {0, 1},
+        ``pos_label`` is set to 1, otherwise an error will be raised.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    Returns
+    -------
+    fpr : ndarray of shape (n_thresholds,)
+        False positive rate (FPR) such that element i is the false positive
+        rate of predictions with score >= thresholds[i]. This is occasionally
+        referred to as false acceptance propability or fall-out.
+
+    fnr : ndarray of shape (n_thresholds,)
+        False negative rate (FNR) such that element i is the false negative
+        rate of predictions with score >= thresholds[i]. This is occasionally
+        referred to as false rejection or miss rate.
+
+    thresholds : ndarray of shape (n_thresholds,)
+        Decreasing score values.
+
+    See Also
+    --------
+    plot_det_curve : Plot detection error tradeoff (DET) curve.
+    DetCurveDisplay : DET curve visualization.
+    roc_curve : Compute Receiver operating characteristic (ROC) curve.
+    precision_recall_curve : Compute precision-recall curve.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics import det_curve
+    >>> y_true = np.array([0, 0, 1, 1])
+    >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
+    >>> fpr, fnr, thresholds = det_curve(y_true, y_scores)
+    >>> fpr
+    array([0.5, 0.5, 0. ])
+    >>> fnr
+    array([0. , 0.5, 0.5])
+    >>> thresholds
+    array([0.35, 0.4 , 0.8 ])
+    """
+    if len(np.unique(y_true)) != 2:
+        raise ValueError("Only one class present in y_true. Detection error "
+                         "tradeoff curve is not defined in that case.")
+
+    fps, tps, thresholds = _binary_clf_curve(
+        y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
+    )
+
+    fns = tps[-1] - tps
+    p_count = tps[-1]
+    n_count = fps[-1]
+
+    # start with false positives zero
+    first_ind = (
+        fps.searchsorted(fps[0], side='right') - 1
+        if fps.searchsorted(fps[0], side='right') > 0
+        else None
+    )
+    # stop with false negatives zero
+    last_ind = tps.searchsorted(tps[-1]) + 1
+    sl = slice(first_ind, last_ind)
+
+    # reverse the output such that list of false positives is decreasing
+    return (
+        fps[sl][::-1] / n_count,
+        fns[sl][::-1] / p_count,
+        thresholds[sl][::-1]
+    )
+
+
 def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None):
-    """Binary roc auc score"""
+    """Binary roc auc score."""
     if len(np.unique(y_true)) != 2:
         raise ValueError("Only one class present in y_true. ROC AUC score "
                          "is not defined in that case.")
@@ -265,16 +364,31 @@ def roc_auc_score(y_true, y_score, *, average="macro", sample_weight=None,
         binary label indicators with shape (n_samples, n_classes).
 
     y_score : array-like of shape (n_samples,) or (n_samples, n_classes)
-        Target scores. In the binary and multilabel cases, these can be either
-        probability estimates or non-thresholded decision values (as returned
-        by `decision_function` on some classifiers). In the multiclass case,
-        these must be probability estimates which sum to 1. The binary
-        case expects a shape (n_samples,), and the scores must be the scores of
-        the class with the greater label. The multiclass and multilabel
-        cases expect a shape (n_samples, n_classes). In the multiclass case,
-        the order of the class scores must correspond to the order of
-        ``labels``, if provided, or else to the numerical or lexicographical
-        order of the labels in ``y_true``.
+        Target scores.
+
+        * In the binary case, it corresponds to an array of shape
+          `(n_samples,)`. Both probability estimates and non-thresholded
+          decision values can be provided. The probability estimates correspond
+          to the **probability of the class with the greater label**,
+          i.e. `estimator.classes_[1]` and thus
+          `estimator.predict_proba(X, y)[:, 1]`. The decision values
+          corresponds to the output of `estimator.decision_function(X, y)`.
+          See more information in the :ref:`User guide <roc_auc_binary>`;
+        * In the multiclass case, it corresponds to an array of shape
+          `(n_samples, n_classes)` of probability estimates provided by the
+          `predict_proba` method. The probability estimates **must**
+          sum to 1 across the possible classes. In addition, the order of the
+          class scores must correspond to the order of ``labels``,
+          if provided, or else to the numerical or lexicographical order of
+          the labels in ``y_true``. See more information in the
+          :ref:`User guide <roc_auc_multiclass>`;
+        * In the multilabel case, it corresponds to an array of shape
+          `(n_samples, n_classes)`. Probability estimates are provided by the
+          `predict_proba` method and the non-thresholded decision values by
+          the `decision_function` method. The probability estimates correspond
+          to the **probability of the class with the greater label for each
+          output** of the classifier. See more information in the
+          :ref:`User guide <roc_auc_multilabel>`.
 
     average : {'micro', 'macro', 'samples', 'weighted'} or None, \
             default='macro'
@@ -352,22 +466,51 @@ def roc_auc_score(y_true, y_score, *, average="macro", sample_weight=None,
             Machine Learning, 45(2), 171-186.
             <http://link.springer.com/article/10.1023/A:1010920819831>`_
 
-    See also
+    See Also
     --------
-    average_precision_score : Area under the precision-recall curve
-
-    roc_curve : Compute Receiver operating characteristic (ROC) curve
-
-    plot_roc_curve : Plot Receiver operating characteristic (ROC) curve
+    average_precision_score : Area under the precision-recall curve.
+    roc_curve : Compute Receiver operating characteristic (ROC) curve.
+    plot_roc_curve : Plot Receiver operating characteristic (ROC) curve.
 
     Examples
     --------
-    >>> import numpy as np
+    Binary case:
+
+    >>> from sklearn.datasets import load_breast_cancer
+    >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.metrics import roc_auc_score
-    >>> y_true = np.array([0, 0, 1, 1])
-    >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> roc_auc_score(y_true, y_scores)
-    0.75
+    >>> X, y = load_breast_cancer(return_X_y=True)
+    >>> clf = LogisticRegression(solver="liblinear", random_state=0).fit(X, y)
+    >>> roc_auc_score(y, clf.predict_proba(X)[:, 1])
+    0.99...
+    >>> roc_auc_score(y, clf.decision_function(X))
+    0.99...
+
+    Multiclass case:
+
+    >>> from sklearn.datasets import load_iris
+    >>> X, y = load_iris(return_X_y=True)
+    >>> clf = LogisticRegression(solver="liblinear").fit(X, y)
+    >>> roc_auc_score(y, clf.predict_proba(X), multi_class='ovr')
+    0.99...
+
+    Multilabel case:
+
+    >>> from sklearn.datasets import make_multilabel_classification
+    >>> from sklearn.multioutput import MultiOutputClassifier
+    >>> X, y = make_multilabel_classification(random_state=0)
+    >>> clf = MultiOutputClassifier(clf).fit(X, y)
+    >>> # get a list of n_output containing probability arrays of shape
+    >>> # (n_samples, n_classes)
+    >>> y_pred = clf.predict_proba(X)
+    >>> # extract the positive columns for each output
+    >>> y_pred = np.transpose([pred[:, 1] for pred in y_pred])
+    >>> roc_auc_score(y, y_pred, average=None)
+    array([0.82..., 0.86..., 0.94..., 0.85... , 0.94...])
+    >>> from sklearn.linear_model import RidgeClassifierCV
+    >>> clf = RidgeClassifierCV().fit(X, y)
+    >>> roc_auc_score(y, clf.decision_function(X), average=None)
+    array([0.81..., 0.84... , 0.93..., 0.87..., 0.94...])
     """
 
     y_type = type_of_target(y_true)
@@ -403,7 +546,7 @@ def roc_auc_score(y_true, y_score, *, average="macro", sample_weight=None,
 
 def _multiclass_roc_auc_score(y_true, y_score, labels,
                               multi_class, average, sample_weight):
-    """Multiclass roc auc score
+    """Multiclass roc auc score.
 
     Parameters
     ----------
@@ -414,11 +557,11 @@ def _multiclass_roc_auc_score(y_true, y_score, labels,
         Target scores corresponding to probability estimates of a sample
         belonging to a particular class
 
-    labels : array-like of shape (n_classes,), default=None
+    labels : array-like of shape (n_classes,) or None
         List of labels to index ``y_score`` used for multiclass. If ``None``,
         the lexical order of ``y_true`` is used to index ``y_score``.
 
-    multi_class : string, 'ovr' or 'ovo'
+    multi_class : {'ovr', 'ovo'}
         Determines the type of multiclass configuration to use.
         ``'ovr'``:
             Calculate metrics for the multiclass case using the one-vs-rest
@@ -427,7 +570,7 @@ def _multiclass_roc_auc_score(y_true, y_score, labels,
             Calculate metrics for the multiclass case using the one-vs-one
             approach.
 
-    average : {'macro', 'weighted'}, default='macro'
+    average : {'macro', 'weighted'}
         Determines the type of averaging performed on the pairwise binary
         metric scores
         ``'macro'``:
@@ -438,7 +581,7 @@ def _multiclass_roc_auc_score(y_true, y_score, labels,
             Calculate metrics for each label, taking into account the
             prevalence of the classes.
 
-    sample_weight : array-like of shape (n_samples,), default=None
+    sample_weight : array-like of shape (n_samples,) or None
         Sample weights.
 
     """
@@ -506,33 +649,33 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
 
     Parameters
     ----------
-    y_true : array, shape = [n_samples]
-        True targets of binary classification
+    y_true : ndarray of shape (n_samples,)
+        True targets of binary classification.
 
-    y_score : array, shape = [n_samples]
-        Estimated probabilities or decision function
+    y_score : ndarray of shape (n_samples,)
+        Estimated probabilities or output of a decision function.
 
     pos_label : int or str, default=None
-        The label of the positive class
+        The label of the positive class.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     Returns
     -------
-    fps : array, shape = [n_thresholds]
+    fps : ndarray of shape (n_thresholds,)
         A count of false positives, at index i being the number of negative
         samples assigned a score >= thresholds[i]. The total number of
         negative samples is equal to fps[-1] (thus true negatives are given by
         fps[-1] - fps).
 
-    tps : array, shape = [n_thresholds <= len(np.unique(y_score))]
+    tps : ndarray of shape (n_thresholds,)
         An increasing count of true positives, at index i being the number
         of positive samples assigned a score >= thresholds[i]. The total
         number of positive samples is equal to tps[-1] (thus false negatives
         are given by tps[-1] - tps).
 
-    thresholds : array, shape = [n_thresholds]
+    thresholds : ndarray of shape (n_thresholds,)
         Decreasing score values.
     """
     # Check to make sure y_true is valid
@@ -603,7 +746,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
 @_deprecate_positional_args
 def precision_recall_curve(y_true, probas_pred, *, pos_label=None,
                            sample_weight=None):
-    """Compute precision-recall pairs for different probability thresholds
+    """Compute precision-recall pairs for different probability thresholds.
 
     Note: this implementation is restricted to the binary classification task.
 
@@ -624,12 +767,12 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None,
 
     Parameters
     ----------
-    y_true : array, shape = [n_samples]
+    y_true : ndarray of shape (n_samples,)
         True binary labels. If labels are not either {-1, 1} or {0, 1}, then
         pos_label should be explicitly given.
 
-    probas_pred : array, shape = [n_samples]
-        Estimated probabilities or decision function.
+    probas_pred : ndarray of shape (n_samples,)
+        Estimated probabilities or output of a decision function.
 
     pos_label : int or str, default=None
         The label of the positive class.
@@ -641,26 +784,26 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None,
 
     Returns
     -------
-    precision : array, shape = [n_thresholds + 1]
+    precision : ndarray of shape (n_thresholds + 1,)
         Precision values such that element i is the precision of
         predictions with score >= thresholds[i] and the last element is 1.
 
-    recall : array, shape = [n_thresholds + 1]
+    recall : ndarray of shape (n_thresholds + 1,)
         Decreasing recall values such that element i is the recall of
         predictions with score >= thresholds[i] and the last element is 0.
 
-    thresholds : array, shape = [n_thresholds <= len(np.unique(probas_pred))]
+    thresholds : ndarray of shape (n_thresholds,)
         Increasing thresholds on the decision function used to compute
-        precision and recall.
+        precision and recall. n_thresholds <= len(np.unique(probas_pred)).
 
-    See also
+    See Also
     --------
-    average_precision_score : Compute average precision from prediction scores
-
-    roc_curve : Compute Receiver operating characteristic (ROC) curve
-
-    plot_precision_recall_curve :
-        Plot Precision Recall Curve for binary classifiers
+    plot_precision_recall_curve : Plot Precision Recall Curve for binary
+        classifiers.
+    PrecisionRecallDisplay : Precision Recall visualization.
+    average_precision_score : Compute average precision from prediction scores.
+    det_curve: Compute error rates for different probability thresholds.
+    roc_curve : Compute Receiver operating characteristic (ROC) curve.
 
     Examples
     --------
@@ -696,7 +839,7 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None,
 @_deprecate_positional_args
 def roc_curve(y_true, y_score, *, pos_label=None, sample_weight=None,
               drop_intermediate=True):
-    """Compute Receiver operating characteristic (ROC)
+    """Compute Receiver operating characteristic (ROC).
 
     Note: this implementation is restricted to the binary classification task.
 
@@ -704,12 +847,11 @@ def roc_curve(y_true, y_score, *, pos_label=None, sample_weight=None,
 
     Parameters
     ----------
-
-    y_true : array, shape (n_samples,)
+    y_true : ndarray of shape (n_samples,)
         True binary labels. If labels are not either {-1, 1} or {0, 1}, then
         pos_label should be explicitly given.
 
-    y_score : array, shape (n_samples,)
+    y_score : ndarray of shape (n_samples,)
         Target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
@@ -722,7 +864,7 @@ def roc_curve(y_true, y_score, *, pos_label=None, sample_weight=None,
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    drop_intermediate : boolean, optional (default=True)
+    drop_intermediate : bool, default=True
         Whether to drop some suboptimal thresholds which would not appear
         on a plotted ROC curve. This is useful in order to create lighter
         ROC curves.
@@ -732,24 +874,25 @@ def roc_curve(y_true, y_score, *, pos_label=None, sample_weight=None,
 
     Returns
     -------
-    fpr : array, shape = (>2,)
+    fpr : ndarray of shape (>2,)
         Increasing false positive rates such that element i is the false
         positive rate of predictions with score >= `thresholds[i]`.
 
-    tpr : array, shape = (>2,)
+    tpr : ndarray of shape (>2,)
         Increasing true positive rates such that element `i` is the true
         positive rate of predictions with score >= `thresholds[i]`.
 
-    thresholds : array, shape = (n_thresholds,)
+    thresholds : ndarray of shape = (n_thresholds,)
         Decreasing thresholds on the decision function used to compute
         fpr and tpr. `thresholds[0]` represents no instances being predicted
         and is arbitrarily set to `max(y_score) + 1`.
 
-    See also
+    See Also
     --------
-    roc_auc_score : Compute the area under the ROC curve
-
-    plot_roc_curve : Plot Receiver operating characteristic (ROC) curve
+    plot_roc_curve : Plot Receiver operating characteristic (ROC) curve.
+    RocCurveDisplay : ROC Curve visualization.
+    det_curve: Compute error rates for different probability thresholds.
+    roc_auc_score : Compute the area under the ROC curve.
 
     Notes
     -----
@@ -829,7 +972,7 @@ def roc_curve(y_true, y_score, *, pos_label=None, sample_weight=None,
 @_deprecate_positional_args
 def label_ranking_average_precision_score(y_true, y_score, *,
                                           sample_weight=None):
-    """Compute ranking-based average precision
+    """Compute ranking-based average precision.
 
     Label ranking average precision (LRAP) is the average over each ground
     truth label assigned to each sample, of the ratio of true vs. total
@@ -845,10 +988,10 @@ def label_ranking_average_precision_score(y_true, y_score, *,
 
     Parameters
     ----------
-    y_true : array or sparse matrix, shape = [n_samples, n_labels]
+    y_true : {ndarray, sparse matrix} of shape (n_samples, n_labels)
         True binary labels in binary indicator format.
 
-    y_score : array, shape = [n_samples, n_labels]
+    y_score : ndarray of shape (n_samples, n_labels)
         Target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
@@ -918,7 +1061,7 @@ def label_ranking_average_precision_score(y_true, y_score, *,
 
 @_deprecate_positional_args
 def coverage_error(y_true, y_score, *, sample_weight=None):
-    """Coverage error measure
+    """Coverage error measure.
 
     Compute how far we need to go through the ranked scores to cover all
     true labels. The best value is equal to the average number
@@ -935,10 +1078,10 @@ def coverage_error(y_true, y_score, *, sample_weight=None):
 
     Parameters
     ----------
-    y_true : array, shape = [n_samples, n_labels]
+    y_true : ndarray of shape (n_samples, n_labels)
         True binary labels in binary indicator format.
 
-    y_score : array, shape = [n_samples, n_labels]
+    y_score : ndarray of shape (n_samples, n_labels)
         Target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
@@ -978,7 +1121,7 @@ def coverage_error(y_true, y_score, *, sample_weight=None):
 
 @_deprecate_positional_args
 def label_ranking_loss(y_true, y_score, *, sample_weight=None):
-    """Compute Ranking loss measure
+    """Compute Ranking loss measure.
 
     Compute the average number of label pairs that are incorrectly ordered
     given y_score weighted by the size of the label set and the number of
@@ -995,10 +1138,10 @@ def label_ranking_loss(y_true, y_score, *, sample_weight=None):
 
     Parameters
     ----------
-    y_true : array or sparse matrix, shape = [n_samples, n_labels]
+    y_true : {ndarray, sparse matrix} of shape (n_samples, n_labels)
         True binary labels in binary indicator format.
 
-    y_score : array, shape = [n_samples, n_labels]
+    y_score : ndarray of shape (n_samples, n_labels)
         Target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
@@ -1015,7 +1158,6 @@ def label_ranking_loss(y_true, y_score, *, sample_weight=None):
     .. [1] Tsoumakas, G., Katakis, I., & Vlahavas, I. (2010).
            Mining multi-label data. In Data mining and knowledge discovery
            handbook (pp. 667-685). Springer US.
-
     """
     y_true = check_array(y_true, ensure_2d=False, accept_sparse='csr')
     y_score = check_array(y_score, ensure_2d=False)
@@ -1074,11 +1216,11 @@ def _dcg_sample_scores(y_true, y_score, k=None,
 
     Parameters
     ----------
-    y_true : ndarray, shape (n_samples, n_labels)
+    y_true : ndarray of shape (n_samples, n_labels)
         True targets of multilabel classification, or true scores of entities
         to be ranked.
 
-    y_score : ndarray, shape (n_samples, n_labels)
+    y_score : ndarray of shape (n_samples, n_labels)
         Target scores, can either be probability estimates, confidence values,
         or non-thresholded measure of decisions (as returned by
         "decision_function" on some classifiers).
@@ -1097,16 +1239,14 @@ def _dcg_sample_scores(y_true, y_score, k=None,
 
     Returns
     -------
-    discounted_cumulative_gain : ndarray, shape (n_samples,)
+    discounted_cumulative_gain : ndarray of shape (n_samples,)
         The DCG score for each sample.
 
-    See also
+    See Also
     --------
-    ndcg_score :
-        The Discounted Cumulative Gain divided by the Ideal Discounted
+    ndcg_score : The Discounted Cumulative Gain divided by the Ideal Discounted
         Cumulative Gain (the DCG obtained for a perfect ranking), in order to
         have a score between 0 and 1.
-
     """
     discount = 1 / (np.log(np.arange(y_true.shape[1]) + 2) / np.log(log_base))
     if k is not None:
@@ -1140,17 +1280,18 @@ def _tie_averaged_dcg(y_true, y_score, discount_cumsum):
     Parameters
     ----------
     y_true : ndarray
-        The true relevance scores
+        The true relevance scores.
 
     y_score : ndarray
-        Predicted scores
+        Predicted scores.
 
     discount_cumsum : ndarray
         Precomputed cumulative sum of the discounts.
 
     Returns
     -------
-    The discounted cumulative gain.
+    discounted_cumulative_gain : float
+        The discounted cumulative gain.
 
     References
     ----------
@@ -1158,7 +1299,6 @@ def _tie_averaged_dcg(y_true, y_score, discount_cumsum):
     performance measures efficiently in the presence of tied scores. In
     European conference on information retrieval (pp. 414-421). Springer,
     Berlin, Heidelberg.
-
     """
     _, inv, counts = np.unique(
         - y_score, return_inverse=True, return_counts=True)
@@ -1198,11 +1338,11 @@ def dcg_score(y_true, y_score, *, k=None,
 
     Parameters
     ----------
-    y_true : ndarray, shape (n_samples, n_labels)
+    y_true : ndarray of shape (n_samples, n_labels)
         True targets of multilabel classification, or true scores of entities
         to be ranked.
 
-    y_score : ndarray, shape (n_samples, n_labels)
+    y_score : ndarray of shape (n_samples, n_labels)
         Target scores, can either be probability estimates, confidence values,
         or non-thresholded measure of decisions (as returned by
         "decision_function" on some classifiers).
@@ -1227,17 +1367,16 @@ def dcg_score(y_true, y_score, *, k=None,
     discounted_cumulative_gain : float
         The averaged sample DCG scores.
 
-    See also
+    See Also
     --------
-    ndcg_score :
-        The Discounted Cumulative Gain divided by the Ideal Discounted
+    ndcg_score : The Discounted Cumulative Gain divided by the Ideal Discounted
         Cumulative Gain (the DCG obtained for a perfect ranking), in order to
         have a score between 0 and 1.
 
     References
     ----------
     `Wikipedia entry for Discounted Cumulative Gain
-    <https://en.wikipedia.org/wiki/Discounted_cumulative_gain>`_
+    <https://en.wikipedia.org/wiki/Discounted_cumulative_gain>`_.
 
     Jarvelin, K., & Kekalainen, J. (2002).
     Cumulated gain-based evaluation of IR techniques. ACM Transactions on
@@ -1245,7 +1384,7 @@ def dcg_score(y_true, y_score, *, k=None,
 
     Wang, Y., Wang, L., Li, Y., He, D., Chen, W., & Liu, T. Y. (2013, May).
     A theoretical analysis of NDCG ranking measures. In Proceedings of the 26th
-    Annual Conference on Learning Theory (COLT 2013)
+    Annual Conference on Learning Theory (COLT 2013).
 
     McSherry, F., & Najork, M. (2008, March). Computing information retrieval
     performance measures efficiently in the presence of tied scores. In
@@ -1302,11 +1441,11 @@ def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False):
 
     Parameters
     ----------
-    y_true : ndarray, shape (n_samples, n_labels)
+    y_true : ndarray of shape (n_samples, n_labels)
         True targets of multilabel classification, or true scores of entities
         to be ranked.
 
-    y_score : ndarray, shape (n_samples, n_labels)
+    y_score : ndarray of shape (n_samples, n_labels)
         Target scores, can either be probability estimates, confidence values,
         or non-thresholded measure of decisions (as returned by
         "decision_function" on some classifiers).
@@ -1321,10 +1460,10 @@ def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False):
 
     Returns
     -------
-    normalized_discounted_cumulative_gain : ndarray, shape (n_samples,)
+    normalized_discounted_cumulative_gain : ndarray of shape (n_samples,)
         The NDCG score for each sample (float in [0., 1.]).
 
-    See also
+    See Also
     --------
     dcg_score : Discounted Cumulative Gain (not normalized).
 
@@ -1355,11 +1494,11 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None,
 
     Parameters
     ----------
-    y_true : ndarray, shape (n_samples, n_labels)
+    y_true : ndarray of shape (n_samples, n_labels)
         True targets of multilabel classification, or true scores of entities
         to be ranked.
 
-    y_score : ndarray, shape (n_samples, n_labels)
+    y_score : ndarray of shape (n_samples, n_labels)
         Target scores, can either be probability estimates, confidence values,
         or non-thresholded measure of decisions (as returned by
         "decision_function" on some classifiers).
@@ -1368,7 +1507,7 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None,
         Only consider the highest k scores in the ranking. If None, use all
         outputs.
 
-    sample_weight : ndarray of shape (n_samples,),default=None
+    sample_weight : ndarray of shape (n_samples,), default=None
         Sample weights. If None, all samples are given the same weight.
 
     ignore_ties : bool, default=False
@@ -1380,7 +1519,7 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None,
     normalized_discounted_cumulative_gain : float in [0., 1.]
         The averaged NDCG scores for all samples.
 
-    See also
+    See Also
     --------
     dcg_score : Discounted Cumulative Gain (not normalized).
 

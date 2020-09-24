@@ -1037,7 +1037,9 @@ Target Types
         identified as 'multiclass'.
 
     continuous multioutput
+    continuous multi-output
     multioutput continuous
+    multi-output continuous
         A regression problem where each sample's target consists of ``n_outputs``
         :term:`outputs`, each one a finite floating point number, for a
         fixed int ``n_outputs > 1`` in a particular dataset.
@@ -1052,6 +1054,7 @@ Target Types
         'multiclass-multioutput'.
 
     multiclass
+    multi-class
         A classification problem consisting of more than two classes.  A
         multiclass target may be represented as a 1-dimensional array of
         strings or integers.  A 2d column vector of integers (i.e. a
@@ -1075,7 +1078,9 @@ Target Types
         identically to 'multiclass'.
 
     multiclass multioutput
+    multi-class multi-output
     multioutput multiclass
+    multi-output multi-class
         A classification problem where each sample's target consists of
         ``n_outputs`` :term:`outputs`, each a class label, for a fixed int
         ``n_outputs > 1`` in a particular dataset.  Each output has a
@@ -1101,6 +1106,7 @@ Target Types
         'multiclass-multioutput' for multiclass multioutput input.
 
     multilabel
+    multi-label
         A :term:`multiclass multioutput` target where each output is
         :term:`binary`.  This may be represented as a 2d (dense) array or
         sparse matrix of integers, such that each column is a separate binary
@@ -1583,10 +1589,10 @@ functions or non-estimator constructors.
         in the User Guide.
 
         Where multiple metrics can be evaluated, ``scoring`` may be given
-        either as a list of unique strings or a dictionary with names as keys
-        and callables as values. Note that this does *not* specify which score
-        function is to be maximized, and another parameter such as ``refit``
-        maybe used for this purpose.
+        either as a list of unique strings, a dictionary with names as keys and
+        callables as values or a callable that returns a dictionary. Note that
+        this does *not* specify which score function is to be maximized, and
+        another parameter such as ``refit`` maybe used for this purpose.
 
 
         The ``scoring`` parameter is validated and interpreted using

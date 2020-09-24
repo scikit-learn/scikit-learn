@@ -12,7 +12,7 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 from scipy import sparse
-from joblib import Parallel, delayed, effective_n_jobs
+from joblib import Parallel, effective_n_jobs
 
 from ._base import LinearModel, _pre_fit
 from ..base import RegressorMixin, MultiOutputMixin
@@ -25,6 +25,7 @@ from ..utils.fixes import _astype_copy_false, _joblib_parallel_args
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.validation import column_or_1d
 from ..utils.validation import _deprecate_positional_args
+from ..utils.fixes import delayed
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
 from . import _cd_fast as cd_fast  # type: ignore
@@ -298,8 +299,7 @@ def lasso_path(X, y, *, eps=1e-3, n_alphas=100, alphas=None,
     [[0.         0.         0.46915237]
      [0.2159048  0.4425765  0.23668876]]
 
-
-    See also
+    See Also
     --------
     lars_path
     Lasso
@@ -651,9 +651,9 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     coef_ : ndarray of shape (n_features,) or (n_targets, n_features)
         parameter vector (w in the cost function formula)
 
-    sparse_coef_ : sparse matrix of shape (n_features, 1) or \
-            (n_targets, n_features)
-        ``sparse_coef_`` is a readonly property derived from ``coef_``
+    sparse_coef_ : sparse matrix of shape (n_features,) or \
+            (n_tasks, n_features)
+        sparse representation of the `coef_`.
 
     intercept_ : float or ndarray of shape (n_targets,)
         independent term in decision function.
@@ -688,12 +688,12 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
 
-    See also
+    See Also
     --------
     ElasticNetCV : Elastic net model with best model selection by
         cross-validation.
-    SGDRegressor: implements elastic net regression with incremental training.
-    SGDClassifier: implements logistic regression with elastic net penalty
+    SGDRegressor : Implements elastic net regression with incremental training.
+    SGDClassifier : Implements logistic regression with elastic net penalty
         (``SGDClassifier(loss="log", penalty="elasticnet")``).
     """
     path = staticmethod(enet_path)
@@ -977,6 +977,10 @@ class Lasso(ElasticNet):
     coef_ : ndarray of shape (n_features,) or (n_targets, n_features)
         parameter vector (w in the cost function formula)
 
+    dual_gap_ : float or ndarray of shape (n_targets,)
+        Given param alpha, the dual gaps at the end of the optimization,
+        same shape as each observation of y.
+
     sparse_coef_ : sparse matrix of shape (n_features, 1) or \
             (n_targets, n_features)
         ``sparse_coef_`` is a readonly property derived from ``coef_``
@@ -999,7 +1003,7 @@ class Lasso(ElasticNet):
     >>> print(clf.intercept_)
     0.15...
 
-    See also
+    See Also
     --------
     lars_path
     lasso_path
@@ -1493,7 +1497,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
 
-    See also
+    See Also
     --------
     lars_path
     lasso_path
@@ -1702,7 +1706,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
 
         alpha = a + b and l1_ratio = a / (a + b).
 
-    See also
+    See Also
     --------
     enet_path
     ElasticNet
@@ -1836,6 +1840,10 @@ class MultiTaskElasticNet(Lasso):
     eps_ : float
         The tolerance scaled scaled by the variance of the target `y`.
 
+    sparse_coef_ : sparse matrix of shape (n_features,) or \
+            (n_tasks, n_features)
+        sparse representation of the `coef_`.
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -1848,7 +1856,7 @@ class MultiTaskElasticNet(Lasso):
     >>> print(clf.intercept_)
     [0.0872422 0.0872422]
 
-    See also
+    See Also
     --------
     MultiTaskElasticNet : Multi-task L1/L2 ElasticNet with built-in
         cross-validation.
@@ -2031,6 +2039,10 @@ class MultiTaskLasso(MultiTaskElasticNet):
     eps_ : float
         The tolerance scaled scaled by the variance of the target `y`.
 
+    sparse_coef_ : sparse matrix of shape (n_features,) or \
+            (n_tasks, n_features)
+        sparse representation of the `coef_`.
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -2043,9 +2055,9 @@ class MultiTaskLasso(MultiTaskElasticNet):
     >>> print(clf.intercept_)
     [-0.41888636 -0.87382323]
 
-    See also
+    See Also
     --------
-    MultiTaskLasso : Multi-task L1/L2 Lasso with built-in cross-validation
+    MultiTaskLasso : Multi-task L1/L2 Lasso with built-in cross-validation.
     Lasso
     MultiTaskElasticNet
 
@@ -2224,7 +2236,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     >>> print(clf.intercept_)
     [0.00166409 0.00166409]
 
-    See also
+    See Also
     --------
     MultiTaskElasticNet
     ElasticNetCV
@@ -2405,7 +2417,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     >>> reg.predict(X[:1,])
     array([[153.7971...,  94.9015...]])
 
-    See also
+    See Also
     --------
     MultiTaskElasticNet
     ElasticNetCV

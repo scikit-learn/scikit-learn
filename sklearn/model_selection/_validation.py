@@ -18,17 +18,18 @@ from contextlib import suppress
 
 import numpy as np
 import scipy.sparse as sp
-from joblib import Parallel, delayed, logger
+from joblib import Parallel, logger
 
 from ..base import is_classifier, clone
 from ..utils import indexable, check_random_state, _safe_indexing
 from ..utils.validation import _check_fit_params
 from ..utils.validation import _num_samples
 from ..utils.validation import _deprecate_positional_args
+from ..utils.fixes import delayed
 from ..utils.metaestimators import _safe_split
 from ..metrics import check_scoring
 from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
-from ..exceptions import FitFailedWarning
+from ..exceptions import FitFailedWarning, NotFittedError
 from ._split import check_cv
 from ..preprocessing import LabelEncoder
 
@@ -146,7 +147,7 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
 
         .. versionadded:: 0.20
 
-    error_score : 'raise' or numeric
+    error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
         If a numeric value is given, FitFailedWarning is raised. This parameter
@@ -219,21 +220,25 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
 
     See Also
     ---------
-    :func:`sklearn.model_selection.cross_val_score`:
-        Run cross-validation for single metric evaluation.
+    cross_val_score : Run cross-validation for single metric evaluation.
 
-    :func:`sklearn.model_selection.cross_val_predict`:
-        Get predictions from each split of cross-validation for diagnostic
-        purposes.
+    cross_val_predict : Get predictions from each split of cross-validation for
+        diagnostic purposes.
 
-    :func:`sklearn.metrics.make_scorer`:
-        Make a scorer from a performance metric or loss function.
+    sklearn.metrics.make_scorer : Make a scorer from a performance metric or
+        loss function.
 
     """
     X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
-    scorers, _ = _check_multimetric_scoring(estimator, scoring=scoring)
+
+    if callable(scoring):
+        scorers = scoring
+    elif scoring is None or isinstance(scoring, str):
+        scorers = check_scoring(estimator, scoring)
+    else:
+        scorers = _check_multimetric_scoring(estimator, scoring)
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
@@ -250,6 +255,12 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
             error_score=error_score)
         for train, test in cv.split(X, y, groups))
 
+    # For callabe scoring, the return type is only know after calling. If the
+    # return type is a dictionary, the error scores can now be inserted with
+    # the correct key.
+    if callable(scoring):
+        _insert_error_scores(results, error_score)
+
     results = _aggregate_score_dicts(results)
 
     ret = {}
@@ -259,17 +270,51 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
     if return_estimator:
         ret['estimator'] = results["estimator"]
 
-    test_scores = _aggregate_score_dicts(results["test_scores"])
+    test_scores_dict = _normalize_score_results(results["test_scores"])
     if return_train_score:
-        train_scores = _aggregate_score_dicts(results["train_scores"])
+        train_scores_dict = _normalize_score_results(results["train_scores"])
 
-    for name in test_scores:
-        ret['test_%s' % name] = test_scores[name]
+    for name in test_scores_dict:
+        ret['test_%s' % name] = test_scores_dict[name]
         if return_train_score:
             key = 'train_%s' % name
-            ret[key] = train_scores[name]
+            ret[key] = train_scores_dict[name]
 
     return ret
+
+
+def _insert_error_scores(results, error_score):
+    """Insert error in `results` by replacing them inplace with `error_score`.
+
+    This only applies to multimetric scores because `_fit_and_score` will
+    handle the single metric case.
+    """
+    successful_score = None
+    failed_indices = []
+    for i, result in enumerate(results):
+        if result["fit_failed"]:
+            failed_indices.append(i)
+        elif successful_score is None:
+            successful_score = result["test_scores"]
+
+    if successful_score is None:
+        raise NotFittedError("All estimators failed to fit")
+
+    if isinstance(successful_score, dict):
+        formatted_error = {name: error_score for name in successful_score}
+        for i in failed_indices:
+            results[i]["test_scores"] = formatted_error.copy()
+            if "train_scores" in results[i]:
+                results[i]["train_scores"] = formatted_error.copy()
+
+
+def _normalize_score_results(scores, scaler_score_key='score'):
+    """Creates a scoring dictionary based on the type of `scores`"""
+    if isinstance(scores[0], dict):
+        # multimetric scoring
+        return _aggregate_score_dicts(scores)
+    # scaler
+    return {scaler_score_key: scores}
 
 
 @_deprecate_positional_args
@@ -368,7 +413,7 @@ def cross_val_score(estimator, X, y=None, *, groups=None, scoring=None,
 
     Returns
     -------
-    scores : array of float, shape=(len(list(cv)),)
+    scores : ndarray of float of shape=(len(list(cv)),)
         Array of scores of the estimator for each run of the cross validation.
 
     Examples
@@ -384,16 +429,14 @@ def cross_val_score(estimator, X, y=None, *, groups=None, scoring=None,
 
     See Also
     ---------
-    :func:`sklearn.model_selection.cross_validate`:
-        To run cross-validation on multiple metrics and also to return
-        train scores, fit times and score times.
+    cross_validate : To run cross-validation on multiple metrics and also to
+        return train scores, fit times and score times.
 
-    :func:`sklearn.model_selection.cross_val_predict`:
-        Get predictions from each split of cross-validation for diagnostic
-        purposes.
+    cross_val_predict : Get predictions from each split of cross-validation for
+        diagnostic purposes.
 
-    :func:`sklearn.metrics.make_scorer`:
-        Make a scorer from a performance metric or loss function.
+    sklearn.metrics.make_scorer : Make a scorer from a performance metric or
+        loss function.
 
     """
     # To ensure multimetric format is not supported
@@ -504,6 +547,8 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
             The parameters that have been evaluated.
         estimator : estimator object
             The fitted estimator.
+        fit_failed : bool
+            The estimator failed to fit.
     """
     progress_msg = ""
     if verbose > 2:
@@ -577,7 +622,10 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
             raise ValueError("error_score must be the string 'raise' or a"
                              " numeric value. (Hint: if using 'raise', please"
                              " make sure that it has been spelled correctly.)")
+        result["fit_failed"] = True
     else:
+        result["fit_failed"] = False
+
         fit_time = time.time() - start_time
         test_scores = _score(estimator, X_test, y_test, scorer,
                              score_params_test)
@@ -739,21 +787,28 @@ def cross_val_predict(estimator, X, y=None, *, groups=None, cv=None,
             - A str, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    method : str, default='predict'
-        Invokes the passed method name of the passed estimator. For
-        method='predict_proba', the columns correspond to the classes
-        in sorted order.
+    method : {'predict', 'predict_proba', 'predict_log_proba', \
+              'decision_function'}, default='predict'
+        The method to be invoked by `estimator`.
 
     Returns
     -------
     predictions : ndarray
-        This is the result of calling ``method``
+        This is the result of calling `method`. Shape:
 
-    See also
+            - When `method` is 'predict' and in special case where `method` is
+              'decision_function' and the target is binary: (n_samples,)
+            - When `method` is one of {'predict_proba', 'predict_log_proba',
+              'decision_function'} (unless special case above):
+              (n_samples, n_classes)
+            - If `estimator` is :term:`multioutput`, an extra dimension
+              'n_outputs' is added to the end of each shape above.
+
+    See Also
     --------
-    cross_val_score : calculate score for each CV split
-
-    cross_validate : calculate one or more scores and timings for each CV split
+    cross_val_score : Calculate score for each CV split.
+    cross_validate : Calculate one or more scores and timings for each CV
+        split.
 
     Notes
     -----
@@ -994,9 +1049,21 @@ def _check_is_permutation(indices, n_samples):
 def permutation_test_score(estimator, X, y, *, groups=None, cv=None,
                            n_permutations=100, n_jobs=None, random_state=0,
                            verbose=0, scoring=None):
-    """Evaluate the significance of a cross-validated score with permutations
+    """Evaluates the significance of a cross-validated score using permutations
 
-    Read more in the :ref:`User Guide <cross_validation>`.
+    Permutes targets to generate 'randomized data' and compute the empirical
+    p-value against the null hypothesis that features and targets are
+    independent.
+
+    The p-value represents the fraction of randomized data sets where the
+    estimator performed as well or better than in the original data. A small
+    p-value suggests that there is a real dependency between features and
+    targets which has been used by the estimator to give good predictions.
+    A large p-value may be due to lack of real dependency between features
+    and targets or the estimator was not able to use the dependency to
+    give good predictions.
+
+    Read more in the :ref:`User Guide <permutation_test_score>`.
 
     Parameters
     ----------
@@ -1084,10 +1151,10 @@ def permutation_test_score(estimator, X, y, *, groups=None, cv=None,
     -----
     This function implements Test 1 in:
 
-        Ojala and Garriga. Permutation Tests for Studying Classifier
-        Performance.  The Journal of Machine Learning Research (2010)
-        vol. 11
-        `[pdf] <http://www.jmlr.org/papers/volume11/ojala10a/ojala10a.pdf>`_.
+        Ojala and Garriga. `Permutation Tests for Studying Classifier
+        Performance
+        <http://www.jmlr.org/papers/volume11/ojala10a/ojala10a.pdf>`_. The
+        Journal of Machine Learning Research (2010) vol. 11
 
     """
     X, y, groups = indexable(X, y, groups)
@@ -1226,7 +1293,7 @@ def learning_curve(estimator, X, y, *, groups=None,
         Whether to shuffle training data before taking prefixes of it
         based on``train_sizes``.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Used when ``shuffle`` is True. Pass an int for reproducible
         output across multiple function calls.
         See :term:`Glossary <random_state>`.

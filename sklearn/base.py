@@ -36,6 +36,7 @@ _DEFAULT_TAGS = {
     'multioutput_only': False,
     'binary_only': False,
     'requires_fit': True,
+    'preserves_dtype': [np.float64],
     'requires_y': False,
     }
 
@@ -50,11 +51,12 @@ def clone(estimator, *, safe=True):
 
     Parameters
     ----------
-    estimator : {list, tuple, set} of estimator objects or estimator object
+    estimator : {list, tuple, set} of estimator instance or a single \
+            estimator instance
         The estimator or group of estimators to be cloned.
 
     safe : bool, default=True
-        If safe is false, clone will fall back to a deep copy on objects
+        If safe is False, clone will fall back to a deep copy on objects
         that are not estimators.
 
     """
@@ -274,7 +276,7 @@ class BaseEstimator(_MetadataRequest):
 
         Returns
         -------
-        params : mapping of string to any
+        params : dict
             Parameter names mapped to their values.
         """
         out = dict()
@@ -299,9 +301,9 @@ class BaseEstimator(_MetadataRequest):
         Set the parameters of this estimator.
 
         The method works on simple estimators as well as on nested objects
-        (such as pipelines). The latter have parameters of the form
-        ``<component>__<parameter>`` so that it's possible to update each
-        component of a nested object.
+        (such as :class:`~sklearn.pipeline.Pipeline`). The latter have
+        parameters of the form ``<component>__<parameter>`` so that it's
+        possible to update each component of a nested object.
 
         Parameters
         ----------
@@ -310,7 +312,7 @@ class BaseEstimator(_MetadataRequest):
 
         Returns
         -------
-        self : object
+        self : estimator instance
             Estimator instance.
         """
         if not params:
@@ -451,7 +453,7 @@ class BaseEstimator(_MetadataRequest):
                 )
             if n_features != self.n_features_in_:
                 raise ValueError(
-                    'X has {} features, but this {} is expecting {} features '
+                    'X has {} features, but {} is expecting {} features '
                     'as input.'.format(n_features, self.__class__.__name__,
                                        self.n_features_in_)
                 )
@@ -561,7 +563,7 @@ class ClassifierMixin(_MetadataConsumer):
             Test samples.
 
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
-            True labels for X.
+            True labels for `X`.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
@@ -569,7 +571,7 @@ class ClassifierMixin(_MetadataConsumer):
         Returns
         -------
         score : float
-            Mean accuracy of self.predict(X) wrt. y.
+            Mean accuracy of ``self.predict(X)`` wrt. `y`.
         """
         from .metrics import accuracy_score
         return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
@@ -583,27 +585,28 @@ class RegressorMixin(_MetadataConsumer):
     _estimator_type = "regressor"
 
     def score(self, X, y, sample_weight=None):
-        """Return the coefficient of determination R^2 of the prediction.
+        """Return the coefficient of determination :math:`R^2` of the
+        prediction.
 
-        The coefficient R^2 is defined as (1 - u/v), where u is the residual
-        sum of squares ((y_true - y_pred) ** 2).sum() and v is the total
-        sum of squares ((y_true - y_true.mean()) ** 2).sum().
-        The best possible score is 1.0 and it can be negative (because the
-        model can be arbitrarily worse). A constant model that always
-        predicts the expected value of y, disregarding the input features,
-        would get a R^2 score of 0.0.
+        The coefficient :math:`R^2` is defined as :math:`(1 - \\frac{u}{v})`,
+        where :math:`u` is the residual sum of squares ``((y_true - y_pred)
+        ** 2).sum()`` and :math:`v` is the total sum of squares ``((y_true -
+        y_true.mean()) ** 2).sum()``. The best possible score is 1.0 and it
+        can be negative (because the model can be arbitrarily worse). A
+        constant model that always predicts the expected value of `y`,
+        disregarding the input features, would get a :math:`R^2` score of
+        0.0.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Test samples. For some estimators this may be a
-            precomputed kernel matrix or a list of generic objects instead,
-            shape = (n_samples, n_samples_fitted),
-            where n_samples_fitted is the number of
-            samples used in the fitting for the estimator.
+            Test samples. For some estimators this may be a precomputed
+            kernel matrix or a list of generic objects instead with shape
+            ``(n_samples, n_samples_fitted)``, where ``n_samples_fitted``
+            is the number of samples used in the fitting for the estimator.
 
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
-            True values for X.
+            True values for `X`.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
@@ -611,11 +614,11 @@ class RegressorMixin(_MetadataConsumer):
         Returns
         -------
         score : float
-            R^2 of self.predict(X) wrt. y.
+            :math:`R^2` of ``self.predict(X)`` wrt. `y`.
 
         Notes
         -----
-        The R2 score used when calling ``score`` on a regressor uses
+        The :math:`R^2` score used when calling ``score`` on a regressor uses
         ``multioutput='uniform_average'`` from version 0.23 to keep consistent
         with default value of :func:`~sklearn.metrics.r2_score`.
         This influences the ``score`` method of all the multioutput
@@ -637,7 +640,7 @@ class ClusterMixin:
 
     def fit_predict(self, X, y=None):
         """
-        Perform clustering on X and returns cluster labels.
+        Perform clustering on `X` and returns cluster labels.
 
         Parameters
         ----------
@@ -649,7 +652,7 @@ class ClusterMixin:
 
         Returns
         -------
-        labels : ndarray of shape (n_samples,)
+        labels : ndarray of shape (n_samples,), dtype=np.int64
             Cluster labels.
         """
         # non-optimized default implementation; override when a better
@@ -657,9 +660,12 @@ class ClusterMixin:
         self.fit(X)
         return self.labels_
 
+    def _more_tags(self):
+        return {"preserves_dtype": []}
+
 
 class BiclusterMixin:
-    """Mixin class for all bicluster estimators in scikit-learn"""
+    """Mixin class for all bicluster estimators in scikit-learn."""
 
     @property
     def biclusters_(self):
@@ -670,7 +676,7 @@ class BiclusterMixin:
         return self.rows_, self.columns_
 
     def get_indices(self, i):
-        """Row and column indices of the i'th bicluster.
+        """Row and column indices of the `i`'th bicluster.
 
         Only works if ``rows_`` and ``columns_`` attributes exist.
 
@@ -692,7 +698,7 @@ class BiclusterMixin:
         return np.nonzero(rows)[0], np.nonzero(columns)[0]
 
     def get_shape(self, i):
-        """Shape of the i'th bicluster.
+        """Shape of the `i`'th bicluster.
 
         Parameters
         ----------
@@ -701,8 +707,11 @@ class BiclusterMixin:
 
         Returns
         -------
-        shape : tuple (int, int)
-            Number of rows and columns (resp.) in the bicluster.
+        n_rows : int
+            Number of rows in the bicluster.
+
+        n_cols : int
+            Number of columns in the bicluster.
         """
         indices = self.get_indices(i)
         return tuple(len(i) for i in indices)
@@ -714,13 +723,13 @@ class BiclusterMixin:
         ----------
         i : int
             The index of the cluster.
-        data : array-like
+        data : array-like of shape (n_samples, n_features)
             The data.
 
         Returns
         -------
-        submatrix : ndarray
-            The submatrix corresponding to bicluster i.
+        submatrix : ndarray of shape (n_rows, n_cols)
+            The submatrix corresponding to bicluster `i`.
 
         Notes
         -----
@@ -740,16 +749,16 @@ class TransformerMixin(_MetadataConsumer):
         """
         Fit to data, then transform it.
 
-        Fits transformer to X and y with optional parameters fit_params
-        and returns a transformed version of X.
+        Fits transformer to `X` and `y` with optional parameters `fit_params`
+        and returns a transformed version of `X`.
 
         Parameters
         ----------
-        X : {array-like, sparse matrix, dataframe} of shape \
-                (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Input samples.
 
-        y : ndarray of shape (n_samples,), default=None
+        y :  array-like of shape (n_samples,) or (n_samples, n_outputs), \
+                default=None
             Target values (None for unsupervised transformations).
 
         **fit_params : dict
@@ -775,11 +784,12 @@ class DensityMixin:
     _estimator_type = "DensityEstimator"
 
     def score(self, X, y=None):
-        """Return the score of the model on the data X
+        """Return the score of the model on the data `X`.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
+            Test samples.
 
         y : Ignored
             Not used, present for API consistency by convention.
@@ -856,7 +866,7 @@ def is_regressor(estimator):
 
     Parameters
     ----------
-    estimator : object
+    estimator : estimator instance
         Estimator object to test.
 
     Returns
@@ -872,7 +882,7 @@ def is_outlier_detector(estimator):
 
     Parameters
     ----------
-    estimator : object
+    estimator : estimator instance
         Estimator object to test.
 
     Returns
