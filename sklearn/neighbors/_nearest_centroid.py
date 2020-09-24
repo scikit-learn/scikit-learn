@@ -154,7 +154,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
                 self.centroids_[cur_class] = X[center_mask].mean(axis=0)
 
         if self.shrink_threshold:
-            if np.ptp(X).sum() == 0:
+            if np.ptp(X, axis=0).sum() == 0:
                 raise ValueError("All features have zero variance. "
                                  "Division by zero.")
             dataset_centroid_ = np.mean(X, axis=0)
