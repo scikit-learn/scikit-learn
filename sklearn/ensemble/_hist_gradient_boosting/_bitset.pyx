@@ -34,8 +34,8 @@ cdef inline unsigned char in_bitset(BITSET_DTYPE_C bitset,
     return (bitset[i1] >> i2) & 1
 
 
-cdef unsigned char in_bitset_memoryview(const BITSET_INNER_DTYPE_C[:] bitset,
-                                X_BINNED_DTYPE_C val) nogil:
+cpdef unsigned char in_bitset_memoryview(const BITSET_INNER_DTYPE_C[:] bitset,
+                                        X_BINNED_DTYPE_C val) nogil:
     cdef:
         unsigned int i1 = val // 32
         unsigned int i2 = val % 32
@@ -43,8 +43,8 @@ cdef unsigned char in_bitset_memoryview(const BITSET_INNER_DTYPE_C[:] bitset,
     return (bitset[i1] >> i2) & 1
 
 
-def set_bitset_memoryview(BITSET_INNER_DTYPE_C[:] bitset,  # OUT
-                  X_BINNED_DTYPE_C val):
+cpdef void set_bitset_memoryview(BITSET_INNER_DTYPE_C[:] bitset,  # OUT
+                                 X_BINNED_DTYPE_C val):
     cdef:
         unsigned int i1 = val // 32
         unsigned int i2 = val % 32
@@ -55,11 +55,14 @@ def set_bitset_memoryview(BITSET_INNER_DTYPE_C[:] bitset,  # OUT
 
 def set_raw_bitset_from_binned_bitset(BITSET_INNER_DTYPE_C[:] raw_bitset,  # OUT
                                       BITSET_INNER_DTYPE_C[:] binned_bitset,
-                                      X_DTYPE_C[:] raw_categories):
-    """Set the raw_bitset from the values of the binned bitset"""
+                                      X_DTYPE_C[:] categories):
+    """Set the raw_bitset from the values of the binned bitset
+    
+    categories is a mapping from binned category value to raw category value.
+    """
     cdef:
         int binned_cat_value, raw_cat_value
     
-    for binned_cat_value, raw_cat_value in enumerate(raw_categories):
+    for binned_cat_value, raw_cat_value in enumerate(categories):
         if in_bitset_memoryview(binned_bitset, binned_cat_value):
             set_bitset_memoryview(raw_bitset, raw_cat_value)
