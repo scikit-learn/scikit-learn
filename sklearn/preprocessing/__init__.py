@@ -34,14 +34,12 @@ from ._label import LabelEncoder
 from ._label import MultiLabelBinarizer
 
 from ._discretization import KBinsDiscretizer
-from ._discretization import MDLPDiscretizer
 
 
 __all__ = [
     'Binarizer',
     'FunctionTransformer',
     'KBinsDiscretizer',
-    'MDLPDiscretizer',
     'KernelCenterer',
     'LabelBinarizer',
     'LabelEncoder',

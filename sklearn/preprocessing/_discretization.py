@@ -236,7 +236,7 @@ class KBinsDiscretizer(_BaseDiscretizer):
     """
 
     @_deprecate_positional_args
-    def __init__(self, n_bins=5, encode='onehot', strategy='quantile',
+    def __init__(self, n_bins=5, *, encode='onehot', strategy='quantile',
                  dtype=None):
         self.n_bins = n_bins
         self.encode = encode
@@ -452,7 +452,7 @@ class MDLPDiscretizer(_BaseDiscretizer):
            [ 0.75 ,  3.75 , -1.25 ,  1.625]])
     """
 
-    def __init__(self, encode="onehot", dtype=None):
+    def __init__(self, *, encode="onehot", dtype=None):
         self.encode = encode
         self.dtype = dtype
 
@@ -478,6 +478,7 @@ class MDLPDiscretizer(_BaseDiscretizer):
         check_classification_targets(y)
 
         output_dtype = self._validate_dtype(X)
+        self._validate_encode()
 
         if y.ndim == 1:
             # Reshape is necessary to preserve the
@@ -516,7 +517,7 @@ class MDLPDiscretizer(_BaseDiscretizer):
             if col_min == col_max or self.n_bins_[j] == 1:
                 if col_min == col_max:
                     warnings.warn(f"Feature {j} is constant and "
-                                  "it will be replaced with 0.")
+                                  "will be replaced with 0.")
                 else:
                     warnings.warn("No bin edges found for feature "
                                   f"{j}. It will be replaced with 0.")
