@@ -110,7 +110,7 @@ def test_pipeline():
         clf.fit(X, y, brand=brand)
     assert not record.list
 
-    scorer = make_scorer(my_scorer, request_props="new_param")
+    scorer = make_scorer(my_metric, request_props="new_param")
 
     param_grid = {'myest__C': [0.1, 1]}
 
