@@ -462,16 +462,39 @@ def test_incremental_weighted_mean_and_variance_simple():
     mean, var, _ = _incremental_weighted_mean_and_var(X, sample_weight,
                                                       0, 0, 0)
 
-    mean_exp = np.average(X, weights=sample_weight, axis=0)
-    var_exp = np.average(X**2, weights=sample_weight, axis=0) - mean_exp**2
-    assert_almost_equal(mean, mean_exp)
-    assert_almost_equal(var, var_exp)
+    expected_mean = np.average(X, weights=sample_weight, axis=0)
+    expected_var = np.average(X**2, weights=sample_weight, axis=0) - \
+                   expected_mean**2
+    assert_almost_equal(mean, expected_mean)
+    assert_almost_equal(var, expected_var)
 
 
-def test_incremental_weighted_mean_and_variance():
+def _weights():
+    high_mean = 1e7
+    low_var = 1e-8
+    zero_mean = 0.0
+    one_var = 1.0
+    size = 100
+    rng = np.random.RandomState(42)
+    normal_weight = \
+        rng.normal(loc=zero_mean, scale=one_var, size=size)
+    almost_zero_weight = \
+        rng.normal(loc=zero_mean, scale=low_var, size=size)
+    almost_ones_weight = rng.normal(loc=1.0, scale=low_var, size=size)
+    just_weight = rng.normal(loc=10.0, scale=one_var, size=size)
+    high_weight = rng.normal(loc=high_mean, scale=one_var, size=size)
+    weights = [normal_weight, almost_ones_weight, just_weight,
+               almost_zero_weight, high_weight]
+    return weights
+
+
+@pytest.mark.parametrize("mean", [0, 1e7, -1e7])
+@pytest.mark.parametrize("var", [1, 1e-8, 1e5])
+@pytest.mark.parametrize("weight", _weights())
+def test_incremental_weighted_mean_and_variance(mean, var, weight):
 
     # Testing of correctness and numerical stability
-    def test(X, sample_weight, mean_exp, var_exp):
+    def test(X, sample_weight, expected_mean, expected_var):
         n = X.shape[0]
         for chunk_size in [1, n//10 + 1, n//4 + 1, n//2 + 1, n]:
             last_mean, last_weight_sum, last_var = 0, 0, 0
@@ -482,48 +505,25 @@ def test_incremental_weighted_mean_and_variance():
                                                        last_mean,
                                                        last_var,
                                                        last_weight_sum)
-            assert_allclose(last_mean, mean_exp)
-            assert_allclose(last_var, var_exp, atol=1e-6)
+            assert_allclose(last_mean, expected_mean)
+            assert_allclose(last_var, expected_var, atol=1e-6)
 
-    high_mean = 1e7
-    low_var = 1e-8
-    high_var = 1e5
-    zero_mean = 0.0
-    one_var = 1.0
     size = (100, 20)
-
     rng = np.random.RandomState(42)
-    normal_weight = \
-        rng.normal(loc=zero_mean, scale=one_var, size=(size[0],))
-    almost_zero_weight = \
-        rng.normal(loc=zero_mean, scale=low_var, size=(size[0],))
-    almost_ones_weight = rng.normal(loc=1.0, scale=low_var, size=(size[0],))
-    just_weight = rng.normal(loc=10.0, scale=one_var, size=(size[0],))
-    high_weight = rng.normal(loc=high_mean, scale=one_var, size=(size[0],))
+
+    # Compare to weighted average: np.average
+    X = rng.normal(loc=mean, scale=var, size=size)
+    expected_mean = _safe_accumulator_op(np.average, X, weights=weight, axis=0)
+    expected_var = _safe_accumulator_op(
+        np.average, (X - expected_mean) ** 2, weights=weight, axis=0)
+    test(X, weight, expected_mean, expected_var)
+
+    # Compare to unweighted mean: np.mean
+    X = rng.normal(loc=mean, scale=var, size=size)
     ones_weight = np.ones(size[0])
-
-    means = [zero_mean, high_mean, -high_mean]
-    vars = [one_var, low_var, high_var]
-    weights = [normal_weight, almost_ones_weight,
-               just_weight, almost_zero_weight, high_weight]
-    means_vars_weights = \
-        [(m, v, w) for m in means for v in vars for w in weights]
-    means_vars = [(m, v) for m in means for v in vars]
-
-    # test in compare to weighted np.average
-    for mean, var, weight in means_vars_weights:
-        X = rng.normal(loc=mean, scale=var, size=size)
-        mean_exp = _safe_accumulator_op(np.average, X, weights=weight, axis=0)
-        var_exp = _safe_accumulator_op(
-            np.average, (X - mean_exp) ** 2, weights=weight, axis=0)
-        test(X, weight, mean_exp, var_exp)
-
-    # test in compare to unweighted np.average
-    for mean, var in means_vars:
-        X = rng.normal(loc=mean, scale=var, size=size)
-        mean_exp = _safe_accumulator_op(np.mean, X, axis=0)
-        var_exp = _safe_accumulator_op(np.var, X, axis=0)
-        test(X, ones_weight, mean_exp, var_exp)
+    expected_mean = _safe_accumulator_op(np.mean, X, axis=0)
+    expected_var = _safe_accumulator_op(np.var, X, axis=0)
+    test(X, ones_weight, expected_mean, expected_var)
 
 
 def test_incremental_weighted_mean_and_variance_ignore_nan():
