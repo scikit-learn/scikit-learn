@@ -326,5 +326,5 @@ def test_error_on_a_dataset_with_unseen_labels(pyplot, fitted_clf, data):
                                  labels=None, display_labels=None)
 
     display_labels = [tick.get_text() for tick in disp.ax_.get_xticklabels()]
-    expected_labels = [f'{i}' for range(n_classes + 1)]
+    expected_labels = [f'{i}' for i in range(n_classes + 1)]
     assert_array_equal(expected_labels, display_labels)
