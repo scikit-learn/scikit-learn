@@ -473,29 +473,11 @@ def test_incremental_weighted_mean_and_variance_simple(rng):
     assert_almost_equal(var, expected_var)
 
 
-def _weights():
-    high_mean = 1e7
-    low_var = 1e-8
-    zero_mean = 0.0
-    one_var = 1.0
-    size = 100
-    rng = np.random.RandomState(42)
-    normal_weight = \
-        rng.normal(loc=zero_mean, scale=one_var, size=size)
-    almost_zero_weight = \
-        rng.normal(loc=zero_mean, scale=low_var, size=size)
-    almost_ones_weight = rng.normal(loc=1.0, scale=low_var, size=size)
-    just_weight = rng.normal(loc=10.0, scale=one_var, size=size)
-    high_weight = rng.normal(loc=high_mean, scale=one_var, size=size)
-    weights = [normal_weight, almost_ones_weight, just_weight,
-               almost_zero_weight, high_weight]
-    return weights
-
-
 @pytest.mark.parametrize("mean", [0, 1e7, -1e7])
 @pytest.mark.parametrize("var", [1, 1e-8, 1e5])
-@pytest.mark.parametrize("weight", _weights())
-def test_incremental_weighted_mean_and_variance(mean, var, weight, rng):
+@pytest.mark.parametrize("loc, scale", [
+    (0, 1), (0, 1e-8), (1, 1e-8), (10, 1), (1e7, 1)])
+def test_incremental_weighted_mean_and_variance(mean, var, loc, scale, rng):
 
     # Testing of correctness and numerical stability
     def test(X, sample_weight, expected_mean, expected_var):
@@ -513,6 +495,7 @@ def test_incremental_weighted_mean_and_variance(mean, var, weight, rng):
             assert_allclose(last_var, expected_var, atol=1e-6)
 
     size = (100, 20)
+    weight = rng.normal(loc=loc, scale=scale, size=size[0])
 
     # Compare to weighted average: np.average
     X = rng.normal(loc=mean, scale=var, size=size)
