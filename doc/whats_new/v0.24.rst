@@ -398,6 +398,12 @@ Changelog
   ``labels`` parameter.
   :pr:`17935` by :user:`Cary Goltermann <Ultramann>`.
 
+- |Fix| bug in :func:`metrics.plot_confusion_matrix` where error occurs when
+  ``y_true`` contains labels that were not previously seen by the classifier
+  while the ``labels`` and ``display_labels`` parameters are set to `None`.
+  :pr:`18405` by :user:`Thomas J. Fan <thomasjpfan>` and
+  :user:`Yakov Pchelintsev <kyouma>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
