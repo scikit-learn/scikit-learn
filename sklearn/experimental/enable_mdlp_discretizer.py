@@ -1,14 +1,14 @@
 """Enables MDLP discretization.
 
-The API and results of these estimators might change without any deprecation
-cycle.
+The API and results of these estimators might
+change without any deprecation cycle.
 
 Importing this file dynamically sets the
 :class:`~sklearn.preprocessing.MLDPDiscretizer`
 as attributes of the `preprocessing` module::
 
     >>> # Explicitly require this experimental feature
-    >>> from sklearn.experimental import enable_mdlp_discretization  # noqa
+    >>> from sklearn.experimental import enable_mdlp_discretizer  # noqa
     >>> # Now you can import normally from preprocessing
     >>> from sklearn.preprocessing import MDLPDiscretizer
 
