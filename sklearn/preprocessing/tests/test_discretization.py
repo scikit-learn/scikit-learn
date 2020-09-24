@@ -5,6 +5,7 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal
 import scipy.sparse as sp
 import warnings
 
+from sklearn.experimental import enable_mdlp_discretizer  # noqa
 from sklearn.preprocessing import KBinsDiscretizer, MDLPDiscretizer
 from sklearn.preprocessing import OneHotEncoder
 
@@ -40,6 +41,17 @@ def test_mdlp_fit_transform():
     mdlpd = MDLPDiscretizer(encode="ordinal")
     expected_Xt = [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [1, 1, 1, 1]]
     check_fit_transform(mdlpd, expected_Xt)
+
+
+def test_mdlp_no_bin_edges():
+    # Test that a warning is raised if
+    # bin edges have not been found
+    y_bad = [1, 2, 1, 2]
+    mdlpd = MDLPDiscretizer(encode="ordinal")
+
+    msg = "No bin edges found for feature 0"
+    with pytest.warns(UserWarning, match=msg):
+        mdlpd.fit(X, y_bad)
 
 
 def test_valid_n_bins():
