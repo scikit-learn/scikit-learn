@@ -36,7 +36,8 @@ def test_set_get_bitset(values_to_insert, expected_bitset):
         ([3, 33, 50, 52],
          [1, 3],
          [0, 2**1 + 2**20]),
-])
+        ]
+)
 def test_raw_bitset_from_binned_bitset(raw_categories, binned_cat_to_insert,
                                        expected_raw_bitset):
     binned_bitset = np.zeros(2, dtype=np.uint32)
