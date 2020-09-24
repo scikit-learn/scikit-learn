@@ -28,7 +28,7 @@ We thus transform the KDD Data set into two different data sets: SA and SF.
   attack.
 
 * http and smtp are two subsets of SF corresponding with third feature
-equal to 'http' (resp. to 'smtp').
+  equal to 'http' (resp. to 'smtp').
 
 General KDD structure :
 
