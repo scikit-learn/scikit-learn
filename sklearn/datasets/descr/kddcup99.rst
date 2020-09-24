@@ -12,24 +12,23 @@ large number of different types of attack with normal activity in the
 background. As the initial goal was to produce a large training set for
 supervised learning algorithms, there is a large proportion (80.1%) of
 abnormal data which is unrealistic in real world, and inappropriate for
-unsupervised anomaly detection which aims at detecting 'abnormal' data, ie
+unsupervised anomaly detection which aims at detecting 'abnormal' data, i.e.:
 
-1) qualitatively different from normal data
-
-2) in large minority among the observations.
+* qualitatively different from normal data
+* in large minority among the observations.
 
 We thus transform the KDD Data set into two different data sets: SA and SF.
 
--SA is obtained by simply selecting all the normal data, and a small
-proportion of abnormal data to gives an anomaly proportion of 1%.
+* SA is obtained by simply selecting all the normal data, and a small
+  proportion of abnormal data to gives an anomaly proportion of 1%.
 
-- SF is obtained as in [3]_
-by simply picking up the data whose attribute logged_in is positive, thus
-focusing on the intrusion attack, which gives a proportion of 0.3% of
-attack.
+* SF is obtained as in [3]_
+  by simply picking up the data whose attribute logged_in is positive, thus
+  focusing on the intrusion attack, which gives a proportion of 0.3% of
+  attack.
 
--http and smtp are two subsets of SF corresponding with third feature
-equal to 'http' (resp. to 'smtp')
+* http and smtp are two subsets of SF corresponding with third feature
+equal to 'http' (resp. to 'smtp').
 
 General KDD structure :
 
@@ -85,8 +84,8 @@ dataset will be downloaded from the web if necessary.
 .. topic:: References
 
     .. [2] Analysis and Results of the 1999 DARPA Off-Line Intrusion
-           Detection Evaluation Richard Lippmann, Joshua W. Haines,
-           David J. Fried, Jonathan Korba, Kumar Das
+           Detection Evaluation, Richard Lippmann, Joshua W. Haines,
+           David J. Fried, Jonathan Korba, Kumar Das.
 
     .. [3] K. Yamanishi, J.-I. Takeuchi, G. Williams, and P. Milne. Online
            unsupervised outlier detection using finite mixtures with
