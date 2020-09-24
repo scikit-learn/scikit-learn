@@ -57,12 +57,15 @@ cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
         node_struct node = nodes[0]
         unsigned int node_idx = 0
         X_BINNED_DTYPE_C mapped_f_idx
+        X_DTYPE_C data_val,
 
     while True:
         if node.is_leaf:
             return node.value
 
-        if isnan(numeric_data[row, node.feature_idx]):
+        data_val = numeric_data[row, node.feature_idx]
+
+        if isnan(data_val):
             if node.missing_go_to_left:
                 node_idx = node.left
             else:
@@ -71,17 +74,17 @@ cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
             mapped_f_idx = f_idx_map[node.feature_idx]
             if not in_bitset_memoryview(
                     known_cat_bitsets[mapped_f_idx],
-                    <X_BINNED_DTYPE_C>numeric_data[row, node.feature_idx]):
+                    <X_BINNED_DTYPE_C>data_val):
                 # treat unknown categories as missing.
                 node_idx = node.left if node.missing_go_to_left else node.right
             elif in_bitset_memoryview(
                     raw_left_cat_bitsets[node.bitset_idx],
-                    <X_BINNED_DTYPE_C>numeric_data[row, node.feature_idx]):
+                    <X_BINNED_DTYPE_C>data_val):
                 node_idx = node.left
             else:
                 node_idx = node.right
         else:
-            if numeric_data[row, node.feature_idx] <= node.num_threshold:
+            if data_val <= node.num_threshold:
                 node_idx = node.left
             else:
                 node_idx = node.right
@@ -117,24 +120,27 @@ cdef inline Y_DTYPE_C _predict_one_from_binned_data(
     cdef:
         node_struct node = nodes[0]
         unsigned int node_idx = 0
+        X_BINNED_DTYPE_C data_val
 
     while True:
         if node.is_leaf:
             return node.value
 
-        if binned_data[row, node.feature_idx] == missing_values_bin_idx:
+        data_val = binned_data[row, node.feature_idx] 
+
+        if data_val == missing_values_bin_idx:
             if node.missing_go_to_left:
                 node_idx = node.left
             else:
                 node_idx = node.right
         elif node.is_categorical:
             if in_bitset_memoryview(binned_left_cat_bitsets[node.bitset_idx],
-                                    binned_data[row, node.feature_idx]):
+                                    data_val):
                 node_idx = node.left
             else:
                 node_idx = node.right
         else:
-            if binned_data[row, node.feature_idx] <= node.bin_threshold:
+            if data_val <= node.bin_threshold:
                 node_idx = node.left
             else:
                 node_idx = node.right
