@@ -122,14 +122,14 @@ cdef inline Y_DTYPE_C _predict_one_from_binned_data(
         if node.is_leaf:
             return node.value
 
-        if node.is_categorical:
-            if in_bitset_memoryview(binned_left_cat_bitsets[node.bitset_idx],
-                            binned_data[row, node.feature_idx]):
+        if binned_data[row, node.feature_idx] == missing_values_bin_idx:
+            if node.missing_go_to_left:
                 node_idx = node.left
             else:
                 node_idx = node.right
-        elif binned_data[row, node.feature_idx] == missing_values_bin_idx:
-            if node.missing_go_to_left:
+        elif node.is_categorical:
+            if in_bitset_memoryview(binned_left_cat_bitsets[node.bitset_idx],
+                                    binned_data[row, node.feature_idx]):
                 node_idx = node.left
             else:
                 node_idx = node.right

@@ -424,7 +424,9 @@ class TreeGrower:
             node.split_info.missing_go_to_left = (
                 left_child_node.n_samples > right_child_node.n_samples)
 
-            # For binned predictions with categorical splits.
+            # Also set bitset for categorical splits: this won't be used during
+            # predict (missing_go_to_left is used instead), but consistency is
+            # better.
             if (node.split_info.is_categorical and
                     node.split_info.missing_go_to_left):
                 set_bitset_memoryview(node.split_info.left_cat_bitset,
