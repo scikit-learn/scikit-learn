@@ -30,7 +30,7 @@ def _predict_from_data(
         const X_DTYPE_C [:, :] numeric_data,
         const BITSET_INNER_DTYPE_C [:, :] raw_left_cat_bitsets,
         const BITSET_INNER_DTYPE_C [:, :] known_cat_bitsets,
-        const X_BINNED_DTYPE_C [:] orig_feature_to_known_cats_idx,
+        const X_BINNED_DTYPE_C [:] f_idx_map,
         Y_DTYPE_C [:] out):
 
     cdef:
@@ -41,7 +41,7 @@ def _predict_from_data(
         out[i] = _predict_one_from_numeric_data(
             nodes, numeric_data, raw_left_cat_bitsets,
             known_cat_bitsets,
-            orig_feature_to_known_cats_idx, i)
+            f_idx_map, i)
 
 
 cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
@@ -49,7 +49,7 @@ cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
         const X_DTYPE_C [:, :] numeric_data,
         const BITSET_INNER_DTYPE_C [:, :] raw_left_cat_bitsets,
         const BITSET_INNER_DTYPE_C [:, :] known_cat_bitsets,
-        const X_BINNED_DTYPE_C [:] orig_feature_to_known_cats_idx,
+        const X_BINNED_DTYPE_C [:] f_idx_map,
         const int row) nogil:
     # Need to pass the whole array and the row index, else prange won't work.
     # See issue Cython #2798
@@ -57,7 +57,7 @@ cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
     cdef:
         node_struct node = nodes[0]
         unsigned int node_idx = 0
-        X_BINNED_DTYPE_C categorical_idx
+        X_BINNED_DTYPE_C mapped_f_idx
 
     while True:
         if node.is_leaf:
@@ -69,9 +69,9 @@ cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
             else:
                 node_idx = node.right
         elif node.is_categorical:
-            categorical_idx = orig_feature_to_known_cats_idx[node.feature_idx]
+            mapped_f_idx = f_idx_map[node.feature_idx]
             if not in_bitset_memoryview(
-                    known_cat_bitsets[categorical_idx],
+                    known_cat_bitsets[mapped_f_idx],
                     <X_BINNED_DTYPE_C>numeric_data[row, node.feature_idx]):
                 # treat unknown categories as missing.
                 node_idx = node.left if node.missing_go_to_left else node.right

@@ -20,10 +20,11 @@ class TreePredictor:
         The nodes of the tree.
     binned_left_cat_bitsets : ndarray of shape (n_categorical_splits, 8), \
             dtype=uint32
-        Bitset for binned categorical used in predict_binned.
+        Bitset for binned categories used in predict_binned when a split is
+        categorical.
     raw_left_cat_bitsets : ndarray of shape (n_categorical_splits, 8), \
             dtype=uint32
-        Bitset for raw categorical used in predict.
+        Bitset for raw categories used in predict when a split is categorical.
 
     """
     def __init__(self, nodes, binned_left_cat_bitsets,
@@ -40,7 +41,7 @@ class TreePredictor:
         """Return maximum depth among all leaves."""
         return int(self.nodes['depth'].max())
 
-    def predict(self, X, known_cat_bitset, orig_feat_to_known_cats_idx):
+    def predict(self, X, known_cat_bitsets, f_idx_map):
         """Predict raw values for non-binned numerical data and binned
         categorical data.
 
@@ -49,13 +50,12 @@ class TreePredictor:
         X : ndarray, shape (n_samples, n_features)
             The input samples.
 
-        known_cat_bitset : ndarray of shape (n_categorical_splits, 8)
-            XXX TODO: shape is incorrect
-            Bitset for known categories.
+        known_cat_bitsets : ndarray of shape (n_categorical_features, 8)
+            Array of bitsets of known categories, for each categorical feature.
 
-        orig_idx_to_cat_idx : ndarray of shape (n_features,)
-            Maps from original feature idx to the categorical idx in
-            known_cat_bitset.
+        f_idx_map : ndarray of shape (n_features,)
+            Map from original feature index to the corresponding index in the
+            known_cat_bitsets array.
 
         Returns
         -------
@@ -64,7 +64,7 @@ class TreePredictor:
         """
         out = np.empty(X.shape[0], dtype=Y_DTYPE)
         _predict_from_data(self.nodes, X, self.raw_left_cat_bitsets,
-                           known_cat_bitset, orig_feat_to_known_cats_idx, out)
+                           known_cat_bitsets, f_idx_map, out)
         return out
 
     def predict_binned(self, X, missing_values_bin_idx):

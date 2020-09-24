@@ -260,35 +260,34 @@ class _BinMapper(TransformerMixin, BaseEstimator):
                      binned)
         return binned
 
-    def make_known_categories(self):
+    def make_known_categories_bitsets(self):
         """Create a mapping from original feature indices to known categorical
         indices and a bitset for known categories.
 
         Returns
         -------
-        result: dict
-            Dictionary with items:
-            - `known_cat_bitset` : ndarray of shape (n_categorical, 8)
-                Bitset for known categories.
-            - `orig_feat_to_known_cat_idx`: ndarray of shape (n_features,)
-                Maps from original feature indies to known categorical
-                indices.
+        - known_cat_bitsets : ndarray of shape (n_categorical_features, 8)
+            Array of bitsets of known categories, for each categorical feature.
+        - f_idx_map : ndarray of shape (n_features,)
+            Map from original feature index to the corresponding index in the
+            known_cat_bitsets array.
         """
 
-        n_features = len(self.bin_thresholds_)
-        categorical_indices = np.flatnonzero(self.is_categorical_)
-        orig_feat_to_known_cats_idx = np.zeros(n_features, dtype=np.uint8)
+        categorical_features_indices = np.flatnonzero(self.is_categorical_)
 
-        orig_feat_to_known_cats_idx[categorical_indices] = np.arange(
-            categorical_indices.size, dtype=np.uint8)
+        n_features = self.is_categorical_.size
+        n_categorical_features = categorical_features_indices.size
 
-        known_cat_bitset = np.zeros((categorical_indices.size, 8),
-                                    dtype=X_BITSET_INNER_DTYPE)
-        for idx, cat_idx in enumerate(categorical_indices):
-            for num in self.bin_thresholds_[cat_idx]:
-                set_bitset_memoryview(known_cat_bitset[idx], num)
+        f_idx_map = np.zeros(n_features, dtype=np.uint8)
+        f_idx_map[categorical_features_indices] = np.arange(
+            n_categorical_features, dtype=np.uint8)
 
-        return {
-            'known_cat_bitset': known_cat_bitset,
-            'orig_feat_to_known_cats_idx': orig_feat_to_known_cats_idx
-        }
+        known_categories = self.bin_thresholds_
+
+        known_cat_bitsets = np.zeros((n_categorical_features, 8),
+                                     dtype=X_BITSET_INNER_DTYPE)
+        for idx, f_idx in enumerate(categorical_features_indices):
+            for raw_cat_val in known_categories[f_idx]:
+                set_bitset_memoryview(known_cat_bitsets[idx], raw_cat_val)
+
+        return known_cat_bitsets, f_idx_map

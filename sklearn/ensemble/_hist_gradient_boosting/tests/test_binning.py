@@ -353,7 +353,7 @@ def test_categorical_with_numerical_features(n_bins):
     assert_array_equal(bin_thresholds[1], np.arange(10, 15))
 
 
-def test_make_known_categories():
+def test_make_known_categories_bitsets():
     X = np.array([[14, 2, 30],
                   [30, 4, 70],
                   [40, 10, 180],
@@ -364,9 +364,8 @@ def test_make_known_categories():
                             known_categories=[None, X[:, 1], X[:, 2]])
     bin_mapper.fit(X)
 
-    result = bin_mapper.make_known_categories()
-    known_cat_bitset = result['known_cat_bitset']
-    orig_feat_to_known_cats_idx = result['orig_feat_to_known_cats_idx']
+    known_cat_bitset, orig_feat_to_known_cats_idx = (
+        bin_mapper.make_known_categories_bitsets())
 
     expected_orig_feat_to_known = np.array([0, 0, 1], dtype=np.uint8)
     assert_allclose(expected_orig_feat_to_known, orig_feat_to_known_cats_idx)

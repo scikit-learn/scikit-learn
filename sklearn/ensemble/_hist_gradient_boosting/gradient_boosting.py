@@ -751,11 +751,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
     def _predict_iterations(self, X, predictors, raw_predictions, is_binned):
         """Add the predictions of the predictors to raw_predictions."""
         if not is_binned:
-            result = self._bin_mapper.make_known_categories()
-            known_cat_bitset = result['known_cat_bitset']
-            orig_feat_to_known_cats_idx = result['orig_feat_to_known_cats_idx']
+            known_cat_bitsets, f_idx_map = (
+                self._bin_mapper.make_known_categories_bitsets())
 
-        # bin categorical features when predicting outside of training loop
         for predictors_of_ith_iteration in predictors:
             for k, predictor in enumerate(predictors_of_ith_iteration):
                 if is_binned:
@@ -766,8 +764,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 else:
                     predict = partial(
                         predictor.predict,
-                        known_cat_bitset=known_cat_bitset,
-                        orig_feat_to_known_cats_idx=orig_feat_to_known_cats_idx)   # noqa
+                        known_cat_bitsets=known_cat_bitsets,
+                        f_idx_map=f_idx_map)   # noqa
                 raw_predictions[k, :] += predict(X)
 
     def _staged_raw_predict(self, X):
