@@ -20,11 +20,12 @@ class TreePredictor:
         The nodes of the tree.
     binned_left_cat_bitsets : ndarray of shape (n_categorical_splits, 8), \
             dtype=uint32
-        Bitset for binned categories used in predict_binned when a split is
-        categorical.
+        Array of bitsets for binned categories used in predict_binned when a
+        split is categorical.
     raw_left_cat_bitsets : ndarray of shape (n_categorical_splits, 8), \
             dtype=uint32
-        Bitset for raw categories used in predict when a split is categorical.
+        Array of bitsets for raw categories used in predict when a split is
+        categorical.
 
     """
     def __init__(self, nodes, binned_left_cat_bitsets,
@@ -42,8 +43,7 @@ class TreePredictor:
         return int(self.nodes['depth'].max())
 
     def predict(self, X, known_cat_bitsets, f_idx_map):
-        """Predict raw values for non-binned numerical data and binned
-        categorical data.
+        """Predict raw values for non-binned data.
 
         Parameters
         ----------
