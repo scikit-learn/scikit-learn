@@ -41,7 +41,7 @@ from ._discretization import KBinsDiscretizer
 if typing.TYPE_CHECKING:
     # Avoid errors in type checkers (e.g. mypy) for experimental estimators
     # TODO: Remove this check once the estimator is no longer experimental
-    from ._discretization import MDLPDiscretizer
+    from ._discretization import MDLPDiscretizer  # noqa
 
 
 __all__ = [
