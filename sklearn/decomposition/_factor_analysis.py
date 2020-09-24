@@ -132,11 +132,11 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
 
     References
     ----------
-    .. David Barber, Bayesian Reasoning and Machine Learning,
-        Algorithm 21.1
+    - David Barber, Bayesian Reasoning and Machine Learning,
+      Algorithm 21.1.
 
-    .. Christopher M. Bishop: Pattern Recognition and Machine Learning,
-        Chapter 12.2.4
+    - Christopher M. Bishop: Pattern Recognition and Machine Learning,
+      Chapter 12.2.4.
 
     See Also
     --------
