@@ -795,7 +795,9 @@ def raises(expected_exc_type, match=None, may_pass=False, err_msg=None):
     may_pass : bool, default=False
         If True, the block is allowed to not raise an exception. Useful in
         cases where some estimators may support a feature but others must
-        fail with an appropriate error message.
+        fail with an appropriate error message. By default, the context
+        manager will raise an exception if the block does not raise an
+        exception.
     err_msg : str, default=None
         If the context manager fails (e.g. the block fails to raise the
         proper exception, or fails to match), then an AssertionError is
