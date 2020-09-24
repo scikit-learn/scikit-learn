@@ -689,10 +689,10 @@ def test_binary_clf_curve_implicit_pos_label(curve_func):
            "value in {0, 1} or {-1, 1} or pass pos_label "
            "explicitly.")
     with pytest.raises(ValueError, match=msg):
-        roc_curve(np.array(["a", "b"], dtype='<U1'), [0., 1.])
+        curve_func(np.array(["a", "b"], dtype='<U1'), [0., 1.])
 
     with pytest.raises(ValueError, match=msg):
-        roc_curve(np.array(["a", "b"], dtype=object), [0., 1.])
+        curve_func(np.array(["a", "b"], dtype=object), [0., 1.])
 
     # The error message is slightly different for bytes-encoded
     # class labels, but otherwise the behavior is the same:
@@ -701,13 +701,13 @@ def test_binary_clf_curve_implicit_pos_label(curve_func):
            "value in {0, 1} or {-1, 1} or pass pos_label "
            "explicitly.")
     with pytest.raises(ValueError, match=msg):
-        roc_curve(np.array([b"a", b"b"], dtype='<S1'), [0., 1.])
+        curve_func(np.array([b"a", b"b"], dtype='<S1'), [0., 1.])
 
     # Check that it is possible to use floating point class labels
     # that are interpreted similarly to integer class labels:
     y_pred = [0., 1., 0.2, 0.42]
-    int_curve = roc_curve([0, 1, 1, 0], y_pred)
-    float_curve = roc_curve([0., 1., 1., 0.], y_pred)
+    int_curve = curve_func([0, 1, 1, 0], y_pred)
+    float_curve = curve_func([0., 1., 1., 0.], y_pred)
     for int_curve_part, float_curve_part in zip(int_curve, float_curve):
         np.testing.assert_allclose(int_curve_part, float_curve_part)
 
