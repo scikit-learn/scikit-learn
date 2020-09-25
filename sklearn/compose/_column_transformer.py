@@ -137,8 +137,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         of the individual transformers and the `sparse_threshold` keyword.
 
     transformers_output_ : dict
-        A dictionary from transformer names to column indices, recording the
-        columns produced by each transformer (if any).
+        A dictionary from transformer names to slices to track the results
+        of each transformer. The slices are the positions in the stacked
+        results of the output of each particular step in `transformers`.
 
     Notes
     -----
