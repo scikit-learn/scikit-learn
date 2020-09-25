@@ -696,6 +696,8 @@ def _incremental_weighted_mean_and_var(X, sample_weight,
                                        last_weight_sum):
     """Calculate weighted mean and weighted variance incremental update.
 
+    .. versionadded:: 0.24
+
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
