@@ -59,6 +59,15 @@ def test_pandas_dependency_message(fetch_covtype_fxt,
 @patch('sklearn.datasets._covtype.GzipFile', Mock())
 @patch('sklearn.datasets._covtype.remove', Mock())
 def test_fetch_with_download(exists, genfromtext):
+    """
+        This test covers the fetch of the dataset from the network
+        and the operations that are mandatory when you dont have the dataset locally
+        - create the folder
+        - gzip it
+        - cast the numpy result
+        - remove the file
+        - dump in joblib
+    """
     genfromtext.return_value = np.array([
         [2.596e+03, 5.100e+01, 3.000e+00, 2.580e+02, 0.000e+00, 5.100e+02,
          2.210e+02, 2.320e+02, 1.480e+02, 6.279e+03, 1.000e+00, 0.000e+00,
