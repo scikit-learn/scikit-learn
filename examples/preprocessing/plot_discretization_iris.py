@@ -37,7 +37,7 @@ n_cols = n_features
 
 combinations = product(range(n_features), repeat=2)
 
-# Transform the dataset with the discretizer
+# Discretizer for the iris dataset
 discretizer = MDLPDiscretizer(encode="ordinal")
 
 fig, axs = plt.subplots(nrows=n_rows,
