@@ -1,4 +1,4 @@
-"""Enables MDLP discretization.
+"""Enables :class:`~sklearn.preprocessing.MDLPDiscretizer`.
 
 The API and results of these estimators might
 change without any deprecation cycle.
