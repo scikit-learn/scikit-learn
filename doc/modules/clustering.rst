@@ -1676,6 +1676,11 @@ Drawbacks
   concepts of clusters, such as density based clusters like those obtained
   through DBSCAN.
 
+- In the output of the DBSCAN algorithm, -1 is assigned to the noise points. Hence,
+  when an input array is fed to the silhouette_score method, the label -1 is also
+  considered as cluster in the silhouette coefficient calaculation. Therefore, the
+  clustering label should start from 0.
+
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_silhouette_analysis.py` : In this example
