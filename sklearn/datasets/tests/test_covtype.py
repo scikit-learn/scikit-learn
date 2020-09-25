@@ -4,6 +4,9 @@ or if specifically requested via environment variable
 from functools import partial
 import pytest
 from sklearn.datasets.tests.test_common import check_return_X_y
+from sklearn.datasets._covtype import fetch_covtype
+from unittest.mock import Mock, patch
+import numpy as np
 
 
 def test_fetch(fetch_covtype_fxt):
@@ -48,3 +51,36 @@ def test_pandas_dependency_message(fetch_covtype_fxt,
                     ' requires pandas')
     with pytest.raises(ImportError, match=expected_msg):
         fetch_covtype_fxt(as_frame=True)
+
+@patch('sklearn.datasets._covtype.np.genfromtxt')
+@patch('sklearn.datasets._covtype.exists', return_value=False)
+@patch('sklearn.datasets._covtype.makedirs', Mock())
+@patch('sklearn.datasets._covtype._fetch_remote', Mock())
+@patch('sklearn.datasets._covtype.GzipFile', Mock())
+@patch('sklearn.datasets._covtype.remove', Mock())
+def test_fetch_with_download(exists, genfromtext):
+    genfromtext.return_value = np.array([
+        [2.596e+03, 5.100e+01, 3.000e+00, 2.580e+02, 0.000e+00, 5.100e+02,
+         2.210e+02, 2.320e+02, 1.480e+02, 6.279e+03, 1.000e+00, 0.000e+00,
+         0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00,
+         0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00,
+         0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00,
+         0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00,
+         0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00,
+         1.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00,
+         0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00,
+         5.000e+00],
+
+        [2.590e+03, 5.600e+01, 2.000e+00, 2.120e+02, -6.000e+00,
+         3.900e+02, 2.200e+02, 2.350e+02, 1.510e+02, 6.225e+03,
+         1.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00,
+         0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00,
+         0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00,
+         0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00,
+         0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00,
+         0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00,
+         0.000e+00, 0.000e+00, 1.000e+00, 0.000e+00, 0.000e+00,
+         0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00,
+         0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 5.000e+00]
+        ])
+    fetch_covtype(download_if_missing=True)
