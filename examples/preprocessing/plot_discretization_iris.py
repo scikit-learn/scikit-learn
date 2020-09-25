@@ -60,11 +60,11 @@ for idx, (i, j) in enumerate(combinations):
     xj = X[:, j]
     indices = [i, j]
 
-    xx_min, xx_max = np.min(xi), np.max(xi)
-    yy_min, yy_max = np.min(xj), np.max(xj)
+    xi_min, xi_max = np.min(xi), np.max(xi)
+    xj_min, xj_max = np.min(xj), np.max(xj)
 
-    xx, yy = np.meshgrid(np.arange(xx_min, xx_max, h),
-                         np.arange(yy_min, yy_max, h))
+    xx, yy = np.meshgrid(np.arange(xi_min, xi_max, h),
+                         np.arange(xj_min, xj_max, h))
 
     grid = np.c_[np.ravel(xx), np.ravel(yy)]
 
@@ -83,8 +83,8 @@ for idx, (i, j) in enumerate(combinations):
     ax.scatter(xi, xj, c=y, edgecolors="k")
 
     # Configure the axes for proper rendering
-    ax.set_xlim(xx_min, xx_max)
-    ax.set_ylim(yy_min, yy_max)
+    ax.set_xlim(xi_min, xi_max)
+    ax.set_ylim(xj_min, xj_max)
 
     if (row + 1) == n_rows:
         # Set the label for the x-axis
