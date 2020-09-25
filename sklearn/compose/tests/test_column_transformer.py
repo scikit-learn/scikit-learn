@@ -321,7 +321,7 @@ def test_column_transformer_transformers_output():
 
     # test with transformer_weights and multiple columns
     ct = ColumnTransformer([('trans', Trans(), [0, 1])],
-                             transformer_weights={'trans': .1})
+                           transformer_weights={'trans': .1})
     ct.fit(X_array)
     assert ct.transformers_output_ == {'trans': slice(0, 2)}
 
