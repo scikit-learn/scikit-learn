@@ -52,6 +52,7 @@ def test_pandas_dependency_message(fetch_covtype_fxt,
     with pytest.raises(ImportError, match=expected_msg):
         fetch_covtype_fxt(as_frame=True)
 
+
 @patch('sklearn.datasets._covtype.np.genfromtxt')
 @patch('sklearn.datasets._covtype.exists', return_value=False)
 @patch('sklearn.datasets._covtype.makedirs', Mock())
