@@ -678,6 +678,8 @@ def test_column_transformer_get_feature_names_raises():
 @pytest.mark.parametrize("X, keys", [
     (np.array([[{'a': 1, 'b': 2}, {'a': 3, 'b': 4}],
                [{'c': 5}, {'c': 6}]], dtype=object).T, ('a', 'b', 'c')),
+    (np.array([[{1: 1, 2: 2}, {1: 3, 2: 4}],
+               [{3: 5}, {3: 6}]], dtype=object).T, ('1', '2', '3')),
 ])
 def test_column_transformer_get_feature_names(X, keys):
     ct = ColumnTransformer(
