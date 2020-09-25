@@ -661,7 +661,7 @@ def test_column_transformer_cloning():
     assert hasattr(ct.transformers_[0][1], 'mean_')
 
 
-def test_column_transformer_get_feature_names():
+def test_column_transformer_get_feature_names_raises():
     X_array = np.array([[0., 1., 2.], [2., 4., 6.]]).T
     ct = ColumnTransformer([('trans', Trans(), [0, 1])])
     # raise correct error when not fitted
@@ -669,10 +669,13 @@ def test_column_transformer_get_feature_names():
         ct.get_feature_names()
     # raise correct error when no feature names are available
     ct.fit(X_array)
-    assert_raise_message(AttributeError,
-                         "Transformer trans (type Trans) does not provide "
-                         "get_feature_names", ct.get_feature_names)
+    msg = r"Transformer trans \(type Trans\) does not provide " \
+          r"get_feature_names"
+    with pytest.raises(AttributeError, match=msg):
+        ct.get_feature_names()
 
+
+def test_column_transformer_get_feature_names():
     # working example
     X = np.array([[{'a': 1, 'b': 2}, {'a': 3, 'b': 4}],
                   [{'c': 5}, {'c': 6}]], dtype=object).T
