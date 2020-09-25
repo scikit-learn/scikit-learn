@@ -89,6 +89,11 @@ Changelog
 - |FIX| :class:`compose.ColumnTransformer` now displays the remainder in the
   diagram display. :pr:`18167` by `Thomas Fan`_.
 
+- |FIX| :meth:`compose.ColumnTransformer.get_feature_names` supports
+  non-string feature names returned by any of its transformers.
+  :pr:`18459` by :user:`Albert Villanova del Moral <albertvillanova>` and
+  :user:`Alonso Silva Allende <alonsosilvaallende>`.
+
 :mod:`sklearn.covariance`
 .........................
 
