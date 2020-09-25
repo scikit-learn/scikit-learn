@@ -675,20 +675,22 @@ def test_column_transformer_get_feature_names_raises():
         ct.get_feature_names()
 
 
-def test_column_transformer_get_feature_names():
-    # working example
-    X = np.array([[{'a': 1, 'b': 2}, {'a': 3, 'b': 4}],
-                  [{'c': 5}, {'c': 6}]], dtype=object).T
+@pytest.mark.parametrize("X, keys", [
+    (np.array([[{'a': 1, 'b': 2}, {'a': 3, 'b': 4}],
+               [{'c': 5}, {'c': 6}]], dtype=object).T, ('a', 'b', 'c')),
+])
+def test_column_transformer_get_feature_names(X, keys):
     ct = ColumnTransformer(
         [('col' + str(i), DictVectorizer(), i) for i in range(2)])
     ct.fit(X)
-    assert ct.get_feature_names() == ['col0__a', 'col0__b', 'col1__c']
+    assert ct.get_feature_names() == [f'col0__{key}' for key in keys[:2]] + \
+           [f'col1__{keys[2]}']
 
     # drop transformer
     ct = ColumnTransformer(
         [('col0', DictVectorizer(), 0), ('col1', 'drop', 1)])
     ct.fit(X)
-    assert ct.get_feature_names() == ['col0__a', 'col0__b']
+    assert ct.get_feature_names() == [f'col0__{key}' for key in keys[:2]]
 
     # passthrough transformer
     ct = ColumnTransformer([('trans', 'passthrough', [0, 1])])
@@ -698,7 +700,8 @@ def test_column_transformer_get_feature_names():
     ct = ColumnTransformer([('trans', DictVectorizer(), 0)],
                            remainder='passthrough')
     ct.fit(X)
-    assert ct.get_feature_names() == ['trans__a', 'trans__b', 'x1']
+    assert ct.get_feature_names() == [f'trans__{key}' for key in keys[:2]] + \
+           ['x1']
 
     ct = ColumnTransformer([('trans', 'passthrough', [1])],
                            remainder='passthrough')
