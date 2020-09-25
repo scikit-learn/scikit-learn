@@ -1,12 +1,12 @@
 """
-Multi-dimensional Scaling (MDS)
+Multi-dimensional Scaling (MDS).
 """
 
 # author: Nelle Varoquaux <nelle.varoquaux@gmail.com>
 # License: BSD
 
 import numpy as np
-from joblib import Parallel, delayed, effective_n_jobs
+from joblib import Parallel, effective_n_jobs
 
 import warnings
 
@@ -15,6 +15,7 @@ from ..metrics import euclidean_distances
 from ..utils import check_random_state, check_array, check_symmetric
 from ..isotonic import IsotonicRegression
 from ..utils.validation import _deprecate_positional_args
+from ..utils.fixes import delayed
 
 
 def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
@@ -49,7 +50,7 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
         Relative tolerance with respect to stress at which to declare
         convergence.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines the random number generator used to initialize the centers.
         Pass an int for reproducible results across multiple function calls.
         See :term: `Glossary <random_state>`.
@@ -196,7 +197,7 @@ def smacof(dissimilarities, *, metric=True, n_components=2, init=None,
         Relative tolerance with respect to stress at which to declare
         convergence.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines the random number generator used to initialize the centers.
         Pass an int for reproducible results across multiple function calls.
         See :term: `Glossary <random_state>`.
@@ -311,7 +312,7 @@ class MDS(BaseEstimator):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines the random number generator used to initialize the centers.
         Pass an int for reproducible results across multiple function calls.
         See :term: `Glossary <random_state>`.
@@ -386,7 +387,7 @@ class MDS(BaseEstimator):
 
     @property
     def _pairwise(self):
-        return self.kernel == "precomputed"
+        return self.dissimilarity == "precomputed"
 
     def fit(self, X, y=None, init=None):
         """

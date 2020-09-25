@@ -5,9 +5,9 @@ Developing scikit-learn estimators
 ==================================
 
 Whether you are proposing an estimator for inclusion in scikit-learn,
-developing a separate package compatible with scikit-learn, or 
-implementing custom components for your own projects, this chapter 
-details how to develop objects that safely interact with scikit-learn 
+developing a separate package compatible with scikit-learn, or
+implementing custom components for your own projects, this chapter
+details how to develop objects that safely interact with scikit-learn
 Pipelines and model selection tools.
 
 .. currentmodule:: sklearn
@@ -148,19 +148,19 @@ The ``fit()`` method takes the training data as arguments, which can be one
 array in the case of unsupervised learning, or two arrays in the case
 of supervised learning.
 
-Note that the model is fitted using X and y, but the object holds no
-reference to X and y. There are, however, some exceptions to this, as in
+Note that the model is fitted using ``X`` and ``y``, but the object holds no
+reference to ``X`` and ``y``. There are, however, some exceptions to this, as in
 the case of precomputed kernels where this data must be stored for use by
 the predict method.
 
 ============= ======================================================
 Parameters
 ============= ======================================================
-X             array-like, shape (n_samples, n_features)
+X             array-like of shape (n_samples, n_features)
 
-y             array, shape (n_samples,)
+y             array-like of shape (n_samples,)
 
-kwargs        optional data-dependent parameters.
+kwargs        optional data-dependent parameters
 ============= ======================================================
 
 ``X.shape[0]`` should be the same as ``y.shape[0]``. If this requisite
@@ -330,11 +330,54 @@ get_params and set_params
 All scikit-learn estimators have ``get_params`` and ``set_params`` functions.
 The ``get_params`` function takes no arguments and returns a dict of the
 ``__init__`` parameters of the estimator, together with their values.
-It must take one keyword argument, ``deep``,
-which receives a boolean value that determines
-whether the method should return the parameters of sub-estimators
-(for most estimators, this can be ignored).
-The default value for ``deep`` should be true.
+
+It must take one keyword argument, ``deep``, which receives a boolean value
+that determines whether the method should return the parameters of
+sub-estimators (for most estimators, this can be ignored). The default value
+for ``deep`` should be `True`. For instance considering the following
+estimator::
+
+    >>> from sklearn.base import BaseEstimator
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> class MyEstimator(BaseEstimator):
+    ...     def __init__(self, subestimator=None, my_extra_param="random"):
+    ...         self.subestimator = subestimator
+    ...         self.my_extra_param = my_extra_param
+
+The parameter `deep` will control whether or not the parameters of the
+`subsestimator` should be reported. Thus when `deep=True`, the output will be::
+
+    >>> my_estimator = MyEstimator(subestimator=LogisticRegression())
+    >>> for param, value in my_estimator.get_params(deep=True).items():
+    ...     print(f"{param} -> {value}")
+    my_extra_param -> random
+    subestimator__C -> 1.0
+    subestimator__class_weight -> None
+    subestimator__dual -> False
+    subestimator__fit_intercept -> True
+    subestimator__intercept_scaling -> 1
+    subestimator__l1_ratio -> None
+    subestimator__max_iter -> 100
+    subestimator__multi_class -> auto
+    subestimator__n_jobs -> None
+    subestimator__penalty -> l2
+    subestimator__random_state -> None
+    subestimator__solver -> lbfgs
+    subestimator__tol -> 0.0001
+    subestimator__verbose -> 0
+    subestimator__warm_start -> False
+    subestimator -> LogisticRegression()
+
+Often, the `subestimator` has a name (as e.g. named steps in a
+:class:`~sklearn.pipeline.Pipeline` object), in which case the key should
+become `<name>__C`, `<name>__class_weight`, etc.
+
+While when `deep=False`, the output will be::
+
+    >>> for param, value in my_estimator.get_params(deep=False).items():
+    ...     print(f"{param} -> {value}")
+    my_extra_param -> random
+    subestimator -> LogisticRegression()
 
 The ``set_params`` on the other hand takes as input a dict of the form
 ``'parameter': value`` and sets the parameter of the estimator using this dict.
@@ -496,6 +539,14 @@ no_validation (default=False)
 non_deterministic (default=False)
     whether the estimator is not deterministic given a fixed ``random_state``
 
+preserves_dtype (default=``[np.float64]``)
+    applies only on transformers. It corresponds to the data types which will
+    be preserved such that `X_trans.dtype` is the same as `X.dtype` after
+    calling `transformer.transform(X)`. If this list is empty, then the
+    transformer is not expected to preserve the data type. The first value in
+    the list is considered as the default data type, corresponding to the data
+    type of the output when the input data type is not going to be preserved.
+
 poor_score (default=False)
     whether the estimator fails to provide a "reasonable" test-set score, which
     currently for regression is an R2 of 0.5 on a subset of the boston housing
@@ -653,21 +704,22 @@ Here's a simple example of code using some of the above guidelines::
     from sklearn.utils import check_array, check_random_state
 
     def choose_random_sample(X, random_state=0):
-        """
-        Choose a random point from X
+        """Choose a random point from X.
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
-            array representing the data
-        random_state : RandomState or an int seed (0 by default)
-            A random number generator instance to define the state of the
-            random permutations generator.
+        X : array-like of shape (n_samples, n_features)
+            An array representing the data.
+        random_state : int or RandomState instance, default=0
+            The seed of the pseudo random number generator that selects a
+            random sample. Pass an int for reproducible output across multiple
+            function calls.
+            See :term:`Glossary <random_state>`.
 
         Returns
         -------
-        x : numpy array, shape (n_features,)
-            A random point selected from X
+        x : ndarray of shape (n_features,)
+            A random point selected from X.
         """
         X = check_array(X)
         random_state = check_random_state(random_state)

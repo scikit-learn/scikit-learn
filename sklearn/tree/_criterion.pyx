@@ -171,7 +171,9 @@ cdef class Criterion:
         return (- self.weighted_n_right * impurity_right
                 - self.weighted_n_left * impurity_left)
 
-    cdef double impurity_improvement(self, double impurity) nogil:
+    cdef double impurity_improvement(self, double impurity_parent,
+                                     double impurity_left,
+                                     double impurity_right) nogil:
         """Compute the improvement in impurity
 
         This method computes the improvement in impurity when a split occurs.
@@ -186,24 +188,25 @@ cdef class Criterion:
 
         Parameters
         ----------
-        impurity : double
-            The initial impurity of the node before the split
+        impurity_parent : double
+            The initial impurity of the parent node before the split
+
+        impurity_left : double
+            The impurity of the left child
+
+        impurity_right : double
+            The impurity of the right child
 
         Return
         ------
         double : improvement in impurity after the split occurs
         """
 
-        cdef double impurity_left
-        cdef double impurity_right
-
-        self.children_impurity(&impurity_left, &impurity_right)
-
         return ((self.weighted_n_node_samples / self.weighted_n_samples) *
-                (impurity - (self.weighted_n_right / 
-                             self.weighted_n_node_samples * impurity_right)
-                          - (self.weighted_n_left / 
-                             self.weighted_n_node_samples * impurity_left)))
+                (impurity_parent - (self.weighted_n_right / 
+                                    self.weighted_n_node_samples * impurity_right)
+                                 - (self.weighted_n_left / 
+                                    self.weighted_n_node_samples * impurity_left)))
 
 
 cdef class ClassificationCriterion(Criterion):
@@ -1306,7 +1309,9 @@ cdef class FriedmanMSE(MSE):
 
         return diff * diff / (self.weighted_n_left * self.weighted_n_right)
 
-    cdef double impurity_improvement(self, double impurity) nogil:
+    cdef double impurity_improvement(self, double impurity_parent, double
+                                     impurity_left, double impurity_right) nogil:
+        # Note: none of the arguments are used here
         cdef double* sum_left = self.sum_left
         cdef double* sum_right = self.sum_right
 
