@@ -13,7 +13,6 @@
 import os
 import os.path as op
 import inspect
-import pkgutil
 import warnings
 import sys
 import functools
@@ -23,7 +22,6 @@ from subprocess import TimeoutExpired
 
 import scipy as sp
 from functools import wraps
-from operator import itemgetter
 from inspect import signature
 
 import shutil
@@ -47,37 +45,21 @@ import numpy as np
 import joblib
 
 import sklearn
-from sklearn.base import (BaseEstimator, ClassifierMixin, ClusterMixin,
-                          RegressorMixin, TransformerMixin)
-from sklearn.utils import deprecated, IS_PYPY, _IS_32BIT
+from sklearn.utils import IS_PYPY, _IS_32BIT
 
 
-__all__ = ["assert_equal", "assert_not_equal", "assert_raises",
+__all__ = ["assert_raises",
            "assert_raises_regexp",
-           "assert_almost_equal", "assert_array_equal",
+           "assert_array_equal",
+           "assert_almost_equal",
            "assert_array_almost_equal", "assert_array_less",
-           "assert_less", "assert_less_equal",
-           "assert_greater", "assert_greater_equal",
            "assert_approx_equal", "assert_allclose",
-           "assert_run_python_script", "SkipTest", "all_estimators"]
+           "assert_run_python_script", "SkipTest"]
 
 _dummy = TestCase('__init__')
-deprecation_message = (
-    'This helper is deprecated in version 0.22 and will be removed in version '
-    '0.24. Please use "assert" instead'
-)
-assert_equal = deprecated(deprecation_message)(_dummy.assertEqual)
-assert_not_equal = deprecated(deprecation_message)(_dummy.assertNotEqual)
 assert_raises = _dummy.assertRaises
 SkipTest = unittest.case.SkipTest
 assert_dict_equal = _dummy.assertDictEqual
-assert_in = deprecated(deprecation_message)(_dummy.assertIn)
-assert_not_in = deprecated(deprecation_message)(_dummy.assertNotIn)
-assert_less = deprecated(deprecation_message)(_dummy.assertLess)
-assert_greater = deprecated(deprecation_message)(_dummy.assertGreater)
-assert_less_equal = deprecated(deprecation_message)(_dummy.assertLessEqual)
-assert_greater_equal = deprecated(deprecation_message)(
-    _dummy.assertGreaterEqual)
 
 assert_raises_regex = _dummy.assertRaisesRegex
 # assert_raises_regexp is deprecated in Python 3.4 in favor of
@@ -103,7 +85,6 @@ def assert_warns(warning_class, func, *args, **kw):
 
     Returns
     -------
-
     result : the return value of `func`
 
     """
@@ -138,7 +119,7 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
     warning_class : the warning class
         The class to test for, e.g. UserWarning.
 
-    message : str | callable
+    message : str or callable
         The message or a substring of the message to test for. If callable,
         it takes a string as the argument and will trigger an AssertionError
         if the callable returns `False`.
@@ -183,7 +164,7 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
             if callable(message):  # add support for certain tests
                 check_in_message = message
             else:
-                check_in_message = lambda msg: message in msg
+                def check_in_message(msg): return message in msg
 
             if check_in_message(msg):
                 message_found = True
@@ -198,9 +179,10 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
 
 
 def assert_warns_div0(func, *args, **kw):
-    """Assume that numpy's warning for divide by zero is raised
+    """Assume that numpy's warning for divide by zero is raised.
 
-    Handles the case of platforms that do not support warning on divide by zero
+    Handles the case of platforms that do not support warning on divide by
+    zero.
 
     Parameters
     ----------
@@ -255,9 +237,9 @@ def ignore_warnings(obj=None, category=Warning):
 
     Parameters
     ----------
-    obj : callable or None
+    obj : callable, default=None
         callable where you want to ignore the warnings.
-    category : warning class, defaults to Warning.
+    category : warning class, default=Warning
         The category to filter. If Warning, all categories will be muted.
 
     Examples
@@ -296,7 +278,7 @@ class _IgnoreWarnings:
 
     Parameters
     ----------
-    category : tuple of warning class, default to Warning
+    category : tuple of warning class, default=Warning
         The category to filter. By default, all the categories will be muted.
 
     """
@@ -394,21 +376,21 @@ def assert_allclose_dense_sparse(x, y, rtol=1e-07, atol=1e-9, err_msg=''):
 
     Parameters
     ----------
-    x : array-like or sparse matrix
+    x : {array-like, sparse matrix}
         First array to compare.
 
-    y : array-like or sparse matrix
+    y : {array-like, sparse matrix}
         Second array to compare.
 
-    rtol : float, optional
-        relative tolerance; see numpy.allclose
+    rtol : float, default=1e-07
+        relative tolerance; see numpy.allclose.
 
-    atol : float, optional
+    atol : float, default=1e-9
         absolute tolerance; see numpy.allclose. Note that the default here is
         more tolerant than the default for numpy.testing.assert_allclose, where
         atol=0.
 
-    err_msg : string, default=''
+    err_msg : str, default=''
         Error message to raise.
     """
     if sp.sparse.issparse(x) and sp.sparse.issparse(y):
@@ -427,102 +409,17 @@ def assert_allclose_dense_sparse(x, y, rtol=1e-07, atol=1e-9, err_msg=''):
                          " not a sparse matrix and an array.")
 
 
-# TODO: Remove in 0.24. This class is now in utils.__init__.
-def all_estimators(type_filter=None):
-    """Get a list of all estimators from sklearn.
-
-    This function crawls the module and gets all classes that inherit
-    from BaseEstimator. Classes that are defined in test-modules are not
-    included.
-    By default meta_estimators such as GridSearchCV are also not included.
-
-    Parameters
-    ----------
-
-    type_filter : string, list of string,  or None, default=None
-        Which kind of estimators should be returned. If None, no filter is
-        applied and all estimators are returned.  Possible values are
-        'classifier', 'regressor', 'cluster' and 'transformer' to get
-        estimators only of these specific types, or a list of these to
-        get the estimators that fit at least one of the types.
-
-    Returns
-    -------
-    estimators : list of tuples
-        List of (name, class), where ``name`` is the class name as string
-        and ``class`` is the actual type of the class.
-    """
-    def is_abstract(c):
-        if not(hasattr(c, '__abstractmethods__')):
-            return False
-        if not len(c.__abstractmethods__):
-            return False
-        return True
-
-    all_classes = []
-    # get parent folder
-    path = sklearn.__path__
-    for importer, modname, ispkg in pkgutil.walk_packages(
-            path=path, prefix='sklearn.', onerror=lambda x: None):
-        if ".tests." in modname or "externals" in modname:
-            continue
-        if IS_PYPY and ('_svmlight_format_io' in modname or
-                        'feature_extraction._hashing_fast' in modname):
-            continue
-        # Ignore deprecation warnings triggered at import time.
-        with ignore_warnings(category=FutureWarning):
-            module = __import__(modname, fromlist="dummy")
-        classes = inspect.getmembers(module, inspect.isclass)
-        all_classes.extend(classes)
-
-    all_classes = set(all_classes)
-
-    estimators = [c for c in all_classes
-                  if (issubclass(c[1], BaseEstimator) and
-                      c[0] != 'BaseEstimator')]
-    # get rid of abstract base classes
-    estimators = [c for c in estimators if not is_abstract(c[1])]
-
-    if type_filter is not None:
-        if not isinstance(type_filter, list):
-            type_filter = [type_filter]
-        else:
-            type_filter = list(type_filter)  # copy
-        filtered_estimators = []
-        filters = {'classifier': ClassifierMixin,
-                   'regressor': RegressorMixin,
-                   'transformer': TransformerMixin,
-                   'cluster': ClusterMixin}
-        for name, mixin in filters.items():
-            if name in type_filter:
-                type_filter.remove(name)
-                filtered_estimators.extend([est for est in estimators
-                                            if issubclass(est[1], mixin)])
-        estimators = filtered_estimators
-        if type_filter:
-            raise ValueError("Parameter type_filter must be 'classifier', "
-                             "'regressor', 'transformer', 'cluster' or "
-                             "None, got"
-                             " %s." % repr(type_filter))
-
-    # drop duplicates, sort for reproducibility
-    # itemgetter is used to ensure the sort does not extend to the 2nd item of
-    # the tuple
-    return sorted(set(estimators), key=itemgetter(0))
-
-
 def set_random_state(estimator, random_state=0):
     """Set random state of an estimator if it has the `random_state` param.
 
     Parameters
     ----------
     estimator : object
-        The estimator
-    random_state : int, RandomState instance or None, optional, default=0
-        Pseudo random number generator state.  If int, random_state is the seed
-        used by the random number generator; If RandomState instance,
-        random_state is the random number generator; If None, the random number
-        generator is the RandomState instance used by `np.random`.
+        The estimator.
+    random_state : int, RandomState instance or None, default=0
+        Pseudo random number generator state.
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
     """
     if "random_state" in estimator.get_params():
         estimator.set_params(random_state=random_state)
@@ -566,21 +463,6 @@ except ImportError:
     pass
 
 
-def clean_warning_registry():
-    """Clean Python warning registry for easier testing of warning messages.
-
-    When changing warning filters this function is not necessary with
-    Python3.5+, as __warningregistry__ will be re-set internally.
-    See https://bugs.python.org/issue4180 and
-    https://bugs.python.org/issue21724 for more details.
-
-    """
-    for mod in sys.modules.values():
-        registry = getattr(mod, "__warningregistry__", None)
-        if registry is not None:
-            registry.clear()
-
-
 def check_skip_network():
     if int(os.environ.get('SKLEARN_SKIP_NETWORK_TESTS', 0)):
         raise SkipTest("Text tutorial requires large dataset download")
@@ -606,7 +488,7 @@ class TempMemmap:
     Parameters
     ----------
     data
-    mmap_mode
+    mmap_mode : str, default='r'
     """
     def __init__(self, data, mmap_mode='r'):
         self.mmap_mode = mmap_mode
@@ -626,8 +508,8 @@ def create_memmap_backed_data(data, mmap_mode='r', return_folder=False):
     Parameters
     ----------
     data
-    mmap_mode
-    return_folder
+    mmap_mode : str, default='r'
+    return_folder :  bool, default=False
     """
     temp_folder = tempfile.mkdtemp(prefix='sklearn_testing_')
     atexit.register(functools.partial(_delete_folder, temp_folder, warn=True))
@@ -643,7 +525,7 @@ def create_memmap_backed_data(data, mmap_mode='r', return_folder=False):
 
 
 def _get_args(function, varargs=False):
-    """Helper to get function arguments"""
+    """Helper to get function arguments."""
 
     try:
         params = signature(function).parameters
@@ -663,7 +545,7 @@ def _get_args(function, varargs=False):
 
 
 def _get_func_name(func):
-    """Get function full name
+    """Get function full name.
 
     Parameters
     ----------
@@ -689,15 +571,15 @@ def _get_func_name(func):
 
 
 def check_docstring_parameters(func, doc=None, ignore=None):
-    """Helper to check docstring
+    """Helper to check docstring.
 
     Parameters
     ----------
     func : callable
         The function object to test.
-    doc : str, optional (default: None)
+    doc : str, default=None
         Docstring if it is passed manually to the test.
-    ignore : None | list
+    ignore : list, default=None
         Parameters to ignore.
 
     Returns
@@ -826,7 +708,7 @@ def assert_run_python_script(source_code, timeout=60):
     ----------
     source_code : str
         The Python source code to execute.
-    timeout : int
+    timeout : int, default=60
         Time in seconds before timeout.
     """
     fd, source_file = tempfile.mkstemp(suffix='_src_test_sklearn.py')

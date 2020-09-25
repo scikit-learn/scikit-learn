@@ -1,5 +1,6 @@
 
 from functools import partial
+from inspect import signature
 from itertools import product
 from itertools import chain
 from itertools import permutations
@@ -29,6 +30,7 @@ from sklearn.metrics import brier_score_loss
 from sklearn.metrics import cohen_kappa_score
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import coverage_error
+from sklearn.metrics import det_curve
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import f1_score
 from sklearn.metrics import fbeta_score
@@ -41,6 +43,7 @@ from sklearn.metrics import log_loss
 from sklearn.metrics import max_error
 from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import mean_absolute_percentage_error
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import mean_tweedie_deviance
 from sklearn.metrics import mean_poisson_deviance
@@ -98,6 +101,7 @@ REGRESSION_METRICS = {
     "mean_absolute_error": mean_absolute_error,
     "mean_squared_error": mean_squared_error,
     "median_absolute_error": median_absolute_error,
+    "mean_absolute_percentage_error": mean_absolute_percentage_error,
     "explained_variance_score": explained_variance_score,
     "r2_score": partial(r2_score, multioutput='variance_weighted'),
     "mean_normal_deviance": partial(mean_tweedie_deviance, power=0),
@@ -203,6 +207,7 @@ def precision_recall_curve_padded_thresholds(*args, **kwargs):
 CURVE_METRICS = {
     "roc_curve": roc_curve,
     "precision_recall_curve": precision_recall_curve_padded_thresholds,
+    "det_curve": det_curve,
 }
 
 THRESHOLDED_METRICS = {
@@ -299,6 +304,7 @@ METRIC_UNDEFINED_MULTICLASS = {
     # curves
     "roc_curve",
     "precision_recall_curve",
+    "det_curve",
 }
 
 # Metric undefined with "binary" or "multiclass" input
@@ -320,6 +326,7 @@ THRESHOLDED_METRICS_WITH_AVERAGING = {
 METRICS_WITH_POS_LABEL = {
     "roc_curve",
     "precision_recall_curve",
+    "det_curve",
 
     "brier_score_loss",
 
@@ -350,6 +357,7 @@ METRICS_WITH_LABELS = {
     "normalized_confusion_matrix",
     "roc_curve",
     "precision_recall_curve",
+    "det_curve",
 
     "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
     "jaccard_score",
@@ -425,7 +433,7 @@ MULTILABELS_METRICS = {
 # Regression metrics with "multioutput-continuous" format support
 MULTIOUTPUT_METRICS = {
     "mean_absolute_error", "median_absolute_error", "mean_squared_error",
-    "r2_score", "explained_variance_score"
+    "r2_score", "explained_variance_score", "mean_absolute_percentage_error"
 }
 
 # Symmetric with respect to their input arguments y_true and y_pred
@@ -462,6 +470,7 @@ NOT_SYMMETRIC_METRICS = {
     "normalized_confusion_matrix",
     "roc_curve",
     "precision_recall_curve",
+    "det_curve",
 
     "precision_score", "recall_score", "f2_score", "f0.5_score",
 
@@ -472,7 +481,7 @@ NOT_SYMMETRIC_METRICS = {
     "macro_f0.5_score", "macro_f2_score", "macro_precision_score",
     "macro_recall_score", "log_loss", "hinge_loss",
     "mean_gamma_deviance", "mean_poisson_deviance",
-    "mean_compound_poisson_deviance"
+    "mean_compound_poisson_deviance", "mean_absolute_percentage_error"
 }
 
 
@@ -1168,8 +1177,7 @@ def check_sample_weight_invariance(name, metric, y1, y2):
         assert_allclose(unweighted_score, weighted_score)
         raise ValueError("Unweighted and weighted scores are unexpectedly "
                          "almost equal (%s) and (%s) "
-                         "for %s" % (unweighted_score,
-                                     weighted_score, name))
+                         "for %s" % (unweighted_score, weighted_score, name))
 
     # check that sample_weight can be a list
     weighted_score_list = metric(y1, y2,
@@ -1372,7 +1380,15 @@ def test_thresholded_multilabel_multioutput_permutations_invariance(name):
         y_true_perm = y_true[:, perm]
 
         current_score = metric(y_true_perm, y_score_perm)
-        assert_almost_equal(score, current_score)
+        if metric == mean_absolute_percentage_error:
+            assert np.isfinite(current_score)
+            assert current_score > 1e6
+            # Here we are not comparing the values in case of MAPE because
+            # whenever y_true value is exactly zero, the MAPE value doesn't
+            # signify anything. Thus, in this case we are just expecting
+            # very large finite value.
+        else:
+            assert_almost_equal(score, current_score)
 
 
 @pytest.mark.parametrize(
@@ -1397,3 +1413,67 @@ def test_thresholded_metric_permutation_invariance(name):
 
         current_score = metric(y_true_perm, y_score_perm)
         assert_almost_equal(score, current_score)
+
+
+@pytest.mark.parametrize("metric_name", CLASSIFICATION_METRICS)
+def test_metrics_consistent_type_error(metric_name):
+    # check that an understable message is raised when the type between y_true
+    # and y_pred mismatch
+    rng = np.random.RandomState(42)
+    y1 = np.array(["spam"] * 3 + ["eggs"] * 2, dtype=object)
+    y2 = rng.randint(0, 2, size=y1.size)
+
+    err_msg = "Labels in y_true and y_pred should be of the same type."
+    with pytest.raises(TypeError, match=err_msg):
+        CLASSIFICATION_METRICS[metric_name](y1, y2)
+
+
+@pytest.mark.parametrize(
+    "metric, y_pred_threshold",
+    [
+        (average_precision_score, True),
+        # FIXME: `brier_score_loss` does not follow this convention.
+        # See discussion in:
+        # https://github.com/scikit-learn/scikit-learn/issues/18307
+        pytest.param(
+            brier_score_loss, True, marks=pytest.mark.xfail(reason="#18307")
+        ),
+        (f1_score, False),
+        (partial(fbeta_score, beta=1), False),
+        (jaccard_score, False),
+        (precision_recall_curve, True),
+        (precision_score, False),
+        (recall_score, False),
+        (roc_curve, True),
+    ],
+)
+@pytest.mark.parametrize("dtype_y_str", [str, object])
+def test_metrics_pos_label_error_str(metric, y_pred_threshold, dtype_y_str):
+    # check that the error message if `pos_label` is not specified and the
+    # targets is made of strings.
+    rng = np.random.RandomState(42)
+    y1 = np.array(["spam"] * 3 + ["eggs"] * 2, dtype=dtype_y_str)
+    y2 = rng.randint(0, 2, size=y1.size)
+
+    if not y_pred_threshold:
+        y2 = np.array(["spam", "eggs"], dtype=dtype_y_str)[y2]
+
+    err_msg_pos_label_None = (
+        "y_true takes value in {'eggs', 'spam'} and pos_label is not "
+        "specified: either make y_true take value in {0, 1} or {-1, 1} or "
+        "pass pos_label explicit"
+    )
+    err_msg_pos_label_1 = (
+        r"pos_label=1 is not a valid label. It should be one of "
+        r"\['eggs', 'spam'\]"
+    )
+
+    pos_label_default = signature(metric).parameters["pos_label"].default
+
+    err_msg = (
+        err_msg_pos_label_1
+        if pos_label_default == 1
+        else err_msg_pos_label_None
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        metric(y1, y2)

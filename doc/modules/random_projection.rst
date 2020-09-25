@@ -52,7 +52,7 @@ The main theoretical result behind the efficiency of random projection is the
   and can even be taken to be an orthogonal projection.
 
 Knowing only the number of samples, the
-:func:`sklearn.random_projection.johnson_lindenstrauss_min_dim` estimates
+:func:`johnson_lindenstrauss_min_dim` estimates
 conservatively the minimal size of the random subspace to guarantee a
 bounded distortion introduced by the random projection::
 
@@ -64,19 +64,19 @@ bounded distortion introduced by the random projection::
   >>> johnson_lindenstrauss_min_dim(n_samples=[1e4, 1e5, 1e6], eps=0.1)
   array([ 7894,  9868, 11841])
 
-.. figure:: ../auto_examples/images/sphx_glr_plot_johnson_lindenstrauss_bound_001.png
-   :target: ../auto_examples/plot_johnson_lindenstrauss_bound.html
+.. figure:: ../auto_examples/miscellaneous/images/sphx_glr_plot_johnson_lindenstrauss_bound_001.png
+   :target: ../auto_examples/miscellaneous/plot_johnson_lindenstrauss_bound.html
    :scale: 75
    :align: center
 
-.. figure:: ../auto_examples/images/sphx_glr_plot_johnson_lindenstrauss_bound_002.png
-   :target: ../auto_examples/plot_johnson_lindenstrauss_bound.html
+.. figure:: ../auto_examples/miscellaneous/images/sphx_glr_plot_johnson_lindenstrauss_bound_002.png
+   :target: ../auto_examples/miscellaneous/plot_johnson_lindenstrauss_bound.html
    :scale: 75
    :align: center
 
 .. topic:: Example:
 
-  * See :ref:`sphx_glr_auto_examples_plot_johnson_lindenstrauss_bound.py`
+  * See :ref:`sphx_glr_auto_examples_miscellaneous_plot_johnson_lindenstrauss_bound.py`
     for a theoretical explication on the Johnson-Lindenstrauss lemma and an
     empirical validation using sparse random matrices.
 
@@ -90,7 +90,7 @@ bounded distortion introduced by the random projection::
 
 Gaussian random projection
 ==========================
-The :class:`sklearn.random_projection.GaussianRandomProjection` reduces the
+The :class:`GaussianRandomProjection` reduces the
 dimensionality by projecting the original input space on a randomly generated
 matrix where components are drawn from the following distribution
 :math:`N(0, \frac{1}{n_{components}})`.
@@ -111,7 +111,7 @@ projection transformer::
 
 Sparse random projection
 ========================
-The :class:`sklearn.random_projection.SparseRandomProjection` reduces the
+The :class:`SparseRandomProjection` reduces the
 dimensionality by projecting the original input space using a sparse
 random matrix.
 

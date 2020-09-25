@@ -33,6 +33,8 @@ def configuration(parent_package='', top_path=None):
 
     # add other directories
     config.add_subpackage('tests')
+    config.add_subpackage('_glm')
+    config.add_subpackage('_glm/tests')
 
     return config
 

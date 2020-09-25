@@ -5,6 +5,7 @@
 import numpy as np
 from . import MinCovDet
 from ..utils.validation import check_is_fitted, check_array
+from ..utils.validation import _deprecate_positional_args
 from ..metrics import accuracy_score
 from ..base import OutlierMixin
 
@@ -38,7 +39,7 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
         The amount of contamination of the data set, i.e. the proportion
         of outliers in the data set. Range is (0, 0.5).
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines the pseudo random number generator for shuffling
         the data. Pass an int for reproducible results across multiple function
         calls. See :term: `Glossary <random_state>`.
@@ -46,10 +47,10 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
     Attributes
     ----------
     location_ : ndarray of shape (n_features,)
-        Estimated robust location
+        Estimated robust location.
 
     covariance_ : ndarray of shape (n_features, n_features)
-        Estimated robust covariance matrix
+        Estimated robust covariance matrix.
 
     precision_ : ndarray of shape (n_features, n_features)
         Estimated pseudo inverse matrix.
@@ -65,6 +66,23 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
         The offset depends on the contamination parameter and is defined in
         such a way we obtain the expected number of outliers (samples with
         decision function < 0) in training.
+
+        .. versionadded:: 0.20
+
+    raw_location_ : ndarray of shape (n_features,)
+        The raw robust estimated location before correction and re-weighting.
+
+    raw_covariance_ : ndarray of shape (n_features, n_features)
+        The raw robust estimated covariance before correction and re-weighting.
+
+    raw_support_ : ndarray of shape (n_samples,)
+        A mask of the observations that have been used to compute
+        the raw robust estimates of location and shape, before correction
+        and re-weighting.
+
+    dist_ : ndarray of shape (n_samples,)
+        Mahalanobis distances of the training set (on which :meth:`fit` is
+        called) observations.
 
     Examples
     --------
@@ -102,7 +120,8 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
        minimum covariance determinant estimator" Technometrics 41(3), 212
        (1999)
     """
-    def __init__(self, store_precision=True, assume_centered=False,
+    @_deprecate_positional_args
+    def __init__(self, *, store_precision=True, assume_centered=False,
                  support_fraction=None, contamination=0.1,
                  random_state=None):
         super().__init__(
@@ -137,7 +156,7 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
 
         Returns
         -------
-        decision : ndarray of shape (n_samples, )
+        decision : ndarray of shape (n_samples,)
             Decision function of the samples.
             It is equal to the shifted Mahalanobis distances.
             The threshold for being an outlier is 0, which ensures a
