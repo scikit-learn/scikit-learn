@@ -700,3 +700,12 @@ def test_raises():
     with raises(TypeError, match="hello", may_pass=True) as cm:
         pass  # still OK
     assert not cm.raised_and_matched
+
+    # Multiple exception types:
+    with raises((TypeError, ValueError)):
+        raise TypeError()
+    with raises((TypeError, ValueError)):
+        raise ValueError()
+    with pytest.raises(AssertionError):
+        with raises((TypeError, ValueError)):
+            pass
