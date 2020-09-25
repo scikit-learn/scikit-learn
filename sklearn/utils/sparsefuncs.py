@@ -5,6 +5,7 @@
 # License: BSD 3 clause
 import scipy.sparse as sp
 import numpy as np
+from .validation import _deprecate_positional_args
 
 from .sparsefuncs_fast import (
     csr_mean_variance_axis0 as _csr_mean_var_axis0,
@@ -98,7 +99,8 @@ def mean_variance_axis(X, axis):
         _raise_typeerror(X)
 
 
-def incr_mean_variance_axis(X, axis, last_mean, last_var, last_n):
+@_deprecate_positional_args
+def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n):
     """Compute incremental mean and variance along an axix on a CSR or
     CSC matrix.
 
@@ -414,7 +416,7 @@ def min_max_axis(X, axis, ignore_nan=False):
     axis : int (either 0 or 1)
         Axis along which the axis should be computed.
 
-    ignore_nan : bool, default is False
+    ignore_nan : bool, default=False
         Ignore or passing through NaN values.
 
         .. versionadded:: 0.20
@@ -444,13 +446,13 @@ def count_nonzero(X, axis=None, sample_weight=None):
 
     Parameters
     ----------
-    X : CSR sparse matrix, shape = (n_samples, n_labels)
+    X : CSR sparse matrix of shape (n_samples, n_labels)
         Input data.
 
     axis : None, 0 or 1
         The axis on which the data is aggregated.
 
-    sample_weight : array, shape = (n_samples,), optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Weight for each row of X.
     """
     if axis == -1:

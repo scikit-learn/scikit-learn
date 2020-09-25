@@ -5,15 +5,15 @@ from itertools import product
 
 import pytest
 
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_raises_regex
-from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_warns
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import assert_raises_regex
+from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import assert_warns
 
 from sklearn.exceptions import ConvergenceWarning
 
@@ -22,21 +22,25 @@ from sklearn.metrics import mean_squared_error
 from sklearn.metrics import make_scorer
 from sklearn.metrics import get_scorer
 
-from sklearn.linear_model.base import LinearRegression
-from sklearn.linear_model.ridge import ridge_regression
-from sklearn.linear_model.ridge import Ridge
-from sklearn.linear_model.ridge import _RidgeGCV
-from sklearn.linear_model.ridge import RidgeCV
-from sklearn.linear_model.ridge import RidgeClassifier
-from sklearn.linear_model.ridge import RidgeClassifierCV
-from sklearn.linear_model.ridge import _solve_cholesky
-from sklearn.linear_model.ridge import _solve_cholesky_kernel
-from sklearn.linear_model.ridge import _check_gcv_mode
-from sklearn.linear_model.ridge import _X_CenterStackOp
+from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import ridge_regression
+from sklearn.linear_model import Ridge
+from sklearn.linear_model._ridge import _RidgeGCV
+from sklearn.linear_model import RidgeCV
+from sklearn.linear_model import RidgeClassifier
+from sklearn.linear_model import RidgeClassifierCV
+from sklearn.linear_model._ridge import _solve_cholesky
+from sklearn.linear_model._ridge import _solve_cholesky_kernel
+from sklearn.linear_model._ridge import _check_gcv_mode
+from sklearn.linear_model._ridge import _X_CenterStackOp
 from sklearn.datasets import make_regression
+from sklearn.datasets import make_classification
 
 from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import KFold, GroupKFold, cross_val_predict
+from sklearn.model_selection import KFold
+from sklearn.model_selection import GroupKFold
+from sklearn.model_selection import cross_val_predict
+from sklearn.model_selection import LeaveOneOut
 
 from sklearn.utils import check_random_state
 from sklearn.datasets import make_multilabel_classification
@@ -57,6 +61,14 @@ y_iris = iris.target
 
 DENSE_FILTER = lambda X: X
 SPARSE_FILTER = lambda X: sp.csr_matrix(X)
+
+
+def _accuracy_callable(y_test, y_pred):
+    return np.mean(y_test == y_pred)
+
+
+def _mean_squared_error_callable(y_test, y_pred):
+    return ((y_test - y_pred) ** 2).mean()
 
 
 @pytest.mark.parametrize('solver',
@@ -466,6 +478,33 @@ def test_ridge_gcv_vs_ridge_loo_cv(
     assert_allclose(gcv_ridge.intercept_, loo_ridge.intercept_, rtol=1e-3)
 
 
+def test_ridge_loo_cv_asym_scoring():
+    # checking on asymmetric scoring
+    scoring = 'explained_variance'
+    n_samples, n_features = 10, 5
+    n_targets = 1
+    X, y = _make_sparse_offset_regression(
+        n_samples=n_samples, n_features=n_features, n_targets=n_targets,
+        random_state=0, shuffle=False, noise=1, n_informative=5
+    )
+
+    alphas = [1e-3, .1, 1., 10., 1e3]
+    loo_ridge = RidgeCV(cv=n_samples, fit_intercept=True,
+                        alphas=alphas, scoring=scoring,
+                        normalize=True)
+
+    gcv_ridge = RidgeCV(fit_intercept=True,
+                        alphas=alphas, scoring=scoring,
+                        normalize=True)
+
+    loo_ridge.fit(X, y)
+    gcv_ridge.fit(X, y)
+
+    assert gcv_ridge.alpha_ == pytest.approx(loo_ridge.alpha_)
+    assert_allclose(gcv_ridge.coef_, loo_ridge.coef_, rtol=1e-3)
+    assert_allclose(gcv_ridge.intercept_, loo_ridge.intercept_, rtol=1e-3)
+
+
 @pytest.mark.parametrize('gcv_mode', ['svd', 'eigen'])
 @pytest.mark.parametrize('X_constructor', [np.asarray, sp.csr_matrix])
 @pytest.mark.parametrize('n_features', [8, 20])
@@ -495,11 +534,7 @@ def test_ridge_gcv_sample_weights(
     kfold = RidgeCV(
         alphas=alphas, cv=splits, scoring='neg_mean_squared_error',
         fit_intercept=fit_intercept)
-    # ignore warning from GridSearchCV: DeprecationWarning: The default of the
-    # `iid` parameter will change from True to False in version 0.22 and will
-    # be removed in 0.24
-    with ignore_warnings(category=DeprecationWarning):
-        kfold.fit(X_tiled, y_tiled)
+    kfold.fit(X_tiled, y_tiled)
 
     ridge_reg = Ridge(alpha=kfold.alpha_, fit_intercept=fit_intercept)
     splits = cv.split(X_tiled, y_tiled, groups=indices)
@@ -634,6 +669,101 @@ def _test_ridge_cv(filter_):
     assert type(ridge_cv.intercept_) == np.float64
 
 
+@pytest.mark.parametrize(
+    "ridge, make_dataset",
+    [(RidgeCV(store_cv_values=False), make_regression),
+     (RidgeClassifierCV(store_cv_values=False), make_classification)]
+)
+def test_ridge_gcv_cv_values_not_stored(ridge, make_dataset):
+    # Check that `cv_values_` is not stored when store_cv_values is False
+    X, y = make_dataset(n_samples=6, random_state=42)
+    ridge.fit(X, y)
+    assert not hasattr(ridge, "cv_values_")
+
+
+@pytest.mark.parametrize(
+    "ridge, make_dataset",
+    [(RidgeCV(), make_regression),
+     (RidgeClassifierCV(), make_classification)]
+)
+@pytest.mark.parametrize("cv", [None, 3])
+def test_ridge_best_score(ridge, make_dataset, cv):
+    # check that the best_score_ is store
+    X, y = make_dataset(n_samples=6, random_state=42)
+    ridge.set_params(store_cv_values=False, cv=cv)
+    ridge.fit(X, y)
+    assert hasattr(ridge, "best_score_")
+    assert isinstance(ridge.best_score_, float)
+
+
+def test_ridge_cv_individual_penalties():
+    # Tests the ridge_cv object optimizing individual penalties for each target
+
+    rng = np.random.RandomState(42)
+
+    # Create random dataset with multiple targets. Each target should have
+    # a different optimal alpha.
+    n_samples, n_features, n_targets = 20, 5, 3
+    y = rng.randn(n_samples, n_targets)
+    X = (np.dot(y[:, [0]], np.ones((1, n_features))) +
+         np.dot(y[:, [1]], 0.05 * np.ones((1, n_features))) +
+         np.dot(y[:, [2]], 0.001 * np.ones((1, n_features))) +
+         rng.randn(n_samples, n_features))
+
+    alphas = (1, 100, 1000)
+
+    # Find optimal alpha for each target
+    optimal_alphas = [RidgeCV(alphas=alphas).fit(X, target).alpha_
+                      for target in y.T]
+
+    # Find optimal alphas for all targets simultaneously
+    ridge_cv = RidgeCV(alphas=alphas, alpha_per_target=True).fit(X, y)
+    assert_array_equal(optimal_alphas, ridge_cv.alpha_)
+
+    # The resulting regression weights should incorporate the different
+    # alpha values.
+    assert_array_almost_equal(Ridge(alpha=ridge_cv.alpha_).fit(X, y).coef_,
+                              ridge_cv.coef_)
+
+    # Test shape of alpha_ and cv_values_
+    ridge_cv = RidgeCV(alphas=alphas, alpha_per_target=True,
+                       store_cv_values=True).fit(X, y)
+    assert ridge_cv.alpha_.shape == (n_targets,)
+    assert ridge_cv.best_score_.shape == (n_targets,)
+    assert ridge_cv.cv_values_.shape == (n_samples, len(alphas), n_targets)
+
+    # Test edge case of there being only one alpha value
+    ridge_cv = RidgeCV(alphas=1, alpha_per_target=True,
+                       store_cv_values=True).fit(X, y)
+    assert ridge_cv.alpha_.shape == (n_targets,)
+    assert ridge_cv.best_score_.shape == (n_targets,)
+    assert ridge_cv.cv_values_.shape == (n_samples, n_targets, 1)
+
+    # Test edge case of there being only one target
+    ridge_cv = RidgeCV(alphas=alphas, alpha_per_target=True,
+                       store_cv_values=True).fit(X, y[:, 0])
+    assert np.isscalar(ridge_cv.alpha_)
+    assert np.isscalar(ridge_cv.best_score_)
+    assert ridge_cv.cv_values_.shape == (n_samples, len(alphas))
+
+    # Try with a custom scoring function
+    ridge_cv = RidgeCV(alphas=alphas, alpha_per_target=True,
+                       scoring='r2').fit(X, y)
+    assert_array_equal(optimal_alphas, ridge_cv.alpha_)
+    assert_array_almost_equal(Ridge(alpha=ridge_cv.alpha_).fit(X, y).coef_,
+                              ridge_cv.coef_)
+
+    # Using a custom CV object should throw an error in combination with
+    # alpha_per_target=True
+    ridge_cv = RidgeCV(alphas=alphas, cv=LeaveOneOut(), alpha_per_target=True)
+    msg = "cv!=None and alpha_per_target=True are incompatible"
+    with pytest.raises(ValueError, match=msg):
+        ridge_cv.fit(X, y)
+    ridge_cv = RidgeCV(alphas=alphas, cv=6, alpha_per_target=True)
+    with pytest.raises(ValueError, match=msg):
+        ridge_cv.fit(X, y)
+
+
 def _test_ridge_diabetes(filter_):
     ridge = Ridge(fit_intercept=False)
     ridge.fit(filter_(X_diabetes), y_diabetes)
@@ -671,6 +801,38 @@ def _test_ridge_classifiers(filter_):
     assert np.mean(y_iris == y_pred) >= 0.8
 
 
+@pytest.mark.parametrize("scoring", [None, "accuracy", _accuracy_callable])
+@pytest.mark.parametrize("cv", [None, KFold(5)])
+@pytest.mark.parametrize("filter_", [DENSE_FILTER, SPARSE_FILTER])
+def test_ridge_classifier_with_scoring(filter_, scoring, cv):
+    # non-regression test for #14672
+    # check that RidgeClassifierCV works with all sort of scoring and
+    # cross-validation
+    scoring_ = make_scorer(scoring) if callable(scoring) else scoring
+    clf = RidgeClassifierCV(scoring=scoring_, cv=cv)
+    # Smoke test to check that fit/predict does not raise error
+    clf.fit(filter_(X_iris), y_iris).predict(filter_(X_iris))
+
+
+@pytest.mark.parametrize("cv", [None, KFold(5)])
+@pytest.mark.parametrize("filter_", [DENSE_FILTER, SPARSE_FILTER])
+def test_ridge_regression_custom_scoring(filter_, cv):
+    # check that custom scoring is working as expected
+    # check the tie breaking strategy (keep the first alpha tried)
+
+    def _dummy_score(y_test, y_pred):
+        return 0.42
+
+    alphas = np.logspace(-2, 2, num=5)
+    clf = RidgeClassifierCV(
+        alphas=alphas, scoring=make_scorer(_dummy_score), cv=cv
+    )
+    clf.fit(filter_(X_iris), y_iris)
+    assert clf.best_score_ == pytest.approx(0.42)
+    # In case of tie score, the first alphas will be kept
+    assert clf.alpha_ == pytest.approx(alphas[0])
+
+
 def _test_tolerance(filter_):
     ridge = Ridge(tol=1e-5, fit_intercept=False)
     ridge.fit(filter_(X_diabetes), y_diabetes)
@@ -693,7 +855,6 @@ def check_dense_sparse(test_func):
         assert_array_almost_equal(ret_dense, ret_sparse, decimal=3)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of multioutput')  # 0.23
 @pytest.mark.parametrize(
         'test_func',
         (_test_ridge_loo, _test_ridge_cv, _test_ridge_cv_normalize,
@@ -791,7 +952,10 @@ def test_class_weights_cv():
     assert_array_equal(reg.predict([[-.2, 2]]), np.array([-1]))
 
 
-def test_ridgecv_store_cv_values():
+@pytest.mark.parametrize(
+    "scoring", [None, 'neg_mean_squared_error', _mean_squared_error_callable]
+)
+def test_ridgecv_store_cv_values(scoring):
     rng = np.random.RandomState(42)
 
     n_samples = 8
@@ -800,7 +964,9 @@ def test_ridgecv_store_cv_values():
     alphas = [1e-1, 1e0, 1e1]
     n_alphas = len(alphas)
 
-    r = RidgeCV(alphas=alphas, cv=None, store_cv_values=True)
+    scoring_ = make_scorer(scoring) if callable(scoring) else scoring
+
+    r = RidgeCV(alphas=alphas, cv=None, store_cv_values=True, scoring=scoring_)
 
     # with len(y.shape) == 1
     y = rng.randn(n_samples)
@@ -813,12 +979,13 @@ def test_ridgecv_store_cv_values():
     r.fit(x, y)
     assert r.cv_values_.shape == (n_samples, n_targets, n_alphas)
 
-    r = RidgeCV(cv=3, store_cv_values=True)
+    r = RidgeCV(cv=3, store_cv_values=True, scoring=scoring)
     assert_raises_regex(ValueError, 'cv!=None and store_cv_values',
                         r.fit, x, y)
 
 
-def test_ridge_classifier_cv_store_cv_values():
+@pytest.mark.parametrize("scoring", [None, 'accuracy', _accuracy_callable])
+def test_ridge_classifier_cv_store_cv_values(scoring):
     x = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
                   [1.0, 1.0], [1.0, 0.0]])
     y = np.array([1, 1, 1, -1, -1])
@@ -827,7 +994,11 @@ def test_ridge_classifier_cv_store_cv_values():
     alphas = [1e-1, 1e0, 1e1]
     n_alphas = len(alphas)
 
-    r = RidgeClassifierCV(alphas=alphas, cv=None, store_cv_values=True)
+    scoring_ = make_scorer(scoring) if callable(scoring) else scoring
+
+    r = RidgeClassifierCV(
+        alphas=alphas, cv=None, store_cv_values=True, scoring=scoring_
+    )
 
     # with len(y.shape) == 1
     n_targets = 1
@@ -1043,6 +1214,7 @@ def test_ridge_fit_intercept_sparse_error(solver):
     err_msg = "solver='{}' does not support".format(solver)
     with pytest.raises(ValueError, match=err_msg):
         sparse_ridge.fit(X_csr, y)
+
 
 def test_ridge_fit_intercept_sparse_sag():
     X, y = _make_sparse_offset_regression(

@@ -1,3 +1,7 @@
+.. Places parent toc into the sidebar
+
+:parenttoc: True
+
 .. title:: User guide: contents
 
 .. _user_guide:
@@ -14,6 +18,7 @@ User Guide
 
 .. toctree::
    :numbered:
+   :maxdepth: 3
 
    supervised_learning.rst
    unsupervised_learning.rst
@@ -21,5 +26,6 @@ User Guide
    inspection.rst
    visualizations.rst
    data_transforms.rst
-   Dataset loading utilities <datasets/index.rst>
-   modules/computing.rst
+   datasets.rst
+   computing.rst
+   modules/model_persistence.rst

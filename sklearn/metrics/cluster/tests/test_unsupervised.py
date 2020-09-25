@@ -4,15 +4,11 @@ import pytest
 from scipy.sparse import csr_matrix
 
 from sklearn import datasets
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raises_regexp
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_warns_message
+from sklearn.utils._testing import assert_array_equal
 from sklearn.metrics.cluster import silhouette_score
 from sklearn.metrics.cluster import silhouette_samples
 from sklearn.metrics import pairwise_distances
 from sklearn.metrics.cluster import calinski_harabasz_score
-from sklearn.metrics.cluster import calinski_harabaz_score
 from sklearn.metrics.cluster import davies_bouldin_score
 
 
@@ -137,17 +133,17 @@ def test_correct_labelsize():
 
     # n_labels = n_samples
     y = np.arange(X.shape[0])
-    assert_raises_regexp(ValueError,
-                         r'Number of labels is %d\. Valid values are 2 '
-                         r'to n_samples - 1 \(inclusive\)' % len(np.unique(y)),
-                         silhouette_score, X, y)
+    err_msg = (r'Number of labels is %d\. Valid values are 2 '
+               r'to n_samples - 1 \(inclusive\)' % len(np.unique(y)))
+    with pytest.raises(ValueError, match=err_msg):
+        silhouette_score(X, y)
 
     # n_labels = 1
     y = np.zeros(X.shape[0])
-    assert_raises_regexp(ValueError,
-                         r'Number of labels is %d\. Valid values are 2 '
-                         r'to n_samples - 1 \(inclusive\)' % len(np.unique(y)),
-                         silhouette_score, X, y)
+    err_msg = (r'Number of labels is %d\. Valid values are 2 '
+               r'to n_samples - 1 \(inclusive\)' % len(np.unique(y)))
+    with pytest.raises(ValueError, match=err_msg):
+        silhouette_score(X, y)
 
 
 def test_non_encoded_labels():
@@ -191,17 +187,15 @@ def test_silhouette_nonzero_diag(dtype):
 def assert_raises_on_only_one_label(func):
     """Assert message when there is only one label"""
     rng = np.random.RandomState(seed=0)
-    assert_raise_message(ValueError, "Number of labels is",
-                         func,
-                         rng.rand(10, 2), np.zeros(10))
+    with pytest.raises(ValueError, match="Number of labels is"):
+        func(rng.rand(10, 2), np.zeros(10))
 
 
 def assert_raises_on_all_points_same_cluster(func):
     """Assert message when all point are in different clusters"""
     rng = np.random.RandomState(seed=0)
-    assert_raise_message(ValueError, "Number of labels is",
-                         func,
-                         rng.rand(10, 2), np.arange(10))
+    with pytest.raises(ValueError, match="Number of labels is"):
+        func(rng.rand(10, 2), np.arange(10))
 
 
 def test_calinski_harabasz_score():
@@ -223,15 +217,6 @@ def test_calinski_harabasz_score():
     labels = [0] * 10 + [1] * 10 + [2] * 10 + [3] * 10
     pytest.approx(calinski_harabasz_score(X, labels),
                   45 * (40 - 4) / (5 * (4 - 1)))
-
-
-def test_deprecated_calinski_harabaz_score():
-    depr_message = ("Function 'calinski_harabaz_score' has been renamed "
-                    "to 'calinski_harabasz_score' "
-                    "and will be removed in version 0.23.")
-    assert_warns_message(DeprecationWarning, depr_message,
-                         calinski_harabaz_score,
-                         np.ones((10, 2)), [0] * 5 + [1] * 5)
 
 
 def test_davies_bouldin_score():

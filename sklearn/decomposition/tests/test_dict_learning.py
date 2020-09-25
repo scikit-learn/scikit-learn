@@ -1,16 +1,19 @@
 import pytest
 
 import numpy as np
+from functools import partial
 import itertools
+
+from sklearn.base import clone
 
 from sklearn.exceptions import ConvergenceWarning
 
 from sklearn.utils import check_array
 
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import TempMemmap
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import TempMemmap
 
 from sklearn.decomposition import DictionaryLearning
 from sklearn.decomposition import MiniBatchDictionaryLearning
@@ -18,6 +21,9 @@ from sklearn.decomposition import SparseCoder
 from sklearn.decomposition import dict_learning
 from sklearn.decomposition import dict_learning_online
 from sklearn.decomposition import sparse_encode
+from sklearn.utils.estimator_checks import check_transformer_data_not_an_array
+from sklearn.utils.estimator_checks import check_transformer_general
+from sklearn.utils.estimator_checks import check_transformers_unfitted
 
 
 rng_global = np.random.RandomState(0)
@@ -107,7 +113,7 @@ def test_dict_learning_lars_positive_parameter():
     alpha = 1
     err_msg = "Positive constraint not supported for 'lars' coding method."
     with pytest.raises(ValueError, match=err_msg):
-        dict_learning(X, n_components, alpha, positive_code=True)
+        dict_learning(X, n_components, alpha=alpha, positive_code=True)
 
 
 @pytest.mark.parametrize("transform_algorithm", [
@@ -247,7 +253,7 @@ def test_dict_learning_online_lars_positive_parameter():
     alpha = 1
     err_msg = "Positive constraint not supported for 'lars' coding method."
     with pytest.raises(ValueError, match=err_msg):
-        dict_learning_online(X, alpha, positive_code=True)
+        dict_learning_online(X, alpha=alpha, positive_code=True)
 
 
 @pytest.mark.parametrize("transform_algorithm", [
@@ -391,6 +397,23 @@ def test_dict_learning_online_partial_fit():
                               decimal=2)
 
 
+def test_dict_learning_iter_offset():
+    n_components = 12
+    rng = np.random.RandomState(0)
+    V = rng.randn(n_components, n_features)
+    dict1 = MiniBatchDictionaryLearning(n_components, n_iter=10,
+                                        dict_init=V, random_state=0,
+                                        shuffle=False)
+    dict2 = MiniBatchDictionaryLearning(n_components, n_iter=10,
+                                        dict_init=V, random_state=0,
+                                        shuffle=False)
+    dict1.fit(X)
+    for sample in X:
+        dict2.partial_fit(sample[np.newaxis, :])
+
+    assert dict1.iter_offset_ == dict2.iter_offset_
+
+
 def test_sparse_encode_shapes():
     n_components = 12
     rng = np.random.RandomState(0)
@@ -475,10 +498,28 @@ def test_sparse_coder_estimator():
     rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)  # random init
     V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
-    code = SparseCoder(dictionary=V, transform_algorithm='lasso_lars',
-                       transform_alpha=0.001).transform(X)
-    assert not np.all(code == 0)
-    assert np.sqrt(np.sum((np.dot(code, V) - X) ** 2)) < 0.1
+    coder = SparseCoder(dictionary=V, transform_algorithm='lasso_lars',
+                        transform_alpha=0.001).transform(X)
+    assert not np.all(coder == 0)
+    assert np.sqrt(np.sum((np.dot(coder, V) - X) ** 2)) < 0.1
+
+
+def test_sparse_coder_estimator_clone():
+    n_components = 12
+    rng = np.random.RandomState(0)
+    V = rng.randn(n_components, n_features)  # random init
+    V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
+    coder = SparseCoder(dictionary=V, transform_algorithm='lasso_lars',
+                        transform_alpha=0.001)
+    cloned = clone(coder)
+    assert id(cloned) != id(coder)
+    np.testing.assert_allclose(cloned.dictionary, coder.dictionary)
+    assert id(cloned.dictionary) != id(coder.dictionary)
+    assert cloned.n_components_ == coder.n_components_
+    assert cloned.n_features_in_ == coder.n_features_in_
+    data = np.random.rand(n_samples, n_features).astype(np.float32)
+    np.testing.assert_allclose(cloned.transform(data),
+                               coder.transform(data))
 
 
 def test_sparse_coder_parallel_mmap():
@@ -498,3 +539,37 @@ def test_sparse_coder_parallel_mmap():
 
     sc = SparseCoder(init_dict, transform_algorithm='omp', n_jobs=2)
     sc.fit_transform(data)
+
+
+def test_sparse_coder_common_transformer():
+    rng = np.random.RandomState(777)
+    n_components, n_features = 40, 3
+    init_dict = rng.rand(n_components, n_features)
+
+    sc = SparseCoder(init_dict)
+
+    check_transformer_data_not_an_array(sc.__class__.__name__, sc)
+    check_transformer_general(sc.__class__.__name__, sc)
+    check_transformer_general_memmap = partial(
+        check_transformer_general, readonly_memmap=True
+    )
+    check_transformer_general_memmap(sc.__class__.__name__, sc)
+    check_transformers_unfitted(sc.__class__.__name__, sc)
+
+
+# TODO: remove in 0.26
+def test_sparse_coder_deprecation():
+    # check that we raise a deprecation warning when accessing `components_`
+    rng = np.random.RandomState(777)
+    n_components, n_features = 40, 64
+    init_dict = rng.rand(n_components, n_features)
+    sc = SparseCoder(init_dict)
+
+    with pytest.warns(FutureWarning, match="'components_' is deprecated"):
+        sc.components_
+
+
+def test_sparse_coder_n_features_in():
+    d = np.array([[1, 2, 3], [1, 2, 3]])
+    sc = SparseCoder(d)
+    assert sc.n_features_in_ == d.shape[1]

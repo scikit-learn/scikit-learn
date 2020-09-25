@@ -2,9 +2,9 @@
 import numpy as np
 import pytest
 
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_allclose_dense_sparse
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_allclose_dense_sparse
 
 from sklearn import datasets
 from sklearn.decomposition import PCA, IncrementalPCA
@@ -384,3 +384,18 @@ def test_incremental_pca_partial_fit_float_division():
 
     np.testing.assert_allclose(singular_vals_float_samples_seen,
                                singular_vals_int_samples_seen)
+
+
+def test_incremental_pca_fit_overflow_error():
+    # Test for overflow error on Windows OS
+    # (non-regression test for issue #17693)
+    rng = np.random.RandomState(0)
+    A = rng.rand(500000, 2)
+
+    ipca = IncrementalPCA(n_components=2, batch_size=10000)
+    ipca.fit(A)
+
+    pca = PCA(n_components=2)
+    pca.fit(A)
+
+    np.testing.assert_allclose(ipca.singular_values_, pca.singular_values_)

@@ -3,26 +3,18 @@
 #          Lars Buitinck
 # License: BSD 3 clause
 
-import pickle
+import math
 
 import numpy as np
 import pytest
+import scipy.stats
 
-from sklearn.utils.testing import assert_array_equal
+from sklearn.utils._testing import assert_array_equal
 
-from sklearn.utils.fixes import MaskedArray
 from sklearn.utils.fixes import _joblib_parallel_args
 from sklearn.utils.fixes import _object_dtype_isnan
-
-
-def test_masked_array_obj_dtype_pickleable():
-    marr = MaskedArray([1, None, 'a'], dtype=object)
-
-    for mask in (True, False, [0, 1, 0]):
-        marr.mask = mask
-        marr_pickled = pickle.loads(pickle.dumps(marr))
-        assert_array_equal(marr.data, marr_pickled.data)
-        assert_array_equal(marr.mask, marr_pickled.mask)
+from sklearn.utils.fixes import loguniform
+from sklearn.utils.fixes import MaskedArray
 
 
 @pytest.mark.parametrize('joblib_version', ('0.11', '0.12.0'))
@@ -68,3 +60,32 @@ def test_object_dtype_isnan(dtype, val):
     mask = _object_dtype_isnan(X)
 
     assert_array_equal(mask, expected_mask)
+
+
+@pytest.mark.parametrize("low,high,base",
+                         [(-1, 0, 10), (0, 2, np.exp(1)), (-1, 1, 2)])
+def test_loguniform(low, high, base):
+    rv = loguniform(base ** low, base ** high)
+    assert isinstance(rv, scipy.stats._distn_infrastructure.rv_frozen)
+    rvs = rv.rvs(size=2000, random_state=0)
+
+    # Test the basics; right bounds, right size
+    assert (base ** low <= rvs).all() and (rvs <= base ** high).all()
+    assert len(rvs) == 2000
+
+    # Test that it's actually (fairly) uniform
+    log_rvs = np.array([math.log(x, base) for x in rvs])
+    counts, _ = np.histogram(log_rvs)
+    assert counts.mean() == 200
+    assert np.abs(counts - counts.mean()).max() <= 40
+
+    # Test that random_state works
+    assert (
+        loguniform(base ** low, base ** high).rvs(random_state=0)
+        == loguniform(base ** low, base ** high).rvs(random_state=0)
+    )
+
+
+def test_masked_array_deprecated():  # TODO: remove in 0.25
+    with pytest.warns(FutureWarning, match='is deprecated'):
+        MaskedArray()

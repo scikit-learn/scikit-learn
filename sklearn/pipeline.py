@@ -14,12 +14,15 @@ from itertools import islice
 
 import numpy as np
 from scipy import sparse
-from joblib import Parallel, delayed
+from joblib import Parallel
 
 from .base import clone, TransformerMixin
+from .utils._estimator_html_repr import _VisualBlock
 from .utils.metaestimators import if_delegate_has_method
 from .utils import Bunch, _print_elapsed_time
 from .utils.validation import check_memory
+from .utils.validation import _deprecate_positional_args
+from .utils.fixes import delayed
 
 from .utils.metaestimators import _BaseComposition
 
@@ -27,7 +30,8 @@ __all__ = ['Pipeline', 'FeatureUnion', 'make_pipeline', 'make_union']
 
 
 class Pipeline(_BaseComposition):
-    """Pipeline of transforms with a final estimator.
+    """
+    Pipeline of transforms with a final estimator.
 
     Sequentially apply a list of transforms and a final estimator.
     Intermediate steps of the pipeline must be 'transforms', that is, they
@@ -45,6 +49,8 @@ class Pipeline(_BaseComposition):
 
     Read more in the :ref:`User Guide <pipeline>`.
 
+    .. versionadded:: 0.5
+
     Parameters
     ----------
     steps : list
@@ -52,7 +58,7 @@ class Pipeline(_BaseComposition):
         chained, in the order in which they are chained, with the last object
         an estimator.
 
-    memory : None, str or object with the joblib.Memory interface, optional
+    memory : str or object with the joblib.Memory interface, default=None
         Used to cache the fitted transformers of the pipeline. By default,
         no caching is performed. If a string is given, it is the path to
         the caching directory. Enabling caching triggers a clone of
@@ -62,70 +68,45 @@ class Pipeline(_BaseComposition):
         inspect estimators within the pipeline. Caching the
         transformers is advantageous when fitting is time consuming.
 
-    verbose : boolean, optional
+    verbose : bool, default=False
         If True, the time elapsed while fitting each step will be printed as it
         is completed.
 
     Attributes
     ----------
-    named_steps : bunch object, a dictionary with attribute access
+    named_steps : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
         Read-only attribute to access any step parameter by user given name.
         Keys are step names and values are steps parameters.
 
-    See also
+    See Also
     --------
-    sklearn.pipeline.make_pipeline : convenience function for simplified
-        pipeline construction.
+    make_pipeline : Convenience function for simplified pipeline construction.
 
     Examples
     --------
-    >>> from sklearn import svm
-    >>> from sklearn.datasets import samples_generator
-    >>> from sklearn.feature_selection import SelectKBest
-    >>> from sklearn.feature_selection import f_regression
+    >>> from sklearn.svm import SVC
+    >>> from sklearn.preprocessing import StandardScaler
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.model_selection import train_test_split
     >>> from sklearn.pipeline import Pipeline
-    >>> # generate some data to play with
-    >>> X, y = samples_generator.make_classification(
-    ...     n_informative=5, n_redundant=0, random_state=42)
-    >>> # ANOVA SVM-C
-    >>> anova_filter = SelectKBest(f_regression, k=5)
-    >>> clf = svm.SVC(kernel='linear')
-    >>> anova_svm = Pipeline([('anova', anova_filter), ('svc', clf)])
-    >>> # You can set the parameters using the names issued
-    >>> # For instance, fit using a k of 10 in the SelectKBest
-    >>> # and a parameter 'C' of the svm
-    >>> anova_svm.set_params(anova__k=10, svc__C=.1).fit(X, y)
-    Pipeline(steps=[('anova', SelectKBest(...)), ('svc', SVC(...))])
-    >>> prediction = anova_svm.predict(X)
-    >>> anova_svm.score(X, y)
-    0.83
-    >>> # getting the selected features chosen by anova_filter
-    >>> anova_svm['anova'].get_support()
-    array([False, False,  True,  True, False, False,  True,  True, False,
-           True, False,  True,  True, False,  True, False,  True,  True,
-           False, False])
-    >>> # Another way to get selected features chosen by anova_filter
-    >>> anova_svm.named_steps.anova.get_support()
-    array([False, False,  True,  True, False, False,  True,  True, False,
-           True, False,  True,  True, False,  True, False,  True,  True,
-           False, False])
-    >>> # Indexing can also be used to extract a sub-pipeline.
-    >>> sub_pipeline = anova_svm[:1]
-    >>> sub_pipeline
-    Pipeline(steps=[('anova', SelectKBest(...))])
-    >>> coef = anova_svm[-1].coef_
-    >>> anova_svm['svc'] is anova_svm[-1]
-    True
-    >>> coef.shape
-    (1, 10)
-    >>> sub_pipeline.inverse_transform(coef).shape
-    (1, 20)
+    >>> X, y = make_classification(random_state=0)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
+    ...                                                     random_state=0)
+    >>> pipe = Pipeline([('scaler', StandardScaler()), ('svc', SVC())])
+    >>> # The pipeline can be used as any other estimator
+    >>> # and avoids leaking the test set into the train set
+    >>> pipe.fit(X_train, y_train)
+    Pipeline(steps=[('scaler', StandardScaler()), ('svc', SVC())])
+    >>> pipe.score(X_test, y_test)
+    0.88
     """
 
     # BaseEstimator interface
     _required_parameters = ['steps']
 
-    def __init__(self, steps, memory=None, verbose=False):
+    @_deprecate_positional_args
+    def __init__(self, steps, *, memory=None, verbose=False):
         self.steps = steps
         self.memory = memory
         self.verbose = verbose
@@ -134,9 +115,12 @@ class Pipeline(_BaseComposition):
     def get_params(self, deep=True):
         """Get parameters for this estimator.
 
+        Returns the parameters given in the constructor as well as the
+        estimators contained within the `steps` of the `Pipeline`.
+
         Parameters
         ----------
-        deep : boolean, optional
+        deep : bool, default=True
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
 
@@ -150,7 +134,9 @@ class Pipeline(_BaseComposition):
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
 
-        Valid parameter keys can be listed with ``get_params()``.
+        Valid parameter keys can be listed with ``get_params()``. Note that
+        you can directly set the parameters of the estimators contained in
+        `steps`.
 
         Returns
         -------
@@ -221,8 +207,10 @@ class Pipeline(_BaseComposition):
         """
         if isinstance(ind, slice):
             if ind.step not in (1, None):
-                raise ValueError('Pipeline slicing only supports a step of 1')
-            return self.__class__(self.steps[ind])
+                raise ValueError("Pipeline slicing only supports a step of 1")
+            return self.__class__(
+                self.steps[ind], memory=self.memory, verbose=self.verbose
+            )
         try:
             name, est = self.steps[ind]
         except TypeError:
@@ -253,17 +241,7 @@ class Pipeline(_BaseComposition):
                                                   len(self.steps),
                                                   name)
 
-    # Estimator interface
-
-    def _fit(self, X, y=None, **fit_params):
-        # shallow copy of steps - this should really be steps_
-        self.steps = list(self.steps)
-        self._validate_steps()
-        # Setup the memory
-        memory = check_memory(self.memory)
-
-        fit_transform_one_cached = memory.cache(_fit_transform_one)
-
+    def _check_fit_params(self, **fit_params):
         fit_params_steps = {name: {} for name, step in self.steps
                             if step is not None}
         for pname, pval in fit_params.items():
@@ -276,6 +254,19 @@ class Pipeline(_BaseComposition):
                     "=sample_weight)`.".format(pname))
             step, param = pname.split('__', 1)
             fit_params_steps[step][param] = pval
+        return fit_params_steps
+
+    # Estimator interface
+
+    def _fit(self, X, y=None, **fit_params_steps):
+        # shallow copy of steps - this should really be steps_
+        self.steps = list(self.steps)
+        self._validate_steps()
+        # Setup the memory
+        memory = check_memory(self.memory)
+
+        fit_transform_one_cached = memory.cache(_fit_transform_one)
+
         for (step_idx,
              name,
              transformer) in self._iter(with_final=False,
@@ -303,7 +294,7 @@ class Pipeline(_BaseComposition):
                     cloned_transformer = clone(transformer)
             else:
                 cloned_transformer = clone(transformer)
-            # Fit or load from cache the current transfomer
+            # Fit or load from cache the current transformer
             X, fitted_transformer = fit_transform_one_cached(
                 cloned_transformer, X, y, None,
                 message_clsname='Pipeline',
@@ -313,9 +304,7 @@ class Pipeline(_BaseComposition):
             # transformer. This is necessary when loading the transformer
             # from the cache.
             self.steps[step_idx] = (name, fitted_transformer)
-        if self._final_estimator == 'passthrough':
-            return X, {}
-        return X, fit_params_steps[self.steps[-1][0]]
+        return X
 
     def fit(self, X, y=None, **fit_params):
         """Fit the model
@@ -343,11 +332,14 @@ class Pipeline(_BaseComposition):
         self : Pipeline
             This estimator
         """
-        Xt, fit_params = self._fit(X, y, **fit_params)
+        fit_params_steps = self._check_fit_params(**fit_params)
+        Xt = self._fit(X, y, **fit_params_steps)
         with _print_elapsed_time('Pipeline',
                                  self._log_message(len(self.steps) - 1)):
             if self._final_estimator != 'passthrough':
-                self._final_estimator.fit(Xt, y, **fit_params)
+                fit_params_last_step = fit_params_steps[self.steps[-1][0]]
+                self._final_estimator.fit(Xt, y, **fit_params_last_step)
+
         return self
 
     def fit_transform(self, X, y=None, **fit_params):
@@ -374,19 +366,23 @@ class Pipeline(_BaseComposition):
 
         Returns
         -------
-        Xt : array-like, shape = [n_samples, n_transformed_features]
+        Xt : array-like of shape  (n_samples, n_transformed_features)
             Transformed samples
         """
+        fit_params_steps = self._check_fit_params(**fit_params)
+        Xt = self._fit(X, y, **fit_params_steps)
+
         last_step = self._final_estimator
-        Xt, fit_params = self._fit(X, y, **fit_params)
         with _print_elapsed_time('Pipeline',
                                  self._log_message(len(self.steps) - 1)):
             if last_step == 'passthrough':
                 return Xt
+            fit_params_last_step = fit_params_steps[self.steps[-1][0]]
             if hasattr(last_step, 'fit_transform'):
-                return last_step.fit_transform(Xt, y, **fit_params)
+                return last_step.fit_transform(Xt, y, **fit_params_last_step)
             else:
-                return last_step.fit(Xt, y, **fit_params).transform(Xt)
+                return last_step.fit(Xt, y,
+                                     **fit_params_last_step).transform(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
     def predict(self, X, **predict_params):
@@ -405,6 +401,8 @@ class Pipeline(_BaseComposition):
             or return_cov, uncertainties that are generated by the
             transformations in the pipeline are not propagated to the
             final estimator.
+
+            .. versionadded:: 0.20
 
         Returns
         -------
@@ -442,10 +440,14 @@ class Pipeline(_BaseComposition):
         -------
         y_pred : array-like
         """
-        Xt, fit_params = self._fit(X, y, **fit_params)
+        fit_params_steps = self._check_fit_params(**fit_params)
+        Xt = self._fit(X, y, **fit_params_steps)
+
+        fit_params_last_step = fit_params_steps[self.steps[-1][0]]
         with _print_elapsed_time('Pipeline',
                                  self._log_message(len(self.steps) - 1)):
-            y_pred = self.steps[-1][-1].fit_predict(Xt, y, **fit_params)
+            y_pred = self.steps[-1][-1].fit_predict(Xt, y,
+                                                    **fit_params_last_step)
         return y_pred
 
     @if_delegate_has_method(delegate='_final_estimator')
@@ -460,7 +462,7 @@ class Pipeline(_BaseComposition):
 
         Returns
         -------
-        y_proba : array-like, shape = [n_samples, n_classes]
+        y_proba : array-like of shape (n_samples, n_classes)
         """
         Xt = X
         for _, name, transform in self._iter(with_final=False):
@@ -479,7 +481,7 @@ class Pipeline(_BaseComposition):
 
         Returns
         -------
-        y_score : array-like, shape = [n_samples, n_classes]
+        y_score : array-like of shape (n_samples, n_classes)
         """
         Xt = X
         for _, name, transform in self._iter(with_final=False):
@@ -498,7 +500,7 @@ class Pipeline(_BaseComposition):
 
         Returns
         -------
-        y_score : ndarray, shape (n_samples,)
+        y_score : ndarray of shape (n_samples,)
         """
         Xt = X
         for _, _, transformer in self._iter(with_final=False):
@@ -517,7 +519,7 @@ class Pipeline(_BaseComposition):
 
         Returns
         -------
-        y_score : array-like, shape = [n_samples, n_classes]
+        y_score : array-like of shape (n_samples, n_classes)
         """
         Xt = X
         for _, name, transform in self._iter(with_final=False):
@@ -539,7 +541,7 @@ class Pipeline(_BaseComposition):
 
         Returns
         -------
-        Xt : array-like, shape = [n_samples, n_transformed_features]
+        Xt : array-like of shape  (n_samples, n_transformed_features)
         """
         # _final_estimator is None or has transform, otherwise attribute error
         # XXX: Handling the None case means we can't use if_delegate_has_method
@@ -561,7 +563,7 @@ class Pipeline(_BaseComposition):
 
         Parameters
         ----------
-        Xt : array-like, shape = [n_samples, n_transformed_features]
+        Xt : array-like of shape  (n_samples, n_transformed_features)
             Data samples, where ``n_samples`` is the number of samples and
             ``n_features`` is the number of features. Must fulfill
             input requirements of last step of pipeline's
@@ -569,7 +571,7 @@ class Pipeline(_BaseComposition):
 
         Returns
         -------
-        Xt : array-like, shape = [n_samples, n_features]
+        Xt : array-like of shape (n_samples, n_features)
         """
         # raise AttributeError if necessary for hasattr behaviour
         # XXX: Handling the None case means we can't use if_delegate_has_method
@@ -623,6 +625,26 @@ class Pipeline(_BaseComposition):
         # check if first estimator expects pairwise input
         return getattr(self.steps[0][1], '_pairwise', False)
 
+    @property
+    def n_features_in_(self):
+        # delegate to first step (which will call _check_is_fitted)
+        return self.steps[0][1].n_features_in_
+
+    def _sk_visual_block_(self):
+        _, estimators = zip(*self.steps)
+
+        def _get_name(name, est):
+            if est is None or est == 'passthrough':
+                return f'{name}: passthrough'
+            # Is an estimator
+            return f'{name}: {est.__class__.__name__}'
+        names = [_get_name(name, est) for name, est in self.steps]
+        name_details = [str(est) for est in estimators]
+        return _VisualBlock('serial', estimators,
+                            names=names,
+                            name_details=name_details,
+                            dash_wrapped=False)
+
 
 def _name_estimators(estimators):
     """Generate names for estimators."""
@@ -649,7 +671,7 @@ def _name_estimators(estimators):
     return list(zip(names, estimators))
 
 
-def make_pipeline(*steps, **kwargs):
+def make_pipeline(*steps, memory=None, verbose=False):
     """Construct a Pipeline from the given estimators.
 
     This is a shorthand for the Pipeline constructor; it does not require, and
@@ -660,7 +682,7 @@ def make_pipeline(*steps, **kwargs):
     ----------
     *steps : list of estimators.
 
-    memory : None, str or object with the joblib.Memory interface, optional
+    memory : str or object with the joblib.Memory interface, default=None
         Used to cache the fitted transformers of the pipeline. By default,
         no caching is performed. If a string is given, it is the path to
         the caching directory. Enabling caching triggers a clone of
@@ -670,14 +692,14 @@ def make_pipeline(*steps, **kwargs):
         inspect estimators within the pipeline. Caching the
         transformers is advantageous when fitting is time consuming.
 
-    verbose : boolean, optional
+    verbose : bool, default=False
         If True, the time elapsed while fitting each step will be printed as it
         is completed.
 
-    See also
+    See Also
     --------
-    sklearn.pipeline.Pipeline : Class for creating a pipeline of
-        transforms with a final estimator.
+    Pipeline : Class for creating a pipeline of transforms with a final
+        estimator.
 
     Examples
     --------
@@ -691,11 +713,6 @@ def make_pipeline(*steps, **kwargs):
     -------
     p : Pipeline
     """
-    memory = kwargs.pop('memory', None)
-    verbose = kwargs.pop('verbose', False)
-    if kwargs:
-        raise TypeError('Unknown keyword arguments: "{}"'
-                        .format(list(kwargs.keys())[0]))
     return Pipeline(_name_estimators(steps), memory=memory, verbose=verbose)
 
 
@@ -744,7 +761,7 @@ def _fit_one(transformer,
         return transformer.fit(X, y, **fit_params)
 
 
-class FeatureUnion(_BaseComposition, TransformerMixin):
+class FeatureUnion(TransformerMixin, _BaseComposition):
     """Concatenates results of multiple transformer objects.
 
     This estimator applies a list of transformer objects in parallel to the
@@ -754,34 +771,44 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
     Parameters of the transformers may be set using its name and the parameter
     name separated by a '__'. A transformer may be replaced entirely by
     setting the parameter with its name to another transformer,
-    or removed by setting to 'drop' or ``None``.
+    or removed by setting to 'drop'.
 
     Read more in the :ref:`User Guide <feature_union>`.
+
+    .. versionadded:: 0.13
 
     Parameters
     ----------
     transformer_list : list of (string, transformer) tuples
         List of transformer objects to be applied to the data. The first
-        half of each tuple is the name of the transformer.
+        half of each tuple is the name of the transformer. The tranformer can
+        be 'drop' for it to be ignored.
 
-    n_jobs : int or None, optional (default=None)
+        .. versionchanged:: 0.22
+           Deprecated `None` as a transformer in favor of 'drop'.
+
+    n_jobs : int, default=None
         Number of jobs to run in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    transformer_weights : dict, optional
+        .. versionchanged:: v0.20
+           `n_jobs` default changed from 1 to None
+
+    transformer_weights : dict, default=None
         Multiplicative weights for features per transformer.
         Keys are transformer names, values the weights.
+        Raises ValueError if key not present in ``transformer_list``.
 
-    verbose : boolean, optional(default=False)
+    verbose : bool, default=False
         If True, the time elapsed while fitting each transformer will be
         printed as it is completed.
 
-    See also
+    See Also
     --------
-    sklearn.pipeline.make_union : convenience function for simplified
-        feature union construction.
+    make_union : Convenience function for simplified feature union
+        construction.
 
     Examples
     --------
@@ -796,7 +823,8 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
     """
     _required_parameters = ["transformer_list"]
 
-    def __init__(self, transformer_list, n_jobs=None,
+    @_deprecate_positional_args
+    def __init__(self, transformer_list, *, n_jobs=None,
                  transformer_weights=None, verbose=False):
         self.transformer_list = transformer_list
         self.n_jobs = n_jobs
@@ -807,9 +835,13 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
     def get_params(self, deep=True):
         """Get parameters for this estimator.
 
+        Returns the parameters given in the constructor as well as the
+        estimators contained within the `transformer_list` of the
+        `FeatureUnion`.
+
         Parameters
         ----------
-        deep : boolean, optional
+        deep : bool, default=True
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
 
@@ -823,7 +855,9 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
 
-        Valid parameter keys can be listed with ``get_params()``.
+        Valid parameter keys can be listed with ``get_params()``. Note that
+        you can directly set the parameters of the estimators contained in
+        `tranformer_list`.
 
         Returns
         -------
@@ -840,13 +874,25 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
 
         # validate estimators
         for t in transformers:
-            if t is None or t == 'drop':
+            if t == 'drop':
                 continue
             if (not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not
                     hasattr(t, "transform")):
                 raise TypeError("All estimators should implement fit and "
                                 "transform. '%s' (type %s) doesn't" %
                                 (t, type(t)))
+
+    def _validate_transformer_weights(self):
+        if not self.transformer_weights:
+            return
+
+        transformer_names = set(name for name, _ in self.transformer_list)
+        for name in self.transformer_weights:
+            if name not in transformer_names:
+                raise ValueError(
+                    f'Attempting to weight transformer "{name}", '
+                    'but it is not present in transformer_list.'
+                )
 
     def _iter(self):
         """
@@ -856,7 +902,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         get_weight = (self.transformer_weights or {}).get
         return ((name, trans, get_weight(name))
                 for name, trans in self.transformer_list
-                if trans is not None and trans != 'drop')
+                if trans != 'drop')
 
     def get_feature_names(self):
         """Get feature names from all transformers.
@@ -876,7 +922,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
                                   trans.get_feature_names()])
         return feature_names
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, **fit_params):
         """Fit all transformers using X.
 
         Parameters
@@ -884,7 +930,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         X : iterable or array-like, depending on transformers
             Input data, used to fit transformers.
 
-        y : array-like, shape (n_samples, ...), optional
+        y : array-like of shape (n_samples, n_outputs), default=None
             Targets for supervised learning.
 
         Returns
@@ -892,7 +938,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         self : FeatureUnion
             This estimator
         """
-        transformers = self._parallel_func(X, y, {}, _fit_one)
+        transformers = self._parallel_func(X, y, fit_params, _fit_one)
         if not transformers:
             # All transformers are None
             return self
@@ -908,12 +954,13 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         X : iterable or array-like, depending on transformers
             Input data to be transformed.
 
-        y : array-like, shape (n_samples, ...), optional
+        y : array-like of shape (n_samples, n_outputs), default=None
             Targets for supervised learning.
 
         Returns
         -------
-        X_t : array-like or sparse matrix, shape (n_samples, sum_n_components)
+        X_t : array-like or sparse matrix of \
+                shape (n_samples, sum_n_components)
             hstack of results of transformers. sum_n_components is the
             sum of n_components (output dimension) over transformers.
         """
@@ -925,11 +972,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         Xs, transformers = zip(*results)
         self._update_transformer_list(transformers)
 
-        if any(sparse.issparse(f) for f in Xs):
-            Xs = sparse.hstack(Xs).tocsr()
-        else:
-            Xs = np.hstack(Xs)
-        return Xs
+        return self._hstack(Xs)
 
     def _log_message(self, name, idx, total):
         if not self.verbose:
@@ -940,6 +983,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         """Runs func in parallel on X and y"""
         self.transformer_list = list(self.transformer_list)
         self._validate_transformers()
+        self._validate_transformer_weights()
         transformers = list(self._iter())
 
         return Parallel(n_jobs=self.n_jobs)(delayed(func)(
@@ -959,7 +1003,8 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
 
         Returns
         -------
-        X_t : array-like or sparse matrix, shape (n_samples, sum_n_components)
+        X_t : array-like or sparse matrix of \
+                shape (n_samples, sum_n_components)
             hstack of results of transformers. sum_n_components is the
             sum of n_components (output dimension) over transformers.
         """
@@ -969,6 +1014,10 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         if not Xs:
             # All transformers are None
             return np.zeros((X.shape[0], 0))
+
+        return self._hstack(Xs)
+
+    def _hstack(self, Xs):
         if any(sparse.issparse(f) for f in Xs):
             Xs = sparse.hstack(Xs).tocsr()
         else:
@@ -977,13 +1026,23 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
 
     def _update_transformer_list(self, transformers):
         transformers = iter(transformers)
-        self.transformer_list[:] = [(name, old if old is None or old == 'drop'
+        self.transformer_list[:] = [(name, old if old == 'drop'
                                      else next(transformers))
                                     for name, old in self.transformer_list]
 
+    @property
+    def n_features_in_(self):
+        # X is passed to all transformers so we just delegate to the first one
+        return self.transformer_list[0][1].n_features_in_
 
-def make_union(*transformers, **kwargs):
-    """Construct a FeatureUnion from the given transformers.
+    def _sk_visual_block_(self):
+        names, transformers = zip(*self.transformer_list)
+        return _VisualBlock('parallel', transformers, names=names)
+
+
+def make_union(*transformers, n_jobs=None, verbose=False):
+    """
+    Construct a FeatureUnion from the given transformers.
 
     This is a shorthand for the FeatureUnion constructor; it does not require,
     and does not permit, naming the transformers. Instead, they will be given
@@ -993,13 +1052,16 @@ def make_union(*transformers, **kwargs):
     ----------
     *transformers : list of estimators
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         Number of jobs to run in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    verbose : boolean, optional(default=False)
+        .. versionchanged:: v0.20
+           `n_jobs` default changed from 1 to None
+
+    verbose : bool, default=False
         If True, the time elapsed while fitting each transformer will be
         printed as it is completed.
 
@@ -1007,10 +1069,10 @@ def make_union(*transformers, **kwargs):
     -------
     f : FeatureUnion
 
-    See also
+    See Also
     --------
-    sklearn.pipeline.FeatureUnion : Class for concatenating the results
-        of multiple transformer objects.
+    FeatureUnion : Class for concatenating the results of multiple transformer
+        objects.
 
     Examples
     --------
@@ -1020,12 +1082,5 @@ def make_union(*transformers, **kwargs):
      FeatureUnion(transformer_list=[('pca', PCA()),
                                    ('truncatedsvd', TruncatedSVD())])
     """
-    n_jobs = kwargs.pop('n_jobs', None)
-    verbose = kwargs.pop('verbose', False)
-    if kwargs:
-        # We do not currently support `transformer_weights` as we may want to
-        # change its type spec in make_union
-        raise TypeError('Unknown keyword arguments: "{}"'
-                        .format(list(kwargs.keys())[0]))
     return FeatureUnion(
         _name_estimators(transformers), n_jobs=n_jobs, verbose=verbose)

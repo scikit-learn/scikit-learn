@@ -6,10 +6,10 @@ import numpy as np
 import pytest
 import scipy.sparse as sp
 
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_raise_message
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_raise_message
 
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_multilabel_classification
@@ -79,7 +79,7 @@ def test_make_classification_informative_features():
                                                          (2, [1/2] * 2, 2),
                                                          (2, [3/4, 1/4], 2),
                                                          (10, [1/3] * 3, 10),
-                                                         (np.int(64), [1], 1)
+                                                         (int(64), [1], 1)
                                                          ]:
         n_classes = len(weights)
         n_clusters = n_classes * n_clusters_per_class
@@ -146,6 +146,36 @@ def test_make_classification_informative_features():
              n_clusters_per_class=2)
 
 
+@pytest.mark.parametrize(
+    'weights, err_type, err_msg',
+    [
+        ([], ValueError,
+         "Weights specified but incompatible with number of classes."),
+        ([.25, .75, .1], ValueError,
+         "Weights specified but incompatible with number of classes."),
+        (np.array([]), ValueError,
+         "Weights specified but incompatible with number of classes."),
+        (np.array([.25, .75, .1]), ValueError,
+         "Weights specified but incompatible with number of classes."),
+        (np.random.random(3), ValueError,
+         "Weights specified but incompatible with number of classes.")
+    ]
+)
+def test_make_classification_weights_type(weights, err_type, err_msg):
+    with pytest.raises(err_type, match=err_msg):
+        make_classification(weights=weights)
+
+
+@pytest.mark.parametrize("kwargs", [{}, {"n_classes": 3, "n_informative": 3}])
+def test_make_classification_weights_array_or_list_ok(kwargs):
+    X1, y1 = make_classification(weights=[.1, .9],
+                                 random_state=0, **kwargs)
+    X2, y2 = make_classification(weights=np.array([.1, .9]),
+                                 random_state=0, **kwargs)
+    assert_almost_equal(X1, X2)
+    assert_almost_equal(y1, y2)
+
+
 def test_make_multilabel_classification_return_sequences():
     for allow_unlabeled, min_length in zip((True, False), (0, 1)):
         X, Y = make_multilabel_classification(n_samples=100, n_features=20,
@@ -190,6 +220,18 @@ def test_make_multilabel_classification_return_indicator_sparse():
         assert X.shape == (25, 20), "X shape mismatch"
         assert Y.shape == (25, 3), "Y shape mismatch"
         assert sp.issparse(Y)
+
+
+@pytest.mark.parametrize(
+    "params, err_msg",
+    [
+        ({"n_classes": 0}, "'n_classes' should be an integer"),
+        ({"length": 0}, "'length' should be an integer")
+    ]
+)
+def test_make_multilabel_classification_valid_arguments(params, err_msg):
+    with pytest.raises(ValueError, match=err_msg):
+        make_multilabel_classification(**params)
 
 
 def test_make_hastie_10_2():
@@ -280,6 +322,15 @@ def test_make_blobs_n_samples_centers_none(n_samples):
     assert X.shape == (sum(n_samples), 2), "X shape mismatch"
     assert all(np.bincount(y, minlength=len(n_samples)) == n_samples), \
         "Incorrect number of samples per blob"
+
+
+def test_make_blobs_return_centers():
+    n_samples = [10, 20]
+    n_features = 3
+    X, y, centers = make_blobs(n_samples=n_samples, n_features=n_features,
+                               return_centers=True, random_state=0)
+
+    assert centers.shape == (len(n_samples), n_features)
 
 
 def test_make_blobs_error():
@@ -446,6 +497,22 @@ def test_make_moons():
                             err_msg="Point is not on expected unit circle")
 
 
+def test_make_moons_unbalanced():
+    X, y = make_moons(n_samples=(7, 5))
+    assert np.sum(y == 0) == 7 and np.sum(y == 1) == 5, \
+        'Number of samples in a moon is wrong'
+    assert X.shape == (12, 2), "X shape mismatch"
+    assert y.shape == (12,), "y shape mismatch"
+
+    with pytest.raises(ValueError, match=r'`n_samples` can be either an int '
+                                         r'or a two-element tuple.'):
+        make_moons(n_samples=[1, 2, 3])
+
+    with pytest.raises(ValueError, match=r'`n_samples` can be either an int '
+                                         r'or a two-element tuple.'):
+        make_moons(n_samples=(10,))
+
+
 def test_make_circles():
     factor = 0.3
 
@@ -460,6 +527,7 @@ def test_make_circles():
         for x, label in zip(X, y):
             dist_sqr = ((x - center) ** 2).sum()
             dist_exp = 1.0 if label == 0 else factor**2
+            dist_exp = 1.0 if label == 0 else factor ** 2
             assert_almost_equal(dist_sqr, dist_exp,
                                 err_msg="Point is not on expected circle")
 
@@ -472,3 +540,20 @@ def test_make_circles():
         make_circles(factor=-0.01)
     with pytest.raises(ValueError):
         make_circles(factor=1.)
+
+
+def test_make_circles_unbalanced():
+    X, y = make_circles(n_samples=(2, 8))
+
+    assert np.sum(y == 0) == 2, 'Number of samples in inner circle is wrong'
+    assert np.sum(y == 1) == 8, 'Number of samples in outer circle is wrong'
+    assert X.shape == (10, 2), "X shape mismatch"
+    assert y.shape == (10,), "y shape mismatch"
+
+    with pytest.raises(ValueError, match=r'`n_samples` can be either an int '
+                                         r'or a two-element tuple.'):
+        make_circles(n_samples=[1, 2, 3])
+
+    with pytest.raises(ValueError, match=r'`n_samples` can be either an int '
+                                         r'or a two-element tuple.'):
+        make_circles(n_samples=(10,))

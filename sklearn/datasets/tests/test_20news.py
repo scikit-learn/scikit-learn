@@ -1,24 +1,21 @@
-"""Test the 20news downloader, if the data is available."""
+"""Test the 20news downloader, if the data is available,
+or if specifically requested via environment variable
+(e.g. for travis cron job)."""
 from functools import partial
 
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.utils.testing import SkipTest
+from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.datasets.tests.test_common import check_return_X_y
+from sklearn.preprocessing import normalize
 
-from sklearn import datasets
 
-
-def test_20news():
-    try:
-        data = datasets.fetch_20newsgroups(
-            subset='all', download_if_missing=False, shuffle=False)
-    except IOError:
-        raise SkipTest("Download 20 newsgroups to run this test")
+def test_20news(fetch_20newsgroups_fxt):
+    data = fetch_20newsgroups_fxt(subset='all', shuffle=False)
 
     # Extract a reduced dataset
-    data2cats = datasets.fetch_20newsgroups(
+    data2cats = fetch_20newsgroups_fxt(
         subset='all', categories=data.target_names[-1:-3:-1], shuffle=False)
     # Check that the ordering of the target_names is the same
     # as the ordering in the full dataset
@@ -39,58 +36,55 @@ def test_20news():
     assert entry1 == entry2
 
     # check that return_X_y option
-    X, y = datasets.fetch_20newsgroups(
-        subset='all', shuffle=False, return_X_y=True
-    )
+    X, y = fetch_20newsgroups_fxt(subset='all', shuffle=False, return_X_y=True)
     assert len(X) == len(data.data)
     assert y.shape == data.target.shape
 
 
-def test_20news_length_consistency():
+def test_20news_length_consistency(fetch_20newsgroups_fxt):
     """Checks the length consistencies within the bunch
 
     This is a non-regression test for a bug present in 0.16.1.
     """
-    try:
-        data = datasets.fetch_20newsgroups(
-            subset='all', download_if_missing=False, shuffle=False)
-    except IOError:
-        raise SkipTest("Download 20 newsgroups to run this test")
     # Extract the full dataset
-    data = datasets.fetch_20newsgroups(subset='all')
+    data = fetch_20newsgroups_fxt(subset='all')
     assert len(data['data']) == len(data.data)
     assert len(data['target']) == len(data.target)
     assert len(data['filenames']) == len(data.filenames)
 
 
-def test_20news_vectorized():
-    try:
-        datasets.fetch_20newsgroups(subset='all',
-                                    download_if_missing=False)
-    except IOError:
-        raise SkipTest("Download 20 newsgroups to run this test")
-
+def test_20news_vectorized(fetch_20newsgroups_vectorized_fxt):
     # test subset = train
-    bunch = datasets.fetch_20newsgroups_vectorized(subset="train")
+    bunch = fetch_20newsgroups_vectorized_fxt(subset="train")
     assert sp.isspmatrix_csr(bunch.data)
     assert bunch.data.shape == (11314, 130107)
     assert bunch.target.shape[0] == 11314
     assert bunch.data.dtype == np.float64
 
     # test subset = test
-    bunch = datasets.fetch_20newsgroups_vectorized(subset="test")
+    bunch = fetch_20newsgroups_vectorized_fxt(subset="test")
     assert sp.isspmatrix_csr(bunch.data)
     assert bunch.data.shape == (7532, 130107)
     assert bunch.target.shape[0] == 7532
     assert bunch.data.dtype == np.float64
 
     # test return_X_y option
-    fetch_func = partial(datasets.fetch_20newsgroups_vectorized, subset='test')
+    fetch_func = partial(fetch_20newsgroups_vectorized_fxt, subset='test')
     check_return_X_y(bunch, fetch_func)
 
     # test subset = all
-    bunch = datasets.fetch_20newsgroups_vectorized(subset='all')
+    bunch = fetch_20newsgroups_vectorized_fxt(subset='all')
     assert sp.isspmatrix_csr(bunch.data)
     assert bunch.data.shape == (11314 + 7532, 130107)
     assert bunch.target.shape[0] == 11314 + 7532
     assert bunch.data.dtype == np.float64
+
+
+def test_20news_normalization(fetch_20newsgroups_vectorized_fxt):
+    X = fetch_20newsgroups_vectorized_fxt(normalize=False)
+    X_ = fetch_20newsgroups_vectorized_fxt(normalize=True)
+    X_norm = X_['data'][:100]
+    X = X['data'][:100]
+
+    assert_allclose_dense_sparse(X_norm, normalize(X))
+    assert np.allclose(np.linalg.norm(X_norm.todense(), axis=1), 1)

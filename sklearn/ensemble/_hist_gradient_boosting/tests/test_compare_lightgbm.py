@@ -13,9 +13,6 @@ from sklearn.ensemble._hist_gradient_boosting.utils import (
     get_equivalent_estimator)
 
 
-pytest.importorskip("lightgbm")
-
-
 @pytest.mark.parametrize('seed', range(5))
 @pytest.mark.parametrize('min_samples_leaf', (1, 20))
 @pytest.mark.parametrize('n_samples, max_leaf_nodes', [
@@ -39,9 +36,16 @@ def test_same_predictions_regression(seed, min_samples_leaf, n_samples,
     #   and max_leaf_nodes is low enough.
     # - To ignore  discrepancies caused by small differences the binning
     #   strategy, data is pre-binned if n_samples > 255.
+    # - We don't check the least_absolute_deviation loss here. This is because
+    #   LightGBM's computation of the median (used for the initial value of
+    #   raw_prediction) is a bit off (they'll e.g. return midpoints when there
+    #   is no need to.). Since these tests only run 1 iteration, the
+    #   discrepancy between the initial values leads to biggish differences in
+    #   the predictions. These differences are much smaller with more
+    #   iterations.
+    pytest.importorskip("lightgbm")
 
     rng = np.random.RandomState(seed=seed)
-    n_samples = n_samples
     max_iter = 1
     max_bins = 255
 
@@ -59,7 +63,7 @@ def test_same_predictions_regression(seed, min_samples_leaf, n_samples,
         max_iter=max_iter,
         max_bins=max_bins,
         learning_rate=1,
-        n_iter_no_change=None,
+        early_stopping=False,
         min_samples_leaf=min_samples_leaf,
         max_leaf_nodes=max_leaf_nodes)
     est_lightgbm = get_equivalent_estimator(est_sklearn, lib='lightgbm')
@@ -91,9 +95,9 @@ def test_same_predictions_regression(seed, min_samples_leaf, n_samples,
 def test_same_predictions_classification(seed, min_samples_leaf, n_samples,
                                          max_leaf_nodes):
     # Same as test_same_predictions_regression but for classification
+    pytest.importorskip("lightgbm")
 
     rng = np.random.RandomState(seed=seed)
-    n_samples = n_samples
     max_iter = 1
     max_bins = 255
 
@@ -112,7 +116,7 @@ def test_same_predictions_classification(seed, min_samples_leaf, n_samples,
         max_iter=max_iter,
         max_bins=max_bins,
         learning_rate=1,
-        n_iter_no_change=None,
+        early_stopping=False,
         min_samples_leaf=min_samples_leaf,
         max_leaf_nodes=max_leaf_nodes)
     est_lightgbm = get_equivalent_estimator(est_sklearn, lib='lightgbm')
@@ -151,9 +155,9 @@ def test_same_predictions_classification(seed, min_samples_leaf, n_samples,
 def test_same_predictions_multiclass_classification(
         seed, min_samples_leaf, n_samples, max_leaf_nodes):
     # Same as test_same_predictions_regression but for classification
+    pytest.importorskip("lightgbm")
 
     rng = np.random.RandomState(seed=seed)
-    n_samples = n_samples
     max_iter = 1
     max_bins = 255
     lr = 1
@@ -174,7 +178,7 @@ def test_same_predictions_multiclass_classification(
         max_iter=max_iter,
         max_bins=max_bins,
         learning_rate=lr,
-        n_iter_no_change=None,
+        early_stopping=False,
         min_samples_leaf=min_samples_leaf,
         max_leaf_nodes=max_leaf_nodes)
     est_lightgbm = get_equivalent_estimator(est_sklearn, lib='lightgbm')

@@ -19,7 +19,7 @@ logged_prs() {
 
 mentioned_issues() {
 	cat doc/whats_new/v$to_file.rst |
-			grep -o 'issue:`[0-9]\+`' |
+			grep -o 'issue:`[0-9]\+`\|pr:`[0-9]\+`' |
 			grep -o '[0-9]\+'
 }
 

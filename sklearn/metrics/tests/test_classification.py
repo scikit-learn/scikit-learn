@@ -1,7 +1,10 @@
 
 from functools import partial
 from itertools import product
+from itertools import chain
+from itertools import permutations
 import warnings
+import re
 
 import numpy as np
 from scipy import linalg
@@ -13,17 +16,15 @@ from sklearn import svm
 from sklearn.datasets import make_multilabel_classification
 from sklearn.preprocessing import label_binarize, LabelBinarizer
 from sklearn.utils.validation import check_random_state
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_warns_div0
-from sklearn.utils.testing import assert_no_warnings
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.mocking import MockDataFrame
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_warns_div0
+from sklearn.utils._testing import assert_no_warnings
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._mocking import MockDataFrame
 
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import average_precision_score
@@ -36,7 +37,6 @@ from sklearn.metrics import fbeta_score
 from sklearn.metrics import hamming_loss
 from sklearn.metrics import hinge_loss
 from sklearn.metrics import jaccard_score
-from sklearn.metrics import jaccard_similarity_score
 from sklearn.metrics import log_loss
 from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import precision_recall_fscore_support
@@ -46,7 +46,7 @@ from sklearn.metrics import zero_one_loss
 from sklearn.metrics import brier_score_loss
 from sklearn.metrics import multilabel_confusion_matrix
 
-from sklearn.metrics.classification import _check_targets
+from sklearn.metrics._classification import _check_targets
 from sklearn.exceptions import UndefinedMetricWarning
 
 from scipy.spatial.distance import hamming as sp_hamming
@@ -153,6 +153,47 @@ def test_classification_report_dictionary_output():
     assert type(expected_report['macro avg']['support']) == int
 
 
+def test_classification_report_output_dict_empty_input():
+    report = classification_report(y_true=[], y_pred=[], output_dict=True)
+    expected_report = {'accuracy': 0.0,
+                       'macro avg': {'f1-score': np.nan,
+                                     'precision': np.nan,
+                                     'recall': np.nan,
+                                     'support': 0},
+                       'weighted avg': {'f1-score': 0.0,
+                                        'precision': 0.0,
+                                        'recall': 0.0,
+                                        'support': 0}}
+    assert isinstance(report, dict)
+    # assert the 2 dicts are equal.
+    assert report.keys() == expected_report.keys()
+    for key in expected_report:
+        if key == 'accuracy':
+            assert isinstance(report[key], float)
+            assert report[key] == expected_report[key]
+        else:
+            assert report[key].keys() == expected_report[key].keys()
+            for metric in expected_report[key]:
+                assert_almost_equal(expected_report[key][metric],
+                                    report[key][metric])
+
+
+@pytest.mark.parametrize('zero_division', ["warn", 0, 1])
+def test_classification_report_zero_division_warning(zero_division):
+    y_true, y_pred = ["a", "b", "c"], ["a", "b", "d"]
+    with warnings.catch_warnings(record=True) as record:
+        classification_report(
+            y_true, y_pred, zero_division=zero_division, output_dict=True)
+        if zero_division == "warn":
+            assert len(record) > 1
+            for item in record:
+                msg = ("Use `zero_division` parameter to control this "
+                       "behavior.")
+                assert msg in str(item.message)
+        else:
+            assert not record
+
+
 def test_multilabel_accuracy_score_subset_accuracy():
     # Dense label indicator matrix format
     y1 = np.array([[0, 1, 1], [1, 0, 1]])
@@ -249,10 +290,12 @@ def test_precision_recall_f_extra_labels():
     # Error when introducing invalid label in multilabel case
     # (although it would only affect performance if average='macro'/None)
     for average in [None, 'macro', 'micro', 'samples']:
-        assert_raises(ValueError, recall_score, y_true_bin, y_pred_bin,
-                      labels=np.arange(6), average=average)
-        assert_raises(ValueError, recall_score, y_true_bin, y_pred_bin,
-                      labels=np.arange(-1, 4), average=average)
+        with pytest.raises(ValueError):
+            recall_score(y_true_bin, y_pred_bin, labels=np.arange(6),
+                         average=average)
+        with pytest.raises(ValueError):
+            recall_score(y_true_bin, y_pred_bin, labels=np.arange(-1, 4),
+                         average=average)
 
     # tests non-regression on issue #10307
     y_true = np.array([[0, 1, 1], [1, 0, 0]])
@@ -286,7 +329,7 @@ def test_precision_recall_f_ignored_labels():
         # ensure the above were meaningful tests:
         for average in ['macro', 'weighted', 'micro']:
             assert (recall_13(average=average) !=
-                             recall_all(average=average))
+                    recall_all(average=average))
 
 
 def test_average_precision_score_score_non_binary_class():
@@ -297,8 +340,9 @@ def test_average_precision_score_score_non_binary_class():
 
     # y_true contains three different class values
     y_true = rng.randint(0, 3, size=10)
-    assert_raise_message(ValueError, "multiclass format is not supported",
-                         average_precision_score, y_true, y_pred)
+    err_msg = "multiclass format is not supported"
+    with pytest.raises(ValueError, match=err_msg):
+        average_precision_score(y_true, y_pred)
 
 
 def test_average_precision_score_duplicate_values():
@@ -330,16 +374,19 @@ def test_precision_recall_fscore_support_errors():
     y_true, y_pred, _ = make_prediction(binary=True)
 
     # Bad beta
-    assert_raises(ValueError, precision_recall_fscore_support,
-                  y_true, y_pred, beta=-0.1)
+    with pytest.raises(ValueError):
+        precision_recall_fscore_support(y_true, y_pred, beta=-0.1)
 
     # Bad pos_label
-    assert_raises(ValueError, precision_recall_fscore_support,
-                  y_true, y_pred, pos_label=2, average='binary')
+    with pytest.raises(ValueError):
+        precision_recall_fscore_support(y_true, y_pred,
+                                        pos_label=2,
+                                        average='binary')
 
     # Bad average option
-    assert_raises(ValueError, precision_recall_fscore_support,
-                  [0, 1, 2], [1, 2, 0], average='mega')
+    with pytest.raises(ValueError):
+        precision_recall_fscore_support([0, 1, 2], [1, 2, 0],
+                                        average='mega')
 
 
 def test_precision_recall_f_unused_pos_label():
@@ -477,34 +524,71 @@ def test_multilabel_confusion_matrix_errors():
     y_pred = np.array([[1, 0, 0], [0, 1, 1], [0, 0, 1]])
 
     # Bad sample_weight
-    assert_raise_message(ValueError, "inconsistent numbers of samples",
-                         multilabel_confusion_matrix,
-                         y_true, y_pred, sample_weight=[1, 2])
-    assert_raise_message(ValueError, "bad input shape",
-                         multilabel_confusion_matrix,
-                         y_true, y_pred,
-                         sample_weight=[[1, 2, 3],
-                                        [2, 3, 4],
-                                        [3, 4, 5]])
+    with pytest.raises(ValueError, match="inconsistent numbers of samples"):
+        multilabel_confusion_matrix(y_true, y_pred, sample_weight=[1, 2])
+    with pytest.raises(ValueError, match="should be a 1d array"):
+        multilabel_confusion_matrix(y_true, y_pred,
+                                    sample_weight=[[1, 2, 3],
+                                                   [2, 3, 4],
+                                                   [3, 4, 5]])
 
     # Bad labels
-    assert_raise_message(ValueError, "All labels must be in [0, n labels)",
-                         multilabel_confusion_matrix,
-                         y_true, y_pred, labels=[-1])
-    assert_raise_message(ValueError, "All labels must be in [0, n labels)",
-                         multilabel_confusion_matrix,
-                         y_true, y_pred, labels=[3])
+    err_msg = r"All labels must be in \[0, n labels\)"
+    with pytest.raises(ValueError, match=err_msg):
+        multilabel_confusion_matrix(y_true, y_pred, labels=[-1])
+    err_msg = r"All labels must be in \[0, n labels\)"
+    with pytest.raises(ValueError, match=err_msg):
+        multilabel_confusion_matrix(y_true, y_pred, labels=[3])
 
     # Using samplewise outside multilabel
-    assert_raise_message(ValueError, "Samplewise metrics",
-                         multilabel_confusion_matrix,
-                         [0, 1, 2], [1, 2, 0], samplewise=True)
+    with pytest.raises(ValueError, match="Samplewise metrics"):
+        multilabel_confusion_matrix([0, 1, 2], [1, 2, 0], samplewise=True)
 
     # Bad y_type
-    assert_raise_message(ValueError, "multiclass-multioutput is not supported",
-                         multilabel_confusion_matrix,
-                         [[0, 1, 2], [2, 1, 0]],
-                         [[1, 2, 0], [1, 0, 2]])
+    err_msg = "multiclass-multioutput is not supported"
+    with pytest.raises(ValueError, match=err_msg):
+        multilabel_confusion_matrix([[0, 1, 2], [2, 1, 0]],
+                                    [[1, 2, 0], [1, 0, 2]])
+
+
+@pytest.mark.parametrize(
+    "normalize, cm_dtype, expected_results",
+    [('true', 'f', 0.333333333),
+     ('pred', 'f', 0.333333333),
+     ('all', 'f', 0.1111111111),
+     (None, 'i', 2)]
+)
+def test_confusion_matrix_normalize(normalize, cm_dtype, expected_results):
+    y_test = [0, 1, 2] * 6
+    y_pred = list(chain(*permutations([0, 1, 2])))
+    cm = confusion_matrix(y_test, y_pred, normalize=normalize)
+    assert_allclose(cm, expected_results)
+    assert cm.dtype.kind == cm_dtype
+
+
+def test_confusion_matrix_normalize_wrong_option():
+    y_test = [0, 0, 0, 0, 1, 1, 1, 1]
+    y_pred = [0, 0, 0, 0, 0, 0, 0, 0]
+    with pytest.raises(ValueError, match='normalize must be one of'):
+        confusion_matrix(y_test, y_pred, normalize=True)
+
+
+def test_confusion_matrix_normalize_single_class():
+    y_test = [0, 0, 0, 0, 1, 1, 1, 1]
+    y_pred = [0, 0, 0, 0, 0, 0, 0, 0]
+
+    cm_true = confusion_matrix(y_test, y_pred, normalize='true')
+    assert cm_true.sum() == pytest.approx(2.0)
+
+    # additionally check that no warnings are raised due to a division by zero
+    with pytest.warns(None) as rec:
+        cm_pred = confusion_matrix(y_test, y_pred, normalize='pred')
+    assert not rec
+    assert cm_pred.sum() == pytest.approx(1.0)
+
+    with pytest.warns(None) as rec:
+        cm_pred = confusion_matrix(y_pred, y_test, normalize='true')
+    assert not rec
 
 
 def test_cohen_kappa():
@@ -579,7 +663,7 @@ def test_matthews_corrcoef_against_jurman():
         for k in range(N)
     ])
     mcc_jurman = cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
-    mcc_ours = matthews_corrcoef(y_true, y_pred, sample_weight)
+    mcc_ours = matthews_corrcoef(y_true, y_pred, sample_weight=sample_weight)
 
     assert_almost_equal(mcc_ours, mcc_jurman, 10)
 
@@ -595,7 +679,7 @@ def test_matthews_corrcoef():
     y_true_inv = ["b" if i == "a" else "a" for i in y_true]
     assert_almost_equal(matthews_corrcoef(y_true, y_true_inv), -1)
 
-    y_true_inv2 = label_binarize(y_true, ["a", "b"])
+    y_true_inv2 = label_binarize(y_true, classes=["a", "b"])
     y_true_inv2 = np.where(y_true_inv2, 'a', 'b')
     assert_almost_equal(matthews_corrcoef(y_true, y_true_inv2), -1)
 
@@ -621,8 +705,9 @@ def test_matthews_corrcoef():
     mask = [1] * 10 + [0] * 10
     # Now the first half of the vector elements are alone given a weight of 1
     # and hence the mcc will not be a perfect 0 as in the previous case
-    assert_raises(AssertionError, assert_almost_equal,
-                  matthews_corrcoef(y_1, y_2, sample_weight=mask), 0.)
+    with pytest.raises(AssertionError):
+        assert_almost_equal(matthews_corrcoef(y_1, y_2,
+                                              sample_weight=mask), 0.)
 
 
 def test_matthews_corrcoef_multiclass():
@@ -665,7 +750,8 @@ def test_matthews_corrcoef_multiclass():
     y_true = [0, 0, 1, 1, 2]
     y_pred = [1, 1, 0, 0, 2]
     sample_weight = [1, 1, 1, 1, 0]
-    assert_almost_equal(matthews_corrcoef(y_true, y_pred, sample_weight), -1)
+    assert_almost_equal(matthews_corrcoef(y_true, y_pred,
+                                          sample_weight=sample_weight), -1)
 
     # For the zero vector case, the corrcoef cannot be calculated and should
     # result in a RuntimeWarning
@@ -674,7 +760,7 @@ def test_matthews_corrcoef_multiclass():
     sample_weight = [1, 1, 0, 0]
     mcc = assert_warns_message(RuntimeWarning, 'invalid value encountered',
                                matthews_corrcoef, y_true, y_pred,
-                               sample_weight)
+                               sample_weight=sample_weight)
 
     # But will output 0
     assert_almost_equal(mcc, 0.)
@@ -754,12 +840,14 @@ def test_precision_recall_f1_score_multiclass():
     fs = f1_score(y_true, y_pred, average='weighted')
     assert_array_almost_equal(fs, 0.47, 2)
 
-    assert_raises(ValueError, precision_score, y_true, y_pred,
-                  average="samples")
-    assert_raises(ValueError, recall_score, y_true, y_pred, average="samples")
-    assert_raises(ValueError, f1_score, y_true, y_pred, average="samples")
-    assert_raises(ValueError, fbeta_score, y_true, y_pred, average="samples",
-                  beta=0.5)
+    with pytest.raises(ValueError):
+        precision_score(y_true, y_pred, average="samples")
+    with pytest.raises(ValueError):
+        recall_score(y_true, y_pred, average="samples")
+    with pytest.raises(ValueError):
+        f1_score(y_true, y_pred, average="samples")
+    with pytest.raises(ValueError):
+        fbeta_score(y_true, y_pred, average="samples", beta=0.5)
 
     # same prediction but with and explicit label ordering
     p, r, f, s = precision_recall_fscore_support(
@@ -846,9 +934,28 @@ def test_confusion_matrix_multiclass_subset_labels():
     assert_array_equal(cm, [[18, 0],
                             [0, 0]])
 
-    # check for exception when none of the specified labels are in y_true
-    assert_raises(ValueError, confusion_matrix, y_true, y_pred,
-                  labels=[extra_label, extra_label + 1])
+
+@pytest.mark.parametrize(
+    "labels, err_msg",
+    [([], "'labels' should contains at least one label."),
+     ([3, 4], "At least one label specified must be in y_true")],
+    ids=["empty list", "unknown labels"]
+)
+def test_confusion_matrix_error(labels, err_msg):
+    y_true, y_pred, _ = make_prediction(binary=False)
+    with pytest.raises(ValueError, match=err_msg):
+        confusion_matrix(y_true, y_pred, labels=labels)
+
+
+@pytest.mark.parametrize(
+    'labels', (None, [0, 1], [0, 1, 2]),
+    ids=['None', 'binary', 'multiclass']
+)
+def test_confusion_matrix_on_zero_length_input(labels):
+    expected_n_classes = len(labels) if labels else 0
+    expected = np.zeros((expected_n_classes, expected_n_classes), dtype=int)
+    cm = confusion_matrix([], [], labels=labels)
+    assert_array_equal(cm, expected)
 
 
 def test_confusion_matrix_dtype():
@@ -1063,12 +1170,11 @@ def test_classification_report_no_labels_target_names_unequal_length():
     y_pred = [0, 2, 2, 0, 0]
     target_names = ['class 0', 'class 1', 'class 2']
 
-    assert_raise_message(ValueError,
-                         "Number of classes, 2, does not "
-                         "match size of target_names, 3. "
-                         "Try specifying the labels parameter",
-                         classification_report,
-                         y_true, y_pred, target_names=target_names)
+    err_msg = ("Number of classes, 2, does not "
+               "match size of target_names, 3. "
+               "Try specifying the labels parameter")
+    with pytest.raises(ValueError, match=err_msg):
+        classification_report(y_true, y_pred, target_names=target_names)
 
 
 @ignore_warnings
@@ -1136,39 +1242,34 @@ def test_multilabel_hamming_loss():
     assert hamming_loss(y1, np.zeros_like(y1), sample_weight=w) == 2. / 3
     # sp_hamming only works with 1-D arrays
     assert hamming_loss(y1[0], y2[0]) == sp_hamming(y1[0], y2[0])
-    assert_warns_message(DeprecationWarning,
-                         "The labels parameter is unused. It was"
-                         " deprecated in version 0.21 and"
-                         " will be removed in version 0.23",
-                         hamming_loss, y1, y2, labels=[0, 1])
 
 
 def test_jaccard_score_validation():
     y_true = np.array([0, 1, 0, 1, 1])
     y_pred = np.array([0, 1, 0, 1, 1])
-    assert_raise_message(ValueError, "pos_label=2 is not a valid label: "
-                         "array([0, 1])", jaccard_score, y_true,
-                         y_pred, average='binary', pos_label=2)
+    err_msg = r"pos_label=2 is not a valid label. It should be one of \[0, 1\]"
+    with pytest.raises(ValueError, match=err_msg):
+        jaccard_score(y_true, y_pred, average='binary', pos_label=2)
 
     y_true = np.array([[0, 1, 1], [1, 0, 0]])
     y_pred = np.array([[1, 1, 1], [1, 0, 1]])
-    msg1 = ("Target is multilabel-indicator but average='binary'. "
-            "Please choose another average setting, one of [None, "
-            "'micro', 'macro', 'weighted', 'samples'].")
-    assert_raise_message(ValueError, msg1, jaccard_score, y_true,
-                         y_pred, average='binary', pos_label=-1)
+    msg1 = (r"Target is multilabel-indicator but average='binary'. "
+            r"Please choose another average setting, one of \[None, "
+            r"'micro', 'macro', 'weighted', 'samples'\].")
+    with pytest.raises(ValueError, match=msg1):
+        jaccard_score(y_true, y_pred, average='binary', pos_label=-1)
 
     y_true = np.array([0, 1, 1, 0, 2])
     y_pred = np.array([1, 1, 1, 1, 0])
-    msg2 = ("Target is multiclass but average='binary'. Please choose "
-            "another average setting, one of [None, 'micro', 'macro', "
-            "'weighted'].")
-    assert_raise_message(ValueError, msg2, jaccard_score, y_true,
-                         y_pred, average='binary')
+    msg2 = (r"Target is multiclass but average='binary'. Please choose "
+            r"another average setting, one of \[None, 'micro', 'macro', "
+            r"'weighted'\].")
+    with pytest.raises(ValueError, match=msg2):
+        jaccard_score(y_true, y_pred, average='binary')
     msg3 = ("Samplewise metrics are not available outside of multilabel "
             "classification.")
-    assert_raise_message(ValueError, msg3, jaccard_score, y_true,
-                         y_pred, average='samples')
+    with pytest.raises(ValueError, match=msg3):
+        jaccard_score(y_true, y_pred, average='samples')
 
     assert_warns_message(UserWarning,
                          "Note that pos_label (set to 3) is ignored when "
@@ -1224,11 +1325,11 @@ def test_multilabel_jaccard_score(recwarn):
                                       average='weighted'), 7. / 8)
 
     msg2 = 'Got 4 > 2'
-    assert_raise_message(ValueError, msg2, jaccard_score, y_true,
-                         y_pred, labels=[4], average='macro')
+    with pytest.raises(ValueError, match=msg2):
+        jaccard_score(y_true, y_pred, labels=[4], average='macro')
     msg3 = 'Got -1 < 0'
-    assert_raise_message(ValueError, msg3, jaccard_score, y_true,
-                         y_pred, labels=[-1], average='macro')
+    with pytest.raises(ValueError, match=msg3):
+        jaccard_score(y_true, y_pred, labels=[-1], average='macro')
 
     msg = ('Jaccard is ill-defined and being set to 0.0 in labels '
            'with no true or predicted samples.')
@@ -1306,6 +1407,35 @@ def test_average_binary_jaccard_score(recwarn):
 
     assert not list(recwarn)
 
+
+def test_jaccard_score_zero_division_warning():
+    # check that we raised a warning with default behavior if a zero division
+    # happens
+    y_true = np.array([[1, 0, 1], [0, 0, 0]])
+    y_pred = np.array([[0, 0, 0], [0, 0, 0]])
+    msg = ('Jaccard is ill-defined and being set to 0.0 in '
+           'samples with no true or predicted labels.'
+           ' Use `zero_division` parameter to control this behavior.')
+    with pytest.warns(UndefinedMetricWarning, match=msg):
+        score = jaccard_score(
+            y_true, y_pred, average='samples', zero_division='warn'
+        )
+        assert score == pytest.approx(0.0)
+
+
+@pytest.mark.parametrize(
+    "zero_division, expected_score", [(0, 0), (1, 0.5)]
+)
+def test_jaccard_score_zero_division_set_value(zero_division, expected_score):
+    # check that we don't issue warning by passing the zero_division parameter
+    y_true = np.array([[1, 0, 1], [0, 0, 0]])
+    y_pred = np.array([[0, 0, 0], [0, 0, 0]])
+    with pytest.warns(None) as record:
+        score = jaccard_score(
+            y_true, y_pred, average="samples", zero_division=zero_division
+        )
+    assert score == pytest.approx(expected_score)
+    assert len(record) == 0
 
 @ignore_warnings
 def test_precision_recall_f1_score_multilabel_1():
@@ -1445,28 +1575,33 @@ def test_precision_recall_f1_score_multilabel_2():
 
 
 @ignore_warnings
-def test_precision_recall_f1_score_with_an_empty_prediction():
+@pytest.mark.parametrize('zero_division', ["warn", 0, 1])
+def test_precision_recall_f1_score_with_an_empty_prediction(zero_division):
     y_true = np.array([[0, 1, 0, 0], [1, 0, 0, 0], [0, 1, 1, 0]])
     y_pred = np.array([[0, 0, 0, 0], [0, 0, 0, 1], [0, 1, 1, 0]])
 
     # true_pos = [ 0.  1.  1.  0.]
     # false_pos = [ 0.  0.  0.  1.]
     # false_neg = [ 1.  1.  0.  0.]
+    zero_division = 1.0 if zero_division == 1.0 else 0.0
     p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
-                                                 average=None)
-    assert_array_almost_equal(p, [0.0, 1.0, 1.0, 0.0], 2)
-    assert_array_almost_equal(r, [0.0, 0.5, 1.0, 0.0], 2)
+                                                 average=None,
+                                                 zero_division=zero_division)
+    assert_array_almost_equal(p, [zero_division, 1.0, 1.0, 0.0], 2)
+    assert_array_almost_equal(r, [0.0, 0.5, 1.0, zero_division], 2)
     assert_array_almost_equal(f, [0.0, 1 / 1.5, 1, 0.0], 2)
     assert_array_almost_equal(s, [1, 2, 1, 0], 2)
 
-    f2 = fbeta_score(y_true, y_pred, beta=2, average=None)
+    f2 = fbeta_score(y_true, y_pred, beta=2, average=None,
+                     zero_division=zero_division)
     support = s
     assert_array_almost_equal(f2, [0, 0.55, 1, 0], 2)
 
     p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
-                                                 average="macro")
-    assert_almost_equal(p, 0.5)
-    assert_almost_equal(r, 1.5 / 4)
+                                                 average="macro",
+                                                 zero_division=zero_division)
+    assert_almost_equal(p, (2 + zero_division) / 4)
+    assert_almost_equal(r, (1.5 + zero_division) / 4)
     assert_almost_equal(f, 2.5 / (4 * 1.5))
     assert s is None
     assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
@@ -1474,24 +1609,29 @@ def test_precision_recall_f1_score_with_an_empty_prediction():
                         np.mean(f2))
 
     p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
-                                                 average="micro")
+                                                 average="micro",
+                                                 zero_division=zero_division)
     assert_almost_equal(p, 2 / 3)
     assert_almost_equal(r, 0.5)
     assert_almost_equal(f, 2 / 3 / (2 / 3 + 0.5))
     assert s is None
     assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
-                                    average="micro"),
+                                    average="micro",
+                                    zero_division=zero_division),
                         (1 + 4) * p * r / (4 * p + r))
 
     p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
-                                                 average="weighted")
-    assert_almost_equal(p, 3 / 4)
+                                                 average="weighted",
+                                                 zero_division=zero_division)
+    assert_almost_equal(p, 3 / 4 if zero_division == 0 else 1.0)
     assert_almost_equal(r, 0.5)
     assert_almost_equal(f, (2 / 1.5 + 1) / 4)
     assert s is None
     assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
-                                    average="weighted"),
-                        np.average(f2, weights=support))
+                                    average="weighted",
+                                    zero_division=zero_division),
+                        np.average(f2, weights=support),
+                        )
 
     p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
                                                  average="samples")
@@ -1503,36 +1643,57 @@ def test_precision_recall_f1_score_with_an_empty_prediction():
     assert_almost_equal(f, 1 / 3)
     assert s is None
     assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
-                                    average="samples"),
+                                    average="samples",
+                                    zero_division=zero_division),
                         0.333, 2)
 
 
 @pytest.mark.parametrize('beta', [1])
 @pytest.mark.parametrize('average', ["macro", "micro", "weighted", "samples"])
-def test_precision_recall_f1_no_labels(beta, average):
+@pytest.mark.parametrize('zero_division', [0, 1])
+def test_precision_recall_f1_no_labels(beta, average, zero_division):
     y_true = np.zeros((20, 3))
     y_pred = np.zeros_like(y_true)
 
-    p, r, f, s = assert_warns(UndefinedMetricWarning,
-                              precision_recall_fscore_support,
-                              y_true, y_pred, average=average,
-                              beta=beta)
+    p, r, f, s = assert_no_warnings(precision_recall_fscore_support, y_true,
+                                    y_pred, average=average, beta=beta,
+                                    zero_division=zero_division)
+    fbeta = assert_no_warnings(fbeta_score, y_true, y_pred, beta=beta,
+                               average=average, zero_division=zero_division)
+
+    zero_division = float(zero_division)
+    assert_almost_equal(p, zero_division)
+    assert_almost_equal(r, zero_division)
+    assert_almost_equal(f, zero_division)
+    assert s is None
+
+    assert_almost_equal(fbeta, float(zero_division))
+
+
+@pytest.mark.parametrize('average', ["macro", "micro", "weighted", "samples"])
+def test_precision_recall_f1_no_labels_check_warnings(average):
+    y_true = np.zeros((20, 3))
+    y_pred = np.zeros_like(y_true)
+
+    func = precision_recall_fscore_support
+    with pytest.warns(UndefinedMetricWarning):
+        p, r, f, s = func(y_true, y_pred, average=average, beta=1.0)
+
     assert_almost_equal(p, 0)
     assert_almost_equal(r, 0)
     assert_almost_equal(f, 0)
     assert s is None
 
-    fbeta = assert_warns(UndefinedMetricWarning, fbeta_score,
-                         y_true, y_pred,
-                         beta=beta, average=average)
+    with pytest.warns(UndefinedMetricWarning):
+        fbeta = fbeta_score(y_true, y_pred, average=average, beta=1.0)
+
     assert_almost_equal(fbeta, 0)
 
 
-def test_precision_recall_f1_no_labels_average_none():
+@pytest.mark.parametrize('zero_division', [0, 1])
+def test_precision_recall_f1_no_labels_average_none(zero_division):
     y_true = np.zeros((20, 3))
     y_pred = np.zeros_like(y_true)
-
-    beta = 1
 
     # tp = [0, 0, 0]
     # fn = [0, 0, 0]
@@ -1542,152 +1703,277 @@ def test_precision_recall_f1_no_labels_average_none():
     # |y_i| = [0, 0, 0]
     # |y_hat_i| = [0, 0, 0]
 
-    p, r, f, s = assert_warns(UndefinedMetricWarning,
-                              precision_recall_fscore_support,
-                              y_true, y_pred, average=None, beta=beta)
+    p, r, f, s = assert_no_warnings(precision_recall_fscore_support,
+                                    y_true, y_pred,
+                                    average=None, beta=1.0,
+                                    zero_division=zero_division)
+    fbeta = assert_no_warnings(fbeta_score, y_true, y_pred, beta=1.0,
+                               average=None, zero_division=zero_division)
+
+    zero_division = float(zero_division)
+    assert_array_almost_equal(
+        p, [zero_division, zero_division, zero_division], 2
+    )
+    assert_array_almost_equal(
+        r, [zero_division, zero_division, zero_division], 2
+    )
+    assert_array_almost_equal(
+        f, [zero_division, zero_division, zero_division], 2
+    )
+    assert_array_almost_equal(s, [0, 0, 0], 2)
+
+    assert_array_almost_equal(
+        fbeta, [zero_division, zero_division, zero_division], 2
+    )
+
+
+def test_precision_recall_f1_no_labels_average_none_warn():
+    y_true = np.zeros((20, 3))
+    y_pred = np.zeros_like(y_true)
+
+    # tp = [0, 0, 0]
+    # fn = [0, 0, 0]
+    # fp = [0, 0, 0]
+    # support = [0, 0, 0]
+    # |y_hat_i inter y_i | = [0, 0, 0]
+    # |y_i| = [0, 0, 0]
+    # |y_hat_i| = [0, 0, 0]
+
+    with pytest.warns(UndefinedMetricWarning):
+        p, r, f, s = precision_recall_fscore_support(
+            y_true, y_pred, average=None, beta=1
+        )
+
     assert_array_almost_equal(p, [0, 0, 0], 2)
     assert_array_almost_equal(r, [0, 0, 0], 2)
     assert_array_almost_equal(f, [0, 0, 0], 2)
     assert_array_almost_equal(s, [0, 0, 0], 2)
 
-    fbeta = assert_warns(UndefinedMetricWarning, fbeta_score,
-                         y_true, y_pred, beta=beta, average=None)
+    with pytest.warns(UndefinedMetricWarning):
+        fbeta = fbeta_score(y_true, y_pred, beta=1, average=None)
+
     assert_array_almost_equal(fbeta, [0, 0, 0], 2)
 
 
 def test_prf_warnings():
     # average of per-label scores
     f, w = precision_recall_fscore_support, UndefinedMetricWarning
-    my_assert = assert_warns_message
     for average in [None, 'weighted', 'macro']:
+
         msg = ('Precision and F-score are ill-defined and '
-               'being set to 0.0 in labels with no predicted samples.')
-        my_assert(w, msg, f, [0, 1, 2], [1, 1, 2], average=average)
+               'being set to 0.0 in labels with no predicted samples.'
+               ' Use `zero_division` parameter to control'
+               ' this behavior.')
+        assert_warns_message(w, msg, f, [0, 1, 2], [1, 1, 2], average=average)
 
         msg = ('Recall and F-score are ill-defined and '
-               'being set to 0.0 in labels with no true samples.')
-        my_assert(w, msg, f, [1, 1, 2], [0, 1, 2], average=average)
+               'being set to 0.0 in labels with no true samples.'
+               ' Use `zero_division` parameter to control'
+               ' this behavior.')
+        assert_warns_message(w, msg, f, [1, 1, 2], [0, 1, 2], average=average)
 
     # average of per-sample scores
     msg = ('Precision and F-score are ill-defined and '
-           'being set to 0.0 in samples with no predicted labels.')
-    my_assert(w, msg, f, np.array([[1, 0], [1, 0]]),
-              np.array([[1, 0], [0, 0]]), average='samples')
+           'being set to 0.0 in samples with no predicted labels.'
+           ' Use `zero_division` parameter to control'
+           ' this behavior.')
+    assert_warns_message(w, msg, f, np.array([[1, 0], [1, 0]]),
+                         np.array([[1, 0], [0, 0]]), average='samples')
 
     msg = ('Recall and F-score are ill-defined and '
-           'being set to 0.0 in samples with no true labels.')
-    my_assert(w, msg, f, np.array([[1, 0], [0, 0]]),
-              np.array([[1, 0], [1, 0]]),
-              average='samples')
+           'being set to 0.0 in samples with no true labels.'
+           ' Use `zero_division` parameter to control'
+           ' this behavior.')
+    assert_warns_message(w, msg, f, np.array([[1, 0], [0, 0]]),
+                         np.array([[1, 0], [1, 0]]), average='samples')
 
     # single score: micro-average
     msg = ('Precision and F-score are ill-defined and '
-           'being set to 0.0 due to no predicted samples.')
-    my_assert(w, msg, f, np.array([[1, 1], [1, 1]]),
-              np.array([[0, 0], [0, 0]]), average='micro')
+           'being set to 0.0 due to no predicted samples.'
+           ' Use `zero_division` parameter to control'
+           ' this behavior.')
+    assert_warns_message(w, msg, f, np.array([[1, 1], [1, 1]]),
+                         np.array([[0, 0], [0, 0]]), average='micro')
 
     msg = ('Recall and F-score are ill-defined and '
-           'being set to 0.0 due to no true samples.')
-    my_assert(w, msg, f, np.array([[0, 0], [0, 0]]),
-              np.array([[1, 1], [1, 1]]), average='micro')
+           'being set to 0.0 due to no true samples.'
+           ' Use `zero_division` parameter to control'
+           ' this behavior.')
+    assert_warns_message(w, msg, f, np.array([[0, 0], [0, 0]]),
+                         np.array([[1, 1], [1, 1]]), average='micro')
 
     # single positive label
     msg = ('Precision and F-score are ill-defined and '
-           'being set to 0.0 due to no predicted samples.')
-    my_assert(w, msg, f, [1, 1], [-1, -1], average='binary')
+           'being set to 0.0 due to no predicted samples.'
+           ' Use `zero_division` parameter to control'
+           ' this behavior.')
+    assert_warns_message(w, msg, f, [1, 1], [-1, -1], average='binary')
 
     msg = ('Recall and F-score are ill-defined and '
-           'being set to 0.0 due to no true samples.')
-    my_assert(w, msg, f, [-1, -1], [1, 1], average='binary')
+           'being set to 0.0 due to no true samples.'
+           ' Use `zero_division` parameter to control'
+           ' this behavior.')
+    assert_warns_message(w, msg, f, [-1, -1], [1, 1], average='binary')
 
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter('always')
         precision_recall_fscore_support([0, 0], [0, 0], average="binary")
         msg = ('Recall and F-score are ill-defined and '
-               'being set to 0.0 due to no true samples.')
+               'being set to 0.0 due to no true samples.'
+               ' Use `zero_division` parameter to control'
+               ' this behavior.')
         assert str(record.pop().message) == msg
         msg = ('Precision and F-score are ill-defined and '
-               'being set to 0.0 due to no predicted samples.')
+               'being set to 0.0 due to no predicted samples.'
+               ' Use `zero_division` parameter to control'
+               ' this behavior.')
         assert str(record.pop().message) == msg
 
 
-def test_recall_warnings():
+@pytest.mark.parametrize('zero_division', [0, 1])
+def test_prf_no_warnings_if_zero_division_set(zero_division):
+    # average of per-label scores
+    f = precision_recall_fscore_support
+    for average in [None, 'weighted', 'macro']:
+
+        assert_no_warnings(f, [0, 1, 2], [1, 1, 2], average=average,
+                           zero_division=zero_division)
+
+        assert_no_warnings(f, [1, 1, 2], [0, 1, 2], average=average,
+                           zero_division=zero_division)
+
+    # average of per-sample scores
+    assert_no_warnings(f, np.array([[1, 0], [1, 0]]),
+                       np.array([[1, 0], [0, 0]]), average='samples',
+                       zero_division=zero_division)
+
+    assert_no_warnings(f, np.array([[1, 0], [0, 0]]),
+                       np.array([[1, 0], [1, 0]]),
+                       average='samples', zero_division=zero_division)
+
+    # single score: micro-average
+    assert_no_warnings(f, np.array([[1, 1], [1, 1]]),
+                       np.array([[0, 0], [0, 0]]), average='micro',
+                       zero_division=zero_division)
+
+    assert_no_warnings(f, np.array([[0, 0], [0, 0]]),
+                       np.array([[1, 1], [1, 1]]), average='micro',
+                       zero_division=zero_division)
+
+    # single positive label
+    assert_no_warnings(f, [1, 1], [-1, -1], average='binary',
+                       zero_division=zero_division)
+
+    assert_no_warnings(f, [-1, -1], [1, 1], average='binary',
+                       zero_division=zero_division)
+
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter('always')
+        precision_recall_fscore_support([0, 0], [0, 0], average="binary",
+                                        zero_division=zero_division)
+        assert len(record) == 0
+
+
+@pytest.mark.parametrize('zero_division', ["warn", 0, 1])
+def test_recall_warnings(zero_division):
     assert_no_warnings(recall_score,
                        np.array([[1, 1], [1, 1]]),
                        np.array([[0, 0], [0, 0]]),
-                       average='micro')
+                       average='micro', zero_division=zero_division)
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter('always')
         recall_score(np.array([[0, 0], [0, 0]]),
                      np.array([[1, 1], [1, 1]]),
-                     average='micro')
-        assert (str(record.pop().message) ==
-                     'Recall is ill-defined and '
-                     'being set to 0.0 due to no true samples.')
+                     average='micro', zero_division=zero_division)
+        if zero_division == "warn":
+            assert (str(record.pop().message) ==
+                    'Recall is ill-defined and '
+                    'being set to 0.0 due to no true samples.'
+                    ' Use `zero_division` parameter to control'
+                    ' this behavior.')
+        else:
+            assert len(record) == 0
+
         recall_score([0, 0], [0, 0])
-        assert (str(record.pop().message) ==
-                     'Recall is ill-defined and '
-                     'being set to 0.0 due to no true samples.')
+        if zero_division == "warn":
+            assert (str(record.pop().message) ==
+                    'Recall is ill-defined and '
+                    'being set to 0.0 due to no true samples.'
+                    ' Use `zero_division` parameter to control'
+                    ' this behavior.')
 
 
-def test_precision_warnings():
+@pytest.mark.parametrize('zero_division', ["warn", 0, 1])
+def test_precision_warnings(zero_division):
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter('always')
         precision_score(np.array([[1, 1], [1, 1]]),
                         np.array([[0, 0], [0, 0]]),
-                        average='micro')
-        assert (str(record.pop().message) ==
-                     'Precision is ill-defined and '
-                     'being set to 0.0 due to no predicted samples.')
+                        average='micro', zero_division=zero_division)
+        if zero_division == "warn":
+            assert (str(record.pop().message) ==
+                    'Precision is ill-defined and '
+                    'being set to 0.0 due to no predicted samples.'
+                    ' Use `zero_division` parameter to control'
+                    ' this behavior.')
+        else:
+            assert len(record) == 0
+
         precision_score([0, 0], [0, 0])
-        assert (str(record.pop().message) ==
-                     'Precision is ill-defined and '
-                     'being set to 0.0 due to no predicted samples.')
+        if zero_division == "warn":
+            assert (str(record.pop().message) ==
+                    'Precision is ill-defined and '
+                    'being set to 0.0 due to no predicted samples.'
+                    ' Use `zero_division` parameter to control'
+                    ' this behavior.')
 
     assert_no_warnings(precision_score,
                        np.array([[0, 0], [0, 0]]),
                        np.array([[1, 1], [1, 1]]),
-                       average='micro')
+                       average='micro', zero_division=zero_division)
 
 
-def test_fscore_warnings():
+@pytest.mark.parametrize('zero_division', ["warn", 0, 1])
+def test_fscore_warnings(zero_division):
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter('always')
 
         for score in [f1_score, partial(fbeta_score, beta=2)]:
             score(np.array([[1, 1], [1, 1]]),
                   np.array([[0, 0], [0, 0]]),
-                  average='micro')
-            assert (str(record.pop().message) ==
-                         'F-score is ill-defined and '
-                         'being set to 0.0 due to no predicted samples.')
+                  average='micro', zero_division=zero_division)
+            assert len(record) == 0
+
             score(np.array([[0, 0], [0, 0]]),
                   np.array([[1, 1], [1, 1]]),
-                  average='micro')
-            assert (str(record.pop().message) ==
-                         'F-score is ill-defined and '
-                         'being set to 0.0 due to no true samples.')
-            score([0, 0], [0, 0])
-            assert (str(record.pop().message) ==
-                         'F-score is ill-defined and '
-                         'being set to 0.0 due to no true samples.')
-            assert (str(record.pop().message) ==
-                         'F-score is ill-defined and '
-                         'being set to 0.0 due to no predicted samples.')
+                  average='micro', zero_division=zero_division)
+            assert len(record) == 0
+
+            score(np.array([[0, 0], [0, 0]]),
+                  np.array([[0, 0], [0, 0]]),
+                  average='micro', zero_division=zero_division)
+            if zero_division == "warn":
+                assert (str(record.pop().message) ==
+                        'F-score is ill-defined and '
+                        'being set to 0.0 due to no true nor predicted '
+                        'samples. Use `zero_division` parameter to '
+                        'control this behavior.')
+            else:
+                assert len(record) == 0
 
 
 def test_prf_average_binary_data_non_binary():
     # Error if user does not explicitly set non-binary average mode
     y_true_mc = [1, 2, 3, 3]
     y_pred_mc = [1, 2, 3, 1]
-    msg_mc = ("Target is multiclass but average='binary'. Please "
-              "choose another average setting, one of ["
-              "None, 'micro', 'macro', 'weighted'].")
+    msg_mc = (r"Target is multiclass but average='binary'. Please "
+              r"choose another average setting, one of \["
+              r"None, 'micro', 'macro', 'weighted'\].")
     y_true_ind = np.array([[0, 1, 1], [1, 0, 0], [0, 0, 1]])
     y_pred_ind = np.array([[0, 1, 0], [1, 0, 0], [0, 0, 1]])
-    msg_ind = ("Target is multilabel-indicator but average='binary'. Please "
-               "choose another average setting, one of ["
-               "None, 'micro', 'macro', 'weighted', 'samples'].")
+    msg_ind = (r"Target is multilabel-indicator but average='binary'. Please "
+               r"choose another average setting, one of \["
+               r"None, 'micro', 'macro', 'weighted', 'samples'\].")
 
     for y_true, y_pred, msg in [
         (y_true_mc, y_pred_mc, msg_mc),
@@ -1695,8 +1981,8 @@ def test_prf_average_binary_data_non_binary():
     ]:
         for metric in [precision_score, recall_score, f1_score,
                        partial(fbeta_score, beta=2)]:
-            assert_raise_message(ValueError, msg,
-                                 metric, y_true, y_pred)
+            with pytest.raises(ValueError, match=msg):
+                metric(y_true, y_pred)
 
 
 def test__check_targets():
@@ -1757,20 +2043,20 @@ def test__check_targets():
         except KeyError:
             expected = EXPECTED[type2, type1]
         if expected is None:
-            assert_raises(ValueError, _check_targets, y1, y2)
+            with pytest.raises(ValueError):
+                _check_targets(y1, y2)
 
             if type1 != type2:
-                assert_raise_message(
-                    ValueError,
-                    "Classification metrics can't handle a mix of {0} and {1} "
-                    "targets".format(type1, type2),
-                    _check_targets, y1, y2)
+                err_msg = ("Classification metrics can't handle a mix "
+                           "of {0} and {1} targets".format(type1, type2))
+                with pytest.raises(ValueError, match=err_msg):
+                    _check_targets(y1, y2)
 
             else:
                 if type1 not in (BIN, MC, IND):
-                    assert_raise_message(ValueError,
-                                         "{0} is not supported".format(type1),
-                                         _check_targets, y1, y2)
+                    err_msg = "{0} is not supported".format(type1)
+                    with pytest.raises(ValueError, match=err_msg):
+                        _check_targets(y1, y2)
 
         else:
             merged_type, y1out, y2out = _check_targets(y1, y2)
@@ -1781,7 +2067,8 @@ def test__check_targets():
             else:
                 assert_array_equal(y1out, np.squeeze(y1))
                 assert_array_equal(y2out, np.squeeze(y2))
-            assert_raises(ValueError, _check_targets, y1[:-1], y2)
+            with pytest.raises(ValueError):
+                _check_targets(y1[:-1], y2)
 
     # Make sure seq of seq is not supported
     y1 = [(1, 2,), (0, 2, 3)]
@@ -1790,7 +2077,8 @@ def test__check_targets():
            'Sequence of sequences are no longer supported; use a binary array'
            ' or sparse matrix instead - the MultiLabelBinarizer'
            ' transformer can convert to this format.')
-    assert_raise_message(ValueError, msg, _check_targets, y1, y2)
+    with pytest.raises(ValueError, match=msg):
+        _check_targets(y1, y2)
 
 
 def test__check_targets_multiclass_with_both_y_true_and_y_pred_binary():
@@ -1831,7 +2119,7 @@ def test_hinge_loss_multiclass():
     np.clip(dummy_losses, 0, None, out=dummy_losses)
     dummy_hinge_loss = np.mean(dummy_losses)
     assert (hinge_loss(y_true, pred_decision) ==
-                 dummy_hinge_loss)
+            dummy_hinge_loss)
 
 
 def test_hinge_loss_multiclass_missing_labels_with_labels_none():
@@ -1844,9 +2132,8 @@ def test_hinge_loss_multiclass_missing_labels_with_labels_none():
     ])
     error_message = ("Please include all labels in y_true "
                      "or pass labels as third argument")
-    assert_raise_message(ValueError,
-                         error_message,
-                         hinge_loss, y_true, pred_decision)
+    with pytest.raises(ValueError, match=error_message):
+        hinge_loss(y_true, pred_decision)
 
 
 def test_hinge_loss_multiclass_with_missing_labels():
@@ -1869,7 +2156,36 @@ def test_hinge_loss_multiclass_with_missing_labels():
     np.clip(dummy_losses, 0, None, out=dummy_losses)
     dummy_hinge_loss = np.mean(dummy_losses)
     assert (hinge_loss(y_true, pred_decision, labels=labels) ==
-                 dummy_hinge_loss)
+            dummy_hinge_loss)
+
+
+def test_hinge_loss_multiclass_missing_labels_only_two_unq_in_y_true():
+    # non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/17630
+    # check that we can compute the hinge loss when providing an array
+    # with labels allowing to not have all labels in y_true
+    pred_decision = np.array([
+        [+0.36, -0.17, -0.58],
+        [-0.15, -0.58, -0.48],
+        [-1.45, -0.58, -0.38],
+        [-0.55, -0.78, -0.42],
+        [-1.45, -0.58, -0.38]
+    ])
+    y_true = np.array([0, 2, 2, 0, 2])
+    labels = np.array([0, 1, 2])
+    dummy_losses = np.array([
+        1 - pred_decision[0][0] + pred_decision[0][1],
+        1 - pred_decision[1][2] + pred_decision[1][0],
+        1 - pred_decision[2][2] + pred_decision[2][1],
+        1 - pred_decision[3][0] + pred_decision[3][2],
+        1 - pred_decision[4][2] + pred_decision[4][1]
+    ])
+    np.clip(dummy_losses, 0, None, out=dummy_losses)
+    dummy_hinge_loss = np.mean(dummy_losses)
+    assert_almost_equal(
+        hinge_loss(y_true, pred_decision, labels=labels),
+        dummy_hinge_loss
+    )
 
 
 def test_hinge_loss_multiclass_invariance_lists():
@@ -1896,7 +2212,7 @@ def test_hinge_loss_multiclass_invariance_lists():
     np.clip(dummy_losses, 0, None, out=dummy_losses)
     dummy_hinge_loss = np.mean(dummy_losses)
     assert (hinge_loss(y_true, pred_decision) ==
-                 dummy_hinge_loss)
+            dummy_hinge_loss)
 
 
 def test_log_loss():
@@ -1928,7 +2244,8 @@ def test_log_loss():
     # raise error if number of classes are not equal.
     y_true = [1, 0, 2]
     y_pred = [[0.2, 0.7], [0.6, 0.5], [0.4, 0.1]]
-    assert_raises(ValueError, log_loss, y_true, y_pred)
+    with pytest.raises(ValueError):
+        log_loss(y_true, y_pred)
 
     # case when y_true is a string array object
     y_true = ["ham", "spam", "spam", "ham"]
@@ -1941,14 +2258,15 @@ def test_log_loss():
     y_true = [2, 2]
     y_pred = [[0.2, 0.7], [0.6, 0.5]]
     y_score = np.array([[0.1, 0.9], [0.1, 0.9]])
-    error_str = ('y_true contains only one label (2). Please provide '
-                 'the true labels explicitly through the labels argument.')
-    assert_raise_message(ValueError, error_str, log_loss, y_true, y_pred)
+    error_str = (r'y_true contains only one label \(2\). Please provide '
+                 r'the true labels explicitly through the labels argument.')
+    with pytest.raises(ValueError, match=error_str):
+        log_loss(y_true, y_pred)
 
     y_pred = [[0.2, 0.7], [0.6, 0.5], [0.2, 0.3]]
     error_str = ('Found input variables with inconsistent numbers of samples: '
                  '[3, 2]')
-    assert_raise_message(ValueError, error_str, log_loss, y_true, y_pred)
+    (ValueError, error_str, log_loss, y_true, y_pred)
 
     # works when the labels argument is used
 
@@ -1992,17 +2310,20 @@ def test_brier_score_loss():
                         true_score)
     assert_almost_equal(brier_score_loss(2 * y_true - 1, y_pred),
                         true_score)
-    assert_raises(ValueError, brier_score_loss, y_true, y_pred[1:])
-    assert_raises(ValueError, brier_score_loss, y_true, y_pred + 1.)
-    assert_raises(ValueError, brier_score_loss, y_true, y_pred - 1.)
+    with pytest.raises(ValueError):
+        brier_score_loss(y_true, y_pred[1:])
+    with pytest.raises(ValueError):
+        brier_score_loss(y_true, y_pred + 1.)
+    with pytest.raises(ValueError):
+        brier_score_loss(y_true, y_pred - 1.)
 
     # ensure to raise an error for multiclass y_true
     y_true = np.array([0, 1, 2, 0])
     y_pred = np.array([0.8, 0.6, 0.4, 0.2])
     error_message = ("Only binary classification is supported. Labels "
                      "in y_true: {}".format(np.array([0, 1, 2])))
-    assert_raise_message(ValueError, error_message, brier_score_loss,
-                         y_true, y_pred)
+    with pytest.raises(ValueError, match=re.escape(error_message)):
+        brier_score_loss(y_true, y_pred)
 
     # calculate correctly when there's only one class in y_true
     assert_almost_equal(brier_score_loss([-1], [0.4]), 0.16)
@@ -2035,21 +2356,3 @@ def test_balanced_accuracy_score(y_true, y_pred):
     adjusted = balanced_accuracy_score(y_true, y_pred, adjusted=True)
     chance = balanced_accuracy_score(y_true, np.full_like(y_true, y_true[0]))
     assert adjusted == (balanced - chance) / (1 - chance)
-
-
-def test_multilabel_jaccard_similarity_score_deprecation():
-    # Dense label indicator matrix format
-    y1 = np.array([[0, 1, 1], [1, 0, 1]])
-    y2 = np.array([[0, 0, 1], [1, 0, 1]])
-
-    # size(y1 \inter y2) = [1, 2]
-    # size(y1 \union y2) = [2, 2]
-
-    jss = partial(assert_warns, DeprecationWarning, jaccard_similarity_score)
-    assert jss(y1, y2) == 0.75
-    assert jss(y1, y1) == 1
-    assert jss(y2, y2) == 1
-    assert jss(y2, np.logical_not(y2)) == 0
-    assert jss(y1, np.logical_not(y1)) == 0
-    assert jss(y1, np.zeros(y1.shape)) == 0
-    assert jss(y2, np.zeros(y1.shape)) == 0

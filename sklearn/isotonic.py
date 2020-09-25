@@ -6,11 +6,13 @@
 import numpy as np
 from scipy import interpolate
 from scipy.stats import spearmanr
-from .base import BaseEstimator, TransformerMixin, RegressorMixin
-from .utils import check_array, check_consistent_length
-from ._isotonic import _inplace_contiguous_isotonic_regression, _make_unique
 import warnings
 import math
+
+from .base import BaseEstimator, TransformerMixin, RegressorMixin
+from .utils import check_array, check_consistent_length
+from .utils.validation import _check_sample_weight, _deprecate_positional_args
+from ._isotonic import _inplace_contiguous_isotonic_regression, _make_unique
 
 
 __all__ = ['check_increasing', 'isotonic_regression',
@@ -25,10 +27,10 @@ def check_increasing(x, y):
 
     Parameters
     ----------
-    x : array-like, shape=(n_samples,)
+    x : array-like of shape (n_samples,)
             Training data.
 
-    y : array-like, shape=(n_samples,)
+    y : array-like of shape (n_samples,)
         Training target.
 
     Returns
@@ -74,37 +76,31 @@ def check_increasing(x, y):
     return increasing_bool
 
 
-def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
+@_deprecate_positional_args
+def isotonic_regression(y, *, sample_weight=None, y_min=None, y_max=None,
                         increasing=True):
-    """Solve the isotonic regression model::
-
-        min sum w[i] (y[i] - y_[i]) ** 2
-
-        subject to y_min = y_[1] <= y_[2] ... <= y_[n] = y_max
-
-    where:
-        - y[i] are inputs (real numbers)
-        - y_[i] are fitted
-        - w[i] are optional strictly positive weights (default to 1.0)
+    """Solve the isotonic regression model.
 
     Read more in the :ref:`User Guide <isotonic>`.
 
     Parameters
     ----------
-    y : iterable of floats
+    y : array-like of shape (n_samples,)
         The data.
 
-    sample_weight : iterable of floats, optional, default: None
+    sample_weight : array-like of shape (n_samples,), default=None
         Weights on each point of the regression.
         If None, weight is set to 1 (equal weights).
 
-    y_min : optional, default: None
-        If not None, set the lowest value of the fit to y_min.
+    y_min : float, default=None
+        Lower bound on the lowest predicted value (the minimum value may
+        still be higher). If not set, defaults to -inf.
 
-    y_max : optional, default: None
-        If not None, set the highest value of the fit to y_max.
+    y_max : float, default=None
+        Upper bound on the highest predicted value (the maximum may still be
+        lower). If not set, defaults to +inf.
 
-    increasing : boolean, optional, default: True
+    increasing : bool, default=True
         Whether to compute ``y_`` is increasing (if set to True) or decreasing
         (if set to False)
 
@@ -121,10 +117,8 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
     order = np.s_[:] if increasing else np.s_[::-1]
     y = check_array(y, ensure_2d=False, dtype=[np.float64, np.float32])
     y = np.array(y[order], dtype=y.dtype)
-    if sample_weight is None:
-        sample_weight = np.ones(len(y), dtype=y.dtype)
-    else:
-        sample_weight = np.array(sample_weight[order], dtype=y.dtype)
+    sample_weight = _check_sample_weight(sample_weight, y, dtype=y.dtype)
+    sample_weight = np.ascontiguousarray(sample_weight[order])
 
     _inplace_contiguous_isotonic_regression(y, sample_weight)
     if y_min is not None or y_max is not None:
@@ -137,48 +131,36 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
     return y[order]
 
 
-class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
+class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
     """Isotonic regression model.
-
-    The isotonic regression optimization problem is defined by::
-
-        min sum w_i (y[i] - y_[i]) ** 2
-
-        subject to y_[i] <= y_[j] whenever X[i] <= X[j]
-        and min(y_) = y_min, max(y_) = y_max
-
-    where:
-        - ``y[i]`` are inputs (real numbers)
-        - ``y_[i]`` are fitted
-        - ``X`` specifies the order.
-          If ``X`` is non-decreasing then ``y_`` is non-decreasing.
-        - ``w[i]`` are optional strictly positive weights (default to 1.0)
 
     Read more in the :ref:`User Guide <isotonic>`.
 
+    .. versionadded:: 0.13
+
     Parameters
     ----------
-    y_min : optional, default: None
-        If not None, set the lowest value of the fit to y_min.
+    y_min : float, default=None
+        Lower bound on the lowest predicted value (the minimum value may
+        still be higher). If not set, defaults to -inf.
 
-    y_max : optional, default: None
-        If not None, set the highest value of the fit to y_max.
+    y_max : float, default=None
+        Upper bound on the highest predicted value (the maximum may still be
+        lower). If not set, defaults to +inf.
 
-    increasing : boolean or string, optional, default: True
-        If boolean, whether or not to fit the isotonic regression with y
-        increasing or decreasing.
+    increasing : bool or 'auto', default=True
+        Determines whether the predictions should be constrained to increase
+        or decrease with `X`. 'auto' will decide based on the Spearman
+        correlation estimate's sign.
 
-        The string value "auto" determines whether y should
-        increase or decrease based on the Spearman correlation estimate's
-        sign.
+    out_of_bounds : {'nan', 'clip', 'raise'}, default='nan'
+        Handles how `X` values outside of the training domain are handled
+        during prediction.
 
-    out_of_bounds : string, optional, default: "nan"
-        The ``out_of_bounds`` parameter handles how x-values outside of the
-        training domain are handled.  When set to "nan", predicted y-values
-        will be NaN.  When set to "clip", predicted y-values will be
-        set to the value corresponding to the nearest train interval endpoint.
-        When set to "raise", allow ``interp1d`` to throw ValueError.
-
+        - 'nan', predictions will be NaN.
+        - 'clip', predictions will be set to the value corresponding to
+          the nearest train interval endpoint.
+        - 'raise', a `ValueError` is raised.
 
     Attributes
     ----------
@@ -188,8 +170,23 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
     X_max_ : float
         Maximum value of input array `X_` for right bound.
 
+    X_thresholds_ : ndarray of shape (n_thresholds,)
+        Unique ascending `X` values used to interpolate
+        the y = f(X) monotonic function.
+
+        .. versionadded:: 0.24
+
+    y_thresholds_ : ndarray of shape (n_thresholds,)
+        De-duplicated `y` values suitable to interpolate the y = f(X)
+        monotonic function.
+
+        .. versionadded:: 0.24
+
     f_ : function
         The stepwise interpolating function that covers the input domain ``X``.
+
+    increasing_ : bool
+        Inferred value for ``increasing``.
 
     Notes
     -----
@@ -215,20 +212,23 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
     >>> from sklearn.datasets import make_regression
     >>> from sklearn.isotonic import IsotonicRegression
     >>> X, y = make_regression(n_samples=10, n_features=1, random_state=41)
-    >>> iso_reg = IsotonicRegression().fit(X.flatten(), y)
+    >>> iso_reg = IsotonicRegression().fit(X, y)
     >>> iso_reg.predict([.1, .2])
     array([1.8628..., 3.7256...])
     """
-    def __init__(self, y_min=None, y_max=None, increasing=True,
+    @_deprecate_positional_args
+    def __init__(self, *, y_min=None, y_max=None, increasing=True,
                  out_of_bounds='nan'):
         self.y_min = y_min
         self.y_max = y_max
         self.increasing = increasing
         self.out_of_bounds = out_of_bounds
 
-    def _check_fit_data(self, X, y, sample_weight=None):
-        if len(X.shape) != 1:
-            raise ValueError("X should be a 1d array")
+    def _check_input_data_shape(self, X):
+        if not (X.ndim == 1 or (X.ndim == 2 and X.shape[1] == 1)):
+            msg = "Isotonic regression input X should be a 1d array or " \
+                  "2d array with 1 feature"
+            raise ValueError(msg)
 
     def _build_f(self, X, y):
         """Build the f_ interp1d function."""
@@ -249,7 +249,8 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
     def _build_y(self, X, y, sample_weight, trim_duplicates=True):
         """Build the y_ IsotonicRegression."""
-        self._check_fit_data(X, y, sample_weight)
+        self._check_input_data_shape(X)
+        X = X.reshape(-1)  # use 1d view
 
         # Determine increasing if auto-determination requested
         if self.increasing == 'auto':
@@ -259,25 +260,19 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
         # If sample_weights is passed, removed zero-weight values and clean
         # order
-        if sample_weight is not None:
-            sample_weight = check_array(sample_weight, ensure_2d=False,
-                                        dtype=X.dtype)
-            mask = sample_weight > 0
-            X, y, sample_weight = X[mask], y[mask], sample_weight[mask]
-        else:
-            sample_weight = np.ones(len(y), dtype=X.dtype)
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+        mask = sample_weight > 0
+        X, y, sample_weight = X[mask], y[mask], sample_weight[mask]
 
         order = np.lexsort((y, X))
         X, y, sample_weight = [array[order] for array in [X, y, sample_weight]]
         unique_X, unique_y, unique_sample_weight = _make_unique(
             X, y, sample_weight)
 
-        # Store _X_ and _y_ to maintain backward compat during the deprecation
-        # period of X_ and y_
-        self._X_ = X = unique_X
-        self._y_ = y = isotonic_regression(unique_y, unique_sample_weight,
-                                           self.y_min, self.y_max,
-                                           increasing=self.increasing_)
+        X = unique_X
+        y = isotonic_regression(unique_y, sample_weight=unique_sample_weight,
+                                y_min=self.y_min, y_max=self.y_max,
+                                increasing=self.increasing_)
 
         # Handle the left and right bounds on X
         self.X_min_, self.X_max_ = np.min(X), np.max(X)
@@ -304,13 +299,16 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
         Parameters
         ----------
-        X : array-like, shape=(n_samples,)
+        X : array-like of shape (n_samples,) or (n_samples, 1)
             Training data.
 
-        y : array-like, shape=(n_samples,)
+            .. versionchanged:: 0.24
+               Also accepts 2d array with 1 feature.
+
+        y : array-like of shape (n_samples,)
             Training target.
 
-        sample_weight : array-like, shape=(n_samples,), optional, default: None
+        sample_weight : array-like of shape (n_samples,), default=None
             Weights. If set to None, all weights will be set to 1 (equal
             weights).
 
@@ -321,13 +319,12 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
         Notes
         -----
-        X is stored for future use, as `transform` needs X to interpolate
+        X is stored for future use, as :meth:`transform` needs X to interpolate
         new input data.
         """
-        check_params = dict(accept_sparse=False, ensure_2d=False,
-                            dtype=[np.float64, np.float32])
-        X = check_array(X, **check_params)
-        y = check_array(y, **check_params)
+        check_params = dict(accept_sparse=False, ensure_2d=False)
+        X = check_array(X, dtype=[np.float64, np.float32], **check_params)
+        y = check_array(y, dtype=X.dtype, **check_params)
         check_consistent_length(X, y, sample_weight)
 
         # Transform y by running the isotonic regression algorithm and
@@ -338,7 +335,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         # on the model to make it possible to support model persistence via
         # the pickle module as the object built by scipy.interp1d is not
         # picklable directly.
-        self._necessary_X_, self._necessary_y_ = X, y
+        self.X_thresholds_, self.y_thresholds_ = X, y
 
         # Build the interpolation function
         self._build_f(X, y)
@@ -349,24 +346,27 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
         Parameters
         ----------
-        T : array-like, shape=(n_samples,)
+        T : array-like of shape (n_samples,) or (n_samples, 1)
             Data to transform.
+
+            .. versionchanged:: 0.24
+               Also accepts 2d array with 1 feature.
 
         Returns
         -------
-        T_ : array, shape=(n_samples,)
+        y_pred : ndarray of shape (n_samples,)
             The transformed data
         """
 
-        if hasattr(self, '_necessary_X_'):
-            dtype = self._necessary_X_.dtype
+        if hasattr(self, 'X_thresholds_'):
+            dtype = self.X_thresholds_.dtype
         else:
             dtype = np.float64
 
         T = check_array(T, dtype=dtype, ensure_2d=False)
 
-        if len(T.shape) != 1:
-            raise ValueError("Isotonic regression input should be a 1d array")
+        self._check_input_data_shape(T)
+        T = T.reshape(-1)  # use 1d view
 
         # Handle the out_of_bounds argument by clipping if needed
         if self.out_of_bounds not in ["raise", "nan", "clip"]:
@@ -389,12 +389,12 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
         Parameters
         ----------
-        T : array-like, shape=(n_samples,)
+        T : array-like of shape (n_samples,) or (n_samples, 1)
             Data to transform.
 
         Returns
         -------
-        T_ : array, shape=(n_samples,)
+        y_pred : ndarray of shape (n_samples,)
             Transformed data.
         """
         return self.transform(T)
@@ -412,8 +412,8 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         We need to rebuild the interpolation function.
         """
         super().__setstate__(state)
-        if hasattr(self, '_necessary_X_') and hasattr(self, '_necessary_y_'):
-            self._build_f(self._necessary_X_, self._necessary_y_)
+        if hasattr(self, 'X_thresholds_') and hasattr(self, 'y_thresholds_'):
+            self._build_f(self.X_thresholds_, self.y_thresholds_)
 
     def _more_tags(self):
         return {'X_types': ['1darray']}
