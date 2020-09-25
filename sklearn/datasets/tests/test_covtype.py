@@ -61,7 +61,8 @@ def test_pandas_dependency_message(fetch_covtype_fxt,
 def test_fetch_with_download(exists, genfromtext):
     """
         This test covers the fetch of the dataset from the network
-        and the operations that are mandatory when you dont have the dataset locally
+        and the operations that are mandatory when we dont have
+        the dataset locally
         - create the folder
         - gzip it
         - cast the numpy result
