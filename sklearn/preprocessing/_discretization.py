@@ -372,7 +372,16 @@ class MDLPDiscretizer(_BaseDiscretizer):
 
     Read more in the :ref:`User Guide <preprocessing_discretization>`.
 
-    .. versionadded:: 0.24
+    .. note::
+
+      This estimator is still **experimental** for now: the predictions
+      and the API might change without any deprecation cycle. To use it,
+      you need to explicitly import ``enable_mdlp_discretizer``::
+
+        >>> # Explictly require this experimental feature
+        >>> from sklearn.experimental import enable_mdlp_discretizer  # noqa
+        >>> # Now you can import normally from preprocessing
+        >>> from sklearn.preprocessing import MDLPDiscretizer
 
     Parameters
     ----------
