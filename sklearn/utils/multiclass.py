@@ -140,11 +140,15 @@ def is_multilabel(y):
     import warnings
 
     if hasattr(y, '__array__') or isinstance(y, Sequence):
+        # TODO: Replace the warning context manager with a try-except statement
+        # DeprecationWarning will be replaced by ValueError, see NEP 34
         with warnings.catch_warnings():
             warnings.simplefilter('error', np.VisibleDeprecationWarning)
             try:
                 y = np.asarray(y)
             except np.VisibleDeprecationWarning:
+                # dtype=object should be provided explicitly for ragged arrays,
+                # see NEP 34
                 y = np.array(y, dtype=object)
 
     if not (hasattr(y, "shape") and y.ndim == 2 and y.shape[1] > 1):
@@ -260,11 +264,15 @@ def type_of_target(y):
     if is_multilabel(y):
         return 'multilabel-indicator'
 
+    # TODO: Replace the warning context manager with a try-except statement
+    # DeprecationWarning will be replaced by ValueError, see NEP 34
     with warnings.catch_warnings():
         warnings.simplefilter('error', np.VisibleDeprecationWarning)
         try:
             y = np.asarray(y)
         except np.VisibleDeprecationWarning:
+            # dtype=object should be provided explicitly for ragged arrays,
+            # see NEP 34
             y = np.asarray(y, dtype=object)
 
     # The old sequence of sequences format
