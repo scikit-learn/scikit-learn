@@ -1208,7 +1208,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
     if batch_size is not None:
         if not isinstance(batch_size, numbers.Integral) or batch_size < 0:
             raise ValueError("Number of samples per batch must be a positive "
-                             f"integer; got ({batch_size=})")
+                             "integer; got (batch_size=%r)" % batch_size)
         if A is None:
             A = H.copy()
         if B is None:
