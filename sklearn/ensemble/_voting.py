@@ -17,7 +17,7 @@ from abc import abstractmethod
 
 import numpy as np
 
-from joblib import Parallel, delayed
+from joblib import Parallel
 
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
@@ -33,6 +33,7 @@ from ..utils.validation import column_or_1d
 from ..utils.validation import _deprecate_positional_args
 from ..exceptions import NotFittedError
 from ..utils._estimator_html_repr import _VisualBlock
+from ..utils.fixes import delayed
 
 
 class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
@@ -140,9 +141,9 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
 class VotingClassifier(ClassifierMixin, _BaseVoting):
     """Soft Voting/Majority Rule classifier for unfitted estimators.
 
-    .. versionadded:: 0.17
-
     Read more in the :ref:`User Guide <voting_classifier>`.
+
+    .. versionadded:: 0.17
 
     Parameters
     ----------
@@ -383,13 +384,13 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 class VotingRegressor(RegressorMixin, _BaseVoting):
     """Prediction voting regressor for unfitted estimators.
 
-    .. versionadded:: 0.21
-
     A voting regressor is an ensemble meta-estimator that fits several base
     regressors, each on the whole dataset. Then it averages the individual
     predictions to form a final prediction.
 
     Read more in the :ref:`User Guide <voting_regressor>`.
+
+    .. versionadded:: 0.21
 
     Parameters
     ----------
