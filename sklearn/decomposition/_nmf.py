@@ -874,7 +874,7 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
 
     n_samples = X.shape[0]
 
-    if batch_size is None:
+    if batch_size is None or batch_size > n_samples:
         batch_size = n_samples
 
     rho = 0.
@@ -1206,6 +1206,9 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
                                random_state=random_state)
 
     if batch_size is not None:
+        if not isinstance(batch_size, numbers.Integral) or batch_size < 0:
+            raise ValueError("Number of samples per batch must be a positive "
+                             f"integer; got ({batch_size=})")
         if A is None:
             A = H.copy()
         if B is None:
