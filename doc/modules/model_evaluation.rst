@@ -599,8 +599,8 @@ false negatives and true positives as follows::
 
   >>> y_true = [0, 0, 0, 1, 1, 1, 1, 1]
   >>> y_pred = [0, 1, 0, 1, 0, 1, 0, 1]
-  >>> tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
-  >>> tn, fp, fn, tp
+  >>> tn, fn, fp, tp = confusion_matrix(y_true, y_pred).ravel()
+  >>> tn, fn, fp, tp
   (2, 1, 2, 3)
 
 .. topic:: Example:
