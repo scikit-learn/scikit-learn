@@ -218,6 +218,11 @@ Changelog
   :class:`ensemble.GradientBoostingClassifier`.
   :pr:`18326` by :user:`Madhura Jayaratne <madhuracj>`.
 
+- |Fix|: Fixed a bug in
+  :class:`ensemble.HistGradientBoostingRegressor` and
+  :class:`ensemble.HistGradientBoostingClassifier` which can now accept data
+  with `uint8` dtype in `predict`. :pr:`18410` by `Nicolas Hug`_.
+
 :mod:`sklearn.exceptions`
 .........................
 
@@ -530,6 +535,11 @@ Changelog
   will raise a ``ValueError``.
   :pr:`17876` by :user:`Cary Goltermann <Ultramann>`.
 
+- |Fix| A slice of a :class:`pipeline.Pipeline` now inherits the parameters of
+  the original pipeline (`memory` and `verbose`).
+  :pr:`18429` by :user:`Albert Villanova del Moral <albertvillanova>` and
+  :user:`Paweł Biernat <pwl>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
@@ -537,7 +547,8 @@ Changelog
   ``use_encoded_value`` option, along with a new ``unknown_value`` parameter,
   to :class:`preprocessing.OrdinalEncoder` to allow unknown categories during
   transform and set the encoded value of the unknown categories.
-  :pr:`17406` by :user:`Felix Wick <FelixWick>`.
+  :pr:`17406` by :user:`Felix Wick <FelixWick>` and :pr:`18406` by
+  `Nicolas Hug`_.
 
 - |Feature| Add ``clip`` parameter to :class:`preprocessing.MinMaxScaler`,
   which clips the transformed values of test data to ``feature_range``.

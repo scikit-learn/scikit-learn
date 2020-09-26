@@ -18,13 +18,14 @@ from contextlib import suppress
 
 import numpy as np
 import scipy.sparse as sp
-from joblib import Parallel, delayed, logger
+from joblib import Parallel, logger
 
 from ..base import is_classifier, clone
 from ..utils import indexable, check_random_state, _safe_indexing
 from ..utils.validation import _check_fit_params
 from ..utils.validation import _num_samples
 from ..utils.validation import _deprecate_positional_args
+from ..utils.fixes import delayed
 from ..utils.metaestimators import _safe_split
 from ..metrics import check_scoring
 from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
@@ -505,15 +506,15 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     return_parameters : bool, default=False
         Return parameters that has been used for the estimator.
 
-    split_progress : list or tuple, optional, default: None
-        A list or tuple of format (<current_split_id>, <total_num_of_splits>)
+    split_progress : {list, tuple} of int, default=None
+        A list or tuple of format (<current_split_id>, <total_num_of_splits>).
 
-    candidate_progress : list or tuple, optional, default: None
+    candidate_progress : {list, tuple} of int, default=None
         A list or tuple of format
-        (<current_candidate_id>, <total_number_of_candidates>)
+        (<current_candidate_id>, <total_number_of_candidates>).
 
     return_n_test_samples : bool, default=False
-        Whether to return the ``n_test_samples``
+        Whether to return the ``n_test_samples``.
 
     return_times : bool, default=False
         Whether to return the fit/score times.
