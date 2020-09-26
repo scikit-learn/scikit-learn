@@ -13,9 +13,6 @@ from sklearn.ensemble._hist_gradient_boosting.utils import (
     get_equivalent_estimator)
 
 
-pytest.importorskip("lightgbm")
-
-
 @pytest.mark.parametrize('seed', range(5))
 @pytest.mark.parametrize('min_samples_leaf', (1, 20))
 @pytest.mark.parametrize('n_samples, max_leaf_nodes', [
@@ -46,9 +43,9 @@ def test_same_predictions_regression(seed, min_samples_leaf, n_samples,
     #   discrepancy between the initial values leads to biggish differences in
     #   the predictions. These differences are much smaller with more
     #   iterations.
+    pytest.importorskip("lightgbm")
 
     rng = np.random.RandomState(seed=seed)
-    n_samples = n_samples
     max_iter = 1
     max_bins = 255
 
@@ -98,9 +95,9 @@ def test_same_predictions_regression(seed, min_samples_leaf, n_samples,
 def test_same_predictions_classification(seed, min_samples_leaf, n_samples,
                                          max_leaf_nodes):
     # Same as test_same_predictions_regression but for classification
+    pytest.importorskip("lightgbm")
 
     rng = np.random.RandomState(seed=seed)
-    n_samples = n_samples
     max_iter = 1
     max_bins = 255
 
@@ -158,9 +155,9 @@ def test_same_predictions_classification(seed, min_samples_leaf, n_samples,
 def test_same_predictions_multiclass_classification(
         seed, min_samples_leaf, n_samples, max_leaf_nodes):
     # Same as test_same_predictions_regression but for classification
+    pytest.importorskip("lightgbm")
 
     rng = np.random.RandomState(seed=seed)
-    n_samples = n_samples
     max_iter = 1
     max_bins = 255
     lr = 1

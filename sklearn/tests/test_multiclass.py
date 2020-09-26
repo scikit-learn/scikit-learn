@@ -1,7 +1,6 @@
-import pytest
-
 import numpy as np
 import scipy.sparse as sp
+import pytest
 
 from re import escape
 
@@ -11,11 +10,13 @@ from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import assert_raises_regexp
+from sklearn.utils._mocking import CheckingClassifier
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
 from sklearn.utils.multiclass import (check_classification_targets,
                                       type_of_target)
+from sklearn.utils import check_array
 from sklearn.utils import shuffle
 
 from sklearn.metrics import precision_score
@@ -28,7 +29,8 @@ from sklearn.linear_model import (LinearRegression, Lasso, ElasticNet, Ridge,
                                   SGDClassifier)
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.model_selection import GridSearchCV, cross_val_score
-from sklearn.pipeline import Pipeline
+from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.impute import SimpleImputer
 from sklearn import svm
 from sklearn import datasets
 
@@ -707,6 +709,32 @@ def test_ecoc_float_y():
                          " got -1", ovo.fit, X, y)
 
 
+def test_ecoc_delegate_sparse_base_estimator():
+    # Non-regression test for
+    # https://github.com/scikit-learn/scikit-learn/issues/17218
+    X, y = iris.data, iris.target
+    X_sp = sp.csc_matrix(X)
+
+    # create an estimator that does not support sparse input
+    base_estimator = CheckingClassifier(
+        check_X=check_array,
+        check_X_params={"ensure_2d": True, "accept_sparse": False},
+    )
+    ecoc = OutputCodeClassifier(base_estimator, random_state=0)
+
+    with pytest.raises(TypeError, match="A sparse matrix was passed"):
+        ecoc.fit(X_sp, y)
+
+    ecoc.fit(X, y)
+    with pytest.raises(TypeError, match="A sparse matrix was passed"):
+        ecoc.predict(X_sp)
+
+    # smoke test to check when sparse input should be supported
+    ecoc = OutputCodeClassifier(LinearSVC(random_state=0))
+    ecoc.fit(X_sp, y).predict(X_sp)
+    assert len(ecoc.estimators_) == 4
+
+
 def test_pairwise_indices():
     clf_precomputed = svm.SVC(kernel='precomputed')
     X, y = iris.data, iris.target
@@ -749,3 +777,21 @@ def test_pairwise_cross_val_score():
         score_precomputed = cross_val_score(ovr_true, linear_kernel, y)
         score_linear = cross_val_score(ovr_false, X, y)
         assert_array_equal(score_precomputed, score_linear)
+
+
+@pytest.mark.parametrize("MultiClassClassifier",
+                         [OneVsRestClassifier, OneVsOneClassifier])
+# FIXME: we should move this test in `estimator_checks` once we are able
+# to construct meta-estimator instances
+def test_support_missing_values(MultiClassClassifier):
+    # smoke test to check that pipeline OvR and OvO classifiers are letting
+    # the validation of missing values to
+    # the underlying pipeline or classifiers
+    rng = np.random.RandomState(42)
+    X, y = iris.data, iris.target
+    mask = rng.choice([1, 0], X.shape, p=[.1, .9]).astype(bool)
+    X[mask] = np.nan
+    lr = make_pipeline(SimpleImputer(),
+                       LogisticRegression(random_state=rng))
+
+    MultiClassClassifier(lr).fit(X, y).score(X, y)

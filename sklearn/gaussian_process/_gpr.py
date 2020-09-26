@@ -1,7 +1,7 @@
-"""Gaussian processes regression. """
+"""Gaussian processes regression."""
 
 # Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-#
+# Modified by: Pete Green <p.l.green@liverpool.ac.uk>
 # License: BSD 3 clause
 
 import warnings
@@ -15,8 +15,9 @@ from ..base import BaseEstimator, RegressorMixin, clone
 from ..base import MultiOutputMixin
 from .kernels import RBF, ConstantKernel as C
 from ..utils import check_random_state
-from ..utils.validation import check_X_y, check_array
+from ..utils.validation import check_array
 from ..utils.optimize import _check_optimize_result
+from ..utils.validation import _deprecate_positional_args
 
 
 class GaussianProcessRegressor(MultiOutputMixin,
@@ -47,16 +48,17 @@ class GaussianProcessRegressor(MultiOutputMixin,
         passed, the kernel "1.0 * RBF(1.0)" is used as default. Note that
         the kernel's hyperparameters are optimized during fitting.
 
-    alpha : float or array-like of shape (n_samples), default=1e-10
+    alpha : float or ndarray of shape (n_samples,), default=1e-10
         Value added to the diagonal of the kernel matrix during fitting.
-        Larger values correspond to increased noise level in the observations.
-        This can also prevent a potential numerical issue during fitting, by
+        This can prevent a potential numerical issue during fitting, by
         ensuring that the calculated values form a positive definite matrix.
-        If an array is passed, it must have the same number of entries as the
-        data used for fitting and is used as datapoint-dependent noise level.
-        Note that this is equivalent to adding a WhiteKernel with c=alpha.
-        Allowing to specify the noise level directly as a parameter is mainly
-        for convenience and for consistency with Ridge.
+        It can also be interpreted as the variance of additional Gaussian
+        measurement noise on the training observations. Note that this is
+        different from using a `WhiteKernel`. If an array is passed, it must
+        have the same number of entries as the data used for fitting and is
+        used as datapoint-dependent noise level. Allowing to specify the
+        noise level directly as a parameter is mainly for convenience and
+        for consistency with Ridge.
 
     optimizer : "fmin_l_bfgs_b" or callable, default="fmin_l_bfgs_b"
         Can either be one of the internally supported optimizers for optimizing
@@ -93,12 +95,13 @@ class GaussianProcessRegressor(MultiOutputMixin,
         run is performed.
 
     normalize_y : bool, default=False
-        Whether the target values y are normalized, i.e., the mean of the
-        observed target values become zero. This parameter should be set to
-        True if the target values' mean is expected to differ considerable from
-        zero. When enabled, the normalization effectively modifies the GP's
-        prior based on the data, which contradicts the likelihood principle;
-        normalization is thus disabled per default.
+        Whether the target values y are normalized, the mean and variance of
+        the target values are set equal to 0 and 1 respectively. This is
+        recommended for cases where zero-mean, unit-variance priors are used.
+        Note that, in this implementation, the normalisation is reversed
+        before the GP predictions are reported.
+
+        .. versionchanged:: 0.23
 
     copy_X_train : bool, default=True
         If True, a persistent copy of the training data is stored in the
@@ -106,7 +109,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
         which might cause predictions to change if the data is modified
         externally.
 
-    random_state : int or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation used to initialize the centers.
         Pass an int for reproducible results across multiple function calls.
         See :term: `Glossary <random_state>`.
@@ -148,7 +151,8 @@ class GaussianProcessRegressor(MultiOutputMixin,
     (array([653.0..., 592.1...]), array([316.6..., 316.6...]))
 
     """
-    def __init__(self, kernel=None, alpha=1e-10,
+    @_deprecate_positional_args
+    def __init__(self, kernel=None, *, alpha=1e-10,
                  optimizer="fmin_l_bfgs_b", n_restarts_optimizer=0,
                  normalize_y=False, copy_X_train=True, random_state=None):
         self.kernel = kernel
@@ -183,19 +187,23 @@ class GaussianProcessRegressor(MultiOutputMixin,
         self._rng = check_random_state(self.random_state)
 
         if self.kernel_.requires_vector_input:
-            X, y = check_X_y(X, y, multi_output=True, y_numeric=True,
-                             ensure_2d=True, dtype="numeric")
+            X, y = self._validate_data(X, y, multi_output=True, y_numeric=True,
+                                       ensure_2d=True, dtype="numeric")
         else:
-            X, y = check_X_y(X, y, multi_output=True, y_numeric=True,
-                             ensure_2d=False, dtype=None)
+            X, y = self._validate_data(X, y, multi_output=True, y_numeric=True,
+                                       ensure_2d=False, dtype=None)
 
         # Normalize target value
         if self.normalize_y:
             self._y_train_mean = np.mean(y, axis=0)
-            # demean y
-            y = y - self._y_train_mean
+            self._y_train_std = np.std(y, axis=0)
+
+            # Remove mean and make unit variance
+            y = (y - self._y_train_mean) / self._y_train_std
+
         else:
             self._y_train_mean = np.zeros(1)
+            self._y_train_std = 1
 
         if np.iterable(self.alpha) \
            and self.alpha.shape[0] != y.shape[0]:
@@ -244,6 +252,8 @@ class GaussianProcessRegressor(MultiOutputMixin,
             # likelihood
             lml_values = list(map(itemgetter(1), optima))
             self.kernel_.theta = optima[np.argmin(lml_values)][0]
+            self.kernel_._check_bounds_params()
+
             self.log_marginal_likelihood_value_ = -np.min(lml_values)
         else:
             self.log_marginal_likelihood_value_ = \
@@ -287,12 +297,12 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
         return_cov : bool, default=False
             If True, the covariance of the joint predictive distribution at
-            the query points is returned along with the mean
+            the query points is returned along with the mean.
 
         Returns
         -------
         y_mean : ndarray of shape (n_samples, [n_output_dims])
-            Mean of predictive distribution a query points
+            Mean of predictive distribution a query points.
 
         y_std : ndarray of shape (n_samples,), optional
             Standard deviation of predictive distribution at query points.
@@ -330,10 +340,17 @@ class GaussianProcessRegressor(MultiOutputMixin,
         else:  # Predict based on GP posterior
             K_trans = self.kernel_(X, self.X_train_)
             y_mean = K_trans.dot(self.alpha_)  # Line 4 (y_mean = f_star)
-            y_mean = self._y_train_mean + y_mean  # undo normal.
+
+            # undo normalisation
+            y_mean = self._y_train_std * y_mean + self._y_train_mean
+
             if return_cov:
                 v = cho_solve((self.L_, True), K_trans.T)  # Line 5
                 y_cov = self.kernel_(X) - K_trans.dot(v)  # Line 6
+
+                # undo normalisation
+                y_cov = y_cov * self._y_train_std**2
+
                 return y_mean, y_cov
             elif return_std:
                 # cache result of K_inv computation
@@ -356,6 +373,10 @@ class GaussianProcessRegressor(MultiOutputMixin,
                     warnings.warn("Predicted variances smaller than 0. "
                                   "Setting those variances to 0.")
                     y_var[y_var_negative] = 0.0
+
+                # undo normalisation
+                y_var = y_var * self._y_train_std**2
+
                 return y_mean, np.sqrt(y_var)
             else:
                 return y_mean
@@ -371,7 +392,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
         n_samples : int, default=1
             The number of samples drawn from the Gaussian process
 
-        random_state : int, RandomState, default=0
+        random_state : int, RandomState instance or None, default=0
             Determines random number generation to randomly draw samples.
             Pass an int for reproducible results across multiple function
             calls.
@@ -470,7 +491,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
             # constructing the full matrix tmp.dot(K_gradient) since only
             # its diagonal is required
             log_likelihood_gradient_dims = \
-                0.5 * np.einsum("ijl,ijk->kl", tmp, K_gradient)
+                0.5 * np.einsum("ijl,jik->kl", tmp, K_gradient)
             log_likelihood_gradient = log_likelihood_gradient_dims.sum(-1)
 
         if eval_gradient:
