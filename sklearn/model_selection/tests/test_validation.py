@@ -1769,29 +1769,44 @@ def test_score():
                          _score, *fit_and_score_args)
 
 
-def test_transformer_copy_warning():
+@pytest.mark.parametrize("func_name, expected_side_effect",[
+    ("set_new_column_in_copy", False),
+    ("set_new_column_in_place", True),
+])
+def test_transformer_copy_warning(func_name, expected_side_effect):
     pd = pytest.importorskip('pandas')
     X = pd.DataFrame({"a": [1, 2, 3, 4, 5, 6],
                       "b": [0, 2, 4, 1, 0, 1],
                       "c": [10, 0, 5, 1, 2, 10]})
     y = pd.Series([0, 0, 1, 1, 0, 0])
 
-    def add_new_column(X_, column_name, value):
-        X_.loc[:, column_name] = value
-        return X_
+    # Transformation without side effects: transform a copy of X; recommended
+    # It creates a new object
+    def set_new_column_in_copy(X, **kwargs):
+        return X.assign(**kwargs)
 
-    # adding a column in a DataFrame should not return a SettingWithCopyWarning
-    assert_no_warnings(add_new_column, X, "d", 15)
+    # Transformation with side effects: transform X in-place; not recommended
+    # It modifies its mutable argument (a DataFrame) passed by reference
+    def set_new_column_in_place(X, **kwargs):
+        for k, v in kwargs.items():
+            X.loc[:, k] = v
+        return X
 
-    # define a FunctionTransformer which add a column to a DataFrame
-    d = {"column_name": "e", "value": 20}
-    func_trans = FunctionTransformer(add_new_column, kw_args=d)
-    pipeline = make_pipeline(func_trans, LogisticRegression())
-
-    # run a pipeline with cross-validation
-    pipeline.fit(X, y)
+    funcs = {
+        'set_new_column_in_copy': set_new_column_in_copy,
+        'set_new_column_in_place': set_new_column_in_place,
+    }
+    func = funcs[func_name]
+    assert_no_warnings(func, X, d=10)
+    assert ('d' in X.columns) is expected_side_effect
+    kw_args = {'e': 20}
+    pipeline = make_pipeline(
+        FunctionTransformer(func, kw_args=kw_args),
+        LogisticRegression())
     assert_no_warnings(cross_val_score, pipeline, X, y, cv=2)
     assert_no_warnings(cross_val_predict, pipeline, X, y, cv=2)
+    pipeline.fit(X, y)
+    assert ('e' in X.columns) is expected_side_effect
 
 
 def test_callable_multimetric_confusion_matrix_cross_validate():
