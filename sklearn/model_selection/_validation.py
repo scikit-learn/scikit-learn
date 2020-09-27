@@ -928,15 +928,12 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
     fit_params = fit_params if fit_params is not None else {}
     fit_params = _check_fit_params(X, fit_params, train)
 
-    # quick hack to silent redundant pandas SettingWithCopyWarning
     X_train, y_train = _safe_split(estimator, X, y, train)
-    if hasattr(X_train, "_is_copy"):
-        X_train._is_copy = None
-    if hasattr(y_train, "_is_copy"):
-        y_train._is_copy = None
     X_test, _ = _safe_split(estimator, X, y, test, train)
-    if hasattr(X_test, "_is_copy"):
-        X_test._is_copy = None
+    # quick hack to silent redundant pandas SettingWithCopyWarning
+    for arr in [X_train, y_train, X_test]:
+        if hasattr(arr, "_is_copy"):
+            arr._is_copy = None
 
     if y_train is None:
         estimator.fit(X_train, **fit_params)
