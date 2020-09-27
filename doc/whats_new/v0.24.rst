@@ -438,7 +438,8 @@ Changelog
   :user:`Nirvan <Nirvan101>` and :user:`Arthur Book <ArthurBook>`.
 
 - |Fix| No pandas warning of type `SettingWithCopyWarning` is raised by
-  :func:`model_selection._fit_and_score` during cross-validation.
+  :func:`model_selection._fit_and_score` and
+  :func:`model_selection._fit_and_predict` during cross-validation.
   :pr:`18464` by :user:`Albert Villanova del Moral <albertvillanova>` and
   :user:`Arthur Imbert <Henley13>`.
 
