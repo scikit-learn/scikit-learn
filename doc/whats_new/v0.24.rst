@@ -437,7 +437,10 @@ Changelog
   :pr:`18266` by :user:`Subrat Sahu <subrat93>`,
   :user:`Nirvan <Nirvan101>` and :user:`Arthur Book <ArthurBook>`.
 
-- |Fix| No warning of type ``
+- |Fix| No pandas warning of type `SettingWithCopyWarning` is raised by
+  :func:`model_selection._fit_and_score` during cross-validation.
+  :pr:`18464` by :user:`Albert Villanova del Moral <albertvillanova>` and
+  :user:`Arthur Imbert <Henley13>`.
 
 :mod:`sklearn.multiclass`
 .........................
