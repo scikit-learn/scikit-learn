@@ -66,8 +66,7 @@ from sklearn.cluster import KMeans
 
 from sklearn.impute import SimpleImputer
 
-from sklearn.preprocessing import LabelEncoder
-from sklearn.preprocessing import FunctionTransformer
+from sklearn.preprocessing import LabelEncoder, FunctionTransformer
 from sklearn.pipeline import Pipeline, make_pipeline
 
 from io import StringIO
