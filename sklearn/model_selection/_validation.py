@@ -578,17 +578,12 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     start_time = time.time()
 
-    # quick hack to silent redundant pandas SettingWithCopyWarning
     X_train, y_train = _safe_split(estimator, X, y, train)
-    if hasattr(X_train, "_is_copy"):
-        X_train._is_copy = None
-    if hasattr(y_train, "_is_copy"):
-        y_train._is_copy = None
     X_test, y_test = _safe_split(estimator, X, y, test, train)
-    if hasattr(X_test, "_is_copy"):
-        X_test._is_copy = None
-    if hasattr(y_test, "_is_copy"):
-        y_test._is_copy = None
+    # quick hack to silent redundant pandas SettingWithCopyWarning
+    for arr in [X_train, y_train, X_test, y_test]:
+        if hasattr(arr, "_is_copy"):
+            arr._is_copy = None
 
     result = {}
     try:
