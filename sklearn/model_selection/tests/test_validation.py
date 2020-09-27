@@ -1769,7 +1769,7 @@ def test_score():
                          _score, *fit_and_score_args)
 
 
-@pytest.mark.parametrize("func_name, expected_side_effect",[
+@pytest.mark.parametrize("func_name, expected_side_effect", [
     ("set_new_column_in_copy", False),
     ("set_new_column_in_place", True),
 ])

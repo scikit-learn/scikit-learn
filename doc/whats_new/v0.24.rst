@@ -437,6 +437,8 @@ Changelog
   :pr:`18266` by :user:`Subrat Sahu <subrat93>`,
   :user:`Nirvan <Nirvan101>` and :user:`Arthur Book <ArthurBook>`.
 
+- |Fix| No warning of type ``
+
 :mod:`sklearn.multiclass`
 .........................
 
