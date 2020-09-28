@@ -779,13 +779,16 @@ def check_estimator_sparse_data(name, estimator_orig, strict_mode=True):
                 estimator.set_params(with_mean=False)
         # fit and predict
         if "64" in matrix_format:
-            err_msg = f"Estimator {name} doesn't seem to support {matrix_format} matrix, and is not failing gracefully, e.g. by using check_array(X, accept_large_sparse=False)"
+            err_msg = (
+                f"Estimator {name} doesn't seem to support {matrix_format} "
+                "matrix, and is not failing gracefully, e.g. by using "
+                "check_array(X, accept_large_sparse=False)"
+            )
         else:
             err_msg = (
-                f"Estimator {name} doesn't seem to fail gracefully on "
-                "sparse data: error message state explicitly that "
-                "sparse input is not supported if this is not"
-                " the case."
+                f"Estimator {name} doesn't seem to fail gracefully on sparse "
+                "data: error message state explicitly that sparse input is "
+                "not supported if this is not the case."
             )
         with raises(
             (TypeError, ValueError),
@@ -1069,8 +1072,7 @@ def check_dont_overwrite_parameters(name, estimator_orig, strict_mode=True):
 
     # check that fit doesn't add any public attribute
     assert not attrs_added_by_fit, (
-            'Estimator adds public attribute(s) during'
-            ' the fit method.'
+            'Estimator adds public attribute(s) during' ' the fit method.'
             ' Estimators are only allowed to add private attributes'
             ' either started with _ or ended'
             ' with _ but %s added'
@@ -1373,11 +1375,9 @@ def _check_transformer(name, transformer_orig, X, y, strict_mode=True):
             # If it's not an array, it does not have a 'T' property
             with raises(
                 ValueError,
-                err_msg=f"The transformer {name} does "
-                "not raise an error when the number of "
-                "features in transform is different from"
-                " the number of features in "
-                "fit.",
+                err_msg=f"The transformer {name} does not raise an error "
+                "when the number of features in transform is different from "
+                "the number of features in fit."
             ):
                 transformer.transform(X[:, :-1])
 
@@ -1507,10 +1507,8 @@ def check_estimators_empty_data_messages(name, estimator_orig,
     # validated first. Let us test the type of exception only:
     with raises(
         ValueError,
-        err_msg=f"The estimator {name} does not"
-        " raise an error when an empty data is used "
-        "to train. Perhaps use "
-        "check_array in train.",
+        err_msg=f"The estimator {name} does not raise an error when an "
+        "empty data is used to train. Perhaps use check_array in train."
     ):
         e.fit(X_zero_samples, [])
 
@@ -1583,8 +1581,8 @@ def check_nonsquare_error(name, estimator_orig, strict_mode=True):
 
     with raises(
         ValueError,
-        err_msg=f"The pairwise estimator {name}"
-        " does not raise an error on non-square data",
+        err_msg=f"The pairwise estimator {name} does not raise an error "
+        "on non-square data",
     ):
         estimator.fit(X, y)
 
@@ -1655,10 +1653,8 @@ def check_estimators_partial_fit_n_features(name, estimator_orig,
 
     with raises(
         ValueError,
-        err_msg=f"The estimator {name} does not raise an"
-        " error when the number of features"
-        " changes between calls to "
-        "partial_fit.",
+        err_msg=f"The estimator {name} does not raise an error when the "
+        "number of features changes between calls to partial_fit.",
     ):
         estimator.partial_fit(X[:, :-1], y)
 
@@ -1883,11 +1879,10 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False,
         if not tags["no_validation"]:
             with raises(
                 ValueError,
-                err_msg=f"The classifier {name} does not "
-                "raise an error when incorrect/malformed input "
-                "data for fit is passed. The number of training "
-                "examples is not the same as the number of labels. "
-                "Perhaps use check_X_y in fit.",
+                err_msg=f"The classifier {name} does not raise an error when "
+                "incorrect/malformed input data for fit is passed. The number "
+                "of training examples is not the same as the number of "
+                "labels. Perhaps use check_X_y in fit.",
             ):
                 classifier.fit(X, y[:-1])
 
@@ -2335,11 +2330,10 @@ def check_regressors_train(name, regressor_orig, readonly_memmap=False,
     # raises error on malformed input for fit
     with raises(
         ValueError,
-        err_msg=f"The classifier {name} does not"
-        " raise an error when incorrect/malformed input "
-        "data for fit is passed. The number of training "
-        "examples is not the same as the number of "
-        "labels. Perhaps use check_X_y in fit.",
+        err_msg=f"The classifier {name} does not raise an error when "
+        "incorrect/malformed input data for fit is passed. The number of "
+        "training examples is not the same as the number of labels. Perhaps "
+        "use check_X_y in fit.",
     ):
         regressor.fit(X, y[:-1])
     # fit
