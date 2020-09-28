@@ -614,7 +614,7 @@ One-hot encoded discretized features can make a model more expressive, while
 maintaining interpretability. For instance, preprocessing with a discretizer
 can introduce nonlinearity to linear models.
 
-.. _preprocessing_k_bins_discretization
+.. _preprocessing_k_bins_discretization:
 
 K-bins discretization
 ---------------------
@@ -675,7 +675,7 @@ on each feature independently.
   * :ref:`sphx_glr_auto_examples_preprocessing_plot_discretization_classification.py`
   * :ref:`sphx_glr_auto_examples_preprocessing_plot_discretization_strategies.py`
 
-.. _preprocessing_mdlp_discretization
+.. _preprocessing_mdlp_discretization:
 
 MDLP discretization
 -------------------
