@@ -760,6 +760,9 @@ def _generate_sparse_matrix(X_csr):
 
 
 def check_estimator_sparse_data(name, estimator_orig, strict_mode=True):
+    # Make sure that the estimator either accepts sparse data in fit and
+    # predict, or that it fails with a helpful error message.
+    # XXX this is a non-API check
     rng = np.random.RandomState(0)
     X = rng.rand(40, 10)
     X[X < .8] = 0
@@ -817,6 +820,7 @@ def check_estimator_sparse_data(name, estimator_orig, strict_mode=True):
 def check_sample_weights_pandas_series(name, estimator_orig, strict_mode=True):
     # check that estimators will accept a 'sample_weight' parameter of
     # type pandas.Series in the 'fit' function.
+    # XXX pure API check
     estimator = clone(estimator_orig)
     if has_fit_parameter(estimator, "sample_weight"):
         try:
@@ -844,6 +848,7 @@ def check_sample_weights_pandas_series(name, estimator_orig, strict_mode=True):
 def check_sample_weights_not_an_array(name, estimator_orig, strict_mode=True):
     # check that estimators will accept a 'sample_weight' parameter of
     # type _NotAnArray in the 'fit' function.
+    # XXX pure API check
     estimator = clone(estimator_orig)
     if has_fit_parameter(estimator, "sample_weight"):
         X = np.array([[1, 1], [1, 2], [1, 3], [1, 4],
@@ -861,6 +866,7 @@ def check_sample_weights_not_an_array(name, estimator_orig, strict_mode=True):
 def check_sample_weights_list(name, estimator_orig, strict_mode=True):
     # check that estimators will accept a 'sample_weight' parameter of
     # type list in the 'fit' function.
+    # XXX: pure API check
     if has_fit_parameter(estimator_orig, "sample_weight"):
         estimator = clone(estimator_orig)
         rnd = np.random.RandomState(0)
@@ -878,6 +884,7 @@ def check_sample_weights_list(name, estimator_orig, strict_mode=True):
 def check_sample_weights_shape(name, estimator_orig, strict_mode=True):
     # check that estimators raise an error if sample_weight
     # shape mismatches the input
+    # XXX: pure API check?????? Are error checks API checks?????
     if (has_fit_parameter(estimator_orig, "sample_weight") and
             not (hasattr(estimator_orig, "_pairwise")
                  and estimator_orig._pairwise)):
@@ -906,6 +913,7 @@ def check_sample_weights_invariance(name, estimator_orig, kind="ones",
     # unit weights and no weights
     # For kind="zeros" check that setting sample_weight to 0 is equivalent
     # to removing corresponding samples.
+    # XXX: non-API check
     estimator1 = clone(estimator_orig)
     estimator2 = clone(estimator_orig)
     set_random_state(estimator1, random_state=0)
@@ -955,6 +963,7 @@ def check_sample_weights_invariance(name, estimator_orig, kind="ones",
 @ignore_warnings(category=(FutureWarning, UserWarning))
 def check_dtype_object(name, estimator_orig, strict_mode=True):
     # check that estimators treat dtype object as numeric if possible
+    # XXXX api or not????? partially????
     rng = np.random.RandomState(0)
     X = _pairwise_estimator_convert_X(rng.rand(40, 10), estimator_orig)
     X = X.astype(object)
@@ -988,6 +997,7 @@ def check_dtype_object(name, estimator_orig, strict_mode=True):
 
 def check_complex_data(name, estimator_orig, strict_mode=True):
     # check that estimators raise an exception on providing complex data
+    #XXX: error check... ?????
     X = np.random.sample(10) + 1j * np.random.sample(10)
     X = X.reshape(-1, 1)
     y = np.random.sample(10) + 1j * np.random.sample(10)
@@ -998,12 +1008,9 @@ def check_complex_data(name, estimator_orig, strict_mode=True):
 
 @ignore_warnings
 def check_dict_unchanged(name, estimator_orig, strict_mode=True):
-    # this estimator raises
-    # ValueError: Found array with 0 feature(s) (shape=(23, 0))
-    # while a minimum of 1 is required.
-    # error
-    if name in ['SpectralCoclustering']:
-        return
+    # check that calling the prediction method does not alter the __dict__
+    # attribute of the estimator.
+    # XXX: pure API check
     rnd = np.random.RandomState(0)
     if name in ['RANSACRegressor']:
         X = 3 * rnd.uniform(size=(20, 3))
