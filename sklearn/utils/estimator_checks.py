@@ -1505,11 +1505,11 @@ def check_estimators_empty_data_messages(name, estimator_orig,
     X_zero_samples = np.empty(0).reshape(0, 3)
     # The precise message can change depending on whether X or y is
     # validated first. Let us test the type of exception only:
-    with raises(
-        ValueError,
-        err_msg=f"The estimator {name} does not raise an error when an "
+    err_msg = (
+        f"The estimator {name} does not raise an error when an "
         "empty data is used to train. Perhaps use check_array in train."
-    ):
+    )
+    with raises(ValueError, err_msg=err_msg):
         e.fit(X_zero_samples, [])
 
     X_zero_features = np.empty(0).reshape(3, 0)
