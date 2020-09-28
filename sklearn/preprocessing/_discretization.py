@@ -133,7 +133,7 @@ class _BaseDiscretizer(TransformerMixin, BaseEstimator):
 class KBinsDiscretizer(_BaseDiscretizer):
     """Bin continuous data into intervals using a given number of bins.
 
-    Read more in the :ref:`User Guide <preprocessing_discretization>`.
+    Read more in the :ref:`User Guide <preprocessing_k_bins_discretization>`.
 
     .. versionadded:: 0.20
 
@@ -368,9 +368,11 @@ class KBinsDiscretizer(_BaseDiscretizer):
 
 
 class MDLPDiscretizer(_BaseDiscretizer):
-    """Bin continuous data into intervals using the MDLP strategy.
+    """Bin data into intervals using entropy criterion and MDLP stopping rule.
 
-    Read more in the :ref:`User Guide <preprocessing_discretization>`.
+    Read more in the :ref:`User Guide <preprocessing_mdlp_discretization>`.
+
+    .. versionadded:: 0.24
 
     .. note::
 
