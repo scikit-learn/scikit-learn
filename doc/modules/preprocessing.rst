@@ -628,7 +628,6 @@ K-bins discretization
   >>> encode = "ordinal"
   >>> est = preprocessing.KBinsDiscretizer(n_bins, encode=encode)
   >>> est = est.fit(X)
-  KBinsDiscretizer(encode='ordinal', n_bins=[3, 2, 2])
 
 By default, the output is one-hot encoded into a sparse matrix
 (see :ref:`preprocessing_categorical_features`) and this can

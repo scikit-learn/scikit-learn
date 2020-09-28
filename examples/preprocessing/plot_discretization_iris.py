@@ -1,7 +1,7 @@
 """
-==================================================
-Demostrating `MDLPDiscretizer` in the iris dataset
-==================================================
+===================================================
+Demonstrating `MDLPDiscretizer` in the iris dataset
+===================================================
 
 This example demonstrates the discretization performed
 by the :class:`~sklearn.preprocessing.MDLPDiscretizer`
