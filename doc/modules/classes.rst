@@ -23,6 +23,7 @@ Base classes
 .. currentmodule:: sklearn
 
 .. autosummary::
+   :nosignatures:
    :toctree: generated/
    :template: class.rst
 
@@ -456,6 +457,7 @@ Samples generator
 
    experimental.enable_hist_gradient_boosting
    experimental.enable_iterative_imputer
+   experimental.enable_successive_halving
 
 
 .. _feature_extraction_ref:
@@ -628,7 +630,7 @@ Kernels:
 
 .. _inspection_ref:
 
-:mod:`sklearn.inspection`: inspection
+:mod:`sklearn.inspection`: Inspection
 =====================================
 
 .. automodule:: sklearn.inspection
@@ -690,8 +692,8 @@ Plotting
 
 .. _kernel_approximation_ref:
 
-:mod:`sklearn.kernel_approximation` Kernel Approximation
-========================================================
+:mod:`sklearn.kernel_approximation`: Kernel Approximation
+=========================================================
 
 .. automodule:: sklearn.kernel_approximation
    :no-members:
@@ -713,8 +715,8 @@ Plotting
 
 .. _kernel_ridge_ref:
 
-:mod:`sklearn.kernel_ridge` Kernel Ridge Regression
-========================================================
+:mod:`sklearn.kernel_ridge`: Kernel Ridge Regression
+====================================================
 
 .. automodule:: sklearn.kernel_ridge
    :no-members:
@@ -1193,9 +1195,11 @@ Hyper-parameter optimizers
    :template: class.rst
 
    model_selection.GridSearchCV
+   model_selection.HalvingGridSearchCV
    model_selection.ParameterGrid
    model_selection.ParameterSampler
    model_selection.RandomizedSearchCV
+   model_selection.HalvingRandomSearchCV
 
 
 Model validation
@@ -1216,14 +1220,14 @@ Model validation
 
 .. _multiclass_ref:
 
-:mod:`sklearn.multiclass`: Multiclass and multilabel classification
-===================================================================
+:mod:`sklearn.multiclass`: Multiclass classification
+====================================================
 
 .. automodule:: sklearn.multiclass
    :no-members:
    :no-inherited-members:
 
-**User guide:** See the :ref:`multiclass` section for further details.
+**User guide:** See the :ref:`multiclass_classification` section for further details.
 
 .. currentmodule:: sklearn
 
@@ -1244,7 +1248,9 @@ Model validation
    :no-members:
    :no-inherited-members:
 
-**User guide:** See the :ref:`multiclass` section for further details.
+**User guide:** See the :ref:`multilabel_classification`,
+:ref:`multiclass_multioutput_classification`, and
+:ref:`multioutput_regression` sections for further details.
 
 .. currentmodule:: sklearn
 
@@ -1323,7 +1329,7 @@ Model validation
 .. _neural_network_ref:
 
 :mod:`sklearn.neural_network`: Neural network models
-=====================================================
+====================================================
 
 .. automodule:: sklearn.neural_network
    :no-members:
@@ -1449,7 +1455,7 @@ details.
 
 .. _semi_supervised_ref:
 
-:mod:`sklearn.semi_supervised` Semi-Supervised Learning
+:mod:`sklearn.semi_supervised`: Semi-Supervised Learning
 ========================================================
 
 .. automodule:: sklearn.semi_supervised

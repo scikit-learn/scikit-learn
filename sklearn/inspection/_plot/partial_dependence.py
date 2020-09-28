@@ -6,7 +6,7 @@ from math import ceil
 import numpy as np
 from scipy import sparse
 from scipy.stats.mstats import mquantiles
-from joblib import Parallel, delayed
+from joblib import Parallel
 
 from .. import partial_dependence
 from ...base import is_regressor
@@ -14,6 +14,7 @@ from ...utils import check_array
 from ...utils import check_matplotlib_support  # noqa
 from ...utils import _safe_indexing
 from ...utils.validation import _deprecate_positional_args
+from ...utils.fixes import delayed
 
 
 @_deprecate_positional_args

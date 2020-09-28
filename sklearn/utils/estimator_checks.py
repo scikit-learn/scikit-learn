@@ -31,8 +31,14 @@ from . import is_scalar_nan
 from ..discriminant_analysis import LinearDiscriminantAnalysis
 from ..linear_model import Ridge
 
-from ..base import (clone, ClusterMixin, is_classifier, is_regressor,
-                    RegressorMixin, is_outlier_detector)
+from ..base import (
+    clone,
+    ClusterMixin,
+    is_classifier,
+    is_regressor,
+    is_outlier_detector,
+    RegressorMixin,
+)
 
 from ..metrics import accuracy_score, adjusted_rand_score, f1_score
 from ..random_projection import BaseRandomProjection
@@ -50,12 +56,26 @@ from .import shuffle
 from .validation import has_fit_parameter, _num_samples
 from ..preprocessing import StandardScaler
 from ..preprocessing import scale
-from ..datasets import (load_iris, make_blobs,
-                        make_multilabel_classification, make_regression)
-
+from ..datasets import (
+    load_iris,
+    make_blobs,
+    make_multilabel_classification,
+    make_regression,
+)
 
 REGRESSION_DATASET = None
 CROSS_DECOMPOSITION = ['PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']
+
+
+def _assert_raises(exp_type, strict_mode, func, *args, msg=None):
+    """Assert exp_type is raised when calling func(*args)
+
+    The error message is validated if strict mode is True.
+    """
+    if strict_mode:
+        assert_raises_regex(exp_type, msg, func, *args)
+    else:
+        assert_raises(exp_type, func, *args)
 
 
 def _yield_checks(estimator):
@@ -148,18 +168,9 @@ def check_supervised_y_no_nan(name, estimator_orig, strict_mode=True):
     y = np.full(10, np.inf)
     y = _enforce_estimator_tags_y(estimator, y)
 
-    errmsg = "Input contains NaN, infinity or a value too large for " \
-             "dtype('float64')."
-    try:
-        estimator.fit(X, y)
-    except ValueError as e:
-        if str(e) != errmsg:
-            raise ValueError("Estimator {0} raised error as expected, but "
-                             "does not match expected error message"
-                             .format(name))
-    else:
-        raise ValueError("Estimator {0} should have raised error on fitting "
-                         "array y with NaN value.".format(name))
+    errmsg = ("Input contains NaN, infinity or a value too large for "
+              r"dtype\('float64'\).")
+    _assert_raises(ValueError, strict_mode, estimator.fit, X, y, msg=errmsg)
 
 
 def _yield_regressor_checks(regressor):
@@ -189,12 +200,15 @@ def _yield_regressor_checks(regressor):
 
 
 def _yield_transformer_checks(transformer):
+    tags = transformer._get_tags()
     # All transformers should either deal with sparse data or raise an
     # exception with type TypeError and an intelligible error message
-    if not transformer._get_tags()["no_validation"]:
+    if not tags["no_validation"]:
         yield check_transformer_data_not_an_array
     # these don't actually fit the data, so don't raise errors
     yield check_transformer_general
+    if tags["preserves_dtype"]:
+        yield check_transformer_preserve_dtypes
     yield partial(check_transformer_general, readonly_memmap=True)
     if not transformer._get_tags()["stateless"]:
         yield check_transformers_unfitted
@@ -963,16 +977,17 @@ def check_dtype_object(name, estimator_orig, strict_mode=True):
     if hasattr(estimator, "transform"):
         estimator.transform(X)
 
+    msg = "Unknown label type"
     try:
         estimator.fit(X, y.astype(object))
     except Exception as e:
-        if "Unknown label type" not in str(e):
+        if strict_mode and "Unknown label type" not in str(e):
             raise
 
     if 'string' not in tags['X_types']:
         X[0, 0] = {'foo': 'bar'}
         msg = "argument must be a string.* number"
-        assert_raises_regex(TypeError, msg, estimator.fit, X, y)
+        _assert_raises(TypeError, strict_mode, estimator.fit, X, y, msg=msg)
     else:
         # Estimators supporting string will not call np.asarray to convert the
         # data to numeric and therefore, the error will not be raised.
@@ -987,8 +1002,8 @@ def check_complex_data(name, estimator_orig, strict_mode=True):
     X = X.reshape(-1, 1)
     y = np.random.sample(10) + 1j * np.random.sample(10)
     estimator = clone(estimator_orig)
-    assert_raises_regex(ValueError, "Complex data not supported",
-                        estimator.fit, X, y)
+    msg = "Complex data not supported"
+    _assert_raises(ValueError, strict_mode, estimator.fit, X, y, msg=msg)
 
 
 @ignore_warnings
@@ -1194,12 +1209,14 @@ def check_fit2d_1sample(name, estimator_orig, strict_mode=True):
 
     msgs = ["1 sample", "n_samples = 1", "n_samples=1", "one sample",
             "1 class", "one class"]
-
     try:
         estimator.fit(X, y)
     except ValueError as e:
-        if all(msg not in repr(e) for msg in msgs):
-            raise e
+        if strict_mode and all(msg not in repr(e) for msg in msgs):
+            raise AssertionError(
+                "The error message should contain one of the following "
+                f"patterns: {', '.join(msgs)}."
+            ) from e
 
 
 @ignore_warnings
@@ -1228,12 +1245,14 @@ def check_fit2d_1feature(name, estimator_orig, strict_mode=True):
     set_random_state(estimator, 1)
 
     msgs = ["1 feature(s)", "n_features = 1", "n_features=1"]
-
     try:
         estimator.fit(X, y)
     except ValueError as e:
-        if all(msg not in repr(e) for msg in msgs):
-            raise e
+        if strict_mode and all(msg not in repr(e) for msg in msgs):
+            raise AssertionError(
+                "The error message should contain one of the following "
+                f"patterns: {', '.join(msgs)}."
+            ) from e
 
 
 @ignore_warnings
@@ -1460,6 +1479,39 @@ def check_estimators_dtypes(name, estimator_orig, strict_mode=True):
                 getattr(estimator, method)(X_train)
 
 
+def check_transformer_preserve_dtypes(
+    name, transformer_orig, strict_mode=True
+):
+    # check that dtype are preserved meaning if input X is of some dtype
+    # X_transformed should be from the same dtype.
+    X, y = make_blobs(
+        n_samples=30,
+        centers=[[0, 0, 0], [1, 1, 1]],
+        random_state=0,
+        cluster_std=0.1,
+    )
+    X = StandardScaler().fit_transform(X)
+    X -= X.min()
+    X = _pairwise_estimator_convert_X(X, transformer_orig)
+
+    for dtype in transformer_orig._get_tags()["preserves_dtype"]:
+        X_cast = X.astype(dtype)
+        transformer = clone(transformer_orig)
+        set_random_state(transformer)
+        X_trans = transformer.fit_transform(X_cast, y)
+
+        if isinstance(X_trans, tuple):
+            # cross-decompostion returns a tuple of (x_scores, y_scores)
+            # when given y with fit_transform; only check the first element
+            X_trans = X_trans[0]
+
+        # check that the output dtype is preserved
+        assert X_trans.dtype == dtype, (
+            f'Estimator transform dtype: {X_trans.dtype} - '
+            f'original/expected dtype: {dtype.__name__}'
+        )
+
+
 @ignore_warnings(category=FutureWarning)
 def check_estimators_empty_data_messages(name, estimator_orig,
                                          strict_mode=True):
@@ -1481,7 +1533,7 @@ def check_estimators_empty_data_messages(name, estimator_orig,
     y = _enforce_estimator_tags_y(e, np.array([1, 0, 1]))
     msg = (r"0 feature\(s\) \(shape=\(3, 0\)\) while a minimum of \d* "
            "is required.")
-    assert_raises_regex(ValueError, msg, e.fit, X_zero_features, y)
+    _assert_raises(ValueError, strict_mode, e.fit, X_zero_features, y, msg=msg)
 
 
 @ignore_warnings(category=FutureWarning)
@@ -2876,9 +2928,9 @@ def check_classifiers_regression_target(name, estimator_orig,
 
     X = X + 1 + abs(X.min(axis=0))  # be sure that X is non-negative
     e = clone(estimator_orig)
-    msg = 'Unknown label type: '
     if not e._get_tags()["no_validation"]:
-        assert_raises_regex(ValueError, msg, e.fit, X, y)
+        msg = 'Unknown label type: '
+        _assert_raises(ValueError, strict_mode, e.fit, X, y, msg=msg)
 
 
 @ignore_warnings(category=FutureWarning)
@@ -2957,11 +3009,8 @@ def check_fit_non_negative(name, estimator_orig, strict_mode=True):
     X = np.array([[-1., 1], [-1., 1]])
     y = np.array([1, 2])
     estimator = clone(estimator_orig)
-    if strict_mode:
-        assert_raises_regex(ValueError, "Negative values in data passed to",
-                            estimator.fit, X, y)
-    else:  # Don't check error message if strict mode is off
-        assert_raises(ValueError, estimator.fit, X, y)
+    msg = "Negative values in data passed to"
+    _assert_raises(ValueError, strict_mode, estimator.fit, X, y, msg=msg)
 
 
 def check_fit_idempotent(name, estimator_orig, strict_mode=True):

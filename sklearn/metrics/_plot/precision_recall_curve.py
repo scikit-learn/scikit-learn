@@ -71,7 +71,7 @@ class PrecisionRecallDisplay:
     >>> disp = PrecisionRecallDisplay(precision=precision, recall=recall)
     >>> disp.plot() # doctest: +SKIP
     """
-
+    @_deprecate_positional_args
     def __init__(self, precision, recall, *,
                  average_precision=None, estimator_name=None, pos_label=None):
         self.estimator_name = estimator_name

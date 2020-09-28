@@ -841,5 +841,8 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         return imputer_mask
 
     def _more_tags(self):
-        return {'allow_nan': True,
-                'X_types': ['2darray', 'string']}
+        return {
+            "allow_nan": True,
+            "X_types": ["2darray", "string"],
+            "preserves_dtype": [],
+        }

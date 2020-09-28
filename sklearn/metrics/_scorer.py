@@ -498,10 +498,17 @@ def make_scorer(score_func, *, greater_is_better=True, needs_proba=False,
                 needs_threshold=False, **kwargs):
     """Make a scorer from a performance metric or loss function.
 
-    This factory function wraps scoring functions for use in GridSearchCV
-    and cross_val_score. It takes a score function, such as ``accuracy_score``,
-    ``mean_squared_error``, ``adjusted_rand_index`` or ``average_precision``
+    This factory function wraps scoring functions for use in
+    :class:`~sklearn.model_selection.GridSearchCV` and
+    :func:`~sklearn.model_selection.cross_val_score`.
+    It takes a score function, such as :func:`~sklearn.metrics.accuracy_score`,
+    :func:`~sklearn.metrics.mean_squared_error`,
+    :func:`~sklearn.metrics.adjusted_rand_index` or
+    :func:`~sklearn.metrics.average_precision`
     and returns a callable that scores an estimator's output.
+    The signature of the call is `(estimator, X, y)` where `estimator`
+    is the model to be evaluated, `X` is the data and `y` is the
+    ground truth labeling (or `None` in the case of unsupervised models).
 
     Read more in the :ref:`User Guide <scoring>`.
 
