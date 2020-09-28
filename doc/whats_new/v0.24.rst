@@ -341,6 +341,9 @@ Changelog
   efficient leave-one-out cross-validation scheme ``cv=None``. :pr:`6624` by
   :user:`Marijn van Vliet <wmvanvliet>`.
 
+- |Fix|: Fixed a bug in :class:`linear_model.LogisticRegression`: the
+  sample_weight object is not modified anymore. :pr:`18480` by
+  :user:`Bart Van Dosselaer <Ansur>`:
 
 :mod:`sklearn.manifold`
 .......................
