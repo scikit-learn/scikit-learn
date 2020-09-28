@@ -23,8 +23,6 @@ from sklearn.utils.estimator_checks import check_fit_score_takes_y
 from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
 from sklearn.utils.estimator_checks import check_classifier_data_not_an_array
 from sklearn.utils.estimator_checks import check_regressor_data_not_an_array
-from sklearn.utils.estimator_checks import check_fit2d_1sample
-from sklearn.utils.estimator_checks import check_fit2d_1feature
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.estimator_checks import check_outlier_corruption
 from sklearn.utils.fixes import np_version, parse_version
@@ -665,37 +663,3 @@ def test_xfail_ignored_in_check_estimator():
     # Make sure checks marked as xfail are just ignored and not run by
     # check_estimator(), but still raise a warning.
     assert_warns(SkipTestWarning, check_estimator, NuSVC())
-
-
-def test_check_fit2d_1sample():
-
-    class MyEst(SVC):
-        # raises a bad error message when only 1 sample is passed
-        def fit(self, X, y):
-            if X.shape[0] == 1:
-                raise ValueError("non informative error message")
-
-    assert_raises_regex(
-        AssertionError,
-        "The error message should contain one of the following",
-        check_fit2d_1sample,
-        'estimator_name',
-        MyEst()
-    )
-
-
-def test_check_fit2d_1feature():
-
-    class MyEst(SVC):
-        # raises a bad error message when only 1 feature is passed
-        def fit(self, X, y):
-            if X.shape[1] == 1:
-                raise ValueError("non informative error message")
-
-    assert_raises_regex(
-        AssertionError,
-        "The error message should contain one of the following",
-        check_fit2d_1feature,
-        'estimator_name',
-        MyEst()
-    )
