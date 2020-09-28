@@ -343,7 +343,8 @@ class BaseRandomProjection(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         self
 
         """
-        X = self._validate_data(X, accept_sparse=['csr', 'csc'])
+        X = self._validate_data(X, accept_sparse=['csr', 'csc'], 
+                                dtype=[np.float32, np.float64])
 
         n_samples, n_features = X.shape
 
@@ -380,7 +381,7 @@ class BaseRandomProjection(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
 
         # Generate a projection matrix of size [n_components, n_features]
         self.components_ = self._make_random_matrix(self.n_components_,
-                                                    n_features)
+                                                    n_features).astype(X.dtype)
 
         # Check contract
         assert self.components_.shape == (self.n_components_, n_features), (
