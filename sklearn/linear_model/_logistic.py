@@ -665,7 +665,7 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     if isinstance(class_weight, dict) or multi_class == 'multinomial':
         class_weight_ = compute_class_weight(class_weight,
                                              classes=classes, y=y)
-        sample_weight *= class_weight_[le.fit_transform(y)]
+        sample_weight = sample_weight * class_weight_[le.fit_transform(y)]
 
     # For doing a ovr, we need to mask the labels first. for the
     # multinomial case this is not necessary.
@@ -681,7 +681,7 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             class_weight_ = compute_class_weight(class_weight,
                                                  classes=mask_classes,
                                                  y=y_bin)
-            sample_weight *= class_weight_[le.fit_transform(y_bin)]
+            sample_weight = sample_weight * class_weight_[le.fit_transform(y_bin)]
 
     else:
         if solver not in ['sag', 'saga']:
