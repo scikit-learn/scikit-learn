@@ -25,6 +25,7 @@ from sklearn.metrics import coverage_error
 from sklearn.metrics import det_curve
 from sklearn.metrics import label_ranking_average_precision_score
 from sklearn.metrics import precision_recall_curve
+from sklearn.metrics import cumulative_gain_curve
 from sklearn.metrics import label_ranking_loss
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve

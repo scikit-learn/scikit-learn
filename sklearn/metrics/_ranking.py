@@ -1006,6 +1006,75 @@ def roc_curve(
 
     return fpr, tpr, thresholds
 
+def cumulative_gain_curve(y_true, y_score, pos_label=None):
+    """This function generates the points necessary to plot the Cumulative Gain for each ten percent of the samples
+    Note: This implementation is restricted to the binary classification task.
+    
+    Parameters
+    ----------
+
+        y_true (array-like, shape (n_samples)): True labels of the data.
+        y_score (array-like, shape (n_samples)): Target scores, can either be
+            probability estimates of the positive class, confidence values, or
+            non-thresholded measure of decisions (as returned by
+            decision_function on some classifiers).
+        pos_label (int or str, default=None): Label considered as positive and
+            others are considered negative
+    Returns
+    -------
+        percentages (numpy.ndarray): An array containing the X-axis values for
+            plotting the Cumulative Gains chart.
+        gains (numpy.ndarray): An array containing the Y-axis values for one
+            curve of the Cumulative Gains chart.
+    Raises:
+        ValueError: If `y_true` is not composed of 2 classes. The Cumulative
+            Gain Chart is only relevant in binary classification.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn import metrics
+    >>> y_true = [0, 1, 1, 0, 0, 0, 1, 1, 0, 0]
+    >>> y_pred = [0.1, 0.8, 0.9, 0,3, 0.4, 0.6, 0.6, 0.6, 0.44]
+    >>> percentages, gains = metrics.cumulative_gain_curve(y_true, y_pred, pos_label=1)
+    >>> percentages
+    array([0. , 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1. ])
+    >>> gains
+    array([0.  , 0.  , 0.25, 0.5 , 0.5 , 0.75, 1.  , 1.  , 1.  , 1.  , 1.  ]
+
+    """
+    y_true, y_score = np.asarray(y_true), np.asarray(y_score)
+
+    # ensure binary classification if pos_label is not specified
+    classes = np.unique(y_true)
+    if (pos_label is None and
+        not (np.array_equal(classes, [0, 1]) or
+             np.array_equal(classes, [-1, 1]) or
+             np.array_equal(classes, [0]) or
+             np.array_equal(classes, [-1]) or
+             np.array_equal(classes, [1]))):
+        raise ValueError("Data is not binary and pos_label is not specified")
+    elif pos_label is None:
+        pos_label = 1.
+
+    # make y_true a boolean vector
+    y_true = (y_true == pos_label)
+
+    sorted_indices = np.argsort(y_score)[::-1]
+    y_true = y_true[sorted_indices]
+    gains = np.cumsum(y_true)
+
+    percentages = np.arange(start=1, stop=len(y_true) + 1)
+
+    gains = gains / float(np.sum(y_true))
+    percentages = percentages / float(len(y_true))
+
+    gains = np.insert(gains, 0, [0])
+    percentages = np.insert(percentages, 0, [0])
+
+    return percentages, gains
+ 
+
 
 def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None):
     """Compute ranking-based average precision.
