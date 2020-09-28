@@ -34,7 +34,7 @@ def _find_binning_threshold(col_data, max_bins):
 
     Return
     ------
-    thresholds: ndarray of shape(min(max_bins, n_unique_values) - 1,)
+    binning_thresholds : ndarray of shape(min(max_bins, n_unique_values) - 1,)
         The increasing numeric values that can be used to separate the bins.
         A given value x is mapped into bin value i iff
         thresholds[i - 1] < x <= thresholds[i]
@@ -107,7 +107,9 @@ class _BinMapper(TransformerMixin, BaseEstimator):
     known_categories : list of {ndarray, None} of shape (n_features,), \
             default=none
         For each categorical feature, the array indicates the set of unique
-        categorical values. For continuous feature, the entry should be None.
+        categorical values. These should be the possible values over all the
+        data, not just the training data. For continuous feature, the
+        corresponding entry should be None.
     random_state: int, RandomState instance or None, default=None
         Pseudo-random number generator to control the random sub-sampling.
         Pass an int for reproducible output across multiple

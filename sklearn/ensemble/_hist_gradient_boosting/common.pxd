@@ -4,6 +4,7 @@ cimport numpy as np
 
 np.import_array()
 
+
 ctypedef np.npy_float64 X_DTYPE_C
 ctypedef np.npy_uint8 X_BINNED_DTYPE_C
 ctypedef np.npy_float64 Y_DTYPE_C
@@ -34,8 +35,8 @@ cdef packed struct node_struct:
     unsigned char is_leaf
     X_BINNED_DTYPE_C bin_threshold
     unsigned char is_categorical
-    # The index of the bitset in the Predictor's bitset arrays. Only used if
-    # is_categorical is True
+    # The index of the corresponding bitsets in the Predictor's bitset arrays.
+    # Only used if is_categorical is True
     unsigned int bitset_idx
 
 cpdef enum MonotonicConstraint:

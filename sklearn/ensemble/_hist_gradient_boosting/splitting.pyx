@@ -299,6 +299,7 @@ cdef class Splitter:
             unsigned int [::1] left_indices_buffer = self.left_indices_buffer
             unsigned int [::1] right_indices_buffer = self.right_indices_buffer
             unsigned char is_categorical = split_info.is_categorical
+            # we need a tmp variable because left_cat_bitset may be None
             BITSET_INNER_DTYPE_C [:] cat_bitset_tmp = split_info.left_cat_bitset
             BITSET_DTYPE_C left_cat_bitset
             IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
@@ -494,14 +495,13 @@ cdef class Splitter:
 
                     if has_missing_values[feature_idx]:
                         # We need to explore both directions to check whether
-                        # sending the nans to the left child would lead to a
-                        # higher gain
+                        # sending the nans to the left child would lead to a higher
+                        # gain
                         self._find_best_bin_to_split_right_to_left(
                             feature_idx, histograms, n_samples,
                             sum_gradients, sum_hessians,
                             value, monotonic_cst[feature_idx],
-                            lower_bound, upper_bound,
-                            &split_infos[feature_idx])
+                            lower_bound, upper_bound, &split_infos[feature_idx])
 
             # then compute best possible split among all features
             best_feature_idx = self._find_best_feature_to_split_helper(
@@ -522,7 +522,7 @@ cdef class Splitter:
             split_info.value_left,
             split_info.value_right,
             split_info.is_categorical,
-            None,  # will only be set if the splt is categorical
+            None,  # left_cat_bitset will only be set if the split is categorical
         )
         # Only set bitset if the split is categorical
         if split_info.is_categorical:
