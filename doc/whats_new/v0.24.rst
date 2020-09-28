@@ -262,6 +262,9 @@ Changelog
   :class:`neighbors.KDTree` for counting nearest neighbors. :pr:`17878` by
   :user:`Noel Rogers <noelano>`.
 
+- |Enhancement| : class:`feature_selection.GenericUnivariateSelect` preserves
+  float32 dtype. :pr:`18482` by :user:`Thierry Gameiro <titigmr>`.
+
 :mod:`sklearn.gaussian_process`
 ...............................
 
