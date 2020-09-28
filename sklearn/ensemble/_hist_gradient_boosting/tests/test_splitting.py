@@ -582,7 +582,7 @@ def _assert_categories_equals_bitset(categories, bitset):
          4,  # n_bins_non_missing
          4,  # missing_values_bin_idx
          False,  # has_missing_values
-         None), # expected_missing_go_to_left, unchecked
+         None),  # expected_missing_go_to_left, unchecked
 
         # 4 categories where the left node has more samples.
         # Since there are no missing values in the training data, the missing
@@ -595,7 +595,7 @@ def _assert_categories_equals_bitset(categories, bitset):
          4,  # n_bins_non_missing
          4,  # missing_values_bin_idx
          False,  # has_missing_values
-         None), # expected_missing_go_to_left, unchecked
+         None),  # expected_missing_go_to_left, unchecked
 
 
         # 4 categories (including missing value)
@@ -605,7 +605,7 @@ def _assert_categories_equals_bitset(categories, bitset):
          3,  # n_bins_non_missing
          9,  # missing_values_bin_idx
          True,   # has_missing_values
-         False), # expected_missing_go_to_left
+         False),  # expected_missing_go_to_left
 
         # split is on the missing value
         ([0, 1, 2, 3, 4] * 11 + [255] * 12,  # X_binned
@@ -614,7 +614,7 @@ def _assert_categories_equals_bitset(categories, bitset):
          5,  # n_bins_non_missing
          255,  # missing_values_bin_idx
          True,   # has_missing_values
-         True), # expected_missing_go_to_left
+         True),  # expected_missing_go_to_left
 
         # split on even categories
         (list(range(60)) * 12,  # X_binned
@@ -623,7 +623,7 @@ def _assert_categories_equals_bitset(categories, bitset):
          59,  # n_bins_non_missing
          59,  # missing_values_bin_idx
          True,  # has_missing_values
-         True), # expected_missing_go_to_left
+         True),  # expected_missing_go_to_left
 
         # split on every 8 categories
         (list(range(256)) * 12,  # X_binned
@@ -632,7 +632,7 @@ def _assert_categories_equals_bitset(categories, bitset):
          255,  # n_bins_non_missing
          255,  # missing_values_bin_idx
          True,  # has_missing_values
-         True), # expected_missing_go_to_left
+         True),  # expected_missing_go_to_left
      ])
 def test_splitting_categorical_sanity(X_binned, all_gradients,
                                       expected_categories_left,

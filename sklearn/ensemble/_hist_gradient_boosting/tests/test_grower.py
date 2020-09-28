@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 from pytest import approx
 from numpy.testing import assert_array_equal
+from numpy.testing import assert_allclose
 
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
@@ -418,7 +419,8 @@ def test_split_on_nan_with_infinite_values():
 
 
 def test_grow_tree_categories():
-    # Checks growing the tree with categorical features
+    # Check that the grower produces the right predictor tree when a split is
+    # categorical
     X_binned = np.array([[0, 1] * 11 + [1]], dtype=X_BINNED_DTYPE).T
     X_binned = np.asfortranarray(X_binned)
 
@@ -441,19 +443,40 @@ def test_grow_tree_categories():
 
     left, right = predictor.nodes[root['left']], predictor.nodes[root['right']]
 
-    # arbitrary validation, but this means ones go to the left. This also means
-    # missing values should go to the left because left child has mode samples.
+    # arbitrary validation, but this means ones go to the left.
     assert left['count'] >= right['count']
-    # With 4 bins, missing values are represented as the 4th bit:
-    # 00001010 = 2 + 8 = 10
-    expected_binned_cat_bitset = [10] + [0] * 7
+
+    # check binned category value (1)
+    expected_binned_cat_bitset = [2**1] + [0] * 7
     binned_cat_bitset = predictor.binned_left_cat_bitsets
     assert_array_equal(binned_cat_bitset[0], expected_binned_cat_bitset)
 
-    # binned category 1 with raw category value 9 goes to the left
+    # check raw category value (9)
     expected_raw_cat_bitsets = [2**9] + [0] * 7
     raw_cat_bitsets = predictor.raw_left_cat_bitsets
     assert_array_equal(raw_cat_bitsets[0], expected_raw_cat_bitsets)
+
+    # Note that since there was no missing values during training, the missing
+    # values aren't part of the bitsets. However, we expect the missing values
+    # to go to the biggest child (i.e. the left one)
+    # The left child has a value of -1 = negative gradient
+    assert root['missing_go_to_left']
+
+    # make sure binned missing values are mapped to the left child during
+    # prediction
+    prediction_binned = predictor.predict_binned(
+        np.asarray([[6]]).astype(X_BINNED_DTYPE), missing_values_bin_idx=6)
+    assert_allclose(prediction_binned, [-1])  # negative gradient
+
+    # make sure raw missing values are mapped to the left child during
+    # prediction
+    known_cat_bitsets = np.zeros((1, 8), dtype=np.uint32)
+    known_cat_bitsets[0, 0] = 4  # 4
+    known_cat_bitsets[0, 1] = 2  # 9
+    f_idx_map = np.array([0], dtype=np.uint8)
+    prediction = predictor.predict(np.array([[np.nan]]), known_cat_bitsets,
+                                   f_idx_map)
+    assert_allclose(prediction, [-1])
 
 
 @pytest.mark.parametrize('min_samples_leaf', (1, 20))

@@ -94,8 +94,11 @@ class SplitInfo:
         Whether the split is done on a categorical feature.
     left_cat_bitset : ndarray of shape=(8,), dtype=uint32 or None
         Bitset representing the categories that go to the left. This is used
-        only when `is_categorical` is True. Note that missing values are part
-        of that bitset, so there is redundancy with missing_go_to_left.
+        only when `is_categorical` is True.
+        Note that missing values are part of that bitset if there are missing
+        values in the training data. For missing values, we rely on that
+        bitset for splitting, but at prediction time, we rely on
+        missing_go_to_left.
     """
     def __init__(self, gain, feature_idx, bin_idx,
                  missing_go_to_left, sum_gradient_left, sum_hessian_left,
@@ -1016,7 +1019,7 @@ cdef inline unsigned char sample_goes_left(
     """Helper to decide whether sample should go to left or right child."""
 
     if is_categorical:
-        # missing value is encoded in left_cat_bitset
+        # note: if any, missing values are encoded in left_cat_bitset
         return in_bitset(left_cat_bitset, bin_value)
     else:
         return (

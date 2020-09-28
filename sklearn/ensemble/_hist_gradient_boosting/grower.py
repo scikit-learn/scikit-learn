@@ -19,7 +19,6 @@ from .common import PREDICTOR_RECORD_DTYPE
 from .common import X_BITSET_INNER_DTYPE
 from .common import Y_DTYPE
 from .common import MonotonicConstraint
-from ._bitset import set_bitset_memoryview
 from ._bitset import set_raw_bitset_from_binned_bitset
 
 EPS = np.finfo(Y_DTYPE).eps  # to avoid zero division errors
@@ -423,14 +422,6 @@ class TreeGrower:
             # has the most samples.
             node.split_info.missing_go_to_left = (
                 left_child_node.n_samples > right_child_node.n_samples)
-
-            # Also set bitset for categorical splits: this won't be used during
-            # predict (missing_go_to_left is used instead), but consistency is
-            # better.
-            if (node.split_info.is_categorical and
-                    node.split_info.missing_go_to_left):
-                set_bitset_memoryview(node.split_info.left_cat_bitset,
-                                      self.missing_values_bin_idx)
 
         self.n_nodes += 2
         self.n_categorical_splits += node.split_info.is_categorical
