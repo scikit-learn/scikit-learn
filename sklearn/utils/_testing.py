@@ -836,7 +836,7 @@ class _Raises(contextlib.AbstractContextManager):
                 return True  # CM is happy
             else:
                 err_msg = (
-                    self.err_msg or f"DID NOT RAISE {self.expected_exc_types}"
+                    self.err_msg or f"Did not raise: {self.expected_exc_types}"
                 )
                 raise AssertionError(err_msg)
 
