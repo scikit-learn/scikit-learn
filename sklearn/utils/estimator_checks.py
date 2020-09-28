@@ -42,7 +42,7 @@ from ..base import (
 
 from ..metrics import accuracy_score, adjusted_rand_score, f1_score
 from ..random_projection import BaseRandomProjection
-from ..feature_selection import SelectKBest
+from ..feature_selection import SelectKBest, f_regression
 from ..pipeline import make_pipeline
 from ..exceptions import DataConversionWarning
 from ..exceptions import NotFittedError
@@ -664,6 +664,9 @@ def _set_checking_parameters(estimator):
 
     if name == 'OneHotEncoder':
         estimator.set_params(handle_unknown='ignore')
+
+    if name == 'GenericUnivariateSelect':
+        estimator.set_params(score_func=f_regression)
 
 
 class _NotAnArray:

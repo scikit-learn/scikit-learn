@@ -82,7 +82,7 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
             warn("No features were selected: either the data is"
                  " too noisy or the selection test too strict.",
                  UserWarning)
-            return np.empty(0).reshape((X.shape[0], 0))
+            return np.empty(0, dtype=X.dtype).reshape((X.shape[0], 0))
         if len(mask) != X.shape[1]:
             raise ValueError("X has a different shape than during fitting.")
         return X[:, safe_mask(X, mask)]

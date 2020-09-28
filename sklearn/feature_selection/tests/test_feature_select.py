@@ -667,3 +667,16 @@ def test_mutual_info_regression():
     gtruth = np.zeros(10)
     gtruth[:2] = 1
     assert_array_equal(support, gtruth)
+
+
+def test_generic_univariate_selection_empty_selection():
+    # check that the empy array generated is the same dtype of the X array
+    # when no features selected
+    X, y = make_regression(
+        n_samples=200, n_features=20, n_informative=5, shuffle=False,
+        random_state=0
+    )
+    X = X.astype('float32')
+    select = GenericUnivariateSelect(score_func=f_classif)
+    X_trans = select.fit_transform(X, y)
+    assert X_trans.dtype == np.float32
