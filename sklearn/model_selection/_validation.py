@@ -506,15 +506,15 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     return_parameters : bool, default=False
         Return parameters that has been used for the estimator.
 
-    split_progress : list or tuple, optional, default: None
-        A list or tuple of format (<current_split_id>, <total_num_of_splits>)
+    split_progress : {list, tuple} of int, default=None
+        A list or tuple of format (<current_split_id>, <total_num_of_splits>).
 
-    candidate_progress : list or tuple, optional, default: None
+    candidate_progress : {list, tuple} of int, default=None
         A list or tuple of format
-        (<current_candidate_id>, <total_number_of_candidates>)
+        (<current_candidate_id>, <total_number_of_candidates>).
 
     return_n_test_samples : bool, default=False
-        Whether to return the ``n_test_samples``
+        Whether to return the ``n_test_samples``.
 
     return_times : bool, default=False
         Whether to return the fit/score times.

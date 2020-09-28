@@ -121,7 +121,7 @@ class LeaveOneOut(BaseCrossValidator):
     For large datasets one should favor :class:`KFold`, :class:`ShuffleSplit`
     or :class:`StratifiedKFold`.
 
-    Read more in the :ref:`User Guide <cross_validation>`.
+    Read more in the :ref:`User Guide <leave_one_out>`.
 
     Examples
     --------
@@ -200,7 +200,7 @@ class LeavePOut(BaseCrossValidator):
     large datasets one should favor :class:`KFold`, :class:`StratifiedKFold`
     or :class:`ShuffleSplit`.
 
-    Read more in the :ref:`User Guide <cross_validation>`.
+    Read more in the :ref:`User Guide <leave_p_out>`.
 
     Parameters
     ----------
@@ -363,7 +363,7 @@ class KFold(_BaseKFold):
     Each fold is then used once as a validation while the k - 1 remaining
     folds form the training set.
 
-    Read more in the :ref:`User Guide <cross_validation>`.
+    Read more in the :ref:`User Guide <k_fold>`.
 
     Parameters
     ----------
@@ -452,6 +452,8 @@ class GroupKFold(_BaseKFold):
 
     The folds are approximately balanced in the sense that the number of
     distinct groups is approximately the same in each fold.
+
+    Read more in the :ref:`User Guide <group_k_fold>`.
 
     Parameters
     ----------
@@ -561,7 +563,7 @@ class GroupKFold(_BaseKFold):
 
 
 class StratifiedKFold(_BaseKFold):
-    """Stratified K-Folds cross-validator
+    """Stratified K-Folds cross-validator.
 
     Provides train/test indices to split data in train/test sets.
 
@@ -569,7 +571,7 @@ class StratifiedKFold(_BaseKFold):
     stratified folds. The folds are made by preserving the percentage of
     samples for each class.
 
-    Read more in the :ref:`User Guide <cross_validation>`.
+    Read more in the :ref:`User Guide <stratified_k_fold>`.
 
     Parameters
     ----------
@@ -733,8 +735,6 @@ class StratifiedKFold(_BaseKFold):
 class TimeSeriesSplit(_BaseKFold):
     """Time Series cross-validator
 
-    .. versionadded:: 0.18
-
     Provides train/test indices to split time series data samples
     that are observed at fixed time intervals, in train/test sets.
     In each split, test indices must be higher than before, and thus shuffling
@@ -747,7 +747,9 @@ class TimeSeriesSplit(_BaseKFold):
     Note that unlike standard cross-validation methods, successive
     training sets are supersets of those that come before them.
 
-    Read more in the :ref:`User Guide <cross_validation>`.
+    Read more in the :ref:`User Guide <time_series_split>`.
+
+    .. versionadded:: 0.18
 
     Parameters
     ----------
@@ -896,7 +898,7 @@ class LeaveOneGroupOut(BaseCrossValidator):
     For instance the groups could be the year of collection of the samples
     and thus allow for cross-validation against time-based splits.
 
-    Read more in the :ref:`User Guide <cross_validation>`.
+    Read more in the :ref:`User Guide <leave_one_group_out>`.
 
     Examples
     --------
@@ -1010,7 +1012,7 @@ class LeavePGroupsOut(BaseCrossValidator):
     ``p`` different values of the groups while the latter uses samples
     all assigned the same groups.
 
-    Read more in the :ref:`User Guide <cross_validation>`.
+    Read more in the :ref:`User Guide <leave_p_groups_out>`.
 
     Parameters
     ----------
@@ -1235,7 +1237,7 @@ class RepeatedKFold(_RepeatedSplits):
 
     Repeats K-Fold n times with different randomization in each repetition.
 
-    Read more in the :ref:`User Guide <cross_validation>`.
+    Read more in the :ref:`User Guide <repeated_k_fold>`.
 
     Parameters
     ----------
@@ -1290,7 +1292,7 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
     Repeats Stratified K-Fold n times with different randomization in each
     repetition.
 
-    Read more in the :ref:`User Guide <cross_validation>`.
+    Read more in the :ref:`User Guide <repeated_k_fold>`.
 
     Parameters
     ----------
@@ -1423,7 +1425,7 @@ class ShuffleSplit(BaseShuffleSplit):
     do not guarantee that all folds will be different, although this is
     still very likely for sizeable datasets.
 
-    Read more in the :ref:`User Guide <cross_validation>`.
+    Read more in the :ref:`User Guide <shuffle_split>`.
 
     Parameters
     ----------
@@ -1523,6 +1525,7 @@ class GroupShuffleSplit(ShuffleSplit):
     Note: The parameters ``test_size`` and ``train_size`` refer to groups, and
     not to samples, as in ShuffleSplit.
 
+    Read more in the :ref:`User Guide <group_shuffle_split>`.
 
     Parameters
     ----------
@@ -1636,7 +1639,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     do not guarantee that all folds will be different, although this is
     still very likely for sizeable datasets.
 
-    Read more in the :ref:`User Guide <cross_validation>`.
+    Read more in the :ref:`User Guide <stratified_shuffle_split>`.
 
     Parameters
     ----------
@@ -1867,7 +1870,7 @@ class PredefinedSplit(BaseCrossValidator):
     Provides train/test indices to split data into train/test sets using a
     predefined scheme specified by the user with the ``test_fold`` parameter.
 
-    Read more in the :ref:`User Guide <cross_validation>`.
+    Read more in the :ref:`User Guide <predefined_split>`.
 
     .. versionadded:: 0.16
 
