@@ -787,8 +787,8 @@ def check_estimator_sparse_data(name, estimator_orig, strict_mode=True):
         else:
             err_msg = (
                 f"Estimator {name} doesn't seem to fail gracefully on sparse "
-                "data: error message state explicitly that sparse input is "
-                "not supported if this is not the case."
+                "data: error message should state explicitly that sparse "
+                "input is not supported if this is not the case."
             )
         with raises(
             (TypeError, ValueError),
