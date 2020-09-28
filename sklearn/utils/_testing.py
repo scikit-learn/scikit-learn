@@ -845,7 +845,7 @@ class _Raises(contextlib.AbstractContextManager):
             for expected_type in self.expected_exc_types
         ):
             if self.err_msg is not None:
-                raise AssertionError(self.err_msg)
+                raise AssertionError(self.err_msg) from exc_value
             else:
                 return False  # will re-raise the original exception
 
@@ -856,9 +856,9 @@ class _Raises(contextlib.AbstractContextManager):
                     "\n".join(self.matches), str(exc_value)
                 )
             )
-            assert any(
-                re.search(match, str(exc_value)) for match in self.matches
-            ), err_msg
+            if not any(re.search(match, str(exc_value))
+                       for match in self.matches):
+                raise AssertionError(err_msg) from exc_value
             self.raised_and_matched = True
 
         return True
