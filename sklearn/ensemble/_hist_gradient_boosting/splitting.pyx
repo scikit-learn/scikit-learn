@@ -937,8 +937,6 @@ cdef class Splitter:
                 set_bitset(split_info.left_cat_bitset, bin_idx)
 
             if has_missing_values:
-                # TODO: there should be a test that removing this line breaks
-                # something. missing_go_to_left will be used during prediction.
                 split_info.missing_go_to_left = in_bitset(
                     split_info.left_cat_bitset, missing_values_bin_idx)
 

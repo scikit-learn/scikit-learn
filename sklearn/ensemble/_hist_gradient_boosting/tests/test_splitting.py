@@ -494,22 +494,23 @@ def test_splitting_missing_values(X_binned, all_gradients,
         # one category
         ([0] * 20, False, 1),
 
-        # all categories appear less than CAT_SMOOTH
+        # all categories appear less than CAT_SMOOTH (hardcoded to 10)
         ([0] * 9 + [1] * 8, False, 2),
 
-        # only one category appear more than CAT_SMOOTH
+        # only one category appears more than CAT_SMOOTH
         ([0] * 12 + [1] * 8, False, 2),
 
         # missing values + category appear less than CAT_SMOOTH
         # 9 is missing
         ([0] * 9 + [1] * 8 + [9] * 4, True, 2),
 
-        # 9 is missing
+        # no non-missing category
         ([9] * 11, True, 0),
     ])
-def test_splitting_categorical_no_splits(X_binned, has_missing_values,
-                                         n_bins_non_missing):
-    # Checks categorical splits are correct when there are no spliits
+def test_splitting_categorical_cat_smooth(X_binned, has_missing_values,
+                                          n_bins_non_missing):
+    # Checks categorical splits are correct when the CAT_SMOOTH constraint
+    # isn't respected: there are no splits
 
     n_bins = max(X_binned) + 1
     n_samples = len(X_binned)
@@ -555,59 +556,65 @@ def test_splitting_categorical_no_splits(X_binned, has_missing_values,
     assert split_info.gain == -1
 
 
-def _assert_threshold_equals_bitset(expected_thresholds, bitset):
+def _assert_categories_equals_bitset(categories, bitset):
+    # assert that the bitset exactly corresponds to the categories
     # bitset is assumed to be an array 8 of uint32
 
     # form bitset from threshold
-    expected_threshold_bitset = np.zeros(8, dtype=np.uint32)
-    for threshold in expected_thresholds:
-        i1 = threshold // 32
-        i2 = threshold % 32
-        expected_threshold_bitset[i1] |= 1 << i2
+    expected_bitset = np.zeros(8, dtype=np.uint32)
+    for cat in categories:
+        idx = cat // 32
+        shift = cat % 32
+        expected_bitset[idx] |= 1 << shift
 
     # check for equality
-    assert_array_equal(expected_threshold_bitset, bitset)
+    assert_array_equal(expected_bitset, bitset)
 
 
 @pytest.mark.parametrize(
     "X_binned, all_gradients, expected_categories_left, n_bins_non_missing,"
-    "missing_values_bin_idx, has_missing_values",
+    "missing_values_bin_idx, has_missing_values, expected_missing_go_to_left",
     [
         # 4 categories
-        # since there is no missing value during training, the
-        # missing values should go to the left bin with 22 samples but
-        # this is done in the grower
         ([0, 1, 2, 3] * 11,  # X_binned
-         [20, 1, 20, 20] * 11,  # all_gradients
+         [10, 1, 10, 10] * 11,  # all_gradients
          [1],  # expected_categories_left
          4,  # n_bins_non_missing
          4,  # missing_values_bin_idx
-         False),  # has_missing_values
+         False,  # has_missing_values
+         None), # expected_missing_go_to_left, unchecked
 
-        # 5 categories where the left node has more samples
-        # the grower would add the missing value bin to go to the left
-        ([0, 1, 2, 3, 4] * 11 + [1] * 50,  # X_binned
-         [10, 1, 10, 10, 10] * 11 + [1] * 50,  # all_gradients
+        # 4 categories where the left node has more samples.
+        # Since there are no missing values in the training data, the missing
+        # value bin isn't part of the bitset. However, we expect the
+        # missing_go_to_left flag to be True, though we don't check it here
+        # because it is set in the grower.
+        ([0, 1, 2, 3] * 11 + [1] * 50,  # X_binned
+         [10, 1, 10, 10] * 11 + [1] * 50,  # all_gradients
          [1],  # expected_categories_left
-         5,  # n_bins_non_missing
-         5,  # missing_values_bin_idx
-         False),  # has_missing_values
+         4,  # n_bins_non_missing
+         4,  # missing_values_bin_idx
+         False,  # has_missing_values
+         None), # expected_missing_go_to_left, unchecked
+
 
         # 4 categories (including missing value)
         ([0, 1, 2] * 11 + [9] * 11,  # X_binned
-         [5, 1, 5] * 11 + [5] * 11,  # all_gradients
+         [10, 1, 10] * 11 + [10] * 11,  # all_gradients
          [1],  # expected_categories_left
          3,  # n_bins_non_missing
          9,  # missing_values_bin_idx
-         True),   # has_missing_values
+         True,   # has_missing_values
+         False), # expected_missing_go_to_left
 
         # split is on the missing value
         ([0, 1, 2, 3, 4] * 11 + [255] * 12,  # X_binned
-         [20, 20, 20, 20, 20] * 11 + [1] * 12,  # all_gradients
+         [10, 10, 10, 10, 10] * 11 + [1] * 12,  # all_gradients
          [255],  # expected_categories_left
          5,  # n_bins_non_missing
          255,  # missing_values_bin_idx
-         True),   # has_missing_values
+         True,   # has_missing_values
+         True), # expected_missing_go_to_left
 
         # split on even categories
         (list(range(60)) * 12,  # X_binned
@@ -615,7 +622,8 @@ def _assert_threshold_equals_bitset(expected_thresholds, bitset):
          list(range(1, 60, 2)),  # expected_categories_left
          59,  # n_bins_non_missing
          59,  # missing_values_bin_idx
-         True),  # has_missing_values
+         True,  # has_missing_values
+         True), # expected_missing_go_to_left
 
         # split on every 8 categories
         (list(range(256)) * 12,  # X_binned
@@ -623,13 +631,15 @@ def _assert_threshold_equals_bitset(expected_thresholds, bitset):
          list(range(7, 256, 8)),  # expected_categories_left
          255,  # n_bins_non_missing
          255,  # missing_values_bin_idx
-         True),  # has_missing_values
+         True,  # has_missing_values
+         True), # expected_missing_go_to_left
      ])
 def test_splitting_categorical_sanity(X_binned, all_gradients,
                                       expected_categories_left,
                                       n_bins_non_missing,
                                       missing_values_bin_idx,
-                                      has_missing_values):
+                                      has_missing_values,
+                                      expected_missing_go_to_left):
     # Tests various combinations of categorical splits
 
     n_samples = len(X_binned)
@@ -674,8 +684,13 @@ def test_splitting_categorical_sanity(X_binned, all_gradients,
                                           sum_gradients, sum_hessians, value)
 
     assert split_info.is_categorical
-    _assert_threshold_equals_bitset(expected_categories_left,
-                                    split_info.left_cat_bitset)
+    assert split_info.gain > 0
+    _assert_categories_equals_bitset(expected_categories_left,
+                                     split_info.left_cat_bitset)
+    if has_missing_values:
+        assert split_info.missing_go_to_left == expected_missing_go_to_left
+    # If there is no missing value during training, the flag missing_go_to_left
+    # is set later in the grower.
 
     # make sure samples are split correctly
     samples_left, samples_right, _ = splitter.split_indices(

@@ -825,8 +825,7 @@ def test_categorical_sanity(insert_missing, make_dataset, Est,
     else:
         categorical_features = np.flatnonzero(categorical)
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y,
-                                                        random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
     est_cat = Est(max_iter=20, categorical_features=categorical_features,
                   random_state=0).fit(X_train, y_train)
@@ -839,11 +838,10 @@ def test_categorical_sanity(insert_missing, make_dataset, Est,
     y_pred_no_cat = est_no_cat.predict(X_test)
     assert metric(y_test, y_pred_cat) >= metric(y_test, y_pred_no_cat)
 
+    # Make sure no error is raised on unknoen categories and nans
     X_test = np.zeros((1, X.shape[1]), dtype=float)
-    X_test[:, ::2] = 30  # unknown category
-    X_test[:, 5:] = np.nan  # sets remaining
-
-    # Does not error on unknown or missing categories
+    X_test[:, ::2] = 30
+    X_test[:, ::4] = np.nan
     est_cat.predict(X_test)
 
 
@@ -882,32 +880,6 @@ def test_categorical_spec_errors(Est, categorical_features, monotonic_cst,
                                  HistGradientBoostingRegressor))
 def test_categorical_bad_encoding_errors(Est):
     # Test errors when categories are encoded incorrectly
-    n_samples = 100
-    X, y = make_classification(random_state=0, n_features=4,
-                               n_samples=n_samples)
-    rng = np.random.RandomState(0)
-    X[:, 0] = rng.randint(0, 10, size=n_samples)
-
-    X[0, 0] = 300
-    est = Est(categorical_features=[True, False, False, False], max_bins=200)
-
-    msg = ("Categorical feature at index 0 is expected to be encoded with "
-           "values < 200")
-    with pytest.raises(ValueError, match=msg):
-        est.fit(X, y)
-
-    X[:, 0] = rng.randint(0, 40, size=n_samples)
-    est = Est(categorical_features=[True, False, False, False], max_bins=10)
-    msg = ("Categorical feature at index 0 is expected to have a cardinality "
-           "<= 10")
-    with pytest.raises(ValueError, match=msg):
-        est.fit(X, y)
-
-
-@pytest.mark.parametrize('Est', (HistGradientBoostingClassifier,
-                                 HistGradientBoostingRegressor))
-def test_categorical_n_bins_errors(Est):
-    # test error when there is not enough bins or when values are >= n_bins
 
     gb = Est(categorical_features=[True], max_bins=2)
 

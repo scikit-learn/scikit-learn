@@ -40,15 +40,13 @@ def test_regression_dataset(n_bins):
     predictor = grower.make_predictor(
         binning_thresholds=mapper.bin_thresholds_)
 
-    known_cat_bitset = np.zeros((0, 8), dtype=X_BITSET_INNER_DTYPE)
-    orig_feat_to_known_cats_idx = np.zeros(0, dtype=np.uint8)
+    known_cat_bitsets = np.zeros((0, 8), dtype=X_BITSET_INNER_DTYPE)
+    f_idx_map = np.zeros(0, dtype=np.uint8)
 
-    y_pred_train = predictor.predict(X_train, known_cat_bitset,
-                                     orig_feat_to_known_cats_idx)
+    y_pred_train = predictor.predict(X_train, known_cat_bitsets, f_idx_map)
     assert r2_score(y_train, y_pred_train) > 0.82
 
-    y_pred_test = predictor.predict(X_test, known_cat_bitset,
-                                    orig_feat_to_known_cats_idx)
+    y_pred_test = predictor.predict(X_test, known_cat_bitsets, f_idx_map)
     assert r2_score(y_test, y_pred_test) > 0.67
 
 
@@ -86,12 +84,11 @@ def test_infinite_values_and_thresholds(num_threshold, expected_predictions):
     binned_cat_bitsets = np.zeros((0, 8), dtype=X_BITSET_INNER_DTYPE)
     raw_categorical_bitsets = np.zeros((0, 8), dtype=X_BITSET_INNER_DTYPE)
     known_cat_bitset = np.zeros((0, 8), dtype=X_BITSET_INNER_DTYPE)
-    orig_feat_to_known_cats_idx = np.zeros(0, dtype=np.uint8)
+    f_idx_map = np.zeros(0, dtype=np.uint8)
 
     predictor = TreePredictor(
         nodes, binned_cat_bitsets, raw_categorical_bitsets)
-    predictions = predictor.predict(X, known_cat_bitset,
-                                    orig_feat_to_known_cats_idx)
+    predictions = predictor.predict(X, known_cat_bitset, f_idx_map)
 
     assert np.all(predictions == expected_predictions)
 
@@ -117,12 +114,13 @@ def test_categorical_predictor(bins_go_left, expected_predictions):
     # Test predictor outputs are correct with categorical features
 
     X_binned = np.array([[0, 1, 2, 3, 4, 5]], dtype=X_BINNED_DTYPE).T
+    categories = np.array([2, 5, 6, 8, 10, 15], dtype=X_DTYPE)
+
     bins_go_left = np.array(bins_go_left, dtype=X_BINNED_DTYPE)
-    category_bins = np.array([2, 5, 6, 8, 10, 15], dtype=X_DTYPE)
-    nodes = np.zeros(3, dtype=PREDICTOR_RECORD_DTYPE)
 
     # We just construct a simple tree with 1 root and 2 children
     # parent node
+    nodes = np.zeros(3, dtype=PREDICTOR_RECORD_DTYPE)
     nodes[0]['left'] = 1
     nodes[0]['right'] = 2
     nodes[0]['feature_idx'] = 0
@@ -143,7 +141,7 @@ def test_categorical_predictor(bins_go_left, expected_predictions):
         set_bitset_memoryview(binned_cat_bitsets[0], go_left)
 
     set_raw_bitset_from_binned_bitset(raw_categorical_bitsets[0],
-                                      binned_cat_bitsets[0], category_bins)
+                                      binned_cat_bitsets[0], categories)
 
     predictor = TreePredictor(nodes, binned_cat_bitsets,
                               raw_categorical_bitsets)
@@ -154,14 +152,13 @@ def test_categorical_predictor(bins_go_left, expected_predictions):
     assert_allclose(prediction_binned, expected_predictions)
 
     # manually construct bitset
-    known_cat_bitset = np.zeros((8, 1), dtype=np.uint32)
-    known_cat_bitset[0, 0] = np.sum(2**category_bins, dtype=np.uint32)
-    orig_feat_to_known_cats_idx = np.array([0], dtype=np.uint8)
+    known_cat_bitsets = np.zeros((8, 1), dtype=np.uint32)
+    known_cat_bitsets[0, 0] = np.sum(2**categories, dtype=np.uint32)
+    f_idx_map = np.array([0], dtype=np.uint8)
 
     # Check with un-binned data
-    predictions = predictor.predict(category_bins.reshape(-1, 1),
-                                    known_cat_bitset,
-                                    orig_feat_to_known_cats_idx)
+    predictions = predictor.predict(categories.reshape(-1, 1),
+                                    known_cat_bitsets, f_idx_map)
     assert_allclose(predictions, expected_predictions)
 
     # Check missing goes left because missing_values_bin_idx=6
@@ -171,8 +168,6 @@ def test_categorical_predictor(bins_go_left, expected_predictions):
     assert_allclose(predictions, [1])
 
     # missing and unknown go left
-    predictions = predictor.predict(np.array([[np.nan, 17.0]],
-                                             dtype=X_DTYPE).T,
-                                    known_cat_bitset,
-                                    orig_feat_to_known_cats_idx)
+    predictions = predictor.predict(np.array([[np.nan, 17]], dtype=X_DTYPE).T,
+                                    known_cat_bitsets, f_idx_map)
     assert_allclose(predictions, [1, 1])

@@ -10,8 +10,8 @@ from sklearn.ensemble._hist_gradient_boosting.common import X_BINNED_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common import X_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common import Y_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
-from sklearn.ensemble._hist_gradient_boosting.common import \
-    X_BITSET_INNER_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.common import (
+    X_BITSET_INNER_DTYPE)
 
 
 def _make_training_data(n_bins=256, constant_hessian=True):
@@ -366,11 +366,10 @@ def test_missing_value_predict_only():
     # now build X_test with only nans, and make sure all predictions are equal
     # to prediction_main_path
     all_nans = np.full(shape=(n_samples, 1), fill_value=np.nan)
-    known_cat_bitset = np.zeros((0, 8), dtype=X_BITSET_INNER_DTYPE)
-    orig_feat_to_known_cats_idx = np.zeros(1, dtype=X_BINNED_DTYPE)
+    known_cat_bitsets = np.zeros((0, 8), dtype=X_BITSET_INNER_DTYPE)
+    f_idx_map = np.zeros(0, dtype=X_BINNED_DTYPE)
 
-    y_pred = predictor.predict(all_nans, known_cat_bitset,
-                               orig_feat_to_known_cats_idx)
+    y_pred = predictor.predict(all_nans, known_cat_bitsets, f_idx_map)
     assert np.all(y_pred == prediction_main_path)
 
 
@@ -406,14 +405,12 @@ def test_split_on_nan_with_infinite_values():
     assert predictor.nodes[0]['num_threshold'] == np.inf
     assert predictor.nodes[0]['bin_threshold'] == n_bins_non_missing - 1
 
-    known_cat_bitset, orig_feat_to_known_cats_idx = (
-        bin_mapper.make_known_categories_bitsets())
+    known_cat_bitsets, f_idx_map = bin_mapper.make_known_categories_bitsets()
 
     # Make sure in particular that the +inf sample is mapped to the left child
     # Note that lightgbm "fails" here and will assign the inf sample to the
     # right child, even though it's a "split on nan" situation.
-    predictions = predictor.predict(X, known_cat_bitset,
-                                    orig_feat_to_known_cats_idx)
+    predictions = predictor.predict(X, known_cat_bitsets, f_idx_map)
     predictions_binned = predictor.predict_binned(
         X_binned, missing_values_bin_idx=bin_mapper.missing_values_bin_idx_)
     np.testing.assert_allclose(predictions, -gradients)
@@ -435,22 +432,28 @@ def test_grow_tree_categories():
     grower.grow()
     assert grower.n_nodes == 3
 
-    binning_thresholds = [np.array([4.0, 9.0], dtype=X_DTYPE)]
-    predictor = grower.make_predictor(binning_thresholds=binning_thresholds)
+    categories = [np.array([4, 9], dtype=X_DTYPE)]
+    predictor = grower.make_predictor(binning_thresholds=categories)
     root = predictor.nodes[0]
     assert root['count'] == 23
     assert root['depth'] == 0
     assert root['is_categorical']
 
-    # missing values with n_bins = 4 goes left because it has more samples
-    # and category 1 goes left -> bitset 0101000 -> 2 + 8 = 10
-    expected_cat_bitset = [10] + [0] * 7
-    binned_cat_bitset = predictor.binned_left_cat_bitsets
-    assert_array_equal(binned_cat_bitset[0], expected_cat_bitset)
+    left, right = predictor.nodes[root['left']], predictor.nodes[root['right']]
 
-    # category 1 with raw value 10 goes to the left
-    raw_categories = predictor.raw_left_cat_bitsets
-    assert_array_equal(raw_categories[0], [2**9] + [0] * 7)
+    # arbitrary validation, but this means ones go to the left. This also means
+    # missing values should go to the left because left child has mode samples.
+    assert left['count'] >= right['count']
+    # With 4 bins, missing values are represented as the 4th bit:
+    # 00001010 = 2 + 8 = 10
+    expected_binned_cat_bitset = [10] + [0] * 7
+    binned_cat_bitset = predictor.binned_left_cat_bitsets
+    assert_array_equal(binned_cat_bitset[0], expected_binned_cat_bitset)
+
+    # binned category 1 with raw category value 9 goes to the left
+    expected_raw_cat_bitsets = [2**9] + [0] * 7
+    raw_cat_bitsets = predictor.raw_left_cat_bitsets
+    assert_array_equal(raw_cat_bitsets[0], expected_raw_cat_bitsets)
 
 
 @pytest.mark.parametrize('min_samples_leaf', (1, 20))

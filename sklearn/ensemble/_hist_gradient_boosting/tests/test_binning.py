@@ -354,6 +354,7 @@ def test_categorical_with_numerical_features(n_bins):
 
 
 def test_make_known_categories_bitsets():
+    # Check the output of make_known_categories_bitsets
     X = np.array([[14, 2, 30],
                   [30, 4, 70],
                   [40, 10, 180],
@@ -364,24 +365,28 @@ def test_make_known_categories_bitsets():
                             known_categories=[None, X[:, 1], X[:, 2]])
     bin_mapper.fit(X)
 
-    known_cat_bitset, orig_feat_to_known_cats_idx = (
-        bin_mapper.make_known_categories_bitsets())
+    known_cat_bitsets, f_idx_map = bin_mapper.make_known_categories_bitsets()
 
-    expected_orig_feat_to_known = np.array([0, 0, 1], dtype=np.uint8)
-    assert_allclose(expected_orig_feat_to_known, orig_feat_to_known_cats_idx)
+    # Note that non-categorical features, values are left to 0
+    expected_f_idx_map = np.array([0, 0, 1], dtype=np.uint8)
+    assert_allclose(expected_f_idx_map, f_idx_map)
 
     expected_cat_bitset = np.zeros((2, 8), dtype=np.uint32)
 
-    # [2, 4, 10, 240]
-    expected_cat_bitset[0, 0] = 2**2 + 2**4 + 2**10
-    expected_cat_bitset[0, 7] = 2**16
+    # first categorical feature: [2, 4, 10, 240]
+    f_idx = 1
+    mapped_f_idx = f_idx_map[f_idx]
+    expected_cat_bitset[mapped_f_idx, 0] = 2**2 + 2**4 + 2**10
+    expected_cat_bitset[mapped_f_idx, 7] = 2**16
 
-    # [30, 70, 180]
-    expected_cat_bitset[1, 0] = 2**30
-    expected_cat_bitset[1, 2] = 2**6
-    expected_cat_bitset[1, 5] = 2**20
+    # second categorical feature [30, 70, 180]
+    f_idx = 2
+    mapped_f_idx = f_idx_map[f_idx]
+    expected_cat_bitset[mapped_f_idx, 0] = 2**30
+    expected_cat_bitset[mapped_f_idx, 2] = 2**6
+    expected_cat_bitset[mapped_f_idx, 5] = 2**20
 
-    assert_allclose(expected_cat_bitset, known_cat_bitset)
+    assert_allclose(expected_cat_bitset, known_cat_bitsets)
 
 
 @pytest.mark.parametrize('is_categorical, known_categories, match', [
