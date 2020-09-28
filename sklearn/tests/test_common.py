@@ -251,7 +251,9 @@ def test_strict_mode_check_estimator():
 
     # MyNMF will fail check_fit_non_negative() in strict mode because it yields
     # a bad error message
-    with pytest.raises(AssertionError, match='does not match'):
+    with pytest.raises(
+        AssertionError, match="The error message should contain"
+    ):
         check_estimator(MyNMFWithBadErrorMessage(), strict_mode=True)
     # However, it should pass the test suite in non-strict mode because when
     # strict mode is off, check_fit_non_negative() will not check the exact

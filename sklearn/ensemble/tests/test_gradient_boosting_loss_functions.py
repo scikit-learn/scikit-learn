@@ -1,11 +1,11 @@
 """
 Testing for the gradient boosting loss functions and initial estimators.
 """
-
+from itertools import product
 import numpy as np
-from numpy.testing import assert_almost_equal
 from numpy.testing import assert_allclose
 import pytest
+from pytest import approx
 
 from sklearn.utils import check_random_state
 from sklearn.ensemble._gb_losses import RegressionLossFunction
@@ -25,35 +25,37 @@ def test_binomial_deviance():
     bd = BinomialDeviance(2)
 
     # pred has the same BD for y in {0, 1}
-    assert (bd(np.array([0.0]), np.array([0.0])) ==
-            bd(np.array([1.0]), np.array([0.0])))
+    assert (bd(np.array([0.]), np.array([0.])) ==
+            bd(np.array([1.]), np.array([0.])))
 
-    assert_almost_equal(bd(np.array([1.0, 1.0, 1.0]),
-                           np.array([100.0, 100.0, 100.0])),
-                        0.0)
-    assert_almost_equal(bd(np.array([1.0, 0.0, 0.0]),
-                           np.array([100.0, -100.0, -100.0])), 0)
+    assert bd(np.array([1., 1, 1]), np.array([100., 100, 100])) == approx(0)
+    assert bd(np.array([1., 0, 0]), np.array([100., -100, -100])) == approx(0)
 
-    # check if same results as alternative definition of deviance (from ESLII)
-    def alt_dev(y, pred):
-        return np.mean(np.logaddexp(0.0, -2.0 * (2.0 * y - 1) * pred))
+    # check if same results as alternative definition of deviance, from ESLII
+    # Eq. (10.18): -loglike = log(1 + exp(-2*z*f))
+    # Note:
+    # - We use y = {0, 1}, ESL (10.18) uses z in {-1, 1}, hence y=2*y-1
+    # - ESL 2*f = pred_raw, hence the factor 2 of ESL disappears.
+    # - Deviance = -2*loglike + .., hence a factor of 2 in front.
+    def alt_dev(y, raw_pred):
+        z = 2 * y - 1
+        return 2 * np.mean(np.log(1 + np.exp(-z * raw_pred)))
 
-    test_data = [(np.array([1.0, 1.0, 1.0]), np.array([100.0, 100.0, 100.0])),
-                 (np.array([0.0, 0.0, 0.0]), np.array([100.0, 100.0, 100.0])),
-                 (np.array([0.0, 0.0, 0.0]),
-                  np.array([-100.0, -100.0, -100.0])),
-                 (np.array([1.0, 1.0, 1.0]),
-                  np.array([-100.0, -100.0, -100.0]))]
-
-    for datum in test_data:
-        assert_almost_equal(bd(*datum), alt_dev(*datum))
-
-    # check the gradient against the
-    def alt_ng(y, pred):
-        return (2 * y - 1) / (1 + np.exp(2 * (2 * y - 1) * pred))
+    test_data = product(
+        (np.array([0., 0, 0]), np.array([1., 1, 1])),
+        (np.array([-5., -5, -5]), np.array([3., 3, 3])))
 
     for datum in test_data:
-        assert_almost_equal(bd.negative_gradient(*datum), alt_ng(*datum))
+        assert bd(*datum) == approx(alt_dev(*datum))
+
+    # check the negative gradient against altenative formula from ESLII
+    # Note: negative_gradient is half the negative gradient.
+    def alt_ng(y, raw_pred):
+        z = 2 * y - 1
+        return z / (1 + np.exp(z * raw_pred))
+
+    for datum in test_data:
+        assert bd.negative_gradient(*datum) == approx(alt_ng(*datum))
 
 
 def test_sample_weight_smoke():
@@ -65,7 +67,7 @@ def test_sample_weight_smoke():
     loss = LeastSquaresError()
     loss_wo_sw = loss(y, pred)
     loss_w_sw = loss(y, pred, np.ones(pred.shape[0], dtype=np.float32))
-    assert_almost_equal(loss_wo_sw, loss_w_sw)
+    assert loss_wo_sw == approx(loss_w_sw)
 
 
 def test_sample_weight_init_estimators():
@@ -164,13 +166,13 @@ def test_multinomial_deviance(n_classes, n_samples):
     loss_wo_sw = loss(y_true, y_pred)
     assert loss_wo_sw > 0
     loss_w_sw = loss(y_true, y_pred, sample_weight=sample_weight)
-    assert loss_wo_sw == pytest.approx(loss_w_sw)
+    assert loss_wo_sw == approx(loss_w_sw)
 
     # Multinomial deviance uses weighted average loss rather than
     # weighted sum loss, so we make sure that the value remains the same
     # when we device the weight by 2.
     loss_w_sw = loss(y_true, y_pred, sample_weight=0.5 * sample_weight)
-    assert loss_wo_sw == pytest.approx(loss_w_sw)
+    assert loss_wo_sw == approx(loss_w_sw)
 
 
 def test_mdl_computation_weighted():
@@ -180,8 +182,7 @@ def test_mdl_computation_weighted():
     expected_loss = 1.0909323
     # MultinomialDeviance loss computation with weights.
     loss = MultinomialDeviance(3)
-    assert (loss(y_true, raw_predictions, weights)
-            == pytest.approx(expected_loss))
+    assert loss(y_true, raw_predictions, weights) == approx(expected_loss)
 
 
 @pytest.mark.parametrize('n', [0, 1, 2])
@@ -241,7 +242,7 @@ def test_init_raw_predictions_values():
     init_estimator = loss.init_estimator().fit(X, y)
     raw_predictions = loss.get_init_raw_predictions(y, init_estimator)
     # Make sure baseline prediction is the mean of all targets
-    assert_almost_equal(raw_predictions, y.mean())
+    assert_allclose(raw_predictions, y.mean())
 
     # Least absolute and huber loss
     for Loss in (LeastAbsoluteError, HuberLossFunction):
@@ -249,7 +250,7 @@ def test_init_raw_predictions_values():
         init_estimator = loss.init_estimator().fit(X, y)
         raw_predictions = loss.get_init_raw_predictions(y, init_estimator)
         # Make sure baseline prediction is the median of all targets
-        assert_almost_equal(raw_predictions, np.median(y))
+        assert_allclose(raw_predictions, np.median(y))
 
     # Quantile loss
     for alpha in (.1, .5, .9):
@@ -257,7 +258,7 @@ def test_init_raw_predictions_values():
         init_estimator = loss.init_estimator().fit(X, y)
         raw_predictions = loss.get_init_raw_predictions(y, init_estimator)
         # Make sure baseline prediction is the alpha-quantile of all targets
-        assert_almost_equal(raw_predictions, np.percentile(y, alpha * 100))
+        assert_allclose(raw_predictions, np.percentile(y, alpha * 100))
 
     y = rng.randint(0, 2, size=n_samples)
 
@@ -271,14 +272,14 @@ def test_init_raw_predictions_values():
     # So we want raw_prediction = link_function(p) = log(p / (1 - p))
     raw_predictions = loss.get_init_raw_predictions(y, init_estimator)
     p = y.mean()
-    assert_almost_equal(raw_predictions, np.log(p / (1 - p)))
+    assert_allclose(raw_predictions, np.log(p / (1 - p)))
 
     # Exponential loss
     loss = ExponentialLoss(n_classes=2)
     init_estimator = loss.init_estimator().fit(X, y)
     raw_predictions = loss.get_init_raw_predictions(y, init_estimator)
     p = y.mean()
-    assert_almost_equal(raw_predictions, .5 * np.log(p / (1 - p)))
+    assert_allclose(raw_predictions, .5 * np.log(p / (1 - p)))
 
     # Multinomial deviance loss
     for n_classes in range(3, 5):
@@ -288,7 +289,7 @@ def test_init_raw_predictions_values():
         raw_predictions = loss.get_init_raw_predictions(y, init_estimator)
         for k in range(n_classes):
             p = (y == k).mean()
-        assert_almost_equal(raw_predictions[:, k], np.log(p))
+            assert_allclose(raw_predictions[:, k], np.log(p))
 
 
 @pytest.mark.parametrize('seed', range(5))
@@ -304,9 +305,9 @@ def test_lad_equals_quantile_50(seed):
 
     lad_loss = lad(y_true, raw_predictions)
     ql_loss = ql(y_true, raw_predictions)
-    assert_almost_equal(lad_loss, 2 * ql_loss)
+    assert lad_loss == approx(2 * ql_loss)
 
     weights = np.linspace(0, 1, n_samples) ** 2
     lad_weighted_loss = lad(y_true, raw_predictions, sample_weight=weights)
     ql_weighted_loss = ql(y_true, raw_predictions, sample_weight=weights)
-    assert_almost_equal(lad_weighted_loss, 2 * ql_weighted_loss)
+    assert lad_weighted_loss == approx(2 * ql_weighted_loss)
