@@ -779,12 +779,7 @@ def check_estimator_sparse_data(name, estimator_orig, strict_mode=True):
                 estimator.set_params(with_mean=False)
         # fit and predict
         if "64" in matrix_format:
-            err_msg = (
-                f"Estimator {name} doesn't seem to support "
-                f"{matrix_format} matrix, "
-                "and is not failing gracefully, e.g. by using "
-                "check_array(X, accept_large_sparse=False)"
-            )
+            err_msg = f"Estimator {name} doesn't seem to support {matrix_format} matrix, and is not failing gracefully, e.g. by using check_array(X, accept_large_sparse=False)"
         else:
             err_msg = (
                 f"Estimator {name} doesn't seem to fail gracefully on "
@@ -1301,7 +1296,7 @@ def check_transformers_unfitted(name, transformer, strict_mode=True):
         err_msg="The unfitted "
         f"transformer {name} does not raise an error when "
         "transform is called. Perhaps use "
-        "check_is_fitted in transform."
+        "check_is_fitted in transform.",
     ):
         transformer.transform(X)
 
@@ -1889,10 +1884,11 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False,
             with raises(
                 ValueError,
                 err_msg=f"The classifier {name} does not "
-                    "raise an error when incorrect/malformed input "
-                    "data for fit is passed. The number of training "
-                    "examples is not the same as the number of labels. "
-                    "Perhaps use check_X_y in fit."):
+                "raise an error when incorrect/malformed input "
+                "data for fit is passed. The number of training "
+                "examples is not the same as the number of labels. "
+                "Perhaps use check_X_y in fit.",
+            ):
                 classifier.fit(X, y[:-1])
 
         # fit
@@ -2915,7 +2911,7 @@ def check_classifiers_regression_target(name, estimator_orig,
 
     X = X + 1 + abs(X.min(axis=0))  # be sure that X is non-negative
     e = clone(estimator_orig)
-    msg = 'Unknown label type: '
+    msg = "Unknown label type: "
     if not e._get_tags()["no_validation"]:
         with raises(ValueError, match=msg):
             e.fit(X, y)
