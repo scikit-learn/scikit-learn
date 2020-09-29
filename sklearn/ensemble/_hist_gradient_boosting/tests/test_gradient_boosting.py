@@ -8,7 +8,6 @@ from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.base import clone, BaseEstimator, TransformerMixin
 from sklearn.base import is_regressor
 from sklearn.pipeline import make_pipeline
-from sklearn.metrics import r2_score, mean_squared_error
 from sklearn.metrics import mean_poisson_deviance
 from sklearn.dummy import DummyRegressor
 from sklearn.exceptions import NotFittedError
@@ -799,51 +798,43 @@ def test_staged_predict(HistGradientBoosting, X, y):
 
 
 @pytest.mark.parametrize("insert_missing", [False, True])
-@pytest.mark.parametrize("make_dataset, Est, metric", [
-    (make_regression, HistGradientBoostingRegressor, mean_squared_error),
-    (make_classification, HistGradientBoostingClassifier, r2_score)
-])
+@pytest.mark.parametrize("Est", (HistGradientBoostingRegressor,
+                                 HistGradientBoostingClassifier))
 @pytest.mark.parametrize("bool_categorical_parameter", [True, False])
-def test_categorical_sanity(insert_missing, make_dataset, Est,
-                            metric, bool_categorical_parameter):
-    # Test support categories with or without missing data
-    X, y = make_dataset(n_samples=2000, n_features=8, random_state=0)
+def test_unknown_categories_nan(insert_missing, Est,
+                                bool_categorical_parameter):
+    # Make sure no error is raised at predict if a category wasn't seen during
+    # fit. We also make sure they're treated as nans.
 
-    # even indices are categorical
-    categorical = np.zeros(X.shape[1], dtype=bool)
-    categorical[::2] = True
+    rng = np.random.RandomState(0)
+    n_samples = 1000
+    f1 = rng.rand(n_samples)
+    f2 = rng.randint(6, size=n_samples)
+    X = np.c_[f1, f2]
+    y = np.zeros(shape=n_samples)
+    y[X[:, 1] % 2 == 0] = 1
 
-    X[:, categorical] = KBinsDiscretizer(
-        encode='ordinal', n_bins=20).fit_transform(X[:, categorical])
+    rng = np.random.RandomState(0)
+    X[:, 1] = rng.randint(4, size=n_samples)
+
+    if bool_categorical_parameter:
+        categorical_features = [False, True]
+    else:
+        categorical_features = [1]
 
     if insert_missing:
-        rng = np.random.RandomState(42)
         mask = rng.binomial(1, 0.01, size=X.shape).astype(np.bool)
         X[mask] = np.nan
 
-    if bool_categorical_parameter:
-        categorical_features = categorical
-    else:
-        categorical_features = np.flatnonzero(categorical)
+    est = Est(max_iter=20, categorical_features=categorical_features).fit(X, y)
+    assert_array_equal(est.is_categorical_, [False, True])
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
-
-    est_cat = Est(max_iter=20, categorical_features=categorical_features,
-                  random_state=0).fit(X_train, y_train)
-    assert_array_equal(est_cat.is_categorical_, categorical)
-
-    est_no_cat = Est(max_iter=20, random_state=0).fit(X_train, y_train)
-
-    # Checks that test metric is an improvement
-    y_pred_cat = est_cat.predict(X_test)
-    y_pred_no_cat = est_no_cat.predict(X_test)
-    assert metric(y_test, y_pred_cat) >= metric(y_test, y_pred_no_cat)
-
-    # Make sure no error is raised on unknoen categories and nans
-    X_test = np.zeros((1, X.shape[1]), dtype=float)
-    X_test[:, ::2] = 30
-    X_test[:, ::4] = np.nan
-    est_cat.predict(X_test)
+    # Make sure no error is raised on unknown categories and nans
+    # unknown categories will be treated as nans
+    X_test = np.zeros((10, X.shape[1]), dtype=float)
+    X_test[:5, 1] = 30
+    X_test[5:, 1] = np.nan
+    assert len(np.unique(est.predict(X_test))) == 1
 
 
 def test_categorical_encoding_strategies():
