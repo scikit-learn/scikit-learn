@@ -2258,14 +2258,9 @@ def test_hinge_loss_multiclass():
     ])
     np.clip(dummy_losses, 0, None, out=dummy_losses)
     dummy_hinge_loss = np.mean(dummy_losses)
-<<<<<<< HEAD
     assert (
         hinge_loss(y_true, pred_decision) == dummy_hinge_loss
     )
-=======
-    assert (hinge_loss(y_true, pred_decision) ==
-            dummy_hinge_loss)
->>>>>>> 13bccedeb02fa650a247a8ab6420bf9d44df3424
 
 
 def test_hinge_loss_multiclass_missing_labels_with_labels_none():
