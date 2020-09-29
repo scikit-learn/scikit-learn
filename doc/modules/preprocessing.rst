@@ -605,8 +605,8 @@ considering the missing values as an additional category::
            [1., 0., 0., 0., 0., 1.],
            [0., 0., 1., 1., 0., 0.]])
 
-If a feature contains both `np.nan` and `None`, they will considered separate
-categories::
+If a feature contains both `np.nan` and `None`, they will be considered
+separate categories::
 
     >>> X = [['Safari'], [None], [np.nan], ['Firefox']]
     >>> enc = preprocessing.OneHotEncoder(handle_unknown='error').fit(X)
