@@ -218,6 +218,11 @@ Changelog
   :class:`ensemble.GradientBoostingClassifier`.
   :pr:`18326` by :user:`Madhura Jayaratne <madhuracj>`.
 
+- |Fix|: Fixed a bug in
+  :class:`ensemble.HistGradientBoostingRegressor` and
+  :class:`ensemble.HistGradientBoostingClassifier` which can now accept data
+  with `uint8` dtype in `predict`. :pr:`18410` by `Nicolas Hug`_.
+
 :mod:`sklearn.exceptions`
 .........................
 
