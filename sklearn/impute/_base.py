@@ -568,18 +568,18 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         nullable integer dtypes with missing values, `missing_values`
         should be set to `np.nan`, since `pd.NA` will be converted to `np.nan`.
 
-    features : {"missing-only", "all"}, default="missing-only"
+    features : {'missing-only', 'all'}, default='missing-only'
         Whether the imputer mask should represent all or a subset of
         features.
 
-        - If "missing-only" (default), the imputer mask will only represent
+        - If 'missing-only' (default), the imputer mask will only represent
           features containing missing values during fit time.
-        - If "all", the imputer mask will represent all features.
+        - If 'all', the imputer mask will represent all features.
 
-    sparse : bool or "auto", default="auto"
+    sparse : bool or 'auto', default='auto'
         Whether the imputer mask format should be sparse or dense.
 
-        - If "auto" (default), the imputer mask will be of same type as
+        - If 'auto' (default), the imputer mask will be of same type as
           input.
         - If True, the imputer mask will be a sparse matrix.
         - If False, the imputer mask will be a numpy array.
@@ -587,7 +587,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
     error_on_new : bool, default=True
         If True, transform will raise an error when there are features with
         missing values in transform that have no missing values in fit. This is
-        applicable only when ``features="missing-only"``.
+        applicable only when `features='missing-only'`.
 
     Attributes
     ----------
