@@ -618,7 +618,6 @@ separate categories::
            [0., 0., 0., 1.],
            [1., 0., 0., 0.]])
 
-
 See :ref:`dict_feature_extraction` for categorical features that are
 represented as a dict, not as scalars.
 
