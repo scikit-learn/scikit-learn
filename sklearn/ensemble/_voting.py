@@ -141,9 +141,9 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
 class VotingClassifier(ClassifierMixin, _BaseVoting):
     """Soft Voting/Majority Rule classifier for unfitted estimators.
 
-    .. versionadded:: 0.17
-
     Read more in the :ref:`User Guide <voting_classifier>`.
+
+    .. versionadded:: 0.17
 
     Parameters
     ----------
@@ -384,13 +384,13 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 class VotingRegressor(RegressorMixin, _BaseVoting):
     """Prediction voting regressor for unfitted estimators.
 
-    .. versionadded:: 0.21
-
     A voting regressor is an ensemble meta-estimator that fits several base
     regressors, each on the whole dataset. Then it averages the individual
     predictions to form a final prediction.
 
     Read more in the :ref:`User Guide <voting_regressor>`.
+
+    .. versionadded:: 0.21
 
     Parameters
     ----------
