@@ -913,7 +913,7 @@ def update1_na(X, code, C, B, e, observed_mask, t, ro):
     e *= gamma
 
 
-def update_dict_na(C, B, e, D, code, observed_mask, Td = 5):
+def update_dict_na(C, B, e, D, code, observed_mask, Td=5):
     """Update dictionary inplace"""
     e_temp = e.copy()
     for td in range(Td):        
@@ -932,9 +932,51 @@ def update_dict_na(C, B, e, D, code, observed_mask, Td = 5):
             D[:, j] /= linalg.norm(D[:, j])
             
 
-def dict_learning_na(X, n_components=12, alpha=1, ro = 2,
-                     n_iter = 200, return_code=True, return_n_iter=False):
+def dict_learning_na(X, n_components=12, alpha=1, ro=2,
+                     n_iter=200, return_code=True, return_n_iter=False):
+    """Solves a dictionary learning matrix factorization problem online.
     
+    X : array of shape (n_samples, n_features)
+        Data matrix with nan.
+
+    n_components : int,
+        Number of dictionary atoms to extract.
+
+    alpha : float,
+        Sparsity controlling parameter.
+
+    ro : float,
+        forgetting factor
+    
+    n_iter : int,
+        Number of mini-batch iterations to perform.
+
+    return_code : boolean,
+        Whether to also return the code U or just the dictionary V.
+
+    return_n_iter : bool
+        Whether or not to return the number of iterations.
+
+    Returns
+    -------
+    code : array of shape (n_samples, n_components),
+        the sparse code (only returned if `return_code=True`)
+
+    dictionary : array of shape (n_components, n_features),
+        the solutions to the dictionary learning problem
+
+    n_iter : int
+        Number of iterations run. Returned only if `return_n_iter` is
+        set to `True`.
+
+    Notes
+    -----
+    **References:**
+
+    Z. Szabo, B. Poczos, A. Lörnicz, 2011: Online Group-Structured
+    Dictionary Learning 
+    """
+
     n_samples, n_features = X.shape
 
     # mask of the observed values of X
