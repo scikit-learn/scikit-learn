@@ -3,8 +3,8 @@ import pytest
 from numpy.testing import assert_allclose, assert_array_equal
 from sklearn.datasets import make_classification, make_regression
 from sklearn.datasets import make_low_rank_matrix
-from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler
-from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler, OneHotEncoder
+from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.base import clone, BaseEstimator, TransformerMixin
 from sklearn.base import is_regressor
 from sklearn.pipeline import make_pipeline
@@ -12,6 +12,7 @@ from sklearn.metrics import r2_score, mean_squared_error
 from sklearn.metrics import mean_poisson_deviance
 from sklearn.dummy import DummyRegressor
 from sklearn.exceptions import NotFittedError
+from sklearn.compose import make_column_transformer
 
 # To use this experimental feature, we need to explicitly ask for it:
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
@@ -843,6 +844,61 @@ def test_categorical_sanity(insert_missing, make_dataset, Est,
     X_test[:, ::2] = 30
     X_test[:, ::4] = np.nan
     est_cat.predict(X_test)
+
+
+def test_categorical_encoding_strategies():
+    # Check native categorical handling vs different encoding strategies. We
+    # make sure that native encoding needs only 1 split to achieve a perfect
+    # prediction on a simple dataset. In contrast, OneHotEncoded data needs
+    # more depth / splits, and treating categories as ordered (just using
+    # OrdinalEncoder) requires even more depth
+
+    # dataset with one random continuous feature, and one categorical feature
+    # with values in [0, 5], e.g. from an OrdinalEncoder.
+    # class == 1 iff categorical value in {0, 2, 4}
+    rng = np.random.RandomState(0)
+    n_samples = 10_000
+    f1 = rng.rand(n_samples)
+    f2 = rng.randint(6, size=n_samples)
+    X = np.c_[f1, f2]
+    y = np.zeros(shape=n_samples)
+    y[X[:, 1] % 2 == 0] = 1
+
+    # make sure dataset is balanced so that the baseline_prediction doesn't
+    # influence predictions too much with max_iter = 1
+    assert 0.49 < y.mean() < 0.51
+
+    clf_cat = HistGradientBoostingClassifier(
+        max_iter=1, max_depth=1, categorical_features=[False, True])
+
+    # Using native categorical encoding, we get perfect predictions with just
+    # one split
+    assert cross_val_score(clf_cat, X, y).mean() == 1
+
+    # quick sanity check for the bitset: 0, 2, 4 = 2**0 + 2**2 + 2**4 = 21
+    expected_left_bitset = [21, 0, 0, 0, 0, 0, 0, 0]
+    left_bitset = clf_cat.fit(X, y)._predictors[0][0].raw_left_cat_bitsets[0]
+    assert_array_equal(left_bitset, expected_left_bitset)
+
+    # Treating categories as ordered, we need more depth / more splits to get
+    # the same predictions
+    clf_no_cat = HistGradientBoostingClassifier(max_iter=1, max_depth=4,
+                                                categorical_features=None)
+    assert cross_val_score(clf_no_cat, X, y).mean() < .9
+
+    clf_no_cat.set_params(max_depth=5)
+    assert cross_val_score(clf_no_cat, X, y).mean() == 1
+
+    # Using OHEd data, we need less splits than with pure OEd data, but we
+    # still need more splits than with the native categorical splits
+    ct = make_column_transformer((OneHotEncoder(sparse=False), [1]),
+                                 remainder='passthrough')
+    X_ohe = ct.fit_transform(X)
+    clf_no_cat.set_params(max_depth=2)
+    assert cross_val_score(clf_no_cat, X_ohe, y).mean() < .9
+
+    clf_no_cat.set_params(max_depth=3)
+    assert cross_val_score(clf_no_cat, X_ohe, y).mean() == 1
 
 
 @pytest.mark.parametrize('Est', (HistGradientBoostingClassifier,
