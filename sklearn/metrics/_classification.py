@@ -41,7 +41,7 @@ from ..utils.validation import _deprecate_positional_args
 from ..utils.sparsefuncs import count_nonzero
 from ..exceptions import UndefinedMetricWarning
 
-from ._base import _check_ambiguity_pos_label
+from ._base import _check_pos_label_consistency
 
 
 def _check_zero_division(zero_division):
@@ -2493,7 +2493,7 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
         raise ValueError("y_prob contains values less than 0.")
 
     try:
-        pos_label = _check_ambiguity_pos_label(pos_label, y_true)
+        pos_label = _check_pos_label_consistency(pos_label, y_true)
     except ValueError:
         classes = np.unique(y_true)
         if classes.dtype.kind not in ('O', 'U', 'S'):
