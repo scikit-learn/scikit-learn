@@ -810,10 +810,6 @@ cdef class Splitter:
             Y_DTYPE_C sum_gradients_bin
             Y_DTYPE_C sum_hessians_bin
             Y_DTYPE_C loss_current_node
-            # Reduces the effect of noises in categorical features,
-            # especially for categoires with few data
-            # TODO: Make this user adjustable?
-            unsigned int MIN_CAT_SUPPORT = 10
             Y_DTYPE_C sum_gradient_left, sum_hessian_left
             Y_DTYPE_C sum_gradient_right, sum_hessian_right
             unsigned int n_samples_left, n_samples_right
@@ -825,37 +821,41 @@ cdef class Splitter:
             Y_DTYPE_C best_sum_gradient_left
             unsigned int best_n_samples_left
             unsigned int best_sorted_thres
+            # Reduces the effect of noises in categorical features,
+            # especially for categoires with few data. Called cat_smooth in
+            # LightGBM. TODO: Make this user adjustable?
+            Y_DTYPE_C MIN_CAT_SUPPORT = 10.
+            # this is equal to 1 for losses where hessians are constant
+            Y_DTYPE_C support_factor = n_samples / sum_hessians
+
 
         cat_infos = <categorical_info *> malloc(
             (n_bins_non_missing + has_missing_values) * sizeof(categorical_info))
 
-        # fill cat_infos while filtering out categories based on
-        # MIN_CAT_SUPPORT
+        # fill cat_infos while filtering out categories based on MIN_CAT_SUPPORT
         for bin_idx in range(n_bins_non_missing):
-            if feature_hist[bin_idx].count >= MIN_CAT_SUPPORT:
+            if self.hessians_are_constant:
+                sum_hessians_bin = feature_hist[bin_idx].count
+            else:
+                sum_hessians_bin = feature_hist[bin_idx].sum_hessians
+            if sum_hessians_bin * support_factor >= MIN_CAT_SUPPORT:
                 cat_infos[n_used_bin].bin_idx = bin_idx
                 sum_gradients_bin = feature_hist[bin_idx].sum_gradients
-                if self.hessians_are_constant:
-                    sum_hessians_bin = feature_hist[bin_idx].count
-                else:
-                    sum_hessians_bin = feature_hist[bin_idx].sum_hessians
 
                 cat_infos[n_used_bin].value = \
                     sum_gradients_bin / (sum_hessians_bin + MIN_CAT_SUPPORT)
                 n_used_bin += 1
 
-        # check missing bin
+        # Also add missing values bin so that nans are considered as a category
         if has_missing_values:
-            if feature_hist[missing_values_bin_idx].count >= MIN_CAT_SUPPORT:
+            if self.hessians_are_constant:
+                sum_hessians_bin = feature_hist[missing_values_bin_idx].count
+            else:
+                sum_hessians_bin = feature_hist[missing_values_bin_idx].sum_hessians
+            if sum_hessians_bin * support_factor >= MIN_CAT_SUPPORT:
                 cat_infos[n_used_bin].bin_idx = missing_values_bin_idx
                 sum_gradients_bin = \
                     feature_hist[missing_values_bin_idx].sum_gradients
-                if self.hessians_are_constant:
-                    sum_hessians_bin = \
-                        feature_hist[missing_values_bin_idx].count
-                else:
-                    sum_hessians_bin = \
-                        feature_hist[missing_values_bin_idx].sum_hessians
 
                 cat_infos[n_used_bin].value = \
                     sum_gradients_bin / (sum_hessians_bin + MIN_CAT_SUPPORT)
