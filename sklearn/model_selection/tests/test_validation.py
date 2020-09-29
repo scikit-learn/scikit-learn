@@ -1786,7 +1786,8 @@ def test_callable_multimetric_confusion_matrix_cross_validate():
 
 # TODO: Remove in 0.26 when the _pairwise attribute is removed
 def test_validation_pairwise():
-    # Correctly warns with pairwise tags
+    # checks the interactions between the pairwise estimator tag
+    # and the _pairwise attribute
     iris = load_iris()
     X, y = iris.data, iris.target
     linear_kernel = np.dot(X, X.T)
