@@ -458,6 +458,10 @@ Changelog
 - |API| Adds :class:`feature_selection.SelectorMixin` back to public API.
   :pr:`16132` by :user:`trimeta`.
 
+- |Enhancement| : class:`feature_selection.GenericUnivariateSelect` preserves
+  float32 dtype. :pr:`18482` by :user:`Thierry Gameiro <titigmr>`
+  and :user:`Daniel Kharsa <aflatoune>`.
+
 :mod:`sklearn.gaussian_process`
 ...............................
 

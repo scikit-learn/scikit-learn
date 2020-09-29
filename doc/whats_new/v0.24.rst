@@ -263,7 +263,8 @@ Changelog
   :user:`Noel Rogers <noelano>`.
 
 - |Enhancement| : class:`feature_selection.GenericUnivariateSelect` preserves
-  float32 dtype. :pr:`18482` by :user:`Thierry Gameiro <titigmr>`.
+  float32 dtype. :pr:`18482` by :user:`Thierry Gameiro <titigmr>`
+  and :user:`Daniel Kharsa <aflatoune>`.
 
 :mod:`sklearn.gaussian_process`
 ...............................
