@@ -336,17 +336,32 @@ def test_check_array():
     result = check_array(X_no_array)
     assert isinstance(result, np.ndarray)
 
+
+def test_check_array_numeric():
+    # simple test for check_array and dtype='numeric'
+    X_str = [['1', '2'], ['3', '4']]
+    for X in [X_str, np.array(X_str, dtype='U'), np.array(X_str, dtype='S')]:
+        X_out = check_array(X, dtype="numeric")
+        assert_allclose(X_out, [[1, 2], [3, 4]])
+
+    X_bytes = [[b'1', b'2'], [b'3', b'4']]
+    for X in [X_bytes, np.array(X_bytes, dtype='V1')]:
+        X_out = check_array(X, dtype="numeric")
+        assert_allclose(X_out, [[1, 2], [3, 4]])
+
+
+def test_check_array_dtype_numeric_errors():
     # deprecation warning if string-like array with dtype="numeric"
-    expected_warn_regex = r"converted to decimal numbers if dtype='numeric'"
+    expected_warn_regex = "Unable to convert array of bytes/strings"
     X_str = [['11', '12'], ['13', 'xx']]
     for X in [X_str, np.array(X_str, dtype='U'), np.array(X_str, dtype='S')]:
-        with pytest.warns(FutureWarning, match=expected_warn_regex):
+        with pytest.raises(ValueError, match=expected_warn_regex):
             check_array(X, dtype="numeric")
 
     # deprecation warning if byte-like array with dtype="numeric"
     X_bytes = [[b'a', b'b'], [b'c', b'd']]
     for X in [X_bytes, np.array(X_bytes, dtype='V1')]:
-        with pytest.warns(FutureWarning, match=expected_warn_regex):
+        with pytest.raises(ValueError, match=expected_warn_regex):
             check_array(X, dtype="numeric")
 
 
