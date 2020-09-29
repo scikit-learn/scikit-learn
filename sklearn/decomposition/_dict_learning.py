@@ -933,7 +933,7 @@ def update_dict_na(C, B, e, D, code, observed_mask, Td = 5):
             
 
 def dict_learning_na(X, n_components=12, alpha=1, ro = 2,
-                     n_iter = 200):
+                     n_iter = 200, return_code=True, return_n_iter=False):
     
     n_samples, n_features = X.shape
 
@@ -978,7 +978,7 @@ def dict_learning_na(X, n_components=12, alpha=1, ro = 2,
 
         # update stats
         update1_na(Xo_minibatch, this_code, C, B, e,
-                observed_mask_minibatch, t, ro)
+                observed_mask_minibatch, t_iter, ro)
 
         # update dictionary
         update_dict_na(C, B, e, D, this_code, observed_mask_minibatch)
@@ -989,7 +989,17 @@ def dict_learning_na(X, n_components=12, alpha=1, ro = 2,
         e += np.outer(this_code, np.multiply(observed_mask_minibatch, D_code))
 
     code = sparse_encode_na(Xo, observed_mask, D.T, alpha)
-    return code, D.T, t_iter
+    
+    
+    if return_code:
+        if return_n_iter:
+            return code, D.T, t_iter
+        else:
+            return code, D.T
+    if return_n_iter:
+        return D.T, t_iter
+    else:
+        return D.T
 
 
 class SparseCodingMixin(TransformerMixin):
@@ -1030,13 +1040,18 @@ class SparseCodingMixin(TransformerMixin):
         """
         check_is_fitted(self)
 
-        X = check_array(X)
-
-        code = sparse_encode(
-            X, self.components_, algorithm=self.transform_algorithm,
-            n_nonzero_coefs=self.transform_n_nonzero_coefs,
-            alpha=self.transform_alpha, max_iter=self.transform_max_iter,
-            n_jobs=self.n_jobs, positive=self.positive_code)
+        X = check_array(X, force_all_finite='allow-nan')
+        if np.any(np.isnan(X)):
+            observed_mask = np.logical_not(_get_mask(X, np.nan))
+            Xo = np.nan_to_num(X)
+            code = sparse_encode_na(
+                Xo, observed_mask, self.components_, alpha=self.transform_alpha)
+        else:
+            code = sparse_encode(
+                X, self.components_, algorithm=self.transform_algorithm,
+                n_nonzero_coefs=self.transform_n_nonzero_coefs,
+                alpha=self.transform_alpha, max_iter=self.transform_max_iter,
+                n_jobs=self.n_jobs, positive=self.positive_code)
 
         if self.split_sign:
             # feature vector is split into a positive and negative side
@@ -1543,9 +1558,10 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
         X = check_array(X, force_all_finite='allow-nan')
         
         if np.any(np.isnan(X)):
+            print('use with nan')
             code, dictionary, self.n_iter_ = dict_learning_na(
                 X, self.n_components, self.alpha, ro = 2,
-                n_iter=self.n_iter)
+                n_iter=self.n_iter, return_n_iter=True)
             self.components_ = dictionary
             self.inner_stats_ = None
             self.iter_offset_ = self.n_iter

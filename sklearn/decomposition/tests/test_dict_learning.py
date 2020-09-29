@@ -17,6 +17,7 @@ from sklearn.decomposition import MiniBatchDictionaryLearning
 from sklearn.decomposition import SparseCoder
 from sklearn.decomposition import dict_learning
 from sklearn.decomposition import dict_learning_online
+from sklearn.decomposition._dict_learning import dict_learning_na
 from sklearn.decomposition import sparse_encode
 
 
@@ -242,6 +243,13 @@ def test_dict_learning_online_shapes():
     assert dictionary.shape == (n_components, n_features)
     assert np.dot(code, dictionary).shape == X.shape
 
+def test_dict_learning_na_shapes():
+    n_components = 8
+    code, dictionary = dict_learning_na(X, n_components=n_components,
+                                            alpha=1)
+    assert code.shape == (n_samples, n_components)
+    assert dictionary.shape == (n_components, n_features)
+    assert np.dot(code, dictionary).shape == X.shape
 
 def test_dict_learning_online_lars_positive_parameter():
     alpha = 1
@@ -343,6 +351,17 @@ def test_dict_learning_online_estimator_shapes():
     dico = MiniBatchDictionaryLearning(n_components, n_iter=20, random_state=0)
     dico.fit(X)
     assert dico.components_.shape == (n_components, n_features)
+
+def test_dict_learning_na_estimator_shapes():
+    n_components = 5
+    dico = MiniBatchDictionaryLearning(n_components, n_iter=20, random_state=0)
+    X_nan = X.copy()
+    X_nan[1,1] = np.nan
+    dico.fit(X_nan)
+    assert dico.components_.shape == (n_components, n_features)
+
+    code = dico.transform(X_nan)
+    assert code.shape == (n_samples, n_components)
 
 
 def test_dict_learning_online_overcomplete():
