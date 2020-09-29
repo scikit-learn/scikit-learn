@@ -15,6 +15,7 @@ better.
 # License: BSD 3 clause
 
 
+import warnings
 from math import log
 
 import numpy as np
@@ -22,9 +23,10 @@ from scipy import sparse as sp
 from scipy.special import comb
 
 from ._expected_mutual_info_fast import expected_mutual_information
-from ...utils.validation import check_array, check_consistent_length
-from ...utils.validation import _deprecate_positional_args
 from ...utils.fixes import _astype_copy_false
+from ...utils.multiclass import type_of_target
+from ...utils.validation import _deprecate_positional_args
+from ...utils.validation import check_array, check_consistent_length
 
 
 def _comb2(n):
@@ -47,9 +49,19 @@ def check_clusterings(labels_true, labels_pred):
     labels_true = check_array(
         labels_true, ensure_2d=False, ensure_min_samples=0, dtype=None,
     )
+
     labels_pred = check_array(
         labels_pred, ensure_2d=False, ensure_min_samples=0, dtype=None,
     )
+
+    type_label = type_of_target(labels_true)
+    type_pred = type_of_target(labels_pred)
+
+    if 'continuous' in (type_pred, type_label):
+        msg = f'Clustering metrics expects discrete values but received' \
+              f' {type_label} values for label, and {type_pred} values ' \
+              f'for target'
+        warnings.warn(msg, UserWarning)
 
     # input checks
     if labels_true.ndim != 1:
@@ -90,12 +102,12 @@ def contingency_matrix(labels_true, labels_pred, *, eps=None, sparse=False):
     labels_pred : array-like of shape (n_samples,)
         Cluster labels to evaluate
 
-    eps : None or float, optional.
+    eps : float, default=None
         If a float, that value is added to all values in the contingency
         matrix. This helps to stop NaN propagation.
         If ``None``, nothing is adjusted.
 
-    sparse : boolean, optional.
+    sparse : bool, default=False
         If True, return a sparse CSR continency matrix. If ``eps is not None``,
         and ``sparse is True``, will throw ValueError.
 
@@ -124,7 +136,7 @@ def contingency_matrix(labels_true, labels_pred, *, eps=None, sparse=False):
     contingency = sp.coo_matrix((np.ones(class_idx.shape[0]),
                                  (class_idx, cluster_idx)),
                                 shape=(n_classes, n_clusters),
-                                dtype=np.int)
+                                dtype=int)
     if sparse:
         contingency = contingency.tocsr()
         contingency.sum_duplicates()
@@ -214,9 +226,9 @@ def adjusted_rand_score(labels_true, labels_pred):
 
     .. [wk] https://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index
 
-    See also
+    See Also
     --------
-    adjusted_mutual_info_score: Adjusted Mutual Information
+    adjusted_mutual_info_score : Adjusted Mutual Information.
 
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
@@ -280,7 +292,7 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
     labels_pred : array-like of shape (n_samples,)
         cluster labels to evaluate
 
-    beta : float
+    beta : float, default=1.0
         Ratio of weight attributed to ``homogeneity`` vs ``completeness``.
         If ``beta`` is greater than 1, ``completeness`` is weighted more
         strongly in the calculation. If ``beta`` is less than 1,
@@ -297,7 +309,7 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
     v_measure : float
         harmonic mean of the first two
 
-    See also
+    See Also
     --------
     homogeneity_score
     completeness_score
@@ -362,7 +374,7 @@ def homogeneity_score(labels_true, labels_pred):
        conditional entropy-based external cluster evaluation measure
        <https://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
 
-    See also
+    See Also
     --------
     completeness_score
     v_measure_score
@@ -432,7 +444,7 @@ def completeness_score(labels_true, labels_pred):
        conditional entropy-based external cluster evaluation measure
        <https://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
 
-    See also
+    See Also
     --------
     homogeneity_score
     v_measure_score
@@ -498,7 +510,7 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0):
     labels_pred : array-like of shape (n_samples,)
         cluster labels to evaluate
 
-    beta : float
+    beta : float, default=1.0
         Ratio of weight attributed to ``homogeneity`` vs ``completeness``.
         If ``beta`` is greater than 1, ``completeness`` is weighted more
         strongly in the calculation. If ``beta`` is less than 1,
@@ -516,7 +528,7 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0):
        conditional entropy-based external cluster evaluation measure
        <https://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
 
-    See also
+    See Also
     --------
     homogeneity_score
     completeness_score
@@ -601,8 +613,8 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     labels_pred : int array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets.
 
-    contingency : {None, array, sparse matrix}, \
-                  shape = [n_classes_true, n_classes_pred]
+    contingency : {ndarray, sparse matrix} of shape \
+            (n_classes_true, n_classes_pred), default=None
         A contingency matrix given by the :func:`contingency_matrix` function.
         If value is ``None``, it will be computed, otherwise the given value is
         used, with ``labels_true`` and ``labels_pred`` ignored.
@@ -616,10 +628,10 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     -----
     The logarithm used is the natural logarithm (base-e).
 
-    See also
+    See Also
     --------
-    adjusted_mutual_info_score: Adjusted against chance Mutual Information
-    normalized_mutual_info_score: Normalized Mutual Information
+    adjusted_mutual_info_score : Adjusted against chance Mutual Information.
+    normalized_mutual_info_score : Normalized Mutual Information.
     """
     if contingency is None:
         labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
@@ -689,7 +701,7 @@ def adjusted_mutual_info_score(labels_true, labels_pred, *,
     labels_pred : int array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets.
 
-    average_method : string, optional (default: 'arithmetic')
+    average_method : str, default='arithmetic'
         How to compute the normalizer in the denominator. Possible options
         are 'min', 'geometric', 'arithmetic', and 'max'.
 
@@ -706,10 +718,10 @@ def adjusted_mutual_info_score(labels_true, labels_pred, *,
        (ie perfectly matched). Random partitions (independent labellings) have
        an expected AMI around 0 on average hence can be negative.
 
-    See also
+    See Also
     --------
-    adjusted_rand_score: Adjusted Rand Index
-    mutual_info_score: Mutual Information (not adjusted for chance)
+    adjusted_rand_score : Adjusted Rand Index.
+    mutual_info_score : Mutual Information (not adjusted for chance).
 
     Examples
     --------
@@ -809,7 +821,7 @@ def normalized_mutual_info_score(labels_true, labels_pred, *,
     labels_pred : int array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets.
 
-    average_method : string, optional (default: 'arithmetic')
+    average_method : str, default='arithmetic'
         How to compute the normalizer in the denominator. Possible options
         are 'min', 'geometric', 'arithmetic', and 'max'.
 
@@ -824,12 +836,12 @@ def normalized_mutual_info_score(labels_true, labels_pred, *,
     nmi : float
        score between 0.0 and 1.0. 1.0 stands for perfectly complete labeling
 
-    See also
+    See Also
     --------
-    v_measure_score: V-Measure (NMI with arithmetic mean option.)
-    adjusted_rand_score: Adjusted Rand Index
-    adjusted_mutual_info_score: Adjusted Mutual Information (adjusted
-        against chance)
+    v_measure_score : V-Measure (NMI with arithmetic mean option).
+    adjusted_rand_score : Adjusted Rand Index.
+    adjusted_mutual_info_score : Adjusted Mutual Information (adjusted
+        against chance).
 
     Examples
     --------
@@ -856,6 +868,7 @@ def normalized_mutual_info_score(labels_true, labels_pred, *,
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     classes = np.unique(labels_true)
     clusters = np.unique(labels_pred)
+
     # Special limit cases: no clustering since the data is not split.
     # This is a perfect match hence return 1.0.
     if (classes.shape[0] == clusters.shape[0] == 1 or
@@ -909,7 +922,7 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
     labels_pred : array, shape = (``n_samples``, )
         A clustering of the data into disjoint subsets.
 
-    sparse : bool
+    sparse : bool, default=False
         Compute contingency matrix internally with sparse matrix.
 
     Returns
