@@ -805,7 +805,12 @@ cdef class Splitter:
             unsigned int missing_values_bin_idx = self.missing_values_bin_idx
             categorical_info * cat_infos
             unsigned int sorted_cat_idx
-            unsigned int n_used_bin = 0
+            unsigned int n_used_bins = 0
+            int [2] scan_direction
+            int direction = 0
+            int best_direction = 0
+            unsigned int max_n_cat_left
+            unsigned int i
             const hist_struct[::1] feature_hist = histograms[feature_idx, :]
             Y_DTYPE_C sum_gradients_bin
             Y_DTYPE_C sum_hessians_bin
@@ -813,14 +818,13 @@ cdef class Splitter:
             Y_DTYPE_C sum_gradient_left, sum_hessian_left
             Y_DTYPE_C sum_gradient_right, sum_hessian_right
             unsigned int n_samples_left, n_samples_right
-            unsigned int i
             Y_DTYPE_C gain
             Y_DTYPE_C best_gain = -1.0
             unsigned char found_better_split = False
             Y_DTYPE_C best_sum_hessian_left
             Y_DTYPE_C best_sum_gradient_left
             unsigned int best_n_samples_left
-            unsigned int best_sorted_thres
+            unsigned int best_cat_infos_thresh
             # Reduces the effect of noises in categorical features,
             # especially for categoires with few data. Called cat_smooth in
             # LightGBM. TODO: Make this user adjustable?
@@ -839,12 +843,12 @@ cdef class Splitter:
             else:
                 sum_hessians_bin = feature_hist[bin_idx].sum_hessians
             if sum_hessians_bin * support_factor >= MIN_CAT_SUPPORT:
-                cat_infos[n_used_bin].bin_idx = bin_idx
+                cat_infos[n_used_bins].bin_idx = bin_idx
                 sum_gradients_bin = feature_hist[bin_idx].sum_gradients
 
-                cat_infos[n_used_bin].value = \
+                cat_infos[n_used_bins].value = \
                     sum_gradients_bin / (sum_hessians_bin + MIN_CAT_SUPPORT)
-                n_used_bin += 1
+                n_used_bins += 1
 
         # Also add missing values bin so that nans are considered as a category
         if has_missing_values:
@@ -853,60 +857,71 @@ cdef class Splitter:
             else:
                 sum_hessians_bin = feature_hist[missing_values_bin_idx].sum_hessians
             if sum_hessians_bin * support_factor >= MIN_CAT_SUPPORT:
-                cat_infos[n_used_bin].bin_idx = missing_values_bin_idx
+                cat_infos[n_used_bins].bin_idx = missing_values_bin_idx
                 sum_gradients_bin = \
                     feature_hist[missing_values_bin_idx].sum_gradients
 
-                cat_infos[n_used_bin].value = \
+                cat_infos[n_used_bins].value = \
                     sum_gradients_bin / (sum_hessians_bin + MIN_CAT_SUPPORT)
-                n_used_bin += 1
+                n_used_bins += 1
 
         # not enough categories to form a split
-        if n_used_bin <= 1:
+        if n_used_bins <= 1:
             free(cat_infos)
             return
 
-        qsort(cat_infos, n_used_bin, sizeof(categorical_info),
+        qsort(cat_infos, n_used_bins, sizeof(categorical_info),
               compare_cat_infos)
 
         loss_current_node = _loss_from_value(value, sum_gradients)
-        sum_gradient_left, sum_hessian_left = 0., 0.
-        n_samples_left = 0
 
-        for sorted_cat_idx in range(n_used_bin):
-            bin_idx = cat_infos[sorted_cat_idx].bin_idx;
-
-            n_samples_left += feature_hist[bin_idx].count
-            n_samples_right = n_samples - n_samples_left
-
-            if self.hessians_are_constant:
-                sum_hessian_left += feature_hist[bin_idx].count
+        scan_direction[0], scan_direction[1] = 1, -1
+        for direction in scan_direction:
+            if direction == 1:
+                max_n_cat_left = (n_used_bins + 1) // 2
             else:
-                sum_hessian_left += feature_hist[bin_idx].sum_hessians
-            sum_hessian_right = sum_hessians - sum_hessian_left
+                max_n_cat_left = (n_used_bins + 1) // 2 - 1
 
-            sum_gradient_left += feature_hist[bin_idx].sum_gradients
-            sum_gradient_right = sum_gradients - sum_gradient_left
+            # The categories we'll consider will go to the left child
+            sum_gradient_left, sum_hessian_left = 0., 0.
+            n_samples_left = 0
 
-            if (n_samples_left < self.min_samples_leaf or
-                sum_hessian_left < self.min_hessian_to_split):
-                continue
-            if (n_samples_right < self.min_samples_leaf or
-                sum_hessian_right < self.min_hessian_to_split):
-                break
+            for i in range(max_n_cat_left):
+                sorted_cat_idx = i if direction == 1 else n_used_bins - 1 - i
+                bin_idx = cat_infos[sorted_cat_idx].bin_idx;
 
-            gain = _split_gain(sum_gradient_left, sum_hessian_left,
-                                sum_gradient_right, sum_hessian_right,
-                                loss_current_node, monotonic_cst,
-                                lower_bound, upper_bound,
-                                self.l2_regularization)
-            if gain > best_gain and gain > self.min_gain_to_split:
-                found_better_split = True
-                best_gain = gain
-                best_sorted_thres = sorted_cat_idx
-                best_sum_gradient_left = sum_gradient_left
-                best_sum_hessian_left = sum_hessian_left
-                best_n_samples_left = n_samples_left
+                n_samples_left += feature_hist[bin_idx].count
+                n_samples_right = n_samples - n_samples_left
+
+                if self.hessians_are_constant:
+                    sum_hessian_left += feature_hist[bin_idx].count
+                else:
+                    sum_hessian_left += feature_hist[bin_idx].sum_hessians
+                sum_hessian_right = sum_hessians - sum_hessian_left
+
+                sum_gradient_left += feature_hist[bin_idx].sum_gradients
+                sum_gradient_right = sum_gradients - sum_gradient_left
+
+                if (n_samples_left < self.min_samples_leaf or
+                    sum_hessian_left < self.min_hessian_to_split):
+                    continue
+                if (n_samples_right < self.min_samples_leaf or
+                    sum_hessian_right < self.min_hessian_to_split):
+                    break
+
+                gain = _split_gain(sum_gradient_left, sum_hessian_left,
+                                    sum_gradient_right, sum_hessian_right,
+                                    loss_current_node, monotonic_cst,
+                                    lower_bound, upper_bound,
+                                    self.l2_regularization)
+                if gain > best_gain and gain > self.min_gain_to_split:
+                    found_better_split = True
+                    best_gain = gain
+                    best_cat_infos_thresh = sorted_cat_idx
+                    best_sum_gradient_left = sum_gradient_left
+                    best_sum_hessian_left = sum_hessian_left
+                    best_n_samples_left = n_samples_left
+                    best_direction = direction
 
 
         if found_better_split:
@@ -932,12 +947,16 @@ cdef class Splitter:
                 split_info.sum_gradient_right, split_info.sum_hessian_right,
                 lower_bound, upper_bound, self.l2_regularization)
 
-            # create bitset with values from best_sorted_thres
+            # create bitset with values from best_cat_infos_thresh
             init_bitset(split_info.left_cat_bitset)
-
-            for i in range(best_sorted_thres + 1):
-                bin_idx = cat_infos[i].bin_idx
-                set_bitset(split_info.left_cat_bitset, bin_idx)
+            if best_direction == 1:
+                for sorted_cat_idx in range(best_cat_infos_thresh + 1):
+                    bin_idx = cat_infos[sorted_cat_idx].bin_idx
+                    set_bitset(split_info.left_cat_bitset, bin_idx)
+            else:
+                for sorted_cat_idx in range(n_used_bins - 1, best_cat_infos_thresh - 1, -1):
+                    bin_idx = cat_infos[sorted_cat_idx].bin_idx
+                    set_bitset(split_info.left_cat_bitset, bin_idx)
 
             if has_missing_values:
                 split_info.missing_go_to_left = in_bitset(
