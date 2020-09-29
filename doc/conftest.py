@@ -57,6 +57,13 @@ def setup_impute():
         raise SkipTest("Skipping impute.rst, pandas not installed")
 
 
+def setup_grid_search():
+    try:
+        import pandas  # noqa
+    except ImportError:
+        raise SkipTest("Skipping grid_search.rst, pandas not installed")
+
+
 def setup_unsupervised_learning():
     try:
         import skimage  # noqa
@@ -86,5 +93,7 @@ def pytest_runtest_setup(item):
         raise SkipTest('FeatureHasher is not compatible with PyPy')
     elif fname.endswith('modules/impute.rst'):
         setup_impute()
+    elif fname.endswith('modules/grid_search.rst'):
+        setup_grid_search()
     elif fname.endswith('statistical_inference/unsupervised_learning.rst'):
         setup_unsupervised_learning()

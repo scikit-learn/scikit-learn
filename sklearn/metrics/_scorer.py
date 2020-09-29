@@ -144,7 +144,7 @@ class _BaseScorer:
             Trained estimator to use for scoring. Must have a predict_proba
             method; the output of that is used to compute the score.
 
-        X : array-like or sparse matrix
+        X : {array-like, sparse matrix}
             Test data that will be fed to estimator.predict.
 
         y_true : array-like
@@ -180,7 +180,7 @@ class _PredictScorer(_BaseScorer):
             Trained estimator to use for scoring. Must have a predict_proba
             method; the output of that is used to compute the score.
 
-        X : array-like or sparse matrix
+        X : {array-like, sparse matrix}
             Test data that will be fed to estimator.predict.
 
         y_true : array-like
@@ -219,14 +219,14 @@ class _ProbaScorer(_BaseScorer):
             Trained classifier to use for scoring. Must have a predict_proba
             method; the output of that is used to compute the score.
 
-        X : array-like or sparse matrix
+        X : {array-like, sparse matrix}
             Test data that will be fed to clf.predict_proba.
 
         y : array-like
             Gold standard target values for X. These must be class labels,
             not probabilities.
 
-        sample_weight : array-like, optional (default=None)
+        sample_weight : array-like, default=None
             Sample weights.
 
         Returns
@@ -271,7 +271,7 @@ class _ThresholdScorer(_BaseScorer):
             decision_function method or a predict_proba method; the output of
             that is used to compute the score.
 
-        X : array-like or sparse matrix
+        X : {array-like, sparse matrix}
             Test data that will be fed to clf.decision_function or
             clf.predict_proba.
 
@@ -279,7 +279,7 @@ class _ThresholdScorer(_BaseScorer):
             Gold standard target values for X. These must be class labels,
             not decision function values.
 
-        sample_weight : array-like, optional (default=None)
+        sample_weight : array-like, default=None
             Sample weights.
 
         Returns
@@ -335,8 +335,8 @@ def get_scorer(scoring):
 
     Parameters
     ----------
-    scoring : str | callable
-        scoring method as string. If callable it is returned as is.
+    scoring : str or callable
+        Scoring method as string. If callable it is returned as is.
 
     Returns
     -------
@@ -424,7 +424,7 @@ def check_scoring(estimator, scoring=None, *, allow_none=False):
 
 
 def _check_multimetric_scoring(estimator, scoring):
-    """Check the scoring parameter in cases when multiple metrics are allowed
+    """Check the scoring parameter in cases when multiple metrics are allowed.
 
     Parameters
     ----------
@@ -498,25 +498,32 @@ def make_scorer(score_func, *, greater_is_better=True, needs_proba=False,
                 needs_threshold=False, **kwargs):
     """Make a scorer from a performance metric or loss function.
 
-    This factory function wraps scoring functions for use in GridSearchCV
-    and cross_val_score. It takes a score function, such as ``accuracy_score``,
-    ``mean_squared_error``, ``adjusted_rand_index`` or ``average_precision``
+    This factory function wraps scoring functions for use in
+    :class:`~sklearn.model_selection.GridSearchCV` and
+    :func:`~sklearn.model_selection.cross_val_score`.
+    It takes a score function, such as :func:`~sklearn.metrics.accuracy_score`,
+    :func:`~sklearn.metrics.mean_squared_error`,
+    :func:`~sklearn.metrics.adjusted_rand_index` or
+    :func:`~sklearn.metrics.average_precision`
     and returns a callable that scores an estimator's output.
+    The signature of the call is `(estimator, X, y)` where `estimator`
+    is the model to be evaluated, `X` is the data and `y` is the
+    ground truth labeling (or `None` in the case of unsupervised models).
 
     Read more in the :ref:`User Guide <scoring>`.
 
     Parameters
     ----------
-    score_func : callable,
+    score_func : callable
         Score function (or loss function) with signature
         ``score_func(y, y_pred, **kwargs)``.
 
-    greater_is_better : boolean, default=True
+    greater_is_better : bool, default=True
         Whether score_func is a score function (default), meaning high is good,
         or a loss function, meaning low is good. In the latter case, the
         scorer object will sign-flip the outcome of the score_func.
 
-    needs_proba : boolean, default=False
+    needs_proba : bool, default=False
         Whether score_func requires predict_proba to get probability estimates
         out of a classifier.
 
@@ -524,7 +531,7 @@ def make_scorer(score_func, *, greater_is_better=True, needs_proba=False,
         a 1D `y_pred` (i.e., probability of the positive class, shape
         `(n_samples,)`).
 
-    needs_threshold : boolean, default=False
+    needs_threshold : bool, default=False
         Whether score_func takes a continuous decision certainty.
         This only works for binary classification using estimators that
         have either a decision_function or predict_proba method.

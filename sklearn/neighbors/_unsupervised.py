@@ -95,7 +95,7 @@ class NearestNeighbors(KNeighborsMixin,
     >>> np.asarray(nbrs[0][0])
     array(2)
 
-    See also
+    See Also
     --------
     KNeighborsClassifier
     RadiusNeighborsClassifier

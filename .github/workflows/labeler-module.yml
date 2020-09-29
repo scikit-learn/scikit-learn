@@ -1,7 +1,5 @@
 name: "Pull Request Labeler"
-on:
-  schedule:
-    - cron: "*/10 * * * *"
+on: pull_request_target
 
 jobs:
   triage:
@@ -13,3 +11,4 @@ jobs:
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
         max-labels: "3"
+        configuration-path: ".github/labeler-module.yml"

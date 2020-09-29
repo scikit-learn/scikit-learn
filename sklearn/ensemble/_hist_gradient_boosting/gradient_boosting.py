@@ -381,7 +381,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                                                     sample_weight_train)
 
                 predictor = grower.make_predictor(
-                    bin_thresholds=self._bin_mapper.bin_thresholds_
+                    num_thresholds=self._bin_mapper.bin_thresholds_
                 )
                 predictors[-1].append(predictor)
 
@@ -645,15 +645,15 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         raw_predictions : array, shape (n_trees_per_iteration, n_samples)
             The raw predicted values.
         """
-        X = check_array(X, dtype=[X_DTYPE, X_BINNED_DTYPE],
-                        force_all_finite=False)
+        is_binned = getattr(self, '_in_fit', False)
+        dtype = X_BINNED_DTYPE if is_binned else X_DTYPE
+        X = check_array(X, dtype=dtype, force_all_finite=False)
         check_is_fitted(self)
         if X.shape[1] != self._n_features:
             raise ValueError(
                 'X has {} features but this estimator was trained with '
                 '{} features.'.format(X.shape[1], self._n_features)
             )
-        is_binned = getattr(self, '_in_fit', False)
         n_samples = X.shape[0]
         raw_predictions = np.zeros(
             shape=(self.n_trees_per_iteration_, n_samples),
@@ -968,6 +968,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         This method allows monitoring (i.e. determine error on testing set)
         after each stage.
 
+        .. versionadded:: 0.24
+
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
@@ -1192,6 +1194,8 @@ class HistGradientBoostingClassifier(ClassifierMixin,
 
         This method allows monitoring (i.e. determine error on testing set)
         after each stage.
+
+        .. versionadded:: 0.24
 
         Parameters
         ----------

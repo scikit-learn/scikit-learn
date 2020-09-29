@@ -5,8 +5,6 @@ import numpy as np
 import scipy.sparse as sp
 import joblib
 
-from io import StringIO
-
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils import deprecated
 from sklearn.utils._testing import (assert_raises_regex,
@@ -112,6 +110,26 @@ class RaisesErrorInSetParams(BaseEstimator):
         X, y = self._validate_data(X, y)
         return self
 
+
+class HasMutableParameters(BaseEstimator):
+    def __init__(self, p=object()):
+        self.p = p
+
+    def fit(self, X, y=None):
+        X, y = self._validate_data(X, y)
+        return self
+
+
+class HasImmutableParameters(BaseEstimator):
+    # Note that object is an uninitialized class, thus immutable.
+    def __init__(self, p=42, q=np.int32(42), r=object):
+        self.p = p
+        self.q = q
+        self.r = r
+
+    def fit(self, X, y=None):
+        X, y = self._validate_data(X, y)
+        return self
 
 class ModifiesValueInsteadOfRaisingError(BaseEstimator):
     def __init__(self, p=0):
@@ -381,6 +399,15 @@ def test_check_estimator():
     assert_raises_regex(TypeError, msg, check_estimator, object)
     msg = "object has no attribute '_get_tags'"
     assert_raises_regex(AttributeError, msg, check_estimator, object())
+    msg = (
+        "Parameter 'p' of estimator 'HasMutableParameters' is of type "
+        "object which is not allowed"
+    )
+    # check that the "default_constructible" test checks for mutable parameters
+    check_estimator(HasImmutableParameters())  # should pass
+    assert_raises_regex(
+        AssertionError, msg, check_estimator, HasMutableParameters()
+    )
     # check that values returned by get_params match set_params
     msg = "get_params result does not match what was passed to set_params"
     assert_raises_regex(AssertionError, msg, check_estimator,
@@ -392,7 +419,7 @@ def test_check_estimator():
     msg = "object has no attribute 'fit'"
     assert_raises_regex(AttributeError, msg, check_estimator, BaseEstimator())
     # check that fit does input validation
-    msg = "ValueError not raised"
+    msg = "Did not raise"
     assert_raises_regex(AssertionError, msg, check_estimator,
                         BaseBadClassifier())
     # check that sample_weights in fit accepts pandas.Series type
@@ -436,19 +463,9 @@ def test_check_estimator():
     # check for sparse matrix input handling
     name = NoSparseClassifier.__name__
     msg = "Estimator %s doesn't seem to fail gracefully on sparse data" % name
-    # the check for sparse input handling prints to the stdout,
-    # instead of raising an error, so as not to remove the original traceback.
-    # that means we need to jump through some hoops to catch it.
-    old_stdout = sys.stdout
-    string_buffer = StringIO()
-    sys.stdout = string_buffer
-    try:
-        check_estimator(NoSparseClassifier())
-    except Exception:
-        pass
-    finally:
-        sys.stdout = old_stdout
-    assert msg in string_buffer.getvalue()
+    assert_raises_regex(
+        AssertionError, msg, check_estimator, NoSparseClassifier()
+    )
 
     # Large indices test on bad estimator
     msg = ('Estimator LargeSparseNotSupportedClassifier doesn\'t seem to '
@@ -529,7 +546,7 @@ def test_check_estimator_clones():
 def test_check_estimators_unfitted():
     # check that a ValueError/AttributeError is raised when calling predict
     # on an unfitted estimator
-    msg = "NotFittedError not raised by predict"
+    msg = "Did not raise"
     assert_raises_regex(AssertionError, msg, check_estimators_unfitted,
                         "estimator", NoSparseClassifier())
 
