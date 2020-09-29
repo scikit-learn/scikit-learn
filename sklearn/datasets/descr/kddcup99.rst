@@ -6,7 +6,7 @@ Kddcup 99 dataset
 The KDD Cup '99 dataset was created by processing the tcpdump portions
 of the 1998 DARPA Intrusion Detection System (IDS) Evaluation dataset,
 created by MIT Lincoln Lab [1]. The artificial data (described on the `dataset's
-homepage <http://kdd.ics.uci.edu/databases/kddcup99/kddcup99.html>`_) was
+homepage <https://kdd.ics.uci.edu/databases/kddcup99/kddcup99.html>`_) was
 generated using a closed network and hand-injected attacks to produce a
 large number of different types of attack with normal activity in the
 background. As the initial goal was to produce a large training set for
@@ -78,8 +78,9 @@ General KDD structure :
 
 :func:`sklearn.datasets.fetch_kddcup99` will load the kddcup99 dataset; it
 returns a dictionary-like object with the feature matrix in the ``data`` member
-and the target values in ``target``. The dataset will be downloaded from the
-web if necessary.
+and the target values in ``target``. The "as_frame" optional argument converts
+``data`` into a pandas DataFrame and ``target`` into a pandas Series. The
+dataset will be downloaded from the web if necessary.
 
 .. topic: References
 
@@ -92,4 +93,3 @@ web if necessary.
            discounting learning algorithms. In Proceedings of the sixth
            ACM SIGKDD international conference on Knowledge discovery
            and data mining, pages 320-324. ACM Press, 2000.
-

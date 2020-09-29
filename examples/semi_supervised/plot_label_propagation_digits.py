@@ -25,21 +25,21 @@ import matplotlib.pyplot as plt
 from scipy import stats
 
 from sklearn import datasets
-from sklearn.semi_supervised import label_propagation
+from sklearn.semi_supervised import LabelSpreading
 
 from sklearn.metrics import confusion_matrix, classification_report
 
 digits = datasets.load_digits()
-rng = np.random.RandomState(0)
+rng = np.random.RandomState(2)
 indices = np.arange(len(digits.data))
 rng.shuffle(indices)
 
-X = digits.data[indices[:330]]
-y = digits.target[indices[:330]]
-images = digits.images[indices[:330]]
+X = digits.data[indices[:340]]
+y = digits.target[indices[:340]]
+images = digits.images[indices[:340]]
 
 n_total_samples = len(y)
-n_labeled_points = 30
+n_labeled_points = 40
 
 indices = np.arange(n_total_samples)
 
@@ -52,7 +52,7 @@ y_train[unlabeled_set] = -1
 
 # #############################################################################
 # Learn with LabelSpreading
-lp_model = label_propagation.LabelSpreading(gamma=0.25, max_iter=5)
+lp_model = LabelSpreading(gamma=.25, max_iter=20)
 lp_model.fit(X, y_train)
 predicted_labels = lp_model.transduction_[unlabeled_set]
 true_labels = y[unlabeled_set]
