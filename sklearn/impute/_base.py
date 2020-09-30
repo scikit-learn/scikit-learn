@@ -320,8 +320,6 @@ class SimpleImputer(_BaseImputer):
                                                self.missing_values,
                                                fill_value)
 
-        invalid_mask = _get_mask(self.statistics_, np.nan)
-        self._valid_mask = np.logical_not(invalid_mask)
         return self
 
     def _sparse_fit(self, X, strategy, missing_values, fill_value):
@@ -489,9 +487,6 @@ class SimpleImputer(_BaseImputer):
         X_indicator = super()._transform_indicator(missing_mask)
 
         return super()._concatenate_indicator(X, X_indicator)
-
-    def _more_tags(self):
-        return {'allow_nan': True}
 
     def inverse_transform(self, X):
         """Convert the data back to the original representation.

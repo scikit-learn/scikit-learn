@@ -188,7 +188,6 @@ class KNNImputer(_BaseImputer):
         _check_weights(self.weights)
         self._fit_X = X
         self._mask_fit_X = _get_mask(self._fit_X, self.missing_values)
-        self._valid_mask = ~np.all(self._mask_fit_X, axis=0)
 
         super()._fit_indicator(self._mask_fit_X)
 
@@ -223,7 +222,7 @@ class KNNImputer(_BaseImputer):
 
         mask = _get_mask(X, self.missing_values)
         mask_fit_X = self._mask_fit_X
-        valid_mask = self._valid_mask
+        valid_mask = ~np.all(mask_fit_X, axis=0)
 
         X_indicator = super()._transform_indicator(mask)
 

@@ -176,8 +176,8 @@ def test_pipeline_init():
     clf = NoTrans()
     pipe = Pipeline([('svc', clf)])
     assert (pipe.get_params(deep=True) ==
-            dict(svc__a=None, svc__b=None, svc=clf,
-                 **pipe.get_params(deep=False)))
+                 dict(svc__a=None, svc__b=None, svc=clf,
+                      **pipe.get_params(deep=False)))
 
     # Check that params are set
     pipe.set_params(svc__a=0.1)

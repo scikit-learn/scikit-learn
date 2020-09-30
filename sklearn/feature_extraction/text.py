@@ -1300,6 +1300,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
             Feature names for transformer output.
         """
         self._check_vocabulary()
+
         return [t for t, i in sorted(self.vocabulary_.items(),
                                      key=itemgetter(1))]
 

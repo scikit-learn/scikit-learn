@@ -20,7 +20,6 @@ from ..utils import (check_array, check_random_state, gen_even_slices,
 from ..utils.extmath import randomized_svd, row_norms
 from ..utils.validation import check_is_fitted, _deprecate_positional_args
 from ..utils.fixes import delayed
-from ..utils._feature_names import _make_feature_names
 from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
 
 
@@ -1358,22 +1357,6 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self.error_ = E
         return self
 
-    def get_feature_names_out(self, input_features=None):
-        """Get output feature names.
-
-        Parameters
-        ----------
-        input_features : array-like of str or None, default=None
-            Not used, present here for API consistency by convention.
-
-        Returns
-        -------
-        output_feature_names : list of str
-            Feature names for transformer output.
-        """
-        return _make_feature_names(n_features=self.components_.shape[0],
-                                   prefix=type(self).__name__.lower())
-
 
 class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     """Mini-batch dictionary learning
@@ -1665,19 +1648,3 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self.inner_stats_ = (A, B)
         self.iter_offset_ = iter_offset + 1
         return self
-
-    def get_feature_names_out(self, input_features=None):
-        """Get output feature names.
-
-        Parameters
-        ----------
-        input_features : array-like of str or None, default=None
-            Not used, present here for API consistency by convention.
-
-        Returns
-        -------
-        output_feature_names : list of str
-            Feature names for transformer output.
-        """
-        return _make_feature_names(n_features=self.components_.shape[0],
-                                   prefix=type(self).__name__.lower())
