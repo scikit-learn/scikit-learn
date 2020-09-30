@@ -1,0 +1,16 @@
+
+name: Reviewed
+#Runs when a core-dev review a PR and remove the 'waiting for review' label
+on:
+  pull_request_review:
+    types: submitted
+
+jobs:
+  one:
+    runs-on: ubuntu-latest
+    steps:
+      - name:
+        if: github.event.pull_request.state == 'open'
+        run: |
+          echo "Marking pull request ${{ github.event.pull_request.number }} as reviewed"
+          curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -d '{"labels": ["Waiting for Reviewer"]}' https://api.github.com/repos/${{ github.repository }}/pull/${{ github.event.pull_request.number }}/labels
