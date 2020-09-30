@@ -149,12 +149,12 @@ print("model score: %.3f" % clf.score(X_test, y_test))
 
 
 # %%
-# Inspecting the coefficients values of the classifier
+# Inspecting the coefficients of the classifier
 ###############################################################################
 # The coefficients of the final classification step of the pipeline gives an
 # idea how each feature impacts the likelihood of survival assuming that the
 # usual linear model assumptions hold (uncorrelated features, linear
-# separability, homoschedastic errors...) which we do not verify in this
+# separability, homoscedastic errors...) which we do not verify in this
 # example.
 #
 # To get error bars we perform cross-validation and compute the mean and
@@ -170,7 +170,7 @@ print("model score: %.3f" % clf.score(X_test, y_test))
 # were the first to reach the lifeboats, and often, priority was given to women
 # and children.
 #
-# Note that conditionned on the "pclass_x" one-hot features, the "fare"
+# Note that conditioned on the "pclass_x" one-hot features, the "fare"
 # numerical feature does not seem to be significantly predictive. If we drop
 # the "pclass" feature, then higher "fare" values would appear significantly
 # correlated with a higher likelihood of survival as the "fare" and "pclass"

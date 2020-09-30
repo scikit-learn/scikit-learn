@@ -1389,7 +1389,11 @@ def test_make_column_selector_pickle():
     'empty_col', [[], np.array([], dtype=int), lambda x: []],
     ids=['list', 'array', 'callable']
 )
-def test_feature_names_empty_columns(empty_col):
+@pytest.mark.parametrize("get_names, expected_names", [
+    ("get_feature_names", ['ohe__x0_a', 'ohe__x0_b', 'ohe__x1_z']),
+    ("get_feature_names_out", ['ohe__col1_a', 'ohe__col1_b', 'ohe__col2_z'])
+])
+def test_feature_names_empty_columns(empty_col, get_names, expected_names):
     pd = pytest.importorskip('pandas')
 
     df = pd.DataFrame({"col1": ["a", "a", "b"], "col2": ["z", "z", "z"]})
@@ -1402,28 +1406,7 @@ def test_feature_names_empty_columns(empty_col):
     )
 
     ct.fit(df)
-    assert ct.get_feature_names() == ['ohe__x0_a', 'ohe__x0_b', 'ohe__x1_z']
-
-
-@pytest.mark.parametrize(
-    'empty_col', [[], np.array([], dtype=int), lambda x: []],
-    ids=['list', 'array', 'callable']
-)
-def test_output_names_empty_columns(empty_col):
-    pd = pytest.importorskip('pandas')
-
-    df = pd.DataFrame({"col1": ["a", "a", "b"], "col2": ["z", "z", "z"]})
-
-    ct = ColumnTransformer(
-        transformers=[
-            ("ohe", OneHotEncoder(), ["col1", "col2"]),
-            ("empty_features", OneHotEncoder(), empty_col),
-        ],
-    )
-
-    ct.fit(df)
-    assert ct.get_feature_names_out() == ['ohe__col1_a', 'ohe__col1_b',
-                                          'ohe__col2_z']
+    assert getattr(ct, get_names)() == expected_names
 
 
 @pytest.mark.parametrize('remainder', ["passthrough", StandardScaler()])

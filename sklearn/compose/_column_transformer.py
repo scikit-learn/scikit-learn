@@ -350,15 +350,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         return Bunch(**{name: trans for name, trans, _
                         in self.transformers_})
 
-    @deprecated("get_feature_names is deprecated in 0.24 and will be removed "
-                "in 0.26. You can use get_feature_names_out instead")
-    def get_feature_names(self):
-        """Get feature names from all transformers.
-
-        Returns
-        -------
-        feature_names : list of strings
-            Names of the features produced by transform.
+    def _get_feature_names_out(self, get_names):
+        """Private function to be used by get_feature_names_out and
+        get_feature_names. This should be removed and integrated into
+        get_feature_names_out when get_feature_names is deprecated.
         """
         check_is_fitted(self)
         feature_names = []
@@ -377,13 +372,26 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                     indices = np.arange(self._n_features)
                     feature_names.extend(['x%d' % i for i in indices[column]])
                 continue
-            if not hasattr(trans, 'get_feature_names'):
-                raise AttributeError("Transformer %s (type %s) does not "
-                                     "provide get_feature_names."
-                                     % (str(name), type(trans).__name__))
-            feature_names.extend([name + "__" + f for f in
-                                  trans.get_feature_names()])
+            feature_names.extend(get_names(name, trans, column))
         return feature_names
+
+    @deprecated("get_feature_names is deprecated in 0.24 and will be removed "
+                "in 0.26. You can use get_feature_names_out instead")
+    def get_feature_names(self):
+        """Get feature names from all transformers.
+
+        Returns
+        -------
+        feature_names : list of strings
+            Names of the features produced by transform.
+        """
+        def get_names(name, trans, column):
+            if not hasattr(trans, 'get_feature_names'):
+                raise AttributeError(
+                    f"Transformer {name} (type {type(trans).__name__}) does "
+                    "not provide get_feature_names.")
+            return [f"{name}__{f}" for f in trans.get_feature_names()]
+        return self._get_feature_names_out(get_names)
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
@@ -398,31 +406,16 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         output_feature_names : list of str
             Transformed feature names.
         """
-        check_is_fitted(self)
-        feature_names = []
-        for name, trans, column, _ in self._iter(fitted=True):
-            if trans == 'drop' or (
-                    hasattr(column, '__len__') and not len(column)):
-                continue
-            if trans == 'passthrough':
-                if hasattr(self, '_df_columns'):
-                    if ((not isinstance(column, slice))
-                            and all(isinstance(col, str) for col in column)):
-                        feature_names.extend(column)
-                    else:
-                        feature_names.extend(self._df_columns[column])
-                else:
-                    indices = np.arange(self._n_features)
-                    feature_names.extend(['x%d' % i for i in indices[column]])
-                continue
+
+        def get_names(name, trans, column):
             if not hasattr(trans, 'get_feature_names_out'):
-                raise AttributeError("Transformer %s (type %s) does not "
-                                     "provide get_feature_names_out."
-                                     % (str(name), type(trans).__name__))
-            feature_names.extend(
-                [name + "__" + f
-                 for f in trans.get_feature_names_out(input_features=column)])
-        return feature_names
+                raise AttributeError(
+                    f"Transformer {name} (type {type(trans).__name__}) does "
+                    "not provide get_feature_names_out.")
+            return [f"{name}__{f}"
+                    for f in
+                    trans.get_feature_names_out(input_features=column)]
+        return self._get_feature_names_out(get_names)
 
     def _update_fitted_transformers(self, transformers):
         # transformers are fitted; excludes 'drop' cases

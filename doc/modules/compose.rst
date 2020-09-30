@@ -139,7 +139,7 @@ or by name::
     >>> pipe['reduce_dim']
     PCA()
 
-To enable model inspection, `Pipeline` has an ``get_feature_names_out()`` method,
+To enable model inspection, `Pipeline` has a ``get_feature_names_out()`` method,
 just like all transformers. You can use pipeline slicing to get the feature names
 going into each step::
 
@@ -154,7 +154,7 @@ going into each step::
     >>> pipe[:-1].get_feature_names_out()
     array(['x2', 'x3'], dtype='<U2')
 
-You can also provide custom feature names for a more human readable format using
+You can also provide custom feature names for the input data using
 ``get_feature_names_out``::
 
     >>> pipe[:-1].get_feature_names_out(iris.feature_names)
