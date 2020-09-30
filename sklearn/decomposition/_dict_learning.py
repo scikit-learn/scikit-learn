@@ -877,9 +877,27 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
 
 
 def sparse_encode_na(X, observed_mask, dictionary, alpha=1):
-    # put 0 on nan and on corresponding column of D
-    # then call sparse_encode
+    """ Proxy for sparse_encode with observed_mask
     
+    Put 0 on nan and on corresponding column of D
+    then call sparse_encode
+
+    Parameters
+    ----------
+    X : array of shape (n_samples, n_features)
+        Data matrix without Nan. should have been replaced by 0
+
+    observed_mask : array of shape (n_samples, n_features)
+        Boolean matrix with 0 where X contains nan
+
+    dictionary : array of shape (n_components, n_features)
+        The dictionary matrix against which to solve the sparse coding of
+        the data.
+
+    alpha : float,
+        Sparsity controlling parameter.
+
+    """
     if X.ndim == 1:
         X = X.reshape(1, -1)
 
@@ -1600,7 +1618,6 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
         X = check_array(X, force_all_finite='allow-nan')
         
         if np.any(np.isnan(X)):
-            print('use with nan')
             code, dictionary, self.n_iter_ = dict_learning_na(
                 X, self.n_components, self.alpha, ro = 2,
                 n_iter=self.n_iter, return_n_iter=True)

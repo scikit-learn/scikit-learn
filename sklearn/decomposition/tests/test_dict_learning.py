@@ -245,11 +245,13 @@ def test_dict_learning_online_shapes():
 
 def test_dict_learning_na_shapes():
     n_components = 8
-    code, dictionary = dict_learning_na(X, n_components=n_components,
+    X_nan = X.copy()
+    X_nan[1,1] = np.nan
+    code, dictionary = dict_learning_na(X_nan, n_components=n_components,
                                             alpha=1)
     assert code.shape == (n_samples, n_components)
     assert dictionary.shape == (n_components, n_features)
-    assert np.dot(code, dictionary).shape == X.shape
+    assert np.dot(code, dictionary).shape == X_nan.shape
 
 def test_dict_learning_online_lars_positive_parameter():
     alpha = 1
