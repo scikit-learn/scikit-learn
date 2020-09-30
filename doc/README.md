@@ -1,4 +1,4 @@
-# Documentation for scikit-learn
+# IMP Documentation for scikit-learn
 
 This directory contains the full manual and web site as displayed at
 http://scikit-learn.org. See
