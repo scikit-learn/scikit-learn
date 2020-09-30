@@ -749,7 +749,7 @@ class OutlierMixin:
 
 
 class OneToOneMixin:
-    """Provides get_feature_names for simple transformers
+    """Provides get_output_names for simple transformers
 
     Assumes there's a 1-to-1 correspondence between input features
     and output features.

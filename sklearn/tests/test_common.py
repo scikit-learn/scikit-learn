@@ -271,12 +271,37 @@ def test_strict_mode_parametrize_with_checks(estimator, check):
     check(estimator)
 
 
-@pytest.mark.parametrize(
-    "transformer",
-    [est for est in _tested_estimators('transformer')
-     if "2darray" in est._get_tags()["X_types"] and
-     not est._get_tags()["no_validation"]],
-    ids=_get_check_estimator_ids)
+# TODO: As more modules support get_output_names they should be removed from
+# this list to be tested
+GET_OUTPUT_NAMES_MODULES_TO_IGNORE = [
+    'cluster',
+    'compose',
+    'cross_decomposition',
+    'decomposition',
+    'discriminant_analysis',
+    'ensemble',
+    'feature_extraction',
+    'feature_selection',
+    'impute',
+    'isotonic',
+    'kernel_approximation',
+    'manifold',
+    'neighbors',
+    'neural_network',
+    'pipeline',
+    'preprocessing',
+    'random_projection'
+]
+
+GET_OUTPUT_NAMES_ESTIMATORS = [
+   est for est in _tested_estimators('transformer')
+   if "2darray" in est._get_tags()["X_types"] and
+   not est._get_tags()["no_validation"] and
+   est.__module__.split('.')[1] not in GET_OUTPUT_NAMES_MODULES_TO_IGNORE
+]
+
+
+@pytest.mark.parametrize("transformer", GET_OUTPUT_NAMES_ESTIMATORS)
 def test_transformers_get_output_names(transformer):
     check_transformer_get_output_names(type(transformer).__name__,
                                        transformer)
