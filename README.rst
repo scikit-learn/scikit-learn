@@ -55,7 +55,7 @@ Installation
 Dependencies
 ~~~~~~~~~~~~
 
-scikit-learn requires:
+scikit-learn prerequires:
 
 - Python (>= |PythonMinVersion|)
 - NumPy (>= |NumPyMinVersion|)
