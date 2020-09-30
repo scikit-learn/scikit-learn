@@ -169,7 +169,7 @@ plt.show()
 # In practice, how strongly the model performances differ will depend on the
 # dataset and on the flexibility of the trees. As a follow up, you may try to
 # reduce the number of trees and their depth, and observe how it affects the
-# scores::
+# scores. The following snippet may help::
 #   for pipe in (hist_dropped, hist_one_hot, hist_ordinal, hist_native):
 #       pipe.set_params(histgradientboostingregressor__max_depth=3,
 #                       histgradientboostingregressor__max_iter=10)
