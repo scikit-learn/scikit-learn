@@ -13,7 +13,6 @@ from ..neighbors._base import _check_weights
 from ..utils import check_array
 from ..utils import is_scalar_nan
 from ..utils._mask import _get_mask
-from ..utils._feature_names import _make_feature_names
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _deprecate_positional_args
 
@@ -305,27 +304,3 @@ class KNNImputer(_BaseImputer):
             pass
 
         return super()._concatenate_indicator(X[:, valid_mask], X_indicator)
-
-    def get_feature_names_out(self, input_features=None):
-        """Get output feature names for transformation.
-
-        Parameters
-        ----------
-        input_features : array-like of str
-            Input feature names.
-
-        Returns
-        -------
-        feature_names : ndarray of str
-            Transformed feature names.
-        """
-        check_is_fitted(self)
-        input_features = _make_feature_names(self._valid_mask.shape[0],
-                                             input_features=input_features)
-        output = np.array(input_features)[self._valid_mask].tolist()
-        if not self.add_indicator:
-            return output
-        missing_names = self.indicator_.get_feature_names_out(input_features)
-        missing_names = [f'missingindicator__{name}' for name in
-                         missing_names]
-        return output + missing_names

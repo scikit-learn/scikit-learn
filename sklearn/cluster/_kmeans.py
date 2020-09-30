@@ -29,7 +29,6 @@ from ..utils import check_random_state
 from ..utils import deprecated
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils._openmp_helpers import _openmp_effective_n_threads
-from ..utils._feature_names import _make_feature_names
 from ..exceptions import ConvergenceWarning
 from ._k_means_fast import _inertia_dense
 from ._k_means_fast import _inertia_sparse
@@ -1159,23 +1158,6 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         return -_labels_inertia(X, sample_weight, x_squared_norms,
                                 self.cluster_centers_)[1]
 
-    def get_feature_names_out(self, input_features=None):
-        """Get output feature names for transformation.
-
-        Parameters
-        ----------
-        input_features : array-like of str or None, default=None
-            Not used, present here for API consistency by convention.
-
-        Returns
-        -------
-        output_feature_names : list of str
-            Feature names for transformer output.
-        """
-        return _make_feature_names(
-            n_features=self.n_clusters,
-            prefix=type(self).__name__.lower())
-
     def _more_tags(self):
         return {
             '_xfail_checks': {
@@ -1896,23 +1878,6 @@ class MiniBatchKMeans(KMeans):
 
         X = self._check_test_data(X)
         return self._labels_inertia_minibatch(X, sample_weight)[0]
-
-    def get_feature_names_out(self, input_features=None):
-        """Get output feature names for transformation.
-
-        Parameters
-        ----------
-        input_features : array-like of str or None, default=None
-            Not used, present here for API consistency by convention.
-
-        Returns
-        -------
-        output_feature_names : list of str
-            Feature names for transformer output.
-        """
-        return _make_feature_names(
-            n_features=self.n_clusters,
-            prefix=type(self).__name__.lower())
 
     def _more_tags(self):
         return {

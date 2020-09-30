@@ -16,7 +16,6 @@ from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
 from ..utils.validation import _deprecate_positional_args
 from ..utils._mask import _get_mask
-from ..utils._feature_names import _make_feature_names
 from ..utils import is_scalar_nan
 
 
@@ -494,30 +493,6 @@ class SimpleImputer(_BaseImputer):
     def _more_tags(self):
         return {'allow_nan': True}
 
-    def get_feature_names_out(self, input_features=None):
-        """Get output feature names for transformation.
-
-        Parameters
-        ----------
-        input_features : array-like of str
-            Input feature names.
-
-        Returns
-        -------
-        feature_names : list of str
-            Transformed feature names.
-        """
-        check_is_fitted(self)
-        input_features = _make_feature_names(self.statistics_.shape[0],
-                                             input_features=input_features)
-        output = np.array(input_features)[self._valid_mask].tolist()
-        if not self.add_indicator:
-            return output
-        missing_names = self.indicator_.get_feature_names_out(input_features)
-        missing_names = [f'missingindicator__{name}' for name in
-                         missing_names]
-        return output + missing_names
-
     def inverse_transform(self, X):
         """Convert the data back to the original representation.
 
@@ -876,20 +851,3 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             "X_types": ["2darray", "string"],
             "preserves_dtype": [],
         }
-
-    def get_feature_names_out(self, input_features=None):
-        """Get output feature names for transformation.
-
-        Parameters
-        ----------
-        input_features : array-like of str or None, default=None
-            Not used, present here for API consistency by convention.
-
-        Returns
-        -------
-        output_feature_names : list of str
-            Feature names for transformer output.
-        """
-        names = _make_feature_names(n_features=self._n_features,
-                                    input_features=input_features)
-        return [names[i] for i in self.features_]

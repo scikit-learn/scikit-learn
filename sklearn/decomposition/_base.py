@@ -14,7 +14,6 @@ from scipy import linalg
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.validation import check_is_fitted
-from ..utils._feature_names import _make_feature_names
 from abc import ABCMeta, abstractmethod
 
 
@@ -158,19 +157,3 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
                             self.components_) + self.mean_
         else:
             return np.dot(X, self.components_) + self.mean_
-
-    def get_feature_names_out(self, input_features=None):
-        """Get output feature names.
-
-        Parameters
-        ----------
-        input_features : array-like of str or None, default=None
-            Not used, present here for API consistency by convention.
-
-        Returns
-        -------
-        output_feature_names : list of str
-            Feature names for transformer output.
-        """
-        return _make_feature_names(n_features=self.components_.shape[0],
-                                   prefix=type(self).__name__.lower())

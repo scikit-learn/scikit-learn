@@ -206,9 +206,10 @@ _ = plt.ylim([0, 27])
 # First of all, we can take a look to the values of the coefficients of the
 # regressor we have fitted.
 
-feature_names = (model.named_steps['columntransformer']
-                      .named_transformers_['onehotencoder']
-                      .get_feature_names_out(input_features=categorical_columns))
+feature_names = (model
+                 .named_steps['columntransformer']
+                 .named_transformers_['onehotencoder']
+                 .get_feature_names_out(input_features=categorical_columns))
 feature_names = np.concatenate(
     [feature_names, numerical_columns])
 

@@ -36,7 +36,6 @@ import scipy.sparse as sp
 from .base import BaseEstimator, TransformerMixin
 
 from .utils import check_random_state
-from .utils._feature_names import _make_feature_names
 from .utils.extmath import safe_sparse_dot
 from .utils.random import sample_without_replacement
 from .utils.validation import check_array, check_is_fitted
@@ -416,22 +415,6 @@ class BaseRandomProjection(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         X_new = safe_sparse_dot(X, self.components_.T,
                                 dense_output=self.dense_output)
         return X_new
-
-    def get_feature_names_out(self, input_features=None):
-        """Get output feature names.
-
-        Parameters
-        ----------
-        input_features : array-like of str or None, default=None
-            Not used, present here for API consistency by convention.
-
-        Returns
-        -------
-        output_feature_names : list of str
-            Feature names for transformer output.
-        """
-        return _make_feature_names(n_features=self.n_components_,
-                                   prefix=type(self).__name__.lower())
 
 
 class GaussianRandomProjection(BaseRandomProjection):

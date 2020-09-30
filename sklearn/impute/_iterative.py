@@ -13,7 +13,6 @@ from ..utils import (check_array, check_random_state, _safe_indexing,
                      is_scalar_nan)
 from ..utils.validation import FLOAT_DTYPES, check_is_fitted
 from ..utils._mask import _get_mask
-from ..utils._feature_names import _make_feature_names
 
 from ._base import _BaseImputer
 from ._base import SimpleImputer
@@ -747,29 +746,3 @@ class IterativeImputer(_BaseImputer):
         """
         self.fit_transform(X)
         return self
-
-    def get_feature_names_out(self, input_features=None):
-        """Get output feature names for transformation.
-
-        Parameters
-        ----------
-        input_features : array-like of str
-            Input feature names.
-
-        Returns
-        -------
-        feature_names : list of str
-            Transformed feature names.
-        """
-        check_is_fitted(self)
-        input_features = _make_feature_names(
-            self.initial_imputer_.statistics_.shape[0],
-            input_features=input_features)
-        output = (np.array(input_features)[self.initial_imputer_._valid_mask]
-                  .tolist())
-        if not self.add_indicator:
-            return output
-        missing_names = self.indicator_.get_feature_names_out(input_features)
-        missing_names = [f'missingindicator__{name}' for name in
-                         missing_names]
-        return output + missing_names

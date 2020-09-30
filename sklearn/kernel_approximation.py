@@ -21,7 +21,6 @@ except ImportError:   # scipy < 1.4
 from .base import BaseEstimator
 from .base import TransformerMixin
 from .utils import check_array, check_random_state, as_float_array
-from .utils._feature_names import _make_feature_names
 from .utils.extmath import safe_sparse_dot
 from .utils.validation import check_is_fitted
 from .metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
@@ -194,22 +193,6 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
 
         return data_sketch
 
-    def get_feature_names_out(self, input_features=None):
-        """Get output feature names.
-
-        Parameters
-        ----------
-        input_features : array-like of str or None, default=None
-            Not used, present here for API consistency by convention.
-
-        Returns
-        -------
-        output_feature_names : list of str
-            Feature names for transformer output.
-        """
-        return _make_feature_names(n_features=self.n_components,
-                                   prefix=type(self).__name__.lower())
-
 
 class RBFSampler(TransformerMixin, BaseEstimator):
     """Approximates feature map of an RBF kernel by Monte Carlo approximation
@@ -325,22 +308,6 @@ class RBFSampler(TransformerMixin, BaseEstimator):
         np.cos(projection, projection)
         projection *= np.sqrt(2.) / np.sqrt(self.n_components)
         return projection
-
-    def get_feature_names_out(self, input_features=None):
-        """Get output feature names.
-
-        Parameters
-        ----------
-        input_features : array-like of str or None, default=None
-            Not used, present here for API consistency by convention.
-
-        Returns
-        -------
-        output_feature_names : list of str
-            Feature names for transformer output.
-        """
-        return _make_feature_names(n_features=self.n_components,
-                                   prefix=type(self).__name__.lower())
 
 
 class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
@@ -466,21 +433,6 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
         projection *= np.sqrt(2.) / np.sqrt(self.n_components)
         return projection
 
-    def get_feature_names_out(self, input_features=None):
-        """Get output feature names.
-
-        Parameters
-        ----------
-        input_features : array-like of str or None, default=None
-            Not used, present here for API consistency by convention.
-
-        Returns
-        -------
-        output_feature_names : list of str
-            Feature names for transformer output.
-        """
-        return _make_feature_names(n_features=self.n_components,
-                                   prefix=type(self).__name__.lower())
 
 class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
     """Approximate feature map for additive chi2 kernel.
@@ -667,23 +619,6 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
             X_new.append(X_step)
 
         return sp.hstack(X_new)
-
-    def get_feature_names_out(self, input_features=None):
-        """Get output feature names.
-
-        Parameters
-        ----------
-        input_features : array-like of str or None, default=None
-            Not used, present here for API consistency by convention.
-
-        Returns
-        -------
-        output_feature_names : list of str
-            Feature names for transformer output.
-        """
-        n_features = self.n_features_in_ * (2 * self.sample_steps - 1)
-        return _make_feature_names(n_features=n_features,
-                                   prefix=type(self).__name__.lower())
 
     def _more_tags(self):
         return {'stateless': True,
@@ -878,22 +813,6 @@ class Nystroem(TransformerMixin, BaseEstimator):
                                  "or precomputed kernel")
 
         return params
-
-    def get_feature_names_out(self, input_features=None):
-        """Get output feature names.
-
-        Parameters
-        ----------
-        input_features : array-like of str or None, default=None
-            Not used, present here for API consistency by convention.
-
-        Returns
-        -------
-        output_feature_names : list of str
-            Feature names for transformer output.
-        """
-        return _make_feature_names(n_features=self.components_.shape[0],
-                                   prefix=type(self).__name__.lower())
 
     def _more_tags(self):
         return {

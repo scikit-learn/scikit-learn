@@ -12,7 +12,6 @@ from scipy.sparse.linalg import svds
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, check_random_state
-from ..utils._feature_names import _make_feature_names
 from ..utils.extmath import randomized_svd, safe_sparse_dot, svd_flip
 from ..utils.sparsefuncs import mean_variance_axis
 from ..utils.validation import _deprecate_positional_args
@@ -236,19 +235,3 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
 
     def _more_tags(self):
         return {'preserves_dtype': [np.float64, np.float32]}
-
-    def get_feature_names_out(self, input_features=None):
-        """Get output feature names.
-
-        Parameters
-        ----------
-        input_features : array-like of str or None, default=None
-            Not used, present here for API consistency by convention.
-
-        Returns
-        -------
-        output_feature_names : list of str
-            Feature names for transformer output.
-        """
-        return _make_feature_names(n_features=self.components_.shape[0],
-                                   prefix=type(self).__name__.lower())

@@ -275,12 +275,10 @@ def test_strict_mode_parametrize_with_checks(estimator, check):
 # this list to be tested
 get_feature_names_out_MODULES_TO_IGNORE = [
     'cluster',
-    'compose',
     'cross_decomposition',
     'decomposition',
     'discriminant_analysis',
     'ensemble',
-    'feature_extraction',
     'feature_selection',
     'impute',
     'isotonic',
@@ -288,8 +286,6 @@ get_feature_names_out_MODULES_TO_IGNORE = [
     'manifold',
     'neighbors',
     'neural_network',
-    'pipeline',
-    'preprocessing',
     'random_projection'
 ]
 
@@ -304,4 +300,4 @@ get_feature_names_out_ESTIMATORS = [
 @pytest.mark.parametrize("transformer", get_feature_names_out_ESTIMATORS)
 def test_transformers_get_feature_names_out(transformer):
     check_transformer_get_feature_names_out(type(transformer).__name__,
-                                       transformer)
+                                            transformer)
