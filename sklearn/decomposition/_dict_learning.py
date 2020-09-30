@@ -94,7 +94,7 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
 
     Returns
     -------
-    code : array of shape (n_components, n_components)
+    code : array of shape (n_samples, n_components)
         The sparse codes
 
     See also

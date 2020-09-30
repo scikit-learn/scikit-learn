@@ -17,7 +17,7 @@ from sklearn.decomposition import MiniBatchDictionaryLearning
 from sklearn.decomposition import SparseCoder
 from sklearn.decomposition import dict_learning
 from sklearn.decomposition import dict_learning_online
-from sklearn.decomposition._dict_learning import dict_learning_na
+from sklearn.decomposition._dict_learning import dict_learning_na, sparse_encode_na
 from sklearn.decomposition import sparse_encode
 
 
@@ -352,6 +352,7 @@ def test_dict_learning_online_estimator_shapes():
     dico.fit(X)
     assert dico.components_.shape == (n_components, n_features)
 
+
 def test_dict_learning_na_estimator_shapes():
     n_components = 5
     dico = MiniBatchDictionaryLearning(n_components, n_iter=20, random_state=0)
@@ -359,9 +360,19 @@ def test_dict_learning_na_estimator_shapes():
     X_nan[1,1] = np.nan
     dico.fit(X_nan)
     assert dico.components_.shape == (n_components, n_features)
-
     code = dico.transform(X_nan)
     assert code.shape == (n_samples, n_components)
+
+
+def test_dict_learning_na_remove_nan():
+    n_components = 5
+    dico = MiniBatchDictionaryLearning(n_components, n_iter=20, random_state=0)
+    X_nan = X.copy()
+    X_nan[1,1] = np.nan
+    dico.fit(X_nan)
+    assert not np.any(np.isnan(dico.components_))
+    code = dico.transform(X_nan)
+    assert not np.any(np.isnan(code))
 
 
 def test_dict_learning_online_overcomplete():
@@ -408,6 +419,16 @@ def test_dict_learning_online_partial_fit():
     assert not np.all(sparse_encode(X, dict1.components_, alpha=1) == 0)
     assert_array_almost_equal(dict1.components_, dict2.components_,
                               decimal=2)
+
+
+def test_sparse_encode_na_shapes():
+    n_components = 12
+    rng = np.random.RandomState(0)
+    V = rng.randn(n_components, n_features)  # random init
+    V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
+    observed_mask = np.ones(X.shape)
+    code = sparse_encode_na(X, observed_mask, V)
+    assert code.shape == (n_samples, n_components)
 
 
 def test_sparse_encode_shapes():
@@ -468,6 +489,17 @@ def test_sparse_encode_error():
     V = rng.randn(n_components, n_features)  # random init
     V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
     code = sparse_encode(X, V, alpha=0.001)
+    assert not np.all(code == 0)
+    assert np.sqrt(np.sum((np.dot(code, V) - X) ** 2)) < 0.1
+
+
+def test_sparse_encode_error():
+    n_components = 12
+    rng = np.random.RandomState(0)
+    V = rng.randn(n_components, n_features)  # random init
+    V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
+    observed_mask = np.ones(X.shape)
+    code = sparse_encode_na(X, observed_mask, V, alpha=0.001)
     assert not np.all(code == 0)
     assert np.sqrt(np.sum((np.dot(code, V) - X) ** 2)) < 0.1
 
