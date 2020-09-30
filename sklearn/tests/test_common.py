@@ -273,8 +273,8 @@ def test_strict_mode_parametrize_with_checks(estimator, check):
     check(estimator)
 
 
-# TODO: As more modules support get_feature_names_out they should be removed from
-# this list to be tested
+# TODO: As more modules support get_feature_names_out they should be removed
+# from this list to be tested
 get_feature_names_out_MODULES_TO_IGNORE = [
     'cluster',
     'cross_decomposition',
