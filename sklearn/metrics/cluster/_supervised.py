@@ -226,9 +226,9 @@ def adjusted_rand_score(labels_true, labels_pred):
 
     .. [wk] https://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index
 
-    See also
+    See Also
     --------
-    adjusted_mutual_info_score: Adjusted Mutual Information
+    adjusted_mutual_info_score : Adjusted Mutual Information.
 
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
@@ -309,7 +309,7 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
     v_measure : float
         harmonic mean of the first two
 
-    See also
+    See Also
     --------
     homogeneity_score
     completeness_score
@@ -374,7 +374,7 @@ def homogeneity_score(labels_true, labels_pred):
        conditional entropy-based external cluster evaluation measure
        <https://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
 
-    See also
+    See Also
     --------
     completeness_score
     v_measure_score
@@ -444,7 +444,7 @@ def completeness_score(labels_true, labels_pred):
        conditional entropy-based external cluster evaluation measure
        <https://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
 
-    See also
+    See Also
     --------
     homogeneity_score
     v_measure_score
@@ -528,7 +528,7 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0):
        conditional entropy-based external cluster evaluation measure
        <https://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
 
-    See also
+    See Also
     --------
     homogeneity_score
     completeness_score
@@ -628,10 +628,10 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     -----
     The logarithm used is the natural logarithm (base-e).
 
-    See also
+    See Also
     --------
-    adjusted_mutual_info_score: Adjusted against chance Mutual Information
-    normalized_mutual_info_score: Normalized Mutual Information
+    adjusted_mutual_info_score : Adjusted against chance Mutual Information.
+    normalized_mutual_info_score : Normalized Mutual Information.
     """
     if contingency is None:
         labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
@@ -718,10 +718,10 @@ def adjusted_mutual_info_score(labels_true, labels_pred, *,
        (ie perfectly matched). Random partitions (independent labellings) have
        an expected AMI around 0 on average hence can be negative.
 
-    See also
+    See Also
     --------
-    adjusted_rand_score: Adjusted Rand Index
-    mutual_info_score: Mutual Information (not adjusted for chance)
+    adjusted_rand_score : Adjusted Rand Index.
+    mutual_info_score : Mutual Information (not adjusted for chance).
 
     Examples
     --------
@@ -836,12 +836,12 @@ def normalized_mutual_info_score(labels_true, labels_pred, *,
     nmi : float
        score between 0.0 and 1.0. 1.0 stands for perfectly complete labeling
 
-    See also
+    See Also
     --------
-    v_measure_score: V-Measure (NMI with arithmetic mean option.)
-    adjusted_rand_score: Adjusted Rand Index
-    adjusted_mutual_info_score: Adjusted Mutual Information (adjusted
-        against chance)
+    v_measure_score : V-Measure (NMI with arithmetic mean option).
+    adjusted_rand_score : Adjusted Rand Index.
+    adjusted_mutual_info_score : Adjusted Mutual Information (adjusted
+        against chance).
 
     Examples
     --------

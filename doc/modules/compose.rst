@@ -148,7 +148,7 @@ or by name::
  * :ref:`sphx_glr_auto_examples_svm_plot_svm_anova.py`
  * :ref:`sphx_glr_auto_examples_compose_plot_compare_reduction.py`
 
-.. topic:: See also:
+.. topic:: See Also:
 
  * :ref:`composite_grid_search`
 
@@ -457,7 +457,7 @@ to specify the column as a list of strings (``['city']``).
 
 Apart from a scalar or a single item list, the column selection can be specified
 as a list of multiple items, an integer array, a slice, a boolean mask, or
-with a :func:`~sklearn.compose.make_column_selector`. The 
+with a :func:`~sklearn.compose.make_column_selector`. The
 :func:`~sklearn.compose.make_column_selector` is used to select columns based
 on data type or column name::
 
@@ -542,8 +542,8 @@ many estimators. This visualization is activated by setting the
   >>> # diplays HTML representation in a jupyter context
   >>> column_trans  # doctest: +SKIP
 
-An example of the HTML output can be seen in the 
-**HTML representation of Pipeline** section of 
+An example of the HTML output can be seen in the
+**HTML representation of Pipeline** section of
 :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`.
 As an alternative, the HTML can be written to a file using
 :func:`~sklearn.utils.estimator_html_repr`::

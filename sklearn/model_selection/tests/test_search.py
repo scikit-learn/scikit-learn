@@ -1750,6 +1750,50 @@ def test_random_search_bad_cv():
         ridge.fit(X[:train_size], y[:train_size])
 
 
+@pytest.mark.parametrize("return_train_score", [False, True])
+@pytest.mark.parametrize(
+    "SearchCV, specialized_params",
+    [(GridSearchCV, {"param_grid": {"max_depth": [2, 3]}}),
+     (RandomizedSearchCV,
+      {"param_distributions": {"max_depth": [2, 3]}, "n_iter": 2})])
+def test_searchcv_raise_warning_with_non_finite_score(
+        SearchCV, specialized_params, return_train_score):
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/10529
+    # Check that we raise a UserWarning when a non-finite score is
+    # computed in the SearchCV
+    X, y = make_classification(n_classes=2, random_state=0)
+
+    class FailingScorer:
+        """Scorer that will fail for some split but not all."""
+
+        def __init__(self):
+            self.n_counts = 0
+
+        def __call__(self, estimator, X, y):
+            self.n_counts += 1
+            if self.n_counts % 5 == 0:
+                return np.nan
+            return 1
+
+    grid = SearchCV(
+        DecisionTreeClassifier(),
+        scoring=FailingScorer(),
+        cv=3,
+        return_train_score=return_train_score,
+        **specialized_params
+    )
+
+    with pytest.warns(UserWarning) as warn_msg:
+        grid.fit(X, y)
+
+    set_with_warning = ["test", "train"] if return_train_score else ["test"]
+    assert len(warn_msg) == len(set_with_warning)
+    for msg, dataset in zip(warn_msg, set_with_warning):
+        assert (f"One or more of the {dataset} scores are non-finite" in
+                str(msg.message))
+
+
 def test_callable_multimetric_confusion_matrix():
     # Test callable with many metrics inserts the correct names and metrics
     # into the search cv object

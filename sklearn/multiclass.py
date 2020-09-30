@@ -1,6 +1,6 @@
 """
-Multiclass and multilabel classification strategies
-===================================================
+Multiclass classification strategies
+====================================
 
 This module implements multiclass learning algorithms:
     - one-vs-the-rest / one-vs-all
@@ -53,9 +53,10 @@ from .utils.multiclass import (_check_partial_fit_first_call,
                                check_classification_targets,
                                _ovr_decision_function)
 from .utils.metaestimators import _safe_split, if_delegate_has_method
+from .utils.fixes import delayed
 from .exceptions import NotFittedError
 
-from joblib import Parallel, delayed
+from joblib import Parallel
 
 __all__ = [
     "OneVsRestClassifier",
@@ -412,7 +413,8 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
 
         Returns
         -------
-        T : array-like of shape (n_samples, n_classes)
+        T : array-like of shape (n_samples, n_classes) or (n_samples,) for \
+            binary classification.
 
             .. versionchanged:: 0.19
                 output shape changed to ``(n_samples,)`` to conform to
@@ -687,7 +689,8 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         Returns
         -------
-        Y : array-like of shape (n_samples, n_classes)
+        Y : array-like of shape (n_samples, n_classes) or (n_samples,) for \
+            binary classification.
 
             .. versionchanged:: 0.19
                 output shape changed to ``(n_samples,)`` to conform to
