@@ -793,11 +793,11 @@ cdef class Splitter:
             split_info_struct * split_info) nogil:  # OUT
         """Find best split for categorical features.
 
-           Categories are first sorted according to their variance, and then
-           a scan is performed as if categories were ordered quantities.
+        Categories are first sorted according to their variance, and then
+        a scan is performed as if categories were ordered quantities.
 
-           Ref: "On Grouping for Maximum Homogeneity", Walter D. Fisher
-           """
+        Ref: "On Grouping for Maximum Homogeneity", Walter D. Fisher
+        """
 
         cdef:
             unsigned int bin_idx
@@ -809,7 +809,7 @@ cdef class Splitter:
             int [2] scan_direction
             int direction = 0
             int best_direction = 0
-            unsigned int max_n_cat_left
+            unsigned int middle
             unsigned int i
             const hist_struct[::1] feature_hist = histograms[feature_idx, :]
             Y_DTYPE_C sum_gradients_bin
@@ -832,6 +832,41 @@ cdef class Splitter:
             # this is equal to 1 for losses where hessians are constant
             Y_DTYPE_C support_factor = n_samples / sum_hessians
 
+        # Details on the split finding:
+        # We first order categories by their sum_gradients / sum_hessians
+        # values, and we exclude categories that don't respect MIN_CAT_SUPPORT
+        # from this sorted array. Missing values are treated just like any
+        # other category. The low-support categories will always be mapped to
+        # the right child. We scan the sorted categories array from left to
+        # right and from right to left, and we stop at the middle.
+        
+        # Considering ordered categories A B C D, with E being a low-support
+        # category: A B C D
+        #              ^
+        #           midpoint
+        # The scans will consider the following split-points:
+        # * left to right:
+        #   A - B C D E
+        #   A B - C D E
+        # * right to left:
+        #   D - A B C E
+        #   C D - A B E
+
+        # Note that since we stop at the middle and since low-support
+        # categories (E) are always mapped to the right, the following splits
+        # aren't considered:
+        # A E - B C D
+        # D E - A B C
+        # Basically, we're forcing E to always be mapped to the child that has
+        # *at least half of the categories* (and this child is always the right
+        # child, by convention).
+
+        # Also note that if we scanned in only one direction (e.g. left to
+        # right), we would only consider the following splits:
+        # A - B C D E
+        # A B - C D E
+        # A B C - D E
+        # and thus we would be missing on D - A B C E and on C D - A B E
 
         cat_infos = <categorical_info *> malloc(
             (n_bins_non_missing + has_missing_values) * sizeof(categorical_info))
@@ -878,15 +913,15 @@ cdef class Splitter:
         scan_direction[0], scan_direction[1] = 1, -1
         for direction in scan_direction:
             if direction == 1:
-                max_n_cat_left = (n_used_bins + 1) // 2
+                middle = (n_used_bins + 1) // 2
             else:
-                max_n_cat_left = (n_used_bins + 1) // 2 - 1
+                middle = (n_used_bins + 1) // 2 - 1
 
             # The categories we'll consider will go to the left child
             sum_gradient_left, sum_hessian_left = 0., 0.
             n_samples_left = 0
 
-            for i in range(max_n_cat_left):
+            for i in range(middle):
                 sorted_cat_idx = i if direction == 1 else n_used_bins - 1 - i
                 bin_idx = cat_infos[sorted_cat_idx].bin_idx;
 

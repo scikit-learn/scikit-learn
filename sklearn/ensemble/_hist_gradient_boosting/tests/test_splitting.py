@@ -584,21 +584,42 @@ def _assert_categories_equals_bitset(categories, bitset):
          False,  # has_missing_values
          None),  # expected_missing_go_to_left, unchecked
 
-        # 4 categories where the left node has more samples.
-        # Since there are no missing values in the training data, the missing
-        # value bin isn't part of the bitset. However, we expect the
-        # missing_go_to_left flag to be True, though we don't check it here
-        # because it is set in the grower.
-        ([0, 1, 2, 3] * 11 + [1] * 50,  # X_binned
-         [10, 1, 10, 10] * 11 + [1] * 50,  # all_gradients
-         [1],  # expected_categories_left
+        # Make sure that the categories that are on the right (second half) of
+        # the sorted categories array can still go in the left child. In this
+        # case, the best split was found when scanning from right to left.
+        ([0, 1, 2, 3] * 11,  # X_binned
+         [10, 10, 10, 1] * 11,  # all_gradients
+         [3],  # expected_categories_left
          4,  # n_bins_non_missing
          4,  # missing_values_bin_idx
          False,  # has_missing_values
          None),  # expected_missing_go_to_left, unchecked
 
+        # categories that don't respect MIN_CAT_SUPPORT (cat 4) are always
+        # mapped to the right child
+        ([0, 1, 2, 3] * 11 + [4] * 5,  # X_binned
+         [10, 10, 10, 1] * 11 + [10] * 5,  # all_gradients
+         [3],  # expected_categories_left
+         4,  # n_bins_non_missing
+         4,  # missing_values_bin_idx
+         False,  # has_missing_values
+         None),  # expected_missing_go_to_left, unchecked
 
-        # 4 categories (including missing value)
+        # categories that don't respect MIN_CAT_SUPPORT are always mapped to
+        # the right child: in this case a more sensible split could have been
+        # 3, 4 - 0, 1, 2
+        # But the split is still 3 - 0, 1, 2, 4. this is because we only scan
+        # up to the middle of the sorted category array (0, 1, 2, 3), and
+        # because we exclude cat 4 in this array.
+        ([0, 1, 2, 3] * 11 + [4] * 5,  # X_binned
+         [10, 10, 10, 1] * 11 + [1] * 5,  # all_gradients
+         [3],  # expected_categories_left
+         4,  # n_bins_non_missing
+         4,  # missing_values_bin_idx
+         False,  # has_missing_values
+         None),  # expected_missing_go_to_left, unchecked
+
+        # 4 categories with missing values that go to the right
         ([0, 1, 2] * 11 + [9] * 11,  # X_binned
          [10, 1, 10] * 11 + [10] * 11,  # all_gradients
          [1],  # expected_categories_left
@@ -606,6 +627,15 @@ def _assert_categories_equals_bitset(categories, bitset):
          9,  # missing_values_bin_idx
          True,   # has_missing_values
          False),  # expected_missing_go_to_left
+
+        # 4 categories with missing values that go to the left
+        ([0, 1, 2] * 11 + [9] * 11,  # X_binned
+         [10, 1, 10] * 11 + [1] * 11,  # all_gradients
+         [1, 9],  # expected_categories_left
+         3,  # n_bins_non_missing
+         9,  # missing_values_bin_idx
+         True,   # has_missing_values
+         True),  # expected_missing_go_to_left
 
         # split is on the missing value
         ([0, 1, 2, 3, 4] * 11 + [255] * 12,  # X_binned
