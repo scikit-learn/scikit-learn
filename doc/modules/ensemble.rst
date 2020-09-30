@@ -1089,7 +1089,7 @@ categories that were not seen during fit time will be treated as the missing
 values.
 
 **Split finding with categorical features**: The canonical way of considering
-*categorical splits in a tree is to consider
+categorical splits in a tree is to consider
 all of the :math:`2^{K - 1} - 1` partitions, where `K` is the number of
 categories. This can quickly become prohibitive when `K` is large.
 Fortunately, since gradient boosting trees are always regression trees (even

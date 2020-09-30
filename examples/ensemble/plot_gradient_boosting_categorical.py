@@ -155,7 +155,7 @@ plt.show()
 # In terms of prediction performance, dropping the categorical features leads
 # to poorer performance. The three models that use categorical features have
 # comparable R2 scores, with a slight edge for the native handling.
-
+#
 # In general, one can expect poorer predictions from one-hot-encoded data,
 # especially when the the trees depth or the number of nodes are limited: with
 # one-hot-encoded data, one needs more split points (i.e. more depth) in order
@@ -165,7 +165,7 @@ plt.show()
 # BDE` the one-hot-encoder model will need at least 3 split points, and the
 # ordinal non-native model will need at last 4 splits: 1 split to isolate `A`,
 # 1 split to isolate `F ,and 2 splits to isolate C from `BCDE`.
-
+#
 # In practice, how strongly the model performances differ will depend on the
 # dataset and on the flexibility of the trees. As a follow up, you may try to
 # reduce the number of trees and their depth, and observe how it affects the
