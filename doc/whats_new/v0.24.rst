@@ -486,9 +486,8 @@ Changelog
   the data intrinsic dimensionality is too high for tree-based methods.
   :pr:`17148` by :user:`Geoffrey Bolmier <gbolmier>`.
 
-- |Fix| :class:`neighbors.NearestCentroid` calling ``fit`` method on an ``X`` 
-  vector with all features having zero variance will raise ``ValueError`` 
-  preventing divde by zero error downstream. 
+- |Fix| :class:`neighbors.NearestCentroid` with a numerical `shrink_threshold`
+  will raise a `ValueError` when fitting on data with all constant features.
   :pr:`18370` by :user:`Trevor Waite <Trevor-Waite>`.
 
 :mod:`sklearn.neural_network`
