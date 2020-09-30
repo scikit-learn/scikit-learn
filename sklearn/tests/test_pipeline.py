@@ -21,14 +21,12 @@ from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_no_warnings
 from sklearn.utils.fixes import parse_version
 
-from sklearn.exceptions import NotFittedError
 from sklearn.base import clone, BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
 from sklearn.svm import SVC
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.linear_model import LogisticRegression, Lasso
 from sklearn.linear_model import LinearRegression
-from sklearn.multiclass import OneVsRestClassifier
 from sklearn.cluster import KMeans
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.dummy import DummyRegressor
@@ -1141,56 +1139,6 @@ def test_make_pipeline_memory():
     shutil.rmtree(cachedir)
 
 
-def test_feature_names_basic():
-    pipe = Pipeline(steps=[
-        ('imputer', SimpleImputer(strategy='median')),
-        ('scaler', StandardScaler()),
-        ('select', SelectKBest(k=2)),
-        ('clf', LogisticRegression())])
-    with pytest.raises(NotFittedError):
-        pipe.get_feature_names_out()
-    iris = load_iris()
-    pipe.fit(iris.data, iris.target)
-    xs = np.array(['x0', 'x1', 'x2', 'x3'])
-    assert_array_equal(pipe[:1].get_feature_names_out(), xs)
-    mask = pipe.named_steps.select.get_support()
-    assert_array_equal(pipe[:-1].get_feature_names_out(), xs[mask])
-    with pytest.raises(
-            TypeError,
-            match="Estimator clf does provide get_feature_names_out."):
-        pipe.get_feature_names_out(iris.feature_names)
-    assert_array_equal(pipe[:1].get_feature_names_out(iris.feature_names),
-                       iris.feature_names)
-    assert_array_equal(pipe[:-1].get_feature_names_out(iris.feature_names),
-                       np.array(iris.feature_names)[mask])
-    pipe = Pipeline(steps=[
-        ('scaler', StandardScaler()),
-        ('pca', PCA(n_components=3)),
-        ('select', SelectKBest(k=2)),
-        ('clf', LogisticRegression())])
-    pipe.fit(iris.data, iris.target)
-    assert_array_equal(pipe[:-1].get_feature_names_out(), ['pca0', 'pca1'])
-    # setting names doesn't change names after PCA
-    assert_array_equal(pipe[:-2].get_feature_names_out(iris.feature_names),
-                       ['pca0', 'pca1', 'pca2'])
-
-
-def test_input_feature_names_pandas():
-    pd = pytest.importorskip("pandas")
-    pipe = Pipeline(steps=[
-        ('imputer', SimpleImputer(strategy='median')),
-        ('scaler', StandardScaler()),
-        ('select', SelectKBest(k=2)),
-        ('clf', LogisticRegression())])
-    iris = load_iris()
-    df = pd.DataFrame(iris.data, columns=iris.feature_names)
-    pipe.fit(df, iris.target)
-    mask = pipe.named_steps.select.get_support()
-    # for now assuming we have to pass these explicitly
-    assert_array_equal(pipe[:-1].get_feature_names_out(iris.feature_names),
-                       np.array(iris.feature_names)[mask])
-
-
 def test_features_names_passthrough():
     pipe = Pipeline(steps=[
         ('imputer', 'passthrough'),
@@ -1215,36 +1163,6 @@ def test_feature_names_count_vectorizer():
                        ['beer', 'burger', 'coke', 'copyright', 'pizza', 'the'])
     assert_array_equal(pipe[:-1].get_feature_names_out("nonsense_is_ignored"),
                        ['beer', 'burger', 'coke', 'copyright', 'pizza', 'the'])
-
-
-def test_feature_names_nested():
-    pipe = Pipeline(steps=[
-        ('inner_pipe', Pipeline(steps=[('select', SelectKBest(k=2)),
-                                       ('clf', LogisticRegression())]))])
-    iris = load_iris()
-    pipe.fit(iris.data, iris.target)
-    xs = np.array(['x0', 'x1', 'x2', 'x3'])
-    mask = pipe.named_steps.inner_pipe.named_steps.select.get_support()
-    assert_array_equal(
-        pipe.named_steps.inner_pipe[:1].get_feature_names_out(), xs[mask])
-    assert_array_equal(
-        pipe.named_steps.inner_pipe[:1].get_feature_names_out(iris.feature_names),
-        np.array(iris.feature_names)[mask])
-
-
-def test_feature_names_meta_pipe():
-    ovr = OneVsRestClassifier(Pipeline(steps=[('select', SelectKBest(k=2)),
-                                              ('clf', LogisticRegression())]))
-    pipe = Pipeline(steps=[('ovr', ovr)])
-    iris = load_iris()
-    pipe.fit(iris.data, iris.target)
-    xs = np.array(['x0', 'x1', 'x2', 'x3'])
-    # check 0ths estimator in OVR only
-    inner_pipe = pipe['ovr'].estimators_[0]
-    mask = inner_pipe['select'].get_support()
-    assert_array_equal(inner_pipe[:-1].get_feature_names_out(), xs[mask])
-    assert_array_equal(inner_pipe[:-1].get_feature_names_out(iris.feature_names),
-                       np.array(iris.feature_names)[mask])
 
 
 def test_pipeline_param_error():

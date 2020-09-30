@@ -8,6 +8,7 @@ different columns.
 # License: BSD
 import warnings
 from itertools import chain
+from typing import Iterable
 
 import numbers
 import numpy as np
@@ -22,6 +23,7 @@ from ..utils import Bunch
 from ..utils import _safe_indexing
 from ..utils import _get_column_indices
 from ..utils import _determine_key_type
+from ..utils._feature_names import _make_feature_names
 from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_array, check_is_fitted
 from ..utils.validation import _deprecate_positional_args
@@ -355,7 +357,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         get_feature_names. This should be removed and integrated into
         get_feature_names_out when get_feature_names is deprecated.
         """
-        check_is_fitted(self)
         feature_names = []
         for name, trans, column, _ in self._iter(fitted=True):
             if trans == 'drop' or (
@@ -385,6 +386,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         feature_names : list of strings
             Names of the features produced by transform.
         """
+        check_is_fitted(self)
+
         def get_names(name, trans, column):
             if not hasattr(trans, 'get_feature_names'):
                 raise AttributeError(
@@ -406,12 +409,20 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         output_feature_names : list of str
             Transformed feature names.
         """
+        check_is_fitted(self)
+        if hasattr(self, '_df_columns'):
+            input_names = self._df_columns
+        else:
+            input_names = _make_feature_names(self.n_features_in_)
 
         def get_names(name, trans, column):
             if not hasattr(trans, 'get_feature_names_out'):
                 raise AttributeError(
                     f"Transformer {name} (type {type(trans).__name__}) does "
                     "not provide get_feature_names_out.")
+            if (isinstance(column, Iterable) and
+                    not all(isinstance(col, str) for col in column)):
+                column = _safe_indexing(input_names, column)
             return [f"{name}__{f}"
                     for f in
                     trans.get_feature_names_out(input_features=column)]

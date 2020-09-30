@@ -1409,6 +1409,33 @@ def test_feature_names_empty_columns(empty_col, get_names, expected_names):
     assert getattr(ct, get_names)() == expected_names
 
 
+@pytest.mark.parametrize("selector", [
+    [1], lambda x: [1], ["col2"], lambda x: ["col2"],
+    [False, True], lambda x: [False, True]
+])
+def test_feature_names_out_pandas(selector):
+    # checks name when selecting only the second column
+    pd = pytest.importorskip('pandas')
+    df = pd.DataFrame({"col1": ["a", "a", "b"], "col2": ["z", "z", "z"]})
+    ct = ColumnTransformer([("ohe", OneHotEncoder(), selector)])
+    ct.fit(df)
+
+    assert ct.get_feature_names_out() == ["ohe__col2_z"]
+
+
+@pytest.mark.parametrize("selector", [
+    [1], lambda x: [1],
+    [False, True], lambda x: [False, True]
+])
+def test_feature_names_out_non_pandas(selector):
+    # checks name when selecting the second column with numpy array
+    X = [["a", "z"], ["a", "z"], ["b", "z"]]
+    ct = ColumnTransformer([("ohe", OneHotEncoder(), selector)])
+    ct.fit(X)
+
+    assert ct.get_feature_names_out() == ["ohe__x1_z"]
+
+
 @pytest.mark.parametrize('remainder', ["passthrough", StandardScaler()])
 def test_sk_visual_block_remainder(remainder):
     # remainder='passthrough' or an estimator will be shown in repr_html
