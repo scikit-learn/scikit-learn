@@ -159,7 +159,7 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         else:
             return np.dot(X, self.components_) + self.mean_
 
-    def get_output_names(self, input_features=None):
+    def get_feature_names_out(self, input_features=None):
         """Get output feature names.
 
         Parameters

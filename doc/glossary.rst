@@ -868,7 +868,7 @@ Class APIs and Estimator Types
         * :term:`fit`
         * :term:`transform`
         * :term:`get_feature_names`
-        * :term:`get_output_names`
+        * :term:`get_feature_names_out`
 
     meta-estimator
     meta-estimators
@@ -1237,7 +1237,7 @@ Methods
         to the names of input columns from which output column names can
         be generated.  By default input features are named x0, x1, ....
 
-    ``get_output_names``
+    ``get_feature_names_out``
         Primarily for :term:`feature extractors`, but also used for other
         transformers to provide string names for each column in the output of
         the estimator's :term:`transform` method.  It outputs a list of

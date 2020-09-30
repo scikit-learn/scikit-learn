@@ -3144,8 +3144,8 @@ _FULLY_STRICT_CHECKS = set([
 ])
 
 
-def check_transformer_get_output_names(name, transformer_orig,
-                                       strict_mode=True):
+def check_transformer_get_feature_names_out(name, transformer_orig,
+                                            strict_mode=True):
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                       random_state=0, n_features=2, cluster_std=0.1)
     X = StandardScaler().fit_transform(X)
@@ -3165,7 +3165,7 @@ def check_transformer_get_output_names(name, transformer_orig,
     X_pred = transformer.fit_transform(X, y=y_)
 
     input_features = ['feature%d' % i for i in range(n_features)]
-    feature_names = transformer.get_output_names(input_features)
+    feature_names = transformer.get_feature_names_out(input_features)
     assert feature_names is not None
     if isinstance(X_pred, tuple):
         assert len(feature_names) == X_pred[0].shape[1], (

@@ -665,7 +665,7 @@ def test_column_transformer_cloning():
 # TODO: Remove in 0.26 when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("get_names", ["get_feature_names",
-                                       "get_output_names"])
+                                       "get_feature_names_out"])
 def test_column_transformer_get_feature_names(get_names):
     X_array = np.array([[0., 1., 2.], [2., 4., 6.]]).T
     ct = ColumnTransformer([('trans', Trans(), [0, 1])])
@@ -737,7 +737,7 @@ def test_column_transformer_get_feature_names(get_names):
 # TODO: Remove in 0.26 when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("get_names", ["get_feature_names",
-                                       "get_output_names"])
+                                       "get_feature_names_out"])
 def test_column_transformer_get_feature_names_dataframe(get_names):
     # passthough transformer with a dataframe
     pd = pytest.importorskip('pandas')
@@ -1422,7 +1422,7 @@ def test_output_names_empty_columns(empty_col):
     )
 
     ct.fit(df)
-    assert ct.get_output_names() == ['ohe__col1_a', 'ohe__col1_b',
+    assert ct.get_feature_names_out() == ['ohe__col1_a', 'ohe__col1_b',
                                      'ohe__col2_z']
 
 

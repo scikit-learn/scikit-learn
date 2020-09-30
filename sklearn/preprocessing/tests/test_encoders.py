@@ -135,7 +135,7 @@ def test_one_hot_encoder_dtype_pandas(output_dtype):
 # TODO: Remove in 0.26 when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("get_names", ["get_feature_names",
-                                       "get_output_names"])
+                                       "get_feature_names_out"])
 def test_one_hot_encoder_feature_names(get_names):
     enc = OneHotEncoder()
     X = [['Male', 1, 'girl', 2, 3],
@@ -172,7 +172,7 @@ def test_one_hot_encoder_feature_names(get_names):
 # TODO: Remove in 0.26 when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("get_names", ["get_feature_names",
-                                       "get_output_names"])
+                                       "get_feature_names_out"])
 def test_one_hot_encoder_feature_names_unicode(get_names):
     enc = OneHotEncoder()
     X = np.array([['c❤t1', 'dat2']], dtype=object).T
@@ -282,7 +282,7 @@ def test_one_hot_encoder_inverse_if_binary():
 # TODO: Remove in 0.26 when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("get_names", ["get_feature_names",
-                                       "get_output_names"])
+                                       "get_feature_names_out"])
 @pytest.mark.parametrize('drop', ['if_binary', 'first', None])
 @pytest.mark.parametrize('reset_drop', ['if_binary', 'first', None])
 def test_one_hot_encoder_drop_reset(get_names, drop, reset_drop):
@@ -420,7 +420,7 @@ def test_one_hot_encoder_pandas():
 # TODO: Remove in 0.26 when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("get_names", ["get_feature_names",
-                                       "get_output_names"])
+                                       "get_feature_names_out"])
 @pytest.mark.parametrize("drop, expected_names",
                          [('first', ['x0_c', 'x2_b']),
                           ('if_binary', ['x0_c', 'x1_2', 'x2_b']),

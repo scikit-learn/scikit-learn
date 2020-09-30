@@ -749,13 +749,13 @@ class OutlierMixin:
 
 
 class OneToOneMixin:
-    """Provides get_output_names for simple transformers
+    """Provides get_feature_names_out for simple transformers
 
     Assumes there's a 1-to-1 correspondence between input features
     and output features.
     """
 
-    def get_output_names(self, input_features=None):
+    def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
 
         Returns input_features as this transformation

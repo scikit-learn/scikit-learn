@@ -962,7 +962,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
     ... ]
     >>> vectorizer = CountVectorizer()
     >>> X = vectorizer.fit_transform(corpus)
-    >>> print(vectorizer.get_output_names())
+    >>> print(vectorizer.get_feature_names_out())
     ['and', 'document', 'first', 'is', 'one', 'second', 'the', 'third', 'this']
     >>> print(X.toarray())
     [[0 1 1 1 0 0 1 0 1]
@@ -971,7 +971,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
      [0 1 1 1 0 0 1 0 1]]
     >>> vectorizer2 = CountVectorizer(analyzer='word', ngram_range=(2, 2))
     >>> X2 = vectorizer2.fit_transform(corpus)
-    >>> print(vectorizer2.get_output_names())
+    >>> print(vectorizer2.get_feature_names_out())
     ['and this', 'document is', 'first document', 'is the', 'is this',
     'second document', 'the first', 'the second', 'the third', 'third one',
      'this document', 'this is', 'this the']
@@ -1275,7 +1275,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
                 for i in range(n_samples)]
 
     @deprecated("get_feature_names is deprecated in 0.24 and will be removed "
-                "in 0.26. You can use get_output_names instead")
+                "in 0.26. You can use get_feature_names_out instead")
     def get_feature_names(self):
         """Array mapping from feature integer indices to feature name.
 
@@ -1284,9 +1284,9 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         feature_names : list
             A list of feature names.
         """
-        return self.get_output_names()
+        return self.get_feature_names_out()
 
-    def get_output_names(self, input_features=None):
+    def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
 
         Parameters
@@ -1720,7 +1720,7 @@ class TfidfVectorizer(CountVectorizer):
     ... ]
     >>> vectorizer = TfidfVectorizer()
     >>> X = vectorizer.fit_transform(corpus)
-    >>> print(vectorizer.get_output_names())
+    >>> print(vectorizer.get_feature_names_out())
     ['and', 'document', 'first', 'is', 'one', 'second', 'the', 'third', 'this']
     >>> print(X.shape)
     (4, 9)

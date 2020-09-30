@@ -657,7 +657,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         if compute_labels:
             self.labels_ = self.predict(X)
 
-    def get_output_names(self, input_features=None):
+    def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
 
         Parameters

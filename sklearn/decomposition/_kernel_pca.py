@@ -365,7 +365,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         K.flat[::n_samples + 1] += self.alpha
         return np.dot(K, self.dual_coef_)
 
-    def get_output_names(self, input_features=None):
+    def get_feature_names_out(self, input_features=None):
         """Get output feature names.
 
         Parameters

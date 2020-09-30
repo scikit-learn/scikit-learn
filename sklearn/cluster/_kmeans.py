@@ -1159,7 +1159,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         return -_labels_inertia(X, sample_weight, x_squared_norms,
                                 self.cluster_centers_)[1]
 
-    def get_output_names(self, input_features=None):
+    def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
 
         Parameters
@@ -1897,7 +1897,7 @@ class MiniBatchKMeans(KMeans):
         X = self._check_test_data(X)
         return self._labels_inertia_minibatch(X, sample_weight)[0]
 
-    def get_output_names(self, input_features=None):
+    def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
 
         Parameters

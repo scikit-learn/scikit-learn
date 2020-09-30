@@ -128,7 +128,7 @@ def test_polynomial_features():
 # TODO: Remove in 0.26 when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("get_names", ["get_feature_names",
-                                       "get_output_names"])
+                                       "get_feature_names_out"])
 def test_polynomial_feature_names(get_names):
     X = np.arange(30).reshape(10, 3)
     poly = PolynomialFeatures(degree=2, include_bias=True).fit(X)

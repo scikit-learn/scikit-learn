@@ -1619,7 +1619,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                           for c in combinations])
 
     @deprecated("get_feature_names is deprecated in 0.24 and will be removed "
-                "in 0.26. You can use get_output_names instead")
+                "in 0.26. You can use get_feature_names_out instead")
     def get_feature_names(self, input_features=None):
         """
         Return feature names for output features
@@ -1634,9 +1634,9 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         -------
         output_feature_names : list of str of shape (n_output_features,)
         """
-        return self.get_output_names(input_features)
+        return self.get_feature_names_out(input_features)
 
-    def get_output_names(self, input_features=None):
+    def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
 
         Parameters
@@ -2290,7 +2290,7 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
 
         return K
 
-    def get_output_names(self, input_features=None):
+    def get_feature_names_out(self, input_features=None):
         """Get output feature names.
 
         Parameters

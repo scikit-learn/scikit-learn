@@ -194,7 +194,7 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
 
         return data_sketch
 
-    def get_output_names(self, input_features=None):
+    def get_feature_names_out(self, input_features=None):
         """Get output feature names.
 
         Parameters
@@ -326,7 +326,7 @@ class RBFSampler(TransformerMixin, BaseEstimator):
         projection *= np.sqrt(2.) / np.sqrt(self.n_components)
         return projection
 
-    def get_output_names(self, input_features=None):
+    def get_feature_names_out(self, input_features=None):
         """Get output feature names.
 
         Parameters
@@ -466,7 +466,7 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
         projection *= np.sqrt(2.) / np.sqrt(self.n_components)
         return projection
 
-    def get_output_names(self, input_features=None):
+    def get_feature_names_out(self, input_features=None):
         """Get output feature names.
 
         Parameters
@@ -668,7 +668,7 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
 
         return sp.hstack(X_new)
 
-    def get_output_names(self, input_features=None):
+    def get_feature_names_out(self, input_features=None):
         """Get output feature names.
 
         Parameters
@@ -879,7 +879,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
 
         return params
 
-    def get_output_names(self, input_features=None):
+    def get_feature_names_out(self, input_features=None):
         """Get output feature names.
 
         Parameters

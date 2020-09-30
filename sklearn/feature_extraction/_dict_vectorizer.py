@@ -370,7 +370,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
             return Xa
 
     @deprecated("get_feature_names is deprecated in 0.24 and will be removed "
-                "in 0.26. You can use get_output_names instead")
+                "in 0.26. You can use get_feature_names_out instead")
     def get_feature_names(self):
         """Returns a list of feature names, ordered by their indices.
 
@@ -379,7 +379,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         """
         return self.feature_names_
 
-    def get_output_names(self, input_features=None):
+    def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
 
         Parameters
@@ -419,11 +419,11 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         >>> D = [{'foo': 1, 'bar': 2}, {'foo': 3, 'baz': 1}]
         >>> X = v.fit_transform(D)
         >>> support = SelectKBest(chi2, k=2).fit(X, [0, 1])
-        >>> v.get_output_names()
+        >>> v.get_feature_names_out()
         ['bar', 'baz', 'foo']
         >>> v.restrict(support.get_support())
         DictVectorizer()
-        >>> v.get_output_names()
+        >>> v.get_feature_names_out()
         ['bar', 'foo']
         """
         if not indices:

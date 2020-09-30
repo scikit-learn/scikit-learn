@@ -389,7 +389,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
             raise ValueError("'method' must be in %s, not %s"
                              % (implemented, method))
 
-    def get_output_names(self, input_features=None):
+    def get_feature_names_out(self, input_features=None):
         """Get output feature names.
 
         Parameters

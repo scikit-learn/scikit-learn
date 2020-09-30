@@ -139,7 +139,7 @@ or by name::
     >>> pipe['reduce_dim']
     PCA()
 
-To enable model inspection, `Pipeline` has an ``get_output_names()`` method,
+To enable model inspection, `Pipeline` has an ``get_feature_names_out()`` method,
 just like all transformers. You can use pipeline slicing to get the feature names
 going into each step::
 
@@ -151,13 +151,13 @@ going into each step::
     ...    ('clf', LogisticRegression())])
     >>> pipe.fit(iris.data, iris.target)
     Pipeline(steps=[('select', SelectKBest(...)), ('clf', LogisticRegression(...))])
-    >>> pipe[:-1].get_output_names()
+    >>> pipe[:-1].get_feature_names_out()
     array(['x2', 'x3'], dtype='<U2')
 
 You can also provide custom feature names for a more human readable format using
-``get_output_names``::
+``get_feature_names_out``::
 
-    >>> pipe[:-1].get_output_names(iris.feature_names)
+    >>> pipe[:-1].get_feature_names_out(iris.feature_names)
     array(['petal length (cm)', 'petal width (cm)'], dtype='<U17')
 
 .. topic:: Examples:
@@ -456,7 +456,7 @@ By default, the remaining rating columns are ignored (``remainder='drop'``)::
                                    ['city']),
                                   ('title_bow', CountVectorizer(), 'title')])
 
-  >>> column_trans.get_output_names()
+  >>> column_trans.get_feature_names_out()
   ['categories__city_London', 'categories__city_Paris',
    'categories__city_Sallisaw', 'title_bow__bow', 'title_bow__feast',
    'title_bow__grapes', 'title_bow__his', 'title_bow__how', 'title_bow__last',

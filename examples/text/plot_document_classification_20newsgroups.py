@@ -174,7 +174,7 @@ print()
 if opts.use_hashing:
     feature_names = None
 else:
-    feature_names = vectorizer.get_output_names()
+    feature_names = vectorizer.get_feature_names_out()
 
 if opts.select_chi2:
     print("Extracting %d best features by a chi-squared test" %

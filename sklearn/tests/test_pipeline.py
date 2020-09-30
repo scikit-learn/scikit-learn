@@ -861,7 +861,7 @@ def test_feature_union_parallel():
 # TODO: Remove in 0.26 when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("get_names", ["get_feature_names",
-                                       "get_output_names"])
+                                       "get_feature_names_out"])
 def test_feature_union_feature_names(get_names):
     word_vect = CountVectorizer(analyzer="word")
     char_vect = CountVectorizer(analyzer="char_wb", ngram_range=(3, 3))
@@ -895,7 +895,7 @@ def test_classes_property():
 # TODO: Remove in 0.26 when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("get_names", ["get_feature_names",
-                                       "get_output_names"])
+                                       "get_feature_names_out"])
 def test_set_feature_union_steps(get_names):
     mult2 = Mult(2)
     mult3 = Mult(3)
@@ -905,10 +905,10 @@ def test_set_feature_union_steps(get_names):
         mult3.get_feature_names = lambda: ['x3']
         mult2.get_feature_names = lambda: ['x2']
         mult5.get_feature_names = lambda: ['x5']
-    else:  # get_output_names
-        mult3.get_output_names = lambda input_features: ['x3']
-        mult2.get_output_names = lambda input_features: ['x2']
-        mult5.get_output_names = lambda input_features: ['x5']
+    else:  # get_feature_names_out
+        mult3.get_feature_names_out = lambda input_features: ['x3']
+        mult2.get_feature_names_out = lambda input_features: ['x2']
+        mult5.get_feature_names_out = lambda input_features: ['x5']
 
     ft = FeatureUnion([('m2', mult2), ('m3', mult3)])
     assert_array_equal([[2, 3]], ft.transform(np.asarray([[1]])))
@@ -933,7 +933,7 @@ def test_set_feature_union_steps(get_names):
 # TODO: Remove in 0.26 when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("get_names", ["get_feature_names",
-                                       "get_output_names"])
+                                       "get_feature_names_out"])
 def test_set_feature_union_step_drop(get_names):
     mult2 = Mult(2)
     mult3 = Mult(3)
@@ -941,9 +941,9 @@ def test_set_feature_union_step_drop(get_names):
     if get_names == "get_feature_names":
         mult2.get_feature_names = lambda: ['x2']
         mult3.get_feature_names = lambda: ['x3']
-    else:  # get_output_names
-        mult2.get_output_names = lambda input_features: ['x2']
-        mult3.get_output_names = lambda input_features: ['x3']
+    else:  # get_feature_names_out
+        mult2.get_feature_names_out = lambda input_features: ['x2']
+        mult3.get_feature_names_out = lambda input_features: ['x3']
 
     X = np.asarray([[1]])
 
@@ -1148,20 +1148,20 @@ def test_feature_names_basic():
         ('select', SelectKBest(k=2)),
         ('clf', LogisticRegression())])
     with pytest.raises(NotFittedError):
-        pipe.get_output_names()
+        pipe.get_feature_names_out()
     iris = load_iris()
     pipe.fit(iris.data, iris.target)
     xs = np.array(['x0', 'x1', 'x2', 'x3'])
-    assert_array_equal(pipe[:1].get_output_names(), xs)
+    assert_array_equal(pipe[:1].get_feature_names_out(), xs)
     mask = pipe.named_steps.select.get_support()
-    assert_array_equal(pipe[:-1].get_output_names(), xs[mask])
+    assert_array_equal(pipe[:-1].get_feature_names_out(), xs[mask])
     with pytest.raises(
             TypeError,
-            match="Estimator clf does provide get_output_names."):
-        pipe.get_output_names(iris.feature_names)
-    assert_array_equal(pipe[:1].get_output_names(iris.feature_names),
+            match="Estimator clf does provide get_feature_names_out."):
+        pipe.get_feature_names_out(iris.feature_names)
+    assert_array_equal(pipe[:1].get_feature_names_out(iris.feature_names),
                        iris.feature_names)
-    assert_array_equal(pipe[:-1].get_output_names(iris.feature_names),
+    assert_array_equal(pipe[:-1].get_feature_names_out(iris.feature_names),
                        np.array(iris.feature_names)[mask])
     pipe = Pipeline(steps=[
         ('scaler', StandardScaler()),
@@ -1169,9 +1169,9 @@ def test_feature_names_basic():
         ('select', SelectKBest(k=2)),
         ('clf', LogisticRegression())])
     pipe.fit(iris.data, iris.target)
-    assert_array_equal(pipe[:-1].get_output_names(), ['pca0', 'pca1'])
+    assert_array_equal(pipe[:-1].get_feature_names_out(), ['pca0', 'pca1'])
     # setting names doesn't change names after PCA
-    assert_array_equal(pipe[:-2].get_output_names(iris.feature_names),
+    assert_array_equal(pipe[:-2].get_feature_names_out(iris.feature_names),
                        ['pca0', 'pca1', 'pca2'])
 
 
@@ -1187,7 +1187,7 @@ def test_input_feature_names_pandas():
     pipe.fit(df, iris.target)
     mask = pipe.named_steps.select.get_support()
     # for now assuming we have to pass these explicitly
-    assert_array_equal(pipe[:-1].get_output_names(iris.feature_names),
+    assert_array_equal(pipe[:-1].get_feature_names_out(iris.feature_names),
                        np.array(iris.feature_names)[mask])
 
 
@@ -1200,8 +1200,8 @@ def test_features_names_passthrough():
     iris = load_iris()
     pipe.fit(iris.data, iris.target)
     xs = ['x0', 'x1', 'x2', 'x3']
-    assert_array_equal(pipe[:-1].get_output_names(), xs)
-    assert_array_equal(pipe[:-1].get_output_names(iris.feature_names),
+    assert_array_equal(pipe[:-1].get_feature_names_out(), xs)
+    assert_array_equal(pipe[:-1].get_feature_names_out(iris.feature_names),
                        iris.feature_names)
 
 
@@ -1211,9 +1211,9 @@ def test_feature_names_count_vectorizer():
         ('clf', LogisticRegression())])
     y = ["pizza" in x for x in JUNK_FOOD_DOCS]
     pipe.fit(JUNK_FOOD_DOCS, y)
-    assert_array_equal(pipe[:-1].get_output_names(),
+    assert_array_equal(pipe[:-1].get_feature_names_out(),
                        ['beer', 'burger', 'coke', 'copyright', 'pizza', 'the'])
-    assert_array_equal(pipe[:-1].get_output_names("nonsense_is_ignored"),
+    assert_array_equal(pipe[:-1].get_feature_names_out("nonsense_is_ignored"),
                        ['beer', 'burger', 'coke', 'copyright', 'pizza', 'the'])
 
 
@@ -1226,9 +1226,9 @@ def test_feature_names_nested():
     xs = np.array(['x0', 'x1', 'x2', 'x3'])
     mask = pipe.named_steps.inner_pipe.named_steps.select.get_support()
     assert_array_equal(
-        pipe.named_steps.inner_pipe[:1].get_output_names(), xs[mask])
+        pipe.named_steps.inner_pipe[:1].get_feature_names_out(), xs[mask])
     assert_array_equal(
-        pipe.named_steps.inner_pipe[:1].get_output_names(iris.feature_names),
+        pipe.named_steps.inner_pipe[:1].get_feature_names_out(iris.feature_names),
         np.array(iris.feature_names)[mask])
 
 
@@ -1242,8 +1242,8 @@ def test_feature_names_meta_pipe():
     # check 0ths estimator in OVR only
     inner_pipe = pipe['ovr'].estimators_[0]
     mask = inner_pipe['select'].get_support()
-    assert_array_equal(inner_pipe[:-1].get_output_names(), xs[mask])
-    assert_array_equal(inner_pipe[:-1].get_output_names(iris.feature_names),
+    assert_array_equal(inner_pipe[:-1].get_feature_names_out(), xs[mask])
+    assert_array_equal(inner_pipe[:-1].get_feature_names_out(iris.feature_names),
                        np.array(iris.feature_names)[mask])
 
 

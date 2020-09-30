@@ -306,7 +306,7 @@ class KNNImputer(_BaseImputer):
 
         return super()._concatenate_indicator(X[:, valid_mask], X_indicator)
 
-    def get_output_names(self, input_features=None):
+    def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
 
         Parameters
@@ -325,7 +325,7 @@ class KNNImputer(_BaseImputer):
         output = np.array(input_features)[self._valid_mask].tolist()
         if not self.add_indicator:
             return output
-        missing_names = self.indicator_.get_output_names(input_features)
+        missing_names = self.indicator_.get_feature_names_out(input_features)
         missing_names = [f'missingindicator__{name}' for name in
                          missing_names]
         return output + missing_names

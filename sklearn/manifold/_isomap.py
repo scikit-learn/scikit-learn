@@ -272,7 +272,7 @@ class Isomap(TransformerMixin, BaseEstimator):
 
         return self.kernel_pca_.transform(G_X)
 
-    def get_output_names(self, input_features=None):
+    def get_feature_names_out(self, input_features=None):
         """Get output feature names.
 
         Parameters

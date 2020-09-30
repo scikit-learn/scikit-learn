@@ -625,7 +625,7 @@ class Pipeline(_BaseComposition):
         # check if first estimator expects pairwise input
         return getattr(self.steps[0][1], '_pairwise', False)
 
-    def get_output_names(self, input_features=None):
+    def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
 
         Transform input features using the pipeline.
@@ -644,12 +644,12 @@ class Pipeline(_BaseComposition):
         """
         feature_names = input_features
         for _, name, transform in self._iter():
-            if not hasattr(transform, "get_output_names"):
+            if not hasattr(transform, "get_feature_names_out"):
                 raise TypeError(
-                    "Estimator {} does provide get_output_names. "
-                    "Did you mean to call Pipeline[:-1].get_output_names"
+                    "Estimator {} does provide get_feature_names_out. "
+                    "Did you mean to call Pipeline[:-1].get_feature_names_out"
                     "()?".format(name))
-            feature_names = transform.get_output_names(
+            feature_names = transform.get_feature_names_out(
                 input_features=feature_names)
         return feature_names
 
@@ -933,7 +933,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
                 if trans != 'drop')
 
     @deprecated("get_feature_names is deprecated in 0.24 and will be removed "
-                "in 0.26. You can use get_output_names instead")
+                "in 0.26. You can use get_feature_names_out instead")
     def get_feature_names(self):
         """Get feature names from all transformers.
 
@@ -952,7 +952,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
                                   trans.get_feature_names()])
         return feature_names
 
-    def get_output_names(self, input_features=None):
+    def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
 
         Parameters
@@ -967,13 +967,13 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         """
         feature_names = []
         for name, trans, _ in self._iter():
-            if not hasattr(trans, 'get_output_names'):
+            if not hasattr(trans, 'get_feature_names_out'):
                 raise AttributeError("Transformer %s (type %s) does not "
-                                     "provide get_output_names."
+                                     "provide get_feature_names_out."
                                      % (str(name), type(trans).__name__))
             feature_names.extend(
                 [name + "__" + f for f in
-                 trans.get_output_names(input_features)])
+                 trans.get_feature_names_out(input_features)])
         return feature_names
 
     def fit(self, X, y=None, **fit_params):

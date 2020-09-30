@@ -748,7 +748,7 @@ class IterativeImputer(_BaseImputer):
         self.fit_transform(X)
         return self
 
-    def get_output_names(self, input_features=None):
+    def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
 
         Parameters
@@ -769,7 +769,7 @@ class IterativeImputer(_BaseImputer):
                   .tolist())
         if not self.add_indicator:
             return output
-        missing_names = self.indicator_.get_output_names(input_features)
+        missing_names = self.indicator_.get_feature_names_out(input_features)
         missing_names = [f'missingindicator__{name}' for name in
                          missing_names]
         return output + missing_names

@@ -275,7 +275,7 @@ class OneHotEncoder(_BaseEncoder):
     >>> enc.inverse_transform([[0, 1, 1, 0, 0], [0, 0, 0, 1, 0]])
     array([['Male', 1],
            [None, 2]], dtype=object)
-    >>> enc.get_output_names(['gender', 'group'])
+    >>> enc.get_feature_names_out(['gender', 'group'])
     ['gender_Female', 'gender_Male', 'group_1', 'group_2', 'group_3']
 
     One can always drop the first column for each feature:
@@ -559,7 +559,7 @@ class OneHotEncoder(_BaseEncoder):
         return X_tr
 
     @deprecated("get_feature_names is deprecated in 0.24 and will be removed "
-                "in 0.26. You can use get_output_names instead")
+                "in 0.26. You can use get_feature_names_out instead")
     def get_feature_names(self, input_features=None):
         """
         Return feature names for output features.
@@ -575,10 +575,10 @@ class OneHotEncoder(_BaseEncoder):
         output_feature_names : ndarray of shape (n_output_features,)
             Array of feature names.
         """
-        feature_names = self.get_output_names(input_features)
+        feature_names = self.get_feature_names_out(input_features)
         return np.array(feature_names, dtype=object)
 
-    def get_output_names(self, input_features=None):
+    def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
 
         Returns input_features as this transformation

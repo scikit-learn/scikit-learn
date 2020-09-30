@@ -156,7 +156,7 @@ Let's take a look at what the most informative features are:
 
   >>> import numpy as np
   >>> def show_top10(classifier, vectorizer, categories):
-  ...     feature_names = np.asarray(vectorizer.get_output_names())
+  ...     feature_names = np.asarray(vectorizer.get_feature_names_out())
   ...     for i, category in enumerate(categories):
   ...         top10 = np.argsort(classifier.coef_[i])[-10:]
   ...         print("%s: %s" % (category, " ".join(feature_names[top10])))

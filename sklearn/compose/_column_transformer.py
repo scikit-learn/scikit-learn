@@ -351,7 +351,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                         in self.transformers_})
 
     @deprecated("get_feature_names is deprecated in 0.24 and will be removed "
-                "in 0.26. You can use get_output_names instead")
+                "in 0.26. You can use get_feature_names_out instead")
     def get_feature_names(self):
         """Get feature names from all transformers.
 
@@ -385,7 +385,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                                   trans.get_feature_names()])
         return feature_names
 
-    def get_output_names(self, input_features=None):
+    def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
 
         Parameters
@@ -415,13 +415,13 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                     indices = np.arange(self._n_features)
                     feature_names.extend(['x%d' % i for i in indices[column]])
                 continue
-            if not hasattr(trans, 'get_output_names'):
+            if not hasattr(trans, 'get_feature_names_out'):
                 raise AttributeError("Transformer %s (type %s) does not "
-                                     "provide get_output_names."
+                                     "provide get_feature_names_out."
                                      % (str(name), type(trans).__name__))
             feature_names.extend(
                 [name + "__" + f
-                 for f in trans.get_output_names(input_features=column)])
+                 for f in trans.get_feature_names_out(input_features=column)])
         return feature_names
 
     def _update_fitted_transformers(self, transformers):

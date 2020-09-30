@@ -840,7 +840,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         """
         return self._perplexity_precomp_distr(X, sub_sampling=sub_sampling)
 
-    def get_output_names(self, input_features=None):
+    def get_feature_names_out(self, input_features=None):
         """Get output feature names.
 
         Parameters

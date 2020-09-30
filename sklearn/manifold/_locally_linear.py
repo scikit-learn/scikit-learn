@@ -735,7 +735,7 @@ class LocallyLinearEmbedding(TransformerMixin,
             X_new[i] = np.dot(self.embedding_[ind[i]].T, weights[i])
         return X_new
 
-    def get_output_names(self, input_features=None):
+    def get_feature_names_out(self, input_features=None):
         """Get output feature names.
 
         Parameters

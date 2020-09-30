@@ -1378,7 +1378,7 @@ class NMF(TransformerMixin, BaseEstimator):
         check_is_fitted(self)
         return np.dot(W, self.components_)
 
-    def get_output_names(self, input_features=None):
+    def get_feature_names_out(self, input_features=None):
         """Get output feature names.
 
         Parameters

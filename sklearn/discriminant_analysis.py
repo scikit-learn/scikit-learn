@@ -657,7 +657,7 @@ class LinearDiscriminantAnalysis(LinearClassifierMixin,
         # Only override for the doc
         return super().decision_function(X)
 
-    def get_output_names(self, input_features=None):
+    def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
 
         Parameters

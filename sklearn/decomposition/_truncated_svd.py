@@ -237,7 +237,7 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
     def _more_tags(self):
         return {'preserves_dtype': [np.float64, np.float32]}
 
-    def get_output_names(self, input_features=None):
+    def get_feature_names_out(self, input_features=None):
         """Get output feature names.
 
         Parameters

@@ -442,7 +442,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         return {'poor_score': True,
                 'requires_y': False}
 
-    def get_output_names(self, input_features=None):
+    def get_feature_names_out(self, input_features=None):
         """Get output feature names.
 
         Parameters
@@ -974,7 +974,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         """
         return self.fit(X, y).transform(X, y)
 
-    def get_output_names(self, input_features=None):
+    def get_feature_names_out(self, input_features=None):
         """Get output feature names.
 
         Parameters

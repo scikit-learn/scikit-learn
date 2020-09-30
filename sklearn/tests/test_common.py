@@ -38,7 +38,7 @@ from sklearn.utils.estimator_checks import (
     _get_check_estimator_ids,
     check_class_weight_balanced_linear_classifier,
     parametrize_with_checks,
-    check_transformer_get_output_names)
+    check_transformer_get_feature_names_out)
 
 
 def test_all_estimator_no_base_class():
@@ -271,9 +271,9 @@ def test_strict_mode_parametrize_with_checks(estimator, check):
     check(estimator)
 
 
-# TODO: As more modules support get_output_names they should be removed from
+# TODO: As more modules support get_feature_names_out they should be removed from
 # this list to be tested
-GET_OUTPUT_NAMES_MODULES_TO_IGNORE = [
+get_feature_names_out_MODULES_TO_IGNORE = [
     'cluster',
     'compose',
     'cross_decomposition',
@@ -293,15 +293,15 @@ GET_OUTPUT_NAMES_MODULES_TO_IGNORE = [
     'random_projection'
 ]
 
-GET_OUTPUT_NAMES_ESTIMATORS = [
+get_feature_names_out_ESTIMATORS = [
    est for est in _tested_estimators('transformer')
    if "2darray" in est._get_tags()["X_types"] and
    not est._get_tags()["no_validation"] and
-   est.__module__.split('.')[1] not in GET_OUTPUT_NAMES_MODULES_TO_IGNORE
+   est.__module__.split('.')[1] not in get_feature_names_out_MODULES_TO_IGNORE
 ]
 
 
-@pytest.mark.parametrize("transformer", GET_OUTPUT_NAMES_ESTIMATORS)
-def test_transformers_get_output_names(transformer):
-    check_transformer_get_output_names(type(transformer).__name__,
+@pytest.mark.parametrize("transformer", get_feature_names_out_ESTIMATORS)
+def test_transformers_get_feature_names_out(transformer):
+    check_transformer_get_feature_names_out(type(transformer).__name__,
                                        transformer)
