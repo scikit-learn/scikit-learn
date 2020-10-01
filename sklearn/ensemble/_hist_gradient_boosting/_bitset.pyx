@@ -17,40 +17,23 @@ cdef inline void init_bitset(BITSET_DTYPE_C bitset) nogil: # OUT
 
 cdef inline void set_bitset(BITSET_DTYPE_C bitset,  # OUT
                             X_BINNED_DTYPE_C val) nogil:
-    cdef:
-        unsigned int i1 = val // 32
-        unsigned int i2 = val % 32
-
-    # It is assumed that val < 256 so that i1 < 8
-    bitset[i1] |= (1 << i2)
+    bitset[val // 32] |= (1 << (val % 32))
 
 
 cdef inline unsigned char in_bitset(BITSET_DTYPE_C bitset,
                                     X_BINNED_DTYPE_C val) nogil:
-    cdef:
-        unsigned int i1 = val // 32
-        unsigned int i2 = val % 32
 
-    return (bitset[i1] >> i2) & 1
+    return (bitset[val // 32] >> (val % 32)) & 1
 
 
-cpdef unsigned char in_bitset_memoryview(const BITSET_INNER_DTYPE_C[:] bitset,
-                                        X_BINNED_DTYPE_C val) nogil:
-    cdef:
-        unsigned int i1 = val // 32
-        unsigned int i2 = val % 32
-
-    return (bitset[i1] >> i2) & 1
+cpdef inline unsigned char in_bitset_memoryview(const BITSET_INNER_DTYPE_C[:] bitset,
+                                                X_BINNED_DTYPE_C val) nogil:
+    return (bitset[val // 32] >> (val % 32)) & 1
 
 
-cpdef void set_bitset_memoryview(BITSET_INNER_DTYPE_C[:] bitset,  # OUT
-                                 X_BINNED_DTYPE_C val):
-    cdef:
-        unsigned int i1 = val // 32
-        unsigned int i2 = val % 32
-
-    # It is assumed that val < 256 so that i1 < 8
-    bitset[i1] |= (1 << i2)
+cpdef inline void set_bitset_memoryview(BITSET_INNER_DTYPE_C[:] bitset,  # OUT
+                                        X_BINNED_DTYPE_C val):
+    bitset[val // 32] |= (1 << (val % 32))
 
 
 def set_raw_bitset_from_binned_bitset(BITSET_INNER_DTYPE_C[:] raw_bitset,  # OUT
