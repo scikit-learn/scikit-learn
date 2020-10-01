@@ -1090,17 +1090,18 @@ values.
 
 **Split finding with categorical features**: The canonical way of considering
 categorical splits in a tree is to consider
-all of the :math:`2^{K - 1} - 1` partitions, where `K` is the number of
-categories. This can quickly become prohibitive when `K` is large.
+all of the :math:`2^{K - 1} - 1` partitions, where :math:`K` is the number of
+categories. This can quickly become prohibitive when :math:`K` is large.
 Fortunately, since gradient boosting trees are always regression trees (even
 for classification problems), there exist a faster strategy that can yield
 equivalent splits. First, the categories of a feature are sorted according to
 the variance of the target, for each category `k`. Once the categories are
 sorted, one can consider *continuous partitions*, i.e. treat the categories
 as if they were ordered continuous values (see Fisher [Fisher1958]_ for a
-formal proof). As a result, only `K - 1` splits need to be considered instead
-of :math:`2^{K - 1} - 1`. The initial sorting is a `O(K log(K))` operation,
-leading to a total complexity of `O(K log(K) + K)`, instead of `O(2^K)`.
+formal proof). As a result, only :math:`K - 1` splits need to be considered
+instead of :math:`2^{K - 1} - 1`. The initial sorting is a :math:`O(K \log(K))`
+operation, leading to a total complexity of :math:`O(K \log(K) + K)`, instead
+of :math:`O(2^K)`.
 
 .. topic:: Examples:
 
