@@ -452,6 +452,8 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         **fit_params : dict of string -> object
             Parameters passed to the `fit` method of each step.
 
+            .. versionadded:: 0.23
+
         Returns
         -------
         self : object
@@ -821,6 +823,8 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
         **fit_params : dict of string -> object
             Parameters passed to the `fit` method at each step
             of the regressor chain.
+
+            .. versionadded:: 0.23
 
         Returns
         -------
