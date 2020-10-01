@@ -838,16 +838,11 @@ class StandardScaler(TransformerMixin, BaseEstimator):
                 self.var_ = None
                 self.n_samples_seen_ += X.shape[0] - np.isnan(X).sum(axis=0)
 
-            elif sample_weight is not None:
-                self.mean_, self.var_, self.n_samples_seen_ = \
-                    _incremental_weighted_mean_and_var(X, sample_weight,
-                                                       self.mean_,
-                                                       self.var_,
-                                                       self.n_samples_seen_)
             else:
                 self.mean_, self.var_, self.n_samples_seen_ = \
                     _incremental_mean_and_var(X, self.mean_, self.var_,
-                                              self.n_samples_seen_)
+                                              self.n_samples_seen_,
+                                              sample_weight=sample_weight)
 
         # for backward-compatibility, reduce n_samples_seen_ to an integer
         # if the number of samples is the same for each feature (i.e. no
