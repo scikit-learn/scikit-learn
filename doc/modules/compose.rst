@@ -152,13 +152,13 @@ going into each step::
     >>> pipe.fit(iris.data, iris.target)
     Pipeline(steps=[('select', SelectKBest(...)), ('clf', LogisticRegression(...))])
     >>> pipe[:-1].get_feature_names_out()
-    array(['x2', 'x3'], dtype='<U2')
+    ['x2', 'x3']
 
 You can also provide custom feature names for the input data using
 ``get_feature_names_out``::
 
     >>> pipe[:-1].get_feature_names_out(iris.feature_names)
-    array(['petal length (cm)', 'petal width (cm)'], dtype='<U17')
+    ['petal length (cm)', 'petal width (cm)']
 
 .. topic:: Examples:
 

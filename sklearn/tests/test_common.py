@@ -275,13 +275,12 @@ def test_strict_mode_parametrize_with_checks(estimator, check):
 
 # TODO: As more modules support get_feature_names_out they should be removed
 # from this list to be tested
-get_feature_names_out_MODULES_TO_IGNORE = [
+GET_FEATURES_OUT_MODULES_TO_IGNORE = [
     'cluster',
     'cross_decomposition',
     'decomposition',
     'discriminant_analysis',
     'ensemble',
-    'feature_selection',
     'impute',
     'isotonic',
     'kernel_approximation',
@@ -291,15 +290,15 @@ get_feature_names_out_MODULES_TO_IGNORE = [
     'random_projection'
 ]
 
-get_feature_names_out_ESTIMATORS = [
+GET_FEATURES_OUT_ESTIMATORS = [
    est for est in _tested_estimators('transformer')
    if "2darray" in est._get_tags()["X_types"] and
    not est._get_tags()["no_validation"] and
-   est.__module__.split('.')[1] not in get_feature_names_out_MODULES_TO_IGNORE
+   est.__module__.split('.')[1] not in GET_FEATURES_OUT_MODULES_TO_IGNORE
 ]
 
 
-@pytest.mark.parametrize("transformer", get_feature_names_out_ESTIMATORS)
+@pytest.mark.parametrize("transformer", GET_FEATURES_OUT_ESTIMATORS)
 def test_transformers_get_feature_names_out(transformer):
     check_transformer_get_feature_names_out(type(transformer).__name__,
                                             transformer)
