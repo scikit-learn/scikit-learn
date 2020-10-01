@@ -781,7 +781,6 @@ class StandardScaler(TransformerMixin, BaseEstimator):
             X = safe_sparse_dot(sw_matrix, X)
             '''
 
-
         # Even in the case of `with_mean=False`, we update the mean anyway
         # This is needed for the incremental computation of the var
         # See incr_mean_variance_axis and _incremental_mean_variance_axis
@@ -844,15 +843,10 @@ class StandardScaler(TransformerMixin, BaseEstimator):
                 self.var_ = None
                 self.n_samples_seen_ += X.shape[0] - np.isnan(X).sum(axis=0)
             else:
-                if sample_weight is not None:
-                    X = X * sample_weight[:,None]
-
                 self.mean_, self.var_, self.n_samples_seen_ = \
                     _incremental_mean_and_var(X, self.mean_, self.var_,
-                                              self.n_samples_seen_)
-
-                if sample_weight is not None:
-                    self.mean_ /= np.mean(sample_weight)
+                                              self.n_samples_seen_,
+                                              sample_weight=sample_weight)
 
         # for backward-compatibility, reduce n_samples_seen_ to an integer
         # if the number of samples is the same for each feature (i.e. no

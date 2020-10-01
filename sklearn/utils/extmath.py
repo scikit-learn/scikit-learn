@@ -690,7 +690,8 @@ def _safe_accumulator_op(op, x, *args, **kwargs):
     return result
 
 
-def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count):
+def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count,
+                              sample_weight=None):
     """Calculate mean update and a Youngs and Cramer variance update.
 
     last_mean and last_variance are statistics computed at the last step by the
@@ -740,9 +741,15 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count):
     # new = the current increment
     # updated = the aggregated stats
     last_sum = last_mean * last_sample_count
-    new_sum = _safe_accumulator_op(np.nansum, X, axis=0)
+    if sample_weight is not None:
+        new_sum = _safe_accumulator_op(np.nansum, X * sample_weight[:, None],
+                                       axis=0)
+        new_sample_count = np.sum(sample_weight[:, None] * (~np.isnan(X)),
+                                  axis=0)
+    else:
+        new_sum = _safe_accumulator_op(np.nansum, X, axis=0)
+        new_sample_count = np.sum(~np.isnan(X), axis=0)
 
-    new_sample_count = np.sum(~np.isnan(X), axis=0)
     updated_sample_count = last_sample_count + new_sample_count
 
     updated_mean = (last_sum + new_sum) / updated_sample_count
@@ -750,12 +757,19 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count):
     if last_variance is None:
         updated_variance = None
     else:
-        new_unnormalized_variance = (
-            _safe_accumulator_op(np.nanvar, X, axis=0) * new_sample_count)
+        if sample_weight is not None:
+            T = new_sum / new_sample_count
+            new_unnormalized_variance = np.sum(sample_weight[:, None] *
+                                               (X - T)**2, axis=0)
+        else:
+            new_unnormalized_variance = (
+                _safe_accumulator_op(np.nanvar, X, axis=0) * new_sample_count)
         last_unnormalized_variance = last_variance * last_sample_count
 
         with np.errstate(divide='ignore', invalid='ignore'):
+
             last_over_new_count = last_sample_count / new_sample_count
+
             updated_unnormalized_variance = (
                 last_unnormalized_variance + new_unnormalized_variance +
                 last_over_new_count / updated_sample_count *
