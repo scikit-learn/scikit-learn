@@ -75,7 +75,9 @@ cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
             if not in_bitset_memoryview(
                     known_cat_bitsets[mapped_f_idx],
                     <X_BINNED_DTYPE_C>data_val):
-                # treat unknown categories as missing.
+                # Treat unknown categories as missing.
+                # Note that this branch makes the prediction 2x slower than
+                # LightGBM with 1 thread (it gets worse with more threads).
                 node_idx = node.left if node.missing_go_to_left else node.right
             elif in_bitset_memoryview(
                     raw_left_cat_bitsets[node.bitset_idx],
