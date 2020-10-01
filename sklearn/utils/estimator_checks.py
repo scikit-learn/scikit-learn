@@ -3155,7 +3155,8 @@ def check_n_features_in_after_fitting(name, estimator_orig, strict_mode=True):
         if not hasattr(estimator, method):
             continue
 
-        msg = f"X has 1 features, but {name} is expecting 2 features as input"
+        msg = (f"X has 1 features, but {name} is expecting {X.shape[1]} "
+               "features as input")
         with raises(ValueError, match=msg):
             getattr(estimator, method)(X_bad)
 
@@ -3172,7 +3173,6 @@ def check_n_features_in_after_fitting(name, estimator_orig, strict_mode=True):
         estimator.partial_fit(X, y)
     assert estimator.n_features_in_ == X.shape[1]
 
-    msg = f"X has 1 features, but {name} is expecting 2 features as input"
     with raises(ValueError, match=msg):
         if has_classes:
             estimator.partial_fit(X_bad, y, classes=np.unique(y))
