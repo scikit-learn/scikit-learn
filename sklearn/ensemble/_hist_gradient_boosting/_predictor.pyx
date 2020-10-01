@@ -19,8 +19,7 @@ from .common cimport X_BINNED_DTYPE_C
 from .common cimport BITSET_INNER_DTYPE_C
 from .common cimport BITSET_DTYPE_C
 from .common cimport node_struct
-from ._bitset cimport in_bitset
-from ._bitset cimport in_bitset_memoryview
+from ._bitset cimport in_bitset_2d_memoryview
 
 np.import_array()
 
@@ -56,7 +55,6 @@ cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
     cdef:
         node_struct node = nodes[0]
         unsigned int node_idx = 0
-        unsigned int mapped_f_idx
         X_DTYPE_C data_val,
 
     while True:
@@ -71,17 +69,18 @@ cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
             else:
                 node_idx = node.right
         elif node.is_categorical:
-            mapped_f_idx = f_idx_map[node.feature_idx]
-            if not in_bitset_memoryview(
-                    known_cat_bitsets[mapped_f_idx],
-                    <X_BINNED_DTYPE_C>data_val):
+            if not in_bitset_2d_memoryview(
+                    known_cat_bitsets,
+                    <X_BINNED_DTYPE_C>data_val,
+                    f_idx_map[node.feature_idx]):
                 # Treat unknown categories as missing.
                 # Note that this branch makes the prediction 2x slower than
                 # LightGBM with 1 thread (it gets worse with more threads).
                 node_idx = node.left if node.missing_go_to_left else node.right
-            elif in_bitset_memoryview(
-                    raw_left_cat_bitsets[node.bitset_idx],
-                    <X_BINNED_DTYPE_C>data_val):
+            elif in_bitset_2d_memoryview(
+                    raw_left_cat_bitsets,
+                    <X_BINNED_DTYPE_C>data_val,
+                    node.bitset_idx):
                 node_idx = node.left
             else:
                 node_idx = node.right
@@ -136,8 +135,10 @@ cdef inline Y_DTYPE_C _predict_one_from_binned_data(
             else:
                 node_idx = node.right
         elif node.is_categorical:
-            if in_bitset_memoryview(binned_left_cat_bitsets[node.bitset_idx],
-                                    data_val):
+            if in_bitset_2d_memoryview(
+                    binned_left_cat_bitsets,
+                    data_val,
+                    node.bitset_idx):
                 node_idx = node.left
             else:
                 node_idx = node.right

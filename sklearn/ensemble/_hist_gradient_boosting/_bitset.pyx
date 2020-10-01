@@ -30,6 +30,14 @@ cpdef inline unsigned char in_bitset_memoryview(const BITSET_INNER_DTYPE_C[:] bi
                                                 X_BINNED_DTYPE_C val) nogil:
     return (bitset[val // 32] >> (val % 32)) & 1
 
+cdef inline unsigned char in_bitset_2d_memoryview(const BITSET_INNER_DTYPE_C [:, :] bitset,
+                                                  X_BINNED_DTYPE_C val,
+                                                  unsigned int row) nogil:
+
+    # Same as above but works on 2d memory views to avoid the creation of 1d
+    # memory views. See https://github.com/scikit-learn/scikit-learn/issues/17299
+    return (bitset[row, val // 32] >> (val % 32)) & 1
+
 
 cpdef inline void set_bitset_memoryview(BITSET_INNER_DTYPE_C[:] bitset,  # OUT
                                         X_BINNED_DTYPE_C val):
