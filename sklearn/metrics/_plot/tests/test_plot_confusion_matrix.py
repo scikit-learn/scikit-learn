@@ -320,7 +320,7 @@ def test_error_on_a_dataset_with_unseen_labels(pyplot, fitted_clf, data,
                                                n_classes):
     X, y = data
 
-    # get values that are not present in 'fitted_clf.classes_'
+    # use values that are not present in 'fitted_clf.classes_'
     y = y + 1
     disp = plot_confusion_matrix(fitted_clf, X, y)
 
