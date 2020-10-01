@@ -389,7 +389,7 @@ class BaseEstimator:
             The input samples.
         reset : bool, default=True
             Whether to reset the `feature_names_in_` attribute.
-            If False, the Input will be checked for consistency with data
+            If False, the input will be checked for consistency with data
             provided when reset was last True.
         """
 
@@ -402,17 +402,17 @@ class BaseEstimator:
             # no feature names to check
             return
 
-        feature_names_in = _get_feature_names(X)
-        if feature_names_in is None:
+        new_feature_names_in = _get_feature_names(X)
+        if new_feature_names_in is None:
             # X does not have feature names but estimator was fitted with
             # data with feature names
             return
 
         # valid the `feature_names_in_` attribute
-        if (len(fitted_feature_names) != len(feature_names_in) or
-                np.any(fitted_feature_names != feature_names_in)):
+        if (len(fitted_feature_names) != len(new_feature_names_in) or
+                np.any(fitted_feature_names != new_feature_names_in)):
             warnings.warn("The column names should match those that were "
-                          f"passed during fit. Got ({feature_names_in}) "
+                          f"passed during fit. Got ({new_feature_names_in}) "
                           f"expected ({fitted_feature_names}). Starting "
                           "version 0.26, an error will be raised",
                           FutureWarning)
