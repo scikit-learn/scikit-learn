@@ -69,19 +69,17 @@ cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
             else:
                 node_idx = node.right
         elif node.is_categorical:
-            if not in_bitset_2d_memoryview(
-                    known_cat_bitsets,
-                    <X_BINNED_DTYPE_C>data_val,
-                    f_idx_map[node.feature_idx]):
-                # Treat unknown categories as missing.
-                # Note that this branch makes the prediction 2x slower than
-                # LightGBM with 1 thread (it gets worse with more threads).
-                node_idx = node.left if node.missing_go_to_left else node.right
-            elif in_bitset_2d_memoryview(
+            if in_bitset_2d_memoryview(
                     raw_left_cat_bitsets,
                     <X_BINNED_DTYPE_C>data_val,
                     node.bitset_idx):
                 node_idx = node.left
+            elif not in_bitset_2d_memoryview(
+                    known_cat_bitsets,
+                    <X_BINNED_DTYPE_C>data_val,
+                    f_idx_map[node.feature_idx]):
+                # Treat unknown categories as missing.
+                node_idx = node.left if node.missing_go_to_left else node.right
             else:
                 node_idx = node.right
         else:
