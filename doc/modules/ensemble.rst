@@ -1056,16 +1056,17 @@ weights into account.
 Categorical Features Support
 ----------------------------
 
-For datasets with categorical data, :class:`HistGradientBoostingClassifier`
-and :class:`HistGradientBoostingRegressor` have native support for splitting
-on categorical features. This is often better than one-hot encoding
-(:class:`~sklearn.preprocessing.OneHotEncoder`) because the trees need more
-depth to achieve the same split on one-hot-encoded data, compared to native
-category handling. This thus leads to faster training times, and possibly
-more accurate trees if depth is a constraint. Native support can also be
-preferable to just relying on an
-:class:`~sklearn.preprocessing.OrdinalEncoder`, because treating categories
-as continuous values would is usually not desirable.
+:class:`HistGradientBoostingClassifier` and
+:class:`HistGradientBoostingRegressor` have native support for categorical
+features: they can consider splits on non-ordered, categorical data.
+
+For datasets with categorical features, using the native categorical support
+is often better than relying on one-hot encoding
+(:class:`~sklearn.preprocessing.OneHotEncoder`), because one-hot encoding
+requires more tree depth to achieve equivalent splits. It is also usually
+better to rely on the native support rather than to treat categorical
+features as continuous, since categories are nominal quantities where order
+does not matter.
 
 To enable categorical support, a boolean mask can be passed to the
 `categorical_features` parameter. In the following, the first feature will be
@@ -1073,19 +1074,22 @@ treated as categorical and the second feature as numerical::
 
   >>> gbdt = HistGradientBoostingClassifier(categorical_features=[True, False])
 
-The `categorical_features` parameter can also be an array indicating the
-indices of the categorical features. The cardinality of each categorical
-feature should be less than the `max_bins` parameter, and each categorical
-feature is expected to be encoded in `[0, max_bins - 1]`. To that end, it
-might be useful to pre-process the data with an
-:class:`~sklearn.preprocessing.OrdinalEncoder` as done in
+Equivalently, one can pass a list of integers indicating the indices of the
+categorical features::
+
+  >>> gbdt = HistGradientBoostingClassifier(categorical_features=[0])
+
+The carinality of each categorical feature should be less than the `max_bins`
+parameter, and each categorical feature is expected to be encoded in
+`[0, max_bins - 1]`. To that end, it might be useful to pre-process the data
+with an :class:`~sklearn.preprocessing.OrdinalEncoder` as done in
 :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py`.
 
 If there are missing values during training, the missing values will be
 treated as a proper category. If there are no missing values during training,
 then at prediction time, missing values are mapped to the child node that has
 the most samples (just like for continuous features). When predicting,
-categories that were not seen during fit time will be treated as the missing
+categories that were not seen during fit time will be treated as missing
 values.
 
 **Split finding with categorical features**: The canonical way of considering
@@ -1099,9 +1103,9 @@ the variance of the target, for each category `k`. Once the categories are
 sorted, one can consider *continuous partitions*, i.e. treat the categories
 as if they were ordered continuous values (see Fisher [Fisher1958]_ for a
 formal proof). As a result, only :math:`K - 1` splits need to be considered
-instead of :math:`2^{K - 1} - 1`. The initial sorting is a :math:`O(K \log(K))`
-operation, leading to a total complexity of :math:`O(K \log(K) + K)`, instead
-of :math:`O(2^K)`.
+instead of :math:`2^{K - 1} - 1`. The initial sorting is a
+:math:`\mathcal{O}(K \log(K))` operation, leading to a total complexity of
+:math:`\mathcal{O}(K \log(K) + K)`, instead of :math:`\mathcal{O}(2^K)`.
 
 .. topic:: Examples:
 

@@ -12,9 +12,9 @@ particular, we will evaluate:
 
 - dropping the categorical features
 - using a :class:`~preprocessing.OneHotEncoder`
-- using a :class:`~preprocessing.OrdinalEncoder` and treat categories as
+- using an :class:`~preprocessing.OrdinalEncoder` and treat categories as
   ordered quantities
-- using a :class:`~preprocessing.OrdinalEncoder` and rely on the :ref:`native
+- using an :class:`~preprocessing.OrdinalEncoder` and rely on the :ref:`native
   category support <categorical_support_gbdt>` of the
   :class:`~ensemble.HistGradientBoostingRegressor` estimator.
 
@@ -100,6 +100,10 @@ hist_ordinal = make_pipeline(ordinal_encoder,
 # Since the :class:`~ensemble.HistGradientBoostingRegressor` requires category
 # values to be encoded in `[0, n_unique_categories - 1]`, we still rely on an
 # :class:`~preprocessing.OrdinalEncoder` to pre-process the data.
+#
+# The main difference between this pipeline and the previous one is that in
+# this one, we let the :class:`~ensemble.HistGradientBoostingRegressor` know
+# which features are categorical.
 
 # The orinal encoder will first output the categorical features, and then the
 # continuous (passed-through) features
@@ -157,14 +161,14 @@ plt.show()
 # comparable R2 scores, with a slight edge for the native handling.
 #
 # In general, one can expect poorer predictions from one-hot-encoded data,
-# especially when the the trees depth or the number of nodes are limited: with
+# especially when the the trees depths or the number of nodes are limited: with
 # one-hot-encoded data, one needs more split points (i.e. more depth) in order
 # to recover an equivalent split that could be obtained in one single split
 # point with native handling. This is also true when categories are treated as
 # ordinal quantities: if categories are `A..F` and the best split is `ACF -
-# BDE` the one-hot-encoder model will need at least 3 split points, and the
-# ordinal non-native model will need at last 4 splits: 1 split to isolate `A`,
-# 1 split to isolate `F ,and 2 splits to isolate C from `BCDE`.
+# BDE` the one-hot-encoder model will need 3 split points (one per category in
+# the left node), and the ordinal non-native model will need 4 splits: 1 split
+# to isolate `A`, 1 split to isolate `F ,and 2 splits to isolate C from `BCDE`.
 #
 # In practice, how strongly the model performances differ will depend on the
 # dataset and on the flexibility of the trees. As a follow up, you may try to
