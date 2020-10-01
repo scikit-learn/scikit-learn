@@ -410,7 +410,7 @@ class BaseEstimator:
         """
 
         if y is None:
-            if self._get_tags()['requires_y']:
+            if reset and self._get_tags()['requires_y']:
                 raise ValueError(
                     f"This {self.__class__.__name__} estimator "
                     f"requires y to be passed, but the target y is None."
