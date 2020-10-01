@@ -26,12 +26,12 @@ np.import_array()
 
 
 def _predict_from_data(
-        node_struct [:] nodes,
+        node_struct [::1] nodes,
         const X_DTYPE_C [:, :] numeric_data,
-        const BITSET_INNER_DTYPE_C [:, :] raw_left_cat_bitsets,
-        const BITSET_INNER_DTYPE_C [:, :] known_cat_bitsets,
-        const X_BINNED_DTYPE_C [:] f_idx_map,
-        Y_DTYPE_C [:] out):
+        const BITSET_INNER_DTYPE_C [:, ::1] raw_left_cat_bitsets,
+        const BITSET_INNER_DTYPE_C [:, ::1] known_cat_bitsets,
+        const unsigned int [::1] f_idx_map,
+        Y_DTYPE_C [::1] out):
 
     cdef:
         int i
@@ -44,11 +44,11 @@ def _predict_from_data(
 
 
 cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
-        node_struct [:] nodes,
+        node_struct [::1] nodes,
         const X_DTYPE_C [:, :] numeric_data,
-        const BITSET_INNER_DTYPE_C [:, :] raw_left_cat_bitsets,
-        const BITSET_INNER_DTYPE_C [:, :] known_cat_bitsets,
-        const X_BINNED_DTYPE_C [:] f_idx_map,
+        const BITSET_INNER_DTYPE_C [:, ::1] raw_left_cat_bitsets,
+        const BITSET_INNER_DTYPE_C [:, ::1] known_cat_bitsets,
+        const unsigned int [::1] f_idx_map,
         const int row) nogil:
     # Need to pass the whole array and the row index, else prange won't work.
     # See issue Cython #2798
@@ -56,7 +56,7 @@ cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
     cdef:
         node_struct node = nodes[0]
         unsigned int node_idx = 0
-        X_BINNED_DTYPE_C mapped_f_idx
+        unsigned int mapped_f_idx
         X_DTYPE_C data_val,
 
     while True:

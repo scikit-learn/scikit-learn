@@ -368,7 +368,7 @@ def test_missing_value_predict_only():
     # to prediction_main_path
     all_nans = np.full(shape=(n_samples, 1), fill_value=np.nan)
     known_cat_bitsets = np.zeros((0, 8), dtype=X_BITSET_INNER_DTYPE)
-    f_idx_map = np.zeros(0, dtype=X_BINNED_DTYPE)
+    f_idx_map = np.zeros(0, dtype=np.uint32)
 
     y_pred = predictor.predict(all_nans, known_cat_bitsets, f_idx_map)
     assert np.all(y_pred == prediction_main_path)
@@ -473,7 +473,7 @@ def test_grow_tree_categories():
     known_cat_bitsets = np.zeros((1, 8), dtype=np.uint32)
     known_cat_bitsets[0, 0] = 4  # 4
     known_cat_bitsets[0, 1] = 2  # 9
-    f_idx_map = np.array([0], dtype=np.uint8)
+    f_idx_map = np.array([0], dtype=np.uint32)
     prediction = predictor.predict(np.array([[np.nan]]), known_cat_bitsets,
                                    f_idx_map)
     assert_allclose(prediction, [-1])
