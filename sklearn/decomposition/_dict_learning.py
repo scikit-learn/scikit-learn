@@ -916,15 +916,16 @@ def update1_na(X, code, C, B, e, observed_mask, t, ro):
     """Update C, B, e inplace"""
     gamma = (1 - 1/t)**ro
 
+    n_samples = X.shape[0]
     # update B
     # Bkj <- gamma * Bkj + x_obs_k . code_j^T
     B *= gamma
-    B += np.outer(X, code)
-
+    B += np.einsum('ri,rj->ij', X, code) / n_samples
+    
     # update C
     # Cjk <- gamma * Cjk + mask_k * code_j²
     C *= gamma
-    C += np.outer(code ** 2, observed_mask)
+    C += np.einsum('ri,rj->ij', code ** 2, observed_mask) / n_samples
 
     # update e, part I
     # e_jk <- gamma * e_jk
@@ -933,11 +934,15 @@ def update1_na(X, code, C, B, e, observed_mask, t, ro):
 
 def update_dict_na(C, B, e, D, code, observed_mask, Td=5):
     """Update dictionary inplace"""
+
     e_temp = e.copy()
     for td in range(Td):        
+
         for j in range(D.shape[1]):
-            D_code = D @ code
-            e_temp[j] = e[j] + np.multiply(observed_mask, D_code) * code[j]
+            D_code = D @ code.T
+            D_code_o = np.multiply(observed_mask.T, D_code) * code[:,j] 
+
+            e_temp[j] = e[j] + np.mean(D_code_o, axis=1)
 
             # solve for uj: cj * uj = bj - ej + cj * dj
             # then dj <- uj
@@ -949,7 +954,6 @@ def update_dict_na(C, B, e, D, code, observed_mask, Td=5):
             # Project uj on the constraint set
             D[:, j] /= linalg.norm(D[:, j])
             
-
 def dict_learning_na(X, n_components=12, alpha=1, ro=2,
                      n_iter=200, return_code=True, return_n_iter=False):
     """Solves a dictionary learning matrix factorization problem online.
@@ -1023,30 +1027,34 @@ def dict_learning_na(X, n_components=12, alpha=1, ro=2,
     B = np.zeros((n_features, n_components))
     e = np.zeros((n_components, n_features))
 
-    for t_iter in range(1, n_iter + 1):
-        ii = t_iter%n_samples # indice of the current row 
+    batch_size = 3
 
-        # minibatch of X observed (1 sample for now)
-        Xo_minibatch = Xo[ii]
+    batches = gen_batches(n_samples, batch_size)
+    batches = itertools.cycle(batches)
+
+    for t_iter, batch in zip(range(n_iter),batches):
+        
+        # minibatch of X observed
+        Xo_minibatch = Xo[batch]
 
         # observed mask for the minibatch
-        observed_mask_minibatch = observed_mask[ii]
+        observed_mask_minibatch = observed_mask[batch]
     
         # compute code for this minibatch
         this_code = sparse_encode_na(Xo_minibatch, observed_mask_minibatch,
-                                     D.T, alpha)[0]
+                                     D.T, alpha)
 
         # update stats
         update1_na(Xo_minibatch, this_code, C, B, e,
-                observed_mask_minibatch, t_iter, ro)
-
+                observed_mask_minibatch, t_iter+1, ro)
+        
         # update dictionary
         update_dict_na(C, B, e, D, this_code, observed_mask_minibatch)
 
         # update e, part II
         # e_jk <- e_jk + mask_k * code_j * (D.code)_k
-        D_code = D @ this_code
-        e += np.outer(this_code, np.multiply(observed_mask_minibatch, D_code))
+        code_D_o = np.multiply(observed_mask_minibatch, this_code.dot(D.T))
+        e += np.einsum('ri,rj->ij', this_code, code_D_o) / Xo_minibatch.shape[0]
 
     code = sparse_encode_na(Xo, observed_mask, D.T, alpha)
     

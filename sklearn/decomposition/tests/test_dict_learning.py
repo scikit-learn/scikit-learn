@@ -495,7 +495,7 @@ def test_sparse_encode_error():
     assert np.sqrt(np.sum((np.dot(code, V) - X) ** 2)) < 0.1
 
 
-def test_sparse_encode_error():
+def test_sparse_encode_na_error():
     n_components = 12
     rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)  # random init
