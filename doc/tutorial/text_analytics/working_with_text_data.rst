@@ -50,19 +50,24 @@ The tutorial folder should contain the following sub-folders:
 You can already copy the skeletons into a new folder somewhere
 on your hard-drive named ``sklearn_tut_workspace`` where you
 will edit your own files for the exercises while keeping
-the original skeletons intact::
+the original skeletons intact:
 
-    % cp -r skeletons work_directory/sklearn_tut_workspace
+.. prompt:: bash $
+
+  cp -r skeletons work_directory/sklearn_tut_workspace
+
 
 Machine learning algorithms need data. Go to each ``$TUTORIAL_HOME/data``
 sub-folder and run the ``fetch_data.py`` script from there (after
 having read them first).
 
-For instance::
+For instance:
 
-    % cd $TUTORIAL_HOME/data/languages
-    % less fetch_data.py
-    % python fetch_data.py
+.. prompt:: bash $
+
+  cd $TUTORIAL_HOME/data/languages
+  less fetch_data.py
+  python fetch_data.py
 
 
 Loading the 20 newsgroups dataset
@@ -487,9 +492,12 @@ Exercises
 ~~~~~~~~~
 
 To do the exercises, copy the content of the 'skeletons' folder as
-a new folder named 'workspace'::
+a new folder named 'workspace':
 
-  % cp -r skeletons workspace
+.. prompt:: bash $
+
+  cp -r skeletons workspace
+
 
 You can then edit the content of the workspace without fear of losing
 the original exercise instructions.

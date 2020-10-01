@@ -79,7 +79,9 @@ avoid oversubscription), the implementation will use as many threads as
 possible.
 
 You can control the exact number of threads that are used via the
-``OMP_NUM_THREADS`` environment variable::
+``OMP_NUM_THREADS`` environment variable:
+
+.. prompt:: bash $
 
     OMP_NUM_THREADS=4 python my_script.py
 
