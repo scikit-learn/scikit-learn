@@ -216,8 +216,11 @@ Below are some tips on avoiding data leakage:
 
 * Always split the data into train and test subsets first, particularly
   before any preprocessing steps.
-* Never include test data when using the `fit` and `fit_transform` methods,
-  for example don't use `fit(X)` (using all the data) or `fit(X_test)`.
+* Never include test data when using estimator `fit` and `fit_transform`
+  methods. Using all the data, e.g., `fit(X)`, can result in overly optimistic
+  scores. Only using the test data, e.g., `fit(X_test)`, can harm performance
+  as preprocessing or model fitting is only performed using the, genrally
+  smaller, test subset.
   Conversely, the `transform` method should be used on both train and test
   subsets as the same proprocessing should be applied to all the data.
   This can be achieved by using `fit_transform`, which combines the `fit` and
