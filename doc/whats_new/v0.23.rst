@@ -614,6 +614,11 @@ Changelog
 :mod:`sklearn.multioutput`
 ..........................
 
+- |Feature| :func:`multioutput.MultiOutputRegressor.fit` and
+  :func:`multioutput.MultiOutputClassifier.fit` now can accept `fit_params`
+  to pass to the `estimator.fit` method of each step. :issue:`15953`
+  :pr:`15959` by :user:`Ke Huang <huangk10>`.
+
 - |Enhancement| :class:`multioutput.RegressorChain` now supports `fit_params`
   for `base_estimator` during `fit`.
   :pr:`16111` by :user:`Venkatachalam N <venkyyuvy>`.
