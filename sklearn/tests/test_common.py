@@ -274,7 +274,10 @@ def test_strict_mode_parametrize_with_checks(estimator, check):
     check(estimator)
 
 
-column_name_modules_to_ignore = {
+# TODO: When more modules get added, we can remove it from this list to make
+# sure it gets tested. After we finish each module we can move the checks
+# into check_estimator
+COLUMN_NAME_MODULES_TO_IGNORE = {
     'calibration',
     'cluster',
     'compose',
@@ -287,6 +290,7 @@ column_name_modules_to_ignore = {
     'feature_selection',
     'gaussian_process',
     'isotonic',
+    'impute',
     'kernel_approximation',
     'kernel_ridge',
     'linear_model',
@@ -307,21 +311,21 @@ column_name_modules_to_ignore = {
 }
 
 column_name_estimators = [
-    est for _, est in all_estimators()
-    if est.__module__.split('.')[1] not in column_name_modules_to_ignore]
+    est for est in _tested_estimators()
+    if est.__module__.split('.')[1] not in COLUMN_NAME_MODULES_TO_IGNORE]
 
 
-@pytest.mark.parametrize('Estimator', column_name_estimators,
+@pytest.mark.parametrize('estimator', column_name_estimators,
                          ids=_get_check_estimator_ids)
-def test_pandas_column_name_consistency(Estimator):
-    estimator = _construct_instance(Estimator)
+def test_pandas_column_name_consistency(estimator):
     _set_checking_parameters(estimator)
-    check_dataframe_column_names_consistency(Estimator.__name__, estimator)
+    check_dataframe_column_names_consistency(type(estimator).__name__,
+                                             estimator)
 
 
-@pytest.mark.parametrize('Estimator', column_name_estimators,
+@pytest.mark.parametrize('estimator', column_name_estimators,
                          ids=_get_check_estimator_ids)
-def test_xarray_column_name_consistency(Estimator):
-    estimator = _construct_instance(Estimator)
+def test_xarray_column_name_consistency(estimator):
     _set_checking_parameters(estimator)
-    check_dataarray_column_names_consistency(Estimator.__name__, estimator)
+    check_dataarray_column_names_consistency(type(estimator).__name__,
+                                             estimator)

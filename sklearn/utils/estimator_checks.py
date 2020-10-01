@@ -3151,6 +3151,9 @@ def check_dataarray_column_names_consistency(name, estimator_orig):
 def _check_column_name_consistency(name, estimator_orig, construct_X,
                                    array_name):
     estimator = clone(estimator_orig)
+    tags = estimator._get_tags()
+    if "2darray" not in tags["X_types"] or tags["no_validation"]:
+        return
 
     X_orig, _ = make_regression(random_state=0, n_features=10)
     X_orig = _enforce_estimator_tags_x(estimator, X_orig)
@@ -3191,6 +3194,14 @@ def _check_column_name_consistency(name, estimator_orig, construct_X,
             continue
         # TODO In 0.26, this will be an error.
         assert_warns_message(FutureWarning, expected_msg, func, X_bad)
+
+    # partial_fit checks on second call
+    if not hasattr(estimator, "partial_fit"):
+        return  #
+
+    estimator = clone(estimator_orig)
+    estimator.partial_fit(X, y)
+    assert_warns_message(FutureWarning, expected_msg, func, X_bad, y)
 
 
 # set of checks that are completely strict, i.e. they have no non-strict part
