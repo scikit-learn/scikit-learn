@@ -22,7 +22,7 @@ Data leakage
 
 Data leakage occurs when information that would not be available at prediction
 time is used when building the model. This results in overly optimsitic
-performance estimates, for example from :ref:`cross validation
+performance estimates, for example from :ref:`cross-validation
 <cross_validation>`, and thus poorer performance when the model is used
 on actually novel data, for example during production.
 
@@ -118,7 +118,7 @@ data, close to chance::
 
 Another way to prevent data leakage is to use the
 :class:`~sklearn.pipeline.Pipeline` to chain together the feature selection
-and model estimators. This pipeline can then be fed into a cross validation
+and model estimators. This pipeline can then be fed into a cross-validation
 function such as :func:`~sklearn.model_selection.cross_val_score`. The
 pipeline ensures that only the training data when performing `fit` and
 the test data will only be used for calculating the accuracy score.
@@ -197,9 +197,9 @@ used to fit our model::
 The :class:`~sklearn.pipeline.Pipeline` is another way to prevent data
 leakage. It chains together the imputation and model estimators and ensures
 that the correct data subset is used for fit, transform and predict when
-used for example, in a cross validation function. This is shown below
+used for example, in a cross-validation function. This is shown below
 along with the mean and standard deviation of the :math:`R^2` scores from
-cross validation::
+cross-validation::
 
     >>> from sklearn.pipeline import make_pipeline
     >>> from sklearn.model_selection import cross_val_score
@@ -219,7 +219,7 @@ Below are some tips on avoiding data leakage:
 * Never include test data when using estimator `fit` and `fit_transform`
   methods. Using all the data, e.g., `fit(X)`, can result in overly optimistic
   scores. Only using the test data, e.g., `fit(X_test)`, can harm performance
-  as preprocessing or model fitting is only performed using the, genrally
+  as preprocessing or model fitting is only performed using the, generally
   smaller, test subset.
   Conversely, the `transform` method should be used on both train and test
   subsets as the same proprocessing should be applied to all the data.
@@ -228,5 +228,5 @@ Below are some tips on avoiding data leakage:
   subset.
 * The scikit-learn :ref:`pipeline <pipeline>` is a great way to prevent data
   leakage as it ensures that the appropriate method is performed on the
-  correct data subset. The pipeline is ideal for use in cross validation
+  correct data subset. The pipeline is ideal for use in cross-validation
   and hyper-parameter tuning functions.
