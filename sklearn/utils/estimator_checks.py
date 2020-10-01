@@ -3173,10 +3173,6 @@ def _check_column_name_consistency(name, estimator_orig, construct_X,
         raise ValueError("Estimator does not have a feature_names_in_ "
                          f"attribute after fitting with a {array_name}")
 
-    if estimator.feature_names_in_ is None:
-        # no names to check
-        return
-
     assert_array_equal(estimator.feature_names_in_, names)
     bad_names = names[::-1]
     X_bad = construct_X(X, bad_names)
@@ -3194,11 +3190,12 @@ def _check_column_name_consistency(name, estimator_orig, construct_X,
 
     # partial_fit checks on second call
     if not hasattr(estimator, "partial_fit"):
-        return  #
+        return  # partial_fit is not defined
 
     estimator = clone(estimator_orig)
     estimator.partial_fit(X, y)
-    assert_warns_message(FutureWarning, expected_msg, func, X_bad, y)
+    assert_warns_message(FutureWarning, expected_msg, estimator.partial_fit,
+                         X_bad, y)
 
 
 # set of checks that are completely strict, i.e. they have no non-strict part

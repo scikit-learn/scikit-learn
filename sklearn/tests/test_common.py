@@ -282,7 +282,6 @@ COLUMN_NAME_MODULES_TO_IGNORE = {
     'cluster',
     'compose',
     'covariance',
-    'cross_decomposition',
     'decomposition',
     'discriminant_analysis',
     'ensemble',
