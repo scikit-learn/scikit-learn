@@ -64,7 +64,6 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.2,
 # Note: no need to use an OrdinalEncoder because categorical features are
 # already clean
 is_categorical = [name in data.categories for name in data.feature_names]
-is_categorical = [False] * n_features
 est = HistGradientBoostingClassifier(
     loss='binary_crossentropy',
     learning_rate=lr,
