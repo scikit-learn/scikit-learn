@@ -3155,7 +3155,7 @@ def _check_column_name_consistency(name, estimator_orig, construct_X,
     if "2darray" not in tags["X_types"] or tags["no_validation"]:
         return
 
-    X_orig, _ = make_regression(random_state=0, n_features=10)
+    X_orig, _ = make_regression(random_state=0, n_features=5)
     X_orig = _enforce_estimator_tags_x(estimator, X_orig)
     X_orig = _pairwise_estimator_convert_X(X_orig, estimator)
 
