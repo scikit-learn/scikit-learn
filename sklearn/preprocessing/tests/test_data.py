@@ -92,48 +92,6 @@ def assert_correct_incr(i, batch_start, batch_stop, n, chunk_size,
                      n_samples_seen)
 
 
-def test_raises_value_error_if_sample_weights_greater_than_1d():
-    # Sample weights must be either scalar or 1D
-
-    n_sampless = [2, 3]
-    n_featuress = [3, 2]
-
-    for n_samples, n_features in zip(n_sampless, n_featuress):
-        X = rng.randn(n_samples, n_features)
-        y = rng.randn(n_samples)
-        sample_weights_OK = rng.randn(n_samples) ** 2 + 1
-        sample_weights_OK_1 = 1.
-        sample_weights_OK_2 = 2.
-
-        scaler = StandardScaler()
-
-        # make sure the "OK" sample weights actually work
-        scaler.fit(X, y, sample_weights_OK)
-        scaler.fit(X, y, sample_weights_OK_1)
-        scaler.fit(X, y, sample_weights_OK_2)
-
-
-def test_standard_scaler_sample_weights():
-    # weighted StandardScaler
-    Xw = [[1, 2, 3], [4, 5, 6]]
-    yw = [[3, 2], [2, 3]]
-    sample_weight = np.asarray([2., 1.])
-    scaler_w = StandardScaler()
-    scaler_w.fit(Xw, yw, sample_weight=sample_weight)
-
-    # unweighted, but with repeated samples
-    X = [[1, 2, 3], [1, 2, 3], [4, 5, 6]]
-    y = [[3, 2], [3, 2], [2, 3]]
-    scaler = StandardScaler()
-    scaler.fit(X, y)
-
-    X_test = [[1.5, 2.5, 3.5], [3.5, 4.5, 5.5]]
-    assert_almost_equal(scaler.mean_, scaler_w.mean_)
-    assert_almost_equal(scaler.var_, scaler_w.var_)
-
-    assert_almost_equal(scaler.transform(data), scaler_w.transform(data))
-
-
 def test_polynomial_features():
     # Test Polynomial Features
     X1 = np.arange(6)[:, np.newaxis]
@@ -328,6 +286,48 @@ def test_polynomial_features_csr_X_dim_edges(deg, dim, interaction_only):
     assert isinstance(Xt_csr, sparse.csr_matrix)
     assert Xt_csr.dtype == Xt_dense.dtype
     assert_array_almost_equal(Xt_csr.A, Xt_dense)
+
+
+def test_raises_value_error_if_sample_weights_greater_than_1d():
+    # Sample weights must be either scalar or 1D
+
+    n_sampless = [2, 3]
+    n_featuress = [3, 2]
+
+    for n_samples, n_features in zip(n_sampless, n_featuress):
+        X = rng.randn(n_samples, n_features)
+        y = rng.randn(n_samples)
+        sample_weights_OK = rng.randn(n_samples) ** 2 + 1
+        sample_weights_OK_1 = 1.
+        sample_weights_OK_2 = 2.
+
+        scaler = StandardScaler()
+
+        # make sure the "OK" sample weights actually work
+        scaler.fit(X, y, sample_weights_OK)
+        scaler.fit(X, y, sample_weights_OK_1)
+        scaler.fit(X, y, sample_weights_OK_2)
+
+
+def test_standard_scaler_sample_weights():
+    # weighted StandardScaler
+    Xw = [[1, 2, 3], [4, 5, 6]]
+    yw = [[3, 2], [2, 3]]
+    sample_weight = np.asarray([2., 1.])
+    scaler_w = StandardScaler()
+    scaler_w.fit(Xw, yw, sample_weight=sample_weight)
+
+    # unweighted, but with repeated samples
+    X = [[1, 2, 3], [1, 2, 3], [4, 5, 6]]
+    y = [[3, 2], [3, 2], [2, 3]]
+    scaler = StandardScaler()
+    scaler.fit(X, y)
+
+    X_test = [[1.5, 2.5, 3.5], [3.5, 4.5, 5.5]]
+
+    assert_almost_equal(scaler.mean_, scaler_w.mean_)
+    assert_almost_equal(scaler.var_, scaler_w.var_)
+    assert_almost_equal(scaler.transform(X_test), scaler_w.transform(X_test))
 
 
 def test_standard_scaler_1d():
