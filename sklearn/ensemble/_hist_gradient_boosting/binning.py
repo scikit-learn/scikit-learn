@@ -280,9 +280,9 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         n_features = self.is_categorical_.size
         n_categorical_features = categorical_features_indices.size
 
-        f_idx_map = np.zeros(n_features, dtype=np.uint8)
+        f_idx_map = np.zeros(n_features, dtype=np.uint32)
         f_idx_map[categorical_features_indices] = np.arange(
-            n_categorical_features, dtype=np.uint8)
+            n_categorical_features, dtype=np.uint32)
 
         known_categories = self.bin_thresholds_
 

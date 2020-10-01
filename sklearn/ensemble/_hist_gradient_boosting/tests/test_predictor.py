@@ -41,7 +41,7 @@ def test_regression_dataset(n_bins):
         binning_thresholds=mapper.bin_thresholds_)
 
     known_cat_bitsets = np.zeros((0, 8), dtype=X_BITSET_INNER_DTYPE)
-    f_idx_map = np.zeros(0, dtype=np.uint8)
+    f_idx_map = np.zeros(0, dtype=np.uint32)
 
     y_pred_train = predictor.predict(X_train, known_cat_bitsets, f_idx_map)
     assert r2_score(y_train, y_pred_train) > 0.82
@@ -84,7 +84,7 @@ def test_infinite_values_and_thresholds(num_threshold, expected_predictions):
     binned_cat_bitsets = np.zeros((0, 8), dtype=X_BITSET_INNER_DTYPE)
     raw_categorical_bitsets = np.zeros((0, 8), dtype=X_BITSET_INNER_DTYPE)
     known_cat_bitset = np.zeros((0, 8), dtype=X_BITSET_INNER_DTYPE)
-    f_idx_map = np.zeros(0, dtype=np.uint8)
+    f_idx_map = np.zeros(0, dtype=np.uint32)
 
     predictor = TreePredictor(
         nodes, binned_cat_bitsets, raw_categorical_bitsets)
@@ -154,7 +154,7 @@ def test_categorical_predictor(bins_go_left, expected_predictions):
     # manually construct bitset
     known_cat_bitsets = np.zeros((1, 8), dtype=np.uint32)
     known_cat_bitsets[0, 0] = np.sum(2**categories, dtype=np.uint32)
-    f_idx_map = np.array([0], dtype=np.uint8)
+    f_idx_map = np.array([0], dtype=np.uint32)
 
     # Check with un-binned data
     predictions = predictor.predict(categories.reshape(-1, 1),
