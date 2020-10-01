@@ -330,6 +330,31 @@ def test_standard_scaler_sample_weights():
     assert_almost_equal(scaler.transform(X_test), scaler_w.transform(X_test))
 
 
+def test_standard_scaler_sparse_sample_weights():
+    # weighted StandardScaler
+    Xw_dense = np.array([[3.0, 0, 4.0], [1.0, 0.0, 0.0], [2.0, 3.0, 0.0]])
+    Xw_sparse = sparse.csr_matrix(Xw_dense)
+    yw = [[3, 2], [2, 3], [4, 5]]
+    sample_weight = np.asarray([2., 1., 1.])
+    scaler_w = StandardScaler(with_mean=False)
+    scaler_w.fit(Xw_sparse, yw, sample_weight=sample_weight)
+
+    X_dense = np.array([[3.0, 0, 4.0], [3.0, 0, 4.0],
+                        [1.0, 0, 0.0], [2.0, 3.0, 0.0]])
+    X_sparse = sparse.csr_matrix(Xw_dense)
+    y = [[3, 2], [2, 3], [4, 5], [2, 3]]
+    scaler = StandardScaler(with_mean=False)
+    scaler.fit(X_sparse, y)
+
+    X_test = [[1.5, 2.5, 3.5], [3.5, 0.0, 5.5], [4.5, 0.0, 0.0]]
+    X_test_sparse = sparse.csr_matrix(X_test)
+
+    assert_almost_equal(scaler.mean_, scaler_w.mean_)
+    assert_almost_equal(scaler.var_, scaler_w.var_)
+    assert_array_almost_equal(np.array(scaler.transform(X_test_sparse)),
+                              np.array(scaler_w.transform(X_test_sparse)))
+
+
 def test_standard_scaler_1d():
     # Test scaling of dataset along single axis
     for X in [X_1row, X_1col, X_list_1row, X_list_1row]:
