@@ -146,6 +146,8 @@ class _MultiOutputEstimator(MetaEstimatorMixin,
         **fit_params : dict of string -> object
             Parameters passed to the ``estimator.fit`` method of each step.
 
+            .. versionadded:: 0.23
+
         Returns
         -------
         self : object
@@ -347,6 +349,8 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
             weights.
         **fit_params : dict of string -> object
             Parameters passed to the ``estimator.fit`` method of each step.
+
+            .. versionadded:: 0.23
 
         Returns
         -------
