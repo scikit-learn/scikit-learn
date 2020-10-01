@@ -89,7 +89,7 @@ def assert_correct_incr(i, batch_start, batch_stop, n, chunk_size,
         assert (i + 1) * chunk_size == n_samples_seen
     else:
         assert (i * chunk_size + (batch_stop - batch_start) ==
-                     n_samples_seen)
+                n_samples_seen)
 
 
 def test_polynomial_features():
@@ -331,6 +331,7 @@ def test_standard_scaler_sample_weights():
 
 
 def test_standard_scaler_sparse_sample_weights():
+    # TODO: still work needed
     # weighted StandardScaler
     Xw_dense = np.array([[3.0, 0, 4.0], [1.0, 0.0, 0.0], [2.0, 3.0, 0.0]])
     Xw_sparse = sparse.csr_matrix(Xw_dense)
@@ -341,7 +342,7 @@ def test_standard_scaler_sparse_sample_weights():
 
     X_dense = np.array([[3.0, 0, 4.0], [3.0, 0, 4.0],
                         [1.0, 0, 0.0], [2.0, 3.0, 0.0]])
-    X_sparse = sparse.csr_matrix(Xw_dense)
+    X_sparse = sparse.csr_matrix(X_dense)
     y = [[3, 2], [2, 3], [4, 5], [2, 3]]
     scaler = StandardScaler(with_mean=False)
     scaler.fit(X_sparse, y)
@@ -1563,15 +1564,15 @@ def test_quantile_transform_bounds():
     transformer = QuantileTransformer()
     transformer.fit(X)
     assert (transformer.transform([[-10]]) ==
-                 transformer.transform([[np.min(X)]]))
+            transformer.transform([[np.min(X)]]))
     assert (transformer.transform([[10]]) ==
-                 transformer.transform([[np.max(X)]]))
+            transformer.transform([[np.max(X)]]))
     assert (transformer.inverse_transform([[-10]]) ==
-                 transformer.inverse_transform(
-                     [[np.min(transformer.references_)]]))
+            transformer.inverse_transform(
+                [[np.min(transformer.references_)]]))
     assert (transformer.inverse_transform([[10]]) ==
-                 transformer.inverse_transform(
-                     [[np.max(transformer.references_)]]))
+            transformer.inverse_transform(
+                [[np.max(transformer.references_)]]))
 
 
 def test_quantile_transform_and_inverse():
@@ -1876,9 +1877,9 @@ def test_maxabs_scaler_partial_fit():
                                   scaler_incr_csc.max_abs_)
         assert scaler_batch.n_samples_seen_ == scaler_incr.n_samples_seen_
         assert (scaler_batch.n_samples_seen_ ==
-                     scaler_incr_csr.n_samples_seen_)
+                scaler_incr_csr.n_samples_seen_)
         assert (scaler_batch.n_samples_seen_ ==
-                     scaler_incr_csc.n_samples_seen_)
+                scaler_incr_csc.n_samples_seen_)
         assert_array_almost_equal(scaler_batch.scale_, scaler_incr.scale_)
         assert_array_almost_equal(scaler_batch.scale_, scaler_incr_csr.scale_)
         assert_array_almost_equal(scaler_batch.scale_, scaler_incr_csc.scale_)
