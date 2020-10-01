@@ -938,8 +938,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         and 0 respectively correspond to a positive constraint, negative
         constraint and no constraint. Read more in the :ref:`User Guide
         <monotonic_cst_gbdt>`.
-    categorical_features : array-like of {bool, int} of shape (n_features), \
-            default=None.
+    categorical_features : array-like of {bool, int} of shape (n_features) \
+            or shape (n_categorical_features,), default=None.
         Indicates the categorical features.
 
         - None : no feature will be considered categorical.
@@ -1183,8 +1183,8 @@ class HistGradientBoostingClassifier(ClassifierMixin,
         and 0 respectively correspond to a positive constraint, negative
         constraint and no constraint. Read more in the :ref:`User Guide
         <monotonic_cst_gbdt>`.
-    categorical_features : array-like of {bool, int} of shape (n_features), \
-            default=None.
+    categorical_features : array-like of {bool, int} of shape (n_features) \
+            or shape (n_categorical_features,), default=None.
         Indicates the categorical features.
 
         - None : no feature will be considered categorical.
