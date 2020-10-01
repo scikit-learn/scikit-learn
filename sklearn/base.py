@@ -19,7 +19,7 @@ from .utils.validation import check_X_y
 from .utils.validation import check_array
 from .utils._estimator_html_repr import estimator_html_repr
 from .utils.validation import _deprecate_positional_args
-from .utils._array_out import _get_feature_names
+from .utils._feature_names import _get_feature_names
 
 _DEFAULT_TAGS = {
     'non_deterministic': False,
@@ -389,8 +389,12 @@ class BaseEstimator:
             The input samples.
         reset : bool, default=True
             Whether to reset the `feature_names_in_` attribute.
-            If False, the input will be checked for consistency with data
-            provided when reset was last True.
+            If False, the input will be checked for consistency with
+            feature names of data provided when reset was last True.
+            .. note::
+               It is recommended to call reset=True in `fit` and in the first
+               call to `partial_fit`. All other methods that validates `X`
+               should set `reset=False`.
         """
 
         if reset:
@@ -433,6 +437,10 @@ class BaseEstimator:
             Whether to reset the `n_features_in_` attribute.
             If False, the input will be checked for consistency with data
             provided when reset was last True.
+            .. note::
+               It is recommended to call reset=True in `fit` and in the first
+               call to `partial_fit`. All other methods that validates `X`
+               should set `reset=False`.
         validate_separately : False or tuple of dicts, default=False
             Only used if y is not None.
             If False, call validate_X_y(). Else, it must be a tuple of kwargs

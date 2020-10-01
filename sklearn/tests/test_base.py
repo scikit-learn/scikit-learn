@@ -543,8 +543,8 @@ def test_feature_names_in():
     # Simple checks for feature_names_in
     pd = pytest.importorskip("pandas")
     iris = datasets.load_iris()
-    df = pd.DataFrame(iris.data, columns=iris.feature_names)
-    y = iris.target
+    X_np, y = iris.data, iris.target
+    df = pd.DataFrame(X_np, columns=iris.feature_names)
 
     class NoOpTransformer(TransformerMixin, BaseEstimator):
         def fit(self, X, y):
@@ -559,11 +559,17 @@ def test_feature_names_in():
     assert_array_equal(trans.feature_names_in_, df.columns)
 
     msg = "The column names should match those that were passed"
-    df_bad = pd.DataFrame(iris.data, columns=iris.feature_names[::-1])
+    df_bad = pd.DataFrame(X_np, columns=iris.feature_names[::-1])
     with pytest.warns(FutureWarning, match=msg):
         trans.transform(df_bad)
 
     # does not warn when transforming on numpy array
     with pytest.warns(None) as record:
-        trans.transform(iris.data)
+        trans.transform(X_np)
+    assert not record
+
+    # fitted on numpy array and transformed on pandas array does not warn
+    trans = NoOpTransformer().fit(X_np, y)
+    with pytest.warns(None) as record:
+        trans.transform(df)
     assert not record

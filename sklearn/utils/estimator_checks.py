@@ -3164,10 +3164,7 @@ def _check_column_name_consistency(name, estimator_orig, construct_X,
     X = construct_X(X_orig, names)
 
     rng = np.random.RandomState(0)
-    if is_regressor(estimator):
-        y = rng.normal(size=n_samples)
-    else:
-        y = rng.randint(low=0, high=2, size=n_samples)
+    y = rng.randint(low=0, high=2, size=n_samples)
     y = _enforce_estimator_tags_y(estimator, y)
 
     estimator.fit(X, y)
