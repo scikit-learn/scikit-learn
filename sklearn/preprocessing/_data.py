@@ -766,21 +766,6 @@ class StandardScaler(TransformerMixin, BaseEstimator):
                                                  dtype=X.dtype)
             sample_weight = np.asarray(sample_weight)
 
-            # TODO: scale X by weights (using )
-            '''
-            from ..utils.extmath import safe_sparse_dot
-            # (from _base)
-            n_samples = X.shape[0]
-            sample_weight = np.asarray(sample_weight)
-            if sample_weight.ndim == 0:
-                sample_weight = np.full(n_samples, sample_weight,
-                                        dtype=sample_weight.dtype)
-            # sample_weight = np.sqrt(sample_weight)
-            sw_matrix = sparse.dia_matrix((sample_weight, 0),
-                                  shape=(n_samples, n_samples))
-            X = safe_sparse_dot(sw_matrix, X)
-            '''
-
         # Even in the case of `with_mean=False`, we update the mean anyway
         # This is needed for the incremental computation of the var
         # See incr_mean_variance_axis and _incremental_mean_variance_axis
@@ -820,7 +805,8 @@ class StandardScaler(TransformerMixin, BaseEstimator):
                         incr_mean_variance_axis(X, axis=0,
                                                 last_mean=self.mean_,
                                                 last_var=self.var_,
-                                                last_n=self.n_samples_seen_)
+                                                last_n=self.n_samples_seen_,
+                                                sample_weight=sample_weight)
             else:
                 self.mean_ = None
                 self.var_ = None
