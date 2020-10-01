@@ -96,8 +96,11 @@ def _changed_params(estimator):
     init_params = {name: param.default for name, param in init_params.items()}
 
     for k, v in params.items():
-        if (k not in init_params or (  # happens if k is part of a **kwargs
-                repr(v) != repr(init_params[k]) and
+        if (k not in init_params or  # happens if k is part of a **kwargs
+            # avoid `repr` if possible, it can be costly for nested estimators
+            (isinstance(v, BaseEstimator) and
+                v.__class__ != init_params[k].__class__) or
+            (repr(v) != repr(init_params[k]) and
                 not (is_scalar_nan(init_params[k]) and is_scalar_nan(v)))):
             filtered_params[k] = v
     return filtered_params
