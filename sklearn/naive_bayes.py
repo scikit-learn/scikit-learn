@@ -904,12 +904,12 @@ class ComplementNB(_BaseDiscreteNB):
             feature_log_prob = -logged
         self.feature_log_prob_ = feature_log_prob
 
-    def _joint_log_likelihood(self, X):	    
-        """Calculate the class scores for the samples in X."""	       
+    def _joint_log_likelihood(self, X):    
+        """Calculate the class scores for the samples in X."""   
         check_is_fitted(self, "classes_")
         X = check_array(X, accept_sparse="csr")
         jll = safe_sparse_dot(X, self.feature_log_prob_.T)
-        if self.fit_prior == True :
+        if self.fit_prior == True:
             jll += self.class_log_prior_
         return jll
 
