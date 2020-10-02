@@ -1,6 +1,6 @@
 
 name: Reviewed
-#Runs when a core-dev review a PR and remove the 'waiting for review' label
+# Runs when a core-dev review a PR and remove the "Waiting for Reviewer" label
 on:
   pull_request_review:
     types: submitted
