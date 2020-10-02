@@ -132,7 +132,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             The decision function of the samples for each class in the model.
         """
         X = self._validate_data(X, accept_sparse=['csr', 'csc'],
-                                reset=False)
+                                reset=False, requires_y=False)
 
         # Initialize first layer
         activation = X

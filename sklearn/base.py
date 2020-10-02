@@ -383,7 +383,8 @@ class BaseEstimator:
                 )
 
     def _validate_data(self, X, y=None, reset=True,
-                       validate_separately=False, **check_params):
+                       validate_separately=False,
+                       requires_y='auto', **check_params):
         """Validate input data and set or check the `n_features_in_` attribute.
 
         Parameters
@@ -406,6 +407,14 @@ class BaseEstimator:
             Only used if y is not None.
             If False, call validate_X_y(). Else, it must be a tuple of kwargs
             to be used for calling check_array() on X and y respectively.
+        requires_y : bool or 'auto', default='auto'
+            If 'auto', the the 'requires_y' tag will be used to decide if `y`
+            is required. If bool, then the caller decides if `y` is required.
+            .. note::
+               It is recommended to leave requires_y='auto' in `fit and
+               in the first call to `partial-fit. All other methods that
+               validate `X` and does not require `y` should set
+               `requires_y=False`.
         **check_params : kwargs
             Parameters passed to :func:`sklearn.utils.check_array` or
             :func:`sklearn.utils.check_X_y`. Ignored if validate_separately
@@ -418,7 +427,8 @@ class BaseEstimator:
         """
 
         if y is None:
-            if reset and self._get_tags()['requires_y']:
+            if ((requires_y == 'auto' and self._get_tags()['requires_y']) or
+                    (isinstance(requires_y, bool) and requires_y)):
                 raise ValueError(
                     f"This {self.__class__.__name__} estimator "
                     f"requires y to be passed, but the target y is None."
