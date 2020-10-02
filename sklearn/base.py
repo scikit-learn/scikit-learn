@@ -360,6 +360,10 @@ class BaseEstimator:
             If True, the `n_features_in_` attribute is set to `X.shape[1]`.
             Else, the attribute must already exist and the function checks
             that it is equal to `X.shape[1]`.
+            .. note::
+               It is recommended to call reset=True in `fit` and in the first
+               call to `partial_fit`. All other methods that validates `X`
+               should set `reset=False`.
         """
         n_features = X.shape[1]
 
@@ -394,6 +398,10 @@ class BaseEstimator:
             Whether to reset the `n_features_in_` attribute.
             If False, the input will be checked for consistency with data
             provided when reset was last True.
+            .. note::
+               It is recommended to call reset=True in `fit` and in the first
+               call to `partial_fit`. All other methods that validates `X`
+               should set `reset=False`.
         validate_separately : False or tuple of dicts, default=False
             Only used if y is not None.
             If False, call validate_X_y(). Else, it must be a tuple of kwargs
