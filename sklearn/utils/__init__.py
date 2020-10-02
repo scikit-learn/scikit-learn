@@ -32,8 +32,7 @@ from .validation import (as_float_array,
                          check_random_state, column_or_1d, check_array,
                          check_consistent_length, check_X_y, indexable,
                          check_symmetric, check_scalar,
-                         _deprecate_positional_args,
-                         _validate_required_props)
+                         _deprecate_positional_args)
 from .. import get_config
 
 
@@ -1199,6 +1198,7 @@ def _empty_metadata_request():
 
 
 def _standardize_method_request(method_request):
+    method_request = {} if method_request is None else method_request
     method_request = copy.deepcopy(method_request)
     if isinstance(method_request, str):
         method_request = {method_request}
@@ -1223,6 +1223,32 @@ def _standardize_metadata_request(request):
             raise ValueError(f"Cannot standardize {request}")
         res[method] = m_props
     return res
+
+
+def _validate_required_props(required_props, given_props):
+    """Checks if all the given props are requested.
+
+    Parameters
+    ----------
+    required_props: dict of {str: {str}}
+        required properties as ``{'given_property': {'method_kwarg',}}
+
+    given_props: dict of {str: data}
+        A ``dict`` with keys as given properties.
+
+    method: str
+        The method for which the given props is validated.
+
+    Returns
+    -------
+    None
+    """
+    required_props = _standardize_method_request(required_props)
+    given_props = {} if given_props is None else given_props
+    if set(required_props.keys()) < set(given_props.keys()):
+        raise ValueError("Requested properties are: {}, but {} "
+                         "provided".format(list(required_props),
+                                           list(given_props)))
 
 
 def _check_method_props(required_props, props, validate=True):

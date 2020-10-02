@@ -4,7 +4,7 @@ import pytest
 from sklearn.feature_selection import SelectKBest
 from sklearn.pipeline import make_pipeline
 from sklearn.base import BaseEstimator, ClassifierMixin, TransformerMixin
-from sklearn.utils.validation import _validate_required_props
+from sklearn.utils import _validate_required_props
 from sklearn.datasets import make_classification
 from sklearn.metrics import make_scorer, balanced_accuracy_score
 from sklearn.model_selection import GridSearchCV

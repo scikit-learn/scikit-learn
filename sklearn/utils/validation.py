@@ -1390,31 +1390,3 @@ def _check_fit_params(X, fit_params, indices=None):
             )
 
     return fit_params_validated
-
-
-def _validate_required_props(required_props, given_props):
-    """Checks if all the given props are requested.
-
-    Parameters
-    ----------
-    required_props: dict of {str: str}
-        required properties as ``{'given_property': 'method_property'}
-
-    given_props: dict of {str: data}
-        A ``dict`` with keys as given properties.
-
-    method: str
-        The method for which the given props is validated.
-
-    Returns
-    -------
-    None
-    """
-    required_props = {} if required_props is None else required_props
-    given_props = {} if given_props is None else given_props
-    if isinstance(required_props, dict):
-        required_props = required_props.values()
-    if set(required_props) < set(given_props.keys()):
-        raise ValueError("Requested properties are: {}, but {} "
-                         "provided".format(list(required_props),
-                                           list(given_props)))

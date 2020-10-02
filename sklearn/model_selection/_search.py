@@ -693,10 +693,16 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         raise NotImplementedError("_run_search not implemented.")
 
     def get_metadata_request(self):
-        scorers, _ = _check_multimetric_scoring(
-            self.estimator, scoring=self.scoring)
+        if callable(self.scoring):
+            scorers = [self.scoring]
+        elif self.scoring is None or isinstance(self.scoring, str):
+            scorers = [check_scoring(self.estimator, self.scoring)]
+        else:
+            scorers = _check_multimetric_scoring(
+                self.estimator, self.scoring).values()
+
         objs = [self.estimator, self.cv]
-        objs.extend(scorers.values())
+        objs.extend(scorers)
         props = _get_props_from_objs(objs)
         # merge split into fit, since it's needed when fit is called
         tmp_props = _empty_metadata_request()
