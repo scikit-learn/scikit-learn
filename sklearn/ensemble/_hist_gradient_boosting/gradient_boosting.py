@@ -877,7 +877,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         stopping. The higher the tolerance, the more likely we are to early
         stop: higher tolerance means that it will be harder for subsequent
         iterations to be considered an improvement upon the reference score.
-    verbose: int, default=0
+    verbose : int, default=0
         The verbosity level. If not zero, print some information about the
         fitting process.
     random_state : int, np.random.RandomStateInstance or None, \
@@ -1103,7 +1103,7 @@ class HistGradientBoostingClassifier(ClassifierMixin,
         tolerance, the more likely we are to early stop: higher tolerance
         means that it will be harder for subsequent iterations to be
         considered an improvement upon the reference score.
-    verbose: int, default=0
+    verbose : int, default=0
         The verbosity level. If not zero, print some information about the
         fitting process.
     random_state : int, np.random.RandomStateInstance or None, \
