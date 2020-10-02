@@ -470,8 +470,7 @@ cdef class Splitter:
                 # (min_samples_leaf, etc) and the grower will later turn the
                 # node into a leaf.
                 split_infos[feature_idx].gain = -1
-                split_infos[feature_idx].is_categorical = \
-                    is_categorical[feature_idx]
+                split_infos[feature_idx].is_categorical = is_categorical[feature_idx]
 
                 if is_categorical[feature_idx]:
                     self._find_best_bin_to_split_category(

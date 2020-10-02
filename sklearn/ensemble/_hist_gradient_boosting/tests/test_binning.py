@@ -4,7 +4,7 @@ import pytest
 
 from sklearn.ensemble._hist_gradient_boosting.binning import (
     _BinMapper,
-    _find_binning_threshold,
+    _find_binning_thresholds,
     _map_to_bins
 )
 from sklearn.ensemble._hist_gradient_boosting.common import X_DTYPE
@@ -19,31 +19,31 @@ DATA = np.random.RandomState(42).normal(
 
 def test_find_binning_thresholds_regular_data():
     data = np.linspace(0, 10, 1001)
-    bin_thresholds = _find_binning_threshold(data, max_bins=10)
+    bin_thresholds = _find_binning_thresholds(data, max_bins=10)
     assert_allclose(bin_thresholds, [1, 2, 3, 4, 5, 6, 7, 8, 9])
 
-    bin_thresholds = _find_binning_threshold(data, max_bins=5)
+    bin_thresholds = _find_binning_thresholds(data, max_bins=5)
     assert_allclose(bin_thresholds, [2, 4, 6, 8])
 
 
 def test_find_binning_thresholds_small_regular_data():
     data = np.linspace(0, 10, 11)
 
-    bin_thresholds = _find_binning_threshold(data, max_bins=5)
+    bin_thresholds = _find_binning_thresholds(data, max_bins=5)
     assert_allclose(bin_thresholds, [2, 4, 6, 8])
 
-    bin_thresholds = _find_binning_threshold(data, max_bins=10)
+    bin_thresholds = _find_binning_thresholds(data, max_bins=10)
     assert_allclose(bin_thresholds, [1, 2, 3, 4, 5, 6, 7, 8, 9])
 
-    bin_thresholds = _find_binning_threshold(data, max_bins=11)
+    bin_thresholds = _find_binning_thresholds(data, max_bins=11)
     assert_allclose(bin_thresholds, np.arange(10) + .5)
 
-    bin_thresholds = _find_binning_threshold(data, max_bins=255)
+    bin_thresholds = _find_binning_thresholds(data, max_bins=255)
     assert_allclose(bin_thresholds, np.arange(10) + .5)
 
 
 def test_find_binning_thresholds_random_data():
-    bin_thresholds = [_find_binning_threshold(DATA[:, i], max_bins=255)
+    bin_thresholds = [_find_binning_thresholds(DATA[:, i], max_bins=255)
                       for i in range(2)]
     for i in range(len(bin_thresholds)):
         assert bin_thresholds[i].shape == (254,)  # 255 - 1
@@ -57,7 +57,7 @@ def test_find_binning_thresholds_random_data():
 
 
 def test_find_binning_thresholds_low_n_bins():
-    bin_thresholds = [_find_binning_threshold(DATA[:, i], max_bins=128)
+    bin_thresholds = [_find_binning_thresholds(DATA[:, i], max_bins=128)
                       for i in range(2)]
     for i in range(len(bin_thresholds)):
         assert bin_thresholds[i].shape == (127,)  # 128 - 1
@@ -82,7 +82,7 @@ def test_bin_mapper_n_features_transform():
 
 @pytest.mark.parametrize('max_bins', [16, 128, 255])
 def test_map_to_bins(max_bins):
-    bin_thresholds = [_find_binning_threshold(DATA[:, i], max_bins=max_bins)
+    bin_thresholds = [_find_binning_thresholds(DATA[:, i], max_bins=max_bins)
                       for i in range(2)]
     binned = np.zeros_like(DATA, dtype=X_BINNED_DTYPE, order='F')
     last_bin_idx = max_bins
@@ -326,8 +326,8 @@ def test_categorical_feature(n_bins):
     expected_trans = np.array([[0, 1, 2, n_bins - 1, 3, 4, 5]]).T
     assert_array_equal(bin_mapper.transform(X), expected_trans)
 
-    # For unknown categories, the mapping is incorrect. This never happens in
-    # practice. This check is only for illustration purpose.
+    # For unknown categories, the mapping is incorrect / undefined. This never
+    # happens in practice. This check is only for illustration purpose.
     X = np.array([[-1, 100]], dtype=X_DTYPE).T
     expected_trans = np.array([[0, 6]]).T
     assert_array_equal(bin_mapper.transform(X), expected_trans)
@@ -367,7 +367,7 @@ def test_make_known_categories_bitsets():
 
     known_cat_bitsets, f_idx_map = bin_mapper.make_known_categories_bitsets()
 
-    # Note that non-categorical features, values are left to 0
+    # Note that for non-categorical features, values are left to 0
     expected_f_idx_map = np.array([0, 0, 1], dtype=np.uint8)
     assert_allclose(expected_f_idx_map, f_idx_map)
 

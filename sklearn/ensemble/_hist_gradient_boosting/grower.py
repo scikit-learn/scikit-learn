@@ -233,8 +233,8 @@ class TreeGrower:
 
         if np.any(np.logical_and(is_categorical == 1,
                                  monotonic_cst != MonotonicConstraint.NO_CST)):
-            raise ValueError("categorical features cannot have monotonic "
-                             "constraints")
+            raise ValueError("Categorical features cannot have monotonic "
+                             "constraints.")
 
         hessians_are_constant = hessians.shape[0] == 1
         self.histogram_builder = HistogramBuilder(

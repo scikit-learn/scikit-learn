@@ -113,29 +113,30 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if self.categorical_features is None:
             return None, None
 
-        cat_features_input = np.asarray(self.categorical_features)
+        categorical_features = np.asarray(self.categorical_features)
 
-        if cat_features_input.dtype.kind not in ('i', 'b'):
+        if categorical_features.size == 0:
+            return None, None
+
+        if categorical_features.dtype.kind not in ('i', 'b'):
             raise ValueError("categorical_features must be an array-like of "
                              "bools or array-like of ints.")
 
         n_features = X.shape[1]
 
         # check for categorical features as indices
-        if cat_features_input.dtype.kind == 'i':
-            if (np.max(cat_features_input) >= n_features
-                    or np.min(cat_features_input) < 0):
+        if categorical_features.dtype.kind == 'i':
+            if (np.max(categorical_features) >= n_features
+                    or np.min(categorical_features) < 0):
                 raise ValueError("categorical_features set as integer "
                                  "indices must be in [0, n_features - 1]")
-            cat_feats = np.zeros(n_features, dtype=bool)
-            cat_feats[cat_features_input] = True
+            is_categorical = np.zeros(n_features, dtype=bool)
+            is_categorical[categorical_features] = True
         else:
-            if cat_features_input.shape[0] != n_features:
+            if categorical_features.shape[0] != n_features:
                 raise ValueError("categorical_features set as a boolean mask "
                                  "must have shape (n_features,)")
-            cat_feats = cat_features_input
-
-        is_categorical = cat_feats
+            is_categorical = categorical_features
 
         if not np.any(is_categorical):
             return None, None

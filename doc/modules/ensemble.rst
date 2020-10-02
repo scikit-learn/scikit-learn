@@ -1152,6 +1152,10 @@ that the feature is supposed to have a positive / negative effect on the
 probability to belong to the positive class. Monotonic constraints are not
 supported for multiclass context.
 
+.. note::
+    Since categories are unordered quantities, it is not possible to enforce
+    monotonic constraints on categorical features.
+
 .. topic:: Examples:
 
   * :ref:`sphx_glr_auto_examples_ensemble_plot_monotonic_constraints.py`

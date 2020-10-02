@@ -6,7 +6,7 @@ This module contains the TreePredictor class which is used for prediction.
 import numpy as np
 
 from .common import Y_DTYPE
-from ._predictor import _predict_from_data
+from ._predictor import _predict_from_raw_data
 from ._predictor import _predict_from_binned_data
 from ._predictor import _compute_partial_dependence
 
@@ -63,8 +63,8 @@ class TreePredictor:
             The raw predicted values.
         """
         out = np.empty(X.shape[0], dtype=Y_DTYPE)
-        _predict_from_data(self.nodes, X, self.raw_left_cat_bitsets,
-                           known_cat_bitsets, f_idx_map, out)
+        _predict_from_raw_data(self.nodes, X, self.raw_left_cat_bitsets,
+                               known_cat_bitsets, f_idx_map, out)
         return out
 
     def predict_binned(self, X, missing_values_bin_idx):

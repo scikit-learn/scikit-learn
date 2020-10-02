@@ -905,7 +905,7 @@ def test_categorical_encoding_strategies():
      r"categorical_features set as a boolean mask must have shape "
      r"\(n_features,\)"),
     ([True, True, False, False], [0, -1, 0, 1],
-     "categorical features cannot have monotonic constraints"),
+     "Categorical features cannot have monotonic constraints"),
 ])
 def test_categorical_spec_errors(Est, categorical_features, monotonic_cst,
                                  expected_msg):
@@ -921,6 +921,21 @@ def test_categorical_spec_errors(Est, categorical_features, monotonic_cst,
 
     with pytest.raises(ValueError, match=expected_msg):
         est.fit(X, y)
+
+
+@pytest.mark.parametrize('Est', (HistGradientBoostingClassifier,
+                                 HistGradientBoostingRegressor))
+@pytest.mark.parametrize('categorical_features', ([False, False], []))
+@pytest.mark.parametrize('as_array', (True, False))
+def test_categorical_spec_no_categories(Est, categorical_features, as_array):
+    # Make sure we can properly detect that no categorical features are present
+    # even if the categorical_features parameter is not None
+    X = np.arange(10).reshape(5, 2)
+    y = np.arange(5)
+    if as_array:
+        categorical_features = np.asarray(categorical_features)
+    est = Est(categorical_features=categorical_features).fit(X, y)
+    assert est.is_categorical_ is None
 
 
 @pytest.mark.parametrize('Est', (HistGradientBoostingClassifier,

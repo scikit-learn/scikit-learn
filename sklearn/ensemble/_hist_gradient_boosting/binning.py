@@ -17,14 +17,14 @@ from .common import X_DTYPE, X_BINNED_DTYPE, ALMOST_INF, X_BITSET_INNER_DTYPE
 from ._bitset import set_bitset_memoryview
 
 
-def _find_binning_threshold(col_data, max_bins):
+def _find_binning_thresholds(col_data, max_bins):
     """Extract quantiles from a continuous feature.
 
     Missing values are ignored for finding the thresholds.
 
     Parameters
     ----------
-    col_data : array-like, shape (n_features,)
+    col_data : array-like, shape (n_samples,)
         The continuous feature to bin.
     max_bins: int
         The maximum number of bins to use for non-missing values. If for a
@@ -36,8 +36,8 @@ def _find_binning_threshold(col_data, max_bins):
     ------
     binning_thresholds : ndarray of shape(min(max_bins, n_unique_values) - 1,)
         The increasing numeric values that can be used to separate the bins.
-        A given value x is mapped into bin value i iff
-        thresholds[i - 1] < x <= thresholds[i]
+        A given value x will be mapped into bin value i iff
+        bining_thresholds[i - 1] < x <= binning_thresholds[i]
 
     """
     # ignore missing values when computing bin thresholds
@@ -108,7 +108,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
             default=none
         For each categorical feature, the array indicates the set of unique
         categorical values. These should be the possible values over all the
-        data, not just the training data. For continuous feature, the
+        data, not just the training data. For continuous features, the
         corresponding entry should be None.
     random_state: int, RandomState instance or None, default=None
         Pseudo-random number generator to control the random sub-sampling.
@@ -213,12 +213,13 @@ class _BinMapper(TransformerMixin, BaseEstimator):
 
         for f_idx in range(n_features):
             if not self.is_categorical_[f_idx]:
-                thresholds = _find_binning_threshold(X[:, f_idx], max_bins)
+                thresholds = _find_binning_thresholds(X[:, f_idx], max_bins)
                 n_bins_non_missing.append(thresholds.shape[0] + 1)
             else:
-                # Since there are at most max_bins categories and since values
-                # are < 254, the thresholds *are* the unique categorical
-                # values.
+                # Since categories are assumed to be encoded in
+                # [0, n_cats] and since n_cats <= max_bins,
+                # the thresholds *are* the unique categorical values. This will
+                # lead to the correct mapping in transform()
                 thresholds = known_categories[f_idx]
                 n_bins_non_missing.append(thresholds.shape[0])
 
@@ -256,15 +257,13 @@ class _BinMapper(TransformerMixin, BaseEstimator):
                 'to transform()'.format(self.n_bins_non_missing_.shape[0],
                                         X.shape[1])
             )
-
         binned = np.zeros_like(X, dtype=X_BINNED_DTYPE, order='F')
         _map_to_bins(X, self.bin_thresholds_, self.missing_values_bin_idx_,
                      binned)
         return binned
 
     def make_known_categories_bitsets(self):
-        """Create a mapping from original feature indices to known categorical
-        indices and a bitset for known categories.
+        """Create bitsets of known categories.
 
         Returns
         -------

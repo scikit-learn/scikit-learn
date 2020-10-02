@@ -93,17 +93,6 @@ def test_infinite_values_and_thresholds(num_threshold, expected_predictions):
     assert np.all(predictions == expected_predictions)
 
 
-def _construct_bitset(bins_go_left):
-    output = np.zeros(8, dtype=X_BITSET_INNER_DTYPE)
-
-    for threshold in bins_go_left:
-        i1 = threshold // 32
-        i2 = threshold % 32
-        output[i1] |= X_BITSET_INNER_DTYPE(1) << X_BITSET_INNER_DTYPE(i2)
-
-    return output
-
-
 @pytest.mark.parametrize(
     'bins_go_left, expected_predictions', [
         ([0, 3, 4, 6], [1, 0, 0, 1, 1, 0]),

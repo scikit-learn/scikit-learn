@@ -24,26 +24,26 @@ from ._bitset cimport in_bitset_2d_memoryview
 np.import_array()
 
 
-def _predict_from_data(
-        node_struct [::1] nodes,
+def _predict_from_raw_data(  # raw data = non-binned data
+        node_struct [:] nodes,
         const X_DTYPE_C [:, :] numeric_data,
         const BITSET_INNER_DTYPE_C [:, ::1] raw_left_cat_bitsets,
         const BITSET_INNER_DTYPE_C [:, ::1] known_cat_bitsets,
         const unsigned int [::1] f_idx_map,
-        Y_DTYPE_C [::1] out):
+        Y_DTYPE_C [:] out):
 
     cdef:
         int i
 
     for i in prange(numeric_data.shape[0], schedule='static', nogil=True):
-        out[i] = _predict_one_from_numeric_data(
+        out[i] = _predict_one_from_raw_data(
             nodes, numeric_data, raw_left_cat_bitsets,
             known_cat_bitsets,
             f_idx_map, i)
 
 
-cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
-        node_struct [::1] nodes,
+cdef inline Y_DTYPE_C _predict_one_from_raw_data(
+        node_struct [:] nodes,
         const X_DTYPE_C [:, :] numeric_data,
         const BITSET_INNER_DTYPE_C [:, ::1] raw_left_cat_bitsets,
         const BITSET_INNER_DTYPE_C [:, ::1] known_cat_bitsets,
