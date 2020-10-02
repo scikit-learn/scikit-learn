@@ -894,9 +894,6 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     out_activation_ : str
         Name of the output activation function.
 
-    loss_curve_ : list of shape (n_iters,)
-        Loss value evaluated at the end of each training step.
-
     Examples
     --------
     >>> from sklearn.neural_network import MLPClassifier
