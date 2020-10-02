@@ -32,6 +32,8 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
     unit variance :math:`v(y_\textrm{pred})` and
     unit deviance :math:`d(y,y_\textrm{pred})`.
 
+    .. versionadded:: 0.23
+
     Methods
     -------
     deviance
@@ -193,6 +195,8 @@ class TweedieDistribution(ExponentialDispersionModel):
     2     Gamma
     3     Inverse Gaussian
 
+    .. versionadded:: 0.23
+
     Parameters
     ----------
     power : float, default=0
@@ -324,25 +328,37 @@ class TweedieDistribution(ExponentialDispersionModel):
 
 
 class NormalDistribution(TweedieDistribution):
-    """Class for the Normal (aka Gaussian) distribution"""
+    """Class for the Normal (aka Gaussian) distribution.
+
+    .. versionadded:: 0.23
+    """
     def __init__(self):
         super().__init__(power=0)
 
 
 class PoissonDistribution(TweedieDistribution):
-    """Class for the scaled Poisson distribution"""
+    """Class for the scaled Poisson distribution.
+
+    .. versionadded:: 0.23
+    """
     def __init__(self):
         super().__init__(power=1)
 
 
 class GammaDistribution(TweedieDistribution):
-    """Class for the Gamma distribution"""
+    """Class for the Gamma distribution.
+
+    .. versionadded:: 0.23
+    """
     def __init__(self):
         super().__init__(power=2)
 
 
 class InverseGaussianDistribution(TweedieDistribution):
-    """Class for the scaled InverseGaussianDistribution distribution"""
+    """Class for the scaled InverseGaussianDistribution distribution.
+
+    .. versionadded:: 0.23
+    """
     def __init__(self):
         super().__init__(power=3)
 
