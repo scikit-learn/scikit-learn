@@ -790,6 +790,11 @@ class StandardScaler(TransformerMixin, BaseEstimator):
             counts_nan = sparse_constructor(
                         (np.isnan(X.data), X.indices, X.indptr),
                         shape=X.shape).sum(axis=0).A.ravel()
+            if sample_weight is not None:
+                _sample_weight_mean = np.mean(sample_weight)
+                sample_weight = (sparse.csr_matrix(sample_weight)
+                                 if X.format == 'csr'
+                                 else sparse.csc_matrix(sample_weight))
 
             if not hasattr(self, 'n_samples_seen_'):
                 self.n_samples_seen_ = (
@@ -798,16 +803,33 @@ class StandardScaler(TransformerMixin, BaseEstimator):
             if self.with_std:
                 # First pass
                 if not hasattr(self, 'scale_'):
-                    # TODO: add sample_weight
-                    self.mean_, self.var_ = mean_variance_axis(X, axis=0)
+                    if sample_weight is not None:
+                        # import pdb; pdb.set_trace()
+                        # from ..utils.extmath import _safe_accumulator_op
+                        new_sum = np.dot(sample_weight, X)   # safe_sparse_dot
+                        new_sample_count = np.sum(sample_weight) # * (~np.isnan(X)),axis=0)
+                        T = new_sum / new_sample_count
+                        # import pdb; pdb.set_trace()
+                        X2 = np.dot(sample_weight, X.multiply(X))
+                        # 2XT = 2 * X.multiply(T)
+                        T2 = new_sample_count * T.multiply(T)
+                        X2T = 2*T.multiply(np.dot(sample_weight, X))
+
+                        new_unnormalized_variance = X2-X2T+T2 #np.dot(sample_weight, X2 - 2*X*T + T**2)
+                        updated_variance = new_unnormalized_variance / new_sample_count
+                        # import pdb; pdb.set_trace()
+                        self.var_ = updated_variance
+
+                    else:
+                        self.mean_, self.var_ = mean_variance_axis(X, axis=0)
+
                 # Next passes
                 else:
                     self.mean_, self.var_, self.n_samples_seen_ = \
                         incr_mean_variance_axis(X, axis=0,
                                                 last_mean=self.mean_,
                                                 last_var=self.var_,
-                                                last_n=self.n_samples_seen_,
-                                                sample_weight=sample_weight)
+                                                last_n=self.n_samples_seen_)
             else:
                 self.mean_ = None
                 self.var_ = None
@@ -831,11 +853,23 @@ class StandardScaler(TransformerMixin, BaseEstimator):
                 self.n_samples_seen_ += X.shape[0] - np.isnan(X).sum(axis=0)
 
             elif sample_weight is not None:
-                self.mean_, self.var_, self.n_samples_seen_ = \
-                    _incremental_weighted_mean_and_var(X, sample_weight,
-                                                   self.mean_,
-                                                   self.var_,
-                                                   self.n_samples_seen_)
+                import pdb; pdb.set_trace()
+                new_sum = np.dot(X.T, sample_weight[:, None]).T  # safe_sparse_dot
+                new_sample_count = np.sum(sample_weight[:, None]) # * (~np.isnan(X)),axis=0)
+                T = new_sum / new_sample_count
+                # import pdb; pdb.set_trace()
+                # new_unnormalized_variance = np.dot(sample_weight, (X-T)**2)
+                new_unnormalized_variance = np.dot(sample_weight, X**2 - 2*X*T + T**2)
+                updated_variance = new_unnormalized_variance / new_sample_count
+                # import pdb; pdb.set_trace()
+                self.var_ = updated_variance
+
+                #
+                # self.mean_, self.var_, self.n_samples_seen_ = \
+                #    _incremental_weighted_mean_and_var(X, sample_weight,
+                #                                   self.mean_,
+                #                                   self.var_,
+                #                                   self.n_samples_seen_)
             else:
                 self.mean_, self.var_, self.n_samples_seen_ = \
                     _incremental_mean_and_var(X, self.mean_, self.var_,

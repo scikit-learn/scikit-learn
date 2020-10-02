@@ -294,7 +294,6 @@ def test_raises_value_error_if_sample_weights_greater_than_1d():
     n_sampless = [2, 3]
     n_featuress = [3, 2]
 
-    warning_msg = 'Sample weights must be 1D array or scalar'
     for n_samples, n_features in zip(n_sampless, n_featuress):
         X = rng.randn(n_samples, n_features)
         y = rng.randn(n_samples)
