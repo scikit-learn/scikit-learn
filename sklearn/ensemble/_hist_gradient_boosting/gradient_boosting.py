@@ -802,7 +802,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         >>> # explicitly require this experimental feature
         >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
         >>> # now you can import normally from ensemble
-        >>> from sklearn.ensemble import HistGradientBoostingClassifier
+        >>> from sklearn.ensemble import HistGradientBoostingRegressor
 
     Read more in the :ref:`User Guide <histogram_based_gradient_boosting>`.
 
