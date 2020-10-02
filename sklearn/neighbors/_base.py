@@ -15,7 +15,7 @@ import numbers
 import numpy as np
 from scipy.sparse import csr_matrix, issparse
 import joblib
-from joblib import Parallel, delayed, effective_n_jobs
+from joblib import Parallel, effective_n_jobs
 
 from ._ball_tree import BallTree
 from ._kd_tree import KDTree
@@ -28,6 +28,7 @@ from ..utils import _to_object_array
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils.validation import check_non_negative
+from ..utils.fixes import delayed
 from ..utils.fixes import parse_version
 from ..exceptions import DataConversionWarning, EfficiencyWarning
 
@@ -703,9 +704,7 @@ class KNeighborsMixin:
                     parse_version(joblib.__version__) < parse_version('0.12'))
             if old_joblib:
                 # Deal with change of API in joblib
-                check_pickle = False if old_joblib else None
-                delayed_query = delayed(_tree_query_parallel_helper,
-                                        check_pickle=check_pickle)
+                delayed_query = delayed(_tree_query_parallel_helper)
                 parallel_kwargs = {"backend": "threading"}
             else:
                 delayed_query = delayed(_tree_query_parallel_helper)
