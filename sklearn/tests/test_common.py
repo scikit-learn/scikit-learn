@@ -275,7 +275,7 @@ def test_strict_mode_parametrize_with_checks(estimator, check):
 
 # TODO: When more modules get added, we can remove it from this list to make
 # sure it gets tested. After we finish each module we can move the checks
-# into check_estimator
+# into sklearn.utils.estimator_checks.check_n_features_in
 N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE = {
     'calibration',
     'cluster',

@@ -3138,7 +3138,7 @@ def check_n_features_in_after_fitting(name, estimator_orig, strict_mode=True):
     n_samples = 100
     X = rng.normal(loc=100, size=(n_samples, 2))
     X = _pairwise_estimator_convert_X(X, estimator)
-    if is_regressor(estimator_orig):
+    if is_regressor(estimator):
         y = rng.normal(size=n_samples)
     else:
         y = rng.randint(low=0, high=2, size=n_samples)
@@ -3166,19 +3166,14 @@ def check_n_features_in_after_fitting(name, estimator_orig, strict_mode=True):
         return
 
     estimator = clone(estimator_orig)
-
-    has_classes = 'classes' in signature(estimator.partial_fit).parameters
-    if has_classes:
+    if is_classifier(estimator):
         estimator.partial_fit(X, y, classes=np.unique(y))
     else:
         estimator.partial_fit(X, y)
     assert estimator.n_features_in_ == X.shape[1]
 
     with raises(ValueError, match=msg):
-        if has_classes:
-            estimator.partial_fit(X_bad, y, classes=np.unique(y))
-        else:
-            estimator.partial_fit(X_bad, y)
+        estimator.partial_fit(X_bad, y)
 
 
 # set of checks that are completely strict, i.e. they have no non-strict part

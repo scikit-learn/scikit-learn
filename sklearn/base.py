@@ -362,7 +362,7 @@ class BaseEstimator:
             that it is equal to `X.shape[1]`.
             .. note::
                It is recommended to call reset=True in `fit` and in the first
-               call to `partial_fit`. All other methods that validates `X`
+               call to `partial_fit`. All other methods that validate `X`
                should set `reset=False`.
         """
         n_features = X.shape[1]
@@ -400,7 +400,7 @@ class BaseEstimator:
             provided when reset was last True.
             .. note::
                It is recommended to call reset=True in `fit` and in the first
-               call to `partial_fit`. All other methods that validates `X`
+               call to `partial_fit`. All other methods that validate `X`
                should set `reset=False`.
         validate_separately : False or tuple of dicts, default=False
             Only used if y is not None.
