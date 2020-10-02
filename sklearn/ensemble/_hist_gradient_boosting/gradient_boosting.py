@@ -850,6 +850,9 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         and 0 respectively correspond to a positive constraint, negative
         constraint and no constraint. Read more in the :ref:`User Guide
         <monotonic_cst_gbdt>`.
+
+        .. versionadded:: 0.23
+
     warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble. For results to be valid, the
@@ -859,6 +862,9 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         If 'auto', early stopping is enabled if the sample size is larger than
         10000. If True, early stopping is enabled, otherwise early stopping is
         disabled.
+
+        .. versionadded:: 0.23
+
     scoring : str or callable or None, default='loss'
         Scoring parameter to use for early stopping. It can be a single
         string (see :ref:`scoring_parameter`) or a callable (see
@@ -1075,6 +1081,9 @@ class HistGradientBoostingClassifier(ClassifierMixin,
         and 0 respectively correspond to a positive constraint, negative
         constraint and no constraint. Read more in the :ref:`User Guide
         <monotonic_cst_gbdt>`.
+
+        .. versionadded:: 0.23
+
     warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble. For results to be valid, the
@@ -1084,6 +1093,9 @@ class HistGradientBoostingClassifier(ClassifierMixin,
         If 'auto', early stopping is enabled if the sample size is larger than
         10000. If True, early stopping is enabled, otherwise early stopping is
         disabled.
+
+        .. versionadded:: 0.23
+
     scoring : str or callable or None, default='loss'
         Scoring parameter to use for early stopping. It can be a single
         string (see :ref:`scoring_parameter`) or a callable (see
