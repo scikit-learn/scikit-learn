@@ -3153,7 +3153,7 @@ def check_n_features_in_after_fitting(name, estimator_orig, strict_mode=True):
     X_bad = X[:, [1]]
 
     msg = (f"X has 1 features, but {name} is expecting {X.shape[1]} "
-            "features as input")
+           "features as input")
     for method in check_methods:
         func = getattr(estimator, method, None)
         if func is None:

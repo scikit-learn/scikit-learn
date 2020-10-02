@@ -275,7 +275,11 @@ def test_strict_mode_parametrize_with_checks(estimator, check):
 
 # TODO: When more modules get added, we can remove it from this list to make
 # sure it gets tested. After we finish each module we can move the checks
-# into sklearn.utils.estimator_checks.check_n_features_in
+# into sklearn.utils.estimator_checks.check_n_features_in.
+# sklearn.utils.estimator_checks.check_estimators_partial_fit_n_features
+# can either be removed or updated with the two more assertions:
+# 1. `n_features_in_` is set during the first call to `partial_fit`.
+# 2. More strict when it comes to the error message.
 N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE = {
     'calibration',
     'cluster',
