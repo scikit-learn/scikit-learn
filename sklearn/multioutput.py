@@ -146,6 +146,8 @@ class _MultiOutputEstimator(MetaEstimatorMixin,
         **fit_params : dict of string -> object
             Parameters passed to the ``estimator.fit`` method of each step.
 
+            .. versionadded:: 0.23
+
         Returns
         -------
         self : object
@@ -236,7 +238,7 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
         using `n_jobs>1` can result in slower performance due
         to the overhead of spawning processes.
 
-        .. versionchanged:: v0.20
+        .. versionchanged:: 0.20
            `n_jobs` default changed from 1 to None
 
     Attributes
@@ -305,7 +307,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-        .. versionchanged:: v0.20
+        .. versionchanged:: 0.20
            `n_jobs` default changed from 1 to None
 
     Attributes
@@ -347,6 +349,8 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
             weights.
         **fit_params : dict of string -> object
             Parameters passed to the ``estimator.fit`` method of each step.
+
+            .. versionadded:: 0.23
 
         Returns
         -------
@@ -447,6 +451,8 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             The target values.
         **fit_params : dict of string -> object
             Parameters passed to the `fit` method of each step.
+
+            .. versionadded:: 0.23
 
         Returns
         -------
@@ -817,6 +823,8 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
         **fit_params : dict of string -> object
             Parameters passed to the `fit` method at each step
             of the regressor chain.
+
+            .. versionadded:: 0.23
 
         Returns
         -------
