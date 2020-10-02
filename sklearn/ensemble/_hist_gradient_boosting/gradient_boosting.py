@@ -880,8 +880,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     verbose : int, default=0
         The verbosity level. If not zero, print some information about the
         fitting process.
-    random_state : int, np.random.RandomStateInstance or None, \
-        default=None
+    random_state : int, RandomState instance or None, default=None
         Pseudo-random number generator to control the subsampling in the
         binning process, and the train/validation data split if early stopping
         is enabled.
@@ -1106,8 +1105,7 @@ class HistGradientBoostingClassifier(ClassifierMixin,
     verbose : int, default=0
         The verbosity level. If not zero, print some information about the
         fitting process.
-    random_state : int, np.random.RandomStateInstance or None, \
-        default=None
+    random_state : int, RandomState instance or None, default=None
         Pseudo-random number generator to control the subsampling in the
         binning process, and the train/validation data split if early stopping
         is enabled.
