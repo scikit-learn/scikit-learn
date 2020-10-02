@@ -242,6 +242,9 @@ class OneHotEncoder(_BaseEncoder):
         - ``drop_idx_ = None`` if all the transformed features will be
           retained.
 
+        .. versionchanged:: 0.23
+           Added the possibility to contain `None` values.
+
     See Also
     --------
     OrdinalEncoder : Performs an ordinal (integer)
