@@ -731,6 +731,8 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         sample_weight : float or array-like of shape (n_samples,), default=None
             Sample weight.
 
+            .. versionadded:: 0.23
+
         check_input : bool, default=True
             Allow to bypass several input checking.
             Don't use this parameter unless you know what you do.
