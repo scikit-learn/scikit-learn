@@ -817,6 +817,10 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         "half least squares loss" and "half poisson deviance" to simplify the
         computation of the gradient. Furthermore, "poisson" loss internally
         uses a log-link and requires ``y >= 0``
+
+        .. versionchanged:: 0.23
+           Added option 'poisson'.
+
     learning_rate : float, default=0.1
         The learning rate, also known as *shrinkage*. This is used as a
         multiplicative factor for the leaves values. Use ``1`` for no
