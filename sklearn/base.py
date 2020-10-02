@@ -384,7 +384,7 @@ class BaseEstimator:
 
     def _validate_data(self, X, y=None, reset=True,
                        validate_separately=False,
-                       requires_y='auto', **check_params):
+                       requires_y='use_tag', **check_params):
         """Validate input data and set or check the `n_features_in_` attribute.
 
         Parameters
@@ -407,11 +407,11 @@ class BaseEstimator:
             Only used if y is not None.
             If False, call validate_X_y(). Else, it must be a tuple of kwargs
             to be used for calling check_array() on X and y respectively.
-        requires_y : bool or 'auto', default='auto'
-            If 'auto', the the 'requires_y' tag will be used to decide if `y`
+        requires_y : bool or 'use_tag', default='use_tag'
+            If 'use_tag', the 'requires_y' tag will be used to decide if `y`
             is required. If bool, then the caller decides if `y` is required.
             .. note::
-               It is recommended to leave requires_y='auto' in `fit and
+               It is recommended to leave requires_y='use_tag' in `fit and
                in the first call to `partial-fit. All other methods that
                validate `X` and does not require `y` should set
                `requires_y=False`.
@@ -427,7 +427,7 @@ class BaseEstimator:
         """
 
         if y is None:
-            if ((requires_y == 'auto' and self._get_tags()['requires_y']) or
+            if ((requires_y == 'use_tag' and self._get_tags()['requires_y']) or
                     (isinstance(requires_y, bool) and requires_y)):
                 raise ValueError(
                     f"This {self.__class__.__name__} estimator "
