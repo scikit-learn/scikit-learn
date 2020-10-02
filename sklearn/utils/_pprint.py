@@ -63,7 +63,7 @@ BaseEstimator.__repr__ for pretty-printing estimators"""
 # - long sequences (lists, tuples, dict items) with more than N elements are
 #   shortened using ellipsis (', ...') at the end.
 
-from inspect import signature
+from inspect import signature, _empty
 import pprint
 from collections import OrderedDict
 
@@ -97,7 +97,8 @@ def _changed_params(estimator):
 
     for k, v in params.items():
         if (k not in init_params or  # happens if k is part of a **kwargs
-            # avoid `repr` if possible, it can be costly for nested estimators
+            init_params[k] == _empty or  # k has no default value
+            # don't `repr` nested estimators, it causes nonlinear complexity
             (isinstance(v, BaseEstimator) and
                 v.__class__ != init_params[k].__class__) or
             (repr(v) != repr(init_params[k]) and
