@@ -12,10 +12,7 @@ from scipy.special import expit, logit
 
 
 class BaseLink(metaclass=ABCMeta):
-    """Abstract base class for Link functions.
-
-    .. versionadded:: 0.23
-    """
+    """Abstract base class for Link functions."""
 
     @abstractmethod
     def __call__(self, y_pred):
@@ -65,10 +62,7 @@ class BaseLink(metaclass=ABCMeta):
 
 
 class IdentityLink(BaseLink):
-    """The identity link function g(x)=x.
-
-    .. versionadded:: 0.23
-    """
+    """The identity link function g(x)=x."""
 
     def __call__(self, y_pred):
         return y_pred
@@ -84,10 +78,7 @@ class IdentityLink(BaseLink):
 
 
 class LogLink(BaseLink):
-    """The log link function g(x)=log(x).
-
-    .. versionadded:: 0.23
-    """
+    """The log link function g(x)=log(x)."""
 
     def __call__(self, y_pred):
         return np.log(y_pred)
@@ -103,10 +94,7 @@ class LogLink(BaseLink):
 
 
 class LogitLink(BaseLink):
-    """The logit link function g(x)=logit(x).
-
-    .. versionadded:: 0.23
-    """
+    """The logit link function g(x)=logit(x)."""
 
     def __call__(self, y_pred):
         return logit(y_pred)

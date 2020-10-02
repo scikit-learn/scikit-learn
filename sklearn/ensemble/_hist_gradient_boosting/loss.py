@@ -69,8 +69,6 @@ class BaseLoss(ABC):
         sample_weight : array-like of shape(n_samples,) default=None
             Weights of training data.
 
-            .. versionadded:: 0.23
-
         Returns
         -------
         gradients : ndarray, shape (prediction_dim, n_samples)
@@ -105,8 +103,6 @@ class BaseLoss(ABC):
 
         sample_weight : array-like of shape(n_samples,) default=None
             Weights of training data.
-
-            .. versionadded:: 0.23
 
         prediction_dim : int
             The dimension of one prediction: 1 for binary classification and
@@ -145,8 +141,6 @@ class BaseLoss(ABC):
 
         sample_weight : array-like of shape(n_samples,) default=None
             Weights of training data.
-
-            .. versionadded:: 0.23
         """
 
 
