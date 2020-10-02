@@ -108,6 +108,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         sample_weight : array-like of shape (n_samples,) default=None
             Weights of training data.
 
+            .. versionadded:: 0.23
+
         Returns
         -------
         self : object
