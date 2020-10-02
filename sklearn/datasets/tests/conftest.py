@@ -22,6 +22,10 @@ def _wrapped_fetch(f, dataset_name):
             return f(*args, **kwargs)
         except IOError:
             pytest.skip("Download {} to run this test".format(dataset_name))
+
+    # Necessary to display the expected error message when pandas is not
+    # installed.
+    wrapped.__name__ = f.__name__
     return wrapped
 
 
