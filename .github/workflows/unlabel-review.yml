@@ -13,4 +13,4 @@ jobs:
         if: github.event.pull_request.state == 'open'
         run: |
           echo "Marking pull request ${{ github.event.pull_request.number }} as reviewed"
-          curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -d '{"labels": ["Waiting for Reviewer"]}' https://api.github.com/repos/${{ github.repository }}/pull/${{ github.event.pull_request.number }}/labels
+          curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -d '{"labels": ["Waiting for Reviewer"]}' https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/labels
