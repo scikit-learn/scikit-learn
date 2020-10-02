@@ -3155,11 +3155,10 @@ def check_n_features_in_after_fitting(name, estimator_orig, strict_mode=True):
     msg = (f"X has 1 features, but {name} is expecting {X.shape[1]} "
            "features as input")
     for method in check_methods:
-        func = getattr(estimator, method, None)
-        if func is None:
+        if not hasattr(estimator, method):
             continue
         with raises(ValueError, match=msg):
-            func(X_bad)
+            getattr(estimator, method)(X_bad)
 
     # partial_fit will check in the second call
     if not hasattr(estimator, "partial_fit"):
