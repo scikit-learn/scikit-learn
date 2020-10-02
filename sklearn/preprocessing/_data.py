@@ -791,7 +791,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
                         (np.isnan(X.data), X.indices, X.indptr),
                         shape=X.shape).sum(axis=0).A.ravel()
             if sample_weight is not None:
-                _sample_weight_mean = np.mean(sample_weight)
+                # _sample_weight_mean = np.mean(sample_weight)
                 sample_weight = (sparse.csr_matrix(sample_weight)
                                  if X.format == 'csr'
                                  else sparse.csc_matrix(sample_weight))
@@ -804,21 +804,33 @@ class StandardScaler(TransformerMixin, BaseEstimator):
                 # First pass
                 if not hasattr(self, 'scale_'):
                     if sample_weight is not None:
-                        # import pdb; pdb.set_trace()
-                        # from ..utils.extmath import _safe_accumulator_op
-                        new_sum = np.dot(sample_weight, X)   # safe_sparse_dot
-                        new_sample_count = np.sum(sample_weight) # * (~np.isnan(X)),axis=0)
+                        from sklearn.utils.extmath import safe_sparse_dot
+                        # adapted for incremental variance with weights from
+                        # T. Chan, G. Golub, R. LeVeque. Algorithms for
+                        # computing the sample
+                        # variance: recommendations, The American Statistician,
+                        # Vol. 37, No. 3,
+                        # pp. 242-247
+                        new_sum = safe_sparse_dot(sample_weight, X)
+                        new_sample_count = np.sum(sample_weight)
                         T = new_sum / new_sample_count
-                        # import pdb; pdb.set_trace()
-                        X2 = np.dot(sample_weight, X.multiply(X))
-                        # 2XT = 2 * X.multiply(T)
-                        T2 = new_sample_count * T.multiply(T)
-                        X2T = 2*T.multiply(np.dot(sample_weight, X))
 
-                        new_unnormalized_variance = X2-X2T+T2 #np.dot(sample_weight, X2 - 2*X*T + T**2)
-                        updated_variance = new_unnormalized_variance / new_sample_count
-                        # import pdb; pdb.set_trace()
-                        self.var_ = updated_variance
+                        # here we calculate: sample_weight*(X-T)**2
+                        X2 = safe_sparse_dot(sample_weight, X.multiply(X))
+                        T2 = new_sample_count * T.multiply(T)
+                        two_XT = 2 * T.multiply(
+                            safe_sparse_dot(sample_weight, X))
+                        new_unnormalized_variance = X2-two_XT+T2
+
+                        updated_variance = (new_unnormalized_variance /
+                                            new_sample_count)
+                        self.var_ = updated_variance.toarray().ravel()
+                        sample_weight = sample_weight.toarray().ravel()
+                        self.mean_ = np.average(X.toarray(),
+                                                weights=sample_weight,
+                                                axis=0)
+                        # TODO: make mean_ work for sparse
+                        # TODO: move all this to sparsefuncs.py
 
                     else:
                         self.mean_, self.var_ = mean_variance_axis(X, axis=0)
@@ -853,23 +865,11 @@ class StandardScaler(TransformerMixin, BaseEstimator):
                 self.n_samples_seen_ += X.shape[0] - np.isnan(X).sum(axis=0)
 
             elif sample_weight is not None:
-                import pdb; pdb.set_trace()
-                new_sum = np.dot(X.T, sample_weight[:, None]).T  # safe_sparse_dot
-                new_sample_count = np.sum(sample_weight[:, None]) # * (~np.isnan(X)),axis=0)
-                T = new_sum / new_sample_count
-                # import pdb; pdb.set_trace()
-                # new_unnormalized_variance = np.dot(sample_weight, (X-T)**2)
-                new_unnormalized_variance = np.dot(sample_weight, X**2 - 2*X*T + T**2)
-                updated_variance = new_unnormalized_variance / new_sample_count
-                # import pdb; pdb.set_trace()
-                self.var_ = updated_variance
-
-                #
-                # self.mean_, self.var_, self.n_samples_seen_ = \
-                #    _incremental_weighted_mean_and_var(X, sample_weight,
-                #                                   self.mean_,
-                #                                   self.var_,
-                #                                   self.n_samples_seen_)
+                self.mean_, self.var_, self.n_samples_seen_ = \
+                    _incremental_weighted_mean_and_var(X, sample_weight,
+                                                       self.mean_,
+                                                       self.var_,
+                                                       self.n_samples_seen_)
             else:
                 self.mean_, self.var_, self.n_samples_seen_ = \
                     _incremental_mean_and_var(X, self.mean_, self.var_,

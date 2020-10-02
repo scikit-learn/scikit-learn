@@ -335,30 +335,46 @@ def test_standard_scaler_sample_weights():
     assert_almost_equal(scaler.transform(X_test), scaler_w.transform(X_test))
 
 
+# TODO
+def test_sample_weight_partial_fit():
+    pass
+
+
+# TODO
+def test_sample_weight_scalar_partial_fit():
+    pass
+
+
+# TODO: add parametrize
 def test_standard_scaler_sparse_sample_weights():
-    # TODO: still work needed
     # weighted StandardScaler
-    Xw_dense = np.array([[3.0, 0, 4.0], [1.0, 0.0, 0.0], [2.0, 3.0, 0.0]])
+    Xw_dense = [[1, 2, 3], [4, 5, 6]]
+    # np.array([[3.0, 0, 4.0], [1.0, 0.0, 0.0], [2.0, 3.0, 0.0]])
     Xw_sparse = sparse.csr_matrix(Xw_dense)
-    yw = [[3, 2], [2, 3], [4, 5]]
-    sample_weight = np.asarray([2., 1., 1.])
+    yw = [[3, 2], [2, 3]]  # [[3, 2], [2, 3], [4, 5]]
+    sample_weight = np.asarray([2., 1.])  # np.asarray([2., 1., 1.])
     scaler_w = StandardScaler(with_mean=False)
     scaler_w.fit(Xw_sparse, yw, sample_weight=sample_weight)
 
-    X_dense = np.array([[3.0, 0, 4.0], [3.0, 0, 4.0],
-                        [1.0, 0, 0.0], [2.0, 3.0, 0.0]])
+    X_dense = [[1, 2, 3], [1, 2, 3], [4, 5, 6]]
+    # np.array([[3.0, 0, 4.0], [3.0, 0, 4.0],
+    # [1.0, 0, 0.0], [2.0, 3.0, 0.0]])
     X_sparse = sparse.csr_matrix(X_dense)
-    y = [[3, 2], [2, 3], [4, 5], [2, 3]]
+    y = [[3, 2], [3, 2], [2, 3]]  # [[3, 2], [2, 3], [4, 5], [2, 3]]
     scaler = StandardScaler(with_mean=False)
     scaler.fit(X_sparse, y)
 
-    X_test = [[1.5, 2.5, 3.5], [3.5, 0.0, 5.5], [4.5, 0.0, 0.0]]
+    X_test = [[1.5, 2.5, 3.5], [3.5, 4.5, 5.5]]
+    # [[1.5, 2.5, 3.5], [3.5, 0.0, 5.5], [4.5, 0.0, 0.0]]
     X_test_sparse = sparse.csr_matrix(X_test)
 
     assert_almost_equal(scaler.mean_, scaler_w.mean_)
     assert_almost_equal(scaler.var_, scaler_w.var_)
-    assert_array_almost_equal(np.array(scaler.transform(X_test_sparse)),
-                              np.array(scaler_w.transform(X_test_sparse)))
+
+    transformed = scaler.transform(X_test_sparse)
+    transformed_w = scaler_w.transform(X_test_sparse)
+    assert_array_almost_equal(transformed.toarray(),
+                              transformed_w.toarray())
 
 
 def test_standard_scaler_1d():
