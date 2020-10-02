@@ -1,0 +1,20 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn import datasets
+from sklearn import svm
+from sklearn.model_selection import train_test_split
+from sklearn import svm
+from sklearn.metrics import accuracy_score
+digits= datasets.load_digits()
+digits.data.shape
+plt.figure(figsize=(20,4))
+for index,(image,label) in enumerate(zip(digits.data[0:6],digits.target[0:6])):
+    plt.subplot(1,6,index+1)
+    plt.imshow(np.reshape(image,(8,8)),cmap = plt.cm.gray_r)
+    plt.title(f'Training: {label}', fontsize = 20)
+svc = svm.SVC(gamma=0.001, C=100.)
+x_train,x_test,y_train,y_test = train_test_split(digits.data,digits.target,test_size = 0.25, random_state=0)
+svc.fit(x_train, y_train)
+pred_acc = svc.predict(x_test)
+accuracy_score(y_test,pred1)
