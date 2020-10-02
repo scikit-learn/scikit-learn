@@ -3129,6 +3129,10 @@ _FULLY_STRICT_CHECKS = set([
 
 def check_transformer_get_feature_names_out(name, transformer_orig,
                                             strict_mode=True):
+    tags = transformer_orig._get_tags()
+    if "2darray" not in tags["X_types"] or tags["no_validation"]:
+        return
+
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                       random_state=0, n_features=2, cluster_std=0.1)
     X = StandardScaler().fit_transform(X)

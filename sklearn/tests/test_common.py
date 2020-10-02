@@ -292,9 +292,7 @@ GET_FEATURES_OUT_MODULES_TO_IGNORE = [
 
 GET_FEATURES_OUT_ESTIMATORS = [
    est for est in _tested_estimators('transformer')
-   if "2darray" in est._get_tags()["X_types"] and
-   not est._get_tags()["no_validation"] and
-   est.__module__.split('.')[1] not in GET_FEATURES_OUT_MODULES_TO_IGNORE
+   if est.__module__.split('.')[1] not in GET_FEATURES_OUT_MODULES_TO_IGNORE
 ]
 
 

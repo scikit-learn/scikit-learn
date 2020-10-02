@@ -371,4 +371,4 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         output_feature_names : list of str
             Feature names for transformer output.
         """
-        return self._encoder.get_feature_names(input_features)
+        return self._encoder.get_feature_names_out(input_features)
