@@ -56,6 +56,13 @@ def test_parameter_checking():
     assert_raise_message(ValueError, msg, NMF(solver='cd',
                                               beta_loss=1.0).fit, A)
 
+    msg = ("The multiplicative update ('mu') solver cannot update "
+           "zeros present in the initialization, and so leads to "
+           "poorer results when used jointly with init='nndsvd'. "
+           "Only init='nndsvda' or init='nndsvdar' are allowed.")
+    assert_raise_message(ValueError, msg, NMF(solver='mu',
+                                              init='nndsvd').fit, A)
+
     msg = "Negative values in data passed to"
     assert_raise_message(ValueError, msg, NMF().fit, -A)
     assert_raise_message(ValueError, msg, nmf._initialize_nmf, -A,
@@ -99,11 +106,11 @@ def test_initialize_variants():
         assert_almost_equal(evl[ref != 0], ref[ref != 0])
 
 
-# ignore UserWarning raised when both solver='mu' and init='nndsvd'
 @ignore_warnings(category=UserWarning)
-@pytest.mark.parametrize('solver', ('cd', 'mu'))
-@pytest.mark.parametrize('init',
-                         (None, 'nndsvd', 'nndsvda', 'nndsvdar', 'random'))
+@pytest.mark.parametrize(['solver', 'init'],
+                         [['cd', None], ['cd', 'nndsvd'], ['cd', 'nndsvda'],
+                          ['cd', 'nndsvdar'], ['mu', None], ['mu', 'nndsvda'],
+                          ['mu', 'nndsvdar']])
 @pytest.mark.parametrize('regularization',
                          (None, 'both', 'components', 'transformation'))
 def test_nmf_fit_nn_output(solver, init, regularization):
@@ -220,7 +227,7 @@ def test_nmf_sparse_transform():
         assert_array_almost_equal(A_fit_tr, A_tr, decimal=1)
 
 
-@pytest.mark.parametrize('init', ['random', 'nndsvd'])
+@pytest.mark.parametrize('init', ['random', 'nndsvdar'])
 @pytest.mark.parametrize('solver', ('cd', 'mu'))
 @pytest.mark.parametrize('regularization',
                          (None, 'both', 'components', 'transformation'))
@@ -560,7 +567,7 @@ def test_nmf_float32_float64_consistency(solver, regularization):
     nmf64 = NMF(solver=solver, regularization=regularization, random_state=0)
     W64 = nmf64.fit_transform(X)
 
-    assert_allclose(W32, W64, rtol=1e-6, atol=1e-5)
+    assert_allclose(W32, W64, rtol=1e-5, atol=1e-4)
 
 
 def test_nmf_custom_init_dtype_error():

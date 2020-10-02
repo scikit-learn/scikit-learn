@@ -222,11 +222,11 @@ def _check_string_param(solver, regularization, beta_loss, init):
             ' = %r' % (solver, beta_loss))
 
     if solver == 'mu' and init == 'nndsvd':
-        warnings.warn("The multiplicative update ('mu') solver cannot update "
-                      "zeros present in the initialization, and so leads to "
-                      "poorer results when used jointly with init='nndsvd'. "
-                      "You may try init='nndsvda' or init='nndsvdar' instead.",
-                      UserWarning)
+        raise ValueError("The multiplicative update ('mu') solver cannot "
+                         "update zeros present in the initialization, "
+                         "and so leads to poorer results when used jointly "
+                         "with init='nndsvd'. "
+                         "Only init='nndsvda' or init='nndsvdar' are allowed.")
 
     beta_loss = _beta_loss_to_float(beta_loss)
     return beta_loss
@@ -267,7 +267,7 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
         Default: None.
         Valid options:
 
-        - None: 'nndsvd' if n_components <= min(n_samples, n_features),
+        - None: 'nndsvdar' if n_components <= min(n_samples, n_features),
             otherwise 'random'.
 
         - 'random': non-negative random matrices, scaled with:
@@ -318,7 +318,7 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
 
     if init is None:
         if n_components <= min(n_samples, n_features):
-            init = 'nndsvd'
+            init = 'nndsvdar'
         else:
             init = 'random'
 
@@ -901,7 +901,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
 
         Valid options:
 
-        - None: 'nndsvd' if n_components < n_features, otherwise 'random'.
+        - None: 'nndsvdar' if n_components < n_features, otherwise 'random'.
 
         - 'random': non-negative random matrices, scaled with:
             sqrt(X.mean() / n_components)
@@ -1130,7 +1130,7 @@ class NMF(TransformerMixin, BaseEstimator):
         Default: None.
         Valid options:
 
-        - None: 'nndsvd' if n_components <= min(n_samples, n_features),
+        - None: 'nndsvdar' if n_components <= min(n_samples, n_features),
             otherwise random.
 
         - 'random': non-negative random matrices, scaled with:
