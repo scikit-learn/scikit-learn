@@ -362,7 +362,7 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
     See "Random Fourier Approximations for Skewed Multiplicative Histogram
     Kernels" by Fuxin Li, Catalin Ionescu and Cristian Sminchisescu.
 
-    See also
+    See Also
     --------
     AdditiveChi2Sampler : A different approach for approximating an additive
         variant of the chi squared kernel.
@@ -483,7 +483,7 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
     This estimator approximates a slightly different version of the additive
     chi squared kernel then ``metric.additive_chi2`` computes.
 
-    See also
+    See Also
     --------
     SkewedChi2Sampler : A Fourier-approximation to a non-additive variant of
         the chi squared kernel.
@@ -710,10 +710,10 @@ class Nystroem(TransformerMixin, BaseEstimator):
       Advances in Neural Information Processing Systems 2012
 
 
-    See also
+    See Also
     --------
     RBFSampler : An approximation to the RBF kernel using random Fourier
-                 features.
+        features.
 
     sklearn.metrics.pairwise.kernel_metrics : List of built-in kernels.
     """
@@ -813,3 +813,12 @@ class Nystroem(TransformerMixin, BaseEstimator):
                                  "or precomputed kernel")
 
         return params
+
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_transformer_preserve_dtypes':
+                'dtypes are preserved but not at a close enough precision',
+            },
+            'preserves_dtype': [np.float64, np.float32]
+        }
