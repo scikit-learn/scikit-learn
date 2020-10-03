@@ -61,10 +61,6 @@ def f(x):
 
 # whole range we want to plot
 x_plot = np.linspace(-1, 11, 100)
-lw = 2
-fig, ax = plt.subplots()
-ax.plot(x_plot, f(x_plot), color='cornflowerblue', linewidth=lw,
-        label="ground truth")
 
 # %%
 # To make it interesting, we only give a small subset of points to train on.
@@ -75,17 +71,23 @@ rng.shuffle(x_train)
 x_train = np.sort(x_train[:20])
 y_train = f(x_train)
 
-# plot training points
-ax.scatter(x_train, y_train, color='navy', s=30, marker='o',
-           label="training points")
-
-# %%
-# Now we are ready to create polynomial features, fit on the training points
-# and show how well they interpolate.
-
 # create matrix versions of these arrays to feed to transformers
 X_train = x_train[:, np.newaxis]
 X_plot = x_plot[:, np.newaxis]
+
+# %%
+# Now we are ready to create polynomial features and splines, fit on the
+# training points and show how well they interpolate.
+
+# plot function
+lw = 2
+fig, ax = plt.subplots()
+ax.plot(x_plot, f(x_plot), color='cornflowerblue', linewidth=lw,
+        label="ground truth")
+
+# plot training points
+ax.scatter(x_train, y_train, color='navy', s=30, marker='o',
+           label="training points")
 
 colors = ['teal', 'yellowgreen', 'gold']
 
@@ -108,7 +110,7 @@ ax.plot(x_plot, y_plot, color='coral', linewidth=lw,
         label="B-spline")
 ax.legend(loc='lower center')
 ax.set_ylim(-20, 10)
-fig
+plt.show()
 
 # %%
 # This shows nicely that higher degree polynomials can fit the data better. But
