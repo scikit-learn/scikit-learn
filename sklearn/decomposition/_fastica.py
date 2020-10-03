@@ -537,9 +537,6 @@ class FastICA(TransformerMixin, BaseEstimator):
         self.mixing_ = linalg.pinv(self.components_)
         self._unmixing = W
 
-        if compute_sources:
-            self.__sources = S
-
         return S
 
     def fit_transform(self, X, y=None):
