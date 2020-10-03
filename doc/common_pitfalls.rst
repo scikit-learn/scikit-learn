@@ -137,28 +137,30 @@ Data leakage during imputation
 ------------------------------
 
 There are a number of methods to impute missing values in data. For example,
-:class:`~sklearn.impute.SimpleImputer` allows you to replace missing values
-with the mean of each feature. Only the train data should be used to
-calculate this mean value, as including the test data in the mean calculation
-will introduce information about the test data into the model.
+:class:`~sklearn.impute.KNNIMputer` uses the mean value from neighbors to
+impute missing values. Only the train data should be used to calculate this
+mean value, as including the test data in the mean calculation will introduce
+information about the test data into the model.
 
 To demonstrate this, we will use the :ref:`diabetes_dataset` and
-artificially introduce 15% missing values::
+artificially introduce missing values to just the smallest `y` values,
+simulating data with values missing not at random::
 
-    >>> import numpy as np
-    >>> from sklearn.datasets import load_diabetes
-    >>> X, y = load_diabetes(return_X_y=True)
     >>> n_samples, n_features = X.shape
+    >>> indx = np.argsort(y)
+    >>> X_sorted = X[indx, :]
+    >>> y_sorted = y[indx]
     >>> rng = np.random.RandomState(42)
-    >>> missing_mask = rng.binomial(n=1, p=0.2, size=(n_samples, n_features))
-    >>> missing_mask = missing_mask.astype(bool)
-    >>> X_missing = X.copy()
-    >>> X_missing[missing_mask] = np.nan
+    >>> mask1 = rng.binomial(n=1, p=0.2, size=(100, n_features))
+    >>> mask2 = np.ones((n_samples-100, n_features))
+    >>> full_mask = np.vstack((mask1, mask2)).astype(bool)
+    >>> X_missing = X_sorted.copy()
+    >>> X_missing[full_mask] = np.nan
 
 **Wrong**
 
-Using all the data to calculate the feature means, to replace the missing
-values with, results in an overly optimsitic :math:`R^2`::
+Using all the data to calculate impute the missing values, results in an
+overly optimsitic :math:`R^2`::
 
     >>> from sklearn.impute import KNNImputer
     >>> from sklearn.model_selection import train_test_split
@@ -173,7 +175,7 @@ values with, results in an overly optimsitic :math:`R^2`::
     >>> y_pred = gbr.predict(X_test)
     >>> score = r2_score(y_test, y_pred)
     >>> print(f"R2 score: {score:.3f}")
-    R2 score: 0.332
+    R2 score: 0.418
 
 **Right**
 
@@ -192,7 +194,7 @@ used to fit our model::
     >>> y_pred = gbr.predict(X_impute_test)
     >>> score = r2_score(y_test, y_pred)
     >>> print(f"R2 score: {score:.3f}")
-    R2 score: 0.320
+    R2 score: 0.060
 
 The :class:`~sklearn.pipeline.Pipeline` is another way to prevent data
 leakage. It chains together the imputation and model estimators and ensures
@@ -206,8 +208,8 @@ cross-validation::
     >>> pipeline = make_pipeline(KNNImputer(),
     ...                          GradientBoostingRegressor(random_state=1))
     >>> scores = cross_val_score(pipeline, X_missing, y)
-    >>> print(f"Mean accuracy: {scores.mean():.3f}+/-{scores.std():.2f}")
-    Mean accuracy: 0.356+/-0.10
+    >>> print(f"Mean R2: {scores.mean():.3f}+/-{scores.std():.2f}")
+    Mean R2: -0.075+/-0.12
 
 How to avoid data leakage
 -------------------------
