@@ -90,7 +90,7 @@ matrix as a binary prediction (micro-averaging).
              :func:`sklearn.metrics.precision_score`,
              :func:`sklearn.metrics.f1_score`
 """
-###############################################################################
+# %%
 # In binary classification settings
 # --------------------------------------------------------
 #
@@ -121,7 +121,7 @@ classifier = svm.LinearSVC(random_state=random_state)
 classifier.fit(X_train, y_train)
 y_score = classifier.decision_function(X_test)
 
-###############################################################################
+# %%
 # Compute the average precision score
 # ...................................
 from sklearn.metrics import average_precision_score
@@ -130,7 +130,7 @@ average_precision = average_precision_score(y_test, y_score)
 print('Average precision-recall score: {0:0.2f}'.format(
       average_precision))
 
-###############################################################################
+# %%
 # Plot the Precision-Recall curve
 # ................................
 from sklearn.metrics import precision_recall_curve
@@ -141,7 +141,7 @@ disp = plot_precision_recall_curve(classifier, X_test, y_test)
 disp.ax_.set_title('2-class Precision-Recall curve: '
                    'AP={0:0.2f}'.format(average_precision))
 
-###############################################################################
+# %%
 # In multi-label settings
 # ------------------------
 #
@@ -170,7 +170,7 @@ classifier.fit(X_train, Y_train)
 y_score = classifier.decision_function(X_test)
 
 
-###############################################################################
+# %%
 # The average precision score in multi-label settings
 # ....................................................
 from sklearn.metrics import precision_recall_curve
@@ -193,7 +193,7 @@ average_precision["micro"] = average_precision_score(Y_test, y_score,
 print('Average precision score, micro-averaged over all classes: {0:0.2f}'
       .format(average_precision["micro"]))
 
-###############################################################################
+# %%
 # Plot the micro-averaged Precision-Recall curve
 # ...............................................
 #
@@ -209,7 +209,7 @@ plt.title(
     'Average precision score, micro-averaged over all classes: AP={0:0.2f}'
     .format(average_precision["micro"]))
 
-###############################################################################
+# %%
 # Plot Precision-Recall curve for each class and iso-f1 curves
 # .............................................................
 #
