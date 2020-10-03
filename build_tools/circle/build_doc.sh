@@ -182,6 +182,7 @@ conda create -n $CONDA_ENV_NAME --yes --quiet \
 source activate testenv
 pip install sphinx-gallery
 pip install numpydoc
+pip install sphinx-prompt
 
 # Build and install scikit-learn in dev mode
 python setup.py build_ext --inplace -j 3
