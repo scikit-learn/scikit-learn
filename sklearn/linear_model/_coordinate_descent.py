@@ -299,7 +299,7 @@ def lasso_path(X, y, *, eps=1e-3, n_alphas=100, alphas=None,
     [[0.         0.         0.46915237]
      [0.2159048  0.4425765  0.23668876]]
 
-    See also
+    See Also
     --------
     lars_path
     Lasso
@@ -687,7 +687,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
 
-    See also
+    See Also
     --------
     ElasticNetCV : Elastic net model with best model selection by
         cross-validation.
@@ -1005,7 +1005,7 @@ class Lasso(ElasticNet):
     >>> print(clf.intercept_)
     0.15...
 
-    See also
+    See Also
     --------
     lars_path
     lasso_path
@@ -1569,7 +1569,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
 
-    See also
+    See Also
     --------
     lars_path
     lasso_path
@@ -1786,7 +1786,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
 
         alpha = a + b and l1_ratio = a / (a + b).
 
-    See also
+    See Also
     --------
     enet_path
     ElasticNet
@@ -1936,7 +1936,7 @@ class MultiTaskElasticNet(Lasso):
     >>> print(clf.intercept_)
     [0.0872422 0.0872422]
 
-    See also
+    See Also
     --------
     MultiTaskElasticNet : Multi-task L1/L2 ElasticNet with built-in
         cross-validation.
@@ -2134,7 +2134,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
     >>> print(clf.intercept_)
     [-0.41888636 -0.87382323]
 
-    See also
+    See Also
     --------
     MultiTaskLasso : Multi-task L1/L2 Lasso with built-in cross-validation
     Lasso
@@ -2319,7 +2319,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     >>> print(clf.intercept_)
     [0.00166409 0.00166409]
 
-    See also
+    See Also
     --------
     MultiTaskElasticNet
     ElasticNetCV
@@ -2525,7 +2525,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     >>> reg.predict(X[:1,])
     array([[153.7971...,  94.9015...]])
 
-    See also
+    See Also
     --------
     MultiTaskElasticNet
     ElasticNetCV
