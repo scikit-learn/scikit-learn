@@ -1026,16 +1026,6 @@ def _check_is_permutation(indices, n_samples):
     return True
 
 
-# def _index_param_value(X, v, indices):
-#     """Private helper function for parameter value indexing."""
-#     if not _is_arraylike(v) or _num_samples(v) != _num_samples(X):
-#         # pass through: skip indexing
-#         return v
-#     if sp.issparse(v):
-#         v = v.tocsr()
-#     return _safe_indexing(v, indices)
-
-
 @_deprecate_positional_args
 def permutation_test_score(estimator, X, y, *, groups=None, cv=None,
                            n_permutations=100, n_jobs=None, random_state=0,
