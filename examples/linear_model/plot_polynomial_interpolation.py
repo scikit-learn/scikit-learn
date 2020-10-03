@@ -58,6 +58,7 @@ def f(x):
     """ function to approximate by polynomial interpolation"""
     return x * np.sin(x)
 
+
 # whole range we want to plot
 x_plot = np.linspace(-1, 11, 100)
 lw = 2
