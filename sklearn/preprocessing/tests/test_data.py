@@ -2588,13 +2588,13 @@ def test_spline_transformer_input_validation():
 
 def test_spline_transformer_feature_names():
     X = np.arange(20).reshape(10, 2)
-    splt = SplineTransformer(degree=3, n_knots=3, include_bias=True).fit(X)
+    splt = SplineTransformer(n_knots=3, degree=3, include_bias=True).fit(X)
     feature_names = splt.get_feature_names()
     assert_array_equal(feature_names,
                        ['x0_sp_0', 'x0_sp_1', 'x0_sp_2', 'x0_sp_3', 'x0_sp_4',
                         'x1_sp_0', 'x1_sp_1', 'x1_sp_2', 'x1_sp_3', 'x1_sp_4'])
 
-    splt = SplineTransformer(degree=3, n_knots=3, include_bias=False).fit(X)
+    splt = SplineTransformer(n_knots=3, degree=3, include_bias=False).fit(X)
     feature_names = splt.get_feature_names(['a', 'b'])
     assert_array_equal(feature_names,
                        ['a_sp_0', 'a_sp_1', 'a_sp_2', 'a_sp_3',
@@ -2611,7 +2611,7 @@ def test_spline_transformer_unity_decomposition(degree, n_knots, knots):
     # make the boundaries 0 and 1 part of X_train, for sure.
     X_train = np.r_[[[0]], X[::2, :], [[1]]]
     X_test = X[1::2, :]
-    splt = SplineTransformer(degree=degree, n_knots=n_knots, knots=knots,
+    splt = SplineTransformer(n_knots=n_knots, degree=degree, knots=knots,
                              include_bias=True)
     splt.fit(X_train)
     for X in [X_train, X_test]:
@@ -2625,7 +2625,7 @@ def test_spline_transformer_linear_regression(bias, intercept):
     X = np.linspace(0, 10, 100)[:, None]
     y = np.sin(X[:, 0]) + 2  # +2 to avoid the value 0 in assert_allclose
     pipe = Pipeline(
-        [['spline', SplineTransformer(degree=3, n_knots=15, include_bias=bias,
+        [['spline', SplineTransformer(n_knots=15, degree=3, include_bias=bias,
                                       extrapolation='constant')],
          ['ols', LinearRegression(fit_intercept=intercept)]])
     pipe.fit(X, y)
@@ -2643,7 +2643,7 @@ def test_spline_transformer_extrapolation(bias, intercept, degree):
 
     # 'constant'
     pipe = Pipeline(
-        [['spline', SplineTransformer(degree=degree, n_knots=4,
+        [['spline', SplineTransformer(n_knots=4, degree=degree,
                                       include_bias=bias,
                                       extrapolation='constant')],
          ['ols', LinearRegression(fit_intercept=intercept)]])
@@ -2652,7 +2652,7 @@ def test_spline_transformer_extrapolation(bias, intercept, degree):
 
     # 'linear'
     pipe = Pipeline(
-        [['spline', SplineTransformer(degree=degree, n_knots=4,
+        [['spline', SplineTransformer(n_knots=4, degree=degree,
                                       include_bias=bias,
                                       extrapolation='linear')],
          ['ols', LinearRegression(fit_intercept=intercept)]])
@@ -2660,7 +2660,7 @@ def test_spline_transformer_extrapolation(bias, intercept, degree):
     assert_allclose(pipe.predict([[-10], [5]]), [-10, 5])
 
     # 'error'
-    splt = SplineTransformer(degree=degree, n_knots=4, include_bias=bias,
+    splt = SplineTransformer(n_knots=4, degree=degree, include_bias=bias,
                              extrapolation='error')
     splt.fit(X)
     with pytest.raises(ValueError):
@@ -2676,7 +2676,7 @@ def test_spline_transformer_kbindiscretizer():
     n_bins = 5
     n_knots = n_bins + 1
 
-    splt = SplineTransformer(degree=0, n_knots=n_knots, knots='quantile',
+    splt = SplineTransformer(n_knots=n_knots, degree=0, knots='quantile',
                              include_bias=True)
     splines = splt.fit_transform(X)
 

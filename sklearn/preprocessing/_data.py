@@ -1819,13 +1819,13 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    degree : int, default=3
-        The polynomial degree of the spline basis. Must be a non-negative
-        integer.
-
     n_knots : int, default=5
         Number of knots of the splines if `knots` equals one of
         {'uniform', 'quantile'}. Must be larger or equal 2.
+
+    degree : int, default=3
+        The polynomial degree of the spline basis. Must be a non-negative
+        integer.
 
     knots : {'uniform', 'quantile'} or array-like of shape \
         (n_knots, n_features), default='uniform'
@@ -1888,7 +1888,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
     See :ref:`examples/linear_model/plot_polynomial_interpolation.py
     <sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py>`
     """
-    def __init__(self, degree=3, n_knots=5, *, knots='uniform',
+    def __init__(self, n_knots=5, degree=3, *, knots='uniform',
                  extrapolation='constant', include_bias=True, order='C'):
         self.degree = degree
         self.knots = knots
