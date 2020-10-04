@@ -2002,6 +2002,23 @@ def test_poisson_zero_nodes():
     reg.fit(X, y)
     assert np.all(reg.predict(X) > 0)
 
+    # FIXME: Test additional dataset where something goes wrong!!!
+    from sklearn.datasets import make_regression
+    n_features = 10
+    X, y = make_regression(
+        effective_rank=n_features * 2 // 3, tail_strength=0.6,
+        n_samples=1_000,
+        n_features=n_features,
+        n_informative=n_features * 2 // 3,
+    )
+    # some excess zeros
+    y[(-1 < y) & (y < 0)] = 0
+    # make sure the target is positive
+    y = np.abs(y)
+    reg = DecisionTreeRegressor(criterion='poisson', random_state=42)
+    reg.fit(X, y)
+    assert np.all(reg.predict(X) > 0)
+
 
 def test_poisson_vs_mse():
     # For a Poisson distributed target, Poisson loss should give better results
