@@ -185,8 +185,10 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
 
         self.components_ = VT
 
-        if self.algorithm == "randomized" or self.tol > 0:
-            X_transformed = self.transform(X)
+        # For consistent .fit_transform = .fit.transform, despite approx
+        if self.algorithm == "randomized" or \
+                (self.algorithm == "arpack" and self.tol > 0):
+            X_transformed = safe_sparse_dot(X, self.components_.T)
         else:
             X_transformed = U * Sigma
 
