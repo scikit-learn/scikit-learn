@@ -194,22 +194,14 @@ def test_truncated_svd_eq_pca(X_sparse):
     assert_allclose(svd.components_, pca.components_)
 
 
-def test_fit_transform(X_sparse):
-    # when: 1, algorithm="randomized", 2, algorithm="arpack" with tol > 0,
-    # fit_transform(X) should equal to fit(X).transform(X)
-
-    svd1 = TruncatedSVD(n_components=5, n_iter=7, random_state=42,
-                        algorithm='randomized')
-    svd2 = TruncatedSVD(n_components=5, n_iter=7, random_state=42,
-                        algorithm='randomized')
-    x1 = svd1.fit_transform(X_sparse)
-    x2 = svd2.fit(X_sparse).transform(X_sparse)
-    assert_almost_equal(x1, x2)
-
-    svd3 = TruncatedSVD(n_components=5, n_iter=7, random_state=42,
-                        algorithm='arpack', tol=1e-6)
-    svd4 = TruncatedSVD(n_components=5, n_iter=7, random_state=42,
-                        algorithm='arpack', tol=1e-6)
-    x3 = svd3.fit_transform(X_sparse)
-    x4 = svd4.fit(X_sparse).transform(X_sparse)
-    assert_almost_equal(x3, x4)
+@pytest.mark.parametrize("algorithm, tol", [
+    ('randomized', 0.), ('arpack', 1e-6), ('arpack', 0.)])
+@pytest.mark.parametrize('kind', ('dense', 'sparse'))
+def test_fit_transform(X_sparse, algorithm, tol, kind):
+    # fit_transform(X) should equal fit(X).transform(X)
+    X = X_sparse if kind == 'sparse' else X_sparse.toarray()
+    svd = TruncatedSVD(n_components=5, n_iter=7, random_state=42,
+                       algorithm=algorithm, tol=tol)
+    X_transformed_1 = svd.fit_transform(X)
+    X_transformed_2 = svd.fit(X).transform(X)
+    assert_allclose(X_transformed_1, X_transformed_2)
