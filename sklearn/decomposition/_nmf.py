@@ -222,11 +222,11 @@ def _check_string_param(solver, regularization, beta_loss, init):
             ' = %r' % (solver, beta_loss))
 
     if solver == 'mu' and init == 'nndsvd':
-        raise ValueError("The multiplicative update ('mu') solver cannot "
-                         "update zeros present in the initialization, "
-                         "and so leads to poorer results when used jointly "
-                         "with init='nndsvd'. "
-                         "Only init='nndsvda' or init='nndsvdar' are allowed.")
+        warnings.warn("The multiplicative update ('mu') solver cannot update "
+                      "zeros present in the initialization, and so leads to "
+                      "poorer results when used jointly with init='nndsvd'. "
+                      "You may try init='nndsvda' or init='nndsvdar' instead.",
+                      UserWarning)
 
     beta_loss = _beta_loss_to_float(beta_loss)
     return beta_loss
@@ -267,7 +267,7 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
         Default: None.
         Valid options:
 
-        - None: 'nndsvdar' if n_components <= min(n_samples, n_features),
+        - None: 'nndsvd' if n_components <= min(n_samples, n_features),
             otherwise 'random'.
 
         - 'random': non-negative random matrices, scaled with:
@@ -318,7 +318,7 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
 
     if init is None:
         if n_components <= min(n_samples, n_features):
-            init = 'nndsvdar'
+            init = 'nndsvd'
         else:
             init = 'random'
 
@@ -901,7 +901,11 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
 
         Valid options:
 
-        - None: 'nndsvdar' if n_components < n_features, otherwise 'random'.
+        - None: 'nndsvd' if n_components < n_features, otherwise 'random'.
+
+        .. deprecated:: 0.24
+           ``nndsvd`` has been deprecated for ``solver='mu'`` in version 0.24
+           and will be made unavailable from version 0.26.
 
         - 'random': non-negative random matrices, scaled with:
             sqrt(X.mean() / n_components)
@@ -1130,8 +1134,12 @@ class NMF(TransformerMixin, BaseEstimator):
         Default: None.
         Valid options:
 
-        - None: 'nndsvdar' if n_components <= min(n_samples, n_features),
+        - None: 'nndsvd' if n_components <= min(n_samples, n_features),
             otherwise random.
+
+        .. deprecated:: 0.24
+           ``nndsvd`` has been deprecated for ``solver='mu'`` in version 0.24
+           and will be made unavailable from version 0.26.
 
         - 'random': non-negative random matrices, scaled with:
             sqrt(X.mean() / n_components)
@@ -1253,7 +1261,7 @@ class NMF(TransformerMixin, BaseEstimator):
     factorization with the beta-divergence. Neural Computation, 23(9).
     """
     @_deprecate_positional_args
-    def __init__(self, n_components=None, *, init=None, solver='cd',
+    def __init__(self, n_components=None, *, init='warn', solver='cd',
                  beta_loss='frobenius', tol=1e-4, max_iter=200,
                  random_state=None, alpha=0., l1_ratio=0., verbose=0,
                  shuffle=False, regularization='both'):
@@ -1330,6 +1338,11 @@ class NMF(TransformerMixin, BaseEstimator):
         -------
         self
         """
+        if self.init == 'warn':
+            warnings.warn("The default value of init for solver 'mu' will "
+                          "change from 'nndsvd' to 'nndsvda' in 0.26.",
+                          FutureWarning)
+            self.init = None
         self.fit_transform(X, **params)
         return self
 
