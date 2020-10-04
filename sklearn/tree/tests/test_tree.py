@@ -2002,7 +2002,7 @@ def test_poisson_zero_nodes():
     reg.fit(X, y)
     assert np.all(reg.predict(X) > 0)
 
-    # FIXME: Test additional dataset where something goes wrong!!!
+    # Test additional dataset where something could go wrong.
     from sklearn.datasets import make_regression
     n_features = 10
     X, y = make_regression(
