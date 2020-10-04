@@ -522,8 +522,6 @@ Half Poisson deviance:
 
 .. math::
 
-    \bar{y}_m = \frac{1}{N_m} \sum_{y \in Q_m} y
-
     H(Q_m) = \frac{1}{N_m} \sum_{y \in Q_m} (y \log\frac{y}{\bar{y}_m}
     - y + \bar{y}_m)
 

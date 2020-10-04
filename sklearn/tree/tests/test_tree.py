@@ -308,9 +308,7 @@ def test_diabetes_underfit(name, Tree, criterion, max_depth, max_loss):
                                      reg.predict(diabetes.data))
     else:
         loss = mean_squared_error(diabetes.target, reg.predict(diabetes.data))
-    assert 0 < loss < max_loss, (
-        f"Failed with {name}, criterion = {criterion} and loss = {loss}"
-    )
+    assert 0 < loss < max_loss
 
 
 def test_probability():
@@ -1994,17 +1992,21 @@ def test_poisson_zero_nodes():
     X = [[0, 0], [0, 1], [0, 2], [0, 3],
          [1, 0], [1, 2], [1, 2], [1, 3]]
     y = [0, 0, 0, 0, 1, 2, 3, 4]
-    # Note that X[:, 0] == 0 is a 100% indicator for y == 0. The tree could
-    # easily learn that.
+    # Note that X[:, 0] == 0 is a 100% indicator for y == 0. The tree can
+    # easily learn that:
+    reg = DecisionTreeRegressor(criterion="mse", random_state=1)
+    reg.fit(X, y)
+    assert np.amin(reg.predict(X)) == 0
+    # whereas Poisson must predict strictly positive numbers
     reg = DecisionTreeRegressor(criterion="poisson", random_state=1)
     reg.fit(X, y)
     assert np.all(reg.predict(X) > 0)
 
 
 def test_poisson_vs_mse():
-    # For Poisson distributed target, Poisson loss should give better results
+    # For a Poisson distributed target, Poisson loss should give better results
     # than least squares measured in Poisson deviance as metric.
-    # Compare to
+    # We have a similar test, test_poisson(), in
     # sklearn/ensemble/_hist_gradient_boosting/tests/test_gradient_boosting.py
     # Note: Some fine tuning was needed to have metric_poi < metric_dummy on
     # the test set!

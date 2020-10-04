@@ -1349,9 +1349,9 @@ cdef class Poisson(RegressionCriterion):
     # Poisson loss = - 1/n * sum(y_true * log(y_pred))
     #              = - 1/n * sum(y_true * log(mean(y_true))
     #              = - mean(y_true) * log(mean(y_true))
-    # With this trick, as for MSE, children_impurity would only need to go over
-    # left xor right split, not both.
-    # This could be faster.
+    # With this trick (used in proxy_impurity_improvement()), as for MSE,
+    # children_impurity would only need to go over left xor right split, not
+    # both. This could be faster.
 
     cdef double node_impurity(self) nogil:
         """Evaluate the impurity of the current node.
@@ -1425,7 +1425,8 @@ cdef class Poisson(RegressionCriterion):
                                       SIZE_t end,
                                       DOUBLE_t* y_sum,
                                       DOUBLE_t weight_sum) nogil:
-        """Helper function to compute Poisson loss (~deviance)."""
+        """Helper function to compute Poisson loss (~deviance) of a given node.
+        """
         cdef const DOUBLE_t[:, ::1] y = self.y
         cdef DOUBLE_t* weight = self.sample_weight
 
