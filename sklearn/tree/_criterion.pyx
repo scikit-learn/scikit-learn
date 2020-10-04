@@ -1437,6 +1437,10 @@ cdef class Poisson(RegressionCriterion):
 
         for k in range(n_outputs):
             y_mean = y_sum[k] / weight_sum
+
+            if y_mean <= 0:
+                return INFINITY
+
             for p in range(start, end):
                 i = self.samples[p]
 
