@@ -143,16 +143,16 @@ mean value, as including the test data in the mean calculation will introduce
 information about the test data into the model.
 
 To demonstrate this, we will use the :ref:`diabetes_dataset` and
-artificially introduce missing values to just the smallest `y` values,
-simulating data with values missing not at random::
+artificially introduce missing values. The smallest 100 `y` values are 10 times
+more likely to be missing, simulating 'missing not at random'::
 
     >>> n_samples, n_features = X.shape
     >>> indx = np.argsort(y)
     >>> X_sorted = X[indx, :]
     >>> y_sorted = y[indx]
     >>> rng = np.random.RandomState(42)
-    >>> mask1 = rng.binomial(n=1, p=0.2, size=(100, n_features))
-    >>> mask2 = np.ones((n_samples-100, n_features))
+    >>> mask1 = rng.binomial(n=1, p=0.1, size=(100, n_features))
+    >>> mask2 = rng.binomial(n=1, p=0.01, size=(n_samples-100, n_features))
     >>> full_mask = np.vstack((mask1, mask2)).astype(bool)
     >>> X_missing = X_sorted.copy()
     >>> X_missing[full_mask] = np.nan
@@ -175,26 +175,27 @@ overly optimsitic :math:`R^2`::
     >>> y_pred = gbr.predict(X_test)
     >>> score = r2_score(y_test, y_pred)
     >>> print(f"R2 score: {score:.3f}")
-    R2 score: 0.418
+    R2 score: 0.405
 
 **Right**
 
 As above, splitting your data into test and train subsets should be done
-first. This enables imputation to be performed on just the train subset then
-used to fit our model::
+first. This enables imputation to be performed using just the train subset,
+which can then used to fit our model. The :math:`R^2` score is now much
+less accurate::
 
     >>> X_train, X_test, y_train, y_test = train_test_split(
     ...     X_missing, y, random_state=42)
     >>> impute = KNNImputer()
-    >>> X_impute_impute = impute.fit_transform(X_train)
+    >>> X_train_impute = impute.fit_transform(X_train)
     >>> gbr = GradientBoostingRegressor(random_state=1)
-    >>> gbr.fit(X_impute_impute, y_train)
+    >>> gbr.fit(X_train_impute, y_train)
     GradientBoostingRegressor(random_state=1)
-    >>> X_impute_test = impute.transform(X_test)
-    >>> y_pred = gbr.predict(X_impute_test)
+    >>> X_test_impute = impute.transform(X_test)
+    >>> y_pred = gbr.predict(X_test_impute)
     >>> score = r2_score(y_test, y_pred)
     >>> print(f"R2 score: {score:.3f}")
-    R2 score: 0.060
+    R2 score: -0.159
 
 The :class:`~sklearn.pipeline.Pipeline` is another way to prevent data
 leakage. It chains together the imputation and model estimators and ensures
@@ -209,7 +210,7 @@ cross-validation::
     ...                          GradientBoostingRegressor(random_state=1))
     >>> scores = cross_val_score(pipeline, X_missing, y)
     >>> print(f"Mean R2: {scores.mean():.3f}+/-{scores.std():.2f}")
-    Mean R2: -0.075+/-0.12
+    Mean R2: -0.220+/-0.09
 
 How to avoid data leakage
 -------------------------
