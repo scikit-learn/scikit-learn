@@ -146,6 +146,9 @@ To demonstrate this, we will use the :ref:`diabetes_dataset` and
 artificially introduce missing values. The smallest 100 `y` values are 10 times
 more likely to be missing, simulating 'missing not at random'::
 
+    >>> import numpy as np
+    >>> from sklearn.datasets import load_diabetes
+    >>> X, y = load_diabetes(return_X_y=True)
     >>> n_samples, n_features = X.shape
     >>> indx = np.argsort(y)
     >>> X_sorted = X[indx, :]
