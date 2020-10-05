@@ -135,33 +135,54 @@ class _BaseScorer:
             )
 
     def _select_proba(self, y_pred, classes, support_multi_class):
-        """Select the column of y_pred when probabilities are provided."""
+        """Select the column of `y_pred` when probabilities are provided.
+
+        If `support_multi_class=True` and `y_pred` is valid, then this method
+        is no-op.
+
+        Parameters
+        ----------
+        y_pred : ndarray of shape (n_samples, n_classes)
+            The prediction given by `predict_proba`.
+
+        classes : ndarray of shape (n_classes,)
+            The class labels for the estimator.
+
+        support_multi_class : bool
+            Whether to support multiclass which has been tagged as binary and
+            return `y_pred` as is.
+
+        Returns
+        -------
+        y_pred : ndarray of shape (n_samples,)
+            Probability predictions of the positive class.
+        """
         if y_pred.shape[1] == 2:
             pos_label = self._kwargs.get("pos_label", classes[1])
             self._check_pos_label(pos_label, classes)
             col_idx = np.flatnonzero(classes == pos_label)[0]
-            y_pred = y_pred[:, col_idx]
-        else:
-            err_msg = (
-                f"Got predict_proba of shape {y_pred.shape}, but need "
-                f"classifier with two classes for {self._score_func.__name__} "
-                f"scoring"
-            )
-            if support_multi_class and y_pred.shape[1] == 1:
-                # In _ProbaScorer, `y_true` can be tagged as binary while the
-                # `y_pred` is multi_class. This case is supported when `labels`
-                # is provided in the metric. E.g.:
-                # y_true = np.array([0, 1, 0, 1])
-                # y_score = np.array([[0.1 , 0.8 , 0.1 ],
-                #                     [0.3 , 0.4 , 0.3 ],
-                #                     [0.35, 0.5 , 0.15],
-                #                     [0.  , 0.2 , 0.8 ]])
-                # roc_auc_score(
-                #     y_true, y_score, labels=[0, 1, 2], multi_class='ovo'
-                # )
-                raise ValueError(err_msg)
-            elif not support_multi_class:
-                raise ValueError(err_msg)
+            return y_pred[:, col_idx]
+
+        err_msg = (
+            f"Got predict_proba of shape {y_pred.shape}, but need "
+            f"classifier with two classes for {self._score_func.__name__} "
+            f"scoring"
+        )
+        if support_multi_class and y_pred.shape[1] == 1:
+            # In _ProbaScorer, `y_true` can be tagged as binary while the
+            # `y_pred` is multi_class. This case is supported when `labels`
+            # is provided in the metric. E.g.:
+            # y_true = np.array([0, 1, 0, 1])
+            # y_score = np.array([[0.1 , 0.8 , 0.1 ],
+            #                     [0.3 , 0.4 , 0.3 ],
+            #                     [0.35, 0.5 , 0.15],
+            #                     [0.  , 0.2 , 0.8 ]])
+            # roc_auc_score(
+            #     y_true, y_score, labels=[0, 1, 2], multi_class='ovo'
+            # )
+            raise ValueError(err_msg)
+        elif not support_multi_class:
+            raise ValueError(err_msg)
 
         return y_pred
 

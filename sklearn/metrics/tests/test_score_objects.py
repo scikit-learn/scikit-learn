@@ -842,7 +842,7 @@ def test_average_precision_pos_label(string_labeled_classification_problem):
     average_precision_scorer = make_scorer(
         average_precision_score, needs_threshold=True,
     )
-    err_msg = "pos_label=1 is invalid. Set it to a label in y_true."
+    err_msg = "pos_label=1 is not a valid label. It should be one of "
     with pytest.raises(ValueError, match=err_msg):
         average_precision_scorer(clf, X_test, y_test)
 
@@ -908,6 +908,7 @@ def test_non_symmetric_metric_pos_label(
 ):
     # check that _PredictScorer leads to the right score when `pos_label` is
     # provided. We check for all possible metric supported.
+    # Note: At some point we may end up having "scorer tags".
     clf, X_test, y_test, y_pred, _, _ = string_labeled_classification_problem
 
     pos_label = "cancer"
