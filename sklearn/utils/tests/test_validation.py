@@ -1252,27 +1252,27 @@ def test_check_pandas_sparse_invalid(ntype1, ntype2):
 
 
 @pytest.mark.parametrize(
-    "ntype1, ntype2, expected_dtype",
+    "ntype1, ntype2, expected_subtype",
     [
-        ("longfloat", "longdouble", "float128"),
-        ("float16", "half", "float16"),
-        ("single", "float32", "float32"),
-        ("double", "float64", "float64"),
-        ("int8", "byte", "int8"),
-        ("short", "int16", "int16"),
-        ("intc", "int32", "int32"),
-        ("int0", "long", "int64"),
-        ("int", "long", "int64"),
-        ("int64", "longlong", "int64"),
-        ("int_", "intp", "int64"),
-        ("ubyte", "uint8", "uint8"),
-        ("uint16", "ushort", "uint16"),
-        ("uintc", "uint32", "uint32"),
-        ("uint", "uint64", "uint64"),
-        ("uintp", "ulonglong", "uint64"),
+        ("longfloat", "longdouble", np.floating),
+        ("float16", "half", np.floating),
+        ("single", "float32", np.floating),
+        ("double", "float64", np.floating),
+        ("int8", "byte", np.integer),
+        ("short", "int16", np.integer),
+        ("intc", "int32", np.integer),
+        ("int0", "long", np.integer),
+        ("int", "long", np.integer),
+        ("int64", "longlong", np.integer),
+        ("int_", "intp", np.integer),
+        ("ubyte", "uint8", np.unsignedinteger),
+        ("uint16", "ushort", np.unsignedinteger),
+        ("uintc", "uint32", np.unsignedinteger),
+        ("uint", "uint64", np.unsignedinteger),
+        ("uintp", "ulonglong", np.unsignedinteger)
     ]
 )
-def test_check_pandas_sparse_valid(ntype1, ntype2, expected_dtype):
+def test_check_pandas_sparse_valid(ntype1, ntype2, expected_subtype):
     # check that we support the conversion of sparse dataframe with mixed
     # type which can be converted safely.
     pd = pytest.importorskip("pandas", minversion="0.25.0")
@@ -1281,4 +1281,4 @@ def test_check_pandas_sparse_valid(ntype1, ntype2, expected_dtype):
                        'col2': pd.arrays.SparseArray([1, 0, 1],
                                                      dtype=ntype2)})
     arr = check_array(df, accept_sparse=['csr', 'csc'])
-    assert arr.dtype.name == expected_dtype
+    assert np.issubdtype(arr.dtype, expected_subtype)

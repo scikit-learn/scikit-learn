@@ -416,7 +416,7 @@ def min_max_axis(X, axis, ignore_nan=False):
     axis : int (either 0 or 1)
         Axis along which the axis should be computed.
 
-    ignore_nan : bool, default is False
+    ignore_nan : bool, default=False
         Ignore or passing through NaN values.
 
         .. versionadded:: 0.20
