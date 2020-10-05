@@ -178,7 +178,7 @@ overly optimsitic :math:`R^2`::
     >>> y_pred = gbr.predict(X_test)
     >>> score = r2_score(y_test, y_pred)
     >>> print(f"R2 score: {score:.3f}")
-    R2 score: 0.405
+    R2 score: -0.188
 
 **Right**
 
