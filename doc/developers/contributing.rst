@@ -654,7 +654,7 @@ Building the documentation requires installing some additional packages:
 .. prompt:: bash $
 
     pip install sphinx sphinx-gallery numpydoc matplotlib Pillow pandas \
-                scikit-image packaging seaborn
+                scikit-image packaging seaborn sphinx-prompt
 
 To build the documentation, you need to be in the ``doc`` folder:
 
