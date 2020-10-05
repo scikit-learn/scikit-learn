@@ -55,7 +55,7 @@ performing models.
 
 Finally, one can also observe that for some intermediate values of ``gamma`` we
 get equally performing models when ``C`` becomes very large. This suggests that
-the support vectors do not change anymore. The radius of the RBF kernel alone
+the set of support vectors does not change anymore. The radius of the RBF kernel alone
 acts as a good structural regularizer. Increasing ``C`` further doesn't help,
 likely because there are no more training points in violation (inside the
 margin or wrongly classified), or at least no better solution can be found.
