@@ -24,6 +24,7 @@ of outliers and inliers.
 """
 
 from time import time
+import math
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.neighbors import LocalOutlierFactor
@@ -46,9 +47,10 @@ models = [
     ("IForest", IsolationForest(random_state=rng, contamination="auto")),
 ]
 
-plt.figure(figsize=(5, len(datasets) * 3))
+rows = math.ceil(len(datasets)/2)
+plt.figure(figsize=(10, rows * 3))
 for dataset_idx, dataset_name in enumerate(datasets):
-    plt.subplot(len(datasets), 1, dataset_idx + 1)
+    plt.subplot(rows, 2, dataset_idx + 1)
 
     # loading and vectorization
     print(f"Loading {dataset_name} data")
@@ -139,19 +141,17 @@ for dataset_idx, dataset_name in enumerate(datasets):
             scoring = -model.fit(X).decision_function(X)
 
         fpr, tpr, thresholds = roc_curve(y, scoring)
-        AUC = auc(fpr, tpr)
-        label_ = str(model_name
-                     + ": %s (AUC = %0.3f, train time: %0.2fs)"
-                     % (dataset_name, AUC, fit_time))
+        area = auc(fpr, tpr)
+        label_ = (f'{model_name} (AUC = {area:0.3f}, '
+                  f'train time: {fit_time:0.2f})')
         plt.plot(fpr, tpr, lw=1, label=label_)
 
     plt.xlim([-0.05, 1.05])
     plt.ylim([-0.05, 1.05])
     plt.legend(loc="lower right")
-    if dataset_idx == 0:
-        plt.title("Receiver operating characteristic (ROC)")
+    plt.title(dataset_name)
     if dataset_idx == len(datasets) - 1:
         plt.xlabel("False Positive Rate")
         plt.ylabel("True Positive Rate")
-
+plt.tight_layout(pad=2.0)  # spacing between subplots
 plt.show()
