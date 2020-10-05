@@ -59,7 +59,7 @@ the set of support vectors does not change anymore. The radius of the RBF kernel
 acts as a good structural regularizer. Increasing ``C`` further doesn't help,
 likely because there are no more training points in violation (inside the
 margin or wrongly classified), or at least no better solution can be found.
-Performance being equal, it makes sense to use the smaller ``C`` values, since
+Scores being equal, it may make sense to use the smaller ``C`` values, since
 very high ``C`` values typically increase fitting time.
 
 On the other hand, lower ``C`` values generally lead to more support vectors,
