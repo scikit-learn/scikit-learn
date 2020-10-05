@@ -55,12 +55,12 @@ performing models.
 
 Finally, one can also observe that for some intermediate values of ``gamma`` we
 get equally performing models when ``C`` becomes very large. This suggests that
-the set of support vectors does not change anymore. The radius of the RBF kernel alone
-acts as a good structural regularizer. Increasing ``C`` further doesn't help,
-likely because there are no more training points in violation (inside the
-margin or wrongly classified), or at least no better solution can be found.
-Scores being equal, it may make sense to use the smaller ``C`` values, since
-very high ``C`` values typically increase fitting time.
+the set of support vectors does not change anymore. The radius of the RBF
+kernel alone acts as a good structural regularizer. Increasing ``C`` further
+doesn't help, likely because there are no more training points in violation
+(inside the margin or wrongly classified), or at least no better solution can
+be found. Scores being equal, it may make sense to use the smaller ``C`` 
+values, since very high ``C`` values typically increase fitting time.
 
 On the other hand, lower ``C`` values generally lead to more support vectors,
 which may increase prediction time. Therefore, lowering the value of ``C``
