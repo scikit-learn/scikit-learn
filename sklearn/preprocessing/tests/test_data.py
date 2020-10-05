@@ -372,12 +372,17 @@ def test_standard_scaler_sparse_sample_weights(Xw, X, sample_weight):
     scaler.fit(X_sparse, y)
 
 
-def test_standard_scaler_1d():
+@pytest.mark.parametrize("add_sample_weight", [False, True])
+def test_standard_scaler_1d(add_sample_weight):
     # Test scaling of dataset along single axis
     for X in [X_1row, X_1col, X_list_1row, X_list_1row]:
-
+        if add_sample_weight:
+            sample_weight = np.ones(len(X))
+        else:
+            sample_weight = None
         scaler = StandardScaler()
-        X_scaled = scaler.fit(X).transform(X, copy=True)
+        X_scaled = scaler.fit(X, sample_weight=sample_weight).transform(
+            X, copy=True)
 
         if isinstance(X, list):
             X = np.array(X)  # cast only after scaling done
