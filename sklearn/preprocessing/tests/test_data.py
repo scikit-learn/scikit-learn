@@ -455,7 +455,6 @@ def test_standard_scaler_numerical_stability():
     # Test numerical stability of scaling
     # np.log(1e-5) is taken because of its floating point representation
     # was empirically found to cause numerical problems with np.mean & np.std.
-
     x = np.full(8, np.log(1e-5), dtype=np.float64)
     # This does not raise a warning as the number of samples is too low
     # to trigger the problem in recent numpy
@@ -485,16 +484,23 @@ def test_standard_scaler_numerical_stability():
     assert_array_almost_equal(x_big_centered, x_small_scaled)
 
 
-def test_scaler_2d_arrays():
+@pytest.mark.parametrize("add_sample_weight", [False, True])
+def test_scaler_2d_arrays(add_sample_weight):
     # Test scaling of 2d array along first axis
+
     rng = np.random.RandomState(0)
     n_features = 5
     n_samples = 4
     X = rng.randn(n_samples, n_features)
     X[:, 0] = 0.0  # first feature is always of zero
+    if add_sample_weight:
+        sample_weight = np.ones(n_samples)
+    else:
+        sample_weight = None
 
     scaler = StandardScaler()
-    X_scaled = scaler.fit(X).transform(X, copy=True)
+    X_scaled = scaler.fit(X, sample_weight=sample_weight).transform(
+        X, copy=True)
     assert not np.any(np.isnan(X_scaled))
     assert scaler.n_samples_seen_ == n_samples
 
@@ -519,7 +525,8 @@ def test_scaler_2d_arrays():
     # Check that the data hasn't been modified
     assert X_scaled is not X
 
-    X_scaled = scaler.fit(X).transform(X, copy=False)
+    X_scaled = scaler.fit(X, sample_weight=sample_weight).transform(
+        X, copy=False)
     assert not np.any(np.isnan(X_scaled))
     assert_array_almost_equal(X_scaled.mean(axis=0), n_features * [0.0])
     assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
@@ -529,7 +536,8 @@ def test_scaler_2d_arrays():
     X = rng.randn(4, 5)
     X[:, 0] = 1.0  # first feature is a constant, non zero feature
     scaler = StandardScaler()
-    X_scaled = scaler.fit(X).transform(X, copy=True)
+    X_scaled = scaler.fit(X, sample_weight=sample_weight).transform(
+        X, copy=True)
     assert not np.any(np.isnan(X_scaled))
     assert_array_almost_equal(X_scaled.mean(axis=0), n_features * [0.0])
     assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
@@ -537,19 +545,25 @@ def test_scaler_2d_arrays():
     assert X_scaled is not X
 
 
-def test_scaler_float16_overflow():
+@pytest.mark.parametrize("add_sample_weight", [False, True])
+def test_scaler_float16_overflow(add_sample_weight):
     # Test if the scaler will not overflow on float16 numpy arrays
     rng = np.random.RandomState(0)
     # float16 has a maximum of 65500.0. On the worst case 5 * 200000 is 100000
     # which is enough to overflow the data type
     X = rng.uniform(5, 10, [200000, 1]).astype(np.float16)
+    if add_sample_weight:
+        sample_weight = np.ones(len(X))
+    else:
+        sample_weight = None
 
     with np.errstate(over='raise'):
-        scaler = StandardScaler().fit(X)
+        scaler = StandardScaler().fit(X, sample_weight=sample_weight)
         X_scaled = scaler.transform(X)
 
     # Calculate the float64 equivalent to verify result
-    X_scaled_f64 = StandardScaler().fit_transform(X.astype(np.float64))
+    X_scaled_f64 = StandardScaler().fit_transform(X.astype(np.float64),
+                                                  sample_weight=sample_weight)
 
     # Overflow calculations may cause -inf, inf, or nan. Since there is no nan
     # input, all of the outputs should be finite. This may be redundant since a
@@ -621,7 +635,8 @@ def test_minmax_scaler_partial_fit():
                                 n_samples_seen=scaler_incr.n_samples_seen_)
 
 
-def test_standard_scaler_partial_fit():
+@pytest.mark.parametrize("add_sample_weight", [False, True])
+def test_standard_scaler_partial_fit(add_sample_weight):
     # Test if partial_fit run over many batches of size 1 and 50
     # gives the same results as fit
     X = X_2d
@@ -629,11 +644,13 @@ def test_standard_scaler_partial_fit():
 
     for chunk_size in [1, 2, 50, n, n + 42]:
         # Test mean at the end of the process
-        scaler_batch = StandardScaler(with_std=False).fit(X)
+        scaler_batch = StandardScaler(with_std=False).fit(
+            X, sample_weight=sample_weight)
 
         scaler_incr = StandardScaler(with_std=False)
         for batch in gen_batches(n_samples, chunk_size):
-            scaler_incr = scaler_incr.partial_fit(X[batch])
+            scaler_incr = scaler_incr.partial_fit(
+                X[batch], sample_weight=sample_weight)
 
         assert_array_almost_equal(scaler_batch.mean_, scaler_incr.mean_)
         assert scaler_batch.var_ == scaler_incr.var_  # Nones
@@ -641,7 +658,8 @@ def test_standard_scaler_partial_fit():
 
         # Test std after 1 step
         batch0 = slice(0, chunk_size)
-        scaler_incr = StandardScaler().partial_fit(X[batch0])
+        scaler_incr = StandardScaler().partial_fit(
+            X[batch0], sample_weight=sample_weight)
         if chunk_size == 1:
             assert_array_almost_equal(np.zeros(n_features, dtype=np.float64),
                                       scaler_incr.var_)
@@ -654,10 +672,11 @@ def test_standard_scaler_partial_fit():
                                       scaler_incr.scale_)  # no constants
 
         # Test std until the end of partial fits, and
-        scaler_batch = StandardScaler().fit(X)
+        scaler_batch = StandardScaler().fit(X, sample_weight=sample_weight)
         scaler_incr = StandardScaler()  # Clean estimator
         for i, batch in enumerate(gen_batches(n_samples, chunk_size)):
-            scaler_incr = scaler_incr.partial_fit(X[batch])
+            scaler_incr = scaler_incr.partial_fit(
+                X[batch], sample_weight=sample_weight)
             assert_correct_incr(i, batch_start=batch.start,
                                 batch_stop=batch.stop, n=n,
                                 chunk_size=chunk_size,
