@@ -1,7 +1,7 @@
 """
-==================================
-Anomaly detection's ROC benchmarks
-==================================
+==========================================
+Evaluation of outlier detection estimators
+==========================================
 
 This example benchmarks outlier detection algorithms using ROC curves
 on classical anomaly detection datasets. The algorithm performance
@@ -34,8 +34,7 @@ from sklearn.preprocessing import LabelBinarizer
 
 print(__doc__)
 
-random_state = 1  # to control the random selection of anomalies in SA
-np.random.seed(random_state)
+rng = np.random.RandomState(42)
 
 # datasets
 datasets = ["http", "smtp", "SA", "SF", "forestcover",
@@ -44,8 +43,7 @@ datasets = ["http", "smtp", "SA", "SF", "forestcover",
 # outlier detection models
 models = [
     ("LOF", LocalOutlierFactor(n_neighbors=20, contamination="auto")),
-    ("IF", IsolationForest(random_state=random_state,
-                           contamination="auto")),
+    ("IForest", IsolationForest(random_state=rng,contamination="auto")),
 ]
 
 plt.figure(figsize=(5, len(datasets) * 3))
@@ -53,25 +51,20 @@ for dataset_idx, dataset_name in enumerate(datasets):
     plt.subplot(len(datasets), 1, dataset_idx + 1)
 
     # loading and vectorization
-    print("loading data: ", str(dataset_idx + 1))
+    print(f"Loading {dataset_name} data")
     if dataset_name in ["http", "smtp", "SA", "SF"]:
         dataset = fetch_kddcup99(
-            subset=dataset_name, percent10=True, random_state=random_state
+            subset=dataset_name, percent10=True, random_state=rng
         )
         X = dataset.data
         y = dataset.target
-        if dataset_name == "SA":
-            idx = np.random.choice(
-                X.shape[0], int(X.shape[0]*0.1), replace=False)
-            X = X[idx, :]  # reduce the sample size
-            y = y[idx]
 
     if dataset_name == "forestcover":
         dataset = fetch_covtype()
         X = dataset.data
         y = dataset.target
-        idx = np.random.choice(
-            X.shape[0], int(X.shape[0]*0.1), replace=False)
+        idx = rng.choice(X.shape[0],
+                         int(X.shape[0]*0.1), replace=False)
         X = X[idx, :]
         y = y[idx]
 
@@ -85,12 +78,20 @@ for dataset_idx, dataset_name in enumerate(datasets):
     print("vectorizing data")
 
     if dataset_name == "SF":
+        idx = rng.choice(X.shape[0],
+                         int(X.shape[0]*0.1), replace=False)
+        X = X[idx, :]  # reduce the sample size
+        y = y[idx]
         lb = LabelBinarizer()
         x1 = lb.fit_transform(X[:, 1].astype(str))
         X = np.c_[X[:, :1], x1, X[:, 2:]]
         y = (y != b"normal.").astype(int)
 
     if dataset_name == "SA":
+        idx = rng.choice(X.shape[0],
+                         int(X.shape[0]*0.1), replace=False)
+        X = X[idx, :]  # reduce the sample size
+        y = y[idx]
         lb = LabelBinarizer()
         x1 = lb.fit_transform(X[:, 1].astype(str))
         x2 = lb.fit_transform(X[:, 2].astype(str))
@@ -102,9 +103,10 @@ for dataset_idx, dataset_name in enumerate(datasets):
         y = (y != b"normal.").astype(int)
 
     if dataset_name in ["glass", "wdbc", "cardiotocography"]:
-        dataset = fetch_openml(name=dataset_name, version=1)
-        X = dataset.data.values  # from dataframe to array
-        y = dataset.target.values
+        dataset = fetch_openml(name=dataset_name, version=1,
+                               as_frame=False)
+        X = dataset.data
+        y = dataset.target
 
         if dataset_name == "glass":
             s = y == 'tableware'
@@ -117,7 +119,7 @@ for dataset_idx, dataset_name in enumerate(datasets):
             X_ben, y_ben = X[~s], y[~s]
 
             # downsampled to 39 points (9.8% outliers)
-            idx = np.random.choice(
+            idx = rng.choice(
                 y_mal.shape[0], 39, replace=False)
             X_mal2 = X_mal[idx, :]
             y_mal2 = y_mal[idx]
@@ -136,7 +138,7 @@ for dataset_idx, dataset_name in enumerate(datasets):
         if model_name == "LOF":
             scoring = -model.negative_outlier_factor_
             # the lower score, the more normal
-        if model_name == "IF":
+        if model_name == "IForest":
             scoring = -model.fit(X).decision_function(X)
 
         fpr, tpr, thresholds = roc_curve(y, scoring)
