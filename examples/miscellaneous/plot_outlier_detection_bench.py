@@ -43,7 +43,7 @@ datasets = ["http", "smtp", "SA", "SF", "forestcover",
 # outlier detection models
 models = [
     ("LOF", LocalOutlierFactor(n_neighbors=20, contamination="auto")),
-    ("IForest", IsolationForest(random_state=rng,contamination="auto")),
+    ("IForest", IsolationForest(random_state=rng, contamination="auto")),
 ]
 
 plt.figure(figsize=(5, len(datasets) * 3))
