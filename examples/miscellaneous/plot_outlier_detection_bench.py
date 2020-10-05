@@ -63,8 +63,7 @@ for dataset_idx, dataset_name in enumerate(datasets):
         dataset = fetch_covtype()
         X = dataset.data
         y = dataset.target
-        idx = rng.choice(X.shape[0],
-                         int(X.shape[0]*0.1), replace=False)
+        idx = rng.choice(X.shape[0], int(X.shape[0]*0.1), replace=False)
         X = X[idx, :]
         y = y[idx]
 
@@ -78,8 +77,7 @@ for dataset_idx, dataset_name in enumerate(datasets):
     print("vectorizing data")
 
     if dataset_name == "SF":
-        idx = rng.choice(X.shape[0],
-                         int(X.shape[0]*0.1), replace=False)
+        idx = rng.choice(X.shape[0], int(X.shape[0]*0.1), replace=False)
         X = X[idx, :]  # reduce the sample size
         y = y[idx]
         lb = LabelBinarizer()
@@ -88,8 +86,7 @@ for dataset_idx, dataset_name in enumerate(datasets):
         y = (y != b"normal.").astype(int)
 
     if dataset_name == "SA":
-        idx = rng.choice(X.shape[0],
-                         int(X.shape[0]*0.1), replace=False)
+        idx = rng.choice(X.shape[0], int(X.shape[0]*0.1), replace=False)
         X = X[idx, :]  # reduce the sample size
         y = y[idx]
         lb = LabelBinarizer()
