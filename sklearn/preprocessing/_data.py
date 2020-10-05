@@ -791,7 +791,6 @@ class StandardScaler(TransformerMixin, BaseEstimator):
                     (np.isnan(X.data), X.indices, X.indptr),
                     shape=X.shape,
                     dtype=sample_weight.dtype)
-                # for CSR
                 if counts_nan.format == 'csr':
                     counts_nan.data *= sample_weight.repeat(
                         np.diff(counts_nan.indptr))
@@ -806,7 +805,8 @@ class StandardScaler(TransformerMixin, BaseEstimator):
             if not hasattr(self, 'n_samples_seen_'):
                 if sample_weight is not None:
                     self.n_samples_seen_ = (
-                        X.shape[0] - counts_nan).astype(np.int64, copy=False)
+                       sample_weight.sum() - counts_nan).astype(np.int64,
+                                                                copy=False)
                 else:
                     self.n_samples_seen_ = (
                         X.shape[0] - counts_nan).astype(np.int64, copy=False)
