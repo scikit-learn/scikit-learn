@@ -403,9 +403,6 @@ class BaseEstimator:
             - Otherwise, both `X` and `y` are checked with either `check_array`
               or `check_X_y`.
 
-            .. note::
-                Be sure to set `y` to `None` in `fit`.
-
         reset : bool, default=True
             Whether to reset the `n_features_in_` attribute.
             If False, the input will be checked for consistency with data
