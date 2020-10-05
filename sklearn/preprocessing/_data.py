@@ -749,6 +749,8 @@ class StandardScaler(TransformerMixin, BaseEstimator):
 
         sample_weight : array-like of shape (n_samples,), default=None
             Individual weights for each sample
+            sample_weight only works if X is sparse and it will through
+            `NotImplementedError` if X is sparse.
 
             .. versionadded:: 0.24
                parameter *sample_weight* support to StandardScaler.
