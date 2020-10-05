@@ -618,6 +618,9 @@ def make_circles(n_samples=100, *, shuffle=True, noise=None, random_state=None,
         If two-element tuple, number of points in outer circle and inner
         circle.
 
+        .. versionchanged:: 0.23
+           Added two-element tuple.
+
     shuffle : bool, default=True
         Whether to shuffle the samples.
 
@@ -688,6 +691,9 @@ def make_moons(n_samples=100, *, shuffle=True, noise=None, random_state=None):
     n_samples : int or tuple of shape (2,), dtype=int, default=100
         If int, the total number of points generated.
         If two-element tuple, number of points in each of two moons.
+
+        .. versionchanged:: 0.23
+           Added two-element tuple.
 
     shuffle : bool, default=True
         Whether to shuffle the samples.

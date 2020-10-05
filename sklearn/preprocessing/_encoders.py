@@ -208,6 +208,9 @@ class OneHotEncoder(_BaseEncoder):
         - array : ``drop[i]`` is the category in feature ``X[:, i]`` that
           should be dropped.
 
+        .. versionchanged:: 0.23
+           Added option 'if_binary'.
+
     sparse : bool, default=True
         Will return sparse matrix if set True else will return an array.
 
@@ -238,6 +241,9 @@ class OneHotEncoder(_BaseEncoder):
           feature isn't binary.
         - ``drop_idx_ = None`` if all the transformed features will be
           retained.
+
+        .. versionchanged:: 0.23
+           Added the possibility to contain `None` values.
 
     See Also
     --------
