@@ -963,7 +963,7 @@ def check_sample_weights_invariance(name, estimator_orig, kind="ones",
 @ignore_warnings(category=(FutureWarning, UserWarning))
 def check_dtype_object(name, estimator_orig, strict_mode=True):
     # check that estimators treat dtype object as numeric if possible
-    # XXXX api or not????? partially????
+    # XXX probably API except for error msg
     rng = np.random.RandomState(0)
     X = _pairwise_estimator_convert_X(rng.rand(40, 10), estimator_orig)
     X = X.astype(object)
@@ -1050,6 +1050,7 @@ def _is_public_parameter(attr):
 @ignore_warnings(category=FutureWarning)
 def check_dont_overwrite_parameters(name, estimator_orig, strict_mode=True):
     # check that fit method only changes or sets private attributes
+    #XXX pure API check
     if hasattr(estimator_orig.__init__, "deprecated_original"):
         # to not check deprecated classes
         return
@@ -1101,7 +1102,8 @@ def check_dont_overwrite_parameters(name, estimator_orig, strict_mode=True):
 
 @ignore_warnings(category=FutureWarning)
 def check_fit2d_predict1d(name, estimator_orig, strict_mode=True):
-    # check by fitting a 2d array and predicting with a 1d array
+    # check that predicting with a 1d array raises an error
+    # XXX Make message validation optional
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(20, 3))
     X = _pairwise_estimator_convert_X(X, estimator_orig)
@@ -1151,6 +1153,7 @@ def _apply_on_subsets(func, X):
 def check_methods_subset_invariance(name, estimator_orig, strict_mode=True):
     # check that method gives invariant results if applied
     # on mini batches or the whole set
+    # XXX: non API check
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(20, 3))
     X = _pairwise_estimator_convert_X(X, estimator_orig)
@@ -1184,6 +1187,7 @@ def check_fit2d_1sample(name, estimator_orig, strict_mode=True):
     # Check that fitting a 2d array with only one sample either works or
     # returns an informative message. The error message should either mention
     # the number of samples or the number of classes.
+    # XXX Non API check
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(1, 10))
     X = _pairwise_estimator_convert_X(X, estimator_orig)
@@ -1214,6 +1218,7 @@ def check_fit2d_1sample(name, estimator_orig, strict_mode=True):
 def check_fit2d_1feature(name, estimator_orig, strict_mode=True):
     # check fitting a 2d array with only 1 feature either works or returns
     # informative message
+    # XXX non API check
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(10, 1))
     X = _pairwise_estimator_convert_X(X, estimator_orig)
@@ -1244,6 +1249,7 @@ def check_fit2d_1feature(name, estimator_orig, strict_mode=True):
 @ignore_warnings
 def check_fit1d(name, estimator_orig, strict_mode=True):
     # check fitting 1d X array raises a ValueError
+    # XXX Pure API check
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(20))
     y = X.astype(int)
@@ -1297,6 +1303,9 @@ def check_transformer_data_not_an_array(name, transformer, strict_mode=True):
 
 @ignore_warnings(category=FutureWarning)
 def check_transformers_unfitted(name, transformer, strict_mode=True):
+    # Make sure the unfitted transformer raises an error when transform is
+    # called
+    # XXX: non API check
     X, y = _regression_dataset()
 
     transformer = clone(transformer)
@@ -1311,6 +1320,13 @@ def check_transformers_unfitted(name, transformer, strict_mode=True):
 
 
 def _check_transformer(name, transformer_orig, X, y, strict_mode=True):
+    # Check that:
+    # - fit_transform returns n_samples transformed samples
+    # - fit_transform and transform give equivalent results.
+    # - fit_transform gives the same results twice
+    # - an error is raised if transform is called with an incorrect number of
+    #   features
+    # XXX: Only make first and last checks part of API
     n_samples, n_features = np.asarray(X).shape
     transformer = clone(transformer_orig)
     set_random_state(transformer)
@@ -1331,12 +1347,13 @@ def _check_transformer(name, transformer_orig, X, y, strict_mode=True):
     X_pred = transformer_clone.fit_transform(X, y=y_)
 
     if isinstance(X_pred, tuple):
+        # for cross-decomposition estimators that transform both X and y
         for x_pred in X_pred:
             assert x_pred.shape[0] == n_samples
     else:
         # check for consistent n_samples
         assert X_pred.shape[0] == n_samples
-
+    
     if hasattr(transformer, 'transform'):
         if name in CROSS_DECOMPOSITION:
             X_pred2 = transformer.transform(X, y_)
@@ -1379,7 +1396,6 @@ def _check_transformer(name, transformer_orig, X, y, strict_mode=True):
            not transformer._get_tags()["stateless"] and \
            X.ndim == 2 and X.shape[1] > 1:
 
-            # If it's not an array, it does not have a 'T' property
             with raises(
                 ValueError,
                 err_msg=f"The transformer {name} does not raise an error "
@@ -1391,11 +1407,14 @@ def _check_transformer(name, transformer_orig, X, y, strict_mode=True):
 
 @ignore_warnings
 def check_pipeline_consistency(name, estimator_orig, strict_mode=True):
+    # check that make_pipeline(est) gives results as est for scores and
+    # transforms
+    # XXX: full API
+
     if estimator_orig._get_tags()['non_deterministic']:
         msg = name + ' is non deterministic'
         raise SkipTest(msg)
 
-    # check that make_pipeline(est) gives same score as est
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                       random_state=0, n_features=2, cluster_std=0.1)
     X -= X.min()
@@ -1422,6 +1441,7 @@ def check_pipeline_consistency(name, estimator_orig, strict_mode=True):
 def check_fit_score_takes_y(name, estimator_orig, strict_mode=True):
     # check that all estimators accept an optional y
     # in fit and score so they can be used in pipelines
+    # XXX : full API check
     rnd = np.random.RandomState(0)
     n_samples = 30
     X = rnd.uniform(size=(n_samples, 3))
@@ -1449,6 +1469,8 @@ def check_fit_score_takes_y(name, estimator_orig, strict_mode=True):
 
 @ignore_warnings
 def check_estimators_dtypes(name, estimator_orig, strict_mode=True):
+    # Check that methods can handle X input of different float and int dtypes
+    # XXX not an API check
     rnd = np.random.RandomState(0)
     X_train_32 = 3 * rnd.uniform(size=(20, 5)).astype(np.float32)
     X_train_32 = _pairwise_estimator_convert_X(X_train_32, estimator_orig)
@@ -1475,6 +1497,7 @@ def check_transformer_preserve_dtypes(
 ):
     # check that dtype are preserved meaning if input X is of some dtype
     # X_transformed should be from the same dtype.
+    # XXX: not an API check
     X, y = make_blobs(
         n_samples=30,
         centers=[[0, 0, 0], [1, 1, 1]],
@@ -1506,6 +1529,9 @@ def check_transformer_preserve_dtypes(
 @ignore_warnings(category=FutureWarning)
 def check_estimators_empty_data_messages(name, estimator_orig,
                                          strict_mode=True):
+    # Make sure that a ValueError is raised when fit is called on data with no
+    # sample or no features.
+    # XXX: API or not?
     e = clone(estimator_orig)
     set_random_state(e, 1)
 
@@ -1531,7 +1557,9 @@ def check_estimators_empty_data_messages(name, estimator_orig,
 
 @ignore_warnings(category=FutureWarning)
 def check_estimators_nan_inf(name, estimator_orig, strict_mode=True):
-    # Checks that Estimator X's do not contain NaN or inf.
+    # Checks that fit, predict and transform raise an error if X contains nans
+    # or inf.
+    # XXX: probably not API?
     rnd = np.random.RandomState(0)
     X_train_finite = _pairwise_estimator_convert_X(rnd.uniform(size=(10, 3)),
                                                    estimator_orig)
@@ -1581,7 +1609,8 @@ def check_estimators_nan_inf(name, estimator_orig, strict_mode=True):
 
 @ignore_warnings
 def check_nonsquare_error(name, estimator_orig, strict_mode=True):
-    """Test that error is thrown when non-square data provided."""
+    # Check that error is raised when non-square data is provided in fit
+    # XXX: API
 
     X, y = make_blobs(n_samples=20, n_features=10)
     estimator = clone(estimator_orig)
@@ -1596,7 +1625,9 @@ def check_nonsquare_error(name, estimator_orig, strict_mode=True):
 
 @ignore_warnings
 def check_estimators_pickle(name, estimator_orig, strict_mode=True):
-    """Test that we can pickle all estimators."""
+    # Test that we can pickle all estimators and that the pickled estimator
+    # gives the same predictions
+    # XXX: Non API check
     check_methods = ["predict", "transform", "decision_function",
                      "predict_proba"]
 
@@ -1641,7 +1672,9 @@ def check_estimators_pickle(name, estimator_orig, strict_mode=True):
 @ignore_warnings(category=FutureWarning)
 def check_estimators_partial_fit_n_features(name, estimator_orig,
                                             strict_mode=True):
-    # check if number of features changes between calls to partial_fit.
+    # check that an error is raised when number of features changes between
+    # calls to partial_fit.
+    # XXX: non API check
     if not hasattr(estimator_orig, 'partial_fit'):
         return
     estimator = clone(estimator_orig)
@@ -1668,6 +1701,11 @@ def check_estimators_partial_fit_n_features(name, estimator_orig,
 
 @ignore_warnings(category=FutureWarning)
 def check_classifier_multioutput(name, estimator, strict_mode=True):
+    # Make sure that the output of predict_proba and decision_function is
+    # correct for multiouput classification (multilabel, multiclass). Also
+    # checks that predict_proba and decision_function have consistent
+    # predictions, i.e. the orders are consistent.
+    # XXX: full API check
     n_samples, n_labels, n_classes = 42, 5, 3
     tags = estimator._get_tags()
     estimator = clone(estimator)
@@ -1726,6 +1764,9 @@ def check_classifier_multioutput(name, estimator, strict_mode=True):
 
 @ignore_warnings(category=FutureWarning)
 def check_regressor_multioutput(name, estimator, strict_mode=True):
+    # Make sure that multioutput regressors output float64 predictions and that
+    # the shape is correct.
+    # XXX: make the first check not an API check
     estimator = clone(estimator)
     n_samples = n_features = 10
 
@@ -1743,7 +1784,7 @@ def check_regressor_multioutput(name, estimator, strict_mode=True):
         "Multioutput predictions by a regressor are expected to be"
         " floating-point precision. Got {} instead".format(y_pred.dtype))
     assert y_pred.shape == y.shape, (
-        "The shape of the orediction for multioutput data is incorrect."
+        "The shape of the prediction for multioutput data is incorrect."
         " Expected {}, got {}.")
 
 
@@ -1776,6 +1817,7 @@ def check_clustering(name, clusterer_orig, readonly_memmap=False,
 
     pred = clusterer.labels_
     assert pred.shape == (n_samples,)
+    # XXX: skip the rest when api_only is True
     assert adjusted_rand_score(pred, y) > 0.4
     if clusterer._get_tags()['non_deterministic']:
         return
@@ -1810,7 +1852,8 @@ def check_clustering(name, clusterer_orig, readonly_memmap=False,
 @ignore_warnings(category=FutureWarning)
 def check_clusterer_compute_labels_predict(name, clusterer_orig,
                                            strict_mode=True):
-    """Check that predict is invariant of compute_labels."""
+    # Check that predict is invariant of compute_labels
+    # XXX: non API check
     X, y = make_blobs(n_samples=20, random_state=0)
     clusterer = clone(clusterer_orig)
     set_random_state(clusterer)
@@ -1825,6 +1868,10 @@ def check_clusterer_compute_labels_predict(name, clusterer_orig,
 
 @ignore_warnings(category=FutureWarning)
 def check_classifiers_one_label(name, classifier_orig, strict_mode=True):
+    # Check that a classifier can fit when there's only 1 class, or that it
+    # raises a proper error. If it can fit, we also make sure that it can
+    # predict.
+    # XXX: non API check
     error_string_fit = "Classifier can't train when only one class is present."
     error_string_predict = ("Classifier can't predict when only one class is "
                             "present.")
@@ -1902,7 +1949,7 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False,
 
         assert y_pred.shape == (n_samples,)
         # training set performance
-        if not tags['poor_score']:
+        if not tags['poor_score']:  # XXX: not API
             assert accuracy_score(y, y_pred) > 0.83
 
         # raises error on malformed input for predict
@@ -1933,10 +1980,10 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False,
                     else:
                         assert decision.shape == (n_samples, 1)
                     dec_pred = (decision.ravel() > 0).astype(int)
-                    assert_array_equal(dec_pred, y_pred)
+                    assert_array_equal(dec_pred, y_pred)  # XXX not API
                 else:
                     assert decision.shape == (n_samples, n_classes)
-                    assert_array_equal(np.argmax(decision, axis=1), y_pred)
+                    assert_array_equal(np.argmax(decision, axis=1), y_pred)  # XXX not API
 
                 # raises error on malformed input for decision_function
                 if not tags["no_validation"]:
@@ -1961,9 +2008,9 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False,
             # predict_proba agrees with predict
             y_prob = classifier.predict_proba(X)
             assert y_prob.shape == (n_samples, n_classes)
-            assert_array_equal(np.argmax(y_prob, axis=1), y_pred)
+            assert_array_equal(np.argmax(y_prob, axis=1), y_pred)# XXX not API
             # check that probas for all classes sum to one
-            assert_array_almost_equal(np.sum(y_prob, axis=1),
+            assert_array_almost_equal(np.sum(y_prob, axis=1),# XXX not API
                                       np.ones(n_samples))
             if not tags["no_validation"]:
                 # raises error on malformed input for predict_proba
@@ -1979,7 +2026,7 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False,
                         err_msg=msg.format(name, "predict_proba"),
                     ):
                         classifier.predict_proba(X.T)
-            if hasattr(classifier, "predict_log_proba"):
+            if hasattr(classifier, "predict_log_proba"):# XXX not API
                 # predict_log_proba is a transformation of predict_proba
                 y_log_prob = classifier.predict_log_proba(X)
                 assert_allclose(y_log_prob, np.log(y_prob), 8, atol=1e-9)
@@ -2040,7 +2087,7 @@ def check_outliers_train(name, estimator_orig, readonly_memmap=True,
     with raises(ValueError):
         estimator.predict(X.T)
 
-    # decision_function agrees with predict
+    # decision_function agrees with predict  XXX not API
     dec_pred = (decision >= 0).astype(int)
     dec_pred[dec_pred == 0] = -1
     assert_array_equal(dec_pred, y_pred)
@@ -2058,6 +2105,7 @@ def check_outliers_train(name, estimator_orig, readonly_memmap=True,
         estimator.score_samples(X.T)
 
     # contamination parameter (not for OneClassSVM which has the nu parameter)
+    # XXX: not API
     if (hasattr(estimator, 'contamination')
             and not hasattr(estimator, 'novelty')):
         # proportion of outliers equal to contamination parameter when not
@@ -2090,6 +2138,8 @@ def check_outliers_train(name, estimator_orig, readonly_memmap=True,
 @ignore_warnings(category=(FutureWarning))
 def check_classifiers_multilabel_representation_invariance(
         name, classifier_orig, strict_mode=True):
+    # check different target representations for multilabel classifiers
+    # XXX: pure API check
 
     X, y = make_multilabel_classification(n_samples=100, n_features=20,
                                           n_classes=5, n_labels=3,
@@ -2125,7 +2175,8 @@ def check_classifiers_multilabel_representation_invariance(
 @ignore_warnings(category=FutureWarning)
 def check_estimators_fit_returns_self(name, estimator_orig,
                                       readonly_memmap=False, strict_mode=True):
-    """Check if self is returned when calling fit."""
+    # Check that self is returned when calling fit.
+    # XXX pure API check
     X, y = make_blobs(random_state=0, n_samples=21)
     # some want non-negative input
     X -= X.min()
@@ -2143,11 +2194,10 @@ def check_estimators_fit_returns_self(name, estimator_orig,
 
 @ignore_warnings
 def check_estimators_unfitted(name, estimator_orig, strict_mode=True):
-    """Check that predict raises an exception in an unfitted estimator.
-
-    Unfitted estimators should raise a NotFittedError.
-    """
+    # Check that predict raises an exception in an unfitted estimator.
+    # Unfitted estimators should raise a NotFittedError.
     # Common test for Regressors, Classifiers and Outlier detection estimators
+    # XXX pure API
     X, y = _regression_dataset()
 
     estimator = clone(estimator_orig)
@@ -2160,6 +2210,9 @@ def check_estimators_unfitted(name, estimator_orig, strict_mode=True):
 
 @ignore_warnings(category=FutureWarning)
 def check_supervised_y_2d(name, estimator_orig, strict_mode=True):
+    # Check that estimators that don't support multi-ouput raise a warning if y
+    # is not 1d, and that they just ravel y
+    # XXX pure API check
     tags = estimator_orig._get_tags()
     if tags['multioutput_only']:
         # These only work on 2d, so this test makes no sense
@@ -2227,7 +2280,6 @@ def check_classifiers_predictions(X, y, name, classifier_orig,
                                (classifier, ", ".join(map(str, y_exp)),
                                 ", ".join(map(str, y_pred))))
 
-    # training set performance
     if name != "ComplementNB":
         # This is a pathological data set for ComplementNB.
         # For some specific cases 'ComplementNB' predicts less classes
@@ -2245,6 +2297,9 @@ def _choose_check_classifiers_labels(name, y, y_names):
 
 
 def check_classifiers_classes(name, classifier_orig, strict_mode=True):
+    # Check that decision function > 0 => pos class
+    # Also checks the classes_ attribute.
+    # XXX pure API check
     X_multiclass, y_multiclass = make_blobs(n_samples=30, random_state=0,
                                             cluster_std=0.1)
     X_multiclass, y_multiclass = shuffle(X_multiclass, y_multiclass,
@@ -2283,6 +2338,9 @@ def check_classifiers_classes(name, classifier_orig, strict_mode=True):
 
 @ignore_warnings(category=FutureWarning)
 def check_regressors_int(name, regressor_orig, strict_mode=True):
+    # Check that regressors give same prediction when y is encoded as int or
+    # float
+    # XXX: API check ?
     X, _ = _regression_dataset()
     X = _pairwise_estimator_convert_X(X[:50], regressor_orig)
     rnd = np.random.RandomState(0)
@@ -2312,6 +2370,12 @@ def check_regressors_int(name, regressor_orig, strict_mode=True):
 @ignore_warnings(category=FutureWarning)
 def check_regressors_train(name, regressor_orig, readonly_memmap=False,
                            X_dtype=np.float64, strict_mode=True):
+    # Check that regressors:
+    # - raise an error when X and y have different number of samples
+    # - accept lists as input to fit
+    # - predict n_samples predictions
+    # - have a score > .5 on simple data
+    # XXX: all API checks except the last one
     X, y = _regression_dataset()
     X = X.astype(X_dtype)
     X = _pairwise_estimator_convert_X(X, regressor_orig)
@@ -2353,6 +2417,7 @@ def check_regressors_train(name, regressor_orig, readonly_memmap=False,
     # TODO: find out why PLS and CCA fail. RANSAC is random
     # and furthermore assumes the presence of outliers, hence
     # skipped
+    # XXX: non API
     if not regressor._get_tags()["poor_score"]:
         assert regressor.score(X, y_) > 0.5
 
@@ -2360,7 +2425,7 @@ def check_regressors_train(name, regressor_orig, readonly_memmap=False,
 @ignore_warnings
 def check_regressors_no_decision_function(name, regressor_orig,
                                           strict_mode=True):
-    # checks whether regressors have decision_function or predict_proba
+    # check that regressors decision_function or predict_proba
     rng = np.random.RandomState(0)
     regressor = clone(regressor_orig)
 
