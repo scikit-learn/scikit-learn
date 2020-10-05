@@ -804,6 +804,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
 
             if not hasattr(self, 'n_samples_seen_'):
                 if sample_weight is not None:
+
                     self.n_samples_seen_ = (
                        sample_weight.sum() - counts_nan).astype(np.int64,
                                                                 copy=False)
@@ -823,6 +824,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
                         # Vol. 37, No. 3,
                         # pp. 242-247
                         # TODO take care of NANS in Sparse
+
                         new_sum = safe_sparse_dot(sample_weight, X)
                         new_sample_count = np.sum(sample_weight)
                         T = new_sum / new_sample_count
