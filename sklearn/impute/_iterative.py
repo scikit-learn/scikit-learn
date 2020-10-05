@@ -116,10 +116,16 @@ class IterativeImputer(_BaseImputer):
         scalar. If array-like, expects shape (n_features,), one min value for
         each feature. The default is `-np.inf`.
 
+        .. versionchanged:: 0.23
+           Added support for array-like.
+
     max_value : float or array-like of shape (n_features,), default=np.inf
         Maximum possible imputed value. Broadcast to shape (n_features,) if
         scalar. If array-like, expects shape (n_features,), one max value for
         each feature. The default is `np.inf`.
+
+        .. versionchanged:: 0.23
+           Added support for array-like.
 
     verbose : int, default=0
         Verbosity flag, controls the debug messages that are issued
