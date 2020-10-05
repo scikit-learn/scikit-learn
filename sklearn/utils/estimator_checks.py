@@ -592,7 +592,7 @@ def _set_checking_parameters(estimator):
             estimator.set_params(max_iter=20)
         # NMF
         if estimator.__class__.__name__ == 'NMF':
-            estimator.set_params(max_iter=100)
+            estimator.set_params(max_iter=100, init='nndsvd')
         # MLP
         if estimator.__class__.__name__ in ['MLPClassifier', 'MLPRegressor']:
             estimator.set_params(max_iter=100)
