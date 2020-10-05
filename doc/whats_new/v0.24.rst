@@ -446,7 +446,7 @@ Changelog
   :func:`model_selection.validation_curve` and
   :func:`model_selection.learning_curve` now accept fit_params to pass
   additional estimator parameters.
-  :pr:`#18527` by :user:`Gaurav Dhingra <gxyd>`,
+  :pr:`18527` by :user:`Gaurav Dhingra <gxyd>`,
   :user:`Julien Jerphanion <jjerphan>` and :user:`Amanda Dsouza <amy12xx>`.
 
 :mod:`sklearn.multiclass`
