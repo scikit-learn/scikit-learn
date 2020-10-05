@@ -711,12 +711,12 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
 
         .. versionadded:: 0.17
 
-    See also
+    See Also
     --------
-    RidgeClassifier : Ridge classifier
-    RidgeCV : Ridge regression with built-in cross validation
+    RidgeClassifier : Ridge classifier.
+    RidgeCV : Ridge regression with built-in cross validation.
     :class:`~sklearn.kernel_ridge.KernelRidge` : Kernel ridge regression
-        combines ridge regression with the kernel trick
+        combines ridge regression with the kernel trick.
 
     Examples
     --------
@@ -1776,6 +1776,8 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         Score of base estimator with best alpha, or, if
         ``alpha_per_target=True``, a score for each target.
 
+        .. versionadded:: 0.23
+
     Examples
     --------
     >>> from sklearn.datasets import load_diabetes
@@ -1785,11 +1787,11 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
     >>> clf.score(X, y)
     0.5166...
 
-    See also
+    See Also
     --------
-    Ridge : Ridge regression
-    RidgeClassifier : Ridge classifier
-    RidgeClassifierCV : Ridge classifier with built-in cross validation
+    Ridge : Ridge regression.
+    RidgeClassifier : Ridge classifier.
+    RidgeClassifierCV : Ridge classifier with built-in cross validation.
     """
 
 
@@ -1882,6 +1884,8 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     best_score_ : float
         Score of base estimator with best alpha.
 
+        .. versionadded:: 0.23
+
     classes_ : ndarray of shape (n_classes,)
         The classes labels.
 
@@ -1894,11 +1898,11 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     >>> clf.score(X, y)
     0.9630...
 
-    See also
+    See Also
     --------
-    Ridge : Ridge regression
-    RidgeClassifier : Ridge classifier
-    RidgeCV : Ridge regression with built-in cross validation
+    Ridge : Ridge regression.
+    RidgeClassifier : Ridge classifier.
+    RidgeCV : Ridge regression with built-in cross validation.
 
     Notes
     -----

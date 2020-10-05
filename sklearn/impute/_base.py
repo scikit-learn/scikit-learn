@@ -184,7 +184,7 @@ class SimpleImputer(_BaseImputer):
         Indicator used to add binary indicators for missing values.
         ``None`` if add_indicator is False.
 
-    See also
+    See Also
     --------
     IterativeImputer : Multivariate imputation of missing values.
 
@@ -568,26 +568,26 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         nullable integer dtypes with missing values, `missing_values`
         should be set to `np.nan`, since `pd.NA` will be converted to `np.nan`.
 
-    features : str, default=None
+    features : {'missing-only', 'all'}, default='missing-only'
         Whether the imputer mask should represent all or a subset of
         features.
 
-        - If "missing-only" (default), the imputer mask will only represent
+        - If 'missing-only' (default), the imputer mask will only represent
           features containing missing values during fit time.
-        - If "all", the imputer mask will represent all features.
+        - If 'all', the imputer mask will represent all features.
 
-    sparse : boolean or "auto", default=None
+    sparse : bool or 'auto', default='auto'
         Whether the imputer mask format should be sparse or dense.
 
-        - If "auto" (default), the imputer mask will be of same type as
+        - If 'auto' (default), the imputer mask will be of same type as
           input.
         - If True, the imputer mask will be a sparse matrix.
         - If False, the imputer mask will be a numpy array.
 
-    error_on_new : boolean, default=None
-        If True (default), transform will raise an error when there are
-        features with missing values in transform that have no missing values
-        in fit. This is applicable only when ``features="missing-only"``.
+    error_on_new : bool, default=True
+        If True, transform will raise an error when there are features with
+        missing values in transform that have no missing values in fit. This is
+        applicable only when `features='missing-only'`.
 
     Attributes
     ----------
@@ -841,5 +841,8 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         return imputer_mask
 
     def _more_tags(self):
-        return {'allow_nan': True,
-                'X_types': ['2darray', 'string']}
+        return {
+            "allow_nan": True,
+            "X_types": ["2darray", "string"],
+            "preserves_dtype": [],
+        }

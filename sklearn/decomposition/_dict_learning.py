@@ -11,7 +11,7 @@ from math import ceil
 
 import numpy as np
 from scipy import linalg
-from joblib import Parallel, delayed, effective_n_jobs
+from joblib import Parallel, effective_n_jobs
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import deprecated
@@ -19,6 +19,7 @@ from ..utils import (check_array, check_random_state, gen_even_slices,
                      gen_batches)
 from ..utils.extmath import randomized_svd, row_norms
 from ..utils.validation import check_is_fitted, _deprecate_positional_args
+from ..utils.fixes import delayed
 from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
 
 
@@ -1285,7 +1286,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009: Online dictionary learning
     for sparse coding (https://www.di.ens.fr/sierra/pdfs/icml09.pdf)
 
-    See also
+    See Also
     --------
     SparseCoder
     MiniBatchDictionaryLearning
@@ -1525,7 +1526,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009: Online dictionary learning
     for sparse coding (https://www.di.ens.fr/sierra/pdfs/icml09.pdf)
 
-    See also
+    See Also
     --------
     SparseCoder
     DictionaryLearning

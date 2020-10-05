@@ -17,7 +17,7 @@ import numpy as np
 from scipy.spatial import distance
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
-from joblib import Parallel, delayed, effective_n_jobs
+from joblib import Parallel, effective_n_jobs
 
 from ..utils.validation import _num_samples
 from ..utils.validation import check_non_negative
@@ -29,6 +29,7 @@ from ..utils.extmath import row_norms, safe_sparse_dot
 from ..preprocessing import normalize
 from ..utils._mask import _get_mask
 from ..utils.validation import _deprecate_positional_args
+from ..utils.fixes import delayed
 from ..utils.fixes import sp_version, parse_version
 
 from ._pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
@@ -825,7 +826,7 @@ def cosine_distances(X, Y=None):
 
     See Also
     --------
-    sklearn.metrics.pairwise.cosine_similarity
+    cosine_similarity
     scipy.spatial.distance.cosine : Dense matrices only.
     """
     # 1.0 - cosine_similarity(X, Y) without copy
@@ -1226,7 +1227,6 @@ def additive_chi2_kernel(X, Y=None):
     --------
     chi2_kernel : The exponentiated version of the kernel, which is usually
         preferable.
-
     sklearn.kernel_approximation.AdditiveChi2Sampler : A Fourier approximation
         to this kernel.
 
@@ -1282,7 +1282,6 @@ def chi2_kernel(X, Y=None, gamma=1.):
     See Also
     --------
     additive_chi2_kernel : The additive version of this kernel.
-
     sklearn.kernel_approximation.AdditiveChi2Sampler : A Fourier approximation
         to the additive version of this kernel.
 
@@ -1735,8 +1734,8 @@ def pairwise_distances(X, Y=None, metric="euclidean", *, n_jobs=None,
     pairwise_distances_chunked : Performs the same calculation as this
         function, but returns a generator of chunks of the distance matrix, in
         order to limit memory usage.
-    paired_distances : Computes the distances between corresponding
-                       elements of two arrays.
+    paired_distances : Computes the distances between corresponding elements
+        of two arrays.
     """
     if (metric not in _VALID_METRICS and
             not callable(metric) and metric != "precomputed"):

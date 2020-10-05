@@ -5,8 +5,6 @@ import numpy as np
 import scipy.sparse as sp
 import joblib
 
-from io import StringIO
-
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils import deprecated
 from sklearn.utils._testing import (assert_raises_regex,
@@ -421,7 +419,7 @@ def test_check_estimator():
     msg = "object has no attribute 'fit'"
     assert_raises_regex(AttributeError, msg, check_estimator, BaseEstimator())
     # check that fit does input validation
-    msg = "ValueError not raised"
+    msg = "Did not raise"
     assert_raises_regex(AssertionError, msg, check_estimator,
                         BaseBadClassifier())
     # check that sample_weights in fit accepts pandas.Series type
@@ -465,19 +463,9 @@ def test_check_estimator():
     # check for sparse matrix input handling
     name = NoSparseClassifier.__name__
     msg = "Estimator %s doesn't seem to fail gracefully on sparse data" % name
-    # the check for sparse input handling prints to the stdout,
-    # instead of raising an error, so as not to remove the original traceback.
-    # that means we need to jump through some hoops to catch it.
-    old_stdout = sys.stdout
-    string_buffer = StringIO()
-    sys.stdout = string_buffer
-    try:
-        check_estimator(NoSparseClassifier())
-    except Exception:
-        pass
-    finally:
-        sys.stdout = old_stdout
-    assert msg in string_buffer.getvalue()
+    assert_raises_regex(
+        AssertionError, msg, check_estimator, NoSparseClassifier()
+    )
 
     # Large indices test on bad estimator
     msg = ('Estimator LargeSparseNotSupportedClassifier doesn\'t seem to '
@@ -558,7 +546,7 @@ def test_check_estimator_clones():
 def test_check_estimators_unfitted():
     # check that a ValueError/AttributeError is raised when calling predict
     # on an unfitted estimator
-    msg = "NotFittedError not raised by predict"
+    msg = "Did not raise"
     assert_raises_regex(AssertionError, msg, check_estimators_unfitted,
                         "estimator", NoSparseClassifier())
 
