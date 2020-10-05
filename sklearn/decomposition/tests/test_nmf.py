@@ -214,7 +214,7 @@ def test_nmf_sparse_transform():
 
     for solver in ('cd', 'mu'):
         model = NMF(solver=solver, random_state=0, n_components=2,
-                    max_iter=400)
+                    max_iter=400, init='nndsvd')
         A_fit_tr = model.fit_transform(A)
         A_tr = model.transform(A)
         assert_array_almost_equal(A_fit_tr, A_tr, decimal=1)
@@ -436,13 +436,17 @@ def test_nmf_regularization():
     rng = np.random.mtrand.RandomState(42)
     X = np.abs(rng.randn(n_samples, n_features))
 
+    # FIXME : to avoid FutureWarnings, should be removed in 0.26
+    init = 'nndsvd'
     # L1 regularization should increase the number of zeros
     l1_ratio = 1.
     for solver in ['cd', 'mu']:
         regul = nmf.NMF(n_components=n_components, solver=solver,
-                        alpha=0.5, l1_ratio=l1_ratio, random_state=42)
+                        alpha=0.5, l1_ratio=l1_ratio, random_state=42,
+                        init=init)
         model = nmf.NMF(n_components=n_components, solver=solver,
-                        alpha=0., l1_ratio=l1_ratio, random_state=42)
+                        alpha=0., l1_ratio=l1_ratio, random_state=42,
+                        init=init)
 
         W_regul = regul.fit_transform(X)
         W_model = model.fit_transform(X)
@@ -462,9 +466,11 @@ def test_nmf_regularization():
     l1_ratio = 0.
     for solver in ['cd', 'mu']:
         regul = nmf.NMF(n_components=n_components, solver=solver,
-                        alpha=0.5, l1_ratio=l1_ratio, random_state=42)
+                        alpha=0.5, l1_ratio=l1_ratio, random_state=42,
+                        init=init)
         model = nmf.NMF(n_components=n_components, solver=solver,
-                        alpha=0., l1_ratio=l1_ratio, random_state=42)
+                        alpha=0., l1_ratio=l1_ratio, random_state=42,
+                        init=init)
 
         W_regul = regul.fit_transform(X)
         W_model = model.fit_transform(X)
@@ -555,9 +561,13 @@ def test_nmf_float32_float64_consistency(solver, regularization):
     # Check that the result of NMF is the same between float32 and float64
     X = np.random.RandomState(0).randn(50, 7)
     np.abs(X, out=X)
-    nmf32 = NMF(solver=solver, regularization=regularization, random_state=0)
+    # FIXME : to avoid FutureWarnings, should be removed in 0.26
+    init = 'nndsvda'
+    nmf32 = NMF(solver=solver, regularization=regularization, random_state=0,
+                init=init)
     W32 = nmf32.fit_transform(X.astype(np.float32))
-    nmf64 = NMF(solver=solver, regularization=regularization, random_state=0)
+    nmf64 = NMF(solver=solver, regularization=regularization, random_state=0,
+                init=init)
     W64 = nmf64.fit_transform(X)
 
     assert_allclose(W32, W64, rtol=1e-6, atol=1e-5)
