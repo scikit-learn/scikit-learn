@@ -156,6 +156,8 @@ class BaseEstimator:
     at the class level in their ``__init__`` as explicit keyword
     arguments (no ``*args`` or ``**kwargs``).
     """
+    # used by _validate_data when `y` is not validated
+    __NO_Y = '__NO_Y'
 
     @classmethod
     def _get_param_names(cls):
@@ -382,9 +384,8 @@ class BaseEstimator:
                                        self.n_features_in_)
                 )
 
-    def _validate_data(self, X, y=None, reset=True,
-                       validate_separately=False,
-                       requires_y='use_tag', **check_params):
+    def _validate_data(self, X, y=__NO_Y, reset=True,
+                       validate_separately=False, **check_params):
         """Validate input data and set or check the `n_features_in_` attribute.
 
         Parameters
@@ -392,9 +393,19 @@ class BaseEstimator:
         X : {array-like, sparse matrix, dataframe} of shape \
                 (n_samples, n_features)
             The input samples.
-        y : array-like of shape (n_samples,), default=None
-            The targets. If None, `check_array` is called on `X` and
-            `check_X_y` is called otherwise.
+        y : array-like of shape (n_samples,), default=__NO_Y
+            The targets.
+
+            - If `None`, `check_array` is called on `X`. If the estimator's
+              requires_y tag is True, then an error will be raised.
+            - If `__NO_Y`, `check_array` is called on `X` and the estimator's
+              requires_y tag is ignored.
+            - Otherwise, both `X` and `y` are checked with either `check_array`
+              or `check_X_y`.
+
+            .. note::
+                Be sure to set `y` to `None` in `fit`.
+
         reset : bool, default=True
             Whether to reset the `n_features_in_` attribute.
             If False, the input will be checked for consistency with data
@@ -407,14 +418,6 @@ class BaseEstimator:
             Only used if y is not None.
             If False, call validate_X_y(). Else, it must be a tuple of kwargs
             to be used for calling check_array() on X and y respectively.
-        requires_y : bool or 'use_tag', default='use_tag'
-            If 'use_tag', the 'requires_y' tag will be used to decide if `y`
-            is required. If bool, then the caller decides if `y` is required.
-            .. note::
-               It is recommended to leave requires_y='use_tag' in `fit and
-               in the first call to `partial-fit. All other methods that
-               validate `X` and does not require `y` should set
-               `requires_y=False`.
         **check_params : kwargs
             Parameters passed to :func:`sklearn.utils.check_array` or
             :func:`sklearn.utils.check_X_y`. Ignored if validate_separately
@@ -427,12 +430,14 @@ class BaseEstimator:
         """
 
         if y is None:
-            if ((requires_y == 'use_tag' and self._get_tags()['requires_y']) or
-                    (isinstance(requires_y, bool) and requires_y)):
+            if self._get_tags()['requires_y']:
                 raise ValueError(
                     f"This {self.__class__.__name__} estimator "
                     f"requires y to be passed, but the target y is None."
                 )
+            X = check_array(X, **check_params)
+            out = X
+        elif y is self.__NO_Y:
             X = check_array(X, **check_params)
             out = X
         else:
