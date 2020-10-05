@@ -275,6 +275,9 @@ class _ProbaScorer(_BaseScorer):
         y_type = type_of_target(y)
         y_pred = method_caller(clf, "predict_proba", X)
         if y_type == "binary" and y_pred.shape[1] <= 2:
+            # `y_type` could be equal to "binary" even in a multi-class
+            # problem: (when only 2 class are given to `y_true` during scoring)
+            # Thus, we need to check for the shape of `y_pred`.
             y_pred = self._select_proba_binary(y_pred, clf.classes_)
         if sample_weight is not None:
             return self._sign * self._score_func(y, y_pred,
