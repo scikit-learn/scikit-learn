@@ -296,7 +296,9 @@ def _generate_search_cv_instances():
             (LogisticRegression, {"logisticregression__C": [0.1, 1.0]}),
         ],
     ):
-        yield SearchCV(make_pipeline(PCA(), Estimator()), param_grid)
+        yield SearchCV(
+            make_pipeline(PCA(), Estimator()), param_grid
+        ).set_params(error_score="raise")
 
 
 @parametrize_with_checks(list(_generate_search_cv_instances()))
@@ -312,5 +314,4 @@ def test_search_cv(estimator, check, request):
             FutureWarning,
         )
     ):
-        estimator.set_params(error_score="raise")
         check(estimator)
