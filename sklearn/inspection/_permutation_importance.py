@@ -1,13 +1,13 @@
-"""Permutation importance for estimators"""
+"""Permutation importance for estimators."""
 import numpy as np
 from joblib import Parallel
-from joblib import delayed
 
 from ..metrics import check_scoring
 from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import check_array
 from ..utils.validation import _deprecate_positional_args
+from ..utils.fixes import delayed
 
 
 def _weights_scorer(scorer, estimator, X, y, sample_weight):
@@ -97,6 +97,8 @@ def permutation_importance(estimator, X, y, *, scoring=None, n_repeats=5,
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights used in scoring.
+
+        .. versionadded:: 0.24
 
     Returns
     -------

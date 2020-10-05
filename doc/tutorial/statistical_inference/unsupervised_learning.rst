@@ -41,18 +41,6 @@ algorithms. The simplest clustering algorithm is :ref:`k_means`.
     >>> print(y_iris[::10])
     [0 0 0 0 0 1 1 1 1 1 2 2 2 2 2]
 
-.. |k_means_iris_bad_init| image:: /auto_examples/cluster/images/sphx_glr_plot_cluster_iris_003.png
-   :target: ../../auto_examples/cluster/plot_cluster_iris.html
-   :scale: 63
-
-.. |k_means_iris_8| image:: /auto_examples/cluster/images/sphx_glr_plot_cluster_iris_001.png
-   :target: ../../auto_examples/cluster/plot_cluster_iris.html
-   :scale: 63
-
-.. |cluster_iris_truth| image:: /auto_examples/cluster/images/sphx_glr_plot_cluster_iris_004.png
-   :target: ../../auto_examples/cluster/plot_cluster_iris.html
-   :scale: 63
-
 .. warning::
 
     There is absolutely no guarantee of recovering a ground truth. First,
@@ -60,42 +48,27 @@ algorithms. The simplest clustering algorithm is :ref:`k_means`.
     is sensitive to initialization, and can fall into local minima,
     although scikit-learn employs several tricks to mitigate this issue.
 
-    .. list-table::
-        :class: centered
+    |
 
-        *
+    .. figure:: /auto_examples/cluster/images/sphx_glr_plot_cluster_iris_003.png
+       :target: ../../auto_examples/cluster/plot_cluster_iris.html
+       :scale: 63
 
-            - |k_means_iris_bad_init|
+       **Bad initialization**
 
-            - |k_means_iris_8|
+    .. figure:: /auto_examples/cluster/images/sphx_glr_plot_cluster_iris_001.png
+       :target: ../../auto_examples/cluster/plot_cluster_iris.html
+       :scale: 63
 
-            - |cluster_iris_truth|
+       **8 clusters**
 
-        *
+    .. figure:: /auto_examples/cluster/images/sphx_glr_plot_cluster_iris_004.png
+       :target: ../../auto_examples/cluster/plot_cluster_iris.html
+       :scale: 63
 
-            - **Bad initialization**
-
-            - **8 clusters**
-
-            - **Ground truth**
+       **Ground truth**
 
     **Don't over-interpret clustering results**
-
-.. |face| image:: /auto_examples/cluster/images/sphx_glr_plot_face_compress_001.png
-   :target: ../../auto_examples/cluster/plot_face_compress.html
-   :scale: 60
-
-.. |face_regular| image:: /auto_examples/cluster/images/sphx_glr_plot_face_compress_002.png
-   :target: ../../auto_examples/cluster/plot_face_compress.html
-   :scale: 60
-
-.. |face_compressed| image:: /auto_examples/cluster/images/sphx_glr_plot_face_compress_003.png
-   :target: ../../auto_examples/cluster/plot_face_compress.html
-   :scale: 60
-
-.. |face_histogram| image:: /auto_examples/cluster/images/sphx_glr_plot_face_compress_004.png
-   :target: ../../auto_examples/cluster/plot_face_compress.html
-   :scale: 60
 
 .. topic:: **Application example: vector quantization**
 
@@ -120,28 +93,27 @@ algorithms. The simplest clustering algorithm is :ref:`k_means`.
     	>>> face_compressed = np.choose(labels, values)
     	>>> face_compressed.shape = face.shape
 
-    .. list-table::
-      :class: centered
 
-      *
-        - |face|
+    .. figure:: /auto_examples/cluster/images/sphx_glr_plot_face_compress_001.png
+       :target: ../../auto_examples/cluster/plot_face_compress.html
 
-        - |face_compressed|
+       **Raw image**
 
-        - |face_regular|
+    .. figure:: /auto_examples/cluster/images/sphx_glr_plot_face_compress_003.png
+       :target: ../../auto_examples/cluster/plot_face_compress.html
 
-        - |face_histogram|
+       **K-means quantization**
 
-      *
+    .. figure:: /auto_examples/cluster/images/sphx_glr_plot_face_compress_002.png
+       :target: ../../auto_examples/cluster/plot_face_compress.html
 
-        - Raw image
+       **Equal bins**
 
-        - K-means quantization
 
-        - Equal bins
+    .. figure:: /auto_examples/cluster/images/sphx_glr_plot_face_compress_004.png
+       :target: ../../auto_examples/cluster/plot_face_compress.html
 
-        - Image histogram
-
+       **Image histogram**
 
 Hierarchical agglomerative clustering: Ward
 ---------------------------------------------

@@ -150,10 +150,10 @@ def make_classification(n_samples=100, n_features=20, *, n_informative=2,
     .. [1] I. Guyon, "Design of experiments for the NIPS 2003 variable
            selection benchmark", 2003.
 
-    See also
+    See Also
     --------
-    make_blobs: simplified variant
-    make_multilabel_classification: unrelated generator for multilabel tasks
+    make_blobs : Simplified variant.
+    make_multilabel_classification : Unrelated generator for multilabel tasks.
     """
     generator = check_random_state(random_state)
 
@@ -461,9 +461,9 @@ def make_hastie_10_2(n_samples=12000, *, random_state=None):
     .. [1] T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical
            Learning Ed. 2", Springer, 2009.
 
-    See also
+    See Also
     --------
-    make_gaussian_quantiles: a generalization of this dataset approach
+    make_gaussian_quantiles : A generalization of this dataset approach.
     """
     rs = check_random_state(random_state)
 
@@ -618,6 +618,9 @@ def make_circles(n_samples=100, *, shuffle=True, noise=None, random_state=None,
         If two-element tuple, number of points in outer circle and inner
         circle.
 
+        .. versionchanged:: 0.23
+           Added two-element tuple.
+
     shuffle : bool, default=True
         Whether to shuffle the samples.
 
@@ -650,9 +653,9 @@ def make_circles(n_samples=100, *, shuffle=True, noise=None, random_state=None,
     else:
         try:
             n_samples_out, n_samples_in = n_samples
-        except ValueError:
+        except ValueError as e:
             raise ValueError('`n_samples` can be either an int or '
-                             'a two-element tuple.')
+                             'a two-element tuple.') from e
 
     generator = check_random_state(random_state)
     # so as not to have the first point = last point, we set endpoint=False
@@ -689,6 +692,9 @@ def make_moons(n_samples=100, *, shuffle=True, noise=None, random_state=None):
         If int, the total number of points generated.
         If two-element tuple, number of points in each of two moons.
 
+        .. versionchanged:: 0.23
+           Added two-element tuple.
+
     shuffle : bool, default=True
         Whether to shuffle the samples.
 
@@ -715,9 +721,9 @@ def make_moons(n_samples=100, *, shuffle=True, noise=None, random_state=None):
     else:
         try:
             n_samples_out, n_samples_in = n_samples
-        except ValueError:
+        except ValueError as e:
             raise ValueError('`n_samples` can be either an int or '
-                             'a two-element tuple.')
+                             'a two-element tuple.') from e
 
     generator = check_random_state(random_state)
 
@@ -816,9 +822,9 @@ def make_blobs(n_samples=100, n_features=2, *, centers=None, cluster_std=1.0,
     >>> y
     array([0, 1, 2, 0, 2, 2, 2, 1, 1, 0])
 
-    See also
+    See Also
     --------
-    make_classification: a more intricate variant
+    make_classification : A more intricate variant.
     """
     generator = check_random_state(random_state)
 
@@ -845,13 +851,14 @@ def make_blobs(n_samples=100, n_features=2, *, centers=None, cluster_std=1.0,
                                         size=(n_centers, n_features))
         try:
             assert len(centers) == n_centers
-        except TypeError:
+        except TypeError as e:
             raise ValueError("Parameter `centers` must be array-like. "
-                             "Got {!r} instead".format(centers))
-        except AssertionError:
-            raise ValueError("Length of `n_samples` not consistent"
-                             " with number of centers. Got n_samples = {} "
-                             "and centers = {}".format(n_samples, centers))
+                             "Got {!r} instead".format(centers)) from e
+        except AssertionError as e:
+            raise ValueError(
+                f"Length of `n_samples` not consistent with number of "
+                f"centers. Got n_samples = {n_samples} and centers = {centers}"
+            ) from e
         else:
             centers = check_array(centers)
             n_features = centers.shape[1]
@@ -1300,7 +1307,7 @@ def make_spd_matrix(n_dim, *, random_state=None):
     X : ndarray of shape (n_dim, n_dim)
         The random symmetric, positive-definite matrix.
 
-    See also
+    See Also
     --------
     make_sparse_spd_matrix
     """
@@ -1356,7 +1363,7 @@ def make_sparse_spd_matrix(dim=1, *, alpha=0.95, norm_diag=False,
     Thus alpha does not translate directly into the filling fraction of
     the matrix itself.
 
-    See also
+    See Also
     --------
     make_spd_matrix
     """
@@ -1632,7 +1639,7 @@ def make_biclusters(shape, n_clusters, *, noise=0.0, minval=10,
         of the seventh ACM SIGKDD international conference on Knowledge
         discovery and data mining (pp. 269-274). ACM.
 
-    See also
+    See Also
     --------
     make_checkerboard
     """
@@ -1724,7 +1731,7 @@ def make_checkerboard(shape, n_clusters, *, noise=0.0, minval=10,
         Spectral biclustering of microarray data: coclustering genes
         and conditions. Genome research, 13(4), 703-716.
 
-    See also
+    See Also
     --------
     make_biclusters
     """
