@@ -399,7 +399,8 @@ class BaseEstimator:
             - If `None`, `check_array` is called on `X`. If the estimator's
               requires_y tag is True, then an error will be raised.
             - If `__NO_Y`, `check_array` is called on `X` and the estimator's
-              requires_y tag is ignored.
+              requires_y tag is ignored. This is a default placeholder and is
+              never meant to be explicitly set.
             - Otherwise, both `X` and `y` are checked with either `check_array`
               or `check_X_y`.
 
