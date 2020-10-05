@@ -436,7 +436,7 @@ def test_nmf_regularization():
     rng = np.random.mtrand.RandomState(42)
     X = np.abs(rng.randn(n_samples, n_features))
 
-    # FIXME : to avoid FutureWarnings, should be removed in 0.26
+    # FIXME : should be removed in 0.26
     init = 'nndsvd'
     # L1 regularization should increase the number of zeros
     l1_ratio = 1.
@@ -561,7 +561,7 @@ def test_nmf_float32_float64_consistency(solver, regularization):
     # Check that the result of NMF is the same between float32 and float64
     X = np.random.RandomState(0).randn(50, 7)
     np.abs(X, out=X)
-    # FIXME : to avoid FutureWarnings, should be removed in 0.26
+    # FIXME : should be removed in 0.26
     init = 'nndsvda'
     nmf32 = NMF(solver=solver, regularization=regularization, random_state=0,
                 init=init)
@@ -586,3 +586,15 @@ def test_nmf_custom_init_dtype_error():
 
     with pytest.raises(TypeError, match="should have the same dtype as X"):
         non_negative_factorization(X, H=H, update_H=False)
+
+
+# FIXME : should be removed in 0.26
+def test_init_default_deprecation():
+    # Test FutureWarning on init default
+    msg = ("The default value of init for solver 'mu' will change from "
+           "'nndsvd' to 'nndsvda' in 0.26.")
+    rng = np.random.mtrand.RandomState(42)
+    A = np.abs(rng.randn(6, 5))
+    with pytest.warns(FutureWarning, match=msg):
+        NMF().fit(A)
+

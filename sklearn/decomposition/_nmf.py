@@ -1339,8 +1339,8 @@ class NMF(TransformerMixin, BaseEstimator):
         self
         """
         if self.init == 'warn':
-            warnings.warn("The default value of init for solver 'mu' will "
-                          "change from 'nndsvd' to 'nndsvda' in 0.26.",
+            warnings.warn(("The default value of init for solver 'mu' will "
+                          "change from 'nndsvd' to 'nndsvda' in 0.26."),
                           FutureWarning)
             self.init = None
         self.fit_transform(X, **params)
