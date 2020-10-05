@@ -176,7 +176,6 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
     else:
         X = np.asarray(X)
         if with_mean:
-
             mean_ = np.nanmean(X, axis)
         if with_std:
             scale_ = np.nanstd(X, axis)
