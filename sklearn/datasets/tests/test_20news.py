@@ -15,8 +15,6 @@ from sklearn.datasets.tests.test_common import check_return_X_y
 from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.preprocessing import normalize
 
-from sklearn.datasets import fetch_20newsgroups_vectorized
-
 
 def test_20news(fetch_20newsgroups_fxt):
     data = fetch_20newsgroups_fxt(subset='all', shuffle=False)
@@ -124,8 +122,10 @@ def test_20news_as_frame(fetch_20newsgroups_vectorized_fxt):
     assert bunch.target.name == "category_class"
 
 
-def test_as_frame_no_pandas():
-    check_pandas_dependency_message(fetch_20newsgroups_vectorized)
+def test_as_frame_no_pandas(
+    fetch_20newsgroups_vectorized_fxt, hide_available_pandas
+):
+    check_pandas_dependency_message(fetch_20newsgroups_vectorized_fxt)
 
 
 def test_outdated_pickle(fetch_20newsgroups_vectorized_fxt):
