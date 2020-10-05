@@ -791,19 +791,17 @@ class StandardScaler(TransformerMixin, BaseEstimator):
                     (np.isnan(X.data), X.indices, X.indptr),
                     shape=X.shape,
                     dtype=sample_weight.dtype)
-                counts_nan.data *= sample_weight.repeat(
-                    np.diff(counts_nan.indptr))
+                # for CSR
+                if counts_nan.format == 'csr':
+                    counts_nan.data *= sample_weight.repeat(
+                        np.diff(counts_nan.indptr))
+                elif counts_nan.format == 'csc':
+                    counts_nan.data *= sample_weight[counts_nan.row]
                 counts_nan = counts_nan.sum(axis=0).A.ravel()
             else:
-                # TODO: that is changing X to dense in X.data ???
                 counts_nan = sparse_constructor(
                         (np.isnan(X.data), X.indices, X.indptr),
                         shape=X.shape).sum(axis=0).A.ravel()
-            if sample_weight is not None:
-                 # _sample_weight_mean = np.mean(sample_weight)
-                 sample_weight = (sparse.csr_matrix(sample_weight)
-                                  if X.format == 'csr'
-                                 else sparse.csc_matrix(sample_weight))
 
             if not hasattr(self, 'n_samples_seen_'):
                 if sample_weight is not None:
