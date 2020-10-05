@@ -134,10 +134,10 @@ class _BaseScorer:
                 f"pos_label={pos_label} is not a valid label: {classes}"
             )
 
-    def _select_proba(self, y_pred, classes, support_multi_class):
+    def _select_proba(self, y_pred, classes, explicit_multi_class):
         """Select the column of `y_pred` when probabilities are provided.
 
-        If `support_multi_class=True` and `y_pred` is valid, then this method
+        If `explicit_multi_class=True` and `y_pred` is valid, then this method
         is no-op.
 
         Parameters
@@ -148,7 +148,8 @@ class _BaseScorer:
         classes : ndarray of shape (n_classes,)
             The class labels for the estimator.
 
-        support_multi_class : bool
+        explicit_multi_class : bool
+            Whether `y
             Whether to support multiclass which has been tagged as binary and
             return `y_pred` as is.
 
@@ -168,20 +169,14 @@ class _BaseScorer:
             f"classifier with two classes for {self._score_func.__name__} "
             f"scoring"
         )
-        if support_multi_class and y_pred.shape[1] == 1:
-            # In _ProbaScorer, `y_true` can be tagged as binary while the
-            # `y_pred` is multi_class. This case is supported when `labels`
-            # is provided in the metric. E.g.:
-            # y_true = np.array([0, 1, 0, 1])
-            # y_score = np.array([[0.1 , 0.8 , 0.1 ],
-            #                     [0.3 , 0.4 , 0.3 ],
-            #                     [0.35, 0.5 , 0.15],
-            #                     [0.  , 0.2 , 0.8 ]])
-            # roc_auc_score(
-            #     y_true, y_score, labels=[0, 1, 2], multi_class='ovo'
-            # )
-            raise ValueError(err_msg)
-        elif not support_multi_class:
+        if not explicit_multi_class or y_pred.shape[1] == 1:
+            # raise an error for the following case:
+            # * for ThresholdScorer, if y_pred.shape[1] != 2;
+            # * for ProbaScorer, if y_pred.shape[1] < 2. More precisely, we
+            #   want to accept the case where 2 classes are given in `y_true`
+            #   (i.e. labelled as `binary`) and the estimator was trained with
+            #   `y` being a multiclass problem (i.e. `y_pred.shape[1] > 2`).
+            #   In the last case, we return `y_pred` as is.
             raise ValueError(err_msg)
 
         return y_pred
@@ -298,7 +293,7 @@ class _ProbaScorer(_BaseScorer):
         y_pred = method_caller(clf, "predict_proba", X)
         if y_type == "binary":
             y_pred = self._select_proba(
-                y_pred, clf.classes_, support_multi_class=True
+                y_pred, clf.classes_, explicit_multi_class=True
             )
         if sample_weight is not None:
             return self._sign * self._score_func(y, y_pred,
@@ -371,7 +366,7 @@ class _ThresholdScorer(_BaseScorer):
 
                 if y_type == "binary":
                     y_pred = self._select_proba(
-                        y_pred, clf.classes_, support_multi_class=False,
+                        y_pred, clf.classes_, explicit_multi_class=False,
                     )
                 elif isinstance(y_pred, list):
                     y_pred = np.vstack([p[:, -1] for p in y_pred]).T

@@ -940,8 +940,27 @@ def test_scorer_select_proba_error(scorer):
     X, y = make_classification(
         n_classes=2, n_informative=3, n_samples=20, random_state=0
     )
-    lr = LogisticRegression(multi_class="multinomial").fit(X, y)
+    lr = LogisticRegression().fit(X, y)
 
     err_msg = "is not a valid label"
     with pytest.raises(ValueError, match=err_msg):
         scorer(lr, X, y)
+
+
+def test_scorer_no_op_multiclass_select_proba():
+    # check that calling a ProbaScorer on a multiclass problem do not raise
+    # an error by considering `y_true` to be binary.
+    # `_select_proba` should be a no-op operation in this case.
+    X, y = make_classification(
+        n_classes=3, n_informative=3, n_samples=20, random_state=0
+    )
+    lr = LogisticRegression().fit(X, y)
+
+    mask_last_class = y == lr.classes_[-1]
+    X_test, y_test = X[~mask_last_class], y[~mask_last_class]
+    assert_array_equal(np.unique(y_test), lr.classes_[:-1])
+
+    scorer = make_scorer(
+        roc_auc_score, needs_proba=True, multi_class="ovo", labels=lr.classes_,
+    )
+    scorer(lr, X_test, y_test)
