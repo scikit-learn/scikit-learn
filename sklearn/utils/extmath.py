@@ -760,8 +760,8 @@ def _incremental_weighted_mean_and_var(X, sample_weight,
     total_weight_sum = _safe_accumulator_op(np.sum, sample_weight, axis=0)
 
     X_0 = np.where(nan_mask, 0, X)
-    new_mean = \
-        _safe_accumulator_op(np.average, X_0, weights=sample_weight, axis=0)
+    new_mean = np.average(X_0,
+                          weights=sample_weight, axis=0).astype(np.float64)
     new_mean *= total_weight_sum / new_weight_sum
     updated_weight_sum = last_weight_sum + new_weight_sum
     updated_mean = (
