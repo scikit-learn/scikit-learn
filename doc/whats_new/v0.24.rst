@@ -100,6 +100,11 @@ Changelog
 :mod:`sklearn.cross_decomposition`
 ..................................
 
+- |API| For :class:`cross_decomposition.NMF`,
+  the default `nndsvd` value for the `init` parameter is deprecated for
+  `solver='mu'`. It will be changed to `nndsvda` in 0.26.
+  :pr:`18525` by `Chiara Marmo <cmarmo>`.
+
 - |API| The bounds of the `n_components` parameter is now restricted:
 
   - into `[1, min(n_samples, n_features, n_targets)]`, for
