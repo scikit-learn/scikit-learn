@@ -1243,7 +1243,10 @@ Methods
         the estimator's :term:`transform` method.  It outputs a list of
         strings and may take a list of strings as input, corresponding
         to the names of input columns from which output column names can
-        be generated.  By default input features are named x0, x1, ....
+        be generated.  If `feature_names_in` is not passed in, then the
+        `feature_names_in_` attribute will be used. If the
+        `feature_names_in_` attribute is not defined or `None`, then the
+        input names are named x0, x1, ..., xn_features_out.
 
     ``get_n_splits``
         On a :term:`CV splitter` (not an estimator), returns the number of
