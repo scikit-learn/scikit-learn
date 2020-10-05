@@ -1565,13 +1565,15 @@ def tpr_fpr_tnr_fnr_scores(y_true, y_pred, *, labels=None, pos_label=1,
 
     Parameters
     ----------
-    y_true : 1d array-like, or label indicator array / sparse matrix
+    y_true : {array-like, label indicator array, sparse matrix} \
+        of shape (n_samples,)
         Ground truth (correct) target values.
 
-    y_pred : 1d array-like, or label indicator array / sparse matrix
+    y_pred : {array-like, label indicator array, sparse matrix} \
+        of shape (n_samples,)
         Estimated targets as returned by a classifier.
 
-    labels : list, optional
+    labels : list, default=None
         The set of labels to include when ``average != 'binary'``, and their
         order if ``average is None``. Labels present in the data can be
         excluded, for example to calculate a multiclass average ignoring a
@@ -1580,14 +1582,14 @@ def tpr_fpr_tnr_fnr_scores(y_true, y_pred, *, labels=None, pos_label=1,
         labels are column indices. By default, all labels in ``y_true`` and
         ``y_pred`` are used in sorted order.
 
-    pos_label : str or int, 1 by default
+    pos_label : str or int, default=1
         The class to report if ``average='binary'`` and the data is binary.
         If the data are multiclass or multilabel, this will be ignored;
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
         scores for that label only.
 
-    average : string, [None (default), 'binary', 'micro', 'macro', 'samples', \
-                       'weighted']
+    average : str, {None, 'binary', 'micro', 'macro', 'samples', 'weighted'}, \
+        default=None
         If ``None``, the scores for each class are returned. Otherwise, this
         determines the type of averaging performed on the data:
 
@@ -1616,7 +1618,7 @@ def tpr_fpr_tnr_fnr_scores(y_true, y_pred, *, labels=None, pos_label=1,
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    zero_division : "warn", 0 or 1, default="warn"
+    zero_division : str or int, {'warn', 0, 1}, default="warn"
         Sets the value to return when there is a zero division:
            - tpr, fnr: when there are no positive labels
            - fpr, tnr: when there are no negative labels
@@ -1625,17 +1627,17 @@ def tpr_fpr_tnr_fnr_scores(y_true, y_pred, *, labels=None, pos_label=1,
 
     Returns
     -------
-    tpr : float (if average is not None) or array of float, shape =\
-        [n_unique_labels]
+    tpr : float (if average is not None), \
+        or ndarray of shape (n_unique_labels,)
 
-    fpr : float (if average is not None) or array of float, shape =\
-        [n_unique_labels]
+    fpr : float (if average is not None), \
+        or ndarray of shape (n_unique_labels,)
 
-    tnr : float (if average is not None) or array of float, shape =\
-        [n_unique_labels]
+    tnr : float (if average is not None), \
+        or ndarray of shape (n_unique_labels,)
 
-    fnr : float (if average is not None) or array of float, shape =\
-        [n_unique_labels]
+    fnr : float (if average is not None), \
+        or ndarray of shape (n_unique_labels,)
         The number of occurrences of each label in ``y_true``.
 
     References
@@ -1673,8 +1675,8 @@ def tpr_fpr_tnr_fnr_scores(y_true, y_pred, *, labels=None, pos_label=1,
 
     Notes
     -----
-    When ``true positive + false negative == 0``, TPR, FNR are not undefined;
-    When ``true negative + false positive == 0``, FPR, TNR are not undefined.
+    When ``true positive + false negative == 0``, TPR, FNR are undefined;
+    When ``true negative + false positive == 0``, FPR, TNR are undefined.
     In such cases, by default the metric will be set to 0, as will f-score,
     and ``UndefinedMetricWarning`` will be raised. This behavior can be
     modified with ``zero_division``.
