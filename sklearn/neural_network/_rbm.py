@@ -132,8 +132,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         check_is_fitted(self)
 
         X = self._validate_data(X, accept_sparse='csr', reset=False,
-                                dtype=(np.float64, np.float32),
-                                requires_y=False)
+                                dtype=(np.float64, np.float32))
         return self._mean_hiddens(X)
 
     def _mean_hiddens(self, v):
