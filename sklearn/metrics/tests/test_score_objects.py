@@ -949,8 +949,8 @@ def test_scorer_select_proba_error(scorer):
 
 def test_scorer_no_op_multiclass_select_proba():
     # check that calling a ProbaScorer on a multiclass problem do not raise
-    # an error by considering `y_true` to be binary.
-    # `_select_proba` should be a no-op operation in this case.
+    # even if `y_true` would be binary during the scoring.
+    # `_select_proba_binary` should not be called in this case.
     X, y = make_classification(
         n_classes=3, n_informative=3, n_samples=20, random_state=0
     )

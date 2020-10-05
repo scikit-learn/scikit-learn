@@ -134,11 +134,9 @@ class _BaseScorer:
                 f"pos_label={pos_label} is not a valid label: {classes}"
             )
 
-    def _select_proba(self, y_pred, classes, explicit_multi_class):
-        """Select the column of `y_pred` when probabilities are provided.
-
-        If `explicit_multi_class=True` and `y_pred` is valid, then this method
-        is no-op.
+    def _select_proba_binary(self, y_pred, classes):
+        """Select the column of the positive label in `y_pred` when
+        probabilities are provided.
 
         Parameters
         ----------
@@ -147,11 +145,6 @@ class _BaseScorer:
 
         classes : ndarray of shape (n_classes,)
             The class labels for the estimator.
-
-        explicit_multi_class : bool
-            Whether `y
-            Whether to support multiclass which has been tagged as binary and
-            return `y_pred` as is.
 
         Returns
         -------
@@ -169,17 +162,7 @@ class _BaseScorer:
             f"classifier with two classes for {self._score_func.__name__} "
             f"scoring"
         )
-        if not explicit_multi_class or y_pred.shape[1] == 1:
-            # raise an error for the following case:
-            # * for ThresholdScorer, if y_pred.shape[1] != 2;
-            # * for ProbaScorer, if y_pred.shape[1] < 2. More precisely, we
-            #   want to accept the case where 2 classes are given in `y_true`
-            #   (i.e. labelled as `binary`) and the estimator was trained with
-            #   `y` being a multiclass problem (i.e. `y_pred.shape[1] > 2`).
-            #   In the last case, we return `y_pred` as is.
-            raise ValueError(err_msg)
-
-        return y_pred
+        raise ValueError(err_msg)
 
     def __repr__(self):
         kwargs_string = "".join([", %s=%s" % (str(k), str(v))
@@ -291,10 +274,8 @@ class _ProbaScorer(_BaseScorer):
 
         y_type = type_of_target(y)
         y_pred = method_caller(clf, "predict_proba", X)
-        if y_type == "binary":
-            y_pred = self._select_proba(
-                y_pred, clf.classes_, explicit_multi_class=True
-            )
+        if y_type == "binary" and y_pred.shape[1] <= 2:
+            y_pred = self._select_proba_binary(y_pred, clf.classes_)
         if sample_weight is not None:
             return self._sign * self._score_func(y, y_pred,
                                                  sample_weight=sample_weight,
@@ -365,9 +346,7 @@ class _ThresholdScorer(_BaseScorer):
                 y_pred = method_caller(clf, "predict_proba", X)
 
                 if y_type == "binary":
-                    y_pred = self._select_proba(
-                        y_pred, clf.classes_, explicit_multi_class=False,
-                    )
+                    y_pred = self._select_proba_binary(y_pred, clf.classes_)
                 elif isinstance(y_pred, list):
                     y_pred = np.vstack([p[:, -1] for p in y_pred]).T
 
