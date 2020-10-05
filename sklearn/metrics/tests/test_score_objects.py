@@ -941,6 +941,7 @@ def test_scorer_select_proba_error(scorer):
         n_classes=2, n_informative=3, n_samples=20, random_state=0
     )
     lr = LogisticRegression().fit(X, y)
+    assert scorer.pos_label not in np.unique(y)
 
     err_msg = "is not a valid label"
     with pytest.raises(ValueError, match=err_msg):
