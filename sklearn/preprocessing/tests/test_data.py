@@ -314,17 +314,26 @@ def test_raises_value_error_if_sample_weights_greater_than_1d():
             scaler.fit(X, y, sample_weight=sample_weight_notOK)
 
 
-def test_standard_scaler_sample_weights():
+@pytest.mark.parametrize(['Xw', 'X', 'sample_weight'],
+                         [([[1, 2, 3], [4, 5, 6]],
+                           [[1, 2, 3], [1, 2, 3], [4, 5, 6]],
+                           [2., 1.]),
+                          ([[1, 0, 1], [0, 0, 1]],
+                           [[1, 0, 1], [0, 0, 1], [0, 0, 1], [0, 0, 1]],
+                           np.array([1, 3])),
+                          ([[1, np.nan, 1], [np.nan, np.nan, 1]],
+                           [[1, np.nan, 1], [np.nan, np.nan, 1],
+                            [np.nan, np.nan, 1], [np.nan, np.nan, 1]],
+                           np.array([1, 3])),
+                          ])
+def test_standard_scaler_sample_weight(Xw, X, sample_weight):
     # weighted StandardScaler
-    Xw = [[1, 2, 3], [4, 5, 6]]
-    yw = [[3, 2], [2, 3]]
-    sample_weight = np.asarray([2., 1.])
+    yw = np.ones(len(Xw))
     scaler_w = StandardScaler()
     scaler_w.fit(Xw, yw, sample_weight=sample_weight)
 
     # unweighted, but with repeated samples
-    X = [[1, 2, 3], [1, 2, 3], [4, 5, 6]]
-    y = [[3, 2], [3, 2], [2, 3]]
+    y = np.ones(len(X))
     scaler = StandardScaler()
     scaler.fit(X, y)
 
