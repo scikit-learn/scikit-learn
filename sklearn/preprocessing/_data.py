@@ -791,12 +791,8 @@ class StandardScaler(TransformerMixin, BaseEstimator):
                     (np.isnan(X.data), X.indices, X.indptr),
                     shape=X.shape,
                     dtype=sample_weight.dtype)
-                if counts_nan.format == 'csr':
-                    counts_nan.data *= sample_weight.repeat(
-                        np.diff(counts_nan.indptr))
-                elif counts_nan.format == 'csc':
-                    counts_nan.data *= sample_weight[counts_nan.row]
-                counts_nan = counts_nan.sum(axis=0).A.ravel()
+                nan_weights = nan_values.multiply(sample_weight[:, np.newaxis])
+                counts_nan = nan_weights.sum(axis=0).A.ravel()
             else:
                 counts_nan = sparse_constructor(
                         (np.isnan(X.data), X.indices, X.indptr),
@@ -824,6 +820,12 @@ class StandardScaler(TransformerMixin, BaseEstimator):
                         # Vol. 37, No. 3,
                         # pp. 242-247
                         # TODO take care of NANS in Sparse
+                        X.data
+                        nans_place = sparse_constructor((np.isnan(X.data), X.indices, X.indptr),shape=X.shape,dtype=sample_weight.dtype)
+                        notnans_place = nans_place
+                        nans_place.multiply(X)
+                        X_not_nan = X.copy()
+                        X_not_nan.data[int(nans_place.data*(-1)+1)]
 
                         new_sum = safe_sparse_dot(sample_weight, X)
                         new_sample_count = np.sum(sample_weight)
