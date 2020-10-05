@@ -218,6 +218,11 @@ Changelog
   :class:`ensemble.GradientBoostingClassifier`.
   :pr:`18326` by :user:`Madhura Jayaratne <madhuracj>`.
 
+- |Fix|: Fixed a bug in
+  :class:`ensemble.HistGradientBoostingRegressor` and
+  :class:`ensemble.HistGradientBoostingClassifier` which can now accept data
+  with `uint8` dtype in `predict`. :pr:`18410` by `Nicolas Hug`_.
+
 :mod:`sklearn.exceptions`
 .........................
 
@@ -500,6 +505,10 @@ Changelog
   now, when the number of features exceeds 15, `brute` is selected, assuming
   the data intrinsic dimensionality is too high for tree-based methods.
   :pr:`17148` by :user:`Geoffrey Bolmier <gbolmier>`.
+
+- |Fix| :class:`neighbors.NearestCentroid` with a numerical `shrink_threshold`
+  will raise a `ValueError` when fitting on data with all constant features.
+  :pr:`18370` by :user:`Trevor Waite <trewaite>`.
 
 :mod:`sklearn.neural_network`
 .............................
