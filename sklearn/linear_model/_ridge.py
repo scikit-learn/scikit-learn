@@ -1776,6 +1776,8 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         Score of base estimator with best alpha, or, if
         ``alpha_per_target=True``, a score for each target.
 
+        .. versionadded:: 0.23
+
     Examples
     --------
     >>> from sklearn.datasets import load_diabetes
@@ -1881,6 +1883,8 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
     best_score_ : float
         Score of base estimator with best alpha.
+
+        .. versionadded:: 0.23
 
     classes_ : ndarray of shape (n_classes,)
         The classes labels.
