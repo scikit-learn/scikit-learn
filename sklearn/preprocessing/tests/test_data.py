@@ -409,8 +409,14 @@ def test_standard_scaler_1d(add_sample_weight):
 
     # Constant feature
     X = np.ones((5, 1))
+    if add_sample_weight:
+        sample_weight = np.ones(len(X))
+    else:
+        sample_weight = None
+
     scaler = StandardScaler()
-    X_scaled = scaler.fit(X).transform(X, copy=True)
+    X_scaled = scaler.fit(X, sample_weight=sample_weight).transform(
+        X, copy=True)
     assert_almost_equal(scaler.mean_, 1.)
     assert_almost_equal(scaler.scale_, 1.)
     assert_array_almost_equal(X_scaled.mean(axis=0), .0)
@@ -644,13 +650,24 @@ def test_standard_scaler_partial_fit(add_sample_weight):
 
     for chunk_size in [1, 2, 50, n, n + 42]:
         # Test mean at the end of the process
+        if add_sample_weight:
+            sample_weight_batch = np.ones(len(X))
+            sample_weight_incr = np.ones(chunk_size)
+        else:
+            sample_weight_batch = None
+            sample_weight_incr = None
+
         scaler_batch = StandardScaler(with_std=False).fit(
-            X, sample_weight=sample_weight)
+            X, sample_weight=sample_weight_batch)
 
         scaler_incr = StandardScaler(with_std=False)
         for batch in gen_batches(n_samples, chunk_size):
-            scaler_incr = scaler_incr.partial_fit(
-                X[batch], sample_weight=sample_weight)
+            try:
+                scaler_incr = scaler_incr.partial_fit(
+                  X[batch], sample_weight=sample_weight_incr)
+
+            except:
+                import pdb; pdb.set_trace()
 
         assert_array_almost_equal(scaler_batch.mean_, scaler_incr.mean_)
         assert scaler_batch.var_ == scaler_incr.var_  # Nones
@@ -658,8 +675,9 @@ def test_standard_scaler_partial_fit(add_sample_weight):
 
         # Test std after 1 step
         batch0 = slice(0, chunk_size)
+
         scaler_incr = StandardScaler().partial_fit(
-            X[batch0], sample_weight=sample_weight)
+            X[batch0], sample_weight=sample_weight_incr)
         if chunk_size == 1:
             assert_array_almost_equal(np.zeros(n_features, dtype=np.float64),
                                       scaler_incr.var_)
@@ -672,11 +690,12 @@ def test_standard_scaler_partial_fit(add_sample_weight):
                                       scaler_incr.scale_)  # no constants
 
         # Test std until the end of partial fits, and
-        scaler_batch = StandardScaler().fit(X, sample_weight=sample_weight)
+        scaler_batch = StandardScaler().fit(X,
+                                            sample_weight=sample_weight_batch)
         scaler_incr = StandardScaler()  # Clean estimator
         for i, batch in enumerate(gen_batches(n_samples, chunk_size)):
             scaler_incr = scaler_incr.partial_fit(
-                X[batch], sample_weight=sample_weight)
+                X[batch], sample_weight=sample_weight_incr)
             assert_correct_incr(i, batch_start=batch.start,
                                 batch_stop=batch.stop, n=n,
                                 chunk_size=chunk_size,
