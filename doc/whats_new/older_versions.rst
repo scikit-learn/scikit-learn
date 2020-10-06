@@ -760,7 +760,7 @@ Changelog
 
 - Faster mean shift by Conrad Lee
 
-- New ``Bootstrap``, :ref:`ShuffleSplit` and various other
+- New ``Bootstrap``, :ref:`shuffle_split` and various other
   improvements in cross validation schemes by `Olivier Grisel`_ and
   `Gael Varoquaux`_
 
