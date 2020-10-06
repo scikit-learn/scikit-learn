@@ -212,8 +212,9 @@ class KNNImputer(_BaseImputer):
             force_all_finite = True
         else:
             force_all_finite = "allow-nan"
-        X = check_array(X, accept_sparse=False, dtype=FLOAT_DTYPES,
-                        force_all_finite=force_all_finite, copy=self.copy)
+        X = self._validate_data(X, accept_sparse=False, dtype=FLOAT_DTYPES,
+                                force_all_finite=force_all_finite,
+                                copy=self.copy)
 
         if X.shape[1] != self._fit_X.shape[1]:
             raise ValueError("Incompatible dimension between the fitted "
