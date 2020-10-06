@@ -702,7 +702,8 @@ def test_standard_scaler_partial_fit(add_sample_weight):
         assert scaler_batch.n_samples_seen_ == scaler_incr.n_samples_seen_
 
 
-def test_standard_scaler_partial_fit_numerical_stability():
+@pytest.mark.parametrize("add_sample_weight", [False, True])
+def test_standard_scaler_partial_fit_numerical_stability(add_sample_weight):
     # Test if the incremental computation introduces significative errors
     # for large datasets with values of large magniture
     rng = np.random.RandomState(0)
@@ -711,11 +712,16 @@ def test_standard_scaler_partial_fit_numerical_stability():
     offsets = rng.uniform(-1e15, 1e15, size=n_features)
     scales = rng.uniform(1e3, 1e6, size=n_features)
     X = rng.randn(n_samples, n_features) * scales + offsets
+    if add_sample_weight:
+        sample_weight = np.ones(len(X))
+    else:
+        sample_weight = None
 
-    scaler_batch = StandardScaler().fit(X)
+    scaler_batch = StandardScaler().fit(X, sample_weight)
     scaler_incr = StandardScaler()
     for chunk in X:
-        scaler_incr = scaler_incr.partial_fit(chunk.reshape(1, n_features))
+        scaler_incr = scaler_incr.partial_fit(chunk.reshape(1, n_features),
+                                              sample_weight = [1])
 
     # Regardless of abs values, they must not be more diff 6 significant digits
     tol = 10 ** (-6)
