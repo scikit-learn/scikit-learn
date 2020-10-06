@@ -384,8 +384,8 @@ class ConfusionMatrixDisplay:
         ...         X, y, random_state=0)
         >>> clf = SVC(random_state=0)
         >>> clf.fit(X_train, y_train)
-        >>> y_pred = clf.predict(X_test)
         SVC(random_state=0)
+        >>> y_pred = clf.predict(X_test)
         >>> ConfusionMatrixDisplay.from_predictions(
         ...    y_test, y_pred)  # doctest: +SKIP
         >>> plt.show()  # doctest: +SKIP
