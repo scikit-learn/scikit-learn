@@ -21,7 +21,7 @@ degree ``degree`` by using ridge regression. We show two different ways given
   the matrix induced by a polynomial kernel.
 
 - :class:`~sklearn.preprocessing.SplineTransformer` generates B-spline basis
-  functions. A basis function of a B-spline is a peace-wise polynomial function
+  functions. A basis function of a B-spline is a piece-wise polynomial function
   of degree ``degree`` that is non-zero only between ``degree+1`` consecutive
   knots. Given ``n_knots`` number of knots, this results in matrix of
   ``n_samples`` rows and ``n_knots + degree - 1`` columns:

@@ -1898,7 +1898,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         self.order = order
 
     @staticmethod
-    def get_base_knot_positions(X, n_knots=10, knots='uniform'):
+    def _get_base_knot_positions(X, n_knots=10, knots='uniform'):
         """Calculate base knot positions.
 
         Base knots such that first knot <= feature <= last knot. For the
@@ -1972,7 +1972,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             raise ValueError("n_knots must be a positive integer >= 2.")
 
         if self.knots in ['uniform', 'quantile']:
-            base_knots = self.get_base_knot_positions(
+            base_knots = self._get_base_knot_positions(
                 X, n_knots=self.n_knots, knots=self.knots)
         else:
             base_knots = check_array(self.knots)
@@ -2081,8 +2081,10 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             if self.extrapolation == 'error':
                 # BSpline with extrapolate=False does not raise an error, but
                 # output np.nan.
-                assert_all_finite(
-                    XBS[:, (i * n_splines):((i + 1) * n_splines)])
+                if np.any(np.isnan(
+                        XBS[:, (i * n_splines):((i + 1) * n_splines)])):
+                    raise ValueError(
+                        "X contains values beyond the limits of the knots.")
             elif self.extrapolation == 'constant':
                 # Set all values beyond xmin and xmax to the value of the
                 # spline basis functions at those two positions.
