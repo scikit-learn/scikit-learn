@@ -69,7 +69,7 @@ def confusion_matrix_display_fxt(request):
     return request.getfixturevalue(request.param)
 
 
-def test_confusion_matrix_display_error_on_regressor(pyplot, data):
+def test_confusion_matrix_display_error_on_regressor(pyplot, data, y_pred):
     X, y = data
     regressor = SVR().fit(X, y)
 
@@ -77,10 +77,22 @@ def test_confusion_matrix_display_error_on_regressor(pyplot, data):
     with pytest.raises(ValueError, match=err_msg):
         ConfusionMatrixDisplay.from_estimator(regressor, X, y)
 
-    y_pred = regressor.predict(X)
+    y_pred_regressor = regressor.predict(X)
+
+    err_msg = (
+        "Only 'binary' and 'multiclass' classification problems are supported"
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        # Force `y_true` to be seen as a regression problem
+        ConfusionMatrixDisplay.from_predictions(y + 0.5, y_pred)
+
     err_msg = "Got `y_pred` of type 'continuous'"
     with pytest.raises(ValueError, match=err_msg):
-        ConfusionMatrixDisplay.from_predictions(y, y_pred)
+        ConfusionMatrixDisplay.from_predictions(y, y_pred_regressor)
+
+    err_msg = "Found input variables with inconsistent numbers of samples"
+    with pytest.raises(ValueError, match=err_msg):
+        ConfusionMatrixDisplay.from_predictions(y, y_pred[::2])
 
 
 def test_confusion_matrix_display_invalid_option(
