@@ -599,9 +599,9 @@ def test_nmf_custom_init_dtype_error():
 def test_init_default_deprecation():
     # Test FutureWarning on init default
     msg = ("The 'init' value, when 'init=None' and "
-           "n_components <= min\(n_samples, n_features\) "
-           "will be changed from 'nndsvd' to 'nndsvda' "
-           "in 0.26.")
+           "n_components is less than n_samples and "
+           "n_features, will be changed from 'nndsvd' to "
+           "'nndsvda' in 0.26.")
     rng = np.random.mtrand.RandomState(42)
     A = np.abs(rng.randn(6, 5))
     with pytest.warns(FutureWarning, match=msg):

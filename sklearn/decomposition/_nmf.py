@@ -1342,9 +1342,9 @@ class NMF(TransformerMixin, BaseEstimator):
         """
         if self.init == 'warn':
             warnings.warn(("The 'init' value, when 'init=None' and "
-                           "n_components <= min(n_samples, n_features) "
-                           "will be changed from 'nndsvd' to 'nndsvda' "
-                           "in 0.26."), FutureWarning)
+                           "n_components is less than n_samples and "
+                           "n_features, will be changed from 'nndsvd' to "
+                           "'nndsvda' in 0.26."), FutureWarning)
             self.init = None
         self.fit_transform(X, **params)
         return self
