@@ -709,7 +709,8 @@ class StandardScaler(TransformerMixin, BaseEstimator):
             Ignored.
 
         sample_weight : array-like of shape (n_samples,), default=None
-            Individual weights for each sample
+            Individual weights for each sample. Works only if X is dense. It
+            will throw an `NotImplemented Error` if passed with sparse X
 
             .. versionadded:: 0.24
                parameter *sample_weight* support to StandardScaler.
@@ -747,9 +748,8 @@ class StandardScaler(TransformerMixin, BaseEstimator):
             Ignored.
 
         sample_weight : array-like of shape (n_samples,), default=None
-            Individual weights for each sample
-            sample_weight only works if X is sparse and it will through
-            `NotImplementedError` if X is sparse.
+            Individual weights for each sample. Works only if X is dense. It
+            will throw an `NotImplemented Error` if passed with sparse X
 
             .. versionadded:: 0.24
                parameter *sample_weight* support to StandardScaler.
