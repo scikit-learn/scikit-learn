@@ -475,7 +475,6 @@ def test_standard_scaler_numerical_stability():
 
 def test_scaler_2d_arrays():
     # Test scaling of 2d array along first axis
-
     rng = np.random.RandomState(0)
     n_features = 5
     n_samples = 4
@@ -483,8 +482,7 @@ def test_scaler_2d_arrays():
     X[:, 0] = 0.0  # first feature is always of zero
 
     scaler = StandardScaler()
-    X_scaled = scaler.fit(X).transform(
-        X, copy=True)
+    X_scaled = scaler.fit(X).transform(X, copy=True)
     assert not np.any(np.isnan(X_scaled))
     assert scaler.n_samples_seen_ == n_samples
 
@@ -509,8 +507,7 @@ def test_scaler_2d_arrays():
     # Check that the data hasn't been modified
     assert X_scaled is not X
 
-    X_scaled = scaler.fit(X).transform(
-        X, copy=False)
+    X_scaled = scaler.fit(X).transform(X, copy=False)
     assert not np.any(np.isnan(X_scaled))
     assert_array_almost_equal(X_scaled.mean(axis=0), n_features * [0.0])
     assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
@@ -520,8 +517,7 @@ def test_scaler_2d_arrays():
     X = rng.randn(4, 5)
     X[:, 0] = 1.0  # first feature is a constant, non zero feature
     scaler = StandardScaler()
-    X_scaled = scaler.fit(X).transform(
-        X, copy=True)
+    X_scaled = scaler.fit(X).transform(X, copy=True)
     assert not np.any(np.isnan(X_scaled))
     assert_array_almost_equal(X_scaled.mean(axis=0), n_features * [0.0])
     assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
@@ -626,8 +622,7 @@ def test_standard_scaler_partial_fit():
 
         scaler_incr = StandardScaler(with_std=False)
         for batch in gen_batches(n_samples, chunk_size):
-            scaler_incr = scaler_incr.partial_fit(
-                X[batch])
+            scaler_incr = scaler_incr.partial_fit(X[batch])
         assert_array_almost_equal(scaler_batch.mean_, scaler_incr.mean_)
         assert scaler_batch.var_ == scaler_incr.var_  # Nones
         assert scaler_batch.n_samples_seen_ == scaler_incr.n_samples_seen_
@@ -635,7 +630,6 @@ def test_standard_scaler_partial_fit():
         # Test std after 1 step
         batch0 = slice(0, chunk_size)
         scaler_incr = StandardScaler().partial_fit(X[batch0])
-
         if chunk_size == 1:
             assert_array_almost_equal(np.zeros(n_features, dtype=np.float64),
                                       scaler_incr.var_)
@@ -651,7 +645,6 @@ def test_standard_scaler_partial_fit():
         scaler_batch = StandardScaler().fit(X)
         scaler_incr = StandardScaler()  # Clean estimator
         for i, batch in enumerate(gen_batches(n_samples, chunk_size)):
-
             scaler_incr = scaler_incr.partial_fit(X[batch])
             assert_correct_incr(i, batch_start=batch.start,
                                 batch_stop=batch.stop, n=n,
@@ -734,12 +727,10 @@ def test_standard_scaler_trasform_with_partial_fit():
         X_sofar = X[:(i + 1), :]
 
         chunks_copy = X_sofar.copy()
-        scaled_batch = StandardScaler().fit_transform(
-            X_sofar)
+        scaled_batch = StandardScaler().fit_transform(X_sofar)
 
         scaler_incr = scaler_incr.partial_fit(X[batch])
         scaled_incr = scaler_incr.transform(X_sofar)
-
         assert_array_almost_equal(scaled_batch, scaled_incr)
         assert_array_almost_equal(X_sofar, chunks_copy)  # No change
         right_input = scaler_incr.inverse_transform(scaled_incr)
