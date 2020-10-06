@@ -721,7 +721,7 @@ def test_standard_scaler_partial_fit_numerical_stability(add_sample_weight):
     scaler_incr = StandardScaler()
     for chunk in X:
         scaler_incr = scaler_incr.partial_fit(chunk.reshape(1, n_features),
-                                              sample_weight = [1])
+                                              sample_weight=[1])
 
     # Regardless of abs values, they must not be more diff 6 significant digits
     tol = 10 ** (-6)
