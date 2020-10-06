@@ -156,8 +156,6 @@ class BaseEstimator:
     at the class level in their ``__init__`` as explicit keyword
     arguments (no ``*args`` or ``**kwargs``).
     """
-    # used by _validate_data when `y` is not validated
-    __NO_Y = '__NO_Y'
 
     @classmethod
     def _get_param_names(cls):
@@ -384,7 +382,7 @@ class BaseEstimator:
                                        self.n_features_in_)
                 )
 
-    def _validate_data(self, X, y=__NO_Y, reset=True,
+    def _validate_data(self, X, y='no_validation', reset=True,
                        validate_separately=False, **check_params):
         """Validate input data and set or check the `n_features_in_` attribute.
 
@@ -398,11 +396,11 @@ class BaseEstimator:
 
             - If `None`, `check_array` is called on `X`. If the estimator's
               requires_y tag is True, then an error will be raised.
-            - If `__NO_Y`, `check_array` is called on `X` and the estimator's
-              requires_y tag is ignored. This is a default placeholder and is
-              never meant to be explicitly set.
+            - If `'no_validation'`, `check_array` is called on `X` and the
+              estimator's requires_y tag is ignored. This is a default
+              placeholder and is never meant to be explicitly set.
             - Otherwise, both `X` and `y` are checked with either `check_array`
-              or `check_X_y`.
+              or `check_X_y` depending on `validate_separately`.
 
         reset : bool, default=True
             Whether to reset the `n_features_in_` attribute.
@@ -435,7 +433,7 @@ class BaseEstimator:
                 )
             X = check_array(X, **check_params)
             out = X
-        elif y is self.__NO_Y:
+        elif y == 'no_validation':
             X = check_array(X, **check_params)
             out = X
         else:
