@@ -528,6 +528,9 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
     >>> plot_confusion_matrix(clf, X_test, y_test)  # doctest: +SKIP
     >>> plt.show()  # doctest: +SKIP
     """
+    # early failing to keep the right error message during the deprecation:
+    if not is_classifier(estimator):
+        raise ValueError("plot_confusion_matrix only supports classifiers")
     return ConfusionMatrixDisplay.from_estimator(
         estimator=estimator,
         X=X,
