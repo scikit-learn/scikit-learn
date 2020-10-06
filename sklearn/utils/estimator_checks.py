@@ -135,7 +135,8 @@ def _yield_classifier_checks(classifier):
         yield check_classifiers_multilabel_representation_invariance
     if not tags["no_validation"]:
         yield check_supervised_y_no_nan
-        yield check_supervised_y_2d
+        if not tags['multioutput_only']:
+            yield check_supervised_y_2d
     if tags["requires_fit"]:
         yield check_estimators_unfitted
     if 'class_weight' in classifier.get_params().keys():
@@ -181,7 +182,7 @@ def _yield_regressor_checks(regressor):
     if tags["multioutput"]:
         yield check_regressor_multioutput
     yield check_regressors_no_decision_function
-    if not tags["no_validation"]:
+    if not tags["no_validation"] and not tags['multioutput_only']:
         yield check_supervised_y_2d
     yield check_supervised_y_no_nan
     name = regressor.__class__.__name__
@@ -277,11 +278,9 @@ def _yield_all_checks(estimator):
         for check in _yield_outliers_checks(estimator):
             yield check
     yield check_parameters_default_constructible
-    yield check_fit2d_predict1d
     yield check_methods_subset_invariance
     yield check_fit2d_1sample
     yield check_fit2d_1feature
-    yield check_fit1d
     yield check_get_params_invariance
     yield check_set_params
     yield check_dict_unchanged
@@ -289,6 +288,8 @@ def _yield_all_checks(estimator):
     yield check_fit_idempotent
     if not tags["no_validation"]:
         yield check_n_features_in
+        yield check_fit1d
+        yield check_fit2d_predict1d
         if tags["requires_y"]:
             yield check_requires_y_none
     if tags["requires_positive_X"]:
@@ -1099,7 +1100,6 @@ def check_fit2d_predict1d(name, estimator_orig, strict_mode=True):
     X = 3 * rnd.uniform(size=(20, 3))
     X = _pairwise_estimator_convert_X(X, estimator_orig)
     y = X[:, 0].astype(int)
-    tags = estimator_orig._get_tags()
     estimator = clone(estimator_orig)
     y = _enforce_estimator_tags_y(estimator, y)
 
@@ -1110,9 +1110,6 @@ def check_fit2d_predict1d(name, estimator_orig, strict_mode=True):
 
     set_random_state(estimator, 1)
     estimator.fit(X, y)
-    if tags["no_validation"]:
-        # FIXME this is a bit loose
-        return
 
     for method in ["predict", "transform", "decision_function",
                    "predict_proba"]:
@@ -1241,10 +1238,6 @@ def check_fit1d(name, estimator_orig, strict_mode=True):
     X = 3 * rnd.uniform(size=(20))
     y = X.astype(int)
     estimator = clone(estimator_orig)
-    tags = estimator._get_tags()
-    if tags["no_validation"]:
-        # FIXME this is a bit loose
-        return
     y = _enforce_estimator_tags_y(estimator, y)
 
     if hasattr(estimator, "n_components"):
@@ -2154,9 +2147,6 @@ def check_estimators_unfitted(name, estimator_orig, strict_mode=True):
 @ignore_warnings(category=FutureWarning)
 def check_supervised_y_2d(name, estimator_orig, strict_mode=True):
     tags = estimator_orig._get_tags()
-    if tags['multioutput_only']:
-        # These only work on 2d, so this test makes no sense
-        return
     rnd = np.random.RandomState(0)
     n_samples = 30
     X = _pairwise_estimator_convert_X(
