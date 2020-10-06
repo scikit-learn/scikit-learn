@@ -185,7 +185,8 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
 
         self.components_ = VT
 
-        # For consistent .fit_transform = .fit.transform, despite approx
+        # As a result of the SVD approximation error on X ~ U @ Sigma @ V.T,
+        # X @ V is not the same as U @ Sigma
         if self.algorithm == "randomized" or \
                 (self.algorithm == "arpack" and self.tol > 0):
             X_transformed = safe_sparse_dot(X, self.components_.T)
