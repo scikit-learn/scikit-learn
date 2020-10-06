@@ -3142,6 +3142,8 @@ def _check_column_name_consistency(name, estimator_orig, construct_X,
                                    array_name):
     estimator = clone(estimator_orig)
     tags = estimator._get_tags()
+
+    # should be
     if "2darray" not in tags["X_types"] or tags["no_validation"]:
         return
 
@@ -3163,6 +3165,13 @@ def _check_column_name_consistency(name, estimator_orig, construct_X,
         raise ValueError("Estimator does not have a feature_names_in_ "
                          f"attribute after fitting with a {array_name}")
 
+    check_funcs = [
+        getattr(estimator, func) for func in
+        ("predict", "transform", "decision_function", "predict_proba")
+        if hasattr(estimator, func)]
+    for func in check_funcs:
+        func(X)  # works
+
     assert_array_equal(estimator.feature_names_in_, names)
     bad_names = names[::-1]
     X_bad = construct_X(X, bad_names)
@@ -3170,13 +3179,9 @@ def _check_column_name_consistency(name, estimator_orig, construct_X,
     expected_msg = ("The column names should match those that were passed "
                     f"during fit. Got ({bad_names}) expected ({names}). "
                     "Starting version 0.26, an error will be raised")
-    for method in ("predict", "transform", "decision_function",
-                   "predict_proba"):
-        func = getattr(estimator, method, None)
-        if func is None:
-            continue
+    for method in check_funcs:
         # TODO In 0.26, this will be an error.
-        assert_warns_message(FutureWarning, expected_msg, func, X_bad)
+        assert_warns_message(FutureWarning, expected_msg, method, X_bad)
 
     # partial_fit checks on second call
     if not hasattr(estimator, "partial_fit"):

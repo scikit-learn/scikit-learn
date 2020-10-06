@@ -276,7 +276,7 @@ def test_strict_mode_parametrize_with_checks(estimator, check):
 
 # TODO: When more modules get added, we can remove it from this list to make
 # sure it gets tested. After we finish each module we can move the checks
-# into check_estimator
+# into check_estimator.
 COLUMN_NAME_MODULES_TO_IGNORE = {
     'calibration',
     'cluster',
