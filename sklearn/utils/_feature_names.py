@@ -4,10 +4,21 @@ import numpy as np
 def _get_feature_names(X):
     """Get feature names from X.
 
-    Supports:
-       - pandas DataFrame
-       - xarray DataArray
-       - Return None for unrecognized array containers
+    Parameters
+    ----------
+    X : {dataframe, dataarray} of shape (n_samples, n_features)
+        Array container to extract feature names.
+
+        - pandas DataFrame : The columns will be considered to be feature
+          names.
+        - xarray DataArray : The coords of the second dimension will be
+          considered to be feature names.
+        - All other array containers will return `None`.
+
+    Returns
+    -------
+    names: array-like of shape (n_features,) or None
+        Column names of `X`. Unrecognized array containers will return `None`.
     """
     if hasattr(X, "columns"):  # pandas
         return np.array(X.columns, dtype=object)
