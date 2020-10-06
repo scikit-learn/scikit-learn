@@ -770,7 +770,8 @@ def test_partial_fit_sparse_input():
         assert_array_equal(X_orig.data, X.data)
 
 
-def test_standard_scaler_trasform_with_partial_fit():
+@pytest.mark.parametrize("add_sample_weight", [False, True])
+def test_standard_scaler_trasform_with_partial_fit(add_sample_weight):
     # Check some postconditions after applying partial_fit and transform
     X = X_2d[:100, :]
 
@@ -778,10 +779,17 @@ def test_standard_scaler_trasform_with_partial_fit():
     for i, batch in enumerate(gen_batches(X.shape[0], 1)):
 
         X_sofar = X[:(i + 1), :]
-        chunks_copy = X_sofar.copy()
-        scaled_batch = StandardScaler().fit_transform(X_sofar)
+        if add_sample_weight:
+            sample_weight = np.ones(len(X_sofar))
+        else:
+            sample_weight = None
 
-        scaler_incr = scaler_incr.partial_fit(X[batch])
+        chunks_copy = X_sofar.copy()
+        scaled_batch = StandardScaler().fit_transform(
+            X_sofar, sample_weight=sample_weight)
+
+        scaler_incr = scaler_incr.partial_fit(X[batch],
+                                              sample_weight=np.ones(1))
         scaled_incr = scaler_incr.transform(X_sofar)
 
         assert_array_almost_equal(scaled_batch, scaled_incr)
