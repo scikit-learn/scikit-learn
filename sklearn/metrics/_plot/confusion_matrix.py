@@ -533,7 +533,7 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
     return ConfusionMatrixDisplay.from_estimator(
         estimator=estimator,
         X=X,
-        y_true=y_true,
+        y=y_true,
         labels=labels,
         sample_weight=sample_weight,
         normalize=normalize,
