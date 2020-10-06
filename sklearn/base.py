@@ -387,12 +387,13 @@ class BaseEstimator:
         ----------
         X : {dataframe-like} of shape (n_samples, n_features)
             The input samples.
+
         reset : bool, default=True
             Whether to reset the `feature_names_in_` attribute.
             If False, the input will be checked for consistency with
             feature names of data provided when reset was last True.
             .. note::
-               It is recommended to call reset=True in `fit` and in the first
+               It is recommended to call `reset=True` in `fit` and in the first
                call to `partial_fit`. All other methods that validates `X`
                should set `reset=False`.
         """
@@ -438,7 +439,7 @@ class BaseEstimator:
             If False, the input will be checked for consistency with data
             provided when reset was last True.
             .. note::
-               It is recommended to call reset=True in `fit` and in the first
+               It is recommended to call `reset=True` in `fit` and in the first
                call to `partial_fit`. All other methods that validates `X`
                should set `reset=False`.
         validate_separately : False or tuple of dicts, default=False
