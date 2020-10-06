@@ -19,7 +19,6 @@ from ._testing import assert_array_equal
 from ._testing import assert_array_almost_equal
 from ._testing import assert_allclose
 from ._testing import assert_allclose_dense_sparse
-from ._testing import assert_warns_message
 from ._testing import set_random_state
 from ._testing import SkipTest
 from ._testing import ignore_warnings
@@ -2343,7 +2342,8 @@ def check_regressors_train(name, regressor_orig, readonly_memmap=False,
 @ignore_warnings
 def check_regressors_no_decision_function(name, regressor_orig,
                                           strict_mode=True):
-    # checks whether regressors have decision_function or predict_proba
+    # check that regressors don't have a decision_function, predict_proba, or
+    # predict_log_proba method.
     rng = np.random.RandomState(0)
     regressor = clone(regressor_orig)
 
@@ -2351,20 +2351,10 @@ def check_regressors_no_decision_function(name, regressor_orig,
     X = _pairwise_estimator_convert_X(X, regressor_orig)
     y = _enforce_estimator_tags_y(regressor, X[:, 0])
 
-    if hasattr(regressor, "n_components"):
-        # FIXME CCA, PLS is not robust to rank 1 effects
-        regressor.n_components = 1
-
     regressor.fit(X, y)
     funcs = ["decision_function", "predict_proba", "predict_log_proba"]
     for func_name in funcs:
-        func = getattr(regressor, func_name, None)
-        if func is None:
-            # doesn't have function
-            continue
-        # has function. Should raise deprecation warning
-        msg = func_name
-        assert_warns_message(FutureWarning, msg, func, X)
+        assert not hasattr(regressor, func_name)
 
 
 @ignore_warnings(category=FutureWarning)
