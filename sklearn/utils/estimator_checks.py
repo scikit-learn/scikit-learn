@@ -19,7 +19,6 @@ from ._testing import assert_array_equal
 from ._testing import assert_array_almost_equal
 from ._testing import assert_allclose
 from ._testing import assert_allclose_dense_sparse
-from ._testing import assert_warns_message
 from ._testing import set_random_state
 from ._testing import SkipTest
 from ._testing import ignore_warnings
