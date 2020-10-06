@@ -716,7 +716,9 @@ class Nystroem(TransformerMixin, BaseEstimator):
     """
     @_deprecate_positional_args
     def __init__(self, kernel="rbf", *, gamma=None, coef0=None, degree=None,
-                 kernel_params=None, n_components=100, random_state=None):
+                 kernel_params=None, n_components=100, random_state=None,
+                 n_jobs=None):
+
         self.kernel = kernel
         self.gamma = gamma
         self.coef0 = coef0
@@ -724,6 +726,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
         self.kernel_params = kernel_params
         self.n_components = n_components
         self.random_state = random_state
+        self.n_jobs = n_jobs
 
     def fit(self, X, y=None):
         """Fit estimator to data.
@@ -757,6 +760,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
 
         basis_kernel = pairwise_kernels(basis, metric=self.kernel,
                                         filter_params=True,
+                                        n_jobs=self.n_jobs,
                                         **self._get_kernel_params())
 
         # sqrt of kernel matrix on basis vectors
@@ -789,6 +793,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
         embedded = pairwise_kernels(X, self.components_,
                                     metric=self.kernel,
                                     filter_params=True,
+                                    n_jobs=self.n_jobs,
                                     **kernel_params)
         return np.dot(embedded, self.normalization_.T)
 
