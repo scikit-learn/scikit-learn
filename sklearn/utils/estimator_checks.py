@@ -2426,6 +2426,7 @@ def check_regressors_train(name, regressor_orig, readonly_memmap=False,
 def check_regressors_no_decision_function(name, regressor_orig,
                                           strict_mode=True):
     # check that regressors decision_function or predict_proba
+    # XXX: full API check
     rng = np.random.RandomState(0)
     regressor = clone(regressor_orig)
 
@@ -2451,7 +2452,11 @@ def check_regressors_no_decision_function(name, regressor_orig,
 
 @ignore_warnings(category=FutureWarning)
 def check_class_weight_classifiers(name, classifier_orig, strict_mode=True):
-
+    # Make sure that classifiers take class_weight into account by creating a
+    # very noisy balanced dataset. We make sure that passing a very imbalanced
+    # class_weights helps recovering a good score.
+    # XXX: full non-API check
+ 
     if classifier_orig._get_tags()['binary_only']:
         problems = [2]
     else:
@@ -2499,6 +2504,7 @@ def check_class_weight_classifiers(name, classifier_orig, strict_mode=True):
 def check_class_weight_balanced_classifiers(name, classifier_orig, X_train,
                                             y_train, X_test, y_test, weights,
                                             strict_mode=True):
+    # XXX: it's never ever used, just ignore
     classifier = clone(classifier_orig)
     if hasattr(classifier, "n_iter"):
         classifier.set_params(n_iter=100)
@@ -2519,8 +2525,10 @@ def check_class_weight_balanced_classifiers(name, classifier_orig, X_train,
 @ignore_warnings(category=FutureWarning)
 def check_class_weight_balanced_linear_classifier(name, Classifier,
                                                   strict_mode=True):
-    """Test class weights with non-contiguous class labels."""
+    # Check that class_weight='balanced' is equivalent to manually passing
+    # class proportions.
     # this is run on classes, not instances, though this should be changed
+    # XXX: non API check
     X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
                   [1.0, 1.0], [1.0, 0.0]])
     y = np.array([1, 1, 1, -1, -1])
@@ -2558,6 +2566,8 @@ def check_class_weight_balanced_linear_classifier(name, Classifier,
 
 @ignore_warnings(category=FutureWarning)
 def check_estimators_overwrite_params(name, estimator_orig, strict_mode=True):
+    # Check that calling fit does not alter the output of get_params
+    # XXX: full API check
     X, y = make_blobs(random_state=0, n_samples=21)
     # some want non-negative input
     X -= X.min()
@@ -2593,7 +2603,10 @@ def check_estimators_overwrite_params(name, estimator_orig, strict_mode=True):
 
 @ignore_warnings(category=FutureWarning)
 def check_no_attributes_set_in_init(name, estimator_orig, strict_mode=True):
-    """Check setting during init."""
+    # Check that:
+    # - init does not set any attribute apart from the parameters
+    # - all parameters of init are set as attributes
+    # XXX: full API check
     estimator = clone(estimator_orig)
     if hasattr(type(estimator).__init__, "deprecated_original"):
         return
@@ -2627,6 +2640,9 @@ def check_no_attributes_set_in_init(name, estimator_orig, strict_mode=True):
 
 @ignore_warnings(category=FutureWarning)
 def check_sparsify_coefficients(name, estimator_orig, strict_mode=True):
+    # Check that sparsified coefs produce the same predictions as the
+    # originals coefs
+    # XXX: full non API check
     X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1],
                   [-1, -2], [2, 2], [-2, -2]])
     y = np.array([1, 1, 1, 2, 2, 2, 3, 3, 3])
@@ -2651,6 +2667,9 @@ def check_sparsify_coefficients(name, estimator_orig, strict_mode=True):
 
 @ignore_warnings(category=FutureWarning)
 def check_classifier_data_not_an_array(name, estimator_orig, strict_mode=True):
+    # Check that estimator yields same predictions whether an array was passed
+    # or not
+    # XXX: full API
     X = np.array([[3, 0], [0, 1], [0, 2], [1, 1], [1, 2], [2, 1],
                   [0, 3], [1, 0], [2, 0], [4, 4], [2, 3], [3, 2]])
     X = _pairwise_estimator_convert_X(X, estimator_orig)
@@ -2663,6 +2682,9 @@ def check_classifier_data_not_an_array(name, estimator_orig, strict_mode=True):
 
 @ignore_warnings(category=FutureWarning)
 def check_regressor_data_not_an_array(name, estimator_orig, strict_mode=True):
+    # Check that estimator yields same predictions whether an array was passed
+    # or not
+    # XXX: full API
     X, y = _regression_dataset()
     X = _pairwise_estimator_convert_X(X, estimator_orig)
     y = _enforce_estimator_tags_y(estimator_orig, y)
@@ -2716,8 +2738,9 @@ def check_estimators_data_not_an_array(name, estimator_orig, X, y, obj_type,
 
 
 def check_parameters_default_constructible(name, Estimator, strict_mode=True):
-    # test default-constructibility
-    # get rid of deprecation warnings
+    # Check that the estimator's default parameters are immutable (sort of).
+    # Also check that get_params returns exactly the default parameters values 
+    # XXX: full API check
 
     Estimator = Estimator.__class__
 
@@ -2846,6 +2869,7 @@ def check_non_transformer_estimators_n_iter(name, estimator_orig,
                                             strict_mode=True):
     # Test that estimators that are not transformers with a parameter
     # max_iter, return the attribute of n_iter_ at least 1.
+    # XXX: full API
 
     # These models are dependent on external solvers like
     # libsvm and accessing the iter parameter is non-trivial.
@@ -2880,6 +2904,7 @@ def check_non_transformer_estimators_n_iter(name, estimator_orig,
 def check_transformer_n_iter(name, estimator_orig, strict_mode=True):
     # Test that transformers with a parameter max_iter, return the
     # attribute of n_iter_ at least 1.
+    # XXX: full API
     estimator = clone(estimator_orig)
     if hasattr(estimator, "max_iter"):
         if name in CROSS_DECOMPOSITION:
@@ -2904,7 +2929,8 @@ def check_transformer_n_iter(name, estimator_orig, strict_mode=True):
 
 @ignore_warnings(category=FutureWarning)
 def check_get_params_invariance(name, estimator_orig, strict_mode=True):
-    # Checks if get_params(deep=False) is a subset of get_params(deep=True)
+    # Checks that get_params(deep=False) is a subset of get_params(deep=True)
+    # XXX: full API
     e = clone(estimator_orig)
 
     shallow_params = e.get_params(deep=False)
@@ -2918,6 +2944,7 @@ def check_get_params_invariance(name, estimator_orig, strict_mode=True):
 def check_set_params(name, estimator_orig, strict_mode=True):
     # Check that get_params() returns the same thing
     # before and after set_params() with some fuzz
+    # XXX: full API check
     estimator = clone(estimator_orig)
 
     orig_params = estimator.get_params(deep=False)
@@ -2972,6 +2999,7 @@ def check_set_params(name, estimator_orig, strict_mode=True):
 def check_classifiers_regression_target(name, estimator_orig,
                                         strict_mode=True):
     # Check if classifier throws an exception when fed regression targets
+    # XXX API check
 
     X, y = _regression_dataset()
 
@@ -2987,6 +3015,7 @@ def check_classifiers_regression_target(name, estimator_orig,
 def check_decision_proba_consistency(name, estimator_orig, strict_mode=True):
     # Check whether an estimator having both decision_function and
     # predict_proba methods has outputs with perfect rank correlation.
+    # XXX: fulll non API check
 
     centers = [(2, 2), (4, 4)]
     X, y = make_blobs(n_samples=100, random_state=0, n_features=4,
@@ -3028,6 +3057,8 @@ def check_outliers_fit_predict(name, estimator_orig, strict_mode=True):
     if hasattr(estimator, 'predict'):
         y_pred_2 = estimator.fit(X).predict(X)
         assert_array_equal(y_pred, y_pred_2)
+    
+    # XXX: next check isn't API check
 
     if hasattr(estimator, "contamination"):
         # proportion of outliers equal to contamination parameter when not
@@ -3057,6 +3088,7 @@ def check_outliers_fit_predict(name, estimator_orig, strict_mode=True):
 def check_fit_non_negative(name, estimator_orig, strict_mode=True):
     # Check that proper warning is raised for non-negative X
     # when tag requires_positive_X is present
+    # XXX: full non API check + remove if else
     X = np.array([[-1., 1], [-1., 1]])
     y = np.array([1, 2])
     estimator = clone(estimator_orig)
@@ -3075,6 +3107,8 @@ def check_fit_idempotent(name, estimator_orig, strict_mode=True):
     # attributes is difficult and full of edge cases. So instead we check that
     # predict(), predict_proba(), decision_function() and transform() return
     # the same results.
+
+    # XXX full API check
 
     check_methods = ["predict", "transform", "decision_function",
                      "predict_proba"]
