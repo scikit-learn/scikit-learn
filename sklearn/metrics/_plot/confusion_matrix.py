@@ -397,14 +397,15 @@ class ConfusionMatrixDisplay:
         supported_type = {"binary", "multiclass"}
         if y_true_type not in supported_type:
             raise ValueError(
-                "Only 'binary' and 'multiclass' classification problems are "
-                "supported. Got {y_true_type}."
+                f"Only 'binary' and 'multiclass' classification problems are "
+                f"supported. Got {y_true_type}."
             )
         elif y_pred_type not in supported_type:
             raise ValueError(
-                "The type of target of `y_pred` differs from the one of "
-                "`y_true`. Ensure to pass prediction as given by "
-                "`classifier.predict(X)`."
+                f"The type of target of `y_pred` differs from the one of "
+                f"`y_true`. Ensure to pass prediction as given by "
+                f"`classifier.predict(X)`. Got `y_pred` of type "
+                f"'{y_pred_type}'."
             )
         check_consistent_length(y_true, y_pred)
 
