@@ -61,23 +61,7 @@ for dataset_idx, dataset_name in enumerate(datasets):
         X = dataset.data
         y = dataset.target
 
-    if dataset_name == "forestcover":
-        dataset = fetch_covtype()
-        X = dataset.data
-        y = dataset.target
-        idx = rng.choice(X.shape[0], int(X.shape[0]*0.1), replace=False)
-        X = X[idx, :]
-        y = y[idx]
-
-        # normal data are those with attribute 2
-        # abnormal those with attribute 4
-        s = (y == 2) + (y == 4)
-        X = X[s, :]
-        y = y[s]
-        y = (y != 2).astype(int)
-
     print("vectorizing data")
-
     if dataset_name == "SF":
         idx = rng.choice(X.shape[0], int(X.shape[0]*0.1), replace=False)
         X = X[idx, :]  # reduce the sample size
@@ -100,6 +84,21 @@ for dataset_idx, dataset_name in enumerate(datasets):
 
     if dataset_name == "http" or dataset_name == "smtp":
         y = (y != b"normal.").astype(int)
+
+    if dataset_name == "forestcover":
+        dataset = fetch_covtype()
+        X = dataset.data
+        y = dataset.target
+        idx = rng.choice(X.shape[0], int(X.shape[0]*0.1), replace=False)
+        X = X[idx, :]
+        y = y[idx]
+
+        # normal data are those with attribute 2
+        # abnormal those with attribute 4
+        s = (y == 2) + (y == 4)
+        X = X[s, :]
+        y = y[s]
+        y = (y != 2).astype(int)
 
     if dataset_name in ["glass", "wdbc", "cardiotocography"]:
         dataset = fetch_openml(name=dataset_name, version=1,
@@ -134,9 +133,12 @@ for dataset_idx, dataset_name in enumerate(datasets):
         tstart = time()
         model.fit(X)
         fit_time = time() - tstart
+
+        # use oppositve of default scoring so that the lower score, the more
+        # normal
         if model_name == "LOF":
             scoring = -model.negative_outlier_factor_
-            # the lower score, the more normal
+
         if model_name == "IForest":
             scoring = -model.fit(X).decision_function(X)
 
