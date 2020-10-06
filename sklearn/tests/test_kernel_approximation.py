@@ -10,6 +10,7 @@ from sklearn.kernel_approximation import RBFSampler
 from sklearn.kernel_approximation import AdditiveChi2Sampler
 from sklearn.kernel_approximation import SkewedChi2Sampler
 from sklearn.kernel_approximation import Nystroem
+from sklearn.kernel_approximation import PolynomialCountSketch
 from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel, chi2_kernel
 
 # generate data
@@ -18,6 +19,44 @@ X = rng.random_sample(size=(300, 50))
 Y = rng.random_sample(size=(300, 50))
 X /= X.sum(axis=1)[:, np.newaxis]
 Y /= Y.sum(axis=1)[:, np.newaxis]
+
+
+@pytest.mark.parametrize('degree', [-1, 0])
+def test_polynomial_count_sketch_raises_if_degree_lower_than_one(degree):
+    with pytest.raises(ValueError, match=f'degree={degree} should be >=1.'):
+        ps_transform = PolynomialCountSketch(degree=degree)
+        ps_transform.fit(X, Y)
+
+
+@pytest.mark.parametrize('X', [X, csr_matrix(X)])
+@pytest.mark.parametrize('Y', [Y, csr_matrix(Y)])
+@pytest.mark.parametrize('gamma', [0.1, 1, 2.5])
+@pytest.mark.parametrize('degree', [1, 2, 3])
+@pytest.mark.parametrize('coef0', [0, 1, 2.5])
+def test_polynomial_count_sketch(X, Y, gamma, degree, coef0):
+    # test that PolynomialCountSketch approximates polynomial
+    # kernel on random data
+
+    # compute exact kernel
+    kernel = polynomial_kernel(X, Y, gamma=gamma, degree=degree, coef0=coef0)
+
+    # approximate kernel mapping
+    ps_transform = PolynomialCountSketch(n_components=5000, gamma=gamma,
+                                         coef0=coef0, degree=degree,
+                                         random_state=42)
+    X_trans = ps_transform.fit_transform(X)
+    Y_trans = ps_transform.transform(Y)
+    kernel_approx = np.dot(X_trans, Y_trans.T)
+
+    error = kernel - kernel_approx
+    assert np.abs(np.mean(error)) <= 0.05  # close to unbiased
+    np.abs(error, out=error)
+    assert np.max(error) <= 0.1  # nothing too far off
+    assert np.mean(error) <= 0.05  # mean is fairly close
+
+
+def _linear_kernel(X, Y):
+    return np.dot(X, Y.T)
 
 
 def test_additive_chi2_sampler():
@@ -176,9 +215,7 @@ def test_nystroem_approximation():
     assert X_transformed.shape == (X.shape[0], 2)
 
     # test callable kernel
-    def linear_kernel(X, Y):
-        return np.dot(X, Y.T)
-    trans = Nystroem(n_components=2, kernel=linear_kernel, random_state=rnd)
+    trans = Nystroem(n_components=2, kernel=_linear_kernel, random_state=rnd)
     X_transformed = trans.fit(X).transform(X)
     assert X_transformed.shape == (X.shape[0], 2)
 
@@ -256,14 +293,11 @@ def test_nystroem_callable():
              kernel_params={'log': kernel_log}).fit(X)
     assert len(kernel_log) == n_samples * (n_samples - 1) / 2
 
-    def linear_kernel(X, Y):
-        return np.dot(X, Y.T)
-
     # if degree, gamma or coef0 is passed, we raise a warning
     msg = "Don't pass gamma, coef0 or degree to Nystroem"
     params = ({'gamma': 1}, {'coef0': 1}, {'degree': 2})
     for param in params:
-        ny = Nystroem(kernel=linear_kernel, **param)
+        ny = Nystroem(kernel=_linear_kernel, **param)
         with pytest.raises(ValueError, match=msg):
             ny.fit(X)
 

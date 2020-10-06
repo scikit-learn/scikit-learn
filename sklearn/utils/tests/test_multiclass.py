@@ -3,7 +3,6 @@ import numpy as np
 import scipy.sparse as sp
 from itertools import product
 import pytest
-from distutils.version import LooseVersion
 
 from scipy.sparse import issparse
 from scipy.sparse import csc_matrix
@@ -14,10 +13,9 @@ from scipy.sparse import lil_matrix
 
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_raises
-from sklearn.utils._testing import assert_raises_regex
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils.estimator_checks import _NotAnArray
+from sklearn.utils.fixes import parse_version
 
 from sklearn.utils.multiclass import unique_labels
 from sklearn.utils.multiclass import is_multilabel
@@ -40,10 +38,10 @@ EXAMPLES = {
         [[0, 1], [1, 0]],
         [[0, 1]],
         csr_matrix(np.array([[0, 1], [1, 0]])),
-        csr_matrix(np.array([[0, 1], [1, 0]], dtype=np.bool)),
+        csr_matrix(np.array([[0, 1], [1, 0]], dtype=bool)),
         csr_matrix(np.array([[0, 1], [1, 0]], dtype=np.int8)),
         csr_matrix(np.array([[0, 1], [1, 0]], dtype=np.uint8)),
-        csr_matrix(np.array([[0, 1], [1, 0]], dtype=np.float)),
+        csr_matrix(np.array([[0, 1], [1, 0]], dtype=float)),
         csr_matrix(np.array([[0, 1], [1, 0]], dtype=np.float32)),
         csr_matrix(np.array([[0, 0], [0, 0]])),
         csr_matrix(np.array([[0, 1]])),
@@ -58,7 +56,7 @@ EXAMPLES = {
         np.array([1, 0, 2]),
         np.array([1, 0, 2], dtype=np.int8),
         np.array([1, 0, 2], dtype=np.uint8),
-        np.array([1, 0, 2], dtype=np.float),
+        np.array([1, 0, 2], dtype=float),
         np.array([1, 0, 2], dtype=np.float32),
         np.array([[1], [0], [2]]),
         _NotAnArray(np.array([1, 0, 2])),
@@ -74,7 +72,7 @@ EXAMPLES = {
         np.array([[1, 0, 2, 2], [1, 4, 2, 4]]),
         np.array([[1, 0, 2, 2], [1, 4, 2, 4]], dtype=np.int8),
         np.array([[1, 0, 2, 2], [1, 4, 2, 4]], dtype=np.uint8),
-        np.array([[1, 0, 2, 2], [1, 4, 2, 4]], dtype=np.float),
+        np.array([[1, 0, 2, 2], [1, 4, 2, 4]], dtype=float),
         np.array([[1, 0, 2, 2], [1, 4, 2, 4]], dtype=np.float32),
         np.array([['a', 'b'], ['c', 'd']]),
         np.array([['a', 'b'], ['c', 'd']]),
@@ -88,10 +86,10 @@ EXAMPLES = {
         [],
         [0],
         np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1]),
-        np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1], dtype=np.bool),
+        np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1], dtype=bool),
         np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1], dtype=np.int8),
         np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1], dtype=np.uint8),
-        np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1], dtype=np.float),
+        np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1], dtype=float),
         np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1], dtype=np.float32),
         np.array([[0], [1]]),
         _NotAnArray(np.array([[0], [1]])),
@@ -154,7 +152,8 @@ MULTILABEL_SEQUENCES = [
 
 def test_unique_labels():
     # Empty iterable
-    assert_raises(ValueError, unique_labels)
+    with pytest.raises(ValueError):
+        unique_labels()
 
     # Multiclass problem
     assert_array_equal(unique_labels(range(10)), np.arange(10))
@@ -178,8 +177,11 @@ def test_unique_labels():
                        np.arange(3))
 
     # Border line case with binary indicator matrix
-    assert_raises(ValueError, unique_labels, [4, 0, 2], np.ones((5, 5)))
-    assert_raises(ValueError, unique_labels, np.ones((5, 4)), np.ones((5, 5)))
+    with pytest.raises(ValueError):
+        unique_labels([4, 0, 2], np.ones((5, 5)))
+    with pytest.raises(ValueError):
+        unique_labels(np.ones((5, 4)), np.ones((5, 5)))
+
     assert_array_equal(unique_labels(np.ones((4, 5)), np.ones((5, 5))),
                        np.arange(5))
 
@@ -194,12 +196,14 @@ def test_unique_labels_non_specific():
 
     # We don't support those format at the moment
     for example in NON_ARRAY_LIKE_EXAMPLES:
-        assert_raises(ValueError, unique_labels, example)
+        with pytest.raises(ValueError):
+            unique_labels(example)
 
     for y_type in ["unknown", "continuous", 'continuous-multioutput',
                    'multiclass-multioutput']:
         for example in EXAMPLES[y_type]:
-            assert_raises(ValueError, unique_labels, example)
+            with pytest.raises(ValueError):
+                unique_labels(example)
 
 
 def test_unique_labels_mixed_types():
@@ -209,13 +213,22 @@ def test_unique_labels_mixed_types():
                              EXAMPLES["binary"])
 
     for y_multilabel, y_multiclass in mix_clf_format:
-        assert_raises(ValueError, unique_labels, y_multiclass, y_multilabel)
-        assert_raises(ValueError, unique_labels, y_multilabel, y_multiclass)
+        with pytest.raises(ValueError):
+            unique_labels(y_multiclass, y_multilabel)
+        with pytest.raises(ValueError):
+            unique_labels(y_multilabel, y_multiclass)
 
-    assert_raises(ValueError, unique_labels, [[1, 2]], [["a", "d"]])
-    assert_raises(ValueError, unique_labels, ["1", 2])
-    assert_raises(ValueError, unique_labels, [["1", 2], [1, 3]])
-    assert_raises(ValueError, unique_labels, [["1", "2"], [2, 3]])
+    with pytest.raises(ValueError):
+        unique_labels([[1, 2]], [["a", "d"]])
+
+    with pytest.raises(ValueError):
+        unique_labels(["1", 2])
+
+    with pytest.raises(ValueError):
+        unique_labels([["1", 2], [1, 3]])
+
+    with pytest.raises(ValueError):
+        unique_labels([["1", "2"], [2, 3]])
 
 
 def test_is_multilabel():
@@ -263,8 +276,8 @@ def test_check_classification_targets():
         if y_type in ["unknown", "continuous", 'continuous-multioutput']:
             for example in EXAMPLES[y_type]:
                 msg = 'Unknown label type: '
-                assert_raises_regex(ValueError, msg,
-                                    check_classification_targets, example)
+                with pytest.raises(ValueError, match=msg):
+                    check_classification_targets(example)
         else:
             for example in EXAMPLES[y_type]:
                 check_classification_targets(example)
@@ -280,19 +293,21 @@ def test_type_of_target():
 
     for example in NON_ARRAY_LIKE_EXAMPLES:
         msg_regex = r'Expected array-like \(array or non-string sequence\).*'
-        assert_raises_regex(ValueError, msg_regex, type_of_target, example)
+        with pytest.raises(ValueError, match=msg_regex):
+            type_of_target(example)
 
     for example in MULTILABEL_SEQUENCES:
         msg = ('You appear to be using a legacy multi-label data '
                'representation. Sequence of sequences are no longer supported;'
                ' use a binary array or sparse matrix instead.')
-        assert_raises_regex(ValueError, msg, type_of_target, example)
+        with pytest.raises(ValueError, match=msg):
+            type_of_target(example)
 
 
 def test_type_of_target_pandas_sparse():
     pd = pytest.importorskip("pandas")
 
-    if LooseVersion(pd.__version__) >= '0.25':
+    if parse_version(pd.__version__) >= parse_version('0.25'):
         pd_sparse_array = pd.arrays.SparseArray
     else:
         pd_sparse_array = pd.SparseArray
