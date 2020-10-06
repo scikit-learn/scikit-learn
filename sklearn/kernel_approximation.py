@@ -670,6 +670,11 @@ class Nystroem(TransformerMixin, BaseEstimator):
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
+    n_jobs : int, default=None
+        The number of jobs to use for the computation. This works by breaking
+        down the kernel matrix into n_jobs even slices and computing them in
+        parallel.
+
     Attributes
     ----------
     components_ : ndarray of shape (n_components, n_features)
