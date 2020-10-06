@@ -6,6 +6,11 @@ import numpy as np
 import pytest
 
 from sklearn.datasets import make_classification
+from sklearn.compose import make_column_transformer
+from sklearn.exceptions import NotFittedError
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 from sklearn.svm import SVR
 
@@ -143,7 +148,6 @@ def test_confusion_matrix_display_plotting(
     data,
     y_pred,
     n_classes,
-    fitted_clf,
     normalize,
     include_values,
 ):
@@ -207,3 +211,106 @@ def test_confusion_matrix_display_plotting(
         assert_array_equal(expected_text, text_text)
     else:
         assert disp.text_ is None
+
+
+def test_confusion_matrix_display(
+    pyplot, confusion_matrix_display_fxt, data, y_pred, n_classes
+):
+    X, y = data
+    constructor, *params = confusion_matrix_display_fxt
+
+    cm = confusion_matrix(y, y_pred)
+    disp = constructor(
+        *params,
+        normalize=None,
+        include_values=True,
+        cmap="viridis",
+        xticks_rotation=45.0,
+    )
+
+    assert_allclose(disp.confusion_matrix, cm)
+    assert disp.text_.shape == (n_classes, n_classes)
+
+    rotations = [tick.get_rotation() for tick in disp.ax_.get_xticklabels()]
+    assert_allclose(rotations, 45.0)
+
+    image_data = disp.im_.get_array().data
+    assert_allclose(image_data, cm)
+
+    disp.plot(cmap="plasma")
+    assert disp.im_.get_cmap().name == "plasma"
+
+    disp.plot(include_values=False)
+    assert disp.text_ is None
+
+    disp.plot(xticks_rotation=90.0)
+    rotations = [tick.get_rotation() for tick in disp.ax_.get_xticklabels()]
+    assert_allclose(rotations, 90.0)
+
+    disp.plot(values_format="e")
+    expected_text = np.array([format(v, "e") for v in cm.ravel(order="C")])
+    text_text = np.array([t.get_text() for t in disp.text_.ravel(order="C")])
+    assert_array_equal(expected_text, text_text)
+
+
+def test_confusion_matrix_contrast(pyplot):
+    # make sure text color is appropriate depending on background
+
+    cm = np.eye(2) / 2
+    disp = ConfusionMatrixDisplay(cm, display_labels=[0, 1])
+
+    disp.plot(cmap=pyplot.cm.gray)
+    # diagonal text is black
+    assert_allclose(disp.text_[0, 0].get_color(), [0.0, 0.0, 0.0, 1.0])
+    assert_allclose(disp.text_[1, 1].get_color(), [0.0, 0.0, 0.0, 1.0])
+
+    # off-diagonal text is white
+    assert_allclose(disp.text_[0, 1].get_color(), [1.0, 1.0, 1.0, 1.0])
+    assert_allclose(disp.text_[1, 0].get_color(), [1.0, 1.0, 1.0, 1.0])
+
+    disp.plot(cmap=pyplot.cm.gray_r)
+    # diagonal text is white
+    assert_allclose(disp.text_[0, 1].get_color(), [0.0, 0.0, 0.0, 1.0])
+    assert_allclose(disp.text_[1, 0].get_color(), [0.0, 0.0, 0.0, 1.0])
+
+    # off-diagonal text is black
+    assert_allclose(disp.text_[0, 0].get_color(), [1.0, 1.0, 1.0, 1.0])
+    assert_allclose(disp.text_[1, 1].get_color(), [1.0, 1.0, 1.0, 1.0])
+
+    # Regression test for #15920
+    cm = np.array([[19, 34], [32, 58]])
+    disp = ConfusionMatrixDisplay(cm, display_labels=[0, 1])
+
+    disp.plot(cmap=pyplot.cm.Blues)
+    min_color = pyplot.cm.Blues(0)
+    max_color = pyplot.cm.Blues(255)
+    assert_allclose(disp.text_[0, 0].get_color(), max_color)
+    assert_allclose(disp.text_[0, 1].get_color(), max_color)
+    assert_allclose(disp.text_[1, 0].get_color(), max_color)
+    assert_allclose(disp.text_[1, 1].get_color(), min_color)
+
+
+@pytest.mark.parametrize(
+    "clf",
+    [
+        LogisticRegression(),
+        make_pipeline(StandardScaler(), LogisticRegression()),
+        make_pipeline(
+            make_column_transformer((StandardScaler(), [0, 1])),
+            LogisticRegression(),
+        ),
+    ],
+    ids=["clf", "pipeline-clf", "pipeline-column_transformer-clf"]
+)
+def test_confusion_matrix_pipeline(pyplot, clf, data, n_classes):
+    X, y = data
+    with pytest.raises(NotFittedError):
+        ConfusionMatrixDisplay.from_estimator(clf, X, y)
+    clf.fit(X, y)
+    y_pred = clf.predict(X)
+
+    disp = ConfusionMatrixDisplay.from_estimator(clf, X, y)
+    cm = confusion_matrix(y, y_pred)
+
+    assert_allclose(disp.confusion_matrix, cm)
+    assert disp.text_.shape == (n_classes, n_classes)
