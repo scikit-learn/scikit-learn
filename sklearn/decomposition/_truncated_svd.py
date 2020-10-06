@@ -128,7 +128,7 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
         self.tol = tol
 
     def fit(self, X, y=None):
-        """Fit LSI model on training data X.
+        """Fit model on training data X.
 
         Parameters
         ----------
@@ -146,7 +146,7 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
         return self
 
     def fit_transform(self, X, y=None):
-        """Fit LSI model to X and perform dimensionality reduction on X.
+        """Fit model to X and perform dimensionality reduction on X.
 
         Parameters
         ----------
