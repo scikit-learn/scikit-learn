@@ -297,16 +297,8 @@ def test_raises_value_error_if_sample_weights_greater_than_1d():
     for n_samples, n_features in zip(n_sampless, n_featuress):
         X = rng.randn(n_samples, n_features)
         y = rng.randn(n_samples)
-        sample_weights_OK = rng.randn(n_samples) ** 2 + 1
-        sample_weights_OK_1 = 1.
-        sample_weights_OK_2 = 2.
 
         scaler = StandardScaler()
-
-        # make sure the "OK" sample weights actually work
-        scaler.fit(X, y, sample_weights_OK)
-        scaler.fit(X, y, sample_weights_OK_1)
-        scaler.fit(X, y, sample_weights_OK_2)
 
         # make sure Error is raised the sample weights greater than 1d
         sample_weight_notOK = sample_weights_OK[:, np.newaxis]
@@ -372,16 +364,11 @@ def test_standard_scaler_sparse_sample_weights(Xw, X, sample_weight):
     scaler.fit(X_sparse, y)
 
 
-@pytest.mark.parametrize("add_sample_weight", [False, True])
-def test_standard_scaler_1d(add_sample_weight):
+def test_standard_scaler_1d():
     # Test scaling of dataset along single axis
     for X in [X_1row, X_1col, X_list_1row, X_list_1row]:
-        if add_sample_weight:
-            sample_weight = np.ones(len(X))
-        else:
-            sample_weight = None
         scaler = StandardScaler()
-        X_scaled = scaler.fit(X, sample_weight=sample_weight).transform(
+        X_scaled = scaler.fit(X).transform(
             X, copy=True)
 
         if isinstance(X, list):
@@ -409,13 +396,9 @@ def test_standard_scaler_1d(add_sample_weight):
 
     # Constant feature
     X = np.ones((5, 1))
-    if add_sample_weight:
-        sample_weight = np.ones(len(X))
-    else:
-        sample_weight = None
 
     scaler = StandardScaler()
-    X_scaled = scaler.fit(X, sample_weight=sample_weight).transform(
+    X_scaled = scaler.fit(X).transform(
         X, copy=True)
     assert_almost_equal(scaler.mean_, 1.)
     assert_almost_equal(scaler.scale_, 1.)
