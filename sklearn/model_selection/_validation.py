@@ -140,8 +140,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
-        If a numeric value is given, FitFailedWarning is raised. This parameter
-        does not affect the refit step, which will always raise the error.
+        If a numeric value is given, FitFailedWarning is raised.
 
     Returns
     -------
