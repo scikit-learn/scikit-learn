@@ -675,9 +675,6 @@ class Nystroem(TransformerMixin, BaseEstimator):
     components_ : ndarray of shape (n_components, n_features)
         Subset of training points used to construct the feature map.
 
-    component_indices_ : ndarray of shape (n_components)
-        Indices of ``components_`` in the training set.
-
     normalization_ : ndarray of shape (n_components, n_components)
         Normalization matrix needed for embedding.
         Square root of the kernel matrix on ``components_``.
@@ -767,7 +764,6 @@ class Nystroem(TransformerMixin, BaseEstimator):
         S = np.maximum(S, 1e-12)
         self.normalization_ = np.dot(U / np.sqrt(S), V)
         self.components_ = basis
-        self.component_indices_ = inds
         return self
 
     def transform(self, X):
