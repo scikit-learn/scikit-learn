@@ -391,7 +391,7 @@ class BaseEstimator:
         X : {array-like, sparse matrix, dataframe} of shape \
                 (n_samples, n_features)
             The input samples.
-        y : array-like of shape (n_samples,), default=__NO_Y
+        y : array-like of shape (n_samples,), default='no_validation'
             The targets.
 
             - If `None`, `check_array` is called on `X`. If the estimator's
