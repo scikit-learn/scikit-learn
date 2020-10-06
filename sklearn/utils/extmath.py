@@ -755,8 +755,8 @@ def _incremental_weighted_mean_and_var(X, sample_weight,
     nan_mask = np.isnan(X)
     sample_weight_T = np.reshape(sample_weight, (1, -1))
     # new_weight_sum with shape (n_features,)
-    new_weight_sum = \
-        _safe_accumulator_op(np.dot, sample_weight_T, ~nan_mask).ravel()
+    new_weight_sum = np.dot(sample_weight_T,
+                            ~nan_mask).ravel().astype(np.float64)
     total_weight_sum = _safe_accumulator_op(np.sum, sample_weight, axis=0)
 
     X_0 = np.where(nan_mask, 0, X)
