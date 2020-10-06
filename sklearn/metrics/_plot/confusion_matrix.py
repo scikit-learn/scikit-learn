@@ -181,6 +181,11 @@ class ConfusionMatrixDisplay:
         colorbar,
         classes,
     ):
+        """Private method which is in charge of:
+        * Compute the confusion matrix;
+        * Create the display;
+        * Make the plotting.
+        """
         if display_labels is None:
             if labels is None:
                 display_labels = classes
