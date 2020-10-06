@@ -4,6 +4,7 @@ import pytest
 from sklearn.feature_selection import SelectKBest
 from sklearn.pipeline import make_pipeline
 from sklearn.base import BaseEstimator, ClassifierMixin, TransformerMixin
+from sklearn.base import MetadataConsumer, SampleWeightConsumer
 from sklearn.utils import _validate_required_props
 from sklearn.datasets import make_classification
 from sklearn.metrics import make_scorer, balanced_accuracy_score
@@ -16,20 +17,23 @@ from sklearn.utils import _standardize_metadata_request
 def assert_request_is_empty(metadata_request, exclude=None):
     if exclude is None:
         exclude = []
-    assert not any(method_request
-                   for method_name, method_request in metadata_request.items()
-                   if method_name not in exclude)
+    assert not any(
+        method_request
+        for method_name, method_request in metadata_request.items()
+        if method_name not in exclude
+    )
 
 
 class MyEst(ClassifierMixin, BaseEstimator):
     def __init__(self, C=1.0):
-        self._metadata_request = {'fit': ['sample_weight', 'brand']}
+        self._metadata_request = {"fit": ["sample_weight", "brand"]}
         self.C = C
 
     def fit(self, X, y, **fit_params):
         _validate_required_props(self.get_metadata_request().fit, fit_params)
-        assert set(fit_params.keys()) <= \
-            set(self.get_metadata_request().fit.values())
+        assert set(fit_params.keys()) <= set(
+            [list(x)[0] for x in self.get_metadata_request().fit.values()]
+        )
         self.svc_ = SVC(C=self.C).fit(X, y)
         return self
 
@@ -40,15 +44,25 @@ class MyEst(ClassifierMixin, BaseEstimator):
         return self.svc_predict_proba(X)
 
 
-class MyTrs(TransformerMixin, BaseEstimator):
+class StuffConsumer(MetadataConsumer):
+    def request_new_param(self, *, fit=True):
+        self._request_key_for_method(method="fit", param="new_param", user_provides=fit)
+        return self
+
+    def request_brand(self, *, fit=True):
+        self._request_key_for_method(method="fit", param="brand", user_provides=fit)
+        return self
+
+
+class MyTrs(SampleWeightConsumer, StuffConsumer, TransformerMixin, BaseEstimator):
     def __init__(self):
-        self._metadata_request = {'fit': ['sample_weight']}
+        self._metadata_request = {"fit": ["sample_weight"]}
 
     def fit(self, X, y=None, **fit_params):
         req_props = self.get_metadata_request().fit
         _validate_required_props(req_props, fit_params)
         self._estimator = SelectKBest().fit(X, y)
-        assert set(fit_params.keys()) <= set(req_props.values())
+        assert set(fit_params.keys()) <= set([list(x)[0] for x in req_props.values()])
         return self
 
     def transform(self, X, y=None):
@@ -69,8 +83,7 @@ def test_defaults():
 
     est = MyEst()
     est_request = _standardize_metadata_request(est.get_metadata_request())
-    assert est_request.fit == {"sample_weight": {"sample_weight"},
-                               "brand": {"brand"}}
+    assert est_request.fit == {"sample_weight": {"sample_weight"}, "brand": {"brand"}}
     assert_request_is_empty(est_request, exclude={"fit"})
 
 
@@ -78,7 +91,7 @@ def test_pipeline():
     X, y = make_classification()
     sw = np.random.rand(len(X))
     my_data = [5, 6]
-    brand = ['my brand']
+    brand = ["my brand"]
 
     clf = make_pipeline(MyTrs(), MyEst())
     clf.fit(X, y, sample_weight=sw, brand=brand)
@@ -86,8 +99,8 @@ def test_pipeline():
                        match="Requested properties are.*other_param"):
         clf.fit(X, y, sample_weight=sw, brand=brand, other_param=sw)
 
-    trs = MyTrs().set_metadata_request(
-        {'fit': {'my_sw': 'new_param'}})
+    trs = MyTrs().request_new_param(fit="my_sw")
+    trs.request_sample_weight(fit=False)
 
     trs_request = _standardize_metadata_request(trs.get_metadata_request())
     assert trs_request.fit == {"my_sw": {"new_param"}}
@@ -96,9 +109,11 @@ def test_pipeline():
     clf = make_pipeline(trs, MyEst())
     pipe_request = _standardize_metadata_request(clf.get_metadata_request())
     print(pipe_request.fit)
-    assert pipe_request.fit == {'my_sw': {'my_sw'},
-                                'sample_weight': {'sample_weight'},
-                                'brand': {'brand'}}
+    assert pipe_request.fit == {
+        "my_sw": {"my_sw"},
+        "sample_weight": {"sample_weight"},
+        "brand": {"brand"},
+    }
     assert_request_is_empty(pipe_request, exclude={"fit"})
     clf.fit(X, y, sample_weight=sw, brand=brand, my_sw=my_data)
 
@@ -112,7 +127,7 @@ def test_pipeline():
 
     scorer = make_scorer(my_metric, request_props="new_param")
 
-    param_grid = {'myest__C': [0.1, 1]}
+    param_grid = {"myest__C": [0.1, 1]}
 
     print("@" * 150 + " GS")
     gs = GridSearchCV(clf, param_grid=param_grid, scoring=scorer)

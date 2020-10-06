@@ -14,6 +14,7 @@ import numpy as np
 
 from . import __version__
 from .utils import _IS_32BIT, _empty_metadata_request
+from .utils import _standardize_metadata_request
 from ._config import get_config
 from .utils.validation import check_X_y
 from .utils.validation import check_array
@@ -86,10 +87,9 @@ def clone(estimator, *, safe=True):
 
     new_object = klass(**new_object_params)
     try:
-        new_object.set_metadata_request(estimator.get_metadata_request())
+        new_object._metadata_request = copy.deepcopy(
+            estimator._metadata_request)
     except AttributeError:
-        pass
-    except RuntimeError:
         pass
 
     params_set = new_object.get_params(deep=False)
@@ -155,10 +155,6 @@ def _pprint(params, offset=0, printer=repr):
     return lines
 
 
-class _FitConsumesSampleWeightsMixin:
-    _metadata_request_fit_sample_weight = {'fit': ['sample_weight']}
-
-
 class _MetadataRequest:
     def get_metadata_request(self):
         """Get requested data properties.
@@ -170,41 +166,33 @@ class _MetadataRequest:
             used. Under each key, there is a dict of mapping of the form
             ``{provided_prop: method_param}``.
         """
-        res = _empty_metadata_request()
         try:
-            props = self._metadata_request
-
-            for method in props:
-                method_props = props.get(method, {})
-                if isinstance(method_props, str):
-                    method_props = {method_props: method_props}
-                elif isinstance(method_props, list):
-                    method_props = dict(zip(method_props, method_props))
-                res[method] = method_props
+            return _standardize_metadata_request(self._metadata_request)
         except AttributeError:
             pass
 
-        return res
+        return _empty_metadata_request()
 
 
-class _MetadataConsumer:
-    def set_metadata_request(self, props):
-        """Set required data properties.
+class MetadataConsumer:
+    def _request_key_for_method(self, *, method, param, user_provides):
+        if not hasattr(self, '_metadata_request'):
+            self._metadata_request = _empty_metadata_request()
+        self._metadata_request = _standardize_metadata_request(
+            self._metadata_request)
 
-        Calling this method will clear the previous state of required metadata.
+        method_dict = self._metadata_request[method]
+        if user_provides is True:
+            method_dict[param] = param
+        elif user_provides is False:
+            if param in method_dict:
+                del method_dict[param]
+        elif isinstance(user_provides, str):
+            method_dict[user_provides] = param
+        else:
+            raise TypeError
 
-        Parameters
-        ----------
-        props : dict of dict of {str: str}, or None
-            The key to the top level dict is the method for which the prop is
-            used. Under each key, there is a dict of mapping of the form
-            ``{provided_prop: method_param}``.
-
-        Returns
-        -------
-        self : estimator
-            returns self.
-        """
+    def _set_metadata_request(self, props):
         if props is None:
             try:
                 del self._metadata_request
@@ -212,18 +200,68 @@ class _MetadataConsumer:
                 pass
             return self
 
-        self._metadata_request = _empty_metadata_request()
+        self._metadata_request = _standardize_metadata_request(props)
 
-        if not isinstance(props, dict):
-            raise ValueError("`props` should be a dictionary")
 
-        for method in self._metadata_request:
-            method_props = props.get(method, {})
-            if isinstance(method_props, str):
-                method_props = {method_props: method_props}
-            elif isinstance(method_props, list):
-                method_props = dict(zip(method_props, method_props))
-            self._metadata_request[method] = method_props
+class SampleWeightConsumer(MetadataConsumer):
+    def request_sample_weight(self, *, fit=True, score=False):
+        """Define how to receive sample_weight from a parent meta-estimator
+
+        When called with default arguments, fitting will be weighted,
+        and the meta-estimator should be passed a fit parameter by the name
+        'sample_weight'.
+
+        Parameters
+        ----------
+        fit : string or bool, default=True
+            The fit parameter name that a meta-estimator should pass to this
+            estimator as sample_weight. If true, the name will be
+            'sample_weight'.
+            If False, no fit parameter will be passed.
+
+        score : string or bool, default=True
+            The parameter name that a meta-estimator should pass to this
+            estimator as sample_weight when calling its `score` method.
+            If true, the name will be 'sample_weight'.
+            If False, no fit parameter will be passed.
+
+        Returns
+        -------
+        self
+
+        Examples
+        --------
+        >>> from sklearn.linear_model import LogisticRegression
+        >>> from sklearn.model_selection import GridSearchCV
+        >>> from sklearn.datasets import load_iris
+        >>> X, y = load_iris(return_X_y=True)
+        >>> sample_weight = np.random.rand(len(X))
+        >>> clf = LogisticRegression()
+        >>> gs = GridSearchCV(clf, {"C": [.1, 1, 10]})
+        # Unweighted fitting and scoring
+        >>> gs.fit(X, y)
+        # Weighted fitting, unweighted scoring
+        >>> clf.request_sample_weight()
+        >>> gs.fit(X, y, sample_weight=sample_weight)
+        # Weighted fitting and scoring
+        >>> clf.request_sample_weight(fit=True, score=True)
+        >>> gs.fit(X, y, sample_weight=sample_weight)
+        # Weighted scoring only
+        >>> clf.request_sample_weight(fit=False, score=True)
+        >>> gs.fit(X, y, sample_weight=sample_weight)
+        # Distinct weights for fit and score
+        >>> score_sample_weight = np.random.rand(len(X))
+        >>> clf.request_sample_weight(fit='fit_sample_weight',
+        ...     score='score_sample_weight')
+        >>> gs.fit(X, y, fit_sample_weight=sample_weight,
+        ...        score_sample_weight=score_sample_weight)
+        """
+        self._request_key_for_method(method='fit',
+                                     param='sample_weight',
+                                     user_provides=fit)
+        self._request_key_for_method(method='score',
+                                     param='sample_weight',
+                                     user_provides=score)
         return self
 
 
@@ -544,7 +582,7 @@ class BaseEstimator(_MetadataRequest):
         return output
 
 
-class ClassifierMixin(_MetadataConsumer):
+class ClassifierMixin(SampleWeightConsumer):
     """Mixin class for all classifiers in scikit-learn."""
 
     _estimator_type = "classifier"
@@ -580,7 +618,7 @@ class ClassifierMixin(_MetadataConsumer):
         return {'requires_y': True}
 
 
-class RegressorMixin(_MetadataConsumer):
+class RegressorMixin(SampleWeightConsumer):
     """Mixin class for all regression estimators in scikit-learn."""
     _estimator_type = "regressor"
 
@@ -742,7 +780,7 @@ class BiclusterMixin:
         return data[row_ind[:, np.newaxis], col_ind]
 
 
-class TransformerMixin(_MetadataConsumer):
+class TransformerMixin:
     """Mixin class for all transformers in scikit-learn."""
 
     def fit_transform(self, X, y=None, **fit_params):

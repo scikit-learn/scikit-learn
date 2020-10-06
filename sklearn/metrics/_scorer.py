@@ -43,7 +43,7 @@ from .cluster import normalized_mutual_info_score
 from .cluster import fowlkes_mallows_score
 
 from ..utils.multiclass import type_of_target
-from ..base import is_regressor, _MetadataRequest, _MetadataConsumer
+from ..base import is_regressor, _MetadataRequest, MetadataConsumer
 from ..utils import _check_method_props
 from ..utils.validation import _deprecate_positional_args
 
@@ -123,7 +123,7 @@ class _MultimetricScorer:
         return False
 
 
-class _BaseScorer(_MetadataRequest, _MetadataConsumer):
+class _BaseScorer(_MetadataRequest, MetadataConsumer):
     def __init__(self, score_func, sign, kwargs):
         self._kwargs = kwargs
         self._score_func = score_func
@@ -588,7 +588,7 @@ def make_scorer(score_func, *, greater_is_better=True, needs_proba=False,
         cls = _ThresholdScorer
     else:
         cls = _PredictScorer
-    return cls(score_func, sign, kwargs).set_metadata_request(
+    return cls(score_func, sign, kwargs)._set_metadata_request(
         {"score": request_props})
 
 
