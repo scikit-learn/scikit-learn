@@ -904,8 +904,9 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
         - None: 'nndsvd' if n_components < n_features, otherwise 'random'.
 
         .. deprecated:: 0.24
-           ``nndsvd`` has been deprecated for ``solver='mu'`` in version 0.24
-           and will be made unavailable from version 0.26.
+           the `init` value, when 'init=None' and if
+           n_components <= min(n_samples, n_features) will be changed from
+           `'nndsvd'` to `'nndsvda'` in 0.26.
 
         - 'random': non-negative random matrices, scaled with:
             sqrt(X.mean() / n_components)
@@ -1138,8 +1139,9 @@ class NMF(TransformerMixin, BaseEstimator):
             otherwise random.
 
         .. deprecated:: 0.24
-           ``nndsvd`` has been deprecated for ``solver='mu'`` in version 0.24
-           and will be made unavailable from version 0.26.
+           the `init` value, when 'init=None' and if
+           n_components <= min(n_samples, n_features) will be changed from
+           `'nndsvd'` to `'nndsvda'` in 0.26.
 
         - 'random': non-negative random matrices, scaled with:
             sqrt(X.mean() / n_components)
@@ -1339,9 +1341,10 @@ class NMF(TransformerMixin, BaseEstimator):
         self
         """
         if self.init == 'warn':
-            warnings.warn(("The default value of init for solver 'mu' will "
-                          "change from 'nndsvd' to 'nndsvda' in 0.26."),
-                          FutureWarning)
+            warnings.warn(("The 'init' value, when 'init=None' and "
+                           "n_components <= min(n_samples, n_features) "
+                           "will be changed from 'nndsvd' to 'nndsvda' "
+                           "in 0.26."), FutureWarning)
             self.init = None
         self.fit_transform(X, **params)
         return self

@@ -553,7 +553,7 @@ def test_nmf_dtype_match(dtype_in, dtype_out, solver, regularization):
     X = np.random.RandomState(0).randn(20, 15).astype(dtype_in, copy=False)
     np.abs(X, out=X)
     # FIXME : should be removed in 0.26
-    init = 'nndsvda'
+    init = 'nndsvd'
     nmf = NMF(solver=solver, regularization=regularization, init=init)
 
     assert nmf.fit(X).transform(X).dtype == dtype_out
@@ -569,7 +569,7 @@ def test_nmf_float32_float64_consistency(solver, regularization):
     X = np.random.RandomState(0).randn(50, 7)
     np.abs(X, out=X)
     # FIXME : should be removed in 0.26
-    init = 'nndsvda'
+    init = 'nndsvd'
     nmf32 = NMF(solver=solver, regularization=regularization, random_state=0,
                 init=init)
     W32 = nmf32.fit_transform(X.astype(np.float32))
@@ -598,8 +598,10 @@ def test_nmf_custom_init_dtype_error():
 # FIXME : should be removed in 0.26
 def test_init_default_deprecation():
     # Test FutureWarning on init default
-    msg = ("The default value of init for solver 'mu' will change from "
-           "'nndsvd' to 'nndsvda' in 0.26.")
+    msg = ("The 'init' value, when 'init=None' and "
+           "n_components <= min\(n_samples, n_features\) "
+           "will be changed from 'nndsvd' to 'nndsvda' "
+           "in 0.26.")
     rng = np.random.mtrand.RandomState(42)
     A = np.abs(rng.randn(6, 5))
     with pytest.warns(FutureWarning, match=msg):

@@ -101,8 +101,9 @@ Changelog
 ..................................
 
 - |API| For :class:`cross_decomposition.NMF`,
-  the default `nndsvd` value for the `init` parameter is deprecated for
-  `solver='mu'`. It will be changed to `nndsvda` in 0.26.
+  the `init` value, when 'init=None' and
+  n_components <= min(n_samples, n_features) will be changed from
+  `'nndsvd'` to `'nndsvda'` in 0.26.
   :pr:`18525` by `Chiara Marmo <cmarmo>`.
 
 - |API| The bounds of the `n_components` parameter is now restricted:
