@@ -15,10 +15,6 @@ from ...base import is_classifier
 class ConfusionMatrixDisplay:
     """Confusion Matrix visualization.
 
-    It is recommend to use :func:`~sklearn.metrics.plot_confusion_matrix` to
-    create a :class:`ConfusionMatrixDisplay`. All parameters are stored as
-    attributes.
-
     Read more in the :ref:`User Guide <visualizations>`.
 
     Parameters
@@ -317,10 +313,11 @@ class ConfusionMatrixDisplay:
         ...     clf, X_test, y_test)  # doctest: +SKIP
         >>> plt.show()  # doctest: +SKIP
         """
-        check_matplotlib_support(f"{cls.__name__}.from_estimator")
+        method_name = f"{cls.__name__}.from_estimator"
+        check_matplotlib_support(method_name)
 
         if not is_classifier(estimator):
-            raise ValueError("plot_confusion_matrix only supports classifiers")
+            raise ValueError(f"{method_name} only supports classifiers")
 
         y_pred = estimator.predict(X)
 
