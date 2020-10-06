@@ -575,7 +575,7 @@ Changelog
   :class:`preprocessing.StandardScaler` for when X is dense. Allows setting
   individual weights for each sample. :pr:`18510` and
   :pr:`18447` and :pr:`16066` by :user:`Maria Telenczuk <maikia>` and
-  `Albert Villanova:user:<albertvillanova>` and :user:`<panpiort8>`
+  :user:`Albert Villanova <albertvillanova>` and :user:`<panpiort8>`
 
 :mod:`sklearn.svm`
 ..................
