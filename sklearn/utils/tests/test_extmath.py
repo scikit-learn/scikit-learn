@@ -459,7 +459,7 @@ def rng():
     return np.random.RandomState(42)
 
 
-@pytest.mark.parametrize("dtype", [np.float16, np.float32, np.float64])
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_incremental_weighted_mean_and_variance_simple(rng, dtype):
     mult = 10
     X = rng.rand(1000, 20).astype(dtype)*mult
@@ -514,7 +514,7 @@ def test_incremental_weighted_mean_and_variance(mean, var, weight_loc,
     _assert(X, ones_weight, expected_mean, expected_var)
 
 
-@pytest.mark.parametrize("dtype", [np.float16, np.float32, np.float64])
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_incremental_weighted_mean_and_variance_ignore_nan(dtype):
     old_means = np.array([535., 535., 535., 535.])
     old_variances = np.array([4225., 4225., 4225., 4225.])
