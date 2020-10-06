@@ -448,8 +448,8 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
     .. deprecated:: 0.24
        `plot_confusion_matrix` is deprecated in 0.24 and will be removed in
        0.26. Use one of the following class methods:
-       :method:`ConfusionMatrixDisplay.from_predictions` or
-       :method:`ConfusionMatrixDisplay.from_estimator`.
+       :func:`~sklearn.metrics.ConfusionMatrixDisplay.from_predictions` or
+       :func:`~sklearn.metrics.ConfusionMatrixDisplay.from_estimator`.
 
     Parameters
     ----------
