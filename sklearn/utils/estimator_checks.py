@@ -3101,6 +3101,60 @@ def check_requires_y_none(name, estimator_orig, strict_mode=True):
             warnings.warn(warning_msg, FutureWarning)
 
 
+def check_n_features_in_after_fitting(name, estimator_orig, strict_mode=True):
+    # Make sure that n_features_in are checked after fitting
+    tags = estimator_orig._get_tags()
+
+    if "2darray" not in tags["X_types"] or tags["no_validation"]:
+        return
+
+    rng = np.random.RandomState(0)
+
+    estimator = clone(estimator_orig)
+    set_random_state(estimator)
+    if 'warm_start' in estimator.get_params():
+        estimator.set_params(warm_start=False)
+
+    n_samples = 100
+    X = rng.normal(loc=100, size=(n_samples, 2))
+    X = _pairwise_estimator_convert_X(X, estimator)
+    if is_regressor(estimator):
+        y = rng.normal(size=n_samples)
+    else:
+        y = rng.randint(low=0, high=2, size=n_samples)
+    y = _enforce_estimator_tags_y(estimator, y)
+
+    estimator.fit(X, y)
+    assert estimator.n_features_in_ == X.shape[1]
+
+    # check methods will check n_features_in_
+    check_methods = ["predict", "transform", "decision_function",
+                     "predict_proba"]
+    X_bad = X[:, [1]]
+
+    msg = (f"X has 1 features, but {name} is expecting {X.shape[1]} "
+           "features as input")
+    for method in check_methods:
+        if not hasattr(estimator, method):
+            continue
+        with raises(ValueError, match=msg):
+            getattr(estimator, method)(X_bad)
+
+    # partial_fit will check in the second call
+    if not hasattr(estimator, "partial_fit"):
+        return
+
+    estimator = clone(estimator_orig)
+    if is_classifier(estimator):
+        estimator.partial_fit(X, y, classes=np.unique(y))
+    else:
+        estimator.partial_fit(X, y)
+    assert estimator.n_features_in_ == X.shape[1]
+
+    with raises(ValueError, match=msg):
+        estimator.partial_fit(X_bad, y)
+
+
 # set of checks that are completely strict, i.e. they have no non-strict part
 _FULLY_STRICT_CHECKS = set([
     'check_n_features_in',
