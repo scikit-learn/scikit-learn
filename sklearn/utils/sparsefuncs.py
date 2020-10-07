@@ -159,9 +159,8 @@ def incr_mean_variance_axis_weighted(X, axis, last_mean, last_var, last_sum,
        pp. 242-247
 
     """
-
     if sample_weight is None:
-        return incr_mean_variance_axis
+        return incr_mean_variance_axis(X, axis, last_mean, last_var, last_sum)
     sample_weight = np.array(sample_weight)
     from sklearn.utils.extmath import safe_sparse_dot
     sparse_constructor = (sp.csr_matrix
@@ -176,6 +175,7 @@ def incr_mean_variance_axis_weighted(X, axis, last_mean, last_var, last_sum,
     X_not_nan = X.copy()
     X_not_nan.data[int(nans_place.data*(-1)+1)]
     '''
+    # import pdb; pdb.set_trace()
     new_sum = safe_sparse_dot(sample_weight, X) # not sparse
     updated_sum = new_sum + last_sum
     new_sample_count = np.sum(sample_weight)  # including Nans for now
