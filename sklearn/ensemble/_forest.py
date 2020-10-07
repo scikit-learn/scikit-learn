@@ -193,7 +193,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                  verbose=0,
                  warm_start=False,
                  class_weight=None,
-                 max_samples=None):
+                 max_samples=None,
+                 importance_type='impurity'):
         super().__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
@@ -509,7 +510,8 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             verbose=verbose,
             warm_start=warm_start,
             class_weight=class_weight,
-            max_samples=max_samples)
+            max_samples=max_samples,
+            importance_type=importance_type)
 
     def _set_oob_score(self, X, y):
         """
@@ -783,7 +785,8 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
             random_state=random_state,
             verbose=verbose,
             warm_start=warm_start,
-            max_samples=max_samples)
+            max_samples=max_samples,
+            importance_type=importance_type)
 
     def predict(self, X):
         """
@@ -2346,6 +2349,7 @@ class RandomTreesEmbedding(BaseForest):
         self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split
         self.sparse_output = sparse_output
+        self.importance_type = 'impurity'
 
     def _set_oob_score(self, X, y):
         raise NotImplementedError("OOB score not supported by tree embedding")
