@@ -272,8 +272,13 @@ def type_of_target(y):
             # see NEP 34
             y = np.asarray(y, dtype=object)
 
-    # The old sequence of sequences format
     try:
+        # labels in bytes format
+        if isinstance(y[0], bytes):
+            raise ValueError('Labels represented as bytes is not supported.'
+                             ' Convert the labels to a supported format.'
+                             ' For example, y = y.astype(str)')
+        # The old sequence of sequences format
         if (not hasattr(y[0], '__array__') and isinstance(y[0], Sequence)
                 and not isinstance(y[0], str)):
             raise ValueError('You appear to be using a legacy multi-label data'

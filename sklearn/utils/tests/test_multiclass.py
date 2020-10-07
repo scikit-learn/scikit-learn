@@ -437,3 +437,13 @@ def test_ovr_decision_function():
                                              n_classes)[0] for i in range(4)]
 
     assert_allclose(dec_values, dec_values_one, atol=1e-6)
+
+
+def test_labels_in_bytes_format():
+    # test whether labels are represented in bytes format
+    # and display a helpful message
+    msg = ('Labels represented as bytes is not supported.'
+           ' Convert the labels to a supported format.'
+           ' For example, y = y.astype'r'\(str\)')
+    with pytest.raises(ValueError, match=msg):
+        type_of_target(np.array([b'a', b'b'], dtype='<S1'))
