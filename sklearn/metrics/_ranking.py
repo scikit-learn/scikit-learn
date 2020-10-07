@@ -443,10 +443,9 @@ def roc_auc_score(y_true, y_score, *, average="macro", sample_weight=None,
             ``average == 'macro'``.
 
     labels : array-like of shape (n_classes,), default=None
-        Only used for multiclass targets.
-        List of labels that index the classes in ``y_score``.
-        If ``None``, the numerical or lexicographical order of the labels in
-        ``y_true`` is used.
+            Only used for multiclass targets. List of labels that index the classes in
+            ``y_score``. If ``None``, the numerical or lexicographical order of
+            the labels in ``y_true`` is used.
 
     Returns
     -------
