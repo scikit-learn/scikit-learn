@@ -134,7 +134,7 @@ accuracy score::
     >>> y_pred = pipeline.predict(X_test)
     >>> score = accuracy_score(y_test, y_pred)
     >>> print(f"Accuracy: {score.mean():.2f}")
-    Mean Accuracy: 0.46
+    Accuracy: 0.46
 
 The pipeline can also be fed into a cross-validation
 function such as :func:`~sklearn.model_selection.cross_val_score`.
