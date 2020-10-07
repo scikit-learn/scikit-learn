@@ -197,7 +197,7 @@ class SparsePCA(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = check_array(X)
+        X = self._validate_data(X, reset=False)
         X = X - self.mean_
 
         U = ridge_regression(self.components_.T, X.T, self.ridge_alpha,
