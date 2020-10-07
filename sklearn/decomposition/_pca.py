@@ -21,7 +21,6 @@ from scipy.sparse.linalg import svds
 
 from ._base import _BasePCA
 from ..utils import check_random_state
-from ..utils import check_array
 from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted

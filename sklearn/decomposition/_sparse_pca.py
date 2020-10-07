@@ -4,7 +4,7 @@
 
 import numpy as np
 
-from ..utils import check_random_state, check_array
+from ..utils import check_random_state
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _deprecate_positional_args
 from ..linear_model import ridge_regression
