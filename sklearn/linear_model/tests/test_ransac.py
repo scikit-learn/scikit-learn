@@ -288,7 +288,9 @@ def test_ransac_none_estimator():
 
     ransac_estimator = RANSACRegressor(base_estimator, min_samples=2,
                                        residual_threshold=5, random_state=0)
-    ransac_none_estimator = RANSACRegressor(None, 2, 5, random_state=0)
+    ransac_none_estimator = RANSACRegressor(None, min_samples=2,
+                                            residual_threshold=5,
+                                            random_state=0)
 
     ransac_estimator.fit(X, y)
     ransac_none_estimator.fit(X, y)
@@ -510,4 +512,4 @@ def test_ransac_final_model_fit_sample_weight():
         sample_weight=sample_weight[mask_samples]
     )
 
-    assert_allclose(ransac.estimator_.coef_, final_model.coef_)
+    assert_allclose(ransac.estimator_.coef_, final_model.coef_, atol=1e-12)
