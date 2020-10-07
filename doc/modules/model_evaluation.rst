@@ -1382,7 +1382,7 @@ uniformly:
 
 .. math::
 
-   \frac{2}{c(c-1)}\sum_{j=1}^{c}\sum_{k > j}^c (\text{AUC}(j | k) +
+   \frac{1}{c(c-1)}\sum_{j=1}^{c}\sum_{k > j}^c (\text{AUC}(j | k) +
    \text{AUC}(k | j))
 
 where :math:`c` is the number of classes and :math:`\text{AUC}(j | k)` is the
@@ -1397,7 +1397,7 @@ prevalence:
 
 .. math::
 
-   \frac{2}{c(c-1)}\sum_{j=1}^{c}\sum_{k > j}^c p(j \cup k)(
+   \frac{1}{c(c-1)}\sum_{j=1}^{c}\sum_{k > j}^c p(j \cup k)(
    \text{AUC}(j | k) + \text{AUC}(k | j))
 
 where :math:`c` is the number of classes. This algorithm is used by setting
