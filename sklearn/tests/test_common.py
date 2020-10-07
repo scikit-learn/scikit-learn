@@ -289,7 +289,6 @@ N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE = {
     'compose',
     'covariance',
     'cross_decomposition',
-    'decomposition',
     'discriminant_analysis',
     'ensemble',
     'feature_extraction',
