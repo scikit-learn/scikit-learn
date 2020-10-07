@@ -459,9 +459,10 @@ def rng():
     return np.random.RandomState(42)
 
 
-def test_incremental_weighted_mean_and_variance_simple(rng):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_incremental_weighted_mean_and_variance_simple(rng, dtype):
     mult = 10
-    X = rng.rand(1000, 20)*mult
+    X = rng.rand(1000, 20).astype(dtype)*mult
     sample_weight = rng.rand(X.shape[0]) * mult
     mean, var, _ = _incremental_weighted_mean_and_var(X, sample_weight,
                                                       0, 0, 0)
@@ -513,7 +514,8 @@ def test_incremental_weighted_mean_and_variance(mean, var, weight_loc,
     _assert(X, ones_weight, expected_mean, expected_var)
 
 
-def test_incremental_weighted_mean_and_variance_ignore_nan():
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_incremental_weighted_mean_and_variance_ignore_nan(dtype):
     old_means = np.array([535., 535., 535., 535.])
     old_variances = np.array([4225., 4225., 4225., 4225.])
     old_weight_sum = np.array([2, 2, 2, 2], dtype=np.int32)
@@ -522,12 +524,12 @@ def test_incremental_weighted_mean_and_variance_ignore_nan():
 
     X = np.array([[170, 170, 170, 170],
                   [430, 430, 430, 430],
-                  [300, 300, 300, 300]])
+                  [300, 300, 300, 300]]).astype(dtype)
 
     X_nan = np.array([[170, np.nan, 170, 170],
                       [np.nan, 170, 430, 430],
                       [430, 430, np.nan, 300],
-                      [300, 300, 300, np.nan]])
+                      [300, 300, 300, np.nan]]).astype(dtype)
 
     X_means, X_variances, X_count = \
         _incremental_weighted_mean_and_var(X,
