@@ -339,3 +339,8 @@ def test_default_labels(pyplot, display_labels, expected_labels):
 
     assert_array_equal(x_ticks, expected_labels)
     assert_array_equal(y_ticks, expected_labels)
+
+
+def test_plot_confusion_matrix_deprecation_warning(pyplot, fitted_clf, data):
+    with pytest.warns(FutureWarning):
+        plot_confusion_matrix(fitted_clf, *data)

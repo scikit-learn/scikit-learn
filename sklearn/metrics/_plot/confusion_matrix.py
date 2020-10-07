@@ -15,6 +15,12 @@ from ...base import is_classifier
 class ConfusionMatrixDisplay:
     """Confusion Matrix visualization.
 
+    It is recommend to use
+    :func:`~sklearn.metrics.ConfusionMatrixDisplay.from_estimator` or
+    :func:`~sklearn.metrics.ConfusionMatrixDisplay.from_predictions` to
+    create a :class:`ConfusionMatrixDisplay`. All parameters are stored as
+    attributes.
+
     Read more in the :ref:`User Guide <visualizations>`.
 
     Parameters
@@ -160,53 +166,6 @@ class ConfusionMatrixDisplay:
         self.ax_ = ax
         return self
 
-    @classmethod
-    def _create_display_and_plot(
-        cls,
-        y_true,
-        y_pred,
-        sample_weight,
-        labels,
-        normalize,
-        display_labels,
-        include_values,
-        cmap,
-        ax,
-        xticks_rotation,
-        values_format,
-        colorbar,
-        classes,
-    ):
-        """Private method which is in charge of:
-        * Compute the confusion matrix;
-        * Create the display;
-        * Make the plotting.
-        """
-        if display_labels is None:
-            if labels is None:
-                display_labels = classes
-            else:
-                display_labels = labels
-
-        cm = confusion_matrix(
-            y_true,
-            y_pred,
-            sample_weight=sample_weight,
-            labels=labels,
-            normalize=normalize,
-        )
-
-        disp = cls(confusion_matrix=cm, display_labels=display_labels)
-
-        return disp.plot(
-            include_values=include_values,
-            cmap=cmap,
-            ax=ax,
-            xticks_rotation=xticks_rotation,
-            values_format=values_format,
-            colorbar=colorbar,
-        )
-
     _common_docstring_from_methods = """labels : array-like of shape \
                 (n_classes,), default=None
             List of labels to index the matrix. This may be used to reorder or
@@ -250,11 +209,6 @@ class ConfusionMatrixDisplay:
         Returns
         -------
         display : :class:`~sklearn.metrics.ConfusionMatrixDisplay`
-
-        See Also
-        --------
-        confusion_matrix : Compute Confusion Matrix to evaluate the accuracy of
-            a classification.
     """.rstrip()
 
     @classmethod
@@ -315,26 +269,29 @@ class ConfusionMatrixDisplay:
         """
         method_name = f"{cls.__name__}.from_estimator"
         check_matplotlib_support(method_name)
-
         if not is_classifier(estimator):
             raise ValueError(f"{method_name} only supports classifiers")
-
         y_pred = estimator.predict(X)
 
-        return cls._create_display_and_plot(
+        if display_labels is None:
+            if labels is None:
+                display_labels = estimator.classes_
+            else:
+                display_labels = labels
+
+        return cls.from_predictions(
             y,
             y_pred,
-            sample_weight,
-            labels,
-            normalize,
-            display_labels,
-            include_values,
-            cmap,
-            ax,
-            xticks_rotation,
-            values_format,
-            colorbar,
-            estimator.classes_
+            sample_weight=sample_weight,
+            labels=labels,
+            normalize=normalize,
+            display_labels=display_labels,
+            include_values=include_values,
+            cmap=cmap,
+            ax=ax,
+            xticks_rotation=xticks_rotation,
+            values_format=values_format,
+            colorbar=colorbar,
         )
 
     @classmethod
@@ -409,28 +366,37 @@ class ConfusionMatrixDisplay:
             )
         check_consistent_length(y_true, y_pred)
 
-        return cls._create_display_and_plot(
+        if display_labels is None:
+            if labels is None:
+                display_labels = np.unique(y_true)
+            else:
+                display_labels = labels
+
+        cm = confusion_matrix(
             y_true,
             y_pred,
-            sample_weight,
-            labels,
-            normalize,
-            display_labels,
-            include_values,
-            cmap,
-            ax,
-            xticks_rotation,
-            values_format,
-            colorbar,
-            np.unique(y_true)
+            sample_weight=sample_weight,
+            labels=labels,
+            normalize=normalize,
+        )
+
+        disp = cls(confusion_matrix=cm, display_labels=display_labels)
+
+        return disp.plot(
+            include_values=include_values,
+            cmap=cmap,
+            ax=ax,
+            xticks_rotation=xticks_rotation,
+            values_format=values_format,
+            colorbar=colorbar,
         )
 
 
 @deprecated(
-    "Function `plot_confusion_matrix` is deprecated in 0.24 and will be "
+    "Function plot_confusion_matrix is deprecated in 0.24 and will be "
     "removed in 0.26. Use one of the class methods: "
-    "`ConfusionMatrixDisplay.from_predictions` or "
-    "`ConfusionMatrixDisplay.from_estimator`."
+    "ConfusionMatrixDisplay.from_predictions or "
+    "ConfusionMatrixDisplay.from_estimator."
 )
 @_deprecate_positional_args
 def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
@@ -528,21 +494,23 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
     >>> plot_confusion_matrix(clf, X_test, y_test)  # doctest: +SKIP
     >>> plt.show()  # doctest: +SKIP
     """
-    # early failing to keep the right error message during the deprecation:
+    check_matplotlib_support("plot_confusion_matrix")
+
     if not is_classifier(estimator):
         raise ValueError("plot_confusion_matrix only supports classifiers")
-    return ConfusionMatrixDisplay.from_estimator(
-        estimator=estimator,
-        X=X,
-        y=y_true,
-        labels=labels,
-        sample_weight=sample_weight,
-        normalize=normalize,
-        display_labels=display_labels,
-        include_values=include_values,
-        xticks_rotation=xticks_rotation,
-        values_format=values_format,
-        cmap=cmap,
-        ax=ax,
-        colorbar=colorbar,
-    )
+
+    y_pred = estimator.predict(X)
+    cm = confusion_matrix(y_true, y_pred, sample_weight=sample_weight,
+                          labels=labels, normalize=normalize)
+
+    if display_labels is None:
+        if labels is None:
+            display_labels = estimator.classes_
+        else:
+            display_labels = labels
+
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm,
+                                  display_labels=display_labels)
+    return disp.plot(include_values=include_values,
+                     cmap=cmap, ax=ax, xticks_rotation=xticks_rotation,
+                     values_format=values_format, colorbar=colorbar)

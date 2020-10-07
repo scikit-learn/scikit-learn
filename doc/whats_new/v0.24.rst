@@ -413,7 +413,7 @@ Changelog
 - |API| :class:`metrics.ConfusionMatrixDisplay` exposes two class methods
   :func:`~metrics.ConfusionMatrixDisplay.from_estimator` and
   :func:`~metrics.ConfusionMatrixDisplay.from_predictions` allowing to create
-  a confusion matrix plot using an estimator or the prediction.
+  a confusion matrix plot using an estimator or the predictions.
   :func:`metrics.plot_confusion_matrix` is deprecated in favor of these two
   class methods and will be removed in 0.26.
   :pr:`18543` by `Guillaume Lemaitre`_.
