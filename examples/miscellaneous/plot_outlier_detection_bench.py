@@ -64,7 +64,7 @@ for dataset_idx, dataset_name in enumerate(datasets):
     print("vectorizing data")
     if dataset_name == "SF":
         idx = rng.choice(X.shape[0], int(X.shape[0]*0.1), replace=False)
-        X = X[idx, :]  # reduce the sample size
+        X = X[idx]  # reduce the sample size to speed up computation
         y = y[idx]
         lb = LabelBinarizer()
         x1 = lb.fit_transform(X[:, 1].astype(str))
@@ -73,7 +73,7 @@ for dataset_idx, dataset_name in enumerate(datasets):
 
     if dataset_name == "SA":
         idx = rng.choice(X.shape[0], int(X.shape[0]*0.1), replace=False)
-        X = X[idx, :]  # reduce the sample size
+        X = X[idx]  # reduce the sample size to speed up computation
         y = y[idx]
         lb = LabelBinarizer()
         x1 = lb.fit_transform(X[:, 1].astype(str))
@@ -90,7 +90,7 @@ for dataset_idx, dataset_name in enumerate(datasets):
         X = dataset.data
         y = dataset.target
         idx = rng.choice(X.shape[0], int(X.shape[0]*0.1), replace=False)
-        X = X[idx, :]
+        X = X[idx]  # reduce the sample size to speed up computation
         y = y[idx]
 
         # normal data are those with attribute 2
@@ -116,10 +116,9 @@ for dataset_idx, dataset_name in enumerate(datasets):
             X_mal, y_mal = X[s], y[s]
             X_ben, y_ben = X[~s], y[~s]
 
-            # downsampled to 39 points (9.8% outliers)
-            idx = rng.choice(
-                y_mal.shape[0], 39, replace=False)
-            X_mal2 = X_mal[idx, :]
+            # downsampled to 39 points (9.8% outliers) to speed up computation
+            idx = rng.choice(y_mal.shape[0], 39, replace=False)
+            X_mal2 = X_mal[idx]
             y_mal2 = y_mal[idx]
             X = np.concatenate((X_ben, X_mal2), axis=0)
             y = np.concatenate((y_ben, y_mal2), axis=0)
@@ -152,8 +151,7 @@ for dataset_idx, dataset_name in enumerate(datasets):
     plt.ylim([-0.05, 1.05])
     plt.legend(loc="lower right")
     plt.title(dataset_name)
-    if dataset_idx == len(datasets) - 1:
-        plt.xlabel("False Positive Rate")
-        plt.ylabel("True Positive Rate")
+    plt.xlabel("False Positive Rate")
+    plt.ylabel("True Positive Rate")
 plt.tight_layout(pad=2.0)  # spacing between subplots
 plt.show()
