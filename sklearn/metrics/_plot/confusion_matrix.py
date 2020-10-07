@@ -6,9 +6,7 @@ from .. import confusion_matrix
 from ...utils import check_matplotlib_support
 from ...utils import deprecated
 from ...utils._docstring import inject_docstring
-from ...utils.multiclass import type_of_target
 from ...utils.validation import _deprecate_positional_args
-from ...utils.validation import check_consistent_length
 from ...base import is_classifier
 
 
@@ -358,23 +356,6 @@ class ConfusionMatrixDisplay:
         >>> plt.show()  # doctest: +SKIP
         """
         check_matplotlib_support(f"{cls.__name__}.from_predictions")
-
-        y_true_type = type_of_target(y_true)
-        y_pred_type = type_of_target(y_pred)
-        supported_type = {"binary", "multiclass"}
-        if y_true_type not in supported_type:
-            raise ValueError(
-                f"Only 'binary' and 'multiclass' classification problems are "
-                f"supported. Got {y_true_type}."
-            )
-        elif y_pred_type not in supported_type:
-            raise ValueError(
-                f"The type of target of `y_pred` differs from the one of "
-                f"`y_true`. Ensure to pass prediction as given by "
-                f"`classifier.predict(X)`. Got `y_pred` of type "
-                f"'{y_pred_type}'."
-            )
-        check_consistent_length(y_true, y_pred)
 
         if display_labels is None:
             if labels is None:

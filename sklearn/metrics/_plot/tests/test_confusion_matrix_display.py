@@ -39,14 +39,10 @@ def test_confusion_matrix_display_validation(pyplot):
     with pytest.raises(ValueError, match=err_msg):
         ConfusionMatrixDisplay.from_estimator(regressor, X, y)
 
-    err_msg = (
-        "Only 'binary' and 'multiclass' classification problems are supported"
-    )
+    err_msg = "Classification metrics can't handle a mix of "
     with pytest.raises(ValueError, match=err_msg):
         # Force `y_true` to be seen as a regression problem
         ConfusionMatrixDisplay.from_predictions(y + 0.5, y_pred_classifier)
-
-    err_msg = "Got `y_pred` of type 'continuous'"
     with pytest.raises(ValueError, match=err_msg):
         ConfusionMatrixDisplay.from_predictions(y, y_pred_regressor)
 
