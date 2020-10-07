@@ -515,7 +515,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         # string, which is not the same one raised by check_n_features. So we
         # don't check n_features_in_ here for now (it's done with adhoc code in
         # the estimator anyway).
-        X = self._check_non_neg_array(X, first_time,
+        X = self._check_non_neg_array(X, reset=first_time,
                                       "LatentDirichletAllocation.partial_fit")
         n_samples, n_features = X.shape
         batch_size = self.batch_size

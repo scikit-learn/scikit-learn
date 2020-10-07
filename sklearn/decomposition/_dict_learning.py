@@ -1629,7 +1629,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         inner_stats = getattr(self, 'inner_stats_', None)
         if iter_offset is None:
             iter_offset = getattr(self, 'iter_offset_', 0)
-        X = self._validate_data(X, reset=iter_offset == 0)
+        X = self._validate_data(X, reset=(iter_offset == 0))
         U, (A, B) = dict_learning_online(
             X, self.n_components, alpha=self.alpha,
             n_iter=1, method=self.fit_algorithm,
