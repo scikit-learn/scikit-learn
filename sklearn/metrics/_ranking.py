@@ -425,23 +425,23 @@ def roc_auc_score(y_true, y_score, *, average="macro", sample_weight=None,
         computation currently is not supported for multiclass.
 
     multi_class : {'raise', 'ovr', 'ovo'}, default='raise'
-        Multiclass only. Determines the type of configuration to use. The
+        This implementation can be used with multiclass classification only. Determines the type of configuration to use. The
         default value raises an error, so either ``'ovr'`` or ``'ovo'`` must be
         passed explicitly.
 
         ``'ovr'``:
-            Computes the AUC of each class against the rest [3]_ [4]_. This
+            Stands for One-vs-rest algorithm. Computes the AUC of each class against the rest [3]_ [4]_. This
             treats the multiclass case in the same way as the multilabel case.
             Sensitive to class imbalance even when ``average == 'macro'``,
             because class imbalance affects the composition of each of the
             'rest' groupings.
         ``'ovo'``:
-            Computes the average AUC of all possible pairwise combinations of
+            Stands for One-vs-one algorithm. Computes the average AUC of all possible pairwise combinations of
             classes [5]_. Insensitive to class imbalance when
             ``average == 'macro'``.
 
     labels : array-like of shape (n_classes,), default=None
-        Multiclass only. List of labels that index the classes in ``y_score``.
+        This implementation can be used with multiclass classification only. List of labels that index the classes in ``y_score``.
         If ``None``, the numerical or lexicographical order of the labels in
         ``y_true`` is used.
 
