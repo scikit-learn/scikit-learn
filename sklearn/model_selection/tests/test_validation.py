@@ -1782,3 +1782,40 @@ def test_callable_multimetric_confusion_matrix_cross_validate():
     score_names = ['tn', 'fp', 'fn', 'tp']
     for name in score_names:
         assert "test_{}".format(name) in cv_results
+
+
+# TODO: Remove in 0.26 when the _pairwise attribute is removed
+def test_validation_pairwise():
+    # checks the interactions between the pairwise estimator tag
+    # and the _pairwise attribute
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    linear_kernel = np.dot(X, X.T)
+
+    svm = SVC(kernel="precomputed")
+    with pytest.warns(None) as record:
+        cross_validate(svm, linear_kernel, y, cv=2)
+    assert not record
+
+    # pairwise tag is not consistent with pairwise attribute
+    class IncorrectTagSVM(SVC):
+        def _more_tags(self):
+            return {'pairwise': False}
+
+    svm = IncorrectTagSVM(kernel='precomputed')
+    msg = ("_pairwise was deprecated in 0.24 and will be removed in 0.26. "
+           "Set the estimator tags of your estimator instead")
+    with pytest.warns(FutureWarning, match=msg):
+        cross_validate(svm, linear_kernel, y, cv=2)
+
+    # the _pairwise attribute is present and set to True while the pairwise
+    # tag is not present
+    class NoEstimatorTagSVM(SVC):
+        def _get_tags(self):
+            tags = super()._get_tags()
+            del tags['pairwise']
+            return tags
+
+    svm = NoEstimatorTagSVM(kernel='precomputed')
+    with pytest.warns(FutureWarning, match=msg):
+        cross_validate(svm, linear_kernel, y, cv=2)

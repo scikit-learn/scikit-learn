@@ -226,6 +226,11 @@ the dataset, e.g. when ``X`` is a precomputed kernel matrix. Specifically,
 the :term:`_pairwise` property is used by ``utils.metaestimators._safe_split``
 to slice rows and columns.
 
+.. deprecated:: 0.24
+
+    The _pairwise attribute is deprecated in 0.24. From 0.26 onward,
+    the `pairwise` estimator tag should be used instead.
+
 Universal attributes
 ^^^^^^^^^^^^^^^^^^^^
 
@@ -539,6 +544,16 @@ no_validation (default=False)
 non_deterministic (default=False)
     whether the estimator is not deterministic given a fixed ``random_state``
 
+pairwise (default=False)
+    This boolean attribute indicates whether the data (`X`) :term:`fit` and
+    similar methods consists of pairwise measures over samples rather than a
+    feature representation for each sample.  It is usually `True` where an
+    estimator has a `metric` or `affinity` or `kernel` parameter with value
+    'precomputed'. Its primary purpose is that when a :term:`meta-estimator`
+    extracts a sub-sample of data intended for a pairwise estimator, the data
+    needs to be indexed on both axes, while other data is indexed only on the
+    first axis.
+
 preserves_dtype (default=``[np.float64]``)
     applies only on transformers. It corresponds to the data types which will
     be preserved such that `X_trans.dtype` is the same as `X.dtype` after
@@ -627,10 +642,10 @@ closed-form solutions.
 Coding guidelines
 =================
 
-The following are some guidelines on how new code should be written for 
-inclusion in scikit-learn, and which may be appropriate to adopt in external 
-projects. Of course, there are special cases and there will be exceptions to 
-these rules. However, following these rules when submitting new code makes 
+The following are some guidelines on how new code should be written for
+inclusion in scikit-learn, and which may be appropriate to adopt in external
+projects. Of course, there are special cases and there will be exceptions to
+these rules. However, following these rules when submitting new code makes
 the review easier so new code can be integrated in less time.
 
 Uniformly formatted code makes it easier to share code ownership. The
