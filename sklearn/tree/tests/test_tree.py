@@ -2003,9 +2003,8 @@ def test_poisson_zero_nodes():
     assert np.all(reg.predict(X) > 0)
 
     # Test additional dataset where something could go wrong.
-    from sklearn.datasets import make_regression
     n_features = 10
-    X, y = make_regression(
+    X, y = datasets.make_regression(
         effective_rank=n_features * 2 // 3, tail_strength=0.6,
         n_samples=1_000,
         n_features=n_features,
