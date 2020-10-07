@@ -350,7 +350,8 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
             Log-likelihood of each sample under the current model
         """
         check_is_fitted(self)
-        X = self._validate_data(X, copy=self.copy, dtype=np.float64)
+        X = self._validate_data(X, copy=self.copy, dtype=np.float64,
+                                reset=False)
         Xr = X - self.mean_
         precision = self.get_precision()
         n_features = X.shape[1]
