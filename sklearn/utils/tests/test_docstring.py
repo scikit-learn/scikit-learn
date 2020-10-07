@@ -2,58 +2,70 @@
 
 import pytest
 
-from sklearn.utils._docstring import Substitution
+from sklearn.utils._docstring import inject_docstring
 
-func_docstring = """A function.
+expected_func_docstring = """A function.
 
-    Parameters
-    ----------
-    xxx
+        Parameters
+        ----------
+        xxx
 
-    yyy
-    """
+        yyy"""
 
+expected_cls_docstring = """A class.
 
-def func(param_1, param_2):
-    """A function.
+        Parameters
+        ----------
+        xxx
 
-    Parameters
-    ----------
-    {param_1}
-
-    {param_2}
-    """
-    return param_1, param_2
+        yyy"""
 
 
-cls_docstring = """A class.
+@pytest.fixture(scope="function")
+def func():
+    def func_to_inject(param_1, param_2):
+        """A function.
 
-    Parameters
-    ----------
-    xxx
+        Parameters
+        ----------
+        {param_1}
 
-    yyy
-    """
-
-
-class cls:
-    """A class.
-
-    Parameters
-    ----------
-    {param_1}
-
-    {param_2}
-    """
-
-    def __init__(self, param_1, param_2):
-        self.param_1 = param_1
-        self.param_2 = param_2
+        {param_2}
+        """
+        return param_1, param_2
+    return func_to_inject, expected_func_docstring
 
 
-@pytest.mark.parametrize(
-    "obj, obj_docstring", [(func, func_docstring), (cls, cls_docstring)]
+@pytest.fixture(scope="function")
+def Klass():
+    class KlassToInject:
+        """A class.
+
+        Parameters
+        ----------
+        {param_1}
+
+        {param_2}
+        """
+        def __init__(self, param_1, param_2):
+            self.param_1 = param_1
+            self.param_2 = param_2
+
+    return KlassToInject, expected_cls_docstring
+
+
+@pytest.fixture(
+    params=["func", "Klass"],
+    scope="function",
 )
-def test_docstring_inject(obj, obj_docstring):
-    obj_injected_docstring = Substitution(param_1="xxx", param_2="yyy")(obj)
-    assert obj_injected_docstring.__doc__ == obj_docstring
+def object_to_inject(request):
+    return request.getfixturevalue(request.param)
+
+
+def test_inject_docstring(object_to_inject):
+    obj, expected_docstring = object_to_inject
+    obj_injected = inject_docstring(param_1="xxx", param_2="yyy")(
+        obj
+    )
+    assert (obj_injected.__doc__.rstrip() ==
+            expected_docstring.rstrip())

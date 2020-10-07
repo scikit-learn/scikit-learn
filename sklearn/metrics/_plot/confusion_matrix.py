@@ -5,7 +5,7 @@ import numpy as np
 from .. import confusion_matrix
 from ...utils import check_matplotlib_support
 from ...utils import deprecated
-from ...utils._docstring import Substitution
+from ...utils._docstring import inject_docstring
 from ...utils.multiclass import type_of_target
 from ...utils.validation import _deprecate_positional_args
 from ...utils.validation import check_consistent_length
@@ -212,7 +212,7 @@ class ConfusionMatrixDisplay:
     """.rstrip()
 
     @classmethod
-    @Substitution(common_docstring=_common_docstring_from_methods)
+    @inject_docstring(common_docstring=_common_docstring_from_methods)
     def from_estimator(
         cls,
         estimator,
@@ -295,7 +295,7 @@ class ConfusionMatrixDisplay:
         )
 
     @classmethod
-    @Substitution(common_docstring=_common_docstring_from_methods)
+    @inject_docstring(common_docstring=_common_docstring_from_methods)
     def from_predictions(
         cls,
         y_true,
