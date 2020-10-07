@@ -277,7 +277,14 @@ def test_strict_mode_parametrize_with_checks(estimator, check):
 
 # TODO: When more modules get added, we can remove it from this list to make
 # sure it gets tested. After we finish each module we can move the checks
-# into check_estimator.
+# into sklearn.utils.estimator_checks.check_n_features_in.
+#
+# check_estimators_partial_fit_n_features can either be removed or updated
+# with the two more assertions:
+# 1. `n_features_in_` is set during the first call to `partial_fit`.
+# 2. More strict when it comes to the error message.
+#
+# check_classifiers_train would need to be updated with the error message
 N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE = {
     'calibration',
     'cluster',
@@ -314,6 +321,7 @@ N_FEATURES_IN_AFTER_FIT_ESTIMATORS = [
     est for est in _tested_estimators() if est.__module__.split('.')[1] not in
     N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE
 ]
+
 
 @pytest.mark.parametrize("estimator", N_FEATURES_IN_AFTER_FIT_ESTIMATORS,
                          ids=_get_check_estimator_ids)
