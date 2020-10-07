@@ -605,4 +605,4 @@ def test_init_default_deprecation():
     rng = np.random.mtrand.RandomState(42)
     A = np.abs(rng.randn(6, 5))
     with pytest.warns(FutureWarning, match=msg):
-        NMF().fit(A)
+        nmf._initialize_nmf(A, 3)

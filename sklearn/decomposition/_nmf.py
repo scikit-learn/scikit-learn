@@ -247,7 +247,7 @@ def _beta_loss_to_float(beta_loss):
     return beta_loss
 
 
-def _initialize_nmf(X, n_components, init=None, eps=1e-6,
+def _initialize_nmf(X, n_components, init='warn', eps=1e-6,
                     random_state=None):
     """Algorithms for NMF initialization.
 
@@ -307,6 +307,13 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
     nonnegative matrix factorization - Pattern Recognition, 2008
     http://tinyurl.com/nndsvd
     """
+    if init == 'warn':
+        warnings.warn(("The 'init' value, when 'init=None' and "
+                       "n_components is less than n_samples and "
+                       "n_features, will be changed from 'nndsvd' to "
+                       "'nndsvda' in 0.26."), FutureWarning)
+        init = None
+
     check_non_negative(X, "NMF initialization")
     n_samples, n_features = X.shape
 
@@ -903,11 +910,6 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
 
         - None: 'nndsvd' if n_components < n_features, otherwise 'random'.
 
-        .. deprecated:: 0.24
-           the `init` value, when 'init=None' and if
-           n_components <= min(n_samples, n_features) will be changed from
-           `'nndsvd'` to `'nndsvda'` in 0.26.
-
         - 'random': non-negative random matrices, scaled with:
             sqrt(X.mean() / n_components)
 
@@ -1138,11 +1140,6 @@ class NMF(TransformerMixin, BaseEstimator):
         - None: 'nndsvd' if n_components <= min(n_samples, n_features),
             otherwise random.
 
-        .. deprecated:: 0.24
-           the `init` value, when 'init=None' and if
-           n_components <= min(n_samples, n_features) will be changed from
-           `'nndsvd'` to `'nndsvda'` in 0.26.
-
         - 'random': non-negative random matrices, scaled with:
             sqrt(X.mean() / n_components)
 
@@ -1263,7 +1260,7 @@ class NMF(TransformerMixin, BaseEstimator):
     factorization with the beta-divergence. Neural Computation, 23(9).
     """
     @_deprecate_positional_args
-    def __init__(self, n_components=None, *, init='warn', solver='cd',
+    def __init__(self, n_components=None, *, init=None, solver='cd',
                  beta_loss='frobenius', tol=1e-4, max_iter=200,
                  random_state=None, alpha=0., l1_ratio=0., verbose=0,
                  shuffle=False, regularization='both'):
@@ -1340,12 +1337,6 @@ class NMF(TransformerMixin, BaseEstimator):
         -------
         self
         """
-        if self.init == 'warn':
-            warnings.warn(("The 'init' value, when 'init=None' and "
-                           "n_components is less than n_samples and "
-                           "n_features, will be changed from 'nndsvd' to "
-                           "'nndsvda' in 0.26."), FutureWarning)
-            self.init = None
         self.fit_transform(X, **params)
         return self
 
