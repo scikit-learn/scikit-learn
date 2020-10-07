@@ -89,7 +89,7 @@ def assert_correct_incr(i, batch_start, batch_stop, n, chunk_size,
         assert (i + 1) * chunk_size == n_samples_seen
     else:
         assert (i * chunk_size + (batch_stop - batch_start) ==
-                     n_samples_seen)
+                n_samples_seen)
 
 
 def test_polynomial_features():
@@ -288,10 +288,86 @@ def test_polynomial_features_csr_X_dim_edges(deg, dim, interaction_only):
     assert_array_almost_equal(Xt_csr.A, Xt_dense)
 
 
+def test_raises_value_error_if_sample_weights_greater_than_1d():
+    # Sample weights must be either scalar or 1D
+
+    n_sampless = [2, 3]
+    n_featuress = [3, 2]
+
+    for n_samples, n_features in zip(n_sampless, n_featuress):
+
+        X = rng.randn(n_samples, n_features)
+        y = rng.randn(n_samples)
+
+        scaler = StandardScaler()
+
+        # make sure Error is raised the sample weights greater than 1d
+        sample_weight_notOK = rng.randn(n_samples, 1) ** 2
+        with pytest.raises(ValueError):
+            scaler.fit(X, y, sample_weight=sample_weight_notOK)
+
+
+@pytest.mark.parametrize(['Xw', 'X', 'sample_weight'],
+                         [([[1, 2, 3], [4, 5, 6]],
+                           [[1, 2, 3], [1, 2, 3], [4, 5, 6]],
+                           [2., 1.]),
+                          ([[1, 0, 1], [0, 0, 1]],
+                           [[1, 0, 1], [0, 0, 1], [0, 0, 1], [0, 0, 1]],
+                           np.array([1, 3])),
+                          ([[1, np.nan, 1], [np.nan, np.nan, 1]],
+                           [[1, np.nan, 1], [np.nan, np.nan, 1],
+                            [np.nan, np.nan, 1], [np.nan, np.nan, 1]],
+                           np.array([1, 3])),
+                          ])
+def test_standard_scaler_sample_weight(Xw, X, sample_weight):
+    # weighted StandardScaler
+    yw = np.ones(len(Xw))
+    scaler_w = StandardScaler()
+    scaler_w.fit(Xw, yw, sample_weight=sample_weight)
+
+    # unweighted, but with repeated samples
+    y = np.ones(len(X))
+    scaler = StandardScaler()
+    scaler.fit(X, y)
+
+    X_test = [[1.5, 2.5, 3.5], [3.5, 4.5, 5.5]]
+
+    assert_almost_equal(scaler.mean_, scaler_w.mean_)
+    assert_almost_equal(scaler.var_, scaler_w.var_)
+    assert_almost_equal(scaler.transform(X_test), scaler_w.transform(X_test))
+
+
+@pytest.mark.parametrize(['Xw', 'X', 'sample_weight'],
+                         [([[0, 0, 1, np.nan, 2, 0],
+                            [0, 3, np.nan, np.nan, np.nan, 2]],
+                           [[0, 0, 1, np.nan, 2, 0],
+                            [0, 0, 1, np.nan, 2, 0],
+                            [0, 3, np.nan, np.nan, np.nan, 2]],
+                           [1., 2.]),
+                          ([[1, 0, 1], [0, 0, 1]],
+                           [[1, 0, 1], [0, 0, 1], [0, 0, 1], [0, 0, 1]],
+                           np.array([1, 3]))
+                          ])
+def test_standard_scaler_sparse_sample_weights(Xw, X, sample_weight):
+    # weighted StandardScaler throughs notImplementedError when run with
+    # sample_weight
+    Xw_sparse = sparse.csr_matrix(Xw)
+    yw = np.ones(len(Xw))
+
+    scaler_w = StandardScaler(with_mean=False)
+    with pytest.raises(NotImplementedError):
+        scaler_w.fit(Xw_sparse, yw, sample_weight=sample_weight)
+
+    # but passes through when run without sample_weight
+    X_sparse = sparse.csr_matrix(X)
+    y = np.ones(len(X))
+    scaler = StandardScaler(with_mean=False)
+    scaler.fit(X_sparse, y)
+
+
 def test_standard_scaler_1d():
     # Test scaling of dataset along single axis
     for X in [X_1row, X_1col, X_list_1row, X_list_1row]:
-
         scaler = StandardScaler()
         X_scaled = scaler.fit(X).transform(X, copy=True)
 
@@ -329,15 +405,21 @@ def test_standard_scaler_1d():
     assert scaler.n_samples_seen_ == X.shape[0]
 
 
-def test_standard_scaler_dtype():
+@pytest.mark.parametrize("add_sample_weight", [False, True])
+def test_standard_scaler_dtype(add_sample_weight):
     # Ensure scaling does not affect dtype
     rng = np.random.RandomState(0)
     n_samples = 10
     n_features = 3
+    if add_sample_weight:
+        sample_weight = np.ones(n_samples)
+    else:
+        sample_weight = None
+
     for dtype in [np.float16, np.float32, np.float64]:
         X = rng.randn(n_samples, n_features).astype(dtype)
         scaler = StandardScaler()
-        X_scaled = scaler.fit(X).transform(X)
+        X_scaled = scaler.fit(X, sample_weight=sample_weight).transform(X)
         assert X.dtype == X_scaled.dtype
         assert scaler.mean_.dtype == np.float64
         assert scaler.scale_.dtype == np.float64
@@ -360,7 +442,6 @@ def test_standard_scaler_numerical_stability():
     # Test numerical stability of scaling
     # np.log(1e-5) is taken because of its floating point representation
     # was empirically found to cause numerical problems with np.mean & np.std.
-
     x = np.full(8, np.log(1e-5), dtype=np.float64)
     # This does not raise a warning as the number of samples is too low
     # to trigger the problem in recent numpy
@@ -539,7 +620,6 @@ def test_standard_scaler_partial_fit():
         scaler_incr = StandardScaler(with_std=False)
         for batch in gen_batches(n_samples, chunk_size):
             scaler_incr = scaler_incr.partial_fit(X[batch])
-
         assert_array_almost_equal(scaler_batch.mean_, scaler_incr.mean_)
         assert scaler_batch.var_ == scaler_incr.var_  # Nones
         assert scaler_batch.n_samples_seen_ == scaler_incr.n_samples_seen_
@@ -644,7 +724,6 @@ def test_standard_scaler_trasform_with_partial_fit():
         X_sofar = X[:(i + 1), :]
         chunks_copy = X_sofar.copy()
         scaled_batch = StandardScaler().fit_transform(X_sofar)
-
         scaler_incr = scaler_incr.partial_fit(X[batch])
         scaled_incr = scaler_incr.transform(X_sofar)
 
