@@ -395,7 +395,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             # Collect newly grown trees
             self.estimators_.extend(trees)
 
-        if self.oob_score:
+        if self.oob_score or (self.importance_type == 'permutation'):
             self._set_oob_score(X, y)
 
         # Decapsulate classes_ attributes
@@ -443,6 +443,9 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             array of zeros.
         """
         check_is_fitted(self)
+
+        if self.importance_type == 'permutation':
+            return self._permutation_importance
 
         all_importances = Parallel(n_jobs=self.n_jobs,
                                    **_joblib_parallel_args(prefer='threads'))(
@@ -493,7 +496,8 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
                  verbose=0,
                  warm_start=False,
                  class_weight=None,
-                 max_samples=None):
+                 max_samples=None,
+                 importance_type='impurity'):
         super().__init__(
             base_estimator,
             n_estimators=n_estimators,
@@ -524,17 +528,37 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             n_samples, self.max_samples
         )
 
-        for estimator in self.estimators_:
+        all_imp = np.zeros((self.n_estimators, X.shape[1]))
+        for i, estimator in enumerate(self.estimators_):
             unsampled_indices = _generate_unsampled_indices(
                 estimator.random_state, n_samples, n_samples_bootstrap)
             p_estimator = estimator.predict_proba(X[unsampled_indices, :],
-                                                  check_input=False)
+                                                    check_input=False)
 
             if self.n_outputs_ == 1:
                 p_estimator = [p_estimator]
 
+            if self.importance_type == 'permutation':
+                baseline = 0
+                for k in range(self.n_outputs_):
+                    baseline += np.mean(y[unsampled_indices, k] == np.argmax(p_estimator[k], axis=1), axis=0) / self.n_outputs_
+                for col in range(X.shape[1]):
+                    X_permuted = X.copy()
+                    np.random.shuffle(X_permuted[:, col])
+                    p_permuted = estimator.predict(X_permuted[unsampled_indices, :],
+                                                        check_input=False)
+                    if self.n_outputs_ == 1:
+                        p_permuted = p_permuted[:, np.newaxis]
+                    curr_acc = 0
+                    for k in range(self.n_outputs_):
+                        curr_acc += np.mean(y[unsampled_indices, k] == p_permuted[:, k], axis=0) / self.n_outputs_
+                    all_imp[i, col] = baseline - curr_acc
+
             for k in range(self.n_outputs_):
                 predictions[k][unsampled_indices, :] += p_estimator[k]
+
+        if self.importance_type == 'permutation':
+            self._permutation_importance = all_imp.mean(axis=0)
 
         for k in range(self.n_outputs_):
             if (predictions[k].sum(axis=1) == 0).any():
@@ -747,7 +771,8 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
                  random_state=None,
                  verbose=0,
                  warm_start=False,
-                 max_samples=None):
+                 max_samples=None,
+                 importance_type='impurity'):
         super().__init__(
             base_estimator,
             n_estimators=n_estimators,
@@ -817,17 +842,41 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
             n_samples, self.max_samples
         )
 
-        for estimator in self.estimators_:
+        all_imp = np.zeros((self.n_estimators, X.shape[1]))
+        for i, estimator in enumerate(self.estimators_):
             unsampled_indices = _generate_unsampled_indices(
                 estimator.random_state, n_samples, n_samples_bootstrap)
             p_estimator = estimator.predict(
                 X[unsampled_indices, :], check_input=False)
 
+
             if self.n_outputs_ == 1:
                 p_estimator = p_estimator[:, np.newaxis]
 
+            if self.importance_type == 'permutation':
+                baseline = 0
+                for k in range(self.n_outputs_):
+                    baseline += np.mean((y[unsampled_indices, k] - p_estimator[:, k]) ** 2) / self.n_outputs_
+                    # baseline += r2_score(y[unsampled_indices, k], p_estimator[:, k]) / self.n_outputs_
+                for col in range(X.shape[1]):
+                    X_permuted = X.copy()
+                    np.random.shuffle(X_permuted[:, col])
+                    p_permuted = estimator.predict(X_permuted[unsampled_indices, :],
+                                                        check_input=False)
+                    if self.n_outputs_ == 1:
+                        p_permuted = p_permuted[:, np.newaxis]
+                    curr_acc = 0
+                    for k in range(self.n_outputs_):
+                        curr_acc += np.mean((y[unsampled_indices, k] - p_permuted[:, k]) ** 2) / self.n_outputs_
+                        # curr_acc += r2_score(y[unsampled_indices, k], p_permuted[:, k]) / self.n_outputs_
+                    all_imp[i, col] = curr_acc - baseline
+                    # all_imp[i, col] = baseline - curr_acc
+
             predictions[unsampled_indices, :] += p_estimator
             n_predictions[unsampled_indices, :] += 1
+
+        if self.importance_type == 'permutation':
+            self._permutation_importance = all_imp.mean(axis=0)
 
         if (n_predictions == 0).any():
             warn("Some inputs do not have OOB scores. "
@@ -1170,7 +1219,8 @@ class RandomForestClassifier(ForestClassifier):
                  warm_start=False,
                  class_weight=None,
                  ccp_alpha=0.0,
-                 max_samples=None):
+                 max_samples=None,
+                 importance_type='impurity'):
         super().__init__(
             base_estimator=DecisionTreeClassifier(),
             n_estimators=n_estimators,
@@ -1186,7 +1236,8 @@ class RandomForestClassifier(ForestClassifier):
             verbose=verbose,
             warm_start=warm_start,
             class_weight=class_weight,
-            max_samples=max_samples)
+            max_samples=max_samples,
+            importance_type=importance_type)
 
         self.criterion = criterion
         self.max_depth = max_depth
@@ -1198,6 +1249,7 @@ class RandomForestClassifier(ForestClassifier):
         self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split
         self.ccp_alpha = ccp_alpha
+        self.importance_type = importance_type
 
 
 class RandomForestRegressor(ForestRegressor):
@@ -1460,7 +1512,8 @@ class RandomForestRegressor(ForestRegressor):
                  verbose=0,
                  warm_start=False,
                  ccp_alpha=0.0,
-                 max_samples=None):
+                 max_samples=None,
+                 importance_type='impurity'):
         super().__init__(
             base_estimator=DecisionTreeRegressor(),
             n_estimators=n_estimators,
@@ -1475,7 +1528,8 @@ class RandomForestRegressor(ForestRegressor):
             random_state=random_state,
             verbose=verbose,
             warm_start=warm_start,
-            max_samples=max_samples)
+            max_samples=max_samples,
+            importance_type=importance_type)
 
         self.criterion = criterion
         self.max_depth = max_depth
@@ -1487,6 +1541,7 @@ class RandomForestRegressor(ForestRegressor):
         self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split
         self.ccp_alpha = ccp_alpha
+        self.importance_type = importance_type
 
 
 class ExtraTreesClassifier(ForestClassifier):
@@ -1772,7 +1827,8 @@ class ExtraTreesClassifier(ForestClassifier):
                  warm_start=False,
                  class_weight=None,
                  ccp_alpha=0.0,
-                 max_samples=None):
+                 max_samples=None,
+                 importance_type='impurity'):
         super().__init__(
             base_estimator=ExtraTreeClassifier(),
             n_estimators=n_estimators,
@@ -1788,7 +1844,8 @@ class ExtraTreesClassifier(ForestClassifier):
             verbose=verbose,
             warm_start=warm_start,
             class_weight=class_weight,
-            max_samples=max_samples)
+            max_samples=max_samples,
+            importance_type=importance_type)
 
         self.criterion = criterion
         self.max_depth = max_depth
@@ -1800,6 +1857,7 @@ class ExtraTreesClassifier(ForestClassifier):
         self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split
         self.ccp_alpha = ccp_alpha
+        self.importance_type = importance_type
 
 
 class ExtraTreesRegressor(ForestRegressor):
@@ -2052,7 +2110,8 @@ class ExtraTreesRegressor(ForestRegressor):
                  verbose=0,
                  warm_start=False,
                  ccp_alpha=0.0,
-                 max_samples=None):
+                 max_samples=None,
+                 importance_type='impurity'):
         super().__init__(
             base_estimator=ExtraTreeRegressor(),
             n_estimators=n_estimators,
@@ -2067,7 +2126,8 @@ class ExtraTreesRegressor(ForestRegressor):
             random_state=random_state,
             verbose=verbose,
             warm_start=warm_start,
-            max_samples=max_samples)
+            max_samples=max_samples,
+            importance_type=importance_type)
 
         self.criterion = criterion
         self.max_depth = max_depth
@@ -2079,6 +2139,7 @@ class ExtraTreesRegressor(ForestRegressor):
         self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split
         self.ccp_alpha = ccp_alpha
+        self.importance_type = importance_type
 
 
 class RandomTreesEmbedding(BaseForest):
