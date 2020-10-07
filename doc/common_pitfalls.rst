@@ -118,20 +118,33 @@ data, close to chance::
 
 Another way to prevent data leakage is to use the
 :class:`~sklearn.pipeline.Pipeline` to chain together the feature selection
-and model estimators. This pipeline can then be fed into a cross-validation
-function such as :func:`~sklearn.model_selection.cross_val_score`. The
-pipeline ensures that only the training data when performing `fit` and
-the test data will only be used for calculating the accuracy score.
-Using :func:`~sklearn.model_selection.cross_val_score` also provides us
-information about the variance of the accuracy score::
+and model estimators. The pipeline ensures that only the training data when
+performing `fit` and the test data is used only for calculating the
+accuracy score::
 
     >>> from sklearn.pipeline import make_pipeline
-    >>> from sklearn.model_selection import cross_val_score
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ...     X, y, random_state=42)
     >>> pipeline = make_pipeline(SelectKBest(k=25),
     ...                          GradientBoostingClassifier(random_state=1))
-    >>> scores = cross_val_score(pipeline, X, y)
-    >>> print(f"Mean Accuracy: {scores.mean():.2f}+/-{scores.std():.2f}")
+    >>> pipeline.fit(X_train, y_train)
+    Pipeline(steps=[('selectkbest', SelectKBest(k=25)),
+                    ('gradientboostingclassifier',
+                    GradientBoostingClassifier(random_state=1))])
+    >>> y_pred = pipeline.predict(X_test)
+    >>> score = accuracy_score(y_test, y_pred)
+    >>> print(f"Accuracy: {score.mean():.2f}")
+    Mean Accuracy: 0.46
+
+The pipeline can also be fed into a cross-validation
+function such as :func:`~sklearn.model_selection.cross_val_score`.
+Again the pipeline ensures that the correct data subset is always used::
+
+    >>> from sklearn.model_selection import cross_val_score
+    >>> scores = cross_val_score(pipeline, X_missing, y)
+    >>> print(f"Mean accuracy: {scores.mean():.3f}+/-{scores.std():.2f}")
     Mean Accuracy: 0.45+/-0.07
+
 
 Data leakage during imputation
 ------------------------------
@@ -182,7 +195,8 @@ overly optimsitic accuracy score::
 
 As above, splitting your data into test and train subsets should be done
 first. This enables imputation to be performed using just the train subset,
-which can then used to fit our model. The accuracy score is now much lower::
+which can then used to fit our model. The accuracy score is now slightly
+lower::
 
     >>> X_train, X_test, y_train, y_test = train_test_split(
     ...     X_missing, y, random_state=42)
@@ -195,22 +209,34 @@ which can then used to fit our model. The accuracy score is now much lower::
     >>> y_pred = gbc.predict(X_test_impute)
     >>> score = accuracy_score(y_test, y_pred)
     >>> print(f"Accuracy: {score:.3f}")
-    Accuracy: 0.456
+    Accuracy:0.904
 
-The :class:`~sklearn.pipeline.Pipeline` is another way to prevent data
+Using the :class:`~sklearn.pipeline.Pipeline` is another way to prevent data
 leakage. It chains together the imputation and model estimators and ensures
-that the correct data subset is used for fit, transform and predict. This is
-shown below when the pipeline is passed to the cross-validation function
-:func:`~sklearn.model_selection.cross_val_score`. The mean and standard
-deviation of the accuracy scores are now much lower::
+that the correct data subset and correct estimator method is used when `fit`
+or `predict` is called on the pipeline::
 
     >>> from sklearn.pipeline import make_pipeline
-    >>> from sklearn.model_selection import cross_val_score
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ...     X_missing, y, random_state=42)
     >>> pipeline = make_pipeline(SimpleImputer(),
     ...                          GradientBoostingClassifier(random_state=1))
+    >>> pipeline.fit(X_train, y_train)
+    Pipeline(steps=[('simpleimputer', SimpleImputer()),
+                    ('gradientboostingclassifier',
+                    GradientBoostingClassifier(random_state=1))])
+    >>> y_pred = pipeline.predict(X_test)
+    >>> score = accuracy_score(y_test, y_pred)
+    >>> print(f"Accuracy: {score:.3f}")
+    Accuracy: 0.904
+
+The pipeline can also be fed to a cross-validation function. Again the
+pipeline ensures that the correct data subset is always used::
+
+    >>> from sklearn.model_selection import cross_val_score
     >>> scores = cross_val_score(pipeline, X_missing, y)
     >>> print(f"Mean accuracy: {scores.mean():.3f}+/-{scores.std():.2f}")
-    Mean accuracy: 0.501+/-0.01
+    Mean accuracy: 0.900+/-0.01
 
 How to avoid data leakage
 -------------------------
