@@ -141,7 +141,7 @@ function such as :func:`~sklearn.model_selection.cross_val_score`.
 Again, the pipeline ensures that the correct data subset is always used::
 
     >>> from sklearn.model_selection import cross_val_score
-    >>> scores = cross_val_score(pipeline, X_missing, y)
+    >>> scores = cross_val_score(pipeline, X, y)
     >>> print(f"Mean accuracy: {scores.mean():.3f}+/-{scores.std():.2f}")
     Mean Accuracy: 0.45+/-0.07
 
