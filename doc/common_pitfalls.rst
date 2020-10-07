@@ -50,6 +50,10 @@ with all scikit-learn estimators.
 
 An example of data leakage during preprocessing is detailed below.
 
+.. topic:: See Also:
+
+  * :ref:`sphx_glr_auto_examples_model_selection_plot_nested_cross_validation_iris.py`
+
 Data leakage during feature selection
 -------------------------------------
 
