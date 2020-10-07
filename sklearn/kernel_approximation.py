@@ -675,6 +675,12 @@ class Nystroem(TransformerMixin, BaseEstimator):
         down the kernel matrix into n_jobs even slices and computing them in
         parallel.
 
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+
+        .. versionadded:: 0.24
+
     Attributes
     ----------
     components_ : ndarray of shape (n_components, n_features)
