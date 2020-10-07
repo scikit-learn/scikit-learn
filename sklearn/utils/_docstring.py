@@ -18,8 +18,8 @@ def inject_docstring(**kwargs):
     ... def func(x):
     ...     "{key_to_replace}"
     ...     pass
-     >>> @inject_docstring(key_to_replace=my_docstring)
-    ... class Klazz(x):
+    >>> @inject_docstring(key_to_replace=my_docstring)
+    ... class Klazz:
     ...     "{key_to_replace}"
     ...     pass
     """
