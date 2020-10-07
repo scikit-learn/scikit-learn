@@ -36,7 +36,11 @@ from ..exceptions import UndefinedMetricWarning
 from ..preprocessing import label_binarize
 from ..utils._encode import _encode, _unique
 
-from ._base import _average_binary_score, _average_multiclass_ovo_score
+from ._base import (
+    _average_binary_score,
+    _average_multiclass_ovo_score,
+    _check_pos_label_consistency,
+)
 
 
 def auc(x, y):
@@ -693,26 +697,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight)
 
-    # ensure binary classification if pos_label is not specified
-    # classes.dtype.kind in ('O', 'U', 'S') is required to avoid
-    # triggering a FutureWarning by calling np.array_equal(a, b)
-    # when elements in the two arrays are not comparable.
-    classes = np.unique(y_true)
-    if (pos_label is None and (
-            classes.dtype.kind in ('O', 'U', 'S') or
-            not (np.array_equal(classes, [0, 1]) or
-                 np.array_equal(classes, [-1, 1]) or
-                 np.array_equal(classes, [0]) or
-                 np.array_equal(classes, [-1]) or
-                 np.array_equal(classes, [1])))):
-        classes_repr = ", ".join(repr(c) for c in classes)
-        raise ValueError("y_true takes value in {{{classes_repr}}} and "
-                         "pos_label is not specified: either make y_true "
-                         "take value in {{0, 1}} or {{-1, 1}} or "
-                         "pass pos_label explicitly.".format(
-                             classes_repr=classes_repr))
-    elif pos_label is None:
-        pos_label = 1.
+    pos_label = _check_pos_label_consistency(pos_label, y_true)
 
     # make y_true a boolean vector
     y_true = (y_true == pos_label)
