@@ -295,6 +295,7 @@ def test_raises_value_error_if_sample_weights_greater_than_1d():
     n_featuress = [3, 2]
 
     for n_samples, n_features in zip(n_sampless, n_featuress):
+
         X = rng.randn(n_samples, n_features)
         y = rng.randn(n_samples)
 
