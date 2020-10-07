@@ -1887,9 +1887,9 @@ def test_maxabs_scaler_partial_fit():
                                   scaler_incr_csc.max_abs_)
         assert scaler_batch.n_samples_seen_ == scaler_incr.n_samples_seen_
         assert (scaler_batch.n_samples_seen_ ==
-                    scaler_incr_csr.n_samples_seen_)
+                     scaler_incr_csr.n_samples_seen_)
         assert (scaler_batch.n_samples_seen_ ==
-                    scaler_incr_csc.n_samples_seen_)
+                     scaler_incr_csc.n_samples_seen_)
         assert_array_almost_equal(scaler_batch.scale_, scaler_incr.scale_)
         assert_array_almost_equal(scaler_batch.scale_, scaler_incr_csr.scale_)
         assert_array_almost_equal(scaler_batch.scale_, scaler_incr_csc.scale_)
