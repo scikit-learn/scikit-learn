@@ -148,7 +148,11 @@ def test_lda_partial_fit_dim_mismatch():
                                     learning_offset=5., total_samples=20,
                                     random_state=rng)
     lda.partial_fit(X_1)
-    with pytest.raises(ValueError, match=r"^The provided data has"):
+    match = (
+        r"^X has \d+ features, but LatentDirichletAllocation"
+        r" is expecting \d+ features as input."
+    )
+    with pytest.raises(ValueError, match=match):
         lda.partial_fit(X_2)
 
 
@@ -200,7 +204,11 @@ def test_lda_transform_mismatch():
     lda = LatentDirichletAllocation(n_components=n_components,
                                     random_state=rng)
     lda.partial_fit(X)
-    with pytest.raises(ValueError, match=r"^The provided data has"):
+    match = (
+        r"^X has \d+ features, but LatentDirichletAllocation"
+        r" is expecting \d+ features as input."
+    )
+    with pytest.raises(ValueError, match=match):
         lda.partial_fit(X_2)
 
 
