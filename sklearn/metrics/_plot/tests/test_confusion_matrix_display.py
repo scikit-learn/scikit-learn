@@ -25,66 +25,26 @@ pytestmark = pytest.mark.filterwarnings(
 )
 
 
-@pytest.fixture(scope="module")
-def n_classes():
-    return 5
-
-
-@pytest.fixture(scope="module")
-def data(n_classes):
+def test_confusion_matrix_display_validation(pyplot):
+    """Check that we raise the proper error when validating parameters."""
     X, y = make_classification(
-        n_samples=100, n_informative=5, n_classes=n_classes, random_state=0
+        n_samples=100, n_informative=5, n_classes=5, random_state=0
     )
-    return X, y
 
-
-@pytest.fixture(scope="module")
-def fitted_clf(data):
-    return SVC(kernel="linear", C=0.01).fit(*data)
-
-
-@pytest.fixture(scope="module")
-def y_pred(data, fitted_clf):
-    X, _ = data
-    return fitted_clf.predict(X)
-
-
-@pytest.fixture(scope="module")
-def estimator_api_params(fitted_clf, data):
-    X, y = data
-    return ConfusionMatrixDisplay.from_estimator, fitted_clf, X, y
-
-
-@pytest.fixture(scope="module")
-def predictions_api_params(data, y_pred):
-    _, y = data
-    return ConfusionMatrixDisplay.from_predictions, y, y_pred
-
-
-@pytest.fixture(
-    params=["estimator_api_params", "predictions_api_params"],
-    scope="module",
-)
-def confusion_matrix_display_fxt(request):
-    return request.getfixturevalue(request.param)
-
-
-def test_confusion_matrix_display_error_on_regressor(pyplot, data, y_pred):
-    X, y = data
     regressor = SVR().fit(X, y)
+    y_pred_regressor = regressor.predict(X)
+    y_pred_classifier = SVC().fit(X, y).predict(X)
 
     err_msg = "ConfusionMatrixDisplay.from_estimator only supports classifiers"
     with pytest.raises(ValueError, match=err_msg):
         ConfusionMatrixDisplay.from_estimator(regressor, X, y)
-
-    y_pred_regressor = regressor.predict(X)
 
     err_msg = (
         "Only 'binary' and 'multiclass' classification problems are supported"
     )
     with pytest.raises(ValueError, match=err_msg):
         # Force `y_true` to be seen as a regression problem
-        ConfusionMatrixDisplay.from_predictions(y + 0.5, y_pred)
+        ConfusionMatrixDisplay.from_predictions(y + 0.5, y_pred_classifier)
 
     err_msg = "Got `y_pred` of type 'continuous'"
     with pytest.raises(ValueError, match=err_msg):
@@ -92,13 +52,27 @@ def test_confusion_matrix_display_error_on_regressor(pyplot, data, y_pred):
 
     err_msg = "Found input variables with inconsistent numbers of samples"
     with pytest.raises(ValueError, match=err_msg):
-        ConfusionMatrixDisplay.from_predictions(y, y_pred[::2])
+        ConfusionMatrixDisplay.from_predictions(y, y_pred_classifier[::2])
 
 
-def test_confusion_matrix_display_invalid_option(
-    pyplot, confusion_matrix_display_fxt
-):
-    constructor, *params = confusion_matrix_display_fxt
+@pytest.mark.parametrize(
+    "constructor_name", ["from_estimator", "from_predictions"]
+)
+def test_confusion_matrix_display_invalid_option(pyplot, constructor_name):
+    """Check the error raise if an invalid parameter value is passed."""
+    X, y = make_classification(
+        n_samples=100, n_informative=5, n_classes=5, random_state=0
+    )
+    classifier = SVC().fit(X, y)
+    y_pred = classifier.predict(X)
+
+    constructor = getattr(ConfusionMatrixDisplay, constructor_name)
+    params = (
+        (classifier, X, y)
+        if constructor_name == "from_estimator"
+        else (y, y_pred)
+    )
+
     extra_params = {"normalize": "invalid"}
 
     err_msg = r"normalize must be one of \{'true', 'pred', 'all', None\}"
@@ -106,20 +80,28 @@ def test_confusion_matrix_display_invalid_option(
         constructor(*params, **extra_params)
 
 
+@pytest.mark.parametrize(
+    "constructor_name", ["from_estimator", "from_predictions"]
+)
 @pytest.mark.parametrize("with_labels", [True, False])
 @pytest.mark.parametrize("with_display_labels", [True, False])
 def test_confusion_matrix_display_custom_labels(
-    pyplot,
-    confusion_matrix_display_fxt,
-    data,
-    y_pred,
-    n_classes,
-    with_labels,
-    with_display_labels,
+    pyplot, constructor_name, with_labels, with_display_labels
 ):
+    """Check the resulting plot when labels are given."""
+    n_classes = 5
+    X, y = make_classification(
+        n_samples=100, n_informative=5, n_classes=n_classes, random_state=0
+    )
+    classifier = SVC().fit(X, y)
+    y_pred = classifier.predict(X)
 
-    X, y = data
-    constructor, *params = confusion_matrix_display_fxt
+    constructor = getattr(ConfusionMatrixDisplay, constructor_name)
+    params = (
+        (classifier, X, y)
+        if constructor_name == "from_estimator"
+        else (y, y_pred)
+    )
 
     ax = pyplot.gca()
     labels = [2, 1, 0, 3, 4] if with_labels else None
@@ -152,19 +134,29 @@ def test_confusion_matrix_display_custom_labels(
     assert_array_equal(y_ticks, expected_display_labels_str)
 
 
+@pytest.mark.parametrize(
+    "constructor_name", ["from_estimator", "from_predictions"]
+)
 @pytest.mark.parametrize("normalize", ["true", "pred", "all", None])
 @pytest.mark.parametrize("include_values", [True, False])
 def test_confusion_matrix_display_plotting(
-    pyplot,
-    confusion_matrix_display_fxt,
-    data,
-    y_pred,
-    n_classes,
-    normalize,
-    include_values,
+    pyplot, constructor_name, normalize, include_values,
 ):
-    X, y = data
-    constructor, *params = confusion_matrix_display_fxt
+    """Check the overall plotting rendering."""
+    n_classes = 5
+    X, y = make_classification(
+        n_samples=100, n_informative=5, n_classes=n_classes, random_state=0
+    )
+    classifier = SVC().fit(X, y)
+    y_pred = classifier.predict(X)
+
+    constructor = getattr(ConfusionMatrixDisplay, constructor_name)
+    params = (
+        (classifier, X, y)
+        if constructor_name == "from_estimator"
+        else (y, y_pred)
+    )
+
     ax = pyplot.gca()
     cmap = "plasma"
 
@@ -174,7 +166,7 @@ def test_confusion_matrix_display_plotting(
         normalize=normalize,
         cmap=cmap,
         ax=ax,
-        include_values=include_values
+        include_values=include_values,
     )
 
     assert disp.ax_ == ax
@@ -225,11 +217,25 @@ def test_confusion_matrix_display_plotting(
         assert disp.text_ is None
 
 
-def test_confusion_matrix_display(
-    pyplot, confusion_matrix_display_fxt, data, y_pred, n_classes
-):
-    X, y = data
-    constructor, *params = confusion_matrix_display_fxt
+@pytest.mark.parametrize(
+    "constructor_name", ["from_estimator", "from_predictions"]
+)
+def test_confusion_matrix_display(pyplot, constructor_name):
+    """Check the behaviour of the default constructor without using the class
+    methods."""
+    n_classes = 5
+    X, y = make_classification(
+        n_samples=100, n_informative=5, n_classes=n_classes, random_state=0
+    )
+    classifier = SVC().fit(X, y)
+    y_pred = classifier.predict(X)
+
+    constructor = getattr(ConfusionMatrixDisplay, constructor_name)
+    params = (
+        (classifier, X, y)
+        if constructor_name == "from_estimator"
+        else (y, y_pred)
+    )
 
     cm = confusion_matrix(y, y_pred)
     disp = constructor(
@@ -266,7 +272,7 @@ def test_confusion_matrix_display(
 
 
 def test_confusion_matrix_contrast(pyplot):
-    # make sure text color is appropriate depending on background
+    """Check that the text color is appropriate depending on background."""
 
     cm = np.eye(2) / 2
     disp = ConfusionMatrixDisplay(cm, display_labels=[0, 1])
@@ -314,8 +320,12 @@ def test_confusion_matrix_contrast(pyplot):
     ],
     ids=["clf", "pipeline-clf", "pipeline-column_transformer-clf"]
 )
-def test_confusion_matrix_pipeline(pyplot, clf, data, n_classes):
-    X, y = data
+def test_confusion_matrix_pipeline(pyplot, clf):
+    """Check the behaviour of the plotting with more complex pipeline."""
+    n_classes = 5
+    X, y = make_classification(
+        n_samples=100, n_informative=5, n_classes=n_classes, random_state=0
+    )
     with pytest.raises(NotFittedError):
         ConfusionMatrixDisplay.from_estimator(clf, X, y)
     clf.fit(X, y)
