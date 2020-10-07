@@ -46,15 +46,18 @@ class MyEst(ClassifierMixin, BaseEstimator):
 
 class StuffConsumer(MetadataConsumer):
     def request_new_param(self, *, fit=True):
-        self._request_key_for_method(method="fit", param="new_param", user_provides=fit)
+        self._request_key_for_method(method="fit", param="new_param",
+                                     user_provides=fit)
         return self
 
     def request_brand(self, *, fit=True):
-        self._request_key_for_method(method="fit", param="brand", user_provides=fit)
+        self._request_key_for_method(method="fit", param="brand",
+                                     user_provides=fit)
         return self
 
 
-class MyTrs(SampleWeightConsumer, StuffConsumer, TransformerMixin, BaseEstimator):
+class MyTrs(SampleWeightConsumer, StuffConsumer, TransformerMixin,
+            BaseEstimator):
     def __init__(self):
         self._metadata_request = {"fit": ["sample_weight"]}
 
@@ -62,7 +65,8 @@ class MyTrs(SampleWeightConsumer, StuffConsumer, TransformerMixin, BaseEstimator
         req_props = self.get_metadata_request().fit
         _validate_required_props(req_props, fit_params)
         self._estimator = SelectKBest().fit(X, y)
-        assert set(fit_params.keys()) <= set([list(x)[0] for x in req_props.values()])
+        assert set(fit_params.keys()) <= set(
+            [list(x)[0] for x in req_props.values()])
         return self
 
     def transform(self, X, y=None):
@@ -83,7 +87,8 @@ def test_defaults():
 
     est = MyEst()
     est_request = _standardize_metadata_request(est.get_metadata_request())
-    assert est_request.fit == {"sample_weight": {"sample_weight"}, "brand": {"brand"}}
+    assert est_request.fit == {"sample_weight": {"sample_weight"},
+                               "brand": {"brand"}}
     assert_request_is_empty(est_request, exclude={"fit"})
 
 

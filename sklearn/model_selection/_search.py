@@ -34,7 +34,7 @@ from ._validation import _normalize_score_results
 from ..exceptions import NotFittedError
 from joblib import Parallel
 from ..utils import (check_random_state, _get_props_from_objs,
-                     _empty_metadata_request, _merge_metadata_requests)
+                     build_router_metadata_request)
 from ..utils.random import sample_without_replacement
 from ..utils.validation import indexable, check_is_fitted, _check_fit_params
 from ..utils.validation import _deprecate_positional_args
@@ -701,19 +701,20 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             scorers = _check_multimetric_scoring(
                 self.estimator, self.scoring).values()
 
-        objs = [self.estimator, self.cv]
-        objs.extend(scorers)
-        props = _get_props_from_objs(objs)
-        # merge split into fit, since it's needed when fit is called
-        tmp_props = _empty_metadata_request()
-        tmp_props.fit = props.split
-        props = _merge_metadata_requests(props, tmp_props)
-        # merge score into fit, since it's needed when fit is called
-        tmp_props = _empty_metadata_request()
-        tmp_props.fit = props.score
-        props = _merge_metadata_requests(props, tmp_props)
-
-        return props
+        return build_router_metadata_request(
+            children={"base": [self.estimator],
+                      "cv": [check_cv(self.cv)],
+                      "scorers": scorers},
+            routing=[
+                ("base", "fit", "fit"),
+                ("cv", "fit", "split"),
+                ("scorers", "fit", "score"),
+                ("scorers", "score", "score"),
+                # XXX: we might want a special way to handle 'remainder'
+                ("base", "transform", "transform"),
+                ("base", "inverse_transform", "inverse_transform"),
+                ("base", "predict", "predict"),
+            ])
 
     def _check_refit_for_multimetric(self, scores):
         """Check `refit` is compatible with `scores` is valid"""

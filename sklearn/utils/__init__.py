@@ -1194,7 +1194,7 @@ def _empty_metadata_request():
                  transform={},
                  score={},
                  split={},
-                 fit_transform={})
+                 inverse_transform={})
 
 
 def _standardize_method_request(method_request):
@@ -1288,31 +1288,82 @@ def _check_method_props(required_props, props, validate=True):
     return res
 
 
-def _merge_metadata_requests(original, update):
-    """Merges the `original` metadata requests with `update`'s contents.
+def _merge_method_requests(original, child):
+    """Merges the `original` metadata requests with `child`'s contents.
+    It ignores `child`'s values and only keeps the keys. This is used in
+    routing, and when we move a level above in the tree, only need to tell
+    the meta-estimator on the top layer which parameters are expected. Only the
+    meta-estimator directly containing the child estimator needs to know of the
+    exact routing expected by the child.
 
     Parameters
     ----------
-    original: dict of dict of {str: str}
-        A set of metadata requests.
+    original: dict of {str: str}
+        A set of method requests.
 
-    update: dict of dict of {str: str}
-        Another set of metadata requests to be merged with the contents of
+    child: dict of {str: str}
+        Another set of method requests to be merged with the contents of
         `original`.
 
     Returns
     -------
-    metadata_requests: dict of dict of {str: str}
-        Merged metadata requests
+    method_requests: dict of {str: str}
+        Merged method requests
     """
-    res = _standardize_metadata_request(original)
-    update = _standardize_metadata_request(update)
-    for method, m_props in update.items():
-        for param, dest in m_props.items():
-            if param not in res[method]:
-                res[method][param] = set()
-            res[method][param] = res[method][param].union(dest)
+    res = _standardize_method_request(original)
+    child = _standardize_method_request(child)
+    for param, dest in child.items():
+        if param not in res:
+            res[param] = set()
+        res[param] = res[param].union(dest)
     return res
+
+
+def build_router_metadata_request(children, routing):
+    """Compose the request that a router should return from get_metadata_request
+
+    For example, GridSearchCV might use:
+
+    def get_metadata_request(self):
+        score_from = "base" if self.scoring is None else "scorers"
+        return build_router_metadata_request(
+            children={"base": [self.estimator],
+                      "cv": [check_cv(self.cv)],
+                      "scorers": check_multimetric_scoring(...)[0].values()},
+            routing=[
+                ("base", "fit", "fit"),
+                ("cv", "fit", "split"),
+                (score_from, "fit", "score"),
+                (score_from, "score", "score"),
+                # XXX: we might want a special way to handle 'remainder'
+                ("base", "transform", "transform"),
+                ("base", "inverse_transform", "inverse_transform"),
+                ("base", "predict", "predict"),
+            ])
+
+    Parameters
+    ----------
+    children : dict
+        Key is a role name (e.g. 'step') used as an identifier in the routing
+        parameter.
+        Value is a collection of objects that may provide get_metadata_request.
+    routing : list of tuples
+        Tuples are a triple of strings
+        (child_role, router_method, child_method).
+        `"all"` can be used in router_method and child_method as an alias to
+        map all methods.
+    """
+    children_props = {k: _get_props_from_objs(v) for k, v in children.items()}
+    out = _empty_metadata_request()
+    for child_role, router_method, child_method in routing:
+        if router_method == child_method == "all":
+            for method in out:
+                out[method] = _merge_method_requests(
+                    out[method], children_props[child_role][method])
+        else:
+            out[router_method] = _merge_method_requests(
+                out[router_method], children_props[child_role][child_method])
+    return out
 
 
 def _get_props_from_objs(objs):
