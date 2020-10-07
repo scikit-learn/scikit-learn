@@ -62,6 +62,151 @@ def inplace_csr_row_scale(X, scale):
     X.data *= np.repeat(scale, np.diff(X.indptr))
 
 
+def mean_variance_axis_weighted(X, axis, sample_weight):
+    """Compute mean and variance along an axix on a CSR or CSC matrix
+
+    Parameters
+    ----------
+    X : CSR or CSC sparse matrix, shape (n_samples, n_features)
+        Input data.
+
+    axis : int (either 0 or 1)
+        Axis along which the axis should be computed.
+
+    Returns
+    -------
+
+    means : float array with shape (n_features,)
+        Feature-wise means
+
+    variances : float array with shape (n_features,)
+        Feature-wise variances
+
+    """
+    _raise_error_wrong_axis(axis)
+
+    if isinstance(X, sp.csr_matrix):
+        if axis == 0:
+            return _csr_mean_var_axis0(X)
+        else:
+            return _csc_mean_var_axis0(X.T)
+    elif isinstance(X, sp.csc_matrix):
+        if axis == 0:
+            return _csc_mean_var_axis0(X)
+        else:
+            return _csr_mean_var_axis0(X.T)
+    else:
+        _raise_typeerror(X)
+
+
+def incr_mean_variance_axis_weighted(X, axis, last_mean, last_var, last_n,
+                                     sample_weight):
+    """Calculate weighted mean and weighted variance incremental update for
+    sparse X.
+
+    .. versionadded:: 0.24
+
+    Parameters
+    ----------
+    X :  CSR or CSC sparse matrix, shape (n_samples, n_features)
+        Input data.
+
+    axis: int (either 0 or 1)
+        Axis along which the axis should be computed.
+
+    sample_weight : array-like of shape (n_samples,) or None
+        Sample weights. If None, then samples are equally weighted.
+
+    last_mean : array-like of shape (n_features,)
+        Mean before the incremental update.
+
+    last_variance : array-like of shape (n_features,) or None
+        Variance before the incremental update.
+        If None, variance update is not computed (in case scaling is not
+        required).
+
+    last_weight_sum : array-like of shape (n_features,)
+        Sum of weights before the incremental update.
+
+    Returns
+    -------
+    updated_mean : array of shape (n_features,)
+
+    updated_variance : array of shape (n_features,) or None
+        If None, only mean is computed.
+
+    updated_weight_sum : array of shape (n_features,)
+
+    Notes
+    -----
+    NaNs in `X` are ignored.
+
+    `last_mean` and `last_variance` are statistics computed at the last step
+    by the function. Both must be initialized to 0.0.
+    The mean is always required (`last_mean`) and returned (`updated_mean`),
+    whereas the variance can be None (`last_variance` and `updated_variance`).
+
+    For further details on the algorithm to perform the computation in a
+    numerically stable way, see [Finch2009]_, Sections 4 and 5.
+
+    References
+    ----------
+    .. adapted for incremental variance with weights from
+       T. Chan, G. Golub, R. LeVeque. Algorithms for
+       computing the sample
+       variance: recommendations, The American Statistician,
+       Vol. 37, No. 3,
+       pp. 242-247
+
+    """
+    nans_place = sparse_constructor((np.isnan(X.data), X.indices, X.indptr),shape=X.shape,dtype=sample_weight.dtype)
+    notnans_place = nans_place
+    nans_place.multiply(X)
+    X_not_nan = X.copy()
+    X_not_nan.data[int(nans_place.data*(-1)+1)]
+
+    new_sum = safe_sparse_dot(sample_weight, X)
+    new_sample_count = np.sum(sample_weight)
+    T = new_sum / new_sample_count
+
+    # here we calculate: sample_weight*(X-T)**2
+    X2 = safe_sparse_dot(sample_weight, X.multiply(X))
+    T2 = new_sample_count * T.multiply(T)
+    two_XT = 2 * T.multiply(safe_sparse_dot(sample_weight, X))
+    new_unnormalized_variance = X2-two_XT+T2
+
+    updated_variance = (new_unnormalized_variance / new_sample_count)
+    self.var_ = updated_variance.toarray().ravel()
+    sample_weight = sample_weight.toarray().ravel()
+
+    import pdb; pdb.set_trace()
+    # calculate the mean
+    from sklearn.utils.extmath import _safe_accumulator_op
+    X_dense = X.toarray()
+
+    # TODO:
+    # way to multiply sparse X by 1d dense sample_weight
+    # X.data *= Y.repeat(np.diff(Z.indptr))
+    # new_sum = _safe_accumulator_op(np.nansum, X_dense * sample_weight[:, None], axis=0)
+    new_sample_count = np.sum(sample_weight[:, None] * (~np.isnan(X_dense)), axis=0)
+
+                        last_sample_count = 0  # update to last
+
+                        last_mean = self.mean_ = 0.0  # init
+                        last_sum = last_mean * last_sample_count
+                        updated_sample_count = last_sample_count + new_sample_count
+                        updated_mean = (last_sum + new_sum) / updated_sample_count
+
+                        self.mean_ = np.average(X.toarray(),
+                                                weights=sample_weight,
+                                                axis=0)
+                        import pdb; pdb.set_trace()
+                        assert np.all(updated_mean == self.mean_)
+                        # TODO: make mean_ work for sparse
+                        # TODO: move all this to sparsefuncs.py
+
+
+
 def mean_variance_axis(X, axis):
     """Compute mean and variance along an axix on a CSR or CSC matrix
 
