@@ -162,10 +162,10 @@ class _MetadataRequest:
 
         Returns
         -------
-        props : dict of dict of {str: str}
+        request : dict of dict of {str: str}
             The key to the top level dict is the method for which the prop is
-            used. Under each key, there is a dict of mapping of the form
-            ``{provided_prop: method_param}``.
+            used. Under each key, there is a dict of the form
+            ``{input_param_name: required_param_name}``.
         """
         try:
             return _standardize_metadata_request(self._metadata_request)
