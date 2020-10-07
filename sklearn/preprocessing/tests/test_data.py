@@ -395,7 +395,6 @@ def test_standard_scaler_1d():
 
     # Constant feature
     X = np.ones((5, 1))
-
     scaler = StandardScaler()
     X_scaled = scaler.fit(X).transform(X, copy=True)
     assert_almost_equal(scaler.mean_, 1.)
@@ -722,7 +721,6 @@ def test_standard_scaler_trasform_with_partial_fit():
     for i, batch in enumerate(gen_batches(X.shape[0], 1)):
 
         X_sofar = X[:(i + 1), :]
-
         chunks_copy = X_sofar.copy()
         scaled_batch = StandardScaler().fit_transform(X_sofar)
         scaler_incr = scaler_incr.partial_fit(X[batch])
@@ -1576,15 +1574,15 @@ def test_quantile_transform_bounds():
     transformer = QuantileTransformer()
     transformer.fit(X)
     assert (transformer.transform([[-10]]) ==
-                transformer.transform([[np.min(X)]]))
+                 transformer.transform([[np.min(X)]]))
     assert (transformer.transform([[10]]) ==
-                transformer.transform([[np.max(X)]]))
+                 transformer.transform([[np.max(X)]]))
     assert (transformer.inverse_transform([[-10]]) ==
-                transformer.inverse_transform(
-                    [[np.min(transformer.references_)]]))
+                 transformer.inverse_transform(
+                     [[np.min(transformer.references_)]]))
     assert (transformer.inverse_transform([[10]]) ==
-                transformer.inverse_transform(
-                    [[np.max(transformer.references_)]]))
+                 transformer.inverse_transform(
+                     [[np.max(transformer.references_)]]))
 
 
 def test_quantile_transform_and_inverse():
@@ -1889,9 +1887,9 @@ def test_maxabs_scaler_partial_fit():
                                   scaler_incr_csc.max_abs_)
         assert scaler_batch.n_samples_seen_ == scaler_incr.n_samples_seen_
         assert (scaler_batch.n_samples_seen_ ==
-                scaler_incr_csr.n_samples_seen_)
+                    scaler_incr_csr.n_samples_seen_)
         assert (scaler_batch.n_samples_seen_ ==
-                scaler_incr_csc.n_samples_seen_)
+                    scaler_incr_csc.n_samples_seen_)
         assert_array_almost_equal(scaler_batch.scale_, scaler_incr.scale_)
         assert_array_almost_equal(scaler_batch.scale_, scaler_incr_csr.scale_)
         assert_array_almost_equal(scaler_batch.scale_, scaler_incr_csc.scale_)
