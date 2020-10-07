@@ -21,7 +21,7 @@ Data leakage
 ============
 
 Data leakage occurs when information that would not be available at prediction
-time is used when building the model. This results in overly optimsitic
+time is used when building the model. This results in overly optimistic
 performance estimates, for example from :ref:`cross-validation
 <cross_validation>`, and thus poorer performance when the model is used
 on actually novel data, for example during production.
@@ -43,7 +43,7 @@ test subset is included in the average calculation, information from the test
 subset is influencing the model.
 
 Including the test data when :ref:`tuning model hyperparameters <grid_search>`
-will also inadvertantly introduce information from the test data into the
+will also inadvertently introduce information from the test data into the
 model. Practically, this means that only the train data subset should be fed
 into the `fit` method of :ref:`hyper_parameter_optimizers`, as is the case
 with all scikit-learn estimators.
@@ -61,7 +61,7 @@ Including the test data in feature selection will optimistically bias your
 model.
 
 To demonstrate we will create this binary classification problem with
-1000 randomly generated features::
+10,000 randomly generated features::
 
     >>> import numpy as np
     >>> n_samples, n_features, n_classes = 200, 10000, 2
@@ -138,7 +138,7 @@ accuracy score::
 
 The pipeline can also be fed into a cross-validation
 function such as :func:`~sklearn.model_selection.cross_val_score`.
-Again, the pipeline ensures that the correct data subset is and estimator
+Again, the pipeline ensures that the correct data subset and estimator
 method is used during fitting and predicting::
 
     >>> from sklearn.model_selection import cross_val_score
@@ -159,7 +159,7 @@ Below are some tips on avoiding data leakage:
   as preprocessing or model fitting is only performed using the, generally
   smaller, test subset.
   Conversely, the `transform` method should be used on both train and test
-  subsets as the same proprocessing should be applied to all the data.
+  subsets as the same preprocessing should be applied to all the data.
   This can be achieved by using `fit_transform`, which combines the `fit` and
   `transform` methods, on the train subset and `transform` on the test
   subset.
