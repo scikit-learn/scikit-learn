@@ -138,7 +138,7 @@ accuracy score::
 
 The pipeline can also be fed into a cross-validation
 function such as :func:`~sklearn.model_selection.cross_val_score`.
-Again the pipeline ensures that the correct data subset is always used::
+Again, the pipeline ensures that the correct data subset is always used::
 
     >>> from sklearn.model_selection import cross_val_score
     >>> scores = cross_val_score(pipeline, X_missing, y)
@@ -174,7 +174,7 @@ introduce random missing values at a rate of 20%::
 **Wrong**
 
 Using all the data to calculate impute the missing values, results in an
-overly optimsitic accuracy score::
+accuracy score that is slightly higher::
 
     >>> from sklearn.impute import SimpleImputer
     >>> from sklearn.model_selection import train_test_split
@@ -193,10 +193,10 @@ overly optimsitic accuracy score::
 
 **Right**
 
-As above, splitting your data into test and train subsets should be done
-first. This enables imputation to be performed using just the train subset,
-which can then used to fit our model. The accuracy score is now slightly
-lower::
+As in the eample above, splitting your data into test and train subsets should
+be done first. This enables imputation to be performed using just the train
+subset, which can then used to fit our model. The accuracy score is now
+slightly lower::
 
     >>> X_train, X_test, y_train, y_test = train_test_split(
     ...     X_missing, y, random_state=42)
