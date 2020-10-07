@@ -22,7 +22,7 @@ from scipy.interpolate import BSpline
 from scipy.special import boxcox
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import assert_all_finite, check_array
+from ..utils import check_array
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
 from ..utils.fixes import linspace
