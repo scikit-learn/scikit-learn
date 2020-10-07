@@ -39,7 +39,8 @@ from sklearn.utils.estimator_checks import (
     check_class_weight_balanced_linear_classifier,
     parametrize_with_checks,
     check_dataframe_column_names_consistency,
-    check_dataarray_column_names_consistency)
+    check_dataarray_column_names_consistency,
+    check_n_features_in_after_fitting)
 
 
 def test_all_estimator_no_base_class():
@@ -277,6 +278,52 @@ def test_strict_mode_parametrize_with_checks(estimator, check):
 # TODO: When more modules get added, we can remove it from this list to make
 # sure it gets tested. After we finish each module we can move the checks
 # into check_estimator.
+N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE = {
+    'calibration',
+    'cluster',
+    'compose',
+    'covariance',
+    'cross_decomposition',
+    'decomposition',
+    'discriminant_analysis',
+    'ensemble',
+    'feature_extraction',
+    'feature_selection',
+    'gaussian_process',
+    'impute',
+    'isotonic',
+    'kernel_approximation',
+    'kernel_ridge',
+    'linear_model',
+    'manifold',
+    'mixture',
+    'model_selection',
+    'multiclass',
+    'multioutput',
+    'naive_bayes',
+    'neighbors',
+    'pipeline',
+    'preprocessing',
+    'random_projection',
+    'semi_supervised',
+    'svm',
+    'tree',
+}
+
+N_FEATURES_IN_AFTER_FIT_ESTIMATORS = [
+    est for est in _tested_estimators() if est.__module__.split('.')[1] not in
+    N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE
+]
+
+@pytest.mark.parametrize("estimator", N_FEATURES_IN_AFTER_FIT_ESTIMATORS,
+                         ids=_get_check_estimator_ids)
+def test_check_n_features_in_after_fitting(estimator):
+    check_n_features_in_after_fitting(estimator.__class__.__name__, estimator)
+
+
+# TODO: When more modules get added, we can remove it from this list to make
+# sure it gets tested. After we finish each module we can move the checks
+# into check_estimator.
 COLUMN_NAME_MODULES_TO_IGNORE = {
     'calibration',
     'cluster',
@@ -308,6 +355,7 @@ COLUMN_NAME_MODULES_TO_IGNORE = {
     'svm',
     'tree',
 }
+
 
 column_name_estimators = [
     est for est in _tested_estimators()

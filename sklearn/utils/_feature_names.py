@@ -27,16 +27,7 @@ def _get_feature_names(X):
     """
     if hasattr(X, "columns"):
         # pandas
-        out = np.array(X.columns, dtype=object)
+        return np.array(X.columns, dtype=object)
     elif hasattr(X, "dims") and isinstance(X.dims, tuple) and len(X.dims) == 2:
         # xarray DataArray
-        out = np.array(X.coords[X.dims[1]], dtype=object)
-    else:
-        # unrecognized array container
-        return None
-
-    # check out for strings
-    if any(not isinstance(item, str) for item in out):
-        raise ValueError("X contains non-string feature names")
-
-    return out
+        return np.array(X.coords[X.dims[1]], dtype=object)

@@ -25,15 +25,3 @@ def test_get_feature_names(array_type):
 
     names = _get_feature_names(X)
     assert_array_equal(names, column_names)
-
-
-@pytest.mark.parametrize("array_type", ["dataframe", "dataarray"])
-@pytest.mark.parametrize("column_names", [
-    np.array(["one", 2, "tree"], dtype=object),
-    np.array([1, 2, 3], dtype=object)
-])
-def test_get_feature_names_non_str(array_type, column_names):
-    X = _construct_array(array_type, column_names)
-    msg = "X contains non-string feature names"
-    with pytest.raises(ValueError, match=msg):
-        _get_feature_names(X)

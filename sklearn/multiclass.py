@@ -42,9 +42,11 @@ import itertools
 from .base import BaseEstimator, ClassifierMixin, clone, is_classifier
 from .base import MultiOutputMixin
 from .base import MetaEstimatorMixin, is_regressor
+from .base import _is_pairwise
 from .preprocessing import LabelBinarizer
 from .metrics.pairwise import euclidean_distances
 from .utils import check_random_state
+from .utils.deprecation import deprecated
 from .utils.validation import _num_samples
 from .utils.validation import check_is_fitted
 from .utils.validation import check_X_y, check_array
@@ -454,10 +456,19 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
                 "Base estimator doesn't have an intercept_ attribute.")
         return np.array([e.intercept_.ravel() for e in self.estimators_])
 
+    # TODO: Remove in 0.26
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 0.26.")
     @property
     def _pairwise(self):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
         return getattr(self.estimator, "_pairwise", False)
+
+    def _more_tags(self):
+        """Indicate if wrapped estimator is using a precomputed Gram matrix"""
+        estimator_tags = self.estimator._get_tags()
+        return {'pairwise': estimator_tags.get('pairwise', False)}
 
     @property
     def _first_estimator(self):
@@ -544,7 +555,13 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
     pairwise_indices_ : list, length = ``len(estimators_)``, or ``None``
         Indices of samples used when training the estimators.
-        ``None`` when ``estimator`` does not have ``_pairwise`` attribute.
+        ``None`` when ``estimator``'s `pairwise` tag is False.
+
+        .. deprecated:: 0.24
+
+            The _pairwise attribute is deprecated in 0.24. From 0.26 and
+            onward, `pairwise_indices_` will use the pairwise estimator tag
+            instead.
 
     Examples
     --------
@@ -595,8 +612,10 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             for i in range(n_classes) for j in range(i + 1, n_classes)))))
 
         self.estimators_ = estimators_indices[0]
+
+        pairwise = _is_pairwise(self)
         self.pairwise_indices_ = (
-            estimators_indices[1] if self._pairwise else None)
+            estimators_indices[1] if pairwise else None)
 
         return self
 
@@ -718,10 +737,19 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     def n_classes_(self):
         return len(self.classes_)
 
+    # TODO: Remove in 0.26
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 0.26.")
     @property
     def _pairwise(self):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
         return getattr(self.estimator, "_pairwise", False)
+
+    def _more_tags(self):
+        """Indicate if wrapped estimator is using a precomputed Gram matrix"""
+        estimator_tags = self.estimator._get_tags()
+        return {'pairwise': estimator_tags.get('pairwise', True)}
 
 
 class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
