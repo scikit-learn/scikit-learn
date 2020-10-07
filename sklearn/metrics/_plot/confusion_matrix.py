@@ -250,6 +250,11 @@ class ConfusionMatrixDisplay:
 
         {common_docstring}
 
+        See Also
+        --------
+        ConfusionMatrixDisplay.from_predictions : Plot the confusion matrix
+            given the true and predicted labels.
+
         Examples
         --------
         >>> import matplotlib.pyplot as plt  # doctest: +SKIP
@@ -328,6 +333,11 @@ class ConfusionMatrixDisplay:
             classifier.
 
         {common_docstring}
+
+        See Also
+        --------
+        ConfusionMatrixDisplay.from_estimator : Plot the confusion matrix
+            given an estimator, the data, and the label.
 
         Examples
         --------
