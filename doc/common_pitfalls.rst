@@ -28,7 +28,7 @@ on actually novel data, for example during production.
 
 A common cause is not keeping the test and train data subsets separate.
 Test data should never be used to make choices about the model.
-The general rule is to never call `fit` on testing data. This is particularly
+The general rule is to never call `fit` on test data. This is particularly
 important for 'supervised transformations' where the `fit` method requires
 both the data, `X` and the target values, `y`. While this may
 sound obvious, this is easy to miss in some cases, for example when applying
@@ -39,16 +39,16 @@ transformation, it is important that these transformations are only learnt
 from the training data. For example, if you have a
 normalization step where you divide by the average value, the average should
 be the average of the train subset, **not** the average of all the data. If the
-test subset was included in the average calculation, information from the test
+test subset is included in the average calculation, information from the test
 subset is influencing the model.
 
-Including the test data when finding the best model hyperparameters will
-also inadvertantly introduce information from the test data into the model.
-Practically, this means that only the train data subset should be fed into
-the `fit` method of :ref:`hyper_parameter_optimizers`, as is the case with all
-scikit-learn estimators.
+Including the test data when :ref:`tuning model hyperparameters <grid_search>`
+will also inadvertantly introduce information from the test data into the
+model. Practically, this means that only the train data subset should be fed
+into the `fit` method of :ref:`hyper_parameter_optimizers`, as is the case
+with all scikit-learn estimators.
 
-Some examples of common data leakage pitfalls are detailed below.
+An example of data leakage during preprocessing is detailed below.
 
 Data leakage during feature selection
 -------------------------------------
@@ -56,9 +56,9 @@ Data leakage during feature selection
 A number of :ref:`feature_selection` functions are available in scikit-learn.
 They can help remove irrelevant, redundant and noisy features as well as
 improve your model build time and performance. As with any other type of
-preprocessing, feature selection should
-**only** use the training data. Including the test data in feature selection
-will optimistically bias your model.
+preprocessing, feature selection should **only** use the training data.
+Including the test data in feature selection will optimistically bias your
+model.
 
 To demonstrate we will create this binary classification problem with
 1000 randomly generated features::
@@ -75,10 +75,10 @@ Using all the data to perform feature selection results in an accuracy score
 much higher than chance, even though our targets are completely random.
 This randomness means that our `X` and `y` are independent and we thus expect
 the accuracy to be around 0.5. However, since the feature selection step
-'sees' the test data, the model has an unfair advantage. Below we use all the
-data for feature selection before splitting the data into training and test
-subsets for model fitting. The result is a much higher than expected
-accuracy score::
+'sees' the test data, the model has an unfair advantage. In the incorrect
+example below we first use all the data for feature selection and then split
+the data into training and test subsets for model fitting. The result is a
+much higher than expected accuracy score::
 
     >>> from sklearn.model_selection import train_test_split
     >>> from sklearn.feature_selection import SelectKBest
@@ -118,8 +118,8 @@ data, close to chance::
 
 Another way to prevent data leakage is to use the
 :class:`~sklearn.pipeline.Pipeline` to chain together the feature selection
-and model estimators. The pipeline ensures that only the training data when
-performing `fit` and the test data is used only for calculating the
+and model estimators. The pipeline ensures that only the training data is
+used when performing `fit` and the test data is used only for calculating the
 accuracy score::
 
     >>> from sklearn.pipeline import make_pipeline
@@ -138,105 +138,13 @@ accuracy score::
 
 The pipeline can also be fed into a cross-validation
 function such as :func:`~sklearn.model_selection.cross_val_score`.
-Again, the pipeline ensures that the correct data subset is always used::
+Again, the pipeline ensures that the correct data subset is and estimator
+method is used during fitting and predicting::
 
     >>> from sklearn.model_selection import cross_val_score
     >>> scores = cross_val_score(pipeline, X, y)
     >>> print(f"Mean accuracy: {scores.mean():.3f}+/-{scores.std():.2f}")
     Mean Accuracy: 0.45+/-0.07
-
-
-Data leakage during imputation
-------------------------------
-
-There are a number of methods to impute missing values in data. For example,
-:class:`~sklearn.impute.SimpleImputer` allows you to replace the missing values
-with the mean of each feature. Only the train data should be used to calculate
-this mean value. Including the test data in the mean calculation will
-introduce information about the test data into the model.
-
-To demonstrate this, we will create another binary classification problem.
-We simulate missing not at random (MNAR) data by setting all the values of one
-feature and one class (`y==0`) to be missing. Additionally we also
-introduce random missing values at a rate of 20%::
-
-    >>> import numpy as np
-    >>> rng = np.random.RandomState(42)
-    >>> n_samples, n_features, n_classes = 1000, 5, 2
-    >>> X = rng.standard_normal((n_samples, n_features))
-    >>> y = rng.choice(n_classes, n_samples)
-    >>> missing_mask = rng.binomial(n=1, p=0.2, size=(n_samples, n_features))
-    >>> missing_mask[y == 0, 2] = 1  # MNAR
-    >>> missing_mask = missing_mask.astype(bool)
-    >>> X_missing = X.copy()
-    >>> X_missing[missing_mask] = np.nan
-
-**Wrong**
-
-Using all the data to calculate impute the missing values, results in an
-accuracy score that is slightly higher::
-
-    >>> from sklearn.impute import SimpleImputer
-    >>> from sklearn.model_selection import train_test_split
-    >>> from sklearn.ensemble import GradientBoostingClassifier
-    >>> from sklearn.metrics import accuracy_score
-    >>> X_impute = SimpleImputer().fit_transform(X_missing)
-    >>> X_train, X_test, y_train, y_test = train_test_split(
-    ...     X_impute, y, random_state=42)
-    >>> gbc = GradientBoostingClassifier(random_state=1)
-    >>> gbc.fit(X_train, y_train)
-    GradientBoostingClassifier(random_state=1)
-    >>> y_pred = gbc.predict(X_test)
-    >>> score = accuracy_score(y_test, y_pred)
-    >>> print(f"Accuracy: {score:.3f}")
-    Accuracy: 0.908
-
-**Right**
-
-As in the eample above, splitting your data into test and train subsets should
-be done first. This enables imputation to be performed using just the train
-subset, which can then used to fit our model. The accuracy score is now
-slightly lower::
-
-    >>> X_train, X_test, y_train, y_test = train_test_split(
-    ...     X_missing, y, random_state=42)
-    >>> impute = SimpleImputer()
-    >>> X_train_impute = impute.fit_transform(X_train)
-    >>> gbc = GradientBoostingClassifier(random_state=1)
-    >>> gbc.fit(X_train_impute, y_train)
-    GradientBoostingClassifier(random_state=1)
-    >>> X_test_impute = impute.transform(X_test)
-    >>> y_pred = gbc.predict(X_test_impute)
-    >>> score = accuracy_score(y_test, y_pred)
-    >>> print(f"Accuracy: {score:.3f}")
-    Accuracy:0.904
-
-Using the :class:`~sklearn.pipeline.Pipeline` is another way to prevent data
-leakage. It chains together the imputation and model estimators and ensures
-that the correct data subset and correct estimator method is used when `fit`
-or `predict` is called on the pipeline::
-
-    >>> from sklearn.pipeline import make_pipeline
-    >>> X_train, X_test, y_train, y_test = train_test_split(
-    ...     X_missing, y, random_state=42)
-    >>> pipeline = make_pipeline(SimpleImputer(),
-    ...                          GradientBoostingClassifier(random_state=1))
-    >>> pipeline.fit(X_train, y_train)
-    Pipeline(steps=[('simpleimputer', SimpleImputer()),
-                    ('gradientboostingclassifier',
-                    GradientBoostingClassifier(random_state=1))])
-    >>> y_pred = pipeline.predict(X_test)
-    >>> score = accuracy_score(y_test, y_pred)
-    >>> print(f"Accuracy: {score:.3f}")
-    Accuracy: 0.904
-
-The pipeline can also be fed to a cross-validation function. Again the
-pipeline ensures that the correct data subset is always used::
-
-    >>> from sklearn.model_selection import cross_val_score
-    >>> scores = cross_val_score(pipeline, X_missing, y)
-    >>> print(f"Mean accuracy: {scores.mean():.3f}+/-{scores.std():.2f}")
-    Mean accuracy: 0.900+/-0.01
 
 How to avoid data leakage
 -------------------------
