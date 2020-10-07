@@ -368,8 +368,7 @@ def test_standard_scaler_1d():
     # Test scaling of dataset along single axis
     for X in [X_1row, X_1col, X_list_1row, X_list_1row]:
         scaler = StandardScaler()
-        X_scaled = scaler.fit(X).transform(
-            X, copy=True)
+        X_scaled = scaler.fit(X).transform(X, copy=True)
 
         if isinstance(X, list):
             X = np.array(X)  # cast only after scaling done
@@ -398,8 +397,7 @@ def test_standard_scaler_1d():
     X = np.ones((5, 1))
 
     scaler = StandardScaler()
-    X_scaled = scaler.fit(X).transform(
-        X, copy=True)
+    X_scaled = scaler.fit(X).transform(X, copy=True)
     assert_almost_equal(scaler.mean_, 1.)
     assert_almost_equal(scaler.scale_, 1.)
     assert_array_almost_equal(X_scaled.mean(axis=0), .0)
@@ -617,8 +615,7 @@ def test_standard_scaler_partial_fit():
 
     for chunk_size in [1, 2, 50, n, n + 42]:
         # Test mean at the end of the process
-        scaler_batch = StandardScaler(with_std=False).fit(
-            X)
+        scaler_batch = StandardScaler(with_std=False).fit(X)
 
         scaler_incr = StandardScaler(with_std=False)
         for batch in gen_batches(n_samples, chunk_size):
@@ -731,6 +728,7 @@ def test_standard_scaler_trasform_with_partial_fit():
 
         scaler_incr = scaler_incr.partial_fit(X[batch])
         scaled_incr = scaler_incr.transform(X_sofar)
+
         assert_array_almost_equal(scaled_batch, scaled_incr)
         assert_array_almost_equal(X_sofar, chunks_copy)  # No change
         right_input = scaler_incr.inverse_transform(scaled_incr)
