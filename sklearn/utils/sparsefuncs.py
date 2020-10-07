@@ -166,7 +166,7 @@ def incr_mean_variance_axis_weighted(X, axis, last_mean, last_var,  last_count,
                                   if X.format == 'csr' else sp.csc_matrix)
     nans_place = sparse_constructor(
         (np.isnan(X.data), X.indices, X.indptr),
-        shape=X.shape,dtype=sample_weight.dtype)
+        shape=X.shape,dtype=bool)
     '''
     # make it working with nans
     notnans_place = nans_place
@@ -174,20 +174,30 @@ def incr_mean_variance_axis_weighted(X, axis, last_mean, last_var,  last_count,
     X_not_nan = X.copy()
     X_not_nan.data[int(nans_place.data*(-1)+1)]
     '''
+    X_not_nan = sparse_constructor(
+        (np.nan_to_num(X.data), X.indices, X.indptr),
+        shape=X.shape,dtype=X.dtype)
+
+    #n_nans = np.asarray(nans_place.sum(axis=0)).ravel()
+    n_nan_weighted = safe_sparse_dot(sample_weight, nans_place)
+    n_not_nan_weighted = np.sum(sample_weight) - n_nan_weighted
+
     last_sum = last_mean * last_count
-    new_sum = safe_sparse_dot(sample_weight, X) # not sparse
+    new_sum = safe_sparse_dot(sample_weight, X_not_nan) # not sparse
     updated_sum = new_sum + last_sum
+    #import pdb; pdb.set_trace()
     # X_data_noNans = np.nan_to_num(X.data)
     # X_data_noNans = X_data_noNans.eliminate_zeros()
 
-    new_sample_count = np.sum(sample_weight)  # including Nans for now
-    updated_sample_count = new_sample_count + last_count
+    new_sample_count = n_not_nan_weighted #np.sum(sample_weight) # including Nans for now
+    updated_sample_count = n_not_nan_weighted + last_count
     # updated_sample_count = new_sample_count
     T = new_sum / new_sample_count
 
     # import pdb; pdb.set_trace()
 
     # here we calculate: sample_weight*(X-T)**2
+    X = X_not_nan
     X2 = safe_sparse_dot(sample_weight, X.multiply(X))
     T2 = new_sample_count * T*T  # T.multiply(T)
     two_XT = 2 * T * (safe_sparse_dot(sample_weight, X))
@@ -214,8 +224,8 @@ def incr_mean_variance_axis_weighted(X, axis, last_mean, last_var,  last_count,
                         last_sum = last_mean * last_sample_count
                         updated_sample_count = last_sample_count + new_sample_count
     '''
-    import pdb; pdb.set_trace()
-    updated_mean = ((last_sum + new_sum) / updated_sample_count).ravel()
+    #import pdb; pdb.set_trace()
+    updated_mean = (updated_sum / updated_sample_count).ravel()
 
     # mean_ = np.average(X.toarray(), weights=sample_weight, axis=0)  # TODO: make it for sparse
     return updated_mean, var_, updated_sample_count
