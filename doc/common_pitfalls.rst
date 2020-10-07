@@ -137,83 +137,80 @@ Data leakage during imputation
 ------------------------------
 
 There are a number of methods to impute missing values in data. For example,
-:class:`~sklearn.impute.KNNIMputer` uses the mean value from neighbors to
-impute missing values. Only the train data should be used to calculate this
-mean value, as including the test data in the mean calculation will introduce
-information about the test data into the model.
+:class:`~sklearn.impute.SimpleImputer` allows you to replace the missing values
+with the mean of each feature. Only the train data should be used to calculate
+this mean value. Including the test data in the mean calculation will
+introduce information about the test data into the model.
 
-To demonstrate this, we will use the :ref:`diabetes_dataset` and
-artificially introduce missing values. The smallest 100 `y` values are 10 times
-more likely to be missing, simulating 'missing not at random'::
+To demonstrate this, we will create another binary classification problem.
+We simulate missing not at random (MNAR) data by setting all the values of one
+feature and one class (`y==0`) to be missing. Additionally we also
+introduce random missing values at a rate of 20%::
 
     >>> import numpy as np
-    >>> from sklearn.datasets import load_diabetes
-    >>> X, y = load_diabetes(return_X_y=True)
-    >>> n_samples, n_features = X.shape
-    >>> indx = np.argsort(y)
-    >>> X_sorted = X[indx, :]
-    >>> y_sorted = y[indx]
     >>> rng = np.random.RandomState(42)
-    >>> mask1 = rng.binomial(n=1, p=0.1, size=(100, n_features))
-    >>> mask2 = rng.binomial(n=1, p=0.01, size=(n_samples-100, n_features))
-    >>> full_mask = np.vstack((mask1, mask2)).astype(bool)
-    >>> X_missing = X_sorted.copy()
-    >>> X_missing[full_mask] = np.nan
+    >>> n_samples, n_features, n_classes = 1000, 5, 2
+    >>> X = rng.standard_normal((n_samples, n_features))
+    >>> y = rng.choice(n_classes, n_samples)
+    >>> missing_mask = rng.binomial(n=1, p=0.2, size=(n_samples, n_features))
+    >>> missing_mask[y == 0, 2] = 1  # MNAR
+    >>> missing_mask = missing_mask.astype(bool)
+    >>> X_missing = X.copy()
+    >>> X_missing[missing_mask] = np.nan
 
 **Wrong**
 
 Using all the data to calculate impute the missing values, results in an
-overly optimsitic :math:`R^2`::
+overly optimsitic accuracy score::
 
-    >>> from sklearn.impute import KNNImputer
+    >>> from sklearn.impute import SimpleImputer
     >>> from sklearn.model_selection import train_test_split
-    >>> from sklearn.ensemble import GradientBoostingRegressor
-    >>> from sklearn.metrics import r2_score
-    >>> X_impute = KNNImputer().fit_transform(X_missing)
+    >>> from sklearn.ensemble import GradientBoostingClassifier
+    >>> from sklearn.metrics import accuracy_score
+    >>> X_impute = SimpleImputer().fit_transform(X_missing)
     >>> X_train, X_test, y_train, y_test = train_test_split(
     ...     X_impute, y, random_state=42)
-    >>> gbr = GradientBoostingRegressor(random_state=1)
-    >>> gbr.fit(X_train, y_train)
-    GradientBoostingRegressor(random_state=1)
-    >>> y_pred = gbr.predict(X_test)
-    >>> score = r2_score(y_test, y_pred)
-    >>> print(f"R2 score: {score:.3f}")
-    R2 score: -0.188
+    >>> gbc = GradientBoostingClassifier(random_state=1)
+    >>> gbc.fit(X_train, y_train)
+    GradientBoostingClassifier(random_state=1)
+    >>> y_pred = gbc.predict(X_test)
+    >>> score = accuracy_score(y_test, y_pred)
+    >>> print(f"Accuracy: {score:.3f}")
+    Accuracy: 0.908
 
 **Right**
 
 As above, splitting your data into test and train subsets should be done
 first. This enables imputation to be performed using just the train subset,
-which can then used to fit our model. The :math:`R^2` score is now much
-less accurate::
+which can then used to fit our model. The accuracy score is now much lower::
 
     >>> X_train, X_test, y_train, y_test = train_test_split(
     ...     X_missing, y, random_state=42)
-    >>> impute = KNNImputer()
+    >>> impute = SimpleImputer()
     >>> X_train_impute = impute.fit_transform(X_train)
-    >>> gbr = GradientBoostingRegressor(random_state=1)
-    >>> gbr.fit(X_train_impute, y_train)
-    GradientBoostingRegressor(random_state=1)
+    >>> gbc = GradientBoostingClassifier(random_state=1)
+    >>> gbc.fit(X_train_impute, y_train)
+    GradientBoostingClassifier(random_state=1)
     >>> X_test_impute = impute.transform(X_test)
-    >>> y_pred = gbr.predict(X_test_impute)
-    >>> score = r2_score(y_test, y_pred)
-    >>> print(f"R2 score: {score:.3f}")
-    R2 score: -0.159
+    >>> y_pred = gbc.predict(X_test_impute)
+    >>> score = accuracy_score(y_test, y_pred)
+    >>> print(f"Accuracy: {score:.3f}")
+    Accuracy: 0.456
 
 The :class:`~sklearn.pipeline.Pipeline` is another way to prevent data
 leakage. It chains together the imputation and model estimators and ensures
-that the correct data subset is used for fit, transform and predict when
-used for example, in a cross-validation function. This is shown below
-along with the mean and standard deviation of the :math:`R^2` scores from
-cross-validation::
+that the correct data subset is used for fit, transform and predict. This is
+shown below when the pipeline is passed to the cross-validation function
+:func:`~sklearn.model_selection.cross_val_score`. The mean and standard
+deviation of the accuracy scores are now much lower::
 
     >>> from sklearn.pipeline import make_pipeline
     >>> from sklearn.model_selection import cross_val_score
-    >>> pipeline = make_pipeline(KNNImputer(),
-    ...                          GradientBoostingRegressor(random_state=1))
+    >>> pipeline = make_pipeline(SimpleImputer(),
+    ...                          GradientBoostingClassifier(random_state=1))
     >>> scores = cross_val_score(pipeline, X_missing, y)
-    >>> print(f"Mean R2: {scores.mean():.3f}+/-{scores.std():.2f}")
-    Mean R2: -0.220+/-0.09
+    >>> print(f"Mean accuracy: {scores.mean():.3f}+/-{scores.std():.2f}")
+    Mean accuracy: 0.501+/-0.01
 
 How to avoid data leakage
 -------------------------
