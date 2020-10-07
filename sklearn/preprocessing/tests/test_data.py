@@ -725,7 +725,6 @@ def test_standard_scaler_trasform_with_partial_fit():
 
         chunks_copy = X_sofar.copy()
         scaled_batch = StandardScaler().fit_transform(X_sofar)
-
         scaler_incr = scaler_incr.partial_fit(X[batch])
         scaled_incr = scaler_incr.transform(X_sofar)
 
@@ -1577,15 +1576,15 @@ def test_quantile_transform_bounds():
     transformer = QuantileTransformer()
     transformer.fit(X)
     assert (transformer.transform([[-10]]) ==
-            transformer.transform([[np.min(X)]]))
+                transformer.transform([[np.min(X)]]))
     assert (transformer.transform([[10]]) ==
-            transformer.transform([[np.max(X)]]))
+                transformer.transform([[np.max(X)]]))
     assert (transformer.inverse_transform([[-10]]) ==
-            transformer.inverse_transform(
-                [[np.min(transformer.references_)]]))
+                transformer.inverse_transform(
+                    [[np.min(transformer.references_)]]))
     assert (transformer.inverse_transform([[10]]) ==
-            transformer.inverse_transform(
-                [[np.max(transformer.references_)]]))
+                transformer.inverse_transform(
+                    [[np.max(transformer.references_)]]))
 
 
 def test_quantile_transform_and_inverse():
