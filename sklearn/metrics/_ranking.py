@@ -425,9 +425,9 @@ def roc_auc_score(y_true, y_score, *, average="macro", sample_weight=None,
         computation currently is not supported for multiclass.
 
     multi_class : {'raise', 'ovr', 'ovo'}, default='raise'
-        Only used for multiclass targets. Determines the type of configuration to use. The
-        default value raises an error, so either ``'ovr'`` or ``'ovo'`` must be
-        passed explicitly.
+        Only used for multiclass targets. Determines the type of configuration
+        to use. The default value raises an error, so either
+        ``'ovr'`` or ``'ovo'`` must be passed explicitly.
 
         ``'ovr'``:
             Stands for One-vs-rest. Computes the AUC of each class
