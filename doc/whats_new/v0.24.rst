@@ -613,6 +613,13 @@ Changelog
   with different endianness.
   :pr:`17644` by :user:`Qi Zhang <qzhang90>`.
 
+Miscellaneous
+.............
+
+- |Enhancement| Calls to ``repr`` are now faster
+  when `print_changed_only=True`, especially with meta-estimators.
+  :pr:`18508` by :user:`Nathan C. <Xethan>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
