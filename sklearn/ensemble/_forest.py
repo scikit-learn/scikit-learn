@@ -396,8 +396,11 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             # Collect newly grown trees
             self.estimators_.extend(trees)
 
-        if self.oob_score or (self.importance_type == 'permutation'):
+        if self.oob_score:
             self._set_oob_score(X, y)
+
+        if self.importance_type == "permutation":
+            self._set_oob_permutation_importance(X, y)
 
         # Decapsulate classes_ attributes
         if hasattr(self, "classes_") and self.n_outputs_ == 1:
@@ -405,6 +408,11 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             self.classes_ = self.classes_[0]
 
         return self
+
+    @abstractmethod
+    def _set_oob_permutation_importance(self, X, y):
+        """
+        Calculate out of bag predictions and score."""
 
     @abstractmethod
     def _set_oob_score(self, X, y):
@@ -446,7 +454,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         check_is_fitted(self)
 
         if self.importance_type == 'permutation':
-            return self._permutation_importance
+            return self._oob_permutation_importance
 
         all_importances = Parallel(n_jobs=self.n_jobs,
                                    **_joblib_parallel_args(prefer='threads'))(
@@ -513,6 +521,53 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             max_samples=max_samples,
             importance_type=importance_type)
 
+    def _set_oob_permutation_importance(self, X, y):
+        """
+        Compute out-of-bag permutation importance."""
+        X = check_array(X, dtype=DTYPE, accept_sparse='csr')
+
+        n_samples = y.shape[0]
+
+        n_predictions = np.zeros(n_samples)
+
+        n_samples_bootstrap = _get_n_samples_bootstrap(
+            n_samples, self.max_samples
+        )
+
+        all_imp = np.zeros((self.n_estimators, X.shape[1]))
+        for i, estimator in enumerate(self.estimators_):
+            unsampled_indices = _generate_unsampled_indices(
+                estimator.random_state, n_samples, n_samples_bootstrap)
+            p_estimator = estimator.predict(X[unsampled_indices, :],
+                                                    check_input=False)
+
+            if self.n_outputs_ == 1:
+                p_estimator = p_estimator[:, np.newaxis]
+
+            baseline = 0
+            for k in range(self.n_outputs_):
+                baseline += np.mean(y[unsampled_indices, k] == p_estimator[:, k], axis=0) / self.n_outputs_
+            for col in range(X.shape[1]):
+                X_permuted = X.copy()
+                np.random.shuffle(X_permuted[:, col])
+                p_permuted = estimator.predict(X_permuted[unsampled_indices, :],
+                                                    check_input=False)
+                if self.n_outputs_ == 1:
+                    p_permuted = p_permuted[:, np.newaxis]
+                curr_acc = 0
+                for k in range(self.n_outputs_):
+                    curr_acc += np.mean(y[unsampled_indices, k] == p_permuted[:, k], axis=0) / self.n_outputs_
+                all_imp[i, col] = baseline - curr_acc
+
+            n_predictions[unsampled_indices] += 1
+
+        self._oob_permutation_importance =  all_imp.mean(axis=0)
+
+        if (n_predictions == 0).any():
+            warn("Some inputs do not have OOB scores. "
+                    "This probably means too few trees were used "
+                    "to compute any reliable oob estimates.")
+
     def _set_oob_score(self, X, y):
         """
         Compute out-of-bag score."""
@@ -530,37 +585,17 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             n_samples, self.max_samples
         )
 
-        all_imp = np.zeros((self.n_estimators, X.shape[1]))
-        for i, estimator in enumerate(self.estimators_):
+        for estimator in self.estimators_:
             unsampled_indices = _generate_unsampled_indices(
                 estimator.random_state, n_samples, n_samples_bootstrap)
             p_estimator = estimator.predict_proba(X[unsampled_indices, :],
-                                                    check_input=False)
+                                                  check_input=False)
 
             if self.n_outputs_ == 1:
                 p_estimator = [p_estimator]
 
-            if self.importance_type == 'permutation':
-                baseline = 0
-                for k in range(self.n_outputs_):
-                    baseline += np.mean(y[unsampled_indices, k] == np.argmax(p_estimator[k], axis=1), axis=0) / self.n_outputs_
-                for col in range(X.shape[1]):
-                    X_permuted = X.copy()
-                    np.random.shuffle(X_permuted[:, col])
-                    p_permuted = estimator.predict(X_permuted[unsampled_indices, :],
-                                                        check_input=False)
-                    if self.n_outputs_ == 1:
-                        p_permuted = p_permuted[:, np.newaxis]
-                    curr_acc = 0
-                    for k in range(self.n_outputs_):
-                        curr_acc += np.mean(y[unsampled_indices, k] == p_permuted[:, k], axis=0) / self.n_outputs_
-                    all_imp[i, col] = baseline - curr_acc
-
             for k in range(self.n_outputs_):
                 predictions[k][unsampled_indices, :] += p_estimator[k]
-
-        if self.importance_type == 'permutation':
-            self._permutation_importance = all_imp.mean(axis=0)
 
         for k in range(self.n_outputs_):
             if (predictions[k].sum(axis=1) == 0).any():
@@ -831,6 +866,53 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
 
         return y_hat
 
+    def _set_oob_permutation_importance(self, X, y):
+        """
+        Compute out-of-bag permutation importances."""
+        X = check_array(X, dtype=DTYPE, accept_sparse='csr')
+
+        n_samples = y.shape[0]
+
+        n_predictions = np.zeros(n_samples)
+
+        n_samples_bootstrap = _get_n_samples_bootstrap(
+            n_samples, self.max_samples
+        )
+
+        all_imp = np.zeros((self.n_estimators, X.shape[1]))
+        for i, estimator in enumerate(self.estimators_):
+            unsampled_indices = _generate_unsampled_indices(
+                estimator.random_state, n_samples, n_samples_bootstrap)
+            p_estimator = estimator.predict(
+                X[unsampled_indices, :], check_input=False)
+
+            if self.n_outputs_ == 1:
+                p_estimator = p_estimator[:, np.newaxis]
+
+            baseline = 0
+            for k in range(self.n_outputs_):
+                baseline += r2_score(y[unsampled_indices, k], p_estimator[:, k]) / self.n_outputs_
+            for col in range(X.shape[1]):
+                X_permuted = X.copy()
+                np.random.shuffle(X_permuted[:, col])
+                p_permuted = estimator.predict(X_permuted[unsampled_indices, :],
+                                                    check_input=False)
+                if self.n_outputs_ == 1:
+                    p_permuted = p_permuted[:, np.newaxis]
+                curr_acc = 0
+                for k in range(self.n_outputs_):
+                    curr_acc += r2_score(y[unsampled_indices, k], p_permuted[:, k]) / self.n_outputs_
+                all_imp[i, col] = baseline - curr_acc
+
+            n_predictions[unsampled_indices] += 1
+
+        self._oob_permutation_importance = all_imp.mean(axis=0)
+
+        if (n_predictions == 0).any():
+            warn("Some inputs do not have OOB scores. "
+                 "This probably means too few trees were used "
+                 "to compute any reliable oob estimates.")
+
     def _set_oob_score(self, X, y):
         """
         Compute out-of-bag scores."""
@@ -845,41 +927,17 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
             n_samples, self.max_samples
         )
 
-        all_imp = np.zeros((self.n_estimators, X.shape[1]))
-        for i, estimator in enumerate(self.estimators_):
+        for estimator in self.estimators_:
             unsampled_indices = _generate_unsampled_indices(
                 estimator.random_state, n_samples, n_samples_bootstrap)
             p_estimator = estimator.predict(
                 X[unsampled_indices, :], check_input=False)
 
-
             if self.n_outputs_ == 1:
                 p_estimator = p_estimator[:, np.newaxis]
 
-            if self.importance_type == 'permutation':
-                baseline = 0
-                for k in range(self.n_outputs_):
-                    baseline += np.mean((y[unsampled_indices, k] - p_estimator[:, k]) ** 2) / self.n_outputs_
-                    # baseline += r2_score(y[unsampled_indices, k], p_estimator[:, k]) / self.n_outputs_
-                for col in range(X.shape[1]):
-                    X_permuted = X.copy()
-                    np.random.shuffle(X_permuted[:, col])
-                    p_permuted = estimator.predict(X_permuted[unsampled_indices, :],
-                                                        check_input=False)
-                    if self.n_outputs_ == 1:
-                        p_permuted = p_permuted[:, np.newaxis]
-                    curr_acc = 0
-                    for k in range(self.n_outputs_):
-                        curr_acc += np.mean((y[unsampled_indices, k] - p_permuted[:, k]) ** 2) / self.n_outputs_
-                        # curr_acc += r2_score(y[unsampled_indices, k], p_permuted[:, k]) / self.n_outputs_
-                    all_imp[i, col] = curr_acc - baseline
-                    # all_imp[i, col] = baseline - curr_acc
-
             predictions[unsampled_indices, :] += p_estimator
             n_predictions[unsampled_indices, :] += 1
-
-        if self.importance_type == 'permutation':
-            self._permutation_importance = all_imp.mean(axis=0)
 
         if (n_predictions == 0).any():
             warn("Some inputs do not have OOB scores. "
@@ -2350,6 +2408,10 @@ class RandomTreesEmbedding(BaseForest):
         self.min_impurity_split = min_impurity_split
         self.sparse_output = sparse_output
         self.importance_type = 'impurity'
+
+
+    def _set_oob_permutation_importance(self, X, y):
+        raise NotImplementedError("OOB permutation importance not supported by tree embedding")
 
     def _set_oob_score(self, X, y):
         raise NotImplementedError("OOB score not supported by tree embedding")
