@@ -250,9 +250,9 @@ def plot_partial_dependence(
     """
     check_matplotlib_support('plot_partial_dependence')  # noqa
     import matplotlib.pyplot as plt  # noqa
-    from matplotlib import transforms  # noqa
-    from matplotlib.ticker import MaxNLocator  # noqa
-    from matplotlib.ticker import ScalarFormatter  # noqa
+    # from matplotlib import transforms  # noqa
+    # from matplotlib.ticker import MaxNLocator  # noqa
+    # from matplotlib.ticker import ScalarFormatter  # noqa
 
     # set target_idx for multi-class estimators
     if hasattr(estimator, 'classes_') and np.size(estimator.classes_) > 2:
@@ -759,9 +759,9 @@ class PartialDependenceDisplay:
 
         check_matplotlib_support("plot_partial_dependence")
         import matplotlib.pyplot as plt  # noqa
-        from matplotlib import transforms  # noqa
-        from matplotlib.ticker import MaxNLocator  # noqa
-        from matplotlib.ticker import ScalarFormatter  # noqa
+        # from matplotlib import transforms  # noqa
+        # from matplotlib.ticker import MaxNLocator  # noqa
+        # from matplotlib.ticker import ScalarFormatter  # noqa
         from matplotlib.gridspec import GridSpecFromSubplotSpec  # noqa
 
         if line_kw is None:
