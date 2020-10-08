@@ -767,7 +767,8 @@ def string_labeled_classification_problem():
 
     The classifier is trained on a binary classification problem where the
     minority class of interest has a string label that is intentionally not the
-    greatest class label using the lexicographic order.
+    greatest class label using the lexicographic order. In this case, "cancer" 
+    is the positive label, and `classifier.classes_` is `["cancer", "not cancer"]`.
 
     In addition, the dataset is imbalanced to better identify problems when
     using non-symmetric performance metrics such as f1-score, average precision
