@@ -734,11 +734,6 @@ class PartialDependenceDisplay:
         self.deciles_vlines_ = np.empty_like(self.axes_, dtype=object)
         self.deciles_hlines_ = np.empty_like(self.axes_, dtype=object)
 
-        # Create 1d views of these 2d arrays for easy indexing
-        contours_ravel = self.contours_.ravel(order='C')
-        vlines_ravel = self.deciles_vlines_.ravel(order='C')
-        hlines_ravel = self.deciles_hlines_.ravel(order='C')
-
         for pd_plot_idx, (axi, feature_idx, pd_result) in enumerate(
             zip(self.axes_.ravel(), self.features, self.pd_results)
         ):
@@ -786,7 +781,10 @@ class PartialDependenceDisplay:
                 CS = axi.contour(
                     XX, YY, Z, levels=Z_level, linewidths=0.5, colors="k"
                 )
-                contours_ravel[pd_plot_idx] = axi.contourf(
+                contour_idx = np.unravel_index(
+                    pd_plot_idx, shape=self.contours_.shape
+                )
+                self.contours_[contour_idx] = axi.contourf(
                     XX,
                     YY,
                     Z,
@@ -802,7 +800,10 @@ class PartialDependenceDisplay:
             trans = transforms.blended_transform_factory(axi.transData,
                                                          axi.transAxes)
             ylim = axi.get_ylim()
-            vlines_ravel[pd_plot_idx] = axi.vlines(
+            vlines_idx = np.unravel_index(
+                pd_plot_idx, shape=self.deciles_vlines_.shape
+            )
+            self.deciles_vlines_[vlines_idx] = axi.vlines(
                 self.deciles[feature_idx[0]],
                 0,
                 0.05,
@@ -827,7 +828,10 @@ class PartialDependenceDisplay:
                 trans = transforms.blended_transform_factory(axi.transAxes,
                                                              axi.transData)
                 xlim = axi.get_xlim()
-                hlines_ravel[pd_plot_idx] = axi.hlines(
+                hlines_idx = np.unravel_index(
+                    pd_plot_idx, shape=self.deciles_hlines_.shape
+                )
+                self.deciles_hlines_[hlines_idx] = axi.hlines(
                     self.deciles[feature_idx[1]],
                     0,
                     0.05,
