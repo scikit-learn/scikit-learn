@@ -69,8 +69,6 @@ from sklearn.pipeline import Pipeline
 from sklearn.linear_model import Ridge, SGDClassifier, LinearRegression
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingClassifier
-from sklearn.mixture import BayesianGaussianMixture
-from sklearn.ensemble import IsolationForest
 
 from sklearn.model_selection.tests.common import OneTimeSplitter
 
