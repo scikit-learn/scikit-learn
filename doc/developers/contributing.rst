@@ -196,6 +196,15 @@ Contributing code
   so far. In order to claim an issue for yourself, please comment exactly
   ``take`` on it for the CI to automatically assign the issue to you.
 
+Resources
+---------
+- Crash Course in Contributing to Scikit-Learn & Open Source Projects:
+    -`Video <https://youtu.be/5OL8XoMMOfA>`_
+    -`Transcript <https://github.com/data-umbrella/event-transcripts/blob/main/2020/05-andreas-mueller-contributing.md>`_
+- Example of Submitting a Pull Request to scikit-learn:
+    -`Video <https://youtu.be/PU1WyDPGePI>`_
+    -`Transcript <https://github.com/data-umbrella/event-transcripts/blob/main/2020/06-reshama-shaikh-sklearn-pr.md>`_
+
 How to contribute
 -----------------
 
