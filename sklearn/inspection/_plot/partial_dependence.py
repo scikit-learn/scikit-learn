@@ -602,11 +602,128 @@ class PartialDependenceDisplay:
             **line_kw,
         )[0]
 
-    def _plot_one_way_partial_dependence(self):
-        pass
+    def _plot_one_way_partial_dependence(
+        self,
+        preds,
+        avg_preds,
+        feature_values,
+        feature_idx,
+        n_ice_to_plot,
+        ax,
+        n_cols,
+        pd_plot_idx,
+        n_lines,
+        individual_line_kw,
+        line_kw,
+    ):
+        from matplotlib import transforms  # noqa
 
-    def _plot_two_way_partial_dependence(self):
-        pass
+        if self.kind in ("individual", "both"):
+            self._plot_ice_lines(
+                preds[self.target_idx],
+                feature_values,
+                n_ice_to_plot,
+                ax,
+                pd_plot_idx,
+                n_lines,
+                individual_line_kw,
+            )
+        if self.kind in ("average", "both"):
+            label = None if self.kind == "average" else "average"
+            # the average is stored as the last line
+            if self.kind == "average":
+                pd_line_idx = pd_plot_idx
+            else:
+                pd_line_idx = pd_plot_idx * n_lines + n_ice_to_plot
+            self._plot_average_dependence(
+                avg_preds[self.target_idx].ravel(),
+                feature_values,
+                ax,
+                pd_line_idx,
+                label,
+                line_kw,
+            )
+
+        trans = transforms.blended_transform_factory(
+            ax.transData, ax.transAxes
+        )
+        ylim = ax.get_ylim()
+        vlines_idx = np.unravel_index(
+            pd_plot_idx, shape=self.deciles_vlines_.shape
+        )
+        self.deciles_vlines_[vlines_idx] = ax.vlines(
+            self.deciles[feature_idx[0]],
+            0,
+            0.05,
+            transform=trans,
+            color="k",
+        )
+        ax.set_ylim(ylim)
+
+        # Set xlabel if it is not already set
+        if not ax.get_xlabel():
+            ax.set_xlabel(self.feature_names[feature_idx[0]])
+
+        if n_cols is None or pd_plot_idx % n_cols == 0:
+            if not ax.get_ylabel():
+                ax.set_ylabel('Partial dependence')
+        else:
+            ax.set_yticklabels([])
+        ax.set_ylim(self.pdp_lim[1])
+
+    def _plot_two_way_partial_dependence(
+        self,
+        avg_preds,
+        feature_values,
+        feature_idx,
+        ax,
+        pd_plot_idx,
+        Z_level,
+        contour_kw,
+    ):
+        from matplotlib import transforms  # noqa
+
+        XX, YY = np.meshgrid(feature_values[0], feature_values[1])
+        Z = avg_preds[self.target_idx].T
+        CS = ax.contour(XX, YY, Z, levels=Z_level, linewidths=0.5, colors="k")
+        contour_idx = np.unravel_index(pd_plot_idx, shape=self.contours_.shape)
+        self.contours_[contour_idx] = ax.contourf(
+            XX,
+            YY,
+            Z,
+            levels=Z_level,
+            vmax=Z_level[-1],
+            vmin=Z_level[0],
+            **contour_kw,
+        )
+        ax.clabel(CS, fmt="%2.2f", colors="k", fontsize=10, inline=True)
+
+        trans = transforms.blended_transform_factory(
+            ax.transData, ax.transAxes
+        )
+        ylim = ax.get_ylim()
+        vlines_idx = np.unravel_index(
+            pd_plot_idx, shape=self.deciles_vlines_.shape
+        )
+        self.deciles_vlines_[vlines_idx] = ax.vlines(
+            self.deciles[feature_idx[0]], 0, 0.05, transform=trans, color="k",
+        )
+        ax.set_ylim(ylim)
+
+        # Set xlabel if it is not already set
+        if not ax.get_xlabel():
+            ax.set_xlabel(self.feature_names[feature_idx[0]])
+
+        xlim = ax.get_xlim()
+        hlines_idx = np.unravel_index(
+            pd_plot_idx, shape=self.deciles_hlines_.shape
+        )
+        self.deciles_hlines_[hlines_idx] = ax.hlines(
+            self.deciles[feature_idx[1]], 0, 0.05, transform=trans, color="k",
+        )
+        # hline erases xlim
+        ax.set_ylabel(self.feature_names[feature_idx[1]])
+        ax.set_xlim(xlim)
 
     def plot(self, ax=None, n_cols=3, line_kw=None, contour_kw=None):
         """Plot partial dependence plots.
@@ -676,6 +793,7 @@ class PartialDependenceDisplay:
             else:
                 n_lines = n_ice_to_plot + 1
         else:
+            n_ice_to_plot = None
             n_lines = 1
 
         if isinstance(ax, plt.Axes):
@@ -749,96 +867,28 @@ class PartialDependenceDisplay:
                 preds = pd_result.individual
 
             if len(feature_values) == 1:
-                if self.kind in ("individual", "both"):
-                    self._plot_ice_lines(
-                        preds[self.target_idx],
-                        feature_values[0],
-                        n_ice_to_plot,
-                        axi,
-                        pd_plot_idx,
-                        n_lines,
-                        individual_line_kw
-                    )
-                if self.kind in ("average", "both"):
-                    label = None if self.kind == "average" else "average"
-                    # the average is stored as the last line
-                    if self.kind == "average":
-                        pd_line_idx = pd_plot_idx
-                    else:
-                        pd_line_idx = pd_plot_idx * n_lines + n_ice_to_plot
-                    self._plot_average_dependence(
-                        avg_preds[self.target_idx].ravel(),
-                        feature_values[0],
-                        axi,
-                        pd_line_idx,
-                        label,
-                        line_kw,
-                    )
+                self._plot_one_way_partial_dependence(
+                    preds,
+                    avg_preds,
+                    feature_values[0],
+                    feature_idx,
+                    n_ice_to_plot,
+                    axi,
+                    n_cols,
+                    pd_plot_idx,
+                    n_lines,
+                    individual_line_kw,
+                    line_kw,
+                )
             else:
-                # contour plot
-                XX, YY = np.meshgrid(feature_values[0], feature_values[1])
-                Z = avg_preds[self.target_idx].T
-                CS = axi.contour(
-                    XX, YY, Z, levels=Z_level, linewidths=0.5, colors="k"
-                )
-                contour_idx = np.unravel_index(
-                    pd_plot_idx, shape=self.contours_.shape
-                )
-                self.contours_[contour_idx] = axi.contourf(
-                    XX,
-                    YY,
-                    Z,
-                    levels=Z_level,
-                    vmax=Z_level[-1],
-                    vmin=Z_level[0],
-                    **contour_kw,
-                )
-                axi.clabel(
-                    CS, fmt="%2.2f", colors="k", fontsize=10, inline=True
+                self._plot_two_way_partial_dependence(
+                    avg_preds,
+                    feature_values,
+                    feature_idx,
+                    axi,
+                    pd_plot_idx,
+                    Z_level,
+                    contour_kw,
                 )
 
-            trans = transforms.blended_transform_factory(axi.transData,
-                                                         axi.transAxes)
-            ylim = axi.get_ylim()
-            vlines_idx = np.unravel_index(
-                pd_plot_idx, shape=self.deciles_vlines_.shape
-            )
-            self.deciles_vlines_[vlines_idx] = axi.vlines(
-                self.deciles[feature_idx[0]],
-                0,
-                0.05,
-                transform=trans,
-                color="k",
-            )
-            axi.set_ylim(ylim)
-
-            # Set xlabel if it is not already set
-            if not axi.get_xlabel():
-                axi.set_xlabel(self.feature_names[feature_idx[0]])
-
-            if len(feature_values) == 1:
-                if n_cols is None or pd_plot_idx % n_cols == 0:
-                    if not axi.get_ylabel():
-                        axi.set_ylabel('Partial dependence')
-                else:
-                    axi.set_yticklabels([])
-                axi.set_ylim(self.pdp_lim[1])
-            else:
-                # contour plot
-                trans = transforms.blended_transform_factory(axi.transAxes,
-                                                             axi.transData)
-                xlim = axi.get_xlim()
-                hlines_idx = np.unravel_index(
-                    pd_plot_idx, shape=self.deciles_hlines_.shape
-                )
-                self.deciles_hlines_[hlines_idx] = axi.hlines(
-                    self.deciles[feature_idx[1]],
-                    0,
-                    0.05,
-                    transform=trans,
-                    color="k",
-                )
-                # hline erases xlim
-                axi.set_ylabel(self.feature_names[feature_idx[1]])
-                axi.set_xlim(xlim)
         return self
