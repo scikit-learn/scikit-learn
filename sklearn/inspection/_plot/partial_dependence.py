@@ -250,9 +250,6 @@ def plot_partial_dependence(
     """
     check_matplotlib_support('plot_partial_dependence')  # noqa
     import matplotlib.pyplot as plt  # noqa
-    # from matplotlib import transforms  # noqa
-    # from matplotlib.ticker import MaxNLocator  # noqa
-    # from matplotlib.ticker import ScalarFormatter  # noqa
 
     # set target_idx for multi-class estimators
     if hasattr(estimator, 'classes_') and np.size(estimator.classes_) > 2:
@@ -585,7 +582,7 @@ class PartialDependenceDisplay:
         for ice_idx, ice in enumerate(ice_lines_subsampled):
             line_idx = np.unravel_index(
                 pd_plot_idx * n_total_lines_by_plot + ice_idx,
-                shape=self.lines_.shape
+                self.lines_.shape
             )
             self.lines_[line_idx] = ax.plot(
                 feature_values, ice.ravel(), **individual_line_kw
@@ -594,7 +591,7 @@ class PartialDependenceDisplay:
     def _plot_average_dependence(
         self, avg_preds, feature_values, ax, pd_line_idx, label, line_kw,
     ):
-        line_idx = np.unravel_index(pd_line_idx, shape=self.lines_.shape)
+        line_idx = np.unravel_index(pd_line_idx, self.lines_.shape)
         self.lines_[line_idx] = ax.plot(
             feature_values,
             avg_preds,
@@ -686,7 +683,7 @@ class PartialDependenceDisplay:
         XX, YY = np.meshgrid(feature_values[0], feature_values[1])
         Z = avg_preds[self.target_idx].T
         CS = ax.contour(XX, YY, Z, levels=Z_level, linewidths=0.5, colors="k")
-        contour_idx = np.unravel_index(pd_plot_idx, shape=self.contours_.shape)
+        contour_idx = np.unravel_index(pd_plot_idx, self.contours_.shape)
         self.contours_[contour_idx] = ax.contourf(
             XX,
             YY,
@@ -702,9 +699,7 @@ class PartialDependenceDisplay:
             ax.transData, ax.transAxes
         )
         ylim = ax.get_ylim()
-        vlines_idx = np.unravel_index(
-            pd_plot_idx, shape=self.deciles_vlines_.shape
-        )
+        vlines_idx = np.unravel_index(pd_plot_idx, self.deciles_vlines_.shape)
         self.deciles_vlines_[vlines_idx] = ax.vlines(
             self.deciles[feature_idx[0]], 0, 0.05, transform=trans, color="k",
         )
@@ -715,9 +710,7 @@ class PartialDependenceDisplay:
             ax.set_xlabel(self.feature_names[feature_idx[0]])
 
         xlim = ax.get_xlim()
-        hlines_idx = np.unravel_index(
-            pd_plot_idx, shape=self.deciles_hlines_.shape
-        )
+        hlines_idx = np.unravel_index(pd_plot_idx, self.deciles_hlines_.shape)
         self.deciles_hlines_[hlines_idx] = ax.hlines(
             self.deciles[feature_idx[1]], 0, 0.05, transform=trans, color="k",
         )
@@ -759,9 +752,6 @@ class PartialDependenceDisplay:
 
         check_matplotlib_support("plot_partial_dependence")
         import matplotlib.pyplot as plt  # noqa
-        # from matplotlib import transforms  # noqa
-        # from matplotlib.ticker import MaxNLocator  # noqa
-        # from matplotlib.ticker import ScalarFormatter  # noqa
         from matplotlib.gridspec import GridSpecFromSubplotSpec  # noqa
 
         if line_kw is None:
