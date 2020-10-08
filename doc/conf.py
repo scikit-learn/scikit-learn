@@ -465,10 +465,11 @@ issues_github_path = 'scikit-learn/scikit-learn'
 # merged
 from sphinx.util import inspect  # noqa
 
+
 old_signature = inspect.signature
 
 
-# changes the default of follow_wrapped
+# changes the default of follow_wrapped to True
 def patch_signature(subject, bound_method=False, follow_wrapped=True):
     return old_signature(subject, bound_method=bound_method,
                          follow_wrapped=follow_wrapped)
