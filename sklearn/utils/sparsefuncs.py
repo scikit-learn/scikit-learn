@@ -63,43 +63,6 @@ def inplace_csr_row_scale(X, scale):
     X.data *= np.repeat(scale, np.diff(X.indptr))
 
 
-def mean_variance_axis_weighted(X, axis, sample_weight):
-    """Compute mean and variance along an axix on a CSR or CSC matrix
-
-    Parameters
-    ----------
-    X : CSR or CSC sparse matrix, shape (n_samples, n_features)
-        Input data.
-
-    axis : int (either 0 or 1)
-        Axis along which the axis should be computed.
-
-    Returns
-    -------
-
-    means : float array with shape (n_features,)
-        Feature-wise means
-
-    variances : float array with shape (n_features,)
-        Feature-wise variances
-
-    """
-    _raise_error_wrong_axis(axis)
-
-    if isinstance(X, sp.csr_matrix):
-        if axis == 0:
-            return _csr_mean_var_axis0(X)
-        else:
-            return _csc_mean_var_axis0(X.T)
-    elif isinstance(X, sp.csc_matrix):
-        if axis == 0:
-            return _csc_mean_var_axis0(X)
-        else:
-            return _csr_mean_var_axis0(X.T)
-    else:
-        _raise_typeerror(X)
-
-
 def incr_mean_variance_axis_weighted(X, axis, last_mean, last_var,  last_count,
                                      sample_weight):
     """Calculate weighted mean and weighted variance incremental update for
