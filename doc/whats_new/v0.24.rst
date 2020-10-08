@@ -563,10 +563,6 @@ Changelog
   which clips the transformed values of test data to ``feature_range``.
   :pr:`17833` by :user:`Yashika Sharma <yashika51>`.
 
-- |Enhancement| Enables support for unicode string dtypes in
-  :class:`preprocessing.OneHotEncoder` and
-  :class:`preprocessing.OrdinalEncoder`. :pr:`15763` by `Thomas Fan`_.
-
 - |Enhancement| Verbose output of :class:`model_selection.GridSearchCV` has
   been improved for readability. :pr:`16935` by :user:`Raghav Rajagopalan
   <raghavrv>` and :user:`Chiara Marmo <cmarmo>`.
@@ -585,6 +581,10 @@ Changelog
   individual weights for each sample. :pr:`18510` and
   :pr:`18447` and :pr:`16066` by :user:`Maria Telenczuk <maikia>` and
   :user:`Albert Villanova <albertvillanova>` and :user:`<panpiort8>`
+
+- |Fix| Enables support for unicode string dtypes in
+  :class:`preprocessing.OneHotEncoder` and
+  :class:`preprocessing.OrdinalEncoder`. :pr:`15763` by `Thomas Fan`_.
 
 :mod:`sklearn.svm`
 ..................
