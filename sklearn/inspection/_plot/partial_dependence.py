@@ -645,9 +645,7 @@ class PartialDependenceDisplay:
             ax.transData, ax.transAxes
         )
         ylim = ax.get_ylim()
-        vlines_idx = np.unravel_index(
-            pd_plot_idx, shape=self.deciles_vlines_.shape
-        )
+        vlines_idx = np.unravel_index(pd_plot_idx, self.deciles_vlines_.shape)
         self.deciles_vlines_[vlines_idx] = ax.vlines(
             self.deciles[feature_idx[0]],
             0,
