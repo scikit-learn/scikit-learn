@@ -242,8 +242,7 @@ class IncrementalPCA(_BasePCA):
                     "sparse input. Either convert data to dense "
                     "or use IncrementalPCA.fit to do so in batches.")
             X = self._validate_data(
-                X, accept_sparse=['csr', 'csc', 'lil'],
-                copy=self.copy, dtype=[np.float64, np.float32],
+                X, copy=self.copy, dtype=[np.float64, np.float32],
                 reset=first_pass)
         n_samples, n_features = X.shape
         if first_pass:
