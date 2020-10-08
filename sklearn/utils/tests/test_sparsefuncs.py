@@ -141,8 +141,6 @@ def test_incr_mean_variance_axis_weighted(Xw, X, sample_weight):
             Xw_sparse, axis, means_w0, vars_w0,
             n_incr_w0, sample_weight=sample_weight)
 
-    assert_array_almost_equal(means_w0, means_w1)
-    assert_array_almost_equal(vars_w0, vars_w1)
     assert_array_almost_equal(means1, means_w1)
     assert_array_almost_equal(vars1, vars_w1)
     assert_array_almost_equal(n_incr1, n_incr_w1)
