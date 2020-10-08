@@ -11,6 +11,7 @@ from .sparsefuncs_fast import (
     csr_mean_variance_axis0 as _csr_mean_var_axis0,
     csc_mean_variance_axis0 as _csc_mean_var_axis0,
     incr_mean_variance_axis0 as _incr_mean_var_axis0)
+from ..utils.extmath import safe_sparse_dot
 
 
 def _raise_typeerror(X):
@@ -108,24 +109,23 @@ def incr_mean_variance_axis_weighted(X, axis, last_mean, last_var,  last_count,
 
     Parameters
     ----------
-    X :  CSR or CSC sparse matrix, shape (n_samples, n_features)
+    X : CSR or CSC sparse matrix, shape (n_samples, n_features)
         Input data.
 
-    axis: int (either 0 or 1)
+    axis : int (either 0 or 1)
         Axis along which the axis should be computed.
+
+    last_mean : float array with shape (n_features,)
+        Array of feature-wise means to update with the new data X.
+
+    last_var : float array with shape (n_features,)
+        Array of feature-wise var to update with the new data X.
+
+    last_n : int with shape (n_features,)
+        Number of samples seen so far, excluded X.
 
     sample_weight : array-like of shape (n_samples,) or None
         Sample weights. If None, then samples are equally weighted.
-
-    last_variance : array-like of shape (n_features,) or None
-        Variance before the incremental update.
-        If None, variance update is not computed (in case scaling is not
-        required).
-
-    last_mean:
-
-    last_sum : int with shape (n_features,)
-        weighted sum
 
     Returns
     -------
@@ -140,100 +140,52 @@ def incr_mean_variance_axis_weighted(X, axis, last_mean, last_var,  last_count,
     -----
     NaNs in `X` are ignored.
 
-    `last_mean` and `last_variance` are statistics computed at the last step
-    by the function. Both must be initialized to 0.0.
-    The mean is always required (`last_mean`) and returned (`updated_mean`),
-    whereas the variance can be None (`last_variance` and `updated_variance`).
-
-    For further details on the algorithm to perform the computation in a
-    numerically stable way, see [Finch2009]_, Sections 4 and 5.
-
     References
     ----------
     .. adapted for incremental variance with weights from
-       T. Chan, G. Golub, R. LeVeque. Algorithms for
-       computing the sample
+       T. Chan, G. Golub, R. LeVeque. Algorithms for computing the sample
        variance: recommendations, The American Statistician,
-       Vol. 37, No. 3,
-       pp. 242-247
+       Vol. 37, No. 3, pp. 242-247
 
     """
     if sample_weight is None:
-        return incr_mean_variance_axis(X, axis, last_mean, last_var, last_sum)
+        return incr_mean_variance_axis(X, axis,
+                                       last_mean, last_var, last_count)
+
     sample_weight = np.array(sample_weight)
-    from sklearn.utils.extmath import safe_sparse_dot
     sparse_constructor = (sp.csr_matrix
-                                  if X.format == 'csr' else sp.csc_matrix)
-    nans_place = sparse_constructor(
-        (np.isnan(X.data), X.indices, X.indptr),
-        shape=X.shape,dtype=bool)
-    '''
-    # make it working with nans
-    notnans_place = nans_place
-    nans_place.multiply(X)
-    X_not_nan = X.copy()
-    X_not_nan.data[int(nans_place.data*(-1)+1)]
-    '''
+                          if X.format == 'csr' else sp.csc_matrix)
+    nans_place = sparse_constructor((np.isnan(X.data), X.indices, X.indptr),
+                                    shape=X.shape, dtype=bool)
+
+    # find non-nan places in X
     X_not_nan = sparse_constructor(
         (np.nan_to_num(X.data), X.indices, X.indptr),
-        shape=X.shape,dtype=X.dtype)
+        shape=X.shape, dtype=X.dtype)
 
-    #n_nans = np.asarray(nans_place.sum(axis=0)).ravel()
     n_nan_weighted = safe_sparse_dot(sample_weight, nans_place)
     n_not_nan_weighted = np.sum(sample_weight) - n_nan_weighted
 
     last_sum = last_mean * last_count
-    new_sum = safe_sparse_dot(sample_weight, X_not_nan) # not sparse
+    new_sum = safe_sparse_dot(sample_weight, X_not_nan)  # not sparse
     updated_sum = new_sum + last_sum
-    #import pdb; pdb.set_trace()
-    # X_data_noNans = np.nan_to_num(X.data)
-    # X_data_noNans = X_data_noNans.eliminate_zeros()
 
-    new_sample_count = n_not_nan_weighted #np.sum(sample_weight) # including Nans for now
+    new_sample_count = n_not_nan_weighted
     updated_sample_count = n_not_nan_weighted + last_count
-    # updated_sample_count = new_sample_count
     T = new_sum / new_sample_count
 
-    # import pdb; pdb.set_trace()
-
     # here we calculate: sample_weight*(X-T)**2
-    X = X_not_nan
-    X2 = safe_sparse_dot(sample_weight, X.multiply(X))
-    T2 = new_sample_count * T*T  # T.multiply(T)
-    two_XT = 2 * T * (safe_sparse_dot(sample_weight, X))
+    X2 = safe_sparse_dot(sample_weight, X_not_nan.multiply(X_not_nan))
+    T2 = new_sample_count * T*T
+    two_XT = 2 * T * (safe_sparse_dot(sample_weight, X_not_nan))
     new_unnormalized_variance = X2-two_XT+T2
 
     updated_variance = (new_unnormalized_variance / new_sample_count)
     var_ = updated_variance.ravel()
     sample_weight = sample_weight.ravel()
-    '''
-    import pdb; pdb.set_trace()
-    # calculate the mean
-    from sklearn.utils.extmath import _safe_accumulator_op
-    X_dense = X.toarray()
-
-                        # TODO:
-                        # way to multiply sparse X by 1d dense sample_weight
-                        # X.data *= Y.repeat(np.diff(Z.indptr))
-                        # new_sum = _safe_accumulator_op(np.nansum, X_dense * sample_weight[:, None], axis=0)
-    # new_sample_count = np.sum(sample_weight[:, None] * (~np.isnan(X_dense)), axis=0)
-
-                        last_sample_count = 0  # update to last
-
-                        last_mean = self.mean_ = 0.0  # init
-                        last_sum = last_mean * last_sample_count
-                        updated_sample_count = last_sample_count + new_sample_count
-    '''
-    #import pdb; pdb.set_trace()
     updated_mean = (updated_sum / updated_sample_count).ravel()
 
-    # mean_ = np.average(X.toarray(), weights=sample_weight, axis=0)  # TODO: make it for sparse
     return updated_mean, var_, updated_sample_count
-    #                     import pdb; pdb.set_trace()
-    #                     assert np.all(updated_mean == self.mean_)
-    #                     # TODO: make mean_ work for sparse
-    #                     # TODO: move all this to sparsefuncs.py
-
 
 
 def mean_variance_axis(X, axis):

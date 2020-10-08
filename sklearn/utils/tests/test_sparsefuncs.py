@@ -9,7 +9,6 @@ from numpy.random import RandomState
 from sklearn.datasets import make_classification
 from sklearn.utils.sparsefuncs import (mean_variance_axis,
                                        incr_mean_variance_axis,
-                                       incr_mean_variance_axis,
                                        incr_mean_variance_axis_weighted,
                                        inplace_column_scale,
                                        inplace_row_scale,
@@ -86,37 +85,37 @@ def test_mean_variance_axis1():
             assert_array_almost_equal(X_means, np.mean(X_test, axis=0))
             assert_array_almost_equal(X_vars, np.var(X_test, axis=0))
 
+
 @pytest.mark.parametrize(['Xw', 'X', 'sample_weight'],
                          [
-                         #([[0, 0, 1], [0, 1, 1]],
-                         # [[0, 0, 1], [0, 1, 1]],
-                         # [1, 1]),
-                         #([[0, 0, 1], [0, 1, 1]],
-                         # [[0, 0, 1], [0, 1, 1], [0, 1, 1]],
-                         # [1, 2]),
-                         #([[0, 0, 1], [0, 1, 1]],
-                         # [[0, 0, 1], [0, 1, 1]],
-                         # None),
+                         ([[0, 0, 1], [0, 1, 1]],
+                          [[0, 0, 1], [0, 1, 1]],
+                          [1, 1]),
+                         ([[0, 0, 1], [0, 1, 1]],
+                          [[0, 0, 1], [0, 1, 1], [0, 1, 1]],
+                          [1, 2]),
+                         ([[0, 0, 1], [0, 1, 1]],
+                          [[0, 0, 1], [0, 1, 1]],
+                          None),
                          ([[0, np.nan, 2],
                            [0, np.nan, np.nan]],
                           [[0, np.nan, 2],
                            [0, np.nan, np.nan]],
                           [1., 1.]),
                          ([[0, 0, 1, np.nan, 2, 0],
-                            [0, 3, np.nan, np.nan, np.nan, 2]],
-                           [[0, 0, 1, np.nan, 2, 0],
-                            [0, 0, 1, np.nan, 2, 0],
-                            [0, 3, np.nan, np.nan, np.nan, 2]],
-                           [2., 1.]),
-                          #([[1, 0, 1], [0, 0, 1]],
-                          #[[1, 0, 1], [0, 0, 1], [0, 0, 1], [0, 0, 1]],
-                          # np.array([1, 3]))
-                          ]
-                          )
+                           [0, 3, np.nan, np.nan, np.nan, 2]],
+                          [[0, 0, 1, np.nan, 2, 0],
+                           [0, 0, 1, np.nan, 2, 0],
+                           [0, 3, np.nan, np.nan, np.nan, 2]],
+                          [2., 1.]),
+                         ([[1, 0, 1], [0, 0, 1]],
+                          [[1, 0, 1], [0, 0, 1], [0, 0, 1], [0, 0, 1]],
+                          np.array([1, 3]))
+                         ]
+                         )
 def test_incr_mean_variance_axis_weighted(Xw, X, sample_weight):
     Xw_sparse = sp.csr_matrix(Xw)
     X_sparse = sp.csr_matrix(X)
-    w = np.ones(len(Xw))
     axis = 0  # 1
 
     last_mean = np.zeros(np.size(Xw, 1))
@@ -133,13 +132,10 @@ def test_incr_mean_variance_axis_weighted(Xw, X, sample_weight):
     assert_array_almost_equal(means0, means_w0)
     assert_array_almost_equal(vars0, vars_w0)
     assert_array_almost_equal(n_incr0, n_incr_w0)
-    #return
-
 
     # check second round for incremental
-    #means1, vars1, n_incr1 = incr_mean_variance_axis(X_sparse, axis, means0,
-    #                                                 vars0, n_incr0)
-    #import pdb; pdb.set_trace()
+    means1, vars1, n_incr1 = incr_mean_variance_axis(X_sparse, axis, means0,
+                                                     vars0, n_incr0)
 
     means_w1, vars_w1, n_incr_w1 = incr_mean_variance_axis_weighted(
             Xw_sparse, axis, means_w0, vars_w0,
@@ -147,9 +143,9 @@ def test_incr_mean_variance_axis_weighted(Xw, X, sample_weight):
 
     assert_array_almost_equal(means_w0, means_w1)
     assert_array_almost_equal(vars_w0, vars_w1)
-    #assert_array_almost_equal(means1, means_w1)
-    #assert_array_almost_equal(vars1, vars_w1)
-    #assert_array_almost_equal(n_incr1, n_incr_w1)
+    assert_array_almost_equal(means1, means_w1)
+    assert_array_almost_equal(vars1, vars_w1)
+    assert_array_almost_equal(n_incr1, n_incr_w1)
 
 
 def test_incr_mean_variance_axis():
