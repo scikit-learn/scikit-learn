@@ -112,8 +112,10 @@ def incr_mean_variance_axis_weighted(X, axis, last_mean, last_var,  last_count,
 
     """
     if sample_weight is None:
-        return incr_mean_variance_axis(X, axis,
-                                       last_mean, last_var, last_count)
+        return incr_mean_variance_axis(X, axis=axis,
+                                       last_mean=last_mean,
+                                       last_var=last_var,
+                                       last_count=last_count)
 
     sample_weight = np.array(sample_weight)
     sparse_constructor = (sp.csr_matrix
