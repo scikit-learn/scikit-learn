@@ -78,7 +78,7 @@ def _encode(values, *, uniques, check_unknown=True):
     encoded : ndarray
         Encoded values
     """
-    if values.dtype == object:
+    if values.dtype.kind in 'OU':
         table = {val: i for i, val in enumerate(uniques)}
         try:
             return np.array([table[v] for v in values])
