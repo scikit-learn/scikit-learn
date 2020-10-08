@@ -627,7 +627,6 @@ class Pipeline(_BaseComposition):
 
     def _more_tags(self):
         # check if first estimator expects pairwise input
-        print(self.steps)
         transformer_tags = self.steps[0][1]._get_tags()
         estimator_tags = self.steps[-1][1]._get_tags()
 
