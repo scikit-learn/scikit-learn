@@ -576,7 +576,6 @@ class PartialDependenceDisplay:
         ax, pd_plot_idx, n_total_lines_by_plot, individual_line_kw
     ):
         rng = check_random_state(self.random_state)
-        lines_ravel = self.lines_.ravel(order='C')
         # subsample ice
         ice_lines_idx = rng.choice(
             ice_lines.shape[0], n_ice_to_plot, replace=False,
@@ -584,21 +583,30 @@ class PartialDependenceDisplay:
         ice_lines_subsampled = ice_lines[ice_lines_idx, :]
         # plot the subsampled ice
         for ice_idx, ice in enumerate(ice_lines_subsampled):
-            line_idx = pd_plot_idx * n_total_lines_by_plot + ice_idx
-            lines_ravel[line_idx] = ax.plot(
+            line_idx = np.unravel_index(
+                pd_plot_idx * n_total_lines_by_plot + ice_idx,
+                shape=self.lines_.shape
+            )
+            self.lines_[line_idx] = ax.plot(
                 feature_values, ice.ravel(), **individual_line_kw
             )[0]
 
     def _plot_average_dependence(
         self, avg_preds, feature_values, ax, pd_line_idx, label, line_kw,
     ):
-        lines_ravel = self.lines_.ravel(order='C')
-        lines_ravel[pd_line_idx] = ax.plot(
+        line_idx = np.unravel_index(pd_line_idx, shape=self.lines_.shape)
+        self.lines_[line_idx] = ax.plot(
             feature_values,
             avg_preds,
             label=label,
             **line_kw,
         )[0]
+
+    def _plot_one_way_partial_dependence(self):
+        pass
+
+    def _plot_two_way_partial_dependence(self):
+        pass
 
     def plot(self, ax=None, n_cols=3, line_kw=None, contour_kw=None):
         """Plot partial dependence plots.
@@ -736,7 +744,7 @@ class PartialDependenceDisplay:
         ):
             avg_preds = None
             preds = None
-            values = pd_result["values"]
+            feature_values = pd_result["values"]
             if self.kind == 'individual':
                 preds = pd_result.individual
             elif self.kind == 'average':
@@ -745,11 +753,11 @@ class PartialDependenceDisplay:
                 avg_preds = pd_result.average
                 preds = pd_result.individual
 
-            if len(values) == 1:
+            if len(feature_values) == 1:
                 if self.kind in ("individual", "both"):
                     self._plot_ice_lines(
                         preds[self.target_idx],
-                        values[0],
+                        feature_values[0],
                         n_ice_to_plot,
                         axi,
                         pd_plot_idx,
@@ -765,7 +773,7 @@ class PartialDependenceDisplay:
                         pd_line_idx = pd_plot_idx * n_lines + n_ice_to_plot
                     self._plot_average_dependence(
                         avg_preds[self.target_idx].ravel(),
-                        values[0],
+                        feature_values[0],
                         axi,
                         pd_line_idx,
                         label,
@@ -773,7 +781,7 @@ class PartialDependenceDisplay:
                     )
             else:
                 # contour plot
-                XX, YY = np.meshgrid(values[0], values[1])
+                XX, YY = np.meshgrid(feature_values[0], feature_values[1])
                 Z = avg_preds[self.target_idx].T
                 CS = axi.contour(
                     XX, YY, Z, levels=Z_level, linewidths=0.5, colors="k"
@@ -807,7 +815,7 @@ class PartialDependenceDisplay:
             if not axi.get_xlabel():
                 axi.set_xlabel(self.feature_names[feature_idx[0]])
 
-            if len(values) == 1:
+            if len(feature_values) == 1:
                 if n_cols is None or pd_plot_idx % n_cols == 0:
                     if not axi.get_ylabel():
                         axi.set_ylabel('Partial dependence')
