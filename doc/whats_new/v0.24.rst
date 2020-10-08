@@ -613,6 +613,11 @@ Changelog
   with different endianness.
   :pr:`17644` by :user:`Qi Zhang <qzhang90>`.
 
+- |Enhancement| Add ``check_methods_sample_order_invariance`` to
+  :func:`~utils.estimator_checks.check_estimator`, which checks that
+  estimator methods are invariant if applied to the same dataset
+  with different sample order :pr:`17598` by :user:`Jason Ngo <ngojason9>`.
+
 Miscellaneous
 .............
 
