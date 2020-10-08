@@ -659,7 +659,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     return result
 
 
-def _score(estimator, X_test, y_test, scorer, error_score):
+def _score(estimator, X_test, y_test, scorer, error_score="raise"):
     """Compute the score(s) of an estimator on a given test set.
 
     Will return a dict of floats if `scorer` is a dict, otherwise a single
