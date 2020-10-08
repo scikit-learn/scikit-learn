@@ -141,10 +141,10 @@ def f_classif(X, y):
     pval : array, shape = [n_features,]
         The set of p-values.
 
-    See also
+    See Also
     --------
-    chi2: Chi-squared stats of non-negative features for classification tasks.
-    f_regression: F-value between label/feature for regression tasks.
+    chi2 : Chi-squared stats of non-negative features for classification tasks.
+    f_regression : F-value between label/feature for regression tasks.
     """
     X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'])
     args = [X[safe_mask(X, y == k)] for k in np.unique(y)]
@@ -204,10 +204,10 @@ def chi2(X, y):
     -----
     Complexity of this algorithm is O(n_classes * n_features).
 
-    See also
+    See Also
     --------
-    f_classif: ANOVA F-value between label/feature for classification tasks.
-    f_regression: F-value between label/feature for regression tasks.
+    f_classif : ANOVA F-value between label/feature for classification tasks.
+    f_regression : F-value between label/feature for regression tasks.
     """
 
     # XXX: we might want to do some of the following in logspace instead for
@@ -265,17 +265,16 @@ def f_regression(X, y, *, center=True):
     pval : array, shape=(n_features,)
         p-values of F-scores.
 
-
-    See also
+    See Also
     --------
-    mutual_info_regression: Mutual information for a continuous target.
-    f_classif: ANOVA F-value between label/feature for classification tasks.
-    chi2: Chi-squared stats of non-negative features for classification tasks.
-    SelectKBest: Select features based on the k highest scores.
-    SelectFpr: Select features based on a false positive rate test.
-    SelectFdr: Select features based on an estimated false discovery rate.
-    SelectFwe: Select features based on family-wise error rate.
-    SelectPercentile: Select features based on percentile of the highest
+    mutual_info_regression : Mutual information for a continuous target.
+    f_classif : ANOVA F-value between label/feature for classification tasks.
+    chi2 : Chi-squared stats of non-negative features for classification tasks.
+    SelectKBest : Select features based on the k highest scores.
+    SelectFpr : Select features based on a false positive rate test.
+    SelectFdr : Select features based on an estimated false discovery rate.
+    SelectFwe : Select features based on family-wise error rate.
+    SelectPercentile : Select features based on percentile of the highest
         scores.
     """
     X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
@@ -382,7 +381,7 @@ class SelectPercentile(_BaseFilter):
     score_func : callable, default=f_classif
         Function taking two arrays X and y, and returning a pair of arrays
         (scores, pvalues) or a single array with scores.
-        Default is f_classif (see below "See also"). The default function only
+        Default is f_classif (see below "See Also"). The default function only
         works with classification tasks.
 
         .. versionadded:: 0.18
@@ -414,18 +413,18 @@ class SelectPercentile(_BaseFilter):
     Ties between features with equal scores will be broken in an unspecified
     way.
 
-    See also
+    See Also
     --------
-    f_classif: ANOVA F-value between label/feature for classification tasks.
-    mutual_info_classif: Mutual information for a discrete target.
-    chi2: Chi-squared stats of non-negative features for classification tasks.
-    f_regression: F-value between label/feature for regression tasks.
-    mutual_info_regression: Mutual information for a continuous target.
-    SelectKBest: Select features based on the k highest scores.
-    SelectFpr: Select features based on a false positive rate test.
-    SelectFdr: Select features based on an estimated false discovery rate.
-    SelectFwe: Select features based on family-wise error rate.
-    GenericUnivariateSelect: Univariate feature selector with configurable
+    f_classif : ANOVA F-value between label/feature for classification tasks.
+    mutual_info_classif : Mutual information for a discrete target.
+    chi2 : Chi-squared stats of non-negative features for classification tasks.
+    f_regression : F-value between label/feature for regression tasks.
+    mutual_info_regression : Mutual information for a continuous target.
+    SelectKBest : Select features based on the k highest scores.
+    SelectFpr : Select features based on a false positive rate test.
+    SelectFdr : Select features based on an estimated false discovery rate.
+    SelectFwe : Select features based on family-wise error rate.
+    GenericUnivariateSelect : Univariate feature selector with configurable
         mode.
     """
     @_deprecate_positional_args
@@ -468,7 +467,7 @@ class SelectKBest(_BaseFilter):
     score_func : callable, default=f_classif
         Function taking two arrays X and y, and returning a pair of arrays
         (scores, pvalues) or a single array with scores.
-        Default is f_classif (see below "See also"). The default function only
+        Default is f_classif (see below "See Also"). The default function only
         works with classification tasks.
 
         .. versionadded:: 0.18
@@ -501,19 +500,19 @@ class SelectKBest(_BaseFilter):
     Ties between features with equal scores will be broken in an unspecified
     way.
 
-    See also
+    See Also
     --------
-    f_classif: ANOVA F-value between label/feature for classification tasks.
-    mutual_info_classif: Mutual information for a discrete target.
-    chi2: Chi-squared stats of non-negative features for classification tasks.
-    f_regression: F-value between label/feature for regression tasks.
-    mutual_info_regression: Mutual information for a continuous target.
-    SelectPercentile: Select features based on percentile of the highest
+    f_classif : ANOVA F-value between label/feature for classification tasks.
+    mutual_info_classif : Mutual information for a discrete target.
+    chi2 : Chi-squared stats of non-negative features for classification tasks.
+    f_regression : F-value between label/feature for regression tasks.
+    mutual_info_regression : Mutual information for a continuous target.
+    SelectPercentile : Select features based on percentile of the highest
         scores.
-    SelectFpr: Select features based on a false positive rate test.
-    SelectFdr: Select features based on an estimated false discovery rate.
-    SelectFwe: Select features based on family-wise error rate.
-    GenericUnivariateSelect: Univariate feature selector with configurable
+    SelectFpr : Select features based on a false positive rate test.
+    SelectFdr : Select features based on an estimated false discovery rate.
+    SelectFwe : Select features based on family-wise error rate.
+    GenericUnivariateSelect : Univariate feature selector with configurable
         mode.
     """
     @_deprecate_positional_args
@@ -557,7 +556,7 @@ class SelectFpr(_BaseFilter):
     score_func : callable, default=f_classif
         Function taking two arrays X and y, and returning a pair of arrays
         (scores, pvalues).
-        Default is f_classif (see below "See also"). The default function only
+        Default is f_classif (see below "See Also"). The default function only
         works with classification tasks.
 
     alpha : float, default=5e-2
@@ -582,19 +581,19 @@ class SelectFpr(_BaseFilter):
     >>> X_new.shape
     (569, 16)
 
-    See also
+    See Also
     --------
-    f_classif: ANOVA F-value between label/feature for classification tasks.
-    chi2: Chi-squared stats of non-negative features for classification tasks.
-    mutual_info_classif:
-    f_regression: F-value between label/feature for regression tasks.
-    mutual_info_regression: Mutual information between features and the target.
-    SelectPercentile: Select features based on percentile of the highest
+    f_classif : ANOVA F-value between label/feature for classification tasks.
+    chi2 : Chi-squared stats of non-negative features for classification tasks.
+    mutual_info_classif: Mutual information for a discrete target.
+    f_regression : F-value between label/feature for regression tasks.
+    mutual_info_regression : Mutual information for a continuous target.
+    SelectPercentile : Select features based on percentile of the highest
         scores.
-    SelectKBest: Select features based on the k highest scores.
-    SelectFdr: Select features based on an estimated false discovery rate.
-    SelectFwe: Select features based on family-wise error rate.
-    GenericUnivariateSelect: Univariate feature selector with configurable
+    SelectKBest : Select features based on the k highest scores.
+    SelectFdr : Select features based on an estimated false discovery rate.
+    SelectFwe : Select features based on family-wise error rate.
+    GenericUnivariateSelect : Univariate feature selector with configurable
         mode.
     """
     @_deprecate_positional_args
@@ -621,7 +620,7 @@ class SelectFdr(_BaseFilter):
     score_func : callable, default=f_classif
         Function taking two arrays X and y, and returning a pair of arrays
         (scores, pvalues).
-        Default is f_classif (see below "See also"). The default function only
+        Default is f_classif (see below "See Also"). The default function only
         works with classification tasks.
 
     alpha : float, default=5e-2
@@ -650,19 +649,19 @@ class SelectFdr(_BaseFilter):
     ----------
     https://en.wikipedia.org/wiki/False_discovery_rate
 
-    See also
+    See Also
     --------
-    f_classif: ANOVA F-value between label/feature for classification tasks.
-    mutual_info_classif: Mutual information for a discrete target.
-    chi2: Chi-squared stats of non-negative features for classification tasks.
-    f_regression: F-value between label/feature for regression tasks.
-    mutual_info_regression: Mutual information for a contnuous target.
-    SelectPercentile: Select features based on percentile of the highest
+    f_classif : ANOVA F-value between label/feature for classification tasks.
+    mutual_info_classif : Mutual information for a discrete target.
+    chi2 : Chi-squared stats of non-negative features for classification tasks.
+    f_regression : F-value between label/feature for regression tasks.
+    mutual_info_regression : Mutual information for a contnuous target.
+    SelectPercentile : Select features based on percentile of the highest
         scores.
-    SelectKBest: Select features based on the k highest scores.
-    SelectFpr: Select features based on a false positive rate test.
-    SelectFwe: Select features based on family-wise error rate.
-    GenericUnivariateSelect: Univariate feature selector with configurable
+    SelectKBest : Select features based on the k highest scores.
+    SelectFpr : Select features based on a false positive rate test.
+    SelectFwe : Select features based on family-wise error rate.
+    GenericUnivariateSelect : Univariate feature selector with configurable
         mode.
     """
     @_deprecate_positional_args
@@ -692,7 +691,7 @@ class SelectFwe(_BaseFilter):
     score_func : callable, default=f_classif
         Function taking two arrays X and y, and returning a pair of arrays
         (scores, pvalues).
-        Default is f_classif (see below "See also"). The default function only
+        Default is f_classif (see below "See Also"). The default function only
         works with classification tasks.
 
     alpha : float, default=5e-2
@@ -717,17 +716,17 @@ class SelectFwe(_BaseFilter):
     pvalues_ : array-like of shape (n_features,)
         p-values of feature scores.
 
-    See also
+    See Also
     --------
-    f_classif: ANOVA F-value between label/feature for classification tasks.
-    chi2: Chi-squared stats of non-negative features for classification tasks.
-    f_regression: F-value between label/feature for regression tasks.
-    SelectPercentile: Select features based on percentile of the highest
+    f_classif : ANOVA F-value between label/feature for classification tasks.
+    chi2 : Chi-squared stats of non-negative features for classification tasks.
+    f_regression : F-value between label/feature for regression tasks.
+    SelectPercentile : Select features based on percentile of the highest
         scores.
-    SelectKBest: Select features based on the k highest scores.
-    SelectFpr: Select features based on a false positive rate test.
-    SelectFdr: Select features based on an estimated false discovery rate.
-    GenericUnivariateSelect: Univariate feature selector with configurable
+    SelectKBest : Select features based on the k highest scores.
+    SelectFpr : Select features based on a false positive rate test.
+    SelectFdr : Select features based on an estimated false discovery rate.
+    GenericUnivariateSelect : Univariate feature selector with configurable
         mode.
     """
     @_deprecate_positional_args
@@ -785,19 +784,19 @@ class GenericUnivariateSelect(_BaseFilter):
     >>> X_new.shape
     (569, 20)
 
-    See also
+    See Also
     --------
-    f_classif: ANOVA F-value between label/feature for classification tasks.
-    mutual_info_classif: Mutual information for a discrete target.
-    chi2: Chi-squared stats of non-negative features for classification tasks.
-    f_regression: F-value between label/feature for regression tasks.
-    mutual_info_regression: Mutual information for a continuous target.
-    SelectPercentile: Select features based on percentile of the highest
+    f_classif : ANOVA F-value between label/feature for classification tasks.
+    mutual_info_classif : Mutual information for a discrete target.
+    chi2 : Chi-squared stats of non-negative features for classification tasks.
+    f_regression : F-value between label/feature for regression tasks.
+    mutual_info_regression : Mutual information for a continuous target.
+    SelectPercentile : Select features based on percentile of the highest
         scores.
-    SelectKBest: Select features based on the k highest scores.
-    SelectFpr: Select features based on a false positive rate test.
-    SelectFdr: Select features based on an estimated false discovery rate.
-    SelectFwe: Select features based on family-wise error rate.
+    SelectKBest : Select features based on the k highest scores.
+    SelectFpr : Select features based on a false positive rate test.
+    SelectFdr : Select features based on an estimated false discovery rate.
+    SelectFwe : Select features based on family-wise error rate.
     """
 
     _selection_modes = {'percentile': SelectPercentile,

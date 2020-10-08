@@ -1,4 +1,4 @@
-"""Gaussian processes regression. """
+"""Gaussian processes regression."""
 
 # Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 # Modified by: Pete Green <p.l.green@liverpool.ac.uk>
@@ -45,19 +45,22 @@ class GaussianProcessRegressor(MultiOutputMixin,
     ----------
     kernel : kernel instance, default=None
         The kernel specifying the covariance function of the GP. If None is
-        passed, the kernel "1.0 * RBF(1.0)" is used as default. Note that
-        the kernel's hyperparameters are optimized during fitting.
+        passed, the kernel ``ConstantKernel(1.0, constant_value_bounds="fixed"
+        * RBF(1.0, length_scale_bounds="fixed")`` is used as default. Note that
+        the kernel hyperparameters are optimized during fitting unless the
+        bounds are marked as "fixed".
 
-    alpha : float or array-like of shape (n_samples), default=1e-10
+    alpha : float or ndarray of shape (n_samples,), default=1e-10
         Value added to the diagonal of the kernel matrix during fitting.
-        Larger values correspond to increased noise level in the observations.
-        This can also prevent a potential numerical issue during fitting, by
+        This can prevent a potential numerical issue during fitting, by
         ensuring that the calculated values form a positive definite matrix.
-        If an array is passed, it must have the same number of entries as the
-        data used for fitting and is used as datapoint-dependent noise level.
-        Note that this is equivalent to adding a WhiteKernel with c=alpha.
-        Allowing to specify the noise level directly as a parameter is mainly
-        for convenience and for consistency with Ridge.
+        It can also be interpreted as the variance of additional Gaussian
+        measurement noise on the training observations. Note that this is
+        different from using a `WhiteKernel`. If an array is passed, it must
+        have the same number of entries as the data used for fitting and is
+        used as datapoint-dependent noise level. Allowing to specify the
+        noise level directly as a parameter is mainly for convenience and
+        for consistency with Ridge.
 
     optimizer : "fmin_l_bfgs_b" or callable, default="fmin_l_bfgs_b"
         Can either be one of the internally supported optimizers for optimizing
@@ -108,7 +111,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
         which might cause predictions to change if the data is modified
         externally.
 
-    random_state : int or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation used to initialize the centers.
         Pass an int for reproducible results across multiple function calls.
         See :term: `Glossary <random_state>`.
@@ -391,7 +394,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
         n_samples : int, default=1
             The number of samples drawn from the Gaussian process
 
-        random_state : int, RandomState, default=0
+        random_state : int, RandomState instance or None, default=0
             Determines random number generation to randomly draw samples.
             Pass an int for reproducible results across multiple function
             calls.
