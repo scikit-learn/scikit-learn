@@ -598,62 +598,126 @@ represented as a dict, not as scalars.
 Discretization
 ==============
 
-`Discretization <https://en.wikipedia.org/wiki/Discretization_of_continuous_features>`_
-(otherwise known as quantization or binning) provides a way to partition continuous
-features into discrete values. Certain datasets with continuous features
-may benefit from discretization, because discretization can transform the dataset
-of continuous attributes to one with only nominal attributes.
+`Discretization (a.k.a. quantization or binning)
+<https://en.wikipedia.org/wiki/Discretization_of_continuous_features>`_
+provides a way to partition continuous features into discrete values.
+Certain datasets with continuous features may benefit from discretization,
+because discretization can transform the dataset of continuous attributes
+to one with only nominal attributes.
+
+Discretization is similar to constructing histograms for continuous data.
+However, histograms focus on counting features which fall into particular
+bins, whereas discretization focuses on assigning feature values to these
+bins.
 
 One-hot encoded discretized features can make a model more expressive, while
-maintaining interpretability. For instance, pre-processing with a discretizer
+maintaining interpretability. For instance, preprocessing with a discretizer
 can introduce nonlinearity to linear models.
+
+.. _preprocessing_k_bins_discretization:
 
 K-bins discretization
 ---------------------
 
-:class:`KBinsDiscretizer` discretizes features into ``k`` bins::
+:class:`KBinsDiscretizer` discretizes features into `k` bins::
 
   >>> X = np.array([[ -3., 5., 15 ],
   ...               [  0., 6., 14 ],
   ...               [  6., 3., 11 ]])
-  >>> est = preprocessing.KBinsDiscretizer(n_bins=[3, 2, 2], encode='ordinal').fit(X)
+  >>> n_bins = [3, 2, 2]
+  >>> encode = "ordinal"
+  >>> est = preprocessing.KBinsDiscretizer(n_bins, encode=encode)
+  >>> est = est.fit(X)
 
-By default the output is one-hot encoded into a sparse matrix
-(See :ref:`preprocessing_categorical_features`)
-and this can be configured with the ``encode`` parameter.
-For each feature, the bin edges are computed during ``fit`` and together with
-the number of bins, they will define the intervals. Therefore, for the current
-example, these intervals are defined as:
+By default, the output is one-hot encoded into a sparse matrix
+(see :ref:`preprocessing_categorical_features`) and this can
+be configured with the `encode` parameter. For each feature,
+the bin edges are computed during `fit` and, together with
+the number of bins, they will define the intervals. Therefore,
+for the current example, these intervals are defined as:
 
  - feature 1: :math:`{[-\infty, -1), [-1, 2), [2, \infty)}`
  - feature 2: :math:`{[-\infty, 5), [5, \infty)}`
  - feature 3: :math:`{[-\infty, 14), [14, \infty)}`
 
-Based on these bin intervals, ``X`` is transformed as follows::
+which are stored in the `bin_edges_` attribute of the discretizer:
 
-  >>> est.transform(X)                      # doctest: +SKIP
+  >>> est.bin_edges_
+  array([array([-3., -1.,  2.,  6.]), array([3., 5., 6.]),
+         array([11., 14., 15.])], dtype=object)
+
+.. note::
+
+  During transform, these intervals are extended to::
+
+    np.concatenate([-np.inf, bin_edges_[i][1:-1], np.inf])
+
+Based on these bin intervals, `X` is transformed as follows::
+
+  >>> est.transform(X)  # doctest: +SKIP
   array([[ 0., 1., 1.],
          [ 1., 1., 1.],
          [ 2., 0., 0.]])
 
-The resulting dataset contains ordinal attributes which can be further used
-in a :class:`~sklearn.pipeline.Pipeline`.
+The resulting dataset contains ordinal attributes which can
+be further used in a :class:`~sklearn.pipeline.Pipeline`.
 
-Discretization is similar to constructing histograms for continuous data.
-However, histograms focus on counting features which fall into particular
-bins, whereas discretization focuses on assigning feature values to these bins.
-
-:class:`KBinsDiscretizer` implements different binning strategies, which can be
-selected with the ``strategy`` parameter. The 'uniform' strategy uses
-constant-width bins. The 'quantile' strategy uses the quantiles values to have
-equally populated bins in each feature. The 'kmeans' strategy defines bins based
-on a k-means clustering procedure performed on each feature independently.
+:class:`KBinsDiscretizer` implements different binning strategies, which
+can be selected with the `strategy` parameter. The `"uniform"` strategy
+uses constant-width bins. The `"quantile"` strategy uses the quantiles
+values to have equally populated bins in each feature. The `"kmeans"`
+strategy defines bins based on a k-means clustering procedure performed
+on each feature independently.
 
 .. topic:: Examples:
 
   * :ref:`sphx_glr_auto_examples_preprocessing_plot_discretization.py`
   * :ref:`sphx_glr_auto_examples_preprocessing_plot_discretization_classification.py`
   * :ref:`sphx_glr_auto_examples_preprocessing_plot_discretization_strategies.py`
+
+.. _preprocessing_mdlp_discretization:
+
+MDLP discretization
+-------------------
+
+:class:`MDLPDiscretizer` discretizes continuous features using the
+entropy criterion with the *Minimum Description Length Principle*
+(*MDLP*) as stopping rule::
+
+  >>> # Explictly require this experimental feature
+  >>> from sklearn.experimental import enable_mdlp_discretizer  # noqa
+  >>> # Now you can import normally from preprocessing
+  >>> from sklearn.preprocessing import MDLPDiscretizer
+  >>> X = np.array([[ -3., 5., 15 ],
+  ...               [  0., 6., 14 ],
+  ...               [  6., 3., 11 ]])
+  >>> y = np.array([1, 1, 2])
+  >>> encode = "ordinal"
+  >>> est = preprocessing.MDLPDiscretizer(encode=encode)
+  >>> est = est.fit(X, y)
+  >>> est.bin_edges_
+  array([array([-3.,  3.,  6.]), array([3., 4., 6.]),
+         array([11. , 12.5, 15. ])], dtype=object)
+
+Based on these bin intervals, `X` is transformed as follows::
+
+  >>> est.transform(X)  # doctest: +SKIP
+  array([[0., 1., 1.],
+         [0., 1., 1.],
+         [1., 0., 0.]])
+
+The resulting dataset contains ordinal attributes which can
+be further used in a :class:`~sklearn.pipeline.Pipeline`.
+
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_preprocessing_plot_discretization_iris.py`
+
+.. topic:: References
+
+  * U. M. Fayyad and K. B. Irani, Multi-Interval Discretization
+    of Continuous -Valued Attributes for Classification Learning,
+    International Joint Conferences on Artificial Intelligence, 1993
 
 .. _preprocessing_binarization:
 

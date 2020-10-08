@@ -458,6 +458,7 @@ Samples generator
    experimental.enable_hist_gradient_boosting
    experimental.enable_iterative_imputer
    experimental.enable_successive_halving
+   experimental.enable_mdlp_discretizer
 
 
 .. _feature_extraction_ref:
@@ -1397,6 +1398,7 @@ details.
    preprocessing.Binarizer
    preprocessing.FunctionTransformer
    preprocessing.KBinsDiscretizer
+   preprocessing.MDLPDiscretizer
    preprocessing.KernelCenterer
    preprocessing.LabelBinarizer
    preprocessing.LabelEncoder
