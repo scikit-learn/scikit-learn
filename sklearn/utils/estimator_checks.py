@@ -594,7 +594,7 @@ def _set_checking_parameters(estimator):
         # NMF
         if estimator.__class__.__name__ == 'NMF':
             # FIXME : init should be removed in 0.26
-            estimator.set_params(max_iter=100, init='nndsvd')
+            estimator.set_params(max_iter=100, init='nndsvda')
         # MLP
         if estimator.__class__.__name__ in ['MLPClassifier', 'MLPRegressor']:
             estimator.set_params(max_iter=100)

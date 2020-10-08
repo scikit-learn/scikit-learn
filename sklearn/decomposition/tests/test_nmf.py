@@ -43,7 +43,7 @@ def test_parameter_checking():
     A = np.ones((2, 2))
     name = 'spam'
     # FIXME : should be removed in 0.26
-    init = 'nndsvd'
+    init = 'nndsvda'
     msg = "Invalid solver parameter: got 'spam' instead of one of"
     assert_raise_message(ValueError, msg, NMF(solver=name, init=init).fit, A)
     msg = "Invalid init parameter: got 'spam' instead of one of"
@@ -179,9 +179,7 @@ def test_n_components_greater_n_features():
     # Smoke test for the case of more components than features.
     rng = np.random.mtrand.RandomState(42)
     A = np.abs(rng.randn(30, 10))
-    # FIXME : should be removed in 0.26
-    init = 'random'
-    NMF(n_components=15, random_state=0, tol=1e-2, init=init).fit(A)
+    NMF(n_components=15, random_state=0, tol=1e-2).fit(A)
 
 
 @pytest.mark.parametrize('solver', ['cd', 'mu'])
@@ -442,7 +440,7 @@ def test_nmf_regularization():
     X = np.abs(rng.randn(n_samples, n_features))
 
     # FIXME : should be removed in 0.26
-    init = 'nndsvd'
+    init = 'nndsvda'
     # L1 regularization should increase the number of zeros
     l1_ratio = 1.
     for solver in ['cd', 'mu']:
@@ -553,7 +551,7 @@ def test_nmf_dtype_match(dtype_in, dtype_out, solver, regularization):
     X = np.random.RandomState(0).randn(20, 15).astype(dtype_in, copy=False)
     np.abs(X, out=X)
     # FIXME : should be removed in 0.26
-    init = 'nndsvd'
+    init = 'nndsvda'
     nmf = NMF(solver=solver, regularization=regularization, init=init)
 
     assert nmf.fit(X).transform(X).dtype == dtype_out
@@ -569,7 +567,7 @@ def test_nmf_float32_float64_consistency(solver, regularization):
     X = np.random.RandomState(0).randn(50, 7)
     np.abs(X, out=X)
     # FIXME : should be removed in 0.26
-    init = 'nndsvd'
+    init = 'nndsvda'
     nmf32 = NMF(solver=solver, regularization=regularization, random_state=0,
                 init=init)
     W32 = nmf32.fit_transform(X.astype(np.float32))

@@ -217,7 +217,7 @@ class MyNMFWithBadErrorMessage(NMF):
     # FIXME : should be removed in 0.26
     def __init__(self):
         super().__init__()
-        self.init = 'nndsvd'
+        self.init = 'nndsvda'
 
     def fit(self, X, y=None, **params):
         X = check_array(X, accept_sparse=('csr', 'csc'),

@@ -211,7 +211,7 @@ def test_fit_docstring_attributes(name, Estimator):
 
     # TO BE REMOVED for v0.26 (avoid FutureWarning)
     if Estimator.__name__ == 'NMF':
-        est.init = 'nndsvd'
+        est.init = 'nndsvda'
 
     X, y = make_classification(n_samples=20, n_features=3,
                                n_redundant=0, n_classes=2,
