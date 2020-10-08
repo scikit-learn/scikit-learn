@@ -629,6 +629,7 @@ class ClusterMixin:
 class BiclusterMixin:
     """Mixin class for all bicluster estimators in scikit-learn."""
 
+    @property
     def biclusters_(self):
         """Convenient way to get row and column indicators together.
 
