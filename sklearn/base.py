@@ -918,8 +918,10 @@ def _is_pairwise(estimator):
 
     - If the `_pairwise` attribute and the tag are present and consistent,
       then use the value and not issue a warning.
+    - If the `_pairwise` attribute and the tag are present and not
       consistent, use the `_pairwise` value and issue a deprecation
       warning.
+    - If only the `_pairwise` attribute is present and it is not False,
       issue a deprecation warning and use the `_pairwise` value.
 
     Parameters
