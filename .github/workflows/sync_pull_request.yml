@@ -11,7 +11,7 @@ jobs:
       - name: Remove label
         run: |
           # The label is always removed so that this action can be triggered
-          # again by adding the label even if the merge fails
+          # again by adding the label even if the sync fails.
 
           curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -X "DELETE" https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/labels/ci%20sync
       - uses: actions/checkout@v2
