@@ -150,8 +150,7 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
     error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
-        If a numeric value is given, FitFailedWarning is raised. This parameter
-        does not affect the refit step, which will always raise the error.
+        If a numeric value is given, FitFailedWarning is raised.
 
         .. versionadded:: 0.20
 
@@ -403,8 +402,7 @@ def cross_val_score(estimator, X, y=None, *, groups=None, scoring=None,
     error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
-        If a numeric value is given, FitFailedWarning is raised. This parameter
-        does not affect the refit step, which will always raise the error.
+        If a numeric value is given, FitFailedWarning is raised.
 
         .. versionadded:: 0.20
 
@@ -491,8 +489,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
-        If a numeric value is given, FitFailedWarning is raised. This parameter
-        does not affect the refit step, which will always raise the error.
+        If a numeric value is given, FitFailedWarning is raised.
 
     parameters : dict or None
         Parameters to be set on the estimator.
@@ -819,6 +816,11 @@ def cross_val_predict(estimator, X, y=None, *, groups=None, cv=None,
     X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
+    splits = list(cv.split(X, y, groups))
+
+    test_indices = np.concatenate([test for _, test in splits])
+    if not _check_is_permutation(test_indices, _num_samples(X)):
+        raise ValueError('cross_val_predict only works for partitions')
 
     # If classification methods produce multiple columns of output,
     # we need to manually encode classes to ensure consistent column ordering.
@@ -839,17 +841,9 @@ def cross_val_predict(estimator, X, y=None, *, groups=None, cv=None,
     # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
                         pre_dispatch=pre_dispatch)
-    prediction_blocks = parallel(delayed(_fit_and_predict)(
+    predictions = parallel(delayed(_fit_and_predict)(
         clone(estimator), X, y, train, test, verbose, fit_params, method)
-        for train, test in cv.split(X, y, groups))
-
-    # Concatenate the predictions
-    predictions = [pred_block_i for pred_block_i, _ in prediction_blocks]
-    test_indices = np.concatenate([indices_i
-                                   for _, indices_i in prediction_blocks])
-
-    if not _check_is_permutation(test_indices, _num_samples(X)):
-        raise ValueError('cross_val_predict only works for partitions')
+        for train, test in splits)
 
     inv_test_indices = np.empty(len(test_indices), dtype=int)
     inv_test_indices[test_indices] = np.arange(len(test_indices))
@@ -916,9 +910,6 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
     -------
     predictions : sequence
         Result of calling 'estimator.method'
-
-    test : array-like
-        This is the value of the test parameter
     """
     # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}
@@ -948,7 +939,7 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
             n_classes = len(set(y)) if y.ndim == 1 else y.shape[1]
             predictions = _enforce_prediction_order(
                 estimator.classes_, predictions, n_classes, method)
-    return predictions, test
+    return predictions
 
 
 def _enforce_prediction_order(classes, predictions, n_classes, method):
@@ -1288,8 +1279,7 @@ def learning_curve(estimator, X, y, *, groups=None,
     error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
-        If a numeric value is given, FitFailedWarning is raised. This parameter
-        does not affect the refit step, which will always raise the error.
+        If a numeric value is given, FitFailedWarning is raised.
 
         .. versionadded:: 0.20
 
@@ -1560,8 +1550,7 @@ def validation_curve(estimator, X, y, *, param_name, param_range, groups=None,
     error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
-        If a numeric value is given, FitFailedWarning is raised. This parameter
-        does not affect the refit step, which will always raise the error.
+        If a numeric value is given, FitFailedWarning is raised.
 
         .. versionadded:: 0.20
 

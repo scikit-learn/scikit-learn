@@ -19,6 +19,7 @@ from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
 from ..base import RegressorMixin
 from ..utils import check_array
 from ..utils.validation import _deprecate_positional_args
+from ..utils.deprecation import deprecated
 
 
 class KNeighborsRegressor(KNeighborsMixin,
@@ -155,6 +156,14 @@ class KNeighborsRegressor(KNeighborsMixin,
               metric_params=metric_params, n_jobs=n_jobs, **kwargs)
         self.weights = _check_weights(weights)
 
+    def _more_tags(self):
+        # For cross-validation routines to split data correctly
+        return {'pairwise': self.metric == 'precomputed'}
+
+    # TODO: Remove in 0.26
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 0.26.")
     @property
     def _pairwise(self):
         # For cross-validation routines to split data correctly
