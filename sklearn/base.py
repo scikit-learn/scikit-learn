@@ -905,7 +905,7 @@ def _is_estimator_type(estimator, estimator_type):
         if estimator_type_attribute != estimator_type_tag:
             warnings.warn("_estimator_type attribute was deprecated in 0.24 "
                           "and will be removed in 0.26. Set the estimator "
-                          "tags of your estimator instead", FutureWarning)
+                          "tags of your estimator instead.", FutureWarning)
 
         return estimator_type_attribute == estimator_type
 

@@ -596,7 +596,7 @@ def test_is_pairwise():
 
 # TODO: Remove in 0.26 when the _estimator_type attribute is removed
 def test_is_estimator_type():
-    # Test the is_estimator_type function
+    # Test the _is_estimator_type function
 
     # The _estimator_type attribute is not
     # consistent with the estimator_type tag
@@ -624,10 +624,8 @@ def test_is_estimator_type():
 
     estimator = NotTagClassifier()
 
-    with pytest.warns(None) as record:
-        assert not _is_estimator_type(estimator, "classifier")
-
-    assert not record
+    with pytest.warns(FutureWarning, match=msg):
+        assert _is_estimator_type(estimator, "classifier")
 
     # The estimator_type tag is present while the
     # _estimator_type attribute is not present
