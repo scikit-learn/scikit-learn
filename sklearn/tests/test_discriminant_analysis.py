@@ -18,7 +18,13 @@ from sklearn.datasets import make_blobs
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 from sklearn.discriminant_analysis import _cov
+from sklearn.covariance import ledoit_wolf
+from sklearn.cluster import KMeans
 
+from sklearn.covariance import ShrunkCovariance
+from sklearn.covariance import LedoitWolf
+
+from sklearn.preprocessing import StandardScaler
 
 # Data is just 6 separable points in the plane
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]], dtype='f')
@@ -74,7 +80,7 @@ def test_lda_predict():
                            'solver %s' % solver)
         y_log_proba_pred1 = clf.predict_log_proba(X1)
         assert_allclose(np.exp(y_log_proba_pred1), y_proba_pred1,
-                        rtol=1e-6, err_msg='solver %s' % solver)
+                        rtol=1e-6, atol=1e-6, err_msg='solver %s' % solver)
 
         # Primarily test for commit 2f34950 -- "reuse" of priors
         y_pred3 = clf.fit(X, y3).predict(X)
@@ -88,9 +94,35 @@ def test_lda_predict():
     assert_raises(ValueError, clf.fit, X, y)
     clf = LinearDiscriminantAnalysis(solver="svd", shrinkage="auto")
     assert_raises(NotImplementedError, clf.fit, X, y)
+    clf = LinearDiscriminantAnalysis(solver="lsqr", shrinkage=np.array([1, 2]))
+    with pytest.raises(TypeError,
+                       match="shrinkage must be a float or a string"):
+        clf.fit(X, y)
+    clf = LinearDiscriminantAnalysis(solver="lsqr",
+                                     shrinkage=0.1,
+                                     covariance_estimator=ShrunkCovariance())
+    with pytest.raises(ValueError,
+                       match=("covariance_estimator and shrinkage "
+                              "parameters are not None. "
+                              "Only one of the two can be set.")):
+        clf.fit(X, y)
     # Test unknown solver
     clf = LinearDiscriminantAnalysis(solver="dummy")
     assert_raises(ValueError, clf.fit, X, y)
+
+    # test bad solver with covariance_estimator
+    clf = LinearDiscriminantAnalysis(solver="svd",
+                                     covariance_estimator=LedoitWolf())
+    with pytest.raises(ValueError,
+                       match="covariance estimator is not supported with svd"):
+        clf.fit(X, y)
+
+    # test bad covariance estimator
+    clf = LinearDiscriminantAnalysis(solver="lsqr",
+                                     covariance_estimator=KMeans(n_clusters=2))
+    with pytest.raises(ValueError,
+                       match="KMeans does not have a covariance_ attribute"):
+        clf.fit(X, y)
 
 
 @pytest.mark.parametrize("n_classes", [2, 3])
@@ -325,6 +357,57 @@ def test_lda_store_covariance():
         clf.covariance_,
         np.array([[0.422222, 0.088889], [0.088889, 0.533333]])
     )
+
+
+@pytest.mark.parametrize('seed', range(10))
+def test_lda_shrinkage(seed):
+    # Test that shrunk covariance estimator and shrinkage parameter behave the
+    # same
+    rng = np.random.RandomState(seed)
+    X = rng.rand(100, 10)
+    y = rng.randint(3, size=(100))
+    c1 = LinearDiscriminantAnalysis(store_covariance=True, shrinkage=0.5,
+                                    solver="lsqr")
+    c2 = LinearDiscriminantAnalysis(
+            store_covariance=True,
+            covariance_estimator=ShrunkCovariance(shrinkage=0.5),
+            solver="lsqr")
+    c1.fit(X, y)
+    c2.fit(X, y)
+    assert_allclose(c1.means_, c2.means_)
+    assert_allclose(c1.covariance_, c2.covariance_)
+
+
+def test_lda_ledoitwolf():
+    # When shrinkage="auto" current implementation uses ledoitwolf estimation
+    # of covariance after standardizing the data. This checks that it is indeed
+    # the case
+    class StandardizedLedoitWolf():
+        def fit(self, X):
+            sc = StandardScaler()  # standardize features
+            X_sc = sc.fit_transform(X)
+            s = ledoit_wolf(X_sc)[0]
+            # rescale
+            s = sc.scale_[:, np.newaxis] * s * sc.scale_[np.newaxis, :]
+            self.covariance_ = s
+
+    rng = np.random.RandomState(0)
+    X = rng.rand(100, 10)
+    y = rng.randint(3, size=(100,))
+    c1 = LinearDiscriminantAnalysis(
+        store_covariance=True,
+        shrinkage="auto",
+        solver="lsqr"
+    )
+    c2 = LinearDiscriminantAnalysis(
+        store_covariance=True,
+        covariance_estimator=StandardizedLedoitWolf(),
+        solver="lsqr"
+    )
+    c1.fit(X, y)
+    c2.fit(X, y)
+    assert_allclose(c1.means_, c2.means_)
+    assert_allclose(c1.covariance_, c2.covariance_)
 
 
 @pytest.mark.parametrize('n_features', [3, 5])

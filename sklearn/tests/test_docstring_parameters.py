@@ -16,9 +16,10 @@ from sklearn.utils import IS_PYPY
 from sklearn.utils._testing import check_docstring_parameters
 from sklearn.utils._testing import _get_func_name
 from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import all_estimators
+from sklearn.utils import all_estimators
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_y
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_x
+from sklearn.utils.estimator_checks import _construct_instance
 from sklearn.utils.deprecation import _is_deprecated
 from sklearn.externals._pep562 import Pep562
 from sklearn.datasets import make_classification
@@ -177,26 +178,36 @@ def test_fit_docstring_attributes(name, Estimator):
     doc = docscrape.ClassDoc(Estimator)
     attributes = doc['Attributes']
 
-    IGNORED = {'ClassifierChain', 'ColumnTransformer', 'CountVectorizer',
-               'DictVectorizer', 'FeatureUnion', 'GaussianRandomProjection',
-               'GridSearchCV', 'MultiOutputClassifier', 'MultiOutputRegressor',
+    IGNORED = {'CCA', 'ClassifierChain', 'ColumnTransformer',
+               'CountVectorizer', 'DictVectorizer', 'FeatureUnion',
+               'GaussianRandomProjection', 'GridSearchCV',
+               'MultiOutputClassifier', 'MultiOutputRegressor',
                'NoSampleWeightWrapper', 'OneVsOneClassifier',
-               'OneVsRestClassifier', 'OutputCodeClassifier', 'Pipeline',
-               'RFE', 'RFECV', 'RandomizedSearchCV', 'RegressorChain',
-               'SelectFromModel', 'SparseCoder', 'SparseRandomProjection',
+               'OutputCodeClassifier', 'Pipeline', 'PLSCanonical',
+               'PLSRegression', 'PLSSVD', 'RFE', 'RFECV',
+               'RandomizedSearchCV', 'RegressorChain', 'SelectFromModel',
+               'SparseCoder', 'SparseRandomProjection',
                'SpectralBiclustering', 'StackingClassifier',
                'StackingRegressor', 'TfidfVectorizer', 'VotingClassifier',
-               'VotingRegressor'}
+               'VotingRegressor', 'SequentialFeatureSelector',
+               'HalvingGridSearchCV', 'HalvingRandomSearchCV'}
     if Estimator.__name__ in IGNORED or Estimator.__name__.startswith('_'):
         pytest.skip("Estimator cannot be fit easily to test fit attributes")
 
-    est = Estimator()
+    est = _construct_instance(Estimator)
 
     if Estimator.__name__ == 'SelectKBest':
         est.k = 2
 
     if Estimator.__name__ == 'DummyClassifier':
         est.strategy = "stratified"
+
+    if 'PLS' in Estimator.__name__ or 'CCA' in Estimator.__name__:
+        est.n_components = 1  # default = 2 is invalid for single target.
+
+    # TO BE REMOVED for v0.25 (avoid FutureWarning)
+    if Estimator.__name__ == 'AffinityPropagation':
+        est.random_state = 63
 
     X, y = make_classification(n_samples=20, n_features=3,
                                n_redundant=0, n_classes=2,
@@ -212,7 +223,9 @@ def test_fit_docstring_attributes(name, Estimator):
     else:
         est.fit(X, y)
 
-    skipped_attributes = {'n_features_in_'}
+    skipped_attributes = {'n_features_in_',
+                          'x_scores_',  # For PLS, TODO remove in 0.26
+                          'y_scores_'}  # For PLS, TODO remove in 0.26
 
     for attr in attributes:
         if attr.name in skipped_attributes:
@@ -221,29 +234,20 @@ def test_fit_docstring_attributes(name, Estimator):
         # As certain attributes are present "only" if a certain parameter is
         # provided, this checks if the word "only" is present in the attribute
         # description, and if not the attribute is required to be present.
-        if 'only ' not in desc:
+        if 'only ' in desc:
+            continue
+        # ignore deprecation warnings
+        with ignore_warnings(category=FutureWarning):
             assert hasattr(est, attr.name)
 
-    IGNORED = {'BayesianRidge', 'Birch', 'CCA', 'CategoricalNB', 'ElasticNet',
-               'ElasticNetCV', 'GaussianProcessClassifier',
-               'GradientBoostingRegressor', 'HistGradientBoostingClassifier',
-               'HistGradientBoostingRegressor', 'IsolationForest',
-               'KNeighborsClassifier', 'KNeighborsRegressor',
-               'KNeighborsTransformer', 'KernelCenterer', 'KernelDensity',
-               'LarsCV', 'Lasso', 'LassoLarsCV', 'LassoLarsIC',
-               'LatentDirichletAllocation', 'LocalOutlierFactor', 'MDS',
-               'MiniBatchKMeans', 'MLPClassifier', 'MLPRegressor',
-               'MultiTaskElasticNet', 'MultiTaskElasticNetCV',
-               'MultiTaskLasso', 'MultiTaskLassoCV', 'NearestNeighbors',
-               'NuSVR', 'OAS', 'OneClassSVM', 'OrthogonalMatchingPursuit',
-               'PLSCanonical', 'PLSRegression', 'PLSSVD',
-               'PassiveAggressiveClassifier', 'Perceptron', 'RBFSampler',
-               'RadiusNeighborsClassifier', 'RadiusNeighborsRegressor',
-               'RadiusNeighborsTransformer', 'RandomTreesEmbedding', 'SVR',
-               'SkewedChi2Sampler'}
+    IGNORED = {'BayesianRidge', 'Birch', 'CCA',
+               'LarsCV', 'Lasso',
+               'OrthogonalMatchingPursuit',
+               'PLSCanonical', 'PLSSVD'}
+
     if Estimator.__name__ in IGNORED:
         pytest.xfail(
-            reason="Classifier has too many undocumented attributes.")
+            reason="Estimator has too many undocumented attributes.")
 
     fit_attr = [k for k in est.__dict__.keys() if k.endswith('_')
                 and not k.startswith('_')]

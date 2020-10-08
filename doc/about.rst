@@ -38,8 +38,18 @@ in the FAQ.
 
    :ref:`How you can contribute to the project <contributing>`
 
+Triage Team
+-----------
+
+The following people are active contributors who also help with
+:ref:`triaging issues <bug_triaging>`, PRs, and general
+maintenance:
+
+.. include:: triage_team.rst
+
 Emeritus Core Developers
 ------------------------
+
 The following people have been active contributors in the past, but are no
 longer active in the project:
 
@@ -271,31 +281,6 @@ July 2017.
    </div>
    </div>
 
-............
-
-.. raw:: html
-
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
-
-`Anaconda, Inc <https://www.anaconda.com/>`_ funds Adrin Jalali since 2019.
-
-.. raw:: html
-
-   </div>
-
-   <div class="sk-sponsor-div-box">
-
-.. image:: images/anaconda.png
-   :width: 100pt
-   :align: center
-   :target: https://sydney.edu.au/
-
-.. raw:: html
-
-   </div>
-   </div>
-
 Past Sponsors
 .............
 
@@ -347,6 +332,31 @@ time of Joris van den Bossche (2017-2018).
    :width: 100pt
    :align: center
    :target: https://www.datascience-paris-saclay.fr/
+
+.. raw:: html
+
+   </div>
+   </div>
+
+............
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`Anaconda, Inc <https://www.anaconda.com/>`_ funded Adrin Jalali in 2019.
+
+.. raw:: html
+
+   </div>
+
+   <div class="sk-sponsor-div-box">
+
+.. image:: images/anaconda.png
+   :width: 100pt
+   :align: center
+   :target: https://www.anaconda.com/
 
 .. raw:: html
 

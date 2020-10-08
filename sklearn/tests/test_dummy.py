@@ -756,7 +756,6 @@ def test_dtype_of_classifier_probas(strategy):
     assert probas.dtype == np.float64
 
 
-@pytest.mark.filterwarnings("ignore:The default value of strategy.*")  # 0.24
 @pytest.mark.parametrize('Dummy', (DummyRegressor, DummyClassifier))
 def test_n_features_in_(Dummy):
     X = [[1, 2]]
@@ -765,22 +764,3 @@ def test_n_features_in_(Dummy):
     assert not hasattr(d, 'n_features_in_')
     d.fit(X, y)
     assert d.n_features_in_ is None
-
-
-@pytest.mark.parametrize("Dummy", (DummyRegressor, DummyClassifier))
-def test_outputs_2d_deprecation(Dummy):
-    X = [[1, 2]]
-    y = [0]
-    with pytest.warns(FutureWarning,
-                      match="will be removed in version 0.24"):
-        Dummy().fit(X, y).outputs_2d_
-
-
-# TODO: Remove in 0.24 when DummyClassifier's `strategy` default updates
-def test_strategy_stratified_deprecated_for_prior():
-    X, y = [[1, 2]], [0]
-
-    msg = ("The default value of strategy will change from "
-           "stratified to prior in 0.24")
-    with pytest.warns(FutureWarning, match=msg):
-        DummyClassifier().fit(X, y)
