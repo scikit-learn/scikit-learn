@@ -9,6 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name:
+        if: github.event.issue.state == 'open'
         run: |
           echo "Marking issue ${{ github.event.issue.number }} as help wanted"
           curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -d '{"labels": ["help wanted"]}' https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/labels

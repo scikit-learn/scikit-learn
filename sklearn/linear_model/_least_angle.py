@@ -15,7 +15,7 @@ import warnings
 import numpy as np
 from scipy import linalg, interpolate
 from scipy.linalg.lapack import get_lapack_funcs
-from joblib import Parallel, delayed
+from joblib import Parallel
 
 from ._base import LinearModel
 from ..base import RegressorMixin, MultiOutputMixin
@@ -25,6 +25,7 @@ from ..utils import check_random_state
 from ..model_selection import check_cv
 from ..exceptions import ConvergenceWarning
 from ..utils.validation import _deprecate_positional_args
+from ..utils.fixes import delayed
 
 SOLVE_TRIANGULAR_ARGS = {'check_finite': False}
 
@@ -852,10 +853,14 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         `y` values, to satisfy the model's assumption of
         one-at-a-time computations. Might help with stability.
 
+        .. versionadded:: 0.23
+
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for jittering. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`. Ignored if `jitter` is None.
+
+        .. versionadded:: 0.23
 
     Attributes
     ----------
@@ -1105,10 +1110,14 @@ class LassoLars(Lars):
         `y` values, to satisfy the model's assumption of
         one-at-a-time computations. Might help with stability.
 
+        .. versionadded:: 0.23
+
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for jittering. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`. Ignored if `jitter` is None.
+
+        .. versionadded:: 0.23
 
     Attributes
     ----------
