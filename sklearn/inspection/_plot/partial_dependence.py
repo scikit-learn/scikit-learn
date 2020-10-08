@@ -571,6 +571,35 @@ class PartialDependenceDisplay:
             return ceil(n_samples * self.subsample)
         return n_samples
 
+    def _plot_ice_lines(
+        self, ice_lines, feature_values, n_ice_to_plot,
+        ax, pd_plot_idx, n_total_lines_by_plot, individual_line_kw
+    ):
+        rng = check_random_state(self.random_state)
+        lines_ravel = self.lines_.ravel(order='C')
+        # subsample ice
+        ice_lines_idx = rng.choice(
+            ice_lines.shape[0], n_ice_to_plot, replace=False,
+        )
+        ice_lines_subsampled = ice_lines[ice_lines_idx, :]
+        # plot the subsampled ice
+        for ice_idx, ice in enumerate(ice_lines_subsampled):
+            line_idx = pd_plot_idx * n_total_lines_by_plot + ice_idx
+            lines_ravel[line_idx] = ax.plot(
+                feature_values, ice.ravel(), **individual_line_kw
+            )[0]
+
+    def _plot_average_dependence(
+        self, avg_preds, feature_values, ax, pd_line_idx, label, line_kw,
+    ):
+        lines_ravel = self.lines_.ravel(order='C')
+        lines_ravel[pd_line_idx] = ax.plot(
+            feature_values,
+            avg_preds,
+            label=label,
+            **line_kw,
+        )[0]
+
     def plot(self, ax=None, n_cols=3, line_kw=None, contour_kw=None):
         """Plot partial dependence plots.
 
@@ -610,8 +639,6 @@ class PartialDependenceDisplay:
         from matplotlib.ticker import ScalarFormatter  # noqa
         from matplotlib.gridspec import GridSpecFromSubplotSpec  # noqa
 
-        rng = check_random_state(self.random_state)
-
         if line_kw is None:
             line_kw = {}
         if contour_kw is None:
@@ -636,11 +663,10 @@ class PartialDependenceDisplay:
             n_ice_to_plot = self._get_sample_count(
                 len(self.pd_results[0].individual[0])
             )
-            n_lines = (
-                n_ice_to_plot
-                if self.kind == "individual"
-                else n_ice_to_plot + 1
-            )
+            if self.kind == "individual":
+                n_lines = n_ice_to_plot
+            else:
+                n_lines = n_ice_to_plot + 1
         else:
             n_lines = 1
 
@@ -701,7 +727,6 @@ class PartialDependenceDisplay:
         self.deciles_hlines_ = np.empty_like(self.axes_, dtype=object)
 
         # Create 1d views of these 2d arrays for easy indexing
-        lines_ravel = self.lines_.ravel(order='C')
         contours_ravel = self.contours_.ravel(order='C')
         vlines_ravel = self.deciles_vlines_.ravel(order='C')
         hlines_ravel = self.deciles_hlines_.ravel(order='C')
@@ -709,7 +734,6 @@ class PartialDependenceDisplay:
         for pd_plot_idx, (axi, feature_idx, pd_result) in enumerate(
             zip(self.axes_.ravel(), self.features, self.pd_results)
         ):
-
             avg_preds = None
             preds = None
             values = pd_result["values"]
@@ -723,30 +747,30 @@ class PartialDependenceDisplay:
 
             if len(values) == 1:
                 if self.kind in ("individual", "both"):
-                    ice_lines = preds[self.target_idx]
-                    ice_lines_idx = rng.choice(
-                        ice_lines.shape[0], n_ice_to_plot, replace=False
+                    self._plot_ice_lines(
+                        preds[self.target_idx],
+                        values[0],
+                        n_ice_to_plot,
+                        axi,
+                        pd_plot_idx,
+                        n_lines,
+                        individual_line_kw
                     )
-                    ice_lines_subsampled = ice_lines[ice_lines_idx, :]
-                    for ice_idx, ice in enumerate(ice_lines_subsampled):
-                        line_idx = pd_plot_idx * n_lines + ice_idx
-                        lines_ravel[line_idx] = axi.plot(
-                            values[0], ice.ravel(), **individual_line_kw
-                        )[0]
                 if self.kind in ("average", "both"):
                     label = None if self.kind == "average" else "average"
                     # the average is stored as the last line
-                    pd_line_idx = (
-                        pd_plot_idx
-                        if self.kind == "average"
-                        else pd_plot_idx * n_lines + n_ice_to_plot
-                    )
-                    lines_ravel[pd_line_idx] = axi.plot(
-                        values[0],
+                    if self.kind == "average":
+                        pd_line_idx = pd_plot_idx
+                    else:
+                        pd_line_idx = pd_plot_idx * n_lines + n_ice_to_plot
+                    self._plot_average_dependence(
                         avg_preds[self.target_idx].ravel(),
-                        label=label,
-                        **line_kw,
-                    )[0]
+                        values[0],
+                        axi,
+                        pd_line_idx,
+                        label,
+                        line_kw,
+                    )
             else:
                 # contour plot
                 XX, YY = np.meshgrid(values[0], values[1])
