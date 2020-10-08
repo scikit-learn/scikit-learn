@@ -64,6 +64,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
     Read more in the :ref:`User Guide <Generalized_linear_regression>`.
 
+    .. versionadded:: 0.23
+
     Parameters
     ----------
     alpha : float, default=1
@@ -391,6 +393,8 @@ class PoissonRegressor(GeneralizedLinearRegressor):
 
     Read more in the :ref:`User Guide <Generalized_linear_regression>`.
 
+    .. versionadded:: 0.23
+
     Parameters
     ----------
     alpha : float, default=1
@@ -470,6 +474,8 @@ class GammaRegressor(GeneralizedLinearRegressor):
     """Generalized Linear Model with a Gamma distribution.
 
     Read more in the :ref:`User Guide <Generalized_linear_regression>`.
+
+    .. versionadded:: 0.23
 
     Parameters
     ----------
@@ -553,6 +559,8 @@ class TweedieRegressor(GeneralizedLinearRegressor):
     ``power`` parameter, which determines the underlying distribution.
 
     Read more in the :ref:`User Guide <Generalized_linear_regression>`.
+
+    .. versionadded:: 0.23
 
     Parameters
     ----------

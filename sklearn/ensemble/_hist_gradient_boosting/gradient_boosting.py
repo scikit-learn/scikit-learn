@@ -108,6 +108,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         sample_weight : array-like of shape (n_samples,) default=None
             Weights of training data.
 
+            .. versionadded:: 0.23
+
         Returns
         -------
         self : object
@@ -800,7 +802,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         >>> # explicitly require this experimental feature
         >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
         >>> # now you can import normally from ensemble
-        >>> from sklearn.ensemble import HistGradientBoostingClassifier
+        >>> from sklearn.ensemble import HistGradientBoostingRegressor
 
     Read more in the :ref:`User Guide <histogram_based_gradient_boosting>`.
 
@@ -815,6 +817,10 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         "half least squares loss" and "half poisson deviance" to simplify the
         computation of the gradient. Furthermore, "poisson" loss internally
         uses a log-link and requires ``y >= 0``
+
+        .. versionchanged:: 0.23
+           Added option 'poisson'.
+
     learning_rate : float, default=0.1
         The learning rate, also known as *shrinkage*. This is used as a
         multiplicative factor for the leaves values. Use ``1`` for no
@@ -848,6 +854,9 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         and 0 respectively correspond to a positive constraint, negative
         constraint and no constraint. Read more in the :ref:`User Guide
         <monotonic_cst_gbdt>`.
+
+        .. versionadded:: 0.23
+
     warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble. For results to be valid, the
@@ -857,6 +866,9 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         If 'auto', early stopping is enabled if the sample size is larger than
         10000. If True, early stopping is enabled, otherwise early stopping is
         disabled.
+
+        .. versionadded:: 0.23
+
     scoring : str or callable or None, default='loss'
         Scoring parameter to use for early stopping. It can be a single
         string (see :ref:`scoring_parameter`) or a callable (see
@@ -877,11 +889,10 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         stopping. The higher the tolerance, the more likely we are to early
         stop: higher tolerance means that it will be harder for subsequent
         iterations to be considered an improvement upon the reference score.
-    verbose: int, default=0
+    verbose : int, default=0
         The verbosity level. If not zero, print some information about the
         fitting process.
-    random_state : int, np.random.RandomStateInstance or None, \
-        default=None
+    random_state : int, RandomState instance or None, default=None
         Pseudo-random number generator to control the subsampling in the
         binning process, and the train/validation data split if early stopping
         is enabled.
@@ -1074,6 +1085,9 @@ class HistGradientBoostingClassifier(ClassifierMixin,
         and 0 respectively correspond to a positive constraint, negative
         constraint and no constraint. Read more in the :ref:`User Guide
         <monotonic_cst_gbdt>`.
+
+        .. versionadded:: 0.23
+
     warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble. For results to be valid, the
@@ -1083,6 +1097,9 @@ class HistGradientBoostingClassifier(ClassifierMixin,
         If 'auto', early stopping is enabled if the sample size is larger than
         10000. If True, early stopping is enabled, otherwise early stopping is
         disabled.
+
+        .. versionadded:: 0.23
+
     scoring : str or callable or None, default='loss'
         Scoring parameter to use for early stopping. It can be a single
         string (see :ref:`scoring_parameter`) or a callable (see
@@ -1103,11 +1120,10 @@ class HistGradientBoostingClassifier(ClassifierMixin,
         tolerance, the more likely we are to early stop: higher tolerance
         means that it will be harder for subsequent iterations to be
         considered an improvement upon the reference score.
-    verbose: int, default=0
+    verbose : int, default=0
         The verbosity level. If not zero, print some information about the
         fitting process.
-    random_state : int, np.random.RandomStateInstance or None, \
-        default=None
+    random_state : int, RandomState instance or None, default=None
         Pseudo-random number generator to control the subsampling in the
         binning process, and the train/validation data split if early stopping
         is enabled.

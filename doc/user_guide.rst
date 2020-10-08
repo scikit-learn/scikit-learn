@@ -29,3 +29,4 @@ User Guide
    datasets.rst
    computing.rst
    modules/model_persistence.rst
+   common_pitfalls.rst

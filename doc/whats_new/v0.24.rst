@@ -180,6 +180,11 @@ Changelog
   :func:`decomposition.NMF.non_negative_factorization`.
   :pr:`17414` by :user:`Bharat Raghunathan <Bharat123rox>`.
 
+- |Fix| :meth:`TruncatedSVD.fit_transform` consistently returns the same
+  as :meth:`TruncatedSVD.fit` followed by :meth:`TruncatedSVD.transform`.
+  :pr:`18528` by :user:`Albert Villanova del Moral <albertvillanova>` and
+  :user:`Ruifeng Zheng <zhengruifeng>`.
+
 :mod:`sklearn.discriminant_analysis`
 ....................................
 
@@ -506,6 +511,10 @@ Changelog
   the data intrinsic dimensionality is too high for tree-based methods.
   :pr:`17148` by :user:`Geoffrey Bolmier <gbolmier>`.
 
+- |Fix| :class:`neighbors.NearestCentroid` with a numerical `shrink_threshold`
+  will raise a `ValueError` when fitting on data with all constant features.
+  :pr:`18370` by :user:`Trevor Waite <trewaite>`.
+
 :mod:`sklearn.neural_network`
 .............................
 
@@ -570,6 +579,12 @@ Changelog
   :class:`preprocessing.KBinsDiscretizer`.
   :pr:`16335` by :user:`Arthur Imbert <Henley13>`.
 
+- |Feature| Add ``sample_weight`` parameter to
+  :class:`preprocessing.StandardScaler` for when X is dense. Allows setting
+  individual weights for each sample. :pr:`18510` and
+  :pr:`18447` and :pr:`16066` by :user:`Maria Telenczuk <maikia>` and
+  :user:`Albert Villanova <albertvillanova>` and :user:`<panpiort8>`
+
 :mod:`sklearn.svm`
 ..................
 
@@ -600,6 +615,18 @@ Changelog
 - |Fix| Allow serialized tree based models to be unpickled on a machine
   with different endianness.
   :pr:`17644` by :user:`Qi Zhang <qzhang90>`.
+
+- |Enhancement| Add ``check_methods_sample_order_invariance`` to
+  :func:`~utils.estimator_checks.check_estimator`, which checks that
+  estimator methods are invariant if applied to the same dataset
+  with different sample order :pr:`17598` by :user:`Jason Ngo <ngojason9>`.
+
+Miscellaneous
+.............
+
+- |Enhancement| Calls to ``repr`` are now faster
+  when `print_changed_only=True`, especially with meta-estimators.
+  :pr:`18508` by :user:`Nathan C. <Xethan>`.
 
 Code and Documentation Contributors
 -----------------------------------
