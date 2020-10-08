@@ -115,7 +115,7 @@ def incr_mean_variance_axis_weighted(X, axis, last_mean, last_var,  last_count,
         return incr_mean_variance_axis(X, axis=axis,
                                        last_mean=last_mean,
                                        last_var=last_var,
-                                       last_count=last_count)
+                                       last_n=last_count)
 
     sample_weight = np.array(sample_weight)
     sparse_constructor = (sp.csr_matrix
@@ -191,7 +191,8 @@ def mean_variance_axis(X, axis):
 
 
 @_deprecate_positional_args
-def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n):
+def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n,
+                            sample_weight=None):
     """Compute incremental mean and variance along an axix on a CSR or
     CSC matrix.
 
@@ -216,6 +217,10 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n):
 
     last_n : int with shape (n_features,)
         Number of samples seen so far, excluded X.
+    TODO: last_n should be last_count
+
+    sample_weight : array-like of shape (n_samples,) or None
+        Sample weights. If None, then samples are equally weighted.
 
     Returns
     -------
@@ -236,13 +241,18 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n):
     """
     _raise_error_wrong_axis(axis)
 
+    if sample_weight is None:
+        sample_weight = np.ones(X.shape[0])
+
     if isinstance(X, sp.csr_matrix):
         if axis == 0:
             return _incr_mean_var_axis0(X, last_mean=last_mean,
-                                        last_var=last_var, last_n=last_n)
+                                        last_var=last_var, last_n=last_n,
+                                        sample_weight=sample_weight)
         else:
             return _incr_mean_var_axis0(X.T, last_mean=last_mean,
-                                        last_var=last_var, last_n=last_n)
+                                        last_var=last_var, last_n=last_n,
+                                        sample_weight=sample_weight)
     elif isinstance(X, sp.csc_matrix):
         if axis == 0:
             return _incr_mean_var_axis0(X, last_mean=last_mean,
