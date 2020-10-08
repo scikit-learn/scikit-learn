@@ -25,7 +25,9 @@ from ._testing import ignore_warnings
 from ._testing import create_memmap_backed_data
 from ._testing import raises
 from . import is_scalar_nan
+
 from ..discriminant_analysis import LinearDiscriminantAnalysis
+from ..linear_model import LogisticRegression
 from ..linear_model import Ridge
 
 from ..base import (
@@ -344,10 +346,24 @@ def _construct_instance(Estimator):
                 estimator = Estimator(Ridge())
             else:
                 estimator = Estimator(LinearDiscriminantAnalysis())
+        elif required_parameters in (['estimators'],):
+            # Heterogeneous ensemble classes (i.e. stacking, voting)
+            if issubclass(Estimator, RegressorMixin):
+                estimator = Estimator(estimators=[
+                    ("est1", Ridge(alpha=0.1)),
+                    ("est2", Ridge(alpha=1))
+                ])
+            else:
+                estimator = Estimator(estimators=[
+                    ("est1", LogisticRegression(C=0.1)),
+                    ("est2", LogisticRegression(C=1))
+                ])
         else:
-            raise SkipTest("Can't instantiate estimator {} which requires "
-                           "parameters {}".format(Estimator.__name__,
-                                                  required_parameters))
+            msg = (f"Can't instantiate estimator {Estimator.__name__} "
+                   f"parameters {required_parameters}")
+            # raise additional warning to be shown by pytest
+            warnings.warn(msg, SkipTestWarning)
+            raise SkipTest(msg)
     else:
         estimator = Estimator()
     return estimator
