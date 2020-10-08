@@ -1185,6 +1185,8 @@ Splitter Functions
    model_selection.check_cv
    model_selection.train_test_split
 
+.. _hyper_parameter_optimizers:
+
 Hyper-parameter optimizers
 --------------------------
 
