@@ -13,9 +13,11 @@ from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import ignore_warnings
 
 from sklearn.base import BaseEstimator, clone, is_classifier
+from sklearn.base import _is_pairwise, _is_estimator_type
 from sklearn.svm import SVC
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
+from sklearn.decomposition import KernelPCA
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
@@ -543,14 +545,108 @@ def test_repr_html_wraps():
         assert "<style>" in output
 
 
-@pytest.mark.parametrize(
-    "Estimator, estimator_type",
-    [(DecisionTreeClassifier, "classifier"),
-     (DecisionTreeRegressor, "regressor"),
-     (KMeans, "clusterer"),
-     (BayesianGaussianMixture, "density_estimator"),
-     (IsolationForest, "outlier_detector")])
+# TODO: Remove in 0.26 when the _pairwise attribute is removed
+def test_is_pairwise():
+    # simple checks for _is_pairwise
+    pca = KernelPCA(kernel='precomputed')
+    with pytest.warns(None) as record:
+        assert _is_pairwise(pca)
+    assert not record
+
+    # pairwise attribute that is not consistent with the pairwise tag
+    class IncorrectTagPCA(KernelPCA):
+        _pairwise = False
+
+    pca = IncorrectTagPCA(kernel='precomputed')
+    msg = ("_pairwise was deprecated in 0.24 and will be removed in 0.26. "
+           "Set the estimator tags of your estimator instead")
+    with pytest.warns(FutureWarning, match=msg):
+        assert not _is_pairwise(pca)
+
+    # the _pairwise attribute is present and set to False while the pairwise
+    # tag is not present
+    class FalsePairwise(BaseEstimator):
+        _pairwise = False
+
+        def _get_tags(self):
+            tags = super()._get_tags()
+            del tags['pairwise']
+            return tags
+
+    false_pairwise = FalsePairwise()
+    with pytest.warns(None) as record:
+        assert not _is_pairwise(false_pairwise)
+    assert not record
+
+    # the _pairwise attribute is present and set to True while pairwise tag is
+    # not present
+    class TruePairwise(FalsePairwise):
+        _pairwise = True
+
+    true_pairwise = TruePairwise()
+    with pytest.warns(FutureWarning, match=msg):
+        assert _is_pairwise(true_pairwise)
+
+    # pairwise attribute is not defined thus tag is used
+    est = BaseEstimator()
+    with pytest.warns(None) as record:
+        assert not _is_pairwise(est)
+    assert not record
+
+
+# TODO: Remove in 0.26 when the _estimator_type attribute is removed
+def test_is_estimator_type():
+    # Test the is_estimator_type function
+
+    # The _estimator_type attribute is not
+    # consistent with the estimator_type tag
+    class IncorrectTagClassifier(DecisionTreeClassifier):
+        _estimator_type = "regressor"
+
+    estimator = IncorrectTagClassifier()
+
+    msg = ("_estimator_type attribute was deprecated in "
+           "0.24 and will be removed in 0.26. Set the "
+           "estimator tags of your estimator instead.")
+
+    with pytest.warns(FutureWarning, match=msg):
+        assert not _is_estimator_type(estimator, "classifier")
+
+    # The _estimator_type attribute is present
+    # while the estimator_type tag is not present
+    class NotTagClassifier(DecisionTreeClassifier):
+
+        def _get_tags(self):
+            tags = super()._get_tags()
+            del tags["estimator_type"]
+
+            return tags
+
+    estimator = NotTagClassifier()
+
+    with pytest.warns(None) as record:
+        assert not _is_estimator_type(estimator, "classifier")
+
+    assert not record
+
+    # The estimator_type tag is present while the
+    # _estimator_type attribute is not present
+    estimator = BaseEstimator()
+
+    with pytest.warns(None) as record:
+        assert not _is_estimator_type(estimator, "classifier")
+
+    assert not record
+
+
+@pytest.mark.parametrize("Estimator, estimator_type",
+                         [(DecisionTreeClassifier, "classifier"),
+                          (DecisionTreeRegressor, "regressor"),
+                          (KMeans, "clusterer"),
+                          (BayesianGaussianMixture, "density_estimator"),
+                          (IsolationForest, "outlier_detector")])
 def test_estimator_type_tag(Estimator, estimator_type):
-    # Assert that estimator_type tag is properly set
-    est = Estimator()
-    assert est._get_tags()["estimator_type"] == estimator_type
+    # Test that the estimator_type tag is properly set
+    estimator = Estimator()
+
+    assert estimator._get_tags()["estimator_type"] == estimator_type

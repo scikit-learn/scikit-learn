@@ -511,6 +511,10 @@ div.sk-sidebar-toc-logo {
   height: 52px;
 }
 
+.sk-toc-active {
+  font-weight: bold;
+}
+
 div.sk-sidebar-toc-wrapper {
   font-size: 0.9rem;
   width: 252px;
@@ -549,7 +553,6 @@ div.sk-sidebar-toc ul ul {
 }
 
 div.sk-sidebar-toc ul ul ul {
-  list-style: square;
   margin-left: 1rem;
 }
 
@@ -834,10 +837,6 @@ div.highlight:hover span.copybutton {
 
 div.highlight:hover span.copybutton:hover {
     background-color: #20252B;
-}
-
-div.body img.align-center {
-  max-width: 800px;
 }
 
 div.body img {
@@ -1229,6 +1228,10 @@ table.sk-sponsor-table tr, table.sk-sponsor-table tr:nth-child(odd) {
 
 table.sk-sponsor-table td {
   padding: 0.30rem;
+}
+
+.caption {
+  text-align: center
 }
 
 /* pygments - highlightning */

@@ -466,11 +466,11 @@ class SpectralBiclustering(BaseSpectral):
                 r, c = self.n_clusters
                 int(r)
                 int(c)
-            except (ValueError, TypeError):
+            except (ValueError, TypeError) as e:
                 raise ValueError("Incorrect parameter n_clusters has value:"
                                  " {}. It should either be a single integer"
                                  " or an iterable with two integers:"
-                                 " (n_row_clusters, n_column_clusters)")
+                                 " (n_row_clusters, n_column_clusters)") from e
         if self.n_components < 1:
             raise ValueError("Parameter n_components must be greater than 0,"
                              " but its value is {}".format(self.n_components))

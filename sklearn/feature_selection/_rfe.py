@@ -8,12 +8,14 @@
 
 import numpy as np
 import numbers
-from joblib import Parallel, delayed, effective_n_jobs
+from joblib import Parallel, effective_n_jobs
 
+from ..utils.deprecation import deprecated
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.metaestimators import _safe_split
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _deprecate_positional_args
+from ..utils.fixes import delayed
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
@@ -63,6 +65,9 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         selected. If integer, the parameter is the absolute number of features
         to select. If float between 0 and 1, it is the fraction of features to
         select.
+
+        .. versionchanged:: 0.24
+           Added float values for fractions.
 
     step : int or float, default=1
         If greater than or equal to 1, then ``step`` corresponds to the
@@ -128,10 +133,14 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     -----
     Allows NaN/Inf in the input if the underlying estimator does as well.
 
-    See also
+    See Also
     --------
     RFECV : Recursive feature elimination with built-in cross-validated
-        selection of the best number of features
+        selection of the best number of features.
+    SelectFromModel : Feature selection based on thresholds of importance
+        weights.
+    SequentialFeatureSelector : Sequential cross-validation based feature
+        selection. Does not rely on importance weights.
 
     References
     ----------
@@ -148,6 +157,14 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         self.step = step
         self.importance_getter = importance_getter
         self.verbose = verbose
+
+    # TODO: Remove in 0.26
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute _estimator_type was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 0.26.")
+    @property
+    def _estimator_type(self):
+        return self.estimator._estimator_type
 
     @property
     def classes_(self):
@@ -361,7 +378,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         return {'poor_score': True,
                 'allow_nan': estimator_tags.get('allow_nan', True),
                 'requires_y': True,
-                'estimator_type': estimator_tags['estimator_type']}
+                'estimator_type': estimator_tags.get('estimator_type', None)}
 
 
 class RFECV(RFE):
@@ -497,9 +514,9 @@ class RFECV(RFE):
     >>> selector.ranking_
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
 
-    See also
+    See Also
     --------
-    RFE : Recursive feature elimination
+    RFE : Recursive feature elimination.
 
     References
     ----------

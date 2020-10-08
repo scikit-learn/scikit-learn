@@ -152,9 +152,8 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
 
-    See also
+    See Also
     --------
-
     SGDClassifier
     Perceptron
 
@@ -381,9 +380,8 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     >>> print(regr.predict([[0, 0, 0, 0]]))
     [-0.02306214]
 
-    See also
+    See Also
     --------
-
     SGDRegressor
 
     References

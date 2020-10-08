@@ -1339,3 +1339,12 @@ def test_n_features_in(Vectorizer, X):
     assert not hasattr(vectorizer, 'n_features_in_')
     vectorizer.fit(X)
     assert not hasattr(vectorizer, 'n_features_in_')
+
+
+def test_tie_breaking_sample_order_invariance():
+    # Checks the sample order invariance when setting max_features
+    # non-regression test for #17939
+    vec = CountVectorizer(max_features=1)
+    vocab1 = vec.fit(['hello', 'world']).vocabulary_
+    vocab2 = vec.fit(['world', 'hello']).vocabulary_
+    assert vocab1 == vocab2

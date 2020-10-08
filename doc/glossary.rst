@@ -356,6 +356,19 @@ General Concepts
 
         .. glossary::
 
+            ``_estimator_type``		
+                 This string-valued attribute identifies an estimator as being a		
+                 classifier, regressor, etc. It is set by mixins such as		
+                 :class:`base.ClassifierMixin`, but needs to be more explicitly		
+                 adopted on a :term:`meta-estimator`.  Its value should usually be		
+                 checked by way of a helper such as :func:`base.is_classifier`.
+
+                
+                .. deprecated:: 0.24
+
+                The `_estimator_type` attribute is deprecated in 0.24. From 0.26
+                onward, the `estimator_type` estimator tag must be used instead.
+
             ``_pairwise``
                 This boolean attribute indicates whether the data (``X``) passed to
                 :func:`fit` and similar methods consists of pairwise measures over
@@ -366,6 +379,12 @@ General Concepts
                 extracts a sub-sample of data intended for a pairwise estimator,
                 the data needs to be indexed on both axes, while other data is
                 indexed only on the first axis.
+
+                .. deprecated:: 0.24
+
+                    The _pairwise attribute is deprecated in 0.24. From 0.26
+                    onward, the `pairwise` estimator tag should be used
+                    instead.
 
         For more detailed info, see :ref:`estimator_tags`.
 
@@ -632,9 +651,9 @@ General Concepts
         sample and each column to a training sample.
 
         Use of precomputed X is usually indicated by setting a ``metric``,
-        ``affinity`` or ``kernel`` parameter to the string 'precomputed'.  An
-        estimator should mark itself as being :term:`_pairwise` if this is the
-        case.
+        ``affinity`` or ``kernel`` parameter to the string 'precomputed'. If
+        this is the case, then the estimator should set the `pairwise`
+        estimator tag as True.
 
     rectangular
         Data that can be represented as a matrix with :term:`samples` on the
@@ -1030,7 +1049,9 @@ Target Types
         identified as 'multiclass'.
 
     continuous multioutput
+    continuous multi-output
     multioutput continuous
+    multi-output continuous
         A regression problem where each sample's target consists of ``n_outputs``
         :term:`outputs`, each one a finite floating point number, for a
         fixed int ``n_outputs > 1`` in a particular dataset.
@@ -1045,6 +1066,7 @@ Target Types
         'multiclass-multioutput'.
 
     multiclass
+    multi-class
         A classification problem consisting of more than two classes.  A
         multiclass target may be represented as a 1-dimensional array of
         strings or integers.  A 2d column vector of integers (i.e. a
@@ -1068,7 +1090,9 @@ Target Types
         identically to 'multiclass'.
 
     multiclass multioutput
+    multi-class multi-output
     multioutput multiclass
+    multi-output multi-class
         A classification problem where each sample's target consists of
         ``n_outputs`` :term:`outputs`, each a class label, for a fixed int
         ``n_outputs > 1`` in a particular dataset.  Each output has a
@@ -1094,6 +1118,7 @@ Target Types
         'multiclass-multioutput' for multiclass multioutput input.
 
     multilabel
+    multi-label
         A :term:`multiclass multioutput` target where each output is
         :term:`binary`.  This may be represented as a 2d (dense) array or
         sparse matrix of integers, such that each column is a separate binary

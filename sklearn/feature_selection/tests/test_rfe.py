@@ -415,7 +415,7 @@ def test_rfe_wrapped_estimator(importance_getter, selector,
     # Non-regression test for
     # https://github.com/scikit-learn/scikit-learn/issues/15312
     X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
-    estimator = LinearSVR()
+    estimator = LinearSVR(random_state=0)
 
     log_estimator = TransformedTargetRegressor(regressor=estimator,
                                                func=np.log,
@@ -492,11 +492,12 @@ def test_multioutput(ClsRFE):
     rfe_test.fit(X, y)
 
 
-@pytest.mark.parametrize(
-    "Estimator, estimator_type",
-    [(SVC, "classifier"),
-     (SVR, "regressor")])
-def test_rfe_estimator_type_tag(Estimator, estimator_type):
-    # Assert that estimator_type tag is properly set
-    rfe = RFE(Estimator())
-    assert rfe._get_tags()["estimator_type"] == estimator_type
+def test_rfe_estimator_type_deprecated():
+    # Assert that the _estimator_type attribute is deprecated
+    rfe = RFE(SVC())
+
+    msg = ("Attribute _estimator_type was deprecated in "
+           "version 0.24 and will be removed in 0.26.")
+
+    with pytest.warns(FutureWarning, match=msg):
+        rfe._estimator_type
