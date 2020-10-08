@@ -433,7 +433,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 "version 0.24 and will be removed in 0.26.")
     @property
     def _estimator_type(self):
-        return self.estimator._get_tags()["estimator_type"]
+        return self.estimator._estimator_type
 
     def _more_tags(self):
         # allows cross-validation to see 'precomputed' metrics
