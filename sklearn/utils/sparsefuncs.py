@@ -139,7 +139,7 @@ def incr_mean_variance_axis_weighted(X, axis, last_mean, last_var,  last_count,
 
     # here we calculate: sample_weight*(X-T)**2
     X2 = safe_sparse_dot(sample_weight, X_not_nan.multiply(X_not_nan))
-    T2 = new_sample_count * T*T
+    T2 = new_sample_count * T * T
     two_XT = 2 * T * (safe_sparse_dot(sample_weight, X_not_nan))
     new_unnormalized_variance = X2-two_XT+T2
 
