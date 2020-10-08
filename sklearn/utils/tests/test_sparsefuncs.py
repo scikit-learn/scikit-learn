@@ -118,7 +118,7 @@ def test_incr_mean_variance_axis_weighted(Xw, X, sample_weight,
                                           sparse_constructor):
     Xw_sparse = sparse_constructor(Xw)
     X_sparse = sparse_constructor(X)
-    axis = 0  # 1
+    axis = 0
 
     last_mean = np.zeros(np.size(Xw, 1))
     last_var = np.zeros_like(last_mean)
@@ -147,7 +147,6 @@ def test_incr_mean_variance_axis_weighted(Xw, X, sample_weight,
     assert_array_almost_equal(vars1, vars_w1)
     assert_array_almost_equal(n_incr1, n_incr_w1)
 
-    # TODO: test for csr/csc
 
 def test_incr_mean_variance_axis():
     for axis in [0, 1]:
