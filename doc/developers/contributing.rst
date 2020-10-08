@@ -198,8 +198,10 @@ Contributing code
 
 Video resources:
 ----------------
-These videos are step-by-step introductions on how to contribute to scikit-learn, and are a great companion to the following text guidelines.
-Please make sure to still check our guidelines below, since they describe our latest up-to-date workflow.
+These videos are step-by-step introductions on how to contribute to
+scikit-learn, and are a great companion to the following text guidelines.
+Please make sure to still check our guidelines below, since they describe our
+latest up-to-date workflow.
 - Crash Course in Contributing to Scikit-Learn & Open Source Projects:
     -`Video <https://youtu.be/5OL8XoMMOfA>`__
     -`Transcript <https://github.com/data-umbrella/event-transcripts/blob/main/2020/05-andreas-mueller-contributing.md>`__
