@@ -1917,8 +1917,7 @@ def test_maxabs_scaler_partial_fit():
                                 n_samples_seen=scaler_incr.n_samples_seen_)
 
 
-@pytest.mark.parametrize("norm", ["l1", "l2", "max"])
-def test_normalizer_norms(norm):
+def test_normalizer_l1():
     rng = np.random.RandomState(0)
     X_dense = rng.randn(4, 5)
     X_sparse_unpruned = sparse.csr_matrix(X_dense)
