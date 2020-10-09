@@ -117,7 +117,8 @@ def test_spectral_embedding_two_components(seed=36):
         se_precomp.fit_transform(affinity.astype(np.float32))
     # thresholding on the first components using 0.
     label_ = np.array(embedded_coordinate.ravel() < 0, dtype="float")
-    assert normalized_mutual_info_score(true_label, label_) == 1.0
+    assert normalized_mutual_info_score(
+        true_label, label_) == pytest.approx(1.0)
 
 
 @pytest.mark.parametrize("X", [S, sparse.csr_matrix(S)],
@@ -344,3 +345,13 @@ def test_spectral_embedding_first_eigen_vector():
 
         assert np.std(embedding[:, 0]) == pytest.approx(0)
         assert np.std(embedding[:, 1]) > 1e-3
+
+
+# TODO: Remove in 0.26
+@pytest.mark.parametrize("affinity", ["precomputed",
+                                      "precomputed_nearest_neighbors"])
+def test_spectral_embedding_pairwise_deprecated(affinity):
+    se = SpectralEmbedding(affinity=affinity)
+    msg = r"Attribute _pairwise was deprecated in version 0\.24"
+    with pytest.warns(FutureWarning, match=msg):
+        se._pairwise

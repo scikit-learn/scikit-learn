@@ -110,6 +110,18 @@ def test_sparse_X():
                               brc_sparse.subcluster_centers_)
 
 
+def test_partial_fit_second_call_error_checks():
+    # second partial fit calls will error when n_features is not consistent
+    # with the first call
+    X, y = make_blobs(n_samples=100)
+    brc = Birch(n_clusters=3)
+    brc.partial_fit(X, y)
+
+    msg = "X has 1 features, but Birch is expecting 2 features"
+    with pytest.raises(ValueError, match=msg):
+        brc.partial_fit(X[:, [0]], y)
+
+
 def check_branching_factor(node, branching_factor):
     subclusters = node.subclusters_
     assert branching_factor >= len(subclusters)
