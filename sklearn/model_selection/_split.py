@@ -827,7 +827,11 @@ class StratifiedGroupKFold(_BaseKFold):
             raise ValueError("n_splits=%d cannot be greater than the"
                              " number of members in each class."
                              % (self.n_splits))
-        _, y_inv = np.unique(y, return_inverse=True)
+        min_groups = np.min(y_cnt)
+        if self.n_splits > min_groups:
+            warnings.warn(("The least populated class in y has only %d"
+                           " members, which is less than n_splits=%d."
+                           % (min_groups, self.n_splits)), UserWarning)
         labels_num = np.max(y_inv) + 1
         y_counts_per_group = defaultdict(lambda: np.zeros(labels_num))
         y_distr = Counter()
