@@ -210,7 +210,7 @@ def plot_det_curve(
     check_matplotlib_support('plot_det_curve')
 
     y_pred, pos_label = _get_response(
-        X, estimator, response_method, pos_label=pos_label
+        estimator, X, y, response_method, pos_label=pos_label
     )
 
     fpr, fnr, _ = det_curve(

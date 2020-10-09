@@ -203,7 +203,8 @@ def plot_precision_recall_curve(estimator, X, y, *,
     check_matplotlib_support("plot_precision_recall_curve")
 
     y_pred, pos_label = _get_response(
-        X, estimator, response_method, pos_label=pos_label)
+        estimator, X, y, response_method, pos_label=pos_label
+    )
 
     precision, recall, _ = precision_recall_curve(y, y_pred,
                                                   pos_label=pos_label,
