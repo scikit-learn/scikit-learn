@@ -249,21 +249,15 @@ Rolling your own estimator
 If you want to implement a new estimator that is scikit-learn-compatible,
 whether it is just for you or for contributing it to scikit-learn, there are
 several internals of scikit-learn that you should be aware of in addition to
-the scikit-learn API outlined above. You can check whether your estimator
-adheres to the scikit-learn interface and standards by running
-:func:`~sklearn.utils.estimator_checks.check_estimator` on an instance. The
-:func:`~sklearn.utils.estimator_checks.parametrize_with_checks` pytest
-decorator can also be used (see its docstring for details and possible
-interactions with `pytest`)::
-
-  >>> from sklearn.utils.estimator_checks import check_estimator
-  >>> from sklearn.svm import LinearSVC
-  >>> check_estimator(LinearSVC())  # passes
+the scikit-learn API outlined above.
 
 The main motivation to make a class compatible to the scikit-learn estimator
 interface might be that you want to use it together with model evaluation and
 selection tools such as :class:`model_selection.GridSearchCV` and
 :class:`pipeline.Pipeline`.
+
+Checking the compatibility of your estimator with scikit-learn is described
+in :ref:`checking_compatibility`
 
 Before detailing the required interface below, we describe two ways to achieve
 the correct interface more easily.
@@ -498,6 +492,35 @@ patterns.
 
 The :mod:`sklearn.utils.multiclass` module contains useful functions
 for working with multiclass and multilabel problems.
+
+.. _checking_compatibility:
+
+Checking the estimator's compatibility
+--------------------------------------
+
+You can check whether your estimator adheres to the scikit-learn interface
+and standards by running
+:func:`~sklearn.utils.estimator_checks.check_estimator` on an instance.
+
+The :func:`~sklearn.utils.estimator_checks.parametrize_with_checks` pytest
+decorator can also be used (see its docstring for details and possible
+interactions with `pytest`)::
+
+  >>> from sklearn.utils.estimator_checks import check_estimator
+  >>> from sklearn.svm import LinearSVC
+  >>> check_estimator(LinearSVC())  # passes
+
+Both :func:`~sklearn.utils.estimator_checks.check_estimator` and
+:func:`~sklearn.utils.estimator_checks.parametrize_with_checks` expose an
+`api_only` parameter: when True, the check suite will only consider pure
+API-compatibility checks. Some more advanced checks will be ignored, such as
+ensuring that error messages are informative, or ensuring that a classifier
+is able to properly discriminate classes on a simple problem. We recommend
+leaving this parameter to False to guarantee robust and user-friendly
+estimators.
+
+The kind of checks that the check suite will run can also be partially
+controlled by setting estimator tags, described below:
 
 .. _estimator_tags:
 

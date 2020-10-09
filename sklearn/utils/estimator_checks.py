@@ -1365,7 +1365,7 @@ def _check_transformer(name, transformer_orig, X, y, api_only=False):
     else:
         # check for consistent n_samples
         assert X_pred.shape[0] == n_samples
-    
+
     if hasattr(transformer, 'transform'):
 
         # raises error on malformed input for transform
@@ -2451,7 +2451,7 @@ def check_class_weight_classifiers(name, classifier_orig, api_only=False):
     # Make sure that classifiers take class_weight into account by creating a
     # very noisy balanced dataset. We make sure that passing a very imbalanced
     # class_weights helps recovering a good score.
- 
+
     if classifier_orig._get_tags()['binary_only']:
         problems = [2]
     else:
@@ -3039,7 +3039,7 @@ def check_outliers_fit_predict(name, estimator_orig, api_only=False):
     if hasattr(estimator, 'predict'):
         y_pred_2 = estimator.fit(X).predict(X)
         assert_array_equal(y_pred, y_pred_2)
-    
+
     if hasattr(estimator, "contamination") and not api_only:
         # proportion of outliers equal to contamination parameter when not
         # set to 'auto'
