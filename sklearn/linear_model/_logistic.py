@@ -2085,6 +2085,7 @@ class LogisticRegressionCV(LogisticRegression,
         """
         scoring = self.scoring or 'accuracy'
         scoring = get_scorer(scoring)
+
         return scoring(self, X, y, sample_weight=sample_weight)
 
     def _more_tags(self):
