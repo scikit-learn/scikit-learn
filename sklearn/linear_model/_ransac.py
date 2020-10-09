@@ -478,7 +478,7 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
             Returns predicted values.
         """
         check_is_fitted(self)
-
+        X = self._validate_data(X, accept_sparse='csr', reset=False)
         return self.estimator_.predict(X)
 
     def score(self, X, y):

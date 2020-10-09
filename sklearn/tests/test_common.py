@@ -298,7 +298,6 @@ N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE = {
     'isotonic',
     'kernel_approximation',
     'kernel_ridge',
-    'linear_model',
     'manifold',
     'mixture',
     'model_selection',
@@ -310,7 +309,6 @@ N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE = {
     'preprocessing',
     'random_projection',
     'semi_supervised',
-    'svm',
     'tree',
 }
 

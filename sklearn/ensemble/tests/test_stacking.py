@@ -483,9 +483,8 @@ def test_stacking_without_n_features_in(make_dataset, Stacking, Estimator):
 
     class MyEstimator(Estimator):
         """Estimator without n_features_in_"""
-        def fit(self, X, y):
-            super().fit(X, y)
-            del self.n_features_in_
+        def _check_n_features(self, X, reset):
+            pass
 
     X, y = make_dataset(random_state=0, n_samples=100)
     stacker = Stacking(estimators=[('lr', MyEstimator())])

@@ -973,6 +973,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         max_squared_sum=max_squared_sum, sample_weight=sample_weight)
 
     log_reg = LogisticRegression(solver=solver, multi_class=multi_class)
+    log_reg.n_features_in_ = X.shape[1]
 
     # The score method of Logistic Regression has a classes_ attribute.
     if multi_class == 'ovr':
@@ -2084,7 +2085,6 @@ class LogisticRegressionCV(LogisticRegression,
         """
         scoring = self.scoring or 'accuracy'
         scoring = get_scorer(scoring)
-
         return scoring(self, X, y, sample_weight=sample_weight)
 
     def _more_tags(self):
