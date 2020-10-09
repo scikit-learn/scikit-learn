@@ -822,6 +822,11 @@ class StratifiedGroupKFold(_BaseKFold):
                     allowed_target_types, type_of_target_y))
 
         y = column_or_1d(y)
+        _, y_inv, y_cnt = np.unique(y, return_inverse=True, return_counts=True)
+        if np.all(self.n_splits > y_cnt):
+            raise ValueError("n_splits=%d cannot be greater than the"
+                             " number of members in each class."
+                             % (self.n_splits))
         _, y_inv = np.unique(y, return_inverse=True)
         labels_num = np.max(y_inv) + 1
         y_counts_per_group = defaultdict(lambda: np.zeros(labels_num))
