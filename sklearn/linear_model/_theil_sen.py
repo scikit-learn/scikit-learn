@@ -15,12 +15,13 @@ import numpy as np
 from scipy import linalg
 from scipy.special import binom
 from scipy.linalg.lapack import get_lapack_funcs
-from joblib import Parallel, delayed, effective_n_jobs
+from joblib import Parallel, effective_n_jobs
 
 from ._base import LinearModel
 from ..base import RegressorMixin
 from ..utils import check_random_state
 from ..utils.validation import _deprecate_positional_args
+from ..utils.fixes import delayed
 from ..exceptions import ConvergenceWarning
 
 _EPSILON = np.finfo(np.double).eps
@@ -239,7 +240,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
     tol : float, default=1.e-3
         Tolerance when calculating spatial median.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         A random number generator instance to define the state of the random
         permutations generator. Pass an int for reproducible output across
         multiple function calls.

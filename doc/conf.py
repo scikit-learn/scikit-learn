@@ -240,6 +240,8 @@ latex_elements = {
     'preamble': r"""
         \usepackage{amsmath}\usepackage{amsfonts}\usepackage{bm}
         \usepackage{morefloats}\usepackage{enumitem} \setlistdepth{10}
+        \let\oldhref\href
+        \renewcommand{\href}[2]{\oldhref{#1}{\hbox{#2}}}
         """
 }
 
@@ -354,6 +356,7 @@ carousel_thumbs = {'sphx_glr_plot_classifier_comparison_001.png': 600}
 # discovered properly by sphinx
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.experimental import enable_iterative_imputer  # noqa
+from sklearn.experimental import enable_halving_search_cv  # noqa
 
 
 def make_carousel_thumbs(app, exception):
@@ -475,3 +478,12 @@ linkcode_resolve = make_linkcode_resolve('sklearn',
 warnings.filterwarnings("ignore", category=UserWarning,
                         message='Matplotlib is currently using agg, which is a'
                                 ' non-GUI backend, so cannot show the figure.')
+
+
+# maps functions with a class name that is indistinguishable when case is
+# ignore to another filename
+autosummary_filename_map = {
+    "sklearn.cluster.dbscan": "dbscan-function",
+    "sklearn.covariance.oas": "oas-function",
+    "sklearn.decomposition.fastica": "fastica-function",
+}

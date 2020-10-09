@@ -180,23 +180,20 @@ scoring method.
 .. currentmodule:: sklearn.svm
 
 .. topic:: **Exercise**
-   :class: green
 
-   On the digits dataset, plot the cross-validation score of a :class:`SVC`
-   estimator with an linear kernel as a function of parameter ``C`` (use a
-   logarithmic grid of points, from 1 to 10).
+    On the digits dataset, plot the cross-validation score of a :class:`SVC`
+    estimator with an linear kernel as a function of parameter ``C`` (use a
+    logarithmic grid of points, from 1 to 10).
 
-   .. literalinclude:: ../../auto_examples/exercises/plot_cv_digits.py
-       :lines: 13-23
-    
-   .. image:: /auto_examples/exercises/images/sphx_glr_plot_cv_digits_001.png
+        .. literalinclude:: ../../auto_examples/exercises/plot_cv_digits.py
+            :lines: 13-23
+
+    .. image:: /auto_examples/exercises/images/sphx_glr_plot_cv_digits_001.png
         :target: ../../auto_examples/exercises/plot_cv_digits.html
         :align: center
         :scale: 90
 
-   **Solution:** :ref:`sphx_glr_auto_examples_exercises_plot_cv_digits.py`
-
-
+    **Solution:** :ref:`sphx_glr_auto_examples_exercises_plot_cv_digits.py`
 
 Grid-search and cross-validated estimators
 ============================================
@@ -272,7 +269,6 @@ These estimators are called similarly to their counterparts, with 'CV'
 appended to their name.
 
 .. topic:: **Exercise**
-   :class: green
 
    On the diabetes dataset, find the optimal regularization parameter
    alpha.
