@@ -89,7 +89,7 @@ elif [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
     echo "Installing numpy and scipy master wheels"
     dev_anaconda_url=https://pypi.anaconda.org/scipy-wheels-nightly/simple
     pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url numpy scipy pandas
-    pip install https://github.com/cython/cython
+    pip install https://github.com/cython/cython/archive/master.zip
     setup_ccache
     echo "Installing joblib master"
     pip install https://github.com/joblib/joblib/archive/master.zip
