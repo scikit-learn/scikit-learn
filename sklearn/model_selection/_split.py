@@ -735,12 +735,12 @@ class StratifiedKFold(_BaseKFold):
         return super().split(X, y, groups)
 
 
-class StratifiedGroupKFold(StratifiedKFold):
+class StratifiedGroupKFold(_BaseKFold):
     """Stratified K-Folds iterator variant with non-overlapping groups.
 
     This cross-validation object is a variation of StratifiedKFold that returns
-    folds stratified by group class. The folds are made by preserving the
-    percentage of groups for each class.
+    stratified folds with non-overlapping groups. The folds are made by
+    preserving the percentage of samples for each class.
 
     The same group will not appear in two different folds (the number of
     distinct groups has to be at least equal to the number of folds).
@@ -749,7 +749,7 @@ class StratifiedGroupKFold(StratifiedKFold):
     the former attempts to create balanced folds such that the number of
     distinct groups is approximately the same in each fold, whereas
     StratifiedGroupKFold attempts to create folds which preserve the
-    percentage of groups for each class.
+    percentage of samples for each class.
 
     Read more in the :ref:`User Guide <cross_validation>`.
 
@@ -782,50 +782,18 @@ class StratifiedGroupKFold(StratifiedKFold):
     ...     print("      ", y[train_idxs])
     ...     print(" TEST:", groups[test_idxs])
     ...     print("      ", y[test_idxs])
-    TRAIN: [3 3 3 4 6 6 7 8 8]
-           [1 1 1 1 0 0 0 0 0]
-     TEST: [1 1 2 2 5 5 5 5]
-           [0 0 1 1 0 0 0 0]
-    TRAIN: [1 1 2 2 4 5 5 5 5 8 8]
-           [0 0 1 1 1 0 0 0 0 0 0]
-     TEST: [3 3 3 6 6 7]
-           [1 1 1 0 0 0]
-    TRAIN: [1 1 2 2 3 3 3 5 5 5 5 6 6 7]
-           [0 0 1 1 1 1 1 0 0 0 0 0 0 0]
-     TEST: [4 8 8]
-           [1 0 0]
-    >>> cv = GroupKFold(n_splits=3)
-    >>> for train_idxs, test_idxs in cv.split(X, y, groups):
-    ...     print("TRAIN:", groups[train_idxs])
-    ...     print("      ", y[train_idxs])
-    ...     print(" TEST:", groups[test_idxs])
-    ...     print("      ", y[test_idxs])
-    TRAIN: [2 2 3 3 3 4 6 6 7 8 8]
-           [1 1 1 1 1 1 0 0 0 0 0]
-     TEST: [1 1 5 5 5 5]
-           [0 0 0 0 0 0]
-    TRAIN: [1 1 5 5 5 5 6 6 7 8 8]
-           [0 0 0 0 0 0 0 0 0 0 0]
-     TEST: [2 2 3 3 3 4]
-           [1 1 1 1 1 1]
-    TRAIN: [1 1 2 2 3 3 3 4 5 5 5 5]
-           [0 0 1 1 1 1 1 1 0 0 0 0]
-     TEST: [6 6 7 8 8]
-           [0 0 0 0 0]
-
-    Notes
-    -----
-    The implementation is designed to:
-
-    * Generate test sets such that all contain the same distribution of
-      group classes, or as close as possible.
-    * Be invariant to class label: relabelling ``y = ["Happy", "Sad"]`` to
-      ``y = [1, 0]`` should not change the indices generated.
-    * Preserve order dependencies in the dataset ordering, when
-      ``shuffle=False``: all samples from class k in some test set were
-      contiguous in y, or separated in y by samples from classes other than k.
-    * Generate test sets where the smallest and largest differ by at most one
-      group.
+    TRAIN: [2 2 4 5 5 5 5 6 6 7]
+           [1 1 1 0 0 0 0 0 0 0]
+     TEST: [1 1 3 3 3 8 8]
+           [0 0 1 1 1 0 0]
+    TRAIN: [1 1 3 3 3 4 5 5 5 5 8 8]
+           [0 0 1 1 1 1 0 0 0 0 0 0]
+     TEST: [2 2 6 6 7]
+           [1 1 0 0 0]
+    TRAIN: [1 1 2 2 3 3 3 6 6 7 8 8]
+           [0 0 1 1 1 1 1 0 0 0 0 0]
+     TEST: [4 5 5 5 5]
+           [1 0 0 0 0]
 
     See also
     --------
@@ -840,26 +808,47 @@ class StratifiedGroupKFold(StratifiedKFold):
         super().__init__(n_splits=n_splits, shuffle=shuffle,
                          random_state=random_state)
 
-    def _iter_test_masks(self, X, y, groups):
-        y = check_array(y, ensure_2d=False, dtype=None)
-        if groups is None:
-            raise ValueError("The 'groups' parameter should not be None.")
-        groups = check_array(groups, ensure_2d=False, dtype=None)
-        (unique_groups, unique_groups_y), group_indices = np.unique(
-            np.stack((groups, y)), axis=1, return_inverse=True)
-        n_groups = len(unique_groups)
-        if self.n_splits > n_groups:
-            raise ValueError("Cannot have number of splits n_splits=%d greater"
-                             " than the number of groups: %d."
-                             % (self.n_splits, n_groups))
-        if unique_groups.shape[0] != np.unique(groups).shape[0]:
-            raise ValueError("Members of each group must all be of the same "
-                             "class.")
-        for group_test in super()._iter_test_masks(X=unique_groups,
-                                                   y=unique_groups_y):
-            # this is the mask of unique_groups in the partition invert it into
-            # a data mask
-            yield np.in1d(group_indices, np.where(group_test))
+    # Implementation based on this kaggle kernel:
+    # https://www.kaggle.com/jakubwasikowski/stratified-group-k-fold-cross-validation
+    def _iter_test_indices(self, X, y, groups):
+        labels_num = np.max(y) + 1
+        y_counts_per_group = defaultdict(lambda: np.zeros(labels_num))
+        y_distr = Counter()
+        for label, group in zip(y, groups):
+            y_counts_per_group[group][label] += 1
+            y_distr[label] += 1
+
+        y_counts_per_fold = defaultdict(lambda: np.zeros(labels_num))
+        groups_per_fold = defaultdict(set)
+
+        groups_and_y_counts = list(y_counts_per_group.items())
+        rng = check_random_state(self.random_state)
+        if self.shuffle:
+            rng.shuffle(groups_and_y_counts)
+
+        for group, y_counts in sorted(groups_and_y_counts,
+                                      key=lambda x: -np.std(x[1])):
+            best_fold = None
+            min_eval = None
+            for i in range(self.n_splits):
+                y_counts_per_fold[i] += y_counts
+                std_per_label = []
+                for label in range(labels_num):
+                    std_per_label.append(np.std(
+                        [y_counts_per_fold[j][label] / y_distr[label]
+                         for j in range(self.n_splits)]))
+                y_counts_per_fold[i] -= y_counts
+                fold_eval = np.mean(std_per_label)
+                if min_eval is None or fold_eval < min_eval:
+                    min_eval = fold_eval
+                    best_fold = i
+            y_counts_per_fold[best_fold] += y_counts
+            groups_per_fold[best_fold].add(group)
+
+        for i in range(self.n_splits):
+            test_indices = [idx for idx, group in enumerate(groups)
+                            if group in groups_per_fold[i]]
+            yield test_indices
 
 
 class TimeSeriesSplit(_BaseKFold):
