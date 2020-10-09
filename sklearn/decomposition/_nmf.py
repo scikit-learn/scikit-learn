@@ -984,7 +984,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
         If true, randomize the order of coordinates in the CD solver.
 
     check_input : bool, default=True
-        If False, the input arrays X will not be checked.
+        If False, the input array X will not be checked.
 
     Returns
     -------
