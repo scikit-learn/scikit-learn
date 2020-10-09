@@ -3170,8 +3170,7 @@ def check_n_features_in_after_fitting(name, estimator_orig, strict_mode=True):
                      "predict_proba"]
     X_bad = X[:, [1]]
 
-    msg = (f"X has 1 features, but {name} is expecting {X.shape[1]} "
-           "features as input")
+    msg = f"Expected X to have {X.shape[1]} features, got 1 instead"
     for method in check_methods:
         if not hasattr(estimator, method):
             continue

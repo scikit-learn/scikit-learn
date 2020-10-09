@@ -117,7 +117,7 @@ def test_partial_fit_second_call_error_checks():
     brc = Birch(n_clusters=3)
     brc.partial_fit(X, y)
 
-    msg = "X has 1 features, but Birch is expecting 2 features"
+    msg = "Expected X to have 2 features, got 1 instead"
     with pytest.raises(ValueError, match=msg):
         brc.partial_fit(X[:, [0]], y)
 

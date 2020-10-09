@@ -378,10 +378,8 @@ class BaseEstimator:
                 )
             if n_features != self.n_features_in_:
                 raise ValueError(
-                    'X has {} features, but {} is expecting {} features '
-                    'as input.'.format(n_features, self.__class__.__name__,
-                                       self.n_features_in_)
-                )
+                    f"Expected X to have {self.n_features_in_} features, got "
+                    f"{n_features} instead")
 
     def _validate_data(self, X, y='no_validation', reset=True,
                        validate_separately=False, **check_params):
