@@ -307,7 +307,6 @@ N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE = {
     'naive_bayes',
     'neighbors',
     'pipeline',
-    'preprocessing',
     'random_projection',
     'semi_supervised',
     'svm',
