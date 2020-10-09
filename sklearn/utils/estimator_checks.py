@@ -25,7 +25,9 @@ from ._testing import ignore_warnings
 from ._testing import create_memmap_backed_data
 from ._testing import raises
 from . import is_scalar_nan
+
 from ..discriminant_analysis import LinearDiscriminantAnalysis
+from ..linear_model import LogisticRegression
 from ..linear_model import Ridge
 
 from ..base import (
@@ -278,6 +280,7 @@ def _yield_all_checks(estimator):
         for check in _yield_outliers_checks(estimator):
             yield check
     yield check_parameters_default_constructible
+    yield check_methods_sample_order_invariance
     yield check_methods_subset_invariance
     yield check_fit2d_1sample
     yield check_fit2d_1feature
@@ -344,10 +347,24 @@ def _construct_instance(Estimator):
                 estimator = Estimator(Ridge())
             else:
                 estimator = Estimator(LinearDiscriminantAnalysis())
+        elif required_parameters in (['estimators'],):
+            # Heterogeneous ensemble classes (i.e. stacking, voting)
+            if issubclass(Estimator, RegressorMixin):
+                estimator = Estimator(estimators=[
+                    ("est1", Ridge(alpha=0.1)),
+                    ("est2", Ridge(alpha=1))
+                ])
+            else:
+                estimator = Estimator(estimators=[
+                    ("est1", LogisticRegression(C=0.1)),
+                    ("est2", LogisticRegression(C=1))
+                ])
         else:
-            raise SkipTest("Can't instantiate estimator {} which requires "
-                           "parameters {}".format(Estimator.__name__,
-                                                  required_parameters))
+            msg = (f"Can't instantiate estimator {Estimator.__name__} "
+                   f"parameters {required_parameters}")
+            # raise additional warning to be shown by pytest
+            warnings.warn(msg, SkipTestWarning)
+            raise SkipTest(msg)
     else:
         estimator = Estimator()
     return estimator
@@ -1151,6 +1168,43 @@ def check_methods_subset_invariance(name, estimator_orig, strict_mode=True):
                 getattr(estimator, method), X)
             assert_allclose(result_full, result_by_batch,
                             atol=1e-7, err_msg=msg)
+
+
+@ignore_warnings(category=FutureWarning)
+def check_methods_sample_order_invariance(
+    name, estimator_orig, strict_mode=True
+):
+    # check that method gives invariant results if applied
+    # on a subset with different sample order
+    rnd = np.random.RandomState(0)
+    X = 3 * rnd.uniform(size=(20, 3))
+    X = _pairwise_estimator_convert_X(X, estimator_orig)
+    y = X[:, 0].astype(np.int)
+    if estimator_orig._get_tags()['binary_only']:
+        y[y == 2] = 1
+    estimator = clone(estimator_orig)
+    y = _enforce_estimator_tags_y(estimator, y)
+
+    if hasattr(estimator, "n_components"):
+        estimator.n_components = 1
+    if hasattr(estimator, "n_clusters"):
+        estimator.n_clusters = 2
+
+    set_random_state(estimator, 1)
+    estimator.fit(X, y)
+
+    idx = np.random.permutation(X.shape[0])
+
+    for method in ["predict", "transform", "decision_function",
+                   "score_samples", "predict_proba"]:
+        msg = ("{method} of {name} is not invariant when applied to a dataset"
+               "with different sample order.").format(method=method, name=name)
+
+        if hasattr(estimator, method):
+            assert_allclose_dense_sparse(getattr(estimator, method)(X)[idx],
+                                         getattr(estimator, method)(X[idx]),
+                                         atol=1e-9,
+                                         err_msg=msg)
 
 
 @ignore_warnings

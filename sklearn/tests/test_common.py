@@ -294,7 +294,6 @@ N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE = {
     'compose',
     'covariance',
     'cross_decomposition',
-    'decomposition',
     'discriminant_analysis',
     'ensemble',
     'feature_extraction',
@@ -329,4 +328,5 @@ N_FEATURES_IN_AFTER_FIT_ESTIMATORS = [
 @pytest.mark.parametrize("estimator", N_FEATURES_IN_AFTER_FIT_ESTIMATORS,
                          ids=_get_check_estimator_ids)
 def test_check_n_features_in_after_fitting(estimator):
+    _set_checking_parameters(estimator)
     check_n_features_in_after_fitting(estimator.__class__.__name__, estimator)

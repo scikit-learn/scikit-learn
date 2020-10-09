@@ -1306,6 +1306,8 @@ class NMF(TransformerMixin, BaseEstimator):
         X = self._validate_data(X, accept_sparse=('csr', 'csc'),
                                 dtype=[np.float64, np.float32])
 
+        # XXX: input data validation is performed again in
+        # non_negative_factorization.
         W, H, n_iter_ = non_negative_factorization(
             X=X, W=W, H=H, n_components=self.n_components, init=self.init,
             update_H=True, solver=self.solver, beta_loss=self.beta_loss,
@@ -1354,7 +1356,12 @@ class NMF(TransformerMixin, BaseEstimator):
             Transformed data.
         """
         check_is_fitted(self)
+        X = self._validate_data(X, accept_sparse=('csr', 'csc'),
+                                dtype=[np.float64, np.float32],
+                                reset=False)
 
+        # XXX: input data validation is performed again in
+        # non_negative_factorization.
         W, _, n_iter_ = non_negative_factorization(
             X=X, W=None, H=self.components_, n_components=self.n_components_,
             init=self.init, update_H=False, solver=self.solver,
