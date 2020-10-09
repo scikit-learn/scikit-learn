@@ -74,8 +74,9 @@ def csr_mean_variance_axis0(X):
     """
     if X.dtype not in [np.float32, np.float64]:
         X = X.astype(np.float64)
-    means, variances, _ =  _csr_mean_variance_axis0(X.data, X.shape[0],
-                                                    X.shape[1], X.indices)
+    # means, variances, _ =  _csr_mean_variance_axis0(X.data, X.shape[0],
+    #                                                 X.shape[1], X.indices)
+    
     return means, variances
 
 
