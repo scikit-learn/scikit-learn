@@ -1938,6 +1938,27 @@ def test_n_features_in():
     assert rs.n_features_in_ == n_features
 
 
+@pytest.mark.parametrize("pairwise", [True, False])
+def test_search_cv_pairwise_property_delegated_to_base_estimator(pairwise):
+    """
+    Test implementation of BaseSearchCV has the pairwise tag
+    which matches the pairwise tag of its estimator.
+    This test make sure pairwise tag is delegated to the base estimator.
+
+    Non-regression test for issue #13920.
+    """
+    class TestEstimator(BaseEstimator):
+        def _more_tags(self):
+            return {'pairwise': pairwise}
+
+    est = TestEstimator()
+    attr_message = "BaseSearchCV pairwise tag must match estimator"
+    cv = GridSearchCV(est, {'n_neighbors': [10]})
+    assert pairwise == cv._get_tags()['pairwise'], attr_message
+
+
+# TODO: Remove in 0.26
+@ignore_warnings(category=FutureWarning)
 def test_search_cv__pairwise_property_delegated_to_base_estimator():
     """
     Test implementation of BaseSearchCV has the _pairwise property
@@ -1955,10 +1976,10 @@ def test_search_cv__pairwise_property_delegated_to_base_estimator():
         assert _pairwise_setting == cv._pairwise, attr_message
 
 
-def test_search_cv__pairwise_property_equivalence_of_precomputed():
+def test_search_cv_pairwise_property_equivalence_of_precomputed():
     """
-    Test implementation of BaseSearchCV has the _pairwise property
-    which matches the _pairwise property of its estimator.
+    Test implementation of BaseSearchCV has the pairwise tag
+    which matches the pairwise tag of its estimator.
     This test ensures the equivalence of 'precomputed'.
 
     Non-regression test for issue #13920.
@@ -1974,7 +1995,7 @@ def test_search_cv__pairwise_property_equivalence_of_precomputed():
     cv.fit(X, y)
     preds_original = cv.predict(X)
 
-    # precompute euclidean metric to validate _pairwise is working
+    # precompute euclidean metric to validate pairwise is working
     X_precomputed = euclidean_distances(X)
     clf = KNeighborsClassifier(metric='precomputed')
     cv = GridSearchCV(clf, grid_params, cv=n_splits)

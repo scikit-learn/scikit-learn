@@ -853,10 +853,14 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         `y` values, to satisfy the model's assumption of
         one-at-a-time computations. Might help with stability.
 
+        .. versionadded:: 0.23
+
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for jittering. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`. Ignored if `jitter` is None.
+
+        .. versionadded:: 0.23
 
     Attributes
     ----------
@@ -1106,10 +1110,14 @@ class LassoLars(Lars):
         `y` values, to satisfy the model's assumption of
         one-at-a-time computations. Might help with stability.
 
+        .. versionadded:: 0.23
+
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for jittering. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`. Ignored if `jitter` is None.
+
+        .. versionadded:: 0.23
 
     Attributes
     ----------
