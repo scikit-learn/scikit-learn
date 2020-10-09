@@ -18,9 +18,10 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 # License: Simplified BSD
 
+from collections import Counter
 from collections.abc import Iterable
 from functools import partial
-from collections import Counter
+from inspect import signature
 
 import numpy as np
 
@@ -31,6 +32,8 @@ from . import (r2_score, median_absolute_error, max_error, mean_absolute_error,
                precision_score, recall_score, log_loss,
                balanced_accuracy_score, explained_variance_score,
                brier_score_loss, jaccard_score, mean_absolute_percentage_error)
+
+from ._base import _get_response
 
 from .cluster import adjusted_rand_score
 from .cluster import homogeneity_score
@@ -46,16 +49,17 @@ from ..utils.validation import _deprecate_positional_args
 from ..base import is_regressor
 
 
-def _cached_call(cache, estimator, method, *args, **kwargs):
+def _cached_call(cache, estimator, *args, **kwargs):
     """Call estimator with method and args and kwargs."""
+    response_method = kwargs["response_method"]
     if cache is None:
-        return getattr(estimator, method)(*args, **kwargs)
+        return _get_response(estimator, *args, **kwargs)
 
     try:
-        return cache[method]
+        return cache[response_method]
     except KeyError:
-        result = getattr(estimator, method)(*args, **kwargs)
-        cache[method] = result
+        result = _get_response(estimator, *args, **kwargs)
+        cache[response_method] = result
         return result
 
 
@@ -83,8 +87,9 @@ class _MultimetricScorer:
 
         for name, scorer in self._scorers.items():
             if isinstance(scorer, _BaseScorer):
-                score = scorer._score(cached_call, estimator,
-                                      *args, **kwargs)
+                score = scorer._score(
+                    cached_call, estimator, *args, **kwargs
+                )
             else:
                 score = scorer(estimator, *args, **kwargs)
             scores[name] = score
@@ -127,42 +132,15 @@ class _BaseScorer:
         self._score_func = score_func
         self._sign = sign
 
-    @staticmethod
-    def _check_pos_label(pos_label, classes):
-        if pos_label not in list(classes):
-            raise ValueError(
-                f"pos_label={pos_label} is not a valid label: {classes}"
-            )
-
-    def _select_proba_binary(self, y_pred, classes):
-        """Select the column of the positive label in `y_pred` when
-        probabilities are provided.
-
-        Parameters
-        ----------
-        y_pred : ndarray of shape (n_samples, n_classes)
-            The prediction given by `predict_proba`.
-
-        classes : ndarray of shape (n_classes,)
-            The class labels for the estimator.
-
-        Returns
-        -------
-        y_pred : ndarray of shape (n_samples,)
-            Probability predictions of the positive class.
-        """
-        if y_pred.shape[1] == 2:
-            pos_label = self._kwargs.get("pos_label", classes[1])
-            self._check_pos_label(pos_label, classes)
-            col_idx = np.flatnonzero(classes == pos_label)[0]
-            return y_pred[:, col_idx]
-
-        err_msg = (
-            f"Got predict_proba of shape {y_pred.shape}, but need "
-            f"classifier with two classes for {self._score_func.__name__} "
-            f"scoring"
-        )
-        raise ValueError(err_msg)
+    def _get_pos_label(self):
+        score_func_params = signature(self._score_func).parameters
+        if "pos_label" in self._kwargs:
+            pos_label = self._kwargs["pos_label"]
+        elif "pos_label" in score_func_params:
+            pos_label = score_func_params["pos_label"].default
+        else:
+            pos_label = None
+        return pos_label
 
     def __repr__(self):
         kwargs_string = "".join([", %s=%s" % (str(k), str(v))
@@ -172,19 +150,19 @@ class _BaseScorer:
                    "" if self._sign > 0 else ", greater_is_better=False",
                    self._factory_args(), kwargs_string))
 
-    def __call__(self, estimator, X, y_true, sample_weight=None):
+    def __call__(self, estimator, X, y, sample_weight=None):
         """Evaluate predicted target values for X relative to y_true.
 
         Parameters
         ----------
         estimator : object
-            Trained estimator to use for scoring. Must have a predict_proba
+            Trained estimator to use for scoring. Must have a prediction
             method; the output of that is used to compute the score.
 
         X : {array-like, sparse matrix}
             Test data that will be fed to estimator.predict.
 
-        y_true : array-like
+        y : array-like
             Gold standard target values for X.
 
         sample_weight : array-like of shape (n_samples,), default=None
@@ -195,8 +173,13 @@ class _BaseScorer:
         score : float
             Score function applied to prediction of estimator on X.
         """
-        return self._score(partial(_cached_call, None), estimator, X, y_true,
-                           sample_weight=sample_weight)
+        return self._score(
+            partial(_cached_call, None),
+            estimator,
+            X,
+            y,
+            sample_weight=sample_weight
+        )
 
     def _factory_args(self):
         """Return non-default make_scorer arguments for repr."""
@@ -204,7 +187,7 @@ class _BaseScorer:
 
 
 class _PredictScorer(_BaseScorer):
-    def _score(self, method_caller, estimator, X, y_true, sample_weight=None):
+    def _score(self, method_caller, estimator, X, y, sample_weight=None):
         """Evaluate predicted target values for X relative to y_true.
 
         Parameters
@@ -214,13 +197,13 @@ class _PredictScorer(_BaseScorer):
             arguments, potentially caching results.
 
         estimator : object
-            Trained estimator to use for scoring. Must have a predict_proba
+            Trained estimator to use for scoring. Must have a `predict`
             method; the output of that is used to compute the score.
 
         X : {array-like, sparse matrix}
             Test data that will be fed to estimator.predict.
 
-        y_true : array-like
+        y : array-like
             Gold standard target values for X.
 
         sample_weight : array-like of shape (n_samples,), default=None
@@ -232,19 +215,20 @@ class _PredictScorer(_BaseScorer):
             Score function applied to prediction of estimator on X.
         """
 
-        y_pred = method_caller(estimator, "predict", X)
+        y_pred, _ = method_caller(
+            estimator, X, y, response_method="predict"
+        )
         if sample_weight is not None:
-            return self._sign * self._score_func(y_true, y_pred,
-                                                 sample_weight=sample_weight,
-                                                 **self._kwargs)
+            return self._sign * self._score_func(
+                y, y_pred, sample_weight=sample_weight, **self._kwargs
+            )
         else:
-            return self._sign * self._score_func(y_true, y_pred,
-                                                 **self._kwargs)
+            return self._sign * self._score_func(y, y_pred, **self._kwargs)
 
 
 class _ProbaScorer(_BaseScorer):
     def _score(self, method_caller, clf, X, y, sample_weight=None):
-        """Evaluate predicted probabilities for X relative to y_true.
+        """Evaluate predicted probabilities for `X` relative to `y_true`.
 
         Parameters
         ----------
@@ -253,14 +237,14 @@ class _ProbaScorer(_BaseScorer):
             arguments, potentially caching results.
 
         clf : object
-            Trained classifier to use for scoring. Must have a predict_proba
+            Trained classifier to use for scoring. Must have a `predict_proba`
             method; the output of that is used to compute the score.
 
         X : {array-like, sparse matrix}
-            Test data that will be fed to clf.predict_proba.
+            Test data that will be fed to `clf.predict_proba`.
 
         y : array-like
-            Gold standard target values for X. These must be class labels,
+            Gold standard target values for `X`. These must be class labels,
             not probabilities.
 
         sample_weight : array-like, default=None
@@ -271,18 +255,17 @@ class _ProbaScorer(_BaseScorer):
         score : float
             Score function applied to prediction of estimator on X.
         """
-
-        y_type = type_of_target(y)
-        y_pred = method_caller(clf, "predict_proba", X)
-        if y_type == "binary" and y_pred.shape[1] <= 2:
-            # `y_type` could be equal to "binary" even in a multi-class
-            # problem: (when only 2 class are given to `y_true` during scoring)
-            # Thus, we need to check for the shape of `y_pred`.
-            y_pred = self._select_proba_binary(y_pred, clf.classes_)
+        y_pred, _ = method_caller(
+            clf,
+            X,
+            y,
+            response_method="predict_proba",
+            pos_label=self._get_pos_label(),
+        )
         if sample_weight is not None:
-            return self._sign * self._score_func(y, y_pred,
-                                                 sample_weight=sample_weight,
-                                                 **self._kwargs)
+            return self._sign * self._score_func(
+                y, y_pred, sample_weight=sample_weight, **self._kwargs
+            )
         else:
             return self._sign * self._score_func(y, y_pred, **self._kwargs)
 
@@ -327,36 +310,38 @@ class _ThresholdScorer(_BaseScorer):
             raise ValueError("{0} format is not supported".format(y_type))
 
         if is_regressor(clf):
-            y_pred = method_caller(clf, "predict", X)
+            y_pred, _ = method_caller(clf, X, y, response_method="predict")
         else:
+            pos_label = self._get_pos_label()
             try:
-                y_pred = method_caller(clf, "decision_function", X)
+                y_pred, _ = method_caller(
+                    clf,
+                    X,
+                    y,
+                    response_method="decision_function",
+                    pos_label=pos_label,
+                )
 
                 if isinstance(y_pred, list):
                     # For multi-output multi-class estimator
                     y_pred = np.vstack([p for p in y_pred]).T
-                elif y_type == "binary" and "pos_label" in self._kwargs:
-                    self._check_pos_label(
-                        self._kwargs["pos_label"], clf.classes_
-                    )
-                    if self._kwargs["pos_label"] == clf.classes_[0]:
-                        # The implicit positive class of the binary classifier
-                        # does not match `pos_label`: we need to invert the
-                        # predictions
-                        y_pred *= -1
 
-            except (NotImplementedError, AttributeError):
-                y_pred = method_caller(clf, "predict_proba", X)
+            except (NotImplementedError, AttributeError, ValueError):
+                y_pred, _ = method_caller(
+                    clf,
+                    X,
+                    y,
+                    response_method="predict_proba",
+                    pos_label=pos_label,
+                )
 
-                if y_type == "binary":
-                    y_pred = self._select_proba_binary(y_pred, clf.classes_)
-                elif isinstance(y_pred, list):
+                if isinstance(y_pred, list):
                     y_pred = np.vstack([p[:, -1] for p in y_pred]).T
 
         if sample_weight is not None:
-            return self._sign * self._score_func(y, y_pred,
-                                                 sample_weight=sample_weight,
-                                                 **self._kwargs)
+            return self._sign * self._score_func(
+                y, y_pred, sample_weight=sample_weight, **self._kwargs
+            )
         else:
             return self._sign * self._score_func(y, y_pred, **self._kwargs)
 

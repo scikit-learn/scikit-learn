@@ -1,6 +1,6 @@
 import scipy as sp
 
-from .base import _get_response
+from .._base import _get_response
 
 from .. import det_curve
 

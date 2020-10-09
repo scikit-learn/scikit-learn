@@ -1,4 +1,4 @@
-from .base import _get_response
+from .._base import _get_response
 
 from .. import auc
 from .. import roc_curve
