@@ -1744,20 +1744,15 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             test = []
 
             for i in range(n_classes):
-                # permutation = rng.permutation(class_counts[i])
-                # perm_indices_class_i = class_indices[i].take(permutation,
-                #                                              mode='clip')
-                perm_indices_class_i = class_indices[i]
-
-
+                permutation = rng.permutation(class_counts[i])
+                perm_indices_class_i = class_indices[i].take(permutation,
+                                                             mode='clip')
 
                 train.extend(perm_indices_class_i[:n_i[i]])
                 test.extend(perm_indices_class_i[n_i[i]:n_i[i] + t_i[i]])
 
-            # train = rng.permutation(train)
-            # test = rng.permutation(test)
-            train = np.array(train)
-            test = np.array(test)
+            train = rng.permutation(train)
+            test = rng.permutation(test)
 
             yield train, test
 
