@@ -1313,7 +1313,8 @@ def test_cv_iterable_wrapper():
         "successive calls to split should yield different results")
 
 
-def test_group_kfold():
+@pytest.mark.parametrize('kfold', [GroupKFold, StratifiedGroupKFold])
+def test_group_kfold(kfold):
     rng = np.random.RandomState(0)
 
     # Parameters of the test
@@ -1332,7 +1333,7 @@ def test_group_kfold():
     len(np.unique(groups))
     # Get the test fold indices from the test set indices of each fold
     folds = np.zeros(n_samples)
-    lkf = GroupKFold(n_splits=n_splits)
+    lkf = kfold(n_splits=n_splits)
     for i, (_, test) in enumerate(lkf.split(X, y, groups)):
         folds[test] = i
 
