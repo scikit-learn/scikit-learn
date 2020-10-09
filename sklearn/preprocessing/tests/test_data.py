@@ -1937,13 +1937,11 @@ def test_normalizer_l1():
     for X in (X_dense, X_sparse_pruned, X_sparse_unpruned):
 
         normalizer = Normalizer(norm='l1', copy=True)
-        normalizer.n_features_in_ = X.shape[1]
         X_norm = normalizer.transform(X)
         assert X_norm is not X
         X_norm1 = toarray(X_norm)
 
         normalizer = Normalizer(norm='l1', copy=False)
-        normalizer.n_features_in_ = X.shape[1]
         X_norm = normalizer.transform(X)
         assert X_norm is X
         X_norm2 = toarray(X_norm)
@@ -1957,9 +1955,7 @@ def test_normalizer_l1():
     # check input for which copy=False won't prevent a copy
     for init in (sparse.coo_matrix, sparse.csc_matrix, sparse.lil_matrix):
         X = init(X_dense)
-        normalizer = Normalizer(norm='l2', copy=False)
-        normalizer.n_features_in_ = X.shape[1]
-        X_norm = normalizer.transform(X)
+        X_norm = normalizer = Normalizer(norm='l2', copy=False).transform(X)
 
         assert X_norm is not X
         assert isinstance(X_norm, sparse.csr_matrix)
@@ -1990,13 +1986,11 @@ def test_normalizer_l2():
     for X in (X_dense, X_sparse_pruned, X_sparse_unpruned):
 
         normalizer = Normalizer(norm='l2', copy=True)
-        normalizer.n_features_in_ = X.shape[1]
         X_norm1 = normalizer.transform(X)
         assert X_norm1 is not X
         X_norm1 = toarray(X_norm1)
 
         normalizer = Normalizer(norm='l2', copy=False)
-        normalizer.n_features_in_ = X.shape[1]
         X_norm2 = normalizer.transform(X)
         assert X_norm2 is X
         X_norm2 = toarray(X_norm2)
@@ -2009,9 +2003,7 @@ def test_normalizer_l2():
     # check input for which copy=False won't prevent a copy
     for init in (sparse.coo_matrix, sparse.csc_matrix, sparse.lil_matrix):
         X = init(X_dense)
-        normalizer = Normalizer(norm='l2', copy=False)
-        normalizer.n_features_in_ = X.shape[1]
-        X_norm = normalizer.transform(X)
+        X_norm = normalizer = Normalizer(norm='l2', copy=False).transform(X)
 
         assert X_norm is not X
         assert isinstance(X_norm, sparse.csr_matrix)
@@ -2042,13 +2034,11 @@ def test_normalizer_max():
     for X in (X_dense, X_sparse_pruned, X_sparse_unpruned):
 
         normalizer = Normalizer(norm='max', copy=True)
-        normalizer.n_features_in_ = X.shape[1]
         X_norm1 = normalizer.transform(X)
         assert X_norm1 is not X
         X_norm1 = toarray(X_norm1)
 
         normalizer = Normalizer(norm='max', copy=False)
-        normalizer.n_features_in_ = X.shape[1]
         X_norm2 = normalizer.transform(X)
         assert X_norm2 is X
         X_norm2 = toarray(X_norm2)
@@ -2062,9 +2052,7 @@ def test_normalizer_max():
     # check input for which copy=False won't prevent a copy
     for init in (sparse.coo_matrix, sparse.csc_matrix, sparse.lil_matrix):
         X = init(X_dense)
-        normalizer = Normalizer(norm='l2', copy=False)
-        normalizer.n_features_in_ = X.shape[1]
-        X_norm = normalizer.transform(X)
+        X_norm = normalizer = Normalizer(norm='l2', copy=False).transform(X)
 
         assert X_norm is not X
         assert isinstance(X_norm, sparse.csr_matrix)
@@ -2089,7 +2077,6 @@ def test_normalizer_max_sign():
 
     for X in (X_dense, X_all_neg, X_all_neg_sparse):
         normalizer = Normalizer(norm='max')
-        normalizer.n_features_in_ = X.shape[1]
         X_norm = normalizer.transform(X)
         assert X_norm is not X
         X_norm = toarray(X_norm)
@@ -2155,7 +2142,6 @@ def test_binarizer():
         X = init(X_.copy())
 
         binarizer = Binarizer(threshold=2.0, copy=True)
-        binarizer.n_features_in_ = 3
         X_bin = toarray(binarizer.transform(X))
         assert np.sum(X_bin == 0) == 4
         assert np.sum(X_bin == 1) == 2
@@ -2169,7 +2155,6 @@ def test_binarizer():
         assert np.sum(X_bin == 1) == 4
 
         binarizer = Binarizer(copy=True)
-        binarizer.n_features_in_ = 3
         X_bin = binarizer.transform(X)
         assert X_bin is not X
         X_bin = toarray(X_bin)
@@ -2177,13 +2162,11 @@ def test_binarizer():
         assert np.sum(X_bin == 1) == 4
 
         binarizer = Binarizer(copy=False)
-        binarizer.n_features_in_ = 3
         X_bin = binarizer.transform(X)
         if init is not list:
             assert X_bin is X
 
         binarizer = Binarizer(copy=False)
-        binarizer.n_features_in_ = 3
         X_float = np.array([[1, 0, 5], [2, 3, -1]], dtype=np.float64)
         X_bin = binarizer.transform(X_float)
         if init is not list:
@@ -2194,7 +2177,6 @@ def test_binarizer():
         assert np.sum(X_bin == 1) == 4
 
     binarizer = Binarizer(threshold=-0.5, copy=True)
-    binarizer.n_features_in_ = 3
     for init in (np.array, list):
         X = init(X_.copy())
 
@@ -2476,7 +2458,6 @@ def test_power_transformer_lambda_zero():
 
     # Test the lambda = 0 case
     pt.lambdas_ = np.array([0])
-    pt.n_features_in_ = 1
     X_trans = pt.transform(X)
     assert_array_almost_equal(pt.inverse_transform(X_trans), X)
 
@@ -2487,7 +2468,6 @@ def test_power_transformer_lambda_one():
     X = np.abs(X_2d)[:, 0:1]
 
     pt.lambdas_ = np.array([1])
-    pt.n_features_in_ = 1
     X_trans = pt.transform(X)
     assert_array_almost_equal(X_trans, X)
 
@@ -2510,12 +2490,10 @@ def test_optimization_power_transformer(method, lmbda):
     X = rng.normal(loc=0, scale=1, size=(n_samples, 1))
 
     pt = PowerTransformer(method=method, standardize=False)
-    pt.n_features_in_ = 1
     pt.lambdas_ = [lmbda]
     X_inv = pt.inverse_transform(X)
 
     pt = PowerTransformer(method=method, standardize=False)
-    pt.n_features_in_ = 1
     X_inv_trans = pt.fit_transform(X_inv)
 
     assert_almost_equal(0, np.linalg.norm(X - X_inv_trans) / n_samples,

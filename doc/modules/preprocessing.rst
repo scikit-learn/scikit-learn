@@ -721,7 +721,7 @@ as each sample is treated independently of others::
 It is possible to adjust the threshold of the binarizer::
 
   >>> binarizer = preprocessing.Binarizer(threshold=1.1)
-  >>> binarizer.fit_transform(X)
+  >>> binarizer.transform(X)
   array([[0., 0., 1.],
          [1., 0., 0.],
          [0., 0., 0.]])
