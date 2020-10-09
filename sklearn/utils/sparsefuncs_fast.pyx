@@ -291,7 +291,7 @@ def incr_mean_variance_axis0(X, last_mean, last_var, last_n, sample_weight):
 
 def _incr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
                               # unsigned long long n_samples,  # this needs to
-                              # change to float as it is a sum of float
+                              # change to float as it is a sum of
                               # sample_weight
                               floating n_samples,
                               unsigned long long n_features,
@@ -301,7 +301,6 @@ def _incr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
                               str X_format,
                               np.ndarray[floating, ndim=1] last_mean,
                               np.ndarray[floating, ndim=1] last_var,
-                              # np.ndarray[np.int64_t, ndim=1] last_n,
                               np.ndarray[floating, ndim=1]  last_n,
                               np.ndarray[floating, ndim=1] sample_weight):
     # Implement the function here since variables using fused types
@@ -344,17 +343,9 @@ def _incr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
     updated_n = np.zeros_like(new_n, dtype=np.float64)
     last_over_new_n = np.zeros_like(new_n, dtype=dtype)
 
-    if X_format == 'csr' or X_format == 'csc':
-        # X is a CSR matrix
-        new_mean, new_var, counts_nan = _csr_mean_variance_axis0(
-            X_data, n_samples, n_features, X_indices, X_row_ind, sample_weight)
-    else:
-        # X is a CSC matrix
-        #new_mean, new_var, counts_nan = _csc_mean_variance_axis0(
-        #    X_data, n_samples, n_features, X_indices, X_row_ind, sample_weight,
-        #    X_indptr)
-        new_mean, new_var, counts_nan = _csr_mean_variance_axis0(
-            X_data, n_samples, n_features, X_row_ind, X_indices, sample_weight)
+    # X can be a CSR or CSC matrix
+    new_mean, new_var, counts_nan = _csr_mean_variance_axis0(
+        X_data, n_samples, n_features, X_indices, X_row_ind, sample_weight)
 
     for i in range(n_features):
         new_n[i] -= counts_nan[i]

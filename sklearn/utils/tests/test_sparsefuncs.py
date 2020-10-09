@@ -88,8 +88,8 @@ def test_mean_variance_axis1():
 
 @pytest.mark.parametrize(['Xw', 'X', 'sample_weight'],
                          [
-                         ([[0, 0, 1], [0, 1, 1]],
-                          [[0, 0, 1], [0, 1, 1]],
+                         ([[0, 0, 1], [0, 2, 3]],
+                          [[0, 0, 1], [0, 2, 3]],
                           [1, 1]),
                          ([[0, 0, 1], [0, 1, 1]],
                           [[0, 0, 1], [0, 1, 1], [0, 1, 1]],
@@ -113,7 +113,8 @@ def test_mean_variance_axis1():
                           np.array([1, 3]))
                          ]
                          )
-@pytest.mark.parametrize("sparse_constructor", [sp.csr_matrix]) #, sp.csc_matrix])
+@pytest.mark.parametrize("sparse_constructor",
+                        [sp.csc_matrix, sp.csr_matrix])
 def test_incr_mean_variance_axis_weighted(Xw, X, sample_weight,
                                           sparse_constructor):
     Xw_sparse = sparse_constructor(Xw)
