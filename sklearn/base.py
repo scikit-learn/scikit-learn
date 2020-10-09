@@ -370,18 +370,16 @@ class BaseEstimator:
 
         if reset:
             self.n_features_in_ = n_features
-        else:
-            if not hasattr(self, 'n_features_in_'):
-                raise RuntimeError(
-                    "The reset parameter is False but there is no "
-                    "n_features_in_ attribute. Is this estimator fitted?"
-                )
-            if n_features != self.n_features_in_:
-                raise ValueError(
-                    'X has {} features, but {} is expecting {} features '
-                    'as input.'.format(n_features, self.__class__.__name__,
-                                       self.n_features_in_)
-                )
+            return
+
+        fitted_n_features_in = getattr(self, 'n_features_in_', None)
+        if fitted_n_features_in is None:
+            return
+
+        if n_features != self.n_features_in_:
+            raise ValueError(
+                f"X has {n_features} features, but {self.__class__.__name__} "
+                f"is expecting {self.n_features_in_} features as input.")
 
     def _validate_data(self, X, y='no_validation', reset=True,
                        validate_separately=False, **check_params):
