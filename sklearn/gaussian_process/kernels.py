@@ -177,7 +177,7 @@ class Kernel(metaclass=ABCMeta):
                                "specify their parameters in the signature"
                                " of their __init__ (no varargs)."
                                " %s doesn't follow this convention."
-                               % (cls, ))
+                               % (cls,))
         for arg in args:
             try:
                 value = getattr(self, arg)
@@ -506,7 +506,7 @@ class CompoundKernel(Kernel):
         start = 0
         for kernel in self.kernels:
             end = start + kernel.n_dims
-            #end = start + sum(h.n_elements for h in kernel.hyperparameters)
+            # end = start + sum(h.n_elements for h in kernel.hyperparameters)
             kernel.theta = theta[start:end]
             start = end
 
@@ -573,7 +573,7 @@ class CompoundKernel(Kernel):
 
     def __repr__(self):
         return "{0}[\n\t{1}\n\t]".format(self.__class__.__name__,
-                ",\n\t".join(repr(k) for k in self.kernels))
+                                         ",\n\t".join(repr(k) for k in self.kernels))
 
     def is_stationary(self):
         """Returns whether the kernel is stationary. """
@@ -942,7 +942,7 @@ class KernelOperator(Kernel):
         if type(self) != type(b):
             return False
         return (self.k1 == b.k1 and self.k2 == b.k2) \
-            or (self.k1 == b.k2 and self.k2 == b.k1)
+               or (self.k1 == b.k2 and self.k2 == b.k1)
 
     def is_stationary(self):
         """Returns whether the kernel is stationary. """
@@ -1129,6 +1129,7 @@ class Exponentiation(Kernel):
         The exponent for the base kernel
 
     """
+
     def __init__(self, kernel, exponent):
         self.kernel = kernel
         self.exponent = exponent
@@ -1300,6 +1301,7 @@ class ConstantKernel(StationaryKernelMixin, GenericKernelMixin,
         The lower and upper bound on constant_value
 
     """
+
     def __init__(self, constant_value=1.0, constant_value_bounds=(1e-5, 1e5)):
         self.constant_value = constant_value
         self.constant_value_bounds = constant_value_bounds
@@ -1401,6 +1403,7 @@ class WhiteKernel(StationaryKernelMixin, GenericKernelMixin,
     noise_level_bounds : pair of floats >= 0, default: (1e-5, 1e5)
         The lower and upper bound on noise_level
     """
+
     def __init__(self, noise_level=1.0, noise_level_bounds=(1e-5, 1e5)):
         self.noise_level = noise_level
         self.noise_level_bounds = noise_level_bounds
@@ -1509,6 +1512,7 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
         The lower and upper bound on length_scale
 
     """
+
     def __init__(self, length_scale=1.0, length_scale_bounds=(1e-5, 1e5)):
         self.length_scale = length_scale
         self.length_scale_bounds = length_scale_bounds
@@ -1579,7 +1583,7 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
             elif self.anisotropic:
                 # We need to recompute the pairwise dimension-wise distances
                 K_gradient = (X[:, np.newaxis, :] - X[np.newaxis, :, :]) ** 2 \
-                    / (length_scale ** 2)
+                             / (length_scale ** 2)
                 K_gradient *= K[..., np.newaxis]
                 return K, K_gradient
         else:
@@ -1589,7 +1593,7 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
         if self.anisotropic:
             return "{0}(length_scale=[{1}])".format(
                 self.__class__.__name__, ", ".join(map("{0:.3g}".format,
-                                                   self.length_scale)))
+                                                       self.length_scale)))
         else:  # isotropic
             return "{0}(length_scale={1:.3g})".format(
                 self.__class__.__name__, np.ravel(self.length_scale)[0])
@@ -1634,6 +1638,7 @@ class Matern(RBF):
         its initial value and not optimized.
 
     """
+
     def __init__(self, length_scale=1.0, length_scale_bounds=(1e-5, 1e5),
                  nu=1.5):
         super().__init__(length_scale, length_scale_bounds)
@@ -1707,14 +1712,14 @@ class Matern(RBF):
 
             # We need to recompute the pairwise dimension-wise distances
             if self.anisotropic:
-                D = (X[:, np.newaxis, :] - X[np.newaxis, :, :])**2 \
+                D = (X[:, np.newaxis, :] - X[np.newaxis, :, :]) ** 2 \
                     / (length_scale ** 2)
             else:
-                D = squareform(dists**2)[:, :, np.newaxis]
+                D = squareform(dists ** 2)[:, :, np.newaxis]
 
             if self.nu == 0.5:
                 K_gradient = K[..., np.newaxis] * D \
-                    / np.sqrt(D.sum(2))[:, :, np.newaxis]
+                             / np.sqrt(D.sum(2))[:, :, np.newaxis]
                 K_gradient[~np.isfinite(K_gradient)] = 0
             elif self.nu == 1.5:
                 K_gradient = \
@@ -1728,6 +1733,7 @@ class Matern(RBF):
                 # approximate gradient numerically
                 def f(theta):  # helper function
                     return self.clone_with_theta(theta)(X, Y)
+
                 return K, _approx_fprime(self.theta, f, 1e-10)
 
             if not self.anisotropic:
@@ -1777,6 +1783,7 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
         The lower and upper bound on alpha
 
     """
+
     def __init__(self, length_scale=1.0, alpha=1.0,
                  length_scale_bounds=(1e-5, 1e5), alpha_bounds=(1e-5, 1e5)):
         self.length_scale = length_scale
@@ -1893,6 +1900,7 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
         The lower and upper bound on periodicity
 
     """
+
     def __init__(self, length_scale=1.0, periodicity=1.0,
                  length_scale_bounds=(1e-5, 1e5),
                  periodicity_bounds=(1e-5, 1e5)):
@@ -1956,14 +1964,14 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
             # gradient with respect to length_scale
             if not self.hyperparameter_length_scale.fixed:
                 length_scale_gradient = \
-                    4 / self.length_scale**2 * sin_of_arg**2 * K
+                    4 / self.length_scale ** 2 * sin_of_arg ** 2 * K
                 length_scale_gradient = length_scale_gradient[:, :, np.newaxis]
             else:  # length_scale is kept fixed
                 length_scale_gradient = np.empty((K.shape[0], K.shape[1], 0))
             # gradient with respect to p
             if not self.hyperparameter_periodicity.fixed:
                 periodicity_gradient = \
-                    4 * arg / self.length_scale**2 * cos_of_arg \
+                    4 * arg / self.length_scale ** 2 * cos_of_arg \
                     * sin_of_arg * K
                 periodicity_gradient = periodicity_gradient[:, :, np.newaxis]
             else:  # p is kept fixed
@@ -2091,7 +2099,7 @@ class DotProduct(Kernel):
 def _approx_fprime(xk, f, epsilon, args=()):
     f0 = f(*((xk,) + args))
     grad = np.zeros((f0.shape[0], f0.shape[1], len(xk)), float)
-    ei = np.zeros((len(xk), ), float)
+    ei = np.zeros((len(xk),), float)
     for k in range(len(xk)):
         ei[k] = 1.0
         d = epsilon * ei
@@ -2192,6 +2200,7 @@ class PairwiseKernel(Kernel):
                     return pairwise_kernels(
                         X, Y, metric=self.metric, gamma=np.exp(gamma),
                         filter_params=True, **pairwise_kernels_kwargs)
+
                 return K, _approx_fprime(self.theta, f, 1e-10)
         else:
             return K
