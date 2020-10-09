@@ -243,21 +243,27 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n,
 
     if sample_weight is None:
         sample_weight = np.ones(X.shape[0])
-
+        # TODO: place check sample_weight function here instead
+    else:
+        sample_weight = np.array(sample_weight)
     if isinstance(X, sp.csr_matrix):
         if axis == 0:
             return _incr_mean_var_axis0(X, last_mean=last_mean,
-                                        last_var=last_var, last_n=last_n)
+                                        last_var=last_var, last_n=last_n,
+                                        sample_weight=sample_weight)
         else:
             return _incr_mean_var_axis0(X.T, last_mean=last_mean,
-                                        last_var=last_var, last_n=last_n)
+                                        last_var=last_var, last_n=last_n,
+                                        sample_weight=sample_weight)
     elif isinstance(X, sp.csc_matrix):
         if axis == 0:
             return _incr_mean_var_axis0(X, last_mean=last_mean,
-                                        last_var=last_var, last_n=last_n)
+                                        last_var=last_var, last_n=last_n,
+                                        sample_weight=sample_weight)
         else:
             return _incr_mean_var_axis0(X.T, last_mean=last_mean,
-                                        last_var=last_var, last_n=last_n)
+                                        last_var=last_var, last_n=last_n,
+                                        sample_weight=sample_weight)
     else:
         _raise_typeerror(X)
 
