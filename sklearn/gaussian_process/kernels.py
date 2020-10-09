@@ -573,7 +573,8 @@ class CompoundKernel(Kernel):
 
     def __repr__(self):
         return "{0}[\n\t{1}\n\t]".format(self.__class__.__name__,
-                                         ",\n\t".join(repr(k) for k in self.kernels))
+                                         ",\n\t".join(repr(k)
+                                                      for k in self.kernels))
 
     def is_stationary(self):
         """Returns whether the kernel is stationary. """
@@ -634,7 +635,8 @@ class Tensor(CompoundKernel):
                           (k(X, Y, eval_gradient=False) for k in self.kernels))
 
     def diag(self, X):
-        return reduce(lambda d0, d1: d0 * d1, (k.diag(X) for k in self.kernels))
+        return reduce(lambda d0, d1: d0 * d1,
+                      (k.diag(X) for k in self.kernels))
 
 
 class DirectSum(CompoundKernel):
@@ -663,7 +665,8 @@ class DirectSum(CompoundKernel):
                           (k(X, Y, eval_gradient=False) for k in self.kernels))
 
     def diag(self, X):
-        return reduce(lambda d0, d1: d0 + d1, (k.diag(X) for k in self.kernels))
+        return reduce(lambda d0, d1: d0 + d1,
+                      (k.diag(X) for k in self.kernels))
 
 
 class Projection(Kernel):
@@ -694,9 +697,11 @@ class Projection(Kernel):
         self.columns = columns
         # if this gets too tedious go back to using pandas,
         # which handles int/list of ints transparently
-        assert isinstance(columns, (list, tuple, int, np.ndarray)), "must be int or list of ints"
+        assert isinstance(columns, (list, tuple, int, np.ndarray)), \
+            "must be int or list of ints"
         self.columns = [columns] if isinstance(columns, int) else columns
-        assert all(isinstance(i, int) for i in self.columns), "must be integers"
+        assert all(isinstance(i, int) for i in self.columns), \
+            "must be integers"
 
     def __call__(self, X, Y=None, eval_gradient=False):
         """Return the kernel k(X, Y) and optionally its gradient.
@@ -752,9 +757,8 @@ class Projection(Kernel):
         # name_ = "{}{}__".format(self.name, self.columns)
         if deep:
             deep_items = self.kernel.get_params().items()
-            # params.update((name_ + k, val) for k, val in deep_items)
-            # params.update(("kernel__{}".format(k), val) for k, val in deep_items)
-            params.update(("{}__{}".format(self.name, k), val) for k, val in deep_items)
+            params.update(("{}__{}".format(self.name, k), val)
+                          for k, val in deep_items)
         return params
 
     @property
