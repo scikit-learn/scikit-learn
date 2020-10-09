@@ -574,3 +574,36 @@ def test_kwargs_in_init():
     with config_context(print_changed_only=False):
         expected = "WithKWargs(a='something', b='unchanged', c='abcd', d=None)"
         assert expected == est.__repr__()
+
+def test_complexity_print_changed_only():
+    # Make sure `__repr__` is called the same amount of times
+    # whether `print_changed_only` is True or False
+    # Non-regression test for
+    # https://github.com/scikit-learn/scikit-learn/issues/18490
+
+    class DummyEstimator(TransformerMixin, BaseEstimator):
+        nb_times_repr_called = 0
+
+        def __init__(self, estimator=None):
+            self.estimator = estimator
+
+        def __repr__(self):
+            DummyEstimator.nb_times_repr_called += 1
+            return super().__repr__()
+
+        def transform(self, X, copy=None):  # pragma: no cover
+            return X
+
+    estimator = DummyEstimator(make_pipeline(DummyEstimator(DummyEstimator()),
+                                             DummyEstimator(),
+                                             'passthrough'))
+    with config_context(print_changed_only=False):
+        repr(estimator)
+        nb_repr_print_changed_only_false = DummyEstimator.nb_times_repr_called
+
+    DummyEstimator.nb_times_repr_called = 0
+    with config_context(print_changed_only=True):
+        repr(estimator)
+        nb_repr_print_changed_only_true = DummyEstimator.nb_times_repr_called
+
+    assert nb_repr_print_changed_only_false == nb_repr_print_changed_only_true
