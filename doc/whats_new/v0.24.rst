@@ -625,7 +625,7 @@ Changelog
   :func:`~utils.estimator_checks.parametrize_with_checks` now expose an
   `api_only` parameter which allows to control whether the check suite should
   only check for pure API-compatibility, or also run more advanced checks.
-  :pr:`TODO` and :pr:`17361` by `Nicolas Hug`_.
+  :pr:`18582` and :pr:`17361` by `Nicolas Hug`_.
 
 Miscellaneous
 .............
