@@ -168,10 +168,12 @@ def csc_mean_variance_axis0(X):
     return means, variances
 
 
-def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
+def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
                              unsigned long long n_samples,
                              unsigned long long n_features,
                              np.ndarray[integral, ndim=1] X_indices,
+                             np.ndarray[integral, ndim=1] X_row_indices,
+                             np.ndarray[floating, ndim=1] sample_weight,
                              np.ndarray[integral, ndim=1] X_indptr):
     # Implement the function here since variables using fused types
     # cannot be declared directly and can only be passed as function arguments
@@ -194,7 +196,7 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
     variances = np.zeros_like(means, dtype=dtype)
 
     cdef np.ndarray[np.int64_t, ndim=1] counts_nan = np.zeros(n_features,
-                                                              dtype=np.int64)
+                                                              dtype=np.float64)
 
     for i in range(n_features):
 
@@ -275,9 +277,10 @@ def incr_mean_variance_axis0(X, last_mean, last_var, last_n, sample_weight):
         sample_weight = sample_weight.astype(np.float64)
     if last_n.dtype not in [np.float32, np.float64]:
         last_n = last_n.astype(np.float64)
-    ind_rows, ind_cols = X.nonzero()
+    # ind_rows, ind_cols = X.nonzero()  # this does not work for csc matrix
+    ind_rows, ind_cols, X_data = sp.find(X)
 
-    return _incr_mean_variance_axis0(X.data,
+    return _incr_mean_variance_axis0(X_data,
                                      np.sum(sample_weight).astype(int),
                                      X.shape[1],
                                      # X.ind_cols,
@@ -341,14 +344,17 @@ def _incr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
     updated_n = np.zeros_like(new_n, dtype=np.float64)
     last_over_new_n = np.zeros_like(new_n, dtype=dtype)
 
-    if X_format == 'csr':
+    if X_format == 'csr' or X_format == 'csc':
         # X is a CSR matrix
         new_mean, new_var, counts_nan = _csr_mean_variance_axis0(
             X_data, n_samples, n_features, X_indices, X_row_ind, sample_weight)
     else:
         # X is a CSC matrix
-        new_mean, new_var, counts_nan = _csc_mean_variance_axis0(
-            X_data, n_samples, n_features, X_indices, X_indptr)
+        #new_mean, new_var, counts_nan = _csc_mean_variance_axis0(
+        #    X_data, n_samples, n_features, X_indices, X_row_ind, sample_weight,
+        #    X_indptr)
+        new_mean, new_var, counts_nan = _csr_mean_variance_axis0(
+            X_data, n_samples, n_features, X_row_ind, X_indices, sample_weight)
 
     for i in range(n_features):
         new_n[i] -= counts_nan[i]
