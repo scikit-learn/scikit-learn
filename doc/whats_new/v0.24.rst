@@ -447,6 +447,14 @@ Changelog
   :pr:`18266` by :user:`Subrat Sahu <subrat93>`,
   :user:`Nirvan <Nirvan101>` and :user:`Arthur Book <ArthurBook>`.
 
+- |Enhancement| :func:`model_selection.cross_val_score`,
+  :func:`model_selection.cross_validate`,
+  :class:`model_selection.GridSearchCV`, and
+  :class:`model_selection.RandomizedSearchCV` allows estimator to fail scoring
+  and replace the score with `error_score`. If `error_score="raise"`, the error
+  will be raised.
+  :pr:`18343` by `Guillaume Lemaitre`_ and :user:`Devi Sandeep <dsandeep0138>`.
+
 :mod:`sklearn.multiclass`
 .........................
 
