@@ -21,16 +21,18 @@ from scipy.special import boxcox
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
+from ..utils.deprecation import deprecated
 from ..utils.extmath import row_norms
-from ..utils.extmath import _incremental_mean_and_var
+from ..utils.extmath import (_incremental_mean_and_var,
+                             _incremental_weighted_mean_and_var)
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
                                       inplace_csr_row_normalize_l2)
 from ..utils.sparsefuncs import (inplace_column_scale,
                                  mean_variance_axis, incr_mean_variance_axis,
                                  min_max_axis)
 from ..utils.validation import (check_is_fitted, check_random_state,
+                                _check_sample_weight,
                                 FLOAT_DTYPES, _deprecate_positional_args)
-
 from ._csr_polynomial_expansion import _csr_polynomial_expansion
 
 from ._encoders import OneHotEncoder
@@ -658,7 +660,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
     --------
     scale : Equivalent function without the estimator API.
 
-    :class:`~sklearn.decomposition.PCA` : Further removes the linear 
+    :class:`~sklearn.decomposition.PCA` : Further removes the linear
         correlation across features with 'whiten=True'.
 
     Notes
@@ -695,7 +697,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
             del self.mean_
             del self.var_
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_weight=None):
         """Compute the mean and std to be used for later scaling.
 
         Parameters
@@ -707,6 +709,13 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         y : None
             Ignored.
 
+        sample_weight : array-like of shape (n_samples,), default=None
+            Individual weights for each sample. Works only if X is dense. It
+            will raise a `NotImplementedError` if called with sparse X
+
+            .. versionadded:: 0.24
+               parameter *sample_weight* support to StandardScaler.
+
         Returns
         -------
         self : object
@@ -715,9 +724,9 @@ class StandardScaler(TransformerMixin, BaseEstimator):
 
         # Reset internal state before fitting
         self._reset()
-        return self.partial_fit(X, y)
+        return self.partial_fit(X, y, sample_weight)
 
-    def partial_fit(self, X, y=None):
+    def partial_fit(self, X, y=None, sample_weight=None):
         """
         Online computation of mean and std on X for later scaling.
 
@@ -739,6 +748,13 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         y : None
             Ignored.
 
+        sample_weight : array-like of shape (n_samples,), default=None
+            Individual weights for each sample. Works only if X is dense. It
+            will raise a `NotImplementedError` if called with sparse X
+
+            .. versionadded:: 0.24
+               parameter *sample_weight* support to StandardScaler.
+
         Returns
         -------
         self : object
@@ -747,6 +763,10 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         X = self._validate_data(X, accept_sparse=('csr', 'csc'),
                                 estimator=self, dtype=FLOAT_DTYPES,
                                 force_all_finite='allow-nan')
+
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X,
+                                                 dtype=X.dtype)
 
         # Even in the case of `with_mean=False`, we update the mean anyway
         # This is needed for the incremental computation of the var
@@ -765,16 +785,21 @@ class StandardScaler(TransformerMixin, BaseEstimator):
                 raise ValueError(
                     "Cannot center sparse matrices: pass `with_mean=False` "
                     "instead. See docstring for motivation and alternatives.")
-
             sparse_constructor = (sparse.csr_matrix
                                   if X.format == 'csr' else sparse.csc_matrix)
-            counts_nan = sparse_constructor(
+
+            if sample_weight is not None:
+                raise NotImplementedError(
+                    "`StandardScaler` does not yet have a support for sparse X"
+                    " and `sample_weight`.")
+            else:
+                counts_nan = sparse_constructor(
                         (np.isnan(X.data), X.indices, X.indptr),
                         shape=X.shape).sum(axis=0).A.ravel()
 
             if not hasattr(self, 'n_samples_seen_'):
                 self.n_samples_seen_ = (
-                        X.shape[0] - counts_nan).astype(np.int64, copy=False)
+                    X.shape[0] - counts_nan).astype(np.int64, copy=False)
 
             if self.with_std:
                 # First pass
@@ -808,6 +833,13 @@ class StandardScaler(TransformerMixin, BaseEstimator):
                 self.mean_ = None
                 self.var_ = None
                 self.n_samples_seen_ += X.shape[0] - np.isnan(X).sum(axis=0)
+
+            elif sample_weight is not None:
+                self.mean_, self.var_, self.n_samples_seen_ = \
+                    _incremental_weighted_mean_and_var(X, sample_weight,
+                                                       self.mean_,
+                                                       self.var_,
+                                                       self.n_samples_seen_)
             else:
                 self.mean_, self.var_, self.n_samples_seen_ = \
                     _incremental_mean_and_var(X, self.mean_, self.var_,
@@ -2270,6 +2302,13 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
 
         return K
 
+    def _more_tags(self):
+        return {'pairwise': True}
+
+    # TODO: Remove in 0.26
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 0.26.")
     @property
     def _pairwise(self):
         return True

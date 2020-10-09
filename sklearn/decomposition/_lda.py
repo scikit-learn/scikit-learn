@@ -509,17 +509,9 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         """
         self._check_params()
         first_time = not hasattr(self, 'components_')
-
-        # In theory reset should be equal to `first_time`, but there are tests
-        # checking the input number of feature and they expect a specific
-        # string, which is not the same one raised by check_n_features. So we
-        # don't check n_features_in_ here for now (it's done with adhoc code in
-        # the estimator anyway).
-        # TODO: set reset=first_time when addressing reset in
-        # predict/transform/etc.
-        reset_n_features = True
-        X = self._check_non_neg_array(X, reset_n_features,
-                                      "LatentDirichletAllocation.partial_fit")
+        X = self._check_non_neg_array(
+            X, reset_n_features=first_time,
+            whom="LatentDirichletAllocation.partial_fit")
         n_samples, n_features = X.shape
         batch_size = self.batch_size
 
@@ -663,6 +655,10 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         doc_topic_distr : ndarray of shape (n_samples, n_components)
             Document topic distribution for X.
         """
+        check_is_fitted(self)
+        X = self._check_non_neg_array(
+            X, reset_n_features=False,
+            whom="LatentDirichletAllocation.transform")
         doc_topic_distr = self._unnormalized_transform(X)
         doc_topic_distr /= doc_topic_distr.sum(axis=1)[:, np.newaxis]
         return doc_topic_distr
@@ -758,7 +754,8 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         score : float
             Use approximate bound as score.
         """
-        X = self._check_non_neg_array(X, reset_n_features=True,
+        check_is_fitted(self)
+        X = self._check_non_neg_array(X, reset_n_features=False,
                                       whom="LatentDirichletAllocation.score")
 
         doc_topic_distr = self._unnormalized_transform(X)
