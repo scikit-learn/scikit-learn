@@ -11,6 +11,7 @@ functions to split the data based on a preset strategy.
 # License: BSD 3 clause
 
 from collections.abc import Iterable
+from collections import defaultdict, Counter
 import warnings
 from itertools import chain, combinations
 from math import ceil, floor
@@ -811,10 +812,21 @@ class StratifiedGroupKFold(_BaseKFold):
     # Implementation based on this kaggle kernel:
     # https://www.kaggle.com/jakubwasikowski/stratified-group-k-fold-cross-validation
     def _iter_test_indices(self, X, y, groups):
-        labels_num = np.max(y) + 1
+        rng = check_random_state(self.random_state)
+        y = np.asarray(y)
+        type_of_target_y = type_of_target(y)
+        allowed_target_types = ('binary', 'multiclass')
+        if type_of_target_y not in allowed_target_types:
+            raise ValueError(
+                'Supported target types are: {}. Got {!r} instead.'.format(
+                    allowed_target_types, type_of_target_y))
+
+        y = column_or_1d(y)
+        _, y_inv = np.unique(y, return_inverse=True)
+        labels_num = np.max(y_inv) + 1
         y_counts_per_group = defaultdict(lambda: np.zeros(labels_num))
         y_distr = Counter()
-        for label, group in zip(y, groups):
+        for label, group in zip(y_inv, groups):
             y_counts_per_group[group][label] += 1
             y_distr[label] += 1
 
@@ -822,7 +834,6 @@ class StratifiedGroupKFold(_BaseKFold):
         groups_per_fold = defaultdict(set)
 
         groups_and_y_counts = list(y_counts_per_group.items())
-        rng = check_random_state(self.random_state)
         if self.shuffle:
             rng.shuffle(groups_and_y_counts)
 
