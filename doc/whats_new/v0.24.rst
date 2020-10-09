@@ -346,6 +346,9 @@ Changelog
   efficient leave-one-out cross-validation scheme ``cv=None``. :pr:`6624` by
   :user:`Marijn van Vliet <wmvanvliet>`.
 
+- |Fix| Fixes bug in :class:`linear_model.TheilSenRegressor` where
+  `predict` and `score` would fail when `fit_intercept=False` and there was
+  one feature during fitting. :pr:`18121` by `Thomas Fan`_.
 
 :mod:`sklearn.manifold`
 .......................
@@ -415,6 +418,13 @@ Changelog
   ``labels`` parameter.
   :pr:`17935` by :user:`Cary Goltermann <Ultramann>`.
 
+- |Fix| Fix scorers that accept a pos_label parameter and compute their metrics
+  from values returned by `decision_function` or `predict_proba`. Previously,
+  they would return erroneous values when pos_label was not corresponding to
+  `classifier.classes_[1]`. This is especially important when training
+  classifiers directly with string labeled target classes.
+  :pr:`#18114` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
@@ -446,6 +456,14 @@ Changelog
   :class:`model_selection.RandomizedSearchCV` results in non-finite scores.
   :pr:`18266` by :user:`Subrat Sahu <subrat93>`,
   :user:`Nirvan <Nirvan101>` and :user:`Arthur Book <ArthurBook>`.
+
+- |Enhancement| :func:`model_selection.cross_val_score`,
+  :func:`model_selection.cross_validate`,
+  :class:`model_selection.GridSearchCV`, and
+  :class:`model_selection.RandomizedSearchCV` allows estimator to fail scoring
+  and replace the score with `error_score`. If `error_score="raise"`, the error
+  will be raised.
+  :pr:`18343` by `Guillaume Lemaitre`_ and :user:`Devi Sandeep <dsandeep0138>`.
 
 :mod:`sklearn.multiclass`
 .........................
@@ -551,6 +569,9 @@ Changelog
 
 :mod:`sklearn.preprocessing`
 ............................
+
+- |Feature| :class:`preprocessing.OneHotEncoder` now supports missing
+  values by treating them as a category. :pr:`17317` by `Thomas Fan`_.
 
 - |Feature| Add a new ``handle_unknown`` parameter with a
   ``use_encoded_value`` option, along with a new ``unknown_value`` parameter,
