@@ -472,8 +472,8 @@ class CompoundKernel(Kernel):
     @property
     def n_dims(self):
         """Returns the number of non-fixed hyperparameters of the kernel."""
-        return sum(h.n_elements \
-                   for k in self.kernels \
+        return sum(h.n_elements
+                   for k in self.kernels
                    for h in k.hyperparameters)
 
     @property
@@ -624,9 +624,8 @@ class Tensor(CompoundKernel):
             def _k_g_mul_(kg0, kg1):
                 k0, g0 = kg0
                 k1, g1 = kg1
-                return k0 * k1, \
-                       np.dstack((g0 * k1[:, :, np.newaxis],
-                                  g1 * k0[:, :, np.newaxis]))
+                return k0 * k1, np.dstack((g0 * k1[:, :, np.newaxis],
+                                           g1 * k0[:, :, np.newaxis]))
 
             return reduce(_k_g_mul_,
                           (k(X, Y, eval_gradient=True) for k in self.kernels))
@@ -945,8 +944,8 @@ class KernelOperator(Kernel):
     def __eq__(self, b):
         if type(self) != type(b):
             return False
-        return (self.k1 == b.k1 and self.k2 == b.k2) \
-               or (self.k1 == b.k2 and self.k2 == b.k1)
+        return (self.k1 == b.k1 and self.k2 == b.k2) or \
+               (self.k1 == b.k2 and self.k2 == b.k1)
 
     def is_stationary(self):
         """Returns whether the kernel is stationary. """
