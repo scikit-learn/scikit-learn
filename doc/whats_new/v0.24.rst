@@ -552,6 +552,9 @@ Changelog
 :mod:`sklearn.preprocessing`
 ............................
 
+- |Feature| :class:`preprocessing.OneHotEncoder` now supports missing
+  values by treating them as a category. :pr:`17317` by `Thomas Fan`_.
+
 - |Feature| Add a new ``handle_unknown`` parameter with a
   ``use_encoded_value`` option, along with a new ``unknown_value`` parameter,
   to :class:`preprocessing.OrdinalEncoder` to allow unknown categories during
