@@ -418,6 +418,13 @@ Changelog
   ``labels`` parameter.
   :pr:`17935` by :user:`Cary Goltermann <Ultramann>`.
 
+- |Fix| Fix scorers that accept a pos_label parameter and compute their metrics
+  from values returned by `decision_function` or `predict_proba`. Previously,
+  they would return erroneous values when pos_label was not corresponding to
+  `classifier.classes_[1]`. This is especially important when training
+  classifiers directly with string labeled target classes.
+  :pr:`#18114` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
