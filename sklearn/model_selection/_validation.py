@@ -1212,7 +1212,7 @@ def learning_curve(estimator, X, y, *, groups=None,
                    train_sizes=np.linspace(0.1, 1.0, 5), cv=None,
                    scoring=None, exploit_incremental_learning=False,
                    n_jobs=None, pre_dispatch="all", verbose=0, shuffle=False,
-                   random_state=None, fit_params=None, error_score=np.nan,
+                   random_state=None, error_score=np.nan,
                    return_times=False):
     """Learning curve.
 
@@ -1317,9 +1317,6 @@ def learning_curve(estimator, X, y, *, groups=None,
     return_times : bool, default=False
         Whether to return the fit and score times.
 
-    fit_params : dict, default=None
-        Parameters to pass to the fit method of the estimator.
-
     Returns
     -------
     train_sizes_abs : array of shape (n_unique_ticks,)
@@ -1390,7 +1387,7 @@ def learning_curve(estimator, X, y, *, groups=None,
 
         results = parallel(delayed(_fit_and_score)(
             clone(estimator), X, y, scorer, train, test, verbose,
-            parameters=None, fit_params=fit_params, return_train_score=True,
+            parameters=None, fit_params=None, return_train_score=True,
             error_score=error_score, return_times=return_times)
             for train, test in train_test_proportions
         )
