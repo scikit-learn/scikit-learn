@@ -1,10 +1,10 @@
 """Test the validation module"""
-
-import sys
-import warnings
-import tempfile
 import os
 import re
+import sys
+import tempfile
+import warnings
+from functools import partial
 from time import sleep
 
 import pytest
@@ -333,16 +333,16 @@ def test_cross_validate_invalid_scoring_param():
     multiclass_scorer = make_scorer(precision_recall_fscore_support)
 
     # Multiclass Scorers that return multiple values are not supported yet
-    assert_raises_regex(ValueError,
-                        "Classification metrics can't handle a mix of "
-                        "binary and continuous targets",
-                        cross_validate, estimator, X, y,
-                        scoring=multiclass_scorer)
-    assert_raises_regex(ValueError,
-                        "Classification metrics can't handle a mix of "
-                        "binary and continuous targets",
-                        cross_validate, estimator, X, y,
-                        scoring={"foo": multiclass_scorer})
+    # the warning message we're expecting to see
+    warning_message = ("Scoring failed. The score on this train-test "
+                       "partition for these parameters will be set to %f. "
+                       "Details: \n" % np.nan)
+
+    with pytest.warns(UserWarning, match=warning_message):
+        cross_validate(estimator, X, y, scoring=multiclass_scorer)
+
+    with pytest.warns(UserWarning, match=warning_message):
+        cross_validate(estimator, X, y, scoring={"foo": multiclass_scorer})
 
     assert_raises_regex(ValueError, "'mse' is not a valid scoring value.",
                         cross_validate, SVC(), X, y, scoring="mse")
@@ -1734,7 +1734,6 @@ def test_score_memmap():
     score = np.memmap(tf.name, shape=(), mode='r', dtype=np.float64)
     try:
         cross_val_score(clf, X, y, scoring=lambda est, X, y: score)
-        # non-scalar should still fail
         assert_raises(ValueError, cross_val_score, clf, X, y,
                       scoring=lambda est, X, y: scores)
     finally:
@@ -1841,6 +1840,89 @@ def test_fit_and_score_working():
     assert result['parameters'] == fit_and_score_kwargs['parameters']
 
 
+def _failing_scorer(estimator, X, y, error_msg):
+    raise ValueError(error_msg)
+
+
+@pytest.mark.filterwarnings("ignore:lbfgs failed to converge")
+@pytest.mark.parametrize("error_score", [np.nan, 0, "raise"])
+def test_cross_val_score_failing_scorer(error_score):
+    # check that an estimator can fail during scoring in `cross_val_score` and
+    # that we can optionally replaced it with `error_score`
+    X, y = load_iris(return_X_y=True)
+    clf = LogisticRegression(max_iter=5).fit(X, y)
+
+    error_msg = "This scorer is supposed to fail!!!"
+    failing_scorer = partial(_failing_scorer, error_msg=error_msg)
+
+    if error_score == "raise":
+        with pytest.raises(ValueError, match=error_msg):
+            cross_val_score(
+                clf, X, y, cv=3, scoring=failing_scorer,
+                error_score=error_score
+            )
+    else:
+        warning_msg = (
+            f"Scoring failed. The score on this train-test partition for "
+            f"these parameters will be set to {error_score}"
+        )
+        with pytest.warns(UserWarning, match=warning_msg):
+            scores = cross_val_score(
+                clf, X, y, cv=3, scoring=failing_scorer,
+                error_score=error_score
+            )
+            assert_allclose(scores, error_score)
+
+
+@pytest.mark.filterwarnings("ignore:lbfgs failed to converge")
+@pytest.mark.parametrize("error_score", [np.nan, 0, "raise"])
+@pytest.mark.parametrize("return_train_score", [True, False])
+@pytest.mark.parametrize("with_multimetric", [False, True])
+def test_cross_validate_failing_scorer(
+    error_score, return_train_score, with_multimetric
+):
+    # check that an estimator can fail during scoring in `cross_validate` and
+    # that we can optionally replaced it with `error_score`
+    X, y = load_iris(return_X_y=True)
+    clf = LogisticRegression(max_iter=5).fit(X, y)
+
+    error_msg = "This scorer is supposed to fail!!!"
+    failing_scorer = partial(_failing_scorer, error_msg=error_msg)
+    if with_multimetric:
+        scoring = {"score_1": failing_scorer, "score_2": failing_scorer}
+    else:
+        scoring = failing_scorer
+
+    if error_score == "raise":
+        with pytest.raises(ValueError, match=error_msg):
+            cross_validate(
+                clf, X, y,
+                cv=3,
+                scoring=scoring,
+                return_train_score=return_train_score,
+                error_score=error_score
+            )
+    else:
+        warning_msg = (
+            f"Scoring failed. The score on this train-test partition for "
+            f"these parameters will be set to {error_score}"
+        )
+        with pytest.warns(UserWarning, match=warning_msg):
+            results = cross_validate(
+                clf, X, y,
+                cv=3,
+                scoring=scoring,
+                return_train_score=return_train_score,
+                error_score=error_score
+            )
+            for key in results:
+                if "_score" in key:
+                    # check the test (and optionally train score) for all
+                    # scorers that should be assigned to `error_score`.
+                    assert_allclose(results[key], error_score)
+
+
+
 def three_params_scorer(i, j, k):
     return 3.4213
 
@@ -1886,7 +1968,7 @@ def test_score():
         return None
     fit_and_score_args = [None, None, None, two_params_scorer]
     assert_raise_message(ValueError, error_message,
-                         _score, *fit_and_score_args)
+                         _score, *fit_and_score_args, error_score=np.nan)
 
 
 def test_callable_multimetric_confusion_matrix_cross_validate():
@@ -1904,3 +1986,40 @@ def test_callable_multimetric_confusion_matrix_cross_validate():
     score_names = ['tn', 'fp', 'fn', 'tp']
     for name in score_names:
         assert "test_{}".format(name) in cv_results
+
+
+# TODO: Remove in 0.26 when the _pairwise attribute is removed
+def test_validation_pairwise():
+    # checks the interactions between the pairwise estimator tag
+    # and the _pairwise attribute
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    linear_kernel = np.dot(X, X.T)
+
+    svm = SVC(kernel="precomputed")
+    with pytest.warns(None) as record:
+        cross_validate(svm, linear_kernel, y, cv=2)
+    assert not record
+
+    # pairwise tag is not consistent with pairwise attribute
+    class IncorrectTagSVM(SVC):
+        def _more_tags(self):
+            return {'pairwise': False}
+
+    svm = IncorrectTagSVM(kernel='precomputed')
+    msg = ("_pairwise was deprecated in 0.24 and will be removed in 0.26. "
+           "Set the estimator tags of your estimator instead")
+    with pytest.warns(FutureWarning, match=msg):
+        cross_validate(svm, linear_kernel, y, cv=2)
+
+    # the _pairwise attribute is present and set to True while the pairwise
+    # tag is not present
+    class NoEstimatorTagSVM(SVC):
+        def _get_tags(self):
+            tags = super()._get_tags()
+            del tags['pairwise']
+            return tags
+
+    svm = NoEstimatorTagSVM(kernel='precomputed')
+    with pytest.warns(FutureWarning, match=msg):
+        cross_validate(svm, linear_kernel, y, cv=2)
