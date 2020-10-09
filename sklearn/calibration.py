@@ -13,7 +13,7 @@ from contextlib import suppress
 
 from math import log
 import numpy as np
-from joblib import delayed, Parallel
+from joblib import Parallel
 
 from scipy.special import expit
 from scipy.special import xlogy
@@ -26,6 +26,7 @@ from .metrics._plot.base import _check_classifier_response_method
 from .preprocessing import label_binarize, LabelBinarizer
 from .utils import (check_array, indexable, column_or_1d,
                     check_matplotlib_support)
+from .utils.fixes import delayed
 from .utils.validation import check_is_fitted, check_consistent_length
 from .utils.validation import _check_sample_weight
 from .pipeline import Pipeline

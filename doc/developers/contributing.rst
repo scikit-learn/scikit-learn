@@ -229,7 +229,7 @@ how to set up your git repository:
 
        $ pip install --no-build-isolation --editable .
 
-   for more details about advanced installation, see the
+   If you receive errors in building scikit-learn, see the
    :ref:`install_bleeding_edge` section.
 
 .. _upstream:
