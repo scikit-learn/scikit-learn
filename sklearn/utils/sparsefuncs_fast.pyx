@@ -277,8 +277,9 @@ def incr_mean_variance_axis0(X, last_mean, last_var, last_n, sample_weight):
         last_n = last_n.astype(np.float64)
     ind_rows, ind_cols = X.nonzero()
 
-    return _incr_mean_variance_axis0(X.data, np.sum(sample_weight).astype(int),
-                                     np.sum(sample_weight), # X.shape[1],
+    return _incr_mean_variance_axis0(X.data,
+                                     np.sum(sample_weight).astype(int),
+                                     X.shape[1],
                                      # X.ind_cols,
                                      ind_rows, ind_cols,
                                      X.indptr, X.format, last_mean, last_var,
