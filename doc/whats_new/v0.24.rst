@@ -346,6 +346,9 @@ Changelog
   efficient leave-one-out cross-validation scheme ``cv=None``. :pr:`6624` by
   :user:`Marijn van Vliet <wmvanvliet>`.
 
+- |Fix| Fixes bug in :class:`linear_model.TheilSenRegressor` where
+  `predict` and `score` would fail when `fit_intercept=False` and there was
+  one feature during fitting. :pr:`18121` by `Thomas Fan`_.
 
 :mod:`sklearn.manifold`
 .......................
