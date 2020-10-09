@@ -863,17 +863,18 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         Maximum of covariances (in absolute value) at each iteration.
         ``n_alphas`` is either ``max_iter``, ``n_features`` or the
         number of nodes in the path with ``alpha >= alpha_min``, whichever
-        is smaller. If this is a list, its length is `n_targets`.
+        is smaller. If this is a list of array-like, the length of the outer
+        list is `n_targets`.
 
     active_ : list of shape (n_alphas,) or list thereof
         Indices of active variables at the end of the path.
-        If this is a list, its length is `n_targets`.
+        If this is a list of list, the length of the outer list is `n_targets`.
 
     coef_path_ : array-like of shape (n_features, n_alphas + 1) or list \
             thereof
         The varying values of the coefficients along the path. It is not
-        present if the ``fit_path`` parameter is ``False``. If this is a list,
-        its length is `n_targets`.
+        present if the ``fit_path`` parameter is ``False``. If this is a list
+        of array-like, the length of the outer list is `n_targets`.
 
     coef_ : array-like of shape (n_features,) or (n_targets, n_features)
         Parameter vector (w in the formulation formula).
@@ -1116,18 +1117,19 @@ class LassoLars(Lars):
         Maximum of covariances (in absolute value) at each iteration.
         ``n_alphas`` is either ``max_iter``, ``n_features`` or the
         number of nodes in the path with ``alpha >= alpha_min``, whichever
-        is smaller. If this is a list, its length is `n_targets`.
+        is smaller. If this is a list of array-like, the length of the outer
+        list is `n_targets`.
 
     active_ : list of length n_alphas or list thereof
         Indices of active variables at the end of the path.
-        If this is a list, its length is `n_targets`.
+        If this is a list of list, the length of the outer list is `n_targets`.
 
     coef_path_ : array-like of shape (n_features, n_alphas + 1) or list \
             thereof
         If a list is passed it's expected to be one of n_targets such arrays.
         The varying values of the coefficients along the path. It is not
-        present if the ``fit_path`` parameter is ``False``. If this is a list,
-        its length is `n_targets`.
+        present if the ``fit_path`` parameter is ``False``. If this is a list
+        of array-like, the length of the outer list is `n_targets`.
 
     coef_ : array-like of shape (n_features,) or (n_targets, n_features)
         Parameter vector (w in the formulation formula).
