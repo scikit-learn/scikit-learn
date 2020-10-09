@@ -848,7 +848,8 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
                                beta_loss='frobenius', tol=1e-4,
                                max_iter=200, alpha=0., l1_ratio=0.,
                                regularization=None, random_state=None,
-                               verbose=0, shuffle=False):
+                               verbose=0, shuffle=False,
+                               check_input=True):
     """Compute Non-negative Matrix Factorization (NMF).
 
     Find two non-negative matrices (W, H) whose product approximates the non-
@@ -982,6 +983,9 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
     shuffle : bool, default=False
         If true, randomize the order of coordinates in the CD solver.
 
+    check_input : bool, default=True
+        If False, the input arrays X will not be checked.
+
     Returns
     -------
     W : ndarray of shape (n_samples, n_components)
@@ -1011,8 +1015,9 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
     Fevotte, C., & Idier, J. (2011). Algorithms for nonnegative matrix
     factorization with the beta-divergence. Neural Computation, 23(9).
     """
-    X = check_array(X, accept_sparse=('csr', 'csc'),
-                    dtype=[np.float64, np.float32])
+    if check_input:
+        X = check_array(X, accept_sparse=('csr', 'csc'),
+                        dtype=[np.float64, np.float32])
     check_non_negative(X, "NMF (input X)")
     beta_loss = _check_string_param(solver, regularization, beta_loss, init)
 
@@ -1299,15 +1304,13 @@ class NMF(TransformerMixin, BaseEstimator):
         X = self._validate_data(X, accept_sparse=('csr', 'csc'),
                                 dtype=[np.float64, np.float32])
 
-        # XXX: input data validation is performed again in
-        # non_negative_factorization.
         W, H, n_iter_ = non_negative_factorization(
             X=X, W=W, H=H, n_components=self.n_components, init=self.init,
             update_H=True, solver=self.solver, beta_loss=self.beta_loss,
             tol=self.tol, max_iter=self.max_iter, alpha=self.alpha,
             l1_ratio=self.l1_ratio, regularization=self.regularization,
             random_state=self.random_state, verbose=self.verbose,
-            shuffle=self.shuffle)
+            shuffle=self.shuffle, check_input=False)
 
         self.reconstruction_err_ = _beta_divergence(X, W, H, self.beta_loss,
                                                     square_root=True)
