@@ -693,7 +693,7 @@ as each sample is treated independently of others::
 It is possible to adjust the threshold of the binarizer::
 
   >>> binarizer = preprocessing.Binarizer(threshold=1.1)
-  >>> binarizer.transform(X)
+  >>> binarizer.fit_transform(X)
   array([[0., 0., 1.],
          [1., 0., 0.],
          [0., 0., 0.]])
@@ -791,5 +791,5 @@ error with a ``filterwarnings``::
   ...                         category=UserWarning, append=False)
 
 For a full code example that demonstrates using a :class:`FunctionTransformer`
-to extract features from text data see 
+to extract features from text data see
 :ref:`sphx_glr_auto_examples_compose_plot_column_transformer.py`
