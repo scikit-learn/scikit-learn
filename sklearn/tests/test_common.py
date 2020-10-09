@@ -294,7 +294,6 @@ N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE = {
     'feature_extraction',
     'feature_selection',
     'gaussian_process',
-    'impute',
     'isotonic',
     'kernel_approximation',
     'kernel_ridge',
