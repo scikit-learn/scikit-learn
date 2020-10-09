@@ -849,7 +849,8 @@ class StratifiedGroupKFold(_BaseKFold):
         for group, y_counts in sorted(groups_and_y_counts,
                                       key=lambda x: -np.std(x[1])):
             best_fold = None
-            min_eval = None
+            min_eval = np.inf
+            min_samples_in_fold = np.inf
             for i in range(self.n_splits):
                 y_counts_per_fold[i] += y_counts
                 std_per_label = []
@@ -859,8 +860,13 @@ class StratifiedGroupKFold(_BaseKFold):
                          for j in range(self.n_splits)]))
                 y_counts_per_fold[i] -= y_counts
                 fold_eval = np.mean(std_per_label)
-                if min_eval is None or fold_eval < min_eval:
+                samples_in_fold = np.sum(y_counts_per_fold[i])
+                condition = np.isclose(fold_eval, min_eval)
+                condition = condition and samples_in_fold < min_samples_in_fold
+                condition = condition or fold_eval < min_eval
+                if condition:
                     min_eval = fold_eval
+                    min_samples_in_fold = samples_in_fold
                     best_fold = i
             y_counts_per_fold[best_fold] += y_counts
             groups_per_fold[best_fold].add(group)
