@@ -204,16 +204,14 @@ Please make sure to still check our guidelines below, since they describe our
 latest up-to-date workflow.
 
 - Crash Course in Contributing to Scikit-Learn & Open Source Projects:
-
-    -`Video <https://youtu.be/5OL8XoMMOfA>`__
-    
-    -`Transcript <https://github.com/data-umbrella/event-transcripts/blob/main/2020/05-andreas-mueller-contributing.md>`__
+  (`Video <https://youtu.be/5OL8XoMMOfA>`__, 
+  `Transcript
+  <https://github.com/data-umbrella/event-transcripts/blob/main/2020/05-andreas-mueller-contributing.md>`__)
 
 - Example of Submitting a Pull Request to scikit-learn:
-
-    -`Video <https://youtu.be/PU1WyDPGePI>`__
-    
-    -`Transcript <https://github.com/data-umbrella/event-transcripts/blob/main/2020/06-reshama-shaikh-sklearn-pr.md>`__
+  (`Video <https://youtu.be/PU1WyDPGePI>`__,
+  `Transcript
+  <https://github.com/data-umbrella/event-transcripts/blob/main/2020/06-reshama-shaikh-sklearn-pr.md>`__)
 
 How to contribute
 -----------------
