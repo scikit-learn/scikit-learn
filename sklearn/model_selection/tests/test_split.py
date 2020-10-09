@@ -139,11 +139,12 @@ def test_2d_y():
     y_multilabel = rng.randint(0, 2, size=(n_samples, 3))
     groups = rng.randint(0, 3, size=(n_samples,))
     splitters = [LeaveOneOut(), LeavePOut(p=2), KFold(), StratifiedKFold(),
-                 RepeatedKFold(), RepeatedStratifiedKFold(), StratifiedGroupKFold(),
-                 ShuffleSplit(), StratifiedShuffleSplit(test_size=.5),
-                 GroupShuffleSplit(), LeaveOneGroupOut(),
-                 LeavePGroupsOut(n_groups=2), GroupKFold(n_splits=3),
-                 TimeSeriesSplit(), PredefinedSplit(test_fold=groups)]
+                 RepeatedKFold(), RepeatedStratifiedKFold(),
+                 StratifiedGroupKFold(), ShuffleSplit(),
+                 StratifiedShuffleSplit(test_size=.5), GroupShuffleSplit(),
+                 LeaveOneGroupOut(), LeavePGroupsOut(n_groups=2),
+                 GroupKFold(n_splits=3), TimeSeriesSplit(),
+                 PredefinedSplit(test_fold=groups)]
     for splitter in splitters:
         list(splitter.split(X, y, groups))
         list(splitter.split(X, y_2d, groups))
@@ -214,7 +215,9 @@ def test_kfold_valueerrors():
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        check_cv_coverage(sgkf_3, X2, y, groups=naive_groups, expected_n_splits=3)
+        check_cv_coverage(
+            sgkf_3, X2, y, groups=naive_groups, expected_n_splits=3
+        )
 
     # Check that errors are raised if all n_groups for individual
     # classes are less than n_splits.
@@ -236,7 +239,6 @@ def test_kfold_valueerrors():
                          StratifiedGroupKFold, 0)
     assert_raise_message(ValueError, error_string,
                          StratifiedGroupKFold, 1)
-
 
     # When n_splits is not integer:
     assert_raises(ValueError, KFold, 1.5)
@@ -373,7 +375,7 @@ def test_stratified_kfold_label_invariance(k, shuffle, kfold):
         return [(list(train), list(test))
                 for train, test
                 in kfold(k, random_state=random_state,
-                                   shuffle=shuffle).split(X, y, groups=groups)]
+                         shuffle=shuffle).split(X, y, groups=groups)]
 
     splits_base = get_splits(y)
     for perm in permutations([0, 1, 2]):
@@ -432,7 +434,9 @@ def test_shuffle_kfold():
     # Check that all indices are returned in the different test folds
     assert sum(all_folds) == 300
 
-@pytest.mark.parametrize("kfold", [KFold, StratifiedKFold, StratifiedGroupKFold])
+
+@pytest.mark.parametrize("kfold",
+                         [KFold, StratifiedKFold, StratifiedGroupKFold])
 def test_shuffle_kfold_stratifiedkfold_reproducibility(kfold):
     X = np.ones(15)  # Divisible by 3
     y = [0] * 7 + [1] * 8
@@ -1640,7 +1644,8 @@ def test_leave_p_out_empty_trainset():
         next(cv.split(X, y, groups=[1, 2]))
 
 
-@pytest.mark.parametrize('Klass', (KFold, StratifiedKFold, StratifiedGroupKFold))
+@pytest.mark.parametrize('Klass',
+                         (KFold, StratifiedKFold, StratifiedGroupKFold))
 def test_random_state_shuffle_false(Klass):
     # passing a non-default random_state when shuffle=False makes no sense
     with pytest.raises(ValueError,
