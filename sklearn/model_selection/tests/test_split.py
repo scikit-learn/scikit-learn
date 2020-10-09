@@ -199,6 +199,11 @@ def test_kfold_valueerrors():
     assert_warns_message(Warning, "The least populated class",
                          next, skf_3.split(X2, y))
 
+    sgkf_3 = StratifiedGroupKFold(3)
+    naive_groups = np.arange(len(y))
+    assert_warns_message(Warning, "The least populated class",
+                         next, sgkf_3.split(X2, y, naive_groups))
+
     # Check that despite the warning the folds are still computed even
     # though all the classes are not necessarily represented at on each
     # side of the split at each split
@@ -206,11 +211,16 @@ def test_kfold_valueerrors():
         warnings.simplefilter("ignore")
         check_cv_coverage(skf_3, X2, y, groups=None, expected_n_splits=3)
 
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        check_cv_coverage(sgkf_3, X2, y, groups=naive_groups, expected_n_splits=3)
+
     # Check that errors are raised if all n_groups for individual
     # classes are less than n_splits.
     y = np.array([3, 3, -1, -1, 2])
 
     assert_raises(ValueError, next, skf_3.split(X2, y))
+    assert_raises(ValueError, next, sgkf_3.split(X2, y))
 
     # Error when number of folds is <= 1
     assert_raises(ValueError, KFold, 0)
@@ -221,12 +231,19 @@ def test_kfold_valueerrors():
                          StratifiedKFold, 0)
     assert_raise_message(ValueError, error_string,
                          StratifiedKFold, 1)
+    assert_raise_message(ValueError, error_string,
+                         StratifiedGroupKFold, 0)
+    assert_raise_message(ValueError, error_string,
+                         StratifiedGroupKFold, 1)
+
 
     # When n_splits is not integer:
     assert_raises(ValueError, KFold, 1.5)
     assert_raises(ValueError, KFold, 2.0)
     assert_raises(ValueError, StratifiedKFold, 1.5)
     assert_raises(ValueError, StratifiedKFold, 2.0)
+    assert_raises(ValueError, StratifiedGroupKFold, 1.5)
+    assert_raises(ValueError, StratifiedGroupKFold, 2.0)
 
     # When shuffle is not  a bool:
     assert_raises(TypeError, KFold, n_splits=4, shuffle=None)
