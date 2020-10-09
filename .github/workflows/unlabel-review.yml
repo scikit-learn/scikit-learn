@@ -16,9 +16,7 @@ jobs:
           echo "${{ CORE_DEV_ENV.*.login }}"
       - name: Relabeling
         if: github.event.pull_request.state == 'open'
-            && contains(${{ CORE_DEV_ENV.*.login }}, github.event.pull_request_review.sender)
+            && contains(env.CORE_DEV_ENV.*.login, github.event.pull_request_review.sender)
         run: |
-          curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/orgs/scikit-learn/teams/core-devs/members >> $CORE_DEV_ENV
-          if
           echo "Marking pull request ${{ github.event.pull_request.number }} as reviewed by"
           curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -X "DELETE" https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/labels/Waiting%20for%20Reviewer
