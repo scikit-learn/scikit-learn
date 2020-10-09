@@ -584,11 +584,12 @@ class PartialDependenceDisplay:
         feature_values : ndarray of shape (n_grid_points,)
             The feature values for which the predictions have been computed.
         n_ice_to_plot : int
-            The number of ICE line to plot.
+            The number of ICE lines to plot.
         ax : Matplotlib axes
             The axis on which to plot the ICE lines.
         pd_plot_idx : int
-            The index of the plot. This index is unravel.
+            The sequential index of the plot. It will be unraveled to find the
+            matching 2D position in the grid layout.
         n_total_lines_by_plot : int
             The total number of lines expected to be plot on the axis.
         individual_line_kw : dict
@@ -625,7 +626,8 @@ class PartialDependenceDisplay:
         ax : Matplotlib axes
             The axis on which to plot the ICE lines.
         pd_line_idx : int
-            The unravel index of the average line.
+            The sequential index of the plot. It will be unraveled to find the
+            matching 2D position in the grid layout.
         label : str or None
             The label to add to the legend plot.
         line_kw : dict
@@ -645,7 +647,7 @@ class PartialDependenceDisplay:
         avg_preds,
         feature_values,
         feature_idx,
-        n_ice_to_plot,
+        n_ice_lines,
         ax,
         n_cols,
         pd_plot_idx,
@@ -668,14 +670,15 @@ class PartialDependenceDisplay:
             The feature values for which the predictions have been computed.
         feature_idx : int
             The index corresponding to the target feature.
-        n_ice_to_plot : int
-            The number of ICE line to plot.
+        n_ice_lines : int
+            The number of ICE lines to plot.
         ax : Matplotlib axes
             The axis on which to plot the ICE and PDP lines.
         n_cols : int or None
             The number of column in the axis.
         pd_plot_idx : int
-            The index of the plot. This index is unravel.
+            The sequential index of the plot. It will be unraveled to find the
+            matching 2D position in the grid layout.
         n_lines : int
             The total number of lines expected to be plot on the axis.
         individual_line_kw : dict
@@ -689,7 +692,7 @@ class PartialDependenceDisplay:
             self._plot_ice_lines(
                 preds[self.target_idx],
                 feature_values,
-                n_ice_to_plot,
+                n_ice_lines,
                 ax,
                 pd_plot_idx,
                 n_lines,
@@ -702,7 +705,7 @@ class PartialDependenceDisplay:
             if self.kind == "average":
                 pd_line_idx = pd_plot_idx
             else:
-                pd_line_idx = pd_plot_idx * n_lines + n_ice_to_plot
+                pd_line_idx = pd_plot_idx * n_lines + n_ice_lines
             self._plot_average_dependence(
                 avg_preds[self.target_idx].ravel(),
                 feature_values,
@@ -763,7 +766,8 @@ class PartialDependenceDisplay:
         ax : Matplotlib axes
             The axis on which to plot the ICE and PDP lines.
         pd_plot_idx : int
-            The index of the plot. This index is unravel.
+            The sequential index of the plot. It will be unraveled to find the
+            matching 2D position in the grid layout.
         Z_level : ndarray of shape (8, 8)
             The Z-level used to encode the average predictions.
         contour_kw : dict
@@ -866,15 +870,15 @@ class PartialDependenceDisplay:
 
         n_features = len(self.features)
         if self.kind in ("individual", "both"):
-            n_ice_to_plot = self._get_sample_count(
+            n_ice_lines = self._get_sample_count(
                 len(self.pd_results[0].individual[0])
             )
             if self.kind == "individual":
-                n_lines = n_ice_to_plot
+                n_lines = n_ice_lines
             else:
-                n_lines = n_ice_to_plot + 1
+                n_lines = n_ice_lines + 1
         else:
-            n_ice_to_plot = None
+            n_ice_lines = 0
             n_lines = 1
 
         if isinstance(ax, plt.Axes):
@@ -953,7 +957,7 @@ class PartialDependenceDisplay:
                     avg_preds,
                     feature_values[0],
                     feature_idx,
-                    n_ice_to_plot,
+                    n_ice_lines,
                     axi,
                     n_cols,
                     pd_plot_idx,
