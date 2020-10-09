@@ -1639,7 +1639,7 @@ def test_leave_p_out_empty_trainset():
         next(cv.split(X, y, groups=[1, 2]))
 
 
-@pytest.mark.parametrize('Klass', (KFold, StratifiedKFold))
+@pytest.mark.parametrize('Klass', (KFold, StratifiedKFold, StratifiedGroupKFold))
 def test_random_state_shuffle_false(Klass):
     # passing a non-default random_state when shuffle=False makes no sense
     with pytest.raises(ValueError,
