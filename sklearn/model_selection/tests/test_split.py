@@ -138,7 +138,7 @@ def test_2d_y():
     y_multilabel = rng.randint(0, 2, size=(n_samples, 3))
     groups = rng.randint(0, 3, size=(n_samples,))
     splitters = [LeaveOneOut(), LeavePOut(p=2), KFold(), StratifiedKFold(),
-                 RepeatedKFold(), RepeatedStratifiedKFold(),
+                 RepeatedKFold(), RepeatedStratifiedKFold(), StratifiedGroupKFold(),
                  ShuffleSplit(), StratifiedShuffleSplit(test_size=.5),
                  GroupShuffleSplit(), LeaveOneGroupOut(),
                  LeavePGroupsOut(n_groups=2), GroupKFold(n_splits=3),
