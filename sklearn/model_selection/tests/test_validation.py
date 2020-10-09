@@ -46,7 +46,6 @@ from sklearn.datasets import make_regression
 from sklearn.datasets import load_diabetes
 from sklearn.datasets import load_iris
 from sklearn.datasets import load_digits
-from sklearn.datasets import make_blobs
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import accuracy_score
@@ -756,20 +755,20 @@ def test_permutation_test_score_allow_nans():
 
 
 def test_permutation_test_score_fit_params():
-    est = SVC(random_state=0)
-    n_samples = 50
-    X, y = make_blobs(n_samples=n_samples, n_features=2, centers=10,
-                      random_state=0)
-    weights = [i for i in range(n_samples)]
-    score_without_fit_params = permutation_test_score(est, X, y)
-    mean_without_fit_params = score_without_fit_params[1].mean()
-    # checking for sample weight with list and numpy array
-    for method in [list, np.array]:
-        w = method(weights)
-        score_with_fit_params = permutation_test_score(est, X, y, fit_params={
-                                                       'sample_weight': w})
-        mean_with_fit_params = score_with_fit_params[1].mean()
-        assert not np.isclose(mean_with_fit_params, mean_without_fit_params)
+    X = np.arange(100).reshape(10, 10)
+    y = np.array([0] * 5 + [1] * 5)
+    clf = CheckingClassifier(expected_fit_params=['sample_weight'])
+
+    err_msg = r"Expected fit parameter\(s\) \['sample_weight'\] not seen."
+    with pytest.raises(AssertionError, match=err_msg):
+        permutation_test_score(clf, X, y)
+
+    err_msg = "Fit parameter sample_weight has length 1; expected"
+    with pytest.raises(AssertionError, match=err_msg):
+        permutation_test_score(clf, X, y,
+                               fit_params={'sample_weight': np.ones(1)})
+    permutation_test_score(clf, X, y,
+                           fit_params={'sample_weight': np.ones(10)})
 
 
 def test_cross_val_score_allow_nans():
@@ -1251,24 +1250,20 @@ def test_learning_curve_with_shuffle():
 
 
 def test_learning_curve_fit_params():
-    est = SVC(random_state=0)
-    n_samples = 50
-    X, y = make_blobs(n_samples=n_samples, n_features=2, centers=10,
-                      random_state=0)
-    # sample weight is a list
-    w = [i for i in range(n_samples)]
-    l_with_fit_params = learning_curve(est, X, y,
-                                       fit_params={'sample_weight': w})
-    l_without_fit_params = learning_curve(est, X, y)
-    l_without_fit_params_m1 = l_without_fit_params[1].mean()
-    assert not np.isclose(l_with_fit_params[1].mean(),
-                          l_without_fit_params_m1)
-    # sample weight is a numpy array
-    W = np.array(w)
-    l_with_fit_params = learning_curve(est, X, y,
-                                       fit_params={'sample_weight': W})
-    assert not np.isclose(l_with_fit_params[1].mean(),
-                          l_without_fit_params_m1)
+    X = np.arange(100).reshape(10, 10)
+    y = np.array([0] * 5 + [1] * 5)
+    clf = CheckingClassifier(expected_fit_params=['sample_weight'])
+
+    err_msg = r"Expected fit parameter\(s\) \['sample_weight'\] not seen."
+    with pytest.raises(AssertionError, match=err_msg):
+        learning_curve(clf, X, y, error_score='raise')
+
+    err_msg = "Fit parameter sample_weight has length 1; expected"
+    with pytest.raises(AssertionError, match=err_msg):
+        learning_curve(clf, X, y, error_score='raise',
+                       fit_params={'sample_weight': np.ones(1)})
+    learning_curve(clf, X, y, error_score='raise',
+                   fit_params={'sample_weight': np.ones(10)})
 
 
 def test_validation_curve():
@@ -1338,33 +1333,23 @@ def test_validation_curve_cv_splits_consistency():
 
 
 def test_validation_curve_fit_params():
-    est = SVC(random_state=0)
-    n_samples = 50
-    X, y = make_blobs(n_samples=n_samples, n_features=2, centers=10,
-                      random_state=0)
-    # sample_weight is a list
-    w = [i for i in range(n_samples)]
-    gamma_range = np.logspace(-6, -1, 5)
-    l_with_fit_params = validation_curve(est, X, y, param_name="gamma",
-                                         param_range=gamma_range,
-                                         fit_params={'sample_weight': w})
-    l_without_fit_params = validation_curve(est, X, y, param_name="gamma",
-                                            param_range=gamma_range)
-    l_without_fit_params_m0 = l_without_fit_params[0].mean()
-    l_without_fit_params_m1 = l_without_fit_params[1].mean()
-    assert not np.isclose(l_with_fit_params[0].mean(),
-                          l_without_fit_params_m0)
-    assert not np.isclose(l_with_fit_params[1].mean(),
-                          l_without_fit_params_m1)
-    # sample_weight is a numpy array
-    W = np.array(w)
-    l_with_fit_params = validation_curve(est, X, y, param_name="gamma",
-                                         param_range=gamma_range,
-                                         fit_params={'sample_weight': W})
-    assert not np.isclose(l_with_fit_params[0].mean(),
-                          l_without_fit_params_m0)
-    assert not np.isclose(l_with_fit_params[1].mean(),
-                          l_without_fit_params_m1)
+    X = np.arange(100).reshape(10, 10)
+    y = np.array([0] * 5 + [1] * 5)
+    clf = CheckingClassifier(expected_fit_params=['sample_weight'])
+
+    err_msg = r"Expected fit parameter\(s\) \['sample_weight'\] not seen."
+    with pytest.raises(AssertionError, match=err_msg):
+        validation_curve(clf, X, y, param_name='foo_param',
+                         param_range=[1, 2, 3], error_score='raise')
+
+    err_msg = "Fit parameter sample_weight has length 1; expected"
+    with pytest.raises(AssertionError, match=err_msg):
+        validation_curve(clf, X, y, param_name='foo_param',
+                         param_range=[1, 2, 3], error_score='raise',
+                         fit_params={'sample_weight': np.ones(1)})
+    validation_curve(clf, X, y, param_name='foo_param',
+                     param_range=[1, 2, 3], error_score='raise',
+                     fit_params={'sample_weight': np.ones(10)})
 
 
 def test_check_is_permutation():

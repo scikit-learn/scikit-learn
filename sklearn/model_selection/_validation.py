@@ -1129,7 +1129,7 @@ def permutation_test_score(estimator, X, y, *, groups=None, cv=None,
     verbose : int, default=0
         The verbosity level.
 
-    fit_params : dict, optional
+    fit_params : dict, default=None
         Parameters to pass to the fit method of the estimator.
 
     Returns
@@ -1317,7 +1317,7 @@ def learning_curve(estimator, X, y, *, groups=None,
     return_times : bool, default=False
         Whether to return the fit and score times.
 
-    fit_params : dict, optional
+    fit_params : dict, default=None
         Parameters to pass to the fit method of the estimator.
 
     Returns
@@ -1589,7 +1589,7 @@ def validation_curve(estimator, X, y, *, param_name, param_range, groups=None,
     verbose : int, default=0
         Controls the verbosity: the higher, the more messages.
 
-    fit_params : dict, optional
+    fit_params : dict, default=None
         Parameters to pass to the fit method of the estimator.
 
     error_score : 'raise' or numeric, default=np.nan
