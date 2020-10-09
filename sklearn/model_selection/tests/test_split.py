@@ -431,40 +431,38 @@ def test_shuffle_kfold():
     # Check that all indices are returned in the different test folds
     assert sum(all_folds) == 300
 
-
-def test_shuffle_kfold_stratifiedkfold_reproducibility():
+@pytest.mark.parametrize("kfold", [KFold, StratifiedKFold, StratifiedGroupKFold])
+def test_shuffle_kfold_stratifiedkfold_reproducibility(kfold):
     X = np.ones(15)  # Divisible by 3
     y = [0] * 7 + [1] * 8
+    groups_1 = np.arange(len(y))
     X2 = np.ones(16)  # Not divisible by 3
     y2 = [0] * 8 + [1] * 8
+    groups_2 = np.arange(len(y2))
 
     # Check that when the shuffle is True, multiple split calls produce the
     # same split when random_state is int
-    kf = KFold(3, shuffle=True, random_state=0)
-    skf = StratifiedKFold(3, shuffle=True, random_state=0)
+    kf = kfold(3, shuffle=True, random_state=0)
 
-    for cv in (kf, skf):
-        np.testing.assert_equal(list(cv.split(X, y)), list(cv.split(X, y)))
-        np.testing.assert_equal(list(cv.split(X2, y2)), list(cv.split(X2, y2)))
+    np.testing.assert_equal(
+        list(kf.split(X, y, groups_1)),
+        list(kf.split(X, y, groups_1))
+    )
 
     # Check that when the shuffle is True, multiple split calls often
     # (not always) produce different splits when random_state is
     # RandomState instance or None
-    kf = KFold(3, shuffle=True, random_state=np.random.RandomState(0))
-    skf = StratifiedKFold(3, shuffle=True,
-                          random_state=np.random.RandomState(0))
-
-    for cv in (kf, skf):
-        for data in zip((X, X2), (y, y2)):
-            # Test if the two splits are different cv
-            for (_, test_a), (_, test_b) in zip(cv.split(*data),
-                                                cv.split(*data)):
-                # cv.split(...) returns an array of tuples, each tuple
-                # consisting of an array with train indices and test indices
-                # Ensure that the splits for data are not same
-                # when random state is not set
-                with pytest.raises(AssertionError):
-                    np.testing.assert_array_equal(test_a, test_b)
+    kf = kfold(3, shuffle=True, random_state=np.random.RandomState(0))
+    for data in zip((X, X2), (y, y2), (groups_1, groups_2)):
+        # Test if the two splits are different cv
+        for (_, test_a), (_, test_b) in zip(kf.split(*data),
+                                            kf.split(*data)):
+            # cv.split(...) returns an array of tuples, each tuple
+            # consisting of an array with train indices and test indices
+            # Ensure that the splits for data are not same
+            # when random state is not set
+            with pytest.raises(AssertionError):
+                np.testing.assert_array_equal(test_a, test_b)
 
 
 def test_shuffle_stratifiedkfold():
