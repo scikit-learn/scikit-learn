@@ -1374,9 +1374,9 @@ class LarsCV(Lars):
 
     Attributes
     ----------
-    active_ : list of length n_alphas or list thereof
+    active_ : list of length n_alphas or list of such lists
         Indices of active variables at the end of the path.
-        If this is a list, its length is `n_targets`.
+        If this is a list of lists, the outer list length is `n_targets`.
 
     coef_ : array-like of shape (n_features,)
         parameter vector (w in the formulation formula)
