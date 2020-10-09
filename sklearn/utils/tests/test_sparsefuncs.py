@@ -138,8 +138,10 @@ def test_incr_mean_variance_axis_weighted(Xw, X, sample_weight,
 
     assert_array_almost_equal(means_w0, means_w0_m)
     assert_array_almost_equal(means0, means_w0) #, )
-    assert_array_almost_equal(vars0, vars_w0, vars_w0_m)
-    assert_array_almost_equal(n_incr0, n_incr_w0, n_incr_w0_m)
+    assert_array_almost_equal(vars_w0, vars_w0_m)
+    assert_array_almost_equal(vars0, vars_w0)
+    assert_array_almost_equal(n_incr0, n_incr_w0)
+    assert_array_almost_equal(n_incr_w0, n_incr_w0_m)
 
     # check second round for incremental
     means1, vars1, n_incr1 = incr_mean_variance_axis(X_sparse, axis, means0,
