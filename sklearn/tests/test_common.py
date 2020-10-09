@@ -218,6 +218,7 @@ class MyNMFWithBadErrorMessage(NMF):
     def __init__(self):
         super().__init__()
         self.init = 'nndsvda'
+        self.max_iter = 500
 
     def fit(self, X, y=None, **params):
         X = check_array(X, accept_sparse=('csr', 'csc'),
