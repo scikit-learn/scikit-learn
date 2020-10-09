@@ -1652,6 +1652,8 @@ def test_random_state_shuffle_false(Klass):
     (KFold(shuffle=True, random_state=123), True),
     (StratifiedKFold(), True),
     (StratifiedKFold(shuffle=True, random_state=123), True),
+    (StratifiedGroupKFold(shuffle=True, random_state=123), True),
+    (StratifiedGroupKFold(), True),
     (RepeatedKFold(random_state=123), True),
     (RepeatedStratifiedKFold(random_state=123), True),
     (ShuffleSplit(random_state=123), True),
@@ -1663,7 +1665,6 @@ def test_random_state_shuffle_false(Klass):
     (LeaveOneGroupOut(), True),
     (LeavePGroupsOut(n_groups=2), True),
     (LeavePOut(p=2), True),
-
     (KFold(shuffle=True, random_state=None), False),
     (KFold(shuffle=True, random_state=None), False),
     (StratifiedKFold(shuffle=True, random_state=np.random.RandomState(0)),
