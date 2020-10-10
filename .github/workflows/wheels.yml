@@ -17,7 +17,7 @@ on:
 jobs:
   build_wheels:
     # TODO: Add a commit marker to trigger the build when it is needed
-    name: Build wheels on ${{ matrix.os }}
+    name: Build wheels on ${{ matrix.os }} for Python {{ matrix.python }}
     runs-on: ${{ matrix.os }}
 
     strategy:
@@ -42,7 +42,7 @@ jobs:
 
       - name: Build and test wheels
         env:
-          CIBW_BUILD: cp${{ matrix.python }}
+          CIBW_BUILD: cp${{ matrix.python }}-*
           CIBW_TEST_REQUIRES: pytest pandas
           CIBW_TEST_COMMAND: pytest --pyargs sklearn
           # Embed vcomp140.dll before generating the Windows
