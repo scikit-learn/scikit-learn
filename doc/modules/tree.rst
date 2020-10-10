@@ -527,7 +527,8 @@ Half Poisson deviance:
 
 Setting `criterion="poisson"` might be a good choice if your target is a count
 or a frequency (count per some unit). In any case, :math:`y >= 0` is a
-necessary condition to use this criterion.
+necessary condition to use this criterion. Note that it fits much slower than
+the MSE criterion.
 
 Mean Absolute Error:
 
@@ -536,6 +537,8 @@ Mean Absolute Error:
     median(y)_m = \underset{y \in Q_m}{\mathrm{median}}(y)
 
     H(Q_m) = \frac{1}{N_m} \sum_{y \in Q_m} |y - median(y)_m|
+
+Note that it fits much slower than the MSE criterion.
 
 
 .. _minimal_cost_complexity_pruning:
