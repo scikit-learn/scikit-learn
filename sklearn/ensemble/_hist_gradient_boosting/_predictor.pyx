@@ -55,7 +55,7 @@ cdef inline Y_DTYPE_C _predict_one_from_raw_data(
     cdef:
         node_struct node = nodes[0]
         unsigned int node_idx = 0
-        X_DTYPE_C data_val,
+        X_DTYPE_C data_val
 
     while True:
         if node.is_leaf:
@@ -125,7 +125,7 @@ cdef inline Y_DTYPE_C _predict_one_from_binned_data(
         if node.is_leaf:
             return node.value
 
-        data_val = binned_data[row, node.feature_idx] 
+        data_val = binned_data[row, node.feature_idx]
 
         if data_val == missing_values_bin_idx:
             if node.missing_go_to_left:
