@@ -22,7 +22,6 @@ from ..utils.validation import _deprecate_positional_args
 from ._base import _convert_data_dataframe
 
 
-
 def _generate_hypercube(samples, dimensions, rng):
     """Returns distinct binary samples of length dimensions.
     """
@@ -162,6 +161,7 @@ def make_classification(n_samples=100, n_features=20, *, n_informative=2,
 
     # Count features, clusters and samples
     if n_informative + n_redundant + n_repeated > n_features:
+        msg = "n_classes({}) * n_clusters_per_class({}) must be"
         raise ValueError("Number of informative, redundant and repeated "
                          "features must sum to less than the number of total"
                          " features")
@@ -263,7 +263,7 @@ def make_classification(n_samples=100, n_features=20, *, n_informative=2,
         generator.shuffle(indices)
         X[:, :] = X[:, indices]
 
-        return X, y
+    return X, y
 
 
 @_deprecate_positional_args
@@ -543,7 +543,7 @@ def make_regression(n_samples=100, n_features=100, *, n_informative=10,
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
-    
+
     as_frame : bool, default=False
         If True, the data is a pandas DataFrame including columns with
         appropriate dtypes (numeric). The target is
@@ -607,16 +607,14 @@ def make_regression(n_samples=100, n_features=100, *, n_informative=10,
         if as_frame:
             feature_names = [f'feat_{fn}' for fn in range(n_features)]
             target_columns = [f'target_{tc}' for tc in range(n_targets)]
-            frame, data, target = _convert_data_dataframe('make_classification',
-                                                        X,
-                                                        y,
-                                                        feature_names,
-                                                        target_columns)
-            return frame, data, target
+            df, data, target = _convert_data_dataframe('make_classification',
+                                                       X,
+                                                       y,
+                                                       feature_names,
+                                                       target_columns)
+            return df, data, target
         else:
             return X, y
-
-    
 
 
 @_deprecate_positional_args
