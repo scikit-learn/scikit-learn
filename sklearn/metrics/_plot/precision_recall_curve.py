@@ -1,4 +1,3 @@
-from sklearn.base import is_classifier
 from .._base import _get_response
 
 from .. import average_precision_score
