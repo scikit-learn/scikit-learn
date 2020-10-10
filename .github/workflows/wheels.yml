@@ -58,7 +58,7 @@ jobs:
       - name: Store artifacts
         uses: actions/upload-artifact@v2
         with:
-          path: wheelhouse/*.whl 
+          path: ./wheelhouse/*.whl 
 
   build_sdist:
     # TODO: Add a commit marker to trigger the build when it is needed
@@ -91,7 +91,7 @@ jobs:
       - name: Store artifacts
         uses: actions/upload-artifact@v2
         with:
-          path: dist/*.tar.gz
+          path: ./dist/*.tar.gz
 
   upload_anaconda:
     name: Upload to Anaconda
