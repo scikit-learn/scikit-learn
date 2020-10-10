@@ -750,7 +750,8 @@ class StratifiedGroupKFold(_BaseKFold):
     the former attempts to create balanced folds such that the number of
     distinct groups is approximately the same in each fold, whereas
     StratifiedGroupKFold attempts to create folds which preserve the
-    percentage of samples for each class.
+    percentage of samples for each class as much as possible given the
+    constraint of non-overlapping groups between splits.
 
     Read more in the :ref:`User Guide <cross_validation>`.
 
@@ -762,6 +763,8 @@ class StratifiedGroupKFold(_BaseKFold):
     shuffle : bool, default=False
         Whether to shuffle each class's samples before splitting into batches.
         Note that the samples within each split will not be shuffled.
+        This implementation can only shuffle groups that have approximately the
+        same y distribution, no global shuffle will be performed.
 
     random_state : int or RandomState instance, default=None
         When `shuffle` is True, `random_state` affects the ordering of the
@@ -795,6 +798,20 @@ class StratifiedGroupKFold(_BaseKFold):
            [0 0 1 1 1 1 1 0 0 0 0 0]
      TEST: [4 5 5 5 5]
            [1 0 0 0 0]
+
+    Notes
+    -----
+    The implementation is designed to:
+
+    * Mimic the behavior of StratifiedKFold as much as possible for trivial
+      groups (e.g. when each group contain only one sample).
+    * Be invariant to class label: relabelling ``y = ["Happy", "Sad"]`` to
+      ``y = [1, 0]`` should not change the indices generated.
+    * Stratify based on samples as much as possible while keeping
+      non-overlapping groups constraint. That means that in some cases when
+      there is a small number of groups containing a large number of samples
+      the stratification will not be possible and the behavior will be close
+      to GroupKFold.
 
     See also
     --------
