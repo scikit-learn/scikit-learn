@@ -44,7 +44,7 @@ jobs:
         env:
           CIBW_BUILD: cp${{ matrix.python }}-*
           CIBW_TEST_REQUIRES: pytest pandas
-          CIBW_TEST_COMMAND: pytest --pyargs sklearn
+          CIBW_TEST_COMMAND: pytest --pyargs sklearn.base
           # Embed vcomp140.dll before generating the Windows
           # wheel and after building the package from source
           CIBW_BEFORE_BUILD_WINDOWS: pip install numpy scipy cython &&
@@ -53,7 +53,8 @@ jobs:
                                      python build_tools/github/vendor_vcomp140.py
         run: |
           python -m cibuildwheel --output-dir wheelhouse
-          ls -l wheelhouse/*.whl
+          ls -l .
+          ls -l ./wheelhouse/*.whl
 
       - name: Store artifacts
         uses: actions/upload-artifact@v2
