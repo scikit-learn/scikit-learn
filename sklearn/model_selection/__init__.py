@@ -14,7 +14,6 @@ from ._split import RepeatedStratifiedKFold
 from ._split import ShuffleSplit
 from ._split import GroupShuffleSplit
 from ._split import StratifiedShuffleSplit
-from ._split import StratifiedGroupShuffleSplit
 from ._split import StratifiedGroupKFold
 from ._split import PredefinedSplit
 from ._split import train_test_split
