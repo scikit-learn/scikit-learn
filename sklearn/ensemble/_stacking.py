@@ -30,9 +30,12 @@ from ..preprocessing import LabelEncoder
 from ..utils import Bunch
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.multiclass import check_classification_targets
-from ..utils.validation import check_is_fitted
-from ..utils.validation import column_or_1d
-from ..utils.validation import _deprecate_positional_args
+from ..utils.validation import (
+    check_is_fitted,
+    _check_response_method,
+    column_or_1d,
+    _deprecate_positional_args,
+)
 from ..utils.fixes import delayed
 
 
@@ -96,18 +99,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
     def _method_name(name, estimator, method):
         if estimator == 'drop':
             return None
-        if method == 'auto':
-            if getattr(estimator, 'predict_proba', None):
-                return 'predict_proba'
-            elif getattr(estimator, 'decision_function', None):
-                return 'decision_function'
-            else:
-                return 'predict'
-        else:
-            if not hasattr(estimator, method):
-                raise ValueError('Underlying estimator {} does not implement '
-                                 'the method {}.'.format(name, method))
-            return method
+        return _check_response_method(estimator, method).__name__
 
     def fit(self, X, y, sample_weight=None):
         """Fit the estimators.
@@ -177,11 +169,17 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
                       if sample_weight is not None
                       else None)
         predictions = Parallel(n_jobs=self.n_jobs)(
-            delayed(cross_val_predict)(clone(est), X, y, cv=deepcopy(cv),
-                                       method=meth, n_jobs=self.n_jobs,
-                                       fit_params=fit_params,
-                                       verbose=self.verbose)
-            for est, meth in zip(all_estimators, self.stack_method_)
+            delayed(cross_val_predict)(
+                clone(est),
+                X,
+                y,
+                cv=deepcopy(cv),
+                method=response_method,
+                n_jobs=self.n_jobs,
+                fit_params=fit_params,
+                verbose=self.verbose
+            )
+            for est, response_method in zip(all_estimators, self.stack_method_)
             if est != 'drop'
         )
 
@@ -213,9 +211,11 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
         """Concatenate and return the predictions of the estimators."""
         check_is_fitted(self)
         predictions = [
-            getattr(est, meth)(X)
-            for est, meth in zip(self.estimators_, self.stack_method_)
-            if est != 'drop'
+            getattr(est, response_method)(X)
+            for est, response_method in zip(
+                self.estimators_, self.stack_method_
+            )
+            if est != "drop"
         ]
         return self._concatenate_predictions(X, predictions)
 

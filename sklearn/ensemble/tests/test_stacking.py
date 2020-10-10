@@ -287,7 +287,7 @@ class NoWeightClassifier(ClassifierMixin, BaseEstimator):
       {'estimators': [('lr', LogisticRegression()),
                       ('svm', SVC(max_iter=5e4))],
        'stack_method': 'predict_proba'},
-      ValueError, 'does not implement the method predict_proba'),
+      ValueError, 'response method predict_proba is not defined in SVC'),
      (y_iris,
       {'estimators': [('lr', LogisticRegression()),
                       ('cor', NoWeightClassifier())]},
