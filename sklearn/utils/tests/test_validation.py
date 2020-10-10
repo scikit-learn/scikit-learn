@@ -38,6 +38,7 @@ from sklearn.utils.validation import (
     check_memory,
     check_non_negative,
     _num_samples,
+    _check_response_method,
     check_scalar,
     _check_psd_eigenvalues,
     _deprecate_positional_args,
@@ -1282,3 +1283,12 @@ def test_check_pandas_sparse_valid(ntype1, ntype2, expected_subtype):
                                                      dtype=ntype2)})
     arr = check_array(df, accept_sparse=['csr', 'csc'])
     assert np.issubdtype(arr.dtype, expected_subtype)
+
+
+def test_check_response_method_unknown_method():
+    err_msg = (
+        "response_method must be one of predict, predict_proba, "
+        "decision_function, auto"
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        _check_response_method(RandomForestRegressor(), "unknown_method")
