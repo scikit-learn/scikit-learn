@@ -16,7 +16,6 @@ They can be loaded using the following functions:
 
 .. autosummary::
 
-   load_boston
    load_iris
    load_diabetes
    load_digits
