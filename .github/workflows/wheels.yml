@@ -26,6 +26,8 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
+        # Build the wheels for Python 3.6 and newer
+        python: [36, 37, 38]
 
     steps:
       - name: Checkout scikit-learn
@@ -40,8 +42,7 @@ jobs:
 
       - name: Build and test wheels
         env:
-          # Build the wheels for Python 3.6 and newer
-          CIBW_SKIP: pp* *p27* *p35*
+          CIBW_BUILD: cp${{ matrix.python }}
           CIBW_TEST_REQUIRES: pytest pandas
           CIBW_TEST_COMMAND: pytest --pyargs sklearn
           # Embed vcomp140.dll before generating the Windows
