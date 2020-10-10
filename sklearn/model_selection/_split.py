@@ -786,14 +786,14 @@ class StratifiedGroupKFold(_BaseKFold):
     ...     print("      ", y[train_idxs])
     ...     print(" TEST:", groups[test_idxs])
     ...     print("      ", y[test_idxs])
-    TRAIN: [2 2 4 5 5 5 5 6 6 7]
-           [1 1 1 0 0 0 0 0 0 0]
-     TEST: [1 1 3 3 3 8 8]
-           [0 0 1 1 1 0 0]
-    TRAIN: [1 1 3 3 3 4 5 5 5 5 8 8]
-           [0 0 1 1 1 1 0 0 0 0 0 0]
-     TEST: [2 2 6 6 7]
-           [1 1 0 0 0]
+    TRAIN: [1 1 2 2 4 5 5 5 5 8 8]
+           [0 0 1 1 1 0 0 0 0 0 0]
+     TEST: [3 3 3 6 6 7]
+           [1 1 1 0 0 0]
+    TRAIN: [3 3 3 4 5 5 5 5 6 6 7]
+           [1 1 1 1 0 0 0 0 0 0 0]
+     TEST: [1 1 2 2 8 8]
+           [0 0 1 1 0 0]
     TRAIN: [1 1 2 2 3 3 3 6 6 7 8 8]
            [0 0 1 1 1 1 1 0 0 0 0 0]
      TEST: [4 5 5 5 5]
