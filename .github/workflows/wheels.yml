@@ -53,14 +53,11 @@ jobs:
                                      python build_tools/github/vendor_vcomp140.py
         run: |
           python -m cibuildwheel --output-dir wheelhouse
-          ls -l .
-          ls -l ./wheelhouse/
-          ls -l ./wheelhouse/*.whl
 
       - name: Store artifacts
         uses: actions/upload-artifact@v2
         with:
-          path: ./wheelhouse/*.whl 
+          path: wheelhouse/*.whl
 
   build_sdist:
     # TODO: Add a commit marker to trigger the build when it is needed
@@ -93,7 +90,7 @@ jobs:
       - name: Store artifacts
         uses: actions/upload-artifact@v2
         with:
-          path: ./dist/*.tar.gz
+          path: dist/*.tar.gz
 
   upload_anaconda:
     name: Upload to Anaconda
