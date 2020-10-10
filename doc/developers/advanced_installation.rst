@@ -1,6 +1,8 @@
 
 .. _advanced-installation:
 
+.. include:: ../min_dependency_substitutions.rst
+
 ==================================================
 Installing the development version of scikit-learn
 ==================================================
@@ -87,10 +89,10 @@ Scikit-learn requires the following dependencies both at build time and at
 runtime:
 
 - Python (>= 3.6),
-- NumPy (>= 1.13.3),
-- SciPy (>= 0.19),
-- Joblib (>= 0.11),
-- threadpoolctl (>= 2.0.0).
+- NumPy (>= |NumpyMinVersion|),
+- SciPy (>= |ScipyMinVersion|),
+- Joblib (>= |JoblibMinVersion|),
+- threadpoolctl (>= |ThreadpoolctlMinVersion|).
 
 Those dependencies are **automatically installed by pip** if they were missing
 when building scikit-learn from source.
@@ -111,7 +113,7 @@ Building Scikit-learn also requires:
     # - sklearn/_build_utils/__init__.py
     # - advanced installation guide
 
-- Cython >= 0.28.5
+- Cython >= |CythonMinVersion|
 - A C/C++ compiler and a matching OpenMP_ runtime library. See the
   :ref:`platform system specific instructions
   <platform_specific_instructions>` for more details.
@@ -135,9 +137,7 @@ Test dependencies
 
 Running tests requires:
 
-.. |PytestMinVersion| replace:: 4.6.2
-
-- pytest >=\ |PytestMinVersion|
+- pytest >= |PytestMinVersion|
 
 Some tests also require `pandas <https://pandas.pydata.org>`_.
 
@@ -241,7 +241,7 @@ It is recommended to use a dedicated `conda environment`_ to build
 scikit-learn from source::
 
     conda create -n sklearn-dev python numpy scipy cython joblib pytest \
-        "conda-forge::compilers>=1.0.4" conda-forge::llvm-openmp
+        "conda-forge::compilers>=1.0.4,!=1.1.0" conda-forge::llvm-openmp
     conda activate sklearn-dev
     make clean
     pip install --verbose --no-build-isolation --editable .
@@ -388,3 +388,53 @@ the base system and these steps will not be necessary.
 .. _Homebrew: https://brew.sh
 .. _virtualenv: https://docs.python.org/3/tutorial/venv.html
 .. _conda environment: https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
+
+Alternative compilers
+=====================
+
+The command::
+
+    pip install --verbose --editable .
+
+will build scikit-learn using your default C/C++ compiler. If you want to build
+scikit-learn with another compiler handled by ``distutils`` or by
+``numpy.distutils``, use the following command::
+
+    python setup.py build_ext --compiler=<compiler> -i build_clib --compiler=<compiler>
+
+To see the list of available compilers run::
+
+    python setup.py build_ext --help-compiler
+
+If your compiler is not listed here, you can specify it via the ``CC`` and
+``LDSHARED`` environment variables (does not work on windows)::
+
+    CC=<compiler> LDSHARED="<compiler> -shared" python setup.py build_ext -i
+
+Building with Intel C Compiler (ICC) using oneAPI on Linux
+----------------------------------------------------------
+
+Intel provides access to all of its oneAPI toolkits and packages through a
+public APT repository. First you need to get and install the public key of this
+repository::
+
+    wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+    sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+    rm GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+
+Then, add the oneAPI repository to your APT repositories::
+
+    sudo add-apt-repository "deb https://apt.repos.intel.com/oneapi all main"
+    sudo apt-get update
+
+Install ICC, packaged under the name ``intel-oneapi-icc``::
+
+    sudo apt-get install intel-oneapi-icc
+
+Before using ICC, you need to set up environment variables::
+
+    source /opt/intel/inteloneapi/setvars.sh
+
+Finally, you can build scikit-learn. For example on Linux x86_64::
+
+    python setup.py build_ext --compiler=intelem -i build_clib --compiler=intelem

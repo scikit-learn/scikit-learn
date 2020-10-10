@@ -4,7 +4,6 @@ from itertools import product
 from itertools import chain
 from itertools import permutations
 import warnings
-import re
 
 import numpy as np
 from scipy import linalg
@@ -151,6 +150,31 @@ def test_classification_report_dictionary_output():
     assert type(expected_report['macro avg']['precision']) == float
     assert type(expected_report['setosa']['support']) == int
     assert type(expected_report['macro avg']['support']) == int
+
+
+def test_classification_report_output_dict_empty_input():
+    report = classification_report(y_true=[], y_pred=[], output_dict=True)
+    expected_report = {'accuracy': 0.0,
+                       'macro avg': {'f1-score': np.nan,
+                                     'precision': np.nan,
+                                     'recall': np.nan,
+                                     'support': 0},
+                       'weighted avg': {'f1-score': 0.0,
+                                        'precision': 0.0,
+                                        'recall': 0.0,
+                                        'support': 0}}
+    assert isinstance(report, dict)
+    # assert the 2 dicts are equal.
+    assert report.keys() == expected_report.keys()
+    for key in expected_report:
+        if key == 'accuracy':
+            assert isinstance(report[key], float)
+            assert report[key] == expected_report[key]
+        else:
+            assert report[key].keys() == expected_report[key].keys()
+            for metric in expected_report[key]:
+                assert_almost_equal(expected_report[key][metric],
+                                    report[key][metric])
 
 
 @pytest.mark.parametrize('zero_division', ["warn", 0, 1])
@@ -928,7 +952,7 @@ def test_confusion_matrix_error(labels, err_msg):
 )
 def test_confusion_matrix_on_zero_length_input(labels):
     expected_n_classes = len(labels) if labels else 0
-    expected = np.zeros((expected_n_classes, expected_n_classes), dtype=np.int)
+    expected = np.zeros((expected_n_classes, expected_n_classes), dtype=int)
     cm = confusion_matrix([], [], labels=labels)
     assert_array_equal(cm, expected)
 
@@ -1222,7 +1246,7 @@ def test_multilabel_hamming_loss():
 def test_jaccard_score_validation():
     y_true = np.array([0, 1, 0, 1, 1])
     y_pred = np.array([0, 1, 0, 1, 1])
-    err_msg = r"pos_label=2 is not a valid label: array\(\[0, 1\]\)"
+    err_msg = r"pos_label=2 is not a valid label. It should be one of \[0, 1\]"
     with pytest.raises(ValueError, match=err_msg):
         jaccard_score(y_true, y_pred, average='binary', pos_label=2)
 
@@ -1382,6 +1406,35 @@ def test_average_binary_jaccard_score(recwarn):
 
     assert not list(recwarn)
 
+
+def test_jaccard_score_zero_division_warning():
+    # check that we raised a warning with default behavior if a zero division
+    # happens
+    y_true = np.array([[1, 0, 1], [0, 0, 0]])
+    y_pred = np.array([[0, 0, 0], [0, 0, 0]])
+    msg = ('Jaccard is ill-defined and being set to 0.0 in '
+           'samples with no true or predicted labels.'
+           ' Use `zero_division` parameter to control this behavior.')
+    with pytest.warns(UndefinedMetricWarning, match=msg):
+        score = jaccard_score(
+            y_true, y_pred, average='samples', zero_division='warn'
+        )
+        assert score == pytest.approx(0.0)
+
+
+@pytest.mark.parametrize(
+    "zero_division, expected_score", [(0, 0), (1, 0.5)]
+)
+def test_jaccard_score_zero_division_set_value(zero_division, expected_score):
+    # check that we don't issue warning by passing the zero_division parameter
+    y_true = np.array([[1, 0, 1], [0, 0, 0]])
+    y_pred = np.array([[0, 0, 0], [0, 0, 0]])
+    with pytest.warns(None) as record:
+        score = jaccard_score(
+            y_true, y_pred, average="samples", zero_division=zero_division
+        )
+    assert score == pytest.approx(expected_score)
+    assert len(record) == 0
 
 @ignore_warnings
 def test_precision_recall_f1_score_multilabel_1():
@@ -2065,7 +2118,7 @@ def test_hinge_loss_multiclass():
     np.clip(dummy_losses, 0, None, out=dummy_losses)
     dummy_hinge_loss = np.mean(dummy_losses)
     assert (hinge_loss(y_true, pred_decision) ==
-                 dummy_hinge_loss)
+            dummy_hinge_loss)
 
 
 def test_hinge_loss_multiclass_missing_labels_with_labels_none():
@@ -2102,7 +2155,36 @@ def test_hinge_loss_multiclass_with_missing_labels():
     np.clip(dummy_losses, 0, None, out=dummy_losses)
     dummy_hinge_loss = np.mean(dummy_losses)
     assert (hinge_loss(y_true, pred_decision, labels=labels) ==
-                 dummy_hinge_loss)
+            dummy_hinge_loss)
+
+
+def test_hinge_loss_multiclass_missing_labels_only_two_unq_in_y_true():
+    # non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/17630
+    # check that we can compute the hinge loss when providing an array
+    # with labels allowing to not have all labels in y_true
+    pred_decision = np.array([
+        [+0.36, -0.17, -0.58],
+        [-0.15, -0.58, -0.48],
+        [-1.45, -0.58, -0.38],
+        [-0.55, -0.78, -0.42],
+        [-1.45, -0.58, -0.38]
+    ])
+    y_true = np.array([0, 2, 2, 0, 2])
+    labels = np.array([0, 1, 2])
+    dummy_losses = np.array([
+        1 - pred_decision[0][0] + pred_decision[0][1],
+        1 - pred_decision[1][2] + pred_decision[1][0],
+        1 - pred_decision[2][2] + pred_decision[2][1],
+        1 - pred_decision[3][0] + pred_decision[3][2],
+        1 - pred_decision[4][2] + pred_decision[4][1]
+    ])
+    np.clip(dummy_losses, 0, None, out=dummy_losses)
+    dummy_hinge_loss = np.mean(dummy_losses)
+    assert_almost_equal(
+        hinge_loss(y_true, pred_decision, labels=labels),
+        dummy_hinge_loss
+    )
 
 
 def test_hinge_loss_multiclass_invariance_lists():
@@ -2237,9 +2319,12 @@ def test_brier_score_loss():
     # ensure to raise an error for multiclass y_true
     y_true = np.array([0, 1, 2, 0])
     y_pred = np.array([0.8, 0.6, 0.4, 0.2])
-    error_message = ("Only binary classification is supported. Labels "
-                     "in y_true: {}".format(np.array([0, 1, 2])))
-    with pytest.raises(ValueError, match=re.escape(error_message)):
+    error_message = (
+        "Only binary classification is supported. The type of the target is "
+        "multiclass"
+    )
+
+    with pytest.raises(ValueError, match=error_message):
         brier_score_loss(y_true, y_pred)
 
     # calculate correctly when there's only one class in y_true

@@ -6,6 +6,8 @@ import pickle
 
 import numpy as np
 
+import warnings
+
 from scipy.spatial import distance
 from scipy import sparse
 
@@ -172,8 +174,13 @@ def test_dbscan_metric_params():
     p = 1
 
     # Compute DBSCAN with metric_params arg
-    db = DBSCAN(metric='minkowski', metric_params={'p': p}, eps=eps,
-                min_samples=min_samples, algorithm='ball_tree').fit(X)
+
+    with warnings.catch_warnings(record=True) as warns:
+        db = DBSCAN(
+            metric='minkowski', metric_params={'p': p}, eps=eps,
+            p=None, min_samples=min_samples, algorithm='ball_tree'
+            ).fit(X)
+    assert not warns
     core_sample_1, labels_1 = db.core_sample_indices_, db.labels_
 
     # Test that sample labels are the same as passing Minkowski 'p' directly
@@ -191,6 +198,19 @@ def test_dbscan_metric_params():
 
     assert_array_equal(core_sample_1, core_sample_3)
     assert_array_equal(labels_1, labels_3)
+
+    with pytest.warns(
+        SyntaxWarning,
+        match="Parameter p is found in metric_params. "
+              "The corresponding parameter from __init__ "
+              "is ignored."):
+        # Test that checks p is ignored in favor of metric_params={'p': <val>}
+        db = DBSCAN(metric='minkowski', metric_params={'p': p}, eps=eps, p=p+1,
+                    min_samples=min_samples, algorithm='ball_tree').fit(X)
+        core_sample_4, labels_4 = db.core_sample_indices_, db.labels_
+
+    assert_array_equal(core_sample_1, core_sample_4)
+    assert_array_equal(labels_1, labels_4)
 
 
 def test_dbscan_balltree():
