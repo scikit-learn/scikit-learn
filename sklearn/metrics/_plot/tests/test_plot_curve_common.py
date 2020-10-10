@@ -1,4 +1,3 @@
-from sklearn.metrics._plot.precision_recall_curve import plot_precision_recall_curve
 import pytest
 
 from sklearn.base import ClassifierMixin
