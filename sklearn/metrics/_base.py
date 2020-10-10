@@ -301,7 +301,7 @@ def _get_response(
             estimator, response_method
         )
         y_pred = prediction_method(X)
-        classes = estimator.classes_
+        classes = list(estimator.classes_)
 
         if pos_label is not None and pos_label not in classes:
             raise ValueError(
