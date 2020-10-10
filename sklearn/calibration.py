@@ -750,9 +750,6 @@ class CalibrationDisplay:
     y_prob : ndarray of shape (n_samples,)
         Probability estimates for the positive class, for each sample.
 
-    estimator_name : str, default=None
-        Name of estimator. If `None`, then the estimator name is not shown.
-
     Attributes
     ----------
     line_ : matplotlib Artist
@@ -764,11 +761,10 @@ class CalibrationDisplay:
     figure_ : matplotlib Figure
         Figure containing the curve.
     """
-    def __init__(self, prob_true, prob_pred, y_prob, *, estimator_name=None):
+    def __init__(self, prob_true, prob_pred, y_prob):
         self.prob_true = prob_true
         self.prob_pred = prob_pred
         self.y_prob = y_prob
-        self.estimator_name = estimator_name
 
     def plot(self, ax=None, *, name=None, ref_line=True, **kwargs):
         """Plot visualization.
@@ -828,107 +824,178 @@ class CalibrationDisplay:
         self.figure_ = ax.figure
         return self
 
+    _common_docstring_from_methods = """n_bins : int, default=5
+            Number of bins to discretize the [0, 1] interval into when calculating
+            the calibration curve. A bigger number requires more data.
 
-def plot_calibration_curve(estimator, X, y, *,
-                           n_bins=5, strategy='uniform',
-                           name=None, ref_line=True, ax=None, **kwargs):
-    """Plot calibration curve, also known as reliability diagrams, for binary
-    classifiers.
+        strategy : {'uniform', 'quantile'}, default='uniform'
+            Strategy used to define the widths of the bins.
 
-    The average predicted probability for each bin is plotted on the x-axis
-    and the fraction of positive classes in each bin is plotted on the y-axis.
+            - `'uniform'`: The bins have identical widths.
+            - `'quantile'`: The bins have the same number of samples and depend on
+            predicted probabilities.
 
-    Extra keyword arguments will be passed to :func:`matplotlib.pyplot.plot`.
+        name : str, default=None
+            Name for labeling curve. If `None`, the name of the estimator is used.
 
-    Read more in the :ref:`User Guide <calibration>`.
+        ref_line : bool, default=True
+            If `True`, plots a reference line representing a perfectly calibrated
+            classifier.
 
-    Parameters
-    ----------
-    estimator : estimator instance
-        Fitted classifier or a fitted :class:`~sklearn.pipeline.Pipeline` in
-        which the last estimator is a classifier. The classifier must
-        have a :term:`predict_proba` method.
+        ax : matplotlib axes, default=None
+            Axes object to plot on. If `None`, a new figure and axes is created.
 
-    X : {array-like, sparse matrix} of shape (n_samples, n_features)
-        Input values.
+        **kwargs : dict
+            Keyword arguments to be passed to :func:`matplotlib.pyplot.plot`.
 
-    y : array-like of shape (n_samples,)
-        Binary target values.
+        Returns
+        -------
+        display : :class:`~sklearn.calibration.CalibrationDisplay`.
+            Object that stores computed values.
+    """.rstrip()
 
-    n_bins : int, default=5
-        Number of bins to discretize the [0, 1] interval into when calculating
-        the calibration curve. A bigger number requires more data.
+    @classmethod
+    @inject_docstring(common_docstring=_common_docstring_from_methods)
+    def from_estimator(cls, estimator, X, y, *,
+                       n_bins=5, strategy='uniform', name=None,
+                       ref_line=True, ax=None, **kwargs)
+        """Plot calibration curve, also known as reliability diagrams, for
+        binary classifiers, using an estimator and data.
 
-    strategy : {'uniform', 'quantile'}, default='uniform'
-        Strategy used to define the widths of the bins.
+        The average predicted probability for each bin is plotted on the x-axis
+        and the fraction of positive classes in each bin is plotted on the
+        y-axis.
 
-        - `'uniform'`: The bins have identical widths.
-        - `'quantile'`: The bins have the same number of samples and depend on
-          predicted probabilities.
+        Extra keyword arguments will be passed to
+        :func:`matplotlib.pyplot.plot`.
 
-    name : str, default=None
-        Name for labeling curve. If `None`, the name of the estimator is used.
+        Read more in the :ref:`User Guide <calibration>`.
 
-    ref_line : bool, default=True
-        If `True`, plots a reference line representing a perfectly calibrated
-        classifier.
+        .. versionadded:: 0.24
 
-    ax : matplotlib axes, default=None
-        Axes object to plot on. If `None`, a new figure and axes is created.
+        Parameters
+        ----------
+        estimator : estimator instance
+            Fitted classifier or a fitted :class:`~sklearn.pipeline.Pipeline`
+            in which the last estimator is a classifier. The classifier must
+            have a :term:`predict_proba` method.
 
-    **kwargs : dict
-        Keyword arguments to be passed to :func:`matplotlib.pyplot.plot`.
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Input values.
 
-    Returns
-    -------
-    display : :class:`~sklearn.calibration.CalibrationDisplay`.
-        Object that stores computed values.
+        y : array-like of shape (n_samples,)
+            Binary target values.
 
-    Examples
-    --------
-    >>> import matplotlib.pyplot as plt
-    >>> from sklearn import (datasets, calibration, model_selection,
-    ...                      linear_model)
-    >>> X, y = datasets.make_classification(random_state=0)
-    >>> X_train, X_test, y_train, y_test = model_selection.train_test_split(
-    ...     X, y, random_state=0)
-    >>> clf = linear_model.LogisticRegression(random_state=0)
-    >>> clf.fit(X_train, y_train)
-    LogisticRegression(random_state=0)
-    >>> viz = calibration.plot_calibration_curve(clf, X_test, y_test)
-    >>> plt.show()
-    """
-    check_matplotlib_support("plot_calibration_curve")
-    binary_error = "Only binary classification is supported."
+        {common_docstring}
 
-    if not is_classifier(estimator):
-        raise ValueError("The 'estimator' parameter should be a fitted binary "
-                         "classifier")
+        See Also
+        --------
+        CalibrationDisplay.from_predictions : Plot calibration curve using true
+            and predicted labels.
 
-    prediction_method = _check_classifier_response_method(
-        estimator, response_method='predict_proba'
-    )
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> from sklearn.datasets import make_classification
+        >>> from sklearn.model_selection import train_test_split
+        >>> from sklearn.linear_model import LogisticRegression
+        >>> from sklearn.calibration import CalibrationDisplay
+        >>> X, y = make_classification(random_state=0)
+        >>> X_train, X_test, y_train, y_test = train_test_split(
+        ...     X, y, random_state=0)
+        >>> clf = LogisticRegression(random_state=0)
+        >>> clf.fit(X_train, y_train)
+        LogisticRegression(random_state=0)
+        >>> disp = CalibrationDisplay.from_estimator(clf, X_test, y_test)
+        >>> plt.show()
+        """
+        method_name = f"{cls.__name__}.from_estimator"
+        check_matplotlib_support(method_name)
 
-    y_prob = prediction_method(X)
+        if not is_classifier(estimator):
+            raise ValueError("The 'estimator' should be a fitted "
+                             "binary classifier")
 
-    if not len(estimator.classes_) == 2:
-        raise ValueError(binary_error)
-    if y_prob.ndim == 1:
-        raise ValueError("'estimator.predict_proba' needs to return a 2d "
-                         "array.")
-    else:
-        if y_prob.shape[1] != 2:
-            raise ValueError(binary_error)
+        prediction_method = _check_classifier_response_method(
+            estimator, response_method='predict_proba'
+        )
+        y_prob = prediction_method(X)
+
+        binar_error = "Only binary classification is supported."
+        if not len(estimator.classes_) == 2:
+            raise ValueError(binar_error)
+        if y_prob.ndim == 1:
+            raise ValueError("'estimator.predict_proba' needs to return a 2d "
+                             "array.")
         else:
-            y_prob = y_prob[:, 1]
+            if y_prob.shape[1] != 2:
+                raise ValueError(binary_error)
+            else:
+                y_prob = y_prob[:, 1]
 
-    prob_true, prob_pred = calibration_curve(
-        y, y_prob, n_bins=n_bins, strategy=strategy
-    )
+        name = name if name is not None else estimator.__class__.__name__
+        return cls.from_predictions(
+            y, y_prob, n_bins=n_bins, strategy=strategy, name=name,
+            ref_line=ref_line, ax=ax, **kwargs
+        )
 
-    name = name if name is not None else estimator.__class__.__name__
-    viz = CalibrationDisplay(
-        prob_true=prob_true, prob_pred=prob_pred, y_prob=y_prob,
-        estimator_name=name
-    )
-    return viz.plot(ax=ax, name=name, ref_line=ref_line, **kwargs)
+    @classmethod
+    @inject_docstring(common_docstring=_common_docstring_from_methods)
+    def from_predictions(cls, y_true, y_prob, *,
+                         n_bins=5, strategy='uniform', name=None,
+                         ref_line=True, ax=None, **kwargs)
+        """Plot calibration curve, also known as reliability diagrams, for
+        binary classifiers, using true and predicted labels.
+
+        The average predicted probability for each bin is plotted on the x-axis
+        and the fraction of positive classes in each bin is plotted on the
+        y-axis.
+
+        Extra keyword arguments will be passed to
+        :func:`matplotlib.pyplot.plot`.
+
+        Read more in the :ref:`User Guide <calibration>`.
+
+        .. versionadded:: 0.24
+
+        Parameters
+        ----------
+        y_true : array-like of shape (n_samples,)
+            True labels.
+
+        y_prob : array-like of shape (n_samples,)
+            The predicted probabilities of the positive class.
+
+        {common_docstring}
+
+        See Also
+        --------
+        CalibrationDisplay.from_estimator : Plot calibration curve using an
+            estimator and data.
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> from sklearn.datasets import make_classification
+        >>> from sklearn.model_selection import train_test_split
+        >>> from sklearn.linear_model import LogisticRegression
+        >>> from sklearn.calibration import CalibrationDisplay
+        >>> X, y = make_classification(random_state=0)
+        >>> X_train, X_test, y_train, y_test = train_test_split(
+        ...     X, y, random_state=0)
+        >>> clf = LogisticRegression(random_state=0)
+        >>> clf.fit(X_train, y_train)
+        LogisticRegression(random_state=0)
+        >>> y_prob = clf.predict_proba(X_test)[:, 1]
+        >>> disp = CalibrationDisplay.from_predictions(y_test, y_prob)
+        >>> plt.show()
+        """
+        method_name = f"{cls.__name__}.from_estimator"
+        check_matplotlib_support(method_name)
+
+        prob_true, prob_pred = calibration_curve(
+            y_true, y_prob, n_bins=n_bins, strategy=strategy
+        )
+
+        disp = cls(prob_true=prob_true, prob_pred=prob_pred, y_prob=y_prob)
+        return disp.plot(ax=ax, name=name, ref_line=ref_line, **kwargs)
