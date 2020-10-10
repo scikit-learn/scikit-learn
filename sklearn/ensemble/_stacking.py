@@ -169,17 +169,11 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
                       if sample_weight is not None
                       else None)
         predictions = Parallel(n_jobs=self.n_jobs)(
-            delayed(cross_val_predict)(
-                clone(est),
-                X,
-                y,
-                cv=deepcopy(cv),
-                method=response_method,
-                n_jobs=self.n_jobs,
-                fit_params=fit_params,
-                verbose=self.verbose
-            )
-            for est, response_method in zip(all_estimators, self.stack_method_)
+            delayed(cross_val_predict)(clone(est), X, y, cv=deepcopy(cv),
+                                       method=meth, n_jobs=self.n_jobs,
+                                       fit_params=fit_params,
+                                       verbose=self.verbose)
+            for est, meth in zip(all_estimators, self.stack_method_)
             if est != 'drop'
         )
 
@@ -211,11 +205,9 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
         """Concatenate and return the predictions of the estimators."""
         check_is_fitted(self)
         predictions = [
-            getattr(est, response_method)(X)
-            for est, response_method in zip(
-                self.estimators_, self.stack_method_
-            )
-            if est != "drop"
+            getattr(est, meth)(X)
+            for est, meth in zip(self.estimators_, self.stack_method_)
+            if est != 'drop'
         ]
         return self._concatenate_predictions(X, predictions)
 
