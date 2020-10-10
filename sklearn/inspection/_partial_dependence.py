@@ -22,7 +22,10 @@ from ..utils import _determine_key_type
 from ..utils import _get_column_indices
 from ..utils.validation import check_is_fitted
 from ..utils import Bunch
-from ..utils.validation import _deprecate_positional_args
+from ..utils.validation import (
+    _check_response_method,
+    _deprecate_positional_args,
+)
 from ..tree import DecisionTreeRegressor
 from ..ensemble import RandomForestRegressor
 from ..exceptions import NotFittedError
@@ -120,29 +123,7 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
     predictions = []
     averaged_predictions = []
 
-    # define the prediction_method (predict, predict_proba, decision_function).
-    if is_regressor(est):
-        prediction_method = est.predict
-    else:
-        predict_proba = getattr(est, 'predict_proba', None)
-        decision_function = getattr(est, 'decision_function', None)
-        if response_method == 'auto':
-            # try predict_proba, then decision_function if it doesn't exist
-            prediction_method = predict_proba or decision_function
-        else:
-            prediction_method = (predict_proba if response_method ==
-                                 'predict_proba' else decision_function)
-        if prediction_method is None:
-            if response_method == 'auto':
-                raise ValueError(
-                    'The estimator has no predict_proba and no '
-                    'decision_function method.'
-                )
-            elif response_method == 'predict_proba':
-                raise ValueError('The estimator has no predict_proba method.')
-            else:
-                raise ValueError(
-                    'The estimator has no decision_function method.')
+    prediction_method = _check_response_method(est, response_method)
 
     for new_values in grid:
         X_eval = X.copy()
