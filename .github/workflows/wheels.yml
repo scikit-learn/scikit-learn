@@ -17,7 +17,7 @@ on:
 jobs:
   build_wheels:
     # TODO: Add a commit marker to trigger the build when it is needed
-    name: Build wheels on ${{ matrix.os }} for Python {{ matrix.python }}
+    name: Build wheels on ${{ matrix.os }} for Python ${{ matrix.python }}
     runs-on: ${{ matrix.os }}
 
     strategy:
