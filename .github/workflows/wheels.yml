@@ -54,6 +54,7 @@ jobs:
         run: |
           python -m cibuildwheel --output-dir wheelhouse
           ls -l .
+          ls -l ./wheelhouse/
           ls -l ./wheelhouse/*.whl
 
       - name: Store artifacts
