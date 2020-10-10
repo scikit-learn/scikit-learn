@@ -16,10 +16,8 @@ from itertools import combinations
 
 import numpy as np
 
-from ..base import is_classifier
 from ..utils import check_array, check_consistent_length
 from ..utils.multiclass import type_of_target
-from ..utils.validation import _check_classifier_response_method
 
 
 def _average_binary_score(binary_metric, y_true, y_score, average,
@@ -251,86 +249,3 @@ def _check_pos_label_consistency(pos_label, y_true):
         pos_label = 1.0
 
     return pos_label
-
-
-def _get_response(
-    estimator,
-    X,
-    y_true,
-    response_method,
-    pos_label=None,
-):
-    """Return response and positive label.
-
-    Parameters
-    ----------
-    estimator : estimator instance
-        Fitted classifier or a fitted :class:`~sklearn.pipeline.Pipeline`
-        in which the last estimator is a classifier.
-
-    X : {array-like, sparse matrix} of shape (n_samples, n_features)
-        Input values.
-
-    y_true : array-like of shape (n_samples,)
-        The true label.
-
-    response_method: {'auto', 'predict_proba', 'decision_function', 'predict'}
-        Specifies whether to use :term:`predict_proba` or
-        :term:`decision_function` as the target response. If set to 'auto',
-        :term:`predict_proba` is tried first and if it does not exist
-        :term:`decision_function` is tried next and :term:`predict` last.
-
-    pos_label : str or int, default=None
-        The class considered as the positive class when computing
-        the metrics. By default, `estimators.classes_[1]` is
-        considered as the positive class.
-
-    Returns
-    -------
-    y_pred : ndarray of shape (n_samples,)
-        Target scores calculated from the provided response_method
-        and pos_label.
-
-    pos_label : str or int
-        The class considered as the positive class when computing
-        the metrics.
-    """
-    if is_classifier(estimator):
-        y_type = type_of_target(y_true)
-        prediction_method = _check_classifier_response_method(
-            estimator, response_method
-        )
-        y_pred = prediction_method(X)
-        classes = list(estimator.classes_)
-
-        if pos_label is not None and pos_label not in classes:
-            raise ValueError(
-                f"pos_label={pos_label} is not a valid label: It should be "
-                f"one of {classes}"
-            )
-        elif pos_label is None and y_type == "binary":
-            pos_label = pos_label if pos_label is not None else classes[-1]
-
-        if prediction_method.__name__ == "predict_proba":
-            if y_type == "binary" and y_pred.shape[1] <= 2:
-                if y_pred.shape[1] == 2:
-                    col_idx = np.flatnonzero(classes == pos_label)[0]
-                    y_pred = y_pred[:, col_idx]
-                else:
-                    err_msg = (
-                        f"Got predict_proba of shape {y_pred.shape}, but need "
-                        f"classifier with two classes."
-                    )
-                    raise ValueError(err_msg)
-        elif prediction_method.__name__ == "decision_function":
-            if y_type == "binary":
-                if pos_label == classes[0]:
-                    y_pred *= -1
-    else:
-        if response_method not in ("predict", "auto"):
-            raise ValueError(
-                f"{estimator.__class__.__name__} should be a classifier"
-            )
-        y_pred, pos_label = estimator.predict(X), None
-
-    return y_pred, pos_label

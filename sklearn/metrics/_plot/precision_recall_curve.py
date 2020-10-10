@@ -1,10 +1,11 @@
-from .._base import _get_response
-
 from .. import average_precision_score
 from .. import precision_recall_curve
 
 from ...base import is_classifier
-from ...utils import check_matplotlib_support
+from ...utils import (
+    check_matplotlib_support,
+    _get_response,
+)
 from ...utils.validation import _deprecate_positional_args
 
 

@@ -3,36 +3,52 @@ The :mod:`sklearn.utils` module includes various utilities.
 """
 import pkgutil
 import inspect
-from importlib import import_module
-from operator import itemgetter
-from collections.abc import Sequence
-from contextlib import contextmanager
-from itertools import compress
-from itertools import islice
+from itertools import (
+    compress,
+    islice,
+)
 import numbers
 import platform
 import struct
 import timeit
-from pathlib import Path
-
 import warnings
+
+from collections.abc import Sequence
+from contextlib import contextmanager
+from importlib import import_module
+from pathlib import Path
+from operator import itemgetter
+
 import numpy as np
 from scipy.sparse import issparse
 
-from .murmurhash import murmurhash3_32
-from .class_weight import compute_class_weight, compute_sample_weight
-from . import _joblib
-from ..exceptions import DataConversionWarning
-from .deprecation import deprecated
-from .fixes import np_version, parse_version
-from ._estimator_html_repr import estimator_html_repr
-from .validation import (as_float_array,
-                         assert_all_finite,
-                         check_random_state, column_or_1d, check_array,
-                         check_consistent_length, check_X_y, indexable,
-                         check_symmetric, check_scalar,
-                         _deprecate_positional_args)
 from .. import get_config
+from ..exceptions import DataConversionWarning
+
+from . import _joblib
+from .class_weight import (
+    compute_class_weight,
+    compute_sample_weight,
+)
+from .deprecation import deprecated
+from ._estimator_html_repr import estimator_html_repr
+from .fixes import np_version, parse_version
+from .multiclass import type_of_target
+from .murmurhash import murmurhash3_32
+from .validation import (
+    as_float_array,
+    assert_all_finite,
+    check_array,
+    check_consistent_length,
+    check_X_y,
+    check_random_state,
+    _check_response_method,
+    check_symmetric,
+    check_scalar,
+    column_or_1d,
+    _deprecate_positional_args,
+    indexable,
+)
 
 
 # Do not deprecate parallel_backend and register_parallel_backend as they are
@@ -1185,3 +1201,86 @@ def all_estimators(type_filter=None):
     # itemgetter is used to ensure the sort does not extend to the 2nd item of
     # the tuple
     return sorted(set(estimators), key=itemgetter(0))
+
+
+def _get_response(
+    estimator,
+    X,
+    y_true,
+    response_method,
+    pos_label=None,
+):
+    """Return response and positive label.
+
+    Parameters
+    ----------
+    estimator : estimator instance
+        Fitted classifier or a fitted :class:`~sklearn.pipeline.Pipeline`
+        in which the last estimator is a classifier.
+
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        Input values.
+
+    y_true : array-like of shape (n_samples,)
+        The true label.
+
+    response_method: {'auto', 'predict_proba', 'decision_function', 'predict'}
+        Specifies whether to use :term:`predict_proba` or
+        :term:`decision_function` as the target response. If set to 'auto',
+        :term:`predict_proba` is tried first and if it does not exist
+        :term:`decision_function` is tried next and :term:`predict` last.
+
+    pos_label : str or int, default=None
+        The class considered as the positive class when computing
+        the metrics. By default, `estimators.classes_[1]` is
+        considered as the positive class.
+
+    Returns
+    -------
+    y_pred : ndarray of shape (n_samples,)
+        Target scores calculated from the provided response_method
+        and pos_label.
+
+    pos_label : str or int
+        The class considered as the positive class when computing
+        the metrics.
+    """
+    from sklearn.base import is_classifier  # noqa
+
+    if is_classifier(estimator):
+        y_type = type_of_target(y_true)
+        prediction_method = _check_response_method(estimator, response_method)
+        y_pred = prediction_method(X)
+        classes = estimator.classes_
+
+        if pos_label is not None and pos_label not in classes.tolist():
+            raise ValueError(
+                f"pos_label={pos_label} is not a valid label: It should be "
+                f"one of {classes}"
+            )
+        elif pos_label is None and y_type == "binary":
+            pos_label = pos_label if pos_label is not None else classes[-1]
+
+        if prediction_method.__name__ == "predict_proba":
+            if y_type == "binary" and y_pred.shape[1] <= 2:
+                if y_pred.shape[1] == 2:
+                    col_idx = np.flatnonzero(classes == pos_label)[0]
+                    y_pred = y_pred[:, col_idx]
+                else:
+                    err_msg = (
+                        f"Got predict_proba of shape {y_pred.shape}, but need "
+                        f"classifier with two classes."
+                    )
+                    raise ValueError(err_msg)
+        elif prediction_method.__name__ == "decision_function":
+            if y_type == "binary":
+                if pos_label == classes[0]:
+                    y_pred *= -1
+    else:
+        if response_method not in ("predict", "auto"):
+            raise ValueError(
+                f"{estimator.__class__.__name__} should be a classifier"
+            )
+        y_pred, pos_label = estimator.predict(X), None
+
+    return y_pred, pos_label

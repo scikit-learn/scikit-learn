@@ -1391,7 +1391,7 @@ def _check_fit_params(X, fit_params, indices=None):
     return fit_params_validated
 
 
-def _check_classifier_response_method(estimator, response_method):
+def _check_response_method(estimator, response_method):
     """Return prediction method from the `response_method`.
 
     Parameters
