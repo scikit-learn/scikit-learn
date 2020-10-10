@@ -19,6 +19,8 @@ from ..utils import check_array, check_random_state
 from ..utils import shuffle as util_shuffle
 from ..utils.random import sample_without_replacement
 from ..utils.validation import _deprecate_positional_args
+from ._base import _convert_data_dataframe
+
 
 
 def _generate_hypercube(samples, dimensions, rng):
@@ -131,6 +133,7 @@ def make_classification(n_samples=100, n_features=20, *, n_informative=2,
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
+
 
     Returns
     -------
@@ -260,7 +263,7 @@ def make_classification(n_samples=100, n_features=20, *, n_informative=2,
         generator.shuffle(indices)
         X[:, :] = X[:, indices]
 
-    return X, y
+        return X, y
 
 
 @_deprecate_positional_args
@@ -479,7 +482,7 @@ def make_hastie_10_2(n_samples=12000, *, random_state=None):
 def make_regression(n_samples=100, n_features=100, *, n_informative=10,
                     n_targets=1, bias=0.0, effective_rank=None,
                     tail_strength=0.5, noise=0.0, shuffle=True, coef=False,
-                    random_state=None):
+                    random_state=None, as_frame=False):
     """Generate a random regression problem.
 
     The input set can either be well conditioned (by default) or have a low
@@ -540,6 +543,11 @@ def make_regression(n_samples=100, n_features=100, *, n_informative=10,
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
+    
+    as_frame : bool, default=False
+        If True, the data is a pandas DataFrame including columns with
+        appropriate dtypes (numeric). The target is
+        a pandas DataFrame or Series depending on the number of target columns.
 
     Returns
     -------
@@ -596,7 +604,19 @@ def make_regression(n_samples=100, n_features=100, *, n_informative=10,
         return X, y, np.squeeze(ground_truth)
 
     else:
-        return X, y
+        if as_frame:
+            feature_names = [f'feat_{fn}' for fn in range(n_features)]
+            target_columns = [f'target_{tc}' for tc in range(n_targets)]
+            frame, data, target = _convert_data_dataframe('make_classification',
+                                                        X,
+                                                        y,
+                                                        feature_names,
+                                                        target_columns)
+            return frame, data, target
+        else:
+            return X, y
+
+    
 
 
 @_deprecate_positional_args
