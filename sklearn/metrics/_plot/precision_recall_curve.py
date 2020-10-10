@@ -1,8 +1,10 @@
+from sklearn.base import is_classifier
 from .._base import _get_response
 
 from .. import average_precision_score
 from .. import precision_recall_curve
 
+from ...base import is_classifier
 from ...utils import check_matplotlib_support
 from ...utils.validation import _deprecate_positional_args
 
@@ -201,6 +203,11 @@ def plot_precision_recall_curve(estimator, X, y, *,
     PrecisionRecallDisplay : Precision Recall visualization.
     """
     check_matplotlib_support("plot_precision_recall_curve")
+
+    if not is_classifier(estimator):
+        raise ValueError(
+            f"{estimator.__class__.__name__} should be a binary classifier."
+        )
 
     y_pred, pos_label = _get_response(
         estimator, X, y, response_method, pos_label=pos_label

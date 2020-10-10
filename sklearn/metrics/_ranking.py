@@ -291,7 +291,8 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
     >>> thresholds
     array([0.35, 0.4 , 0.8 ])
     """
-    if len(np.unique(y_true)) != 2:
+    y_true_type = type_of_target(y_true)
+    if y_true_type == "binary" and len(np.unique(y_true)) != 2:
         raise ValueError("Only one class present in y_true. Detection error "
                          "tradeoff curve is not defined in that case.")
 

@@ -3,6 +3,7 @@ from .._base import _get_response
 from .. import auc
 from .. import roc_curve
 
+from ...base import is_classifier
 from ...utils import check_matplotlib_support
 from ...utils.validation import _deprecate_positional_args
 
@@ -208,6 +209,11 @@ def plot_roc_curve(estimator, X, y, *, sample_weight=None,
     >>> plt.show()                                   # doctest: +SKIP
     """
     check_matplotlib_support('plot_roc_curve')
+
+    if not is_classifier(estimator):
+        raise ValueError(
+            f"{estimator.__class__.__name__} should be a binary classifier."
+        )
 
     y_pred, pos_label = _get_response(
         estimator, X, y, response_method, pos_label=pos_label

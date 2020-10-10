@@ -4,6 +4,7 @@ from .._base import _get_response
 
 from .. import det_curve
 
+from ...base import is_classifier
 from ...utils import check_matplotlib_support
 
 
@@ -208,6 +209,11 @@ def plot_det_curve(
     >>> plt.show()                                   # doctest: +SKIP
     """
     check_matplotlib_support('plot_det_curve')
+
+    if not is_classifier(estimator):
+        raise ValueError(
+            f"{estimator.__class__.__name__} should be a binary classifier."
+        )
 
     y_pred, pos_label = _get_response(
         estimator, X, y, response_method, pos_label=pos_label

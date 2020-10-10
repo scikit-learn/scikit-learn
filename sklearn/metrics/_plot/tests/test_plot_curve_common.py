@@ -1,3 +1,4 @@
+from sklearn.metrics._plot.precision_recall_curve import plot_precision_recall_curve
 import pytest
 
 from sklearn.base import ClassifierMixin
@@ -10,8 +11,11 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier
 
-from sklearn.metrics import plot_det_curve
-from sklearn.metrics import plot_roc_curve
+from sklearn.metrics import (
+    plot_det_curve,
+    plot_precision_recall_curve,
+    plot_roc_curve,
+)
 
 
 @pytest.fixture(scope="module")
@@ -25,13 +29,15 @@ def data_binary(data):
     return X[y < 2], y[y < 2]
 
 
-@pytest.mark.parametrize("plot_func", [plot_det_curve, plot_roc_curve])
+@pytest.mark.parametrize(
+    "plot_func", [plot_det_curve, plot_roc_curve, plot_precision_recall_curve]
+)
 def test_plot_curve_error_non_binary(pyplot, data, plot_func):
     X, y = data
     clf = DecisionTreeClassifier()
     clf.fit(X, y)
 
-    msg = "DecisionTreeClassifier should be a binary classifier"
+    msg = "multiclass format is not supported"
     with pytest.raises(ValueError, match=msg):
         plot_func(clf, X, y)
 
@@ -42,12 +48,14 @@ def test_plot_curve_error_non_binary(pyplot, data, plot_func):
                        "MyClassifier"),
      ("decision_function", "response method decision_function is not defined "
                            "in MyClassifier"),
-     ("auto", "response method decision_function or predict_proba is not "
-              "defined in MyClassifier"),
-     ("bad_method", "response_method must be 'predict_proba', "
-                    "'decision_function' or 'auto'")]
+     ("auto", "response method decision_function, predict_proba or predict is "
+              "not defined in MyClassifier"),
+     ("bad_method", "response_method must be one of predict, predict_proba, "
+                    "decision_function, auto.")]
 )
-@pytest.mark.parametrize("plot_func", [plot_det_curve, plot_roc_curve])
+@pytest.mark.parametrize(
+    "plot_func", [plot_det_curve, plot_roc_curve, plot_precision_recall_curve]
+)
 def test_plot_curve_error_no_response(
     pyplot, data_binary, response_method, msg, plot_func,
 ):
@@ -64,7 +72,9 @@ def test_plot_curve_error_no_response(
         plot_func(clf, X, y, response_method=response_method)
 
 
-@pytest.mark.parametrize("plot_func", [plot_det_curve, plot_roc_curve])
+@pytest.mark.parametrize(
+    "plot_func", [plot_det_curve, plot_roc_curve, plot_precision_recall_curve]
+)
 def test_plot_curve_estimator_name_multiple_calls(
     pyplot, data_binary, plot_func
 ):
@@ -89,7 +99,9 @@ def test_plot_curve_estimator_name_multiple_calls(
             make_pipeline(StandardScaler(), LogisticRegression()),
             make_pipeline(make_column_transformer((StandardScaler(), [0, 1])),
                           LogisticRegression())])
-@pytest.mark.parametrize("plot_func", [plot_det_curve, plot_roc_curve])
+@pytest.mark.parametrize(
+    "plot_func", [plot_det_curve, plot_roc_curve, plot_precision_recall_curve]
+)
 def test_plot_det_curve_not_fitted_errors(pyplot, data_binary, clf, plot_func):
     X, y = data_binary
     # clone since we parametrize the test and the classifier will be fitted
