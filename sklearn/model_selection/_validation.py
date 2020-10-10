@@ -150,8 +150,7 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
     error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
-        If a numeric value is given, FitFailedWarning is raised. This parameter
-        does not affect the refit step, which will always raise the error.
+        If a numeric value is given, FitFailedWarning is raised.
 
         .. versionadded:: 0.20
 
@@ -403,8 +402,7 @@ def cross_val_score(estimator, X, y=None, *, groups=None, scoring=None,
     error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
-        If a numeric value is given, FitFailedWarning is raised. This parameter
-        does not affect the refit step, which will always raise the error.
+        If a numeric value is given, FitFailedWarning is raised.
 
         .. versionadded:: 0.20
 
@@ -491,8 +489,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
-        If a numeric value is given, FitFailedWarning is raised. This parameter
-        does not affect the refit step, which will always raise the error.
+        If a numeric value is given, FitFailedWarning is raised.
 
     parameters : dict or None
         Parameters to be set on the estimator.
@@ -543,6 +540,13 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         fit_failed : bool
             The estimator failed to fit.
     """
+    if not isinstance(error_score, numbers.Number) and error_score != 'raise':
+        raise ValueError(
+            "error_score must be the string 'raise' or a numeric value. "
+            "(Hint: if using 'raise', please make sure that it has been "
+            "spelled correctly.)"
+        )
+
     progress_msg = ""
     if verbose > 2:
         if split_progress is not None:
@@ -608,19 +612,17 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                           "Details: \n%s" %
                           (error_score, format_exc()),
                           FitFailedWarning)
-        else:
-            raise ValueError("error_score must be the string 'raise' or a"
-                             " numeric value. (Hint: if using 'raise', please"
-                             " make sure that it has been spelled correctly.)")
         result["fit_failed"] = True
     else:
         result["fit_failed"] = False
 
         fit_time = time.time() - start_time
-        test_scores = _score(estimator, X_test, y_test, scorer)
+        test_scores = _score(estimator, X_test, y_test, scorer, error_score)
         score_time = time.time() - start_time - fit_time
         if return_train_score:
-            train_scores = _score(estimator, X_train, y_train, scorer)
+            train_scores = _score(
+                estimator, X_train, y_train, scorer, error_score
+            )
 
     if verbose > 1:
         total_time = score_time + fit_time
@@ -655,7 +657,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     return result
 
 
-def _score(estimator, X_test, y_test, scorer):
+def _score(estimator, X_test, y_test, scorer, error_score="raise"):
     """Compute the score(s) of an estimator on a given test set.
 
     Will return a dict of floats if `scorer` is a dict, otherwise a single
@@ -664,13 +666,30 @@ def _score(estimator, X_test, y_test, scorer):
     if isinstance(scorer, dict):
         # will cache method calls if needed. scorer() returns a dict
         scorer = _MultimetricScorer(**scorer)
-    if y_test is None:
-        scores = scorer(estimator, X_test)
-    else:
-        scores = scorer(estimator, X_test, y_test)
 
-    error_msg = ("scoring must return a number, got %s (%s) "
-                 "instead. (scorer=%s)")
+    try:
+        if y_test is None:
+            scores = scorer(estimator, X_test)
+        else:
+            scores = scorer(estimator, X_test, y_test)
+    except Exception:
+        if error_score == 'raise':
+            raise
+        else:
+            if isinstance(scorer, _MultimetricScorer):
+                scores = {name: error_score for name in scorer._scorers}
+            else:
+                scores = error_score
+            warnings.warn(
+                f"Scoring failed. The score on this train-test partition for "
+                f"these parameters will be set to {error_score}. Details: \n"
+                f"{format_exc()}",
+                UserWarning,
+            )
+
+    error_msg = (
+        "scoring must return a number, got %s (%s) instead. (scorer=%s)"
+    )
     if isinstance(scores, dict):
         for name, score in scores.items():
             if hasattr(score, 'item'):
@@ -1282,8 +1301,7 @@ def learning_curve(estimator, X, y, *, groups=None,
     error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
-        If a numeric value is given, FitFailedWarning is raised. This parameter
-        does not affect the refit step, which will always raise the error.
+        If a numeric value is given, FitFailedWarning is raised.
 
         .. versionadded:: 0.20
 
@@ -1348,7 +1366,9 @@ def learning_curve(estimator, X, y, *, groups=None,
         classes = np.unique(y) if is_classifier(estimator) else None
         out = parallel(delayed(_incremental_fit_estimator)(
             clone(estimator), X, y, classes, train, test, train_sizes_abs,
-            scorer, verbose, return_times) for train, test in cv_iter)
+            scorer, verbose, return_times, error_score=error_score)
+            for train, test in cv_iter
+        )
         out = np.asarray(out).transpose((2, 1, 0))
     else:
         train_test_proportions = []
@@ -1360,7 +1380,8 @@ def learning_curve(estimator, X, y, *, groups=None,
             clone(estimator), X, y, scorer, train, test, verbose,
             parameters=None, fit_params=None, return_train_score=True,
             error_score=error_score, return_times=return_times)
-            for train, test in train_test_proportions)
+            for train, test in train_test_proportions
+        )
         results = _aggregate_score_dicts(results)
         train_scores = results["train_scores"].reshape(-1, n_unique_ticks).T
         test_scores = results["test_scores"].reshape(-1, n_unique_ticks).T
@@ -1439,7 +1460,8 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
 
 
 def _incremental_fit_estimator(estimator, X, y, classes, train, test,
-                               train_sizes, scorer, verbose, return_times):
+                               train_sizes, scorer, verbose,
+                               return_times, error_score):
     """Train estimator on training subsets incrementally and compute scores."""
     train_scores, test_scores, fit_times, score_times = [], [], [], []
     partitions = zip(train_sizes, np.split(train, train_sizes)[:-1])
@@ -1460,8 +1482,12 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
 
         start_score = time.time()
 
-        test_scores.append(_score(estimator, X_test, y_test, scorer))
-        train_scores.append(_score(estimator, X_train, y_train, scorer))
+        test_scores.append(
+            _score(estimator, X_test, y_test, scorer, error_score)
+        )
+        train_scores.append(
+            _score(estimator, X_train, y_train, scorer, error_score)
+        )
 
         score_time = time.time() - start_score
         score_times.append(score_time)
@@ -1554,8 +1580,7 @@ def validation_curve(estimator, X, y, *, param_name, param_range, groups=None,
     error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
-        If a numeric value is given, FitFailedWarning is raised. This parameter
-        does not affect the refit step, which will always raise the error.
+        If a numeric value is given, FitFailedWarning is raised.
 
         .. versionadded:: 0.20
 
