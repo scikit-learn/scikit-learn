@@ -481,8 +481,8 @@ def test_nmf_regularization():
         H_regul = regul.components_
         H_model = model.components_
 
-        assert W_model.mean() > W_regul.mean()
-        assert H_model.mean() > H_regul.mean()
+        assert (linalg.norm(W_model))**2. + (linalg.norm(H_model))**2. > \
+               (linalg.norm(W_regul))**2. + (linalg.norm(H_regul))**2.
 
 
 @ignore_warnings(category=ConvergenceWarning)
