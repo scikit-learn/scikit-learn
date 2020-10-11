@@ -19,7 +19,7 @@ from sklearn.model_selection import KFold
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, LinearRegression
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.preprocessing import StandardScaler
@@ -471,49 +471,55 @@ def data_binary(data):
     return X[y < 2], y[y < 2]
 
 
-@pytest.mark.parametrize(
-    "estimator_name, expected_label",
-    [(None, "_line1"),
-     ("my_est", "my_est"),
-     ("my_est2", "my_est2")]
-)
-def test_calibration_display_default_labels(pyplot, estimator_name,
-                                            expected_label):
-    prob_true = np.array([0, 1, 1, 0])
-    prob_pred = np.array([0.2, 0.8, 0.8, 0.4])
-    y_prob = np.array([])
-
-    viz = CalibrationDisplay(prob_true, prob_pred, y_prob,
-                             estimator_name=estimator_name)
-    viz.plot()
-    assert viz.line_.get_label() == expected_label
-
-
-def test_plot_calibration_curve_error_non_binary(pyplot, data):
+def test_calibration_display_reg(data):
     X, y = data
-    clf = DecisionTreeClassifier()
-    clf.fit(X, y)
+    reg = LinearRegression().fit(X, y)
 
-    msg = "Only binary classification is supported."
+    msg = "'estimator' should be a fitted classifier"
     with pytest.raises(ValueError, match=msg):
-        plot_calibration_curve(clf, X, y)
+        CalibrationDisplay.from_estimator(clf, X, y)
 
 
-def test_plot_calibration_curve_no_predict_proba(pyplot, data_binary):
+def test_calibration_display_no_predict_proba(pyplot, data_binary):
     X, y = data_binary
     clf = LinearSVC().fit(X, y)
 
     msg = "response method predict_proba is not defined in"
     with pytest.raises(ValueError, match=msg):
-        plot_calibration_curve(clf, X, y)
+        CalibrationDisplay.from_estimator(clf, X, y)
 
 
-def test_plot_calibration_curve_not_fitted(pyplot, data_binary):
+def test_calibration_display_not_fitted(pyplot, data_binary):
     X, y = data_binary
     clf = LogisticRegression()
 
     with pytest.raises(NotFittedError):
-        plot_calibration_curve(clf, X, y)
+        CalibrationDisplay.from_estimator(clf, X, y)
+
+
+@pytest.mark.parametrize(
+    "constructor_name", ["from_estimator", "from_predictions"]
+)
+def test_calibration_display_non_binary(pyplot, data, constructor_name):
+    X, y = data
+    clf = DecisionTreeClassifier()
+    clf.fit(X, y)
+    y_prob = clf.predict_proba(X)
+
+    constructor = getattr(CalibrationDisplay, constructor_name)
+    params = (
+        (clf, X, y)
+        if constructor_name == "from_estimator"
+        else (y, y_prob)
+    )
+
+    msg = (
+        "Only binary classification is supported."
+        if constructor_name == "from_estimator"
+        else "A column-vector y was passed when a 1d array was"
+    )
+    with pytest.raises(ValueError, match=msg):
+        constructor(*params)
 
 
 @pytest.mark.parametrize("n_bins", [5, 10])
@@ -560,6 +566,24 @@ def test_plot_calibration_curve_pipeline(pyplot, data_binary):
     viz = plot_calibration_curve(clf, X, y)
     assert clf.__class__.__name__ in viz.line_.get_label()
     assert viz.estimator_name == clf.__class__.__name__
+
+
+@pytest.mark.parametrize(
+    "estimator_name, expected_label",
+    [(None, "_line1"),
+     ("my_est", "my_est"),
+     ("my_est2", "my_est2")]
+)
+def test_calibration_display_default_labels(pyplot, estimator_name,
+                                            expected_label):
+    prob_true = np.array([0, 1, 1, 0])
+    prob_pred = np.array([0.2, 0.8, 0.8, 0.4])
+    y_prob = np.array([])
+
+    viz = CalibrationDisplay(prob_true, prob_pred, y_prob,
+                             estimator_name=estimator_name)
+    viz.plot()
+    assert viz.line_.get_label() == expected_label
 
 
 def test_plot_calibration_curve_estimator_name_multiple_calls(pyplot,

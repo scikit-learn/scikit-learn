@@ -26,6 +26,7 @@ from .metrics._plot.base import _check_classifier_response_method
 from .preprocessing import label_binarize, LabelBinarizer
 from .utils import (check_array, indexable, column_or_1d,
                     check_matplotlib_support)
+from .utils._docstring import inject_docstring
 from .utils.fixes import delayed
 from .utils.validation import check_is_fitted, check_consistent_length
 from .utils.validation import _check_sample_weight
@@ -858,7 +859,7 @@ class CalibrationDisplay:
     @inject_docstring(common_docstring=_common_docstring_from_methods)
     def from_estimator(cls, estimator, X, y, *,
                        n_bins=5, strategy='uniform', name=None,
-                       ref_line=True, ax=None, **kwargs)
+                       ref_line=True, ax=None, **kwargs):
         """Plot calibration curve, also known as reliability diagrams, for
         binary classifiers, using an estimator and data.
 
@@ -913,15 +914,14 @@ class CalibrationDisplay:
         check_matplotlib_support(method_name)
 
         if not is_classifier(estimator):
-            raise ValueError("The 'estimator' should be a fitted "
-                             "binary classifier")
+            raise ValueError("'estimator' should be a fitted classifier.")
 
         prediction_method = _check_classifier_response_method(
             estimator, response_method='predict_proba'
         )
         y_prob = prediction_method(X)
 
-        binar_error = "Only binary classification is supported."
+        binary_error = "Only binary classification is supported."
         if not len(estimator.classes_) == 2:
             raise ValueError(binar_error)
         if y_prob.ndim == 1:
@@ -943,7 +943,7 @@ class CalibrationDisplay:
     @inject_docstring(common_docstring=_common_docstring_from_methods)
     def from_predictions(cls, y_true, y_prob, *,
                          n_bins=5, strategy='uniform', name=None,
-                         ref_line=True, ax=None, **kwargs)
+                         ref_line=True, ax=None, **kwargs):
         """Plot calibration curve, also known as reliability diagrams, for
         binary classifiers, using true and predicted labels.
 
