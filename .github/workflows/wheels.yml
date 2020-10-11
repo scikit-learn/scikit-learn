@@ -38,7 +38,7 @@ jobs:
     
       - name: Install dependencies
         run: |
-          python -m pip install cibuildwheel
+          python -m pip install git+https://github.com/joerick/cibuildwheel.git
 
       - name: Build and test wheels
         env:
