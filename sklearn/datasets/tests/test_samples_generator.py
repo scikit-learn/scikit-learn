@@ -276,9 +276,9 @@ def test_make_regression():
     df, data, target = make_regression(n_samples=100, n_features=1,
                                        as_frame=True)
 
-    assert df.shape == (100, 2)
-    assert data.shape == (100, 1)
-    assert target.shape == (100,)
+    assert df.shape == (100, 2), "df shape mismatch"
+    assert data.shape == (100, 1), "features df shape mismatch"
+    assert target.shape == (100,), "target series/df shape mismatch"
     assert isinstance(df, pd.DataFrame)
     assert isinstance(data, pd.DataFrame)
     assert isinstance(target, pd.Series)
@@ -290,13 +290,14 @@ def test_make_regression():
                                           noise=1.0, random_state=0,
                                           as_frame=True)
 
-    assert df.shape == (100, 11)
-    assert data.shape == (100, 10)
-    assert target.shape == (100,)
+    assert df.shape == (100, 11), "df shape mismatch"
+    assert data.shape == (100, 10), "features df shape mismatch"
+    assert target.shape == (100,), "target df shape mismatch"
+    assert c.shape == (10,), "coef shape mismatch"
+    assert sum(c != 0.0) == 3, "Unexpected number of informative features"
     assert isinstance(df, pd.DataFrame)
     assert isinstance(data, pd.DataFrame)
     assert isinstance(target, pd.Series)
-    assert isinstance == (c, np.ndarray)
 
     # Test both coef & as_frame set to True with small number of features
     df, data, target, c = make_regression(n_samples=100, n_features=1,
@@ -308,7 +309,6 @@ def test_make_regression():
     assert isinstance(df, pd.DataFrame)
     assert isinstance(data, pd.DataFrame)
     assert isinstance(target, pd.Series)
-    assert isinstance == (c, np.ndarray)
 
 
 def test_make_regression_multitarget():
