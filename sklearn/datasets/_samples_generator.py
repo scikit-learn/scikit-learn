@@ -607,20 +607,20 @@ def make_regression(n_samples=100, n_features=100, *, n_informative=10,
         feature_names = [f'feat_{fn}' for fn in range(n_features)]
         target_columns = [f'target_{tc}' for tc in range(n_targets)]
         df, data, target = _convert_data_dataframe('make_classification',
-                                                    X,
-                                                    y,
-                                                    feature_names,
-                                                    target_columns)
+                                                   X,
+                                                   y,
+                                                   feature_names,
+                                                   target_columns)
         return df, data, target
 
     elif coef and as_frame:
         feature_names = [f'feat_{fn}' for fn in range(n_features)]
         target_columns = [f'target_{tc}' for tc in range(n_targets)]
         df, data, target = _convert_data_dataframe('make_classification',
-                                                    X,
-                                                    y,
-                                                    feature_names,
-                                                    target_columns)
+                                                   X,
+                                                   y,
+                                                   feature_names,
+                                                   target_columns)
         return df, data, target, np.squeeze(ground_truth)
 
     else:

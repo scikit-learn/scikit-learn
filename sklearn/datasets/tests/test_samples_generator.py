@@ -259,11 +259,11 @@ def test_make_regression():
 
     assert X.shape == (100, 1)
 
-    # Test with only pandas dataframe 
+    # Test with only pandas dataframe
     df, data, target = make_regression(n_samples=100, n_features=10,
-                                       n_informative=3,effective_rank=5, 
+                                       n_informative=3, effective_rank=5,
                                        coef=False, bias=0.0,
-                                       noise=1.0, random_state=0, 
+                                       noise=1.0, random_state=0,
                                        as_frame=True)
 
     assert df.shape == (100, 11), "X shape mismatch"
@@ -271,24 +271,25 @@ def test_make_regression():
     assert target.shape == (100, )
 
     # Test dataframewith small number of features.
-    df, data, target = make_regression(n_samples=100, n_features=1, 
+    df, data, target = make_regression(n_samples=100, n_features=1,
                                        as_frame=True)
-    
+
     assert df.shape == (100, 2)
     assert data.shape == (100, 1)
     assert target.shape == (100,)
 
     # Test both coef & as_frame set to True
     df, data, target, c = make_regression(n_samples=100, n_features=10,
-                                          n_informative=3,effective_rank=5,
+                                          n_informative=3, effective_rank=5,
                                           coef=True, bias=0.0,
-                                          noise=1.0, random_state=0, 
-                                          as_frame=True) 
+                                          noise=1.0, random_state=0,
+                                          as_frame=True)
 
     assert df.shape == (100, 11)
     assert data.shape == (100, 10)
     assert target.shape == (100,)
     assert c.shape == (10,)
+
 
 def test_make_regression_multitarget():
     X, y, c = make_regression(n_samples=100, n_features=10, n_informative=3,
