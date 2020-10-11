@@ -242,6 +242,7 @@ def test_make_hastie_10_2():
 
 
 def test_make_regression():
+    pd = pytest.importorskip('pandas')
     X, y, c = make_regression(n_samples=100, n_features=10, n_informative=3,
                               effective_rank=5, coef=True, bias=0.0,
                               noise=1.0, random_state=0)
@@ -277,6 +278,9 @@ def test_make_regression():
     assert df.shape == (100, 2)
     assert data.shape == (100, 1)
     assert target.shape == (100,)
+    assert isinstance(df, pd.DataFrame)
+    assert isinstance(data, pd.DataFrame)
+    assert isinstance(target, pd.Series)
 
     # Test both coef & as_frame set to True
     df, data, target, c = make_regression(n_samples=100, n_features=10,
@@ -288,6 +292,9 @@ def test_make_regression():
     assert df.shape == (100, 11)
     assert data.shape == (100, 10)
     assert target.shape == (100,)
+    assert isinstance(df, pd.DataFrame)
+    assert isinstance(data, pd.DataFrame)
+    assert isinstance(target, pd.Series)
     assert c.shape == (10,)
 
 
