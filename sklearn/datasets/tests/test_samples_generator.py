@@ -308,7 +308,7 @@ def test_make_regression():
     assert isinstance(df, pd.DataFrame)
     assert isinstance(data, pd.DataFrame)
     assert isinstance(target, pd.Series)
-    assert c.shape == (1,)
+    assert isinstance == (c, np.ndarray)
 
 
 def test_make_regression_multitarget():
