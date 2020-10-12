@@ -11,7 +11,6 @@ from .sparsefuncs_fast import (
     csr_mean_variance_axis0 as _csr_mean_var_axis0,
     csc_mean_variance_axis0 as _csc_mean_var_axis0,
     incr_mean_variance_axis0 as _incr_mean_var_axis0)
-from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import _check_sample_weight
 
 
