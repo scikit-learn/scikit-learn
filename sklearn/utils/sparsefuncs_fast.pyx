@@ -72,7 +72,8 @@ def csr_mean_variance_axis0(X):
         Feature-wise variances
 
     """
-
+    if X.dtype not in [np.float32, np.float64]:
+        X = X.astype(np.float64)
     last_mean = np.zeros(X.shape[1], dtype=X.dtype)
     last_var = np.zeros(X.shape[1], dtype=X.dtype)
     last_n = np.zeros(X.shape[1], dtype=X.dtype)
@@ -224,11 +225,14 @@ def incr_mean_variance_axis0(X, last_mean, last_var, last_n, sample_weight):
     if X.dtype not in [np.float32, np.float64]:
         X = X.astype(np.float64)
     X_dtype = X.dtype
-    if sample_weight.dtype not in [np.float32, np.float64]:
+    if sample_weight is None:
+       sample_weight = np.ones(X.shape[0]).astype(X_dtype)
+    elif sample_weight.dtype not in [np.float32, np.float64]:
         sample_weight = sample_weight.astype(np.float64)
     if last_n.dtype not in [np.float32, np.float64]:
         last_n = last_n.astype(np.float64)
 
+    # ind_rows, ind_cols, X_data = sp.find(X)
     ind_rows, ind_cols, X_data = sp.find(X)
 
     return _incr_mean_variance_axis0(X_data,
