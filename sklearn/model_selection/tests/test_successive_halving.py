@@ -6,7 +6,7 @@ import numpy as np
 
 from sklearn.datasets import make_classification
 from sklearn.dummy import DummyClassifier
-from sklearn.experimental import enable_successive_halving  # noqa
+from sklearn.experimental import enable_halving_search_cv  # noqa
 from sklearn.model_selection import HalvingGridSearchCV
 from sklearn.model_selection import HalvingRandomSearchCV
 from sklearn.model_selection import KFold, ShuffleSplit

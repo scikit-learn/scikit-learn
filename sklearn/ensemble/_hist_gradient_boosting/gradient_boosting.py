@@ -851,7 +851,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         is always reserved for missing values. Must be no larger than 255.
     monotonic_cst : array-like of int of shape (n_features), default=None
         Indicates the monotonic constraint to enforce on each feature. -1, 1
-        and 0 respectively correspond to a positive constraint, negative
+        and 0 respectively correspond to a negative constraint, positive
         constraint and no constraint. Read more in the :ref:`User Guide
         <monotonic_cst_gbdt>`.
 
@@ -1082,7 +1082,7 @@ class HistGradientBoostingClassifier(ClassifierMixin,
         is always reserved for missing values. Must be no larger than 255.
     monotonic_cst : array-like of int of shape (n_features), default=None
         Indicates the monotonic constraint to enforce on each feature. -1, 1
-        and 0 respectively correspond to a positive constraint, negative
+        and 0 respectively correspond to a negative constraint, positive
         constraint and no constraint. Read more in the :ref:`User Guide
         <monotonic_cst_gbdt>`.
 
