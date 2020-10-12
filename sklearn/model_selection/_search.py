@@ -1243,7 +1243,7 @@ class GridSearchCV(BaseSearchCV):
         .. versionadded:: 0.20
 
     multimetric_ : bool
-        Whether or not the scorers passed compute several metrics.
+        Whether or not the scorers compute several metrics.
 
     Notes
     -----
@@ -1560,7 +1560,7 @@ class RandomizedSearchCV(BaseSearchCV):
         .. versionadded:: 0.20
 
     multimetric_ : bool
-        Whether or not the scorers passed compute several metrics.
+        Whether or not the scorers compute several metrics.
 
     Notes
     -----

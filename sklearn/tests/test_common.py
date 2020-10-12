@@ -305,8 +305,8 @@ def _generate_search_cv_instances():
 @parametrize_with_checks(list(_generate_search_cv_instances()))
 def test_search_cv(estimator, check, request):
     # Common tests for SearchCV instances
-    # We have separate test because this estimator can accept both wide range
-    # of predictors (classifier, regressor, pipeline)
+    # We have a separate test because those meta-estimators can accept a
+    # wide range of base estimators (classifiers, regressors, pipelines)
     with ignore_warnings(
         category=(
             FutureWarning,
