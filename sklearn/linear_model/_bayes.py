@@ -536,6 +536,9 @@ class ARDRegression(RegressorMixin, LinearModel):
         X, y, X_offset_, y_offset_, X_scale_ = self._preprocess_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X)
 
+        self.X_offset_ = X_offset_
+        self.X_scale_ = X_scale_
+
         # Launch the convergence loop
         keep_lambda = np.ones(n_features, dtype=bool)
 
