@@ -356,6 +356,56 @@ class EstimatorWithFitAndPredict:
         return self.y
 
 
+class MockEstimatorOnOffPrediction(BaseEstimator):
+    """Estimator for which we can turn on/off the prediction methods.
+
+    Parameters
+    ----------
+    response_methods: list of \
+            {"predict", "predict_proba", "decision_function"}, default=None
+        List containing the response implemented by the estimator. When, the
+        response is in the list, it will return the name of the response method
+        when called. Otherwise, an `AttributeError` is raised. It allows to
+        use `getattr` as any conventional estimator.
+        By default, no response methods are mocked.
+    """
+    def __init__(self, response_methods=None):
+        self.response_methods = response_methods
+
+    def fit(self, X, y):
+        self.classes_ = np.unique(y)
+        return self
+
+    def _predict(self, X):
+        return "predict"
+
+    def _predict_proba(self, X):
+        return "predict_proba"
+
+    def _decision_function(self, X):
+        return "decision_function"
+
+    def _check_response(self, method):
+        if (
+            self.response_methods is not None
+            and method in self.response_methods
+        ):
+            return getattr(self, f"_{method}")
+        raise AttributeError(f"{method} not implemented.")
+
+    @property
+    def predict(self):
+        return self._check_response("predict")
+
+    @property
+    def predict_proba(self):
+        return self._check_response("predict_proba")
+
+    @property
+    def decision_function(self):
+        return self._check_response("decision_function")
+
+
 class DummyScorer:
     """Dummy scorer that always returns 1."""
     def __call__(self, est, X, y):

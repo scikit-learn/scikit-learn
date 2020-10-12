@@ -32,6 +32,7 @@ from sklearn.utils.fixes import parse_version
 from sklearn.utils._mocking import (
     EstimatorWithFit,
     MockDataFrame,
+    MockEstimatorOnOffPrediction,
 )
 from sklearn.utils._testing import (
     assert_allclose,
@@ -1296,6 +1297,7 @@ def test_check_pandas_sparse_valid(ntype1, ntype2, expected_subtype):
 
 
 def test_check_response_method_unknown_method():
+    """Check the error message when passing an unknown response method."""
     err_msg = (
         "response_method must be one of predict, predict_proba, "
         "decision_function, auto"
@@ -1309,6 +1311,8 @@ def test_check_response_method_unknown_method():
     ["decision_function", "predict_proba", "predict", "auto"]
 )
 def test_check_response_method_not_supported_response_method(response_method):
+    """Check the error message when a response method is not supported by the
+    estimator."""
     err_msg = "response_method {} not defined"
     if response_method == "auto":
         err_msg = err_msg.format("decision_function, predict_proba or predict")
@@ -1316,3 +1320,25 @@ def test_check_response_method_not_supported_response_method(response_method):
         err_msg = err_msg.format(response_method)
     with pytest.raises(ValueError, match=err_msg):
         _check_response_method(EstimatorWithFit(), response_method)
+
+
+@pytest.mark.parametrize(
+    "response_methods, expected_method_name",
+    [
+        (["predict_proba", "decision_function", "predict"], "predict_proba"),
+        (["decision_function", "predict"], "decision_function"),
+        (["predict_proba", "predict"], "predict_proba"),
+        (["predict_proba", "predict_proba"]),
+        (["decision_function", "decision_function"]),
+        (["predict"], "predict"),
+    ],
+)
+def test_check_response_method_order_auto(
+    response_methods, expected_method_name
+):
+    """Check the order of the response method when using `auto`."""
+    my_estimator = MockEstimatorOnOffPrediction(response_methods)
+
+    X = "mocking_data"
+    method_name_predicting = _check_response_method(my_estimator, "auto")(X)
+    assert method_name_predicting == expected_method_name

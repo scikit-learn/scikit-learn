@@ -415,14 +415,14 @@ class NoPredictProbaNoDecisionFunction(ClassifierMixin, BaseEstimator):
       'response_method blahblah is invalid. Accepted response_method'),
      (NoPredictProbaNoDecisionFunction(),
       {'features': [0], 'response_method': 'auto'},
-      'response method decision_function, predict_proba or predict is not '
+      'response_method decision_function, predict_proba or predict is not '
       'defined'),
      (NoPredictProbaNoDecisionFunction(),
       {'features': [0], 'response_method': 'predict_proba'},
-      'response method predict_proba is not defined'),
+      'response_method predict_proba is not defined'),
      (NoPredictProbaNoDecisionFunction(),
       {'features': [0], 'response_method': 'decision_function'},
-      'response method decision_function is not defined'),
+      'response_method decision_function is not defined'),
      (LinearRegression(),
       {'features': [0], 'method': 'blahblah'},
       'blahblah is invalid. Accepted method names are brute, recursion, auto'),
