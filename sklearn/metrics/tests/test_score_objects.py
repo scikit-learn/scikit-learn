@@ -12,11 +12,18 @@ import pytest
 import joblib
 
 from numpy.testing import assert_allclose
+
+from sklearn.utils._mocking import (
+    DummyScorer,
+    EstimatorWithFit,
+    EstimatorWithFitAndPredict,
+    EstimatorWithFitAndScore,
+    EstimatorWithoutFit,
+)
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import ignore_warnings
 
-from sklearn.base import BaseEstimator
 from sklearn.metrics import (
     average_precision_score,
     brier_score_loss,
@@ -137,45 +144,6 @@ def teardown_module():
     # GC closes the mmap file descriptors
     X_mm, y_mm, y_ml_mm, ESTIMATORS = None, None, None, None
     shutil.rmtree(TEMP_FOLDER)
-
-
-class EstimatorWithoutFit:
-    """Dummy estimator to test scoring validators"""
-    pass
-
-
-class EstimatorWithFit(BaseEstimator):
-    """Dummy estimator to test scoring validators"""
-    def fit(self, X, y):
-        self.classes_ = np.unique(y)
-        return self
-
-
-class EstimatorWithFitAndScore:
-    """Dummy estimator to test scoring validators"""
-    def fit(self, X, y):
-        self.classes_ = np.unique(y)
-        return self
-
-    def score(self, X, y):
-        return 1.0
-
-
-class EstimatorWithFitAndPredict:
-    """Dummy estimator to test scoring validators"""
-    def fit(self, X, y):
-        self.y = y
-        self.classes_ = np.unique(y)
-        return self
-
-    def predict(self, X):
-        return self.y
-
-
-class DummyScorer:
-    """Dummy scorer that always returns 1."""
-    def __call__(self, est, X, y):
-        return 1
 
 
 def test_all_scorers_repr():
@@ -764,7 +732,7 @@ def test_multiclass_roc_no_proba_scorer_errors(scorer_name):
     X, y = make_classification(n_classes=3, n_informative=3, n_samples=20,
                                random_state=0)
     lr = Perceptron().fit(X, y)
-    msg = "response method predict_proba is not defined in Perceptron"
+    msg = "response_method predict_proba is not defined in Perceptron"
     with pytest.raises(ValueError, match=msg):
         scorer(lr, X, y)
 

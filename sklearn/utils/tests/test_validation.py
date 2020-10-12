@@ -12,47 +12,57 @@ from pytest import importorskip
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.utils._testing import assert_no_warnings
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import SkipTest
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_allclose_dense_sparse
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils import as_float_array, check_array, check_symmetric
-from sklearn.utils import check_X_y
-from sklearn.utils import deprecated
-from sklearn.utils._mocking import MockDataFrame
-from sklearn.utils.estimator_checks import _NotAnArray
-from sklearn.random_projection import _sparse_random_matrix
+from sklearn.datasets import make_blobs
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
 from sklearn.linear_model import ARDRegression
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.random_projection import _sparse_random_matrix
 from sklearn.svm import SVR
-from sklearn.datasets import make_blobs
-from sklearn.utils import _safe_indexing
+from sklearn.utils import (
+    as_float_array,
+    check_array,
+    check_symmetric,
+    _safe_indexing,
+)
+from sklearn.utils import check_X_y
+from sklearn.utils import deprecated
+from sklearn.utils.estimator_checks import _NotAnArray
+from sklearn.utils.fixes import parse_version
+from sklearn.utils._mocking import (
+    EstimatorWithFit,
+    MockDataFrame,
+)
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_allclose_dense_sparse,
+    assert_array_equal,
+    assert_no_warnings,
+    ignore_warnings,
+    SkipTest,
+    TempMemmap,
+)
+
 from sklearn.utils.validation import (
-    has_fit_parameter,
-    check_is_fitted,
-    check_consistent_length,
+    _allclose_dense_sparse,
     assert_all_finite,
+    check_consistent_length,
+    _check_fit_params,
+    check_is_fitted,
     check_memory,
     check_non_negative,
-    _num_samples,
     _check_response_method,
+    _check_sample_weight,
     check_scalar,
     _check_psd_eigenvalues,
     _deprecate_positional_args,
-    _check_sample_weight,
-    _allclose_dense_sparse,
-    FLOAT_DTYPES)
-from sklearn.utils.validation import _check_fit_params
-from sklearn.utils.fixes import parse_version
+    has_fit_parameter,
+    _num_samples,
+    FLOAT_DTYPES,
+)
+
 
 import sklearn
-
-from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
-
-from sklearn.utils._testing import TempMemmap
 
 
 def test_as_float_array():
@@ -1292,3 +1302,17 @@ def test_check_response_method_unknown_method():
     )
     with pytest.raises(ValueError, match=err_msg):
         _check_response_method(RandomForestRegressor(), "unknown_method")
+
+
+@pytest.mark.parametrize(
+    "response_method",
+    ["decision_function", "predict_proba", "predict", "auto"]
+)
+def test_check_response_method_not_supported_response_method(response_method):
+    err_msg = "response_method {} not defined"
+    if response_method == "auto":
+        err_msg = err_msg.format("decision_function, predict_proba or predict")
+    else:
+        err_msg = err_msg.format(response_method)
+    with pytest.raises(ValueError, match=err_msg):
+        _check_response_method(EstimatorWithFit(), response_method)

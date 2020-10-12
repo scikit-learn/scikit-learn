@@ -1420,7 +1420,7 @@ def _check_response_method(estimator, response_method):
             f"{', '.join(possible_response_methods)}."
         )
 
-    error_msg = "response method {} is not defined in {}"
+    error_msg = "response_method {} not defined in {}"
     if response_method != "auto":
         prediction_method = getattr(estimator, response_method, None)
         if prediction_method is None:

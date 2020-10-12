@@ -321,3 +321,42 @@ class NoSampleWeightWrapper(BaseEstimator):
 
     def _more_tags(self):
         return {'_skip_test': True}
+
+
+class EstimatorWithoutFit:
+    """Dummy estimator to test scoring validators"""
+    pass
+
+
+class EstimatorWithFit(BaseEstimator):
+    """Dummy estimator to test scoring validators"""
+    def fit(self, X, y):
+        self.classes_ = np.unique(y)
+        return self
+
+
+class EstimatorWithFitAndScore:
+    """Dummy estimator to test scoring validators"""
+    def fit(self, X, y):
+        self.classes_ = np.unique(y)
+        return self
+
+    def score(self, X, y):
+        return 1.0
+
+
+class EstimatorWithFitAndPredict:
+    """Dummy estimator to test scoring validators"""
+    def fit(self, X, y):
+        self.y = y
+        self.classes_ = np.unique(y)
+        return self
+
+    def predict(self, X):
+        return self.y
+
+
+class DummyScorer:
+    """Dummy scorer that always returns 1."""
+    def __call__(self, est, X, y):
+        return 1

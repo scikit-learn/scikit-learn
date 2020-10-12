@@ -99,7 +99,13 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
     def _method_name(name, estimator, method):
         if estimator == 'drop':
             return None
-        return _check_response_method(estimator, method).__name__
+        try:
+            method_name = _check_response_method(estimator, method).__name__
+        except ValueError as e:
+            raise ValueError(
+                f"stack_method {method} not defined in {name}"
+            ) from e
+        return method_name
 
     def fit(self, X, y, sample_weight=None):
         """Fit the estimators.
