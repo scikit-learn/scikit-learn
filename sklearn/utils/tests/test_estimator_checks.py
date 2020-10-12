@@ -268,6 +268,27 @@ class NotInvariantPredict(BaseEstimator):
         return np.zeros(X.shape[0])
 
 
+class NotInvariantSampleOrder(BaseEstimator):
+    def fit(self, X, y):
+        X, y = self._validate_data(
+            X, y,
+            accept_sparse=("csr", "csc"),
+            multi_output=True,
+            y_numeric=True)
+        # store the original X to check for sample order later
+        self._X = X
+        return self
+
+    def predict(self, X):
+        X = check_array(X)
+        # if the input contains the same elements but different sample order,
+        # then just return zeros.
+        if (np.array_equiv(np.sort(X, axis=0), np.sort(self._X, axis=0)) and
+           (X != self._X).any()):
+            return np.zeros(X.shape[0])
+        return X[:, 0]
+
+
 class LargeSparseNotSupportedClassifier(BaseEstimator):
     def fit(self, X, y):
         X, y = self._validate_data(
@@ -453,6 +474,13 @@ def test_check_estimator():
            ' with _ but wrong_attribute added')
     assert_raises_regex(AssertionError, msg,
                         check_estimator, SetsWrongAttribute())
+    # check for sample order invariance
+    name = NotInvariantSampleOrder.__name__
+    method = 'predict'
+    msg = ("{method} of {name} is not invariant when applied to a dataset"
+           "with different sample order.").format(method=method, name=name)
+    assert_raises_regex(AssertionError, msg,
+                        check_estimator, NotInvariantSampleOrder())
     # check for invariant method
     name = NotInvariantPredict.__name__
     method = 'predict'

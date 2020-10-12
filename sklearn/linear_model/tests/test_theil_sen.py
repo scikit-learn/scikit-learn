@@ -179,6 +179,9 @@ def test_theil_sen_1d_no_intercept():
     assert_array_almost_equal(theil_sen.coef_, w + c, 1)
     assert_almost_equal(theil_sen.intercept_, 0.)
 
+    # non-regression test for #18104
+    theil_sen.score(X, y)
+
 
 def test_theil_sen_2d():
     X, y, w, c = gen_toy_problem_2d()
