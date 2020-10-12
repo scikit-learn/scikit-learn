@@ -85,6 +85,26 @@ def test_mean_variance_axis1():
             assert_array_almost_equal(X_vars, np.var(X_test, axis=0))
 
 
+@pytest.mark.parametrize("sparse_constructor",
+                         [sp.csc_matrix, sp.csr_matrix])
+def test_raise_nonimplemented_error_if_weights_and_axis_is_one(
+        sparse_constructor):
+    Xw = [[0, 0, 1], [0, 1, 1]]
+    weights = [1, 2]
+    Xw_sparse = sparse_constructor(Xw)
+
+    last_mean = np.zeros(np.size(Xw, 1))
+    last_var = np.zeros_like(last_mean)
+    last_n = np.zeros_like(last_mean, dtype=np.int64)
+
+    axis = 1
+
+    with pytest.raises(NotImplementedError):
+        incr_mean_variance_axis(Xw_sparse, axis, last_mean,
+                                last_var, last_n,
+                                sample_weight=weights)
+
+
 @pytest.mark.parametrize(['Xw', 'X', 'sample_weight'],
                          [
                          ([[0, 0, 1], [0, 2, 3]],
@@ -114,10 +134,9 @@ def test_mean_variance_axis1():
                          )
 @pytest.mark.parametrize("sparse_constructor",
                          [sp.csc_matrix, sp.csr_matrix])
-@pytest.mark.parametrize("axis",
-                         [0, 1])
 def test_incr_mean_variance_axis_weighted(Xw, X, sample_weight,
-                                          sparse_constructor, axis):
+                                          sparse_constructor):
+    axis = 0
     Xw_sparse = sparse_constructor(Xw)
     X_sparse = sparse_constructor(X)
 

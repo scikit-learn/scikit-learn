@@ -151,9 +151,13 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n,
     """
     _raise_error_wrong_axis(axis)
 
-    if sample_weight is None:
-        sample_weight = np.ones(X.shape[0])
-    else:
+    if sample_weight is not None:
+        if axis == 1:
+            raise NotImplementedError(
+                    "`incr_mean_variance_axis` cannot be called with"
+                    "`sample_weight` and `axis` set to 1`. Eighter set"
+                    "`sample_weight` to None or `axis` to 0")
+
         sample_weight = _check_sample_weight(sample_weight, X,
                                              dtype=X.dtype)
 
