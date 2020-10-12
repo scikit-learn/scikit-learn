@@ -84,7 +84,7 @@ def csr_mean_variance_axis0(X):
     return means, variances
 
 
-def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data, # np.ndarray[floating, ndim=1, mode="c"] X_data,
+def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
                              unsigned long long n_samples,
                              unsigned long long n_features,
                              np.ndarray[integral, ndim=1] X_indices,
@@ -111,16 +111,10 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data, # np.ndarray[f
     variances = np.zeros_like(means, dtype=dtype)
 
     cdef:
-        # counts[j] contains the number of samples where feature j is non-zero
         np.ndarray[np.int64_t, ndim=1] counts = np.zeros(n_features,
                                                          dtype=np.int64)
-        # counts_nan[j] contains the number of NaNs for feature j
-        # it is a float because it is waited by sample_weight which might
-        # a float
-        # np.ndarray[np.int64_t, ndim=1] counts_nan = np.zeros(n_features,
-        #                                                     dtype=np.int64)
-        np.ndarray[np.float64_t, ndim=1] counts_nan = np.zeros(n_features,
-                                                               dtype=np.float64)
+        np.ndarray[np.float64_t, ndim=1] counts_nan = np.zeros(
+            n_features, dtype=np.float64)
 
     for i in range(non_zero):
         col_ind = X_indices[i]
@@ -145,7 +139,7 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data, # np.ndarray[f
         variances[i] += (n_samples - counts_nan[i] - counts[i]) * means[i]**2
         variances[i] /= (n_samples - counts_nan[i])
 
-    return means.astype(dtype), variances.astype(dtype), counts_nan.astype(dtype)
+    return means, variances, counts_nan.astype(dtype)
 
 
 def csc_mean_variance_axis0(X):
@@ -167,9 +161,7 @@ def csc_mean_variance_axis0(X):
     """
     if X.dtype not in [np.float32, np.float64]:
         X = X.astype(np.float64)
-    # means, variances, _ = _csc_mean_variance_axis0(X.data, X.shape[0],
-    #                                                X.shape[1], X.indices,
-    #                                               X.indptr)
+
     last_mean = np.zeros(X.shape[1], dtype=X.dtype)
     last_var = np.zeros(X.shape[1], dtype=X.dtype)
     last_n = np.zeros(X.shape[1], dtype=X.dtype)
@@ -177,61 +169,6 @@ def csc_mean_variance_axis0(X):
     means, variances, _ = incr_mean_variance_axis0(
         X, last_mean, last_var, last_n, sample_weight)
     return means, variances
-
-
-def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
-                             unsigned long long n_samples,
-                             unsigned long long n_features,
-                             np.ndarray[integral, ndim=1] X_indices,
-                             np.ndarray[integral, ndim=1] X_row_indices,
-                             np.ndarray[floating, ndim=1] sample_weight,
-                             np.ndarray[integral, ndim=1] X_indptr):
-    # Implement the function here since variables using fused types
-    # cannot be declared directly and can only be passed as function arguments
-    cdef:
-        np.npy_intp i, j
-        unsigned long long counts
-        unsigned long long startptr
-        floating diff
-        # means[j] contains the mean of feature j
-        np.ndarray[floating, ndim=1] means
-        # variances[j] contains the variance of feature j
-        np.ndarray[floating, ndim=1] variances
-
-    if floating is float:
-        dtype = np.float32
-    else:
-        dtype = np.float64
-
-    means = np.zeros(n_features, dtype=dtype)
-    variances = np.zeros_like(means, dtype=dtype)
-
-    cdef np.ndarray[np.int64_t, ndim=1] counts_nan = np.zeros(n_features,
-                                                              dtype=np.float64)
-
-    for i in range(n_features):
-
-        startptr = X_indptr[i]
-        endptr = X_indptr[i + 1]
-        counts = endptr - startptr
-
-        for j in range(startptr, endptr):
-            if not isnan(X_data[j]):
-                means[i] += X_data[j]
-            else:
-                counts_nan[i] += 1
-        counts -= counts_nan[i]
-        means[i] /= (n_samples - counts_nan[i])
-
-        for j in range(startptr, endptr):
-            if not isnan(X_data[j]):
-                diff = X_data[j] - means[i]
-                variances[i] += diff * diff
-
-        variances[i] += (n_samples - counts_nan[i] - counts) * means[i]**2
-        variances[i] /= (n_samples - counts_nan[i])
-
-    return means, variances, counts_nan
 
 
 def incr_mean_variance_axis0(X, last_mean, last_var, last_n, sample_weight):
@@ -252,11 +189,12 @@ def incr_mean_variance_axis0(X, last_mean, last_var, last_n, sample_weight):
     last_var : float array with shape (n_features,)
       Array of feature-wise var to update with the new data X.
 
-    # TODO: it should be float array
-    last_n : int array with shape (n_features,)
-      Number of samples seen so far, before X.
+    last_n : float array with shape (n_features,)
+      Sum of the sample_weight seen so far (if sample_weight are all set to 1
+      this will be the same as number of samples seen so far, before X).
 
-    sample_weight: ...float array with shape (n_samples,)
+    sample_weight: float array with shape (n_samples,). If not used set all
+       sample_weight to 1s.
 
     Returns
     -------
@@ -291,13 +229,11 @@ def incr_mean_variance_axis0(X, last_mean, last_var, last_n, sample_weight):
     if last_n.dtype not in [np.float32, np.float64]:
         last_n = last_n.astype(np.float64)
 
-    # ind_rows, ind_cols = X.nonzero()  # this does not work for csc matrix
     ind_rows, ind_cols, X_data = sp.find(X)
 
-    return _incr_mean_variance_axis0(X_data, #.astype(X_dtype),
+    return _incr_mean_variance_axis0(X_data,
                                      np.sum(sample_weight).astype(X_dtype),
                                      X.shape[1],
-                                     # X.ind_cols,
                                      ind_rows,
                                      ind_cols,
                                      X.indptr,
@@ -309,9 +245,6 @@ def incr_mean_variance_axis0(X, last_mean, last_var, last_n, sample_weight):
 
 
 def _incr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
-                              # unsigned long long n_samples,  # this needs to
-                              # change to float as it is a sum of
-                              # sample_weight
                               unsigned long long n_samples,
                               unsigned long long n_features,
                               np.ndarray[integral, ndim=1] X_row_ind,
@@ -321,6 +254,7 @@ def _incr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
                               np.ndarray[floating, ndim=1] last_mean,
                               np.ndarray[floating, ndim=1] last_var,
                               np.ndarray[floating, ndim=1] last_n,
+                              # previous sum of the sample_weight (ie float)
                               np.ndarray[floating, ndim=1] sample_weight):
     # Implement the function here since variables using fused types
     # cannot be declared directly and can only be passed as function arguments
@@ -348,17 +282,13 @@ def _incr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
     updated_var = np.zeros_like(new_mean, dtype=dtype)
 
     cdef:
-        # np.ndarray[np.int64_t, ndim=1] new_n
         np.ndarray[floating, ndim=1] new_n
-        # np.ndarray[np.int64_t, ndim=1] updated_n
         np.ndarray[floating, ndim=1] updated_n
         np.ndarray[floating, ndim=1] last_over_new_n
-        # np.ndarray[np.int64_t, ndim=1] counts_nan
         np.ndarray[floating, ndim=1] counts_nan
 
     # Obtain new stats first
-    new_n = np.full(n_features, n_samples, dtype=dtype)  # dtype=np.int64)
-    # updated_n = np.zeros_like(new_n, dtype=np.int64)
+    new_n = np.full(n_features, n_samples, dtype=dtype)
     updated_n = np.zeros_like(new_n, dtype=dtype)
     last_over_new_n = np.zeros_like(new_n, dtype=dtype)
 
