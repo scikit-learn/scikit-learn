@@ -1,4 +1,5 @@
 """Docstring utilities."""
+from string import Template
 
 
 def inject_docstring(**kwargs):
@@ -16,14 +17,14 @@ def inject_docstring(**kwargs):
     >>> from sklearn.utils._docstring import inject_docstring
     >>> @inject_docstring(key_to_replace=my_docstring)
     ... def func(x):
-    ...     "{key_to_replace}"
+    ...     "${key_to_replace}"
     ...     pass
     >>> @inject_docstring(key_to_replace=my_docstring)
     ... class Klazz:
-    ...     "{key_to_replace}"
+    ...     "${key_to_replace}"
     ...     pass
     """
     def decorate(obj):
-        obj.__doc__ = obj.__doc__.format(**kwargs)
+        obj.__doc__ = Template(obj.__doc__).substitute(**kwargs)
         return obj
     return decorate

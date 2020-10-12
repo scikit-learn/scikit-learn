@@ -28,9 +28,9 @@ def func():
 
         Parameters
         ----------
-        {param_1}
+        ${param_1}
 
-        {param_2}
+        ${param_2}
         """
         return param_1, param_2
     return func_to_inject, expected_func_docstring
@@ -43,9 +43,9 @@ def Klass():
 
         Parameters
         ----------
-        {param_1}
+        ${param_1}
 
-        {param_2}
+        ${param_2}
         """
         def __init__(self, param_1, param_2):
             self.param_1 = param_1

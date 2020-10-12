@@ -246,7 +246,7 @@ class ConfusionMatrixDisplay:
         y : array-like of shape (n_samples,)
             Target values.
 
-        {common_docstring}
+        ${common_docstring}
 
         See Also
         --------
@@ -330,7 +330,7 @@ class ConfusionMatrixDisplay:
             The predicted labels given by the method `predict` of an
             classifier.
 
-        {common_docstring}
+        ${common_docstring}
 
         See Also
         --------
