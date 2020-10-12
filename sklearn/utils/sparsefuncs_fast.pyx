@@ -248,7 +248,7 @@ def incr_mean_variance_axis0(X, last_mean, last_var, last_n, sample_weight):
 
 
 def _incr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
-                              unsigned long long n_samples,
+                              floating n_samples,
                               unsigned long long n_features,
                               np.ndarray[integral, ndim=1] X_row_ind,
                               np.ndarray[integral, ndim=1] X_indices,
