@@ -234,13 +234,16 @@ def incr_mean_variance_axis0(X, last_mean, last_var, last_n, sample_weight):
 
     # ind_rows, ind_cols, X_data = sp.find(X)
     ind_rows, ind_cols, X_data = sp.find(X)
+    ind_rows.astype(integral)
+    ind_cols.astype(integral)
+    X_indptr.astype(integral)
 
     return _incr_mean_variance_axis0(X_data,
                                      np.sum(sample_weight).astype(X_dtype),
                                      X.shape[1],
                                      ind_rows,
                                      ind_cols,
-                                     X.indptr,
+                                     X_indptr,
                                      X.format,
                                      last_mean.astype(X_dtype),
                                      last_var.astype(X_dtype),
