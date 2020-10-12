@@ -1783,7 +1783,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             self.iter_offset_ = self.n_iter
         else:
             U, (A, B), self.n_iter_ = dict_learning_online(
-                X, self.n_components, self.alpha,
+                X, self.n_components, alpha=self.alpha,
                 n_iter=self.n_iter, return_code=False,
                 method=self.fit_algorithm,
                 method_max_iter=self.transform_max_iter,
