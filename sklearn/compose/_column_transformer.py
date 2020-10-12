@@ -12,9 +12,10 @@ from itertools import chain
 import numbers
 import numpy as np
 from scipy import sparse
-from joblib import Parallel, delayed
+from joblib import Parallel
 
 from ..base import clone, TransformerMixin
+from ..utils._estimator_html_repr import _VisualBlock
 from ..pipeline import _fit_transform_one, _transform_one, _name_estimators
 from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
@@ -23,6 +24,8 @@ from ..utils import _get_column_indices
 from ..utils import _determine_key_type
 from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_array, check_is_fitted
+from ..utils.validation import _deprecate_positional_args
+from ..utils.fixes import delayed
 
 
 __all__ = [
@@ -51,20 +54,20 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     Parameters
     ----------
     transformers : list of tuples
-        List of (name, transformer, column(s)) tuples specifying the
+        List of (name, transformer, columns) tuples specifying the
         transformer objects to be applied to subsets of the data.
 
-        name : string
+        name : str
             Like in Pipeline and FeatureUnion, this allows the transformer and
             its parameters to be set using ``set_params`` and searched in grid
             search.
-        transformer : estimator or {'passthrough', 'drop'}
+        transformer : {'drop', 'passthrough'} or estimator
             Estimator must support :term:`fit` and :term:`transform`.
             Special-cased strings 'drop' and 'passthrough' are accepted as
             well, to indicate to drop the columns or to pass them through
             untransformed, respectively.
-        column(s) : string or int, array-like of string or int, slice, \
-boolean mask array or callable
+        columns :  str, array-like of str, int, array-like of int, \
+                array-like of bool, slice or callable
             Indexes the data on its second axis. Integers are interpreted as
             positional columns, while strings can reference DataFrame columns
             by name.  A scalar string or int should be used where
@@ -72,9 +75,9 @@ boolean mask array or callable
             otherwise a 2d array will be passed to the transformer.
             A callable is passed the input data `X` and can return any of the
             above. To select multiple columns by name or dtype, you can use
-            :obj:`make_column_transformer`.
+            :obj:`make_column_selector`.
 
-    remainder : {'drop', 'passthrough'} or estimator, default 'drop'
+    remainder : {'drop', 'passthrough'} or estimator, default='drop'
         By default, only the specified columns in `transformers` are
         transformed and combined in the output, and the non-specified
         columns are dropped. (default of ``'drop'``).
@@ -88,25 +91,25 @@ boolean mask array or callable
         Note that using this feature requires that the DataFrame columns
         input at :term:`fit` and :term:`transform` have identical order.
 
-    sparse_threshold : float, default = 0.3
+    sparse_threshold : float, default=0.3
         If the output of the different transformers contains sparse matrices,
         these will be stacked as a sparse matrix if the overall density is
         lower than this value. Use ``sparse_threshold=0`` to always return
         dense.  When the transformed output consists of all dense data, the
         stacked result will be dense, and this keyword will be ignored.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         Number of jobs to run in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    transformer_weights : dict, optional
+    transformer_weights : dict, default=None
         Multiplicative weights for features per transformer. The output of the
         transformer is multiplied by these weights. Keys are transformer names,
         values the weights.
 
-    verbose : boolean, optional(default=False)
+    verbose : bool, default=False
         If True, the time elapsed while fitting each transformer will be
         printed as it is completed.
 
@@ -124,13 +127,13 @@ boolean mask array or callable
         ``len(transformers_)==len(transformers)+1``, otherwise
         ``len(transformers_)==len(transformers)``.
 
-    named_transformers_ : Bunch object, a dictionary with attribute access
+    named_transformers_ : :class:`~sklearn.utils.Bunch`
         Read-only attribute to access any transformer by given name.
         Keys are transformer names and values are the fitted transformer
         objects.
 
-    sparse_output_ : boolean
-        Boolean flag indicating wether the output of ``transform`` is a
+    sparse_output_ : bool
+        Boolean flag indicating whether the output of ``transform`` is a
         sparse matrix or a dense numpy array, which depends on the output
         of the individual transformers and the `sparse_threshold` keyword.
 
@@ -143,12 +146,12 @@ boolean mask array or callable
     in the `passthrough` keyword. Those columns specified with `passthrough`
     are added at the right to the output of the transformers.
 
-    See also
+    See Also
     --------
-    sklearn.compose.make_column_transformer : convenience function for
+    make_column_transformer : Convenience function for
         combining the outputs of multiple transformer objects applied to
         column subsets of the original feature space.
-    sklearn.compose.make_column_selector : convenience function for selecting
+    make_column_selector : Convenience function for selecting
         columns based on datatype or the columns name with a regex pattern.
 
     Examples
@@ -171,8 +174,9 @@ boolean mask array or callable
     """
     _required_parameters = ['transformers']
 
+    @_deprecate_positional_args
     def __init__(self,
-                 transformers,
+                 transformers, *,
                  remainder='drop',
                  sparse_threshold=0.3,
                  n_jobs=None,
@@ -204,15 +208,19 @@ boolean mask array or callable
     def get_params(self, deep=True):
         """Get parameters for this estimator.
 
+        Returns the parameters given in the constructor as well as the
+        estimators contained within the `transformers` of the
+        `ColumnTransformer`.
+
         Parameters
         ----------
-        deep : boolean, optional
+        deep : bool, default=True
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
 
         Returns
         -------
-        params : mapping of string to any
+        params : dict
             Parameter names mapped to their values.
         """
         return self._get_params('_transformers', deep=deep)
@@ -220,7 +228,9 @@ boolean mask array or callable
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
 
-        Valid parameter keys can be listed with ``get_params()``.
+        Valid parameter keys can be listed with ``get_params()``. Note that you
+        can directly set the parameters of the estimators contained in
+        `transformers` of `ColumnTransformer`.
 
         Returns
         -------
@@ -313,19 +323,18 @@ boolean mask array or callable
                 self.remainder)
 
         # Make it possible to check for reordered named columns on transform
-        if (hasattr(X, 'columns') and
-                any(_determine_key_type(cols) == 'str'
-                    for cols in self._columns)):
+        self._has_str_cols = any(_determine_key_type(cols) == 'str'
+                                 for cols in self._columns)
+        if hasattr(X, 'columns'):
             self._df_columns = X.columns
 
         self._n_features = X.shape[1]
         cols = []
         for columns in self._columns:
             cols.extend(_get_column_indices(X, columns))
-        remaining_idx = list(set(range(self._n_features)) - set(cols))
-        remaining_idx = sorted(remaining_idx) or None
 
-        self._remainder = ('remainder', self.remainder, remaining_idx)
+        remaining_idx = sorted(set(range(self._n_features)) - set(cols))
+        self._remainder = ('remainder', self.remainder, remaining_idx or None)
 
     @property
     def named_transformers_(self):
@@ -350,14 +359,22 @@ boolean mask array or callable
         """
         check_is_fitted(self)
         feature_names = []
-        for name, trans, _, _ in self._iter(fitted=True):
-            if trans == 'drop':
+        for name, trans, column, _ in self._iter(fitted=True):
+            if trans == 'drop' or (
+                    hasattr(column, '__len__') and not len(column)):
                 continue
-            elif trans == 'passthrough':
-                raise NotImplementedError(
-                    "get_feature_names is not yet supported when using "
-                    "a 'passthrough' transformer.")
-            elif not hasattr(trans, 'get_feature_names'):
+            if trans == 'passthrough':
+                if hasattr(self, '_df_columns'):
+                    if ((not isinstance(column, slice))
+                            and all(isinstance(col, str) for col in column)):
+                        feature_names.extend(column)
+                    else:
+                        feature_names.extend(self._df_columns[column])
+                else:
+                    indices = np.arange(self._n_features)
+                    feature_names.extend(['x%d' % i for i in indices[column]])
+                continue
+            if not hasattr(trans, 'get_feature_names'):
                 raise AttributeError("Transformer %s (type %s) does not "
                                      "provide get_feature_names."
                                      % (str(name), type(trans).__name__))
@@ -457,7 +474,7 @@ boolean mask array or callable
                         self._iter(fitted=fitted, replace_strings=True), 1))
         except ValueError as e:
             if "Expected 2D array, got 1D array instead" in str(e):
-                raise ValueError(_ERR_MSG_1DCOLUMN)
+                raise ValueError(_ERR_MSG_1DCOLUMN) from e
             else:
                 raise
 
@@ -466,11 +483,11 @@ boolean mask array or callable
 
         Parameters
         ----------
-        X : array-like or DataFrame of shape [n_samples, n_features]
+        X : {array-like, dataframe} of shape (n_samples, n_features)
             Input data, of which specified subsets are used to fit the
             transformers.
 
-        y : array-like, shape (n_samples, ...), optional
+        y : array-like of shape (n_samples,...), default=None
             Targets for supervised learning.
 
         Returns
@@ -489,16 +506,17 @@ boolean mask array or callable
 
         Parameters
         ----------
-        X : array-like or DataFrame of shape [n_samples, n_features]
+        X : {array-like, dataframe} of shape (n_samples, n_features)
             Input data, of which specified subsets are used to fit the
             transformers.
 
-        y : array-like, shape (n_samples, ...), optional
+        y : array-like of shape (n_samples,), default=None
             Targets for supervised learning.
 
         Returns
         -------
-        X_t : array-like or sparse matrix, shape (n_samples, sum_n_components)
+        X_t : {array-like, sparse matrix} of \
+                shape (n_samples, sum_n_components)
             hstack of results of transformers. sum_n_components is the
             sum of n_components (output dimension) over transformers. If
             any result is a sparse matrix, everything will be converted to
@@ -511,6 +529,8 @@ boolean mask array or callable
         else:
             self._feature_names_in = None
         X = _check_X(X)
+        # set n_features_in_ attribute
+        self._check_n_features(X, reset=True)
         self._validate_transformers()
         self._validate_column_callables(X)
         self._validate_remainder(X)
@@ -544,12 +564,13 @@ boolean mask array or callable
 
         Parameters
         ----------
-        X : array-like or DataFrame of shape [n_samples, n_features]
+        X : {array-like, dataframe} of shape (n_samples, n_features)
             The data to be transformed by subset.
 
         Returns
         -------
-        X_t : array-like or sparse matrix, shape (n_samples, sum_n_components)
+        X_t : {array-like, sparse matrix} of \
+                shape (n_samples, sum_n_components)
             hstack of results of transformers. sum_n_components is the
             sum of n_components (output dimension) over transformers. If
             any result is a sparse matrix, everything will be converted to
@@ -575,6 +596,7 @@ boolean mask array or callable
         # name order and count. See #14237 for details.
         if (self._remainder[2] is not None and
                 hasattr(self, '_df_columns') and
+                self._has_str_cols and
                 hasattr(X, 'columns')):
             n_cols_fit = len(self._df_columns)
             n_cols_transform = len(X.columns)
@@ -584,6 +606,7 @@ boolean mask array or callable
                                  'and for transform when using the '
                                  'remainder keyword')
 
+        # TODO: also call _check_n_features(reset=False) in 0.24
         self._validate_features(X.shape[1], X_feature_names)
         Xs = self._fit_transform(X, None, _transform_one, fitted=True)
         self._validate_output(Xs)
@@ -602,7 +625,7 @@ boolean mask array or callable
 
         Parameters
         ----------
-        Xs : List of numpy arrays, sparse arrays, or DataFrames
+        Xs : list of {array-like, sparse matrix, dataframe}
         """
         if self.sparse_output_:
             try:
@@ -613,21 +636,43 @@ boolean mask array or callable
                                             accept_sparse=True,
                                             force_all_finite=False)
                                 for X in Xs]
-            except ValueError:
-                raise ValueError("For a sparse output, all columns should"
-                                 " be a numeric or convertible to a numeric.")
+            except ValueError as e:
+                raise ValueError(
+                    "For a sparse output, all columns should "
+                    "be a numeric or convertible to a numeric."
+                ) from e
 
             return sparse.hstack(converted_Xs).tocsr()
         else:
             Xs = [f.toarray() if sparse.issparse(f) else f for f in Xs]
             return np.hstack(Xs)
 
+    def _sk_visual_block_(self):
+        if isinstance(self.remainder, str) and self.remainder == 'drop':
+            transformers = self.transformers
+        elif hasattr(self, "_remainder"):
+            remainder_columns = self._remainder[2]
+            if hasattr(self, '_df_columns'):
+                remainder_columns = (
+                    self._df_columns[remainder_columns].tolist()
+                )
+            transformers = chain(self.transformers,
+                                 [('remainder', self.remainder,
+                                   remainder_columns)])
+        else:
+            transformers = chain(self.transformers,
+                                 [('remainder', self.remainder, '')])
+
+        names, transformers, name_details = zip(*transformers)
+        return _VisualBlock('parallel', transformers,
+                            names=names, name_details=name_details)
+
 
 def _check_X(X):
     """Use check_array only on lists and other non-array-likes / sparse"""
     if hasattr(X, '__array__') or sparse.issparse(X):
         return X
-    return check_array(X, force_all_finite='allow-nan', dtype=np.object)
+    return check_array(X, force_all_finite='allow-nan', dtype=object)
 
 
 def _is_empty_column_selection(column):
@@ -639,7 +684,9 @@ def _is_empty_column_selection(column):
     if hasattr(column, 'dtype') and np.issubdtype(column.dtype, np.bool_):
         return not column.any()
     elif hasattr(column, '__len__'):
-        return len(column) == 0
+        return (len(column) == 0 or
+                all(isinstance(col, bool) for col in column)
+                and not any(column))
     else:
         return False
 
@@ -656,7 +703,11 @@ def _get_transformer_list(estimators):
     return transformer_list
 
 
-def make_column_transformer(*transformers, **kwargs):
+def make_column_transformer(*transformers,
+                            remainder='drop',
+                            sparse_threshold=0.3,
+                            n_jobs=None,
+                            verbose=False):
     """Construct a ColumnTransformer from the given transformers.
 
     This is a shorthand for the ColumnTransformer constructor; it does not
@@ -669,25 +720,26 @@ def make_column_transformer(*transformers, **kwargs):
     Parameters
     ----------
     *transformers : tuples
-        Tuples of the form (transformer, column(s)) specifying the
+        Tuples of the form (transformer, columns) specifying the
         transformer objects to be applied to subsets of the data.
 
-        transformer : estimator or {'passthrough', 'drop'}
+        transformer : {'drop', 'passthrough'} or estimator
             Estimator must support :term:`fit` and :term:`transform`.
             Special-cased strings 'drop' and 'passthrough' are accepted as
             well, to indicate to drop the columns or to pass them through
             untransformed, respectively.
-        column(s) : string or int, array-like of string or int, slice, \
-boolean mask array or callable
+        columns : str,  array-like of str, int, array-like of int, slice, \
+                array-like of bool or callable
             Indexes the data on its second axis. Integers are interpreted as
             positional columns, while strings can reference DataFrame columns
             by name. A scalar string or int should be used where
             ``transformer`` expects X to be a 1d array-like (vector),
             otherwise a 2d array will be passed to the transformer.
             A callable is passed the input data `X` and can return any of the
-            above.
+            above. To select multiple columns by name or dtype, you can use
+            :obj:`make_column_selector`.
 
-    remainder : {'drop', 'passthrough'} or estimator, default 'drop'
+    remainder : {'drop', 'passthrough'} or estimator, default='drop'
         By default, only the specified columns in `transformers` are
         transformed and combined in the output, and the non-specified
         columns are dropped. (default of ``'drop'``).
@@ -699,7 +751,7 @@ boolean mask array or callable
         non-specified columns will use the ``remainder`` estimator. The
         estimator must support :term:`fit` and :term:`transform`.
 
-    sparse_threshold : float, default = 0.3
+    sparse_threshold : float, default=0.3
         If the transformed output consists of a mix of sparse and dense data,
         it will be stacked as a sparse matrix if the density is lower than this
         value. Use ``sparse_threshold=0`` to always return dense.
@@ -707,13 +759,13 @@ boolean mask array or callable
         the stacked result will be sparse or dense, respectively, and this
         keyword will be ignored.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         Number of jobs to run in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    verbose : boolean, optional(default=False)
+    verbose : bool, default=False
         If True, the time elapsed while fitting each transformer will be
         printed as it is completed.
 
@@ -721,9 +773,9 @@ boolean mask array or callable
     -------
     ct : ColumnTransformer
 
-    See also
+    See Also
     --------
-    sklearn.compose.ColumnTransformer : Class that allows combining the
+    ColumnTransformer : Class that allows combining the
         outputs of multiple transformer objects used on column subsets
         of the data into a single feature space.
 
@@ -742,13 +794,6 @@ boolean mask array or callable
     """
     # transformer_weights keyword is not passed through because the user
     # would need to know the automatically generated names of the transformers
-    n_jobs = kwargs.pop('n_jobs', None)
-    remainder = kwargs.pop('remainder', 'drop')
-    sparse_threshold = kwargs.pop('sparse_threshold', 0.3)
-    verbose = kwargs.pop('verbose', False)
-    if kwargs:
-        raise TypeError('Unknown keyword arguments: "{}"'
-                        .format(list(kwargs.keys())[0]))
     transformer_list = _get_transformer_list(transformers)
     return ColumnTransformer(transformer_list, n_jobs=n_jobs,
                              remainder=remainder,
@@ -794,9 +839,9 @@ class make_column_selector:
         Callable for column selection to be used by a
         :class:`ColumnTransformer`.
 
-    See also
+    See Also
     --------
-    sklearn.compose.ColumnTransformer : Class that allows combining the
+    ColumnTransformer : Class that allows combining the
         outputs of multiple transformer objects used on column subsets
         of the data into a single feature space.
 
@@ -819,8 +864,9 @@ class make_column_selector:
            [-0.30151134,  0.        ,  1.        ,  0.        ],
            [ 0.90453403,  0.        ,  0.        ,  1.        ]])
     """
-
-    def __init__(self, pattern=None, dtype_include=None, dtype_exclude=None):
+    @_deprecate_positional_args
+    def __init__(self, pattern=None, *, dtype_include=None,
+                 dtype_exclude=None):
         self.pattern = pattern
         self.dtype_include = dtype_include
         self.dtype_exclude = dtype_exclude

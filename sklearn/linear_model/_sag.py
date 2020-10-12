@@ -13,13 +13,14 @@ from ._sag_fast import sag32, sag64
 from ..exceptions import ConvergenceWarning
 from ..utils import check_array
 from ..utils.validation import _check_sample_weight
+from ..utils.validation import _deprecate_positional_args
 from ..utils.extmath import row_norms
 
 
 def get_auto_step_size(max_squared_sum, alpha_scaled, loss, fit_intercept,
                        n_samples=None,
                        is_saga=False):
-    """Compute automatic step size for SAG solver
+    """Compute automatic step size for SAG solver.
 
     The step size is set to 1 / (alpha_scaled + L + fit_intercept) where L is
     the max sum of squares for over all samples.
@@ -33,17 +34,17 @@ def get_auto_step_size(max_squared_sum, alpha_scaled, loss, fit_intercept,
         Constant that multiplies the regularization term, scaled by
         1. / n_samples, the number of samples.
 
-    loss : string, in {"log", "squared"}
+    loss : {'log', 'squared', 'multinomial'}
         The loss function used in SAG solver.
 
     fit_intercept : bool
         Specifies if a constant (a.k.a. bias or intercept) will be
         added to the decision function.
 
-    n_samples : int, optional
+    n_samples : int, default=None
         Number of rows in X. Useful if is_saga=True.
 
-    is_saga : boolean, optional
+    is_saga : bool, default=False
         Whether to return step size for the SAGA algorithm or the SAG
         algorithm.
 
@@ -84,12 +85,13 @@ def get_auto_step_size(max_squared_sum, alpha_scaled, loss, fit_intercept,
     return step
 
 
+@_deprecate_positional_args
 def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
                max_iter=1000, tol=0.001, verbose=0, random_state=None,
                check_input=True, max_squared_sum=None,
                warm_start_mem=None,
                is_saga=False):
-    """SAG solver for Ridge and LogisticRegression
+    """SAG solver for Ridge and LogisticRegression.
 
     SAG stands for Stochastic Average Gradient: the gradient of the loss is
     estimated each sample at a time and the model is updated along the way with
@@ -111,17 +113,17 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
 
     Parameters
     ----------
-    X : {array-like, sparse matrix}, shape (n_samples, n_features)
-        Training data
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        Training data.
 
-    y : numpy array, shape (n_samples,)
+    y : ndarray of shape (n_samples,)
         Target values. With loss='multinomial', y must be label encoded
         (see preprocessing.LabelEncoder).
 
-    sample_weight : array-like, shape (n_samples,), optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Weights applied to individual samples (1. for unweighted).
 
-    loss : 'log' | 'squared' | 'multinomial'
+    loss : {'log', 'squared', 'multinomial'}, default='log'
         Loss function that will be optimized:
         -'log' is the binary logistic loss, as used in LogisticRegression.
         -'squared' is the squared loss, as used in Ridge.
@@ -131,42 +133,39 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
         .. versionadded:: 0.18
            *loss='multinomial'*
 
-    alpha : float, optional
+    alpha : float, default=1.
         L2 regularization term in the objective function
-        ``(0.5 * alpha * || W ||_F^2)``. Defaults to 1.
+        ``(0.5 * alpha * || W ||_F^2)``.
 
-    beta : float, optional
+    beta : float, default=0.
         L1 regularization term in the objective function
         ``(beta * || W ||_1)``. Only applied if ``is_saga`` is set to True.
-        Defaults to 0.
 
-    max_iter : int, optional
+    max_iter : int, default=1000
         The max number of passes over the training data if the stopping
-        criteria is not reached. Defaults to 1000.
+        criteria is not reached.
 
-    tol : double, optional
+    tol : double, default=0.001
         The stopping criteria for the weights. The iterations will stop when
-        max(change in weights) / max(weights) < tol. Defaults to .001
+        max(change in weights) / max(weights) < tol.
 
-    verbose : integer, optional
+    verbose : int, default=0
         The verbosity level.
 
-    random_state : int, RandomState instance or None, optional, default None
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+    random_state : int, RandomState instance or None, default=None
+        Used when shuffling the data. Pass an int for reproducible output
+        across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
-    check_input : bool, default True
+    check_input : bool, default=True
         If False, the input arrays X and y will not be checked.
 
-    max_squared_sum : float, default None
+    max_squared_sum : float, default=None
         Maximum squared sum of X over samples. If None, it will be computed,
         going through all the samples. The value should be precomputed
         to speed up cross validation.
 
-    warm_start_mem : dict, optional
+    warm_start_mem : dict, default=None
         The initialization parameters used for warm starting. Warm starting is
         currently used in LogisticRegression but not in Ridge.
         It contains:
@@ -180,13 +179,13 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
             - 'seen': array of boolean describing the seen samples.
             - 'num_seen': the number of seen samples.
 
-    is_saga : boolean, optional
+    is_saga : bool, default=False
         Whether to use the SAGA algorithm or the SAG algorithm. SAGA behaves
         better in the first epochs, and allow for l1 regularisation.
 
     Returns
     -------
-    coef_ : array, shape (n_features)
+    coef_ : ndarray of shape (n_features,)
         Weight vector.
 
     n_iter_ : int
@@ -227,9 +226,9 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
     for Non-Strongly Convex Composite Objectives
     https://arxiv.org/abs/1407.0202
 
-    See also
+    See Also
     --------
-    Ridge, SGDRegressor, ElasticNet, Lasso, SVR, and
+    Ridge, SGDRegressor, ElasticNet, Lasso, SVR,
     LogisticRegression, SGDClassifier, LinearSVC, Perceptron
     """
     if warm_start_mem is None:

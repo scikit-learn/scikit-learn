@@ -1,0 +1,26 @@
+# Tweet the URL of a commit on @sklearn_commits whenever a push event
+# happens on the master branch
+name: Twitter Push Notification
+
+
+on:
+  push:
+    branches:
+      - master
+
+
+jobs:
+  tweet:
+    name: Twitter Notification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Tweet URL of last commit as @sklearn_commits
+        if: github.repository == 'scikit-learn/scikit-learn'
+        uses: xorilog/twitter-action@0.1
+        with:
+          args: "-message \"https://github.com/scikit-learn/scikit-learn/commit/${{ github.sha }}\""
+        env:
+          TWITTER_CONSUMER_KEY: ${{ secrets.TWITTER_CONSUMER_KEY }}
+          TWITTER_CONSUMER_SECRET: ${{ secrets.TWITTER_CONSUMER_SECRET }}
+          TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
+          TWITTER_ACCESS_SECRET: ${{ secrets.TWITTER_ACCESS_SECRET }}
