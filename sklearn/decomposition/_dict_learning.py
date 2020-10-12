@@ -1772,7 +1772,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             Returns the instance itself.
         """
         random_state = check_random_state(self.random_state)
-        X = self._validate_data(X)
+        X = self._validate_data(X, force_all_finite="allow-nan")
 
         if np.any(np.isnan(X)):
             code, dictionary, self.n_iter_ = dict_learning_na(
