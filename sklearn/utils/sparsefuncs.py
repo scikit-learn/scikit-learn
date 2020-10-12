@@ -171,7 +171,7 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n,
     else:
         return _incr_mean_var_axis0(X.T, last_mean=last_mean,
                                     last_var=last_var, last_n=last_n,
-                                    sample_weight=sample_weight)
+                                    sample_weight=None)
 
 
 def inplace_column_scale(X, scale):
