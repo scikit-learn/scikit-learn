@@ -415,7 +415,7 @@ class NoPredictProbaNoDecisionFunction(ClassifierMixin, BaseEstimator):
       'response_method blahblah is invalid. Accepted response_method'),
      (NoPredictProbaNoDecisionFunction(),
       {'features': [0], 'response_method': 'auto'},
-      'response_method decision_function, predict_proba or predict is not '
+      'response_method decision_function, predict_proba or predict not '
       'defined'),
      (NoPredictProbaNoDecisionFunction(),
       {'features': [0], 'response_method': 'predict_proba'},
