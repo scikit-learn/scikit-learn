@@ -359,8 +359,8 @@ class BaseEstimator:
             The input samples.
         reset : bool
             If True, the `n_features_in_` attribute is set to `X.shape[1]`.
-            If False and the attribute exists, then check that it is equal to
-            `X.shape[1]`. If False and the attribute does *not* exists, then
+            If False and the attribute exist, then check that it is equal to
+            `X.shape[1]`. If False and the attribute does *not* exist, then
             the check is skipped.
             .. note::
                It is recommended to call reset=True in `fit` and in the first
