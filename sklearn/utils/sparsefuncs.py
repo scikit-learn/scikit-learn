@@ -12,6 +12,7 @@ from .sparsefuncs_fast import (
     csc_mean_variance_axis0 as _csc_mean_var_axis0,
     incr_mean_variance_axis0 as _incr_mean_var_axis0)
 from ..utils.extmath import safe_sparse_dot
+from ..utils.validation import _check_sample_weight
 
 
 def _raise_typeerror(X):
@@ -243,29 +244,31 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n,
 
     if sample_weight is None:
         sample_weight = np.ones(X.shape[0])
-        # TODO: place check sample_weight function here instead
     else:
-        sample_weight = np.array(sample_weight)
-    if isinstance(X, sp.csr_matrix):
-        if axis == 0:
-            return _incr_mean_var_axis0(X, last_mean=last_mean,
-                                        last_var=last_var, last_n=last_n,
-                                        sample_weight=sample_weight)
-        else:
-            return _incr_mean_var_axis0(X.T, last_mean=last_mean,
-                                        last_var=last_var, last_n=last_n,
-                                        sample_weight=sample_weight)
-    elif isinstance(X, sp.csc_matrix):
-        if axis == 0:
-            return _incr_mean_var_axis0(X, last_mean=last_mean,
-                                        last_var=last_var, last_n=last_n,
-                                        sample_weight=sample_weight)
-        else:
-            return _incr_mean_var_axis0(X.T, last_mean=last_mean,
-                                        last_var=last_var, last_n=last_n,
-                                        sample_weight=sample_weight)
-    else:
+        sample_weight = _check_sample_weight(sample_weight, X,
+                                             dtype=X.dtype)
+
+    if not (isinstance(X, sp.csr_matrix) or isinstance(X, sp.csc_matrix)):
         _raise_typeerror(X)
+
+    if axis == 0:
+        return _incr_mean_var_axis0(X, last_mean=last_mean,
+                                    last_var=last_var, last_n=last_n,
+                                    sample_weight=sample_weight)
+    else:
+        return _incr_mean_var_axis0(X.T, last_mean=last_mean,
+                                        last_var=last_var, last_n=last_n,
+                                        sample_weight=sample_weight)
+    # elif isinstance(X, sp.csc_matrix):
+    #if axis == 0:
+    #    return _incr_mean_var_axis0(X, last_mean=last_mean,
+    #                                last_var=last_var, last_n=last_n,
+    #                                sample_weight=sample_weight)
+    #    else:
+    #        return _incr_mean_var_axis0(X.T, last_mean=last_mean,
+    #                                    last_var=last_var, last_n=last_n,
+    #                                    sample_weight=sample_weight)
+    #else:
 
 
 def inplace_column_scale(X, scale):

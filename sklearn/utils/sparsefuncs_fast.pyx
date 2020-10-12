@@ -72,15 +72,19 @@ def csr_mean_variance_axis0(X):
         Feature-wise variances
 
     """
-    if X.dtype not in [np.float32, np.float64]:
-        X = X.astype(np.float64)
-    # means, variances, _ =  _csr_mean_variance_axis0(X.data, X.shape[0],
-    #                                                 X.shape[1], X.indices)
-    
+
+    last_mean = np.zeros(X.shape[1], dtype=X.dtype)
+    last_var = np.zeros(X.shape[1], dtype=X.dtype)
+    last_n = np.zeros(X.shape[1], dtype=X.dtype)
+    sample_weight = np.ones(X.shape[0], dtype=X.dtype)
+
+    means, variances, _ = incr_mean_variance_axis0(
+        X, last_mean, last_var, last_n, sample_weight)
+
     return means, variances
 
 
-def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
+def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data, # np.ndarray[floating, ndim=1, mode="c"] X_data,
                              unsigned long long n_samples,
                              unsigned long long n_features,
                              np.ndarray[integral, ndim=1] X_indices,
@@ -141,7 +145,7 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
         variances[i] += (n_samples - counts_nan[i] - counts[i]) * means[i]**2
         variances[i] /= (n_samples - counts_nan[i])
 
-    return means, variances, counts_nan
+    return means.astype(dtype), variances.astype(dtype), counts_nan.astype(dtype)
 
 
 def csc_mean_variance_axis0(X):
@@ -163,9 +167,15 @@ def csc_mean_variance_axis0(X):
     """
     if X.dtype not in [np.float32, np.float64]:
         X = X.astype(np.float64)
-    means, variances, _ = _csc_mean_variance_axis0(X.data, X.shape[0],
-                                                   X.shape[1], X.indices,
-                                                  X.indptr)
+    # means, variances, _ = _csc_mean_variance_axis0(X.data, X.shape[0],
+    #                                                X.shape[1], X.indices,
+    #                                               X.indptr)
+    last_mean = np.zeros(X.shape[1], dtype=X.dtype)
+    last_var = np.zeros(X.shape[1], dtype=X.dtype)
+    last_n = np.zeros(X.shape[1], dtype=X.dtype)
+    sample_weight = np.ones(X.shape[0], dtype=X.dtype)
+    means, variances, _ = incr_mean_variance_axis0(
+        X, last_mean, last_var, last_n, sample_weight)
     return means, variances
 
 
@@ -242,6 +252,7 @@ def incr_mean_variance_axis0(X, last_mean, last_var, last_n, sample_weight):
     last_var : float array with shape (n_features,)
       Array of feature-wise var to update with the new data X.
 
+    # TODO: it should be float array
     last_n : int array with shape (n_features,)
       Number of samples seen so far, before X.
 
@@ -274,27 +285,34 @@ def incr_mean_variance_axis0(X, last_mean, last_var, last_n, sample_weight):
     """
     if X.dtype not in [np.float32, np.float64]:
         X = X.astype(np.float64)
+    X_dtype = X.dtype
     if sample_weight.dtype not in [np.float32, np.float64]:
         sample_weight = sample_weight.astype(np.float64)
     if last_n.dtype not in [np.float32, np.float64]:
         last_n = last_n.astype(np.float64)
+
     # ind_rows, ind_cols = X.nonzero()  # this does not work for csc matrix
     ind_rows, ind_cols, X_data = sp.find(X)
 
-    return _incr_mean_variance_axis0(X_data,
-                                     np.sum(sample_weight).astype(int),
+    return _incr_mean_variance_axis0(X_data, #.astype(X_dtype),
+                                     np.sum(sample_weight).astype(X_dtype),
                                      X.shape[1],
                                      # X.ind_cols,
-                                     ind_rows, ind_cols,
-                                     X.indptr, X.format, last_mean, last_var,
-                                     last_n, sample_weight)
+                                     ind_rows,
+                                     ind_cols,
+                                     X.indptr,
+                                     X.format,
+                                     last_mean.astype(X_dtype),
+                                     last_var.astype(X_dtype),
+                                     last_n.astype(X_dtype),
+                                     sample_weight.astype(X_dtype))
 
 
 def _incr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
                               # unsigned long long n_samples,  # this needs to
                               # change to float as it is a sum of
                               # sample_weight
-                              floating n_samples,
+                              unsigned long long n_samples,
                               unsigned long long n_features,
                               np.ndarray[integral, ndim=1] X_row_ind,
                               np.ndarray[integral, ndim=1] X_indices,
@@ -302,7 +320,7 @@ def _incr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
                               str X_format,
                               np.ndarray[floating, ndim=1] last_mean,
                               np.ndarray[floating, ndim=1] last_var,
-                              np.ndarray[floating, ndim=1]  last_n,
+                              np.ndarray[floating, ndim=1] last_n,
                               np.ndarray[floating, ndim=1] sample_weight):
     # Implement the function here since variables using fused types
     # cannot be declared directly and can only be passed as function arguments
@@ -339,9 +357,9 @@ def _incr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
         np.ndarray[floating, ndim=1] counts_nan
 
     # Obtain new stats first
-    new_n = np.full(n_features, n_samples, dtype=np.float64)  # dtype=np.int64)
+    new_n = np.full(n_features, n_samples, dtype=dtype)  # dtype=np.int64)
     # updated_n = np.zeros_like(new_n, dtype=np.int64)
-    updated_n = np.zeros_like(new_n, dtype=np.float64)
+    updated_n = np.zeros_like(new_n, dtype=dtype)
     last_over_new_n = np.zeros_like(new_n, dtype=dtype)
 
     # X can be a CSR or CSC matrix
