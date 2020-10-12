@@ -92,7 +92,7 @@ Changelog
 :mod:`sklearn.covariance`
 .........................
 
-- |API| Deprecates `cv_alphas_` in favor of `cv_results['alphas']` and
+- |API| Deprecates `cv_alphas_` in favor of `cv_results_['alphas']` and
   `grid_scores_` in favor of split scores in `cv_results_` in
   :class:`covariance.GraphicalLassoCV`. `cv_alphas_` and `grid_scores_` will be
   removed in version 0.26. :pr:`16392` by `Thomas Fan`_.
@@ -214,16 +214,16 @@ Changelog
   :pr:`18341` by `Olivier Grisel`_, `Nicolas Hug`_, `Thomas Fan`_, and
   :user:`Egor Smirnov <SmirnovEgorRu>`.
 
-- |API|: The parameter ``n_classes_`` is now deprecated in
+- |API| The parameter ``n_classes_`` is now deprecated in
   :class:`ensemble.GradientBoostingRegressor` and returns `1`.
   :pr:`17702` by :user:`Simona Maggio <simonamaggio>`.
 
-- |API|: Mean absolute error ('mae') is now deprecated for the parameter
+- |API| Mean absolute error ('mae') is now deprecated for the parameter
   ``criterion`` in :class:`ensemble.GradientBoostingRegressor` and
   :class:`ensemble.GradientBoostingClassifier`.
   :pr:`18326` by :user:`Madhura Jayaratne <madhuracj>`.
 
-- |Fix|: Fixed a bug in
+- |Fix| Fixed a bug in
   :class:`ensemble.HistGradientBoostingRegressor` and
   :class:`ensemble.HistGradientBoostingClassifier` which can now accept data
   with `uint8` dtype in `predict`. :pr:`18410` by `Nicolas Hug`_.
@@ -418,24 +418,24 @@ Changelog
 :mod:`sklearn.model_selection`
 ..............................
 
-- |Enhancement| :class:`model_selection.TimeSeriesSplit` has two new keyword
-  arguments `test_size` and `gap`. `test_size` allows the out-of-sample
-  time series length to be fixed for all folds. `gap` removes a fixed number of
-  samples between the train and test set on each fold.
-  :pr:`13204` by :user:`Kyle Kosic <kykosic>`.
-
-- |Feature| :class:`model_selection.RandomizedSearchCV` and
-  :class:`model_selection.GridSearchCV` now have the method, ``score_samples``
-  :pr:`17478` by :user:`Teon Brooks <teonbrooks>` and
-  :user:`Mohamed Maskani <maskani-moh>`.
-
-- |Feature| Added (experimental) parameter search estimators
+- |MajorFeature| Added (experimental) parameter search estimators
   :class:`model_selection.HalvingRandomSearchCV` and
   :class:`model_selection.HalvingGridSearchCV` which implement Successive
   Halving, and can be used as a drop-in replacements for
   :class:`model_selection.RandomizedSearchCV` and
   :class:`model_selection.GridSearchCV`. :pr:`13900` by `Nicolas Hug`_, `Joel
   Nothman`_ and `Andreas Müller`_.
+
+- |Feature| :class:`model_selection.RandomizedSearchCV` and
+  :class:`model_selection.GridSearchCV` now have the method, ``score_samples``
+  :pr:`17478` by :user:`Teon Brooks <teonbrooks>` and
+  :user:`Mohamed Maskani <maskani-moh>`.
+
+- |Enhancement| :class:`model_selection.TimeSeriesSplit` has two new keyword
+  arguments `test_size` and `gap`. `test_size` allows the out-of-sample
+  time series length to be fixed for all folds. `gap` removes a fixed number of
+  samples between the train and test set on each fold.
+  :pr:`13204` by :user:`Kyle Kosic <kykosic>`.
 
 - |Fix| Fixed the `len` of :class:`model_selection.ParameterSampler` when
   all distributions are lists and `n_iter` is more than the number of unique
@@ -479,7 +479,7 @@ Changelog
 :mod:`sklearn.naive_bayes`
 ..........................
 
-- |API|: The attributes ``coef_`` and ``intercept_`` are now deprecated in
+- |API| The attributes ``coef_`` and ``intercept_`` are now deprecated in
   :class:`naive_bayes.MultinomialNB`, :class:`naive_bayes.ComplementNB`,
   :class:`naive_bayes.BernoulliNB` and :class:`naive_bayes.CategoricalNB`,
   and will be removed in v0.26. :pr:`17427` by
@@ -585,7 +585,7 @@ Changelog
 :mod:`sklearn.svm`
 ..................
 
-- |Enhancement| invoke scipy blas api for svm kernel function in ``fit``,
+- |Enhancement| invoke SciPy BLAS API for SVM kernel function in ``fit``,
   ``predict`` and related methods of :class:`svm.SVC`, :class:`svm.NuSVC`,
   :class:`svm.SVR`, :class:`svm.NuSVR`, :class:`OneClassSVM`.
   :pr:`16530` by :user:`Shuhua Fan <jim0421>`.
@@ -596,7 +596,7 @@ Changelog
 - |Enhancement| :func:`tree.plot_tree` now uses colors from the matplotlib
   configuration settings. :pr:`17187` by `Andreas Müller`_.
 
-- |API|: The parameter ``X_idx_sorted`` is now deprecated in
+- |API| The parameter ``X_idx_sorted`` is now deprecated in
   :meth:`tree.DecisionTreeClassifier.fit` and
   :meth:`tree.DecisionTreeRegressor.fit`, and has not effect.
   :pr:`17614` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
