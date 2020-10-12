@@ -20,9 +20,9 @@ from sklearn.decomposition import MiniBatchDictionaryLearning
 from sklearn.decomposition import SparseCoder
 from sklearn.decomposition import dict_learning
 from sklearn.decomposition import dict_learning_online
-from sklearn.decomposition import dict_learning_na
-from sklearn.decomposition import sparse_encode_na
 from sklearn.decomposition import sparse_encode
+from sklearn.decomposition._dict_learning import dict_learning_na
+from sklearn.decomposition._dict_learning import sparse_encode_na
 from sklearn.utils.estimator_checks import check_transformer_data_not_an_array
 from sklearn.utils.estimator_checks import check_transformer_general
 from sklearn.utils.estimator_checks import check_transformers_unfitted
