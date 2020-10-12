@@ -434,7 +434,11 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     def _more_tags(self):
         # allows cross-validation to see 'precomputed' metrics
         estimator_tags = self.estimator._get_tags()
-        return {'pairwise': estimator_tags.get('pairwise', False)}
+        return {
+            'pairwise': estimator_tags.get('pairwise', False),
+            "_xfail_checks": {"check_supervised_y_2d":
+                              "DataConversionWarning not caught"},
+        }
 
     # TODO: Remove in 0.26
     # mypy error: Decorated property not supported
@@ -962,12 +966,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                        splits=True)
 
         return results
-
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {"check_supervised_y_2d":
-                              "DataConversionWarning not caught"}
-        }
 
 
 class GridSearchCV(BaseSearchCV):
