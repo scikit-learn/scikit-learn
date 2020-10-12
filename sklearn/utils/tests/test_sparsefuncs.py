@@ -9,7 +9,6 @@ from numpy.random import RandomState
 from sklearn.datasets import make_classification
 from sklearn.utils.sparsefuncs import (mean_variance_axis,
                                        incr_mean_variance_axis,
-                                       incr_mean_variance_axis_weighted,
                                        inplace_column_scale,
                                        inplace_row_scale,
                                        inplace_swap_row, inplace_swap_column,
@@ -114,12 +113,13 @@ def test_mean_variance_axis1():
                          ]
                          )
 @pytest.mark.parametrize("sparse_constructor",
-                        [sp.csc_matrix, sp.csr_matrix])
+                         [sp.csc_matrix, sp.csr_matrix])
+@pytest.mark.parametrize("axis",
+                         [0, 1])
 def test_incr_mean_variance_axis_weighted(Xw, X, sample_weight,
-                                          sparse_constructor):
+                                          sparse_constructor, axis):
     Xw_sparse = sparse_constructor(Xw)
     X_sparse = sparse_constructor(X)
-    axis = 0
 
     last_mean = np.zeros(np.size(Xw, 1))
     last_var = np.zeros_like(last_mean)
@@ -133,16 +133,9 @@ def test_incr_mean_variance_axis_weighted(Xw, X, sample_weight,
             Xw_sparse, axis, last_mean, last_var,
             last_n, sample_weight=sample_weight)
 
-    means_w0_m, vars_w0_m, n_incr_w0_m = incr_mean_variance_axis_weighted(
-            Xw_sparse, axis, last_mean, last_var,
-            last_n, sample_weight=sample_weight)
-
-    assert_array_almost_equal(means_w0, means_w0_m)
-    assert_array_almost_equal(means0, means_w0) #, )
-    assert_array_almost_equal(vars_w0, vars_w0_m)
+    assert_array_almost_equal(means0, means_w0)
     assert_array_almost_equal(vars0, vars_w0)
     assert_array_almost_equal(n_incr0, n_incr_w0)
-    assert_array_almost_equal(n_incr_w0, n_incr_w0_m)
 
     # check second round for incremental
     means1, vars1, n_incr1 = incr_mean_variance_axis(X_sparse, axis, means0,
@@ -153,20 +146,13 @@ def test_incr_mean_variance_axis_weighted(Xw, X, sample_weight,
             Xw_sparse, axis, means_w0, vars_w0,
             n_incr_w0, sample_weight=sample_weight)
 
-    means_w0_m, vars_w0_m, n_incr_w0_m = incr_mean_variance_axis_weighted(
-        Xw_sparse, axis, means_w0_m, vars_w0_m,
-        n_incr_w0_m, sample_weight=sample_weight)
-
     assert_array_almost_equal(means1, means_w1)
-    assert_array_almost_equal(means_w0_m, means_w1)
     assert_array_almost_equal(vars1, vars_w1)
-    assert_array_almost_equal(vars_w0_m, vars_w1)
     assert_array_almost_equal(n_incr1, n_incr_w1)
-    assert_array_almost_equal(n_incr_w0_m, n_incr_w1)
 
 
 def test_incr_mean_variance_axis():
-    for axis in [0]: # , 1]:
+    for axis in [0, 1]:
         rng = np.random.RandomState(0)
         n_features = 50
         n_samples = 10

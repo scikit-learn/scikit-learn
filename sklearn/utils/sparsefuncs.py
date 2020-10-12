@@ -64,96 +64,6 @@ def inplace_csr_row_scale(X, scale):
     X.data *= np.repeat(scale, np.diff(X.indptr))
 
 
-def incr_mean_variance_axis_weighted(X, axis, last_mean, last_var,  last_count,
-                                     sample_weight):
-    """Calculate weighted mean and weighted variance incremental update for
-    sparse X.
-
-    .. versionadded:: 0.24
-
-    Parameters
-    ----------
-    X : CSR or CSC sparse matrix, shape (n_samples, n_features)
-        Input data.
-
-    axis : int (either 0 or 1)
-        Axis along which the axis should be computed.
-
-    last_mean : float array with shape (n_features,)
-        Array of feature-wise means to update with the new data X.
-
-    last_var : float array with shape (n_features,)
-        Array of feature-wise var to update with the new data X.
-
-    last_n : int with shape (n_features,)
-        Number of samples seen so far, excluded X.
-
-    sample_weight : array-like of shape (n_samples,) or None
-        Sample weights. If None, then samples are equally weighted.
-
-    Returns
-    -------
-    updated_mean : array of shape (n_features,)
-
-    updated_variance : array of shape (n_features,) or None
-        If None, only mean is computed.
-
-    updated_weight_sum : array of shape (n_features,)
-
-    Notes
-    -----
-    NaNs in `X` are ignored.
-
-    References
-    ----------
-    .. adapted for incremental variance with weights from
-       T. Chan, G. Golub, R. LeVeque. Algorithms for computing the sample
-       variance: recommendations, The American Statistician,
-       Vol. 37, No. 3, pp. 242-247
-
-    """
-    if sample_weight is None:
-        return incr_mean_variance_axis(X, axis=axis,
-                                       last_mean=last_mean,
-                                       last_var=last_var,
-                                       last_n=last_count)
-
-    sample_weight = np.array(sample_weight)
-    sparse_constructor = (sp.csr_matrix
-                          if X.format == 'csr' else sp.csc_matrix)
-    nans_place = sparse_constructor((np.isnan(X.data), X.indices, X.indptr),
-                                    shape=X.shape, dtype=bool)
-
-    # find non-nan places in X
-    X_not_nan = sparse_constructor(
-        (np.nan_to_num(X.data), X.indices, X.indptr),
-        shape=X.shape, dtype=X.dtype)
-
-    n_nan_weighted = safe_sparse_dot(sample_weight, nans_place)
-    n_not_nan_weighted = np.sum(sample_weight) - n_nan_weighted
-
-    last_sum = last_mean * last_count
-    new_sum = safe_sparse_dot(sample_weight, X_not_nan)  # not sparse
-    updated_sum = new_sum + last_sum
-
-    new_sample_count = n_not_nan_weighted
-    updated_sample_count = n_not_nan_weighted + last_count
-    T = new_sum / new_sample_count
-
-    # here we calculate: sample_weight*(X-T)**2
-    X2 = safe_sparse_dot(sample_weight, X_not_nan.multiply(X_not_nan))
-    T2 = new_sample_count * T * T
-    two_XT = 2 * T * (safe_sparse_dot(sample_weight, X_not_nan))
-    new_unnormalized_variance = X2-two_XT+T2
-
-    updated_variance = (new_unnormalized_variance / new_sample_count)
-    var_ = updated_variance.ravel()
-    sample_weight = sample_weight.ravel()
-    updated_mean = (updated_sum / updated_sample_count).ravel()
-
-    return updated_mean, var_, updated_sample_count
-
-
 def mean_variance_axis(X, axis):
     """Compute mean and variance along an axix on a CSR or CSC matrix
 
@@ -217,8 +127,8 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n,
         Array of feature-wise var to update with the new data X.
 
     last_n : int with shape (n_features,)
-        Number of samples seen so far, excluded X.
-    TODO: last_n should be last_count
+        Sum of the weights seen for each feature, excluding the current weights
+        TODO: last_n should be now called last_count (?).
 
     sample_weight : array-like of shape (n_samples,) or None
         Sample weights. If None, then samples are equally weighted.
@@ -257,18 +167,8 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n,
                                     sample_weight=sample_weight)
     else:
         return _incr_mean_var_axis0(X.T, last_mean=last_mean,
-                                        last_var=last_var, last_n=last_n,
-                                        sample_weight=sample_weight)
-    # elif isinstance(X, sp.csc_matrix):
-    #if axis == 0:
-    #    return _incr_mean_var_axis0(X, last_mean=last_mean,
-    #                                last_var=last_var, last_n=last_n,
-    #                                sample_weight=sample_weight)
-    #    else:
-    #        return _incr_mean_var_axis0(X.T, last_mean=last_mean,
-    #                                    last_var=last_var, last_n=last_n,
-    #                                    sample_weight=sample_weight)
-    #else:
+                                    last_var=last_var, last_n=last_n,
+                                    sample_weight=sample_weight)
 
 
 def inplace_column_scale(X, scale):
