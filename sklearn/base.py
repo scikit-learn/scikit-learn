@@ -372,8 +372,10 @@ class BaseEstimator:
             self.n_features_in_ = n_features
             return
 
-        fitted_n_features_in = getattr(self, 'n_features_in_', None)
-        if fitted_n_features_in is None:
+        if not hasattr(self, "n_features_in_"):
+            # Skip this check if the expected number of expected input features
+            # was not recorded by calling fit first. This is typically the case
+            # for stateless transformers.
             return
 
         if n_features != self.n_features_in_:
