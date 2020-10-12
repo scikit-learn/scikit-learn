@@ -37,9 +37,10 @@ jobs:
         uses: actions/setup-python@v2
     
       - name: Install dependencies
+        shell: bash
         # OpenMP is not present on macOS by default
         run: |
-          if [ $(uname) == "Darwin" ]; then
+          if [ "$RUNNER_OS" == "Windows" ]; then
             brew install libomp
             export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
             export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
