@@ -40,7 +40,7 @@ jobs:
         shell: bash
         # OpenMP is not present on macOS by default
         run: |
-          if [ "$RUNNER_OS" == "Windows" ]; then
+          if [ "$RUNNER_OS" == "macOS" ]; then
             brew install libomp
             export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
             export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
