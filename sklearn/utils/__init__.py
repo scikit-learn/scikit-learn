@@ -1241,9 +1241,9 @@ def _get_response(
         Target scores calculated from the provided response_method
         and pos_label.
 
-    pos_label : str or int
+    pos_label : str, int or None
         The class considered as the positive class when computing
-        the metrics.
+        the metrics. Returns `None` with `estimator` is a regressor.
     """
     from sklearn.base import is_classifier  # noqa
 
