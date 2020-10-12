@@ -538,7 +538,7 @@ Changelog
 
 - |Fix| Using `sort_results=True` now correctly sorts the results in methods
   `radius_neighbors` and `radius_neighbors_graph`, even when using the "brute"
-  algorithm. :pr:`18611` by `Tom Dupre la Tour`_.
+  algorithm. :pr:`18612` by `Tom Dupre la Tour`_.
 
 :mod:`sklearn.neural_network`
 .............................
