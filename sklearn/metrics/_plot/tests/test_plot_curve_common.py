@@ -43,11 +43,11 @@ def test_plot_curve_error_non_binary(pyplot, data, plot_func):
 
 @pytest.mark.parametrize(
     "response_method, msg",
-    [("predict_proba", "response_method predict_proba is not defined in "
+    [("predict_proba", "response_method predict_proba not defined in "
                        "MyClassifier"),
-     ("decision_function", "response_method decision_function is not defined "
+     ("decision_function", "response_method decision_function not defined "
                            "in MyClassifier"),
-     ("auto", "response_method decision_function, predict_proba or predict is "
+     ("auto", "response_method decision_function, predict_proba or predict "
               "not defined in MyClassifier"),
      ("bad_method", "response_method must be one of predict, predict_proba, "
                     "decision_function, auto.")]

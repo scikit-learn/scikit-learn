@@ -732,7 +732,7 @@ def test_multiclass_roc_no_proba_scorer_errors(scorer_name):
     X, y = make_classification(n_classes=3, n_informative=3, n_samples=20,
                                random_state=0)
     lr = Perceptron().fit(X, y)
-    msg = "response_method predict_proba is not defined in Perceptron"
+    msg = "response_method predict_proba not defined in Perceptron"
     with pytest.raises(ValueError, match=msg):
         scorer(lr, X, y)
 
