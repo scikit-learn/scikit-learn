@@ -345,10 +345,10 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
       This estimator is still **experimental** for now: the predictions
       and the API might change without any deprecation cycle. To use it,
-      you need to explicitly import ``enable_successive_halving``::
+      you need to explicitly import ``enable_halving_search_cv``::
 
         >>> # explicitly require this experimental feature
-        >>> from sklearn.experimental import enable_successive_halving # noqa
+        >>> from sklearn.experimental import enable_halving_search_cv # noqa
         >>> # now you can import normally from model_selection
         >>> from sklearn.model_selection import HalvingGridSearchCV
 
@@ -394,7 +394,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
             - ``n_splits * 2`` when ``resource='n_samples'`` for a regression
                problem
             - ``n_classes * n_splits * 2`` when ``resource='n_samples'`` for a
-               regression problem
+               classification problem
             - ``1`` when ``resource != 'n_samples'``
         - 'exhaust' will set `r0` such that the **last** iteration uses as
           much resources as possible. Namely, the last iteration will use the
@@ -574,7 +574,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.ensemble import RandomForestClassifier
-    >>> from sklearn.experimental import enable_successive_halving  # noqa
+    >>> from sklearn.experimental import enable_halving_search_cv  # noqa
     >>> from sklearn.model_selection import HalvingGridSearchCV
     ...
     >>> X, y = load_iris(return_X_y=True)
@@ -626,10 +626,10 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
       This estimator is still **experimental** for now: the predictions
       and the API might change without any deprecation cycle. To use it,
-      you need to explicitly import ``enable_successive_halving``::
+      you need to explicitly import ``enable_halving_search_cv``::
 
         >>> # explicitly require this experimental feature
-        >>> from sklearn.experimental import enable_successive_halving # noqa
+        >>> from sklearn.experimental import enable_halving_search_cv # noqa
         >>> # now you can import normally from model_selection
         >>> from sklearn.model_selection import HalvingRandomSearchCV
 
@@ -681,7 +681,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
             - ``n_splits * 2`` when ``resource='n_samples'`` for a regression
                problem
             - ``n_classes * n_splits * 2`` when ``resource='n_samples'`` for a
-               regression problem
+               classification problem
             - ``1`` when ``resource != 'n_samples'``
         - 'exhaust' will set `r0` such that the **last** iteration uses as
           much resources as possible. Namely, the last iteration will use the
@@ -863,7 +863,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.ensemble import RandomForestClassifier
-    >>> from sklearn.experimental import enable_successive_halving  # noqa
+    >>> from sklearn.experimental import enable_halving_search_cv  # noqa
     >>> from sklearn.model_selection import HalvingRandomSearchCV
     >>> from scipy.stats import randint
     ...
