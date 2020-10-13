@@ -283,12 +283,6 @@ class LinearClassifierMixin(ClassifierMixin):
         check_is_fitted(self)
 
         X = self._validate_data(X, accept_sparse='csr', reset=False)
-
-        n_features = self.coef_.shape[1]
-        if X.shape[1] != n_features:
-            raise ValueError("X has %d features per sample; expecting %d"
-                             % (X.shape[1], n_features))
-
         scores = safe_sparse_dot(X, self.coef_.T,
                                  dense_output=True) + self.intercept_
         return scores.ravel() if scores.shape[1] == 1 else scores
