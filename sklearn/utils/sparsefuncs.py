@@ -128,8 +128,9 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n,
     last_n : ndarray with shape (n_features,)
         Sum of the weights seen for each feature, excluding the current weights
 
-    sample_weight : array-like of shape (n_samples,) or None
-        Sample weights. If None, then samples are equally weighted.
+    sample_weight : array-like of shape (n_samples,) if axis is set to 0, or
+        of shape (n_features,) if axis is set to 1 or None (regardless of axis)
+        If it is set to None, then samples are equally weighted.
 
     Returns
     -------
@@ -150,27 +151,18 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n,
     """
     _raise_error_wrong_axis(axis)
 
-    if sample_weight is not None:
-        if axis == 1:
-            raise NotImplementedError(
-                    "`incr_mean_variance_axis` cannot be called with"
-                    "`sample_weight` and `axis` set to 1`. Eighter set"
-                    "`sample_weight` to None or `axis` to 0")
-
-        sample_weight = _check_sample_weight(sample_weight, X,
-                                             dtype=X.dtype)
-
     if not (isinstance(X, sp.csr_matrix) or isinstance(X, sp.csc_matrix)):
         _raise_typeerror(X)
 
-    if axis == 0:
-        return _incr_mean_var_axis0(X, last_mean=last_mean,
-                                    last_var=last_var, last_n=last_n,
-                                    weights=sample_weight)
-    else:
-        return _incr_mean_var_axis0(X.T, last_mean=last_mean,
-                                    last_var=last_var, last_n=last_n,
-                                    weights=None)
+    if axis == 1:
+        X = X.T
+    if sample_weight is not None:
+        sample_weight = _check_sample_weight(sample_weight, X,
+                                             dtype=X.dtype)
+
+    return _incr_mean_var_axis0(X, last_mean=last_mean,
+                                last_var=last_var, last_n=last_n,
+                                weights=sample_weight)
 
 
 def inplace_column_scale(X, scale):

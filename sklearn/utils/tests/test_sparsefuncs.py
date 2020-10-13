@@ -85,24 +85,55 @@ def test_mean_variance_axis1():
             assert_array_almost_equal(X_vars, np.var(X_test, axis=0))
 
 
+@pytest.mark.parametrize(['Xw', 'X', 'sample_weight'],
+                         [
+                         ([[0, 0, 1], [0, 2, 3]],
+                          [[0, 0, 1], [0, 2, 3]],
+                          [1, 1, 1]),
+                         ([[0, 0, 1], [0, 1, 1]],
+                          [[0, 0, 1], [0, 1, 1], [0, 1, 2]],
+                          [1, 2, 1]),
+                         ([[0, 0, 1], [0, 1, 1]],
+                          [[0, 0, 1], [0, 1, 1]],
+                          None),
+                         ([[0, np.nan, 2],
+                           [0, np.nan, np.nan]],
+                          [[0, np.nan, 2],
+                           [0, np.nan, np.nan]],
+                          [1., 1., 1.]),
+                         ([[0, 0],
+                           [1, np.nan],
+                           [2, 0],
+                           [0, 3],
+                           [np.nan, np.nan],
+                           [np.nan, 2]],
+                          [[0, 0],
+                           [1, np.nan],
+                           [1, np.nan],
+                           [2, 0],
+                           [2, 3],
+                           [0, np.nan]],
+                          [2., 1.]),
+                         ([[1, 0, 1], [0, 3, 1]],
+                          [[1, 0, 1], [0, 0, 1], [np.nan, 9, np.nan]],
+                          np.array([1, 3, 1]))
+                         ]
+                         )
 @pytest.mark.parametrize("sparse_constructor",
                          [sp.csc_matrix, sp.csr_matrix])
-def test_raise_nonimplemented_error_if_weights_and_axis_is_one(
-        sparse_constructor):
-    Xw = [[0, 0, 1], [0, 1, 1]]
-    weights = [1, 2]
+def test_sample_weights_and_axis_is_one(Xw, X, sample_weight,
+                                        sparse_constructor):
     Xw_sparse = sparse_constructor(Xw)
 
-    last_mean = np.zeros(np.size(Xw, 1))
+    last_mean = np.zeros(np.size(Xw, 0))
     last_var = np.zeros_like(last_mean)
     last_n = np.zeros_like(last_mean, dtype=np.int64)
 
     axis = 1
 
-    with pytest.raises(NotImplementedError):
-        incr_mean_variance_axis(X=Xw_sparse, axis=axis, last_mean=last_mean,
-                                last_var=last_var, last_n=last_n,
-                                sample_weight=weights)
+    incr_mean_variance_axis(X=Xw_sparse, axis=axis, last_mean=last_mean,
+                            last_var=last_var, last_n=last_n,
+                            sample_weight=sample_weight)
 
 
 @pytest.mark.parametrize(['Xw', 'X', 'sample_weight'],
