@@ -100,8 +100,8 @@ def test_raise_nonimplemented_error_if_weights_and_axis_is_one(
     axis = 1
 
     with pytest.raises(NotImplementedError):
-        incr_mean_variance_axis(Xw_sparse, axis, last_mean,
-                                last_var, last_n,
+        incr_mean_variance_axis(X=Xw_sparse, axis=axis, last_mean=last_mean,
+                                last_var=last_var, last_n=last_n,
                                 sample_weight=weights)
 
 
