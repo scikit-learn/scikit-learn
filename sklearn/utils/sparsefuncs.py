@@ -127,7 +127,6 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n,
 
     last_n : ndarray with shape (n_features,)
         Sum of the weights seen for each feature, excluding the current weights
-        TODO: last_n should be now called last_sample_count (?).
 
     sample_weight : array-like of shape (n_samples,) or None
         Sample weights. If None, then samples are equally weighted.
