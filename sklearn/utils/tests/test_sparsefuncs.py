@@ -122,7 +122,7 @@ def test_mean_variance_axis1():
 @pytest.mark.parametrize("sparse_constructor",
                          [sp.csc_matrix, sp.csr_matrix])
 def test_weights_and_axis_is_one(Xw, X, weights,
-                                        sparse_constructor):
+                                 sparse_constructor):
     Xw_sparse = sparse_constructor(Xw)
 
     last_mean = np.zeros(np.size(Xw, 0))
