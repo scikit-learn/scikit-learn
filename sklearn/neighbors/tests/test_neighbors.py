@@ -702,8 +702,8 @@ def test_radius_neighbors_sort_results(algorithm, metric):
     # sort_results=True and return_distance=False
     if metric != "precomputed":  # no need to raise with precomputed graph
         with pytest.raises(ValueError, match="return_distance must be True"):
-            _ = model.radius_neighbors(X=X, radius=np.inf, sort_results=True,
-                                       return_distance=False)
+            model.radius_neighbors(X=X, radius=np.inf, sort_results=True,
+                                   return_distance=False)
 
     # self.radius_neighbors_graph
     graph = model.radius_neighbors_graph(X=X, radius=np.inf, mode="distance",
