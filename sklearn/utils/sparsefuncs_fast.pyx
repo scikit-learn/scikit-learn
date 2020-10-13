@@ -228,23 +228,23 @@ def incr_mean_variance_axis0(X, last_mean, last_var, last_n, weights=None):
     if weights is None:
        weights = np.ones(X.shape[0], dtype=X_dtype)
     elif weights.dtype not in [np.float32, np.float64]:
-        weights = weights.astype(np.float64)
+        weights = weights.astype(np.float64, copy=False)
     if last_n.dtype not in [np.float32, np.float64]:
-        last_n = last_n.astype(np.float64)
+        last_n = last_n.astype(np.float64, copy=False)
 
     ind_rows, ind_cols, X_data = sp.find(X)
 
     return _incr_mean_variance_axis0(X_data,
-                                     np.sum(weights).astype(X_dtype),
+                                     np.sum(weights),
                                      X.shape[1],
-                                     ind_rows.astype(np.int64),
-                                     ind_cols.astype(np.int64),
-                                     X.indptr.astype(np.int64),
+                                     ind_rows,
+                                     ind_cols,
+                                     X.indptr.astype(np.int32),
                                      X.format,
-                                     last_mean.astype(X_dtype),
-                                     last_var.astype(X_dtype),
-                                     last_n.astype(X_dtype),
-                                     weights.astype(X_dtype))
+                                     last_mean.astype(X_dtype, copy=False),
+                                     last_var.astype(X_dtype, copy=False),
+                                     last_n.astype(X_dtype, copy=False),
+                                     weights.astype(X_dtype, copy=False))
 
 
 def _incr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
