@@ -172,7 +172,7 @@ def csc_mean_variance_axis0(X):
     return means, variances
 
 
-def incr_mean_variance_axis0(X, last_mean, last_var, last_n, weights):
+def incr_mean_variance_axis0(X, last_mean, last_var, last_n, weights=None):
     """Compute mean and variance along axis 0 on a CSR or CSC matrix.
 
     last_mean, last_var are the statistics computed at the last step by this
@@ -194,8 +194,8 @@ def incr_mean_variance_axis0(X, last_mean, last_var, last_n, weights):
       Sum of the weights seen so far (if weights are all set to 1
       this will be the same as number of samples seen so far, before X).
 
-    weights: float array with shape (n_samples,). If not used set all
-       weights to 1s.
+    weights : float array with shape (n_samples,) or None. If it is set
+      to None samples will be equally weighted.
 
     Returns
     -------
