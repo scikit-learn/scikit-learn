@@ -197,7 +197,7 @@ Here is an example of building custom scorers, and of using the
     >>> from sklearn.dummy import DummyClassifier
     >>> clf = DummyClassifier(strategy='most_frequent', random_state=0)
     >>> clf = clf.fit(X, y)
-    >>> my_custom_loss_func(clf.predict(X), y)
+    >>> my_custom_loss_func(y, clf.predict(X))
     0.69...
     >>> score(clf, X, y)
     -0.69...
