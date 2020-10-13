@@ -384,7 +384,7 @@ Changelog
   :user:`Mohamed Ali Jamaoui <mohamed-ali>`.
 
 - |Feature| :func:`metrics.plot_confusion_matrix` now supports making colorbar
-  optional in the matplotlib plot by setting colorbar=False. :pr:`17192` by
+  optional in the matplotlib plot by setting `colorbar=False`. :pr:`17192` by
   :user:`Avi Gupta <avigupta2612>`
 
 - |Enhancement| Add `sample_weight` parameter to
