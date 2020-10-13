@@ -160,7 +160,7 @@ Changelog
 
 - |Enhancement| :func:`decomposition.FactorAnalysis` now supports the optional
   argument `rotation`, which can take the value `None`, `'varimax'` or
-  `'quartimax'.` :pr:`11064` by :user:`Jona Sassenhagen <jona-sassenhagen>`.
+  `'quartimax'`. :pr:`11064` by :user:`Jona Sassenhagen <jona-sassenhagen>`.
 
 - |Enhancement| :class:`decomposition.NMF` now supports the optional parameter
   `regularization`, which can take the values `None`, `components`,
