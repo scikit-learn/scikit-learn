@@ -94,6 +94,7 @@ def test_fit():
     mlp.intercepts_[1] = np.array([1.0])
     mlp._coef_grads = [] * 2
     mlp._intercept_grads = [] * 2
+    mlp.n_features_in_ = 3
 
     # Initialize parameters
     mlp.n_iter_ = 0
@@ -371,8 +372,6 @@ def test_partial_fit_classification():
     # `partial_fit` should yield the same results as 'fit' for binary and
     # multi-class classification.
     for X, y in classification_datasets:
-        X = X
-        y = y
         mlp = MLPClassifier(solver='sgd', max_iter=100, random_state=1,
                             tol=0, alpha=1e-5, learning_rate_init=0.2)
 
@@ -490,7 +489,7 @@ def test_predict_proba_binary():
 
     assert y_proba.shape == (n_samples, n_classes)
     assert_array_equal(proba_max, proba_log_max)
-    assert_array_equal(y_log_proba, np.log(y_proba))
+    assert_allclose(y_log_proba, np.log(y_proba))
 
     assert roc_auc_score(y, y_proba[:, 1]) == 1.0
 
@@ -513,7 +512,7 @@ def test_predict_proba_multiclass():
 
     assert y_proba.shape == (n_samples, n_classes)
     assert_array_equal(proba_max, proba_log_max)
-    assert_array_equal(y_log_proba, np.log(y_proba))
+    assert_allclose(y_log_proba, np.log(y_proba))
 
 
 def test_predict_proba_multilabel():
@@ -537,7 +536,7 @@ def test_predict_proba_multilabel():
 
     assert (y_proba.sum(1) - 1).dot(y_proba.sum(1) - 1) > 1e-10
     assert_array_equal(proba_max, proba_log_max)
-    assert_array_equal(y_log_proba, np.log(y_proba))
+    assert_allclose(y_log_proba, np.log(y_proba))
 
 
 def test_shuffle():
@@ -664,6 +663,23 @@ def test_warm_start():
             clf.fit(X, y_i)
 
 
+@pytest.mark.parametrize("MLPEstimator", [MLPClassifier, MLPRegressor])
+def test_warm_start_full_iteration(MLPEstimator):
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/16812
+    # Check that the MLP estimator accomplish `max_iter` with a
+    # warm started estimator.
+    X, y = X_iris, y_iris
+    max_iter = 3
+    clf = MLPEstimator(
+        hidden_layer_sizes=2, solver='sgd', warm_start=True, max_iter=max_iter
+    )
+    clf.fit(X, y)
+    assert max_iter == clf.n_iter_
+    clf.fit(X, y)
+    assert 2 * max_iter == clf.n_iter_
+
+
 def test_n_iter_no_change():
     # test n_iter_no_change using binary data set
     # the classifying fitting process is not prone to loss curve fluctuations
@@ -718,3 +734,61 @@ def test_early_stopping_stratified():
             ValueError,
             match='The least populated class in y has only 1 member'):
         mlp.fit(X, y)
+
+
+def test_mlp_classifier_dtypes_casting():
+    # Compare predictions for different dtypes
+    mlp_64 = MLPClassifier(alpha=1e-5,
+                           hidden_layer_sizes=(5, 3),
+                           random_state=1, max_iter=50)
+    mlp_64.fit(X_digits[:300], y_digits[:300])
+    pred_64 = mlp_64.predict(X_digits[300:])
+    proba_64 = mlp_64.predict_proba(X_digits[300:])
+
+    mlp_32 = MLPClassifier(alpha=1e-5,
+                           hidden_layer_sizes=(5, 3),
+                           random_state=1, max_iter=50)
+    mlp_32.fit(X_digits[:300].astype(np.float32), y_digits[:300])
+    pred_32 = mlp_32.predict(X_digits[300:].astype(np.float32))
+    proba_32 = mlp_32.predict_proba(X_digits[300:].astype(np.float32))
+
+    assert_array_equal(pred_64, pred_32)
+    assert_allclose(proba_64, proba_32, rtol=1e-02)
+
+
+def test_mlp_regressor_dtypes_casting():
+    mlp_64 = MLPRegressor(alpha=1e-5,
+                          hidden_layer_sizes=(5, 3),
+                          random_state=1, max_iter=50)
+    mlp_64.fit(X_digits[:300], y_digits[:300])
+    pred_64 = mlp_64.predict(X_digits[300:])
+
+    mlp_32 = MLPRegressor(alpha=1e-5,
+                          hidden_layer_sizes=(5, 3),
+                          random_state=1, max_iter=50)
+    mlp_32.fit(X_digits[:300].astype(np.float32), y_digits[:300])
+    pred_32 = mlp_32.predict(X_digits[300:].astype(np.float32))
+
+    assert_allclose(pred_64, pred_32, rtol=1e-04)
+
+
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+@pytest.mark.parametrize('Estimator', [MLPClassifier, MLPRegressor])
+def test_mlp_param_dtypes(dtype, Estimator):
+    # Checks if input dtype is used for network parameters
+    # and predictions
+    X, y = X_digits.astype(dtype), y_digits
+    mlp = Estimator(alpha=1e-5,
+                    hidden_layer_sizes=(5, 3),
+                    random_state=1, max_iter=50)
+    mlp.fit(X[:300], y[:300])
+    pred = mlp.predict(X[300:])
+
+    assert all([intercept.dtype == dtype
+                for intercept in mlp.intercepts_])
+
+    assert all([coef.dtype == dtype
+                for coef in mlp.coefs_])
+
+    if Estimator == MLPRegressor:
+        assert pred.dtype == dtype

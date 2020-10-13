@@ -1,4 +1,4 @@
-"""Weight Boosting
+"""Weight Boosting.
 
 This module contains weight boosting estimators for both classification and
 regression.
@@ -255,11 +255,11 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
                     in zip(self.estimator_weights_, self.estimators_))
                     / norm)
 
-        except AttributeError:
+        except AttributeError as e:
             raise AttributeError(
                 "Unable to compute feature importances "
                 "since base_estimator does not have a "
-                "feature_importances_ attribute")
+                "feature_importances_ attribute") from e
 
 
 def _samme_proba(estimator, n_classes, X):
@@ -322,7 +322,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         The SAMME.R algorithm typically converges faster than SAMME,
         achieving a lower test error with fewer boosting iterations.
 
-    random_state : int or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the random seed given at each `base_estimator` at each
         boosting iteration.
         Thus, it is only used when `base_estimator` exposes a `random_state`.
@@ -360,20 +360,19 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
 
     See Also
     --------
-    AdaBoostRegressor
-        An AdaBoost regressor that begins by fitting a regressor on the
-        original dataset and then fits additional copies of the regressor
-        on the same dataset but where the weights of instances are
-        adjusted according to the error of the current prediction.
+    AdaBoostRegressor : An AdaBoost regressor that begins by fitting a
+        regressor on the original dataset and then fits additional copies of
+        the regressor on the same dataset but where the weights of instances
+        are adjusted according to the error of the current prediction.
 
-    GradientBoostingClassifier
-        GB builds an additive model in a forward stage-wise fashion. Regression
-        trees are fit on the negative gradient of the binomial or multinomial
-        deviance loss function. Binary classification is a special case where
-        only a single regression tree is induced.
+    GradientBoostingClassifier : GB builds an additive model in a forward
+        stage-wise fashion. Regression trees are fit on the negative gradient
+        of the binomial or multinomial deviance loss function. Binary
+        classification is a special case where only a single regression tree is
+        induced.
 
-    sklearn.tree.DecisionTreeClassifier
-        A non-parametric supervised learning method used for classification.
+    sklearn.tree.DecisionTreeClassifier : A non-parametric supervised learning
+        method used for classification.
         Creates a model that predicts the value of a target variable by
         learning simple decision rules inferred from the data features.
 
@@ -482,7 +481,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         sample_weight : array-like of shape (n_samples,)
             The current sample weights.
 
-        random_state : RandomState
+        random_state : RandomState instance
             The RandomState instance used if the base estimator accepts a
             `random_state` attribute.
 
@@ -905,7 +904,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         The loss function to use when updating the weights after each
         boosting iteration.
 
-    random_state : int or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the random seed given at each `base_estimator` at each
         boosting iteration.
         Thus, it is only used when `base_estimator` exposes a `random_state`.
@@ -950,7 +949,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     >>> regr.score(X, y)
     0.9771...
 
-    See also
+    See Also
     --------
     AdaBoostClassifier, GradientBoostingRegressor,
     sklearn.tree.DecisionTreeRegressor

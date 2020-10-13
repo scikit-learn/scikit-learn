@@ -19,11 +19,11 @@ data can be found in the ``labels_`` attribute.
 
     One important thing to note is that the algorithms implemented in
     this module can take different kinds of matrix as input. All the
-    methods accept standard data matrices of shape ``[n_samples, n_features]``.
+    methods accept standard data matrices of shape ``(n_samples, n_features)``.
     These can be obtained from the classes in the :mod:`sklearn.feature_extraction`
     module. For :class:`AffinityPropagation`, :class:`SpectralClustering`
     and :class:`DBSCAN` one can also input similarity matrices of shape
-    ``[n_samples, n_samples]``. These can be obtained from the functions
+    ``(n_samples, n_samples)``. These can be obtained from the functions
     in the :mod:`sklearn.metrics.pairwise` module.
 
 Overview of clustering methods
@@ -821,7 +821,7 @@ by black points below.
 
     This implementation is by default not memory efficient because it constructs
     a full pairwise similarity matrix in the case where kd-trees or ball-trees cannot
-    be used (e.g., with sparse matrices). This matrix will consume n^2 floats.
+    be used (e.g., with sparse matrices). This matrix will consume :math:`n^2` floats.
     A couple of mechanisms for getting around this are:
 
     - Use :ref:`OPTICS <optics>` clustering in conjunction with the
@@ -926,8 +926,8 @@ represented as children of a larger parent cluster.
     `HDBSCAN <https://hdbscan.readthedocs.io>`_. The HDBSCAN implementation is
     multithreaded, and has better algorithmic runtime complexity than OPTICS,
     at the cost of worse memory scaling. For extremely large datasets that
-    exhaust system memory using HDBSCAN, OPTICS will maintain *n* (as opposed
-    to *n^2*) memory scaling; however, tuning of the ``max_eps`` parameter
+    exhaust system memory using HDBSCAN, OPTICS will maintain :math:`n` (as opposed
+    to :math:`n^2`) memory scaling; however, tuning of the ``max_eps`` parameter
     will likely need to be used to give a solution in a reasonable amount of
     wall time.
 
@@ -953,7 +953,7 @@ The CF Subclusters hold the necessary information for clustering which prevents
 the need to hold the entire input data in memory. This information includes:
 
 - Number of samples in a subcluster.
-- Linear Sum - A n-dimensional vector holding the sum of all samples
+- Linear Sum - An n-dimensional vector holding the sum of all samples
 - Squared Sum - Sum of the squared L2 norm of all samples.
 - Centroids - To avoid recalculation linear sum / n_samples.
 - Squared norm of the centroids.
