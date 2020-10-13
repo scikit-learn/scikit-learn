@@ -1274,4 +1274,4 @@ def test_rfe_estimator_type_deprecated():
            "version 0.24 and will be removed in 0.26.")
 
     with pytest.warns(FutureWarning, match=msg):
-        pipeline._estimator_type
+        assert pipeline._estimator_type == "classifier"

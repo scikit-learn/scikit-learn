@@ -1,5 +1,6 @@
 import pytest
 
+from sklearn.base import BaseEstimator
 from sklearn.base import ClassifierMixin
 from sklearn.base import clone
 from sklearn.compose import make_column_transformer
@@ -53,7 +54,7 @@ def test_plot_curve_error_no_response(
 ):
     X, y = data_binary
 
-    class MyClassifier(ClassifierMixin):
+    class MyClassifier(ClassifierMixin, BaseEstimator):
         def fit(self, X, y):
             self.classes_ = [0, 1]
             return self

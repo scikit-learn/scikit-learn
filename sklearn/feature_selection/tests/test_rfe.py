@@ -492,6 +492,7 @@ def test_multioutput(ClsRFE):
     rfe_test.fit(X, y)
 
 
+# TODO: Remove in 0.26 when the _estimator_type attribute is removed
 def test_rfe_estimator_type_deprecated():
     # Assert that the _estimator_type attribute is deprecated
     rfe = RFE(SVC())
@@ -500,4 +501,4 @@ def test_rfe_estimator_type_deprecated():
            "version 0.24 and will be removed in 0.26.")
 
     with pytest.warns(FutureWarning, match=msg):
-        rfe._estimator_type
+        assert rfe._estimator_type == "classifier"

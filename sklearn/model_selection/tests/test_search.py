@@ -2086,7 +2086,8 @@ def test_scalar_fit_param_compat(SearchCV, param_search):
     model.fit(X_train, y_train, **fit_params)
 
 
-def test_rfe_estimator_type_deprecated():
+# TODO: Remove in 0.26 when the _estimator_type attribute is removed
+def test_search_cv_estimator_type_deprecated():
     # Assert that the _estimator_type attribute is deprecated
     estimator = SVC(kernel="linear")
     param_grid = {"gamma": ["scale", "auto"]}
@@ -2097,4 +2098,4 @@ def test_rfe_estimator_type_deprecated():
            "version 0.24 and will be removed in 0.26.")
 
     with pytest.warns(FutureWarning, match=msg):
-        search._estimator_type
+        assert search._estimator_type == "classifier"

@@ -363,7 +363,6 @@ General Concepts
                  adopted on a :term:`meta-estimator`.  Its value should usually be		
                  checked by way of a helper such as :func:`base.is_classifier`.
 
-                
                 .. deprecated:: 0.24
 
                 The `_estimator_type` attribute is deprecated in 0.24. From 0.26
