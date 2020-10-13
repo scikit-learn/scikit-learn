@@ -35,18 +35,19 @@ jobs:
 
       - name: Setup Python
         uses: actions/setup-python@v2
-    
+
       - name: Install dependencies
         shell: bash
         # OpenMP is not present on macOS by default
         run: |
           if [ "$RUNNER_OS" == "macOS" ]; then
             brew install libomp
-            export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
-            export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
-            export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
-            export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
-            export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
+            echo "::set-env name=CC::/usr/bin/clang"
+            echo "::set-env name=CXX::/usr/bin/clang++"
+            echo "::set-env name=CPPFLAGS::$CPPFLAGS -Xpreprocessor -fopenmp"
+            echo "::set-env name=CFLAGS::$CFLAGS -I/usr/local/opt/libomp/include"
+            echo "::set-env name=CXXFLAGS::$CXXFLAGS -I/usr/local/opt/libomp/include"
+            echo "::set-env name=LDFLAGS::$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp"
           fi
           python -m pip install cibuildwheel
 
