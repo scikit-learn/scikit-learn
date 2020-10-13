@@ -683,7 +683,7 @@ def test_radius_neighbors_returns_array_of_objects():
                                                    ("brute", "euclidean"),
                                                    ("brute", "precomputed")])
 def test_radius_neighbors_sort_results(algorithm, metric):
-	# Check that radius_neighbors[_graph] output is sorted when sort_result is True
+    # Test radius_neighbors[_graph] output when sort_result is True
     n_samples = 10
     rng = np.random.RandomState(42)
     X = rng.random_sample((n_samples, 4))
