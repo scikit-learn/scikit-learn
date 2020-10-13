@@ -296,7 +296,7 @@ def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
         set to `True`, the sign ambiguity is resolved by making the largest
         loadings for each component in the left singular vectors positive.
 
-    random_state : int, RandomState instance or None, default=None
+    random_state : int, RandomState instance or None, default=0
         The seed of the pseudo random number generator to use when shuffling
         the data, i.e. getting the random vectors to initialize the algorithm.
         Pass an int for reproducible results across multiple function calls.
