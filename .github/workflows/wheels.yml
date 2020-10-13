@@ -42,12 +42,12 @@ jobs:
         run: |
           if [ "$RUNNER_OS" == "macOS" ]; then
             brew install libomp
-            echo "::set-env name=CC::/usr/bin/clang"
-            echo "::set-env name=CXX::/usr/bin/clang++"
-            echo "::set-env name=CPPFLAGS::$CPPFLAGS -Xpreprocessor -fopenmp"
-            echo "::set-env name=CFLAGS::$CFLAGS -I/usr/local/opt/libomp/include"
-            echo "::set-env name=CXXFLAGS::$CXXFLAGS -I/usr/local/opt/libomp/include"
-            echo "::set-env name=LDFLAGS::$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp"
+            echo "CC=/usr/bin/clang" >> $GITHUB_ENV
+            echo "CXX=/usr/bin/clang++" >> $GITHUB_ENV
+            echo "CPPFLAGS=$CPPFLAGS -Xpreprocessor -fopenmp" >> $GITHUB_ENV
+            echo "CFLAGS=$CFLAGS -I/usr/local/opt/libomp/include" >> $GITHUB_ENV
+            echo "CXXFLAGS=$CXXFLAGS -I/usr/local/opt/libomp/include" >> $GITHUB_ENV
+            echo "LDFLAGS=$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp" >> $GITHUB_ENV
           fi
           python -m pip install cibuildwheel
 
