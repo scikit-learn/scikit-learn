@@ -436,7 +436,7 @@ Changelog
   Nothman`_ and `Andreas Müller`_.
 
 - |Feature| :class:`model_selection.RandomizedSearchCV` and
-  :class:`model_selection.GridSearchCV` now have the method, ``score_samples``
+  :class:`model_selection.GridSearchCV` now have the method ``score_samples``
   :pr:`17478` by :user:`Teon Brooks <teonbrooks>` and
   :user:`Mohamed Maskani <maskani-moh>`.
 
