@@ -973,7 +973,6 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         max_squared_sum=max_squared_sum, sample_weight=sample_weight)
 
     log_reg = LogisticRegression(solver=solver, multi_class=multi_class)
-    log_reg.n_features_in_ = X.shape[1]
 
     # The score method of Logistic Regression has a classes_ attribute.
     if multi_class == 'ovr':

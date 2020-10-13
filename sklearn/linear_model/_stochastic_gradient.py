@@ -55,7 +55,6 @@ class _ValidationScoreCallback:
                  classes=None):
         self.estimator = clone(estimator)
         self.estimator.t_ = 1  # to pass check_is_fitted
-        self.estimator.n_features_in_ = X_val.shape[1]
         if classes is not None:
             self.estimator.classes_ = classes
         self.X_val = X_val
