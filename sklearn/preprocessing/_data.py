@@ -776,11 +776,9 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         # if n_samples_seen_ is not ndarray (i.e. no missing values),
         # we need to transform it to a NumPy array of shape (n_features,)
         # required by incr_mean_variance_axis and _incremental_variance_axis
-        if hasattr(self, 'n_samples_seen_'):
-            if not isinstance(self.n_samples_seen_, np.ndarray):
-                self.n_samples_seen_ = np.repeat(
-                    self.n_samples_seen_, X.shape[1]).astype(
-                        self.n_samples_seen_.dtype, copy=False)
+        if hasattr(self, 'n_samples_seen_') and not isinstance(self.n_samples_seen_, np.ndarray):
+            self.n_samples_seen_ = np.repeat(
+                self.n_samples_seen_, X.shape[1]).astype(self.n_samples_seen_.dtype, copy=False)
 
         if sparse.issparse(X):
             if self.with_mean:
