@@ -82,23 +82,33 @@ Changelog
 :mod:`sklearn.compose`
 ......................
 
-- |FIX| :class:`compose.ColumnTransformer` will skip transformers the
+- |Fix| :class:`compose.ColumnTransformer` will skip transformers the
   column selector is a list of bools that are False. :pr:`17616` by
   `Thomas Fan`_.
 
-- |FIX| :class:`compose.ColumnTransformer` now displays the remainder in the
+- |Fix| :class:`compose.ColumnTransformer` now displays the remainder in the
   diagram display. :pr:`18167` by `Thomas Fan`_.
 
 :mod:`sklearn.covariance`
 .........................
 
-- |API| Deprecates `cv_alphas_` in favor of `cv_results['alphas']` and
+- |API| Deprecates `cv_alphas_` in favor of `cv_results_['alphas']` and
   `grid_scores_` in favor of split scores in `cv_results_` in
   :class:`covariance.GraphicalLassoCV`. `cv_alphas_` and `grid_scores_` will be
   removed in version 0.26. :pr:`16392` by `Thomas Fan`_.
 
 :mod:`sklearn.cross_decomposition`
 ..................................
+
+- |Fix| Fixed a bug in :class:`cross_decomposition.PLSSVD` which would
+  sometimes return components in the reversed order of importance.
+  :pr:`17095` by `Nicolas Hug`_.
+
+- |Fix| Fixed a bug in :class:`cross_decomposition.PLSSVD`,
+  :class:`cross_decomposition.CCA`, and
+  :class:`cross_decomposition.PLSCanonical`, which would lead to incorrect
+  predictions for `est.transform(Y)` when the training data is single-target.
+  :pr:`17095` by `Nicolas Hug`_.
 
 - |API| The bounds of the `n_components` parameter is now restricted:
 
@@ -116,27 +126,17 @@ Changelog
   retrieved by calling `transform` on the training data. The `norm_y_weights`
   attribute will also be removed. :pr:`17095` by `Nicolas Hug`_.
 
-- |Fix| Fixed a bug in :class:`cross_decomposition.PLSSVD` which would
-  sometimes return components in the reversed order of importance.
-  :pr:`17095` by `Nicolas Hug`_.
-
-- |Fix| Fixed a bug in :class:`cross_decomposition.PLSSVD`,
-  :class:`cross_decomposition.CCA`, and
-  :class:`cross_decomposition.PLSCanonical`, which would lead to incorrect
-  predictions for `est.transform(Y)` when the training data is single-target.
-  :pr:`17095` by `Nicolas Hug`_.
-
 :mod:`sklearn.datasets`
 .......................
+
+- |Feature| :func:`datasets.fetch_openml` now validates md5 checksum of arff
+  files downloaded or cached to ensure data integrity.
+  :pr:`14800` by :user:`Shashank Singh <shashanksingh28>` and `Joel Nothman`_.
 
 - |Enhancement| :func:`datasets.fetch_openml` now allows argument `as_frame`
   to be 'auto', which tries to convert returned data to pandas DataFrame
   unless data is sparse.
   :pr:`17396` by :user:`Jiaxiang <fujiaxiang>`.
-
-- |Feature| :func:`datasets.fetch_openml` now validates md5checksum of arff
-  files downloaded or cached to ensure data integrity.
-  :pr:`14800` by :user:`Shashank Singh <shashanksingh28>` and `Joel Nothman`_.
 
 - |Enhancement| :func:`datasets.fetch_covtype` now now supports the optional
   argument `as_frame`; when it is set to True, the returned Bunch object's
@@ -158,6 +158,16 @@ Changelog
 :mod:`sklearn.decomposition`
 ............................
 
+- |Enhancement| :func:`decomposition.FactorAnalysis` now supports the optional
+  argument `rotation`, which can take the value `None`, `'varimax'` or
+  `'quartimax'`. :pr:`11064` by :user:`Jona Sassenhagen <jona-sassenhagen>`.
+
+- |Enhancement| :class:`decomposition.NMF` now supports the optional parameter
+  `regularization`, which can take the values `None`, 'components',
+  'transformation' or 'both', in accordance with
+  :func:`decomposition.NMF.non_negative_factorization`.
+  :pr:`17414` by :user:`Bharat Raghunathan <Bharat123rox>`.
+
 - |Fix| :class:`decomposition.KernelPCA` behaviour is now more consistent
   between 32-bits and 64-bits data input when the kernel has small positive
   eigenvalues. Small positive eigenvalues were not correctly discarded for
@@ -169,16 +179,6 @@ Changelog
   deprecated in 0.24 and will be removed in 0.26. This attribute was
   redundant with the `dictionary` attribute and constructor parameter.
   :pr:`17679` by :user:`Xavier Dupré <sdpython>`.
-
-- |Enhancement| :func:`decomposition.FactorAnalysis` now supports the optional
-  argument `rotation`, which can take the value `None`, `'varimax'` or
-  `'quartimax'.` :pr:`11064` by :user:`Jona Sassenhagen <jona-sassenhagen>`.
-
-- |Enhancement| :class:`decomposition.NMF` now supports the optional parameter
-  `regularization`, which can take the values `None`, `components`,
-  `transformation` or `both`, in accordance with
-  :func:`decomposition.NMF.non_negative_factorization`.
-  :pr:`17414` by :user:`Bharat Raghunathan <Bharat123rox>`.
 
 - |Fix| :meth:`TruncatedSVD.fit_transform` consistently returns the same
   as :meth:`TruncatedSVD.fit` followed by :meth:`TruncatedSVD.transform`.
@@ -214,19 +214,19 @@ Changelog
   :pr:`18341` by `Olivier Grisel`_, `Nicolas Hug`_, `Thomas Fan`_, and
   :user:`Egor Smirnov <SmirnovEgorRu>`.
 
-- |API|: The parameter ``n_classes_`` is now deprecated in
-  :class:`ensemble.GradientBoostingRegressor` and returns `1`.
-  :pr:`17702` by :user:`Simona Maggio <simonamaggio>`.
-
-- |API|: Mean absolute error ('mae') is now deprecated for the parameter
-  ``criterion`` in :class:`ensemble.GradientBoostingRegressor` and
-  :class:`ensemble.GradientBoostingClassifier`.
-  :pr:`18326` by :user:`Madhura Jayaratne <madhuracj>`.
-
-- |Fix|: Fixed a bug in
+- |Fix| Fixed a bug in
   :class:`ensemble.HistGradientBoostingRegressor` and
   :class:`ensemble.HistGradientBoostingClassifier` which can now accept data
   with `uint8` dtype in `predict`. :pr:`18410` by `Nicolas Hug`_.
+
+- |API| The parameter ``n_classes_`` is now deprecated in
+  :class:`ensemble.GradientBoostingRegressor` and returns `1`.
+  :pr:`17702` by :user:`Simona Maggio <simonamaggio>`.
+
+- |API| Mean absolute error ('mae') is now deprecated for the parameter
+  ``criterion`` in :class:`ensemble.GradientBoostingRegressor` and
+  :class:`ensemble.GradientBoostingClassifier`.
+  :pr:`18326` by :user:`Madhura Jayaratne <madhuracj>`.
 
 :mod:`sklearn.exceptions`
 .........................
@@ -255,17 +255,17 @@ Changelog
   attribute name/path or a `callable` for extracting feature importance from
   the estimator.  :pr:`15361` by :user:`Venkatachalam N <venkyyuvy>`.
 
-- |Enhancement| :class:`feature_selection.RFE` supports the option for the
-  number of `n_features_to_select` to be given as a float representing the
-  percentage of features to select.
-  :pr:`17090` by :user:`Lisa Schwetlick <lschwetlick>` and
-  :user:`Marija Vlajic Wheeler <marijavlajic>`.
-
 - |Efficiency| Reduce memory footprint in
   :func:`feature_selection.mutual_info_classif`
   and :func:`feature_selection.mutual_info_regression` by calling
   :class:`neighbors.KDTree` for counting nearest neighbors. :pr:`17878` by
   :user:`Noel Rogers <noelano>`.
+
+- |Enhancement| :class:`feature_selection.RFE` supports the option for the
+  number of `n_features_to_select` to be given as a float representing the
+  percentage of features to select.
+  :pr:`17090` by :user:`Lisa Schwetlick <lschwetlick>` and
+  :user:`Marija Vlajic Wheeler <marijavlajic>`.
 
 :mod:`sklearn.gaussian_process`
 ...............................
@@ -279,12 +279,6 @@ Changelog
 :mod:`sklearn.impute`
 .....................
 
-- |Fix| replace the default values in :class:`impute.IterativeImputer`
-  of `min_value` and `max_value` parameters to `-np.inf` and `np.inf`,
-  respectively instead of `None`. However, the behaviour of the class does not
-  change since `None` was defaulting to these values already.
-  :pr:`16493` by :user:`Darshan N <DarshanGowda0>`.
-
 - |Feature| :class:`impute.SimpleImputer` now supports a list of strings
   when ``strategy='most_frequent'`` or ``strategy='constant'``.
   :pr:`17526` by :user:`Ayako YAGI <yagi-3>` and
@@ -293,6 +287,12 @@ Changelog
 - |Feature| Added method :meth:`impute.SimpleImputer.inverse_transform` to
   revert imputed data to original when instantiated with
   ``add_indicator=True``. :pr:`17612` by :user:`Srimukh Sripada <d3b0unce>`.
+
+- |Fix| replace the default values in :class:`impute.IterativeImputer`
+  of `min_value` and `max_value` parameters to `-np.inf` and `np.inf`,
+  respectively instead of `None`. However, the behaviour of the class does not
+  change since `None` was defaulting to these values already.
+  :pr:`16493` by :user:`Darshan N <DarshanGowda0>`.
 
 - |Fix| :class:`impute.IterativeImputer` will not attempt to set the
   estimator's `random_state` attribute, allowing to use it with more external classes.
@@ -356,15 +356,15 @@ Changelog
 :mod:`sklearn.manifold`
 .......................
 
+- |Efficiency| Fixed :issue:`10493`. Improve Local Linear Embedding (LLE)
+  that raised `MemoryError` exception when used with large inputs.
+  :pr:`17997` by :user:`Bertrand Maisonneuve <bmaisonn>`.
+
 - |Enhancement| Add `square_distances` parameter to :class:`manifold.TSNE`,
   which provides backward compatibility during deprecation of legacy squaring
   behavior. Distances will be squared by default in 0.26, and this parameter
   will be removed in 0.28. :pr:`17662` by
   :user:`Joshua Newton <joshuacwnewton>`.
-
-- |Efficiency| Fixed :issue:`10493`. Improve Local Linear Embedding (LLE)
-  that raised `MemoryError` exception when used with large inputs.
-  :pr:`17997` by :user:`Bertrand Maisonneuve <bmaisonn>`.
 
 - |Fix| :class:`manifold.MDS` now correctly sets its `_pairwise` attribute.
   :pr:`18278` by `Thomas Fan`_.
@@ -387,10 +387,9 @@ Changelog
   some practical test cases were taken from PR :pr:`10711` by
   :user:`Mohamed Ali Jamaoui <mohamed-ali>`.
 
-- |Fix| Fixed a bug in
-  :func:`metrics.classification_report` which was raising AttributeError
-  when called with `output_dict=True` for 0-length values.
-  :pr:`17777` by :user:`Shubhanshu Mishra <napsternxg>`.
+- |Feature| :func:`metrics.plot_confusion_matrix` now supports making colorbar
+  optional in the matplotlib plot by setting `colorbar=False`. :pr:`17192` by
+  :user:`Avi Gupta <avigupta2612>`
 
 - |Enhancement| Add `sample_weight` parameter to
   :func:`metrics.median_absolute_error`. :pr:`17225` by
@@ -401,14 +400,15 @@ Changelog
   class to be used when computing the precision and recall statistics.
   :pr:`17569` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Feature| :func:`metrics.plot_confusion_matrix` now supports making colorbar
-  optional in the matplotlib plot by setting colorbar=False. :pr:`17192` by
-  :user:`Avi Gupta <avigupta2612>`
-
 - |Enhancement| Add `pos_label` parameter in
   :func:`metrics.plot_roc_curve` in order to specify the positive
   class to be used when computing the roc auc statistics.
   :pr:`17651` by :user:`Clara Matos <claramatos>`.
+
+- |Fix| Fixed a bug in
+  :func:`metrics.classification_report` which was raising AttributeError
+  when called with `output_dict=True` for 0-length values.
+  :pr:`17777` by :user:`Shubhanshu Mishra <napsternxg>`.
 
 - |Fix| Fixed a bug in
   :func:`metrics.jaccard_score` which recommended the `zero_division`
@@ -431,24 +431,32 @@ Changelog
 :mod:`sklearn.model_selection`
 ..............................
 
-- |Enhancement| :class:`model_selection.TimeSeriesSplit` has two new keyword
-  arguments `test_size` and `gap`. `test_size` allows the out-of-sample
-  time series length to be fixed for all folds. `gap` removes a fixed number of
-  samples between the train and test set on each fold.
-  :pr:`13204` by :user:`Kyle Kosic <kykosic>`.
-
-- |Feature| :class:`model_selection.RandomizedSearchCV` and
-  :class:`model_selection.GridSearchCV` now have the method, ``score_samples``
-  :pr:`17478` by :user:`Teon Brooks <teonbrooks>` and
-  :user:`Mohamed Maskani <maskani-moh>`.
-
-- |Feature| Added (experimental) parameter search estimators
+- |MajorFeature| Added (experimental) parameter search estimators
   :class:`model_selection.HalvingRandomSearchCV` and
   :class:`model_selection.HalvingGridSearchCV` which implement Successive
   Halving, and can be used as a drop-in replacements for
   :class:`model_selection.RandomizedSearchCV` and
   :class:`model_selection.GridSearchCV`. :pr:`13900` by `Nicolas Hug`_, `Joel
   Nothman`_ and `Andreas Müller`_.
+
+- |Feature| :class:`model_selection.RandomizedSearchCV` and
+  :class:`model_selection.GridSearchCV` now have the method ``score_samples``
+  :pr:`17478` by :user:`Teon Brooks <teonbrooks>` and
+  :user:`Mohamed Maskani <maskani-moh>`.
+
+- |Enhancement| :class:`model_selection.TimeSeriesSplit` has two new keyword
+  arguments `test_size` and `gap`. `test_size` allows the out-of-sample
+  time series length to be fixed for all folds. `gap` removes a fixed number of
+  samples between the train and test set on each fold.
+  :pr:`13204` by :user:`Kyle Kosic <kykosic>`.
+
+- |Enhancement| :func:`model_selection.cross_val_score`,
+  :func:`model_selection.cross_validate`,
+  :class:`model_selection.GridSearchCV`, and
+  :class:`model_selection.RandomizedSearchCV` allows estimator to fail scoring
+  and replace the score with `error_score`. If `error_score="raise"`, the error
+  will be raised.
+  :pr:`18343` by `Guillaume Lemaitre`_ and :user:`Devi Sandeep <dsandeep0138>`.
 
 - |Fix| Fixed the `len` of :class:`model_selection.ParameterSampler` when
   all distributions are lists and `n_iter` is more than the number of unique
@@ -459,14 +467,6 @@ Changelog
   :class:`model_selection.RandomizedSearchCV` results in non-finite scores.
   :pr:`18266` by :user:`Subrat Sahu <subrat93>`,
   :user:`Nirvan <Nirvan101>` and :user:`Arthur Book <ArthurBook>`.
-
-- |Enhancement| :func:`model_selection.cross_val_score`,
-  :func:`model_selection.cross_validate`,
-  :class:`model_selection.GridSearchCV`, and
-  :class:`model_selection.RandomizedSearchCV` allows estimator to fail scoring
-  and replace the score with `error_score`. If `error_score="raise"`, the error
-  will be raised.
-  :pr:`18343` by `Guillaume Lemaitre`_ and :user:`Devi Sandeep <dsandeep0138>`.
 
 :mod:`sklearn.multiclass`
 .........................
@@ -485,11 +485,6 @@ Changelog
 :mod:`sklearn.multioutput`
 ..........................
 
-- |Fix| A fix to accept tuples for the ``order`` parameter
-  in :class:`multioutput.ClassifierChain`.
-  :pr:`18124` by :user:`Gus Brocchini <boldloop>` and
-  :user:`Amanda Dsouza <amy12xx>`.
-
 - |Enhancement| :class:`multioutput.MultiOutputClassifier` and
   :class:`multioutput.MultiOutputRegressor` now accepts the inputs
   with missing values. Hence, estimators which can handle missing
@@ -497,20 +492,25 @@ Changelog
   estimators) can be used as a estimator for multiclass wrappers.
   :pr:`17987` by :user:`Venkatachalam N <venkyyuvy>`.
 
+- |Fix| A fix to accept tuples for the ``order`` parameter
+  in :class:`multioutput.ClassifierChain`.
+  :pr:`18124` by :user:`Gus Brocchini <boldloop>` and
+  :user:`Amanda Dsouza <amy12xx>`.
+
 :mod:`sklearn.naive_bayes`
 ..........................
-
-- |API|: The attributes ``coef_`` and ``intercept_`` are now deprecated in
-  :class:`naive_bayes.MultinomialNB`, :class:`naive_bayes.ComplementNB`,
-  :class:`naive_bayes.BernoulliNB` and :class:`naive_bayes.CategoricalNB`,
-  and will be removed in v0.26. :pr:`17427` by
-  :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
 - |Enhancement| Adds a parameter `min_categories` to
   :class:`naive_bayes.CategoricalNB` that allows a minimum number of categories
   per feature to be specified. This allows categories unseen during training
   to be accounted for.
   :pr:`16326` by :user:`George Armstrong <gwarmstrong>`.
+
+- |API| The attributes ``coef_`` and ``intercept_`` are now deprecated in
+  :class:`naive_bayes.MultinomialNB`, :class:`naive_bayes.ComplementNB`,
+  :class:`naive_bayes.BernoulliNB` and :class:`naive_bayes.CategoricalNB`,
+  and will be removed in v0.26. :pr:`17427` by
+  :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
 :mod:`sklearn.neighbors`
 ........................
@@ -587,6 +587,12 @@ Changelog
   which clips the transformed values of test data to ``feature_range``.
   :pr:`17833` by :user:`Yashika Sharma <yashika51>`.
 
+- |Feature| Add ``sample_weight`` parameter to
+  :class:`preprocessing.StandardScaler` for when X is dense. Allows setting
+  individual weights for each sample. :pr:`18510` and
+  :pr:`18447` and :pr:`16066` by :user:`Maria Telenczuk <maikia>` and
+  :user:`Albert Villanova <albertvillanova>` and :user:`panpiort8`.
+
 - |Enhancement| Verbose output of :class:`model_selection.GridSearchCV` has
   been improved for readability. :pr:`16935` by :user:`Raghav Rajagopalan
   <raghavrv>` and :user:`Chiara Marmo <cmarmo>`.
@@ -600,16 +606,10 @@ Changelog
   :class:`preprocessing.KBinsDiscretizer`.
   :pr:`16335` by :user:`Arthur Imbert <Henley13>`.
 
-- |Feature| Add ``sample_weight`` parameter to
-  :class:`preprocessing.StandardScaler` for when X is dense. Allows setting
-  individual weights for each sample. :pr:`18510` and
-  :pr:`18447` and :pr:`16066` by :user:`Maria Telenczuk <maikia>` and
-  :user:`Albert Villanova <albertvillanova>` and :user:`<panpiort8>`
-
 :mod:`sklearn.svm`
 ..................
 
-- |Enhancement| invoke scipy blas api for svm kernel function in ``fit``,
+- |Enhancement| invoke SciPy BLAS API for SVM kernel function in ``fit``,
   ``predict`` and related methods of :class:`svm.SVC`, :class:`svm.NuSVC`,
   :class:`svm.SVR`, :class:`svm.NuSVR`, :class:`OneClassSVM`.
   :pr:`16530` by :user:`Shuhua Fan <jim0421>`.
@@ -620,13 +620,18 @@ Changelog
 - |Enhancement| :func:`tree.plot_tree` now uses colors from the matplotlib
   configuration settings. :pr:`17187` by `Andreas Müller`_.
 
-- |API|: The parameter ``X_idx_sorted`` is now deprecated in
+- |API| The parameter ``X_idx_sorted`` is now deprecated in
   :meth:`tree.DecisionTreeClassifier.fit` and
   :meth:`tree.DecisionTreeRegressor.fit`, and has not effect.
   :pr:`17614` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
 :mod:`sklearn.utils`
 ....................
+
+- |Enhancement| Add ``check_methods_sample_order_invariance`` to
+  :func:`~utils.estimator_checks.check_estimator`, which checks that
+  estimator methods are invariant if applied to the same dataset
+  with different sample order :pr:`17598` by :user:`Jason Ngo <ngojason9>`.
 
 - |Fix| Raise ValueError with clear error message in :func:`check_array`
   for sparse DataFrames with mixed types.
@@ -636,11 +641,6 @@ Changelog
 - |Fix| Allow serialized tree based models to be unpickled on a machine
   with different endianness.
   :pr:`17644` by :user:`Qi Zhang <qzhang90>`.
-
-- |Enhancement| Add ``check_methods_sample_order_invariance`` to
-  :func:`~utils.estimator_checks.check_estimator`, which checks that
-  estimator methods are invariant if applied to the same dataset
-  with different sample order :pr:`17598` by :user:`Jason Ngo <ngojason9>`.
 
 Miscellaneous
 .............
@@ -653,4 +653,4 @@ Code and Documentation Contributors
 -----------------------------------
 
 Thanks to everyone who has contributed to the maintenance and improvement of
-the project since version 0.20, including:
+the project since version 0.23, including:
