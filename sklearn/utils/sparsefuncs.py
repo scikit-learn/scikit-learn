@@ -102,7 +102,7 @@ def mean_variance_axis(X, axis):
 
 @_deprecate_positional_args
 def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n,
-                            sample_weight=None):
+                            weights=None):
     """Compute incremental mean and variance along an axix on a CSR or
     CSC matrix.
 
@@ -128,9 +128,10 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n,
     last_n : ndarray with shape (n_features,)
         Sum of the weights seen for each feature, excluding the current weights
 
-    sample_weight : array-like of shape (n_samples,) if axis is set to 0, or
-        of shape (n_features,) if axis is set to 1 or None (regardless of axis)
-        If it is set to None, then samples are equally weighted.
+    weights : array-like of shape (n_samples,) if axis is set to 0; or
+        of shape (n_features,) if axis is set to 1; or None
+        (regardless of axis)
+        If it is set to None,then samples are equally weighted.
 
     Returns
     -------
@@ -156,13 +157,12 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n,
 
     if axis == 1:
         X = X.T
-    if sample_weight is not None:
-        sample_weight = _check_sample_weight(sample_weight, X,
-                                             dtype=X.dtype)
+    if weights is not None:
+        weights = _check_sample_weight(weights, X, dtype=X.dtype)
 
     return _incr_mean_var_axis0(X, last_mean=last_mean,
                                 last_var=last_var, last_n=last_n,
-                                weights=sample_weight)
+                                weights=weights)
 
 
 def inplace_column_scale(X, scale):
