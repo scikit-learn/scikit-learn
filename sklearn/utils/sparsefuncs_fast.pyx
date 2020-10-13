@@ -250,7 +250,7 @@ def incr_mean_variance_axis0(X, last_mean, last_var, last_n, weights=None):
 def _incr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
                               floating n_samples,
                               unsigned long long n_features,
-                              # find() returns int32 so we can set them to int
+                              # find() returns int32 so we can set them to long
                               np.ndarray[int, ndim=1] X_row_ind,
                               np.ndarray[int, ndim=1] X_indices,
                               # X_indptr might be either in32 or int64
