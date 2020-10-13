@@ -85,7 +85,7 @@ def test_mean_variance_axis1():
             assert_array_almost_equal(X_vars, np.var(X_test, axis=0))
 
 
-@pytest.mark.parametrize(['Xw', 'X', 'sample_weight'],
+@pytest.mark.parametrize(['Xw', 'X', 'weights'],
                          [
                          ([[0, 0, 1], [0, 2, 3]],
                           [[0, 0, 1], [0, 2, 3]],
@@ -121,7 +121,7 @@ def test_mean_variance_axis1():
                          )
 @pytest.mark.parametrize("sparse_constructor",
                          [sp.csc_matrix, sp.csr_matrix])
-def test_sample_weights_and_axis_is_one(Xw, X, sample_weight,
+def test_weights_and_axis_is_one(Xw, X, weights,
                                         sparse_constructor):
     Xw_sparse = sparse_constructor(Xw)
 
@@ -133,10 +133,10 @@ def test_sample_weights_and_axis_is_one(Xw, X, sample_weight,
 
     incr_mean_variance_axis(X=Xw_sparse, axis=axis, last_mean=last_mean,
                             last_var=last_var, last_n=last_n,
-                            sample_weight=sample_weight)
+                            weights=weights)
 
 
-@pytest.mark.parametrize(['Xw', 'X', 'sample_weight'],
+@pytest.mark.parametrize(['Xw', 'X', 'weights'],
                          [
                          ([[0, 0, 1], [0, 2, 3]],
                           [[0, 0, 1], [0, 2, 3]],
@@ -165,7 +165,7 @@ def test_sample_weights_and_axis_is_one(Xw, X, sample_weight,
                          )
 @pytest.mark.parametrize("sparse_constructor",
                          [sp.csc_matrix, sp.csr_matrix])
-def test_incr_mean_variance_axis_weighted(Xw, X, sample_weight,
+def test_incr_mean_variance_axis_weighted(Xw, X, weights,
                                           sparse_constructor):
     axis = 0
     Xw_sparse = sparse_constructor(Xw)
@@ -178,11 +178,11 @@ def test_incr_mean_variance_axis_weighted(Xw, X, sample_weight,
                                                      last_mean=last_mean,
                                                      last_var=last_var,
                                                      last_n=last_n,
-                                                     sample_weight=None)
+                                                     weights=None)
 
     means_w0, vars_w0, n_incr_w0 = incr_mean_variance_axis(
             X=Xw_sparse, axis=axis, last_mean=last_mean, last_var=last_var,
-            last_n=last_n, sample_weight=sample_weight)
+            last_n=last_n, weights=weights)
 
     assert_array_almost_equal(means0, means_w0)
     assert_array_almost_equal(vars0, vars_w0)
@@ -193,11 +193,11 @@ def test_incr_mean_variance_axis_weighted(Xw, X, sample_weight,
                                                      last_mean=means0,
                                                      last_var=vars0,
                                                      last_n=n_incr0,
-                                                     sample_weight=None)
+                                                     weights=None)
 
     means_w1, vars_w1, n_incr_w1 = incr_mean_variance_axis(
             X=Xw_sparse, axis=axis, last_mean=means_w0, last_var=vars_w0,
-            last_n=n_incr_w0, sample_weight=sample_weight)
+            last_n=n_incr_w0, weights=weights)
 
     assert_array_almost_equal(means1, means_w1)
     assert_array_almost_equal(vars1, vars_w1)
