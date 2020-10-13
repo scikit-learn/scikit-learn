@@ -591,7 +591,7 @@ Changelog
   :class:`preprocessing.StandardScaler` for when X is dense. Allows setting
   individual weights for each sample. :pr:`18510` and
   :pr:`18447` and :pr:`16066` by :user:`Maria Telenczuk <maikia>` and
-  :user:`Albert Villanova <albertvillanova>` and :user:`panpiort8`
+  :user:`Albert Villanova <albertvillanova>` and :user:`panpiort8`.
 
 - |Enhancement| Verbose output of :class:`model_selection.GridSearchCV` has
   been improved for readability. :pr:`16935` by :user:`Raghav Rajagopalan
