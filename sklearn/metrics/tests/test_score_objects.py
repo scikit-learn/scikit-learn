@@ -630,7 +630,7 @@ def test_multimetric_scorer_calls_method_once(scorers, expected_predict_count,
     mock_est.predict = predict_func
     mock_est.predict_proba = predict_proba_func
     mock_est.decision_function = decision_function_func
-    mock_est.estimator_type = "classifier"
+    mock_est._estimator_type = "classifier"
     mock_est._get_tags = get_tags_func
 
     # Add the classes that would be found during fit
