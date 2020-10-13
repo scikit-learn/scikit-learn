@@ -151,7 +151,7 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n,
     """
     _raise_error_wrong_axis(axis)
 
-    if not (isinstance(X, sp.csr_matrix) or isinstance(X, sp.csc_matrix)):
+    if not isinstance(X, [sp.csr_matrix, sp.csc_matrix]):
         _raise_typeerror(X)
 
     if axis == 1:
