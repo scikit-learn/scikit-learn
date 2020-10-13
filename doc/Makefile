@@ -66,9 +66,9 @@ ziphtml:
 	# Optimize the images to reduce the size of the ZIP
 	optipng $(BUILDDIR)/html/stable/_images/*.png
 	# Exclude the output directory to avoid infinity recursion
-	zip -q -x $(BUILDDIR)/html/stable/_downloads \
-	       -r $(BUILDDIR)/html/stable/_downloads/scikit-learn-docs.zip \
-		      $(BUILDDIR)/html/stable
+	cd $(BUILDDIR)/html/stable; \
+	zip -q -x _downloads \
+	       -r _downloads/scikit-learn-docs.zip .
 	@echo
 	@echo "Build finished. The ZIP of the HTML is in $(BUILDDIR)/html/stable/_downloads."
 
