@@ -359,8 +359,9 @@ class BaseEstimator:
             The input samples.
         reset : bool
             If True, the `n_features_in_` attribute is set to `X.shape[1]`.
-            Else, the attribute must already exist and the function checks
-            that it is equal to `X.shape[1]`.
+            If False and the attribute exists, then check that it is equal to
+            `X.shape[1]`. If False and the attribute does *not* exist, then
+            the check is skipped.
             .. note::
                It is recommended to call reset=True in `fit` and in the first
                call to `partial_fit`. All other methods that validate `X`
@@ -372,8 +373,10 @@ class BaseEstimator:
             self.n_features_in_ = n_features
             return
 
-        fitted_n_features_in = getattr(self, 'n_features_in_', None)
-        if fitted_n_features_in is None:
+        if not hasattr(self, "n_features_in_"):
+            # Skip this check if the expected number of expected input features
+            # was not recorded by calling fit first. This is typically the case
+            # for stateless transformers.
             return
 
         if n_features != self.n_features_in_:
