@@ -304,7 +304,7 @@ def _get_check_estimator_ids(obj):
 
     When `obj` is an estimator, this returns the pprint version of the
     estimator (with `print_changed_only=True`). When `obj` is a function, the
-    name of the function is returned with its keyworld arguments.
+    name of the function is returned with its keyword arguments.
 
     `_get_check_estimator_ids` is designed to be used as the `id` in
     `pytest.mark.parametrize` where `check_estimator(..., generate_only=True)`
@@ -521,7 +521,7 @@ def check_estimator(Estimator, generate_only=False, strict_mode=True):
 
     Parameters
     ----------
-    estimator : estimator object
+    Estimator : estimator object
         Estimator instance to check.
 
         .. versionchanged:: 0.24
@@ -740,7 +740,7 @@ def _generate_sparse_matrix(X_csr):
         -------
         out: iter(Matrices)
             In format['dok', 'lil', 'dia', 'bsr', 'csr', 'csc', 'coo',
-             'coo_64', 'csc_64', 'csr_64']
+            'coo_64', 'csc_64', 'csr_64']
     """
 
     assert X_csr.format == 'csr'
@@ -1770,7 +1770,7 @@ def check_regressor_multioutput(name, estimator, strict_mode=True):
         "Multioutput predictions by a regressor are expected to be"
         " floating-point precision. Got {} instead".format(y_pred.dtype))
     assert y_pred.shape == y.shape, (
-        "The shape of the orediction for multioutput data is incorrect."
+        "The shape of the prediction for multioutput data is incorrect."
         " Expected {}, got {}.")
 
 
@@ -2871,7 +2871,7 @@ def check_set_params(name, estimator_orig, strict_mode=True):
     estimator = clone(estimator_orig)
 
     orig_params = estimator.get_params(deep=False)
-    msg = ("get_params result does not match what was passed to set_params")
+    msg = "get_params result does not match what was passed to set_params"
 
     estimator.set_params(**orig_params)
     curr_params = estimator.get_params(deep=False)

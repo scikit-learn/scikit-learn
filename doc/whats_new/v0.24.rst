@@ -331,6 +331,9 @@ Changelog
   map approximation.
   :pr:`13003` by :user:`Daniel López Sánchez <lopeLH>`.
 
+- |Efficiency| :class:`kernel_approximation.Nystroem` now supports
+  parallelization via `joblib.Parallel` using argument `n_jobs`.
+  :pr:`18545` by :user:`Laurenz Reitsam <LaurenzReitsam>`.
 
 :mod:`sklearn.linear_model`
 ...........................
