@@ -708,7 +708,7 @@ def test_radius_neighbors_sort_results(algorithm, metric):
     # self.radius_neighbors_graph
     graph = model.radius_neighbors_graph(X=X, radius=np.inf, mode="distance",
                                          sort_results=True)
-    _is_sorted_by_data(graph)
+    assert _is_sorted_by_data(graph)
 
 
 def test_RadiusNeighborsClassifier_multioutput():
