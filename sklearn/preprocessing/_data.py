@@ -631,7 +631,6 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         The variance for each feature in the training set. Used to compute
         `scale_`. Equal to ``None`` when ``with_std=False``.
 
-    # TODO: should this parameter name change to last_weight_sum ??
     n_samples_seen_ : int, float or ndarray of shape (n_features,)
         Sum of weights processed so far by the estimator for each feature.
         If `sample_weight` is not used it is equivalent to the number
