@@ -474,7 +474,7 @@ class IterativeImputer(_BaseImputer):
         abs_corr_mat = normalize(abs_corr_mat, norm='l1', axis=0, copy=False)
         return abs_corr_mat
 
-    def _initial_imputation(self, X, in_fit=True):
+    def _initial_imputation(self, X, in_fit=False):
         """Perform initial imputation for input X.
 
         Parameters
@@ -483,8 +483,8 @@ class IterativeImputer(_BaseImputer):
             Input data, where "n_samples" is the number of samples and
             "n_features" is the number of features.
 
-        in_fit : bool, default=True
-            True if called in fit.
+        in_fit : bool, default=False
+            Whether function is called in fit.
 
         Returns
         -------
@@ -603,7 +603,8 @@ class IterativeImputer(_BaseImputer):
 
         self.initial_imputer_ = None
 
-        X, Xt, mask_missing_values, complete_mask = self._initial_imputation(X)
+        X, Xt, mask_missing_values, complete_mask = (
+            self._initial_imputation(X, in_fit=True))
 
         super()._fit_indicator(complete_mask)
         X_indicator = super()._transform_indicator(complete_mask)
@@ -704,8 +705,7 @@ class IterativeImputer(_BaseImputer):
         """
         check_is_fitted(self)
 
-        X, Xt, mask_missing_values, complete_mask = (
-            self._initial_imputation(X, in_fit=False))
+        X, Xt, mask_missing_values, complete_mask = self._initial_imputation(X)
 
         X_indicator = super()._transform_indicator(complete_mask)
 
