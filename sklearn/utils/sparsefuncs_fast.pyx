@@ -140,7 +140,7 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
         variances[i] += (n_samples - counts_nan[i] - counts[i]) * means[i]**2
         variances[i] /= (n_samples - counts_nan[i])
 
-    return means, variances, counts_nan.astype(dtype)
+    return means, variances, counts_nan.astype(dtype, copy=False)
 
 
 def csc_mean_variance_axis0(X):
@@ -239,7 +239,7 @@ def incr_mean_variance_axis0(X, last_mean, last_var, last_n, weights=None):
                                      X.shape[1],
                                      ind_rows,
                                      ind_cols,
-                                     X.indptr.astype(np.int32),
+                                     X.indptr,
                                      X.format,
                                      last_mean.astype(X_dtype, copy=False),
                                      last_var.astype(X_dtype, copy=False),
@@ -250,8 +250,10 @@ def incr_mean_variance_axis0(X, last_mean, last_var, last_n, weights=None):
 def _incr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
                               floating n_samples,
                               unsigned long long n_features,
-                              np.ndarray[integral, ndim=1] X_row_ind,
-                              np.ndarray[integral, ndim=1] X_indices,
+                              # find() returns int32 so we can set them to int
+                              np.ndarray[int, ndim=1] X_row_ind,
+                              np.ndarray[int, ndim=1] X_indices,
+                              # X_indptr might be either in32 or int64
                               np.ndarray[integral, ndim=1] X_indptr,
                               str X_format,
                               np.ndarray[floating, ndim=1] last_mean,
