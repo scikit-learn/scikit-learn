@@ -440,7 +440,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         estimator_tags = self.estimator._get_tags()
         return {'pairwise': estimator_tags.get('pairwise', False),
                 'estimator_type': estimator_tags.get('estimator_type', None),
-                '_xfail_checks": {'check_supervised_y_2d':
+                '_xfail_checks': {'check_supervised_y_2d':
                                   'DataConversionWarning not caught'}}
 
     # TODO: Remove in 0.26
