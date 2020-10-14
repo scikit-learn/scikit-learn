@@ -146,3 +146,17 @@ def test_manhattan_metric():
     clf.fit(X_csr, y)
     assert_array_equal(clf.centroids_, dense_centroid)
     assert_array_equal(dense_centroid, [[-1, -1], [1, 1]])
+
+
+def test_features_zero_var():
+    # Test that features with 0 variance throw error
+
+    X = np.empty((10, 2))
+    X[:, 0] = -0.13725701
+    X[:, 1] = -0.9853293
+    y = np.zeros((10))
+    y[0] = 1
+
+    clf = NearestCentroid(shrink_threshold=0.1)
+    with assert_raises(ValueError):
+        clf.fit(X, y)
