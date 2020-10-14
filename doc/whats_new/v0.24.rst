@@ -542,6 +542,14 @@ Changelog
   will raise a `ValueError` when fitting on data with all constant features.
   :pr:`18370` by :user:`Trevor Waite <trewaite>`.
 
+- |Fix| In  methods `radius_neighbors` and
+  `radius_neighbors_graph` of :class:`neighbors.NearestNeighbors`,
+  :class:`neighbors.RadiusNeighborsClassifier`,
+  :class:`neighbors.RadiusNeighborsRegressor`, and
+  :class:`neighbors.RadiusNeighborsTransformer`, using `sort_results=True` now
+  correctly sorts the results even when fitting with the "brute" algorithm.
+  :pr:`18612` by `Tom Dupre la Tour`_.
+
 :mod:`sklearn.neural_network`
 .............................
 
