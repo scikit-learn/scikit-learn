@@ -754,6 +754,23 @@ def test_permutation_test_score_allow_nans():
     permutation_test_score(p, X, y)
 
 
+def test_permutation_test_score_fit_params():
+    X = np.arange(100).reshape(10, 10)
+    y = np.array([0] * 5 + [1] * 5)
+    clf = CheckingClassifier(expected_fit_params=['sample_weight'])
+
+    err_msg = r"Expected fit parameter\(s\) \['sample_weight'\] not seen."
+    with pytest.raises(AssertionError, match=err_msg):
+        permutation_test_score(clf, X, y)
+
+    err_msg = "Fit parameter sample_weight has length 1; expected"
+    with pytest.raises(AssertionError, match=err_msg):
+        permutation_test_score(clf, X, y,
+                               fit_params={'sample_weight': np.ones(1)})
+    permutation_test_score(clf, X, y,
+                           fit_params={'sample_weight': np.ones(10)})
+
+
 def test_cross_val_score_allow_nans():
     # Check that cross_val_score allows input data with NaNs
     X = np.arange(200, dtype=np.float64).reshape(10, -1)
@@ -1296,6 +1313,26 @@ def test_validation_curve_cv_splits_consistency():
 
     # OneTimeSplitter is basically unshuffled KFold(n_splits=5). Sanity check.
     assert_array_almost_equal(np.array(scores3), np.array(scores1))
+
+
+def test_validation_curve_fit_params():
+    X = np.arange(100).reshape(10, 10)
+    y = np.array([0] * 5 + [1] * 5)
+    clf = CheckingClassifier(expected_fit_params=['sample_weight'])
+
+    err_msg = r"Expected fit parameter\(s\) \['sample_weight'\] not seen."
+    with pytest.raises(AssertionError, match=err_msg):
+        validation_curve(clf, X, y, param_name='foo_param',
+                         param_range=[1, 2, 3], error_score='raise')
+
+    err_msg = "Fit parameter sample_weight has length 1; expected"
+    with pytest.raises(AssertionError, match=err_msg):
+        validation_curve(clf, X, y, param_name='foo_param',
+                         param_range=[1, 2, 3], error_score='raise',
+                         fit_params={'sample_weight': np.ones(1)})
+    validation_curve(clf, X, y, param_name='foo_param',
+                     param_range=[1, 2, 3], error_score='raise',
+                     fit_params={'sample_weight': np.ones(10)})
 
 
 def test_check_is_permutation():
