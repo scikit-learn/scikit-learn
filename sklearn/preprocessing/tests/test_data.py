@@ -1313,8 +1313,6 @@ def test_quantile_transform_check_error():
     err_msg = ("X has 2 features, but QuantileTransformer is expecting "
                "3 features as input.")
     with pytest.raises(ValueError, match=err_msg):
-        transformer.transform(X_bad_feat)
-    with pytest.raises(ValueError, match=err_msg):
         transformer.inverse_transform(X_bad_feat)
 
     transformer = QuantileTransformer(n_quantiles=10,
