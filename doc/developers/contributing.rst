@@ -751,12 +751,11 @@ Finally, follow the formatting rules below to make it consistently good:
 * When editing reStructuredText (``.rst``) files, try to keep line length under
   80 characters when possible (exceptions include links and tables).
 
-* Before submitting your pull request:
+* Do not modify label for internal links as this would break existing cross
+  references in the documentation.
 
-    * check if your modifications have introduced new sphinx warnings and try
-      to fix them;
-    * check if you have removed or modified anchors for internal links and
-      revert them if needed.
+* Before submitting your pull request check if your modifications have
+  introduced new sphinx warnings and try to fix them.
 
 .. _generated_doc_CI:
 
