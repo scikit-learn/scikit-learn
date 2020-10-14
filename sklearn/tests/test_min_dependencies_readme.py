@@ -7,14 +7,14 @@ from pathlib import Path
 
 import pytest
 import sklearn
-from sklearn._build_utils.min_dependencies import dependent_packages
+from sklearn._min_dependencies import dependent_packages
 from sklearn.utils.fixes import parse_version
 
 
 def test_min_dependencies_readme():
     # Test that the minimum dependencies in the README.rst file are
     # consistent with the minimum dependencies defined at the file:
-    # sklearn/_build_utils/min_dependencies.py
+    # sklearn/_min_dependencies.py
 
     pattern = re.compile(r"(\.\. \|)" +
                          r"(([A-Za-z]+\-?)+)" +
