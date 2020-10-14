@@ -25,6 +25,8 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
 
+from sklearn.utils.validation import _num_samples
+
 from sklearn.model_selection import cross_val_score, ShuffleSplit
 from sklearn.model_selection import cross_val_predict
 from sklearn.model_selection import cross_validate
@@ -114,9 +116,10 @@ class MockImprovingEstimator(BaseEstimator):
 
 class MockIncrementalImprovingEstimator(MockImprovingEstimator):
     """Dummy classifier that provides partial_fit"""
-    def __init__(self, n_max_train_sizes):
+    def __init__(self, n_max_train_sizes, expected_fit_params=None):
         super().__init__(n_max_train_sizes)
         self.x = None
+        self.expected_fit_params = expected_fit_params
 
     def _is_training_data(self, X):
         return self.x in X
@@ -124,6 +127,20 @@ class MockIncrementalImprovingEstimator(MockImprovingEstimator):
     def partial_fit(self, X, y=None, **params):
         self.train_sizes += X.shape[0]
         self.x = X[0]
+
+        if self.expected_fit_params:
+            missing = set(self.expected_fit_params) - set(params)
+            if missing:
+                raise AssertionError(
+                    f'Expected fit parameter(s) {list(missing)} not seen.'
+                )
+            for key, value in params.items():
+                if key in self.expected_fit_params and \
+                   _num_samples(value) != _num_samples(X):
+                    raise AssertionError(
+                        f'Fit parameter {key} has length {_num_samples(value)}'
+                        f'; expected {_num_samples(X)}.'
+                    )
 
 
 class MockEstimatorWithParameter(BaseEstimator):
@@ -1247,6 +1264,48 @@ def test_learning_curve_with_shuffle():
                               train_scores_batch.mean(axis=1))
     assert_array_almost_equal(test_scores_inc.mean(axis=1),
                               test_scores_batch.mean(axis=1))
+
+
+def test_learning_curve_fit_params():
+    X = np.arange(100).reshape(10, 10)
+    y = np.array([0] * 5 + [1] * 5)
+    clf = CheckingClassifier(expected_fit_params=['sample_weight'])
+
+    err_msg = r"Expected fit parameter\(s\) \['sample_weight'\] not seen."
+    with pytest.raises(AssertionError, match=err_msg):
+        learning_curve(clf, X, y, error_score='raise')
+
+    err_msg = "Fit parameter sample_weight has length 1; expected"
+    with pytest.raises(AssertionError, match=err_msg):
+        learning_curve(clf, X, y, error_score='raise',
+                       fit_params={'sample_weight': np.ones(1)})
+    learning_curve(clf, X, y, error_score='raise',
+                   fit_params={'sample_weight': np.ones(10)})
+
+
+def test_learning_curve_incremental_learning_fit_params():
+    X, y = make_classification(n_samples=30, n_features=1, n_informative=1,
+                               n_redundant=0, n_classes=2,
+                               n_clusters_per_class=1, random_state=0)
+    estimator = MockIncrementalImprovingEstimator(20, ['sample_weight'])
+    err_msg = r"Expected fit parameter\(s\) \['sample_weight'\] not seen."
+    with pytest.raises(AssertionError, match=err_msg):
+        learning_curve(estimator, X, y, cv=3,
+                       exploit_incremental_learning=True,
+                       train_sizes=np.linspace(0.1, 1.0, 10),
+                       error_score='raise')
+
+    err_msg = "Fit parameter sample_weight has length 3; expected"
+    with pytest.raises(AssertionError, match=err_msg):
+        learning_curve(estimator, X, y, cv=3,
+                       exploit_incremental_learning=True,
+                       train_sizes=np.linspace(0.1, 1.0, 10),
+                       error_score='raise',
+                       fit_params={'sample_weight': np.ones(3)})
+
+    learning_curve(estimator, X, y, cv=3, exploit_incremental_learning=True,
+                   train_sizes=np.linspace(0.1, 1.0, 10), error_score='raise',
+                   fit_params={'sample_weight': np.ones(2)})
 
 
 def test_validation_curve():

@@ -474,6 +474,10 @@ Changelog
   :pr:`18266` by :user:`Subrat Sahu <subrat93>`,
   :user:`Nirvan <Nirvan101>` and :user:`Arthur Book <ArthurBook>`.
 
+- |Enhancement| :func:`model_selection.learning_curve` now accept fit_params
+  to pass additional estimator parameters.
+  :pr:`18595` by :user:`Amanda Dsouza <amy12xx>`.
+
 :mod:`sklearn.multiclass`
 .........................
 
