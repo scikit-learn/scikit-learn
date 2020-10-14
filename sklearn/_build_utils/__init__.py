@@ -13,7 +13,7 @@ from distutils.version import LooseVersion
 
 from .pre_build_helpers import basic_check_build
 from .openmp_helpers import check_openmp_support
-from .min_dependencies import CYTHON_MIN_VERSION
+from .._min_dependencies import CYTHON_MIN_VERSION
 
 
 DEFAULT_ROOT = 'sklearn'
