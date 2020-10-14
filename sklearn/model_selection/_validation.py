@@ -1312,6 +1312,8 @@ def learning_curve(estimator, X, y, *, groups=None,
     fit_params : dict, default=None
         Parameters to pass to the fit method of the estimator.
 
+        .. versionadded:: 0.24
+
     Returns
     -------
     train_sizes_abs : array of shape (n_unique_ticks,)
