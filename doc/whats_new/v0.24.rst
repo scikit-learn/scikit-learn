@@ -450,6 +450,12 @@ Changelog
   samples between the train and test set on each fold.
   :pr:`13204` by :user:`Kyle Kosic <kykosic>`.
 
+- |Enhancement| :func:`model_selection.permutation_test_score` and
+  :func:`model_selection.validation_curve` now accept fit_params
+  to pass additional estimator parameters.
+  :pr:`18527` by :user:`Gaurav Dhingra <gxyd>`,
+  :user:`Julien Jerphanion <jjerphan>` and :user:`Amanda Dsouza <amy12xx>`.
+
 - |Enhancement| :func:`model_selection.cross_val_score`,
   :func:`model_selection.cross_validate`,
   :class:`model_selection.GridSearchCV`, and
@@ -535,6 +541,14 @@ Changelog
 - |Fix| :class:`neighbors.NearestCentroid` with a numerical `shrink_threshold`
   will raise a `ValueError` when fitting on data with all constant features.
   :pr:`18370` by :user:`Trevor Waite <trewaite>`.
+
+- |Fix| In  methods `radius_neighbors` and
+  `radius_neighbors_graph` of :class:`neighbors.NearestNeighbors`,
+  :class:`neighbors.RadiusNeighborsClassifier`,
+  :class:`neighbors.RadiusNeighborsRegressor`, and
+  :class:`neighbors.RadiusNeighborsTransformer`, using `sort_results=True` now
+  correctly sorts the results even when fitting with the "brute" algorithm.
+  :pr:`18612` by `Tom Dupre la Tour`_.
 
 :mod:`sklearn.neural_network`
 .............................

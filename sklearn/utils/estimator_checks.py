@@ -3143,14 +3143,6 @@ def check_requires_y_none(name, estimator_orig, strict_mode=True):
             warnings.warn(warning_msg, FutureWarning)
 
 
-def _accumulate_estimator_names(estimator, names):
-    for attribute_name in ["estimator_", "base_estimator_"]:
-        base_estimator = getattr(estimator, attribute_name, None)
-        if base_estimator is not None:
-            names.append(base_estimator.__class__.__name__)
-            _accumulate_estimator_names(base_estimator, names)
-
-
 def check_n_features_in_after_fitting(name, estimator_orig, strict_mode=True):
     # Make sure that n_features_in are checked after fitting
     tags = estimator_orig._get_tags()
@@ -3181,10 +3173,8 @@ def check_n_features_in_after_fitting(name, estimator_orig, strict_mode=True):
     check_methods = ["predict", "transform", "decision_function",
                      "predict_proba"]
     X_bad = X[:, [1]]
-    names = [name]
-    _accumulate_estimator_names(estimator, names)
-    names = "|".join(names)
-    msg = (f"X has 1 features, but ({names}) is expecting {X.shape[1]} "
+
+    msg = (f"X has 1 features, but \\w+ is expecting {X.shape[1]} "
            "features as input")
     for method in check_methods:
         if not hasattr(estimator, method):

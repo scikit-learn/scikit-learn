@@ -925,10 +925,10 @@ class RadiusNeighborsMixin:
             Whether or not to return the distances.
 
         sort_results : bool, default=False
-            If True, the distances and indices will be sorted before being
-            returned. If `False`, the results will not be sorted. If
-            `return_distance=False`, setting `sort_results=True` will
-            result in an error.
+            If True, the distances and indices will be sorted by increasing
+            distances before being returned. If False, the results may not
+            be sorted. If `return_distance=False`, setting `sort_results=True`
+            will result in an error.
 
             .. versionadded:: 0.22
 
@@ -1021,6 +1021,16 @@ class RadiusNeighborsMixin:
                 neigh_ind_list = sum(chunked_results, [])
                 results = _to_object_array(neigh_ind_list)
 
+            if sort_results:
+                if not return_distance:
+                    raise ValueError("return_distance must be True "
+                                     "if sort_results is True.")
+                for ii in range(len(neigh_dist)):
+                    order = np.argsort(neigh_dist[ii], kind='mergesort')
+                    neigh_ind[ii] = neigh_ind[ii][order]
+                    neigh_dist[ii] = neigh_dist[ii][order]
+                results = neigh_dist, neigh_ind
+
         elif self._fit_method in ['ball_tree', 'kd_tree']:
             if issparse(X):
                 raise ValueError(
@@ -1097,9 +1107,9 @@ class RadiusNeighborsMixin:
             edges are Euclidean distance between points.
 
         sort_results : bool, default=False
-            If True, the distances and indices will be sorted before being
-            returned. If False, the results will not be sorted.
-            Only used with mode='distance'.
+            If True, in each row of the result, the non-zero entries will be
+            sorted by increasing distances. If False, the non-zero entries may
+            not be sorted. Only used with mode='distance'.
 
             .. versionadded:: 0.22
 
