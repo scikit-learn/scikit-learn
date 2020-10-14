@@ -468,7 +468,7 @@ the estimators::
 
 Directly comparing the performance of the
 :class:`~sklearn.discriminant_analysis.LinearDiscriminantAnalysis` estimator
-vs the :class:`~sklearn.naive_bayes.GaussianNB` estimator on each fold would
+vs the :class:`~sklearn.naive_bayes.GaussianNB` estimator **on each fold** would
 be a mistake: **the splits on which the estimators are evaluated are
 different**. Indeed, :func:`~sklearn.model_selection.cross_val_score` will
 internally call `cv.split` on the same
