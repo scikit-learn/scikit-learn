@@ -38,7 +38,6 @@ def _find_binning_thresholds(col_data, max_bins):
         The increasing numeric values that can be used to separate the bins.
         A given value x will be mapped into bin value i iff
         bining_thresholds[i - 1] < x <= binning_thresholds[i]
-
     """
     # ignore missing values when computing bin thresholds
     missing_mask = np.isnan(col_data)
