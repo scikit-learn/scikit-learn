@@ -30,9 +30,8 @@ and the model will not be able to perform effectively.
 For the following example, let's create a synthetic dataset with a
 single feature::
 
-    
-    
-    from sklearn.datasets import make_regression
+
+    >>> from sklearn.datasets import make_regression
     >>> from sklearn.model_selection import train_test_split
     ...
     >>> random_state = 42
