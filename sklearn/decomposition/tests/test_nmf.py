@@ -606,3 +606,5 @@ def test_init_default_deprecation():
         nmf._initialize_nmf(A, 3)
     with pytest.warns(FutureWarning, match=msg):
         NMF().fit(A)
+    with pytest.warns(FutureWarning, match=msg):
+        non_negative_factorization(A)

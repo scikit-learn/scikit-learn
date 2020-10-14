@@ -851,7 +851,7 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
 
 @_deprecate_positional_args
 def non_negative_factorization(X, W=None, H=None, n_components=None, *,
-                               init=None, update_H=True, solver='cd',
+                               init='warn', update_H=True, solver='cd',
                                beta_loss='frobenius', tol=1e-4,
                                max_iter=200, alpha=0., l1_ratio=0.,
                                regularization=None, random_state=None,
