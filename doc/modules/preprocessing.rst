@@ -590,6 +590,34 @@ In the transformed `X`, the first column is the encoding of the feature with
 categories "male"/"female", while the remaining 6 columns is the encoding of
 the 2 features with respectively 3 categories each.
 
+:class:`OneHotEncoder` supports categorical features with missing values by
+considering the missing values as an additional category::
+
+    >>> X = [['male', 'Safari'],
+    ...      ['female', None],
+    ...      [np.nan, 'Firefox']]
+    >>> enc = preprocessing.OneHotEncoder(handle_unknown='error').fit(X)
+    >>> enc.categories_
+    [array(['female', 'male', nan], dtype=object),
+     array(['Firefox', 'Safari', None], dtype=object)]
+    >>> enc.transform(X).toarray()
+    array([[0., 1., 0., 0., 1., 0.],
+           [1., 0., 0., 0., 0., 1.],
+           [0., 0., 1., 1., 0., 0.]])
+
+If a feature contains both `np.nan` and `None`, they will be considered
+separate categories::
+
+    >>> X = [['Safari'], [None], [np.nan], ['Firefox']]
+    >>> enc = preprocessing.OneHotEncoder(handle_unknown='error').fit(X)
+    >>> enc.categories_
+    [array(['Firefox', 'Safari', None, nan], dtype=object)]
+    >>> enc.transform(X).toarray()
+    array([[0., 1., 0., 0.],
+           [0., 0., 1., 0.],
+           [0., 0., 0., 1.],
+           [1., 0., 0., 0.]])
+
 See :ref:`dict_feature_extraction` for categorical features that are
 represented as a dict, not as scalars.
 
@@ -791,5 +819,5 @@ error with a ``filterwarnings``::
   ...                         category=UserWarning, append=False)
 
 For a full code example that demonstrates using a :class:`FunctionTransformer`
-to extract features from text data see 
+to extract features from text data see
 :ref:`sphx_glr_auto_examples_compose_plot_column_transformer.py`
