@@ -23,6 +23,7 @@ from sklearn.utils.estimator_checks import _construct_instance
 from sklearn.utils.deprecation import _is_deprecated
 from sklearn.externals._pep562 import Pep562
 from sklearn.datasets import make_classification
+from sklearn.linear_model import LogisticRegression
 
 import pytest
 
@@ -169,6 +170,10 @@ def test_tabs():
                                     % modname)
 
 
+def _construct_searchcv_instance(SearchCV):
+    return SearchCV(LogisticRegression(), {"C": [0.1, 1]})
+
+
 @pytest.mark.parametrize('name, Estimator',
                          all_estimators())
 def test_fit_docstring_attributes(name, Estimator):
@@ -180,12 +185,12 @@ def test_fit_docstring_attributes(name, Estimator):
 
     IGNORED = {'CCA', 'ClassifierChain', 'ColumnTransformer',
                'CountVectorizer', 'DictVectorizer', 'FeatureUnion',
-               'GaussianRandomProjection', 'GridSearchCV',
+               'GaussianRandomProjection',
                'MultiOutputClassifier', 'MultiOutputRegressor',
                'NoSampleWeightWrapper', 'OneVsOneClassifier',
                'OutputCodeClassifier', 'Pipeline', 'PLSCanonical',
                'PLSRegression', 'PLSSVD', 'RFE', 'RFECV',
-               'RandomizedSearchCV', 'RegressorChain', 'SelectFromModel',
+               'RegressorChain', 'SelectFromModel',
                'SparseCoder', 'SparseRandomProjection',
                'SpectralBiclustering', 'StackingClassifier',
                'StackingRegressor', 'TfidfVectorizer', 'VotingClassifier',
@@ -194,7 +199,10 @@ def test_fit_docstring_attributes(name, Estimator):
     if Estimator.__name__ in IGNORED or Estimator.__name__.startswith('_'):
         pytest.skip("Estimator cannot be fit easily to test fit attributes")
 
-    est = _construct_instance(Estimator)
+    if Estimator.__name__ in ("RandomizedSearchCV", "GridSearchCV"):
+        est = _construct_searchcv_instance(Estimator)
+    else:
+        est = _construct_instance(Estimator)
 
     if Estimator.__name__ == 'SelectKBest':
         est.k = 2
