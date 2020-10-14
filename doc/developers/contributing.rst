@@ -751,8 +751,9 @@ Finally, follow the formatting rules below to make it consistently good:
 * When editing reStructuredText (``.rst``) files, try to keep line length under
   80 characters when possible (exceptions include links and tables).
 
-* Do not modify label for internal links as this would break existing cross
-  references in the documentation.
+* Do not modify sphinx labels as this would break existing cross references and
+  external links pointing to specific sections in the
+  scikit-learn documentation.
 
 * Before submitting your pull request check if your modifications have
   introduced new sphinx warnings and try to fix them.
