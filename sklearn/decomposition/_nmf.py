@@ -1260,7 +1260,7 @@ class NMF(TransformerMixin, BaseEstimator):
     factorization with the beta-divergence. Neural Computation, 23(9).
     """
     @_deprecate_positional_args
-    def __init__(self, n_components=None, *, init=None, solver='cd',
+    def __init__(self, n_components=None, *, init='warn', solver='cd',
                  beta_loss='frobenius', tol=1e-4, max_iter=200,
                  random_state=None, alpha=0., l1_ratio=0., verbose=0,
                  shuffle=False, regularization='both'):
