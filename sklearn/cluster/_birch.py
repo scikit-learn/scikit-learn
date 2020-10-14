@@ -12,7 +12,6 @@ from math import sqrt
 from ..metrics import pairwise_distances_argmin
 from ..metrics.pairwise import euclidean_distances
 from ..base import TransformerMixin, ClusterMixin, BaseEstimator
-from ..utils import check_array
 from ..utils.extmath import row_norms
 from ..utils.validation import check_is_fitted, _deprecate_positional_args
 from ..exceptions import ConvergenceWarning
@@ -585,8 +584,9 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         labels : ndarray of shape(n_samples,)
             Labelled data.
         """
-        X = check_array(X, accept_sparse='csr')
-        self._check_fit(X)
+        check_is_fitted(self)
+        X = self._validate_data(X, accept_sparse='csr',
+                                reset=False)
         kwargs = {'Y_norm_squared': self._subcluster_norms}
         return self.subcluster_labels_[
                 pairwise_distances_argmin(X,
@@ -612,6 +612,9 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
             Transformed data.
         """
         check_is_fitted(self)
+        self._validate_data(X, accept_sparse='csr', reset=False)
+        # XXX: input data validation is performed again in
+        # euclidean_distances.
         return euclidean_distances(X, self.subcluster_centers_)
 
     def _global_clustering(self, X=None):

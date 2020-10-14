@@ -285,7 +285,6 @@ def test_strict_mode_parametrize_with_checks(estimator, check):
 # check_classifiers_train would need to be updated with the error message
 N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE = {
     'calibration',
-    'cluster',
     'compose',
     'covariance',
     'cross_decomposition',

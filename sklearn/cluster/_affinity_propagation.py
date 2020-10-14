@@ -10,7 +10,7 @@ import warnings
 
 from ..exceptions import ConvergenceWarning
 from ..base import BaseEstimator, ClusterMixin
-from ..utils import as_float_array, check_array, check_random_state
+from ..utils import as_float_array, check_random_state
 from ..utils.deprecation import deprecated
 from ..utils.validation import check_is_fitted, _deprecate_positional_args
 from ..metrics import euclidean_distances
@@ -446,7 +446,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
             Cluster labels.
         """
         check_is_fitted(self)
-        X = check_array(X)
+        X = self._validate_data(X, reset=False)
         if not hasattr(self, "cluster_centers_"):
             raise ValueError("Predict method is not supported when "
                              "affinity='precomputed'.")
