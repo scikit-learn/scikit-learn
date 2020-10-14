@@ -1132,6 +1132,8 @@ def permutation_test_score(estimator, X, y, *, groups=None, cv=None,
     fit_params : dict, default=None
         Parameters to pass to the fit method of the estimator.
 
+        .. versionadded:: 0.24
+
     Returns
     -------
     score : float
@@ -1588,6 +1590,8 @@ def validation_curve(estimator, X, y, *, param_name, param_range, groups=None,
 
     fit_params : dict, default=None
         Parameters to pass to the fit method of the estimator.
+
+        .. versionadded:: 0.24
 
     error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
