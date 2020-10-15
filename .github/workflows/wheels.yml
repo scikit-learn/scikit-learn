@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v2
+        uses: actions/checkout@v1
 
       - name: Set environment variables
         run: |
@@ -53,7 +53,7 @@ jobs:
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v2
+        uses: actions/checkout@v1
 
       - name: Setup Python
         uses: actions/setup-python@v2
@@ -101,7 +101,7 @@ jobs:
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v2
+        uses: actions/checkout@v1
 
       - name: Setup Python
         uses: actions/setup-python@v2
