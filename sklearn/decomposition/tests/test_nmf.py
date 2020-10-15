@@ -179,7 +179,7 @@ def test_n_components_greater_n_features():
     # Smoke test for the case of more components than features.
     rng = np.random.mtrand.RandomState(42)
     A = np.abs(rng.randn(30, 10))
-        # FIXME : should be removed in 0.26
+    # FIXME : should be removed in 0.26
     init = 'random'
     NMF(n_components=15, random_state=0, tol=1e-2, init=init).fit(A)
 
