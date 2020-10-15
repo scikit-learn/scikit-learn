@@ -73,13 +73,11 @@ def csr_mean_variance_axis0(X):
     """
     if X.dtype not in [np.float32, np.float64]:
         X = X.astype(np.float64)
-    last_mean = np.zeros(X.shape[1], dtype=X.dtype)
-    last_var = np.zeros(X.shape[1], dtype=X.dtype)
-    last_n = np.zeros(X.shape[1], dtype=X.dtype)
+
     weights = np.ones(X.shape[0], dtype=X.dtype)
 
-    means, variances, _ = incr_mean_variance_axis0(
-        X, last_mean, last_var, last_n, weights)
+    means, variances, _ = _csr_mean_variance_axis0(
+        X.data, X.shape[0], X.shape[1], X.indices, X.indptr, weights)
 
     return means, variances
 
@@ -94,8 +92,8 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
     # cannot be declared directly and can only be passed as function arguments
     cdef:
         np.npy_intp i
-        # unsigned long long non_zero = X_indices.shape[0]
-        np.npy_intp col_ind
+        unsigned long long row_ind
+        integral col_ind
         floating diff
         # means[j] contains the mean of feature j
         np.ndarray[floating, ndim=1] means
@@ -111,8 +109,8 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
     variances = np.zeros_like(means, dtype=dtype)
 
     cdef:
-        np.ndarray[np.int64_t, ndim=1] counts = np.zeros(n_features,
-                                                         dtype=np.int64)
+        np.ndarray[np.float64_t, ndim=1] counts = np.zeros(n_features,
+                                                         dtype=np.float64)
         np.ndarray[np.float64_t, ndim=1] counts_nan = np.zeros(
             n_features, dtype=np.float64)
 
@@ -162,12 +160,9 @@ def csc_mean_variance_axis0(X):
     if X.dtype not in [np.float32, np.float64]:
         X = X.astype(np.float64)
 
-    last_mean = np.zeros(X.shape[1], dtype=X.dtype)
-    last_var = np.zeros(X.shape[1], dtype=X.dtype)
-    last_n = np.zeros(X.shape[1], dtype=X.dtype)
     weights = np.ones(X.shape[0], dtype=X.dtype)
-    means, variances, _ = incr_mean_variance_axis0(
-        X, last_mean, last_var, last_n, weights)
+    means, variances, _ = _csc_mean_variance_axis0(
+        X.data, X.shape[0], X.shape[1], X.indices, X.indptr, weights)
     return means, variances
 
 
@@ -181,7 +176,8 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
     # cannot be declared directly and can only be passed as function arguments
     cdef:
         np.npy_intp i
-        np.npy_intp row_ind
+        unsigned long long col_ind
+        integral row_ind
         floating diff
         # means[j] contains the mean of feature j
         np.ndarray[floating, ndim=1] means
@@ -197,8 +193,8 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
     variances = np.zeros_like(means, dtype=dtype)
 
     cdef:
-        np.ndarray[np.int64_t, ndim=1] counts = np.zeros(n_features,
-                                                         dtype=np.int64)
+        np.ndarray[np.float64_t, ndim=1] counts = np.zeros(n_features,
+                                                           dtype=np.float64)
         np.ndarray[np.float64_t, ndim=1] counts_nan = np.zeros(
             n_features, dtype=np.float64)
 
