@@ -93,7 +93,6 @@ jobs:
           path: wheelhouse/*.whl
 
   build_sdist:
-    # TODO: Add a commit marker to trigger the build when it is needed
     name: Source distribution
     runs-on: ubuntu-latest
     needs: check_build
