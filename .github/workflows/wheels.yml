@@ -40,7 +40,7 @@ jobs:
     name: Build wheels on ${{ matrix.os }} for Python ${{ matrix.python }}
     runs-on: ${{ matrix.os }}
     needs: check_build
-    if: $ {{ needs.check_build.outputs.build }}
+    if: ${{ needs.check_build.outputs.build }}
 
     strategy:
       # Avoid that the wheel builder for a
