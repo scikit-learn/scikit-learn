@@ -21,13 +21,13 @@ particular, we will evaluate:
 We will work with the Ames Lowa Housing dataset which consists of numerical
 and categorical features, where the houses' sales prices is the target.
 """
-##############################################################################
+print(__doc__)
+
+# %%
 # Load Ames Housing dataset
 # -------------------------
 # First, we load the ames housing data as a pandas dataframe. The features
 # are either categorical or numerical:
-print(__doc__)
-
 from sklearn.datasets import fetch_openml
 
 X, y = fetch_openml(data_id=41211, as_frame=True, return_X_y=True)
@@ -38,7 +38,7 @@ print(f"Number of features: {X.shape[1]}")
 print(f"Number of categorical features: {n_categorical_features}")
 print(f"Number of numerical features: {n_numerical_features}")
 
-##############################################################################
+# %%
 # Gradient boosting estimator with dropped categorical features
 # -------------------------------------------------------------
 # As a baseline, we create an estimator where the categorical features are
@@ -56,7 +56,7 @@ dropper = make_column_transformer(
 hist_dropped = make_pipeline(dropper,
                              HistGradientBoostingRegressor(random_state=42))
 
-##############################################################################
+# %%
 # Gradient boosting estimator with one-hot encoding
 # -------------------------------------------------
 # Next, we create a pipeline that will one-hot encode the categorical features
@@ -72,7 +72,7 @@ one_hot_encoder = make_column_transformer(
 hist_one_hot = make_pipeline(one_hot_encoder,
                              HistGradientBoostingRegressor(random_state=42))
 
-##############################################################################
+# %%
 # Gradient boosting estimator with ordinal encoding
 # -------------------------------------------------
 # Next, we create a pipeline that will treat categorical features as if they
@@ -90,7 +90,7 @@ ordinal_encoder = make_column_transformer(
 hist_ordinal = make_pipeline(ordinal_encoder,
                              HistGradientBoostingRegressor(random_state=42))
 
-##############################################################################
+# %%
 # Gradient boosting estimator with native categorical support
 # -----------------------------------------------------------
 # We now create a :class:`~ensemble.HistGradientBoostingRegressor` estimator
@@ -116,7 +116,7 @@ hist_native = make_pipeline(
 )
 
 
-##############################################################################
+# %%
 # Model comparison
 # ----------------
 # Finally, we evaluate the models using cross validation. Here we compare the
@@ -147,7 +147,7 @@ for key, title, ax, y_limit in plot_info:
            ylim=y_limit)
 plt.show()
 
-##############################################################################
+# %%
 # We see that the model with one-hot-encoded data is by far the slowest. This
 # is to be expected, since one-hot-encoding creates one additional feature per
 # category value (for each categorical feature), and thus more split points
