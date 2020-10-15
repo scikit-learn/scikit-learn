@@ -1,17 +1,29 @@
 import numpy as np
 import pytest
 
-from sklearn.feature_selection import SelectKBest
-from sklearn.pipeline import make_pipeline
 from sklearn.base import BaseEstimator, ClassifierMixin, TransformerMixin
 from sklearn.base import MetadataConsumer, SampleWeightConsumer
-from sklearn.utils import _validate_required_props
 from sklearn.datasets import make_classification
-from sklearn.metrics import make_scorer, balanced_accuracy_score
-from sklearn.model_selection import GridSearchCV
-from sklearn.svm import SVC
+from sklearn.feature_selection import SelectKBest
+from sklearn.metrics import balanced_accuracy_score
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import make_scorer
 from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegressionCV
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import GroupKFold, cross_validate
+from sklearn.pipeline import make_pipeline
+from sklearn.svm import SVC
 from sklearn.utils import _standardize_metadata_request
+from sklearn.utils import _validate_required_props
+
+
+N, M = 100, 4
+X = np.random.rand(N, M)
+y = np.random.randint(0, 1, size=N)
+my_groups = np.random.randint(0, 10, size=N)
+my_weights = np.random.rand(N)
+my_other_weights = np.random.rand(N)
 
 
 def assert_request_is_empty(metadata_request, exclude=None):
@@ -138,3 +150,83 @@ def test_pipeline():
     gs = GridSearchCV(clf, param_grid=param_grid, scoring=scorer)
     print("GS props request: ", gs.get_metadata_request())
     gs.fit(X, y, new_param=brand, sample_weight=sw, my_sw=sw, brand=brand)
+
+
+def test_slep_caseA():
+    # Case A: weighted scoring and fitting
+
+    # Here we presume that GroupKFold requests `groups` by default.
+    # We need to explicitly request weights in make_scorer and for
+    # LogisticRegressionCV. Both of these consumers understand the meaning
+    # of the key "sample_weight".
+
+    weighted_acc = make_scorer(accuracy_score, request_props=['sample_weight'])
+    lr = LogisticRegressionCV(
+        cv=GroupKFold(),
+        scoring=weighted_acc,
+    ).request_sample_weight(fit='sample_weight')
+    cross_validate(lr, X, y, cv=GroupKFold(),
+                   props={'sample_weight': my_weights, 'groups': my_groups},
+                   scoring=weighted_acc)
+
+    # Error handling: if props={'sample_eight': my_weights, ...} was passed,
+    # cross_validate would raise an error, since 'sample_eight' was not
+    # requested by any of its children.
+
+
+def test_slep_caseB():
+    # Case B: weighted scoring and unweighted fitting
+
+    # Since LogisticRegressionCV requires that weights explicitly be requested,
+    # removing that request means the fitting is unweighted.
+
+    weighted_acc = make_scorer(accuracy_score, request_props=['sample_weight'])
+    lr = LogisticRegressionCV(
+        cv=GroupKFold(),
+        scoring=weighted_acc,
+    )
+    cross_validate(lr, X, y, cv=GroupKFold(),
+                   props={'sample_weight': my_weights, 'groups': my_groups},
+                   scoring=weighted_acc)
+
+
+def test_slep_caseC():
+    # Case C: unweighted feature selection
+
+    # Like LogisticRegressionCV, SelectKBest needs to request weights
+    # explicitly. Here it does not request them.
+
+    weighted_acc = make_scorer(accuracy_score, request_props=['sample_weight'])
+    lr = LogisticRegressionCV(
+        cv=GroupKFold(),
+        scoring=weighted_acc,
+    ).request_sample_weight(fit=['sample_weight'])
+    sel = SelectKBest()
+    pipe = make_pipeline(sel, lr)
+    cross_validate(pipe, X, y, cv=GroupKFold(),
+                   props={'sample_weight': my_weights, 'groups': my_groups},
+                   scoring=weighted_acc)
+
+
+def test_slep_caseD():
+    # Case D: different scoring and fitting weights
+
+    # Despite make_scorer and LogisticRegressionCV both expecting a key
+    # sample_weight, we can use aliases to pass different weights to different
+    # consumers.
+
+    weighted_acc = make_scorer(
+        accuracy_score,
+        request_props={'scoring_weight': 'sample_weight'}
+    )
+    lr = LogisticRegressionCV(
+        cv=GroupKFold(),
+        scoring=weighted_acc,
+    ).request_sample_weight(fit='fitting_weight')
+    cross_validate(lr, X, y, cv=GroupKFold(),
+                   props={
+                          'scoring_weight': my_weights,
+                          'fitting_weight': my_other_weights,
+                          'groups': my_groups,
+                   },
+                   scoring=weighted_acc)

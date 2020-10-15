@@ -33,8 +33,9 @@ from ._validation import _insert_error_scores
 from ._validation import _normalize_score_results
 from ..exceptions import NotFittedError
 from joblib import Parallel
-from ..utils import (check_random_state, _get_props_from_objs,
-                     build_router_metadata_request)
+from ..utils import check_random_state
+from ..utils import build_router_metadata_request
+from ..utils import build_method_metadata_params
 from ..utils.random import sample_without_replacement
 from ..utils.validation import indexable, check_is_fitted, _check_fit_params
 from ..utils.validation import _deprecate_positional_args
@@ -42,7 +43,7 @@ from ..utils.metaestimators import if_delegate_has_method
 from ..utils.fixes import delayed
 from ..metrics._scorer import _check_multimetric_scoring
 from ..metrics import check_scoring
-from ..utils import deprecated, _check_method_props
+from ..utils import deprecated
 
 __all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
            'ParameterSampler', 'RandomizedSearchCV']
@@ -768,9 +769,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         """
         if groups is not None:
             fit_params.update({'groups': groups})
-        _fit_params = _check_method_props(
-            self.estimator.get_metadata_request().fit, fit_params,
-            validate=False)
         estimator = self.estimator
         refit_metric = "score"
         if callable(self.scoring):
@@ -782,15 +780,29 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             self._check_refit_for_multimetric(scorers)
             refit_metric = self.refit
 
-        _score_params = _check_method_props(
-            _get_props_from_objs(scorers).score, fit_params,
-            validate=False)
+        cv_orig = check_cv(self.cv, y, classifier=is_classifier(estimator))
 
-        X, y, groups = indexable(X, y, groups)
+        _params = build_method_metadata_params(
+            children={'scorers': scorers,
+                      'estimator': estimator,
+                      'splitter': cv_orig},
+            routing=[
+                ('scorers', 'score', 'score'),
+                ('estimator', 'fit', 'fit'),
+                ('splitter', 'split', 'split')
+            ],
+            metadata=fit_params
+        )
+        _fit_params = _params.fit
+        _score_params = _params.score
+        _cv_params = _params.split
+
+        indexables = indexable(X, y, **_cv_params)
+        X, y = indexables[0], indexables[1]
+        _cv_params = indexables[2:] if len(indexables) > 2 else None
         _fit_params = _check_fit_params(X, _fit_params)
 
-        cv_orig = check_cv(self.cv, y, classifier=is_classifier(estimator))
-        n_splits = cv_orig.get_n_splits(X, y, groups)
+        n_splits = cv_orig.get_n_splits(X, y, **_cv_params)
 
         base_estimator = clone(self.estimator)
 

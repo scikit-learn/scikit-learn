@@ -41,6 +41,7 @@ __all__ = ['cross_validate', 'cross_val_score', 'cross_val_predict',
 @_deprecate_positional_args
 def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
                    n_jobs=None, verbose=0, fit_params=None,
+                   props=None,
                    pre_dispatch='2*n_jobs', return_train_score=False,
                    return_estimator=False, error_score=np.nan):
     """Evaluate metric(s) by cross-validation and also record fit/score times.
@@ -111,6 +112,9 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
 
     fit_params : dict, default=None
         Parameters to pass to the fit method of the estimator.
+
+    props : dict, default=None
+        The metadata required to be passed to the underlying relevant methods.
 
     pre_dispatch : int or str, default='2*n_jobs'
         Controls the number of jobs that get dispatched during parallel

@@ -1280,8 +1280,8 @@ def _check_method_props(required_props, props, validate=True):
     props = {key: value for key, value in props.items() if value is not None}
     if validate:
         _validate_required_props(required_props, props)
-    print("props:", props)
-    print("required_props: ", required_props)
+    # print("props:", props)
+    # print("required_props: ", required_props)
     res = {value: props[key] for key, values
            in required_props.items() if key in props
            for value in values}
@@ -1352,6 +1352,11 @@ def build_router_metadata_request(children, routing):
         (child_role, router_method, child_method).
         `"all"` can be used in router_method and child_method as an alias to
         map all methods.
+
+    Returns
+    -------
+    metadata_request : dict
+        The metadata request built from the children.
     """
     children_props = {k: _get_props_from_objs(v) for k, v in children.items()}
     out = _empty_metadata_request()
@@ -1363,6 +1368,67 @@ def build_router_metadata_request(children, routing):
         else:
             out[router_method] = _merge_method_requests(
                 out[router_method], children_props[child_role][child_method])
+    return out
+
+
+def build_method_metadata_params(children, routing, metadata):
+    """Build parameters required to be passed to different methods of children.
+
+    For instance, GridSearchCV may call:
+
+    _params = build_method_metadata_params(
+        children={'scorers': scorers,
+                  'estimator': estimator,
+                  'splitter': cv_orig},
+        routing={[
+            ('scorers', 'score', 'score'),
+            ('estimator', 'fit', 'fit')
+            ('splitter', 'split', 'split')
+        ]},
+        fit_params
+    )
+
+    Parameters
+    ----------
+    children : dict
+        Key is a role name (e.g. 'step') used as an identifier in the routing
+        parameter.
+        Value is a collection of objects that may provide get_metadata_request.
+    routing : list of tuples
+        Tuples are a triple of strings
+        (child_role, router_method, child_method).
+    metadata : dict
+        The parameters given passed to the method. This can be fit_params
+        passed to a `GridSearchCV().fit(...)` for instance.
+
+    Returns
+    -------
+    metadata_params : dict
+        A dictionary such as:
+        {'fit': {'sample_weight': sample_weight},
+         'split': {'groups': groups}}
+    """
+    children_props = {k: _get_props_from_objs(v) for k, v in children.items()}
+    out = Bunch(**{method: dict() for method in _empty_metadata_request()})
+    for child_role, router_method, child_method in routing:
+        props = _check_method_props(
+            children_props[child_role][child_method], metadata, validate=False)
+        if len(props) == 0:
+            continue
+        if out[router_method] == dict():
+            # empty dict, initiate it with what we got
+            out[router_method] = props
+        else:
+            for param, value in props:
+                if param in out[router_method]:
+                    if value == out[router_method][param]:
+                        # the same parameter with the same value, no issues
+                        continue
+                    else:
+                        raise ValueError("Conflicting parameters with "
+                                         "different values.")
+                else:
+                    out[router_method][param] = value
     return out
 
 
