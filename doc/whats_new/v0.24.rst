@@ -110,6 +110,12 @@ Changelog
   predictions for `est.transform(Y)` when the training data is single-target.
   :pr:`17095` by `Nicolas Hug`_.
 
+- |API| For :class:`cross_decomposition.NMF`,
+  the `init` value, when 'init=None' and
+  n_components <= min(n_samples, n_features) will be changed from
+  `'nndsvd'` to `'nndsvda'` in 0.26.
+  :pr:`18525` by `Chiara Marmo <cmarmo>`.
+
 - |API| The bounds of the `n_components` parameter is now restricted:
 
   - into `[1, min(n_samples, n_features, n_targets)]`, for
