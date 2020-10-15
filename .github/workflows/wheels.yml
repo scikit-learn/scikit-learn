@@ -28,7 +28,7 @@ jobs:
 
       - name: Set environment variables
         run: |
-          echo "COMMIT_MSG=$(git log --format=%B -n 1 $GITHUB_SHA)" >> $GITHUB_ENV
+          echo "COMMIT_MSG=$(git log --no-merges -1 --oneline)" >> $GITHUB_ENV
 
       - id: check_build
         name: Check build
