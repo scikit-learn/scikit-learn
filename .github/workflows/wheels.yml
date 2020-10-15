@@ -32,7 +32,7 @@ jobs:
 
       - id: check_build
         name: Check build
-        if: endsWith(env.COMMIT_MSG, "[cd build]") || ${{ github.event_name == "push" }}
+        if: endsWith(env.COMMIT_MSG, "[cd build]") || ${{ github.event_name == 'push' }}
         run: |
           echo "::set-output name=build::true"
 
