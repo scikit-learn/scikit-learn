@@ -105,7 +105,7 @@ hist_ordinal = make_pipeline(ordinal_encoder,
 # this one, we let the :class:`~ensemble.HistGradientBoostingRegressor` know
 # which features are categorical.
 
-# The orinal encoder will first output the categorical features, and then the
+# The ordinal encoder will first output the categorical features, and then the
 # continuous (passed-through) features
 categorical_mask = ([True] * n_categorical_features +
                     [False] * n_numerical_features)
@@ -120,32 +120,40 @@ hist_native = make_pipeline(
 # Model comparison
 # ----------------
 # Finally, we evaluate the models using cross validation. Here we compare the
-# models performance in terms of :func:`~metrics.r2_score` and fit times.
+# models performance in terms of
+# :func:`~metrics.mean_absolute_percentage_error` and fit times.
 
 from sklearn.model_selection import cross_validate
 import matplotlib.pyplot as plt
 
-dropped_result = cross_validate(hist_dropped, X, y, cv=3)
-one_hot_result = cross_validate(hist_one_hot, X, y, cv=3)
-ordinal_result = cross_validate(hist_ordinal, X, y, cv=3)
-native_result = cross_validate(hist_native, X, y, cv=3)
+scoring = "neg_mean_absolute_percentage_error"
+dropped_result = cross_validate(hist_dropped, X, y, cv=3, scoring=scoring)
+one_hot_result = cross_validate(hist_one_hot, X, y, cv=3, scoring=scoring)
+ordinal_result = cross_validate(hist_ordinal, X, y, cv=3, scoring=scoring)
+native_result = cross_validate(hist_native, X, y, cv=3, scoring=scoring)
 
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 8))
 
-plot_info = [('fit_time', 'Fit times (s)', ax1, None),
-             ('test_score', 'Test Scores (r2 score)', ax2, (0.5, 1.0))]
+def plot_results(figure_title):
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 8))
 
-x, width = np.arange(4), 0.9
-for key, title, ax, y_limit in plot_info:
-    items = [dropped_result[key], one_hot_result[key], ordinal_result[key],
-             native_result[key]]
-    ax.bar(x, [np.mean(item) for item in items],
-           width, yerr=[np.std(item) for item in items],
-           color=['C0', 'C1', 'C2', 'C3'])
-    ax.set(xlabel='Model', title=title, xticks=x,
-           xticklabels=["Dropped", "One Hot", "Ordinal", "Native"],
-           ylim=y_limit)
-plt.show()
+    plot_info = [('fit_time', 'Fit times (s)', ax1, None),
+                 ('test_score', 'Mean Absolute Percentage Error', ax2,
+                  (0, 0.20))]
+
+    x, width = np.arange(4), 0.9
+    for key, title, ax, y_limit in plot_info:
+        items = [dropped_result[key], one_hot_result[key], ordinal_result[key],
+                 native_result[key]]
+        ax.bar(x, [np.mean(np.abs(item)) for item in items],
+               width, yerr=[np.std(item) for item in items],
+               color=['C0', 'C1', 'C2', 'C3'])
+        ax.set(xlabel='Model', title=title, xticks=x,
+               xticklabels=["Dropped", "One Hot", "Ordinal", "Native"],
+               ylim=y_limit)
+    fig.suptitle(figure_title)
+
+
+plot_results("Gradient Boosting on Adult Census")
 
 # %%
 # We see that the model with one-hot-encoded data is by far the slowest. This
@@ -158,7 +166,7 @@ plt.show()
 #
 # In terms of prediction performance, dropping the categorical features leads
 # to poorer performance. The three models that use categorical features have
-# comparable R2 scores, with a slight edge for the native handling.
+# comparable error rates, with a slight edge for the native handling.
 #
 # In general, one can expect poorer predictions from one-hot-encoded data,
 # especially when the the trees depths or the number of nodes are limited: with
@@ -168,12 +176,36 @@ plt.show()
 # ordinal quantities: if categories are `A..F` and the best split is `ACF -
 # BDE` the one-hot-encoder model will need 3 split points (one per category in
 # the left node), and the ordinal non-native model will need 4 splits: 1 split
-# to isolate `A`, 1 split to isolate `F ,and 2 splits to isolate C from `BCDE`.
+# to isolate `A`, 1 split to isolate `F`, and 2 splits to isolate `C` from
+# `BCDE`.
+
+# %%
+# Under-fitting variant
+# ----------------------
 #
 # In practice, how strongly the model performances differ will depend on the
-# dataset and on the flexibility of the trees. As a follow up, you may try to
-# reduce the number of trees and their depth, and observe how it affects the
-# scores. The following snippet may help::
-#   for pipe in (hist_dropped, hist_one_hot, hist_ordinal, hist_native):
-#       pipe.set_params(histgradientboostingregressor__max_depth=3,
-#                       histgradientboostingregressor__max_iter=10)
+# dataset and on the flexibility of the trees.
+#
+# To see this, let us re-run the same analysis with under-fitting models where
+# we artificially limit the total number of splits by both limitting the number
+# of trees and the depth of each tree.
+
+for pipe in (hist_dropped, hist_one_hot, hist_ordinal, hist_native):
+    pipe.set_params(histgradientboostingregressor__max_depth=3,
+                    histgradientboostingregressor__max_iter=15)
+
+dropped_result = cross_validate(hist_dropped, X, y, cv=3, scoring=scoring)
+one_hot_result = cross_validate(hist_one_hot, X, y, cv=3, scoring=scoring)
+ordinal_result = cross_validate(hist_ordinal, X, y, cv=3, scoring=scoring)
+native_result = cross_validate(hist_native, X, y, cv=3, scoring=scoring)
+
+plot_results("Gradient Boosting on Adult Census (few and small trees)")
+
+plt.show()
+
+# %%
+# The results for these under-fitting models confirm our previous intuition:
+# the native category handling strategy fairs the best when the splitting
+# budget is constrained. The two other strategies (one-hot and ordinal
+# encoding) lead to error values comparable to the baseline model that just
+# dropped the categorical features.
