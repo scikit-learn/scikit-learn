@@ -135,7 +135,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         else:
             if categorical_features.shape[0] != n_features:
                 raise ValueError("categorical_features set as a boolean mask "
-                                 "must have shape (n_features,)")
+                                 "must have shape (n_features,), got: "
+                                 f"{categorical_features.shape}")
             is_categorical = categorical_features
 
         if not np.any(is_categorical):
