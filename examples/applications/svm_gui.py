@@ -183,7 +183,7 @@ class View:
     def update_example(self, model, idx):
         x, y, l = model.data[idx]
         if l == 1:
-            color = 'w'
+            color = 'b'
         elif l == -1:
             color = 'k'
         self.ax.plot([x], [y], "%so" % color, scalex=0.0, scaley=0.0)
