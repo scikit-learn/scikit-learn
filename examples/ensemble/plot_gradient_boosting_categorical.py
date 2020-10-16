@@ -180,8 +180,8 @@ plot_results("Gradient Boosting on Adult Census")
 # `BCDE`.
 
 # %%
-# Under-fitting variant
-# ----------------------
+# Limitting the number of splits
+# ------------------------------
 #
 # In practice, how strongly the model performances differ will depend on the
 # dataset and on the flexibility of the trees.
@@ -205,7 +205,8 @@ plt.show()
 
 # %%
 # The results for these under-fitting models confirm our previous intuition:
-# the native category handling strategy fairs the best when the splitting
-# budget is constrained. The two other strategies (one-hot and ordinal
-# encoding) lead to error values comparable to the baseline model that just
+# the native category handling strategy performs the best when the splitting
+# budget is constrained. The two other strategies (one-hot encoding and
+# treating categories as ordinal values) lead to error values comparable
+# to the baseline model that just
 # dropped the categorical features.
