@@ -166,7 +166,7 @@ def test_nmf_transform(estimator, solver, regularization):
     rng = np.random.mtrand.RandomState(42)
     A = np.abs(rng.randn(6, 5))
     m = estimator(solver=solver, n_components=3, init='random',
-            regularization=regularization, random_state=0, tol=1e-5)
+                  regularization=regularization, random_state=0, tol=1e-5)
     ft = m.fit_transform(A)
     t = m.transform(A)
     assert_array_almost_equal(ft, t, decimal=2)
@@ -183,7 +183,7 @@ def test_nmf_transform_custom_init(estimator):
     W_init = np.abs(avg * random_state.randn(6, n_components))
 
     m = estimator(solver='mu', n_components=n_components, init='custom',
-            random_state=0)
+                  random_state=0)
     m.fit_transform(A, W=W_init, H=H_init)
     m.transform(A)
 
@@ -198,7 +198,7 @@ def test_nmf_inverse_transform(estimator, solver, regularization):
     random_state = np.random.RandomState(0)
     A = np.abs(random_state.randn(6, 4))
     m = estimator(solver=solver, n_components=4, init='random', random_state=0,
-            regularization=regularization, max_iter=1000)
+                  regularization=regularization, max_iter=1000)
     ft = m.fit_transform(A)
     A_new = m.inverse_transform(ft)
     assert_array_almost_equal(A, A_new, decimal=2)
@@ -229,8 +229,8 @@ def test_nmf_sparse_input(estimator, solver, regularization):
     A_sparse = csc_matrix(A)
 
     est1 = estimator(solver=solver, n_components=5, init='random',
-               regularization=regularization, random_state=0,
-               tol=1e-2)
+                     regularization=regularization, random_state=0,
+                     tol=1e-2)
     est2 = clone(est1)
 
     W1 = est1.fit_transform(A)
@@ -253,7 +253,7 @@ def test_nmf_sparse_transform(estimator, solver):
     A = csc_matrix(A)
 
     model = estimator(solver=solver, random_state=0, n_components=2,
-                max_iter=400, init='nndsvd')
+                      max_iter=400, init='nndsvd')
     A_fit_tr = model.fit_transform(A)
     A_tr = model.transform(A)
     assert_array_almost_equal(A_fit_tr, A_tr, decimal=1)
@@ -281,8 +281,8 @@ def test_non_negative_factorization_consistency(estimator, init,
         regularization=regularization, random_state=1, tol=1e-2)
 
     model_class = estimator(init=init, solver=solver,
-                      regularization=regularization,
-                      random_state=1, tol=1e-2)
+                            regularization=regularization,
+                            random_state=1, tol=1e-2)
     W_cls = model_class.fit_transform(A)
     W_cls_2 = model_class.transform(A)
 
@@ -492,12 +492,12 @@ def test_nmf_regularization(estimator, solver):
     init = 'nndsvda'
     # L1 regularization should increase the number of zeros
     l1_ratio = 1.
-    regul = nmf.NMF(n_components=n_components, solver=solver,
-                    alpha=0.5, l1_ratio=l1_ratio, random_state=42,
-                    init=init)
-    model = nmf.NMF(n_components=n_components, solver=solver,
-                    alpha=0., l1_ratio=l1_ratio, random_state=42,
-                    init=init)
+    regul = nmf.estimator(n_components=n_components, solver=solver,
+                          alpha=0.5, l1_ratio=l1_ratio, random_state=42,
+                          init=init)
+    model = nmf.estimator(n_components=n_components, solver=solver,
+                          alpha=0., l1_ratio=l1_ratio, random_state=42,
+                          init=init)
 
     W_regul = regul.fit_transform(X)
     W_model = model.fit_transform(X)
@@ -515,12 +515,12 @@ def test_nmf_regularization(estimator, solver):
 
     # L2 regularization should decrease the norm of the sum of tne matrices
     l1_ratio = 0.
-    regul = nmf.NMF(n_components=n_components, solver=solver,
-                    alpha=0.5, l1_ratio=l1_ratio, random_state=42,
-                    init=init)
-    model = nmf.NMF(n_components=n_components, solver=solver,
-                    alpha=0., l1_ratio=l1_ratio, random_state=42,
-                    init=init)
+    regul = nmf.estimator(n_components=n_components, solver=solver,
+                          alpha=0.5, l1_ratio=l1_ratio, random_state=42,
+                          init=init)
+    model = nmf.estimator(n_components=n_components, solver=solver,
+                          alpha=0., l1_ratio=l1_ratio, random_state=42,
+                          init=init)
 
     W_regul = regul.fit_transform(X)
     W_model = model.fit_transform(X)
@@ -705,6 +705,7 @@ def test_minibatch_nmf_auxiliary_matrices():
     )
 
     assert np.sum((A-A3)**2., axis=(0, 1)) > 1e-3
+
 
 # FIXME : should be removed in 0.26
 def test_init_default_deprecation():
