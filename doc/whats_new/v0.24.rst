@@ -110,6 +110,12 @@ Changelog
   predictions for `est.transform(Y)` when the training data is single-target.
   :pr:`17095` by `Nicolas Hug`_.
 
+- |API| For :class:`cross_decomposition.NMF`,
+  the `init` value, when 'init=None' and
+  n_components <= min(n_samples, n_features) will be changed from
+  `'nndsvd'` to `'nndsvda'` in 0.26.
+  :pr:`18525` by `Chiara Marmo <cmarmo>`.
+
 - |API| The bounds of the `n_components` parameter is now restricted:
 
   - into `[1, min(n_samples, n_features, n_targets)]`, for
@@ -450,6 +456,12 @@ Changelog
   samples between the train and test set on each fold.
   :pr:`13204` by :user:`Kyle Kosic <kykosic>`.
 
+- |Enhancement| :func:`model_selection.permutation_test_score` and
+  :func:`model_selection.validation_curve` now accept fit_params
+  to pass additional estimator parameters.
+  :pr:`18527` by :user:`Gaurav Dhingra <gxyd>`,
+  :user:`Julien Jerphanion <jjerphan>` and :user:`Amanda Dsouza <amy12xx>`.
+
 - |Enhancement| :func:`model_selection.cross_val_score`,
   :func:`model_selection.cross_validate`,
   :class:`model_selection.GridSearchCV`, and
@@ -467,6 +479,10 @@ Changelog
   :class:`model_selection.RandomizedSearchCV` results in non-finite scores.
   :pr:`18266` by :user:`Subrat Sahu <subrat93>`,
   :user:`Nirvan <Nirvan101>` and :user:`Arthur Book <ArthurBook>`.
+
+- |Enhancement| :func:`model_selection.learning_curve` now accept fit_params
+  to pass additional estimator parameters.
+  :pr:`18595` by :user:`Amanda Dsouza <amy12xx>`.
 
 :mod:`sklearn.multiclass`
 .........................
@@ -535,6 +551,14 @@ Changelog
 - |Fix| :class:`neighbors.NearestCentroid` with a numerical `shrink_threshold`
   will raise a `ValueError` when fitting on data with all constant features.
   :pr:`18370` by :user:`Trevor Waite <trewaite>`.
+
+- |Fix| In  methods `radius_neighbors` and
+  `radius_neighbors_graph` of :class:`neighbors.NearestNeighbors`,
+  :class:`neighbors.RadiusNeighborsClassifier`,
+  :class:`neighbors.RadiusNeighborsRegressor`, and
+  :class:`neighbors.RadiusNeighborsTransformer`, using `sort_results=True` now
+  correctly sorts the results even when fitting with the "brute" algorithm.
+  :pr:`18612` by `Tom Dupre la Tour`_.
 
 :mod:`sklearn.neural_network`
 .............................

@@ -610,7 +610,8 @@ def _set_checking_parameters(estimator):
             estimator.set_params(max_iter=20)
         # NMF
         if estimator.__class__.__name__ == 'NMF':
-            estimator.set_params(max_iter=100)
+            # FIXME : init should be removed in 0.26
+            estimator.set_params(max_iter=500, init='nndsvda')
         # MLP
         if estimator.__class__.__name__ in ['MLPClassifier', 'MLPRegressor']:
             estimator.set_params(max_iter=100)
@@ -3174,7 +3175,7 @@ def check_n_features_in_after_fitting(name, estimator_orig, strict_mode=True):
                      "predict_proba"]
     X_bad = X[:, [1]]
 
-    msg = (f"X has 1 features, but {name} is expecting {X.shape[1]} "
+    msg = (f"X has 1 features, but \\w+ is expecting {X.shape[1]} "
            "features as input")
     for method in check_methods:
         if not hasattr(estimator, method):
