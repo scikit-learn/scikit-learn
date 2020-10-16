@@ -157,6 +157,10 @@ Changelog
   :pr:`18280` by :user:`Alex Liang <tianchuliang>` and
   `Guillaume Lemaitre`_.
 
+- |Feature| :func:`datasets.fetch_openml` now validates md5checksum of arff
+  files downloaded or cached to ensure data integrity.
+  :pr:`14800` by :user:`Shashank Singh <shashanksingh28>` and `Joel Nothman`_.
+
 - |API| The default value of `as_frame` in :func:`datasets.fetch_openml` is
   changed from False to 'auto'.
   :pr:`17610` by :user:`Jiaxiang <fujiaxiang>`.
@@ -378,11 +382,18 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
+- |Feature| new metric :func:`metrics.top_k_accuracy_score`. It's a
+  generalization of :func:`metrics.top_k_accuracy_score`, the difference is
+  that a prediction is considered correct as long as the true label is
+  associated with one of the `k` highest predicted scores.
+  :func:`accuracy_score` is the special case of `k = 1`.
+  :pr:`16625` by :user:`Geoffrey Bolmier <gbolmier>`.
+
 - |Feature| Added :func:`metrics.det_curve` to compute Detection Error Tradeoff
   curve classification metric.
   :pr:`10591` by :user:`Jeremy Karnowski <jkarnows>` and
   :user:`Daniel Mohns <dmohns>`.
-
+  
 - |Feature| Added :func:`metrics.plot_det_curve` and
   :class:`metrics.DetCurveDisplay` to ease the plot of DET curves.
   :pr:`18176` by :user:`Guillaume Lemaitre <glemaitre>`.
@@ -405,6 +416,10 @@ Changelog
   :func:`metrics.plot_precision_recall_curve` in order to specify the positive
   class to be used when computing the precision and recall statistics.
   :pr:`17569` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Feature| :func:`metrics.plot_confusion_matrix` now supports making colorbar
+  optional in the matplotlib plot by setting colorbar=False. :pr:`17192` by
+  :user:`Avi Gupta <avigupta2612>`
 
 - |Enhancement| Add `pos_label` parameter in
   :func:`metrics.plot_roc_curve` in order to specify the positive
