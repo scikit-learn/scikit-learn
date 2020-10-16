@@ -138,6 +138,11 @@ class Controller:
         if self.fitted:
             self.fit()
 
+    def rezoom(self):
+        """Rezoom the window on the scatter plot. """
+        if len(self.model.data) >= 2:
+            self.model.changed("rezoom")
+
 
 class View:
     """Test docstring. """
@@ -208,6 +213,16 @@ class View:
             self.remove_surface()
             self.plot_support_vectors(model.clf.support_vectors_)
             self.plot_decision_surface(model.surface, model.surface_type)
+
+        if event == "rezoom":
+            xmin = min([model.data[i][0] for i in range(len(model.data))])
+            xmax = max([model.data[i][0] for i in range(len(model.data))])
+            ymin = min([model.data[i][1] for i in range(len(model.data))])
+            ymax = max([model.data[i][1] for i in range(len(model.data))])
+            slack_x = np.abs(xmax - xmin) * .05
+            slack_y = np.abs(ymax - ymin) * .05
+            self.ax.set_xlim((xmin - slack_x, xmax + slack_x))
+            self.ax.set_ylim((ymin - slack_y, ymax + slack_y))
 
         self.canvas.draw()
 
@@ -308,6 +323,8 @@ class ControllBar:
         fm.pack(side=Tk.LEFT)
         Tk.Button(fm, text='Clear', width=5,
                   command=controller.clear_data).pack(side=Tk.LEFT)
+        Tk.Button(fm, text="Rezoom", width=5,
+                  command=controller.rezoom).pack(side=Tk.LEFT)
 
 
 def get_parser():
