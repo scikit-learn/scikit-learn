@@ -50,13 +50,9 @@ def test_parameter_checking():
     # FIXME : should be removed in 0.26
     init = 'nndsvda'
     msg = "Invalid solver parameter: got 'spam' instead of one of"
-<<<<<<< HEAD
-    assert_raise_message(ValueError, msg, NMF(solver=name).fit, A)
+    assert_raise_message(ValueError, msg, NMF(solver=name, init=init).fit, A)
     msg = "Invalid solver parameter: got 'spam' instead of one of"
     assert_raise_message(ValueError, msg, MiniBatchNMF(solver=name).fit, A)
-=======
-    assert_raise_message(ValueError, msg, NMF(solver=name, init=init).fit, A)
->>>>>>> master
     msg = "Invalid init parameter: got 'spam' instead of one of"
     assert_raise_message(ValueError, msg, NMF(init=name).fit, A)
     msg = "Invalid regularization parameter: got 'spam' instead of one of"
@@ -81,12 +77,8 @@ def test_parameter_checking():
                                               beta_loss=1.0).fit, A)
 
     msg = "Negative values in data passed to"
-<<<<<<< HEAD
-    assert_raise_message(ValueError, msg, NMF().fit, -A)
-    assert_raise_message(ValueError, msg, MiniBatchNMF().fit, -A)
-=======
     assert_raise_message(ValueError, msg, NMF(init=init).fit, -A)
->>>>>>> master
+    assert_raise_message(ValueError, msg, MiniBatchNMF().fit, -A)
     assert_raise_message(ValueError, msg, nmf._initialize_nmf, -A,
                          2, 'nndsvd')
     clf = NMF(2, tol=0.1, init=init).fit(A)
