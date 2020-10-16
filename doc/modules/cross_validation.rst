@@ -480,7 +480,7 @@ Example of Leave-2-Out on a dataset with 4 samples::
   [0 1] [2 3]
 
 
-.. _shuffle_split:
+.. _ShuffleSplit:
 
 Random permutations cross-validation a.k.a. Shuffle & Split
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
