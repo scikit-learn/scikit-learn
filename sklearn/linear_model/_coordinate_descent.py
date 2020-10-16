@@ -614,7 +614,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         For sparse input this option is always ``True`` to preserve sparsity.
 
     max_iter : int, default=1000
-        The maximum number of iterations
+        The maximum number of iterations.
 
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -648,17 +648,17 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     Attributes
     ----------
     coef_ : ndarray of shape (n_features,) or (n_targets, n_features)
-        parameter vector (w in the cost function formula)
+        Parameter vector (w in the cost function formula).
 
     sparse_coef_ : sparse matrix of shape (n_features,) or \
             (n_targets, n_features)
-        sparse representation of the `coef_`.
+        Sparse representation of the `coef_`.
 
     intercept_ : float or ndarray of shape (n_targets,)
-        independent term in decision function.
+        Independent term in decision function.
 
     n_iter_ : list of int
-        number of iterations run by the coordinate descent solver to reach
+        Number of iterations run by the coordinate descent solver to reach
         the specified tolerance.
 
     dual_gap_ : float or ndarray of shape (n_targets,)
@@ -691,8 +691,8 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     --------
     ElasticNetCV : Elastic net model with best model selection by
         cross-validation.
-    SGDRegressor: implements elastic net regression with incremental training.
-    SGDClassifier: implements logistic regression with elastic net penalty
+    SGDRegressor : Implements elastic net regression with incremental training.
+    SGDClassifier : Implements logistic regression with elastic net penalty
         (``SGDClassifier(loss="log", penalty="elasticnet")``).
     """
     path = staticmethod(enet_path)
@@ -721,14 +721,16 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         Parameters
         ----------
         X : {ndarray, sparse matrix} of (n_samples, n_features)
-            Data
+            Data.
 
         y : {ndarray, sparse matrix} of shape (n_samples,) or \
             (n_samples, n_targets)
-            Target. Will be cast to X's dtype if necessary
+            Target. Will be cast to X's dtype if necessary.
 
         sample_weight : float or array-like of shape (n_samples,), default=None
             Sample weight.
+
+            .. versionadded:: 0.23
 
         check_input : bool, default=True
             Allow to bypass several input checking.
@@ -875,7 +877,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
 
     @property
     def sparse_coef_(self):
-        """Sparse representation of the fitted ``coef_``."""
+        """Sparse representation of the fitted `coef_`."""
         return sparse.csr_matrix(self.coef_)
 
     def _decision_function(self, X):
@@ -888,7 +890,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         Returns
         -------
         T : ndarray of shape (n_samples,)
-            The predicted decision function
+            The predicted decision function.
         """
         check_is_fitted(self)
         if sparse.isspmatrix(X):
@@ -946,7 +948,7 @@ class Lasso(ElasticNet):
         If ``True``, X will be copied; else, it may be overwritten.
 
     max_iter : int, default=1000
-        The maximum number of iterations
+        The maximum number of iterations.
 
     tol : float, default=1e-4
         The tolerance for the optimization: if the updates are
@@ -977,7 +979,7 @@ class Lasso(ElasticNet):
     Attributes
     ----------
     coef_ : ndarray of shape (n_features,) or (n_targets, n_features)
-        parameter vector (w in the cost function formula)
+        Parameter vector (w in the cost function formula).
 
     dual_gap_ : float or ndarray of shape (n_targets,)
         Given param alpha, the dual gaps at the end of the optimization,
@@ -985,13 +987,13 @@ class Lasso(ElasticNet):
 
     sparse_coef_ : sparse matrix of shape (n_features, 1) or \
             (n_targets, n_features)
-        ``sparse_coef_`` is a readonly property derived from ``coef_``
+        Readonly property derived from ``coef_``.
 
     intercept_ : float or ndarray of shape (n_targets,)
-        independent term in decision function.
+        Independent term in decision function.
 
     n_iter_ : int or list of int
-        number of iterations run by the coordinate descent solver to reach
+        Number of iterations run by the coordinate descent solver to reach
         the specified tolerance.
 
     Examples
@@ -1049,23 +1051,23 @@ def _path_residuals(X, y, sample_weight, train, test, path, path_params,
         Training data.
 
     y : array-like of shape (n_samples,) or (n_samples, n_targets)
-        Target values
+        Target values.
 
     sample_weight : None or array-like of shape (n_samples,)
         Sample weight.
 
     train : list of indices
-        The indices of the train set
+        The indices of the train set.
 
     test : list of indices
-        The indices of the test set
+        The indices of the test set.
 
     path : callable
-        function returning a list of models on the path. See
-        enet_path for an example of signature
+        Function returning a list of models on the path. See
+        enet_path for an example of signature.
 
     path_params : dictionary
-        Parameters passed to the path function
+        Parameters passed to the path function.
 
     alphas : array-like, default=None
         Array of float that is used for cross-validation. If not
@@ -1079,11 +1081,11 @@ def _path_residuals(X, y, sample_weight, train, test, path, path_params,
 
     X_order : {'F', 'C'}, default=None
         The order of the arrays expected by the path function to
-        avoid memory copies
+        avoid memory copies.
 
     dtype : a numpy dtype, default=None
         The dtype of the arrays expected by the path function to
-        avoid memory copies
+        avoid memory copies.
     """
     X_train = X[train]
     y_train = y[train]
@@ -1219,7 +1221,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             X can be sparse.
 
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
-            Target values
+            Target values.
 
         sample_weight : float or array-like of shape (n_samples,), default=None
             Sample weight.
@@ -1440,14 +1442,14 @@ class LassoCV(RegressorMixin, LinearModelCV):
         ``alpha_min / alpha_max = 1e-3``.
 
     n_alphas : int, default=100
-        Number of alphas along the regularization path
+        Number of alphas along the regularization path.
 
     alphas : ndarray, default=None
         List of alphas where to compute the models.
-        If ``None`` alphas are set automatically
+        If ``None`` alphas are set automatically.
 
     fit_intercept : bool, default=True
-        whether to calculate the intercept for this model. If set
+        Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
@@ -1466,7 +1468,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
         matrix can also be passed as argument.
 
     max_iter : int, default=1000
-        The maximum number of iterations
+        The maximum number of iterations.
 
     tol : float, default=1e-4
         The tolerance for the optimization: if the updates are
@@ -1504,7 +1506,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
         for more details.
 
     positive : bool, default=False
-        If positive, restrict regression coefficients to be positive
+        If positive, restrict regression coefficients to be positive.
 
     random_state : int, RandomState instance, default=None
         The seed of the pseudo random number generator that selects a random
@@ -1527,26 +1529,26 @@ class LassoCV(RegressorMixin, LinearModelCV):
     Attributes
     ----------
     alpha_ : float
-        The amount of penalization chosen by cross validation
+        The amount of penalization chosen by cross validation.
 
     coef_ : ndarray of shape (n_features,) or (n_targets, n_features)
-        parameter vector (w in the cost function formula)
+        Parameter vector (w in the cost function formula).
 
     intercept_ : float or ndarray of shape (n_targets,)
-        independent term in decision function.
+        Independent term in decision function.
 
     mse_path_ : ndarray of shape (n_alphas, n_folds)
-        mean square error for the test set on each fold, varying alpha
+        Mean square error for the test set on each fold, varying alpha.
 
     alphas_ : ndarray of shape (n_alphas,)
-        The grid of alphas used for fitting
+        The grid of alphas used for fitting.
 
     dual_gap_ : float or ndarray of shape (n_targets,)
         The dual gap at the end of the optimization for the optimal alpha
         (``alpha_``).
 
     n_iter_ : int
-        number of iterations run by the coordinate descent solver to reach
+        Number of iterations run by the coordinate descent solver to reach
         the specified tolerance for the optimal alpha.
 
     Examples
@@ -1623,7 +1625,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         prediction score is used. Note that a good choice of list of
         values for l1_ratio is often to put more values close to 1
         (i.e. Lasso) and less close to 0 (i.e. Ridge), as in ``[.1, .5, .7,
-        .9, .95, .99, 1]``
+        .9, .95, .99, 1]``.
 
     eps : float, default=1e-3
         Length of the path. ``eps=1e-3`` means that
@@ -1634,10 +1636,10 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
 
     alphas : ndarray, default=None
         List of alphas where to compute the models.
-        If None alphas are set automatically
+        If None alphas are set automatically.
 
     fit_intercept : bool, default=True
-        whether to calculate the intercept for this model. If set
+        Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
@@ -1656,7 +1658,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         matrix can also be passed as argument.
 
     max_iter : int, default=1000
-        The maximum number of iterations
+        The maximum number of iterations.
 
     tol : float, default=1e-4
         The tolerance for the optimization: if the updates are
@@ -1717,14 +1719,14 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
     Attributes
     ----------
     alpha_ : float
-        The amount of penalization chosen by cross validation
+        The amount of penalization chosen by cross validation.
 
     l1_ratio_ : float
         The compromise between l1 and l2 penalization chosen by
-        cross validation
+        cross validation.
 
     coef_ : ndarray of shape (n_features,) or (n_targets, n_features)
-        Parameter vector (w in the cost function formula),
+        Parameter vector (w in the cost function formula).
 
     intercept_ : float or ndarray of shape (n_targets, n_features)
         Independent term in the decision function.
@@ -1740,7 +1742,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         The dual gaps at the end of the optimization for the optimal alpha.
 
     n_iter_ : int
-        number of iterations run by the coordinate descent solver to reach
+        Number of iterations run by the coordinate descent solver to reach
         the specified tolerance for the optimal alpha.
 
     Examples
@@ -1831,7 +1833,8 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
 
 
 class MultiTaskElasticNet(Lasso):
-    """Multi-task ElasticNet model trained with L1/L2 mixed-norm as regularizer
+    """Multi-task ElasticNet model trained with L1/L2 mixed-norm as
+    regularizer.
 
     The optimization objective for MultiTaskElasticNet is::
 
@@ -1850,7 +1853,7 @@ class MultiTaskElasticNet(Lasso):
     Parameters
     ----------
     alpha : float, default=1.0
-        Constant that multiplies the L1/L2 term. Defaults to 1.0
+        Constant that multiplies the L1/L2 term. Defaults to 1.0.
 
     l1_ratio : float, default=0.5
         The ElasticNet mixing parameter, with 0 < l1_ratio <= 1.
@@ -1859,7 +1862,7 @@ class MultiTaskElasticNet(Lasso):
         For ``0 < l1_ratio < 1``, the penalty is a combination of L1/L2 and L2.
 
     fit_intercept : bool, default=True
-        whether to calculate the intercept for this model. If set
+        Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
@@ -1875,7 +1878,7 @@ class MultiTaskElasticNet(Lasso):
         If ``True``, X will be copied; else, it may be overwritten.
 
     max_iter : int, default=1000
-        The maximum number of iterations
+        The maximum number of iterations.
 
     tol : float, default=1e-4
         The tolerance for the optimization: if the updates are
@@ -1911,7 +1914,7 @@ class MultiTaskElasticNet(Lasso):
         Note that ``coef_`` stores the transpose of ``W``, ``W.T``.
 
     n_iter_ : int
-        number of iterations run by the coordinate descent solver to reach
+        Number of iterations run by the coordinate descent solver to reach
         the specified tolerance.
 
     dual_gap_ : float
@@ -1922,7 +1925,7 @@ class MultiTaskElasticNet(Lasso):
 
     sparse_coef_ : sparse matrix of shape (n_features,) or \
             (n_targets, n_features)
-        sparse representation of the `coef_`.
+        Sparse representation of the `coef_`.
 
     Examples
     --------
@@ -1971,9 +1974,9 @@ class MultiTaskElasticNet(Lasso):
         Parameters
         ----------
         X : ndarray of shape (n_samples, n_features)
-            Data
+            Data.
         y : ndarray of shape (n_samples, n_targets)
-            Target. Will be cast to X's dtype if necessary
+            Target. Will be cast to X's dtype if necessary.
 
         Returns
         -------
@@ -2055,10 +2058,10 @@ class MultiTaskLasso(MultiTaskElasticNet):
     Parameters
     ----------
     alpha : float, default=1.0
-        Constant that multiplies the L1/L2 term. Defaults to 1.0
+        Constant that multiplies the L1/L2 term. Defaults to 1.0.
 
     fit_intercept : bool, default=True
-        whether to calculate the intercept for this model. If set
+        Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
@@ -2074,7 +2077,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
         If ``True``, X will be copied; else, it may be overwritten.
 
     max_iter : int, default=1000
-        The maximum number of iterations
+        The maximum number of iterations.
 
     tol : float, default=1e-4
         The tolerance for the optimization: if the updates are
@@ -2106,10 +2109,10 @@ class MultiTaskLasso(MultiTaskElasticNet):
         Note that ``coef_`` stores the transpose of ``W``, ``W.T``.
 
     intercept_ : ndarray of shape (n_targets,)
-        independent term in decision function.
+        Independent term in decision function.
 
     n_iter_ : int
-        number of iterations run by the coordinate descent solver to reach
+        Number of iterations run by the coordinate descent solver to reach
         the specified tolerance.
 
     dual_gap_ : ndarray of shape (n_alphas,)
@@ -2120,7 +2123,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
 
     sparse_coef_ : sparse matrix of shape (n_features,) or \
             (n_targets, n_features)
-        sparse representation of the `coef_`.
+        Sparse representation of the `coef_`.
 
     Examples
     --------
@@ -2203,14 +2206,14 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         ``alpha_min / alpha_max = 1e-3``.
 
     n_alphas : int, default=100
-        Number of alphas along the regularization path
+        Number of alphas along the regularization path.
 
     alphas : array-like, default=None
         List of alphas where to compute the models.
         If not provided, set automatically.
 
     fit_intercept : bool, default=True
-        whether to calculate the intercept for this model. If set
+        Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
@@ -2223,7 +2226,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         on an estimator with ``normalize=False``.
 
     max_iter : int, default=1000
-        The maximum number of iterations
+        The maximum number of iterations.
 
     tol : float, default=1e-4
         The tolerance for the optimization: if the updates are
@@ -2287,20 +2290,20 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         Note that ``coef_`` stores the transpose of ``W``, ``W.T``.
 
     alpha_ : float
-        The amount of penalization chosen by cross validation
+        The amount of penalization chosen by cross validation.
 
     mse_path_ : ndarray of shape (n_alphas, n_folds) or \
                 (n_l1_ratio, n_alphas, n_folds)
-        mean square error for the test set on each fold, varying alpha
+        Mean square error for the test set on each fold, varying alpha.
 
     alphas_ : ndarray of shape (n_alphas,) or (n_l1_ratio, n_alphas)
-        The grid of alphas used for fitting, for each l1_ratio
+        The grid of alphas used for fitting, for each l1_ratio.
 
     l1_ratio_ : float
-        best l1_ratio obtained by cross-validation.
+        Best l1_ratio obtained by cross-validation.
 
     n_iter_ : int
-        number of iterations run by the coordinate descent solver to reach
+        Number of iterations run by the coordinate descent solver to reach
         the specified tolerance for the optimal alpha.
 
     dual_gap_ : float
@@ -2412,14 +2415,14 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         ``alpha_min / alpha_max = 1e-3``.
 
     n_alphas : int, default=100
-        Number of alphas along the regularization path
+        Number of alphas along the regularization path.
 
     alphas : array-like, default=None
         List of alphas where to compute the models.
         If not provided, set automatically.
 
     fit_intercept : bool, default=True
-        whether to calculate the intercept for this model. If set
+        Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
@@ -2496,16 +2499,16 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         Note that ``coef_`` stores the transpose of ``W``, ``W.T``.
 
     alpha_ : float
-        The amount of penalization chosen by cross validation
+        The amount of penalization chosen by cross validation.
 
     mse_path_ : ndarray of shape (n_alphas, n_folds)
-        mean square error for the test set on each fold, varying alpha
+        Mean square error for the test set on each fold, varying alpha.
 
     alphas_ : ndarray of shape (n_alphas,)
         The grid of alphas used for fitting.
 
     n_iter_ : int
-        number of iterations run by the coordinate descent solver to reach
+        Number of iterations run by the coordinate descent solver to reach
         the specified tolerance for the optimal alpha.
 
     dual_gap_ : float

@@ -9,7 +9,7 @@ Importing this file dynamically sets the
 `model_selection` module::
 
     >>> # explicitly require this experimental feature
-    >>> from sklearn.experimental import enable_successive_halving # noqa
+    >>> from sklearn.experimental import enable_halving_search_cv # noqa
     >>> # now you can import normally from model_selection
     >>> from sklearn.model_selection import HalvingRandomSearchCV
     >>> from sklearn.model_selection import HalvingGridSearchCV

@@ -16,76 +16,53 @@ from ._binning import _map_to_bins
 from .common import X_DTYPE, X_BINNED_DTYPE, ALMOST_INF
 
 
-def _find_binning_thresholds(data, max_bins, subsample, random_state):
+def _find_binning_thresholds(col_data, max_bins):
     """Extract feature-wise quantiles from numerical data.
 
     Missing values are ignored for finding the thresholds.
 
     Parameters
     ----------
-    data : array-like of shape (n_samples, n_features)
-        The data to bin.
-
+    col_data : array-like, shape (n_features,)
+        The numerical feature to bin.
     max_bins: int
         The maximum number of bins to use for non-missing values. If for a
         given feature the number of unique values is less than ``max_bins``,
         then those unique values will be used to compute the bin thresholds,
-        instead of the quantiles.
-
-    subsample : int or None
-        If ``n_samples > subsample``, then ``sub_samples`` samples will be
-        randomly chosen to compute the quantiles. If ``None``, the whole data
-        is used.
-
-    random_state: int, RandomState instance or None
-        Pseudo-random number generator to control the random sub-sampling.
-        Pass an int for reproducible output across multiple
-        function calls.
-        See :term: `Glossary <random_state>`.
+        instead of the quantiles
 
     Return
     ------
-    binning_thresholds: list of ndarray
+    binning_thresholds: ndarray
         For each feature, stores the increasing numeric values that can
         be used to separate the bins. Thus ``len(binning_thresholds) ==
         n_features``.
     """
-    rng = check_random_state(random_state)
-    if subsample is not None and data.shape[0] > subsample:
-        subset = rng.choice(data.shape[0], subsample, replace=False)
-        data = data.take(subset, axis=0)
+    # ignore missing values when computing bin thresholds
+    missing_mask = np.isnan(col_data)
+    if missing_mask.any():
+        col_data = col_data[~missing_mask]
+    col_data = np.ascontiguousarray(col_data, dtype=X_DTYPE)
+    distinct_values = np.unique(col_data)
+    if len(distinct_values) <= max_bins:
+        midpoints = distinct_values[:-1] + distinct_values[1:]
+        midpoints *= .5
+    else:
+        # We sort again the data in this case. We could compute
+        # approximate midpoint percentiles using the output of
+        # np.unique(col_data, return_counts) instead but this is more
+        # work and the performance benefit will be limited because we
+        # work on a fixed-size subsample of the full data.
+        percentiles = np.linspace(0, 100, num=max_bins + 1)
+        percentiles = percentiles[1:-1]
+        midpoints = np.percentile(col_data, percentiles,
+                                  interpolation='midpoint').astype(X_DTYPE)
+        assert midpoints.shape[0] == max_bins - 1
 
-    binning_thresholds = []
-    for f_idx in range(data.shape[1]):
-        col_data = data[:, f_idx]
-        # ignore missing values when computing bin thresholds
-        missing_mask = np.isnan(col_data)
-        if missing_mask.any():
-            col_data = col_data[~missing_mask]
-        col_data = np.ascontiguousarray(col_data, dtype=X_DTYPE)
-        distinct_values = np.unique(col_data)
-        if len(distinct_values) <= max_bins:
-            midpoints = distinct_values[:-1] + distinct_values[1:]
-            midpoints *= .5
-        else:
-            # We sort again the data in this case. We could compute
-            # approximate midpoint percentiles using the output of
-            # np.unique(col_data, return_counts) instead but this is more
-            # work and the performance benefit will be limited because we
-            # work on a fixed-size subsample of the full data.
-            percentiles = np.linspace(0, 100, num=max_bins + 1)
-            percentiles = percentiles[1:-1]
-            midpoints = np.percentile(col_data, percentiles,
-                                      interpolation='midpoint').astype(X_DTYPE)
-            assert midpoints.shape[0] == max_bins - 1
-
-        # We avoid having +inf thresholds: +inf thresholds are only allowed in
-        # a "split on nan" situation.
-        np.clip(midpoints, a_min=None, a_max=ALMOST_INF, out=midpoints)
-
-        binning_thresholds.append(midpoints)
-
-    return binning_thresholds
+    # We avoid having +inf thresholds: +inf thresholds are only allowed in
+    # a "split on nan" situation.
+    np.clip(midpoints, a_min=None, a_max=ALMOST_INF, out=midpoints)
+    return midpoints
 
 
 class _BinMapper(TransformerMixin, BaseEstimator):
@@ -170,9 +147,15 @@ class _BinMapper(TransformerMixin, BaseEstimator):
 
         X = check_array(X, dtype=[X_DTYPE], force_all_finite=False)
         max_bins = self.n_bins - 1
-        self.bin_thresholds_ = _find_binning_thresholds(
-            X, max_bins, subsample=self.subsample,
-            random_state=self.random_state)
+
+        rng = check_random_state(self.random_state)
+        if self.subsample is not None and X.shape[0] > self.subsample:
+            subset = rng.choice(X.shape[0], self.subsample, replace=False)
+            X = X.take(subset, axis=0)
+
+        self.bin_thresholds_ = [
+            _find_binning_thresholds(X[:, f_idx], max_bins)
+            for f_idx in range(X.shape[1])]
 
         self.n_bins_non_missing_ = np.array(
             [thresholds.shape[0] + 1 for thresholds in self.bin_thresholds_],
