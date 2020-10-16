@@ -492,12 +492,12 @@ def test_nmf_regularization(estimator, solver):
     init = 'nndsvda'
     # L1 regularization should increase the number of zeros
     l1_ratio = 1.
-    regul = nmf.estimator(n_components=n_components, solver=solver,
-                          alpha=0.5, l1_ratio=l1_ratio, random_state=42,
-                          init=init)
-    model = nmf.estimator(n_components=n_components, solver=solver,
-                          alpha=0., l1_ratio=l1_ratio, random_state=42,
-                          init=init)
+    regul = estimator(n_components=n_components, solver=solver,
+                      alpha=0.5, l1_ratio=l1_ratio, random_state=42,
+                      init=init)
+    model = estimator(n_components=n_components, solver=solver,
+                      alpha=0., l1_ratio=l1_ratio, random_state=42,
+                      init=init)
 
     W_regul = regul.fit_transform(X)
     W_model = model.fit_transform(X)
@@ -515,12 +515,12 @@ def test_nmf_regularization(estimator, solver):
 
     # L2 regularization should decrease the norm of the sum of tne matrices
     l1_ratio = 0.
-    regul = nmf.estimator(n_components=n_components, solver=solver,
-                          alpha=0.5, l1_ratio=l1_ratio, random_state=42,
-                          init=init)
-    model = nmf.estimator(n_components=n_components, solver=solver,
-                          alpha=0., l1_ratio=l1_ratio, random_state=42,
-                          init=init)
+    regul = estimator(n_components=n_components, solver=solver,
+                      alpha=0.5, l1_ratio=l1_ratio, random_state=42,
+                      init=init)
+    model = estimator(n_components=n_components, solver=solver,
+                      alpha=0., l1_ratio=l1_ratio, random_state=42,
+                      init=init)
 
     W_regul = regul.fit_transform(X)
     W_model = model.fit_transform(X)
