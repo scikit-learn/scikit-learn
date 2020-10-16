@@ -167,23 +167,24 @@ plot_results("Gradient Boosting on Adult Census")
 # In terms of prediction performance, dropping the categorical features leads
 # to poorer performance. The three models that use categorical features have
 # comparable error rates, with a slight edge for the native handling.
-#
-# In general, one can expect poorer predictions from one-hot-encoded data,
-# especially when the the trees depths or the number of nodes are limited: with
-# one-hot-encoded data, one needs more split points (i.e. more depth) in order
-# to recover an equivalent split that could be obtained in one single split
-# point with native handling. This is also true when categories are treated as
-# ordinal quantities: if categories are `A..F` and the best split is `ACF -
-# BDE` the one-hot-encoder model will need 3 split points (one per category in
-# the left node), and the ordinal non-native model will need 4 splits: 1 split
-# to isolate `A`, 1 split to isolate `F`, and 2 splits to isolate `C` from
-# `BCDE`.
 
 # %%
 # Limitting the number of splits
 # ------------------------------
 #
-# In practice, how strongly the model performances differ will depend on the
+# In general, one can expect poorer predictions from one-hot-encoded data,
+# especially when the the trees depths or the number of nodes are limited: with
+# one-hot-encoded data, one needs more split points (i.e. more depth) in order
+# to recover an equivalent split that could be obtained in one single split
+# point with native handling.
+#
+# This is also true when categories are treated as ordinal quantities: if
+# categories are `A..F` and the best split is `ACF - BDE` the one-hot-encoder
+# model will need 3 split points (one per category in the left node), and the
+# ordinal non-native model will need 4 splits: 1 split to isolate `A`, 1 split
+# to isolate `F`, and 2 splits to isolate `C` from `BCDE`.
+#
+# In practice, how strongly the models performances differ will depend on the
 # dataset and on the flexibility of the trees.
 #
 # To see this, let us re-run the same analysis with under-fitting models where
@@ -208,5 +209,4 @@ plt.show()
 # the native category handling strategy performs the best when the splitting
 # budget is constrained. The two other strategies (one-hot encoding and
 # treating categories as ordinal values) lead to error values comparable
-# to the baseline model that just
-# dropped the categorical features.
+# to the baseline model that just dropped the categorical features.
