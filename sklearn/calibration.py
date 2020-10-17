@@ -106,7 +106,7 @@ class CalibratedClassifierCV(ClassifierMixin,
         ``-1`` means using all processors.
 
         Base estimator clones are fitted in parallel across cross-validation
-        iterations. Therefore parallelism happens only when `cv` != "prefit".
+        iterations. Therefore parallelism happens only when `cv != "prefit"`.
 
         See :term:`Glossary <n_jobs>` for more details.
 
@@ -126,8 +126,10 @@ class CalibratedClassifierCV(ClassifierMixin,
         :func:`~sklearn.model_selection.cross_val_predict`, which are then
         used for calibration. At prediction time, the classifier used is the
         `base_estimator` trained on all the data.
-        Note this method is implemented when `probabilities=True` for
-        :mod:`sklearn.svm` estimators.
+        Note that this method is also internally implemented  in
+        :mod:`sklearn.svm` estimators with the `probabilities=True` parameter.
+
+        .. versionadded:: 0.24
 
     Attributes
     ----------
@@ -146,9 +148,8 @@ class CalibratedClassifierCV(ClassifierMixin,
         - When `cv` is not "prefit" and `ensemble=False`, the `base_estimator`,
           fitted on all the data, and fitted calibrator.
 
-    n_features_in_ : int
-        The number of features in `X`. If `cv='prefit'`, number of features
-        in the data used to fit `base_estimator`.
+    .. versionchanged:: 0.24
+        Single calibrated classifier case when `ensemble=False`.
 
     Examples
     --------
@@ -280,9 +281,9 @@ class CalibratedClassifierCV(ClassifierMixin,
                 sample_weight = _check_sample_weight(sample_weight, X)
                 if not supports_sw:
                     estimator_name = type(base_estimator).__name__
-                    warnings.warn("Since %s does not support sample_weights, "
-                                  "sample weights will only be used for the "
-                                  "calibration itself." % estimator_name)
+                    warnings.warn(f"Since {estimator_name} does not support "
+                                  "sample_weights, sample weights will only be"
+                                  " used for the calibration itself.")
 
             # Check that each cross-validation fold can have at least one
             # example per class
@@ -824,7 +825,7 @@ def calibration_curve(y_true, y_prob, *, normalize=False, n_bins=5,
     array([0. , 0.5, 1. ])
     >>> prob_pred
     array([0.2  , 0.525, 0.85 ])
-     """
+    """
     y_true = column_or_1d(y_true)
     y_prob = column_or_1d(y_prob)
     check_consistent_length(y_true, y_prob)

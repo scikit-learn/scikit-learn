@@ -98,7 +98,7 @@ the calibrator tries to predict :math:`p(y_i = 1 | f_i)`.
 The samples that are used to fit the calibrator should not be the same
 samples used to fit the classifier, as this would introduce bias.
 This is because performance of the classifier on its training data would be
-better than for novel data. Using the classifier output from training data
+better than for novel data. Using the classifier output of training data
 to fit the calibrator would thus result in a biased calibrator that maps to
 probabilities closer to 0 and 1 than it should.
 

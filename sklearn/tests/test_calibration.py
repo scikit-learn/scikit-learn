@@ -57,48 +57,48 @@ def test_calibration(data, method, ensemble):
     clf = MultinomialNB().fit(X_train, y_train, sample_weight=sw_train)
     prob_pos_clf = clf.predict_proba(X_test)[:, 1]
 
-    pc_clf = CalibratedClassifierCV(clf, cv=y.size + 1, ensemble=ensemble)
-    assert_raises(ValueError, pc_clf.fit, X, y)
+    cal_clf = CalibratedClassifierCV(clf, cv=y.size + 1, ensemble=ensemble)
+    assert_raises(ValueError, cal_clf.fit, X, y)
 
     # Naive Bayes with calibration
     for this_X_train, this_X_test in [(X_train, X_test),
                                       (sparse.csr_matrix(X_train),
                                        sparse.csr_matrix(X_test))]:
-        pc_clf = CalibratedClassifierCV(
+        cal_clf = CalibratedClassifierCV(
             clf, method=method, cv=2, ensemble=ensemble
         )
         # Note that this fit overwrites the fit on the entire training
         # set
-        pc_clf.fit(this_X_train, y_train, sample_weight=sw_train)
-        prob_pos_pc_clf = pc_clf.predict_proba(this_X_test)[:, 1]
+        cal_clf.fit(this_X_train, y_train, sample_weight=sw_train)
+        prob_pos_cal_clf = cal_clf.predict_proba(this_X_test)[:, 1]
 
         # Check that brier score has improved after calibration
         assert (brier_score_loss(y_test, prob_pos_clf) >
-                brier_score_loss(y_test, prob_pos_pc_clf))
+                brier_score_loss(y_test, prob_pos_cal_clf))
 
         # Check invariance against relabeling [0, 1] -> [1, 2]
-        pc_clf.fit(this_X_train, y_train + 1, sample_weight=sw_train)
-        prob_pos_pc_clf_relabeled = pc_clf.predict_proba(this_X_test)[:, 1]
-        assert_array_almost_equal(prob_pos_pc_clf,
-                                  prob_pos_pc_clf_relabeled)
+        cal_clf.fit(this_X_train, y_train + 1, sample_weight=sw_train)
+        prob_pos_cal_clf_relabeled = cal_clf.predict_proba(this_X_test)[:, 1]
+        assert_array_almost_equal(prob_pos_cal_clf,
+                                  prob_pos_cal_clf_relabeled)
 
         # Check invariance against relabeling [0, 1] -> [-1, 1]
-        pc_clf.fit(this_X_train, 2 * y_train - 1, sample_weight=sw_train)
-        prob_pos_pc_clf_relabeled = pc_clf.predict_proba(this_X_test)[:, 1]
-        assert_array_almost_equal(prob_pos_pc_clf, prob_pos_pc_clf_relabeled)
+        cal_clf.fit(this_X_train, 2 * y_train - 1, sample_weight=sw_train)
+        prob_pos_cal_clf_relabeled = cal_clf.predict_proba(this_X_test)[:, 1]
+        assert_array_almost_equal(prob_pos_cal_clf, prob_pos_cal_clf_relabeled)
 
         # Check invariance against relabeling [0, 1] -> [1, 0]
-        pc_clf.fit(this_X_train, (y_train + 1) % 2, sample_weight=sw_train)
-        prob_pos_pc_clf_relabeled = pc_clf.predict_proba(this_X_test)[:, 1]
+        cal_clf.fit(this_X_train, (y_train + 1) % 2, sample_weight=sw_train)
+        prob_pos_cal_clf_relabeled = cal_clf.predict_proba(this_X_test)[:, 1]
         if method == "sigmoid":
-            assert_array_almost_equal(prob_pos_pc_clf,
-                                      1 - prob_pos_pc_clf_relabeled)
+            assert_array_almost_equal(prob_pos_cal_clf,
+                                      1 - prob_pos_cal_clf_relabeled)
         else:
             # Isotonic calibration is not invariant against relabeling
             # but should improve in both cases
             assert (brier_score_loss(y_test, prob_pos_clf) >
                     brier_score_loss((y_test + 1) % 2,
-                                     prob_pos_pc_clf_relabeled))
+                                     prob_pos_cal_clf_relabeled))
 
 
 @pytest.mark.parametrize('ensemble', [True, False])
@@ -205,7 +205,7 @@ def test_parallel_execution(data, method, ensemble):
 @pytest.mark.parametrize('ensemble', [True, False])
 def test_calibration_multiclass(method, ensemble):
     # Test calibration for multiclass with classifier that implements
-    # only decision function."""
+    # only decision function.
     clf = LinearSVC(random_state=7)
     X, y_idx = make_blobs(n_samples=100, n_features=2, random_state=42,
                           centers=3, cluster_std=3.0)
@@ -293,18 +293,18 @@ def test_calibration_prefit():
                                       (sparse.csr_matrix(X_calib),
                                        sparse.csr_matrix(X_test))]:
         for method in ['isotonic', 'sigmoid']:
-            pc_clf = CalibratedClassifierCV(clf, method=method, cv="prefit")
+            cal_clf = CalibratedClassifierCV(clf, method=method, cv="prefit")
 
             for sw in [sw_calib, None]:
-                pc_clf.fit(this_X_calib, y_calib, sample_weight=sw)
-                y_prob = pc_clf.predict_proba(this_X_test)
-                y_pred = pc_clf.predict(this_X_test)
-                prob_pos_pc_clf = y_prob[:, 1]
+                cal_clf.fit(this_X_calib, y_calib, sample_weight=sw)
+                y_prob = cal_clf.predict_proba(this_X_test)
+                y_pred = cal_clf.predict(this_X_test)
+                prob_pos_cal_clf = y_prob[:, 1]
                 assert_array_equal(y_pred,
                                    np.array([0, 1])[np.argmax(y_prob, axis=1)])
 
                 assert (brier_score_loss(y_test, prob_pos_clf) >
-                        brier_score_loss(y_test, prob_pos_pc_clf))
+                        brier_score_loss(y_test, prob_pos_cal_clf))
 
 
 @pytest.mark.parametrize('method', ['sigmoid', 'isotonic'])
