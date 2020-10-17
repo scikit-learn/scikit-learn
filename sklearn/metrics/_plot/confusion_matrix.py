@@ -5,7 +5,6 @@ import numpy as np
 from .. import confusion_matrix
 from ...utils import check_matplotlib_support
 from ...utils import deprecated
-from ...utils._docstring import inject_docstring
 from ...utils.validation import _deprecate_positional_args
 from ...base import is_classifier
 
@@ -164,53 +163,7 @@ class ConfusionMatrixDisplay:
         self.ax_ = ax
         return self
 
-    _common_docstring_from_methods = """labels : array-like of shape \
-                (n_classes,), default=None
-            List of labels to index the matrix. This may be used to reorder or
-            select a subset of labels. If `None` is given, those that appear at
-            least once in `y_true` or `y_pred` are used in sorted order.
-
-        sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights.
-
-        normalize : {'true', 'pred', 'all'}, default=None
-            Normalizes confusion matrix over the true (rows), predicted
-            (columns) conditions or all the population. If None, confusion
-            matrix will not be normalized.
-
-        display_labels : array-like of shape (n_classes,), default=None
-            Target names used for plotting. By default, `labels` will be used
-            if it is defined, otherwise the unique labels of `y_true` and
-            `y_pred` will be used.
-
-        include_values : bool, default=True
-            Includes values in confusion matrix.
-
-        xticks_rotation : {'vertical', 'horizontal'} or float, \
-            default='horizontal'
-            Rotation of xtick labels.
-
-        values_format : str, default=None
-            Format specification for values in confusion matrix. If `None`, the
-            format specification is 'd' or '.2g' whichever is shorter.
-
-        cmap : str or matplotlib Colormap, default='viridis'
-            Colormap recognized by matplotlib.
-
-        ax : matplotlib Axes, default=None
-            Axes object to plot on. If `None`, a new figure and axes is
-            created.
-
-        colorbar : bool, default=True
-            Whether or not to add a colorbar to the plot.
-
-        Returns
-        -------
-        display : :class:`~sklearn.metrics.ConfusionMatrixDisplay`
-    """.rstrip()
-
     @classmethod
-    @inject_docstring(common_docstring=_common_docstring_from_methods)
     def from_estimator(
         cls,
         estimator,
@@ -246,7 +199,48 @@ class ConfusionMatrixDisplay:
         y : array-like of shape (n_samples,)
             Target values.
 
-        ${common_docstring}
+        labels : array-like of shape (n_classes,), default=None
+            List of labels to index the matrix. This may be used to reorder or
+            select a subset of labels. If `None` is given, those that appear at
+            least once in `y_true` or `y_pred` are used in sorted order.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights.
+
+        normalize : {'true', 'pred', 'all'}, default=None
+            Normalizes confusion matrix over the true (rows), predicted
+            (columns) conditions or all the population. If None, confusion
+            matrix will not be normalized.
+
+        display_labels : array-like of shape (n_classes,), default=None
+            Target names used for plotting. By default, `labels` will be used
+            if it is defined, otherwise the unique labels of `y_true` and
+            `y_pred` will be used.
+
+        include_values : bool, default=True
+            Includes values in confusion matrix.
+
+        xticks_rotation : {'vertical', 'horizontal'} or float, \
+                default='horizontal'
+            Rotation of xtick labels.
+
+        values_format : str, default=None
+            Format specification for values in confusion matrix. If `None`, the
+            format specification is 'd' or '.2g' whichever is shorter.
+
+        cmap : str or matplotlib Colormap, default='viridis'
+            Colormap recognized by matplotlib.
+
+        ax : matplotlib Axes, default=None
+            Axes object to plot on. If `None`, a new figure and axes is
+            created.
+
+        colorbar : bool, default=True
+            Whether or not to add a colorbar to the plot.
+
+        Returns
+        -------
+        display : :class:`~sklearn.metrics.ConfusionMatrixDisplay`
 
         See Also
         --------
@@ -298,7 +292,6 @@ class ConfusionMatrixDisplay:
         )
 
     @classmethod
-    @inject_docstring(common_docstring=_common_docstring_from_methods)
     def from_predictions(
         cls,
         y_true,
@@ -330,7 +323,48 @@ class ConfusionMatrixDisplay:
             The predicted labels given by the method `predict` of an
             classifier.
 
-        ${common_docstring}
+        labels : array-like of shape (n_classes,), default=None
+            List of labels to index the matrix. This may be used to reorder or
+            select a subset of labels. If `None` is given, those that appear at
+            least once in `y_true` or `y_pred` are used in sorted order.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights.
+
+        normalize : {'true', 'pred', 'all'}, default=None
+            Normalizes confusion matrix over the true (rows), predicted
+            (columns) conditions or all the population. If None, confusion
+            matrix will not be normalized.
+
+        display_labels : array-like of shape (n_classes,), default=None
+            Target names used for plotting. By default, `labels` will be used
+            if it is defined, otherwise the unique labels of `y_true` and
+            `y_pred` will be used.
+
+        include_values : bool, default=True
+            Includes values in confusion matrix.
+
+        xticks_rotation : {'vertical', 'horizontal'} or float, \
+                default='horizontal'
+            Rotation of xtick labels.
+
+        values_format : str, default=None
+            Format specification for values in confusion matrix. If `None`, the
+            format specification is 'd' or '.2g' whichever is shorter.
+
+        cmap : str or matplotlib Colormap, default='viridis'
+            Colormap recognized by matplotlib.
+
+        ax : matplotlib Axes, default=None
+            Axes object to plot on. If `None`, a new figure and axes is
+            created.
+
+        colorbar : bool, default=True
+            Whether or not to add a colorbar to the plot.
+
+        Returns
+        -------
+        display : :class:`~sklearn.metrics.ConfusionMatrixDisplay`
 
         See Also
         --------
