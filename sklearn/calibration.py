@@ -118,11 +118,11 @@ class CalibratedClassifierCV(ClassifierMixin,
 
     n_jobs : int, default=None
         Pool size for multiprocessing / multithreading, passed to
-		``joblib.Parallel`` for use in :meth:`fit`. Ignored if
+        ``joblib.Parallel`` for use in :meth:`fit`. Ignored if
         ``cv == "prefit"``.
 
         For every cross-validation split specified by ``cv``, a calibrated
-		classifier is fitted using the cloned base estimator, parallelized by
+        classifier is fitted using the cloned base estimator, parallelized by
         ``joblib.Parallel``.
 
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
