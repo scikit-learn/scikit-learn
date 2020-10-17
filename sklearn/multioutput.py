@@ -393,8 +393,10 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         return self._predict_proba
 
     def _predict_proba(self, X):
-        results = [estimator.predict_proba(X) for estimator in
-                   self.estimators_]
+        results = Parallel(n_jobs=self.n_jobs)(
+            delayed(e.predict_proba)(X)
+            for e in self.estimators_)
+
         return results
 
     def score(self, X, y):
