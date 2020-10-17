@@ -229,14 +229,17 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
         An estimator object implementing :term:`fit` and :term:`predict`.
 
     n_jobs : int or None, optional (default=None)
-        The number of jobs to run in parallel for :meth:`fit`.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-        for more details.
+        Pool size for multiprocessing / multithreading, passed to
+		``joblib.Parallel`` for use in :meth:`fit` and :meth:`predict`.
+        Also used in :meth:`partial_fit` if supported by the passed
+		estimator.
 
-        When individual estimators are fast to train or predict
-        using `n_jobs>1` can result in slower performance due
-        to the overhead of spawning processes.
+		An instance of the passed estimator is trained for each output
+		variable in ``y``, parallelized by ``joblib.Parallel``.
+
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all available processes / threads.
+		See :term:`Glossary <n_jobs>` for more details.
 
         .. versionchanged:: 0.20
            `n_jobs` default changed from 1 to None
@@ -245,6 +248,12 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
     ----------
     estimators_ : list of ``n_output`` estimators
         Estimators used for predictions.
+
+    Notes
+	-----
+	When individual estimators are fast to train or predict,
+    using ``n_jobs > 1`` can result in slower performance due
+    to the parallelism overhead.
 
     Examples
     --------
@@ -301,14 +310,26 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         :term:`predict_proba`.
 
     n_jobs : int or None, optional (default=None)
-        The number of jobs to use for the computation.
-        It does each target variable in y in parallel.
+		Pool size for multiprocessing / multithreading, passed to
+		``joblib.Parallel()`` for use in :meth:`fit` and :meth:`predict`.
+		Also used in :meth:`partial_fit` if supported by the passed
+		estimator.
+
+		An instance of the passed estimator is trained for each output
+		variable in ``y``, parallelized by ``joblib.Parallel``
+
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-        for more details.
+        ``-1`` means using all available processes / threads.
+		See :term:`Glossary <n_jobs>` for more details.
 
         .. versionchanged:: 0.20
            `n_jobs` default changed from 1 to None
+
+    Notes
+	-----
+	When individual estimators are fast to train or predict,
+    using ``n_jobs > 1`` can result in slower performance due
+    to the parallelism overhead.
 
     Attributes
     ----------
