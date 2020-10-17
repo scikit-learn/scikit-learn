@@ -303,7 +303,7 @@ def _get_check_estimator_ids(obj):
 
     When `obj` is an estimator, this returns the pprint version of the
     estimator (with `print_changed_only=True`). When `obj` is a function, the
-    name of the function is returned with its keyworld arguments.
+    name of the function is returned with its keyword arguments.
 
     `_get_check_estimator_ids` is designed to be used as the `id` in
     `pytest.mark.parametrize` where `check_estimator(..., generate_only=True)`
@@ -520,7 +520,7 @@ def check_estimator(Estimator, generate_only=False, api_only=False):
 
     Parameters
     ----------
-    estimator : estimator object
+    Estimator : estimator object
         Estimator instance to check.
 
         .. versionchanged:: 0.24
@@ -608,7 +608,8 @@ def _set_checking_parameters(estimator):
             estimator.set_params(max_iter=20)
         # NMF
         if estimator.__class__.__name__ == 'NMF':
-            estimator.set_params(max_iter=100)
+            # FIXME : init should be removed in 0.26
+            estimator.set_params(max_iter=500, init='nndsvda')
         # MLP
         if estimator.__class__.__name__ in ['MLPClassifier', 'MLPRegressor']:
             estimator.set_params(max_iter=100)
@@ -738,7 +739,7 @@ def _generate_sparse_matrix(X_csr):
         -------
         out: iter(Matrices)
             In format['dok', 'lil', 'dia', 'bsr', 'csr', 'csc', 'coo',
-             'coo_64', 'csc_64', 'csr_64']
+            'coo_64', 'csc_64', 'csr_64']
     """
 
     assert X_csr.format == 'csr'
@@ -1555,12 +1556,16 @@ def check_estimators_empty_data_messages(name, estimator_orig,
     with raises(ValueError, err_msg=err_msg):
         e.fit(X_zero_samples, [])
 
-    X_zero_features = np.empty(0).reshape(3, 0)
+    X_zero_features = np.empty(0).reshape(12, 0)
     # the following y should be accepted by both classifiers and regressors
     # and ignored by unsupervised models
-    y = _enforce_estimator_tags_y(e, np.array([1, 0, 1]))
-    msg = (r"0 feature\(s\) \(shape=\(3, 0\)\) while a minimum of \d* "
-           "is required.") if not api_only else None
+    y = _enforce_estimator_tags_y(
+        e, np.array([1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0])
+    )
+    msg = (
+        r"0 feature\(s\) \(shape=\(\d*, 0\)\) while a minimum of \d* "
+        "is required."
+    ) if not api_only else None
     with raises(ValueError, match=msg):
         e.fit(X_zero_features, y)
 
@@ -2932,7 +2937,7 @@ def check_set_params(name, estimator_orig, api_only=False):
     estimator = clone(estimator_orig)
 
     orig_params = estimator.get_params(deep=False)
-    msg = ("get_params result does not match what was passed to set_params")
+    msg = "get_params result does not match what was passed to set_params"
 
     estimator.set_params(**orig_params)
     curr_params = estimator.get_params(deep=False)
@@ -3232,7 +3237,7 @@ def check_n_features_in_after_fitting(name, estimator_orig, api_only=False):
                      "predict_proba"]
     X_bad = X[:, [1]]
 
-    msg = (f"X has 1 features, but {name} is expecting {X.shape[1]} "
+    msg = (f"X has 1 features, but \\w+ is expecting {X.shape[1]} "
            "features as input")
     for method in check_methods:
         if not hasattr(estimator, method):
