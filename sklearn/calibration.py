@@ -117,13 +117,14 @@ class CalibratedClassifierCV(ClassifierMixin,
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
     n_jobs : int, default=None
-        Number of jobs to run in parallel.
+        Pool size for multiprocessing / multithreading, passed to
+		joblib.Parallel() for use in :meth:`fit`. Ignored if ``cv == "prefit"``.
+
+        For every cross-validation split specified by ``cv``, a calibrated
+		classifier is fitted using the cloned base estimator.
+
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors.
-
-        Base estimator clones are fitted in parallel across cross-validation
-        iterations. Therefore parallelism happens only when cv != "prefit".
-
+        ``-1`` means use all available processes / threads.
         See :term:`Glossary <n_jobs>` for more details.
 
         .. versionadded:: 0.24
