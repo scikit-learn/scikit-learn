@@ -314,3 +314,11 @@ def test_32_64_decomposition_shape():
     kpca = KernelPCA()
     assert (kpca.fit_transform(X).shape ==
             kpca.fit_transform(X.astype(np.float32)).shape)
+
+
+# TODO: Remove in 0.26
+def test_kernel_pcc_pairwise_is_deprecated():
+    kp = KernelPCA(kernel='precomputed')
+    msg = r"Attribute _pairwise was deprecated in version 0\.24"
+    with pytest.warns(FutureWarning, match=msg):
+        kp._pairwise

@@ -25,6 +25,7 @@ from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import check_array, gen_even_slices
 from ..utils import _to_object_array
+from ..utils.deprecation import deprecated
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils.validation import check_non_negative
@@ -520,6 +521,14 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         return self
 
+    def _more_tags(self):
+        # For cross-validation routines to split data correctly
+        return {'pairwise': self.metric == 'precomputed'}
+
+    # TODO: Remove in 0.26
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 0.26.")
     @property
     def _pairwise(self):
         # For cross-validation routines to split data correctly
@@ -916,10 +925,10 @@ class RadiusNeighborsMixin:
             Whether or not to return the distances.
 
         sort_results : bool, default=False
-            If True, the distances and indices will be sorted before being
-            returned. If `False`, the results will not be sorted. If
-            `return_distance=False`, setting `sort_results=True` will
-            result in an error.
+            If True, the distances and indices will be sorted by increasing
+            distances before being returned. If False, the results may not
+            be sorted. If `return_distance=False`, setting `sort_results=True`
+            will result in an error.
 
             .. versionadded:: 0.22
 
@@ -1012,6 +1021,16 @@ class RadiusNeighborsMixin:
                 neigh_ind_list = sum(chunked_results, [])
                 results = _to_object_array(neigh_ind_list)
 
+            if sort_results:
+                if not return_distance:
+                    raise ValueError("return_distance must be True "
+                                     "if sort_results is True.")
+                for ii in range(len(neigh_dist)):
+                    order = np.argsort(neigh_dist[ii], kind='mergesort')
+                    neigh_ind[ii] = neigh_ind[ii][order]
+                    neigh_dist[ii] = neigh_dist[ii][order]
+                results = neigh_dist, neigh_ind
+
         elif self._fit_method in ['ball_tree', 'kd_tree']:
             if issparse(X):
                 raise ValueError(
@@ -1088,9 +1107,9 @@ class RadiusNeighborsMixin:
             edges are Euclidean distance between points.
 
         sort_results : bool, default=False
-            If True, the distances and indices will be sorted before being
-            returned. If False, the results will not be sorted.
-            Only used with mode='distance'.
+            If True, in each row of the result, the non-zero entries will be
+            sorted by increasing distances. If False, the non-zero entries may
+            not be sorted. Only used with mode='distance'.
 
             .. versionadded:: 0.22
 

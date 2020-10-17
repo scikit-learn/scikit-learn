@@ -296,7 +296,7 @@ def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
         set to `True`, the sign ambiguity is resolved by making the largest
         loadings for each component in the left singular vectors positive.
 
-    random_state : int, RandomState instance or None, default=None
+    random_state : int, RandomState instance or None, default=0
         The seed of the pseudo random number generator to use when shuffling
         the data, i.e. getting the random vectors to initialize the algorithm.
         Pass an int for reproducible results across multiple function calls.
@@ -755,8 +755,8 @@ def _incremental_weighted_mean_and_var(X, sample_weight,
     nan_mask = np.isnan(X)
     sample_weight_T = np.reshape(sample_weight, (1, -1))
     # new_weight_sum with shape (n_features,)
-    new_weight_sum = \
-        _safe_accumulator_op(np.dot, sample_weight_T, ~nan_mask).ravel()
+    new_weight_sum = np.dot(sample_weight_T,
+                            ~nan_mask).ravel().astype(np.float64)
     total_weight_sum = _safe_accumulator_op(np.sum, sample_weight, axis=0)
 
     X_0 = np.where(nan_mask, 0, X)
