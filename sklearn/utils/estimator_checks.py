@@ -1297,7 +1297,7 @@ def check_transformer_general(name, transformer, readonly_memmap=False,
     if readonly_memmap:
         X, y = create_memmap_backed_data([X, y])
 
-    _check_transformer(name, transformer, X, y)
+    _check_transformer(name, transformer, X, y, api_only=api_only)
 
 
 @ignore_warnings(category=FutureWarning)
@@ -1311,9 +1311,10 @@ def check_transformer_data_not_an_array(name, transformer, api_only=False):
     X = _pairwise_estimator_convert_X(X, transformer)
     this_X = _NotAnArray(X)
     this_y = _NotAnArray(np.asarray(y))
-    _check_transformer(name, transformer, this_X, this_y)
+    _check_transformer(name, transformer, this_X, this_y, api_only=api_only)
     # try the same with some list
-    _check_transformer(name, transformer, X.tolist(), y.tolist())
+    _check_transformer(name, transformer, X.tolist(), y.tolist(),
+                       api_only=api_only)
 
 
 @ignore_warnings(category=FutureWarning)
@@ -3269,8 +3270,7 @@ _NON_API_CHECKS = set([
     'check_methods_subset_invariance',
     'check_methods_sample_order_invariance',
     'check_fit2d_1sample',
-    'check_fit2d_1featureucheck_estimators_dtypes',
-    'check_estimators_dtypes',
+    'check_fit2d_1feature',
     'check_transformer_preserve_dtypes',
     'check_estimators_nan_inf',
     'check_estimators_pickle',

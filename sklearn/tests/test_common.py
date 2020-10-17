@@ -221,7 +221,7 @@ class MyNMFWithBadErrorMessage(NMF):
     # Same as NMF but raises an uninformative error message if X has negative
     # value. This estimator would fail the check suite with api_only=False,
     # specifically it would fail check_fit_non_negative because its error
-    # message doesn't match
+    # message doesn't match the expected one.
 
     def __init__(self):
         # declare init to avoid deprecation warning since default has changed
