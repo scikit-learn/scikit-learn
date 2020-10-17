@@ -134,6 +134,13 @@ In this case the output of :term:`predict_proba` for
 :class:`CalibratedClassifierCV` is the predicted probabilities obtained
 from the single `(classifier, calibrator)` couple.
 
+The main advantage of `ensemble=True` is to benefit from the traditional
+ensembling effect (similar to :ref:`bagging`). The resulting ensemble should
+both be well calibrated and slightly more accurate than with `ensemble=False`.
+The main advantage of using `ensemble=False` is computational: it reduces the
+overall fit time by training only a single base classifier and calibrator
+pair, decreases the final model size and increases prediction speed.
+
 Alternatively an already fitted classifier can be calibrated by setting
 `cv="prefit"`. In this case, the data is not split and all of it is used to
 fit the regressor. It is up to the user
