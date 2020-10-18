@@ -14,16 +14,8 @@ from sklearn.utils.deprecation import deprecated
 from sklearn.utils.metaestimators import if_delegate_has_method
 from sklearn.utils._testing import (
     assert_raises,
-    assert_less,
-    assert_greater,
-    assert_less_equal,
-    assert_greater_equal,
     assert_warns,
     assert_no_warnings,
-    assert_equal,
-    assert_not_equal,
-    assert_in,
-    assert_not_in,
     set_random_state,
     assert_raise_message,
     ignore_warnings,
@@ -33,44 +25,12 @@ from sklearn.utils._testing import (
     TempMemmap,
     create_memmap_backed_data,
     _delete_folder,
-    _convert_container)
+    _convert_container,
+    raises,
+)
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-
-
-@pytest.mark.filterwarnings("ignore",
-                            category=FutureWarning)  # 0.24
-def test_assert_less():
-    assert 0 < 1
-    with pytest.raises(AssertionError):
-        assert_less(1, 0)
-
-
-@pytest.mark.filterwarnings("ignore",
-                            category=FutureWarning)  # 0.24
-def test_assert_greater():
-    assert 1 > 0
-    with pytest.raises(AssertionError):
-        assert_greater(0, 1)
-
-
-@pytest.mark.filterwarnings("ignore",
-                            category=FutureWarning)  # 0.24
-def test_assert_less_equal():
-    assert 0 <= 1
-    assert 1 <= 1
-    with pytest.raises(AssertionError):
-        assert_less_equal(1, 0)
-
-
-@pytest.mark.filterwarnings("ignore",
-                            category=FutureWarning)  # 0.24
-def test_assert_greater_equal():
-    assert 1 >= 0
-    assert 1 >= 1
-    with pytest.raises(AssertionError):
-        assert_greater_equal(0, 1)
 
 
 def test_set_random_state():
@@ -662,23 +622,6 @@ def test_create_memmap_backed_data(monkeypatch):
     assert registration_counter.nb_calls == 4
 
 
-# 0.24
-@pytest.mark.parametrize('callable, args', [
-    (assert_equal, (0, 0)),
-    (assert_not_equal, (0, 1)),
-    (assert_greater, (1, 0)),
-    (assert_greater_equal, (1, 0)),
-    (assert_less, (0, 1)),
-    (assert_less_equal, (0, 1)),
-    (assert_in, (0, [0])),
-    (assert_not_in, (0, [1]))])
-def test_deprecated_helpers(callable, args):
-    msg = ('is deprecated in version 0.22 and will be removed in version '
-           '0.24. Please use "assert" instead')
-    with pytest.warns(FutureWarning, match=msg):
-        callable(*args)
-
-
 @pytest.mark.parametrize(
     "constructor_name, container_type",
     [('list', list),
@@ -694,3 +637,75 @@ def test_convert_container(constructor_name, container_type):
     container = [0, 1]
     assert isinstance(_convert_container(container, constructor_name),
                       container_type)
+
+
+def test_raises():
+    # Tests for the raises context manager
+
+    # Proper type, no match
+    with raises(TypeError):
+        raise TypeError()
+
+    # Proper type, proper match
+    with raises(TypeError, match="how are you") as cm:
+        raise TypeError("hello how are you")
+    assert cm.raised_and_matched
+
+    # Proper type, proper match with multiple patterns
+    with raises(TypeError, match=["not this one", "how are you"]) as cm:
+        raise TypeError("hello how are you")
+    assert cm.raised_and_matched
+
+    # bad type, no match
+    with pytest.raises(ValueError, match="this will be raised"):
+        with raises(TypeError) as cm:
+            raise ValueError("this will be raised")
+    assert not cm.raised_and_matched
+
+    # Bad type, no match, with a err_msg
+    with pytest.raises(AssertionError, match="the failure message"):
+        with raises(TypeError, err_msg="the failure message") as cm:
+            raise ValueError()
+    assert not cm.raised_and_matched
+
+    # bad type, with match (is ignored anyway)
+    with pytest.raises(ValueError, match="this will be raised"):
+        with raises(TypeError, match="this is ignored") as cm:
+            raise ValueError("this will be raised")
+    assert not cm.raised_and_matched
+
+    # proper type but bad match
+    with pytest.raises(
+        AssertionError, match="should contain one of the following patterns"
+    ):
+        with raises(TypeError, match="hello") as cm:
+            raise TypeError("Bad message")
+    assert not cm.raised_and_matched
+
+    # proper type but bad match, with err_msg
+    with pytest.raises(AssertionError, match="the failure message"):
+        with raises(
+            TypeError, match="hello", err_msg="the failure message"
+        ) as cm:
+            raise TypeError("Bad message")
+    assert not cm.raised_and_matched
+
+    # no raise with default may_pass=False
+    with pytest.raises(AssertionError, match="Did not raise"):
+        with raises(TypeError) as cm:
+            pass
+    assert not cm.raised_and_matched
+
+    # no raise with may_pass=True
+    with raises(TypeError, match="hello", may_pass=True) as cm:
+        pass  # still OK
+    assert not cm.raised_and_matched
+
+    # Multiple exception types:
+    with raises((TypeError, ValueError)):
+        raise TypeError()
+    with raises((TypeError, ValueError)):
+        raise ValueError()
+    with pytest.raises(AssertionError):
+        with raises((TypeError, ValueError)):
+            pass

@@ -8,7 +8,6 @@
 
 import numpy as np
 cimport numpy as np
-from threadpoolctl import threadpool_limits
 from cython cimport floating
 from cython.parallel import prange, parallel
 from libc.stdlib cimport malloc, calloc, free
@@ -26,19 +25,7 @@ from ._k_means_fast cimport _average_centers, _center_shift
 np.import_array()
 
 
-# Threadpoolctl wrappers to limit the number of threads in second level of
-# nested parallelism (i.e. BLAS) to avoid oversubsciption.
-def lloyd_iter_chunked_dense(*args, **kwargs):
-    with threadpool_limits(limits=1, user_api="blas"):
-        _lloyd_iter_chunked_dense(*args, **kwargs)
-
-
-def lloyd_iter_chunked_sparse(*args, **kwargs):
-    with threadpool_limits(limits=1, user_api="blas"):
-        _lloyd_iter_chunked_sparse(*args, **kwargs)
-
-
-def _lloyd_iter_chunked_dense(
+def lloyd_iter_chunked_dense(
         np.ndarray[floating, ndim=2, mode='c'] X,  # IN
         floating[::1] sample_weight,               # IN
         floating[::1] x_squared_norms,             # IN
@@ -230,7 +217,7 @@ cdef void _update_chunk_dense(
                 centers_new[label * n_features + k] += X[i * n_features + k] * sample_weight[i]
 
 
-def _lloyd_iter_chunked_sparse(
+def lloyd_iter_chunked_sparse(
         X,                                 # IN
         floating[::1] sample_weight,       # IN
         floating[::1] x_squared_norms,     # IN

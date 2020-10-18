@@ -56,7 +56,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
     verbose : int, default=0
         The verbosity level. The default, zero, means silent mode.
 
-    random_state : integer or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for:
 
         - Gibbs sampling from visible and hidden layers.
@@ -70,17 +70,17 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
     Attributes
     ----------
-    intercept_hidden_ : array-like, shape (n_components,)
+    intercept_hidden_ : array-like of shape (n_components,)
         Biases of the hidden units.
 
-    intercept_visible_ : array-like, shape (n_features,)
+    intercept_visible_ : array-like of shape (n_features,)
         Biases of the visible units.
 
-    components_ : array-like, shape (n_components, n_features)
+    components_ : array-like of shape (n_components, n_features)
         Weight matrix, where n_features in the number of
         visible units and n_components is the number of hidden units.
 
-    h_samples_ : array-like, shape (batch_size, n_components)
+    h_samples_ : array-like of shape (batch_size, n_components)
         Hidden Activation sampled from the model distribution,
         where batch_size in the number of examples per minibatch and
         n_components is the number of hidden units.
@@ -131,7 +131,8 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = check_array(X, accept_sparse='csr', dtype=np.float64)
+        X = self._validate_data(X, accept_sparse='csr', reset=False,
+                                dtype=(np.float64, np.float32))
         return self._mean_hiddens(X)
 
     def _mean_hiddens(self, v):
@@ -159,7 +160,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         v : ndarray of shape (n_samples, n_features)
             Values of the visible layer to sample from.
 
-        rng : RandomState
+        rng : RandomState instance
             Random number generator to use.
 
         Returns
@@ -178,7 +179,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         h : ndarray of shape (n_samples, n_components)
             Values of the hidden layer to sample from.
 
-        rng : RandomState
+        rng : RandomState instance
             Random number generator to use.
 
         Returns
@@ -243,7 +244,9 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         self : BernoulliRBM
             The fitted model.
         """
-        X = check_array(X, accept_sparse='csr', dtype=np.float64)
+        first_pass = not hasattr(self, 'components_')
+        X = self._validate_data(X, accept_sparse='csr', dtype=np.float64,
+                                reset=first_pass)
         if not hasattr(self, 'random_state_'):
             self.random_state_ = check_random_state(self.random_state)
         if not hasattr(self, 'components_'):
@@ -274,7 +277,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         v_pos : ndarray of shape (n_samples, n_features)
             The data to use for training.
 
-        rng : RandomState
+        rng : RandomState instance
             Random number generator to use for sampling.
         """
         h_pos = self._mean_hiddens(v_pos)
@@ -344,16 +347,20 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         self : BernoulliRBM
             The fitted model.
         """
-        X = self._validate_data(X, accept_sparse='csr', dtype=np.float64)
+        X = self._validate_data(
+            X, accept_sparse='csr', dtype=(np.float64, np.float32)
+        )
         n_samples = X.shape[0]
         rng = check_random_state(self.random_state)
 
         self.components_ = np.asarray(
             rng.normal(0, 0.01, (self.n_components, X.shape[1])),
-            order='F')
-        self.intercept_hidden_ = np.zeros(self.n_components, )
-        self.intercept_visible_ = np.zeros(X.shape[1], )
-        self.h_samples_ = np.zeros((self.batch_size, self.n_components))
+            order='F',
+            dtype=X.dtype)
+        self.intercept_hidden_ = np.zeros(self.n_components, dtype=X.dtype)
+        self.intercept_visible_ = np.zeros(X.shape[1], dtype=X.dtype)
+        self.h_samples_ = np.zeros((self.batch_size, self.n_components),
+                                   dtype=X.dtype)
 
         n_batches = int(np.ceil(float(n_samples) / self.batch_size))
         batch_slices = list(gen_even_slices(n_batches * self.batch_size,
@@ -378,6 +385,8 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         return {
             '_xfail_checks': {
                 'check_methods_subset_invariance':
-                'fails for the decision_function method'
+                'fails for the decision_function method',
+                'check_methods_sample_order_invariance':
+                'fails for the score_samples method',
             }
         }

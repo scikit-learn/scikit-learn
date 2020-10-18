@@ -1,12 +1,10 @@
-"""Matrix factorization with Sparse PCA"""
+"""Matrix factorization with Sparse PCA."""
 # Author: Vlad Niculae, Gael Varoquaux, Alexandre Gramfort
 # License: BSD 3 clause
 
-import warnings
-
 import numpy as np
 
-from ..utils import check_random_state, check_array
+from ..utils import check_random_state
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _deprecate_positional_args
 from ..linear_model import ridge_regression
@@ -14,24 +12,8 @@ from ..base import BaseEstimator, TransformerMixin
 from ._dict_learning import dict_learning, dict_learning_online
 
 
-# FIXME: remove in 0.24
-def _check_normalize_components(normalize_components, estimator_name):
-    if normalize_components != 'deprecated':
-        if normalize_components:
-            warnings.warn(
-                "'normalize_components' has been deprecated in 0.22 and "
-                "will be removed in 0.24. Remove the parameter from the "
-                " constructor.", FutureWarning
-            )
-        else:
-            raise NotImplementedError(
-                "normalize_components=False is not supported starting from "
-                "0.22. Remove this parameter from the constructor."
-            )
-
-
 class SparsePCA(TransformerMixin, BaseEstimator):
-    """Sparse Principal Components Analysis (SparsePCA)
+    """Sparse Principal Components Analysis (SparsePCA).
 
     Finds the set of sparse components that can optimally reconstruct
     the data.  The amount of sparseness is controllable by the coefficient
@@ -41,66 +23,56 @@ class SparsePCA(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    n_components : int,
+    n_components : int, default=None
         Number of sparse atoms to extract.
 
-    alpha : float,
+    alpha : float, default=1
         Sparsity controlling parameter. Higher values lead to sparser
         components.
 
-    ridge_alpha : float,
+    ridge_alpha : float, default=0.01
         Amount of ridge shrinkage to apply in order to improve
         conditioning when calling the transform method.
 
-    max_iter : int,
+    max_iter : int, default=1000
         Maximum number of iterations to perform.
 
-    tol : float,
+    tol : float, default=1e-8
         Tolerance for the stopping condition.
 
-    method : {'lars', 'cd'}
+    method : {'lars', 'cd'}, default='lars'
         lars: uses the least angle regression method to solve the lasso problem
         (linear_model.lars_path)
         cd: uses the coordinate descent method to compute the
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         Number of parallel jobs to run.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    U_init : array of shape (n_samples, n_components),
+    U_init : ndarray of shape (n_samples, n_components), default=None
         Initial values for the loadings for warm restart scenarios.
 
-    V_init : array of shape (n_components, n_features),
+    V_init : ndarray of shape (n_components, n_features), default=None
         Initial values for the components for warm restart scenarios.
 
-    verbose : int
+    verbose : int or bool, default=False
         Controls the verbosity; the higher, the more messages. Defaults to 0.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Used during dictionary learning. Pass an int for reproducible results
         across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    normalize_components : 'deprecated'
-        This parameter does not have any effect. The components are always
-        normalized.
-
-        .. versionadded:: 0.20
-
-        .. deprecated:: 0.22
-           ``normalize_components`` is deprecated in 0.22 and will be removed
-           in 0.24.
-
     Attributes
     ----------
-    components_ : array, [n_components, n_features]
+    components_ : ndarray of shape (n_components, n_features)
         Sparse components extracted from the data.
 
-    error_ : array
+    error_ : ndarray
         Vector of errors at each iteration.
 
     n_components_ : int
@@ -111,7 +83,7 @@ class SparsePCA(TransformerMixin, BaseEstimator):
     n_iter_ : int
         Number of iterations run.
 
-    mean_ : array, shape (n_features,)
+    mean_ : ndarray of shape (n_features,)
         Per-feature empirical mean, estimated from the training set.
         Equal to ``X.mean(axis=0)``.
 
@@ -131,7 +103,7 @@ class SparsePCA(TransformerMixin, BaseEstimator):
     >>> np.mean(transformer.components_ == 0)
     0.9666...
 
-    See also
+    See Also
     --------
     PCA
     MiniBatchSparsePCA
@@ -140,8 +112,7 @@ class SparsePCA(TransformerMixin, BaseEstimator):
     @_deprecate_positional_args
     def __init__(self, n_components=None, *, alpha=1, ridge_alpha=0.01,
                  max_iter=1000, tol=1e-8, method='lars', n_jobs=None,
-                 U_init=None, V_init=None, verbose=False, random_state=None,
-                 normalize_components='deprecated'):
+                 U_init=None, V_init=None, verbose=False, random_state=None):
         self.n_components = n_components
         self.alpha = alpha
         self.ridge_alpha = ridge_alpha
@@ -153,14 +124,13 @@ class SparsePCA(TransformerMixin, BaseEstimator):
         self.V_init = V_init
         self.verbose = verbose
         self.random_state = random_state
-        self.normalize_components = normalize_components
 
     def fit(self, X, y=None):
         """Fit the model from data in X.
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
 
@@ -174,10 +144,6 @@ class SparsePCA(TransformerMixin, BaseEstimator):
         random_state = check_random_state(self.random_state)
         X = self._validate_data(X)
 
-        _check_normalize_components(
-            self.normalize_components, self.__class__.__name__
-        )
-
         self.mean_ = X.mean(axis=0)
         X = X - self.mean_
 
@@ -187,7 +153,8 @@ class SparsePCA(TransformerMixin, BaseEstimator):
             n_components = self.n_components
         code_init = self.V_init.T if self.V_init is not None else None
         dict_init = self.U_init.T if self.U_init is not None else None
-        Vt, _, E, self.n_iter_ = dict_learning(X.T, n_components, self.alpha,
+        Vt, _, E, self.n_iter_ = dict_learning(X.T, n_components,
+                                               alpha=self.alpha,
                                                tol=self.tol,
                                                max_iter=self.max_iter,
                                                method=self.method,
@@ -219,32 +186,24 @@ class SparsePCA(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array of shape (n_samples, n_features)
+        X : ndarray of shape (n_samples, n_features)
             Test data to be transformed, must have the same number of
             features as the data used to train the model.
 
         Returns
         -------
-        X_new array, shape (n_samples, n_components)
+        X_new : ndarray of shape (n_samples, n_components)
             Transformed data.
         """
         check_is_fitted(self)
 
-        X = check_array(X)
+        X = self._validate_data(X, reset=False)
         X = X - self.mean_
 
         U = ridge_regression(self.components_.T, X.T, self.ridge_alpha,
                              solver='cholesky')
 
         return U
-
-    def _more_tags(self):
-        return {
-            '_xfail_checks': {
-                "check_methods_subset_invariance":
-                "fails for the transform method"
-            }
-        }
 
 
 class MiniBatchSparsePCA(SparsePCA):
@@ -258,64 +217,54 @@ class MiniBatchSparsePCA(SparsePCA):
 
     Parameters
     ----------
-    n_components : int,
+    n_components : int, default=None
         number of sparse atoms to extract
 
-    alpha : int,
+    alpha : int, default=1
         Sparsity controlling parameter. Higher values lead to sparser
         components.
 
-    ridge_alpha : float,
+    ridge_alpha : float, default=0.01
         Amount of ridge shrinkage to apply in order to improve
         conditioning when calling the transform method.
 
-    n_iter : int,
+    n_iter : int, default=100
         number of iterations to perform for each mini batch
 
-    callback : callable or None, optional (default: None)
+    callback : callable, default=None
         callable that gets invoked every five iterations
 
-    batch_size : int,
+    batch_size : int, default=3
         the number of features to take in each mini batch
 
-    verbose : int
+    verbose : int or bool, default=False
         Controls the verbosity; the higher, the more messages. Defaults to 0.
 
-    shuffle : boolean,
+    shuffle : bool, default=True
         whether to shuffle the data before splitting it in batches
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         Number of parallel jobs to run.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    method : {'lars', 'cd'}
+    method : {'lars', 'cd'}, default='lars'
         lars: uses the least angle regression method to solve the lasso problem
         (linear_model.lars_path)
         cd: uses the coordinate descent method to compute the
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Used for random shuffling when ``shuffle`` is set to ``True``,
         during online dictionary learning. Pass an int for reproducible results
         across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    normalize_components : 'deprecated'
-        This parameter does not have any effect. The components are always
-        normalized.
-
-        .. versionadded:: 0.20
-
-        .. deprecated:: 0.22
-           ``normalize_components`` is deprecated in 0.22 and will be removed
-           in 0.24.
-
     Attributes
     ----------
-    components_ : array, [n_components, n_features]
+    components_ : ndarray of shape (n_components, n_features)
         Sparse components extracted from the data.
 
     n_components_ : int
@@ -326,7 +275,7 @@ class MiniBatchSparsePCA(SparsePCA):
     n_iter_ : int
         Number of iterations run.
 
-    mean_ : array, shape (n_features,)
+    mean_ : ndarray of shape (n_features,)
         Per-feature empirical mean, estimated from the training set.
         Equal to ``X.mean(axis=0)``.
 
@@ -347,7 +296,7 @@ class MiniBatchSparsePCA(SparsePCA):
     >>> np.mean(transformer.components_ == 0)
     0.94
 
-    See also
+    See Also
     --------
     PCA
     SparsePCA
@@ -356,13 +305,11 @@ class MiniBatchSparsePCA(SparsePCA):
     @_deprecate_positional_args
     def __init__(self, n_components=None, *, alpha=1, ridge_alpha=0.01,
                  n_iter=100, callback=None, batch_size=3, verbose=False,
-                 shuffle=True, n_jobs=None, method='lars', random_state=None,
-                 normalize_components='deprecated'):
+                 shuffle=True, n_jobs=None, method='lars', random_state=None):
         super().__init__(
             n_components=n_components, alpha=alpha, verbose=verbose,
             ridge_alpha=ridge_alpha, n_jobs=n_jobs, method=method,
-            random_state=random_state,
-            normalize_components=normalize_components)
+            random_state=random_state)
         self.n_iter = n_iter
         self.callback = callback
         self.batch_size = batch_size
@@ -373,7 +320,7 @@ class MiniBatchSparsePCA(SparsePCA):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
 
@@ -386,10 +333,6 @@ class MiniBatchSparsePCA(SparsePCA):
         """
         random_state = check_random_state(self.random_state)
         X = self._validate_data(X)
-
-        _check_normalize_components(
-            self.normalize_components, self.__class__.__name__
-        )
 
         self.mean_ = X.mean(axis=0)
         X = X - self.mean_

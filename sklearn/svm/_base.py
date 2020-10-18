@@ -14,6 +14,7 @@ from ..utils.multiclass import _ovr_decision_function
 from ..utils import check_array, check_random_state
 from ..utils import column_or_1d
 from ..utils import compute_class_weight
+from ..utils.deprecation import deprecated
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted, _check_large_sparse
 from ..utils.validation import _num_samples
@@ -60,7 +61,7 @@ def _one_vs_one_coef(dual_coef, n_support, support_vectors):
 
 
 class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
-    """Base class for estimators that use libsvm as backing library
+    """Base class for estimators that use libsvm as backing library.
 
     This implements support vector machine classification and regression.
 
@@ -102,6 +103,14 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         self.max_iter = max_iter
         self.random_state = random_state
 
+    def _more_tags(self):
+        # Used by cross_val_score.
+        return {'pairwise': self.kernel == 'precomputed'}
+
+    # TODO: Remove in 0.26
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 0.26.")
     @property
     def _pairwise(self):
         # Used by cross_val_score.
@@ -121,7 +130,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         y : array-like of shape (n_samples,)
             Target values (class labels in classification, real numbers in
-            regression)
+            regression).
 
         sample_weight : array-like of shape (n_samples,), default=None
             Per-sample weights. Rescale C per sample. Higher weights
@@ -543,7 +552,8 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         y_ = column_or_1d(y, warn=True)
         check_classification_targets(y)
         cls, y = np.unique(y_, return_inverse=True)
-        self.class_weight_ = compute_class_weight(self.class_weight, cls, y_)
+        self.class_weight_ = compute_class_weight(self.class_weight,
+                                                  classes=cls, y=y_)
         if len(cls) < 2:
             raise ValueError(
                 "The number of classes has to be greater than one; got %d"
@@ -637,7 +647,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         ----------
         X : array-like of shape (n_samples, n_features)
             For kernel="precomputed", the expected shape of X is
-            [n_samples_test, n_samples_train]
+            (n_samples_test, n_samples_train).
 
         Returns
         -------
@@ -879,7 +889,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     tol : float
         Stopping condition.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the pseudo random number generation for shuffling the data.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -926,7 +936,8 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
                              " in the data, but the data contains only one"
                              " class: %r" % classes_[0])
 
-        class_weight_ = compute_class_weight(class_weight, classes_, y)
+        class_weight_ = compute_class_weight(class_weight, classes=classes_,
+                                             y=y)
     else:
         class_weight_ = np.empty(0, dtype=np.float64)
         y_ind = y

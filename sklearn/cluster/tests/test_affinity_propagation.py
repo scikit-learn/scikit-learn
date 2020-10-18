@@ -223,7 +223,7 @@ def test_affinity_propagation_convergence_warning_dense_sparse(centers):
     """Non-regression, see #13334"""
     rng = np.random.RandomState(42)
     X = rng.rand(40, 10)
-    y = (4 * rng.rand(40)).astype(np.int)
+    y = (4 * rng.rand(40)).astype(int)
     ap = AffinityPropagation(random_state=46)
     ap.fit(X, y)
     ap.cluster_centers_ = centers
@@ -231,3 +231,24 @@ def test_affinity_propagation_convergence_warning_dense_sparse(centers):
         assert_array_equal(ap.predict(X),
                            np.zeros(X.shape[0], dtype=int))
     assert len(record) == 0
+
+
+def test_affinity_propagation_float32():
+    # Test to fix incorrect clusters due to dtype change
+    # (non-regression test for issue #10832)
+    X = np.array([[1, 0, 0, 0],
+                  [0, 1, 1, 0],
+                  [0, 1, 1, 0],
+                  [0, 0, 0, 1]], dtype='float32')
+    afp = AffinityPropagation(preference=1, affinity='precomputed',
+                              random_state=0).fit(X)
+    expected = np.array([0, 1, 1, 2])
+    assert_array_equal(afp.labels_, expected)
+
+
+# TODO: Remove in 0.26
+def test_affinity_propagation_pairwise_is_deprecated():
+    afp = AffinityPropagation(affinity='precomputed')
+    msg = r"Attribute _pairwise was deprecated in version 0\.24"
+    with pytest.warns(FutureWarning, match=msg):
+        afp._pairwise

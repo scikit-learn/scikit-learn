@@ -16,7 +16,7 @@ extends single output estimators to multioutput estimators.
 
 import numpy as np
 import scipy.sparse as sp
-from joblib import Parallel, delayed
+from joblib import Parallel
 
 from abc import ABCMeta, abstractmethod
 from .base import BaseEstimator, clone, MetaEstimatorMixin
@@ -27,7 +27,7 @@ from .utils.metaestimators import if_delegate_has_method
 from .utils.validation import (check_is_fitted, has_fit_parameter,
                                _check_fit_params, _deprecate_positional_args)
 from .utils.multiclass import check_classification_targets
-from .utils import deprecated
+from .utils.fixes import delayed
 
 __all__ = ["MultiOutputRegressor", "MultiOutputClassifier",
            "ClassifierChain", "RegressorChain"]
@@ -61,7 +61,8 @@ def _partial_fit_estimator(estimator, X, y, classes=None, sample_weight=None,
     return estimator
 
 
-class _MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
+class _MultiOutputEstimator(MetaEstimatorMixin,
+                            BaseEstimator,
                             metaclass=ABCMeta):
     @abstractmethod
     @_deprecate_positional_args
@@ -76,13 +77,13 @@ class _MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
 
         Parameters
         ----------
-        X : (sparse) array-like, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Data.
 
-        y : (sparse) array-like, shape (n_samples, n_outputs)
+        y : {array-like, sparse matrix} of shape (n_samples, n_outputs)
             Multi-output targets.
 
-        classes : list of numpy arrays, shape (n_outputs)
+        classes : list of ndarray of shape (n_outputs,)
             Each array is unique classes for one output in str/int
             Can be obtained by via
             ``[np.unique(y[:, i]) for i in range(y.shape[1])]``, where y is the
@@ -101,6 +102,7 @@ class _MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
         self : object
         """
         X, y = check_X_y(X, y,
+                         force_all_finite=False,
                          multi_output=True,
                          accept_sparse=True)
 
@@ -129,10 +131,10 @@ class _MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
 
         Parameters
         ----------
-        X : (sparse) array-like, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Data.
 
-        y : (sparse) array-like, shape (n_samples, n_outputs)
+        y : {array-like, sparse matrix} of shape (n_samples, n_outputs)
             Multi-output targets. An indicator matrix turns on multilabel
             estimation.
 
@@ -144,6 +146,8 @@ class _MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
         **fit_params : dict of string -> object
             Parameters passed to the ``estimator.fit`` method of each step.
 
+            .. versionadded:: 0.23
+
         Returns
         -------
         self : object
@@ -153,7 +157,9 @@ class _MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
             raise ValueError("The base estimator should implement"
                              " a fit method")
 
-        X, y = self._validate_data(X, y, multi_output=True, accept_sparse=True)
+        X, y = self._validate_data(X, y,
+                                   force_all_finite=False,
+                                   multi_output=True, accept_sparse=True)
 
         if is_classifier(self):
             check_classification_targets(y)
@@ -182,12 +188,12 @@ class _MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
 
         Parameters
         ----------
-        X : (sparse) array-like, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Data.
 
         Returns
         -------
-        y : (sparse) array-like, shape (n_samples, n_outputs)
+        y : {array-like, sparse matrix} of shape (n_samples, n_outputs)
             Multi-output targets predicted across multiple predictors.
             Note: Separate models are generated for each predictor.
         """
@@ -196,7 +202,7 @@ class _MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
             raise ValueError("The base estimator should implement"
                              " a predict method")
 
-        X = check_array(X, accept_sparse=True)
+        X = check_array(X, force_all_finite=False, accept_sparse=True)
 
         y = Parallel(n_jobs=self.n_jobs)(
             delayed(e.predict)(X)
@@ -232,7 +238,7 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
         using `n_jobs>1` can result in slower performance due
         to the overhead of spawning processes.
 
-        .. versionchanged:: v0.20
+        .. versionchanged:: 0.20
            `n_jobs` default changed from 1 to None
 
     Attributes
@@ -262,10 +268,10 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
 
         Parameters
         ----------
-        X : (sparse) array-like, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Data.
 
-        y : (sparse) array-like, shape (n_samples, n_outputs)
+        y : {array-like, sparse matrix} of shape (n_samples, n_outputs)
             Multi-output targets.
 
         sample_weight : array-like of shape (n_samples,), default=None
@@ -301,12 +307,12 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-        .. versionchanged:: v0.20
+        .. versionchanged:: 0.20
            `n_jobs` default changed from 1 to None
 
     Attributes
     ----------
-    classes_ : array, shape = (n_classes,)
+    classes_ : ndarray of shape (n_classes,)
         Class labels.
 
     estimators_ : list of ``n_output`` estimators
@@ -337,12 +343,14 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
             The input data.
         Y : array-like of shape (n_samples, n_classes)
             The target values.
-        sample_weight : array-like of shape (n_samples,) or None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
             Only supported if the underlying classifier supports sample
             weights.
         **fit_params : dict of string -> object
             Parameters passed to the ``estimator.fit`` method of each step.
+
+            .. versionadded:: 0.23
 
         Returns
         -------
@@ -362,7 +370,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Data
 
         Returns
@@ -394,10 +402,10 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             Test samples
 
-        y : array-like, shape [n_samples, n_outputs]
+        y : array-like of shape (n_samples, n_outputs)
             True values for X
 
         Returns
@@ -437,12 +445,14 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input data.
-        Y : array-like, shape (n_samples, n_classes)
+        Y : array-like of shape (n_samples, n_classes)
             The target values.
         **fit_params : dict of string -> object
             Parameters passed to the `fit` method of each step.
+
+            .. versionadded:: 0.23
 
         Returns
         -------
@@ -453,6 +463,9 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         random_state = check_random_state(self.random_state)
         check_array(X, accept_sparse=True)
         self.order_ = self.order
+        if isinstance(self.order_, tuple):
+            self.order_ = np.array(self.order_)
+
         if self.order_ is None:
             self.order_ = np.array(range(Y.shape[1]))
         elif isinstance(self.order_, str):
@@ -503,12 +516,12 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input data.
 
         Returns
         -------
-        Y_pred : array-like, shape (n_samples, n_classes)
+        Y_pred : array-like of shape (n_samples, n_classes)
             The predicted values.
 
         """
@@ -549,8 +562,8 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     base_estimator : estimator
         The base estimator from which the classifier chain is built.
 
-    order : array-like of shape (n_outputs,) or 'random', optional
-        By default the order will be determined by the order of columns in
+    order : array-like of shape (n_outputs,) or 'random', default=None
+        If None, the order will be determined by the order of columns in
         the label matrix Y.::
 
             order = [0, 1, 2, ..., Y.shape[1] - 1]
@@ -566,13 +579,12 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
 
         If order is 'random' a random ordering will be used.
 
-    cv : int, cross-validation generator or an iterable, optional \
-    (default=None)
+    cv : int, cross-validation generator or an iterable, default=None
         Determines whether to use cross validated predictions or true
         labels for the results of previous estimators in the chain.
-        If cv is None the true labels are used when fitting. Otherwise
-        possible inputs for cv are:
+        Possible inputs for cv are:
 
+        - None, to use true labels when fitting,
         - integer, to specify the number of folds in a (Stratified)KFold,
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
@@ -598,17 +610,39 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     order_ : list
         The order of labels in the classifier chain.
 
-    See also
+    Examples
     --------
-    RegressorChain: Equivalent for regression
-    MultioutputClassifier: Classifies each output independently rather than
+    >>> from sklearn.datasets import make_multilabel_classification
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> from sklearn.model_selection import train_test_split
+    >>> from sklearn.multioutput import ClassifierChain
+    >>> X, Y = make_multilabel_classification(
+    ...    n_samples=12, n_classes=3, random_state=0
+    ... )
+    >>> X_train, X_test, Y_train, Y_test = train_test_split(
+    ...    X, Y, random_state=0
+    ... )
+    >>> base_lr = LogisticRegression(solver='lbfgs', random_state=0)
+    >>> chain = ClassifierChain(base_lr, order='random', random_state=0)
+    >>> chain.fit(X_train, Y_train).predict(X_test)
+    array([[1., 1., 0.],
+           [1., 0., 0.],
+           [0., 1., 0.]])
+    >>> chain.predict_proba(X_test)
+    array([[0.8387..., 0.9431..., 0.4576...],
+           [0.8878..., 0.3684..., 0.2640...],
+           [0.0321..., 0.9935..., 0.0625...]])
+
+    See Also
+    --------
+    RegressorChain : Equivalent for regression.
+    MultioutputClassifier : Classifies each output independently rather than
         chaining.
 
     References
     ----------
     Jesse Read, Bernhard Pfahringer, Geoff Holmes, Eibe Frank, "Classifier
     Chains for Multi-label Classification", 2009.
-
     """
 
     def fit(self, X, Y):
@@ -616,9 +650,9 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input data.
-        Y : array-like, shape (n_samples, n_classes)
+        Y : array-like of shape (n_samples, n_classes)
             The target values.
 
         Returns
@@ -637,11 +671,11 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
 
         Returns
         -------
-        Y_prob : array-like, shape (n_samples, n_classes)
+        Y_prob : array-like of shape (n_samples, n_classes)
         """
         X = check_array(X, accept_sparse=True)
         Y_prob_chain = np.zeros((X.shape[0], len(self.estimators_)))
@@ -666,11 +700,11 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------
-        Y_decision : array-like, shape (n_samples, n_classes )
+        Y_decision : array-like of shape (n_samples, n_classes)
             Returns the decision function of the sample for each model
             in the chain.
         """
@@ -712,8 +746,8 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
     base_estimator : estimator
         The base estimator from which the classifier chain is built.
 
-    order : array-like of shape (n_outputs,) or 'random', optional
-        By default the order will be determined by the order of columns in
+    order : array-like of shape (n_outputs,) or 'random', default=None
+        If None, the order will be determined by the order of columns in
         the label matrix Y.::
 
             order = [0, 1, 2, ..., Y.shape[1] - 1]
@@ -729,13 +763,12 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
 
         If order is 'random' a random ordering will be used.
 
-    cv : int, cross-validation generator or an iterable, optional \
-    (default=None)
+    cv : int, cross-validation generator or an iterable, default=None
         Determines whether to use cross validated predictions or true
         labels for the results of previous estimators in the chain.
-        If cv is None the true labels are used when fitting. Otherwise
-        possible inputs for cv are:
+        Possible inputs for cv are:
 
+        - None, to use true labels when fitting,
         - integer, to specify the number of folds in a (Stratified)KFold,
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
@@ -757,10 +790,22 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
     order_ : list
         The order of labels in the classifier chain.
 
-    See also
+    Examples
     --------
-    ClassifierChain: Equivalent for classification
-    MultioutputRegressor: Learns each output independently rather than
+    >>> from sklearn.multioutput import RegressorChain
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> logreg = LogisticRegression(solver='lbfgs',multi_class='multinomial')
+    >>> X, Y = [[1, 0], [0, 1], [1, 1]], [[0, 2], [1, 1], [2, 0]]
+    >>> chain = RegressorChain(base_estimator=logreg, order=[0, 1]).fit(X, Y)
+    >>> chain.predict(X)
+    array([[0., 2.],
+           [1., 1.],
+           [2., 0.]])
+
+    See Also
+    --------
+    ClassifierChain : Equivalent for classification.
+    MultioutputRegressor : Learns each output independently rather than
         chaining.
 
     """
@@ -770,14 +815,16 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input data.
-        Y : array-like, shape (n_samples, n_classes)
+        Y : array-like of shape (n_samples, n_classes)
             The target values.
 
         **fit_params : dict of string -> object
             Parameters passed to the `fit` method at each step
             of the regressor chain.
+
+            .. versionadded:: 0.23
 
         Returns
         -------
@@ -788,10 +835,3 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
 
     def _more_tags(self):
         return {'multioutput_only': True}
-
-
-# TODO: remove in 0.24
-@deprecated("MultiOutputEstimator is deprecated in version "
-            "0.22 and will be removed in version 0.24.")
-class MultiOutputEstimator(_MultiOutputEstimator):
-    pass

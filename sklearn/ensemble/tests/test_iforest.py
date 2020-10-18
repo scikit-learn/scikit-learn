@@ -124,11 +124,6 @@ def test_iforest_error():
     # test X_test n_features match X_train one:
     assert_raises(ValueError, IsolationForest().fit(X).predict, X[:, 1:])
 
-    # test that behaviour='old' will raise an error
-    msg = "The old behaviour of IsolationForest is not implemented anymore."
-    with pytest.raises(NotImplementedError, match=msg):
-        IsolationForest(behaviour='old').fit(X)
-
 
 def test_recalculate_max_depth():
     """Check max_depth recalculation when max_samples is reset to n_samples"""
@@ -315,13 +310,6 @@ def test_iforest_chunks_works2(
 ):
     test_iforest_works(contamination)
     assert mocked_get_chunk.call_count == n_predict_calls
-
-
-def test_iforest_deprecation():
-    iforest = IsolationForest(behaviour='new')
-    warn_msg = "'behaviour' is deprecated in 0.22 and will be removed in 0.24"
-    with pytest.warns(FutureWarning, match=warn_msg):
-        iforest.fit(iris.data)
 
 
 def test_iforest_with_uniform_data():

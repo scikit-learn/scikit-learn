@@ -10,7 +10,6 @@
 
 import numpy as np
 cimport numpy as np
-from threadpoolctl import threadpool_limits
 cimport cython
 from cython cimport floating
 from cython.parallel import prange, parallel
@@ -28,18 +27,6 @@ from ._k_means_fast cimport _center_shift
 
 
 np.import_array()
-
-
-# Threadpoolctl wrappers to limit the number of threads in second level of
-# nested parallelism (i.e. BLAS) to avoid oversubsciption.
-def elkan_iter_chunked_dense(*args, **kwargs):
-    with threadpool_limits(limits=1, user_api="blas"):
-        _elkan_iter_chunked_dense(*args, **kwargs)
-
-
-def elkan_iter_chunked_sparse(*args, **kwargs):
-    with threadpool_limits(limits=1, user_api="blas"):
-        _elkan_iter_chunked_sparse(*args, **kwargs)
 
 
 def init_bounds_dense(
@@ -193,7 +180,7 @@ def init_bounds_sparse(
         upper_bounds[i] = min_dist
 
 
-def _elkan_iter_chunked_dense(
+def elkan_iter_chunked_dense(
         np.ndarray[floating, ndim=2, mode='c'] X,  # IN
         floating[::1] sample_weight,               # IN
         floating[:, ::1] centers_old,              # IN
@@ -421,7 +408,7 @@ cdef void _update_chunk_dense(
                 centers_new[label * n_features + k] += X[i * n_features + k] * sample_weight[i]
 
 
-def _elkan_iter_chunked_sparse(
+def elkan_iter_chunked_sparse(
         X,                                       # IN
         floating[::1] sample_weight,             # IN
         floating[:, ::1] centers_old,            # IN
