@@ -148,8 +148,8 @@ class CalibratedClassifierCV(ClassifierMixin,
         - When `cv` is not "prefit" and `ensemble=False`, the `base_estimator`,
           fitted on all the data, and fitted calibrator.
 
-    .. versionchanged:: 0.24
-        Single calibrated classifier case when `ensemble=False`.
+        .. versionchanged:: 0.24
+            Single calibrated classifier case when `ensemble=False`.
 
     Examples
     --------
