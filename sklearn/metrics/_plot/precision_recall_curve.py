@@ -1,9 +1,11 @@
-from .base import _check_classifier_response_method
+import numpy as np
+
 from .base import _get_response
 
 from .. import average_precision_score
 from .. import precision_recall_curve
 
+from ...preprocessing import label_binarize
 from ...utils import check_matplotlib_support
 from ...utils.validation import _deprecate_positional_args
 
@@ -72,6 +74,7 @@ class PrecisionRecallDisplay:
     >>> disp = PrecisionRecallDisplay(precision=precision, recall=recall)
     >>> disp.plot() # doctest: +SKIP
     """
+
     @_deprecate_positional_args
     def __init__(self, precision, recall, *,
                  average_precision=None, estimator_name=None, pos_label=None):
@@ -141,27 +144,46 @@ class PrecisionRecallDisplay:
         return self
 
 
-def _setup_display(y, y_pred,
-                   pos_label=1, sample_weight=None, name=None):
-    """
-    Setup Precision Recall visualization.
+def _get_precision_recall_display(y, y_pred,
+                                  pos_label=1, sample_weight=None, name=None):
+    """Calculate precision recall metrics and return precision recall display.
 
-    :param y:
-    :param y_pred:
-    :param pos_label:
-    :param sample_weight : array-like of shape (n_samples,), default=None
+    Parameters
+    ----------
+    y : array-like of shape (n_samples,)
+        Target values.
+
+    y_pred: ndarray of shape (n_samples,)
+        Target scores.
+
+    pos_label : str or int, default=None
+        The class considered as the positive class when computing the roc auc
+        metrics. By default, `estimators.classes_[1]` is considered
+        as the positive class.
+        This parameter is ignored for multiclass cenarios.
+
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
-    :param name: str, default=None
-        Name for labeling curve. If `None`, the name of the
-        estimator is used.
-    :return:
+
+    name : str, default=None
+        Name of ROC Curve for labeling.
+
+    Returns
+    -------
+    display : :class:`~sklearn.metrics.PrecisionRecallDisplay`
+        Object that stores computed values.
     """
-    precision, recall, _ = precision_recall_curve(y, y_pred,
-                                                  pos_label=pos_label,
-                                                  sample_weight=sample_weight)
-    average_precision = average_precision_score(y, y_pred,
-                                                pos_label=pos_label,
-                                                sample_weight=sample_weight)
+    precision, recall, _ = precision_recall_curve(
+        y, y_pred,
+        pos_label=pos_label,
+        sample_weight=sample_weight
+    )
+
+    average_precision = average_precision_score(
+        y, y_pred,
+        pos_label=pos_label,
+        sample_weight=sample_weight
+    )
 
     return PrecisionRecallDisplay(
         precision=precision, recall=recall,
@@ -205,8 +227,13 @@ def plot_precision_recall_curve(estimator, X, y, *,
         Name for labeling curve. If `None`, the name of the
         estimator is used.
 
-    ax : matplotlib axes, default=None
+    ax : Matplotlib axes or array-like of Matplotlib axes, default=None
         Axes object to plot on. If `None`, a new figure and axes is created.
+        For the multiclass cenario:
+        - If a single axis is passed in, all plots are plotted in
+          the same axis.
+        - If an array-like of axes are passed in, the precision recall curve
+          plots will be drawn directly into these axes.
 
     pos_label : str or int, default=None
         The class considered as the positive class when computing the precision
@@ -221,7 +248,7 @@ def plot_precision_recall_curve(estimator, X, y, *,
     Returns
     -------
     display : :class:`~sklearn.metrics.PrecisionRecallDisplay`
-        Object that stores computed values.
+        Object or array-like of object that stores computed values.
 
     See Also
     --------
@@ -231,24 +258,53 @@ def plot_precision_recall_curve(estimator, X, y, *,
     """
     check_matplotlib_support("plot_precision_recall_curve")
 
+    import matplotlib.pyplot as plt
+
+    n_classes = len(np.unique(y)) if y.ndim == 1 else y.shape[1]
+
+    print('n_classes', n_classes, y.ndim, y.shape)
+
     y_pred, pos_label = _get_response(
-        X, estimator, response_method, pos_label=pos_label)
+        X, estimator, response_method,
+        n_classes=n_classes, pos_label=pos_label)
 
-    precision, recall, _ = precision_recall_curve(y, y_pred,
-                                                  pos_label=pos_label,
-                                                  sample_weight=sample_weight)
-    average_precision = average_precision_score(y, y_pred,
-                                                pos_label=pos_label,
-                                                sample_weight=sample_weight)
+    name = estimator.__class__.__name__ if name is None else name
 
-    name = name if name is not None else estimator.__class__.__name__
+    # Early exit if the axes does not have the correct number of axes
+    if ax is not None and not isinstance(ax, plt.Axes):
+        axes = np.asarray(ax, dtype=object)
+        if axes.size != n_classes:
+            raise ValueError("Expected ax to have {} axes, got {}".format(
+                n_classes, axes.size))
 
-    viz = PrecisionRecallDisplay(
-        precision=precision,
-        recall=recall,
-        average_precision=average_precision,
-        estimator_name=name,
-        pos_label=pos_label,
-    )
+    if n_classes == 2:
 
-    return viz.plot(ax=ax, name=name, **kwargs)
+        viz = _get_precision_recall_display(
+            y, y_pred, pos_label=pos_label,
+            sample_weight=sample_weight
+        )
+
+        return viz.plot(ax=ax, name=name, **kwargs)
+    else:
+        # binarize if y is a vector
+        if y.ndim == 1:
+            y = label_binarize(y, classes=np.unique(y))
+
+        if ax is None:
+            fig, ax = plt.subplots()
+
+        vizs = []
+
+        for i in range(n_classes):
+            viz = _get_precision_recall_display(
+                y[:, i], y_pred[:, i],
+                sample_weight=sample_weight,
+            )
+
+            axes = ax if isinstance(ax, plt.Axes) else ax[i]
+
+            viz.plot(ax=axes, name='{} (class {})'.format(name, i), **kwargs)
+
+            vizs.append(viz)
+
+        return vizs

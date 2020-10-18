@@ -45,7 +45,8 @@ def _check_classifier_response_method(estimator, response_method):
     return prediction_method
 
 
-def _get_response(X, estimator, response_method, pos_label=None):
+def _get_response(X, estimator, response_method,
+                  n_classes=2, pos_label=None):
     """Return response and positive label.
 
     Parameters
@@ -79,6 +80,10 @@ def _get_response(X, estimator, response_method, pos_label=None):
         the metrics.
     """
     classification_error = (
+        "{} should be a classifier".format(estimator.__class__.__name__)
+    )
+
+    binary_classification_error = (
         "{} should be a binary classifier".format(estimator.__class__.__name__)
     )
 
@@ -90,6 +95,9 @@ def _get_response(X, estimator, response_method, pos_label=None):
 
     y_pred = prediction_method(X)
 
+    if n_classes > 2:
+        return y_pred, None
+
     if pos_label is not None and pos_label not in estimator.classes_:
         raise ValueError(
             f"The class provided by 'pos_label' is unknown. Got "
@@ -98,7 +106,7 @@ def _get_response(X, estimator, response_method, pos_label=None):
 
     if y_pred.ndim != 1:  # `predict_proba`
         if y_pred.shape[1] != 2:
-            raise ValueError(classification_error)
+            raise ValueError(binary_classification_error)
         if pos_label is None:
             pos_label = estimator.classes_[1]
             y_pred = y_pred[:, 1]

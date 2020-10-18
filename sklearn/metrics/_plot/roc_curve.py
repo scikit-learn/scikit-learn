@@ -1,5 +1,6 @@
+import numpy as np
+
 from .base import _get_response
-from .base import _check_classifier_response_method
 
 from .. import auc
 from .. import roc_curve
@@ -69,6 +70,7 @@ class RocCurveDisplay:
     >>> display.plot()  # doctest: +SKIP
     >>> plt.show()      # doctest: +SKIP
     """
+
     @_deprecate_positional_args
     def __init__(self, *, fpr, tpr,
                  roc_auc=None, estimator_name=None, pos_label=None):
@@ -119,11 +121,16 @@ class RocCurveDisplay:
             fig, ax = plt.subplots()
 
         self.line_, = ax.plot(self.fpr, self.tpr, **line_kwargs)
-        info_pos_label = (f" (Positive label: {self.pos_label})"
-                          if self.pos_label is not None else "")
 
-        xlabel = "False Positive Rate" + info_pos_label
-        ylabel = "True Positive Rate" + info_pos_label
+        xlabel = "False Positive Rate"
+        ylabel = "True Positive Rate"
+
+        if self.pos_label is not None:
+            info_pos_label = (f" (Positive label: {self.pos_label})"
+                              if self.pos_label is not None else "")
+            xlabel += info_pos_label
+            ylabel += info_pos_label
+
         ax.set(xlabel=xlabel, ylabel=ylabel)
 
         if "label" in line_kwargs:
@@ -134,15 +141,56 @@ class RocCurveDisplay:
         return self
 
 
-def _setup_display(y, y_pred,
-                   pos_label=1, sample_weight=None,
-                   drop_intermediate=True, name=None):
-    fpr, tpr, _ = roc_curve(y, y_pred, pos_label=pos_label,
-                            sample_weight=sample_weight,
-                            drop_intermediate=drop_intermediate)
+def _get_roc_curve_display(y, y_pred,
+                           pos_label=None, sample_weight=None,
+                           drop_intermediate=True, name=None):
+    """Calculate roc metrics and return roc curve display.
+
+    Parameters
+    ----------
+    y : array-like of shape (n_samples,)
+        Target values.
+
+    y_pred: ndarray of shape (n_samples,)
+        Target scores.
+
+    pos_label : str or int, default=None
+        The class considered as the positive class when computing the roc auc
+        metrics. By default, `estimators.classes_[1]` is considered
+        as the positive class.
+        This parameter is ignored for multiclass cenarios.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    drop_intermediate : boolean, default=True
+        Whether to drop some suboptimal thresholds which would not appear
+        on a plotted ROC curve. This is useful in order to create lighter
+        ROC curves.
+
+    name : str, default=None
+        Name of ROC Curve for labeling.
+
+    Returns
+    -------
+    display : :class:`~sklearn.metrics.RocCurveDisplay`
+        Object that stores computed values.
+    """
+    fpr, tpr, _ = roc_curve(
+        y, y_pred,
+        pos_label=pos_label,
+        sample_weight=sample_weight,
+        drop_intermediate=drop_intermediate
+    )
+
     roc_auc = auc(fpr, tpr)
+
     return RocCurveDisplay(
-        fpr=fpr, tpr=tpr, roc_auc=roc_auc, estimator_name=name
+        fpr=fpr,
+        tpr=tpr,
+        roc_auc=roc_auc,
+        estimator_name=name,
+        pos_label=pos_label
     )
 
 
@@ -187,8 +235,13 @@ def plot_roc_curve(estimator, X, y, *, sample_weight=None,
         Name of ROC Curve for labeling. If `None`, use the name of the
         estimator.
 
-    ax : matplotlib axes, default=None
+    ax : Matplotlib axes or array-like of Matplotlib axes, default=None
         Axes object to plot on. If `None`, a new figure and axes is created.
+        For the multiclass cenario:
+        - If a single axis is passed in, all plots are plotted in
+          the same axis.
+        - If an array-like of axes are passed in, the roc curve
+          plots will be drawn directly into these axes.
 
     pos_label : str or int, default=None
         The class considered as the positive class when computing the roc auc
@@ -200,7 +253,7 @@ def plot_roc_curve(estimator, X, y, *, sample_weight=None,
     Returns
     -------
     display : :class:`~sklearn.metrics.RocCurveDisplay`
-        Object that stores computed values.
+        Object or array-like of object that stores computed values.
 
     See Also
     --------
@@ -223,22 +276,50 @@ def plot_roc_curve(estimator, X, y, *, sample_weight=None,
     """
     check_matplotlib_support('plot_roc_curve')
 
-    y_pred, pos_label = _get_response(
-        X, estimator, response_method, pos_label=pos_label)
+    import matplotlib.pyplot as plt
 
-    fpr, tpr, _ = roc_curve(y, y_pred, pos_label=pos_label,
-                            sample_weight=sample_weight,
-                            drop_intermediate=drop_intermediate)
-    roc_auc = auc(fpr, tpr)
+    n_classes = len(np.unique(y))
+
+    y_pred, pos_label = _get_response(
+        X, estimator, response_method,
+        n_classes=n_classes, pos_label=pos_label)
 
     name = estimator.__class__.__name__ if name is None else name
 
-    viz = RocCurveDisplay(
-        fpr=fpr,
-        tpr=tpr,
-        roc_auc=roc_auc,
-        estimator_name=name,
-        pos_label=pos_label
-    )
+    # Early exit if the axes does not have the correct number of axes
+    if ax is not None and not isinstance(ax, plt.Axes):
+        axes = np.asarray(ax, dtype=object)
+        if axes.size != n_classes:
+            raise ValueError("Expected ax to have {} axes, got {}".format(
+                n_classes, axes.size))
 
-    return viz.plot(ax=ax, name=name, **kwargs)
+    if n_classes == 2:
+
+        viz = _get_roc_curve_display(
+            y, y_pred, pos_label=pos_label,
+            sample_weight=sample_weight,
+            drop_intermediate=drop_intermediate
+        )
+
+        return viz.plot(ax=ax, name=name, **kwargs)
+    else:
+        # binarize if y is a vector
+        if y.ndim == 1:
+            y = label_binarize(y, classes=np.unique(y))
+
+        vizs = []
+
+        for i in range(n_classes):
+            viz = _get_roc_curve_display(
+                y[:, i], y_pred[:, i],
+                sample_weight=sample_weight,
+                drop_intermediate=drop_intermediate
+            )
+
+            axes = ax if isinstance(ax, plt.Axes) else ax[i]
+
+            viz.plot(ax=axes, name='{} (class {})'.format(name, i), **kwargs)
+
+            vizs.append(viz)
+
+        return vizs
