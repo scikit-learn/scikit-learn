@@ -119,44 +119,56 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n,
     axis : int (either 0 or 1)
         Axis along which the axis should be computed.
 
-    last_mean : float array with shape (n_features,)
+    last_mean : ndarray, shape (n_features,) or (n_samples,)
         Array of feature-wise means to update with the new data X.
+        Shape depends on axis.
 
-    last_var : float array with shape (n_features,)
+    last_var : ndarray, shape (n_features,) or (n_samples,)
         Array of feature-wise var to update with the new data X.
+        Shape depends on axis.
 
-    last_n : ndarray with shape (n_features,)
+    last_n : ndarray, shape (n_features,) or (n_samples,)
         Sum of the weights seen for each feature, excluding the current weights
+        Shape depends on axis.
 
-    weights : array-like of shape (n_samples,) if axis is set to 0; or
-        of shape (n_features,) if axis is set to 1; or None
-        (regardless of axis)
-        If it is set to None,then samples are equally weighted.
+    weights : ndarray, shape (n_samples,) or (n_features,) | None
+        if axis is set to 0 shape is (n_samples,) or
+        if axis is set to 1 shape is (n_features,).
+        If it is set to None, then samples are equally weighted.
 
     Returns
     -------
-
-    means : float array with shape (n_features,)
+    means : ndarray, shape (n_features,) or (n_samples,)
         Updated feature-wise means.
 
-    variances : float array with shape (n_features,)
+    variances : ndarray, shape (n_features,) or (n_samples,)
         Updated feature-wise variances.
 
-    n : int with shape (n_features,)
-        Updated number of seen samples.
+    n : ndarray, shape (n_features,) or (n_samples,)
+        Updated number of seen samples per feature if axis=0
+        or number of seen features per sample if axis=1.
 
     Notes
     -----
     NaNs are ignored in the algorithm.
-
     """
     _raise_error_wrong_axis(axis)
 
     if not isinstance(X, (sp.csr_matrix, sp.csc_matrix)):
         _raise_typeerror(X)
 
+    n_samples, n_features = X.shape
+
     if axis == 1:
         X = X.T
+        assert last_mean.shape[0] == n_samples
+        assert last_var.shape[0] == n_samples
+        assert last_n.shape[0] == n_samples
+    else:
+        assert last_mean.shape[0] == n_features
+        assert last_var.shape[0] == n_features
+        assert last_n.shape[0] == n_features
+
     if weights is not None:
         weights = _check_sample_weight(weights, X, dtype=X.dtype)
 

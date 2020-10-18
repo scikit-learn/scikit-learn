@@ -127,7 +127,7 @@ def test_incr_mean_variance_axis_weighted_axis1(Xw, X, weights,
     Xw_sparse = sparse_constructor(Xw)
     X_sparse = sparse_constructor(X)
 
-    last_mean = np.zeros(np.size(Xw, 1))
+    last_mean = np.zeros(np.shape(Xw)[0])
     last_var = np.zeros_like(last_mean)
     last_n = np.zeros_like(last_mean, dtype=np.int64)
     means0, vars0, n_incr0 = incr_mean_variance_axis(X=X_sparse, axis=axis,
