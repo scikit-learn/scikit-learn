@@ -25,11 +25,16 @@ from sklearn.utils.estimator_checks import check_estimator
 import sklearn
 from sklearn.base import BiclusterMixin
 
+from sklearn.decomposition import PCA
 from sklearn.decomposition import NMF
-from sklearn.utils.validation import check_non_negative, check_array
 from sklearn.linear_model._base import LinearClassifierMixin
 from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import Ridge
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import RandomizedSearchCV
+from sklearn.pipeline import make_pipeline
 from sklearn.svm import NuSVC
+
 from sklearn.utils import IS_PYPY
 from sklearn.utils._testing import SkipTest
 from sklearn.utils.estimator_checks import (
@@ -38,7 +43,9 @@ from sklearn.utils.estimator_checks import (
     _get_check_estimator_ids,
     check_class_weight_balanced_linear_classifier,
     parametrize_with_checks,
-    check_n_features_in_after_fitting)
+    check_n_features_in_after_fitting,
+)
+from sklearn.utils.validation import check_non_negative, check_array
 
 
 def test_all_estimator_no_base_class():
@@ -214,6 +221,12 @@ class MyNMFWithBadErrorMessage(NMF):
     # Same as NMF but raises an uninformative error message if X has negative
     # value. This estimator would fail the check suite in strict mode,
     # specifically it would fail check_fit_non_negative
+    # FIXME : should be removed in 0.26
+    def __init__(self):
+        super().__init__()
+        self.init = 'nndsvda'
+        self.max_iter = 500
+
     def fit(self, X, y=None, **params):
         X = check_array(X, accept_sparse=('csr', 'csc'),
                         dtype=[np.float64, np.float32])
@@ -273,6 +286,44 @@ def test_strict_mode_parametrize_with_checks(estimator, check):
     check(estimator)
 
 
+def _generate_search_cv_instances():
+    for SearchCV, (Estimator, param_grid) in zip(
+        [GridSearchCV, RandomizedSearchCV],
+        [
+            (Ridge, {"alpha": [0.1, 1.0]}),
+            (LogisticRegression, {"C": [0.1, 1.0]}),
+        ],
+    ):
+        yield SearchCV(Estimator(), param_grid)
+
+    for SearchCV, (Estimator, param_grid) in zip(
+        [GridSearchCV, RandomizedSearchCV],
+        [
+            (Ridge, {"ridge__alpha": [0.1, 1.0]}),
+            (LogisticRegression, {"logisticregression__C": [0.1, 1.0]}),
+        ],
+    ):
+        yield SearchCV(
+            make_pipeline(PCA(), Estimator()), param_grid
+        ).set_params(error_score="raise")
+
+
+@parametrize_with_checks(list(_generate_search_cv_instances()))
+def test_search_cv(estimator, check, request):
+    # Common tests for SearchCV instances
+    # We have a separate test because those meta-estimators can accept a
+    # wide range of base estimators (classifiers, regressors, pipelines)
+    with ignore_warnings(
+        category=(
+            FutureWarning,
+            ConvergenceWarning,
+            UserWarning,
+            FutureWarning,
+        )
+    ):
+        check(estimator)
+
+
 # TODO: When more modules get added, we can remove it from this list to make
 # sure it gets tested. After we finish each module we can move the checks
 # into sklearn.utils.estimator_checks.check_n_features_in.
@@ -289,7 +340,6 @@ N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE = {
     'compose',
     'covariance',
     'cross_decomposition',
-    'decomposition',
     'discriminant_analysis',
     'ensemble',
     'feature_extraction',
@@ -324,4 +374,5 @@ N_FEATURES_IN_AFTER_FIT_ESTIMATORS = [
 @pytest.mark.parametrize("estimator", N_FEATURES_IN_AFTER_FIT_ESTIMATORS,
                          ids=_get_check_estimator_ids)
 def test_check_n_features_in_after_fitting(estimator):
+    _set_checking_parameters(estimator)
     check_n_features_in_after_fitting(estimator.__class__.__name__, estimator)
