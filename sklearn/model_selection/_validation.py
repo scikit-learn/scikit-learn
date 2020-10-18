@@ -25,6 +25,7 @@ from ..utils import indexable, check_random_state, _safe_indexing
 from ..utils.validation import _check_fit_params
 from ..utils.validation import _num_samples
 from ..utils.validation import _deprecate_positional_args
+from ..utils import build_method_metadata_params
 from ..utils.fixes import delayed
 from ..utils.metaestimators import _safe_split
 from ..metrics import check_scoring
@@ -232,9 +233,13 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
         loss function.
 
     """
-    X, y, groups = indexable(X, y, groups)
-
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
+
+    if fit_params is not None:
+        warnings.warn("fit_params is deprecated. Please use props.",
+                      FutureWarning)
+        props = {} if props is None else props
+        props.update(fit_params)
 
     if callable(scoring):
         scorers = scoring
@@ -243,6 +248,29 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
     else:
         scorers = _check_multimetric_scoring(estimator, scoring)
 
+    _params = build_method_metadata_params(
+        children={'scorers': scorers,
+                  'estimator': estimator,
+                  'splitter': cv},
+        routing=[
+            ('scorers', 'score', 'score'),
+            ('estimator', 'fit', 'fit'),
+            ('splitter', 'split', 'split')
+        ],
+        metadata=props
+    )
+    _fit_params = _params.fit
+    _score_params = _params.score
+    _cv_params = _params.split
+
+    _cv_param_values = _cv_params.values()
+    _cv_param_names = _cv_params.keys()
+    indexables = indexable(X, y, *_cv_param_values)
+    X, y = indexables[0], indexables[1]
+    _cv_param_values = indexables[2:] if len(indexables) > 2 else []
+    _cv_params = {name: value for name, value
+                  in zip(_cv_param_names, _cv_param_values)}
+    _fit_params = _check_fit_params(X, _fit_params)
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
@@ -250,13 +278,12 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
     results = parallel(
         delayed(_fit_and_score)(
             clone(estimator), X, y, scorers, train, test, verbose, None,
-            fit_params=fit_params,
-            # TODO: support score_params here
-            score_params=None,
+            fit_params=_fit_params,
+            score_params=_score_params,
             return_train_score=return_train_score,
             return_times=True, return_estimator=return_estimator,
             error_score=error_score)
-        for train, test in cv.split(X, y, groups))
+        for train, test in cv.split(X, y, **_cv_params))
 
     # For callabe scoring, the return type is only know after calling. If the
     # return type is a dictionary, the error scores can now be inserted with

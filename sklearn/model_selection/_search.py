@@ -797,9 +797,13 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         _score_params = _params.score
         _cv_params = _params.split
 
-        indexables = indexable(X, y, **_cv_params)
+        _cv_param_values = _cv_params.values()
+        _cv_param_names = _cv_params.keys()
+        indexables = indexable(X, y, *_cv_param_values)
         X, y = indexables[0], indexables[1]
-        _cv_params = indexables[2:] if len(indexables) > 2 else None
+        _cv_param_values = indexables[2:] if len(indexables) > 2 else []
+        _cv_params = {name: value for name, value
+                      in zip(_cv_param_names, _cv_param_values)}
         _fit_params = _check_fit_params(X, _fit_params)
 
         n_splits = cv_orig.get_n_splits(X, y, **_cv_params)
