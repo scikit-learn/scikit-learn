@@ -9,7 +9,7 @@
 #          Sylvain Marie
 # License: BSD 3 clause
 
-from functools import wraps
+from functools import reduce, wraps
 import warnings
 import numbers
 
@@ -1391,7 +1391,7 @@ def _check_fit_params(X, fit_params, indices=None):
     return fit_params_validated
 
 
-def _check_response_method(estimator, response_method):
+def _check_response_method(estimator, response_method=None):
     """Return prediction method from the `response_method`.
 
     Parameters
@@ -1399,45 +1399,40 @@ def _check_response_method(estimator, response_method):
     estimator : estimator instance
         Classifier to check.
 
-    response_method : {'auto', 'predict_proba', 'decision_function', 'predict'}
-        Specifies whether to use :term:`predict_proba` or
-        :term:`decision_function` as the target response. If set to 'auto',
-        :term:`predict_proba` is tried first and if it does not exist
-        :term:`decision_function` is tried next and :term:`predict` last.
+    response_method : {'predict_proba', 'decision_function', 'predict'} or \
+            list of str, default=None.
+        Specifies the response method to use get prediction from an estimator
+        (i.e. :term:`predict_proba`, :term:`decision_function` or
+        :term:`predict`).
+
+        * if `str`, it corresponds to the name to the method to return.
+        * if a list of `str`, it provides the method names in order of
+          preference. The method returned corresponds to the first method in
+          the list and which is implemented by `estimator`.
+        * if `None`, :term:`predict_proba` is tried first and if it does not
+          exist :term:`decision_function` is tried next and :term:`predict`
+          last.
 
     Returns
     -------
     prediction_method : callable
         Prediction method of estimator.
     """
-
-    possible_response_methods = (
-        "predict", "predict_proba", "decision_function", "auto"
-    )
-    if response_method not in possible_response_methods:
-        raise ValueError(
-            f"response_method must be one of "
-            f"{', '.join(possible_response_methods)}."
-        )
-
-    error_msg = "response_method {} not defined in {}"
-    if response_method != "auto":
-        prediction_method = getattr(estimator, response_method, None)
-        if prediction_method is None:
-            raise ValueError(
-                error_msg.format(response_method, estimator.__class__.__name__)
-            )
+    if response_method is None:
+        list_methods = ["predict_proba", "decision_function", "predict"]
+    elif isinstance(response_method, str):
+        list_methods = [response_method]
     else:
-        predict_proba = getattr(estimator, 'predict_proba', None)
-        decision_function = getattr(estimator, 'decision_function', None)
-        predict = getattr(estimator, 'predict', None)
-        prediction_method = predict_proba or decision_function or predict
-        if prediction_method is None:
-            raise ValueError(
-                error_msg.format(
-                    "decision_function, predict_proba or predict",
-                    estimator.__class__.__name__
-                )
-            )
+        list_methods = response_method
+
+    prediction_method = [
+        getattr(estimator, method, None) for method in list_methods
+    ]
+    prediction_method = reduce(lambda x, y: x or y, prediction_method)
+    if prediction_method is None:
+        raise ValueError(
+            f"response_method {', '.join(list_methods)} not defined in "
+            f"{estimator.__class__.__name__}"
+        )
 
     return prediction_method
