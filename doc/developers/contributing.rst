@@ -765,12 +765,12 @@ Finally, follow the formatting rules below to make it consistently good:
       7. When specifying the dtype of an ndarray, use e.g. ``dtype=np.int32``
          after defining the shape:
          ``ndarray of shape (n_samples,), dtype=np.int32``. You can specify
-        multiple dtype as a set:
-        ``array-like of shape (n_samples,), dtype={np.float64, np.float32}``.
-        If one wants to mention arbitrary precision, use `integral` and
-        `floating` rather than the Python dtype `int` and `float`. When both
-        `int` and `floating` are supported, there is no need to specify the
-        dtype.
+         multiple dtype as a set:
+         ``array-like of shape (n_samples,), dtype={np.float64, np.float32}``.
+         If one wants to mention arbitrary precision, use `integral` and
+         `floating` rather than the Python dtype `int` and `float`. When both
+         `int` and `floating` are supported, there is no need to specify the
+         dtype.
       8. When the default is ``None``, ``None`` only needs to be specified at the
          end with ``default=None``. Be sure to include in the docstring, what it
          means for the parameter or attribute to be ``None``.
