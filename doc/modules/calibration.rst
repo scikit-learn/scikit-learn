@@ -126,7 +126,7 @@ that has the highest probability.
 
 Alternatively an already fitted classifier can be calibrated by setting
 `cv="prefit"`. In this case, the data is not split and all of it is used to
-fit the regressor. It is up to the user
+fit the regressor. It is up to the user to
 make sure that the data used for fitting the classifier is disjoint from the
 data used for fitting the regressor.
 
