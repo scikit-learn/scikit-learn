@@ -95,7 +95,7 @@ def _make_unique(np.ndarray[dtype=floating] X,
     cdef int n_samples = len(X)
     for j in range(n_samples):
         x = X[j]
-        if x - current_x > 1e-15:
+        if x - current_x >= 1e-15:
             # next unique value
             x_out[i] = current_x
             weights_out[i] = current_weight
