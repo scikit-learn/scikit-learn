@@ -9,6 +9,7 @@ import pytest
 from sklearn.exceptions import NotFittedError
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import _convert_container
 from sklearn.utils import is_scalar_nan
 
 from sklearn.preprocessing import OneHotEncoder
@@ -265,31 +266,35 @@ def test_one_hot_encoder_inverse(sparse_, drop):
     with pytest.raises(ValueError, match=msg):
         enc.inverse_transform(X_tr)
 
-    # raises error if found all zero value if handle_unknown='error'
-    X = [[2, 55], [1, 55], [2, 55]]
-    enc = OneHotEncoder(sparse=sparse_)
-    X_tr = enc.fit_transform(X)
-    # make the second row of the first feature to be all zero
-    X_tr[1, :] = 0
 
-    msg = r"Samples \[(\d )*\d\] can not be inverted when drop=None " \
-          r"and handle_unknown='error' because they contain all zeros"
+@pytest.mark.parametrize('sparse_', [False, True])
+@pytest.mark.parametrize(
+    "X, X_trans",
+    [
+        ([[2, 55], [1, 55], [2, 55]], [[0, 1, 1], [0, 0, 0], [0, 1, 1]]),
+        ([['one', 'a'], ['two', 'a'], ['three', 'b'], ['two', 'a']],
+         [[0, 0, 0, 0, 0], [0, 0, 0, 0, 1], [0, 1, 0, 0, 0]]),
+    ]
+)
+def test_one_hot_encoder_inverse_transform_raise_error_with_unknown(
+    X, X_trans, sparse_
+):
+    """Check that `inverse_transform` raise an error with unknown samples, no
+    dropped feature, and `handle_unknow="error`.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/14934
+    """
+    enc = OneHotEncoder(sparse=sparse_).fit(X)
+    msg = (
+        r"Samples \[(\d )*\d\] can not be inverted when drop=None and "
+        r"handle_unknown='error' because they contain all zeros"
+    )
 
+    if sparse_:
+        # emulate sparse data transform by a one-hot encoder sparse.
+        X_trans = _convert_container(X_trans, "sparse")
     with pytest.raises(ValueError, match=msg):
-        enc.inverse_transform(X_tr)
-
-    # test cases from issue #14934
-    test_array = np.array([['one', 'kate'],
-                           ['two', 'kate'],
-                           ['three', 'john'],
-                           ['two', 'kate']])
-    ohe = OneHotEncoder()
-    ohe.fit(test_array)
-    inverse_test_array = np.array([[0, 0, 0, 0, 0],
-                                   [0, 0, 0, 0, 1],
-                                   [0, 1, 0, 0, 0]])
-    with pytest.raises(ValueError, match=msg):
-        ohe.inverse_transform(inverse_test_array)
+        enc.inverse_transform(X_trans)
 
 
 def test_one_hot_encoder_inverse_if_binary():
