@@ -396,7 +396,7 @@ def filter_search_index(app, exception):
 
 def generate_min_dependency_table(app):
     """Generate min dependency table for docs."""
-    from sklearn._build_utils.min_dependencies import dependent_packages
+    from sklearn._min_dependencies import dependent_packages
 
     # get length of header
     package_header_len = max(len(package)
@@ -440,7 +440,7 @@ def generate_min_dependency_table(app):
 
 def generate_min_dependency_substitutions(app):
     """Generate min dependency substitutions for docs."""
-    from sklearn._build_utils.min_dependencies import dependent_packages
+    from sklearn._min_dependencies import dependent_packages
 
     output = StringIO()
 
