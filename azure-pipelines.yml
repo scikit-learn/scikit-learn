@@ -163,7 +163,6 @@ jobs:
       pylatest_conda_mkl:
         DISTRIB: 'conda'
         BLAS: 'mkl'
-        COVERAGE: 'true'
         PYTEST_XDIST_VERSION: 'none'
       pylatest_conda_mkl_no_openmp:
         DISTRIB: 'conda'
