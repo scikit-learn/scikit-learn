@@ -107,9 +107,8 @@ def _make_unique(np.ndarray[dtype=floating] X,
         else:
             current_weight += sample_weights[j]
             current_y += y[j] * sample_weights[j]
-            unique_values -= 1
 
     x_out[i] = current_x
     weights_out[i] = current_weight
     y_out[i] = current_y / current_weight
-    return x_out[:unique_values], y_out[:unique_values], weights_out[:unique_values]
+    return x_out[:i], y_out[:i], weights_out[:i]

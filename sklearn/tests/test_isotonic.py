@@ -512,12 +512,11 @@ def test_make_unique_dtype():
 
 
 def test_make_unique_tol():
-    x = np.array([0, 0+1e-16, 1, 1+1e-15])
+    x = np.array([0, 1e-16, 1, 1+1e-15])
     y = x.copy()
     w = np.ones_like(x)
     x, y, w = _make_unique(x, y, w)
-    print(x, y, w)
-    # assert X_unique ==
+    assert x == [0, 1]
 
 
 @pytest.mark.parametrize("increasing", [True, False])
