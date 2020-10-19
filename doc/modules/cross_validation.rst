@@ -648,6 +648,39 @@ Here is a visualization of the cross-validation behavior.
    :align: center
    :scale: 75%
 
+.. _stratified_group_k_fold:
+
+StratifiedGroupKFold
+^^^^^^^^^^^^^^^^^^^^
+
+:class:`StratifiedGroupKFold` is a cross-validation scheme that combines both
+:class:`StratifiedKFold` and :class:`GroupKFold`. The idea is to try to
+preserve the distribution of labels in each split while keeping each group
+within a single split. That might be useful when you have an unbalanced
+dataset so that using just :class:`GroupKFold` might produce skewed splits.
+
+Example::
+
+  >>> from sklearn.model_selection import StratifiedGroupKFold
+  >>> X = list(range(18))
+  >>> y = [1] * 6 + [0] * 12
+  >>> groups = [1, 2, 3, 3, 4, 4, 1, 1, 2, 2, 3, 4, 5, 5, 5, 6, 6, 6]
+  >>> sgkf = StratifiedGroupKFold(n_splits=3)
+  >>> for train, test in sgkf.split(X, y, groups=groups):
+  ...     print("%s %s" % (train, test))
+  [ 0  2  3  4  5  6  7 10 11 15 16 17] [ 1  8  9 12 13 14]
+  [ 0  1  4  5  6  7  8  9 11 12 13 14] [ 2  3 10 15 16 17]
+  [ 1  2  3  8  9 10 12 13 14 15 16 17] [ 0  4  5  6  7 11]
+
+Implementation notes:
+
+- This implementation iterates over groups sorted by standard deviation of
+  labels. That means that when shuffle=True only groups with the same labels
+  distribution will be shuffled.
+- This split is suboptimal in a sense that it might produce imbalanced splits
+  even if perfect stratification is possible. If you have relatively close
+  distribution of labels within groups, using :class:`GroupKFold` is better.
+
 .. _leave_one_group_out:
 
 Leave One Group Out
