@@ -197,7 +197,7 @@ Contributing code
   ``take`` on it for the CI to automatically assign the issue to you.
 
 Video resources
-----------------
+---------------
 These videos are step-by-step introductions on how to contribute to
 scikit-learn, and are a great companion to the following text guidelines.
 Please make sure to still check our guidelines below, since they describe our
