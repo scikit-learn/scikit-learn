@@ -169,6 +169,7 @@ jobs:
         SKLEARN_TEST_NO_OPENMP: 'true'
         SKLEARN_SKIP_OPENMP_TEST: 'true'
         COVERAGE: 'true'
+        PYTEST_XDIST_VERSION: 'none'
 
 - template: build_tools/azure/windows.yml
   parameters:
