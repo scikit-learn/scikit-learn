@@ -13,3 +13,6 @@ requires = [
     "numpy==1.17.3; python_version>='3.8' and platform_system=='AIX'",
     "scipy>=0.19.1",
 ]
+
+[tool.black]
+line-length = 79

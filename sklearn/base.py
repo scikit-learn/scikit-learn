@@ -157,6 +157,22 @@ def _pprint(params, offset=0, printer=repr):
 
 
 class _MetadataRequest:
+    def _add_defaults(self, defaults):
+        metadata_request = _standardize_metadata_request(
+            self._metadata_request)
+        defaults = _standardize_metadata_request(defaults)
+        for method in defaults:
+            if method not in metadata_request:
+                metadata_request[method] = copy.deepcopy(defaults[method])
+            else:
+                for key in defaults[method]:
+                    for value in metadata_request[method]:
+                        if key in value:
+                            break
+                    else:
+                        metadata_request[method][key] = defaults[method][key]
+        self._metadata_request = metadata_request
+
     def get_metadata_request(self):
         """Get requested data properties.
 
@@ -167,18 +183,24 @@ class _MetadataRequest:
             used. Under each key, there is a dict of the form
             ``{input_param_name: required_param_name}``.
         """
-        try:
+        if hasattr(self, '_metadata_request'):
             return _standardize_metadata_request(self._metadata_request)
-        except AttributeError:
-            pass
 
-        return _empty_metadata_request()
+        self._metadata_request = _empty_metadata_request()
+
+        defaults = [x for x in dir(self)
+                    if x.startswith('_metadata_request__')]
+        for attr in defaults:
+            self._add_defaults(getattr(self, attr))
+        return _standardize_metadata_request(self._metadata_request)
 
 
 class MetadataConsumer:
     def _request_key_for_method(self, *, method, param, user_provides):
+        if user_provides is None:
+            return
         if not hasattr(self, '_metadata_request'):
-            self._metadata_request = _empty_metadata_request()
+            self._metadata_request = self.get_metadata_request()
         self._metadata_request = _standardize_metadata_request(
             self._metadata_request)
 
@@ -205,26 +227,24 @@ class MetadataConsumer:
 
 
 class SampleWeightConsumer(MetadataConsumer):
-    def request_sample_weight(self, *, fit=True, score=False):
+    def request_sample_weight(self, *, fit=None, score=None):
         """Define how to receive sample_weight from a parent meta-estimator
-
-        When called with default arguments, fitting will be weighted,
-        and the meta-estimator should be passed a fit parameter by the name
-        'sample_weight'.
 
         Parameters
         ----------
-        fit : string or bool, default=True
+        fit : string or bool, default=None
             The fit parameter name that a meta-estimator should pass to this
             estimator as sample_weight. If true, the name will be
             'sample_weight'.
             If False, no fit parameter will be passed.
+            If None, no change in routing.
 
-        score : string or bool, default=True
+        score : string or bool, default=None
             The parameter name that a meta-estimator should pass to this
             estimator as sample_weight when calling its `score` method.
             If true, the name will be 'sample_weight'.
-            If False, no fit parameter will be passed.
+            If False, no score parameter will be passed.
+            If None, no change in routing.
 
         Returns
         -------

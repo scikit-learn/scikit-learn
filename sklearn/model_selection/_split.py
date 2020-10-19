@@ -26,7 +26,7 @@ from ..utils.validation import _num_samples, column_or_1d
 from ..utils.validation import check_array
 from ..utils.validation import _deprecate_positional_args
 from ..utils.multiclass import type_of_target
-from ..base import _pprint, _MetadataRequest
+from ..base import _pprint, _MetadataRequest, MetadataConsumer
 
 __all__ = ['BaseCrossValidator',
            'KFold',
@@ -44,6 +44,34 @@ __all__ = ['BaseCrossValidator',
            'PredefinedSplit',
            'train_test_split',
            'check_cv']
+
+
+class GroupsConsumer(MetadataConsumer):
+
+    _metadata_request__groups = {'split': ['groups']}
+
+    def request_groups(self, *, split=None):
+        """Define how to receive groups from the caller in `split` and
+        `get_n_splits`.
+
+        Parameters
+        ----------
+        split : string or bool, default=None
+            The parameter name that a meta-estimator should pass to this
+            estimator as groups when calling its `split` or `get_n_splits`
+            method.
+            If true, the name will be 'groups'.
+            If False, no score parameter will be passed.
+            If None, no change in routing.
+
+        Returns
+        -------
+        self
+        """
+        self._request_key_for_method(method='split',
+                                     param='groups',
+                                     user_provides=split)
+        return self
 
 
 class BaseCrossValidator(_MetadataRequest, metaclass=ABCMeta):
@@ -444,7 +472,7 @@ class KFold(_BaseKFold):
             current = stop
 
 
-class GroupKFold(_BaseKFold):
+class GroupKFold(GroupsConsumer, _BaseKFold):
     """K-fold iterator variant with non-overlapping groups.
 
     The same group will not appear in two different folds (the number of
@@ -495,9 +523,6 @@ class GroupKFold(_BaseKFold):
     LeaveOneGroupOut : For splitting the data according to explicit
         domain-specific stratification of the dataset.
     """
-
-    _metadata_request = {'split': ['groups']}
-
     def __init__(self, n_splits=5):
         super().__init__(n_splits, shuffle=False, random_state=None)
 
@@ -891,7 +916,7 @@ class TimeSeriesSplit(_BaseKFold):
                        indices[test_start:test_start + test_size])
 
 
-class LeaveOneGroupOut(BaseCrossValidator):
+class LeaveOneGroupOut(GroupsConsumer, BaseCrossValidator):
     """Leave One Group Out cross-validator
 
     Provides train/test indices to split data according to a third-party
@@ -932,9 +957,6 @@ class LeaveOneGroupOut(BaseCrossValidator):
      [7 8]] [1 2] [1 2]
 
     """
-
-    _metadata_request = {'split': ['groups']}
-
     def _iter_test_masks(self, X, y, groups):
         if groups is None:
             raise ValueError("The 'groups' parameter should not be None.")
@@ -1002,7 +1024,7 @@ class LeaveOneGroupOut(BaseCrossValidator):
         return super().split(X, y, groups)
 
 
-class LeavePGroupsOut(BaseCrossValidator):
+class LeavePGroupsOut(GroupsConsumer, BaseCrossValidator):
     """Leave P Group(s) Out cross-validator
 
     Provides train/test indices to split data according to a third-party
@@ -1057,9 +1079,6 @@ class LeavePGroupsOut(BaseCrossValidator):
     --------
     GroupKFold : K-fold iterator variant with non-overlapping groups.
     """
-
-    _metadata_request = {'split': ['groups']}
-
     def __init__(self, n_groups):
         self.n_groups = n_groups
 
@@ -1135,7 +1154,7 @@ class LeavePGroupsOut(BaseCrossValidator):
         return super().split(X, y, groups)
 
 
-class _RepeatedSplits(metaclass=ABCMeta):
+class _RepeatedSplits(_MetadataRequest, metaclass=ABCMeta):
     """Repeated splits for an arbitrary randomized CV splitter.
 
     Repeats splits for cross-validators n times with different randomization
@@ -1349,7 +1368,7 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
             n_splits=n_splits)
 
 
-class BaseShuffleSplit(metaclass=ABCMeta):
+class BaseShuffleSplit(_MetadataRequest, metaclass=ABCMeta):
     """Base class for ShuffleSplit and StratifiedShuffleSplit"""
     @_deprecate_positional_args
     def __init__(self, n_splits=10, *, test_size=None, train_size=None,
@@ -1510,7 +1529,7 @@ class ShuffleSplit(BaseShuffleSplit):
             yield ind_train, ind_test
 
 
-class GroupShuffleSplit(ShuffleSplit):
+class GroupShuffleSplit(GroupsConsumer, ShuffleSplit):
     '''Shuffle-Group(s)-Out cross-validation iterator
 
     Provides randomized train/test indices to split data according to a
@@ -1576,8 +1595,6 @@ class GroupShuffleSplit(ShuffleSplit):
     TRAIN: [2 3 4 5 6 7] TEST: [0 1]
     TRAIN: [0 1 5 6 7] TEST: [2 3 4]
     '''
-    _metadata_request = {'split': ['groups']}
-
     @_deprecate_positional_args
     def __init__(self, n_splits=5, *, test_size=None, train_size=None,
                  random_state=None):

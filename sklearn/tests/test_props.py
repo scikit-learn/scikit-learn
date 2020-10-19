@@ -11,11 +11,46 @@ from sklearn.metrics import make_scorer
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import LogisticRegressionCV
 from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import GroupKFold, cross_validate
+from sklearn.model_selection import cross_validate
 from sklearn.pipeline import make_pipeline
 from sklearn.svm import SVC
 from sklearn.utils import _standardize_metadata_request
 from sklearn.utils import _validate_required_props
+
+from sklearn.model_selection import KFold
+from sklearn.model_selection import GroupKFold
+from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import TimeSeriesSplit
+from sklearn.model_selection import LeaveOneGroupOut
+from sklearn.model_selection import LeaveOneOut
+from sklearn.model_selection import LeavePGroupsOut
+from sklearn.model_selection import LeavePOut
+from sklearn.model_selection import RepeatedKFold
+from sklearn.model_selection import RepeatedStratifiedKFold
+from sklearn.model_selection import ShuffleSplit
+from sklearn.model_selection import GroupShuffleSplit
+from sklearn.model_selection import StratifiedShuffleSplit
+from sklearn.model_selection import PredefinedSplit
+
+NonGroupCVs = [
+    KFold,
+    LeaveOneOut,
+    LeavePOut,
+    RepeatedStratifiedKFold,
+    RepeatedKFold,
+    ShuffleSplit,
+    StratifiedKFold,
+    StratifiedShuffleSplit,
+    PredefinedSplit,
+    TimeSeriesSplit,
+]
+
+GroupCVs = [
+    GroupKFold,
+    LeaveOneGroupOut,
+    LeavePGroupsOut,
+    GroupShuffleSplit,
+]
 
 
 N, M = 100, 4
@@ -58,18 +93,21 @@ class MyEst(ClassifierMixin, BaseEstimator):
 
 class StuffConsumer(MetadataConsumer):
     def request_new_param(self, *, fit=True):
-        self._request_key_for_method(method="fit", param="new_param",
-                                     user_provides=fit)
+        self._request_key_for_method(
+            method="fit", param="new_param", user_provides=fit
+        )
         return self
 
     def request_brand(self, *, fit=True):
-        self._request_key_for_method(method="fit", param="brand",
-                                     user_provides=fit)
+        self._request_key_for_method(
+            method="fit", param="brand", user_provides=fit
+        )
         return self
 
 
-class MyTrs(SampleWeightConsumer, StuffConsumer, TransformerMixin,
-            BaseEstimator):
+class MyTrs(
+    SampleWeightConsumer, StuffConsumer, TransformerMixin, BaseEstimator
+):
     def __init__(self):
         self._metadata_request = {"fit": ["sample_weight"]}
 
@@ -78,7 +116,8 @@ class MyTrs(SampleWeightConsumer, StuffConsumer, TransformerMixin,
         _validate_required_props(req_props, fit_params)
         self._estimator = SelectKBest().fit(X, y)
         assert set(fit_params.keys()) <= set(
-            [list(x)[0] for x in req_props.values()])
+            [list(x)[0] for x in req_props.values()]
+        )
         return self
 
     def transform(self, X, y=None):
@@ -99,8 +138,10 @@ def test_defaults():
 
     est = MyEst()
     est_request = _standardize_metadata_request(est.get_metadata_request())
-    assert est_request.fit == {"sample_weight": {"sample_weight"},
-                               "brand": {"brand"}}
+    assert est_request.fit == {
+        "sample_weight": {"sample_weight"},
+        "brand": {"brand"},
+    }
     assert_request_is_empty(est_request, exclude={"fit"})
 
 
@@ -112,8 +153,9 @@ def test_pipeline():
 
     clf = make_pipeline(MyTrs(), MyEst())
     clf.fit(X, y, sample_weight=sw, brand=brand)
-    with pytest.raises(ValueError,
-                       match="Requested properties are.*other_param"):
+    with pytest.raises(
+        ValueError, match="Requested properties are.*other_param"
+    ):
         clf.fit(X, y, sample_weight=sw, brand=brand, other_param=sw)
 
     trs = MyTrs().request_new_param(fit="my_sw")
@@ -160,14 +202,18 @@ def test_slep_caseA():
     # LogisticRegressionCV. Both of these consumers understand the meaning
     # of the key "sample_weight".
 
-    weighted_acc = make_scorer(accuracy_score, request_props=['sample_weight'])
+    weighted_acc = make_scorer(accuracy_score, request_props=["sample_weight"])
     lr = LogisticRegressionCV(
+        cv=GroupKFold(), scoring=weighted_acc,
+    ).request_sample_weight(fit="sample_weight")
+    cross_validate(
+        lr,
+        X,
+        y,
         cv=GroupKFold(),
+        props={"sample_weight": my_weights, "groups": my_groups},
         scoring=weighted_acc,
-    ).request_sample_weight(fit='sample_weight')
-    cross_validate(lr, X, y, cv=GroupKFold(),
-                   props={'sample_weight': my_weights, 'groups': my_groups},
-                   scoring=weighted_acc)
+    )
 
     # Error handling: if props={'sample_eight': my_weights, ...} was passed,
     # cross_validate would raise an error, since 'sample_eight' was not
@@ -180,14 +226,16 @@ def test_slep_caseB():
     # Since LogisticRegressionCV requires that weights explicitly be requested,
     # removing that request means the fitting is unweighted.
 
-    weighted_acc = make_scorer(accuracy_score, request_props=['sample_weight'])
-    lr = LogisticRegressionCV(
+    weighted_acc = make_scorer(accuracy_score, request_props=["sample_weight"])
+    lr = LogisticRegressionCV(cv=GroupKFold(), scoring=weighted_acc,)
+    cross_validate(
+        lr,
+        X,
+        y,
         cv=GroupKFold(),
+        props={"sample_weight": my_weights, "groups": my_groups},
         scoring=weighted_acc,
     )
-    cross_validate(lr, X, y, cv=GroupKFold(),
-                   props={'sample_weight': my_weights, 'groups': my_groups},
-                   scoring=weighted_acc)
 
 
 def test_slep_caseC():
@@ -196,16 +244,20 @@ def test_slep_caseC():
     # Like LogisticRegressionCV, SelectKBest needs to request weights
     # explicitly. Here it does not request them.
 
-    weighted_acc = make_scorer(accuracy_score, request_props=['sample_weight'])
+    weighted_acc = make_scorer(accuracy_score, request_props=["sample_weight"])
     lr = LogisticRegressionCV(
-        cv=GroupKFold(),
-        scoring=weighted_acc,
+        cv=GroupKFold(), scoring=weighted_acc,
     ).request_sample_weight(fit=True)
     sel = SelectKBest()
     pipe = make_pipeline(sel, lr)
-    cross_validate(pipe, X, y, cv=GroupKFold(),
-                   props={'sample_weight': my_weights, 'groups': my_groups},
-                   scoring=weighted_acc)
+    cross_validate(
+        pipe,
+        X,
+        y,
+        cv=GroupKFold(),
+        props={"sample_weight": my_weights, "groups": my_groups},
+        scoring=weighted_acc,
+    )
 
 
 def test_slep_caseD():
@@ -216,17 +268,58 @@ def test_slep_caseD():
     # consumers.
 
     weighted_acc = make_scorer(
-        accuracy_score,
-        request_props={'scoring_weight': 'sample_weight'}
+        accuracy_score, request_props={"scoring_weight": "sample_weight"}
     )
     lr = LogisticRegressionCV(
+        cv=GroupKFold(), scoring=weighted_acc,
+    ).request_sample_weight(fit="fitting_weight")
+    cross_validate(
+        lr,
+        X,
+        y,
         cv=GroupKFold(),
+        props={
+            "scoring_weight": my_weights,
+            "fitting_weight": my_other_weights,
+            "groups": my_groups,
+        },
         scoring=weighted_acc,
-    ).request_sample_weight(fit='fitting_weight')
-    cross_validate(lr, X, y, cv=GroupKFold(),
-                   props={
-                          'scoring_weight': my_weights,
-                          'fitting_weight': my_other_weights,
-                          'groups': my_groups,
-                   },
-                   scoring=weighted_acc)
+    )
+
+
+@pytest.mark.parametrize("Klass", GroupCVs)
+def test_group_splitter_metadata_requests(Klass):
+    if Klass is LeavePGroupsOut:
+        cv = Klass(n_groups=2)
+    else:
+        cv = Klass()
+    # check the default metadata_request
+    assert cv.get_metadata_request() == _standardize_metadata_request(
+        {"split": ["groups"]}
+    )
+
+    # test that setting split to False empties the metadata_request
+    cv.request_groups(split=False)
+    assert_request_is_empty(cv.get_metadata_request())
+
+    # set a different input name and test
+    cv.request_groups(split="my_groups")
+    assert cv.get_metadata_request() == _standardize_metadata_request(
+        {"split": {"my_groups": "groups"}}
+    )
+
+
+@pytest.mark.parametrize("Klass", NonGroupCVs)
+def test_nongroup_splitter_metadata_requests(Klass):
+    if Klass is LeavePOut:
+        cv = Klass(p=2)
+    elif Klass is PredefinedSplit:
+        cv = Klass(test_fold=[1, 1, 0])
+    else:
+        cv = Klass()
+
+    # check the default metadata_request
+    assert_request_is_empty(cv.get_metadata_request())
+
+    # test that setting split to False empties the metadata_request
+    assert not hasattr(cv, "request_groups")

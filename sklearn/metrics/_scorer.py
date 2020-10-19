@@ -585,7 +585,7 @@ def make_scorer(score_func, *, greater_is_better=True, needs_proba=False,
 
     request_props : list of strings, or dict of {str: str}, default=None
         A list of required properties, or a mapping of the form
-        ``{required_parameter: provided_parameter}``, or None.
+        ``{provided_metadata: required_metadata}``, or None.
 
     **kwargs : additional arguments
         Additional parameters to be passed to score_func.
