@@ -1207,7 +1207,7 @@ def _get_response(
     estimator,
     X,
     y_true,
-    response_method,
+    response_method=None,
     pos_label=None,
 ):
     """Return response and positive label.
@@ -1224,11 +1224,19 @@ def _get_response(
     y_true : array-like of shape (n_samples,)
         The true label.
 
-    response_method: {'auto', 'predict_proba', 'decision_function', 'predict'}
-        Specifies whether to use :term:`predict_proba` or
-        :term:`decision_function` as the target response. If set to 'auto',
-        :term:`predict_proba` is tried first and if it does not exist
-        :term:`decision_function` is tried next and :term:`predict` last.
+    response_method : {'predict_proba', 'decision_function', 'predict'} or \
+            list of str, default=None.
+        Specifies the response method to use get prediction from an estimator
+        (i.e. :term:`predict_proba`, :term:`decision_function` or
+        :term:`predict`).
+
+        * if `str`, it corresponds to the name to the method to return.
+        * if a list of `str`, it provides the method names in order of
+          preference. The method returned corresponds to the first method in
+          the list and which is implemented by `estimator`.
+        * if `None`, :term:`predict_proba` is tried first and if it does not
+          exist :term:`decision_function` is tried next and :term:`predict`
+          last.
 
     pos_label : str or int, default=None
         The class considered as the positive class when computing
@@ -1277,7 +1285,7 @@ def _get_response(
                 if pos_label == classes[0]:
                     y_pred *= -1
     else:
-        if response_method not in ("predict", "auto"):
+        if response_method not in ("predict", None):
             raise ValueError(
                 f"{estimator.__class__.__name__} should be a classifier"
             )

@@ -732,7 +732,7 @@ def test_get_response_regressor_error(response_method):
         _get_response(my_estimator, X, y, response_method=response_method)
 
 
-@pytest.mark.parametrize("response_method", ["predict", "auto"])
+@pytest.mark.parametrize("response_method", ["predict", None])
 def test_get_response_regressor(response_method):
     """Check the behaviour of `_get_response` with regressor."""
     X, y = make_regression(n_samples=10, random_state=0)
@@ -749,7 +749,7 @@ def test_get_response_regressor(response_method):
 
 @pytest.mark.parametrize(
     "response_method",
-    ["auto", "predict_proba", "decision_function", "predict"],
+    [None, "predict_proba", "decision_function", "predict"],
 )
 def test_get_response_classifier_unknown_pos_label(response_method):
     """Check that `_get_response` raises the proper error message with
