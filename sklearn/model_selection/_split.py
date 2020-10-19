@@ -878,10 +878,12 @@ class StratifiedGroupKFold(_BaseKFold):
                 y_counts_per_fold[i] -= y_counts
                 fold_eval = np.mean(std_per_label)
                 samples_in_fold = np.sum(y_counts_per_fold[i])
-                condition = np.isclose(fold_eval, min_eval)
-                condition = condition and samples_in_fold < min_samples_in_fold
-                condition = condition or fold_eval < min_eval
-                if condition:
+                is_current_fold_better = (
+                    np.isclose(fold_eval, min_eval)
+                    and samples_in_fold < min_samples_in_fold
+                    or fold_eval < min_eval
+                )
+                if is_current_fold_better:
                     min_eval = fold_eval
                     min_samples_in_fold = samples_in_fold
                     best_fold = i
