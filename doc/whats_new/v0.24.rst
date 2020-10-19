@@ -393,7 +393,7 @@ Changelog
   curve classification metric.
   :pr:`10591` by :user:`Jeremy Karnowski <jkarnows>` and
   :user:`Daniel Mohns <dmohns>`.
-  
+
 - |Feature| Added :func:`metrics.plot_det_curve` and
   :class:`metrics.DetCurveDisplay` to ease the plot of DET curves.
   :pr:`18176` by :user:`Guillaume Lemaitre <glemaitre>`.
@@ -644,6 +644,12 @@ Changelog
 - |Enhancement| Add `dtype` parameter to
   :class:`preprocessing.KBinsDiscretizer`.
   :pr:`16335` by :user:`Arthur Imbert <Henley13>`.
+
+- |Fix| Raise error on
+  :meth:`sklearn.preprocessing.OneHotEncoder.inverse_transform`
+  when `handle_unknown='error'` and `drop=None` for samples
+  encoded as all zeros. :pr:`14982` by
+  :user:`Kevin Winata <kwinata>`.
 
 :mod:`sklearn.svm`
 ..................
