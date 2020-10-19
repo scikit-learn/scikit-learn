@@ -196,6 +196,23 @@ Contributing code
   so far. In order to claim an issue for yourself, please comment exactly
   ``take`` on it for the CI to automatically assign the issue to you.
 
+Video resources
+---------------
+These videos are step-by-step introductions on how to contribute to
+scikit-learn, and are a great companion to the following text guidelines.
+Please make sure to still check our guidelines below, since they describe our
+latest up-to-date workflow.
+
+- Crash Course in Contributing to Scikit-Learn & Open Source Projects:
+  `Video <https://youtu.be/5OL8XoMMOfA>`__,
+  `Transcript
+  <https://github.com/data-umbrella/event-transcripts/blob/main/2020/05-andreas-mueller-contributing.md>`__
+
+- Example of Submitting a Pull Request to scikit-learn:
+  `Video <https://youtu.be/PU1WyDPGePI>`__,
+  `Transcript
+  <https://github.com/data-umbrella/event-transcripts/blob/main/2020/06-reshama-shaikh-sklearn-pr.md>`__
+
 How to contribute
 -----------------
 
@@ -229,7 +246,7 @@ how to set up your git repository:
 
        $ pip install --no-build-isolation --editable .
 
-   for more details about advanced installation, see the
+   If you receive errors in building scikit-learn, see the
    :ref:`install_bleeding_edge` section.
 
 .. _upstream:
@@ -485,6 +502,7 @@ message, the following actions are taken.
     [ci skip]              CI is skipped completely
     [lint skip]            Azure pipeline skips linting
     [scipy-dev]            Add a Travis build with our dependencies (numpy, scipy, etc ...) development builds
+    [icc-build]            Add a Travis build with the Intel C compiler (ICC)
     [arm64]                Add a Travis build for the ARM64 / aarch64 little endian architecture
     [doc skip]             Docs are not built
     [doc quick]            Docs built, but excludes example gallery plots
@@ -689,12 +707,12 @@ opposed to how it works "under the hood".
 
 Finally, follow the formatting rules below to make it consistently good:
 
-* Add "See also" in docstrings for related classes/functions.
+* Add "See Also" in docstrings for related classes/functions.
 
-* "See also" in docstrings should be one line per reference,
+* "See Also" in docstrings should be one line per reference,
   with a colon and an explanation, for example::
 
-    See also
+    See Also
     --------
     SelectKBest : Select features based on the k highest scores.
     SelectFpr : Select features based on a false positive rate test.
@@ -723,38 +741,39 @@ Finally, follow the formatting rules below to make it consistently good:
 
     multioutput_array : ndarray of shape (n_samples, n_classes) or list such arrays
 
-In general have the following in mind:
+  In general have the following in mind:
 
-    1. Use Python basic types. (``bool`` instead of ``boolean``)
-    2. Use parenthesis for defining shapes: ``array-like of shape (n_samples,)``
-       or ``array-like of shape (n_samples, n_features)``
-    3. For strings with multiple options, use brackets:
-       ``input: {'log', 'squared', 'multinomial'}``
-    4. 1D or 2D data can be a subset of
-       ``{array-like, ndarray, sparse matrix, dataframe}``. Note that ``array-like``
-       can also be a ``list``, while ``ndarray`` is explicitly only a ``numpy.ndarray``.
-    5. Specify ``dataframe`` when "frame-like" features are being used, such
-       as the column names.
-    6. When specifying the data type of a list, use ``of`` as a delimiter:
-       ``list of int``. When the parameter supports arrays giving details about
-       the shape and/or data type and a list of such arrays, you can use one
-       of:
+      1. Use Python basic types. (``bool`` instead of ``boolean``)
+      2. Use parenthesis for defining shapes: ``array-like of shape (n_samples,)``
+         or ``array-like of shape (n_samples, n_features)``
+      3. For strings with multiple options, use brackets:
+         ``input: {'log', 'squared', 'multinomial'}``
+      4. 1D or 2D data can be a subset of
+         ``{array-like, ndarray, sparse matrix, dataframe}``. Note that ``array-like``
+         can also be a ``list``, while ``ndarray`` is explicitly only a ``numpy.ndarray``.
+      5. Specify ``dataframe`` when "frame-like" features are being used, such
+         as the column names.
+      6. When specifying the data type of a list, use ``of`` as a delimiter:
+         ``list of int``. When the parameter supports arrays giving details about
+        the shape and/or data type and a list of such arrays, you can use one
+        of:
 
-      * ``array-like of shape (n_samples,) or list thereof``;
-      * ``array-like of shape (n_samples,) or list of these``;
-      * ``array-like of shape (n_samples,) or list of such arrays``.
+        * ``array-like of shape (n_samples,) or list thereof``;
+        * ``array-like of shape (n_samples,) or list of these``;
+        * ``array-like of shape (n_samples,) or list of such arrays``.
 
-    7. When specifying the dtype of an ndarray, use e.g. ``dtype=np.int32``
-       after defining the shape:
-       ``ndarray of shape (n_samples,), dtype=np.int32``. You can specify
-       multiple dtype as a set:
-       ``array-like of shape (n_samples,), dtype={np.float64, np.float32}``.
-       If one wants to mention arbitrary precision, use `integral` and
-       `floating` rather than the Python dtype `int` and `float`. When both
-       `int` and `floating` are supported, one can use `dtype=numeric`.
-    8. When the default is ``None``, ``None`` only needs to be specified at the
-       end with ``default=None``. Be sure to include in the docstring, what it
-       means for the parameter or attribute to be ``None``.
+      7. When specifying the dtype of an ndarray, use e.g. ``dtype=np.int32``
+         after defining the shape:
+         ``ndarray of shape (n_samples,), dtype=np.int32``. You can specify
+        multiple dtype as a set:
+        ``array-like of shape (n_samples,), dtype={np.float64, np.float32}``.
+        If one wants to mention arbitrary precision, use `integral` and
+        `floating` rather than the Python dtype `int` and `float`. When both
+        `int` and `floating` are supported, there is no need to specify the
+        dtype.
+      8. When the default is ``None``, ``None`` only needs to be specified at the
+         end with ``default=None``. Be sure to include in the docstring, what it
+         means for the parameter or attribute to be ``None``.
 
 * For unwritten formatting rules, try to follow existing good works:
 
@@ -764,8 +783,12 @@ In general have the following in mind:
 * When editing reStructuredText (``.rst``) files, try to keep line length under
   80 characters when possible (exceptions include links and tables).
 
-* Before submitting you pull request check if your modifications have introduced
-  new sphinx warnings and try to fix them.
+* Do not modify sphinx labels as this would break existing cross references and
+  external links pointing to specific sections in the
+  scikit-learn documentation.
+
+* Before submitting your pull request check if your modifications have
+  introduced new sphinx warnings and try to fix them.
 
 .. _generated_doc_CI:
 
@@ -921,6 +944,8 @@ can run for a provided list of values for the `n_jobs` parameter.
 
 More information on how to write a benchmark and how to use asv can be found in
 the `asv documentation <https://asv.readthedocs.io/en/latest/index.html>`_.
+
+.. _issue_tracker_tags:
 
 Issue Tracker Tags
 ==================

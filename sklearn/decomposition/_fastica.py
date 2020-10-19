@@ -537,9 +537,6 @@ class FastICA(TransformerMixin, BaseEstimator):
         self.mixing_ = linalg.pinv(self.components_)
         self._unmixing = W
 
-        if compute_sources:
-            self.__sources = S
-
         return S
 
     def fit_transform(self, X, y=None):
@@ -587,7 +584,7 @@ class FastICA(TransformerMixin, BaseEstimator):
             and n_features is the number of features.
 
         copy : bool, default=True
-            If False, data passed to fit are overwritten. Defaults to True.
+            If False, data passed to fit can be overwritten. Defaults to True.
 
         Returns
         -------
@@ -595,7 +592,8 @@ class FastICA(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
+        X = self._validate_data(X, copy=(copy and self.whiten),
+                                dtype=FLOAT_DTYPES, reset=False)
         if self.whiten:
             X -= self.mean_
 

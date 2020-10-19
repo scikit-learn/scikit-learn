@@ -75,7 +75,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
     See Also
     --------
-     sklearn.preprocessing.Binarizer : Class used to bin values as ``0`` or
+    Binarizer : Class used to bin values as ``0`` or
         ``1`` based on a parameter ``threshold``.
 
     Notes
@@ -126,7 +126,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
     """
 
     @_deprecate_positional_args
-    def __init__(self, n_bins=5, encode='onehot', strategy='quantile',
+    def __init__(self, n_bins=5, *, encode='onehot', strategy='quantile',
                  dtype=None):
         self.n_bins = n_bins
         self.encode = encode
@@ -139,7 +139,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features), dtype=numeric
+        X : array-like of shape (n_samples, n_features)
             Data to be discretized.
 
         y : None
@@ -276,7 +276,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features), dtype=numeric
+        X : array-like of shape (n_samples, n_features)
             Data to be discretized.
 
         Returns
@@ -331,7 +331,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        Xt : array-like of shape (n_samples, n_features), dtype=numeric
+        Xt : array-like of shape (n_samples, n_features)
             Transformed data in the binned space.
 
         Returns

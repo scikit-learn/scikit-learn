@@ -208,7 +208,7 @@ def test_column_transformer_dataframe():
     assert_array_equal(both.fit_transform(X_df), res)
     assert_array_equal(both.fit(X_df).transform(X_df), res)
     assert len(both.transformers_) == 2
-    assert ct.transformers_[-1][0] != 'remainder'
+    assert both.transformers_[-1][0] != 'remainder'
 
     # test multiple columns
     both = ColumnTransformer([('trans', Trans(), ['first', 'second'])],
@@ -216,14 +216,14 @@ def test_column_transformer_dataframe():
     assert_array_equal(both.fit_transform(X_df), 0.1 * X_res_both)
     assert_array_equal(both.fit(X_df).transform(X_df), 0.1 * X_res_both)
     assert len(both.transformers_) == 1
-    assert ct.transformers_[-1][0] != 'remainder'
+    assert both.transformers_[-1][0] != 'remainder'
 
     both = ColumnTransformer([('trans', Trans(), [0, 1])],
                              transformer_weights={'trans': .1})
     assert_array_equal(both.fit_transform(X_df), 0.1 * X_res_both)
     assert_array_equal(both.fit(X_df).transform(X_df), 0.1 * X_res_both)
     assert len(both.transformers_) == 1
-    assert ct.transformers_[-1][0] != 'remainder'
+    assert both.transformers_[-1][0] != 'remainder'
 
     # ensure pandas object is passes through
 

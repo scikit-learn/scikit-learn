@@ -131,7 +131,8 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = check_array(X, accept_sparse='csr', dtype=(np.float64, np.float32))
+        X = self._validate_data(X, accept_sparse='csr', reset=False,
+                                dtype=(np.float64, np.float32))
         return self._mean_hiddens(X)
 
     def _mean_hiddens(self, v):
@@ -243,7 +244,9 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         self : BernoulliRBM
             The fitted model.
         """
-        X = check_array(X, accept_sparse='csr', dtype=np.float64)
+        first_pass = not hasattr(self, 'components_')
+        X = self._validate_data(X, accept_sparse='csr', dtype=np.float64,
+                                reset=first_pass)
         if not hasattr(self, 'random_state_'):
             self.random_state_ = check_random_state(self.random_state)
         if not hasattr(self, 'components_'):
@@ -382,6 +385,8 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         return {
             '_xfail_checks': {
                 'check_methods_subset_invariance':
-                'fails for the decision_function method'
+                'fails for the decision_function method',
+                'check_methods_sample_order_invariance':
+                'fails for the score_samples method',
             }
         }

@@ -68,9 +68,9 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
-    See also
+    See Also
     --------
-    sklearn.neighbors.KNeighborsClassifier: nearest neighbors classifier
+    KNeighborsClassifier : Nearest neighbors classifier.
 
     Notes
     -----
@@ -154,6 +154,9 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
                 self.centroids_[cur_class] = X[center_mask].mean(axis=0)
 
         if self.shrink_threshold:
+            if np.all(np.ptp(X, axis=0) == 0):
+                raise ValueError("All features have zero variance. "
+                                 "Division by zero.")
             dataset_centroid_ = np.mean(X, axis=0)
 
             # m parameter for determining deviation

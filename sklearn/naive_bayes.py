@@ -1111,6 +1111,8 @@ class CategoricalNB(_BaseDiscreteNB):
         Number of categories for each feature. This value is
         inferred from the data or set by the minimum number of categories.
 
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> import numpy as np
