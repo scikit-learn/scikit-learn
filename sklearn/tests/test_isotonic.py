@@ -516,7 +516,7 @@ def test_make_unique_tol():
     y = x.copy()
     w = np.ones_like(x)
     x, y, w = _make_unique(x, y, w)
-    assert x == [0, 1]
+    assert x == [0, 1, 1+1e-15]
 
 
 @pytest.mark.parametrize("increasing", [True, False])
