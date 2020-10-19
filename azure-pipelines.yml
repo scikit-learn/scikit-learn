@@ -163,13 +163,13 @@ jobs:
       pylatest_conda_mkl:
         DISTRIB: 'conda'
         BLAS: 'mkl'
+        COVERAGE: 'true'
+        PYTEST_XDIST_VERSION: 'none'
       pylatest_conda_mkl_no_openmp:
         DISTRIB: 'conda'
         BLAS: 'mkl'
         SKLEARN_TEST_NO_OPENMP: 'true'
         SKLEARN_SKIP_OPENMP_TEST: 'true'
-        COVERAGE: 'true'
-        PYTEST_XDIST_VERSION: 'none'
 
 - template: build_tools/azure/windows.yml
   parameters:
