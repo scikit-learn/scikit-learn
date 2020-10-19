@@ -538,6 +538,42 @@ def test_kfold_can_detect_dependent_samples_on_digits():  # see #2372
     assert mean_score > 0.80
 
 
+def test_stratified_group_kfold_trivial():
+    sgkf = StratifiedGroupKFold(n_splits=3)
+    # Trivial example - groups with the same distribution
+    y = np.array([1] * 6 + [0] * 12)
+    X = np.ones_like(y).reshape(-1, 1)
+    groups = np.asarray((1, 2, 3, 4, 5, 6, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6))
+    distr = np.bincount(y) / len(y)
+    test_sizes = []
+    for train, test in sgkf.split(X, y, groups):
+        # check group constraint
+        assert np.intersect1d(groups[train], groups[test]).size == 0
+        # check y distribution
+        assert_allclose(np.bincount(y[train]) / len(train), distr, atol=0.02)
+        assert_allclose(np.bincount(y[test]) / len(test), distr, atol=0.02)
+        test_sizes.append(len(test))
+    assert np.ptp(test_sizes) <= 1
+
+
+def test_stratified_group_kfold_approximate():
+    # Not perfect stratification (even though it is possible) because of
+    # iteration over groups
+    sgkf = StratifiedGroupKFold(n_splits=3)
+    y = np.array([1] * 6 + [0] * 12)
+    X = np.ones_like(y).reshape(-1, 1)
+    groups = np.array([1, 2, 3, 3, 4, 4, 1, 1, 2, 2, 3, 4, 5, 5, 5, 6, 6, 6])
+    expected = np.asarray([[0.833, 0.166], [0.666, 0.333], [0.5, 0.5]])
+    test_sizes = []
+    for (train, test), expect_dist in zip(sgkf.split(X, y, groups), expected):
+        # check group constraint
+        assert np.intersect1d(groups[train], groups[test]).size == 0
+        split_dist = np.bincount(y[test]) / len(test)
+        assert_allclose(split_dist, expect_dist, atol=0.001)
+        test_sizes.append(len(test))
+    assert np.ptp(test_sizes) <= 1
+
+
 def test_shuffle_split():
     ss1 = ShuffleSplit(test_size=0.2, random_state=0).split(X)
     ss2 = ShuffleSplit(test_size=2, random_state=0).split(X)
