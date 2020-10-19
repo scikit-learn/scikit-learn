@@ -209,6 +209,9 @@ def plot_precision_recall_curve(estimator, X, y, *,
             f"{estimator.__class__.__name__} should be a binary classifier."
         )
 
+    if response_method == "auto":
+        response_method = ["predict_proba", "decision_function"]
+
     y_pred, pos_label = _get_response(
         estimator, X, y, response_method, pos_label=pos_label
     )

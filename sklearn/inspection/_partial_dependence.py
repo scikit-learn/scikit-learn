@@ -387,11 +387,15 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
             'response_method {} is invalid. Accepted response_method names '
             'are {}.'.format(response_method, ', '.join(accepted_responses)))
 
-    if is_regressor(estimator) and response_method != 'auto':
-        raise ValueError(
-            "The response_method parameter is ignored for regressors and "
-            "must be 'auto'."
-        )
+    if is_regressor(estimator):
+        if response_method != "auto":
+            raise ValueError(
+                "The response_method parameter is ignored for regressors and "
+                "must be 'auto'."
+            )
+        response_method = "predict"
+    elif response_method == "auto":
+        response_method = ["predict_proba", "decision_function"]
 
     accepted_methods = ('brute', 'recursion', 'auto')
     if method not in accepted_methods:
@@ -435,10 +439,10 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
                 "Only the following estimators support the 'recursion' "
                 "method: {}. Try using method='brute'."
                 .format(', '.join(supported_classes_recursion)))
-        if response_method == 'auto':
+        if isinstance(response_method, list):
             response_method = 'decision_function'
 
-        if response_method != 'decision_function':
+        if is_classifier(estimator) and response_method != 'decision_function':
             raise ValueError(
                 "With the 'recursion' method, the response_method must be "
                 "'decision_function'. Got {}.".format(response_method)

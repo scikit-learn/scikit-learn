@@ -212,8 +212,9 @@ def test_partial_dependence_helpers(est, method, target_feature):
                      [123]])
 
     if method == 'brute':
-        pdp, predictions = _partial_dependence_brute(est, grid, features, X,
-                                                     response_method='auto')
+        pdp, predictions = _partial_dependence_brute(
+            est, grid, features, X, response_method='predict'
+        )
     else:
         pdp = _partial_dependence_recursion(est, grid, features)
 
@@ -415,8 +416,7 @@ class NoPredictProbaNoDecisionFunction(ClassifierMixin, BaseEstimator):
       'response_method blahblah is invalid. Accepted response_method'),
      (NoPredictProbaNoDecisionFunction(),
       {'features': [0], 'response_method': 'auto'},
-      'response_method decision_function, predict_proba or predict not '
-      'defined'),
+      'response_method predict_proba, decision_function not defined'),
      (NoPredictProbaNoDecisionFunction(),
       {'features': [0], 'response_method': 'predict_proba'},
       'response_method predict_proba not defined'),

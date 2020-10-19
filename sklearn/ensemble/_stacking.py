@@ -99,6 +99,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
     def _method_name(name, estimator, method):
         if estimator == 'drop':
             return None
+        method = None if method == "auto" else method
         try:
             method_name = _check_response_method(estimator, method).__name__
         except ValueError as e:
