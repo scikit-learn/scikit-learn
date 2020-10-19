@@ -754,9 +754,9 @@ Finally, follow the formatting rules below to make it consistently good:
       5. Specify ``dataframe`` when "frame-like" features are being used, such
          as the column names.
       6. When specifying the data type of a list, use ``of`` as a delimiter:
-         ``list of int``. When the parameter supports arrays giving details about
-        the shape and/or data type and a list of such arrays, you can use one
-        of:
+         ``list of int``. When the parameter supports arrays giving details
+         about the shape and/or data type and a list of such arrays, you can
+         use one of:
 
         * ``array-like of shape (n_samples,) or list thereof``;
         * ``array-like of shape (n_samples,) or list of these``;
