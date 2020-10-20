@@ -91,14 +91,14 @@ def test_derivatives(loss, x0, y_true):
         return get_hessians(y_true, x)
 
     optimum = newton(func, x0=x0, fprime=fprime, fprime2=fprime2,
-                     maxiter=70, tol=2e-8)
+                     maxiter=70, tol=5e-6)
 
     # Need to ravel arrays because assert_allclose requires matching dimensions
     y_true = y_true.ravel()
     optimum = optimum.ravel()
-    assert_allclose(loss.inverse_link_function(optimum), y_true)
-    assert_allclose(func(optimum), 0, atol=1e-14)
-    assert_allclose(get_gradients(y_true, optimum), 0, atol=1e-7)
+    assert_allclose(loss.inverse_link_function(optimum), y_true, atol=2e-5)
+    assert_allclose(func(optimum), 0, atol=2e-11)
+    assert_allclose(get_gradients(y_true, optimum), 0, atol=2e-5)
 
 
 @pytest.mark.parametrize('loss, n_classes, prediction_dim', [
