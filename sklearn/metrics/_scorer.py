@@ -27,9 +27,9 @@ import numpy as np
 from . import (r2_score, median_absolute_error, max_error, mean_absolute_error,
                mean_squared_error, mean_squared_log_error,
                mean_poisson_deviance, mean_gamma_deviance, accuracy_score,
-               f1_score, roc_auc_score, average_precision_score,
-               precision_score, recall_score, log_loss,
-               balanced_accuracy_score, explained_variance_score,
+               top_k_accuracy_score, f1_score, roc_auc_score,
+               average_precision_score, precision_score, recall_score,
+               log_loss, balanced_accuracy_score, explained_variance_score,
                brier_score_loss, jaccard_score, mean_absolute_percentage_error)
 
 from .cluster import adjusted_rand_score
@@ -653,6 +653,9 @@ accuracy_scorer = make_scorer(accuracy_score)
 balanced_accuracy_scorer = make_scorer(balanced_accuracy_score)
 
 # Score functions that need decision values
+top_k_accuracy_scorer = make_scorer(top_k_accuracy_score,
+                                    greater_is_better=True,
+                                    needs_threshold=True)
 roc_auc_scorer = make_scorer(roc_auc_score, greater_is_better=True,
                              needs_threshold=True)
 average_precision_scorer = make_scorer(average_precision_score,
@@ -701,7 +704,9 @@ SCORERS = dict(explained_variance=explained_variance_scorer,
                neg_root_mean_squared_error=neg_root_mean_squared_error_scorer,
                neg_mean_poisson_deviance=neg_mean_poisson_deviance_scorer,
                neg_mean_gamma_deviance=neg_mean_gamma_deviance_scorer,
-               accuracy=accuracy_scorer, roc_auc=roc_auc_scorer,
+               accuracy=accuracy_scorer,
+               top_k_accuracy=top_k_accuracy_scorer,
+               roc_auc=roc_auc_scorer,
                roc_auc_ovr=roc_auc_ovr_scorer,
                roc_auc_ovo=roc_auc_ovo_scorer,
                roc_auc_ovr_weighted=roc_auc_ovr_weighted_scorer,
