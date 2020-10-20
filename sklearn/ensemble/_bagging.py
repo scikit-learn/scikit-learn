@@ -10,7 +10,7 @@ import numpy as np
 from abc import ABCMeta, abstractmethod
 from warnings import warn
 
-from joblib import Parallel, delayed
+from joblib import Parallel
 
 from ._base import BaseEnsemble, _partition_estimators
 from ..base import ClassifierMixin, RegressorMixin
@@ -23,6 +23,7 @@ from ..utils.multiclass import check_classification_targets
 from ..utils.random import sample_without_replacement
 from ..utils.validation import has_fit_parameter, check_is_fitted, \
     _check_sample_weight, _deprecate_positional_args
+from ..utils.fixes import delayed
 
 
 __all__ = ["BaggingClassifier",
@@ -503,7 +504,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         :obj:`joblib.parallel_backend` context. ``-1`` means using all
         processors. See :term:`Glossary <n_jobs>` for more details.
 
-    random_state : int or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the random resampling of the original dataset
         (sample wise and feature wise).
         If the base estimator accepts a `random_state` attribute, a different
@@ -909,7 +910,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         :obj:`joblib.parallel_backend` context. ``-1`` means using all
         processors. See :term:`Glossary <n_jobs>` for more details.
 
-    random_state : int or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the random resampling of the original dataset
         (sample wise and feature wise).
         If the base estimator accepts a `random_state` attribute, a different
