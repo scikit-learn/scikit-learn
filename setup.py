@@ -3,28 +3,34 @@
 # Copyright (C) 2007-2009 Cournapeau David <cournape@gmail.com>
 #               2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
 # License: 3-clause BSD
-import subprocess
-
-descr = """A set of python modules for machine learning and data mining"""
 
 import sys
 import os
+import platform
 import shutil
+
+# We need to import setuptools before because it monkey-patches distutils
+import setuptools  # noqa
 from distutils.command.clean import clean as Clean
+from distutils.command.sdist import sdist
+
 from pkg_resources import parse_version
-
-if sys.version_info[0] < 3:
-    import __builtin__ as builtins
-else:
+import traceback
+import importlib
+try:
     import builtins
+except ImportError:
+    # Python 2 compat: just to be able to declare that Python >=3.6 is needed.
+    import __builtin__ as builtins
 
-# This is a bit (!) hackish: we are setting a global variable so that the main
-# sklearn __init__ can detect if it is being loaded by the setup routine, to
-# avoid attempting to load components that aren't built yet:
-# the numpy distutils extensions that are used by scikit-learn to recursively
-# build the compiled extensions in sub-packages is based on the Python import
-# machinery.
+# This is a bit (!) hackish: we are setting a global variable so that the
+# main sklearn __init__ can detect if it is being loaded by the setup
+# routine, to avoid attempting to load components that aren't built yet:
+# the numpy distutils extensions that are used by scikit-learn to
+# recursively build the compiled extensions in sub-packages is based on the
+# Python import machinery.
 builtins.__SKLEARN_SETUP__ = True
+
 
 DISTNAME = 'scikit-learn'
 DESCRIPTION = 'A set of python modules for machine learning and data mining'
@@ -33,31 +39,38 @@ with open('README.rst') as f:
 MAINTAINER = 'Andreas Mueller'
 MAINTAINER_EMAIL = 'amueller@ais.uni-bonn.de'
 URL = 'http://scikit-learn.org'
+DOWNLOAD_URL = 'https://pypi.org/project/scikit-learn/#files'
 LICENSE = 'new BSD'
-DOWNLOAD_URL = 'http://sourceforge.net/projects/scikit-learn/files/'
+PROJECT_URLS = {
+    'Bug Tracker': 'https://github.com/scikit-learn/scikit-learn/issues',
+    'Documentation': 'https://scikit-learn.org/stable/documentation.html',
+    'Source Code': 'https://github.com/scikit-learn/scikit-learn'
+}
 
 # We can actually import a restricted version of sklearn that
 # does not need the compiled code
 import sklearn
+import sklearn._min_dependencies as min_deps  # noqa
+
 
 VERSION = sklearn.__version__
 
-# Optional setuptools features
-# We need to import setuptools early, if we want setuptools features,
-# as it monkey-patches the 'setup' function
+
 # For some commands, use setuptools
-SETUPTOOLS_COMMANDS = set([
+SETUPTOOLS_COMMANDS = {
     'develop', 'release', 'bdist_egg', 'bdist_rpm',
     'bdist_wininst', 'install_egg_info', 'build_sphinx',
     'egg_info', 'easy_install', 'upload', 'bdist_wheel',
     '--single-version-externally-managed',
-])
+}
 if SETUPTOOLS_COMMANDS.intersection(sys.argv):
-    import setuptools
-
     extra_setuptools_args = dict(
         zip_safe=False,  # the package can run out of an .egg file
         include_package_data=True,
+        extras_require={
+            key: min_deps.tag_to_packages[key] for
+            key in ['examples', 'docs', 'tests', 'benchmark']
+        },
     )
 else:
     extra_setuptools_args = dict()
@@ -74,9 +87,6 @@ class CleanCommand(Clean):
         cwd = os.path.abspath(os.path.dirname(__file__))
         remove_c_files = not os.path.exists(os.path.join(cwd, 'PKG-INFO'))
         if remove_c_files:
-            cython_hash_file = os.path.join(cwd, 'cythonize.dat')
-            if os.path.exists(cython_hash_file):
-                os.unlink(cython_hash_file)
             print('Will remove generated .c files')
         if os.path.exists('build'):
             shutil.rmtree('build')
@@ -96,7 +106,34 @@ class CleanCommand(Clean):
                     shutil.rmtree(os.path.join(dirpath, dirname))
 
 
-cmdclass = {'clean': CleanCommand}
+cmdclass = {'clean': CleanCommand, 'sdist': sdist}
+
+# custom build_ext command to set OpenMP compile flags depending on os and
+# compiler
+# build_ext has to be imported after setuptools
+try:
+    from numpy.distutils.command.build_ext import build_ext  # noqa
+
+    class build_ext_subclass(build_ext):
+        def build_extensions(self):
+            from sklearn._build_utils.openmp_helpers import get_openmp_flag
+
+            if sklearn._OPENMP_SUPPORTED:
+                openmp_flag = get_openmp_flag(self.compiler)
+
+                for e in self.extensions:
+                    e.extra_compile_args += openmp_flag
+                    e.extra_link_args += openmp_flag
+
+            build_ext.build_extensions(self)
+
+    cmdclass['build_ext'] = build_ext_subclass
+
+except ImportError:
+    # Numpy should not be a dependency just to be able to introspect
+    # that python 3.6 is required.
+    pass
+
 
 # Optional wheelhouse-uploader features
 # To automate release of binary packages for scikit-learn we need a tool
@@ -105,7 +142,7 @@ cmdclass = {'clean': CleanCommand}
 # to PyPI at release time.
 # The URL of the artifact repositories are configured in the setup.cfg file.
 
-WHEELHOUSE_UPLOADER_COMMANDS = set(['fetch_artifacts', 'upload_all'])
+WHEELHOUSE_UPLOADER_COMMANDS = {'fetch_artifacts', 'upload_all'}
 if WHEELHOUSE_UPLOADER_COMMANDS.intersection(sys.argv):
     import wheelhouse_uploader.cmd
 
@@ -117,6 +154,8 @@ def configuration(parent_package='', top_path=None):
         os.remove('MANIFEST')
 
     from numpy.distutils.misc_util import Configuration
+    from sklearn._build_utils import _check_cython_version
+
     config = Configuration(None, parent_package, top_path)
 
     # Avoid non-useful msg:
@@ -126,63 +165,52 @@ def configuration(parent_package='', top_path=None):
                        delegate_options_to_subpackages=True,
                        quiet=True)
 
+    # Cython is required by config.add_subpackage for templated extensions
+    # that need the tempita sub-submodule. So check that we have the correct
+    # version of Cython so as to be able to raise a more informative error
+    # message from the start if it's not the case.
+    _check_cython_version()
+
     config.add_subpackage('sklearn')
 
     return config
 
 
-scipy_min_version = '0.9'
-numpy_min_version = '1.6.1'
-
-
-def get_scipy_status():
+def check_package_status(package, min_version):
     """
-    Returns a dictionary containing a boolean specifying whether SciPy
+    Returns a dictionary containing a boolean specifying whether given package
     is up-to-date, along with the version string (empty string if
     not installed).
     """
-    scipy_status = {}
+    package_status = {}
     try:
-        import scipy
-        scipy_version = scipy.__version__
-        scipy_status['up_to_date'] = parse_version(
-            scipy_version) >= parse_version(scipy_min_version)
-        scipy_status['version'] = scipy_version
+        module = importlib.import_module(package)
+        package_version = module.__version__
+        package_status['up_to_date'] = parse_version(
+            package_version) >= parse_version(min_version)
+        package_status['version'] = package_version
     except ImportError:
-        scipy_status['up_to_date'] = False
-        scipy_status['version'] = ""
-    return scipy_status
+        traceback.print_exc()
+        package_status['up_to_date'] = False
+        package_status['version'] = ""
 
+    req_str = "scikit-learn requires {} >= {}.\n".format(
+        package, min_version)
 
-def get_numpy_status():
-    """
-    Returns a dictionary containing a boolean specifying whether NumPy
-    is up-to-date, along with the version string (empty string if
-    not installed).
-    """
-    numpy_status = {}
-    try:
-        import numpy
-        numpy_version = numpy.__version__
-        numpy_status['up_to_date'] = parse_version(
-            numpy_version) >= parse_version(numpy_min_version)
-        numpy_status['version'] = numpy_version
-    except ImportError:
-        numpy_status['up_to_date'] = False
-        numpy_status['version'] = ""
-    return numpy_status
+    instructions = ("Installation instructions are available on the "
+                    "scikit-learn website: "
+                    "http://scikit-learn.org/stable/install.html\n")
 
-
-def generate_cython():
-    cwd = os.path.abspath(os.path.dirname(__file__))
-    print("Cythonizing sources")
-    p = subprocess.call([sys.executable, os.path.join(cwd,
-                                                      'build_tools',
-                                                      'cythonize.py'),
-                         'sklearn'],
-                        cwd=cwd)
-    if p != 0:
-        raise RuntimeError("Running cythonize failed!")
+    if package_status['up_to_date'] is False:
+        if package_status['version']:
+            raise ImportError("Your installation of {} "
+                              "{} is out-of-date.\n{}{}"
+                              .format(package, package_status['version'],
+                                      req_str, instructions))
+        else:
+            raise ImportError("{} is not "
+                              "installed.\n{}{}"
+                              .format(package, req_str, instructions))
 
 
 def setup_package():
@@ -192,8 +220,9 @@ def setup_package():
                     description=DESCRIPTION,
                     license=LICENSE,
                     url=URL,
-                    version=VERSION,
                     download_url=DOWNLOAD_URL,
+                    project_urls=PROJECT_URLS,
+                    version=VERSION,
                     long_description=LONG_DESCRIPTION,
                     classifiers=['Intended Audience :: Science/Research',
                                  'Intended Audience :: Developers',
@@ -202,93 +231,57 @@ def setup_package():
                                  'Programming Language :: Python',
                                  'Topic :: Software Development',
                                  'Topic :: Scientific/Engineering',
+                                 'Development Status :: 5 - Production/Stable',
                                  'Operating System :: Microsoft :: Windows',
                                  'Operating System :: POSIX',
                                  'Operating System :: Unix',
                                  'Operating System :: MacOS',
-                                 'Programming Language :: Python :: 2',
-                                 'Programming Language :: Python :: 2.6',
-                                 'Programming Language :: Python :: 2.7',
                                  'Programming Language :: Python :: 3',
-                                 'Programming Language :: Python :: 3.3',
-                                 'Programming Language :: Python :: 3.4',
+                                 'Programming Language :: Python :: 3.6',
+                                 'Programming Language :: Python :: 3.7',
+                                 'Programming Language :: Python :: 3.8',
+                                 ('Programming Language :: Python :: '
+                                  'Implementation :: CPython'),
+                                 ('Programming Language :: Python :: '
+                                  'Implementation :: PyPy')
                                  ],
                     cmdclass=cmdclass,
+                    python_requires=">=3.6",
+                    install_requires=min_deps.tag_to_packages['install'],
+                    package_data={'': ['*.pxd']},
                     **extra_setuptools_args)
 
     if len(sys.argv) == 1 or (
             len(sys.argv) >= 2 and ('--help' in sys.argv[1:] or
                                     sys.argv[1] in ('--help-commands',
                                                     'egg_info',
+                                                    'dist_info',
                                                     '--version',
                                                     'clean'))):
-        # For these actions, NumPy is not required, nor Cythonization
-        #
-        # They are required to succeed without Numpy for example when
+        # These actions are required to succeed without Numpy for example when
         # pip is used to install Scikit-learn when Numpy is not yet present in
         # the system.
-        try:
-            from setuptools import setup
-        except ImportError:
-            from distutils.core import setup
+
+        # These commands use setup from setuptools
+        from setuptools import setup
 
         metadata['version'] = VERSION
     else:
-        numpy_status = get_numpy_status()
-        numpy_req_str = "scikit-learn requires NumPy >= {0}.\n".format(
-            numpy_min_version)
-        scipy_status = get_scipy_status()
-        scipy_req_str = "scikit-learn requires SciPy >= {0}.\n".format(
-            scipy_min_version)
+        if sys.version_info < (3, 6):
+            raise RuntimeError(
+                "Scikit-learn requires Python 3.6 or later. The current"
+                " Python version is %s installed in %s."
+                % (platform.python_version(), sys.executable))
 
-        instructions = ("Installation instructions are available on the "
-                        "scikit-learn website: "
-                        "http://scikit-learn.org/stable/install.html\n")
+        check_package_status('numpy', min_deps.NUMPY_MIN_VERSION)
 
-        if numpy_status['up_to_date'] is False:
-            if numpy_status['version']:
-                raise ImportError("Your installation of Numerical Python "
-                                  "(NumPy) {0} is out-of-date.\n{1}{2}"
-                                  .format(numpy_status['version'],
-                                          numpy_req_str, instructions))
-            else:
-                raise ImportError("Numerical Python (NumPy) is not "
-                                  "installed.\n{0}{1}"
-                                  .format(numpy_req_str, instructions))
-        if scipy_status['up_to_date'] is False:
-            if scipy_status['version']:
-                raise ImportError("Your installation of Scientific Python "
-                                  "(SciPy) {0} is out-of-date.\n{1}{2}"
-                                  .format(scipy_status['version'],
-                                          scipy_req_str, instructions))
-            else:
-                raise ImportError("Scientific Python (SciPy) is not "
-                                  "installed.\n{0}{1}"
-                                  .format(scipy_req_str, instructions))
+        check_package_status('scipy', min_deps.SCIPY_MIN_VERSION)
 
+        # These commands require the setup from numpy.distutils because they
+        # may use numpy.distutils compiler classes.
         from numpy.distutils.core import setup
 
         metadata['configuration'] = configuration
-
-        if len(sys.argv) >= 2 and sys.argv[1] not in 'config':
-            # Cythonize if needed
-
-            print('Generating cython files')
-            cwd = os.path.abspath(os.path.dirname(__file__))
-            if not os.path.exists(os.path.join(cwd, 'PKG-INFO')):
-                # Generate Cython sources, unless building from source release
-                generate_cython()
-
-            # Clean left-over .so file
-            for dirpath, dirnames, filenames in os.walk(
-                    os.path.join(cwd, 'sklearn')):
-                for filename in filenames:
-                    extension = os.path.splitext(filename)[1]
-                    if extension in (".so", ".pyd", ".dll"):
-                        pyx_file = str.replace(filename, extension, '.pyx')
-                        print(pyx_file)
-                        if not os.path.exists(os.path.join(dirpath, pyx_file)):
-                            os.unlink(os.path.join(dirpath, filename))
 
     setup(**metadata)
 

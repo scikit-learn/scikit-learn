@@ -7,12 +7,11 @@ Data comes from a random square matrix.
 from datetime import datetime
 import numpy as np
 from sklearn import linear_model
-from sklearn.utils.bench import total_seconds
 
 
 if __name__ == '__main__':
 
-    import pylab as pl
+    import matplotlib.pyplot as plt
 
     n_iter = 40
 
@@ -34,25 +33,25 @@ if __name__ == '__main__':
         start = datetime.now()
         ridge = linear_model.Ridge(alpha=1.)
         ridge.fit(X, Y)
-        time_ridge[i] = total_seconds(datetime.now() - start)
+        time_ridge[i] = (datetime.now() - start).total_seconds()
 
         start = datetime.now()
         ols = linear_model.LinearRegression()
         ols.fit(X, Y)
-        time_ols[i] = total_seconds(datetime.now() - start)
+        time_ols[i] = (datetime.now() - start).total_seconds()
 
         start = datetime.now()
         lasso = linear_model.LassoLars()
         lasso.fit(X, Y)
-        time_lasso[i] = total_seconds(datetime.now() - start)
+        time_lasso[i] = (datetime.now() - start).total_seconds()
 
-    pl.figure('scikit-learn GLM benchmark results')
-    pl.xlabel('Dimensions')
-    pl.ylabel('Time (s)')
-    pl.plot(dimensions, time_ridge, color='r')
-    pl.plot(dimensions, time_ols, color='g')
-    pl.plot(dimensions, time_lasso, color='b')
+    plt.figure('scikit-learn GLM benchmark results')
+    plt.xlabel('Dimensions')
+    plt.ylabel('Time (s)')
+    plt.plot(dimensions, time_ridge, color='r')
+    plt.plot(dimensions, time_ols, color='g')
+    plt.plot(dimensions, time_lasso, color='b')
 
-    pl.legend(['Ridge', 'OLS', 'LassoLars'], loc='upper left')
-    pl.axis('tight')
-    pl.show()
+    plt.legend(['Ridge', 'OLS', 'LassoLars'], loc='upper left')
+    plt.axis('tight')
+    plt.show()

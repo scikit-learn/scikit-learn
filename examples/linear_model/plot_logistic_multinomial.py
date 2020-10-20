@@ -9,7 +9,7 @@ are represented by the dashed lines.
 """
 print(__doc__)
 # Authors: Tom Dupre la Tour <tom.dupre-la-tour@m4x.org>
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -50,7 +50,8 @@ for multi_class in ('multinomial', 'ovr'):
     colors = "bry"
     for i, color in zip(clf.classes_, colors):
         idx = np.where(y == i)
-        plt.scatter(X[idx, 0], X[idx, 1], c=color, cmap=plt.cm.Paired)
+        plt.scatter(X[idx, 0], X[idx, 1], c=color, cmap=plt.cm.Paired,
+                    edgecolor='black', s=20)
 
     # Plot the three one-against-all classifiers
     xmin, xmax = plt.xlim()

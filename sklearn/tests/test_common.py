@@ -5,35 +5,47 @@ General tests for all estimators in sklearn.
 # Authors: Andreas Mueller <amueller@ais.uni-bonn.de>
 #          Gael Varoquaux gael.varoquaux@normalesup.org
 # License: BSD 3 clause
-from __future__ import print_function
 
 import os
 import warnings
 import sys
+import re
 import pkgutil
+from inspect import isgenerator
+from functools import partial
 
-from sklearn.externals.six import PY3
-from sklearn.utils.testing import assert_false, clean_warning_registry
-from sklearn.utils.testing import all_estimators
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_in
-from sklearn.utils.testing import ignore_warnings
+import pytest
+import numpy as np
+
+from sklearn.utils import all_estimators
+from sklearn.utils._testing import ignore_warnings
+from sklearn.exceptions import ConvergenceWarning, SkipTestWarning
+from sklearn.utils.estimator_checks import check_estimator
 
 import sklearn
-from sklearn.cluster.bicluster import BiclusterMixin
-from sklearn.decomposition import ProjectedGradientNMF
+from sklearn.base import BiclusterMixin
 
-from sklearn.linear_model.base import LinearClassifierMixin
+from sklearn.decomposition import PCA
+from sklearn.decomposition import NMF
+from sklearn.linear_model._base import LinearClassifierMixin
+from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import Ridge
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import RandomizedSearchCV
+from sklearn.pipeline import make_pipeline
+from sklearn.svm import NuSVC
+
+from sklearn.utils import IS_PYPY
+from sklearn.utils._testing import SkipTest
 from sklearn.utils.estimator_checks import (
-    _yield_all_checks,
-    CROSS_DECOMPOSITION,
-    check_parameters_default_constructible,
+    _construct_instance,
+    _set_checking_parameters,
+    _get_check_estimator_ids,
     check_class_weight_balanced_linear_classifier,
-    check_transformer_n_iter,
-    check_non_transformer_estimators_n_iter,
-    check_get_params_invariance,
-    check_fit2d_predict1d,
-    check_fit1d_1sample)
+    parametrize_with_checks,
+    check_n_features_in_after_fitting,
+)
+from sklearn.utils.validation import check_non_negative, check_array
 
 
 def test_all_estimator_no_base_class():
@@ -41,79 +53,105 @@ def test_all_estimator_no_base_class():
     for name, Estimator in all_estimators():
         msg = ("Base estimators such as {0} should not be included"
                " in all_estimators").format(name)
-        assert_false(name.lower().startswith('base'), msg=msg)
+        assert not name.lower().startswith('base'), msg
 
 
-def test_all_estimators():
-    # Test that estimators are default-constructible, cloneable
-    # and have working repr.
-    estimators = all_estimators(include_meta_estimators=True)
-
-    # Meta sanity-check to make sure that the estimator introspection runs
-    # properly
-    assert_greater(len(estimators), 0)
-
-    for name, Estimator in estimators:
-        # some can just not be sensibly default constructed
-        yield check_parameters_default_constructible, name, Estimator
+def _sample_func(x, y=1):
+    pass
 
 
-def test_non_meta_estimators():
-    # input validation etc for non-meta estimators
-    estimators = all_estimators()
-    for name, Estimator in estimators:
+@pytest.mark.parametrize("val, expected", [
+    (partial(_sample_func, y=1), "_sample_func(y=1)"),
+    (_sample_func, "_sample_func"),
+    (partial(_sample_func, 'world'), "_sample_func"),
+    (LogisticRegression(C=2.0), "LogisticRegression(C=2.0)"),
+    (LogisticRegression(random_state=1, solver='newton-cg',
+                        class_weight='balanced', warm_start=True),
+     "LogisticRegression(class_weight='balanced',random_state=1,"
+     "solver='newton-cg',warm_start=True)")
+])
+def test_get_check_estimator_ids(val, expected):
+    assert _get_check_estimator_ids(val) == expected
+
+
+def _tested_estimators():
+    for name, Estimator in all_estimators():
         if issubclass(Estimator, BiclusterMixin):
             continue
-        if name.startswith("_"):
+        try:
+            estimator = _construct_instance(Estimator)
+        except SkipTest:
             continue
-        for check in _yield_all_checks(name, Estimator):
-            if issubclass(Estimator, ProjectedGradientNMF):
-                # The ProjectedGradientNMF class is deprecated
-                with ignore_warnings():
-                    yield check, name, Estimator
-            else:
-                yield check, name, Estimator
 
+        yield estimator
+
+
+@parametrize_with_checks(list(_tested_estimators()))
+def test_estimators(estimator, check, request):
+    # Common tests for estimator instances
+    with ignore_warnings(category=(FutureWarning,
+                                   ConvergenceWarning,
+                                   UserWarning, FutureWarning)):
+        _set_checking_parameters(estimator)
+        check(estimator)
+
+
+def test_check_estimator_generate_only():
+    all_instance_gen_checks = check_estimator(LogisticRegression(),
+                                              generate_only=True)
+    assert isgenerator(all_instance_gen_checks)
+
+
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
+# ignore deprecated open(.., 'U') in numpy distutils
 def test_configure():
     # Smoke test the 'configure' step of setup, this tests all the
-    # 'configure' functions in the setup.pys in the scikit
+    # 'configure' functions in the setup.pys in scikit-learn
+    # This test requires Cython which is not necessarily there when running
+    # the tests of an installed version of scikit-learn or when scikit-learn
+    # is installed in editable mode by pip build isolation enabled.
+    pytest.importorskip("Cython")
     cwd = os.getcwd()
     setup_path = os.path.abspath(os.path.join(sklearn.__path__[0], '..'))
     setup_filename = os.path.join(setup_path, 'setup.py')
     if not os.path.exists(setup_filename):
-        return
+        pytest.skip('setup.py not available')
+    # XXX unreached code as of v0.22
     try:
         os.chdir(setup_path)
         old_argv = sys.argv
         sys.argv = ['setup.py', 'config']
-        clean_warning_registry()
+
         with warnings.catch_warnings():
             # The configuration spits out warnings when not finding
             # Blas/Atlas development headers
             warnings.simplefilter('ignore', UserWarning)
-            if PY3:
-                with open('setup.py') as f:
-                    exec(f.read(), dict(__name__='__main__'))
-            else:
-                execfile('setup.py', dict(__name__='__main__'))
+            with open('setup.py') as f:
+                exec(f.read(), dict(__name__='__main__'))
     finally:
         sys.argv = old_argv
         os.chdir(cwd)
 
 
-def test_class_weight_balanced_linear_classifiers():
+def _tested_linear_classifiers():
     classifiers = all_estimators(type_filter='classifier')
 
-    clean_warning_registry()
     with warnings.catch_warnings(record=True):
-        linear_classifiers = [
-            (name, clazz)
-            for name, clazz in classifiers
-            if 'class_weight' in clazz().get_params().keys()
-               and issubclass(clazz, LinearClassifierMixin)]
+        for name, clazz in classifiers:
+            required_parameters = getattr(clazz, "_required_parameters", [])
+            if len(required_parameters):
+                # FIXME
+                continue
 
-    for name, Classifier in linear_classifiers:
-        yield check_class_weight_balanced_linear_classifier, name, Classifier
+            if ('class_weight' in clazz().get_params().keys() and
+                    issubclass(clazz, LinearClassifierMixin)):
+                yield name, clazz
+
+
+@pytest.mark.parametrize("name, Classifier",
+                         _tested_linear_classifiers())
+def test_class_weight_balanced_linear_classifiers(name, Classifier):
+    check_class_weight_balanced_linear_classifier(name, Classifier)
 
 
 @ignore_warnings
@@ -126,90 +164,215 @@ def test_import_all_consistency():
     for modname in submods + ['sklearn']:
         if ".tests." in modname:
             continue
+        if IS_PYPY and ('_svmlight_format_io' in modname or
+                        'feature_extraction._hashing_fast' in modname):
+            continue
         package = __import__(modname, fromlist="dummy")
         for name in getattr(package, '__all__', ()):
-            if getattr(package, name, None) is None:
-                raise AttributeError(
-                    "Module '{0}' has no attribute '{1}'".format(
-                        modname, name))
+            assert hasattr(package, name),\
+                "Module '{0}' has no attribute '{1}'".format(modname, name)
 
 
 def test_root_import_all_completeness():
-    EXCEPTIONS = ('utils', 'tests', 'base', 'setup')
+    EXCEPTIONS = ('utils', 'tests', 'base', 'setup', 'conftest')
     for _, modname, _ in pkgutil.walk_packages(path=sklearn.__path__,
                                                onerror=lambda _: None):
         if '.' in modname or modname.startswith('_') or modname in EXCEPTIONS:
             continue
-        assert_in(modname, sklearn.__all__)
+        assert modname in sklearn.__all__
 
 
-def test_non_transformer_estimators_n_iter():
-    # Test that all estimators of type which are non-transformer
-    # and which have an attribute of max_iter, return the attribute
-    # of n_iter atleast 1.
-    for est_type in ['regressor', 'classifier', 'cluster']:
-        regressors = all_estimators(type_filter=est_type)
-        for name, Estimator in regressors:
-            # LassoLars stops early for the default alpha=1.0 for
-            # the iris dataset.
-            if name == 'LassoLars':
-                estimator = Estimator(alpha=0.)
-            else:
-                estimator = Estimator()
-            if hasattr(estimator, "max_iter"):
-                # These models are dependent on external solvers like
-                # libsvm and accessing the iter parameter is non-trivial.
-                if name in (['Ridge', 'SVR', 'NuSVR', 'NuSVC',
-                             'RidgeClassifier', 'SVC', 'RandomizedLasso',
-                             'LogisticRegressionCV']):
-                    continue
+def test_all_tests_are_importable():
+    # Ensure that for each contentful subpackage, there is a test directory
+    # within it that is also a subpackage (i.e. a directory with __init__.py)
 
-                # Tested in test_transformer_n_iter below
-                elif (name in CROSS_DECOMPOSITION or
-                      name in ['LinearSVC', 'LogisticRegression']):
-                    continue
-
-                else:
-                    # Multitask models related to ENet cannot handle
-                    # if y is mono-output.
-                    yield (check_non_transformer_estimators_n_iter,
-                           name, estimator, 'Multi' in name)
+    HAS_TESTS_EXCEPTIONS = re.compile(r'''(?x)
+                                      \.externals(\.|$)|
+                                      \.tests(\.|$)|
+                                      \._
+                                      ''')
+    lookup = {name: ispkg
+              for _, name, ispkg
+              in pkgutil.walk_packages(sklearn.__path__, prefix='sklearn.')}
+    missing_tests = [name for name, ispkg in lookup.items()
+                     if ispkg
+                     and not HAS_TESTS_EXCEPTIONS.search(name)
+                     and name + '.tests' not in lookup]
+    assert missing_tests == [], ('{0} do not have `tests` subpackages. '
+                                 'Perhaps they require '
+                                 '__init__.py or an add_subpackage directive '
+                                 'in the parent '
+                                 'setup.py'.format(missing_tests))
 
 
-def test_transformer_n_iter():
-    transformers = all_estimators(type_filter='transformer')
-    for name, Estimator in transformers:
-        if issubclass(Estimator, ProjectedGradientNMF):
-            # The ProjectedGradientNMF class is deprecated
-            with ignore_warnings():
-                estimator = Estimator()
-        else:
-            estimator = Estimator()
-        # Dependent on external solvers and hence accessing the iter
-        # param is non-trivial.
-        external_solver = ['Isomap', 'KernelPCA', 'LocallyLinearEmbedding',
-                           'RandomizedLasso', 'LogisticRegressionCV']
+def test_class_support_removed():
+    # Make sure passing classes to check_estimator or parametrize_with_checks
+    # raises an error
 
-        if hasattr(estimator, "max_iter") and name not in external_solver:
-            if isinstance(estimator, ProjectedGradientNMF):
-                # The ProjectedGradientNMF class is deprecated
-                with ignore_warnings():
-                    yield check_transformer_n_iter, name, estimator
-            else:
-                yield check_transformer_n_iter, name, estimator
+    msg = "Passing a class was deprecated.* isn't supported anymore"
+    with pytest.raises(TypeError, match=msg):
+        check_estimator(LogisticRegression)
+
+    with pytest.raises(TypeError, match=msg):
+        parametrize_with_checks([LogisticRegression])
 
 
-def test_get_params_invariance():
-    # Test for estimators that support get_params, that
-    # get_params(deep=False) is a subset of get_params(deep=True)
-    # Related to issue #4465
+class MyNMFWithBadErrorMessage(NMF):
+    # Same as NMF but raises an uninformative error message if X has negative
+    # value. This estimator would fail the check suite in strict mode,
+    # specifically it would fail check_fit_non_negative
+    # FIXME : should be removed in 0.26
+    def __init__(self):
+        super().__init__()
+        self.init = 'nndsvda'
+        self.max_iter = 500
 
-    estimators = all_estimators(include_meta_estimators=False, include_other=True)
-    for name, Estimator in estimators:
-        if hasattr(Estimator, 'get_params'):
-            # The ProjectedGradientNMF class is deprecated
-            if issubclass(Estimator, ProjectedGradientNMF):
-                with ignore_warnings():
-                    yield check_get_params_invariance, name, Estimator
-            else:
-                yield check_get_params_invariance, name, Estimator
+    def fit(self, X, y=None, **params):
+        X = check_array(X, accept_sparse=('csr', 'csc'),
+                        dtype=[np.float64, np.float32])
+        try:
+            check_non_negative(X, whom='')
+        except ValueError:
+            raise ValueError("Some non-informative error msg")
+
+        return super().fit(X, y, **params)
+
+
+def test_strict_mode_check_estimator():
+    # Tests various conditions for the strict mode of check_estimator()
+    # Details are in the comments
+
+    # LogisticRegression has no _xfail_checks, so when strict_mode is on, there
+    # should be no skipped tests.
+    with pytest.warns(None) as catched_warnings:
+        check_estimator(LogisticRegression(), strict_mode=True)
+    assert not any(isinstance(w, SkipTestWarning) for w in catched_warnings)
+    # When strict mode is off, check_n_features should be skipped because it's
+    # a fully strict check
+    msg_check_n_features_in = 'check_n_features_in is fully strict '
+    with pytest.warns(SkipTestWarning, match=msg_check_n_features_in):
+        check_estimator(LogisticRegression(), strict_mode=False)
+
+    # NuSVC has some _xfail_checks. They should be skipped regardless of
+    # strict_mode
+    with pytest.warns(SkipTestWarning,
+                      match='fails for the decision_function method'):
+        check_estimator(NuSVC(), strict_mode=True)
+    # When strict mode is off, check_n_features_in is skipped along with the
+    # rest of the xfail_checks
+    with pytest.warns(SkipTestWarning, match=msg_check_n_features_in):
+        check_estimator(NuSVC(), strict_mode=False)
+
+    # MyNMF will fail check_fit_non_negative() in strict mode because it yields
+    # a bad error message
+    with pytest.raises(
+        AssertionError, match="The error message should contain"
+    ):
+        check_estimator(MyNMFWithBadErrorMessage(), strict_mode=True)
+    # However, it should pass the test suite in non-strict mode because when
+    # strict mode is off, check_fit_non_negative() will not check the exact
+    # error messsage. (We still assert that the warning from
+    # check_n_features_in is raised)
+    with pytest.warns(SkipTestWarning, match=msg_check_n_features_in):
+        check_estimator(MyNMFWithBadErrorMessage(), strict_mode=False)
+
+
+@parametrize_with_checks([LogisticRegression(),
+                          NuSVC(),
+                          MyNMFWithBadErrorMessage()],
+                         strict_mode=False)
+def test_strict_mode_parametrize_with_checks(estimator, check):
+    # Ideally we should assert that the strict checks are Xfailed...
+    check(estimator)
+
+
+def _generate_search_cv_instances():
+    for SearchCV, (Estimator, param_grid) in zip(
+        [GridSearchCV, RandomizedSearchCV],
+        [
+            (Ridge, {"alpha": [0.1, 1.0]}),
+            (LogisticRegression, {"C": [0.1, 1.0]}),
+        ],
+    ):
+        yield SearchCV(Estimator(), param_grid)
+
+    for SearchCV, (Estimator, param_grid) in zip(
+        [GridSearchCV, RandomizedSearchCV],
+        [
+            (Ridge, {"ridge__alpha": [0.1, 1.0]}),
+            (LogisticRegression, {"logisticregression__C": [0.1, 1.0]}),
+        ],
+    ):
+        yield SearchCV(
+            make_pipeline(PCA(), Estimator()), param_grid
+        ).set_params(error_score="raise")
+
+
+@parametrize_with_checks(list(_generate_search_cv_instances()))
+def test_search_cv(estimator, check, request):
+    # Common tests for SearchCV instances
+    # We have a separate test because those meta-estimators can accept a
+    # wide range of base estimators (classifiers, regressors, pipelines)
+    with ignore_warnings(
+        category=(
+            FutureWarning,
+            ConvergenceWarning,
+            UserWarning,
+            FutureWarning,
+        )
+    ):
+        check(estimator)
+
+
+# TODO: When more modules get added, we can remove it from this list to make
+# sure it gets tested. After we finish each module we can move the checks
+# into sklearn.utils.estimator_checks.check_n_features_in.
+#
+# check_estimators_partial_fit_n_features can either be removed or updated
+# with the two more assertions:
+# 1. `n_features_in_` is set during the first call to `partial_fit`.
+# 2. More strict when it comes to the error message.
+#
+# check_classifiers_train would need to be updated with the error message
+N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE = {
+    'calibration',
+    'cluster',
+    'compose',
+    'covariance',
+    'cross_decomposition',
+    'discriminant_analysis',
+    'ensemble',
+    'feature_extraction',
+    'feature_selection',
+    'gaussian_process',
+    'impute',
+    'isotonic',
+    'kernel_approximation',
+    'kernel_ridge',
+    'linear_model',
+    'manifold',
+    'mixture',
+    'model_selection',
+    'multiclass',
+    'multioutput',
+    'naive_bayes',
+    'neighbors',
+    'pipeline',
+    'preprocessing',
+    'random_projection',
+    'semi_supervised',
+    'svm',
+    'tree',
+}
+
+N_FEATURES_IN_AFTER_FIT_ESTIMATORS = [
+    est for est in _tested_estimators() if est.__module__.split('.')[1] not in
+    N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE
+]
+
+
+@pytest.mark.parametrize("estimator", N_FEATURES_IN_AFTER_FIT_ESTIMATORS,
+                         ids=_get_check_estimator_ids)
+def test_check_n_features_in_after_fitting(estimator):
+    _set_checking_parameters(estimator)
+    check_n_features_in_after_fitting(estimator.__class__.__name__, estimator)

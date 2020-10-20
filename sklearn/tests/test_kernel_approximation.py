@@ -1,17 +1,17 @@
 import numpy as np
 from scipy.sparse import csr_matrix
+import pytest
 
-from sklearn.utils.testing import assert_array_equal, assert_equal, assert_true
-from sklearn.utils.testing import assert_not_equal
-from sklearn.utils.testing import assert_array_almost_equal, assert_raises
-from sklearn.utils.testing import assert_less_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal, assert_raises
 
 from sklearn.metrics.pairwise import kernel_metrics
 from sklearn.kernel_approximation import RBFSampler
 from sklearn.kernel_approximation import AdditiveChi2Sampler
 from sklearn.kernel_approximation import SkewedChi2Sampler
 from sklearn.kernel_approximation import Nystroem
-from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel
+from sklearn.kernel_approximation import PolynomialCountSketch
+from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel, chi2_kernel
 
 # generate data
 rng = np.random.RandomState(0)
@@ -19,6 +19,44 @@ X = rng.random_sample(size=(300, 50))
 Y = rng.random_sample(size=(300, 50))
 X /= X.sum(axis=1)[:, np.newaxis]
 Y /= Y.sum(axis=1)[:, np.newaxis]
+
+
+@pytest.mark.parametrize('degree', [-1, 0])
+def test_polynomial_count_sketch_raises_if_degree_lower_than_one(degree):
+    with pytest.raises(ValueError, match=f'degree={degree} should be >=1.'):
+        ps_transform = PolynomialCountSketch(degree=degree)
+        ps_transform.fit(X, Y)
+
+
+@pytest.mark.parametrize('X', [X, csr_matrix(X)])
+@pytest.mark.parametrize('Y', [Y, csr_matrix(Y)])
+@pytest.mark.parametrize('gamma', [0.1, 1, 2.5])
+@pytest.mark.parametrize('degree', [1, 2, 3])
+@pytest.mark.parametrize('coef0', [0, 1, 2.5])
+def test_polynomial_count_sketch(X, Y, gamma, degree, coef0):
+    # test that PolynomialCountSketch approximates polynomial
+    # kernel on random data
+
+    # compute exact kernel
+    kernel = polynomial_kernel(X, Y, gamma=gamma, degree=degree, coef0=coef0)
+
+    # approximate kernel mapping
+    ps_transform = PolynomialCountSketch(n_components=5000, gamma=gamma,
+                                         coef0=coef0, degree=degree,
+                                         random_state=42)
+    X_trans = ps_transform.fit_transform(X)
+    Y_trans = ps_transform.transform(Y)
+    kernel_approx = np.dot(X_trans, Y_trans.T)
+
+    error = kernel - kernel_approx
+    assert np.abs(np.mean(error)) <= 0.05  # close to unbiased
+    np.abs(error, out=error)
+    assert np.max(error) <= 0.1  # nothing too far off
+    assert np.mean(error) <= 0.05  # mean is fairly close
+
+
+def _linear_kernel(X, Y):
+    return np.dot(X, Y.T)
 
 
 def test_additive_chi2_sampler():
@@ -64,19 +102,19 @@ def test_additive_chi2_sampler():
 
         # test that the sample_interval is initialized correctly
         transform = AdditiveChi2Sampler(sample_steps=sample_steps)
-        assert_equal(transform.sample_interval, None)
+        assert transform.sample_interval is None
 
         # test that the sample_interval is changed in the fit method
         transform.fit(X)
-        assert_not_equal(transform.sample_interval_, None)
+        assert transform.sample_interval_ is not None
 
     # test that the sample_interval is set correctly
     sample_interval = 0.3
     transform = AdditiveChi2Sampler(sample_steps=4,
                                     sample_interval=sample_interval)
-    assert_equal(transform.sample_interval, sample_interval)
+    assert transform.sample_interval == sample_interval
     transform.fit(X)
-    assert_equal(transform.sample_interval_, sample_interval)
+    assert transform.sample_interval_ == sample_interval
 
 
 def test_skewed_chi2_sampler():
@@ -84,6 +122,11 @@ def test_skewed_chi2_sampler():
 
     # compute exact kernel
     c = 0.03
+    # set on negative component but greater than c to ensure that the kernel
+    # approximation is valid on the group (-c; +\infty) endowed with the skewed
+    # multiplication.
+    Y[0, 0] = -c / 2.
+
     # abbreviations for easier formula
     X_c = (X + c)[:, np.newaxis, :]
     Y_c = (Y + c)[np.newaxis, :, :]
@@ -103,11 +146,27 @@ def test_skewed_chi2_sampler():
 
     kernel_approx = np.dot(X_trans, Y_trans.T)
     assert_array_almost_equal(kernel, kernel_approx, 1)
+    assert np.isfinite(kernel).all(), \
+        'NaNs found in the Gram matrix'
+    assert np.isfinite(kernel_approx).all(), \
+        'NaNs found in the approximate Gram matrix'
 
-    # test error is raised on negative input
+    # test error is raised on when inputs contains values smaller than -c
     Y_neg = Y.copy()
-    Y_neg[0, 0] = -1
+    Y_neg[0, 0] = -c * 2.
     assert_raises(ValueError, transform.transform, Y_neg)
+
+
+def test_additive_chi2_sampler_exceptions():
+    """Ensures correct error message"""
+    transformer = AdditiveChi2Sampler()
+    X_neg = X.copy()
+    X_neg[0, 0] = -1
+    with pytest.raises(ValueError, match="X in AdditiveChi2Sampler.fit"):
+        transformer.fit(X_neg)
+    with pytest.raises(ValueError, match="X in AdditiveChi2Sampler.transform"):
+        transformer.fit(X)
+        transformer.transform(X_neg)
 
 
 def test_rbf_sampler():
@@ -123,10 +182,10 @@ def test_rbf_sampler():
     kernel_approx = np.dot(X_trans, Y_trans.T)
 
     error = kernel - kernel_approx
-    assert_less_equal(np.abs(np.mean(error)), 0.01)  # close to unbiased
+    assert np.abs(np.mean(error)) <= 0.01  # close to unbiased
     np.abs(error, out=error)
-    assert_less_equal(np.max(error), 0.1)  # nothing too far off
-    assert_less_equal(np.mean(error), 0.05)  # mean is fairly close
+    assert np.max(error) <= 0.1  # nothing too far off
+    assert np.mean(error) <= 0.05  # mean is fairly close
 
 
 def test_input_validation():
@@ -153,20 +212,39 @@ def test_nystroem_approximation():
 
     trans = Nystroem(n_components=2, random_state=rnd)
     X_transformed = trans.fit(X).transform(X)
-    assert_equal(X_transformed.shape, (X.shape[0], 2))
+    assert X_transformed.shape == (X.shape[0], 2)
 
     # test callable kernel
-    linear_kernel = lambda X, Y: np.dot(X, Y.T)
-    trans = Nystroem(n_components=2, kernel=linear_kernel, random_state=rnd)
+    trans = Nystroem(n_components=2, kernel=_linear_kernel, random_state=rnd)
     X_transformed = trans.fit(X).transform(X)
-    assert_equal(X_transformed.shape, (X.shape[0], 2))
+    assert X_transformed.shape == (X.shape[0], 2)
 
     # test that available kernels fit and transform
     kernels_available = kernel_metrics()
     for kern in kernels_available:
         trans = Nystroem(n_components=2, kernel=kern, random_state=rnd)
         X_transformed = trans.fit(X).transform(X)
-        assert_equal(X_transformed.shape, (X.shape[0], 2))
+        assert X_transformed.shape == (X.shape[0], 2)
+
+
+def test_nystroem_default_parameters():
+    rnd = np.random.RandomState(42)
+    X = rnd.uniform(size=(10, 4))
+
+    # rbf kernel should behave as gamma=None by default
+    # aka gamma = 1 / n_features
+    nystroem = Nystroem(n_components=10)
+    X_transformed = nystroem.fit_transform(X)
+    K = rbf_kernel(X, gamma=None)
+    K2 = np.dot(X_transformed, X_transformed.T)
+    assert_array_almost_equal(K, K2)
+
+    # chi2 kernel should behave as gamma=1 by default
+    nystroem = Nystroem(kernel='chi2', n_components=10)
+    X_transformed = nystroem.fit_transform(X)
+    K = chi2_kernel(X, gamma=1)
+    K2 = np.dot(X_transformed, X_transformed.T)
+    assert_array_almost_equal(K, K2)
 
 
 def test_nystroem_singular_kernel():
@@ -182,7 +260,7 @@ def test_nystroem_singular_kernel():
     K = rbf_kernel(X, gamma=gamma)
 
     assert_array_almost_equal(K, np.dot(X_transformed, X_transformed.T))
-    assert_true(np.all(np.isfinite(Y)))
+    assert np.all(np.isfinite(Y))
 
 
 def test_nystroem_poly_kernel_params():
@@ -213,4 +291,33 @@ def test_nystroem_callable():
     Nystroem(kernel=logging_histogram_kernel,
              n_components=(n_samples - 1),
              kernel_params={'log': kernel_log}).fit(X)
-    assert_equal(len(kernel_log), n_samples * (n_samples - 1) / 2)
+    assert len(kernel_log) == n_samples * (n_samples - 1) / 2
+
+    # if degree, gamma or coef0 is passed, we raise a warning
+    msg = "Don't pass gamma, coef0 or degree to Nystroem"
+    params = ({'gamma': 1}, {'coef0': 1}, {'degree': 2})
+    for param in params:
+        ny = Nystroem(kernel=_linear_kernel, **param)
+        with pytest.raises(ValueError, match=msg):
+            ny.fit(X)
+
+
+def test_nystroem_precomputed_kernel():
+    # Non-regression: test Nystroem on precomputed kernel.
+    # PR - 14706
+    rnd = np.random.RandomState(12)
+    X = rnd.uniform(size=(10, 4))
+
+    K = polynomial_kernel(X, degree=2, coef0=.1)
+    nystroem = Nystroem(kernel='precomputed', n_components=X.shape[0])
+    X_transformed = nystroem.fit_transform(K)
+    assert_array_almost_equal(np.dot(X_transformed, X_transformed.T), K)
+
+    # if degree, gamma or coef0 is passed, we raise a ValueError
+    msg = "Don't pass gamma, coef0 or degree to Nystroem"
+    params = ({'gamma': 1}, {'coef0': 1}, {'degree': 2})
+    for param in params:
+        ny = Nystroem(kernel='precomputed', n_components=X.shape[0],
+                      **param)
+        with pytest.raises(ValueError, match=msg):
+            ny.fit(K)

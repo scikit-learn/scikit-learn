@@ -1,16 +1,16 @@
-"""
+r"""
 =====================================
 Multi-class AdaBoosted Decision Trees
 =====================================
 
-This example reproduces Figure 1 of Zhu et al [1] and shows how boosting can
+This example reproduces Figure 1 of Zhu et al [1]_ and shows how boosting can
 improve prediction accuracy on a multi-class problem. The classification
 dataset is constructed by taking a ten-dimensional standard normal distribution
 and defining three classes separated by nested concentric ten-dimensional
 spheres such that roughly equal numbers of samples are in each class (quantiles
 of the :math:`\chi^2` distribution).
 
-The performance of the SAMME and SAMME.R [1] algorithms are compared. SAMME.R
+The performance of the SAMME and SAMME.R [1]_ algorithms are compared. SAMME.R
 uses the probability estimates to update the additive model, while SAMME  uses
 the classifications only. As the example illustrates, the SAMME.R algorithm
 typically converges faster than SAMME, achieving a lower test error with fewer
@@ -28,8 +28,6 @@ print(__doc__)
 # Author: Noel Dawe <noel.dawe@gmail.com>
 #
 # License: BSD 3 clause
-
-from sklearn.externals.six.moves import zip
 
 import matplotlib.pyplot as plt
 

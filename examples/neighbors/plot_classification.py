@@ -10,6 +10,7 @@ print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
 from matplotlib.colors import ListedColormap
 from sklearn import neighbors, datasets
 
@@ -17,15 +18,17 @@ n_neighbors = 15
 
 # import some data to play with
 iris = datasets.load_iris()
-X = iris.data[:, :2]  # we only take the first two features. We could
-                      # avoid this ugly slicing by using a two-dim dataset
+
+# we only take the first two features. We could avoid this ugly
+# slicing by using a two-dim dataset
+X = iris.data[:, :2]
 y = iris.target
 
 h = .02  # step size in the mesh
 
 # Create color maps
-cmap_light = ListedColormap(['#FFAAAA', '#AAFFAA', '#AAAAFF'])
-cmap_bold = ListedColormap(['#FF0000', '#00FF00', '#0000FF'])
+cmap_light = ListedColormap(['orange', 'cyan', 'cornflowerblue'])
+cmap_bold = ['darkorange', 'c', 'darkblue']
 
 for weights in ['uniform', 'distance']:
     # we create an instance of Neighbours Classifier and fit the data.
@@ -42,14 +45,17 @@ for weights in ['uniform', 'distance']:
 
     # Put the result into a color plot
     Z = Z.reshape(xx.shape)
-    plt.figure()
-    plt.pcolormesh(xx, yy, Z, cmap=cmap_light)
+    plt.figure(figsize=(8, 6))
+    plt.contourf(xx, yy, Z, cmap=cmap_light)
 
     # Plot also the training points
-    plt.scatter(X[:, 0], X[:, 1], c=y, cmap=cmap_bold)
+    sns.scatterplot(x=X[:, 0], y=X[:, 1], hue=iris.target_names[y],
+                    palette=cmap_bold, alpha=1.0, edgecolor="black")
     plt.xlim(xx.min(), xx.max())
     plt.ylim(yy.min(), yy.max())
     plt.title("3-Class classification (k = %i, weights = '%s')"
               % (n_neighbors, weights))
+    plt.xlabel(iris.feature_names[0])
+    plt.ylabel(iris.feature_names[1])
 
 plt.show()

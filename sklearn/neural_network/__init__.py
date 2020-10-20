@@ -3,12 +3,12 @@ The :mod:`sklearn.neural_network` module includes models based on neural
 networks.
 """
 
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
-from .rbm import BernoulliRBM
+from ._rbm import BernoulliRBM
 
-from .multilayer_perceptron import MLPClassifier
-from .multilayer_perceptron import MLPRegressor
+from ._multilayer_perceptron import MLPClassifier
+from ._multilayer_perceptron import MLPRegressor
 
 __all__ = ["BernoulliRBM",
            "MLPClassifier",

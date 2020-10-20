@@ -5,7 +5,7 @@ Shrinkage covariance estimation: LedoitWolf vs OAS and max-likelihood
 
 When working with covariance estimation, the usual approach is to use
 a maximum likelihood estimator, such as the
-:class:`sklearn.covariance.EmpiricalCovariance`. It is unbiased, i.e. it
+:class:`~sklearn.covariance.EmpiricalCovariance`. It is unbiased, i.e. it
 converges to the true (population) covariance when given many
 observations. However, it can also be beneficial to regularize it, in
 order to reduce its variance; this, in turn, introduces some bias. This
@@ -21,11 +21,11 @@ Here we compare 3 approaches:
 
 * A close formula proposed by Ledoit and Wolf to compute
   the asymptotically optimal regularization parameter (minimizing a MSE
-  criterion), yielding the :class:`sklearn.covariance.LedoitWolf`
+  criterion), yielding the :class:`~sklearn.covariance.LedoitWolf`
   covariance estimate.
 
 * An improvement of the Ledoit-Wolf shrinkage, the
-  :class:`sklearn.covariance.OAS`, proposed by Chen et al. Its
+  :class:`~sklearn.covariance.OAS`, proposed by Chen et al. Its
   convergence is significantly better under the assumption that the data
   are Gaussian, in particular for small samples.
 
@@ -52,7 +52,7 @@ from sklearn.covariance import LedoitWolf, OAS, ShrunkCovariance, \
 from sklearn.model_selection import GridSearchCV
 
 
-###############################################################################
+# #############################################################################
 # Generate sample data
 n_features, n_samples = 40, 20
 np.random.seed(42)
@@ -64,7 +64,7 @@ coloring_matrix = np.random.normal(size=(n_features, n_features))
 X_train = np.dot(base_X_train, coloring_matrix)
 X_test = np.dot(base_X_test, coloring_matrix)
 
-###############################################################################
+# #############################################################################
 # Compute the likelihood on test data
 
 # spanning a range of possible shrinkage coefficient values
@@ -78,7 +78,7 @@ real_cov = np.dot(coloring_matrix.T, coloring_matrix)
 emp_cov = empirical_covariance(X_train)
 loglik_real = -log_likelihood(emp_cov, linalg.inv(real_cov))
 
-###############################################################################
+# #############################################################################
 # Compare different approaches to setting the parameter
 
 # GridSearch for an optimal shrinkage coefficient
@@ -94,11 +94,11 @@ loglik_lw = lw.fit(X_train).score(X_test)
 oa = OAS()
 loglik_oa = oa.fit(X_train).score(X_test)
 
-###############################################################################
+# #############################################################################
 # Plot results
 fig = plt.figure()
 plt.title("Regularized covariance: likelihood and shrinkage coefficient")
-plt.xlabel('Regularizaton parameter: shrinkage coefficient')
+plt.xlabel('Regularization parameter: shrinkage coefficient')
 plt.ylabel('Error: negative log-likelihood on test data')
 # range shrinkage curve
 plt.loglog(shrinkages, negative_logliks, label="Negative log-likelihood")

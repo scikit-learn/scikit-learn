@@ -57,6 +57,7 @@ clf = best_gmm
 bars = []
 
 # Plot the BIC scores
+plt.figure(figsize=(8, 6))
 spl = plt.subplot(2, 1, 1)
 for i, (cv_type, color) in enumerate(zip(cv_types, color_iter)):
     xpos = np.array(n_components_range) + .2 * (i - 2)
@@ -75,9 +76,9 @@ spl.legend([b[0] for b in bars], cv_types)
 # Plot the winner
 splot = plt.subplot(2, 1, 2)
 Y_ = clf.predict(X)
-for i, (mean, covar, color) in enumerate(zip(clf.means_, clf.covariances_,
-                                             color_iter)):
-    v, w = linalg.eigh(covar)
+for i, (mean, cov, color) in enumerate(zip(clf.means_, clf.covariances_,
+                                           color_iter)):
+    v, w = linalg.eigh(cov)
     if not np.any(Y_ == i):
         continue
     plt.scatter(X[Y_ == i, 0], X[Y_ == i, 1], .8, color=color)
@@ -93,6 +94,7 @@ for i, (mean, covar, color) in enumerate(zip(clf.means_, clf.covariances_,
 
 plt.xticks(())
 plt.yticks(())
-plt.title('Selected GMM: full model, 2 components')
+plt.title(f'Selected GMM: {best_gmm.covariance_type} model, '
+          f'{best_gmm.n_components} components')
 plt.subplots_adjust(hspace=.35, bottom=.02)
 plt.show()

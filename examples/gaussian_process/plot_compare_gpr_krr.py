@@ -73,7 +73,7 @@ param_grid = {"alpha": [1e0, 1e-1, 1e-2, 1e-3],
               "kernel": [ExpSineSquared(l, p)
                          for l in np.logspace(-2, 2, 10)
                          for p in np.logspace(0, 2, 10)]}
-kr = GridSearchCV(KernelRidge(), cv=5, param_grid=param_grid)
+kr = GridSearchCV(KernelRidge(), param_grid=param_grid)
 stime = time.time()
 kr.fit(X, y)
 print("Time for KRR fitting: %.3f" % (time.time() - stime))
@@ -91,7 +91,7 @@ stime = time.time()
 y_kr = kr.predict(X_plot)
 print("Time for KRR prediction: %.3f" % (time.time() - stime))
 
-# Predict using kernel ridge
+# Predict using gaussian process regressor
 stime = time.time()
 y_gpr = gpr.predict(X_plot, return_std=False)
 print("Time for GPR prediction: %.3f" % (time.time() - stime))

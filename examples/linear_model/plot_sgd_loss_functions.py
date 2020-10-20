@@ -4,7 +4,7 @@ SGD: convex loss functions
 ==========================
 
 A plot that compares the various convex loss functions supported by
-:class:`sklearn.linear_model.SGDClassifier` .
+:class:`~sklearn.linear_model.SGDClassifier` .
 """
 print(__doc__)
 
@@ -38,5 +38,5 @@ plt.plot(xx, modified_huber_loss(xx, 1), color='darkorchid', lw=lw,
 plt.ylim((0, 8))
 plt.legend(loc="upper right")
 plt.xlabel(r"Decision function $f(x)$")
-plt.ylabel("$L(y, f(x))$")
+plt.ylabel("$L(y=1, f(x))$")
 plt.show()

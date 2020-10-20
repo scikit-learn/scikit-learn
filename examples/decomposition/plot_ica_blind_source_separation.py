@@ -21,7 +21,7 @@ from scipy import signal
 
 from sklearn.decomposition import FastICA, PCA
 
-###############################################################################
+# #############################################################################
 # Generate sample data
 np.random.seed(0)
 n_samples = 2000
@@ -51,7 +51,7 @@ assert np.allclose(X, np.dot(S_, A_.T) + ica.mean_)
 pca = PCA(n_components=3)
 H = pca.fit_transform(X)  # Reconstruct signals based on orthogonal components
 
-###############################################################################
+# #############################################################################
 # Plot results
 
 plt.figure()
@@ -69,5 +69,5 @@ for ii, (model, name) in enumerate(zip(models, names), 1):
     for sig, color in zip(model.T, colors):
         plt.plot(sig, color=color)
 
-plt.subplots_adjust(0.09, 0.04, 0.94, 0.94, 0.26, 0.46)
+plt.tight_layout()
 plt.show()

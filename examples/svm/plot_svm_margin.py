@@ -47,10 +47,12 @@ for name, penalty in (('unreg', 1), ('reg', 0.05)):
     yy = a * xx - (clf.intercept_[0]) / w[1]
 
     # plot the parallels to the separating hyperplane that pass through the
-    # support vectors
+    # support vectors (margin away from hyperplane in direction
+    # perpendicular to hyperplane). This is sqrt(1+a^2) away vertically in
+    # 2-d.
     margin = 1 / np.sqrt(np.sum(clf.coef_ ** 2))
-    yy_down = yy + a * margin
-    yy_up = yy - a * margin
+    yy_down = yy - np.sqrt(1 + a ** 2) * margin
+    yy_up = yy + np.sqrt(1 + a ** 2) * margin
 
     # plot the line, the points, and the nearest vectors to the plane
     plt.figure(fignum, figsize=(4, 3))
@@ -60,8 +62,9 @@ for name, penalty in (('unreg', 1), ('reg', 0.05)):
     plt.plot(xx, yy_up, 'k--')
 
     plt.scatter(clf.support_vectors_[:, 0], clf.support_vectors_[:, 1], s=80,
-                facecolors='none', zorder=10)
-    plt.scatter(X[:, 0], X[:, 1], c=Y, zorder=10, cmap=plt.cm.Paired)
+                facecolors='none', zorder=10, edgecolors='k')
+    plt.scatter(X[:, 0], X[:, 1], c=Y, zorder=10, cmap=plt.cm.Paired,
+                edgecolors='k')
 
     plt.axis('tight')
     x_min = -4.8

@@ -37,7 +37,7 @@ import matplotlib.pyplot as plt
 
 from sklearn.decomposition import PCA, FastICA
 
-###############################################################################
+# #############################################################################
 # Generate sample data
 rng = np.random.RandomState(42)
 S = rng.standard_t(1.5, size=(20000, 2))
@@ -57,7 +57,7 @@ S_ica_ = ica.fit(X).transform(X)  # Estimate the sources
 S_ica_ /= S_ica_.std(axis=0)
 
 
-###############################################################################
+# #############################################################################
 # Plot results
 
 def plot_samples(S, axis_list=None):
@@ -70,8 +70,8 @@ def plot_samples(S, axis_list=None):
             x_axis, y_axis = axis
             # Trick to get legend to work
             plt.plot(0.1 * x_axis, 0.1 * y_axis, linewidth=2, color=color)
-            plt.quiver(0, 0, x_axis, y_axis, zorder=11, width=0.01, scale=6,
-                       color=color)
+            plt.quiver((0, 0), (0, 0), x_axis, y_axis, zorder=11, width=0.01,
+                       scale=6, color=color)
 
     plt.hlines(0, -3, 3)
     plt.vlines(0, -3, 3)

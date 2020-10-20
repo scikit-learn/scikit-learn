@@ -10,30 +10,36 @@ with matplotlib.
 This allows the scaling of the algorithm with the problem size to be
 visualized and understood.
 """
-from __future__ import print_function
-
 import numpy as np
 import gc
 from datetime import datetime
 from sklearn.isotonic import isotonic_regression
-from sklearn.utils.bench import total_seconds
+from scipy.special import expit
 import matplotlib.pyplot as plt
 import argparse
 
 
 def generate_perturbed_logarithm_dataset(size):
-    return np.random.randint(-50, 50, size=n) \
-        + 50. * np.log(1 + np.arange(n))
+    return (np.random.randint(-50, 50, size=size) +
+            50. * np.log(1 + np.arange(size)))
 
 
 def generate_logistic_dataset(size):
     X = np.sort(np.random.normal(size=size))
-    return np.random.random(size=size) < 1.0 / (1.0 + np.exp(-X))
+    return np.random.random(size=size) < expit(X)
+
+
+def generate_pathological_dataset(size):
+    # Triggers O(n^2) complexity on the original implementation.
+    return np.r_[np.arange(size),
+                 np.arange(-(size - 1), size),
+                 np.arange(-(size - 1), 1)]
 
 
 DATASET_GENERATORS = {
     'perturbed_logarithm': generate_perturbed_logarithm_dataset,
-    'logistic': generate_logistic_dataset
+    'logistic': generate_logistic_dataset,
+    'pathological': generate_pathological_dataset,
 }
 
 
@@ -46,13 +52,14 @@ def bench_isotonic_regression(Y):
 
     tstart = datetime.now()
     isotonic_regression(Y)
-    delta = datetime.now() - tstart
-    return total_seconds(delta)
+    return (datetime.now() - tstart).total_seconds()
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description="Isotonic Regression benchmark tool")
+    parser.add_argument('--seed', type=int,
+                        help="RNG seed")
     parser.add_argument('--iterations', type=int, required=True,
                         help="Number of iterations to average timings over "
                         "for each problem size")
@@ -66,6 +73,8 @@ if __name__ == '__main__':
                         required=True)
 
     args = parser.parse_args()
+
+    np.random.seed(args.seed)
 
     timings = []
     for exponent in range(args.log_min_problem_size,

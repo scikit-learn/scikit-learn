@@ -35,7 +35,7 @@ X = rng.uniform(0, 5, 20)[:, np.newaxis]
 y = 0.5 * np.sin(3 * X[:, 0]) + rng.normal(0, 0.5, X.shape[0])
 
 # First run
-plt.figure(0)
+plt.figure()
 kernel = 1.0 * RBF(length_scale=100.0, length_scale_bounds=(1e-2, 1e3)) \
     + WhiteKernel(noise_level=1, noise_level_bounds=(1e-10, 1e+1))
 gp = GaussianProcessRegressor(kernel=kernel,
@@ -47,14 +47,14 @@ plt.fill_between(X_, y_mean - np.sqrt(np.diag(y_cov)),
                  y_mean + np.sqrt(np.diag(y_cov)),
                  alpha=0.5, color='k')
 plt.plot(X_, 0.5*np.sin(3*X_), 'r', lw=3, zorder=9)
-plt.scatter(X[:, 0], y, c='r', s=50, zorder=10)
+plt.scatter(X[:, 0], y, c='r', s=50, zorder=10, edgecolors=(0, 0, 0))
 plt.title("Initial: %s\nOptimum: %s\nLog-Marginal-Likelihood: %s"
           % (kernel, gp.kernel_,
              gp.log_marginal_likelihood(gp.kernel_.theta)))
 plt.tight_layout()
 
 # Second run
-plt.figure(1)
+plt.figure()
 kernel = 1.0 * RBF(length_scale=1.0, length_scale_bounds=(1e-2, 1e3)) \
     + WhiteKernel(noise_level=1e-5, noise_level_bounds=(1e-10, 1e+1))
 gp = GaussianProcessRegressor(kernel=kernel,
@@ -66,14 +66,14 @@ plt.fill_between(X_, y_mean - np.sqrt(np.diag(y_cov)),
                  y_mean + np.sqrt(np.diag(y_cov)),
                  alpha=0.5, color='k')
 plt.plot(X_, 0.5*np.sin(3*X_), 'r', lw=3, zorder=9)
-plt.scatter(X[:, 0], y, c='r', s=50, zorder=10)
+plt.scatter(X[:, 0], y, c='r', s=50, zorder=10, edgecolors=(0, 0, 0))
 plt.title("Initial: %s\nOptimum: %s\nLog-Marginal-Likelihood: %s"
           % (kernel, gp.kernel_,
              gp.log_marginal_likelihood(gp.kernel_.theta)))
 plt.tight_layout()
 
 # Plot LML landscape
-plt.figure(2)
+plt.figure()
 theta0 = np.logspace(-2, 3, 49)
 theta1 = np.logspace(-2, 0, 50)
 Theta0, Theta1 = np.meshgrid(theta0, theta1)
@@ -83,9 +83,9 @@ LML = np.array(LML).T
 
 vmin, vmax = (-LML).min(), (-LML).max()
 vmax = 50
+level = np.around(np.logspace(np.log10(vmin), np.log10(vmax), 50), decimals=1)
 plt.contour(Theta0, Theta1, -LML,
-            levels=np.logspace(np.log10(vmin), np.log10(vmax), 50),
-            norm=LogNorm(vmin=vmin, vmax=vmax))
+            levels=level, norm=LogNorm(vmin=vmin, vmax=vmax))
 plt.colorbar()
 plt.xscale("log")
 plt.yscale("log")

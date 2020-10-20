@@ -5,7 +5,7 @@ Sparse coding with a precomputed dictionary
 
 Transform a signal as a sparse combination of Ricker wavelets. This example
 visually compares different sparse coding methods using the
-:class:`sklearn.decomposition.SparseCoder` estimator. The Ricker (also known
+:class:`~sklearn.decomposition.SparseCoder` estimator. The Ricker (also known
 as Mexican hat or the second derivative of a Gaussian) is not a particularly
 good kernel to represent piecewise constant signals like this one. It can
 therefore be seen how much adding different widths of atoms matters and it
@@ -17,17 +17,18 @@ is performed in order to stay on the same order of magnitude.
 print(__doc__)
 
 import numpy as np
-import matplotlib.pylab as plt
+import matplotlib.pyplot as plt
 
 from sklearn.decomposition import SparseCoder
+from sklearn.utils.fixes import np_version, parse_version
 
 
 def ricker_function(resolution, center, width):
     """Discrete sub-sampled Ricker (Mexican hat) wavelet"""
     x = np.linspace(0, resolution - 1, resolution)
-    x = ((2 / ((np.sqrt(3 * width) * np.pi ** 1 / 4)))
-         * (1 - ((x - center) ** 2 / width ** 2))
-         * np.exp((-(x - center) ** 2) / (2 * width ** 2)))
+    x = ((2 / (np.sqrt(3 * width) * np.pi ** .25))
+         * (1 - (x - center) ** 2 / width ** 2)
+         * np.exp(-(x - center) ** 2 / (2 * width ** 2)))
     return x
 
 
@@ -44,13 +45,13 @@ def ricker_matrix(width, resolution, n_components):
 resolution = 1024
 subsampling = 3  # subsampling factor
 width = 100
-n_components = resolution / subsampling
+n_components = resolution // subsampling
 
 # Compute a wavelet dictionary
 D_fixed = ricker_matrix(width=width, resolution=resolution,
                         n_components=n_components)
 D_multi = np.r_[tuple(ricker_matrix(width=w, resolution=resolution,
-                                    n_components=np.floor(n_components / 5))
+                      n_components=n_components // 5)
                 for w in (10, 50, 100, 500, 1000))]
 
 # Generate a signal
@@ -60,10 +61,13 @@ y[first_quarter] = 3.
 y[np.logical_not(first_quarter)] = -1.
 
 # List the different sparse coding methods in the following format:
-# (title, transform_algorithm, transform_alpha, transform_n_nozero_coefs)
+# (title, transform_algorithm, transform_alpha,
+#  transform_n_nozero_coefs, color)
 estimators = [('OMP', 'omp', None, 15, 'navy'),
-              ('Lasso', 'lasso_cd', 2, None, 'turquoise'), ]
+              ('Lasso', 'lasso_lars', 2, None, 'turquoise'), ]
 lw = 2
+# Avoid FutureWarning about default value change when numpy >= 1.14
+lstsq_rcond = None if np_version >= parse_version('1.14') else -1
 
 plt.figure(figsize=(13, 6))
 for subplot, (D, title) in enumerate(zip((D_fixed, D_multi),
@@ -88,7 +92,7 @@ for subplot, (D, title) in enumerate(zip((D_fixed, D_multi),
                         transform_alpha=20)
     x = coder.transform(y.reshape(1, -1))
     _, idx = np.where(x != 0)
-    x[0, idx], _, _, _ = np.linalg.lstsq(D[idx, :].T, y)
+    x[0, idx], _, _, _ = np.linalg.lstsq(D[idx, :].T, y, rcond=lstsq_rcond)
     x = np.ravel(np.dot(x, D))
     squared_error = np.sum((y - x) ** 2)
     plt.plot(x, color='darkorange', lw=lw,

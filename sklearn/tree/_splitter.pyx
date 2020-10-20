@@ -13,7 +13,7 @@
 #          Fares Hedayati <fares.hedayati@gmail.com>
 #          Jacob Schreiber <jmschreiber91@gmail.com>
 #
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 from ._criterion cimport Criterion
 
@@ -60,27 +60,27 @@ cdef class Splitter:
 
     def __cinit__(self, Criterion criterion, SIZE_t max_features,
                   SIZE_t min_samples_leaf, double min_weight_leaf,
-                  object random_state, bint presort):
+                  object random_state):
         """
         Parameters
         ----------
-        criterion: Criterion
+        criterion : Criterion
             The criterion to measure the quality of a split.
 
-        max_features: SIZE_t
+        max_features : SIZE_t
             The maximal number of randomly selected features which can be
             considered for a split.
 
-        min_samples_leaf: SIZE_t
+        min_samples_leaf : SIZE_t
             The minimal number of samples each leaf can have, where splits
             which would result in having less samples in a leaf are not
             considered.
 
-        min_weight_leaf: double
+        min_weight_leaf : double
             The minimal weight each leaf can have, where the weight is the sum
             of the weights of each sample in it.
 
-        random_state: object
+        random_state : object
             The user inputted random state to be used for pseudo-randomness
         """
 
@@ -92,15 +92,12 @@ cdef class Splitter:
         self.n_features = 0
         self.feature_values = NULL
 
-        self.y = NULL
-        self.y_stride = 0
         self.sample_weight = NULL
 
         self.max_features = max_features
         self.min_samples_leaf = min_samples_leaf
         self.min_weight_leaf = min_weight_leaf
         self.random_state = random_state
-        self.presort = presort
 
     def __dealloc__(self):
         """Destructor."""
@@ -116,24 +113,26 @@ cdef class Splitter:
     def __setstate__(self, d):
         pass
 
-    cdef void init(self,
+    cdef int init(self,
                    object X,
-                   np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
-                   DOUBLE_t* sample_weight,
-                   np.ndarray X_idx_sorted=None) except *:
+                   const DOUBLE_t[:, ::1] y,
+                   DOUBLE_t* sample_weight) except -1:
         """Initialize the splitter.
 
         Take in the input data X, the target Y, and optional sample weights.
 
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
+        or 0 otherwise.
+
         Parameters
         ----------
-        X: object
+        X : object
             This contains the inputs. Usually it is a 2d numpy array.
 
-        y: numpy.ndarray, dtype=DOUBLE_t
+        y : ndarray, dtype=DOUBLE_t
             This is the vector of targets, or true labels, for the samples
 
-        sample_weight: numpy.ndarray, dtype=DOUBLE_t (optional)
+        sample_weight : DOUBLE_t*
             The weights of the samples, where higher weighted samples are fit
             closer than lower weight samples. If not provided, all samples
             are assumed to have uniform weight.
@@ -176,22 +175,25 @@ cdef class Splitter:
         safe_realloc(&self.feature_values, n_samples)
         safe_realloc(&self.constant_features, n_features)
 
-        self.y = <DOUBLE_t*> y.data
-        self.y_stride = <SIZE_t> y.strides[0] / <SIZE_t> y.itemsize
+        self.y = y
 
         self.sample_weight = sample_weight
+        return 0
 
-    cdef void node_reset(self, SIZE_t start, SIZE_t end,
-                         double* weighted_n_node_samples) nogil:
+    cdef int node_reset(self, SIZE_t start, SIZE_t end,
+                        double* weighted_n_node_samples) nogil except -1:
         """Reset splitter on node samples[start:end].
+
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
+        or 0 otherwise.
 
         Parameters
         ----------
-        start: SIZE_t
+        start : SIZE_t
             The index of the first sample to consider
-        end: SIZE_t
+        end : SIZE_t
             The index of the last sample to consider
-        weighted_n_node_samples: numpy.ndarray, dtype=double pointer
+        weighted_n_node_samples : ndarray, dtype=double pointer
             The total weight of those samples
         """
 
@@ -199,7 +201,6 @@ cdef class Splitter:
         self.end = end
 
         self.criterion.init(self.y,
-                            self.y_stride,
                             self.sample_weight,
                             self.weighted_n_samples,
                             self.samples,
@@ -207,13 +208,16 @@ cdef class Splitter:
                             end)
 
         weighted_n_node_samples[0] = self.criterion.weighted_n_node_samples
+        return 0
 
-    cdef void node_split(self, double impurity, SplitRecord* split,
-                         SIZE_t* n_constant_features) nogil:
+    cdef int node_split(self, double impurity, SplitRecord* split,
+                        SIZE_t* n_constant_features) nogil except -1:
         """Find the best split on node samples[start:end].
 
         This is a placeholder method. The majority of computation will be done
         here.
+
+        It should return -1 upon errors.
         """
 
         pass
@@ -230,59 +234,25 @@ cdef class Splitter:
 
 
 cdef class BaseDenseSplitter(Splitter):
-    cdef DTYPE_t* X
-    cdef SIZE_t X_sample_stride
-    cdef SIZE_t X_feature_stride
+    cdef const DTYPE_t[:, :] X
 
-    cdef np.ndarray X_idx_sorted
-    cdef INT32_t* X_idx_sorted_ptr
-    cdef SIZE_t X_idx_sorted_stride
     cdef SIZE_t n_total_samples
-    cdef SIZE_t* sample_mask
 
-    def __cinit__(self, Criterion criterion, SIZE_t max_features,
-                  SIZE_t min_samples_leaf, double min_weight_leaf,
-                  object random_state, bint presort):
+    cdef int init(self,
+                  object X,
+                  const DOUBLE_t[:, ::1] y,
+                  DOUBLE_t* sample_weight) except -1:
+        """Initialize the splitter
 
-        self.X = NULL
-        self.X_sample_stride = 0
-        self.X_feature_stride = 0
-        self.X_idx_sorted_ptr = NULL
-        self.X_idx_sorted_stride = 0
-        self.sample_mask = NULL
-        self.presort = presort
-
-    def __dealloc__(self):
-        """Destructor."""
-        if self.presort == 1:
-            free(self.sample_mask)
-
-    cdef void init(self,
-                   object X,
-                   np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
-                   DOUBLE_t* sample_weight,
-                   np.ndarray X_idx_sorted=None) except *:
-        """Initialize the splitter."""
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
+        or 0 otherwise.
+        """
 
         # Call parent init
         Splitter.init(self, X, y, sample_weight)
 
-        # Initialize X
-        cdef np.ndarray X_ndarray = X
-
-        self.X = <DTYPE_t*> X_ndarray.data
-        self.X_sample_stride = <SIZE_t> X.strides[0] / <SIZE_t> X.itemsize
-        self.X_feature_stride = <SIZE_t> X.strides[1] / <SIZE_t> X.itemsize
-
-        if self.presort == 1:
-            self.X_idx_sorted = X_idx_sorted
-            self.X_idx_sorted_ptr = <INT32_t*> self.X_idx_sorted.data
-            self.X_idx_sorted_stride = (<SIZE_t> self.X_idx_sorted.strides[1] /
-                                        <SIZE_t> self.X_idx_sorted.itemsize)
-
-            self.n_total_samples = X.shape[0]
-            safe_realloc(&self.sample_mask, self.n_total_samples)
-            memset(self.sample_mask, 0, self.n_total_samples*sizeof(SIZE_t))
+        self.X = X
+        return 0
 
 
 cdef class BestSplitter(BaseDenseSplitter):
@@ -292,12 +262,15 @@ cdef class BestSplitter(BaseDenseSplitter):
                                self.max_features,
                                self.min_samples_leaf,
                                self.min_weight_leaf,
-                               self.random_state,
-                               self.presort), self.__getstate__())
+                               self.random_state), self.__getstate__())
 
-    cdef void node_split(self, double impurity, SplitRecord* split,
-                         SIZE_t* n_constant_features) nogil:
-        """Find the best split on node samples[start:end]."""
+    cdef int node_split(self, double impurity, SplitRecord* split,
+                        SIZE_t* n_constant_features) nogil except -1:
+        """Find the best split on node samples[start:end]
+
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
+        or 0 otherwise.
+        """
         # Find the best split
         cdef SIZE_t* samples = self.samples
         cdef SIZE_t start = self.start
@@ -307,17 +280,11 @@ cdef class BestSplitter(BaseDenseSplitter):
         cdef SIZE_t* constant_features = self.constant_features
         cdef SIZE_t n_features = self.n_features
 
-        cdef DTYPE_t* X = self.X
         cdef DTYPE_t* Xf = self.feature_values
-        cdef SIZE_t X_sample_stride = self.X_sample_stride
-        cdef SIZE_t X_feature_stride = self.X_feature_stride
         cdef SIZE_t max_features = self.max_features
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef double min_weight_leaf = self.min_weight_leaf
         cdef UINT32_t* random_state = &self.rand_r_state
-
-        cdef INT32_t* X_idx_sorted = self.X_idx_sorted_ptr
-        cdef SIZE_t* sample_mask = self.sample_mask
 
         cdef SplitRecord best, current
         cdef double current_proxy_improvement = -INFINITY
@@ -325,7 +292,6 @@ cdef class BestSplitter(BaseDenseSplitter):
 
         cdef SIZE_t f_i = n_features
         cdef SIZE_t f_j
-        cdef SIZE_t tmp
         cdef SIZE_t p
         cdef SIZE_t feature_idx_offset
         cdef SIZE_t feature_offset
@@ -344,10 +310,6 @@ cdef class BestSplitter(BaseDenseSplitter):
         cdef SIZE_t partition_end
 
         _init_split(&best, end)
-
-        if self.presort == 1:
-            for p in range(start, end):
-                sample_mask[samples[p]] = 1
 
         # Sample up to max_features without replacement using a
         # Fisher-Yates-based algorithm (using the local variables `f_i` and
@@ -383,9 +345,7 @@ cdef class BestSplitter(BaseDenseSplitter):
 
             if f_j < n_known_constants:
                 # f_j in the interval [n_drawn_constants, n_known_constants[
-                tmp = features[f_j]
-                features[f_j] = features[n_drawn_constants]
-                features[n_drawn_constants] = tmp
+                features[n_drawn_constants], features[f_j] = features[f_j], features[n_drawn_constants]
 
                 n_drawn_constants += 1
 
@@ -394,31 +354,18 @@ cdef class BestSplitter(BaseDenseSplitter):
                 f_j += n_found_constants
                 # f_j in the interval [n_total_constants, f_i[
                 current.feature = features[f_j]
-                feature_offset = self.X_feature_stride * current.feature
 
-                # Sort samples along that feature; either by utilizing
-                # presorting, or by copying the values into an array and
+                # Sort samples along that feature; by
+                # copying the values into an array and
                 # sorting the array in a manner which utilizes the cache more
                 # effectively.
-                if self.presort == 1:
-                    p = start
-                    feature_idx_offset = self.X_idx_sorted_stride * current.feature
+                for i in range(start, end):
+                    Xf[i] = self.X[samples[i], current.feature]
 
-                    for i in range(self.n_total_samples): 
-                        j = X_idx_sorted[i + feature_idx_offset]
-                        if sample_mask[j] == 1:
-                            samples[p] = j
-                            Xf[p] = X[self.X_sample_stride * j + feature_offset]
-                            p += 1
-                else:
-                    for i in range(start, end):
-                        Xf[i] = X[self.X_sample_stride * samples[i] + feature_offset]
-
-                    sort(Xf + start, samples + start, end - start)
+                sort(Xf + start, samples + start, end - start)
 
                 if Xf[end - 1] <= Xf[start] + FEATURE_THRESHOLD:
-                    features[f_j] = features[n_total_constants]
-                    features[n_total_constants] = current.feature
+                    features[f_j], features[n_total_constants] = features[n_total_constants], features[f_j]
 
                     n_found_constants += 1
                     n_total_constants += 1
@@ -461,40 +408,36 @@ cdef class BestSplitter(BaseDenseSplitter):
 
                             if current_proxy_improvement > best_proxy_improvement:
                                 best_proxy_improvement = current_proxy_improvement
-                                current.threshold = (Xf[p - 1] + Xf[p]) / 2.0
+                                # sum of halves is used to avoid infinite value
+                                current.threshold = Xf[p - 1] / 2.0 + Xf[p] / 2.0
 
-                                if current.threshold == Xf[p]:
+                                if ((current.threshold == Xf[p]) or
+                                    (current.threshold == INFINITY) or
+                                    (current.threshold == -INFINITY)):
                                     current.threshold = Xf[p - 1]
 
                                 best = current  # copy
 
         # Reorganize into samples[start:best.pos] + samples[best.pos:end]
         if best.pos < end:
-            feature_offset = X_feature_stride * best.feature
             partition_end = end
             p = start
 
             while p < partition_end:
-                if X[X_sample_stride * samples[p] + feature_offset] <= best.threshold:
+                if self.X[samples[p], best.feature] <= best.threshold:
                     p += 1
 
                 else:
                     partition_end -= 1
 
-                    tmp = samples[partition_end]
-                    samples[partition_end] = samples[p]
-                    samples[p] = tmp
+                    samples[p], samples[partition_end] = samples[partition_end], samples[p]
 
             self.criterion.reset()
             self.criterion.update(best.pos)
-            best.improvement = self.criterion.impurity_improvement(impurity)
             self.criterion.children_impurity(&best.impurity_left,
                                              &best.impurity_right)
-
-        # Reset sample mask
-        if self.presort == 1:
-            for p in range(start, end):
-                sample_mask[samples[p]] = 0
+            best.improvement = self.criterion.impurity_improvement(
+                impurity, best.impurity_left, best.impurity_right)
 
         # Respect invariant for constant features: the original order of
         # element in features[:n_known_constants] must be preserved for sibling
@@ -509,16 +452,20 @@ cdef class BestSplitter(BaseDenseSplitter):
         # Return values
         split[0] = best
         n_constant_features[0] = n_total_constants
+        return 0
 
 
 # Sort n-element arrays pointed to by Xf and samples, simultaneously,
 # by the values in Xf. Algorithm: Introsort (Musser, SP&E, 1997).
 cdef inline void sort(DTYPE_t* Xf, SIZE_t* samples, SIZE_t n) nogil:
+    if n == 0:
+      return
     cdef int maxd = 2 * <int>log(n)
     introsort(Xf, samples, n, maxd)
 
 
-cdef inline void swap(DTYPE_t* Xf, SIZE_t* samples, SIZE_t i, SIZE_t j) nogil:
+cdef inline void swap(DTYPE_t* Xf, SIZE_t* samples,
+        SIZE_t i, SIZE_t j) nogil:
     # Helper for sort
     Xf[i], Xf[j] = Xf[j], Xf[i]
     samples[i], samples[j] = samples[j], samples[i]
@@ -546,7 +493,8 @@ cdef inline DTYPE_t median3(DTYPE_t* Xf, SIZE_t n) nogil:
 
 # Introsort with median of 3 pivot selection and 3-way partition function
 # (robust to repeated elements, e.g. lots of zero features).
-cdef void introsort(DTYPE_t* Xf, SIZE_t *samples, SIZE_t n, int maxd) nogil:
+cdef void introsort(DTYPE_t* Xf, SIZE_t *samples,
+                    SIZE_t n, int maxd) nogil:
     cdef DTYPE_t pivot
     cdef SIZE_t i, l, r
 
@@ -628,12 +576,15 @@ cdef class RandomSplitter(BaseDenseSplitter):
                                  self.max_features,
                                  self.min_samples_leaf,
                                  self.min_weight_leaf,
-                                 self.random_state,
-                                 self.presort), self.__getstate__())
+                                 self.random_state), self.__getstate__())
 
-    cdef void node_split(self, double impurity, SplitRecord* split,
-                         SIZE_t* n_constant_features) nogil:
-        """Find the best random split on node samples[start:end]."""
+    cdef int node_split(self, double impurity, SplitRecord* split,
+                        SIZE_t* n_constant_features) nogil except -1:
+        """Find the best random split on node samples[start:end]
+
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
+        or 0 otherwise.
+        """
         # Draw random splits and pick the best
         cdef SIZE_t* samples = self.samples
         cdef SIZE_t start = self.start
@@ -643,10 +594,7 @@ cdef class RandomSplitter(BaseDenseSplitter):
         cdef SIZE_t* constant_features = self.constant_features
         cdef SIZE_t n_features = self.n_features
 
-        cdef DTYPE_t* X = self.X
         cdef DTYPE_t* Xf = self.feature_values
-        cdef SIZE_t X_sample_stride = self.X_sample_stride
-        cdef SIZE_t X_feature_stride = self.X_feature_stride
         cdef SIZE_t max_features = self.max_features
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef double min_weight_leaf = self.min_weight_leaf
@@ -659,7 +607,7 @@ cdef class RandomSplitter(BaseDenseSplitter):
         cdef SIZE_t f_i = n_features
         cdef SIZE_t f_j
         cdef SIZE_t p
-        cdef SIZE_t tmp
+        cdef SIZE_t partition_end
         cdef SIZE_t feature_stride
         # Number of features discovered to be constant during the split search
         cdef SIZE_t n_found_constants = 0
@@ -672,7 +620,6 @@ cdef class RandomSplitter(BaseDenseSplitter):
         cdef DTYPE_t min_feature_value
         cdef DTYPE_t max_feature_value
         cdef DTYPE_t current_feature_value
-        cdef SIZE_t partition_end
 
         _init_split(&best, end)
 
@@ -709,10 +656,7 @@ cdef class RandomSplitter(BaseDenseSplitter):
 
             if f_j < n_known_constants:
                 # f_j in the interval [n_drawn_constants, n_known_constants[
-                tmp = features[f_j]
-                features[f_j] = features[n_drawn_constants]
-                features[n_drawn_constants] = tmp
-
+                features[n_drawn_constants], features[f_j] = features[f_j], features[n_drawn_constants]
                 n_drawn_constants += 1
 
             else:
@@ -721,15 +665,14 @@ cdef class RandomSplitter(BaseDenseSplitter):
                 # f_j in the interval [n_total_constants, f_i[
 
                 current.feature = features[f_j]
-                feature_stride = X_feature_stride * current.feature
 
                 # Find min, max
-                min_feature_value = X[X_sample_stride * samples[start] + feature_stride]
+                min_feature_value = self.X[samples[start], current.feature]
                 max_feature_value = min_feature_value
                 Xf[start] = min_feature_value
 
                 for p in range(start + 1, end):
-                    current_feature_value = X[X_sample_stride * samples[p] + feature_stride]
+                    current_feature_value = self.X[samples[p], current.feature]
                     Xf[p] = current_feature_value
 
                     if current_feature_value < min_feature_value:
@@ -738,8 +681,7 @@ cdef class RandomSplitter(BaseDenseSplitter):
                         max_feature_value = current_feature_value
 
                 if max_feature_value <= min_feature_value + FEATURE_THRESHOLD:
-                    features[f_j] = features[n_total_constants]
-                    features[n_total_constants] = current.feature
+                    features[f_j], features[n_total_constants] = features[n_total_constants], current.feature
 
                     n_found_constants += 1
                     n_total_constants += 1
@@ -757,21 +699,15 @@ cdef class RandomSplitter(BaseDenseSplitter):
                         current.threshold = min_feature_value
 
                     # Partition
-                    partition_end = end
-                    p = start
+                    p, partition_end = start, end
                     while p < partition_end:
-                        current_feature_value = Xf[p]
-                        if current_feature_value <= current.threshold:
+                        if Xf[p] <= current.threshold:
                             p += 1
                         else:
                             partition_end -= 1
 
-                            Xf[p] = Xf[partition_end]
-                            Xf[partition_end] = current_feature_value
-
-                            tmp = samples[partition_end]
-                            samples[partition_end] = samples[p]
-                            samples[p] = tmp
+                            Xf[p], Xf[partition_end] = Xf[partition_end], Xf[p]
+                            samples[p], samples[partition_end] = samples[partition_end], samples[p]
 
                     current.pos = partition_end
 
@@ -796,29 +732,24 @@ cdef class RandomSplitter(BaseDenseSplitter):
                         best = current  # copy
 
         # Reorganize into samples[start:best.pos] + samples[best.pos:end]
-        feature_stride = X_feature_stride * best.feature
         if best.pos < end:
             if current.feature != best.feature:
-                partition_end = end
-                p = start
+                p, partition_end = start, end
 
                 while p < partition_end:
-                    if X[X_sample_stride * samples[p] + feature_stride] <= best.threshold:
+                    if self.X[samples[p], best.feature] <= best.threshold:
                         p += 1
-
                     else:
                         partition_end -= 1
 
-                        tmp = samples[partition_end]
-                        samples[partition_end] = samples[p]
-                        samples[p] = tmp
-
+                        samples[p], samples[partition_end] = samples[partition_end], samples[p]
 
             self.criterion.reset()
             self.criterion.update(best.pos)
-            best.improvement = self.criterion.impurity_improvement(impurity)
             self.criterion.children_impurity(&best.impurity_left,
                                              &best.impurity_right)
+            best.improvement = self.criterion.impurity_improvement(
+                impurity, best.impurity_left, best.impurity_right)
 
         # Respect invariant for constant features: the original order of
         # element in features[:n_known_constants] must be preserved for sibling
@@ -833,6 +764,7 @@ cdef class RandomSplitter(BaseDenseSplitter):
         # Return values
         split[0] = best
         n_constant_features[0] = n_total_constants
+        return 0
 
 
 cdef class BaseSparseSplitter(Splitter):
@@ -848,7 +780,7 @@ cdef class BaseSparseSplitter(Splitter):
 
     def __cinit__(self, Criterion criterion, SIZE_t max_features,
                   SIZE_t min_samples_leaf, double min_weight_leaf,
-                  object random_state, bint presort):
+                  object random_state):
         # Parent __cinit__ is automatically called
 
         self.X_data = NULL
@@ -865,13 +797,15 @@ cdef class BaseSparseSplitter(Splitter):
         free(self.index_to_samples)
         free(self.sorted_samples)
 
-    cdef void init(self,
-                   object X,
-                   np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
-                   DOUBLE_t* sample_weight,
-                   np.ndarray X_idx_sorted=None) except *:
-        """Initialize the splitter."""
+    cdef int init(self,
+                  object X,
+                  const DOUBLE_t[:, ::1] y,
+                  DOUBLE_t* sample_weight) except -1:
+        """Initialize the splitter
 
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
+        or 0 otherwise.
+        """
         # Call parent init
         Splitter.init(self, X, y, sample_weight)
 
@@ -903,15 +837,15 @@ cdef class BaseSparseSplitter(Splitter):
 
         for p in range(n_samples):
             index_to_samples[samples[p]] = p
+        return 0
 
     cdef inline SIZE_t _partition(self, double threshold,
                                   SIZE_t end_negative, SIZE_t start_positive,
                                   SIZE_t zero_pos) nogil:
         """Partition samples[start:end] based on threshold."""
 
-        cdef double value
-        cdef SIZE_t partition_end
         cdef SIZE_t p
+        cdef SIZE_t partition_end
 
         cdef DTYPE_t* Xf = self.feature_values
         cdef SIZE_t* samples = self.samples
@@ -928,16 +862,13 @@ cdef class BaseSparseSplitter(Splitter):
             return zero_pos
 
         while p < partition_end:
-            value = Xf[p]
-
-            if value <= threshold:
+            if Xf[p] <= threshold:
                 p += 1
 
             else:
                 partition_end -= 1
 
-                Xf[p] = Xf[partition_end]
-                Xf[partition_end] = value
+                Xf[p], Xf[partition_end] = Xf[partition_end], Xf[p]
                 sparse_swap(index_to_samples, samples, p, partition_end)
 
         return partition_end
@@ -1148,7 +1079,7 @@ cdef inline void extract_nnz_binary_search(INT32_t* X_indices,
 
 
 cdef inline void sparse_swap(SIZE_t* index_to_samples, SIZE_t* samples,
-                             SIZE_t pos_1, SIZE_t pos_2) nogil  :
+                             SIZE_t pos_1, SIZE_t pos_2) nogil:
     """Swap sample pos_1 and pos_2 preserving sparse invariant."""
     samples[pos_1], samples[pos_2] =  samples[pos_2], samples[pos_1]
     index_to_samples[samples[pos_1]] = pos_1
@@ -1163,13 +1094,14 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                                      self.max_features,
                                      self.min_samples_leaf,
                                      self.min_weight_leaf,
-                                     self.random_state,
-                                     self.presort), self.__getstate__())
+                                     self.random_state), self.__getstate__())
 
-    cdef void node_split(self, double impurity, SplitRecord* split,
-                         SIZE_t* n_constant_features) nogil:
-        """Find the best split on node samples[start:end], using sparse
-           features.
+    cdef int node_split(self, double impurity, SplitRecord* split,
+                        SIZE_t* n_constant_features) nogil except -1:
+        """Find the best split on node samples[start:end], using sparse features
+
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
+        or 0 otherwise.
         """
         # Find the best split
         cdef SIZE_t* samples = self.samples
@@ -1198,7 +1130,7 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
         cdef double best_proxy_improvement = - INFINITY
 
         cdef SIZE_t f_i = n_features
-        cdef SIZE_t f_j, p, tmp
+        cdef SIZE_t f_j, p
         cdef SIZE_t n_visited_features = 0
         # Number of features discovered to be constant during the split search
         cdef SIZE_t n_found_constants = 0
@@ -1214,7 +1146,7 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
         cdef bint is_samples_sorted = 0  # indicate is sorted_samples is
                                          # inititialized
 
-        # We assume implicitely that end_positive = end and
+        # We assume implicitly that end_positive = end and
         # start_negative = start
         cdef SIZE_t start_positive
         cdef SIZE_t end_negative
@@ -1253,9 +1185,7 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
 
             if f_j < n_known_constants:
                 # f_j in the interval [n_drawn_constants, n_known_constants[
-                tmp = features[f_j]
-                features[f_j] = features[n_drawn_constants]
-                features[n_drawn_constants] = tmp
+                features[f_j], features[n_drawn_constants] = features[n_drawn_constants], features[f_j]
 
                 n_drawn_constants += 1
 
@@ -1290,8 +1220,7 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                         end_negative += 1
 
                 if Xf[end - 1] <= Xf[start] + FEATURE_THRESHOLD:
-                    features[f_j] = features[n_total_constants]
-                    features[n_total_constants] = current.feature
+                    features[f_j], features[n_total_constants] = features[n_total_constants], features[f_j]
 
                     n_found_constants += 1
                     n_total_constants += 1
@@ -1346,9 +1275,12 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
 
                             if current_proxy_improvement > best_proxy_improvement:
                                 best_proxy_improvement = current_proxy_improvement
+                                # sum of halves used to avoid infinite values
+                                current.threshold = Xf[p_prev] / 2.0 + Xf[p] / 2.0
 
-                                current.threshold = (Xf[p_prev] + Xf[p]) / 2.0
-                                if current.threshold == Xf[p]:
+                                if ((current.threshold == Xf[p]) or
+                                    (current.threshold == INFINITY) or
+                                    (current.threshold == -INFINITY)):
                                     current.threshold = Xf[p_prev]
 
                                 best = current
@@ -1363,9 +1295,10 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
 
             self.criterion.reset()
             self.criterion.update(best.pos)
-            best.improvement = self.criterion.impurity_improvement(impurity)
             self.criterion.children_impurity(&best.impurity_left,
                                              &best.impurity_right)
+            best.improvement = self.criterion.impurity_improvement(
+                impurity, best.impurity_left, best.impurity_right)
 
         # Respect invariant for constant features: the original order of
         # element in features[:n_known_constants] must be preserved for sibling
@@ -1380,6 +1313,7 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
         # Return values
         split[0] = best
         n_constant_features[0] = n_total_constants
+        return 0
 
 
 cdef class RandomSparseSplitter(BaseSparseSplitter):
@@ -1390,13 +1324,14 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
                                        self.max_features,
                                        self.min_samples_leaf,
                                        self.min_weight_leaf,
-                                       self.random_state,
-                                       self.presort), self.__getstate__())
+                                       self.random_state), self.__getstate__())
 
-    cdef void node_split(self, double impurity, SplitRecord* split,
-                         SIZE_t* n_constant_features) nogil:
-        """Find a random split on node samples[start:end], using sparse
-           features.
+    cdef int node_split(self, double impurity, SplitRecord* split,
+                        SIZE_t* n_constant_features) nogil except -1:
+        """Find a random split on node samples[start:end], using sparse features
+
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
+        or 0 otherwise.
         """
         # Find the best split
         cdef SIZE_t* samples = self.samples
@@ -1427,7 +1362,7 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
         cdef DTYPE_t current_feature_value
 
         cdef SIZE_t f_i = n_features
-        cdef SIZE_t f_j, p, tmp
+        cdef SIZE_t f_j, p
         cdef SIZE_t n_visited_features = 0
         # Number of features discovered to be constant during the split search
         cdef SIZE_t n_found_constants = 0
@@ -1444,7 +1379,7 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
         cdef bint is_samples_sorted = 0  # indicate that sorted_samples is
                                          # inititialized
 
-        # We assume implicitely that end_positive = end and
+        # We assume implicitly that end_positive = end and
         # start_negative = start
         cdef SIZE_t start_positive
         cdef SIZE_t end_negative
@@ -1483,9 +1418,7 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
 
             if f_j < n_known_constants:
                 # f_j in the interval [n_drawn_constants, n_known_constants[
-                tmp = features[f_j]
-                features[f_j] = features[n_drawn_constants]
-                features[n_drawn_constants] = tmp
+                features[f_j], features[n_drawn_constants] = features[n_drawn_constants], features[f_j]
 
                 n_drawn_constants += 1
 
@@ -1574,10 +1507,10 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
 
                     if current_proxy_improvement > best_proxy_improvement:
                         best_proxy_improvement = current_proxy_improvement
-                        current.improvement = self.criterion.impurity_improvement(impurity)
-
                         self.criterion.children_impurity(&current.impurity_left,
                                                          &current.impurity_right)
+                        current.improvement = self.criterion.impurity_improvement(
+                            impurity, current.impurity_left, current.impurity_right)
                         best = current
 
         # Reorganize into samples[start:best.pos] + samples[best.pos:end]
@@ -1591,9 +1524,10 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
 
             self.criterion.reset()
             self.criterion.update(best.pos)
-            best.improvement = self.criterion.impurity_improvement(impurity)
             self.criterion.children_impurity(&best.impurity_left,
                                              &best.impurity_right)
+            best.improvement = self.criterion.impurity_improvement(
+                impurity, best.impurity_left, best.impurity_right)
 
         # Respect invariant for constant features: the original order of
         # element in features[:n_known_constants] must be preserved for sibling
@@ -1608,3 +1542,4 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
         # Return values
         split[0] = best
         n_constant_features[0] = n_total_constants
+        return 0

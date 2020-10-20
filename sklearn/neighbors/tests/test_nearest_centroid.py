@@ -5,11 +5,10 @@ Testing for the nearest centroid module.
 import numpy as np
 from scipy import sparse as sp
 from numpy.testing import assert_array_equal
-from numpy.testing import assert_equal
 
 from sklearn.neighbors import NearestCentroid
 from sklearn import datasets
-from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.utils._testing import assert_raises
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -56,10 +55,9 @@ def test_classification_toy():
 
 
 def test_precomputed():
-    clf = NearestCentroid(metric="precomputed")
-    clf.fit(X, y)
-    S = pairwise_distances(T, clf.centroids_)
-    assert_array_equal(clf.predict(S), true_result)
+    clf = NearestCentroid(metric='precomputed')
+    with assert_raises(ValueError):
+        clf.fit(X, y)
 
 
 def test_iris():
@@ -91,11 +89,25 @@ def test_pickle():
     s = pickle.dumps(obj)
 
     obj2 = pickle.loads(s)
-    assert_equal(type(obj2), obj.__class__)
+    assert type(obj2) == obj.__class__
     score2 = obj2.score(iris.data, iris.target)
     assert_array_equal(score, score2,
                        "Failed to generate same score"
                        " after pickling (classification).")
+
+
+def test_shrinkage_correct():
+    # Ensure that the shrinking is correct.
+    # The expected result is calculated by R (pamr),
+    # which is implemented by the author of the original paper.
+    # (One need to modify the code to output the new centroid in pamr.predict)
+
+    X = np.array([[0, 1], [1, 0], [1, 1], [2, 0], [6, 8]])
+    y = np.array([1, 1, 2, 2, 2])
+    clf = NearestCentroid(shrink_threshold=0.1)
+    clf.fit(X, y)
+    expected_result = np.array([[0.7787310, 0.8545292], [2.814179, 2.763647]])
+    np.testing.assert_array_almost_equal(clf.centroids_, expected_result)
 
 
 def test_shrinkage_threshold_decoded_y():
@@ -134,3 +146,17 @@ def test_manhattan_metric():
     clf.fit(X_csr, y)
     assert_array_equal(clf.centroids_, dense_centroid)
     assert_array_equal(dense_centroid, [[-1, -1], [1, 1]])
+
+
+def test_features_zero_var():
+    # Test that features with 0 variance throw error
+
+    X = np.empty((10, 2))
+    X[:, 0] = -0.13725701
+    X[:, 1] = -0.9853293
+    y = np.zeros((10))
+    y[0] = 1
+
+    clf = NearestCentroid(shrink_threshold=0.1)
+    with assert_raises(ValueError):
+        clf.fit(X, y)

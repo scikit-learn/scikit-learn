@@ -6,27 +6,28 @@ Covariance estimation is closely related to the theory of Gaussian Graphical
 Models.
 """
 
-from .empirical_covariance_ import empirical_covariance, EmpiricalCovariance, \
-    log_likelihood
-from .shrunk_covariance_ import shrunk_covariance, ShrunkCovariance, \
-    ledoit_wolf, ledoit_wolf_shrinkage, \
-    LedoitWolf, oas, OAS
-from .robust_covariance import fast_mcd, MinCovDet
-from .graph_lasso_ import graph_lasso, GraphLasso, GraphLassoCV
-from .outlier_detection import EllipticEnvelope
+from ._empirical_covariance import (empirical_covariance,
+                                    EmpiricalCovariance,
+                                    log_likelihood)
+from ._shrunk_covariance import (shrunk_covariance, ShrunkCovariance,
+                                  ledoit_wolf, ledoit_wolf_shrinkage,
+                                  LedoitWolf, oas, OAS)
+from ._robust_covariance import fast_mcd, MinCovDet
+from ._graph_lasso import graphical_lasso, GraphicalLasso, GraphicalLassoCV
+from ._elliptic_envelope import EllipticEnvelope
 
 
 __all__ = ['EllipticEnvelope',
            'EmpiricalCovariance',
-           'GraphLasso',
-           'GraphLassoCV',
+           'GraphicalLasso',
+           'GraphicalLassoCV',
            'LedoitWolf',
            'MinCovDet',
            'OAS',
            'ShrunkCovariance',
            'empirical_covariance',
            'fast_mcd',
-           'graph_lasso',
+           'graphical_lasso',
            'ledoit_wolf',
            'ledoit_wolf_shrinkage',
            'log_likelihood',

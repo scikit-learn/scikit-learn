@@ -4,7 +4,7 @@ Gradient Boosting regularization
 ================================
 
 Illustration of the effect of different regularization strategies
-for Gradient Boosting. The example is taken from Hastie et al 2009.
+for Gradient Boosting. The example is taken from Hastie et al 2009 [1]_.
 
 The loss function used is binomial deviance. Regularization via
 shrinkage (``learning_rate < 1.0``) improves performance considerably.

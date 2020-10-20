@@ -12,7 +12,7 @@ list of multi-dimensional observations. We say that the first axis of
 these arrays is the **samples** axis, while the second is the
 **features** axis.
 
-.. topic:: A simple example shipped with the scikit: iris dataset
+.. topic:: A simple example shipped with scikit-learn: iris dataset
 
     ::
 
@@ -29,12 +29,7 @@ these arrays is the **samples** axis, while the second is the
 When the data is not initially in the ``(n_samples, n_features)`` shape, it
 needs to be preprocessed in order to be used by scikit-learn.
 
-.. topic:: An example of reshaping data would be the digits dataset 
-
-    .. image:: ../../auto_examples/datasets/images/plot_digits_last_image_001.png
-        :target: ../../auto_examples/datasets/plot_digits_last_image.html
-        :align: right
-        :scale: 60
+.. topic:: An example of reshaping data would be the digits dataset
 
     The digits dataset is made of 1797 8x8 images of hand-written
     digits ::
@@ -42,15 +37,21 @@ needs to be preprocessed in order to be used by scikit-learn.
         >>> digits = datasets.load_digits()
         >>> digits.images.shape
         (1797, 8, 8)
-        >>> import pylab as pl #doctest: +SKIP
-        >>> pl.imshow(digits.images[-1], cmap=pl.cm.gray_r) #doctest: +SKIP
+        >>> import matplotlib.pyplot as plt #doctest: +SKIP
+        >>> plt.imshow(digits.images[-1],
+        ...            cmap=plt.cm.gray_r) #doctest: +SKIP
         <matplotlib.image.AxesImage object at ...>
+    
+    .. image:: /auto_examples/datasets/images/sphx_glr_plot_digits_last_image_001.png
+        :target: ../../auto_examples/datasets/plot_digits_last_image.html
+        :align: center
 
-    To use this dataset with the scikit, we transform each 8x8 image into a
+    To use this dataset with scikit-learn, we transform each 8x8 image into a
     feature vector of length 64 ::
 
-        >>> data = digits.images.reshape((digits.images.shape[0], -1))
-
+        >>> data = digits.images.reshape(
+        ...     (digits.images.shape[0], -1)
+        ... )
 
 Estimators objects
 ===================
@@ -89,4 +90,3 @@ parameters are attributes of the estimator object ending by an
 underscore::
 
     >>> estimator.estimated_param_ #doctest: +SKIP
-
