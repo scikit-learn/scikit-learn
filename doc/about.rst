@@ -538,9 +538,11 @@ budget of the project [#f1]_.
 
 .. raw :: html
 
-    </br></br>
-    <a class="btn btn-warning btn-big sk-donate-btn mb-1" href="https://numfocus.org/donate-to-scikit-learn">Help us, <strong>donate!</strong></a>
-    </br>
+   </br></br>
+   <div style="text-align: center;">
+   <a class="btn btn-warning btn-big sk-donate-btn mb-1" href="https://numfocus.org/donate-to-scikit-learn">Help us, <strong>donate!</strong></a>
+   </div>
+   </br>
 
 .. rubric:: Notes
 
