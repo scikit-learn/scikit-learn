@@ -123,7 +123,7 @@ class KNeighborsClassifier(KNeighborsMixin,
     >>> print(neigh.predict_proba([[0.9]]))
     [[0.66666667 0.33333333]]
 
-    See also
+    See Also
     --------
     RadiusNeighborsClassifier
     KNeighborsRegressor
@@ -356,7 +356,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin,
     classes_ : ndarray of shape (n_classes,)
         Class labels known to the classifier.
 
-    effective_metric_ : str or callble
+    effective_metric_ : str or callable
         The distance metric used. It will be same as the `metric` parameter
         or a synonym of it, e.g. 'euclidean' if the `metric` parameter set to
         'minkowski' and `p` parameter set to 2.
@@ -391,7 +391,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin,
     >>> print(neigh.predict_proba([[1.0]]))
     [[0.66666667 0.33333333]]
 
-    See also
+    See Also
     --------
     KNeighborsClassifier
     RadiusNeighborsRegressor

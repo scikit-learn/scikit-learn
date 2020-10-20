@@ -794,3 +794,20 @@ def test_staged_predict(HistGradientBoosting, X, y):
 
             assert_allclose(staged_predictions, pred_aux)
             assert staged_predictions.shape == pred_aux.shape
+
+
+@pytest.mark.parametrize('Est', (HistGradientBoostingClassifier,
+                                 HistGradientBoostingRegressor))
+def test_uint8_predict(Est):
+    # Non regression test for
+    # https://github.com/scikit-learn/scikit-learn/issues/18408
+    # Make sure X can be of dtype uint8 (i.e. X_BINNED_DTYPE) in predict. It
+    # will be converted to X_DTYPE.
+
+    rng = np.random.RandomState(0)
+
+    X = rng.randint(0, 100, size=(10, 2)).astype(np.uint8)
+    y = rng.randint(0, 2, size=10).astype(np.uint8)
+    est = Est()
+    est.fit(X, y)
+    est.predict(X)

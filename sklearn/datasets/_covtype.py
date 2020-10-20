@@ -86,7 +86,7 @@ def fetch_covtype(*, data_home=None, download_if_missing=True,
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for dataset shuffling. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -114,9 +114,9 @@ def fetch_covtype(*, data_home=None, download_if_missing=True,
     dataset : :class:`~sklearn.utils.Bunch`
         Dictionary-like object, with the following attributes.
 
-        data : numpy array of shape (581012, 54)
+        data : ndarray of shape (581012, 54)
             Each row corresponds to the 54 features in the dataset.
-        target : numpy array of shape (581012,)
+        target : ndarray of shape (581012,)
             Each value corresponds to one of
             the 7 forest covertypes with values
             ranging between 1 to 7.
@@ -125,9 +125,9 @@ def fetch_covtype(*, data_home=None, download_if_missing=True,
         DESCR : str
             Description of the forest covertype dataset.
         feature_names : list
-            The names of the dataset columns
+            The names of the dataset columns.
         target_names: list
-            The names of the target columns
+            The names of the target columns.
 
     (data, target) : tuple if ``return_X_y`` is True
 
