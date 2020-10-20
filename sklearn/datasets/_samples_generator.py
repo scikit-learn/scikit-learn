@@ -133,7 +133,6 @@ def make_classification(n_samples=100, n_features=20, *, n_informative=2,
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-
     Returns
     -------
     X : ndarray of shape (n_samples, n_features)
@@ -560,6 +559,12 @@ def make_regression(n_samples=100, n_features=100, *, n_informative=10,
     coef : ndarray of shape (n_features,) or (n_features, n_targets)
         The coefficient of the underlying linear model. It is returned only if
         coef is True.
+    
+    df : pandas DataFrame including features and target.
+    
+    data : pandas DataFrame of features.
+
+    target : pandas DataFrame of target.
     """
     n_informative = min(n_features, n_informative)
     generator = check_random_state(random_state)
@@ -600,10 +605,7 @@ def make_regression(n_samples=100, n_features=100, *, n_informative=10,
 
     y = np.squeeze(y)
 
-    if coef and not as_frame:
-        return X, y, np.squeeze(ground_truth)
-
-    elif as_frame and not coef:
+    if as_frame:
         feature_names = [f'feat_{fn}' for fn in range(n_features)]
         target_columns = [f'target_{tc}' for tc in range(n_targets)]
         df, data, target = _convert_data_dataframe('make_classification',
@@ -611,20 +613,15 @@ def make_regression(n_samples=100, n_features=100, *, n_informative=10,
                                                    y,
                                                    feature_names,
                                                    target_columns)
-        return df, data, target
-
-    elif coef and as_frame:
-        feature_names = [f'feat_{fn}' for fn in range(n_features)]
-        target_columns = [f'target_{tc}' for tc in range(n_targets)]
-        df, data, target = _convert_data_dataframe('make_classification',
-                                                   X,
-                                                   y,
-                                                   feature_names,
-                                                   target_columns)
-        return df, data, target, np.squeeze(ground_truth)
-
+        if coef:
+            return df, data, target, np.squeeze(ground_truth)
+        else:
+            return df, data, target            
     else:
-        return X, y
+        if coef:
+            return X, y, np.squeeze(ground_truth)
+        else:
+            return X, y
 
 
 @_deprecate_positional_args

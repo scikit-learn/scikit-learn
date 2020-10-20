@@ -243,7 +243,6 @@ def test_make_hastie_10_2():
 
 def test_make_regression():
     pd = pytest.importorskip('pandas')
-    np = pytest.importorskip('numpy')
     X, y, c = make_regression(n_samples=100, n_features=10, n_informative=3,
                               effective_rank=5, coef=True, bias=0.0,
                               noise=1.0, random_state=0)
