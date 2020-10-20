@@ -563,11 +563,9 @@ budget of the project [#f1]_.
 Infrastructure support
 ----------------------
 
-- We would like to thank `Rackspace <https://www.rackspace.com>`_ for providing
-  us with a free `Rackspace Cloud <https://www.rackspace.com/cloud/>`_ account
-  to automatically build the documentation and the example gallery from for the
-  development version of scikit-learn using `this tool
-  <https://github.com/scikit-learn/sklearn-docbuilder>`_.
+- We would like to thank `Anaconda <https://www.anaconda.com>`_ for providing
+  us with a free `Anaconda Cloud <https://www.anaconda.org/>`_ account
+  to upload our staging and nightly builds.
 
 - We would also like to thank `Microsoft Azure
   <https://azure.microsoft.com/en-us/>`_, `Travis Cl <https://travis-ci.org/>`_,
