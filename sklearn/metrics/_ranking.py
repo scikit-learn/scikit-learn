@@ -204,12 +204,6 @@ def average_precision_score(y_true, y_score, *, average="macro", pos_label=1,
     ... ])
     >>> average_precision_score(y_true, y_scores)
     0.77...
-
-    Notes
-    -----
-    .. versionchanged:: 0.19
-      Instead of linearly interpolating between operating points, precisions
-      are weighted by the change in recall since the last operating point.
     """
     def _binary_uninterpolated_average_precision(
             y_true, y_score, pos_label=1, sample_weight=None):
