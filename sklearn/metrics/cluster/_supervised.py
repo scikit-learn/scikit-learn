@@ -749,7 +749,8 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     Returns
     -------
     mi : float
-       Mutual information, a non-negative value, measured in nats using the natural logarithm
+       Mutual information, a non-negative value, measured in nats using the
+       natural logarithm
 
     Notes
     -----
@@ -960,7 +961,7 @@ def normalized_mutual_info_score(labels_true, labels_pred, *,
     Returns
     -------
     nmi : float
-       score between 0.0 and 1.0 in normalized nats (based on the natural 
+       score between 0.0 and 1.0 in normalized nats (based on the natural
        logarithm). 1.0 stands for perfectly complete labeling.
 
     See Also
