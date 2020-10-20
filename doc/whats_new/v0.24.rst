@@ -165,10 +165,6 @@ Changelog
   changed from False to 'auto'.
   :pr:`17610` by :user:`Jiaxiang <fujiaxiang>`.
 
-- |Feature| :func:`datasets.fetch_openml` now validates md5checksum of arff
-  files downloaded or cached to ensure data integrity.
-  :pr:`14800` by :user:`Shashank Singh <shashanksingh28>` and `Joel Nothman`_.
-
 :mod:`sklearn.decomposition`
 ............................
 
