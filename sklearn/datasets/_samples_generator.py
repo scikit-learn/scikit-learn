@@ -559,9 +559,9 @@ def make_regression(n_samples=100, n_features=100, *, n_informative=10,
     coef : ndarray of shape (n_features,) or (n_features, n_targets)
         The coefficient of the underlying linear model. It is returned only if
         coef is True.
-    
+
     df : pandas DataFrame including features and target.
-    
+
     data : pandas DataFrame of features.
 
     target : pandas DataFrame of target.
@@ -616,7 +616,7 @@ def make_regression(n_samples=100, n_features=100, *, n_informative=10,
         if coef:
             return df, data, target, np.squeeze(ground_truth)
         else:
-            return df, data, target            
+            return df, data, target
     else:
         if coef:
             return X, y, np.squeeze(ground_truth)
