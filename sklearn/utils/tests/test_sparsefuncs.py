@@ -180,14 +180,12 @@ def test_incr_mean_variance_axis_dim_mismatch():
 
     # test ValueError if axis=1 and last_mean.size == n_features
     with pytest.raises(ValueError):
-        mean1, var1, _ = incr_mean_variance_axis(X, axis=1, **kwargs)
-        assert_array_almost_equal(np.mean(X.toarray(), axis=1), mean1)
-        assert_array_almost_equal(np.var(X.toarray(), axis=1), var1)
+        incr_mean_variance_axis(X, axis=1, **kwargs)
 
     # test inconsistent shapes of last_mean, last_var, last_n
     kwargs = dict(last_mean=last_mean[:-1], last_var=last_var, last_n=last_n)
     with pytest.raises(ValueError):
-        mean0, var0, _ = incr_mean_variance_axis(X, axis=0, **kwargs)
+        incr_mean_variance_axis(X, axis=0, **kwargs)
 
 
 @pytest.mark.parametrize(
