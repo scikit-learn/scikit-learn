@@ -864,12 +864,15 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
         return X
 
-    def _check_mkl_vcomp(self, n_samples):
+    def _check_mkl_vcomp(self, X, n_samples):
         """Warns when vcomp and mkl are both present"""
         # The BLAS call inside a prange in lloyd_iter_chunked_dense is known to
         # cause a small memory leak when there are less chunks than the number
         # of available threads. It only happens when the OpenMP library is
         # vcomp (microsoft OpenMP) and the BLAS library is MKL.
+        if sp.issparse(X):
+            return
+
         active_threads = int(np.ceil(n_samples / 256))
         if active_threads < self._n_threads:
             modules = threadpool_info()
@@ -1004,8 +1007,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
         if self._algorithm == "full":
             kmeans_single = _kmeans_single_lloyd
-            if not sp.issparse(X):
-                self._check_mkl_vcomp(X.shape[0])
+            self._check_mkl_vcomp(X, X.shape[0])
         else:
             kmeans_single = _kmeans_single_elkan
 
@@ -1689,7 +1691,7 @@ class MiniBatchKMeans(KMeans):
         n_batches = int(np.ceil(float(n_samples) / self.batch_size))
         n_iter = int(self.max_iter * n_batches)
 
-        self._check_mkl_vcomp(self.batch_size)
+        self._check_mkl_vcomp(X, self.batch_size)
 
         validation_indices = random_state.randint(0, n_samples,
                                                   self._init_size)
@@ -1853,7 +1855,7 @@ class MiniBatchKMeans(KMeans):
                 init = check_array(init, dtype=X.dtype, copy=True, order='C')
                 self._validate_center_shape(X, init)
 
-            self._check_mkl_vcomp(self.batch_size)
+            self._check_mkl_vcomp(X, X.shape[0])
 
             # initialize the cluster centers
             self.cluster_centers_ = self._init_centroids(
