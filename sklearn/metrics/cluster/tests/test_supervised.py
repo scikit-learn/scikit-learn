@@ -22,7 +22,7 @@ from sklearn.utils import assert_all_finite
 from sklearn.utils._testing import (
     assert_almost_equal, ignore_warnings)
 from numpy.testing import (
-    assert_array_equal, assert_array_almost_equal)
+    assert_array_equal, assert_array_almost_equal, assert_allclose)
 
 
 score_funcs = [
@@ -381,57 +381,76 @@ def test_check_clustering_error():
         check_clusterings(wavelength, noise)
 
 
-def test_pair_confusion_matrix():
-    n = 10
-    N = n * n
-
+def test_pair_confusion_matrix_fully_dispersed():
     # edge case: every element is its own cluster
+    N = 100
     clustering1 = list(range(N))
     clustering2 = clustering1
     expected = np.array([[N * (N - 1), 0], [0, 0]])
-    assert_array_equal(expected, pair_confusion_matrix(clustering1,
-                                                       clustering2))
+    assert_array_equal(
+        pair_confusion_matrix(clustering1, clustering2), expected
+    )
 
+
+def test_pair_confusion_matrix_single_cluster():
     # edge case: only one cluster
-    clustering1 = np.full((N,), fill_value=0)
+    N = 100
+    clustering1 = np.zeros((N,))
     clustering2 = clustering1
     expected = np.array([[0, 0], [0, N * (N - 1)]])
-    assert_array_equal(expected, pair_confusion_matrix(clustering1,
-                                                       clustering2))
+    assert_array_equal(
+        pair_confusion_matrix(clustering1, clustering2), expected
+    )
 
+
+def test_pair_confusion_matrix():
     # regular case: different non-trivial clusterings
-    clustering1 = np.array([i+1 for i in range(n) for j in range(n)])
-    clustering2 = np.array([i+1 for i in range(n) for j in range(n+1)][:N])
+    n = 10
+    N = n ** 2
+    clustering1 = np.hstack([[i + 1] * n for i in range(n)])
+    clustering2 = np.hstack([[i + 1] * (n + 1) for i in range(n)])[:N]
     # basic quadratic implementation
-    expected = np.full(shape=(2, 2), fill_value=0, dtype=np.int64)
+    expected = np.zeros(shape=(2, 2), dtype=np.int64)
     for i in range(len(clustering1)):
         for j in range(len(clustering2)):
             if i != j:
                 same_cluster_1 = int(clustering1[i] == clustering1[j])
                 same_cluster_2 = int(clustering2[i] == clustering2[j])
                 expected[same_cluster_1, same_cluster_2] += 1
-    assert_array_equal(expected, pair_confusion_matrix(clustering1,
-                                                       clustering2))
+    assert_array_equal(
+        pair_confusion_matrix(clustering1, clustering2), expected
+    )
+
+
+@pytest.mark.parametrize(
+    "clustering1, clustering2",
+    [(list(range(100)), list(range(100))),
+     (np.zeros((100,)), np.zeros((100,))]
+)
+def test_rand_score_edge_cases(clustering1, clustering2):
+    # edge case 1: every element is its own cluster
+    # edge case 2: only one cluster
+    assert_allclose(rand_score(clustering1, clustering2), 1.)
+
+
+def test_rand_score_fully_dispersed():
+    # edge case: every element is its own cluster
+    N = 100
+    clustering1 = list(range(N))
+    clustering2 = clustering1
+    expected = 1.
+    assert_allclose(rand_score(clustering1, clustering2), expected)
+
+
+def test_rand_score_single_cluster():
+    N = 100
+    clustering1 = np.zeros((N,))
+    clustering2 = clustering1
+    expected = 1.
+    assert_allclose(rand_score(clustering1, clustering2), expected)
 
 
 def test_rand_score():
-    n = 10
-    N = n * n
-
-    # edge case: every element is its own cluster
-    clustering1 = list(range(N))
-    clustering2 = clustering1
-    expected = np.array([1.])
-    assert_array_almost_equal(expected, rand_score(clustering1,
-                                                   clustering2))
-
-    # edge case: only one cluster
-    clustering1 = np.full((N,), fill_value=0)
-    clustering2 = clustering1
-    expected = np.array([1.])
-    assert_array_almost_equal(expected, rand_score(clustering1,
-                                                   clustering2))
-
     # regular case: different non-trivial clusterings
     clustering1 = [0, 0, 0, 1, 1, 1]
     clustering2 = [0, 1, 0, 1, 2, 2]
@@ -443,6 +462,5 @@ def test_rand_score():
     # rand score
     expected_numerator = D00 + D11
     expected_denominator = D00 + D01 + D10 + D11
-    expected_score = expected_numerator / expected_denominator
-    assert_array_almost_equal(expected_score, rand_score(clustering1,
-                                                         clustering2))
+    expected = float(expected_numerator) / expected_denominator
+    assert_allclose(rand_score(clustering1, clustering2), expected)

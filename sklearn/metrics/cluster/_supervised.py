@@ -108,7 +108,7 @@ def contingency_matrix(labels_true, labels_pred, *, eps=None, sparse=False,
 
         .. versionadded:: 0.18
 
-    dtype : numeric data type, default=np.int.
+    dtype : numeric type, default=np.int.
         See the notes on ``eps`` below.
 
         .. versionadded:: 0.24
@@ -154,7 +154,7 @@ def contingency_matrix(labels_true, labels_pred, *, eps=None, sparse=False,
 def pair_confusion_matrix(labels_true, labels_pred):
     """Pair confusion matrix arising from two clusterings.
 
-    The pair confusion matrix :math:`C` computes a 2x2 similarity matrix
+    The pair confusion matrix :math:`C` computes a 2 by 2 similarity matrix
     between two clusterings by considering all pairs of samples and counting
     pairs that are assigned into the same or into different clusters under
     the true and predicted clusterings.
@@ -168,15 +168,22 @@ def pair_confusion_matrix(labels_true, labels_pred):
 
     Parameters
     ----------
-    labels_true : int array, shape = [n_samples]
-        Ground truth class labels to be used as a reference
+    labels_true : array-like of shape (n_samples,), dtype=integral
+        Ground truth class labels to be used as a reference.
 
-    labels_pred : int array, shape = [n_samples]
-        Cluster labels to evaluate
+    labels_pred : array-like of shape (n_samples,), dtype=integral
+        Cluster labels to evaluate.
 
     Returns
     -------
-    C : array, shape(2, 2)
+    C : ndarray of shape (2, 2), dtype=np.int64
+        The contingency matrix.
+
+    See Also
+    --------
+    rand_score: Rand Score
+    adjusted_rand_score: Adjusted Rand Score
+    adjusted_mutual_info_score: Adjusted Mutual Information
 
     Examples
     --------
@@ -204,27 +211,23 @@ def pair_confusion_matrix(labels_true, labels_pred):
       Classification 1985
       https://link.springer.com/article/10.1007%2FBF01908075
 
-    See also
-    --------
-    rand_score: Rand Score
-    adjusted_rand_score: Adjusted Rand Score
-    adjusted_mutual_info_score: Adjusted Mutual Information
-
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     n_samples = np.int64(labels_true.shape[0])
 
     # Computation using the contingency data
-    contingency = contingency_matrix(labels_true, labels_pred, sparse=True,
-                                     dtype=np.int64)
+    contingency = contingency_matrix(
+        labels_true, labels_pred, sparse=True, dtype=np.int64
+    )
     n_c = np.ravel(contingency.sum(axis=1))
     n_k = np.ravel(contingency.sum(axis=0))
-    Sum_Squares = sum(n_ij*n_ij for n_ij in contingency.data)
-    C11 = Sum_Squares - n_samples
-    C01 = sum(contingency.dot(n_k)) - Sum_Squares
-    C10 = sum(contingency.transpose().dot(n_c)) - Sum_Squares
-    C00 = n_samples * n_samples - C01 - C10 - Sum_Squares
-    return np.array([[C00, C01], [C10, C11]])
+    sum_squares = (contingency.data ** 2).sum()
+    C = np.empty((2, 2), dtype=np.int64)
+    C[1, 1] = sum_squares - n_samples
+    C[0, 1] = contingency.dot(n_k).sum() - sum_squares
+    C[1, 0] = contingency.transpose().dot(n_c).sum() - sum_squares
+    C[0, 0] = n_samples ** 2  - C[0, 1] - C[1, 0] - sum_squares
+    return C
 
 
 def rand_score(labels_true, labels_pred):
@@ -243,17 +246,22 @@ def rand_score(labels_true, labels_pred):
 
     Parameters
     ----------
-    labels_true : int array, shape = [n_samples]
-        Ground truth class labels to be used as a reference
+    labels_true : array-like of shape (n_samples,), dtype=integral
+        Ground truth class labels to be used as a reference.
 
-    labels_pred : array, shape = [n_samples]
-        Cluster labels to evaluate
+    labels_pred : array-like of shape (n_samples,), dtype=integral
+        Cluster labels to evaluate.
 
     Returns
     -------
     RI : float
        Similarity score between 0.0 and 1.0, inclusive, 1.0 stands for
-       perfect match
+       perfect match.
+
+    See Also
+    --------
+    adjusted_rand_score: Adjusted Rand Score
+    adjusted_mutual_info_score: Adjusted Mutual Information
 
     Examples
     --------
@@ -264,7 +272,7 @@ def rand_score(labels_true, labels_pred):
       1.0
 
     Labelings that assign all classes members to the same clusters
-    are complete but may be not always pure, hence penalized:
+    are complete but may not always be pure, hence penalized:
 
       >>> rand_score([0, 0, 1, 2], [0, 0, 1, 1])
       0.83...
@@ -279,23 +287,18 @@ def rand_score(labels_true, labels_pred):
 
     .. https://en.wikipedia.org/wiki/Rand_index
 
-    See also
-    --------
-    adjusted_rand_score: Adjusted Rand Score
-    adjusted_mutual_info_score: Adjusted Mutual Information
-
     """
-    m = pair_confusion_matrix(labels_true, labels_pred)
-    m_diag = m[0][0] + m[1][1]
-    m_sum = m_diag + m[0][1] + m[1][0]
+    contingency = pair_confusion_matrix(labels_true, labels_pred)
+    numerator = contingency.diagonal().sum()
+    denominator = contingency.sum()
 
-    # Special limit cases: no clustering since the data is not split;
-    # or trivial clustering where each document is assigned a unique cluster.
-    # These are perfect matches hence return 1.0.
-    if m_diag == m_sum or m_sum == 0:
+    if numerator == denominator or denominator == 0:
+        # Special limit cases: no clustering since the data is not split;
+        # or trivial clustering where each document is assigned a unique
+        # cluster. These are perfect matches hence return 1.0.
         return 1.0
 
-    return float(m_diag) / m_sum
+    return float(numerator) / denominator
 
 
 def adjusted_rand_score(labels_true, labels_pred):
@@ -347,7 +350,7 @@ def adjusted_rand_score(labels_true, labels_pred):
       1.0
 
     Labelings that assign all classes members to the same clusters
-    are complete be not always pure, hence penalized::
+    are complete but may not always be pure, hence penalized::
 
       >>> adjusted_rand_score([0, 0, 1, 2], [0, 0, 1, 1])
       0.57...

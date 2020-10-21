@@ -1056,11 +1056,10 @@ the **similarity** of the two assignments, ignoring permutations:
   >>> from sklearn import metrics
   >>> labels_true = [0, 0, 0, 1, 1, 1]
   >>> labels_pred = [0, 0, 1, 1, 2, 2]
-
   >>> metrics.rand_score(labels_true, labels_pred)
   0.66...
 
-As with all clustering metrics one can permute 0 and 1 in the predicted
+As with all clustering metrics, one can permute 0 and 1 in the predicted
 labels, rename 2 to 3, and get the same score::
 
   >>> labels_pred = [1, 1, 0, 0, 3, 3]
@@ -1081,7 +1080,7 @@ Perfect labeling is scored 1.0::
   1.0
 
 Poorly agreeing labels (e.g. independent labelings) have lower scores
-but not necessarily close to zero (see also Adjusted Rand index)::
+but not necessarily close to zero (see also :ref:`adjusted_rand_score`)::
 
   >>> labels_true = [0, 0, 0, 0, 0, 0, 1, 1]
   >>> labels_pred = [0, 1, 2, 3, 4, 5, 5, 6]
@@ -1093,7 +1092,7 @@ Advantages
 ~~~~~~~~~~
 
 - **Interpretable**: The score is proportional to the number of sample
-  pairs whose labels are the same in both labels_pred and labels_true,
+  pairs whose labels are the same in both `labels_pred` and `labels_true`,
   or are different in both.
 
 - **Bounded range [0, 1]**: Lower values indicate different
@@ -1143,7 +1142,7 @@ in the dataset. It does not matter if the calculation is performed
 on ordered pairs or unordered pairs as long as the calculation is
 performed consistently.
 
-However the Rand index does not guarantee that random label assignments
+However, the Rand index does not guarantee that random label assignments
 will get a value close to zero (esp. if the number of clusters is in
 the same order of magnitude as the number of samples).
 
@@ -2010,7 +2009,7 @@ Drawbacks
 .. _pair_confusion_matrix:
 
 Pair Confusion Matrix
--------------------------
+---------------------
 
 The pair confusion matrix
 (:func:`sklearn.metrics.cluster.pair_confusion_matrix`) is a 2x2
@@ -2028,22 +2027,18 @@ under the true and predicted clusterings.
 
 It has the following entries:
 
-:math:`C_{00}`
-  number of pairs with both clusterings having the samples
+:math:`C_{00}` : number of pairs with both clusterings having the samples
   not clustered together
 
-:math:`C_{10}`
-  number of pairs with the true label clustering having the
-  samples clustered together but the other clustering not
-  having the samples clustered together
+:math:`C_{10}` : number of pairs with the true label clustering having the
+  samples clustered together but the other clustering not having the samples
+  clustered together
 
-:math:`C_{01}`
-  number of pairs with the true label clustering not having
-  the samples clustered together but the other clustering
-  having the samples clustered together
+:math:`C_{01}` : number of pairs with the true label clustering not having
+  the samples clustered together but the other clustering having the samples
+  clustered together
 
-:math:`C_{11}`
-  number of pairs with both clusterings having the samples
+:math:`C_{11}` : number of pairs with both clusterings having the samples
   clustered together
 
 Considering a pair of samples that is clustered together a positive pair,
@@ -2066,7 +2061,7 @@ diagonal regardless of actual label values::
           [0, 4]])
 
 Labelings that assign all classes members to the same clusters
-are complete but may be not always pure, hence penalized, and
+are complete but may not always be pure, hence penalized, and
 have some off-diagonal non-zero entries::
 
    >>> pair_confusion_matrix([0, 0, 1, 2], [0, 0, 1, 1])
@@ -2091,4 +2086,4 @@ diagonal entries::
 
  * L. Hubert and P. Arabie, Comparing Partitions, Journal of
    Classification 1985
-   https://link.springer.com/article/10.1007%2FBF01908075>
+   <https://link.springer.com/article/10.1007%2FBF01908075>_
