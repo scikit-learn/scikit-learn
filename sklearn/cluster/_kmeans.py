@@ -884,13 +884,14 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
                 if not hasattr(self, "batch_size"):  # KMeans
                     warnings.warn(
                         f"KMeans is known to have a memory leak on Windows "
-                        f"with MKL. You can avoid it by setting the "
-                        f"environment variable "
-                        f"OMP_NUM_THREADS={active_threads}")
+                        f"with MKL, when there are less chunks than available "
+                        f"threads. You can avoid it by setting the environment"
+                        f" variable OMP_NUM_THREADS={active_threads}.")
                 else:  # MiniBatchKMeans
                     warnings.warn(
                         f"MiniBatchKMeans is known to have a memory leak on "
-                        f"Windows with MKL. You can prevent it by setting "
+                        f"Windows with MKL, when there are less chunks than "
+                        f"available threads. You can prevent it by setting "
                         f"batch_size >= {self._n_threads * 256} or by setting "
                         f"the environment variable "
                         f"OMP_NUM_THREADS={active_threads}")
