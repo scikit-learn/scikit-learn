@@ -58,11 +58,10 @@ Changelog
   sparse matrix or dataframe at the start. :pr:`17546` by
   :user:`Lucy Liu <lucyleeow>`.
 
-- |Enhancement| Refactor :class:`calibration.CalibratedClassifierCV` so the
-  chaining of the classifier to its corresponding calibrator and fitting of
-  the calibrator is now separate. Also add `ensemble` parameter, which
-  implements calibration via an ensemble of calibrators (current method) or
-  just one calibrator using all the data (method implemented in
+- |Enhancement| Add `ensemble` parameter to
+  :class:`calibration.CalibratedClassifierCV`, which enables implementation
+  of calibration via an ensemble of calibrators (current method) or
+  just one calibrator using all the data (similar to the built-in feature of
   :mod:`sklearn.svm` estimators with the `probabilities=True` parameter).
   :pr:`17856` by :user:`Lucy Liu <lucyleeow>`.
 
