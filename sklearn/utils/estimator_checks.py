@@ -346,7 +346,7 @@ def _construct_instance(Estimator):
             if issubclass(Estimator, RegressorMixin):
                 estimator = Estimator(Ridge())
             else:
-                estimator = Estimator(LinearDiscriminantAnalysis())
+                estimator = Estimator(LogisticRegression(C=1))
         elif required_parameters in (['estimators'],):
             # Heterogeneous ensemble classes (i.e. stacking, voting)
             if issubclass(Estimator, RegressorMixin):
@@ -1479,7 +1479,14 @@ def check_estimators_dtypes(name, estimator_orig, strict_mode=True):
     X_train_64 = X_train_32.astype(np.float64)
     X_train_int_64 = X_train_32.astype(np.int64)
     X_train_int_32 = X_train_32.astype(np.int32)
-    y = X_train_int_64[:, 0]
+
+    # Approximately balanced binary classification problem related to the first
+    # feature of X. Using a binary classification problem is preferable to a
+    # multiclass problem because there are few samples in the dataset and some
+    # meta-estimators perform internal cross-validation which further reduces
+    # the size of the inner training sets which can become degenerate with very
+    # few samples per target class leading to hard to debug edge cases.
+    y = X_train_int_64[:, 0] >= np.median(X_train_int_64[:, 0])
     y = _enforce_estimator_tags_y(estimator_orig, y)
 
     methods = ["predict", "transform", "decision_function", "predict_proba"]
