@@ -869,7 +869,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         # The BLAS call inside a prange in lloyd_iter_chunked_dense is known to
         # cause a small memory leak when there are less chunks than the number
         # of available threads. It only happens when the OpenMP library is
-        # vcomp (microsoft OpenMP) and the BLAS library is MKL.
+        # vcomp (microsoft OpenMP) and the BLAS library is MKL. see #18653
         if sp.issparse(X):
             return
 
