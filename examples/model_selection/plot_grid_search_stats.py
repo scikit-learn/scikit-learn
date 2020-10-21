@@ -105,7 +105,7 @@ model_scores = results_df.filter(like='split')
 fig, ax = plt.subplots()
 sns.lineplot(
     data=model_scores.transpose().iloc[:30],
-    dashes='', palette='Set1', marker='o', alpha=.5, ax=ax
+    dashes=False, palette='Set1', marker='o', alpha=.5, ax=ax
 )
 ax.set_xlabel("CV test fold", size=12, labelpad=10)
 ax.set_ylabel("Model AUC", size=12)
