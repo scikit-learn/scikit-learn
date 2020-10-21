@@ -105,8 +105,7 @@ def test_incr_mean_variance_axis():
         # Test errors
         X = np.array(data_chunks[0])
         X = np.atleast_2d(X)
-        if axis == 1:
-            X = X.T
+        X = X.T if axis == 1 else X
         X_lil = sp.lil_matrix(X)
         X_csr = sp.csr_matrix(X_lil)
 
@@ -135,8 +134,7 @@ def test_incr_mean_variance_axis():
 
         # Test _incremental_mean_and_var with whole data
         X = np.vstack(data_chunks)
-        if axis == 1:
-            X = X.T
+        X = X.T if axis == 1 else X
         X_lil = sp.lil_matrix(X)
         X_csr = sp.csr_matrix(X_lil)
         X_csc = sp.csc_matrix(X_lil)
@@ -164,10 +162,17 @@ def test_incr_mean_variance_axis():
                 assert_array_equal(X.shape[axis], n_incr)
 
 
-def test_incr_mean_variance_axis_dim_mismatch():
+@pytest.mark.parametrize(
+    "sparse_constructor", [sp.csc_matrix, sp.csr_matrix]
+)
+def test_incr_mean_variance_axis_dim_mismatch(sparse_constructor):
+    """Check that we raise proper error when axis=1 and the dimension mismatch.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/pull/18655
+    """
     n_samples, n_features = 60, 4
     rng = np.random.RandomState(42)
-    X = sp.csc_matrix(rng.rand(n_samples, n_features))
+    X = sparse_constructor(rng.rand(n_samples, n_features))
 
     last_mean = np.zeros(n_features)
     last_var = np.zeros_like(last_mean)
@@ -175,8 +180,8 @@ def test_incr_mean_variance_axis_dim_mismatch():
 
     kwargs = dict(last_mean=last_mean, last_var=last_var, last_n=last_n)
     mean0, var0, _ = incr_mean_variance_axis(X, axis=0, **kwargs)
-    assert_array_almost_equal(np.mean(X.toarray(), axis=0), mean0)
-    assert_array_almost_equal(np.var(X.toarray(), axis=0), var0)
+    assert_allclose(np.mean(X.toarray(), axis=0), mean0)
+    assert_allclose(np.var(X.toarray(), axis=0), var0)
 
     # test ValueError if axis=1 and last_mean.size == n_features
     with pytest.raises(ValueError):

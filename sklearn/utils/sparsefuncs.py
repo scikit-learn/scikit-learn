@@ -117,32 +117,29 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n):
     axis : int (either 0 or 1)
         Axis along which the axis should be computed.
 
-    last_mean : ndarray, shape (n_features,) or (n_samples,)
+    last_mean : ndarray of shape (n_features,) or (n_samples,), dtype=floating
         Array of means to update with the new data X.
-        Should be of shape (n_features,) if axis=0 or
-        (n_samples,) if axis=1.
+        Should be of shape (n_features,) if axis=0 or (n_samples,) if axis=1.
 
-    last_var : ndarray, shape (n_features,) or (n_samples,)
+    last_var : ndarray of shape (n_features,) or (n_samples,), dtype=floating
         Array of variances to update with the new data X.
-        Should be of shape (n_features,) if axis=0 or
-        (n_samples,) if axis=1.
+        Should be of shape (n_features,) if axis=0 or (n_samples,) if axis=1.
 
-    last_n : ndarray, shape (n_features,) or (n_samples,)
+    last_n : ndarray of shape (n_features,) or (n_samples,), dtype=integral
         Sum of the weights seen so far, excluding the current weights
-        Should be of shape (n_samples,) if axis=0 or
-        (n_features,) if axis=1.
+        Should be of shape (n_samples,) if axis=0 or (n_features,) if axis=1.
 
     Returns
     -------
-    means : ndarray, shape (n_features,) or (n_samples,)
+    means : ndarray, shape (n_features,) or (n_samples,), dtype=floating
         Updated feature-wise means if axis = 0 or
         sample-wise means if axis = 1.
 
-    variances : ndarray, shape (n_features,) or (n_samples,)
+    variances : ndarray, shape (n_features,) or (n_samples,), dtype=floating
         Updated feature-wise variances if axis = 0 or
         sample-wise variances if axis = 1.
 
-    n : ndarray, shape (n_features,) or (n_samples,)
+    n : ndarray, shape (n_features,) or (n_samples,), dtype=integral
         Updated number of seen samples per feature if axis=0
         or number of seen features per sample if axis=1.
 
