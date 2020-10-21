@@ -252,6 +252,11 @@ Changelog
   values for one categorical feature. :pr:`17367` by :user:`Peng Yu <yupbank>`
   and :user:`Chiara Marmo <cmarmo>`.
 
+- |Fix| :class:`feature_extraction.CountVectorizer` raises an issue if a
+  custom token pattern which capture more than one group is provided.
+  :pr:`15427` by :user:`Gangesh Gudmalwar <ggangesh>` and
+  :user:`Erin R Hoffman <hoffm386>`.
+
 :mod:`sklearn.feature_selection`
 ................................
 

@@ -342,7 +342,10 @@ class _VectorizerMixin:
         token_pattern = re.compile(self.token_pattern)
 
         if token_pattern.groups > 1:
-            raise ValueError("more than 1 capturing group in token pattern")
+            raise ValueError(
+                "More than 1 capturing group in token pattern. Only a single "
+                "group should be captured."
+            )
 
         return token_pattern.findall
 
