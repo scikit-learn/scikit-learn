@@ -2027,18 +2027,18 @@ under the true and predicted clusterings.
 
 It has the following entries:
 
-:math:`C_{00}` : number of pairs with both clusterings having the samples
+  :math:`C_{00}` : number of pairs with both clusterings having the samples
   not clustered together
 
-:math:`C_{10}` : number of pairs with the true label clustering having the
+  :math:`C_{10}` : number of pairs with the true label clustering having the
   samples clustered together but the other clustering not having the samples
   clustered together
 
-:math:`C_{01}` : number of pairs with the true label clustering not having
+  :math:`C_{01}` : number of pairs with the true label clustering not having
   the samples clustered together but the other clustering having the samples
   clustered together
 
-:math:`C_{11}` : number of pairs with both clusterings having the samples
+  :math:`C_{11}` : number of pairs with both clusterings having the samples
   clustered together
 
 Considering a pair of samples that is clustered together a positive pair,
