@@ -39,7 +39,9 @@ def test_confusion_matrix_display_validation(pyplot):
     with pytest.raises(ValueError, match=err_msg):
         ConfusionMatrixDisplay.from_estimator(regressor, X, y)
 
-    err_msg = "Classification metrics can't handle a mix of "
+    err_msg = (
+        "Mix type of y not allowed, got types {'multiclass', 'continuous'}"
+    )
     with pytest.raises(ValueError, match=err_msg):
         # Force `y_true` to be seen as a regression problem
         ConfusionMatrixDisplay.from_predictions(y + 0.5, y_pred_classifier)
@@ -332,3 +334,35 @@ def test_confusion_matrix_pipeline(pyplot, clf):
 
     assert_allclose(disp.confusion_matrix, cm)
     assert disp.text_.shape == (n_classes, n_classes)
+
+
+@pytest.mark.parametrize(
+    "constructor_name", ["from_estimator", "from_predictions"]
+)
+def test_confusion_matrix_with_unknown_labels(pyplot, constructor_name):
+    """Check that when labels=None, the unique values in `y_pred` and `y_true`
+    will be used.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/pull/18405
+    """
+    n_classes = 5
+    X, y = make_classification(
+        n_samples=100, n_informative=5, n_classes=n_classes, random_state=0
+    )
+    classifier = SVC().fit(X, y)
+    y_pred = classifier.predict(X)
+    # create unseen labels in `y_true` not seen during fitting and not present
+    # in 'classifier.classes_'
+    y = y + 1
+
+    constructor = getattr(ConfusionMatrixDisplay, constructor_name)
+    params = (
+        (classifier, X, y)
+        if constructor_name == "from_estimator"
+        else (y, y_pred)
+    )
+    disp = constructor(*params, labels=None)
+
+    display_labels = [tick.get_text() for tick in disp.ax_.get_xticklabels()]
+    expected_labels = [str(i) for i in range(n_classes + 1)]
+    assert_array_equal(expected_labels, display_labels)

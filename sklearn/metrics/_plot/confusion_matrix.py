@@ -5,6 +5,7 @@ import numpy as np
 from .. import confusion_matrix
 from ...utils import check_matplotlib_support
 from ...utils import deprecated
+from ...utils.multiclass import unique_labels
 from ...utils.validation import _deprecate_positional_args
 from ...base import is_classifier
 
@@ -270,12 +271,6 @@ class ConfusionMatrixDisplay:
             raise ValueError(f"{method_name} only supports classifiers")
         y_pred = estimator.predict(X)
 
-        if display_labels is None:
-            if labels is None:
-                display_labels = estimator.classes_
-            else:
-                display_labels = labels
-
         return cls.from_predictions(
             y,
             y_pred,
@@ -393,7 +388,7 @@ class ConfusionMatrixDisplay:
 
         if display_labels is None:
             if labels is None:
-                display_labels = np.unique(y_true)
+                display_labels = unique_labels(y_true, y_pred)
             else:
                 display_labels = labels
 
@@ -530,7 +525,7 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
 
     if display_labels is None:
         if labels is None:
-            display_labels = estimator.classes_
+            display_labels = unique_labels(y_true, y_pred)
         else:
             display_labels = labels
 

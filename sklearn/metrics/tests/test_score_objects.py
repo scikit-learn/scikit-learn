@@ -63,7 +63,7 @@ REGRESSION_SCORERS = ['explained_variance', 'r2',
                       'max_error', 'neg_mean_poisson_deviance',
                       'neg_mean_gamma_deviance']
 
-CLF_SCORERS = ['accuracy', 'balanced_accuracy',
+CLF_SCORERS = ['accuracy', 'balanced_accuracy', 'top_k_accuracy',
                'f1', 'f1_weighted', 'f1_macro', 'f1_micro',
                'roc_auc', 'average_precision', 'precision',
                'precision_weighted', 'precision_macro', 'precision_micro',
@@ -506,6 +506,9 @@ def test_classification_scorer_sample_weight():
         if name in REGRESSION_SCORERS:
             # skip the regression scores
             continue
+        if name == 'top_k_accuracy':
+            # in the binary case k > 1 will always lead to a perfect score
+            scorer._kwargs = {'k': 1}
         if name in MULTILABEL_ONLY_SCORERS:
             target = y_ml_test
         else:
