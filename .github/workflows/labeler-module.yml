@@ -1,13 +1,11 @@
 name: "Pull Request Labeler"
-on:
-  schedule:
-    - cron: "*/10 * * * *"
+on: pull_request_target
 
 jobs:
   triage:
     runs-on: ubuntu-latest
     steps:
-    - uses: thomasjpfan/labeler@v2.4.6
+    - uses: thomasjpfan/labeler@v2.5.0
       continue-on-error: true
       if: github.repository == 'scikit-learn/scikit-learn'
       with:

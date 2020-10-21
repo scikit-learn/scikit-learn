@@ -340,6 +340,13 @@ class _VectorizerMixin:
         if self.tokenizer is not None:
             return self.tokenizer
         token_pattern = re.compile(self.token_pattern)
+
+        if token_pattern.groups > 1:
+            raise ValueError(
+                "More than 1 capturing group in token pattern. Only a single "
+                "group should be captured."
+            )
+
         return token_pattern.findall
 
     def get_stop_words(self):
@@ -504,7 +511,7 @@ class _VectorizerMixin:
 
 
 class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
-    """Convert a collection of text documents to a matrix of token occurrences
+    r"""Convert a collection of text documents to a matrix of token occurrences
 
     It turns a collection of text documents into a scipy.sparse matrix holding
     token occurrence counts (or binary occurrence information), possibly
@@ -599,11 +606,15 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         will be removed from the resulting tokens.
         Only applies if ``analyzer == 'word'``.
 
-    token_pattern : string
+    token_pattern : str, default=r"(?u)\\b\\w\\w+\\b"
         Regular expression denoting what constitutes a "token", only used
         if ``analyzer == 'word'``. The default regexp selects tokens of 2
         or more alphanumeric characters (punctuation is completely ignored
         and always treated as a token separator).
+
+        If there is a capturing group in token_pattern then the
+        captured group content, not the entire match, becomes the token.
+        At most one capturing group is permitted.
 
     ngram_range : tuple (min_n, max_n), default=(1, 1)
         The lower and upper boundary of the range of n-values for different
@@ -613,8 +624,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         only bigrams.
         Only applies if ``analyzer is not callable``.
 
-    analyzer : string, {'word', 'char', 'char_wb'} or callable, \
-            default='word'
+    analyzer : {'word', 'char', 'char_wb'} or callable, default='word'
         Whether the feature should be made of word or character n-grams.
         Option 'char_wb' creates character n-grams only from text inside
         word boundaries; n-grams at the edges of words are padded with space.
@@ -796,7 +806,7 @@ def _document_frequency(X):
 
 
 class CountVectorizer(_VectorizerMixin, BaseEstimator):
-    """Convert a collection of text documents to a matrix of token counts
+    r"""Convert a collection of text documents to a matrix of token counts
 
     This implementation produces a sparse representation of the counts using
     scipy.sparse.csr_matrix.
@@ -867,11 +877,15 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         in the range [0.7, 1.0) to automatically detect and filter stop
         words based on intra corpus document frequency of terms.
 
-    token_pattern : string, default=r"(?u)/b/w/w+/b"
+    token_pattern : str, default=r"(?u)\\b\\w\\w+\\b"
         Regular expression denoting what constitutes a "token", only used
         if ``analyzer == 'word'``. The default regexp select tokens of 2
         or more alphanumeric characters (punctuation is completely ignored
         and always treated as a token separator).
+
+        If there is a capturing group in token_pattern then the
+        captured group content, not the entire match, becomes the token.
+        At most one capturing group is permitted.
 
     ngram_range : tuple (min_n, max_n), default=(1, 1)
         The lower and upper boundary of the range of n-values for different
@@ -881,8 +895,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         unigrams and bigrams, and ``(2, 2)`` means only bigrams.
         Only applies if ``analyzer is not callable``.
 
-    analyzer : string, {'word', 'char', 'char_wb'} or callable, \
-            default='word'
+    analyzer : {'word', 'char', 'char_wb'} or callable, default='word'
         Whether the feature should be made of word n-gram or character
         n-grams.
         Option 'char_wb' creates character n-grams only from text inside
@@ -1509,7 +1522,7 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
 
 
 class TfidfVectorizer(CountVectorizer):
-    """Convert a collection of raw documents to a matrix of TF-IDF features.
+    r"""Convert a collection of raw documents to a matrix of TF-IDF features.
 
     Equivalent to :class:`CountVectorizer` followed by
     :class:`TfidfTransformer`.
@@ -1592,11 +1605,15 @@ class TfidfVectorizer(CountVectorizer):
         in the range [0.7, 1.0) to automatically detect and filter stop
         words based on intra corpus document frequency of terms.
 
-    token_pattern : str
+    token_pattern : str, default=r"(?u)\\b\\w\\w+\\b"
         Regular expression denoting what constitutes a "token", only used
         if ``analyzer == 'word'``. The default regexp selects tokens of 2
         or more alphanumeric characters (punctuation is completely ignored
         and always treated as a token separator).
+
+        If there is a capturing group in token_pattern then the
+        captured group content, not the entire match, becomes the token.
+        At most one capturing group is permitted.
 
     ngram_range : tuple (min_n, max_n), default=(1, 1)
         The lower and upper boundary of the range of n-values for different
