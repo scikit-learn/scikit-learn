@@ -5,6 +5,7 @@ import sys
 import numpy as np
 from scipy import sparse as sp
 from threadpoolctl import threadpool_limits
+from threadpoolctl import threadpool_info
 
 import pytest
 
@@ -1030,3 +1031,23 @@ def test_minibatch_kmeans_wrong_params(param, match):
     # are passed for the MiniBatchKMeans specific parameters
     with pytest.raises(ValueError, match=match):
         MiniBatchKMeans(**param).fit(X)
+
+
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+def test_mkl_vcomp_warning(Estimator):
+    # Check the memory leak warning.
+    modules = threadpool_info()
+    has_vcomp = "vcomp" in [module["prefix"] for module in modules]
+    has_mkl = ("mkl", "intel") in [
+        (module["internal_api"], module.get("threading_layer", None))
+        for module in modules]
+
+    if not (has_vcomp and has_mkl):
+        pytest.skip("Requires vcomp and MKL")
+
+    km = Estimator(n_clusters=n_clusters, random_state=0)
+    if Estimator is KMeans:
+        km.set_params(algorithm="full")
+
+    with pytest.warns(UserWarning, match="memory leak on Windows"):
+        km.fit(X)

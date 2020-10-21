@@ -881,13 +881,13 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
                 (module["internal_api"], module.get("threading_layer", None))
                 for module in modules]
             if has_vcomp and has_mkl:
-                if self.__class__ is KMeans:
+                if not hasattr(self, "batch_size"):  # KMeans
                     warnings.warn(
                         f"KMeans is known to have a memory leak on Windows "
                         f"with MKL. You can avoid it by setting the "
                         f"environment variable "
                         f"OMP_NUM_THREADS={active_threads}")
-                elif self.__class__ is MiniBatchKMeans:
+                else:  # MiniBatchKMeans
                     warnings.warn(
                         f"MiniBatchKMeans is known to have a memory leak on "
                         f"Windows with MKL. You can prevent it by setting "
