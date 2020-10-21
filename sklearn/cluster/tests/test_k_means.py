@@ -1042,6 +1042,9 @@ def test_mkl_vcomp_warning(Estimator):
         (module["internal_api"], module.get("threading_layer", None))
         for module in modules]
 
+    from pprint import pprint
+    pprint(modules)
+
     if not (has_vcomp and has_mkl):
         pytest.skip("Requires vcomp and MKL")
 
