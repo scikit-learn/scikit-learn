@@ -1,0 +1,32 @@
+import random
+import time
+choices=["Rock","Paper","Scissors"]
+computer=random.choice(choices)
+result=False
+player_name=input("Enter the player name:")
+time.sleep(2)
+print('The game is about to start')
+time.sleep(3)
+player=input("Rock Paper or Scissors \n").capitalize()
+time.sleep(1)
+while result==False:
+    if player==computer:
+        print("Tie!")
+    elif player=='Rock':
+        if computer=='Paper':
+            print(player_name +' wins over the computer')
+        elif computer=='Scissors':
+            print('computer wins over the ' +player_name)
+    elif player=='Paper':
+        if computer=='Rock':
+            print(player_name +' wins over the computer')
+        elif computer=='Scissors':
+            print('computer wins over the ' +player_name)
+    elif player=='Scissors':
+        if computer=='paper':
+            print(player_name +' wins over the computer')
+        elif computer=='Rock':
+            print('computer wins over the ' +player_name)
+    else:
+        print('You have entered the wrong choice')
+    result=True
