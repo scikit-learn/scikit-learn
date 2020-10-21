@@ -1044,20 +1044,25 @@ classes according to some similarity metric.
 .. currentmodule:: sklearn.metrics
 
 .. _rand_score:
+.. _adjusted_rand_score:
 
 Rand index
 ----------
 
-Given the knowledge of the ground truth class assignments ``labels_true``
-and our clustering algorithm assignments of the same samples
-``labels_pred``, the **Rand index** is a function that measures
-the **similarity** of the two assignments, ignoring permutations:
+Given the knowledge of the ground truth class assignments
+``labels_true`` and our clustering algorithm assignments of the same
+samples ``labels_pred``, the **(adjusted or unadjusted) Rand index**
+is a function that measures the **similarity** of the two assignments,
+ignoring permutations (and for the adjusted Rand index **with chance
+normalization**)::
 
   >>> from sklearn import metrics
   >>> labels_true = [0, 0, 0, 1, 1, 1]
   >>> labels_pred = [0, 0, 1, 1, 2, 2]
   >>> metrics.rand_score(labels_true, labels_pred)
   0.66...
+  >>> metrics.adjusted_rand_score(labels_true, labels_pred)
+  0.24...
 
 As with all clustering metrics, one can permute 0 and 1 in the predicted
 labels, rename 2 to 3, and get the same score::
@@ -1065,172 +1070,90 @@ labels, rename 2 to 3, and get the same score::
   >>> labels_pred = [1, 1, 0, 0, 3, 3]
   >>> metrics.rand_score(labels_true, labels_pred)
   0.66...
+  >>> metrics.adjusted_rand_score(labels_true, labels_pred)
+  0.24...
 
-Furthermore, :func:`rand_score` is **symmetric**: swapping the argument
-does not change the score. It can thus be used as a **consensus
-measure**::
+Furthermore, both :func:`rand_score` :func:`adjusted_rand_score` are
+**symmetric**: swapping the argument does not change the scores. They can
+thus be used as **consensus measures**::
 
   >>> metrics.rand_score(labels_pred, labels_true)
   0.66...
-
-Perfect labeling is scored 1.0::
-
-  >>> labels_pred = labels_true[:]
-  >>> metrics.rand_score(labels_true, labels_pred)
-  1.0
-
-Poorly agreeing labels (e.g. independent labelings) have lower scores
-but not necessarily close to zero (see also :ref:`adjusted_rand_score`)::
-
-  >>> labels_true = [0, 0, 0, 0, 0, 0, 1, 1]
-  >>> labels_pred = [0, 1, 2, 3, 4, 5, 5, 6]
-  >>> metrics.rand_score(labels_true, labels_pred)
-  0.39...
-
-
-Advantages
-~~~~~~~~~~
-
-- **Interpretable**: The score is proportional to the number of sample
-  pairs whose labels are the same in both `labels_pred` and `labels_true`,
-  or are different in both.
-
-- **Bounded range [0, 1]**: Lower values indicate different
-  labelings, similar clusterings have a high Rand index, 1.0 is the
-  perfect match score.
-
-- **No assumption is made on the cluster structure**: The Rand index
-  can be used to compare all kinds of clustering algorithms.
-
-
-Drawbacks
-~~~~~~~~~
-
-- Contrary to inertia, the **Rand index requires knowledge of the
-  ground truth classes** which is almost never available in practice
-  or requires manual assignment by human annotators (as in the
-  supervised learning setting).
-
-- The **Rand index is often close to 1.0** even if the clusterings
-  themselves differ significantly. This can be understood when
-  interpreting the Rand index as the accuracy of element pair labeling
-  resulting from the clusterings: In practice there often is a
-  majority of element pairs that are assigned the ``different`` pair
-  label under both the predicted and the ground truth clustering
-  resulting in a high proportion of pair labels that agree, which
-  leads subsequently to a high score.
-
-
-Mathematical formulation
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-If C is a ground truth class assignment and K the clustering, let us
-define :math:`a` and :math:`b` as:
-
-- :math:`a`, the number of pairs of elements that are in the same set
-  in C and in the same set in K
-
-- :math:`b`, the number of pairs of elements that are in different sets
-  in C and in different sets in K
-
-The raw (unadjusted) Rand index is then given by:
-
-.. math:: \text{RI} = \frac{a + b}{C_2^{n_{samples}}}
-
-where :math:`C_2^{n_{samples}}` is the total number of possible pairs
-in the dataset. It does not matter if the calculation is performed
-on ordered pairs or unordered pairs as long as the calculation is
-performed consistently.
-
-However, the Rand index does not guarantee that random label assignments
-will get a value close to zero (esp. if the number of clusters is in
-the same order of magnitude as the number of samples).
-
-.. topic:: References
-
- * `Wikipedia entry for the Rand index
-   <https://en.wikipedia.org/wiki/Rand_index>`_
-
-.. _adjusted_rand_score:
-
-Adjusted Rand index
--------------------
-
-Given the knowledge of the ground truth class assignments ``labels_true``
-and our clustering algorithm assignments of the same samples
-``labels_pred``, the **adjusted Rand index** is a function that measures
-the **similarity** of the two assignments, ignoring permutations and **with
-chance normalization**::
-
-  >>> from sklearn import metrics
-  >>> labels_true = [0, 0, 0, 1, 1, 1]
-  >>> labels_pred = [0, 0, 1, 1, 2, 2]
-
-  >>> metrics.adjusted_rand_score(labels_true, labels_pred)
-  0.24...
-
-One can permute 0 and 1 in the predicted labels, rename 2 to 3, and get
-the same score::
-
-  >>> labels_pred = [1, 1, 0, 0, 3, 3]
-  >>> metrics.adjusted_rand_score(labels_true, labels_pred)
-  0.24...
-
-Furthermore, :func:`adjusted_rand_score` is **symmetric**: swapping the argument
-does not change the score. It can thus be used as a **consensus
-measure**::
-
   >>> metrics.adjusted_rand_score(labels_pred, labels_true)
   0.24...
 
 Perfect labeling is scored 1.0::
 
   >>> labels_pred = labels_true[:]
+  >>> metrics.rand_score(labels_true, labels_pred)
+  1.0
   >>> metrics.adjusted_rand_score(labels_true, labels_pred)
   1.0
 
-Bad (e.g. independent labelings) have negative or close to 0.0 scores::
+Poorly agreeing labels (e.g. independent labelings) have lower scores,
+and for the adjusted Rand index the score will be negative or close to
+zero. However, for the unadjusted Rand index the score, while lower,
+will not necessarily be close to zero.::
 
-  >>> labels_true = [0, 1, 2, 0, 3, 4, 5, 1]
-  >>> labels_pred = [1, 1, 0, 0, 2, 2, 2, 2]
+  >>> labels_true = [0, 0, 0, 0, 0, 0, 1, 1]
+  >>> labels_pred = [0, 1, 2, 3, 4, 5, 5, 6]
+  >>> metrics.rand_score(labels_true, labels_pred)
+  0.39...
   >>> metrics.adjusted_rand_score(labels_true, labels_pred)
-  -0.12...
+  -0.07...
 
 
 Advantages
 ~~~~~~~~~~
 
-- **Random (uniform) label assignments have a ARI score close to 0.0**
-  for any value of ``n_clusters`` and ``n_samples`` (which is not the
-  case for raw Rand index or the V-measure for instance).
+- **Interpretability**: The unadjusted Rand index is proportional
+  to the number of sample pairs whose labels are the same in both
+  `labels_pred` and `labels_true`, or are different in both.
 
-- **Bounded range [-1, 1]**: negative values are bad (independent
-  labelings), similar clusterings have a positive ARI, 1.0 is the perfect
-  match score.
+- **Random (uniform) label assignments have an adjusted Rand index
+  score close to 0.0** for any value of ``n_clusters`` and
+  ``n_samples`` (which is not the case for the unadjusted Rand index
+  or the V-measure for instance).
 
-- **No assumption is made on the cluster structure**: can be used
-  to compare clustering algorithms such as k-means which assumes isotropic
-  blob shapes with results of spectral clustering algorithms which can
-  find cluster with "folded" shapes.
+- **Bounded range**: Lower values indicate different labelings,
+  similar clusterings have a high (adjusted or unadjusted) Rand index,
+  1.0 is the perfect match score. The score range is [0, 1] for the
+  unadjusted Rand index and [-1, 1] for the adjusted Rand index.
+
+- **No assumption is made on the cluster structure**: The (adjusted or
+  unadjusted) Rand index can be used to compare all kinds of
+  clustering algorithms, and can be used to compare clustering
+  algorithms such as k-means which assumes isotropic blob shapes with
+  results of spectral clustering algorithms which can find cluster
+  with "folded" shapes.
 
 
 Drawbacks
 ~~~~~~~~~
 
-- Contrary to inertia, **ARI requires knowledge of the ground truth
-  classes** while is almost never available in practice or requires manual
-  assignment by human annotators (as in the supervised learning setting).
+- Contrary to inertia, the **(adjusted or unadjusted) Rand index
+  requires knowledge of the ground truth classes** which is almost
+  never available in practice or requires manual assignment by human
+  annotators (as in the supervised learning setting).
 
-  However ARI can also be useful in a purely unsupervised setting as a
-  building block for a Consensus Index that can be used for clustering
-  model selection (TODO).
+  However (adjusted or unadjusted) Rand index can also be useful in a
+  purely unsupervised setting as a building block for a Consensus
+  Index that can be used for clustering model selection (TODO).
 
+- The **unadjusted Rand index is often close to 1.0** even if the
+  clusterings themselves differ significantly. This can be understood
+  when interpreting the Rand index as the accuracy of element pair
+  labeling resulting from the clusterings: In practice there often is
+  a majority of element pairs that are assigned the ``different`` pair
+  label under both the predicted and the ground truth clustering
+  resulting in a high proportion of pair labels that agree, which
+  leads subsequently to a high score.
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`: Analysis of
-   the impact of the dataset size on the value of clustering measures
-   for random assignments.
+ * :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`:
+   Analysis of the impact of the dataset size on the value of
+   clustering measures for random assignments.
 
 
 Mathematical formulation
@@ -1245,14 +1168,16 @@ define :math:`a` and :math:`b` as:
 - :math:`b`, the number of pairs of elements that are in different sets
   in C and in different sets in K
 
-The raw (unadjusted) Rand index is then given by:
+The unadjusted Rand index is then given by:
 
 .. math:: \text{RI} = \frac{a + b}{C_2^{n_{samples}}}
 
-Where :math:`C_2^{n_{samples}}` is the total number of possible pairs
-in the dataset (without ordering).
+where :math:`C_2^{n_{samples}}` is the total number of possible pairs
+in the dataset. It does not matter if the calculation is performed on
+ordered pairs or unordered pairs as long as the calculation is
+performed consistently.
 
-However the RI score does not guarantee that random label assignments
+However, the Rand index does not guarantee that random label assignments
 will get a value close to zero (esp. if the number of clusters is in
 the same order of magnitude as the number of samples).
 
@@ -1271,8 +1196,12 @@ random labelings by defining the adjusted Rand index as follows:
    <https://psycnet.apa.org/record/2004-17801-007>`_
    D. Steinley, Psychological Methods 2004
 
+ * `Wikipedia entry for the Rand index
+   <https://en.wikipedia.org/wiki/Rand_index>`_
+
  * `Wikipedia entry for the adjusted Rand index
    <https://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index>`_
+
 
 .. _mutual_info_score:
 
