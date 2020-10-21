@@ -3250,6 +3250,10 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         ----------
         X : array-like of shape (n_samples, n_features)
 
+        in_fit : bool
+            Whether or not `_check_input` is called from `fit` or other
+            methods, e.g. `predict`, `transform`, etc.
+
         check_positive : bool, default=False
             If True, check that all data is positive and non-zero (only if
             ``self.method=='box-cox'``).
