@@ -425,7 +425,7 @@ def test_pair_confusion_matrix():
 @pytest.mark.parametrize(
     "clustering1, clustering2",
     [(list(range(100)), list(range(100))),
-     (np.zeros((100,)), np.zeros((100,))]
+     (np.zeros((100,)), np.zeros((100,)))]
 )
 def test_rand_score_edge_cases(clustering1, clustering2):
     # edge case 1: every element is its own cluster
