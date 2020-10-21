@@ -295,6 +295,18 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
 
         self.coef_ = np.dot(self.x_rotations_, self.y_loadings_.T)
         self.coef_ = self.coef_ * self.y_std_
+
+        if self.deflation_mode == "regression":
+            # Calculate VIP for PLSRegression
+            T = self.x_scores_
+            W = self.x_weights_
+            Q = self.y_loadings_
+            w0, w1 = W.shape
+            s = np.sum(T ** 2, axis=0) * np.sum(Q ** 2, axis=0)
+            s_sum = np.sum(s, axis=0)
+            w_norm = np.array([(W[:, i] / np.linalg.norm(W[:, i]))
+                               for i in range(w1)])
+            self.vip_ = np.sqrt(w0 * np.sum(s * w_norm.T ** 2, axis=1) / s_sum)
         return self
 
     def transform(self, X, Y=None, copy=True):
@@ -511,6 +523,10 @@ class PLSRegression(_PLS):
     coef_ : ndarray of shape (n_features, n_targets)
         The coefficients of the linear model such that `Y` is approximated as
         `Y = X @ coef_`.
+
+    vip_ : ndarray of shape (n_features,)
+        The Variable Importance in Projection (VIP) score. Used to estimate
+        feature importance.
 
     n_iter_ : list of shape (n_components,)
         Number of iterations of the power method, for each
