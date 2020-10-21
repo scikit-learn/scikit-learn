@@ -10,7 +10,7 @@ trained and evaluated using :class:`~sklearn.model_selection.GridSearchCV`.
 # %%
 # We will start by simulating moon shaped data (where the ideal separation
 # between classes is non-linear), adding to it a moderate degree of noise.
-# Datapoints will belong to one of two possible classes, each with two
+# Datapoints will belong to one of two possible classes to be predicted by two
 # features. We will simulate 50 samples for each class:
 
 print(__doc__)
@@ -107,7 +107,7 @@ sns.lineplot(
     data=model_scores.transpose().iloc[:30],
     dashes='', palette='Set1', marker='o', alpha=.5, ax=ax
 )
-ax.set_xlabel("CV fold", size=12, labelpad=10)
+ax.set_xlabel("CV test fold", size=12, labelpad=10)
 ax.set_ylabel("Model AUC", size=12)
 ax.tick_params(bottom=True, labelbottom=False)
 plt.show()
@@ -135,27 +135,30 @@ print(f"Correlation of models:\n {model_scores.transpose().corr()}")
 # We can start by asking: "Is the first model significantly better than the
 # second model (when ranked by `mean_test_score`)?"
 #
-# If we wanted to answer this question using a frequentist approach we could
-# run a paired t-test. Many variants of the latter have been developed to
-# account for the 'non-independence of observations problem' described in the
-# previous section. We will use the one proven to obtain the highest
-# replicability scores while mantaining a low rate of false postitives and
-# false negatives: the Nadeau and Bengio's corrected t-test [2]_ that uses a 10
-# times repeated 10-fold cross validation [3]_.
+# To answer this question using a frequentist approach we could
+# run a paired t-test and compute a p-value. Many variants of the latter have
+# been developed to account for the 'non-independence of observations problem'
+# described in the previous section. We will use the one proven to obtain the
+# highest replicability scores (which rate how similar the performance of a
+# model is when evaluating it on different random partitions of the same
+# dataset) while mantaining a low rate of false postitives and false negatives:
+# the Nadeau and Bengio's corrected t-test [2]_ that uses a 10 times repeated
+# 10-fold cross validation [3]_.
 #
 # This corrected paired t-test is computed as:
 #
 # .. math::
-#    t=\frac{\frac{1}{k.r}\sum_{i=1}^{k}\sum_{j=1}^{r}x_{ij}}
-#    {\sqrt{(\frac{1}{k.r}+\frac{n_2}{n_1})\hat{\sigma}^2}}
+#    t=\frac{\frac{1}{k \cdot r}\sum_{i=1}^{k}\sum_{j=1}^{r}x_{ij}}
+#    {\sqrt{(\frac{1}{k \cdot r}+\frac{n_2}{n_1})\hat{\sigma}^2}}
 #
-# where :math:`k` is the number of folds and :math:`r` the number of
-# repetitions in the cross-validation, and :math:`n_2` is the number of
-# observations used for testing while :math:`n_1` is the the number of
-# observations used for training.
+# where :math:`{\sigma}^2` represents the variance, :math:`k` is the number of
+# folds, :math:`r` the number of repetitions in the cross-validation,
+# :math:`n_2` is the number of observations used for testing, and :math:`n_1`
+# is the the number of observations used for training.
 #
-# Let's implement a corrected one tailed paired t-test to compare the first and
-# second model, and compute the corresponding p-value:
+# Let's implement a corrected right-tailed paired t-test to evaluate if the
+# performance of the first model is significantly better than that of the
+# second model. Our null hypothesis is that their performance will be similar.
 
 import numpy as np
 from scipy.stats import t
@@ -272,16 +275,14 @@ print(f"Uncorrected t-value: {t_stat_uncorrected:.3f}\n"
 # but in this example we will implement the approach suggested by Benavoli and
 # collegues [4]_.
 #
-# One way of defining our posterior using a `closed-form expression
-# <https://en.wikipedia.org/wiki/Closed-form_expression>`_ is to select a
-# prior `conjugate <https://en.wikipedia.org/wiki/Conjugate_prior>`_ to the
-# likelihood function. Benavoli and collegues [4]_ show that when comparing the
-# performance of two classifiers we can model the prior as a Normal-Gamma
-# distribution (with both mean and variance unknown)
-# `conjugate <https://en.wikipedia.org/wiki/Conjugate_prior>`_ to a normal
-# likelihood, to thus express the posterior as a normal distribution.
+# One way of defining our posterior using a closed-form expression is to select
+# a prior conjugate to the likelihood function. Benavoli and collegues [4]_
+# show that when comparing the performance of two classifiers we can model the
+# prior as a Normal-Gamma distribution (with both mean and variance unknown)
+# conjugate to a normal likelihood, to thus express the posterior as a normal
+# distribution.
 # Marginalizing out the variance from this normal posterior, we can define the
-# posterior of the mean parameter as a Student T distribution. Specifically:
+# posterior of the mean parameter as a Student's t-distribution. Specifically:
 #
 # .. math::
 #    St(\mu;n-1,\overline{x},(\frac{1}{n}+\frac{n_2}{n_1})\hat{\sigma}^2)
@@ -291,7 +292,7 @@ print(f"Uncorrected t-value: {t_stat_uncorrected:.3f}\n"
 # Notice that we are using Nadeau and Bengio's corrected variance in our
 # Bayesian approach as well.
 #
-# Let's compute the posterior:
+# Let's compute and plot the posterior:
 
 # intitialize random variable
 t_post = t(
@@ -319,7 +320,7 @@ plt.show()
 # that the second model is better than the first by computing the area under
 # the curve from minus infinity to zero.
 
-better_prob = t_post.sf(0)
+better_prob = 1 - t_post.cdf(0)
 
 print(f"Probability of {model_scores.index[0]} being more accurate than "
       f"{model_scores.index[1]}: {better_prob:.3f}")
@@ -331,7 +332,7 @@ print(f"Probability of {model_scores.index[1]} being more accurate than "
 # that one model is better than the other.
 #
 # Note that we obtained similar results as those in the frequentist approach.
-# Given our choice of priors we are in essence performing the same
+# Given our choice of priors, we are essentially performing the same
 # computations, but we are allowed to make different assertions.
 
 # %%
@@ -340,14 +341,14 @@ print(f"Probability of {model_scores.index[1]} being more accurate than "
 # way. A default approach [4]_ is to define estimators as practically
 # equivalent when they differ by less than 1% in their accuracy. But we could
 # also define this practical equivalence taking into account the problem we are
-# trying to solve. E.g. a difference of 5% in accuracy would mean an increase
-# of $1000 in sales, and we consider any quantity above that as relevant for
-# our business.
+# trying to solve. For example. a difference of 5% in accuracy would mean an
+# increase of $1000 in sales, and we consider any quantity above that as
+# relevant for our business.
 #
 # In this example we are going to follow the suggestion in [4]_ and define the
-# Region of Practical Equivalence (ROPE) to be [-0.01, 0.01]. That is, we will
-# consider two models as practically equivelent if they differ by less than 1%
-# in their performance.
+# Region of Practical Equivalence (ROPE) to be :math:`[-0.01, 0.01]`. That is,
+# we will consider two models as practically equivelent if they differ by less
+# than 1% in their performance.
 #
 # To compute the probabilities of the classifiers being practically equivalent,
 # we calculate the area under the curve of the posterior over the ROPE
@@ -450,11 +451,10 @@ pairwise_comp_df
 
 # %%
 # We observe that after correcting for multiple comparisons, the only model
-# that significantly differs from the others is `'poly2'`.
-#
+# that significantly differs from the others is `'2_poly'`.
 # `'rbf'`, the model ranked first by
 # :class:`~sklearn.model_selection.GridSearchCV`, does not significantly
-# differ from `'linear'` or `'poly3'`.
+# differ from `'linear'` or `'3_poly'`.
 
 # %%
 # Pairwise comparison of all models: Bayesian approach
@@ -497,24 +497,27 @@ pairwise_comp_df
 # Results show that the model ranked first by
 # :class:`~sklearn.model_selection.GridSearchCV` `'rbf'`, has approximately a
 # 6.8% chance of being worse than `'linear'`, and a 1.8% chance of being worse
-# than `'poly3'`.
-#
+# than `'3_poly'`.
 # `'rbf'` and `'linear'` have a 43% probability of being practically
-# equivalent, while `'rbf'` and `'poly3'` have a 10% chance of being so.
+# equivalent, while `'rbf'` and `'3_poly'` have a 10% chance of being so.
 #
 # Similarly to the conclusions obtained using the frequentist approach, all
-# models have a 100% probability of being better than `'poly2'`, and none have
+# models have a 100% probability of being better than `'2_poly'`, and none have
 # a practically equivalent performance with the latter.
 
 # %%
 # Take-home messages
 # ------------------
+# - Small differences in performance measures might easily turn out to be
+#   merely by chance, but not because one model predicts systematically better
+#   than the other. As shown in this example, statistics can tell you how
+#   likely that is.
 # - When statistically comparing the performance of two models evaluated in
 #   GridSearchCV, it is necessary to correct the calculated variance which
 #   could be underestimated since the scores of the models are not independent
 #   from each other.
 # - A frequentist approach that uses a (variance-corrected) paired t-test can
-#   tell us if the performance of one model is better that another with a
+#   tell us if the performance of one model is better than another with a
 #   degree of certainty above chance.
 # - A Bayesian approach can provide the probabilities of one model being
 #   better, worse or practically equivalent than another. It can also tell us
