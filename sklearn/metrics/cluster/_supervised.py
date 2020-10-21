@@ -750,7 +750,7 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     -------
     mi : float
        Mutual information, a non-negative value, measured in nats using the
-       natural logarithm
+       natural logarithm.
 
     Notes
     -----
