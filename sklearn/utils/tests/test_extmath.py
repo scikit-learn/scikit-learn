@@ -11,6 +11,7 @@ from scipy import stats
 from scipy.special import expit
 
 import pytest
+from sklearn.utils import gen_batches
 
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_allclose
@@ -21,7 +22,7 @@ from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import skip_if_32bit
 
-from sklearn.utils.extmath import density
+from sklearn.utils.extmath import density, _safe_accumulator_op
 from sklearn.utils.extmath import randomized_svd
 from sklearn.utils.extmath import row_norms
 from sklearn.utils.extmath import weighted_mode
@@ -29,10 +30,10 @@ from sklearn.utils.extmath import cartesian
 from sklearn.utils.extmath import log_logistic
 from sklearn.utils.extmath import svd_flip
 from sklearn.utils.extmath import _incremental_mean_and_var
+from sklearn.utils.extmath import _incremental_weighted_mean_and_var
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
 from sklearn.utils.extmath import softmax
 from sklearn.utils.extmath import stable_cumsum
-from sklearn.utils.extmath import safe_min
 from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.datasets import make_low_rank_matrix
 
@@ -59,7 +60,7 @@ def test_uniform_weights():
 
     for axis in (None, 0, 1):
         mode, score = stats.mode(x, axis)
-        mode2, score2 = weighted_mode(x, weights, axis)
+        mode2, score2 = weighted_mode(x, weights, axis=axis)
 
         assert_array_equal(mode, mode2)
         assert_array_equal(score, score2)
@@ -100,12 +101,12 @@ def check_randomized_svd_low_rank(dtype):
     assert X.shape == (n_samples, n_features)
 
     # compute the singular values of X using the slow exact method
-    U, s, V = linalg.svd(X, full_matrices=False)
+    U, s, Vt = linalg.svd(X, full_matrices=False)
 
     # Convert the singular values to the specific dtype
     U = U.astype(dtype, copy=False)
     s = s.astype(dtype, copy=False)
-    V = V.astype(dtype, copy=False)
+    Vt = Vt.astype(dtype, copy=False)
 
     for normalizer in ['auto', 'LU', 'QR']:  # 'none' would not be stable
         # compute the singular values of X using the fast approximate method
@@ -133,7 +134,7 @@ def check_randomized_svd_low_rank(dtype):
         assert_almost_equal(s[:k], sa, decimal=decimal)
 
         # check the singular vectors too (while not checking the sign)
-        assert_almost_equal(np.dot(U[:, :k], V[:k, :]), np.dot(Ua, Va),
+        assert_almost_equal(np.dot(U[:, :k], Vt[:k, :]), np.dot(Ua, Va),
                             decimal=decimal)
 
         # check the sparse matrix representation
@@ -306,28 +307,28 @@ def test_randomized_svd_power_iteration_normalizer():
     n_components = 50
 
     # Check that it diverges with many (non-normalized) power iterations
-    U, s, V = randomized_svd(X, n_components, n_iter=2,
-                             power_iteration_normalizer='none')
-    A = X - U.dot(np.diag(s).dot(V))
+    U, s, Vt = randomized_svd(X, n_components, n_iter=2,
+                              power_iteration_normalizer='none')
+    A = X - U.dot(np.diag(s).dot(Vt))
     error_2 = linalg.norm(A, ord='fro')
-    U, s, V = randomized_svd(X, n_components, n_iter=20,
-                             power_iteration_normalizer='none')
-    A = X - U.dot(np.diag(s).dot(V))
+    U, s, Vt = randomized_svd(X, n_components, n_iter=20,
+                              power_iteration_normalizer='none')
+    A = X - U.dot(np.diag(s).dot(Vt))
     error_20 = linalg.norm(A, ord='fro')
     assert np.abs(error_2 - error_20) > 100
 
     for normalizer in ['LU', 'QR', 'auto']:
-        U, s, V = randomized_svd(X, n_components, n_iter=2,
-                                 power_iteration_normalizer=normalizer,
-                                 random_state=0)
-        A = X - U.dot(np.diag(s).dot(V))
+        U, s, Vt = randomized_svd(X, n_components, n_iter=2,
+                                  power_iteration_normalizer=normalizer,
+                                  random_state=0)
+        A = X - U.dot(np.diag(s).dot(Vt))
         error_2 = linalg.norm(A, ord='fro')
 
         for i in [5, 10, 50]:
-            U, s, V = randomized_svd(X, n_components, n_iter=i,
-                                     power_iteration_normalizer=normalizer,
-                                     random_state=0)
-            A = X - U.dot(np.diag(s).dot(V))
+            U, s, Vt = randomized_svd(X, n_components, n_iter=i,
+                                      power_iteration_normalizer=normalizer,
+                                      random_state=0)
+            A = X - U.dot(np.diag(s).dot(Vt))
             error = linalg.norm(A, ord='fro')
             assert 15 > np.abs(error_2 - error)
 
@@ -355,20 +356,20 @@ def test_svd_flip():
     X = rs.randn(n_samples, n_features)
 
     # Check matrix reconstruction
-    U, S, V = linalg.svd(X, full_matrices=False)
-    U1, V1 = svd_flip(U, V, u_based_decision=False)
+    U, S, Vt = linalg.svd(X, full_matrices=False)
+    U1, V1 = svd_flip(U, Vt, u_based_decision=False)
     assert_almost_equal(np.dot(U1 * S, V1), X, decimal=6)
 
     # Check transposed matrix reconstruction
     XT = X.T
-    U, S, V = linalg.svd(XT, full_matrices=False)
-    U2, V2 = svd_flip(U, V, u_based_decision=True)
+    U, S, Vt = linalg.svd(XT, full_matrices=False)
+    U2, V2 = svd_flip(U, Vt, u_based_decision=True)
     assert_almost_equal(np.dot(U2 * S, V2), XT, decimal=6)
 
     # Check that different flip methods are equivalent under reconstruction
-    U_flip1, V_flip1 = svd_flip(U, V, u_based_decision=True)
+    U_flip1, V_flip1 = svd_flip(U, Vt, u_based_decision=True)
     assert_almost_equal(np.dot(U_flip1 * S, V_flip1), XT, decimal=6)
-    U_flip2, V_flip2 = svd_flip(U, V, u_based_decision=False)
+    U_flip2, V_flip2 = svd_flip(U, Vt, u_based_decision=False)
     assert_almost_equal(np.dot(U_flip2 * S, V_flip2), XT, decimal=6)
 
 
@@ -451,6 +452,101 @@ def test_logistic_sigmoid():
 
     extreme_x = np.array([-100., 100.])
     assert_array_almost_equal(log_logistic(extreme_x), [-100, 0])
+
+
+@pytest.fixture()
+def rng():
+    return np.random.RandomState(42)
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_incremental_weighted_mean_and_variance_simple(rng, dtype):
+    mult = 10
+    X = rng.rand(1000, 20).astype(dtype)*mult
+    sample_weight = rng.rand(X.shape[0]) * mult
+    mean, var, _ = _incremental_weighted_mean_and_var(X, sample_weight,
+                                                      0, 0, 0)
+
+    expected_mean = np.average(X, weights=sample_weight, axis=0)
+    expected_var = np.average(X**2, weights=sample_weight, axis=0) - \
+        expected_mean**2
+    assert_almost_equal(mean, expected_mean)
+    assert_almost_equal(var, expected_var)
+
+
+@pytest.mark.parametrize("mean", [0, 1e7, -1e7])
+@pytest.mark.parametrize("var", [1, 1e-8, 1e5])
+@pytest.mark.parametrize("weight_loc, weight_scale", [
+    (0, 1), (0, 1e-8), (1, 1e-8), (10, 1), (1e7, 1)])
+def test_incremental_weighted_mean_and_variance(mean, var, weight_loc,
+                                                weight_scale, rng):
+
+    # Testing of correctness and numerical stability
+    def _assert(X, sample_weight, expected_mean, expected_var):
+        n = X.shape[0]
+        for chunk_size in [1, n//10 + 1, n//4 + 1, n//2 + 1, n]:
+            last_mean, last_weight_sum, last_var = 0, 0, 0
+            for batch in gen_batches(n, chunk_size):
+                last_mean, last_var, last_weight_sum = \
+                    _incremental_weighted_mean_and_var(X[batch],
+                                                       sample_weight[batch],
+                                                       last_mean,
+                                                       last_var,
+                                                       last_weight_sum)
+            assert_allclose(last_mean, expected_mean)
+            assert_allclose(last_var, expected_var, atol=1e-6)
+
+    size = (100, 20)
+    weight = rng.normal(loc=weight_loc, scale=weight_scale, size=size[0])
+
+    # Compare to weighted average: np.average
+    X = rng.normal(loc=mean, scale=var, size=size)
+    expected_mean = _safe_accumulator_op(np.average, X, weights=weight, axis=0)
+    expected_var = _safe_accumulator_op(
+        np.average, (X - expected_mean) ** 2, weights=weight, axis=0)
+    _assert(X, weight, expected_mean, expected_var)
+
+    # Compare to unweighted mean: np.mean
+    X = rng.normal(loc=mean, scale=var, size=size)
+    ones_weight = np.ones(size[0])
+    expected_mean = _safe_accumulator_op(np.mean, X, axis=0)
+    expected_var = _safe_accumulator_op(np.var, X, axis=0)
+    _assert(X, ones_weight, expected_mean, expected_var)
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_incremental_weighted_mean_and_variance_ignore_nan(dtype):
+    old_means = np.array([535., 535., 535., 535.])
+    old_variances = np.array([4225., 4225., 4225., 4225.])
+    old_weight_sum = np.array([2, 2, 2, 2], dtype=np.int32)
+    sample_weights_X = np.ones(3)
+    sample_weights_X_nan = np.ones(4)
+
+    X = np.array([[170, 170, 170, 170],
+                  [430, 430, 430, 430],
+                  [300, 300, 300, 300]]).astype(dtype)
+
+    X_nan = np.array([[170, np.nan, 170, 170],
+                      [np.nan, 170, 430, 430],
+                      [430, 430, np.nan, 300],
+                      [300, 300, 300, np.nan]]).astype(dtype)
+
+    X_means, X_variances, X_count = \
+        _incremental_weighted_mean_and_var(X,
+                                           sample_weights_X,
+                                           old_means,
+                                           old_variances,
+                                           old_weight_sum)
+    X_nan_means, X_nan_variances, X_nan_count = \
+        _incremental_weighted_mean_and_var(X_nan,
+                                           sample_weights_X_nan,
+                                           old_means,
+                                           old_variances,
+                                           old_weight_sum)
+
+    assert_allclose(X_nan_means, X_means)
+    assert_allclose(X_nan_variances, X_variances)
+    assert_allclose(X_nan_count, X_count)
 
 
 def test_incremental_variance_update_formulas():
@@ -545,15 +641,8 @@ def test_incremental_variance_numerical_stability():
     A1 = np.full((n_samples // 2, n_features), x2, dtype=np.float64)
     A = np.vstack((A0, A1))
 
-    # Older versions of numpy have different precision
-    # In some old version, np.var is not stable
-    if np.abs(np_var(A) - two_pass_var(A)).max() < 1e-6:
-        stable_var = np_var
-    else:
-        stable_var = two_pass_var
-
     # Naive one pass var: >tol (=1063)
-    assert np.abs(stable_var(A) - one_pass_var(A)).max() > tol
+    assert np.abs(np_var(A) - one_pass_var(A)).max() > tol
 
     # Starting point for online algorithms: after A0
 
@@ -565,7 +654,7 @@ def test_incremental_variance_numerical_stability():
     assert n == A.shape[0]
     # the mean is also slightly unstable
     assert np.abs(A.mean(axis=0) - mean).max() > 1e-6
-    assert np.abs(stable_var(A) - var).max() > tol
+    assert np.abs(np_var(A) - var).max() > tol
 
     # Robust implementation: <tol (177)
     mean, var = A0[0, :], np.zeros(n_features)
@@ -576,7 +665,7 @@ def test_incremental_variance_numerical_stability():
                                       mean, var, n)
     assert_array_equal(n, A.shape[0])
     assert_array_almost_equal(A.mean(axis=0), mean)
-    assert tol > np.abs(stable_var(A) - var).max()
+    assert tol > np.abs(np_var(A) - var).max()
 
 
 def test_incremental_variance_ddof():
@@ -643,13 +732,6 @@ def test_stable_cumsum():
     assert_array_equal(stable_cumsum(A, axis=0), np.cumsum(A, axis=0))
     assert_array_equal(stable_cumsum(A, axis=1), np.cumsum(A, axis=1))
     assert_array_equal(stable_cumsum(A, axis=2), np.cumsum(A, axis=2))
-
-
-def test_safe_min():
-    msg = ("safe_min is deprecated in version 0.22 and will be removed "
-           "in version 0.24.")
-    with pytest.warns(FutureWarning, match=msg):
-        safe_min(np.ones(10))
 
 
 @pytest.mark.parametrize("A_array_constr", [np.array, sparse.csr_matrix],

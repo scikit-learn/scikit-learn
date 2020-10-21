@@ -1,6 +1,8 @@
 import os
 import sys
 import numpy as np
+from numpy.testing import assert_allclose, assert_almost_equal
+from numpy.testing import assert_array_almost_equal, assert_array_equal
 import scipy.sparse as sp
 from scipy import linalg, optimize, sparse
 
@@ -16,10 +18,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.utils import compute_class_weight, _IS_32BIT
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_warns
@@ -31,10 +29,8 @@ from sklearn.preprocessing import scale
 from sklearn.utils._testing import skip_if_no_parallel
 
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.exceptions import ChangedBehaviorWarning
 from sklearn.linear_model._logistic import (
     LogisticRegression,
-    logistic_regression_path,
     _logistic_regression_path, LogisticRegressionCV,
     _logistic_loss_and_grad, _logistic_grad_hess,
     _multinomial_grad_hess, _logistic_loss,
@@ -390,8 +386,20 @@ def test_logistic_regression_path_convergence_fail():
     X = np.concatenate((rng.randn(100, 2) + [1, 1], rng.randn(100, 2)))
     y = [1] * 100 + [-1] * 100
     Cs = [1e3]
-    assert_warns(ConvergenceWarning, _logistic_regression_path,
-                 X, y, Cs=Cs, tol=0., max_iter=1, random_state=0, verbose=1)
+
+    # Check that the convergence message points to both a model agnostic
+    # advice (scaling the data) and to the logistic regression specific
+    # documentation that includes hints on the solver configuration.
+    with pytest.warns(ConvergenceWarning) as record:
+        _logistic_regression_path(
+            X, y, Cs=Cs, tol=0., max_iter=1, random_state=0, verbose=0)
+
+    assert len(record) == 1
+    warn_msg = record[0].message.args[0]
+    assert "lbfgs failed to converge" in warn_msg
+    assert "Increase the number of iterations" in warn_msg
+    assert "scale the data" in warn_msg
+    assert "linear_model.html#logistic-regression" in warn_msg
 
 
 def test_liblinear_dual_random_state():
@@ -873,7 +881,7 @@ def test_logistic_regression_sample_weights():
 def _compute_class_weight_dictionary(y):
     # helper for returning a dictionary instead of an array
     classes = np.unique(y)
-    class_weight = compute_class_weight("balanced", classes, y)
+    class_weight = compute_class_weight("balanced", classes=classes, y=y)
     class_weight_dict = dict(zip(classes, class_weight))
     return class_weight_dict
 
@@ -1712,8 +1720,8 @@ def test_logistic_regression_multi_class_auto(est, solver):
                               solver=solver)
         if sys.platform == 'darwin' and solver == 'lbfgs':
             pytest.xfail('Issue #11924: LogisticRegressionCV(solver="lbfgs", '
-                         'multi_class="multinomial") is nondterministic on '
-                         'MacOS.')  # pragma: no cover
+                         'multi_class="multinomial") is nondeterministic on '
+                         'MacOS.')
         assert_allclose(est_auto_multi.coef_, est_multi_multi.coef_)
         assert_allclose(est_auto_multi.predict_proba(X2),
                         est_multi_multi.predict_proba(X2))
@@ -1725,13 +1733,6 @@ def test_logistic_regression_multi_class_auto(est, solver):
         assert not np.allclose(est_auto_bin.coef_,
                                fit(X, y_multi, multi_class='multinomial',
                                    solver=solver).coef_)
-
-
-def test_logistic_regression_path_deprecation():
-
-    assert_warns_message(FutureWarning,
-                         "logistic_regression_path was deprecated",
-                         logistic_regression_path, X, Y1)
 
 
 @pytest.mark.parametrize('solver', ('lbfgs', 'newton-cg', 'sag', 'saga'))
@@ -1824,3 +1825,43 @@ def test_scores_attribute_layout_elasticnet():
 
             avg_score_lr = cross_val_score(lr, X, y, cv=cv).mean()
             assert avg_scores_lrcv[i, j] == pytest.approx(avg_score_lr)
+
+
+@pytest.mark.parametrize("fit_intercept", [False, True])
+def test_multinomial_identifiability_on_iris(fit_intercept):
+    """Test that the multinomial classification is identifiable.
+
+    A multinomial with c classes can be modeled with
+    probability_k = exp(X@coef_k) / sum(exp(X@coef_l), l=1..c) for k=1..c.
+    This is not identifiable, unless one chooses a further constraint.
+    According to [1], the maximum of the L2 penalized likelihood automatically
+    satisfies the symmetric constraint:
+    sum(coef_k, k=1..c) = 0
+
+    Further details can be found in the appendix of [2].
+
+    Reference
+    ---------
+    .. [1] Zhu, Ji and Trevor J. Hastie. "Classification of gene microarrays by
+    penalized logistic regression". Biostatistics 5 3 (2004): 427-43.
+    https://doi.org/10.1093/biostatistics%2Fkxg046
+
+    .. [2] Powers, Scott, Trevor J. Hastie and Robert Tibshirani. "Nuclear
+    penalized multinomial regression with an application to predicting at bat
+    outcomes in baseball." Statistical modelling 18 5-6 (2017): 388-410 .
+    https://arxiv.org/pdf/1706.10272.pdf
+    """
+    # Test logistic regression with the iris dataset
+    n_samples, n_features = iris.data.shape
+    target = iris.target_names[iris.target]
+
+    clf = LogisticRegression(C=len(iris.data), solver='lbfgs', max_iter=300,
+                             multi_class='multinomial',
+                             fit_intercept=fit_intercept
+                             )
+    clf.fit(iris.data, target)
+
+    # axis=0 is sum over classes
+    assert_allclose(clf.coef_.sum(axis=0), 0, atol=1e-10)
+    if fit_intercept:
+        clf.intercept_.sum(axis=0) == pytest.approx(0, abs=1e-15)

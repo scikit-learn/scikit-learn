@@ -13,11 +13,11 @@ from .utils import check_random_state
 from .utils.validation import _num_samples
 from .utils.validation import check_array
 from .utils.validation import check_consistent_length
-from .utils.validation import check_is_fitted
+from .utils.validation import check_is_fitted, _check_sample_weight
 from .utils.random import _random_choice_csc
 from .utils.stats import _weighted_percentile
 from .utils.multiclass import class_distribution
-from .utils import deprecated
+from .utils.validation import _deprecate_positional_args
 
 
 class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
@@ -29,9 +29,12 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <dummy_estimators>`.
 
+    .. versionadded:: 0.13
+
     Parameters
     ----------
-    strategy : str, default="stratified"
+    strategy : {"stratified", "most_frequent", "prior", "uniform", \
+            "constant"}, default="prior"
         Strategy to use to generate predictions.
 
         * "stratified": generates predictions by respecting the training
@@ -45,15 +48,15 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
           the user. This is useful for metrics that evaluate a non-majority
           class
 
-          .. versionadded:: 0.17
-             Dummy Classifier now supports prior fitting strategy using
-             parameter *prior*.
+          .. versionchanged:: 0.24
+             The default value of `strategy` has changed to "prior" in version
+             0.24.
 
-    random_state : int, RandomState instance or None, optional, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None, default=None
+        Controls the randomness to generate the predictions when
+        ``strategy='stratified'`` or ``strategy='uniform'``.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     constant : int or str or array-like of shape (n_outputs,)
         The explicit constant as predicted by the "constant" strategy. This
@@ -61,19 +64,19 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
     Attributes
     ----------
-    classes_ : array or list of array of shape (n_classes,)
+    classes_ : ndarray of shape (n_classes,) or list thereof
         Class labels for each output.
 
-    n_classes_ : array or list of array of shape (n_classes,)
+    n_classes_ : int or list of int
         Number of label for each output.
 
-    class_prior_ : array or list of array of shape (n_classes,)
+    class_prior_ : ndarray of shape (n_classes,) or list thereof
         Probability of each class for each output.
 
-    n_outputs_ : int,
+    n_outputs_ : int
         Number of outputs.
 
-    sparse_output_ : bool,
+    sparse_output_ : bool
         True if the array returned from predict is to be in sparse CSC format.
         Is automatically set to True if the input y is passed in sparse format.
 
@@ -91,8 +94,8 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
     >>> dummy_clf.score(X, y)
     0.75
     """
-
-    def __init__(self, strategy="stratified", random_state=None,
+    @_deprecate_positional_args
+    def __init__(self, *, strategy="prior", random_state=None,
                  constant=None):
         self.strategy = strategy
         self.random_state = random_state
@@ -103,8 +106,8 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, object with finite length or shape}
-            Training data, requires length = n_samples
+        X : array-like of shape (n_samples, n_features)
+            Training data.
 
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             Target values.
@@ -118,11 +121,14 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         """
         allowed_strategies = ("most_frequent", "stratified", "uniform",
                               "constant", "prior")
+
         if self.strategy not in allowed_strategies:
             raise ValueError("Unknown strategy type: %s, expected one of %s."
                              % (self.strategy, allowed_strategies))
 
-        if self.strategy == "uniform" and sp.issparse(y):
+        self._strategy = self.strategy
+
+        if self._strategy == "uniform" and sp.issparse(y):
             y = y.toarray()
             warnings.warn('A local copy of the target data has been converted '
                           'to a numpy array. Predicting on sparse target data '
@@ -141,9 +147,14 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
         self.n_outputs_ = y.shape[1]
 
-        check_consistent_length(X, y, sample_weight)
+        self.n_features_in_ = None  # No input validation is done for X
 
-        if self.strategy == "constant":
+        check_consistent_length(X, y)
+
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X)
+
+        if self._strategy == "constant":
             if self.constant is None:
                 raise ValueError("Constant target value has to be specified "
                                  "when the constant strategy is used.")
@@ -157,7 +168,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
          self.n_classes_,
          self.class_prior_) = class_distribution(y, sample_weight)
 
-        if self.strategy == "constant":
+        if self._strategy == "constant":
             for k in range(self.n_outputs_):
                 if not any(constant[k][0] == c for c in self.classes_[k]):
                     # Checking in case of constant strategy if the constant
@@ -180,8 +191,8 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, object with finite length or shape}
-            Training data, requires length = n_samples
+        X : array-like of shape (n_samples, n_features)
+            Test data.
 
         Returns
         -------
@@ -206,43 +217,43 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
             class_prior_ = [class_prior_]
             constant = [constant]
         # Compute probability only once
-        if self.strategy == "stratified":
+        if self._strategy == "stratified":
             proba = self.predict_proba(X)
             if self.n_outputs_ == 1:
                 proba = [proba]
 
         if self.sparse_output_:
             class_prob = None
-            if self.strategy in ("most_frequent", "prior"):
+            if self._strategy in ("most_frequent", "prior"):
                 classes_ = [np.array([cp.argmax()]) for cp in class_prior_]
 
-            elif self.strategy == "stratified":
+            elif self._strategy == "stratified":
                 class_prob = class_prior_
 
-            elif self.strategy == "uniform":
+            elif self._strategy == "uniform":
                 raise ValueError("Sparse target prediction is not "
                                  "supported with the uniform strategy")
 
-            elif self.strategy == "constant":
+            elif self._strategy == "constant":
                 classes_ = [np.array([c]) for c in constant]
 
             y = _random_choice_csc(n_samples, classes_, class_prob,
-                                  self.random_state)
+                                   self.random_state)
         else:
-            if self.strategy in ("most_frequent", "prior"):
+            if self._strategy in ("most_frequent", "prior"):
                 y = np.tile([classes_[k][class_prior_[k].argmax()] for
                              k in range(self.n_outputs_)], [n_samples, 1])
 
-            elif self.strategy == "stratified":
+            elif self._strategy == "stratified":
                 y = np.vstack([classes_[k][proba[k].argmax(axis=1)] for
                                k in range(self.n_outputs_)]).T
 
-            elif self.strategy == "uniform":
+            elif self._strategy == "uniform":
                 ret = [classes_[k][rs.randint(n_classes_[k], size=n_samples)]
                        for k in range(self.n_outputs_)]
                 y = np.vstack(ret).T
 
-            elif self.strategy == "constant":
+            elif self._strategy == "constant":
                 y = np.tile(self.constant, (n_samples, 1))
 
             if self.n_outputs_ == 1:
@@ -256,12 +267,12 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, object with finite length or shape}
-            Training data, requires length = n_samples
+        X : array-like of shape (n_samples, n_features)
+            Test data.
 
         Returns
         -------
-        P : array-like or list of array-lke of shape (n_samples, n_classes)
+        P : ndarray of shape (n_samples, n_classes) or list thereof
             Returns the probability of the sample for each class in
             the model, where classes are ordered arithmetically, for each
             output.
@@ -286,22 +297,22 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
         P = []
         for k in range(self.n_outputs_):
-            if self.strategy == "most_frequent":
+            if self._strategy == "most_frequent":
                 ind = class_prior_[k].argmax()
                 out = np.zeros((n_samples, n_classes_[k]), dtype=np.float64)
                 out[:, ind] = 1.0
-            elif self.strategy == "prior":
+            elif self._strategy == "prior":
                 out = np.ones((n_samples, 1)) * class_prior_[k]
 
-            elif self.strategy == "stratified":
+            elif self._strategy == "stratified":
                 out = rs.multinomial(1, class_prior_[k], size=n_samples)
                 out = out.astype(np.float64)
 
-            elif self.strategy == "uniform":
+            elif self._strategy == "uniform":
                 out = np.ones((n_samples, n_classes_[k]), dtype=np.float64)
                 out /= n_classes_[k]
 
-            elif self.strategy == "constant":
+            elif self._strategy == "constant":
                 ind = np.where(classes_[k] == constant[k])
                 out = np.zeros((n_samples, n_classes_[k]), dtype=np.float64)
                 out[:, ind] = 1.0
@@ -324,7 +335,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
         Returns
         -------
-        P : array-like or list of array-like of shape (n_samples, n_classes)
+        P : ndarray of shape (n_samples, n_classes) or list thereof
             Returns the log probability of the sample for each class in
             the model, where classes are ordered arithmetically for each
             output.
@@ -336,7 +347,15 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
             return [np.log(p) for p in proba]
 
     def _more_tags(self):
-        return {'poor_score': True, 'no_validation': True}
+        return {
+            'poor_score': True, 'no_validation': True,
+            '_xfail_checks': {
+                'check_methods_subset_invariance':
+                'fails for the predict method',
+                'check_methods_sample_order_invariance':
+                'fails for the predict method'
+            }
+        }
 
     def score(self, X, y, sample_weight=None):
         """Returns the mean accuracy on the given test data and labels.
@@ -347,9 +366,8 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, None}
-            Test samples with shape = (n_samples, n_features) or
-            None. Passing None as test samples gives the same result
+        X : None or array-like of shape (n_samples, n_features)
+            Test samples. Passing None as test samples gives the same result
             as passing real test samples, since DummyClassifier
             operates independently of the sampled observations.
 
@@ -369,15 +387,6 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
             X = np.zeros(shape=(len(y), 1))
         return super().score(X, y, sample_weight)
 
-    @deprecated(
-        "The outputs_2d_ attribute is deprecated in version 0.22 "
-        "and will be removed in version 0.24. It is equivalent to "
-        "n_outputs_ > 1."
-    )
-    @property
-    def outputs_2d_(self):
-        return self.n_outputs_ != 1
-
 
 class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     """
@@ -389,9 +398,11 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <dummy_estimators>`.
 
+    .. versionadded:: 0.13
+
     Parameters
     ----------
-    strategy : str
+    strategy : {"mean", "median", "quantile", "constant"}, default="mean"
         Strategy to use to generate predictions.
 
         * "mean": always predicts the mean of the training set
@@ -401,22 +412,22 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         * "constant": always predicts a constant value that is provided by
           the user.
 
-    constant : int or float or array-like of shape (n_outputs,)
+    constant : int or float or array-like of shape (n_outputs,), default=None
         The explicit constant as predicted by the "constant" strategy. This
         parameter is useful only for the "constant" strategy.
 
-    quantile : float in [0.0, 1.0]
+    quantile : float in [0.0, 1.0], default=None
         The quantile to predict using the "quantile" strategy. A quantile of
         0.5 corresponds to the median, while 0.0 to the minimum and 1.0 to the
         maximum.
 
     Attributes
     ----------
-    constant_ : array, shape (1, n_outputs)
+    constant_ : ndarray of shape (1, n_outputs)
         Mean or median or quantile of the training targets or constant value
         given by the user.
 
-    n_outputs_ : int,
+    n_outputs_ : int
         Number of outputs.
 
     Examples
@@ -433,8 +444,8 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     >>> dummy_regr.score(X, y)
     0.0
     """
-
-    def __init__(self, strategy="mean", constant=None, quantile=None):
+    @_deprecate_positional_args
+    def __init__(self, *, strategy="mean", constant=None, quantile=None):
         self.strategy = strategy
         self.constant = constant
         self.quantile = quantile
@@ -444,8 +455,8 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, object with finite length or shape}
-            Training data, requires length = n_samples
+        X : array-like of shape (n_samples, n_features)
+            Training data.
 
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             Target values.
@@ -463,6 +474,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                              % (self.strategy, allowed_strategies))
 
         y = check_array(y, ensure_2d=False)
+        self.n_features_in_ = None  # No input validation is done for X
         if len(y) == 0:
             raise ValueError("y must not be empty.")
 
@@ -471,8 +483,9 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self.n_outputs_ = y.shape[1]
 
         check_consistent_length(X, y, sample_weight)
+
         if sample_weight is not None:
-            sample_weight = np.asarray(sample_weight)
+            sample_weight = _check_sample_weight(sample_weight, X)
 
         if self.strategy == "mean":
             self.constant_ = np.average(y, axis=0, weights=sample_weight)
@@ -523,12 +536,14 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, object with finite length or shape}
-            Training data, requires length = n_samples
+        X : array-like of shape (n_samples, n_features)
+            Test data.
 
-        return_std : boolean, optional
+        return_std : bool, default=False
             Whether to return the standard deviation of posterior prediction.
             All zeros in this case.
+
+            .. versionadded:: 0.20
 
         Returns
         -------
@@ -567,13 +582,8 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, None}
-            Test samples with shape = (n_samples, n_features) or None.
-            For some estimators this may be a
-            precomputed kernel matrix instead, shape = (n_samples,
-            n_samples_fitted], where n_samples_fitted is the number of
-            samples used in the fitting for the estimator.
-            Passing None as test samples gives the same result
+        X : None or array-like of shape (n_samples, n_features)
+            Test samples. Passing None as test samples gives the same result
             as passing real test samples, since DummyRegressor
             operates independently of the sampled observations.
 
@@ -591,12 +601,3 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         if X is None:
             X = np.zeros(shape=(len(y), 1))
         return super().score(X, y, sample_weight)
-
-    @deprecated(
-        "The outputs_2d_ attribute is deprecated in version 0.22 "
-        "and will be removed in version 0.24. It is equivalent to "
-        "n_outputs_ > 1."
-    )
-    @property
-    def outputs_2d_(self):
-        return self.n_outputs_ != 1

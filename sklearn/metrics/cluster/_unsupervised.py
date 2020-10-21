@@ -16,7 +16,7 @@ from ...utils import _safe_indexing
 from ..pairwise import pairwise_distances_chunked
 from ..pairwise import pairwise_distances
 from ...preprocessing import LabelEncoder
-from ...utils import deprecated
+from ...utils.validation import _deprecate_positional_args
 
 
 def check_number_of_labels(n_labels, n_samples):
@@ -25,17 +25,18 @@ def check_number_of_labels(n_labels, n_samples):
     Parameters
     ----------
     n_labels : int
-        Number of labels
+        Number of labels.
 
     n_samples : int
-        Number of samples
+        Number of samples.
     """
     if not 1 < n_labels < n_samples:
         raise ValueError("Number of labels is %d. Valid values are 2 "
                          "to n_samples - 1 (inclusive)" % n_labels)
 
 
-def silhouette_score(X, labels, metric='euclidean', sample_size=None,
+@_deprecate_positional_args
+def silhouette_score(X, labels, *, metric='euclidean', sample_size=None,
                      random_state=None, **kwds):
     """Compute the mean Silhouette Coefficient of all samples.
 
@@ -45,7 +46,7 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
     b)``.  To clarify, ``b`` is the distance between a sample and the nearest
     cluster that the sample is not a part of.
     Note that Silhouette Coefficient is only defined if number of labels
-    is 2 <= n_labels <= n_samples - 1.
+    is ``2 <= n_labels <= n_samples - 1``.
 
     This function returns the mean Silhouette Coefficient over all samples.
     To obtain the values for each sample, use :func:`silhouette_samples`.
@@ -58,31 +59,30 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
 
     Parameters
     ----------
-    X : array [n_samples_a, n_samples_a] if metric == "precomputed", or, \
-             [n_samples_a, n_features] otherwise
-        Array of pairwise distances between samples, or a feature array.
+    X : array-like of shape (n_samples_a, n_samples_a) if metric == \
+            "precomputed" or (n_samples_a, n_features) otherwise
+        An array of pairwise distances between samples, or a feature array.
 
-    labels : array, shape = [n_samples]
-         Predicted labels for each sample.
+    labels : array-like of shape (n_samples,)
+        Predicted labels for each sample.
 
-    metric : string, or callable
+    metric : str or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
         allowed by :func:`metrics.pairwise.pairwise_distances
-        <sklearn.metrics.pairwise.pairwise_distances>`. If X is the distance
-        array itself, use ``metric="precomputed"``.
+        <sklearn.metrics.pairwise.pairwise_distances>`. If ``X`` is
+        the distance array itself, use ``metric="precomputed"``.
 
-    sample_size : int or None
+    sample_size : int, default=None
         The size of the sample to use when computing the Silhouette Coefficient
         on a random subset of the data.
         If ``sample_size is None``, no sampling is used.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        The generator used to randomly select a subset of samples.  If int,
-        random_state is the seed used by the random number generator; If
-        RandomState instance, random_state is the random number generator; If
-        None, the random number generator is the RandomState instance used by
-        `np.random`. Used when ``sample_size is not None``.
+    random_state : int, RandomState instance or None, default=None
+        Determines random number generation for selecting a subset of samples.
+        Used when ``sample_size is not None``.
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     **kwds : optional keyword parameters
         Any further parameters are passed directly to the distance function.
@@ -118,18 +118,18 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
 
 
 def _silhouette_reduce(D_chunk, start, labels, label_freqs):
-    """Accumulate silhouette statistics for vertical chunk of X
+    """Accumulate silhouette statistics for vertical chunk of X.
 
     Parameters
     ----------
-    D_chunk : shape (n_chunk_samples, n_samples)
-        precomputed distances for a chunk
+    D_chunk : array-like of shape (n_chunk_samples, n_samples)
+        Precomputed distances for a chunk.
     start : int
-        first index in chunk
-    labels : array, shape (n_samples,)
-        corresponding cluster labels, encoded as {0, ..., n_clusters-1}
-    label_freqs : array
-        distribution of cluster labels in ``labels``
+        First index in the chunk.
+    labels : array-like of shape (n_samples,)
+        Corresponding cluster labels, encoded as {0, ..., n_clusters-1}.
+    label_freqs : array-like
+        Distribution of cluster labels in ``labels``.
     """
     # accumulate distances from each sample to each cluster
     clust_dists = np.zeros((len(D_chunk), len(label_freqs)),
@@ -149,7 +149,8 @@ def _silhouette_reduce(D_chunk, start, labels, label_freqs):
     return intra_clust_dists, inter_clust_dists
 
 
-def silhouette_samples(X, labels, metric='euclidean', **kwds):
+@_deprecate_positional_args
+def silhouette_samples(X, labels, *, metric='euclidean', **kwds):
     """Compute the Silhouette Coefficient for each sample.
 
     The Silhouette Coefficient is a measure of how well samples are clustered
@@ -163,7 +164,7 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
     sample.  The Silhouette Coefficient for a sample is ``(b - a) / max(a,
     b)``.
     Note that Silhouette Coefficient is only defined if number of labels
-    is 2 <= n_labels <= n_samples - 1.
+    is 2 ``<= n_labels <= n_samples - 1``.
 
     This function returns the Silhouette Coefficient for each sample.
 
@@ -174,19 +175,19 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
 
     Parameters
     ----------
-    X : array [n_samples_a, n_samples_a] if metric == "precomputed", or, \
-             [n_samples_a, n_features] otherwise
-        Array of pairwise distances between samples, or a feature array.
+    X : array-like of shape (n_samples_a, n_samples_a) if metric == \
+            "precomputed" or (n_samples_a, n_features) otherwise
+        An array of pairwise distances between samples, or a feature array.
 
-    labels : array, shape = [n_samples]
-             label values for each sample
+    labels : array-like of shape (n_samples,)
+        Label values for each sample.
 
-    metric : string, or callable
+    metric : str or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
-        allowed by :func:`sklearn.metrics.pairwise.pairwise_distances`. If X is
-        the distance array itself, use "precomputed" as the metric. Precomputed
-        distance matrices must have 0 along the diagonal.
+        allowed by :func:`sklearn.metrics.pairwise.pairwise_distances`.
+        If ``X`` is the distance array itself, use "precomputed" as the metric.
+        Precomputed distance matrices must have 0 along the diagonal.
 
     `**kwds` : optional keyword parameters
         Any further parameters are passed directly to the distance function.
@@ -195,8 +196,8 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
 
     Returns
     -------
-    silhouette : array, shape = [n_samples]
-        Silhouette Coefficient for each samples.
+    silhouette : array-like of shape (n_samples,)
+        Silhouette Coefficients for each sample.
 
     References
     ----------
@@ -259,11 +260,11 @@ def calinski_harabasz_score(X, labels):
 
     Parameters
     ----------
-    X : array-like, shape (``n_samples``, ``n_features``)
-        List of ``n_features``-dimensional data points. Each row corresponds
+    X : array-like of shape (n_samples, n_features)
+        A list of ``n_features``-dimensional data points. Each row corresponds
         to a single data point.
 
-    labels : array-like, shape (``n_samples``,)
+    labels : array-like of shape (n_samples,)
         Predicted labels for each sample.
 
     Returns
@@ -299,13 +300,6 @@ def calinski_harabasz_score(X, labels):
             (intra_disp * (n_labels - 1.)))
 
 
-@deprecated("Function 'calinski_harabaz_score' has been renamed to "
-            "'calinski_harabasz_score' "
-            "and will be removed in version 0.23.")
-def calinski_harabaz_score(X, labels):
-    return calinski_harabasz_score(X, labels)
-
-
 def davies_bouldin_score(X, labels):
     """Computes the Davies-Bouldin score.
 
@@ -318,13 +312,15 @@ def davies_bouldin_score(X, labels):
 
     Read more in the :ref:`User Guide <davies-bouldin_index>`.
 
+    .. versionadded:: 0.20
+
     Parameters
     ----------
-    X : array-like, shape (``n_samples``, ``n_features``)
-        List of ``n_features``-dimensional data points. Each row corresponds
+    X : array-like of shape (n_samples, n_features)
+        A list of ``n_features``-dimensional data points. Each row corresponds
         to a single data point.
 
-    labels : array-like, shape (``n_samples``,)
+    labels : array-like of shape (n_samples,)
         Predicted labels for each sample.
 
     Returns
@@ -348,7 +344,7 @@ def davies_bouldin_score(X, labels):
     check_number_of_labels(n_labels, n_samples)
 
     intra_dists = np.zeros(n_labels)
-    centroids = np.zeros((n_labels, len(X[0])), dtype=np.float)
+    centroids = np.zeros((n_labels, len(X[0])), dtype=float)
     for k in range(n_labels):
         cluster_k = _safe_indexing(X, labels == k)
         centroid = cluster_k.mean(axis=0)
