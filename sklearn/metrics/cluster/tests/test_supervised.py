@@ -433,23 +433,6 @@ def test_rand_score_edge_cases(clustering1, clustering2):
     assert_allclose(rand_score(clustering1, clustering2), 1.)
 
 
-def test_rand_score_fully_dispersed():
-    # edge case: every element is its own cluster
-    N = 100
-    clustering1 = list(range(N))
-    clustering2 = clustering1
-    expected = 1.
-    assert_allclose(rand_score(clustering1, clustering2), expected)
-
-
-def test_rand_score_single_cluster():
-    N = 100
-    clustering1 = np.zeros((N,))
-    clustering2 = clustering1
-    expected = 1.
-    assert_allclose(rand_score(clustering1, clustering2), expected)
-
-
 def test_rand_score():
     # regular case: different non-trivial clusterings
     clustering1 = [0, 0, 0, 1, 1, 1]
