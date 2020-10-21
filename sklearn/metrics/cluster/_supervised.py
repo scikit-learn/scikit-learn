@@ -226,7 +226,7 @@ def pair_confusion_matrix(labels_true, labels_pred):
     C[1, 1] = sum_squares - n_samples
     C[0, 1] = contingency.dot(n_k).sum() - sum_squares
     C[1, 0] = contingency.transpose().dot(n_c).sum() - sum_squares
-    C[0, 0] = n_samples ** 2  - C[0, 1] - C[1, 0] - sum_squares
+    C[0, 0] = n_samples ** 2 - C[0, 1] - C[1, 0] - sum_squares
     return C
 
 
