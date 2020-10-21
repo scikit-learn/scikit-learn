@@ -154,19 +154,22 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n):
         _raise_typeerror(X)
 
     if not (np.size(last_mean) == np.size(last_var) == np.size(last_n)):
-        raise ValueError("last_mean, last_var, last_n do not have the "
-                         "same shapes.")
+        raise ValueError(
+            "last_mean, last_var, last_n do not have the same shapes."
+        )
 
     if axis == 1:
         if np.size(last_mean) != X.shape[0]:
-            raise ValueError("If axis=1, then last_mean, last_n, last_var "
-                             "should be of size n_samples %d (Got %d)." %
-                             (X.shape[0], np.size(last_mean)))
+            raise ValueError(
+                f"If axis=1, then last_mean, last_n, last_var should be of "
+                f"size n_samples {X.shape[0]} (Got {np.size(last_mean)})."
+            )
     else:  # axis == 0
         if np.size(last_mean) != X.shape[1]:
-            raise ValueError("If axis=0, then last_mean, last_n, last_var "
-                             "should be of size n_features %d (Got %d)." %
-                             (X.shape[1], np.size(last_mean)))
+            raise ValueError(
+                f"If axis=0, then last_mean, last_n, last_var should be of "
+                f"size n_features {X.shape[1]} (Got {np.size(last_mean)})."
+            )
 
     if isinstance(X, sp.csr_matrix):
         if axis == 0:
