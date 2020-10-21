@@ -9,6 +9,7 @@
 
 
 from itertools import chain, combinations
+import numbers
 import warnings
 from itertools import combinations_with_replacement as combinations_w_r
 
@@ -631,10 +632,8 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         The variance for each feature in the training set. Used to compute
         `scale_`. Equal to ``None`` when ``with_std=False``.
 
-    n_samples_seen_ : int, float or ndarray of shape (n_features,)
-        Sum of weights processed so far by the estimator for each feature.
-        If `sample_weight` is not used it is equivalent to the number
-        of samples processed by the estimator for each feature.
+    n_samples_seen_ : int or ndarray of shape (n_features,)
+        The number of samples processed by the estimator for each feature.
         If there are not missing samples, the ``n_samples_seen`` will be an
         integer, otherwise it will be an array.
         Will be reset on new calls to fit, but increments across
@@ -773,15 +772,13 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         # This is needed for the incremental computation of the var
         # See incr_mean_variance_axis and _incremental_mean_variance_axis
 
-        # if n_samples_seen_ is not ndarray (i.e. no missing values),
-        # we need to transform it to a NumPy array of shape (n_features,)
-        # required by incr_mean_variance_axis and _incremental_variance_axis
-        if (hasattr(self,
-                    'n_samples_seen_') and not isinstance(self.n_samples_seen_,
-                                                          np.ndarray)):
+        # if n_samples_seen_ is an integer (i.e. no missing values), we need to
+        # transform it to a NumPy array of shape (n_features,) required by
+        # incr_mean_variance_axis and _incremental_variance_axis
+        if (hasattr(self, 'n_samples_seen_') and
+                isinstance(self.n_samples_seen_, numbers.Integral)):
             self.n_samples_seen_ = np.repeat(
-                self.n_samples_seen_, X.shape[1]).astype(
-                    self.n_samples_seen_.dtype, copy=False)
+                self.n_samples_seen_, X.shape[1]).astype(np.int64, copy=False)
 
         if sparse.issparse(X):
             if self.with_mean:
