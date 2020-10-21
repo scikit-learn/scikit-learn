@@ -343,7 +343,7 @@ def test_standard_scaler_sample_weight(Xw, X, sample_weight):
                            [[0, 0, 1, np.nan, 2, 0],
                             [0, 0, 1, np.nan, 2, 0],
                             [0, 3, np.nan, np.nan, np.nan, 2]],
-                           [2., 1.]),
+                           [1., 2.]),
                           ([[1, 0, 1], [0, 0, 1]],
                            [[1, 0, 1], [0, 0, 1], [0, 0, 1], [0, 0, 1]],
                            np.array([1, 3]))
