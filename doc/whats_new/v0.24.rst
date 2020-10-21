@@ -692,6 +692,11 @@ Changelog
   with different endianness.
   :pr:`17644` by :user:`Qi Zhang <qzhang90>`.
 
+- |Fix| Check that we raise proper error when axis=1 and the
+  dimensions do not match in :func:`utils.sparse_func.incr_mean_variance_axis`.
+  By :user:`Alex Gramfort <agramfort>`.
+
+
 Miscellaneous
 .............
 
