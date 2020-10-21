@@ -1202,12 +1202,17 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
         if H.dtype != X.dtype:
             raise TypeError("H should have the same dtype as X. Got H.dtype = "
                             "{}.".format(H.dtype))
-        # 'mu' solver should not be initialized by zeros
-        if solver == 'mu':
-            avg = np.sqrt(X.mean() / n_components)
-            W = np.full((n_samples, n_components), avg, dtype=X.dtype)
+
+        if init != 'custom':
+            W, _ = _initialize_nmf(X, n_components, init=init,
+                                   random_state=random_state)
         else:
-            W = np.zeros((n_samples, n_components), dtype=X.dtype)
+            # 'mu' solver should not be initialized by zeros
+            if solver == 'mu':
+                avg = np.sqrt(X.mean() / n_components)
+                W = np.full((n_samples, n_components), avg, dtype=X.dtype)
+            else:
+                W = np.zeros((n_samples, n_components), dtype=X.dtype)
     else:
         W, H = _initialize_nmf(X, n_components, init=init,
                                random_state=random_state)
@@ -1770,7 +1775,14 @@ class MiniBatchNMF(NMF):
         return W
 
     def partial_fit(self, X, y=None, **params):
-        if hasattr(self, 'components_'):
+        is_first_call_to_partial_fit = not hasattr(self, 'components_')
+
+        X = self._validate_data(X, accept_sparse='csr',
+                                dtype=[np.float64, np.float32],
+                                order='C', accept_large_sparse=False,
+                                reset=is_first_call_to_partial_fit)
+
+        if not is_first_call_to_partial_fit:
 
             # Compute W given H and X using NMF.transform
             W, _, n_iter_, = non_negative_factorization(
