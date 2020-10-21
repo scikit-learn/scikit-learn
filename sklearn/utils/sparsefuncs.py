@@ -131,15 +131,15 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n):
 
     Returns
     -------
-    means : ndarray, shape (n_features,) or (n_samples,), dtype=floating
+    means : ndarray of shape (n_features,) or (n_samples,), dtype=floating
         Updated feature-wise means if axis = 0 or
         sample-wise means if axis = 1.
 
-    variances : ndarray, shape (n_features,) or (n_samples,), dtype=floating
+    variances : ndarray of shape (n_features,) or (n_samples,), dtype=floating
         Updated feature-wise variances if axis = 0 or
         sample-wise variances if axis = 1.
 
-    n : ndarray, shape (n_features,) or (n_samples,), dtype=integral
+    n : ndarray of shape (n_features,) or (n_samples,), dtype=integral
         Updated number of seen samples per feature if axis=0
         or number of seen features per sample if axis=1.
 
