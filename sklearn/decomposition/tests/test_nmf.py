@@ -309,12 +309,16 @@ def test_non_negative_factorization_checking():
     msg = "Invalid regularization parameter: got 'spam' instead of one of"
     assert_raise_message(ValueError, msg, nnmf, A, A, 0 * A, 2, init='custom',
                          regularization='spam')
+    # FIXME : should be removed in 0.26
+    init = 'nndsvda'
     msg = ("Number of samples per batch must be a positive integer; "
-           "got (batch_size=0.5")
-    assert_raise_message(ValueError, msg, nnmf, A, A, A, 2, batch_size=0.5)
+           "got (batch_size=0.5)")
+    assert_raise_message(ValueError, msg, nnmf, A, A, A, 2,
+                         batch_size=0.5, init=init)
     msg = ("Number of samples per batch must be a positive integer; "
-           "got (batch_size='3'")
-    assert_raise_message(ValueError, msg, nnmf, A, A, A, 2, batch_size='3')
+           "got (batch_size='3')")
+    assert_raise_message(ValueError, msg, nnmf, A, A, A, 2,
+                         batch_size='3', init=init)
 
 
 def _beta_divergence_dense(X, W, H, beta):
