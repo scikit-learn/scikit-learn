@@ -50,8 +50,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
             # TODO: Remove !=1.1.0 when the following is fixed:
             # sklearn/svm/_libsvm.cpython-38-darwin.so,
             # 2): Symbol not found: _svm_check_parameter error
-            TO_INSTALL="$TO_INSTALL conda-forge::compilers>=1.0.4,!=1.1.0 \
-                        conda-forge::llvm-openmp"
+            TO_INSTALL="$TO_INSTALL compilers>=1.0.4,!=1.1.0 llvm-openmp"
         fi
     fi
 	make_conda $TO_INSTALL
