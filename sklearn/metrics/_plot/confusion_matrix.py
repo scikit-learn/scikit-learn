@@ -4,6 +4,7 @@ import numpy as np
 
 from .. import confusion_matrix
 from ...utils import check_matplotlib_support
+from ...utils.multiclass import unique_labels
 from ...utils.validation import _deprecate_positional_args
 from ...base import is_classifier
 
@@ -262,7 +263,7 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
 
     if display_labels is None:
         if labels is None:
-            display_labels = estimator.classes_
+            display_labels = unique_labels(y_true, y_pred)
         else:
             display_labels = labels
 
