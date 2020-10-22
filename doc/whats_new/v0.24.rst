@@ -63,7 +63,8 @@ Changelog
   of calibration via an ensemble of calibrators (current method) or
   just one calibrator using all the data (similar to the built-in feature of
   :mod:`sklearn.svm` estimators with the `probabilities=True` parameter).
-  :pr:`17856` by :user:`Lucy Liu <lucyleeow>`.
+  :pr:`17856` by :user:`Lucy Liu <lucyleeow>` and
+  :user:`Andrea Esuli <aesuli>`.
 
 :mod:`sklearn.cluster`
 ......................
