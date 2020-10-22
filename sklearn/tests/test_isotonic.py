@@ -512,7 +512,9 @@ def test_make_unique_dtype():
 
 
 def test_make_unique_tol():
-    x = np.array([0, 1e-16, 1, 1+1e-15])
+    x = np.array([0, 1e-16, 1, 1+1e-14])
+    diff = 1+1e-13 - 1
+    # print(f'diff {diff}\n diff > 1e-15 {diff > 1e-15}')
     y = x.copy()
     w = np.ones_like(x)
     results = _make_unique(x, y, w)

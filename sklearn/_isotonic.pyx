@@ -76,7 +76,6 @@ def _make_unique(np.ndarray[dtype=floating] X,
 
     Assumes that X is ordered, so that all duplicates follow each other.
     """
-    print('hello')
     unique_values = len(np.unique(X))
     if unique_values == len(X):
         return X, y, sample_weights
@@ -96,8 +95,10 @@ def _make_unique(np.ndarray[dtype=floating] X,
     cdef int n_samples = len(X)
     for j in range(n_samples):
         x = X[j]
+        diff = x - current_x
+        print(diff)
         if x - current_x >= 1e-15:
-            print('hello')
+            print(f'diff is greater than')
             # next unique value
             x_out[i] = current_x
             weights_out[i] = current_weight
