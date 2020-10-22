@@ -683,29 +683,31 @@ def test_minibatch_nmf_partial_fit():
                               decimal=2)
 
 
-def test_minibatch_nmf_auxiliary_matrices():
+def test_minibatch_nmf_auxiliary_matrices_and_iteroffset():
     rng = np.random.mtrand.RandomState(42)
     X = np.abs(rng.randn(48, 5))
 
     beta_loss = 'itakura-saito'
 
-    W1, H1, n_iter, A1, B1 = non_negative_factorization(
+    W1, H1, n_iter, A1, B1, iter_offset = non_negative_factorization(
         X, init='nndsvdar', solver='mu',
         beta_loss=beta_loss,
         random_state=1, tol=1e-2, batch_size=48, max_iter=1)
+
+    assert iter_offset == 1
 
     A = A1.copy()
     B = B1.copy()
 
     delta_H, A2, B2 = nmf._multiplicative_update_h(
-        X, W1, H1, A1, B1, 0, 0, 0, 0, 1, 1
+        X, W1, H1, A1, B1, 0, 0, 0, True, 1, 1
     )
 
     assert_array_equal(A, A2)
     assert_array_equal(B, B2)
 
     delta_H, A3, B3 = nmf._multiplicative_update_h(
-        X, W1, H1, A1, B1, 0, 0, 0, n_iter, 1, 1
+        X, W1, H1, A1, B1, 0, 0, 0, False, 1, 1
     )
 
     assert np.sum((A-A3)**2., axis=(0, 1)) > 1e-3
