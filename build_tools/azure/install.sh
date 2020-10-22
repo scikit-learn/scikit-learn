@@ -27,7 +27,13 @@ source build_tools/shared.sh
 
 if [[ "$DISTRIB" == "conda" ]]; then
 
-    TO_INSTALL="python=$PYTHON_VERSION ccache pip blas[build=$BLAS]"
+    if [[ "CONDA_CHANNEL" != "" ]]; then
+        TO_INSTALL="-c $CONDA_CHANNEL"
+    else
+        TO_INSTALL=""
+    fi
+
+    TO_INSTALL="$TO_INSTALL python=$PYTHON_VERSION ccache pip blas[build=$BLAS]"
 
     TO_INSTALL="$TO_INSTALL $(get_dep numpy $NUMPY_VERSION)"
     TO_INSTALL="$TO_INSTALL $(get_dep scipy $SCIPY_VERSION)"
