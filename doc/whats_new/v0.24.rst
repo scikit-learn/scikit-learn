@@ -252,6 +252,11 @@ Changelog
   values for one categorical feature. :pr:`17367` by :user:`Peng Yu <yupbank>`
   and :user:`Chiara Marmo <cmarmo>`.
 
+- |Fix| :class:`feature_extraction.CountVectorizer` raises an issue if a
+  custom token pattern which capture more than one group is provided.
+  :pr:`15427` by :user:`Gangesh Gudmalwar <ggangesh>` and
+  :user:`Erin R Hoffman <hoffm386>`.
+
 :mod:`sklearn.feature_selection`
 ................................
 
@@ -448,6 +453,12 @@ Changelog
   `classifier.classes_[1]`. This is especially important when training
   classifiers directly with string labeled target classes.
   :pr:`#18114` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| Fixed bug in :func:`metrics.plot_confusion_matrix` where error occurs
+  when `y_true` contains labels that were not previously seen by the classifier
+  while the `labels` and `display_labels` parameters are set to `None`.
+  :pr:`18405` by :user:`Thomas J. Fan <thomasjpfan>` and
+  :user:`Yakov Pchelintsev <kyouma>`.
 
 :mod:`sklearn.model_selection`
 ..............................
@@ -686,6 +697,11 @@ Changelog
 - |Fix| Allow serialized tree based models to be unpickled on a machine
   with different endianness.
   :pr:`17644` by :user:`Qi Zhang <qzhang90>`.
+
+- |Fix| Check that we raise proper error when axis=1 and the
+  dimensions do not match in :func:`utils.sparse_func.incr_mean_variance_axis`.
+  By :user:`Alex Gramfort <agramfort>`.
+
 
 Miscellaneous
 .............
