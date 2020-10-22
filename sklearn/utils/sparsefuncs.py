@@ -127,8 +127,8 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n,
         Array of variances to update with the new data X.
         Should be of shape (n_features,) if axis=0 or (n_samples,) if axis=1.
 
-    last_n : float |
-            ndarray of shape (n_features,) or (n_samples,), dtype=floating
+    last_n : float or ndarray of shape (n_features,) or (n_samples,), \
+            dtype=floating
         Sum of the weights seen so far, excluding the current weights
         If not float, it should be of shape (n_samples,) if
         axis=0 or (n_features,) if axis=1. If float it corresponds to
