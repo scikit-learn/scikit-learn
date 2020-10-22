@@ -522,15 +522,11 @@ def test_make_unique_tol():
 
 def test_isotonic_inf():
     # Check that inf values are not returned
-    X_train = np.array([[1.9, 1.18], [1.34, 1.06], [2.22, 6.8],
-                       [-1.37, 0.87], [0.12, -2.94]])
-    X_test = np.array([[-1.28, 0.23], [1.67, -1.36], [1.82, -2.92]])
-    y_train = np.array([1, 0, 1, 1, 0])
-    # X = np.array([0., 4.1e-320, 4.4e-314, 1.])
-    # y = np.array([0.42, 0.42, 0.44, 0.44])
-    ireg = IsotonicRegression().fit(X_train, y_train)
-    y_pred = ireg.predict(X_test)
-    print(y_pred)
+    X = np.array([0., 4.1e-320, 4.4e-314, 1.])
+    y = np.array([0.42, 0.42, 0.44, 0.44])
+    ireg = IsotonicRegression().fit(X, y)
+    y_pred = ireg.predict(np.array([0, 2.1e-319, 5.4e-316, 1e-10]))
+    assert np.all(np.isfinite(y_pred))
 
 
 @pytest.mark.parametrize("increasing", [True, False])
