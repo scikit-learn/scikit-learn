@@ -395,6 +395,18 @@ def test_incr_mean_variance_no_new_n():
     assert_allclose(updated_n, last_n)
 
 
+def test_incr_mean_variance_n_float():
+    # check the behaviour when last_n is just a number
+    axis = 0
+    X = sp.random(5, 2, density=0.8, random_state=0).tocsr()
+    last_mean, last_var = np.zeros(X.shape[1]), np.zeros(X.shape[1])
+    last_n = 0
+    _, _, new_n = incr_mean_variance_axis(
+        X, axis=axis, last_mean=last_mean, last_var=last_var, last_n=last_n
+    )
+    assert_allclose(new_n, np.full(X.shape[1], X.shape[0]))
+
+
 @pytest.mark.parametrize("axis", [0, 1])
 @pytest.mark.parametrize("sparse_constructor", [sp.csc_matrix, sp.csr_matrix])
 def test_incr_mean_variance_axis_ignore_nan(axis, sparse_constructor):

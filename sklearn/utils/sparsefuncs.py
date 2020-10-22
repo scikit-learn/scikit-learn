@@ -127,9 +127,12 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n,
         Array of variances to update with the new data X.
         Should be of shape (n_features,) if axis=0 or (n_samples,) if axis=1.
 
-    last_n : ndarray of shape (n_features,) or (n_samples,), dtype=integral
+    last_n : float |
+            ndarray of shape (n_features,) or (n_samples,), dtype=floating
         Sum of the weights seen so far, excluding the current weights
-        Should be of shape (n_samples,) if axis=0 or (n_features,) if axis=1.
+        If not float, it should be of shape (n_samples,) if
+        axis=0 or (n_features,) if axis=1. If float it corresponds to
+        having same weights for all features (or samples).
 
     weights : ndarray, shape (n_samples,) or (n_features,) | None
         if axis is set to 0 shape is (n_samples,) or
@@ -158,6 +161,9 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n,
 
     if not isinstance(X, (sp.csr_matrix, sp.csc_matrix)):
         _raise_typeerror(X)
+
+    if np.size(last_n) == 1:
+        last_n = np.full(last_mean.shape, last_n, dtype=last_mean.dtype)
 
     if not (np.size(last_mean) == np.size(last_var) == np.size(last_n)):
         raise ValueError(
