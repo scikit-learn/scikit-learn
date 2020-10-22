@@ -445,5 +445,5 @@ def test_rand_score():
     # rand score
     expected_numerator = D00 + D11
     expected_denominator = D00 + D01 + D10 + D11
-    expected = float(expected_numerator) / expected_denominator
+    expected = expected_numerator / expected_denominator
     assert_allclose(rand_score(clustering1, clustering2), expected)

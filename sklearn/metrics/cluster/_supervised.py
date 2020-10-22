@@ -92,10 +92,10 @@ def contingency_matrix(labels_true, labels_pred, *, eps=None, sparse=False,
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
-        Ground truth class labels to be used as a reference
+        Ground truth class labels to be used as a reference.
 
     labels_pred : array-like of shape (n_samples,)
-        Cluster labels to evaluate
+        Cluster labels to evaluate.
 
     eps : float, default=None
         If a float, that value is added to all values in the contingency
@@ -103,13 +103,13 @@ def contingency_matrix(labels_true, labels_pred, *, eps=None, sparse=False,
         If ``None``, nothing is adjusted.
 
     sparse : bool, default=False
-        If True, return a sparse CSR continency matrix. If ``eps is not None``,
-        and ``sparse is True``, will throw ValueError.
+        If `True`, return a sparse CSR continency matrix. If `eps` is not
+        `None` and `sparse` is `True` will raise ValueError.
 
         .. versionadded:: 0.18
 
-    dtype : numeric type, default=np.int.
-        See the notes on ``eps`` below.
+    dtype : numeric type, default=np.int
+        Output dtype. Ignored if `eps` is not `None`.
 
         .. versionadded:: 0.24
 
@@ -210,7 +210,6 @@ def pair_confusion_matrix(labels_true, labels_pred):
     .. L. Hubert and P. Arabie, Comparing Partitions, Journal of
       Classification 1985
       https://link.springer.com/article/10.1007%2FBF01908075
-
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     n_samples = np.int64(labels_true.shape[0])
@@ -286,7 +285,6 @@ def rand_score(labels_true, labels_pred):
     .. https://en.wikipedia.org/wiki/Simple_matching_coefficient
 
     .. https://en.wikipedia.org/wiki/Rand_index
-
     """
     contingency = pair_confusion_matrix(labels_true, labels_pred)
     numerator = contingency.diagonal().sum()
@@ -298,7 +296,7 @@ def rand_score(labels_true, labels_pred):
         # cluster. These are perfect matches hence return 1.0.
         return 1.0
 
-    return float(numerator) / denominator
+    return numerator / denominator
 
 
 def adjusted_rand_score(labels_true, labels_pred):
@@ -381,7 +379,6 @@ def adjusted_rand_score(labels_true, labels_pred):
     See Also
     --------
     adjusted_mutual_info_score : Adjusted Mutual Information.
-
     """
     (tn, fp), (fn, tp) = pair_confusion_matrix(labels_true, labels_pred)
 
@@ -541,7 +538,6 @@ def homogeneity_score(labels_true, labels_pred):
       0.0...
       >>> print("%.6f" % homogeneity_score([0, 0, 1, 1], [0, 0, 0, 0]))
       0.0...
-
     """
     return homogeneity_completeness_v_measure(labels_true, labels_pred)[0]
 
@@ -611,7 +607,6 @@ def completeness_score(labels_true, labels_pred):
       0.0
       >>> print(completeness_score([0, 0, 0, 0], [0, 1, 2, 3]))
       0.0
-
     """
     return homogeneity_completeness_v_measure(labels_true, labels_pred)[1]
 
@@ -711,7 +706,6 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0):
 
       >>> print("%.6f" % v_measure_score([0, 0, 1, 1], [0, 0, 0, 0]))
       0.0...
-
     """
     return homogeneity_completeness_v_measure(labels_true, labels_pred,
                                               beta=beta)[2]
@@ -891,7 +885,6 @@ def adjusted_mutual_info_score(labels_true, labels_pred, *,
 
     .. [2] `Wikipedia entry for the Adjusted Mutual Information
        <https://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
-
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     n_samples = labels_true.shape[0]
@@ -1001,7 +994,6 @@ def normalized_mutual_info_score(labels_true, labels_pred, *,
       >>> normalized_mutual_info_score([0, 0, 0, 0], [0, 1, 2, 3])
       ... # doctest: +SKIP
       0.0
-
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     classes = np.unique(labels_true)

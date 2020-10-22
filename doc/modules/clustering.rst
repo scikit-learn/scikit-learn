@@ -1053,14 +1053,18 @@ Given the knowledge of the ground truth class assignments
 ``labels_true`` and our clustering algorithm assignments of the same
 samples ``labels_pred``, the **(adjusted or unadjusted) Rand index**
 is a function that measures the **similarity** of the two assignments,
-ignoring permutations (and for the adjusted Rand index **with chance
-normalization**)::
+ignoring permutations::
 
   >>> from sklearn import metrics
   >>> labels_true = [0, 0, 0, 1, 1, 1]
   >>> labels_pred = [0, 0, 1, 1, 2, 2]
   >>> metrics.rand_score(labels_true, labels_pred)
   0.66...
+
+The Rand index does not ensure to obtain a value close to 0.0 for a
+random labelling. The adjusted Rand index **corrects for chance** and
+will give such a baseline.
+
   >>> metrics.adjusted_rand_score(labels_true, labels_pred)
   0.24...
 
