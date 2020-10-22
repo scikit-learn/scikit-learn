@@ -1793,7 +1793,7 @@ Advantages
 Drawbacks
 ~~~~~~~~~
 
-- The Davies-Boulding index is generally higher for convex clusters than other
+- The Davies-Boulding index is generally lower for convex clusters than other
   concepts of clusters, such as density based clusters like those obtained from
   DBSCAN.
 - The usage of centroid distance limits the distance metric to Euclidean space.
