@@ -27,7 +27,7 @@ source build_tools/shared.sh
 
 if [[ "$DISTRIB" == "conda" ]]; then
 
-    if [[ "CONDA_CHANNEL" != "" ]]; then
+    if [[ "$CONDA_CHANNEL" != "" ]]; then
         TO_INSTALL="-c $CONDA_CHANNEL"
     else
         TO_INSTALL=""
