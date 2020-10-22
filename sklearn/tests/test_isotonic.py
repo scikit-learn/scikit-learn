@@ -512,14 +512,25 @@ def test_make_unique_dtype():
 
 
 def test_make_unique_tol():
+    # Check that equality tolerance works
     x = np.array([0, 1e-16, 1, 1+1e-14])
-    diff = 1+1e-13 - 1
-    # print(f'diff {diff}\n diff > 1e-15 {diff > 1e-15}')
     y = x.copy()
     w = np.ones_like(x)
-    results = _make_unique(x, y, w)
-    print(results)
-    # assert x == [0, 1, 1+1e-15]
+    x, y, w = _make_unique(x, y, w)
+    assert_array_equal(x, [0, 1, 1+1e-14])
+
+
+def test_isotonic_inf():
+    # Check that inf values are not returned
+    X_train = np.array([[1.9, 1.18], [1.34, 1.06], [2.22, 6.8],
+                       [-1.37, 0.87], [0.12, -2.94]])
+    X_test = np.array([[-1.28, 0.23], [1.67, -1.36], [1.82, -2.92]])
+    y_train = np.array([1, 0, 1, 1, 0])
+    # X = np.array([0., 4.1e-320, 4.4e-314, 1.])
+    # y = np.array([0.42, 0.42, 0.44, 0.44])
+    ireg = IsotonicRegression().fit(X_train, y_train)
+    y_pred = ireg.predict(X_test)
+    print(y_pred)
 
 
 @pytest.mark.parametrize("increasing", [True, False])
