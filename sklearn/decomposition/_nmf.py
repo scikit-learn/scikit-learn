@@ -914,7 +914,7 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
     for n_iter in range(1, max_iter + 1):
         for iter_offset, slice in enumerate(
             gen_batches(n=n_samples, batch_size=batch_size)
-            ):
+        ):
             # update W
             # H_sum, HHt and XHt are saved and reused if not update_H
             delta_W, H_sum, HHt, XHt = _multiplicative_update_w(
@@ -1256,11 +1256,11 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
                                                shuffle=shuffle,
                                                random_state=random_state)
     elif solver == 'mu':
-        W, H, n_iter, iter_offset = _fit_multiplicative_update(X, W, H, A, B, beta_loss,
-                                                  batch_size, max_iter,
-                                                  tol, l1_reg_W, l1_reg_H,
-                                                  l2_reg_W, l2_reg_H, update_H,
-                                                  verbose, forget_factor)
+        W, H, n_iter, iter_offset = _fit_multiplicative_update(
+            X, W, H, A, B, beta_loss, batch_size, max_iter,
+            tol, l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H, update_H,
+            verbose, forget_factor
+        )
 
     else:
         raise ValueError("Invalid solver parameter '%s'." % solver)
