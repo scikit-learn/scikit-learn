@@ -2256,10 +2256,12 @@ class RollingSplit(BaseCrossValidator, metaclass=ABCMeta):
     Rolling window Time Series cross-validator.
 
     It allows to specify a the rolling (sliding) training size,
-    the test window size, the gap size (aka "embargo") between train and test sets and step size.
+    the test window size, the gap size (aka "embargo") between train and test
+    sets and step size.
     The train window size can also be set to be expanding.
 
-    In contrast to TimeSeriesSplit, the number of generated splits will depend on the number of samples
+    In contrast to TimeSeriesSplit, the number of generated splits will depend
+    on the number of samples
     in the target dataset and the window sizes, gap and step specifications.
 
     Parameters
@@ -2272,13 +2274,15 @@ class RollingSplit(BaseCrossValidator, metaclass=ABCMeta):
         Length of the test window. Must be at least 1.
 
     gap: int, default=0
-        Also known as "embargo". Number of unused indices left between train and test in each split.
+        Also known as "embargo". Number of unused indices left between train
+        and test in each split.
 
     step: int, default=1
         Number of indices to move forward between each split.
 
     expanding: bool, default=False
-        If true, training window will be expanding. Minimum size is defined by train_size.
+        If true, training window will be expanding. Minimum size is defined by
+        train_size.
 
 
     """
@@ -2300,10 +2304,12 @@ class RollingSplit(BaseCrossValidator, metaclass=ABCMeta):
         step = self.step
 
         indices = np.arange(n_samples)
-        start_idxs = range(0, n_samples - train_size - test_size - gap + 1, step)
+        start_idxs = range(0, n_samples - train_size - test_size - gap + 1,
+                           step)
 
         if len(start_idxs) == 0:
-            raise ValueError("Rolling window specifications yield null split set. "
+            raise ValueError("Rolling window specifications yield null "
+                             "split set. "
                              f"(n_samples={n_samples} train_size={train_size}"
                              f" test_size={test_size} gap={gap})"
                              )
@@ -2313,7 +2319,10 @@ class RollingSplit(BaseCrossValidator, metaclass=ABCMeta):
                 idx_train = indices[0:i + train_size]
             else:
                 idx_train = indices[i:i + train_size]
-            idx_test = indices[i + train_size + gap:i + train_size + gap + test_size]
+
+            idx_test = indices[i + train_size + gap:
+                               i + train_size + gap + test_size]
+
             yield idx_train, idx_test
 
     def get_n_splits(self, X=None, y=None, groups=None):
