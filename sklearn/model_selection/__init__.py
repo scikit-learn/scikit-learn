@@ -42,6 +42,7 @@ if typing.TYPE_CHECKING:
 __all__ = ['BaseCrossValidator',
            'GridSearchCV',
            'TimeSeriesSplit',
+           'RollingSplit',
            'KFold',
            'GroupKFold',
            'GroupShuffleSplit',

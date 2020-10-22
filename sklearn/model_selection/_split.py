@@ -2249,3 +2249,79 @@ def _yields_constant_splits(cv):
     shuffle = getattr(cv, 'shuffle', True)
     random_state = getattr(cv, 'random_state', 0)
     return isinstance(random_state, numbers.Integral) or not shuffle
+
+
+class RollingSplit(BaseCrossValidator, metaclass=ABCMeta):
+    """
+    Rolling window Time Series cross-validator.
+
+    It allows to specify a the rolling (sliding) training size,
+    the test window size, the gap size (aka "embargo") between train and test sets and step size.
+    The train window size can also be set to be expanding.
+
+    In contrast to TimeSeriesSplit, the number of generated splits will depend on the number of samples
+    in the target dataset and the window sizes, gap and step specifications.
+
+    Parameters
+    ----------
+    train_size : int
+        Length of the training window. Must be at least 1.
+        If expanding=True, this will be the minimum training window size.
+
+    test_size: int
+        Length of the test window. Must be at least 1.
+
+    gap: int, default=0
+        Also known as "embargo". Number of unused indices left between train and test in each split.
+
+    step: int, default=1
+        Number of indices to move forward between each split.
+
+    expanding: bool, default=False
+        If true, training window will be expanding. Minimum size is defined by train_size.
+
+
+    """
+
+    def __init__(self, train_size, test_size, gap=0, step=1, expanding=False):
+        self.train_size = train_size
+        self.test_size = test_size
+        self.gap = gap
+        self.step = step
+        self.expanding = expanding
+
+    def split(self, X, y=None, groups=None):
+        X, y, groups = indexable(X, y, groups)
+        n_samples = _num_samples(X)
+
+        train_size = self.train_size
+        test_size = self.test_size
+        gap = self.gap
+        step = self.step
+
+        indices = np.arange(n_samples)
+        start_idxs = range(0, n_samples - train_size - test_size - gap + 1, step)
+
+        if len(start_idxs) == 0:
+            raise ValueError("Rolling window specifications yield null split set. "
+                             f"(n_samples={n_samples} train_size={train_size}"
+                             f" test_size={test_size} gap={gap})"
+                             )
+
+        for i in start_idxs:
+            if self.expanding:
+                idx_train = indices[0:i + train_size]
+            else:
+                idx_train = indices[i:i + train_size]
+            idx_test = indices[i + train_size + gap:i + train_size + gap + test_size]
+            yield idx_train, idx_test
+
+    def get_n_splits(self, X=None, y=None, groups=None):
+        X, y, groups = indexable(X, y, groups)
+        n_samples = _num_samples(X)
+
+        train_size = self.train_size
+        test_size = self.test_size
+        gap = self.gap
+        step = self.step
+        return (n_samples - train_size - test_size - gap + 1) // step
