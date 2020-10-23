@@ -25,7 +25,6 @@ from ._testing import create_memmap_backed_data
 from ._testing import raises
 from . import is_scalar_nan
 
-from ..discriminant_analysis import LinearDiscriminantAnalysis
 from ..linear_model import LogisticRegression
 from ..linear_model import Ridge
 
@@ -345,7 +344,7 @@ def _construct_instance(Estimator):
             if issubclass(Estimator, RegressorMixin):
                 estimator = Estimator(Ridge())
             else:
-                estimator = Estimator(LinearDiscriminantAnalysis())
+                estimator = Estimator(LogisticRegression(C=1))
         elif required_parameters in (['estimators'],):
             # Heterogeneous ensemble classes (i.e. stacking, voting)
             if issubclass(Estimator, RegressorMixin):
