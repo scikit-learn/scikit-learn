@@ -117,26 +117,31 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n):
     axis : int (either 0 or 1)
         Axis along which the axis should be computed.
 
-    last_mean : float array with shape (n_features,)
-        Array of feature-wise means to update with the new data X.
+    last_mean : ndarray of shape (n_features,) or (n_samples,), dtype=floating
+        Array of means to update with the new data X.
+        Should be of shape (n_features,) if axis=0 or (n_samples,) if axis=1.
 
-    last_var : float array with shape (n_features,)
-        Array of feature-wise var to update with the new data X.
+    last_var : ndarray of shape (n_features,) or (n_samples,), dtype=floating
+        Array of variances to update with the new data X.
+        Should be of shape (n_features,) if axis=0 or (n_samples,) if axis=1.
 
-    last_n : int with shape (n_features,)
-        Number of samples seen so far, excluded X.
+    last_n : ndarray of shape (n_features,) or (n_samples,), dtype=integral
+        Sum of the weights seen so far, excluding the current weights
+        Should be of shape (n_samples,) if axis=0 or (n_features,) if axis=1.
 
     Returns
     -------
+    means : ndarray of shape (n_features,) or (n_samples,), dtype=floating
+        Updated feature-wise means if axis = 0 or
+        sample-wise means if axis = 1.
 
-    means : float array with shape (n_features,)
-        Updated feature-wise means.
+    variances : ndarray of shape (n_features,) or (n_samples,), dtype=floating
+        Updated feature-wise variances if axis = 0 or
+        sample-wise variances if axis = 1.
 
-    variances : float array with shape (n_features,)
-        Updated feature-wise variances.
-
-    n : int with shape (n_features,)
-        Updated number of seen samples.
+    n : ndarray of shape (n_features,) or (n_samples,), dtype=integral
+        Updated number of seen samples per feature if axis=0
+        or number of seen features per sample if axis=1.
 
     Notes
     -----
@@ -144,6 +149,27 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n):
 
     """
     _raise_error_wrong_axis(axis)
+
+    if not isinstance(X, (sp.csr_matrix, sp.csc_matrix)):
+        _raise_typeerror(X)
+
+    if not (np.size(last_mean) == np.size(last_var) == np.size(last_n)):
+        raise ValueError(
+            "last_mean, last_var, last_n do not have the same shapes."
+        )
+
+    if axis == 1:
+        if np.size(last_mean) != X.shape[0]:
+            raise ValueError(
+                f"If axis=1, then last_mean, last_n, last_var should be of "
+                f"size n_samples {X.shape[0]} (Got {np.size(last_mean)})."
+            )
+    else:  # axis == 0
+        if np.size(last_mean) != X.shape[1]:
+            raise ValueError(
+                f"If axis=0, then last_mean, last_n, last_var should be of "
+                f"size n_features {X.shape[1]} (Got {np.size(last_mean)})."
+            )
 
     if isinstance(X, sp.csr_matrix):
         if axis == 0:
@@ -159,8 +185,6 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n):
         else:
             return _incr_mean_var_axis0(X.T, last_mean=last_mean,
                                         last_var=last_var, last_n=last_n)
-    else:
-        _raise_typeerror(X)
 
 
 def inplace_column_scale(X, scale):

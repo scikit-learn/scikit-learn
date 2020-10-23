@@ -110,6 +110,12 @@ Changelog
   predictions for `est.transform(Y)` when the training data is single-target.
   :pr:`17095` by `Nicolas Hug`_.
 
+- |API| For :class:`cross_decomposition.NMF`,
+  the `init` value, when 'init=None' and
+  n_components <= min(n_samples, n_features) will be changed from
+  `'nndsvd'` to `'nndsvda'` in 0.26.
+  :pr:`18525` by `Chiara Marmo <cmarmo>`.
+
 - |API| The bounds of the `n_components` parameter is now restricted:
 
   - into `[1, min(n_samples, n_features, n_targets)]`, for
@@ -150,6 +156,10 @@ Changelog
   a pandas Series.
   :pr:`18280` by :user:`Alex Liang <tianchuliang>` and
   `Guillaume Lemaitre`_.
+
+- |Feature| :func:`datasets.fetch_openml` now validates md5checksum of arff
+  files downloaded or cached to ensure data integrity.
+  :pr:`14800` by :user:`Shashank Singh <shashanksingh28>` and `Joel Nothman`_.
 
 - |API| The default value of `as_frame` in :func:`datasets.fetch_openml` is
   changed from False to 'auto'.
@@ -241,6 +251,11 @@ Changelog
 - |Enhancement| :class:`feature_extraction.DictVectorizer` accepts multiple
   values for one categorical feature. :pr:`17367` by :user:`Peng Yu <yupbank>`
   and :user:`Chiara Marmo <cmarmo>`.
+
+- |Fix| :class:`feature_extraction.CountVectorizer` raises an issue if a
+  custom token pattern which capture more than one group is provided.
+  :pr:`15427` by :user:`Gangesh Gudmalwar <ggangesh>` and
+  :user:`Erin R Hoffman <hoffm386>`.
 
 :mod:`sklearn.feature_selection`
 ................................
@@ -372,6 +387,13 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
+- |Feature| new metric :func:`metrics.top_k_accuracy_score`. It's a
+  generalization of :func:`metrics.top_k_accuracy_score`, the difference is
+  that a prediction is considered correct as long as the true label is
+  associated with one of the `k` highest predicted scores.
+  :func:`accuracy_score` is the special case of `k = 1`.
+  :pr:`16625` by :user:`Geoffrey Bolmier <gbolmier>`.
+
 - |Feature| Added :func:`metrics.det_curve` to compute Detection Error Tradeoff
   curve classification metric.
   :pr:`10591` by :user:`Jeremy Karnowski <jkarnows>` and
@@ -400,6 +422,10 @@ Changelog
   class to be used when computing the precision and recall statistics.
   :pr:`17569` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Feature| :func:`metrics.plot_confusion_matrix` now supports making colorbar
+  optional in the matplotlib plot by setting colorbar=False. :pr:`17192` by
+  :user:`Avi Gupta <avigupta2612>`
+
 - |Enhancement| Add `pos_label` parameter in
   :func:`metrics.plot_roc_curve` in order to specify the positive
   class to be used when computing the roc auc statistics.
@@ -427,6 +453,12 @@ Changelog
   `classifier.classes_[1]`. This is especially important when training
   classifiers directly with string labeled target classes.
   :pr:`#18114` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| Fixed bug in :func:`metrics.plot_confusion_matrix` where error occurs
+  when `y_true` contains labels that were not previously seen by the classifier
+  while the `labels` and `display_labels` parameters are set to `None`.
+  :pr:`18405` by :user:`Thomas J. Fan <thomasjpfan>` and
+  :user:`Yakov Pchelintsev <kyouma>`.
 
 :mod:`sklearn.model_selection`
 ..............................
@@ -624,6 +656,12 @@ Changelog
   :class:`preprocessing.KBinsDiscretizer`.
   :pr:`16335` by :user:`Arthur Imbert <Henley13>`.
 
+- |Fix| Raise error on
+  :meth:`sklearn.preprocessing.OneHotEncoder.inverse_transform`
+  when `handle_unknown='error'` and `drop=None` for samples
+  encoded as all zeros. :pr:`14982` by
+  :user:`Kevin Winata <kwinata>`.
+
 :mod:`sklearn.svm`
 ..................
 
@@ -659,6 +697,11 @@ Changelog
 - |Fix| Allow serialized tree based models to be unpickled on a machine
   with different endianness.
   :pr:`17644` by :user:`Qi Zhang <qzhang90>`.
+
+- |Fix| Check that we raise proper error when axis=1 and the
+  dimensions do not match in :func:`utils.sparse_func.incr_mean_variance_axis`.
+  By :user:`Alex Gramfort <agramfort>`.
+
 
 Miscellaneous
 .............
