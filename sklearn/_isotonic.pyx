@@ -91,7 +91,7 @@ def _make_unique(np.ndarray[dtype=floating] X,
     cdef int j
     cdef floating x
     cdef int n_samples = len(X)
-    cdef floating eps = np.finfo(X.dtype).eps
+    cdef floating eps = np.finfo(X.dtype).resolution
 
     for j in range(n_samples):
         x = X[j]
