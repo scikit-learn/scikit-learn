@@ -109,8 +109,8 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
     variances = np.zeros_like(means, dtype=dtype)
 
     cdef:
-        np.ndarray[np.float64_t, ndim=1] counts = np.zeros(n_features,
-                                                         dtype=np.float64)
+        np.ndarray[np.float64_t, ndim=1] counts = np.zeros(
+            n_features, dtype=np.float64)
         np.ndarray[np.float64_t, ndim=1] counts_nan = np.zeros(
             n_features, dtype=np.float64)
 
