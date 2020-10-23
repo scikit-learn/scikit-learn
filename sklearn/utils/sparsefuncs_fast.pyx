@@ -109,10 +109,10 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
     variances = np.zeros_like(means, dtype=dtype)
 
     cdef:
-        np.ndarray[np.float64_t, ndim=1] counts = np.zeros(
-            n_features, dtype=np.float64)
-        np.ndarray[np.float64_t, ndim=1] counts_nan = np.zeros(
-            n_features, dtype=np.float64)
+        np.ndarray[floating, ndim=1] counts = np.zeros(
+            n_features, dtype=dtype)
+        np.ndarray[floating, ndim=1] counts_nan = np.zeros(
+            n_features, dtype=dtype)
 
     for row_ind in range(len(X_indptr) - 1):
         for i in range(X_indptr[row_ind], X_indptr[row_ind + 1]):
@@ -137,7 +137,7 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
         variances[i] += (n_samples - counts_nan[i] - counts[i]) * means[i]**2
         variances[i] /= (n_samples - counts_nan[i])
 
-    return means, variances, counts_nan.astype(dtype, copy=False)
+    return means, variances, counts_nan
 
 
 def csc_mean_variance_axis0(X):
