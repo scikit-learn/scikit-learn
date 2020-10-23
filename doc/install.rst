@@ -64,19 +64,46 @@ Installing the latest release
 
 Then run:
 
-.. prompt:: bash $
+.. raw:: html
 
-  pip install -U scikit-learn
+       <div class="highlight"><pre><code
+        ><span class="sk-expandable" data-packager="pip" data-os="linux" data-venv="">python3 -m venv sklearn-venv</span
+        ><span class="sk-expandable" data-packager="pip" data-os="windows" data-venv="">python -m venv sklearn-venv</span
+        ><span class="sk-expandable" data-packager="pip" data-os="mac" data-venv="">python -m venv sklearn-venv</span
+        ><span class="sk-expandable" data-packager="pip" data-os="linux" data-venv="">source sklearn-venv/bin/activate</span
+        ><span class="sk-expandable" data-packager="pip" data-os="mac" data-venv="">source sklearn-venv/bin/activate</span
+        ><span class="sk-expandable" data-packager="pip" data-os="windows" data-venv="">sklearn-venv\Scripts\activate</span
+        ><span class="sk-expandable" data-packager="pip" data-venv="">pip install -U scikit-learn</span
+        ><span class="sk-expandable" data-packager="pip" data-os="mac" data-venv="no">pip install -U scikit-learn</span
+        ><span class="sk-expandable" data-packager="pip" data-os="windows" data-venv="no">pip install -U scikit-learn</span
+        ><span class="sk-expandable" data-packager="pip" data-os="linux" data-venv="no">pip3 install -U scikit-learn</span
+        ><span class="sk-expandable" data-packager="conda" data-venv="">conda create -n sklearn-env</span
+        ><span class="sk-expandable" data-packager="conda" data-venv="">conda activate sklearn-env</span
+        ><span class="sk-expandable" data-packager="conda">conda install -c conda-forge scikit-learn </span
+       ></code></pre></div>
 
+In order to check your installation you can use
 
-In order to check your installation you can use:
+.. raw:: html
 
-.. prompt:: bash $
-
-  python -m pip show scikit-learn  # to see which version and where scikit-learn is installed
-  python -m pip freeze  # to see all packages installed in the active virtualenv
-  python -c "import sklearn; sklearn.show_versions()"
-
+   <div class="highlight"><pre><code
+      ><span class="sk-expandable" data-packager="pip" data-os="linux" data-venv="no">python3 -m pip show scikit-learn  # to see which version and where scikit-learn is installed</span
+      ><span class="sk-expandable" data-packager="pip" data-os="linux" data-venv="no">python3 -m pip freeze  # to see all packages installed in the active virtualenv</span
+      ><span class="sk-expandable" data-packager="pip" data-os="linux" data-venv="no">python3 -c "import sklearn; sklearn.show_versions()"</span
+      ><span class="sk-expandable" data-packager="pip" data-venv="">python -m pip show scikit-learn  # to see which version and where scikit-learn is installed</span
+      ><span class="sk-expandable" data-packager="pip" data-venv="">python -m pip freeze  # to see all packages installed in the active virtualenv</span
+      ><span class="sk-expandable" data-packager="pip" data-venv="">python -c "import sklearn; sklearn.show_versions()"</span
+      ><span class="sk-expandable" data-packager="pip" data-os="windows" data-venv="no">python -m pip show scikit-learn  # to see which version and where scikit-learn is installed</span
+      ><span class="sk-expandable" data-packager="pip" data-os="windows" data-venv="no">python -m pip freeze  # to see all packages installed in the active virtualenv</span
+      ><span class="sk-expandable" data-packager="pip" data-os="windows" data-venv="no">python -c "import sklearn; sklearn.show_versions()"</span
+      ><span class="sk-expandable" data-packager="pip" data-os="mac" data-venv="no">python -m pip show scikit-learn  # to see which version and where scikit-learn is installed</span
+      ><span class="sk-expandable" data-packager="pip" data-os="mac" data-venv="no">python -m pip freeze  # to see all packages installed in the active virtualenv</span
+      ><span class="sk-expandable" data-packager="pip" data-os="mac" data-venv="no">python -c "import sklearn; sklearn.show_versions()"</span
+      ><span class="sk-expandable" data-packager="conda">conda list scikit-learn  # to see which scikit-learn version is installed</span
+      ><span class="sk-expandable" data-packager="conda">conda list  # to see all packages installed in the active conda environment</span
+      ><span class="sk-expandable" data-packager="conda">python -c "import sklearn; sklearn.show_versions()"</span
+      ></code></pre></div>
+  </div>
 
 Note that in order to avoid potential conflicts with other packages it is
 strongly recommended to use a virtual environment, e.g. python3 ``virtualenv``
@@ -162,7 +189,7 @@ Only the Python 3 version is available in the Debian Buster (the more recent
 Debian distribution).
 Packages can be installed using ``apt-get``:
 
-.. prompt:: python $
+.. prompt:: bash $
 
   sudo apt-get install python3-sklearn python3-sklearn-lib python3-sklearn-doc
 
