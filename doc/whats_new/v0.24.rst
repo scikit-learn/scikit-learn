@@ -338,6 +338,10 @@ Changelog
 - |Enhancement| :class:`isotonic.IsotonicRegression` now accepts 2d array with
   1 feature as input array. :pr:`17379` by :user:`Jiaxiang <fujiaxiang>`.
 
+- |Fix| Add tolerance when determining duplicate X values to prevent
+  inf values from being predicted by :class:`isotonic.IsotonicRegression`.
+  :pr:`18639` by :user:`Lucy Liu <lucyleeow>`.
+
 :mod:`sklearn.kernel_approximation`
 ...................................
 
