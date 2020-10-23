@@ -432,8 +432,8 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = check_array(X, copy=self.copy, dtype=FLOAT_DTYPES,
-                        force_all_finite="allow-nan")
+        X = self._validate_data(X, copy=self.copy, dtype=FLOAT_DTYPES,
+                                force_all_finite="allow-nan", reset=False)
 
         X *= self.scale_
         X += self.min_
@@ -760,9 +760,10 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         self : object
             Fitted scaler.
         """
+        first_call = not hasattr(self, "n_samples_seen_")
         X = self._validate_data(X, accept_sparse=('csr', 'csc'),
                                 estimator=self, dtype=FLOAT_DTYPES,
-                                force_all_finite='allow-nan')
+                                force_all_finite='allow-nan', reset=first_call)
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X,
@@ -1097,9 +1098,10 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
             Transformed array.
         """
         check_is_fitted(self)
-        X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
-                        estimator=self, dtype=FLOAT_DTYPES,
-                        force_all_finite='allow-nan')
+        X = self._validate_data(X, accept_sparse=('csr', 'csc'),
+                                copy=self.copy, reset=False,
+                                estimator=self, dtype=FLOAT_DTYPES,
+                                force_all_finite='allow-nan')
 
         if sparse.issparse(X):
             inplace_column_scale(X, 1.0 / self.scale_)
@@ -1398,9 +1400,10 @@ class RobustScaler(TransformerMixin, BaseEstimator):
             Transformed array.
         """
         check_is_fitted(self)
-        X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
-                        estimator=self, dtype=FLOAT_DTYPES,
-                        force_all_finite='allow-nan')
+        X = self._validate_data(X, accept_sparse=('csr', 'csc'),
+                                copy=self.copy, estimator=self,
+                                dtype=FLOAT_DTYPES, reset=False,
+                                force_all_finite='allow-nan')
 
         if sparse.issparse(X):
             if self.with_scaling:
@@ -1735,8 +1738,8 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = check_array(X, order='F', dtype=FLOAT_DTYPES,
-                        accept_sparse=('csr', 'csc'))
+        X = self._validate_data(X, order='F', dtype=FLOAT_DTYPES, reset=False,
+                                accept_sparse=('csr', 'csc'))
 
         n_samples, n_features = X.shape
 
@@ -2038,7 +2041,7 @@ class Normalizer(TransformerMixin, BaseEstimator):
             Transformed array.
         """
         copy = copy if copy is not None else self.copy
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_data(X, accept_sparse='csr', reset=False)
         return normalize(X, norm=self.norm, axis=1, copy=copy)
 
     def _more_tags(self):
@@ -2195,7 +2198,11 @@ class Binarizer(TransformerMixin, BaseEstimator):
             Transformed array.
         """
         copy = copy if copy is not None else self.copy
-        return binarize(X, threshold=self.threshold, copy=copy)
+        # TODO: This should be refactored because binarize also calls
+        # check_array
+        X = self._validate_data(X, accept_sparse=['csr', 'csc'], copy=copy,
+                                reset=False)
+        return binarize(X, threshold=self.threshold, copy=False)
 
     def _more_tags(self):
         return {'stateless': True}
@@ -2291,7 +2298,7 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        K = check_array(K, copy=copy, dtype=FLOAT_DTYPES)
+        K = self._validate_data(K, copy=copy, dtype=FLOAT_DTYPES, reset=False)
 
         K_pred_cols = (np.sum(K, axis=1) /
                        self.K_fit_rows_.shape[0])[:, np.newaxis]
@@ -2689,16 +2696,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
     def _check_inputs(self, X, in_fit, accept_sparse_negative=False,
                       copy=False):
         """Check inputs before fit and transform."""
-        # In theory reset should be equal to `in_fit`, but there are tests
-        # checking the input number of feature and they expect a specific
-        # string, which is not the same one raised by check_n_features. So we
-        # don't check n_features_in_ here for now (it's done with adhoc code in
-        # the estimator anyway).
-        # TODO: set reset=in_fit when addressing reset in
-        # predict/transform/etc.
-        reset = True
-
-        X = self._validate_data(X, reset=reset,
+        X = self._validate_data(X, reset=in_fit,
                                 accept_sparse='csc', copy=copy,
                                 dtype=FLOAT_DTYPES,
                                 force_all_finite='allow-nan')
@@ -2717,16 +2715,6 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
                                  self.output_distribution))
 
         return X
-
-    def _check_is_fitted(self, X):
-        """Check the inputs before transforming."""
-        check_is_fitted(self)
-        # check that the dimension of X are adequate with the fitted data
-        if X.shape[1] != self.quantiles_.shape[1]:
-            raise ValueError('X does not have the same number of features as'
-                             ' the previously fitted data. Got {} instead of'
-                             ' {}.'.format(X.shape[1],
-                                           self.quantiles_.shape[1]))
 
     def _transform(self, X, inverse=False):
         """Forward and inverse transform.
@@ -2777,8 +2765,8 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         Xt : {ndarray, sparse matrix} of shape (n_samples, n_features)
             The projected data.
         """
+        check_is_fitted(self)
         X = self._check_inputs(X, in_fit=False, copy=self.copy)
-        self._check_is_fitted(X)
 
         return self._transform(X, inverse=False)
 
@@ -2798,9 +2786,9 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         Xt : {ndarray, sparse matrix} of (n_samples, n_features)
             The projected data.
         """
+        check_is_fitted(self)
         X = self._check_inputs(X, in_fit=False, accept_sparse_negative=True,
                                copy=self.copy)
-        self._check_is_fitted(X)
 
         return self._transform(X, inverse=True)
 
@@ -3262,6 +3250,10 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         ----------
         X : array-like of shape (n_samples, n_features)
 
+        in_fit : bool
+            Whether or not `_check_input` is called from `fit` or other
+            methods, e.g. `predict`, `transform`, etc.
+
         check_positive : bool, default=False
             If True, check that all data is positive and non-zero (only if
             ``self.method=='box-cox'``).
@@ -3273,7 +3265,8 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
             If True, check that the transformation method is valid.
         """
         X = self._validate_data(X, ensure_2d=True, dtype=FLOAT_DTYPES,
-                                copy=self.copy, force_all_finite='allow-nan')
+                                copy=self.copy, force_all_finite='allow-nan',
+                                reset=in_fit)
 
         with np.warnings.catch_warnings():
             np.warnings.filterwarnings(
