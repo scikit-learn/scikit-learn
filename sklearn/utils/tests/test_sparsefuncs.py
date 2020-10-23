@@ -121,14 +121,17 @@ def test_mean_variance_axis1():
                          )
 @pytest.mark.parametrize("sparse_constructor",
                          [sp.csc_matrix, sp.csr_matrix])
+@pytest.mark.parametrize("dtype",
+                         [np.float32, np.float64])
 def test_incr_mean_variance_axis_weighted_axis1(Xw, X, weights,
-                                                sparse_constructor):
+                                                sparse_constructor,
+                                                dtype):
     axis = 1
-    Xw_sparse = sparse_constructor(Xw)
-    X_sparse = sparse_constructor(X)
+    Xw_sparse = sparse_constructor(Xw).astype(dtype)
+    X_sparse = sparse_constructor(X).astype(dtype)
 
-    last_mean = np.zeros(np.shape(Xw)[0])
-    last_var = np.zeros_like(last_mean)
+    last_mean = np.zeros(np.shape(Xw)[0], dtype=dtype)
+    last_var = np.zeros_like(last_mean, dtype=dtype)
     last_n = np.zeros_like(last_mean, dtype=np.int64)
     means0, vars0, n_incr0 = incr_mean_variance_axis(X=X_sparse, axis=axis,
                                                      last_mean=last_mean,
@@ -139,6 +142,10 @@ def test_incr_mean_variance_axis_weighted_axis1(Xw, X, weights,
     means_w0, vars_w0, n_incr_w0 = incr_mean_variance_axis(
             X=Xw_sparse, axis=axis, last_mean=last_mean, last_var=last_var,
             last_n=last_n, weights=weights)
+
+    assert means_w0.dtype == dtype
+    assert vars_w0.dtype == dtype
+    assert n_incr_w0.dtype == dtype
 
     means_simple, vars_simple = mean_variance_axis(X=X_sparse, axis=axis)
 
@@ -162,6 +169,10 @@ def test_incr_mean_variance_axis_weighted_axis1(Xw, X, weights,
     assert_array_almost_equal(means1, means_w1)
     assert_array_almost_equal(vars1, vars_w1)
     assert_array_almost_equal(n_incr1, n_incr_w1)
+
+    assert means_w1.dtype == dtype
+    assert vars_w1.dtype == dtype
+    assert n_incr_w1.dtype == dtype
 
 
 @pytest.mark.parametrize(['Xw', 'X', 'weights'],
@@ -193,13 +204,16 @@ def test_incr_mean_variance_axis_weighted_axis1(Xw, X, weights,
                          )
 @pytest.mark.parametrize("sparse_constructor",
                          [sp.csc_matrix, sp.csr_matrix])
+@pytest.mark.parametrize("dtype",
+                         [np.float32, np.float64])
 def test_incr_mean_variance_axis_weighted_axis0(Xw, X, weights,
-                                                sparse_constructor):
+                                                sparse_constructor,
+                                                dtype):
     axis = 0
-    Xw_sparse = sparse_constructor(Xw)
-    X_sparse = sparse_constructor(X)
+    Xw_sparse = sparse_constructor(Xw).astype(dtype)
+    X_sparse = sparse_constructor(X).astype(dtype)
 
-    last_mean = np.zeros(np.size(Xw, 1))
+    last_mean = np.zeros(np.size(Xw, 1), dtype=dtype)
     last_var = np.zeros_like(last_mean)
     last_n = np.zeros_like(last_mean, dtype=np.int64)
     means0, vars0, n_incr0 = incr_mean_variance_axis(X=X_sparse, axis=axis,
@@ -211,6 +225,10 @@ def test_incr_mean_variance_axis_weighted_axis0(Xw, X, weights,
     means_w0, vars_w0, n_incr_w0 = incr_mean_variance_axis(
             X=Xw_sparse, axis=axis, last_mean=last_mean, last_var=last_var,
             last_n=last_n, weights=weights)
+
+    assert means_w0.dtype == dtype
+    assert vars_w0.dtype == dtype
+    assert n_incr_w0.dtype == dtype
 
     means_simple, vars_simple = mean_variance_axis(X=X_sparse, axis=axis)
 
@@ -234,6 +252,10 @@ def test_incr_mean_variance_axis_weighted_axis0(Xw, X, weights,
     assert_array_almost_equal(means1, means_w1)
     assert_array_almost_equal(vars1, vars_w1)
     assert_array_almost_equal(n_incr1, n_incr_w1)
+
+    assert means_w1.dtype == dtype
+    assert vars_w1.dtype == dtype
+    assert n_incr_w1.dtype == dtype
 
 
 def test_incr_mean_variance_axis():
