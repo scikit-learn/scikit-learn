@@ -374,6 +374,12 @@ General Concepts
                 the data needs to be indexed on both axes, while other data is
                 indexed only on the first axis.
 
+                .. deprecated:: 0.24
+
+                    The _pairwise attribute is deprecated in 0.24. From 0.26
+                    onward, the `pairwise` estimator tag should be used
+                    instead.
+
         For more detailed info, see :ref:`estimator_tags`.
 
     feature
@@ -639,9 +645,9 @@ General Concepts
         sample and each column to a training sample.
 
         Use of precomputed X is usually indicated by setting a ``metric``,
-        ``affinity`` or ``kernel`` parameter to the string 'precomputed'.  An
-        estimator should mark itself as being :term:`_pairwise` if this is the
-        case.
+        ``affinity`` or ``kernel`` parameter to the string 'precomputed'. If
+        this is the case, then the estimator should set the `pairwise`
+        estimator tag as True.
 
     rectangular
         Data that can be represented as a matrix with :term:`samples` on the

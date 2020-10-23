@@ -254,8 +254,8 @@ scikit-learn from source:
 
 .. prompt:: bash $
 
-    conda create -n sklearn-dev python numpy scipy cython joblib pytest \
-        "conda-forge::compilers>=1.0.4,!=1.1.0" conda-forge::llvm-openmp
+    conda create -n sklearn-dev -c conda-forge python numpy scipy cython \
+        joblib threadpoolctl pytest "compilers>=1.0.4,!=1.1.0" llvm-openmp
     conda activate sklearn-dev
     make clean
     pip install --verbose --no-build-isolation --editable .
@@ -389,7 +389,8 @@ in the user folder using conda:
 
 .. prompt:: bash $
 
-    conda create -n sklearn-dev numpy scipy joblib cython conda-forge::compilers
+    conda create -n sklearn-dev -c conda-forge python numpy scipy cython \
+        joblib threadpoolctl pytest compilers
     conda activate sklearn-dev
     pip install --verbose --no-build-isolation --editable .
 

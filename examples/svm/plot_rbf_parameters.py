@@ -53,13 +53,18 @@ values) can be made more complex by increasing the importance of classifying
 each point correctly (larger ``C`` values) hence the diagonal of good
 performing models.
 
-Finally one can also observe that for some intermediate values of ``gamma`` we
-get equally performing models when ``C`` becomes very large: it is not
-necessary to regularize by enforcing a larger margin. The radius of the RBF
-kernel alone acts as a good structural regularizer. In practice though it
-might still be interesting to simplify the decision function with a lower
-value of ``C`` so as to favor models that use less memory and that are faster
-to predict.
+Finally, one can also observe that for some intermediate values of ``gamma`` we
+get equally performing models when ``C`` becomes very large. This suggests that
+the set of support vectors does not change anymore. The radius of the RBF
+kernel alone acts as a good structural regularizer. Increasing ``C`` further
+doesn't help, likely because there are no more training points in violation
+(inside the margin or wrongly classified), or at least no better solution can
+be found. Scores being equal, it may make sense to use the smaller ``C``
+values, since very high ``C`` values typically increase fitting time.
+
+On the other hand, lower ``C`` values generally lead to more support vectors,
+which may increase prediction time. Therefore, lowering the value of ``C``
+involves a trade-off between fitting time and prediction time.
 
 We should also note that small differences in scores results from the random
 splits of the cross-validation procedure. Those spurious variations can be

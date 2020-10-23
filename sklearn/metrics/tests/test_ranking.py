@@ -19,6 +19,7 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_warns
 
+from sklearn.metrics import accuracy_score
 from sklearn.metrics import auc
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import coverage_error
@@ -30,8 +31,11 @@ from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
 from sklearn.metrics._ranking import _ndcg_sample_scores, _dcg_sample_scores
 from sklearn.metrics import ndcg_score, dcg_score
+from sklearn.metrics import top_k_accuracy_score
 
 from sklearn.exceptions import UndefinedMetricWarning
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
 
 
 ###############################################################################
@@ -1608,3 +1612,136 @@ def test_partial_roc_auc_score():
         assert_almost_equal(
             roc_auc_score(y_true, y_pred, max_fpr=max_fpr),
             _partial_roc_auc_score(y_true, y_pred, max_fpr))
+
+
+@pytest.mark.parametrize('y_true, k, true_score', [
+    ([0, 1, 2, 3], 1, 0.25),
+    ([0, 1, 2, 3], 2, 0.5),
+    ([0, 1, 2, 3], 3, 0.75),
+])
+def test_top_k_accuracy_score(y_true, k, true_score):
+    y_score = np.array([
+        [0.4, 0.3, 0.2, 0.1],
+        [0.1, 0.3, 0.4, 0.2],
+        [0.4, 0.1, 0.2, 0.3],
+        [0.3, 0.2, 0.4, 0.1],
+    ])
+    score = top_k_accuracy_score(y_true, y_score, k=k)
+    assert score == pytest.approx(true_score)
+
+
+@pytest.mark.parametrize('y_score, k, true_score', [
+    (np.array([-1, -1, 1, 1]), 1, 1),
+    (np.array([-1, 1, -1, 1]), 1, 0.5),
+    (np.array([-1, 1, -1, 1]), 2, 1),
+    (np.array([.2, .2, .7, .7]), 1, 1),
+    (np.array([.2, .7, .2, .7]), 1, 0.5),
+    (np.array([.2, .7, .2, .7]), 2, 1),
+])
+def test_top_k_accuracy_score_binary(y_score, k, true_score):
+    y_true = [0, 0, 1, 1]
+
+    threshold = .5 if y_score.min() >= 0 and y_score.max() <= 1 else 0
+    y_pred = (y_score > threshold).astype(np.int) if k == 1 else y_true
+
+    score = top_k_accuracy_score(y_true, y_score, k=k)
+    score_acc = accuracy_score(y_true, y_pred)
+
+    assert score == score_acc == pytest.approx(true_score)
+
+
+def test_top_k_accuracy_score_increasing():
+    # Make sure increasing k leads to a higher score
+    X, y = datasets.make_classification(n_classes=10, n_samples=1000,
+                                        n_informative=10, random_state=0)
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+
+    clf = LogisticRegression(random_state=0)
+    clf.fit(X_train, y_train)
+
+    for X, y in zip((X_train, X_test), (y_train, y_test)):
+        scores = [
+            top_k_accuracy_score(y, clf.predict_proba(X), k=k)
+            for k in range(2, 10)
+        ]
+
+        assert np.all(np.diff(scores) > 0)
+
+
+@pytest.mark.parametrize('y_true, k, true_score', [
+    ([0, 1, 2, 3], 1, 0.25),
+    ([0, 1, 2, 3], 2, 0.5),
+    ([0, 1, 2, 3], 3, 1),
+])
+def test_top_k_accuracy_score_ties(y_true, k, true_score):
+    # Make sure highest indices labels are chosen first in case of ties
+    y_score = np.array([
+        [5, 5, 7, 0],
+        [1, 5, 5, 5],
+        [0, 0, 3, 3],
+        [1, 1, 1, 1],
+    ])
+    assert top_k_accuracy_score(y_true, y_score,
+                                k=k) == pytest.approx(true_score)
+
+
+@pytest.mark.parametrize('y_true, k', [
+    ([0, 1, 2, 3], 4),
+    ([0, 1, 2, 3], 5),
+])
+def test_top_k_accuracy_score_warning(y_true, k):
+    y_score = np.array([
+        [0.4, 0.3, 0.2, 0.1],
+        [0.1, 0.4, 0.3, 0.2],
+        [0.2, 0.1, 0.4, 0.3],
+        [0.3, 0.2, 0.1, 0.4],
+    ])
+    w = UndefinedMetricWarning
+    score = assert_warns(w, top_k_accuracy_score, y_true, y_score, k=k)
+    assert score == 1
+
+
+@pytest.mark.parametrize('y_true, labels, msg', [
+    (
+        [0, .57, 1, 2],
+        None,
+        "y type must be 'binary' or 'multiclass', got 'continuous'"
+    ),
+    (
+        [0, 1, 2, 3],
+        None,
+        r"Number of classes in 'y_true' \(4\) not equal to the number of "
+        r"classes in 'y_score' \(3\)."
+    ),
+    (
+        ['c', 'c', 'a', 'b'],
+        ['a', 'b', 'c', 'c'],
+        "Parameter 'labels' must be unique."
+    ),
+    (
+        ['c', 'c', 'a', 'b'],
+        ['a', 'c', 'b'],
+        "Parameter 'labels' must be ordered."
+    ),
+    (
+        [0, 0, 1, 2],
+        [0, 1, 2, 3],
+        r"Number of given labels \(4\) not equal to the number of classes in "
+        r"'y_score' \(3\)."
+    ),
+    (
+        [0, 0, 1, 2],
+        [0, 1, 3],
+        "'y_true' contains labels not in parameter 'labels'."
+    ),
+])
+def test_top_k_accuracy_score_error(y_true, labels, msg):
+    y_score = np.array([
+        [0.2, 0.1, 0.7],
+        [0.4, 0.3, 0.3],
+        [0.3, 0.4, 0.3],
+        [0.4, 0.5, 0.1],
+    ])
+    with pytest.raises(ValueError, match=msg):
+        top_k_accuracy_score(y_true, y_score, k=2, labels=labels)
