@@ -48,7 +48,7 @@ def _grid_from_X(X, percentiles, grid_resolution):
     Parameters
     ----------
     X : ndarray, shape (n_samples, n_target_features)
-        The data
+        The data.
 
     percentiles : tuple of floats
         The percentiles which are used to construct the extreme values of
@@ -164,9 +164,9 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
             predictions.append(pred)
             # average over samples
             averaged_predictions.append(np.mean(pred, axis=0))
-        except NotFittedError:
+        except NotFittedError as e:
             raise ValueError(
-                "'estimator' parameter must be a fitted estimator")
+                "'estimator' parameter must be a fitted estimator") from e
 
     n_samples = X.shape[0]
 
@@ -358,6 +358,11 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
         ``grid_resolution``, or the number of unique values in ``X[:, j]``,
         whichever is smaller. Only available when `kind="legacy"`.
 
+    See Also
+    --------
+    plot_partial_dependence : Plot Partial Dependence.
+    PartialDependenceDisplay : Partial Dependence visualization.
+
     Examples
     --------
     >>> X = [[0, 0, 2], [1, 0, 0]]
@@ -367,10 +372,6 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
     >>> partial_dependence(gb, features=[0], X=X, percentiles=(0, 1),
     ...                    grid_resolution=2) # doctest: +SKIP
     (array([[-4.52...,  4.52...]]), [array([ 0.,  1.])])
-
-    See also
-    --------
-    sklearn.inspection.plot_partial_dependence: Plot partial dependence
     """
     if not (is_classifier(estimator) or is_regressor(estimator)):
         raise ValueError(

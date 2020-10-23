@@ -244,3 +244,11 @@ def test_affinity_propagation_float32():
                               random_state=0).fit(X)
     expected = np.array([0, 1, 1, 2])
     assert_array_equal(afp.labels_, expected)
+
+
+# TODO: Remove in 0.26
+def test_affinity_propagation_pairwise_is_deprecated():
+    afp = AffinityPropagation(affinity='precomputed')
+    msg = r"Attribute _pairwise was deprecated in version 0\.24"
+    with pytest.warns(FutureWarning, match=msg):
+        afp._pairwise
