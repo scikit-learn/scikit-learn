@@ -130,15 +130,13 @@ def test_incr_mean_variance_axis_weighted_axis1(Xw, X, weights,
     last_mean = np.zeros(np.shape(Xw)[0])
     last_var = np.zeros_like(last_mean)
     last_n = np.zeros_like(last_mean, dtype=np.int64)
-    means0, vars0, n_incr0 = incr_mean_variance_axis(X=X_sparse, axis=axis,
-                                                     last_mean=last_mean,
-                                                     last_var=last_var,
-                                                     last_n=last_n,
-                                                     weights=None)
+    means0, vars0, n_incr0 = incr_mean_variance_axis(
+        X=X_sparse, axis=axis, last_mean=last_mean, last_var=last_var,
+        last_n=last_n, weights=None)
 
     means_w0, vars_w0, n_incr_w0 = incr_mean_variance_axis(
-            X=Xw_sparse, axis=axis, last_mean=last_mean, last_var=last_var,
-            last_n=last_n, weights=weights)
+        X=Xw_sparse, axis=axis, last_mean=last_mean, last_var=last_var,
+        last_n=last_n, weights=weights)
 
     means_simple, vars_simple = mean_variance_axis(X=X_sparse, axis=axis)
 
@@ -149,15 +147,13 @@ def test_incr_mean_variance_axis_weighted_axis1(Xw, X, weights,
     assert_array_almost_equal(n_incr0, n_incr_w0)
 
     # check second round for incremental
-    means1, vars1, n_incr1 = incr_mean_variance_axis(X=X_sparse, axis=axis,
-                                                     last_mean=means0,
-                                                     last_var=vars0,
-                                                     last_n=n_incr0,
-                                                     weights=None)
+    means1, vars1, n_incr1 = incr_mean_variance_axis(
+        X=X_sparse, axis=axis, last_mean=means0, last_var=vars0,
+        last_n=n_incr0, weights=None)
 
     means_w1, vars_w1, n_incr_w1 = incr_mean_variance_axis(
-            X=Xw_sparse, axis=axis, last_mean=means_w0, last_var=vars_w0,
-            last_n=n_incr_w0, weights=weights)
+        X=Xw_sparse, axis=axis, last_mean=means_w0, last_var=vars_w0,
+        last_n=n_incr_w0, weights=weights)
 
     assert_array_almost_equal(means1, means_w1)
     assert_array_almost_equal(vars1, vars_w1)
@@ -202,15 +198,13 @@ def test_incr_mean_variance_axis_weighted_axis0(Xw, X, weights,
     last_mean = np.zeros(np.size(Xw, 1))
     last_var = np.zeros_like(last_mean)
     last_n = np.zeros_like(last_mean, dtype=np.int64)
-    means0, vars0, n_incr0 = incr_mean_variance_axis(X=X_sparse, axis=axis,
-                                                     last_mean=last_mean,
-                                                     last_var=last_var,
-                                                     last_n=last_n,
-                                                     weights=None)
+    means0, vars0, n_incr0 = incr_mean_variance_axis(
+        X=X_sparse, axis=axis, last_mean=last_mean, last_var=last_var,
+        last_n=last_n, weights=None)
 
     means_w0, vars_w0, n_incr_w0 = incr_mean_variance_axis(
-            X=Xw_sparse, axis=axis, last_mean=last_mean, last_var=last_var,
-            last_n=last_n, weights=weights)
+        X=Xw_sparse, axis=axis, last_mean=last_mean, last_var=last_var,
+        last_n=last_n, weights=weights)
 
     means_simple, vars_simple = mean_variance_axis(X=X_sparse, axis=axis)
 
@@ -221,15 +215,13 @@ def test_incr_mean_variance_axis_weighted_axis0(Xw, X, weights,
     assert_array_almost_equal(n_incr0, n_incr_w0)
 
     # check second round for incremental
-    means1, vars1, n_incr1 = incr_mean_variance_axis(X=X_sparse, axis=axis,
-                                                     last_mean=means0,
-                                                     last_var=vars0,
-                                                     last_n=n_incr0,
-                                                     weights=None)
+    means1, vars1, n_incr1 = incr_mean_variance_axis(
+        X=X_sparse, axis=axis, ast_mean=means0, last_var=vars0,
+        last_n=n_incr0, weights=None)
 
     means_w1, vars_w1, n_incr_w1 = incr_mean_variance_axis(
-            X=Xw_sparse, axis=axis, last_mean=means_w0, last_var=vars_w0,
-            last_n=n_incr_w0, weights=weights)
+        X=Xw_sparse, axis=axis, last_mean=means_w0, last_var=vars_w0,
+        last_n=n_incr_w0, weights=weights)
 
     assert_array_almost_equal(means1, means_w1)
     assert_array_almost_equal(vars1, vars_w1)

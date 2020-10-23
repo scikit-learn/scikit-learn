@@ -132,7 +132,7 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n,
         Sum of the weights seen so far, excluding the current weights
         If not float, it should be of shape (n_samples,) if
         axis=0 or (n_features,) if axis=1. If float it corresponds to
-        having same weights for all features (or samples).
+        having same weights for all samples (or features).
 
     weights : ndarray, shape (n_samples,) or (n_features,) | None
         if axis is set to 0 shape is (n_samples,) or
@@ -150,8 +150,12 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n,
         sample-wise variances if axis = 1.
 
     n : ndarray of shape (n_features,) or (n_samples,), dtype=integral
-        Updated number of seen weights per feature if axis=0
+        Updated number of seen samples per feature if axis=0
         or number of seen features per sample if axis=1.
+        
+        If weights is not None, n is a sum of the weights of the seen
+        samples or features instead of the actual number of seen
+        samples or features.
 
     Notes
     -----
