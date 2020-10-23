@@ -152,7 +152,7 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n,
     n : ndarray of shape (n_features,) or (n_samples,), dtype=integral
         Updated number of seen samples per feature if axis=0
         or number of seen features per sample if axis=1.
-        
+
         If weights is not None, n is a sum of the weights of the seen
         samples or features instead of the actual number of seen
         samples or features.
