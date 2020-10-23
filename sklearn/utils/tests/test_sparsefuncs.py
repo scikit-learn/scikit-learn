@@ -216,7 +216,7 @@ def test_incr_mean_variance_axis_weighted_axis0(Xw, X, weights,
 
     # check second round for incremental
     means1, vars1, n_incr1 = incr_mean_variance_axis(
-        X=X_sparse, axis=axis, ast_mean=means0, last_var=vars0,
+        X=X_sparse, axis=axis, last_mean=means0, last_var=vars0,
         last_n=n_incr0, weights=None)
 
     means_w1, vars_w1, n_incr_w1 = incr_mean_variance_axis(
