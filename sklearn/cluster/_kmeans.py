@@ -31,6 +31,7 @@ from ..utils import deprecated
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..exceptions import ConvergenceWarning
+from ._k_means_fast import CHUNK_SIZE
 from ._k_means_fast import _inertia_dense
 from ._k_means_fast import _inertia_sparse
 from ._k_means_fast import _mini_batch_update_csr
@@ -873,7 +874,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         if sp.issparse(X):
             return
 
-        active_threads = int(np.ceil(n_samples / 256))
+        active_threads = int(np.ceil(n_samples / CHUNK_SIZE))
         if active_threads < self._n_threads:
             modules = threadpool_info()
             has_vcomp = "vcomp" in [module["prefix"] for module in modules]
@@ -892,8 +893,8 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
                         f"MiniBatchKMeans is known to have a memory leak on "
                         f"Windows with MKL, when there are less chunks than "
                         f"available threads. You can prevent it by setting "
-                        f"batch_size >= {self._n_threads * 256} or by setting "
-                        f"the environment variable "
+                        f"batch_size >= {self._n_threads * CHUNK_SIZE} or by "
+                        f"setting the environment variable "
                         f"OMP_NUM_THREADS={active_threads}")
 
     def _init_centroids(self, X, x_squared_norms, init, random_state,
