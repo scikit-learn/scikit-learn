@@ -229,13 +229,9 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
         An estimator object implementing :term:`fit` and :term:`predict`.
 
     n_jobs : int or None, optional (default=None)
-        Pool size for multiprocessing / multithreading, passed to
-        ``joblib.Parallel`` for use in :meth:`fit` and :meth:`predict`.
-        Also used in :meth:`partial_fit` if supported by the passed
-        estimator.
-
-        An instance of the passed estimator is trained for each output
-        variable in ``y``, parallelized by ``joblib.Parallel``.
+        The number of jobs to run in parallel.
+        :meth:`fit`, :meth:`predict` and :meth:`partial_fit` (if supported
+        by the passed estimator) will be parallelized for each target.
 
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all available processes / threads.
@@ -310,13 +306,9 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         :term:`predict_proba`.
 
     n_jobs : int or None, optional (default=None)
-        Pool size for multiprocessing / multithreading, passed to
-        ``joblib.Parallel()`` for use in :meth:`fit` and :meth:`predict`.
-        Also used in :meth:`partial_fit` if supported by the passed
-        estimator.
-
-        An instance of the passed estimator is trained for each output
-        variable in ``y``, parallelized by ``joblib.Parallel``
+        The number of jobs to run in parallel.
+        :meth:`fit`, :meth:`predict` and :meth:`partial_fit` (if supported
+        by the passed estimator) will be parallelized for each target.
 
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all available processes / threads.
