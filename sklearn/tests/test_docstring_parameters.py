@@ -217,6 +217,10 @@ def test_fit_docstring_attributes(name, Estimator):
     if Estimator.__name__ == 'AffinityPropagation':
         est.random_state = 63
 
+    # TO BE REMOVED for v0.26 (avoid FutureWarning)
+    if Estimator.__name__ == 'NMF':
+        est.init = 'nndsvda'
+
     X, y = make_classification(n_samples=20, n_features=3,
                                n_redundant=0, n_classes=2,
                                random_state=2)

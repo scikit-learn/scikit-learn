@@ -41,16 +41,27 @@ than others, it might dominate the objective function and make the
 estimator unable to learn from other features correctly as expected.
 
 
-The function :func:`scale` provides a quick and easy way to perform this
-operation on a single array-like dataset::
+The :mod:`~sklearn.preprocessing` module provides the
+:class:`StandardScaler` utility class, which is a quick and
+easy way to perform the following operation on an array-like
+dataset::
 
   >>> from sklearn import preprocessing
   >>> import numpy as np
   >>> X_train = np.array([[ 1., -1.,  2.],
   ...                     [ 2.,  0.,  0.],
   ...                     [ 0.,  1., -1.]])
-  >>> X_scaled = preprocessing.scale(X_train)
+  >>> scaler = preprocessing.StandardScaler().fit(X_train)
+  >>> scaler
+  StandardScaler()
 
+  >>> scaler.mean_
+  array([1. ..., 0. ..., 0.33...])
+
+  >>> scaler.scale_
+  array([0.81..., 0.81..., 1.24...])
+
+  >>> X_scaled = scaler.transform(X_train)
   >>> X_scaled
   array([[ 0.  ..., -1.22...,  1.33...],
          [ 1.22...,  0.  ..., -0.26...],
@@ -71,35 +82,26 @@ Scaled data has zero mean and unit variance::
 
 ..    >>> print_options = np.set_printoptions(print_options)
 
-The ``preprocessing`` module further provides a utility class
-:class:`StandardScaler` that implements the ``Transformer`` API to compute
-the mean and standard deviation on a training set so as to be
-able to later reapply the same transformation on the testing set.
-This class is hence suitable for use in the early steps of a
-:class:`~sklearn.pipeline.Pipeline`::
+This class implements the ``Transformer`` API to compute the mean and
+standard deviation on a training set so as to be able to later re-apply the
+same transformation on the testing set. This class is hence suitable for
+use in the early steps of a :class:`~sklearn.pipeline.Pipeline`::
 
-  >>> scaler = preprocessing.StandardScaler().fit(X_train)
-  >>> scaler
-  StandardScaler()
+  >>> from sklearn.datasets import make_classification
+  >>> from sklearn.linear_model import LogisticRegression
+  >>> from sklearn.model_selection import train_test_split
+  >>> from sklearn.pipeline import make_pipeline
+  >>> from sklearn.preprocessing import StandardScaler
 
-  >>> scaler.mean_
-  array([1. ..., 0. ..., 0.33...])
+  >>> X, y = make_classification(random_state=42)
+  >>> X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
+  >>> pipe = make_pipeline(StandardScaler(), LogisticRegression())
+  >>> pipe.fit(X_train, y_train)  # apply scaling on training data
+  Pipeline(steps=[('standardscaler', StandardScaler()),
+                  ('logisticregression', LogisticRegression())])
 
-  >>> scaler.scale_
-  array([0.81..., 0.81..., 1.24...])
-
-  >>> scaler.transform(X_train)
-  array([[ 0.  ..., -1.22...,  1.33...],
-         [ 1.22...,  0.  ..., -0.26...],
-         [-1.22...,  1.22..., -1.06...]])
-
-
-The scaler instance can then be used on new data to transform it the
-same way it did on the training set::
-
-  >>> X_test = [[-1., 1., 0.]]
-  >>> scaler.transform(X_test)
-  array([[-2.44...,  1.22..., -0.26...]])
+  >>> pipe.score(X_test, y_test)  # apply scaling on testing data, without leaking training data.
+  0.96
 
 It is possible to disable either centering or scaling by either
 passing ``with_mean=False`` or ``with_std=False`` to the constructor
@@ -181,20 +183,15 @@ Here is how to use the toy data from the previous example with this scaler::
   array([2.,  1.,  2.])
 
 
-As with :func:`scale`, the module further provides convenience functions
-:func:`minmax_scale` and :func:`maxabs_scale` if you don't want to create
-an object.
-
-
 Scaling sparse data
 -------------------
 Centering sparse data would destroy the sparseness structure in the data, and
 thus rarely is a sensible thing to do. However, it can make sense to scale
 sparse inputs, especially if features are on different scales.
 
-:class:`MaxAbsScaler`  and :func:`maxabs_scale` were specifically designed
-for scaling sparse data, and are the recommended way to go about this.
-However, :func:`scale` and :class:`StandardScaler` can accept ``scipy.sparse``
+:class:`MaxAbsScaler` was specifically designed for scaling
+sparse data, and is the recommended way to go about this.
+However, :class:`StandardScaler` can accept ``scipy.sparse``
 matrices  as input, as long as ``with_mean=False`` is explicitly passed
 to the constructor. Otherwise a ``ValueError`` will be raised as
 silently centering would break the sparsity and would often crash the
@@ -218,9 +215,8 @@ Scaling data with outliers
 
 If your data contains many outliers, scaling using the mean and variance
 of the data is likely to not work very well. In these cases, you can use
-:func:`robust_scale` and :class:`RobustScaler` as drop-in replacements
-instead. They use more robust estimates for the center and range of your
-data.
+:class:`RobustScaler` as a drop-in replacement instead. It uses
+more robust estimates for the center and range of your data.
 
 
 .. topic:: References:
@@ -237,12 +233,6 @@ data.
 
   To address this issue you can use :class:`~sklearn.decomposition.PCA` with
   ``whiten=True`` to further remove the linear correlation across features.
-
-.. topic:: Scaling a 1D array
-
-   All above functions (i.e. :func:`scale`, :func:`minmax_scale`,
-   :func:`maxabs_scale`, and :func:`robust_scale`) accept 1D array which can be
-   useful in some specific case.
 
 .. _kernel_centering:
 
@@ -284,8 +274,8 @@ data from any distribution to as close to a Gaussian distribution.
 Mapping to a Uniform distribution
 ---------------------------------
 
-:class:`QuantileTransformer` and :func:`quantile_transform` provide a
-non-parametric transformation to map the data to a uniform distribution
+:class:`QuantileTransformer` provides a non-parametric
+transformation to map the data to a uniform distribution
 with values between 0 and 1::
 
   >>> from sklearn.datasets import load_iris
@@ -414,8 +404,8 @@ This assumption is the base of the `Vector Space Model
 classification and clustering contexts.
 
 The function :func:`normalize` provides a quick and easy way to perform this
-operation on a single array-like dataset, either using the ``l1`` or ``l2``
-norms::
+operation on a single array-like dataset, either using the ``l1``, ``l2``, or
+``max`` norms::
 
   >>> X = [[ 1., -1.,  2.],
   ...      [ 2.,  0.,  0.],
@@ -726,8 +716,8 @@ It is possible to adjust the threshold of the binarizer::
          [1., 0., 0.],
          [0., 0., 0.]])
 
-As for the :class:`StandardScaler` and :class:`Normalizer` classes, the
-preprocessing module provides a companion function :func:`binarize`
+As for the :class:`Normalizer` class, the preprocessing module
+provides a companion function :func:`binarize`
 to be used when the transformer API is not necessary.
 
 Note that the :class:`Binarizer` is similar to the :class:`KBinsDiscretizer`
