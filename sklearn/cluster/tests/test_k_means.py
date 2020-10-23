@@ -551,6 +551,7 @@ def test_predict(Estimator, algorithm, init, dtype, array_constr):
 
     # re-predict labels for training set using fit_predict
     pred = km.fit_predict(X)
+    assert_allclose(v_measure_score(pred, labels), 1)
 
     # predict centroid labels
     pred = km.predict(km.cluster_centers_)
