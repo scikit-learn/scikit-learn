@@ -112,7 +112,11 @@ class PrecisionRecallDisplay:
 
         name = self.estimator_name if name is None else name
 
-        line_kwargs = {"drawstyle": "steps-post"}
+        if "drawstyle" not in kwargs:
+            line_kwargs = {"drawstyle": "steps-post"}
+        else:
+            line_kwargs = {}
+
         if self.average_precision is not None and name is not None:
             line_kwargs["label"] = (f"{name} (AP = "
                                     f"{self.average_precision:0.2f})")
@@ -261,8 +265,6 @@ def plot_precision_recall_curve(estimator, X, y, *,
     import matplotlib.pyplot as plt
 
     n_classes = len(np.unique(y)) if y.ndim == 1 else y.shape[1]
-
-    print('n_classes', n_classes, y.ndim, y.shape)
 
     y_pred, pos_label = _get_response(
         X, estimator, response_method,
