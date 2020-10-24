@@ -757,3 +757,16 @@ def test_encoders_does_not_support_none_values(Encoder):
     with pytest.raises(TypeError, match="Encoders require their input to be "
                                         "uniformly strings or numbers."):
         Encoder().fit(values)
+
+
+def test_drop_most_frequent():
+    X = [['abc', 12, 2, 55],
+         ['def', 12, 1, 55],
+         ['def', 12, 3, 56]]
+    exp = [[1, 1, 0, 0],
+           [0, 0, 0, 0],
+           [0, 0, 1, 1]]
+    ohe = OneHotEncoder(drop='most_frequent')
+    trans = ohe.fit_transform(X).toarray()
+    assert_array_equal(trans, exp)
+    assert_array_equal(ohe.inverse_transform(trans), np.array(X, dtype=object))

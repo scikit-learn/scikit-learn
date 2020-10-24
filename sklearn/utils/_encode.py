@@ -1,7 +1,8 @@
 import numpy as np
+from collections import Counter
 
 
-def _unique(values, *, return_inverse=False):
+def _unique(values, *, return_inverse=False, return_counts=False):
     """Helper function to find unique values with support for python objects.
 
     Uses pure python method for object dtype, and numpy method for
@@ -25,22 +26,32 @@ def _unique(values, *, return_inverse=False):
         Only provided if `return_inverse` is True.
     """
     if values.dtype == object:
-        return _unique_python(values, return_inverse=return_inverse)
+        return _unique_python(values,
+                              return_inverse=return_inverse,
+                              return_counts=return_counts)
     # numerical
-    return np.unique(values, return_inverse=return_inverse)
+    return np.unique(values,
+                     return_inverse=return_inverse,
+                     return_counts=return_counts)
 
 
-def _unique_python(values, *, return_inverse):
+def _unique_python(values, *, return_inverse, return_counts):
     # Only used in `_uniques`, see docstring there for details
     try:
         uniques = sorted(set(values))
-        uniques = np.array(uniques, dtype=values.dtype)
+        if return_counts:
+            ctr = Counter(values)
+            ctr = dict(sorted(ctr.items()))
+            uniques = (np.array(list(ctr.keys()), dtype=values.dtype),
+                       np.array(list(ctr.values()), dtype=values.dtype))
+        else:
+            uniques = np.array(uniques, dtype=values.dtype)
     except TypeError:
         types = sorted(t.__qualname__
                        for t in set(type(v) for v in values))
         raise TypeError("Encoders require their input to be uniformly "
                         f"strings or numbers. Got {types}")
-
+    # TODO
     if return_inverse:
         table = {val: i for i, val in enumerate(uniques)}
         inverse = np.array([table[v] for v in values])
