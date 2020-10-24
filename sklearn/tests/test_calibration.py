@@ -28,6 +28,7 @@ from sklearn.calibration import CalibratedClassifierCV
 from sklearn.calibration import _sigmoid_calibration, _SigmoidCalibration
 from sklearn.calibration import calibration_curve
 from sklearn.utils._mocking import CheckingClassifier
+from sklearn.utils._testing import _convert_container
 
 
 def test_calibration():
@@ -458,21 +459,21 @@ def test_calibration_attributes(clf, cv):
         assert calib_clf.n_features_in_ == X.shape[1]
 
 
-@pytest.mark.parametrize('fit_params_as_list', [False, True])
-def test_calibration_with_fit_params(fit_params_as_list):
-    """Tests that fit_params are passed to the underlying base estimator
+@pytest.mark.parametrize('fit_params_type', ['list', 'array'])
+def test_calibration_with_fit_params(fit_params_type):
+    """Tests that fit_params are passed to the underlying base estimator.
 
+    Related issue:
     https://github.com/scikit-learn/scikit-learn/issues/12384
-
     """
     n_samples = 100
     X, y = make_classification(n_samples=n_samples, n_features=6,
                                random_state=42)
 
-    if fit_params_as_list:
-        fit_params = {'a': y.tolist(), 'b': y.tolist()}
-    else:
-        fit_params = {'a': y, 'b': y}
+    fit_params = {
+        "a": _convert_container(y, fit_params_type),
+        "b": _convert_container(y, fit_params_type),
+    }
 
     clf = CheckingClassifier(expected_fit_params=['a', 'b'])
     pc_clf = CalibratedClassifierCV(clf)
@@ -486,8 +487,7 @@ def test_calibration_with_fit_params(fit_params_as_list):
 ])
 def test_calibration_with_sample_weight_base_estimator(sample_weight):
     """Tests that sample_weight is passed to the underlying base
-    estimator
-
+    estimator.
     """
     n_samples = 100
     X, y = make_classification(n_samples=n_samples, n_features=6,
@@ -501,11 +501,10 @@ def test_calibration_with_sample_weight_base_estimator(sample_weight):
 
 def test_calibration_without_sample_weight_base_estimator():
     """Check that even if the base_estimator doesn't support
-    sample_weight, fitting with sample_weight still works
+    sample_weight, fitting with sample_weight still works.
 
     There should be a warning, since the sample_weight is not passed
     on to the base_estimator.
-
     """
     n_samples = 100
     X, y = make_classification(n_samples=n_samples, n_features=6,
@@ -526,8 +525,7 @@ def test_calibration_without_sample_weight_base_estimator():
 
 def test_calibration_with_fit_params_inconsistent_length():
     """fit_params having different length than data should raise the
-    correct error message
-
+    correct error message.
     """
     n_samples = 100
     X, y = make_classification(n_samples=2 * n_samples, n_features=6,
@@ -539,6 +537,7 @@ def test_calibration_with_fit_params_inconsistent_length():
 
     msg = (
         r"Found input variables with inconsistent numbers of "
-        r"samples: \[200, 5\]")
+        r"samples: \[200, 5\]"
+    )
     with pytest.raises(ValueError, match=msg):
         pc_clf.fit(X, y, **fit_params)

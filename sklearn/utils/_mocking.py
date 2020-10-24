@@ -1,7 +1,8 @@
 import numpy as np
 
 from ..base import BaseEstimator, ClassifierMixin
-from .validation import _num_samples, check_array, check_is_fitted
+from .validation import _check_sample_weight, _num_samples, check_array
+from .validation import check_is_fitted
 
 
 class ArraySlicingWrapper:
@@ -81,8 +82,8 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
     expected_fit_params : list of str, default=None
         A list of the expected parameters given when calling `fit`.
 
-    expected_sample_weight : bool (default=False)
-        Whether to check if a valid sample_weight was passed to `fit`.
+    expected_sample_weight : bool, default=False
+        Whether to check if a valid `sample_weight` was passed to `fit`.
 
     Attributes
     ----------
@@ -208,10 +209,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         if self.expected_sample_weight:
             if sample_weight is None:
                 raise AssertionError("Expected sample_weight to be passed")
-            if len(sample_weight) != _num_samples(X):
-                raise AssertionError(
-                    f'Expected sample_weight to have length {_num_samples(X)},'
-                    f' got length {len(sample_weight)} instead.')
+            _check_sample_weight(sample_weight, X)
 
         return self
 
