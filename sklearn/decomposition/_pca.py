@@ -1,4 +1,4 @@
-""" Principal Component Analysis
+""" Principal Component Analysis.
 """
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
@@ -21,7 +21,6 @@ from scipy.sparse.linalg import svds
 
 from ._base import _BasePCA
 from ..utils import check_random_state
-from ..utils import check_array
 from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
@@ -48,7 +47,7 @@ def _assess_dimension(spectrum, rank, n_samples):
     Returns
     -------
     ll : float
-        The log-likelihood
+        The log-likelihood.
 
     Notes
     -----
@@ -199,7 +198,7 @@ class PCA(_BasePCA):
 
         .. versionadded:: 0.18.0
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Used when the 'arpack' or 'randomized' solvers are used. Pass an int
         for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -342,8 +341,7 @@ class PCA(_BasePCA):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : None
-            Ignored variable.
+        y : Ignored
 
         Returns
         -------
@@ -362,12 +360,11 @@ class PCA(_BasePCA):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : None
-            Ignored variable.
+        y : Ignored
 
         Returns
         -------
-        X_new : array-like of shape (n_samples, n_components)
+        X_new : ndarray of shape (n_samples, n_components)
             Transformed values.
 
         Notes
@@ -430,7 +427,7 @@ class PCA(_BasePCA):
                              "".format(self._fit_svd_solver))
 
     def _fit_full(self, X, n_components):
-        """Fit the model by computing full SVD on X"""
+        """Fit the model by computing full SVD on X."""
         n_samples, n_features = X.shape
 
         if n_components == 'mle':
@@ -497,7 +494,7 @@ class PCA(_BasePCA):
 
     def _fit_truncated(self, X, n_components, svd_solver):
         """Fit the model by computing truncated SVD (by ARPACK or randomized)
-        on X
+        on X.
         """
         n_samples, n_features = X.shape
 
@@ -580,12 +577,12 @@ class PCA(_BasePCA):
 
         Returns
         -------
-        ll : array-like of shape (n_samples,)
+        ll : ndarray of shape (n_samples,)
             Log-likelihood of each sample under the current model.
         """
         check_is_fitted(self)
 
-        X = check_array(X)
+        X = self._validate_data(X, dtype=[np.float64, np.float32], reset=False)
         Xr = X - self.mean_
         n_features = X.shape[1]
         precision = self.get_precision()
@@ -606,8 +603,7 @@ class PCA(_BasePCA):
         X : array-like of shape (n_samples, n_features)
             The data.
 
-        y : None
-            Ignored variable.
+        y : Ignored
 
         Returns
         -------
@@ -615,3 +611,6 @@ class PCA(_BasePCA):
             Average log-likelihood of the samples under the current model.
         """
         return np.mean(self.score_samples(X))
+
+    def _more_tags(self):
+        return {'preserves_dtype': [np.float64, np.float32]}

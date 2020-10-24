@@ -374,6 +374,12 @@ General Concepts
                 the data needs to be indexed on both axes, while other data is
                 indexed only on the first axis.
 
+                .. deprecated:: 0.24
+
+                    The _pairwise attribute is deprecated in 0.24. From 0.26
+                    onward, the `pairwise` estimator tag should be used
+                    instead.
+
         For more detailed info, see :ref:`estimator_tags`.
 
     feature
@@ -639,9 +645,9 @@ General Concepts
         sample and each column to a training sample.
 
         Use of precomputed X is usually indicated by setting a ``metric``,
-        ``affinity`` or ``kernel`` parameter to the string 'precomputed'.  An
-        estimator should mark itself as being :term:`_pairwise` if this is the
-        case.
+        ``affinity`` or ``kernel`` parameter to the string 'precomputed'. If
+        this is the case, then the estimator should set the `pairwise`
+        estimator tag as True.
 
     rectangular
         Data that can be represented as a matrix with :term:`samples` on the
@@ -1037,7 +1043,9 @@ Target Types
         identified as 'multiclass'.
 
     continuous multioutput
+    continuous multi-output
     multioutput continuous
+    multi-output continuous
         A regression problem where each sample's target consists of ``n_outputs``
         :term:`outputs`, each one a finite floating point number, for a
         fixed int ``n_outputs > 1`` in a particular dataset.
@@ -1052,6 +1060,7 @@ Target Types
         'multiclass-multioutput'.
 
     multiclass
+    multi-class
         A classification problem consisting of more than two classes.  A
         multiclass target may be represented as a 1-dimensional array of
         strings or integers.  A 2d column vector of integers (i.e. a
@@ -1075,7 +1084,9 @@ Target Types
         identically to 'multiclass'.
 
     multiclass multioutput
+    multi-class multi-output
     multioutput multiclass
+    multi-output multi-class
         A classification problem where each sample's target consists of
         ``n_outputs`` :term:`outputs`, each a class label, for a fixed int
         ``n_outputs > 1`` in a particular dataset.  Each output has a
@@ -1101,6 +1112,7 @@ Target Types
         'multiclass-multioutput' for multiclass multioutput input.
 
     multilabel
+    multi-label
         A :term:`multiclass multioutput` target where each output is
         :term:`binary`.  This may be represented as a 2d (dense) array or
         sparse matrix of integers, such that each column is a separate binary

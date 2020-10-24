@@ -27,8 +27,6 @@ from sklearn.linear_model import LinearRegression
 from sklearn.svm import LinearSVC
 from sklearn.svm import LinearSVR
 from sklearn.svm import SVC
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import scale
@@ -44,8 +42,6 @@ from sklearn.utils._mocking import CheckingClassifier
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import ignore_warnings
-from sklearn.utils.estimator_checks import check_estimator
-from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
 
 X_diabetes, y_diabetes = load_diabetes(return_X_y=True)
 X_iris, y_iris = load_iris(return_X_y=True)
@@ -366,24 +362,6 @@ def test_stacking_randomness(estimator, X, y):
         estimator_full.fit(X, y).transform(X)[:, 1:],
         estimator_drop.fit(X, y).transform(X)
     )
-
-
-# These warnings are raised due to _BaseComposition
-@pytest.mark.filterwarnings("ignore:TypeError occurred during set_params")
-@pytest.mark.filterwarnings("ignore:Estimator's parameters changed after")
-@pytest.mark.parametrize(
-    "estimator",
-    [StackingClassifier(
-        estimators=[('lr', LogisticRegression(random_state=0)),
-                    ('tree', DecisionTreeClassifier(random_state=0))]),
-     StackingRegressor(
-         estimators=[('lr', LinearRegression()),
-                     ('tree', DecisionTreeRegressor(random_state=0))])],
-    ids=['StackingClassifier', 'StackingRegressor']
-)
-def test_check_estimators_stacking_estimator(estimator):
-    check_estimator(estimator)
-    check_no_attributes_set_in_init(estimator.__class__.__name__, estimator)
 
 
 def test_stacking_classifier_stratify_default():

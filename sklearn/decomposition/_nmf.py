@@ -1,4 +1,4 @@
-""" Non-negative matrix factorization
+""" Non-negative matrix factorization.
 """
 # Author: Vlad Niculae
 #         Lars Buitinck
@@ -25,14 +25,14 @@ EPSILON = np.finfo(np.float32).eps
 
 
 def norm(x):
-    """Dot product-based Euclidean norm implementation
+    """Dot product-based Euclidean norm implementation.
 
     See: http://fseoane.net/blog/2011/computing-the-vector-norm/
 
     Parameters
     ----------
     x : array-like
-        Vector for which to compute the norm
+        Vector for which to compute the norm.
     """
     return sqrt(squared_norm(x))
 
@@ -43,9 +43,9 @@ def trace_dot(X, Y):
     Parameters
     ----------
     X : array-like
-        First matrix
+        First matrix.
     Y : array-like
-        Second matrix
+        Second matrix.
     """
     return np.dot(X.ravel(), Y.ravel())
 
@@ -65,27 +65,27 @@ def _beta_divergence(X, W, H, beta, square_root=False):
 
     Parameters
     ----------
-    X : float or array-like, shape (n_samples, n_features)
+    X : float or array-like of shape (n_samples, n_features)
 
-    W : float or dense array-like, shape (n_samples, n_components)
+    W : float or array-like of shape (n_samples, n_components)
 
-    H : float or dense array-like, shape (n_components, n_features)
+    H : float or array-like of shape (n_components, n_features)
 
-    beta : float, string in {'frobenius', 'kullback-leibler', 'itakura-saito'}
+    beta : float or {'frobenius', 'kullback-leibler', 'itakura-saito'}
         Parameter of the beta-divergence.
         If beta == 2, this is half the Frobenius *squared* norm.
         If beta == 1, this is the generalized Kullback-Leibler divergence.
         If beta == 0, this is the Itakura-Saito divergence.
         Else, this is the general beta-divergence.
 
-    square_root : boolean, default False
+    square_root : bool, default=False
         If True, return np.sqrt(2 * res)
         For beta == 2, it corresponds to the Frobenius norm.
 
     Returns
     -------
         res : float
-            Beta divergence of X and np.dot(X, H)
+            Beta divergence of X and np.dot(X, H).
     """
     beta = _beta_loss_to_float(beta)
 
@@ -187,7 +187,7 @@ def _special_sparse_dot(W, H, X):
 
 
 def _compute_regularization(alpha, l1_ratio, regularization):
-    """Compute L1 and L2 regularization coefficients for W and H"""
+    """Compute L1 and L2 regularization coefficients for W and H."""
     alpha_H = 0.
     alpha_W = 0.
     if regularization in ('both', 'components'):
@@ -233,7 +233,7 @@ def _check_string_param(solver, regularization, beta_loss, init):
 
 
 def _beta_loss_to_float(beta_loss):
-    """Convert string beta_loss to float"""
+    """Convert string beta_loss to float."""
     allowed_beta_loss = {'frobenius': 2,
                          'kullback-leibler': 1,
                          'itakura-saito': 0}
@@ -247,22 +247,22 @@ def _beta_loss_to_float(beta_loss):
     return beta_loss
 
 
-def _initialize_nmf(X, n_components, init=None, eps=1e-6,
+def _initialize_nmf(X, n_components, init='warn', eps=1e-6,
                     random_state=None):
     """Algorithms for NMF initialization.
 
     Computes an initial guess for the non-negative
-    rank k matrix approximation for X: X = WH
+    rank k matrix approximation for X: X = WH.
 
     Parameters
     ----------
-    X : array-like, shape (n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
         The data matrix to be decomposed.
 
-    n_components : integer
+    n_components : int
         The number of components desired in the approximation.
 
-    init :  None | 'random' | 'nndsvd' | 'nndsvda' | 'nndsvdar'
+    init :  {'random', 'nndsvd', 'nndsvda', 'nndsvdar'}, default=None
         Method used to initialize the procedure.
         Default: None.
         Valid options:
@@ -285,21 +285,21 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
 
         - 'custom': use custom matrices W and H
 
-    eps : float
+    eps : float, default=1e-6
         Truncate all values less then this in output to zero.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Used when ``init`` == 'nndsvdar' or 'random'. Pass an int for
         reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Returns
     -------
-    W : array-like, shape (n_samples, n_components)
-        Initial guesses for solving X ~= WH
+    W : array-like of shape (n_samples, n_components)
+        Initial guesses for solving X ~= WH.
 
-    H : array-like, shape (n_components, n_features)
-        Initial guesses for solving X ~= WH
+    H : array-like of shape (n_components, n_features)
+        Initial guesses for solving X ~= WH.
 
     References
     ----------
@@ -307,6 +307,13 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
     nonnegative matrix factorization - Pattern Recognition, 2008
     http://tinyurl.com/nndsvd
     """
+    if init == 'warn':
+        warnings.warn(("The 'init' value, when 'init=None' and "
+                       "n_components is less than n_samples and "
+                       "n_features, will be changed from 'nndsvd' to "
+                       "'nndsvda' in 0.26."), FutureWarning)
+        init = None
+
     check_non_negative(X, "NMF initialization")
     n_samples, n_features = X.shape
 
@@ -395,11 +402,11 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
 
 def _update_coordinate_descent(X, W, Ht, l1_reg, l2_reg, shuffle,
                                random_state):
-    """Helper function for _fit_coordinate_descent
+    """Helper function for _fit_coordinate_descent.
 
     Update W to minimize the objective function, iterating once over all
     coordinates. By symmetry, to update H, one can call
-    _update_coordinate_descent(X.T, Ht, W, ...)
+    _update_coordinate_descent(X.T, Ht, W, ...).
 
     """
     n_components = Ht.shape[1]
@@ -435,44 +442,44 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, l1_reg_W=0,
 
     Parameters
     ----------
-    X : array-like, shape (n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
         Constant matrix.
 
-    W : array-like, shape (n_samples, n_components)
+    W : array-like of shape (n_samples, n_components)
         Initial guess for the solution.
 
-    H : array-like, shape (n_components, n_features)
+    H : array-like of shape (n_components, n_features)
         Initial guess for the solution.
 
-    tol : float, default: 1e-4
+    tol : float, default=1e-4
         Tolerance of the stopping condition.
 
-    max_iter : integer, default: 200
+    max_iter : int, default=200
         Maximum number of iterations before timing out.
 
-    l1_reg_W : double, default: 0.
+    l1_reg_W : float, default=0.
         L1 regularization parameter for W.
 
-    l1_reg_H : double, default: 0.
+    l1_reg_H : float, default=0.
         L1 regularization parameter for H.
 
-    l2_reg_W : double, default: 0.
+    l2_reg_W : float, default=0.
         L2 regularization parameter for W.
 
-    l2_reg_H : double, default: 0.
+    l2_reg_H : float, default=0.
         L2 regularization parameter for H.
 
-    update_H : boolean, default: True
+    update_H : bool, default=True
         Set to True, both W and H will be estimated from initial guesses.
         Set to False, only W will be estimated.
 
-    verbose : integer, default: 0
+    verbose : int, default=0
         The verbosity level.
 
-    shuffle : boolean, default: False
+    shuffle : bool, default=False
         If true, randomize the order of coordinates in the CD solver.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Used to randomize the coordinates in the CD solver, when
         ``shuffle`` is set to ``True``. Pass an int for reproducible
         results across multiple function calls.
@@ -480,10 +487,10 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, l1_reg_W=0,
 
     Returns
     -------
-    W : array-like, shape (n_samples, n_components)
+    W : ndarray of shape (n_samples, n_components)
         Solution to the non-negative least squares problem.
 
-    H : array-like, shape (n_components, n_features)
+    H : ndarray of shape (n_components, n_features)
         Solution to the non-negative least squares problem.
 
     n_iter : int
@@ -532,7 +539,7 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, l1_reg_W=0,
 
 def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
                              H_sum=None, HHt=None, XHt=None, update_H=True):
-    """update W in Multiplicative Update NMF"""
+    """Update W in Multiplicative Update NMF."""
     if beta_loss == 2:
         # Numerator
         if XHt is None:
@@ -626,7 +633,7 @@ def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
 
 
 def _multiplicative_update_h(X, W, H, beta_loss, l1_reg_H, l2_reg_H, gamma):
-    """update H in Multiplicative Update NMF"""
+    """Update H in Multiplicative Update NMF."""
     if beta_loss == 2:
         numerator = safe_sparse_dot(W.T, X)
         denominator = np.linalg.multi_dot([W.T, W, H])
@@ -711,7 +718,7 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
                                max_iter=200, tol=1e-4,
                                l1_reg_W=0, l1_reg_H=0, l2_reg_W=0, l2_reg_H=0,
                                update_H=True, verbose=0):
-    """Compute Non-negative Matrix Factorization with Multiplicative Update
+    """Compute Non-negative Matrix Factorization with Multiplicative Update.
 
     The objective function is _beta_divergence(X, WH) and is minimized with an
     alternating minimization of W and H. Each minimization is done with a
@@ -719,16 +726,17 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
 
     Parameters
     ----------
-    X : array-like, shape (n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
         Constant input matrix.
 
-    W : array-like, shape (n_samples, n_components)
+    W : array-like of shape (n_samples, n_components)
         Initial guess for the solution.
 
-    H : array-like, shape (n_components, n_features)
+    H : array-like of shape (n_components, n_features)
         Initial guess for the solution.
 
-    beta_loss : float or string, default 'frobenius'
+    beta_loss : float or {'frobenius', 'kullback-leibler', \
+            'itakura-saito'}, default='frobenius'
         String must be in {'frobenius', 'kullback-leibler', 'itakura-saito'}.
         Beta divergence to be minimized, measuring the distance between X
         and the dot product WH. Note that values different from 'frobenius'
@@ -736,37 +744,37 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
         fits. Note that for beta_loss <= 0 (or 'itakura-saito'), the input
         matrix X cannot contain zeros.
 
-    max_iter : integer, default: 200
+    max_iter : int, default=200
         Number of iterations.
 
-    tol : float, default: 1e-4
+    tol : float, default=1e-4
         Tolerance of the stopping condition.
 
-    l1_reg_W : double, default: 0.
+    l1_reg_W : float, default=0.
         L1 regularization parameter for W.
 
-    l1_reg_H : double, default: 0.
+    l1_reg_H : float, default=0.
         L1 regularization parameter for H.
 
-    l2_reg_W : double, default: 0.
+    l2_reg_W : float, default=0.
         L2 regularization parameter for W.
 
-    l2_reg_H : double, default: 0.
+    l2_reg_H : float, default=0.
         L2 regularization parameter for H.
 
-    update_H : boolean, default: True
+    update_H : bool, default=True
         Set to True, both W and H will be estimated from initial guesses.
         Set to False, only W will be estimated.
 
-    verbose : integer, default: 0
+    verbose : int, default=0
         The verbosity level.
 
     Returns
     -------
-    W : array, shape (n_samples, n_components)
+    W : ndarray of shape (n_samples, n_components)
         Solution to the non-negative least squares problem.
 
-    H : array, shape (n_components, n_features)
+    H : ndarray of shape (n_components, n_features)
         Solution to the non-negative least squares problem.
 
     n_iter : int
@@ -843,56 +851,60 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
 
 @_deprecate_positional_args
 def non_negative_factorization(X, W=None, H=None, n_components=None, *,
-                               init=None, update_H=True, solver='cd',
+                               init='warn', update_H=True, solver='cd',
                                beta_loss='frobenius', tol=1e-4,
                                max_iter=200, alpha=0., l1_ratio=0.,
                                regularization=None, random_state=None,
                                verbose=0, shuffle=False):
-    r"""Compute Non-negative Matrix Factorization (NMF)
+    """Compute Non-negative Matrix Factorization (NMF).
 
     Find two non-negative matrices (W, H) whose product approximates the non-
     negative matrix X. This factorization can be used for example for
     dimensionality reduction, source separation or topic extraction.
 
-    The objective function is::
+    The objective function is:
 
-        0.5 * ||X - WH||_Fro^2
-        + alpha * l1_ratio * ||vec(W)||_1
-        + alpha * l1_ratio * ||vec(H)||_1
-        + 0.5 * alpha * (1 - l1_ratio) * ||W||_Fro^2
-        + 0.5 * alpha * (1 - l1_ratio) * ||H||_Fro^2
+        .. math::
 
-    Where::
+            0.5 * ||X - WH||_{Fro}^2 + alpha * l1_{ratio} * ||vec(W)||_1
 
-        ||A||_Fro^2 = \sum_{i,j} A_{ij}^2 (Frobenius norm)
-        ||vec(A)||_1 = \sum_{i,j} abs(A_{ij}) (Elementwise L1 norm)
+            + alpha * l1_{ratio} * ||vec(H)||_1
+
+            + 0.5 * alpha * (1 - l1_{ratio}) * ||W||_{Fro}^2
+
+            + 0.5 * alpha * (1 - l1_{ratio}) * ||H||_{Fro}^2
+
+    Where:
+
+    :math:`||A||_{Fro}^2 = \\sum_{i,j} A_{ij}^2` (Frobenius norm)
+
+    :math:`||vec(A)||_1 = \\sum_{i,j} abs(A_{ij})` (Elementwise L1 norm)
 
     For multiplicative-update ('mu') solver, the Frobenius norm
-    (0.5 * ||X - WH||_Fro^2) can be changed into another beta-divergence loss,
-    by changing the beta_loss parameter.
+    :math:`(0.5 * ||X - WH||_{Fro}^2)` can be changed into another
+    beta-divergence loss, by changing the beta_loss parameter.
 
     The objective function is minimized with an alternating minimization of W
     and H. If H is given and update_H=False, it solves for W only.
 
     Parameters
     ----------
-    X : array-like, shape (n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
         Constant matrix.
 
-    W : array-like, shape (n_samples, n_components)
+    W : array-like of shape (n_samples, n_components), default=None
         If init='custom', it is used as initial guess for the solution.
 
-    H : array-like, shape (n_components, n_features)
+    H : array-like of shape (n_components, n_features), default=None
         If init='custom', it is used as initial guess for the solution.
         If update_H=False, it is used as a constant, to solve for W only.
 
-    n_components : integer
+    n_components : int, default=None
         Number of components, if n_components is not set all features
         are kept.
 
-    init : None | 'random' | 'nndsvd' | 'nndsvda' | 'nndsvdar' | 'custom'
+    init : {'random', 'nndsvd', 'nndsvda', 'nndsvdar', 'custom'}, default=None
         Method used to initialize the procedure.
-        Default: None.
 
         Valid options:
 
@@ -917,11 +929,11 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
         .. versionchanged:: 0.23
             The default value of `init` changed from 'random' to None in 0.23.
 
-    update_H : boolean, default: True
+    update_H : bool, default=True
         Set to True, both W and H will be estimated from initial guesses.
         Set to False, only W will be estimated.
 
-    solver : 'cd' | 'mu'
+    solver : {'cd', 'mu'}, default='cd'
         Numerical solver to use:
 
         - 'cd' is a Coordinate Descent solver that uses Fast Hierarchical
@@ -935,8 +947,8 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
         .. versionadded:: 0.19
            Multiplicative Update solver.
 
-    beta_loss : float or string, default 'frobenius'
-        String must be in {'frobenius', 'kullback-leibler', 'itakura-saito'}.
+    beta_loss : float or {'frobenius', 'kullback-leibler', \
+            'itakura-saito'}, default='frobenius'
         Beta divergence to be minimized, measuring the distance between X
         and the dot product WH. Note that values different from 'frobenius'
         (or 2) and 'kullback-leibler' (or 1) lead to significantly slower
@@ -945,44 +957,44 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
 
         .. versionadded:: 0.19
 
-    tol : float, default: 1e-4
+    tol : float, default=1e-4
         Tolerance of the stopping condition.
 
-    max_iter : integer, default: 200
+    max_iter : int, default=200
         Maximum number of iterations before timing out.
 
-    alpha : double, default: 0.
+    alpha : float, default=0.
         Constant that multiplies the regularization terms.
 
-    l1_ratio : double, default: 0.
+    l1_ratio : float, default=0.
         The regularization mixing parameter, with 0 <= l1_ratio <= 1.
         For l1_ratio = 0 the penalty is an elementwise L2 penalty
         (aka Frobenius Norm).
         For l1_ratio = 1 it is an elementwise L1 penalty.
         For 0 < l1_ratio < 1, the penalty is a combination of L1 and L2.
 
-    regularization : 'both' | 'components' | 'transformation' | None
+    regularization : {'both', 'components', 'transformation'}, default=None
         Select whether the regularization affects the components (H), the
         transformation (W), both or none of them.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Used for NMF initialisation (when ``init`` == 'nndsvdar' or
         'random'), and in Coordinate Descent. Pass an int for reproducible
         results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    verbose : integer, default: 0
+    verbose : int, default=0
         The verbosity level.
 
-    shuffle : boolean, default: False
+    shuffle : bool, default=False
         If true, randomize the order of coordinates in the CD solver.
 
     Returns
     -------
-    W : array-like, shape (n_samples, n_components)
+    W : ndarray of shape (n_samples, n_components)
         Solution to the non-negative least squares problem.
 
-    H : array-like, shape (n_components, n_features)
+    H : ndarray of shape (n_components, n_features)
         Solution to the non-negative least squares problem.
 
     n_iter : int
@@ -1081,28 +1093,33 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
 
 
 class NMF(TransformerMixin, BaseEstimator):
-    """Non-Negative Matrix Factorization (NMF)
+    """Non-Negative Matrix Factorization (NMF).
 
     Find two non-negative matrices (W, H) whose product approximates the non-
     negative matrix X. This factorization can be used for example for
     dimensionality reduction, source separation or topic extraction.
 
-    The objective function is::
+    The objective function is:
 
-        0.5 * ||X - WH||_Fro^2
-        + alpha * l1_ratio * ||vec(W)||_1
-        + alpha * l1_ratio * ||vec(H)||_1
-        + 0.5 * alpha * (1 - l1_ratio) * ||W||_Fro^2
-        + 0.5 * alpha * (1 - l1_ratio) * ||H||_Fro^2
+        .. math::
 
-    Where::
+            0.5 * ||X - WH||_{Fro}^2 + alpha * l1_{ratio} * ||vec(W)||_1
 
-        ||A||_Fro^2 = \\sum_{i,j} A_{ij}^2 (Frobenius norm)
-        ||vec(A)||_1 = \\sum_{i,j} abs(A_{ij}) (Elementwise L1 norm)
+            + alpha * l1_{ratio} * ||vec(H)||_1
+
+            + 0.5 * alpha * (1 - l1_{ratio}) * ||W||_{Fro}^2
+
+            + 0.5 * alpha * (1 - l1_{ratio}) * ||H||_{Fro}^2
+
+    Where:
+
+    :math:`||A||_{Fro}^2 = \\sum_{i,j} A_{ij}^2` (Frobenius norm)
+
+    :math:`||vec(A)||_1 = \\sum_{i,j} abs(A_{ij})` (Elementwise L1 norm)
 
     For multiplicative-update ('mu') solver, the Frobenius norm
-    (0.5 * ||X - WH||_Fro^2) can be changed into another beta-divergence loss,
-    by changing the beta_loss parameter.
+    (:math:`0.5 * ||X - WH||_{Fro}^2`) can be changed into another
+    beta-divergence loss, by changing the beta_loss parameter.
 
     The objective function is minimized with an alternating minimization of W
     and H.
@@ -1111,11 +1128,11 @@ class NMF(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    n_components : int or None
+    n_components : int, default=None
         Number of components, if n_components is not set all features
         are kept.
 
-    init : None | 'random' | 'nndsvd' |  'nndsvda' | 'nndsvdar' | 'custom'
+    init : {'random', 'nndsvd', 'nndsvda', 'nndsvdar', 'custom'}, default=None
         Method used to initialize the procedure.
         Default: None.
         Valid options:
@@ -1138,7 +1155,7 @@ class NMF(TransformerMixin, BaseEstimator):
 
         - 'custom': use custom matrices W and H
 
-    solver : 'cd' | 'mu'
+    solver : {'cd', 'mu'}, default='cd'
         Numerical solver to use:
         'cd' is a Coordinate Descent solver.
         'mu' is a Multiplicative Update solver.
@@ -1149,8 +1166,8 @@ class NMF(TransformerMixin, BaseEstimator):
         .. versionadded:: 0.19
            Multiplicative Update solver.
 
-    beta_loss : float or string, default 'frobenius'
-        String must be in {'frobenius', 'kullback-leibler', 'itakura-saito'}.
+    beta_loss : float or {'frobenius', 'kullback-leibler', \
+            'itakura-saito'}, default='frobenius'
         Beta divergence to be minimized, measuring the distance between X
         and the dot product WH. Note that values different from 'frobenius'
         (or 2) and 'kullback-leibler' (or 1) lead to significantly slower
@@ -1159,26 +1176,26 @@ class NMF(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.19
 
-    tol : float, default: 1e-4
+    tol : float, default=1e-4
         Tolerance of the stopping condition.
 
-    max_iter : integer, default: 200
+    max_iter : int, default=200
         Maximum number of iterations before timing out.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Used for initialisation (when ``init`` == 'nndsvdar' or
         'random'), and in Coordinate Descent. Pass an int for reproducible
         results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    alpha : double, default: 0.
+    alpha : float, default=0.
         Constant that multiplies the regularization terms. Set it to zero to
         have no regularization.
 
         .. versionadded:: 0.17
            *alpha* used in the Coordinate Descent solver.
 
-    l1_ratio : double, default: 0.
+    l1_ratio : float, default=0.
         The regularization mixing parameter, with 0 <= l1_ratio <= 1.
         For l1_ratio = 0 the penalty is an elementwise L2 penalty
         (aka Frobenius Norm).
@@ -1192,7 +1209,7 @@ class NMF(TransformerMixin, BaseEstimator):
     verbose : bool, default=False
         Whether to be verbose.
 
-    shuffle : boolean, default: False
+    shuffle : bool, default=False
         If true, randomize the order of coordinates in the CD solver.
 
         .. versionadded:: 0.17
@@ -1207,15 +1224,15 @@ class NMF(TransformerMixin, BaseEstimator):
 
     Attributes
     ----------
-    components_ : array, [n_components, n_features]
+    components_ : ndarray of shape (n_components, n_features)
         Factorization matrix, sometimes called 'dictionary'.
 
-    n_components_ : integer
+    n_components_ : int
         The number of components. It is same as the `n_components` parameter
         if it was given. Otherwise, it will be same as the number of
         features.
 
-    reconstruction_err_ : number
+    reconstruction_err_ : float
         Frobenius norm of the matrix difference, or beta-divergence, between
         the training data ``X`` and the reconstructed data ``WH`` from
         the fitted model.
@@ -1243,7 +1260,7 @@ class NMF(TransformerMixin, BaseEstimator):
     factorization with the beta-divergence. Neural Computation, 23(9).
     """
     @_deprecate_positional_args
-    def __init__(self, n_components=None, *, init=None, solver='cd',
+    def __init__(self, n_components=None, *, init='warn', solver='cd',
                  beta_loss='frobenius', tol=1e-4, max_iter=200,
                  random_state=None, alpha=0., l1_ratio=0., verbose=0,
                  shuffle=False, regularization='both'):
@@ -1270,25 +1287,27 @@ class NMF(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Data matrix to be decomposed
 
         y : Ignored
 
-        W : array-like, shape (n_samples, n_components)
+        W : array-like of shape (n_samples, n_components)
             If init='custom', it is used as initial guess for the solution.
 
-        H : array-like, shape (n_components, n_features)
+        H : array-like of shape (n_components, n_features)
             If init='custom', it is used as initial guess for the solution.
 
         Returns
         -------
-        W : array, shape (n_samples, n_components)
+        W : ndarray of shape (n_samples, n_components)
             Transformed data.
         """
         X = self._validate_data(X, accept_sparse=('csr', 'csc'),
                                 dtype=[np.float64, np.float32])
 
+        # XXX: input data validation is performed again in
+        # non_negative_factorization.
         W, H, n_iter_ = non_negative_factorization(
             X=X, W=W, H=H, n_components=self.n_components, init=self.init,
             update_H=True, solver=self.solver, beta_loss=self.beta_loss,
@@ -1311,7 +1330,7 @@ class NMF(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Data matrix to be decomposed
 
         y : Ignored
@@ -1324,20 +1343,25 @@ class NMF(TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X):
-        """Transform the data X according to the fitted NMF model
+        """Transform the data X according to the fitted NMF model.
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Data matrix to be transformed by the model
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Data matrix to be transformed by the model.
 
         Returns
         -------
-        W : array, shape (n_samples, n_components)
-            Transformed data
+        W : ndarray of shape (n_samples, n_components)
+            Transformed data.
         """
         check_is_fitted(self)
+        X = self._validate_data(X, accept_sparse=('csr', 'csc'),
+                                dtype=[np.float64, np.float32],
+                                reset=False)
 
+        # XXX: input data validation is performed again in
+        # non_negative_factorization.
         W, _, n_iter_ = non_negative_factorization(
             X=X, W=None, H=self.components_, n_components=self.n_components_,
             init=self.init, update_H=False, solver=self.solver,
@@ -1354,13 +1378,13 @@ class NMF(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        W : {array-like, sparse matrix}, shape (n_samples, n_components)
-            Transformed data matrix
+        W : {ndarray, sparse matrix} of shape (n_samples, n_components)
+            Transformed data matrix.
 
         Returns
         -------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Data matrix of original shape
+        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+            Data matrix of original shape.
 
         .. versionadded:: 0.18
         """

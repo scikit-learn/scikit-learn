@@ -23,6 +23,7 @@ Base classes
 .. currentmodule:: sklearn
 
 .. autosummary::
+   :nosignatures:
    :toctree: generated/
    :template: class.rst
 
@@ -456,6 +457,7 @@ Samples generator
 
    experimental.enable_hist_gradient_boosting
    experimental.enable_iterative_imputer
+   experimental.enable_halving_search_cv
 
 
 .. _feature_extraction_ref:
@@ -545,6 +547,7 @@ From text
    feature_selection.SelectFdr
    feature_selection.SelectFromModel
    feature_selection.SelectFwe
+   feature_selection.SequentialFeatureSelector
    feature_selection.RFE
    feature_selection.RFECV
    feature_selection.VarianceThreshold
@@ -627,7 +630,7 @@ Kernels:
 
 .. _inspection_ref:
 
-:mod:`sklearn.inspection`: inspection
+:mod:`sklearn.inspection`: Inspection
 =====================================
 
 .. automodule:: sklearn.inspection
@@ -689,8 +692,8 @@ Plotting
 
 .. _kernel_approximation_ref:
 
-:mod:`sklearn.kernel_approximation` Kernel Approximation
-========================================================
+:mod:`sklearn.kernel_approximation`: Kernel Approximation
+=========================================================
 
 .. automodule:: sklearn.kernel_approximation
    :no-members:
@@ -712,8 +715,8 @@ Plotting
 
 .. _kernel_ridge_ref:
 
-:mod:`sklearn.kernel_ridge` Kernel Ridge Regression
-========================================================
+:mod:`sklearn.kernel_ridge`: Kernel Ridge Regression
+====================================================
 
 .. automodule:: sklearn.kernel_ridge
    :no-members:
@@ -947,7 +950,7 @@ details.
    metrics.cohen_kappa_score
    metrics.confusion_matrix
    metrics.dcg_score
-   metrics.detection_error_tradeoff_curve
+   metrics.det_curve
    metrics.f1_score
    metrics.fbeta_score
    metrics.hamming_loss
@@ -963,6 +966,7 @@ details.
    metrics.recall_score
    metrics.roc_auc_score
    metrics.roc_curve
+   metrics.top_k_accuracy_score
    metrics.zero_one_loss
 
 Regression metrics
@@ -1100,6 +1104,7 @@ See the :ref:`visualizations` section of the user guide for further details.
    :template: function.rst
 
    metrics.plot_confusion_matrix
+   metrics.plot_det_curve
    metrics.plot_precision_recall_curve
    metrics.plot_roc_curve
 
@@ -1108,6 +1113,7 @@ See the :ref:`visualizations` section of the user guide for further details.
    :template: class.rst
 
    metrics.ConfusionMatrixDisplay
+   metrics.DetCurveDisplay
    metrics.PrecisionRecallDisplay
    metrics.RocCurveDisplay
 
@@ -1180,6 +1186,8 @@ Splitter Functions
    model_selection.check_cv
    model_selection.train_test_split
 
+.. _hyper_parameter_optimizers:
+
 Hyper-parameter optimizers
 --------------------------
 
@@ -1190,9 +1198,11 @@ Hyper-parameter optimizers
    :template: class.rst
 
    model_selection.GridSearchCV
+   model_selection.HalvingGridSearchCV
    model_selection.ParameterGrid
    model_selection.ParameterSampler
    model_selection.RandomizedSearchCV
+   model_selection.HalvingRandomSearchCV
 
 
 Model validation
@@ -1213,14 +1223,14 @@ Model validation
 
 .. _multiclass_ref:
 
-:mod:`sklearn.multiclass`: Multiclass and multilabel classification
-===================================================================
+:mod:`sklearn.multiclass`: Multiclass classification
+====================================================
 
 .. automodule:: sklearn.multiclass
    :no-members:
    :no-inherited-members:
 
-**User guide:** See the :ref:`multiclass` section for further details.
+**User guide:** See the :ref:`multiclass_classification` section for further details.
 
 .. currentmodule:: sklearn
 
@@ -1241,7 +1251,9 @@ Model validation
    :no-members:
    :no-inherited-members:
 
-**User guide:** See the :ref:`multiclass` section for further details.
+**User guide:** See the :ref:`multilabel_classification`,
+:ref:`multiclass_multioutput_classification`, and
+:ref:`multioutput_regression` sections for further details.
 
 .. currentmodule:: sklearn
 
@@ -1320,7 +1332,7 @@ Model validation
 .. _neural_network_ref:
 
 :mod:`sklearn.neural_network`: Neural network models
-=====================================================
+====================================================
 
 .. automodule:: sklearn.neural_network
    :no-members:
@@ -1446,7 +1458,7 @@ details.
 
 .. _semi_supervised_ref:
 
-:mod:`sklearn.semi_supervised` Semi-Supervised Learning
+:mod:`sklearn.semi_supervised`: Semi-Supervised Learning
 ========================================================
 
 .. automodule:: sklearn.semi_supervised

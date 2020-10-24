@@ -21,8 +21,8 @@ def get_config():
 
     See Also
     --------
-    config_context: Context manager for global scikit-learn configuration
-    set_config: Set global scikit-learn configuration
+    config_context : Context manager for global scikit-learn configuration.
+    set_config : Set global scikit-learn configuration.
     """
     return _global_config.copy()
 
@@ -35,7 +35,7 @@ def set_config(assume_finite=None, working_memory=None,
 
     Parameters
     ----------
-    assume_finite : bool, optional
+    assume_finite : bool, default=None
         If True, validation for finiteness will be skipped,
         saving time, but leading to potential crashes. If
         False, validation for finiteness will be performed,
@@ -43,7 +43,7 @@ def set_config(assume_finite=None, working_memory=None,
 
         .. versionadded:: 0.19
 
-    working_memory : int, optional
+    working_memory : int, default=None
         If set, scikit-learn will attempt to limit the size of temporary arrays
         to this number of MiB (per job when parallelised), often saving both
         computation time and memory on expensive operations that can be
@@ -51,7 +51,7 @@ def set_config(assume_finite=None, working_memory=None,
 
         .. versionadded:: 0.20
 
-    print_changed_only : bool, optional
+    print_changed_only : bool, default=None
         If True, only the parameters that were set to non-default
         values will be printed when printing an estimator. For example,
         ``print(SVC())`` while True will only print 'SVC()' while the default
@@ -60,7 +60,7 @@ def set_config(assume_finite=None, working_memory=None,
 
         .. versionadded:: 0.21
 
-    display : {'text', 'diagram'}, optional
+    display : {'text', 'diagram'}, default=None
         If 'diagram', estimators will be displayed as a diagram in a Jupyter
         lab or notebook context. If 'text', estimators will be displayed as
         text. Default is 'text'.
@@ -69,8 +69,8 @@ def set_config(assume_finite=None, working_memory=None,
 
     See Also
     --------
-    config_context: Context manager for global scikit-learn configuration
-    get_config: Retrieve current values of the global configuration
+    config_context : Context manager for global scikit-learn configuration.
+    get_config : Retrieve current values of the global configuration.
     """
     if assume_finite is not None:
         _global_config['assume_finite'] = assume_finite
@@ -88,19 +88,19 @@ def config_context(**new_config):
 
     Parameters
     ----------
-    assume_finite : bool, optional
+    assume_finite : bool, default=False
         If True, validation for finiteness will be skipped,
         saving time, but leading to potential crashes. If
         False, validation for finiteness will be performed,
         avoiding error.  Global default: False.
 
-    working_memory : int, optional
+    working_memory : int, default=1024
         If set, scikit-learn will attempt to limit the size of temporary arrays
         to this number of MiB (per job when parallelised), often saving both
         computation time and memory on expensive operations that can be
         performed in chunks. Global default: 1024.
 
-    print_changed_only : bool, optional
+    print_changed_only : bool, default=True
         If True, only the parameters that were set to non-default
         values will be printed when printing an estimator. For example,
         ``print(SVC())`` while True will only print 'SVC()', but would print
@@ -110,7 +110,7 @@ def config_context(**new_config):
         .. versionchanged:: 0.23
            Default changed from False to True.
 
-    display : {'text', 'diagram'}, optional
+    display : {'text', 'diagram'}, default='text'
         If 'diagram', estimators will be displayed as a diagram in a Jupyter
         lab or notebook context. If 'text', estimators will be displayed as
         text. Default is 'text'.
@@ -138,8 +138,8 @@ def config_context(**new_config):
 
     See Also
     --------
-    set_config: Set global scikit-learn configuration
-    get_config: Retrieve current values of the global configuration
+    set_config : Set global scikit-learn configuration.
+    get_config : Retrieve current values of the global configuration.
     """
     old_config = get_config().copy()
     set_config(**new_config)
