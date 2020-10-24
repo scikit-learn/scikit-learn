@@ -141,10 +141,10 @@ def test_checking_classifier_fit_params(iris):
     clf = CheckingClassifier(expected_sample_weight=True)
     sample_weight = np.ones(len(X) // 2)
 
-    msg = (f'Expected sample_weight to have length {len(X)},'
-           f' got length {len(X) // 2} instead.')
-    with pytest.raises(AssertionError, match=msg):
+    msg = f'sample_weight.shape == ({len(X) // 2},), expected ({len(X)},)!'
+    with pytest.raises(ValueError) as exc:
         clf.fit(X, y, sample_weight=sample_weight)
+    assert exc.value.args[0] == msg
 
 
 def test_checking_classifier_missing_fit_params(iris):
