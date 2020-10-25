@@ -2,13 +2,11 @@ import os
 import shutil
 import tempfile
 import warnings
-import numpy
 from pickle import loads
 from pickle import dumps
 from functools import partial
 
 import pytest
-import joblib
 
 import numpy as np
 from sklearn.datasets import get_data_home
@@ -23,9 +21,8 @@ from sklearn.datasets import load_iris
 from sklearn.datasets import load_breast_cancer
 from sklearn.datasets import load_boston
 from sklearn.datasets import load_wine
-from sklearn.datasets.base import Bunch
-from sklearn.datasets.base import _refresh_cache
-from sklearn.datasets.tests.test_common import check_return_X_y
+from sklearn.utils import Bunch
+from sklearn.datasets.tests.test_common import check_as_frame
 
 from sklearn.externals._pilutil import pillow_installed
 
@@ -142,21 +139,6 @@ def test_load_sample_images():
         warnings.warn("Could not load sample images, PIL is not available.")
 
 
-def test_load_digits():
-    digits = load_digits()
-    assert digits.data.shape == (1797, 64)
-    assert numpy.unique(digits.target).size == 10
-
-    # test return_X_y option
-    check_return_X_y(digits, partial(load_digits))
-
-
-def test_load_digits_n_class_lt_10():
-    digits = load_digits(9)
-    assert digits.data.shape == (1617, 64)
-    assert numpy.unique(digits.target).size == 9
-
-
 def test_load_sample_image():
     try:
         china = load_sample_image('china.jpg')
@@ -174,75 +156,48 @@ def test_load_missing_sample_image_error():
         warnings.warn("Could not load sample images, PIL is not available.")
 
 
-def test_load_diabetes():
-    res = load_diabetes()
-    assert res.data.shape == (442, 10)
-    assert res.target.size, 442
-    assert len(res.feature_names) == 10
-    assert res.DESCR
+@pytest.mark.parametrize(
+    "loader_func, data_shape, target_shape, n_target, has_descr, filenames",
+    [(load_breast_cancer, (569, 30), (569,), 2, True, ["filename"]),
+     (load_wine, (178, 13), (178,), 3, True, []),
+     (load_iris, (150, 4), (150,), 3, True, ["filename"]),
+     (load_linnerud, (20, 3), (20, 3), 3, True,
+      ["data_filename", "target_filename"]),
+     (load_diabetes, (442, 10), (442,), None, True, []),
+     (load_digits, (1797, 64), (1797,), 10, True, []),
+     (partial(load_digits, n_class=9), (1617, 64), (1617,), 10, True, []),
+     (load_boston, (506, 13), (506,), None, True, ["filename"])]
+)
+def test_loader(loader_func, data_shape, target_shape, n_target, has_descr,
+                filenames):
+    bunch = loader_func()
 
-    # test return_X_y option
-    check_return_X_y(res, partial(load_diabetes))
-
-
-def test_load_linnerud():
-    res = load_linnerud()
-    assert res.data.shape == (20, 3)
-    assert res.target.shape == (20, 3)
-    assert len(res.target_names) == 3
-    assert res.DESCR
-    assert os.path.exists(res.data_filename)
-    assert os.path.exists(res.target_filename)
-
-    # test return_X_y option
-    check_return_X_y(res, partial(load_linnerud))
-
-
-def test_load_iris():
-    res = load_iris()
-    assert res.data.shape == (150, 4)
-    assert res.target.size == 150
-    assert res.target_names.size == 3
-    assert res.DESCR
-    assert os.path.exists(res.filename)
-
-    # test return_X_y option
-    check_return_X_y(res, partial(load_iris))
+    assert isinstance(bunch, Bunch)
+    assert bunch.data.shape == data_shape
+    assert bunch.target.shape == target_shape
+    if hasattr(bunch, "feature_names"):
+        assert len(bunch.feature_names) == data_shape[1]
+    if n_target is not None:
+        assert len(bunch.target_names) == n_target
+    if has_descr:
+        assert bunch.DESCR
+    if filenames:
+        assert all([os.path.exists(bunch.get(f, False)) for f in filenames])
 
 
-def test_load_wine():
-    res = load_wine()
-    assert res.data.shape == (178, 13)
-    assert res.target.size == 178
-    assert res.target_names.size == 3
-    assert res.DESCR
-
-    # test return_X_y option
-    check_return_X_y(res, partial(load_wine))
-
-
-def test_load_breast_cancer():
-    res = load_breast_cancer()
-    assert res.data.shape == (569, 30)
-    assert res.target.size == 569
-    assert res.target_names.size == 2
-    assert res.DESCR
-    assert os.path.exists(res.filename)
-
-    # test return_X_y option
-    check_return_X_y(res, partial(load_breast_cancer))
-
-
-def test_load_boston():
-    res = load_boston()
-    assert res.data.shape == (506, 13)
-    assert res.target.size == 506
-    assert res.feature_names.size == 13
-    assert res.DESCR
-    assert os.path.exists(res.filename)
-
-    # test return_X_y option
-    check_return_X_y(res, partial(load_boston))
+@pytest.mark.parametrize("loader_func, data_dtype, target_dtype", [
+    (load_breast_cancer, np.float64, int),
+    (load_diabetes, np.float64, np.float64),
+    (load_digits, np.float64, int),
+    (load_iris, np.float64, int),
+    (load_linnerud, np.float64, np.float64),
+    (load_wine, np.float64, int),
+])
+def test_toy_dataset_frame_dtype(loader_func, data_dtype, target_dtype):
+    default_result = loader_func()
+    check_as_frame(default_result, loader_func,
+                   expected_data_dtype=data_dtype,
+                   expected_target_dtype=target_dtype)
 
 
 def test_loads_dumps_bunch():
@@ -277,55 +232,3 @@ def test_bunch_dir():
     # check that dir (important for autocomplete) shows attributes
     data = load_iris()
     assert "data" in dir(data)
-
-
-def test_refresh_cache(monkeypatch):
-    # uses pytests monkeypatch fixture
-    # https://docs.pytest.org/en/latest/monkeypatch.html
-
-    def _load_warn(*args, **kwargs):
-        # raise the warning from "externals.joblib.__init__.py"
-        # this is raised when a file persisted by the old joblib is loaded now
-        msg = ("sklearn.externals.joblib is deprecated in 0.21 and will be "
-               "removed in 0.23. Please import this functionality directly "
-               "from joblib, which can be installed with: pip install joblib. "
-               "If this warning is raised when loading pickled models, you "
-               "may need to re-serialize those models with scikit-learn "
-               "0.21+.")
-        warnings.warn(msg, DeprecationWarning)
-        return 0
-
-    def _load_warn_unrelated(*args, **kwargs):
-        warnings.warn("unrelated warning", DeprecationWarning)
-        return 0
-
-    def _dump_safe(*args, **kwargs):
-        pass
-
-    def _dump_raise(*args, **kwargs):
-        # this happens if the file is read-only and joblib.dump fails to write
-        # on it.
-        raise IOError()
-
-    # test if the dataset spesific warning is raised if load raises the joblib
-    # warning, and dump fails to dump with new joblib
-    monkeypatch.setattr(joblib, "load", _load_warn)
-    monkeypatch.setattr(joblib, "dump", _dump_raise)
-    msg = "This dataset will stop being loadable in scikit-learn"
-    with pytest.warns(DeprecationWarning, match=msg):
-        _refresh_cache('test', 0)
-
-    # make sure no warning is raised if load raises the warning, but dump
-    # manages to dump the new data
-    monkeypatch.setattr(joblib, "load", _load_warn)
-    monkeypatch.setattr(joblib, "dump", _dump_safe)
-    with pytest.warns(None) as warns:
-        _refresh_cache('test', 0)
-    assert len(warns) == 0
-
-    # test if an unrelated warning is still passed through and not suppressed
-    # by _refresh_cache
-    monkeypatch.setattr(joblib, "load", _load_warn_unrelated)
-    monkeypatch.setattr(joblib, "dump", _dump_safe)
-    with pytest.warns(DeprecationWarning, match="unrelated warning"):
-        _refresh_cache('test', 0)

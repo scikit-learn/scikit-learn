@@ -27,13 +27,13 @@ class AgglomerationTransform(TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features] or [n_features]
+        X : array-like of shape (n_samples, n_features) or (n_samples,)
             A M by N array of M observations in N dimensions or a length
             M array of M one-dimensional observations.
 
         Returns
         -------
-        Y : array, shape = [n_samples, n_clusters] or [n_clusters]
+        Y : ndarray of shape (n_samples, n_clusters) or (n_clusters,)
             The pooled values for each feature cluster.
         """
         check_is_fitted(self)
@@ -62,12 +62,12 @@ class AgglomerationTransform(TransformerMixin):
 
         Parameters
         ----------
-        Xred : array-like, shape=[n_samples, n_clusters] or [n_clusters,]
+        Xred : array-like of shape (n_samples, n_clusters) or (n_clusters,)
             The values to be assigned to each cluster of samples
 
         Returns
         -------
-        X : array, shape=[n_samples, n_features] or [n_features]
+        X : ndarray of shape (n_samples, n_features) or (n_features,)
             A vector of size n_samples with the values of Xred assigned to
             each of the cluster of samples.
         """

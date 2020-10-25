@@ -14,17 +14,17 @@ from sklearn.exceptions import NotFittedError
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import train_test_split
-from sklearn.neighbors.base import VALID_METRICS_SPARSE, VALID_METRICS
-from sklearn.neighbors.base import _is_sorted_by_data, _check_precomputed
+from sklearn.neighbors import VALID_METRICS_SPARSE, VALID_METRICS
+from sklearn.neighbors._base import _is_sorted_by_data, _check_precomputed
 from sklearn.pipeline import make_pipeline
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raises_regex
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_raises_regex
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.validation import check_random_state
 
 import joblib
@@ -95,19 +95,24 @@ def test_unsupervised_kneighbors(n_samples=20, n_features=5,
             assert_array_almost_equal(results[i][1], results[i + 1][1])
 
 
-def test_unsupervised_inputs():
-    # test the types of valid input into NearestNeighbors
-    X = rng.random_sample((10, 3))
+@pytest.mark.parametrize("NearestNeighbors", [neighbors.KNeighborsClassifier,
+                                              neighbors.KNeighborsRegressor,
+                                              neighbors.NearestNeighbors])
+def test_unsupervised_inputs(NearestNeighbors):
+    # Test unsupervised inputs for neighbors estimators
 
+    X = rng.random_sample((10, 3))
+    y = rng.randint(3, size=10)
     nbrs_fid = neighbors.NearestNeighbors(n_neighbors=1)
     nbrs_fid.fit(X)
 
     dist1, ind1 = nbrs_fid.kneighbors(X)
 
-    nbrs = neighbors.NearestNeighbors(n_neighbors=1)
+    nbrs = NearestNeighbors(n_neighbors=1)
 
-    for input in (nbrs_fid, neighbors.BallTree(X), neighbors.KDTree(X)):
-        nbrs.fit(input)
+    for data in (nbrs_fid, neighbors.BallTree(X), neighbors.KDTree(X)):
+        nbrs.fit(data, y)
+
         dist2, ind2 = nbrs.kneighbors(X)
 
         assert_array_almost_equal(dist1, dist2)
@@ -363,7 +368,7 @@ def test_kneighbors_classifier(n_samples=40,
     # Test k-neighbors classification
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
-    y = ((X ** 2).sum(axis=1) < .5).astype(np.int)
+    y = ((X ** 2).sum(axis=1) < .5).astype(int)
     y_str = y.astype(str)
 
     weight_func = _weight_func
@@ -389,10 +394,10 @@ def test_kneighbors_classifier_float_labels(n_samples=40, n_features=5,
     # Test k-neighbors classification
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
-    y = ((X ** 2).sum(axis=1) < .5).astype(np.int)
+    y = ((X ** 2).sum(axis=1) < .5).astype(int)
 
     knn = neighbors.KNeighborsClassifier(n_neighbors=n_neighbors)
-    knn.fit(X, y.astype(np.float))
+    knn.fit(X, y.astype(float))
     epsilon = 1e-5 * (2 * rng.rand(1, n_features) - 1)
     y_pred = knn.predict(X[:n_test_pts] + epsilon)
     assert_array_equal(y_pred, y[:n_test_pts])
@@ -438,7 +443,7 @@ def test_radius_neighbors_classifier(n_samples=40,
     # Test radius-based classification
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
-    y = ((X ** 2).sum(axis=1) < .5).astype(np.int)
+    y = ((X ** 2).sum(axis=1) < .5).astype(int)
     y_str = y.astype(str)
 
     weight_func = _weight_func
@@ -649,6 +654,63 @@ def test_radius_neighbors_boundary_handling():
         assert_array_equal(results[0], [0, 1])
 
 
+def test_radius_neighbors_returns_array_of_objects():
+    # check that we can pass precomputed distances to
+    # NearestNeighbors.radius_neighbors()
+    # non-regression test for
+    # https://github.com/scikit-learn/scikit-learn/issues/16036
+    X = csr_matrix(np.ones((4, 4)))
+    X.setdiag([0, 0, 0, 0])
+
+    nbrs = neighbors.NearestNeighbors(radius=0.5, algorithm='auto',
+                                      leaf_size=30,
+                                      metric='precomputed').fit(X)
+    neigh_dist, neigh_ind = nbrs.radius_neighbors(X, return_distance=True)
+
+    expected_dist = np.empty(X.shape[0], dtype=object)
+    expected_dist[:] = [np.array([0]), np.array([0]), np.array([0]),
+                        np.array([0])]
+    expected_ind = np.empty(X.shape[0], dtype=object)
+    expected_ind[:] = [np.array([0]), np.array([1]), np.array([2]),
+                       np.array([3])]
+
+    assert_array_equal(neigh_dist, expected_dist)
+    assert_array_equal(neigh_ind, expected_ind)
+
+
+@pytest.mark.parametrize(["algorithm", "metric"], [("ball_tree", "euclidean"),
+                                                   ("kd_tree", "euclidean"),
+                                                   ("brute", "euclidean"),
+                                                   ("brute", "precomputed")])
+def test_radius_neighbors_sort_results(algorithm, metric):
+    # Test radius_neighbors[_graph] output when sort_result is True
+    n_samples = 10
+    rng = np.random.RandomState(42)
+    X = rng.random_sample((n_samples, 4))
+
+    if metric == "precomputed":
+        X = neighbors.radius_neighbors_graph(X, radius=np.inf, mode="distance")
+    model = neighbors.NearestNeighbors(algorithm=algorithm, metric=metric)
+    model.fit(X)
+
+    # self.radius_neighbors
+    distances, indices = model.radius_neighbors(X=X, radius=np.inf,
+                                                sort_results=True)
+    for ii in range(n_samples):
+        assert_array_equal(distances[ii], np.sort(distances[ii]))
+
+    # sort_results=True and return_distance=False
+    if metric != "precomputed":  # no need to raise with precomputed graph
+        with pytest.raises(ValueError, match="return_distance must be True"):
+            model.radius_neighbors(X=X, radius=np.inf, sort_results=True,
+                                   return_distance=False)
+
+    # self.radius_neighbors_graph
+    graph = model.radius_neighbors_graph(X=X, radius=np.inf, mode="distance",
+                                         sort_results=True)
+    assert _is_sorted_by_data(graph)
+
+
 def test_RadiusNeighborsClassifier_multioutput():
     # Test k-NN classifier on multioutput data
     rng = check_random_state(0)
@@ -695,7 +757,7 @@ def test_kneighbors_classifier_sparse(n_samples=40,
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
     X *= X > .2
-    y = ((X ** 2).sum(axis=1) < .5).astype(np.int)
+    y = ((X ** 2).sum(axis=1) < .5).astype(int)
 
     for sparsemat in SPARSE_TYPES:
         knn = neighbors.KNeighborsClassifier(n_neighbors=n_neighbors,
@@ -942,7 +1004,7 @@ def test_kneighbors_regressor_sparse(n_samples=40,
     # Like the above, but with various types of sparse matrices
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
-    y = ((X ** 2).sum(axis=1) < .25).astype(np.int)
+    y = ((X ** 2).sum(axis=1) < .25).astype(int)
 
     for sparsemat in SPARSE_TYPES:
         knn = neighbors.KNeighborsRegressor(n_neighbors=n_neighbors,
@@ -1221,9 +1283,9 @@ def test_callable_metric():
         return np.sqrt(np.sum(x1 ** 2 + x2 ** 2))
 
     X = np.random.RandomState(42).rand(20, 2)
-    nbrs1 = neighbors.NearestNeighbors(3, algorithm='auto',
+    nbrs1 = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
                                        metric=custom_metric)
-    nbrs2 = neighbors.NearestNeighbors(3, algorithm='brute',
+    nbrs2 = neighbors.NearestNeighbors(n_neighbors=3, algorithm='brute',
                                        metric=custom_metric)
 
     nbrs1.fit(X)
@@ -1315,7 +1377,7 @@ def test_non_euclidean_kneighbors():
         nbrs_graph = neighbors.kneighbors_graph(
             X, 3, metric=metric, mode='connectivity',
             include_self=True).toarray()
-        nbrs1 = neighbors.NearestNeighbors(3, metric=metric).fit(X)
+        nbrs1 = neighbors.NearestNeighbors(n_neighbors=3, metric=metric).fit(X)
         assert_array_equal(nbrs_graph, nbrs1.kneighbors_graph(X).toarray())
 
     # Test radiusneighbors_graph
@@ -1327,7 +1389,7 @@ def test_non_euclidean_kneighbors():
         assert_array_equal(nbrs_graph, nbrs1.radius_neighbors_graph(X).A)
 
     # Raise error when wrong parameters are supplied,
-    X_nbrs = neighbors.NearestNeighbors(3, metric='manhattan')
+    X_nbrs = neighbors.NearestNeighbors(n_neighbors=3, metric='manhattan')
     X_nbrs.fit(X)
     assert_raises(ValueError, neighbors.kneighbors_graph, X_nbrs, 3,
                   metric='euclidean')
@@ -1434,7 +1496,7 @@ def test_k_and_radius_neighbors_duplicates():
 
         # Mask the first duplicates when n_duplicates > n_neighbors.
         X = np.ones((3, 1))
-        nn = neighbors.NearestNeighbors(n_neighbors=1)
+        nn = neighbors.NearestNeighbors(n_neighbors=1, algorithm='brute')
         nn.fit(X)
         dist, ind = nn.kneighbors()
         assert_array_equal(dist, np.zeros((3, 1)))
@@ -1582,7 +1644,7 @@ def test_sparse_metric_callable():
 def test_pairwise_boolean_distance():
     # Non-regression test for #4523
     # 'brute': uses scipy.spatial.distance through pairwise_distances
-    # 'ball_tree': uses sklearn.neighbors.dist_metrics
+    # 'ball_tree': uses sklearn.neighbors._dist_metrics
     rng = np.random.RandomState(0)
     X = rng.uniform(size=(6, 5))
     NN = neighbors.NearestNeighbors
@@ -1650,3 +1712,33 @@ def test_pipeline_with_nearest_neighbors_transformer():
         y_pred_chain = reg_chain.fit(X, y).predict(X2)
         y_pred_compact = reg_compact.fit(X, y).predict(X2)
         assert_array_almost_equal(y_pred_chain, y_pred_compact)
+
+
+@pytest.mark.parametrize('X, metric, metric_params, expected_algo', [
+    (np.random.randint(10, size=(10, 10)), 'precomputed', None, 'brute'),
+    (np.random.randn(10, 20), 'euclidean', None, 'brute'),
+    (np.random.randn(8, 5), 'euclidean', None, 'brute'),
+    (np.random.randn(10, 5), 'euclidean', None, 'kd_tree'),
+    (np.random.randn(10, 5), 'seuclidean', {'V': [2]*5}, 'ball_tree'),
+    (np.random.randn(10, 5), 'correlation', None, 'brute'),
+])
+def test_auto_algorithm(X, metric, metric_params, expected_algo):
+    model = neighbors.NearestNeighbors(
+        n_neighbors=4,
+        algorithm='auto',
+        metric=metric,
+        metric_params=metric_params
+    )
+    model.fit(X)
+    assert model._fit_method == expected_algo
+
+
+# TODO: Remove in 0.26
+@pytest.mark.parametrize("NearestNeighbors", [neighbors.KNeighborsClassifier,
+                                              neighbors.KNeighborsRegressor,
+                                              neighbors.NearestNeighbors])
+def test_pairwise_deprecated(NearestNeighbors):
+    nn = NearestNeighbors(metric='precomputed')
+    msg = r"Attribute _pairwise was deprecated in version 0\.24"
+    with pytest.warns(FutureWarning, match=msg):
+        nn._pairwise

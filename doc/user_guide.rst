@@ -1,5 +1,6 @@
-.. Places global toc into the sidebar
-:globalsidebartoc: True
+.. Places parent toc into the sidebar
+
+:parenttoc: True
 
 .. title:: User guide: contents
 
@@ -25,5 +26,7 @@ User Guide
    inspection.rst
    visualizations.rst
    data_transforms.rst
-   Dataset loading utilities <datasets/index.rst>
-   modules/computing.rst
+   datasets.rst
+   computing.rst
+   modules/model_persistence.rst
+   common_pitfalls.rst

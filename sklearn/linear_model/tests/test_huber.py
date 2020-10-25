@@ -3,16 +3,15 @@
 
 import numpy as np
 from scipy import optimize, sparse
-import pytest
 
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
 
 from sklearn.datasets import make_regression
 from sklearn.linear_model import (
     HuberRegressor, LinearRegression, SGDRegressor, Ridge)
-from sklearn.linear_model.huber import _huber_loss_and_gradient
+from sklearn.linear_model._huber import _huber_loss_and_gradient
 
 
 def make_regression_with_outliers(n_samples=50, n_features=20):
@@ -143,8 +142,6 @@ def test_huber_scaling_invariant():
     assert_array_equal(n_outliers_mask_3, n_outliers_mask_1)
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_huber_and_sgd_same_results():
     # Test they should converge to same coefficients for same parameters
 

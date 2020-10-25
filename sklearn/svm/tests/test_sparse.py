@@ -9,7 +9,7 @@ from sklearn.datasets import make_classification, load_digits, make_blobs
 from sklearn.svm.tests import test_svm
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.extmath import safe_sparse_dot
-from sklearn.utils.testing import (assert_warns,
+from sklearn.utils._testing import (assert_warns,
                                    assert_raise_message, ignore_warnings,
                                    skip_if_32bit)
 
@@ -181,7 +181,7 @@ def test_sparse_decision_function():
     assert_array_almost_equal(dec.ravel(), clf.decision_function(X))
     assert_array_almost_equal(
         prediction,
-        clf.classes_[(clf.decision_function(X) > 0).astype(np.int).ravel()])
+        clf.classes_[(clf.decision_function(X) > 0).astype(int).ravel()])
     expected = np.array([-1., -0.66, -1., 0.66, 1., 1.])
     assert_array_almost_equal(clf.decision_function(X), expected, 2)
 

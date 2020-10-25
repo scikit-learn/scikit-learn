@@ -14,9 +14,9 @@ from scipy.linalg import norm
 from scipy.optimize import fmin_bfgs
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import LinearRegression, TheilSenRegressor
-from sklearn.linear_model.theil_sen import _spatial_median, _breakdown_point
-from sklearn.linear_model.theil_sen import _modified_weiszfeld_step
-from sklearn.utils.testing import assert_almost_equal, assert_raises
+from sklearn.linear_model._theil_sen import _spatial_median, _breakdown_point
+from sklearn.linear_model._theil_sen import _modified_weiszfeld_step
+from sklearn.utils._testing import assert_almost_equal, assert_raises
 
 
 @contextmanager
@@ -178,6 +178,9 @@ def test_theil_sen_1d_no_intercept():
                                   random_state=0).fit(X, y)
     assert_array_almost_equal(theil_sen.coef_, w + c, 1)
     assert_almost_equal(theil_sen.intercept_, 0.)
+
+    # non-regression test for #18104
+    theil_sen.score(X, y)
 
 
 def test_theil_sen_2d():

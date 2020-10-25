@@ -200,7 +200,8 @@ Now restart IPython and let us use this new toy::
 
   In [1]: from sklearn.datasets import load_digits
 
-  In [2]: from sklearn.decomposition.nmf import _nls_subproblem, NMF
+  In [2]: from sklearn.decomposition import NMF
+    ... : from sklearn.decomposition._nmf import _nls_subproblem
 
   In [3]: X, _ = load_digits(return_X_y=True)
 
@@ -331,16 +332,16 @@ memory alignment, direct blas calls...
 Using OpenMP
 ------------
 
-Since scikit-learn can be built without OpenMP support, it's necessary to
+Since scikit-learn can be built without OpenMP, it's necessary to
 protect each direct call to OpenMP. This can be done using the following
 syntax::
 
   # importing OpenMP
-  IF SKLEARN_OPENMP_SUPPORTED:
+  IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
       cimport openmp
 
   # calling OpenMP
-  IF SKLEARN_OPENMP_SUPPORTED:
+  IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
       max_threads = openmp.omp_get_max_threads()
   ELSE:
       max_threads = 1

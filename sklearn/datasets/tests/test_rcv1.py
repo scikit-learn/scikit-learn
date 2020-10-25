@@ -1,26 +1,17 @@
-"""Test the rcv1 loader.
+"""Test the rcv1 loader, if the data is available,
+or if specifically requested via environment variable
+(e.g. for travis cron job)."""
 
-Skipped if rcv1 is not already downloaded to data_home.
-"""
-
-import errno
 import scipy.sparse as sp
 import numpy as np
 from functools import partial
-from sklearn.datasets import fetch_rcv1
 from sklearn.datasets.tests.test_common import check_return_X_y
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import SkipTest
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_equal
 
 
-def test_fetch_rcv1():
-    try:
-        data1 = fetch_rcv1(shuffle=False, download_if_missing=False)
-    except IOError as e:
-        if e.errno == errno.ENOENT:
-            raise SkipTest("Download RCV1 dataset to run this test.")
-
+def test_fetch_rcv1(fetch_rcv1_fxt):
+    data1 = fetch_rcv1_fxt(shuffle=False)
     X1, Y1 = data1.data, data1.target
     cat_list, s1 = data1.target_names.tolist(), data1.sample_id
 
@@ -48,14 +39,12 @@ def test_fetch_rcv1():
         assert num == Y1[:, j].data.size
 
     # test shuffling and subset
-    data2 = fetch_rcv1(shuffle=True, subset='train', random_state=77,
-                       download_if_missing=False)
+    data2 = fetch_rcv1_fxt(shuffle=True, subset='train', random_state=77)
     X2, Y2 = data2.data, data2.target
     s2 = data2.sample_id
 
     # test return_X_y option
-    fetch_func = partial(fetch_rcv1, shuffle=False, subset='train',
-                         download_if_missing=False)
+    fetch_func = partial(fetch_rcv1_fxt, shuffle=False, subset='train')
     check_return_X_y(data2, fetch_func)
 
     # The first 23149 samples are the training samples

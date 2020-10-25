@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.utils.optimize import _newton_cg
 from scipy.optimize import fmin_ncg
 
-from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
 
 
 def test_newton_cg():
