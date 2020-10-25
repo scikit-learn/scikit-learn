@@ -212,7 +212,6 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
             row_ind = X_indices[i]
             if not isnan(X_data[i]):
                 means[col_ind] += (X_data[i] * weights[row_ind])
-                print(row_ind, col_ind, means)
             else:
                 counts_nan[col_ind] += weights[row_ind]
 
