@@ -781,24 +781,7 @@ def check_estimator_sparse_data(name, estimator_orig, strict_mode=True):
             if name in ['Scaler', 'StandardScaler']:
                 estimator.set_params(with_mean=False)
         # fit and predict
-        if "64" in matrix_format:
-            err_msg = (
-                f"Estimator {name} doesn't seem to support {matrix_format} "
-                "matrix, and is not failing gracefully, e.g. by using "
-                "check_array(X, accept_large_sparse=False)"
-            )
-        else:
-            err_msg = (
-                f"Estimator {name} doesn't seem to fail gracefully on sparse "
-                "data: error message should state explicitly that sparse "
-                "input is not supported if this is not the case."
-            )
-        with raises(
-            (TypeError, ValueError),
-            match=["sparse", "Sparse"],
-            may_pass=True,
-            err_msg=err_msg,
-        ):
+        try:
             with ignore_warnings(category=FutureWarning):
                 estimator.fit(X, y)
             if hasattr(estimator, "predict"):
@@ -814,6 +797,24 @@ def check_estimator_sparse_data(name, estimator_orig, strict_mode=True):
                 else:
                     expected_probs_shape = (X.shape[0], 4)
                 assert probs.shape == expected_probs_shape
+        except (TypeError, ValueError) as e:
+            if 'sparse' not in repr(e).lower():
+                if "64" in matrix_format:
+                    msg = ("Estimator %s doesn't seem to support %s matrix, "
+                           "and is not failing gracefully, e.g. by using "
+                           "check_array(X, accept_large_sparse=False)")
+                    raise AssertionError(msg % (name, matrix_format))
+                else:
+                    msg = ("Estimator %s doesn't seem to fail gracefully on "
+                           "sparse data: error message should state "
+                           "explicitly that sparse input is not supported if "
+                           "this is not the case.")
+                    raise AssertionError(msg % (name))
+        except Exception:
+            msg = ("Estimator %s doesn't seem to fail gracefully on "
+                   "sparse data: it should raise a TypeError or a ValueError "
+                   "if sparse input is explicitly not supported.")
+            raise AssertionError(msg % (name))
 
 
 @ignore_warnings(category=FutureWarning)

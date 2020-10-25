@@ -551,16 +551,16 @@ def test_check_estimator():
                "error message should state explicitly that sparse input is"
                " not supported if this is not the case." % name)
         assert_raises_regex(
-            AssertionError, msg, check_estimator, clf
+            AssertionError, msg, check_estimator, clf()
         )
     # check that the equality of the result for sparse/dense input is checked
     assert_raises_regex(AssertionError,
                         "Not equal to tolerance",
-                        check_estimator, SparseDenseDifferentPredict)
+                        check_estimator, SparseDenseDifferentPredict())
     assert_raises_regex(AssertionError,
                         "Not equal to tolerance",
                         check_estimator,
-                        SparseDenseDifferentPredictProba)
+                        SparseDenseDifferentPredictProba())
 
     # Large indices test on bad estimator
     msg = ('Estimator LargeSparseNotSupportedClassifier doesn\'t seem to '
