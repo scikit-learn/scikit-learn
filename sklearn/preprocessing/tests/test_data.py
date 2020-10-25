@@ -683,33 +683,48 @@ def test_standard_scaler_partial_fit_numerical_stability():
         assert_allclose(scaler_incr.scale_, scaler.scale_, rtol=tol)
 
 
-def test_partial_fit_sparse_input():
+@pytest.mark.parametrize("sample_weight", [True, None])
+def test_partial_fit_sparse_input(sample_weight):
     # Check that sparsity is not destroyed
     X = np.array([[1.], [0.], [0.], [5.]])
     X_csr = sparse.csr_matrix(X)
     X_csc = sparse.csc_matrix(X)
 
+    if sample_weight:
+        sample_weight = rng.rand(X_csc.shape[0])
+
     null_transform = StandardScaler(with_mean=False, with_std=False, copy=True)
     for X in [X_csr, X_csc]:
 
-        X_null = null_transform.partial_fit(X).transform(X)
+        X_null = null_transform.partial_fit(
+            X, sample_weight=sample_weight).transform(X)
         assert_array_equal(X_null.data, X.data)
         X_orig = null_transform.inverse_transform(X_null)
         assert_array_equal(X_orig.data, X_null.data)
         assert_array_equal(X_orig.data, X.data)
 
 
-def test_standard_scaler_trasform_with_partial_fit():
+@pytest.mark.parametrize("sample_weight", [True, None])
+def test_standard_scaler_trasform_with_partial_fit(sample_weight):
     # Check some postconditions after applying partial_fit and transform
     X = X_2d[:100, :]
+
+    if sample_weight:
+        sample_weight = rng.rand(X.shape[0])
 
     scaler_incr = StandardScaler()
     for i, batch in enumerate(gen_batches(X.shape[0], 1)):
 
         X_sofar = X[:(i + 1), :]
         chunks_copy = X_sofar.copy()
-        scaled_batch = StandardScaler().fit_transform(X_sofar)
-        scaler_incr = scaler_incr.partial_fit(X[batch])
+        if sample_weight is None:
+            scaled_batch = StandardScaler().fit_transform(X_sofar)
+            scaler_incr = scaler_incr.partial_fit(X[batch])
+        else:
+            scaled_batch = StandardScaler().fit_transform(
+                X_sofar, sample_weight=sample_weight[:i + 1])
+            scaler_incr = scaler_incr.partial_fit(
+                X[batch], sample_weight=sample_weight[batch])
         scaled_incr = scaler_incr.transform(X_sofar)
 
         assert_array_almost_equal(scaled_batch, scaled_incr)
@@ -721,8 +736,14 @@ def test_standard_scaler_trasform_with_partial_fit():
         epsilon = np.finfo(float).eps
         assert_array_less(zero, scaler_incr.var_ + epsilon)  # as less or equal
         assert_array_less(zero, scaler_incr.scale_ + epsilon)
-        # (i+1) because the Scaler has been already fitted
-        assert (i + 1) == scaler_incr.n_samples_seen_
+        if sample_weight is None:
+            # (i+1) because the Scaler has been already fitted
+            assert (i + 1) == scaler_incr.n_samples_seen_
+        else:
+            assert (
+                np.sum(sample_weight[:i + 1]) ==
+                pytest.approx(scaler_incr.n_samples_seen_)
+            )
 
 
 def test_min_max_scaler_iris():
