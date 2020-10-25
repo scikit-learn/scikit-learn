@@ -814,6 +814,24 @@ def check_estimator_sparse_data(name, estimator_orig, strict_mode=True):
                 else:
                     expected_probs_shape = (X.shape[0], 4)
                 assert probs.shape == expected_probs_shape
+             except (TypeError, ValueError) as e:
+		if 'sparse' not in repr(e).lower():
+                    if "64" in matrix_format:
+			msg = ("Estimator %s doesn't seem to support %s matrix, "
+                               "and is not failing gracefully, e.g. by using "
+                               "check_array(X, accept_large_sparse=False)")
+			raise AssertionError(msg % (name, matrix_format))
+                    else:
+			print("Estimator %s doesn't seem to fail gracefully on "
+                              "sparse data: error message should state explicitly "
+                              "that sparse input is not supported if this is not "
+                              "the case." % name)
+			raise
+             except Exception:
+		print("Estimator %s doesn't seem to fail gracefully on "
+                      "sparse data: it should raise a TypeError or a ValueError "
+                      "if sparse input is explicitly not supported." % name)
+		raise
 
 
 @ignore_warnings(category=FutureWarning)
