@@ -534,7 +534,7 @@ def test_check_estimator():
     msg = ("{method} of {name} is not invariant when applied "
            "to a subset.").format(method=method, name=name)
     assert_raises_regex(AssertionError, msg,
-                        check_estimator, NotInvariantPredict)
+                        check_estimator, NotInvariantPredict())
     # check for sparse matrix input handling
     name = NoSparseClassifierException.__name__
     msg = ("Estimator %s doesn't seem to fail gracefully on sparse data: "
