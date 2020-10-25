@@ -541,7 +541,7 @@ def test_check_estimator():
            "it should raise a TypeError or a ValueError if sparse input "
            "is explicitly not supported." % name)
     assert_raises_regex(
-           AssertionError, msg, check_estimator, NoSparseClassifierException()
+        AssertionError, msg, check_estimator, NoSparseClassifierException()
     )
 
     # check for sparse matrix input handling, if the wrong TypeError is thrown
