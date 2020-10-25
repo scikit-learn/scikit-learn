@@ -537,13 +537,13 @@ def test_check_estimator():
                         check_estimator, NotInvariantPredict)
     # check for sparse matrix input handling
     name = NoSparseClassifier.__name__
-msg = ("Estimator %s doesn't seem to fail gracefully on sparse data: "
-       "it should raise a TypeError or a ValueError if sparse input "
-        "is explicitly not supported." % name)    
-assert_raises_regex(
-        AssertionError, msg, check_estimator, NoSparseClassifierException()
+    msg = ("Estimator %s doesn't seem to fail gracefully on sparse data: "
+           "it should raise a TypeError or a ValueError if sparse input "
+           "is explicitly not supported." % name)
+    assert_raises_regex(
+           AssertionError, msg, check_estimator, NoSparseClassifierException()
     )
-    
+
     # check for sparse matrix input handling, if the wrong TypeError is thrown
     for clf in [NoSparseClassifierTypeError, NoSparseClassifierValueError]:
         name = clf.__name__
@@ -562,7 +562,7 @@ assert_raises_regex(
                         check_estimator,
                         SparseDenseDifferentPredictProba)
 
-    
+
     # Large indices test on bad estimator
     msg = ('Estimator LargeSparseNotSupportedClassifier doesn\'t seem to '
            r'support \S{3}_64 matrix, and is not failing gracefully.*')
