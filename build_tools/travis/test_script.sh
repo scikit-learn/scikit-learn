@@ -59,7 +59,7 @@ run_tests() {
 
     set -x  # print executed commands to the terminal
 
-    $TEST_CMD sklearn
+    $TEST_CMD sklearn.utils.tests.test_seq_dataset
 }
 
 run_tests
