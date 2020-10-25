@@ -83,13 +83,17 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                                  " it has to be of shape (n_features,).")
 
         self.categories_ = []
+        self.categories_count_ = []
 
         for i in range(n_features):
             Xi = X_list[i]
             if self.categories == 'auto':
-                cats = _unique(Xi)
+                cats, cats_count = _unique(Xi, return_counts=True)
             else:
                 cats = np.array(self.categories[i], dtype=Xi.dtype)
+                cats_, cats_count = _unique(Xi, return_counts=True)
+                missing = np.setdiff1d(cats, cats_, assume_unique=True)
+                cats_count = np.append(cats_count, np.zeros(missing.shape[0]))
                 if Xi.dtype != object:
                     sorted_cats = np.sort(cats)
                     error_msg = ("Unsorted categories are not "
@@ -107,6 +111,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                         msg = ("Found unknown categories {0} in column {1}"
                                " during fit".format(diff, i))
                         raise ValueError(msg)
+            self.categories_count_.append(cats_count)
             self.categories_.append(cats)
 
     def _transform(self, X, handle_unknown='error', force_all_finite=True):
@@ -244,6 +249,13 @@ class OneHotEncoder(_BaseEncoder):
         of ``transform``). This includes the category specified in ``drop``
         (if any).
 
+    categories_count_ : list of arrays
+        The frequency count of each category within each feature determined
+        during fitting.
+        (in order of the features in X and corresponding with the output
+        of ``transform``). This includes the category specified in ``drop``
+        (if any).
+
     drop_idx_ : array of shape (n_features,)
         - ``drop_idx_[i]`` is the index in ``categories_[i]`` of the category
           to be dropped for each feature.
@@ -344,6 +356,10 @@ class OneHotEncoder(_BaseEncoder):
             elif self.drop == 'if_binary':
                 return np.array([0 if len(cats) == 2 else None
                                 for cats in self.categories_], dtype=object)
+            elif self.drop == 'most_frequent':
+                return np.array([np.argmax(cats_count)
+                                for cats_count in self.categories_count_],
+                                dtype=object)
             else:
                 msg = (
                     "Wrong input for parameter `drop`. Expected "

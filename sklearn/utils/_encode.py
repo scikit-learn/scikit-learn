@@ -2,9 +2,10 @@ from typing import NamedTuple
 
 import numpy as np
 from . import is_scalar_nan
+from collections import Counter
 
 
-def _unique(values, *, return_inverse=False):
+def _unique(values, *, return_inverse=False, return_counts=False):
     """Helper function to find unique values with support for python objects.
 
     Uses pure python method for object dtype, and numpy method for
@@ -28,12 +29,18 @@ def _unique(values, *, return_inverse=False):
         Only provided if `return_inverse` is True.
     """
     if values.dtype == object:
-        return _unique_python(values, return_inverse=return_inverse)
+        return _unique_python(values,
+                              return_inverse=return_inverse,
+                              return_counts=return_counts)
     # numerical
-    out = np.unique(values, return_inverse=return_inverse)
+    out = np.unique(values,
+                    return_inverse=return_inverse,
+                    return_counts=return_counts)
 
     if return_inverse:
         uniques, inverse = out
+    elif return_counts:
+        uniques, counts = out
     else:
         uniques = out
 
@@ -44,9 +51,13 @@ def _unique(values, *, return_inverse=False):
         uniques = uniques[:nan_idx + 1]
         if return_inverse:
             inverse[inverse > nan_idx] = nan_idx
+        if return_counts:
+            counts[counts > nan_idx] = nan_idx
 
     if return_inverse:
         return uniques, inverse
+    if return_counts:
+        return uniques, counts
     return uniques
 
 
@@ -123,7 +134,7 @@ def _map_to_integer(values, uniques):
     return np.array([table[v] for v in values])
 
 
-def _unique_python(values, *, return_inverse):
+def _unique_python(values, *, return_inverse, return_counts):
     # Only used in `_uniques`, see docstring there for details
     try:
         uniques_set = set(values)
@@ -137,10 +148,18 @@ def _unique_python(values, *, return_inverse):
                        for t in set(type(v) for v in values))
         raise TypeError("Encoders require their input to be uniformly "
                         f"strings or numbers. Got {types}")
-
     if return_inverse:
         return uniques, _map_to_integer(values, uniques)
-
+    if return_counts:
+        ctr_all = Counter(values)
+        ctr = {k: ctr_all[k] for k in uniques_set}
+        ctr = dict(sorted(ctr.items()))
+        if len(missing_values.to_list()) != 0:
+            ctr_missing = {k: ctr_all[k] for k in missing_values.to_list()}
+            ctr.update(ctr_missing)
+        uniques = np.array(list(ctr.keys()), dtype=values.dtype)
+        counts = np.array(list(ctr.values()), dtype=int)
+        return uniques, counts
     return uniques
 
 
