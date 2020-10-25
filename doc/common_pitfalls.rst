@@ -243,8 +243,9 @@ subtle parameter.
 
     For an optimal robustness of cross-validation (CV) results, pass
     `RandomState` instances when creating estimators, or leave `random_state`
-    to `None`. Passing integers to CV splitters is usually the safest option,
-    although `RandomState` instances are fine if you know what you are doing.
+    to `None`. Passing integers to CV splitters is usually the safest option
+    and is preferable; passing `RandomState` instances to splitters may
+    sometimes be useful to achieve very specific use-cases.
     For both estimators and splitters, passing an integer vs passing an
     instance (or `None`) leads to subtle but significant differences,
     especially for CV procedures. These differences are important to
@@ -557,11 +558,11 @@ is done by passing a `RandomState` instance (or `None`) to the estimator
 initialization.
 
 When we pass an integer, the estimator will use the same RNG on each fold: if
-we get a good (or bad) CV performance, it might just be because we got lucky
-(or unlucky) with that specific seed. Passing instances leads to more
-robust CV results, and makes the comparison between various algorithms
-fairer. It also helps limiting the temptation to treat the estimator's RNG as
-a hyper-parameter that can be tuned.
+if the estimator performs well (or bad), as evaluated by CV, it might just be
+because we got lucky (or unlucky) with that specific seed. Passing instances
+leads to more robust CV results, and makes the comparison between various
+algorithms fairer. It also helps limiting the temptation to treat the
+estimator's RNG as a hyper-parameter that can be tuned.
 
 Whether we pass `RandomState` instances or integers to CV splitters has no
 impact on robustness, as long as `split` is only called once. When `split`
