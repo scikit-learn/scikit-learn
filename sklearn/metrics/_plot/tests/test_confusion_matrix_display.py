@@ -39,9 +39,7 @@ def test_confusion_matrix_display_validation(pyplot):
     with pytest.raises(ValueError, match=err_msg):
         ConfusionMatrixDisplay.from_estimator(regressor, X, y)
 
-    err_msg = (
-        "Mix type of y not allowed, got types {'multiclass', 'continuous'}"
-    )
+    err_msg = "Mix type of y not allowed, got types"
     with pytest.raises(ValueError, match=err_msg):
         # Force `y_true` to be seen as a regression problem
         ConfusionMatrixDisplay.from_predictions(y + 0.5, y_pred_classifier)
