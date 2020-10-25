@@ -65,7 +65,7 @@ if [[ "$TRAVIS_CPU_ARCH" == "amd64" ]]; then
     dev_anaconda_url=https://pypi.anaconda.org/scipy-wheels-nightly/simple
     pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url scipy pandas
     echo "Installing numpy wheels"
-    pip install scipy numpy==1.19.1
+    pip install scipy numpy==1.19.2
     pip install --pre cython
     echo "Installing joblib master"
     pip install https://github.com/joblib/joblib/archive/master.zip
