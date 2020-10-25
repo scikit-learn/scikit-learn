@@ -2941,7 +2941,7 @@ def check_estimator_sparse_dense(name, estimator_orig):
     rng = np.random.RandomState(52)
     estimator = clone(estimator_orig)
     estimator_sp = clone(estimator_orig)
-    tags = _safe_tags(estimator_orig)
+    tags = estimator_orig._get_tags()
     centers = 2 if tags["binary_only"] else None
     X, y = make_blobs(random_state=rng, cluster_std=0.5, centers=centers)
     # for put some points to zero to have a little bit of sparsity
