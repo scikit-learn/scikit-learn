@@ -54,7 +54,7 @@ def _csr_row_norms(np.ndarray[floating, ndim=1, mode="c"] X_data,
     return norms
 
 
-def csr_mean_variance_axis0(X, weights=None):
+def csr_mean_variance_axis0(X, weights=None, return_sum_weights=False):
     """Compute mean and variance along axis 0 on a CSR matrix
 
     Parameters
@@ -65,6 +65,9 @@ def csr_mean_variance_axis0(X, weights=None):
     weights : float array with shape (n_samples,) or None.
         If it is set to None samples will be equally weighted.
 
+    return_sum_weights : bool
+        If True, returns the sum of weights seen for each feature.
+
     Returns
     -------
     means : float array with shape (n_features,)
@@ -73,6 +76,8 @@ def csr_mean_variance_axis0(X, weights=None):
     variances : float array with shape (n_features,)
         Feature-wise variances
 
+    sum_weights : float array with shape (n_features,)
+        Returned if return_sum_weights is True.
     """
     if X.dtype not in [np.float32, np.float64]:
         X = X.astype(np.float64)
@@ -80,9 +85,11 @@ def csr_mean_variance_axis0(X, weights=None):
     if weights is None:
         weights = np.ones(X.shape[0], dtype=X.dtype)
 
-    means, variances, _ = _csr_mean_variance_axis0(
+    means, variances, sum_weights = _csr_mean_variance_axis0(
         X.data, X.shape[0], X.shape[1], X.indices, X.indptr, weights)
 
+    if return_sum_weights:
+        return means, variances, sum_weights
     return means, variances
 
 
@@ -113,10 +120,12 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
     variances = np.zeros_like(means, dtype=dtype)
 
     cdef:
-        np.ndarray[floating, ndim=1] counts = np.zeros(
-            n_features, dtype=dtype)
-        np.ndarray[floating, ndim=1] counts_nan = np.zeros(
-            n_features, dtype=dtype)
+        np.ndarray[floating, ndim=1] sum_weights = \
+            np.full(fill_value=np.sum(weights), shape=n_features, dtype=dtype)
+        np.ndarray[floating, ndim=1] sum_weights_nan = \
+            np.zeros(shape=n_features, dtype=dtype)
+        np.ndarray[floating, ndim=1] sum_weights_nz = \
+            np.zeros(shape=n_features, dtype=dtype)
 
     for row_ind in range(len(X_indptr) - 1):
         for i in range(X_indptr[row_ind], X_indptr[row_ind + 1]):
@@ -124,10 +133,11 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
             if not isnan(X_data[i]):
                 means[col_ind] += (X_data[i] * weights[row_ind])
             else:
-                counts_nan[col_ind] += weights[row_ind]
+                sum_weights_nan[col_ind] += weights[row_ind]
 
     for i in range(n_features):
-        means[i] /= (n_samples - counts_nan[i])
+        sum_weights[i] -= sum_weights_nan[i]
+        means[i] /= sum_weights[i]
 
     for row_ind in range(len(X_indptr) - 1):
         for i in range(X_indptr[row_ind], X_indptr[row_ind + 1]):
@@ -135,16 +145,16 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
             if not isnan(X_data[i]):
                 diff = X_data[i] - means[col_ind]
                 variances[col_ind] += diff * diff * weights[row_ind]
-                counts[col_ind] += weights[row_ind]
+                sum_weights_nz[col_ind] += weights[row_ind]
 
     for i in range(n_features):
-        variances[i] += (n_samples - counts_nan[i] - counts[i]) * means[i]**2
-        variances[i] /= (n_samples - counts_nan[i])
+        variances[i] += (sum_weights[i] - sum_weights_nz[i]) * means[i]**2
+        variances[i] /= sum_weights[i]
 
-    return means, variances, counts_nan
+    return means, variances, sum_weights
 
 
-def csc_mean_variance_axis0(X, weights=None):
+def csc_mean_variance_axis0(X, weights=None, return_sum_weights=False):
     """Compute mean and variance along axis 0 on a CSC matrix
 
     Parameters
@@ -155,6 +165,9 @@ def csc_mean_variance_axis0(X, weights=None):
     weights : float array with shape (n_samples,) or None.
         If it is set to None samples will be equally weighted.
 
+    return_sum_weights : bool
+        If True, returns the sum of weights seen for each feature.
+
     Returns
     -------
     means : float array with shape (n_features,)
@@ -163,6 +176,8 @@ def csc_mean_variance_axis0(X, weights=None):
     variances : float array with shape (n_features,)
         Feature-wise variances
 
+    sum_weights : float array with shape (n_features,)
+        Returned if return_sum_weights is True.
     """
     if X.dtype not in [np.float32, np.float64]:
         X = X.astype(np.float64)
@@ -170,8 +185,11 @@ def csc_mean_variance_axis0(X, weights=None):
     if weights is None:
         weights = np.ones(X.shape[0], dtype=X.dtype)
 
-    means, variances, _ = _csc_mean_variance_axis0(
+    means, variances, sum_weights = _csc_mean_variance_axis0(
         X.data, X.shape[0], X.shape[1], X.indices, X.indptr, weights)
+
+    if return_sum_weights:
+        return means, variances, sum_weights
     return means, variances
 
 
@@ -202,10 +220,12 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
     variances = np.zeros_like(means, dtype=dtype)
 
     cdef:
-        np.ndarray[floating, ndim=1] counts = \
-            np.zeros(n_features, dtype=dtype)
-        np.ndarray[floating, ndim=1] counts_nan = \
-            np.zeros(n_features, dtype=dtype)
+        np.ndarray[floating, ndim=1] sum_weights = \
+            np.full(fill_value=np.sum(weights), shape=n_features, dtype=dtype)
+        np.ndarray[floating, ndim=1] sum_weights_nan = \
+            np.zeros(shape=n_features, dtype=dtype)
+        np.ndarray[floating, ndim=1] sum_weights_nz = \
+            np.zeros(shape=n_features, dtype=dtype)
 
     for col_ind in range(n_features):
         for i in range(X_indptr[col_ind], X_indptr[col_ind + 1]):
@@ -213,10 +233,11 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
             if not isnan(X_data[i]):
                 means[col_ind] += (X_data[i] * weights[row_ind])
             else:
-                counts_nan[col_ind] += weights[row_ind]
+                sum_weights_nan[col_ind] += weights[row_ind]
 
     for i in range(n_features):
-        means[i] /= (n_samples - counts_nan[i])
+        sum_weights[i] -= sum_weights_nan[i]
+        means[i] /= sum_weights[i]
 
     for col_ind in range(n_features):
         for i in range(X_indptr[col_ind], X_indptr[col_ind + 1]):
@@ -224,13 +245,13 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
             if not isnan(X_data[i]):
                 diff = X_data[i] - means[col_ind]
                 variances[col_ind] += diff * diff * weights[row_ind]
-                counts[col_ind] += weights[row_ind]
+                sum_weights_nz[col_ind] += weights[row_ind]
 
     for i in range(n_features):
-        variances[i] += (n_samples - counts_nan[i] - counts[i]) * means[i]**2
-        variances[i] /= (n_samples - counts_nan[i])
+        variances[i] += (sum_weights[i] - sum_weights_nz[i]) * means[i]**2
+        variances[i] /= sum_weights[i]
 
-    return means, variances, counts_nan
+    return means, variances, sum_weights
 
 
 def incr_mean_variance_axis0(X, last_mean, last_var, last_n, weights=None):
@@ -346,23 +367,19 @@ def _incr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
         np.ndarray[floating, ndim=1] new_n
         np.ndarray[floating, ndim=1] updated_n
         np.ndarray[floating, ndim=1] last_over_new_n
-        np.ndarray[floating, ndim=1] counts_nan
 
     # Obtain new stats first
-    new_n = np.full(n_features, n_samples, dtype=dtype)
+    new_n = np.empty(shape=n_features, dtype=dtype)
     updated_n = np.zeros_like(new_n, dtype=dtype)
     last_over_new_n = np.zeros_like(new_n, dtype=dtype)
 
     # X can be a CSR or CSC matrix
     if X_format == 'csr':
-        new_mean, new_var, counts_nan = _csr_mean_variance_axis0(
+        new_mean, new_var, new_n = _csr_mean_variance_axis0(
             X_data, n_samples, n_features, X_indices, X_indptr, weights)
     else:  # X_format == 'csc'
-        new_mean, new_var, counts_nan = _csc_mean_variance_axis0(
+        new_mean, new_var, new_n = _csc_mean_variance_axis0(
             X_data, n_samples, n_features, X_indices, X_indptr, weights)
-
-    for i in range(n_features):
-        new_n[i] -= counts_nan[i]
 
     # First pass
     cdef bint is_first_pass = True
@@ -370,13 +387,16 @@ def _incr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
         if last_n[i] > 0:
             is_first_pass = False
             break
+
     if is_first_pass:
         return new_mean, new_var, new_n
+
+    for i in range(n_features):
+        updated_n[i] = last_n[i] + new_n[i]
 
     # Next passes
     for i in range(n_features):
         if new_n[i] > 0:
-            updated_n[i] = last_n[i] + new_n[i]
             last_over_new_n[i] = dtype(last_n[i]) / dtype(new_n[i])
             # Unnormalized stats
             last_mean[i] *= last_n[i]

@@ -9,7 +9,6 @@
 
 
 from itertools import chain, combinations
-import numbers
 import warnings
 from itertools import combinations_with_replacement as combinations_w_r
 
@@ -635,7 +634,8 @@ class StandardScaler(TransformerMixin, BaseEstimator):
     n_samples_seen_ : int or ndarray of shape (n_features,)
         The number of samples processed by the estimator for each feature.
         If there are not missing samples, the ``n_samples_seen`` will be an
-        integer, otherwise it will be an array.
+        integer, otherwise it will be an array. If sample_weights are
+        used it will be an array that sums the weights seen so far.
         Will be reset on new calls to fit, but increments across
         ``partial_fit`` calls.
 
@@ -762,6 +762,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         X = self._validate_data(X, accept_sparse=('csr', 'csc'),
                                 estimator=self, dtype=FLOAT_DTYPES,
                                 force_all_finite='allow-nan', reset=first_call)
+        n_samples, n_features = X.shape
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X,
@@ -774,10 +775,21 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         # if n_samples_seen_ is an integer (i.e. no missing values), we need to
         # transform it to a NumPy array of shape (n_features,) required by
         # incr_mean_variance_axis and _incremental_variance_axis
-        if (hasattr(self, 'n_samples_seen_') and
-                isinstance(self.n_samples_seen_, numbers.Integral)):
+        if not hasattr(self, 'n_samples_seen_'):
+            if sample_weight is not None:
+                self.n_samples_seen_ = np.zeros(n_features, dtype=X.dtype)
+            else:
+                self.n_samples_seen_ = np.zeros(n_features, dtype=np.int64)
+        elif (hasattr(self, 'n_samples_seen_') and
+              np.size(self.n_samples_seen_) == 1):
             self.n_samples_seen_ = np.repeat(
-                self.n_samples_seen_, X.shape[1]).astype(np.int64, copy=False)
+                self.n_samples_seen_, X.shape[1])
+            if sample_weight is not None:
+                self.n_samples_seen_ = \
+                    self.n_samples_seen_.astype(X.dtype, copy=False)
+            else:
+                self.n_samples_seen_ = \
+                    self.n_samples_seen_.astype(np.int64, copy=False)
 
         if sparse.issparse(X):
             if self.with_mean:
@@ -787,23 +799,12 @@ class StandardScaler(TransformerMixin, BaseEstimator):
             sparse_constructor = (sparse.csr_matrix
                                   if X.format == 'csr' else sparse.csc_matrix)
 
-            counts_nan = sparse_constructor(
-                        (np.isnan(X.data), X.indices, X.indptr),
-                        shape=X.shape).sum(axis=0).A.ravel()
-
-            if not hasattr(self, 'n_samples_seen_'):
-                self.n_samples_seen_ = (
-                    X.shape[0] - counts_nan).astype(np.int64, copy=False)
-
             if self.with_std:
-                if sample_weight is not None:
-                    # XXX : this should not be necessary
-                    sample_weight = \
-                        sample_weight / np.sum(sample_weight) * X.shape[0]
                 # First pass
                 if not hasattr(self, 'scale_'):
-                    self.mean_, self.var_ = mean_variance_axis(
-                        X, axis=0, weights=sample_weight)
+                    self.mean_, self.var_, self.n_samples_seen_ = \
+                        mean_variance_axis(X, axis=0, weights=sample_weight,
+                                           return_sum_weights=True)
                 # Next passes
                 else:
                     self.mean_, self.var_, self.n_samples_seen_ = \
@@ -813,14 +814,17 @@ class StandardScaler(TransformerMixin, BaseEstimator):
                                                 last_n=self.n_samples_seen_,
                                                 weights=sample_weight)
             else:
-                self.mean_ = None
+                self.mean_ = None  # as with_mean must be False for sparse
                 self.var_ = None
-                if hasattr(self, 'scale_'):
-                    self.n_samples_seen_ += X.shape[0] - counts_nan
+                if sample_weight is None:
+                    weights = np.ones(n_samples, dtype=np.int64)
+                else:
+                    weights = sample_weight
+                sum_weights_nan = weights @ sparse_constructor(
+                    (np.isnan(X.data), X.indices, X.indptr),
+                    shape=X.shape)
+                self.n_samples_seen_ += np.sum(weights) - sum_weights_nan
         else:
-            if not hasattr(self, 'n_samples_seen_'):
-                self.n_samples_seen_ = np.zeros(X.shape[1], dtype=np.int64)
-
             # First pass
             if not hasattr(self, 'scale_'):
                 self.mean_ = .0
