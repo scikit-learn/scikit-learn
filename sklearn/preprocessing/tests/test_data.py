@@ -845,12 +845,16 @@ def test_min_max_scaler_1d():
                               minmax_scale(X_1d, copy=True))
 
 
-def test_scaler_without_centering():
+@pytest.mark.parametrize("sample_weight", [True, None])
+def test_scaler_without_centering(sample_weight):
     rng = np.random.RandomState(42)
     X = rng.randn(4, 5)
     X[:, 0] = 0.0  # first feature is always of zero
     X_csr = sparse.csr_matrix(X)
     X_csc = sparse.csc_matrix(X)
+
+    if sample_weight:
+        sample_weight = rng.rand(4)
 
     with pytest.raises(ValueError):
         StandardScaler().fit(X_csr)
@@ -863,33 +867,42 @@ def test_scaler_without_centering():
     X_orig = null_transform.inverse_transform(X_null)
     assert_array_equal(X_orig.data, X_csr.data)
 
-    scaler = StandardScaler(with_mean=False).fit(X)
+    scaler = StandardScaler(with_mean=False).fit(
+        X, sample_weight=sample_weight)
     X_scaled = scaler.transform(X, copy=True)
     assert not np.any(np.isnan(X_scaled))
 
-    scaler_csr = StandardScaler(with_mean=False).fit(X_csr)
+    scaler_csr = StandardScaler(with_mean=False).fit(
+        X_csr, sample_weight=sample_weight)
     X_csr_scaled = scaler_csr.transform(X_csr, copy=True)
     assert not np.any(np.isnan(X_csr_scaled.data))
 
-    scaler_csc = StandardScaler(with_mean=False).fit(X_csc)
+    scaler_csc = StandardScaler(with_mean=False).fit(
+        X_csc, sample_weight=sample_weight)
     X_csc_scaled = scaler_csc.transform(X_csc, copy=True)
     assert not np.any(np.isnan(X_csc_scaled.data))
 
     assert_array_almost_equal(scaler.mean_, scaler_csr.mean_)
     assert_array_almost_equal(scaler.var_, scaler_csr.var_)
     assert_array_almost_equal(scaler.scale_, scaler_csr.scale_)
+    assert_array_almost_equal(scaler.n_samples_seen_,
+                              scaler_csr.n_samples_seen_)
 
     assert_array_almost_equal(scaler.mean_, scaler_csc.mean_)
     assert_array_almost_equal(scaler.var_, scaler_csc.var_)
     assert_array_almost_equal(scaler.scale_, scaler_csc.scale_)
+    assert_array_almost_equal(scaler.n_samples_seen_,
+                              scaler_csc.n_samples_seen_)
 
-    assert_array_almost_equal(
-        X_scaled.mean(axis=0), [0., -0.01, 2.24, -0.35, -0.78], 2)
-    assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
+    if sample_weight is None:
+        assert_array_almost_equal(
+            X_scaled.mean(axis=0), [0., -0.01, 2.24, -0.35, -0.78], 2)
+        assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
 
-    X_csr_scaled_mean, X_csr_scaled_std = mean_variance_axis(X_csr_scaled, 0)
+    X_csr_scaled_mean, X_csr_scaled_var = \
+        mean_variance_axis(X_csr_scaled, 0)
     assert_array_almost_equal(X_csr_scaled_mean, X_scaled.mean(axis=0))
-    assert_array_almost_equal(X_csr_scaled_std, X_scaled.std(axis=0))
+    assert_array_almost_equal(X_csr_scaled_var, X_scaled.var(axis=0))
 
     # Check that X has not been modified (copy)
     assert X_scaled is not X
