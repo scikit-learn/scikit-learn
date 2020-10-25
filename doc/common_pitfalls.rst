@@ -243,18 +243,18 @@ subtle parameter.
 
     For an optimal robustness of cross-validation (CV) results, pass
     `RandomState` instances when creating estimators, or leave `random_state`
-    to None. Passing integers to CV splitters is usually the safest option,
+    to `None`. Passing integers to CV splitters is usually the safest option,
     although `RandomState` instances are fine if you know what you are doing.
     For both estimators and splitters, passing an integer vs passing an
-    instance (or None) leads to subtle but significant differences,
+    instance (or `None`) leads to subtle but significant differences,
     especially for CV procedures. These differences are important to
     understand when reporting results.
 
     For reproducible results across executions, remove any use of
     `random_state=None`.
 
-Using None or `RandomState` instances, and repeated calls to `fit` and `split`
-------------------------------------------------------------------------------
+Using `None` or `RandomState` instances, and repeated calls to `fit` and `split`
+--------------------------------------------------------------------------------
 
 The `random_state` parameter determines whether multiple calls to :term:`fit`
 (for estimators) or to :term:`split` (for CV splitters) will produce the same
@@ -553,7 +553,7 @@ set of randomly selected features that each tree will be using.
 
 For these reasons, it is preferable to evaluate the cross-validation
 preformance by letting the estimator use a different RNG on each fold. This
-is done by passing a `RandomState` instance (or None) to the estimator
+is done by passing a `RandomState` instance (or `None`) to the estimator
 initialization.
 
 When we pass an integer, the estimator will use the same RNG on each fold: if
