@@ -710,8 +710,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
             Ignored.
 
         sample_weight : array-like of shape (n_samples,), default=None
-            Individual weights for each sample. Works only if X is dense. It
-            will raise a `NotImplementedError` if called with sparse X
+            Individual weights for each sample.
 
             .. versionadded:: 0.24
                parameter *sample_weight* support to StandardScaler.
@@ -749,8 +748,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
             Ignored.
 
         sample_weight : array-like of shape (n_samples,), default=None
-            Individual weights for each sample. Works only if X is dense. It
-            will raise a `NotImplementedError` if called with sparse X
+            Individual weights for each sample.
 
             .. versionadded:: 0.24
                parameter *sample_weight* support to StandardScaler.
@@ -789,12 +787,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
             sparse_constructor = (sparse.csr_matrix
                                   if X.format == 'csr' else sparse.csc_matrix)
 
-            if sample_weight is not None:
-                raise NotImplementedError(
-                    "`StandardScaler` does not yet have a support for sparse X"
-                    " and `sample_weight`.")
-            else:
-                counts_nan = sparse_constructor(
+            counts_nan = sparse_constructor(
                         (np.isnan(X.data), X.indices, X.indptr),
                         shape=X.shape).sum(axis=0).A.ravel()
 
@@ -803,16 +796,22 @@ class StandardScaler(TransformerMixin, BaseEstimator):
                     X.shape[0] - counts_nan).astype(np.int64, copy=False)
 
             if self.with_std:
+                if sample_weight is not None:
+                    # XXX : this should not be necessary
+                    sample_weight = \
+                        sample_weight / np.sum(sample_weight) * X.shape[0]
                 # First pass
                 if not hasattr(self, 'scale_'):
-                    self.mean_, self.var_ = mean_variance_axis(X, axis=0)
+                    self.mean_, self.var_ = mean_variance_axis(
+                        X, axis=0, weights=sample_weight)
                 # Next passes
                 else:
                     self.mean_, self.var_, self.n_samples_seen_ = \
                         incr_mean_variance_axis(X, axis=0,
                                                 last_mean=self.mean_,
                                                 last_var=self.var_,
-                                                last_n=self.n_samples_seen_)
+                                                last_n=self.n_samples_seen_,
+                                                weights=sample_weight)
             else:
                 self.mean_ = None
                 self.var_ = None

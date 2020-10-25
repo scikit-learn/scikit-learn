@@ -319,15 +319,28 @@ def test_raises_value_error_if_sample_weights_greater_than_1d():
                             [np.nan, np.nan, 1], [np.nan, np.nan, 1]],
                            np.array([1, 3])),
                           ])
-def test_standard_scaler_sample_weight(Xw, X, sample_weight):
+@pytest.mark.parametrize("sparse_constructor",
+                         [None, sparse.csc_matrix, sparse.csr_matrix])
+def test_standard_scaler_sample_weight(
+        Xw, X, sample_weight, sparse_constructor):
+
+    with_mean = True
+    if sparse_constructor is not None:
+        X = sparse_constructor(X)
+        Xw = sparse_constructor(Xw)
+        with_mean = False
+    else:
+        Xw = np.array(Xw)
+        X = np.array(X)
+
     # weighted StandardScaler
-    yw = np.ones(len(Xw))
-    scaler_w = StandardScaler()
+    yw = np.ones(Xw.shape[0])
+    scaler_w = StandardScaler(with_mean=with_mean)
     scaler_w.fit(Xw, yw, sample_weight=sample_weight)
 
     # unweighted, but with repeated samples
-    y = np.ones(len(X))
-    scaler = StandardScaler()
+    y = np.ones(X.shape[0])
+    scaler = StandardScaler(with_mean=with_mean)
     scaler.fit(X, y)
 
     X_test = [[1.5, 2.5, 3.5], [3.5, 4.5, 5.5]]
@@ -335,34 +348,6 @@ def test_standard_scaler_sample_weight(Xw, X, sample_weight):
     assert_almost_equal(scaler.mean_, scaler_w.mean_)
     assert_almost_equal(scaler.var_, scaler_w.var_)
     assert_almost_equal(scaler.transform(X_test), scaler_w.transform(X_test))
-
-
-@pytest.mark.parametrize(['Xw', 'X', 'sample_weight'],
-                         [([[0, 0, 1, np.nan, 2, 0],
-                            [0, 3, np.nan, np.nan, np.nan, 2]],
-                           [[0, 0, 1, np.nan, 2, 0],
-                            [0, 0, 1, np.nan, 2, 0],
-                            [0, 3, np.nan, np.nan, np.nan, 2]],
-                           [1., 2.]),
-                          ([[1, 0, 1], [0, 0, 1]],
-                           [[1, 0, 1], [0, 0, 1], [0, 0, 1], [0, 0, 1]],
-                           np.array([1, 3]))
-                          ])
-def test_standard_scaler_sparse_sample_weights(Xw, X, sample_weight):
-    # weighted StandardScaler throughs notImplementedError when run with
-    # sample_weight
-    Xw_sparse = sparse.csr_matrix(Xw)
-    yw = np.ones(len(Xw))
-
-    scaler_w = StandardScaler(with_mean=False)
-    with pytest.raises(NotImplementedError):
-        scaler_w.fit(Xw_sparse, yw, sample_weight=sample_weight)
-
-    # but passes through when run without sample_weight
-    X_sparse = sparse.csr_matrix(X)
-    y = np.ones(len(X))
-    scaler = StandardScaler(with_mean=False)
-    scaler.fit(X_sparse, y)
 
 
 def test_standard_scaler_1d():

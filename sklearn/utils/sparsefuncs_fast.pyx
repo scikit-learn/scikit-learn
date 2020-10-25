@@ -54,13 +54,16 @@ def _csr_row_norms(np.ndarray[floating, ndim=1, mode="c"] X_data,
     return norms
 
 
-def csr_mean_variance_axis0(X):
+def csr_mean_variance_axis0(X, weights=None):
     """Compute mean and variance along axis 0 on a CSR matrix
 
     Parameters
     ----------
     X : CSR sparse matrix, shape (n_samples, n_features)
         Input data.
+
+    weights : float array with shape (n_samples,) or None.
+        If it is set to None samples will be equally weighted.
 
     Returns
     -------
@@ -74,7 +77,8 @@ def csr_mean_variance_axis0(X):
     if X.dtype not in [np.float32, np.float64]:
         X = X.astype(np.float64)
 
-    weights = np.ones(X.shape[0], dtype=X.dtype)
+    if weights is None:
+        weights = np.ones(X.shape[0], dtype=X.dtype)
 
     means, variances, _ = _csr_mean_variance_axis0(
         X.data, X.shape[0], X.shape[1], X.indices, X.indptr, weights)
@@ -140,13 +144,16 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
     return means, variances, counts_nan
 
 
-def csc_mean_variance_axis0(X):
+def csc_mean_variance_axis0(X, weights=None):
     """Compute mean and variance along axis 0 on a CSC matrix
 
     Parameters
     ----------
     X : CSC sparse matrix, shape (n_samples, n_features)
         Input data.
+
+    weights : float array with shape (n_samples,) or None.
+        If it is set to None samples will be equally weighted.
 
     Returns
     -------
@@ -160,7 +167,9 @@ def csc_mean_variance_axis0(X):
     if X.dtype not in [np.float32, np.float64]:
         X = X.astype(np.float64)
 
-    weights = np.ones(X.shape[0], dtype=X.dtype)
+    if weights is None:
+        weights = np.ones(X.shape[0], dtype=X.dtype)
+
     means, variances, _ = _csc_mean_variance_axis0(
         X.data, X.shape[0], X.shape[1], X.indices, X.indptr, weights)
     return means, variances
@@ -203,6 +212,7 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
             row_ind = X_indices[i]
             if not isnan(X_data[i]):
                 means[col_ind] += (X_data[i] * weights[row_ind])
+                print(row_ind, col_ind, means)
             else:
                 counts_nan[col_ind] += weights[row_ind]
 

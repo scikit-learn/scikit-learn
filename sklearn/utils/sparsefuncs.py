@@ -63,7 +63,7 @@ def inplace_csr_row_scale(X, scale):
     X.data *= np.repeat(scale, np.diff(X.indptr))
 
 
-def mean_variance_axis(X, axis):
+def mean_variance_axis(X, axis, weights=None):
     """Compute mean and variance along an axix on a CSR or CSC matrix
 
     Parameters
@@ -73,6 +73,11 @@ def mean_variance_axis(X, axis):
 
     axis : int (either 0 or 1)
         Axis along which the axis should be computed.
+
+    weights : ndarray, shape (n_samples,) or (n_features,) | None
+        if axis is set to 0 shape is (n_samples,) or
+        if axis is set to 1 shape is (n_features,).
+        If it is set to None, then samples are equally weighted.
 
     Returns
     -------
@@ -88,14 +93,14 @@ def mean_variance_axis(X, axis):
 
     if isinstance(X, sp.csr_matrix):
         if axis == 0:
-            return _csr_mean_var_axis0(X)
+            return _csr_mean_var_axis0(X, weights=weights)
         else:
-            return _csc_mean_var_axis0(X.T)
+            return _csc_mean_var_axis0(X.T, weights=weights)
     elif isinstance(X, sp.csc_matrix):
         if axis == 0:
-            return _csc_mean_var_axis0(X)
+            return _csc_mean_var_axis0(X, weights=weights)
         else:
-            return _csr_mean_var_axis0(X.T)
+            return _csr_mean_var_axis0(X.T, weights=weights)
     else:
         _raise_typeerror(X)
 
