@@ -149,16 +149,17 @@ print(f"Correlation of models:\n {model_scores.transpose().corr()}")
 #
 # .. math::
 #    t=\frac{\frac{1}{k \cdot r}\sum_{i=1}^{k}\sum_{j=1}^{r}x_{ij}}
-#    {\sqrt{(\frac{1}{k \cdot r}+\frac{n_2}{n_1})\hat{\sigma}^2}}
+#    {\sqrt{(\frac{1}{k \cdot r}+\frac{n_{test}}{n_{train}})\hat{\sigma}^2}}
 #
 # where :math:`{\sigma}^2` represents the variance, :math:`k` is the number of
 # folds, :math:`r` the number of repetitions in the cross-validation,
-# :math:`n_2` is the number of observations used for testing, and :math:`n_1`
-# is the the number of observations used for training.
+# :math:`n_{test}` is the number of observations used for testing, and
+# :math:`n_{train}` is the the number of observations used for training.
 #
 # Let's implement a corrected right-tailed paired t-test to evaluate if the
 # performance of the first model is significantly better than that of the
-# second model. Our null hypothesis is that their performance will be similar.
+# second model. Our null hypothesis is that the 2nd model performs at least as
+# good as the 1st model
 
 import numpy as np
 from scipy.stats import t
@@ -285,7 +286,8 @@ print(f"Uncorrected t-value: {t_stat_uncorrected:.3f}\n"
 # posterior of the mean parameter as a Student's t-distribution. Specifically:
 #
 # .. math::
-#    St(\mu;n-1,\overline{x},(\frac{1}{n}+\frac{n_2}{n_1})\hat{\sigma}^2)
+#    St(\mu;n-1,\overline{x},(\frac{1}{n}+\frac{n_{test}}{n_{train}})
+#    \hat{\sigma}^2)
 #
 # where :math:`n` is the total number of observations.
 #
@@ -336,16 +338,18 @@ print(f"Probability of {model_scores.index[1]} being more accurate than "
 # computations, but we are allowed to make different assertions.
 
 # %%
+# Region of Practical Equivalence
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 # Sometimes we are interested in determining the probabilities that our models
 # have an equivalent performance, where "equivalent" is defined in a practical
 # way. A default approach [4]_ is to define estimators as practically
 # equivalent when they differ by less than 1% in their accuracy. But we could
 # also define this practical equivalence taking into account the problem we are
-# trying to solve. For example. a difference of 5% in accuracy would mean an
+# trying to solve. For example, a difference of 5% in accuracy would mean an
 # increase of $1000 in sales, and we consider any quantity above that as
 # relevant for our business.
 #
-# In this example we are going to follow the suggestion in [4]_ and define the
+# In this example we are going to define the
 # Region of Practical Equivalence (ROPE) to be :math:`[-0.01, 0.01]`. That is,
 # we will consider two models as practically equivelent if they differ by less
 # than 1% in their performance.
