@@ -2317,13 +2317,27 @@ def test_brier_score_loss():
     with pytest.raises(ValueError):
         brier_score_loss(y_true, y_pred - 1.)
 
-    # ensure to raise an error for multiclass y_true
+    # ensure to raise an error for wrong number of classes
     y_true = np.array([0, 1, 2, 0])
     y_pred = np.array([0.8, 0.6, 0.4, 0.2])
-    error_message = ("Only binary classification is supported. Labels "
-                     "in y_true: {}".format(np.array([0, 1, 2])))
+    error_message = ("y_true and y_prob contain different number of "
+                     "classes 3, 2. Please provide the true "
+                     "labels explicitly through the labels argument. "
+                     "Classes found in "
+                     "y_true: [0 1 2]")
     with pytest.raises(ValueError, match=re.escape(error_message)):
         brier_score_loss(y_true, y_pred)
+
+    y_true = ['eggs', 'spam', 'ham']
+    y_pred = [[1, 0, 0],
+              [0, 1, 0],
+              [0, 1, 0]]
+    labels = ['eggs', 'spam', 'ham', 'yams']
+    error_message = ("The number of classes in labels is different "
+                     "from that in y_prob. Classes found in "
+                     "labels: ['eggs' 'ham' 'spam' 'yams']")
+    with pytest.raises(ValueError, match=re.escape(error_message)):
+        brier_score_loss(y_true, y_pred, labels=labels)
 
     # calculate correctly when there's only one class in y_true
     assert_almost_equal(brier_score_loss([-1], [0.4]), 0.16)
@@ -2333,6 +2347,17 @@ def test_brier_score_loss():
         brier_score_loss(['foo'], [0.4], pos_label='bar'), 0.16)
     assert_almost_equal(
         brier_score_loss(['foo'], [0.4], pos_label='foo'), 0.36)
+
+    # calculate multiclass
+    assert_almost_equal(brier_score_loss(['eggs', 'spam', 'ham'], [[1, 0, 0],
+                                                                   [0, 1, 0],
+                                                                   [0, 1, 0]]),
+                        2/3)
+    assert_almost_equal(brier_score_loss(['eggs', 'spam', 'ham'], [[1, 0, 0, 0],
+                                                                   [0, 1, 0, 0],
+                                                                   [0, 1, 0, 0]],
+                                         labels=['eggs', 'spam', 'ham', 'yams']),
+                        2/3)
 
 
 def test_balanced_accuracy_score_unseen():
