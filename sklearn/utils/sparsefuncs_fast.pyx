@@ -373,9 +373,8 @@ def _incr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
         np.ndarray[floating, ndim=1] last_over_new_n
 
     # Obtain new stats first
-    new_n = np.empty(shape=n_features, dtype=dtype)
-    updated_n = np.zeros_like(new_n, dtype=dtype)
-    last_over_new_n = np.zeros_like(new_n, dtype=dtype)
+    updated_n = np.zeros(shape=n_features, dtype=dtype)
+    last_over_new_n = np.zeros_like(updated_n, dtype=dtype)
 
     # X can be a CSR or CSC matrix
     if X_format == 'csr':

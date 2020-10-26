@@ -74,14 +74,18 @@ def mean_variance_axis(X, axis, weights=None, return_sum_weights=False):
     axis : int (either 0 or 1)
         Axis along which the axis should be computed.
 
-    weights : ndarray, shape (n_samples,) or (n_features,) | None
+    weights : ndarray of shape (n_samples,) or (n_features,), default=None
         if axis is set to 0 shape is (n_samples,) or
         if axis is set to 1 shape is (n_features,).
         If it is set to None, then samples are equally weighted.
 
-    return_sum_weights : bool
+        .. versionadded:: 0.24
+
+    return_sum_weights : bool, default=False
         If True, returns the sum of weights seen for each feature
         if axis=0 or each sample if axis=1.
+
+        .. versionadded:: 0.24
 
     Returns
     -------
