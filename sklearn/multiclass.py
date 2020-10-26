@@ -443,7 +443,7 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
     def n_classes_(self):
         return len(self.classes_)
 
-    # TODO: Remove in 0.26 when the intercept_ attribute is deprecated
+    # TODO: Remove in 0.26 when the coef_ attribute is deprecated
     # mypy error: Decorated property not supported
     @deprecated("Attribute coef_ was deprecated in "  # type: ignore
                 "version 0.24 and will be removed in 0.26. "
