@@ -31,9 +31,21 @@ Triage team
 ------------
 
 The triage team is composed of community members who have permission on
-github to edit, label and close issues. :ref:`Their work <bug_triaging>` is
+github to label and close issues. :ref:`Their work <bug_triaging>` is
 crucial to improve the communication in the project and limit the crowding
 of the issue tracker.
+
+Similarly to what has been decided in the `python project 
+<https://devguide.python.org/triaging/#becoming-a-member-of-the-python-triage-team>`_,
+any contributor may become a member of the scikit-learn triage team, after
+showing some continuity in participating to scikit-learn
+development (with pull requests and reviews).
+Any core developer is welcome to propose a scikit-learn contributor to join the
+triage team. Other core developers are then consulted: while it is expected
+that most acceptances will be unanimous, a two-thirds majority is enough.
+Every new triager will be announced in the mailing list.
+Triagers are welcome to participate in `monthly core developer meetings
+<https://github.com/scikit-learn/administrative/tree/master/meeting_notes>`_.
 
 Core developers
 ---------------

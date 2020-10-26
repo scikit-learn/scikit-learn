@@ -172,3 +172,11 @@ then
     echo "$doctest_directive"
     exit 1
 fi
+
+joblib_import="$(git grep -l -A 10 -E "joblib import.+delayed" -- "*.py" ":!sklearn/utils/_joblib.py" ":!sklearn/utils/fixes.py")"
+
+if [ ! -z "$joblib_import" ]; then
+    echo "Use from sklearn.utils.fixes import delayed instead of joblib delayed. The following files contains imports to joblib.delayed:"
+    echo "$joblib_import"
+    exit 1
+fi

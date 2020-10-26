@@ -7,6 +7,7 @@ and pairwise metrics and distance computations.
 from ._ranking import auc
 from ._ranking import average_precision_score
 from ._ranking import coverage_error
+from ._ranking import det_curve
 from ._ranking import dcg_score
 from ._ranking import label_ranking_average_precision_score
 from ._ranking import label_ranking_loss
@@ -14,6 +15,7 @@ from ._ranking import ndcg_score
 from ._ranking import precision_recall_curve
 from ._ranking import roc_auc_score
 from ._ranking import roc_curve
+from ._ranking import top_k_accuracy_score
 
 from ._classification import accuracy_score
 from ._classification import balanced_accuracy_score
@@ -76,6 +78,8 @@ from ._scorer import make_scorer
 from ._scorer import SCORERS
 from ._scorer import get_scorer
 
+from ._plot.det_curve import plot_det_curve
+from ._plot.det_curve import DetCurveDisplay
 from ._plot.roc_curve import plot_roc_curve
 from ._plot.roc_curve import RocCurveDisplay
 from ._plot.precision_recall_curve import plot_precision_recall_curve
@@ -104,6 +108,8 @@ __all__ = [
     'coverage_error',
     'dcg_score',
     'davies_bouldin_score',
+    'DetCurveDisplay',
+    'det_curve',
     'euclidean_distances',
     'explained_variance_score',
     'f1_score',
@@ -140,6 +146,7 @@ __all__ = [
     'pairwise_distances_chunked',
     'pairwise_kernels',
     'plot_confusion_matrix',
+    'plot_det_curve',
     'plot_precision_recall_curve',
     'plot_roc_curve',
     'PrecisionRecallDisplay',
@@ -154,6 +161,7 @@ __all__ = [
     'SCORERS',
     'silhouette_samples',
     'silhouette_score',
+    'top_k_accuracy_score',
     'v_measure_score',
     'zero_one_loss',
     'brier_score_loss',

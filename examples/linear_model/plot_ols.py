@@ -5,16 +5,15 @@
 =========================================================
 Linear Regression Example
 =========================================================
-This example uses the only the first feature of the `diabetes` dataset, in
-order to illustrate a two-dimensional plot of this regression technique. The
-straight line can be seen in the plot, showing how linear regression attempts
-to draw a straight line that will best minimize the residual sum of squares
-between the observed responses in the dataset, and the responses predicted by
-the linear approximation.
+The example below uses only the first feature of the `diabetes` dataset,
+in order to illustrate the data points within the two-dimensional plot.
+The straight line can be seen in the plot, showing how linear regression
+attempts to draw a straight line that will best minimize the
+residual sum of squares between the observed responses in the dataset,
+and the responses predicted by the linear approximation.
 
-The coefficients, the residual sum of squares and the coefficient
-of determination are also calculated.
-
+The coefficients, residual sum of squares and the coefficient of
+determination are also calculated.
 """
 print(__doc__)
 
