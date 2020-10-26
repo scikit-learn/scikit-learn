@@ -4,10 +4,10 @@ from itertools import product
 from itertools import chain
 from itertools import permutations
 import warnings
-
 import numpy as np
 from scipy import linalg
 import pytest
+import re
 
 from sklearn import datasets
 from sklearn import svm
