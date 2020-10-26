@@ -2437,7 +2437,7 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None,
         the probabilities provided are assumed to be that of the
         positive class. The labels in ``y_pred`` are assumed to be
         ordered alphabetically, as done by
-        :class:`preprocessing.LabelBinarizer`, unless pos_label, or labels is specified.
+        :class:`preprocessing.LabelBinarizer`, unless ``pos_label`` or ``labels`` is specified.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
