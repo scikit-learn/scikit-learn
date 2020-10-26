@@ -2479,8 +2479,8 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None,
     .. [1] `Wikipedia entry for the Brier score
             <https://en.wikipedia.org/wiki/Brier_score>`_.
     """
-    y_true = check_array(y_prob, ensure_2d=False)
-    y_prob = column_or_1d(y_prob)
+    y_true = column_or_1d(y_true)
+    y_prob = check_array(y_prob, ensure_2d=False)
     check_consistent_length(y_prob, y_true, sample_weight)
 
     if y_prob.max() > 1:
