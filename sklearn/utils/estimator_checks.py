@@ -2278,7 +2278,7 @@ def check_classifiers_classes(name, classifier_orig, strict_mode=True):
     X_multiclass = StandardScaler().fit_transform(X_multiclass)
     # We need to make sure that we have non negative data, for things
     # like NMF
-    X_multiclass -= X_multiclass.min() - .1
+    X_multiclass = _enforce_estimator_tags_x(classifier_orig, X_multiclass)
 
     X_binary = X_multiclass[y_multiclass != 2]
     y_binary = y_multiclass[y_multiclass != 2]
@@ -2945,12 +2945,9 @@ def check_estimator_sparse_dense(name, estimator_orig,
     centers = 2 if tags["binary_only"] else None
     X, y = make_blobs(random_state=rng, cluster_std=0.5, centers=centers)
     # for put some points to zero to have a little bit of sparsity
-    # TODO: update this with enforce_estimator_tags_X when #14705 is merged
-    if tags["requires_positive_X"]:
-        X -= np.min(X) - 1.
+    X = _enforce_estimator_tags_x(estimator_orig, X)
     X_csr = sparse.csr_matrix(X)
-    if tags["multioutput"] or tags["multioutput_only"]:
-        y = y[:, np.newaxis]
+    y = _enforce_estimator_tags_y(estimator_orig, y)
 
     for sparse_format in ['csr', 'csc', 'dok', 'lil', 'coo', 'dia', 'bsr']:
         X_sp = X_csr.asformat(sparse_format)
