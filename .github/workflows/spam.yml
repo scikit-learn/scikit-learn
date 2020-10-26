@@ -1,0 +1,28 @@
+name: Close spam issues and PRs
+# Run when an issue or PR is labeled with the "spam" tag
+on:
+  issues:
+    types: [labeled]
+  pull_request_target:
+    types: [labeled]
+
+jobs:
+  close:
+    runs-on: ubuntu-latest
+    if: >-
+      contains(github.event.issue.labels.*.name, 'spam') ||
+      contains(github.event.pull_request.labels.*.name, 'spam')
+    steps:
+      - name: Get issue or PR number
+        run: |
+        # Check whether the workflow is triggered on an issue or PR
+        if [[ "$GITHUB_EVENT_NAME" == "issue" ]]; then
+          echo "NUMBER=${{ github.event.issue.number }}" >> $GITHUB_ENV
+        else
+          echo "NUMBER=${{ github.event.pull_request.number }}" >> $GITHUB_ENV
+        fi
+
+      - name: Close issue or PR
+        run: |
+          echo "Closing $NUMBER."
+          curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -X "DELETE" https://api.github.com/repos/${{ github.repository }}/issues/"$NUMBER"/labels/spam
