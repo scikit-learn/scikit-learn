@@ -183,10 +183,16 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
         Coefficient of the features in the decision function. This attribute
         exists only if the ``estimators_`` defines ``coef_``.
 
+        .. deprecated:: 0.24
+            This attribute is deprecated in 0.24 and will be removed in 0.26.
+
     intercept_ : ndarray of shape (1, 1) or (n_classes, 1)
         If ``y`` is binary, the shape is ``(1, 1)`` else ``(n_classes, 1)``
         This attribute exists only if the ``estimators_`` defines
         ``intercept_``.
+
+        .. deprecated:: 0.24
+            This attribute is deprecated in 0.24 and will be removed in 0.26.
 
     classes_ : array, shape = [`n_classes`]
         Class labels.
