@@ -3,8 +3,9 @@
 # License: BSD 3 clause
 
 from array import array
-from collections.abc import Mapping
+from collections.abc import Mapping, Iterable
 from operator import itemgetter
+from numbers import Number
 
 import numpy as np
 import scipy.sparse as sp
@@ -35,10 +36,15 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
     a feature "f" that can take on the values "ham" and "spam" will become two
     features in the output, one signifying "f=ham", the other "f=spam".
 
+    If a feature value is a sequence or set of strings, this transformer
+    will iterate over the values and will count the occurrences of each string
+    value.
+
     However, note that this transformer will only do a binary one-hot encoding
     when feature values are of type string. If categorical features are
-    represented as numeric values such as int, the DictVectorizer can be
-    followed by :class:`sklearn.preprocessing.OneHotEncoder` to complete
+    represented as numeric values such as int or iterables of strings, the
+    DictVectorizer can be followed by
+    :class:`~sklearn.preprocessing.OneHotEncoder` to complete
     binary one-hot encoding.
 
     Features that do not occur in a sample (mapping) will have a zero value
@@ -78,17 +84,17 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
     >>> X
     array([[2., 0., 1.],
            [0., 1., 3.]])
-    >>> v.inverse_transform(X) == \
-        [{'bar': 2.0, 'foo': 1.0}, {'baz': 1.0, 'foo': 3.0}]
+    >>> v.inverse_transform(X) == [{'bar': 2.0, 'foo': 1.0},
+    ...                            {'baz': 1.0, 'foo': 3.0}]
     True
     >>> v.transform({'foo': 4, 'unseen_feature': 3})
     array([[0., 0., 4.]])
 
-    See also
+    See Also
     --------
-    FeatureHasher : performs vectorization using only a hash function.
-    sklearn.preprocessing.OrdinalEncoder : handles nominal/categorical
-      features encoded as columns of arbitrary data types.
+    FeatureHasher : Performs vectorization using only a hash function.
+    sklearn.preprocessing.OrdinalEncoder : Handles nominal/categorical
+        features encoded as columns of arbitrary data types.
     """
     @_deprecate_positional_args
     def __init__(self, *, dtype=np.float64, separator="=", sparse=True,
@@ -98,6 +104,28 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         self.sparse = sparse
         self.sort = sort
 
+    def _add_iterable_element(self, f, v, feature_names, vocab, *,
+                              fitting=True, transforming=False,
+                              indices=None, values=None):
+        """Add feature names for iterable of strings"""
+        for vv in v:
+            if isinstance(vv, str):
+                feature_name = "%s%s%s" % (f, self.separator, vv)
+                vv = 1
+            else:
+                raise TypeError(f'Unsupported type {type(vv)} in iterable '
+                                'value. Only iterables of string are '
+                                'supported.')
+            if fitting and feature_name not in vocab:
+                vocab[feature_name] = len(feature_names)
+                feature_names.append(feature_name)
+
+            if transforming and feature_name in vocab:
+                indices.append(vocab[feature_name])
+                values.append(self.dtype(vv))
+
+        return
+
     def fit(self, X, y=None):
         """Learn a list of feature name -> indices mappings.
 
@@ -106,6 +134,10 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         X : Mapping or iterable over Mappings
             Dict(s) or Mapping(s) from feature names (arbitrary Python
             objects) to feature values (strings or convertible to dtype).
+
+            .. versionchanged:: 0.24
+               Accepts multiple string values for one categorical feature.
+
         y : (ignored)
 
         Returns
@@ -118,10 +150,22 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         for x in X:
             for f, v in x.items():
                 if isinstance(v, str):
-                    f = "%s%s%s" % (f, self.separator, v)
-                if f not in vocab:
-                    feature_names.append(f)
-                    vocab[f] = len(vocab)
+                    feature_name = "%s%s%s" % (f, self.separator, v)
+                    v = 1
+                elif isinstance(v, Number) or (v is None):
+                    feature_name = f
+                elif isinstance(v, Mapping):
+                    raise TypeError(f'Unsupported value type {type(v)} '
+                                    f'for {f}: {v}.\n'
+                                    'Mapping objects are not supported.')
+                elif isinstance(v, Iterable):
+                    feature_name = None
+                    self._add_iterable_element(f, v, feature_names, vocab)
+
+                if feature_name is not None:
+                    if feature_name not in vocab:
+                        vocab[feature_name] = len(feature_names)
+                        feature_names.append(feature_name)
 
         if self.sort:
             feature_names.sort()
@@ -150,6 +194,8 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
             feature_names = self.feature_names_
             vocab = self.vocabulary_
 
+        transforming = True
+
         # Process everything as sparse regardless of setting
         X = [X] if isinstance(X, Mapping) else X
 
@@ -164,17 +210,29 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         for x in X:
             for f, v in x.items():
                 if isinstance(v, str):
-                    f = "%s%s%s" % (f, self.separator, v)
+                    feature_name = "%s%s%s" % (f, self.separator, v)
                     v = 1
-                if f in vocab:
-                    indices.append(vocab[f])
-                    values.append(dtype(v))
-                else:
-                    if fitting:
-                        feature_names.append(f)
-                        vocab[f] = len(vocab)
-                        indices.append(vocab[f])
-                        values.append(dtype(v))
+                elif isinstance(v, Number) or (v is None):
+                    feature_name = f
+                elif isinstance(v, Mapping):
+                    raise TypeError(f'Unsupported value Type {type(v)} '
+                                    f'for {f}: {v}.\n'
+                                    'Mapping objects are not supported.')
+                elif isinstance(v, Iterable):
+                    feature_name = None
+                    self._add_iterable_element(f, v, feature_names, vocab,
+                                               fitting=fitting,
+                                               transforming=transforming,
+                                               indices=indices, values=values)
+
+                if feature_name is not None:
+                    if fitting and feature_name not in vocab:
+                        vocab[feature_name] = len(feature_names)
+                        feature_names.append(feature_name)
+
+                    if feature_name in vocab:
+                        indices.append(vocab[feature_name])
+                        values.append(self.dtype(v))
 
             indptr.append(len(indices))
 
@@ -218,6 +276,10 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         X : Mapping or iterable over Mappings
             Dict(s) or Mapping(s) from feature names (arbitrary Python
             objects) to feature values (strings or convertible to dtype).
+
+            .. versionchanged:: 0.24
+               Accepts multiple string values for one categorical feature.
+
         y : (ignored)
 
         Returns

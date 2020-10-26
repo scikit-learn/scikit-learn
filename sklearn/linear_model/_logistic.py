@@ -16,7 +16,7 @@ import warnings
 import numpy as np
 from scipy import optimize, sparse
 from scipy.special import expit, logsumexp
-from joblib import Parallel, delayed, effective_n_jobs
+from joblib import Parallel, effective_n_jobs
 
 from ._base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
 from ._sag import sag_solver
@@ -32,6 +32,7 @@ from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.validation import _deprecate_positional_args
 from ..utils.multiclass import check_classification_targets
 from ..utils.fixes import _joblib_parallel_args
+from ..utils.fixes import delayed
 from ..model_selection import check_cv
 from ..metrics import get_scorer
 
@@ -1008,8 +1009,9 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
     return coefs, Cs, np.array(scores), n_iter
 
 
-class LogisticRegression(BaseEstimator, LinearClassifierMixin,
-                         SparseCoefMixin):
+class LogisticRegression(LinearClassifierMixin,
+                         SparseCoefMixin,
+                         BaseEstimator):
     """
     Logistic Regression (aka logit, MaxEnt) classifier.
 
@@ -1386,9 +1388,6 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                                         self.intercept_[:, np.newaxis],
                                         axis=1)
 
-        self.coef_ = list()
-        self.intercept_ = np.zeros(n_classes)
-
         # Hack so that we iterate only once for the multinomial case.
         if multi_class == 'multinomial':
             classes_ = [None]
@@ -1430,6 +1429,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         if self.fit_intercept:
             self.intercept_ = self.coef_[:, -1]
             self.coef_ = self.coef_[:, :-1]
+        else:
+            self.intercept_ = np.zeros(n_classes)
 
         return self
 
@@ -1498,8 +1499,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         return np.log(self.predict_proba(X))
 
 
-class LogisticRegressionCV(LogisticRegression, BaseEstimator,
-                           LinearClassifierMixin):
+class LogisticRegressionCV(LogisticRegression,
+                           LinearClassifierMixin,
+                           BaseEstimator):
     """Logistic Regression CV (aka logit, MaxEnt) classifier.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -1735,7 +1737,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     >>> clf.score(X, y)
     0.98...
 
-    See also
+    See Also
     --------
     LogisticRegression
 
@@ -2084,3 +2086,11 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         scoring = get_scorer(scoring)
 
         return scoring(self, X, y, sample_weight=sample_weight)
+
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_sample_weights_invariance':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }
