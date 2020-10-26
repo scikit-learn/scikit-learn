@@ -437,6 +437,11 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
     def n_classes_(self):
         return len(self.classes_)
 
+    # TODO: Remove in 0.26 when the intercept_ attribute is deprecated
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute coef_ was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 0.26. "
+                "Use the importance_getter parameter instead.")
     @property
     def coef_(self):
         check_is_fitted(self)
@@ -448,6 +453,11 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
             return sp.vstack(coefs)
         return np.vstack(coefs)
 
+    # TODO: Remove in 0.26 when the intercept_ attribute is deprecated
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute intercept_ was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 0.26. "
+                "Use the importance_getter parameter instead.")
     @property
     def intercept_(self):
         check_is_fitted(self)
