@@ -356,7 +356,7 @@ carousel_thumbs = {'sphx_glr_plot_classifier_comparison_001.png': 600}
 # discovered properly by sphinx
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.experimental import enable_iterative_imputer  # noqa
-from sklearn.experimental import enable_successive_halving  # noqa
+from sklearn.experimental import enable_halving_search_cv  # noqa
 
 
 def make_carousel_thumbs(app, exception):
@@ -396,7 +396,7 @@ def filter_search_index(app, exception):
 
 def generate_min_dependency_table(app):
     """Generate min dependency table for docs."""
-    from sklearn._build_utils.min_dependencies import dependent_packages
+    from sklearn._min_dependencies import dependent_packages
 
     # get length of header
     package_header_len = max(len(package)
@@ -440,7 +440,7 @@ def generate_min_dependency_table(app):
 
 def generate_min_dependency_substitutions(app):
     """Generate min dependency substitutions for docs."""
-    from sklearn._build_utils.min_dependencies import dependent_packages
+    from sklearn._min_dependencies import dependent_packages
 
     output = StringIO()
 

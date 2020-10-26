@@ -41,6 +41,8 @@ from ..utils.validation import _deprecate_positional_args
 from ..utils.sparsefuncs import count_nonzero
 from ..exceptions import UndefinedMetricWarning
 
+from ._base import _check_pos_label_consistency
+
 
 def _check_zero_division(zero_division):
     if isinstance(zero_division, str) and zero_division == "warn":
@@ -2446,6 +2448,7 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None,
         Sample weights.
 
     pos_label : int or str, default=None
+<<<<<<< HEAD
         Label of the positive class.
         Defaults to the greater label unless y_true is all 0 or all -1
         in which case pos_label defaults to 1. Ignored if more than 2 distinct values in
@@ -2455,6 +2458,16 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None,
         If not provided, labels will be inferred from y_true. If ``labels``
         is ``None`` and ``y_prob`` has shape (n_samples,) the labels are
         assumed to be binary and are inferred from ``y_true``.
+=======
+        Label of the positive class. `pos_label` will be infered in the
+        following manner:
+
+        * if `y_true` in {-1, 1} or {0, 1}, `pos_label` defaults to 1;
+        * else if `y_true` contains string, an error will be raised and
+          `pos_label` should be explicitely specified;
+        * otherwise, `pos_label` defaults to the greater label,
+          i.e. `np.unique(y_true)[-1]`.
+>>>>>>> upstream/master
 
     Returns
     -------
@@ -2497,16 +2510,16 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None,
     elif len(np.unique(y_true)) > 2:
         lb = lb.fit(y_true)
     else:
-        # if pos_label=None, when y_true is in {-1, 1} or {0, 1},
-        # pos_label is set to 1 (consistent with precision_recall_curve/roc_curve),
-        # otherwise pos_label is set to the greater label
-        # (different from precision_recall_curve/roc_curve,
-        # the purpose is to keep backward compatibility).
-        if pos_label is None:
-            if np.all(y_true == 0) or np.all(y_true == -1):
-                pos_label = 1
+        try:
+            pos_label = _check_pos_label_consistency(pos_label, y_true)
+        except ValueError:
+            classes = np.unique(y_true)
+            if classes.dtype.kind not in ('O', 'U', 'S'):
+                # for backward compatibility, if classes are not string then
+                # `pos_label` will correspond to the greater label
+                pos_label = classes[-1]
             else:
-                pos_label = y_true.max()
+                raise
         y_true = np.array(y_true == pos_label, int)
         lb = lb.fit([0, 1])  # fit on [0, 1] because y_true can be all 0s or all 1s, but we want to assume binary
 
