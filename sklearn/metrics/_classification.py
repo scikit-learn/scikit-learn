@@ -2402,7 +2402,8 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
 
 
 @_deprecate_positional_args
-def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
+def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None,
+                     labels=None):
     """Compute the Brier score loss.
 
     The smaller the Brier score loss, the better, hence the naming with "loss".
@@ -2430,8 +2431,13 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     y_true : array of shape (n_samples,)
         True targets.
 
-    y_prob : array of shape (n_samples,)
-        Probabilities of the positive class.
+    y_prob : array-like of float, shape = (n_samples, n_classes) or (n_samples,)
+        Predicted probabilities, as returned by a classifier's
+        predict_proba method. If ``y_pred.shape = (n_samples,)``
+        the probabilities provided are assumed to be that of the
+        positive class. The labels in ``y_pred`` are assumed to be
+        ordered alphabetically, as done by
+        :class:`preprocessing.LabelBinarizer`, unless pos_label, or labels is specified.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
@@ -2439,7 +2445,13 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     pos_label : int or str, default=None
         Label of the positive class.
         Defaults to the greater label unless y_true is all 0 or all -1
-        in which case pos_label defaults to 1.
+        in which case pos_label defaults to 1. Ignored if more than 2 distinct values in
+        y_true or labels argument is passed.
+
+    labels : array-like, default=None
+        If not provided, labels will be inferred from y_true. If ``labels``
+        is ``None`` and ``y_prob`` has shape (n_samples,) the labels are
+        assumed to be binary and are inferred from ``y_true``.
 
     Returns
     -------
@@ -2467,31 +2479,67 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     .. [1] `Wikipedia entry for the Brier score
             <https://en.wikipedia.org/wiki/Brier_score>`_.
     """
-    y_true = column_or_1d(y_true)
+    y_true = check_array(y_prob, ensure_2d=False)
     y_prob = column_or_1d(y_prob)
-    assert_all_finite(y_true)
-    assert_all_finite(y_prob)
-    check_consistent_length(y_true, y_prob, sample_weight)
+    check_consistent_length(y_prob, y_true, sample_weight)
 
-    labels = np.unique(y_true)
-    if len(labels) > 2:
-        raise ValueError("Only binary classification is supported. "
-                         "Labels in y_true: %s." % labels)
     if y_prob.max() > 1:
         raise ValueError("y_prob contains values greater than 1.")
     if y_prob.min() < 0:
         raise ValueError("y_prob contains values less than 0.")
 
-    # if pos_label=None, when y_true is in {-1, 1} or {0, 1},
-    # pos_label is set to 1 (consistent with precision_recall_curve/roc_curve),
-    # otherwise pos_label is set to the greater label
-    # (different from precision_recall_curve/roc_curve,
-    # the purpose is to keep backward compatibility).
-    if pos_label is None:
-        if (np.array_equal(labels, [0]) or
-                np.array_equal(labels, [-1])):
-            pos_label = 1
+    lb = LabelBinarizer()
+    if labels is not None:
+        lb = lb.fit(labels)
+    elif len(np.unique(y_true)) > 2:
+        lb = lb.fit(y_true)
+    else:
+        # if pos_label=None, when y_true is in {-1, 1} or {0, 1},
+        # pos_label is set to 1 (consistent with precision_recall_curve/roc_curve),
+        # otherwise pos_label is set to the greater label
+        # (different from precision_recall_curve/roc_curve,
+        # the purpose is to keep backward compatibility).
+        if pos_label is None:
+            if np.all(y_true == 0) or np.all(y_true == -1):
+                pos_label = 1
+            else:
+                pos_label = y_true.max()
+        y_true = np.array(y_true == pos_label, int)
+        lb = lb.fit([0, 1])  # fit on [0, 1] because y_true can be all 0s or all 1s, but we want to assume binary
+
+    transformed_labels = lb.transform(y_true)
+    if transformed_labels.shape[1] == 1:
+        transformed_labels = np.append(1-transformed_labels, transformed_labels, axis=1)
+
+    # If y_prob is of single dimension, assume y_true to be binary
+    if y_prob.ndim == 1:
+        y_prob = y_prob[:, np.newaxis]
+    if y_prob.shape[1] == 1:
+        y_prob = np.append(1 - y_prob, y_prob, axis=1)
+
+    # Check if dimensions are consistent.
+    transformed_labels = check_array(transformed_labels)
+    if len(lb.classes_) != y_prob.shape[1]:
+        if labels is None:
+            raise ValueError("y_true and y_prob contain different number of "
+                             "classes {0}, {1}. Please provide the true "
+                             "labels explicitly through the labels argument. "
+                             "Classes found in "
+                             "y_true: {2}".format(transformed_labels.shape[1],
+                                                  y_prob.shape[1],
+                                                  lb.classes_))
         else:
-            pos_label = y_true.max()
-    y_true = np.array(y_true == pos_label, int)
-    return np.average((y_true - y_prob) ** 2, weights=sample_weight)
+            raise ValueError('The number of classes in labels is different '
+                             'from that in y_prob. Classes found in '
+                             'labels: {0}'.format(lb.classes_))
+
+    # calculate
+    brier_loss = np.average(np.sum((transformed_labels - y_prob) ** 2, axis=1), weights=sample_weights)
+
+    # Original definition of Brier Score sums loss over all samples over all classes. sklearn historically uses
+    # the alternate version for the binary case, where it sums only over positive class. Maintain that behaviour
+    # for backwards compatibility
+    if len(lb.classes_) == 2:
+        brier_loss /= 2
+
+    return brier_loss
