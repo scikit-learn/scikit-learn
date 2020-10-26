@@ -153,10 +153,12 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n,
         axis=0 or (n_features,) if axis=1. If float it corresponds to
         having same weights for all samples (or features).
 
-    weights : ndarray, shape (n_samples,) or (n_features,) | None
+    weights : ndarray of shape (n_samples,) or (n_features,), default=None
         if axis is set to 0 shape is (n_samples,) or
         if axis is set to 1 shape is (n_features,).
         If it is set to None, then samples are equally weighted.
+
+        .. versionadded:: 0.24
 
     Returns
     -------
