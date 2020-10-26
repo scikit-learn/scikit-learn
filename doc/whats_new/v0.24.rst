@@ -655,7 +655,7 @@ Changelog
 - |Enhancement| Add `dtype` parameter to
   :class:`preprocessing.KBinsDiscretizer`.
   :pr:`16335` by :user:`Arthur Imbert <Henley13>`.
-  
+
 - |Fix| Raise error on
   :meth:`sklearn.preprocessing.OneHotEncoder.inverse_transform`
   when `handle_unknown='error'` and `drop=None` for samples
