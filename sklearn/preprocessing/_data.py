@@ -633,9 +633,10 @@ class StandardScaler(TransformerMixin, BaseEstimator):
 
     n_samples_seen_ : int or ndarray of shape (n_features,)
         The number of samples processed by the estimator for each feature.
-        If there are not missing samples, the ``n_samples_seen`` will be an
-        integer, otherwise it will be an array. If sample_weights are
-        used it will be an array that sums the weights seen so far.
+        If there are no missing samples, the ``n_samples_seen`` will be an
+        integer, otherwise it will be an array of dtype int. If
+        sample_weights are used it will be a float (if no missing data)
+        or an array of dtype float that sums the weights seen so far.
         Will be reset on new calls to fit, but increments across
         ``partial_fit`` calls.
 
@@ -775,21 +776,15 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         # if n_samples_seen_ is an integer (i.e. no missing values), we need to
         # transform it to a NumPy array of shape (n_features,) required by
         # incr_mean_variance_axis and _incremental_variance_axis
+        dtype = np.int64 if sample_weight is None else X.dtype
         if not hasattr(self, 'n_samples_seen_'):
-            if sample_weight is not None:
-                self.n_samples_seen_ = np.zeros(n_features, dtype=X.dtype)
-            else:
-                self.n_samples_seen_ = np.zeros(n_features, dtype=np.int64)
+            self.n_samples_seen_ = np.zeros(n_features, dtype=dtype)
         elif (hasattr(self, 'n_samples_seen_') and
               np.size(self.n_samples_seen_) == 1):
             self.n_samples_seen_ = np.repeat(
                 self.n_samples_seen_, X.shape[1])
-            if sample_weight is not None:
-                self.n_samples_seen_ = \
-                    self.n_samples_seen_.astype(X.dtype, copy=False)
-            else:
-                self.n_samples_seen_ = \
-                    self.n_samples_seen_.astype(np.int64, copy=False)
+            self.n_samples_seen_ = \
+                self.n_samples_seen_.astype(dtype, copy=False)
 
         if sparse.issparse(X):
             if self.with_mean:
@@ -813,17 +808,20 @@ class StandardScaler(TransformerMixin, BaseEstimator):
                                                 last_var=self.var_,
                                                 last_n=self.n_samples_seen_,
                                                 weights=sample_weight)
+                # We force the mean and variance to float64 for large arrays
+                # See https://github.com/scikit-learn/scikit-learn/pull/12338
+                self.mean_ = self.mean_.astype(np.float64, copy=False)
+                self.var_ = self.var_.astype(np.float64, copy=False)
             else:
                 self.mean_ = None  # as with_mean must be False for sparse
                 self.var_ = None
-                if sample_weight is None:
-                    weights = np.ones(n_samples, dtype=np.int64)
-                else:
-                    weights = sample_weight
+                weights = _check_sample_weight(sample_weight, X)
                 sum_weights_nan = weights @ sparse_constructor(
                     (np.isnan(X.data), X.indices, X.indptr),
                     shape=X.shape)
-                self.n_samples_seen_ += np.sum(weights) - sum_weights_nan
+                self.n_samples_seen_ += (
+                    (np.sum(weights) - sum_weights_nan).astype(dtype)
+                )
         else:
             # First pass
             if not hasattr(self, 'scale_'):

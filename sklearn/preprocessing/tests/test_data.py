@@ -390,8 +390,10 @@ def test_standard_scaler_1d():
     assert scaler.n_samples_seen_ == X.shape[0]
 
 
+@pytest.mark.parametrize("sparse_constructor",
+                         [None, sparse.csc_matrix, sparse.csr_matrix])
 @pytest.mark.parametrize("add_sample_weight", [False, True])
-def test_standard_scaler_dtype(add_sample_weight):
+def test_standard_scaler_dtype(add_sample_weight, sparse_constructor):
     # Ensure scaling does not affect dtype
     rng = np.random.RandomState(0)
     n_samples = 10
@@ -400,10 +402,14 @@ def test_standard_scaler_dtype(add_sample_weight):
         sample_weight = np.ones(n_samples)
     else:
         sample_weight = None
-
+    with_mean = True
     for dtype in [np.float16, np.float32, np.float64]:
         X = rng.randn(n_samples, n_features).astype(dtype)
-        scaler = StandardScaler()
+        if sparse_constructor is not None:
+            X = sparse_constructor(X)
+            with_mean = False
+
+        scaler = StandardScaler(with_mean=with_mean)
         X_scaled = scaler.fit(X, sample_weight=sample_weight).transform(X)
         assert X.dtype == X_scaled.dtype
         assert scaler.mean_.dtype == np.float64
@@ -698,10 +704,10 @@ def test_partial_fit_sparse_input(sample_weight):
 
         X_null = null_transform.partial_fit(
             X, sample_weight=sample_weight).transform(X)
-        assert_array_equal(X_null.data, X.data)
+        assert_array_equal(X_null.toarray(), X.toarray())
         X_orig = null_transform.inverse_transform(X_null)
-        assert_array_equal(X_orig.data, X_null.data)
-        assert_array_equal(X_orig.data, X.data)
+        assert_array_equal(X_orig.toarray(), X_null.toarray())
+        assert_array_equal(X_orig.toarray(), X.toarray())
 
 
 @pytest.mark.parametrize("sample_weight", [True, None])
@@ -875,7 +881,7 @@ def test_scaler_without_centering(sample_weight):
     X_csc = sparse.csc_matrix(X)
 
     if sample_weight:
-        sample_weight = rng.rand(4)
+        sample_weight = rng.rand(X.shape[0])
 
     with pytest.raises(ValueError):
         StandardScaler().fit(X_csr)

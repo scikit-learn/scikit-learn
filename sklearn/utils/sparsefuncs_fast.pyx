@@ -62,11 +62,13 @@ def csr_mean_variance_axis0(X, weights=None, return_sum_weights=False):
     X : CSR sparse matrix, shape (n_samples, n_features)
         Input data.
 
-    weights : float array with shape (n_samples,) or None.
+    weights : ndarray of shape (n_samples,), dtype=floating, default=None
         If it is set to None samples will be equally weighted.
 
-    return_sum_weights : bool
+    return_sum_weights : bool, default=False
         If True, returns the sum of weights seen for each feature.
+
+        .. versionadded:: 0.24
 
     Returns
     -------
@@ -76,7 +78,7 @@ def csr_mean_variance_axis0(X, weights=None, return_sum_weights=False):
     variances : float array with shape (n_features,)
         Feature-wise variances
 
-    sum_weights : float array with shape (n_features,)
+    sum_weights : ndarray of shape (n_features,), dtype=floating
         Returned if return_sum_weights is True.
     """
     if X.dtype not in [np.float32, np.float64]:
@@ -162,11 +164,13 @@ def csc_mean_variance_axis0(X, weights=None, return_sum_weights=False):
     X : CSC sparse matrix, shape (n_samples, n_features)
         Input data.
 
-    weights : float array with shape (n_samples,) or None.
+    weights : ndarray of shape (n_samples,), dtype=floating, default=None
         If it is set to None samples will be equally weighted.
 
-    return_sum_weights : bool
+    return_sum_weights : bool, default=False
         If True, returns the sum of weights seen for each feature.
+
+        .. versionadded:: 0.24
 
     Returns
     -------
@@ -176,7 +180,7 @@ def csc_mean_variance_axis0(X, weights=None, return_sum_weights=False):
     variances : float array with shape (n_features,)
         Feature-wise variances
 
-    sum_weights : float array with shape (n_features,)
+    sum_weights : ndarray of shape (n_features,), dtype=floating
         Returned if return_sum_weights is True.
     """
     if X.dtype not in [np.float32, np.float64]:
