@@ -832,11 +832,13 @@ def test_support_missing_values(MultiClassClassifier):
 # TODO: Remove this test in version 0.26 when
 # the coef_ and intercept_ attributes are removed
 def test_ovr_deprecated_coef_intercept():
-    ovr = OneVsRestClassifier(SVC(degree=2))
+    ovr = OneVsRestClassifier(SVC(kernel="linear"))
+    ovr = ovr.fit(iris.data, iris.target)
 
-    msg = ("Attribute {0} was deprecated in version "
-           "0.24 and will be removed in 0.26. Use the "
-           "importance_getter parameter instead.")
+    msg = ("Attribute {0} was deprecated in version 0.24 "
+           "and will be removed in 0.26. If you observe "
+           "this warning while using RFE or SelectFromModel, "
+           "use the importance_getter parameter instead.")
 
     for att in ["coef_", "intercept_"]:
         with pytest.warns(FutureWarning, match=msg.format(att)):
