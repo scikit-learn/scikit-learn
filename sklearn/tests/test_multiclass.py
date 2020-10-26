@@ -439,7 +439,8 @@ def test_ovr_pipeline():
     assert_array_equal(ovr.predict(iris.data), ovr_pipe.predict(iris.data))
 
 
-# TODO: Remove in 0.26 when the coef_ attribute is deprecated
+# TODO: Remove this test in version 0.26
+# when the coef_ attribute is removed
 @ignore_warnings(category=FutureWarning)
 def test_ovr_coef_():
     for base_classifier in [SVC(kernel='linear', random_state=0),
@@ -458,7 +459,8 @@ def test_ovr_coef_():
                          sp.issparse(ovr.coef_))
 
 
-# TODO: Remove in 0.26 when the coef_ attribute is deprecated
+# TODO: Remove this test in version 0.26
+# when the coef_ attribute is removed
 @ignore_warnings(category=FutureWarning)
 def test_ovr_coef_exceptions():
     # Not fitted exception!
@@ -827,8 +829,8 @@ def test_support_missing_values(MultiClassClassifier):
     MultiClassClassifier(lr).fit(X, y).score(X, y)
 
 
-# TODO: Remove in version 0.26 when the coef_
-# and intercept_ attributes are deprecated
+# TODO: Remove this test in version 0.26 when
+# the coef_ and intercept_ attributes are removed
 def test_ovr_deprecated_coef_intercept():
     ovr = OneVsRestClassifier(SVC(degree=2))
 
@@ -838,4 +840,4 @@ def test_ovr_deprecated_coef_intercept():
 
     for att in ["coef_", "intercept_"]:
         with pytest.warns(FutureWarning, match=msg.format(att)):
-            hasattr(ovr, att)
+            getattr(ovr, att)

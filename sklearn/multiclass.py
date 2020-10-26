@@ -184,7 +184,11 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
         exists only if the ``estimators_`` defines ``coef_``.
 
         .. deprecated:: 0.24
-            This attribute is deprecated in 0.24 and will be removed in 0.26.
+            This attribute is deprecated in 0.24 and will
+            be removed in 0.26. If you use this attribute
+            in :class:`~sklearn.feature_selection.RFE` or
+            :class:`~sklearn.feature_selection.SelectFromModel`,
+            change by the importance_getter parameter instead.
 
     intercept_ : ndarray of shape (1, 1) or (n_classes, 1)
         If ``y`` is binary, the shape is ``(1, 1)`` else ``(n_classes, 1)``
@@ -192,7 +196,11 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
         ``intercept_``.
 
         .. deprecated:: 0.24
-            This attribute is deprecated in 0.24 and will be removed in 0.26.
+            This attribute is deprecated in 0.24 and will
+            be removed in 0.26. If you use this attribute
+            in :class:`~sklearn.feature_selection.RFE` or
+            :class:`~sklearn.feature_selection.SelectFromModel`,
+            change by the importance_getter parameter instead.
 
     classes_ : array, shape = [`n_classes`]
         Class labels.
@@ -447,7 +455,9 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
     # mypy error: Decorated property not supported
     @deprecated("Attribute coef_ was deprecated in "  # type: ignore
                 "version 0.24 and will be removed in 0.26. "
-                "Use the importance_getter parameter instead.")
+                "If you observe this warning while using RFE "
+                "or SelectFromModel, use the importance_getter "
+                "parameter instead.")
     @property
     def coef_(self):
         check_is_fitted(self)
@@ -463,7 +473,9 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
     # mypy error: Decorated property not supported
     @deprecated("Attribute intercept_ was deprecated in "  # type: ignore
                 "version 0.24 and will be removed in 0.26. "
-                "Use the importance_getter parameter instead.")
+                "If you observe this warning while using RFE "
+                "or SelectFromModel, use the importance_getter "
+                "parameter instead.")
     @property
     def intercept_(self):
         check_is_fitted(self)
