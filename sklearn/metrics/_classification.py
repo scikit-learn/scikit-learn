@@ -2537,7 +2537,7 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None,
                              'labels: {0}'.format(lb.classes_))
 
     # calculate
-    brier_loss = np.average(np.sum((transformed_labels - y_prob) ** 2, axis=1), weights=sample_weights)
+    brier_loss = np.average(np.sum((transformed_labels - y_prob) ** 2, axis=1), weights=sample_weight)
 
     # Original definition of Brier Score sums loss over all samples over all classes. sklearn historically uses
     # the alternate version for the binary case, where it sums only over positive class. Maintain that behaviour
