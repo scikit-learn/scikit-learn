@@ -450,6 +450,25 @@ def test_plot_tree_gini(pyplot):
     assert nodes[2].get_text() == "gini = 0.0\nsamples = 3\nvalue = [0, 3]"
 
 
+def test_plot_tree_gain_ratio(pyplot):
+    # mostly smoke tests
+    # Check correctness of export_graphviz for criterion = gini
+    clf = DecisionTreeClassifier(max_depth=3,
+                                 min_samples_split=2,
+                                 criterion="gain_ratio",
+                                 random_state=2)
+    clf.fit(X, y)
+
+    # Test export code
+    feature_names = ['first feat', 'sepal_width']
+    nodes = plot_tree(clf, feature_names=feature_names)
+    assert len(nodes) == 3
+    assert nodes[0].get_text() == ("first feat <= 0.0\ngini = 1.0\n"
+                                   "samples = 6\nvalue = [3, 3]")
+    assert nodes[1].get_text() == "gini = 0.0\nsamples = 3\nvalue = [3, 0]"
+    assert nodes[2].get_text() == "gini = 0.0\nsamples = 3\nvalue = [0, 3]"
+
+
 # FIXME: to be removed in 0.25
 def test_plot_tree_rotate_deprecation(pyplot):
     tree = DecisionTreeClassifier()
