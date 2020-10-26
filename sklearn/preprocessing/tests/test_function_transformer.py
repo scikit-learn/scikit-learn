@@ -4,7 +4,7 @@ from scipy import sparse
 
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.utils._testing import (assert_array_equal,
-                                   assert_allclose_dense_sparse)
+                                    assert_allclose_dense_sparse)
 from sklearn.utils._testing import assert_warns_message, assert_no_warnings
 
 

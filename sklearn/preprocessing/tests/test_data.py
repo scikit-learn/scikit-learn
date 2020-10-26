@@ -1,9 +1,3 @@
-# Authors:
-#
-#          Giorgio Patrini
-#
-# License: BSD 3 clause
-
 import warnings
 import itertools
 
