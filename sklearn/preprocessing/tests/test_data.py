@@ -1,3 +1,9 @@
+# Authors:
+#
+#          Giorgio Patrini
+#
+# License: BSD 3 clause
+
 import warnings
 import itertools
 
@@ -47,9 +53,9 @@ from sklearn.preprocessing._discretization import KBinsDiscretizer
 from sklearn.exceptions import NotFittedError
 
 from sklearn.base import clone
+from sklearn.pipeline import Pipeline
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import cross_val_predict
-from sklearn.pipeline import Pipeline
 from sklearn.svm import SVR
 from sklearn.utils import shuffle
 
