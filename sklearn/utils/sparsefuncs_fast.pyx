@@ -65,6 +65,8 @@ def csr_mean_variance_axis0(X, weights=None, return_sum_weights=False):
     weights : ndarray of shape (n_samples,), dtype=floating, default=None
         If it is set to None samples will be equally weighted.
 
+        .. versionadded:: 0.24
+
     return_sum_weights : bool, default=False
         If True, returns the sum of weights seen for each feature.
 
@@ -166,6 +168,8 @@ def csc_mean_variance_axis0(X, weights=None, return_sum_weights=False):
 
     weights : ndarray of shape (n_samples,), dtype=floating, default=None
         If it is set to None samples will be equally weighted.
+
+        .. versionadded:: 0.24
 
     return_sum_weights : bool, default=False
         If True, returns the sum of weights seen for each feature.
