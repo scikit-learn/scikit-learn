@@ -577,7 +577,7 @@ Changelog
 - |Fix| :class:`neighbors.BinaryTree`
   will raise a `ValueError` when fitting on data array having points with
   different dimensions.
-  :pr:`` by :user:`Chiara Marmo <cmarmo>`.
+  :pr:`18691` by :user:`Chiara Marmo <cmarmo>`.
 
 - |Fix| :class:`neighbors.NearestCentroid` with a numerical `shrink_threshold`
   will raise a `ValueError` when fitting on data with all constant features.

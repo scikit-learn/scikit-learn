@@ -68,7 +68,7 @@ def test_query_haversine():
 
 
 def test_array_object_type():
-    X = [(1,2,3), (2,5), (5,5,1,2)]
+    X = [(1, 2, 3), (2, 5), (5, 5, 1, 2)]
     Y = np.array(X)
     with pytest.raises(
         ValueError,
