@@ -788,7 +788,11 @@ def test_encoders_does_not_support_none_values(Encoder):
 @pytest.mark.parametrize('category_dtype', ['O', 'U'])
 @pytest.mark.parametrize('array_type', ['list', 'array', 'dataframe'])
 def test_encoders_unicode_categories(input_dtype, category_dtype, array_type):
-    # encoders are correct for both string and object dtypes
+    """Check that encoding work with string and object dtypes.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/15616
+    https://github.com/scikit-learn/scikit-learn/issues/15726
+    """
 
     X = np.array([['b'], ['a']], dtype=input_dtype)
     categories = [np.array(['b', 'a'], dtype=category_dtype)]
