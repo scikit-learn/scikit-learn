@@ -69,7 +69,8 @@ def test_query_haversine():
 
 def test_array_object_type():
     X = [(1, 2, 3), (2, 5), (5, 5, 1, 2)]
-    Y = np.array(X)
+    # dtype parameter enforced by NEP 34
+    Y = np.array(X, dtype=object)
     with pytest.raises(
         ValueError,
         match="setting an array element with a sequence"
