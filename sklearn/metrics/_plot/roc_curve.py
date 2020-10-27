@@ -298,7 +298,8 @@ def plot_roc_curve(estimator, X, y, *, sample_weight=None,
         viz = _get_roc_curve_display(
             y, y_pred, pos_label=pos_label,
             sample_weight=sample_weight,
-            drop_intermediate=drop_intermediate
+            drop_intermediate=drop_intermediate,
+            name=name
         )
 
         return viz.plot(ax=ax, name=name, **kwargs)
@@ -307,13 +308,17 @@ def plot_roc_curve(estimator, X, y, *, sample_weight=None,
         if y.ndim == 1:
             y = label_binarize(y, classes=np.unique(y))
 
+        if ax is None:
+            fig, ax = plt.subplots()
+
         vizs = []
 
         for i in range(n_classes):
             viz = _get_roc_curve_display(
                 y[:, i], y_pred[:, i],
                 sample_weight=sample_weight,
-                drop_intermediate=drop_intermediate
+                drop_intermediate=drop_intermediate,
+                name=name
             )
 
             axes = ax if isinstance(ax, plt.Axes) else ax[i]

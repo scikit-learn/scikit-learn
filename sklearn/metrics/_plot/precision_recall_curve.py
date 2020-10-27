@@ -191,7 +191,8 @@ def _get_precision_recall_display(y, y_pred,
 
     return PrecisionRecallDisplay(
         precision=precision, recall=recall,
-        average_precision=average_precision, estimator_name=name
+        average_precision=average_precision, estimator_name=name,
+        pos_label=pos_label
     )
 
 
@@ -283,7 +284,8 @@ def plot_precision_recall_curve(estimator, X, y, *,
 
         viz = _get_precision_recall_display(
             y, y_pred, pos_label=pos_label,
-            sample_weight=sample_weight
+            sample_weight=sample_weight,
+            name=name
         )
 
         return viz.plot(ax=ax, name=name, **kwargs)
@@ -301,6 +303,7 @@ def plot_precision_recall_curve(estimator, X, y, *,
             viz = _get_precision_recall_display(
                 y[:, i], y_pred[:, i],
                 sample_weight=sample_weight,
+                name=name
             )
 
             axes = ax if isinstance(ax, plt.Axes) else ax[i]

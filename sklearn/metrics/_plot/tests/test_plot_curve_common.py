@@ -25,7 +25,7 @@ def data_binary(data):
     return X[y < 2], y[y < 2]
 
 
-@pytest.mark.parametrize("plot_func", [plot_det_curve, plot_roc_curve])
+@pytest.mark.parametrize("plot_func", [plot_det_curve])
 def test_plot_curve_error_non_binary(pyplot, data, plot_func):
     X, y = data
     clf = DecisionTreeClassifier()
