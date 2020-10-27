@@ -662,6 +662,10 @@ Changelog
   encoded as all zeros. :pr:`14982` by
   :user:`Kevin Winata <kwinata>`.
 
+- |Fix| Fix incorrect encoding when using unicode string dtypes in
+  :class:`preprocessing.OneHotEncoder` and
+  :class:`preprocessing.OrdinalEncoder`. :pr:`15763` by `Thomas Fan`_.
+
 :mod:`sklearn.svm`
 ..................
 
