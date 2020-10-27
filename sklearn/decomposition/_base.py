@@ -10,11 +10,26 @@
 
 import numpy as np
 from scipy import linalg
+from scipy.sparse import spmatrix, issparse
+from scipy.sparse.linalg import LinearOperator
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils.validation import check_is_fitted
 from abc import ABCMeta, abstractmethod
 
+
+def _implicitly_center(X: spmatrix, mu: np.ndarray) -> LinearOperator:
+    mu = mu[None, :]
+    XH = X.T.conj(copy=False)
+    _ones = np.ones(X.shape[0])[None, :].dot
+    return LinearOperator(
+        matvec=lambda x: X.dot(x) - mu.dot(x),
+        dtype=X.dtype,
+        matmat=lambda x: X.dot(x) - mu.dot(x),
+        shape=X.shape,
+        rmatvec=lambda x: XH.dot(x) - mu.T.dot(_ones(x)),
+        rmatmat=lambda x: XH.dot(x) - mu.T.dot(_ones(x)),
+    )
 
 class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for PCA methods.
@@ -123,10 +138,18 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         """
         check_is_fitted(self)
 
-        X = self._validate_data(X, dtype=[np.float64, np.float32], reset=False)
+        X = self._validate_data(
+            X,
+            accept_sparse=("csr", "csc"),
+            dtype=[np.float64, np.float32],
+            reset=False
+        )
         if self.mean_ is not None:
-            X = X - self.mean_
-        X_transformed = np.dot(X, self.components_.T)
+            if issparse(X):
+                X = _implicitly_center(X, self.mean_)
+            else:
+                X = X - self.mean_
+        X_transformed = X @ self.components_.T
         if self.whiten:
             X_transformed /= np.sqrt(self.explained_variance_)
         return X_transformed

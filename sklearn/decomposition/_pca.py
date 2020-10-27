@@ -16,10 +16,10 @@ import numbers
 import numpy as np
 from scipy import linalg
 from scipy.special import gammaln
-from scipy.sparse import issparse, spmatrix
-from scipy.sparse.linalg import svds, LinearOperator
+from scipy.sparse import issparse
+from scipy.sparse.linalg import svds
 
-from ._base import _BasePCA
+from ._base import _BasePCA, _implicitly_center
 from ..utils import check_random_state
 from ..utils.sparsefuncs import mean_variance_axis
 from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
@@ -107,20 +107,6 @@ def _infer_dimension(spectrum, n_samples):
     for rank in range(1, spectrum.shape[0]):
         ll[rank] = _assess_dimension(spectrum, rank, n_samples)
     return ll.argmax()
-
-
-def _implicitly_center(X: spmatrix, mu: np.ndarray) -> LinearOperator:
-    mu = mu[None, :]
-    XH = X.T.conj(copy=False)
-    _ones = np.ones(X.shape[0])[None, :].dot
-    return LinearOperator(
-        matvec=lambda x: X.dot(x) - mu.dot(x),
-        dtype=X.dtype,
-        matmat=lambda x: X.dot(x) - mu.dot(x),
-        shape=X.shape,
-        rmatvec=lambda x: XH.dot(x) - mu.T.dot(_ones(x)),
-        rmatmat=lambda x: XH.dot(x) - mu.T.dot(_ones(x)),
-    )
 
 
 class PCA(_BasePCA):
