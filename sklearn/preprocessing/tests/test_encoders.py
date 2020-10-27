@@ -791,9 +791,8 @@ def test_encoders_unicode_categories(input_dtype, category_dtype, array_type):
     # encoders are correct for both string and object dtypes
 
     X = np.array([['b'], ['a']], dtype=input_dtype)
-    ohe = OneHotEncoder(categories=[np.array(['b', 'a'],
-                                             dtype=category_dtype)],
-                        sparse=False).fit(X)
+    categories = [np.array(['b', 'a'], dtype=category_dtype)]
+    ohe = OneHotEncoder(categories=categories, sparse=False).fit(X)
 
     X_test = _convert_container([['a'], ['a'], ['b'], ['a']], array_type)
     X_trans = ohe.transform(X_test)
