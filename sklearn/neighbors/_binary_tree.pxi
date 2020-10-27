@@ -1058,7 +1058,7 @@ cdef class BinaryTree:
         n_samples = data.shape[0]
         n_features = data.shape[1]
 
-        self.data_arr = np.asarray(data, dtype=DTYPE, order='C')
+        self.data_arr = check_array(data, dtype=DTYPE, order='C')
         self.leaf_size = leaf_size
         self.dist_metric = DistanceMetric.get_metric(metric, **kwargs)
         self.euclidean = (self.dist_metric.__class__.__name__

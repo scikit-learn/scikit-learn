@@ -65,3 +65,13 @@ def test_query_haversine():
 
     assert_array_almost_equal(dist1, dist2)
     assert_array_almost_equal(ind1, ind2)
+
+
+def test_array_object_type():
+    X = [(1,2,3), (2,5), (5,5,1,2)]
+    Y = np.array(X)
+    with pytest.raises(
+        ValueError,
+        match="setting an array element with a sequence"
+    ):
+        BallTree(Y)
