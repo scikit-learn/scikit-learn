@@ -1933,6 +1933,20 @@ def kmeans_plusplus(X, n_clusters, *, x_squared_norms=None,
     to speed up convergence. see: Arthur, D. and Vassilvitskii, S.
     "k-means++: the advantages of careful seeding". ACM-SIAM symposium
     on Discrete algorithms. 2007
+
+    Examples
+    --------
+
+    >>> from sklearn.cluster import kmeans_plusplus
+    >>> import numpy as np
+    >>> X = np.array([[1, 2], [1, 4], [1, 0],
+    ...               [10, 2], [10, 4], [10, 0]])
+    >>> centers, indices = kmeans_plusplus(X, n_clusters=2, random_state=0)
+    >>> centers
+    array([[10,  4],
+           [ 1,  0]])
+    >>> indices
+    array([4, 2])
     """
 
     # Check data
@@ -1947,7 +1961,9 @@ def kmeans_plusplus(X, n_clusters, *, x_squared_norms=None,
     if x_squared_norms is None:
         x_squared_norms = row_norms(X, squared=True)
     else:
-        x_squared_norms = check_array(x_squared_norms, dtype=X.dtype)
+        x_squared_norms = check_array(x_squared_norms,
+                                      dtype=X.dtype,
+                                      ensure_2d=False)
 
     if x_squared_norms.shape[0] != X.shape[0]:
         raise ValueError(

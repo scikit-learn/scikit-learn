@@ -1046,8 +1046,10 @@ def test_kmeans_plusplus_wrong_params(param, match):
 
 
 @pytest.mark.parametrize("data", [X, X_csr])
-def test_kmeans_plusplus_output(data):
+@pytest.mark.parametrize("dtype", [np.float64, np.float32])
+def test_kmeans_plusplus_output(data, dtype):
     # Check for the correct number of seeds and all positive values
+    data = data.astype(dtype)
     centers, indices = kmeans_plusplus(data, n_clusters)
 
     # Check there are the correct number of indices and that all indices are
@@ -1062,6 +1064,15 @@ def test_kmeans_plusplus_output(data):
     assert (centers.min(axis=0) >= X.min(axis=0)).all()
 
     # Check that indices correspond to reported centers
+    assert_allclose(X[indices], centers)
+
+
+@pytest.mark.parametrize("x_squared_norms", [row_norms(X, squared=True), None])
+def test_kmeans_plusplus_norms(x_squared_norms):
+    # Check that defining x_squared_norms returns the same as default=None.
+    centers, indices = kmeans_plusplus(X, n_clusters,
+                                       x_squared_norms=x_squared_norms)
+
     assert_allclose(X[indices], centers)
 
 
