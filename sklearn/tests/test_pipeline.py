@@ -1,7 +1,6 @@
 """
 Test the pipeline module.
 """
-from distutils.version import LooseVersion
 from tempfile import mkdtemp
 import shutil
 import time
@@ -20,6 +19,7 @@ from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_no_warnings
+from sklearn.utils.fixes import parse_version
 
 from sklearn.base import clone, BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
@@ -34,6 +34,9 @@ from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.impute import SimpleImputer
 
 iris = load_iris()
 
@@ -517,7 +520,8 @@ def test_make_union_kwargs():
     # invalid keyword parameters should raise an error message
     assert_raise_message(
         TypeError,
-        'Unknown keyword arguments: "transformer_weights"',
+        "make_union() got an unexpected "
+        "keyword argument 'transformer_weights'",
         make_union, pca, mock, transformer_weights={'pca': 10, 'Transf': 1}
     )
 
@@ -554,15 +558,32 @@ def test_pipeline_fit_transform():
     assert_array_almost_equal(X_trans, X_trans2)
 
 
-def test_pipeline_slice():
-    pipe = Pipeline([('transf1', Transf()),
-                     ('transf2', Transf()),
-                     ('clf', FitParamT())])
-    pipe2 = pipe[:-1]
-    assert isinstance(pipe2, Pipeline)
-    assert pipe2.steps == pipe.steps[:-1]
-    assert 2 == len(pipe2.named_steps)
-    assert_raises(ValueError, lambda: pipe[::-1])
+@pytest.mark.parametrize("start, end", [(0, 1), (0, 2), (1, 2), (1, 3),
+                                        (None, 1), (1, None), (None, None)])
+def test_pipeline_slice(start, end):
+    pipe = Pipeline(
+        [("transf1", Transf()), ("transf2", Transf()), ("clf", FitParamT())],
+        memory="123",
+        verbose=True,
+    )
+    pipe_slice = pipe[start:end]
+    # Test class
+    assert isinstance(pipe_slice, Pipeline)
+    # Test steps
+    assert pipe_slice.steps == pipe.steps[start:end]
+    # Test named_steps attribute
+    assert list(pipe_slice.named_steps.items()) == list(
+        pipe.named_steps.items())[start:end]
+    # Test the rest of the parameters
+    pipe_params = pipe.get_params(deep=False)
+    pipe_slice_params = pipe_slice.get_params(deep=False)
+    del pipe_params["steps"]
+    del pipe_slice_params["steps"]
+    assert pipe_params == pipe_slice_params
+    # Test exception
+    msg = "Pipeline slicing only supports a step of 1"
+    with pytest.raises(ValueError, match=msg):
+        pipe[start:end:-1]
 
 
 def test_pipeline_index():
@@ -755,12 +776,6 @@ def test_make_pipeline():
     assert pipe.steps[1][0] == "transf-2"
     assert pipe.steps[2][0] == "fitparamt"
 
-    assert_raise_message(
-        TypeError,
-        'Unknown keyword arguments: "random_parameter"',
-        make_pipeline, t1, t2, random_parameter='rnd'
-    )
-
 
 def test_feature_union_weights():
     # test feature union with transformer weights
@@ -898,9 +913,7 @@ def test_set_feature_union_steps():
     assert ['mock__x5'] == ft.get_feature_names()
 
 
-# TODO: Remove parametrization in 0.24 when None is removed for FeatureUnion
-@pytest.mark.parametrize('drop', ['drop', None])
-def test_set_feature_union_step_drop(drop):
+def test_set_feature_union_step_drop():
     mult2 = Mult(2)
     mult2.get_feature_names = lambda: ['x2']
     mult3 = Mult(3)
@@ -913,32 +926,32 @@ def test_set_feature_union_step_drop(drop):
     assert ['m2__x2', 'm3__x3'] == ft.get_feature_names()
 
     with pytest.warns(None) as record:
-        ft.set_params(m2=drop)
+        ft.set_params(m2='drop')
         assert_array_equal([[3]], ft.fit(X).transform(X))
         assert_array_equal([[3]], ft.fit_transform(X))
     assert ['m3__x3'] == ft.get_feature_names()
-    assert record if drop is None else not record
+    assert not record
 
     with pytest.warns(None) as record:
-        ft.set_params(m3=drop)
+        ft.set_params(m3='drop')
         assert_array_equal([[]], ft.fit(X).transform(X))
         assert_array_equal([[]], ft.fit_transform(X))
     assert [] == ft.get_feature_names()
-    assert record if drop is None else not record
+    assert not record
 
     with pytest.warns(None) as record:
         # check we can change back
         ft.set_params(m3=mult3)
         assert_array_equal([[3]], ft.fit(X).transform(X))
-    assert record if drop is None else not record
+    assert not record
 
     with pytest.warns(None) as record:
         # Check 'drop' step at construction time
-        ft = FeatureUnion([('m2', drop), ('m3', mult3)])
+        ft = FeatureUnion([('m2', 'drop'), ('m3', mult3)])
         assert_array_equal([[3]], ft.fit(X).transform(X))
         assert_array_equal([[3]], ft.fit_transform(X))
     assert ['m3__x3'] == ft.get_feature_names()
-    assert record if drop is None else not record
+    assert not record
 
 
 def test_step_name_validation():
@@ -1025,7 +1038,7 @@ def test_pipeline_memory():
     y = iris.target
     cachedir = mkdtemp()
     try:
-        if LooseVersion(joblib.__version__) < LooseVersion('0.12'):
+        if parse_version(joblib.__version__) < parse_version('0.12'):
             # Deal with change of API in joblib
             memory = joblib.Memory(cachedir=cachedir, verbose=10)
         else:
@@ -1087,7 +1100,7 @@ def test_pipeline_memory():
 
 def test_make_pipeline_memory():
     cachedir = mkdtemp()
-    if LooseVersion(joblib.__version__) < LooseVersion('0.12'):
+    if parse_version(joblib.__version__) < parse_version('0.12'):
         # Deal with change of API in joblib
         memory = joblib.Memory(cachedir=cachedir, verbose=10)
     else:
@@ -1161,6 +1174,49 @@ def test_verbose(est, method, pattern, capsys):
     assert re.match(pattern, capsys.readouterr().out)
 
 
+def test_n_features_in_pipeline():
+    # make sure pipelines delegate n_features_in to the first step
+
+    X = [[1, 2], [3, 4], [5, 6]]
+    y = [0, 1, 2]
+
+    ss = StandardScaler()
+    gbdt = HistGradientBoostingClassifier()
+    pipe = make_pipeline(ss, gbdt)
+    assert not hasattr(pipe, 'n_features_in_')
+    pipe.fit(X, y)
+    assert pipe.n_features_in_ == ss.n_features_in_ == 2
+
+    # if the first step has the n_features_in attribute then the pipeline also
+    # has it, even though it isn't fitted.
+    ss = StandardScaler()
+    gbdt = HistGradientBoostingClassifier()
+    pipe = make_pipeline(ss, gbdt)
+    ss.fit(X, y)
+    assert pipe.n_features_in_ == ss.n_features_in_ == 2
+    assert not hasattr(gbdt, 'n_features_in_')
+
+
+def test_n_features_in_feature_union():
+    # make sure FeatureUnion delegates n_features_in to the first transformer
+
+    X = [[1, 2], [3, 4], [5, 6]]
+    y = [0, 1, 2]
+
+    ss = StandardScaler()
+    fu = make_union(ss)
+    assert not hasattr(fu, 'n_features_in_')
+    fu.fit(X, y)
+    assert fu.n_features_in_ == ss.n_features_in_ == 2
+
+    # if the first step has the n_features_in attribute then the feature_union
+    # also has it, even though it isn't fitted.
+    ss = StandardScaler()
+    fu = make_union(ss)
+    ss.fit(X, y)
+    assert fu.n_features_in_ == ss.n_features_in_ == 2
+
+
 def test_feature_union_fit_params():
     # Regression test for issue: #15117
     class Dummy(TransformerMixin, BaseEstimator):
@@ -1184,14 +1240,27 @@ def test_feature_union_fit_params():
     t.fit_transform(X, y, a=0)
 
 
-# TODO: Remove in 0.24 when None is removed
-def test_feature_union_warns_with_none():
-    msg = (r"Using None as a transformer is deprecated in version 0\.22 and "
-           r"will be removed in version 0\.24\. Please use 'drop' instead\.")
-    with pytest.warns(FutureWarning, match=msg):
-        union = FeatureUnion([('multi1', None), ('multi2', Mult())])
+def test_pipeline_missing_values_leniency():
+    # check that pipeline let the missing values validation to
+    # the underlying transformers and predictors.
+    X, y = iris.data, iris.target
+    mask = np.random.choice([1, 0], X.shape, p=[.1, .9]).astype(bool)
+    X[mask] = np.nan
+    pipe = make_pipeline(SimpleImputer(), LogisticRegression())
+    assert pipe.fit(X, y).score(X, y) > 0.4
 
-    X = [[1, 2, 3], [4, 5, 6]]
 
-    with pytest.warns(FutureWarning, match=msg):
-        union.fit_transform(X)
+def test_feature_union_warns_unknown_transformer_weight():
+    # Warn user when transformer_weights containers a key not present in
+    # transformer_list
+    X = [[1, 2], [3, 4], [5, 6]]
+    y = [0, 1, 2]
+
+    transformer_list = [('transf', Transf())]
+    # Transformer weights dictionary with incorrect name
+    weights = {'transformer': 1}
+    expected_msg = ('Attempting to weight transformer "transformer", '
+                    'but it is not present in transformer_list.')
+    union = FeatureUnion(transformer_list, transformer_weights=weights)
+    with pytest.raises(ValueError, match=expected_msg):
+        union.fit(X, y)

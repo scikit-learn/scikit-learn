@@ -15,6 +15,8 @@ from sklearn.ensemble import (RandomForestClassifier,
                               HistGradientBoostingClassifier)
 from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.base import BaseEstimator
+from sklearn.pipeline import make_pipeline
+from sklearn.decomposition import PCA
 
 
 class NaNTag(BaseEstimator):
@@ -37,8 +39,6 @@ data, y = iris.data, iris.target
 rng = np.random.RandomState(0)
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_invalid_input():
     clf = SGDClassifier(alpha=0.1, max_iter=10, shuffle=True,
                         random_state=None, tol=None)
@@ -118,7 +118,7 @@ def test_max_features():
 
     for n_features in range(1, X_new1.shape[1] + 1):
         transformer2 = SelectFromModel(estimator=Lasso(alpha=0.025,
-                                       random_state=42),
+                                                       random_state=42),
                                        max_features=n_features,
                                        threshold=-np.inf)
         X_new2 = transformer2.fit_transform(X, y)
@@ -220,7 +220,7 @@ def test_coef_default_threshold():
 
     # For the Lasso and related models, the threshold defaults to 1e-5
     transformer = SelectFromModel(estimator=Lasso(alpha=0.1,
-                                  random_state=42))
+                                                  random_state=42))
     transformer.fit(X, y)
     X_new = transformer.transform(X)
     mask = np.abs(transformer.estimator_.coef_) > 1e-5
@@ -252,8 +252,6 @@ def test_2d_coef():
             assert_array_almost_equal(X_new, X[:, feature_mask])
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_partial_fit():
     est = PassiveAggressiveClassifier(random_state=0, shuffle=False,
                                       max_iter=5, tol=None)
@@ -284,8 +282,6 @@ def test_calling_fit_reinitializes():
     assert transformer.estimator_.C == 100
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_prefit():
     # Test all possible combinations of the prefit parameter.
 
@@ -325,8 +321,6 @@ def test_threshold_string():
     assert_array_almost_equal(X_transform, data[:, mask])
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_threshold_without_refitting():
     # Test that the threshold can be set without refitting the model.
     clf = SGDClassifier(alpha=0.1, max_iter=10, shuffle=True,
@@ -375,3 +369,21 @@ def test_allow_nan_tag_comes_from_estimator():
     no_nan_est = NoNaNTag()
     model = SelectFromModel(estimator=no_nan_est)
     assert model._get_tags()['allow_nan'] is False
+
+
+def _pca_importances(pca_estimator):
+    return np.abs(pca_estimator.explained_variance_)
+
+
+@pytest.mark.parametrize(
+    "estimator, importance_getter",
+    [(make_pipeline(PCA(random_state=0), LogisticRegression()),
+      'named_steps.logisticregression.coef_'),
+     (PCA(random_state=0), _pca_importances)]
+)
+def test_importance_getter(estimator, importance_getter):
+    selector = SelectFromModel(
+        estimator, threshold="mean", importance_getter=importance_getter
+    )
+    selector.fit(data, y)
+    assert selector.transform(data).shape[1] == 1

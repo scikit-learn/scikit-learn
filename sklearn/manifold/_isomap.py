@@ -6,8 +6,8 @@
 import numpy as np
 from ..base import BaseEstimator, TransformerMixin
 from ..neighbors import NearestNeighbors, kneighbors_graph
-from ..utils.deprecation import deprecated
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _deprecate_positional_args
 from ..utils.graph import graph_shortest_path
 from ..decomposition import KernelPCA
 from ..preprocessing import KernelCenterer
@@ -22,13 +22,13 @@ class Isomap(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    n_neighbors : integer
+    n_neighbors : int, default=5
         number of neighbors to consider for each point.
 
-    n_components : integer
+    n_components : int, default=2
         number of coordinates for the manifold
 
-    eigen_solver : ['auto'|'arpack'|'dense']
+    eigen_solver : {'auto', 'arpack', 'dense'}, default='auto'
         'auto' : Attempt to choose the most efficient solver
         for the given problem.
 
@@ -38,15 +38,15 @@ class Isomap(TransformerMixin, BaseEstimator):
         'dense' : Use a direct solver (i.e. LAPACK)
         for the eigenvalue decomposition.
 
-    tol : float
+    tol : float, default=0
         Convergence tolerance passed to arpack or lobpcg.
         not used if eigen_solver == 'dense'.
 
-    max_iter : integer
+    max_iter : int, default=None
         Maximum number of iterations for the arpack solver.
         not used if eigen_solver == 'dense'.
 
-    path_method : string ['auto'|'FW'|'D']
+    path_method : {'auto', 'FW', 'D'}, default='auto'
         Method to use in finding shortest path.
 
         'auto' : attempt to choose the best algorithm automatically.
@@ -55,7 +55,8 @@ class Isomap(TransformerMixin, BaseEstimator):
 
         'D' : Dijkstra's algorithm.
 
-    neighbors_algorithm : string ['auto'|'brute'|'kd_tree'|'ball_tree']
+    neighbors_algorithm : {'auto', 'brute', 'kd_tree', 'ball_tree'}, \
+                          default='auto'
         Algorithm to use for nearest neighbors search,
         passed to neighbors.NearestNeighbors instance.
 
@@ -122,8 +123,8 @@ class Isomap(TransformerMixin, BaseEstimator):
     .. [1] Tenenbaum, J.B.; De Silva, V.; & Langford, J.C. A global geometric
            framework for nonlinear dimensionality reduction. Science 290 (5500)
     """
-
-    def __init__(self, n_neighbors=5, n_components=2, eigen_solver='auto',
+    @_deprecate_positional_args
+    def __init__(self, *, n_neighbors=5, n_components=2, eigen_solver='auto',
                  tol=0, max_iter=None, path_method='auto',
                  neighbors_algorithm='auto', n_jobs=None, metric='minkowski',
                  p=2, metric_params=None):
@@ -140,13 +141,13 @@ class Isomap(TransformerMixin, BaseEstimator):
         self.metric_params = metric_params
 
     def _fit_transform(self, X):
-
         self.nbrs_ = NearestNeighbors(n_neighbors=self.n_neighbors,
                                       algorithm=self.neighbors_algorithm,
                                       metric=self.metric, p=self.p,
                                       metric_params=self.metric_params,
                                       n_jobs=self.n_jobs)
         self.nbrs_.fit(X)
+        self.n_features_in_ = self.nbrs_.n_features_in_
 
         self.kernel_pca_ = KernelPCA(n_components=self.n_components,
                                      kernel="precomputed",
@@ -166,13 +167,6 @@ class Isomap(TransformerMixin, BaseEstimator):
         G *= -0.5
 
         self.embedding_ = self.kernel_pca_.fit_transform(G)
-
-    @deprecated("Attribute `training_data_` was deprecated in version 0.22 and"
-                " will be removed in 0.24.")
-    @property
-    def training_data_(self):
-        check_is_fitted(self)
-        return self.nbrs_._fit_X
 
     def reconstruction_error(self):
         """Compute the reconstruction error for the embedding.

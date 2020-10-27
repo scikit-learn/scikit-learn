@@ -13,7 +13,7 @@ this project as part of his thesis.
 In 2010 Fabian Pedregosa, Gael Varoquaux, Alexandre Gramfort and Vincent
 Michel of INRIA took leadership of the project and made the first public
 release, February the 1st 2010. Since then, several releases have appeared
-following a ~3 month cycle, and a thriving international community has
+following a ~ 3-month cycle, and a thriving international community has
 been leading the development.
 
 Governance
@@ -38,8 +38,18 @@ in the FAQ.
 
    :ref:`How you can contribute to the project <contributing>`
 
+Triage Team
+-----------
+
+The following people are active contributors who also help with
+:ref:`triaging issues <bug_triaging>`, PRs, and general
+maintenance:
+
+.. include:: triage_team.rst
+
 Emeritus Core Developers
 ------------------------
+
 The following people have been active contributors in the past, but are no
 longer active in the project:
 
@@ -108,7 +118,7 @@ Funding
 Scikit-Learn is a community driven project, however institutional and private
 grants help to assure its sustainability.
 
-The project would like to thank the following funders. 
+The project would like to thank the following funders.
 
 ...................................
 
@@ -139,7 +149,7 @@ Grisel, Guillaume Lemaitre, Jérémie du Boisberranger and Chiara Marmo.
    :target: https://www.axa.fr/
 
 .. |bnp| image:: images/bnp.png
-   :width: 170pt
+   :width: 150pt
    :target: https://www.bnpparibascardif.com/
 
 .. |fujitsu| image:: images/fujitsu.png
@@ -174,16 +184,18 @@ Grisel, Guillaume Lemaitre, Jérémie du Boisberranger and Chiara Marmo.
    | |msn|   |  |bcg|   |
    +---------+----------+
    |                    |
-   +---------+----------+ 
-   |  |axa|  ||fujitsu| |
    +---------+----------+
-   |        |bnp|       |
+   |  |axa|  |   |bnp|  |
    +---------+----------+
-   | |intel| | |nvidia| |
+   ||fujitsu||  |intel| |
    +---------+----------+
    |                    |
    +---------+----------+
-   ||dataiku|| |inria|  |
+   ||dataiku|| |nvidia| |
+   +---------+----------+
+   |                    |
+   +---------+----------+
+   |       |inria|      |
    +---------+----------+
 
 .. raw:: html
@@ -191,7 +203,7 @@ Grisel, Guillaume Lemaitre, Jérémie du Boisberranger and Chiara Marmo.
    </div>
    </div>
 
-........  
+........
 
 .. raw:: html
 
@@ -206,7 +218,7 @@ Grisel, Guillaume Lemaitre, Jérémie du Boisberranger and Chiara Marmo.
 
    <div class="sk-sponsor-div-box">
 
-.. image:: themes/scikit-learn/static/img/columbia.png 
+.. image:: themes/scikit-learn/static/img/columbia.png
    :width: 50pt
    :align: center
    :target: https://www.columbia.edu/
@@ -220,7 +232,7 @@ Grisel, Guillaume Lemaitre, Jérémie du Boisberranger and Chiara Marmo.
 
 .. raw:: html
 
-   <div class="sk-sponsor-div">   
+   <div class="sk-sponsor-div">
    <div class="sk-sponsor-div-box">
 
 Andreas Müller received a grant to improve scikit-learn from the
@@ -269,14 +281,15 @@ July 2017.
    </div>
    </div>
 
-............
+...........
 
 .. raw:: html
 
    <div class="sk-sponsor-div">
    <div class="sk-sponsor-div-box">
 
-`Anaconda, Inc <https://www.anaconda.com/>`_ funds Adrin Jalali since 2019.
+`Zalando SE <https://corporate.zalando.com/en>`_ funds Adrin Jalali since
+August 2020.
 
 .. raw:: html
 
@@ -284,10 +297,10 @@ July 2017.
 
    <div class="sk-sponsor-div-box">
 
-.. image:: images/anaconda.png
+.. image:: images/zalando_logo.png
    :width: 100pt
    :align: center
-   :target: https://sydney.edu.au/
+   :target: https://corporate.zalando.com/en
 
 .. raw:: html
 
@@ -345,6 +358,31 @@ time of Joris van den Bossche (2017-2018).
    :width: 100pt
    :align: center
    :target: https://www.datascience-paris-saclay.fr/
+
+.. raw:: html
+
+   </div>
+   </div>
+
+............
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`Anaconda, Inc <https://www.anaconda.com/>`_ funded Adrin Jalali in 2019.
+
+.. raw:: html
+
+   </div>
+
+   <div class="sk-sponsor-div-box">
+
+.. image:: images/anaconda.png
+   :width: 100pt
+   :align: center
+   :target: https://www.anaconda.com/
 
 .. raw:: html
 
@@ -518,7 +556,7 @@ budget of the project [#f1]_.
 
 .. rubric:: Notes
 
-.. [#f1] Regarding the organization budget in particular, we might use some of
+.. [#f1] Regarding the organization budget, in particular, we might use some of
          the donated funds to pay for other project expenses such as DNS,
          hosting or continuous integration services.
 

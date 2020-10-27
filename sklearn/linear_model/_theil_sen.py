@@ -15,12 +15,13 @@ import numpy as np
 from scipy import linalg
 from scipy.special import binom
 from scipy.linalg.lapack import get_lapack_funcs
-from joblib import Parallel, delayed, effective_n_jobs
+from joblib import Parallel, effective_n_jobs
 
 from ._base import LinearModel
 from ..base import RegressorMixin
 from ..utils import check_random_state
-from ..utils import check_X_y
+from ..utils.validation import _deprecate_positional_args
+from ..utils.fixes import delayed
 from ..exceptions import ConvergenceWarning
 
 _EPSILON = np.finfo(np.double).eps
@@ -39,12 +40,12 @@ def _modified_weiszfeld_step(X, x_old):
         Training vector, where n_samples is the number of samples and
         n_features is the number of features.
 
-    x_old : array, shape = [n_features]
+    x_old : ndarray of shape = (n_features,)
         Current start vector.
 
     Returns
     -------
-    x_new : array, shape = [n_features]
+    x_new : ndarray of shape (n_features,)
         New iteration step.
 
     References
@@ -88,15 +89,15 @@ def _spatial_median(X, max_iter=300, tol=1.e-3):
         Training vector, where n_samples is the number of samples and
         n_features is the number of features.
 
-    max_iter : int, optional
-        Maximum number of iterations.  Default is 300.
+    max_iter : int, default=300
+        Maximum number of iterations.
 
-    tol : float, optional
-        Stop the algorithm if spatial_median has converged. Default is 1.e-3.
+    tol : float, default=1.e-3
+        Stop the algorithm if spatial_median has converged.
 
     Returns
     -------
-    spatial_median : array, shape = [n_features]
+    spatial_median : ndarray of shape = (n_features,)
         Spatial median.
 
     n_iter : int
@@ -109,7 +110,7 @@ def _spatial_median(X, max_iter=300, tol=1.e-3):
       http://users.jyu.fi/~samiayr/pdf/ayramo_eurogen05.pdf
     """
     if X.shape[1] == 1:
-        return 1, np.median(X.ravel())
+        return 1, np.median(X.ravel(), keepdims=True)
 
     tol **= 2  # We are computing the tol on the squared norm
     spatial_median_old = np.mean(X, axis=0)
@@ -124,7 +125,6 @@ def _spatial_median(X, max_iter=300, tol=1.e-3):
         warnings.warn("Maximum number of iterations {max_iter} reached in "
                       "spatial median for TheilSen regressor."
                       "".format(max_iter=max_iter), ConvergenceWarning)
-
     return n_iter, spatial_median
 
 
@@ -161,10 +161,10 @@ def _lstsq(X, y, indices, fit_intercept):
         Design matrix, where n_samples is the number of samples and
         n_features is the number of features.
 
-    y : array, shape = [n_samples]
+    y : ndarray of shape (n_samples,)
         Target vector, where n_samples is the number of samples.
 
-    indices : array, shape = [n_subpopulation, n_subsamples]
+    indices : ndarray of shape (n_subpopulation, n_subsamples)
         Indices of all subsamples with respect to the chosen subpopulation.
 
     fit_intercept : bool
@@ -172,7 +172,7 @@ def _lstsq(X, y, indices, fit_intercept):
 
     Returns
     -------
-    weights : array, shape = [n_subpopulation, n_features + intercept]
+    weights : ndarray of shape (n_subpopulation, n_features + intercept)
         Solution matrix of n_subpopulation solved least square problems.
     """
     fit_intercept = int(fit_intercept)
@@ -209,14 +209,14 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
 
     Parameters
     ----------
-    fit_intercept : boolean, optional, default True
+    fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations.
 
-    copy_X : boolean, optional, default True
+    copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
-    max_subpopulation : int, optional, default 1e4
+    max_subpopulation : int, default=1e4
         Instead of computing with a set of cardinality 'n choose k', where n is
         the number of samples and k is the number of subsamples (at least
         number of features), consider only a stochastic subpopulation of a
@@ -224,7 +224,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         For other than small problem sizes this parameter will determine
         memory usage and runtime if n_subsamples is not changed.
 
-    n_subsamples : int, optional, default None
+    n_subsamples : int, default=None
         Number of samples to calculate the parameters. This is at least the
         number of features (plus 1 if fit_intercept=True) and the number of
         samples as a maximum. A lower number leads to a higher breakdown
@@ -234,31 +234,30 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         If n_subsamples is set to n_samples, Theil-Sen is identical to least
         squares.
 
-    max_iter : int, optional, default 300
+    max_iter : int, default=300
         Maximum number of iterations for the calculation of spatial median.
 
-    tol : float, optional, default 1.e-3
+    tol : float, default=1.e-3
         Tolerance when calculating spatial median.
 
-    random_state : int, RandomState instance or None, optional, default None
+    random_state : int, RandomState instance or None, default=None
         A random number generator instance to define the state of the random
-        permutations generator.  If int, random_state is the seed used by the
-        random number generator; If RandomState instance, random_state is the
-        random number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`.
+        permutations generator. Pass an int for reproducible output across
+        multiple function calls.
+        See :term:`Glossary <random_state>`
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         Number of CPUs to use during the cross validation.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    verbose : boolean, optional, default False
+    verbose : bool, default=False
         Verbose mode when fitting the model.
 
     Attributes
     ----------
-    coef_ : array, shape = (n_features)
+    coef_ : ndarray of shape (n_features,)
         Coefficients of the regression model (median of distribution).
 
     intercept_ : float
@@ -292,8 +291,8 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
       Xin Dang, Hanxiang Peng, Xueqin Wang and Heping Zhang
       http://home.olemiss.edu/~xdang/papers/MTSE.pdf
     """
-
-    def __init__(self, fit_intercept=True, copy_X=True,
+    @_deprecate_positional_args
+    def __init__(self, *, fit_intercept=True, copy_X=True,
                  max_subpopulation=1e4, n_subsamples=None, max_iter=300,
                  tol=1.e-3, random_state=None, n_jobs=None, verbose=False):
         self.fit_intercept = fit_intercept
@@ -348,17 +347,17 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
 
         Parameters
         ----------
-        X : numpy array of shape [n_samples, n_features]
-            Training data
-        y : numpy array of shape [n_samples]
-            Target values
+        X : ndarray of shape (n_samples, n_features)
+            Training data.
+        y : ndarray of shape (n_samples,)
+            Target values.
 
         Returns
         -------
         self : returns an instance of self.
         """
         random_state = check_random_state(self.random_state)
-        X, y = check_X_y(X, y, y_numeric=True)
+        X, y = self._validate_data(X, y, y_numeric=True)
         n_samples, n_features = X.shape
         n_subsamples, self.n_subpopulation_ = self._check_subparams(n_samples,
                                                                     n_features)

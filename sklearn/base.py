@@ -13,7 +13,12 @@ import re
 import numpy as np
 
 from . import __version__
+from ._config import get_config
 from .utils import _IS_32BIT
+from .utils.validation import check_X_y
+from .utils.validation import check_array
+from .utils._estimator_html_repr import estimator_html_repr
+from .utils.validation import _deprecate_positional_args
 
 _DEFAULT_TAGS = {
     'non_deterministic': False,
@@ -27,25 +32,39 @@ _DEFAULT_TAGS = {
     'stateless': False,
     'multilabel': False,
     '_skip_test': False,
+    '_xfail_checks': False,
     'multioutput_only': False,
     'binary_only': False,
-    'requires_fit': True}
+    'requires_fit': True,
+    'preserves_dtype': [np.float64],
+    'requires_y': False,
+    'pairwise': False,
+    }
 
 
-def clone(estimator, safe=True):
-    """Constructs a new estimator with the same parameters.
+@_deprecate_positional_args
+def clone(estimator, *, safe=True):
+    """Constructs a new unfitted estimator with the same parameters.
 
     Clone does a deep copy of the model in an estimator
     without actually copying attached data. It yields a new estimator
-    with the same parameters that has not been fit on any data.
+    with the same parameters that has not been fitted on any data.
+
+    If the estimator's `random_state` parameter is an integer (or if the
+    estimator doesn't have a `random_state` parameter), an *exact clone* is
+    returned: the clone and the original estimator will give the exact same
+    results. Otherwise, *statistical clone* is returned: the clone might
+    yield different results from the original estimator. More details can be
+    found in :ref:`randomness`.
 
     Parameters
     ----------
-    estimator : estimator object, or list, tuple or set of objects
-        The estimator or group of estimators to be cloned
+    estimator : {list, tuple, set} of estimator instance or a single \
+            estimator instance
+        The estimator or group of estimators to be cloned.
 
-    safe : boolean, optional
-        If safe is false, clone will fall back to a deep copy on objects
+    safe : bool, default=True
+        If safe is False, clone will fall back to a deep copy on objects
         that are not estimators.
 
     """
@@ -57,10 +76,17 @@ def clone(estimator, safe=True):
         if not safe:
             return copy.deepcopy(estimator)
         else:
-            raise TypeError("Cannot clone object '%s' (type %s): "
-                            "it does not seem to be a scikit-learn estimator "
-                            "as it does not implement a 'get_params' methods."
-                            % (repr(estimator), type(estimator)))
+            if isinstance(estimator, type):
+                raise TypeError("Cannot clone object. " +
+                                "You should provide an instance of " +
+                                "scikit-learn estimator instead of a class.")
+            else:
+                raise TypeError("Cannot clone object '%s' (type %s): "
+                                "it does not seem to be a scikit-learn "
+                                "estimator as it does not implement a "
+                                "'get_params' method."
+                                % (repr(estimator), type(estimator)))
+
     klass = estimator.__class__
     new_object_params = estimator.get_params(deep=False)
     for name, param in new_object_params.items():
@@ -87,10 +113,10 @@ def _pprint(params, offset=0, printer=repr):
     params : dict
         The dictionary to pretty print
 
-    offset : int
+    offset : int, default=0
         The offset in characters to add at the begin of each line.
 
-    printer : callable
+    printer : callable, default=repr
         The function to convert entries to strings, typically
         the builtin str or repr
 
@@ -130,7 +156,7 @@ def _pprint(params, offset=0, printer=repr):
 
 
 class BaseEstimator:
-    """Base class for all estimators in scikit-learn
+    """Base class for all estimators in scikit-learn.
 
     Notes
     -----
@@ -178,7 +204,7 @@ class BaseEstimator:
 
         Returns
         -------
-        params : mapping of string to any
+        params : dict
             Parameter names mapped to their values.
         """
         out = dict()
@@ -203,9 +229,9 @@ class BaseEstimator:
         Set the parameters of this estimator.
 
         The method works on simple estimators as well as on nested objects
-        (such as pipelines). The latter have parameters of the form
-        ``<component>__<parameter>`` so that it's possible to update each
-        component of a nested object.
+        (such as :class:`~sklearn.pipeline.Pipeline`). The latter have
+        parameters of the form ``<component>__<parameter>`` so that it's
+        possible to update each component of a nested object.
 
         Parameters
         ----------
@@ -214,7 +240,7 @@ class BaseEstimator:
 
         Returns
         -------
-        self : object
+        self : estimator instance
             Estimator instance.
         """
         if not params:
@@ -331,9 +357,144 @@ class BaseEstimator:
                 collected_tags.update(more_tags)
         return collected_tags
 
+    def _check_n_features(self, X, reset):
+        """Set the `n_features_in_` attribute, or check against it.
+
+        Parameters
+        ----------
+        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+            The input samples.
+        reset : bool
+            If True, the `n_features_in_` attribute is set to `X.shape[1]`.
+            If False and the attribute exists, then check that it is equal to
+            `X.shape[1]`. If False and the attribute does *not* exist, then
+            the check is skipped.
+            .. note::
+               It is recommended to call reset=True in `fit` and in the first
+               call to `partial_fit`. All other methods that validate `X`
+               should set `reset=False`.
+        """
+        n_features = X.shape[1]
+
+        if reset:
+            self.n_features_in_ = n_features
+            return
+
+        if not hasattr(self, "n_features_in_"):
+            # Skip this check if the expected number of expected input features
+            # was not recorded by calling fit first. This is typically the case
+            # for stateless transformers.
+            return
+
+        if n_features != self.n_features_in_:
+            raise ValueError(
+                f"X has {n_features} features, but {self.__class__.__name__} "
+                f"is expecting {self.n_features_in_} features as input.")
+
+    def _validate_data(self, X, y='no_validation', reset=True,
+                       validate_separately=False, **check_params):
+        """Validate input data and set or check the `n_features_in_` attribute.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix, dataframe} of shape \
+                (n_samples, n_features)
+            The input samples.
+        y : array-like of shape (n_samples,), default='no_validation'
+            The targets.
+
+            - If `None`, `check_array` is called on `X`. If the estimator's
+              requires_y tag is True, then an error will be raised.
+            - If `'no_validation'`, `check_array` is called on `X` and the
+              estimator's requires_y tag is ignored. This is a default
+              placeholder and is never meant to be explicitly set.
+            - Otherwise, both `X` and `y` are checked with either `check_array`
+              or `check_X_y` depending on `validate_separately`.
+
+        reset : bool, default=True
+            Whether to reset the `n_features_in_` attribute.
+            If False, the input will be checked for consistency with data
+            provided when reset was last True.
+            .. note::
+               It is recommended to call reset=True in `fit` and in the first
+               call to `partial_fit`. All other methods that validate `X`
+               should set `reset=False`.
+        validate_separately : False or tuple of dicts, default=False
+            Only used if y is not None.
+            If False, call validate_X_y(). Else, it must be a tuple of kwargs
+            to be used for calling check_array() on X and y respectively.
+        **check_params : kwargs
+            Parameters passed to :func:`sklearn.utils.check_array` or
+            :func:`sklearn.utils.check_X_y`. Ignored if validate_separately
+            is not False.
+
+        Returns
+        -------
+        out : {ndarray, sparse matrix} or tuple of these
+            The validated input. A tuple is returned if `y` is not None.
+        """
+
+        if y is None:
+            if self._get_tags()['requires_y']:
+                raise ValueError(
+                    f"This {self.__class__.__name__} estimator "
+                    f"requires y to be passed, but the target y is None."
+                )
+            X = check_array(X, **check_params)
+            out = X
+        elif isinstance(y, str) and y == 'no_validation':
+            X = check_array(X, **check_params)
+            out = X
+        else:
+            if validate_separately:
+                # We need this because some estimators validate X and y
+                # separately, and in general, separately calling check_array()
+                # on X and y isn't equivalent to just calling check_X_y()
+                # :(
+                check_X_params, check_y_params = validate_separately
+                X = check_array(X, **check_X_params)
+                y = check_array(y, **check_y_params)
+            else:
+                X, y = check_X_y(X, y, **check_params)
+            out = X, y
+
+        if check_params.get('ensure_2d', True):
+            self._check_n_features(X, reset=reset)
+
+        return out
+
+    @property
+    def _repr_html_(self):
+        """HTML representation of estimator.
+
+        This is redundant with the logic of `_repr_mimebundle_`. The latter
+        should be favorted in the long term, `_repr_html_` is only
+        implemented for consumers who do not interpret `_repr_mimbundle_`.
+        """
+        if get_config()["display"] != 'diagram':
+            raise AttributeError("_repr_html_ is only defined when the "
+                                 "'display' configuration option is set to "
+                                 "'diagram'")
+        return self._repr_html_inner
+
+    def _repr_html_inner(self):
+        """This function is returned by the @property `_repr_html_` to make
+        `hasattr(estimator, "_repr_html_") return `True` or `False` depending
+        on `get_config()["display"]`.
+        """
+        return estimator_html_repr(self)
+
+    def _repr_mimebundle_(self, **kwargs):
+        """Mime bundle used by jupyter kernels to display estimator"""
+        output = {"text/plain": repr(self)}
+        if get_config()["display"] == 'diagram':
+            output["text/html"] = estimator_html_repr(self)
+        return output
+
 
 class ClassifierMixin:
     """Mixin class for all classifiers in scikit-learn."""
+
     _estimator_type = "classifier"
 
     def score(self, X, y, sample_weight=None):
@@ -350,7 +511,7 @@ class ClassifierMixin:
             Test samples.
 
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
-            True labels for X.
+            True labels for `X`.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
@@ -358,10 +519,13 @@ class ClassifierMixin:
         Returns
         -------
         score : float
-            Mean accuracy of self.predict(X) wrt. y.
+            Mean accuracy of ``self.predict(X)`` wrt. `y`.
         """
         from .metrics import accuracy_score
         return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
+
+    def _more_tags(self):
+        return {'requires_y': True}
 
 
 class RegressorMixin:
@@ -369,26 +533,28 @@ class RegressorMixin:
     _estimator_type = "regressor"
 
     def score(self, X, y, sample_weight=None):
-        """Return the coefficient of determination R^2 of the prediction.
+        """Return the coefficient of determination :math:`R^2` of the
+        prediction.
 
-        The coefficient R^2 is defined as (1 - u/v), where u is the residual
-        sum of squares ((y_true - y_pred) ** 2).sum() and v is the total
-        sum of squares ((y_true - y_true.mean()) ** 2).sum().
-        The best possible score is 1.0 and it can be negative (because the
-        model can be arbitrarily worse). A constant model that always
-        predicts the expected value of y, disregarding the input features,
-        would get a R^2 score of 0.0.
+        The coefficient :math:`R^2` is defined as :math:`(1 - \\frac{u}{v})`,
+        where :math:`u` is the residual sum of squares ``((y_true - y_pred)
+        ** 2).sum()`` and :math:`v` is the total sum of squares ``((y_true -
+        y_true.mean()) ** 2).sum()``. The best possible score is 1.0 and it
+        can be negative (because the model can be arbitrarily worse). A
+        constant model that always predicts the expected value of `y`,
+        disregarding the input features, would get a :math:`R^2` score of
+        0.0.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Test samples. For some estimators this may be a
-            precomputed kernel matrix instead, shape = (n_samples,
-            n_samples_fitted], where n_samples_fitted is the number of
-            samples used in the fitting for the estimator.
+            Test samples. For some estimators this may be a precomputed
+            kernel matrix or a list of generic objects instead with shape
+            ``(n_samples, n_samples_fitted)``, where ``n_samples_fitted``
+            is the number of samples used in the fitting for the estimator.
 
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
-            True values for X.
+            True values for `X`.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
@@ -396,38 +562,24 @@ class RegressorMixin:
         Returns
         -------
         score : float
-            R^2 of self.predict(X) wrt. y.
+            :math:`R^2` of ``self.predict(X)`` wrt. `y`.
 
         Notes
         -----
-        The R2 score used when calling ``score`` on a regressor will use
+        The :math:`R^2` score used when calling ``score`` on a regressor uses
         ``multioutput='uniform_average'`` from version 0.23 to keep consistent
-        with :func:`~sklearn.metrics.r2_score`. This will influence the
-        ``score`` method of all the multioutput regressors (except for
-        :class:`~sklearn.multioutput.MultiOutputRegressor`). To specify the
-        default value manually and avoid the warning, please either call
-        :func:`~sklearn.metrics.r2_score` directly or make a custom scorer with
-        :func:`~sklearn.metrics.make_scorer` (the built-in scorer ``'r2'`` uses
-        ``multioutput='uniform_average'``).
+        with default value of :func:`~sklearn.metrics.r2_score`.
+        This influences the ``score`` method of all the multioutput
+        regressors (except for
+        :class:`~sklearn.multioutput.MultiOutputRegressor`).
         """
 
         from .metrics import r2_score
-        from .metrics._regression import _check_reg_targets
         y_pred = self.predict(X)
-        # XXX: Remove the check in 0.23
-        y_type, _, _, _ = _check_reg_targets(y, y_pred, None)
-        if y_type == 'continuous-multioutput':
-            warnings.warn("The default value of multioutput (not exposed in "
-                          "score method) will change from 'variance_weighted' "
-                          "to 'uniform_average' in 0.23 to keep consistent "
-                          "with 'metrics.r2_score'. To specify the default "
-                          "value manually and avoid the warning, please "
-                          "either call 'metrics.r2_score' directly or make a "
-                          "custom scorer with 'metrics.make_scorer' (the "
-                          "built-in scorer 'r2' uses "
-                          "multioutput='uniform_average').", FutureWarning)
-        return r2_score(y, y_pred, sample_weight=sample_weight,
-                        multioutput='variance_weighted')
+        return r2_score(y, y_pred, sample_weight=sample_weight)
+
+    def _more_tags(self):
+        return {'requires_y': True}
 
 
 class ClusterMixin:
@@ -436,11 +588,11 @@ class ClusterMixin:
 
     def fit_predict(self, X, y=None):
         """
-        Perform clustering on X and returns cluster labels.
+        Perform clustering on `X` and returns cluster labels.
 
         Parameters
         ----------
-        X : ndarray, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Input data.
 
         y : Ignored
@@ -448,7 +600,7 @@ class ClusterMixin:
 
         Returns
         -------
-        labels : ndarray, shape (n_samples,)
+        labels : ndarray of shape (n_samples,), dtype=np.int64
             Cluster labels.
         """
         # non-optimized default implementation; override when a better
@@ -456,9 +608,12 @@ class ClusterMixin:
         self.fit(X)
         return self.labels_
 
+    def _more_tags(self):
+        return {"preserves_dtype": []}
+
 
 class BiclusterMixin:
-    """Mixin class for all bicluster estimators in scikit-learn"""
+    """Mixin class for all bicluster estimators in scikit-learn."""
 
     @property
     def biclusters_(self):
@@ -469,7 +624,7 @@ class BiclusterMixin:
         return self.rows_, self.columns_
 
     def get_indices(self, i):
-        """Row and column indices of the i'th bicluster.
+        """Row and column indices of the `i`'th bicluster.
 
         Only works if ``rows_`` and ``columns_`` attributes exist.
 
@@ -480,9 +635,9 @@ class BiclusterMixin:
 
         Returns
         -------
-        row_ind : np.array, dtype=np.intp
+        row_ind : ndarray, dtype=np.intp
             Indices of rows in the dataset that belong to the bicluster.
-        col_ind : np.array, dtype=np.intp
+        col_ind : ndarray, dtype=np.intp
             Indices of columns in the dataset that belong to the bicluster.
 
         """
@@ -491,7 +646,7 @@ class BiclusterMixin:
         return np.nonzero(rows)[0], np.nonzero(columns)[0]
 
     def get_shape(self, i):
-        """Shape of the i'th bicluster.
+        """Shape of the `i`'th bicluster.
 
         Parameters
         ----------
@@ -500,8 +655,11 @@ class BiclusterMixin:
 
         Returns
         -------
-        shape : (int, int)
-            Number of rows and columns (resp.) in the bicluster.
+        n_rows : int
+            Number of rows in the bicluster.
+
+        n_cols : int
+            Number of columns in the bicluster.
         """
         indices = self.get_indices(i)
         return tuple(len(i) for i in indices)
@@ -513,13 +671,13 @@ class BiclusterMixin:
         ----------
         i : int
             The index of the cluster.
-        data : array
+        data : array-like of shape (n_samples, n_features)
             The data.
 
         Returns
         -------
-        submatrix : array
-            The submatrix corresponding to bicluster i.
+        submatrix : ndarray of shape (n_rows, n_cols)
+            The submatrix corresponding to bicluster `i`.
 
         Notes
         -----
@@ -539,23 +697,24 @@ class TransformerMixin:
         """
         Fit to data, then transform it.
 
-        Fits transformer to X and y with optional parameters fit_params
-        and returns a transformed version of X.
+        Fits transformer to `X` and `y` with optional parameters `fit_params`
+        and returns a transformed version of `X`.
 
         Parameters
         ----------
-        X : numpy array of shape [n_samples, n_features]
-            Training set.
+        X : array-like of shape (n_samples, n_features)
+            Input samples.
 
-        y : numpy array of shape [n_samples]
-            Target values.
+        y :  array-like of shape (n_samples,) or (n_samples, n_outputs), \
+                default=None
+            Target values (None for unsupervised transformations).
 
         **fit_params : dict
             Additional fit parameters.
 
         Returns
         -------
-        X_new : numpy array of shape [n_samples, n_features_new]
+        X_new : ndarray array of shape (n_samples, n_features_new)
             Transformed array.
         """
         # non-optimized default implementation; override when a better
@@ -573,11 +732,15 @@ class DensityMixin:
     _estimator_type = "DensityEstimator"
 
     def score(self, X, y=None):
-        """Return the score of the model on the data X
+        """Return the score of the model on the data `X`.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
+            Test samples.
+
+        y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
@@ -597,15 +760,15 @@ class OutlierMixin:
 
         Parameters
         ----------
-        X : ndarray, shape (n_samples, n_features)
-            Input data.
+        X : {array-like, sparse matrix, dataframe} of shape \
+            (n_samples, n_features)
 
         y : Ignored
             Not used, present for API consistency by convention.
 
         Returns
         -------
-        y : ndarray, shape (n_samples,)
+        y : ndarray of shape (n_samples,)
             1 for inliers, -1 for outliers.
         """
         # override for transductive outlier detectors like LocalOulierFactor
@@ -651,7 +814,7 @@ def is_regressor(estimator):
 
     Parameters
     ----------
-    estimator : object
+    estimator : estimator instance
         Estimator object to test.
 
     Returns
@@ -667,7 +830,7 @@ def is_outlier_detector(estimator):
 
     Parameters
     ----------
-    estimator : object
+    estimator : estimator instance
         Estimator object to test.
 
     Returns
@@ -676,3 +839,45 @@ def is_outlier_detector(estimator):
         True if estimator is an outlier detector and False otherwise.
     """
     return getattr(estimator, "_estimator_type", None) == "outlier_detector"
+
+
+def _is_pairwise(estimator):
+    """Returns True if estimator is pairwise.
+
+    - If the `_pairwise` attribute and the tag are present and consistent,
+      then use the value and not issue a warning.
+    - If the `_pairwise` attribute and the tag are present and not
+      consistent, use the `_pairwise` value and issue a deprecation
+      warning.
+    - If only the `_pairwise` attribute is present and it is not False,
+      issue a deprecation warning and use the `_pairwise` value.
+
+    Parameters
+    ----------
+    estimator : object
+        Estimator object to test.
+
+    Returns
+    -------
+    out : bool
+        True if the estimator is pairwise and False otherwise.
+    """
+    with warnings.catch_warnings():
+        warnings.filterwarnings('ignore', category=FutureWarning)
+        has_pairwise_attribute = hasattr(estimator, '_pairwise')
+        pairwise_attribute = getattr(estimator, '_pairwise', False)
+
+    if hasattr(estimator, '_get_tags') and callable(estimator._get_tags):
+        pairwise_tag = estimator._get_tags().get('pairwise', False)
+    else:
+        pairwise_tag = False
+
+    if has_pairwise_attribute:
+        if pairwise_attribute != pairwise_tag:
+            warnings.warn("_pairwise was deprecated in 0.24 and will be "
+                          "removed in 0.26. Set the estimator tags of your "
+                          "estimator instead", FutureWarning)
+        return pairwise_attribute
+
+    # use pairwise tag when the attribute is not present
+    return pairwise_tag
