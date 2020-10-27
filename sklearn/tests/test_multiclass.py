@@ -837,6 +837,7 @@ def test_support_missing_values(MultiClassClassifier):
     # the underlying pipeline or classifiers
     rng = np.random.RandomState(42)
     X, y = iris.data, iris.target
+    X = np.copy(X)  # Copy to avoid that the original data is modified
     mask = rng.choice([1, 0], X.shape, p=[.1, .9]).astype(bool)
     X[mask] = np.nan
     lr = make_pipeline(SimpleImputer(),
