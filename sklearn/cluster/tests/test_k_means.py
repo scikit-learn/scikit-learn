@@ -1066,7 +1066,7 @@ def test_kmeans_plusplus_output(data):
 
 
 def test_kmeans_plusplus_dataorder():
-    # Check that memory layout doe not effect result
+    # Check that memory layout does not effect result
     centers_c, _ = kmeans_plusplus(X, n_clusters, random_state=0)
 
     X_fortran = np.asfortranarray(X)

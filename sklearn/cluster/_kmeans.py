@@ -1894,15 +1894,17 @@ def kmeans_plusplus(X, n_clusters, *, x_squared_norms=None,
                     random_state=None, n_local_trials=None):
     """Init n_clusters seeds according to k-means++
 
+    .. versionadded:: 0.24
+
     Parameters
     ----------
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
-        The data to pick seeds for.
+        The data to pick seeds from.
 
     n_clusters : int
         The number of centroids to initialize
 
-    x_squared_norms : array-like of shape (n_samples,)
+    x_squared_norms : array-like of shape (n_samples,), default=None
         Squared Euclidean norm of each data point.
 
     random_state : int or RandomState instance, default=None
@@ -1945,7 +1947,7 @@ def kmeans_plusplus(X, n_clusters, *, x_squared_norms=None,
     if x_squared_norms is None:
         x_squared_norms = row_norms(X, squared=True)
     else:
-        x_squared_norms = check_array(x_squared_norms)
+        x_squared_norms = check_array(x_squared_norms, dtype=X.dtype)
 
     if x_squared_norms.shape[0] != X.shape[0]:
         raise ValueError(
