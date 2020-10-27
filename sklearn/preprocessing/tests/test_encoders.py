@@ -830,14 +830,6 @@ def test_encoders_has_categorical_tags(Encoder):
     assert 'categorical' in Encoder()._get_tags()['X_types']
 
 
-@pytest.mark.parametrize('Encoder', [OneHotEncoder, OrdinalEncoder])
-def test_encoders_does_not_support_none_values(Encoder):
-    values = [["a"], [None]]
-    with pytest.raises(TypeError, match="Encoders require their input to be "
-                                        "uniformly strings or numbers."):
-        Encoder().fit(values)
-
-
 @pytest.mark.parametrize('input_dtype', ['O', 'U'])
 @pytest.mark.parametrize('category_dtype', ['O', 'U'])
 @pytest.mark.parametrize('array_type', ['list', 'array', 'dataframe'])
