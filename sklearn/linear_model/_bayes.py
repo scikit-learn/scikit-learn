@@ -120,11 +120,13 @@ class BayesianRidge(RegressorMixin, LinearModel):
         The actual number of iterations to reach the stopping criterion.
 
     X_offset_ : float
-        if normalized, offset subtracted for centering data to mean zero
+        If `normalize=True`, offset subtracted for centering data to a
+        zero mean.
 
     X_scale_ : float
-        if normalized, scaling parameter for division
-    
+        If `normalize=True`, parameter used to scale data to a unit
+        standard deviation.
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -471,11 +473,13 @@ class ARDRegression(RegressorMixin, LinearModel):
         ``fit_intercept = False``.
 
     X_offset_ : float
-        if normalized, offset subtracted for centering data to mean zero
+        If `normalize=True`, offset subtracted for centering data to a
+        zero mean.
 
     X_scale_ : float
-        if normalized, scaling parameter for division
-    
+        If `normalize=True`, parameter used to scale data to a unit
+        standard deviation.
+
     Examples
     --------
     >>> from sklearn import linear_model
