@@ -368,6 +368,10 @@ Changelog
   `predict` and `score` would fail when `fit_intercept=False` and there was
   one feature during fitting. :pr:`18121` by `Thomas Fan`_.
 
+- |Fix| Fixes bug in :class:`linear_model.Perceptron` where `__init__` method
+  doesn't have `l1_ratio` parameter. :pr:`18622` by 
+  :user:`Haesun Park <rickiepark>`.
+
 :mod:`sklearn.manifold`
 .......................
 
