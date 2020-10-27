@@ -474,6 +474,22 @@ def test_ovr_coef_exceptions():
     assert_raises(AttributeError, lambda x: ovr.coef_, None)
 
 
+# TODO: Remove this test in version 0.26 when
+# the coef_ and intercept_ attributes are removed
+def test_ovr_deprecated_coef_intercept():
+    ovr = OneVsRestClassifier(SVC(kernel="linear"))
+    ovr = ovr.fit(iris.data, iris.target)
+
+    msg = ("Attribute {0} was deprecated in version 0.24 "
+           "and will be removed in 0.26. If you observe "
+           "this warning while using RFE or SelectFromModel, "
+           "use the importance_getter parameter instead.")
+
+    for att in ["coef_", "intercept_"]:
+        with pytest.warns(FutureWarning, match=msg.format(att)):
+            getattr(ovr, att)
+
+
 def test_ovo_exceptions():
     ovo = OneVsOneClassifier(LinearSVC(random_state=0))
     assert_raises(ValueError, ovo.predict, [])
@@ -827,19 +843,3 @@ def test_support_missing_values(MultiClassClassifier):
                        LogisticRegression(random_state=rng))
 
     MultiClassClassifier(lr).fit(X, y).score(X, y)
-
-
-# TODO: Remove this test in version 0.26 when
-# the coef_ and intercept_ attributes are removed
-def test_ovr_deprecated_coef_intercept():
-    ovr = OneVsRestClassifier(SVC(kernel="linear"))
-    ovr = ovr.fit(iris.data, iris.target)
-
-    msg = ("Attribute {0} was deprecated in version 0.24 "
-           "and will be removed in 0.26. If you observe "
-           "this warning while using RFE or SelectFromModel, "
-           "use the importance_getter parameter instead.")
-
-    for att in ["coef_", "intercept_"]:
-        with pytest.warns(FutureWarning, match=msg.format(att)):
-            getattr(ovr, att)
