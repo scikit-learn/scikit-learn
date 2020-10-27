@@ -14,7 +14,6 @@ from sklearn.utils import is_scalar_nan
 
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import OrdinalEncoder
-from sklearn.utils._testing import _convert_container
 
 
 def test_one_hot_encoder_sparse_dense():
