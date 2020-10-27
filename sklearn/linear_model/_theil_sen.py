@@ -110,7 +110,7 @@ def _spatial_median(X, max_iter=300, tol=1.e-3):
       http://users.jyu.fi/~samiayr/pdf/ayramo_eurogen05.pdf
     """
     if X.shape[1] == 1:
-        return 1, np.median(X.ravel())
+        return 1, np.median(X.ravel(), keepdims=True)
 
     tol **= 2  # We are computing the tol on the squared norm
     spatial_median_old = np.mean(X, axis=0)
@@ -125,7 +125,6 @@ def _spatial_median(X, max_iter=300, tol=1.e-3):
         warnings.warn("Maximum number of iterations {max_iter} reached in "
                       "spatial median for TheilSen regressor."
                       "".format(max_iter=max_iter), ConvergenceWarning)
-
     return n_iter, spatial_median
 
 

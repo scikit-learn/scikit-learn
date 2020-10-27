@@ -457,7 +457,7 @@ Samples generator
 
    experimental.enable_hist_gradient_boosting
    experimental.enable_iterative_imputer
-   experimental.enable_successive_halving
+   experimental.enable_halving_search_cv
 
 
 .. _feature_extraction_ref:
@@ -966,6 +966,7 @@ details.
    metrics.recall_score
    metrics.roc_auc_score
    metrics.roc_curve
+   metrics.top_k_accuracy_score
    metrics.zero_one_loss
 
 Regression metrics
