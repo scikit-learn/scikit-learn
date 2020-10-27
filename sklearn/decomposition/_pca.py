@@ -16,11 +16,12 @@ import numbers
 import numpy as np
 from scipy import linalg
 from scipy.special import gammaln
-from scipy.sparse import issparse
-from scipy.sparse.linalg import svds
+from scipy.sparse import issparse, spmatrix
+from scipy.sparse.linalg import svds, LinearOperator
 
 from ._base import _BasePCA
 from ..utils import check_random_state
+from ..utils.sparsefuncs import mean_variance_axis
 from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
@@ -106,6 +107,20 @@ def _infer_dimension(spectrum, n_samples):
     for rank in range(1, spectrum.shape[0]):
         ll[rank] = _assess_dimension(spectrum, rank, n_samples)
     return ll.argmax()
+
+
+def _implicitly_center(X: spmatrix, mu: np.ndarray) -> LinearOperator:
+    mu = mu[None, :]
+    XH = X.T.conj(copy=False)
+    _ones = np.ones(X.shape[0])[None, :].dot
+    return LinearOperator(
+        matvec=lambda x: X.dot(x) - mu.dot(x),
+        dtype=X.dtype,
+        matmat=lambda x: X.dot(x) - mu.dot(x),
+        shape=X.shape,
+        rmatvec=lambda x: XH.dot(x) - mu.T.dot(_ones(x)),
+        rmatmat=lambda x: XH.dot(x) - mu.T.dot(_ones(x)),
+    )
 
 
 class PCA(_BasePCA):
@@ -389,11 +404,14 @@ class PCA(_BasePCA):
 
         # Raise an error for sparse input.
         # This is more informative than the generic one raised by check_array.
-        if issparse(X):
-            raise TypeError('PCA does not support sparse input. See '
-                            'TruncatedSVD for a possible alternative.')
+        if issparse(X) and self.svd_solver != 'arpack':
+            raise TypeError(
+                'PCA only support sparse inputs with the "arpack" solver. See '
+                'TruncatedSVD for a possible alternative.'
+            )
 
         X = self._validate_data(X, dtype=[np.float64, np.float32],
+                                accept_sparse=("csr", "csc"),
                                 ensure_2d=True, copy=self.copy)
 
         # Handle n_components==None
@@ -523,8 +541,14 @@ class PCA(_BasePCA):
         random_state = check_random_state(self.random_state)
 
         # Center data
-        self.mean_ = np.mean(X, axis=0)
-        X -= self.mean_
+        if issparse(X):
+            self.mean_, total_var = mean_variance_axis(X, axis=0)
+            total_var *= n_samples / (n_samples - 1)  # ddof=1
+            X = _implicitly_center(X, self.mean_)
+        else:
+            self.mean_ = np.mean(X, axis=0)
+            total_var = np.var(X, ddof=1, axis=0)
+            X -= self.mean_
 
         if svd_solver == 'arpack':
             # random init solution, as ARPACK does it internally
@@ -549,11 +573,9 @@ class PCA(_BasePCA):
 
         # Get variance explained by singular values
         self.explained_variance_ = (S ** 2) / (n_samples - 1)
-        total_var = np.var(X, ddof=1, axis=0)
         self.explained_variance_ratio_ = \
             self.explained_variance_ / total_var.sum()
         self.singular_values_ = S.copy()  # Store the singular values.
-
         if self.n_components_ < min(n_features, n_samples):
             self.noise_variance_ = (total_var.sum() -
                                     self.explained_variance_.sum())
