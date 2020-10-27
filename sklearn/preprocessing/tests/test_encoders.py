@@ -850,11 +850,12 @@ def test_encoders_unicode_categories(input_dtype, category_dtype, array_type):
     expected = np.array([[0, 1], [0, 1], [1, 0], [0, 1]])
     assert_allclose(X_trans, expected)
 
-    oe = OrdinalEncoder(categories=[['b', 'a']]).fit(X)
+    oe = OrdinalEncoder(categories=categories).fit(X)
     X_trans = oe.transform(X_test)
 
     expected = np.array([[1], [1], [0], [1]])
     assert_array_equal(X_trans, expected)
+
 
 @pytest.mark.parametrize("missing_value", [np.nan, None])
 def test_ohe_missing_values_get_feature_names(missing_value):
