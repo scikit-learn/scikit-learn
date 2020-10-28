@@ -202,11 +202,7 @@ class BaseEstimator:
         """
         out = dict()
         for key in self._get_param_names():
-            try:
-                value = getattr(self, key)
-            except AttributeError:
-                raise AttributeError('The parameter {} cannot be retrieved '
-                                     'as an instance attribute.'.format(key))
+            value = getattr(self, key)
             if deep and hasattr(value, 'get_params'):
                 deep_items = value.get_params().items()
                 out.update((key + '__' + k, val) for k, val in deep_items)
