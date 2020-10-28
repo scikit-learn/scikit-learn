@@ -45,7 +45,8 @@ def get_data_home(data_home=None) -> str:
     Parameters
     ----------
     data_home : str, default=None
-        The path to scikit-learn data directory.
+        The path to scikit-learn data directory. If `None`, the default path
+        is `~/sklearn_learn_data`.
     """
     if data_home is None:
         data_home = environ.get('SCIKIT_LEARN_DATA',
@@ -62,7 +63,8 @@ def clear_data_home(data_home=None):
     Parameters
     ----------
     data_home : str, default=None
-        The path to scikit-learn data directory.
+        The path to scikit-learn data directory. If `None`, the default path
+        is `~/sklearn_learn_data`.
     """
     data_home = get_data_home(data_home)
     shutil.rmtree(data_home)

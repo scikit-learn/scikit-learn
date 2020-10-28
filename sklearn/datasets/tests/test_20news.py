@@ -99,9 +99,7 @@ def test_20news_as_frame(fetch_20newsgroups_vectorized_fxt):
     pd = pytest.importorskip('pandas')
 
     bunch = fetch_20newsgroups_vectorized_fxt(as_frame=True)
-    check_as_frame(
-        bunch, partial(fetch_20newsgroups_vectorized_fxt),
-    )
+    check_as_frame(bunch, fetch_20newsgroups_vectorized_fxt)
 
     frame = bunch.frame
     assert frame.shape == (11314, 130108)
