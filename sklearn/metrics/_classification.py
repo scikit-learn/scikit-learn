@@ -2414,8 +2414,9 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None,
     takes on a value between zero and two, since this is the largest
     possible difference between a predicted probability (which must be
     between zero and one) and the actual outcome (which can take on values
-    of only 0 and 1), when summed over all the distinct classes. NOTE: in the binary case, scikit-learn uses an
-    alternate version of the brier score that is exactly half of the original definition and thus has a range
+    of only 0 and 1), when summed over all the distinct classes. NOTE: in the
+    binary case, scikit-learn uses an alternate version of the brier score that
+    is exactly half of the original definition and thus has a range
     between [0, 1].
 
     It can be decomposed is the sum of refinement loss and calibration loss.
@@ -2425,9 +2426,9 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None,
     variables which can take on three or more values (this is because the
     Brier score assumes that all possible outcomes are equivalently
     "distant" from one another). Which label is considered to be the positive
-    label in the binary case is controlled via the parameter `pos_label`, which defaults to
-    the greater label unless `y_true` is all 0 or all -1, in which case
-    `pos_label` defaults to 1.
+    label in the binary case is controlled via the parameter `pos_label`, which
+    defaults to the greater label unless `y_true` is all 0 or all -1, in which
+    case `pos_label` defaults to 1.
 
     Read more in the :ref:`User Guide <brier_score_loss>`.
 
@@ -2436,13 +2437,14 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None,
     y_true : array of shape (n_samples,)
         True targets.
 
-    y_prob : array-like of float, shape = (n_samples, n_classes) or (n_samples,)
+    y_prob : array-like of float, shape=(n_samples, n_classes) or (n_samples,)
         Predicted probabilities, as returned by a classifier's
         predict_proba method. If ``y_pred.shape = (n_samples,)``
         the probabilities provided are assumed to be that of the
         positive class. The labels in ``y_pred`` are assumed to be
         ordered alphabetically, as done by
-        :class:`preprocessing.LabelBinarizer`, unless ``pos_label`` or ``labels`` is specified.
+        :class:`preprocessing.LabelBinarizer`, unless ``pos_label`` or
+        ``labels`` is specified.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
@@ -2514,11 +2516,14 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None,
             else:
                 raise
         y_true = np.array(y_true == pos_label, int)
-        lb = lb.fit([0, 1])  # fit on [0, 1] because y_true can be all 0s or all 1s, but we want to assume binary
+        # fit on [0, 1] because y_true can be all 0s or all 1s, but we want
+        # to assume binary
+        lb = lb.fit([0, 1])
 
     transformed_labels = lb.transform(y_true)
     if transformed_labels.shape[1] == 1:
-        transformed_labels = np.append(1-transformed_labels, transformed_labels, axis=1)
+        transformed_labels = np.append(1-transformed_labels,
+                                       transformed_labels, axis=1)
 
     # If y_prob is of single dimension, assume y_true to be binary
     if y_prob.ndim == 1:
@@ -2543,10 +2548,12 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None,
                              'labels: {0}'.format(lb.classes_))
 
     # calculate
-    brier_loss = np.average(np.sum((transformed_labels - y_prob) ** 2, axis=1), weights=sample_weight)
+    brier_loss = np.average(np.sum((transformed_labels - y_prob) ** 2, axis=1),
+                            weights=sample_weight)
 
-    # Original definition of Brier Score sums loss over all samples over all classes. sklearn historically uses
-    # the alternate version for the binary case, where it sums only over positive class. Maintain that behaviour
+    # Original definition of Brier Score sums loss over all samples over all
+    # classes. sklearn historically uses the alternate version for the binary
+    # case, where it sums only over positive class. Maintain that behaviour
     # for backwards compatibility
     if len(lb.classes_) == 2:
         brier_loss /= 2
