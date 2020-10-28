@@ -46,6 +46,14 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.base`
+...................
+
+- |Fix| :meth:`base.BaseEstimator.get_params` now will raise an
+        `AttributeError` if a parameter cannot be retrieved as
+        an instance attribute. Previously it would return `None`.
+        :pr:`17448` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
+
 :mod:`sklearn.calibration`
 ..........................
 
