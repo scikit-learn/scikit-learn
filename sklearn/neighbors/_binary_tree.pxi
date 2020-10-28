@@ -1052,9 +1052,7 @@ cdef class BinaryTree:
         self.data_arr = check_array(data, dtype=DTYPE, order='C')
         if self.data_arr.size == 0:
             raise ValueError("X is an empty array")
-
-        n_samples = self.data_arr.shape[0]
-        n_features = self.data_arr.shape[1]
+        n_samples, n_features = self.data_arr.shape
 
         if leaf_size < 1:
             raise ValueError("leaf_size must be greater than or equal to 1")
@@ -1069,7 +1067,7 @@ cdef class BinaryTree:
             raise ValueError('metric {metric} is not valid for '
                              '{BinaryTree}'.format(metric=metric,
                                                    **DOC_DICT))
-        self.dist_metric._validate_data(data)
+        self.dist_metric._validate_data(self.data_arr)
 
         # determine number of levels in the tree, and from this
         # the number of nodes in the tree.  This results in leaf nodes
