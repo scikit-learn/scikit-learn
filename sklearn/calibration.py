@@ -118,7 +118,7 @@ class CalibratedClassifierCV(ClassifierMixin,
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. For every cross-validation split
-        specified by ``cv``, a calibrated classifier is fitted using the cloned
+        specified by ``cv``, a classifier is fitted using the cloned
         base estimator in :meth:`fit`. Ignored if ``cv == "prefit"``.
 
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
