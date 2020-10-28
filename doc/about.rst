@@ -563,11 +563,8 @@ budget of the project [#f1]_.
 Infrastructure support
 ----------------------
 
-- We would like to thank `Anaconda <https://www.anaconda.com>`_ for providing
-  us with a free `Anaconda Cloud <https://www.anaconda.org/>`_ account
-  to upload our staging and nightly builds.
-
 - We would also like to thank `Microsoft Azure
   <https://azure.microsoft.com/en-us/>`_, `Travis Cl <https://travis-ci.org/>`_,
   `CircleCl <https://circleci.com/>`_ for free CPU time on their Continuous
-  Integration servers.
+  Integration servers, And `Anaconda Inc. <https://www.anaconda.com>`_ for the
+  storage they provide for our staging and nightly builds.
