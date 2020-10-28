@@ -25,6 +25,8 @@ class Perceptron(BaseSGDClassifier):
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
         Only used if `penalty` is 'elasticnet'.
 
+        .. versionadded:: 0.24
+
     fit_intercept : bool, default=True
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered.
