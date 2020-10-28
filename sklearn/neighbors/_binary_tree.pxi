@@ -1055,10 +1055,11 @@ cdef class BinaryTree:
         if leaf_size < 1:
             raise ValueError("leaf_size must be greater than or equal to 1")
 
+        self.data_arr = check_array(data, dtype=DTYPE, order='C')
+
         n_samples = data.shape[0]
         n_features = data.shape[1]
 
-        self.data_arr = check_array(data, dtype=DTYPE, order='C')
         self.leaf_size = leaf_size
         self.dist_metric = DistanceMetric.get_metric(metric, **kwargs)
         self.euclidean = (self.dist_metric.__class__.__name__
