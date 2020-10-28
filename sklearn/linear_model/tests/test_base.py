@@ -182,12 +182,12 @@ def test_deprecate_normalize(normalize, default):
 
     if expected == AssertionError:
         with pytest.raises(AssertionError) as record:
-            _normalize = _deprecate_normalize(normalize, default)
+            _normalize = _deprecate_normalize(normalize, default, 'estimator')
         assert all(warning in str(record.value) for warning
                    in warning_msg)
     else:
         with pytest.warns(expected) as record:
-            _normalize = _deprecate_normalize(normalize, default)
+            _normalize = _deprecate_normalize(normalize, default, 'estimator')
         assert _normalize == output
 
         if expected is None:
