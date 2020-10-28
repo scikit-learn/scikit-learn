@@ -67,3 +67,13 @@ def test_undefined_methods():
     clf = Perceptron(max_iter=100)
     for meth in ("predict_proba", "predict_log_proba"):
         assert_raises(AttributeError, lambda x: getattr(clf, x), meth)
+
+
+def test_perceptron_l1_ratio():
+    clf1 = Perceptron(l1_ratio=0, penalty='elasticnet')
+    clf1.fit(X, y)
+
+    clf2 = Perceptron(l1_ratio=0.15, penalty='elasticnet')
+    clf2.fit(X, y)
+
+    assert clf1.score(X, y) != clf2.score(X, y)
