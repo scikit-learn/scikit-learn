@@ -100,7 +100,7 @@ def pytest_runtest_setup(item):
     elif IS_PYPY and fname.endswith('modules/feature_extraction.rst'):
         raise SkipTest('FeatureHasher is not compatible with PyPy')
     elif fname.endswith('datasets/loading_other_datasets.rst'):
-        setup_impute()
+        setup_loading_other_datasets()
     elif fname.endswith('modules/impute.rst'):
         setup_impute()
     elif fname.endswith('modules/grid_search.rst'):
