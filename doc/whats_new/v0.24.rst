@@ -647,10 +647,11 @@ Changelog
   :pr:`17833` by :user:`Yashika Sharma <yashika51>`.
 
 - |Feature| Add ``sample_weight`` parameter to
-  :class:`preprocessing.StandardScaler` for when X is dense. Allows setting
+  :class:`preprocessing.StandardScaler`. Allows setting
   individual weights for each sample. :pr:`18510` and
-  :pr:`18447` and :pr:`16066` by :user:`Maria Telenczuk <maikia>` and
-  :user:`Albert Villanova <albertvillanova>` and :user:`panpiort8`.
+  :pr:`18447` and :pr:`16066` and :pr:`18682` by
+  :user:`Maria Telenczuk <maikia>` and :user:`Albert Villanova <albertvillanova>`
+  and :user:`panpiort8` and :user:`Alex Gramfort <agramfort>`.
 
 - |Enhancement| Verbose output of :class:`model_selection.GridSearchCV` has
   been improved for readability. :pr:`16935` by :user:`Raghav Rajagopalan
