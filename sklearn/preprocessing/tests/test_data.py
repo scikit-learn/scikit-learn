@@ -1310,12 +1310,8 @@ def test_quantile_transform_check_error():
 
     X_bad_feat = np.transpose([[0, 25, 50, 0, 0, 0, 75, 0, 0, 100],
                                [0, 0, 2.6, 4.1, 0, 0, 2.3, 0, 9.5, 0.1]])
-    err_msg = ("X does not have the same number of features as the previously"
-               " fitted " "data. Got 2 instead of 3.")
-    with pytest.raises(ValueError, match=err_msg):
-        transformer.transform(X_bad_feat)
-    err_msg = ("X does not have the same number of features "
-               "as the previously fitted data. Got 2 instead of 3.")
+    err_msg = ("X has 2 features, but QuantileTransformer is expecting "
+               "3 features as input.")
     with pytest.raises(ValueError, match=err_msg):
         transformer.inverse_transform(X_bad_feat)
 
@@ -2434,7 +2430,8 @@ def test_power_transformer_shape_exception(method):
 
     # Exceptions should be raised for arrays with different num_columns
     # than during fitting
-    wrong_shape_message = 'Input data has a different number of features'
+    wrong_shape_message = (r"X has \d+ features, but PowerTransformer is "
+                           r"expecting \d+ features")
 
     with pytest.raises(ValueError, match=wrong_shape_message):
         pt.transform(X[:, 0:1])

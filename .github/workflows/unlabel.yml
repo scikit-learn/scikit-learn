@@ -1,0 +1,14 @@
+name: Reviewed
+# Runs when a review is submitted to a PR and
+# remove the "Waiting for Reviewer" label
+on:
+  pull_request_target:
+    types: review_request_removed
+
+jobs:
+  one:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check event
+        run: |
+          echo "Did this run"

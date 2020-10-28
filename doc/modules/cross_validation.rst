@@ -864,6 +864,9 @@ to shuffle the data indices before splitting them. Note that:
   of parameters validated by a single call to its ``fit`` method.
 * To get identical results for each split, set ``random_state`` to an integer.
 
+For more details on how to control the randomness of cv splitters and avoid
+common pitfalls, see :ref:`randomness`.
+
 Cross validation and model selection
 ====================================
 
