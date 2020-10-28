@@ -1056,15 +1056,17 @@ def test_kmeans_plusplus_output(data, dtype):
     # positive and within the number of samples
     assert indices.shape[0] == n_clusters
     assert (indices >= 0).all()
-    assert (indices <= X.shape[0]).all()
+    assert (indices <= data.shape[0]).all()
 
     # Check for the correct number of seeds and that they are bound by the data
     assert centers.shape[0] == n_clusters
-    assert (centers.max(axis=0) <= X.max(axis=0)).all()
-    assert (centers.min(axis=0) >= X.min(axis=0)).all()
+    assert (centers.max(axis=0) <= data.max(axis=0)).all()
+    assert (centers.min(axis=0) >= data.min(axis=0)).all()
 
     # Check that indices correspond to reported centers
-    assert_allclose(X[indices], centers)
+    # Use X for comparison rather than data, test still works against centers
+    # calculated with sparse data.
+    assert_allclose(X[indices].astype(dtype), centers)
 
 
 @pytest.mark.parametrize("x_squared_norms", [row_norms(X, squared=True), None])
