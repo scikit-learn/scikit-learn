@@ -162,6 +162,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
     .. [1] Breunig, M. M., Kriegel, H. P., Ng, R. T., & Sander, J. (2000, May).
            LOF: identifying density-based local outliers. In ACM sigmod record.
     """
+
     def __init__(self, n_neighbors=20, algorithm='auto', leaf_size=30,
                  metric='minkowski', p=2, metric_params=None,
                  contamination="auto", novelty=False, n_jobs=None):
@@ -245,7 +246,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         self : object
         """
         if self.contamination != 'auto':
-            if not(0. < self.contamination <= .5):
+            if not (0. < self.contamination <= .5):
                 raise ValueError("contamination must be in (0, 0.5], "
                                  "got: %f" % self.contamination)
 
