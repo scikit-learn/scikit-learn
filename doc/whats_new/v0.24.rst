@@ -338,6 +338,10 @@ Changelog
 - |Enhancement| :class:`isotonic.IsotonicRegression` now accepts 2d array with
   1 feature as input array. :pr:`17379` by :user:`Jiaxiang <fujiaxiang>`.
 
+- |Fix| Add tolerance when determining duplicate X values to prevent
+  inf values from being predicted by :class:`isotonic.IsotonicRegression`.
+  :pr:`18639` by :user:`Lucy Liu <lucyleeow>`.
+
 :mod:`sklearn.kernel_approximation`
 ...................................
 
@@ -662,6 +666,10 @@ Changelog
   encoded as all zeros. :pr:`14982` by
   :user:`Kevin Winata <kwinata>`.
 
+- |Fix| Fix incorrect encoding when using unicode string dtypes in
+  :class:`preprocessing.OneHotEncoder` and
+  :class:`preprocessing.OrdinalEncoder`. :pr:`15763` by `Thomas Fan`_.
+
 :mod:`sklearn.svm`
 ..................
 
@@ -701,6 +709,11 @@ Changelog
 - |Fix| Check that we raise proper error when axis=1 and the
   dimensions do not match in :func:`utils.sparse_func.incr_mean_variance_axis`.
   By :user:`Alex Gramfort <agramfort>`.
+
+
+- |Enhancement| Add support for weights in
+  :func:`utils.sparse_func.incr_mean_variance_axis`.
+  By :user:`Maria Telenczuk <maikia>` and :user:`Alex Gramfort <agramfort>`.
 
 
 Miscellaneous
