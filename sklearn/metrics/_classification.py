@@ -2448,17 +2448,6 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None,
         Sample weights.
 
     pos_label : int or str, default=None
-<<<<<<< HEAD
-        Label of the positive class.
-        Defaults to the greater label unless y_true is all 0 or all -1
-        in which case pos_label defaults to 1. Ignored if more than 2 distinct values in
-        y_true or labels argument is passed.
-
-    labels : array-like, default=None
-        If not provided, labels will be inferred from y_true. If ``labels``
-        is ``None`` and ``y_prob`` has shape (n_samples,) the labels are
-        assumed to be binary and are inferred from ``y_true``.
-=======
         Label of the positive class. `pos_label` will be infered in the
         following manner:
 
@@ -2467,7 +2456,11 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None,
           `pos_label` should be explicitely specified;
         * otherwise, `pos_label` defaults to the greater label,
           i.e. `np.unique(y_true)[-1]`.
->>>>>>> upstream/master
+
+    labels : array-like, default=None
+        If not provided, labels will be inferred from y_true. If ``labels``
+        is ``None`` and ``y_prob`` has shape (n_samples,) the labels are
+        assumed to be binary and are inferred from ``y_true``.
 
     Returns
     -------
