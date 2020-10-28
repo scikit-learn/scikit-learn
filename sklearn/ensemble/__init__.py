@@ -21,6 +21,7 @@ from ._voting import VotingClassifier
 from ._voting import VotingRegressor
 from ._stacking import StackingClassifier
 from ._stacking import StackingRegressor
+from ._voronoi_iforest import VoronoiIForest
 
 if typing.TYPE_CHECKING:
     # Avoid errors in type checkers (e.g. mypy) for experimental estimators.
