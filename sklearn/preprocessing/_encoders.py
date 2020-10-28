@@ -27,7 +27,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
     """
 
-    def _check_X(self, X):
+    def _check_X(self, X, force_all_finite=True):
         """
         Perform custom check_array:
         - convert list of strings to object dtype
@@ -41,17 +41,19 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         """
         if not (hasattr(X, 'iloc') and getattr(X, 'ndim', 0) == 2):
             # if not a dataframe, do normal check_array validation
-            X_temp = check_array(X, dtype=None)
+            X_temp = check_array(X, dtype=None,
+                                 force_all_finite=force_all_finite)
             if (not hasattr(X, 'dtype')
                     and np.issubdtype(X_temp.dtype, np.str_)):
-                X = check_array(X, dtype=object)
+                X = check_array(X, dtype=object,
+                                force_all_finite=force_all_finite)
             else:
                 X = X_temp
             needs_validation = False
         else:
             # pandas dataframe, do validation later column by column, in order
             # to keep the dtype information to be used in the encoder.
-            needs_validation = True
+            needs_validation = force_all_finite
 
         n_samples, n_features = X.shape
         X_columns = []
@@ -71,8 +73,9 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         # numpy arrays, sparse arrays
         return X[:, feature_idx]
 
-    def _fit(self, X, handle_unknown='error'):
-        X_list, n_samples, n_features = self._check_X(X)
+    def _fit(self, X, handle_unknown='error', force_all_finite=True):
+        X_list, n_samples, n_features = self._check_X(
+            X, force_all_finite=force_all_finite)
 
         if self.categories != 'auto':
             if len(self.categories) != n_features:
@@ -87,10 +90,17 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 cats = _unique(Xi)
             else:
                 cats = np.array(self.categories[i], dtype=Xi.dtype)
-                if Xi.dtype != object:
-                    if not np.all(np.sort(cats) == cats):
-                        raise ValueError("Unsorted categories are not "
-                                         "supported for numerical categories")
+                if Xi.dtype.kind not in 'OU':
+                    sorted_cats = np.sort(cats)
+                    error_msg = ("Unsorted categories are not "
+                                 "supported for numerical categories")
+                    # if there are nans, nan should be the last element
+                    stop_idx = -1 if np.isnan(sorted_cats[-1]) else None
+                    if (np.any(sorted_cats[:stop_idx] != cats[:stop_idx]) or
+                        (np.isnan(sorted_cats[-1]) and
+                         not np.isnan(sorted_cats[-1]))):
+                        raise ValueError(error_msg)
+
                 if handle_unknown == 'error':
                     diff = _check_unknown(Xi, cats)
                     if diff:
@@ -99,8 +109,9 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                         raise ValueError(msg)
             self.categories_.append(cats)
 
-    def _transform(self, X, handle_unknown='error'):
-        X_list, n_samples, n_features = self._check_X(X)
+    def _transform(self, X, handle_unknown='error', force_all_finite=True):
+        X_list, n_samples, n_features = self._check_X(
+            X, force_all_finite=force_all_finite)
 
         X_int = np.zeros((n_samples, n_features), dtype=int)
         X_mask = np.ones((n_samples, n_features), dtype=bool)
@@ -208,6 +219,9 @@ class OneHotEncoder(_BaseEncoder):
         - array : ``drop[i]`` is the category in feature ``X[:, i]`` that
           should be dropped.
 
+        .. versionchanged:: 0.23
+           Added option 'if_binary'.
+
     sparse : bool, default=True
         Will return sparse matrix if set True else will return an array.
 
@@ -238,6 +252,9 @@ class OneHotEncoder(_BaseEncoder):
           feature isn't binary.
         - ``drop_idx_ = None`` if all the transformed features will be
           retained.
+
+        .. versionchanged:: 0.23
+           Added the possibility to contain `None` values.
 
     See Also
     --------
@@ -349,8 +366,26 @@ class OneHotEncoder(_BaseEncoder):
                        "of features ({}), got {}")
                 raise ValueError(msg.format(len(self.categories_),
                                             len(self.drop)))
-            missing_drops = [(i, val) for i, val in enumerate(self.drop)
-                             if val not in self.categories_[i]]
+            missing_drops = []
+            drop_indices = []
+            for col_idx, (val, cat_list) in enumerate(zip(self.drop,
+                                                          self.categories_)):
+                if not is_scalar_nan(val):
+                    drop_idx = np.where(cat_list == val)[0]
+                    if drop_idx.size:  # found drop idx
+                        drop_indices.append(drop_idx[0])
+                    else:
+                        missing_drops.append((col_idx, val))
+                    continue
+
+                # val is nan, find nan in categories manually
+                for cat_idx, cat in enumerate(cat_list):
+                    if is_scalar_nan(cat):
+                        drop_indices.append(cat_idx)
+                        break
+                else:  # loop did not break thus drop is missing
+                    missing_drops.append((col_idx, val))
+
             if any(missing_drops):
                 msg = ("The following categories were supposed to be "
                        "dropped, but were not found in the training "
@@ -359,10 +394,7 @@ class OneHotEncoder(_BaseEncoder):
                                 ["Category: {}, Feature: {}".format(c, v)
                                     for c, v in missing_drops])))
                 raise ValueError(msg)
-            return np.array([np.where(cat_list == val)[0][0]
-                             for (val, cat_list) in
-                             zip(self.drop, self.categories_)],
-                            dtype=object)
+            return np.array(drop_indices, dtype=object)
 
     def fit(self, X, y=None):
         """
@@ -382,7 +414,8 @@ class OneHotEncoder(_BaseEncoder):
         self
         """
         self._validate_keywords()
-        self._fit(X, handle_unknown=self.handle_unknown)
+        self._fit(X, handle_unknown=self.handle_unknown,
+                  force_all_finite='allow-nan')
         self.drop_idx_ = self._compute_drop_idx()
         return self
 
@@ -425,7 +458,8 @@ class OneHotEncoder(_BaseEncoder):
         """
         check_is_fitted(self)
         # validation of X happens in _check_X called by _transform
-        X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown)
+        X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown,
+                                        force_all_finite='allow-nan')
 
         n_samples, n_features = X_int.shape
 
@@ -537,13 +571,20 @@ class OneHotEncoder(_BaseEncoder):
                 # ignored unknown categories: we have a row of all zero
                 if unknown.any():
                     found_unknown[i] = unknown
-            # drop will either be None or handle_unknown will be error. If
-            # self.drop_idx_ is not None, then we can safely assume that all of
-            # the nulls in each column are the dropped value
-            elif self.drop_idx_ is not None:
+            else:
                 dropped = np.asarray(sub.sum(axis=1) == 0).flatten()
                 if dropped.any():
-                    X_tr[dropped, i] = self.categories_[i][self.drop_idx_[i]]
+                    if self.drop_idx_ is None:
+                        all_zero_samples = np.flatnonzero(dropped)
+                        raise ValueError(
+                            f"Samples {all_zero_samples} can not be inverted "
+                            "when drop=None and handle_unknown='error' "
+                            "because they contain all zeros")
+                    # we can safely assume that all of the nulls in each column
+                    # are the dropped value
+                    X_tr[dropped, i] = self.categories_[i][
+                        self.drop_idx_[i]
+                    ]
 
             j += n_categories
 

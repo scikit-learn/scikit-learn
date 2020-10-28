@@ -89,7 +89,7 @@ def assert_correct_incr(i, batch_start, batch_stop, n, chunk_size,
         assert (i + 1) * chunk_size == n_samples_seen
     else:
         assert (i * chunk_size + (batch_stop - batch_start) ==
-                     n_samples_seen)
+                n_samples_seen)
 
 
 def test_polynomial_features():
@@ -288,10 +288,66 @@ def test_polynomial_features_csr_X_dim_edges(deg, dim, interaction_only):
     assert_array_almost_equal(Xt_csr.A, Xt_dense)
 
 
+def test_raises_value_error_if_sample_weights_greater_than_1d():
+    # Sample weights must be either scalar or 1D
+
+    n_sampless = [2, 3]
+    n_featuress = [3, 2]
+
+    for n_samples, n_features in zip(n_sampless, n_featuress):
+
+        X = rng.randn(n_samples, n_features)
+        y = rng.randn(n_samples)
+
+        scaler = StandardScaler()
+
+        # make sure Error is raised the sample weights greater than 1d
+        sample_weight_notOK = rng.randn(n_samples, 1) ** 2
+        with pytest.raises(ValueError):
+            scaler.fit(X, y, sample_weight=sample_weight_notOK)
+
+
+@pytest.mark.parametrize(['Xw', 'X', 'sample_weight'],
+                         [([[1, 2, 3], [4, 5, 6]],
+                           [[1, 2, 3], [1, 2, 3], [4, 5, 6]],
+                           [2., 1.]),
+                          ([[1, 0, 1], [0, 0, 1]],
+                           [[1, 0, 1], [0, 0, 1], [0, 0, 1], [0, 0, 1]],
+                           np.array([1, 3])),
+                          ([[1, np.nan, 1], [np.nan, np.nan, 1]],
+                           [[1, np.nan, 1], [np.nan, np.nan, 1],
+                            [np.nan, np.nan, 1], [np.nan, np.nan, 1]],
+                           np.array([1, 3])),
+                          ])
+@pytest.mark.parametrize(
+    "array_constructor", ["array", "sparse_csr", "sparse_csc"]
+)
+def test_standard_scaler_sample_weight(
+        Xw, X, sample_weight, array_constructor):
+    with_mean = not array_constructor.startswith("sparse")
+    X = _convert_container(X, array_constructor)
+    Xw = _convert_container(Xw, array_constructor)
+
+    # weighted StandardScaler
+    yw = np.ones(Xw.shape[0])
+    scaler_w = StandardScaler(with_mean=with_mean)
+    scaler_w.fit(Xw, yw, sample_weight=sample_weight)
+
+    # unweighted, but with repeated samples
+    y = np.ones(X.shape[0])
+    scaler = StandardScaler(with_mean=with_mean)
+    scaler.fit(X, y)
+
+    X_test = [[1.5, 2.5, 3.5], [3.5, 4.5, 5.5]]
+
+    assert_almost_equal(scaler.mean_, scaler_w.mean_)
+    assert_almost_equal(scaler.var_, scaler_w.var_)
+    assert_almost_equal(scaler.transform(X_test), scaler_w.transform(X_test))
+
+
 def test_standard_scaler_1d():
     # Test scaling of dataset along single axis
     for X in [X_1row, X_1col, X_list_1row, X_list_1row]:
-
         scaler = StandardScaler()
         X_scaled = scaler.fit(X).transform(X, copy=True)
 
@@ -329,15 +385,27 @@ def test_standard_scaler_1d():
     assert scaler.n_samples_seen_ == X.shape[0]
 
 
-def test_standard_scaler_dtype():
+@pytest.mark.parametrize("sparse_constructor",
+                         [None, sparse.csc_matrix, sparse.csr_matrix])
+@pytest.mark.parametrize("add_sample_weight", [False, True])
+def test_standard_scaler_dtype(add_sample_weight, sparse_constructor):
     # Ensure scaling does not affect dtype
     rng = np.random.RandomState(0)
     n_samples = 10
     n_features = 3
+    if add_sample_weight:
+        sample_weight = np.ones(n_samples)
+    else:
+        sample_weight = None
+    with_mean = True
     for dtype in [np.float16, np.float32, np.float64]:
         X = rng.randn(n_samples, n_features).astype(dtype)
-        scaler = StandardScaler()
-        X_scaled = scaler.fit(X).transform(X)
+        if sparse_constructor is not None:
+            X = sparse_constructor(X)
+            with_mean = False
+
+        scaler = StandardScaler(with_mean=with_mean)
+        X_scaled = scaler.fit(X, sample_weight=sample_weight).transform(X)
         assert X.dtype == X_scaled.dtype
         assert scaler.mean_.dtype == np.float64
         assert scaler.scale_.dtype == np.float64
@@ -360,7 +428,6 @@ def test_standard_scaler_numerical_stability():
     # Test numerical stability of scaling
     # np.log(1e-5) is taken because of its floating point representation
     # was empirically found to cause numerical problems with np.mean & np.std.
-
     x = np.full(8, np.log(1e-5), dtype=np.float64)
     # This does not raise a warning as the number of samples is too low
     # to trigger the problem in recent numpy
@@ -539,7 +606,6 @@ def test_standard_scaler_partial_fit():
         scaler_incr = StandardScaler(with_std=False)
         for batch in gen_batches(n_samples, chunk_size):
             scaler_incr = scaler_incr.partial_fit(X[batch])
-
         assert_array_almost_equal(scaler_batch.mean_, scaler_incr.mean_)
         assert scaler_batch.var_ == scaler_incr.var_  # Nones
         assert scaler_batch.n_samples_seen_ == scaler_incr.n_samples_seen_
@@ -618,34 +684,48 @@ def test_standard_scaler_partial_fit_numerical_stability():
         assert_allclose(scaler_incr.scale_, scaler.scale_, rtol=tol)
 
 
-def test_partial_fit_sparse_input():
+@pytest.mark.parametrize("sample_weight", [True, None])
+def test_partial_fit_sparse_input(sample_weight):
     # Check that sparsity is not destroyed
     X = np.array([[1.], [0.], [0.], [5.]])
     X_csr = sparse.csr_matrix(X)
     X_csc = sparse.csc_matrix(X)
 
+    if sample_weight:
+        sample_weight = rng.rand(X_csc.shape[0])
+
     null_transform = StandardScaler(with_mean=False, with_std=False, copy=True)
     for X in [X_csr, X_csc]:
 
-        X_null = null_transform.partial_fit(X).transform(X)
-        assert_array_equal(X_null.data, X.data)
+        X_null = null_transform.partial_fit(
+            X, sample_weight=sample_weight).transform(X)
+        assert_array_equal(X_null.toarray(), X.toarray())
         X_orig = null_transform.inverse_transform(X_null)
-        assert_array_equal(X_orig.data, X_null.data)
-        assert_array_equal(X_orig.data, X.data)
+        assert_array_equal(X_orig.toarray(), X_null.toarray())
+        assert_array_equal(X_orig.toarray(), X.toarray())
 
 
-def test_standard_scaler_trasform_with_partial_fit():
+@pytest.mark.parametrize("sample_weight", [True, None])
+def test_standard_scaler_trasform_with_partial_fit(sample_weight):
     # Check some postconditions after applying partial_fit and transform
     X = X_2d[:100, :]
+
+    if sample_weight:
+        sample_weight = rng.rand(X.shape[0])
 
     scaler_incr = StandardScaler()
     for i, batch in enumerate(gen_batches(X.shape[0], 1)):
 
         X_sofar = X[:(i + 1), :]
         chunks_copy = X_sofar.copy()
-        scaled_batch = StandardScaler().fit_transform(X_sofar)
-
-        scaler_incr = scaler_incr.partial_fit(X[batch])
+        if sample_weight is None:
+            scaled_batch = StandardScaler().fit_transform(X_sofar)
+            scaler_incr = scaler_incr.partial_fit(X[batch])
+        else:
+            scaled_batch = StandardScaler().fit_transform(
+                X_sofar, sample_weight=sample_weight[:i + 1])
+            scaler_incr = scaler_incr.partial_fit(
+                X[batch], sample_weight=sample_weight[batch])
         scaled_incr = scaler_incr.transform(X_sofar)
 
         assert_array_almost_equal(scaled_batch, scaled_incr)
@@ -657,8 +737,14 @@ def test_standard_scaler_trasform_with_partial_fit():
         epsilon = np.finfo(float).eps
         assert_array_less(zero, scaler_incr.var_ + epsilon)  # as less or equal
         assert_array_less(zero, scaler_incr.scale_ + epsilon)
-        # (i+1) because the Scaler has been already fitted
-        assert (i + 1) == scaler_incr.n_samples_seen_
+        if sample_weight is None:
+            # (i+1) because the Scaler has been already fitted
+            assert (i + 1) == scaler_incr.n_samples_seen_
+        else:
+            assert (
+                np.sum(sample_weight[:i + 1]) ==
+                pytest.approx(scaler_incr.n_samples_seen_)
+            )
 
 
 def test_min_max_scaler_iris():
@@ -781,12 +867,16 @@ def test_min_max_scaler_1d():
                               minmax_scale(X_1d, copy=True))
 
 
-def test_scaler_without_centering():
+@pytest.mark.parametrize("sample_weight", [True, None])
+def test_scaler_without_centering(sample_weight):
     rng = np.random.RandomState(42)
     X = rng.randn(4, 5)
     X[:, 0] = 0.0  # first feature is always of zero
     X_csr = sparse.csr_matrix(X)
     X_csc = sparse.csc_matrix(X)
+
+    if sample_weight:
+        sample_weight = rng.rand(X.shape[0])
 
     with pytest.raises(ValueError):
         StandardScaler().fit(X_csr)
@@ -799,33 +889,42 @@ def test_scaler_without_centering():
     X_orig = null_transform.inverse_transform(X_null)
     assert_array_equal(X_orig.data, X_csr.data)
 
-    scaler = StandardScaler(with_mean=False).fit(X)
+    scaler = StandardScaler(with_mean=False).fit(
+        X, sample_weight=sample_weight)
     X_scaled = scaler.transform(X, copy=True)
     assert not np.any(np.isnan(X_scaled))
 
-    scaler_csr = StandardScaler(with_mean=False).fit(X_csr)
+    scaler_csr = StandardScaler(with_mean=False).fit(
+        X_csr, sample_weight=sample_weight)
     X_csr_scaled = scaler_csr.transform(X_csr, copy=True)
     assert not np.any(np.isnan(X_csr_scaled.data))
 
-    scaler_csc = StandardScaler(with_mean=False).fit(X_csc)
+    scaler_csc = StandardScaler(with_mean=False).fit(
+        X_csc, sample_weight=sample_weight)
     X_csc_scaled = scaler_csc.transform(X_csc, copy=True)
     assert not np.any(np.isnan(X_csc_scaled.data))
 
     assert_array_almost_equal(scaler.mean_, scaler_csr.mean_)
     assert_array_almost_equal(scaler.var_, scaler_csr.var_)
     assert_array_almost_equal(scaler.scale_, scaler_csr.scale_)
+    assert_array_almost_equal(scaler.n_samples_seen_,
+                              scaler_csr.n_samples_seen_)
 
     assert_array_almost_equal(scaler.mean_, scaler_csc.mean_)
     assert_array_almost_equal(scaler.var_, scaler_csc.var_)
     assert_array_almost_equal(scaler.scale_, scaler_csc.scale_)
+    assert_array_almost_equal(scaler.n_samples_seen_,
+                              scaler_csc.n_samples_seen_)
 
-    assert_array_almost_equal(
-        X_scaled.mean(axis=0), [0., -0.01, 2.24, -0.35, -0.78], 2)
-    assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
+    if sample_weight is None:
+        assert_array_almost_equal(
+            X_scaled.mean(axis=0), [0., -0.01, 2.24, -0.35, -0.78], 2)
+        assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
 
-    X_csr_scaled_mean, X_csr_scaled_std = mean_variance_axis(X_csr_scaled, 0)
+    X_csr_scaled_mean, X_csr_scaled_var = \
+        mean_variance_axis(X_csr_scaled, 0)
     assert_array_almost_equal(X_csr_scaled_mean, X_scaled.mean(axis=0))
-    assert_array_almost_equal(X_csr_scaled_std, X_scaled.std(axis=0))
+    assert_array_almost_equal(X_csr_scaled_var, X_scaled.var(axis=0))
 
     # Check that X has not been modified (copy)
     assert X_scaled is not X
@@ -1231,12 +1330,8 @@ def test_quantile_transform_check_error():
 
     X_bad_feat = np.transpose([[0, 25, 50, 0, 0, 0, 75, 0, 0, 100],
                                [0, 0, 2.6, 4.1, 0, 0, 2.3, 0, 9.5, 0.1]])
-    err_msg = ("X does not have the same number of features as the previously"
-               " fitted " "data. Got 2 instead of 3.")
-    with pytest.raises(ValueError, match=err_msg):
-        transformer.transform(X_bad_feat)
-    err_msg = ("X does not have the same number of features "
-               "as the previously fitted data. Got 2 instead of 3.")
+    err_msg = ("X has 2 features, but QuantileTransformer is expecting "
+               "3 features as input.")
     with pytest.raises(ValueError, match=err_msg):
         transformer.inverse_transform(X_bad_feat)
 
@@ -2141,21 +2236,34 @@ def test_center_kernel():
 def test_cv_pipeline_precomputed():
     # Cross-validate a regression on four coplanar points with the same
     # value. Use precomputed kernel to ensure Pipeline with KernelCenterer
-    # is treated as a _pairwise operation.
+    # is treated as a pairwise operation.
     X = np.array([[3, 0, 0], [0, 3, 0], [0, 0, 3], [1, 1, 1]])
     y_true = np.ones((4,))
     K = X.dot(X.T)
     kcent = KernelCenterer()
     pipeline = Pipeline([("kernel_centerer", kcent), ("svr", SVR())])
 
-    # did the pipeline set the _pairwise attribute?
-    assert pipeline._pairwise
+    # did the pipeline set the pairwise attribute?
+    assert pipeline._get_tags()['pairwise']
+
+    # TODO: Remove in 0.26
+    msg = r"Attribute _pairwise was deprecated in version 0\.24"
+    with pytest.warns(FutureWarning, match=msg):
+        assert pipeline._pairwise
 
     # test cross-validation, score should be almost perfect
     # NB: this test is pretty vacuous -- it's mainly to test integration
     #     of Pipeline and KernelCenterer
     y_pred = cross_val_predict(pipeline, K, y_true, cv=2)
     assert_array_almost_equal(y_true, y_pred)
+
+
+# TODO: Remove in 0.26
+def test_pairwise_deprecated():
+    kcent = KernelCenterer()
+    msg = r"Attribute _pairwise was deprecated in version 0\.24"
+    with pytest.warns(FutureWarning, match=msg):
+        kcent._pairwise
 
 
 def test_fit_transform():
@@ -2342,7 +2450,8 @@ def test_power_transformer_shape_exception(method):
 
     # Exceptions should be raised for arrays with different num_columns
     # than during fitting
-    wrong_shape_message = 'Input data has a different number of features'
+    wrong_shape_message = (r"X has \d+ features, but PowerTransformer is "
+                           r"expecting \d+ features")
 
     with pytest.raises(ValueError, match=wrong_shape_message):
         pt.transform(X[:, 0:1])
