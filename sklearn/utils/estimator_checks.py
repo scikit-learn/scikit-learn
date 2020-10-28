@@ -3272,7 +3272,6 @@ _NON_API_CHECKS = set([
     'check_fit2d_1feature',
     'check_transformer_preserve_dtypes',
     'check_estimators_nan_inf',
-    'check_estimators_pickle',
     'check_clusterer_compute_labels_predict',
     'check_classifiers_one_label',
     'check_regressors_int',
