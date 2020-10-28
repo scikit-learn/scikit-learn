@@ -30,7 +30,6 @@ from scipy.sparse import csr_matrix
 
 from ..preprocessing import LabelBinarizer
 from ..preprocessing import LabelEncoder
-from ..utils import assert_all_finite
 from ..utils import check_array
 from ..utils import check_consistent_length
 from ..utils import column_or_1d
