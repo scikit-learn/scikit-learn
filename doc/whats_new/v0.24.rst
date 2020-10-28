@@ -372,6 +372,11 @@ Changelog
   `predict` and `score` would fail when `fit_intercept=False` and there was
   one feature during fitting. :pr:`18121` by `Thomas Fan`_.
 
+- |Fix| Fixes bug in :class:`linear_model.ARDRegression` where `predict`
+  was raising an error when `normalize=True` and `return_std=True` because
+  `X_offset_` and `X_scale_` were undefined.
+  :pr:`18607` by :user:`fhaselbeck <fhaselbeck>`.
+
 :mod:`sklearn.manifold`
 .......................
 
