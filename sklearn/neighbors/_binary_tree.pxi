@@ -1049,18 +1049,17 @@ cdef class BinaryTree:
     def __init__(self, data,
                  leaf_size=40, metric='minkowski', sample_weight=None, **kwargs):
         # validate data
-        if data.size == 0:
+        self.data_arr = check_array(data, dtype=DTYPE, order='C')
+        if self.data_arr.size == 0:
             raise ValueError("X is an empty array")
+
+        n_samples = self.data_arr.shape[0]
+        n_features = self.data_arr.shape[1]
 
         if leaf_size < 1:
             raise ValueError("leaf_size must be greater than or equal to 1")
-
-        self.data_arr = check_array(data, dtype=DTYPE, order='C')
-
-        n_samples = data.shape[0]
-        n_features = data.shape[1]
-
         self.leaf_size = leaf_size
+
         self.dist_metric = DistanceMetric.get_metric(metric, **kwargs)
         self.euclidean = (self.dist_metric.__class__.__name__
                           == 'EuclideanDistance')
