@@ -1382,6 +1382,7 @@ def _check_transformer(name, transformer_orig, X, y, api_only=False):
             ):
                 transformer.transform(X[:, :-1])
         if api_only:
+            # The remaining asserts are non-API asserts
             return
 
         if name in CROSS_DECOMPOSITION:
@@ -1769,6 +1770,7 @@ def check_classifier_multioutput(name, estimator, api_only=False):
                 assert_array_equal(y_prob.round().astype(int), y_pred)
 
     if api_only:
+        # The remaining asserts are non-API asserts
         return
 
     if (hasattr(estimator, "decision_function") and
@@ -1836,6 +1838,8 @@ def check_clustering(name, clusterer_orig, readonly_memmap=False,
     assert pred.shape == (n_samples,)
 
     if api_only:
+        # The remaining asserts are non-API asserts
+
         return
 
     assert adjusted_rand_score(pred, y) > 0.4
