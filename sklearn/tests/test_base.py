@@ -509,7 +509,7 @@ def test_raises_on_get_params_non_attribute():
             return self
 
     est = MyEstimator()
-    msg = "The parameter param cannot be retrieved as an instance attribute."
+    msg = "'MyEstimator' object has no attribute 'param'"
 
     with pytest.raises(AttributeError, match=msg):
         est.get_params()
