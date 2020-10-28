@@ -83,21 +83,21 @@ def mean_variance_axis(X, axis, weights=None, return_sum_weights=False):
 
     return_sum_weights : bool, default=False
         If True, returns the sum of weights seen for each feature
-        if axis=0 or each sample if axis=1.
+        if `axis=0` or each sample if `axis=1`.
 
         .. versionadded:: 0.24
 
     Returns
     -------
 
-    means : float array with shape (n_features,)
+    means : ndarray of shape (n_features,), dtype=floating
         Feature-wise means
 
-    variances : float array with shape (n_features,)
+    variances : ndarray of shape (n_features,), dtype=floating
         Feature-wise variances
 
-    sum_weights : float array with shape (n_features,)
-        Returned if return_sum_weights is True.
+    sum_weights : ndarray of shape (n_features,), dtype=floating
+        Returned if `return_sum_weights` is `True`.
     """
     _raise_error_wrong_axis(axis)
 
@@ -154,7 +154,7 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n,
         having same weights for all samples (or features).
 
     weights : ndarray of shape (n_samples,) or (n_features,), default=None
-        if axis is set to 0 shape is (n_samples,) or
+        If axis is set to 0 shape is (n_samples,) or
         if axis is set to 1 shape is (n_features,).
         If it is set to None, then samples are equally weighted.
 

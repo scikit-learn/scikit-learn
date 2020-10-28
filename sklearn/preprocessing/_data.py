@@ -635,7 +635,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         The number of samples processed by the estimator for each feature.
         If there are no missing samples, the ``n_samples_seen`` will be an
         integer, otherwise it will be an array of dtype int. If
-        sample_weights are used it will be a float (if no missing data)
+        `sample_weights` are used it will be a float (if no missing data)
         or an array of dtype float that sums the weights seen so far.
         Will be reset on new calls to fit, but increments across
         ``partial_fit`` calls.
@@ -763,7 +763,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         X = self._validate_data(X, accept_sparse=('csr', 'csc'),
                                 estimator=self, dtype=FLOAT_DTYPES,
                                 force_all_finite='allow-nan', reset=first_call)
-        n_samples, n_features = X.shape
+        n_features = X.shape[1]
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X,
@@ -779,8 +779,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         dtype = np.int64 if sample_weight is None else X.dtype
         if not hasattr(self, 'n_samples_seen_'):
             self.n_samples_seen_ = np.zeros(n_features, dtype=dtype)
-        elif (hasattr(self, 'n_samples_seen_') and
-              np.size(self.n_samples_seen_) == 1):
+        elif np.size(self.n_samples_seen_) == 1:
             self.n_samples_seen_ = np.repeat(
                 self.n_samples_seen_, X.shape[1])
             self.n_samples_seen_ = \

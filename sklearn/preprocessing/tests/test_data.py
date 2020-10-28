@@ -319,19 +319,14 @@ def test_raises_value_error_if_sample_weights_greater_than_1d():
                             [np.nan, np.nan, 1], [np.nan, np.nan, 1]],
                            np.array([1, 3])),
                           ])
-@pytest.mark.parametrize("sparse_constructor",
-                         [None, sparse.csc_matrix, sparse.csr_matrix])
+@pytest.mark.parametrize(
+    "array_constructor", ["array", "sparse_csr", "sparse_csc"]
+)
 def test_standard_scaler_sample_weight(
-        Xw, X, sample_weight, sparse_constructor):
-
-    with_mean = True
-    if sparse_constructor is not None:
-        X = sparse_constructor(X)
-        Xw = sparse_constructor(Xw)
-        with_mean = False
-    else:
-        Xw = np.array(Xw)
-        X = np.array(X)
+        Xw, X, sample_weight, array_constructor):
+    with_mean = not array_constructor.startswith("sparse")
+    X = _convert_container(X, array_constructor)
+    Xw = _convert_container(Xw, array_constructor)
 
     # weighted StandardScaler
     yw = np.ones(Xw.shape[0])
