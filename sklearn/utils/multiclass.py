@@ -8,6 +8,7 @@ Multi-class / multi-label utility function
 """
 from collections.abc import Sequence
 from itertools import chain
+import warnings
 
 from scipy.sparse import issparse
 from scipy.sparse.base import spmatrix
@@ -137,11 +138,9 @@ def is_multilabel(y):
     >>> is_multilabel(np.array([[1, 0, 0]]))
     True
     """
-    import warnings
-
     if hasattr(y, '__array__') or isinstance(y, Sequence):
-        # TODO: Replace the warning context manager with a try-except statement
         # DeprecationWarning will be replaced by ValueError, see NEP 34
+        # https://numpy.org/neps/nep-0034-infer-dtype-is-object.html
         with warnings.catch_warnings():
             warnings.simplefilter('error', np.VisibleDeprecationWarning)
             try:
@@ -248,8 +247,6 @@ def type_of_target(y):
     >>> type_of_target(np.array([[0, 1], [1, 1]]))
     'multilabel-indicator'
     """
-    import warnings
-
     valid = ((isinstance(y, (Sequence, spmatrix)) or hasattr(y, '__array__'))
              and not isinstance(y, str))
 
@@ -264,8 +261,8 @@ def type_of_target(y):
     if is_multilabel(y):
         return 'multilabel-indicator'
 
-    # TODO: Replace the warning context manager with a try-except statement
     # DeprecationWarning will be replaced by ValueError, see NEP 34
+    # https://numpy.org/neps/nep-0034-infer-dtype-is-object.html
     with warnings.catch_warnings():
         warnings.simplefilter('error', np.VisibleDeprecationWarning)
         try:
