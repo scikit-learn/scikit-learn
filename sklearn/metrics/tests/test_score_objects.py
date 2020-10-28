@@ -75,6 +75,7 @@ CLF_SCORERS = ['accuracy', 'balanced_accuracy', 'top_k_accuracy',
 
 # All supervised cluster scorers (They behave like classification metric)
 CLUSTER_SCORERS = ["adjusted_rand_score",
+                   "rand_score",
                    "homogeneity_score",
                    "completeness_score",
                    "v_measure_score",
@@ -603,6 +604,8 @@ def test_scoring_is_not_metric():
         check_scoring(Ridge(), scoring=r2_score)
     with pytest.raises(ValueError, match='make_scorer'):
         check_scoring(KMeans(), scoring=cluster_module.adjusted_rand_score)
+    with pytest.raises(ValueError, match='make_scorer'):
+        check_scoring(KMeans(), scoring=cluster_module.rand_score)
 
 
 @pytest.mark.parametrize(

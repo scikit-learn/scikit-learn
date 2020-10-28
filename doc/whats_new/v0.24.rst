@@ -396,6 +396,10 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
+- |Feature| Added :func:`metrics.cluster.pair_confusion_matrix` implementing
+  the confusion matrix arising from pairs of elements from two clusterings.
+  :pr:`17412` by :user:`Uwe F Mayer <ufmayer>`.
+
 - |Feature| new metric :func:`metrics.top_k_accuracy_score`. It's a
   generalization of :func:`metrics.top_k_accuracy_score`, the difference is
   that a prediction is considered correct as long as the true label is
@@ -418,9 +422,18 @@ Changelog
   some practical test cases were taken from PR :pr:`10711` by
   :user:`Mohamed Ali Jamaoui <mohamed-ali>`.
 
+- |Feature| Added :func:`metrics.rand_score` implementing the (unadjusted)
+  Rand index.
+  :pr:`17412` by :user:`Uwe F Mayer <ufmayer>`.
+
 - |Feature| :func:`metrics.plot_confusion_matrix` now supports making colorbar
   optional in the matplotlib plot by setting `colorbar=False`. :pr:`17192` by
   :user:`Avi Gupta <avigupta2612>`
+
+- |Fix| Fixed a bug in
+  :func:`metrics.classification_report` which was raising AttributeError
+  when called with `output_dict=True` for 0-length values.
+  :pr:`17777` by :user:`Shubhanshu Mishra <napsternxg>`.
 
 - |Enhancement| Add `sample_weight` parameter to
   :func:`metrics.median_absolute_error`. :pr:`17225` by
