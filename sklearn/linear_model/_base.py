@@ -11,6 +11,7 @@ Generalized Linear Models.
 #         Lars Buitinck
 #         Maryan Morel <maryan.morel@polytechnique.edu>
 #         Giorgio Patrini <giorgio.patrini@anu.edu.au>
+#         Maria Telenczuk <https://github.com/maikia>
 # License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
@@ -51,7 +52,7 @@ SPARSE_INTERCEPT_DECAY = 0.01
 # FIXME in 0.26: variable 'normalize' should be removed from linear models
 # in cases where now normalize=False. default value of 'normalize' should be
 # changed to False in linear models where now normalize=True
-def _deprecate_normalize(normalize, default):
+def _deprecate_normalize(normalize, default, est_name):
     if normalize == 'deprecated':
         _normalize = default
     else:
@@ -61,18 +62,23 @@ def _deprecate_normalize(normalize, default):
         warnings.warn(
             " default of 'normalize' will be set to False in version 0.26 and"
             " deprecated in version 0.28."
-            " Pass normalize=False and use Pipeline with a StandardScaler in a"
-            " preprocessing stage:"
+            " \nPass normalize=False and use Pipeline with a StandardScaler in"
+            " a preprocessing stage:"
             "  model = make_pipeline(StandardScaler(),"
-            " {type(self).__name__}())", FutureWarning
+            f" {est_name}())", FutureWarning
         )
     elif normalize != 'deprecated' and normalize and not default:
         warnings.warn(
             "'normalize' was deprecated in version 0.24 and will be"
-            " removed in 0.26. If you still wish to normalize use"
+            " removed in 0.26. \nIf you still wish to normalize use"
             " Pipeline with a StandardScaler in a preprocessing stage:"
             "  model = make_pipeline(StandardScaler(),"
-            " {type(self).__name__}())", FutureWarning
+            f" {est_name}()). \nIf you used sample_weight you can"
+            " now  pass it as follows:"
+            " model = make_pipeline(StandardScaler("
+            "sample_weight=your_sample_weight),"
+            f" {est_name}("
+            "sample_weight=your_sample_weight))", FutureWarning
         )
     elif normalize != 'deprecated' and not normalize and not default:
         warnings.warn(
@@ -551,7 +557,8 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         self : returns an instance of self.
         """
 
-        _normalize = _deprecate_normalize(self.normalize, default=False)
+        _normalize = _deprecate_normalize(self.normalize, default=False,
+                                          est_name=type(self).__name__)
 
         n_jobs_ = self.n_jobs
 
