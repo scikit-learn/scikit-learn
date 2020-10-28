@@ -1052,7 +1052,9 @@ cdef class BinaryTree:
         self.data_arr = check_array(data, dtype=DTYPE, order='C')
         if self.data_arr.size == 0:
             raise ValueError("X is an empty array")
-        n_samples, n_features = self.data_arr.shape
+
+        n_samples = self.data_arr.shape[0]
+        n_features = self.data_arr.shape[1]
 
         if leaf_size < 1:
             raise ValueError("leaf_size must be greater than or equal to 1")
