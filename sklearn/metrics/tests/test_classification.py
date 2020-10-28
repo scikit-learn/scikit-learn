@@ -2352,11 +2352,13 @@ def test_brier_score_loss():
                                                                    [0, 1, 0],
                                                                    [0, 1, 0]]),
                         2/3)
-    assert_almost_equal(brier_score_loss(['eggs', 'spam', 'ham'], [[1, 0, 0, 0],
-                                                                   [0, 1, 0, 0],
-                                                                   [0, 1, 0, 0]],
-                                         labels=['eggs', 'spam', 'ham', 'yams']),
-                        2/3)
+    assert_almost_equal(
+        brier_score_loss(['eggs', 'spam', 'ham'],
+                         [[1, 0, 0, 0],
+                          [0, 1, 0, 0],
+                          [0, 1, 0, 0]],
+                         labels=['eggs', 'spam', 'ham', 'yams']),
+        2/3)
 
 
 def test_balanced_accuracy_score_unseen():
