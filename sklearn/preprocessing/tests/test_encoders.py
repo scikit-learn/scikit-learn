@@ -830,6 +830,33 @@ def test_encoders_has_categorical_tags(Encoder):
     assert 'categorical' in Encoder()._get_tags()['X_types']
 
 
+@pytest.mark.parametrize('input_dtype', ['O', 'U'])
+@pytest.mark.parametrize('category_dtype', ['O', 'U'])
+@pytest.mark.parametrize('array_type', ['list', 'array', 'dataframe'])
+def test_encoders_unicode_categories(input_dtype, category_dtype, array_type):
+    """Check that encoding work with string and object dtypes.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/15616
+    https://github.com/scikit-learn/scikit-learn/issues/15726
+    """
+
+    X = np.array([['b'], ['a']], dtype=input_dtype)
+    categories = [np.array(['b', 'a'], dtype=category_dtype)]
+    ohe = OneHotEncoder(categories=categories, sparse=False).fit(X)
+
+    X_test = _convert_container([['a'], ['a'], ['b'], ['a']], array_type)
+    X_trans = ohe.transform(X_test)
+
+    expected = np.array([[0, 1], [0, 1], [1, 0], [0, 1]])
+    assert_allclose(X_trans, expected)
+
+    oe = OrdinalEncoder(categories=categories).fit(X)
+    X_trans = oe.transform(X_test)
+
+    expected = np.array([[1], [1], [0], [1]])
+    assert_array_equal(X_trans, expected)
+
+
 @pytest.mark.parametrize("missing_value", [np.nan, None])
 def test_ohe_missing_values_get_feature_names(missing_value):
     # encoder with missing values with object dtypes
