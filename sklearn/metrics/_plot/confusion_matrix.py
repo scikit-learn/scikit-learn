@@ -67,9 +67,11 @@ class ConfusionMatrixDisplay:
     >>> disp.plot() # doctest: +SKIP
     """
     @_deprecate_positional_args
-    def __init__(self, confusion_matrix, *, display_labels=None):
+    def __init__(self, confusion_matrix, *, display_labels=None, 
+        confusion_matrix_absolute=None):
         self.confusion_matrix = confusion_matrix
         self.display_labels = display_labels
+        self.confusion_matrix_absolute = confusion_matrix_absolute
 
     @_deprecate_positional_args
     def plot(self, *, include_values=True, cmap='viridis',
@@ -113,6 +115,8 @@ class ConfusionMatrixDisplay:
             fig = ax.figure
 
         cm = self.confusion_matrix
+        cm_absolute = self.confusion_matrix_absolute
+
         n_classes = cm.shape[0]
         self.im_ = ax.imshow(cm, interpolation='nearest', cmap=cmap)
         self.text_ = None
@@ -135,6 +139,14 @@ class ConfusionMatrixDisplay:
                             text_cm = text_d
                 else:
                     text_cm = format(cm[i, j], values_format)
+
+                if cm_absolute:
+                    text_cm_abs = format(cm_absolute[i, j], '.2g')
+                    text_d = format(cm_absolute[i, j], 'd')
+                    if len(text_d) < len(text_cm):
+                        text_cm_abs = text_d
+
+                    text_cm = "%s\n(%s)" % (text_cm, text_cm_abs)
 
                 self.text_[i, j] = ax.text(
                     j, i, text_cm,
@@ -165,6 +177,7 @@ class ConfusionMatrixDisplay:
 @_deprecate_positional_args
 def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
                           sample_weight=None, normalize=None,
+                          display_absolute=False,
                           display_labels=None, include_values=True,
                           xticks_rotation='horizontal',
                           values_format=None,
@@ -261,6 +274,12 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
     cm = confusion_matrix(y_true, y_pred, sample_weight=sample_weight,
                           labels=labels, normalize=normalize)
 
+    # retrieve absolute sample numbers
+    cm_absolute = None
+    if normalize and display_absolute:
+        cm_absolute = confusion_matrix(y_true, y_pred, sample_weight=sample_weight,
+                          labels=labels)
+
     if display_labels is None:
         if labels is None:
             display_labels = unique_labels(y_true, y_pred)
@@ -268,7 +287,8 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
             display_labels = labels
 
     disp = ConfusionMatrixDisplay(confusion_matrix=cm,
-                                  display_labels=display_labels)
+                                  display_labels=display_labels,
+                                  confusion_matrix_absolute=cm_absolute)
     return disp.plot(include_values=include_values,
                      cmap=cmap, ax=ax, xticks_rotation=xticks_rotation,
                      values_format=values_format, colorbar=colorbar)
