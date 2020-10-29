@@ -98,7 +98,6 @@ def test_plot_confusion_matrix_custom_labels(pyplot, data, y_pred, fitted_clf,
     assert_array_equal(y_ticks, expected_display_labels_str)
 
 
-
 @pytest.mark.parametrize("display_absolute", [False, True])
 @pytest.mark.parametrize("normalize", ['true', 'pred', 'all', None])
 @pytest.mark.parametrize("include_values", [True, False])
