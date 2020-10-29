@@ -117,11 +117,11 @@ def test_plot_confusion_matrix(pyplot, data, y_pred, n_classes, fitted_clf,
     assert disp.ax_ == ax
 
     if normalize == 'true':
-        cm = cm_abs / cm.sum(axis=1, keepdims=True)
+        cm = cm_abs / cm_abs.sum(axis=1, keepdims=True)
     elif normalize == 'pred':
-        cm = cm_abs / cm.sum(axis=0, keepdims=True)
+        cm = cm_abs / cm_abs.sum(axis=0, keepdims=True)
     elif normalize == 'all':
-        cm = cm_abs / cm.sum()
+        cm = cm_abs / cm_abs.sum()
     else:
         cm = cm_abs
 
