@@ -66,7 +66,7 @@ def test_calibration(data, method, ensemble):
                                       (sparse.csr_matrix(X_train),
                                        sparse.csr_matrix(X_test))]:
         cal_clf = CalibratedClassifierCV(
-            clf, method=method, cv=2, ensemble=ensemble
+            clf, method=method, cv=5, ensemble=ensemble
         )
         # Note that this fit overwrites the fit on the entire training
         # set
@@ -204,58 +204,75 @@ def test_parallel_execution(data, method, ensemble):
 
 @pytest.mark.parametrize('method', ['sigmoid', 'isotonic'])
 @pytest.mark.parametrize('ensemble', [True, False])
-def test_calibration_multiclass(method, ensemble):
+# increase the number of RNG seeds to assess the statistical stability of this
+# test:
+@pytest.mark.parametrize('seed', range(2))
+def test_calibration_multiclass(method, ensemble, seed):
+
+    def multiclass_brier(y_true, proba_pred, n_classes):
+        Y_onehot = np.eye(n_classes)[y_true]
+        return np.sum((Y_onehot - proba_pred) ** 2) / Y_onehot.shape[0]
+
     # Test calibration for multiclass with classifier that implements
     # only decision function.
     clf = LinearSVC(random_state=7)
-    X, y_idx = make_blobs(n_samples=100, n_features=2, random_state=42,
-                          centers=3, cluster_std=3.0)
+    X, y = make_blobs(n_samples=500, n_features=100, random_state=seed,
+                      centers=10, cluster_std=15.0)
 
-    # Use categorical labels to check that CalibratedClassifierCV supports
-    # them correctly
-    target_names = np.array(['a', 'b', 'c'])
-    y = target_names[y_idx]
-
+    # Use an unbalanced dataset by collapsing 8 clusters into one class
+    # to make the naive calibration based on a softmax more unlikely
+    # to work.
+    y[y > 2] = 2
+    n_classes = np.unique(y).shape[0]
     X_train, y_train = X[::2], y[::2]
     X_test, y_test = X[1::2], y[1::2]
 
     clf.fit(X_train, y_train)
 
     cal_clf = CalibratedClassifierCV(
-        clf, method=method, cv=2, ensemble=ensemble
+        clf, method=method, cv=5, ensemble=ensemble
     )
     cal_clf.fit(X_train, y_train)
     probas = cal_clf.predict_proba(X_test)
     # Check probabilities sum to 1
     assert_allclose(np.sum(probas, axis=1), np.ones(len(X_test)))
 
-    # Check that log-loss of calibrated classifier is smaller than
-    # log-loss obtained by naively turning OvR decision function to
-    # probabilities via softmax
-    uncalibrated_log_loss = \
-        log_loss(y_test, softmax(clf.decision_function(X_test)))
-    calibrated_log_loss = log_loss(y_test, probas)
-    assert uncalibrated_log_loss >= calibrated_log_loss
+    # Check that the dataset is not too trivial, otherwise it's hard
+    # to get interesting calibration data during the internal
+    # cross-validation loop.
+    assert 0.65 < clf.score(X_test, y_test) < 0.95
+
+    # Check that the accuracy of the calibrated model is never degraded
+    # too much compared to the original classifier.
+    assert cal_clf.score(X_test, y_test) > 0.95 * clf.score(X_test, y_test)
+
+    # Check that Brier loss of calibrated classifier is smaller than
+    # loss obtained by naively turning OvR decision function to
+    # probabilities via a softmax
+    uncalibrated_brier = \
+        multiclass_brier(y_test, softmax(clf.decision_function(X_test)),
+                         n_classes=n_classes)
+    calibrated_brier = multiclass_brier(y_test, probas,
+                                        n_classes=n_classes)
+
+    assert calibrated_brier < 1.1 * uncalibrated_brier
 
     # Test that calibration of a multiclass classifier decreases log-loss
     # for RandomForestClassifier
-    X, y = make_blobs(n_samples=1500, n_features=2, random_state=42,
-                      cluster_std=3.0)
-    X_train, y_train = X[::2], y[::2]
-    X_test, y_test = X[1::2], y[1::2]
-
-    clf = RandomForestClassifier(n_estimators=10, random_state=42)
+    clf = RandomForestClassifier(n_estimators=30, random_state=42)
     clf.fit(X_train, y_train)
     clf_probs = clf.predict_proba(X_test)
-    loss = log_loss(y_test, clf_probs)
+    uncalibrated_brier = multiclass_brier(y_test, clf_probs,
+                                          n_classes=n_classes)
 
     cal_clf = CalibratedClassifierCV(
-        clf, method=method, cv=3, ensemble=ensemble
+        clf, method=method, cv=5, ensemble=ensemble
     )
     cal_clf.fit(X_train, y_train)
     cal_clf_probs = cal_clf.predict_proba(X_test)
-    cal_loss = log_loss(y_test, cal_clf_probs)
-    assert loss > cal_loss
+    calibrated_brier = multiclass_brier(y_test, cal_clf_probs,
+                                        n_classes=n_classes)
+    assert calibrated_brier < 1.1 * uncalibrated_brier
 
 
 def test_calibration_prefit():
