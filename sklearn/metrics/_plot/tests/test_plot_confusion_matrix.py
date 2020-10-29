@@ -122,6 +122,8 @@ def test_plot_confusion_matrix(pyplot, data, y_pred, n_classes, fitted_clf,
         cm = cm_abs / cm.sum(axis=0, keepdims=True)
     elif normalize == 'all':
         cm = cm_abs / cm.sum()
+    else:
+        cm = cm_abs
 
     assert_allclose(disp.confusion_matrix, cm)
     import matplotlib as mpl
