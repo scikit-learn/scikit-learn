@@ -153,7 +153,7 @@ def test_plot_confusion_matrix(pyplot, data, y_pred, n_classes, fitted_clf,
     if include_values:
         assert disp.text_.shape == (n_classes, n_classes)
         fmt = '.2g'
-        if display_absolute:
+        if display_absolute and normalize:
             expected_text = np.array(
                 ["%s\n(%s)" % (format(v_rel, fmt), format(v_rel, fmt))
                     for v_rel, v_abs in zip(
