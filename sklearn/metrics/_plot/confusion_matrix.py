@@ -140,7 +140,7 @@ class ConfusionMatrixDisplay:
                 else:
                     text_cm = format(cm[i, j], values_format)
 
-                if cm_absolute:
+                if isinstance(cm_absolute, np.ndarray):
                     text_cm_abs = format(cm_absolute[i, j], '.2g')
                     text_d = format(cm_absolute[i, j], 'd')
                     if len(text_d) < len(text_cm):
