@@ -21,7 +21,7 @@ from sklearn.datasets import make_moons
 X, y = make_moons(noise=0.352, random_state=1, n_samples=100)
 
 sns.scatterplot(
-    X[:, 0], X[:, 1], hue=y,
+    x=X[:, 0], y=X[:, 1], hue=y,
     marker='o', s=25, edgecolor='k', legend=False
 ).set_title("Data")
 plt.show()
@@ -63,13 +63,13 @@ search.fit(X, y)
 import pandas as pd
 
 results_df = pd.DataFrame(search.cv_results_)
+results_df = results_df.sort_values(by=['rank_test_score'])
 results_df = (
     results_df
-    .sort_values(by=['rank_test_score'])
     .set_index(results_df["params"].apply(
         lambda x: "_".join(str(val) for val in x.values()))
     )
-    .rename_axis('model')
+    .rename_axis('kernel')
 )
 results_df[
     ['params', 'rank_test_score', 'mean_test_score', 'std_test_score']
@@ -151,15 +151,17 @@ print(f"Correlation of models:\n {model_scores.transpose().corr()}")
 #    t=\frac{\frac{1}{k \cdot r}\sum_{i=1}^{k}\sum_{j=1}^{r}x_{ij}}
 #    {\sqrt{(\frac{1}{k \cdot r}+\frac{n_{test}}{n_{train}})\hat{\sigma}^2}}
 #
-# where :math:`{\sigma}^2` represents the variance, :math:`k` is the number of
-# folds, :math:`r` the number of repetitions in the cross-validation,
-# :math:`n_{test}` is the number of observations used for testing, and
-# :math:`n_{train}` is the the number of observations used for training.
+# where :math:`k` is the number of folds,
+# :math:`r` the number of repetitions in the cross-validation,
+# :math:`x` is the difference in performance of the models,
+# :math:`n_{test}` is the number of observations used for testing,
+# :math:`n_{train}` is the the number of observations used for training,
+# and :math:`\hat{\sigma}^2` represents the variance of the sample.
 #
 # Let's implement a corrected right-tailed paired t-test to evaluate if the
 # performance of the first model is significantly better than that of the
-# second model. Our null hypothesis is that the 2nd model performs at least as
-# good as the 1st model
+# second model. Our null hypothesis is that the second model performs at least
+# as good as the first model
 
 import numpy as np
 from scipy.stats import t
@@ -221,10 +223,10 @@ def compute_corrected_ttest(differences, n, df, n_train, n_test):
     return t_stat, p_val
 
 
+# %%
 model_1_scores = model_scores.iloc[0].values  # scores of the best model
 model_2_scores = model_scores.iloc[1].values  # scores of the second-best model
 
-# %%
 differences = model_1_scores - model_2_scores
 
 n = differences.shape[0]  # number of test sets
@@ -289,7 +291,14 @@ print(f"Uncorrected t-value: {t_stat_uncorrected:.3f}\n"
 #    St(\mu;n-1,\overline{x},(\frac{1}{n}+\frac{n_{test}}{n_{train}})
 #    \hat{\sigma}^2)
 #
-# where :math:`n` is the total number of observations.
+# where :math:`\mu` represents the mean difference in performance of the
+# population,
+# :math:`n` is the total number of observations,
+# :math:`\overline{x}` represents the mean difference in performance of the
+# sample,
+# :math:`n_{test}` is the number of observations used for testing,
+# :math:`n_{train}` is the the number of observations used for training,
+# and :math:`\hat{\sigma}^2` represents the variance of the sample.
 #
 # Notice that we are using Nadeau and Bengio's corrected variance in our
 # Bayesian approach as well.
@@ -342,7 +351,7 @@ print(f"Probability of {model_scores.index[1]} being more accurate than "
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 # Sometimes we are interested in determining the probabilities that our models
 # have an equivalent performance, where "equivalent" is defined in a practical
-# way. A default approach [4]_ is to define estimators as practically
+# way. A naive approach [4]_ would be to define estimators as practically
 # equivalent when they differ by less than 1% in their accuracy. But we could
 # also define this practical equivalence taking into account the problem we are
 # trying to solve. For example, a difference of 5% in accuracy would mean an
@@ -387,8 +396,11 @@ plt.show()
 # %%
 # The Bayesian estimation approach also allows us to compute how uncertain we
 # are about our estimation of the difference. This can be calculated using
-# credible intervals which compute the range of values that have a particular
-# probability of containing the true mean of differences.
+# credible intervals which show the range of values that the mean
+# difference in performance between models can take with certain probability.
+# For example, a credible interval of 50% will tell us that there is a 50% of
+# probability that the true (mean) difference of performance between models is
+# between x and y values.
 #
 # Let's determine the credible intervals of our data using 50%, 75% and 95%:
 
@@ -404,6 +416,12 @@ cred_int_df = pd.DataFrame(
     columns=['interval', 'lower value', 'upper value']
 ).set_index('interval')
 cred_int_df
+
+# %%
+# As shown in the table, there is a 50% probability that the true mean
+# difference between models will be between 0.000977 and 0.019023, 70%
+# probability that it will be between -0.005422 and 0.025422, and 95%
+# probability that it will be between -0.016445	and 0.036445.
 
 # %%
 # Pairwise comparison of all models: frequentist approach
