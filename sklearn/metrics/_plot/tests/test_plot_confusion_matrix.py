@@ -107,7 +107,7 @@ def test_plot_confusion_matrix(pyplot, data, y_pred, n_classes, fitted_clf,
     X, y = data
     ax = pyplot.gca()
     cmap = 'plasma'
-    cm = confusion_matrix(y, y_pred)
+    cm_abs = confusion_matrix(y, y_pred)
     disp = plot_confusion_matrix(fitted_clf, X, y,
                                  normalize=normalize,
                                  cmap=cmap, ax=ax,
@@ -117,11 +117,11 @@ def test_plot_confusion_matrix(pyplot, data, y_pred, n_classes, fitted_clf,
     assert disp.ax_ == ax
 
     if normalize == 'true':
-        cm = cm / cm.sum(axis=1, keepdims=True)
+        cm = cm_abs / cm.sum(axis=1, keepdims=True)
     elif normalize == 'pred':
-        cm = cm / cm.sum(axis=0, keepdims=True)
+        cm = cm_abs / cm.sum(axis=0, keepdims=True)
     elif normalize == 'all':
-        cm = cm / cm.sum()
+        cm = cm_abs / cm.sum()
 
     assert_allclose(disp.confusion_matrix, cm)
     import matplotlib as mpl
@@ -151,7 +151,18 @@ def test_plot_confusion_matrix(pyplot, data, y_pred, n_classes, fitted_clf,
     if include_values:
         assert disp.text_.shape == (n_classes, n_classes)
         fmt = '.2g'
-        expected_text = np.array([format(v, fmt) for v in cm.ravel(order="C")])
+        if display_absolute:
+            expected_text = np.array(
+                ["%s\n%s" % (format(v_rel, fmt), format(v_rel, fmt))
+                    for v_rel, v_abs in zip(
+                            cm.ravel(order="C"),
+                            cm_abs.ravel(order="C")
+                        )
+                 ]
+            )
+        else:
+            expected_text = np.array([format(v, fmt)
+                                      for v in cm.ravel(order="C")])
         text_text = np.array([
             t.get_text() for t in disp.text_.ravel(order="C")])
         assert_array_equal(expected_text, text_text)
