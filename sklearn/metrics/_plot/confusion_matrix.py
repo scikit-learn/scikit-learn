@@ -67,8 +67,8 @@ class ConfusionMatrixDisplay:
     >>> disp.plot() # doctest: +SKIP
     """
     @_deprecate_positional_args
-    def __init__(self, confusion_matrix, *, display_labels=None, 
-        confusion_matrix_absolute=None):
+    def __init__(self, confusion_matrix, *, display_labels=None,
+                 confusion_matrix_absolute=None):
         self.confusion_matrix = confusion_matrix
         self.display_labels = display_labels
         self.confusion_matrix_absolute = confusion_matrix_absolute
@@ -277,8 +277,9 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
     # retrieve absolute sample numbers
     cm_absolute = None
     if normalize and display_absolute:
-        cm_absolute = confusion_matrix(y_true, y_pred, sample_weight=sample_weight,
-                          labels=labels)
+        cm_absolute = confusion_matrix(y_true, y_pred,
+                                       sample_weight=sample_weight,
+                                       labels=labels)
 
     if display_labels is None:
         if labels is None:
