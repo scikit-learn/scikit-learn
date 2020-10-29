@@ -13,6 +13,7 @@ from sklearn.utils._testing import (assert_array_almost_equal,
                                     assert_almost_equal,
                                     assert_array_equal,
                                     assert_raises, ignore_warnings)
+from sklearn.utils.extmath import softmax
 from sklearn.exceptions import NotFittedError
 from sklearn.datasets import make_classification, make_blobs
 from sklearn.preprocessing import LabelEncoder
@@ -109,7 +110,8 @@ def test_calibration_bad_method(data, ensemble):
     clf_invalid_method = CalibratedClassifierCV(
         clf, method="foo", ensemble=ensemble
     )
-    assert_raises(ValueError, clf_invalid_method.fit, X, y)
+    with pytest.raises(ValueError):
+        clf_invalid_method.fit(X, y)
 
 
 @pytest.mark.parametrize('ensemble', [True, False])
@@ -119,7 +121,8 @@ def test_calibration_regressor(data, ensemble):
     X, y = data
     clf_base_regressor = \
         CalibratedClassifierCV(RandomForestRegressor(), ensemble=ensemble)
-    assert_raises(RuntimeError, clf_base_regressor.fit, X, y)
+    with pytest.raises(RuntimeError):
+        clf_base_regressor.fit(X, y)
 
 
 def test_calibration_default_estimator(data):
@@ -144,10 +147,8 @@ def test_calibration_cv_splitter(data, ensemble):
     assert calib_clf.cv.n_splits == splits
 
     calib_clf.fit(X, y)
-    if ensemble:
-        assert len(calib_clf.calibrated_classifiers_) == splits
-    else:
-        assert len(calib_clf.calibrated_classifiers_) == 1
+    expected_n_clf = splits if ensemble else 1
+    assert len(calib_clf.calibrated_classifiers_) == expected_n_clf
 
 
 @pytest.mark.parametrize('method', ['sigmoid', 'isotonic'])
@@ -226,15 +227,11 @@ def test_calibration_multiclass(method, ensemble):
     cal_clf.fit(X_train, y_train)
     probas = cal_clf.predict_proba(X_test)
     # Check probabilities sum to 1
-    assert_array_almost_equal(np.sum(probas, axis=1), np.ones(len(X_test)))
+    assert_allclose(np.sum(probas, axis=1), np.ones(len(X_test)))
 
     # Check that log-loss of calibrated classifier is smaller than
     # log-loss obtained by naively turning OvR decision function to
     # probabilities via softmax
-    def softmax(y_pred):
-        e = np.exp(-y_pred)
-        return e / e.sum(axis=1).reshape(-1, 1)
-
     uncalibrated_log_loss = \
         log_loss(y_test, softmax(clf.decision_function(X_test)))
     calibrated_log_loss = log_loss(y_test, probas)
