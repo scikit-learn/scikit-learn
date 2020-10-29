@@ -840,6 +840,10 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     .. [4] `Jurman, Riccadonna, Furlanello, (2012). A Comparison of MCC and CEN
         Error Measures in MultiClass Prediction
         <https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0041882>`_.
+        
+    .. [5] `Chicco, Jurman, (2020). The advantages of the Matthews correlation 
+    coefficient (MCC) over F1 score and accuracy in binary classification evaluation
+        <https://doi.org/10.1186/s12864-019-6413-7>`_.        
 
     Examples
     --------
