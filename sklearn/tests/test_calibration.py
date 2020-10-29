@@ -25,7 +25,7 @@ from sklearn.isotonic import IsotonicRegression
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
-from sklearn.metrics import brier_score_loss, log_loss
+from sklearn.metrics import brier_score_loss
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.calibration import _sigmoid_calibration, _SigmoidCalibration
 from sklearn.calibration import calibration_curve
