@@ -1238,7 +1238,7 @@ class CategoricalNB(_BaseDiscreteNB):
                 )
             n_categories_ = np.maximum(n_categories_X,
                                        min_categories_,
-                                       dtype=np.int)
+                                       dtype=int)
             if n_categories_.shape != n_categories_X.shape:
                 raise ValueError(
                     f"'min_categories' should have shape ({X.shape[1]},"
