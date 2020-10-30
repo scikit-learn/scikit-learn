@@ -511,6 +511,43 @@ def test_make_unique_dtype():
         assert_array_equal(x, [2, 3, 5])
 
 
+@pytest.mark.parametrize("dtype", [np.float64, np.float32])
+def test_make_unique_tolerance(dtype):
+    # Check that equality takes account of np.finfo tolerance
+    x = np.array([0, 1e-16, 1, 1+1e-14], dtype=dtype)
+    y = x.copy()
+    w = np.ones_like(x)
+    x, y, w = _make_unique(x, y, w)
+    if dtype == np.float64:
+        x_out = np.array([0, 1, 1+1e-14])
+    else:
+        x_out = np.array([0, 1])
+    assert_array_equal(x, x_out)
+
+
+def test_isotonic_make_unique_tolerance():
+    # Check that averaging of targets for duplicate X is done correctly,
+    # taking into account tolerance
+    X = np.array([0, 1, 1+1e-16, 2], dtype=np.float64)
+    y = np.array([0, 1, 2, 3], dtype=np.float64)
+    ireg = IsotonicRegression().fit(X, y)
+    y_pred = ireg.predict([0, 0.5, 1, 1.5, 2])
+
+    assert_array_equal(y_pred, np.array([0, 0.75, 1.5, 2.25, 3]))
+    assert_array_equal(ireg.X_thresholds_, np.array([0., 1., 2.]))
+    assert_array_equal(ireg.y_thresholds_, np.array([0., 1.5, 3.]))
+
+
+def test_isotonic_non_regression_inf_slope():
+    # Non-regression test to ensure that inf values are not returned
+    # see: https://github.com/scikit-learn/scikit-learn/issues/10903
+    X = np.array([0., 4.1e-320, 4.4e-314, 1.])
+    y = np.array([0.42, 0.42, 0.44, 0.44])
+    ireg = IsotonicRegression().fit(X, y)
+    y_pred = ireg.predict(np.array([0, 2.1e-319, 5.4e-316, 1e-10]))
+    assert np.all(np.isfinite(y_pred))
+
+
 @pytest.mark.parametrize("increasing", [True, False])
 def test_isotonic_thresholds(increasing):
     rng = np.random.RandomState(42)
