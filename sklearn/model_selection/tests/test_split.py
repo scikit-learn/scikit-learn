@@ -574,6 +574,27 @@ def test_stratified_group_kfold_approximate():
     assert np.ptp(test_sizes) <= 1
 
 
+@pytest.mark.parametrize('y, groups, expected',
+                         [(np.array([0] * 6 + [1] * 6),
+                           np.array([1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6]),
+                           np.asarray([[.5, .5],
+                                       [.5, .5],
+                                       [.5, .5]])),
+                          (np.array([0] * 9 + [1] * 3),
+                           np.array([1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 5, 6]),
+                           np.asarray([[.75, .25],
+                                       [.75, .25],
+                                       [.75, .25]]))])
+def test_stratified_group_kfold_homogeneous_groups(y, groups, expected):
+    sgkf = StratifiedGroupKFold(n_splits=3)
+    X = np.ones_like(y).reshape(-1, 1)
+    for (train, test), expect_dist in zip(sgkf.split(X, y, groups), expected):
+        # check group constraint
+        assert np.intersect1d(groups[train], groups[test]).size == 0
+        split_dist = np.bincount(y[test]) / len(test)
+        assert_allclose(split_dist, expect_dist, atol=0.001)
+
+
 def test_shuffle_split():
     ss1 = ShuffleSplit(test_size=0.2, random_state=0).split(X)
     ss2 = ShuffleSplit(test_size=2, random_state=0).split(X)
