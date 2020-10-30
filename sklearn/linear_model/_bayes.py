@@ -81,7 +81,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
     copy_X : bool, default=True
@@ -118,6 +118,14 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.
+
+    X_offset_ : float
+        If `normalize=True`, offset subtracted for centering data to a
+        zero mean.
+
+    X_scale_ : float
+        If `normalize=True`, parameter used to scale data to a unit
+        standard deviation.
 
     Examples
     --------
@@ -333,14 +341,15 @@ class BayesianRidge(RegressorMixin, LinearModel):
         """
 
         if n_samples > n_features:
-            coef_ = np.dot(Vh.T,
-                           Vh / (eigen_vals_ +
-                                 lambda_ / alpha_)[:, np.newaxis])
-            coef_ = np.dot(coef_, XT_y)
+            coef_ = np.linalg.multi_dot([Vh.T,
+                                         Vh / (eigen_vals_ + lambda_ /
+                                               alpha_)[:, np.newaxis],
+                                         XT_y])
         else:
-            coef_ = np.dot(X.T, np.dot(
-                U / (eigen_vals_ + lambda_ / alpha_)[None, :], U.T))
-            coef_ = np.dot(coef_, y)
+            coef_ = np.linalg.multi_dot([X.T,
+                                         U / (eigen_vals_ + lambda_ /
+                                              alpha_)[None, :],
+                                         U.T, y])
 
         rmse_ = np.sum((y - np.dot(X, coef_)) ** 2)
 
@@ -433,7 +442,7 @@ class ARDRegression(RegressorMixin, LinearModel):
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
     copy_X : bool, default=True
@@ -462,6 +471,14 @@ class ARDRegression(RegressorMixin, LinearModel):
     intercept_ : float
         Independent term in decision function. Set to 0.0 if
         ``fit_intercept = False``.
+
+    X_offset_ : float
+        If `normalize=True`, offset subtracted for centering data to a
+        zero mean.
+
+    X_scale_ : float
+        If `normalize=True`, parameter used to scale data to a unit
+        standard deviation.
 
     Examples
     --------
@@ -535,6 +552,9 @@ class ARDRegression(RegressorMixin, LinearModel):
         X, y, X_offset_, y_offset_, X_scale_ = self._preprocess_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X)
 
+        self.X_offset_ = X_offset_
+        self.X_scale_ = X_scale_
+
         # Launch the convergence loop
         keep_lambda = np.ones(n_features, dtype=bool)
 
@@ -555,8 +575,8 @@ class ARDRegression(RegressorMixin, LinearModel):
         coef_old_ = None
 
         def update_coeff(X, y, coef_, alpha_, keep_lambda, sigma_):
-            coef_[keep_lambda] = alpha_ * np.dot(
-                sigma_, np.dot(X[:, keep_lambda].T, y))
+            coef_[keep_lambda] = alpha_ * np.linalg.multi_dot([
+                sigma_, X[:, keep_lambda].T, y])
             return coef_
 
         update_sigma = (self._update_sigma if n_samples >= n_features

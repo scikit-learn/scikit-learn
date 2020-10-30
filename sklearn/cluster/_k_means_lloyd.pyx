@@ -8,7 +8,6 @@
 
 import numpy as np
 cimport numpy as np
-from threadpoolctl import threadpool_limits
 from cython cimport floating
 from cython.parallel import prange, parallel
 from libc.stdlib cimport malloc, calloc, free
@@ -18,6 +17,7 @@ from libc.float cimport DBL_MAX, FLT_MAX
 from ..utils.extmath import row_norms
 from ..utils._cython_blas cimport _gemm
 from ..utils._cython_blas cimport RowMajor, Trans, NoTrans
+from ._k_means_fast import CHUNK_SIZE
 from ._k_means_fast cimport _relocate_empty_clusters_dense
 from ._k_means_fast cimport _relocate_empty_clusters_sparse
 from ._k_means_fast cimport _average_centers, _center_shift
@@ -26,19 +26,7 @@ from ._k_means_fast cimport _average_centers, _center_shift
 np.import_array()
 
 
-# Threadpoolctl wrappers to limit the number of threads in second level of
-# nested parallelism (i.e. BLAS) to avoid oversubsciption.
-def lloyd_iter_chunked_dense(*args, **kwargs):
-    with threadpool_limits(limits=1, user_api="blas"):
-        _lloyd_iter_chunked_dense(*args, **kwargs)
-
-
-def lloyd_iter_chunked_sparse(*args, **kwargs):
-    with threadpool_limits(limits=1, user_api="blas"):
-        _lloyd_iter_chunked_sparse(*args, **kwargs)
-
-
-def _lloyd_iter_chunked_dense(
+def lloyd_iter_chunked_dense(
         np.ndarray[floating, ndim=2, mode='c'] X,  # IN
         floating[::1] sample_weight,               # IN
         floating[::1] x_squared_norms,             # IN
@@ -103,7 +91,7 @@ def _lloyd_iter_chunked_dense(
 
         # hard-coded number of samples per chunk. Appeared to be close to
         # optimal in all situations.
-        int n_samples_chunk = 256 if n_samples > 256 else n_samples
+        int n_samples_chunk = CHUNK_SIZE if n_samples > CHUNK_SIZE else n_samples
         int n_chunks = n_samples // n_samples_chunk
         int n_samples_rem = n_samples % n_samples_chunk
         int chunk_idx, n_samples_chunk_eff
@@ -119,6 +107,9 @@ def _lloyd_iter_chunked_dense(
 
     # count remainder chunk in total number of chunks
     n_chunks += n_samples != n_chunks * n_samples_chunk
+
+    # number of threads should not be bigger than number of chunks
+    n_threads = min(n_threads, n_chunks)
 
     if update_centers:
         memset(&centers_new[0, 0], 0, n_clusters * n_features * sizeof(floating))
@@ -227,7 +218,7 @@ cdef void _update_chunk_dense(
                 centers_new[label * n_features + k] += X[i * n_features + k] * sample_weight[i]
 
 
-def _lloyd_iter_chunked_sparse(
+def lloyd_iter_chunked_sparse(
         X,                                 # IN
         floating[::1] sample_weight,       # IN
         floating[::1] x_squared_norms,     # IN
@@ -294,7 +285,7 @@ def _lloyd_iter_chunked_sparse(
         # Chosed same as for dense. Does not have the same impact since with
         # sparse data the pairwise distances matrix is not precomputed.
         # However, splitting in chunks is necessary to get parallelism.
-        int n_samples_chunk = 256 if n_samples > 256 else n_samples
+        int n_samples_chunk = CHUNK_SIZE if n_samples > CHUNK_SIZE else n_samples
         int n_chunks = n_samples // n_samples_chunk
         int n_samples_rem = n_samples % n_samples_chunk
         int chunk_idx, n_samples_chunk_eff = 0
@@ -313,6 +304,9 @@ def _lloyd_iter_chunked_sparse(
 
     # count remainder chunk in total number of chunks
     n_chunks += n_samples != n_chunks * n_samples_chunk
+
+    # number of threads should not be bigger than number of chunks
+    n_threads = min(n_threads, n_chunks)
 
     if update_centers:
         memset(&centers_new[0, 0], 0, n_clusters * n_features * sizeof(floating))

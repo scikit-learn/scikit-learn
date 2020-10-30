@@ -20,9 +20,10 @@ import warnings
 import numpy as np
 import scipy.sparse as sp
 from scipy import linalg
+from scipy import optimize
 from scipy import sparse
 from scipy.special import expit
-from joblib import Parallel, delayed
+from joblib import Parallel
 
 from ..base import (BaseEstimator, ClassifierMixin, RegressorMixin,
                     MultiOutputMixin)
@@ -36,6 +37,7 @@ from ..utils.fixes import sparse_lsqr
 from ..utils._seq_dataset import ArrayDataset32, CSRDataset32
 from ..utils._seq_dataset import ArrayDataset64, CSRDataset64
 from ..utils.validation import check_is_fitted, _check_sample_weight
+from ..utils.fixes import delayed
 from ..preprocessing import normalize as f_normalize
 
 # TODO: bayesian_ridge_regression and bayesian_regression_ard
@@ -54,10 +56,10 @@ def make_dataset(X, y, sample_weight, random_state=None):
 
     Parameters
     ----------
-    X : array_like, shape (n_samples, n_features)
+    X : array-like, shape (n_samples, n_features)
         Training data
 
-    y : array_like, shape (n_samples, )
+    y : array-like, shape (n_samples, )
         Target values.
 
     sample_weight : numpy array of shape (n_samples,)
@@ -225,7 +227,7 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array_like or sparse matrix, shape (n_samples, n_features)
+        X : array-like or sparse matrix, shape (n_samples, n_features)
             Samples.
 
         Returns
@@ -267,7 +269,7 @@ class LinearClassifierMixin(ClassifierMixin):
 
         Parameters
         ----------
-        X : array_like or sparse matrix, shape (n_samples, n_features)
+        X : array-like or sparse matrix, shape (n_samples, n_features)
             Samples.
 
         Returns
@@ -296,7 +298,7 @@ class LinearClassifierMixin(ClassifierMixin):
 
         Parameters
         ----------
-        X : array_like or sparse matrix, shape (n_samples, n_features)
+        X : array-like or sparse matrix, shape (n_samples, n_features)
             Samples.
 
         Returns
@@ -306,7 +308,7 @@ class LinearClassifierMixin(ClassifierMixin):
         """
         scores = self.decision_function(X)
         if len(scores.shape) == 1:
-            indices = (scores > 0).astype(np.int)
+            indices = (scores > 0).astype(int)
         else:
             indices = scores.argmax(axis=1)
         return self.classes_[indices]
@@ -406,8 +408,8 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit`` on
-        an estimator with ``normalize=False``.
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
+        on an estimator with ``normalize=False``.
 
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
@@ -418,6 +420,12 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
+
+    positive : bool, default=False
+        When set to ``True``, forces the coefficients to be positive. This
+        option is only supported for dense arrays.
+
+        .. versionadded:: 0.24
 
     Attributes
     ----------
@@ -439,19 +447,20 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
     See Also
     --------
-    sklearn.linear_model.Ridge : Ridge regression addresses some of the
+    Ridge : Ridge regression addresses some of the
         problems of Ordinary Least Squares by imposing a penalty on the
         size of the coefficients with l2 regularization.
-    sklearn.linear_model.Lasso : The Lasso is a linear model that estimates
+    Lasso : The Lasso is a linear model that estimates
         sparse coefficients with l1 regularization.
-    sklearn.linear_model.ElasticNet : Elastic-Net is a linear regression
+    ElasticNet : Elastic-Net is a linear regression
         model trained with both l1 and l2 -norm regularization of the
         coefficients.
 
     Notes
     -----
     From the implementation point of view, this is just plain Ordinary
-    Least Squares (scipy.linalg.lstsq) wrapped as a predictor object.
+    Least Squares (scipy.linalg.lstsq) or Non Negative Least Squares
+    (scipy.optimize.nnls) wrapped as a predictor object.
 
     Examples
     --------
@@ -472,11 +481,12 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     """
     @_deprecate_positional_args
     def __init__(self, *, fit_intercept=True, normalize=False, copy_X=True,
-                 n_jobs=None):
+                 n_jobs=None, positive=False):
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.copy_X = copy_X
         self.n_jobs = n_jobs
+        self.positive = positive
 
     def fit(self, X, y, sample_weight=None):
         """
@@ -502,7 +512,10 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         """
 
         n_jobs_ = self.n_jobs
-        X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc', 'coo'],
+
+        accept_sparse = False if self.positive else ['csr', 'csc', 'coo']
+
+        X, y = self._validate_data(X, y, accept_sparse=accept_sparse,
                                    y_numeric=True, multi_output=True)
 
         if sample_weight is not None:
@@ -518,7 +531,16 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
             # Sample weight can be implemented via a simple rescaling.
             X, y = _rescale_data(X, y, sample_weight)
 
-        if sp.issparse(X):
+        if self.positive:
+            if y.ndim < 2:
+                self.coef_, self._residues = optimize.nnls(X, y)
+            else:
+                # scipy.optimize.nnls cannot handle y with shape (M, K)
+                outs = Parallel(n_jobs=n_jobs_)(
+                        delayed(optimize.nnls)(X, y[:, j])
+                        for j in range(y.shape[1]))
+                self.coef_, self._residues = map(np.vstack, zip(*outs))
+        elif sp.issparse(X):
             X_offset_scale = X_offset / X_scale
 
             def matvec(b):

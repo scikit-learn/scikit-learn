@@ -13,7 +13,6 @@ from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.feature_extraction.text import VectorizerMixin
 
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 
@@ -342,6 +341,43 @@ def test_fit_countvectorizer_twice():
     assert X1.shape[1] != X2.shape[1]
 
 
+def test_countvectorizer_custom_token_pattern():
+    """Check `get_feature_names()` when a custom token pattern is passed.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/12971
+    """
+    corpus = [
+        'This is the 1st document in my corpus.',
+        'This document is the 2nd sample.',
+        'And this is the 3rd one.',
+        'Is this the 4th document?',
+    ]
+    token_pattern = r"[0-9]{1,3}(?:st|nd|rd|th)\s\b(\w{2,})\b"
+    vectorizer = CountVectorizer(token_pattern=token_pattern)
+    vectorizer.fit_transform(corpus)
+    expected = ['document', 'one', 'sample']
+    assert vectorizer.get_feature_names() == expected
+
+
+def test_countvectorizer_custom_token_pattern_with_several_group():
+    """Check that we raise an error if token pattern capture several groups.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/12971
+    """
+    corpus = [
+        'This is the 1st document in my corpus.',
+        'This document is the 2nd sample.',
+        'And this is the 3rd one.',
+        'Is this the 4th document?',
+    ]
+
+    token_pattern = r"([0-9]{1,3}(?:st|nd|rd|th))\s\b(\w{2,})\b"
+    err_msg = "More than 1 capturing group in token pattern"
+    vectorizer = CountVectorizer(token_pattern=token_pattern)
+    with pytest.raises(ValueError, match=err_msg):
+        vectorizer.fit(corpus)
+
+
 def test_tf_idf_smoothing():
     X = [[1, 1, 1],
          [1, 1, 0],
@@ -520,18 +556,6 @@ def test_tfidf_vectorizer_setters():
     assert tv._tfidf.smooth_idf
     tv.sublinear_tf = True
     assert tv._tfidf.sublinear_tf
-
-
-# FIXME Remove copy parameter support in 0.24
-def test_tfidf_vectorizer_deprecationwarning():
-    msg = ("'copy' param is unused and has been deprecated since "
-           "version 0.22. Backward compatibility for 'copy' will "
-           "be removed in 0.24.")
-    with pytest.warns(FutureWarning, match=msg):
-        tv = TfidfVectorizer()
-        train_data = JUNK_FOOD_DOCS
-        tv.fit(train_data)
-        tv.transform(train_data, copy=True)
 
 
 @fails_if_pypy
@@ -1354,12 +1378,10 @@ def test_n_features_in(Vectorizer, X):
     assert not hasattr(vectorizer, 'n_features_in_')
 
 
-# TODO: Remove in 0.24
-def test_vectorizermixin_is_deprecated():
-    class MyVectorizer(VectorizerMixin):
-        pass
-
-    msg = ("VectorizerMixin is deprecated in version 0.22 and will be removed "
-           "in version 0.24.")
-    with pytest.warns(FutureWarning, match=msg):
-        MyVectorizer()
+def test_tie_breaking_sample_order_invariance():
+    # Checks the sample order invariance when setting max_features
+    # non-regression test for #17939
+    vec = CountVectorizer(max_features=1)
+    vocab1 = vec.fit(['hello', 'world']).vocabulary_
+    vocab2 = vec.fit(['world', 'hello']).vocabulary_
+    assert vocab1 == vocab2

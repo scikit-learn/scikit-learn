@@ -29,9 +29,8 @@ from .utils.validation import _deprecate_positional_args
 __all__ = ['LinearDiscriminantAnalysis', 'QuadraticDiscriminantAnalysis']
 
 
-def _cov(X, shrinkage=None):
-    """Estimate covariance matrix (using optional shrinkage).
-
+def _cov(X, shrinkage=None, covariance_estimator=None):
+    """Estimate covariance matrix (using optional covariance_estimator).
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
@@ -43,29 +42,52 @@ def _cov(X, shrinkage=None):
           - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
           - float between 0 and 1: fixed shrinkage parameter.
 
+        Shrinkage parameter is ignored if  `covariance_estimator`
+        is not None.
+
+    covariance_estimator : estimator, default=None
+        If not None, `covariance_estimator` is used to estimate
+        the covariance matrices instead of relying on the empirical
+        covariance estimator (with potential shrinkage).
+        The object should have a fit method and a ``covariance_`` attribute
+        like the estimators in :mod:`sklearn.covariance``.
+        if None the shrinkage parameter drives the estimate.
+
+        .. versionadded:: 0.24
+
     Returns
     -------
     s : ndarray of shape (n_features, n_features)
         Estimated covariance matrix.
     """
-    shrinkage = "empirical" if shrinkage is None else shrinkage
-    if isinstance(shrinkage, str):
-        if shrinkage == 'auto':
-            sc = StandardScaler()  # standardize features
-            X = sc.fit_transform(X)
-            s = ledoit_wolf(X)[0]
-            # rescale
-            s = sc.scale_[:, np.newaxis] * s * sc.scale_[np.newaxis, :]
-        elif shrinkage == 'empirical':
-            s = empirical_covariance(X)
+    if covariance_estimator is None:
+        shrinkage = "empirical" if shrinkage is None else shrinkage
+        if isinstance(shrinkage, str):
+            if shrinkage == 'auto':
+                sc = StandardScaler()  # standardize features
+                X = sc.fit_transform(X)
+                s = ledoit_wolf(X)[0]
+                # rescale
+                s = sc.scale_[:, np.newaxis] * s * sc.scale_[np.newaxis, :]
+            elif shrinkage == 'empirical':
+                s = empirical_covariance(X)
+            else:
+                raise ValueError('unknown shrinkage parameter')
+        elif isinstance(shrinkage, float) or isinstance(shrinkage, int):
+            if shrinkage < 0 or shrinkage > 1:
+                raise ValueError('shrinkage parameter must be between 0 and 1')
+            s = shrunk_covariance(empirical_covariance(X), shrinkage)
         else:
-            raise ValueError('unknown shrinkage parameter')
-    elif isinstance(shrinkage, float) or isinstance(shrinkage, int):
-        if shrinkage < 0 or shrinkage > 1:
-            raise ValueError('shrinkage parameter must be between 0 and 1')
-        s = shrunk_covariance(empirical_covariance(X), shrinkage)
+            raise TypeError('shrinkage must be a float or a string')
     else:
-        raise TypeError('shrinkage must be of string or int type')
+        if shrinkage is not None and shrinkage != 0:
+            raise ValueError("covariance_estimator and shrinkage parameters "
+                             "are not None. Only one of the two can be set.")
+        covariance_estimator.fit(X)
+        if not hasattr(covariance_estimator, 'covariance_'):
+            raise ValueError("%s does not have a covariance_ attribute" %
+                             covariance_estimator.__class__.__name__)
+        s = covariance_estimator.covariance_
     return s
 
 
@@ -93,7 +115,7 @@ def _class_means(X, y):
     return means
 
 
-def _class_cov(X, y, priors, shrinkage=None):
+def _class_cov(X, y, priors, shrinkage=None, covariance_estimator=None):
     """Compute weighted within-class covariance matrix.
 
     The per-class covariance are weighted by the class priors.
@@ -115,6 +137,18 @@ def _class_cov(X, y, priors, shrinkage=None):
           - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
           - float between 0 and 1: fixed shrinkage parameter.
 
+        Shrinkage parameter is ignored if `covariance_estimator` is not None.
+
+    covariance_estimator : estimator, default=None
+        If not None, `covariance_estimator` is used to estimate
+        the covariance matrices instead of relying the empirical
+        covariance estimator (with potential shrinkage).
+        The object should have a fit method and a ``covariance_`` attribute
+        like the estimators in sklearn.covariance.
+        If None, the shrinkage parameter drives the estimate.
+
+        .. versionadded:: 0.24
+
     Returns
     -------
     cov : array-like of shape (n_features, n_features)
@@ -124,12 +158,14 @@ def _class_cov(X, y, priors, shrinkage=None):
     cov = np.zeros(shape=(X.shape[1], X.shape[1]))
     for idx, group in enumerate(classes):
         Xg = X[y == group, :]
-        cov += priors[idx] * np.atleast_2d(_cov(Xg, shrinkage))
+        cov += priors[idx] * np.atleast_2d(
+            _cov(Xg, shrinkage, covariance_estimator))
     return cov
 
 
-class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
-                                 TransformerMixin):
+class LinearDiscriminantAnalysis(LinearClassifierMixin,
+                                 TransformerMixin,
+                                 BaseEstimator):
     """Linear Discriminant Analysis
 
     A classifier with a linear decision boundary, generated by fitting class
@@ -154,8 +190,10 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
           - 'svd': Singular value decomposition (default).
             Does not compute the covariance matrix, therefore this solver is
             recommended for data with a large number of features.
-          - 'lsqr': Least squares solution, can be combined with shrinkage.
-          - 'eigen': Eigenvalue decomposition, can be combined with shrinkage.
+          - 'lsqr': Least squares solution.
+            Can be combined with shrinkage or custom covariance estimator.
+          - 'eigen': Eigenvalue decomposition.
+            Can be combined with shrinkage or custom covariance estimator.
 
     shrinkage : 'auto' or float, default=None
         Shrinkage parameter, possible values:
@@ -163,6 +201,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
           - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
           - float between 0 and 1: fixed shrinkage parameter.
 
+        This should be left to None if `covariance_estimator` is used.
         Note that shrinkage works only with 'lsqr' and 'eigen' solvers.
 
     priors : array-like of shape (n_classes,), default=None
@@ -189,6 +228,20 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         solver is 'svd'.
 
         .. versionadded:: 0.17
+
+    covariance_estimator : covariance estimator, default=None
+        If not None, `covariance_estimator` is used to estimate
+        the covariance matrices instead of relying on the empirical
+        covariance estimator (with potential shrinkage).
+        The object should have a fit method and a ``covariance_`` attribute
+        like the estimators in :mod:`sklearn.covariance`.
+        if None the shrinkage parameter drives the estimate.
+
+        This should be left to None if `shrinkage` is used.
+        Note that `covariance_estimator` works only with 'lsqr' and 'eigen'
+        solvers.
+
+        .. versionadded:: 0.24
 
     Attributes
     ----------
@@ -227,10 +280,9 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
     classes_ : array-like of shape (n_classes,)
         Unique class labels.
 
-    See also
+    See Also
     --------
-    sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis: Quadratic
-        Discriminant Analysis
+    QuadraticDiscriminantAnalysis : Quadratic Discriminant Analysis.
 
     Examples
     --------
@@ -244,22 +296,25 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
     """
-    @_deprecate_positional_args
-    def __init__(self, *, solver='svd', shrinkage=None, priors=None,
-                 n_components=None, store_covariance=False, tol=1e-4):
+
+    def __init__(self, solver='svd', shrinkage=None, priors=None,
+                 n_components=None, store_covariance=False, tol=1e-4,
+                 covariance_estimator=None):
         self.solver = solver
         self.shrinkage = shrinkage
         self.priors = priors
         self.n_components = n_components
         self.store_covariance = store_covariance  # used only in svd solver
         self.tol = tol  # used only in svd solver
+        self.covariance_estimator = covariance_estimator
 
-    def _solve_lsqr(self, X, y, shrinkage):
+    def _solve_lsqr(self, X, y, shrinkage, covariance_estimator):
         """Least squares solver.
 
         The least squares solver computes a straightforward solution of the
         optimal decision rule based directly on the discriminant functions. It
-        can only be used for classification (with optional shrinkage), because
+        can only be used for classification (with any covariance estimator),
+        because
         estimation of eigenvectors is not performed. Therefore, dimensionality
         reduction with the transform is not supported.
 
@@ -277,6 +332,19 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
               - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
               - float between 0 and 1: fixed shrinkage parameter.
 
+            Shrinkage parameter is ignored if  `covariance_estimator` i
+            not None
+
+        covariance_estimator : estimator, default=None
+            If not None, `covariance_estimator` is used to estimate
+            the covariance matrices instead of relying the empirical
+            covariance estimator (with potential shrinkage).
+            The object should have a fit method and a ``covariance_`` attribute
+            like the estimators in sklearn.covariance.
+            if None the shrinkage parameter drives the estimate.
+
+            .. versionadded:: 0.24
+
         Notes
         -----
         This solver is based on [1]_, section 2.6.2, pp. 39-41.
@@ -288,18 +356,20 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
            0-471-05669-3.
         """
         self.means_ = _class_means(X, y)
-        self.covariance_ = _class_cov(X, y, self.priors_, shrinkage)
+        self.covariance_ = _class_cov(X, y, self.priors_, shrinkage,
+                                      covariance_estimator)
         self.coef_ = linalg.lstsq(self.covariance_, self.means_.T)[0].T
         self.intercept_ = (-0.5 * np.diag(np.dot(self.means_, self.coef_.T)) +
                            np.log(self.priors_))
 
-    def _solve_eigen(self, X, y, shrinkage):
+    def _solve_eigen(self, X, y, shrinkage,
+                     covariance_estimator):
         """Eigenvalue solver.
 
         The eigenvalue solver computes the optimal solution of the Rayleigh
         coefficient (basically the ratio of between class scatter to within
         class scatter). This solver supports both classification and
-        dimensionality reduction (with optional shrinkage).
+        dimensionality reduction (with any covariance estimator).
 
         Parameters
         ----------
@@ -315,6 +385,19 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
               - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
               - float between 0 and 1: fixed shrinkage constant.
 
+            Shrinkage parameter is ignored if  `covariance_estimator` i
+            not None
+
+        covariance_estimator : estimator, default=None
+            If not None, `covariance_estimator` is used to estimate
+            the covariance matrices instead of relying the empirical
+            covariance estimator (with potential shrinkage).
+            The object should have a fit method and a ``covariance_`` attribute
+            like the estimators in sklearn.covariance.
+            if None the shrinkage parameter drives the estimate.
+
+            .. versionadded:: 0.24
+
         Notes
         -----
         This solver is based on [1]_, section 3.8.3, pp. 121-124.
@@ -326,10 +409,11 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
            0-471-05669-3.
         """
         self.means_ = _class_means(X, y)
-        self.covariance_ = _class_cov(X, y, self.priors_, shrinkage)
+        self.covariance_ = _class_cov(X, y, self.priors_, shrinkage,
+                                      covariance_estimator)
 
         Sw = self.covariance_  # within scatter
-        St = _cov(X, shrinkage)  # total scatter
+        St = _cov(X, shrinkage, covariance_estimator)  # total scatter
         Sb = St - Sw  # between scatter
 
         evals, evecs = linalg.eigh(Sb, Sw)
@@ -378,11 +462,11 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         # 2) Within variance scaling
         X = np.sqrt(fac) * (Xc / std)
         # SVD of centered (within)scaled data
-        U, S, V = linalg.svd(X, full_matrices=False)
+        U, S, Vt = linalg.svd(X, full_matrices=False)
 
         rank = np.sum(S > self.tol)
         # Scaling of within covariance is: V' 1/S
-        scalings = (V[:rank] / std).T / S[:rank]
+        scalings = (Vt[:rank] / std).T / S[:rank]
 
         # 3) Between variance scaling
         # Scale weighted centers
@@ -391,12 +475,12 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         # Centers are living in a space with n_classes-1 dim (maximum)
         # Use SVD to find projection in the space spanned by the
         # (n_classes) centers
-        _, S, V = linalg.svd(X, full_matrices=0)
+        _, S, Vt = linalg.svd(X, full_matrices=0)
 
         self.explained_variance_ratio_ = (S**2 / np.sum(
             S**2))[:self._max_components]
         rank = np.sum(S > self.tol * S[0])
-        self.scalings_ = np.dot(scalings, V.T[:, :rank])
+        self.scalings_ = np.dot(scalings, Vt.T[:, :rank])
         coef = np.dot(self.means_ - self.xbar_, self.scalings_)
         self.intercept_ = (-0.5 * np.sum(coef ** 2, axis=1) +
                            np.log(self.priors_))
@@ -461,11 +545,19 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         if self.solver == 'svd':
             if self.shrinkage is not None:
                 raise NotImplementedError('shrinkage not supported')
+            if self.covariance_estimator is not None:
+                raise ValueError(
+                        'covariance estimator '
+                        'is not supported '
+                        'with svd solver. Try another solver')
             self._solve_svd(X, y)
         elif self.solver == 'lsqr':
-            self._solve_lsqr(X, y, shrinkage=self.shrinkage)
+            self._solve_lsqr(X, y, shrinkage=self.shrinkage,
+                             covariance_estimator=self.covariance_estimator)
         elif self.solver == 'eigen':
-            self._solve_eigen(X, y, shrinkage=self.shrinkage)
+            self._solve_eigen(X, y,
+                              shrinkage=self.shrinkage,
+                              covariance_estimator=self.covariance_estimator)
         else:
             raise ValueError("unknown solver {} (valid solvers are 'svd', "
                              "'lsqr', and 'eigen').".format(self.solver))
@@ -537,7 +629,9 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         C : ndarray of shape (n_samples, n_classes)
             Estimated log probabilities.
         """
-        return np.log(self.predict_proba(X))
+        prediction = self.predict_proba(X)
+        prediction[prediction == 0.0] += np.finfo(prediction.dtype).tiny
+        return np.log(prediction)
 
     def decision_function(self, X):
         """Apply decision function to an array of samples.
@@ -648,10 +742,9 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
-    See also
+    See Also
     --------
-    sklearn.discriminant_analysis.LinearDiscriminantAnalysis: Linear
-        Discriminant Analysis
+    LinearDiscriminantAnalysis : Linear Discriminant Analysis.
     """
     @_deprecate_positional_args
     def __init__(self, *, priors=None, reg_param=0., store_covariance=False,

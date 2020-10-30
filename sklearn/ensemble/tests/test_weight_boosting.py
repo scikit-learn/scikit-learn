@@ -12,7 +12,6 @@ from scipy.sparse import lil_matrix
 from sklearn.utils._testing import assert_array_equal, assert_array_less
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_raises, assert_raises_regexp
-from sklearn.utils._testing import ignore_warnings
 
 from sklearn.base import BaseEstimator
 from sklearn.base import clone
@@ -46,10 +45,10 @@ iris = datasets.load_iris()
 perm = rng.permutation(iris.target.size)
 iris.data, iris.target = shuffle(iris.data, iris.target, random_state=rng)
 
-# Load the boston dataset and randomly permute it
-boston = datasets.load_boston()
-boston.data, boston.target = shuffle(boston.data, boston.target,
-                                     random_state=rng)
+# Load the diabetes dataset and randomly permute it
+diabetes = datasets.load_diabetes()
+diabetes.data, diabetes.target = shuffle(diabetes.data, diabetes.target,
+                                         random_state=rng)
 
 
 def test_samme_proba():
@@ -144,12 +143,12 @@ def test_iris():
 
 
 @pytest.mark.parametrize('loss', ['linear', 'square', 'exponential'])
-def test_boston(loss):
-    # Check consistency on dataset boston house prices.
+def test_diabetes(loss):
+    # Check consistency on dataset diabetes.
     reg = AdaBoostRegressor(loss=loss, random_state=0)
-    reg.fit(boston.data, boston.target)
-    score = reg.score(boston.data, boston.target)
-    assert score > 0.85
+    reg.fit(diabetes.data, diabetes.target)
+    score = reg.score(diabetes.data, diabetes.target)
+    assert score > 0.6
 
     # Check we used multiple estimators
     assert len(reg.estimators_) > 1
@@ -163,7 +162,7 @@ def test_staged_predict(algorithm):
     # Check staged predictions.
     rng = np.random.RandomState(0)
     iris_weights = rng.randint(10, size=iris.target.shape)
-    boston_weights = rng.randint(10, size=boston.target.shape)
+    diabetes_weights = rng.randint(10, size=diabetes.target.shape)
 
     clf = AdaBoostClassifier(algorithm=algorithm, n_estimators=10)
     clf.fit(iris.data, iris.target, sample_weight=iris_weights)
@@ -186,14 +185,15 @@ def test_staged_predict(algorithm):
 
     # AdaBoost regression
     clf = AdaBoostRegressor(n_estimators=10, random_state=0)
-    clf.fit(boston.data, boston.target, sample_weight=boston_weights)
+    clf.fit(diabetes.data, diabetes.target, sample_weight=diabetes_weights)
 
-    predictions = clf.predict(boston.data)
-    staged_predictions = [p for p in clf.staged_predict(boston.data)]
-    score = clf.score(boston.data, boston.target, sample_weight=boston_weights)
+    predictions = clf.predict(diabetes.data)
+    staged_predictions = [p for p in clf.staged_predict(diabetes.data)]
+    score = clf.score(diabetes.data, diabetes.target,
+                      sample_weight=diabetes_weights)
     staged_scores = [
         s for s in clf.staged_score(
-            boston.data, boston.target, sample_weight=boston_weights)]
+            diabetes.data, diabetes.target, sample_weight=diabetes_weights)]
 
     assert len(staged_predictions) == 10
     assert_array_almost_equal(predictions, staged_predictions[-1])
@@ -217,7 +217,7 @@ def test_gridsearch():
     parameters = {'n_estimators': (1, 2),
                   'base_estimator__max_depth': (1, 2)}
     clf = GridSearchCV(boost, parameters)
-    clf.fit(boston.data, boston.target)
+    clf.fit(diabetes.data, diabetes.target)
 
 
 def test_pickle():
@@ -238,13 +238,13 @@ def test_pickle():
 
     # Adaboost regressor
     obj = AdaBoostRegressor(random_state=0)
-    obj.fit(boston.data, boston.target)
-    score = obj.score(boston.data, boston.target)
+    obj.fit(diabetes.data, diabetes.target)
+    score = obj.score(diabetes.data, diabetes.target)
     s = pickle.dumps(obj)
 
     obj2 = pickle.loads(s)
     assert type(obj2) == obj.__class__
-    score2 = obj2.score(boston.data, boston.target)
+    score2 = obj2.score(diabetes.data, diabetes.target)
     assert score == score2
 
 
@@ -499,8 +499,6 @@ def test_multidimensional_X():
     boost.predict(X)
 
 
-# TODO: Remove in 0.24 when DummyClassifier's `strategy` default changes
-@ignore_warnings
 @pytest.mark.parametrize("algorithm", ['SAMME', 'SAMME.R'])
 def test_adaboostclassifier_without_sample_weight(algorithm):
     X, y = iris.data, iris.target
@@ -571,7 +569,7 @@ def test_adaboost_consistent_predict(algorithm):
 @pytest.mark.parametrize(
     'model, X, y',
     [(AdaBoostClassifier(), iris.data, iris.target),
-     (AdaBoostRegressor(), boston.data, boston.target)]
+     (AdaBoostRegressor(), diabetes.data, diabetes.target)]
 )
 def test_adaboost_negative_weight_error(model, X, y):
     sample_weight = np.ones_like(y)
