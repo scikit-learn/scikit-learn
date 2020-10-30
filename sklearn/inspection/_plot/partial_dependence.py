@@ -689,6 +689,7 @@ class PartialDependenceDisplay:
             Dict with keywords passed when plotting the PD plot.
         """
         from matplotlib import transforms  # noqa
+        show_legend = False
 
         if self.kind in ("individual", "both"):
             self._plot_ice_lines(
@@ -702,16 +703,15 @@ class PartialDependenceDisplay:
             )
 
         if self.kind in ("average", "both"):
+            # do not modify the `line_kw` in place since it might be reuse for
+            # each feature for which the partial dependence is requested
+            line_kw = deepcopy(line_kw)
             # the average is stored as the last line
             if self.kind == "average":
-                # do not modify the `line_kw` in place since it might be reuse
-                # for each feature for which the partial dependence is
-                # requested
-                line_kw = deepcopy(line_kw)
-                label = line_kw.pop("label", "average")
+                label = line_kw.pop("label", None)
                 pd_line_idx = pd_plot_idx
             else:
-                label = None
+                label = line_kw.pop("label", "average")
                 pd_line_idx = pd_plot_idx * n_lines + n_ice_lines
             self._plot_average_dependence(
                 avg_preds[self.target_idx].ravel(),
@@ -721,6 +721,7 @@ class PartialDependenceDisplay:
                 label,
                 line_kw,
             )
+            show_legend = label is not None
 
         trans = transforms.blended_transform_factory(
             ax.transData, ax.transAxes
@@ -746,6 +747,9 @@ class PartialDependenceDisplay:
                 ax.set_ylabel('Partial dependence')
         else:
             ax.set_yticklabels([])
+
+        if show_legend:
+            ax.legend()
 
     def _plot_two_way_partial_dependence(
         self,
