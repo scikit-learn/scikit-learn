@@ -655,7 +655,7 @@ StratifiedGroupKFold
 
 :class:`StratifiedGroupKFold` is a cross-validation scheme that combines both
 :class:`StratifiedKFold` and :class:`GroupKFold`. The idea is to try to
-preserve the distribution of labels in each split while keeping each group
+preserve the distribution of classes in each split while keeping each group
 within a single split. That might be useful when you have an unbalanced
 dataset so that using just :class:`GroupKFold` might produce skewed splits.
 
@@ -677,6 +677,11 @@ Implementation notes:
 - This implementation iterates over groups sorted by standard deviation of
   labels. That means that when shuffle=True only groups with the same labels
   distribution will be shuffled.
+- The algorithm greedily assigns each group to one of n_splits test sets,
+  choosing the test set that minimises the variance in class distribution
+  across test sets. Group assignment proceeds from groups with highest to
+  lowest variance in class frequency, i.e. large groups peaked on one or few
+  classes are assigned first.
 - This split is suboptimal in a sense that it might produce imbalanced splits
   even if perfect stratification is possible. If you have relatively close
   distribution of labels within groups, using :class:`GroupKFold` is better.
