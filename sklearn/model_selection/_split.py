@@ -813,10 +813,14 @@ class StratifiedGroupKFold(_BaseKFold):
       to GroupKFold.
     * Implementation is based on this kaggle kernel:
       https://www.kaggle.com/jakubwasikowski/stratified-group-k-fold-cross-validation
+
       Changelist:
-      - Refactored function to class following scikit-learn KFold interface.
+
+      - Refactored function to a class following scikit-learn KFold interface.
       - Added heuristic for assigning group to the least populated fold in
         cases when all other criteria are equal
+      - Swtch from using python ``Counter`` to ``np.unique`` to get class
+        distribution
       - Added scikit-learn checks for input: checking that target is binary or
         multiclass, checking passed random state, checking that number of
         splits is less than number of members in each class, checking that
