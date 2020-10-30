@@ -11,7 +11,7 @@ functions to split the data based on a preset strategy.
 # License: BSD 3 clause
 
 from collections.abc import Iterable
-from collections import defaultdict, Counter
+from collections import defaultdict
 import warnings
 from itertools import chain, combinations
 from math import ceil, floor
@@ -858,10 +858,8 @@ class StratifiedGroupKFold(_BaseKFold):
                            % (n_smallest_class, self.n_splits)), UserWarning)
         labels_num = len(y_cnt)
         y_counts_per_group = defaultdict(lambda: np.zeros(labels_num))
-        y_distr = Counter()
         for label, group in zip(y_inv, groups):
             y_counts_per_group[group][label] += 1
-            y_distr[label] += 1
 
         y_counts_per_fold = defaultdict(lambda: np.zeros(labels_num))
         groups_per_fold = defaultdict(set)
@@ -880,7 +878,7 @@ class StratifiedGroupKFold(_BaseKFold):
                 std_per_label = []
                 for label in range(labels_num):
                     std_per_label.append(np.std(
-                        [y_counts_per_fold[j][label] / y_distr[label]
+                        [y_counts_per_fold[j][label] / y_cnt[label]
                          for j in range(self.n_splits)]))
                 y_counts_per_fold[i] -= y_counts
                 fold_eval = np.mean(std_per_label)
