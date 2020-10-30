@@ -22,7 +22,7 @@ jobs:
           set -xe
           git remote add pr_remote ${{ github.event.pull_request.head.repo.html_url }}
           git fetch pr_remote ${{ github.event.pull_request.head.ref }}
-          git checkout pr_remote/${{ github.event.pull_request.head.ref }}
+          git checkout -b pr_branch pr_remote/${{ github.event.pull_request.head.ref }}
           git config user.name github-actions
           git config user.email github-actions@github.com
           git merge origin/master

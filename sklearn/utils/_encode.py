@@ -173,7 +173,7 @@ def _encode(values, *, uniques, check_unknown=True):
     encoded : ndarray
         Encoded values
     """
-    if values.dtype == object:
+    if values.dtype.kind in 'OU':
         try:
             return _map_to_integer(values, uniques)
         except KeyError as e:
