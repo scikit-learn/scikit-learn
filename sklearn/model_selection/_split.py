@@ -856,7 +856,7 @@ class StratifiedGroupKFold(_BaseKFold):
             warnings.warn(("The least populated class in y has only %d"
                            " members, which is less than n_splits=%d."
                            % (n_smallest_class, self.n_splits)), UserWarning)
-        labels_num = np.max(y_inv) + 1
+        labels_num = len(y_cnt)
         y_counts_per_group = defaultdict(lambda: np.zeros(labels_num))
         y_distr = Counter()
         for label, group in zip(y_inv, groups):
