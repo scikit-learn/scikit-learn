@@ -231,7 +231,7 @@ def _check_optimize_result(solver, result, max_iter=None,
     if solver == "lbfgs":
         if result.status != 0:
             try:
-                # The message is already decoded in some platforms
+                # The message is already decoded in scipy>=1.6.0
                 result_message = result.message.decode("latin1")
             except AttributeError:
                 result_message = result.message
