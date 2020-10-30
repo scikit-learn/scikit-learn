@@ -585,6 +585,16 @@ class _CalibratedClassifier:
         The method to use for calibration. Can be 'sigmoid' which
         corresponds to Platt's method or 'isotonic' which is a
         non-parametric approach based on isotonic regression.
+
+    Attributes
+    ----------
+    calibrators_ : list of fitted estimator instances
+        Same as `calibrators`. Exposed for backward-compatibility. Use
+        `calibrators` instead.
+
+        .. deprecated:: 0.24
+           `calibrators_` is deprecated from 0.24 and will be removed in
+           0.26. Use `calibrators` instead.
     """
     def __init__(self, base_estimator, calibrators, *, classes,
                  method='sigmoid'):
@@ -592,6 +602,14 @@ class _CalibratedClassifier:
         self.calibrators = calibrators
         self.classes = classes
         self.method = method
+
+    @property
+    def calibrators_(self):
+        warnings.warn(
+            "calibrators_ is deprecated in 0.24 and will be removed in 0.26. "
+            "Use calibrators instead.", FutureWarning
+        )
+        return self.calibrators
 
     def predict_proba(self, X):
         """Calculate calibrated probabilities.
