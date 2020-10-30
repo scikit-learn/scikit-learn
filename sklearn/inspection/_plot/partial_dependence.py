@@ -1,4 +1,5 @@
 import numbers
+from copy import deepcopy
 from itertools import chain
 from math import ceil
 
@@ -703,6 +704,10 @@ class PartialDependenceDisplay:
         if self.kind in ("average", "both"):
             # the average is stored as the last line
             if self.kind == "average":
+                # do not modify the `line_kw` in place since it might be reuse
+                # for each feature for which the partial dependence is
+                # requested
+                line_kw = deepcopy(line_kw)
                 label = line_kw.pop("label", "average")
                 pd_line_idx = pd_plot_idx
             else:
