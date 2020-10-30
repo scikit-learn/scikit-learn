@@ -10,6 +10,7 @@ METRICS = {'euclidean': {},
            'chebyshev': {},
            'minkowski': dict(p=3)}
 
+
 def test_array_object_type():
     """Check that we do not accept object dtype array."""
     X = np.array([(1, 2, 3), (2, 5), (5, 5, 1, 2)], dtype=object)
