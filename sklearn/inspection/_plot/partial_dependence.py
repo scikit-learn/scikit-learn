@@ -1,5 +1,4 @@
 import numbers
-from copy import deepcopy
 from itertools import chain
 from math import ceil
 
@@ -614,7 +613,12 @@ class PartialDependenceDisplay:
             )[0]
 
     def _plot_average_dependence(
-        self, avg_preds, feature_values, ax, pd_line_idx, label, line_kw,
+        self,
+        avg_preds,
+        feature_values,
+        ax,
+        pd_line_idx,
+        line_kw,
     ):
         """Plot the average partial dependence.
 
@@ -630,8 +634,6 @@ class PartialDependenceDisplay:
         pd_line_idx : int
             The sequential index of the plot. It will be unraveled to find the
             matching 2D position in the grid layout.
-        label : str or None
-            The label to add to the legend plot.
         line_kw : dict
             Dict with keywords passed when plotting the PD plot.
         """
@@ -639,7 +641,6 @@ class PartialDependenceDisplay:
         self.lines_[line_idx] = ax.plot(
             feature_values,
             avg_preds,
-            label=label,
             **line_kw,
         )[0]
 
@@ -689,7 +690,6 @@ class PartialDependenceDisplay:
             Dict with keywords passed when plotting the PD plot.
         """
         from matplotlib import transforms  # noqa
-        show_legend = False
 
         if self.kind in ("individual", "both"):
             self._plot_ice_lines(
@@ -703,25 +703,18 @@ class PartialDependenceDisplay:
             )
 
         if self.kind in ("average", "both"):
-            # do not modify the `line_kw` in place since it might be reuse for
-            # each feature for which the partial dependence is requested
-            line_kw = deepcopy(line_kw)
             # the average is stored as the last line
             if self.kind == "average":
-                label = line_kw.pop("label", None)
                 pd_line_idx = pd_plot_idx
             else:
-                label = line_kw.pop("label", "average")
                 pd_line_idx = pd_plot_idx * n_lines + n_ice_lines
             self._plot_average_dependence(
                 avg_preds[self.target_idx].ravel(),
                 feature_values,
                 ax,
                 pd_line_idx,
-                label,
                 line_kw,
             )
-            show_legend = label is not None
 
         trans = transforms.blended_transform_factory(
             ax.transData, ax.transAxes
@@ -748,7 +741,7 @@ class PartialDependenceDisplay:
         else:
             ax.set_yticklabels([])
 
-        if show_legend:
+        if line_kw.get("label", None):
             ax.legend()
 
     def _plot_two_way_partial_dependence(
@@ -871,7 +864,10 @@ class PartialDependenceDisplay:
         default_contour_kws = {"alpha": 0.75}
         contour_kw = {**default_contour_kws, **contour_kw}
 
-        default_line_kws = {'color': 'C0'}
+        default_line_kws = {
+            "color": "C0",
+            "label": None if self.kind == "average" else "average",
+        }
         line_kw = {**default_line_kws, **line_kw}
         individual_line_kw = line_kw.copy()
 
