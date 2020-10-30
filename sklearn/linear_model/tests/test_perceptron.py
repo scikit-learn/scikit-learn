@@ -70,6 +70,7 @@ def test_undefined_methods():
 
 
 def test_perceptron_l1_ratio():
+    """Check that `l1_ratio` has an impact when `penalty='elasticnet'`"""
     clf1 = Perceptron(l1_ratio=0, penalty='elasticnet')
     clf1.fit(X, y)
 
