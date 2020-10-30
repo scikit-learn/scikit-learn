@@ -538,21 +538,11 @@ budget of the project [#f1]_.
 
 .. raw :: html
 
-    </br></br>
-    <form action="https://www.paypal.com/cgi-bin/webscr" method="post"
-    target="_top">
-    <input type="hidden" name="cmd" value="_s-xclick">
-    <input type="hidden" name="hosted_button_id" value="74EYUMF3FTSW8">
-    <input type="image"
-    src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif"
-    border="0" name="submit" alt="PayPal - The safer, easier way to pay
-    online!" style="position: relative;
-    left: 40%;">
-    <img alt="" border="0"
-    src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1"
-    height="1">
-    </form>
-    </br>
+   </br></br>
+   <div style="text-align: center;">
+   <a class="btn btn-warning btn-big sk-donate-btn mb-1" href="https://numfocus.org/donate-to-scikit-learn">Help us, <strong>donate!</strong></a>
+   </div>
+   </br>
 
 .. rubric:: Notes
 
