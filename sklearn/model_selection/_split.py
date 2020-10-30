@@ -811,6 +811,16 @@ class StratifiedGroupKFold(_BaseKFold):
       there is a small number of groups containing a large number of samples
       the stratification will not be possible and the behavior will be close
       to GroupKFold.
+    * Implementation is based on this kaggle kernel:
+      https://www.kaggle.com/jakubwasikowski/stratified-group-k-fold-cross-validation
+      Changelist:
+      - Refactored function to class following scikit-learn KFold interface.
+      - Added heuristic for assigning group to the least populated fold in
+        cases when all other criteria are equal
+      - Added scikit-learn checks for input: checking that target is binary or
+        multiclass, checking passed random state, checking that number of
+        splits is less than number of members in each class, checking that
+        least populated class has more members than there are splits.
 
     See also
     --------
@@ -825,8 +835,6 @@ class StratifiedGroupKFold(_BaseKFold):
         super().__init__(n_splits=n_splits, shuffle=shuffle,
                          random_state=random_state)
 
-    # Implementation based on this kaggle kernel:
-    # https://www.kaggle.com/jakubwasikowski/stratified-group-k-fold-cross-validation
     def _iter_test_indices(self, X, y, groups):
         rng = check_random_state(self.random_state)
         y = np.asarray(y)
