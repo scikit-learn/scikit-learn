@@ -233,6 +233,10 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
         :meth:`fit`, :meth:`predict` and :meth:`partial_fit` (if supported
         by the passed estimator) will be parallelized for each target.
 
+        When individual estimators are fast to train or predict,
+        using ``n_jobs > 1`` can result in slower performance due
+        to the parallelism overhead.
+
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all available processes / threads.
         See :term:`Glossary <n_jobs>` for more details.
@@ -244,12 +248,6 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
     ----------
     estimators_ : list of ``n_output`` estimators
         Estimators used for predictions.
-
-    Notes
-    -----
-    When individual estimators are fast to train or predict,
-    using ``n_jobs > 1`` can result in slower performance due
-    to the parallelism overhead.
 
     Examples
     --------
@@ -310,18 +308,16 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         :meth:`fit`, :meth:`predict` and :meth:`partial_fit` (if supported
         by the passed estimator) will be parallelized for each target.
 
+        When individual estimators are fast to train or predict,
+        using ``n_jobs > 1`` can result in slower performance due
+        to the parallelism overhead.
+
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all available processes / threads.
         See :term:`Glossary <n_jobs>` for more details.
 
         .. versionchanged:: 0.20
            `n_jobs` default changed from 1 to None
-
-    Notes
-    -----
-    When individual estimators are fast to train or predict,
-    using ``n_jobs > 1`` can result in slower performance due
-    to the parallelism overhead.
 
     Attributes
     ----------
