@@ -595,6 +595,39 @@ def test_stratified_group_kfold_homogeneous_groups(y, groups, expected):
         assert_allclose(split_dist, expect_dist, atol=0.001)
 
 
+@pytest.mark.parametrize('cls_distr',
+                         [(0.4, 0.6),
+                          (0.3, 0.7),
+                          (0.2, 0.8),
+                          (0.8, 0.2)])
+@pytest.mark.parametrize('n_groups', [5, 30, 70])
+def test_stratified_group_kfold_against_group_kfold(cls_distr, n_groups):
+    # Check that given sufficient amount of samples StratifiedGroupKFold
+    # produces better stratified folds than regular GroupKFold
+    n_splits = 5
+    sgkf = StratifiedGroupKFold(n_splits=n_splits)
+    gkf = GroupKFold(n_splits=n_splits)
+    rng = np.random.RandomState(0)
+    n_points = 1000
+    y = rng.choice(2, size=n_points, p=cls_distr)
+    X = np.ones_like(y).reshape(-1, 1)
+    g = rng.choice(n_groups, n_points)
+    sgkf_folds = sgkf.split(X, y, groups=g)
+    gkf_folds = gkf.split(X, y, groups=g)
+    sgkf_entr = 0
+    gkf_entr = 0
+    for (sgkf_train, sgkf_test), (_, gkf_test) in zip(sgkf_folds, gkf_folds):
+        # check group constraint
+        assert np.intersect1d(g[sgkf_train], g[sgkf_test]).size == 0
+        sgkf_distr = np.bincount(y[sgkf_test]) / len(sgkf_test)
+        gkf_distr = np.bincount(y[gkf_test]) / len(gkf_test)
+        sgkf_entr += stats.entropy(sgkf_distr, qk=cls_distr)
+        gkf_entr += stats.entropy(gkf_distr, qk=cls_distr)
+    sgkf_entr /= n_splits
+    gkf_entr /= n_splits
+    assert sgkf_entr <= gkf_entr
+
+
 def test_shuffle_split():
     ss1 = ShuffleSplit(test_size=0.2, random_state=0).split(X)
     ss2 = ShuffleSplit(test_size=2, random_state=0).split(X)
