@@ -188,7 +188,9 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
             be removed in 0.26. If you use this attribute
             in :class:`~sklearn.feature_selection.RFE` or
             :class:`~sklearn.feature_selection.SelectFromModel`,
-            change by the importance_getter parameter instead.
+            you may pass a callable to the `importance_getter`
+            parameter that extracts feature the importances
+            from `estimators_`.
 
     intercept_ : ndarray of shape (1, 1) or (n_classes, 1)
         If ``y`` is binary, the shape is ``(1, 1)`` else ``(n_classes, 1)``
@@ -200,7 +202,9 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
             be removed in 0.26. If you use this attribute
             in :class:`~sklearn.feature_selection.RFE` or
             :class:`~sklearn.feature_selection.SelectFromModel`,
-            change by the importance_getter parameter instead.
+            you may pass a callable to the `importance_getter`
+            parameter that extracts feature the importances
+            from `estimators_`.
 
     classes_ : array, shape = [`n_classes`]
         Class labels.
