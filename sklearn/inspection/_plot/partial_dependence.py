@@ -701,11 +701,12 @@ class PartialDependenceDisplay:
             )
 
         if self.kind in ("average", "both"):
-            label = None if self.kind == "average" else "average"
             # the average is stored as the last line
             if self.kind == "average":
+                label = line_kw.pop("label", "average")
                 pd_line_idx = pd_plot_idx
             else:
+                label = None
                 pd_line_idx = pd_plot_idx * n_lines + n_ice_lines
             self._plot_average_dependence(
                 avg_preds[self.target_idx].ravel(),
