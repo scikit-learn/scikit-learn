@@ -546,8 +546,8 @@ def test_calibration_attributes(clf, cv):
 
 # FIXME: remove in 0.26
 def test_calibrated_classifier_cv_deprecation(data):
-    """Check that we raise the proper deprecation warning if accessing
-    `calibrators_` from the `_CalibratedClassifier`."""
+    # Check that we raise the proper deprecation warning if accessing
+    # `calibrators_` from the `_CalibratedClassifier`.
     X, y = data
     calib_clf = CalibratedClassifierCV(cv=2).fit(X, y)
 
