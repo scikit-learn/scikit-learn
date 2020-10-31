@@ -7,6 +7,7 @@ and pairwise metrics and distance computations.
 from ._ranking import auc
 from ._ranking import average_precision_score
 from ._ranking import coverage_error
+from ._ranking import det_curve
 from ._ranking import dcg_score
 from ._ranking import label_ranking_average_precision_score
 from ._ranking import label_ranking_loss
@@ -14,6 +15,7 @@ from ._ranking import ndcg_score
 from ._ranking import precision_recall_curve
 from ._ranking import roc_auc_score
 from ._ranking import roc_curve
+from ._ranking import top_k_accuracy_score
 
 from ._classification import accuracy_score
 from ._classification import balanced_accuracy_score
@@ -37,6 +39,8 @@ from ._classification import multilabel_confusion_matrix
 from . import cluster
 from .cluster import adjusted_mutual_info_score
 from .cluster import adjusted_rand_score
+from .cluster import rand_score
+from .cluster import pair_confusion_matrix
 from .cluster import completeness_score
 from .cluster import consensus_score
 from .cluster import homogeneity_completeness_v_measure
@@ -64,6 +68,7 @@ from ._regression import mean_absolute_error
 from ._regression import mean_squared_error
 from ._regression import mean_squared_log_error
 from ._regression import median_absolute_error
+from ._regression import mean_absolute_percentage_error
 from ._regression import r2_score
 from ._regression import mean_tweedie_deviance
 from ._regression import mean_poisson_deviance
@@ -75,6 +80,8 @@ from ._scorer import make_scorer
 from ._scorer import SCORERS
 from ._scorer import get_scorer
 
+from ._plot.det_curve import plot_det_curve
+from ._plot.det_curve import DetCurveDisplay
 from ._plot.roc_curve import plot_roc_curve
 from ._plot.roc_curve import RocCurveDisplay
 from ._plot.precision_recall_curve import plot_precision_recall_curve
@@ -103,6 +110,8 @@ __all__ = [
     'coverage_error',
     'dcg_score',
     'davies_bouldin_score',
+    'DetCurveDisplay',
+    'det_curve',
     'euclidean_distances',
     'explained_variance_score',
     'f1_score',
@@ -128,16 +137,19 @@ __all__ = [
     'mean_gamma_deviance',
     'mean_tweedie_deviance',
     'median_absolute_error',
+    'mean_absolute_percentage_error',
     'multilabel_confusion_matrix',
     'mutual_info_score',
     'ndcg_score',
     'normalized_mutual_info_score',
+    'pair_confusion_matrix',
     'pairwise_distances',
     'pairwise_distances_argmin',
     'pairwise_distances_argmin_min',
     'pairwise_distances_chunked',
     'pairwise_kernels',
     'plot_confusion_matrix',
+    'plot_det_curve',
     'plot_precision_recall_curve',
     'plot_roc_curve',
     'PrecisionRecallDisplay',
@@ -145,6 +157,7 @@ __all__ = [
     'precision_recall_fscore_support',
     'precision_score',
     'r2_score',
+    'rand_score',
     'recall_score',
     'RocCurveDisplay',
     'roc_auc_score',
@@ -152,6 +165,7 @@ __all__ = [
     'SCORERS',
     'silhouette_samples',
     'silhouette_score',
+    'top_k_accuracy_score',
     'v_measure_score',
     'zero_one_loss',
     'brier_score_loss',

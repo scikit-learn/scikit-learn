@@ -46,7 +46,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
     ----------
     min_samples : int > 1 or float between 0 and 1, default=5
         The number of samples in a neighborhood for a point to be considered as
-        a core point. Also, up and down steep regions can't have more then
+        a core point. Also, up and down steep regions can't have more than
         ``min_samples`` consecutive non-steep points. Expressed as an absolute
         number or a fraction of the number of samples (rounded to be at least
         2).
@@ -179,8 +179,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
 
     See Also
     --------
-    DBSCAN
-        A similar clustering for a specified neighborhood radius (eps).
+    DBSCAN : A similar clustering for a specified neighborhood radius (eps).
         Our implementation is optimized for runtime.
 
     References
@@ -244,7 +243,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
         self : instance of OPTICS
             The instance.
         """
-        X = self._validate_data(X, dtype=np.float)
+        X = self._validate_data(X, dtype=float)
 
         if self.cluster_method not in ['dbscan', 'xi']:
             raise ValueError("cluster_method should be one of"
@@ -664,10 +663,10 @@ def _extend_region(steep_point, xward_point, start, min_samples):
 
     Parameters
     ----------
-    steep_point : ndarray of shape (n_samples,), dtype=np.bool
+    steep_point : ndarray of shape (n_samples,), dtype=bool
         True if the point is steep downward (upward).
 
-    xward_point : ndarray of shape (n_samples,), dtype=np.bool
+    xward_point : ndarray of shape (n_samples,), dtype=bool
         True if the point is an upward (respectively downward) point.
 
     start : int

@@ -3,8 +3,10 @@ import pytest
 
 from sklearn.metrics.cluster import adjusted_mutual_info_score
 from sklearn.metrics.cluster import adjusted_rand_score
+from sklearn.metrics.cluster import rand_score
 from sklearn.metrics.cluster import completeness_score
 from sklearn.metrics.cluster import contingency_matrix
+from sklearn.metrics.cluster import pair_confusion_matrix
 from sklearn.metrics.cluster import entropy
 from sklearn.metrics.cluster import expected_mutual_information
 from sklearn.metrics.cluster import fowlkes_mallows_score
@@ -14,15 +16,18 @@ from sklearn.metrics.cluster import mutual_info_score
 from sklearn.metrics.cluster import normalized_mutual_info_score
 from sklearn.metrics.cluster import v_measure_score
 from sklearn.metrics.cluster._supervised import _generalized_average
+from sklearn.metrics.cluster._supervised import check_clusterings
 
 from sklearn.utils import assert_all_finite
 from sklearn.utils._testing import (
-        assert_almost_equal, ignore_warnings)
-from numpy.testing import assert_array_almost_equal
+    assert_almost_equal, ignore_warnings)
+from numpy.testing import (
+    assert_array_equal, assert_array_almost_equal, assert_allclose)
 
 
 score_funcs = [
     adjusted_rand_score,
+    rand_score,
     homogeneity_score,
     completeness_score,
     v_measure_score,
@@ -61,13 +66,13 @@ def test_generalized_average():
 @ignore_warnings(category=FutureWarning)
 def test_perfect_matches():
     for score_func in score_funcs:
-        assert score_func([], []) == 1.0
-        assert score_func([0], [1]) == 1.0
-        assert score_func([0, 0, 0], [0, 0, 0]) == 1.0
-        assert score_func([0, 1, 0], [42, 7, 42]) == 1.0
-        assert score_func([0., 1., 0.], [42., 7., 42.]) == 1.0
-        assert score_func([0., 1., 2.], [42., 7., 2.]) == 1.0
-        assert score_func([0, 1, 2], [42, 7, 2]) == 1.0
+        assert score_func([], []) == pytest.approx(1.0)
+        assert score_func([0], [1]) == pytest.approx(1.0)
+        assert score_func([0, 0, 0], [0, 0, 0]) == pytest.approx(1.0)
+        assert score_func([0, 1, 0], [42, 7, 42]) == pytest.approx(1.0)
+        assert score_func([0., 1., 0.], [42., 7., 42.]) == pytest.approx(1.0)
+        assert score_func([0., 1., 2.], [42., 7., 2.]) == pytest.approx(1.0)
+        assert score_func([0, 1, 2], [42, 7, 2]) == pytest.approx(1.0)
     score_funcs_with_changing_means = [
         normalized_mutual_info_score,
         adjusted_mutual_info_score,
@@ -75,13 +80,17 @@ def test_perfect_matches():
     means = {"min", "geometric", "arithmetic", "max"}
     for score_func in score_funcs_with_changing_means:
         for mean in means:
-            assert score_func([], [], mean) == 1.0
-            assert score_func([0], [1], mean) == 1.0
-            assert score_func([0, 0, 0], [0, 0, 0], mean) == 1.0
-            assert score_func([0, 1, 0], [42, 7, 42], mean) == 1.0
-            assert score_func([0., 1., 0.], [42., 7., 42.], mean) == 1.0
-            assert score_func([0., 1., 2.], [42., 7., 2.], mean) == 1.0
-            assert score_func([0, 1, 2], [42, 7, 2], mean) == 1.0
+            assert score_func([], [], mean) == pytest.approx(1.0)
+            assert score_func([0], [1], mean) == pytest.approx(1.0)
+            assert score_func([0, 0, 0], [0, 0, 0], mean) == pytest.approx(1.0)
+            assert score_func(
+                [0, 1, 0], [42, 7, 42], mean) == pytest.approx(1.0)
+            assert score_func(
+                [0., 1., 0.], [42., 7., 42.], mean) == pytest.approx(1.0)
+            assert score_func(
+                [0., 1., 2.], [42., 7., 2.], mean) == pytest.approx(1.0)
+            assert score_func(
+                [0, 1, 2], [42, 7, 2], mean) == pytest.approx(1.0)
 
 
 def test_homogeneous_but_not_complete_labeling():
@@ -160,6 +169,11 @@ def test_non_consecutive_labels():
     assert_almost_equal(ari_1, 0.24, 2)
     assert_almost_equal(ari_2, 0.24, 2)
 
+    ri_1 = rand_score([0, 0, 0, 1, 1, 1], [0, 1, 0, 1, 2, 2])
+    ri_2 = rand_score([0, 0, 0, 1, 1, 1], [0, 4, 0, 4, 2, 2])
+    assert_almost_equal(ri_1, 0.66, 2)
+    assert_almost_equal(ri_2, 0.66, 2)
+
 
 @ignore_warnings(category=FutureWarning)
 def uniform_labelings_scores(score_func, n_samples, k_range, n_runs=10,
@@ -212,7 +226,7 @@ def test_adjusted_mutual_info_score():
     ami = adjusted_mutual_info_score(labels_a, labels_b)
     assert_almost_equal(ami, 0.27821, 5)
     ami = adjusted_mutual_info_score([1, 1, 2, 2], [2, 2, 3, 3])
-    assert ami == 1.0
+    assert ami == pytest.approx(1.0)
     # Test with a very large array
     a110 = np.array([list(labels_a) * 110]).flatten()
     b110 = np.array([list(labels_b) * 110]).flatten()
@@ -269,23 +283,27 @@ def test_contingency_matrix_sparse():
 @ignore_warnings(category=FutureWarning)
 def test_exactly_zero_info_score():
     # Check numerical stability when information is exactly zero
-    for i in np.logspace(1, 4, 4).astype(np.int):
-        labels_a, labels_b = (np.ones(i, dtype=np.int),
-                              np.arange(i, dtype=np.int))
-        assert normalized_mutual_info_score(labels_a, labels_b) == 0.0
-        assert v_measure_score(labels_a, labels_b) == 0.0
-        assert adjusted_mutual_info_score(labels_a, labels_b) == 0.0
-        assert normalized_mutual_info_score(labels_a, labels_b) == 0.0
+    for i in np.logspace(1, 4, 4).astype(int):
+        labels_a, labels_b = (np.ones(i, dtype=int),
+                              np.arange(i, dtype=int))
+        assert normalized_mutual_info_score(
+            labels_a, labels_b) == pytest.approx(0.0)
+        assert v_measure_score(
+            labels_a, labels_b) == pytest.approx(0.0)
+        assert adjusted_mutual_info_score(
+            labels_a, labels_b) == pytest.approx(0.0)
+        assert normalized_mutual_info_score(
+            labels_a, labels_b) == pytest.approx(0.0)
         for method in ["min", "geometric", "arithmetic", "max"]:
-            assert adjusted_mutual_info_score(labels_a, labels_b,
-                                              method) == 0.0
-            assert normalized_mutual_info_score(labels_a, labels_b,
-                                                method) == 0.0
+            assert adjusted_mutual_info_score(
+                labels_a, labels_b,  method) == pytest.approx(0.0)
+            assert normalized_mutual_info_score(
+                labels_a, labels_b, method) == pytest.approx(0.0)
 
 
 def test_v_measure_and_mutual_information(seed=36):
     # Check relation between v_measure, entropy and mutual information
-    for i in np.logspace(1, 4, 4).astype(np.int):
+    for i in np.logspace(1, 4, 4).astype(int):
         random_state = np.random.RandomState(seed)
         labels_a, labels_b = (random_state.randint(0, 10, i),
                               random_state.randint(0, 10, i))
@@ -348,3 +366,84 @@ def test_fowlkes_mallows_score_properties():
 def test_mutual_info_score_positive_constant_label(labels_true, labels_pred):
     # non-regression test for #16355
     assert mutual_info_score(labels_true, labels_pred) >= 0
+
+
+def test_check_clustering_error():
+    # Test warning message for continuous values
+    rng = np.random.RandomState(42)
+    noise = rng.rand(500)
+    wavelength = np.linspace(0.01, 1, 500) * 1e-6
+    msg = 'Clustering metrics expects discrete values but received ' \
+          'continuous values for label, and continuous values for ' \
+          'target'
+
+    with pytest.warns(UserWarning, match=msg):
+        check_clusterings(wavelength, noise)
+
+
+def test_pair_confusion_matrix_fully_dispersed():
+    # edge case: every element is its own cluster
+    N = 100
+    clustering1 = list(range(N))
+    clustering2 = clustering1
+    expected = np.array([[N * (N - 1), 0], [0, 0]])
+    assert_array_equal(
+        pair_confusion_matrix(clustering1, clustering2), expected
+    )
+
+
+def test_pair_confusion_matrix_single_cluster():
+    # edge case: only one cluster
+    N = 100
+    clustering1 = np.zeros((N,))
+    clustering2 = clustering1
+    expected = np.array([[0, 0], [0, N * (N - 1)]])
+    assert_array_equal(
+        pair_confusion_matrix(clustering1, clustering2), expected
+    )
+
+
+def test_pair_confusion_matrix():
+    # regular case: different non-trivial clusterings
+    n = 10
+    N = n ** 2
+    clustering1 = np.hstack([[i + 1] * n for i in range(n)])
+    clustering2 = np.hstack([[i + 1] * (n + 1) for i in range(n)])[:N]
+    # basic quadratic implementation
+    expected = np.zeros(shape=(2, 2), dtype=np.int64)
+    for i in range(len(clustering1)):
+        for j in range(len(clustering2)):
+            if i != j:
+                same_cluster_1 = int(clustering1[i] == clustering1[j])
+                same_cluster_2 = int(clustering2[i] == clustering2[j])
+                expected[same_cluster_1, same_cluster_2] += 1
+    assert_array_equal(
+        pair_confusion_matrix(clustering1, clustering2), expected
+    )
+
+
+@pytest.mark.parametrize(
+    "clustering1, clustering2",
+    [(list(range(100)), list(range(100))),
+     (np.zeros((100,)), np.zeros((100,)))]
+)
+def test_rand_score_edge_cases(clustering1, clustering2):
+    # edge case 1: every element is its own cluster
+    # edge case 2: only one cluster
+    assert_allclose(rand_score(clustering1, clustering2), 1.)
+
+
+def test_rand_score():
+    # regular case: different non-trivial clusterings
+    clustering1 = [0, 0, 0, 1, 1, 1]
+    clustering2 = [0, 1, 0, 1, 2, 2]
+    # pair confusion matrix
+    D11 = 2 * 2  # ordered pairs (1, 3), (5, 6)
+    D10 = 2 * 4  # ordered pairs (1, 2), (2, 3), (4, 5), (4, 6)
+    D01 = 2 * 1  # ordered pair (2, 4)
+    D00 = 5 * 6 - D11 - D01 - D10  # the remaining pairs
+    # rand score
+    expected_numerator = D00 + D11
+    expected_denominator = D00 + D01 + D10 + D11
+    expected = expected_numerator / expected_denominator
+    assert_allclose(rand_score(clustering1, clustering2), expected)

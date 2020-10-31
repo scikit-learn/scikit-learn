@@ -33,7 +33,7 @@ def test_fit_transform(strategy, expected):
 def test_valid_n_bins():
     KBinsDiscretizer(n_bins=2).fit_transform(X)
     KBinsDiscretizer(n_bins=np.array([2])[0]).fit_transform(X)
-    assert KBinsDiscretizer(n_bins=2).fit(X).n_bins_.dtype == np.dtype(np.int)
+    assert KBinsDiscretizer(n_bins=2).fit(X).n_bins_.dtype == np.dtype(int)
 
 
 def test_invalid_n_bins():
@@ -99,14 +99,6 @@ def test_fit_transform_n_bins_array(strategy, expected):
     assert est.bin_edges_.shape == (n_features, )
     for bin_edges, n_bins in zip(est.bin_edges_, est.n_bins_):
         assert bin_edges.shape == (n_bins + 1, )
-
-
-def test_invalid_n_features():
-    est = KBinsDiscretizer(n_bins=3).fit(X)
-    bad_X = np.arange(25).reshape(5, -1)
-    err_msg = "Incorrect number of features. Expecting 4, received 5"
-    with pytest.raises(ValueError, match=err_msg):
-        est.transform(bad_X)
 
 
 @pytest.mark.parametrize('strategy', ['uniform', 'kmeans', 'quantile'])
