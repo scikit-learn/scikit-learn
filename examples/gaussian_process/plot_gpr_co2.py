@@ -61,7 +61,6 @@ confident predictions until around 2015.
 #
 # License: BSD 3 clause
 
-from __future__ import division, print_function
 
 import numpy as np
 
@@ -75,7 +74,7 @@ print(__doc__)
 
 
 def load_mauna_loa_atmospheric_co2():
-    ml_data = fetch_openml(data_id=41187)
+    ml_data = fetch_openml(data_id=41187, as_frame=False)
     months = []
     ppmv_sums = []
     counts = []
@@ -130,7 +129,7 @@ k2 = 2.0**2 * RBF(length_scale=100.0) \
 k3 = 0.5**2 * RationalQuadratic(length_scale=1.0, alpha=1.0)
 k4 = 0.1**2 * RBF(length_scale=0.1) \
     + WhiteKernel(noise_level=0.1**2,
-                  noise_level_bounds=(1e-3, np.inf))  # noise terms
+                  noise_level_bounds=(1e-5, np.inf))  # noise terms
 kernel = k1 + k2 + k3 + k4
 
 gp = GaussianProcessRegressor(kernel=kernel, alpha=0,
