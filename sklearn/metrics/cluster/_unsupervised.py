@@ -138,7 +138,7 @@ def _silhouette_reduce(D_chunk, start, labels, label_freqs):
                            dtype=D_chunk.dtype)
     for i in range(n_chunk_samples):
         sample_weights = (D_chunk.getrow(i).toarray().squeeze()
-                            if issparse(D_chunk) else D_chunk[i])
+                         if issparse(D_chunk) else D_chunk[i])
         clust_dists[i] += np.bincount(labels, weights=sample_weights,
                                       minlength=len(label_freqs))
 
