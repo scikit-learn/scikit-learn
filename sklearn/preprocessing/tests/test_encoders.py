@@ -531,38 +531,6 @@ def test_one_hot_encoder_drop_equals_if_binary():
     assert_allclose(result, expected)
 
 
-# TODO: Remove when 'ignore' is deprecated in 0.26
-@pytest.mark.filterwarnings("ignore:handle_unknown='ignore':FutureWarning")
-@pytest.mark.parametrize("X", [np.array([[1, np.nan]]).T,
-                               np.array([['a', np.nan]], dtype=object).T],
-                         ids=['numeric', 'object'])
-@pytest.mark.parametrize("as_data_frame", [False, True],
-                         ids=['array', 'dataframe'])
-@pytest.mark.parametrize("handle_unknown", ['error', 'auto', 'ignore'])
-def test_one_hot_encoder_raise_missing(X, as_data_frame, handle_unknown):
-    if as_data_frame:
-        pd = pytest.importorskip('pandas')
-        X = pd.DataFrame(X)
-
-    ohe = OneHotEncoder(categories='auto', handle_unknown=handle_unknown)
-
-    with pytest.raises(ValueError, match="Input contains NaN"):
-        ohe.fit(X)
-
-    with pytest.raises(ValueError, match="Input contains NaN"):
-        ohe.fit_transform(X)
-
-    if as_data_frame:
-        X_partial = X.iloc[:1, :]
-    else:
-        X_partial = X[:1, :]
-
-    ohe.fit(X_partial)
-
-    with pytest.raises(ValueError, match="Input contains NaN"):
-        ohe.transform(X)
-
-
 @pytest.mark.parametrize("X", [
     [['abc', 2, 55], ['def', 1, 55]],
     np.array([[10, 2, 55], [20, 1, 55]]),
@@ -873,14 +841,6 @@ def test_categories(density, drop):
 @pytest.mark.parametrize('Encoder', [OneHotEncoder, OrdinalEncoder])
 def test_encoders_has_categorical_tags(Encoder):
     assert 'categorical' in Encoder()._get_tags()['X_types']
-
-
-@pytest.mark.parametrize('Encoder', [OneHotEncoder, OrdinalEncoder])
-def test_encoders_does_not_support_none_values(Encoder):
-    values = [["a"], [None]]
-    with pytest.raises(TypeError, match="Encoders require their input to be "
-                                        "uniformly strings or numbers."):
-        Encoder().fit(values)
 
 
 def test_ohe_infrequent_infrequent_is_a_cat():
