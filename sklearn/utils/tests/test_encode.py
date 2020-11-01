@@ -184,6 +184,9 @@ def test_unique_util_missing_values_numeric():
     assert_array_equal(uniques, expected_uniques)
     assert_array_equal(inverse, expected_inverse)
 
+    _, counts = _unique(values, return_counts=True)
+    assert_array_equal(counts, [1, 2, 1, 2])
+
     encoded = _encode(values, uniques=uniques)
     assert_array_equal(encoded, expected_inverse)
 
@@ -201,6 +204,9 @@ def test_unique_util_with_all_missing_values():
     expected_inverse = [3, 0, 1, 1, 2, 3, 2]
     _, inverse = _unique(values, return_inverse=True)
     assert_array_equal(inverse, expected_inverse)
+
+    _, counts = _unique(values, return_counts=True)
+    assert_array_equal(counts, [1, 2, 2, 2])
 
 
 def test_check_unknown_with_both_missing_values():

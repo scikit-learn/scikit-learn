@@ -1,4 +1,3 @@
-from collections import Counter
 from typing import NamedTuple
 
 import numpy as np
@@ -40,9 +39,15 @@ def _unique(values, *, return_inverse=False, return_counts=False):
                     return_counts=return_counts)
 
     if return_inverse:
-        uniques, inverse = out
+        if return_counts:
+            uniques, inverse, counts = out
+        else:
+            uniques, inverse = out
     else:
-        uniques = out
+        if return_counts:
+            uniques, counts = out
+        else:
+            uniques = out
 
     # np.unique will have duplicate missing values at the end of `uniques`
     # here we clip the nans and remove it from uniques
@@ -52,9 +57,19 @@ def _unique(values, *, return_inverse=False, return_counts=False):
         if return_inverse:
             inverse[inverse > nan_idx] = nan_idx
 
+        if return_counts:
+            counts[nan_idx] = np.sum(counts[nan_idx:])
+            counts = counts[:nan_idx+1]
+
+    ret = (uniques, )
+
     if return_inverse:
-        return uniques, inverse
-    return uniques
+        ret += (inverse, )
+
+    if return_counts:
+        ret += (counts, )
+
+    return ret[0] if len(ret) == 1 else ret
 
 
 class MissingValues(NamedTuple):
@@ -124,6 +139,27 @@ class _nandict(dict):
         raise KeyError(key)
 
 
+class _NaNCounter(dict):
+    """Counter that supports nans."""
+    def __init__(self, iterable):
+        for item in iterable:
+            if is_scalar_nan(item):
+                if not hasattr(self, 'nan_cnt'):
+                    self.nan_cnt = 0
+                self.nan_cnt += 1
+                continue
+
+            try:
+                self[item] += 1
+            except KeyError:
+                self[item] = 1
+
+    def __missing__(self, key):
+        if hasattr(self, 'nan_cnt') and is_scalar_nan(key):
+            return self.nan_cnt
+        raise KeyError(key)
+
+
 def _map_to_integer(values, uniques):
     """Map values based on its position in uniques."""
     table = _nandict({val: i for i, val in enumerate(uniques)})
@@ -150,7 +186,7 @@ def _unique_python(values, *, return_inverse, return_counts):
         ret += (_map_to_integer(values, uniques), )
 
     if return_counts:
-        uniques_dict = Counter(values)
+        uniques_dict = _NaNCounter(values)
         counts = np.array([uniques_dict[item] for item in uniques],
                           dtype=int)
         ret += (counts, )
