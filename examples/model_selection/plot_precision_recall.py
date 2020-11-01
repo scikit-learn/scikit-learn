@@ -219,8 +219,8 @@ fig.subplots_adjust(bottom=0.25)
 disp = plot_precision_recall_curve(
     classifier, X_test, Y_test, ax=ax, drawstyle='default')[0]
 
-lines = disp[0].ax_.get_lines()
-_, labels = disp[0].ax_.get_legend_handles_labels()
+lines = disp.ax_.get_lines()
+_, labels = disp.ax_.get_legend_handles_labels()
 
 f_scores = np.linspace(0.2, 0.8, num=4)
 for f_score in f_scores:

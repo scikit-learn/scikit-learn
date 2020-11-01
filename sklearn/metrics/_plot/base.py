@@ -1,6 +1,8 @@
 import numpy as np
 
 from sklearn.base import is_classifier
+from sklearn.preprocessing import label_binarize
+from sklearn.utils.multiclass import type_of_target
 
 
 def _check_classifier_response_method(estimator, response_method):
@@ -120,3 +122,53 @@ def _get_response(X, estimator, response_method,
             y_pred *= -1
 
     return y_pred, pos_label
+
+
+def _plot_curve(plot_curve_fn,
+                estimator, X, y, *,
+                response_method="auto",
+                name=None, ax=None, pos_label=None, **kwargs):
+    import matplotlib.pyplot as plt
+
+    n_classes = len(np.unique(y)) if y.ndim == 1 else y.shape[1]
+
+    y_type = type_of_target(y)
+
+    y_pred, pos_label = _get_response(
+        X, estimator, response_method,
+        n_classes=n_classes, pos_label=pos_label)
+
+    name = estimator.__class__.__name__ if name is None else name
+
+    # Early exit if the axes does not have the correct number of axes
+    if ax is not None and not isinstance(ax, plt.Axes):
+        axes = np.asarray(ax, dtype=object)
+        if axes.size != n_classes:
+            raise ValueError("Expected ax to have {} axes, got {}".format(
+                n_classes, axes.size))
+
+    if n_classes == 2:
+
+        viz = plot_curve_fn(y, y_pred, pos_label=pos_label, y_type=y_type, name=name)
+
+        return viz.plot(ax=ax, name=name, **kwargs)
+    else:
+        # binarize if y is a vector
+        if y.ndim == 1:
+            y = label_binarize(y, classes=np.unique(y))
+
+        if ax is None:
+            fig, ax = plt.subplots(1, n_classes)
+
+        vizs = []
+
+        for i in range(n_classes):
+            viz = plot_curve_fn(y[:, i], y_pred[:, i], y_type=y_type, name=name)
+
+            axes = ax if isinstance(ax, plt.Axes) else ax[i]
+
+            viz.plot(ax=axes, name='{} for class {}'.format(name, i), **kwargs)
+
+            vizs.append(viz)
+
+        return vizs

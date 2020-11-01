@@ -1,11 +1,10 @@
 import numpy as np
 
-from .base import _get_response
+from .base import _plot_curve
 
 from .. import auc
 from .. import roc_curve
 
-from ...preprocessing import label_binarize
 from ...utils import check_matplotlib_support
 from ...utils.validation import _deprecate_positional_args
 
@@ -122,14 +121,11 @@ class RocCurveDisplay:
 
         self.line_, = ax.plot(self.fpr, self.tpr, **line_kwargs)
 
-        xlabel = "False Positive Rate"
-        ylabel = "True Positive Rate"
+        info_pos_label = (f" (Positive label: {self.pos_label})"
+                          if self.pos_label is not None else "")
 
-        if self.pos_label is not None:
-            info_pos_label = (f" (Positive label: {self.pos_label})"
-                              if self.pos_label is not None else "")
-            xlabel += info_pos_label
-            ylabel += info_pos_label
+        xlabel = "False Positive Rate" + info_pos_label
+        ylabel = "True Positive Rate" + info_pos_label
 
         ax.set(xlabel=xlabel, ylabel=ylabel)
 
@@ -142,8 +138,8 @@ class RocCurveDisplay:
 
 
 def _get_roc_curve_display(y, y_pred,
-                           pos_label=None, sample_weight=None,
-                           drop_intermediate=True, name=None):
+                           pos_label=1, sample_weight=None,
+                           drop_intermediate=True, y_type='binary', name=None):
     """Calculate roc metrics and return roc curve display.
 
     Parameters
@@ -184,6 +180,8 @@ def _get_roc_curve_display(y, y_pred,
     )
 
     roc_auc = auc(fpr, tpr)
+
+    pos_label = pos_label if y_type == 'binary' else None
 
     return RocCurveDisplay(
         fpr=fpr,
@@ -276,55 +274,15 @@ def plot_roc_curve(estimator, X, y, *, sample_weight=None,
     """
     check_matplotlib_support('plot_roc_curve')
 
-    import matplotlib.pyplot as plt
-
-    n_classes = len(np.unique(y))
-
-    y_pred, pos_label = _get_response(
-        X, estimator, response_method,
-        n_classes=n_classes, pos_label=pos_label)
-
-    name = estimator.__class__.__name__ if name is None else name
-
-    # Early exit if the axes does not have the correct number of axes
-    if ax is not None and not isinstance(ax, plt.Axes):
-        axes = np.asarray(ax, dtype=object)
-        if axes.size != n_classes:
-            raise ValueError("Expected ax to have {} axes, got {}".format(
-                n_classes, axes.size))
-
-    if n_classes == 2:
-
-        viz = _get_roc_curve_display(
+    def plot_curve_fn(y, y_pred, pos_label=1, y_type='binary', name=None):
+        return _get_roc_curve_display(
             y, y_pred, pos_label=pos_label,
             sample_weight=sample_weight,
             drop_intermediate=drop_intermediate,
-            name=name
+            y_type=y_type, name=name
         )
 
-        return viz.plot(ax=ax, name=name, **kwargs)
-    else:
-        # binarize if y is a vector
-        if y.ndim == 1:
-            y = label_binarize(y, classes=np.unique(y))
-
-        if ax is None:
-            fig, ax = plt.subplots()
-
-        vizs = []
-
-        for i in range(n_classes):
-            viz = _get_roc_curve_display(
-                y[:, i], y_pred[:, i],
-                sample_weight=sample_weight,
-                drop_intermediate=drop_intermediate,
-                name=name
-            )
-
-            axes = ax if isinstance(ax, plt.Axes) else ax[i]
-
-            viz.plot(ax=axes, name='{} (class {})'.format(name, i), **kwargs)
-
-            vizs.append(viz)
-
-        return vizs
+    return _plot_curve(plot_curve_fn=plot_curve_fn,
+                       estimator=estimator, X=X, y=y,
+                       response_method=response_method, name=name,
+                       ax=ax, pos_label=pos_label, **kwargs)

@@ -1,11 +1,8 @@
-import numpy as np
-
-from .base import _get_response
+from .base import _plot_curve
 
 from .. import average_precision_score
 from .. import precision_recall_curve
 
-from ...preprocessing import label_binarize
 from ...utils import check_matplotlib_support
 from ...utils.validation import _deprecate_positional_args
 
@@ -149,7 +146,8 @@ class PrecisionRecallDisplay:
 
 
 def _get_precision_recall_display(y, y_pred,
-                                  pos_label=1, sample_weight=None, name=None):
+                                  pos_label=1, sample_weight=None,
+                                  y_type='binary', name=None):
     """Calculate precision recall metrics and return precision recall display.
 
     Parameters
@@ -177,6 +175,7 @@ def _get_precision_recall_display(y, y_pred,
     display : :class:`~sklearn.metrics.PrecisionRecallDisplay`
         Object that stores computed values.
     """
+
     precision, recall, _ = precision_recall_curve(
         y, y_pred,
         pos_label=pos_label,
@@ -188,6 +187,8 @@ def _get_precision_recall_display(y, y_pred,
         pos_label=pos_label,
         sample_weight=sample_weight
     )
+
+    pos_label = pos_label if y_type == 'binary' else None
 
     return PrecisionRecallDisplay(
         precision=precision, recall=recall,
@@ -263,53 +264,14 @@ def plot_precision_recall_curve(estimator, X, y, *,
     """
     check_matplotlib_support("plot_precision_recall_curve")
 
-    import matplotlib.pyplot as plt
-
-    n_classes = len(np.unique(y)) if y.ndim == 1 else y.shape[1]
-
-    y_pred, pos_label = _get_response(
-        X, estimator, response_method,
-        n_classes=n_classes, pos_label=pos_label)
-
-    name = estimator.__class__.__name__ if name is None else name
-
-    # Early exit if the axes does not have the correct number of axes
-    if ax is not None and not isinstance(ax, plt.Axes):
-        axes = np.asarray(ax, dtype=object)
-        if axes.size != n_classes:
-            raise ValueError("Expected ax to have {} axes, got {}".format(
-                n_classes, axes.size))
-
-    if n_classes == 2:
-
-        viz = _get_precision_recall_display(
+    def plot_curve_fn(y, y_pred, pos_label=1, y_type='binary', name=None):
+        return _get_precision_recall_display(
             y, y_pred, pos_label=pos_label,
             sample_weight=sample_weight,
-            name=name
+            y_type=y_type, name=name
         )
 
-        return viz.plot(ax=ax, name=name, **kwargs)
-    else:
-        # binarize if y is a vector
-        if y.ndim == 1:
-            y = label_binarize(y, classes=np.unique(y))
-
-        if ax is None:
-            fig, ax = plt.subplots()
-
-        vizs = []
-
-        for i in range(n_classes):
-            viz = _get_precision_recall_display(
-                y[:, i], y_pred[:, i],
-                sample_weight=sample_weight,
-                name=name
-            )
-
-            axes = ax if isinstance(ax, plt.Axes) else ax[i]
-
-            viz.plot(ax=axes, name='{} (class {})'.format(name, i), **kwargs)
-
-            vizs.append(viz)
-
-        return vizs
+    return _plot_curve(plot_curve_fn=plot_curve_fn,
+                       estimator=estimator, X=X, y=y,
+                       response_method=response_method, name=name,
+                       ax=ax, pos_label=pos_label, **kwargs)
