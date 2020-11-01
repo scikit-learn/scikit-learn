@@ -2,7 +2,6 @@ import pytest
 import numpy as np
 from numpy.testing import assert_allclose
 
-from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.metrics import plot_precision_recall_curve
 from sklearn.metrics import PrecisionRecallDisplay
 from sklearn.metrics import average_precision_score
@@ -14,7 +13,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.exceptions import NotFittedError
 from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler, label_binarize
+from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import label_binarize
 from sklearn.utils import shuffle
 from sklearn.compose import make_column_transformer
 
@@ -40,31 +40,6 @@ def test_errors(pyplot):
     msg = "DecisionTreeRegressor should be a classifier"
     with pytest.raises(ValueError, match=msg):
         plot_precision_recall_curve(reg, X, y_binary)
-
-
-@pytest.mark.parametrize(
-    "response_method, msg",
-    [("predict_proba", "response method predict_proba is not defined in "
-                       "MyClassifier"),
-     ("decision_function", "response method decision_function is not defined "
-                           "in MyClassifier"),
-     ("auto", "response method decision_function or predict_proba is not "
-              "defined in MyClassifier"),
-     ("bad_method", "response_method must be 'predict_proba', "
-                    "'decision_function' or 'auto'")])
-def test_error_bad_response(pyplot, response_method, msg):
-    X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
-
-    class MyClassifier(ClassifierMixin, BaseEstimator):
-        def fit(self, X, y):
-            self.fitted_ = True
-            self.classes_ = [0, 1]
-            return self
-
-    clf = MyClassifier().fit(X, y)
-
-    with pytest.raises(ValueError, match=msg):
-        plot_precision_recall_curve(clf, X, y, response_method=response_method)
 
 
 @pytest.mark.parametrize("response_method",
@@ -120,7 +95,8 @@ def test_plot_precision_recall(pyplot, response_method, with_sample_weight):
 @pytest.mark.parametrize("response_method",
                          ["predict_proba", "decision_function"])
 @pytest.mark.parametrize("with_sample_weight", [True, False])
-def test_plot_precision_recall_multiclass(pyplot, response_method, with_sample_weight):
+@pytest.mark.parametrize("with_same_axis", [True, False])
+def test_plot_precision_recall_multiclass(pyplot, response_method, with_sample_weight, with_same_axis):
     X, y = make_classification(n_classes=3, n_samples=50,
                                n_informative=3, random_state=0)
 
@@ -132,9 +108,16 @@ def test_plot_precision_recall_multiclass(pyplot, response_method, with_sample_w
     else:
         sample_weight = None
 
+    import matplotlib.pyplot as plt
+    if with_same_axis:
+        fig, ax = plt.subplots()
+    else:
+        ax = None
+
     disp = plot_precision_recall_curve(lr, X, y, alpha=0.8,
                                        response_method=response_method,
-                                       sample_weight=sample_weight)
+                                       sample_weight=sample_weight,
+                                       ax=ax)
 
     y_score = getattr(lr, response_method)(X)
 
@@ -149,7 +132,6 @@ def test_plot_precision_recall_multiclass(pyplot, response_method, with_sample_w
         assert_allclose(disp[i].precision, prec)
         assert_allclose(disp[i].recall, recall)
         assert disp[i].average_precision == pytest.approx(avg_prec)
-
         assert disp[i].estimator_name == "LogisticRegression"
 
         # cannot fail thanks to pyplot fixture
@@ -168,21 +150,6 @@ def test_plot_precision_recall_multiclass(pyplot, response_method, with_sample_w
         disp[i].plot(name="MySpecialEstimator for class {}".format(i))
         expected_label = "MySpecialEstimator for class {} (AP = {:0.2f})".format(i, avg_prec)
         assert disp[i].line_.get_label() == expected_label
-
-
-@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
-@pytest.mark.parametrize("nrows, ncols", [(1, 4), (1, 5)])
-def test_plot_precision_recall_incorrect_num_axes(pyplot, nrows, ncols):
-    fig, axes = pyplot.subplots(nrows, ncols)
-
-    X, y = make_classification(n_classes=3, n_samples=50,
-                               n_informative=3, random_state=0)
-    lr = LogisticRegression().fit(X, y)
-
-    msg = "Expected ax to have {} axes, got {}".format(3, nrows * ncols)
-
-    with pytest.raises(ValueError, match=msg):
-        plot_precision_recall_curve(lr, X, y, ax=axes)
 
 
 @pytest.mark.parametrize(

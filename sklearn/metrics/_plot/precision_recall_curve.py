@@ -201,7 +201,7 @@ def _get_precision_recall_display(y, y_pred,
 def plot_precision_recall_curve(estimator, X, y, *,
                                 sample_weight=None, response_method="auto",
                                 name=None, ax=None, pos_label=None, **kwargs):
-    """Plot Precision Recall Curve for binary classifiers.
+    """Plot Precision Recall Curve.
 
     Extra keyword arguments will be passed to matplotlib's `plot`.
 
@@ -264,14 +264,14 @@ def plot_precision_recall_curve(estimator, X, y, *,
     """
     check_matplotlib_support("plot_precision_recall_curve")
 
-    def plot_curve_fn(y, y_pred, pos_label=1, y_type='binary', name=None):
+    def plot_curve_func(y, y_pred, pos_label=1, y_type='binary', name=None):
         return _get_precision_recall_display(
             y, y_pred, pos_label=pos_label,
             sample_weight=sample_weight,
             y_type=y_type, name=name
         )
 
-    return _plot_curve(plot_curve_fn=plot_curve_fn,
+    return _plot_curve(plot_curve_func=plot_curve_func,
                        estimator=estimator, X=X, y=y,
                        response_method=response_method, name=name,
                        ax=ax, pos_label=pos_label, **kwargs)

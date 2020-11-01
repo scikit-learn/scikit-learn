@@ -124,10 +124,72 @@ def _get_response(X, estimator, response_method,
     return y_pred, pos_label
 
 
-def _plot_curve(plot_curve_fn,
+def _plot_curve(plot_curve_func,
                 estimator, X, y, *,
                 response_method="auto",
                 name=None, ax=None, pos_label=None, **kwargs):
+    """Plot curve base function.
+
+    Extra keyword arguments will be passed to matplotlib's `plot`.
+
+    Read more in the :ref:`User Guide <visualizations>`.
+
+    Parameters
+    ----------
+    plot_curve_func : callable
+        Plot curve function (computes the plot metrics and returns a display).
+        Can be either `_get_roc_curve_display` or `_get_precision_recall_display`.
+
+    estimator : estimator instance
+        Fitted classifier or a fitted :class:`~sklearn.pipeline.Pipeline`
+        in which the last estimator is a classifier.
+
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        Input values.
+
+    y : array-like of shape (n_samples,)
+        Target values.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    drop_intermediate : boolean, default=True
+        Whether to drop some suboptimal thresholds which would not appear
+        on a plotted ROC curve. This is useful in order to create lighter
+        ROC curves.
+
+    response_method : {'predict_proba', 'decision_function', 'auto'} \
+    default='auto'
+        Specifies whether to use :term:`predict_proba` or
+        :term:`decision_function` as the target response. If set to 'auto',
+        :term:`predict_proba` is tried first and if it does not exist
+        :term:`decision_function` is tried next.
+
+    name : str, default=None
+        Name of the curve for labeling. If `None`, use the name of the
+        estimator.
+
+    ax : Matplotlib axes or array-like of Matplotlib axes, default=None
+        Axes object to plot on. If `None`, a new figure and axes is created.
+        For the multiclass cenario:
+        - If a single axis is passed in, all plots are plotted in
+          the same axis.
+        - If an array-like of axes are passed in, the roc curve
+          plots will be drawn directly into these axes.
+
+    pos_label : str or int, default=None
+        The class considered as the positive class when computing the roc auc
+        metrics. By default, `estimators.classes_[1]` is considered
+        as the positive class.
+
+        .. versionadded:: 0.24
+
+    Returns
+    -------
+    display : :class:`~sklearn.metrics.RocCurveDisplay` or :class:`~sklearn.metrics.PrecisionRecallDisplay`
+        Object or array-like of object that stores computed values.
+
+    """
     import matplotlib.pyplot as plt
 
     n_classes = len(np.unique(y)) if y.ndim == 1 else y.shape[1]
@@ -149,7 +211,7 @@ def _plot_curve(plot_curve_fn,
 
     if n_classes == 2:
 
-        viz = plot_curve_fn(y, y_pred, pos_label=pos_label, y_type=y_type, name=name)
+        viz = plot_curve_func(y, y_pred, pos_label=pos_label, y_type=y_type, name=name)
 
         return viz.plot(ax=ax, name=name, **kwargs)
     else:
@@ -163,7 +225,7 @@ def _plot_curve(plot_curve_fn,
         vizs = []
 
         for i in range(n_classes):
-            viz = plot_curve_fn(y[:, i], y_pred[:, i], y_type=y_type, name=name)
+            viz = plot_curve_func(y[:, i], y_pred[:, i], y_type=y_type, name=name)
 
             axes = ax if isinstance(ax, plt.Axes) else ax[i]
 

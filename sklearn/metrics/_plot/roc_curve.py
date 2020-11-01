@@ -274,7 +274,7 @@ def plot_roc_curve(estimator, X, y, *, sample_weight=None,
     """
     check_matplotlib_support('plot_roc_curve')
 
-    def plot_curve_fn(y, y_pred, pos_label=1, y_type='binary', name=None):
+    def plot_curve_func(y, y_pred, pos_label=1, y_type='binary', name=None):
         return _get_roc_curve_display(
             y, y_pred, pos_label=pos_label,
             sample_weight=sample_weight,
@@ -282,7 +282,7 @@ def plot_roc_curve(estimator, X, y, *, sample_weight=None,
             y_type=y_type, name=name
         )
 
-    return _plot_curve(plot_curve_fn=plot_curve_fn,
+    return _plot_curve(plot_curve_func=plot_curve_func,
                        estimator=estimator, X=X, y=y,
                        response_method=response_method, name=name,
                        ax=ax, pos_label=pos_label, **kwargs)
