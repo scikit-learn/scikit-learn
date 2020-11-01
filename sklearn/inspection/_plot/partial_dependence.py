@@ -869,7 +869,9 @@ class PartialDependenceDisplay:
             "label": None if self.kind == "average" else "average",
         }
         line_kw = {**default_line_kws, **line_kw}
+
         individual_line_kw = line_kw.copy()
+        del individual_line_kw["label"]
 
         if self.kind == 'individual' or self.kind == 'both':
             individual_line_kw['alpha'] = 0.3
