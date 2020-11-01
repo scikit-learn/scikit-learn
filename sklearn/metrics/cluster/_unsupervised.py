@@ -9,6 +9,7 @@
 import functools
 
 import numpy as np
+from scipy.sparse import issparse
 
 from ...utils import check_random_state
 from ...utils import check_X_y
@@ -131,15 +132,18 @@ def _silhouette_reduce(D_chunk, start, labels, label_freqs):
     label_freqs : array-like
         Distribution of cluster labels in ``labels``.
     """
+    n_chunk_samples = D_chunk.shape[0]
     # accumulate distances from each sample to each cluster
-    clust_dists = np.zeros((len(D_chunk), len(label_freqs)),
+    clust_dists = np.zeros((n_chunk_samples, len(label_freqs)),
                            dtype=D_chunk.dtype)
-    for i in range(len(D_chunk)):
-        clust_dists[i] += np.bincount(labels, weights=D_chunk[i],
+    for i in range(n_chunk_samples):
+        sample_weights = (D_chunk.getrow(i).toarray().squeeze()
+                            if issparse(D_chunk) else D_chunk[i])
+        clust_dists[i] += np.bincount(labels, weights=sample_weights,
                                       minlength=len(label_freqs))
 
     # intra_index selects intra-cluster distances within clust_dists
-    intra_index = (np.arange(len(D_chunk)), labels[start:start + len(D_chunk)])
+    intra_index = (np.arange(n_chunk_samples), labels[start:start + n_chunk_samples])
     # intra_clust_dists are averaged over cluster size outside this function
     intra_clust_dists = clust_dists[intra_index]
     # of the remaining distances we normalise and extract the minimum
@@ -216,7 +220,7 @@ def silhouette_samples(X, labels, *, metric='euclidean', **kwds):
     # Check for non-zero diagonal entries in precomputed distance matrix
     if metric == 'precomputed':
         atol = np.finfo(X.dtype).eps * 100
-        if np.any(np.abs(np.diagonal(X)) > atol):
+        if np.any(np.abs(X.diagonal()) > atol):
             raise ValueError(
                 'The precomputed distance matrix contains non-zero '
                 'elements on the diagonal. Use np.fill_diagonal(X, 0).'
