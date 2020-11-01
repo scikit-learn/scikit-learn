@@ -137,13 +137,16 @@ def _silhouette_reduce(D_chunk, start, labels, label_freqs):
     clust_dists = np.zeros((n_chunk_samples, len(label_freqs)),
                            dtype=D_chunk.dtype)
     for i in range(n_chunk_samples):
-        sample_weights = (D_chunk.getrow(i).toarray().squeeze()
-                            if issparse(D_chunk) else D_chunk[i])
+        if issparse(D_chunk):
+            sample_weights = D_chunk.getrow(i).toarray().squeeze()
+        else:
+            sample_weights = D_chunk[i]
         clust_dists[i] += np.bincount(labels, weights=sample_weights,
                                       minlength=len(label_freqs))
 
     # intra_index selects intra-cluster distances within clust_dists
-    intra_index = (np.arange(n_chunk_samples), labels[start:start + n_chunk_samples])
+    end = start + n_chunk_samples
+    intra_index = (np.arange(n_chunk_samples), labels[start:end])
     # intra_clust_dists are averaged over cluster size outside this function
     intra_clust_dists = clust_dists[intra_index]
     # of the remaining distances we normalise and extract the minimum
