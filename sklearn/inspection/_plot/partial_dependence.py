@@ -613,7 +613,12 @@ class PartialDependenceDisplay:
             )[0]
 
     def _plot_average_dependence(
-        self, avg_preds, feature_values, ax, pd_line_idx, label, line_kw,
+        self,
+        avg_preds,
+        feature_values,
+        ax,
+        pd_line_idx,
+        line_kw,
     ):
         """Plot the average partial dependence.
 
@@ -629,8 +634,6 @@ class PartialDependenceDisplay:
         pd_line_idx : int
             The sequential index of the plot. It will be unraveled to find the
             matching 2D position in the grid layout.
-        label : str or None
-            The label to add to the legend plot.
         line_kw : dict
             Dict with keywords passed when plotting the PD plot.
         """
@@ -638,7 +641,6 @@ class PartialDependenceDisplay:
         self.lines_[line_idx] = ax.plot(
             feature_values,
             avg_preds,
-            label=label,
             **line_kw,
         )[0]
 
@@ -701,7 +703,6 @@ class PartialDependenceDisplay:
             )
 
         if self.kind in ("average", "both"):
-            label = None if self.kind == "average" else "average"
             # the average is stored as the last line
             if self.kind == "average":
                 pd_line_idx = pd_plot_idx
@@ -712,7 +713,6 @@ class PartialDependenceDisplay:
                 feature_values,
                 ax,
                 pd_line_idx,
-                label,
                 line_kw,
             )
 
@@ -740,6 +740,9 @@ class PartialDependenceDisplay:
                 ax.set_ylabel('Partial dependence')
         else:
             ax.set_yticklabels([])
+
+        if line_kw.get("label", None):
+            ax.legend()
 
     def _plot_two_way_partial_dependence(
         self,
@@ -861,7 +864,10 @@ class PartialDependenceDisplay:
         default_contour_kws = {"alpha": 0.75}
         contour_kw = {**default_contour_kws, **contour_kw}
 
-        default_line_kws = {'color': 'C0'}
+        default_line_kws = {
+            "color": "C0",
+            "label": None if self.kind == "average" else "average",
+        }
         line_kw = {**default_line_kws, **line_kw}
         individual_line_kw = line_kw.copy()
 

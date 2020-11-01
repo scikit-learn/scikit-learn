@@ -45,23 +45,33 @@ fig, ax = plt.subplots()
 gbdt = HistGradientBoostingRegressor()
 gbdt.fit(X, y)
 disp = plot_partial_dependence(
-    gbdt, X, features=[0, 1],
-    line_kw={'linewidth': 4, 'label': 'unconstrained'},
-    ax=ax)
+    gbdt,
+    X,
+    features=[0, 1],
+    line_kw={"linewidth": 4, "label": "unconstrained", "color": "tab:blue"},
+    ax=ax,
+)
 
 # With positive and negative constraints
 gbdt = HistGradientBoostingRegressor(monotonic_cst=[1, -1])
 gbdt.fit(X, y)
 
 plot_partial_dependence(
-    gbdt, X, features=[0, 1],
-    feature_names=('First feature\nPositive constraint',
-                   'Second feature\nNegtive constraint'),
-    line_kw={'linewidth': 4, 'label': 'constrained'},
-    ax=disp.axes_)
+    gbdt,
+    X,
+    features=[0, 1],
+    feature_names=(
+        "First feature\nPositive constraint",
+        "Second feature\nNegtive constraint",
+    ),
+    line_kw={"linewidth": 4, "label": "constrained", "color": "tab:orange"},
+    ax=disp.axes_,
+)
 
 for f_idx in (0, 1):
-    disp.axes_[0, f_idx].plot(X[:, f_idx], y, 'o', alpha=.3, zorder=-1)
+    disp.axes_[0, f_idx].plot(
+        X[:, f_idx], y, "o", alpha=0.3, zorder=-1, color="tab:green"
+    )
     disp.axes_[0, f_idx].set_ylim(-6, 6)
 
 plt.legend()
