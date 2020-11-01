@@ -333,9 +333,9 @@ def test_export_text():
     clf.fit(X, y)
 
     expected_report = dedent("""
-    |--- feature_1 <= 0.00
+    |--- feature_0 <= 0.00
     |   |--- class: -1
-    |--- feature_1 >  0.00
+    |--- feature_0 >  0.00
     |   |--- class: 1
     """).lstrip()
 
@@ -346,25 +346,25 @@ def test_export_text():
     assert export_text(clf, max_depth=10) == expected_report
 
     expected_report = dedent("""
-    |--- b <= 0.00
+    |--- a <= 0.00
     |   |--- class: -1
-    |--- b >  0.00
+    |--- a >  0.00
     |   |--- class: 1
     """).lstrip()
     assert export_text(clf, feature_names=['a', 'b']) == expected_report
 
     expected_report = dedent("""
-    |--- feature_1 <= 0.00
+    |--- feature_0 <= 0.00
     |   |--- weights: [3.00, 0.00] class: -1
-    |--- feature_1 >  0.00
+    |--- feature_0 >  0.00
     |   |--- weights: [0.00, 3.00] class: 1
     """).lstrip()
     assert export_text(clf, show_weights=True) == expected_report
 
     expected_report = dedent("""
-    |- feature_1 <= 0.00
+    |- feature_0 <= 0.00
     | |- class: -1
-    |- feature_1 >  0.00
+    |- feature_0 >  0.00
     | |- class: 1
     """).lstrip()
     assert export_text(clf, spacing=1) == expected_report
@@ -374,10 +374,10 @@ def test_export_text():
     clf = DecisionTreeClassifier(max_depth=4, random_state=0)
     clf.fit(X_l, y_l)
     expected_report = dedent("""
-    |--- feature_1 <= 0.00
-    |   |--- class: -1
-    |--- feature_1 >  0.00
+    |--- feature_0 <= 0.00
     |   |--- truncated branch of depth 2
+    |--- feature_0 >  0.00
+    |   |--- class: 1
     """).lstrip()
     assert export_text(clf, max_depth=0) == expected_report
 
@@ -388,9 +388,9 @@ def test_export_text():
     reg.fit(X_mo, y_mo)
 
     expected_report = dedent("""
-    |--- feature_1 <= 0.0
+    |--- feature_0 <= 0.0
     |   |--- value: [-1.0, -1.0]
-    |--- feature_1 >  0.0
+    |--- feature_0 >  0.0
     |   |--- value: [1.0, 1.0]
     """).lstrip()
     assert export_text(reg, decimals=1) == expected_report

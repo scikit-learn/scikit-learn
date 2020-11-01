@@ -1140,7 +1140,7 @@ def test_gradient_boosting_early_stopping():
                                                         random_state=42)
     # Check if early_stopping works as expected
     for est, tol, early_stop_n_estimators in ((gbc, 1e-1, 28), (gbr, 1e-1, 13),
-                                              (gbc, 1e-3, 70),
+                                              (gbc, 1e-3, 67),
                                               (gbr, 1e-3, 28)):
         est.set_params(tol=tol)
         est.fit(X_train, y_train)

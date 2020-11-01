@@ -314,7 +314,6 @@ def test_probability():
                             err_msg="Failed with {0}".format(name))
 
 
-
 def test_feature_selection_stability():
     # Check consistency on dataset iris.
     for criterion in CLF_CRITERIONS:

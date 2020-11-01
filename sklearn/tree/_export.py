@@ -865,9 +865,9 @@ def export_text(decision_tree, *, feature_names=None, max_depth=10,
     >>> decision_tree = decision_tree.fit(X, y)
     >>> r = export_text(decision_tree, feature_names=iris['feature_names'])
     >>> print(r)
-    |--- petal width (cm) <= 0.80
+    |--- petal length (cm) <= 2.45
     |   |--- class: 0
-    |--- petal width (cm) >  0.80
+    |--- petal length (cm) >  2.45
     |   |--- petal width (cm) <= 1.75
     |   |   |--- class: 1
     |   |--- petal width (cm) >  1.75
