@@ -772,6 +772,10 @@ def _convert_container(container, constructor_name, columns_name=None):
         return pd.Index(container)
     elif constructor_name == 'slice':
         return slice(container[0], container[1])
+    elif constructor_name == 'sparse_csr':
+        return sp.sparse.csr_matrix(container)
+    elif constructor_name == 'sparse_csc':
+        return sp.sparse.csc_matrix(container)
 
 
 def raises(expected_exc_type, match=None, may_pass=False, err_msg=None):
