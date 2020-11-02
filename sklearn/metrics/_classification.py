@@ -30,6 +30,7 @@ from scipy.sparse import csr_matrix
 
 from ..preprocessing import LabelBinarizer
 from ..preprocessing import LabelEncoder
+from ..utils import assert_all_finite
 from ..utils import check_array
 from ..utils import check_consistent_length
 from ..utils import column_or_1d
@@ -39,8 +40,6 @@ from ..utils.validation import _num_samples
 from ..utils.validation import _deprecate_positional_args
 from ..utils.sparsefuncs import count_nonzero
 from ..exceptions import UndefinedMetricWarning
-
-from ._base import _check_pos_label_consistency
 
 
 def _check_zero_division(zero_division):
@@ -2403,31 +2402,32 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
 
 
 @_deprecate_positional_args
-def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None,
-                     labels=None):
+def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     """Compute the Brier score loss.
 
     The smaller the Brier score loss, the better, hence the naming with "loss".
     The Brier score measures the mean squared difference between the predicted
     probability and the actual outcome. The Brier score always
-    takes on a value between zero and two, since this is the largest
+    takes on a value between zero and one, since this is the largest
     possible difference between a predicted probability (which must be
     between zero and one) and the actual outcome (which can take on values
-    of only 0 and 1), when summed over all the distinct classes. NOTE: in the
-    binary case, scikit-learn uses an alternate version of the brier score that
-    is exactly half of the original definition and thus has a range
-    between [0, 1].
-
-    It can be decomposed is the sum of refinement loss and calibration loss.
+    of only 0 and 1). It can be decomposed is the sum of refinement loss and
+    calibration loss.
 
     The Brier score is appropriate for binary and categorical outcomes that
     can be structured as true or false, but is inappropriate for ordinal
     variables which can take on three or more values (this is because the
     Brier score assumes that all possible outcomes are equivalently
     "distant" from one another). Which label is considered to be the positive
-    label in the binary case is controlled via the parameter `pos_label`, which
-    defaults to the greater label unless `y_true` is all 0 or all -1, in which
-    case `pos_label` defaults to 1.
+    label is controlled via the parameter `pos_label`, which defaults to
+    the greater label unless `y_true` is all 0 or all -1, in which case
+    `pos_label` defaults to 1.
+
+    A more generalized form of Brier score is implemented in
+    :func:`multiclass_brier_score_loss` that is applicable to the multi-class
+    case as well. When used for the binary case, `multiclass_brier_score_loss`
+    returns Brier score that is exactly twice of the value returned by this
+    function.
 
     Read more in the :ref:`User Guide <brier_score_loss>`.
 
@@ -2436,32 +2436,16 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None,
     y_true : array of shape (n_samples,)
         True targets.
 
-    y_prob : array-like of float, shape=(n_samples, n_classes) or (n_samples,)
-        Predicted probabilities, as returned by a classifier's
-        predict_proba method. If ``y_pred.shape = (n_samples,)``
-        the probabilities provided are assumed to be that of the
-        positive class. The labels in ``y_pred`` are assumed to be
-        ordered alphabetically, as done by
-        :class:`preprocessing.LabelBinarizer`, unless ``pos_label`` or
-        ``labels`` is specified.
+    y_prob : array of shape (n_samples,)
+        Probabilities of the positive class.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     pos_label : int or str, default=None
-        Label of the positive class. `pos_label` will be infered in the
-        following manner:
-
-        * if `y_true` in {-1, 1} or {0, 1}, `pos_label` defaults to 1;
-        * else if `y_true` contains string, an error will be raised and
-          `pos_label` should be explicitely specified;
-        * otherwise, `pos_label` defaults to the greater label,
-          i.e. `np.unique(y_true)[-1]`.
-
-    labels : array-like, default=None
-        If not provided, labels will be inferred from y_true. If ``labels``
-        is ``None`` and ``y_prob`` has shape (n_samples,) the labels are
-        assumed to be binary and are inferred from ``y_true``.
+        Label of the positive class.
+        Defaults to the greater label unless y_true is all 0 or all -1
+        in which case pos_label defaults to 1.
 
     Returns
     -------
@@ -2490,6 +2474,112 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None,
             <https://en.wikipedia.org/wiki/Brier_score>`_.
     """
     y_true = column_or_1d(y_true)
+    y_prob = column_or_1d(y_prob)
+    assert_all_finite(y_true)
+    assert_all_finite(y_prob)
+    check_consistent_length(y_true, y_prob, sample_weight)
+
+    labels = np.unique(y_true)
+    if len(labels) > 2:
+        raise ValueError("Only binary classification is supported. "
+                         "Labels in y_true: %s. "
+                         "Use multiclass_brier_score_loss instead" % labels)
+    if y_prob.max() > 1:
+        raise ValueError("y_prob contains values greater than 1.")
+    if y_prob.min() < 0:
+        raise ValueError("y_prob contains values less than 0.")
+
+    # if pos_label=None, when y_true is in {-1, 1} or {0, 1},
+    # pos_label is set to 1 (consistent with precision_recall_curve/roc_curve),
+    # otherwise pos_label is set to the greater label
+    # (different from precision_recall_curve/roc_curve,
+    # the purpose is to keep backward compatibility).
+    if pos_label is None:
+        if (np.array_equal(labels, [0]) or
+                np.array_equal(labels, [-1])):
+            pos_label = 1
+        else:
+            pos_label = y_true.max()
+    y_true = np.array(y_true == pos_label, int)
+    return np.average((y_true - y_prob) ** 2, weights=sample_weight)
+
+
+def multiclass_brier_score_loss(y_true, y_prob, sample_weight=None,
+                                labels=None):
+    r"""Compute the Brier score loss.
+
+    The smaller the Brier score loss, the better, hence the naming with "loss".
+    The Brier score measures the mean squared difference between the predicted
+    probability and the actual outcome.
+
+    For :math:`N` samples with :math:`C` different classes, the multi-class
+    Brier score is defined as:
+
+    .. math::
+        \frac{1}{N}\sum_{i=1}^{N}\sum_{c=1}^{C}(y_{ic} - \bar{y}_{ic})^{2}
+
+    where :math:`y_{ic}` is 1 if observation `i` belongs to class `c`,
+    otherwise 0 and :math:`\bar{y}_{ic}` is the predicted probability of
+    observation `i` for class `c`. The probabilities for `c` classes for
+    observation `i` should sum to 1.
+
+    The Brier score always takes on a value between [0, 2]. For the
+    binary case however, there is a more common definition of Brier score
+    implemented in :func:`brier_score_loss` that is exactly half of the value
+    returned by this function, thereby having a range between [0, 1].
+
+    It can be decomposed as the sum of refinement loss and calibration loss.
+
+    The Brier score is appropriate for binary and categorical outcomes that
+    can be structured as true or false, but is inappropriate for ordinal
+    variables which can take on three or more values (this is because the
+    Brier score assumes that all possible outcomes are equivalently
+    "distant" from one another).
+
+    Read more in the :ref:`User Guide <brier_score_loss>`.
+
+    Parameters
+    ----------
+    y_true : array of shape (n_samples,)
+        True targets.
+
+    y_prob : array-like of float, shape=(n_samples, n_classes) or (n_samples,)
+        Predicted probabilities, as returned by a classifier's
+        predict_proba method. If ``y_pred.shape = (n_samples,)``
+        the probabilities provided are assumed to be that of the
+        positive class. The labels in ``y_pred`` are assumed to be
+        ordered alphabetically, as done by
+        :class:`preprocessing.LabelBinarizer`.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    labels : array-like, default=None
+        If not provided, labels will be inferred from y_true. If ``labels``
+        is ``None`` and ``y_prob`` has shape (n_samples,) the labels are
+        assumed to be binary and are inferred from ``y_true``.
+
+    Returns
+    -------
+    score : float
+        Brier score loss.
+
+    Examples
+    --------
+    >>> from sklearn.metrics import multiclass_brier_score_loss
+    >>> multiclass_brier_score_loss([0, 1, 1, 0],
+    ...                             [0.1, 0.9, 0.8, 0.3])
+    0.074...
+    >>> multiclass_brier_score_loss(['eggs', 'ham', 'spam'], [[.8, .1, .1],
+    ...                                                       [.2, .7, .1],
+    ...                                                       [.2, .2, .6]])
+    0.146...
+    References
+    ----------
+    .. [1] `Wikipedia entry for the Brier score
+            <https://en.wikipedia.org/wiki/Brier_score>`_.
+    """
+    y_true = column_or_1d(y_true)
     y_prob = check_array(y_prob, ensure_2d=False)
     check_consistent_length(y_prob, y_true, sample_weight)
 
@@ -2501,25 +2591,20 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None,
     lb = LabelBinarizer()
     if labels is not None:
         lb = lb.fit(labels)
-    elif len(np.unique(y_true)) > 2:
-        lb = lb.fit(y_true)
     else:
-        try:
-            pos_label = _check_pos_label_consistency(pos_label, y_true)
-        except ValueError:
-            classes = np.unique(y_true)
-            if classes.dtype.kind not in ('O', 'U', 'S'):
-                # for backward compatibility, if classes are not string then
-                # `pos_label` will correspond to the greater label
-                pos_label = classes[-1]
-            else:
-                raise
-        y_true = np.array(y_true == pos_label, int)
-        # fit on [0, 1] because y_true can be all 0s or all 1s, but we want
-        # to assume binary
-        lb = lb.fit([0, 1])
+        lb = lb.fit(y_true)
+
+    if len(lb.classes_) == 1:
+        if labels is None:
+            raise ValueError('y_true contains only one label ({0}). Please '
+                             'provide the true labels explicitly through the '
+                             'labels argument.'.format(lb.classes_[0]))
+        else:
+            raise ValueError('The labels array needs to contain at least two '
+                             'labels, got {0}.'.format(lb.classes_))
 
     transformed_labels = lb.transform(y_true)
+
     if transformed_labels.shape[1] == 1:
         transformed_labels = np.append(1-transformed_labels,
                                        transformed_labels, axis=1)
@@ -2546,15 +2631,5 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None,
                              'from that in y_prob. Classes found in '
                              'labels: {0}'.format(lb.classes_))
 
-    # calculate
-    brier_loss = np.average(np.sum((transformed_labels - y_prob) ** 2, axis=1),
-                            weights=sample_weight)
-
-    # Original definition of Brier Score sums loss over all samples over all
-    # classes. sklearn historically uses the alternate version for the binary
-    # case, where it sums only over positive class. Maintain that behaviour
-    # for backwards compatibility
-    if len(lb.classes_) == 2:
-        brier_loss /= 2
-
-    return brier_loss
+    return np.average(np.sum((transformed_labels - y_prob) ** 2, axis=1),
+                      weights=sample_weight)
