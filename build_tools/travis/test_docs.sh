@@ -9,4 +9,6 @@ if [[ "$BUILD_WITH_ICC" == "true" ]]; then
     source /opt/intel/inteloneapi/setvars.sh
 fi
 
-PYTEST="pytest -n $CI_CPU_COUNT" make test-doc
+if [[ "$TRAVIS_CPU_ARCH" != "arm64" ]]; then
+    PYTEST="pytest -n $CI_CPU_COUNT" make test-doc
+fi
