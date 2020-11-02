@@ -137,10 +137,7 @@ check_files() {
 if [[ "$MODIFIED_FILES" == "no_match" ]]; then
     echo "No file outside sklearn/externals and doc/sphinxext has been modified"
 else
-
-    check_files "$(echo "$MODIFIED_FILES" | grep -v ^examples)"
-    check_files "$(echo "$MODIFIED_FILES" | grep ^examples)" \
-        --config ./examples/.flake8
+    check_files "$MODIFIED_FILES"
     # check code for unused imports
     flake8 --exclude=sklearn/externals/ --select=F401 sklearn/ examples/
 fi

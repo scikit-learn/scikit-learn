@@ -8,6 +8,7 @@ Multi-class / multi-label utility function
 """
 from collections.abc import Sequence
 from itertools import chain
+import warnings
 
 from scipy.sparse import issparse
 from scipy.sparse.base import spmatrix
@@ -138,7 +139,17 @@ def is_multilabel(y):
     True
     """
     if hasattr(y, '__array__') or isinstance(y, Sequence):
-        y = np.asarray(y)
+        # DeprecationWarning will be replaced by ValueError, see NEP 34
+        # https://numpy.org/neps/nep-0034-infer-dtype-is-object.html
+        with warnings.catch_warnings():
+            warnings.simplefilter('error', np.VisibleDeprecationWarning)
+            try:
+                y = np.asarray(y)
+            except np.VisibleDeprecationWarning:
+                # dtype=object should be provided explicitly for ragged arrays,
+                # see NEP 34
+                y = np.array(y, dtype=object)
+
     if not (hasattr(y, "shape") and y.ndim == 2 and y.shape[1] > 1):
         return False
 
@@ -250,7 +261,16 @@ def type_of_target(y):
     if is_multilabel(y):
         return 'multilabel-indicator'
 
-    y = np.asarray(y)
+    # DeprecationWarning will be replaced by ValueError, see NEP 34
+    # https://numpy.org/neps/nep-0034-infer-dtype-is-object.html
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', np.VisibleDeprecationWarning)
+        try:
+            y = np.asarray(y)
+        except np.VisibleDeprecationWarning:
+            # dtype=object should be provided explicitly for ragged arrays,
+            # see NEP 34
+            y = np.asarray(y, dtype=object)
 
     # The old sequence of sequences format
     try:
