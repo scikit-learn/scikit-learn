@@ -2321,9 +2321,8 @@ def test_brier_score_loss():
     # ensure to raise an error for multiclass y_true
     y_true = np.array([0, 1, 2, 0])
     y_pred = np.array([0.8, 0.6, 0.4, 0.2])
-    error_message = ("Only binary classification is supported. Labels in "
-                     "y_true: {}. Use multiclass_brier_score_loss "
-                     "instead".format(np.array([0, 1, 2])))
+    error_message = ("Only binary classification is supported. "
+                     "Use multiclass_brier_score_loss instead")
     with pytest.raises(ValueError, match=re.escape(error_message)):
         brier_score_loss(y_true, y_pred)
 
@@ -2382,9 +2381,9 @@ def test_multiclass_brier_score_loss():
     # raise error message when there's only one class in y_true
     y_true = ['eggs']
     y_pred = [.1]
-    error_message = ('y_true contains only one label ({0}). Please '
-                     'provide the true labels explicitly through the '
-                     'labels argument.'.format(y_true[0]))
+    error_message = (f'y_true contains only one label {y_true[0]}. Please '
+                     f'provide the true labels explicitly through the '
+                     f'labels argument.')
     with pytest.raises(ValueError, match=re.escape(error_message)):
         multiclass_brier_score_loss(y_true, y_pred)
 

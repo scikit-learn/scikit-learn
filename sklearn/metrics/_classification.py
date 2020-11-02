@@ -41,6 +41,8 @@ from ..utils.validation import _deprecate_positional_args
 from ..utils.sparsefuncs import count_nonzero
 from ..exceptions import UndefinedMetricWarning
 
+from ._base import _check_pos_label_consistency
+
 
 def _check_zero_division(zero_division):
     if isinstance(zero_division, str) and zero_division == "warn":
@@ -2483,27 +2485,29 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     assert_all_finite(y_prob)
     check_consistent_length(y_true, y_prob, sample_weight)
 
-    labels = np.unique(y_true)
-    if len(labels) > 2:
-        raise ValueError("Only binary classification is supported. "
-                         "Labels in y_true: %s. "
-                         "Use multiclass_brier_score_loss instead" % labels)
+    y_type = type_of_target(y_true)
+    if y_type != "binary":
+        if y_type == 'multiclass':
+            raise ValueError("Only binary classification is supported. "
+                             "Use multiclass_brier_score_loss instead")
+        else:
+            raise ValueError(f"Only binary classification is supported. The "
+                             f"type of the target is {y_type}.")
     if y_prob.max() > 1:
         raise ValueError("y_prob contains values greater than 1.")
     if y_prob.min() < 0:
         raise ValueError("y_prob contains values less than 0.")
 
-    # if pos_label=None, when y_true is in {-1, 1} or {0, 1},
-    # pos_label is set to 1 (consistent with precision_recall_curve/roc_curve),
-    # otherwise pos_label is set to the greater label
-    # (different from precision_recall_curve/roc_curve,
-    # the purpose is to keep backward compatibility).
-    if pos_label is None:
-        if (np.array_equal(labels, [0]) or
-                np.array_equal(labels, [-1])):
-            pos_label = 1
-        else:
-            pos_label = y_true.max()
+    try:
+        pos_label = _check_pos_label_consistency(pos_label, y_true)
+    except ValueError:
+        classes = np.unique(y_true)
+        if classes.dtype.kind not in ('O', 'U', 'S'):
+            # for backward compatibility, if classes are not string then
+            # `pos_label` will correspond to the greater label
+            pos_label = classes[-1]
+    else:
+        raise
     y_true = np.array(y_true == pos_label, int)
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
 
@@ -2601,12 +2605,12 @@ def multiclass_brier_score_loss(y_true, y_prob, sample_weight=None,
 
     if len(lb.classes_) == 1:
         if labels is None:
-            raise ValueError('y_true contains only one label ({0}). Please '
-                             'provide the true labels explicitly through the '
-                             'labels argument.'.format(lb.classes_[0]))
+            raise ValueError(f'y_true contains only one label: '
+                             f'{lb.classes_[0]}. Please provide the true '
+                             f'labels explicitly through the labels argument.')
         else:
-            raise ValueError('The labels array needs to contain at least two '
-                             'labels, got {0}.'.format(lb.classes_))
+            raise ValueError(f'The labels array needs to contain at least two '
+                             f'labels, got {lb.classes_}.')
 
     transformed_labels = lb.transform(y_true)
 
@@ -2624,17 +2628,15 @@ def multiclass_brier_score_loss(y_true, y_prob, sample_weight=None,
     transformed_labels = check_array(transformed_labels)
     if len(lb.classes_) != y_prob.shape[1]:
         if labels is None:
-            raise ValueError("y_true and y_prob contain different number of "
-                             "classes {0}, {1}. Please provide the true "
-                             "labels explicitly through the labels argument. "
-                             "Classes found in "
-                             "y_true: {2}".format(transformed_labels.shape[1],
-                                                  y_prob.shape[1],
-                                                  lb.classes_))
+            raise ValueError(f"y_true and y_prob contain different number of "
+                             f"classes {transformed_labels.shape[1]}, "
+                             f"{y_prob.shape[1]}. Please provide the true "
+                             f"labels explicitly through the labels argument. "
+                             f"Classes found in y_true: {lb.classes_}")
         else:
-            raise ValueError('The number of classes in labels is different '
-                             'from that in y_prob. Classes found in '
-                             'labels: {0}'.format(lb.classes_))
+            raise ValueError(f'The number of classes in labels is different '
+                             f'from that in y_prob. Classes found in '
+                             f'labels: {lb.classes_}')
 
     return np.average(np.sum((transformed_labels - y_prob) ** 2, axis=1),
                       weights=sample_weight)
