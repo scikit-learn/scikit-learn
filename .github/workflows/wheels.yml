@@ -73,19 +73,21 @@ jobs:
           fi
           python -m pip install cibuildwheel
 
+      - name: Get minimum build dependencies
+        run: |
+          echo "NUMPY_VERSION=$(python sklearn/_min_dependencies.py numpy)" >> $GITHUB_ENV
+          echo "SCIPY_VERSION=$(python sklearn/_min_dependencies.py scipy)" >> $GITHUB_ENV
+          echo "CYTHON_VERSION=$(python sklearn/_min_dependencies.py cython)" >> $GITHUB_ENV
+
       - name: Build and test wheels
         env:
           CIBW_BUILD: cp${{ matrix.python }}-*
-          CIBW_TEST_REQUIRES: pytest pandas
-          CIBW_TEST_COMMAND: pytest --pyargs sklearn
+          # Build against the minumum version of the upstream dependencies
+          CIBW_BEFORE_BUILD: pip install numpy==$NUMPY_VERSION scipy==$SCIPY_VERSION cython==$CYTHON_VERSION
           # Increase debugging output
           CIBW_BUILD_VERBOSITY: 1
-          # Embed vcomp140.dll before generating the Windows
-          # wheel and after building the package from source
-          CIBW_BEFORE_BUILD_WINDOWS: pip install numpy scipy cython &&
-                                     rm -rf build &&
-                                     python setup.py build &&
-                                     python build_tools/github/vendor_vcomp140.py
+          CIBW_TEST_REQUIRES: pytest pandas
+          CIBW_TEST_COMMAND: pytest --pyargs sklearn
         run: |
           python -m cibuildwheel --output-dir wheelhouse
 
