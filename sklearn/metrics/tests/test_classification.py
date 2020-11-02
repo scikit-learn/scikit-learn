@@ -4,10 +4,11 @@ from itertools import product
 from itertools import chain
 from itertools import permutations
 import warnings
+import re
+
 import numpy as np
 from scipy import linalg
 import pytest
-import re
 
 from sklearn import datasets
 from sklearn import svm
@@ -44,6 +45,7 @@ from sklearn.metrics import recall_score
 from sklearn.metrics import zero_one_loss
 from sklearn.metrics import brier_score_loss
 from sklearn.metrics import multilabel_confusion_matrix
+from sklearn.metrics import multiclass_brier_score_loss
 
 from sklearn.metrics._classification import _check_targets
 from sklearn.exceptions import UndefinedMetricWarning
@@ -2316,27 +2318,14 @@ def test_brier_score_loss():
     with pytest.raises(ValueError):
         brier_score_loss(y_true, y_pred - 1.)
 
-    # ensure to raise an error for wrong number of classes
+    # ensure to raise an error for multiclass y_true
     y_true = np.array([0, 1, 2, 0])
     y_pred = np.array([0.8, 0.6, 0.4, 0.2])
-    error_message = ("y_true and y_prob contain different number of "
-                     "classes 3, 2. Please provide the true "
-                     "labels explicitly through the labels argument. "
-                     "Classes found in "
-                     "y_true: [0 1 2]")
+    error_message = ("Only binary classification is supported. Labels in "
+                     "y_true: {}. Use multiclass_brier_score_loss "
+                     "instead".format(np.array([0, 1, 2])))
     with pytest.raises(ValueError, match=re.escape(error_message)):
         brier_score_loss(y_true, y_pred)
-
-    y_true = ['eggs', 'spam', 'ham']
-    y_pred = [[1, 0, 0],
-              [0, 1, 0],
-              [0, 1, 0]]
-    labels = ['eggs', 'spam', 'ham', 'yams']
-    error_message = ("The number of classes in labels is different "
-                     "from that in y_prob. Classes found in "
-                     "labels: ['eggs' 'ham' 'spam' 'yams']")
-    with pytest.raises(ValueError, match=re.escape(error_message)):
-        brier_score_loss(y_true, y_pred, labels=labels)
 
     # calculate correctly when there's only one class in y_true
     assert_almost_equal(brier_score_loss([-1], [0.4]), 0.16)
@@ -2347,18 +2336,78 @@ def test_brier_score_loss():
     assert_almost_equal(
         brier_score_loss(['foo'], [0.4], pos_label='foo'), 0.36)
 
-    # calculate multiclass
-    assert_almost_equal(brier_score_loss(['eggs', 'spam', 'ham'], [[1, 0, 0],
-                                                                   [0, 1, 0],
-                                                                   [0, 1, 0]]),
-                        2/3)
+
+def test_multiclass_brier_score_loss():
+    # Check brier_score_loss function
+    y_true = np.array([0, 1, 1, 0, 1, 1])
+    y_pred = np.array([0.1, 0.8, 0.9, 0.3, 1., 0.95])
+
+    assert_almost_equal(multiclass_brier_score_loss(y_true, y_pred),
+                        .05083333)
+    assert_almost_equal(multiclass_brier_score_loss(y_true, y_pred),
+                        brier_score_loss(y_true, y_pred) * 2)
+
+    with pytest.raises(ValueError):
+        # bad length of y_pred
+        multiclass_brier_score_loss(y_true, y_pred[1:])
+    with pytest.raises(ValueError):
+        # y_pred has value greater than 1
+        multiclass_brier_score_loss(y_true, y_pred + 1.)
+    with pytest.raises(ValueError):
+        # y_pred has value less than 1
+        multiclass_brier_score_loss(y_true, y_pred - 1.)
+
+    # ensure to raise an error for wrong number of classes
+    y_true = np.array([0, 1, 2, 0])
+    y_pred = np.array([0.8, 0.6, 0.4, 0.2])
+    error_message = ("y_true and y_prob contain different number of "
+                     "classes 3, 2. Please provide the true "
+                     "labels explicitly through the labels argument. "
+                     "Classes found in "
+                     "y_true: [0 1 2]")
+    with pytest.raises(ValueError, match=re.escape(error_message)):
+        multiclass_brier_score_loss(y_true, y_pred)
+
+    y_true = ['eggs', 'spam', 'ham']
+    y_pred = [[1, 0, 0],
+              [0, 1, 0],
+              [0, 1, 0]]
+    labels = ['eggs', 'spam', 'ham', 'yams']
+    error_message = ("The number of classes in labels is different "
+                     "from that in y_prob. Classes found in "
+                     "labels: ['eggs' 'ham' 'spam' 'yams']")
+    with pytest.raises(ValueError, match=re.escape(error_message)):
+        multiclass_brier_score_loss(y_true, y_pred, labels=labels)
+
+    # raise error message when there's only one class in y_true
+    y_true = ['eggs']
+    y_pred = [.1]
+    error_message = ('y_true contains only one label ({0}). Please '
+                     'provide the true labels explicitly through the '
+                     'labels argument.'.format(y_true[0]))
+    with pytest.raises(ValueError, match=re.escape(error_message)):
+        multiclass_brier_score_loss(y_true, y_pred)
+
+    # error is fixed when labels is specified
+    assert_almost_equal(multiclass_brier_score_loss(y_true, y_pred,
+                                                    labels=['eggs', 'ham']),
+                        .02)
+
+    # test cases for multi-class
     assert_almost_equal(
-        brier_score_loss(['eggs', 'spam', 'ham'],
-                         [[1, 0, 0, 0],
-                          [0, 1, 0, 0],
-                          [0, 1, 0, 0]],
-                         labels=['eggs', 'spam', 'ham', 'yams']),
+        multiclass_brier_score_loss(['eggs', 'spam', 'ham'],
+                                    [[1, 0, 0, 0],
+                                     [0, 1, 0, 0],
+                                     [0, 1, 0, 0]],
+                                    labels=['eggs', 'spam', 'ham', 'yams']),
         2/3)
+
+    assert_almost_equal(
+        multiclass_brier_score_loss([1, 0, 2],
+                                    [[0.2, 0.7, 0.1],
+                                     [0.6, 0.2, 0.2],
+                                     [0.6, 0.1, 0.3]]),
+        .41333333)
 
 
 def test_balanced_accuracy_score_unseen():

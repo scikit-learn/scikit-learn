@@ -2574,6 +2574,7 @@ def multiclass_brier_score_loss(y_true, y_prob, sample_weight=None,
     ...                                                       [.2, .7, .1],
     ...                                                       [.2, .2, .6]])
     0.146...
+
     References
     ----------
     .. [1] `Wikipedia entry for the Brier score

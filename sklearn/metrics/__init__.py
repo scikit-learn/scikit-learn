@@ -35,6 +35,7 @@ from ._classification import recall_score
 from ._classification import zero_one_loss
 from ._classification import brier_score_loss
 from ._classification import multilabel_confusion_matrix
+from ._classification import multiclass_brier_score_loss
 
 from . import cluster
 from .cluster import adjusted_mutual_info_score
@@ -137,6 +138,7 @@ __all__ = [
     'median_absolute_error',
     'mean_absolute_percentage_error',
     'multilabel_confusion_matrix',
+    'multiclass_brier_score_loss',
     'mutual_info_score',
     'ndcg_score',
     'normalized_mutual_info_score',
