@@ -165,7 +165,3 @@ plt.xlim(-0.05, 1.05)
 plt.ylim(-0.05, 1.05)
 
 plt.show()
-
-# DEBUG: spurious modification: don't forget to remove me before merging.
-if False:
-    print(b)
