@@ -389,9 +389,9 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                                 X.indptr.dtype != np.intc):
                 raise ValueError("No support for np.int64 index based "
                                  "sparse matrices")
-
-        # The number of features is checked regardless of `check_input`
-        self._check_n_features(X, reset=False)
+        else:
+            # The number of features is checked regardless of `check_input`
+            self._check_n_features(X, reset=False)
         return X
 
     def predict(self, X, check_input=True):
