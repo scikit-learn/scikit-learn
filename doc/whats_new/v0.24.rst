@@ -25,6 +25,7 @@ random sampling procedures.
 - |Fix| :class:`decomposition.KernelPCA` behaviour is now more consistent
   between 32-bits and 64-bits data when the kernel has small positive
   eigenvalues.
+- |Fix| ::class:`linear_model.Perceptron` when penalty='elasticnet'
 
 Details are listed in the changelog below.
 
@@ -397,6 +398,11 @@ Changelog
   was raising an error when `normalize=True` and `return_std=True` because
   `X_offset_` and `X_scale_` were undefined.
   :pr:`18607` by :user:`fhaselbeck <fhaselbeck>`.
+
+- |Fix| Added the missing `l1_ratio` parameter in
+  :class:`linear_model.Perceptron`, to be used when `penalty='elasticnet'`.
+  This changes the default from 0 to 0.15. :pr:`18622` by
+  :user:`Haesun Park <rickiepark>`.
 
 :mod:`sklearn.manifold`
 .......................
