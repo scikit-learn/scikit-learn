@@ -2321,9 +2321,9 @@ def test_brier_score_loss():
     # ensure to raise an error for multiclass y_true
     y_true = np.array([0, 1, 2, 0])
     y_pred = np.array([0.8, 0.6, 0.4, 0.2])
-    error_message = (f"Only binary classification is supported. The type of "
-                     f"the target is multiclass. For the multiclass case, use "
-                     f"multiclass_brier_score_loss instead")
+    error_message = ("Only binary classification is supported. The type of "
+                     "the target is multiclass. For the multiclass case, use "
+                     "multiclass_brier_score_loss instead")
     with pytest.raises(ValueError, match=re.escape(error_message)):
         brier_score_loss(y_true, y_pred)
 
