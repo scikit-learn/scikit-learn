@@ -2506,8 +2506,8 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
             # for backward compatibility, if classes are not string then
             # `pos_label` will correspond to the greater label
             pos_label = classes[-1]
-    else:
-        raise
+        else:
+            raise
     y_true = np.array(y_true == pos_label, int)
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
 

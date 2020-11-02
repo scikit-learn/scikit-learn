@@ -2381,7 +2381,7 @@ def test_multiclass_brier_score_loss():
     # raise error message when there's only one class in y_true
     y_true = ['eggs']
     y_pred = [.1]
-    error_message = (f'y_true contains only one label {y_true[0]}. Please '
+    error_message = (f'y_true contains only one label: {y_true[0]}. Please '
                      f'provide the true labels explicitly through the '
                      f'labels argument.')
     with pytest.raises(ValueError, match=re.escape(error_message)):
