@@ -21,12 +21,6 @@ except ImportError:
 python -c "import joblib; print(joblib.cpu_count(), 'CPUs')"
 python -c "import platform; print(platform.machine())"
 
-if [[ "$BUILD_WITH_ICC" == "true" ]]; then
-    # the tools in the oneAPI toolkits are configured via environment variables
-    # which are also required at runtime.
-    source /opt/intel/inteloneapi/setvars.sh
-fi
-
 run_tests() {
     TEST_CMD="pytest --showlocals --durations=20 --pyargs"
 

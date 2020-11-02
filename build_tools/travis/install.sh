@@ -89,7 +89,7 @@ if [[ "$BUILD_WITH_ICC" == "true" ]]; then
     sudo add-apt-repository "deb https://apt.repos.intel.com/oneapi all main"
     sudo apt-get update
     sudo apt-get install intel-oneapi-icc
-    source /opt/intel/inteloneapi/setvars.sh
+    source /opt/intel/oneapi/setvars.sh
 
     # The build_clib command is implicitly used to build libsvm-skl. To compile
     # with a different compiler we also need to specify the compiler for this
