@@ -30,7 +30,6 @@ from ..base import RegressorMixin
 from ..base import is_classifier
 from ..base import MultiOutputMixin
 from ..utils import Bunch
-from ..utils import check_array
 from ..utils import check_random_state
 from ..utils.validation import _check_sample_weight
 from ..utils import compute_sample_weight
@@ -174,6 +173,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         # Determine output settings
         n_samples, self.n_features_ = X.shape
+        self.n_features_in_ = self.n_features_
         is_classification = is_classifier(self)
 
         y = np.atleast_1d(y)
@@ -394,19 +394,15 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     def _validate_X_predict(self, X, check_input):
         """Validate the training data on predict (probabilities)."""
         if check_input:
-            X = check_array(X, dtype=DTYPE, accept_sparse="csr")
+            X = self._validate_data(X, dtype=DTYPE, accept_sparse="csr",
+                                    reset=False)
             if issparse(X) and (X.indices.dtype != np.intc or
                                 X.indptr.dtype != np.intc):
                 raise ValueError("No support for np.int64 index based "
                                  "sparse matrices")
-
-        n_features = X.shape[1]
-        if self.n_features_ != n_features:
-            raise ValueError("Number of features of the model must "
-                             "match the input. Model n_features is %s and "
-                             "input n_features is %s "
-                             % (self.n_features_, n_features))
-
+        else:
+            # The number of features is checked regardless of `check_input`
+            self._check_n_features(X, reset=False)
         return X
 
     def predict(self, X, check_input=True):
