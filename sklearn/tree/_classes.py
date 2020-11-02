@@ -60,9 +60,12 @@ __all__ = ["DecisionTreeClassifier",
 DTYPE = _tree.DTYPE
 DOUBLE = _tree.DOUBLE
 
-CRITERIA_CLF = {"gini": _criterion.Gini, "entropy": _criterion.Entropy}
-CRITERIA_REG = {"mse": _criterion.MSE, "friedman_mse": _criterion.FriedmanMSE,
-                "mae": _criterion.MAE}
+CRITERIA_CLF = {"gini": _criterion.Gini,
+                "entropy": _criterion.Entropy}
+CRITERIA_REG = {"mse": _criterion.MSE,
+                "friedman_mse": _criterion.FriedmanMSE,
+                "mae": _criterion.MAE,
+                "poisson": _criterion.Poisson}
 
 DENSE_SPLITTERS = {"best": _splitter.BestSplitter,
                    "random": _splitter.RandomSplitter}
@@ -160,6 +163,14 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 if X.indices.dtype != np.intc or X.indptr.dtype != np.intc:
                     raise ValueError("No support for np.int64 index based "
                                      "sparse matrices")
+
+            if self.criterion == "poisson":
+                if np.any(y < 0):
+                    raise ValueError("Some value(s) of y are negative which is"
+                                     " not allowed for Poisson regression.")
+                if np.sum(y) <= 0:
+                    raise ValueError("Sum of y is not positive which is "
+                                     "necessary for Poisson regression.")
 
         # Determine output settings
         n_samples, self.n_features_ = X.shape
@@ -973,17 +984,21 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
     Parameters
     ----------
-    criterion : {"mse", "friedman_mse", "mae"}, default="mse"
+    criterion : {"mse", "friedman_mse", "mae", "poisson"}, default="mse"
         The function to measure the quality of a split. Supported criteria
         are "mse" for the mean squared error, which is equal to variance
         reduction as feature selection criterion and minimizes the L2 loss
         using the mean of each terminal node, "friedman_mse", which uses mean
         squared error with Friedman's improvement score for potential splits,
-        and "mae" for the mean absolute error, which minimizes the L1 loss
-        using the median of each terminal node.
+        "mae" for the mean absolute error, which minimizes the L1 loss using
+        the median of each terminal node, and "poisson" which uses reduction in
+        Poisson deviance to find splits.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
+
+        .. versionadded:: 0.24
+            Poisson deviance criterion.
 
     splitter : {"best", "random"}, default="best"
         The strategy used to choose the split at each node. Supported
@@ -1521,14 +1536,17 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
     Parameters
     ----------
-    criterion : {"mse", "friedman_mse", "mae"}, default="mse"
+    criterion : {"mse", "friedman_mse", "mae", "poisson"}, default="mse"
         The function to measure the quality of a split. Supported criteria
         are "mse" for the mean squared error, which is equal to variance
-        reduction as feature selection criterion, and "mae" for the mean
-        absolute error.
+        reduction as feature selection criterion, "mae" for the mean absolute
+        error and "poisson" for the Poisson deviance.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
+
+        .. versionadded:: 0.24
+            Poisson deviance criterion.
 
     splitter : {"random", "best"}, default="random"
         The strategy used to choose the split at each node. Supported

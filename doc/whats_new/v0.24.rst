@@ -727,6 +727,10 @@ Changelog
 :mod:`sklearn.tree`
 ...................
 
+- |Feature| :class:`tree.DecisionTreeRegressor` now supports the new splitting
+  criterion ``'poisson'`` useful for modeling count data. :pr:`17386` by
+  :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Enhancement| :func:`tree.plot_tree` now uses colors from the matplotlib
   configuration settings. :pr:`17187` by `Andreas Müller`_.
 
