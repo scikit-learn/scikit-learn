@@ -136,7 +136,7 @@ print(f"Correlation of models:\n {model_scores.transpose().corr()}")
 # second model (when ranked by `mean_test_score`)?"
 #
 # To answer this question using a frequentist approach we could
-# run a paired t-test and compute a p-value. Many variants of the latter have
+# run a paired t-test and compute the p-value. Many variants of the latter have
 # been developed to account for the 'non-independence of observations problem'
 # described in the previous section. We will use the one proven to obtain the
 # highest replicability scores (which rate how similar the performance of a
@@ -161,7 +161,7 @@ print(f"Correlation of models:\n {model_scores.transpose().corr()}")
 # Let's implement a corrected right-tailed paired t-test to evaluate if the
 # performance of the first model is significantly better than that of the
 # second model. Our null hypothesis is that the second model performs at least
-# as good as the first model
+# as good as the first model.
 
 import numpy as np
 from scipy.stats import t
@@ -396,11 +396,12 @@ plt.show()
 # %%
 # The Bayesian estimation approach also allows us to compute how uncertain we
 # are about our estimation of the difference. This can be calculated using
-# credible intervals which show the range of values that the mean
-# difference in performance between models can take with certain probability.
-# For example, a credible interval of 50% will tell us that there is a 50% of
+# credible intervals. For a given probability, they show the range of values
+# that the the estimated quantity, in our case the mean difference in
+# performance, can take.
+# For example, a 50% credible interval [x, y] tells us that there is a 50%
 # probability that the true (mean) difference of performance between models is
-# between x and y values.
+# between x and y.
 #
 # Let's determine the credible intervals of our data using 50%, 75% and 95%:
 
