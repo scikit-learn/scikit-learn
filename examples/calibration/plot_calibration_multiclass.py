@@ -167,4 +167,5 @@ plt.ylim(-0.05, 1.05)
 plt.show()
 
 # DEBUG: spurious modification: don't forget to remove me before merging.
-unused_var = 1
+if False:
+    print(b)
