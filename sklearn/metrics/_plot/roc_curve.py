@@ -1,5 +1,3 @@
-import numpy as np
-
 from .base import _plot_curve
 
 from .. import auc

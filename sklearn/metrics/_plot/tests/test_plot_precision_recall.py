@@ -96,7 +96,8 @@ def test_plot_precision_recall(pyplot, response_method, with_sample_weight):
                          ["predict_proba", "decision_function"])
 @pytest.mark.parametrize("with_sample_weight", [True, False])
 @pytest.mark.parametrize("with_same_axis", [True, False])
-def test_plot_precision_recall_multiclass(pyplot, response_method, with_sample_weight, with_same_axis):
+def test_plot_precision_recall_multiclass(pyplot, response_method,
+                                          with_sample_weight, with_same_axis):
     X, y = make_classification(n_classes=3, n_samples=50,
                                n_informative=3, random_state=0)
 
@@ -141,14 +142,16 @@ def test_plot_precision_recall_multiclass(pyplot, response_method, with_sample_w
         assert isinstance(disp[i].ax_, mpl.axes.Axes)
         assert isinstance(disp[i].figure_, mpl.figure.Figure)
 
-        expected_label = "LogisticRegression for class {} (AP = {:0.2f})".format(i, avg_prec)
+        expected_label = "LogisticRegression for class {} " \
+                         "(AP = {:0.2f})".format(i, avg_prec)
         assert disp[i].line_.get_label() == expected_label
         assert disp[i].ax_.get_xlabel() == "Recall"
         assert disp[i].ax_.get_ylabel() == "Precision"
 
         # draw again with another label
         disp[i].plot(name="MySpecialEstimator for class {}".format(i))
-        expected_label = "MySpecialEstimator for class {} (AP = {:0.2f})".format(i, avg_prec)
+        expected_label = "MySpecialEstimator for class {} " \
+                         "(AP = {:0.2f})".format(i, avg_prec)
         assert disp[i].line_.get_label() == expected_label
 
 

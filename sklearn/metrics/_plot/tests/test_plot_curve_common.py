@@ -109,7 +109,8 @@ def test_plot_det_curve_not_fitted_errors(pyplot, data_binary, clf, plot_func):
 
 @pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize("nrows, ncols", [(1, 4), (1, 5)])
-@pytest.mark.parametrize("plot_func", [plot_precision_recall_curve, plot_roc_curve])
+@pytest.mark.parametrize("plot_func",
+                         [plot_precision_recall_curve, plot_roc_curve])
 def test_plot_curve_incorrect_num_axes(pyplot, nrows, ncols, plot_func):
     fig, axes = pyplot.subplots(nrows, ncols)
 
@@ -133,9 +134,11 @@ def test_plot_curve_incorrect_num_axes(pyplot, nrows, ncols, plot_func):
               "defined in MyClassifier"),
      ("bad_method", "response_method must be 'predict_proba', "
                     "'decision_function' or 'auto'")])
-@pytest.mark.parametrize("plot_func", [plot_precision_recall_curve, plot_roc_curve])
+@pytest.mark.parametrize("plot_func",
+                         [plot_precision_recall_curve, plot_roc_curve])
 @pytest.mark.parametrize("is_binary, ", [True, False])
-def test_error_bad_response(pyplot, response_method, msg, is_binary, plot_func):
+def test_error_bad_response(pyplot, response_method, msg,
+                            is_binary, plot_func):
     if is_binary:
         X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
     else:

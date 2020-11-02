@@ -219,7 +219,8 @@ def plot_precision_recall_curve(estimator, X, y, *,
     y : array-like of shape (n_samples,) or (n_samples, n_classes)
         Target values.
 
-    sample_weight : array-like of shape (n_samples,) or (n_samples, n_classes), default=None
+    sample_weight : array-like of shape (n_samples,)
+                    or (n_samples, n_classes), default=None
         Sample weights.
 
     response_method : {'predict_proba', 'decision_function', 'auto'}, \

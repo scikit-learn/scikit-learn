@@ -140,7 +140,8 @@ def test_plot_roc_curve_multiclass(pyplot, response_method, data,
         assert isinstance(viz[i].ax_, mpl.axes.Axes)
         assert isinstance(viz[i].figure_, mpl.figure.Figure)
 
-        expected_label = "LogisticRegression for class {} (AUC = {:0.2f})".format(i, viz[i].roc_auc)
+        expected_label = "LogisticRegression for class {} " \
+                         "(AUC = {:0.2f})".format(i, viz[i].roc_auc)
         assert viz[i].line_.get_label() == expected_label
 
         assert viz[i].ax_.get_ylabel() == "True Positive Rate"

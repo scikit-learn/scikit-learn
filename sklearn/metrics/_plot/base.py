@@ -138,7 +138,8 @@ def _plot_curve(plot_curve_func,
     ----------
     plot_curve_func : callable
         Plot curve function (computes the plot metrics and returns a display).
-        Can be either `_get_roc_curve_display` or `_get_precision_recall_display`.
+        Can be either `_get_roc_curve_display` or
+        `_get_precision_recall_display`.
 
     estimator : estimator instance
         Fitted classifier or a fitted :class:`~sklearn.pipeline.Pipeline`
@@ -187,7 +188,7 @@ def _plot_curve(plot_curve_func,
     Returns
     -------
     display : :class:`~sklearn.metrics.RocCurveDisplay`
-        or :class:`~sklearn.metrics.PrecisionRecallDisplay`
+              or :class:`~sklearn.metrics.PrecisionRecallDisplay`
         Object or array-like of object that stores computed values.
 
     """
@@ -212,7 +213,8 @@ def _plot_curve(plot_curve_func,
 
     if n_classes == 2:
 
-        viz = plot_curve_func(y, y_pred, pos_label=pos_label, y_type=y_type, name=name)
+        viz = plot_curve_func(y, y_pred, pos_label=pos_label,
+                              y_type=y_type, name=name)
 
         return viz.plot(ax=ax, name=name, **kwargs)
     else:
@@ -226,7 +228,8 @@ def _plot_curve(plot_curve_func,
         vizs = []
 
         for i in range(n_classes):
-            viz = plot_curve_func(y[:, i], y_pred[:, i], y_type=y_type, name=name)
+            viz = plot_curve_func(y[:, i], y_pred[:, i],
+                                  y_type=y_type, name=name)
 
             axes = ax if isinstance(ax, plt.Axes) else ax[i]
 
