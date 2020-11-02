@@ -2939,7 +2939,7 @@ def check_classifiers_regression_target(name, estimator_orig,
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_estimator_sparse_dense(name, estimator_orig,
                                  strict_mode=True):
-    rng = np.random.RandomState(52)
+    rng = np.random.RandomState(42)
     estimator = clone(estimator_orig)
     estimator_sp = clone(estimator_orig)
     tags = estimator_orig._get_tags()
