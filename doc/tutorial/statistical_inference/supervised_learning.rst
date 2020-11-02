@@ -417,7 +417,7 @@ the separating line (less regularization).
 
 .. figure:: /auto_examples/svm/images/sphx_glr_plot_svm_margin_001.png
    :target: ../../auto_examples/svm/plot_svm_margin.html
-   
+
    **Unregularized SVM**
 
 .. figure:: /auto_examples/svm/images/sphx_glr_plot_svm_margin_002.png
