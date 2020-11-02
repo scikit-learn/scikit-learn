@@ -78,6 +78,8 @@ jobs:
           CIBW_BUILD: cp${{ matrix.python }}-*
           CIBW_TEST_REQUIRES: pytest pandas
           CIBW_TEST_COMMAND: pytest --pyargs sklearn
+          # Increase debugging output
+          CIBW_BUILD_VERBOSITY: 1
           # Embed vcomp140.dll before generating the Windows
           # wheel and after building the package from source
           CIBW_BEFORE_BUILD_WINDOWS: pip install numpy scipy cython &&
