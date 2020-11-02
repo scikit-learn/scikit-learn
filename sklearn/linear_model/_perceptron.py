@@ -23,7 +23,7 @@ class Perceptron(BaseSGDClassifier):
     l1_ratio : float, default=0.15
         The Elastic Net mixing parameter, with `0 <= l1_ratio <= 1`.
         `l1_ratio=0` corresponds to L2 penalty, `l1_ratio=1` to L1.
-        Only used if `penalty`='elasticnet'.
+        Only used if `penalty='elasticnet'`.
 
         .. versionadded:: 0.24
 

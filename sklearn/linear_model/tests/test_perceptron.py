@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.testing._private.utils import assert_allclose
 import scipy.sparse as sp
 
 from sklearn.utils._testing import assert_array_almost_equal
@@ -78,3 +79,13 @@ def test_perceptron_l1_ratio():
     clf2.fit(X, y)
 
     assert clf1.score(X, y) != clf2.score(X, y)
+
+    # check that the bounds of elastic net which should correspond to an l1 or
+    # l2 penalty depending of `l1_ratio` value.
+    clf_l1 = Perceptron(penalty='l1').fit(X, y)
+    clf_elasticnet = Perceptron(l1_ratio=1, penalty='elasticnet').fit(X, y)
+    assert_allclose(clf_l1.coef_, clf_elasticnet.coef_)
+
+    clf_l2 = Perceptron(penalty='l2').fit(X, y)
+    clf_elasticnet = Perceptron(l1_ratio=0, penalty='elasticnet').fit(X, y)
+    assert_allclose(clf_l2.coef_, clf_elasticnet.coef_)
