@@ -82,7 +82,7 @@ jobs:
       - name: Build and test wheels
         env:
           CIBW_BUILD: cp${{ matrix.python }}-*
-          # Build against the minumum version of the upstream dependencies
+          # Build against the minimum version of the upstream dependencies
           CIBW_BEFORE_BUILD: pip install numpy==$NUMPY_VERSION scipy==$SCIPY_VERSION cython==$CYTHON_VERSION
           # Increase debugging output
           CIBW_BUILD_VERBOSITY: 1
