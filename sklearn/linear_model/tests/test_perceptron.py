@@ -1,7 +1,7 @@
 import numpy as np
-from numpy.testing._private.utils import assert_allclose
 import scipy.sparse as sp
 
+from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_raises
 
