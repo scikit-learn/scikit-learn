@@ -1536,11 +1536,11 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
     Parameters
     ----------
-    criterion : {"mse", "friedman_mse", "mae", "poisson"}, default="mse"
+    criterion : {"mse", "friedman_mse", "mae"}, default="mse"
         The function to measure the quality of a split. Supported criteria
         are "mse" for the mean squared error, which is equal to variance
-        reduction as feature selection criterion, "mae" for the mean absolute
-        error and "poisson" for the Poisson deviance.
+        reduction as feature selection criterion and "mae" for the mean
+        absolute error.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
