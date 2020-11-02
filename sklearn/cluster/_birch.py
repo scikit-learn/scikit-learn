@@ -585,8 +585,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
             Labelled data.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse='csr',
-                                reset=False)
+        X = self._validate_data(X, accept_sparse='csr', reset=False)
         kwargs = {'Y_norm_squared': self._subcluster_norms}
         return self.subcluster_labels_[
                 pairwise_distances_argmin(X,
