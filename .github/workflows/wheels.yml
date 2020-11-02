@@ -49,7 +49,7 @@ jobs:
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
         # Build the wheels for Python 3.6 and newer
-        python: [36, 37, 38, 39]
+        python: [36, 37, 38]
 
     steps:
       - name: Checkout scikit-learn
