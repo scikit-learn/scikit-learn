@@ -2447,6 +2447,7 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     pos_label : int or str, default=None
         Label of the positive class. `pos_label` will be infered in the
         following manner:
+
         * if `y_true` in {-1, 1} or {0, 1}, `pos_label` defaults to 1;
         * else if `y_true` contains string, an error will be raised and
           `pos_label` should be explicitely specified;
