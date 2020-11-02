@@ -219,7 +219,8 @@ def test_weighted_classification_toy():
 def test_regression_toy(Tree, criterion):
     # Check regression on a toy dataset.
     if criterion == "poisson":
-        # make target positive
+        # make target positive while not touching the original y and
+        # true_result
         a = np.abs(np.min(y)) + 1
         y_train = np.array(y) + a
         y_test = np.array(true_result) + a
