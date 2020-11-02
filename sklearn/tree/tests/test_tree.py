@@ -293,7 +293,9 @@ def test_diabetes_overfit(name, Tree, criterion):
 @pytest.mark.parametrize("name, Tree", REG_TREES.items())
 @pytest.mark.parametrize(
     "criterion, max_depth, max_loss",
-    [("mse", 15, 60), ("mae", 20, 60), ("friedman_mse", 15, 60),
+    [("mse", 15, 60),
+     ("mae", 20, 60),
+     ("friedman_mse", 15, 60),
      ("poisson", 15, 30)]
 )
 def test_diabetes_underfit(name, Tree, criterion, max_depth, max_loss):
