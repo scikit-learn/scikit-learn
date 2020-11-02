@@ -137,7 +137,7 @@ print(f"Correlation of models:\n {model_scores.transpose().corr()}")
 #
 # To answer this question using a frequentist approach we could
 # run a paired t-test and compute the p-value. This is also known as
-# Diebold-Mariano test in the forecast literature.
+# Diebold-Mariano test in the forecast literature [5]_.
 # Many variants of the latter have been developed to account for the
 # 'non-independence of observations problem'
 # described in the previous section. We will use the one proven to obtain the
@@ -573,4 +573,6 @@ pairwise_comp_df
 #        The Journal of Machine Learning Research, 18(1). See the Python
 #        library that accompanies this paper `here
 #        <https://github.com/janezd/baycomp>`_.
-#
+# .. [5] Diebold, F.X. & Mariano R.S. (1995). `Comparing predictive accuracy
+#        <http://www.est.uc3m.es/esp/nueva_docencia/comp_col_get/lade/tecnicas_prediccion/Practicas0708/Comparing%20Predictive%20Accuracy%20(Dielbold).pdf>`_
+#        Journal of Business & economic statistics, 20(1), 134-144.
