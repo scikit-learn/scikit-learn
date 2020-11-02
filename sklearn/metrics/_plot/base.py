@@ -186,7 +186,8 @@ def _plot_curve(plot_curve_func,
 
     Returns
     -------
-    display : :class:`~sklearn.metrics.RocCurveDisplay` or :class:`~sklearn.metrics.PrecisionRecallDisplay`
+    display : :class:`~sklearn.metrics.RocCurveDisplay`
+        or :class:`~sklearn.metrics.PrecisionRecallDisplay`
         Object or array-like of object that stores computed values.
 
     """
