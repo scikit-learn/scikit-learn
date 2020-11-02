@@ -542,3 +542,19 @@ def test_calibration_attributes(clf, cv):
         classes = LabelEncoder().fit(y).classes_
         assert_array_equal(calib_clf.classes_, classes)
         assert calib_clf.n_features_in_ == X.shape[1]
+
+
+# FIXME: remove in 0.26
+def test_calibrated_classifier_cv_deprecation(data):
+    # Check that we raise the proper deprecation warning if accessing
+    # `calibrators_` from the `_CalibratedClassifier`.
+    X, y = data
+    calib_clf = CalibratedClassifierCV(cv=2).fit(X, y)
+
+    with pytest.warns(FutureWarning):
+        calibrators = calib_clf.calibrated_classifiers_[0].calibrators_
+
+    for clf1, clf2 in zip(
+        calibrators, calib_clf.calibrated_classifiers_[0].calibrators
+    ):
+        assert clf1 is clf2
