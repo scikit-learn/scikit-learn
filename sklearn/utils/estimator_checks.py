@@ -800,21 +800,22 @@ def check_estimator_sparse_data(name, estimator_orig, strict_mode=True):
         except (TypeError, ValueError) as e:
             if 'sparse' not in repr(e).lower():
                 if "64" in matrix_format:
-                    msg = ("Estimator %s doesn't seem to support %s matrix, "
-                           "and is not failing gracefully, e.g. by using "
-                           "check_array(X, accept_large_sparse=False)")
-                    raise AssertionError(msg % (name, matrix_format))
+                    msg = (f"Estimator {name} doesn't seem to support "
+                           f"{matrix_format} matrix, and is not failing "
+                           f"gracefully, e.g. by using "
+                           f"check_array(X, accept_large_sparse=False)")
+                    raise AssertionError(msg)
                 else:
-                    msg = ("Estimator %s doesn't seem to fail gracefully on "
-                           "sparse data: error message should state "
-                           "explicitly that sparse input is not supported if "
-                           "this is not the case.")
-                    raise AssertionError(msg % (name))
+                    msg = (f"Estimator {name} doesn't seem to fail gracefully "
+                           f"on sparse data: error message should state "
+                           f"explicitly that sparse input is not supported if "
+                           f"this is not the case.")
+                    raise AssertionError(msg)
         except Exception:
-            msg = ("Estimator %s doesn't seem to fail gracefully on "
-                   "sparse data: it should raise a TypeError or a ValueError "
-                   "if sparse input is explicitly not supported.")
-            raise AssertionError(msg % (name))
+            msg = (f"Estimator {name} doesn't seem to fail gracefully on "
+                   f"sparse data: it should raise a TypeError or a ValueError "
+                   f"if sparse input is explicitly not supported.")
+            raise AssertionError(msg)
 
 
 @ignore_warnings(category=FutureWarning)

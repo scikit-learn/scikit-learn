@@ -547,9 +547,9 @@ def test_check_estimator():
     # check for sparse matrix input handling, if the wrong TypeError is thrown
     for clf in [NoSparseClassifierTypeError, NoSparseClassifierValueError]:
         name = clf.__name__
-        msg = ("Estimator %s doesn't seem to fail gracefully on sparse data: "
-               "error message should state explicitly that sparse input is"
-               " not supported if this is not the case." % name)
+        msg = (f"Estimator {name} doesn't seem to fail gracefully on sparse "
+               f"data: error message should state explicitly that sparse "
+               f"input is not supported if this is not the case.")
         assert_raises_regex(
             AssertionError, msg, check_estimator, clf()
         )
