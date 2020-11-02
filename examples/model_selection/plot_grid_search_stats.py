@@ -136,8 +136,10 @@ print(f"Correlation of models:\n {model_scores.transpose().corr()}")
 # second model (when ranked by `mean_test_score`)?"
 #
 # To answer this question using a frequentist approach we could
-# run a paired t-test and compute the p-value. Many variants of the latter have
-# been developed to account for the 'non-independence of observations problem'
+# run a paired t-test and compute the p-value. This is also known as
+# Diebold-Mariano test in the forecast literature.
+# Many variants of the latter have been developed to account for the
+# 'non-independence of observations problem'
 # described in the previous section. We will use the one proven to obtain the
 # highest replicability scores (which rate how similar the performance of a
 # model is when evaluating it on different random partitions of the same
