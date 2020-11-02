@@ -1,5 +1,7 @@
 import time
+
 from joblib import Parallel
+import pytest
 
 from sklearn import get_config, set_config, config_context
 from sklearn.utils._testing import assert_raises
@@ -78,17 +80,20 @@ def test_set_config():
     assert_raises(TypeError, set_config, do_something_else=True)
 
 
-def test_config_threadsafe():
+def set_assume_finite(assume_finite, sleep_dur):
+    with config_context(assume_finite=assume_finite):
+        time.sleep(sleep_dur)
+        return get_config()['assume_finite']
+
+
+@pytest.mark.parametrize("backend",
+                         ["loky", "multiprocessing", "threading"])
+def test_config_threadsafe(backend):
     """Test that the global config is threadsafe."""
 
-    def set_assume_finite(assume_finite, sleep_dur):
-        with config_context(assume_finite=assume_finite):
-            time.sleep(sleep_dur)
-            return get_config()['assume_finite']
-
     booleans = [False, True]
-    sleep_seconds = [0.5, 1]
-    items = Parallel(backend='threading', n_jobs=2)(
+    sleep_seconds = [0.1, 0.2]
+    items = Parallel(backend=backend, n_jobs=2)(
         delayed(set_assume_finite)(value, sleep_dur)
         for value, sleep_dur in zip(booleans, sleep_seconds))
 
