@@ -1,11 +1,13 @@
 import time
 
 from joblib import Parallel
+import joblib
 import pytest
 
 from sklearn import get_config, set_config, config_context
 from sklearn.utils._testing import assert_raises
 from sklearn.utils.fixes import delayed
+from sklearn.utils.fixes import parse_version
 
 
 def test_config_context():
@@ -91,8 +93,13 @@ def set_assume_finite(assume_finite, sleep_dur):
 def test_config_threadsafe(backend):
     """Test that the global config is threadsafe."""
 
+    if (parse_version(joblib.__version__) < parse_version('0.12')
+            and backend == 'loky'):
+        pytest.skip('loky backend does not exist in joblib <0.12')
+
     booleans = [False, True]
     sleep_seconds = [0.1, 0.2]
+
     items = Parallel(backend=backend, n_jobs=2)(
         delayed(set_assume_finite)(value, sleep_dur)
         for value, sleep_dur in zip(booleans, sleep_seconds))
