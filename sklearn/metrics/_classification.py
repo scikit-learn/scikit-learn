@@ -2487,12 +2487,12 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
 
     y_type = type_of_target(y_true)
     if y_type != "binary":
-        if y_type == 'multiclass':
-            raise ValueError("Only binary classification is supported. "
-                             "Use multiclass_brier_score_loss instead")
-        else:
-            raise ValueError(f"Only binary classification is supported. The "
-                             f"type of the target is {y_type}.")
+        raise ValueError(
+            f"Only binary classification is supported. The type of the target "
+            f"is {y_type}. For the multiclass case, use "
+            f"multiclass_brier_score_loss instead"
+        )
+
     if y_prob.max() > 1:
         raise ValueError("y_prob contains values greater than 1.")
     if y_prob.min() < 0:
