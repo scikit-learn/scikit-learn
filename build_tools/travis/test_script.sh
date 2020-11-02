@@ -24,7 +24,7 @@ python -c "import platform; print(platform.machine())"
 if [[ "$BUILD_WITH_ICC" == "true" ]]; then
     # the tools in the oneAPI toolkits are configured via environment variables
     # which are also required at runtime.
-    source /opt/intel/inteloneapi/setvars.sh
+    source /opt/intel/oneapi/setvars.sh
 fi
 
 run_tests() {

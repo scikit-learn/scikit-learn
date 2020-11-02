@@ -434,7 +434,7 @@ Install ICC, packaged under the name ``intel-oneapi-icc``::
 
 Before using ICC, you need to set up environment variables::
 
-    source /opt/intel/inteloneapi/setvars.sh
+    source /opt/intel/oneapi/setvars.sh
 
 Finally, you can build scikit-learn. For example on Linux x86_64::
 
