@@ -15,7 +15,6 @@ from ..base import BaseEstimator, RegressorMixin, clone
 from ..base import MultiOutputMixin
 from .kernels import RBF, ConstantKernel as C
 from ..utils import check_random_state
-from ..utils.validation import check_array
 from ..utils.optimize import _check_optimize_result
 from ..utils.validation import _deprecate_positional_args
 
@@ -320,9 +319,11 @@ class GaussianProcessRegressor(MultiOutputMixin,
                 "returning full covariance.")
 
         if self.kernel is None or self.kernel.requires_vector_input:
-            X = check_array(X, ensure_2d=True, dtype="numeric")
+            X = self._validate_data(X, ensure_2d=True, dtype="numeric",
+                                    reset=False)
         else:
-            X = check_array(X, ensure_2d=False, dtype=None)
+            X = self._validate_data(X, ensure_2d=False, dtype=None,
+                                    reset=False)
 
         if not hasattr(self, "X_train_"):  # Unfitted;predict based on GP prior
             if self.kernel is None:
