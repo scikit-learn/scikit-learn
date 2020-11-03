@@ -664,7 +664,7 @@ class KNeighborsMixin:
             if self.effective_metric_ == 'precomputed':
                 X = _check_precomputed(X)
             else:
-                X = check_array(X, accept_sparse='csr')
+                X = self._validate_data(X, accept_sparse='csr', reset=False)
         else:
             query_is_train = True
             X = self._fit_X
@@ -979,7 +979,7 @@ class RadiusNeighborsMixin:
             if self.effective_metric_ == 'precomputed':
                 X = _check_precomputed(X)
             else:
-                X = check_array(X, accept_sparse='csr')
+                X = self._validate_data(X, accept_sparse='csr', reset=False)
         else:
             query_is_train = True
             X = self._fit_X

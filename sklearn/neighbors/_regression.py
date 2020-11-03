@@ -17,7 +17,6 @@ import numpy as np
 from ._base import _get_weights, _check_weights
 from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
 from ..base import RegressorMixin
-from ..utils import check_array
 from ..utils.validation import _deprecate_positional_args
 from ..utils.deprecation import deprecated
 
@@ -203,7 +202,7 @@ class KNeighborsRegressor(KNeighborsMixin,
         y : ndarray of shape (n_queries,) or (n_queries, n_outputs), dtype=int
             Target values.
         """
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_data(X, accept_sparse='csr', reset=False)
 
         neigh_dist, neigh_ind = self.kneighbors(X)
 
@@ -392,7 +391,7 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin,
                 dtype=double
             Target values.
         """
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_data(X, accept_sparse='csr', reset=False)
 
         neigh_dist, neigh_ind = self.radius_neighbors(X)
 
