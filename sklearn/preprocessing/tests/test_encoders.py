@@ -897,7 +897,36 @@ def test_drop_most_frequent():
     exp = [[1, 1, 0, 0],
            [0, 0, 0, 0],
            [0, 0, 1, 1]]
+    exp_counts_list = [[1, 2],
+                       [3],
+                       [1, 1, 1],
+                       [2, 1]]
+    exp_counts = np.array([np.array(xi) for xi in exp_counts_list])
     ohe = OneHotEncoder(drop='most_frequent')
     trans = ohe.fit_transform(X).toarray()
     assert_array_equal(trans, exp)
+    assert all([np.array_equal(ohe.categories_count_[i], exp_counts[i])
+                for i in range(4)])
     assert_array_equal(ohe.inverse_transform(trans), np.array(X, dtype=object))
+
+
+def test_drop_most_frequent_specified_categories():
+    X = [['abc', 12, 2, 55, np.nan],
+         ['def', 12, 2, 55, np.nan],
+         ['def', 12, 3, 56, 1]]
+    exp_counts_list = [[2, 1],
+                       [3],
+                       [0, 2, 1, 0],
+                       [1, 0, 2],
+                       [2, 1]]
+    exp_counts = np.array([np.array(xi) for xi in exp_counts_list])
+    categories = [['def', 'abc'],
+                  [12],
+                  [1, 2, 3, 0],
+                  [56, np.nan, 55],
+                  [np.nan, 1]]
+    ohe = OneHotEncoder(drop='most_frequent',
+                        categories=categories)
+    ohe.fit(X)
+    assert all([np.array_equal(ohe.categories_count_[i], exp_counts[i])
+                for i in range(5)])

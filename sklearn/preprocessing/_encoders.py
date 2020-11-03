@@ -13,7 +13,6 @@ from ..utils.validation import _deprecate_positional_args
 
 from ..utils._encode import _encode, _check_unknown, _unique
 
-
 __all__ = [
     'OneHotEncoder',
     'OrdinalEncoder'
@@ -91,9 +90,11 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 cats, cats_count = _unique(Xi, return_counts=True)
             else:
                 cats = np.array(self.categories[i], dtype=Xi.dtype)
-                cats_, cats_count = _unique(Xi, return_counts=True)
-                missing = np.setdiff1d(cats, cats_, assume_unique=True)
-                cats_count = np.append(cats_count, np.zeros(missing.shape[0]))
+
+                cats_, cats_count = _unique(Xi,
+                                            return_counts=True,
+                                            cats=cats)
+
                 if Xi.dtype != object:
                     sorted_cats = np.sort(cats)
                     error_msg = ("Unsorted categories are not "
@@ -221,6 +222,8 @@ class OneHotEncoder(_BaseEncoder):
         - 'if_binary' : drop the first category in each feature with two
           categories. Features with 1 or more than 2 categories are
           left intact.
+        - 'most_frequent' : drop the most frequent category in each feature.
+          If all frequency counts equal, the first category will be dropped.
         - array : ``drop[i]`` is the category in feature ``X[:, i]`` that
           should be dropped.
 
