@@ -89,7 +89,9 @@ def configuration(parent_package='', top_path=None):
             os.getenv("SKLEARN_VENDOR_VCOMP140_DLL") == "1"):
         # Embed vcomp140.dll before generating the Windows
         # wheel and after building the package from source
-        embed_vcomp140(op.join(op.dirname(op.abspath(__file__)), "build"))
+        file_dirname = op.abspath(__file__)
+        root_dirname = op.join(file_dirname, "..", "..")
+        embed_vcomp140(op.join(root_dirname, "build"))
 
     return config
 
