@@ -74,9 +74,12 @@ def embed_vcomp140(build_dirname):
     if not op.exists(target_folder):
         os.mkdir(target_folder)
 
-    print("Copying '%s' to:\n%s" % (VCOMP140_SRC_PATH, target_folder))
+    print(f"Copying {VCOMP140_SRC_PATH} to: \n{target_folder}.")
     shutil.copy2(VCOMP140_SRC_PATH, target_folder)
 
-    # Generate the _distributor_init file in the source tree.
-    print("Generating the '_distributor_init.py' file in:")
-    print(make_distributor_init("sklearn", op.basename(VCOMP140_SRC_PATH)))
+    sklearn_dirname = op.join(build_dirname, "..", "sklearn")
+    dll_filename = op.basename(VCOMP140_SRC_PATH)
+
+    # Generate the _distributor_init file in the source tree
+    print("Generating the '_distributor_init.py' file in: ")
+    print(make_distributor_init(sklearn_dirname, dll_filename))
