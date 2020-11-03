@@ -90,7 +90,7 @@ def configuration(parent_package='', top_path=None):
 
         # Embed vcomp140.dll before generating the Windows
         # wheel and after building the package from source
-        embed_vcomp140(os.path.join(os.getcwd(), "..", "build"))
+        embed_vcomp140(os.path.join(os.getcwd(), "build"))
 
     return config
 
