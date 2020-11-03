@@ -27,9 +27,10 @@ sns.scatterplot(
 plt.show()
 
 # %%
-# We will compare the performance of SVC estimators that vary on their `kernel`
-# parameter, to decide which choice of this hyper-parameter predicts our
-# simulated data best. We will evaluate the performance of the models using
+# We will compare the performance of :class:`~sklearn.svm.SVC` estimators that
+# vary on their `kernel` parameter, to decide which choice of this
+# hyper-parameter predicts our simulated data best.
+# We will evaluate the performance of the models using
 # :class:`~sklearn.model_selection.RepeatedStratifiedKFold`, repeating 10 times
 # a 10-fold stratified cross validation using a different randomization of the
 # data in each repetition. The performance will be evaluated using
@@ -78,28 +79,30 @@ results_df[
 # %%
 # We can see that the estimator using the `'rbf'` kernel performed best,
 # closely followed by `'linear'`. Both estimators with a `'poly'` kernel
-# performed worse, with the one using a two degree polynomial achieving a much
+# performed worse, with the one using a two-degree polynomial achieving a much
 # lower perfomance than all other models.
 #
-# Usually, the analysis just ends here, but half the story is missing. **The
-# output of `GridSearchCV` does not provide information on the certainty of
-# the differences between the models. We don't know if these are statistically
-# significant.** To evaluate this, we need to conduct a statistical test.
+# Usually, the analysis just ends here, but half the story is missing. The
+# output of :class:`~sklearn.model_selection.GridSearchCV` does not provide
+# information on the certainty of the differences between the models.
+# We don't know if these are **statistically** significant.
+# To evaluate this, we need to conduct a statistical test.
 # Specifically, to contrast the performance of two models we should
 # statistically compare their AUC scores. There are 100 samples (AUC
 # scores) for each model as we repreated 10 times a 10-fold cross-validation.
 #
-# However, the scores of the models are not independent: we iteratively used
-# the same partitions of the data to evaluate them, increasing the correlation
-# between the performance of the models. This means that some partitions of the
-# data can make the distinction of the classes particularly easy or hard to
-# find for all models, and thus their scores will co-vary.
+# However, the scores of the models are not independent: all models are
+# evaluated on the **same** 100 partitions, increasing the correlation
+# between the performance of the models.
+# Since some partitions of the data can make the distinction of the classes
+# particularly easy or hard to find for all models, the models scores will
+# co-vary.
 #
 # Let's inspect this partition effect by plotting the performance of all models
 # in each fold, and calculating the correlation between models across folds:
 
 # create df of model scores ordered by perfomance
-model_scores = results_df.filter(like='split')
+model_scores = results_df.filter(regex=r'split\d*_test_score')
 
 # plot 30 examples of dependency between cv fold and AUC scores
 fig, ax = plt.subplots()
@@ -123,10 +126,10 @@ print(f"Correlation of models:\n {model_scores.transpose().corr()}")
 # the number of false positive errors (i.e. detecting a significant difference
 # between models when such does not exist) [1]_.
 #
-# Several methods have been developed to correct the variance for the
-# correlation in these cases. In this example we will explore one of these
-# methods implemented using two different statistical approaches: frequentist
-# and Bayesian.
+# Several variance-corrected statistical tests have been developed for these
+# cases. In this example we will show how to implement one of them (the so
+# called Nadeau and Bengio's corrected t-test) under two different statistical
+# frameworks: frequentist and Bayesian.
 
 # %%
 # Comparing two models: frequentist approach
@@ -169,15 +172,13 @@ import numpy as np
 from scipy.stats import t
 
 
-def correct_std(differences, n, n_train, n_test):
+def corrected_std(differences, n_train, n_test):
     """Corrects standard deviation using Nadeau and Bengio's approach.
 
     Parameters
     ----------
     differences : ndarray of shape (n_samples, 1)
         Vector containing the differences in the score metrics of two models.
-    n : int
-        Total number of samples.
     n_train : int
         Number of samples in the training set.
     n_test : int
@@ -188,6 +189,7 @@ def correct_std(differences, n, n_train, n_test):
     corrected_std : int
         Variance-corrected standard deviation of the set of differences.
     """
+    n = n_train + n_test
     corrected_var = (
         np.var(differences, ddof=1) * ((1 / n) + (n_test / n_train))
     )
@@ -195,15 +197,13 @@ def correct_std(differences, n, n_train, n_test):
     return corrected_std
 
 
-def compute_corrected_ttest(differences, n, df, n_train, n_test):
+def compute_corrected_ttest(differences, df, n_train, n_test):
     """Computes right-tailed paired t-test with corrected variance.
 
     Parameters
     ----------
     differences : array-like of shape (n_samples, 1)
         Vector containing the differences in the score metrics of two models.
-    n : int
-        Total number of samples.
     df : int
         Degrees of freedom.
     n_train : int
@@ -219,8 +219,8 @@ def compute_corrected_ttest(differences, n, df, n_train, n_test):
         Variance-corrected p-value.
     """
     mean = np.mean(differences)
-    corrected_std = correct_std(differences, n, n_train, n_test)
-    t_stat = mean / corrected_std
+    std = corrected_std(differences, n_train, n_test)
+    t_stat = mean / std
     p_val = t.sf(np.abs(t_stat), df)  # right-tailed t-test
     return t_stat, p_val
 
@@ -236,7 +236,7 @@ df = n - 1
 n_train = len(list(cv.split(X, y))[0][0])
 n_test = len(list(cv.split(X, y))[0][1])
 
-t_stat, p_val = compute_corrected_ttest(differences, n, df, n_train, n_test)
+t_stat, p_val = compute_corrected_ttest(differences, df, n_train, n_test)
 print(f"Corrected t-value: {t_stat:.3f}\n"
       f"Corrected p-value: {p_val:.3f}")
 
@@ -293,11 +293,10 @@ print(f"Uncorrected t-value: {t_stat_uncorrected:.3f}\n"
 #    St(\mu;n-1,\overline{x},(\frac{1}{n}+\frac{n_{test}}{n_{train}})
 #    \hat{\sigma}^2)
 #
-# where :math:`\mu` represents the mean difference in performance of the
-# population,
+# where :math:`\mu` represents the posterior of the mean difference in
+# performance,
 # :math:`n` is the total number of samples,
-# :math:`\overline{x}` represents the mean difference in performance of the
-# sample,
+# :math:`\overline{x}` represents the mean difference in the scores,
 # :math:`n_{test}` is the number of samples used for testing,
 # :math:`n_{train}` is the number of samples used for training,
 # and :math:`\hat{\sigma}^2` represents the variance of the sample.
@@ -310,7 +309,7 @@ print(f"Uncorrected t-value: {t_stat_uncorrected:.3f}\n"
 # intitialize random variable
 t_post = t(
     df, loc=np.mean(differences),
-    scale=correct_std(differences, n, n_train, n_test)
+    scale=corrected_std(differences, n_train, n_test)
 )
 
 # %%
@@ -362,7 +361,7 @@ print(f"Probability of {model_scores.index[1]} being more accurate than "
 #
 # In this example we are going to define the
 # Region of Practical Equivalence (ROPE) to be :math:`[-0.01, 0.01]`. That is,
-# we will consider two models as practically equivelent if they differ by less
+# we will consider two models as practically equivalent if they differ by less
 # than 1% in their performance.
 #
 # To compute the probabilities of the classifiers being practically equivalent,
@@ -391,7 +390,7 @@ plt.show()
 
 # %%
 # As suggested in [4]_, we can further interpret these probabilities using the
-# same criteria as the frequentist approach: Is the probability of falling
+# same criteria as the frequentist approach: is the probability of falling
 # inside the ROPE bigger than 95% (alpha value of 5%)?  In that case we can
 # conclude that both models are practically equivalent.
 
@@ -458,7 +457,7 @@ for model_i, model_k in combinations(range(len(model_scores)), 2):
     model_k_scores = model_scores.iloc[model_k].values
     differences = model_i_scores - model_k_scores
     t_stat, p_val = compute_corrected_ttest(
-        differences, n, df, n_train, n_test
+        differences, df, n_train, n_test
     )
     p_val *= n_comparisons  # implement Bonferroni correction
     # Bonferroni can output p-values higher than 1
@@ -499,13 +498,13 @@ for model_i, model_k in combinations(range(len(model_scores)), 2):
     differences = model_i_scores - model_k_scores
     t_post = t(
         df, loc=np.mean(differences),
-        scale=correct_std(differences, n, n_train, n_test)
+        scale=corrected_std(differences, n_train, n_test)
     )
-    left_prob = t_post.cdf(rope_interval[0])
-    right_prob = t_post.sf(rope_interval[1])
+    worse_prob = t_post.cdf(rope_interval[0])
+    better_prob = 1 - t_post.cdf(rope_interval[1])
     rope_prob = t_post.cdf(rope_interval[1]) - t_post.cdf(rope_interval[0])
 
-    pairwise_bayesian.append([left_prob, right_prob, rope_prob])
+    pairwise_bayesian.append([worse_prob, better_prob, rope_prob])
 
 pairwise_bayesian_df = (pd.DataFrame(
     pairwise_bayesian,
