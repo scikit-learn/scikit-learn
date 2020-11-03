@@ -6,12 +6,8 @@ Utilities useful during the build.
 
 
 import os
-import os.path as op
 import sklearn
 import contextlib
-import shutil
-from glob import glob
-import textwrap
 
 from distutils.version import LooseVersion
 
@@ -21,9 +17,6 @@ from .._min_dependencies import CYTHON_MIN_VERSION
 
 
 DEFAULT_ROOT = 'sklearn'
-
-VCOMP140_SRC_PATH = "C:\\Windows\System32\\vcomp140.dll"  # noqa
-GLOB_PATTERN = "lib.*/sklearn"
 
 
 def _check_cython_version():
