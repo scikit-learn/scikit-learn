@@ -95,8 +95,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                                             return_counts=True,
                                             cats=cats)
 
-                if Xi.dtype != object:
-                    sorted_cats = np.sort(cats)
+                if Xi.dtype.kind not in 'OU':
+                    sorted_cats = np.sort(cats) 
                     error_msg = ("Unsorted categories are not "
                                  "supported for numerical categories")
                     # if there are nans, nan should be the last element

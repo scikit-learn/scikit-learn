@@ -30,7 +30,6 @@ from ..base import RegressorMixin
 from ..base import is_classifier
 from ..base import MultiOutputMixin
 from ..utils import Bunch
-from ..utils import check_array
 from ..utils import check_random_state
 from ..utils.validation import _check_sample_weight
 from ..utils import compute_sample_weight
@@ -60,9 +59,12 @@ __all__ = ["DecisionTreeClassifier",
 DTYPE = _tree.DTYPE
 DOUBLE = _tree.DOUBLE
 
-CRITERIA_CLF = {"gini": _criterion.Gini, "entropy": _criterion.Entropy}
-CRITERIA_REG = {"mse": _criterion.MSE, "friedman_mse": _criterion.FriedmanMSE,
-                "mae": _criterion.MAE}
+CRITERIA_CLF = {"gini": _criterion.Gini,
+                "entropy": _criterion.Entropy}
+CRITERIA_REG = {"mse": _criterion.MSE,
+                "friedman_mse": _criterion.FriedmanMSE,
+                "mae": _criterion.MAE,
+                "poisson": _criterion.Poisson}
 
 DENSE_SPLITTERS = {"best": _splitter.BestSplitter,
                    "random": _splitter.RandomSplitter}
@@ -161,8 +163,17 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     raise ValueError("No support for np.int64 index based "
                                      "sparse matrices")
 
+            if self.criterion == "poisson":
+                if np.any(y < 0):
+                    raise ValueError("Some value(s) of y are negative which is"
+                                     " not allowed for Poisson regression.")
+                if np.sum(y) <= 0:
+                    raise ValueError("Sum of y is not positive which is "
+                                     "necessary for Poisson regression.")
+
         # Determine output settings
         n_samples, self.n_features_ = X.shape
+        self.n_features_in_ = self.n_features_
         is_classification = is_classifier(self)
 
         y = np.atleast_1d(y)
@@ -383,19 +394,15 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     def _validate_X_predict(self, X, check_input):
         """Validate the training data on predict (probabilities)."""
         if check_input:
-            X = check_array(X, dtype=DTYPE, accept_sparse="csr")
+            X = self._validate_data(X, dtype=DTYPE, accept_sparse="csr",
+                                    reset=False)
             if issparse(X) and (X.indices.dtype != np.intc or
                                 X.indptr.dtype != np.intc):
                 raise ValueError("No support for np.int64 index based "
                                  "sparse matrices")
-
-        n_features = X.shape[1]
-        if self.n_features_ != n_features:
-            raise ValueError("Number of features of the model must "
-                             "match the input. Model n_features is %s and "
-                             "input n_features is %s "
-                             % (self.n_features_, n_features))
-
+        else:
+            # The number of features is checked regardless of `check_input`
+            self._check_n_features(X, reset=False)
         return X
 
     def predict(self, X, check_input=True):
@@ -973,17 +980,21 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
     Parameters
     ----------
-    criterion : {"mse", "friedman_mse", "mae"}, default="mse"
+    criterion : {"mse", "friedman_mse", "mae", "poisson"}, default="mse"
         The function to measure the quality of a split. Supported criteria
         are "mse" for the mean squared error, which is equal to variance
         reduction as feature selection criterion and minimizes the L2 loss
         using the mean of each terminal node, "friedman_mse", which uses mean
         squared error with Friedman's improvement score for potential splits,
-        and "mae" for the mean absolute error, which minimizes the L1 loss
-        using the median of each terminal node.
+        "mae" for the mean absolute error, which minimizes the L1 loss using
+        the median of each terminal node, and "poisson" which uses reduction in
+        Poisson deviance to find splits.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
+
+        .. versionadded:: 0.24
+            Poisson deviance criterion.
 
     splitter : {"best", "random"}, default="best"
         The strategy used to choose the split at each node. Supported
@@ -1524,11 +1535,14 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     criterion : {"mse", "friedman_mse", "mae"}, default="mse"
         The function to measure the quality of a split. Supported criteria
         are "mse" for the mean squared error, which is equal to variance
-        reduction as feature selection criterion, and "mae" for the mean
+        reduction as feature selection criterion and "mae" for the mean
         absolute error.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
+
+        .. versionadded:: 0.24
+            Poisson deviance criterion.
 
     splitter : {"random", "best"}, default="random"
         The strategy used to choose the split at each node. Supported
