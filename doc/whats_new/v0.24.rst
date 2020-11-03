@@ -770,6 +770,13 @@ Changelog
   :func:`utils.sparse_func.incr_mean_variance_axis`.
   By :user:`Maria Telenczuk <maikia>` and :user:`Alex Gramfort <agramfort>`.
 
+- |Enhancement| Allows to pass a custom checks generator using the parameter
+  `checks_generator` in
+  :func:`~sklearn.utils.estimator_checks.check_estimator` and
+  :func:`~sklearn.utils.estimator_checks.parametrize_with_checks`. Note that
+  this feature is experimental in such way that the expected signature of the
+  `check` functions can change without deprecation cycle.
+  :pr:`18750` by :user:`Guillaume Lemaitre`_.
 
 Miscellaneous
 .............

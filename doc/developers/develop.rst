@@ -800,5 +800,5 @@ purpose. This parameter is a generator that yield callables such as::
         yield check_estimator_has_fit
 
 .. warning::
-   The API of the checks function is experimental and the expected signature
-   can change without notice.
+   This feature is experimental. The signature of the `check` functions can
+   change without any deprecation cycle.
