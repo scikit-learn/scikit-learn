@@ -85,10 +85,10 @@ def configuration(parent_package='', top_path=None):
 
     if (os.name == "nt" and
             "bdist_wheel" in sys.argv and
-            os.getenv("SKLEARN_VENDOR_VCOMP140_DLL")):
+            os.getenv("SKLEARN_VENDOR_VCOMP140_DLL") == "1"):
         # Embed vcomp140.dll before generating the Windows
         # wheel and after building the package from source
-        embed_vcomp140()
+        embed_vcomp140(os.path.join(os.getcwd(), "..", "build"))
 
     return config
 

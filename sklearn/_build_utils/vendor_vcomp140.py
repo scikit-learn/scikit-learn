@@ -12,7 +12,7 @@ from glob import glob
 import textwrap
 
 VCOMP140_SRC_PATH = "C:\\Windows\System32\\vcomp140.dll"  # noqa
-TARGET_FOLDER_GLOB_PATTERN = "build/lib.*/sklearn"
+GLOB_PATTERN = "lib.*/sklearn"
 
 
 def make_distributor_init(sklearn_dirname, dll_filename):
@@ -46,23 +46,28 @@ def make_distributor_init(sklearn_dirname, dll_filename):
     return op.abspath(distributor_init)
 
 
-def embed_vcomp140():
+def embed_vcomp140(build_dirname):
     # TODO: use threadpoolctl to dynamically locate the right vcomp dll
     # instead? This would require first in-place building scikit-learn
     # to make it "importable".
     if not op.exists(VCOMP140_SRC_PATH):
-        raise ValueError("Could not find %r" % VCOMP140_SRC_PATH)
+        raise ValueError(f"Could not find {VCOMP140_SRC_PATH}.")
 
-    if not op.isdir("build"):
-        raise RuntimeError("Could not find ./build/ folder. "
-                           "Run 'python setup.py build' first")
-    target_folders = glob(TARGET_FOLDER_GLOB_PATTERN)
+    if not op.isdir(build_dirname):
+        raise RuntimeError(f"Could not find {build_dirname} folder. "
+                           "Run 'python setup.py build' first.")
+
+    target_folder_glob_pattern = op.join(build_dirname, GLOB_PATTERN)
+    target_folders = glob(target_folder_glob_pattern)
+
     if len(target_folders) == 0:
-        raise RuntimeError("Could not find folder matching '%s'"
-                           % TARGET_FOLDER_GLOB_PATTERN)
+        raise RuntimeError(f"Could not find folder matching "
+                           f"{target_folder_glob_pattern}.")
+
     if len(target_folders) > 1:
-        raise RuntimeError("Found too many target folders: '%s'"
-                           % "', '".join(target_folders))
+        raise RuntimeError(f"Found too many target folders: "
+                           f"{', '.join(target_folders)}.")
+
     target_folder = op.abspath(op.join(target_folders[0], ".libs"))
 
     # create the "sklearn/.libs" subfolder
