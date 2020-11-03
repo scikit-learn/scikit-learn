@@ -431,7 +431,9 @@ def _should_be_skipped_or_marked(estimator, check, strict_mode):
     return False, 'placeholder reason that will never be used'
 
 
-def parametrize_with_checks(estimators, strict_mode=True):
+def parametrize_with_checks(
+    estimators, strict_mode=True, checks_generator=None,
+):
     """Pytest specific decorator for parametrizing estimator checks.
 
     The `id` of each check is set to be a pprint version of the estimator
@@ -464,6 +466,12 @@ def parametrize_with_checks(estimators, strict_mode=True):
 
         .. versionadded:: 0.24
 
+    checks_generator : callable, default=None
+        The generator yielding checks for the estimators. By default, the
+        common checks from scikit-learn will be yielded.
+
+        .. versionadded::0.24
+
     Returns
     -------
     decorator : `pytest.mark.parametrize`
@@ -488,18 +496,24 @@ def parametrize_with_checks(estimators, strict_mode=True):
                "Please pass an instance instead.")
         raise TypeError(msg)
 
-    def checks_generator():
+    if checks_generator is None:
+        checks_generator = _yield_all_checks
+
+    def _checks_generator():
         for estimator in estimators:
             name = type(estimator).__name__
-            for check in _yield_all_checks(estimator):
+            for check in checks_generator(estimator):
                 check = partial(check, name, strict_mode=strict_mode)
                 yield _maybe_mark_xfail(estimator, check, strict_mode, pytest)
 
-    return pytest.mark.parametrize("estimator, check", checks_generator(),
-                                   ids=_get_check_estimator_ids)
+    return pytest.mark.parametrize(
+        "estimator, check", _checks_generator(), ids=_get_check_estimator_ids
+    )
 
 
-def check_estimator(Estimator, generate_only=False, strict_mode=True):
+def check_estimator(
+    Estimator, generate_only=False, strict_mode=True, checks_generator=None,
+):
     """Check if estimator adheres to scikit-learn conventions.
 
     This estimator will run an extensive test-suite for input validation,
@@ -550,6 +564,12 @@ def check_estimator(Estimator, generate_only=False, strict_mode=True):
 
         .. versionadded:: 0.24
 
+    checks_generator : callable, default=None
+        The generator yielding checks for the estimators. By default, the
+        common checks from scikit-learn will be yielded.
+
+        .. versionadded::0.24
+
     Returns
     -------
     checks_generator : generator
@@ -565,15 +585,18 @@ def check_estimator(Estimator, generate_only=False, strict_mode=True):
     estimator = Estimator
     name = type(estimator).__name__
 
-    def checks_generator():
-        for check in _yield_all_checks(estimator):
+    if checks_generator is None:
+        checks_generator = _yield_all_checks
+
+    def _checks_generator():
+        for check in checks_generator(estimator):
             check = _maybe_skip(estimator, check, strict_mode)
             yield estimator, partial(check, name, strict_mode=strict_mode)
 
     if generate_only:
-        return checks_generator()
+        return _checks_generator()
 
-    for estimator, check in checks_generator():
+    for estimator, check in _checks_generator():
         try:
             check(estimator)
         except SkipTest as exception:
