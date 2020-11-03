@@ -3,6 +3,7 @@ import os
 import os.path as op
 
 from sklearn._build_utils import cythonize_extensions
+from sklearn._build_utils.vendor_vcomp140 import embed_vcomp140
 
 
 def configuration(parent_package='', top_path=None):
