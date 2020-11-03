@@ -60,8 +60,8 @@ jobs:
 
       - name: Install dependencies
         shell: bash
-        # OpenMP is not present on macOS by default
         run: |
+          # Enable OpenMP support for the compiler shipped by default with macOS
           if [ "$RUNNER_OS" == "macOS" ]; then
             brew install libomp
             echo "CC=/usr/bin/clang" >> $GITHUB_ENV
@@ -73,18 +73,12 @@ jobs:
           fi
           python -m pip install cibuildwheel
 
-      - name: Get minimum build dependencies
-        run: |
-          echo "NUMPY_VERSION=$(python sklearn/_min_dependencies.py numpy)" >> $GITHUB_ENV
-          echo "SCIPY_VERSION=$(python sklearn/_min_dependencies.py scipy)" >> $GITHUB_ENV
-          echo "CYTHON_VERSION=$(python sklearn/_min_dependencies.py cython)" >> $GITHUB_ENV
-
+      # Note that the versions of the build dependencies are specified in
+      # the pyproject.toml file, while the tests are run against the most
+      # recent versions of the dependencies specified in the wheel metadata
       - name: Build and test wheels
         env:
           CIBW_BUILD: cp${{ matrix.python }}-*
-          # Build against the minimum version of the upstream dependencies
-          CIBW_BEFORE_BUILD: pip install numpy==$NUMPY_VERSION scipy==$SCIPY_VERSION cython==$CYTHON_VERSION
-          # Increase debugging output
           CIBW_BUILD_VERBOSITY: 1
           CIBW_TEST_REQUIRES: pytest pandas
           CIBW_TEST_COMMAND: pytest --pyargs sklearn
@@ -109,7 +103,8 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v2
 
-      # The setup file and the tests need these dependencies to be installed
+      # The setup file and the tests need
+      # these dependencies to be installed
       - name: Install dependencies
         run: |
           python -m pip install numpy scipy cython
