@@ -232,7 +232,7 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
 
         Returns
         -------
-        C : array, shape (n_samples,)
+        C : array, shape (n_samples,) or (n_samples, n_outputs)
             Returns predicted values.
         """
         return self._decision_function(X)
@@ -303,7 +303,7 @@ class LinearClassifierMixin(ClassifierMixin):
 
         Returns
         -------
-        C : array, shape [n_samples]
+        C : array, shape (n_samples,)
             Predicted class label per sample.
         """
         scores = self.decision_function(X)
