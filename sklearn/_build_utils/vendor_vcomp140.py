@@ -46,7 +46,7 @@ def make_distributor_init(sklearn_dirname, dll_filename):
     return op.abspath(distributor_init)
 
 
-def main():
+def vendor_vcomp140():
     # TODO: use threadpoolctl to dynamically locate the right vcomp dll
     # instead? This would require first in-place building scikit-learn
     # to make it "importable".
@@ -75,7 +75,3 @@ def main():
     # Generate the _distributor_init file in the source tree.
     print("Generating the '_distributor_init.py' file in:")
     print(make_distributor_init("sklearn", op.basename(VCOMP140_SRC_PATH)))
-
-
-if __name__ == "__main__":
-    main()

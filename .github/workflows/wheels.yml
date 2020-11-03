@@ -79,9 +79,10 @@ jobs:
       - name: Build and test wheels
         env:
           CIBW_BUILD: cp${{ matrix.python }}-*
-          CIBW_BUILD_VERBOSITY: 1
+          CIBW_BUILD_VERBOSITY: 1  # Increase verbose debugging output
           CIBW_TEST_REQUIRES: pytest pandas
           CIBW_TEST_COMMAND: pytest --pyargs sklearn
+          SKLEARN_VENDOR_VCOMP140_DLL: 1  # Embed vcomp140.dll for Windows
         run: |
           python -m cibuildwheel --output-dir wheelhouse
 
