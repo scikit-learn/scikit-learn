@@ -316,8 +316,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         `x_scores` if `Y` is not given, `(x_scores, y_scores)` otherwise.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, copy=copy, dtype=FLOAT_DTYPES,
-                                reset=False)
+        X = self._validate_data(X, copy=copy, dtype=FLOAT_DTYPES, reset=False)
         # Normalize
         X -= self.x_mean_
         X /= self.x_std_
