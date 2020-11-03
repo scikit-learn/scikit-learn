@@ -193,7 +193,7 @@ class LocalOutlierFactor(KNeighborsMixin,
     def fit_predict(self):
         """Fits the model to the training set X and returns the labels.
 
-        **Only available for novelty detection (when novelty is set to True).**
+        **Only available for outlier detection (when novelty is set to False).**
         Label is 1 for an inlier and -1 for an outlier according to the LOF
         score and the contamination parameter.
 
