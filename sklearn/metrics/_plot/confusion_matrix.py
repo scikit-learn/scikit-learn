@@ -194,7 +194,7 @@ class ConfusionMatrixDisplay:
             Fitted classifier or a fitted :class:`~sklearn.pipeline.Pipeline`
             in which the last estimator is a classifier.
 
-        X : {{array-like, sparse matrix}} of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Input values.
 
         y : array-like of shape (n_samples,)
