@@ -86,7 +86,7 @@ results_df[
 # the differences between the models. We don't know if these are statistically
 # significant.** To evaluate this, we need to conduct a statistical test.
 # Specifically, to contrast the performance of two models we should
-# statistically compare their AUC scores. There are 100 observations (AUC
+# statistically compare their AUC scores. There are 100 samples (AUC
 # scores) for each model as we repreated 10 times a 10-fold cross-validation.
 #
 # However, the scores of the models are not independent: we iteratively used
@@ -118,7 +118,7 @@ print(f"Correlation of models:\n {model_scores.transpose().corr()}")
 # %%
 # We can observe that the performance of the models highly depends on the fold.
 #
-# As a consequence, if we assume independence between observations we will be
+# As a consequence, if we assume independence between samples we will be
 # underestimating the variance computed in our statistical tests, increasing
 # the number of false positive errors (i.e. detecting a significant difference
 # between models when such does not exist) [1]_.
@@ -138,8 +138,8 @@ print(f"Correlation of models:\n {model_scores.transpose().corr()}")
 # To answer this question using a frequentist approach we could
 # run a paired t-test and compute the p-value. This is also known as
 # Diebold-Mariano test in the forecast literature [5]_.
-# Many variants of the latter have been developed to account for the
-# 'non-independence of observations problem'
+# Many variants of such a t-test have been developed to account for the
+# 'non-independence of samples problem'
 # described in the previous section. We will use the one proven to obtain the
 # highest replicability scores (which rate how similar the performance of a
 # model is when evaluating it on different random partitions of the same
@@ -156,8 +156,8 @@ print(f"Correlation of models:\n {model_scores.transpose().corr()}")
 # where :math:`k` is the number of folds,
 # :math:`r` the number of repetitions in the cross-validation,
 # :math:`x` is the difference in performance of the models,
-# :math:`n_{test}` is the number of observations used for testing,
-# :math:`n_{train}` is the the number of observations used for training,
+# :math:`n_{test}` is the number of samples used for testing,
+# :math:`n_{train}` is the number of samples used for training,
 # and :math:`\hat{\sigma}^2` represents the variance of the sample.
 #
 # Let's implement a corrected right-tailed paired t-test to evaluate if the
@@ -174,14 +174,14 @@ def correct_std(differences, n, n_train, n_test):
 
     Parameters
     ----------
-    differences : ndarray of shape (n_observations, 1)
+    differences : ndarray of shape (n_samples, 1)
         Vector containing the differences in the score metrics of two models.
     n : int
-        Total number of observations.
+        Total number of samples.
     n_train : int
-        Number of observations in the training set.
+        Number of samples in the training set.
     n_test : int
-        Number of observations in the testing set.
+        Number of samples in the testing set.
 
     Returns
     -------
@@ -200,16 +200,16 @@ def compute_corrected_ttest(differences, n, df, n_train, n_test):
 
     Parameters
     ----------
-    differences : array-like of shape (n_observations, 1)
+    differences : array-like of shape (n_samples, 1)
         Vector containing the differences in the score metrics of two models.
     n : int
-        Total number of observations.
+        Total number of samples.
     df : int
         Degrees of freedom.
     n_train : int
-        Number of observations in the training set.
+        Number of samples in the training set.
     n_test : int
-        Number of observations in the testing set.
+        Number of samples in the testing set.
 
     Returns
     -------
@@ -295,11 +295,11 @@ print(f"Uncorrected t-value: {t_stat_uncorrected:.3f}\n"
 #
 # where :math:`\mu` represents the mean difference in performance of the
 # population,
-# :math:`n` is the total number of observations,
+# :math:`n` is the total number of samples,
 # :math:`\overline{x}` represents the mean difference in performance of the
 # sample,
-# :math:`n_{test}` is the number of observations used for testing,
-# :math:`n_{train}` is the the number of observations used for training,
+# :math:`n_{test}` is the number of samples used for testing,
+# :math:`n_{train}` is the number of samples used for training,
 # and :math:`\hat{\sigma}^2` represents the variance of the sample.
 #
 # Notice that we are using Nadeau and Bengio's corrected variance in our
@@ -399,7 +399,7 @@ plt.show()
 # The Bayesian estimation approach also allows us to compute how uncertain we
 # are about our estimation of the difference. This can be calculated using
 # credible intervals. For a given probability, they show the range of values
-# that the the estimated quantity, in our case the mean difference in
+# that the estimated quantity, in our case the mean difference in
 # performance, can take.
 # For example, a 50% credible interval [x, y] tells us that there is a 50%
 # probability that the true (mean) difference of performance between models is
