@@ -1342,8 +1342,12 @@ class MiniBatchKMeans(KMeans):
         Maximum number of iterations over the complete dataset before
         stopping independently of any early stopping criterion heuristics.
 
-    batch_size : int, default=100
+    batch_size : int, default=1024
         Size of the mini batches.
+        For faster compuations, you can set the ``batch_size`` greater than
+        256 * number of cores to enable parallelism on all cores.
+
+        .. versionchanged:: XXX
 
     verbose : int, default=0
         Verbosity mode.
