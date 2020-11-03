@@ -88,6 +88,8 @@ def configuration(parent_package='', top_path=None):
         # Avoid circular import
         from sklearn._build_utils.vendor_vcomp140 import embed_vcomp140  # noqa
 
+        print(os.listdir(os.getcwd()))
+
         # Embed vcomp140.dll before generating the Windows
         # wheel and after building the package from source
         embed_vcomp140(os.path.join(os.getcwd(), "build"))
