@@ -46,7 +46,7 @@ def make_distributor_init(sklearn_dirname, dll_filename):
     return op.abspath(distributor_init)
 
 
-def vendor_vcomp140():
+def add_vcomp140():
     # TODO: use threadpoolctl to dynamically locate the right vcomp dll
     # instead? This would require first in-place building scikit-learn
     # to make it "importable".

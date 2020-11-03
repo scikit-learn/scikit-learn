@@ -2,7 +2,7 @@ import sys
 import os
 
 from sklearn._build_utils import cythonize_extensions
-from sklearn._build_utils.vendor_vcomp140 import vendor_vcomp140
+from sklearn._build_utils.vendor_vcomp140 import add_vcomp140
 
 
 def configuration(parent_package='', top_path=None):
@@ -88,7 +88,7 @@ def configuration(parent_package='', top_path=None):
             os.getenv("SKLEARN_VENDOR_VCOMP140_DLL")):
         # Embed vcomp140.dll before generating the Windows
         # wheel and after building the package from source
-        vendor_vcomp140()
+        add_vcomp140()
 
     return config
 
