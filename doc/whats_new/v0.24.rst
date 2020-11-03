@@ -776,7 +776,7 @@ Changelog
   :func:`~sklearn.utils.estimator_checks.parametrize_with_checks`. Note that
   this feature is experimental in such way that the expected signature of the
   `check` functions can change without deprecation cycle.
-  :pr:`18750` by :user:`Guillaume Lemaitre`_.
+  :pr:`18750` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 Miscellaneous
 .............
