@@ -470,7 +470,7 @@ def parametrize_with_checks(
         The generator yielding checks for the estimators. By default, the
         common checks from scikit-learn will be yielded.
 
-        .. versionadded::0.24
+        .. versionadded:: 0.24
 
     Returns
     -------
@@ -568,7 +568,7 @@ def check_estimator(
         The generator yielding checks for the estimators. By default, the
         common checks from scikit-learn will be yielded.
 
-        .. versionadded::0.24
+        .. versionadded:: 0.24
 
     Returns
     -------
