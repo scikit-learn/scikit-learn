@@ -86,7 +86,7 @@ def configuration(parent_package='', top_path=None):
             "bdist_wheel" in sys.argv and
             os.getenv("SKLEARN_VENDOR_VCOMP140_DLL") == "1"):
         # Avoid circular import
-        from sklearn._build_utils.vendor_vcomp140 import embed_vcomp140  # noqa
+        from sklearn._build_utils.vendor_vcomp140 import embed_vcomp140  # noqa
 
         # Embed vcomp140.dll before generating the Windows
         # wheel and after building the package from source
