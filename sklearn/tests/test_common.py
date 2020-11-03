@@ -359,7 +359,6 @@ N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE = {
     'neighbors',
     'pipeline',
     'random_projection',
-    'semi_supervised',
     'svm',
 }
 
