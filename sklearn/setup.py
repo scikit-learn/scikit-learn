@@ -1,7 +1,8 @@
 import sys
 import os
+import os.path as op
 
-from sklearn._build_utils import cythonize_extensions, embed_vcomp140
+from sklearn._build_utils import cythonize_extensions
 
 
 def configuration(parent_package='', top_path=None):
@@ -85,9 +86,10 @@ def configuration(parent_package='', top_path=None):
     if (os.name == "nt" and
             "bdist_wheel" in sys.argv and
             os.getenv("SKLEARN_VENDOR_VCOMP140_DLL") == "1"):
+        pass
         # Embed vcomp140.dll before generating the Windows
         # wheel and after building the package from source
-        embed_vcomp140(os.path.join(os.getcwd(), "build"))
+        # embed_vcomp140(op.join(op.dirname(op.abspath(__file__)), "build"))
 
     return config
 
