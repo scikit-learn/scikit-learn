@@ -1472,7 +1472,7 @@ class MiniBatchKMeans(KMeans):
     """
     @_deprecate_positional_args
     def __init__(self, n_clusters=8, *, init='k-means++', max_iter=100,
-                 batch_size=100, verbose=0, compute_labels=True,
+                 batch_size=1024, verbose=0, compute_labels=True,
                  random_state=None, tol=0.0, max_no_improvement=10,
                  init_size=None, n_init=3, reassignment_ratio=0.01, mode=0):
 
@@ -1518,6 +1518,7 @@ class MiniBatchKMeans(KMeans):
         if self.batch_size <= 0:
             raise ValueError(
                 f"batch_size should be > 0, got {self.batch_size} instead.")
+        self._batch_size = min(self.batch_size, X.shape[0])
 
         # init_size
         if self.init_size is not None and self.init_size <= 0:
@@ -1525,7 +1526,7 @@ class MiniBatchKMeans(KMeans):
                 f"init_size should be > 0, got {self.init_size} instead.")
         self._init_size = self.init_size
         if self._init_size is None:
-            self._init_size = 3 * self.batch_size
+            self._init_size = 3 * self._batch_size
             if self._init_size < self.n_clusters:
                 self._init_size = 3 * self.n_clusters
         elif self._init_size < self.n_clusters:
@@ -1548,7 +1549,7 @@ class MiniBatchKMeans(KMeans):
         """Helper function to encapsulate the early stopping logic"""
         # Normalize inertia to be able to compare values when
         # batch_size changes
-        batch_inertia /= self.batch_size
+        batch_inertia /= self._batch_size
 
         # Ignore first iteration because it's inertia from initialization.
         if iteration_idx == 0:
@@ -1564,7 +1565,7 @@ class MiniBatchKMeans(KMeans):
         if ewa_inertia is None:
             ewa_inertia = batch_inertia
         else:
-            alpha = self.batch_size * 2.0 / (n_samples + 1)
+            alpha = self._batch_size * 2.0 / (n_samples + 1)
             alpha = min(alpha, 1)
             ewa_inertia = ewa_inertia * (1 - alpha) + batch_inertia * alpha
 
@@ -1614,7 +1615,7 @@ class MiniBatchKMeans(KMeans):
 
         If there are empty clusters we always want to reassign.
         """
-        self._n_since_last_reassign += self.batch_size
+        self._n_since_last_reassign += self._batch_size
         if ((self._counts == 0).any() or
                 self._n_since_last_reassign >= (10 * self.n_clusters)):
             self._n_since_last_reassign = 0
@@ -1661,7 +1662,7 @@ class MiniBatchKMeans(KMeans):
             init = check_array(init, dtype=X.dtype, copy=True, order='C')
             self._validate_center_shape(X, init)
 
-        self._check_mkl_vcomp(X, self.batch_size)
+        self._check_mkl_vcomp(X, self._batch_size)
 
         # precompute squared norms of data points
         x_squared_norms = row_norms(X, squared=True)
@@ -1711,7 +1712,7 @@ class MiniBatchKMeans(KMeans):
         # Initialize number of samples seen since last reassignment
         self._n_since_last_reassign = 0
 
-        n_batches = int(np.ceil(float(n_samples) / self.batch_size))
+        n_batches = int(np.ceil(float(n_samples) / self._batch_size))
         n_iter = int(self.max_iter * n_batches)
 
         with threadpool_limits(limits=1, user_api="blas"):
@@ -1719,7 +1720,7 @@ class MiniBatchKMeans(KMeans):
             for i in range(n_iter):
                 # Sample a minibatch from the full dataset
                 minibatch_indices = random_state.randint(0, n_samples,
-                                                         self.batch_size)
+                                                         self._batch_size)
 
                 # Perform the actual update step on the minibatch data
                 batch_inertia = _mini_batch_step(
