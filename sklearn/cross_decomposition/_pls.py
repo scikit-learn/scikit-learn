@@ -65,6 +65,10 @@ def _get_first_singular_vectors_power_method(X, Y, mode="A", max_iter=500,
         if norm_y_weights:
             y_weights /= np.sqrt(np.dot(y_weights, y_weights)) + eps
 
+        # Replace weights that are all close to zero with zeros
+        y_mask = np.abs(y_weights) < 100 * eps
+        y_weights[y_mask] = 0.0
+
         y_score = np.dot(Y, y_weights) / (np.dot(y_weights, y_weights) + eps)
 
         x_weights_diff = x_weights - x_weights_old
