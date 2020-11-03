@@ -186,6 +186,13 @@ General Concepts
         :class:`~pipeline.Pipeline` and
         :class:`~pipeline.FeatureUnion`.)
 
+        If the estimator's `random_state` parameter is an integer (or if the
+        estimator doesn't have a `random_state` parameter), an *exact clone*
+        is returned: the clone and the original estimator will give the exact
+        same results. Otherwise, *statistical clone* is returned: the clone
+        might yield different results from the original estimator. More
+        details can be found in :ref:`randomness`.
+
     common tests
         This refers to the tests run on almost every estimator class in
         Scikit-learn to check they comply with basic API conventions.  They are
@@ -1583,6 +1590,9 @@ functions or non-estimator constructors.
         :func:`utils.check_random_state` is used internally to validate the
         input ``random_state`` and return a :class:`~numpy.random.RandomState`
         instance.
+
+        For more details on how to control the randomness of scikit-learn
+        objects and avoid common pitfalls, you may refer to :ref:`randomness`.
 
     ``scoring``
         Specifies the score function to be maximized (usually by :ref:`cross

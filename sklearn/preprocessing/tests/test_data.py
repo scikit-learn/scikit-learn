@@ -319,15 +319,23 @@ def test_raises_value_error_if_sample_weights_greater_than_1d():
                             [np.nan, np.nan, 1], [np.nan, np.nan, 1]],
                            np.array([1, 3])),
                           ])
-def test_standard_scaler_sample_weight(Xw, X, sample_weight):
+@pytest.mark.parametrize(
+    "array_constructor", ["array", "sparse_csr", "sparse_csc"]
+)
+def test_standard_scaler_sample_weight(
+        Xw, X, sample_weight, array_constructor):
+    with_mean = not array_constructor.startswith("sparse")
+    X = _convert_container(X, array_constructor)
+    Xw = _convert_container(Xw, array_constructor)
+
     # weighted StandardScaler
-    yw = np.ones(len(Xw))
-    scaler_w = StandardScaler()
+    yw = np.ones(Xw.shape[0])
+    scaler_w = StandardScaler(with_mean=with_mean)
     scaler_w.fit(Xw, yw, sample_weight=sample_weight)
 
     # unweighted, but with repeated samples
-    y = np.ones(len(X))
-    scaler = StandardScaler()
+    y = np.ones(X.shape[0])
+    scaler = StandardScaler(with_mean=with_mean)
     scaler.fit(X, y)
 
     X_test = [[1.5, 2.5, 3.5], [3.5, 4.5, 5.5]]
@@ -335,34 +343,6 @@ def test_standard_scaler_sample_weight(Xw, X, sample_weight):
     assert_almost_equal(scaler.mean_, scaler_w.mean_)
     assert_almost_equal(scaler.var_, scaler_w.var_)
     assert_almost_equal(scaler.transform(X_test), scaler_w.transform(X_test))
-
-
-@pytest.mark.parametrize(['Xw', 'X', 'sample_weight'],
-                         [([[0, 0, 1, np.nan, 2, 0],
-                            [0, 3, np.nan, np.nan, np.nan, 2]],
-                           [[0, 0, 1, np.nan, 2, 0],
-                            [0, 0, 1, np.nan, 2, 0],
-                            [0, 3, np.nan, np.nan, np.nan, 2]],
-                           [1., 2.]),
-                          ([[1, 0, 1], [0, 0, 1]],
-                           [[1, 0, 1], [0, 0, 1], [0, 0, 1], [0, 0, 1]],
-                           np.array([1, 3]))
-                          ])
-def test_standard_scaler_sparse_sample_weights(Xw, X, sample_weight):
-    # weighted StandardScaler throughs notImplementedError when run with
-    # sample_weight
-    Xw_sparse = sparse.csr_matrix(Xw)
-    yw = np.ones(len(Xw))
-
-    scaler_w = StandardScaler(with_mean=False)
-    with pytest.raises(NotImplementedError):
-        scaler_w.fit(Xw_sparse, yw, sample_weight=sample_weight)
-
-    # but passes through when run without sample_weight
-    X_sparse = sparse.csr_matrix(X)
-    y = np.ones(len(X))
-    scaler = StandardScaler(with_mean=False)
-    scaler.fit(X_sparse, y)
 
 
 def test_standard_scaler_1d():
@@ -405,8 +385,10 @@ def test_standard_scaler_1d():
     assert scaler.n_samples_seen_ == X.shape[0]
 
 
+@pytest.mark.parametrize("sparse_constructor",
+                         [None, sparse.csc_matrix, sparse.csr_matrix])
 @pytest.mark.parametrize("add_sample_weight", [False, True])
-def test_standard_scaler_dtype(add_sample_weight):
+def test_standard_scaler_dtype(add_sample_weight, sparse_constructor):
     # Ensure scaling does not affect dtype
     rng = np.random.RandomState(0)
     n_samples = 10
@@ -415,10 +397,14 @@ def test_standard_scaler_dtype(add_sample_weight):
         sample_weight = np.ones(n_samples)
     else:
         sample_weight = None
-
+    with_mean = True
     for dtype in [np.float16, np.float32, np.float64]:
         X = rng.randn(n_samples, n_features).astype(dtype)
-        scaler = StandardScaler()
+        if sparse_constructor is not None:
+            X = sparse_constructor(X)
+            with_mean = False
+
+        scaler = StandardScaler(with_mean=with_mean)
         X_scaled = scaler.fit(X, sample_weight=sample_weight).transform(X)
         assert X.dtype == X_scaled.dtype
         assert scaler.mean_.dtype == np.float64
@@ -698,33 +684,48 @@ def test_standard_scaler_partial_fit_numerical_stability():
         assert_allclose(scaler_incr.scale_, scaler.scale_, rtol=tol)
 
 
-def test_partial_fit_sparse_input():
+@pytest.mark.parametrize("sample_weight", [True, None])
+def test_partial_fit_sparse_input(sample_weight):
     # Check that sparsity is not destroyed
     X = np.array([[1.], [0.], [0.], [5.]])
     X_csr = sparse.csr_matrix(X)
     X_csc = sparse.csc_matrix(X)
 
+    if sample_weight:
+        sample_weight = rng.rand(X_csc.shape[0])
+
     null_transform = StandardScaler(with_mean=False, with_std=False, copy=True)
     for X in [X_csr, X_csc]:
 
-        X_null = null_transform.partial_fit(X).transform(X)
-        assert_array_equal(X_null.data, X.data)
+        X_null = null_transform.partial_fit(
+            X, sample_weight=sample_weight).transform(X)
+        assert_array_equal(X_null.toarray(), X.toarray())
         X_orig = null_transform.inverse_transform(X_null)
-        assert_array_equal(X_orig.data, X_null.data)
-        assert_array_equal(X_orig.data, X.data)
+        assert_array_equal(X_orig.toarray(), X_null.toarray())
+        assert_array_equal(X_orig.toarray(), X.toarray())
 
 
-def test_standard_scaler_trasform_with_partial_fit():
+@pytest.mark.parametrize("sample_weight", [True, None])
+def test_standard_scaler_trasform_with_partial_fit(sample_weight):
     # Check some postconditions after applying partial_fit and transform
     X = X_2d[:100, :]
+
+    if sample_weight:
+        sample_weight = rng.rand(X.shape[0])
 
     scaler_incr = StandardScaler()
     for i, batch in enumerate(gen_batches(X.shape[0], 1)):
 
         X_sofar = X[:(i + 1), :]
         chunks_copy = X_sofar.copy()
-        scaled_batch = StandardScaler().fit_transform(X_sofar)
-        scaler_incr = scaler_incr.partial_fit(X[batch])
+        if sample_weight is None:
+            scaled_batch = StandardScaler().fit_transform(X_sofar)
+            scaler_incr = scaler_incr.partial_fit(X[batch])
+        else:
+            scaled_batch = StandardScaler().fit_transform(
+                X_sofar, sample_weight=sample_weight[:i + 1])
+            scaler_incr = scaler_incr.partial_fit(
+                X[batch], sample_weight=sample_weight[batch])
         scaled_incr = scaler_incr.transform(X_sofar)
 
         assert_array_almost_equal(scaled_batch, scaled_incr)
@@ -736,8 +737,14 @@ def test_standard_scaler_trasform_with_partial_fit():
         epsilon = np.finfo(float).eps
         assert_array_less(zero, scaler_incr.var_ + epsilon)  # as less or equal
         assert_array_less(zero, scaler_incr.scale_ + epsilon)
-        # (i+1) because the Scaler has been already fitted
-        assert (i + 1) == scaler_incr.n_samples_seen_
+        if sample_weight is None:
+            # (i+1) because the Scaler has been already fitted
+            assert (i + 1) == scaler_incr.n_samples_seen_
+        else:
+            assert (
+                np.sum(sample_weight[:i + 1]) ==
+                pytest.approx(scaler_incr.n_samples_seen_)
+            )
 
 
 def test_min_max_scaler_iris():
@@ -860,12 +867,16 @@ def test_min_max_scaler_1d():
                               minmax_scale(X_1d, copy=True))
 
 
-def test_scaler_without_centering():
+@pytest.mark.parametrize("sample_weight", [True, None])
+def test_scaler_without_centering(sample_weight):
     rng = np.random.RandomState(42)
     X = rng.randn(4, 5)
     X[:, 0] = 0.0  # first feature is always of zero
     X_csr = sparse.csr_matrix(X)
     X_csc = sparse.csc_matrix(X)
+
+    if sample_weight:
+        sample_weight = rng.rand(X.shape[0])
 
     with pytest.raises(ValueError):
         StandardScaler().fit(X_csr)
@@ -878,33 +889,42 @@ def test_scaler_without_centering():
     X_orig = null_transform.inverse_transform(X_null)
     assert_array_equal(X_orig.data, X_csr.data)
 
-    scaler = StandardScaler(with_mean=False).fit(X)
+    scaler = StandardScaler(with_mean=False).fit(
+        X, sample_weight=sample_weight)
     X_scaled = scaler.transform(X, copy=True)
     assert not np.any(np.isnan(X_scaled))
 
-    scaler_csr = StandardScaler(with_mean=False).fit(X_csr)
+    scaler_csr = StandardScaler(with_mean=False).fit(
+        X_csr, sample_weight=sample_weight)
     X_csr_scaled = scaler_csr.transform(X_csr, copy=True)
     assert not np.any(np.isnan(X_csr_scaled.data))
 
-    scaler_csc = StandardScaler(with_mean=False).fit(X_csc)
+    scaler_csc = StandardScaler(with_mean=False).fit(
+        X_csc, sample_weight=sample_weight)
     X_csc_scaled = scaler_csc.transform(X_csc, copy=True)
     assert not np.any(np.isnan(X_csc_scaled.data))
 
     assert_array_almost_equal(scaler.mean_, scaler_csr.mean_)
     assert_array_almost_equal(scaler.var_, scaler_csr.var_)
     assert_array_almost_equal(scaler.scale_, scaler_csr.scale_)
+    assert_array_almost_equal(scaler.n_samples_seen_,
+                              scaler_csr.n_samples_seen_)
 
     assert_array_almost_equal(scaler.mean_, scaler_csc.mean_)
     assert_array_almost_equal(scaler.var_, scaler_csc.var_)
     assert_array_almost_equal(scaler.scale_, scaler_csc.scale_)
+    assert_array_almost_equal(scaler.n_samples_seen_,
+                              scaler_csc.n_samples_seen_)
 
-    assert_array_almost_equal(
-        X_scaled.mean(axis=0), [0., -0.01, 2.24, -0.35, -0.78], 2)
-    assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
+    if sample_weight is None:
+        assert_array_almost_equal(
+            X_scaled.mean(axis=0), [0., -0.01, 2.24, -0.35, -0.78], 2)
+        assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
 
-    X_csr_scaled_mean, X_csr_scaled_std = mean_variance_axis(X_csr_scaled, 0)
+    X_csr_scaled_mean, X_csr_scaled_var = \
+        mean_variance_axis(X_csr_scaled, 0)
     assert_array_almost_equal(X_csr_scaled_mean, X_scaled.mean(axis=0))
-    assert_array_almost_equal(X_csr_scaled_std, X_scaled.std(axis=0))
+    assert_array_almost_equal(X_csr_scaled_var, X_scaled.var(axis=0))
 
     # Check that X has not been modified (copy)
     assert X_scaled is not X

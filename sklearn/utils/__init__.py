@@ -813,10 +813,7 @@ def _to_object_array(sequence):
     array([array([0]), array([1])], dtype=object)
     >>> _to_object_array([np.array([0]), np.array([1, 2])])
     array([array([0]), array([1, 2])], dtype=object)
-    >>> np.array([np.array([0]), np.array([1])])
-    array([[0],
-       [1]])
-    >>> np.array([np.array([0]), np.array([1, 2])])
+    >>> _to_object_array([np.array([0]), np.array([1, 2])])
     array([array([0]), array([1, 2])], dtype=object)
     """
     out = np.empty(len(sequence), dtype=object)
@@ -1071,7 +1068,7 @@ def check_matplotlib_support(caller_name):
 
 
 def check_pandas_support(caller_name):
-    """Raise ImportError with detailed error message if pandsa is not
+    """Raise ImportError with detailed error message if pandas is not
     installed.
 
     Plot utilities like :func:`fetch_openml` should lazily import

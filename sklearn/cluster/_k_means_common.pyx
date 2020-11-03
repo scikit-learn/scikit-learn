@@ -24,6 +24,10 @@ from ..utils.extmath import row_norms
 np.import_array()
 
 
+# Number of samples per data chunk defined as a global constant.
+CHUNK_SIZE = 256
+
+
 cdef floating _euclidean_dense_dense(
         floating* a,  # IN
         floating* b,  # IN

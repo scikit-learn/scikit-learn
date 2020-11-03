@@ -25,6 +25,7 @@ random sampling procedures.
 - |Fix| :class:`decomposition.KernelPCA` behaviour is now more consistent
   between 32-bits and 64-bits data when the kernel has small positive
   eigenvalues.
+- |Fix| ::class:`linear_model.Perceptron` when penalty='elasticnet'
 
 Details are listed in the changelog below.
 
@@ -46,6 +47,14 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.base`
+...................
+
+- |Fix| :meth:`base.BaseEstimator.get_params` now will raise an
+        `AttributeError` if a parameter cannot be retrieved as
+        an instance attribute. Previously it would return `None`.
+        :pr:`17448` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
+
 :mod:`sklearn.calibration`
 ..........................
 
@@ -57,6 +66,14 @@ Changelog
   prefit :class:`pipeline.Pipeline` where data is not `X` is not array-like,
   sparse matrix or dataframe at the start. :pr:`17546` by
   :user:`Lucy Liu <lucyleeow>`.
+
+- |Enhancement| Add `ensemble` parameter to
+  :class:`calibration.CalibratedClassifierCV`, which enables implementation
+  of calibration via an ensemble of calibrators (current method) or
+  just one calibrator using all the data (similar to the built-in feature of
+  :mod:`sklearn.svm` estimators with the `probabilities=True` parameter).
+  :pr:`17856` by :user:`Lucy Liu <lucyleeow>` and
+  :user:`Andrea Esuli <aesuli>`.
 
 :mod:`sklearn.cluster`
 ......................
@@ -164,6 +181,11 @@ Changelog
 - |API| The default value of `as_frame` in :func:`datasets.fetch_openml` is
   changed from False to 'auto'.
   :pr:`17610` by :user:`Jiaxiang <fujiaxiang>`.
+
+- |Enhancement| :func:`datasets.fetch_20newsgroups_vectorized` now supports
+  loading as a pandas ``DataFrame`` by setting ``as_frame=True``.
+  :pr:`17499` by :user:`Brigitta Sipőcz <bsipocz>` and
+  `Guillaume Lemaitre`_.
 
 :mod:`sklearn.decomposition`
 ............................
@@ -338,6 +360,10 @@ Changelog
 - |Enhancement| :class:`isotonic.IsotonicRegression` now accepts 2d array with
   1 feature as input array. :pr:`17379` by :user:`Jiaxiang <fujiaxiang>`.
 
+- |Fix| Add tolerance when determining duplicate X values to prevent
+  inf values from being predicted by :class:`isotonic.IsotonicRegression`.
+  :pr:`18639` by :user:`Lucy Liu <lucyleeow>`.
+
 :mod:`sklearn.kernel_approximation`
 ...................................
 
@@ -368,6 +394,16 @@ Changelog
   `predict` and `score` would fail when `fit_intercept=False` and there was
   one feature during fitting. :pr:`18121` by `Thomas Fan`_.
 
+- |Fix| Fixes bug in :class:`linear_model.ARDRegression` where `predict`
+  was raising an error when `normalize=True` and `return_std=True` because
+  `X_offset_` and `X_scale_` were undefined.
+  :pr:`18607` by :user:`fhaselbeck <fhaselbeck>`.
+
+- |Fix| Added the missing `l1_ratio` parameter in
+  :class:`linear_model.Perceptron`, to be used when `penalty='elasticnet'`.
+  This changes the default from 0 to 0.15. :pr:`18622` by
+  :user:`Haesun Park <rickiepark>`.
+
 :mod:`sklearn.manifold`
 .......................
 
@@ -386,6 +422,10 @@ Changelog
 
 :mod:`sklearn.metrics`
 ......................
+
+- |Feature| Added :func:`metrics.cluster.pair_confusion_matrix` implementing
+  the confusion matrix arising from pairs of elements from two clusterings.
+  :pr:`17412` by :user:`Uwe F Mayer <ufmayer>`.
 
 - |Feature| new metric :func:`metrics.top_k_accuracy_score`. It's a
   generalization of :func:`metrics.top_k_accuracy_score`, the difference is
@@ -409,9 +449,18 @@ Changelog
   some practical test cases were taken from PR :pr:`10711` by
   :user:`Mohamed Ali Jamaoui <mohamed-ali>`.
 
+- |Feature| Added :func:`metrics.rand_score` implementing the (unadjusted)
+  Rand index.
+  :pr:`17412` by :user:`Uwe F Mayer <ufmayer>`.
+
 - |Feature| :func:`metrics.plot_confusion_matrix` now supports making colorbar
   optional in the matplotlib plot by setting `colorbar=False`. :pr:`17192` by
   :user:`Avi Gupta <avigupta2612>`
+
+- |Fix| Fixed a bug in
+  :func:`metrics.classification_report` which was raising AttributeError
+  when called with `output_dict=True` for 0-length values.
+  :pr:`17777` by :user:`Shubhanshu Mishra <napsternxg>`.
 
 - |Enhancement| Add `sample_weight` parameter to
   :func:`metrics.median_absolute_error`. :pr:`17225` by
@@ -574,6 +623,11 @@ Changelog
   the data intrinsic dimensionality is too high for tree-based methods.
   :pr:`17148` by :user:`Geoffrey Bolmier <gbolmier>`.
 
+- |Fix| :class:`neighbors.BinaryTree`
+  will raise a `ValueError` when fitting on data array having points with
+  different dimensions.
+  :pr:`18691` by :user:`Chiara Marmo <cmarmo>`.
+
 - |Fix| :class:`neighbors.NearestCentroid` with a numerical `shrink_threshold`
   will raise a `ValueError` when fitting on data with all constant features.
   :pr:`18370` by :user:`Trevor Waite <trewaite>`.
@@ -638,10 +692,11 @@ Changelog
   :pr:`17833` by :user:`Yashika Sharma <yashika51>`.
 
 - |Feature| Add ``sample_weight`` parameter to
-  :class:`preprocessing.StandardScaler` for when X is dense. Allows setting
+  :class:`preprocessing.StandardScaler`. Allows setting
   individual weights for each sample. :pr:`18510` and
-  :pr:`18447` and :pr:`16066` by :user:`Maria Telenczuk <maikia>` and
-  :user:`Albert Villanova <albertvillanova>` and :user:`panpiort8`.
+  :pr:`18447` and :pr:`16066` and :pr:`18682` by
+  :user:`Maria Telenczuk <maikia>` and :user:`Albert Villanova <albertvillanova>`
+  and :user:`panpiort8` and :user:`Alex Gramfort <agramfort>`.
 
 - |Enhancement| Verbose output of :class:`model_selection.GridSearchCV` has
   been improved for readability. :pr:`16935` by :user:`Raghav Rajagopalan
@@ -662,6 +717,10 @@ Changelog
   encoded as all zeros. :pr:`14982` by
   :user:`Kevin Winata <kwinata>`.
 
+- |Fix| Fix incorrect encoding when using unicode string dtypes in
+  :class:`preprocessing.OneHotEncoder` and
+  :class:`preprocessing.OrdinalEncoder`. :pr:`15763` by `Thomas Fan`_.
+
 :mod:`sklearn.svm`
 ..................
 
@@ -672,6 +731,10 @@ Changelog
 
 :mod:`sklearn.tree`
 ...................
+
+- |Feature| :class:`tree.DecisionTreeRegressor` now supports the new splitting
+  criterion ``'poisson'`` useful for modeling count data. :pr:`17386` by
+  :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Enhancement| :func:`tree.plot_tree` now uses colors from the matplotlib
   configuration settings. :pr:`17187` by `Andreas Müller`_.
@@ -701,6 +764,11 @@ Changelog
 - |Fix| Check that we raise proper error when axis=1 and the
   dimensions do not match in :func:`utils.sparse_func.incr_mean_variance_axis`.
   By :user:`Alex Gramfort <agramfort>`.
+
+
+- |Enhancement| Add support for weights in
+  :func:`utils.sparse_func.incr_mean_variance_axis`.
+  By :user:`Maria Telenczuk <maikia>` and :user:`Alex Gramfort <agramfort>`.
 
 
 Miscellaneous
