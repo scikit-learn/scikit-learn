@@ -287,7 +287,7 @@ def setup_package():
     setup(**metadata)
 
     if (os.name == "nt" and
-            "bdist_wheel" in sys.argv):
+            "bdist_wheel" in sys.argv and
             os.getenv("SKLEARN_VENDOR_VCOMP140_DLL") == "1"):
         try:
             # The directory to put final built distributions is
