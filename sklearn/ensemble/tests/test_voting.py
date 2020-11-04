@@ -412,7 +412,11 @@ def test_set_estimator_drop():
                              voting='soft', weights=[1, 0.5],
                              flatten_transform=False)
     with pytest.warns(None) as record:
-        eclf2.set_params(rf='drop').fit(X1, y1)
+        with warnings.catch_warnings():
+            # scipy 1.3.0 uses tostring which is deprecated in numpy
+            warnings.filterwarnings("ignore", "tostring", DeprecationWarning)
+            eclf2.set_params(rf='drop').fit(X1, y1)
+    assert not record
     assert_array_almost_equal(eclf1.transform(X1),
                               np.array([[[0.7, 0.3], [0.3, 0.7]],
                                         [[1., 0.], [0., 1.]]]))
