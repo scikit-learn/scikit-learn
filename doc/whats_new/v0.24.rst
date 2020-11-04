@@ -623,6 +623,11 @@ Changelog
   the data intrinsic dimensionality is too high for tree-based methods.
   :pr:`17148` by :user:`Geoffrey Bolmier <gbolmier>`.
 
+- |Fix| :class:`neighbors.BinaryTree`
+  will raise a `ValueError` when fitting on data array having points with
+  different dimensions.
+  :pr:`18691` by :user:`Chiara Marmo <cmarmo>`.
+
 - |Fix| :class:`neighbors.NearestCentroid` with a numerical `shrink_threshold`
   will raise a `ValueError` when fitting on data with all constant features.
   :pr:`18370` by :user:`Trevor Waite <trewaite>`.
