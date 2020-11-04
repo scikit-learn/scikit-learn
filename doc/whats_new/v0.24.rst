@@ -25,6 +25,7 @@ random sampling procedures.
 - |Fix| :class:`decomposition.KernelPCA` behaviour is now more consistent
   between 32-bits and 64-bits data when the kernel has small positive
   eigenvalues.
+- |Fix| ::class:`linear_model.Perceptron` when penalty='elasticnet'
 
 Details are listed in the changelog below.
 
@@ -180,6 +181,11 @@ Changelog
 - |API| The default value of `as_frame` in :func:`datasets.fetch_openml` is
   changed from False to 'auto'.
   :pr:`17610` by :user:`Jiaxiang <fujiaxiang>`.
+
+- |Enhancement| :func:`datasets.fetch_20newsgroups_vectorized` now supports
+  loading as a pandas ``DataFrame`` by setting ``as_frame=True``.
+  :pr:`17499` by :user:`Brigitta Sipőcz <bsipocz>` and
+  `Guillaume Lemaitre`_.
 
 :mod:`sklearn.decomposition`
 ............................
@@ -392,6 +398,11 @@ Changelog
   was raising an error when `normalize=True` and `return_std=True` because
   `X_offset_` and `X_scale_` were undefined.
   :pr:`18607` by :user:`fhaselbeck <fhaselbeck>`.
+
+- |Fix| Added the missing `l1_ratio` parameter in
+  :class:`linear_model.Perceptron`, to be used when `penalty='elasticnet'`.
+  This changes the default from 0 to 0.15. :pr:`18622` by
+  :user:`Haesun Park <rickiepark>`.
 
 :mod:`sklearn.manifold`
 .......................
@@ -612,6 +623,11 @@ Changelog
   the data intrinsic dimensionality is too high for tree-based methods.
   :pr:`17148` by :user:`Geoffrey Bolmier <gbolmier>`.
 
+- |Fix| :class:`neighbors.BinaryTree`
+  will raise a `ValueError` when fitting on data array having points with
+  different dimensions.
+  :pr:`18691` by :user:`Chiara Marmo <cmarmo>`.
+
 - |Fix| :class:`neighbors.NearestCentroid` with a numerical `shrink_threshold`
   will raise a `ValueError` when fitting on data with all constant features.
   :pr:`18370` by :user:`Trevor Waite <trewaite>`.
@@ -721,6 +737,10 @@ Changelog
 
 :mod:`sklearn.tree`
 ...................
+
+- |Feature| :class:`tree.DecisionTreeRegressor` now supports the new splitting
+  criterion ``'poisson'`` useful for modeling count data. :pr:`17386` by
+  :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Enhancement| :func:`tree.plot_tree` now uses colors from the matplotlib
   configuration settings. :pr:`17187` by `Andreas Müller`_.
