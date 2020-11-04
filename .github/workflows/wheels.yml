@@ -79,7 +79,7 @@ jobs:
       # recent versions of the dependencies specified in the wheel metadata
       - name: Build and test wheels
         env:
-          CIBW_BUILD: cp${{ matrix.python }}-*
+          CIBW_BUILD: cp${{ matrix.python }}-win_amd64
           CIBW_TEST_REQUIRES: pytest pandas threadpoolctl
           # Run the tests and check that there are no links to system libraries
           CIBW_TEST_COMMAND: python -m threadpoolctl -i sklearn # pytest --pyargs sklearn && python -m threadpoolctl -i sklearn
@@ -112,7 +112,7 @@ jobs:
               # echo "$wheel does not vendor vcomp140.dll."
               # exit 1
             # fi
-          # done
+          done
 
       - name: Store artifacts
         uses: actions/upload-artifact@v2
