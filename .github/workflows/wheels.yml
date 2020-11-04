@@ -62,7 +62,8 @@ jobs:
         shell: bash
         run: |
           # Enable OpenMP support for the compiler shipped by default with macOS
-          if [ "$RUNNER_OS" == "macOS" ]; then
+          if [ "$RUNNER_OS" == "macOS" ]
+          then
             brew install libomp
             echo "CC=/usr/bin/clang" >> $GITHUB_ENV
             echo "CXX=/usr/bin/clang++" >> $GITHUB_ENV
@@ -85,6 +86,25 @@ jobs:
           SKLEARN_VENDOR_VCOMP140_DLL: 1  # Embed vcomp140.dll for Windows
         run: |
           python -m cibuildwheel --output-dir wheelhouse
+
+      # Check that the Windows wheels vendor the vcomp140.dll file
+      - name: Check vcomp140.dll
+        shell: bash
+        if: runner.os == 'Windows'
+        run: |
+          for wheel in wheelhouse/*.whl
+          do
+            unzip -l "$wheel" | grep -q sklearn/.libs/vcomp140.dll
+
+            if [ "$?" == "0" ]
+            then
+              echo "$wheel vendors vcomp140.dll."
+            else
+              # Immediately exit with an error status code
+              echo "$wheel does not vendor vcomp140.dll."
+              exit 1
+            fi
+          done
 
       - name: Store artifacts
         uses: actions/upload-artifact@v2
