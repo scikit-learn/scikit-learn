@@ -1385,7 +1385,8 @@ cdef class Poisson(RegressionCriterion):
         cdef double y_mean_right = 0.
 
         for k in range(self.n_outputs):
-            if (self.sum_left[k] <= EPSILON) or (self.sum_right[k] <= EPSILON):
+            if ((self.sum_left[k] <= 10 * EPSILON) or
+                    (self.sum_right[k] <= 10 * EPSILON)):
                 # Poisson loss does not allow non-positive predictions. We
                 # therefore forbid splits that have child nodes with
                 # sum(y_i) <= 0.
@@ -1440,7 +1441,7 @@ cdef class Poisson(RegressionCriterion):
         cdef SIZE_t n_outputs = self.n_outputs
 
         for k in range(n_outputs):
-            if y_sum[k] <= EPSILON:
+            if y_sum[k] <= 10 * EPSILON:
                 # y_sum could be computed from the subtraction
                 # sum_right = sum_total - sum_left leading to a potential
                 # floating point rounding error.
