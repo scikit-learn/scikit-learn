@@ -34,6 +34,7 @@ from ._utils cimport safe_realloc
 from ._utils cimport sizet_ptr_to_ndarray
 from ._utils cimport WeightedMedianCalculator
 
+cdef double EPSILON = np.finfo('double').eps
 
 cdef class Criterion:
     """Interface for impurity criteria.
@@ -1384,7 +1385,7 @@ cdef class Poisson(RegressionCriterion):
         cdef double y_mean_right = 0.
 
         for k in range(self.n_outputs):
-            if (self.sum_left[k] <= 0) or (self.sum_right[k] <= 0):
+            if (self.sum_left[k] <= EPSILON) or (self.sum_right[k] <= EPSILON):
                 # Poisson loss does not allow non-positive predictions. We
                 # therefore forbid splits that have child nodes with
                 # sum(y_i) <= 0.
@@ -1438,7 +1439,7 @@ cdef class Poisson(RegressionCriterion):
         for k in range(n_outputs):
             y_mean = y_sum[k] / weight_sum
 
-            if y_mean <= 0:
+            if y_mean <= EPSILON:
                 return INFINITY
 
             for p in range(start, end):
