@@ -2984,7 +2984,7 @@ def check_estimator_sparse_dense(name, estimator_orig,
                 assert pred.shape == pred_sp.shape
             if hasattr(estimator, 'predict_proba'):
                 probs = estimator.predict_proba(X_converted)
-                probs_sp = estimator.predict_proba(X_sp_converted)
+                probs_sp = estimator_sp.predict_proba(X_sp_converted)
                 assert probs_sp.shape == (X.shape[0], len(np.unique(y)))
                 assert_allclose(probs, probs_sp)
 
