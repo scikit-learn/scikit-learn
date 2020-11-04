@@ -24,12 +24,6 @@ def _delete_file(zipf, filename):
         if item.filename != filename:
             zipf_copy.writestr(item, buffer)
 
-    # Remove temporary artifacts
-    os.remove(zipf.filename)
-
-    # Rename to the original filename
-    os.rename(zipf_copy.filename, zipf.filename)
-
     return zipf_copy
 
 
@@ -83,9 +77,15 @@ def embed_vcomp140(wheel_dirname):
     dll_filename = op.basename(VCOMP140_SRC_PATH)
     target_folder = op.join("sklearn", ".libs", "vcomp140.dll")
 
+    # Remove the _distributor_init file to avoid duplicates
     with zipfile.ZipFile(wheel_file, "a") as zipf:
-        # Remove the _distributor_init file to avoid duplicates
-        zipf = _delete_file(zipf, DISTRIBUTOR_INIT)
+        zipf_copy = _delete_file(zipf, DISTRIBUTOR_INIT)
+
+    # Remove temporary artifacts
+    os.remove(zipf.filename)
+
+    # Rename to the original filename
+    os.rename(zipf_copy.filename, zipf.filename)
 
     with zipfile.ZipFile(wheel_file, "a") as zipf:
         print(f"Copying {VCOMP140_SRC_PATH} to {target_folder}.")
