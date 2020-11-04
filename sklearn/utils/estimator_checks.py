@@ -2966,6 +2966,13 @@ def check_estimator_sparse_dense(name, estimator_orig,
         try:
             estimator_sp.fit(X_sp_converted, y)
             estimator.fit(X_converted, y)
+        except (ValueError, TypeError):
+            # this is the case where estimators don't support sparse inputs.
+            # We don't want to have this case interfere
+            # with our test of equality: it is already tested by
+            # check_estimator_sparse_data
+            pass
+        else:
             if hasattr(estimator, "predict"):
                 pred = estimator.predict(X_converted)
                 pred_sp = estimator_sp.predict(X_sp_converted)
@@ -2980,12 +2987,6 @@ def check_estimator_sparse_dense(name, estimator_orig,
                 probs_sp = estimator.predict_proba(X_sp_converted)
                 assert probs_sp.shape == (X.shape[0], len(np.unique(y)))
                 assert_allclose(probs, probs_sp)
-        except (ValueError, TypeError):
-            # this is the case where estimators don't support sparse inputs.
-            # We don't want to have this case interfere
-            # with our test of equality: it is already tested by
-            # check_estimator_sparse_data
-            pass
 
 
 @ignore_warnings(category=FutureWarning)
