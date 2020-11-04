@@ -382,8 +382,7 @@ def test_copy(Est):
                               pls.predict(X.copy(), copy=False))
 
 
-# @pytest.mark.parametrize('Est', (CCA, PLSCanonical, PLSRegression, PLSSVD))
-@pytest.mark.parametrize('Est', (CCA, ))
+@pytest.mark.parametrize('Est', (CCA, PLSCanonical, PLSRegression, PLSSVD))
 def test_scale_and_stability(Est):
     # scale=True is equivalent to scale=False on centered/scaled data
     # This allows to check numerical stability over platforms as well
@@ -417,8 +416,7 @@ def test_scale_and_stability(Est):
     X3 = np.dot(Y3, Q) + 2 * rng.randn(n_samples, n_features) + 1
     X3 *= 1000
 
-    # for (X, Y) in [(X1, Y1), (X2, Y2), (X3, Y3)]:
-    for (X, Y) in [(X2, Y2)]:
+    for (X, Y) in [(X1, Y1), (X2, Y2), (X3, Y3)]:
         X_std = X.std(axis=0, ddof=1)
         X_std[X_std == 0] = 1
         Y_std = Y.std(axis=0, ddof=1)
@@ -428,7 +426,6 @@ def test_scale_and_stability(Est):
 
         X_score, Y_score = Est(scale=True).fit_transform(X, Y)
         X_s_score, Y_s_score = Est(scale=False).fit_transform(X_s, Y_s)
-        assert False
 
         assert_array_almost_equal(X_s_score, X_score)
         assert_array_almost_equal(Y_s_score, Y_score)
