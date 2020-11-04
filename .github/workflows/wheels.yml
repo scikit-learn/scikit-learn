@@ -147,7 +147,7 @@ jobs:
           twine check dist/*.tar.gz
           python -m pip install dist/*.tar.gz
           python setup.py build_ext -i
-          pytest --pyargs sklearn
+          # pytest --pyargs sklearn
 
       - name: Store artifacts
         uses: actions/upload-artifact@v2
