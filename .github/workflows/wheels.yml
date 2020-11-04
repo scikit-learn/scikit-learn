@@ -82,7 +82,7 @@ jobs:
           CIBW_BUILD: cp${{ matrix.python }}-*
           CIBW_TEST_REQUIRES: pytest pandas threadpoolctl
           # Run the tests and check that there are no links to system libraries
-          CIBW_TEST_COMMAND: pytest --pyargs sklearn && python -m threadpoolctl -i sklearn
+          CIBW_TEST_COMMAND: python -m threadpoolctl -i sklearn # pytest --pyargs sklearn && python -m threadpoolctl -i sklearn
         run: |
           python -m cibuildwheel --output-dir wheelhouse
 
@@ -102,17 +102,17 @@ jobs:
             rm -r "$wheel_dirname"
 
             # Ensure that the wheel vendors vcomp140.dll
-            unzip -l "$wheel" | grep -q sklearn/.libs/vcomp140.dll && echo $?
+            # unzip -l "$wheel" | grep -q sklearn/.libs/vcomp140.dll && echo $?
 
-            if [ "$?" == "0" ]
-            then
-              echo "$wheel vendors vcomp140.dll."
-            else
+            # if [ "$?" == "0" ]
+            # then
+            #   echo "$wheel vendors vcomp140.dll."
+            # else
               # Immediately exit with an error status code
-              echo "$wheel does not vendor vcomp140.dll."
-              exit 1
-            fi
-          done
+              # echo "$wheel does not vendor vcomp140.dll."
+              # exit 1
+            # fi
+          # done
 
       - name: Store artifacts
         uses: actions/upload-artifact@v2
