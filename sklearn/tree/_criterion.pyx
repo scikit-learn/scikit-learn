@@ -1389,6 +1389,9 @@ cdef class Poisson(RegressionCriterion):
                 # Poisson loss does not allow non-positive predictions. We
                 # therefore forbid splits that have child nodes with
                 # sum(y_i) <= 0.
+                # Since sum_right = sum_total - sum_left, it can lead to
+                # floating point rounding error and will not give zero. Thus,
+                # we relax the above comparison to sum(y_i) <= EPSILON.
                 return -INFINITY
             else:
                 y_mean_left = self.sum_left[k] / self.weighted_n_left
@@ -1440,6 +1443,11 @@ cdef class Poisson(RegressionCriterion):
             y_mean = y_sum[k] / weight_sum
 
             if y_mean <= EPSILON:
+                # y_mean could be computed from the subtraction
+                # sum_right = sum_total - sum_left leading to a potential
+                # floating point rounding error.
+                # Thus, we relax the comparison y_mean <= 0 to
+                # y_mean <= EPSILON.
                 return INFINITY
 
             for p in range(start, end):

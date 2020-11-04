@@ -1987,7 +1987,7 @@ def test_balance_property(criterion, Tree):
     assert np.sum(reg.predict(X)) == pytest.approx(np.sum(y))
 
 
-@pytest.mark.parametrize("seed", range(100))
+@pytest.mark.parametrize("seed", range(10000))
 def test_poisson_zero_nodes(seed):
     # Test that sum(y)=0 and therefore y_pred=0 is forbidden on nodes.
     X = [[0, 0], [0, 1], [0, 2], [0, 3],
