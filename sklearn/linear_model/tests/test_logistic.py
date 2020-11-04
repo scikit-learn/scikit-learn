@@ -394,6 +394,8 @@ def test_logistic_regression_path_convergence_fail():
         _logistic_regression_path(
             X, y, Cs=Cs, tol=0., max_iter=1, random_state=0, verbose=0)
 
+    # Only check for ConvergenceWarnings
+    record = [r for r in record if r.category == ConvergenceWarning]
     assert len(record) == 1
     warn_msg = record[0].message.args[0]
     assert "lbfgs failed to converge" in warn_msg

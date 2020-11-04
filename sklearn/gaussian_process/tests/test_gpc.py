@@ -203,6 +203,8 @@ def test_warning_bounds():
     with pytest.warns(None) as record:
         gpc_sum.fit(X, y)
 
+    # Only checks ConvergenceWarnings
+    record = [r for r in record if r.category == ConvergenceWarning]
     assert len(record) == 2
     assert record[0].message.args[0] == ("The optimal value found for "
                                          "dimension 0 of parameter "
@@ -226,6 +228,8 @@ def test_warning_bounds():
     with pytest.warns(None) as record:
         gpc_dims.fit(X_tile, y)
 
+    # Only checks ConvergenceWarnings
+    record = [r for r in record if r.category == ConvergenceWarning]
     assert len(record) == 2
     assert record[0].message.args[0] == ("The optimal value found for "
                                          "dimension 0 of parameter "
