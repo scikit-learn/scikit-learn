@@ -72,7 +72,7 @@ jobs:
             echo "CXXFLAGS=$CXXFLAGS -I/usr/local/opt/libomp/include" >> $GITHUB_ENV
             echo "LDFLAGS=$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp" >> $GITHUB_ENV
           fi
-          python -m pip install cibuildwheel
+          python -m pip install cibuildwheel wheel
 
       # Note that the versions of the build dependencies are specified in
       # the pyproject.toml file, while the tests are run against the most
