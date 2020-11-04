@@ -82,7 +82,7 @@ jobs:
           CIBW_BUILD: cp${{ matrix.python }}-*
           CIBW_TEST_REQUIRES: pytest pandas threadpoolctl
           # Run the tests and check that there are no links to system libraries
-          CIBW_TEST_COMMAND: python -m threadpoolctl -i sklearn # pytest --pyargs sklearn && python -m threadpoolctl -i sklearn
+          CIBW_TEST_COMMAND: pytest --pyargs sklearn && python -m threadpoolctl -i sklearn
         run: |
           python -m cibuildwheel --output-dir wheelhouse
 
@@ -98,10 +98,11 @@ jobs:
             wheel_dirname=$(find . -maxdepth 1 -type d -name 'scikit_learn*' -print -quit)
             python build_tools/github/vendor_vcomp140.py "$wheel_dirname"
             wheel pack "$wheel_dirname" -d wheelhouse
+            echo "Removing the temporary directory $wheel_dirname"
             rm -r "$wheel_dirname"
 
             # Ensure that the wheel vendors vcomp140.dll
-            unzip -l "$wheel" | grep -q sklearn/.libs/vcomp140.dll
+            unzip -l "$wheel" | grep -q sklearn/.libs/vcomp140.dll && echo $?
 
             if [ "$?" == "0" ]
             then
