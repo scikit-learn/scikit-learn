@@ -12,6 +12,26 @@ VCOMP140_SRC_PATH = "C:\\Windows\System32\\vcomp140.dll"  # noqa
 GLOB_PATTERN = "*.whl"
 
 
+def _delete_file(zipf, filename):
+    """Delete a file from the ZIP file."""
+    zipf_copy = zipfile.ZipFile(zipf.filename + ".copy", "a")
+
+    for item in zipf.infolist():
+        # The buffer hold the read file
+        buffer = zipf.read(item.filename)
+
+        if item.filename != filename:
+            zipf_copy.writestr(item, buffer)
+
+    # Remove temporary artifacts
+    os.remove(zipf.filename)
+
+    # Rename to the original filename
+    os.rename(zipf_copy.filename, zipf.filename)
+
+    return zipf_copy
+
+
 def make_distributor_init(zipf, sklearn_dirname, dll_filename):
     """Create a _distributor_init.py file for the vcomp140.dll.
 
@@ -22,7 +42,7 @@ def make_distributor_init(zipf, sklearn_dirname, dll_filename):
     distributor_init = op.join(sklearn_dirname, "_distributor_init.py")
 
     # Remove the _distributor_init file to avoid duplicated files
-    os.system(f"zip -d {zipf.filename} \"{distributor_init}\"")
+    zipf = _delete_file(zipf, distributor_init)
 
     zipf.writestr(distributor_init, textwrap.dedent("""
         '''Helper to preload vcomp140.dll to prevent "not found" errors.
