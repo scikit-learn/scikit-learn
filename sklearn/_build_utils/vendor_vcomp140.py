@@ -15,14 +15,15 @@ VCOMP140_SRC_PATH = "C:\\Windows\System32\\vcomp140.dll"  # noqa
 
 def _delete_file(zipf, filename):
     """Delete a file from the ZIP file."""
-    zipf_copy = zipfile.ZipFile(zipf.filename + ".copy", "a")
+    with zipfile.ZipFile(zipf.filename + ".copy", "a") as zipf_copy:
+        # Copy the files and skip "filename" because
+        # the zipfile module has not a remove method
+        for item in zipf.infolist():
+            # The buffer hold the read file
+            buffer = zipf.read(item.filename)
 
-    for item in zipf.infolist():
-        # The buffer hold the read file
-        buffer = zipf.read(item.filename)
-
-        if item.filename != filename:
-            zipf_copy.writestr(item, buffer)
+            if item.filename != filename:
+                zipf_copy.writestr(item, buffer)
 
     return zipf_copy
 
