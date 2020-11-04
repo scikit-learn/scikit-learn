@@ -161,7 +161,8 @@ print(f"Correlation of models:\n {model_scores.transpose().corr()}")
 # :math:`x` is the difference in performance of the models,
 # :math:`n_{test}` is the number of samples used for testing,
 # :math:`n_{train}` is the number of samples used for training,
-# and :math:`\hat{\sigma}^2` represents the variance of the sample.
+# and :math:`\hat{\sigma}^2` represents the variance of the observed
+# differences.
 #
 # Let's implement a corrected right-tailed paired t-test to evaluate if the
 # performance of the first model is significantly better than that of the
@@ -299,7 +300,8 @@ print(f"Uncorrected t-value: {t_stat_uncorrected:.3f}\n"
 # :math:`\overline{x}` represents the mean difference in the scores,
 # :math:`n_{test}` is the number of samples used for testing,
 # :math:`n_{train}` is the number of samples used for training,
-# and :math:`\hat{\sigma}^2` represents the variance of the sample.
+# and :math:`\hat{\sigma}^2` represents the variance of the observed
+# differences.
 #
 # Notice that we are using Nadeau and Bengio's corrected variance in our
 # Bayesian approach as well.
