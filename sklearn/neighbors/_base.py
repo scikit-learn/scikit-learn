@@ -713,13 +713,11 @@ class KNeighborsMixin:
                     parse_version(joblib.__version__) < parse_version('0.12'))
             if old_joblib:
                 # Deal with change of API in joblib
-                delayed_query = delayed(_tree_query_parallel_helper)
                 parallel_kwargs = {"backend": "threading"}
             else:
-                delayed_query = delayed(_tree_query_parallel_helper)
                 parallel_kwargs = {"prefer": "threads"}
             chunked_results = Parallel(n_jobs, **parallel_kwargs)(
-                delayed_query(
+                delayed(_tree_query_parallel_helper)(
                     self._tree, X[s], n_neighbors, return_distance)
                 for s in gen_even_slices(X.shape[0], n_jobs)
             )
@@ -1038,13 +1036,11 @@ class RadiusNeighborsMixin:
                     "or set algorithm='brute'" % self._fit_method)
 
             n_jobs = effective_n_jobs(self.n_jobs)
+            delayed_query = delayed(_tree_query_radius_parallel_helper)
             if parse_version(joblib.__version__) < parse_version('0.12'):
                 # Deal with change of API in joblib
-                delayed_query = delayed(_tree_query_radius_parallel_helper,
-                                        check_pickle=False)
                 parallel_kwargs = {"backend": "threading"}
             else:
-                delayed_query = delayed(_tree_query_radius_parallel_helper)
                 parallel_kwargs = {"prefer": "threads"}
 
             chunked_results = Parallel(n_jobs, **parallel_kwargs)(

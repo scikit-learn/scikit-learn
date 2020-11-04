@@ -355,22 +355,7 @@ this reason.
 How do I set a ``random_state`` for an entire execution?
 ---------------------------------------------------------
 
-For testing and replicability, it is often important to have the entire execution
-controlled by a single seed for the pseudo-random number generator used in
-algorithms that have a randomized component. Scikit-learn does not use its own
-global random state; whenever a RandomState instance or an integer random seed
-is not provided as an argument, it relies on the numpy global random state,
-which can be set using :func:`numpy.random.seed`.
-For example, to set an execution's numpy global random state to 42, one could
-execute the following in his or her script::
-
-    import numpy as np
-    np.random.seed(42)
-
-However, a global random state is prone to modification by other code during
-execution. Thus, the only way to ensure replicability is to pass ``RandomState``
-instances everywhere and ensure that both estimators and cross-validation
-splitters have their ``random_state`` parameter set.
+Please refer to :ref:`randomness`.
 
 Why do categorical variables need preprocessing in scikit-learn, compared to other tools?
 -----------------------------------------------------------------------------------------
