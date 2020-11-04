@@ -57,6 +57,7 @@ is an estimator object::
     >>> from sklearn.svm import SVC
     >>> from sklearn.decomposition import PCA
     >>> set_config(display='diagram')
+    >>> estimators = [('reduce_dim', PCA()), ('clf', SVC())]
     >>> pipe = Pipeline(estimators)
     >>> pipe
     Pipeline(steps=[('reduce_dim', PCA()), ('clf', SVC())])
