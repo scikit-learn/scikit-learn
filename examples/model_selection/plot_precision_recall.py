@@ -134,7 +134,6 @@ print('Average precision-recall score: {0:0.2f}'.format(
 # %%
 # Plot the Precision-Recall curve
 # ................................
-from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import plot_precision_recall_curve
 import matplotlib.pyplot as plt
 
@@ -205,9 +204,8 @@ plt.xlabel('Recall')
 plt.ylabel('Precision')
 plt.ylim([0.0, 1.05])
 plt.xlim([0.0, 1.0])
-plt.title(
-    'Average precision score, micro-averaged over all classes: AP={0:0.2f}'
-        .format(average_precision["micro"]))
+plt.title('Average precision score, micro-averaged '
+          'over all classes: AP={0:0.2f}'.format(average_precision["micro"]))
 
 # %%
 # Plot Precision-Recall curve for each class and iso-f1 curves
