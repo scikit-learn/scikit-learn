@@ -8,8 +8,9 @@ import textwrap
 from glob import glob
 
 
-VCOMP140_SRC_PATH = "C:\\Windows\System32\\vcomp140.dll"  # noqa
 GLOB_PATTERN = "*.whl"
+DISTRIBUTOR_INIT = op.join("sklearn", "_distributor_init.py")
+VCOMP140_SRC_PATH = "C:\\Windows\System32\\vcomp140.dll"  # noqa
 
 
 def _delete_file(zipf, filename):
@@ -32,19 +33,14 @@ def _delete_file(zipf, filename):
     return zipf_copy
 
 
-def make_distributor_init(zipf, sklearn_dirname, dll_filename):
+def make_distributor_init(zipf, dll_filename):
     """Create a _distributor_init.py file for the vcomp140.dll.
 
     This file is imported first when importing the
     sklearn package so as to pre-load the vendored
     vcomp140.dll.
     """
-    distributor_init = op.join(sklearn_dirname, "_distributor_init.py")
-
-    # Remove the _distributor_init file to avoid duplicated files
-    zipf = _delete_file(zipf, distributor_init)
-
-    zipf.writestr(distributor_init, textwrap.dedent("""
+    zipf.writestr(DISTRIBUTOR_INIT, textwrap.dedent("""
         '''Helper to preload vcomp140.dll to prevent "not found" errors.
 
         Once the vcomp140.dll is preloaded, the namespace is made
@@ -88,9 +84,13 @@ def embed_vcomp140(wheel_dirname):
     target_folder = op.join("sklearn", ".libs", "vcomp140.dll")
 
     with zipfile.ZipFile(wheel_file, "a") as zipf:
+        # Remove the _distributor_init file to avoid duplicates
+        zipf = _delete_file(zipf, DISTRIBUTOR_INIT)
+
+    with zipfile.ZipFile(wheel_file, "a") as zipf:
         print(f"Copying {VCOMP140_SRC_PATH} to {target_folder}.")
         zipf.write(VCOMP140_SRC_PATH, target_folder)
 
         # Generate the _distributor_init file in the source tree
         print("Generating the '_distributor_init.py' file.")
-        make_distributor_init(zipf, "sklearn", dll_filename)
+        make_distributor_init(zipf, dll_filename)
