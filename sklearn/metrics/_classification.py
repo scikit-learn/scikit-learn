@@ -2525,10 +2525,10 @@ def multiclass_brier_score_loss(y_true, y_prob, sample_weight=None,
     Brier score is defined as:
 
     .. math::
-        \frac{1}{N}\sum_{i=1}^{N}\sum_{c=1}^{C}(y_{ic} - \bar{y}_{ic})^{2}
+        \frac{1}{N}\sum_{i=1}^{N}\sum_{c=1}^{C}(y_{ic} - \hat{y}_{ic})^{2}
 
     where :math:`y_{ic}` is 1 if observation `i` belongs to class `c`,
-    otherwise 0 and :math:`\bar{y}_{ic}` is the predicted probability of
+    otherwise 0 and :math:`\hat{y}_{ic}` is the predicted probability of
     observation `i` for class `c`. The probabilities for `c` classes for
     observation `i` should sum to 1.
 
