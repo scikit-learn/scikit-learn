@@ -22,7 +22,6 @@ from scipy.sparse.linalg import svds
 from ._base import _BasePCA
 from ..utils import check_random_state
 
-from ..utils import check_array
 from ..utils._arpack import _init_arpack_v0
 
 from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
