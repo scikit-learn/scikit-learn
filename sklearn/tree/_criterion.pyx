@@ -1440,15 +1440,15 @@ cdef class Poisson(RegressionCriterion):
         cdef SIZE_t n_outputs = self.n_outputs
 
         for k in range(n_outputs):
-            y_mean = y_sum[k] / weight_sum
-
-            if y_mean <= EPSILON:
-                # y_mean could be computed from the subtraction
+            if y_sum[k] <= EPSILON:
+                # y_sum could be computed from the subtraction
                 # sum_right = sum_total - sum_left leading to a potential
                 # floating point rounding error.
-                # Thus, we relax the comparison y_mean <= 0 to
-                # y_mean <= EPSILON.
+                # Thus, we relax the comparison y_sum <= 0 to
+                # y_sum <= EPSILON.
                 return INFINITY
+
+            y_mean = y_sum[k] / weight_sum
 
             for p in range(start, end):
                 i = self.samples[p]
