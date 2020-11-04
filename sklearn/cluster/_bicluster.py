@@ -9,7 +9,7 @@ import numpy as np
 
 from scipy.linalg import norm
 from scipy.sparse import dia_matrix, issparse
-from scipy.sparse.linalg import svds
+from scipy.sparse.linalg import eigsh, svds
 
 from . import KMeans, MiniBatchKMeans
 from ..base import BaseEstimator, BiclusterMixin
