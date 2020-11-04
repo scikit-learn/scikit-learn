@@ -1302,12 +1302,15 @@ def test_encoders_unicode_categories(input_dtype, category_dtype, array_type):
     assert_array_equal(X_trans, expected)
 
 
+# TODO: Remove when 'ignore' is deprecated in 0.26
+@pytest.mark.filterwarnings("ignore:handle_unknown='ignore':FutureWarning")
+@pytest.mark.parametrize("handle_unknown", ['auto', 'ignore'])
 @pytest.mark.parametrize("missing_value", [np.nan, None])
-def test_ohe_missing_values_get_feature_names(missing_value):
+def test_ohe_missing_values_get_feature_names(missing_value, handle_unknown):
     # encoder with missing values with object dtypes
     X = np.array([['a', 'b', missing_value, 'a', missing_value]],
                  dtype=object).T
-    ohe = OneHotEncoder(sparse=False, handle_unknown='ignore').fit(X)
+    ohe = OneHotEncoder(sparse=False, handle_unknown=handle_unknown).fit(X)
     names = ohe.get_feature_names()
     assert_array_equal(names, ['x0_a', 'x0_b', f'x0_{missing_value}'])
 
@@ -1330,8 +1333,12 @@ def test_ohe_missing_value_support_pandas():
     assert_allclose(Xtr, expected_df_trans)
 
 
+# TODO: Remove when 'ignore' is deprecated in 0.26
+@pytest.mark.filterwarnings("ignore:handle_unknown='ignore':FutureWarning")
+@pytest.mark.parametrize("handle_unknown", ['auto', 'ignore'])
 @pytest.mark.parametrize('pd_nan_type', ['pd.NA', 'np.nan'])
-def test_ohe_missing_value_support_pandas_categorical(pd_nan_type):
+def test_ohe_missing_value_support_pandas_categorical(pd_nan_type,
+                                                      handle_unknown):
     # checks pandas dataframe with categorical features
     if pd_nan_type == 'pd.NA':
         # pd.NA is in pandas 1.0
@@ -1353,7 +1360,7 @@ def test_ohe_missing_value_support_pandas_categorical(pd_nan_type):
         [1, 0, 0, 0],
     ])
 
-    ohe = OneHotEncoder(sparse=False, handle_unknown='ignore')
+    ohe = OneHotEncoder(sparse=False, handle_unknown=handle_unknown)
     df_trans = ohe.fit_transform(df)
     assert_allclose(expected_df_trans, df_trans)
 
