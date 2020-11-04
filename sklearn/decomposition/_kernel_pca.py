@@ -11,6 +11,8 @@ from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import svd_flip
 from ..utils.validation import check_is_fitted, _check_psd_eigenvalues
 
+from ..utils.deprecation import deprecated
+
 from ..exceptions import NotFittedError
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import KernelCenterer
@@ -167,6 +169,10 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         self.n_jobs = n_jobs
         self.copy_X = copy_X
 
+    # TODO: Remove in 0.26
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 0.26.")
     @property
     def _pairwise(self):
         return self.kernel == "precomputed"
@@ -325,6 +331,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         X_new : ndarray of shape (n_samples, n_components)
         """
         check_is_fitted(self)
+        X = self._validate_data(X, accept_sparse='csr', reset=False)
 
         # Compute centered gram matrix between X and training data X_fit_
         K = self._centerer.transform(self._get_kernel(X, self.X_fit_))
@@ -364,4 +371,5 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         return np.dot(K, self.dual_coef_)
 
     def _more_tags(self):
-        return {'preserves_dtype': [np.float64, np.float32]}
+        return {'preserves_dtype': [np.float64, np.float32],
+                'pairwise': self.kernel == 'precomputed'}

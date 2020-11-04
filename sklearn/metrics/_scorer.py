@@ -27,12 +27,13 @@ import numpy as np
 from . import (r2_score, median_absolute_error, max_error, mean_absolute_error,
                mean_squared_error, mean_squared_log_error,
                mean_poisson_deviance, mean_gamma_deviance, accuracy_score,
-               f1_score, roc_auc_score, average_precision_score,
-               precision_score, recall_score, log_loss,
-               balanced_accuracy_score, explained_variance_score,
+               top_k_accuracy_score, f1_score, roc_auc_score,
+               average_precision_score, precision_score, recall_score,
+               log_loss, balanced_accuracy_score, explained_variance_score,
                brier_score_loss, jaccard_score, mean_absolute_percentage_error)
 
 from .cluster import adjusted_rand_score
+from .cluster import rand_score
 from .cluster import homogeneity_score
 from .cluster import completeness_score
 from .cluster import v_measure_score
@@ -126,6 +127,43 @@ class _BaseScorer:
         self._kwargs = kwargs
         self._score_func = score_func
         self._sign = sign
+
+    @staticmethod
+    def _check_pos_label(pos_label, classes):
+        if pos_label not in list(classes):
+            raise ValueError(
+                f"pos_label={pos_label} is not a valid label: {classes}"
+            )
+
+    def _select_proba_binary(self, y_pred, classes):
+        """Select the column of the positive label in `y_pred` when
+        probabilities are provided.
+
+        Parameters
+        ----------
+        y_pred : ndarray of shape (n_samples, n_classes)
+            The prediction given by `predict_proba`.
+
+        classes : ndarray of shape (n_classes,)
+            The class labels for the estimator.
+
+        Returns
+        -------
+        y_pred : ndarray of shape (n_samples,)
+            Probability predictions of the positive class.
+        """
+        if y_pred.shape[1] == 2:
+            pos_label = self._kwargs.get("pos_label", classes[1])
+            self._check_pos_label(pos_label, classes)
+            col_idx = np.flatnonzero(classes == pos_label)[0]
+            return y_pred[:, col_idx]
+
+        err_msg = (
+            f"Got predict_proba of shape {y_pred.shape}, but need "
+            f"classifier with two classes for {self._score_func.__name__} "
+            f"scoring"
+        )
+        raise ValueError(err_msg)
 
     def __repr__(self):
         kwargs_string = "".join([", %s=%s" % (str(k), str(v))
@@ -237,14 +275,11 @@ class _ProbaScorer(_BaseScorer):
 
         y_type = type_of_target(y)
         y_pred = method_caller(clf, "predict_proba", X)
-        if y_type == "binary":
-            if y_pred.shape[1] == 2:
-                y_pred = y_pred[:, 1]
-            elif y_pred.shape[1] == 1:  # not multiclass
-                raise ValueError('got predict_proba of shape {},'
-                                 ' but need classifier with two'
-                                 ' classes for {} scoring'.format(
-                                     y_pred.shape, self._score_func.__name__))
+        if y_type == "binary" and y_pred.shape[1] <= 2:
+            # `y_type` could be equal to "binary" even in a multi-class
+            # problem: (when only 2 class are given to `y_true` during scoring)
+            # Thus, we need to check for the shape of `y_pred`.
+            y_pred = self._select_proba_binary(y_pred, clf.classes_)
         if sample_weight is not None:
             return self._sign * self._score_func(y, y_pred,
                                                  sample_weight=sample_weight,
@@ -298,22 +333,24 @@ class _ThresholdScorer(_BaseScorer):
             try:
                 y_pred = method_caller(clf, "decision_function", X)
 
-                # For multi-output multi-class estimator
                 if isinstance(y_pred, list):
+                    # For multi-output multi-class estimator
                     y_pred = np.vstack([p for p in y_pred]).T
+                elif y_type == "binary" and "pos_label" in self._kwargs:
+                    self._check_pos_label(
+                        self._kwargs["pos_label"], clf.classes_
+                    )
+                    if self._kwargs["pos_label"] == clf.classes_[0]:
+                        # The implicit positive class of the binary classifier
+                        # does not match `pos_label`: we need to invert the
+                        # predictions
+                        y_pred *= -1
 
             except (NotImplementedError, AttributeError):
                 y_pred = method_caller(clf, "predict_proba", X)
 
                 if y_type == "binary":
-                    if y_pred.shape[1] == 2:
-                        y_pred = y_pred[:, 1]
-                    else:
-                        raise ValueError('got predict_proba of shape {},'
-                                         ' but need classifier with two'
-                                         ' classes for {} scoring'.format(
-                                             y_pred.shape,
-                                             self._score_func.__name__))
+                    y_pred = self._select_proba_binary(y_pred, clf.classes_)
                 elif isinstance(y_pred, list):
                     y_pred = np.vstack([p[:, -1] for p in y_pred]).T
 
@@ -617,6 +654,9 @@ accuracy_scorer = make_scorer(accuracy_score)
 balanced_accuracy_scorer = make_scorer(balanced_accuracy_score)
 
 # Score functions that need decision values
+top_k_accuracy_scorer = make_scorer(top_k_accuracy_score,
+                                    greater_is_better=True,
+                                    needs_threshold=True)
 roc_auc_scorer = make_scorer(roc_auc_score, greater_is_better=True,
                              needs_threshold=True)
 average_precision_scorer = make_scorer(average_precision_score,
@@ -645,6 +685,7 @@ brier_score_loss_scorer = make_scorer(brier_score_loss,
 
 # Clustering scores
 adjusted_rand_scorer = make_scorer(adjusted_rand_score)
+rand_scorer = make_scorer(rand_score)
 homogeneity_scorer = make_scorer(homogeneity_score)
 completeness_scorer = make_scorer(completeness_score)
 v_measure_scorer = make_scorer(v_measure_score)
@@ -665,7 +706,9 @@ SCORERS = dict(explained_variance=explained_variance_scorer,
                neg_root_mean_squared_error=neg_root_mean_squared_error_scorer,
                neg_mean_poisson_deviance=neg_mean_poisson_deviance_scorer,
                neg_mean_gamma_deviance=neg_mean_gamma_deviance_scorer,
-               accuracy=accuracy_scorer, roc_auc=roc_auc_scorer,
+               accuracy=accuracy_scorer,
+               top_k_accuracy=top_k_accuracy_scorer,
+               roc_auc=roc_auc_scorer,
                roc_auc_ovr=roc_auc_ovr_scorer,
                roc_auc_ovo=roc_auc_ovo_scorer,
                roc_auc_ovr_weighted=roc_auc_ovr_weighted_scorer,
@@ -676,6 +719,7 @@ SCORERS = dict(explained_variance=explained_variance_scorer,
                neg_brier_score=neg_brier_score_scorer,
                # Cluster metrics that use supervised evaluation
                adjusted_rand_score=adjusted_rand_scorer,
+               rand_score=rand_scorer,
                homogeneity_score=homogeneity_scorer,
                completeness_score=completeness_scorer,
                v_measure_score=v_measure_scorer,

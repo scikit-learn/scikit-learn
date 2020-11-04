@@ -345,3 +345,13 @@ def test_spectral_embedding_first_eigen_vector():
 
         assert np.std(embedding[:, 0]) == pytest.approx(0)
         assert np.std(embedding[:, 1]) > 1e-3
+
+
+# TODO: Remove in 0.26
+@pytest.mark.parametrize("affinity", ["precomputed",
+                                      "precomputed_nearest_neighbors"])
+def test_spectral_embedding_pairwise_deprecated(affinity):
+    se = SpectralEmbedding(affinity=affinity)
+    msg = r"Attribute _pairwise was deprecated in version 0\.24"
+    with pytest.warns(FutureWarning, match=msg):
+        se._pairwise
