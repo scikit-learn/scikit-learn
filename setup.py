@@ -51,6 +51,7 @@ PROJECT_URLS = {
 # does not need the compiled code
 import sklearn
 import sklearn._min_dependencies as min_deps  # noqa
+from sklearn._build_utils.vendor_vcomp140 import embed_vcomp140
 
 
 VERSION = sklearn.__version__
@@ -284,6 +285,23 @@ def setup_package():
         metadata['configuration'] = configuration
 
     setup(**metadata)
+
+    if (os.name == "nt" and
+            "bdist_wheel" in sys.argv):
+            os.getenv("SKLEARN_VENDOR_VCOMP140_DLL") == "1"):
+        try:
+            # The directory to put final built distributions is
+            # specified in the --dist-dir command line argument
+            args = sys.argv
+            index = args.index("--dist-dir")
+            wheel_dirname = args[index + 1]
+        except ValueError:
+            # Default directory to put final built distributions
+            wheel_dirname = "dist"
+
+        # Embed vcomp140.dll before generating the Windows
+        # wheel and after building the package from source
+        embed_vcomp140(wheel_dirname)
 
 
 if __name__ == "__main__":
