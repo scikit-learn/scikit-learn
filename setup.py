@@ -51,7 +51,7 @@ PROJECT_URLS = {
 # does not need the compiled code
 import sklearn
 import sklearn._min_dependencies as min_deps  # noqa
-from sklearn._build_utils.vendor_vcomp140 import embed_vcomp140
+from sklearn._build_utils.vendor_vcomp140 import embed_vcomp140  # noqa
 
 
 VERSION = sklearn.__version__
