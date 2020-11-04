@@ -382,11 +382,9 @@ def test_copy(Est):
                               pls.predict(X.copy(), copy=False))
 
 
+@pytest.mark.xfail
 @pytest.mark.parametrize('Est', (CCA, PLSCanonical, PLSRegression, PLSSVD))
 def test_scale_and_stability(Est):
-    pytest.xfail("Known random failures. For more information, see: "
-                 "https://github.com/scikit-learn/scikit-learn/issues/18613")
-
     # scale=True is equivalent to scale=False on centered/scaled data
     # This allows to check numerical stability over platforms as well
 

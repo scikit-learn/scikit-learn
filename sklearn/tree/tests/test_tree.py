@@ -1987,10 +1987,8 @@ def test_balance_property(criterion, Tree):
     assert np.sum(reg.predict(X)) == pytest.approx(np.sum(y))
 
 
+@pytest.mark.xfail
 def test_poisson_zero_nodes():
-    pytest.xfail("Known random failures. For more information, see: "
-                 "https://github.com/scikit-learn/scikit-learn/pull/18737")
-
     # Test that sum(y)=0 and therefore y_pred=0 is forbidden on nodes.
     X = [[0, 0], [0, 1], [0, 2], [0, 3],
          [1, 0], [1, 2], [1, 2], [1, 3]]
