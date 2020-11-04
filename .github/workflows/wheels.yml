@@ -82,7 +82,7 @@ jobs:
           CIBW_BUILD: cp${{ matrix.python }}-*
           CIBW_TEST_REQUIRES: pytest pandas threadpoolctl
           # Run the tests and check that there are no links to system libraries
-          CIBW_TEST_COMMAND: pytest --pyargs sklearn && python -m threadpoolctl -i sklearn
+          CIBW_TEST_COMMAND: python -m threadpoolctl -i sklearn # pytest --pyargs sklearn && python -m threadpoolctl -i sklearn
         run: |
           python -m cibuildwheel --output-dir wheelhouse
 
