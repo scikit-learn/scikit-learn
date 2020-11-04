@@ -186,12 +186,12 @@ for i in range(n_classes):
     average_precision[i] = average_precision_score(Y_test[:, i], y_score[:, i])
 
 # A "micro-average": quantifying score on all classes jointly
-precision["micro"], recall["micro"], _ = precision_recall_curve(Y_test.ravel(),
-                                                                y_score.ravel())
-average_precision["micro"] = average_precision_score(Y_test, y_score,
-                                                     average="micro")
-print('Average precision score, micro-averaged over all classes: {0:0.2f}'
-      .format(average_precision["micro"]))
+precision["micro"], recall["micro"], _ = precision_recall_curve(
+    Y_test.ravel(), y_score.ravel())
+average_precision["micro"] = average_precision_score(
+    Y_test, y_score, average="micro")
+print('Average precision score, micro-averaged over '
+      'all classes: {0:0.2f}'.format(average_precision["micro"]))
 
 # %%
 # Plot the micro-averaged Precision-Recall curve
@@ -243,4 +243,3 @@ disp.ax_.set_ylim([0.0, 1.05])
 disp.ax_.legend(lines, labels, loc=(0, -.38), prop=dict(size=14))
 
 plt.show()
-
