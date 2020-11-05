@@ -2569,14 +2569,16 @@ def calibration_error(y_true, y_prob, sample_weight=None, norm='l2',
     >>> y_pred = np.array([0.25, 0.25, 0.25, 0.25] + [0.75, 0.75, 0.75, 0.75])
     >>> calibration_error(y_true, y_pred, n_bins=5)
     0.0
-    >>> calibration_error(y_true, y_pred, n_bins=5, \
-                         norm="max")
+    >>> calibration_error(
+    ...     y_true, y_pred, n_bins=5, norm="max"
+    ... )
     0.0
     >>> y_true = np.array([0, 0, 0, 0] + [1, 1, 1, 1])
     >>> calibration_error(y_true, y_pred, n_bins=5)
     0.25
-    >>> calibration_error(y_true, y_pred, n_bins=5, \
-                         norm="max")
+    >>> calibration_error(
+    ...     y_true, y_pred, n_bins=5, norm="max"
+    ... )
     0.25
     """
     y_true = column_or_1d(y_true)
@@ -2613,12 +2615,14 @@ def calibration_error(y_true, y_prob, sample_weight=None, norm='l2',
 
     n_bins = int(n_bins)
     if strategy == 'quantile':
-        quantiles = np.percentile(y_prob, np.arange(0, 1, 1./n_bins)*100)
+        quantiles = np.percentile(y_prob, np.arange(0, 1, 1.0 / n_bins) * 100)
     elif strategy == 'uniform':
-        quantiles = np.arange(0, 1, 1./n_bins)
+        quantiles = np.arange(0, 1, 1.0 / n_bins)
     else:
-        raise ValueError("Invalid entry to 'strategy' input. Strategy "
-                         "must be either 'quantile' or 'uniform'.")
+        raise ValueError(
+            f"Invalid entry to 'strategy' input. Strategy must be either "
+            f"'quantile' or 'uniform'. Got {strategy} instead."
+        )
 
     threshold_indices = np.searchsorted(y_prob, quantiles).tolist()
     threshold_indices.append(y_true.shape[0])
@@ -2630,7 +2634,7 @@ def calibration_error(y_true, y_prob, sample_weight=None, norm='l2',
     loss = 0.
     count = float(sample_weight.sum())
     for i, i_start in enumerate(threshold_indices[:-1]):
-        i_end = threshold_indices[i+1]
+        i_end = threshold_indices[i + 1]
         # ignore empty bins
         if i_end == i_start:
             continue
@@ -2642,8 +2646,9 @@ def calibration_error(y_true, y_prob, sample_weight=None, norm='l2',
                                   sample_weight[i_start:i_end])
                            / delta_count[i])
         if norm == "l2" and reduce_bias:
-            delta_debias = avg_pred_true[i] * (avg_pred_true[i] - 1) \
-                           * delta_count[i]
+            delta_debias = (
+                avg_pred_true[i] * (avg_pred_true[i] - 1) * delta_count[i]
+            )
             delta_debias /= (count * delta_count[i] - 1)
             debias[i] = delta_debias
 
