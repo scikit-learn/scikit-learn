@@ -2338,14 +2338,60 @@ def test_brier_score_loss():
 
 
 def test_multiclass_brier_score_loss():
-    # Check brier_score_loss function
+    # test cases for binary case
     y_true = np.array([0, 1, 1, 0, 1, 1])
     y_pred = np.array([0.1, 0.8, 0.9, 0.3, 1., 0.95])
 
     assert_almost_equal(multiclass_brier_score_loss(y_true, y_pred),
                         .05083333)
+    # Check brier_score_loss and multiclass_brier_score_loss are consistent
     assert_almost_equal(multiclass_brier_score_loss(y_true, y_pred),
                         brier_score_loss(y_true, y_pred) * 2)
+
+    # test cases for multi-class
+    assert_almost_equal(
+        multiclass_brier_score_loss(['eggs', 'spam', 'ham'],
+                                    [[1, 0, 0, 0],
+                                     [0, 1, 0, 0],
+                                     [0, 1, 0, 0]],
+                                    labels=['eggs', 'spam', 'ham', 'yams']),
+        2/3)
+
+    assert_almost_equal(
+        multiclass_brier_score_loss([1, 0, 2],
+                                    [[0.2, 0.7, 0.1],
+                                     [0.6, 0.2, 0.2],
+                                     [0.6, 0.1, 0.3]]),
+        .41333333)
+
+    # check perfect predictions for 2 classes
+    assert_almost_equal(multiclass_brier_score_loss([0, 0, 1, 1],
+                                                    [0., 0., 1., 1.]),
+                        0)
+
+    # check perfect predictions for 3 classes
+    assert_almost_equal(multiclass_brier_score_loss([0, 1, 2],
+                                                    [[1., 0., 0.],
+                                                     [0., 1., 0.],
+                                                     [0., 0., 1.]]),
+                        0)
+
+    # check perfectly incorrect predictions for 2 classes
+    assert_almost_equal(multiclass_brier_score_loss([0, 0, 1, 1],
+                                                    [1., 1., 0., 0.]),
+                        2)
+
+    # check perfectly incorrect predictions for 3 classes
+    assert_almost_equal(multiclass_brier_score_loss([0, 1, 2],
+                                                    [[0., 1., 0.],
+                                                     [1., 0., 0.],
+                                                     [1., 0., 0.]]),
+                        2)
+
+
+def test_multiclass_brier_score_loss_invalid_inputs():
+    y_true = np.array([0, 1, 1, 0, 1, 1])
+    y_pred = np.array([0.1, 0.8, 0.9, 0.3, 1., 0.95])
 
     with pytest.raises(ValueError):
         # bad length of y_pred
@@ -2392,22 +2438,6 @@ def test_multiclass_brier_score_loss():
     assert_almost_equal(multiclass_brier_score_loss(y_true, y_pred,
                                                     labels=['eggs', 'ham']),
                         .02)
-
-    # test cases for multi-class
-    assert_almost_equal(
-        multiclass_brier_score_loss(['eggs', 'spam', 'ham'],
-                                    [[1, 0, 0, 0],
-                                     [0, 1, 0, 0],
-                                     [0, 1, 0, 0]],
-                                    labels=['eggs', 'spam', 'ham', 'yams']),
-        2/3)
-
-    assert_almost_equal(
-        multiclass_brier_score_loss([1, 0, 2],
-                                    [[0.2, 0.7, 0.1],
-                                     [0.6, 0.2, 0.2],
-                                     [0.6, 0.1, 0.3]]),
-        .41333333)
 
 
 def test_balanced_accuracy_score_unseen():
