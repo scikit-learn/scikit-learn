@@ -584,7 +584,7 @@ def test_isotonic_strict():
 
     ireg = IsotonicRegression(strict=True)
     ireg.fit(x, y)
-    x_test = np.linspace(-10, 110, 1000)
+    x_test = np.linspace(1, 99, 1000)
     pred = ireg.predict(x_test)
 
     assert all(np.diff(ireg.y_thresholds_) > 0)

@@ -250,13 +250,8 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
             # single y, constant prediction
             self.f_ = lambda x: y.repeat(x.shape)
         else:
-            if self.strict:
-                self.f_ = interpolate.interp1d(X, y, kind='linear',
-                                               bounds_error=bounds_error,
-                                               fill_value='extrapolate')
-            else:
-                self.f_ = interpolate.interp1d(X, y, kind='linear',
-                                               bounds_error=bounds_error)
+            self.f_ = interpolate.interp1d(X, y, kind='linear',
+                                           bounds_error=bounds_error)
 
     def _build_y(self, X, y, sample_weight, trim_duplicates=True):
         """Build the y_ IsotonicRegression."""
@@ -289,8 +284,11 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         self.X_min_, self.X_max_ = np.min(X), np.max(X)
 
         if self.strict:
+            # Remove flat segments, fix extremities
             keep_data = np.ones(len(y), dtype=bool)
-            keep_data[1:] = np.not_equal(y[1:], y[:-1])
+            keep_data[1:-1] = np.not_equal(y[1:-1], y[:-2])
+            ix_last = np.nonzero(keep_data[:-1])[0][-1]
+            keep_data[ix_last] = 0
             if np.count_nonzero(keep_data) == 1:
                 raise ValueError("Strict monotonicity cannot be enforced.")
             else:
