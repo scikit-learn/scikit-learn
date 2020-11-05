@@ -120,12 +120,16 @@ the test data::
 .. note:: Diagram rendering of estimators
 
     To render estimators as diagrams in notebooks, use the `display='diagram'` option::
+<<<<<<< HEAD
 
     >>> import sklearn
     >>> from sklearn import config_context
     ...
+=======
+    
+>>>>>>> f57622c4cb02352c83e44491a78f902e8e646f38
     >>> with config_context(display='diagram'):
-    >>>   pipe
+    >>>     pipe
 
     You may also call :func:`~sklearn.set_config` at the top of the notebook.
 
