@@ -123,7 +123,6 @@ the test data::
 
     >>> from sklearn import set_config
     >>> set_config(display='diagram')
-    ...
     >>> pipe 
 
     You may also call :func:`~sklearn.set_config` at the top of the notebook.
