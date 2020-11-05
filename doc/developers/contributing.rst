@@ -1087,6 +1087,18 @@ When the change is in a class, we validate and raise warning in ``fit``::
   import warnings
 
   class ExampleEstimator:
+      """Changing the default value of an estimator parameter.
+
+      Parameters
+      ----------
+      n_clusters : int
+        Number of clusters.
+
+        .. versionchanged:: 0.20
+          The default value of ``n_clusters`` will change to 10 in version
+          0.22.
+      """
+
       def __init__(self, n_clusters='warn'):
           self.n_clusters = n_clusters
 
@@ -1095,10 +1107,11 @@ When the change is in a class, we validate and raise warning in ``fit``::
             warnings.warn("The default value of n_clusters will change from "
                           "5 to 10 in 0.22.", FutureWarning)
             self._n_clusters = 5
+          else:
+            self._n_clusters = self.n_clusters
 
-Similar to deprecations, the warning message should always give both the
-version in which the change happened and the version in which the old behavior
-will be removed. The docstring needs to be updated accordingly. We need a test
+The warning message should always give the version in which the change happens.
+The docstring needs to be updated accordingly. We need a test
 which ensures that the warning is raised in relevant cases but not in other
 cases. The warning should be caught in all other tests
 (using e.g., ``@pytest.mark.filterwarnings``), and there should be no warning
