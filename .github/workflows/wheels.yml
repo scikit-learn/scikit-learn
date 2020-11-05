@@ -16,7 +16,7 @@ on:
 
 jobs:
   # Check whether to build the wheels and the source tarball
-  check_build:
+  check_build_trigger:
     name: Check build trigger
     runs-on: ubuntu-latest
     outputs:
