@@ -26,7 +26,6 @@ random sampling procedures.
   between 32-bits and 64-bits data when the kernel has small positive
   eigenvalues.
 - |Fix| ::class:`linear_model.Perceptron` when penalty='elasticnet'
-- |Fix| :class:`cross_decomposition.CCA` with a rank-deficient `y`.
 
 Details are listed in the changelog below.
 
@@ -128,8 +127,8 @@ Changelog
   predictions for `est.transform(Y)` when the training data is single-target.
   :pr:`17095` by `Nicolas Hug`_.
 
-- |Fix| Increases the stability of :class:`cross_decomposition.CCA` with a
-  rank-deficient `y`. :pr:`18746` by `Thomas Fan`_.
+- |Fix| Increases the stability of :class:`cross_decomposition.CCA` :pr:`18746`
+  by `Thomas Fan`_.
 
 - |API| For :class:`cross_decomposition.NMF`,
   the `init` value, when 'init=None' and
