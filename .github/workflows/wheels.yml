@@ -30,7 +30,7 @@ jobs:
         name: Check build trigger
         run: bash build_tools/github/check_build_trigger.sh
 
-  # Build the wheels for Linux, Windows and MacOS for Python 3.6 and newer
+  # Build the wheels for Linux, Windows and macOS for Python 3.6 and newer
   build_wheels:
     name: Build wheels on ${{ matrix.os }} for Python ${{ matrix.python }}
     runs-on: ${{ matrix.os }}
