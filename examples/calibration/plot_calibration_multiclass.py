@@ -174,7 +174,7 @@ cal_score = log_loss(y_test, cal_clf_probs)
 
 print("Log-loss of")
 print(f" * uncalibrated classifier: {score:.3f}")
-print(f" * calibrated classifier: {sig_score:.3f}")
+print(f" * calibrated classifier: {cal_score:.3f}")
 
 # %%
 # Finally we generate a grid of possibile uncalibrated probabilities, over
