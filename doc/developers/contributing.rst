@@ -1110,8 +1110,8 @@ When the change is in a class, we validate and raise warning in ``fit``::
           else:
             self._n_clusters = self.n_clusters
 
-The warning message should always give the version in which the change happens
-and the docstring needs to be updated accordingly. We need a test
+The warning message should always give the version in which the change will
+happen and the docstring needs to be updated accordingly. We need a test
 which ensures that the warning is raised in relevant cases but not in other
 cases. The warning should be caught in all other tests
 (using e.g., ``@pytest.mark.filterwarnings``), and there should be no warning
