@@ -6,12 +6,12 @@ set -x
 # OpenMP is not present on macOS by default
 if [ "$RUNNER_OS" == "macOS" ]; then
     brew install libomp
-    echo "CC=/usr/bin/clang" >> $GITHUB_ENV
-    echo "CXX=/usr/bin/clang++" >> $GITHUB_ENV
-    echo "CPPFLAGS=$CPPFLAGS -Xpreprocessor -fopenmp" >> $GITHUB_ENV
-    echo "CFLAGS=$CFLAGS -I/usr/local/opt/libomp/include" >> $GITHUB_ENV
-    echo "CXXFLAGS=$CXXFLAGS -I/usr/local/opt/libomp/include" >> $GITHUB_ENV
-    echo "LDFLAGS=$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp" >> $GITHUB_ENV
+    export CC=/usr/bin/clang
+    export CXX=/usr/bin/clang++
+    export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
+    export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
+    export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
+    export LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp"
 fi
 
 # The version of the built dependencies are specified
