@@ -89,6 +89,9 @@ import matplotlib.pyplot as plt
 
 plt.figure(figsize=(10, 10))
 colors = ["r", "g", "b"]
+
+clf_probs = clf.predict_proba(X_test)
+cal_clf_probs = cal_clf.predict_proba(X_test)
 # Plot arrows
 for i in range(clf_probs.shape[0]):
     plt.arrow(clf_probs[i, 0], clf_probs[i, 1],
@@ -166,10 +169,7 @@ _ = plt.legend(loc="best")
 
 from sklearn.metrics import log_loss
 
-clf_probs = clf.predict_proba(X_test)
 score = log_loss(y_test, clf_probs)
-
-cal_clf_probs = cal_clf.predict_proba(X_test)
 cal_score = log_loss(y_test, cal_clf_probs)
 
 print("Log-loss of")
