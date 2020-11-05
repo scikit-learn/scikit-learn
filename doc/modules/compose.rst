@@ -52,11 +52,9 @@ The :class:`Pipeline` is built using a list of ``(key, value)`` pairs, where
 the ``key`` is a string containing the name you want to give this step and ``value``
 is an estimator object::
 
-    >>> from sklearn import set_config
     >>> from sklearn.pipeline import Pipeline
     >>> from sklearn.svm import SVC
     >>> from sklearn.decomposition import PCA
-    >>> set_config(display='diagram')
     >>> estimators = [('reduce_dim', PCA()), ('clf', SVC())]
     >>> pipe = Pipeline(estimators)
     >>> pipe
