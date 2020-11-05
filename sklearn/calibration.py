@@ -105,11 +105,6 @@ class CalibratedClassifierCV(ClassifierMixin,
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-<<<<<<< HEAD
-    strict : bool, default=False
-        For the isotonic method, if set to True, this imposes strict
-        monotonicity constraints. Ignored if `method='sigmoid'`.
-=======
     n_jobs : int, default=None
         Number of jobs to run in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
@@ -140,7 +135,10 @@ class CalibratedClassifierCV(ClassifierMixin,
         :mod:`sklearn.svm` estimators with the `probabilities=True` parameter.
 
         .. versionadded:: 0.24
->>>>>>> upstream/master
+    
+    strict : bool, default=False
+        For the isotonic method, if set to True, this imposes strict
+        monotonicity constraints. Ignored if `method='sigmoid'`.
 
     Attributes
     ----------
@@ -218,20 +216,13 @@ class CalibratedClassifierCV(ClassifierMixin,
     """
     @_deprecate_positional_args
     def __init__(self, base_estimator=None, *, method='sigmoid',
-<<<<<<< HEAD
-                 cv=None, strict=False):
-        self.base_estimator = base_estimator
-        self.method = method
-        self.cv = cv
-        self.strict = strict
-=======
-                 cv=None, n_jobs=None, ensemble=True):
+                 cv=None, n_jobs=None, ensemble=True, strict=False):
         self.base_estimator = base_estimator
         self.method = method
         self.cv = cv
         self.n_jobs = n_jobs
         self.ensemble = ensemble
->>>>>>> upstream/master
+        self.strict = strict
 
     def fit(self, X, y, sample_weight=None):
         """Fit the calibrated model.
@@ -274,20 +265,14 @@ class CalibratedClassifierCV(ClassifierMixin,
                 self.n_features_in_ = base_estimator.n_features_in_
             self.classes_ = self.base_estimator.classes_
 
-<<<<<<< HEAD
-            calibrated_classifier = _CalibratedClassifier(
-                base_estimator, method=self.method, strict=self.strict)
-            calibrated_classifier.fit(X, y, sample_weight)
-=======
             pred_method = _get_prediction_method(base_estimator)
             n_classes = len(self.classes_)
             predictions = _compute_predictions(pred_method, X, n_classes)
 
             calibrated_classifier = _fit_calibrator(
                 base_estimator, predictions, y, self.classes_, self.method,
-                sample_weight
+                self.strict, sample_weight
             )
->>>>>>> upstream/master
             self.calibrated_classifiers_.append(calibrated_classifier)
         else:
             X, y = self._validate_data(
@@ -347,21 +332,11 @@ class CalibratedClassifierCV(ClassifierMixin,
                 if sample_weight is not None and supports_sw:
                     this_estimator.fit(X, y, sample_weight)
                 else:
-<<<<<<< HEAD
-                    this_estimator.fit(X[train], y[train])
-
-                calibrated_classifier = _CalibratedClassifier(
-                    this_estimator, method=self.method, classes=self.classes_,
-                    strict=self.strict)
-                sw = None if sample_weight is None else sample_weight[test]
-                calibrated_classifier.fit(X[test], y[test], sample_weight=sw)
-=======
                     this_estimator.fit(X, y)
                 calibrated_classifier = _fit_calibrator(
                     this_estimator, predictions, y, self.classes_, self.method,
                     sample_weight
                 )
->>>>>>> upstream/master
                 self.calibrated_classifiers_.append(calibrated_classifier)
 
         return self
@@ -424,7 +399,7 @@ class CalibratedClassifierCV(ClassifierMixin,
 
 
 def _fit_classifier_calibrator_pair(estimator, X, y, train, test, supports_sw,
-                                    method, classes, sample_weight=None):
+                                    method, strict, classes, sample_weight=None):
     """Fit a classifier/calibration pair on a given train/test split.
 
     Fit the classifier on the train set, compute its predictions on the test
@@ -442,19 +417,8 @@ def _fit_classifier_calibrator_pair(estimator, X, y, train, test, supports_sw,
     y : array-like, shape (n_samples,)
         Targets.
 
-<<<<<<< HEAD
-    strict : bool, default=False
-        For the isotonic method, if set to True, this imposes strict
-        monotonicity constraints. Ignored if `method='sigmoid'`.
-
-
-    See also
-    --------
-    CalibratedClassifierCV
-=======
     train : ndarray, shape (n_train_indicies,)
         Indices of the training subset.
->>>>>>> upstream/master
 
     test : ndarray, shape (n_test_indicies,)
         Indices of the testing subset.
@@ -465,6 +429,10 @@ def _fit_classifier_calibrator_pair(estimator, X, y, train, test, supports_sw,
     method : {'sigmoid', 'isotonic'}
         Method to use for calibration.
 
+    strict : bool, default=False
+        For the isotonic method, if set to True, this imposes strict
+        monotonicity constraints. Ignored if `method='sigmoid'`.
+        
     classes : ndarray, shape (n_classes,)
         The target classes.
 
@@ -539,21 +507,11 @@ def _compute_predictions(pred_method, X, n_classes):
         The predictions. Note if there are 2 classes, array is of shape
         (X.shape[0], 1).
     """
-<<<<<<< HEAD
-    @_deprecate_positional_args
-    def __init__(self, base_estimator, *, method='sigmoid', classes=None,
-                 strict=False):
-        self.base_estimator = base_estimator
-        self.method = method
-        self.classes = classes
-        self.strict = strict
-=======
     predictions = pred_method(X=X)
     if hasattr(pred_method, '__name__'):
         method_name = pred_method.__name__
     else:
         method_name = signature(pred_method).parameters['method'].default
->>>>>>> upstream/master
 
     if method_name == 'decision_function':
         if predictions.ndim == 1:
@@ -567,7 +525,7 @@ def _compute_predictions(pred_method, X, n_classes):
     return predictions
 
 
-def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
+def _fit_calibrator(clf, predictions, y, classes, method, strict=False, sample_weight=None):
     """Fit calibrator(s) and return a `_CalibratedClassifier`
     instance.
 
@@ -595,6 +553,10 @@ def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
     sample_weight : ndarray, shape (n_samples,), default=None
         Sample weights. If None, then samples are equally weighted.
 
+    strict : bool, default=False
+        For the isotonic method, if set to True, this imposes strict
+        monotonicity constraints. Ignored if `method='sigmoid'`.
+
     Returns
     -------
     pipeline : _CalibratedClassifier instance
@@ -605,7 +567,8 @@ def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
     calibrators = []
     for class_idx, this_pred in zip(pos_class_indices, predictions.T):
         if method == 'isotonic':
-            calibrator = IsotonicRegression(out_of_bounds='clip')
+            calibrator = IsotonicRegression(out_of_bounds='clip',
+                                            strict=strict)
         elif method == 'sigmoid':
             calibrator = _SigmoidCalibration()
         else:
@@ -620,22 +583,8 @@ def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
     return pipeline
 
 
-<<<<<<< HEAD
-        for k, this_df in zip(idx_pos_class, df.T):
-            if self.method == 'isotonic':
-                calibrator = IsotonicRegression(out_of_bounds='clip',
-                                                strict=self.strict)
-            elif self.method == 'sigmoid':
-                calibrator = _SigmoidCalibration()
-            else:
-                raise ValueError('method should be "sigmoid" or '
-                                 '"isotonic". Got %s.' % self.method)
-            calibrator.fit(this_df, Y[:, k], sample_weight)
-            self.calibrators_.append(calibrator)
-=======
 class _CalibratedClassifier:
     """Pipeline-like chaining a fitted classifier and its fitted calibrators.
->>>>>>> upstream/master
 
     Parameters
     ----------
