@@ -261,7 +261,7 @@ def _check_fitted_model(km):
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
 def test_all_init(Estimator, data, init):
     # Check KMeans and MiniBatchKMeans with all possible init.
-    n_init = 10 if type(init) is str else 1
+    n_init = 10 if isinstance(init, str) else 1
     km = Estimator(init=init, n_clusters=n_clusters, random_state=42,
                    n_init=n_init).fit(data)
     _check_fitted_model(km)
@@ -272,7 +272,7 @@ def test_all_init(Estimator, data, init):
                          ids=["random", "k-means++", "ndarray", "callable"])
 def test_minibatch_kmeans_partial_fit_init(init):
     # Check MiniBatchKMeans init with partial_fit
-    n_init = 10 if type(init) is str else 1
+    n_init = 10 if isinstance(init, str) else 1
     km = MiniBatchKMeans(init=init, n_clusters=n_clusters, random_state=0,
                          n_init=n_init)
     for i in range(100):
@@ -590,7 +590,7 @@ def test_predict(Estimator, algorithm, init, dtype, array_constr):
 def test_predict_dense_sparse(Estimator, init):
     # check that models trained on sparse input also works for dense input at
     # predict time and vice versa.
-    n_init = 10 if type(init) is str else 1
+    n_init = 10 if isinstance(init, str) else 1
     km = Estimator(n_clusters=n_clusters, init=init, n_init=n_init,
                    random_state=0)
 
