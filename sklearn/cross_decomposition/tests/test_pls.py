@@ -383,52 +383,65 @@ def test_copy(Est):
 
 
 @pytest.mark.parametrize('Est', (CCA, PLSCanonical, PLSRegression, PLSSVD))
-def test_scale_and_stability(Est):
-    # scale=True is equivalent to scale=False on centered/scaled data
-    # This allows to check numerical stability over platforms as well
-
+def test_scale_and_stability_non_regression_7819(Est):
+    # Non-regression for https://github.com/scikit-learn/scikit-learn/pull/7819
     rng = np.random.RandomState(0)
 
-    d = load_linnerud()
-    X1 = d.data
-    Y1 = d.target
-    # causes X[:, -1].std() to be zero
-    X1[:, -1] = 1.0
-
-    # From bug #2821
-    # Test with X2, Y2 s.t. clf.x_score[:, 1] == 0, clf.y_score[:, 1] == 0
-    # This test robustness of algorithm when dealing with value close to 0
-    X2 = np.array([[0., 0., 1.],
-                   [1., 0., 0.],
-                   [2., 2., 2.],
-                   [3., 5., 4.]])
-    Y2 = np.array([[0.1, -0.2],
-                   [0.9, 1.1],
-                   [6.2, 5.9],
-                   [11.9, 12.3]])
-
-    # Non-regression for https://github.com/scikit-learn/scikit-learn/pull/7819
     n_samples = 1000
     n_targets = 5
     n_features = 10
     Q = rng.randn(n_targets, n_features)
-    Y3 = rng.randn(n_samples, n_targets)
-    X3 = np.dot(Y3, Q) + 2 * rng.randn(n_samples, n_features) + 1
-    X3 *= 1000
+    Y = rng.randn(n_samples, n_targets)
+    X = np.dot(Y, Q) + 2 * rng.randn(n_samples, n_features) + 1
+    X *= 1000
 
-    for (X, Y) in [(X1, Y1), (X2, Y2), (X3, Y3)]:
-        X_std = X.std(axis=0, ddof=1)
-        X_std[X_std == 0] = 1
-        Y_std = Y.std(axis=0, ddof=1)
-        Y_std[Y_std == 0] = 1
-        X_s = (X - X.mean(axis=0)) / X_std
-        Y_s = (Y - Y.mean(axis=0)) / Y_std
+    X_s, Y_s, *_ = _center_scale_xy(X, Y)
 
-        X_score, Y_score = Est(scale=True).fit_transform(X, Y)
-        X_s_score, Y_s_score = Est(scale=False).fit_transform(X_s, Y_s)
+    X_score, Y_score = Est(scale=True).fit_transform(X, Y)
+    X_s_score, Y_s_score = Est(scale=False).fit_transform(X_s, Y_s)
 
-        assert_array_almost_equal(X_s_score, X_score)
-        assert_array_almost_equal(Y_s_score, Y_score)
+    assert_array_almost_equal(X_s_score, X_score)
+    assert_array_almost_equal(Y_s_score, Y_score)
+
+
+@pytest.mark.parametrize('Est', (CCA, PLSCanonical, PLSRegression, PLSSVD))
+def test_scale_and_stability_non_regression_linnerud(Est):
+    # scale=True is equivalent to scale=False on centered/scaled data
+    # This allows to check numerical stability over platforms as well
+
+    X, Y = load_linnerud(return_X_y=True)
+    # causes X[:, -1].std() to be zero
+    X[:, -1] = 1.0
+    X_s, Y_s, *_ = _center_scale_xy(X, Y)
+
+    X_score, Y_score = Est(scale=True).fit_transform(X, Y)
+    X_s_score, Y_s_score = Est(scale=False).fit_transform(X_s, Y_s)
+
+    assert_array_almost_equal(X_s_score, X_score)
+    assert_array_almost_equal(Y_s_score, Y_score)
+
+
+@pytest.mark.parametrize('Est', (CCA, PLSCanonical, PLSRegression, PLSSVD))
+def test_scale_and_stability_2821(Est):
+    # From bug #2821
+    # Test with X2, Y2 s.t. clf.x_score[:, 1] == 0, clf.y_score[:, 1] == 0
+    # This test robustness of algorithm when dealing with value close to 0
+    X = np.array([[0., 0., 1.],
+                  [1., 0., 0.],
+                  [2., 2., 2.],
+                  [3., 5., 4.]])
+    Y = np.array([[0.1, -0.2],
+                  [0.9, 1.1],
+                  [6.2, 5.9],
+                  [11.9, 12.3]])
+
+    X_s, Y_s, *_ = _center_scale_xy(X, Y)
+
+    X_score, Y_score = Est(scale=True).fit_transform(X, Y)
+    X_s_score, Y_s_score = Est(scale=False).fit_transform(X_s, Y_s)
+
+    assert_array_almost_equal(X_s_score, X_score)
+    assert_array_almost_equal(Y_s_score, Y_score)
 
 
 @pytest.mark.parametrize('Est', (PLSSVD, PLSCanonical, CCA))
