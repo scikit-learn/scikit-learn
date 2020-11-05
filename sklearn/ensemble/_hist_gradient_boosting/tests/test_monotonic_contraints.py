@@ -100,30 +100,30 @@ def assert_children_values_bounded(grower, monotonic_cst):
     if monotonic_cst == MonotonicConstraint.NO_CST:
         return
 
-    def recursively_check_children_node_values(node):
+    def recursively_check_children_node_values(node, right_sibling=None):
         if node.is_leaf:
             return
-        if node is not grower.root and node is node.parent.left_child:
-            sibling = node.sibling  # on the right
-            middle = (node.value + sibling.value) / 2
+        if right_sibling is not None:
+            middle = (node.value + right_sibling.value) / 2
             if monotonic_cst == MonotonicConstraint.POS:
                 assert (node.left_child.value <=
                         node.right_child.value <=
                         middle)
-                if not sibling.is_leaf:
+                if not right_sibling.is_leaf:
                     assert (middle <=
-                            sibling.left_child.value <=
-                            sibling.right_child.value)
+                            right_sibling.left_child.value <=
+                            right_sibling.right_child.value)
             else:  # NEG
                 assert (node.left_child.value >=
                         node.right_child.value >=
                         middle)
-                if not sibling.is_leaf:
+                if not right_sibling.is_leaf:
                     assert (middle >=
-                            sibling.left_child.value >=
-                            sibling.right_child.value)
+                            right_sibling.left_child.value >=
+                            right_sibling.right_child.value)
 
-        recursively_check_children_node_values(node.left_child)
+        recursively_check_children_node_values(node.left_child,
+                                               right_sibling=node.right_child)
         recursively_check_children_node_values(node.right_child)
 
     recursively_check_children_node_values(grower.root)
@@ -176,13 +176,17 @@ def test_nodes_values(monotonic_cst, seed):
     for leave in grower.finalized_leaves:
         leave.value /= grower.shrinkage
 
+    # We pass undefined num_thresholds because we won't use predict() anyway
+    predictor = grower.make_predictor(
+        num_thresholds=np.zeros((X_binned.shape[1], X_binned.max() + 1))
+    )
+
     # The consistency of the bounds can only be checked on the tree grower
     # as the node bounds are not copied into the predictor tree. The
     # consistency checks on the values of node children and leaves can be
     # done either on the grower tree or on the predictor tree. We only
     # do those checks on the predictor tree as the latter is derived from
     # the former.
-    predictor = grower.make_predictor()
     assert_children_values_monotonic(predictor, monotonic_cst)
     assert_children_values_bounded(grower, monotonic_cst)
     assert_leaves_values_monotonic(predictor, monotonic_cst)

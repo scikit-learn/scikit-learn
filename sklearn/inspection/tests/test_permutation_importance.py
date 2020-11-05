@@ -351,3 +351,87 @@ def test_permutation_importance_large_memmaped_data(input_type):
     # permutating feature should not change the predictions
     expected_importances = np.zeros((n_features, n_repeats))
     assert_allclose(expected_importances, r.importances)
+
+
+def test_permutation_importance_sample_weight():
+    # Creating data with 2 features and 1000 samples, where the target
+    # variable is a linear combination of the two features, such that
+    # in half of the samples the impact of feature 1 is twice the impact of
+    # feature 2, and vice versa on the other half of the samples.
+    rng = np.random.RandomState(1)
+    n_samples = 1000
+    n_features = 2
+    n_half_samples = n_samples // 2
+    x = rng.normal(0.0, 0.001, (n_samples, n_features))
+    y = np.zeros(n_samples)
+    y[:n_half_samples] = 2 * x[:n_half_samples, 0] + x[:n_half_samples, 1]
+    y[n_half_samples:] = x[n_half_samples:, 0] + 2 * x[n_half_samples:, 1]
+
+    # Fitting linear regression with perfect prediction
+    lr = LinearRegression(fit_intercept=False)
+    lr.fit(x, y)
+
+    # When all samples are weighted with the same weights, the ratio of
+    # the two features importance should equal to 1 on expectation (when using
+    # mean absolutes error as the loss function).
+    pi = permutation_importance(lr, x, y, random_state=1,
+                                scoring='neg_mean_absolute_error',
+                                n_repeats=200)
+    x1_x2_imp_ratio_w_none = pi.importances_mean[0] / pi.importances_mean[1]
+    assert x1_x2_imp_ratio_w_none == pytest.approx(1, 0.01)
+
+    # When passing a vector of ones as the sample_weight, results should be
+    # the same as in the case that sample_weight=None.
+    w = np.ones(n_samples)
+    pi = permutation_importance(lr, x, y, random_state=1,
+                                scoring='neg_mean_absolute_error',
+                                n_repeats=200, sample_weight=w)
+    x1_x2_imp_ratio_w_ones = pi.importances_mean[0] / pi.importances_mean[1]
+    assert x1_x2_imp_ratio_w_ones == pytest.approx(
+        x1_x2_imp_ratio_w_none, 0.01)
+
+    # When the ratio between the weights of the first half of the samples and
+    # the second half of the samples approaches to infinity, the ratio of
+    # the two features importance should equal to 2 on expectation (when using
+    # mean absolutes error as the loss function).
+    w = np.hstack([np.repeat(10.0 ** 10, n_half_samples),
+                   np.repeat(1.0, n_half_samples)])
+    lr.fit(x, y, w)
+    pi = permutation_importance(lr, x, y, random_state=1,
+                                scoring='neg_mean_absolute_error',
+                                n_repeats=200,
+                                sample_weight=w)
+    x1_x2_imp_ratio_w = pi.importances_mean[0] / pi.importances_mean[1]
+    assert x1_x2_imp_ratio_w / x1_x2_imp_ratio_w_none == pytest.approx(2, 0.01)
+
+
+def test_permutation_importance_no_weights_scoring_function():
+    # Creating a scorer function that does not takes sample_weight
+    def my_scorer(estimator, X, y):
+        return 1
+
+    # Creating some data and estimator for the permutation test
+    x = np.array([[1, 2], [3, 4]])
+    y = np.array([1, 2])
+    w = np.array([1, 1])
+    lr = LinearRegression()
+    lr.fit(x, y)
+
+    # test that permutation_importance does not return error when
+    # sample_weight is None
+    try:
+        permutation_importance(lr, x, y, random_state=1,
+                               scoring=my_scorer,
+                               n_repeats=1)
+    except TypeError:
+        pytest.fail("permutation_test raised an error when using a scorer "
+                    "function that does not accept sample_weight even though "
+                    "sample_weight was None")
+
+    # test that permutation_importance raise exception when sample_weight is
+    # not None
+    with pytest.raises(TypeError):
+        permutation_importance(lr, x, y, random_state=1,
+                               scoring=my_scorer,
+                               n_repeats=1,
+                               sample_weight=w)

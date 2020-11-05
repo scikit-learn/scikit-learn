@@ -141,7 +141,7 @@ p = p[p[:, 2] >= 0]
 calibrated_classifier = sig_clf.calibrated_classifiers_[0]
 prediction = np.vstack([calibrator.predict(this_p)
                         for calibrator, this_p in
-                        zip(calibrated_classifier.calibrators_, p.T)]).T
+                        zip(calibrated_classifier.calibrators, p.T)]).T
 prediction /= prediction.sum(axis=1)[:, None]
 
 # Plot modifications of calibrator

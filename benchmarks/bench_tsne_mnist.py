@@ -106,7 +106,7 @@ if __name__ == "__main__":
     if args.bhtsne:
         try:
             from bhtsne.bhtsne import run_bh_tsne
-        except ImportError:
+        except ImportError as e:
             raise ImportError("""\
 If you want comparison with the reference implementation, build the
 binary from source (https://github.com/lvdmaaten/bhtsne) in the folder
@@ -117,7 +117,7 @@ $ cd bhtsne
 $ g++ sptree.cpp tsne.cpp tsne_main.cpp -o bh_tsne -O2
 $ touch __init__.py
 $ cd ..
-""")
+""") from e
 
         def bhtsne(X):
             """Wrapper for the reference lvdmaaten/bhtsne implementation."""
@@ -131,10 +131,10 @@ $ cd ..
 
         try:
             from memory_profiler import profile
-        except ImportError:
+        except ImportError as e:
             raise ImportError("To run the benchmark with `--profile`, you "
                               "need to install `memory_profiler`. Please "
-                              "run `pip install memory_profiler`.")
+                              "run `pip install memory_profiler`.") from e
         methods = [(n, profile(m)) for n, m in methods]
 
     data_size = [100, 500, 1000, 5000, 10000]
