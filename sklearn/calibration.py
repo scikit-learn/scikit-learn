@@ -135,7 +135,7 @@ class CalibratedClassifierCV(ClassifierMixin,
         :mod:`sklearn.svm` estimators with the `probabilities=True` parameter.
 
         .. versionadded:: 0.24
-    
+
     strict : bool, default=False
         For the isotonic method, if set to True, this imposes strict
         monotonicity constraints. Ignored if `method='sigmoid'`.
@@ -399,7 +399,8 @@ class CalibratedClassifierCV(ClassifierMixin,
 
 
 def _fit_classifier_calibrator_pair(estimator, X, y, train, test, supports_sw,
-                                    method, strict, classes, sample_weight=None):
+                                    method, classes, strict=False,
+                                    sample_weight=None):
     """Fit a classifier/calibration pair on a given train/test split.
 
     Fit the classifier on the train set, compute its predictions on the test
@@ -429,12 +430,12 @@ def _fit_classifier_calibrator_pair(estimator, X, y, train, test, supports_sw,
     method : {'sigmoid', 'isotonic'}
         Method to use for calibration.
 
+    classes : ndarray, shape (n_classes,)
+        The target classes.
+
     strict : bool, default=False
         For the isotonic method, if set to True, this imposes strict
         monotonicity constraints. Ignored if `method='sigmoid'`.
-        
-    classes : ndarray, shape (n_classes,)
-        The target classes.
 
     sample_weight : array-like, default=None
         Sample weights for `X`.
@@ -525,7 +526,8 @@ def _compute_predictions(pred_method, X, n_classes):
     return predictions
 
 
-def _fit_calibrator(clf, predictions, y, classes, method, strict=False, sample_weight=None):
+def _fit_calibrator(clf, predictions, y, classes, method, strict=False,
+                    sample_weight=None):
     """Fit calibrator(s) and return a `_CalibratedClassifier`
     instance.
 
