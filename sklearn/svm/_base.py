@@ -148,6 +148,13 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         If X is a dense array, then the other methods will not support sparse
         matrices as input.
         """
+        # changing default value of nu in OneClassSVM, remove in 0.26
+        if self.nu == 'warn':
+            warnings.warn('The default value of nu will change from 0.5 to 0.1'
+                          ' in version 0.26.', FutureWarning)
+            self._nu = 0.5
+        else:
+            self._nu = self.nu
 
         rnd = check_random_state(self.random_state)
 
@@ -278,7 +285,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                 X, y,
                 svm_type=solver_type, sample_weight=sample_weight,
                 class_weight=self.class_weight_, kernel=kernel, C=self.C,
-                nu=self.nu, probability=self.probability, degree=self.degree,
+                nu=self._nu, probability=self.probability, degree=self.degree,
                 shrinking=self.shrinking, tol=self.tol,
                 cache_size=self.cache_size, coef0=self.coef0,
                 gamma=self._gamma, epsilon=self.epsilon,
@@ -302,7 +309,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                 X.shape[1], X.data, X.indices, X.indptr, y, solver_type,
                 kernel_type, self.degree, self._gamma, self.coef0, self.tol,
                 self.C, self.class_weight_,
-                sample_weight, self.nu, self.cache_size, self.epsilon,
+                sample_weight, self._nu, self.cache_size, self.epsilon,
                 int(self.shrinking), int(self.probability), self.max_iter,
                 random_seed)
 
@@ -384,7 +391,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             LIBSVM_IMPL.index(self._impl), kernel_type,
             self.degree, self._gamma, self.coef0, self.tol,
             C, self.class_weight_,
-            self.nu, self.epsilon, self.shrinking,
+            self._nu, self.epsilon, self.shrinking,
             self.probability, self._n_support,
             self._probA, self._probB)
 
@@ -463,7 +470,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             LIBSVM_IMPL.index(self._impl), kernel_type,
             self.degree, self._gamma, self.coef0, self.tol,
             self.C, self.class_weight_,
-            self.nu, self.epsilon, self.shrinking,
+            self._nu, self.epsilon, self.shrinking,
             self.probability, self._n_support,
             self._probA, self._probB)
 
@@ -744,7 +751,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
             LIBSVM_IMPL.index(self._impl), kernel_type,
             self.degree, self._gamma, self.coef0, self.tol,
             self.C, self.class_weight_,
-            self.nu, self.epsilon, self.shrinking,
+            self._nu, self.epsilon, self.shrinking,
             self.probability, self._n_support,
             self._probA, self._probB)
 

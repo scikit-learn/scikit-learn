@@ -281,6 +281,7 @@ def test_sparse_liblinear_intercept_handling():
     test_svm.test_dense_liblinear_intercept_handling(svm.LinearSVC)
 
 
+@pytest.mark.filterwarnings('ignore:The default value of nu')
 @pytest.mark.parametrize("datasets_index", range(4))
 @pytest.mark.parametrize("kernel", ["linear", "poly", "rbf", "sigmoid"])
 @skip_if_32bit

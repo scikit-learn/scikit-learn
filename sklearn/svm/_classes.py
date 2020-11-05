@@ -1268,6 +1268,9 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         vectors. Should be in the interval (0, 1]. By default 0.5
         will be taken.
 
+        .. versionchanged:: 0.26
+           The default value of ``nu`` will change to 0.1 in version 0.26.
+
     shrinking : bool, default=True
         Whether to use the shrinking heuristic.
         See the :ref:`User Guide <shrinking_svm>`.
@@ -1329,19 +1332,19 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     --------
     >>> from sklearn.svm import OneClassSVM
     >>> X = [[0], [0.44], [0.45], [0.46], [1]]
-    >>> clf = OneClassSVM(gamma='auto').fit(X)
+    >>> clf = OneClassSVM(gamma='auto', nu=0.1).fit(X)
     >>> clf.predict(X)
     array([-1,  1,  1,  1, -1])
     >>> clf.score_samples(X)
-    array([1.7798..., 2.0547..., 2.0556..., 2.0561..., 1.7332...])
+    array([0.3419..., 0.3886..., 0.3889..., 0.3890..., 0.3419...])
     """
 
     _impl = 'one_class'
 
     @_deprecate_positional_args
     def __init__(self, *, kernel='rbf', degree=3, gamma='scale',
-                 coef0=0.0, tol=1e-3, nu=0.5, shrinking=True, cache_size=200,
-                 verbose=False, max_iter=-1):
+                 coef0=0.0, tol=1e-3, nu='warn', shrinking=True,
+                 cache_size=200, verbose=False, max_iter=-1):
 
         super().__init__(
             kernel, degree, gamma, coef0, tol, 0., nu, 0.,

@@ -174,6 +174,7 @@ def _construct_searchcv_instance(SearchCV):
     return SearchCV(LogisticRegression(), {"C": [0.1, 1]})
 
 
+@pytest.mark.filterwarnings('ignore:The default value of nu')
 @pytest.mark.parametrize('name, Estimator',
                          all_estimators())
 def test_fit_docstring_attributes(name, Estimator):

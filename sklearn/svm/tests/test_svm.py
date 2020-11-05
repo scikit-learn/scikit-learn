@@ -246,7 +246,7 @@ def test_svr_errors():
 
 def test_oneclass():
     # Test OneClassSVM
-    clf = svm.OneClassSVM()
+    clf = svm.OneClassSVM(nu=0.5)
     clf.fit(X)
     pred = clf.predict(T)
 
@@ -262,7 +262,6 @@ def test_oneclass():
 
 def test_oneclass_decision_function():
     # Test OneClassSVM decision function
-    clf = svm.OneClassSVM()
     rnd = check_random_state(2)
 
     # Generate train data
@@ -290,6 +289,7 @@ def test_oneclass_decision_function():
     assert_array_equal((dec_func_outliers > 0).ravel(), y_pred_outliers == 1)
 
 
+@pytest.mark.filterwarnings('ignore:The default value of nu')
 def test_oneclass_score_samples():
     X_train = [[1, 1], [1, 2], [2, 1]]
     clf = svm.OneClassSVM(gamma=1).fit(X_train)
@@ -499,6 +499,7 @@ def test_svm_equivalence_sample_weight_C():
     assert_allclose(dual_coef_no_weight, clf.dual_coef_)
 
 
+@pytest.mark.filterwarnings('ignore:The default value of nu')
 @pytest.mark.parametrize(
     "Estimator, err_msg",
     [(svm.SVC,
@@ -661,6 +662,7 @@ def test_bad_input():
         clf.predict(Xt)
 
 
+@pytest.mark.filterwarnings('ignore:The default value of nu')
 @pytest.mark.parametrize(
     'Estimator, data',
     [(svm.SVC, datasets.load_iris(return_X_y=True)),
@@ -912,6 +914,7 @@ def test_liblinear_set_coef():
     assert_array_equal(values, values2)
 
 
+@pytest.mark.filterwarnings('ignore:The default value of nu')
 def test_immutable_coef_property():
     # Check that primal coef modification are not silently ignored
     svms = [
@@ -1216,6 +1219,7 @@ def test_linearsvm_liblinear_sample_weight(SVM, params):
             assert_allclose(X_est_no_weight, X_est_with_weight)
 
 
+@pytest.mark.filterwarnings('ignore:The default value of nu')
 def test_n_support_oneclass_svr():
     # Make n_support is correct for oneclass and SVR (used to be
     # non-initialized)
@@ -1236,6 +1240,7 @@ def test_n_support_oneclass_svr():
 
 
 # TODO: Remove in 0.25 when probA_ and probB_ are deprecated
+@pytest.mark.filterwarnings('ignore:The default value of nu')
 @pytest.mark.parametrize("SVMClass, data", [
     (svm.OneClassSVM, (X, )),
     (svm.SVR, (X, Y))
@@ -1288,3 +1293,12 @@ def test_custom_kernel_not_array_input(Estimator):
     else:  # regressor
         assert_allclose(svc1.predict(data), svc2.predict(X))
         assert_allclose(svc1.predict(data), svc3.predict(K))
+
+
+def test_warning_oneclasssvm_nu_default_value():
+    # remove test in 0.26 when removing FutureWarning
+    clf = svm.OneClassSVM()
+    warn_msg = ('The default value of nu will change from 0.5 to 0.1 in '
+                'version 0.26.')
+    with pytest.warns(FutureWarning, match=warn_msg):
+        clf.fit(X)
