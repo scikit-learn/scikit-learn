@@ -68,7 +68,7 @@ jobs:
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: wheel unpack {wheel} &&
                                              python build_tools/github/vendor_vcomp140.py %WHEEL_DIRNAME% &&
                                              wheel pack %WHEEL_DIRNAME% -d {dest_dir} &&
-                                             rmdir /s %WHEEL_DIRNAME%
+                                             rmdir /s /q %WHEEL_DIRNAME%
 
         run: bash build_tools/github/build_wheels.sh
 
