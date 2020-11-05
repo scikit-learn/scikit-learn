@@ -1,6 +1,7 @@
 """ Network tests are only run, if data is already locally available,
 or if download is specifically requested by environment variable."""
 import builtins
+from functools import wraps
 from os import environ
 import pytest
 from sklearn.datasets import fetch_20newsgroups
@@ -16,6 +17,7 @@ def _wrapped_fetch(f, dataset_name):
     """ Fetch dataset (download if missing and requested by environment) """
     download_if_missing = environ.get('SKLEARN_SKIP_NETWORK_TESTS', '1') == '0'
 
+    @wraps(f)
     def wrapped(*args, **kwargs):
         kwargs['download_if_missing'] = download_if_missing
         try:

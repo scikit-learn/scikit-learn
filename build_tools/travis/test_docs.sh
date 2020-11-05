@@ -3,4 +3,6 @@
 set -e
 set -x
 
-make test-doc
+if [[ "$TRAVIS_CPU_ARCH" != "arm64" ]]; then
+    PYTEST="pytest -n $CI_CPU_COUNT" make test-doc
+fi

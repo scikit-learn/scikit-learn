@@ -10,8 +10,9 @@ from ..utils.multiclass import check_classification_targets
 from ..utils.deprecation import deprecated
 
 
-class LinearSVC(BaseEstimator, LinearClassifierMixin,
-                SparseCoefMixin):
+class LinearSVC(LinearClassifierMixin,
+                SparseCoefMixin,
+                BaseEstimator):
     """Linear Support Vector Classification.
 
     Similar to SVC with parameter kernel='linear', but implemented in terms of
@@ -34,7 +35,8 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     loss : {'hinge', 'squared_hinge'}, default='squared_hinge'
         Specifies the loss function. 'hinge' is the standard SVM loss
         (used e.g. by the SVC class) while 'squared_hinge' is the
-        square of the hinge loss.
+        square of the hinge loss. The combination of ``penalty='l1'``
+        and ``loss='hinge'`` is not supported.
 
     dual : bool, default=True
         Select the algorithm to either solve the dual or primal
@@ -87,7 +89,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         per-process runtime setting in liblinear that, if enabled, may not work
         properly in a multithreaded context.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the pseudo random number generation for shuffling the data for
         the dual coordinate descent (if ``dual=True``). When ``dual=False`` the
         underlying implementation of :class:`LinearSVC` is not random and
@@ -119,8 +121,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
 
     See Also
     --------
-    SVC
-        Implementation of Support Vector Machine classifier using libsvm:
+    SVC : Implementation of Support Vector Machine classifier using libsvm:
         the kernel can be non-linear but its SMO algorithm does not
         scale to large number of samples as LinearSVC does.
 
@@ -132,8 +133,8 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         Finally SVC can fit dense data without memory copy if the input
         is C-contiguous. Sparse data will still incur memory copy though.
 
-    sklearn.linear_model.SGDClassifier
-        SGDClassifier can optimize the same cost function as LinearSVC
+    sklearn.linear_model.SGDClassifier : SGDClassifier can optimize the same
+        cost function as LinearSVC
         by adjusting the penalty and loss parameters. In addition it requires
         less memory, allows incremental (online) learning, and implements
         various loss functions and regularization regimes.
@@ -247,7 +248,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     def _more_tags(self):
         return {
             '_xfail_checks': {
-                'check_sample_weights_invariance(kind=zeros)':
+                'check_sample_weights_invariance':
                 'zero sample_weight is not equivalent to removing samples',
             }
         }
@@ -312,7 +313,7 @@ class LinearSVR(RegressorMixin, LinearModel):
         per-process runtime setting in liblinear that, if enabled, may not work
         properly in a multithreaded context.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the pseudo random number generation for shuffling the data.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -359,17 +360,15 @@ class LinearSVR(RegressorMixin, LinearModel):
 
     See Also
     --------
-    LinearSVC
-        Implementation of Support Vector Machine classifier using the
+    LinearSVC : Implementation of Support Vector Machine classifier using the
         same library as this class (liblinear).
 
-    SVR
-        Implementation of Support Vector Machine regression using libsvm:
+    SVR : Implementation of Support Vector Machine regression using libsvm:
         the kernel can be non-linear but its SMO algorithm does not
         scale to large number of samples as LinearSVC does.
 
-    sklearn.linear_model.SGDRegressor
-        SGDRegressor can optimize the same cost function as LinearSVR
+    sklearn.linear_model.SGDRegressor : SGDRegressor can optimize the same cost
+        function as LinearSVR
         by adjusting the penalty and loss parameters. In addition it requires
         less memory, allows incremental (online) learning, and implements
         various loss functions and regularization regimes.
@@ -435,7 +434,7 @@ class LinearSVR(RegressorMixin, LinearModel):
     def _more_tags(self):
         return {
             '_xfail_checks': {
-                'check_sample_weights_invariance(kind=zeros)':
+                'check_sample_weights_invariance':
                 'zero sample_weight is not equivalent to removing samples',
             }
         }
@@ -551,7 +550,7 @@ class SVC(BaseSVC):
 
         .. versionadded:: 0.22
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the pseudo random number generation for shuffling the data for
         probability estimates. Ignored when `probability` is False.
         Pass an int for reproducible output across multiple function calls.
@@ -563,7 +562,7 @@ class SVC(BaseSVC):
         Multipliers of parameter C for each class.
         Computed based on the ``class_weight`` parameter.
 
-    classes_ : array of shape (n_classes,)
+    classes_ : ndarray of shape (n_classes,)
         The classes labels.
 
     coef_ : ndarray of shape (n_classes * (n_classes - 1) / 2, n_features)
@@ -629,12 +628,10 @@ class SVC(BaseSVC):
 
     See Also
     --------
-    SVR
-        Support Vector Machine for Regression implemented using libsvm.
+    SVR : Support Vector Machine for Regression implemented using libsvm.
 
-    LinearSVC
-        Scalable Linear Support Vector Machine for classification
-        implemented using liblinear. Check the See also section of
+    LinearSVC : Scalable Linear Support Vector Machine for classification
+        implemented using liblinear. Check the See Also section of
         LinearSVC for more comparison element.
 
     References
@@ -669,7 +666,7 @@ class SVC(BaseSVC):
     def _more_tags(self):
         return {
             '_xfail_checks': {
-                'check_sample_weights_invariance(kind=zeros)':
+                'check_sample_weights_invariance':
                 'zero sample_weight is not equivalent to removing samples',
             }
         }
@@ -774,7 +771,7 @@ class NuSVC(BaseSVC):
 
         .. versionadded:: 0.22
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the pseudo random number generation for shuffling the data for
         probability estimates. Ignored when `probability` is False.
         Pass an int for reproducible output across multiple function calls.
@@ -853,11 +850,9 @@ class NuSVC(BaseSVC):
 
     See Also
     --------
-    SVC
-        Support Vector Machine for classification using libsvm.
+    SVC : Support Vector Machine for classification using libsvm.
 
-    LinearSVC
-        Scalable linear Support Vector Machine for classification using
+    LinearSVC : Scalable linear Support Vector Machine for classification using
         liblinear.
 
     References
@@ -894,7 +889,7 @@ class NuSVC(BaseSVC):
                 'check_methods_subset_invariance':
                 'fails for the decision_function method',
                 'check_class_weight_classifiers': 'class_weight is ignored.',
-                'check_sample_weights_invariance(kind=zeros)':
+                'check_sample_weights_invariance':
                 'zero sample_weight is not equivalent to removing samples',
             }
         }
@@ -1021,12 +1016,10 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     See Also
     --------
-    NuSVR
-        Support Vector Machine for regression implemented using libsvm
+    NuSVR : Support Vector Machine for regression implemented using libsvm
         using a parameter to control the number of support vectors.
 
-    LinearSVR
-        Scalable Linear Support Vector Machine for regression
+    LinearSVR : Scalable Linear Support Vector Machine for regression
         implemented using liblinear.
 
     References
@@ -1071,7 +1064,7 @@ class SVR(RegressorMixin, BaseLibSVM):
     def _more_tags(self):
         return {
             '_xfail_checks': {
-                'check_sample_weights_invariance(kind=zeros)':
+                'check_sample_weights_invariance':
                 'zero sample_weight is not equivalent to removing samples',
             }
         }
@@ -1192,12 +1185,11 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
     See Also
     --------
-    NuSVC
-        Support Vector Machine for classification implemented with libsvm
+    NuSVC : Support Vector Machine for classification implemented with libsvm
         with a parameter to control the number of support vectors.
 
-    SVR
-        epsilon Support Vector Machine for regression implemented with libsvm.
+    SVR : Epsilon Support Vector Machine for regression implemented with
+        libsvm.
 
     References
     ----------
@@ -1225,7 +1217,7 @@ class NuSVR(RegressorMixin, BaseLibSVM):
     def _more_tags(self):
         return {
             '_xfail_checks': {
-                'check_sample_weights_invariance(kind=zeros)':
+                'check_sample_weights_invariance':
                 'zero sample_weight is not equivalent to removing samples',
             }
         }
@@ -1458,7 +1450,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     def _more_tags(self):
         return {
             '_xfail_checks': {
-                'check_sample_weights_invariance(kind=zeros)':
+                'check_sample_weights_invariance':
                 'zero sample_weight is not equivalent to removing samples',
             }
         }

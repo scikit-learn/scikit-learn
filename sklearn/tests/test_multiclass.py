@@ -10,6 +10,7 @@ from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import assert_raises_regexp
+from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._mocking import CheckingClassifier
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
@@ -29,7 +30,8 @@ from sklearn.linear_model import (LinearRegression, Lasso, ElasticNet, Ridge,
                                   SGDClassifier)
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.model_selection import GridSearchCV, cross_val_score
-from sklearn.pipeline import Pipeline
+from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.impute import SimpleImputer
 from sklearn import svm
 from sklearn import datasets
 
@@ -750,6 +752,7 @@ def test_pairwise_indices():
                      linear_kernel.shape[0])
 
 
+@ignore_warnings(category=FutureWarning)
 def test_pairwise_attribute():
     clf_precomputed = svm.SVC(kernel='precomputed')
     clf_notprecomputed = svm.SVC()
@@ -760,6 +763,30 @@ def test_pairwise_attribute():
 
         ovr_true = MultiClassClassifier(clf_precomputed)
         assert ovr_true._pairwise
+
+
+@pytest.mark.parametrize("MultiClassClassifier", [OneVsRestClassifier,
+                                                  OneVsOneClassifier])
+def test_pairwise_tag(MultiClassClassifier):
+    clf_precomputed = svm.SVC(kernel='precomputed')
+    clf_notprecomputed = svm.SVC()
+
+    ovr_false = MultiClassClassifier(clf_notprecomputed)
+    assert not ovr_false._get_tags()['pairwise']
+
+    ovr_true = MultiClassClassifier(clf_precomputed)
+    assert ovr_true._get_tags()['pairwise']
+
+
+# TODO: Remove in 0.26
+@pytest.mark.parametrize("MultiClassClassifier", [OneVsRestClassifier,
+                                                  OneVsOneClassifier])
+def test_pairwise_deprecated(MultiClassClassifier):
+    clf_precomputed = svm.SVC(kernel='precomputed')
+    ov_clf = MultiClassClassifier(clf_precomputed)
+    msg = r"Attribute _pairwise was deprecated in version 0\.24"
+    with pytest.warns(FutureWarning, match=msg):
+        ov_clf._pairwise
 
 
 def test_pairwise_cross_val_score():
@@ -776,3 +803,21 @@ def test_pairwise_cross_val_score():
         score_precomputed = cross_val_score(ovr_true, linear_kernel, y)
         score_linear = cross_val_score(ovr_false, X, y)
         assert_array_equal(score_precomputed, score_linear)
+
+
+@pytest.mark.parametrize("MultiClassClassifier",
+                         [OneVsRestClassifier, OneVsOneClassifier])
+# FIXME: we should move this test in `estimator_checks` once we are able
+# to construct meta-estimator instances
+def test_support_missing_values(MultiClassClassifier):
+    # smoke test to check that pipeline OvR and OvO classifiers are letting
+    # the validation of missing values to
+    # the underlying pipeline or classifiers
+    rng = np.random.RandomState(42)
+    X, y = iris.data, iris.target
+    mask = rng.choice([1, 0], X.shape, p=[.1, .9]).astype(bool)
+    X[mask] = np.nan
+    lr = make_pipeline(SimpleImputer(),
+                       LogisticRegression(random_state=rng))
+
+    MultiClassClassifier(lr).fit(X, y).score(X, y)

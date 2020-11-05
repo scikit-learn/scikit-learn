@@ -43,6 +43,8 @@ and will store the coefficients :math:`w` of the linear model in its
 
     >>> from sklearn import linear_model
     >>> reg = linear_model.LinearRegression()
+    >>> reg.fit ([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
+    LinearRegression()
     >>> reg.fit([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
     LinearRegression()
     >>> reg.coef_
@@ -61,6 +63,19 @@ example, when data are collected without an experimental design.
 
    * :ref:`sphx_glr_auto_examples_linear_model_plot_ols.py`
 
+Non-Negative Least Squares
+--------------------------
+
+It is possible to constrain all the coefficients to be non-negative, which may
+be useful when they represent some physical or naturally non-negative
+quantities (e.g., frequency counts or prices of goods).
+:class:`LinearRegression` accepts a boolean ``positive``
+parameter: when set to `True` `Non Negative Least Squares
+<https://en.wikipedia.org/wiki/Non-negative_least_squares>`_ are then applied.
+
+.. topic:: Examples:
+
+   * :ref:`sphx_glr_auto_examples_linear_model_plot_nnls.py`
 
 Ordinary Least Squares Complexity
 ---------------------------------
@@ -160,13 +175,12 @@ This method has the same order of complexity as
 .. between these
 
 
-Setting the regularization parameter: generalized Cross-Validation
-------------------------------------------------------------------
+Setting the regularization parameter: leave-one-out Cross-Validation
+--------------------------------------------------------------------
 
 :class:`RidgeCV` implements ridge regression with built-in
 cross-validation of the alpha parameter. The object works in the same way
-as GridSearchCV except that it defaults to Generalized Cross-Validation
-(GCV), an efficient form of leave-one-out cross-validation::
+as GridSearchCV except that it defaults to Leave-One-Out Cross-Validation::
 
     >>> import numpy as np
     >>> from sklearn import linear_model
@@ -179,7 +193,7 @@ as GridSearchCV except that it defaults to Generalized Cross-Validation
 
 Specifying the value of the :term:`cv` attribute will trigger the use of
 cross-validation with :class:`~sklearn.model_selection.GridSearchCV`, for
-example `cv=10` for 10-fold cross-validation, rather than Generalized
+example `cv=10` for 10-fold cross-validation, rather than Leave-One-Out
 Cross-Validation.
 
 .. topic:: References

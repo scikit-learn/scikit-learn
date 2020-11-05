@@ -20,7 +20,7 @@ def pyplot():
         The ``matplotlib.pyplot`` module.
     """
     matplotlib = pytest.importorskip('matplotlib')
-    matplotlib.use('agg', warn=False, force=True)
+    matplotlib.use('agg')
     pyplot = pytest.importorskip('matplotlib.pyplot')
     yield pyplot
     pyplot.close('all')

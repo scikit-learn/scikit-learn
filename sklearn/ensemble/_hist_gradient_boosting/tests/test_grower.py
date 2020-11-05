@@ -156,7 +156,10 @@ def test_predictor_from_grower():
 
     # Check that the node structure can be converted into a predictor
     # object to perform predictions at scale
-    predictor = grower.make_predictor()
+    # We pass undefined num_thresholds because we won't use predict() anyway
+    predictor = grower.make_predictor(
+        num_thresholds=np.zeros((X_binned.shape[1], n_bins))
+    )
     assert predictor.nodes.shape[0] == 5
     assert predictor.nodes['is_leaf'].sum() == 3
 
@@ -218,7 +221,7 @@ def test_min_samples_leaf(n_samples, min_samples_leaf, n_bins,
                         max_leaf_nodes=n_samples)
     grower.grow()
     predictor = grower.make_predictor(
-        bin_thresholds=mapper.bin_thresholds_)
+        num_thresholds=mapper.bin_thresholds_)
 
     if n_samples >= min_samples_leaf:
         for node in predictor.nodes:
@@ -339,7 +342,10 @@ def test_missing_value_predict_only():
                         has_missing_values=False)
     grower.grow()
 
-    predictor = grower.make_predictor()
+    # We pass undefined num_thresholds because we won't use predict() anyway
+    predictor = grower.make_predictor(
+        num_thresholds=np.zeros((X_binned.shape[1], X_binned.max() + 1))
+    )
 
     # go from root to a leaf, always following node with the most samples.
     # That's the path nans are supposed to take
@@ -382,11 +388,11 @@ def test_split_on_nan_with_infinite_values():
     grower.grow()
 
     predictor = grower.make_predictor(
-        bin_thresholds=bin_mapper.bin_thresholds_
+        num_thresholds=bin_mapper.bin_thresholds_
     )
 
     # sanity check: this was a split on nan
-    assert predictor.nodes[0]['threshold'] == np.inf
+    assert predictor.nodes[0]['num_threshold'] == np.inf
     assert predictor.nodes[0]['bin_threshold'] == n_bins_non_missing - 1
 
     # Make sure in particular that the +inf sample is mapped to the left child

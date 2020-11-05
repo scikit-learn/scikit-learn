@@ -58,6 +58,19 @@ from sklearn.linear_model._coordinate_descent import _set_order
 from sklearn.utils import check_array
 
 
+@pytest.mark.parametrize('l1_ratio', (-1, 2, None, 10, 'something_wrong'))
+def test_l1_ratio_param_invalid(l1_ratio):
+    # Check that correct error is raised when l1_ratio in ElasticNet
+    # is outside the correct range
+    X = np.array([[-1.], [0.], [1.]])
+    Y = [-1, 0, 1]       # just a straight line
+
+    msg = "l1_ratio must be between 0 and 1; got l1_ratio="
+    clf = ElasticNet(alpha=0.1, l1_ratio=l1_ratio)
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(X, Y)
+
+
 @pytest.mark.parametrize('order', ['C', 'F'])
 @pytest.mark.parametrize('input_order', ['C', 'F'])
 def test_set_order_dense(order, input_order):

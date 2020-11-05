@@ -285,7 +285,8 @@ def test_preserve_trustworthiness_approximately_with_precomputed_distances():
         D = squareform(pdist(X), "sqeuclidean")
         tsne = TSNE(n_components=2, perplexity=2, learning_rate=100.0,
                     early_exaggeration=2.0, metric="precomputed",
-                    random_state=i, verbose=0, n_iter=500)
+                    random_state=i, verbose=0, n_iter=500,
+                    square_distances=True)
         X_embedded = tsne.fit_transform(D)
         t = trustworthiness(D, X_embedded, n_neighbors=1, metric="precomputed")
         assert t > .95
@@ -325,13 +326,14 @@ def test_too_few_iterations():
     ([[0., -1.], [1., 0.]], ".* positive.*"),
 ])
 def test_bad_precomputed_distances(method, D, retype, message_regex):
-    tsne = TSNE(metric="precomputed", method=method)
+    tsne = TSNE(metric="precomputed", method=method,
+                square_distances=True)
     with pytest.raises(ValueError, match=message_regex):
         tsne.fit_transform(retype(D))
 
 
 def test_exact_no_precomputed_sparse():
-    tsne = TSNE(metric='precomputed', method='exact')
+    tsne = TSNE(metric='precomputed', method='exact', square_distances=True)
     with pytest.raises(TypeError, match='sparse'):
         tsne.fit_transform(sp.csr_matrix([[0, 5], [5, 0]]))
 
@@ -340,7 +342,7 @@ def test_high_perplexity_precomputed_sparse_distances():
     # Perplexity should be less than 50
     dist = np.array([[1., 0., 0.], [0., 1., 0.], [1., 0., 0.]])
     bad_dist = sp.csr_matrix(dist)
-    tsne = TSNE(metric="precomputed")
+    tsne = TSNE(metric="precomputed", square_distances=True)
     msg = "3 neighbors per samples are required, but some samples have only 1"
     with pytest.raises(ValueError, match=msg):
         tsne.fit_transform(bad_dist)
@@ -358,7 +360,7 @@ def test_sparse_precomputed_distance():
     assert sp.issparse(D_sparse)
     assert_almost_equal(D_sparse.A, D)
 
-    tsne = TSNE(metric="precomputed", random_state=0)
+    tsne = TSNE(metric="precomputed", random_state=0, square_distances=True)
     Xt_dense = tsne.fit_transform(D)
 
     for fmt in ['csr', 'lil']:
@@ -371,7 +373,8 @@ def test_non_positive_computed_distances():
     def metric(x, y):
         return -1
 
-    tsne = TSNE(metric=metric, method='exact')
+    # Negative computed distances should be caught even if result is squared
+    tsne = TSNE(metric=metric, method='exact', square_distances=True)
     X = np.array([[0.0, 0.0], [1.0, 1.0]])
     with pytest.raises(ValueError, match="All distances .*metric given.*"):
         tsne.fit_transform(X)
@@ -395,17 +398,19 @@ def test_init_ndarray():
 def test_init_ndarray_precomputed():
     # Initialize TSNE with ndarray and metric 'precomputed'
     # Make sure no FutureWarning is thrown from _fit
-    tsne = TSNE(init=np.zeros((100, 2)), metric="precomputed")
+    tsne = TSNE(init=np.zeros((100, 2)), metric="precomputed",
+                square_distances=True)
     tsne.fit(np.zeros((100, 100)))
 
 
 def test_distance_not_available():
     # 'metric' must be valid.
-    tsne = TSNE(metric="not available", method='exact')
+    tsne = TSNE(metric="not available", method='exact', square_distances=True)
     with pytest.raises(ValueError, match="Unknown metric not available.*"):
         tsne.fit_transform(np.array([[0.0], [1.0]]))
 
-    tsne = TSNE(metric="not available", method='barnes_hut')
+    tsne = TSNE(metric="not available", method='barnes_hut',
+                square_distances=True)
     with pytest.raises(ValueError, match="Metric 'not available' not valid.*"):
         tsne.fit_transform(np.array([[0.0], [1.0]]))
 
@@ -414,6 +419,13 @@ def test_method_not_available():
     # 'nethod' must be 'barnes_hut' or 'exact'
     tsne = TSNE(method='not available')
     with pytest.raises(ValueError, match="'method' must be 'barnes_hut' or "):
+        tsne.fit_transform(np.array([[0.0], [1.0]]))
+
+
+def test_square_distances_not_available():
+    # square_distances must be True or 'legacy'.
+    tsne = TSNE(square_distances="not_available")
+    with pytest.raises(ValueError, match="'square_distances' must be True or"):
         tsne.fit_transform(np.array([[0.0], [1.0]]))
 
 
@@ -428,7 +440,7 @@ def test_angle_out_of_range_checks():
 
 def test_pca_initialization_not_compatible_with_precomputed_kernel():
     # Precomputed distance matrices must be square matrices.
-    tsne = TSNE(metric="precomputed", init="pca")
+    tsne = TSNE(metric="precomputed", init="pca", square_distances=True)
     with pytest.raises(ValueError, match="The parameter init=\"pca\" cannot"
                                          " be used with"
                                          " metric=\"precomputed\"."):
@@ -586,7 +598,7 @@ def test_verbose():
 def test_chebyshev_metric():
     # t-SNE should allow metrics that cannot be squared (issue #3526).
     random_state = check_random_state(0)
-    tsne = TSNE(metric="chebyshev")
+    tsne = TSNE(metric="chebyshev", square_distances=True)
     X = random_state.randn(5, 2)
     tsne.fit_transform(X)
 
@@ -872,11 +884,62 @@ def test_tsne_with_different_distance_metrics():
     for metric, dist_func in zip(metrics, dist_funcs):
         X_transformed_tsne = TSNE(
             metric=metric, n_components=n_components_embedding,
-            random_state=0, n_iter=300).fit_transform(X)
+            random_state=0, n_iter=300, square_distances=True).fit_transform(X)
         X_transformed_tsne_precomputed = TSNE(
             metric='precomputed', n_components=n_components_embedding,
-            random_state=0, n_iter=300).fit_transform(dist_func(X))
+            random_state=0, n_iter=300,
+            square_distances=True).fit_transform(dist_func(X))
         assert_array_equal(X_transformed_tsne, X_transformed_tsne_precomputed)
+
+
+@pytest.mark.parametrize('method', ['exact', 'barnes_hut'])
+@pytest.mark.parametrize('metric', ['euclidean', 'manhattan'])
+@pytest.mark.parametrize('square_distances', [True, 'legacy'])
+@ignore_warnings(category=FutureWarning)
+def test_tsne_different_square_distances(method, metric, square_distances):
+    # Make sure that TSNE works for different square_distances settings
+    # FIXME remove test when square_distances=True becomes the default in 0.26
+    random_state = check_random_state(0)
+    n_components_original = 3
+    n_components_embedding = 2
+
+    # Used to create data with structure; this avoids unstable behavior in TSNE
+    X, _ = make_blobs(n_features=n_components_original,
+                      random_state=random_state)
+    X_precomputed = pairwise_distances(X, metric=metric)
+
+    if metric == 'euclidean' and square_distances == 'legacy':
+        X_precomputed **= 2
+
+    X_transformed_tsne = TSNE(
+        metric=metric, n_components=n_components_embedding,
+        square_distances=square_distances, method=method,
+        random_state=0).fit_transform(X)
+    X_transformed_tsne_precomputed = TSNE(
+        metric='precomputed', n_components=n_components_embedding,
+        square_distances=square_distances, method=method,
+        random_state=0).fit_transform(X_precomputed)
+
+    assert_allclose(X_transformed_tsne, X_transformed_tsne_precomputed)
+
+
+@pytest.mark.parametrize('metric', ['euclidean', 'manhattan'])
+@pytest.mark.parametrize('square_distances', [True, 'legacy'])
+def test_tsne_square_distances_futurewarning(metric, square_distances):
+    # Make sure that a FutureWarning is only raised when a non-Euclidean
+    # metric is specified and square_distances is not set to True.
+    random_state = check_random_state(0)
+
+    X = random_state.randn(5, 2)
+    tsne = TSNE(metric=metric, square_distances=square_distances)
+
+    if metric != 'euclidean' and square_distances is not True:
+        with pytest.warns(FutureWarning, match="'square_distances'.*"):
+            tsne.fit_transform(X)
+    else:
+        with pytest.warns(None) as record:
+            tsne.fit_transform(X)
+        assert not record
 
 
 @pytest.mark.parametrize('method', ['exact', 'barnes_hut'])

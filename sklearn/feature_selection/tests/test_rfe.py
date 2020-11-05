@@ -416,7 +416,7 @@ def test_rfe_wrapped_estimator(importance_getter, selector,
     # Non-regression test for
     # https://github.com/scikit-learn/scikit-learn/issues/15312
     X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
-    estimator = LinearSVR()
+    estimator = LinearSVR(random_state=0)
 
     log_estimator = TransformedTargetRegressor(regressor=estimator,
                                                func=np.log,

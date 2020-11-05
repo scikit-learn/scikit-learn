@@ -48,7 +48,7 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 from scipy.sparse import issparse
 from scipy.sparse import hstack as sparse_hstack
-from joblib import Parallel, delayed
+from joblib import Parallel
 
 from ..base import ClassifierMixin, RegressorMixin, MultiOutputMixin
 from ..metrics import r2_score
@@ -59,6 +59,7 @@ from ..tree._tree import DTYPE, DOUBLE
 from ..utils import check_random_state, check_array, compute_sample_weight
 from ..exceptions import DataConversionWarning
 from ._base import BaseEnsemble, _partition_estimators
+from ..utils.fixes import delayed
 from ..utils.fixes import _joblib_parallel_args
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted, _check_sample_weight
@@ -1008,7 +1009,7 @@ class RandomForestClassifier(ForestClassifier):
         context. ``-1`` means using all processors. See :term:`Glossary
         <n_jobs>` for more details.
 
-    random_state : int or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls both the randomness of the bootstrapping of the samples used
         when building trees (if ``bootstrap=True``) and the sampling of the
         features to consider when looking for the best split at each node
@@ -1330,7 +1331,7 @@ class RandomForestRegressor(ForestRegressor):
         context. ``-1`` means using all processors. See :term:`Glossary
         <n_jobs>` for more details.
 
-    random_state : int or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls both the randomness of the bootstrapping of the samples used
         when building trees (if ``bootstrap=True``) and the sampling of the
         features to consider when looking for the best split at each node
@@ -1612,7 +1613,7 @@ class ExtraTreesClassifier(ForestClassifier):
         context. ``-1`` means using all processors. See :term:`Glossary
         <n_jobs>` for more details.
 
-    random_state : int, RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls 3 sources of randomness:
 
         - the bootstrapping of the samples used when building trees
@@ -1929,7 +1930,7 @@ class ExtraTreesRegressor(ForestRegressor):
         context. ``-1`` means using all processors. See :term:`Glossary
         <n_jobs>` for more details.
 
-    random_state : int or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls 3 sources of randomness:
 
         - the bootstrapping of the samples used when building trees
@@ -2003,8 +2004,8 @@ class ExtraTreesRegressor(ForestRegressor):
 
     See Also
     --------
-    sklearn.tree.ExtraTreeRegressor: Base estimator for this ensemble.
-    RandomForestRegressor: Ensemble regressor using trees with optimal splits.
+    sklearn.tree.ExtraTreeRegressor : Base estimator for this ensemble.
+    RandomForestRegressor : Ensemble regressor using trees with optimal splits.
 
     Notes
     -----
@@ -2185,7 +2186,7 @@ class RandomTreesEmbedding(BaseForest):
         context. ``-1`` means using all processors. See :term:`Glossary
         <n_jobs>` for more details.
 
-    random_state : int or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the generation of the random `y` used to fit the trees
         and the draw of the splits for each feature at the trees' nodes.
         See :term:`Glossary <random_state>` for details.

@@ -36,18 +36,20 @@ def _get_valid_samples_by_column(X, col):
 
 
 @pytest.mark.parametrize(
-    "est, func, support_sparse, strictly_positive",
-    [(MaxAbsScaler(), maxabs_scale, True, False),
-     (MinMaxScaler(), minmax_scale, False, False),
-     (StandardScaler(), scale, False, False),
-     (StandardScaler(with_mean=False), scale, True, False),
-     (PowerTransformer('yeo-johnson'), power_transform, False, False),
-     (PowerTransformer('box-cox'), power_transform, False, True),
-     (QuantileTransformer(n_quantiles=10), quantile_transform, True, False),
-     (RobustScaler(), robust_scale, False, False),
-     (RobustScaler(with_centering=False), robust_scale, True, False)]
+    "est, func, support_sparse, strictly_positive, omit_kwargs",
+    [(MaxAbsScaler(), maxabs_scale, True, False, []),
+     (MinMaxScaler(), minmax_scale, False, False, ['clip']),
+     (StandardScaler(), scale, False, False, []),
+     (StandardScaler(with_mean=False), scale, True, False, []),
+     (PowerTransformer('yeo-johnson'), power_transform, False, False, []),
+     (PowerTransformer('box-cox'), power_transform, False, True, []),
+     (QuantileTransformer(n_quantiles=10), quantile_transform, True, False,
+     []),
+     (RobustScaler(), robust_scale, False, False, []),
+     (RobustScaler(with_centering=False), robust_scale, True, False, [])]
 )
-def test_missing_value_handling(est, func, support_sparse, strictly_positive):
+def test_missing_value_handling(est, func, support_sparse, strictly_positive,
+                                omit_kwargs):
     # check that the preprocessing method let pass nan
     rng = np.random.RandomState(42)
     X = iris.data.copy()
@@ -74,7 +76,12 @@ def test_missing_value_handling(est, func, support_sparse, strictly_positive):
     with pytest.warns(None) as records:
         Xt_class = est.transform(X_train)
     assert len(records) == 0
-    Xt_func = func(X_train, **est.get_params())
+    kwargs = est.get_params()
+    # remove the parameters which should be omitted because they
+    # are not defined in the sister function of the preprocessing class
+    for kwarg in omit_kwargs:
+        _ = kwargs.pop(kwarg)
+    Xt_func = func(X_train, **kwargs)
     assert_array_equal(np.isnan(Xt_func), np.isnan(Xt_class))
     assert_allclose(Xt_func[~np.isnan(Xt_func)], Xt_class[~np.isnan(Xt_class)])
 

@@ -7,8 +7,6 @@ import numpy as np
 from sklearn.utils._testing import assert_almost_equal, assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_raise_message
-from sklearn.utils.estimator_checks import check_estimator
-from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import LogisticRegression
@@ -488,23 +486,6 @@ def test_none_estimator_with_weights(X, y, voter):
     assert not record
     y_pred = voter.predict(X)
     assert y_pred.shape == y.shape
-
-
-@pytest.mark.parametrize(
-    "estimator",
-    [VotingRegressor(
-        estimators=[('lr', LinearRegression()),
-                    ('tree', DecisionTreeRegressor(random_state=0))]),
-     VotingClassifier(
-         estimators=[('lr', LogisticRegression(random_state=0)),
-                     ('tree', DecisionTreeClassifier(random_state=0))])],
-    ids=['VotingRegressor', 'VotingClassifier']
-)
-def test_check_estimators_voting_estimator(estimator):
-    # FIXME: to be removed when meta-estimators can specified themselves
-    # their testing parameters (for required parameters).
-    check_estimator(estimator)
-    check_no_attributes_set_in_init(estimator.__class__.__name__, estimator)
 
 
 @pytest.mark.parametrize(
