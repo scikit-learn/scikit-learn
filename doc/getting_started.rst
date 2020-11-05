@@ -119,9 +119,10 @@ the test data::
 
 .. note:: Diagram rendering of estimators
 
-    To render estimators as diagrams in notebooks, use the `display='diagram'` option:
+    To render estimators as diagrams in notebooks, use the `display='diagram'` option::
+    
     >>> with config_context(display='diagram'):
-    >>>   pipe
+    >>>     pipe
 
     You may also call `set_config 
     <https://scikit-learn.org/stable/modules/generated/sklearn.set_config.html>`_
