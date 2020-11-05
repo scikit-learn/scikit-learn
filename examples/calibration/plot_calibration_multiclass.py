@@ -10,24 +10,25 @@ classes. Arrows point from the probability vectors predicted by an uncalibrated
 classifier to the probability vectors predicted by the same classifier after
 sigmoid calibration on a hold-out validation set. Colors indicate the true
 class of an instance (red: class 1, green: class 2, blue: class 3).
-
-Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-License: BSD Style.
-
-Data
-----
-
-Below, we generate a classification dataset with 2000 samples, 2 features
-and 3 target classes. We then split the data as follows:
-
-* train: 600 samples (for training the classifier)
-* valid: 400 samples (for calibrating predicted probabilities)
-* test: 1000 samples
-
-Note that we also create `X_train_valid` and `y_train_valid`, which consists
-of both the train and valid subsets. This is used when we only want to train
-the classifier but not calibrate the predicted probabilities.
 """
+
+# %%
+# Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
+# License: BSD Style.
+
+# Data
+# ----
+
+# Below, we generate a classification dataset with 2000 samples, 2 features
+# and 3 target classes. We then split the data as follows:
+
+# * train: 600 samples (for training the classifier)
+# * valid: 400 samples (for calibrating predicted probabilities)
+# * test: 1000 samples
+
+# Note that we also create `X_train_valid` and `y_train_valid`, which consists
+# of both the train and valid subsets. This is used when we only want to train
+# the classifier but not calibrate the predicted probabilities.
 
 import numpy as np
 from sklearn.datasets import make_blobs
@@ -55,9 +56,9 @@ clf = RandomForestClassifier(n_estimators=25)
 clf.fit(X_train_valid, y_train_valid)
 
 # %%
-# To train the calibrated classifier, with start with the same
-# :class:`~sklearn.ensemble.RandomForestClassifier` but train it using
-# the train data subset (600 samples) then calibrate, with `method='sigmoid'`
+# To train the calibrated classifier, we start with the same
+# :class:`~sklearn.ensemble.RandomForestClassifier` but train it using only
+# the train data subset (600 samples) then calibrate, with `method='sigmoid'`,
 # using the valid data subset (400 samples) in a 2-stage process.
 
 from sklearn.calibration import CalibratedClassifierCV
@@ -72,13 +73,13 @@ cal_clf.fit(X_valid, y_valid)
 # ---------------------
 #
 # The uncalibrated classifier is overly confident in its predictions and
-# incurs a large :ref:`log_loss`. The calibrated classifier produces
+# incurs a large :ref:`log loss <log_loss>`. The calibrated classifier produces
 # probabilities that are less confident, i.e., the probabilities are further
 # away from 0 and 1. This calibration results in a lower log loss.
 #
 # Below we plot a 2-simplex with arrows showing the change in predicted
 # probabilities of the test samples. Each vertex of the simplex represents
-# perfectly predicting one of the three classes (e.g., 1, 0, 0). The mid point
+# a perfectly predicted class (e.g., 1, 0, 0). The mid point
 # inside the simplex represents predicting the three classes with equal
 # probability (i.e., 1/3, 1/3, 1/3). Each arrow starts at the
 # uncalibrated probabilities and end with the arrow head at the calibrated
