@@ -6,9 +6,9 @@ on:
     # Nightly build at 3:42 A.M.
     - cron: "42 3 */1 * *"
   push:
-    tags:
-      # Final releases, release candidates and post-releases
-      - "[0-9]+.[0-9]+.[0-9]+(rc[0-9]+)?(.post[0-9]+)?"
+    branches:
+      # Release branches
+      - "[0-9]+.[0-9]+.X"
   pull_request:
     branches:
       - master
