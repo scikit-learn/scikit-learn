@@ -482,6 +482,20 @@ class PLSRegression(_PLS):
 
     Attributes
     ----------
+    x_mean_ : ndarray of shape (n_features,)
+        Centered X with mean of zero.
+
+    y_mean_ : ndarray of shape (n_targets,)
+        Centered Y with mean of zero.
+
+    x_std_ : ndarray of shape (n_features,)
+        Standard deviations of X per feature. If scale is False, the standard
+        deviations are set to one.
+
+    y_std_ : ndarray of shape (n_targets,)
+        Standard deviations of Y per target vector. If scale is False, the
+        standard deviations are set to one.
+
     x_weights_ : ndarray of shape (n_features, n_components)
         The left singular vectors of the cross-covariance matrices of each
         iteration.
