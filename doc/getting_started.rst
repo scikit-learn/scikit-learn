@@ -117,6 +117,17 @@ the test data::
   >>> accuracy_score(pipe.predict(X_test), y_test)
   0.97...
 
+.. note:: Diagram rendering of estimators
+
+    To render estimators as diagrams in notebooks, use the `display='diagram'` option:
+    >>> with config_context(display='diagram'):
+    >>>   pipe
+
+    You may also call `set_config 
+    <https://scikit-learn.org/stable/modules/generated/sklearn.set_config.html>`_
+    at the top of the notebook.
+
+
 Model evaluation
 ----------------
 
