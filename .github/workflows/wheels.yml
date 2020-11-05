@@ -91,7 +91,7 @@ jobs:
         uses: actions/setup-python@v2
 
       - name: Build and test source distribution
-        run: bash build_tools/github/build_sdist.sh
+        run: bash build_tools/github/build_source.sh
 
       - name: Store artifacts
         uses: actions/upload-artifact@v2
