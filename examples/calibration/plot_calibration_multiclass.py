@@ -41,19 +41,6 @@ X_valid, y_valid = X[600:1000], y[600:1000]
 X_train_valid, y_train_valid = X[:1000], y[:1000]
 X_test, y_test = X[1000:], y[1000:]
 
-
-# The base classifier is a random forest classifier with 25 base estimators
-# (trees). If this classifier is trained on all 1000 training datapoints, it is
-# overly confident in its predictions and thus incurs a large log-loss.
-
-# Calibrating an identical classifier, which was trained on 600 datapoints, with
-# method='sigmoid' on the remaining 400 datapoints reduces the confidence of the
-# predictions, i.e., moves the probability vectors from the edges of the simplex
-# towards the center. This calibration results in a lower log-loss. Note that an
-# alternative would have been to increase the number of base estimators which
-# would have resulted in a similar decrease in log-loss.
-
-
 # %%
 # Fitting and calibration
 # -----------------------
@@ -173,6 +160,9 @@ _ = plt.legend(loc="best")
 #
 # We can show this objectively by comparing the log loss of the uncalibrated
 # and calibrated classifiers on the predictions of the 1000 test samples.
+# Note that an alternative would have been to increase the number of base
+# estimators (trees) of the :class:`~sklearn.ensemble.RandomForestClassifier`
+# which would have resulted in a similar decrease in log loss.
 
 from sklearn.metrics import log_loss
 
