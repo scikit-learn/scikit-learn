@@ -14,6 +14,9 @@ on:
       - master
       - "[0-9]+.[0-9]+.X"
 
+env:
+  SCIKIT_LEARN_VERSION: 0.24.dev0
+
 jobs:
   # Check whether to build the wheels and the source tarball
   check_build_trigger:
@@ -53,6 +56,8 @@ jobs:
 
       - name: Build and test wheels
         env:
+          # Set the directory where the wheel is unpacked
+          CIBW_ENVIRONMENT: "WHEEL_DIRNAME=scikit_learn-$SCIKIT_LEARN_VERSION"
           CIBW_BUILD: cp${{ matrix.python }}-*
           CIBW_TEST_REQUIRES: pytest pandas threadpoolctl
           # Test that there are no links to system libraries
@@ -60,12 +65,10 @@ jobs:
                              python -m threadpoolctl -i sklearn
           # By default, the Windows wheels are not repaired.
           # In this case, we need to vendor the vcomp140.dll 
-          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: bash &&
-                                             wheel unpack {wheel} &&
-                                             wheel_dirname=$(ls -td * | head -1) &&
-                                             python build_tools/github/vendor_vcomp140.py "$wheel_dirname" &&
-                                             wheel pack "$wheel_dirname" -d {dest_dir} &&
-                                             rm -r "$wheel_dirname"
+          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: wheel unpack {wheel} &&
+                                             python build_tools/github/vendor_vcomp140.py "$WHEEL_DIRNAME" &&
+                                             wheel pack "$WHEEL_DIRNAME" -d {dest_dir} &&
+                                             rm -r "$WHEEL_DIRNAME"
 
         run: bash build_tools/github/build_wheels.sh
 
