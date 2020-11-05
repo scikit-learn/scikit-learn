@@ -62,9 +62,9 @@ jobs:
           # In this case, we need to vendor the vcomp140.dll 
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: wheel unpack {wheel} &&
                                              wheel_dirname=$(ls -td * | head -1) &&
-                                             python build_tools/github/vendor_vcomp140.dll $wheel_dirname &&
-                                             wheel pack $wheel_dirname -d {dest_dir} &&
-                                             rm -r $wheel_dirname
+                                             python build_tools/github/vendor_vcomp140.dll "$wheel_dirname" &&
+                                             wheel pack "$wheel_dirname" -d {dest_dir} &&
+                                             rm -r "$wheel_dirname"
 
         run: bash build_tools/github/build_wheels.sh
 
