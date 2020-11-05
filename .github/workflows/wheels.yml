@@ -52,9 +52,6 @@ jobs:
         uses: actions/setup-python@v2
 
       - name: Build and test wheels
-        run: bash build_tools/github/build_wheels.sh
-
-      - name: Build and test wheels
         env:
           CIBW_BUILD: cp${{ matrix.python }}-*
           CIBW_TEST_REQUIRES: pytest pandas threadpoolctl
