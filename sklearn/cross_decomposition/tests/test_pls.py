@@ -426,6 +426,7 @@ def test_scale_and_stability(Est):
 
         X_score, Y_score = Est(scale=True).fit_transform(X, Y)
         X_s_score, Y_s_score = Est(scale=False).fit_transform(X_s, Y_s)
+        assert False
 
         assert_array_almost_equal(X_s_score, X_score)
         assert_array_almost_equal(Y_s_score, Y_score)
