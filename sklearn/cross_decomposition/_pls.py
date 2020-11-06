@@ -45,6 +45,7 @@ def _get_first_singular_vectors_power_method(X, Y, mode="A", max_iter=500,
         # As a result, and as detailed in the Wegelin's review, CCA (i.e. mode
         # B) will be unstable if n_features > n_samples or n_targets >
         # n_samples
+        # print(np.linalg.cond(X))
         X_pinv = pinv2(X, check_finite=False, cond=10*eps)
         Y_pinv = pinv2(Y, check_finite=False, cond=10*eps)
 

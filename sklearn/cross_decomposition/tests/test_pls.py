@@ -385,35 +385,33 @@ def test_copy(Est):
 def _generate_test_scale_and_stability_datasets():
     """Generate dataset for test_scale_and_stability"""
     # dataset for non-regression 7818
-    rng = np.random.RandomState(0)
-    n_samples = 1000
-    n_targets = 5
-    n_features = 10
-    Q = rng.randn(n_targets, n_features)
-    Y = rng.randn(n_samples, n_targets)
-    X = np.dot(Y, Q) + 2 * rng.randn(n_samples, n_features) + 1
-    X *= 1000
-    yield X, Y
+    # rng = np.random.RandomState(0)
+    # n_samples = 1000
+    # n_targets = 5
+    # n_features = 10
+    # Q = rng.randn(n_targets, n_features)
+    # Y = rng.randn(n_samples, n_targets)
+    # X = np.dot(Y, Q) + 2 * rng.randn(n_samples, n_features) + 1
+    # X *= 1000
+    # yield X, Y
 
-    # Data set where one of the features is constaint
-    X, Y = load_linnerud(return_X_y=True)
-    # causes X[:, -1].std() to be zero
-    X[:, -1] = 1.0
-    yield X, Y
+    # # Data set where one of the features is constaint
+    # X, Y = load_linnerud(return_X_y=True)
+    # # causes X[:, -1].std() to be zero
+    # X[:, -1] = 1.0
+    # yield X, Y
 
     # Seeds that provide a non-regression test for #18746, where CCA fails
-    seeds = [53, 801]
+    seeds = [138, 530, 741]
     for seed in seeds:
         rng = np.random.RandomState(seed)
-        X = np.array([[0., 0., 1.],
-                      [1., 0., 0.],
-                      [2., 2., 2.],
-                      [3., 5., 4.]])
+        X = rng.randn(4, 3)
         Y = rng.randn(4, 2)
         yield X, Y
 
 
-@pytest.mark.parametrize('Est', (CCA, PLSCanonical, PLSRegression, PLSSVD))
+# @pytest.mark.parametrize('Est', (CCA, PLSCanonical, PLSRegression, PLSSVD))
+@pytest.mark.parametrize('Est', (CCA, ))
 @pytest.mark.parametrize('X, Y', _generate_test_scale_and_stability_datasets())
 def test_scale_and_stability(Est, X, Y):
     """scale=True is equivalent to scale=False on centered/scaled data
