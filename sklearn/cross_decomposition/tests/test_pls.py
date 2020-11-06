@@ -421,8 +421,8 @@ def test_scale_and_stability(Est, X, Y):
     X_score, Y_score = Est(scale=True).fit_transform(X, Y)
     X_s_score, Y_s_score = Est(scale=False).fit_transform(X_s, Y_s)
 
-    assert_allclose(X_s_score, X_score)
-    assert_allclose(Y_s_score, Y_score)
+    assert_allclose(X_s_score, X_score, atol=1e-4)
+    assert_allclose(Y_s_score, Y_score, atol=1e-4)
 
 
 @pytest.mark.parametrize('Est', (PLSSVD, PLSCanonical, CCA))

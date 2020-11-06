@@ -229,15 +229,10 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         # This whole thing corresponds to the algorithm in section 4.1 of the
         # review from Wegelin. See above for a notation mapping from code to
         # paper.
-        Y_eps = np.finfo(Yk.dtype).eps
         for k in range(n_components):
             # Find first left and right singular vectors of the X.T.dot(Y)
             # cross-covariance matrix.
             if self.algorithm == "nipals":
-                # Replace columns that are all close to zero with zeros
-                Yk_mask = np.all(np.abs(Yk) < 10 * Y_eps, axis=0)
-                Yk[:, Yk_mask] = 0.0
-
                 x_weights, y_weights, n_iter_ = \
                     _get_first_singular_vectors_power_method(
                         Xk, Yk, mode=self.mode, max_iter=self.max_iter,
