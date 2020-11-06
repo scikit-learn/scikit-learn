@@ -635,8 +635,9 @@ def check_array(array, accept_sparse=False, *, accept_large_sparse=True,
         # make sure we actually converted to numeric:
         if dtype_numeric and array.dtype.kind in "OUSV":
             warnings.warn("Arrays of bytes/strings is being converted to "
-                          "decimal numbers if dtype='numeric'",
-                          DataConversionWarning, stacklevel=2)
+                          "decimal numbers if dtype='numeric'. This behavior "
+                          "is deprecated in 0.24 and will be removed in 0.26",
+                          FutureWarning, stacklevel=2)
             try:
                 array = array.astype(np.float64)
             except ValueError as e:

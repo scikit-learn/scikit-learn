@@ -46,7 +46,6 @@ from sklearn.utils.validation import (
     FLOAT_DTYPES)
 from sklearn.utils.validation import _check_fit_params
 from sklearn.utils.fixes import parse_version
-from sklearn.exceptions import DataConversionWarning
 
 import sklearn
 
@@ -338,6 +337,7 @@ def test_check_array():
     assert isinstance(result, np.ndarray)
 
 
+# TODO: Check for error in 0.26 when implicit conversation is removed
 @pytest.mark.parametrize("X", [
    [['1', '2'], ['3', '4']],
    np.array([['1', '2'], ['3', '4']], dtype='U'),
@@ -348,8 +348,9 @@ def test_check_array():
 def test_check_array_numeric_warns(X):
     """Test that check_array warns when it converts a bytes/string into a
     float."""
-    expected_msg = "Arrays of bytes/strings is being converted to decimal"
-    with pytest.warns(DataConversionWarning, match=expected_msg):
+    expected_msg = (r"Arrays of bytes/strings is being converted to decimal .*"
+                    r"deprecated in 0.24 and will be removed in 0.26")
+    with pytest.warns(FutureWarning, match=expected_msg):
         X_out = check_array(X, dtype="numeric")
     assert_allclose(X_out, [[1, 2], [3, 4]])
 
