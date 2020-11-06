@@ -382,12 +382,10 @@ def test_copy(Est):
                               pls.predict(X.copy(), copy=False))
 
 
-@pytest.mark.parametrize('Est', (CCA, PLSCanonical, PLSRegression, PLSSVD))
-def test_scale_and_stability_non_regression_7819(Est):
-    """Non-regression for
-    https://github.com/scikit-learn/scikit-learn/pull/7819"""
+def _generate_test_scale_and_stability_datasets():
+    """Generate dataset for test_scale_and_stability"""
+    # dataset for non-reression 7818
     rng = np.random.RandomState(0)
-
     n_samples = 1000
     n_targets = 5
     n_features = 10
@@ -395,45 +393,30 @@ def test_scale_and_stability_non_regression_7819(Est):
     Y = rng.randn(n_samples, n_targets)
     X = np.dot(Y, Q) + 2 * rng.randn(n_samples, n_features) + 1
     X *= 1000
-
-    X_s, Y_s, *_ = _center_scale_xy(X, Y)
-
-    X_score, Y_score = Est(scale=True).fit_transform(X, Y)
-    X_s_score, Y_s_score = Est(scale=False).fit_transform(X_s, Y_s)
-
-    assert_array_almost_equal(X_s_score, X_score)
-    assert_array_almost_equal(Y_s_score, Y_score)
-
-
-@pytest.mark.parametrize('Est', (CCA, PLSCanonical, PLSRegression, PLSSVD))
-def test_scale_and_stability_linnerud(Est):
-    """scale=True is equivalent to scale=False on centered/scaled data
-    This allows to check numerical stability over platforms as well"""
+    yield X, Y
 
     X, Y = load_linnerud(return_X_y=True)
     # causes X[:, -1].std() to be zero
     X[:, -1] = 1.0
-    X_s, Y_s, *_ = _center_scale_xy(X, Y)
+    yield X, Y
 
-    X_score, Y_score = Est(scale=True).fit_transform(X, Y)
-    X_s_score, Y_s_score = Est(scale=False).fit_transform(X_s, Y_s)
-
-    assert_array_almost_equal(X_s_score, X_score)
-    assert_array_almost_equal(Y_s_score, Y_score)
+    # Seeds that fail for CCA
+    seeds = [53, 801]
+    for seed in seeds:
+        rng = np.random.RandomState(seed)
+        X = np.array([[0., 0., 1.],
+                      [1., 0., 0.],
+                      [2., 2., 2.],
+                      [3., 5., 4.]])
+        Y = rng.randn(4, 2)
+        yield X, Y
 
 
 @pytest.mark.parametrize('Est', (CCA, PLSCanonical, PLSRegression, PLSSVD))
-@pytest.mark.parametrize('seed', [53, 801])
-def test_scale_and_stability(Est, seed):
-    """Ensure that results are consistent between platforms. For CCA, this
-    test ensures that the computation of `x_weights` is stable for
-    different platforms. (#18746)"""
-    rng = np.random.RandomState(seed)
-    X = np.array([[0., 0., 1.],
-                  [1., 0., 0.],
-                  [2., 2., 2.],
-                  [3., 5., 4.]])
-    Y = rng.randn(4, 2)
+@pytest.mark.parametrize('X, Y', _generate_test_scale_and_stability_datasets())
+def test_scale_and_stability(Est, X, Y):
+    """scale=True is equivalent to scale=False on centered/scaled data
+    This allows to check numerical stability over platforms as well"""
 
     X_s, Y_s, *_ = _center_scale_xy(X, Y)
 
@@ -442,6 +425,7 @@ def test_scale_and_stability(Est, seed):
 
     assert_array_almost_equal(X_s_score, X_score)
     assert_array_almost_equal(Y_s_score, Y_score)
+
 
 
 @pytest.mark.parametrize('Est', (PLSSVD, PLSCanonical, CCA))
