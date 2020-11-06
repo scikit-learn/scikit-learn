@@ -384,7 +384,7 @@ def test_copy(Est):
 
 def _generate_test_scale_and_stability_datasets():
     """Generate dataset for test_scale_and_stability"""
-    # dataset for non-reression 7818
+    # dataset for non-regression 7818
     rng = np.random.RandomState(0)
     n_samples = 1000
     n_targets = 5
@@ -395,12 +395,13 @@ def _generate_test_scale_and_stability_datasets():
     X *= 1000
     yield X, Y
 
+    # Data set where one of the features is constaint
     X, Y = load_linnerud(return_X_y=True)
     # causes X[:, -1].std() to be zero
     X[:, -1] = 1.0
     yield X, Y
 
-    # Seeds that fail for CCA
+    # Seeds that provide a non-regression test for #18746, where CCA fails
     seeds = [53, 801]
     for seed in seeds:
         rng = np.random.RandomState(seed)
