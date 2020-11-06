@@ -72,11 +72,6 @@ cal_clf.fit(X_valid, y_valid)
 # Compare probabilities
 # ---------------------
 #
-# The uncalibrated classifier is overly confident in its predictions and
-# incurs a large :ref:`log loss <log_loss>`. The calibrated classifier produces
-# probabilities that are less confident, i.e., the probabilities are further
-# away from 0 and 1. This calibration results in a lower log loss.
-#
 # Below we plot a 2-simplex with arrows showing the change in predicted
 # probabilities of the test samples. Each vertex of the simplex represents
 # a perfectly predicted class (e.g., 1, 0, 0). The mid point
@@ -85,6 +80,18 @@ cal_clf.fit(X_valid, y_valid)
 # uncalibrated probabilities and end with the arrow head at the calibrated
 # probability. The color of the arrow represents the true class of that test
 # sample.
+#
+# The uncalibrated classifier is overly confident in its predictions and
+# incurs a large :ref:`log loss <log_loss>`. The calibrated classifier incurs
+# a lower :ref:`log loss <log_loss>` due to two factors. First, notice in the
+# figure below that the arrows generally point away from the edges of the
+# simplex, where the probability of one class is 0. Second, a large proportion
+# of the arrows point towards the true class, e.g., green arrows (samples where
+# the true class is 'green') generally point towards the green vertex. These
+# result in fewer over-confident 0 predicted probabilities and at the same time
+# an increase in the the probabilities for the correct class. Thus the
+# calibrated classifier produces more accurate predicted probablities that
+# incur a lower :ref:`log loss <log_loss>`
 
 import matplotlib.pyplot as plt
 
@@ -154,19 +161,12 @@ plt.ylim(-0.05, 1.05)
 _ = plt.legend(loc="best")
 
 # %%
-# Notice in the figure above that the arrows generally point away from the
-# edges of the simplex, where the probability of one class is 0. Further, a
-# large proportion of the arrows point towards the true
-# class, e.g., green arrows (samples where the true class is 'green')
-# generally point towards the green vertex. These result in fewer
-# over-confident 0 predicted probabilities and at the same time an increase
-# in the the probabilities for the correct class.
-#
-# We can show this objectively by comparing the log loss of the uncalibrated
-# and calibrated classifiers on the predictions of the 1000 test samples.
-# Note that an alternative would have been to increase the number of base
-# estimators (trees) of the :class:`~sklearn.ensemble.RandomForestClassifier`
-# which would have resulted in a similar decrease in log loss.
+# We can show this objectively by comparing the :ref:`log loss <log_loss>` of
+# the uncalibrated and calibrated classifiers on the predictions of the 1000
+# test samples. Note that an alternative would have been to increase the number
+# of base estimators (trees) of the
+# :class:`~sklearn.ensemble.RandomForestClassifier` which would have resulted
+# in a similar decrease in :ref:`log loss <log_loss>`.
 
 from sklearn.metrics import log_loss
 
