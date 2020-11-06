@@ -71,19 +71,12 @@ cal_clf.fit(X_valid, y_valid)
 # %%
 # Compare probabilities
 # ---------------------
-#
-# Below we plot a 2-simplex with arrows showing the change in predicted
-# probabilities of the test samples. Each vertex of the simplex represents
-# a perfectly predicted class (e.g., 1, 0, 0). The mid point
-# inside the simplex represents predicting the three classes with equal
-# probability (i.e., 1/3, 1/3, 1/3). Each arrow starts at the
-# uncalibrated probabilities and end with the arrow head at the calibrated
-# probability. The color of the arrow represents the true class of that test
-# sample.
+# Below we plotted a 2-simplex with arrows showing the change in predicted
+# probabilities of the test samples.
 
 import matplotlib.pyplot as plt
 
-plt.figure(figsize=(9, 8))
+plt.figure(figsize=(10, 10))
 colors = ["r", "g", "b"]
 
 clf_probs = clf.predict_proba(X_test)
@@ -149,6 +142,14 @@ plt.ylim(-0.05, 1.05)
 _ = plt.legend(loc="best")
 
 # %%
+# In the figure above. each vertex of the simplex represents
+# a perfectly predicted class (e.g., 1, 0, 0). The mid point
+# inside the simplex represents predicting the three classes with equal
+# probability (i.e., 1/3, 1/3, 1/3). Each arrow starts at the
+# uncalibrated probabilities and end with the arrow head at the calibrated
+# probability. The color of the arrow represents the true class of that test
+# sample.
+#
 # The uncalibrated classifier is overly confident in its predictions and
 # incurs a large :ref:`log loss <log_loss>`. The calibrated classifier incurs
 # a lower :ref:`log loss <log_loss>` due to two factors. First, notice in the
@@ -182,7 +183,7 @@ print(f" * calibrated classifier: {cal_score:.3f}")
 # the 2-simplex, compute the corresponding calibrated probabilities and
 # plot arrows for each. This illustrates the learned calibration map:
 
-plt.figure(figsize=(9, 8))
+plt.figure(figsize=(10, 10))
 # Generate grid of points
 p1d = np.linspace(0, 1, 20)
 p0, p1 = np.meshgrid(p1d, p1d)
