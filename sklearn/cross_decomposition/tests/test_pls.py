@@ -384,7 +384,8 @@ def test_copy(Est):
 
 @pytest.mark.parametrize('Est', (CCA, PLSCanonical, PLSRegression, PLSSVD))
 def test_scale_and_stability_non_regression_7819(Est):
-    # Non-regression for https://github.com/scikit-learn/scikit-learn/pull/7819
+    """Non-regression for
+    https://github.com/scikit-learn/scikit-learn/pull/7819"""
     rng = np.random.RandomState(0)
 
     n_samples = 1000
@@ -405,9 +406,9 @@ def test_scale_and_stability_non_regression_7819(Est):
 
 
 @pytest.mark.parametrize('Est', (CCA, PLSCanonical, PLSRegression, PLSSVD))
-def test_scale_and_stability_non_regression_linnerud(Est):
-    # scale=True is equivalent to scale=False on centered/scaled data
-    # This allows to check numerical stability over platforms as well
+def test_scale_and_stability_linnerud(Est):
+    """scale=True is equivalent to scale=False on centered/scaled data
+    This allows to check numerical stability over platforms as well"""
 
     X, Y = load_linnerud(return_X_y=True)
     # causes X[:, -1].std() to be zero
@@ -422,10 +423,10 @@ def test_scale_and_stability_non_regression_linnerud(Est):
 
 
 @pytest.mark.parametrize('Est', (CCA, PLSCanonical, PLSRegression, PLSSVD))
-def test_scale_and_stability_2821(Est):
-    # From bug #2821
-    # Test with X2, Y2 s.t. clf.x_score[:, 1] == 0, clf.y_score[:, 1] == 0
-    # This test robustness of algorithm when dealing with value close to 0
+def test_scale_and_stability(Est):
+    """Ensure that results are consistent between platforms. For CCA, this
+    test ensures that the computation of `x_weights` is stable for
+    different platforms. (#18746)"""
     X = np.array([[0., 0., 1.],
                   [1., 0., 0.],
                   [2., 2., 2.],
