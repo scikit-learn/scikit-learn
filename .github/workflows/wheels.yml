@@ -1,0 +1,125 @@
+# Workflow to build and test wheels
+name: Wheel builder
+
+on:
+  schedule:
+    # Nightly build at 3:42 A.M.
+    - cron: "42 3 */1 * *"
+  push:
+    branches:
+      # Release branches
+      - "[0-9]+.[0-9]+.X"
+  pull_request:
+    branches:
+      - master
+      - "[0-9]+.[0-9]+.X"
+
+env:
+  SCIKIT_LEARN_VERSION: 0.24.dev0
+
+jobs:
+  # Check whether to build the wheels and the source tarball
+  check_build_trigger:
+    name: Check build trigger
+    runs-on: ubuntu-latest
+    outputs:
+      build: ${{ steps.check_build_trigger.outputs.build }}
+
+    steps:
+      - name: Checkout scikit-learn
+        uses: actions/checkout@v1
+
+      - id: check_build_trigger
+        name: Check build trigger
+        run: bash build_tools/github/check_build_trigger.sh
+
+  # Build the wheels for Linux, Windows and macOS for Python 3.6 and newer
+  build_wheels:
+    name: Build wheels on ${{ matrix.os }} for Python ${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    needs: check_build_trigger
+    if: needs.check_build_trigger.outputs.build
+
+    strategy:
+      # Ensure that a wheel builder finishes even if another fails
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        python: [36, 37, 38, 39]
+
+    steps:
+      - name: Checkout scikit-learn
+        uses: actions/checkout@v1
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+
+      - name: Build and test wheels
+        env:
+          # Set the directory where the wheel is unpacked
+          CIBW_ENVIRONMENT: "WHEEL_DIRNAME=scikit_learn-$SCIKIT_LEARN_VERSION"
+          CIBW_BUILD: cp${{ matrix.python }}-*
+          CIBW_TEST_REQUIRES: pytest pandas threadpoolctl
+          # Test that there are no links to system libraries
+          CIBW_TEST_COMMAND: pytest --pyargs sklearn &&
+                             python -m threadpoolctl -i sklearn
+          # By default, the Windows wheels are not repaired.
+          # In this case, we need to vendor the vcomp140.dll 
+          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: wheel unpack {wheel} &&
+                                             python build_tools/github/vendor_vcomp140.py %WHEEL_DIRNAME% &&
+                                             wheel pack %WHEEL_DIRNAME% -d {dest_dir} &&
+                                             rmdir /s /q %WHEEL_DIRNAME%
+
+        run: bash build_tools/github/build_wheels.sh
+
+      - name: Store artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          path: wheelhouse/*.whl
+
+  # Build the source distribution under Linux
+  build_sdist:
+    name: Source distribution
+    runs-on: ubuntu-latest
+    needs: check_build_trigger
+    if: needs.check_build_trigger.outputs.build
+
+    steps:
+      - name: Checkout scikit-learn
+        uses: actions/checkout@v1
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+
+      - name: Build and test source distribution
+        run: bash build_tools/github/build_source.sh
+
+      - name: Store artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          path: dist/*.tar.gz
+
+  # Upload the wheels and the source distribution
+  upload_anaconda:
+    name: Upload to Anaconda
+    runs-on: ubuntu-latest
+    needs: [build_wheels, build_sdist]
+    # The artifacts are not be uploaded on PRs
+    if: github.event_name != 'pull_request'
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: dist
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+
+      - name: Upload artifacts
+        env:
+          # Secret variables need to be mapped to environment variables explicitly
+          SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN: ${{ secrets.SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN }}
+          SCIKIT_LEARN_STAGING_UPLOAD_TOKEN: ${{ secrets.SCIKIT_LEARN_STAGING_UPLOAD_TOKEN }}
+        # Force a replacement if the remote file already exists
+        run: bash build_tools/github/upload_anaconda.sh

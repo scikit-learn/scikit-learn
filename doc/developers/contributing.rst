@@ -496,6 +496,7 @@ message, the following actions are taken.
     Commit Message Marker  Action Taken by CI
     ---------------------- -------------------
     [ci skip]              CI is skipped completely
+    [cd build]             CD is run (wheels and source distribution are built)
     [lint skip]            Azure pipeline skips linting
     [scipy-dev]            Add a Travis build with our dependencies (numpy, scipy, etc ...) development builds
     [icc-build]            Add a Travis build with the Intel C compiler (ICC)
