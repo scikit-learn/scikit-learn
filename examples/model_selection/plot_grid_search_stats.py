@@ -268,13 +268,13 @@ print(f"Uncorrected t-value: {t_stat_uncorrected:.3f}\n"
 # ---------------------------------------
 # We can use Bayesian estimation to calculate the probability that the first
 # model is better than the second. Bayesian estimation will output a
-# distribution that specifies the probability of each parameter value, which in
-# this example is the mean of the differences in the performance of two models.
+# distribution followed by the mean :math:`\mu` of the differences in the
+# performance of two models.
 #
 # To obtain the posterior distribution we need to define a prior that models
-# our beliefs of how the means are distributed before looking at the data,
+# our beliefs of how the mean is distributed before looking at the data,
 # and multiply it by a likelihood function that computes how likely our
-# observed mean differences are, given the values that the mean of differences
+# observed differences are, given the values that the mean of differences
 # could take.
 #
 # Bayesian estimation can be carried out in many forms to answer our question,
@@ -294,9 +294,7 @@ print(f"Uncorrected t-value: {t_stat_uncorrected:.3f}\n"
 #    St(\mu;n-1,\overline{x},(\frac{1}{n}+\frac{n_{test}}{n_{train}})
 #    \hat{\sigma}^2)
 #
-# where :math:`\mu` represents the posterior of the mean difference in
-# performance,
-# :math:`n` is the total number of samples,
+# where :math:`n` is the total number of samples,
 # :math:`\overline{x}` represents the mean difference in the scores,
 # :math:`n_{test}` is the number of samples used for testing,
 # :math:`n_{train}` is the number of samples used for training,
@@ -323,7 +321,7 @@ plt.plot(x, t_post.pdf(x))
 plt.xticks(np.arange(-0.04, 0.06, 0.01))
 plt.fill_between(x, t_post.pdf(x), 0, facecolor='blue', alpha=.2)
 plt.ylabel("Probability density")
-plt.xlabel("Mean difference")
+plt.xlabel(r"Mean difference ($\mu$)")
 plt.title("Posterior distribution")
 plt.show()
 
@@ -386,7 +384,7 @@ plt.xticks(np.arange(-0.04, 0.06, 0.01))
 plt.vlines([-0.01, 0.01], ymin=0, ymax=(np.max(t_post.pdf(x)) + 1))
 plt.fill_between(x_rope, t_post.pdf(x_rope), 0, facecolor='blue', alpha=.2)
 plt.ylabel("Probability density")
-plt.xlabel("Mean difference")
+plt.xlabel(r"Mean difference ($\mu$)")
 plt.title("Posterior distribution under the ROPE")
 plt.show()
 
