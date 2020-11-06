@@ -83,7 +83,7 @@ cal_clf.fit(X_valid, y_valid)
 
 import matplotlib.pyplot as plt
 
-plt.figure(figsize=(10, 10))
+plt.figure(figsize=(9, 8))
 colors = ["r", "g", "b"]
 
 clf_probs = clf.predict_proba(X_test)
@@ -182,7 +182,7 @@ print(f" * calibrated classifier: {cal_score:.3f}")
 # the 2-simplex, compute the corresponding calibrated probabilities and
 # plot arrows for each. This illustrates the learned calibration map:
 
-plt.figure(figsize=(10, 10))
+plt.figure(figsize=(9, 8))
 # Generate grid of points
 p1d = np.linspace(0, 1, 20)
 p0, p1 = np.meshgrid(p1d, p1d)
