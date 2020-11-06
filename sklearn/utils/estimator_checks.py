@@ -788,6 +788,9 @@ def check_estimator_sparse_data(name, estimator_orig, strict_mode=True):
                 pred = estimator.predict(X)
                 if tags['multioutput_only']:
                     assert pred.shape == (X.shape[0], 1)
+                elif tags['multioutput']:
+                    assert (pred.shape == (X.shape[0], 1) or
+                            pred.shape == (X.shape[0],))
                 else:
                     assert pred.shape == (X.shape[0],)
             if hasattr(estimator, 'predict_proba'):

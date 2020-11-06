@@ -309,13 +309,19 @@ class NotInvariantPredict(BaseEstimator):
 
     def predict(self, X):
         # return 1 if X has more than one element else return 0
-        X = check_array(X)
+        X = check_array(X, accept_sparse=('csr', 'csc'))
         if X.shape[0] > 1:
             return np.ones(X.shape[0])
         return np.zeros(X.shape[0])
 
 
 class NotInvariantSampleOrder(BaseEstimator):
+
+    def _get_tags(self):
+        tags = super()._get_tags()
+        tags['multioutput'] = True
+        return tags
+
     def fit(self, X, y):
         X, y = self._validate_data(
             X, y,
@@ -327,13 +333,22 @@ class NotInvariantSampleOrder(BaseEstimator):
         return self
 
     def predict(self, X):
-        X = check_array(X)
+        X = check_array(X, accept_sparse=('csr', 'csc'))
         # if the input contains the same elements but different sample order,
         # then just return zeros.
-        if (np.array_equiv(np.sort(X, axis=0), np.sort(self._X, axis=0)) and
-           (X != self._X).any()):
-            return np.zeros(X.shape[0])
-        return X[:, 0]
+        if sp.issparse(X):
+            X_checked = X.A
+        else:
+            X_checked = X
+        if sp.issparse(self._X):
+            _X_checked = self._X.A
+        else:
+            _X_checked = self._X
+        if (np.array_equiv(np.sort(X_checked, axis=0),
+                           np.sort(_X_checked, axis=0)) and
+           (X_checked != _X_checked).any()):
+            return np.zeros(X_checked.shape[0])
+        return X_checked[:, 0]
 
 
 class LargeSparseNotSupportedClassifier(BaseEstimator):
