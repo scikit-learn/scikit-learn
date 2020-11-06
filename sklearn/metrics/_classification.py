@@ -128,6 +128,92 @@ def _check_targets(y_true, y_pred):
     return y_type, y_true, y_pred
 
 
+def _validate_multiclass_probabilistic_prediction(y_true, y_prob,
+                                                  sample_weight, labels):
+    r"""Convert y_true and y_prob to shape [n_samples, n_classes]
+
+    1. Verify that y_true, y_prob, and sample_weights have the same first dim
+    2. Ensure 2 or more classes in y_true i.e. valid classification task. The
+       classes are provided by the labels argument, or inferred using y_true.
+       When inferring y_true is assumed binary if it has shape (n_samples, ).
+    3. Validate y_true, and y_prob have the same number of classes. Convert to
+       shape [n_samples, n_classes]/
+
+    Parameters
+    ----------
+    y_true : array-like or label indicator matrix
+        Ground truth (correct) labels for n_samples samples.
+
+    y_prob : array-like of float, shape=(n_samples, n_classes) or (n_samples,)
+        Predicted probabilities, as returned by a classifier's
+        predict_proba method. If ``y_prob.shape = (n_samples,)``
+        the probabilities provided are assumed to be that of the
+        positive class. The labels in ``y_prob`` are assumed to be
+        ordered lexicographically, as done by
+        :class:`preprocessing.LabelBinarizer`.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    labels : array-like, default=None
+        If not provided, labels will be inferred from y_true. If ``labels``
+        is ``None`` and ``y_prob`` has shape (n_samples,) the labels are
+        assumed to be binary and are inferred from ``y_true``.
+
+    Returns
+    -------
+    transformed_labels : array of shape [n_samples, n_classes]
+
+    y_prob : array of shape [n_samples, n_classes]
+    """
+    y_prob = check_array(y_prob, ensure_2d=False)
+    check_consistent_length(y_prob, y_true, sample_weight)
+
+    lb = LabelBinarizer()
+
+    if labels is not None:
+        lb = lb.fit(labels)
+    else:
+        lb = lb.fit(y_true)
+
+    if len(lb.classes_) == 1:
+        if labels is None:
+            raise ValueError(f'y_true contains only one label: '
+                             f'{lb.classes_[0]}. Please provide the true '
+                             f'labels explicitly through the labels argument.')
+        else:
+            raise ValueError(f'The labels array needs to contain at least two '
+                             f'labels, got {lb.classes_}.')
+
+    transformed_labels = lb.transform(y_true)
+
+    if transformed_labels.shape[1] == 1:
+        transformed_labels = np.append(1-transformed_labels,
+                                       transformed_labels, axis=1)
+
+    # If y_prob is of single dimension, assume y_true to be binary
+    if y_prob.ndim == 1:
+        y_prob = y_prob[:, np.newaxis]
+    if y_prob.shape[1] == 1:
+        y_prob = np.append(1 - y_prob, y_prob, axis=1)
+
+    # Check if dimensions are consistent.
+    transformed_labels = check_array(transformed_labels)
+    if len(lb.classes_) != y_prob.shape[1]:
+        if labels is None:
+            raise ValueError(f"y_true and y_prob contain different number of "
+                             f"classes {transformed_labels.shape[1]}, "
+                             f"{y_prob.shape[1]}. Please provide the true "
+                             f"labels explicitly through the labels argument. "
+                             f"Classes found in y_true: {lb.classes_}")
+        else:
+            raise ValueError(f'The number of classes in labels is different '
+                             f'from that in y_prob. Classes found in '
+                             f'labels: {lb.classes_}')
+
+    return transformed_labels, y_prob
+
+
 def _weighted_sum(sample_score, sample_weight, normalize=False):
     if normalize:
         return np.average(sample_score, weights=sample_weight)
@@ -2222,57 +2308,12 @@ def log_loss(y_true, y_pred, *, eps=1e-15, normalize=True, sample_weight=None,
     C.M. Bishop (2006). Pattern Recognition and Machine Learning. Springer,
     p. 209.
     """
-    y_pred = check_array(y_pred, ensure_2d=False)
-    check_consistent_length(y_pred, y_true, sample_weight)
-
-    lb = LabelBinarizer()
-
-    if labels is not None:
-        lb.fit(labels)
-    else:
-        lb.fit(y_true)
-
-    if len(lb.classes_) == 1:
-        if labels is None:
-            raise ValueError('y_true contains only one label ({0}). Please '
-                             'provide the true labels explicitly through the '
-                             'labels argument.'.format(lb.classes_[0]))
-        else:
-            raise ValueError('The labels array needs to contain at least two '
-                             'labels for log_loss, '
-                             'got {0}.'.format(lb.classes_))
-
-    transformed_labels = lb.transform(y_true)
-
-    if transformed_labels.shape[1] == 1:
-        transformed_labels = np.append(1 - transformed_labels,
-                                       transformed_labels, axis=1)
+    transformed_labels, y_pred = _validate_multiclass_probabilistic_prediction(
+        y_true, y_pred, sample_weight, labels
+    )
 
     # Clipping
     y_pred = np.clip(y_pred, eps, 1 - eps)
-
-    # If y_pred is of single dimension, assume y_true to be binary
-    # and then check.
-    if y_pred.ndim == 1:
-        y_pred = y_pred[:, np.newaxis]
-    if y_pred.shape[1] == 1:
-        y_pred = np.append(1 - y_pred, y_pred, axis=1)
-
-    # Check if dimensions are consistent.
-    transformed_labels = check_array(transformed_labels)
-    if len(lb.classes_) != y_pred.shape[1]:
-        if labels is None:
-            raise ValueError("y_true and y_pred contain different number of "
-                             "classes {0}, {1}. Please provide the true "
-                             "labels explicitly through the labels argument. "
-                             "Classes found in "
-                             "y_true: {2}".format(transformed_labels.shape[1],
-                                                  y_pred.shape[1],
-                                                  lb.classes_))
-        else:
-            raise ValueError('The number of classes in labels is different '
-                             'from that in y_pred. Classes found in '
-                             'labels: {0}'.format(lb.classes_))
 
     # Renormalize
     y_pred /= y_pred.sum(axis=1)[:, np.newaxis]
@@ -2557,7 +2598,7 @@ def multiclass_brier_score_loss(y_true, y_prob, sample_weight=None,
         predict_proba method. If ``y_prob.shape = (n_samples,)``
         the probabilities provided are assumed to be that of the
         positive class. The labels in ``y_prob`` are assumed to be
-        ordered alphabetically, as done by
+        ordered lexicographically, as done by
         :class:`preprocessing.LabelBinarizer`.
 
     sample_weight : array-like of shape (n_samples,), default=None
@@ -2590,54 +2631,15 @@ def multiclass_brier_score_loss(y_true, y_prob, sample_weight=None,
             <https://en.wikipedia.org/wiki/Brier_score>`_.
     """
     y_true = column_or_1d(y_true)
-    y_prob = check_array(y_prob, ensure_2d=False)
-    check_consistent_length(y_prob, y_true, sample_weight)
+
+    transformed_labels, y_prob = _validate_multiclass_probabilistic_prediction(
+        y_true, y_prob, sample_weight, labels
+    )
 
     if y_prob.max() > 1:
         raise ValueError("y_prob contains values greater than 1.")
     if y_prob.min() < 0:
         raise ValueError("y_prob contains values less than 0.")
-
-    lb = LabelBinarizer()
-    if labels is not None:
-        lb = lb.fit(labels)
-    else:
-        lb = lb.fit(y_true)
-
-    if len(lb.classes_) == 1:
-        if labels is None:
-            raise ValueError(f'y_true contains only one label: '
-                             f'{lb.classes_[0]}. Please provide the true '
-                             f'labels explicitly through the labels argument.')
-        else:
-            raise ValueError(f'The labels array needs to contain at least two '
-                             f'labels, got {lb.classes_}.')
-
-    transformed_labels = lb.transform(y_true)
-
-    if transformed_labels.shape[1] == 1:
-        transformed_labels = np.append(1-transformed_labels,
-                                       transformed_labels, axis=1)
-
-    # If y_prob is of single dimension, assume y_true to be binary
-    if y_prob.ndim == 1:
-        y_prob = y_prob[:, np.newaxis]
-    if y_prob.shape[1] == 1:
-        y_prob = np.append(1 - y_prob, y_prob, axis=1)
-
-    # Check if dimensions are consistent.
-    transformed_labels = check_array(transformed_labels)
-    if len(lb.classes_) != y_prob.shape[1]:
-        if labels is None:
-            raise ValueError(f"y_true and y_prob contain different number of "
-                             f"classes {transformed_labels.shape[1]}, "
-                             f"{y_prob.shape[1]}. Please provide the true "
-                             f"labels explicitly through the labels argument. "
-                             f"Classes found in y_true: {lb.classes_}")
-        else:
-            raise ValueError(f'The number of classes in labels is different '
-                             f'from that in y_prob. Classes found in '
-                             f'labels: {lb.classes_}')
 
     return np.average(np.sum((transformed_labels - y_prob) ** 2, axis=1),
                       weights=sample_weight)

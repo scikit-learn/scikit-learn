@@ -2259,7 +2259,7 @@ def test_log_loss():
     y_true = [2, 2]
     y_pred = [[0.2, 0.7], [0.6, 0.5]]
     y_score = np.array([[0.1, 0.9], [0.1, 0.9]])
-    error_str = (r'y_true contains only one label \(2\). Please provide '
+    error_str = (r'y_true contains only one label: 2. Please provide '
                  r'the true labels explicitly through the labels argument.')
     with pytest.raises(ValueError, match=error_str):
         log_loss(y_true, y_pred)
