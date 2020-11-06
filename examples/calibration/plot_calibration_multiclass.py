@@ -80,18 +80,6 @@ cal_clf.fit(X_valid, y_valid)
 # uncalibrated probabilities and end with the arrow head at the calibrated
 # probability. The color of the arrow represents the true class of that test
 # sample.
-#
-# The uncalibrated classifier is overly confident in its predictions and
-# incurs a large :ref:`log loss <log_loss>`. The calibrated classifier incurs
-# a lower :ref:`log loss <log_loss>` due to two factors. First, notice in the
-# figure below that the arrows generally point away from the edges of the
-# simplex, where the probability of one class is 0. Second, a large proportion
-# of the arrows point towards the true class, e.g., green arrows (samples where
-# the true class is 'green') generally point towards the green vertex. These
-# result in fewer over-confident 0 predicted probabilities and at the same time
-# an increase in the the probabilities for the correct class. Thus the
-# calibrated classifier produces more accurate predicted probablities that
-# incur a lower :ref:`log loss <log_loss>`
 
 import matplotlib.pyplot as plt
 
@@ -161,6 +149,18 @@ plt.ylim(-0.05, 1.05)
 _ = plt.legend(loc="best")
 
 # %%
+# The uncalibrated classifier is overly confident in its predictions and
+# incurs a large :ref:`log loss <log_loss>`. The calibrated classifier incurs
+# a lower :ref:`log loss <log_loss>` due to two factors. First, notice in the
+# figure above that the arrows generally point away from the edges of the
+# simplex, where the probability of one class is 0. Second, a large proportion
+# of the arrows point towards the true class, e.g., green arrows (samples where
+# the true class is 'green') generally point towards the green vertex. These
+# result in fewer over-confident, 0 predicted probabilities and at the same
+# time an increase in the the predicted probabilities of the correct class.
+# Thus, the calibrated classifier produces more accurate predicted probablities
+# that incur a lower :ref:`log loss <log_loss>`
+#
 # We can show this objectively by comparing the :ref:`log loss <log_loss>` of
 # the uncalibrated and calibrated classifiers on the predictions of the 1000
 # test samples. Note that an alternative would have been to increase the number
