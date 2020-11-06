@@ -488,6 +488,7 @@ def test_norm_y_weights_deprecation(Est):
         est.norm_y_weights
 
 
+# TODO: Remove test in 0.26
 @pytest.mark.parametrize('Est', (PLSRegression, PLSCanonical, CCA, PLSSVD))
 @pytest.mark.parametrize('attr', ("x_mean_", "y_mean_", "x_std_", "y_std_"))
 def test_mean_and_std_deprecation(Est, attr):
