@@ -423,18 +423,17 @@ def test_scale_and_stability_linnerud(Est):
 
 
 @pytest.mark.parametrize('Est', (CCA, PLSCanonical, PLSRegression, PLSSVD))
-def test_scale_and_stability(Est):
+@pytest.mark.parametrize('seed', [53, 801])
+def test_scale_and_stability(Est, seed):
     """Ensure that results are consistent between platforms. For CCA, this
     test ensures that the computation of `x_weights` is stable for
     different platforms. (#18746)"""
+    rng = np.random.RandomState(seed)
     X = np.array([[0., 0., 1.],
                   [1., 0., 0.],
                   [2., 2., 2.],
                   [3., 5., 4.]])
-    Y = np.array([[0.1, -0.2],
-                  [0.9, 1.1],
-                  [6.2, 5.9],
-                  [11.9, 12.3]])
+    Y = rng.randn(4, 2)
 
     X_s, Y_s, *_ = _center_scale_xy(X, Y)
 
