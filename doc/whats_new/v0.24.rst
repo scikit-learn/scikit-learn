@@ -25,7 +25,8 @@ random sampling procedures.
 - |Fix| :class:`decomposition.KernelPCA` behaviour is now more consistent
   between 32-bits and 64-bits data when the kernel has small positive
   eigenvalues.
-- |Fix| ::class:`linear_model.Perceptron` when penalty='elasticnet'
+
+- |Fix| :class:`linear_model.Perceptron` when `penalty='elasticnet'`
 
 Details are listed in the changelog below.
 
@@ -51,9 +52,9 @@ Changelog
 ...................
 
 - |Fix| :meth:`base.BaseEstimator.get_params` now will raise an
-        `AttributeError` if a parameter cannot be retrieved as
-        an instance attribute. Previously it would return `None`.
-        :pr:`17448` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
+  `AttributeError` if a parameter cannot be retrieved as
+  an instance attribute. Previously it would return `None`.
+  :pr:`17448` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
 :mod:`sklearn.calibration`
 ..........................
@@ -131,7 +132,7 @@ Changelog
   the `init` value, when 'init=None' and
   n_components <= min(n_samples, n_features) will be changed from
   `'nndsvd'` to `'nndsvda'` in 0.26.
-  :pr:`18525` by `Chiara Marmo <cmarmo>`.
+  :pr:`18525` by :user:`Chiara Marmo <cmarmo>`.
 
 - |API| The bounds of the `n_components` parameter is now restricted:
 
@@ -222,7 +223,7 @@ Changelog
 
 - |Enhancement| :class:`discriminant_analysis.LinearDiscriminantAnalysis` can
   now use custom covariance estimate by setting the `covariance_estimator`
-  parameter. :pr:`14446` by :user:`Hugo Richard <hugorichard>`
+  parameter. :pr:`14446` by :user:`Hugo Richard <hugorichard>`.
 
 :mod:`sklearn.ensemble`
 .......................
@@ -473,7 +474,7 @@ Changelog
 
 - |Feature| :func:`metrics.plot_confusion_matrix` now supports making colorbar
   optional in the matplotlib plot by setting colorbar=False. :pr:`17192` by
-  :user:`Avi Gupta <avigupta2612>`
+  :user:`Avi Gupta <avigupta2612>`.
 
 - |Enhancement| Add `pos_label` parameter in
   :func:`metrics.plot_roc_curve` in order to specify the positive
@@ -501,7 +502,7 @@ Changelog
   they would return erroneous values when pos_label was not corresponding to
   `classifier.classes_[1]`. This is especially important when training
   classifiers directly with string labeled target classes.
-  :pr:`#18114` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`18114` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Fix| Fixed bug in :func:`metrics.plot_confusion_matrix` where error occurs
   when `y_true` contains labels that were not previously seen by the classifier
