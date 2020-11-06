@@ -21,7 +21,6 @@ from scipy.sparse.linalg import svds
 
 from ._base import _BasePCA
 from ..utils import check_random_state
-from ..utils import check_array
 from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
@@ -583,7 +582,7 @@ class PCA(_BasePCA):
         """
         check_is_fitted(self)
 
-        X = check_array(X)
+        X = self._validate_data(X, dtype=[np.float64, np.float32], reset=False)
         Xr = X - self.mean_
         n_features = X.shape[1]
         precision = self.get_precision()

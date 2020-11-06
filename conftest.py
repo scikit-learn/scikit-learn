@@ -13,7 +13,7 @@ from _pytest.doctest import DoctestItem
 
 from sklearn.utils import _IS_32BIT
 from sklearn.externals import _pilutil
-from sklearn._build_utils.min_dependencies import PYTEST_MIN_VERSION
+from sklearn._min_dependencies import PYTEST_MIN_VERSION
 from sklearn.utils.fixes import np_version, parse_version
 
 

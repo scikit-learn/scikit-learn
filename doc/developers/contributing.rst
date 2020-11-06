@@ -196,6 +196,23 @@ Contributing code
   so far. In order to claim an issue for yourself, please comment exactly
   ``take`` on it for the CI to automatically assign the issue to you.
 
+Video resources
+---------------
+These videos are step-by-step introductions on how to contribute to
+scikit-learn, and are a great companion to the following text guidelines.
+Please make sure to still check our guidelines below, since they describe our
+latest up-to-date workflow.
+
+- Crash Course in Contributing to Scikit-Learn & Open Source Projects:
+  `Video <https://youtu.be/5OL8XoMMOfA>`__, 
+  `Transcript
+  <https://github.com/data-umbrella/event-transcripts/blob/main/2020/05-andreas-mueller-contributing.md>`__
+
+- Example of Submitting a Pull Request to scikit-learn:
+  `Video <https://youtu.be/PU1WyDPGePI>`__,
+  `Transcript
+  <https://github.com/data-umbrella/event-transcripts/blob/main/2020/06-reshama-shaikh-sklearn-pr.md>`__
+
 How to contribute
 -----------------
 
@@ -431,11 +448,7 @@ You can check for common programming errors with the following tools:
 
   see also :ref:`testing_coverage`
 
-* A moderate use of type annotations is encouraged but is not mandatory. See
-  `mypy quickstart <https://mypy.readthedocs.io/en/latest/getting_started.html>`_
-  for an introduction, as well as `pandas contributing documentation
-  <https://pandas.pydata.org/pandas-docs/stable/development/contributing.html#type-hints>`_
-  for style guidelines. Whether you add type annotation or not::
+* Run static analysis with `mypy`::
 
     mypy sklearn
 
@@ -483,6 +496,7 @@ message, the following actions are taken.
     Commit Message Marker  Action Taken by CI
     ---------------------- -------------------
     [ci skip]              CI is skipped completely
+    [cd build]             CD is run (wheels and source distribution are built)
     [lint skip]            Azure pipeline skips linting
     [scipy-dev]            Add a Travis build with our dependencies (numpy, scipy, etc ...) development builds
     [icc-build]            Add a Travis build with the Intel C compiler (ICC)
@@ -722,26 +736,26 @@ Finally, follow the formatting rules below to make it consistently good:
 
     sample_weight : array-like of shape (n_samples,), default=None
 
-In general have the following in mind:
+  In general have the following in mind:
 
-    1. Use Python basic types. (``bool`` instead of ``boolean``)
-    2. Use parenthesis for defining shapes: ``array-like of shape (n_samples,)``
-       or ``array-like of shape (n_samples, n_features)``
-    3. For strings with multiple options, use brackets:
-       ``input: {'log', 'squared', 'multinomial'}``
-    4. 1D or 2D data can be a subset of
-       ``{array-like, ndarray, sparse matrix, dataframe}``. Note that ``array-like``
-       can also be a ``list``, while ``ndarray`` is explicitly only a ``numpy.ndarray``.
-    5. Specify ``dataframe`` when "frame-like" features are being used, such
-       as the column names.
-    6. When specifying the data type of a list, use ``of`` as a delimiter:
-       ``list of int``.
-    7. When specifying the dtype of an ndarray, use e.g. ``dtype=np.int32``
-       after defining the shape:
-       ``ndarray of shape (n_samples,), dtype=np.int32``.
-    8. When the default is ``None``, ``None`` only needs to be specified at the
-       end with ``default=None``. Be sure to include in the docstring, what it
-       means for the parameter or attribute to be ``None``.
+      1. Use Python basic types. (``bool`` instead of ``boolean``)
+      2. Use parenthesis for defining shapes: ``array-like of shape (n_samples,)``
+         or ``array-like of shape (n_samples, n_features)``
+      3. For strings with multiple options, use brackets:
+         ``input: {'log', 'squared', 'multinomial'}``
+      4. 1D or 2D data can be a subset of
+         ``{array-like, ndarray, sparse matrix, dataframe}``. Note that ``array-like``
+         can also be a ``list``, while ``ndarray`` is explicitly only a ``numpy.ndarray``.
+      5. Specify ``dataframe`` when "frame-like" features are being used, such
+         as the column names.
+      6. When specifying the data type of a list, use ``of`` as a delimiter:
+         ``list of int``.
+      7. When specifying the dtype of an ndarray, use e.g. ``dtype=np.int32``
+         after defining the shape:
+         ``ndarray of shape (n_samples,), dtype=np.int32``.
+      8. When the default is ``None``, ``None`` only needs to be specified at the
+         end with ``default=None``. Be sure to include in the docstring, what it
+         means for the parameter or attribute to be ``None``.
 
 * For unwritten formatting rules, try to follow existing good works:
 
@@ -751,8 +765,12 @@ In general have the following in mind:
 * When editing reStructuredText (``.rst``) files, try to keep line length under
   80 characters when possible (exceptions include links and tables).
 
-* Before submitting you pull request check if your modifications have introduced
-  new sphinx warnings and try to fix them.
+* Do not modify sphinx labels as this would break existing cross references and
+  external links pointing to specific sections in the
+  scikit-learn documentation.
+
+* Before submitting your pull request check if your modifications have
+  introduced new sphinx warnings and try to fix them.
 
 .. _generated_doc_CI:
 

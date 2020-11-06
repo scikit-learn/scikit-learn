@@ -445,15 +445,20 @@ def test_multilabel_binarizer_non_integer_labels():
     for inp, classes in inputs:
         # fit_transform()
         mlb = MultiLabelBinarizer()
+        inp = np.array(inp, dtype=object)
         assert_array_equal(mlb.fit_transform(inp), indicator_mat)
         assert_array_equal(mlb.classes_, classes)
-        assert_array_equal(mlb.inverse_transform(indicator_mat), inp)
+        indicator_mat_inv = np.array(mlb.inverse_transform(indicator_mat),
+                                     dtype=object)
+        assert_array_equal(indicator_mat_inv, inp)
 
         # fit().transform()
         mlb = MultiLabelBinarizer()
         assert_array_equal(mlb.fit(inp).transform(inp), indicator_mat)
         assert_array_equal(mlb.classes_, classes)
-        assert_array_equal(mlb.inverse_transform(indicator_mat), inp)
+        indicator_mat_inv = np.array(mlb.inverse_transform(indicator_mat),
+                                     dtype=object)
+        assert_array_equal(indicator_mat_inv, inp)
 
     mlb = MultiLabelBinarizer()
     with pytest.raises(TypeError):

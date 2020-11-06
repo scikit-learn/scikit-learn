@@ -1425,7 +1425,7 @@ class ShuffleSplit(BaseShuffleSplit):
     do not guarantee that all folds will be different, although this is
     still very likely for sizeable datasets.
 
-    Read more in the :ref:`User Guide <shuffle_split>`.
+    Read more in the :ref:`User Guide <ShuffleSplit>`.
 
     Parameters
     ----------

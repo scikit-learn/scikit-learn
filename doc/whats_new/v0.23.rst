@@ -194,7 +194,7 @@ random sampling procedures.
   :func:`decomposition.non_negative_factorization` with float32 dtype input.
 - |Fix| :func:`decomposition.KernelPCA.inverse_transform`
 - |API| :class:`ensemble.HistGradientBoostingClassifier` and
-  :class:`ensemble.HistGradientBoostingRegrerssor`
+  :class:`ensemble.HistGradientBoostingRegressor`
 - |Fix| ``estimator_samples_`` in :class:`ensemble.BaggingClassifier`,
   :class:`ensemble.BaggingRegressor` and :class:`ensemble.IsolationForest`
 - |Fix| :class:`ensemble.StackingClassifier` and
@@ -406,7 +406,7 @@ Changelog
   :user:`Chiara Marmo <cmarmo>`.
 
 - |API| Fixed a bug in :class:`ensemble.HistGradientBoostingClassifier` and
-  :class:`ensemble.HistGradientBoostingRegrerssor` that would not respect the
+  :class:`ensemble.HistGradientBoostingRegressor` that would not respect the
   `max_leaf_nodes` parameter if the criteria was reached at the same time as
   the `max_depth` criteria. :pr:`16183` by `Nicolas Hug`_.
 
@@ -521,9 +521,9 @@ Changelog
   the wrapped `base_estimator` during the fitting of the final model.
   :pr:`15773` by :user:`Jeremy Alexandre <J-A16>`.
 
-- |Fix| add `best_score_` attribute to :class:`linear_model.RidgeCV` and
+- |Fix| Add `best_score_` attribute to :class:`linear_model.RidgeCV` and
   :class:`linear_model.RidgeClassifierCV`.
-  :pr:`15653` by :user:`Jérôme Dockès <jeromedockes>`.
+  :pr:`15655` by :user:`Jérôme Dockès <jeromedockes>`.
 
 - |Fix| Fixed a bug in :class:`linear_model.RidgeClassifierCV` to pass a
   specific scoring strategy. Before the internal estimator outputs score
@@ -550,8 +550,8 @@ Changelog
   `Nicolas Hug`_.
 
 - |Fix| Fixed a bug in :class:`linear_model.ElasticNetCV`,
-  :class:`linear_model.MultitaskElasticNetCV`, :class:`linear_model.LassoCV`
-  and :class:`linear_model.MultitaskLassoCV` where fitting would fail when
+  :class:`linear_model.MultiTaskElasticNetCV`, :class:`linear_model.LassoCV`
+  and :class:`linear_model.MultiTaskLassoCV` where fitting would fail when
   using joblib loky backend. :pr:`14264` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
@@ -613,6 +613,11 @@ Changelog
 
 :mod:`sklearn.multioutput`
 ..........................
+
+- |Feature| :func:`multioutput.MultiOutputRegressor.fit` and
+  :func:`multioutput.MultiOutputClassifier.fit` now can accept `fit_params`
+  to pass to the `estimator.fit` method of each step. :issue:`15953`
+  :pr:`15959` by :user:`Ke Huang <huangk10>`.
 
 - |Enhancement| :class:`multioutput.RegressorChain` now supports `fit_params`
   for `base_estimator` during `fit`.
