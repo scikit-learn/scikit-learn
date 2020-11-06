@@ -401,6 +401,16 @@ def _generate_test_scale_and_stability_datasets():
     X[:, -1] = 1.0
     yield X, Y
 
+    X = np.array([[0., 0., 1.],
+                  [1., 0., 0.],
+                  [2., 2., 2.],
+                  [3., 5., 4.]])
+    Y = np.array([[0.1, -0.2],
+                  [0.9, 1.1],
+                  [6.2, 5.9],
+                  [11.9, 12.3]])
+    yield X, Y
+
     # Seeds that provide a non-regression test for #18746, where CCA fails
     seeds = [138, 530, 741]
     for seed in seeds:

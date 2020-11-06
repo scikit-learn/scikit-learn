@@ -234,10 +234,6 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
             # Find first left and right singular vectors of the X.T.dot(Y)
             # cross-covariance matrix.
             if self.algorithm == "nipals":
-                # Replace columns that are all close to zero with zeros
-                Yk_mask = np.all(np.abs(Yk) < 10 * Y_eps, axis=0)
-                Yk[:, Yk_mask] = 0.0
-
                 x_weights, y_weights, n_iter_ = \
                     _get_first_singular_vectors_power_method(
                         Xk, Yk, mode=self.mode, max_iter=self.max_iter,
