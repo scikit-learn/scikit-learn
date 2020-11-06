@@ -6,6 +6,7 @@
 
 import sys
 import numpy as np
+import warnings
 
 from scipy.optimize import approx_fprime
 
@@ -486,7 +487,10 @@ def test_warning_bounds():
                   RBF(length_scale_bounds=[1e3, 1e5]))
     gpr_sum = GaussianProcessRegressor(kernel=kernel_sum)
     with pytest.warns(None) as record:
-        gpr_sum.fit(X, y)
+        with warnings.catch_warnings():
+            # scipy 1.3.0 uses tostring which is deprecated in numpy
+            warnings.filterwarnings("ignore", "tostring", DeprecationWarning)
+            gpr_sum.fit(X, y)
 
     assert len(record) == 2
     assert record[0].message.args[0] == ("The optimal value found for "
@@ -509,7 +513,10 @@ def test_warning_bounds():
     gpr_dims = GaussianProcessRegressor(kernel=kernel_dims)
 
     with pytest.warns(None) as record:
-        gpr_dims.fit(X_tile, y)
+        with warnings.catch_warnings():
+            # scipy 1.3.0 uses tostring which is deprecated in numpy
+            warnings.filterwarnings("ignore", "tostring", DeprecationWarning)
+            gpr_dims.fit(X_tile, y)
 
     assert len(record) == 2
     assert record[0].message.args[0] == ("The optimal value found for "
