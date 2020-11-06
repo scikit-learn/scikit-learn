@@ -46,6 +46,7 @@ from sklearn.utils.validation import (
     FLOAT_DTYPES)
 from sklearn.utils.validation import _check_fit_params
 from sklearn.utils.fixes import parse_version
+from sklearn.exceptions import DataConversionWarning
 
 import sklearn
 
@@ -337,32 +338,34 @@ def test_check_array():
     assert isinstance(result, np.ndarray)
 
 
-def test_check_array_numeric():
-    # simple test for check_array and dtype='numeric'
-    X_str = [['1', '2'], ['3', '4']]
-    for X in [X_str, np.array(X_str, dtype='U'), np.array(X_str, dtype='S')]:
+@pytest.mark.parametrize("X", [
+   [['1', '2'], ['3', '4']],
+   np.array([['1', '2'], ['3', '4']], dtype='U'),
+   np.array([['1', '2'], ['3', '4']], dtype='S'),
+   [[b'1', b'2'], [b'3', b'4']],
+   np.array([[b'1', b'2'], [b'3', b'4']], dtype='V1')
+])
+def test_check_array_numeric_warns(X):
+    """Test that check_array warns when it converts a bytes/string into a
+    float."""
+    expected_msg = "Arrays of bytes/strings is being converted to decimal"
+    with pytest.warns(DataConversionWarning, match=expected_msg):
         X_out = check_array(X, dtype="numeric")
-        assert_allclose(X_out, [[1, 2], [3, 4]])
-
-    X_bytes = [[b'1', b'2'], [b'3', b'4']]
-    for X in [X_bytes, np.array(X_bytes, dtype='V1')]:
-        X_out = check_array(X, dtype="numeric")
-        assert_allclose(X_out, [[1, 2], [3, 4]])
+    assert_allclose(X_out, [[1, 2], [3, 4]])
 
 
-def test_check_array_dtype_numeric_errors():
-    # deprecation warning if string-like array with dtype="numeric"
-    expected_warn_regex = "Unable to convert array of bytes/strings"
-    X_str = [['11', '12'], ['13', 'xx']]
-    for X in [X_str, np.array(X_str, dtype='U'), np.array(X_str, dtype='S')]:
-        with pytest.raises(ValueError, match=expected_warn_regex):
-            check_array(X, dtype="numeric")
-
-    # deprecation warning if byte-like array with dtype="numeric"
-    X_bytes = [[b'a', b'b'], [b'c', b'd']]
-    for X in [X_bytes, np.array(X_bytes, dtype='V1')]:
-        with pytest.raises(ValueError, match=expected_warn_regex):
-            check_array(X, dtype="numeric")
+@pytest.mark.parametrize("X", [
+   [['11', '12'], ['13', 'xx']],
+   np.array([['11', '12'], ['13', 'xx']], dtype='U'),
+   np.array([['11', '12'], ['13', 'xx']], dtype='S'),
+   [[b'a', b'b'], [b'c', b'd']],
+   np.array([[b'a', b'b'], [b'c', b'd']], dtype='V1')
+])
+def test_check_array_dtype_numeric_errors(X):
+    """Error when string-ike array can not be converted"""
+    expected_warn_msg = "Unable to convert array of bytes/strings"
+    with pytest.raises(ValueError, match=expected_warn_msg):
+        check_array(X, dtype="numeric")
 
 
 @pytest.mark.parametrize("pd_dtype", ["Int8", "Int16", "UInt8", "UInt16"])
