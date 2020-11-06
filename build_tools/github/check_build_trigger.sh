@@ -4,7 +4,7 @@ set -e
 set -x
 
 COMMIT_MSG=$(git log --no-merges -1 --oneline)
-BRANCH_NAME=$(echo "${GITHUB_BRANCH##*/}")
+BRANCH_NAME=$(echo "${GITHUB_REF##*/}")
 
 # The commit marker "[cd build]" will trigger the build when required
 if [[ "$GITHUB_EVENT_NAME" == push && "$BRANCH_NAME" != master ||
