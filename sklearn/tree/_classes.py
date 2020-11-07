@@ -174,7 +174,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         # Determine output settings
         n_samples, self.n_features_ = X.shape
-        self.n_features_in_ = self.n_features_
         is_classification = is_classifier(self)
 
         y = np.atleast_1d(y)
