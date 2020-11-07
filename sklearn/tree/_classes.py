@@ -184,6 +184,28 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             # [:, np.newaxis] that does not.
             y = np.reshape(y, (-1, 1))
 
+        if update_tree:
+            # TODO: find a way to build on previous tree
+            if is_classification:
+                check_classification_targets(y)
+                y = np.copy(y)
+
+                y_encoded = np.zeros(y.shape, dtype=int)
+                for k in range(self.n_outputs_):
+                    classes_k, y_encoded[:, k] = np.unique(y[:, k],
+                                                           return_inverse=True)
+                y = y_encoded
+
+            if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
+                y = np.ascontiguousarray(y, dtype=DOUBLE)
+
+            # Update tree
+            self.builder_.update(self.tree_, X, y, sample_weight)
+
+            self._prune_tree()
+
+            return self
+
         self.n_outputs_ = y.shape[1]
 
         if is_classification:
@@ -212,15 +234,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
             y = np.ascontiguousarray(y, dtype=DOUBLE)
-
-        if update_tree:
-            # TODO: find a way to build on previous tree
-            # Update tree
-            self.builder_.update(self.tree_, X, y, sample_weight)
-
-            self._prune_tree()
-
-            return self
 
         # Check parameters
         max_depth = (np.iinfo(np.int32).max if self.max_depth is None
