@@ -410,8 +410,7 @@ def _generate_test_scale_and_stability_datasets():
         yield X, Y
 
 
-# @pytest.mark.parametrize('Est', (CCA, PLSCanonical, PLSRegression, PLSSVD))
-@pytest.mark.parametrize('Est', (CCA, ))
+@pytest.mark.parametrize('Est', (CCA, PLSCanonical, PLSRegression, PLSSVD))
 @pytest.mark.parametrize('X, Y', _generate_test_scale_and_stability_datasets())
 def test_scale_and_stability(Est, X, Y):
     """scale=True is equivalent to scale=False on centered/scaled data
