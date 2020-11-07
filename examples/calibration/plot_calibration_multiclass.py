@@ -20,11 +20,11 @@ License: BSD Style.
 # ----
 # Below, we generate a classification dataset with 2000 samples, 2 features
 # and 3 target classes. We then split the data as follows:
-
+#
 # * train: 600 samples (for training the classifier)
 # * valid: 400 samples (for calibrating predicted probabilities)
 # * test: 1000 samples
-
+#
 # Note that we also create `X_train_valid` and `y_train_valid`, which consists
 # of both the train and valid subsets. This is used when we only want to train
 # the classifier but not calibrate the predicted probabilities.
