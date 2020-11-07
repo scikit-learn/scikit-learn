@@ -254,15 +254,12 @@ def ridge_regression(X, y, alpha, *, sample_weight=None, solver='auto',
         Target values
 
     alpha : float or array-like of shape (n_targets,)
-        Regularization strength; must be a positive float. Regularization
-        improves the conditioning of the problem and reduces the variance of
-        the estimates. Larger values specify stronger regularization.
-        Alpha corresponds to ``1 / (2C)`` in other linear models such as
-        :class:`~sklearn.linear_model.LogisticRegression` or
-        :class:`~sklearn.svm.LinearSVC`. If an array is passed, penalties are
-        assumed to be specific to the targets. Hence they must correspond in
-        number.
-
+        Constant that multiplies the L1 term. Defaults to 1.0.
+        ``alpha = 0`` is equivalent to an ordinary least square, solved
+        by the :class:`LinearRegression` object. For numerical
+        reasons, using ``alpha = 0`` with the ``Lasso`` object is not advised.
+        Given this, you should use the :class:`LinearRegression` object.
+        
     sample_weight : float or array-like of shape (n_samples,), default=None
         Individual weights for each sample. If given a float, every sample
         will have the same weight. If sample_weight is not None and
@@ -362,6 +359,15 @@ def ridge_regression(X, y, alpha, *, sample_weight=None, solver='auto',
     Notes
     -----
     This function won't compute the intercept.
+
+    Alpha must be a positive float for regularization strenght. 
+    Regularization improves the conditioning of the problem and 
+    reduces the variance of the estimates. Larger values specify stronger 
+    regularization. Alpha corresponds to ``1 / (2C)`` in other linear 
+    models such as :class:`~sklearn.linear_model.LogisticRegression` or
+    :class:`~sklearn.svm.LinearSVC`. If an array is passed, penalties are
+    assumed to be specific to the targets. Hence they must correspond in
+    number.
     """
     return _ridge_regression(X, y, alpha,
                              sample_weight=sample_weight,
