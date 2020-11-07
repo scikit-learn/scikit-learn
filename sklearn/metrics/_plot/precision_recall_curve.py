@@ -219,7 +219,7 @@ def plot_precision_recall_curve(estimator, X, y, *,
     y : array-like of shape (n_samples,) or (n_samples, n_classes)
         Target values.
 
-    sample_weight : array-like of shape (n_samples,)
+    sample_weight : array-like of shape (n_samples,) \
                     or (n_samples, n_classes), default=None
         Sample weights.
 
@@ -262,6 +262,7 @@ def plot_precision_recall_curve(estimator, X, y, *,
     precision_recall_curve : Compute precision-recall pairs for different
         probability thresholds.
     PrecisionRecallDisplay : Precision Recall visualization.
+
     """
     check_matplotlib_support("plot_precision_recall_curve")
 

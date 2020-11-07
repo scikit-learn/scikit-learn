@@ -55,7 +55,7 @@ svc_disp.plot(ax=ax, alpha=0.8)
 plt.show()
 
 # %%
-# Repeat the process for a multiclass scenario
+# Training a Random Forest and Plotting the ROC Curve for a multiclass scenario
 # -------------------------
 X, y = load_wine(return_X_y=True)
 
@@ -63,7 +63,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 svc = SVC(random_state=42)
 svc.fit(X_train, y_train)
 
-fig, ax = plt.subplots(1, 3)
+fig, ax = plt.subplots(1, 3, figsize=(19.2, 4.8))
 svc_disp = plot_roc_curve(svc, X_test, y_test, ax=ax)
 
 rfc = RandomForestClassifier(n_estimators=10, random_state=42)
