@@ -10,9 +10,6 @@ classes. Arrows point from the probability vectors predicted by an uncalibrated
 classifier to the probability vectors predicted by the same classifier after
 sigmoid calibration on a hold-out validation set. Colors indicate the true
 class of an instance (red: class 1, green: class 2, blue: class 3).
-
-Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-License: BSD Style.
 """
 
 # %%
@@ -28,6 +25,9 @@ License: BSD Style.
 # Note that we also create `X_train_valid` and `y_train_valid`, which consists
 # of both the train and valid subsets. This is used when we only want to train
 # the classifier but not calibrate the predicted probabilities.
+
+Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
+License: BSD Style.
 
 import numpy as np
 from sklearn.datasets import make_blobs
