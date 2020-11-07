@@ -13,6 +13,7 @@
 #          Fares Hedayati <fares.hedayati@gmail.com>
 #          Jacob Schreiber <jmschreiber91@gmail.com>
 #          Nelson Liu <nelson@nelsonliu.me>
+#          Haoyin Xu <haoyinxu@gmail.com>
 #
 # License: BSD 3 clause
 
@@ -85,6 +86,11 @@ cdef class TreeBuilder:
     cpdef build(self, Tree tree, object X, np.ndarray y,
                 np.ndarray sample_weight=None):
         """Build a decision tree from the training set (X, y)."""
+        pass
+
+    cpdef update(self, Tree tree, object X, np.ndarray y,
+                np.ndarray sample_weight=None):
+        """Update a decision tree with the training set (X, y)."""
         pass
 
     cdef inline _check_input(self, object X, np.ndarray y,
@@ -266,6 +272,128 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         if rc == -1:
             raise MemoryError()
 
+    cpdef update(self, Tree tree, object X, np.ndarray y,
+                np.ndarray sample_weight=None):
+        """Update a decision tree with the training set (X, y)."""
+
+        # check input
+        X, y, sample_weight = self._check_input(X, y, sample_weight)
+
+        cdef DOUBLE_t* sample_weight_ptr = NULL
+        if sample_weight is not None:
+            sample_weight_ptr = <DOUBLE_t*> sample_weight.data
+
+        # Parameters
+        cdef Splitter splitter = self.splitter
+        cdef SIZE_t max_depth = self.max_depth
+        cdef SIZE_t min_samples_leaf = self.min_samples_leaf
+        cdef double min_weight_leaf = self.min_weight_leaf
+        cdef SIZE_t min_samples_split = self.min_samples_split
+        cdef double min_impurity_decrease = self.min_impurity_decrease
+        cdef double min_impurity_split = self.min_impurity_split
+
+        # Recursive partition (without actual recursion)
+        splitter.init(X, y, sample_weight_ptr)
+
+        cdef SIZE_t start
+        cdef SIZE_t end
+        cdef SIZE_t depth
+        cdef SIZE_t parent
+        cdef bint is_left
+        cdef SIZE_t n_node_samples = splitter.n_samples
+        cdef double weighted_n_samples = splitter.weighted_n_samples
+        cdef double weighted_n_node_samples
+        cdef SplitRecord split
+        cdef SIZE_t node_id
+
+        cdef double impurity = INFINITY
+        cdef SIZE_t n_constant_features
+        cdef bint is_leaf
+        cdef bint first = 1
+        cdef SIZE_t max_depth_seen = tree.max_depth
+        cdef int rc = 0
+
+        cdef Stack stack = Stack(INITIAL_STACK_SIZE)
+        cdef StackRecord stack_record
+
+        with nogil:
+            # push root node onto stack
+            rc = stack.push(0, n_node_samples, 0, _TREE_UNDEFINED, 0, INFINITY, 0)
+            if rc == -1:
+                # got return code -1 - out-of-memory
+                with gil:
+                    raise MemoryError()
+
+            while not stack.is_empty():
+                stack.pop(&stack_record)
+
+                start = stack_record.start
+                end = stack_record.end
+                depth = stack_record.depth
+                parent = stack_record.parent
+                is_left = stack_record.is_left
+                impurity = stack_record.impurity
+                n_constant_features = stack_record.n_constant_features
+
+                n_node_samples = end - start
+                splitter.node_reset(start, end, &weighted_n_node_samples)
+
+                is_leaf = (depth >= max_depth or
+                           n_node_samples < min_samples_split or
+                           n_node_samples < 2 * min_samples_leaf or
+                           weighted_n_node_samples < 2 * min_weight_leaf)
+
+                if first:
+                    impurity = splitter.node_impurity()
+                    first = 0
+
+                is_leaf = (is_leaf or
+                           (impurity <= min_impurity_split))
+
+                if not is_leaf:
+                    splitter.node_split(impurity, &split, &n_constant_features)
+                    # If EPSILON=0 in the below comparison, float precision
+                    # issues stop splitting, producing trees that are
+                    # dissimilar to v0.18
+                    is_leaf = (is_leaf or split.pos >= end or
+                               (split.improvement + EPSILON <
+                                min_impurity_decrease))
+
+                node_id = tree._add_node(parent, is_left, is_leaf, split.feature,
+                                         split.threshold, impurity, n_node_samples,
+                                         weighted_n_node_samples)
+
+                if node_id == SIZE_MAX:
+                    rc = -1
+                    break
+
+                # Store value for all nodes, to facilitate tree/model
+                # inspection and interpretation
+                splitter.node_value(tree.value + node_id * tree.value_stride)
+
+                if not is_leaf:
+                    # Push right child on stack
+                    rc = stack.push(split.pos, end, depth + 1, node_id, 0,
+                                    split.impurity_right, n_constant_features)
+                    if rc == -1:
+                        break
+
+                    # Push left child on stack
+                    rc = stack.push(start, split.pos, depth + 1, node_id, 1,
+                                    split.impurity_left, n_constant_features)
+                    if rc == -1:
+                        break
+
+                if depth > max_depth_seen:
+                    max_depth_seen = depth
+
+            if rc >= 0:
+                rc = tree._resize_c(tree.node_count)
+
+            if rc >= 0:
+                tree.max_depth = max_depth_seen
+        if rc == -1:
+            raise MemoryError()
 
 # Best first builder ----------------------------------------------------------
 
@@ -338,6 +466,114 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         # Initial capacity
         cdef SIZE_t init_capacity = max_split_nodes + max_leaf_nodes
         tree._resize(init_capacity)
+
+        with nogil:
+            # add root to frontier
+            rc = self._add_split_node(splitter, tree, 0, n_node_samples,
+                                      INFINITY, IS_FIRST, IS_LEFT, NULL, 0,
+                                      &split_node_left)
+            if rc >= 0:
+                rc = _add_to_frontier(&split_node_left, frontier)
+
+            if rc == -1:
+                with gil:
+                    raise MemoryError()
+
+            while not frontier.is_empty():
+                frontier.pop(&record)
+
+                node = &tree.nodes[record.node_id]
+                is_leaf = (record.is_leaf or max_split_nodes <= 0)
+
+                if is_leaf:
+                    # Node is not expandable; set node as leaf
+                    node.left_child = _TREE_LEAF
+                    node.right_child = _TREE_LEAF
+                    node.feature = _TREE_UNDEFINED
+                    node.threshold = _TREE_UNDEFINED
+
+                else:
+                    # Node is expandable
+
+                    # Decrement number of split nodes available
+                    max_split_nodes -= 1
+
+                    # Compute left split node
+                    rc = self._add_split_node(splitter, tree,
+                                              record.start, record.pos,
+                                              record.impurity_left,
+                                              IS_NOT_FIRST, IS_LEFT, node,
+                                              record.depth + 1,
+                                              &split_node_left)
+                    if rc == -1:
+                        break
+
+                    # tree.nodes may have changed
+                    node = &tree.nodes[record.node_id]
+
+                    # Compute right split node
+                    rc = self._add_split_node(splitter, tree, record.pos,
+                                              record.end,
+                                              record.impurity_right,
+                                              IS_NOT_FIRST, IS_NOT_LEFT, node,
+                                              record.depth + 1,
+                                              &split_node_right)
+                    if rc == -1:
+                        break
+
+                    # Add nodes to queue
+                    rc = _add_to_frontier(&split_node_left, frontier)
+                    if rc == -1:
+                        break
+
+                    rc = _add_to_frontier(&split_node_right, frontier)
+                    if rc == -1:
+                        break
+
+                if record.depth > max_depth_seen:
+                    max_depth_seen = record.depth
+
+            if rc >= 0:
+                rc = tree._resize_c(tree.node_count)
+
+            if rc >= 0:
+                tree.max_depth = max_depth_seen
+
+        if rc == -1:
+            raise MemoryError()
+
+    cpdef update(self, Tree tree, object X, np.ndarray y,
+                np.ndarray sample_weight=None):
+        """Update a decision tree with the training set (X, y)."""
+
+        # check input
+        X, y, sample_weight = self._check_input(X, y, sample_weight)
+
+        cdef DOUBLE_t* sample_weight_ptr = NULL
+        if sample_weight is not None:
+            sample_weight_ptr = <DOUBLE_t*> sample_weight.data
+
+        # Parameters
+        cdef Splitter splitter = self.splitter
+        cdef SIZE_t max_leaf_nodes = self.max_leaf_nodes
+        cdef SIZE_t min_samples_leaf = self.min_samples_leaf
+        cdef double min_weight_leaf = self.min_weight_leaf
+        cdef SIZE_t min_samples_split = self.min_samples_split
+
+        # Recursive partition (without actual recursion)
+        splitter.init(X, y, sample_weight_ptr)
+
+        cdef PriorityHeap frontier = PriorityHeap(INITIAL_STACK_SIZE)
+        cdef PriorityHeapRecord record
+        cdef PriorityHeapRecord split_node_left
+        cdef PriorityHeapRecord split_node_right
+
+        cdef SIZE_t n_node_samples = splitter.n_samples
+        cdef SIZE_t max_split_nodes = max_leaf_nodes - 1
+        cdef bint is_leaf
+        cdef SIZE_t max_depth_seen = tree.max_depth
+        cdef int rc = 0
+        cdef Node* node
 
         with nogil:
             # add root to frontier
@@ -655,7 +891,7 @@ cdef class Tree:
 
         if (node_ndarray.dtype != NODE_DTYPE):
             # possible mismatch of big/little endian due to serialization
-            # on a different architecture. Try swapping the byte order.  
+            # on a different architecture. Try swapping the byte order.
             node_ndarray = node_ndarray.byteswap().newbyteorder()
             if (node_ndarray.dtype != NODE_DTYPE):
                 raise ValueError('Did not recognise loaded array dytpe')

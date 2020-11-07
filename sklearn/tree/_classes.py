@@ -11,6 +11,7 @@ randomized trees. Single and multi-output problems are both handled.
 #          Joly Arnaud <arnaud.v.joly@gmail.com>
 #          Fares Hedayati <fares.hedayati@gmail.com>
 #          Nelson Liu <nelson@nelsonliu.me>
+#          Haoyin Xu <haoyinxu@gmail.com>
 #
 # License: BSD 3 clause
 
@@ -140,7 +141,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         return self.tree_.n_leaves
 
     def fit(self, X, y, sample_weight=None, check_input=True,
-            X_idx_sorted="deprecated"):
+            X_idx_sorted="deprecated", update_tree=False):
 
         random_state = check_random_state(self.random_state)
 
@@ -212,6 +213,15 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
             y = np.ascontiguousarray(y, dtype=DOUBLE)
+
+        if update_tree:
+            # TODO: find a way to build on previous tree
+            # Update tree
+            self.builder_.update(self.tree_, X, y, sample_weight)
+
+            self._prune_tree()
+
+            return self
 
         # Check parameters
         max_depth = (np.iinfo(np.int32).max if self.max_depth is None
@@ -355,7 +365,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                                                 min_weight_leaf,
                                                 random_state)
 
-        if is_classifier(self):
+        if is_classification:
             self.tree_ = Tree(self.n_features_,
                               self.n_classes_, self.n_outputs_)
         else:
@@ -366,14 +376,14 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         # Use BestFirst if max_leaf_nodes given; use DepthFirst otherwise
         if max_leaf_nodes < 0:
-            builder = DepthFirstTreeBuilder(splitter, min_samples_split,
+            self.builder_ = DepthFirstTreeBuilder(splitter, min_samples_split,
                                             min_samples_leaf,
                                             min_weight_leaf,
                                             max_depth,
                                             self.min_impurity_decrease,
                                             min_impurity_split)
         else:
-            builder = BestFirstTreeBuilder(splitter, min_samples_split,
+            self.builder_ = BestFirstTreeBuilder(splitter, min_samples_split,
                                            min_samples_leaf,
                                            min_weight_leaf,
                                            max_depth,
@@ -381,9 +391,9 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                                            self.min_impurity_decrease,
                                            min_impurity_split)
 
-        builder.build(self.tree_, X, y, sample_weight)
+        self.builder_.build(self.tree_, X, y, sample_weight)
 
-        if self.n_outputs_ == 1 and is_classifier(self):
+        if self.n_outputs_ == 1 and is_classification:
             self.n_classes_ = self.n_classes_[0]
             self.classes_ = self.classes_[0]
 
@@ -778,6 +788,9 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
         for basic usage of these attributes.
 
+    builder_ : TreeBuilder instance
+        The underlying TreeBuilder object.
+
     See Also
     --------
     DecisionTreeRegressor : A decision tree regressor.
@@ -853,7 +866,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             ccp_alpha=ccp_alpha)
 
     def fit(self, X, y, sample_weight=None, check_input=True,
-            X_idx_sorted="deprecated"):
+            X_idx_sorted="deprecated", update_tree=False):
         """Build a decision tree classifier from the training set (X, y).
 
         Parameters
@@ -883,6 +896,9 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
             .. deprecated :: 0.24
 
+        update_tree : bool, default=False
+            Choice of updating the existing tree or creating a new one.
+
         Returns
         -------
         self : DecisionTreeClassifier
@@ -893,7 +909,8 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             X, y,
             sample_weight=sample_weight,
             check_input=check_input,
-            X_idx_sorted=X_idx_sorted)
+            X_idx_sorted=X_idx_sorted,
+            update_tree=update_tree)
         return self
 
     def predict_proba(self, X, check_input=True):
@@ -1134,6 +1151,9 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
         for basic usage of these attributes.
 
+    builder_ : TreeBuilder instance
+        The underlying TreeBuilder object.
+
     See Also
     --------
     DecisionTreeClassifier : A decision tree classifier.
@@ -1202,7 +1222,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             ccp_alpha=ccp_alpha)
 
     def fit(self, X, y, sample_weight=None, check_input=True,
-            X_idx_sorted="deprecated"):
+            X_idx_sorted="deprecated", update_tree=False):
         """Build a decision tree regressor from the training set (X, y).
 
         Parameters
@@ -1231,6 +1251,9 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
             .. deprecated :: 0.24
 
+        update_tree : bool, default=False
+            Choice of updating the existing tree or creating a new one.
+
         Returns
         -------
         self : DecisionTreeRegressor
@@ -1241,7 +1264,8 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             X, y,
             sample_weight=sample_weight,
             check_input=check_input,
-            X_idx_sorted=X_idx_sorted)
+            X_idx_sorted=X_idx_sorted,
+            update_tree=update_tree)
         return self
 
     def _compute_partial_dependence_recursion(self, grid, target_features):
