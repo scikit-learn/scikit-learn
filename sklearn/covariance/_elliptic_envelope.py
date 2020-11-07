@@ -37,7 +37,7 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
 
     contamination : float, default=0.1
         The amount of contamination of the data set, i.e. the proportion
-        of outliers in the data set. Range is (0, 0.5).
+        of outliers in the data set. Range is (0, 0.5].
 
     random_state : int, RandomState instance or None, default=None
         Determines the pseudo random number generator for shuffling
@@ -142,6 +142,11 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
         y : Ignored
             Not used, present for API consistency by convention.
         """
+        if self.contamination != 'auto':
+            if not(0. < self.contamination <= .5):
+                raise ValueError("contamination must be in (0, 0.5], "
+                                 "got: %f" % self.contamination)
+
         super().fit(X)
         self.offset_ = np.percentile(-self.dist_, 100. * self.contamination)
         return self

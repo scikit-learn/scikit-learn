@@ -2108,9 +2108,10 @@ def check_outliers_train(name, estimator_orig, readonly_memmap=True,
             check_outlier_corruption(num_outliers, expected_outliers, decision)
 
         # raises error when contamination is a scalar and not in [0,1]
+        msg = r"contamination must be in \(0, 0.5]"
         for contamination in [-0.5, 2.3]:
             estimator.set_params(contamination=contamination)
-            with raises(ValueError):
+            with raises(ValueError, match=msg):
                 estimator.fit(X)
 
 
@@ -2998,9 +2999,10 @@ def check_outliers_fit_predict(name, estimator_orig, strict_mode=True):
             check_outlier_corruption(num_outliers, expected_outliers, decision)
 
         # raises error when contamination is a scalar and not in [0,1]
+        msg = r"contamination must be in \(0, 0.5]"
         for contamination in [-0.5, 2.3]:
             estimator.set_params(contamination=contamination)
-            with raises(ValueError):
+            with raises(ValueError, match=msg):
                 estimator.fit_predict(X)
 
 
