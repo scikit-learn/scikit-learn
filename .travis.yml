@@ -17,9 +17,8 @@ env:
     - OPENBLAS_NUM_THREADS=2
     - PYTEST_VERSION=latest
     # Custom environment variables for the wheel builder
-    - CIBW_TEST_REQUIRES=pytest pandas
-    - CIBW_TEST_COMMAND=pytest --pyargs sklearn &&
-                        python -m threadpoolctl -i sklearn
+    - CIBW_TEST_REQUIRES="pytest pandas"
+    - CIBW_TEST_COMMAND="pytest --pyargs sklearn && python -m threadpoolctl -i sklearn"
 
 jobs:
   include:
