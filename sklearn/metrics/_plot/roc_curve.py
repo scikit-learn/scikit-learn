@@ -220,8 +220,8 @@ def plot_roc_curve(estimator, X, y, *, sample_weight=None,
         on a plotted ROC curve. This is useful in order to create lighter
         ROC curves.
 
-    response_method : {'predict_proba', 'decision_function', 'auto'} \
-    default='auto'
+    response_method : {'predict_proba', 'decision_function', 'auto'}, \
+                      default='auto'
         Specifies whether to use :term:`predict_proba` or
         :term:`decision_function` as the target response. If set to 'auto',
         :term:`predict_proba` is tried first and if it does not exist
@@ -233,7 +233,7 @@ def plot_roc_curve(estimator, X, y, *, sample_weight=None,
 
     ax : Matplotlib axes or array-like of Matplotlib axes, default=None
         Axes object to plot on. If `None`, a new figure and axes is created.
-        For the multiclass cenario:
+        In a multiclass setting:
         - If a single axis is passed in, all plots are plotted in
           the same axis.
         - If an array-like of axes are passed in, the roc curve

@@ -236,7 +236,7 @@ def plot_precision_recall_curve(estimator, X, y, *,
 
     ax : Matplotlib axes or array-like of Matplotlib axes, default=None
         Axes object to plot on. If `None`, a new figure and axes is created.
-        For the multiclass cenario:
+        In a multiclass setting:
         - If a single axis is passed in, all plots are plotted in
           the same axis.
         - If an array-like of axes are passed in, the precision recall curve
