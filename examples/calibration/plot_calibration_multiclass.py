@@ -71,7 +71,7 @@ cal_clf.fit(X_valid, y_valid)
 # %%
 # Compare probabilities
 # ---------------------
-# Below we plotted a 2-simplex with arrows showing the change in predicted
+# Below we plot a 2-simplex with arrows showing the change in predicted
 # probabilities of the test samples.
 
 import matplotlib.pyplot as plt
@@ -142,7 +142,7 @@ plt.ylim(-0.05, 1.05)
 _ = plt.legend(loc="best")
 
 # %%
-# In the figure above. each vertex of the simplex represents
+# In the figure above each vertex of the simplex represents
 # a perfectly predicted class (e.g., 1, 0, 0). The mid point
 # inside the simplex represents predicting the three classes with equal
 # probability (i.e., 1/3, 1/3, 1/3). Each arrow starts at the
@@ -179,19 +179,20 @@ print(f" * uncalibrated classifier: {score:.3f}")
 print(f" * calibrated classifier: {cal_score:.3f}")
 
 # %%
-# Finally we generate a grid of possibile uncalibrated probabilities, over
+# Finally we generate a grid of possibile uncalibrated probabilities over
 # the 2-simplex, compute the corresponding calibrated probabilities and
-# plot arrows for each. This illustrates the learned calibration map:
+# plot arrows for each. The arrows are colored according the highest
+# uncalibrated probability. This illustrates the learned calibration map:
 
 plt.figure(figsize=(10, 10))
-# Generate grid of points
+# Generate grid of probability values
 p1d = np.linspace(0, 1, 20)
 p0, p1 = np.meshgrid(p1d, p1d)
 p2 = 1 - p0 - p1
 p = np.c_[p0.ravel(), p1.ravel(), p2.ravel()]
 p = p[p[:, 2] >= 0]
 
-# Use the three class-wise calibrators to compute where each point is mapped
+# Use the three class-wise calibrators to compute calibrated probabilities
 calibrated_classifier = cal_clf.calibrated_classifiers_[0]
 prediction = np.vstack([calibrator.predict(this_p)
                         for calibrator, this_p in
