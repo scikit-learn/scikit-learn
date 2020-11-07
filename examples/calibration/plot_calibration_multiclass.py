@@ -10,15 +10,14 @@ classes. Arrows point from the probability vectors predicted by an uncalibrated
 classifier to the probability vectors predicted by the same classifier after
 sigmoid calibration on a hold-out validation set. Colors indicate the true
 class of an instance (red: class 1, green: class 2, blue: class 3).
+
+Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
+License: BSD Style.
 """
 
 # %%
-# Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-# License: BSD Style.
-
 # Data
 # ----
-
 # Below, we generate a classification dataset with 2000 samples, 2 features
 # and 3 target classes. We then split the data as follows:
 
@@ -142,7 +141,7 @@ plt.ylim(-0.05, 1.05)
 _ = plt.legend(loc="best")
 
 # %%
-# In the figure above each vertex of the simplex represents
+# In the figure above, each vertex of the simplex represents
 # a perfectly predicted class (e.g., 1, 0, 0). The mid point
 # inside the simplex represents predicting the three classes with equal
 # probability (i.e., 1/3, 1/3, 1/3). Each arrow starts at the
@@ -156,8 +155,8 @@ _ = plt.legend(loc="best")
 # figure above that the arrows generally point away from the edges of the
 # simplex, where the probability of one class is 0. Second, a large proportion
 # of the arrows point towards the true class, e.g., green arrows (samples where
-# the true class is 'green') generally point towards the green vertex. These
-# result in fewer over-confident, 0 predicted probabilities and at the same
+# the true class is 'green') generally point towards the green vertex. This
+# results in fewer over-confident, 0 predicted probabilities and at the same
 # time an increase in the the predicted probabilities of the correct class.
 # Thus, the calibrated classifier produces more accurate predicted probablities
 # that incur a lower :ref:`log loss <log_loss>`
