@@ -26,8 +26,8 @@ class of an instance (red: class 1, green: class 2, blue: class 3).
 # of both the train and valid subsets. This is used when we only want to train
 # the classifier but not calibrate the predicted probabilities.
 
-Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-License: BSD Style.
+# Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
+# License: BSD Style.
 
 import numpy as np
 from sklearn.datasets import make_blobs
