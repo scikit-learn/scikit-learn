@@ -1,13 +1,13 @@
-# make it explicit that we favor the new container-based travis workers
+# Make it explicit that we favor the
+# new container-based Travis workers
 language: python
+dist: xenial
 
 cache:
   apt: true
   directories:
   - $HOME/.cache/pip
   - $HOME/.ccache
-
-dist: xenial
 
 env:
   global:
@@ -16,12 +16,16 @@ env:
     - OMP_NUM_THREADS=2
     - OPENBLAS_NUM_THREADS=2
     - PYTEST_VERSION=latest
+    # Custom environment variables for the wheel builder
+    - CIBW_TEST_REQUIRES=pytest pandas
+    - CIBW_TEST_COMMAND=pytest --pyargs sklearn &&
+                        python -m threadpoolctl -i sklearn
 
-matrix:
+jobs:
   include:
-    # Linux environment to test scikit-learn against numpy and scipy master
-    # installed from their CI wheels in a virtualenv with the Python
-    # interpreter provided by travis.
+    # Linux environment to test scikit-learn against NumPy and SciPy
+    # master installed from their continuous integration wheels in a
+    # virtual environment with Python interpreter provided by Travis.
     - python: 3.7
       env:
         - CHECK_WARNINGS="true"
@@ -43,12 +47,40 @@ matrix:
       arch: arm64
       if: type = cron OR commit_message =~ /\[arm64\]/
 
+    # Linux environments to build the scikit-learn wheels
+    # for the ARM64 arquitecture and Python 3.6 and newer
+    - python: 3.6
+      os: linux
+      arch: arm64
+      if: type = cron or commit_message =~ /\[cd build\]/
+      env:
+        - CIBW_BUILD: cp36-manylinux_aarch64
+
+    - python: 3.7
+      os: linux
+      arch: arm64
+      if: type = cron or commit_message =~ /\[cd build\]/
+      env:
+        - CIBW_BUILD: cp37-manylinux_aarch64
+
+    - python: 3.8
+      os: linux
+      arch: arm64
+      if: type = cron or commit_message =~ /\[cd build\]/
+      env:
+        - CIBW_BUILD: cp38-manylinux_aarch64
+
+    - python: 3.9
+      os: linux
+      arch: arm64
+      if: type = cron or commit_message =~ /\[cd build\]/
+      env:
+        - CIBW_BUILD: cp39-manylinux_aarch64
+
 install: source build_tools/travis/install.sh
-script:
-  - bash build_tools/travis/test_script.sh || travis_terminate 1
-  - bash build_tools/travis/test_docs.sh || travis_terminate 1
-  - bash build_tools/travis/test_pytest_soft_dependency.sh || travis_terminate 1
+script: source build_tools/travis/script.sh
 after_success: source build_tools/travis/after_success.sh
+
 notifications:
   webhooks:
     urls:
