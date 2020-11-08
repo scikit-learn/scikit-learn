@@ -15,7 +15,7 @@ fi
 
 ls -l dist
 ls -l dist/artifact
-command -v anaconda
+anaconda -h
 
 # Force a replacement if the remote file already exists
 # anaconda -t $ANACONDA_TOKEN upload --force -u $ANACONDA_ORG dist/artifact/*.whl
