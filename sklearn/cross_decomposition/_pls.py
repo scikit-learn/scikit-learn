@@ -4,7 +4,6 @@ The :mod:`sklearn.pls` module implements Partial Least Squares (PLS).
 
 # Author: Edouard Duchesnay <edouard.duchesnay@cea.fr>
 # License: BSD 3 clause
-# trial changes
 
 import warnings
 from abc import ABCMeta, abstractmethod
@@ -296,6 +295,11 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
 
         self.coef_ = np.dot(self.x_rotations_, self.y_loadings_.T)
         self.coef_ = self.coef_ * self.y_std_
+
+        #Percentage of Variance Contribution of each variable to a Principal Component in X space (inspired by the PCA package from R)
+        #magnitude expressed as percentage and with its original sign
+
+        self.contr_perc = self.x_loadings_ / np.sum(abs(self.x_loadings_), axis = 0) * 100
         return self
 
     def transform(self, X, Y=None, copy=True):
