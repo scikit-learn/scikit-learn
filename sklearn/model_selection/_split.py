@@ -571,7 +571,7 @@ class StratifiedKFold(_BaseKFold):
     stratified folds. The folds are made by preserving the percentage of
     samples for each class.
 
-    Read more in the :ref:`User Guide <stratified_k_fold>`.
+    Read more about stratification in the :ref:`User Guide <stratification>`.
 
     Parameters
     ----------
@@ -2119,13 +2119,7 @@ def train_test_split(*arrays,
 
     stratify : array-like, default=None
         If not None, data is split in a stratified fashion, using this as
-        the class labels. 
-        The `stratify` parameter makes a split in such a way that the 
-        proportion of values in the sample produced shall be the 
-        same as the proportion of values in the array provided as value to 
-        the parameter. For example, specifying `stratify=[1, 0, 1, 1]` 
-        will make sure that every sample in your split has 25% of 0's 
-        and 75% of 1's.
+        the class labels. aaaaaaaaaa
 
     Returns
     -------
