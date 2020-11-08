@@ -7,7 +7,7 @@ set -x
 # By default pull requests use refs/pull/PULL_ID/merge as the source branch
 # which has a "Merge ID into ID" as a commit message. The latest commit
 # message is the second to last commit
-MERGE_MSG=$(git log $GITHUB_SHA -1 --pretty=%B)
+MERGE_MSG=$(git log -1 --pretty=%B)
 COMMIT_ID=$(echo $MERGE_MSG | awk '{print $2}')
 COMMIT_MSG=$(git log $COMMIT_ID -1 --pretty=%B)
 
