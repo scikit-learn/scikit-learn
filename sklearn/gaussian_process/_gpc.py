@@ -55,6 +55,18 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         passed, the kernel "1.0 * RBF(1.0)" is used as default. Note that
         the kernel's hyperparameters are optimized during fitting.
 
+    alpha : float or ndarray of shape (n_samples,), default=1e-10
+        Value added to the diagonal of the kernel matrix during fitting.
+        This can prevent a potential numerical issue during fitting, by
+        ensuring that the calculated values form a positive definite matrix.
+        It can also be interpreted as the variance of additional Gaussian
+        measurement noise on the training observations. Note that this is
+        different from using a `WhiteKernel`. If an array is passed, it must
+        have the same number of entries as the data used for fitting and is
+        used as datapoint-dependent noise level. Allowing to specify the
+        noise level directly as a parameter is mainly for convenience and
+        for consistency with Ridge.
+
     optimizer : 'fmin_l_bfgs_b' or callable, default='fmin_l_bfgs_b'
         Can either be one of the internally supported optimizers for optimizing
         the kernel's parameters, specified by a string, or an externally
@@ -146,10 +158,11 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
     """
     @_deprecate_positional_args
-    def __init__(self, kernel=None, *, optimizer="fmin_l_bfgs_b",
+    def __init__(self, kernel=None, *, alpha=1e-10, optimizer="fmin_l_bfgs_b",
                  n_restarts_optimizer=0, max_iter_predict=100,
                  warm_start=False, copy_X_train=True, random_state=None):
         self.kernel = kernel
+        self.alpha = alpha
         self.optimizer = optimizer
         self.n_restarts_optimizer = n_restarts_optimizer
         self.max_iter_predict = max_iter_predict
@@ -181,6 +194,15 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         self.rng = check_random_state(self.random_state)
 
         self.X_train_ = np.copy(X) if self.copy_X_train else X
+
+        if np.iterable(self.alpha) \
+           and self.alpha.shape[0] != y.shape[0]:
+            if self.alpha.shape[0] == 1:
+                self.alpha = self.alpha[0]
+            else:
+                raise ValueError("alpha must be a scalar or an array"
+                                 " with same number of entries as y.(%d != %d)"
+                                 % (self.alpha.shape[0], y.shape[0]))
 
         # Encode class labels and check that it is a binary classification
         # problem
@@ -241,6 +263,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         # Precompute quantities required for predictions which are independent
         # of actual query points
         K = self.kernel_(self.X_train_)
+        K[np.diag_indices_from(K)] += self.alpha
 
         _, (self.pi_, self.W_sr_, self.L_, _, _) = \
             self._posterior_mode(K, return_temporaries=True)
@@ -357,6 +380,8 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
             K, K_gradient = kernel(self.X_train_, eval_gradient=True)
         else:
             K = kernel(self.X_train_)
+
+        K[np.diag_indices_from(K)] += self.alpha
 
         # Compute log-marginal-likelihood Z and also store some temporaries
         # which can be reused for computing Z's gradient
@@ -480,6 +505,18 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         passed, the kernel "1.0 * RBF(1.0)" is used as default. Note that
         the kernel's hyperparameters are optimized during fitting.
 
+    alpha : float or ndarray of shape (n_samples,), default=1e-10
+        Value added to the diagonal of the kernel matrix during fitting.
+        This can prevent a potential numerical issue during fitting, by
+        ensuring that the calculated values form a positive definite matrix.
+        It can also be interpreted as the variance of additional Gaussian
+        measurement noise on the training observations. Note that this is
+        different from using a `WhiteKernel`. If an array is passed, it must
+        have the same number of entries as the data used for fitting and is
+        used as datapoint-dependent noise level. Allowing to specify the
+        noise level directly as a parameter is mainly for convenience and
+        for consistency with Ridge.
+
     optimizer : 'fmin_l_bfgs_b' or callable, default='fmin_l_bfgs_b'
         Can either be one of the internally supported optimizers for optimizing
         the kernel's parameters, specified by a string, or an externally
@@ -596,11 +633,13 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
     .. versionadded:: 0.18
     """
     @_deprecate_positional_args
-    def __init__(self, kernel=None, *, optimizer="fmin_l_bfgs_b",
-                 n_restarts_optimizer=0, max_iter_predict=100,
-                 warm_start=False, copy_X_train=True, random_state=None,
+    def __init__(self, kernel=None, *, alpha=1e-10,
+                 optimizer="fmin_l_bfgs_b", n_restarts_optimizer=0,
+                 max_iter_predict=100, warm_start=False,
+                 copy_X_train=True, random_state=None,
                  multi_class="one_vs_rest", n_jobs=None):
         self.kernel = kernel
+        self.alpha = alpha
         self.optimizer = optimizer
         self.n_restarts_optimizer = n_restarts_optimizer
         self.max_iter_predict = max_iter_predict
@@ -634,6 +673,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
 
         self.base_estimator_ = _BinaryGaussianProcessClassifierLaplace(
             kernel=self.kernel,
+            alpha=self.alpha,
             optimizer=self.optimizer,
             n_restarts_optimizer=self.n_restarts_optimizer,
             max_iter_predict=self.max_iter_predict,
