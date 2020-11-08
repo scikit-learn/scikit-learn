@@ -571,8 +571,6 @@ class StratifiedKFold(_BaseKFold):
     stratified folds. The folds are made by preserving the percentage of
     samples for each class.
 
-    Read more about stratification in the :ref:`User Guide <stratification>`.
-
     Parameters
     ----------
     n_splits : int, default=5
@@ -2119,7 +2117,8 @@ def train_test_split(*arrays,
 
     stratify : array-like, default=None
         If not None, data is split in a stratified fashion, using this as
-        the class labels. aaaaaaaaaa
+        the class labels. 
+        Read more about stratification in the :ref:`User Guide <stratification>`.
 
     Returns
     -------
