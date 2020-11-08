@@ -11,8 +11,12 @@ else
     ANACONDA_TOKEN="$SCIKIT_LEARN_STAGING_UPLOAD_TOKEN"
 fi
 
-pip install git+https://github.com/Anaconda-Server/anaconda-client
+# TODO: Just for testing, remove before merging
+
+ls -l dist
+ls -l dist/artifact
+command -v anaconda
 
 # Force a replacement if the remote file already exists
-anaconda -t $ANACONDA_TOKEN upload --force -u $ANACONDA_ORG dist/*
-echo "Index: https://pypi.anaconda.org/$ANACONDA_ORG/simple"
+# anaconda -t $ANACONDA_TOKEN upload --force -u $ANACONDA_ORG dist/artifact/*.whl
+# echo "Index: https://pypi.anaconda.org/$ANACONDA_ORG/simple"
