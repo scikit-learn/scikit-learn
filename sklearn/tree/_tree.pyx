@@ -282,6 +282,16 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef DOUBLE_t* sample_weight_ptr = NULL
         if sample_weight is not None:
             sample_weight_ptr = <DOUBLE_t*> sample_weight.data
+  
+        # Initial capacity
+        cdef int init_capacity
+
+        if tree.max_depth <= 10:
+            init_capacity = (2 ** (tree.max_depth + 1)) - 1
+        else:
+            init_capacity = 2047
+
+        tree._resize(init_capacity)
 
         # Parameters
         cdef Splitter splitter = self.splitter
@@ -574,6 +584,10 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t max_depth_seen = tree.max_depth
         cdef int rc = 0
         cdef Node* node
+
+        # Initial capacity
+        cdef SIZE_t init_capacity = max_split_nodes + max_leaf_nodes
+        tree._resize(init_capacity)
 
         with nogil:
             # add root to frontier
