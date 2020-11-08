@@ -4,6 +4,7 @@ The :mod:`sklearn.pls` module implements Partial Least Squares (PLS).
 
 # Author: Edouard Duchesnay <edouard.duchesnay@cea.fr>
 # License: BSD 3 clause
+# trial changes
 
 import warnings
 from abc import ABCMeta, abstractmethod
