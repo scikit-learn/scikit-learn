@@ -2955,12 +2955,6 @@ def check_estimator_sparse_dense(name, estimator_orig,
 
     for sparse_format in ['csr', 'csc', 'dok', 'lil', 'coo', 'dia', 'bsr']:
         X_sp = X_csr.asformat(sparse_format)
-        if name in ['Scaler', 'StandardScaler']:
-            estimator.set_params(with_mean=False)
-            estimator_sp.set_params(with_mean=False)
-        if name in ['RobustScaler']:
-            estimator.set_params(with_centering=False)
-            estimator_sp.set_params(with_centering=False)
 
         set_random_state(estimator)
         set_random_state(estimator_sp)
