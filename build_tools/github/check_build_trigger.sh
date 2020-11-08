@@ -3,7 +3,7 @@
 set -e
 set -x
 
-COMMIT_MSG=$(git log --no-merges -1 --oneline)
+COMMIT_MSG=$(git log -1 --oneline --format=%s)
 
 # The commit marker "[cd build]" will trigger the build when required
 if [[ "$GITHUB_EVENT_NAME" == schedule ||
