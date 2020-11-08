@@ -204,7 +204,7 @@ Please make sure to still check our guidelines below, since they describe our
 latest up-to-date workflow.
 
 - Crash Course in Contributing to Scikit-Learn & Open Source Projects:
-  `Video <https://youtu.be/5OL8XoMMOfA>`__, 
+  `Video <https://youtu.be/5OL8XoMMOfA>`__,
   `Transcript
   <https://github.com/data-umbrella/event-transcripts/blob/main/2020/05-andreas-mueller-contributing.md>`__
 
@@ -234,7 +234,7 @@ how to set up your git repository:
 
 3. Clone your fork of the scikit-learn repo from your GitHub account to your
    local disk:
-   
+
    .. prompt:: bash $
 
        git clone git@github.com:YourLogin/scikit-learn.git  # add --depth 1 if your connection is slow
@@ -260,7 +260,7 @@ how to set up your git repository:
 6. Add the ``upstream`` remote. This saves a reference to the main
    scikit-learn repository, which you can use to keep your repository
    synchronized with the latest changes:
-   
+
    .. prompt:: bash $
 
     git remote add upstream https://github.com/scikit-learn/scikit-learn.git
@@ -479,6 +479,8 @@ You can check for common programming errors with the following tools:
   for an introduction, as well as `pandas contributing documentation
   <https://pandas.pydata.org/pandas-docs/stable/development/contributing.html#type-hints>`_
   for style guidelines. Whether you add type annotation or not:
+
+  Run static analysis with `mypy`:
 
   .. prompt:: bash $
 
