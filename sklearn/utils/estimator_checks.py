@@ -2959,7 +2959,7 @@ def check_classifiers_regression_target(name, estimator_orig,
     X = X + 1 + abs(X.min(axis=0))  # be sure that X is non-negative
     e = clone(estimator_orig)
     msg = "Unknown label type: "
-    if not _safe_tags(e, keyy="no_validation"):
+    if not _safe_tags(e, key="no_validation"):
         with raises(ValueError, match=msg):
             e.fit(X, y)
 
