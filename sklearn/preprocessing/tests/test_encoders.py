@@ -915,3 +915,35 @@ def test_ohe_missing_value_support_pandas_categorical(pd_nan_type):
     assert len(ohe.categories_) == 1
     assert_array_equal(ohe.categories_[0][:-1], ['a', 'b', 'c'])
     assert np.isnan(ohe.categories_[0][-1])
+
+
+@pytest.mark.parametrize("to_pandas", [True, False])
+def test_ohe_drop_if_binary_warn(to_pandas):
+    """Simple checks for drop='if_binary' and handle_unknown='warn'."""
+    X = [['a', 0], ['b', 2], ['b', 1]]
+    if to_pandas:
+        pd = pytest.importorskip("pandas")
+        X = pd.DataFrame(X)
+
+    ohe = OneHotEncoder(drop='if_binary', sparse=False,
+                        handle_unknown='warn')
+    X_trans = ohe.fit_transform(X)
+
+    X_expected = np.array([
+        [0, 1, 0, 0],
+        [1, 0, 0, 1],
+        [1, 0, 1, 0],
+    ])
+    assert_allclose(X_trans, X_expected)
+
+    X_test = [['c', 3]]
+    if to_pandas:
+        pd = pytest.importorskip("pandas")
+        X_test = pd.DataFrame(X_test)
+
+    X_expected = np.array([[0, 0, 0, 0]])
+
+    warn_msg = "Found unknown categories {0} in columns {1} during transform"
+    with pytest.warns(UserWarning, match=warn_msg):
+        X_trans = ohe.transform(X_test)
+    assert_allclose(X_trans, X_expected)

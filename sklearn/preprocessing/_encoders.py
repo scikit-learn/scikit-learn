@@ -329,7 +329,8 @@ class OneHotEncoder(_BaseEncoder):
         # If we have both dropped columns and ignored unknown
         # values, there will be ambiguous cells. This creates difficulties
         # in interpreting the model.
-        if self.drop is not None and self.handle_unknown != 'error':
+        if (self.drop is not None
+                and self.handle_unknown not in ['error', 'warn']):
             raise ValueError(
                 "`handle_unknown` must be 'error' when the drop parameter is "
                 "specified, as both would create categories that are all "
