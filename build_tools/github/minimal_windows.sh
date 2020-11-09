@@ -3,16 +3,14 @@
 set -e
 set -x
 
-PYTHON_VERSION=${{ matrix.python }}
-
 # Remove the dot from the Python version for naming the wheel
 TRIM_PYTHON_VERSION=$(echo $PYTHON_VERSION | tr -d ".")
 
-if [[ $PYTHON_VERSION != 3.7 ]]; then
+if [[ $PYTHON_VERSION == 3.7 ]]; then
+    IDENTIFIER=cp"$TRIM_PYTHON_VERSION"m-win_amd64.whl
+else
     # Different identifier for Python 3.8 and newer
     IDENTIFIER=cp"$TRIM_PYTHON_VERSION"-win_amd64.whl
-else
-    IDENTIFIER=cp"$TRIM_PYTHON_VERSION"m-win_amd64.whl
 
 WHEEL=scikit_learn-$SCIKIT_LEARN_VERSION-cp$TRIM_PYTHON_VERSION-$IDENTIFIER
 
