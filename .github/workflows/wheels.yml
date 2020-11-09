@@ -32,7 +32,7 @@ jobs:
         uses: actions/checkout@v1
 
       - name: Run in container
-        run: docker build --build-arg PYTHON_VERSION={{ matrix.python }} -t scikit-learn/minimal-windows -f build_tools/github/Dockerfile .
+        run: docker build -t scikit-learn/minimal-windows -f build_tools/github/Dockerfile .
 
 # Check whether to build the wheels and the source tarball
 # check_build_trigger:
