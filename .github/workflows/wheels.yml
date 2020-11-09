@@ -23,12 +23,12 @@ jobs:
     name: Check vendor vcomp140.dll
     runs-on: windows-latest
     steps:
+      - name: Checkout scikit-learn
+        uses: actions/checkout@v1
+
       - name: Run in container
         run: |
-          docker pull mcr.microsoft.com/windows/servercore:ltsc2019
-          docker run mcr.microsoft.com/windows/servercore:ltsc2019 powershell
-          wget https://www.python.org/ftp/python/3.9.0/python-3.9.0-embed-amd64.zip -UseBasicParsing -OutFile python.zip
-          Expand-Archive C:\python.zip -DestinationPath C:\python
+          docker build -t scikit-learn/minimal-windows -f build_tools/github/Dockerfile .
 
 # Check whether to build the wheels and the source tarball
 # check_build_trigger:
