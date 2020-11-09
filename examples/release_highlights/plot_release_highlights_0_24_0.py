@@ -23,6 +23,32 @@ or with conda::
 ##############################################################################
 # Searching parameter space with successive halving
 # -------------------------------------------------
+# Successive halving, a new, state of the art method, is now available to
+# explore the space of the parameters and identify their best combination.
+# The parameter space is roughly sampled at the beginning using a small
+# amount of resources.
+# Only some of the candidates are selected for the next iteration, allowing to
+# better sample around the local optimization and to allocate more resources.
+# Only a subset of candidates will last until the end of the iteration process.
+# Read more in the :ref:`User Guide <successive_halving_user_guide>`.
+# 
+# .. figure:: ../model_selection/images/sphx_glr_plot_successive_halving_iterations_001.png
+#   :target: ../model_selection/plot_successive_halving_iterations.html
+#   :align: center
+
+from sklearn.experimental import enable_halving_search_cv  # noqa
+from sklearn.model_selection import HalvingGridSearchCV
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.datasets import make_classification
+
+param_grid = {'max_depth': [3, 5, 10],
+              'min_samples_split': [2, 5, 10]}
+base_estimator = RandomForestClassifier(random_state=0)
+X, y = make_classification(n_samples=1000, random_state=0)
+sh = HalvingGridSearchCV(base_estimator, param_grid, cv=5,
+                         factor=2, resource='n_estimators',
+                         max_resources=30).fit(X, y)
+sh.best_params_
 
 ##############################################################################
 # New PolynomialCountSketch kernel approximation function
