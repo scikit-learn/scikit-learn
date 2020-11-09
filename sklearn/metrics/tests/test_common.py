@@ -799,7 +799,7 @@ def test_thresholded_invariance_string_vs_numbers_labels(name):
                 metric(y1_str.astype('O'), y2)
 
 
-invalids = [
+invalids_nan_inf = [
     ([0, 1], [np.inf, np.inf]),
     ([0, 1], [np.nan, np.nan]),
     ([0, 1], [np.nan, np.inf]),
@@ -815,16 +815,31 @@ invalids = [
         'metric',
         chain(THRESHOLDED_METRICS.values(), REGRESSION_METRICS.values()))
 def test_regression_thresholded_inf_nan_input(metric):
-    for y_true, y_score in invalids:
+    for y_true, y_score in invalids_nan_inf:
         with pytest.raises(ValueError, match="contains NaN, infinity"):
             metric(y_true, y_score)
 
 
 @pytest.mark.parametrize('metric', CLASSIFICATION_METRICS.values())
 def test_classification_inf_nan_input(metric):
-    # Classification metrics all raise a mixed input exception
-    for y_true, y_score in invalids:
+    # check that classification metrics raise a message mentioning the
+    # occurrence of non-finite values in the target vectors.
+    for y_true, y_score in invalids_nan_inf:
         err_msg = "Input contains NaN, infinity or a value too large"
+        with pytest.raises(ValueError, match=err_msg):
+            metric(y_true, y_score)
+
+
+@pytest.mark.parametrize('metric', CLASSIFICATION_METRICS.values())
+def test_classification_binary_continuous_input(metric):
+    # check that classification metrics raise a message of mixed type data with
+    # continuous/binary target vectors.
+    invalid_binary_continuous = [(['a', 'b', 'a'], [0.1, 0.2, 0.3])]
+    err_msg = (
+        "Classification metrics can't handle a mix of binary and continuous "
+        "targets"
+    )
+    for y_true, y_score in invalid_binary_continuous:
         with pytest.raises(ValueError, match=err_msg):
             metric(y_true, y_score)
 
