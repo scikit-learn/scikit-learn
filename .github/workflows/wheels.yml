@@ -21,7 +21,7 @@ on: pull_request
 jobs:
   check_vendor_vcomp140:
     name: Check vendor vcomp140.dll
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/windows/servercore:ltsc2019
     steps:
