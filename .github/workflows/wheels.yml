@@ -19,8 +19,8 @@ on: pull_request
 #   SCIKIT_LEARN_VERSION: 0.24.dev0
 
 jobs:
-  check_vendor_vcomp140:
-    name: Check vendor vcomp140.dll
+  minimal_windows:
+    name: Minimal windows
     runs-on: windows-latest
     strategy:
       matrix:
@@ -31,8 +31,8 @@ jobs:
       - name: Checkout scikit-learn
         uses: actions/checkout@v1
 
-      - name: Run in container
-        run: docker build --build-arg PYTHON_VERSION=${{ matrix.python }} -t scikit-learn/minimal-windows -f build_tools/github/Dockerfile .
+      - name: Run the minimal Windows container
+        run: bash build_tools/github/minimal_windows.sh
 
 # Check whether to build the wheels and the source tarball
 # check_build_trigger:
