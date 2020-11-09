@@ -392,6 +392,12 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         if partial_fit is used instead of fit, they are assigned to the
         last batch of data.
 
+    fit_ : bool
+        True if `fit` method is called.
+
+    partial_fit_ : bool
+        True if `partial_fit` method is called.
+
     See Also
     --------
     MiniBatchKMeans : Alternative implementation that does incremental updates
