@@ -33,9 +33,8 @@ jobs:
 
       - name: Run the minimal Windows container
         run: bash build_tools/github/minimal_windows.sh
-        with:
-          env:
-            PYTHON_VERSION: matrix.python
+        env:
+          PYTHON_VERSION: matrix.python
 
 # Check whether to build the wheels and the source tarball
 # check_build_trigger:
