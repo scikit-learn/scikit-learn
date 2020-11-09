@@ -26,7 +26,7 @@ jobs:
       - name: Run in container
         run: |
           docker pull mcr.microsoft.com/windows/servercore:ltsc2019
-          docker run mcr.microsoft.com/windows/servercore:ltsc2019
+          docker run mcr.microsoft.com/windows/servercore:ltsc2019 powershell
 # Check whether to build the wheels and the source tarball
 # check_build_trigger:
 #   name: Check build trigger
