@@ -1,16 +1,10 @@
-# Python version for the base image
 ARG PYTHON_VERSION
 
+# Get the Python version of the base image from a build argument
 FROM winamd64/python:$PYTHON_VERSION-windowsservercore
 
-# Run the container in user mode
-ARG USERNAME=scikit-learn
-ENV HOME /home/$USERNAME
-RUN useradd -ms /bin/bash $USERNAME
-USER $USERNAME
+# Copy the Windows wheel to a temporary directory
+ADD sklearn/setup.py /tmp/
+CMD ls -l /tmp/
 
-# Move to the workspace
-RUN mkdir -p $HOME/workspace
-WORKDIR $HOME/workspace
-
-CMD latexmk -synctex=1 -interaction=nonstopmode -file-line-error -pdf $FILE
+RUN python -c "import sklearn" 
