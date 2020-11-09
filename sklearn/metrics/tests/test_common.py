@@ -805,11 +805,7 @@ invalids_nan_inf = [
     ([0, 1], [np.nan, np.inf]),
     ([0, 1], [np.inf, 1]),
     ([0, 1], [np.nan, 1]),
-    # non-regression test for:
-    # https://github.com/scikit-learn/scikit-learn/issues/6809
-    ([np.nan, 1, 2], [1, 2, 3]),
 ]
-
 
 @pytest.mark.parametrize(
         'metric',
@@ -824,7 +820,12 @@ def test_regression_thresholded_inf_nan_input(metric):
 def test_classification_inf_nan_input(metric):
     # check that classification metrics raise a message mentioning the
     # occurrence of non-finite values in the target vectors.
-    for y_true, y_score in invalids_nan_inf:
+
+    # Add an additional case for classification only
+    # non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/6809
+    invalids = invalids_nan_inf + [([np.nan, 1, 2], [1, 2, 3])]
+    for y_true, y_score in invalids:
         err_msg = "Input contains NaN, infinity or a value too large"
         with pytest.raises(ValueError, match=err_msg):
             metric(y_true, y_score)
