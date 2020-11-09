@@ -799,16 +799,23 @@ def test_thresholded_invariance_string_vs_numbers_labels(name):
                 metric(y1_str.astype('O'), y2)
 
 
-invalids = [([0, 1], [np.inf, np.inf]),
-            ([0, 1], [np.nan, np.nan]),
-            ([0, 1], [np.nan, np.inf])]
+invalids = [
+    ([0, 1], [np.inf, np.inf]),
+    ([0, 1], [np.nan, np.nan]),
+    ([0, 1], [np.nan, np.inf]),
+    ([0, 1], [np.inf, 1]),
+    ([0, 1], [np.nan, 1]),
+    # non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/6809
+    ([np.nan, 1, 2], [1, 2, 3]),
+]
 
 
 @pytest.mark.parametrize(
         'metric',
         chain(THRESHOLDED_METRICS.values(), REGRESSION_METRICS.values()))
 def test_regression_thresholded_inf_nan_input(metric):
-
+    print()
     for y_true, y_score in invalids:
         with pytest.raises(ValueError, match="contains NaN, infinity"):
             metric(y_true, y_score)
