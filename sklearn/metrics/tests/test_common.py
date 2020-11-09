@@ -815,7 +815,6 @@ invalids = [
         'metric',
         chain(THRESHOLDED_METRICS.values(), REGRESSION_METRICS.values()))
 def test_regression_thresholded_inf_nan_input(metric):
-    print()
     for y_true, y_score in invalids:
         with pytest.raises(ValueError, match="contains NaN, infinity"):
             metric(y_true, y_score)
