@@ -22,13 +22,19 @@ jobs:
   check_vendor_vcomp140:
     name: Check vendor vcomp140.dll
     runs-on: windows-latest
+    matrix:
+      # Python 3.6 is not supported by the official Docker image
+      python: [3.7, 3.8, 3.9]
+
     steps:
       - name: Checkout scikit-learn
         uses: actions/checkout@v1
 
       - name: Run in container
         run: |
-          docker build -t scikit-learn/minimal-windows -f build_tools/github/Dockerfile .
+          docker build --build-arg PYTHON_VERSION={{ matrix.python }} \
+                       -t scikit-learn/minimal-windows \
+                       -f build_tools/github/Dockerfile .
 
 # Check whether to build the wheels and the source tarball
 # check_build_trigger:

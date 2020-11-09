@@ -1,4 +1,16 @@
-FROM mcr.microsoft.com/windows/servercore:ltsc2019
+# Python version for the base image
+ARG PYTHON_VERSION
 
-# Download the Windows embeddable zip file
-CMD wget https://www.python.org/ftp/python/3.9.0/python-3.9.0-embed-amd64.zip
+FROM winamd64/python:$PYTHON_VERSION-windowsservercore
+
+# Run the container in user mode
+ARG USERNAME=scikit-learn
+ENV HOME /home/$USERNAME
+RUN useradd -ms /bin/bash $USERNAME
+USER $USERNAME
+
+# Move to the workspace
+RUN mkdir -p $HOME/workspace
+WORKDIR $HOME/workspace
+
+CMD latexmk -synctex=1 -interaction=nonstopmode -file-line-error -pdf $FILE
