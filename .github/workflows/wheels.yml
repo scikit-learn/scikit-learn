@@ -22,9 +22,10 @@ jobs:
   check_vendor_vcomp140:
     name: Check vendor vcomp140.dll
     runs-on: windows-latest
-    matrix:
-      # Python 3.6 is not supported by the official Docker image
-      python: [3.7, 3.8, 3.9]
+    strategy:
+      matrix:
+        # Python 3.6 is not supported by the official Docker image
+        python: [3.7, 3.8, 3.9]
 
     steps:
       - name: Checkout scikit-learn
