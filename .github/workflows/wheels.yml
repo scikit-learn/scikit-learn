@@ -21,14 +21,11 @@ on: pull_request
 jobs:
   check_vendor_vcomp140:
     name: Check vendor vcomp140.dll
-    runs-on: ubuntu-latest
-    container:
-      image: mcr.microsoft.com/windows/servercore:ltsc2019
+    runs-on: windows-latest
     steps:
       - name: Run in container
         run: |
-          echo This job does specify a container.
-          echo It runs in the container instead of the VM.
+          docker pull mcr.microsoft.com/windows/servercore:ltsc2019
 # Check whether to build the wheels and the source tarball
 # check_build_trigger:
 #   name: Check build trigger
