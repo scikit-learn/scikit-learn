@@ -20,7 +20,7 @@ on: pull_request
 
 jobs:
   minimal_windows:
-    name: Minimal windows
+    name: Minimal Windows
     runs-on: windows-latest
     strategy:
       matrix:
@@ -31,10 +31,10 @@ jobs:
       - name: Checkout scikit-learn
         uses: actions/checkout@v1
 
-      - name: Run the minimal Windows container
+      - name: Build and run Windows container
         run: bash build_tools/github/minimal_windows.sh
         env:
-          PYTHON_VERSION: matrix.python
+          PYTHON_VERSION: ${{ matrix.python }}
 
 # Check whether to build the wheels and the source tarball
 # check_build_trigger:
