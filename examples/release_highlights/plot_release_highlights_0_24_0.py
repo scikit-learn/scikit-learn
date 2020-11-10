@@ -31,9 +31,12 @@ or with conda::
 # :class:`~sklearn.model_selection.GridSearchCV` and
 # :class:`~sklearn.model_selection.RandomizedSearchCV`.
 # Successive halving is an iterative selection process. The first iteration is
-# run on a subset of the input sample. Only some of the parameter candidates
-# are selected for the next iteration, allowing to increase the size of the
-# input subset. As illustrated in the figure below,
+# run with a small amount of resources, by resource meaning typically the
+# number of training samples, but also arbitrary numeric parameters such
+# as `n_estimators` in a random forest. Only some of the parameter candidates
+# are selected for the next iteration, with an increasing size of the
+# allocated resources.
+# As illustrated in the figure below,
 # only a subset of candidates will last until the end of the iteration process.
 # Read more in the :ref:`User Guide <successive_halving_user_guide>`.
 # 
@@ -60,11 +63,8 @@ param_dist = {"max_depth": [3, None],
               "bootstrap": [True, False],
               "criterion": ["gini", "entropy"]}
 
-rsh = HalvingRandomSearchCV(
-    estimator=clf,
-    param_distributions=param_dist,
-    factor=2,
-    random_state=rng)
+rsh = HalvingRandomSearchCV(estimator=clf, param_distributions=param_dist,
+                            factor=2, random_state=rng)
 rsh.fit(X, y)
 rsh.best_params_
 
@@ -74,46 +74,22 @@ rsh.best_params_
 # A new iterative transformer to select features is available:
 # :class:`~sklearn.feature_selection.SequentialFeatureSelector`.
 # Sequential Feature Selection can add features once at a time (forward
-# selection) or remove features from feature list (backward selection),
-# based on a cross-validated score maximization.
+# selection) or remove features from the list of the available features
+# (backward selection), based on a cross-validated score maximization.
 # See the :ref:`User Guide <sequential_feature_selection>`.
 
-from sklearn.datasets import fetch_openml
-from sklearn.compose import make_column_transformer
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.linear_model import Ridge
 from sklearn.feature_selection import SequentialFeatureSelector
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.datasets import load_iris
 
-survey = fetch_openml(data_id=534, as_frame=True)
-X_data = survey.data[survey.feature_names]
-y = survey.target.values.ravel()
-
-categorical_columns = ['RACE', 'OCCUPATION', 'SECTOR',
-                       'MARR', 'UNION', 'SEX', 'SOUTH']
-numerical_columns = ['EDUCATION', 'EXPERIENCE', 'AGE']
-
-preprocessor = make_column_transformer(
-    (OneHotEncoder(drop='if_binary'), categorical_columns),
-    remainder='passthrough'
-)
-preprocessor.fit(X_data)
-X = preprocessor.transform(X_data)
-
-feature_names = preprocessor.get_feature_names()
-ridge = Ridge(alpha=1e-10).fit(X, y)
-
-sfs_forward = SequentialFeatureSelector(ridge, n_features_to_select=2,
-                                        direction='forward').fit(X, y)
-sfs_backward = SequentialFeatureSelector(ridge, n_features_to_select=2,
-                                         direction='backward').fit(X, y)
-
-sfs_forward_features  = [i for (i, v) in zip(feature_names, sfs_forward.get_support()) if v]
-sfs_backward_features  = [i for (i, v) in zip(feature_names, sfs_backward.get_support()) if v]
-
+X, y = load_iris(return_X_y=True, as_frame=True)
+feature_names = X.columns
+knn = KNeighborsClassifier(n_neighbors=3)
+sfs = SequentialFeatureSelector(knn, n_features_to_select=2)
+sfs.fit(X, y)
+sfs_features  = [i for (i, v) in zip(feature_names, sfs.get_support()) if v]
 print("Features selected by forward sequential selection: "
-      f"{sfs_forward_features}")
-print("Features selected by backward sequential selection: "
-      f"{sfs_backward_features}")
+      f"{sfs_features}")
 
 ##############################################################################
 # New PolynomialCountSketch kernel approximation function
