@@ -570,8 +570,8 @@ class StratifiedKFold(_BaseKFold):
     This cross-validation object is a variation of KFold that returns
     stratified folds. The folds are made by preserving the percentage of
     samples for each class.
-    
-    Read more in the :ref:`User Guide <stratified_k_fold>`. 
+
+    Read more in the :ref:`User Guide <stratified_k_fold>`.
 
     Parameters
     ----------
