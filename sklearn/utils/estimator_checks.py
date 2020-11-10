@@ -26,7 +26,6 @@ from ._testing import create_memmap_backed_data
 from ._testing import raises
 from . import is_scalar_nan
 
-from ..discriminant_analysis import LinearDiscriminantAnalysis
 from ..linear_model import LogisticRegression
 from ..linear_model import Ridge
 
@@ -346,7 +345,7 @@ def _construct_instance(Estimator):
             if issubclass(Estimator, RegressorMixin):
                 estimator = Estimator(Ridge())
             else:
-                estimator = Estimator(LinearDiscriminantAnalysis())
+                estimator = Estimator(LogisticRegression(C=1))
         elif required_parameters in (['estimators'],):
             # Heterogeneous ensemble classes (i.e. stacking, voting)
             if issubclass(Estimator, RegressorMixin):
@@ -2545,7 +2544,14 @@ def check_estimators_overwrite_params(name, estimator_orig, strict_mode=True):
 @ignore_warnings(category=FutureWarning)
 def check_no_attributes_set_in_init(name, estimator_orig, strict_mode=True):
     """Check setting during init."""
-    estimator = clone(estimator_orig)
+    try:
+        # Clone fails if the estimator does not store
+        # all parameters as an attribute during init
+        estimator = clone(estimator_orig)
+    except AttributeError:
+        raise AttributeError(f"Estimator {name} should store all "
+                             "parameters as an attribute during init.")
+
     if hasattr(type(estimator).__init__, "deprecated_original"):
         return
 
@@ -2566,13 +2572,6 @@ def check_no_attributes_set_in_init(name, estimator_orig, strict_mode=True):
     assert not invalid_attr, (
             "Estimator %s should not set any attribute apart"
             " from parameters during init. Found attributes %s."
-            % (name, sorted(invalid_attr)))
-    # Ensure that each parameter is set in init
-    invalid_attr = set(init_params) - set(vars(estimator)) - {"self"}
-    assert not invalid_attr, (
-            "Estimator %s should store all parameters"
-            " as an attribute during init. Did not find "
-            "attributes %s."
             % (name, sorted(invalid_attr)))
 
 

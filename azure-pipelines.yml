@@ -160,9 +160,10 @@ jobs:
     dependsOn: [linting]
     condition: and(ne(variables['Build.Reason'], 'Schedule'), succeeded('linting'))
     matrix:
-      pylatest_conda_mkl:
+      pylatest_conda_forge_mkl:
         DISTRIB: 'conda'
         BLAS: 'mkl'
+        CONDA_CHANNEL: 'conda-forge'
       pylatest_conda_mkl_no_openmp:
         DISTRIB: 'conda'
         BLAS: 'mkl'
