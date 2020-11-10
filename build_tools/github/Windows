@@ -1,11 +1,10 @@
-ARG PYTHON_VERSION
-ARG WHEEL
-
 # Get the Python version of the base image from a build argument
+ARG PYTHON_VERSION
 FROM winamd64/python:$PYTHON_VERSION-windowsservercore
 
 # Copy and install the Windows wheel
-ADD dist/artifact/$WHEEL /tmp/
+ARG WHEEL
+COPY dist/artifact/$WHEEL /tmp/$WHEEL
 RUN pip install /tmp/$WHEEL
 
 CMD python -c "import sklearn" 
