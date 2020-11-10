@@ -117,6 +117,16 @@ the test data::
   >>> accuracy_score(pipe.predict(X_test), y_test)
   0.97...
 
+.. note:: Diagram rendering of estimators
+    The default configuration for displaying a pipeline is 'text':
+    ``set_config(display='text')``. To visualize the diagram in Jupyter
+    Notebook, use ``set_config(display='diagram')`` and then call the pipeline
+    object.
+
+    >>> with config_context(display='diagram'):
+    >>>    pipe
+    <diagram renders here>
+
 Model evaluation
 ----------------
 
