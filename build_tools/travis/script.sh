@@ -8,7 +8,7 @@
 set -e
 set -x
 
-if ! [[ "$TRAVIS_COMMIT_MESSAGE" =~ \[cd\ build\] ]]; then
+if ! [[ $BUILD_WHEEL == true ]]; then
     bash build_tools/travis/test_script.sh || travis_terminate 1
     bash build_tools/travis/test_docs.sh || travis_terminate 1
     bash build_tools/travis/test_pytest_soft_dependency.sh || travis_terminate 1

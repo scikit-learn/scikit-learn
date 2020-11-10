@@ -10,7 +10,7 @@
 set -e
 set -x
 
-if [[ "$TRAVIS_COMMIT_MESSAGE" =~ \[cd\ build\] ]]; then
+if [[ $BUILD_WHEEL == true ]]; then
     # TODO: Upload the wheels to the Anaconda repository
 else
     if [[ "$COVERAGE" == "true" ]]; then
