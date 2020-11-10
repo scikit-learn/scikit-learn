@@ -23,13 +23,16 @@ or with conda::
 ##############################################################################
 # Searching parameter space with successive halving
 # -------------------------------------------------
-# Successive halving, a new, state of the art method, is now available to
+# Successive halving, a state of the art method, is now available to
 # explore the space of the parameters and identify their best combination.
-# The parameter space is roughly sampled at the beginning using a small
-# amount of resources.
-# Only some of the candidates are selected for the next iteration, allowing to
-# better sample around the local optimization and to allocate more resources.
-# Only a subset of candidates will last until the end of the iteration process.
+# :class:`HalvingGridSearchCV` and :class:`HalvingRandomSearchCV` can be
+# used as drop-in replacement for :class:`GridSearchCV` and
+# :class:`RandomizedSearchCV`.
+# Successive halving is an iterative selection process. The first iteration is
+# run on a subset of the input sample. Only some of the parameter candidates
+# are selected for the next iteration, allowing to increase the size of the
+# input subset. As illustrated in the figure below,
+# only a subset of candidates will last until the end of the iteration process.
 # Read more in the :ref:`User Guide <successive_halving_user_guide>`.
 # 
 # .. figure:: ../model_selection/images/sphx_glr_plot_successive_halving_iterations_001.png
@@ -37,18 +40,33 @@ or with conda::
 #   :align: center
 
 from sklearn.experimental import enable_halving_search_cv  # noqa
-from sklearn.model_selection import HalvingGridSearchCV
+from sklearn.model_selection import HalvingRandomSearchCV
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.datasets import make_classification
 
-param_grid = {'max_depth': [3, 5, 10],
-              'min_samples_split': [2, 5, 10]}
-base_estimator = RandomForestClassifier(random_state=0)
-X, y = make_classification(n_samples=1000, random_state=0)
-sh = HalvingGridSearchCV(base_estimator, param_grid, cv=5,
-                         factor=2, resource='n_estimators',
-                         max_resources=30).fit(X, y)
-sh.best_params_
+rng = np.random.RandomState(0)
+
+X, y = datasets.make_classification(n_samples=700, random_state=rng)
+
+clf = RandomForestClassifier(n_estimators=20, random_state=rng)
+
+param_dist = {"max_depth": [3, None],
+              "max_features": randint(1, 11),
+              "min_samples_split": randint(2, 11),
+              "bootstrap": [True, False],
+              "criterion": ["gini", "entropy"]}
+
+rsh = HalvingRandomSearchCV(
+    estimator=clf,
+    param_distributions=param_dist,
+    factor=2,
+    random_state=rng)
+rsh.fit(X, y)
+rsh.best_params_
+
+##############################################################################
+# New SequentialFeatureSelector transformer
+# -----------------------------------------
 
 ##############################################################################
 # New PolynomialCountSketch kernel approximation function
