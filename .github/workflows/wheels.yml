@@ -62,7 +62,7 @@ jobs:
           CIBW_BUILD: cp${{ matrix.python }}-*
           CIBW_TEST_REQUIRES: pytest pandas threadpoolctl
           # Test that there are no links to system libraries
-          CIBW_TEST_COMMAND: pytest --pyargs sklearn.tests.test_base &&
+          CIBW_TEST_COMMAND: pytest --pyargs sklearn &&
                              python -m threadpoolctl -i sklearn
           # By default, the Windows wheels are not repaired.
           # In this case, we need to vendor the vcomp140.dll
