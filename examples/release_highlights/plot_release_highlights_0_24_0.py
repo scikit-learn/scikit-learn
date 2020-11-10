@@ -25,9 +25,11 @@ or with conda::
 # -------------------------------------------------
 # Successive halving, a state of the art method, is now available to
 # explore the space of the parameters and identify their best combination.
-# :class:`HalvingGridSearchCV` and :class:`HalvingRandomSearchCV` can be
-# used as drop-in replacement for :class:`GridSearchCV` and
-# :class:`RandomizedSearchCV`.
+# :class:`~sklearn.model_selection.HalvingGridSearchCV` and
+# :class:`~sklearn.model_selection.HalvingRandomSearchCV` can be
+# used as drop-in replacement for
+# :class:`~sklearn.model_selection.GridSearchCV` and
+# :class:`~sklearn.model_selection.RandomizedSearchCV`.
 # Successive halving is an iterative selection process. The first iteration is
 # run on a subset of the input sample. Only some of the parameter candidates
 # are selected for the next iteration, allowing to increase the size of the
@@ -69,6 +71,49 @@ rsh.best_params_
 ##############################################################################
 # New SequentialFeatureSelector transformer
 # -----------------------------------------
+# A new iterative transformer to select features is available:
+# :class:`~sklearn.feature_selection.SequentialFeatureSelector`.
+# Sequential Feature Selection can add features once at a time (forward
+# selection) or remove features from feature list (backward selection),
+# based on a cross-validated score maximization.
+# See the :ref:`User Guide <sequential_feature_selection>`.
+
+from sklearn.datasets import fetch_openml
+from sklearn.compose import make_column_transformer
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.linear_model import Ridge
+from sklearn.feature_selection import SequentialFeatureSelector
+
+survey = fetch_openml(data_id=534, as_frame=True)
+X_data = survey.data[survey.feature_names]
+y = survey.target.values.ravel()
+
+categorical_columns = ['RACE', 'OCCUPATION', 'SECTOR',
+                       'MARR', 'UNION', 'SEX', 'SOUTH']
+numerical_columns = ['EDUCATION', 'EXPERIENCE', 'AGE']
+
+preprocessor = make_column_transformer(
+    (OneHotEncoder(drop='if_binary'), categorical_columns),
+    remainder='passthrough'
+)
+preprocessor.fit(X_data)
+X = preprocessor.transform(X_data)
+
+feature_names = preprocessor.get_feature_names()
+ridge = Ridge(alpha=1e-10).fit(X, y)
+
+sfs_forward = SequentialFeatureSelector(ridge, n_features_to_select=2,
+                                        direction='forward').fit(X, y)
+sfs_backward = SequentialFeatureSelector(ridge, n_features_to_select=2,
+                                         direction='backward').fit(X, y)
+
+sfs_forward_features  = [i for (i, v) in zip(feature_names, sfs_forward.get_support()) if v]
+sfs_backward_features  = [i for (i, v) in zip(feature_names, sfs_backward.get_support()) if v]
+
+print("Features selected by forward sequential selection: "
+      f"{sfs_forward_features}")
+print("Features selected by backward sequential selection: "
+      f"{sfs_backward_features}")
 
 ##############################################################################
 # New PolynomialCountSketch kernel approximation function
