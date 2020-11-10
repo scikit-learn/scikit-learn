@@ -85,7 +85,7 @@ elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
     python -m pip install -U pip
 
     # optionally install scikit-image
-    python -m pip install --only-binary :all: sckit-image || true
+    python -m pip install --only-binary :all: scikit-image || true
 
     python -m pip install pandas matplotlib pyamg
     # do not install dependencies for lightgbm since it requires scikit-learn
