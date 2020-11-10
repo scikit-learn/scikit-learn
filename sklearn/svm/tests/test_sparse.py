@@ -181,7 +181,7 @@ def test_sparse_decision_function():
     assert_array_almost_equal(dec.ravel(), clf.decision_function(X))
     assert_array_almost_equal(
         prediction,
-        clf.classes_[(clf.decision_function(X) > 0).astype(np.int).ravel()])
+        clf.classes_[(clf.decision_function(X) > 0).astype(int).ravel()])
     expected = np.array([-1., -0.66, -1., 0.66, 1., 1.])
     assert_array_almost_equal(clf.decision_function(X), expected, 2)
 

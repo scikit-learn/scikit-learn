@@ -23,10 +23,21 @@
 .. |DOI| image:: https://zenodo.org/badge/21369/scikit-learn/scikit-learn.svg
 .. _DOI: https://zenodo.org/badge/latestdoi/21369/scikit-learn/scikit-learn
 
-scikit-learn
-============
+.. |PythonMinVersion| replace:: 3.6
+.. |NumPyMinVersion| replace:: 1.13.3
+.. |SciPyMinVersion| replace:: 0.19.1
+.. |JoblibMinVersion| replace:: 0.11
+.. |ThreadpoolctlMinVersion| replace:: 2.0.0
+.. |MatplotlibMinVersion| replace:: 2.1.1
+.. |Scikit-ImageMinVersion| replace:: 0.13
+.. |PandasMinVersion| replace:: 0.25.0
+.. |SeabornMinVersion| replace:: 0.9.0
+.. |PytestMinVersion| replace:: 5.0.1
 
-scikit-learn is a Python module for machine learning built on top of
+.. image:: doc/logos/scikit-learn-logo.png
+  :target: https://scikit-learn.org/
+
+**scikit-learn** is a Python module for machine learning built on top of
 SciPy and is distributed under the 3-Clause BSD license.
 
 The project was started in 2007 by David Cournapeau as a Google Summer
@@ -38,7 +49,6 @@ It is currently maintained by a team of volunteers.
 
 Website: https://scikit-learn.org
 
-
 Installation
 ------------
 
@@ -47,20 +57,23 @@ Dependencies
 
 scikit-learn requires:
 
-- Python (>= 3.6)
-- NumPy (>= 1.13.3)
-- SciPy (>= 0.19.1)
-- joblib (>= 0.11)
-- threadpoolctl (>= 2.0.0)
+- Python (>= |PythonMinVersion|)
+- NumPy (>= |NumPyMinVersion|)
+- SciPy (>= |SciPyMinVersion|)
+- joblib (>= |JoblibMinVersion|)
+- threadpoolctl (>= |ThreadpoolctlMinVersion|)
+
+=======
 
 **Scikit-learn 0.20 was the last version to support Python 2.7 and Python 3.4.**
 scikit-learn 0.23 and later require Python 3.6 or newer.
 
-Scikit-learn plotting capabilities (i.e., functions start with ``plot_``
-and classes end with "Display") require Matplotlib (>= 2.1.1). For running the
-examples Matplotlib >= 2.1.1 is required. A few examples require
-scikit-image >= 0.13, a few examples require pandas >= 0.18.0, some examples
-require seaborn >= 0.9.0.
+Scikit-learn plotting capabilities (i.e., functions start with ``plot_`` and
+classes end with "Display") require Matplotlib (>= |MatplotlibMinVersion|).
+For running the examples Matplotlib >= |MatplotlibMinVersion| is required.
+A few examples require scikit-image >= |Scikit-ImageMinVersion|, a few examples
+require pandas >= |PandasMinVersion|, some examples require seaborn >=
+|SeabornMinVersion|.
 
 User installation
 ~~~~~~~~~~~~~~~~~
@@ -72,7 +85,7 @@ the easiest way to install scikit-learn is using ``pip``   ::
 
 or ``conda``::
 
-    conda install scikit-learn
+    conda install -c conda-forge scikit-learn
 
 The documentation includes more detailed `installation instructions <https://scikit-learn.org/stable/install.html>`_.
 
@@ -116,8 +129,8 @@ To learn more about making a contribution to scikit-learn, please see our
 Testing
 ~~~~~~~
 
-After installation, you can launch the test suite from outside the
-source directory (you will need to have ``pytest`` >= 3.3.0 installed)::
+After installation, you can launch the test suite from outside the source
+directory (you will need to have ``pytest`` >= |PyTestMinVersion| installed)::
 
     pytest sklearn
 
@@ -134,7 +147,6 @@ Before opening a Pull Request, have a look at the
 full Contributing page to make sure your code complies
 with our guidelines: https://scikit-learn.org/stable/developers/index.html
 
-
 Project History
 ---------------
 
@@ -146,7 +158,6 @@ for a list of core contributors.
 The project is currently maintained by a team of volunteers.
 
 **Note**: `scikit-learn` was previously referred to as `scikits.learn`.
-
 
 Help and Support
 ----------------
@@ -163,6 +174,8 @@ Communication
 
 - Mailing list: https://mail.python.org/mailman/listinfo/scikit-learn
 - IRC channel: ``#scikit-learn`` at ``webchat.freenode.net``
+- Gitter: https://gitter.im/scikit-learn/scikit-learn
+- Twitter: https://twitter.com/scikit_learn
 - Stack Overflow: https://stackoverflow.com/questions/tagged/scikit-learn
 - Website: https://scikit-learn.org
 

@@ -10,7 +10,9 @@ at which the fixe is no longer needed.
 #
 # License: BSD 3 clause
 
+from functools import update_wrapper
 from distutils.version import LooseVersion
+import functools
 
 import numpy as np
 import scipy.sparse as sp
@@ -18,30 +20,26 @@ import scipy
 import scipy.stats
 from scipy.sparse.linalg import lsqr as sparse_lsqr  # noqa
 from numpy.ma import MaskedArray as _MaskedArray  # TODO: remove in 0.25
+from .._config import config_context, get_config
 
 from .deprecation import deprecated
 
-
-def _parse_version(version_string):
-    version = []
-    for x in version_string.split('.'):
-        try:
-            version.append(int(x))
-        except ValueError:
-            # x may be of the form dev-1ea1592
-            version.append(x)
-    return tuple(version)
+try:
+    from pkg_resources import parse_version  # type: ignore
+except ImportError:
+    # setuptools not installed
+    parse_version = LooseVersion  # type: ignore
 
 
-np_version = _parse_version(np.__version__)
-sp_version = _parse_version(scipy.__version__)
+np_version = parse_version(np.__version__)
+sp_version = parse_version(scipy.__version__)
 
 
-if sp_version >= (1, 4):
+if sp_version >= parse_version('1.4'):
     from scipy.sparse.linalg import lobpcg
 else:
     # Backport of lobpcg functionality from scipy 1.4.0, can be removed
-    # once support for sp_version < (1, 4) is dropped
+    # once support for sp_version < parse_version('1.4') is dropped
     # mypy error: Name 'lobpcg' already defined (possibly by an import)
     from ..externals._lobpcg import lobpcg  # type: ignore  # noqa
 
@@ -56,7 +54,7 @@ def _astype_copy_false(X):
     {ndarray, csr_matrix, csc_matrix}.astype when possible,
     otherwise don't specify
     """
-    if sp_version >= (1, 1) or not sp.issparse(X):
+    if sp_version >= parse_version('1.1') or not sp.issparse(X):
         return {'copy': False}
     else:
         return {}
@@ -85,7 +83,7 @@ def _joblib_parallel_args(**kwargs):
     """
     import joblib
 
-    if joblib.__version__ >= LooseVersion('0.12'):
+    if parse_version(joblib.__version__) >= parse_version('0.12'):
         return kwargs
 
     extra_args = set(kwargs.keys()).difference({'prefer', 'require'})
@@ -170,7 +168,7 @@ class MaskedArray(_MaskedArray):
 def _take_along_axis(arr, indices, axis):
     """Implements a simplified version of np.take_along_axis if numpy
     version < 1.15"""
-    if np_version > (1, 14):
+    if np_version >= parse_version('1.15'):
         return np.take_along_axis(arr=arr, indices=indices, axis=axis)
     else:
         if axis is None:
@@ -201,3 +199,24 @@ def _take_along_axis(arr, indices, axis):
 
         fancy_index = tuple(fancy_index)
         return arr[fancy_index]
+
+
+# remove when https://github.com/joblib/joblib/issues/1071 is fixed
+def delayed(function):
+    """Decorator used to capture the arguments of a function."""
+    @functools.wraps(function)
+    def delayed_function(*args, **kwargs):
+        return _FuncWrapper(function), args, kwargs
+    return delayed_function
+
+
+class _FuncWrapper:
+    """"Load the global configuration before calling the function."""
+    def __init__(self, function):
+        self.function = function
+        self.config = get_config()
+        update_wrapper(self, self.function)
+
+    def __call__(self, *args, **kwargs):
+        with config_context(**self.config):
+            return self.function(*args, **kwargs)

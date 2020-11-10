@@ -11,7 +11,7 @@ the original feature space.
 """
 from sklearn import svm
 from sklearn.datasets import make_classification
-from sklearn.feature_selection import SelectKBest, f_regression
+from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
@@ -27,7 +27,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
 # ANOVA SVM-C
 # 1) anova filter, take 3 best ranked features
-anova_filter = SelectKBest(f_regression, k=3)
+anova_filter = SelectKBest(f_classif, k=3)
 # 2) svm
 clf = svm.LinearSVC()
 

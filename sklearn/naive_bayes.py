@@ -27,12 +27,13 @@ from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize
 from .preprocessing import LabelBinarizer
 from .preprocessing import label_binarize
-from .utils import check_X_y, check_array
+from .utils import check_X_y, check_array, deprecated
 from .utils.extmath import safe_sparse_dot
 from .utils.multiclass import _check_partial_fit_first_call
 from .utils.validation import check_is_fitted, check_non_negative, column_or_1d
 from .utils.validation import _check_sample_weight
 from .utils.validation import _deprecate_positional_args
+
 
 __all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB', 'ComplementNB',
            'CategoricalNB']
@@ -650,18 +651,21 @@ class _BaseDiscreteNB(_BaseNB):
         self.feature_count_ = np.zeros((n_effective_classes, n_features),
                                        dtype=np.float64)
 
-    # XXX The following is a stopgap measure; we need to set the dimensions
-    # of class_log_prior_ and feature_log_prob_ correctly.
-    def _get_coef(self):
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute coef_ was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 0.26.")
+    @property
+    def coef_(self):
         return (self.feature_log_prob_[1:]
                 if len(self.classes_) == 2 else self.feature_log_prob_)
 
-    def _get_intercept(self):
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute intercept_ was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 0.26.")
+    @property
+    def intercept_(self):
         return (self.class_log_prior_[1:]
                 if len(self.classes_) == 2 else self.class_log_prior_)
-
-    coef_ = property(_get_coef)
-    intercept_ = property(_get_intercept)
 
     def _more_tags(self):
         return {'poor_score': True}
@@ -710,8 +714,11 @@ class MultinomialNB(_BaseDiscreteNB):
         Class labels known to the classifier
 
     coef_ : ndarray of shape (n_classes, n_features)
-        Mirrors ``feature_log_prob_`` for interpreting MultinomialNB
+        Mirrors ``feature_log_prob_`` for interpreting `MultinomialNB`
         as a linear model.
+
+        .. deprecated:: 0.24
+            ``coef_`` is deprecated in 0.24 and will be removed in 0.26.
 
     feature_count_ : ndarray of shape (n_classes, n_features)
         Number of samples encountered for each (class, feature)
@@ -722,9 +729,12 @@ class MultinomialNB(_BaseDiscreteNB):
         Empirical log probability of features
         given a class, ``P(x_i|y)``.
 
-    intercept_ : ndarray of shape (n_classes, )
-        Mirrors ``class_log_prior_`` for interpreting MultinomialNB
+    intercept_ : ndarray of shape (n_classes,)
+        Mirrors ``class_log_prior_`` for interpreting `MultinomialNB`
         as a linear model.
+
+        .. deprecated:: 0.24
+            ``intercept_`` is deprecated in 0.24 and will be removed in 0.26.
 
     n_features_ : int
         Number of features of each sample.
@@ -833,6 +843,13 @@ class ComplementNB(_BaseDiscreteNB):
     classes_ : ndarray of shape (n_classes,)
         Class labels known to the classifier
 
+    coef_ : ndarray of shape (n_classes, n_features)
+        Mirrors ``feature_log_prob_`` for interpreting `ComplementNB`
+        as a linear model.
+
+        .. deprecated:: 0.24
+            ``coef_`` is deprecated in 0.24 and will be removed in 0.26.
+
     feature_all_ : ndarray of shape (n_features,)
         Number of samples encountered for each feature during fitting. This
         value is weighted by the sample weight when provided.
@@ -843,6 +860,13 @@ class ComplementNB(_BaseDiscreteNB):
 
     feature_log_prob_ : ndarray of shape (n_classes, n_features)
         Empirical weights for class complements.
+
+    intercept_ : ndarray of shape (n_classes,)
+        Mirrors ``class_log_prior_`` for interpreting `ComplementNB`
+        as a linear model.
+
+        .. deprecated:: 0.24
+            ``coef_`` is deprecated in 0.24 and will be removed in 0.26.
 
     n_features_ : int
         Number of features of each sample.
@@ -951,6 +975,10 @@ class BernoulliNB(_BaseDiscreteNB):
     classes_ : ndarray of shape (n_classes,)
         Class labels known to the classifier
 
+    coef_ : ndarray of shape (n_classes, n_features)
+        Mirrors ``feature_log_prob_`` for interpreting `BernoulliNB`
+        as a linear model.
+
     feature_count_ : ndarray of shape (n_classes, n_features)
         Number of samples encountered for each (class, feature)
         during fitting. This value is weighted by the sample weight when
@@ -958,6 +986,10 @@ class BernoulliNB(_BaseDiscreteNB):
 
     feature_log_prob_ : ndarray of shape (n_classes, n_features)
         Empirical log probability of features given a class, P(x_i|y).
+
+    intercept_ : ndarray of shape (n_classes,)
+        Mirrors ``class_log_prior_`` for interpreting `BernoulliNB`
+        as a linear model.
 
     n_features_ : int
         Number of features of each sample.
@@ -1068,6 +1100,18 @@ class CategoricalNB(_BaseDiscreteNB):
         Prior probabilities of the classes. If specified the priors are not
         adjusted according to the data.
 
+    min_categories : int or array-like of shape (n_features,), default=None
+        Minimum number of categories per feature.
+
+        - integer: Sets the minimum number of categories per feature to
+          `n_categories` for each features.
+        - array-like: shape (n_features,) where `n_categories[i]` holds the
+          minimum number of categories for the ith column of the input.
+        - None (default): Determines the number of categories automatically
+          from the training data.
+
+        .. versionadded:: 0.24
+
     Attributes
     ----------
     category_count_ : list of arrays of shape (n_features,)
@@ -1093,6 +1137,12 @@ class CategoricalNB(_BaseDiscreteNB):
     n_features_ : int
         Number of features of each sample.
 
+    n_categories_ : ndarray of shape (n_features,), dtype=int
+        Number of categories for each feature. This value is
+        inferred from the data or set by the minimum number of categories.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> import numpy as np
@@ -1109,11 +1159,13 @@ class CategoricalNB(_BaseDiscreteNB):
 
     @_deprecate_positional_args
     def __init__(self, *, alpha=1.0, force_alpha=False, fit_prior=True,
-                 class_prior=None):
+                 class_prior=None,
+                 min_categories=None):
         self.alpha = alpha
         self.force_alpha = force_alpha
         self.fit_prior = fit_prior
         self.class_prior = class_prior
+        self.min_categories = min_categories
 
     def fit(self, X, y, sample_weight=None):
         """Fit Naive Bayes classifier according to X, y
@@ -1205,6 +1257,30 @@ class CategoricalNB(_BaseDiscreteNB):
         self.category_count_ = [np.zeros((n_effective_classes, 0))
                                 for _ in range(n_features)]
 
+    @staticmethod
+    def _validate_n_categories(X, min_categories):
+        # rely on max for n_categories categories are encoded between 0...n-1
+        n_categories_X = X.max(axis=0) + 1
+        min_categories_ = np.array(min_categories)
+        if min_categories is not None:
+            if not np.issubdtype(min_categories_.dtype, np.signedinteger):
+                raise ValueError(
+                    f"'min_categories' should have integral type. Got "
+                    f"{min_categories_.dtype} instead."
+                )
+            n_categories_ = np.maximum(n_categories_X,
+                                       min_categories_,
+                                       dtype=np.int)
+            if n_categories_.shape != n_categories_X.shape:
+                raise ValueError(
+                    f"'min_categories' should have shape ({X.shape[1]},"
+                    f") when an array-like is provided. Got"
+                    f" {min_categories_.shape} instead."
+                )
+            return n_categories_
+        else:
+            return n_categories_X
+
     def _count(self, X, Y):
         def _update_cat_count_dims(cat_count, highest_feature):
             diff = highest_feature + 1 - cat_count.shape[1]
@@ -1225,10 +1301,12 @@ class CategoricalNB(_BaseDiscreteNB):
                 cat_count[j, indices] += counts[indices]
 
         self.class_count_ += Y.sum(axis=0)
+        self.n_categories_ = self._validate_n_categories(
+            X, self.min_categories)
         for i in range(self.n_features_):
             X_feature = X[:, i]
             self.category_count_[i] = _update_cat_count_dims(
-                self.category_count_[i], X_feature.max())
+                self.category_count_[i], self.n_categories_[i] - 1)
             _update_cat_count(X_feature, Y,
                               self.category_count_[i],
                               self.class_count_.shape[0])

@@ -1,4 +1,3 @@
-from distutils.version import LooseVersion
 import pickle
 import pytest
 
@@ -13,6 +12,7 @@ from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_raises_regexp
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import ignore_warnings
+from sklearn.utils.fixes import parse_version
 
 from sklearn import linear_model, datasets, metrics
 from sklearn.base import clone, is_classifier
@@ -1594,7 +1594,8 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     # a segmentation fault when trying to write in a readonly memory mapped
     # buffer.
 
-    if joblib.__version__ < LooseVersion('0.12') and backend == 'loky':
+    if (parse_version(joblib.__version__) < parse_version('0.12')
+            and backend == 'loky'):
         pytest.skip('loky backend does not exist in joblib <0.12')
 
     random_state = np.random.RandomState(42)

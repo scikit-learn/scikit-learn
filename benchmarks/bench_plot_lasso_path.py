@@ -84,8 +84,8 @@ if __name__ == '__main__':
     from mpl_toolkits.mplot3d import axes3d  # register the 3d projection
     import matplotlib.pyplot as plt
 
-    samples_range = np.linspace(10, 2000, 5).astype(np.int)
-    features_range = np.linspace(10, 2000, 5).astype(np.int)
+    samples_range = np.linspace(10, 2000, 5).astype(int)
+    features_range = np.linspace(10, 2000, 5).astype(int)
     results = compute_bench(samples_range, features_range)
 
     max_time = max(max(t) for t in results.values())

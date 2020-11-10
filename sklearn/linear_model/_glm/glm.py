@@ -48,7 +48,7 @@ def _y_pred_deviance_derivative(coef, X, y, weights, family, link):
     return y_pred, devp
 
 
-class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
+class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
     """Regression via a penalized Generalized Linear Model (GLM).
 
     GLMs based on a reproductive Exponential Dispersion Model (EDM) aim at
@@ -63,6 +63,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
     The parameter ``alpha`` corresponds to the lambda parameter in glmnet.
 
     Read more in the :ref:`User Guide <Generalized_linear_regression>`.
+
+    .. versionadded:: 0.23
 
     Parameters
     ----------
@@ -391,6 +393,8 @@ class PoissonRegressor(GeneralizedLinearRegressor):
 
     Read more in the :ref:`User Guide <Generalized_linear_regression>`.
 
+    .. versionadded:: 0.23
+
     Parameters
     ----------
     alpha : float, default=1
@@ -470,6 +474,8 @@ class GammaRegressor(GeneralizedLinearRegressor):
     """Generalized Linear Model with a Gamma distribution.
 
     Read more in the :ref:`User Guide <Generalized_linear_regression>`.
+
+    .. versionadded:: 0.23
 
     Parameters
     ----------
@@ -553,6 +559,8 @@ class TweedieRegressor(GeneralizedLinearRegressor):
     ``power`` parameter, which determines the underlying distribution.
 
     Read more in the :ref:`User Guide <Generalized_linear_regression>`.
+
+    .. versionadded:: 0.23
 
     Parameters
     ----------

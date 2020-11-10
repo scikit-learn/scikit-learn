@@ -24,12 +24,12 @@ Sampling more dimensions clearly leads to better classification results, but
 comes at a greater cost. This means there is a tradeoff between runtime and
 accuracy, given by the parameter n_components. Note that solving the Linear
 SVM and also the approximate kernel SVM could be greatly accelerated by using
-stochastic gradient descent via :class:`sklearn.linear_model.SGDClassifier`.
+stochastic gradient descent via :class:`~sklearn.linear_model.SGDClassifier`.
 This is not easily possible for the case of the kernelized SVM.
 
 """
 
-###########################################################################
+# %%
 # Python package and dataset imports, load dataset
 # ---------------------------------------------------
 
@@ -55,7 +55,7 @@ from sklearn.decomposition import PCA
 digits = datasets.load_digits(n_class=9)
 
 
-##################################################################
+# %%
 # Timing and accuracy plots
 # --------------------------------------------------
 # To apply an classifier on this data, we need to flatten the image, to
@@ -165,7 +165,7 @@ plt.tight_layout()
 plt.show()
 
 
-############################################################################
+# %%
 # Decision Surfaces of RBF Kernel SVM and Linear SVM
 # --------------------------------------------------------
 # The second plot visualized the decision surfaces of the RBF kernel SVM and

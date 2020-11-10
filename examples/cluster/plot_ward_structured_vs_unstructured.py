@@ -58,7 +58,7 @@ ax = p3.Axes3D(fig)
 ax.view_init(7, -80)
 for l in np.unique(label):
     ax.scatter(X[label == l, 0], X[label == l, 1], X[label == l, 2],
-               color=plt.cm.jet(np.float(l) / np.max(label + 1)),
+               color=plt.cm.jet(float(l) / np.max(label + 1)),
                s=20, edgecolor='k')
 plt.title('Without connectivity constraints (time %.2fs)' % elapsed_time)
 

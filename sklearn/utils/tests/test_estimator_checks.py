@@ -5,8 +5,6 @@ import numpy as np
 import scipy.sparse as sp
 import joblib
 
-from io import StringIO
-
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils import deprecated
 from sklearn.utils._testing import (assert_raises_regex,
@@ -25,7 +23,7 @@ from sklearn.utils.estimator_checks import check_classifier_data_not_an_array
 from sklearn.utils.estimator_checks import check_regressor_data_not_an_array
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.estimator_checks import check_outlier_corruption
-from sklearn.utils.fixes import _parse_version
+from sklearn.utils.fixes import np_version, parse_version
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression, SGDClassifier
 from sklearn.mixture import GaussianMixture
@@ -34,7 +32,6 @@ from sklearn.decomposition import NMF
 from sklearn.linear_model import MultiTaskElasticNet, LogisticRegression
 from sklearn.svm import SVC, NuSVC
 from sklearn.neighbors import KNeighborsRegressor
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.validation import check_array
 from sklearn.utils import all_estimators
 from sklearn.exceptions import SkipTestWarning
@@ -113,6 +110,26 @@ class RaisesErrorInSetParams(BaseEstimator):
         X, y = self._validate_data(X, y)
         return self
 
+
+class HasMutableParameters(BaseEstimator):
+    def __init__(self, p=object()):
+        self.p = p
+
+    def fit(self, X, y=None):
+        X, y = self._validate_data(X, y)
+        return self
+
+
+class HasImmutableParameters(BaseEstimator):
+    # Note that object is an uninitialized class, thus immutable.
+    def __init__(self, p=42, q=np.int32(42), r=object):
+        self.p = p
+        self.q = q
+        self.r = r
+
+    def fit(self, X, y=None):
+        X, y = self._validate_data(X, y)
+        return self
 
 class ModifiesValueInsteadOfRaisingError(BaseEstimator):
     def __init__(self, p=0):
@@ -251,6 +268,27 @@ class NotInvariantPredict(BaseEstimator):
         return np.zeros(X.shape[0])
 
 
+class NotInvariantSampleOrder(BaseEstimator):
+    def fit(self, X, y):
+        X, y = self._validate_data(
+            X, y,
+            accept_sparse=("csr", "csc"),
+            multi_output=True,
+            y_numeric=True)
+        # store the original X to check for sample order later
+        self._X = X
+        return self
+
+    def predict(self, X):
+        X = check_array(X)
+        # if the input contains the same elements but different sample order,
+        # then just return zeros.
+        if (np.array_equiv(np.sort(X, axis=0), np.sort(self._X, axis=0)) and
+           (X != self._X).any()):
+            return np.zeros(X.shape[0])
+        return X[:, 0]
+
+
 class LargeSparseNotSupportedClassifier(BaseEstimator):
     def fit(self, X, y):
         X, y = self._validate_data(
@@ -307,11 +345,19 @@ class EstimatorInconsistentForPandas(BaseEstimator):
         return np.array([self.value_] * X.shape[0])
 
 
-class UntaggedBinaryClassifier(DecisionTreeClassifier):
+class UntaggedBinaryClassifier(SGDClassifier):
     # Toy classifier that only supports binary classification, will fail tests.
-    def fit(self, X, y, sample_weight=None):
-        super().fit(X, y, sample_weight)
-        if np.all(self.n_classes_ > 2):
+    def fit(self, X, y, coef_init=None, intercept_init=None,
+            sample_weight=None):
+        super().fit(X, y, coef_init, intercept_init, sample_weight)
+        if len(self.classes_) > 2:
+            raise ValueError('Only 2 classes are supported')
+        return self
+
+    def partial_fit(self, X, y, classes=None, sample_weight=None):
+        super().partial_fit(X=X, y=y, classes=classes,
+                            sample_weight=sample_weight)
+        if len(self.classes_) > 2:
             raise ValueError('Only 2 classes are supported')
         return self
 
@@ -334,9 +380,16 @@ class RequiresPositiveYRegressor(LinearRegression):
         return {"requires_positive_y": True}
 
 
+class PoorScoreLogisticRegression(LogisticRegression):
+    def decision_function(self, X):
+        return super().decision_function(X) + 1
+
+    def _more_tags(self):
+        return {"poor_score": True}
+
+
 def test_not_an_array_array_function():
-    np_version = _parse_version(np.__version__)
-    if np_version < (1, 17):
+    if np_version < parse_version('1.17'):
         raise SkipTest("array_function protocol not supported in numpy <1.17")
     not_array = _NotAnArray(np.ones(10))
     msg = "Don't want to call array_function sum!"
@@ -367,6 +420,15 @@ def test_check_estimator():
     assert_raises_regex(TypeError, msg, check_estimator, object)
     msg = "object has no attribute '_get_tags'"
     assert_raises_regex(AttributeError, msg, check_estimator, object())
+    msg = (
+        "Parameter 'p' of estimator 'HasMutableParameters' is of type "
+        "object which is not allowed"
+    )
+    # check that the "default_constructible" test checks for mutable parameters
+    check_estimator(HasImmutableParameters())  # should pass
+    assert_raises_regex(
+        AssertionError, msg, check_estimator, HasMutableParameters()
+    )
     # check that values returned by get_params match set_params
     msg = "get_params result does not match what was passed to set_params"
     assert_raises_regex(AssertionError, msg, check_estimator,
@@ -378,7 +440,7 @@ def test_check_estimator():
     msg = "object has no attribute 'fit'"
     assert_raises_regex(AttributeError, msg, check_estimator, BaseEstimator())
     # check that fit does input validation
-    msg = "ValueError not raised"
+    msg = "Did not raise"
     assert_raises_regex(AssertionError, msg, check_estimator,
                         BaseBadClassifier())
     # check that sample_weights in fit accepts pandas.Series type
@@ -412,6 +474,13 @@ def test_check_estimator():
            ' with _ but wrong_attribute added')
     assert_raises_regex(AssertionError, msg,
                         check_estimator, SetsWrongAttribute())
+    # check for sample order invariance
+    name = NotInvariantSampleOrder.__name__
+    method = 'predict'
+    msg = ("{method} of {name} is not invariant when applied to a dataset"
+           "with different sample order.").format(method=method, name=name)
+    assert_raises_regex(AssertionError, msg,
+                        check_estimator, NotInvariantSampleOrder())
     # check for invariant method
     name = NotInvariantPredict.__name__
     method = 'predict'
@@ -422,19 +491,9 @@ def test_check_estimator():
     # check for sparse matrix input handling
     name = NoSparseClassifier.__name__
     msg = "Estimator %s doesn't seem to fail gracefully on sparse data" % name
-    # the check for sparse input handling prints to the stdout,
-    # instead of raising an error, so as not to remove the original traceback.
-    # that means we need to jump through some hoops to catch it.
-    old_stdout = sys.stdout
-    string_buffer = StringIO()
-    sys.stdout = string_buffer
-    try:
-        check_estimator(NoSparseClassifier())
-    except Exception:
-        pass
-    finally:
-        sys.stdout = old_stdout
-    assert msg in string_buffer.getvalue()
+    assert_raises_regex(
+        AssertionError, msg, check_estimator, NoSparseClassifier()
+    )
 
     # Large indices test on bad estimator
     msg = ('Estimator LargeSparseNotSupportedClassifier doesn\'t seem to '
@@ -462,6 +521,9 @@ def test_check_estimator():
     msg = 'negative y values not supported!'
     assert_raises_regex(ValueError, msg, check_estimator,
                         RequiresPositiveYRegressor())
+
+    # Does not raise error on classifier with poor_score tag
+    check_estimator(PoorScoreLogisticRegression())
 
 
 def test_check_outlier_corruption():
@@ -512,7 +574,7 @@ def test_check_estimator_clones():
 def test_check_estimators_unfitted():
     # check that a ValueError/AttributeError is raised when calling predict
     # on an unfitted estimator
-    msg = "NotFittedError not raised by predict"
+    msg = "Did not raise"
     assert_raises_regex(AssertionError, msg, check_estimators_unfitted,
                         "estimator", NoSparseClassifier())
 
@@ -537,11 +599,9 @@ def test_check_no_attributes_set_in_init():
                         check_no_attributes_set_in_init,
                         'estimator_name',
                         NonConformantEstimatorPrivateSet())
-    assert_raises_regex(AssertionError,
+    assert_raises_regex(AttributeError,
                         "Estimator estimator_name should store all "
-                        "parameters as an attribute during init. "
-                        "Did not find attributes "
-                        r"\['you_should_set_this_'\].",
+                        "parameters as an attribute during init.",
                         check_no_attributes_set_in_init,
                         'estimator_name',
                         NonConformantEstimatorNoParamSet())

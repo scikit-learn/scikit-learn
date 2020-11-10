@@ -1,7 +1,6 @@
 """
 Test the pipeline module.
 """
-from distutils.version import LooseVersion
 from tempfile import mkdtemp
 import shutil
 import time
@@ -20,6 +19,7 @@ from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_no_warnings
+from sklearn.utils.fixes import parse_version
 
 from sklearn.base import clone, BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
@@ -36,6 +36,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.impute import SimpleImputer
 
 iris = load_iris()
 
@@ -557,15 +558,32 @@ def test_pipeline_fit_transform():
     assert_array_almost_equal(X_trans, X_trans2)
 
 
-def test_pipeline_slice():
-    pipe = Pipeline([('transf1', Transf()),
-                     ('transf2', Transf()),
-                     ('clf', FitParamT())])
-    pipe2 = pipe[:-1]
-    assert isinstance(pipe2, Pipeline)
-    assert pipe2.steps == pipe.steps[:-1]
-    assert 2 == len(pipe2.named_steps)
-    assert_raises(ValueError, lambda: pipe[::-1])
+@pytest.mark.parametrize("start, end", [(0, 1), (0, 2), (1, 2), (1, 3),
+                                        (None, 1), (1, None), (None, None)])
+def test_pipeline_slice(start, end):
+    pipe = Pipeline(
+        [("transf1", Transf()), ("transf2", Transf()), ("clf", FitParamT())],
+        memory="123",
+        verbose=True,
+    )
+    pipe_slice = pipe[start:end]
+    # Test class
+    assert isinstance(pipe_slice, Pipeline)
+    # Test steps
+    assert pipe_slice.steps == pipe.steps[start:end]
+    # Test named_steps attribute
+    assert list(pipe_slice.named_steps.items()) == list(
+        pipe.named_steps.items())[start:end]
+    # Test the rest of the parameters
+    pipe_params = pipe.get_params(deep=False)
+    pipe_slice_params = pipe_slice.get_params(deep=False)
+    del pipe_params["steps"]
+    del pipe_slice_params["steps"]
+    assert pipe_params == pipe_slice_params
+    # Test exception
+    msg = "Pipeline slicing only supports a step of 1"
+    with pytest.raises(ValueError, match=msg):
+        pipe[start:end:-1]
 
 
 def test_pipeline_index():
@@ -1020,7 +1038,7 @@ def test_pipeline_memory():
     y = iris.target
     cachedir = mkdtemp()
     try:
-        if LooseVersion(joblib.__version__) < LooseVersion('0.12'):
+        if parse_version(joblib.__version__) < parse_version('0.12'):
             # Deal with change of API in joblib
             memory = joblib.Memory(cachedir=cachedir, verbose=10)
         else:
@@ -1082,7 +1100,7 @@ def test_pipeline_memory():
 
 def test_make_pipeline_memory():
     cachedir = mkdtemp()
-    if LooseVersion(joblib.__version__) < LooseVersion('0.12'):
+    if parse_version(joblib.__version__) < parse_version('0.12'):
         # Deal with change of API in joblib
         memory = joblib.Memory(cachedir=cachedir, verbose=10)
     else:
@@ -1220,3 +1238,29 @@ def test_feature_union_fit_params():
 
     t.fit(X, y, a=0)
     t.fit_transform(X, y, a=0)
+
+
+def test_pipeline_missing_values_leniency():
+    # check that pipeline let the missing values validation to
+    # the underlying transformers and predictors.
+    X, y = iris.data, iris.target
+    mask = np.random.choice([1, 0], X.shape, p=[.1, .9]).astype(bool)
+    X[mask] = np.nan
+    pipe = make_pipeline(SimpleImputer(), LogisticRegression())
+    assert pipe.fit(X, y).score(X, y) > 0.4
+
+
+def test_feature_union_warns_unknown_transformer_weight():
+    # Warn user when transformer_weights containers a key not present in
+    # transformer_list
+    X = [[1, 2], [3, 4], [5, 6]]
+    y = [0, 1, 2]
+
+    transformer_list = [('transf', Transf())]
+    # Transformer weights dictionary with incorrect name
+    weights = {'transformer': 1}
+    expected_msg = ('Attempting to weight transformer "transformer", '
+                    'but it is not present in transformer_list.')
+    union = FeatureUnion(transformer_list, transformer_weights=weights)
+    with pytest.raises(ValueError, match=expected_msg):
+        union.fit(X, y)

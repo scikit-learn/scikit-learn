@@ -97,13 +97,11 @@ def dbscan(X, eps=0.5, *, min_samples=5, metric='minkowski',
     labels : ndarray of shape (n_samples,)
         Cluster labels for each point.  Noisy samples are given the label -1.
 
-    See also
+    See Also
     --------
-    DBSCAN
-        An estimator interface for this clustering algorithm.
-    OPTICS
-        A similar estimator interface clustering at multiple values of eps. Our
-        implementation is optimized for memory usage.
+    DBSCAN : An estimator interface for this clustering algorithm.
+    OPTICS : A similar estimator interface clustering at multiple values of
+        eps. Our implementation is optimized for memory usage.
 
     Notes
     -----
@@ -199,7 +197,8 @@ class DBSCAN(ClusterMixin, BaseEstimator):
 
     p : float, default=None
         The power of the Minkowski metric to be used to calculate distance
-        between points.
+        between points. If None, then ``p=2`` (equivalent to the Euclidean
+        distance).
 
     n_jobs : int, default=None
         The number of parallel jobs to run.
@@ -231,10 +230,9 @@ class DBSCAN(ClusterMixin, BaseEstimator):
     >>> clustering
     DBSCAN(eps=3, min_samples=2)
 
-    See also
+    See Also
     --------
-    OPTICS
-        A similar clustering at multiple values of eps. Our implementation
+    OPTICS : A similar clustering at multiple values of eps. Our implementation
         is optimized for memory usage.
 
     Notes

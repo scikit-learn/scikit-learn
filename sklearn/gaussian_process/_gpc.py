@@ -108,7 +108,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         which might cause predictions to change if the data is modified
         externally.
 
-    random_state : int or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation used to initialize the centers.
         Pass an int for reproducible results across multiple function calls.
         See :term: `Glossary <random_state>`.
@@ -231,6 +231,8 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
             # likelihood
             lml_values = list(map(itemgetter(1), optima))
             self.kernel_.theta = optima[np.argmin(lml_values)][0]
+            self.kernel_._check_bounds_params()
+
             self.log_marginal_likelihood_value_ = -np.min(lml_values)
         else:
             self.log_marginal_likelihood_value_ = \
@@ -531,7 +533,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         which might cause predictions to change if the data is modified
         externally.
 
-    random_state : int or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation used to initialize the centers.
         Pass an int for reproducible results across multiple function calls.
         See :term: `Glossary <random_state>`.
@@ -548,13 +550,18 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         estimates.
 
     n_jobs : int, default=None
-        The number of jobs to use for the computation.
+        The number of jobs to use for the computation: the specified
+        multiclass problems are computed in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     Attributes
     ----------
+    base_estimator_ : ``Estimator`` instance
+        The estimator instance that defines the likelihood function
+        using the observed data.
+
     kernel_ : kernel instance
         The kernel used for prediction. In case of binary classification,
         the structure of the kernel is the same as the one passed as parameter

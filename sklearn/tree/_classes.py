@@ -30,7 +30,6 @@ from ..base import RegressorMixin
 from ..base import is_classifier
 from ..base import MultiOutputMixin
 from ..utils import Bunch
-from ..utils import check_array
 from ..utils import check_random_state
 from ..utils.validation import _check_sample_weight
 from ..utils import compute_sample_weight
@@ -60,9 +59,12 @@ __all__ = ["DecisionTreeClassifier",
 DTYPE = _tree.DTYPE
 DOUBLE = _tree.DOUBLE
 
-CRITERIA_CLF = {"gini": _criterion.Gini, "entropy": _criterion.Entropy}
-CRITERIA_REG = {"mse": _criterion.MSE, "friedman_mse": _criterion.FriedmanMSE,
-                "mae": _criterion.MAE}
+CRITERIA_CLF = {"gini": _criterion.Gini,
+                "entropy": _criterion.Entropy}
+CRITERIA_REG = {"mse": _criterion.MSE,
+                "friedman_mse": _criterion.FriedmanMSE,
+                "mae": _criterion.MAE,
+                "poisson": _criterion.Poisson}
 
 DENSE_SPLITTERS = {"best": _splitter.BestSplitter,
                    "random": _splitter.RandomSplitter}
@@ -138,7 +140,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         return self.tree_.n_leaves
 
     def fit(self, X, y, sample_weight=None, check_input=True,
-            X_idx_sorted=None):
+            X_idx_sorted="deprecated"):
 
         random_state = check_random_state(self.random_state)
 
@@ -161,8 +163,17 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     raise ValueError("No support for np.int64 index based "
                                      "sparse matrices")
 
+            if self.criterion == "poisson":
+                if np.any(y < 0):
+                    raise ValueError("Some value(s) of y are negative which is"
+                                     " not allowed for Poisson regression.")
+                if np.sum(y) <= 0:
+                    raise ValueError("Sum of y is not positive which is "
+                                     "necessary for Poisson regression.")
+
         # Determine output settings
         n_samples, self.n_features_ = X.shape
+        self.n_features_in_ = self.n_features_
         is_classification = is_classifier(self)
 
         y = np.atleast_1d(y)
@@ -185,7 +196,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             if self.class_weight is not None:
                 y_original = np.copy(y)
 
-            y_encoded = np.zeros(y.shape, dtype=np.int)
+            y_encoded = np.zeros(y.shape, dtype=int)
             for k in range(self.n_outputs_):
                 classes_k, y_encoded[:, k] = np.unique(y[:, k],
                                                        return_inverse=True)
@@ -317,6 +328,13 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             raise ValueError("min_impurity_decrease must be greater than "
                              "or equal to 0")
 
+        # TODO: Remove in v0.26
+        if X_idx_sorted != "deprecated":
+            warnings.warn("The parameter 'X_idx_sorted' is deprecated and has "
+                          "no effect. It will be removed in v0.26. You can "
+                          "suppress this warning by not passing any value to "
+                          "the 'X_idx_sorted' parameter.", FutureWarning)
+
         # Build tree
         criterion = self.criterion
         if not isinstance(criterion, Criterion):
@@ -363,7 +381,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                                            self.min_impurity_decrease,
                                            min_impurity_split)
 
-        builder.build(self.tree_, X, y, sample_weight, X_idx_sorted)
+        builder.build(self.tree_, X, y, sample_weight)
 
         if self.n_outputs_ == 1 and is_classifier(self):
             self.n_classes_ = self.n_classes_[0]
@@ -374,21 +392,17 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         return self
 
     def _validate_X_predict(self, X, check_input):
-        """Validate X whenever one tries to predict, apply, predict_proba"""
+        """Validate the training data on predict (probabilities)."""
         if check_input:
-            X = check_array(X, dtype=DTYPE, accept_sparse="csr")
+            X = self._validate_data(X, dtype=DTYPE, accept_sparse="csr",
+                                    reset=False)
             if issparse(X) and (X.indices.dtype != np.intc or
                                 X.indptr.dtype != np.intc):
                 raise ValueError("No support for np.int64 index based "
                                  "sparse matrices")
-
-        n_features = X.shape[1]
-        if self.n_features_ != n_features:
-            raise ValueError("Number of features of the model must "
-                             "match the input. Model n_features is %s and "
-                             "input n_features is %s "
-                             % (self.n_features_, n_features))
-
+        else:
+            # The number of features is checked regardless of `check_input`
+            self._check_n_features(X, reset=False)
         return X
 
     def predict(self, X, check_input=True):
@@ -653,7 +667,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         valid partition of the node samples is found, even if it requires to
         effectively inspect more than ``max_features`` features.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the randomness of the estimator. The features are always
         randomly permuted at each split, even if ``splitter`` is set to
         ``"best"``. When ``max_features < n_features``, the algorithm will
@@ -758,7 +772,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
-    tree_ : Tree
+    tree_ : Tree instance
         The underlying Tree object. Please refer to
         ``help(sklearn.tree._tree.Tree)`` for attributes of Tree object and
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
@@ -775,6 +789,11 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     unpruned trees which can potentially be very large on some data sets. To
     reduce memory consumption, the complexity and size of the trees should be
     controlled by setting those parameter values.
+
+    The :meth:`predict` method operates using the :func:`numpy.argmax`
+    function on the outputs of :meth:`predict_proba`. This means that in
+    case the highest predicted probabilities are tied, the classifier will
+    predict the tied class with the lowest index in :term:`classes_`.
 
     References
     ----------
@@ -834,7 +853,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             ccp_alpha=ccp_alpha)
 
     def fit(self, X, y, sample_weight=None, check_input=True,
-            X_idx_sorted=None):
+            X_idx_sorted="deprecated"):
         """Build a decision tree classifier from the training set (X, y).
 
         Parameters
@@ -858,12 +877,11 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             Allow to bypass several input checking.
             Don't use this parameter unless you know what you do.
 
-        X_idx_sorted : array-like of shape (n_samples, n_features), \
-                default=None
-            The indexes of the sorted training input samples. If many tree
-            are grown on the same dataset, this allows the ordering to be
-            cached between trees. If None, the data will be sorted here.
-            Don't use this parameter unless you know what to do.
+        X_idx_sorted : deprecated, default="deprecated"
+            This parameter is deprecated and has no effect.
+            It will be removed in v0.26.
+
+            .. deprecated :: 0.24
 
         Returns
         -------
@@ -962,17 +980,21 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
     Parameters
     ----------
-    criterion : {"mse", "friedman_mse", "mae"}, default="mse"
+    criterion : {"mse", "friedman_mse", "mae", "poisson"}, default="mse"
         The function to measure the quality of a split. Supported criteria
         are "mse" for the mean squared error, which is equal to variance
         reduction as feature selection criterion and minimizes the L2 loss
         using the mean of each terminal node, "friedman_mse", which uses mean
         squared error with Friedman's improvement score for potential splits,
-        and "mae" for the mean absolute error, which minimizes the L1 loss
-        using the median of each terminal node.
+        "mae" for the mean absolute error, which minimizes the L1 loss using
+        the median of each terminal node, and "poisson" which uses reduction in
+        Poisson deviance to find splits.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
+
+        .. versionadded:: 0.24
+            Poisson deviance criterion.
 
     splitter : {"best", "random"}, default="best"
         The strategy used to choose the split at each node. Supported
@@ -1031,7 +1053,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         valid partition of the node samples is found, even if it requires to
         effectively inspect more than ``max_features`` features.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the randomness of the estimator. The features are always
         randomly permuted at each split, even if ``splitter`` is set to
         ``"best"``. When ``max_features < n_features``, the algorithm will
@@ -1066,7 +1088,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float, (default=0)
+    min_impurity_split : float, default=0
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
@@ -1106,7 +1128,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
-    tree_ : Tree
+    tree_ : Tree instance
         The underlying Tree object. Please refer to
         ``help(sklearn.tree._tree.Tree)`` for attributes of Tree object and
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
@@ -1180,7 +1202,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             ccp_alpha=ccp_alpha)
 
     def fit(self, X, y, sample_weight=None, check_input=True,
-            X_idx_sorted=None):
+            X_idx_sorted="deprecated"):
         """Build a decision tree regressor from the training set (X, y).
 
         Parameters
@@ -1203,12 +1225,11 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             Allow to bypass several input checking.
             Don't use this parameter unless you know what you do.
 
-        X_idx_sorted : array-like of shape (n_samples, n_features), \
-            default=None
-            The indexes of the sorted training input samples. If many tree
-            are grown on the same dataset, this allows the ordering to be
-            cached between trees. If None, the data will be sorted here.
-            Don't use this parameter unless you know what to do.
+        X_idx_sorted : deprecated, default="deprecated"
+            This parameter is deprecated and has no effect.
+            It will be removed in v0.26.
+
+            .. deprecated :: 0.24
 
         Returns
         -------
@@ -1326,7 +1347,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         valid partition of the node samples is found, even if it requires to
         effectively inspect more than ``max_features`` features.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Used to pick randomly the `max_features` used at each split.
         See :term:`Glossary <random_state>` for details.
 
@@ -1353,7 +1374,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float, (default=0)
+    min_impurity_split : float, default=None
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
@@ -1423,7 +1444,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
-    tree_ : Tree
+    tree_ : Tree instance
         The underlying Tree object. Please refer to
         ``help(sklearn.tree._tree.Tree)`` for attributes of Tree object and
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
@@ -1514,11 +1535,14 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     criterion : {"mse", "friedman_mse", "mae"}, default="mse"
         The function to measure the quality of a split. Supported criteria
         are "mse" for the mean squared error, which is equal to variance
-        reduction as feature selection criterion, and "mae" for the mean
+        reduction as feature selection criterion and "mae" for the mean
         absolute error.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
+
+        .. versionadded:: 0.24
+            Poisson deviance criterion.
 
     splitter : {"random", "best"}, default="random"
         The strategy used to choose the split at each node. Supported
@@ -1577,7 +1601,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         valid partition of the node samples is found, even if it requires to
         effectively inspect more than ``max_features`` features.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Used to pick randomly the `max_features` used at each split.
         See :term:`Glossary <random_state>` for details.
 
@@ -1599,7 +1623,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float, (default=0)
+    min_impurity_split : float, default=None
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
@@ -1641,7 +1665,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
-    tree_ : Tree
+    tree_ : Tree instance
         The underlying Tree object. Please refer to
         ``help(sklearn.tree._tree.Tree)`` for attributes of Tree object and
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`

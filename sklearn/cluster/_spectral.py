@@ -12,6 +12,7 @@ import numpy as np
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_random_state, as_float_array
 from ..utils.validation import _deprecate_positional_args
+from ..utils.deprecation import deprecated
 from ..metrics.pairwise import pairwise_kernels
 from ..neighbors import kneighbors_graph, NearestNeighbors
 from ..manifold import spectral_embedding
@@ -160,7 +161,8 @@ def discretize(vectors, *, copy=True, max_svd_restarts=30, n_iter_max=20,
 @_deprecate_positional_args
 def spectral_clustering(affinity, *, n_clusters=8, n_components=None,
                         eigen_solver=None, random_state=None, n_init=10,
-                        eigen_tol=0.0, assign_labels='kmeans'):
+                        eigen_tol=0.0, assign_labels='kmeans',
+                        verbose=False):
     """Apply clustering to a projection of the normalized Laplacian.
 
     In practice Spectral Clustering is very useful when the structure of
@@ -194,7 +196,8 @@ def spectral_clustering(affinity, *, n_clusters=8, n_components=None,
     eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}
         The eigenvalue decomposition strategy to use. AMG requires pyamg
         to be installed. It can be faster on very large, sparse problems,
-        but may also lead to instabilities
+        but may also lead to instabilities. If None, then ``'arpack'`` is
+        used.
 
     random_state : int, RandomState instance, default=None
         A pseudo random number generator used for the initialization of the
@@ -220,6 +223,11 @@ def spectral_clustering(affinity, *, n_clusters=8, n_components=None,
         approach which is less sensitive to random initialization. See
         the 'Multiclass spectral clustering' paper referenced below for
         more details on the discretization approach.
+
+    verbose : bool, default=False
+        Verbosity mode.
+
+        .. versionadded:: 0.24
 
     Returns
     -------
@@ -264,10 +272,12 @@ def spectral_clustering(affinity, *, n_clusters=8, n_components=None,
                               eigen_solver=eigen_solver,
                               random_state=random_state,
                               eigen_tol=eigen_tol, drop_first=False)
+    if verbose:
+        print(f'Computing label assignment using {assign_labels}')
 
     if assign_labels == 'kmeans':
         _, labels, _ = k_means(maps, n_clusters, random_state=random_state,
-                               n_init=n_init)
+                               n_init=n_init, verbose=verbose)
     else:
         labels = discretize(maps, random_state=random_state)
 
@@ -307,7 +317,8 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
     eigen_solver : {'arpack', 'lobpcg', 'amg'}, default=None
         The eigenvalue decomposition strategy to use. AMG requires pyamg
         to be installed. It can be faster on very large, sparse problems,
-        but may also lead to instabilities.
+        but may also lead to instabilities. If None, then ``'arpack'`` is
+        used.
 
     n_components : int, default=n_clusters
         Number of eigen vectors to use for the spectral embedding
@@ -372,10 +383,17 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         callable object. Ignored by other kernels.
 
     n_jobs : int, default=None
-        The number of parallel jobs to run.
+        The number of parallel jobs to run when `affinity='nearest_neighbors'`
+        or `affinity='precomputed_nearest_neighbors'`. The neighbors search
+        will be done in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
+
+    verbose : bool, default=False
+        Verbosity mode.
+
+        .. versionadded:: 0.24
 
     Attributes
     ----------
@@ -439,7 +457,8 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
     def __init__(self, n_clusters=8, *, eigen_solver=None, n_components=None,
                  random_state=None, n_init=10, gamma=1., affinity='rbf',
                  n_neighbors=10, eigen_tol=0.0, assign_labels='kmeans',
-                 degree=3, coef0=1, kernel_params=None, n_jobs=None):
+                 degree=3, coef0=1, kernel_params=None, n_jobs=None,
+                 verbose=False):
         self.n_clusters = n_clusters
         self.eigen_solver = eigen_solver
         self.n_components = n_components
@@ -454,6 +473,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         self.coef0 = coef0
         self.kernel_params = kernel_params
         self.n_jobs = n_jobs
+        self.verbose = verbose
 
     def fit(self, X, y=None):
         """Perform spectral clustering from features, or affinity matrix.
@@ -519,7 +539,8 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
                                            random_state=random_state,
                                            n_init=self.n_init,
                                            eigen_tol=self.eigen_tol,
-                                           assign_labels=self.assign_labels)
+                                           assign_labels=self.assign_labels,
+                                           verbose=self.verbose)
         return self
 
     def fit_predict(self, X, y=None):
@@ -546,6 +567,14 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         """
         return super().fit_predict(X, y)
 
+    def _more_tags(self):
+        return {'pairwise': self.affinity in ["precomputed",
+                                              "precomputed_nearest_neighbors"]}
+
+    # TODO: Remove in 0.26
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 0.26.")
     @property
     def _pairwise(self):
         return self.affinity in ["precomputed",

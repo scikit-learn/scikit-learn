@@ -109,6 +109,36 @@ def test_rfe():
     assert_array_almost_equal(X_r, X_r_sparse.toarray())
 
 
+@pytest.mark.parametrize("n_features_to_select", [-1, 2.1])
+def test_rfe_invalid_n_features_errors(n_features_to_select):
+    clf = SVC(kernel="linear")
+
+    iris = load_iris()
+    rfe = RFE(estimator=clf, n_features_to_select=n_features_to_select,
+              step=0.1)
+    msg = f"n_features_to_select must be .+ Got {n_features_to_select}"
+    with pytest.raises(ValueError, match=msg):
+        rfe.fit(iris.data, iris.target)
+
+
+def test_rfe_percent_n_features():
+    # test that the results are the same
+    generator = check_random_state(0)
+    iris = load_iris()
+    X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
+    y = iris.target
+    # there are 10 features in the data. We select 40%.
+    clf = SVC(kernel="linear")
+    rfe_num = RFE(estimator=clf, n_features_to_select=4, step=0.1)
+    rfe_num.fit(X, y)
+
+    rfe_perc = RFE(estimator=clf, n_features_to_select=0.4, step=0.1)
+    rfe_perc.fit(X, y)
+
+    assert_array_equal(rfe_perc.ranking_, rfe_num.ranking_)
+    assert_array_equal(rfe_perc.support_, rfe_num.support_)
+
+
 def test_rfe_mockclassifier():
     generator = check_random_state(0)
     iris = load_iris()
@@ -386,7 +416,7 @@ def test_rfe_wrapped_estimator(importance_getter, selector,
     # Non-regression test for
     # https://github.com/scikit-learn/scikit-learn/issues/15312
     X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
-    estimator = LinearSVR()
+    estimator = LinearSVR(random_state=0)
 
     log_estimator = TransformedTargetRegressor(regressor=estimator,
                                                func=np.log,

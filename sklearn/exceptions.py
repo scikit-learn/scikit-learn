@@ -3,6 +3,8 @@ The :mod:`sklearn.exceptions` module includes all custom warnings and error
 classes used across scikit-learn.
 """
 
+from .utils.deprecation import deprecated
+
 __all__ = ['NotFittedError',
            'ChangedBehaviorWarning',
            'ConvergenceWarning',
@@ -38,6 +40,8 @@ class NotFittedError(ValueError, AttributeError):
     """
 
 
+@deprecated("ChangedBehaviorWarning is deprecated in 0.24 and will be removed "
+            "in 0.26")
 class ChangedBehaviorWarning(UserWarning):
     """Warning class used to notify the user of any change in the behavior.
 
@@ -109,6 +113,8 @@ class FitFailedWarning(RuntimeWarning):
     """
 
 
+@deprecated("NonBLASDotWarning is deprecated in 0.24 and will be removed in "
+            "0.26")
 class NonBLASDotWarning(EfficiencyWarning):
     """Warning used when the dot operation does not use BLAS.
 

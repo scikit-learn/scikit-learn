@@ -53,7 +53,7 @@ cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
             else:
                 node = nodes[node.right]
         else:
-            if numeric_data[row, node.feature_idx] <= node.threshold:
+            if numeric_data[row, node.feature_idx] <= node.num_threshold:
                 node = nodes[node.left]
             else:
                 node = nodes[node.right]
@@ -177,7 +177,7 @@ def _compute_partial_dependence(
 
                 if is_target_feature:
                     # In this case, we push left or right child on stack
-                    if X[sample_idx, feature_idx] <= current_node.threshold:
+                    if X[sample_idx, feature_idx] <= current_node.num_threshold:
                         node_idx_stack[stack_size] = current_node.left
                     else:
                         node_idx_stack[stack_size] = current_node.right

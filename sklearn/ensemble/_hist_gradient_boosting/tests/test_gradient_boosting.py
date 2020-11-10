@@ -253,7 +253,7 @@ def test_binning_train_validation_are_separated():
         random_state=rng
     )
     gb.fit(X_classification, y_classification)
-    mapper_training_data = gb.bin_mapper_
+    mapper_training_data = gb._bin_mapper
 
     # Note that since the data is small there is no subsampling and the
     # random_state doesn't matter
@@ -277,7 +277,7 @@ def test_missing_values_trivial():
     rng = np.random.RandomState(0)
 
     X = rng.normal(size=(n_samples, n_features))
-    mask = rng.binomial(1, .5, size=X.shape).astype(np.bool)
+    mask = rng.binomial(1, .5, size=X.shape).astype(bool)
     X[mask] = np.nan
     y = mask.ravel()
     gb = HistGradientBoostingClassifier()
@@ -314,7 +314,7 @@ def test_missing_values_resilience(problem, missing_proportion,
         gb = HistGradientBoostingClassifier()
         expected_min_score = expected_min_score_classification
 
-    mask = rng.binomial(1, missing_proportion, size=X.shape).astype(np.bool)
+    mask = rng.binomial(1, missing_proportion, size=X.shape).astype(bool)
     X[mask] = np.nan
 
     gb.fit(X, y)
@@ -392,7 +392,7 @@ def test_missing_values_minmax_imputation():
     # The implementation of MIA as an imputation transformer was suggested by
     # "Remark 3" in https://arxiv.org/abs/1902.06931
 
-    class MinMaxImputer(BaseEstimator, TransformerMixin):
+    class MinMaxImputer(TransformerMixin, BaseEstimator):
 
         def fit(self, X, y=None):
             mm = MinMaxScaler().fit(X)
@@ -794,3 +794,20 @@ def test_staged_predict(HistGradientBoosting, X, y):
 
             assert_allclose(staged_predictions, pred_aux)
             assert staged_predictions.shape == pred_aux.shape
+
+
+@pytest.mark.parametrize('Est', (HistGradientBoostingClassifier,
+                                 HistGradientBoostingRegressor))
+def test_uint8_predict(Est):
+    # Non regression test for
+    # https://github.com/scikit-learn/scikit-learn/issues/18408
+    # Make sure X can be of dtype uint8 (i.e. X_BINNED_DTYPE) in predict. It
+    # will be converted to X_DTYPE.
+
+    rng = np.random.RandomState(0)
+
+    X = rng.randint(0, 100, size=(10, 2)).astype(np.uint8)
+    y = rng.randint(0, 2, size=10).astype(np.uint8)
+    est = Est()
+    est.fit(X, y)
+    est.predict(X)

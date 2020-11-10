@@ -16,7 +16,7 @@ insurer to compensate for a loss covered by the insurance. The *claim amount*
 is the amount of money that the insurer must pay. The *exposure* is the
 duration of the insurance coverage of a given policy, in years.
 
-Here our goal goal is to predict the expected
+Here our goal is to predict the expected
 value, i.e. the mean, of the total claim amount per exposure unit also
 referred to as the pure premium.
 
@@ -73,7 +73,7 @@ def load_mtpl2(n_samples=100000):
     """
     # freMTPL2freq dataset from https://www.openml.org/d/41214
     df_freq = fetch_openml(data_id=41214, as_frame=True)['data']
-    df_freq['IDpol'] = df_freq['IDpol'].astype(np.int)
+    df_freq['IDpol'] = df_freq['IDpol'].astype(int)
     df_freq.set_index('IDpol', inplace=True)
 
     # freMTPL2sev dataset from https://www.openml.org/d/41215
@@ -86,7 +86,7 @@ def load_mtpl2(n_samples=100000):
     df["ClaimAmount"].fillna(0, inplace=True)
 
     # unquote string fields
-    for column_name in df.columns[df.dtypes.values == np.object]:
+    for column_name in df.columns[df.dtypes.values == object]:
         df[column_name] = df[column_name].str.strip("'")
     return df.iloc[:n_samples]
 
@@ -191,7 +191,7 @@ def score_estimator(
     return res
 
 
-##############################################################################
+# %%
 # Loading datasets, basic feature extraction and target definitions
 # -----------------------------------------------------------------
 #
@@ -245,7 +245,7 @@ df["AvgClaimAmount"] = df["ClaimAmount"] / np.fmax(df["ClaimNb"], 1)
 with pd.option_context("display.max_columns", 15):
     print(df[df.ClaimAmount > 0].head())
 
-##############################################################################
+# %%
 #
 # Frequency model -- Poisson distribution
 # ---------------------------------------
@@ -278,7 +278,7 @@ scores = score_estimator(
 print("Evaluation of PoissonRegressor on target Frequency")
 print(scores)
 
-##############################################################################
+# %%
 # We can visually compare observed and predicted values, aggregated by the
 # drivers age (``DrivAge``), vehicle age (``VehAge``) and the insurance
 # bonus/malus (``BonusMalus``).
@@ -334,7 +334,7 @@ plot_obs_pred(
 )
 
 
-##############################################################################
+# %%
 # According to the observed data, the frequency of accidents is higher for
 # drivers younger than 30 years old, and is positively correlated with the
 # `BonusMalus` variable. Our model is able to mostly correctly model this
@@ -376,7 +376,7 @@ scores = score_estimator(
 print("Evaluation of GammaRegressor on target AvgClaimAmount")
 print(scores)
 
-##############################################################################
+# %%
 # Here, the scores for the test data call for caution as they are
 # significantly worse than for the training data indicating an overfit despite
 # the strong regularization.
@@ -393,7 +393,7 @@ print("Predicted Mean AvgClaim Amount | NbClaim > 0: %.2f"
       % glm_sev.predict(X_train).mean())
 
 
-##############################################################################
+# %%
 # We can visually compare observed and predicted values, aggregated for
 # the drivers age (``DrivAge``).
 
@@ -423,7 +423,7 @@ plot_obs_pred(
 )
 plt.tight_layout()
 
-##############################################################################
+# %%
 # Overall, the drivers age (``DrivAge``) has a weak impact on the claim
 # severity, both in observed and predicted data.
 #
@@ -491,7 +491,7 @@ print("Evaluation of the Product Model and the Tweedie Regressor "
 with pd.option_context('display.expand_frame_repr', False):
     print(scores)
 
-##############################################################################
+# %%
 # In this example, both modeling approaches yield comparable performance
 # metrics. For implementation reasons, the percentage of explained variance
 # :math:`D^2` is not available for the product model.
@@ -522,7 +522,7 @@ for subset_label, X, df in [
 
 print(pd.DataFrame(res).set_index("subset").T)
 
-##############################################################################
+# %%
 # Finally, we can compare the two models using a plot of cumulated claims: for
 # each model, the policyholders are ranked from safest to riskiest and the
 # fraction of observed total cumulated claims is plotted on the y axis. This

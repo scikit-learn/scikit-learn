@@ -98,21 +98,21 @@ def fetch_rcv1(*, data_home=None, subset='all', download_if_missing=True,
 
     Parameters
     ----------
-    data_home : string, optional
+    data_home : str, default=None
         Specify another download and cache folder for the datasets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
-    subset : string, 'train', 'test', or 'all', default='all'
+    subset : {'train', 'test', 'all'}, default='all'
         Select the dataset to load: 'train' for the training set
         (23149 samples), 'test' for the test set (781265 samples),
         'all' for both, with the training samples first if shuffle is False.
         This follows the official LYRL2004 chronological split.
 
-    download_if_missing : boolean, default=True
+    download_if_missing : bool, default=True
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for dataset shuffling. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -120,7 +120,7 @@ def fetch_rcv1(*, data_home=None, subset='all', download_if_missing=True,
     shuffle : bool, default=False
         Whether to shuffle dataset.
 
-    return_X_y : boolean, default=False.
+    return_X_y : bool, default=False
         If True, returns ``(dataset.data, dataset.target)`` instead of a Bunch
         object. See below for more information about the `dataset.data` and
         `dataset.target` object.
@@ -132,16 +132,16 @@ def fetch_rcv1(*, data_home=None, subset='all', download_if_missing=True,
     dataset : :class:`~sklearn.utils.Bunch`
         Dictionary-like object, with the following attributes.
 
-        data : scipy csr array, dtype np.float64, shape (804414, 47236)
-            The array has 0.16% of non zero values.
-        target : scipy csr array, dtype np.uint8, shape (804414, 103)
+        data : sparse matrix of shape (804414, 47236), dtype=np.float64
+            The array has 0.16% of non zero values. Will be of CSR format.
+        target : sparse matrix of shape (804414, 103), dtype=np.uint8
             Each sample has a value of 1 in its categories, and 0 in others.
-            The array has 3.15% of non zero values.
-        sample_id : numpy array, dtype np.uint32, shape (804414,)
+            The array has 3.15% of non zero values. Will be of CSR format.
+        sample_id : ndarray of shape (804414,), dtype=np.uint32,
             Identification number of each sample, as ordered in dataset.data.
-        target_names : numpy array, dtype object, length (103)
+        target_names : ndarray of shape (103,), dtype=object
             Names of each target (RCV1 topics), as ordered in dataset.target.
-        DESCR : string
+        DESCR : str
             Description of the RCV1 dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
@@ -274,7 +274,7 @@ def fetch_rcv1(*, data_home=None, subset='all', download_if_missing=True,
 
 
 def _inverse_permutation(p):
-    """inverse permutation p"""
+    """Inverse permutation p."""
     n = p.size
     s = np.zeros(n, dtype=np.int32)
     i = np.arange(n, dtype=np.int32)
@@ -283,7 +283,7 @@ def _inverse_permutation(p):
 
 
 def _find_permutation(a, b):
-    """find the permutation from a to b"""
+    """Find the permutation from a to b."""
     t = np.argsort(a)
     u = np.argsort(b)
     u_ = _inverse_permutation(u)

@@ -48,7 +48,7 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 from scipy.sparse import issparse
 from scipy.sparse import hstack as sparse_hstack
-from joblib import Parallel, delayed
+from joblib import Parallel
 
 from ..base import ClassifierMixin, RegressorMixin, MultiOutputMixin
 from ..metrics import r2_score
@@ -59,6 +59,7 @@ from ..tree._tree import DTYPE, DOUBLE
 from ..utils import check_random_state, check_array, compute_sample_weight
 from ..exceptions import DataConversionWarning
 from ._base import BaseEnsemble, _partition_estimators
+from ..utils.fixes import delayed
 from ..utils.fixes import _joblib_parallel_args
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted, _check_sample_weight
@@ -107,7 +108,7 @@ def _get_n_samples_bootstrap(n_samples, max_samples):
         if not (0 < max_samples < 1):
             msg = "`max_samples` must be in range (0, 1) but got value {}"
             raise ValueError(msg.format(max_samples))
-        return int(round(n_samples * max_samples))
+        return round(n_samples * max_samples)
 
     msg = "`max_samples` should be int or float, but got type '{}'"
     raise TypeError(msg.format(type(max_samples)))
@@ -566,7 +567,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         self.classes_ = []
         self.n_classes_ = []
 
-        y_store_unique_indices = np.zeros(y.shape, dtype=np.int)
+        y_store_unique_indices = np.zeros(y.shape, dtype=int)
         for k in range(self.n_outputs_):
             classes_k, y_store_unique_indices[:, k] = \
                 np.unique(y[:, k], return_inverse=True)
@@ -948,7 +949,7 @@ class RandomForestClassifier(ForestClassifier):
 
         - If int, then consider `max_features` features at each split.
         - If float, then `max_features` is a fraction and
-          `int(max_features * n_features)` features are considered at each
+          `round(max_features * n_features)` features are considered at each
           split.
         - If "auto", then `max_features=sqrt(n_features)`.
         - If "sqrt", then `max_features=sqrt(n_features)` (same as "auto").
@@ -1008,7 +1009,7 @@ class RandomForestClassifier(ForestClassifier):
         context. ``-1`` means using all processors. See :term:`Glossary
         <n_jobs>` for more details.
 
-    random_state : int or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls both the randomness of the bootstrapping of the samples used
         when building trees (if ``bootstrap=True``) and the sampling of the
         features to consider when looking for the best split at each node
@@ -1271,7 +1272,7 @@ class RandomForestRegressor(ForestRegressor):
 
         - If int, then consider `max_features` features at each split.
         - If float, then `max_features` is a fraction and
-          `int(max_features * n_features)` features are considered at each
+          `round(max_features * n_features)` features are considered at each
           split.
         - If "auto", then `max_features=n_features`.
         - If "sqrt", then `max_features=sqrt(n_features)`.
@@ -1330,7 +1331,7 @@ class RandomForestRegressor(ForestRegressor):
         context. ``-1`` means using all processors. See :term:`Glossary
         <n_jobs>` for more details.
 
-    random_state : int or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls both the randomness of the bootstrapping of the samples used
         when building trees (if ``bootstrap=True``) and the sampling of the
         features to consider when looking for the best split at each node
@@ -1553,7 +1554,7 @@ class ExtraTreesClassifier(ForestClassifier):
 
         - If int, then consider `max_features` features at each split.
         - If float, then `max_features` is a fraction and
-          `int(max_features * n_features)` features are considered at each
+          `round(max_features * n_features)` features are considered at each
           split.
         - If "auto", then `max_features=sqrt(n_features)`.
         - If "sqrt", then `max_features=sqrt(n_features)`.
@@ -1612,7 +1613,7 @@ class ExtraTreesClassifier(ForestClassifier):
         context. ``-1`` means using all processors. See :term:`Glossary
         <n_jobs>` for more details.
 
-    random_state : int, RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls 3 sources of randomness:
 
         - the bootstrapping of the samples used when building trees
@@ -1866,12 +1867,12 @@ class ExtraTreesRegressor(ForestRegressor):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : {"auto", "sqrt", "log2"} int or float, default="auto"
+    max_features : {"auto", "sqrt", "log2"}, int or float, default="auto"
         The number of features to consider when looking for the best split:
 
         - If int, then consider `max_features` features at each split.
         - If float, then `max_features` is a fraction and
-          `int(max_features * n_features)` features are considered at each
+          `round(max_features * n_features)` features are considered at each
           split.
         - If "auto", then `max_features=n_features`.
         - If "sqrt", then `max_features=sqrt(n_features)`.
@@ -1929,7 +1930,7 @@ class ExtraTreesRegressor(ForestRegressor):
         context. ``-1`` means using all processors. See :term:`Glossary
         <n_jobs>` for more details.
 
-    random_state : int or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls 3 sources of randomness:
 
         - the bootstrapping of the samples used when building trees
@@ -2003,8 +2004,8 @@ class ExtraTreesRegressor(ForestRegressor):
 
     See Also
     --------
-    sklearn.tree.ExtraTreeRegressor: Base estimator for this ensemble.
-    RandomForestRegressor: Ensemble regressor using trees with optimal splits.
+    sklearn.tree.ExtraTreeRegressor : Base estimator for this ensemble.
+    RandomForestRegressor : Ensemble regressor using trees with optimal splits.
 
     Notes
     -----
@@ -2185,7 +2186,7 @@ class RandomTreesEmbedding(BaseForest):
         context. ``-1`` means using all processors. See :term:`Glossary
         <n_jobs>` for more details.
 
-    random_state : int or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the generation of the random `y` used to fit the trees
         and the draw of the splits for each feature at the trees' nodes.
         See :term:`Glossary <random_state>` for details.
@@ -2200,8 +2201,24 @@ class RandomTreesEmbedding(BaseForest):
 
     Attributes
     ----------
-    estimators_ : list of DecisionTreeClassifier
+    base_estimator_ : DecisionTreeClassifier instance
+        The child estimator template used to create the collection of fitted
+        sub-estimators.
+
+    estimators_ : list of DecisionTreeClassifier instances
         The collection of fitted sub-estimators.
+
+    feature_importances_ : ndarray of shape (n_features,)
+        The feature importances (the higher, the more important the feature).
+
+    n_features_ : int
+        The number of features when ``fit`` is performed.
+
+    n_outputs_ : int
+        The number of outputs when ``fit`` is performed.
+
+    one_hot_encoder_ : OneHotEncoder instance
+        One-hot encoder used to create the sparse embedding.
 
     References
     ----------
