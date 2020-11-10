@@ -14,7 +14,6 @@ from scipy.sparse.linalg import eigsh, svds
 from . import KMeans, MiniBatchKMeans
 from ..base import BaseEstimator, BiclusterMixin
 
-from ..utils._arpack import _init_arpack_v0
 from ..utils.validation import check_random_state
 from ..utils.extmath import (make_nonnegative, randomized_svd,
                              safe_sparse_dot)
