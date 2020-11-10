@@ -39,6 +39,7 @@ or with conda::
 #   :target: ../model_selection/plot_successive_halving_iterations.html
 #   :align: center
 
+import numpy as np
 from sklearn.experimental import enable_halving_search_cv  # noqa
 from sklearn.model_selection import HalvingRandomSearchCV
 from sklearn.ensemble import RandomForestClassifier
