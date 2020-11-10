@@ -97,19 +97,13 @@ def bench_k_means(kmeans, name, data, labels):
 
     # The silhouette score requires the full dataset
     results += [
-        metrics.silhouette_score(
-            data,
-            estimator[-1].labels_,
-            metric="euclidean",
-            sample_size=300,
-        )
+        metrics.silhouette_score(data, estimator[-1].labels_,
+                                 metric="euclidean", sample_size=300,)
     ]
 
     # Show the results
-    formatter_result = (
-        "{:9s}\t{:.3f}s\t{:.0f}\t{:.3f}\t{:.3f}"
-        "\t{:.3f}\t{:.3f}\t{:.3f}\t{:.3f}"
-    )
+    formatter_result = ("{:9s}\t{:.3f}s\t{:.0f}\t{:.3f}\t{:.3f}"
+                        "\t{:.3f}\t{:.3f}\t{:.3f}\t{:.3f}")
     print(formatter_result.format(*results))
 
 
@@ -133,37 +127,16 @@ from sklearn.decomposition import PCA
 print(82 * '_')
 print('init\t\ttime\tinertia\thomo\tcompl\tv-meas\tARI\tAMI\tsilhouette')
 
-bench_k_means(
-    kmeans=KMeans(
-        init="k-means++",
-        n_clusters=n_digits,
-        n_init=4,
-        random_state=0,
-    ),
-    name="k-means++",
-    data=data,
-    labels=labels,
-)
+kmeans = KMeans(init="k-means++", n_clusters=n_digits, n_init=4,
+                random_state=0)
+bench_k_means(kmeans=kmeans, name="k-means++", data=data, labels=labels)
 
-bench_k_means(
-    kmeans=KMeans(
-        init="random",
-        n_clusters=n_digits,
-        n_init=4,
-        random_state=0,
-    ),
-    name="random",
-    data=data,
-    labels=labels,
-)
+kmeans = KMeans(init="random", n_clusters=n_digits, n_init=4, random_state=0)
+bench_k_means(kmeans=kmeans, name="random", data=data, labels=labels)
 
 pca = PCA(n_components=n_digits).fit(data)
-bench_k_means(
-    kmeans=KMeans(init=pca.components_, n_clusters=n_digits, n_init=1),
-    name="PCA-based",
-    data=data,
-    labels=labels,
-)
+kmeans = KMeans(init=pca.components_, n_clusters=n_digits, n_init=1)
+bench_k_means(kmeans=kmeans, name="PCA-based", data=data, labels=labels)
 
 print(82 * '_')
 
@@ -196,31 +169,17 @@ Z = kmeans.predict(np.c_[xx.ravel(), yy.ravel()])
 Z = Z.reshape(xx.shape)
 plt.figure(1)
 plt.clf()
-plt.imshow(
-    Z,
-    interpolation="nearest",
-    extent=(xx.min(), xx.max(), yy.min(), yy.max()),
-    cmap=plt.cm.Paired,
-    aspect="auto",
-    origin="lower",
-)
+plt.imshow(Z, interpolation="nearest",
+           extent=(xx.min(), xx.max(), yy.min(), yy.max()),
+           cmap=plt.cm.Paired, aspect="auto", origin="lower")
 
 plt.plot(reduced_data[:, 0], reduced_data[:, 1], 'k.', markersize=2)
 # Plot the centroids as a white X
 centroids = kmeans.cluster_centers_
-plt.scatter(
-    centroids[:, 0],
-    centroids[:, 1],
-    marker="x",
-    s=169,
-    linewidths=3,
-    color="w",
-    zorder=10,
-)
-plt.title(
-    "K-means clustering on the digits dataset (PCA-reduced data)\n"
-    "Centroids are marked with white cross"
-)
+plt.scatter(centroids[:, 0], centroids[:, 1], marker="x", s=169, linewidths=3,
+            color="w", zorder=10)
+plt.title("K-means clustering on the digits dataset (PCA-reduced data)\n"
+          "Centroids are marked with white cross")
 plt.xlim(x_min, x_max)
 plt.ylim(y_min, y_max)
 plt.xticks(())
