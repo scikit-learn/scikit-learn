@@ -40,6 +40,7 @@ or with conda::
 #   :align: center
 
 import numpy as np
+from scipy.stats import randint
 from sklearn.experimental import enable_halving_search_cv  # noqa
 from sklearn.model_selection import HalvingRandomSearchCV
 from sklearn.ensemble import RandomForestClassifier
