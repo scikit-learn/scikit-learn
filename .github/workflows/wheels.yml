@@ -15,8 +15,8 @@ on: pull_request
 #     - master
 #     - "[0-9]+.[0-9]+.X"
 
-# env:
-#   SCIKIT_LEARN_VERSION: 0.24.dev0
+env:
+  SCIKIT_LEARN_VERSION: 0.24.dev0
 
 jobs:
   minimal_windows:
