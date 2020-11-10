@@ -63,7 +63,7 @@ def inplace_csr_row_scale(X, scale):
     X.data *= np.repeat(scale, np.diff(X.indptr))
 
 
-def mean_variance_axis(X, axis):
+def mean_variance_axis(X, axis, weights=None, return_sum_weights=False):
     """Compute mean and variance along an axix on a CSR or CSC matrix
 
     Parameters
@@ -74,28 +74,47 @@ def mean_variance_axis(X, axis):
     axis : int (either 0 or 1)
         Axis along which the axis should be computed.
 
+    weights : ndarray of shape (n_samples,) or (n_features,), default=None
+        if axis is set to 0 shape is (n_samples,) or
+        if axis is set to 1 shape is (n_features,).
+        If it is set to None, then samples are equally weighted.
+
+        .. versionadded:: 0.24
+
+    return_sum_weights : bool, default=False
+        If True, returns the sum of weights seen for each feature
+        if `axis=0` or each sample if `axis=1`.
+
+        .. versionadded:: 0.24
+
     Returns
     -------
 
-    means : float array with shape (n_features,)
+    means : ndarray of shape (n_features,), dtype=floating
         Feature-wise means
 
-    variances : float array with shape (n_features,)
+    variances : ndarray of shape (n_features,), dtype=floating
         Feature-wise variances
 
+    sum_weights : ndarray of shape (n_features,), dtype=floating
+        Returned if `return_sum_weights` is `True`.
     """
     _raise_error_wrong_axis(axis)
 
     if isinstance(X, sp.csr_matrix):
         if axis == 0:
-            return _csr_mean_var_axis0(X)
+            return _csr_mean_var_axis0(
+                X, weights=weights, return_sum_weights=return_sum_weights)
         else:
-            return _csc_mean_var_axis0(X.T)
+            return _csc_mean_var_axis0(
+                X.T, weights=weights, return_sum_weights=return_sum_weights)
     elif isinstance(X, sp.csc_matrix):
         if axis == 0:
-            return _csc_mean_var_axis0(X)
+            return _csc_mean_var_axis0(
+                X, weights=weights, return_sum_weights=return_sum_weights)
         else:
-            return _csr_mean_var_axis0(X.T)
+            return _csr_mean_var_axis0(
+                X.T, weights=weights, return_sum_weights=return_sum_weights)
     else:
         _raise_typeerror(X)
 
@@ -134,10 +153,12 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n,
         axis=0 or (n_features,) if axis=1. If float it corresponds to
         having same weights for all samples (or features).
 
-    weights : ndarray, shape (n_samples,) or (n_features,) | None
-        if axis is set to 0 shape is (n_samples,) or
+    weights : ndarray of shape (n_samples,) or (n_features,), default=None
+        If axis is set to 0 shape is (n_samples,) or
         if axis is set to 1 shape is (n_features,).
         If it is set to None, then samples are equally weighted.
+
+        .. versionadded:: 0.24
 
     Returns
     -------

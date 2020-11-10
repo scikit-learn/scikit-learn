@@ -61,7 +61,7 @@ feature, code or documentation improvement).
    or `conda environment`_.
 
 #. Install Cython_ and build the project with pip in :ref:`editable_mode`:
-   
+
    .. prompt:: bash $
 
         pip install cython
@@ -272,7 +272,7 @@ forge using the following command:
 
 .. prompt:: bash $
 
-    conda list 
+    conda list
 
 which should include ``compilers`` and ``llvm-openmp``.
 
@@ -492,7 +492,7 @@ Before using ICC, you need to set up environment variables:
 
 .. prompt:: bash $
 
-    source /opt/intel/inteloneapi/setvars.sh
+    source /opt/intel/oneapi/setvars.sh
 
 Finally, you can build scikit-learn. For example on Linux x86_64:
 
