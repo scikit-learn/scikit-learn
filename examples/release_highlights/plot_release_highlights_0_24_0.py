@@ -47,7 +47,7 @@ from sklearn.datasets import make_classification
 
 rng = np.random.RandomState(0)
 
-X, y = datasets.make_classification(n_samples=700, random_state=rng)
+X, y = make_classification(n_samples=700, random_state=rng)
 
 clf = RandomForestClassifier(n_estimators=20, random_state=rng)
 
