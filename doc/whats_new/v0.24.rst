@@ -555,7 +555,8 @@ Changelog
   :class:`model_selection.RandomizedSearchCV` results in non-finite scores.
   :pr:`18266` by :user:`Subrat Sahu <subrat93>`,
   :user:`Nirvan <Nirvan101>` and :user:`Arthur Book <ArthurBook>`.
-  - |Enhancement| :func:`model_selection.learning_curve` now accept fit_params
+
+- |Enhancement| :func:`model_selection.learning_curve` now accept fit_params
   to pass additional estimator parameters.
   :pr:`18595` by :user:`Amanda Dsouza <amy12xx>`.
 
@@ -607,7 +608,7 @@ Changelog
   class:`MultinomialNB`, allowing user to set parameter alpha to a very
   small number, greater or equal 0, which was earlier automatically changed
   to `_ALPHA_MIN` instead.
-  :pr:`16747` by :user:`arka204`
+  :pr:`16747`, :pr:`18805` by :user:`arka204` and :user:`hongshaoyang`.
 
 :mod:`sklearn.neighbors`
 ........................
