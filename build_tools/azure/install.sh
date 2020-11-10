@@ -84,7 +84,7 @@ elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
     setup_ccache
     python -m pip install -U pip
 
-    # optionally install scikit-image
+    # Do not build scikit-image from source because it is an optional dependency
     python -m pip install --only-binary :all: scikit-image || true
 
     python -m pip install pandas matplotlib pyamg
