@@ -807,42 +807,45 @@ invalids_nan_inf = [
     ([0, 1], [np.nan, 1]),
 ]
 
+
 @pytest.mark.parametrize(
-        'metric',
-        chain(THRESHOLDED_METRICS.values(), REGRESSION_METRICS.values()))
-def test_regression_thresholded_inf_nan_input(metric):
-    for y_true, y_score in invalids_nan_inf:
-        with pytest.raises(ValueError, match="contains NaN, infinity"):
-            metric(y_true, y_score)
+    'metric',
+    chain(THRESHOLDED_METRICS.values(), REGRESSION_METRICS.values())
+)
+@pytest.mark.parametrize("y_true, y_score", invalids_nan_inf)
+def test_regression_thresholded_inf_nan_input(metric, y_true, y_score):
+    with pytest.raises(ValueError, match="contains NaN, infinity"):
+        metric(y_true, y_score)
 
 
 @pytest.mark.parametrize('metric', CLASSIFICATION_METRICS.values())
-def test_classification_inf_nan_input(metric):
-    # check that classification metrics raise a message mentioning the
-    # occurrence of non-finite values in the target vectors.
-
+@pytest.mark.parametrize(
+    "y_true, y_score",
+    invalids_nan_inf +
     # Add an additional case for classification only
     # non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/6809
-    invalids = invalids_nan_inf + [([np.nan, 1, 2], [1, 2, 3])]
-    for y_true, y_score in invalids:
-        err_msg = "Input contains NaN, infinity or a value too large"
-        with pytest.raises(ValueError, match=err_msg):
-            metric(y_true, y_score)
+    [([np.nan, 1, 2], [1, 2, 3])]
+)
+def test_classification_inf_nan_input(metric, y_true, y_score):
+    """check that classification metrics raise a message mentioning the
+    occurrence of non-finite values in the target vectors."""
+    err_msg = "Input contains NaN, infinity or a value too large"
+    with pytest.raises(ValueError, match=err_msg):
+        metric(y_true, y_score)
 
 
 @pytest.mark.parametrize('metric', CLASSIFICATION_METRICS.values())
 def test_classification_binary_continuous_input(metric):
-    # check that classification metrics raise a message of mixed type data with
-    # continuous/binary target vectors.
-    invalid_binary_continuous = [(['a', 'b', 'a'], [0.1, 0.2, 0.3])]
+    """check that classification metrics raise a message of mixed type data
+    with continuous/binary target vectors."""
+    y_true, y_score = ['a', 'b', 'a'], [0.1, 0.2, 0.3]
     err_msg = (
         "Classification metrics can't handle a mix of binary and continuous "
         "targets"
     )
-    for y_true, y_score in invalid_binary_continuous:
-        with pytest.raises(ValueError, match=err_msg):
-            metric(y_true, y_score)
+    with pytest.raises(ValueError, match=err_msg):
+        metric(y_true, y_score)
 
 
 @ignore_warnings
