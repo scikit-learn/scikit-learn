@@ -7,4 +7,4 @@ ARG WHEEL
 COPY dist/artifact/$WHEEL /tmp/$WHEEL
 RUN pip install /tmp/$env:WHEEL
 
-CMD python -c "import sklearn" 
+CMD [ "python", "-c", "import sklearn" ]
