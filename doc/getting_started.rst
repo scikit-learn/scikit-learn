@@ -123,10 +123,6 @@ the test data::
     Notebook, use ``set_config(display='diagram')`` and then call the pipeline
     object.
 
-    >>> with config_context(display='diagram'):
-    >>>    pipe
-    <diagram renders here>
-
 Model evaluation
 ----------------
 
