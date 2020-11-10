@@ -39,6 +39,8 @@ from ._classification import multilabel_confusion_matrix
 from . import cluster
 from .cluster import adjusted_mutual_info_score
 from .cluster import adjusted_rand_score
+from .cluster import rand_score
+from .cluster import pair_confusion_matrix
 from .cluster import completeness_score
 from .cluster import consensus_score
 from .cluster import homogeneity_completeness_v_measure
@@ -140,6 +142,7 @@ __all__ = [
     'mutual_info_score',
     'ndcg_score',
     'normalized_mutual_info_score',
+    'pair_confusion_matrix',
     'pairwise_distances',
     'pairwise_distances_argmin',
     'pairwise_distances_argmin_min',
@@ -154,6 +157,7 @@ __all__ = [
     'precision_recall_fscore_support',
     'precision_score',
     'r2_score',
+    'rand_score',
     'recall_score',
     'RocCurveDisplay',
     'roc_auc_score',
