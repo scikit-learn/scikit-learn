@@ -5,6 +5,6 @@ FROM winamd64/python:$PYTHON_VERSION-windowsservercore
 # Copy and install the Windows wheel
 ARG WHEEL
 COPY dist/artifact/$WHEEL /tmp/$WHEEL
-RUN pip install /tmp/$WHEEL
+RUN pip install /tmp/%WHEEL%
 
 CMD python -c "import sklearn" 
