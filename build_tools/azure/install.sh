@@ -84,7 +84,10 @@ elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
     setup_ccache
     python -m pip install -U pip
 
-    python -m pip install pandas matplotlib pyamg scikit-image
+    # Do not build scikit-image from source because it is an optional dependency
+    python -m pip install --only-binary :all: scikit-image || true
+
+    python -m pip install pandas matplotlib pyamg
     # do not install dependencies for lightgbm since it requires scikit-learn
     # and install a version less than 3.0.0 until the issue #18316 is solved.
     python -m pip install "lightgbm<3.0.0" --no-deps
