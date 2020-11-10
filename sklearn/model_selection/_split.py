@@ -2120,7 +2120,7 @@ def train_test_split(*arrays,
     stratify : array-like, default=None
         If not None, data is split in a stratified fashion, using this as
         the class labels. 
-        Read more about stratification in the :ref:`User Guide <stratification>`.
+        Read more in the :ref:`User Guide <stratification>`.
 
     Returns
     -------
