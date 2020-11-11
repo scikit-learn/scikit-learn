@@ -25,9 +25,7 @@ random sampling procedures.
 - |Fix| :class:`decomposition.KernelPCA` behaviour is now more consistent
   between 32-bits and 64-bits data when the kernel has small positive
   eigenvalues.
-- |Fix| In ``fit`` and ``fit_transform`` methods of Spectral bi-clustering 
-  algorithms :class:`sklearn.cluster.SpectralCoclustering` and 
-  :class:`sklearn.cluster.SpectralBiclustering`, and dimensionality reduction 
+- |Fix| In ``fit`` and ``fit_transform`` methods of dimensionality reduction 
   algorithms :class:`sklearn.decomposition.KernelPCA`, 
   :class:`sklearn.decomposition.PCA`, 
   :class:`sklearn.decomposition.TruncatedSVD` now initializes the v0
