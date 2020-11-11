@@ -200,7 +200,11 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 y = np.ascontiguousarray(y, dtype=DOUBLE)
 
             # Update tree
-            self.builder_.update(self.tree_, X, y, sample_weight)
+            try:
+                self.builder_.update(self.tree_, X, y, sample_weight)
+            except AttributeError:
+                print("No existing tree to update")
+                return self
 
             self._prune_tree()
 
