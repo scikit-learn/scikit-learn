@@ -142,7 +142,9 @@ General Concepts
             We provide limited backwards compatibility assurances for the
             estimator checks: we may add extra requirements on estimators
             tested with this function, usually when these were informally
-            assumed but not formally tested.
+            assumed but not formally tested. In particular, checks that are
+            not API-related (i.e. those that are ignored when `api_only` is
+            True) may enforce backward-incompatible requirements.
 
         Despite this informal contract with our users, the software is provided
         as is, as stated in the license.  When a release inadvertently

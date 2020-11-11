@@ -748,6 +748,12 @@ Changelog
 :mod:`sklearn.utils`
 ....................
 
+- |Feature| :func:`~utils.estimator_checks.check_estimator` and
+  :func:`~utils.estimator_checks.parametrize_with_checks` now expose an
+  `api_only` parameter which allows to control whether the check suite should
+  only check for pure API-compatibility, or also run more advanced checks.
+  :pr:`18582` and :pr:`17361` by `Nicolas Hug`_.
+
 - |Enhancement| Add ``check_methods_sample_order_invariance`` to
   :func:`~utils.estimator_checks.check_estimator`, which checks that
   estimator methods are invariant if applied to the same dataset
@@ -766,11 +772,9 @@ Changelog
   dimensions do not match in :func:`utils.sparse_func.incr_mean_variance_axis`.
   By :user:`Alex Gramfort <agramfort>`.
 
-
 - |Enhancement| Add support for weights in
   :func:`utils.sparse_func.incr_mean_variance_axis`.
   By :user:`Maria Telenczuk <maikia>` and :user:`Alex Gramfort <agramfort>`.
-
 
 Miscellaneous
 .............

@@ -219,10 +219,13 @@ def test_class_support_removed():
 
 class MyNMFWithBadErrorMessage(NMF):
     # Same as NMF but raises an uninformative error message if X has negative
-    # value. This estimator would fail the check suite in strict mode,
-    # specifically it would fail check_fit_non_negative
-    # FIXME : should be removed in 0.26
+    # value. This estimator would fail the check suite with api_only=False,
+    # specifically it would fail check_fit_non_negative because its error
+    # message doesn't match the expected one.
+
     def __init__(self):
+        # declare init to avoid deprecation warning since default has changed
+        # FIXME : __init__ should be removed in 0.26
         super().__init__()
         self.init = 'nndsvda'
         self.max_iter = 500
@@ -238,51 +241,52 @@ class MyNMFWithBadErrorMessage(NMF):
         return super().fit(X, y, **params)
 
 
-def test_strict_mode_check_estimator():
-    # Tests various conditions for the strict mode of check_estimator()
+def test_api_only_check_estimator():
+    # Tests various conditions for the api_only parameter of check_estimator()
     # Details are in the comments
 
-    # LogisticRegression has no _xfail_checks, so when strict_mode is on, there
+    # LogisticRegression has no _xfail_checks, so when api_only=False, there
     # should be no skipped tests.
     with pytest.warns(None) as catched_warnings:
-        check_estimator(LogisticRegression(), strict_mode=True)
+        check_estimator(LogisticRegression(), api_only=False)
     assert not any(isinstance(w, SkipTestWarning) for w in catched_warnings)
-    # When strict mode is off, check_n_features should be skipped because it's
-    # a fully strict check
-    msg_check_n_features_in = 'check_n_features_in is fully strict '
-    with pytest.warns(SkipTestWarning, match=msg_check_n_features_in):
-        check_estimator(LogisticRegression(), strict_mode=False)
+    # When api_only is True, check_fit2d_1sample should be skipped
+    # because it's not an API check
+    skip_match = 'check_fit2d_1sample is not an API check'
+    with pytest.warns(SkipTestWarning, match=skip_match):
+        check_estimator(LogisticRegression(), api_only=True)
 
     # NuSVC has some _xfail_checks. They should be skipped regardless of
-    # strict_mode
+    # api_only
     with pytest.warns(SkipTestWarning,
                       match='fails for the decision_function method'):
-        check_estimator(NuSVC(), strict_mode=True)
-    # When strict mode is off, check_n_features_in is skipped along with the
-    # rest of the xfail_checks
-    with pytest.warns(SkipTestWarning, match=msg_check_n_features_in):
-        check_estimator(NuSVC(), strict_mode=False)
+        check_estimator(NuSVC(), api_only=False)
+    # When api_only is True, check_fit2d_1sample is skipped along
+    # with the rest of the xfail_checks
+    with pytest.warns(SkipTestWarning, match=skip_match):
+        check_estimator(NuSVC(), api_only=True)
 
-    # MyNMF will fail check_fit_non_negative() in strict mode because it yields
-    # a bad error message
+    # MyNMF will fail check_fit_non_negative() with api_only=False because it
+    # yields a bad error message
     with pytest.raises(
         AssertionError, match="The error message should contain"
     ):
-        check_estimator(MyNMFWithBadErrorMessage(), strict_mode=True)
-    # However, it should pass the test suite in non-strict mode because when
-    # strict mode is off, check_fit_non_negative() will not check the exact
-    # error messsage. (We still assert that the warning from
-    # check_n_features_in is raised)
-    with pytest.warns(SkipTestWarning, match=msg_check_n_features_in):
-        check_estimator(MyNMFWithBadErrorMessage(), strict_mode=False)
+        check_estimator(MyNMFWithBadErrorMessage(), api_only=False)
+    # However, it should pass the test suite with api_only=True because when in
+    # this case, check_fit_non_negative() will not check the exact error
+    # messsage. (We still assert that the warning from
+    # check_fit2d_1sample is raised)
+    with pytest.warns(SkipTestWarning, match=skip_match):
+        check_estimator(MyNMFWithBadErrorMessage(), api_only=True)
 
 
 @parametrize_with_checks([LogisticRegression(),
                           NuSVC(),
                           MyNMFWithBadErrorMessage()],
-                         strict_mode=False)
-def test_strict_mode_parametrize_with_checks(estimator, check):
-    # Ideally we should assert that the strict checks are Xfailed...
+                         api_only=True)
+def test_api_only_parametrize_with_checks(estimator, check):
+    # Ideally we should assert that the NON_API checks are either Xfailed or
+    # Xpassed
     check(estimator)
 
 

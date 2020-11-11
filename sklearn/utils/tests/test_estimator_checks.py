@@ -627,10 +627,12 @@ class MinimalEstimator:
     _get_param_names = BaseEstimator._get_param_names  # used by get_params
     set_params = BaseEstimator.set_params
     get_params = BaseEstimator.get_params
-    __setstate__ = BaseEstimator.__setstate__
-    __getstate__ = BaseEstimator.__getstate__
+    # __setstate__ = BaseEstimator.__setstate__
+    # __getstate__ = BaseEstimator.__getstate__
 
     def fit(self, X, y):
+        X = check_array(X)
+        self.n_features_in_ = X.shape[1]
         return self
 
 
@@ -641,7 +643,9 @@ class MinimalClassifier(MinimalEstimator):
         return super().fit(X, y)
 
     def predict_proba(self, X):
-        proba_shape = (len(X), self.classes_.size)
+        check_is_fitted(self)
+        X = check_array(X)
+        proba_shape = (X.shape[0], self.classes_.size)
         y_proba = np.zeros(shape=proba_shape, dtype=np.float64)
         y_proba[:, 0] = 1.0
         return y_proba
@@ -651,8 +655,44 @@ class MinimalClassifier(MinimalEstimator):
         y_pred = y_proba.argmax(axis=1)
         return self.classes_[y_pred]
 
+    def score(self, X, y):
+        return 1.0
 
-@parametrize_with_checks([MinimalClassifier()], strict_mode=False)
+
+class MinimalRegressor(MinimalEstimator):
+
+    def fit(self, X, y):
+        self._mean = np.mean(y)
+        return super().fit(X, y)
+
+    def predict(self, X):
+        X = check_array(X)
+        return np.ones(shape=(X.shape[0],)) * self._mean
+
+    def score(self, X, y):
+        return 1.0
+
+
+class MinimalTransformer(MinimalEstimator):
+
+    def transform(self, X, y=None):
+        check_is_fitted(self)
+        X = check_array(X)
+        if X.shape[1] != self.n_features_in_:
+            raise ValueError
+        return X
+
+    def inverse_transform(self, X, y=None):
+        return self.transform(X)
+
+    def fit_transform(self, X, y=None):
+        return self.fit(X, y).transform(X, y)
+
+
+@parametrize_with_checks(
+    [MinimalClassifier(), MinimalRegressor(), MinimalTransformer()],
+    api_only=True
+)
 def test_check_estimator_minimal(estimator, check):
     check(estimator)
 
