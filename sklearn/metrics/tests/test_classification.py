@@ -2299,6 +2299,21 @@ def test_log_loss_pandas_input():
         assert_almost_equal(loss, 1.0383217, decimal=6)
 
 
+def test_log_loss_warnings():
+    assert_warns_message(
+        UserWarning,
+        "Labels passed were ['spam', 'eggs', 'ham']. But this function "
+        "assumes labels are ordered lexicographically. "
+        "Ensure that labels in y_prob are ordered as "
+        "['eggs' 'ham' 'spam'].",
+        log_loss,
+        ['eggs', 'spam', 'ham'],
+        [[1, 0, 0],
+         [0, 1, 0],
+         [0, 0, 1]],
+        labels=['spam', 'eggs', 'ham'])
+
+
 def test_brier_score_loss():
     # Check brier_score_loss function
     y_true = np.array([0, 1, 1, 0, 1, 1])
@@ -2354,7 +2369,7 @@ def test_multiclass_brier_score_loss():
                                     [[1, 0, 0, 0],
                                      [0, 1, 0, 0],
                                      [0, 1, 0, 0]],
-                                    labels=['eggs', 'spam', 'ham', 'yams']),
+                                    labels=['eggs', 'ham', 'spam', 'yams']),
         2/3)
 
     assert_almost_equal(
@@ -2438,6 +2453,21 @@ def test_multiclass_brier_score_loss_invalid_inputs():
     assert_almost_equal(multiclass_brier_score_loss(y_true, y_pred,
                                                     labels=['eggs', 'ham']),
                         .02)
+
+
+def test_multiclass_brier_score_loss_warnings():
+    assert_warns_message(
+        UserWarning,
+        "Labels passed were ['spam', 'eggs', 'ham']. But this function "
+        "assumes labels are ordered lexicographically. "
+        "Ensure that labels in y_prob are ordered as "
+        "['eggs' 'ham' 'spam'].",
+        multiclass_brier_score_loss,
+        ['eggs', 'spam', 'ham'],
+        [[1, 0, 0],
+         [0, 1, 0],
+         [0, 0, 1]],
+        labels=['spam', 'eggs', 'ham'])
 
 
 def test_balanced_accuracy_score_unseen():

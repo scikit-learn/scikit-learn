@@ -173,6 +173,13 @@ def _validate_multiclass_probabilistic_prediction(y_true, y_prob,
 
     if labels is not None:
         lb = lb.fit(labels)
+        # LabelBinarizer does not respect the order implied by labels, which
+        # can be misleading.
+        if not np.all(lb.classes_ == labels):
+            warnings.warn(f"Labels passed were {labels}. But this function "
+                          f"assumes labels are ordered lexicographically. "
+                          f"Ensure that labels in y_prob are ordered as "
+                          f"{lb.classes_}.", UserWarning)
     else:
         lb = lb.fit(y_true)
 

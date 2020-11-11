@@ -483,7 +483,7 @@ NOT_SYMMETRIC_METRICS = {
     "unnormalized_multilabel_confusion_matrix",
 
     "macro_f0.5_score", "macro_f2_score", "macro_precision_score",
-    "macro_recall_score", "log_loss", "hinge_loss",
+    "macro_recall_score", "hinge_loss",
     "mean_gamma_deviance", "mean_poisson_deviance",
     "mean_compound_poisson_deviance", "mean_absolute_percentage_error"
 }
