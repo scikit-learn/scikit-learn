@@ -627,8 +627,15 @@ class MinimalEstimator:
     _get_param_names = BaseEstimator._get_param_names  # used by get_params
     set_params = BaseEstimator.set_params
     get_params = BaseEstimator.get_params
-    # __setstate__ = BaseEstimator.__setstate__
-    # __getstate__ = BaseEstimator.__getstate__
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        # only because we are within scikit-learn source code
+        from sklearn import __version__
+        return dict(state.items(), _sklearn_version=__version__)
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
 
     def fit(self, X, y):
         X = check_array(X)
