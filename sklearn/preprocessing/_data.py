@@ -941,10 +941,10 @@ class StandardScaler(TransformerMixin, BaseEstimator):
                 'preserves_dtype': [np.float64, np.float32],
                 '_xfail_cheks':
                     {'check_estimator_sparse_dense':
-                         "Default StandardScaler don't support sparse inputs. "
-                         "But StandardScaler is tested on sparse data in "
-                         "`preprocessing.tests.test_data."
-                         "test_scaler_without_centering`."
+                     "Default StandardScaler don't support sparse inputs. "
+                     "But StandardScaler is tested on sparse data in "
+                     "`preprocessing.tests.test_data."
+                     "test_scaler_without_centering`."
                      }
                 }
 
@@ -1455,10 +1455,10 @@ class RobustScaler(TransformerMixin, BaseEstimator):
         return {'allow_nan': True,
                 '_xfail_cheks':
                     {'check_estimator_sparse_dense':
-                         "Default RobustScaler don't support sparse inputs. "
-                         "But RobustScaler is tested on sparse data in "
-                         "`preprocessing.tests.test_data."
-                         "test_robust_scaler_equivalence_dense_sparse`."
+                     "Default RobustScaler don't support sparse inputs. "
+                     "But RobustScaler is tested on sparse data in "
+                     "`preprocessing.tests.test_data."
+                     "test_robust_scaler_equivalence_dense_sparse`."
                      }}
 
 
