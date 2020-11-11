@@ -46,6 +46,9 @@ def get_openmp_flag(compiler):
 
 def check_openmp_support():
     """Check whether OpenMP test code can be compiled and run"""
+    if "PYODIDE_PACKAGE_ABI" in os.environ:
+        # Pyodide doesn't support OpenMP
+        return False
     code = textwrap.dedent(
         """\
         #include <omp.h>
