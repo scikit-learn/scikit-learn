@@ -2973,9 +2973,7 @@ def check_estimator_sparse_dense(name, estimator_orig,
             if hasattr(estimator, "predict"):
                 pred = estimator.predict(X_converted)
                 pred_sp = estimator_sp.predict(X_sp_converted)
-                if not (isinstance(estimator, BaseSGD) or  # SGD is too random
-                        getattr(estimator, 'kernel', None) == 'precomputed' or
-                        getattr(estimator, 'metric', None) == 'precomputed'):
+                if not isinstance(estimator, BaseSGD):
                     assert_allclose(pred, pred_sp)
 
                 assert pred.shape == pred_sp.shape
