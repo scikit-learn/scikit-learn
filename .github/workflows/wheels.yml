@@ -48,11 +48,11 @@ jobs:
         os: [windows-latest, ubuntu-latest, macos-latest]
         python: [36, 37, 38, 39]
         include:
-          os: windows-latest
+          - os: windows-latest
             platform-id: [win_amd64, win32]
-          os: ubuntu-latest
+          - os: ubuntu-latest
             platform-id: [manylinux_x86_64, manylinux_i686]
-          os: macos-latest
+          - os: macos-latest
             platform-id: macosx_x86_64
 
     steps:
