@@ -114,3 +114,17 @@ print("Features selected by forward sequential selection: "
 ##############################################################################
 # HistGradientBoostingClassifier improved performances
 # ----------------------------------------------------
+
+##############################################################################
+# New documentation improvements
+# ------------------------------
+#
+# `New examples and documentation pages
+# <../../search.html?q=versionadded 0.24>`_
+# have been addeed in a continuous effort
+# of improving the understanding of data science practices.
+# Among others a new section about :ref:`common pitfalls and recommended
+# practices <common_pitfalls>` is now included, and an `example
+# <../model_selection/plot_grid_search_stats.html>`_ illustrating
+# how statistically compare the performance of models
+# evaluated using :class:`~sklearn.model_selection.GridSearchCV`.

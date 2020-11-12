@@ -5,6 +5,10 @@ Statistical comparison of models using grid search
 
 This example illustrates how to statistically compare the performance of models
 trained and evaluated using :class:`~sklearn.model_selection.GridSearchCV`.
+
+.. meta::
+   :keywords: versionadded0.24
+
 """
 
 # %%
