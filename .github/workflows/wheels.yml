@@ -28,7 +28,9 @@ jobs:
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - id: check_build_trigger
         name: Check build trigger
@@ -65,7 +67,7 @@ jobs:
           CIBW_TEST_COMMAND: pytest --pyargs sklearn &&
                              python -m threadpoolctl -i sklearn
           # By default, the Windows wheels are not repaired.
-          # In this case, we need to vendor the vcomp140.dll 
+          # In this case, we need to vendor the vcomp140.dll
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: wheel unpack {wheel} &&
                                              python build_tools/github/vendor_vcomp140.py %WHEEL_DIRNAME% &&
                                              wheel pack %WHEEL_DIRNAME% -d {dest_dir} &&
