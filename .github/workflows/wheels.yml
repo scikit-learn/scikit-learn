@@ -45,9 +45,9 @@ jobs:
       # Ensure that a wheel builder finishes even if another fails
       fail-fast: false
       matrix:
-        bitness: [32, 64]
         os: [windows-latest, ubuntu-latest, macos-latest]
         python: [36, 37, 38, 39]
+        bitness: [32, 64]
         include:
           # Run 32 and 64 bit version in parallel for Linux and Windows
           - os: windows-latest
@@ -67,7 +67,7 @@ jobs:
             platform_id: macosx_x86_64
         exclude:
           - os: macos-latest
-          - bitness: 32
+            bitness: 32
 
     steps:
       - name: Checkout scikit-learn
