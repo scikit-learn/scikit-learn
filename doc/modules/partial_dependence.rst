@@ -105,6 +105,8 @@ generated. The ``values`` field returned by
 used in the grid for each input feature of interest. They also correspond to
 the axis of the plots.
 
+.. _individual_conditional:
+
 Individual conditional expectation (ICE) plot
 =============================================
 

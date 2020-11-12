@@ -102,6 +102,28 @@ print("Features selected by forward sequential selection: "
 ##############################################################################
 # Individual Conditional Expectation
 # ----------------------------------
+# A new kind of partial dependence plot is available: the Individual
+# Conditional Expectation (ICE) plot. It visualizes the dependence of the
+# prediction on a feature for each sample separately with one line per sample.
+# See th :ref:`User Guide <individual_conditional>`
+
+from sklearn.inspection import partial_dependence
+from sklearn.inspection import plot_partial_dependence
+print('Computing partial dependence plots...')
+tic = time()
+features = feature_names
+est = HistGradientBoostingRegressor()
+est.fit(X_train, y_train)
+display = plot_partial_dependence(
+       est, X, features, kind="both", subsample=50,
+       n_jobs=3, grid_resolution=20, random_state=0
+)
+print(f"done in {time() - tic:.3f}s")
+display.figure_.suptitle(
+    'Partial dependence of house value on non-location features\n'
+    'for the California housing dataset, with MLPRegressor'
+)
+display.figure_.subplots_adjust(hspace=0.3)
 
 ##############################################################################
 # New metrics available
