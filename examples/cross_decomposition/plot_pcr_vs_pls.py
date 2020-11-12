@@ -30,6 +30,10 @@ also applies a dimensionality reduction to the samples before applying a
 linear regressor to the transformed data. The main difference with PCR is
 that the PLS transformation is supervised. Therefore, as we will see in this
 example, it does not suffer from the issue we just mentioned.
+
+.. meta::
+   :keywords: versionadded0.24
+
 """
 
 print(__doc__)

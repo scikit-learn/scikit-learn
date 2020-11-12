@@ -18,6 +18,10 @@ To install the latest version (with pip)::
 or with conda::
 
     conda install -c conda-forge scikit-learn
+
+.. meta::
+   :keywords: highlights
+
 """
 
 ##############################################################################
@@ -120,7 +124,7 @@ print("Features selected by forward sequential selection: "
 # ------------------------------
 #
 # `New examples and documentation pages
-# <../../search.html?q=versionadded 0.24>`_
+# <../../search.html?q=versionadded0.24>`_
 # have been addeed in a continuous effort
 # of improving the understanding of data science practices.
 # Among others a new section about :ref:`common pitfalls and recommended

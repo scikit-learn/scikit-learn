@@ -8,6 +8,9 @@ This example illustrates how a successive halving search
 iteratively chooses the best parameter combination out of
 multiple candidates.
 
+.. meta::
+   :keywords: versionadded0.24
+
 """
 import pandas as pd
 from sklearn import datasets
