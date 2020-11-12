@@ -79,7 +79,10 @@ jobs:
       - name: Build and test wheels
         env:
           # Set the directory where the wheel is unpacked
-          CIBW_ENVIRONMENT: "WHEEL_DIRNAME=scikit_learn-$SCIKIT_LEARN_VERSION"
+          CIBW_ENVIRONMENT: WHEEL_DIRNAME=scikit_learn-$SCIKIT_LEARN_VERSION
+                            OMP_NUM_THREADS=2
+                            OPENBLAS_NUM_THREADS=2
+                            SKLEARN_SKIP_NETWORK_TESTS=1
           CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
           CIBW_TEST_REQUIRES: pytest pandas threadpoolctl
           # Test that there are no links to system libraries
