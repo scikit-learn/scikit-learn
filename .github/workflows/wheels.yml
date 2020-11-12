@@ -47,6 +47,13 @@ jobs:
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
         python: [36, 37, 38, 39]
+        include:
+          os: windows-latest
+            platform-id: [win_amd64, win32]
+          os: ubuntu-latest
+            platform-id: [manylinux_x86_64, manylinux_i686]
+          os: macos-latest
+            platform-id: macosx_x86_64
 
     steps:
       - name: Checkout scikit-learn
@@ -59,7 +66,7 @@ jobs:
         env:
           # Set the directory where the wheel is unpacked
           CIBW_ENVIRONMENT: "WHEEL_DIRNAME=scikit_learn-$SCIKIT_LEARN_VERSION"
-          CIBW_BUILD: cp${{ matrix.python }}-*
+          CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform-id }}
           CIBW_TEST_REQUIRES: pytest pandas threadpoolctl
           # Test that there are no links to system libraries
           CIBW_TEST_COMMAND: pytest --pyargs sklearn &&
