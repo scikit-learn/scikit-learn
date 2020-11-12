@@ -54,7 +54,7 @@ from sklearn.linear_model import RidgeCV
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-alphas = np.linspace(0.1, 100, num=30)
+alphas = np.logspace(-3, 3, num=30)  # 10^-3 to 10^3
 model = make_pipeline(StandardScaler(), RidgeCV(alphas=alphas))
 
 # %%
