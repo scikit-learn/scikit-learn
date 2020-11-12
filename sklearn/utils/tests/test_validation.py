@@ -351,8 +351,7 @@ def test_check_array_numeric_warns(X):
     expected_msg = (r"Arrays of bytes/strings is being converted to decimal .*"
                     r"deprecated in 0.24 and will be removed in 0.26")
     with pytest.warns(FutureWarning, match=expected_msg):
-        X_out = check_array(X, dtype="numeric")
-    assert_allclose(X_out, [[1, 2], [3, 4]])
+        check_array(X, dtype="numeric")
 
 
 @pytest.mark.parametrize("X", [
