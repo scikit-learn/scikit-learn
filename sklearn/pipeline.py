@@ -623,8 +623,11 @@ class Pipeline(_BaseComposition):
 
     def _more_tags(self):
         # check if first estimator expects pairwise input
-        estimator_tags = self.steps[0][1]._get_tags()
-        return {'pairwise': estimator_tags.get('pairwise', False)}
+        try:
+            pairwise = self.steps[0][1]._get_tags().get('pairwise', False)
+        except AttributeError:
+            pairwise = False
+        return {'pairwise': pairwise}
 
     # TODO: Remove in 0.26
     # mypy error: Decorated property not supported
