@@ -36,7 +36,7 @@ jobs:
 
   # Build the wheels for Linux, Windows and macOS for Python 3.6 and newer
   build_wheels:
-    name: Build wheels on ${{ matrix.os }} for Py${{ matrix.python }} ({{ matrix.bitness }} bit)
+    name: Build wheels on ${{ matrix.os }} for Py${{ matrix.python }} (${{ matrix.bitness }} bit)
     runs-on: ${{ matrix.os }}
     needs: check_build_trigger
     if: needs.check_build_trigger.outputs.build
