@@ -107,21 +107,18 @@ print("Features selected by forward sequential selection: "
 # prediction on a feature for each sample separately with one line per sample.
 # See th :ref:`User Guide <individual_conditional>`
 
-from sklearn.inspection import partial_dependence
 from sklearn.inspection import plot_partial_dependence
+
 print('Computing partial dependence plots...')
-tic = time()
 features = feature_names
-est = HistGradientBoostingRegressor()
-est.fit(X_train, y_train)
+knn.fit(X, y)
 display = plot_partial_dependence(
-       est, X, features, kind="both", subsample=50,
+       knn, X, features, target=2, kind="individual", subsample=50,
        n_jobs=3, grid_resolution=20, random_state=0
 )
-print(f"done in {time() - tic:.3f}s")
 display.figure_.suptitle(
-    'Partial dependence of house value on non-location features\n'
-    'for the California housing dataset, with MLPRegressor'
+    'Partial dependence of iris type\n'
+    'with KNN classifier'
 )
 display.figure_.subplots_adjust(hspace=0.3)
 
