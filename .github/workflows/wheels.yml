@@ -48,10 +48,15 @@ jobs:
         os: [windows-latest, ubuntu-latest, macos-latest]
         python: [36, 37, 38, 39]
         include:
+          # Run 32 and 64 bit version in parallel for Linux and Windows
           - os: windows-latest
-            platform-id: [win_amd64, win32]
+            platform-id: win_amd64
+          - os: windows-latest
+            platform-id: win32
           - os: ubuntu-latest
-            platform-id: [manylinux_x86_64, manylinux_i686]
+            platform-id: manylinux_x86_64
+          - os: ubuntu-latest
+            platform-id: manylinux_i686
           - os: macos-latest
             platform-id: macosx_x86_64
 
