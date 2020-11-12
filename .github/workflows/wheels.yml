@@ -47,18 +47,27 @@ jobs:
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
         python: [36, 37, 38, 39]
+        bitness: [32, 64]
         include:
           # Run 32 and 64 bit version in parallel for Linux and Windows
           - os: windows-latest
+            bitness: 64
             platform-id: win_amd64
           - os: windows-latest
+            bitness: 32
             platform-id: win32
           - os: ubuntu-latest
+            bitness: 64
             platform-id: manylinux_x86_64
           - os: ubuntu-latest
+            bitness: 32
             platform-id: manylinux_i686
           - os: macos-latest
+            bitness: 64
             platform-id: macosx_x86_64
+        exclude:
+          - os: macos-latest
+          - bitness: 32
 
     steps:
       - name: Checkout scikit-learn
