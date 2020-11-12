@@ -36,7 +36,7 @@ jobs:
 
   # Build the wheels for Linux, Windows and macOS for Python 3.6 and newer
   build_wheels:
-    name: Build wheels on ${{ matrix.os }} for Python ${{ matrix.python }}
+    name: Build wheel for cp${{ matrix.python }}-${{ matrix.platform_id }}
     runs-on: ${{ matrix.os }}
     needs: check_build_trigger
     if: needs.check_build_trigger.outputs.build
@@ -47,6 +47,27 @@ jobs:
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
         python: [36, 37, 38, 39]
+        bitness: [32, 64]
+        include:
+          # Run 32 and 64 bit version in parallel for Linux and Windows
+          - os: windows-latest
+            bitness: 64
+            platform_id: win_amd64
+          - os: windows-latest
+            bitness: 32
+            platform_id: win32
+          - os: ubuntu-latest
+            bitness: 64
+            platform_id: manylinux_x86_64
+          - os: ubuntu-latest
+            bitness: 32
+            platform_id: manylinux_i686
+          - os: macos-latest
+            bitness: 64
+            platform_id: macosx_x86_64
+        exclude:
+          - os: macos-latest
+            bitness: 32
 
     steps:
       - name: Checkout scikit-learn
@@ -59,7 +80,7 @@ jobs:
         env:
           # Set the directory where the wheel is unpacked
           CIBW_ENVIRONMENT: "WHEEL_DIRNAME=scikit_learn-$SCIKIT_LEARN_VERSION"
-          CIBW_BUILD: cp${{ matrix.python }}-*
+          CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
           CIBW_TEST_REQUIRES: pytest pandas threadpoolctl
           # Test that there are no links to system libraries
           CIBW_TEST_COMMAND: pytest --pyargs sklearn &&
