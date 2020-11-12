@@ -133,19 +133,11 @@ try:
 except ImportError:
     print('pandas not installed')
 "
+# Automatically use as many cores as possible to speed-up scikit-learn
+# build.
+pip install loky
+export SKLEARN_BUILD_PARALLEL="auto"
+
 python -m pip list
-
-if [[ "$DISTRIB" == "conda-pip-latest" ]]; then
-    # Check that pip can automatically install the build dependencies from
-    # pyproject.toml using an isolated build environment:
-    pip install --verbose --editable .
-else
-    # Use the pre-installed build dependencies and build directly in the
-    # current environment.
-    # Use setup.py instead of `pip install -e .` to be able to pass the -j flag
-    # to speed-up the building multicore CI machines.
-    python setup.py build_ext --inplace -j 3
-    python setup.py develop
-fi
-
+python setup.py develop
 ccache -s

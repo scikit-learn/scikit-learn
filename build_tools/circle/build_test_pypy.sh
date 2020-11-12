@@ -25,15 +25,16 @@ pip install --extra-index-url https://antocuni.github.io/pypy-wheels/manylinux20
 
 # Install Cython directly
 pip install https://antocuni.github.io/pypy-wheels/ubuntu/Cython/Cython-0.29.14-py3-none-any.whl
-pip install sphinx numpydoc docutils joblib pillow pytest
+pip install sphinx numpydoc docutils joblib pillow pytest loky
 
 ccache -M 512M
 export CCACHE_COMPRESS=1
 export PATH=/usr/lib/ccache:$PATH
 export LOKY_MAX_CPU_COUNT="2"
 export OMP_NUM_THREADS="1"
+export SKLEARN_BUILD_PARALLEL="auto"
 
-python setup.py build_ext --inplace -j 3
+# Build and install scikit-learn in dev mode
 pip install --no-build-isolation -e .
 
 # Check that Python implementation is PyPy

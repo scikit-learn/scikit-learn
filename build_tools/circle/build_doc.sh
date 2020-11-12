@@ -182,9 +182,10 @@ conda create -n $CONDA_ENV_NAME --yes --quiet \
 source activate testenv
 pip install sphinx-gallery
 pip install numpydoc
+pip install loky
 
 # Build and install scikit-learn in dev mode
-python setup.py build_ext --inplace -j 3
+export SKLEARN_BUILD_PARALLEL="auto"
 python setup.py develop
 
 export OMP_NUM_THREADS=1
