@@ -139,5 +139,13 @@ pip install loky
 export SKLEARN_BUILD_PARALLEL="auto"
 
 python -m pip list
-python setup.py develop
+if [[ "$DISTRIB" == "conda-pip-latest" ]]; then
+    # Check that pip can automatically install missing build dependencies from
+    # pyproject.toml.
+    pip install --verbose --editable .
+else
+    # Use the pre-installed build dependencies and build directly in the
+    # current environment.
+    python setup.py develop
+fi
 ccache -s
