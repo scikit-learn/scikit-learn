@@ -1178,7 +1178,7 @@ def check_methods_sample_order_invariance(
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(20, 3))
     X = _pairwise_estimator_convert_X(X, estimator_orig)
-    y = X[:, 0].astype(np.int)
+    y = X[:, 0].astype(np.int64)
     if estimator_orig._get_tags()['binary_only']:
         y[y == 2] = 1
     estimator = clone(estimator_orig)
