@@ -54,7 +54,7 @@ from sklearn.linear_model import RidgeCV
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-alphas = np.logspace(-3, 3, num=30)  # 10^-3 to 10^3
+alphas = np.logspace(-1, 2.5, num=50)
 model = make_pipeline(StandardScaler(), RidgeCV(alphas=alphas))
 
 # %%
@@ -159,7 +159,7 @@ cv_estimators = cv_results["estimator"]
 
 # %%
 alpha = [est[-1].alpha_ for est in cv_estimators]
-plt.hist(alpha, bins=20, density=True)
+plt.hist(alpha, bins=30, density=True)
 plt.xlabel("Alpha")
 plt.ylabel("Density")
 _ = plt.title("Distribution of alpha parameter \nduring cross-validation")
