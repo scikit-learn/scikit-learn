@@ -44,39 +44,42 @@ jobs:
     - python: 3.7
       env:
         - CI_CPU_COUNT="8"
-      os: linux
-      arch: arm64
+      arch: arm64-graviton2
       if: type = cron OR commit_message =~ /\[arm64\]/
 
     # Linux environments to build the scikit-learn wheels
     # for the ARM64 arquitecture and Python 3.6 and newer
     - python: 3.6
-      os: linux
-      arch: arm64
+      dist: focal
+      virt: vm
+      group: edge
       if: type = cron or commit_message =~ /\[cd build\]/
       env:
         - BUILD_WHEEL: true
         - CIBW_BUILD: cp36-manylinux_aarch64
 
     - python: 3.7
-      os: linux
-      arch: arm64
+      dist: focal
+      virt: vm
+      group: edge
       if: type = cron or commit_message =~ /\[cd build\]/
       env:
         - BUILD_WHEEL: true
         - CIBW_BUILD: cp37-manylinux_aarch64
 
     - python: 3.8
-      os: linux
-      arch: arm64
+      dist: focal
+      virt: vm
+      group: edge
       if: type = cron or commit_message =~ /\[cd build\]/
       env:
         - BUILD_WHEEL: true
         - CIBW_BUILD: cp38-manylinux_aarch64
 
     - python: 3.9
-      os: linux
-      arch: arm64
+      dist: focal
+      virt: vm
+      group: edge
       if: type = cron or commit_message =~ /\[cd build\]/
       env:
         - BUILD_WHEEL: true
