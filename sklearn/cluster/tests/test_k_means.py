@@ -20,7 +20,7 @@ from sklearn.utils.extmath import row_norms
 from sklearn.metrics import pairwise_distances
 from sklearn.metrics import pairwise_distances_argmin
 from sklearn.metrics.cluster import v_measure_score
-from sklearn.cluster import KMeans, k_means
+from sklearn.cluster import KMeans, k_means, kmeans_plusplus
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.cluster._kmeans import _labels_inertia
 from sklearn.cluster._kmeans import _mini_batch_step
@@ -1030,3 +1030,60 @@ def test_minibatch_kmeans_wrong_params(param, match):
     # are passed for the MiniBatchKMeans specific parameters
     with pytest.raises(ValueError, match=match):
         MiniBatchKMeans(**param).fit(X)
+
+
+@pytest.mark.parametrize("param, match", [
+    ({"n_local_trials": 0},
+     r"n_local_trials is set to 0 but should be an "
+     r"integer value greater than zero"),
+    ({"x_squared_norms": X[:2]},
+     r"The length of x_squared_norms .* should "
+     r"be equal to the length of n_samples")]
+)
+def test_kmeans_plusplus_wrong_params(param, match):
+    with pytest.raises(ValueError, match=match):
+        kmeans_plusplus(X, n_clusters, **param)
+
+
+@pytest.mark.parametrize("data", [X, X_csr])
+@pytest.mark.parametrize("dtype", [np.float64, np.float32])
+def test_kmeans_plusplus_output(data, dtype):
+    # Check for the correct number of seeds and all positive values
+    data = data.astype(dtype)
+    centers, indices = kmeans_plusplus(data, n_clusters)
+
+    # Check there are the correct number of indices and that all indices are
+    # positive and within the number of samples
+    assert indices.shape[0] == n_clusters
+    assert (indices >= 0).all()
+    assert (indices <= data.shape[0]).all()
+
+    # Check for the correct number of seeds and that they are bound by the data
+    assert centers.shape[0] == n_clusters
+    assert (centers.max(axis=0) <= data.max(axis=0)).all()
+    assert (centers.min(axis=0) >= data.min(axis=0)).all()
+
+    # Check that indices correspond to reported centers
+    # Use X for comparison rather than data, test still works against centers
+    # calculated with sparse data.
+    assert_allclose(X[indices].astype(dtype), centers)
+
+
+@pytest.mark.parametrize("x_squared_norms", [row_norms(X, squared=True), None])
+def test_kmeans_plusplus_norms(x_squared_norms):
+    # Check that defining x_squared_norms returns the same as default=None.
+    centers, indices = kmeans_plusplus(X, n_clusters,
+                                       x_squared_norms=x_squared_norms)
+
+    assert_allclose(X[indices], centers)
+
+
+def test_kmeans_plusplus_dataorder():
+    # Check that memory layout does not effect result
+    centers_c, _ = kmeans_plusplus(X, n_clusters, random_state=0)
+
+    X_fortran = np.asfortranarray(X)
+
+    centers_fortran, _ = kmeans_plusplus(X_fortran, n_clusters, random_state=0)
+
+    assert_allclose(centers_c, centers_fortran)
