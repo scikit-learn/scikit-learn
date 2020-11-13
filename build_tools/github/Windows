@@ -12,4 +12,4 @@ ARG WHEEL
 COPY $WHEEL /tmp/$WHEEL
 RUN pip install /tmp/$env:WHEEL
 
-CMD [ "pytest", "--pyargs", "sklearn" "&&" "python" "-m" "threadpoolctl" "-i" "sklearn"]
+CMD [ "pytest", "--pyargs", "sklearn", "&&", "python", "-m", "threadpoolctl", "-i", "sklearn"]
