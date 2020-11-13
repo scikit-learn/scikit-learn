@@ -778,7 +778,7 @@ class MultiOutputMixin:
         return {'multioutput': True}
 
 
-class _UnstableArchMixin:
+class _UnstableArchMixin:  # noqa
     """Mark estimators that are non-determinstic on 32bit or PowerPC"""
     def _more_tags(self):
         return {'non_deterministic': (

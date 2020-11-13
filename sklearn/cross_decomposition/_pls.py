@@ -12,7 +12,6 @@ import numpy as np
 from scipy.linalg import pinv2, svd
 
 from ..base import BaseEstimator, RegressorMixin, TransformerMixin
-from ..base import _UnstableArchMixin
 from ..base import MultiOutputMixin
 from ..utils import check_array, check_consistent_length
 from ..utils.extmath import svd_flip
@@ -655,7 +654,7 @@ class PLSCanonical(_PLS):
             max_iter=max_iter, tol=tol, copy=copy)
 
 
-class CCA(_UnstableArchMixin, _PLS):
+class CCA(_PLS):
     """Canonical Correlation Analysis, also known as "Mode B" PLS.
 
     Read more in the :ref:`User Guide <cross_decomposition>`.
