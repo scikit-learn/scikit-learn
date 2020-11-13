@@ -7,6 +7,15 @@ from .common cimport BITSET_DTYPE_C
 from .common cimport X_DTYPE_C
 from .common cimport X_BINNED_DTYPE_C
 
+
+# A bitset is a data structure used to represent sets of integers in [0, n]. We
+# use them to represent sets of features indices (e.g. features that go to the
+# left child, or features that are categorical). For familiarity with bitsets
+# and bitwise operations:
+# https://en.wikipedia.org/wiki/Bit_array
+# https://en.wikipedia.org/wiki/Bitwise_operation
+
+
 cdef inline void init_bitset(BITSET_DTYPE_C bitset) nogil: # OUT
     cdef:
         unsigned int i
