@@ -1007,6 +1007,7 @@ def test_sample_weight_unchanged(Estimator):
 def test_wrong_params(Estimator, param, match):
     # Check that error are raised with clear error message when wrong values
     # are passed for the parameters
+    # Set n_init=1 by default to avoid warning with precomputed init
     km = Estimator(n_init=1)
     with pytest.raises(ValueError, match=match):
         km.set_params(**param).fit(X)
