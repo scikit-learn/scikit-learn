@@ -9,7 +9,7 @@ RUN pip install $env:CIBW_TEST_REQUIRES.split(" ")
 
 # Copy and install the Windows wheel
 ARG WHEEL
-COPY dist/artifact/$WHEEL /tmp/$WHEEL
+COPY $WHEEL /tmp/$WHEEL
 RUN pip install /tmp/$env:WHEEL
 
 CMD [ "pytest", "--pyargs", "sklearn" "&&" "python" "-m" "threadpoolctl" "-i" "sklearn"]
