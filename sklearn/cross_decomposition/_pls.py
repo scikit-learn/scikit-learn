@@ -215,7 +215,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         norm_y_weights = self._norm_y_weights
 
         # Scale (in place)
-        Xk, Yk, self.x_mean_, self.y_mean_, self.x_std_, self.y_std_ = (
+        Xk, Yk, self._x_mean, self._y_mean, self._x_std, self._y_std = (
             _center_scale_xy(X, Y, self.scale))
 
         self.x_weights_ = np.zeros((p, n_components))  # U
@@ -294,7 +294,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
                                    check_finite=False))
 
         self.coef_ = np.dot(self.x_rotations_, self.y_loadings_.T)
-        self.coef_ = self.coef_ * self.y_std_
+        self.coef_ = self.coef_ * self._y_std
         return self
 
     def transform(self, X, Y=None, copy=True):
@@ -318,16 +318,16 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         check_is_fitted(self)
         X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
         # Normalize
-        X -= self.x_mean_
-        X /= self.x_std_
+        X -= self._x_mean
+        X /= self._x_std
         # Apply rotation
         x_scores = np.dot(X, self.x_rotations_)
         if Y is not None:
             Y = check_array(Y, ensure_2d=False, copy=copy, dtype=FLOAT_DTYPES)
             if Y.ndim == 1:
                 Y = Y.reshape(-1, 1)
-            Y -= self.y_mean_
-            Y /= self.y_std_
+            Y -= self._y_mean
+            Y /= self._y_std
             y_scores = np.dot(Y, self.y_rotations_)
             return x_scores, y_scores
 
@@ -356,8 +356,8 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         X_reconstructed = np.matmul(X, self.x_loadings_.T)
 
         # Denormalize
-        X_reconstructed *= self.x_std_
-        X_reconstructed += self.x_mean_
+        X_reconstructed *= self._x_std
+        X_reconstructed += self._x_mean
         return X_reconstructed
 
     def predict(self, X, copy=True):
@@ -380,10 +380,10 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         check_is_fitted(self)
         X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
         # Normalize
-        X -= self.x_mean_
-        X /= self.x_std_
+        X -= self._x_mean
+        X /= self._x_std
         Ypred = np.dot(X, self.coef_)
-        return Ypred + self.y_mean_
+        return Ypred + self._y_mean
 
     def fit_transform(self, X, y=None):
         """Learn and apply the dimension reduction on the train data.
@@ -411,6 +411,34 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
     @property
     def norm_y_weights(self):
         return self._norm_y_weights
+
+    @deprecated(  # type: ignore
+        "Attribute x_mean_ was deprecated in version 0.24 and "
+        "will be removed in 0.26.")
+    @property
+    def x_mean_(self):
+        return self._x_mean
+
+    @deprecated(  # type: ignore
+        "Attribute y_mean_ was deprecated in version 0.24 and "
+        "will be removed in 0.26.")
+    @property
+    def y_mean_(self):
+        return self._y_mean
+
+    @deprecated(  # type: ignore
+        "Attribute x_std_ was deprecated in version 0.24 and "
+        "will be removed in 0.26.")
+    @property
+    def x_std_(self):
+        return self._x_std
+
+    @deprecated(  # type: ignore
+        "Attribute y_std_ was deprecated in version 0.24 and "
+        "will be removed in 0.26.")
+    @property
+    def y_std_(self):
+        return self._y_std
 
     @property
     def x_scores_(self):
@@ -870,7 +898,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
             )
             n_components = rank_upper_bound
 
-        X, Y, self.x_mean_, self.y_mean_, self.x_std_, self.y_std_ = (
+        X, Y, self._x_mean, self._y_mean, self._x_std, self._y_std = (
             _center_scale_xy(X, Y, self.scale))
 
         # Compute SVD of cross-covariance matrix
@@ -905,6 +933,34 @@ class PLSSVD(TransformerMixin, BaseEstimator):
     def y_scores_(self):
         return self._y_scores
 
+    @deprecated(  # type: ignore
+        "Attribute x_mean_ was deprecated in version 0.24 and "
+        "will be removed in 0.26.")
+    @property
+    def x_mean_(self):
+        return self._x_mean
+
+    @deprecated(  # type: ignore
+        "Attribute y_mean_ was deprecated in version 0.24 and "
+        "will be removed in 0.26.")
+    @property
+    def y_mean_(self):
+        return self._y_mean
+
+    @deprecated(  # type: ignore
+        "Attribute x_std_ was deprecated in version 0.24 and "
+        "will be removed in 0.26.")
+    @property
+    def x_std_(self):
+        return self._x_std
+
+    @deprecated(  # type: ignore
+        "Attribute y_std_ was deprecated in version 0.24 and "
+        "will be removed in 0.26.")
+    @property
+    def y_std_(self):
+        return self._y_std
+
     def transform(self, X, Y=None):
         """
         Apply the dimensionality reduction.
@@ -926,13 +982,13 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
         X = check_array(X, dtype=np.float64)
-        Xr = (X - self.x_mean_) / self.x_std_
+        Xr = (X - self._x_mean) / self._x_std
         x_scores = np.dot(Xr, self.x_weights_)
         if Y is not None:
             Y = check_array(Y, ensure_2d=False, dtype=np.float64)
             if Y.ndim == 1:
                 Y = Y.reshape(-1, 1)
-            Yr = (Y - self.y_mean_) / self.y_std_
+            Yr = (Y - self._y_mean) / self._y_std
             y_scores = np.dot(Yr, self.y_weights_)
             return x_scores, y_scores
         return x_scores

@@ -221,6 +221,12 @@ class MyNMFWithBadErrorMessage(NMF):
     # Same as NMF but raises an uninformative error message if X has negative
     # value. This estimator would fail the check suite in strict mode,
     # specifically it would fail check_fit_non_negative
+    # FIXME : should be removed in 0.26
+    def __init__(self):
+        super().__init__()
+        self.init = 'nndsvda'
+        self.max_iter = 500
+
     def fit(self, X, y=None, **params):
         X = check_array(X, accept_sparse=('csr', 'csc'),
                         dtype=[np.float64, np.float32])
@@ -352,11 +358,9 @@ N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE = {
     'naive_bayes',
     'neighbors',
     'pipeline',
-    'preprocessing',
     'random_projection',
     'semi_supervised',
     'svm',
-    'tree',
 }
 
 N_FEATURES_IN_AFTER_FIT_ESTIMATORS = [
