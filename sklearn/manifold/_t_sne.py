@@ -434,7 +434,9 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric='euclidean'):
         Embedding of the training data in low-dimensional space.
 
     n_neighbors : int, default=5
-        Number of neighbors k that will be considered.
+        Number of neighbors that will be considered. Should be lesser than
+        n_samples/2 to ensure trustworthiness is within [0, 1]. A warning will
+        be raised otherwise.
 
     metric : str or callable, default='euclidean'
         Which metric to use for computing pairwise distances between samples
@@ -450,6 +452,10 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric='euclidean'):
     trustworthiness : float
         Trustworthiness of the low-dimensional embedding.
     """
+    n_samples = X.shape[0]
+    if n_neighbors >= n_samples/2:
+        warnings.warn(f"n_neighbors ({n_neighbors}) should be less than"
+                      f"{n_samples / 2}")
     dist_X = pairwise_distances(X, metric=metric)
     if metric == 'precomputed':
         dist_X = dist_X.copy()
@@ -464,7 +470,6 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric='euclidean'):
     # We build an inverted index of neighbors in the input space: For sample i,
     # we define `inverted_index[i]` as the inverted index of sorted distances:
     # inverted_index[i][ind_X[i]] = np.arange(1, n_sample + 1)
-    n_samples = X.shape[0]
     inverted_index = np.zeros((n_samples, n_samples), dtype=int)
     ordered_indices = np.arange(n_samples + 1)
     inverted_index[ordered_indices[:-1, np.newaxis],
