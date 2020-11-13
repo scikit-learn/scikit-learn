@@ -1492,11 +1492,12 @@ class MiniBatchKMeans(KMeans):
         best of the ``n_init`` initializations as measured by inertia.
 
     reassignment_ratio : float, default=0.01
-        Control the fraction of the maximum number of counts for a
-        center to be reassigned. A higher value means that low count
-        centers are more easily reassigned, which means that the
-        model will take longer to converge, but should converge in a
-        better clustering.
+        Control the fraction of the maximum number of counts for a center to
+        be reassigned. A higher value means that low count centers are more
+        easily reassigned, which means that the model will take longer to
+        converge, but should converge in a better clustering. A too high value
+        may however cause convergence issues, especially with a small batch
+        size.
 
     Attributes
     ----------
