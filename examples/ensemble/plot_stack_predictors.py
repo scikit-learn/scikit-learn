@@ -15,15 +15,16 @@ prediction. We compare the performance of each individual regressor with the
 stacking strategy. Stacking slightly improves the overall performance.
 
 """
-print(__doc__)
-
-from sklearn import set_config
-set_config(display='diagram')
 
 # Authors: Guillaume Lemaitre <g.lemaitre58@gmail.com>
 #          Maria Telenczuk    <https://github.com/maikia>
 # License: BSD 3 clause
 
+# %%
+print(__doc__)
+
+from sklearn import set_config
+set_config(display='diagram')
 
 # %%
 # Download the dataset
