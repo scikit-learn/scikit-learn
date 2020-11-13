@@ -450,6 +450,6 @@ and environment variable as follows before calling the ``pip install`` or
     export SKLEARN_BUILD_PARALLEL=3
     pip install --verbose --no-build-isolation --editable .
 
-On a machine with 2 CPU cores, it has been empirically shown beneficial to use
-a parallelism level of 3 to overlap IO bound tasks (reading and writing files
-on disk) with CPU bound tasks (actually compiling).
+On a machine with 2 CPU cores, it can be beneficial to use a parallelism level
+of 3 to overlap IO bound tasks (reading and writing files on disk) with CPU
+bound tasks (actually compiling).
