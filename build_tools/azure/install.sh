@@ -140,8 +140,9 @@ export SKLEARN_BUILD_PARALLEL="auto"
 
 python -m pip list
 if [[ "$DISTRIB" == "conda-pip-latest" ]]; then
-    # Check that pip can automatically install missing build dependencies from
-    # pyproject.toml.
+    # Check that pip can automatically build scikit-learn with the build
+    # dependencies specified in pyproject.toml using an isolated build
+    # environment:
     pip install --verbose --editable .
 else
     # Use the pre-installed build dependencies and build directly in the
