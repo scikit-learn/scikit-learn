@@ -97,6 +97,10 @@ Changelog
   `init_size_`, are deprecated and will be removed in 0.26. :pr:`17864` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Enhancement| Added :func:`cluster.kmeans_plusplus` as public function. 
+  Initialization by KMeans++ can now be called separately to generate
+  initial cluster centroids. :pr:`17937` by :user:`g-walsh`
+
 :mod:`sklearn.compose`
 ......................
 
@@ -152,6 +156,13 @@ Changelog
   attributes were deprecated and will be removed in 0.26. They can be
   retrieved by calling `transform` on the training data. The `norm_y_weights`
   attribute will also be removed. :pr:`17095` by `Nicolas Hug`_.
+
+- |API| For :class:`cross_decomposition.PLSRegression`,
+  :class:`cross_decomposition.PLSCanonical`,
+  :class:`cross_decomposition.CCA`, and
+  :class:`cross_decomposition.PLSSVD`, the `x_mean_`, `y_mean_`, `x_std_`, and
+  `y_std_` attributes were deprecated and will be removed in 0.26.
+  :pr:`18768` by :user:`Maren Westermann <marenwestermann>`.
 
 :mod:`sklearn.datasets`
 .......................
