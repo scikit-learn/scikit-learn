@@ -26,7 +26,7 @@ IDENTIFIER=scikit_learn-$SCIKIT_LEARN_VERSION-cp$PYTHON_VERSION-$IDENTIFIER
 BASE_PATH="C:/Users/RUNNER~1/AppData/Local/Temp"
 WHEEL_PATH=$(find $BASE_PATH -type d -name "repaired_wheel")
 WHEEL_PATH=$(realpath $WHEEL_PATH)
-WHEEL_PATH="$WHEEL_PATH/$IDENTIFIER"
+WHEEL="$WHEEL_PATH/$IDENTIFIER"
 
 # Dot the Python version for identyfing the base Docker image
 PYTHON_VERSION=$(echo ${PYTHON_VERSION:0:1}.${PYTHON_VERSION:1:2})
