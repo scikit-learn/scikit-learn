@@ -1064,13 +1064,14 @@ For datasets with categorical features, using the native categorical support
 is often better than relying on one-hot encoding
 (:class:`~sklearn.preprocessing.OneHotEncoder`), because one-hot encoding
 requires more tree depth to achieve equivalent splits. It is also usually
-better to rely on the native support rather than to treat categorical
-features as continuous, since categories are nominal quantities where order
-does not matter.
+better to rely on the native categorical support rather than to treat
+categorical features as continuous (ordinal), since categories are nominal
+quantities where order does not matter.
 
 To enable categorical support, a boolean mask can be passed to the
-`categorical_features` parameter. In the following, the first feature will be
-treated as categorical and the second feature as numerical::
+`categorical_features` parameter, indicating which feature is categorical. In
+the following, the first feature will be treated as categorical and the
+second feature as numerical::
 
   >>> gbdt = HistGradientBoostingClassifier(categorical_features=[True, False])
 

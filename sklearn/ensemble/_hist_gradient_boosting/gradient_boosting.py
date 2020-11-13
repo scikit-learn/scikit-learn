@@ -769,7 +769,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     predict = partial(
                         predictor.predict,
                         known_cat_bitsets=known_cat_bitsets,
-                        f_idx_map=f_idx_map)   # noqa
+                        f_idx_map=f_idx_map)
                 raw_predictions[k, :] += predict(X)
 
     def _staged_raw_predict(self, X):

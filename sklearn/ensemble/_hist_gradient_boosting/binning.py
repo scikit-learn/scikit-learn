@@ -96,7 +96,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         instead of the quantiles. For categorical features indicated by
         ``is_categorical``, the docstring for ``is_categorical`` details on
         this procedure.
-    subsample : int or None, optional (default=2e5)
+    subsample : int or None, default=2e5
         If ``n_samples > subsample``, then ``sub_samples`` samples will be
         randomly chosen to compute the quantiles. If ``None``, the whole data
         is used.
@@ -286,6 +286,9 @@ class _BinMapper(TransformerMixin, BaseEstimator):
 
         known_cat_bitsets = np.zeros((n_categorical_features, 8),
                                      dtype=X_BITSET_INNER_DTYPE)
+
+        # TODO: complexity is O(n_categorical_features * 255). Maybe this is
+        # worth cythonizing
         for mapped_f_idx, f_idx in enumerate(categorical_features_indices):
             for raw_cat_val in known_categories[f_idx]:
                 set_bitset_memoryview(known_cat_bitsets[mapped_f_idx],

@@ -240,7 +240,7 @@ Changelog
 .......................
 
 - |MajorFeature| :class:`ensemble.HistGradientBoostingRegressor` and
-  :class:`ensemble.HistGradientBoostingClassifier` now support has native
+  :class:`ensemble.HistGradientBoostingClassifier` now have native
   support for categorical features with the `categorical_features`
   parameter. :pr:`18394` by `Nicolas Hug`_ and `Thomas Fan`_.
 
