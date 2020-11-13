@@ -123,6 +123,11 @@ the test data::
     Notebook, use ``set_config(display='diagram')`` and then call the pipeline
     object.
 
+    >>> from sklearn import set_config
+    >>> set_config(display='diagram')   # doctest: +SKIP
+    >>> # displays HTML representation in a jupyter context
+    >>> pipe  # doctest: +SKIP
+
 Model evaluation
 ----------------
 
