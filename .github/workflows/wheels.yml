@@ -83,6 +83,7 @@ jobs:
                             OMP_NUM_THREADS=2
                             OPENBLAS_NUM_THREADS=2
                             SKLEARN_SKIP_NETWORK_TESTS=1
+                            SKLEARN_BUILD_PARALLEL=3
           CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
           CIBW_TEST_REQUIRES: pytest pandas threadpoolctl
           # Test that there are no links to system libraries

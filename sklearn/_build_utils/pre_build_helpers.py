@@ -87,6 +87,9 @@ def compile_test_program(code, extra_preargs=[], extra_postargs=[]):
 
 def basic_check_build():
     """Check basic compilation and linking of C code"""
+    if "PYODIDE_PACKAGE_ABI" in os.environ:
+        # The following check won't work in pyodide
+        return
     code = textwrap.dedent(
         """\
         #include <stdio.h>
