@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 =================================================================
 Pipeline: chaining a SVC and PCA
@@ -24,8 +22,8 @@ from sklearn.svm import SVC
 from sklearn.decomposition import PCA
 from sklearn import set_config
 
-estimators = [('reduce_dim', PCA()), ('clf', SVC())]
-pipe = Pipeline(estimators)
+steps = [('reduce_dim', PCA()), ('clf', SVC())]
+pipe = Pipeline(steps)
 pipe
 
 # to visualize the diagram, change display='diagram'
