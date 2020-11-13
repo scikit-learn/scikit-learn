@@ -455,7 +455,7 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric='euclidean'):
     n_samples = X.shape[0]
     if n_neighbors >= n_samples/2:
         warnings.warn(f"n_neighbors ({n_neighbors}) should be less than"
-                      f"{n_samples / 2}")
+                      f" {n_samples / 2}")
     dist_X = pairwise_distances(X, metric=metric)
     if metric == 'precomputed':
         dist_X = dist_X.copy()
