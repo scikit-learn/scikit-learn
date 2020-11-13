@@ -20,6 +20,7 @@ import numpy as np
 from sklearn.utils import all_estimators
 from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning, SkipTestWarning
+from sklearn.exceptions import FitFailedWarning
 from sklearn.utils.estimator_checks import check_estimator
 
 import sklearn
@@ -319,6 +320,7 @@ def test_search_cv(estimator, check, request):
             ConvergenceWarning,
             UserWarning,
             FutureWarning,
+            FitFailedWarning,
         )
     ):
         check(estimator)
