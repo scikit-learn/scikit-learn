@@ -132,6 +132,9 @@ Changelog
   predictions for `est.transform(Y)` when the training data is single-target.
   :pr:`17095` by `Nicolas Hug`_.
 
+- |Fix| Increases the stability of :class:`cross_decomposition.CCA` :pr:`18746`
+  by `Thomas Fan`_.
+
 - |API| For :class:`cross_decomposition.NMF`,
   the `init` value, when 'init=None' and
   n_components <= min(n_samples, n_features) will be changed from
