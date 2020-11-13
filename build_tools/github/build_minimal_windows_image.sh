@@ -23,15 +23,16 @@ IDENTIFIER=scikit_learn-$SCIKIT_LEARN_VERSION-cp$PYTHON_VERSION-$IDENTIFIER
 
 # Find the repaired wheel because there is no a way
 # to access to the path in a straightforward manner
-BASE_PATH="C:\Users\RUNNER~1\AppData\Local\Temp"
+BASE_PATH="C:/Users/RUNNER~1/AppData/Local/Temp"
 REPAIRED_WHEEL_PATH=$(find $BASE_PATH -type d -name "repaired_wheel")
 
 PATH=$(realpath $REPAIRED_WHEEL_PATH)
-WHEEL="$PATH\\$IDENTIFIER"
+WHEEL="$PATH/$IDENTIFIER"
 
 # Dot the Python version for identyfing the base Docker image
 PYTHON_VERSION=$(echo ${PYTHON_VERSION:0:1}.${PYTHON_VERSION:1:2})
 
+# Build a minimal Windows Docker image for testing the wheels
 docker build --build-arg PYTHON_VERSION=$PYTHON_VERSION \
              --build-arg WHEEL="$WHEEL" \
              --build-arg CIBW_TEST_REQUIRES="$CIBW_TEST_REQUIRES" \
