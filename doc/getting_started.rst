@@ -117,7 +117,6 @@ the test data::
   >>> accuracy_score(pipe.predict(X_test), y_test)
   0.97...
 
-
 Model evaluation
 ----------------
 
