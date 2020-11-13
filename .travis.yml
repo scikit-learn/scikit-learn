@@ -20,6 +20,7 @@ env:
     # Custom environment variables for the wheel builder
     - CIBW_BUILD_VERBOSITY=1
     - CIBW_TEST_REQUIRES="pytest pandas"
+    - CIBW_ENVIRONMENT="OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 SKLEARN_SKIP_NETWORK_TESTS=1 OPENBLAS_VERBOSE=1 OPENBLAS_CORETYPE=NEOVERSEN1"
     - CIBW_TEST_COMMAND="python -m threadpoolctl -i numpy scipy.linalg && pytest --pyargs sklearn && python -m threadpoolctl -i sklearn"
 
 jobs:
