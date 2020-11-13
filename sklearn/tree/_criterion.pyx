@@ -34,6 +34,8 @@ from ._utils cimport safe_realloc
 from ._utils cimport sizet_ptr_to_ndarray
 from ._utils cimport WeightedMedianCalculator
 
+# EPSILON is used in the Poisson criterion
+cdef double EPSILON = 10 * np.finfo('double').eps
 
 cdef class Criterion:
     """Interface for impurity criteria.
@@ -1384,10 +1386,13 @@ cdef class Poisson(RegressionCriterion):
         cdef double y_mean_right = 0.
 
         for k in range(self.n_outputs):
-            if (self.sum_left[k] <= 0) or (self.sum_right[k] <= 0):
+            if (self.sum_left[k] <= EPSILON) or (self.sum_right[k] <= EPSILON):
                 # Poisson loss does not allow non-positive predictions. We
                 # therefore forbid splits that have child nodes with
                 # sum(y_i) <= 0.
+                # Since sum_right = sum_total - sum_left, it can lead to
+                # floating point rounding error and will not give zero. Thus,
+                # we relax the above comparison to sum(y_i) <= EPSILON.
                 return -INFINITY
             else:
                 y_mean_left = self.sum_left[k] / self.weighted_n_left
@@ -1436,10 +1441,15 @@ cdef class Poisson(RegressionCriterion):
         cdef SIZE_t n_outputs = self.n_outputs
 
         for k in range(n_outputs):
-            y_mean = y_sum[k] / weight_sum
-
-            if y_mean <= 0:
+            if y_sum[k] <= EPSILON:
+                # y_sum could be computed from the subtraction
+                # sum_right = sum_total - sum_left leading to a potential
+                # floating point rounding error.
+                # Thus, we relax the comparison y_sum <= 0 to
+                # y_sum <= EPSILON.
                 return INFINITY
+
+            y_mean = y_sum[k] / weight_sum
 
             for p in range(start, end):
                 i = self.samples[p]

@@ -183,13 +183,12 @@ def test_fit_docstring_attributes(name, Estimator):
     doc = docscrape.ClassDoc(Estimator)
     attributes = doc['Attributes']
 
-    IGNORED = {'CCA', 'ClassifierChain', 'ColumnTransformer',
+    IGNORED = {'ClassifierChain', 'ColumnTransformer',
                'CountVectorizer', 'DictVectorizer', 'FeatureUnion',
                'GaussianRandomProjection',
                'MultiOutputClassifier', 'MultiOutputRegressor',
                'NoSampleWeightWrapper', 'OneVsOneClassifier',
-               'OutputCodeClassifier', 'Pipeline', 'PLSCanonical',
-               'PLSRegression', 'PLSSVD', 'RFE', 'RFECV',
+               'OutputCodeClassifier', 'Pipeline', 'RFE', 'RFECV',
                'RegressorChain', 'SelectFromModel',
                'SparseCoder', 'SparseRandomProjection',
                'SpectralBiclustering', 'StackingClassifier',
@@ -252,10 +251,8 @@ def test_fit_docstring_attributes(name, Estimator):
         with ignore_warnings(category=FutureWarning):
             assert hasattr(est, attr.name)
 
-    IGNORED = {'Birch', 'CCA',
-               'LarsCV', 'Lasso',
-               'OrthogonalMatchingPursuit',
-               'PLSCanonical', 'PLSSVD'}
+    IGNORED = {'Birch', 'LarsCV', 'Lasso',
+               'OrthogonalMatchingPursuit'}
 
     if Estimator.__name__ in IGNORED:
         pytest.xfail(
