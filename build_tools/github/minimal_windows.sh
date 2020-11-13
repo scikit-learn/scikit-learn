@@ -24,6 +24,6 @@ PYTHON_VERSION=$(echo ${PYTHON_VERSION:0:1}.${PYTHON_VERSION:1:2})
 
 docker build --build-arg PYTHON_VERSION=$PYTHON_VERSION \
              --build-arg WHEEL=$WHEEL \
-             --build-arg CIBW_TEST_REQUIRES=$CIBW_TEST_REQUIRES \
-             -t scikit-learn/minimal-windows \
-             -f build_tools/github/Windows .
+             --build-arg CIBW_TEST_REQUIRES="$CIBW_TEST_REQUIRES" \
+             -f build_tools/github/Windows \
+             -t scikit-learn/minimal-windows .
