@@ -25,14 +25,16 @@ pip install --extra-index-url https://antocuni.github.io/pypy-wheels/manylinux20
 
 # Install Cython directly
 pip install https://antocuni.github.io/pypy-wheels/ubuntu/Cython/Cython-0.29.14-py3-none-any.whl
-pip install sphinx numpydoc docutils joblib pillow pytest loky
+pip install sphinx numpydoc docutils joblib pillow pytest
 
 ccache -M 512M
 export CCACHE_COMPRESS=1
 export PATH=/usr/lib/ccache:$PATH
 export LOKY_MAX_CPU_COUNT="2"
 export OMP_NUM_THREADS="1"
-export SKLEARN_BUILD_PARALLEL="auto"
+# Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
+# workers with 2 cores when building the compiled extensions of scikit-learn.
+export SKLEARN_BUILD_PARALLEL=3
 
 # Build and install scikit-learn in dev mode
 pip install --no-build-isolation -e .

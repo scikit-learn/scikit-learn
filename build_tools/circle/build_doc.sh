@@ -182,10 +182,10 @@ conda create -n $CONDA_ENV_NAME --yes --quiet \
 source activate testenv
 pip install sphinx-gallery
 pip install numpydoc
-pip install loky
 
-# Build and install scikit-learn in dev mode
-export SKLEARN_BUILD_PARALLEL="auto"
+# Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
+# workers with 2 cores when building the compiled extensions of scikit-learn.
+export SKLEARN_BUILD_PARALLEL=3
 python setup.py develop
 
 export OMP_NUM_THREADS=1

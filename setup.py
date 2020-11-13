@@ -18,10 +18,6 @@ from pkg_resources import parse_version
 import traceback
 import importlib
 try:
-    import loky
-except ImportError:
-    loky = None
-try:
     import builtins
 except ImportError:
     # Python 2 compat: just to be able to declare that Python >=3.6 is needed.
@@ -112,8 +108,9 @@ class CleanCommand(Clean):
 
 cmdclass = {'clean': CleanCommand, 'sdist': sdist}
 
-# custom build_ext command to set OpenMP compile flags depending on os and
-# compiler
+# Custom build_ext command to set OpenMP compile flags depending on os and
+# compiler. Also makes it possible to set the parallelism level via
+# and environment variable (useful for the wheel building CI).
 # build_ext has to be imported after setuptools
 try:
     from numpy.distutils.command.build_ext import build_ext  # noqa
@@ -127,17 +124,7 @@ try:
                 # command-line flag (--parallel or -j)
 
                 parallel = os.environ.get("SKLEARN_BUILD_PARALLEL")
-                if parallel == "auto":
-                    if loky is not None:
-                        # loky can automatically detect the useable number of
-                        # cores taking any CPU usage quota into account.
-                        self.parallel = loky.cpu_count()
-                    else:
-                        # Fall-back to to non CPU quota aware, yet affinity
-                        # aware detection of useable CPUs
-                        self.parallel = len(os.sched_getaffinity())
-                elif parallel:
-                    # Assume a fixed number.
+                if parallel:
                     self.parallel = int(parallel)
             if self.parallel:
                 print("setting parallel=%d " % self.parallel)

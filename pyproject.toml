@@ -4,11 +4,6 @@ requires = [
     "setuptools",
     "wheel",
     "Cython>=0.28.5",
-    # loky is used for automated detection of useable CPU cores for
-    # parallel builds on cloud platforms that can use linux container
-    # CPU usage quotas (see the custom build_ext command in setup.py)
-    # for more details.
-    "loky",
 
     # PyPy needs numpy >= 1.14.0
     # platform_python_implementation!='CPython' not needed >= Python 3.7 which is numpy 1.14.5
