@@ -88,6 +88,8 @@ jobs:
           # Test that there are no links to system libraries
           CIBW_TEST_COMMAND: pytest --pyargs sklearn &&
                              python -m threadpoolctl -i sklearn
+          # Build a minimal Windows Docker image to test the wheels
+          CIBW_BEFORE_TEST_WINDOWS: bash build_tools/github/minimal_windows.sh ${{ matrix.python }} ${{ matrix.bitness }}
           # By default, the Windows wheels are not repaired.
           # In this case, we need to vendor the vcomp140.dll
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: wheel unpack {wheel} &&
@@ -123,33 +125,6 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           path: dist/*.tar.gz
-
-  # Minimal Windows Docker container to test the wheels
-  minimal_windows:
-    name: Minimal Windows container
-    runs-on: windows-latest
-    needs: build_wheels
-
-    strategy:
-      # Ensure that a container finishes even if another fails
-      fail-fast: false
-      matrix:
-        # Python 3.6 is not supported by the official Docker image
-        python: [3.7, 3.8, 3.9]
-
-    steps:
-      - name: Checkout scikit-learn
-        uses: actions/checkout@v1
-
-      - name: Download artifacts
-        uses: actions/download-artifact@v2
-        with:
-          path: dist
-
-      - name: Build and run Windows container
-        run: bash build_tools/github/minimal_windows.sh
-        env:
-          PYTHON_VERSION: ${{ matrix.python }}
 
   # Upload the wheels and the source distribution
   upload_anaconda:

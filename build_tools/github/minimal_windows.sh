@@ -3,21 +3,27 @@
 set -e
 set -x
 
-# Remove the dot from the Python version for naming the wheel
-TRIM_PYTHON_VERSION=$(echo $PYTHON_VERSION | tr -d ".")
+PYTHON_VERSION=$1
+BITNESS=$2
 
-if [[ "$PYTHON_VERSION" == "3.7" ]]; then
-    IDENTIFIER=cp"$TRIM_PYTHON_VERSION"m-win_amd64.whl
-else
-    # Different identifier for Python 3.8 and newer
-    IDENTIFIER=cp"$TRIM_PYTHON_VERSION"-win_amd64.whl
+if [[ "$PYTHON_VERSION" == "36" || "$BITNESS" == "32" ]]; then
+    # Python 3.6 and 32-bit architectures are not
+    # yet supported by the official Docker images
+    exit 0
 fi
 
-WHEEL=scikit_learn-$SCIKIT_LEARN_VERSION-cp$TRIM_PYTHON_VERSION-$IDENTIFIER
+if [[ "$PYTHON_VERSION" == "37" ]]; then
+    IDENTIFIER=cp"$PYTHON_VERSION"m-win_amd64.whl
+else
+    # Different identifier for Python 3.8 and newer
+    IDENTIFIER=cp"$PYTHON_VERSION"-win_amd64.whl
+fi
+
+WHEEL=scikit_learn-$SCIKIT_LEARN_VERSION-cp$PYTHON_VERSION-$IDENTIFIER
+PYTHON_VERSION=$(echo ${PYTHON_VERSION:0:1}.${PYTHON_VERSION:1:2})
 
 docker build --build-arg PYTHON_VERSION=$PYTHON_VERSION \
              --build-arg WHEEL=$WHEEL \
+             --build-arg CIBW_TEST_REQUIRES=$CIBW_TEST_REQUIRES
              -t scikit-learn/minimal-windows \
              -f build_tools/github/Windows .
-
-docker run --rm scikit-learn/minimal-windows
