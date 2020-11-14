@@ -12,5 +12,6 @@ if [[ "$PYTHON_VERSION" == "36" || "$BITNESS" == "32" ]]; then
     pytest --pyargs sklearn
     python -m threadpoolctl -i sklearn
 else
-    docker run --rm scikit-learn/minimal-windows
+    docker run -e SKLEARN_SKIP_NETWORK_TESTS=1 \
+               --rm scikit-learn/minimal-windows
 fi
