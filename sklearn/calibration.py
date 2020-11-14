@@ -23,7 +23,12 @@ from scipy.optimize import fmin_bfgs
 from .base import (BaseEstimator, ClassifierMixin, RegressorMixin, clone,
                    MetaEstimatorMixin)
 from .preprocessing import label_binarize, LabelEncoder
-from .utils import check_array, indexable, column_or_1d
+from .utils import (
+    check_array,
+    column_or_1d,
+    deprecated,
+    indexable,
+)
 from .utils.multiclass import check_classification_targets
 from .utils.fixes import delayed
 from .utils.validation import check_is_fitted, check_consistent_length
@@ -585,6 +590,16 @@ class _CalibratedClassifier:
         The method to use for calibration. Can be 'sigmoid' which
         corresponds to Platt's method or 'isotonic' which is a
         non-parametric approach based on isotonic regression.
+
+    Attributes
+    ----------
+    calibrators_ : list of fitted estimator instances
+        Same as `calibrators`. Exposed for backward-compatibility. Use
+        `calibrators` instead.
+
+        .. deprecated:: 0.24
+           `calibrators_` is deprecated from 0.24 and will be removed in
+           0.26. Use `calibrators` instead.
     """
     def __init__(self, base_estimator, calibrators, *, classes,
                  method='sigmoid'):
@@ -592,6 +607,16 @@ class _CalibratedClassifier:
         self.calibrators = calibrators
         self.classes = classes
         self.method = method
+
+    # TODO: Remove in 0.26
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "calibrators_ is deprecated in 0.24 and will be removed in 0.26. "
+        "Use calibrators instead."
+    )
+    @property
+    def calibrators_(self):
+        return self.calibrators
 
     def predict_proba(self, X):
         """Calculate calibrated probabilities.
