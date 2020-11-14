@@ -3,15 +3,14 @@ ARG PYTHON_VERSION
 FROM winamd64/python:$PYTHON_VERSION-windowsservercore
 
 ARG CIBW_TEST_REQUIRES
-ARG WHEEL_PATH
-ARG WHEEL_NAME
+ARG WHEEL
 
 # Install the requirements
 RUN pip install --upgrade pip
 RUN pip install $env:CIBW_TEST_REQUIRES.split(" ")
 
 # Copy and install the Windows wheel
-COPY $WHEEL_PATH /tmp/$WHEEL_NAME
-RUN pip install /tmp/$env:WHEEL_NAME
+COPY $WHEEL $WHEEL
+RUN pip install $env:WHEEL
 
 CMD [ "pytest", "--pyargs", "sklearn", "&&", "python", "-m", "threadpoolctl", "-i", "sklearn"]
