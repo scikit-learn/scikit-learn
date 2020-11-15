@@ -36,6 +36,10 @@ enhance the functionality of scikit-learn's estimators.
   An automated machine learning toolkit and a drop-in replacement for a
   scikit-learn estimator
 
+- `autoviml <https://github.com/AutoViML/Auto_ViML/>`_
+  Automatically Build Multiple Machine Learning Models with a Single Line of Code.
+  Designed as a faster way to use scikit-learn models without having to preprocess data.
+
 - `TPOT <https://github.com/rhiever/tpot>`_
   An automated machine learning toolkit that optimizes a series of scikit-learn
   operators to design a machine learning pipeline, including data and feature

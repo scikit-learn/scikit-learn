@@ -26,6 +26,8 @@ random sampling procedures.
   between 32-bits and 64-bits data when the kernel has small positive
   eigenvalues.
 
+- |Fix| :class:`linear_model.Perceptron` when `penalty='elasticnet'`
+
 Details are listed in the changelog below.
 
 (While we are trying to better inform users by providing this information, we
@@ -50,9 +52,9 @@ Changelog
 ...................
 
 - |Fix| :meth:`base.BaseEstimator.get_params` now will raise an
-        `AttributeError` if a parameter cannot be retrieved as
-        an instance attribute. Previously it would return `None`.
-        :pr:`17448` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
+  `AttributeError` if a parameter cannot be retrieved as
+  an instance attribute. Previously it would return `None`.
+  :pr:`17448` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
 :mod:`sklearn.calibration`
 ..........................
@@ -95,6 +97,10 @@ Changelog
   `init_size_`, are deprecated and will be removed in 0.26. :pr:`17864` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Enhancement| Added :func:`cluster.kmeans_plusplus` as public function. 
+  Initialization by KMeans++ can now be called separately to generate
+  initial cluster centroids. :pr:`17937` by :user:`g-walsh`
+
 :mod:`sklearn.compose`
 ......................
 
@@ -126,11 +132,14 @@ Changelog
   predictions for `est.transform(Y)` when the training data is single-target.
   :pr:`17095` by `Nicolas Hug`_.
 
+- |Fix| Increases the stability of :class:`cross_decomposition.CCA` :pr:`18746`
+  by `Thomas Fan`_.
+
 - |API| For :class:`cross_decomposition.NMF`,
   the `init` value, when 'init=None' and
   n_components <= min(n_samples, n_features) will be changed from
   `'nndsvd'` to `'nndsvda'` in 0.26.
-  :pr:`18525` by `Chiara Marmo <cmarmo>`.
+  :pr:`18525` by :user:`Chiara Marmo <cmarmo>`.
 
 - |API| The bounds of the `n_components` parameter is now restricted:
 
@@ -147,6 +156,13 @@ Changelog
   attributes were deprecated and will be removed in 0.26. They can be
   retrieved by calling `transform` on the training data. The `norm_y_weights`
   attribute will also be removed. :pr:`17095` by `Nicolas Hug`_.
+
+- |API| For :class:`cross_decomposition.PLSRegression`,
+  :class:`cross_decomposition.PLSCanonical`,
+  :class:`cross_decomposition.CCA`, and
+  :class:`cross_decomposition.PLSSVD`, the `x_mean_`, `y_mean_`, `x_std_`, and
+  `y_std_` attributes were deprecated and will be removed in 0.26.
+  :pr:`18768` by :user:`Maren Westermann <marenwestermann>`.
 
 :mod:`sklearn.datasets`
 .......................
@@ -221,7 +237,7 @@ Changelog
 
 - |Enhancement| :class:`discriminant_analysis.LinearDiscriminantAnalysis` can
   now use custom covariance estimate by setting the `covariance_estimator`
-  parameter. :pr:`14446` by :user:`Hugo Richard <hugorichard>`
+  parameter. :pr:`14446` by :user:`Hugo Richard <hugorichard>`.
 
 :mod:`sklearn.ensemble`
 .......................
@@ -398,6 +414,11 @@ Changelog
   `X_offset_` and `X_scale_` were undefined.
   :pr:`18607` by :user:`fhaselbeck <fhaselbeck>`.
 
+- |Fix| Added the missing `l1_ratio` parameter in
+  :class:`linear_model.Perceptron`, to be used when `penalty='elasticnet'`.
+  This changes the default from 0 to 0.15. :pr:`18622` by
+  :user:`Haesun Park <rickiepark>`.
+
 :mod:`sklearn.manifold`
 .......................
 
@@ -467,7 +488,7 @@ Changelog
 
 - |Feature| :func:`metrics.plot_confusion_matrix` now supports making colorbar
   optional in the matplotlib plot by setting colorbar=False. :pr:`17192` by
-  :user:`Avi Gupta <avigupta2612>`
+  :user:`Avi Gupta <avigupta2612>`.
 
 - |Enhancement| :func:`metrics.average_precision_score` now supports the
   multiclass case.
@@ -499,7 +520,7 @@ Changelog
   they would return erroneous values when pos_label was not corresponding to
   `classifier.classes_[1]`. This is especially important when training
   classifiers directly with string labeled target classes.
-  :pr:`#18114` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`18114` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Fix| Fixed bug in :func:`metrics.plot_confusion_matrix` where error occurs
   when `y_true` contains labels that were not previously seen by the classifier
@@ -621,6 +642,11 @@ Changelog
   the data intrinsic dimensionality is too high for tree-based methods.
   :pr:`17148` by :user:`Geoffrey Bolmier <gbolmier>`.
 
+- |Fix| :class:`neighbors.BinaryTree`
+  will raise a `ValueError` when fitting on data array having points with
+  different dimensions.
+  :pr:`18691` by :user:`Chiara Marmo <cmarmo>`.
+
 - |Fix| :class:`neighbors.NearestCentroid` with a numerical `shrink_threshold`
   will raise a `ValueError` when fitting on data with all constant features.
   :pr:`18370` by :user:`Trevor Waite <trewaite>`.
@@ -724,6 +750,10 @@ Changelog
 
 :mod:`sklearn.tree`
 ...................
+
+- |Feature| :class:`tree.DecisionTreeRegressor` now supports the new splitting
+  criterion ``'poisson'`` useful for modeling count data. :pr:`17386` by
+  :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Enhancement| :func:`tree.plot_tree` now uses colors from the matplotlib
   configuration settings. :pr:`17187` by `Andreas Müller`_.
