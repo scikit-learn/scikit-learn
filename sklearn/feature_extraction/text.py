@@ -1496,8 +1496,10 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
                 raise ValueError("Input has n_features=%d while the model"
                                  " has been trained with n_features=%d" % (
                                      n_features, expected_n_features))
-            # *= doesn't work
-            X = X * self._idf_diag
+
+            if copy:
+                X = X.copy()
+            X.data *= self._idf_diag.data[X.indices]
 
         if self.norm:
             X = normalize(X, norm=self.norm, copy=False)
