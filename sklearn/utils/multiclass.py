@@ -17,7 +17,7 @@ from scipy.sparse import lil_matrix
 
 import numpy as np
 
-from .validation import check_array, _assert_all_finite, assert_all_finite
+from .validation import check_array, _assert_all_finite
 
 
 def _unique_multiclass(y):
@@ -272,9 +272,6 @@ def type_of_target(y):
                 # dtype=object should be provided explicitly for ragged arrays,
                 # see NEP 34
                 y = np.asarray(y, dtype=object)
-            except ValueError:
-                # Known to fail in numpy 1.3 for array of arrays
-                return 'unknown'
 
     # The old sequence of sequences format
     try:
@@ -289,15 +286,19 @@ def type_of_target(y):
         pass
 
     # Invalid inputs
-    if y.ndim not in (1, 2):  # [[[1, 2]]]
+    if y.ndim not in (1, 2):
+        # Number of dimension greater than 2: [[[1, 2]]]
         return 'unknown'
     if not min(y.shape):
+        # Empty ndarray: []/[[]]
         if y.ndim == 1:
+            # 1-D empty array: []
             return 'binary'  # []
-        return 'unknown'  # [[]]
-    # [obj_1] and not ["label_1"]
-    if not issparse(y) and y.dtype == object and \
-            not isinstance(y.flat[0], str):
+        # 2-D empty array: [[]]
+        return 'unknown'
+    if (not issparse(y) and y.dtype == object and
+            not isinstance(y.flat[0], str)):
+        # [obj_1] and not ["label_1"]
         return 'unknown'
 
     # Check if multioutput
@@ -309,20 +310,15 @@ def type_of_target(y):
     # Check float and contains non-integer float values
     if y.dtype.kind == 'f':
         # [.1, .2, 3] or [[.1, .2, 3]] or [[1., .2]] and not [1., 2., 3.]
-        if not issparse(y) and np.any(y != y.astype(int)):
-            _assert_all_finite(y)
-            return 'continuous' + suffix
-        if issparse(y) and np.any(y.data != y.data.astype(int)):
-            assert_all_finite(y)
+        data = y.data if issparse(y) else y
+        if np.any(data != data.astype(int)):
+            _assert_all_finite(data)
             return 'continuous' + suffix
 
     # Check multiclass
-    if len(np.unique(y)) > 2:
-        return 'multiclass' + suffix  # [1, 2, 3] or [[1., 2., 3]]
-    # [[1, 2]]
-    if not issparse(y) and y.ndim == 2 and len(y[0]) > 1:
-        return 'multiclass' + suffix
-    if issparse(y) and y.ndim == 2 and len(y.getrow(0).data) > 1:
+    first_row = y[0] if not issparse(y) else y.getrow(0).data
+    if len(np.unique(y)) > 2 or (y.ndim == 2 and len(first_row) > 1):
+        # [1, 2, 3] or [[1., 2., 3]] or [[1, 2]]
         return 'multiclass' + suffix
     else:
         return 'binary'  # [1, 2] or [["a"], ["b"]]
