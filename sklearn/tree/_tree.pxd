@@ -59,10 +59,6 @@ cdef class Tree:
                           SIZE_t feature, double threshold, double impurity,
                           SIZE_t n_node_samples,
                           double weighted_n_samples) nogil except -1
-    cdef SIZE_t _update_node(self, SIZE_t node_id, bint is_leaf, SIZE_t feature,
-                          double threshold, double impurity,
-                          SIZE_t n_node_samples,
-                          double weighted_n_node_samples) nogil except -1
     cdef int _resize(self, SIZE_t capacity) nogil except -1
     cdef int _resize_c(self, SIZE_t capacity=*) nogil except -1
 

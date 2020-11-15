@@ -293,19 +293,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
         tree._resize(init_capacity)
 
-        # Organize samples by decision paths
-        paths = tree.decision_path(X)
-        leafs = {}
-        for i in range(X.shape[0]):
-            leaf = paths[i].indices[-1]
-            depth = paths[i].indices.shape[0] - 1
-            if leaf in leafs:
-                leafs[leaf][0] += 1
-            else:
-                leafs[leaf] = [1, depth]
-
-        X_copy = []
-
         # Parameters
         cdef Splitter splitter = self.splitter
         cdef SIZE_t max_depth = self.max_depth
@@ -339,8 +326,24 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef StackRecord stack_record
 
         with nogil:
+            # Organize samples by decision paths
+            paths = tree.decision_path(X)
+            false_roots = {}
+            for i in range(X.shape[0]):
+                parent = paths[i].indices[-2]
+                leaf = paths[i].indices[-1]
+                depth = paths[i].indices.shape[0] - 1
+                left = 0
+
+                if parent in false_roots:
+                    false_roots[parent][0] += 1
+                else:
+                    if tree.children_left[parent] == leaf:
+                        left = 1
+                    false_roots[parent] = [1, depth, left]
+
             # push reached leaf nodes onto stack
-            for key, value in leafs.items():
+            for key, value in sorted(false_roots.items()):
                 end += value[0]
                 rc = stack.push(start, end, value[1], key, 0, tree.impurity[key], 0)
                 start += value
@@ -1018,37 +1021,6 @@ cdef class Tree:
             node.threshold = threshold
 
         self.node_count += 1
-
-        return node_id
-
-    cdef SIZE_t _update_node(self, SIZE_t node_id, bint is_leaf, SIZE_t feature,
-                          double threshold, double impurity,
-                          SIZE_t n_node_samples,
-                          double weighted_n_node_samples) nogil except -1:
-        """Update a node on the tree.
-
-        The updated node remains on the same position.
-
-        Returns (size_t)(-1) on error.
-        """
-        if node_id >= self.capacity:
-            if self._resize_c() != 0:
-                return SIZE_MAX
-
-        cdef Node* node = &self.nodes[node_id]
-        node.impurity = impurity
-        node.n_node_samples = n_node_samples
-        node.weighted_n_node_samples = weighted_n_node_samples
-
-        if is_leaf:
-            node.left_child = _TREE_LEAF
-            node.right_child = _TREE_LEAF
-            node.feature = _TREE_UNDEFINED
-            node.threshold = _TREE_UNDEFINED
-
-        else:
-            node.feature = feature
-            node.threshold = threshold
 
         return node_id
 
