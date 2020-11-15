@@ -336,11 +336,11 @@ def test_categorical_feature(n_bins):
 @pytest.mark.parametrize("n_bins", (128, 256))
 def test_categorical_with_numerical_features(n_bins):
     # basic check for binmapper with mixed data
-    X1 = np.arange(10, 20).reshape(-1, 1)
-    X2 = np.arange(10, 15).reshape(-1, 1)
+    X1 = np.arange(10, 20).reshape(-1, 1)  # numerical
+    X2 = np.arange(10, 15).reshape(-1, 1)  # categorical
     X2 = np.r_[X2, X2]
     X = np.c_[X1, X2]
-    known_categories = [None, np.unique(X2)]
+    known_categories = [None, np.unique(X2).astype(X_DTYPE)]
 
     bin_mapper = _BinMapper(n_bins=n_bins,
                             is_categorical=np.array([False, True]),
@@ -351,6 +351,18 @@ def test_categorical_with_numerical_features(n_bins):
     bin_thresholds = bin_mapper.bin_thresholds_
     assert len(bin_thresholds) == 2
     assert_array_equal(bin_thresholds[1], np.arange(10, 15))
+
+    expected_X_trans = [[0, 0],
+                        [1, 1],
+                        [2, 2],
+                        [3, 3],
+                        [4, 4],
+                        [5, 0],
+                        [6, 1],
+                        [7, 2],
+                        [8, 3],
+                        [9, 4]]
+    assert_array_equal(bin_mapper.transform(X), expected_X_trans)
 
 
 def test_make_known_categories_bitsets():
@@ -377,6 +389,7 @@ def test_make_known_categories_bitsets():
     f_idx = 1
     mapped_f_idx = f_idx_map[f_idx]
     expected_cat_bitset[mapped_f_idx, 0] = 2**2 + 2**4 + 2**10
+    # 240 = 32**7 + 16, therefore the 16th bit of the 7th array is 1.
     expected_cat_bitset[mapped_f_idx, 7] = 2**16
 
     # second categorical feature [30, 70, 180]

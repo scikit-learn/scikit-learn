@@ -809,13 +809,10 @@ def test_unknown_categories_nan(insert_missing, Est,
     rng = np.random.RandomState(0)
     n_samples = 1000
     f1 = rng.rand(n_samples)
-    f2 = rng.randint(6, size=n_samples)
+    f2 = rng.randint(4, size=n_samples)
     X = np.c_[f1, f2]
     y = np.zeros(shape=n_samples)
     y[X[:, 1] % 2 == 0] = 1
-
-    rng = np.random.RandomState(0)
-    X[:, 1] = rng.randint(4, size=n_samples)
 
     if bool_categorical_parameter:
         categorical_features = [False, True]
@@ -824,6 +821,7 @@ def test_unknown_categories_nan(insert_missing, Est,
 
     if insert_missing:
         mask = rng.binomial(1, 0.01, size=X.shape).astype(np.bool)
+        assert mask.sum() > 0
         X[mask] = np.nan
 
     est = Est(max_iter=20, categorical_features=categorical_features).fit(X, y)
@@ -842,7 +840,7 @@ def test_categorical_encoding_strategies():
     # make sure that native encoding needs only 1 split to achieve a perfect
     # prediction on a simple dataset. In contrast, OneHotEncoded data needs
     # more depth / splits, and treating categories as ordered (just using
-    # OrdinalEncoder) requires even more depth
+    # OrdinalEncoder) requires even more depth.
 
     # dataset with one random continuous feature, and one categorical feature
     # with values in [0, 5], e.g. from an OrdinalEncoder.

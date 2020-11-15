@@ -893,11 +893,13 @@ cdef class Splitter:
                 sum_hessians_bin = feature_hist[missing_values_bin_idx].sum_hessians
             if sum_hessians_bin * support_factor >= MIN_CAT_SUPPORT:
                 cat_infos[n_used_bins].bin_idx = missing_values_bin_idx
-                sum_gradients_bin = \
+                sum_gradients_bin = (
                     feature_hist[missing_values_bin_idx].sum_gradients
+                )
 
-                cat_infos[n_used_bins].value = \
+                cat_infos[n_used_bins].value = (
                     sum_gradients_bin / (sum_hessians_bin + MIN_CAT_SUPPORT)
+                )
                 n_used_bins += 1
 
         # not enough categories to form a split

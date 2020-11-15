@@ -89,13 +89,13 @@ class _BinMapper(TransformerMixin, BaseEstimator):
     ----------
     n_bins : int, default=256
         The maximum number of bins to use (including the bin for missing
-        values). Non-missing values are binned on ``max_bins = n_bins - 1``
-        bins. The last bin is always reserved for missing values. If for a
-        given feature the number of unique values is less than ``max_bins``,
-        then those unique values will be used to compute the bin thresholds,
-        instead of the quantiles. For categorical features indicated by
-        ``is_categorical``, the docstring for ``is_categorical`` details on
-        this procedure.
+        values). Should be in [3, 256]. Non-missing values are binned on
+        ``max_bins = n_bins - 1`` bins. The last bin is always reserved for
+        missing values. If for a given feature the number of unique values is
+        less than ``max_bins``, then those unique values will be used to
+        compute the bin thresholds, instead of the quantiles. For categorical
+        features indicated by ``is_categorical``, the docstring for
+        ``is_categorical`` details on this procedure.
     subsample : int or None, default=2e5
         If ``n_samples > subsample``, then ``sub_samples`` samples will be
         randomly chosen to compute the quantiles. If ``None``, the whole data
