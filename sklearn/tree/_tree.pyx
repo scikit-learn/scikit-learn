@@ -325,33 +325,37 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef Stack stack = Stack(INITIAL_STACK_SIZE)
         cdef StackRecord stack_record
 
+        # Organize samples by decision paths
+        paths = tree.decision_path(X)
+        cdef int PARENT
+        cdef int CHILD
+        false_roots = {}
+        for i in range(X.shape[0]):
+            depth = paths[i].indices.shape[0] - 1
+            PARENT = depth - 1
+            CHILD = depth
+
+            parent = paths[i].indices[PARENT]
+            child = paths[i].indices[CHILD]
+            left = 0
+
+            if parent in false_roots:
+                false_roots[parent][0] += 1
+            else:
+                if tree.children_left[parent] == child:
+                    left = 1
+                false_roots[parent] = [1, depth, left]
+
+        # push reached leaf nodes onto stack
+        for key, value in sorted(false_roots.items()):
+            end += value[0]
+            rc = stack.push(start, end, value[1], key, value[2], tree.impurity[key], 0)
+            start += value[0]
+            if rc == -1:
+                # got return code -1 - out-of-memory
+                raise MemoryError()
+
         with nogil:
-            # Organize samples by decision paths
-            paths = tree.decision_path(X)
-            false_roots = {}
-            for i in range(X.shape[0]):
-                parent = paths[i].indices[-2]
-                leaf = paths[i].indices[-1]
-                depth = paths[i].indices.shape[0] - 1
-                left = 0
-
-                if parent in false_roots:
-                    false_roots[parent][0] += 1
-                else:
-                    if tree.children_left[parent] == leaf:
-                        left = 1
-                    false_roots[parent] = [1, depth, left]
-
-            # push reached leaf nodes onto stack
-            for key, value in sorted(false_roots.items()):
-                end += value[0]
-                rc = stack.push(start, end, value[1], key, 0, tree.impurity[key], 0)
-                start += value
-                if rc == -1:
-                    # got return code -1 - out-of-memory
-                    with gil:
-                        raise MemoryError()
-
             while not stack.is_empty():
                 stack.pop(&stack_record)
 
