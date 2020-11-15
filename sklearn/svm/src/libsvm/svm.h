@@ -19,6 +19,8 @@ struct svm_node
 struct svm_problem
 {
 	int l;
+    int l1;
+    int l2;
 	double *y;
 	struct svm_node *x;
 	double *W; /* instance weights */
@@ -76,6 +78,7 @@ struct svm_model
 	int l;			/* total #SV */
 	struct svm_node *SV;		/* SVs (SV[l]) */
 	double **sv_coef;	/* coefficients for SVs in decision functions (sv_coef[k-1][l]) */
+	double * sv_square;
 
 	int *sv_ind;            /* index of support vectors */
 

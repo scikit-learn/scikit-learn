@@ -35,6 +35,10 @@ import  numpy as np
 cimport numpy as np
 from libc.stdlib cimport free
 from ..utils._cython_blas cimport _dot
+from ..utils._cython_blas cimport _scal
+from ..utils._cython_blas cimport _gemv
+from ..utils._cython_blas cimport BLAS_Order
+from ..utils._cython_blas cimport BLAS_Trans
 
 include "_libsvm.pxi"
 
@@ -192,6 +196,9 @@ def fit(
         raise ValueError(error_repl)
     cdef BlasFunctions blas_functions
     blas_functions.dot = _dot[double]
+    blas_functions.dscal = _scal[double]
+    blas_functions.dgemv = _gemv[double]
+
     # this does the real work
     cdef int fit_status = 0
     with nogil:
@@ -351,11 +358,17 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     set_predict_params(&param, svm_type, kernel, degree, gamma, coef0,
                        cache_size, 0, <int>class_weight.shape[0],
                        class_weight_label.data, class_weight.data)
-    model = set_model(&param, <int> nSV.shape[0], SV.data, SV.shape,
-                      support.data, support.shape, sv_coef.strides,
-                      sv_coef.data, intercept.data, nSV.data, probA.data, probB.data)
+
     cdef BlasFunctions blas_functions
     blas_functions.dot = _dot[double]
+    blas_functions.dscal = _scal[double]
+    blas_functions.dgemv = _gemv[double]
+
+    model = set_model(&param, <int> nSV.shape[0], SV.data, SV.shape,
+                      support.data, support.shape, sv_coef.strides,
+                      sv_coef.data, intercept.data, nSV.data, probA.data, probB.data,
+                      &blas_functions)
+
     #TODO: use check_model
     try:
         dec_values = np.empty(X.shape[0])
@@ -454,14 +467,20 @@ def predict_proba(
     set_predict_params(&param, svm_type, kernel, degree, gamma, coef0,
                        cache_size, 1, <int>class_weight.shape[0],
                        class_weight_label.data, class_weight.data)
+
+    cdef BlasFunctions blas_functions
+    blas_functions.dot = _dot[double]
+    blas_functions.dscal = _scal[double]
+    blas_functions.dgemv = _gemv[double]
+
     model = set_model(&param, <int> nSV.shape[0], SV.data, SV.shape,
                       support.data, support.shape, sv_coef.strides,
                       sv_coef.data, intercept.data, nSV.data,
-                      probA.data, probB.data)
+                      probA.data, probB.data,
+                      &blas_functions)
 
     cdef np.npy_intp n_class = get_nr(model)
-    cdef BlasFunctions blas_functions
-    blas_functions.dot = _dot[double]
+
     try:
         dec_values = np.empty((X.shape[0], n_class), dtype=np.float64)
         with nogil:
@@ -556,18 +575,23 @@ def decision_function(
                        cache_size, 0, <int>class_weight.shape[0],
                        class_weight_label.data, class_weight.data)
 
+    cdef BlasFunctions blas_functions
+    blas_functions.dot = _dot[double]
+    blas_functions.dscal = _scal[double]
+    blas_functions.dgemv = _gemv[double]
+
     model = set_model(&param, <int> nSV.shape[0], SV.data, SV.shape,
                       support.data, support.shape, sv_coef.strides,
                       sv_coef.data, intercept.data, nSV.data,
-                      probA.data, probB.data)
+                      probA.data, probB.data,
+                      &blas_functions)
 
     if svm_type > 1:
         n_class = 1
     else:
         n_class = get_nr(model)
         n_class = n_class * (n_class - 1) // 2
-    cdef BlasFunctions blas_functions
-    blas_functions.dot = _dot[double]
+
     try:
         dec_values = np.empty((X.shape[0], n_class), dtype=np.float64)
         with nogil:
@@ -712,6 +736,8 @@ def cross_validation(
     cdef np.ndarray[np.float64_t, ndim=1, mode='c'] target
     cdef BlasFunctions blas_functions
     blas_functions.dot = _dot[double]
+    blas_functions.dscal = _scal[double]
+    blas_functions.dgemv = _gemv[double]
     try:
         target = np.empty((X.shape[0]), dtype=np.float64)
         with nogil:
