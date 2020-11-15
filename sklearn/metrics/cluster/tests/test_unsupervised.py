@@ -184,14 +184,14 @@ def test_silhouette_nonzero_diag(dtype):
     with pytest.raises(ValueError, match='contains non-zero'):
         silhouette_samples(dists, labels, metric='precomputed')
 
-@pytest.mark.parametrize('store_order', ('row-major', 'col-major'))
-def test_silhouette_sparse_input(store_order):
-    # Ensure that silhouette_samples works for sparse matrix inputs
-
-    X, y = np.array([[0,0],[1,0],[10,10],[10,11]], dtype=np.float32), np.array([1,1,1,0])
+@pytest.mark.parametrize('to_sparse', (csr_matrix, csc_matrix))
+def test_silhouette_sparse_input(to_sparse):
+    """ Ensure that silhouette_samples works for sparse matrix inputs """
+    X = np.array([[0, 0], [1, 0], [10, 10], [10, 11]], dtype=np.float32)
+    y = np.array([1, 1, 1, 0])
     pdist = pairwise_distances(X)
-    sX = csr_matrix(pdist) if store_order == 'row-major' else csc_matrix(pdist)
-    silhouette_samples(sX,y,metric="precomputed")
+    sX = to_sparse(pdist)
+    silhouette_samples(sX, y, metric="precomputed")
 
 def assert_raises_on_only_one_label(func):
     """Assert message when there is only one label"""
