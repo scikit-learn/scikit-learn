@@ -282,7 +282,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef DOUBLE_t* sample_weight_ptr = NULL
         if sample_weight is not None:
             sample_weight_ptr = <DOUBLE_t*> sample_weight.data
-  
+
         # Initial capacity
         cdef int init_capacity
 
@@ -292,6 +292,19 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
             init_capacity = 2047
 
         tree._resize(init_capacity)
+
+        # Organize samples by decision paths
+        paths = tree.decision_path(X)
+        leafs = {}
+        for i in range(X.shape[0]):
+            leaf = paths[i].indices[-1]
+            depth = paths[i].indices.shape[0] - 1
+            if leaf in leafs:
+                leafs[leaf][0] += 1
+            else:
+                leafs[leaf] = [1, depth]
+
+        X_copy = []
 
         # Parameters
         cdef Splitter splitter = self.splitter
@@ -305,8 +318,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         # Recursive partition (without actual recursion)
         splitter.init(X, y, sample_weight_ptr)
 
-        cdef SIZE_t start
-        cdef SIZE_t end
+        cdef SIZE_t start = 0
+        cdef SIZE_t end = 0
         cdef SIZE_t depth
         cdef SIZE_t parent
         cdef bint is_left
@@ -316,10 +329,9 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef SplitRecord split
         cdef SIZE_t node_id
 
-        cdef double impurity = INFINITY
+        cdef double impurity
         cdef SIZE_t n_constant_features
         cdef bint is_leaf
-        cdef bint first = 1
         cdef SIZE_t max_depth_seen = tree.max_depth
         cdef int rc = 0
 
@@ -327,12 +339,15 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef StackRecord stack_record
 
         with nogil:
-            # push root node onto stack
-            rc = stack.push(0, n_node_samples, 0, _TREE_UNDEFINED, 0, INFINITY, 0)
-            if rc == -1:
-                # got return code -1 - out-of-memory
-                with gil:
-                    raise MemoryError()
+            # push reached leaf nodes onto stack
+            for key, value in leafs.items():
+                end += value[0]
+                rc = stack.push(start, end, value[1], key, 0, tree.impurity[key], 0)
+                start += value
+                if rc == -1:
+                    # got return code -1 - out-of-memory
+                    with gil:
+                        raise MemoryError()
 
             while not stack.is_empty():
                 stack.pop(&stack_record)
@@ -352,10 +367,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                            n_node_samples < min_samples_split or
                            n_node_samples < 2 * min_samples_leaf or
                            weighted_n_node_samples < 2 * min_weight_leaf)
-
-                if first:
-                    impurity = splitter.node_impurity()
-                    first = 0
 
                 is_leaf = (is_leaf or
                            (impurity <= min_impurity_split))
@@ -1007,6 +1018,37 @@ cdef class Tree:
             node.threshold = threshold
 
         self.node_count += 1
+
+        return node_id
+
+    cdef SIZE_t _update_node(self, SIZE_t node_id, bint is_leaf, SIZE_t feature,
+                          double threshold, double impurity,
+                          SIZE_t n_node_samples,
+                          double weighted_n_node_samples) nogil except -1:
+        """Update a node on the tree.
+
+        The updated node remains on the same position.
+
+        Returns (size_t)(-1) on error.
+        """
+        if node_id >= self.capacity:
+            if self._resize_c() != 0:
+                return SIZE_MAX
+
+        cdef Node* node = &self.nodes[node_id]
+        node.impurity = impurity
+        node.n_node_samples = n_node_samples
+        node.weighted_n_node_samples = weighted_n_node_samples
+
+        if is_leaf:
+            node.left_child = _TREE_LEAF
+            node.right_child = _TREE_LEAF
+            node.feature = _TREE_UNDEFINED
+            node.threshold = _TREE_UNDEFINED
+
+        else:
+            node.feature = feature
+            node.threshold = threshold
 
         return node_id
 
