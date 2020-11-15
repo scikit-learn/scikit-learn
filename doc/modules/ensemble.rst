@@ -1065,8 +1065,9 @@ is often better than relying on one-hot encoding
 (:class:`~sklearn.preprocessing.OneHotEncoder`), because one-hot encoding
 requires more tree depth to achieve equivalent splits. It is also usually
 better to rely on the native categorical support rather than to treat
-categorical features as continuous (ordinal), since categories are nominal
-quantities where order does not matter.
+categorical features as continuous (ordinal), which happens for ordinal-encoded
+categorical data, since categories are nominal quantities where order does not
+matter.
 
 To enable categorical support, a boolean mask can be passed to the
 `categorical_features` parameter, indicating which feature is categorical. In

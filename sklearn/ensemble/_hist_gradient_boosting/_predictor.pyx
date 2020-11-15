@@ -74,14 +74,14 @@ cdef inline Y_DTYPE_C _predict_one_from_raw_data(
                     <X_BINNED_DTYPE_C>data_val,
                     node.bitset_idx):
                 node_idx = node.left
-            elif not in_bitset_2d_memoryview(
+            elif in_bitset_2d_memoryview(
                     known_cat_bitsets,
                     <X_BINNED_DTYPE_C>data_val,
                     f_idx_map[node.feature_idx]):
+                node_idx = node.right
+            else:
                 # Treat unknown categories as missing.
                 node_idx = node.left if node.missing_go_to_left else node.right
-            else:
-                node_idx = node.right
         else:
             if data_val <= node.num_threshold:
                 node_idx = node.left

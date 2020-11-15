@@ -486,7 +486,7 @@ cdef class Splitter:
                     # the right (left to right scan) or to the left (right to
                     # left case). See algo 3 from the XGBoost paper
                     # https://arxiv.org/abs/1603.02754
-                    # Note: for the categorical features above. this isn't
+                    # Note: for the categorical features above, this isn't
                     # needed since missing values are considered a native
                     # category.
                     self._find_best_bin_to_split_left_to_right(
@@ -825,7 +825,7 @@ cdef class Splitter:
             unsigned int best_n_samples_left
             unsigned int best_cat_infos_thresh
             # Reduces the effect of noises in categorical features,
-            # especially for categoires with few data. Called cat_smooth in
+            # especially for categories with few data. Called cat_smooth in
             # LightGBM. TODO: Make this user adjustable?
             Y_DTYPE_C MIN_CAT_SUPPORT = 10.
             # this is equal to 1 for losses where hessians are constant
@@ -880,8 +880,9 @@ cdef class Splitter:
                 cat_infos[n_used_bins].bin_idx = bin_idx
                 sum_gradients_bin = feature_hist[bin_idx].sum_gradients
 
-                cat_infos[n_used_bins].value = \
+                cat_infos[n_used_bins].value = (
                     sum_gradients_bin / (sum_hessians_bin + MIN_CAT_SUPPORT)
+                )
                 n_used_bins += 1
 
         # Also add missing values bin so that nans are considered as a category
