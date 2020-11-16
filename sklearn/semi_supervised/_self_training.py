@@ -22,7 +22,7 @@ def _validate_estimator(estimator):
 
 
 class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
-    """Self-training classifier
+    """Self-training classifier.
 
     This class allows a given supervised classifier to function as a
     semi-supervised classifier, allowing it to learn from unlabeled data. It
@@ -269,7 +269,6 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             array with predicted labels
         """
         check_is_fitted(self)
-        X = self._validate_data(X)
         return self.base_estimator_.predict(X)
 
     def predict_proba(self, X):
@@ -290,7 +289,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
 
     @if_delegate_has_method(delegate='base_estimator')
     def decision_function(self, X):
-        """Calls decision function of the base_estimator
+        """Calls decision function of the base_estimator.
 
         Parameters
         ----------
@@ -324,7 +323,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
 
     @if_delegate_has_method(delegate='base_estimator')
     def score(self, X, y):
-        """Calls score on the base_estimator
+        """Calls score on the base_estimator.
 
         Parameters
         ----------

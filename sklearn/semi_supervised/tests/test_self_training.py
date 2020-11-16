@@ -198,16 +198,6 @@ def test_zero_iterations(base_estimator, y):
     assert clf1.termination_condition_ == "max_iter"
 
 
-def test_notfitted():
-    # Test that predicting without training throws an error
-    st = SelfTrainingClassifier(KNeighborsClassifier())
-    msg = "This SelfTrainingClassifier instance is not fitted yet"
-    with pytest.raises(NotFittedError, match=msg):
-        st.predict(X_train)
-    with pytest.raises(NotFittedError, match=msg):
-        st.predict_proba(X_train)
-
-
 def test_prefitted_throws_error():
     # Test that passing a pre-fitted classifier and calling predict throws an
     # error
@@ -274,7 +264,6 @@ def test_strings_dtype():
 
 @pytest.mark.parametrize("verbose", [True, False])
 def test_verbose(capsys, verbose):
-
     clf = SelfTrainingClassifier(KNeighborsClassifier(), verbose=verbose)
     clf.fit(X_train, y_train_missing_labels)
 
