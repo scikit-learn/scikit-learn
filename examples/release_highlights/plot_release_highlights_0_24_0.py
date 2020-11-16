@@ -91,9 +91,8 @@ feature_names = X.columns
 knn = KNeighborsClassifier(n_neighbors=3)
 sfs = SequentialFeatureSelector(knn, n_features_to_select=2)
 sfs.fit(X, y)
-sfs_features  = [i for (i, v) in zip(feature_names, sfs.get_support()) if v]
 print("Features selected by forward sequential selection: "
-      f"{sfs_features}")
+      f"{feature_names[sfs.get_support()]}")
 
 ##############################################################################
 # New PolynomialCountSketch kernel approximation function
