@@ -314,20 +314,27 @@ def _compute_precision_cholesky(covariances, covariance_type):
         precisions_chol = np.empty((n_components, n_features, n_features))
         for k, covariance in enumerate(covariances):
             try:
-                cov_chol = linalg.cholesky(covariance, lower=True)
+                cov_chol = linalg.cholesky(covariance,
+                                           lower=True,
+                                           check_finite=False)
             except linalg.LinAlgError:
                 raise ValueError(estimate_precision_error_message)
             precisions_chol[k] = linalg.solve_triangular(cov_chol,
                                                          np.eye(n_features),
-                                                         lower=True).T
+                                                         lower=True,
+                                                         check_finite=False).T
     elif covariance_type == 'tied':
         _, n_features = covariances.shape
         try:
-            cov_chol = linalg.cholesky(covariances, lower=True)
+            cov_chol = linalg.cholesky(covariances,
+                                       lower=True,
+                                       check_finite=False)
         except linalg.LinAlgError:
             raise ValueError(estimate_precision_error_message)
-        precisions_chol = linalg.solve_triangular(cov_chol, np.eye(n_features),
-                                                  lower=True).T
+        precisions_chol = linalg.solve_triangular(cov_chol,
+                                                  np.eye(n_features),
+                                                  lower=True,
+                                                  check_finite=False).T
     else:
         if np.any(np.less_equal(covariances, 0.0)):
             raise ValueError(estimate_precision_error_message)
