@@ -125,6 +125,10 @@ display.figure_.subplots_adjust(hspace=0.3)
 ##############################################################################
 # New metrics available
 # ---------------------
+# A number of new metric functions are now available, as for example
+# :func:`metrics.top_k_accuracy_score` and :func:`metrics.det_curve`.
+# For a complete list see the `changelog
+# <../../whats_new/v0.24.html#sklearn-metrics>`_.
 
 ##############################################################################
 # DecisionTreeRegressor now supports the new 'poisson' splitting criterion 
@@ -133,6 +137,16 @@ display.figure_.subplots_adjust(hspace=0.3)
 ##############################################################################
 # Retrieving datasets from literature as pandas dataframes
 # --------------------------------------------------------
+# All the relevant functions loading datasets have a new parameter `as_frame`
+# allowing to load the dataset as a pandas DataFrame including columns with
+# appropriate dtypes (numeric, string, or categorical).
+# The target is a pandas DataFrame or Series depending on the number of
+# `target_columns`.
+
+from sklearn.datasets import fetch_kddcup99
+
+df_kddcup99 = fetch_kddcup99(as_frame=True)
+df_kddcup99.head()
 
 ##############################################################################
 # HistGradientBoostingClassifier improved performances
