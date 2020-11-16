@@ -160,10 +160,12 @@ plot_results("Gradient Boosting on Adult Census")
 # We see that the model with one-hot-encoded data is by far the slowest. This
 # is to be expected, since one-hot-encoding creates one additional feature per
 # category value (for each categorical feature), and thus more split points
-# need to be considered during fitting. The native handling of categorical
-# features is slightly slower than treating categories as ordered quantities
-# ('Ordinal'), since native handling requires :ref:`sorting categories
-# <categorical_support_gbdt>`.
+# need to be considered during fitting. In theory, we expect the native
+# handling of categorical features to be slightly slower than treating
+# categories as ordered quantities ('Ordinal'), since native handling requires
+# :ref:`sorting categories <categorical_support_gbdt>`. Fitting times should
+# however be close when the number of categories is small, and this may not
+# always be reflected in practice.
 #
 # In terms of prediction performance, dropping the categorical features leads
 # to poorer performance. The three models that use categorical features have
@@ -174,7 +176,7 @@ plot_results("Gradient Boosting on Adult Census")
 # ------------------------------
 #
 # In general, one can expect poorer predictions from one-hot-encoded data,
-# especially when the trees depths or the number of nodes are limited: with
+# especially when the tree depths or the number of nodes are limited: with
 # one-hot-encoded data, one needs more split points, i.e. more depth, in order
 # to recover an equivalent split that could be obtained in one single split
 # point with native handling.
