@@ -104,7 +104,7 @@ print("Features selected by forward sequential selection: "
 # --------------------------------------------------------
 # All the relevant functions loading datasets have a new parameter `as_frame`
 # allowing to load the dataset as a pandas DataFrame including columns with
-# appropriate dtypes (numeric, string, or categorical).
+# appropriate dtypes (numeric, string, or categorical) and names.
 # The target is a pandas DataFrame or Series depending on the number of
 # `target_columns`.
 
@@ -163,7 +163,7 @@ display.figure_.subplots_adjust(hspace=0.3)
 # `New examples and documentation pages
 # <../../search.html?q=versionadded0.24>`_
 # have been addeed in a continuous effort
-# of improving the understanding of data science practices.
+# to improve the understanding of data science practices.
 # Among others a new section about :ref:`common pitfalls and recommended
 # practices <common_pitfalls>` is now included, and an `example
 # <../model_selection/plot_grid_search_stats.html>`_ illustrating
