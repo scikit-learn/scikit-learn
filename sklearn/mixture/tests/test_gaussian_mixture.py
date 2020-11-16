@@ -342,7 +342,8 @@ def test_suffstat_sk_full():
     # check the precision computation
     precs_chol_pred = _compute_precision_cholesky(covars_pred, 'full')
     precs_pred = np.array([np.dot(prec, prec.T) for prec in precs_chol_pred])
-    precs_est = np.array([linalg.inv(cov) for cov in covars_pred])
+    precs_est = np.array([linalg.inv(cov, check_finite=False)
+                          for cov in covars_pred])
     assert_array_almost_equal(precs_est, precs_pred)
 
     # special case 2, assuming resp are all ones
@@ -358,7 +359,8 @@ def test_suffstat_sk_full():
     # check the precision computation
     precs_chol_pred = _compute_precision_cholesky(covars_pred, 'full')
     precs_pred = np.array([np.dot(prec, prec.T) for prec in precs_chol_pred])
-    precs_est = np.array([linalg.inv(cov) for cov in covars_pred])
+    precs_est = np.array([linalg.inv(cov, check_finite=False)
+                          for cov in covars_pred])
     assert_array_almost_equal(precs_est, precs_pred)
 
 
