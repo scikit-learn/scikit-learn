@@ -494,13 +494,13 @@ def test_splitting_missing_values(X_binned, all_gradients,
         # one category
         ([0] * 20, False, 1),
 
-        # all categories appear less than CAT_SMOOTH (hardcoded to 10)
+        # all categories appear less than MIN_CAT_SUPPORT (hardcoded to 10)
         ([0] * 9 + [1] * 8, False, 2),
 
-        # only one category appears more than CAT_SMOOTH
+        # only one category appears more than MIN_CAT_SUPPORT
         ([0] * 12 + [1] * 8, False, 2),
 
-        # missing values + category appear less than CAT_SMOOTH
+        # missing values + category appear less than MIN_CAT_SUPPORT
         # 9 is missing
         ([0] * 9 + [1] * 8 + [9] * 4, True, 2),
 
@@ -509,7 +509,7 @@ def test_splitting_missing_values(X_binned, all_gradients,
     ])
 def test_splitting_categorical_cat_smooth(X_binned, has_missing_values,
                                           n_bins_non_missing):
-    # Checks categorical splits are correct when the CAT_SMOOTH constraint
+    # Checks categorical splits are correct when the MIN_CAT_SUPPORT constraint
     # isn't respected: there are no splits
 
     n_bins = max(X_binned) + 1
@@ -558,7 +558,7 @@ def test_splitting_categorical_cat_smooth(X_binned, has_missing_values,
 
 def _assert_categories_equals_bitset(categories, bitset):
     # assert that the bitset exactly corresponds to the categories
-    # bitset is assumed to be an array 8 of uint32
+    # bitset is assumed to be an array of 8 uint32 elements
 
     # form bitset from threshold
     expected_bitset = np.zeros(8, dtype=np.uint32)

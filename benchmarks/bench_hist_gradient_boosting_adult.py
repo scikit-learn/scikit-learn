@@ -48,7 +48,7 @@ def predict(est, data_test, target_test):
           f"ROC AUC: {roc_auc:.4f}, ACC: {acc :.4f}")
 
 
-data = fetch_openml(data_id=179, as_frame=False)
+data = fetch_openml(data_id=179, as_frame=False)  # adult dataset
 X, y = data.data, data.target
 
 n_features = X.shape[1]

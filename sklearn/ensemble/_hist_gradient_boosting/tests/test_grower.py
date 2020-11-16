@@ -457,8 +457,8 @@ def test_grow_tree_categories():
 
     # Note that since there was no missing values during training, the missing
     # values aren't part of the bitsets. However, we expect the missing values
-    # to go to the biggest child (i.e. the left one)
-    # The left child has a value of -1 = negative gradient
+    # to go to the biggest child (i.e. the left one).
+    # The left child has a value of -1 = negative gradient.
     assert root['missing_go_to_left']
 
     # make sure binned missing values are mapped to the left child during
@@ -469,9 +469,7 @@ def test_grow_tree_categories():
 
     # make sure raw missing values are mapped to the left child during
     # prediction
-    known_cat_bitsets = np.zeros((1, 8), dtype=np.uint32)
-    known_cat_bitsets[0, 0] = 4  # 4
-    known_cat_bitsets[0, 1] = 2  # 9
+    known_cat_bitsets = np.zeros((1, 8), dtype=np.uint32)  # ignored anyway
     f_idx_map = np.array([0], dtype=np.uint32)
     prediction = predictor.predict(np.array([[np.nan]]), known_cat_bitsets,
                                    f_idx_map)

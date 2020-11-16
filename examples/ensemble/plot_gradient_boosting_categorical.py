@@ -6,14 +6,14 @@ Categorical Feature Support in Gradient Boosting
 .. currentmodule:: sklearn
 
 In this example, we will compare the training times and prediction
-performance of :class:`~ensemble.HistGradientBoostingRegressor` with
-different encoding strategies to deal with categorical features. In
+performances of :class:`~ensemble.HistGradientBoostingRegressor` with
+different encoding strategies for categorical features. In
 particular, we will evaluate:
 
 - dropping the categorical features
 - using a :class:`~preprocessing.OneHotEncoder`
 - using an :class:`~preprocessing.OrdinalEncoder` and treat categories as
-  ordered quantities
+  ordered, equidistant quantities
 - using an :class:`~preprocessing.OrdinalEncoder` and rely on the :ref:`native
   category support <categorical_support_gbdt>` of the
   :class:`~ensemble.HistGradientBoostingRegressor` estimator.
@@ -34,6 +34,7 @@ X, y = fetch_openml(data_id=41211, as_frame=True, return_X_y=True)
 
 n_categorical_features = (X.dtypes == 'category').sum()
 n_numerical_features = (X.dtypes == 'float').sum()
+print(f"Number of samples: {X.shape[0]}")
 print(f"Number of features: {X.shape[1]}")
 print(f"Number of categorical features: {n_categorical_features}")
 print(f"Number of numerical features: {n_numerical_features}")
@@ -174,7 +175,7 @@ plot_results("Gradient Boosting on Adult Census")
 #
 # In general, one can expect poorer predictions from one-hot-encoded data,
 # especially when the the trees depths or the number of nodes are limited: with
-# one-hot-encoded data, one needs more split points (i.e. more depth) in order
+# one-hot-encoded data, one needs more split points, i.e. more depth, in order
 # to recover an equivalent split that could be obtained in one single split
 # point with native handling.
 #
@@ -184,7 +185,7 @@ plot_results("Gradient Boosting on Adult Census")
 # ordinal non-native model will need 4 splits: 1 split to isolate `A`, 1 split
 # to isolate `F`, and 2 splits to isolate `C` from `BCDE`.
 #
-# In practice, how strongly the models performances differ will depend on the
+# How strongly the models' performances differ in practice will depend on the
 # dataset and on the flexibility of the trees.
 #
 # To see this, let us re-run the same analysis with under-fitting models where
@@ -209,4 +210,4 @@ plt.show()
 # the native category handling strategy performs the best when the splitting
 # budget is constrained. The two other strategies (one-hot encoding and
 # treating categories as ordinal values) lead to error values comparable
-# to the baseline model that just dropped the categorical features.
+# to the baseline model that just dropped the categorical features altogether.
