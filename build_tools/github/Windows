@@ -12,5 +12,3 @@ RUN pip install $env:CIBW_TEST_REQUIRES.split(" ")
 # Copy and install the Windows wheel
 COPY $WHEEL_NAME $WHEEL_NAME
 RUN pip install $env:WHEEL_NAME
-
-CMD [ "powershell", "-NoProfile", "-Command", "pytest --pyargs sklearn ; python -m threadpoolctl -i sklearn" ]

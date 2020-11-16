@@ -13,5 +13,12 @@ if [[ "$PYTHON_VERSION" == "36" || "$BITNESS" == "32" ]]; then
     python -m threadpoolctl -i sklearn
 else
     docker run -e SKLEARN_SKIP_NETWORK_TESTS=1 \
-               --rm scikit-learn/minimal-windows
+               -e OMP_NUM_THREADS=2 \
+               -e OPENBLAS_NUM_THREADS=2 \
+               --rm scikit-learn/minimal-windows \
+               "pytest --pyargs sklearn"
+
+    # Test that there are no links to system libraries
+    docker run --rm scikit-learn/minimal-windows \
+               "python -m threadpoolctl -i sklearn"
 fi
