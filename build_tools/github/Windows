@@ -13,4 +13,7 @@ RUN pip install $env:CIBW_TEST_REQUIRES.split(" ")
 COPY $WHEEL_NAME $WHEEL_NAME
 RUN pip install $env:WHEEL_NAME
 
+# See: https://github.com/docker-library/python/issues/359
+RUN certutil -generateSSTFromWU roots.sst && certutil -addstore -f root roots.sst && del roots.sst
+
 CMD [ "powershell", "-NoProfile", "-Command", "pytest --pyargs sklearn ; python -m threadpoolctl -i sklearn" ]
