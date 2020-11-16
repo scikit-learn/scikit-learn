@@ -12,7 +12,6 @@ import numpy as np
 from scipy.linalg import pinv2, svd
 
 from ..base import BaseEstimator, RegressorMixin, TransformerMixin
-from ..base import _UnstableArchMixin
 from ..base import MultiOutputMixin
 from ..utils import check_array, check_consistent_length
 from ..utils.extmath import svd_flip
@@ -45,8 +44,8 @@ def _get_first_singular_vectors_power_method(X, Y, mode="A", max_iter=500,
         # As a result, and as detailed in the Wegelin's review, CCA (i.e. mode
         # B) will be unstable if n_features > n_samples or n_targets >
         # n_samples
-        X_pinv = pinv2(X, check_finite=False)
-        Y_pinv = pinv2(Y, check_finite=False)
+        X_pinv = pinv2(X, check_finite=False, cond=10*eps)
+        Y_pinv = pinv2(Y, check_finite=False, cond=10*eps)
 
     for i in range(max_iter):
         if mode == "B":
@@ -683,7 +682,7 @@ class PLSCanonical(_PLS):
             max_iter=max_iter, tol=tol, copy=copy)
 
 
-class CCA(_UnstableArchMixin, _PLS):
+class CCA(_PLS):
     """Canonical Correlation Analysis, also known as "Mode B" PLS.
 
     Read more in the :ref:`User Guide <cross_decomposition>`.

@@ -45,10 +45,6 @@ run_tests() {
         export SKLEARN_SKIP_NETWORK_TESTS=0
     fi
 
-    if [[ "$COVERAGE" == "true" ]]; then
-        TEST_CMD="$TEST_CMD --cov sklearn"
-    fi
-
     if [[ -n "$CHECK_WARNINGS" ]]; then
         TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning"
     fi

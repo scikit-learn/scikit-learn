@@ -32,8 +32,11 @@ export CCACHE_COMPRESS=1
 export PATH=/usr/lib/ccache:$PATH
 export LOKY_MAX_CPU_COUNT="2"
 export OMP_NUM_THREADS="1"
+# Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
+# workers with 2 cores when building the compiled extensions of scikit-learn.
+export SKLEARN_BUILD_PARALLEL=3
 
-python setup.py build_ext --inplace -j 3
+# Build and install scikit-learn in dev mode
 pip install --no-build-isolation -e .
 
 # Check that Python implementation is PyPy
