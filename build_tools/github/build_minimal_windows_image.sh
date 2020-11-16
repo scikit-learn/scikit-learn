@@ -23,7 +23,7 @@ WHEEL_NAME=scikit_learn-$SCIKIT_LEARN_VERSION-cp$PYTHON_VERSION-$WHEEL_NAME
 
 # Find the repaired wheel because there is no a way
 # to access to the path in a straightforward manner
-WHEEL_PATH="C:/Users/RUNNER~1/AppData/Local/Temp"
+WHEEL_PATH="$HOME/AppData/Local/Temp"
 WHEEL_PATH=$(find $WHEEL_PATH -type d -name "repaired_wheel")
 WHEEL_PATH=$(realpath $WHEEL_PATH)
 WHEEL_PATH="$WHEEL_PATH/$WHEEL_NAME"
