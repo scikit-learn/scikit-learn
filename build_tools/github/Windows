@@ -5,10 +5,9 @@ FROM winamd64/python:$PYTHON_VERSION-windowsservercore
 ARG CIBW_TEST_REQUIRES
 ARG WHEEL_NAME
 
-# Install the requirements
-RUN pip install --upgrade pip
-RUN pip install $env:CIBW_TEST_REQUIRES.split(" ")
-
 # Copy and install the Windows wheel
 COPY $WHEEL_NAME $WHEEL_NAME
 RUN pip install $env:WHEEL_NAME
+
+# Install the testing dependencies
+RUN pip install $env:CIBW_TEST_REQUIRES.split(" ")
