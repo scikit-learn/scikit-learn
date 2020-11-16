@@ -16,10 +16,10 @@ else
                -e OMP_NUM_THREADS=2 \
                -e OPENBLAS_NUM_THREADS=2 \
                --name minimal_windows \
-               -d -ti --rm scikit-learn/minimal-windows bash
+               -d -ti --rm scikit-learn/minimal-windows
 
-    docker exec minimal_windows pytest --pyargs sklearn
+    docker exec minimal_windows powershell -NoProfile -Command "pytest --pyargs sklearn"
 
     # Test that there are no links to system libraries
-    docker exec minimal_windows python -m threadpoolctl -i sklearn
+    docker exec minimal_windows powershell -NoProfile -Command "python -m threadpoolctl -i sklearn"
 fi
