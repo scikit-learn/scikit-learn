@@ -16,9 +16,9 @@ else
                -e OMP_NUM_THREADS=2 \
                -e OPENBLAS_NUM_THREADS=2 \
                --rm scikit-learn/minimal-windows \
-               "pytest --pyargs sklearn"
+               "powershell -NoProfile -Command 'pytest --pyargs sklearn'"
 
     # Test that there are no links to system libraries
     docker run --rm scikit-learn/minimal-windows \
-               "python -m threadpoolctl -i sklearn"
+               "powershell -NoProfile -Command 'python -m threadpoolctl -i sklearn'"
 fi
