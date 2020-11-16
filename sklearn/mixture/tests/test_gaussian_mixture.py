@@ -389,7 +389,7 @@ def test_suffstat_sk_tied():
     # check the precision computation
     precs_chol_pred = _compute_precision_cholesky(covars_pred_tied, 'tied')
     precs_pred = np.dot(precs_chol_pred, precs_chol_pred.T)
-    precs_est = linalg.inv(covars_pred_tied)
+    precs_est = linalg.inv(covars_pred_tied, check_finite=False)
     assert_array_almost_equal(precs_est, precs_pred)
 
 
