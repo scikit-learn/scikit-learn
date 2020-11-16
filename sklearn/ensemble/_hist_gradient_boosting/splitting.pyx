@@ -302,7 +302,8 @@ cdef class Splitter:
             unsigned int [::1] left_indices_buffer = self.left_indices_buffer
             unsigned int [::1] right_indices_buffer = self.right_indices_buffer
             unsigned char is_categorical = split_info.is_categorical
-            # we need a tmp variable because left_cat_bitset may be None
+            # Cython is unhappy if we set left_cat_bitset to
+            # split_info.left_cat_bitset directly, so we need a tmp var
             BITSET_INNER_DTYPE_C [:] cat_bitset_tmp = split_info.left_cat_bitset
             BITSET_DTYPE_C left_cat_bitset
             IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
