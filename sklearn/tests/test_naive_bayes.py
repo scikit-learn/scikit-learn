@@ -58,7 +58,8 @@ def test_gnb():
     assert_raises(ValueError, GaussianNB().partial_fit, X, y, classes=[0, 1])
 
     # TODO remove once sigma_ attribute is removed (GH #16760)
-    assert_array_equal(clf.sigma_, clf.var_)
+    with pytest.warns(FutureWarning):
+        assert_array_equal(clf.sigma_, clf.var_)
 
 
 def test_gnb_prior():
