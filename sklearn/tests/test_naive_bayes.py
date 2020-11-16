@@ -57,6 +57,9 @@ def test_gnb():
     # FIXME Remove this test once the more general partial_fit tests are merged
     assert_raises(ValueError, GaussianNB().partial_fit, X, y, classes=[0, 1])
 
+    # TODO remove once sigma_ attribute is removed (GH #16760)
+    assert_array_equal(clf.sigma_, clf.var_)
+
 
 def test_gnb_prior():
     # Test whether class priors are properly set.
