@@ -3,10 +3,10 @@
 Inspect and analyze estimator within cross-validation
 =====================================================
 
-Evaluating a predictive model involves cross-validation. This example:
+Evaluating a predictive model involves :ref:`cross-validation <cross_validation>`. This example:
 
-* recalls the question that a cross-validation framework allows to answer to;
-* highlights the way to inspect the internals of a model when using the
+* details how to interpret the results from a cross-validation framework ;
+* highlights how to inspect the internals of a model when using the
   cross-validation framework.
 """
 
@@ -16,9 +16,9 @@ print(__doc__)
 # Dataset
 # -------
 #
-# We will use the california housing dataset where the goals is to predict the
+# We will use the :ref:`california_housing_dataset` where the goal is to predict the
 # average house value in a neighborhood. From the start, we will split our data
-# into two sets: a set that we will use to make all our experiments and a set
+# into two sets: a set that we will use for all our experiments and a set
 # that we will leave out for further confirmation.
 
 # %%
@@ -37,15 +37,15 @@ X_train, X_test, y_train, y_test = train_test_split(
 # ----------------
 #
 # In this example, we will use a linear model which should be a good baseline:
-# a ridge model. A ridge model enforce a L2 penalty on the coefficients. Thus,
-# the penalty parameter `alpha` has to be tuned. More importantly, this
-# parameter needs to be tune for our specific problem: a fine tuning on another
+# a :ref:`ridge model <ridge_regression>`. A ridge model enforces a L2 penalty on the coefficients.
+# The penalty parameter `alpha` thus has to be tuned. More importantly, this
+# parameter needs to be tuned for our specific problem: tuning on another
 # dataset does not ensure an optimal parameter value for the current dataset.
 #
-# Here, we use the class :class:`~sklearn.linear_model.RidgeCV` that allows to
+# Here, we use the class :class:`~sklearn.linear_model.RidgeCV` that can
 # tune `alpha` by cross-validation.
 #
-# Besides, we add a preprocessing stage to standardize the data such that the
+# We also add a preprocessing stage to :ref:`standardize <preprocessing_scaler>` the data such that the
 # optimization problem encountered by the ridge regressor is well-posed.
 
 # %%
@@ -66,13 +66,13 @@ model = make_pipeline(StandardScaler(), RidgeCV(alphas=alphas))
 # Cross-validation framework
 # --------------------------
 #
-# Before to put such a predictive model into production, one needs to evaluate
-# the performance of such model to have an idea of what to expect in
+# Before putting such a predictive model into production, one needs to evaluate
+# the performance of the model to have an idea of what to expect in
 # production.
 #
-# Cross-validation should be used to make such analysis. First, it allows to
+# Cross-validation should be used to make this analysis. First, it allows us to
 # quantify the variance of the model performance. A large variance of the
-# metric will indicate that we cannot trust the reported performance nor try to
+# score metric will indicate that we cannot trust the reported performance nor try to
 # interpret findings built on internal model's parameters. Usually large
 # variations are linked to small sample size but not only.
 
@@ -91,7 +91,7 @@ cv_results = cross_validate(
 )
 
 # %%
-# Here, we used a repeated K-fold cross-validation. At each round of the
+# Here, we used a repeated K-fold cross-validation. At each round of
 # cross-validation, it should be noted that the parameter `alpha` of the ridge
 # regressor is also optimized via another internal cross-validation. This
 # process is called a nested cross-validation and should always be implemented
@@ -119,40 +119,40 @@ _ = plt.title(
 # We start by plotting the empirical distribution of the test score computed
 # during cross-validation.
 #
-# We observe a little variation in terms of R2 score. Thus, we can now safely
-# interpret if the results obtained are synonymous of having a good model.
+# We observe little variation in R2 score and can thus safely use the results
+# to interpret the model performance.
 #
-# Our baseline perform around an R2 of 0.6 which is better than a dummy
-# regressor. Therefore, such a predictive model can be used as a baseline if
-# we would like to develop more advanced machine learning pipelines.
+# Our baseline model has an R2 of around 0.6 which is better than a dummy
+# regressor. We can therefore use this predictive model as a baseline against
+# more advanced machine learning pipelines.
 #
-# To conclude, cross-validation allows to answer to two questions here: are the
-# results reliable and, if it is the case, how good is my predictive model.
+# To conclude, cross-validation allows us to answer to two questions: are the
+# results reliable and, if it is, how good is the predictive model.
 #
 # Model inspection
 # ................
 #
-# Once we are happy or at least aware of our model limitation, we can
+# Once we are happy or at least aware of any model limitations, we can
 # investigate the internals of our model. When we performed the
-# cross-validation, we pass a parameter `return_estimator` to `True`.
+# cross-validation, we set the parameter `return_estimator` to `True`.
 #
-# It allows to get the different predictive models trained and tested within
+# It allows us to get the different predictive models trained and tested within
 # cross-validation.
 
 # %%
 cv_estimators = cv_results["estimator"]
 
 # %%
-# While the cross-validation allows us to know if we got reliable models, we
-# did not check if the model at each round were similar.
+# While the cross-validation allows us to know if our models are reliable, we
+# have not checked if the model at each cross validation fold is similar.
 #
-# We recall that in our case, our baseline was required to tune tha parameter
+# Recall that in our case, our baseline model required tuning of the parameter
 # `alpha`. Therefore, up-to-now, we do not know if the optimal `alpha`
-# parameter for all models are similar. We can reformulate this as: what is the
-# variance of the `alpha` parameter values across iterations.
+# parameter for all models are similar. In other words, we are asking the question: what is the
+# variance of the `alpha` parameter value across iterations.
 #
-# Indeed, if the parameters `alpha` are varying depending of the input data, it
-# might be challenging to put our model in production because we will not be
+# Indeed, if the `alpha` parameters vary depending on the input data, it
+# might be challenging to put our model in production because we would not be
 # able to fix this hyperparameter.
 #
 # Let's check the `alpha` parameter variance.
@@ -165,9 +165,9 @@ plt.ylabel("Density")
 _ = plt.title("Distribution of alpha parameter \nduring cross-validation")
 
 # %%
-# We see that the regularization parameter `alpha` values are centered and
-# condensed around 40: it is a good sign. It means that most of the models
-# tuned within the cross-validation had an equivalent parameter `alpha`.
+# We see that the regularization parameter, `alpha`, values are centered and
+# condensed around 40. This is a good sign and means that most of the models
+# tuned within the cross-validation had similar `alpha values`.
 #
 # However, not only hyperparameter such as `alpha` should be studied. The model
 # parameter coming out of the fitting process should analyzed. In our case, we
