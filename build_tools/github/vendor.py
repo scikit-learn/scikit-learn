@@ -11,8 +11,10 @@ import textwrap
 TARGET_FOLDER = op.join("sklearn", ".libs")
 DISTRIBUTOR_INIT = op.join("sklearn", "_distributor_init.py")
 VCOMP140_SRC_PATH = "C:\\Windows\\System32\\vcomp140.dll"
-MSVCP140_SRC_PATH = ("C:\\Program Files (x86)\\Microsoft Visual Studio 14.0"
-                     "\\VC\\redist\\x86\\Microsoft.VC140.CRT\\msvcp140.dll")
+
+# The redistributable version should match the compiler version
+MSVCP140_FORMAT_PATH = ("C:\\Program Files (x86)\\Microsoft Visual Studio 14.0"
+                        "\\VC\\redist\\{0}\\Microsoft.VC140.CRT\\msvcp140.dll")
 
 
 def make_distributor_init(distributor_init, vcomp140_dll, msvcp140_dll):
@@ -46,8 +48,11 @@ def make_distributor_init(distributor_init, vcomp140_dll, msvcp140_dll):
             """.format(vcomp140_dll, msvcp140_dll)))
 
 
-def main(wheel_dirname):
+def main(wheel_dirname, bitness):
     """Embed vcomp140.dll and msvcp140.dll in the wheel."""
+    architecture = "x86" if bitness == "32" else "x64"
+    MSVCP140_SRC_PATH = MSVCP140_FORMAT_PATH.format(architecture)
+
     if not op.exists(VCOMP140_SRC_PATH):
         raise ValueError(f"Could not find {VCOMP140_SRC_PATH}.")
 
@@ -78,5 +83,5 @@ def main(wheel_dirname):
 
 
 if __name__ == "__main__":
-    _, wheel_file = sys.argv
-    main(wheel_file)
+    _, wheel_file, bitness = sys.argv
+    main(wheel_file, bitness)
