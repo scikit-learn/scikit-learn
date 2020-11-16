@@ -671,11 +671,12 @@ class GaussianMixture(BaseMixture):
                 covariances, self.covariance_type)
         elif self.covariance_type == 'full':
             self.precisions_cholesky_ = np.array(
-                [linalg.cholesky(prec_init, lower=True)
+                [linalg.cholesky(prec_init, lower=True, check_finite=False)
                  for prec_init in self.precisions_init])
         elif self.covariance_type == 'tied':
             self.precisions_cholesky_ = linalg.cholesky(self.precisions_init,
-                                                        lower=True)
+                                                        lower=True,
+                                                        check_finite=False)
         else:
             self.precisions_cholesky_ = self.precisions_init
 
