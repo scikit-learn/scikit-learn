@@ -174,7 +174,7 @@ plot_results("Gradient Boosting on Adult Census")
 # ------------------------------
 #
 # In general, one can expect poorer predictions from one-hot-encoded data,
-# especially when the the trees depths or the number of nodes are limited: with
+# especially when the trees depths or the number of nodes are limited: with
 # one-hot-encoded data, one needs more split points, i.e. more depth, in order
 # to recover an equivalent split that could be obtained in one single split
 # point with native handling.
