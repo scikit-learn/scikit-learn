@@ -449,9 +449,10 @@ def test_compute_log_det_cholesky():
         covariance = rand_data.covariances[covar_type]
 
         if covar_type == 'full':
-            predected_det = np.array([linalg.det(cov) for cov in covariance])
+            predected_det = np.array([linalg.det(cov, check_finite=False)
+                                      for cov in covariance])
         elif covar_type == 'tied':
-            predected_det = linalg.det(covariance)
+            predected_det = linalg.det(covariance, check_finite=False)
         elif covar_type == 'diag':
             predected_det = np.array([np.prod(cov) for cov in covariance])
         elif covar_type == 'spherical':
@@ -965,9 +966,11 @@ def test_property():
         if covar_type == 'full':
             for prec, covar in zip(gmm.precisions_, gmm.covariances_):
 
-                assert_array_almost_equal(linalg.inv(prec), covar)
+                assert_array_almost_equal(linalg.inv(prec, check_finite=False),
+                                          covar)
         elif covar_type == 'tied':
-            assert_array_almost_equal(linalg.inv(gmm.precisions_),
+            assert_array_almost_equal(linalg.inv(gmm.precisions_,
+                                                 check_finite=False),
                                       gmm.covariances_)
         else:
             assert_array_almost_equal(gmm.precisions_, 1. / gmm.covariances_)
