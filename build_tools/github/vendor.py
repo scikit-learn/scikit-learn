@@ -47,7 +47,7 @@ def make_distributor_init(distributor_init, vcomp140, vcruntime140):
             """.format(vcomp140, vcruntime140)))
 
 
-def main(wheel_dirname, bitness):
+def main(wheel_dirname):
     """Embed vcomp140.dll and VCRUNTIME140.dll after building the wheels."""
     if not op.exists(VCOMP140_SRC_PATH):
         raise ValueError(f"Could not find {VCOMP140_SRC_PATH}.")
@@ -72,7 +72,7 @@ def main(wheel_dirname, bitness):
     shutil.copy2(VCOMP140_SRC_PATH, target_folder)
 
     print(f"Copying {VCRUNTIME140_SRC_PATH} to {target_folder}.")
-    shutil.copy2(VCRUNTIME140_SRC_PATH, target_folder))
+    shutil.copy2(VCRUNTIME140_SRC_PATH, target_folder)
 
     # Generate the _distributor_init file in the source tree
     print("Generating the '_distributor_init.py' file.")
