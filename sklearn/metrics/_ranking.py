@@ -1701,7 +1701,7 @@ def top_k_accuracy_score(y_true, y_score, *, k=2, normalize=True,
     if y_type == 'binary':
         if k == 1:
             threshold = .5 if y_score.min() >= 0 and y_score.max() <= 1 else 0
-            y_pred = (y_score > threshold).astype(np.int)
+            y_pred = (y_score > threshold).astype(np.int64)
             hits = y_pred == y_true_encoded
         else:
             hits = np.ones_like(y_score, dtype=np.bool_)

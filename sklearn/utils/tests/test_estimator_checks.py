@@ -599,11 +599,9 @@ def test_check_no_attributes_set_in_init():
                         check_no_attributes_set_in_init,
                         'estimator_name',
                         NonConformantEstimatorPrivateSet())
-    assert_raises_regex(AssertionError,
+    assert_raises_regex(AttributeError,
                         "Estimator estimator_name should store all "
-                        "parameters as an attribute during init. "
-                        "Did not find attributes "
-                        r"\['you_should_set_this_'\].",
+                        "parameters as an attribute during init.",
                         check_no_attributes_set_in_init,
                         'estimator_name',
                         NonConformantEstimatorNoParamSet())

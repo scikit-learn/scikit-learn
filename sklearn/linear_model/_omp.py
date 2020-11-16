@@ -588,6 +588,11 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
     n_iter_ : int or array-like
         Number of active features across every target.
 
+    n_nonzero_coefs_ : int
+        The number of non-zero coefficients in the solution. If
+        `n_nonzero_coefs` is None and `tol` is None this value is either set
+        to 10% of `n_features` or 1, whichever is greater.
+
     Examples
     --------
     >>> from sklearn.linear_model import OrthogonalMatchingPursuit
