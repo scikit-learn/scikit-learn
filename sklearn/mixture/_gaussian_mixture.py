@@ -83,7 +83,7 @@ def _check_precision_positivity(precision, covariance_type):
 def _check_precision_matrix(precision, covariance_type):
     """Check a precision matrix is symmetric and positive-definite."""
     if not (np.allclose(precision, precision.T) and
-            np.all(linalg.eigvalsh(precision) > 0.)):
+            np.all(linalg.eigvalsh(precision, check_finite=False) > 0.)):
         raise ValueError("'%s precision' should be symmetric, "
                          "positive-definite" % covariance_type)
 
