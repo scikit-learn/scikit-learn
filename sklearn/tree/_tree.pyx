@@ -387,9 +387,17 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                                (split.improvement + EPSILON <
                                 min_impurity_decrease))
 
-                node_id = tree._add_node(parent, is_left, is_leaf, split.feature,
-                                         split.threshold, impurity, n_node_samples,
-                                         weighted_n_node_samples)
+                with gil:
+                    if parent in false_roots:
+                        node_id = tree._update_node(parent, is_left, is_leaf,
+                                                    split.feature, split.threshold,
+                                                    impurity, n_node_samples,
+                                                    weighted_n_node_samples)
+                    else:
+                        node_id = tree._add_node(parent, is_left, is_leaf,
+                                                 split.feature, split.threshold,
+                                                 impurity, n_node_samples,
+                                                 weighted_n_node_samples)
 
                 if node_id == SIZE_MAX:
                     rc = -1
@@ -1025,6 +1033,40 @@ cdef class Tree:
             node.threshold = threshold
 
         self.node_count += 1
+
+        return node_id
+
+    cdef SIZE_t _update_node(self, SIZE_t parent, bint is_left, bint is_leaf,
+                             SIZE_t feature, double threshold, double impurity,
+                             SIZE_t n_node_samples,
+                             double weighted_n_node_samples) nogil except -1:
+        """Update a node on the tree.
+        The updated node remains on the same position.
+        Returns (size_t)(-1) on error.
+        """
+        cdef SIZE_t node_id
+        if is_left:
+            node_id = self.nodes[parent].left_child
+        else:
+            node_id = self.nodes[parent].right_child
+
+        if node_id >= self.capacity:
+            if self._resize_c() != 0:
+                return SIZE_MAX
+
+        cdef Node* node = &self.nodes[node_id]
+        node.impurity = impurity
+        node.n_node_samples = n_node_samples
+        node.weighted_n_node_samples = weighted_n_node_samples
+
+        if is_leaf:
+            node.left_child = _TREE_LEAF
+            node.right_child = _TREE_LEAF
+            node.feature = _TREE_UNDEFINED
+            node.threshold = _TREE_UNDEFINED
+        else:
+            node.feature = feature
+            node.threshold = threshold
 
         return node_id
 
