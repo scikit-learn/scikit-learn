@@ -100,6 +100,20 @@ print("Features selected by forward sequential selection: "
 # -------------------------------------------------------
 
 ##############################################################################
+# Retrieving datasets from literature as pandas dataframes
+# --------------------------------------------------------
+# All the relevant functions loading datasets have a new parameter `as_frame`
+# allowing to load the dataset as a pandas DataFrame including columns with
+# appropriate dtypes (numeric, string, or categorical).
+# The target is a pandas DataFrame or Series depending on the number of
+# `target_columns`.
+
+from sklearn.datasets import fetch_kddcup99
+
+df_kddcup99 = fetch_kddcup99(as_frame=True)
+df_kddcup99.target.head()
+
+##############################################################################
 # Individual Conditional Expectation
 # ----------------------------------
 # A new kind of partial dependence plot is available: the Individual
@@ -107,18 +121,22 @@ print("Features selected by forward sequential selection: "
 # prediction on a feature for each sample separately with one line per sample.
 # See th :ref:`User Guide <individual_conditional>`
 
+from sklearn.linear_model import BayesianRidge
+from sklearn.datasets import fetch_california_housing
 from sklearn.inspection import plot_partial_dependence
 
+X, y = fetch_california_housing(return_X_y=True, as_frame=True)
 print('Computing partial dependence plots...')
-features = feature_names
-knn.fit(X, y)
+features = ['MedInc', 'AveOccup', 'HouseAge', 'AveRooms']
+est = BayesianRidge()
+est.fit(X, y)
 display = plot_partial_dependence(
-       knn, X, features, target=2, kind="individual", subsample=50,
+       est, X, features, kind="individual", subsample=50,
        n_jobs=3, grid_resolution=20, random_state=0
 )
 display.figure_.suptitle(
-    'Partial dependence of iris type\n'
-    'with KNN classifier'
+    'Partial dependence of house value on non-location features\n'
+    'for the California housing dataset, with BayesianRidge'
 )
 display.figure_.subplots_adjust(hspace=0.3)
 
@@ -133,20 +151,6 @@ display.figure_.subplots_adjust(hspace=0.3)
 ##############################################################################
 # DecisionTreeRegressor now supports the new 'poisson' splitting criterion 
 # ------------------------------------------------------------------------
-
-##############################################################################
-# Retrieving datasets from literature as pandas dataframes
-# --------------------------------------------------------
-# All the relevant functions loading datasets have a new parameter `as_frame`
-# allowing to load the dataset as a pandas DataFrame including columns with
-# appropriate dtypes (numeric, string, or categorical).
-# The target is a pandas DataFrame or Series depending on the number of
-# `target_columns`.
-
-from sklearn.datasets import fetch_kddcup99
-
-df_kddcup99 = fetch_kddcup99(as_frame=True)
-df_kddcup99.data.head()
 
 ##############################################################################
 # HistGradientBoostingClassifier improved performances
