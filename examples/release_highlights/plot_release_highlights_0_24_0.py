@@ -143,11 +143,10 @@ display.figure_.subplots_adjust(hspace=0.3)
 # The target is a pandas DataFrame or Series depending on the number of
 # `target_columns`.
 
-import pandas as pd
 from sklearn.datasets import fetch_kddcup99
 
 df_kddcup99 = fetch_kddcup99(as_frame=True)
-df_kddcup99.head()
+df_kddcup99.data.head()
 
 ##############################################################################
 # HistGradientBoostingClassifier improved performances
