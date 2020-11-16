@@ -186,6 +186,13 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         if update_tree:
             # TODO: find a way to build on previous tree
+            # See if there is an existing tree
+            try:
+                self.tree_
+            except AttributeError:
+                print("No existing tree to update")
+                return self
+
             if is_classification:
                 check_classification_targets(y)
                 y = np.copy(y)
@@ -200,11 +207,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 y = np.ascontiguousarray(y, dtype=DOUBLE)
 
             # Update tree
-            try:
-                self.builder_.update(self.tree_, X, y, sample_weight)
-            except AttributeError:
-                print("No existing tree to update")
-                return self
+            self.builder_.update(self.tree_, X, y, sample_weight)
 
             self._prune_tree()
 

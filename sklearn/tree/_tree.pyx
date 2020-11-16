@@ -279,6 +279,44 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         # check input
         X, y, sample_weight = self._check_input(X, y, sample_weight)
 
+        # organize samples by decision paths
+        paths = tree.decision_path(X)
+        cdef int PARENT
+        cdef int CHILD
+        false_roots = {}
+        X_copy = {}
+        y_copy = {}
+        for i in range(X.shape[0]):
+            depth_i = paths[i].indices.shape[0] - 1
+            PARENT = depth_i - 1
+            CHILD = depth_i
+
+            if PARENT < 0:
+                parent_i = _TREE_UNDEFINED
+            else:
+                parent_i = paths[i].indices[PARENT]
+            child_i = paths[i].indices[CHILD]
+            left = 0
+            if tree.children_left[parent_i] == child_i:
+                left = 1
+
+            if (parent_i, left) in false_roots:
+                false_roots[(parent_i, left)][0] += 1
+                X_copy[(parent_i, left)].append(X[i])
+                y_copy[(parent_i, left)].append(y[i])
+            else:
+                false_roots[(parent_i, left)] = [1, depth_i]
+                X_copy[(parent_i, left)] = [X[i]]
+                y_copy[(parent_i, left)] = [y[i]]
+
+        X_list = []
+        y_list = []
+        for key, value in sorted(X_copy.items()):
+            X_list = X_list + value
+            y_list = y_list + y_copy[key]
+        cdef object X_new = np.array(X_list)
+        cdef np.ndarray y_new = np.array(y_list)
+
         cdef DOUBLE_t* sample_weight_ptr = NULL
         if sample_weight is not None:
             sample_weight_ptr = <DOUBLE_t*> sample_weight.data
@@ -303,7 +341,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef double min_impurity_split = self.min_impurity_split
 
         # Recursive partition (without actual recursion)
-        splitter.init(X, y, sample_weight_ptr)
+        splitter.init(X_new, y_new, sample_weight_ptr)
 
         cdef SIZE_t start = 0
         cdef SIZE_t end = 0
@@ -325,31 +363,11 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef Stack stack = Stack(INITIAL_STACK_SIZE)
         cdef StackRecord stack_record
 
-        # Organize samples by decision paths
-        paths = tree.decision_path(X)
-        cdef int PARENT
-        cdef int CHILD
-        false_roots = {}
-        for i in range(X.shape[0]):
-            depth = paths[i].indices.shape[0] - 1
-            PARENT = depth - 1
-            CHILD = depth
-
-            parent = paths[i].indices[PARENT]
-            child = paths[i].indices[CHILD]
-            left = 0
-
-            if parent in false_roots:
-                false_roots[parent][0] += 1
-            else:
-                if tree.children_left[parent] == child:
-                    left = 1
-                false_roots[parent] = [1, depth, left]
-
         # push reached leaf nodes onto stack
         for key, value in sorted(false_roots.items()):
             end += value[0]
-            rc = stack.push(start, end, value[1], key, value[2], tree.impurity[key], 0)
+            rc = stack.push(start, end, value[1], key[0], key[1],
+                            tree.impurity[key[0]], 0)
             start += value[0]
             if rc == -1:
                 # got return code -1 - out-of-memory

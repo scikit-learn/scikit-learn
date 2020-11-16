@@ -5,6 +5,7 @@
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 #          Jacob Schreiber <jmschreiber91@gmail.com>
 #          Nelson Liu <nelson@nelsonliu.me>
+#          Haoyin Xu <haoyinxu@gmail.com>
 #
 # License: BSD 3 clause
 
