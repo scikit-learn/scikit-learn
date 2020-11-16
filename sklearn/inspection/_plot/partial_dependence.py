@@ -866,7 +866,7 @@ class PartialDependenceDisplay:
 
         default_line_kws = {
             "color": "C0",
-            "label": None if self.kind == "average" else "average",
+            "label": "average" if self.kind == "both" else None,
         }
         line_kw = {**default_line_kws, **line_kw}
 
