@@ -86,8 +86,8 @@ class RandomData:
         self.precisions = {
             'spherical': 1. / self.covariances['spherical'],
             'diag': 1. / self.covariances['diag'],
-            'tied': linalg.inv(self.covariances['tied']),
-            'full': np.array([linalg.inv(covariance)
+            'tied': linalg.inv(self.covariances['tied'], check_finite=False),
+            'full': np.array([linalg.inv(covariance, check_finite=False)
                              for covariance in self.covariances['full']])}
 
         self.X = dict(zip(COVARIANCE_TYPE, [generate_data(
