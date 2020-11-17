@@ -62,7 +62,7 @@ def _modified_weiszfeld_step(X, x_old):
 
     diff = diff[mask]
     diff_norm = diff_norm[mask][:, np.newaxis]
-    quotient_norm = linalg.norm(np.sum(diff / diff_norm, axis=0))
+    quotient_norm = linalg.norm(np.sum(diff / diff_norm, axis=0), check_finite=False)
 
     if quotient_norm > _EPSILON:  # to avoid division by zero
         new_direction = (np.sum(X[mask, :] / diff_norm, axis=0)
