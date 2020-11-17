@@ -206,7 +206,9 @@ console:
 
     python -c "import struct; print(struct.calcsize('P') * 8)"
 
-For 64-bit Python, configure the build environment with::
+For 64-bit Python, configure the build environment with:
+
+.. prompt:: bash $
 
     SET DISTUTILS_USE_SDK=1
     "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
