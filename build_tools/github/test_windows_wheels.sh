@@ -15,13 +15,10 @@ else
     docker run --name minimal_windows \
                -d -ti --rm scikit-learn/minimal-windows powershell
 
-    # The "-e" option is not working for docker
-    # run nor docker exec on Windows containers
-    docker exec minimal_windows \$env:SKLEARN_SKIP_NETWORK_TESTS="1"
-    docker exec minimal_windows \$env:OMP_NUM_THREADS="2"
-    docker exec minimal_windows \$env:OPENBLAS_NUM_THREADS="2"
-
-    docker exec minimal_windows pytest --pyargs sklearn
+    docker exec -e \$env:SKLEARN_SKIP_NETWORK_TESTS=1 \
+                -e \$env:OMP_NUM_THREADS=2 \
+                -e \$env:OPENBLAS_NUM_THREADS=2 \
+                minimal_windows pytest --pyargs sklearn
 
     # Test that there are no links to system libraries
     docker exec minimal_windows python -m threadpoolctl -i sklearn
