@@ -772,13 +772,16 @@ class Nystroem(TransformerMixin, BaseEstimator):
         basis_inds = inds[:n_components]
         basis = X[basis_inds]
 
-        basis_kernel = pairwise_kernels(basis, metric=self.kernel,
+        metric = self.kernel
+        basis_kernel = pairwise_kernels(basis, metric=metric,
                                         filter_params=True,
                                         n_jobs=self.n_jobs,
                                         **self._get_kernel_params())
 
+        # If metric is a callable it may return non finite values
+        check_finite = callable(metric)
         # sqrt of kernel matrix on basis vectors
-        U, S, V = svd(basis_kernel)
+        U, S, V = svd(basis_kernel, check_finite=check_finite)
         S = np.maximum(S, 1e-12)
         self.normalization_ = np.dot(U / np.sqrt(S), V)
         self.components_ = basis
