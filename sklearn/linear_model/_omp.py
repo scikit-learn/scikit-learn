@@ -107,13 +107,13 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True,
                                     overwrite_b=True,
                                     check_finite=False)
             v = nrm2(L[n_active, :n_active]) ** 2
-            Lkk = linalg.norm(X[:, lam]) ** 2 - v
+            Lkk = linalg.norm(X[:, lam], check_finite=False) ** 2 - v
             if Lkk <= min_float:  # selected atoms are dependent
                 warnings.warn(premature, RuntimeWarning, stacklevel=2)
                 break
             L[n_active, n_active] = sqrt(Lkk)
         else:
-            L[0, 0] = linalg.norm(X[:, lam])
+            L[0, 0] = linalg.norm(X[:, lam], check_finite=False)
 
         X.T[n_active], X.T[lam] = swap(X.T[n_active], X.T[lam])
         alpha[n_active], alpha[lam] = alpha[lam], alpha[n_active]
