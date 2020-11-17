@@ -147,7 +147,7 @@ def test_spatial_median_2d():
     _, median = _spatial_median(X, max_iter=100, tol=1.e-6)
 
     def cost_func(y):
-        dists = np.array([norm(x - y) for x in X])
+        dists = np.array([norm(x - y, check_finite=False) for x in X])
         return np.sum(dists)
 
     # Check if median is solution of the Fermat-Weber location problem
@@ -187,7 +187,7 @@ def test_theil_sen_2d():
     X, y, w, c = gen_toy_problem_2d()
     # Check that Least Squares fails
     lstq = LinearRegression().fit(X, y)
-    assert norm(lstq.coef_ - w) > 1.0
+    assert norm(lstq.coef_ - w, check_finite=False) > 1.0
     # Check that Theil-Sen works
     theil_sen = TheilSenRegressor(max_subpopulation=1e3,
                                   random_state=0).fit(X, y)
@@ -258,7 +258,7 @@ def test_theil_sen_parallel():
     X, y, w, c = gen_toy_problem_2d()
     # Check that Least Squares fails
     lstq = LinearRegression().fit(X, y)
-    assert norm(lstq.coef_ - w) > 1.0
+    assert norm(lstq.coef_ - w, check_finite=False) > 1.0
     # Check that Theil-Sen works
     theil_sen = TheilSenRegressor(n_jobs=2,
                                   random_state=0,
