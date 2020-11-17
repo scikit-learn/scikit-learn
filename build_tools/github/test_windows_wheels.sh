@@ -16,7 +16,7 @@ else
                          --env OMP_NUM_THREADS=2 \
                          --env OPENBLAS_NUM_THREADS=2 \
                          --name minimal_windows \
-                         -d -ti --rm scikit-learn/minimal-windows powershell 'Write-Output "$env:SKLEARN_SKIP_NETWORK_TESTS $env:OMP_NUM_THREADS $env:OPENBLAS_NUM_THREADS"'
+                         --rm scikit-learn/minimal-windows powershell 'Write-Output "$env:SKLEARN_SKIP_NETWORK_TESTS $env:OMP_NUM_THREADS $env:OPENBLAS_NUM_THREADS"'
 
     # docker exec minimal_windows pytest --pyargs sklearn
 
