@@ -237,7 +237,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
         coef_old_ = None
 
         XT_y = np.dot(X.T, y)
-        U, S, Vh = linalg.svd(X, full_matrices=False)
+        U, S, Vh = linalg.svd(X, full_matrices=False, check_finite=False)
         eigen_vals_ = S ** 2
 
         # Convergence loop of the bayesian ridge regression
