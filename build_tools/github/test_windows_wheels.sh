@@ -18,6 +18,10 @@ else
                --name minimal_windows \
                -d -ti --rm scikit-learn/minimal-windows
 
+    docker exec minimal_windows powershell -NoProfile -Command "$env:SKLEARN_SKIP_NETWORK_TESTS"
+    docker exec minimal_windows powershell -NoProfile -Command "$env:OMP_NUM_THREADS"
+    docker exec minimal_windows powershell -NoProfile -Command "$env:OPENBLAS_NUM_THREADS"
+
     docker exec minimal_windows powershell -NoProfile -Command "pytest --pyargs sklearn"
 
     # Test that there are no links to system libraries
