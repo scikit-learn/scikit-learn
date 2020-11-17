@@ -236,12 +236,12 @@ def test_rank_deficient_design():
         lars = linear_model.LassoLars(.1, normalize=False)
         coef_lars_ = lars.fit(X, y).coef_
         obj_lars = (1. / (2. * 3.)
-                    * linalg.norm(y - np.dot(X, coef_lars_)) ** 2
-                    + .1 * linalg.norm(coef_lars_, 1))
+                    * linalg.norm(y - np.dot(X, coef_lars_), check_finite=False) ** 2
+                    + .1 * linalg.norm(coef_lars_, 1, check_finite=False))
         coord_descent = linear_model.Lasso(.1, tol=1e-6, normalize=False)
         coef_cd_ = coord_descent.fit(X, y).coef_
-        obj_cd = ((1. / (2. * 3.)) * linalg.norm(y - np.dot(X, coef_cd_)) ** 2
-                  + .1 * linalg.norm(coef_cd_, 1))
+        obj_cd = ((1. / (2. * 3.)) * linalg.norm(y - np.dot(X, coef_cd_), check_finite=False) ** 2
+                  + .1 * linalg.norm(coef_cd_, 1, check_finite=False))
         assert obj_lars < obj_cd * (1. + 1e-8)
 
 
@@ -257,7 +257,7 @@ def test_lasso_lars_vs_lasso_cd():
             continue
         lasso_cd.alpha = a
         lasso_cd.fit(X, y)
-        error = linalg.norm(c - lasso_cd.coef_)
+        error = linalg.norm(c - lasso_cd.coef_, check_finite=False)
         assert error < 0.01
 
     # similar test, with the classifiers
@@ -265,7 +265,7 @@ def test_lasso_lars_vs_lasso_cd():
         clf1 = linear_model.LassoLars(alpha=alpha, normalize=False).fit(X, y)
         clf2 = linear_model.Lasso(alpha=alpha, tol=1e-8,
                                   normalize=False).fit(X, y)
-        err = linalg.norm(clf1.coef_ - clf2.coef_)
+        err = linalg.norm(clf1.coef_ - clf2.coef_, check_finite=False)
         assert err < 1e-3
 
     # same test, with normalized data
@@ -278,7 +278,7 @@ def test_lasso_lars_vs_lasso_cd():
             continue
         lasso_cd.alpha = a
         lasso_cd.fit(X, y)
-        error = linalg.norm(c - lasso_cd.coef_)
+        error = linalg.norm(c - lasso_cd.coef_, check_finite=False)
         assert error < 0.01
 
 
@@ -294,7 +294,7 @@ def test_lasso_lars_vs_lasso_cd_early_stopping():
         lasso_cd = linear_model.Lasso(fit_intercept=False, tol=1e-8)
         lasso_cd.alpha = alphas[-1]
         lasso_cd.fit(X, y)
-        error = linalg.norm(lasso_path[:, -1] - lasso_cd.coef_)
+        error = linalg.norm(lasso_path[:, -1] - lasso_cd.coef_, check_finite=False)
         assert error < 0.01
 
     # same test, with normalization
@@ -304,7 +304,7 @@ def test_lasso_lars_vs_lasso_cd_early_stopping():
         lasso_cd = linear_model.Lasso(normalize=True, tol=1e-8)
         lasso_cd.alpha = alphas[-1]
         lasso_cd.fit(X, y)
-        error = linalg.norm(lasso_path[:, -1] - lasso_cd.coef_)
+        error = linalg.norm(lasso_path[:, -1] - lasso_cd.coef_, check_finite=False)
         assert error < 0.01
 
 
@@ -365,8 +365,8 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned2():
     alpha = .0001
 
     def objective_function(coef):
-        return (1. / (2. * len(X)) * linalg.norm(y - np.dot(X, coef)) ** 2
-                + alpha * linalg.norm(coef, 1))
+        return (1. / (2. * len(X)) * linalg.norm(y - np.dot(X, coef), check_finite=False) ** 2
+                + alpha * linalg.norm(coef, 1, check_finite=False))
 
     lars = linear_model.LassoLars(alpha=alpha, normalize=False)
     warning_message = (
@@ -578,7 +578,7 @@ def test_lasso_lars_vs_lasso_cd_positive():
             continue
         lasso_cd.alpha = a
         lasso_cd.fit(X, y)
-        error = linalg.norm(c - lasso_cd.coef_)
+        error = linalg.norm(c - lasso_cd.coef_, check_finite=False)
         assert error < 0.01
 
     # The range of alphas chosen for coefficient comparison here is restricted
@@ -595,7 +595,7 @@ def test_lasso_lars_vs_lasso_cd_positive():
                                       normalize=False, positive=True).fit(X, y)
         clf2 = linear_model.Lasso(fit_intercept=False, alpha=alpha, tol=1e-8,
                                   normalize=False, positive=True).fit(X, y)
-        err = linalg.norm(clf1.coef_ - clf2.coef_)
+        err = linalg.norm(clf1.coef_ - clf2.coef_, check_finite=False)
         assert err < 1e-3
 
     # normalized data
@@ -607,7 +607,7 @@ def test_lasso_lars_vs_lasso_cd_positive():
     for c, a in zip(lasso_path.T[:-1], alphas[:-1]):  # don't include alpha=0
         lasso_cd.alpha = a
         lasso_cd.fit(X, y)
-        error = linalg.norm(c - lasso_cd.coef_)
+        error = linalg.norm(c - lasso_cd.coef_, check_finite=False)
         assert error < 0.01
 
 
