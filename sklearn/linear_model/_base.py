@@ -551,7 +551,8 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
             X_centered = sparse.linalg.LinearOperator(shape=X.shape,
                                                       matvec=matvec,
-                                                      rmatvec=rmatvec)
+                                                      rmatvec=rmatvec,
+                                                      check_finite=False)
 
             if y.ndim < 2:
                 out = sparse_lsqr(X_centered, y)
@@ -566,7 +567,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
                 self._residues = np.vstack([out[3] for out in outs])
         else:
             self.coef_, self._residues, self.rank_, self.singular_ = \
-                linalg.lstsq(X, y)
+                linalg.lstsq(X, y, check_finite=False)
             self.coef_ = self.coef_.T
 
         if y.ndim == 1:
