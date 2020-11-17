@@ -175,7 +175,16 @@ display.figure_.subplots_adjust(hspace=0.3)
 # splitting criterion. Setting `criterion="poisson"` might be a good choice
 # if your target is a count or a frequency.
 
+from sklearn.tree import DecisionTreeRegressor
 
+n_samples, n_features = 1000, 20
+rng = np.random.RandomState(0)
+X = rng.randn(n_samples, n_features)
+# positive integer target correlated with X[:, 5] with many zeros:
+y = rng.poisson(lam=np.exp(X[:, 5]) / 2)
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
+regressor = DecisionTreeRegressor(criterion='poisson', random_state=0)
+regressor.fit(X_train, y_train)
 
 ##############################################################################
 # HistGradientBoostingClassifier improved performances
