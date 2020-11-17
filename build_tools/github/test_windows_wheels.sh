@@ -18,8 +18,8 @@ else
     docker exec -e SKLEARN_SKIP_NETWORK_TESTS=1 \
                 -e OMP_NUM_THREADS=2 \
                 -e OPENBLAS_NUM_THREADS=2 \
-                minimal_windows powershell -NoProfile -Command "pytest --pyargs sklearn"
+                minimal_windows pytest --pyargs sklearn
 
     # Test that there are no links to system libraries
-    docker exec minimal_windows powershell -NoProfile -Command "python -m threadpoolctl -i sklearn"
+    docker exec minimal_windows python -m threadpoolctl -i sklearn
 fi
