@@ -86,8 +86,8 @@ class RandomData:
         self.precisions = {
             'spherical': 1. / self.covariances['spherical'],
             'diag': 1. / self.covariances['diag'],
-            'tied': linalg.inv(self.covariances['tied'], check_finite=False),
-            'full': np.array([linalg.inv(covariance, check_finite=False)
+            'tied': linalg.inv(self.covariances['tied']),
+            'full': np.array([linalg.inv(covariance)
                              for covariance in self.covariances['full']])}
 
         self.X = dict(zip(COVARIANCE_TYPE, [generate_data(
@@ -342,8 +342,7 @@ def test_suffstat_sk_full():
     # check the precision computation
     precs_chol_pred = _compute_precision_cholesky(covars_pred, 'full')
     precs_pred = np.array([np.dot(prec, prec.T) for prec in precs_chol_pred])
-    precs_est = np.array([linalg.inv(cov, check_finite=False)
-                          for cov in covars_pred])
+    precs_est = np.array([linalg.inv(cov) for cov in covars_pred])
     assert_array_almost_equal(precs_est, precs_pred)
 
     # special case 2, assuming resp are all ones
@@ -359,8 +358,7 @@ def test_suffstat_sk_full():
     # check the precision computation
     precs_chol_pred = _compute_precision_cholesky(covars_pred, 'full')
     precs_pred = np.array([np.dot(prec, prec.T) for prec in precs_chol_pred])
-    precs_est = np.array([linalg.inv(cov, check_finite=False)
-                          for cov in covars_pred])
+    precs_est = np.array([linalg.inv(cov) for cov in covars_pred])
     assert_array_almost_equal(precs_est, precs_pred)
 
 
@@ -389,7 +387,7 @@ def test_suffstat_sk_tied():
     # check the precision computation
     precs_chol_pred = _compute_precision_cholesky(covars_pred_tied, 'tied')
     precs_pred = np.dot(precs_chol_pred, precs_chol_pred.T)
-    precs_est = linalg.inv(covars_pred_tied, check_finite=False)
+    precs_est = linalg.inv(covars_pred_tied)
     assert_array_almost_equal(precs_est, precs_pred)
 
 
@@ -449,10 +447,9 @@ def test_compute_log_det_cholesky():
         covariance = rand_data.covariances[covar_type]
 
         if covar_type == 'full':
-            predected_det = np.array([linalg.det(cov, check_finite=False)
-                                      for cov in covariance])
+            predected_det = np.array([linalg.det(cov) for cov in covariance])
         elif covar_type == 'tied':
-            predected_det = linalg.det(covariance, check_finite=False)
+            predected_det = linalg.det(covariance)
         elif covar_type == 'diag':
             predected_det = np.array([np.prod(cov) for cov in covariance])
         elif covar_type == 'spherical':
@@ -966,11 +963,10 @@ def test_property():
         if covar_type == 'full':
             for prec, covar in zip(gmm.precisions_, gmm.covariances_):
 
-                assert_array_almost_equal(linalg.inv(prec, check_finite=False),
+                assert_array_almost_equal(linalg.inv(prec),
                                           covar)
         elif covar_type == 'tied':
-            assert_array_almost_equal(linalg.inv(gmm.precisions_,
-                                                 check_finite=False),
+            assert_array_almost_equal(linalg.inv(gmm.precisions_),
                                       gmm.covariances_)
         else:
             assert_array_almost_equal(gmm.precisions_, 1. / gmm.covariances_)
