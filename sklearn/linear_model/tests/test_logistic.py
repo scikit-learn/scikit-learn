@@ -493,7 +493,7 @@ def test_logistic_grad_hess():
         ])
 
         d_grad -= d_grad.mean(axis=0)
-        approx_hess_col = linalg.lstsq(d_x[:, np.newaxis], d_grad)[0].ravel()
+        approx_hess_col = linalg.lstsq(d_x[:, np.newaxis], d_grad, check_finite=False)[0].ravel()
 
         assert_array_almost_equal(approx_hess_col, hess_col, decimal=3)
 
@@ -998,7 +998,7 @@ def test_multinomial_grad_hess():
         for t in d_x
     ])
     d_grad -= d_grad.mean(axis=0)
-    approx_hess_col = linalg.lstsq(d_x[:, np.newaxis], d_grad)[0].ravel()
+    approx_hess_col = linalg.lstsq(d_x[:, np.newaxis], d_grad, check_finite=False)[0].ravel()
     assert_array_almost_equal(hess_col, approx_hess_col)
 
 
