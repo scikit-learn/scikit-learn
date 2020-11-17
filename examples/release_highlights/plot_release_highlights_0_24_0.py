@@ -29,6 +29,8 @@ or with conda::
 # -------------------------------------------------
 # Successive halving, a state of the art method, is now available to
 # explore the space of the parameters and identify their best combination.
+# It is still experimental, in order to import it `enable_halving_search_cv`
+# should be imported from `experimental`.
 # :class:`~sklearn.model_selection.HalvingGridSearchCV` and
 # :class:`~sklearn.model_selection.HalvingRandomSearchCV` can be
 # used as drop-in replacement for
@@ -97,7 +99,25 @@ print("Features selected by forward sequential selection: "
 ##############################################################################
 # New PolynomialCountSketch kernel approximation function
 # -------------------------------------------------------
+# The new :class:`~sklearn.kernel_approximation.PolynomialCountSketch`
+# approximates a polynomial expansion of a feature space when used with linear
+# models, but uses much less memory than
+# :class:`~sklearn.preprocessing.PolynomialFeatures`, and is often faster than
+# using a polynomial kernel in SVM.
 
+from sklearn.datasets import fetch_covtype
+from sklearn.pipeline import make_pipeline
+from sklearn.model_selection import train_test_split
+from sklearn.kernel_approximation import PolynomialCountSketch
+from sklearn.svm import LinearSVC
+
+X, y = fetch_covtype(return_X_y=True)
+pipe = make_pipeline(PolynomialCountSketch(degree=4, n_components=1000),
+                     LinearSVC())
+X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=5000,
+                                                    test_size=10000,
+                                                    random_state=42)
+pipe.fit(X_train, y_train)
 ##############################################################################
 # Retrieving datasets from literature as pandas dataframes
 # --------------------------------------------------------
