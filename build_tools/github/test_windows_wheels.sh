@@ -17,9 +17,9 @@ else
 
     # The "-e" option is not working for docker
     # run nor docker exec on Windows containers
-    docker exec minimal_windows $env:SKLEARN_SKIP_NETWORK_TESTS="1"
-    docker exec minimal_windows $env:OMP_NUM_THREADS="2"
-    docker exec minimal_windows $env:OPENBLAS_NUM_THREADS="2"
+    docker exec minimal_windows \$env:SKLEARN_SKIP_NETWORK_TESTS="1"
+    docker exec minimal_windows \$env:OMP_NUM_THREADS="2"
+    docker exec minimal_windows \$env:OPENBLAS_NUM_THREADS="2"
 
     docker exec minimal_windows pytest --pyargs sklearn
 

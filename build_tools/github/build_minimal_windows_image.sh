@@ -28,7 +28,7 @@ WHEEL_NAME=scikit_learn-$SCIKIT_LEARN_VERSION-cp$PYTHON_VERSION-$WHEEL_NAME
 # The repaired wheel is under a temporary directory that may
 # remove folders concurrently with respect to "find" command
 TEMP_FOLDER="$HOME/AppData/Local/Temp"
-WHEEL_PATH=$(find $TEMP_FOLDER -type d -name "repaired_wheel"); \
+WHEEL_PATH=$(find $TEMP_FOLDER -type d -name "repaired_wheel" 2>/dev/null); \
            echo "Ignoring concurrently deleted temporary folders."
 
 if [[ -z "$WHEEL_PATH" ]]; then
