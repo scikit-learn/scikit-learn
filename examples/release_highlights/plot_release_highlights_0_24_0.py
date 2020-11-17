@@ -170,6 +170,12 @@ display.figure_.subplots_adjust(hspace=0.3)
 ##############################################################################
 # DecisionTreeRegressor now supports the new 'poisson' splitting criterion 
 # ------------------------------------------------------------------------
+# The integration of Poisson regression estimation continues from version 0.23
+# :class:`~sklearn.tree.DecisionTreeRegressor` now supports a new `'poisson'`
+# splitting criterion. Setting `criterion="poisson"` might be a good choice
+# if your target is a count or a frequency.
+
+
 
 ##############################################################################
 # HistGradientBoostingClassifier improved performances
