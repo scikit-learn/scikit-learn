@@ -596,6 +596,7 @@ def _lars_path_solver(
                                         L[n_active, :n_active],
                                         trans=0, lower=1,
                                         overwrite_b=True,
+                                        check_finite=False,
                                         **SOLVE_TRIANGULAR_ARGS)
 
             v = np.dot(L[n_active, :n_active], L[n_active, :n_active])
