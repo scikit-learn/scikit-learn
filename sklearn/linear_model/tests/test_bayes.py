@@ -73,7 +73,7 @@ def test_bayesian_ridge_score_values():
     score = lambda_1 * log(lambda_) - lambda_2 * lambda_
     score += alpha_1 * log(alpha_) - alpha_2 * alpha_
     M = 1. / alpha_ * np.eye(n_samples) + 1. / lambda_ * np.dot(X, X.T)
-    M_inv = pinvh(M)
+    M_inv = pinvh(M, check_finite=False)
     score += - 0.5 * (fast_logdet(M) + np.dot(y.T, np.dot(M_inv, y)) +
                       n_samples * log(2 * np.pi))
 
