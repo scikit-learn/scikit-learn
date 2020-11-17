@@ -12,14 +12,14 @@ if [[ "$PYTHON_VERSION" == "36" || "$BITNESS" == "32" ]]; then
     pytest --pyargs sklearn
     python -m threadpoolctl -i sklearn
 else
-    docker run -e \$env:SKLEARN_SKIP_NETWORK_TESTS=1 \
-               -e \$env:OMP_NUM_THREADS=2 \
-               -e \$env:OPENBLAS_NUM_THREADS=2 \
-               --name minimal_windows \
-               -d -ti --rm scikit-learn/minimal-windows powershell
+    docker container run --env SKLEARN_SKIP_NETWORK_TESTS=1 \
+                         --env OMP_NUM_THREADS=2 \
+                         --env OPENBLAS_NUM_THREADS=2 \
+                         --name minimal_windows \
+                         -d -ti --rm scikit-learn/minimal-windows powershell 'Write-Output "$env:SKLEARN_SKIP_NETWORK_TESTS $env:OMP_NUM_THREADS $env:OPENBLAS_NUM_THREADS"'
 
-    docker exec minimal_windows pytest --pyargs sklearn
+    # docker exec minimal_windows pytest --pyargs sklearn
 
     # Test that there are no links to system libraries
-    docker exec minimal_windows python -m threadpoolctl -i sklearn
+    # docker exec minimal_windows python -m threadpoolctl -i sklearn
 fi
