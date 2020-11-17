@@ -79,6 +79,11 @@ class GradientBoostingClassifierBenchmark(Predictor, Estimator, Benchmark):
                                                subsample=0.5,
                                                random_state=0)
 
+        return estimator
+
+    def make_scorers(self):
+        make_gen_classif_scorers(self)
+
 
 class HistGradientBoostingClassifierBenchmark(Predictor, Estimator, Benchmark):
     """
