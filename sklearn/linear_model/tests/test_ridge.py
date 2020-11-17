@@ -203,7 +203,7 @@ def test_ridge_sample_weights():
                 I[0, 0] = 0
 
             cf_coefs = linalg.solve(X_aug.T.dot(W).dot(X_aug) + alpha * I,
-                                    X_aug.T.dot(W).dot(y))
+                                    X_aug.T.dot(W).dot(y), check_finite=False)
 
             if intercept is False:
                 assert_array_almost_equal(coefs, cf_coefs)
