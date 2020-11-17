@@ -85,7 +85,7 @@ def test_linear_regression_sample_weights():
                 X_aug = np.concatenate((dummy_column, X), axis=1)
 
             coefs2 = linalg.solve(X_aug.T.dot(W).dot(X_aug),
-                                  X_aug.T.dot(W).dot(y))
+                                  X_aug.T.dot(W).dot(y), check_finite=False)
 
             if intercept is False:
                 assert_array_almost_equal(coefs1, coefs2)
