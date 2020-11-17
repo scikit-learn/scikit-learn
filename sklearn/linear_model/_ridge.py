@@ -145,13 +145,13 @@ def _solve_cholesky(X, y, alpha):
     if one_alpha:
         A.flat[::n_features + 1] += alpha[0]
         return linalg.solve(A, Xy, sym_pos=True,
-                            overwrite_a=True).T
+                            overwrite_a=True, check_finite=False).T
     else:
         coefs = np.empty([n_targets, n_features], dtype=X.dtype)
         for coef, target, current_alpha in zip(coefs, Xy.T, alpha):
             A.flat[::n_features + 1] += current_alpha
             coef[:] = linalg.solve(A, target, sym_pos=True,
-                                   overwrite_a=False).ravel()
+                                   overwrite_a=False, check_finite=False).ravel()
             A.flat[::n_features + 1] -= current_alpha
         return coefs
 
@@ -185,11 +185,11 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
             #       use the fall-back solution below in case a LinAlgError
             #       is raised
             dual_coef = linalg.solve(K, y, sym_pos=True,
-                                     overwrite_a=False)
+                                     overwrite_a=False, check_finite=False)
         except np.linalg.LinAlgError:
             warnings.warn("Singular matrix in solving dual problem. Using "
                           "least-squares solution instead.")
-            dual_coef = linalg.lstsq(K, y)[0]
+            dual_coef = linalg.lstsq(K, y, check_finite=False)[0]
 
         # K is expensive to compute and store in memory so change it back in
         # case it was user-given.
@@ -207,7 +207,7 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
             K.flat[::n_samples + 1] += current_alpha
 
             dual_coef[:] = linalg.solve(K, target, sym_pos=True,
-                                        overwrite_a=False).ravel()
+                                        overwrite_a=False, check_finite=False).ravel()
 
             K.flat[::n_samples + 1] -= current_alpha
 
@@ -218,7 +218,7 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
 
 
 def _solve_svd(X, y, alpha):
-    U, s, Vt = linalg.svd(X, full_matrices=False)
+    U, s, Vt = linalg.svd(X, full_matrices=False, check_finite=False)
     idx = s > 1e-15  # same default value as scipy.linalg.pinv
     s_nnz = s[idx][:, np.newaxis]
     UTy = np.dot(U.T, y)
@@ -1285,7 +1285,7 @@ class _RidgeGCV(LinearModel):
             # containing the square roots of the sample weights.
             # by centering, it is orthogonal to the other columns
             K += np.outer(sqrt_sw, sqrt_sw)
-        eigvals, Q = linalg.eigh(K)
+        eigvals, Q = linalg.eigh(K, check_finite=False)
         QT_y = np.dot(Q.T, y)
         return X_mean, eigvals, Q, QT_y
 
@@ -1331,7 +1331,7 @@ class _RidgeGCV(LinearModel):
             cov[:, -1] = 0
             cov[-1, -1] = sqrt_sw.dot(sqrt_sw)
         nullspace_dim = max(0, n_features - n_samples)
-        eigvals, V = linalg.eigh(cov)
+        eigvals, V = linalg.eigh(cov, check_finite=False)
         # remove eigenvalues and vectors in the null space of X^T.X
         eigvals = eigvals[nullspace_dim:]
         V = V[:, nullspace_dim:]
@@ -1406,7 +1406,7 @@ class _RidgeGCV(LinearModel):
             # by centering, the other columns are orthogonal to that one
             intercept_column = sqrt_sw[:, None]
             X = np.hstack((X, intercept_column))
-        U, singvals, _ = linalg.svd(X, full_matrices=0)
+        U, singvals, _ = linalg.svd(X, full_matrices=0, check_finite=False)
         singvals_sq = singvals ** 2
         UT_y = np.dot(U.T, y)
         return X_mean, singvals_sq, U, UT_y
