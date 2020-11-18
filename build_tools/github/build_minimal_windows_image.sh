@@ -40,7 +40,6 @@ WHEEL_PATH=$(realpath $WHEEL_PATH)
 WHEEL_PATH="$WHEEL_PATH/$WHEEL_NAME"
 
 cp $WHEEL_PATH $WHEEL_NAME
-cp $CONFTEST_PATH $CONFTEST_NAME
 
 # Dot the Python version for identyfing the base Docker image
 PYTHON_VERSION=$(echo ${PYTHON_VERSION:0:1}.${PYTHON_VERSION:1:2})
