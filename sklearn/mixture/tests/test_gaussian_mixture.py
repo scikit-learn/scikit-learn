@@ -963,8 +963,7 @@ def test_property():
         if covar_type == 'full':
             for prec, covar in zip(gmm.precisions_, gmm.covariances_):
 
-                assert_array_almost_equal(linalg.inv(prec),
-                                          covar)
+                assert_array_almost_equal(linalg.inv(prec), covar)
         elif covar_type == 'tied':
             assert_array_almost_equal(linalg.inv(gmm.precisions_),
                                       gmm.covariances_)
