@@ -22,6 +22,7 @@ from sklearn.utils import as_float_array, check_array, check_symmetric
 from sklearn.utils import check_X_y
 from sklearn.utils import deprecated
 from sklearn.utils._mocking import MockDataFrame
+from sklearn.utils.fixes import np_version, parse_version
 from sklearn.utils.estimator_checks import _NotAnArray
 from sklearn.random_projection import _sparse_random_matrix
 from sklearn.linear_model import ARDRegression
@@ -365,6 +366,9 @@ def test_check_array_numeric_warns(X):
 ])
 def test_check_array_dtype_numeric_errors(X):
     """Error when string-ike array can not be converted"""
+    if (np_version < parse_version("1.14")
+            and hasattr(X, "dtype") and X.dtype.kind == "V"):
+        pytest.skip("old numpy would convert V dtype into float silently")
     expected_warn_msg = "Unable to convert array of bytes/strings"
     with pytest.raises(ValueError, match=expected_warn_msg):
         check_array(X, dtype="numeric")
