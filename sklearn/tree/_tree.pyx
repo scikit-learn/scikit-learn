@@ -279,6 +279,10 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         # check input
         X, y, sample_weight = self._check_input(X, y, sample_weight)
 
+        cdef DOUBLE_t* sample_weight_ptr = NULL
+        if sample_weight is not None:
+            sample_weight_ptr = <DOUBLE_t*> sample_weight.data
+
         # organize samples by decision paths
         paths = tree.decision_path(X)
         cdef int PARENT
@@ -316,10 +320,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
             y_list = y_list + y_copy[key]
         cdef object X_new = np.array(X_list)
         cdef np.ndarray y_new = np.array(y_list)
-
-        cdef DOUBLE_t* sample_weight_ptr = NULL
-        if sample_weight is not None:
-            sample_weight_ptr = <DOUBLE_t*> sample_weight.data
 
         # Initial capacity
         cdef int init_capacity
@@ -607,6 +607,44 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         if sample_weight is not None:
             sample_weight_ptr = <DOUBLE_t*> sample_weight.data
 
+        # organize samples by decision paths
+        paths = tree.decision_path(X)
+        cdef int PARENT
+        cdef int CHILD
+        false_roots = {}
+        X_copy = {}
+        y_copy = {}
+        for i in range(X.shape[0]):
+            depth_i = paths[i].indices.shape[0] - 1
+            PARENT = depth_i - 1
+            CHILD = depth_i
+
+            if PARENT < 0:
+                parent_i = _TREE_UNDEFINED
+            else:
+                parent_i = paths[i].indices[PARENT]
+            child_i = paths[i].indices[CHILD]
+            left = 0
+            if tree.children_left[parent_i] == child_i:
+                left = 1
+
+            if (parent_i, left) in false_roots:
+                false_roots[(parent_i, left)][0] += 1
+                X_copy[(parent_i, left)].append(X[i])
+                y_copy[(parent_i, left)].append(y[i])
+            else:
+                false_roots[(parent_i, left)] = [1, depth_i]
+                X_copy[(parent_i, left)] = [X[i]]
+                y_copy[(parent_i, left)] = [y[i]]
+
+        X_list = []
+        y_list = []
+        for key, value in sorted(X_copy.items()):
+            X_list = X_list + value
+            y_list = y_list + y_copy[key]
+        cdef object X_new = np.array(X_list)
+        cdef np.ndarray y_new = np.array(y_list)
+
         # Parameters
         cdef Splitter splitter = self.splitter
         cdef SIZE_t max_leaf_nodes = self.max_leaf_nodes
@@ -615,7 +653,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t min_samples_split = self.min_samples_split
 
         # Recursive partition (without actual recursion)
-        splitter.init(X, y, sample_weight_ptr)
+        splitter.init(X_new, y_new, sample_weight_ptr)
 
         cdef PriorityHeap frontier = PriorityHeap(INITIAL_STACK_SIZE)
         cdef PriorityHeapRecord record
