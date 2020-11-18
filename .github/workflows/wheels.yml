@@ -78,9 +78,9 @@ jobs:
 
       - name: Build and test wheels
         env:
-          CONFTEST_PATH: ${{ github.workspace }}/conftest.py
-          CONFTEST_NAME: conftest.py
-          CIBW_ENVIRONMENT: WHEEL_DIRNAME=scikit_learn-$SCIKIT_LEARN_VERSION
+          CIBW_ENVIRONMENT: CONFTEST_PATH=${{ github.workspace }}/conftest.py
+                            CONFTEST_NAME=conftest.py
+                            WHEEL_DIRNAME=scikit_learn-$SCIKIT_LEARN_VERSION
                             OMP_NUM_THREADS=2
                             OPENBLAS_NUM_THREADS=2
                             SKLEARN_SKIP_NETWORK_TESTS=1
