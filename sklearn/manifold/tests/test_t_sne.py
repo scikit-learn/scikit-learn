@@ -967,7 +967,8 @@ def test_tsne_with_mahalanobis_distance():
 
     # 1. raises error here (original issue)
     tsne = TSNE(verbose=1, perplexity=40, n_iter=250, learning_rate=50,
-                n_components=n_embedding, random_state=0, metric='mahalanobis')
+                n_components=n_embedding, random_state=0, metric='mahalanobis',
+                square_distances=True)
     ref = "Must provide either V or VI for Mahalanobis distance"
     with pytest.raises(ValueError, match=ref):
         tsne.fit_transform(X)
