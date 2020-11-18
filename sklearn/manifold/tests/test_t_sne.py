@@ -974,13 +974,16 @@ def test_tsne_with_mahalanobis_distance():
 
     # 2. check for correct answer
     precomputed_X = squareform(pdist(X, metric='mahalanobis'), checks=True)
-    ref = TSNE(verbose=1, perplexity=40, n_iter=250, learning_rate=50,
-               n_components=n_embedding, random_state=0,
-               metric='precomputed', square_distances=True).fit_transform(precomputed_X)
+    ref = TSNE(
+            verbose=1, perplexity=40, n_iter=250, learning_rate=50,
+            n_components=n_embedding, random_state=0, metric='precomputed',
+            square_distances=True).fit_transform(precomputed_X)
 
-    now = TSNE(verbose=1, perplexity=40, n_iter=250, learning_rate=50,
-               n_components=n_embedding, random_state=0, metric='mahalanobis',
-               metric_params={'V': np.cov(X.T)}, square_distances=True).fit_transform(X)
+    now = TSNE(
+            verbose=1, perplexity=40, n_iter=250, learning_rate=50,
+            n_components=n_embedding, random_state=0, metric='mahalanobis',
+            metric_params={'V': np.cov(X.T)},
+            square_distances=True).fit_transform(X)
     assert_array_equal(ref, now)
 
 
