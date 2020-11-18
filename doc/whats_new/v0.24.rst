@@ -242,6 +242,11 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
+- |MajorFeature| :class:`ensemble.HistGradientBoostingRegressor` and
+  :class:`ensemble.HistGradientBoostingClassifier` now have native
+  support for categorical features with the `categorical_features`
+  parameter. :pr:`18394` by `Nicolas Hug`_ and `Thomas Fan`_.
+
 - |Feature| :class:`ensemble.HistGradientBoostingRegressor` and
   :class:`ensemble.HistGradientBoostingClassifier` now support the
   method `staged_predict`, which allows monitoring of each stage.
