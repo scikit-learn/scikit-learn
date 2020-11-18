@@ -1475,6 +1475,7 @@ def test_simple_imputation_inverse_transform_exceptions(missing_value):
                        match=f"Got 'add_indicator={imputer.add_indicator}'"):
         imputer.inverse_transform(X_1_trans)
 
+
 def test_simple_imputation_string_column_all_missing():
     X_1 = [
         ['Lion'],

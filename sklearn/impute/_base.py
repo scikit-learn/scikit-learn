@@ -232,8 +232,8 @@ class SimpleImputer(_BaseImputer):
             # with strategy='most_frequent' or 'constant'
             # because the list is converted to Unicode numpy array
             if isinstance(X, list) and \
-               (isinstance(self.fill_value, str) or
-                any(isinstance(elem, str) for row in X for elem in row)):
+                (isinstance(self.fill_value, str)
+                 or any(isinstance(elem, str) for row in X for elem in row)):
                 dtype = object
             else:
                 dtype = None
