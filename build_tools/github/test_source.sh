@@ -10,7 +10,8 @@ python -m pip install dist/*.tar.gz
 python -m pip install pytest pandas
 
 # Run the tests on the installed source distribution
-mkdir tmp_for_test
-cd tmp_for_test
+mkdir ../tmp_for_test
+cp conftest.py ../tmp_for_test
+cd ../tmp_for_test
 
 pytest --pyargs sklearn
