@@ -75,6 +75,19 @@ rsh.fit(X, y)
 rsh.best_params_
 
 ##############################################################################
+# Native support for categorical features in HistGradientBoosting
+# ---------------------------------------------------------------
+# :class:`sklearn.ensemble.HistGradientBoostingClassifier` and
+# :class:`sklearn.ensemble.HistGradientBoostingRegressor` now have native
+# support for categorical features: they can consider splits on non-ordered,
+# categorical data. Read more in the :ref:`User Guide
+# <categorical_support_gbdt>`
+#.. image:: /auto_examples/ensemble/images/sphx_glr_plot_gradient_boosting_categorical_001.png
+#    :alt: Gradient Boosting on Adult Census, Fit times (s),
+#        Mean Absolute Percentage Error
+#    :class: sphx-glr-single-img
+
+##############################################################################
 # New SequentialFeatureSelector transformer
 # -----------------------------------------
 # A new iterative transformer to select features is available:
@@ -118,6 +131,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=5000,
                                                     test_size=10000,
                                                     random_state=42)
 pipe.fit(X_train, y_train)
+
 ##############################################################################
 # Retrieving datasets from literature as pandas dataframes
 # --------------------------------------------------------
@@ -185,10 +199,6 @@ y = rng.poisson(lam=np.exp(X[:, 5]) / 2)
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
 regressor = DecisionTreeRegressor(criterion='poisson', random_state=0)
 regressor.fit(X_train, y_train)
-
-##############################################################################
-# HistGradientBoostingClassifier improved performances
-# ----------------------------------------------------
 
 ##############################################################################
 # New documentation improvements
