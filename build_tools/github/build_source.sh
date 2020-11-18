@@ -9,4 +9,3 @@ python -m pip install pytest pandas
 
 python setup.py sdist
 python -m pip install dist/*.tar.gz
-python setup.py build_ext -i

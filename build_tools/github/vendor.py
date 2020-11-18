@@ -1,6 +1,6 @@
-"""Embed vcomp140.dll, VCRUNTIME140.dll and VCRUNTIME140_1.dll.
+"""Embed vcomp140.dll, vcruntime140.dll and vcruntime140_1.dll.
 
-Note that VCRUNTIME140_1.dll is only required (and available)
+Note that vcruntime140_1.dll is only required (and available)
 for 64-bit architectures.
 """
 
@@ -15,8 +15,8 @@ import textwrap
 TARGET_FOLDER = op.join("sklearn", ".libs")
 DISTRIBUTOR_INIT = op.join("sklearn", "_distributor_init.py")
 VCOMP140_SRC_PATH = "C:\\Windows\\System32\\vcomp140.dll"
-VCRUNTIME140_SRC_PATH = "C:\\Windows\\System32\\VCRUNTIME140.dll"
-VCRUNTIME140_1_SRC_PATH = "C:\\Windows\\System32\\VCRUNTIME140_1.dll"
+VCRUNTIME140_SRC_PATH = "C:\\Windows\\System32\\vcruntime140.dll"
+VCRUNTIME140_1_SRC_PATH = "C:\\Windows\\System32\\vcruntime140_1.dll"
 
 
 def make_distributor_init_32_bits(distributor_init,
@@ -25,16 +25,16 @@ def make_distributor_init_32_bits(distributor_init,
     """Create a _distributor_init.py file for 32-bit architectures.
 
     This file is imported first when importing the sklearn package
-    so as to pre-load the vendored vcomp140.dll and VCRUNTIME140.dll.
+    so as to pre-load the vendored vcomp140.dll and vcruntime140.dll.
     """
     with open(distributor_init, "wt") as f:
         f.write(textwrap.dedent("""
-            '''Helper to preload vcomp140.dll and VCRUNTIME140.dll to
+            '''Helper to preload vcomp140.dll and vcruntime140.dll to
             prevent "not found" errors.
 
-            Once vcomp140.dll and VCRUNTIME140.dll are preloaded, the
+            Once vcomp140.dll and vcruntime140.dll are preloaded, the
             namespace is made available to any subsequent vcomp140.dll
-            and VCRUNTIME140.dll. This is created as part of the scripts
+            and vcruntime140.dll. This is created as part of the scripts
             that build the wheel.
             '''
 
@@ -45,7 +45,7 @@ def make_distributor_init_32_bits(distributor_init,
 
 
             if os.name == "nt":
-                # Load vcomp140.dll and VCRUNTIME140.dll
+                # Load vcomp140.dll and vcruntime140.dll
                 libs_path = op.join(op.dirname(__file__), ".libs")
                 vcomp140_dll_filename = op.join(libs_path, "{0}")
                 vcruntime140_dll_filename = op.join(libs_path, "{1}")
@@ -61,17 +61,17 @@ def make_distributor_init_64_bits(distributor_init,
     """Create a _distributor_init.py file for 64-bit architectures.
 
     This file is imported first when importing the sklearn package
-    so as to pre-load the vendored vcomp140.dll, VCRUNTIME140.dll
-    and VCRUNTIME140_1.dll.
+    so as to pre-load the vendored vcomp140.dll, vcruntime140.dll
+    and vcruntime140_1.dll.
     """
     with open(distributor_init, "wt") as f:
         f.write(textwrap.dedent("""
-            '''Helper to preload vcomp140.dll, VCRUNTIME140.dll and
-            VCRUNTIME140_1.dll to prevent "not found" errors.
+            '''Helper to preload vcomp140.dll, vcruntime140.dll and
+            vcruntime140_1.dll to prevent "not found" errors.
 
-            Once vcomp140.dll, VCRUNTIME140.dll and VCRUNTIME140_1.dll are
+            Once vcomp140.dll, vcruntime140.dll and vcruntime140_1.dll are
             preloaded, the namespace is made available to any subsequent
-            vcomp140.dll, VCRUNTIME140.dll and VCRUNTIME140_1.dll. This is
+            vcomp140.dll, vcruntime140.dll and vcruntime140_1.dll. This is
             created as part of the scripts that build the wheel.
             '''
 
@@ -82,7 +82,7 @@ def make_distributor_init_64_bits(distributor_init,
 
 
             if os.name == "nt":
-                # Load vcomp140.dll, VCRUNTIME140.dll and VCRUNTIME140_1.dll
+                # Load vcomp140.dll, vcruntime140.dll and vcruntime140_1.dll
                 libs_path = op.join(op.dirname(__file__), ".libs")
                 vcomp140_dll_filename = op.join(libs_path, "{0}")
                 vcruntime140_dll_filename = op.join(libs_path, "{1}")
@@ -96,7 +96,7 @@ def make_distributor_init_64_bits(distributor_init,
 
 
 def main(wheel_dirname, bitness):
-    """Embed vcomp140.dll, VCRUNTIME140.dll and VCRUNTIME140_1.dll."""
+    """Embed vcomp140.dll, vcruntime140.dll and vcruntime140_1.dll."""
     if not op.exists(VCOMP140_SRC_PATH):
         raise ValueError(f"Could not find {VCOMP140_SRC_PATH}.")
 
