@@ -18,7 +18,7 @@ else
 
     docker exec -e SKLEARN_SKIP_NETWORK_TESTS=1 \
                 -e OMP_NUM_THREADS=2 \
-                -e OPENBLAS_NUM_THREADS=2
+                -e OPENBLAS_NUM_THREADS=2 \
                 minimal_windows pytest --pyargs sklearn
 
     docker exec minimal_windows python -m threadpoolctl -i sklearn
