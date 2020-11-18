@@ -40,6 +40,7 @@ WHEEL_PATH=$(realpath $WHEEL_PATH)
 WHEEL_PATH="$WHEEL_PATH/$WHEEL_NAME"
 
 cp $WHEEL_PATH $WHEEL_NAME
+cp $CONFTEST_PATH $CONFTEST_NAME
 
 # Dot the Python version for identyfing the base Docker image
 PYTHON_VERSION=$(echo ${PYTHON_VERSION:0:1}.${PYTHON_VERSION:1:2})
@@ -47,6 +48,7 @@ PYTHON_VERSION=$(echo ${PYTHON_VERSION:0:1}.${PYTHON_VERSION:1:2})
 # Build a minimal Windows Docker image for testing the wheels
 docker build --build-arg PYTHON_VERSION=$PYTHON_VERSION \
              --build-arg WHEEL_NAME=$WHEEL_NAME \
+             --build-arg CONFTEST_NAME=$CONFTEST_NAME \
              --build-arg CIBW_TEST_REQUIRES="$CIBW_TEST_REQUIRES" \
              -f build_tools/github/Windows \
              -t scikit-learn/minimal-windows .

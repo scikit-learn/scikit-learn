@@ -78,6 +78,8 @@ jobs:
 
       - name: Build and test wheels
         env:
+          CONFTEST_PATH: ${{ github.workspace }}/conftest.py
+          CONFTEST_NAME: conftest.py
           CIBW_ENVIRONMENT: WHEEL_DIRNAME=scikit_learn-$SCIKIT_LEARN_VERSION
                             OMP_NUM_THREADS=2
                             OPENBLAS_NUM_THREADS=2
@@ -113,6 +115,11 @@ jobs:
 
       - name: Build source distribution
         run: bash build_tools/github/build_source.sh
+        env:
+          OMP_NUM_THREADS=2
+          OPENBLAS_NUM_THREADS=2
+          SKLEARN_SKIP_NETWORK_TESTS=1
+          SKLEARN_BUILD_PARALLEL=3
 
       - name: Test source distribution
         run: bash build_tools/github/test_source.sh
