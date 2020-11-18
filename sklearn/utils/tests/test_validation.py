@@ -354,6 +354,8 @@ def test_check_array_numeric_warns(X):
         check_array(X, dtype="numeric")
 
 
+# TODO: remove in 0.26
+@ignore_warnings(category=FutureWarning)
 @pytest.mark.parametrize("X", [
    [['11', '12'], ['13', 'xx']],
    np.array([['11', '12'], ['13', 'xx']], dtype='U'),
