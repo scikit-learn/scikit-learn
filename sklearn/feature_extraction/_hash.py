@@ -84,10 +84,10 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
     array([[ 0.,  0., -4., -1.,  0.,  0.,  0.,  0.,  0.,  2.],
            [ 0.,  0.,  0., -2., -5.,  0.,  0.,  0.,  0.,  0.]])
 
-    See also
+    See Also
     --------
-    DictVectorizer : vectorizes string-valued features using a hash table.
-    sklearn.preprocessing.OneHotEncoder : handles nominal/categorical features.
+    DictVectorizer : Vectorizes string-valued features using a hash table.
+    sklearn.preprocessing.OneHotEncoder : Handles nominal/categorical features.
     """
     @_deprecate_positional_args
     def __init__(self, n_features=(2 ** 20), *, input_type="dict",

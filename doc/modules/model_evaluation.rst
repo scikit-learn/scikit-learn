@@ -60,6 +60,7 @@ Scoring                                Function                                 
 **Classification**
 'accuracy'                             :func:`metrics.accuracy_score`
 'balanced_accuracy'                    :func:`metrics.balanced_accuracy_score`
+'top_k_accuracy'                       :func:`metrics.top_k_accuracy_score`
 'average_precision'                    :func:`metrics.average_precision_score`
 'neg_brier_score'                      :func:`metrics.brier_score_loss`
 'f1'                                   :func:`metrics.f1_score`                           for binary targets
@@ -85,6 +86,7 @@ Scoring                                Function                                 
 'homogeneity_score'                    :func:`metrics.homogeneity_score`
 'mutual_info_score'                    :func:`metrics.mutual_info_score`
 'normalized_mutual_info_score'         :func:`metrics.normalized_mutual_info_score`
+'rand_score'                           :func:`metrics.rand_score`
 'v_measure_score'                      :func:`metrics.v_measure_score`
 
 **Regression**
@@ -197,7 +199,7 @@ Here is an example of building custom scorers, and of using the
     >>> from sklearn.dummy import DummyClassifier
     >>> clf = DummyClassifier(strategy='most_frequent', random_state=0)
     >>> clf = clf.fit(X, y)
-    >>> my_custom_loss_func(clf.predict(X), y)
+    >>> my_custom_loss_func(y, clf.predict(X))
     0.69...
     >>> score(clf, X, y)
     -0.69...
@@ -305,7 +307,7 @@ Some of these are restricted to the binary classification case:
 
    precision_recall_curve
    roc_curve
-   detection_error_tradeoff_curve
+   det_curve
 
 
 Others also work in the multiclass case:
@@ -318,6 +320,7 @@ Others also work in the multiclass case:
    hinge_loss
    matthews_corrcoef
    roc_auc_score
+   top_k_accuracy_score
 
 
 Some also work in the multilabel case:
@@ -437,6 +440,44 @@ In the multilabel case with binary label indicators::
   * See :ref:`sphx_glr_auto_examples_feature_selection_plot_permutation_test_for_classification.py`
     for an example of accuracy score usage using permutations of
     the dataset.
+
+.. _top_k_accuracy_score:
+
+Top-k accuracy score
+--------------------
+
+The :func:`top_k_accuracy_score` function is a generalization of
+:func:`accuracy_score`. The difference is that a prediction is considered
+correct as long as the true label is associated with one of the ``k`` highest
+predicted scores. :func:`accuracy_score` is the special case of `k = 1`.
+
+The function covers the binary and multiclass classification cases but not the
+multilabel case.
+
+If :math:`\hat{f}_{i,j}` is the predicted class for the :math:`i`-th sample
+corresponding to the :math:`j`-th largest predicted score and :math:`y_i` is the
+corresponding true value, then the fraction of correct predictions over
+:math:`n_\text{samples}` is defined as
+
+.. math::
+
+   \texttt{top-k accuracy}(y, \hat{f}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} \sum_{j=1}^{k} 1(\hat{f}_{i,j} = y_i)
+
+where :math:`k` is the number of guesses allowed and :math:`1(x)` is the
+`indicator function <https://en.wikipedia.org/wiki/Indicator_function>`_.
+
+  >>> import numpy as np
+  >>> from sklearn.metrics import top_k_accuracy_score
+  >>> y_true = np.array([0, 1, 2, 2])
+  >>> y_score = np.array([[0.5, 0.2, 0.2],
+  ...                     [0.3, 0.4, 0.2],
+  ...                     [0.2, 0.4, 0.3],
+  ...                     [0.7, 0.2, 0.1]])
+  >>> top_k_accuracy_score(y_true, y_score, k=2)
+  0.75
+  >>> # Not normalizing gives the number of "correctly" classified samples
+  >>> top_k_accuracy_score(y_true, y_score, k=2, normalize=False)
+  3
 
 .. _balanced_accuracy_score:
 
@@ -1326,21 +1367,48 @@ area under the roc curve, the curve information is summarized in one number.
 For more information see the `Wikipedia article on AUC
 <https://en.wikipedia.org/wiki/Receiver_operating_characteristic#Area_under_the_curve>`_.
 
-  >>> import numpy as np
-  >>> from sklearn.metrics import roc_auc_score
-  >>> y_true = np.array([0, 0, 1, 1])
-  >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
-  >>> roc_auc_score(y_true, y_scores)
-  0.75
-
-In multi-label classification, the :func:`roc_auc_score` function is
-extended by averaging over the labels as :ref:`above <average>`.
-
 Compared to metrics such as the subset accuracy, the Hamming loss, or the
 F1 score, ROC doesn't require optimizing a threshold for each label.
 
-The :func:`roc_auc_score` function can also be used in multi-class
-classification. Two averaging strategies are currently supported: the
+.. _roc_auc_binary:
+
+Binary case
+^^^^^^^^^^^
+
+In the **binary case**, you can either provide the probability estimates, using
+the `classifier.predict_proba()` method, or the non-thresholded decision values
+given by the `classifier.decision_function()` method. In the case of providing
+the probability estimates, the probability of the class with the
+"greater label" should be provided. The "greater label" corresponds to
+`classifier.classes_[1]` and thus `classifier.predict_proba(X)[:, 1]`.
+Therefore, the `y_score` parameter is of size (n_samples,).
+
+  >>> from sklearn.datasets import load_breast_cancer
+  >>> from sklearn.linear_model import LogisticRegression
+  >>> from sklearn.metrics import roc_auc_score
+  >>> X, y = load_breast_cancer(return_X_y=True)
+  >>> clf = LogisticRegression(solver="liblinear").fit(X, y)
+  >>> clf.classes_
+  array([0, 1])
+
+We can use the probability estimates corresponding to `clf.classes_[1]`.
+
+  >>> y_score = clf.predict_proba(X)[:, 1]
+  >>> roc_auc_score(y, y_score)
+  0.99...
+
+Otherwise, we can use the non-thresholded decision values
+
+  >>> roc_auc_score(y, clf.decision_function(X))
+  0.99...
+
+.. _roc_auc_multiclass:
+
+Multi-class case
+^^^^^^^^^^^^^^^^
+
+The :func:`roc_auc_score` function can also be used in **multi-class
+classification**. Two averaging strategies are currently supported: the
 one-vs-one algorithm computes the average of the pairwise ROC AUC scores, and
 the one-vs-rest algorithm computes the average of the ROC AUC scores for each
 class against all other classes. In both cases, the predicted labels are
@@ -1394,6 +1462,34 @@ to the given limit.
    :scale: 75
    :align: center
 
+.. _roc_auc_multilabel:
+
+Multi-label case
+^^^^^^^^^^^^^^^^
+
+In **multi-label classification**, the :func:`roc_auc_score` function is
+extended by averaging over the labels as :ref:`above <average>`. In this case,
+you should provide a `y_score` of shape `(n_samples, n_classes)`. Thus, when
+using the probability estimates, one needs to select the probability of the
+class with the greater label for each output.
+
+  >>> from sklearn.datasets import make_multilabel_classification
+  >>> from sklearn.multioutput import MultiOutputClassifier
+  >>> X, y = make_multilabel_classification(random_state=0)
+  >>> inner_clf = LogisticRegression(solver="liblinear", random_state=0)
+  >>> clf = MultiOutputClassifier(inner_clf).fit(X, y)
+  >>> y_score = np.transpose([y_pred[:, 1] for y_pred in clf.predict_proba(X)])
+  >>> roc_auc_score(y, y_score, average=None)
+  array([0.82..., 0.86..., 0.94..., 0.85... , 0.94...])
+
+And the decision values do not require such processing.
+
+  >>> from sklearn.linear_model import RidgeClassifierCV
+  >>> clf = RidgeClassifierCV().fit(X, y)
+  >>> y_score = clf.decision_function(X)
+  >>> roc_auc_score(y, y_score, average=None)
+  array([0.81..., 0.84... , 0.93..., 0.87..., 0.94...])
+
 .. topic:: Examples:
 
   * See :ref:`sphx_glr_auto_examples_model_selection_plot_roc.py`
@@ -1438,7 +1534,7 @@ to the given limit.
 Detection error tradeoff (DET)
 ------------------------------
 
-The function :func:`detection_error_tradeoff_curve` computes the
+The function :func:`det_curve` computes the
 detection error tradeoff curve (DET) curve [WikipediaDET2017]_.
 Quoting Wikipedia:
 

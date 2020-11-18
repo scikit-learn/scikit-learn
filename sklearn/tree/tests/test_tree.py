@@ -8,16 +8,21 @@ import struct
 
 import pytest
 import numpy as np
+from numpy.testing import assert_allclose
 from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
 from scipy.sparse import coo_matrix
 
 from sklearn.random_projection import _sparse_random_matrix
 
+from sklearn.dummy import DummyRegressor
+
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_poisson_deviance
 
-from sklearn.utils._testing import assert_allclose
+from sklearn.model_selection import train_test_split
+
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_almost_equal
@@ -27,6 +32,7 @@ from sklearn.utils._testing import create_memmap_backed_data
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import skip_if_32bit
 
+from sklearn.utils.estimator_checks import check_sample_weights_invariance
 from sklearn.utils.validation import check_random_state
 
 from sklearn.exceptions import NotFittedError
@@ -45,7 +51,7 @@ from sklearn import datasets
 from sklearn.utils import compute_sample_weight
 
 CLF_CRITERIONS = ("gini", "entropy")
-REG_CRITERIONS = ("mse", "mae", "friedman_mse")
+REG_CRITERIONS = ("mse", "mae", "friedman_mse", "poisson")
 
 CLF_TREES = {
     "DecisionTreeClassifier": DecisionTreeClassifier,
@@ -208,18 +214,27 @@ def test_weighted_classification_toy():
                            "Failed with {0}".format(name))
 
 
-def test_regression_toy():
+@pytest.mark.parametrize("Tree", REG_TREES.values())
+@pytest.mark.parametrize("criterion", REG_CRITERIONS)
+def test_regression_toy(Tree, criterion):
     # Check regression on a toy dataset.
-    for name, Tree in REG_TREES.items():
-        reg = Tree(random_state=1)
-        reg.fit(X, y)
-        assert_almost_equal(reg.predict(T), true_result,
-                            err_msg="Failed with {0}".format(name))
+    if criterion == "poisson":
+        # make target positive while not touching the original y and
+        # true_result
+        a = np.abs(np.min(y)) + 1
+        y_train = np.array(y) + a
+        y_test = np.array(true_result) + a
+    else:
+        y_train = y
+        y_test = true_result
 
-        clf = Tree(max_features=1, random_state=1)
-        clf.fit(X, y)
-        assert_almost_equal(reg.predict(T), true_result,
-                            err_msg="Failed with {0}".format(name))
+    reg = Tree(criterion=criterion, random_state=1)
+    reg.fit(X, y_train)
+    assert_allclose(reg.predict(T), y_test)
+
+    clf = Tree(criterion=criterion, max_features=1, random_state=1)
+    clf.fit(X, y_train)
+    assert_allclose(reg.predict(T), y_test)
 
 
 def test_xor():
@@ -277,10 +292,13 @@ def test_diabetes_overfit(name, Tree, criterion):
 @skip_if_32bit
 @pytest.mark.parametrize("name, Tree", REG_TREES.items())
 @pytest.mark.parametrize(
-    "criterion, max_depth",
-    [("mse", 15), ("mae", 20), ("friedman_mse", 15)]
+    "criterion, max_depth, metric, max_loss",
+    [("mse", 15, mean_squared_error, 60),
+     ("mae", 20, mean_squared_error, 60),
+     ("friedman_mse", 15, mean_squared_error, 60),
+     ("poisson", 15, mean_poisson_deviance, 30)]
 )
-def test_diabetes_underfit(name, Tree, criterion, max_depth):
+def test_diabetes_underfit(name, Tree, criterion, max_depth, metric, max_loss):
     # check consistency of trees when the depth and the number of features are
     # limited
 
@@ -289,10 +307,8 @@ def test_diabetes_underfit(name, Tree, criterion, max_depth):
         max_features=6, random_state=0
     )
     reg.fit(diabetes.data, diabetes.target)
-    score = mean_squared_error(diabetes.target, reg.predict(diabetes.data))
-    assert score < 60 and score > 0, (
-        f"Failed with {name}, criterion = {criterion} and score = {score}"
-    )
+    loss = metric(diabetes.target, reg.predict(diabetes.data))
+    assert 0 < loss < max_loss
 
 
 def test_probability():
@@ -590,6 +606,13 @@ def test_error():
         with pytest.raises(NotFittedError):
             est.apply(T)
 
+    # non positive target for Poisson splitting Criterion
+    est = DecisionTreeRegressor(criterion="poisson")
+    with pytest.raises(ValueError, match="y is not positive.*Poisson"):
+        est.fit([[0, 1, 2]], [0, 0, 0])
+    with pytest.raises(ValueError, match="Some.*y are negative.*Poisson"):
+        est.fit([[0, 1, 2]], [5, -0.1, 2])
+
 
 def test_min_samples_split():
     """Test min_samples_split parameter"""
@@ -728,8 +751,8 @@ def test_min_weight_fraction_leaf_on_sparse_input(name):
 
 def check_min_weight_fraction_leaf_with_min_samples_leaf(name, datasets,
                                                          sparse=False):
-    """Test the interaction between min_weight_fraction_leaf and min_samples_leaf
-    when sample_weights is not provided in fit."""
+    """Test the interaction between min_weight_fraction_leaf and
+    min_samples_leaf when sample_weights is not provided in fit."""
     if sparse:
         X = DATASETS[datasets]["X_sparse"].astype(np.float32)
     else:
@@ -1948,6 +1971,136 @@ def check_apply_path_readonly(name):
 @pytest.mark.parametrize("name", ALL_TREES)
 def test_apply_path_readonly_all_trees(name):
     check_apply_path_readonly(name)
+
+
+@pytest.mark.parametrize("criterion", ["mse", "friedman_mse", "poisson"])
+@pytest.mark.parametrize("Tree", REG_TREES.values())
+def test_balance_property(criterion, Tree):
+    # Test that sum(y_pred)=sum(y_true) on training set.
+    # This works if the mean is predicted (should even be true for each leaf).
+    # MAE predicts the median and is therefore excluded from this test.
+
+    # Choose a training set with non-negative targets (for poisson)
+    X, y = diabetes.data, diabetes.target
+    reg = Tree(criterion=criterion)
+    reg.fit(X, y)
+    assert np.sum(reg.predict(X)) == pytest.approx(np.sum(y))
+
+
+@pytest.mark.parametrize("seed", range(3))
+def test_poisson_zero_nodes(seed):
+    # Test that sum(y)=0 and therefore y_pred=0 is forbidden on nodes.
+    X = [[0, 0], [0, 1], [0, 2], [0, 3],
+         [1, 0], [1, 2], [1, 2], [1, 3]]
+    y = [0, 0, 0, 0, 1, 2, 3, 4]
+    # Note that X[:, 0] == 0 is a 100% indicator for y == 0. The tree can
+    # easily learn that:
+    reg = DecisionTreeRegressor(criterion="mse", random_state=seed)
+    reg.fit(X, y)
+    assert np.amin(reg.predict(X)) == 0
+    # whereas Poisson must predict strictly positive numbers
+    reg = DecisionTreeRegressor(criterion="poisson", random_state=seed)
+    reg.fit(X, y)
+    assert np.all(reg.predict(X) > 0)
+
+    # Test additional dataset where something could go wrong.
+    n_features = 10
+    X, y = datasets.make_regression(
+        effective_rank=n_features * 2 // 3, tail_strength=0.6,
+        n_samples=1_000,
+        n_features=n_features,
+        n_informative=n_features * 2 // 3,
+        random_state=seed,
+    )
+    # some excess zeros
+    y[(-1 < y) & (y < 0)] = 0
+    # make sure the target is positive
+    y = np.abs(y)
+    reg = DecisionTreeRegressor(criterion='poisson', random_state=seed)
+    reg.fit(X, y)
+    assert np.all(reg.predict(X) > 0)
+
+
+def test_poisson_vs_mse():
+    # For a Poisson distributed target, Poisson loss should give better results
+    # than least squares measured in Poisson deviance as metric.
+    # We have a similar test, test_poisson(), in
+    # sklearn/ensemble/_hist_gradient_boosting/tests/test_gradient_boosting.py
+    # Note: Some fine tuning was needed to have metric_poi < metric_dummy on
+    # the test set!
+    rng = np.random.RandomState(42)
+    n_train, n_test, n_features = 500, 500, 10
+    X = datasets.make_low_rank_matrix(n_samples=n_train + n_test,
+                                      n_features=n_features, random_state=rng)
+    # We create a log-linear Poisson model and downscale coef as it will get
+    # exponentiated.
+    coef = rng.uniform(low=-2, high=2, size=n_features) / np.max(X, axis=0)
+    y = rng.poisson(lam=np.exp(X @ coef))
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=n_test,
+                                                        random_state=rng)
+    # We prevent some overfitting by setting min_samples_split=10.
+    tree_poi = DecisionTreeRegressor(criterion="poisson",
+                                     min_samples_split=10,
+                                     random_state=rng)
+    tree_mse = DecisionTreeRegressor(criterion="mse",
+                                     min_samples_split=10,
+                                     random_state=rng)
+
+    tree_poi.fit(X_train, y_train)
+    tree_mse.fit(X_train, y_train)
+    dummy = DummyRegressor(strategy="mean").fit(X_train, y_train)
+
+    for X, y, val in [(X_train, y_train, "train"), (X_test, y_test, "test")]:
+        metric_poi = mean_poisson_deviance(y, tree_poi.predict(X))
+        # mse might produce non-positive predictions => clip
+        metric_mse = mean_poisson_deviance(y, np.clip(tree_mse.predict(X),
+                                                      1e-15, None))
+        metric_dummy = mean_poisson_deviance(y, dummy.predict(X))
+        # As MSE might correctly predict 0 in train set, its train score can
+        # be better than Poisson. This is no longer the case for the test set.
+        if val == "test":
+            assert metric_poi < metric_mse
+        assert metric_poi < metric_dummy
+
+
+@pytest.mark.parametrize('criterion', REG_CRITERIONS)
+def test_decision_tree_regressor_sample_weight_consistentcy(
+        criterion):
+    """Test that the impact of sample_weight is consistent."""
+    tree_params = dict(criterion=criterion)
+    tree = DecisionTreeRegressor(**tree_params, random_state=42)
+    for kind in ['zeros', 'ones']:
+        check_sample_weights_invariance("DecisionTreeRegressor_" + criterion,
+                                        tree, kind='zeros')
+
+    rng = np.random.RandomState(0)
+    n_samples, n_features = 10, 5
+
+    X = rng.rand(n_samples, n_features)
+    y = np.mean(X, axis=1) + rng.rand(n_samples)
+    # make it positive in order to work also for poisson criterion
+    y += np.min(y) + 0.1
+
+    # check that multiplying sample_weight by 2 is equivalent
+    # to repeating corresponding samples twice
+    X2 = np.concatenate([X, X[:n_samples//2]], axis=0)
+    y2 = np.concatenate([y, y[:n_samples//2]])
+    sample_weight_1 = np.ones(len(y))
+    sample_weight_1[:n_samples//2] = 2
+
+    tree1 = DecisionTreeRegressor(**tree_params).fit(
+            X, y, sample_weight=sample_weight_1
+    )
+
+    tree2 = DecisionTreeRegressor(**tree_params).fit(
+            X2, y2, sample_weight=None
+    )
+
+    assert tree1.tree_.node_count == tree2.tree_.node_count
+    # Thresholds, tree.tree_.threshold, and values, tree.tree_.value, are not
+    # exactly the same, but on the training set, those differences do not
+    # matter and thus predictions are the same.
+    assert_allclose(tree1.predict(X), tree2.predict(X))
 
 
 # TODO: Remove in v0.26

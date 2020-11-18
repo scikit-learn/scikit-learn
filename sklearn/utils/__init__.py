@@ -497,9 +497,9 @@ def resample(*arrays,
       ...          random_state=0)
       [1, 1, 1, 0, 1]
 
-    See also
+    See Also
     --------
-    :func:`sklearn.utils.shuffle`
+    shuffle
     """
     max_n_samples = n_samples
     random_state = check_random_state(random_state)
@@ -626,9 +626,9 @@ def shuffle(*arrays, random_state=None, n_samples=None):
       >>> shuffle(y, n_samples=2, random_state=0)
       array([0, 1])
 
-    See also
+    See Also
     --------
-    :func:`sklearn.utils.resample`
+    resample
     """
     return resample(*arrays, replace=False, n_samples=n_samples,
                     random_state=random_state)
@@ -813,10 +813,7 @@ def _to_object_array(sequence):
     array([array([0]), array([1])], dtype=object)
     >>> _to_object_array([np.array([0]), np.array([1, 2])])
     array([array([0]), array([1, 2])], dtype=object)
-    >>> np.array([np.array([0]), np.array([1])])
-    array([[0],
-       [1]])
-    >>> np.array([np.array([0]), np.array([1, 2])])
+    >>> _to_object_array([np.array([0]), np.array([1, 2])])
     array([array([0]), array([1, 2])], dtype=object)
     """
     out = np.empty(len(sequence), dtype=object)
@@ -1071,7 +1068,7 @@ def check_matplotlib_support(caller_name):
 
 
 def check_pandas_support(caller_name):
-    """Raise ImportError with detailed error message if pandsa is not
+    """Raise ImportError with detailed error message if pandas is not
     installed.
 
     Plot utilities like :func:`fetch_openml` should lazily import
@@ -1097,11 +1094,11 @@ def all_estimators(type_filter=None):
     This function crawls the module and gets all classes that inherit
     from BaseEstimator. Classes that are defined in test-modules are not
     included.
-    By default meta_estimators such as GridSearchCV are also not included.
 
     Parameters
     ----------
-    type_filter : str or list of str, default=None
+    type_filter : {"classifier", "regressor", "cluster", "transformer"} \
+            or list of such str, default=None
         Which kind of estimators should be returned. If None, no filter is
         applied and all estimators are returned.  Possible values are
         'classifier', 'regressor', 'cluster' and 'transformer' to get

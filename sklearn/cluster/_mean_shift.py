@@ -16,10 +16,11 @@ Seeding is performed using a binning technique for scalability.
 
 import numpy as np
 import warnings
-from joblib import Parallel, delayed
+from joblib import Parallel
 
 from collections import defaultdict
 from ..utils.validation import check_is_fitted, _deprecate_positional_args
+from ..utils.fixes import delayed
 from ..utils import check_random_state, gen_batches, check_array
 from ..base import BaseEstimator, ClusterMixin
 from ..neighbors import NearestNeighbors

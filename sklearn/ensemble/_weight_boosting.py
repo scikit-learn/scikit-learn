@@ -360,20 +360,19 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
 
     See Also
     --------
-    AdaBoostRegressor
-        An AdaBoost regressor that begins by fitting a regressor on the
-        original dataset and then fits additional copies of the regressor
-        on the same dataset but where the weights of instances are
-        adjusted according to the error of the current prediction.
+    AdaBoostRegressor : An AdaBoost regressor that begins by fitting a
+        regressor on the original dataset and then fits additional copies of
+        the regressor on the same dataset but where the weights of instances
+        are adjusted according to the error of the current prediction.
 
-    GradientBoostingClassifier
-        GB builds an additive model in a forward stage-wise fashion. Regression
-        trees are fit on the negative gradient of the binomial or multinomial
-        deviance loss function. Binary classification is a special case where
-        only a single regression tree is induced.
+    GradientBoostingClassifier : GB builds an additive model in a forward
+        stage-wise fashion. Regression trees are fit on the negative gradient
+        of the binomial or multinomial deviance loss function. Binary
+        classification is a special case where only a single regression tree is
+        induced.
 
-    sklearn.tree.DecisionTreeClassifier
-        A non-parametric supervised learning method used for classification.
+    sklearn.tree.DecisionTreeClassifier : A non-parametric supervised learning
+        method used for classification.
         Creates a model that predicts the value of a target variable by
         learning simple decision rules inferred from the data features.
 
@@ -950,7 +949,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     >>> regr.score(X, y)
     0.9771...
 
-    See also
+    See Also
     --------
     AdaBoostClassifier, GradientBoostingRegressor,
     sklearn.tree.DecisionTreeRegressor

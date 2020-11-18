@@ -43,6 +43,14 @@ def setup_working_with_text_data():
         raise SkipTest("Skipping dataset loading doctests")
 
 
+def setup_loading_other_datasets():
+    try:
+        import pandas  # noqa
+    except ImportError:
+        raise SkipTest("Skipping loading_other_datasets.rst, "
+                       "pandas not installed")
+
+
 def setup_compose():
     try:
         import pandas  # noqa
@@ -55,6 +63,13 @@ def setup_impute():
         import pandas  # noqa
     except ImportError:
         raise SkipTest("Skipping impute.rst, pandas not installed")
+
+
+def setup_grid_search():
+    try:
+        import pandas  # noqa
+    except ImportError:
+        raise SkipTest("Skipping grid_search.rst, pandas not installed")
 
 
 def setup_unsupervised_learning():
@@ -84,7 +99,11 @@ def pytest_runtest_setup(item):
         setup_compose()
     elif IS_PYPY and fname.endswith('modules/feature_extraction.rst'):
         raise SkipTest('FeatureHasher is not compatible with PyPy')
+    elif fname.endswith('datasets/loading_other_datasets.rst'):
+        setup_loading_other_datasets()
     elif fname.endswith('modules/impute.rst'):
         setup_impute()
+    elif fname.endswith('modules/grid_search.rst'):
+        setup_grid_search()
     elif fname.endswith('statistical_inference/unsupervised_learning.rst'):
         setup_unsupervised_learning()

@@ -12,7 +12,7 @@ from itertools import chain
 import numbers
 import numpy as np
 from scipy import sparse
-from joblib import Parallel, delayed
+from joblib import Parallel
 
 from ..base import clone, TransformerMixin
 from ..utils._estimator_html_repr import _VisualBlock
@@ -25,6 +25,7 @@ from ..utils import _determine_key_type
 from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_array, check_is_fitted
 from ..utils.validation import _deprecate_positional_args
+from ..utils.fixes import delayed
 
 
 __all__ = [
@@ -145,12 +146,12 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     in the `passthrough` keyword. Those columns specified with `passthrough`
     are added at the right to the output of the transformers.
 
-    See also
+    See Also
     --------
-    sklearn.compose.make_column_transformer : convenience function for
+    make_column_transformer : Convenience function for
         combining the outputs of multiple transformer objects applied to
         column subsets of the original feature space.
-    sklearn.compose.make_column_selector : convenience function for selecting
+    make_column_selector : Convenience function for selecting
         columns based on datatype or the columns name with a regex pattern.
 
     Examples
@@ -207,6 +208,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     def get_params(self, deep=True):
         """Get parameters for this estimator.
 
+        Returns the parameters given in the constructor as well as the
+        estimators contained within the `transformers` of the
+        `ColumnTransformer`.
+
         Parameters
         ----------
         deep : bool, default=True
@@ -223,7 +228,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
 
-        Valid parameter keys can be listed with ``get_params()``.
+        Valid parameter keys can be listed with ``get_params()``. Note that you
+        can directly set the parameters of the estimators contained in
+        `transformers` of `ColumnTransformer`.
 
         Returns
         -------
@@ -766,9 +773,9 @@ def make_column_transformer(*transformers,
     -------
     ct : ColumnTransformer
 
-    See also
+    See Also
     --------
-    sklearn.compose.ColumnTransformer : Class that allows combining the
+    ColumnTransformer : Class that allows combining the
         outputs of multiple transformer objects used on column subsets
         of the data into a single feature space.
 
@@ -832,9 +839,9 @@ class make_column_selector:
         Callable for column selection to be used by a
         :class:`ColumnTransformer`.
 
-    See also
+    See Also
     --------
-    sklearn.compose.ColumnTransformer : Class that allows combining the
+    ColumnTransformer : Class that allows combining the
         outputs of multiple transformer objects used on column subsets
         of the data into a single feature space.
 

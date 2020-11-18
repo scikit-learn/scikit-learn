@@ -1333,3 +1333,17 @@ def test_attr_error_raised_if_not_fitted():
     )
     with pytest.raises(AttributeError, match=msg):
         gbr.n_classes_
+
+
+# TODO: Update in 0.26 to check for the error raised
+@pytest.mark.parametrize('estimator', [
+    GradientBoostingClassifier(criterion='mae'),
+    GradientBoostingRegressor(criterion='mae')
+])
+def test_criterion_mae_deprecation(estimator):
+    # checks whether a deprecation warning is issues when criterion='mae'
+    # is used.
+    msg = ("criterion='mae' was deprecated in version 0.24 and "
+           "will be removed in version 0.26.")
+    with pytest.warns(FutureWarning, match=msg):
+        estimator.fit(X, y)

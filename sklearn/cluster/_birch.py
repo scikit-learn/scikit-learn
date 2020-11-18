@@ -394,9 +394,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
 
     See Also
     --------
-
-    MiniBatchKMeans
-        Alternative  implementation that does incremental updates
+    MiniBatchKMeans : Alternative implementation that does incremental updates
         of the centers' positions using mini-batches.
 
     Notes

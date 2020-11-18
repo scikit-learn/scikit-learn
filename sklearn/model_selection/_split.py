@@ -121,7 +121,7 @@ class LeaveOneOut(BaseCrossValidator):
     For large datasets one should favor :class:`KFold`, :class:`ShuffleSplit`
     or :class:`StratifiedKFold`.
 
-    Read more in the :ref:`User Guide <cross_validation>`.
+    Read more in the :ref:`User Guide <leave_one_out>`.
 
     Examples
     --------
@@ -144,13 +144,11 @@ class LeaveOneOut(BaseCrossValidator):
     TRAIN: [0] TEST: [1]
     [[1 2]] [[3 4]] [1] [2]
 
-    See also
+    See Also
     --------
-    LeaveOneGroupOut
-        For splitting the data according to explicit, domain-specific
-        stratification of the dataset.
-
-    GroupKFold: K-fold iterator variant with non-overlapping groups.
+    LeaveOneGroupOut : For splitting the data according to explicit,
+        domain-specific stratification of the dataset.
+    GroupKFold : K-fold iterator variant with non-overlapping groups.
     """
 
     def _iter_test_indices(self, X, y=None, groups=None):
@@ -202,7 +200,7 @@ class LeavePOut(BaseCrossValidator):
     large datasets one should favor :class:`KFold`, :class:`StratifiedKFold`
     or :class:`ShuffleSplit`.
 
-    Read more in the :ref:`User Guide <cross_validation>`.
+    Read more in the :ref:`User Guide <leave_p_out>`.
 
     Parameters
     ----------
@@ -365,7 +363,7 @@ class KFold(_BaseKFold):
     Each fold is then used once as a validation while the k - 1 remaining
     folds form the training set.
 
-    Read more in the :ref:`User Guide <cross_validation>`.
+    Read more in the :ref:`User Guide <k_fold>`.
 
     Parameters
     ----------
@@ -414,16 +412,15 @@ class KFold(_BaseKFold):
     split. You can make the results identical by setting `random_state`
     to an integer.
 
-    See also
+    See Also
     --------
-    StratifiedKFold
-        Takes group information into account to avoid building folds with
-        imbalanced class distributions (for binary or multiclass
+    StratifiedKFold : Takes group information into account to avoid building
+        folds with imbalanced class distributions (for binary or multiclass
         classification tasks).
 
-    GroupKFold: K-fold iterator variant with non-overlapping groups.
+    GroupKFold : K-fold iterator variant with non-overlapping groups.
 
-    RepeatedKFold: Repeats K-Fold n times.
+    RepeatedKFold : Repeats K-Fold n times.
     """
     @_deprecate_positional_args
     def __init__(self, n_splits=5, *, shuffle=False,
@@ -455,6 +452,8 @@ class GroupKFold(_BaseKFold):
 
     The folds are approximately balanced in the sense that the number of
     distinct groups is approximately the same in each fold.
+
+    Read more in the :ref:`User Guide <group_k_fold>`.
 
     Parameters
     ----------
@@ -491,11 +490,10 @@ class GroupKFold(_BaseKFold):
      [7 8]] [[1 2]
      [3 4]] [3 4] [1 2]
 
-    See also
+    See Also
     --------
-    LeaveOneGroupOut
-        For splitting the data according to explicit domain-specific
-        stratification of the dataset.
+    LeaveOneGroupOut : For splitting the data according to explicit
+        domain-specific stratification of the dataset.
     """
     def __init__(self, n_splits=5):
         super().__init__(n_splits, shuffle=False, random_state=None)
@@ -565,7 +563,7 @@ class GroupKFold(_BaseKFold):
 
 
 class StratifiedKFold(_BaseKFold):
-    """Stratified K-Folds cross-validator
+    """Stratified K-Folds cross-validator.
 
     Provides train/test indices to split data in train/test sets.
 
@@ -573,7 +571,7 @@ class StratifiedKFold(_BaseKFold):
     stratified folds. The folds are made by preserving the percentage of
     samples for each class.
 
-    Read more in the :ref:`User Guide <cross_validation>`.
+    Read more in the :ref:`User Guide <stratified_k_fold>`.
 
     Parameters
     ----------
@@ -629,9 +627,9 @@ class StratifiedKFold(_BaseKFold):
     .. versionchanged:: 0.22
         The previous implementation did not follow the last constraint.
 
-    See also
+    See Also
     --------
-    RepeatedStratifiedKFold: Repeats Stratified K-Fold n times.
+    RepeatedStratifiedKFold : Repeats Stratified K-Fold n times.
     """
     @_deprecate_positional_args
     def __init__(self, n_splits=5, *, shuffle=False, random_state=None):
@@ -737,8 +735,6 @@ class StratifiedKFold(_BaseKFold):
 class TimeSeriesSplit(_BaseKFold):
     """Time Series cross-validator
 
-    .. versionadded:: 0.18
-
     Provides train/test indices to split time series data samples
     that are observed at fixed time intervals, in train/test sets.
     In each split, test indices must be higher than before, and thus shuffling
@@ -751,7 +747,9 @@ class TimeSeriesSplit(_BaseKFold):
     Note that unlike standard cross-validation methods, successive
     training sets are supersets of those that come before them.
 
-    Read more in the :ref:`User Guide <cross_validation>`.
+    Read more in the :ref:`User Guide <time_series_split>`.
+
+    .. versionadded:: 0.18
 
     Parameters
     ----------
@@ -769,9 +767,13 @@ class TimeSeriesSplit(_BaseKFold):
         ``n_samples // (n_splits + 1)``, which is the maximum allowed value
         with ``gap=0``.
 
+        .. versionadded:: 0.24
+
     gap : int, default=0
         Number of samples to exclude from the end of each train set before
         the test set.
+
+        .. versionadded:: 0.24
 
     Examples
     --------
@@ -815,7 +817,7 @@ class TimeSeriesSplit(_BaseKFold):
     Notes
     -----
     The training set has size ``i * n_samples // (n_splits + 1)
-    + n_samples % (n_splits + 1)`` in the ``i``th split,
+    + n_samples % (n_splits + 1)`` in the ``i`` th split,
     with a test set of size ``n_samples//(n_splits + 1)`` by default,
     where ``n_samples`` is the number of samples.
     """
@@ -896,7 +898,7 @@ class LeaveOneGroupOut(BaseCrossValidator):
     For instance the groups could be the year of collection of the samples
     and thus allow for cross-validation against time-based splits.
 
-    Read more in the :ref:`User Guide <cross_validation>`.
+    Read more in the :ref:`User Guide <leave_one_group_out>`.
 
     Examples
     --------
@@ -1010,7 +1012,7 @@ class LeavePGroupsOut(BaseCrossValidator):
     ``p`` different values of the groups while the latter uses samples
     all assigned the same groups.
 
-    Read more in the :ref:`User Guide <cross_validation>`.
+    Read more in the :ref:`User Guide <leave_p_groups_out>`.
 
     Parameters
     ----------
@@ -1046,9 +1048,9 @@ class LeavePGroupsOut(BaseCrossValidator):
     [[1 2]] [[3 4]
      [5 6]] [1] [2 1]
 
-    See also
+    See Also
     --------
-    GroupKFold: K-fold iterator variant with non-overlapping groups.
+    GroupKFold : K-fold iterator variant with non-overlapping groups.
     """
 
     def __init__(self, n_groups):
@@ -1235,7 +1237,7 @@ class RepeatedKFold(_RepeatedSplits):
 
     Repeats K-Fold n times with different randomization in each repetition.
 
-    Read more in the :ref:`User Guide <cross_validation>`.
+    Read more in the :ref:`User Guide <repeated_k_fold>`.
 
     Parameters
     ----------
@@ -1273,9 +1275,9 @@ class RepeatedKFold(_RepeatedSplits):
     split. You can make the results identical by setting `random_state`
     to an integer.
 
-    See also
+    See Also
     --------
-    RepeatedStratifiedKFold: Repeats Stratified K-Fold n times.
+    RepeatedStratifiedKFold : Repeats Stratified K-Fold n times.
     """
     @_deprecate_positional_args
     def __init__(self, *, n_splits=5, n_repeats=10, random_state=None):
@@ -1290,7 +1292,7 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
     Repeats Stratified K-Fold n times with different randomization in each
     repetition.
 
-    Read more in the :ref:`User Guide <cross_validation>`.
+    Read more in the :ref:`User Guide <repeated_k_fold>`.
 
     Parameters
     ----------
@@ -1329,9 +1331,9 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
     split. You can make the results identical by setting `random_state`
     to an integer.
 
-    See also
+    See Also
     --------
-    RepeatedKFold: Repeats K-Fold n times.
+    RepeatedKFold : Repeats K-Fold n times.
     """
     @_deprecate_positional_args
     def __init__(self, *, n_splits=5, n_repeats=10, random_state=None):
@@ -1423,7 +1425,7 @@ class ShuffleSplit(BaseShuffleSplit):
     do not guarantee that all folds will be different, although this is
     still very likely for sizeable datasets.
 
-    Read more in the :ref:`User Guide <cross_validation>`.
+    Read more in the :ref:`User Guide <ShuffleSplit>`.
 
     Parameters
     ----------
@@ -1523,6 +1525,7 @@ class GroupShuffleSplit(ShuffleSplit):
     Note: The parameters ``test_size`` and ``train_size`` refer to groups, and
     not to samples, as in ShuffleSplit.
 
+    Read more in the :ref:`User Guide <group_shuffle_split>`.
 
     Parameters
     ----------
@@ -1636,7 +1639,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     do not guarantee that all folds will be different, although this is
     still very likely for sizeable datasets.
 
-    Read more in the :ref:`User Guide <cross_validation>`.
+    Read more in the :ref:`User Guide <stratified_shuffle_split>`.
 
     Parameters
     ----------
@@ -1867,7 +1870,7 @@ class PredefinedSplit(BaseCrossValidator):
     Provides train/test indices to split data into train/test sets using a
     predefined scheme specified by the user with the ``test_fold`` parameter.
 
-    Read more in the :ref:`User Guide <cross_validation>`.
+    Read more in the :ref:`User Guide <predefined_split>`.
 
     .. versionadded:: 0.16
 
@@ -2117,6 +2120,7 @@ def train_test_split(*arrays,
     stratify : array-like, default=None
         If not None, data is split in a stratified fashion, using this as
         the class labels.
+        Read more in the :ref:`User Guide <stratification>`.
 
     Returns
     -------
@@ -2235,3 +2239,14 @@ def _build_repr(self):
         params[key] = value
 
     return '%s(%s)' % (class_name, _pprint(params, offset=len(class_name)))
+
+
+def _yields_constant_splits(cv):
+    # Return True if calling cv.split() always returns the same splits
+    # We assume that if a cv doesn't have a shuffle parameter, it shuffles by
+    # default (e.g. ShuffleSplit). If it actually doesn't shuffle (e.g.
+    # LeaveOneOut), then it won't have a random_state parameter anyway, in
+    # which case it will default to 0, leading to output=True
+    shuffle = getattr(cv, 'shuffle', True)
+    random_state = getattr(cv, 'random_state', 0)
+    return isinstance(random_state, numbers.Integral) or not shuffle

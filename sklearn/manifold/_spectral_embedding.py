@@ -21,6 +21,7 @@ from ..utils.fixes import lobpcg
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph, NearestNeighbors
 from ..utils.validation import _deprecate_positional_args
+from ..utils.deprecation import deprecated
 
 
 def _graph_connected_component(graph, node_id):
@@ -406,7 +407,7 @@ class SpectralEmbedding(BaseEstimator):
         Number of nearest neighbors for nearest_neighbors graph building.
         If None, n_neighbors will be set to max(n_samples/10, 1).
 
-    n_jobs : int, default=None)
+    n_jobs : int, default=None
         The number of parallel jobs to run.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -462,6 +463,14 @@ class SpectralEmbedding(BaseEstimator):
         self.n_neighbors = n_neighbors
         self.n_jobs = n_jobs
 
+    def _more_tags(self):
+        return {'pairwise': self.affinity in ["precomputed",
+                                              "precomputed_nearest_neighbors"]}
+
+    # TODO: Remove in 0.26
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 0.26.")
     @property
     def _pairwise(self):
         return self.affinity in ["precomputed",
