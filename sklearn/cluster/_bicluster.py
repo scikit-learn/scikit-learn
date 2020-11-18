@@ -60,9 +60,9 @@ def _bistochastic_normalize(X, max_iter=1000, tol=1e-5):
     for _ in range(max_iter):
         X_new, _, _ = _scale_normalize(X_scaled)
         if issparse(X):
-            dist = norm(X_scaled.data - X.data)
+            dist = norm(X_scaled.data - X.data, check_finite=False)
         else:
-            dist = norm(X_scaled - X_new)
+            dist = norm(X_scaled - X_new, check_finite=False)
         X_scaled = X_new
         if dist is not None and dist < tol:
             break
@@ -534,7 +534,10 @@ class SpectralBiclustering(BaseSpectral):
             return centroid[labels].ravel()
         piecewise_vectors = np.apply_along_axis(make_piecewise,
                                                 axis=1, arr=vectors)
-        dists = np.apply_along_axis(norm, axis=1,
+
+        def norm_without_check_finite(v):
+            return norm(v, check_finite=False)
+        dists = np.apply_along_axis(norm_without_check_finite, axis=1,
                                     arr=(vectors - piecewise_vectors))
         result = vectors[np.argsort(dists)[:n_best]]
         return result
