@@ -70,8 +70,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "_svm_cython_blas_helpers.h"
 #include "../newrand/newrand.h"
 
-#include <unordered_map>
-
 #ifndef _LIBSVM_CPP
 typedef double Qfloat;
 typedef signed char schar;
