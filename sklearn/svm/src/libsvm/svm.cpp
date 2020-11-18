@@ -2420,42 +2420,46 @@ static void remove_zero_weight(PREFIX(problem) *newprob, const PREFIX(problem) *
 }
 
 #ifdef _DENSE_REP
-void perm_sort(svm_node *x, int *perm, int length)
+static void perm_sort(svm_node *x, int *perm, int length)
 {
-     //sort x by the perm;
     int dim = x[0].dim;
-    std::unordered_map<int,svm_node*> ump;
+    int reorder_flag[length] = {0};
+    int reorder_link[length];
+    int reverse_perm[length];
 
+    double * reorder_buffer = new double[dim];
+
+    // Generate the reversed perm map
     for(int i=0; i<length; i++) {
-        if (perm[i] < i) {
-            double * buffer = new double[dim];
-            memcpy(buffer, x[perm[i]].values, dim*sizeof(double));
-            svm_node *p = new svm_node;
-            p->dim = x[perm[i]].dim;
-            p->ind = x[perm[i]].ind;
-            p->values = buffer;
-            ump[perm[i]] = p;
-        }
+        reverse_perm[perm[i]] = i;
     }
 
     for(int i=0; i<length; i++) {
-        int src = perm[i];
-        if (src > i) {
-            x[i].dim = x[src].dim;
-            x[i].ind = x[src].ind;
-            memcpy(x[i].values, x[src].values, dim*sizeof(double));
-        } else if (src < i) {
-            svm_node *p = ump[src];
-            x[i].dim = p->dim;
-            x[i].ind = p->ind;
-            memcpy(x[i].values, p->values, dim*sizeof(double));
+        // Find the first not reordered element
+        if (reorder_flag[i] == 0 && reverse_perm[i] != i) {
+            int index_link = 0;
+            int index_r_perm = i;
+
+            memcpy(reorder_buffer, x[i].values, dim*sizeof(double));
+            while (1) {
+                reorder_link[index_link++] = index_r_perm;
+                reorder_flag[index_r_perm] = 1;
+                index_r_perm = reverse_perm[index_r_perm];
+                if (index_r_perm == i) {
+                    index_link --;
+                    break;
+                }
+            }
+
+            memcpy(x[reorder_link[0]].values, x[reorder_link[index_link]].values, dim*sizeof(double));
+            for (; index_link > 1; index_link--) {
+                memcpy(x[reorder_link[index_link]].values, x[reorder_link[index_link-1]].values, dim*sizeof(double));
+            }
+            memcpy(x[reorder_link[1]].values, reorder_buffer, dim*sizeof(double));
         }
     }
 
-    for(std::unordered_map<int,svm_node*>::iterator i=ump.begin(); i!=ump.end(); i++){
-        delete i->second->values;
-        delete i->second;
-    }
+    delete reorder_buffer;
 }
 #endif
 
