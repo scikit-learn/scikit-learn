@@ -99,13 +99,14 @@ def make_classification(n_samples=100, n_features=20, *, n_informative=2,
         classes are balanced. Note that if ``len(weights) == n_classes - 1``,
         then the last class weight is automatically inferred.
         More than ``n_samples`` samples may be returned if the sum of
-        ``weights`` exceeds 1.
+        ``weights`` exceeds 1. Note that the actual class proportions will
+        not exactly match ``weights`` when ``flip_y`` isn't 0.
 
     flip_y : float, default=0.01
         The fraction of samples whose class is assigned randomly. Larger
         values introduce noise in the labels and make the classification
         task harder. Note that the default setting flip_y > 0 might lead
-        to less than n_classes in y in some cases.
+        to less than ``n_classes`` in y in some cases.
 
     class_sep : float, default=1.0
         The factor multiplying the hypercube size.  Larger values spread
@@ -618,6 +619,9 @@ def make_circles(n_samples=100, *, shuffle=True, noise=None, random_state=None,
         If two-element tuple, number of points in outer circle and inner
         circle.
 
+        .. versionchanged:: 0.23
+           Added two-element tuple.
+
     shuffle : bool, default=True
         Whether to shuffle the samples.
 
@@ -688,6 +692,9 @@ def make_moons(n_samples=100, *, shuffle=True, noise=None, random_state=None):
     n_samples : int or tuple of shape (2,), dtype=int, default=100
         If int, the total number of points generated.
         If two-element tuple, number of points in each of two moons.
+
+        .. versionchanged:: 0.23
+           Added two-element tuple.
 
     shuffle : bool, default=True
         Whether to shuffle the samples.

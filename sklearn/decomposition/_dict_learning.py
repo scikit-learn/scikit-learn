@@ -11,7 +11,7 @@ from math import ceil
 
 import numpy as np
 from scipy import linalg
-from joblib import Parallel, delayed, effective_n_jobs
+from joblib import Parallel, effective_n_jobs
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import deprecated
@@ -19,6 +19,7 @@ from ..utils import (check_array, check_random_state, gen_even_slices,
                      gen_batches)
 from ..utils.extmath import randomized_svd, row_norms
 from ..utils.validation import check_is_fitted, _deprecate_positional_args
+from ..utils.fixes import delayed
 from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
 
 
@@ -906,7 +907,7 @@ class _BaseSparseCoding(TransformerMixin):
     def _transform(self, X, dictionary):
         """Private method allowing to accomodate both DictionaryLearning and
         SparseCoder."""
-        X = check_array(X)
+        X = self._validate_data(X, reset=False)
 
         code = sparse_encode(
             X, dictionary, algorithm=self.transform_algorithm,
@@ -1621,7 +1622,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         """
         if not hasattr(self, 'random_state_'):
             self.random_state_ = check_random_state(self.random_state)
-        X = check_array(X)
         if hasattr(self, 'components_'):
             dict_init = self.components_
         else:
@@ -1629,6 +1629,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         inner_stats = getattr(self, 'inner_stats_', None)
         if iter_offset is None:
             iter_offset = getattr(self, 'iter_offset_', 0)
+        X = self._validate_data(X, reset=(iter_offset == 0))
         U, (A, B) = dict_learning_online(
             X, self.n_components, alpha=self.alpha,
             n_iter=1, method=self.fit_algorithm,

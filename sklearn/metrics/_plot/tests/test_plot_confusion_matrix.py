@@ -314,3 +314,23 @@ def test_default_labels(pyplot, display_labels, expected_labels):
 
     assert_array_equal(x_ticks, expected_labels)
     assert_array_equal(y_ticks, expected_labels)
+
+
+def test_error_on_a_dataset_with_unseen_labels(
+    pyplot, fitted_clf, data, n_classes
+):
+    """Check that when labels=None, the unique values in `y_pred` and `y_true`
+    will be used.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/pull/18405
+    """
+    X, y = data
+
+    # create unseen labels in `y_true` not seen during fitting and not present
+    # in 'fitted_clf.classes_'
+    y = y + 1
+    disp = plot_confusion_matrix(fitted_clf, X, y)
+
+    display_labels = [tick.get_text() for tick in disp.ax_.get_xticklabels()]
+    expected_labels = [str(i) for i in range(n_classes + 1)]
+    assert_array_equal(expected_labels, display_labels)

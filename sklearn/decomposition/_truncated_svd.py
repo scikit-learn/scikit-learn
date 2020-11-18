@@ -128,7 +128,7 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
         self.tol = tol
 
     def fit(self, X, y=None):
-        """Fit LSI model on training data X.
+        """Fit model on training data X.
 
         Parameters
         ----------
@@ -146,7 +146,7 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
         return self
 
     def fit_transform(self, X, y=None):
-        """Fit LSI model to X and perform dimensionality reduction on X.
+        """Fit model to X and perform dimensionality reduction on X.
 
         Parameters
         ----------
@@ -185,8 +185,15 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
 
         self.components_ = VT
 
+        # As a result of the SVD approximation error on X ~ U @ Sigma @ V.T,
+        # X @ V is not the same as U @ Sigma
+        if self.algorithm == "randomized" or \
+                (self.algorithm == "arpack" and self.tol > 0):
+            X_transformed = safe_sparse_dot(X, self.components_.T)
+        else:
+            X_transformed = U * Sigma
+
         # Calculate explained variance & explained variance ratio
-        X_transformed = U * Sigma
         self.explained_variance_ = exp_var = np.var(X_transformed, axis=0)
         if sp.issparse(X):
             _, full_var = mean_variance_axis(X, axis=0)
@@ -211,8 +218,8 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
         X_new : ndarray of shape (n_samples, n_components)
             Reduced version of X. This will always be a dense array.
         """
-        X = check_array(X, accept_sparse=['csr', 'csc'])
         check_is_fitted(self)
+        X = self._validate_data(X, accept_sparse=['csr', 'csc'], reset=False)
         return safe_sparse_dot(X, self.components_.T)
 
     def inverse_transform(self, X):

@@ -558,15 +558,32 @@ def test_pipeline_fit_transform():
     assert_array_almost_equal(X_trans, X_trans2)
 
 
-def test_pipeline_slice():
-    pipe = Pipeline([('transf1', Transf()),
-                     ('transf2', Transf()),
-                     ('clf', FitParamT())])
-    pipe2 = pipe[:-1]
-    assert isinstance(pipe2, Pipeline)
-    assert pipe2.steps == pipe.steps[:-1]
-    assert 2 == len(pipe2.named_steps)
-    assert_raises(ValueError, lambda: pipe[::-1])
+@pytest.mark.parametrize("start, end", [(0, 1), (0, 2), (1, 2), (1, 3),
+                                        (None, 1), (1, None), (None, None)])
+def test_pipeline_slice(start, end):
+    pipe = Pipeline(
+        [("transf1", Transf()), ("transf2", Transf()), ("clf", FitParamT())],
+        memory="123",
+        verbose=True,
+    )
+    pipe_slice = pipe[start:end]
+    # Test class
+    assert isinstance(pipe_slice, Pipeline)
+    # Test steps
+    assert pipe_slice.steps == pipe.steps[start:end]
+    # Test named_steps attribute
+    assert list(pipe_slice.named_steps.items()) == list(
+        pipe.named_steps.items())[start:end]
+    # Test the rest of the parameters
+    pipe_params = pipe.get_params(deep=False)
+    pipe_slice_params = pipe_slice.get_params(deep=False)
+    del pipe_params["steps"]
+    del pipe_slice_params["steps"]
+    assert pipe_params == pipe_slice_params
+    # Test exception
+    msg = "Pipeline slicing only supports a step of 1"
+    with pytest.raises(ValueError, match=msg):
+        pipe[start:end:-1]
 
 
 def test_pipeline_index():

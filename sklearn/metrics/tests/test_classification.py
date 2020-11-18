@@ -4,7 +4,6 @@ from itertools import product
 from itertools import chain
 from itertools import permutations
 import warnings
-import re
 
 import numpy as np
 from scipy import linalg
@@ -2320,9 +2319,12 @@ def test_brier_score_loss():
     # ensure to raise an error for multiclass y_true
     y_true = np.array([0, 1, 2, 0])
     y_pred = np.array([0.8, 0.6, 0.4, 0.2])
-    error_message = ("Only binary classification is supported. Labels "
-                     "in y_true: {}".format(np.array([0, 1, 2])))
-    with pytest.raises(ValueError, match=re.escape(error_message)):
+    error_message = (
+        "Only binary classification is supported. The type of the target is "
+        "multiclass"
+    )
+
+    with pytest.raises(ValueError, match=error_message):
         brier_score_loss(y_true, y_pred)
 
     # calculate correctly when there's only one class in y_true

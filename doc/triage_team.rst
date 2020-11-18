@@ -10,7 +10,19 @@
     <p>Juan Carlos Alfaro Jiménez</p>
     </div>
     <div>
+    <a href='https://github.com/lucyleeow'><img src='https://avatars0.githubusercontent.com/u/23182829?v=4' class='avatar' /></a> <br />
+    <p>Lucy Liu</p>
+    </div>
+    <div>
     <a href='https://github.com/cmarmo'><img src='https://avatars3.githubusercontent.com/u/1662261?v=4' class='avatar' /></a> <br />
     <p>Chiara Marmo</p>
+    </div>
+    <div>
+    <a href='https://github.com/reshamas'><img src='https://avatars0.githubusercontent.com/u/2507232?v=4' class='avatar' /></a> <br />
+    <p>Reshama Shaikh</p>
+    </div>
+    <div>
+    <a href='https://github.com/albertcthomas'><img src='https://avatars3.githubusercontent.com/u/15966638?v=4' class='avatar' /></a> <br />
+    <p>Albert Thomas</p>
     </div>
     </div>

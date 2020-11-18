@@ -30,7 +30,7 @@ Label propagation denotes a few variations of semi-supervised graph
 inference algorithms. 
 
 A few features available in this model:
-  * Can be used for classification and regression tasks
+  * Used for classification tasks
   * Kernel methods to project data into alternate dimensional spaces
 
 `scikit-learn` provides two label propagation models:
