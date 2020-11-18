@@ -116,10 +116,10 @@ jobs:
       - name: Build source distribution
         run: bash build_tools/github/build_source.sh
         env:
-          OMP_NUM_THREADS=2
-          OPENBLAS_NUM_THREADS=2
-          SKLEARN_SKIP_NETWORK_TESTS=1
-          SKLEARN_BUILD_PARALLEL=3
+          OMP_NUM_THREADS: 2
+          OPENBLAS_NUM_THREADS: 2
+          SKLEARN_SKIP_NETWORK_TESTS: 1
+          SKLEARN_BUILD_PARALLEL: 3
 
       - name: Test source distribution
         run: bash build_tools/github/test_source.sh
