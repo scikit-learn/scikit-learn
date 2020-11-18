@@ -78,23 +78,19 @@ jobs:
 
       - name: Build and test wheels
         env:
-          # Set the directory where the wheel is unpacked
+          CONFTEST_PATH: ${{ github.workspace }}/conftest.py
+          CONFTEST_NAME: conftest.py
           CIBW_ENVIRONMENT: WHEEL_DIRNAME=scikit_learn-$SCIKIT_LEARN_VERSION
                             OMP_NUM_THREADS=2
                             OPENBLAS_NUM_THREADS=2
                             SKLEARN_SKIP_NETWORK_TESTS=1
                             SKLEARN_BUILD_PARALLEL=3
           CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
+          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: bash build_tools/github/repair_windows_wheels.sh {wheel} {dest_dir} ${{ matrix.bitness }} 
+          CIBW_BEFORE_TEST_WINDOWS: bash build_tools/github/build_minimal_windows_image.sh ${{ matrix.python }} ${{ matrix.bitness }}
           CIBW_TEST_REQUIRES: pytest pandas threadpoolctl
-          # Test that there are no links to system libraries
-          CIBW_TEST_COMMAND: pytest --pyargs sklearn &&
-                             python -m threadpoolctl -i sklearn
-          # By default, the Windows wheels are not repaired.
-          # In this case, we need to vendor the vcomp140.dll
-          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: wheel unpack {wheel} &&
-                                             python build_tools/github/vendor_vcomp140.py %WHEEL_DIRNAME% &&
-                                             wheel pack %WHEEL_DIRNAME% -d {dest_dir} &&
-                                             rmdir /s /q %WHEEL_DIRNAME%
+          CIBW_TEST_COMMAND: bash {project}/build_tools/github/test_wheels.sh
+          CIBW_TEST_COMMAND_WINDOWS: bash {project}/build_tools/github/test_windows_wheels.sh ${{ matrix.python }} ${{ matrix.bitness }}
 
         run: bash build_tools/github/build_wheels.sh
 
@@ -117,8 +113,17 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v2
 
-      - name: Build and test source distribution
+      - name: Build source distribution
         run: bash build_tools/github/build_source.sh
+        env:
+          SKLEARN_BUILD_PARALLEL: 3
+
+      - name: Test source distribution
+        run: bash build_tools/github/test_source.sh
+        env:
+          OMP_NUM_THREADS: 2
+          OPENBLAS_NUM_THREADS: 2
+          SKLEARN_SKIP_NETWORK_TESTS: 1
 
       - name: Store artifacts
         uses: actions/upload-artifact@v2
@@ -130,7 +135,7 @@ jobs:
     name: Upload to Anaconda
     runs-on: ubuntu-latest
     needs: [build_wheels, build_sdist]
-    # The artifacts are not be uploaded on PRs
+    # The artifacts cannot be uploaded on PRs
     if: github.event_name != 'pull_request'
 
     steps:
