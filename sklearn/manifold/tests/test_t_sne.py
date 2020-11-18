@@ -976,11 +976,11 @@ def test_tsne_with_mahalanobis_distance():
     precomputed_X = squareform(pdist(X, metric='mahalanobis'), checks=True)
     ref = TSNE(verbose=1, perplexity=40, n_iter=250, learning_rate=50,
                n_components=n_embedding, random_state=0,
-               metric='precomputed').fit_transform(precomputed_X)
+               metric='precomputed', square_distances=True).fit_transform(precomputed_X)
 
     now = TSNE(verbose=1, perplexity=40, n_iter=250, learning_rate=50,
                n_components=n_embedding, random_state=0, metric='mahalanobis',
-               metric_params={'V': np.cov(X.T)}).fit_transform(X)
+               metric_params={'V': np.cov(X.T)}, square_distances=True).fit_transform(X)
     assert_array_equal(ref, now)
 
 
@@ -997,10 +997,10 @@ def test_tsne_with_euclidean_distance(method):
                    'learning_rate': 50, 'n_components': n_embedding,
                    'random_state': 0, 'method': method}
 
-    tsne_ref = TSNE(**tsne_params, metric='precomputed')
-    tsne_now = TSNE(**tsne_params, metric='euclidean')
+    tsne_ref = TSNE(**tsne_params, metric='precomputed', square_distances=True)
+    tsne_now = TSNE(**tsne_params, metric='euclidean', square_distances=True)
 
-    precomputed_X = squareform(pdist(X, metric='euclidean'), checks=True)**2
+    precomputed_X = pairwise_distances(X, metric='euclidean')
     ref = tsne_ref.fit_transform(precomputed_X)
 
     now = tsne_now.fit_transform(X)
@@ -1021,8 +1021,8 @@ def test_tsne_metric_params(method):
                    'learning_rate': 50, 'n_components': n_embedding,
                    'random_state': 0, 'method': method}
 
-    tsne_ref = TSNE(**tsne_params, metric='precomputed')
-    tsne_now = TSNE(**tsne_params)
+    tsne_ref = TSNE(**tsne_params, metric='precomputed', square_distances=True)
+    tsne_now = TSNE(**tsne_params, square_distances=True)
 
     # 1. check case metric='minkowski', p=2
     precomputed_X = squareform(pdist(X, metric='minkowski', p=2), checks=True)
