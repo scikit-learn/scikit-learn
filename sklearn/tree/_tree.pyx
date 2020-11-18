@@ -671,7 +671,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t init_capacity = max_split_nodes + max_leaf_nodes
         tree._resize(init_capacity)
 
-        # add reached leaf nodes onto stack
+        # add reached leaf nodes to frontier
         cdef SIZE_t start = 0
         cdef SIZE_t end = 0
         for key, value in sorted(false_roots.items()):
@@ -679,14 +679,14 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
             if key[1]:
                 rc = self._update_split_node(splitter, tree, start, end,
                                              tree.impurity[key[0]], IS_NOT_FIRST,
-                                             IS_LEFT, &tree.nodes[key[0]]
+                                             IS_LEFT, &tree.nodes[key[0]],
                                              value[1], &split_node_left)
                 if rc >= 0:
                     rc = _add_to_frontier(&split_node_left, frontier)
             else:
                 rc = self._update_split_node(splitter, tree, start, end,
                                              tree.impurity[key[0]], IS_NOT_FIRST,
-                                             IS_NOT_LEFT, &tree.nodes[key[0]]
+                                             IS_NOT_LEFT, &tree.nodes[key[0]],
                                              value[1], &split_node_right)
                 if rc >= 0:
                     rc = _add_to_frontier(&split_node_right, frontier)
