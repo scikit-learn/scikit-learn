@@ -88,6 +88,13 @@ def test_spectral_coclustering():
             _test_shape_indices(model)
 
 
+def test_print_scipy_version():
+    # TODO(Mathschy) remove this after seeing what is the version
+    #  of scipy in CI.
+    from scipy import __version__
+    assert False, "we are using scipy version: %s" % __version__
+
+
 def test_spectral_biclustering():
     # Test Kluger methods on a checkerboard dataset.
     S, rows, cols = make_checkerboard((30, 30), 3, noise=0.5,
