@@ -155,7 +155,9 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         self : object
             returns an instance of self.
         """
-        X, y = self._validate_data(X, y)
+        # we need row slicing support for sparce matrices
+        X, y = self._validate_data(X, y, accept_sparse=[
+            'csr', 'csc', 'lil', 'dok'])
 
         if self.base_estimator is None:
             raise ValueError("base_estimator cannot be None!")
