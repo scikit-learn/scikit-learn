@@ -3,7 +3,7 @@
 set -e
 set -x
 
-if [[ "$RUNNER_OS" != "Linux" ]]; then
+if [[ "$OSTYPE" != "linux-gnu" ]]; then
     # The Linux test environment is run in a Docker container and
     # it is not possible to copy the test configuration file (yet)
     cp $CONFTEST_PATH $CONFTEST_NAME
