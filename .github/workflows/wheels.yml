@@ -123,7 +123,6 @@ jobs:
         env:
           OMP_NUM_THREADS: 2
           OPENBLAS_NUM_THREADS: 2
-          SKLEARN_SKIP_NETWORK_TESTS: 1
 
       - name: Store artifacts
         uses: actions/upload-artifact@v2
