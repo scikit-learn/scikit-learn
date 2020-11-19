@@ -8,8 +8,8 @@ sudo apt-get -yq install wget bzip2 build-essential ccache
 
 # Init micromamba, a fast and lightweight alternative to conda for CI.
 rm -rf ~/micromamba
-wget -qO- https://micromamba.snakepit.net/api/micromamba/linux-64/latest | tar -xvj bin/micromamba
-./bin/micromamba shell init -s bash -p $HOME/micromamba
+wget -qO- https://micromamba.snakepit.net/api/micromamba/linux-64/latest | tar -xvj $HOME/bin/micromamba
+$HOME/bin/micromamba shell init -s bash -p $HOME/micromamba
 source ~/.bashrc
 micromamba activate
 
