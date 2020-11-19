@@ -423,7 +423,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                     "The output of the '{0}' transformer should be 2D (scipy "
                     "matrix, array, or pandas DataFrame).".format(name))
 
-    def _index_output(self, Xs):
+    def _record_transformer_slices(self, Xs):
         """
         Record which transformer produced which column.
         """
@@ -574,7 +574,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         self._update_fitted_transformers(transformers)
         self._validate_output(Xs)
-        self._index_output(Xs)
+        self._record_transformer_slices(Xs)
 
         return self._hstack(list(Xs))
 
