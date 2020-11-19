@@ -6,24 +6,20 @@ dist: xenial
 cache:
   apt: true
   directories:
-  - $HOME/.cache/pip
-  - $HOME/.ccache
+    - $HOME/.cache/pip
+    - $HOME/.ccache
 
 env:
   global:
-    # Directory where tests are run from
-    - TEST_DIR=/tmp/sklearn
-    - OMP_NUM_THREADS=2
-    - OPENBLAS_NUM_THREADS=2
-    - SKLEARN_SKIP_NETWORK_TESTS=1
-    - PYTEST_VERSION=latest
+    - TEST_DIR: /tmp/sklearn  # Directory where tests are run from
+    - PYTEST_VERSION: latest
     # Custom environment variables for the wheel builder
-    - CIBW_BUILD_VERBOSITY=1
-    - CIBW_TEST_REQUIRES="pytest pandas"
-    - CIBW_TEST_COMMAND="pytest --pyargs sklearn && python -m threadpoolctl -i sklearn"
-    - CIBW_ENVIRONMENT="OMP_NUM_THREADS=2
+    - CIBW_BUILD_VERBOSITY: 1
+    - CIBW_TEST_REQUIRES: pytest pandas
+    - CIBW_TEST_COMMAND: bash build_tools/travis/test_wheels.sh
+    - CIBW_ENVIRONMENT: OMP_NUM_THREADS=2
                         OPENBLAS_NUM_THREADS=2
-                        SKLEARN_SKIP_NETWORK_TESTS=1"
+                        SKLEARN_SKIP_NETWORK_TESTS=1
 
 jobs:
   include:
@@ -32,28 +28,30 @@ jobs:
     # virtual environment with Python interpreter provided by Travis.
     - python: 3.7
       env:
-        - CHECK_WARNINGS="true"
-        - CI_CPU_COUNT="3"
+        - CHECK_WARNINGS: true
+        - CI_CPU_COUNT: 3
       if: type = cron OR commit_message =~ /\[scipy-dev\]/
 
-    # As above but build scikit-learn with Intel C compiler (ICC).
     - python: 3.7
       env:
-        - CHECK_WARNING="true"
-        - BUILD_WITH_ICC="true"
-        - CI_CPU_COUNT="3"
+        - CHECK_WARNING: true
+        - BUILD_WITH_ICC: true
+        - CI_CPU_COUNT: 3
       if: type = cron OR commit_message =~ /\[icc-build\]/
 
     - python: 3.7
+      os: linux
+      arch: arm64
       env:
-        - CI_CPU_COUNT="8"
-      arch: arm64-graviton2
+        - CI_CPU_COUNT: 8
+      
       if: type = cron OR commit_message =~ /\[arm64\]/
 
     # Linux environments to build the scikit-learn wheels
     # for the ARM64 arquitecture and Python 3.6 and newer
     - python: 3.6
-      arch: arm64-graviton2
+      os: linux
+      arch: arm64
       if: type = cron or commit_message =~ /\[cd build\]/
       env:
         - CI_CPU_COUNT: 8
@@ -61,7 +59,8 @@ jobs:
         - CIBW_BUILD: cp36-manylinux_aarch64
 
     - python: 3.7
-      arch: arm64-graviton2
+      os: linux
+      arch: arm64
       if: type = cron or commit_message =~ /\[cd build\]/
       env:
         - CI_CPU_COUNT: 8
@@ -69,7 +68,8 @@ jobs:
         - CIBW_BUILD: cp37-manylinux_aarch64
 
     - python: 3.8
-      arch: arm64-graviton2
+      os: linux
+      arch: arm64
       if: type = cron or commit_message =~ /\[cd build\]/
       env:
         - CI_CPU_COUNT: 8
@@ -77,7 +77,8 @@ jobs:
         - CIBW_BUILD: cp38-manylinux_aarch64
 
     - python: 3.9
-      arch: arm64-graviton2
+      os: linux
+      arch: arm64
       if: type = cron or commit_message =~ /\[cd build\]/
       env:
         - CI_CPU_COUNT: 8
