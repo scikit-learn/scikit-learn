@@ -438,7 +438,7 @@ def randomized_eigsh(M, n_components, *, n_oversamples=10, n_iter='auto',
 
     Strategy 'module':
     The principle is that for diagonalizable matrices, the singular values and
-    eigenvalues are related: if t is an eigenvalue of A, then \|t\| is a
+    eigenvalues are related: if t is an eigenvalue of A, then :math:`|t|` is a
     singular value of A. This method relies on a randomized SVD to find the n
     singular components corresponding to the n singular values with largest
     modules, and then uses the signs of the singular vectors to find the true
