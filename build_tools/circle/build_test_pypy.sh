@@ -9,10 +9,14 @@ apt-get -yq install wget bzip2 build-essential ccache
 # Install pypy and all the scikit-learn dependencies from conda-forge. In
 # particular, we want to install pypy compatible binary packages for numpy and
 # scipy as it would be to costly to build those from source.
-mamba install -y \
+conda install -y mamba
+mamba create -n pypy -y \
     pypy numpy scipy cython \
     joblib threadpoolctl pillow pytest \
     sphinx numpydoc docutils
+
+eval "$(conda shell.bash hook)"
+conda activate pypy
 
 # Check that we are running PyPy instead of CPython in this environment.
 python --version
