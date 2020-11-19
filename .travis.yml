@@ -15,6 +15,7 @@ env:
     - PYTEST_VERSION=latest
     - OMP_NUM_THREADS=2
     - OPENBLAS_NUM_THREADS=2
+    - SKLEARN_BUILD_PARALLEL=3
     - SKLEARN_SKIP_NETWORK_TESTS=1
     # Custom environment variables for the wheel builder
     - CIBW_BUILD_VERBOSITY=1
@@ -22,6 +23,7 @@ env:
     - CIBW_TEST_COMMAND="bash build_tools/travis/test_wheels.sh"
     - CIBW_ENVIRONMENT="OMP_NUM_THREADS=2
                         OPENBLAS_NUM_THREADS=2
+                        SKLEARN_BUILD_PARALLEL=3
                         SKLEARN_SKIP_NETWORK_TESTS=1"
 
 jobs:
@@ -32,21 +34,17 @@ jobs:
     - python: 3.7
       env:
         - CHECK_WARNINGS=true
-        - CI_CPU_COUNT=3
       if: type = cron OR commit_message =~ /\[scipy-dev\]/
 
     - python: 3.7
       env:
         - CHECK_WARNING=true
         - BUILD_WITH_ICC=true
-        - CI_CPU_COUNT=3
       if: type = cron OR commit_message =~ /\[icc-build\]/
 
     - python: 3.7
       os: linux
       arch: arm64
-      env:
-        - CI_CPU_COUNT=8
       
       if: type = cron OR commit_message =~ /\[arm64\]/
 
@@ -57,7 +55,6 @@ jobs:
       arch: arm64
       if: type = cron or commit_message =~ /\[cd build\]/
       env:
-        - CI_CPU_COUNT=8
         - BUILD_WHEEL=true
         - CIBW_BUILD=cp36-manylinux_aarch64
 
@@ -66,7 +63,6 @@ jobs:
       arch: arm64
       if: type = cron or commit_message =~ /\[cd build\]/
       env:
-        - CI_CPU_COUNT=8
         - BUILD_WHEEL=true
         - CIBW_BUILD=cp37-manylinux_aarch64
 
@@ -75,7 +71,6 @@ jobs:
       arch: arm64
       if: type = cron or commit_message =~ /\[cd build\]/
       env:
-        - CI_CPU_COUNT=8
         - BUILD_WHEEL=true
         - CIBW_BUILD=cp38-manylinux_aarch64
 
@@ -84,7 +79,6 @@ jobs:
       arch: arm64
       if: type = cron or commit_message =~ /\[cd build\]/
       env:
-        - CI_CPU_COUNT=8
         - BUILD_WHEEL=true
         - CIBW_BUILD=cp39-manylinux_aarch64
 

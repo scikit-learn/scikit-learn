@@ -88,11 +88,11 @@ if [[ "$BUILD_WITH_ICC" == "true" ]]; then
     # The build_clib command is implicitly used to build libsvm-skl. To compile
     # with a different compiler we also need to specify the compiler for this
     # command.
-    python setup.py build_ext --compiler=intelem -i -j "${CI_CPU_COUNT}" build_clib --compiler=intelem
+    python setup.py build_ext --compiler=intelem -i build_clib --compiler=intelem
 else
     # Use setup.py instead of `pip install -e .` to be able to pass the -j flag
     # to speed-up the building multicore CI machines.
-    python setup.py build_ext --inplace -j "${CI_CPU_COUNT}"
+    python setup.py build_ext --inplace
 fi
 
 python setup.py develop
