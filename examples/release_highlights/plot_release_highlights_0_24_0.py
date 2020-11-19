@@ -81,11 +81,11 @@ rsh.best_params_
 # :class:`sklearn.ensemble.HistGradientBoostingRegressor` now have native
 # support for categorical features: they can consider splits on non-ordered,
 # categorical data. Read more in the :ref:`User Guide
-# <categorical_support_gbdt>`
-#.. image:: /auto_examples/ensemble/images/sphx_glr_plot_gradient_boosting_categorical_001.png
-#    :alt: Gradient Boosting on Adult Census, Fit times (s),
-#        Mean Absolute Percentage Error
-#    :class: sphx-glr-single-img
+# <categorical_support_gbdt>`.
+#
+# .. figure:: ../ensemble/images/sphx_glr_plot_gradient_boosting_categorical_001.png
+#   :target: ../ensemble/plot_gradient_boosting_categorical.html
+#   :align: center
 
 ##############################################################################
 # New SequentialFeatureSelector transformer
