@@ -6,15 +6,8 @@ set -e
 sudo apt-get -yq update
 sudo apt-get -yq install wget bzip2 build-essential ccache
 
-# Init micromamba, a fast and lightweight alternative to conda for CI.
-rm -rf ~/micromamba
-mkdir -p $HOME/bin
-pushd $HOME
-wget -qO- https://micromamba.snakepit.net/api/micromamba/linux-64/latest | tar -xvj bin/micromamba
-popd
+# Activate the base micromamba env
 export PATH="$HOME/bin:$PATH"
-micromamba shell init -s bash -p $HOME/micromamba
-source ~/.bashrc
 micromamba activate
 
 # Install pypy and all the scikit-learn dependencies from conda-forge. In
