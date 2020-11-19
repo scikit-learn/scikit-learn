@@ -6,7 +6,6 @@ set -e
 apt-get -yq update
 apt-get -yq install wget bzip2 build-essential ccache
 
-conda activate
 # Install pypy and all the scikit-learn dependencies from conda-forge. In
 # particular, we want to install pypy compatible binary packages for numpy and
 # scipy as it would be to costly to build those from source.

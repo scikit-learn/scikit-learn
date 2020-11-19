@@ -110,7 +110,6 @@ jobs:
             - pypy3-ccache-{{ .Branch }}
             - pypy3-ccache
       - checkout
-      - run: conda init bash
       - run: conda install -y mamba
       - run: ./build_tools/circle/build_test_pypy.sh
       - save_cache:
