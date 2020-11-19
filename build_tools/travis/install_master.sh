@@ -33,7 +33,7 @@ ccache --max-size 100M --show-stats
 # to setup a conda-based environment instead
 deactivate
 
-if [[ "$TRAVIS_CPU_ARCH" == "arm64" ]]; then
+if [[ $TRAVIS_CPU_ARCH == arm64 ]]; then
     # Different Miniconda URL for ARM64 architectures
     MINICONDA_URL="https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-aarch64.sh"
 else
@@ -52,7 +52,7 @@ conda create -n testenv --yes python=3.7
 
 source activate testenv
 
-if [[ "$TRAVIS_CPU_ARCH" == "amd64" ]]; then
+if [[ $TRAVIS_CPU_ARCH == amd64 ]]; then
     echo "Upgrading pip and setuptools."
     pip install --upgrade pip setuptools
     echo "Installing numpy, scipy and pandas master wheels."
@@ -78,7 +78,7 @@ python --version
 python -c "import numpy; print(f'numpy {numpy.__version__}')"
 python -c "import scipy; print(f'scipy {scipy.__version__}')"
 
-if [[ "$BUILD_WITH_ICC" == "true" ]]; then
+if [[ $BUILD_WITH_ICC == true ]]; then
     wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
     sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
     rm GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB

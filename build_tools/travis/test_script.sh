@@ -26,8 +26,8 @@ cp setup.cfg $TEST_DIR
 cd $TEST_DIR
 
 if [[ $TRAVIS_CPU_ARCH == arm64 ]]; then
-    # Faster tests for ARM64 architectures
-    TEST_CMD="$TEST_CMD -n $SKLEARN_BUILD_PARALLEL"
+    # Faster run of the source code tests
+    TEST_CMD="$TEST_CMD -n $CPU_COUNT"
 
     # Remove the option to test the docstring
     sed -i -e 's/--doctest-modules//g' setup.cfg

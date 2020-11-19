@@ -7,7 +7,8 @@
 set -e
 set -x
 
-if [[ $BUILD_WHEEL == true ]]; then
+# The wheels cannot be uploaded on PRs
+if [[ $BUILD_WHEEL == true && $TRAVIS_EVENT_TYPE != pull_request ]]; then
     if [ $TRAVIS_EVENT_TYPE == cron ]; then
         ANACONDA_ORG="scipy-wheels-nightly"
         ANACONDA_TOKEN="$SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN"

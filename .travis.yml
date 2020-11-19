@@ -11,19 +11,20 @@ cache:
 
 env:
   global:
-    - TEST_DIR=/tmp/sklearn  # Directory where tests are run from
+    - CPU_COUNT=3
+    - TEST_DIR=/tmp/sklearn  # Test directory for continuous integration jobs
     - PYTEST_VERSION=latest
     - OMP_NUM_THREADS=2
     - OPENBLAS_NUM_THREADS=2
     - SKLEARN_BUILD_PARALLEL=3
     - SKLEARN_SKIP_NETWORK_TESTS=1
     # Custom environment variables for the wheel builder
-    - CIBW_BUILD_VERBOSITY=1
-    - CIBW_TEST_REQUIRES="pytest pytest-xdist pandas"
+    - CIBW_TEST_REQUIRES="pytest pytest-xdist"
     - CIBW_TEST_COMMAND="bash {project}/build_tools/travis/test_wheels.sh"
-    - CIBW_ENVIRONMENT="OMP_NUM_THREADS=2
+    - CIBW_ENVIRONMENT="CPU_COUNT=8
+                        OMP_NUM_THREADS=2
                         OPENBLAS_NUM_THREADS=2
-                        SKLEARN_BUILD_PARALLEL=3
+                        SKLEARN_BUILD_PARALLEL=8
                         SKLEARN_SKIP_NETWORK_TESTS=1"
     # Nightly upload token and staging upload token are set in Travis settings
     - SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN=__token__
@@ -48,7 +49,6 @@ jobs:
     - python: 3.7
       os: linux
       arch: arm64
-      
       if: type = cron OR commit_message =~ /\[arm64\]/
 
     # Linux environments to build the scikit-learn wheels

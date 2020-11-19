@@ -3,13 +3,8 @@
 set -e
 set -x
 
-TEST_CMD="pytest --pyargs"
-
-if [[ $TRAVIS_CPU_ARCH == arm64 ]]; then
-    TEST_CMD="$TEST_CMD -n $SKLEARN_BUILD_PARALLEL"
-fi
-
-$TEST_CMD sklearn
+# Faster run of the source code tests
+pytest -n $CPU_COUNT --pyargs sklearn
 
 # Test that there are no links to system libraries
 python -m threadpoolctl -i sklearn
