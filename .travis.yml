@@ -19,12 +19,15 @@ env:
     - SKLEARN_SKIP_NETWORK_TESTS=1
     # Custom environment variables for the wheel builder
     - CIBW_BUILD_VERBOSITY=1
-    - CIBW_TEST_REQUIRES="pytest pandas"
-    - CIBW_TEST_COMMAND="bash build_tools/travis/test_wheels.sh"
+    - CIBW_TEST_REQUIRES="pytest pytest-xdist pandas"
+    - CIBW_TEST_COMMAND="bash {project}/build_tools/travis/test_wheels.sh"
     - CIBW_ENVIRONMENT="OMP_NUM_THREADS=2
                         OPENBLAS_NUM_THREADS=2
                         SKLEARN_BUILD_PARALLEL=3
                         SKLEARN_SKIP_NETWORK_TESTS=1"
+    # Nightly upload token and staging upload token are set in Travis settings
+    - SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN=__token__
+    - SCIKIT_LEARN_STAGING_UPLOAD_TOKEN=__token__
 
 jobs:
   include:

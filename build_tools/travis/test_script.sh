@@ -1,51 +1,40 @@
 #!/bin/bash
 
 set -e
+set -x
 
 python --version
-python -c "import numpy; print('numpy %s' % numpy.__version__)"
-python -c "import scipy; print('scipy %s' % scipy.__version__)"
+python -c "import numpy; print(f'numpy {numpy.__version__}')"
+python -c "import scipy; print(f'scipy {scipy.__version__}')"
 python -c "\
 try:
     import pandas
-    print('pandas %s' % pandas.__version__)
+    print(f'pandas {pandas.__version__}')
 except ImportError:
     pass
 "
-python -c "import joblib; print(joblib.cpu_count(), 'CPUs')"
-python -c "import platform; print(platform.machine())"
+python -c "import joblib; print(f'{joblib.cpu_count()} CPUs')"
+python -c "import platform; print(f'{platform.machine()}')"
 
-run_tests() {
-    TEST_CMD="pytest --showlocals --durations=20 --pyargs"
+TEST_CMD="pytest --showlocals --durations=20 --pyargs"
 
-    # Get into a temp directory to run test from the installed scikit-learn and
-    # check if we do not leave artifacts
-    mkdir -p $TEST_DIR
-    # We need the setup.cfg for the pytest settings
-    cp setup.cfg $TEST_DIR
-    cd $TEST_DIR
+# Run the tests on the installed version
+mkdir -p $TEST_DIR
 
-    if [[ "$TRAVIS_CPU_ARCH" == "arm64" ]]; then
-        # use pytest-xdist for faster tests
-        TEST_CMD="$TEST_CMD -n $CI_CPU_COUNT"
-        # remove option to test docstring
-        sed -i -e 's/--doctest-modules//g' setup.cfg
-    else
-        # Tests that require large downloads over the networks are skipped in CI.
-        # Here we make sure, that they are still run on a regular basis.
-        #
-        # Note that using pytest-xdist is currently not compatible
-        # with fetching datasets in tests due to datasets cache corruptions issues.
-        export SKLEARN_SKIP_NETWORK_TESTS=0
-    fi
+# Copy "setup.cfg" for the test settings
+cp setup.cfg $TEST_DIR
+cd $TEST_DIR
 
-    if [[ -n "$CHECK_WARNINGS" ]]; then
-        TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning"
-    fi
+if [[ $TRAVIS_CPU_ARCH == arm64 ]]; then
+    # Faster tests for ARM64 architectures
+    TEST_CMD="$TEST_CMD -n $SKLEARN_BUILD_PARALLEL"
 
-    set -x  # print executed commands to the terminal
+    # Remove the option to test the docstring
+    sed -i -e 's/--doctest-modules//g' setup.cfg
+fi
 
-    $TEST_CMD sklearn
-}
+if [[ -n $CHECK_WARNINGS ]]; then
+    TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning"
+fi
 
-run_tests
+$TEST_CMD sklearn

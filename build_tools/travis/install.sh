@@ -2,8 +2,7 @@
 
 # This script is meant to be called by the "install" step
 # defined in the ".travis.yml" file. In particular, it is
-# important that we call to the right installation script
-# for the job being executed.
+# important that we call to the right installation script.
 
 set -e
 set -x
