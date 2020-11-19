@@ -112,7 +112,8 @@ jobs:
       - checkout
       - run: cd $HOME && wget -qO- https://micromamba.snakepit.net/api/micromamba/linux-64/latest | tar -xvj bin/micromamba
       - run: $HOME/bin/micromamba shell init -s bash -p $HOME/micromamba
-      - run: ./build_tools/circle/build_test_pypy.sh
+      - run: source ~/.bashrc
+      - run: bash ./build_tools/circle/build_test_pypy.sh
       - save_cache:
           key: pypy3-ccache-{{ .Branch }}-{{ .BuildNum }}
           paths:
