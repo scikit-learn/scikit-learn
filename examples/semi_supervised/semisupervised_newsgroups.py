@@ -9,44 +9,44 @@ dataset (which will be automatically downloaded).
 You can adjust the number of categories by giving their names to the dataset
 loader or setting them to None to get the 20 of them.
 
-Here is sample output of a run:
+Here is sample output of a run::
 
-    11314 documents
-    20 categories
+  11314 documents
+  20 categories
 
-    Supervised SGDClassifier on 100% of the data:
-    X_train length: 8485
-    Unlabeled samples in train: 0
-    Micro-averaged F1 score: 0.908
-    ----------
+  Supervised SGDClassifier on 100% of the data:
+  X_train length: 8485
+  Unlabeled samples in train: 0
+  Micro-averaged F1 score: 0.908
+  ----------
 
-    Supervised SGDClassifier on 20% of the data:
-    X_train length: 1678
-    Unlabeled samples in train: 0
-    Micro-averaged F1 score: 0.787
-    ----------
+  Supervised SGDClassifier on 20% of the data:
+  X_train length: 1678
+  Unlabeled samples in train: 0
+  Micro-averaged F1 score: 0.787
+  ----------
 
-    SelfTrainingClassifier on 20% of the data (rest is unlabeled):
-    X_train length: 8485
-    Unlabeled samples in train: 6807
-    End of iteration 1, added 2890 new labels.
-    End of iteration 2, added 620 new labels.
-    End of iteration 3, added 222 new labels.
-    End of iteration 4, added 95 new labels.
-    End of iteration 5, added 33 new labels.
-    End of iteration 6, added 23 new labels.
-    End of iteration 7, added 12 new labels.
-    End of iteration 8, added 13 new labels.
-    End of iteration 9, added 8 new labels.
-    End of iteration 10, added 3 new labels.
-    Micro-averaged F1 score: 0.827
-    ----------
+  SelfTrainingClassifier on 20% of the data (rest is unlabeled):
+  X_train length: 8485
+  Unlabeled samples in train: 6807
+  End of iteration 1, added 2890 new labels.
+  End of iteration 2, added 620 new labels.
+  End of iteration 3, added 222 new labels.
+  End of iteration 4, added 95 new labels.
+  End of iteration 5, added 33 new labels.
+  End of iteration 6, added 23 new labels.
+  End of iteration 7, added 12 new labels.
+  End of iteration 8, added 13 new labels.
+  End of iteration 9, added 8 new labels.
+  End of iteration 10, added 3 new labels.
+  Micro-averaged F1 score: 0.827
+  ----------
 
-    LabelSpreading on 20% of the data (rest is unlabeled):
-    X_train length: 8485
-    Unlabeled samples in train: 6807
-    Micro-averaged F1 score: 0.645
-    ----------
+  LabelSpreading on 20% of the data (rest is unlabeled):
+  X_train length: 8485
+  Unlabeled samples in train: 6807
+  Micro-averaged F1 score: 0.645
+  ----------
 """
 import numpy as np
 
