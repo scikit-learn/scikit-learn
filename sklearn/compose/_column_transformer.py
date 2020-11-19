@@ -435,7 +435,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             n_columns = Xs[transformer_idx].shape[1]
             self.transformers_output_[name] = slice(idx, idx + n_columns)
             idx += n_columns
-        return
 
     def _validate_features(self, n_features, feature_names):
         """Ensures feature counts and names are the same during fit and
