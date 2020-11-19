@@ -47,12 +47,13 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         training set. If 'threshold', pseudo-labels with prediction
         probabilities above `threshold` are added to the dataset. If 'k_best',
         the `k_best` pseudo-labels with highest prediction probabilities are
-        added to the dataset.
-        The 'threshold' criterion assumes a well calibrated classifier.
+        added to the dataset. When using the 'threshold' criterion, a
+        :ref`well calibrated classifier <_calibration>` should be used.
 
     threshold : float, optional (default=0.75)
         The decision threshold for use with `criterion='threshold'`.
-        Should be in [0, 1).
+        Should be in [0, 1). When using the 'threshold' criterion, a
+        :ref`well calibrated classifier <_calibration>` should be used.
 
     k_best : int, optional (default=10)
         The amount of samples to add in each iteration. Only used when

@@ -42,14 +42,23 @@ classifier, allowing it to learn from unlabeled data.
 :class:`SelfTrainingClassifier` can be called with any classifier that
 implements `predict_proba`, passed as the parameter `base_classifier`. In
 each iteration, the `base_classifier` predicts labels for the unlabeled
-samples and adds them to the labeled dataset if the classifier's confidence is
-above the `threshold`. The labels used for the final
-fitting as well as the iteration in which each sample was labeled are available
-as attributes. The optional `max_iter` parameter specifies how many times the
-loop is executed at most.
+samples and adds a subset of these labels to the labeled dataset.
 
-The `max_iter` parameter may be set to `None`, causing the algorithm to
-iterate until all samples have labels.
+The choice of this subset is determined by the selection criterion. This
+selection can be done using a `threshold` on the prediction probabilities, or
+by choosing the `k_best` samples according to the prediction probabilities.
+
+The labels used for the final fit as well as the iteration in which each sample
+was labeled are available as attributes. The optional `max_iter` parameter
+specifies how many times the loop is executed at most.
+
+The `max_iter` parameter may be set to `None`, causing the algorithm to iterate
+until all samples have labels or no new samples are selected in that iteration.
+
+.. note::
+
+   When using the self-training classifier, the
+   :ref:`calibration <_calibration>` of the classifier is important.
 
 .. topic:: Examples
 
