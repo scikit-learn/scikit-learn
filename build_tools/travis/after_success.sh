@@ -20,6 +20,6 @@ if [[ $BUILD_WHEEL == true && $TRAVIS_EVENT_TYPE != pull_request ]]; then
     pip install git+https://github.com/Anaconda-Server/anaconda-client
 
     # Force a replacement if the remote file already exists
-    anaconda -t $ANACONDA_TOKEN upload --force -u $ANACONDA_ORG wheelhouse/*
+    anaconda -t $ANACONDA_TOKEN upload --force -u $ANACONDA_ORG wheelhouse/*.whl
     echo "Index: https://pypi.anaconda.org/$ANACONDA_ORG/simple"
 fi
