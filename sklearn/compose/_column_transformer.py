@@ -427,14 +427,14 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         """
         Record which transformer produced which column.
         """
-        idx_ = 0
+        idx = 0
         self.transformers_output_ = {}
-        for idx, (name, _, _, _) in enumerate(
+        for transformer_idx, (name, _, _, _) in enumerate(
             self._iter(fitted=True, replace_strings=True)
         ):
-            n_columns = Xs[idx].shape[1]
-            self.transformers_output_[name] = slice(idx_, idx_ + n_columns)
-            idx_ += n_columns
+            n_columns = Xs[transformer_idx].shape[1]
+            self.transformers_output_[name] = slice(idx, idx + n_columns)
+            idx += n_columns
         return
 
     def _validate_features(self, n_features, feature_names):
