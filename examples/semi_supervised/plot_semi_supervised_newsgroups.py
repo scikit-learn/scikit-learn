@@ -88,6 +88,6 @@ if __name__ == "__main__":
     eval_and_print_metrics(st_pipeline, X_train, y_train, X_test, y_test)
 
     if 'CI' not in os.environ:
-        # LabelSpreading takes too long to run in the online documentation; skip it.
+        # LabelSpreading takes too long to run in the online documentation
         print("LabelSpreading on 20% of the data (rest is unlabeled):")
         eval_and_print_metrics(ls_pipeline, X_train, y_train, X_test, y_test)
