@@ -88,6 +88,16 @@ rsh.best_params_
 #   :align: center
 
 ##############################################################################
+# Improved performances in HistGradientBoosting methods
+# -----------------------------------------------------
+# Histogram initialization is now done in parallel in
+# :class:`ensemble.HistGradientBoostingRegressor` and
+# :class:`ensemble.HistGradientBoostingClassifier` which results in speed
+# improvement.
+# See more in the `Benchmark page
+# <https://scikit-learn.org/scikit-learn-benchmarks/>`_.
+
+##############################################################################
 # New SequentialFeatureSelector transformer
 # -----------------------------------------
 # A new iterative transformer to select features is available:
