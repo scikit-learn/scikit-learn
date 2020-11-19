@@ -438,12 +438,12 @@ def randomized_eigsh(M, n_components, *, n_oversamples=10, n_iter='auto',
 
     Strategy 'module':
     The principle is that for diagonalizable matrices, the singular values and
-    eigenvalues are related: if t is an eigenvalue of A, then |t| is a singular
-    value of A. This method relies on a randomized SVD to find the n singular
-    components corresponding to the n singular values with largest modules,
-    and then uses the signs of the singular vectors to find the true sign of t:
-    if the sign of left and right singular vectors are different then the
-    corresponding eigenvalue is negative.
+    eigenvalues are related: if t is an eigenvalue of A, then \|t\| is a
+    singular value of A. This method relies on a randomized SVD to find the n
+    singular components corresponding to the n singular values with largest
+    modules, and then uses the signs of the singular vectors to find the true
+    sign of t: if the sign of left and right singular vectors are different
+    then the corresponding eigenvalue is negative.
 
     This method is particularly fast on large matrices on which
     you wish to extract only a small number of components. In order to
