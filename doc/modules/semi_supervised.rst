@@ -58,7 +58,7 @@ until all samples have labels or no new samples are selected in that iteration.
 .. note::
 
    When using the self-training classifier, the
-   :ref:`calibration <_calibration>` of the classifier is important.
+   :ref:`calibration <calibration>` of the classifier is important.
 
 .. topic:: Examples
 
@@ -149,4 +149,3 @@ which can drastically reduce running times.
     [3] Olivier Delalleau, Yoshua Bengio, Nicolas Le Roux. Efficient
     Non-Parametric Function Induction in Semi-Supervised Learning. AISTAT 2005
     https://research.microsoft.com/en-us/people/nicolasl/efficient_ssl.pdf
-
