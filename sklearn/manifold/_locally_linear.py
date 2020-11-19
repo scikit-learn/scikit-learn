@@ -99,7 +99,7 @@ def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3, n_jobs=None):
     A : sparse matrix in CSR format, shape = [n_samples, n_samples]
         A[i, j] is assigned the weight of edge that connects i to j.
 
-    See also
+    See Also
     --------
     sklearn.neighbors.kneighbors_graph
     sklearn.neighbors.radius_neighbors_graph
@@ -169,15 +169,14 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
             eigen_values, eigen_vectors = eigsh(M, k + k_skip, sigma=0.0,
                                                 tol=tol, maxiter=max_iter,
                                                 v0=v0)
-        except RuntimeError as msg:
-            raise ValueError("Error in determining null-space with ARPACK. "
-                             "Error message: '%s'. "
-                             "Note that eigen_solver='arpack' can fail when "
-                             "the weight matrix is singular or otherwise "
-                             "ill-behaved. In that case, eigen_solver='dense' "
-                             "is recommended. See online documentation for "
-                             "more information."
-                             % msg)
+        except RuntimeError as e:
+            raise ValueError(
+                "Error in determining null-space with ARPACK. Error message: "
+                "'%s'. Note that eigen_solver='arpack' can fail when the "
+                "weight matrix is singular or otherwise ill-behaved. In that "
+                "case, eigen_solver='dense' is recommended. See online "
+                "documentation for more information." % e
+            ) from e
 
         return eigen_vectors[:, k_skip:], np.sum(eigen_values[k_skip:])
     elif eigen_solver == 'dense':

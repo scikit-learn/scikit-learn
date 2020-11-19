@@ -101,14 +101,6 @@ def test_fit_transform_n_bins_array(strategy, expected):
         assert bin_edges.shape == (n_bins + 1, )
 
 
-def test_invalid_n_features():
-    est = KBinsDiscretizer(n_bins=3).fit(X)
-    bad_X = np.arange(25).reshape(5, -1)
-    err_msg = "Incorrect number of features. Expecting 4, received 5"
-    with pytest.raises(ValueError, match=err_msg):
-        est.transform(bad_X)
-
-
 @pytest.mark.parametrize('strategy', ['uniform', 'kmeans', 'quantile'])
 def test_same_min_max(strategy):
     warnings.simplefilter("always")

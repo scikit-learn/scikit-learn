@@ -505,7 +505,7 @@ class TSNE(BaseEstimator):
         The perplexity is related to the number of nearest neighbors that
         is used in other manifold learning algorithms. Larger datasets
         usually require a larger perplexity. Consider selecting a value
-        between 5 and 50. Different values can result in significanlty
+        between 5 and 50. Different values can result in significantly
         different results.
 
     early_exaggeration : float, default=12.0
@@ -564,7 +564,7 @@ class TSNE(BaseEstimator):
     verbose : int, default=0
         Verbosity level.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines the random number generator. Pass an int for reproducible
         results across multiple function calls. Note that different
         initializations might result in different local minima of the cost

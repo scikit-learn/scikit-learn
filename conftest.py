@@ -5,6 +5,7 @@
 # doc/modules/clustering.rst and use sklearn from the local folder rather than
 # the one from site-packages.
 
+import os
 import platform
 import sys
 
@@ -13,7 +14,7 @@ from _pytest.doctest import DoctestItem
 
 from sklearn.utils import _IS_32BIT
 from sklearn.externals import _pilutil
-from sklearn._build_utils.min_dependencies import PYTEST_MIN_VERSION
+from sklearn._min_dependencies import PYTEST_MIN_VERSION
 from sklearn.utils.fixes import np_version, parse_version
 
 
@@ -50,7 +51,8 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(marker)
 
     # Skip tests which require internet if the flag is provided
-    if config.getoption("--skip-network"):
+    if (config.getoption("--skip-network")
+            or int(os.environ.get("SKLEARN_SKIP_NETWORK_TESTS", "0"))):
         skip_network = pytest.mark.skip(
             reason="test requires internet connectivity")
         for item in items:

@@ -18,6 +18,7 @@ from libc.stdlib cimport calloc, free
 from libc.string cimport memset, memcpy
 
 from ..utils.extmath import row_norms
+from ._k_means_fast import CHUNK_SIZE
 from ._k_means_fast cimport _relocate_empty_clusters_dense
 from ._k_means_fast cimport _relocate_empty_clusters_sparse
 from ._k_means_fast cimport _euclidean_dense_dense
@@ -257,7 +258,7 @@ def elkan_iter_chunked_dense(
 
         # hard-coded number of samples per chunk. Splitting in chunks is
         # necessary to get parallelism. Chunk size chosed to be same as lloyd's
-        int n_samples_chunk = 256 if n_samples > 256 else n_samples
+        int n_samples_chunk = CHUNK_SIZE if n_samples > CHUNK_SIZE else n_samples
         int n_chunks = n_samples // n_samples_chunk
         int n_samples_rem = n_samples % n_samples_chunk
         int chunk_idx, n_samples_chunk_eff
@@ -489,7 +490,7 @@ def elkan_iter_chunked_sparse(
 
         # hard-coded number of samples per chunk. Splitting in chunks is
         # necessary to get parallelism. Chunk size chosed to be same as lloyd's
-        int n_samples_chunk = 256 if n_samples > 256 else n_samples
+        int n_samples_chunk = CHUNK_SIZE if n_samples > CHUNK_SIZE else n_samples
         int n_chunks = n_samples // n_samples_chunk
         int n_samples_rem = n_samples % n_samples_chunk
         int chunk_idx, n_samples_chunk_eff

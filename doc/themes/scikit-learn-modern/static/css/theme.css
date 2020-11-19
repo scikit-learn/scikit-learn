@@ -839,10 +839,6 @@ div.highlight:hover span.copybutton:hover {
     background-color: #20252B;
 }
 
-div.body img.align-center {
-  max-width: 800px;
-}
-
 div.body img {
     max-width: 100%;
     height: unset!important; /* Needed because sphinx sets the height */
@@ -1232,6 +1228,10 @@ table.sk-sponsor-table tr, table.sk-sponsor-table tr:nth-child(odd) {
 
 table.sk-sponsor-table td {
   padding: 0.30rem;
+}
+
+.caption {
+  text-align: center
 }
 
 /* pygments - highlightning */

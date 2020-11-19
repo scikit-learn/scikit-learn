@@ -4,6 +4,8 @@
 Contributing
 ============
 
+.. currentmodule:: sklearn
+
 This project is a community effort, and everyone is welcome to
 contribute.
 
@@ -55,11 +57,11 @@ find a typo in the documentation, or have made improvements, do not hesitate to
 send an email to the mailing list or preferably submit a GitHub pull request.
 Full documentation can be found under the doc/ directory.
 
-But there are many other ways to help. In particular answering queries on the
-`issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_,
-investigating bugs, and :ref:`reviewing other developers' pull requests
-<code_review>` are very valuable contributions that decrease the burden on the
-project maintainers.
+But there are many other ways to help. In particular helping to
+:ref:`improve, triage, and investigate issues <bug_triaging>` and
+:ref:`reviewing other developers' pull requests <code_review>` are very
+valuable contributions that decrease the burden on the project
+maintainers.
 
 Another way to contribute is to report issues you're facing, and give a "thumbs
 up" on issues that others reported and that are relevant to you.  It also helps
@@ -173,6 +175,9 @@ feedback:
   <https://help.github.com/articles/creating-and-highlighting-code-blocks>`_
   for more details.
 
+If you want to help curate issues, read :ref:`the following
+<bug_triaging>`.
+
 Contributing code
 =================
 
@@ -190,6 +195,23 @@ Contributing code
   label in your search. This lists all the issues that have been unclaimed
   so far. In order to claim an issue for yourself, please comment exactly
   ``take`` on it for the CI to automatically assign the issue to you.
+
+Video resources
+---------------
+These videos are step-by-step introductions on how to contribute to
+scikit-learn, and are a great companion to the following text guidelines.
+Please make sure to still check our guidelines below, since they describe our
+latest up-to-date workflow.
+
+- Crash Course in Contributing to Scikit-Learn & Open Source Projects:
+  `Video <https://youtu.be/5OL8XoMMOfA>`__, 
+  `Transcript
+  <https://github.com/data-umbrella/event-transcripts/blob/main/2020/05-andreas-mueller-contributing.md>`__
+
+- Example of Submitting a Pull Request to scikit-learn:
+  `Video <https://youtu.be/PU1WyDPGePI>`__,
+  `Transcript
+  <https://github.com/data-umbrella/event-transcripts/blob/main/2020/06-reshama-shaikh-sklearn-pr.md>`__
 
 How to contribute
 -----------------
@@ -224,7 +246,7 @@ how to set up your git repository:
 
        $ pip install --no-build-isolation --editable .
 
-   for more details about advanced installation, see the
+   If you receive errors in building scikit-learn, see the
    :ref:`install_bleeding_edge` section.
 
 .. _upstream:
@@ -426,13 +448,9 @@ You can check for common programming errors with the following tools:
 
   see also :ref:`testing_coverage`
 
-* A moderate use of type annotations is encouraged but is not mandatory. See
-  `mypy quickstart <https://mypy.readthedocs.io/en/latest/getting_started.html>`_
-  for an introduction, as well as `pandas contributing documentation
-  <https://pandas.pydata.org/pandas-docs/stable/development/contributing.html#type-hints>`_
-  for style guidelines. Whether you add type annotation or not::
+* Run static analysis with `mypy`::
 
-    mypy --ignore-missing-import sklearn
+    mypy sklearn
 
   must not produce new errors in your pull request. Using `# type: ignore`
   annotation can be a workaround for a few cases that are not supported by
@@ -478,13 +496,18 @@ message, the following actions are taken.
     Commit Message Marker  Action Taken by CI
     ---------------------- -------------------
     [ci skip]              CI is skipped completely
+    [cd build]             CD is run (wheels and source distribution are built)
     [lint skip]            Azure pipeline skips linting
     [scipy-dev]            Add a Travis build with our dependencies (numpy, scipy, etc ...) development builds
+    [icc-build]            Add a Travis build with the Intel C compiler (ICC)
     [arm64]                Add a Travis build for the ARM64 / aarch64 little endian architecture
     [doc skip]             Docs are not built
     [doc quick]            Docs built, but excludes example gallery plots
-    [doc build]            Docs built including example gallery plots
+    [doc build]            Docs built including example gallery plots (very long)
     ====================== ===================
+
+Note that, by default, the documentation is built but only the examples
+that are directly modified by the pull request are executed.
 
 .. _stalled_pull_request:
 
@@ -684,12 +707,12 @@ opposed to how it works "under the hood".
 
 Finally, follow the formatting rules below to make it consistently good:
 
-* Add "See also" in docstrings for related classes/functions.
+* Add "See Also" in docstrings for related classes/functions.
 
-* "See also" in docstrings should be one line per reference,
+* "See Also" in docstrings should be one line per reference,
   with a colon and an explanation, for example::
 
-    See also
+    See Also
     --------
     SelectKBest : Select features based on the k highest scores.
     SelectFpr : Select features based on a false positive rate test.
@@ -716,26 +739,26 @@ Finally, follow the formatting rules below to make it consistently good:
 
     sample_weight : array-like of shape (n_samples,), default=None
 
-In general have the following in mind:
+  In general have the following in mind:
 
-    1. Use Python basic types. (``bool`` instead of ``boolean``)
-    2. Use parenthesis for defining shapes: ``array-like of shape (n_samples,)``
-       or ``array-like of shape (n_samples, n_features)``
-    3. For strings with multiple options, use brackets:
-       ``input: {'log', 'squared', 'multinomial'}``
-    4. 1D or 2D data can be a subset of
-       ``{array-like, ndarray, sparse matrix, dataframe}``. Note that ``array-like``
-       can also be a ``list``, while ``ndarray`` is explicitly only a ``numpy.ndarray``.
-    5. Specify ``dataframe`` when "frame-like" features are being used, such
-       as the column names.
-    6. When specifying the data type of a list, use ``of`` as a delimiter:
-       ``list of int``.
-    7. When specifying the dtype of an ndarray, use e.g. ``dtype=np.int32``
-       after defining the shape:
-       ``ndarray of shape (n_samples,), dtype=np.int32``.
-    8. When the default is ``None``, ``None`` only needs to be specified at the
-       end with ``default=None``. Be sure to include in the docstring, what it
-       means for the parameter or attribute to be ``None``.
+      1. Use Python basic types. (``bool`` instead of ``boolean``)
+      2. Use parenthesis for defining shapes: ``array-like of shape (n_samples,)``
+         or ``array-like of shape (n_samples, n_features)``
+      3. For strings with multiple options, use brackets:
+         ``input: {'log', 'squared', 'multinomial'}``
+      4. 1D or 2D data can be a subset of
+         ``{array-like, ndarray, sparse matrix, dataframe}``. Note that ``array-like``
+         can also be a ``list``, while ``ndarray`` is explicitly only a ``numpy.ndarray``.
+      5. Specify ``dataframe`` when "frame-like" features are being used, such
+         as the column names.
+      6. When specifying the data type of a list, use ``of`` as a delimiter:
+         ``list of int``.
+      7. When specifying the dtype of an ndarray, use e.g. ``dtype=np.int32``
+         after defining the shape:
+         ``ndarray of shape (n_samples,), dtype=np.int32``.
+      8. When the default is ``None``, ``None`` only needs to be specified at the
+         end with ``default=None``. Be sure to include in the docstring, what it
+         means for the parameter or attribute to be ``None``.
 
 * For unwritten formatting rules, try to follow existing good works:
 
@@ -745,8 +768,12 @@ In general have the following in mind:
 * When editing reStructuredText (``.rst``) files, try to keep line length under
   80 characters when possible (exceptions include links and tables).
 
-* Before submitting you pull request check if your modifications have introduced
-  new sphinx warnings and try to fix them.
+* Do not modify sphinx labels as this would break existing cross references and
+  external links pointing to specific sections in the
+  scikit-learn documentation.
+
+* Before submitting your pull request check if your modifications have
+  introduced new sphinx warnings and try to fix them.
 
 .. _generated_doc_CI:
 
@@ -815,7 +842,7 @@ To test code coverage, you need to install the `coverage
 Monitoring performance
 ======================
 
-*This section is heavily inspired from the* `pandas documentation 
+*This section is heavily inspired from the* `pandas documentation
 <https://pandas.pydata.org/docs/development/contributing.html#running-the-performance-test-suite>`_.
 
 When proposing changes to the existing code base, it's important to make sure
@@ -902,6 +929,8 @@ can run for a provided list of values for the `n_jobs` parameter.
 
 More information on how to write a benchmark and how to use asv can be found in
 the `asv documentation <https://asv.readthedocs.io/en/latest/index.html>`_.
+
+.. _issue_tracker_tags:
 
 Issue Tracker Tags
 ==================
@@ -1162,17 +1191,17 @@ make this task easier and faster (in no particular order).
   is performed, especially at the beginning of the :term:`fit` methods.
   Sometimes, only a very small portion of the code is doing the actual job.
   For example looking at the ``fit()`` method of
-  :class:`sklearn.linear_model.LinearRegression`, what you're looking for
+  :class:`~linear_model.LinearRegression`, what you're looking for
   might just be the call the ``scipy.linalg.lstsq``, but it is buried into
   multiple lines of input checking and the handling of different kinds of
   parameters.
 - Due to the use of `Inheritance
   <https://en.wikipedia.org/wiki/Inheritance_(object-oriented_programming)>`_,
   some methods may be implemented in parent classes. All estimators inherit
-  at least from :class:`BaseEstimator <sklearn.base.BaseEstimator>`, and
-  from a ``Mixin`` class (e.g. :class:`ClassifierMixin
-  <sklearn.base.ClassifierMixin>`) that enables default behaviour depending
-  on the nature of the estimator (classifier, regressor, transformer, etc.).
+  at least from :class:`~base.BaseEstimator`, and
+  from a ``Mixin`` class (e.g. :class:`~base.ClassifierMixin`) that enables default
+  behaviour depending on the nature of the estimator (classifier, regressor,
+  transformer, etc.).
 - Sometimes, reading the tests for a given function will give you an idea of
   what its intended purpose is. You can use ``git grep`` (see below) to find
   all the tests written for a function. Most tests for a specific

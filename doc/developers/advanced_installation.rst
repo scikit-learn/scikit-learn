@@ -240,8 +240,8 @@ First install the macOS command line tools::
 It is recommended to use a dedicated `conda environment`_ to build
 scikit-learn from source::
 
-    conda create -n sklearn-dev python numpy scipy cython joblib pytest \
-        "conda-forge::compilers>=1.0.4,!=1.1.0" conda-forge::llvm-openmp
+    conda create -n sklearn-dev -c conda-forge python numpy scipy cython \
+        joblib threadpoolctl pytest "compilers>=1.0.4,!=1.1.0" llvm-openmp
     conda activate sklearn-dev
     make clean
     pip install --verbose --no-build-isolation --editable .
@@ -353,7 +353,8 @@ Linux compilers from conda-forge
 Alternatively, install a recent version of the GNU C Compiler toolchain (GCC)
 in the user folder using conda::
 
-    conda create -n sklearn-dev numpy scipy joblib cython conda-forge::compilers
+    conda create -n sklearn-dev -c conda-forge python numpy scipy cython \
+        joblib threadpoolctl pytest compilers
     conda activate sklearn-dev
     pip install --verbose --no-build-isolation --editable .
 
@@ -433,8 +434,22 @@ Install ICC, packaged under the name ``intel-oneapi-icc``::
 
 Before using ICC, you need to set up environment variables::
 
-    source /opt/intel/inteloneapi/setvars.sh
+    source /opt/intel/oneapi/setvars.sh
 
 Finally, you can build scikit-learn. For example on Linux x86_64::
 
     python setup.py build_ext --compiler=intelem -i build_clib --compiler=intelem
+
+Parallel builds
+===============
+
+It is possible to build scikit-learn compiled extensions in parallel by setting
+and environment variable as follows before calling the ``pip install`` or
+``python setup.py build_ext`` commands::
+
+    export SKLEARN_BUILD_PARALLEL=3
+    pip install --verbose --no-build-isolation --editable .
+
+On a machine with 2 CPU cores, it can be beneficial to use a parallelism level
+of 3 to overlap IO bound tasks (reading and writing files on disk) with CPU
+bound tasks (actually compiling).
