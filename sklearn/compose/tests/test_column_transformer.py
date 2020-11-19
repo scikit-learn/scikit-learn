@@ -312,7 +312,7 @@ def test_column_transformer_empty_columns(pandas, column_selection,
 
 def test_column_transformer_output_indices():
     # Checks for the output_indices_ attribute
-    X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
+    X_array = np.arange(6).reshape(3, 2)
 
     ct = ColumnTransformer([('trans1', Trans(), [0]),
                             ('trans2', Trans(), [1])])
