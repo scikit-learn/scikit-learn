@@ -2390,18 +2390,25 @@ static void svm_group_classes(const PREFIX(problem) *prob, int *nr_class_ret, in
 
 // Remove zero weighed data as libsvm and some liblinear solvers require C > 0.
 //
-static void remove_zero_weight(PREFIX(problem) *newprob, const PREFIX(problem) *prob) 
+static void remove_zero_weight(PREFIX(problem) *newprob, const PREFIX(problem) *prob, bool compress_flag)
 {
 	int i;
 	int l = 0;
 	for(i=0;i<prob->l;i++)
 		if(prob->W[i] > 0) l++;
-	*newprob = *prob;
 	newprob->l = l;
+
+	if (l == prob->l) {  // No data line removed, fall back to use the original prob
+		newprob->y = NULL;
+		newprob->W = NULL;
+		newprob->x = NULL;
+		return;
+	}
+
 #ifdef _DENSE_REP
 	newprob->x = Malloc(PREFIX(node),l);
 #else
-      	newprob->x = Malloc(PREFIX(node) *,l);
+	newprob->x = Malloc(PREFIX(node) *,l);
 #endif
 	newprob->y = Malloc(double,l);
 	newprob->W = Malloc(double,l);
@@ -2415,6 +2422,34 @@ static void remove_zero_weight(PREFIX(problem) *newprob, const PREFIX(problem) *
 			newprob->W[j] = prob->W[i];
 			j++;
 		}
+
+#ifdef _DENSE_REP
+	if (compress_flag == true) {
+		int dim = prob->x[0].dim;
+		int zero_w_count = 0;
+		int i = 0;
+		while (i<prob->l) {
+			while(i < prob->l && prob->W[i] > 0) {i++;}  // Find next 0 entry
+
+			i++;
+			while(i < prob->l && prob->W[i] > 0) {
+				memcpy(prob->x[i].values, prob->x[i-1-zero_w_count].values, dim*sizeof(double));
+				prob->x[i-1-zero_w_count].dim = prob->x[i].dim;
+				prob->x[i-1-zero_w_count].ind = prob->x[i].ind;
+				prob->y[i-1-zero_w_count] = prob->y[i];
+				prob->W[i-1-zero_w_count] = prob->W[i];
+				i++;
+			}
+			zero_w_count++;
+		}
+
+		for(i=0;i<newprob->l;i++) {
+			newprob->x[i] = prob->x[i];
+			newprob->y[i] = prob->y[i];
+			newprob->W[i] = prob->W[i];
+		}
+	}
+#endif
 }
 
 #ifdef _DENSE_REP
@@ -2457,7 +2492,7 @@ static void perm_sort(svm_node *x, int *perm, int length)
         }
     }
 
-    delete reorder_buffer;
+    delete[] reorder_buffer;
 }
 #endif
 
@@ -2468,8 +2503,8 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
         int *status, BlasFunctions *blas_functions)
 {
 	PREFIX(problem) newprob;
-	remove_zero_weight(&newprob, prob);
-	prob = &newprob;
+	remove_zero_weight(&newprob, prob, true);
+	if (newprob.l != prob->l) {prob = &newprob;}
 
 	PREFIX(model) *model = Malloc(PREFIX(model),1);
 	model->param = *param;
@@ -3256,7 +3291,7 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
 	{
 		PREFIX(problem) newprob;
 		// filter samples with negative and null weights 
-		remove_zero_weight(&newprob, prob);
+		remove_zero_weight(&newprob, prob, false);
 
 		char* msg = NULL;
 		// all samples were removed
