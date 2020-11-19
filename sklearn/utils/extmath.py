@@ -380,6 +380,8 @@ def randomized_eigsh(M, n_components, *, n_oversamples=10, n_iter='auto',
                      selection='value', random_state=0):
     """Computes a truncated eigendecomposition using randomized methods
 
+    .. versionadded:: 0.24
+
     The choice of components to select can be tuned with the `selection`
     parameter.
 
