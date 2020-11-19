@@ -2,31 +2,31 @@
 set -x
 set -e
 
+# System build tools
 apt-get -yq update
-apt-get -yq install libatlas-base-dev liblapack-dev gfortran ccache libopenblas-dev
+apt-get -yq install wget bzip2 build-essential ccache
 
-pip install virtualenv
+# Init micromamba, a fast and lightweight alternative to conda for CI.
+rm -rf ~/micromamba
+wget -qO- https://micromamba.snakepit.net/api/micromamba/linux-64/latest | tar -xvj bin/micromamba
+./bin/micromamba shell init -s bash -p /home/$USER/micromamba
+source ~/.bashrc
+micromamba activate
 
-if command -v pypy3; then
-    virtualenv -p $(command -v pypy3) pypy-env
-elif command -v pypy; then
-    virtualenv -p $(command -v pypy) pypy-env
-fi
+# Install pypy and all the scikit-learn dependencies from conda-forge. In
+# particular, we want to install pypy compatible binary packages for numpy and
+# scipy as it would be to costly to build those from source.
+micromamba install -y -c conda-forge \
+    pypy numpy scipy cython \
+    joblib threadpoolctl pillow pytest \
+    sphinx numpydoc docutils
 
-source pypy-env/bin/activate
-
+# Check that we are running PyPy instead of CPython in this environment.
 python --version
 which python
+python -c "import platform; assert platform.python_implementation() == 'PyPy'"
 
-pip install -U pip
-
-# pins versions to install wheel from https://antocuni.github.io/pypy-wheels/manylinux2010
-pip install --extra-index-url https://antocuni.github.io/pypy-wheels/manylinux2010 numpy==1.18.0 scipy==1.3.2
-
-# Install Cython directly
-pip install https://antocuni.github.io/pypy-wheels/ubuntu/Cython/Cython-0.29.14-py3-none-any.whl
-pip install sphinx numpydoc docutils joblib pillow pytest
-
+# Build and install scikit-learn in dev mode
 ccache -M 512M
 export CCACHE_COMPRESS=1
 export PATH=/usr/lib/ccache:$PATH
@@ -35,17 +35,8 @@ export OMP_NUM_THREADS="1"
 # Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
 # workers with 2 cores when building the compiled extensions of scikit-learn.
 export SKLEARN_BUILD_PARALLEL=3
-
-# Build and install scikit-learn in dev mode
 pip install --no-build-isolation -e .
 
-# Check that Python implementation is PyPy
-python - << EOL
-import platform
-from sklearn.utils import IS_PYPY
-assert IS_PYPY is True, "platform={}!=PyPy".format(platform.python_implementation())
-EOL
-
-python -m pytest sklearn/
+python -m pytest sklearn
 python -m pytest doc/sphinxext/
 python -m pytest $(find doc -name '*.rst' | sort)
