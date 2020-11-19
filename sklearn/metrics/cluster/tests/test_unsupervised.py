@@ -195,6 +195,19 @@ def test_silhouette_sparse_input(to_sparse):
     silhouette_samples(sX, y, metric="precomputed")
 
 
+def test_silhouette_sparse_implementation():
+    """ Ensure implementation for sparse matrix works correctly"""
+    X = np.array([[0, 0], [1, 0], [10, 10], [10, 11]], dtype=np.float32)
+    y = np.array([1, 1, 1, 0])
+    pdist = pairwise_distances(X)
+    sX = csr_matrix(pdist)
+    sparse_out = silhouette_samples(sX, y, metric="precomputed")
+    dense_out = silhouette_samples(pdist, y, metric="precomputed")
+
+    for out in zip(sparse_out, dense_out):
+        assert out[0] == out[1]
+
+
 def assert_raises_on_only_one_label(func):
     """Assert message when there is only one label"""
     rng = np.random.RandomState(seed=0)
