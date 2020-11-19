@@ -3,8 +3,8 @@ set -x
 set -e
 
 # System build tools
-apt-get -yq update
-apt-get -yq install wget bzip2 build-essential ccache
+sudo apt-get -yq update
+sudo apt-get -yq install wget bzip2 build-essential ccache
 
 # Init micromamba, a fast and lightweight alternative to conda for CI.
 rm -rf ~/micromamba
