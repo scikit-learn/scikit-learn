@@ -310,38 +310,38 @@ def test_column_transformer_empty_columns(pandas, column_selection,
     assert isinstance(ct.transformers_[0][1], TransRaise)
 
 
-def test_column_transformer_transformer_slices():
-    # Checks for the transformer_slices_ attribute
+def test_column_transformer_output_indices():
+    # Checks for the output_indices_ attribute
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
 
     ct = ColumnTransformer([('trans1', Trans(), [0]),
                             ('trans2', Trans(), [1])])
     ct.fit(X_array)
-    assert ct.transformer_slices_ == {'trans1': slice(0, 1),
-                                      'trans2': slice(1, 2),
-                                      'remainder': slice(-1, 0)}
+    assert ct.output_indices_ == {'trans1': slice(0, 1),
+                                  'trans2': slice(1, 2),
+                                  'remainder': slice(-1, 0)}
 
     # test with transformer_weights and multiple columns
     ct = ColumnTransformer([('trans', Trans(), [0, 1])],
                            transformer_weights={'trans': .1})
     ct.fit(X_array)
-    assert ct.transformer_slices_ == {'trans': slice(0, 2),
-                                      'remainder': slice(-1, 0)}
+    assert ct.output_indices_ == {'trans': slice(0, 2),
+                                  'remainder': slice(-1, 0)}
 
     # test case that ensures that the attribute does also work when
     # a given transformer doesn't have any columns to work on
     ct = ColumnTransformer([('trans1', Trans(), [0, 1]),
                             ('trans2', TransRaise(), [])])
     ct.fit(X_array)
-    assert ct.transformer_slices_ == {'trans1': slice(0, 2),
-                                      'trans2': slice(-1, 0),
-                                      'remainder': slice(-1, 0)}
+    assert ct.output_indices_ == {'trans1': slice(0, 2),
+                                  'trans2': slice(-1, 0),
+                                  'remainder': slice(-1, 0)}
 
     ct = ColumnTransformer([('trans', TransRaise(), [])],
                            remainder='passthrough')
     ct.fit(X_array)
-    assert ct.transformer_slices_ == {'trans': slice(-1, 0),
-                                      'remainder': slice(0, 2)}
+    assert ct.output_indices_ == {'trans': slice(-1, 0),
+                                  'remainder': slice(0, 2)}
 
     # test with data frame
     pd = pytest.importorskip('pandas')
@@ -350,16 +350,16 @@ def test_column_transformer_transformer_slices():
     ct = ColumnTransformer([('trans1', Trans(), ['first']),
                             ('trans2', Trans(), ['second'])])
     ct.fit(X_df)
-    assert ct.transformer_slices_ == {'trans1': slice(0, 1),
-                                      'trans2': slice(1, 2),
-                                      'remainder': slice(-1, 0)}
+    assert ct.output_indices_ == {'trans1': slice(0, 1),
+                                  'trans2': slice(1, 2),
+                                  'remainder': slice(-1, 0)}
 
     ct = ColumnTransformer([('trans1', Trans(), [0]),
                             ('trans2', Trans(), [1])])
     ct.fit(X_df)
-    assert ct.transformer_slices_ == {'trans1': slice(0, 1),
-                                      'trans2': slice(1, 2),
-                                      'remainder': slice(-1, 0)}
+    assert ct.output_indices_ == {'trans1': slice(0, 1),
+                                  'trans2': slice(1, 2),
+                                  'remainder': slice(-1, 0)}
 
 
 def test_column_transformer_sparse_array():

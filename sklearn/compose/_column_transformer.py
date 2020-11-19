@@ -136,7 +136,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         sparse matrix or a dense numpy array, which depends on the output
         of the individual transformers and the `sparse_threshold` keyword.
 
-    transformer_slices_ : dict
+    output_indices_ : dict
         A dictionary from each transformer name to a :py:object:`slice`,
         where the slice corresponds to indices in the transformed output.
         This is useful to inspect which transformer is responsible for
@@ -423,26 +423,26 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                     "The output of the '{0}' transformer should be 2D (scipy "
                     "matrix, array, or pandas DataFrame).".format(name))
 
-    def _record_transformer_slices(self, Xs):
+    def _record_output_indices(self, Xs):
         """
         Record which transformer produced which column.
         """
         idx = 0
-        self.transformer_slices_ = {}
+        self.output_indices_ = {}
 
         for transformer_idx, (name, _, _, _) in enumerate(
             self._iter(fitted=True, replace_strings=True)
         ):
             n_columns = Xs[transformer_idx].shape[1]
-            self.transformer_slices_[name] = slice(idx, idx + n_columns)
+            self.output_indices_[name] = slice(idx, idx + n_columns)
             idx += n_columns
 
         # empty slices for transformers that generate no output (except
         # for 'remainder' when 'drop'); these are safe for indexing
         all_names = [t[0] for t in self.transformers] + ['remainder']
         for name in all_names:
-            if name not in self.transformer_slices_:
-                self.transformer_slices_[name] = slice(-1, 0)
+            if name not in self.output_indices_:
+                self.output_indices_[name] = slice(-1, 0)
 
     def _validate_features(self, n_features, feature_names):
         """Ensures feature counts and names are the same during fit and
@@ -582,7 +582,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         self._update_fitted_transformers(transformers)
         self._validate_output(Xs)
-        self._record_transformer_slices(Xs)
+        self._record_output_indices(Xs)
 
         return self._hstack(list(Xs))
 
