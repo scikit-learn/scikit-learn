@@ -12,7 +12,8 @@ mkdir -p $HOME/bin
 pushd $HOME
 wget -qO- https://micromamba.snakepit.net/api/micromamba/linux-64/latest | tar -xvj bin/micromamba
 popd
-$HOME/bin/micromamba shell init -s bash -p $HOME/micromamba
+export PATH="$HOME/bin:$PATH"
+micromamba shell init -s bash -p $HOME/micromamba
 source ~/.bashrc
 micromamba activate
 
