@@ -136,7 +136,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         sparse matrix or a dense numpy array, which depends on the output
         of the individual transformers and the `sparse_threshold` keyword.
 
-    transformers_output_ : dict
+    transformer_slices_ : dict
         A dictionary from transformer names to :py:class:`slice`s, where
         each slice corresponds to indices in the transformed output.
         This is useful to inspect which transformer is responsible for
@@ -428,12 +428,12 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         Record which transformer produced which column.
         """
         idx = 0
-        self.transformers_output_ = {}
+        self.transformer_slices_ = {}
         for transformer_idx, (name, _, _, _) in enumerate(
             self._iter(fitted=True, replace_strings=True)
         ):
             n_columns = Xs[transformer_idx].shape[1]
-            self.transformers_output_[name] = slice(idx, idx + n_columns)
+            self.transformer_slices_[name] = slice(idx, idx + n_columns)
             idx += n_columns
 
     def _validate_features(self, n_features, feature_names):
