@@ -5,7 +5,6 @@
 # of the ARM64 architecture for the continuous deployment jobs.
 
 set -e
-set -x
 
 # The wheels cannot be uploaded on PRs
 if [[ $BUILD_WHEEL == true && $TRAVIS_EVENT_TYPE != pull_request ]]; then

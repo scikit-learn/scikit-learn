@@ -5,7 +5,6 @@
 # important that we call to the right installation script.
 
 set -e
-set -x
 
 if [[ $BUILD_WHEEL == true ]]; then
     source build_tools/travis/install_wheels.sh

@@ -1,7 +1,6 @@
 #!/bin/bash
 
 set -e
-set -x
 
 # Faster run of the source code tests
 pytest -n $CPU_COUNT --pyargs sklearn

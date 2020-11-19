@@ -6,7 +6,6 @@
 # testing the continuous integration jobs.
 
 set -e
-set -x
 
 if [[ $BUILD_WHEEL != true ]]; then
     # This trick will make Travis terminate the continuation of the pipeline

@@ -1,7 +1,6 @@
 #!/bin/bash
 
 set -e
-set -x
 
 python --version
 python -c "import numpy; print(f'numpy {numpy.__version__}')"

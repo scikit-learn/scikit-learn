@@ -8,7 +8,6 @@
 # for GCC + Cython, and gain time.
 
 set -e
-set -x
 
 echo "CPU Arch: $TRAVIS_CPU_ARCH."
 
