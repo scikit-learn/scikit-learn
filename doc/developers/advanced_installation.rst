@@ -439,3 +439,17 @@ Before using ICC, you need to set up environment variables::
 Finally, you can build scikit-learn. For example on Linux x86_64::
 
     python setup.py build_ext --compiler=intelem -i build_clib --compiler=intelem
+
+Parallel builds
+===============
+
+It is possible to build scikit-learn compiled extensions in parallel by setting
+and environment variable as follows before calling the ``pip install`` or
+``python setup.py build_ext`` commands::
+
+    export SKLEARN_BUILD_PARALLEL=3
+    pip install --verbose --no-build-isolation --editable .
+
+On a machine with 2 CPU cores, it can be beneficial to use a parallelism level
+of 3 to overlap IO bound tasks (reading and writing files on disk) with CPU
+bound tasks (actually compiling).
