@@ -103,7 +103,7 @@ jobs:
 
   pypy3:
     docker:
-      - image: buster-slim
+      - image: circleci/python:3.7.3-stretch
     steps:
       - restore_cache:
           keys:
