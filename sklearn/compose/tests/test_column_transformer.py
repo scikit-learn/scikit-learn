@@ -310,7 +310,8 @@ def test_column_transformer_empty_columns(pandas, column_selection,
     assert isinstance(ct.transformers_[0][1], TransRaise)
 
 
-def test_column_transformer_transformers_output():
+def test_column_transformer_transformer_slices():
+    # Checks for the transformer_slices_ attribute
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
 
     ct = ColumnTransformer([('trans1', Trans(), [0]),
