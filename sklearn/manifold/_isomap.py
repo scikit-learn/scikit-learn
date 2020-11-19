@@ -38,7 +38,10 @@ class Isomap(TransformerMixin, BaseEstimator):
         'dense' : Use a direct solver (i.e. LAPACK)
         for the eigenvalue decomposition.
 
-        'randomized' : Run randomized SVD by the method of Halko et al.
+        'randomized' : Run randomized SVD by the method of Halko et al. Note
+        that this should only be used when there is no risk of large negative
+        eigenvalues. Indeed current implementation of this method returns the
+        n_components with largest module. See :func:`randomized_eigsh`.
 
         .. versionchanged:: 0.24
 
