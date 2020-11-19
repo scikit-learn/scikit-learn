@@ -103,17 +103,16 @@ jobs:
 
   pypy3:
     docker:
-      - image: circleci/python
+      - image: condaforge/miniforge3
     steps:
       - restore_cache:
           keys:
             - pypy3-ccache-{{ .Branch }}
             - pypy3-ccache
       - checkout
-      - run: cd $HOME && wget -qO- https://micromamba.snakepit.net/api/micromamba/linux-64/latest | tar -xvj bin/micromamba
-      - run: $HOME/bin/micromamba shell init -s bash -p $HOME/micromamba
-      - run: source ~/.bashrc
-      - run: bash ./build_tools/circle/build_test_pypy.sh
+      - run: conda init bash
+      - run: conda install -y mamba
+      - run: ./build_tools/circle/build_test_pypy.sh
       - save_cache:
           key: pypy3-ccache-{{ .Branch }}-{{ .BuildNum }}
           paths:

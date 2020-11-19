@@ -3,17 +3,14 @@ set -x
 set -e
 
 # System build tools
-sudo apt-get -yq update
-sudo apt-get -yq install wget bzip2 build-essential ccache
+apt-get -yq update
+apt-get -yq install wget bzip2 build-essential ccache
 
-# Activate the base micromamba env
-export PATH="$HOME/bin:$PATH"
-micromamba activate
-
+conda activate
 # Install pypy and all the scikit-learn dependencies from conda-forge. In
 # particular, we want to install pypy compatible binary packages for numpy and
 # scipy as it would be to costly to build those from source.
-micromamba install -y -c conda-forge \
+mamba install -y \
     pypy numpy scipy cython \
     joblib threadpoolctl pillow pytest \
     sphinx numpydoc docutils
