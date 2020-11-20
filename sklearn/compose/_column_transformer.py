@@ -137,7 +137,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         of the individual transformers and the `sparse_threshold` keyword.
 
     output_indices_ : dict
-        A dictionary from each transformer name to a :py:object:`slice`,
+        A dictionary from each transformer name to a :object:`slice`,
         where the slice corresponds to indices in the transformed output.
         This is useful to inspect which transformer is responsible for
         which transformed feature(s).
