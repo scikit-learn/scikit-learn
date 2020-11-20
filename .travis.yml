@@ -51,6 +51,8 @@ jobs:
       os: linux
       arch: arm64
       if: type = cron OR commit_message =~ /\[arm64\]/
+      env:
+        - CPU_COUNT=8
 
     # Linux environments to build the scikit-learn wheels
     # for the ARM64 arquitecture and Python 3.6 and newer
