@@ -94,7 +94,7 @@ jobs:
 
         run: bash build_tools/github/build_wheels.sh
 
-      - name: Store artifacts
+      - name: Upload artifacts
         uses: actions/upload-artifact@v2
         # Prevent the job from failing when the upload artifact step
         # fails (the network infrastructure is not very reliable yet)
@@ -128,7 +128,7 @@ jobs:
           OPENBLAS_NUM_THREADS: 2
           SKLEARN_SKIP_NETWORK_TESTS: 1
 
-      - name: Store artifacts
+      - name: Upload artifacts
         uses: actions/upload-artifact@v2
         # Prevent the job from failing when the upload artifact step
         # fails (the network infrastructure is not very reliable yet)
