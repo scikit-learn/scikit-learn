@@ -347,8 +347,6 @@ N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE = {
     'gaussian_process',
     'impute',
     'isotonic',
-    'kernel_approximation',
-    'kernel_ridge',
     'linear_model',
     'manifold',
     'mixture',
