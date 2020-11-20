@@ -2973,9 +2973,7 @@ def check_estimator_sparse_dense(name, estimator_orig,
             if hasattr(estimator, "predict"):
                 pred = estimator.predict(X_converted)
                 pred_sp = estimator_sp.predict(X_sp_converted)
-                if not isinstance(estimator, BaseSGD):
-                    assert_allclose(pred, pred_sp)
-
+                assert_allclose(pred, pred_sp)
                 assert pred.shape == pred_sp.shape
             if hasattr(estimator, 'predict_proba'):
                 probs = estimator.predict_proba(X_converted)
