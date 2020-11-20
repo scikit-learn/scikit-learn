@@ -5,7 +5,7 @@ set -x
 
 PYTHON_VERSION=$1
 
-# Install the system build tools for PyPy implementation
 if [[ $PYTHON_VERSION == pp36 ]]; then
+    # Install the system build tools (ATLAS and LAPLACK) for PyPy implementation
     apt-get -yq install libatlas-base-dev liblapack-dev gfortran libopenblas-dev
 fi
