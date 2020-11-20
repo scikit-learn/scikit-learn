@@ -123,9 +123,8 @@ def test_kernel_pca_sparse():
                 kpca.inverse_transform(X_pred_transformed)
 
 
-@pytest.mark.parametrize("solver", ["auto", "dense", "arpack", "randomized"],
-                         ids="solver={}".format)
-@pytest.mark.parametrize("n_features", [4, 10], ids="n_features={}".format)
+@pytest.mark.parametrize("solver", ["auto", "dense", "arpack", "randomized"])
+@pytest.mark.parametrize("n_features", [4, 10])
 def test_kernel_pca_linear_kernel(solver, n_features):
     """ Tests that kPCA with a linear kernel is equivalent to PCA for all
     solvers"""
@@ -233,8 +232,7 @@ def test_kernel_pca_precomputed():
                                   np.abs(X_kpca_train2))
 
 
-@pytest.mark.parametrize("solver", ["auto", "dense", "arpack", "randomized"],
-                         ids="solver={}".format)
+@pytest.mark.parametrize("solver", ["auto", "dense", "arpack", "randomized"])
 def test_kernel_pca_precomputed_non_symmetric(solver):
     """Tests that a non symmetric precomputed kernel is actually accepted
     because the kernel centerer does its job correctly"""
@@ -329,8 +327,7 @@ def test_kernel_conditioning():
     assert np.all(kpca.lambdas_ == _check_psd_eigenvalues(kpca.lambdas_))
 
 
-@pytest.mark.parametrize("solver", ["auto", "dense", "arpack", "randomized"],
-                         ids="solver={}".format)
+@pytest.mark.parametrize("solver", ["auto", "dense", "arpack", "randomized"])
 def test_precomputed_kernel_not_psd(solver):
     """ Tests for all methods what happens with a non PSD gram matrix (this
     can happen in an isomap scenario, or with custom kernel functions, or
@@ -375,8 +372,7 @@ def test_precomputed_kernel_not_psd(solver):
             kpca.fit(K)
 
 
-@pytest.mark.parametrize("n_components", [4, 10, 20],
-                         ids="n_components={}".format)
+@pytest.mark.parametrize("n_components", [4, 10, 20])
 def test_kernel_pca_solvers_equivalence(n_components):
     """Checks that 'dense', 'arpack' and 'randomized' solvers give similar
     results"""
