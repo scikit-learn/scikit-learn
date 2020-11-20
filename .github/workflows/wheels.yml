@@ -96,6 +96,9 @@ jobs:
 
       - name: Store artifacts
         uses: actions/upload-artifact@v2
+        # Prevent the job from failing when the upload artifact step
+        # fails (the network infrastructure is not very reliable yet)
+        continue-on-error: true
         with:
           path: wheelhouse/*.whl
 
@@ -127,6 +130,9 @@ jobs:
 
       - name: Store artifacts
         uses: actions/upload-artifact@v2
+        # Prevent the job from failing when the upload artifact step
+        # fails (the network infrastructure is not very reliable yet)
+        continue-on-error: true
         with:
           path: dist/*.tar.gz
 
