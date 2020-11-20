@@ -382,11 +382,10 @@ def test_kernel_pca_solvers_equivalence(n_components):
     results"""
 
     # Generate random data
-    n_training_samples = 2000
-    n_features = 10
-    rng = np.random.RandomState(0)
-    X_fit = rng.random_sample((n_training_samples, n_features))
-    X_pred = rng.random_sample((100, n_features))
+    n_train, n_test = 2000, 100
+    np.random.seed(0)
+    X, _ = make_circles(n_samples=(n_train + n_test), factor=.3, noise=.05)
+    X_fit, X_pred = X[:n_train, :], X[n_train:, :]
 
     # reference (full)
     ref_pred = KernelPCA(n_components, eigen_solver="dense")\
