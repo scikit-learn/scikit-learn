@@ -7,7 +7,7 @@ In this example, semi-supervised classifiers are training on the 20 newsgroups
 dataset (which will be automatically downloaded).
 
 You can adjust the number of categories by giving their names to the dataset
-loader or setting them to None to get the 20 of them.
+loader or setting them to `None` to get all 20 of them.
 """
 import os
 
@@ -56,11 +56,12 @@ ls_pipeline = Pipeline([
 
 
 def eval_and_print_metrics(clf, X_train, y_train, X_test, y_test):
-    print("X_train length:", len(X_train))
-    print("Unlabeled samples in train:", sum(1 for x in y_train if x == -1))
+   print("Number of training samples:", len(X_train))
+    print("Unlabeled samples in training set:",
+          sum(1 for x in y_train if x == -1))
     clf.fit(X_train, y_train)
     y_pred = clf.predict(X_test)
-    print("Micro-averaged F1 score:",
+    print("Micro-averaged F1 score on test set: "
           "%0.3f" % f1_score(y_test, y_pred, average='micro'))
     print("-" * 10)
     print()
@@ -79,12 +80,13 @@ if __name__ == "__main__":
     # X_20 and y_20 are the subset of the train dataset indicated by the mask
     X_20, y_20 = map(list, zip(*((x, y)
                      for x, y, m in zip(X_train, y_train, y_mask) if m)))
-    print("Supervised SGDClassifier on 20% of the data:")
+    print("Supervised SGDClassifier on 20% of the training data:")
     eval_and_print_metrics(pipeline, X_20, y_20, X_test, y_test)
 
     # set the non-masked subset to be unlabeled
     y_train[~y_mask] = -1
-    print("SelfTrainingClassifier on 20% of the data (rest is unlabeled):")
+    print("SelfTrainingClassifier on 20% of the training data (rest "
+          "is unlabeled):")
     eval_and_print_metrics(st_pipeline, X_train, y_train, X_test, y_test)
 
     if 'CI' not in os.environ:
