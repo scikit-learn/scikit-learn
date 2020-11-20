@@ -3,7 +3,7 @@
 set -e
 set -x
 
-if [ "$GITHUB_EVENT_NAME" == "schedule" ]; then
+if [ $GITHUB_EVENT_NAME == schedule ]; then
     ANACONDA_ORG="scipy-wheels-nightly"
     ANACONDA_TOKEN="$SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN"
 else

@@ -36,7 +36,7 @@ jobs:
 
   # Build the wheels for Linux, Windows and macOS for Python 3.6 and newer
   build_wheels:
-    name: Build wheel for cp${{ matrix.python }}-${{ matrix.platform_id }}
+    name: Build wheel for ${{ matrix.python }}-${{ matrix.platform_id }}
     runs-on: ${{ matrix.os }}
     needs: check_build_trigger
     if: needs.check_build_trigger.outputs.build
@@ -46,7 +46,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
-        python: [36, 37, 38, 39]
+        python: [cp36, cp37, cp38, cp39, pp36]
         bitness: [32, 64]
         include:
           # Run 32 and 64 bit version in parallel for Linux and Windows
@@ -66,6 +66,12 @@ jobs:
             bitness: 64
             platform_id: macosx_x86_64
         exclude:
+          - os: windows-latest
+            bitness: 64
+            python: pp36
+          - os: ubuntu-latest
+            bitness: 32
+            python: pp36
           - os: macos-latest
             bitness: 32
 
@@ -85,7 +91,7 @@ jobs:
                             OPENBLAS_NUM_THREADS=2
                             SKLEARN_SKIP_NETWORK_TESTS=1
                             SKLEARN_BUILD_PARALLEL=3
-          CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
+          CIBW_BUILD: ${{ matrix.python }}-${{ matrix.platform_id }}
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: bash build_tools/github/repair_windows_wheels.sh {wheel} {dest_dir} ${{ matrix.bitness }} 
           CIBW_BEFORE_TEST_WINDOWS: bash build_tools/github/build_minimal_windows_image.sh ${{ matrix.python }} ${{ matrix.bitness }}
           CIBW_TEST_REQUIRES: pytest pandas threadpoolctl

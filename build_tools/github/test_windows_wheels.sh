@@ -6,9 +6,9 @@ set -x
 PYTHON_VERSION=$1
 BITNESS=$2
 
-if [[ "$PYTHON_VERSION" == "36" || "$BITNESS" == "32" ]]; then
-    # For Python 3.6 and 32-bit architecture use the regular
-    # test command (outside of the minimal Docker container)
+if [[ $PYTHON_VERSION =~ [cp]p36 || $BITNESS == 32 ]]; then
+    # For CPython 3.6, PyPy and 32-bit architecture use the
+    # regular test command outside of the Docker container.
     cp $CONFTEST_PATH $CONFTEST_NAME
     pytest --pyargs sklearn
     python -m threadpoolctl -i sklearn
