@@ -412,7 +412,7 @@ def locally_linear_embedding(
             for i in range(N):
                 X_nbrs = X[neighbors[i]] - X[i]
                 C_nbrs = np.dot(X_nbrs, X_nbrs.T)
-                evi, vi = eigh(C_nbrs)
+                evi, vi = eigh(C_nbrs, check_finite=False)
                 evals[i] = evi[::-1]
                 V[i] = vi[:, ::-1]
 
