@@ -991,7 +991,7 @@ def test_multinomial_grad_hess():
     # Estimate hessian using least squares as done in
     # test_logistic_grad_hess
     e = 1e-3
-    d_x = np.linspace(-e, e, 30)
+    asvd_x = np.linspace(-e, e, 30)
     d_grad = np.array([
         _multinomial_grad_hess(w + t * vec, X, Y, alpha=1.,
                                sample_weight=sample_weights)[0]
