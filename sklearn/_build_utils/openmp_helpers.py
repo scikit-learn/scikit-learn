@@ -74,9 +74,11 @@ def check_openmp_support():
                                       extra_preargs=extra_preargs,
                                       extra_postargs=extra_postargs)
 
-        if 'nthreads=' in output[0]:
+        if output and 'nthreads=' in output[0]:
             nthreads = int(output[0].strip().split('=')[1])
             openmp_supported = len(output) == nthreads
+        elif "PYTHON_CROSSENV" in os.environ:
+            openmp_supported = True
         else:
             openmp_supported = False
 
