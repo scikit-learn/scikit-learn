@@ -3,7 +3,7 @@
 Semi-supervised Classification on a Text Dataset
 ================================================
 
-In this example, semi-supervised classifiers are training on the 20 newsgroups
+In this example, semi-supervised classifiers are trained on the 20 newsgroups
 dataset (which will be automatically downloaded).
 
 You can adjust the number of categories by giving their names to the dataset
