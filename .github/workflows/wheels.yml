@@ -67,10 +67,11 @@ jobs:
             platform_id: macosx_x86_64
         exclude:
           - os: windows-latest
-            bitness: 64
             python: pp36
           - os: ubuntu-latest
             bitness: 32
+            python: pp36
+          - os: macos-latest
             python: pp36
           - os: macos-latest
             bitness: 32

@@ -5,10 +5,10 @@ requires = [
     "wheel",
     "Cython>=0.28.5",
 
-    # PyPy needs numpy >= 1.14.0
+    # PyPy needs numpy >= 1.19.0
     # platform_python_implementation!='CPython' not needed >= Python 3.7 which is numpy 1.14.5
     "numpy==1.13.3; python_version=='3.6' and platform_machine!='aarch64' and platform_system!='AIX' and platform_python_implementation=='CPython'",
-    "numpy==1.14.0; python_version=='3.6' and platform_machine!='aarch64' and platform_system!='AIX' and platform_python_implementation!='CPython'",
+    "numpy==1.19.0; python_version=='3.6' and platform_machine!='aarch64' and platform_system!='AIX' and platform_python_implementation!='CPython'",
 
     # AIX needs numpy >= 1.16.0
     # platform_system!='AIX' not needed >= Python 3.8 which is numpy 1.17.3
