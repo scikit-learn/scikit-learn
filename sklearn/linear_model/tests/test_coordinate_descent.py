@@ -639,6 +639,16 @@ def test_multi_task_lasso_readonly_data():
         assert_array_almost_equal(clf.coef_[0], clf.coef_[1])
 
 
+def test_multi_task_enet_readonly_data():
+    X, y, X_test, y_test = build_dataset()
+    Y = np.c_[y, y]
+    with TempMemmap((X, Y)) as (X, Y):
+        Y = np.c_[y, y]
+        clf = MultiTaskElasticNet(alpha=1, tol=1e-8).fit(X, Y)
+        assert 0 < clf.dual_gap_ < 1e-5
+        assert_array_almost_equal(clf.coef_[0], clf.coef_[1])
+
+
 def test_enet_multitarget():
     n_targets = 3
     X, y, _, _ = build_dataset(n_samples=10, n_features=8,
