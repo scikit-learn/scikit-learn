@@ -49,8 +49,6 @@ permissions given to maintainers, which includes:
 - become a member of the *scikit-learn* team on conda-forge by editing the 
   ``recipe/meta.yaml`` file on 
   ``https://github.com/conda-forge/scikit-learn-feedstock``
-- *maintainer* on ``https://github.com/MacPython/scikit-learn-wheels``
-
 
 .. _preparing_a_release_pr:
 
@@ -120,36 +118,11 @@ Making a release
    candidate period, the latest stable is two versions behind the master
    branch, instead of one.
 
-3. At this point all relevant PRs should have been merged into the `0.99.X`
-   branch. Create the source tarball:
-
-   - Wipe clean your repo::
-
-       $ git clean -xfd
-
-   - Generate the tarball::
-
-       $ python setup.py sdist
-
-   - You can also test a binary dist build using::
-
-       $ python setup.py bdist_wheel
-
-   - You can test if PyPi is going to accept the package using::
-
-       $ twine check dist/*
-
-   You can run ``twine check`` after step 5 (fetching artifacts) as well.
-
-   The result should be in the `dist/` folder. We will upload it later
-   with the wheels. Check that you can install it in a new virtualenv and
-   that the tests pass.
-
-4. Proceed with caution. Ideally, tags should be created when you're almost
+3. Proceed with caution. Ideally, tags should be created when you're almost
    certain that the release is ready, since adding a tag to the main repo can
-   trigger certain automated processes. You can test upload the ``sdist`` to
-   ``test.pypi.org``, and test the next step by setting ``BUILD_COMMIT`` to the
-   branch name (``0.99.X`` for instance) in a PR to the wheel building repo.
+   trigger certain automated processes. You can create a PR in the main repo
+   and trigger the wheel builder with the ``[cd build]`` commit marker. Then,
+   you can upload the wheels and ``sdist`` to ``test.pypi.org`` for testing.
    Once all works, you can proceed with tagging. Create the tag and push it (if
    it's an RC, it can be ``0.xxrc1`` for instance)::
 
@@ -157,12 +130,14 @@ Making a release
 
     $ git push git@github.com:scikit-learn/scikit-learn.git 0.99
 
-5. Update the dependency versions and set ``BUILD_COMMIT`` variable to the
-   release tag at:
+.. note::
+  
+  Before building the wheels, make sure that the ``pyproject.toml`` file is
+  up to date and using the oldest version of ``numpy`` for each Python version
+  to avoid ABI incompatibility issues. Moreover, a new line have to be included
+  in the ``pyproject.toml`` file for each new supported version of Python.
 
-   https://github.com/MacPython/scikit-learn-wheels
-
-   Once the CI has completed successfully, collect the generated binary wheel
+5. Once the CD has completed successfully, collect the generated binary wheel
    packages and upload them to PyPI by running the following commands in the
    scikit-learn source folder (checked out at the release tag)::
 
