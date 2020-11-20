@@ -56,7 +56,7 @@ ls_pipeline = Pipeline([
 
 
 def eval_and_print_metrics(clf, X_train, y_train, X_test, y_test):
-   print("Number of training samples:", len(X_train))
+    print("Number of training samples:", len(X_train))
     print("Unlabeled samples in training set:",
           sum(1 for x in y_train if x == -1))
     clf.fit(X_train, y_train)
