@@ -137,7 +137,7 @@ Making a release
   to avoid ABI incompatibility issues. Moreover, a new line have to be included
   in the ``pyproject.toml`` file for each new supported version of Python.
 
-5. Once the CD has completed successfully, collect the generated binary wheel
+4. Once the CD has completed successfully, collect the generated binary wheel
    packages and upload them to PyPI by running the following commands in the
    scikit-learn source folder (checked out at the release tag)::
 
@@ -145,7 +145,7 @@ Making a release
        $ pip install -U wheelhouse_uploader twine
        $ python setup.py fetch_artifacts
 
-6. Check the content of the `dist/` folder: it should contain all the wheels
+5. Check the content of the `dist/` folder: it should contain all the wheels
    along with the source tarball ("scikit-learn-RRR.tar.gz").
 
    Make sure that you do not have developer versions or older versions of
@@ -159,7 +159,7 @@ Making a release
 
        $ twine upload dist/*
 
-7. For major/minor (not bug-fix release), update the symlink for ``stable``
+6. For major/minor (not bug-fix release), update the symlink for ``stable``
    and the ``latestStable`` variable in
    https://github.com/scikit-learn/scikit-learn.github.io::
 
