@@ -461,7 +461,7 @@ def randomized_eigsh(M, n_components, *, n_oversamples=10, n_iter='auto',
       Halko, et al., 2009 https://arxiv.org/abs/0909.4061
 
     """
-    if selection == 'value':
+    if selection == 'value':  # pragma: no cover
         # to do : an algorithm can be found in the Halko et al reference
         raise NotImplementedError()
 
