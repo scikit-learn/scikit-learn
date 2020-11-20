@@ -508,7 +508,7 @@ def locally_linear_embedding(
                 v = svd(Xi, full_matrices=True, check_finite=False)[0]
             else:
                 Ci = np.dot(Xi, Xi.T)
-                v = eigh(Ci)[1][:, ::-1]
+                v = eigh(Ci, check_finite=False)[1][:, ::-1]
 
             Gi = np.zeros((n_neighbors, n_components + 1))
             Gi[:, 1:] = v[:, :n_components]
