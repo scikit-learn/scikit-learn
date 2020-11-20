@@ -67,7 +67,7 @@ def barycenter_weights(X, Y, indices, reg=1e-3):
         else:
             R = reg
         G.flat[::n_neighbors + 1] += R
-        w = solve(G, v, sym_pos=True)
+        w = solve(G, v, sym_pos=True, check_finite=False)
         B[i, :] = w / np.sum(w)
     return B
 
