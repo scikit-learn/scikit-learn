@@ -505,7 +505,7 @@ def locally_linear_embedding(
 
             # compute n_components largest eigenvalues of Xi * Xi^T
             if use_svd:
-                v = svd(Xi, full_matrices=True)[0]
+                v = svd(Xi, full_matrices=True, check_finite=False)[0]
             else:
                 Ci = np.dot(Xi, Xi.T)
                 v = eigh(Ci)[1][:, ::-1]
