@@ -405,7 +405,8 @@ def locally_linear_embedding(
             for i in range(N):
                 X_nbrs = X[neighbors[i]] - X[i]
                 V[i], evals[i], _ = svd(X_nbrs,
-                                        full_matrices=True)
+                                        full_matrices=True,
+                                        check_finite=False)
             evals **= 2
         else:
             for i in range(N):
