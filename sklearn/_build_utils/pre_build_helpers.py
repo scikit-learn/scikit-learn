@@ -80,6 +80,8 @@ def compile_test_program(code, extra_preargs=[], extra_postargs=[]):
                 output = output.decode(
                     sys.stdout.encoding or 'utf-8').splitlines()
             else:
+                # Return an empty output if we are cross compiling
+                # as we cannot run the test_program
                 output = []
         except Exception:
             raise
