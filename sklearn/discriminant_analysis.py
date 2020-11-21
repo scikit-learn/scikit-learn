@@ -37,9 +37,9 @@ def _cov(X, shrinkage=None):
     X : array-like of shape (n_samples, n_features)
         Input data.
 
-    shrinkage : {'empirical', 'auto'} or float, default=None
+    shrinkage : {'empirical', 'auto'} or float, default='empirical'
         Shrinkage parameter, possible values:
-          - None or 'empirical': no shrinkage (default).
+          - 'empirical': no shrinkage (default).
           - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
           - float between 0 and 1: fixed shrinkage parameter.
 
@@ -48,7 +48,6 @@ def _cov(X, shrinkage=None):
     s : ndarray of shape (n_features, n_features)
         Estimated covariance matrix.
     """
-    shrinkage = "empirical" if shrinkage is None else shrinkage
     if isinstance(shrinkage, str):
         if shrinkage == 'auto':
             sc = StandardScaler()  # standardize features
@@ -65,7 +64,7 @@ def _cov(X, shrinkage=None):
             raise ValueError('shrinkage parameter must be between 0 and 1')
         s = shrunk_covariance(empirical_covariance(X), shrinkage)
     else:
-        raise TypeError('shrinkage must be of string or int type')
+        raise TypeError('shrinkage must be of string or float type')
     return s
 
 
