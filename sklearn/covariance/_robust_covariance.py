@@ -643,7 +643,7 @@ class MinCovDet(EmpiricalCovariance):
         random_state = check_random_state(self.random_state)
         n_samples, n_features = X.shape
         # check that the empirical covariance is full rank
-        if (linalg.svdvals(np.dot(X.T, X), 
+        if (linalg.svdvals(np.dot(X.T, X), \
                            check_finite=False) > 1e-8).sum() != n_features:
             warnings.warn("The covariance matrix associated to your dataset "
                           "is not full rank")
