@@ -9,7 +9,7 @@ import warnings
 
 from abc import ABCMeta, abstractmethod
 
-from joblib import Parallel, delayed
+from joblib import Parallel
 
 from ..base import clone, is_classifier
 from ._base import LinearClassifierMixin, SparseCoefMixin
@@ -20,6 +20,7 @@ from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.validation import _deprecate_positional_args
+from ..utils.fixes import delayed
 from ..exceptions import ConvergenceWarning
 from ..model_selection import StratifiedShuffleSplit, ShuffleSplit
 

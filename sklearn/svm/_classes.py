@@ -35,7 +35,8 @@ class LinearSVC(LinearClassifierMixin,
     loss : {'hinge', 'squared_hinge'}, default='squared_hinge'
         Specifies the loss function. 'hinge' is the standard SVM loss
         (used e.g. by the SVC class) while 'squared_hinge' is the
-        square of the hinge loss.
+        square of the hinge loss. The combination of ``penalty='l1'``
+        and ``loss='hinge'`` is not supported.
 
     dual : bool, default=True
         Select the algorithm to either solve the dual or primal

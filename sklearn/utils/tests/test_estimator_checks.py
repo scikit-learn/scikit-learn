@@ -5,8 +5,6 @@ import numpy as np
 import scipy.sparse as sp
 import joblib
 
-from io import StringIO
-
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils import deprecated
 from sklearn.utils._testing import (assert_raises_regex,
@@ -270,6 +268,27 @@ class NotInvariantPredict(BaseEstimator):
         return np.zeros(X.shape[0])
 
 
+class NotInvariantSampleOrder(BaseEstimator):
+    def fit(self, X, y):
+        X, y = self._validate_data(
+            X, y,
+            accept_sparse=("csr", "csc"),
+            multi_output=True,
+            y_numeric=True)
+        # store the original X to check for sample order later
+        self._X = X
+        return self
+
+    def predict(self, X):
+        X = check_array(X)
+        # if the input contains the same elements but different sample order,
+        # then just return zeros.
+        if (np.array_equiv(np.sort(X, axis=0), np.sort(self._X, axis=0)) and
+           (X != self._X).any()):
+            return np.zeros(X.shape[0])
+        return X[:, 0]
+
+
 class LargeSparseNotSupportedClassifier(BaseEstimator):
     def fit(self, X, y):
         X, y = self._validate_data(
@@ -421,7 +440,7 @@ def test_check_estimator():
     msg = "object has no attribute 'fit'"
     assert_raises_regex(AttributeError, msg, check_estimator, BaseEstimator())
     # check that fit does input validation
-    msg = "ValueError not raised"
+    msg = "Did not raise"
     assert_raises_regex(AssertionError, msg, check_estimator,
                         BaseBadClassifier())
     # check that sample_weights in fit accepts pandas.Series type
@@ -455,6 +474,13 @@ def test_check_estimator():
            ' with _ but wrong_attribute added')
     assert_raises_regex(AssertionError, msg,
                         check_estimator, SetsWrongAttribute())
+    # check for sample order invariance
+    name = NotInvariantSampleOrder.__name__
+    method = 'predict'
+    msg = ("{method} of {name} is not invariant when applied to a dataset"
+           "with different sample order.").format(method=method, name=name)
+    assert_raises_regex(AssertionError, msg,
+                        check_estimator, NotInvariantSampleOrder())
     # check for invariant method
     name = NotInvariantPredict.__name__
     method = 'predict'
@@ -465,19 +491,9 @@ def test_check_estimator():
     # check for sparse matrix input handling
     name = NoSparseClassifier.__name__
     msg = "Estimator %s doesn't seem to fail gracefully on sparse data" % name
-    # the check for sparse input handling prints to the stdout,
-    # instead of raising an error, so as not to remove the original traceback.
-    # that means we need to jump through some hoops to catch it.
-    old_stdout = sys.stdout
-    string_buffer = StringIO()
-    sys.stdout = string_buffer
-    try:
-        check_estimator(NoSparseClassifier())
-    except Exception:
-        pass
-    finally:
-        sys.stdout = old_stdout
-    assert msg in string_buffer.getvalue()
+    assert_raises_regex(
+        AssertionError, msg, check_estimator, NoSparseClassifier()
+    )
 
     # Large indices test on bad estimator
     msg = ('Estimator LargeSparseNotSupportedClassifier doesn\'t seem to '
@@ -558,7 +574,7 @@ def test_check_estimator_clones():
 def test_check_estimators_unfitted():
     # check that a ValueError/AttributeError is raised when calling predict
     # on an unfitted estimator
-    msg = "NotFittedError not raised by predict"
+    msg = "Did not raise"
     assert_raises_regex(AssertionError, msg, check_estimators_unfitted,
                         "estimator", NoSparseClassifier())
 
@@ -583,11 +599,9 @@ def test_check_no_attributes_set_in_init():
                         check_no_attributes_set_in_init,
                         'estimator_name',
                         NonConformantEstimatorPrivateSet())
-    assert_raises_regex(AssertionError,
+    assert_raises_regex(AttributeError,
                         "Estimator estimator_name should store all "
-                        "parameters as an attribute during init. "
-                        "Did not find attributes "
-                        r"\['you_should_set_this_'\].",
+                        "parameters as an attribute during init.",
                         check_no_attributes_set_in_init,
                         'estimator_name',
                         NonConformantEstimatorNoParamSet())

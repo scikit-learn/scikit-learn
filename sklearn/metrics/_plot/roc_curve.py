@@ -67,7 +67,7 @@ class RocCurveDisplay:
     >>> display.plot()  # doctest: +SKIP
     >>> plt.show()      # doctest: +SKIP
     """
-
+    @_deprecate_positional_args
     def __init__(self, *, fpr, tpr,
                  roc_auc=None, estimator_name=None, pos_label=None):
         self.estimator_name = estimator_name

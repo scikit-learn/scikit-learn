@@ -476,7 +476,7 @@ class FastICA(TransformerMixin, BaseEstimator):
             X -= X_mean[:, np.newaxis]
 
             # Whitening and preprocessing by PCA
-            u, d, _ = linalg.svd(X, full_matrices=False)
+            u, d, _ = linalg.svd(X, full_matrices=False, check_finite=False)
 
             del _
             K = (u / d).T[:n_components]  # see (6.33) p.140
@@ -534,11 +534,8 @@ class FastICA(TransformerMixin, BaseEstimator):
         else:
             self.components_ = W
 
-        self.mixing_ = linalg.pinv(self.components_)
+        self.mixing_ = linalg.pinv(self.components_, check_finite=False)
         self._unmixing = W
-
-        if compute_sources:
-            self.__sources = S
 
         return S
 
@@ -587,7 +584,7 @@ class FastICA(TransformerMixin, BaseEstimator):
             and n_features is the number of features.
 
         copy : bool, default=True
-            If False, data passed to fit are overwritten. Defaults to True.
+            If False, data passed to fit can be overwritten. Defaults to True.
 
         Returns
         -------
@@ -595,7 +592,8 @@ class FastICA(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
+        X = self._validate_data(X, copy=(copy and self.whiten),
+                                dtype=FLOAT_DTYPES, reset=False)
         if self.whiten:
             X -= self.mean_
 

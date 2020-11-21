@@ -6,13 +6,13 @@ Base IO code for all datasets
 #               2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #               2010 Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
-import os
 import csv
+import hashlib
+import os
 import shutil
 from collections import namedtuple
 from os import environ, listdir, makedirs
 from os.path import dirname, exists, expanduser, isdir, join, splitext
-import hashlib
 
 from ..utils import Bunch
 from ..utils import check_random_state
@@ -44,8 +44,9 @@ def get_data_home(data_home=None) -> str:
 
     Parameters
     ----------
-    data_home : str | None
-        The path to scikit-learn data dir.
+    data_home : str, default=None
+        The path to scikit-learn data directory. If `None`, the default path
+        is `~/sklearn_learn_data`.
     """
     if data_home is None:
         data_home = environ.get('SCIKIT_LEARN_DATA',
@@ -61,17 +62,24 @@ def clear_data_home(data_home=None):
 
     Parameters
     ----------
-    data_home : str | None
-        The path to scikit-learn data dir.
+    data_home : str, default=None
+        The path to scikit-learn data directory. If `None`, the default path
+        is `~/sklearn_learn_data`.
     """
     data_home = get_data_home(data_home)
     shutil.rmtree(data_home)
 
 
 def _convert_data_dataframe(caller_name, data, target,
-                            feature_names, target_names):
+                            feature_names, target_names, sparse_data=False):
     pd = check_pandas_support('{} with as_frame=True'.format(caller_name))
-    data_df = pd.DataFrame(data, columns=feature_names)
+    if not sparse_data:
+        data_df = pd.DataFrame(data, columns=feature_names)
+    else:
+        data_df = pd.DataFrame.sparse.from_spmatrix(
+            data, columns=feature_names
+        )
+
     target_df = pd.DataFrame(target, columns=target_names)
     combined_df = pd.concat([data_df, target_df], axis=1)
     X = combined_df[feature_names]

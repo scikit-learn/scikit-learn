@@ -26,14 +26,14 @@ from scipy import linalg
 
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import check_array, check_random_state
+from ..utils import check_random_state
 from ..utils.extmath import fast_logdet, randomized_svd, squared_norm
 from ..utils.validation import check_is_fitted, _deprecate_positional_args
 from ..exceptions import ConvergenceWarning
 
 
 class FactorAnalysis(TransformerMixin, BaseEstimator):
-    """Factor Analysis (FA)
+    """Factor Analysis (FA).
 
     A simple linear generative model with Gaussian latent variables.
 
@@ -74,7 +74,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
 
     noise_variance_init : ndarray of shape (n_features,), default=None
         The initial guess of the noise variance for each feature.
-        If None, it defaults to np.ones(n_features)
+        If None, it defaults to np.ones(n_features).
 
     svd_method : {'lapack', 'randomized'}, default='randomized'
         Which SVD method to use. If 'lapack' use standard SVD from
@@ -87,14 +87,14 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
 
     iterated_power : int, default=3
         Number of iterations for the power method. 3 by default. Only used
-        if ``svd_method`` equals 'randomized'
+        if ``svd_method`` equals 'randomized'.
 
     rotation : {'varimax', 'quartimax'}, default=None
         If not None, apply the indicated rotation. Currently, varimax and
         quartimax are implemented. See
         `"The varimax criterion for analytic rotation in factor analysis"
         <https://link.springer.com/article/10.1007%2FBF02289233>`_
-        H. F. Kaiser, 1958
+        H. F. Kaiser, 1958.
 
         .. versionadded:: 0.24
 
@@ -132,11 +132,11 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
 
     References
     ----------
-    .. David Barber, Bayesian Reasoning and Machine Learning,
-        Algorithm 21.1
+    - David Barber, Bayesian Reasoning and Machine Learning,
+      Algorithm 21.1.
 
-    .. Christopher M. Bishop: Pattern Recognition and Machine Learning,
-        Chapter 12.2.4
+    - Christopher M. Bishop: Pattern Recognition and Machine Learning,
+      Chapter 12.2.4.
 
     See Also
     --------
@@ -212,7 +212,9 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         # to allow for unified computation of loglikelihood
         if self.svd_method == 'lapack':
             def my_svd(X):
-                _, s, Vt = linalg.svd(X, full_matrices=False)
+                _, s, Vt = linalg.svd(X,
+                                      full_matrices=False,
+                                      check_finite=False)
                 return (s[:n_components], Vt[:n_components],
                         squared_norm(s[n_components:]))
         elif self.svd_method == 'randomized':
@@ -279,7 +281,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = check_array(X)
+        X = self._validate_data(X, reset=False)
         Ih = np.eye(len(self.components_))
 
         X_transformed = X - self.mean_
@@ -350,7 +352,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
             Log-likelihood of each sample under the current model
         """
         check_is_fitted(self)
-
+        X = self._validate_data(X, reset=False)
         Xr = X - self.mean_
         precision = self.get_precision()
         n_features = X.shape[1]

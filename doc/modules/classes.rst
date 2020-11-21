@@ -124,6 +124,7 @@ Functions
    cluster.dbscan
    cluster.estimate_bandwidth
    cluster.k_means
+   cluster.kmeans_plusplus
    cluster.mean_shift
    cluster.spectral_clustering
    cluster.ward_tree
@@ -457,6 +458,7 @@ Samples generator
 
    experimental.enable_hist_gradient_boosting
    experimental.enable_iterative_imputer
+   experimental.enable_halving_search_cv
 
 
 .. _feature_extraction_ref:
@@ -965,6 +967,7 @@ details.
    metrics.recall_score
    metrics.roc_auc_score
    metrics.roc_curve
+   metrics.top_k_accuracy_score
    metrics.zero_one_loss
 
 Regression metrics
@@ -1025,11 +1028,13 @@ details.
    metrics.davies_bouldin_score
    metrics.completeness_score
    metrics.cluster.contingency_matrix
+   metrics.cluster.pair_confusion_matrix
    metrics.fowlkes_mallows_score
    metrics.homogeneity_completeness_v_measure
    metrics.homogeneity_score
    metrics.mutual_info_score
    metrics.normalized_mutual_info_score
+   metrics.rand_score
    metrics.silhouette_score
    metrics.silhouette_samples
    metrics.v_measure_score
@@ -1184,6 +1189,8 @@ Splitter Functions
    model_selection.check_cv
    model_selection.train_test_split
 
+.. _hyper_parameter_optimizers:
+
 Hyper-parameter optimizers
 --------------------------
 
@@ -1219,14 +1226,14 @@ Model validation
 
 .. _multiclass_ref:
 
-:mod:`sklearn.multiclass`: Multiclass and multilabel classification
-===================================================================
+:mod:`sklearn.multiclass`: Multiclass classification
+====================================================
 
 .. automodule:: sklearn.multiclass
    :no-members:
    :no-inherited-members:
 
-**User guide:** See the :ref:`multiclass` section for further details.
+**User guide:** See the :ref:`multiclass_classification` section for further details.
 
 .. currentmodule:: sklearn
 
@@ -1247,7 +1254,9 @@ Model validation
    :no-members:
    :no-inherited-members:
 
-**User guide:** See the :ref:`multiclass` section for further details.
+**User guide:** See the :ref:`multilabel_classification`,
+:ref:`multiclass_multioutput_classification`, and
+:ref:`multioutput_regression` sections for further details.
 
 .. currentmodule:: sklearn
 
@@ -1469,6 +1478,7 @@ details.
 
    semi_supervised.LabelPropagation
    semi_supervised.LabelSpreading
+   semi_supervised.SelfTrainingClassifier
 
 
 .. _svm_ref:

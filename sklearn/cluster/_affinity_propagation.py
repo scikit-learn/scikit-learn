@@ -10,10 +10,12 @@ import warnings
 
 from ..exceptions import ConvergenceWarning
 from ..base import BaseEstimator, ClusterMixin
-from ..utils import as_float_array, check_array, check_random_state
+from ..utils import as_float_array, check_random_state
+from ..utils.deprecation import deprecated
 from ..utils.validation import check_is_fitted, _deprecate_positional_args
 from ..metrics import euclidean_distances
 from ..metrics import pairwise_distances_argmin
+from .._config import config_context
 
 
 def _equal_similarities_and_preferences(S, preference):
@@ -373,9 +375,16 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         self.affinity = affinity
         self.random_state = random_state
 
+    # TODO: Remove in 0.26
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 0.26.")
     @property
     def _pairwise(self):
         return self.affinity == "precomputed"
+
+    def _more_tags(self):
+        return {'pairwise': self.affinity == 'precomputed'}
 
     def fit(self, X, y=None):
         """Fit the clustering from features, or affinity matrix.
@@ -438,13 +447,14 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
             Cluster labels.
         """
         check_is_fitted(self)
-        X = check_array(X)
+        X = self._validate_data(X, reset=False)
         if not hasattr(self, "cluster_centers_"):
             raise ValueError("Predict method is not supported when "
                              "affinity='precomputed'.")
 
         if self.cluster_centers_.shape[0] > 0:
-            return pairwise_distances_argmin(X, self.cluster_centers_)
+            with config_context(assume_finite=True):
+                return pairwise_distances_argmin(X, self.cluster_centers_)
         else:
             warnings.warn("This model does not have any cluster centers "
                           "because affinity propagation did not converge. "

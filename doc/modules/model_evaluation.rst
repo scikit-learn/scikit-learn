@@ -60,6 +60,7 @@ Scoring                                Function                                 
 **Classification**
 'accuracy'                             :func:`metrics.accuracy_score`
 'balanced_accuracy'                    :func:`metrics.balanced_accuracy_score`
+'top_k_accuracy'                       :func:`metrics.top_k_accuracy_score`
 'average_precision'                    :func:`metrics.average_precision_score`
 'neg_brier_score'                      :func:`metrics.brier_score_loss`
 'f1'                                   :func:`metrics.f1_score`                           for binary targets
@@ -85,6 +86,7 @@ Scoring                                Function                                 
 'homogeneity_score'                    :func:`metrics.homogeneity_score`
 'mutual_info_score'                    :func:`metrics.mutual_info_score`
 'normalized_mutual_info_score'         :func:`metrics.normalized_mutual_info_score`
+'rand_score'                           :func:`metrics.rand_score`
 'v_measure_score'                      :func:`metrics.v_measure_score`
 
 **Regression**
@@ -197,7 +199,7 @@ Here is an example of building custom scorers, and of using the
     >>> from sklearn.dummy import DummyClassifier
     >>> clf = DummyClassifier(strategy='most_frequent', random_state=0)
     >>> clf = clf.fit(X, y)
-    >>> my_custom_loss_func(clf.predict(X), y)
+    >>> my_custom_loss_func(y, clf.predict(X))
     0.69...
     >>> score(clf, X, y)
     -0.69...
@@ -318,6 +320,7 @@ Others also work in the multiclass case:
    hinge_loss
    matthews_corrcoef
    roc_auc_score
+   top_k_accuracy_score
 
 
 Some also work in the multilabel case:
@@ -437,6 +440,44 @@ In the multilabel case with binary label indicators::
   * See :ref:`sphx_glr_auto_examples_feature_selection_plot_permutation_test_for_classification.py`
     for an example of accuracy score usage using permutations of
     the dataset.
+
+.. _top_k_accuracy_score:
+
+Top-k accuracy score
+--------------------
+
+The :func:`top_k_accuracy_score` function is a generalization of
+:func:`accuracy_score`. The difference is that a prediction is considered
+correct as long as the true label is associated with one of the ``k`` highest
+predicted scores. :func:`accuracy_score` is the special case of `k = 1`.
+
+The function covers the binary and multiclass classification cases but not the
+multilabel case.
+
+If :math:`\hat{f}_{i,j}` is the predicted class for the :math:`i`-th sample
+corresponding to the :math:`j`-th largest predicted score and :math:`y_i` is the
+corresponding true value, then the fraction of correct predictions over
+:math:`n_\text{samples}` is defined as
+
+.. math::
+
+   \texttt{top-k accuracy}(y, \hat{f}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} \sum_{j=1}^{k} 1(\hat{f}_{i,j} = y_i)
+
+where :math:`k` is the number of guesses allowed and :math:`1(x)` is the
+`indicator function <https://en.wikipedia.org/wiki/Indicator_function>`_.
+
+  >>> import numpy as np
+  >>> from sklearn.metrics import top_k_accuracy_score
+  >>> y_true = np.array([0, 1, 2, 2])
+  >>> y_score = np.array([[0.5, 0.2, 0.2],
+  ...                     [0.3, 0.4, 0.2],
+  ...                     [0.2, 0.4, 0.3],
+  ...                     [0.7, 0.2, 0.1]])
+  >>> top_k_accuracy_score(y_true, y_score, k=2)
+  0.75
+  >>> # Not normalizing gives the number of "correctly" classified samples
+  >>> top_k_accuracy_score(y_true, y_score, k=2, normalize=False)
+  3
 
 .. _balanced_accuracy_score:
 

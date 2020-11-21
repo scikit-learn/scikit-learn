@@ -59,6 +59,7 @@ from sklearn.metrics import roc_curve
 from sklearn.metrics import zero_one_loss
 from sklearn.metrics import ndcg_score
 from sklearn.metrics import dcg_score
+from sklearn.metrics import top_k_accuracy_score
 
 from sklearn.metrics._base import _average_binary_score
 
@@ -243,7 +244,9 @@ THRESHOLDED_METRICS = {
     "label_ranking_average_precision_score":
     label_ranking_average_precision_score,
     "ndcg_score": ndcg_score,
-    "dcg_score": dcg_score
+    "dcg_score": dcg_score,
+
+    "top_k_accuracy_score": top_k_accuracy_score
 }
 
 ALL_METRICS = dict()
@@ -383,6 +386,7 @@ METRICS_WITH_LABELS = {
 # Metrics with a "normalize" option
 METRICS_WITH_NORMALIZE_OPTION = {
     "accuracy_score",
+    "top_k_accuracy_score",
     "zero_one_loss",
 }
 
@@ -573,6 +577,7 @@ def test_sample_order_invariance(name):
     random_state = check_random_state(0)
     y_true = random_state.randint(0, 2, size=(20, ))
     y_pred = random_state.randint(0, 2, size=(20, ))
+
     if name in METRICS_REQUIRE_POSITIVE_Y:
         y_true, y_pred = _require_positive_targets(y_true, y_pred)
 
@@ -794,28 +799,53 @@ def test_thresholded_invariance_string_vs_numbers_labels(name):
                 metric(y1_str.astype('O'), y2)
 
 
-invalids = [([0, 1], [np.inf, np.inf]),
-            ([0, 1], [np.nan, np.nan]),
-            ([0, 1], [np.nan, np.inf])]
+invalids_nan_inf = [
+    ([0, 1], [np.inf, np.inf]),
+    ([0, 1], [np.nan, np.nan]),
+    ([0, 1], [np.nan, np.inf]),
+    ([0, 1], [np.inf, 1]),
+    ([0, 1], [np.nan, 1]),
+]
 
 
 @pytest.mark.parametrize(
-        'metric',
-        chain(THRESHOLDED_METRICS.values(), REGRESSION_METRICS.values()))
-def test_regression_thresholded_inf_nan_input(metric):
-
-    for y_true, y_score in invalids:
-        with pytest.raises(ValueError, match="contains NaN, infinity"):
-            metric(y_true, y_score)
+    'metric',
+    chain(THRESHOLDED_METRICS.values(), REGRESSION_METRICS.values())
+)
+@pytest.mark.parametrize("y_true, y_score", invalids_nan_inf)
+def test_regression_thresholded_inf_nan_input(metric, y_true, y_score):
+    with pytest.raises(ValueError, match="contains NaN, infinity"):
+        metric(y_true, y_score)
 
 
 @pytest.mark.parametrize('metric', CLASSIFICATION_METRICS.values())
-def test_classification_inf_nan_input(metric):
-    # Classification metrics all raise a mixed input exception
-    for y_true, y_score in invalids:
-        err_msg = "Input contains NaN, infinity or a value too large"
-        with pytest.raises(ValueError, match=err_msg):
-            metric(y_true, y_score)
+@pytest.mark.parametrize(
+    "y_true, y_score",
+    invalids_nan_inf +
+    # Add an additional case for classification only
+    # non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/6809
+    [([np.nan, 1, 2], [1, 2, 3])]
+)
+def test_classification_inf_nan_input(metric, y_true, y_score):
+    """check that classification metrics raise a message mentioning the
+    occurrence of non-finite values in the target vectors."""
+    err_msg = "Input contains NaN, infinity or a value too large"
+    with pytest.raises(ValueError, match=err_msg):
+        metric(y_true, y_score)
+
+
+@pytest.mark.parametrize('metric', CLASSIFICATION_METRICS.values())
+def test_classification_binary_continuous_input(metric):
+    """check that classification metrics raise a message of mixed type data
+    with continuous/binary target vectors."""
+    y_true, y_score = ['a', 'b', 'a'], [0.1, 0.2, 0.3]
+    err_msg = (
+        "Classification metrics can't handle a mix of binary and continuous "
+        "targets"
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        metric(y_true, y_score)
 
 
 @ignore_warnings
@@ -961,41 +991,59 @@ def test_raise_value_error_multilabel_sequences(name):
 @pytest.mark.parametrize('name', sorted(METRICS_WITH_NORMALIZE_OPTION))
 def test_normalize_option_binary_classification(name):
     # Test in the binary case
+    n_classes = 2
     n_samples = 20
     random_state = check_random_state(0)
-    y_true = random_state.randint(0, 2, size=(n_samples, ))
-    y_pred = random_state.randint(0, 2, size=(n_samples, ))
+
+    y_true = random_state.randint(0, n_classes, size=(n_samples, ))
+    y_pred = random_state.randint(0, n_classes, size=(n_samples, ))
+    y_score = random_state.normal(size=y_true.shape)
 
     metrics = ALL_METRICS[name]
-    measure = metrics(y_true, y_pred, normalize=True)
-    assert_array_less(-1.0 * measure, 0,
+    pred = y_score if name in THRESHOLDED_METRICS else y_pred
+    measure_normalized = metrics(y_true, pred, normalize=True)
+    measure_not_normalized = metrics(y_true, pred, normalize=False)
+
+    assert_array_less(-1.0 * measure_normalized, 0,
                       err_msg="We failed to test correctly the normalize "
                               "option")
-    assert_allclose(metrics(y_true, y_pred, normalize=False) / n_samples,
-                    measure)
+
+    assert_allclose(measure_normalized, measure_not_normalized / n_samples,
+                    err_msg=f"Failed with {name}")
 
 
 @pytest.mark.parametrize('name', sorted(METRICS_WITH_NORMALIZE_OPTION))
 def test_normalize_option_multiclass_classification(name):
     # Test in the multiclass case
+    n_classes = 4
+    n_samples = 20
     random_state = check_random_state(0)
-    y_true = random_state.randint(0, 4, size=(20, ))
-    y_pred = random_state.randint(0, 4, size=(20, ))
-    n_samples = y_true.shape[0]
+
+    y_true = random_state.randint(0, n_classes, size=(n_samples, ))
+    y_pred = random_state.randint(0, n_classes, size=(n_samples, ))
+    y_score = random_state.uniform(size=(n_samples, n_classes))
 
     metrics = ALL_METRICS[name]
-    measure = metrics(y_true, y_pred, normalize=True)
-    assert_array_less(-1.0 * measure, 0,
+    pred = y_score if name in THRESHOLDED_METRICS else y_pred
+    measure_normalized = metrics(y_true, pred, normalize=True)
+    measure_not_normalized = metrics(y_true, pred, normalize=False)
+
+    assert_array_less(-1.0 * measure_normalized, 0,
                       err_msg="We failed to test correctly the normalize "
                               "option")
-    assert_allclose(metrics(y_true, y_pred, normalize=False) / n_samples,
-                    measure)
+
+    assert_allclose(measure_normalized, measure_not_normalized / n_samples,
+                    err_msg=f"Failed with {name}")
 
 
-def test_normalize_option_multilabel_classification():
+@pytest.mark.parametrize('name', sorted(
+    METRICS_WITH_NORMALIZE_OPTION.intersection(MULTILABELS_METRICS)
+))
+def test_normalize_option_multilabel_classification(name):
     # Test in the multilabel case
     n_classes = 4
     n_samples = 100
+    random_state = check_random_state(0)
 
     # for both random_state 0 and 1, y_true and y_pred has at least one
     # unlabelled entry
@@ -1010,18 +1058,23 @@ def test_normalize_option_multilabel_classification():
                                                allow_unlabeled=True,
                                                n_samples=n_samples)
 
+    y_score = random_state.uniform(size=y_true.shape)
+
     # To make sure at least one empty label is present
     y_true += [0]*n_classes
     y_pred += [0]*n_classes
 
-    for name in METRICS_WITH_NORMALIZE_OPTION:
-        metrics = ALL_METRICS[name]
-        measure = metrics(y_true, y_pred, normalize=True)
-        assert_array_less(-1.0 * measure, 0,
-                          err_msg="We failed to test correctly the normalize "
-                                  "option")
-        assert_allclose(metrics(y_true, y_pred, normalize=False) / n_samples,
-                        measure, err_msg="Failed with %s" % name)
+    metrics = ALL_METRICS[name]
+    pred = y_score if name in THRESHOLDED_METRICS else y_pred
+    measure_normalized = metrics(y_true, pred, normalize=True)
+    measure_not_normalized = metrics(y_true, pred, normalize=False)
+
+    assert_array_less(-1.0 * measure_normalized, 0,
+                      err_msg="We failed to test correctly the normalize "
+                              "option")
+
+    assert_allclose(measure_normalized, measure_not_normalized / n_samples,
+                    err_msg=f"Failed with {name}")
 
 
 @ignore_warnings
@@ -1159,6 +1212,10 @@ def test_averaging_multilabel_all_ones(name):
 def check_sample_weight_invariance(name, metric, y1, y2):
     rng = np.random.RandomState(0)
     sample_weight = rng.randint(1, 10, size=len(y1))
+
+    # top_k_accuracy_score always lead to a perfect score for k > 1 in the
+    # binary case
+    metric = partial(metric, k=1) if name == "top_k_accuracy_score" else metric
 
     # check that unit weights gives the same score as no weight
     unweighted_score = metric(y1, y2, sample_weight=None)
@@ -1432,12 +1489,7 @@ def test_metrics_consistent_type_error(metric_name):
     "metric, y_pred_threshold",
     [
         (average_precision_score, True),
-        # FIXME: `brier_score_loss` does not follow this convention.
-        # See discussion in:
-        # https://github.com/scikit-learn/scikit-learn/issues/18307
-        pytest.param(
-            brier_score_loss, True, marks=pytest.mark.xfail(reason="#18307")
-        ),
+        (brier_score_loss, True),
         (f1_score, False),
         (partial(fbeta_score, beta=1), False),
         (jaccard_score, False),
