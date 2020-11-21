@@ -48,7 +48,7 @@ def _cov(X, shrinkage=None):
     s : ndarray of shape (n_features, n_features)
         Estimated covariance matrix.
     """
-    shrinkage = 'empirical' if shrinkage is None else shrinkage
+    shrinkage = "empirical" if shrinkage is None else shrinkage
     if isinstance(shrinkage, str):
         if shrinkage == 'auto':
             sc = StandardScaler()  # standardize features
