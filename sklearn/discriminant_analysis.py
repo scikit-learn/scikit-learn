@@ -37,9 +37,9 @@ def _cov(X, shrinkage=None):
     X : array-like of shape (n_samples, n_features)
         Input data.
 
-    shrinkage : {'empirical', 'auto'} or float, default='empirical'
+    shrinkage : 'auto' or float, default=None
         Shrinkage parameter, possible values:
-          - 'empirical': no shrinkage (default).
+          - None : no shrinkage (default).
           - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
           - float between 0 and 1: fixed shrinkage parameter.
 
@@ -48,6 +48,7 @@ def _cov(X, shrinkage=None):
     s : ndarray of shape (n_features, n_features)
         Estimated covariance matrix.
     """
+    shrinkage = 'empirical' if shrinkage is None else shrinkage
     if isinstance(shrinkage, str):
         if shrinkage == 'auto':
             sc = StandardScaler()  # standardize features
