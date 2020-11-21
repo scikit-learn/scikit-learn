@@ -8,8 +8,8 @@ gh_wheel_path = Path.cwd() / ".github" / "workflows" / "wheels.yml"
 with gh_wheel_path.open('r') as f:
     wheel_config = yaml.safe_load(f)
 
-n_python_versions = len(wheel_config['jobs']['build_wheels']
-                                    ['strategy']['matrix']['python'])
+build_matrix = wheel_config['jobs']['build_wheels']['strategy']['matrix']
+n_python_versions = len(build_matrix['python'])
 
 # For each python version we have: 5 wheels
 # 1 osx wheel (x86_64)
