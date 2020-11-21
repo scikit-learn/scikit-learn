@@ -89,6 +89,9 @@ Changelog
 - |FIX| :class:`compose.ColumnTransformer` now displays the remainder in the
   diagram display. :pr:`18167` by `Thomas Fan`_.
 
+- |Enhancement| :class:`compose.ColumnTransformer` now records the output
+  of each transformer. :pr:`18393` by :user:`Luca Bittarello <lbittarello>`.
+
 :mod:`sklearn.covariance`
 .........................
 
