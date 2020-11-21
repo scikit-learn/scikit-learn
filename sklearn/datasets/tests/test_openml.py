@@ -1274,8 +1274,8 @@ def test_convert_arff_data_type():
 
 
 def test_missing_values_pandas(monkeypatch):
-    # check that missing values in categories are compatible with pandas
-    # categorical
+    """check that missing values in categories are compatible with pandas
+    categorical"""
     pytest.importorskip('pandas')
 
     data_id = 42585
