@@ -167,7 +167,7 @@ class EmpiricalCovariance(BaseEstimator):
         self.covariance_ = covariance
         # set precision
         if self.store_precision:
-            self.precision_ = linalg.pinvh(covariance,check_finite=False)
+            self.precision_ = linalg.pinvh(covariance, check_finite=False)
         else:
             self.precision_ = None
 
@@ -182,7 +182,7 @@ class EmpiricalCovariance(BaseEstimator):
         if self.store_precision:
             precision = self.precision_
         else:
-            precision = linalg.pinvh(self.covariance_,check_finite=False)
+            precision = linalg.pinvh(self.covariance_, check_finite=False)
         return precision
 
     def fit(self, X, y=None):
@@ -279,7 +279,7 @@ class EmpiricalCovariance(BaseEstimator):
         if norm == "frobenius":
             squared_norm = np.sum(error ** 2)
         elif norm == "spectral":
-            squared_norm = np.amax(linalg.svdvals(np.dot(error.T, error)))
+            squared_norm = np.amax(linalg.svdvals(np.dot(error.T, error), check_finite=False))
         else:
             raise NotImplementedError(
                 "Only spectral and frobenius norms are implemented")

@@ -55,7 +55,7 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
         - initial_estimates[0]: an initial location estimate
         - initial_estimates[1]: an initial covariance estimate
 
-    verbose : bool, defaut=False
+    verbose : bool, default=False
         Verbose mode.
 
     cov_computation_method : callable, \
@@ -228,7 +228,7 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
         (2 is enough to be close to the final solution. "Never" exceeds 20).
         This parameter must be a strictly positive integer.
 
-    verbose : bool, default False
+    verbose : bool, default=False
         Control the output verbosity.
 
     cov_computation_method : callable, \
@@ -643,7 +643,7 @@ class MinCovDet(EmpiricalCovariance):
         random_state = check_random_state(self.random_state)
         n_samples, n_features = X.shape
         # check that the empirical covariance is full rank
-        if (linalg.svdvals(np.dot(X.T, X)) > 1e-8).sum() != n_features:
+        if (linalg.svdvals(np.dot(X.T, X), check_finite=False) > 1e-8).sum() != n_features:
             warnings.warn("The covariance matrix associated to your dataset "
                           "is not full rank")
         # compute and store raw estimates
