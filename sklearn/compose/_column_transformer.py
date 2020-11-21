@@ -442,7 +442,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         all_names = [t[0] for t in self.transformers] + ['remainder']
         for name in all_names:
             if name not in self.output_indices_:
-                self.output_indices_[name] = slice(-1, 0)
+                self.output_indices_[name] = slice(0, 0)
 
     def _validate_features(self, n_features, feature_names):
         """Ensures feature counts and names are the same during fit and
