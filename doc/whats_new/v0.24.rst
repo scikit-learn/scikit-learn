@@ -736,6 +736,14 @@ Changelog
   when `handle_unknown='error'` and `drop=None` for samples
   encoded as all zeros. :pr:`14982` by
   :user:`Kevin Winata <kwinata>`.
+  
+:mod:`sklearn.semi_supervised`
+..............................
+
+- |MajorFeature| Added :class:`semi_supervised.SelfTrainingClassifier`, a
+  meta-classifier that allows any supervised classifier to function as a
+  semi-supervised classifier that can learn from unlabeled data. :issue:`11682`
+  by :user:`Oliver Rausch <orausch>` and :user:`Patrice Becker <pr0duktiv>`.
 
 - |Fix| Fix incorrect encoding when using unicode string dtypes in
   :class:`preprocessing.OneHotEncoder` and
