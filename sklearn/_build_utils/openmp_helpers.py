@@ -78,7 +78,7 @@ def check_openmp_support():
             nthreads = int(output[0].strip().split('=')[1])
             openmp_supported = len(output) == nthreads
         elif "PYTHON_CROSSENV" in os.environ:
-            # Since we can't run the test program when cross-compiling 
+            # Since we can't run the test program when cross-compiling
             # assume that openmp is supported if the program can be
             # compiled.
             openmp_supported = True
