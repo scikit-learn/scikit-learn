@@ -1184,7 +1184,7 @@ def check_methods_sample_order_invariance(
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(20, 3))
     X = _pairwise_estimator_convert_X(X, estimator_orig)
-    y = X[:, 0].astype(np.int)
+    y = X[:, 0].astype(np.int64)
     if estimator_orig._get_tags()['binary_only']:
         y[y == 2] = 1
     estimator = clone(estimator_orig)
@@ -2271,7 +2271,11 @@ def check_classifiers_predictions(X, y, name, classifier_orig,
 
 
 def _choose_check_classifiers_labels(name, y, y_names):
-    return y if name in ["LabelPropagation", "LabelSpreading"] else y_names
+    # Semisupervised classifers use -1 as the indicator for an unlabeled
+    # sample.
+    return y if name in ["LabelPropagation",
+                         "LabelSpreading",
+                         "SelfTrainingClassifier"] else y_names
 
 
 def check_classifiers_classes(name, classifier_orig, strict_mode=True):
@@ -2550,7 +2554,14 @@ def check_estimators_overwrite_params(name, estimator_orig, strict_mode=True):
 @ignore_warnings(category=FutureWarning)
 def check_no_attributes_set_in_init(name, estimator_orig, strict_mode=True):
     """Check setting during init."""
-    estimator = clone(estimator_orig)
+    try:
+        # Clone fails if the estimator does not store
+        # all parameters as an attribute during init
+        estimator = clone(estimator_orig)
+    except AttributeError:
+        raise AttributeError(f"Estimator {name} should store all "
+                             "parameters as an attribute during init.")
+
     if hasattr(type(estimator).__init__, "deprecated_original"):
         return
 
@@ -2571,13 +2582,6 @@ def check_no_attributes_set_in_init(name, estimator_orig, strict_mode=True):
     assert not invalid_attr, (
             "Estimator %s should not set any attribute apart"
             " from parameters during init. Found attributes %s."
-            % (name, sorted(invalid_attr)))
-    # Ensure that each parameter is set in init
-    invalid_attr = set(init_params) - set(vars(estimator)) - {"self"}
-    assert not invalid_attr, (
-            "Estimator %s should store all parameters"
-            " as an attribute during init. Did not find "
-            "attributes %s."
             % (name, sorted(invalid_attr)))
 
 
@@ -2805,10 +2809,12 @@ def check_non_transformer_estimators_n_iter(name, estimator_orig,
 
     # These models are dependent on external solvers like
     # libsvm and accessing the iter parameter is non-trivial.
+    # SelfTrainingClassifier does not perform an iteration if all samples are
+    # labeled, hence n_iter_ = 0 is valid.
     not_run_check_n_iter = ['Ridge', 'SVR', 'NuSVR', 'NuSVC',
                             'RidgeClassifier', 'SVC', 'RandomizedLasso',
                             'LogisticRegressionCV', 'LinearSVC',
-                            'LogisticRegression']
+                            'LogisticRegression', 'SelfTrainingClassifier']
 
     # Tested in test_transformer_n_iter
     not_run_check_n_iter += CROSS_DECOMPOSITION

@@ -86,6 +86,7 @@ Scoring                                Function                                 
 'homogeneity_score'                    :func:`metrics.homogeneity_score`
 'mutual_info_score'                    :func:`metrics.mutual_info_score`
 'normalized_mutual_info_score'         :func:`metrics.normalized_mutual_info_score`
+'rand_score'                           :func:`metrics.rand_score`
 'v_measure_score'                      :func:`metrics.v_measure_score`
 
 **Regression**
