@@ -1,5 +1,6 @@
 import unittest
 import sys
+import warnings
 
 import numpy as np
 import scipy.sparse as sp
@@ -7,10 +8,14 @@ import joblib
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils import deprecated
-from sklearn.utils._testing import (assert_raises_regex,
-                                    ignore_warnings,
-                                    assert_warns, assert_raises,
-                                    SkipTest)
+from sklearn.utils._testing import (
+    assert_raises_regex,
+    ignore_warnings,
+    assert_warns,
+    assert_warns_message,
+    assert_raises,
+    SkipTest,
+)
 from sklearn.utils.estimator_checks import check_estimator, _NotAnArray
 from sklearn.utils.estimator_checks \
     import check_class_weight_balanced_linear_classifier
@@ -21,6 +26,7 @@ from sklearn.utils.estimator_checks import check_fit_score_takes_y
 from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
 from sklearn.utils.estimator_checks import check_classifier_data_not_an_array
 from sklearn.utils.estimator_checks import check_regressor_data_not_an_array
+from sklearn.utils.estimator_checks import parametrize_with_checks
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.estimator_checks import check_outlier_corruption
 from sklearn.utils.fixes import np_version, parse_version
@@ -677,3 +683,44 @@ def test_xfail_ignored_in_check_estimator():
     # Make sure checks marked as xfail are just ignored and not run by
     # check_estimator(), but still raise a warning.
     assert_warns(SkipTestWarning, check_estimator, NuSVC())
+
+
+def my_own_check(name, instance, strict_mode=True):
+    warnings.warn("my_own_check was executed", UserWarning)
+
+
+def my_own_generator(estimator):
+    yield my_own_check
+
+
+def test_check_estimator_checks_generator():
+    # Check that we can pass a custom checks generator in `check_estimator`
+    assert_warns_message(
+        UserWarning,
+        "my_own_check was executed",
+        check_estimator,
+        BaseEstimator(),
+        checks_generator=my_own_generator,
+    )
+
+
+def test_parametrize_with_checks_checks_generator():
+    # Check that we can pass a custom checks generator in
+    # `parametrize_with_checks`
+    decorator = parametrize_with_checks(
+        [BaseEstimator()], checks_generator=my_own_generator
+    )
+
+    def test_estimator(estimator, check):
+        check(estimator)
+
+    test_estimator = decorator(test_estimator)
+    for _mark in test_estimator.pytestmark:
+        for estimator, check in _mark.args[1]:
+            assert_warns_message(
+                UserWarning,
+                "my_own_check was executed",
+                test_estimator,
+                estimator,
+                check,
+            )

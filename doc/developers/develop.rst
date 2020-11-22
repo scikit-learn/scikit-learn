@@ -777,3 +777,28 @@ The reason for this setup is reproducibility:
 when an estimator is ``fit`` twice to the same data,
 it should produce an identical model both times,
 hence the validation in ``fit``, not ``__init__``.
+
+Reuse the testing infrastructure from scikit-learn
+--------------------------------------------------
+
+Scikit-learn provides two utilities:
+:func:`~sklearn.utils.estimator_checks.check_estimator` and
+:func:`~sklearn.utils.estimator_checks.parametrize_with_checks`. These
+utilities tests if a custom estimator is compatible with the different tools
+available in scikit-learn. It is common for a third-party library to extend
+the test suite with its own estimator checks.
+
+Both functions accept a parameter `checks_generator` which can be used for this
+purpose. This parameter is a generator that yield callables such as::
+
+
+    def check_estimator_has_fit(name, instance, strict_mode=True):
+        assert hasattr(instance, "fit"), f"{name} does not implement fit"
+
+
+    def checks_generator(estimator):
+        yield check_estimator_has_fit
+
+.. warning::
+   This feature is experimental. The signature of the `check` functions can
+   change without any deprecation cycle.
