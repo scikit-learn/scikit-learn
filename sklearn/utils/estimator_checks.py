@@ -2265,7 +2265,11 @@ def check_classifiers_predictions(X, y, name, classifier_orig,
 
 
 def _choose_check_classifiers_labels(name, y, y_names):
-    return y if name in ["LabelPropagation", "LabelSpreading"] else y_names
+    # Semisupervised classifers use -1 as the indicator for an unlabeled
+    # sample.
+    return y if name in ["LabelPropagation",
+                         "LabelSpreading",
+                         "SelfTrainingClassifier"] else y_names
 
 
 def check_classifiers_classes(name, classifier_orig, strict_mode=True):
@@ -2799,10 +2803,12 @@ def check_non_transformer_estimators_n_iter(name, estimator_orig,
 
     # These models are dependent on external solvers like
     # libsvm and accessing the iter parameter is non-trivial.
+    # SelfTrainingClassifier does not perform an iteration if all samples are
+    # labeled, hence n_iter_ = 0 is valid.
     not_run_check_n_iter = ['Ridge', 'SVR', 'NuSVR', 'NuSVC',
                             'RidgeClassifier', 'SVC', 'RandomizedLasso',
                             'LogisticRegressionCV', 'LinearSVC',
-                            'LogisticRegression']
+                            'LogisticRegression', 'SelfTrainingClassifier']
 
     # Tested in test_transformer_n_iter
     not_run_check_n_iter += CROSS_DECOMPOSITION
