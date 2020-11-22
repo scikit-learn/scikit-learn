@@ -551,8 +551,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
             X_centered = sparse.linalg.LinearOperator(shape=X.shape,
                                                       matvec=matvec,
-                                                      rmatvec=rmatvec,
-                                                      check_finite=False)
+                                                      rmatvec=rmatvec)
 
             if y.ndim < 2:
                 out = sparse_lsqr(X_centered, y)
