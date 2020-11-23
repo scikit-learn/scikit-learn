@@ -382,53 +382,57 @@ def test_copy(Est):
                               pls.predict(X.copy(), copy=False))
 
 
-@pytest.mark.parametrize('Est', (CCA, PLSCanonical, PLSRegression, PLSSVD))
-def test_scale_and_stability(Est):
-    # scale=True is equivalent to scale=False on centered/scaled data
-    # This allows to check numerical stability over platforms as well
-
+def _generate_test_scale_and_stability_datasets():
+    """Generate dataset for test_scale_and_stability"""
+    # dataset for non-regression 7818
     rng = np.random.RandomState(0)
-
-    d = load_linnerud()
-    X1 = d.data
-    Y1 = d.target
-    # causes X[:, -1].std() to be zero
-    X1[:, -1] = 1.0
-
-    # From bug #2821
-    # Test with X2, Y2 s.t. clf.x_score[:, 1] == 0, clf.y_score[:, 1] == 0
-    # This test robustness of algorithm when dealing with value close to 0
-    X2 = np.array([[0., 0., 1.],
-                   [1., 0., 0.],
-                   [2., 2., 2.],
-                   [3., 5., 4.]])
-    Y2 = np.array([[0.1, -0.2],
-                   [0.9, 1.1],
-                   [6.2, 5.9],
-                   [11.9, 12.3]])
-
-    # Non-regression for https://github.com/scikit-learn/scikit-learn/pull/7819
     n_samples = 1000
     n_targets = 5
     n_features = 10
     Q = rng.randn(n_targets, n_features)
-    Y3 = rng.randn(n_samples, n_targets)
-    X3 = np.dot(Y3, Q) + 2 * rng.randn(n_samples, n_features) + 1
-    X3 *= 1000
+    Y = rng.randn(n_samples, n_targets)
+    X = np.dot(Y, Q) + 2 * rng.randn(n_samples, n_features) + 1
+    X *= 1000
+    yield X, Y
 
-    for (X, Y) in [(X1, Y1), (X2, Y2), (X3, Y3)]:
-        X_std = X.std(axis=0, ddof=1)
-        X_std[X_std == 0] = 1
-        Y_std = Y.std(axis=0, ddof=1)
-        Y_std[Y_std == 0] = 1
-        X_s = (X - X.mean(axis=0)) / X_std
-        Y_s = (Y - Y.mean(axis=0)) / Y_std
+    # Data set where one of the features is constaint
+    X, Y = load_linnerud(return_X_y=True)
+    # causes X[:, -1].std() to be zero
+    X[:, -1] = 1.0
+    yield X, Y
 
-        X_score, Y_score = Est(scale=True).fit_transform(X, Y)
-        X_s_score, Y_s_score = Est(scale=False).fit_transform(X_s, Y_s)
+    X = np.array([[0., 0., 1.],
+                  [1., 0., 0.],
+                  [2., 2., 2.],
+                  [3., 5., 4.]])
+    Y = np.array([[0.1, -0.2],
+                  [0.9, 1.1],
+                  [6.2, 5.9],
+                  [11.9, 12.3]])
+    yield X, Y
 
-        assert_array_almost_equal(X_s_score, X_score)
-        assert_array_almost_equal(Y_s_score, Y_score)
+    # Seeds that provide a non-regression test for #18746, where CCA fails
+    seeds = [530, 741]
+    for seed in seeds:
+        rng = np.random.RandomState(seed)
+        X = rng.randn(4, 3)
+        Y = rng.randn(4, 2)
+        yield X, Y
+
+
+@pytest.mark.parametrize('Est', (CCA, PLSCanonical, PLSRegression, PLSSVD))
+@pytest.mark.parametrize('X, Y', _generate_test_scale_and_stability_datasets())
+def test_scale_and_stability(Est, X, Y):
+    """scale=True is equivalent to scale=False on centered/scaled data
+    This allows to check numerical stability over platforms as well"""
+
+    X_s, Y_s, *_ = _center_scale_xy(X, Y)
+
+    X_score, Y_score = Est(scale=True).fit_transform(X, Y)
+    X_s_score, Y_s_score = Est(scale=False).fit_transform(X_s, Y_s)
+
+    assert_allclose(X_s_score, X_score, atol=1e-4)
+    assert_allclose(Y_s_score, Y_score, atol=1e-4)
 
 
 @pytest.mark.parametrize('Est', (PLSSVD, PLSCanonical, CCA))
@@ -486,6 +490,20 @@ def test_norm_y_weights_deprecation(Est):
     est = Est().fit(X, Y)
     with pytest.warns(FutureWarning, match="norm_y_weights was deprecated"):
         est.norm_y_weights
+
+
+# TODO: Remove test in 0.26
+@pytest.mark.parametrize('Estimator',
+                         (PLSRegression, PLSCanonical, CCA, PLSSVD))
+@pytest.mark.parametrize('attribute',
+                         ("x_mean_", "y_mean_", "x_std_", "y_std_"))
+def test_mean_and_std_deprecation(Estimator, attribute):
+    rng = np.random.RandomState(0)
+    X = rng.randn(10, 5)
+    Y = rng.randn(10, 3)
+    estimator = Estimator().fit(X, Y)
+    with pytest.warns(FutureWarning, match=f"{attribute} was deprecated"):
+        getattr(estimator, attribute)
 
 
 @pytest.mark.parametrize('n_samples, n_features', [(100, 10), (100, 200)])

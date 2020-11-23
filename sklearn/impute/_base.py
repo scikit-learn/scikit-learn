@@ -793,15 +793,11 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         # Need not validate X again as it would have already been validated
         # in the Imputer calling MissingIndicator
         if not self._precomputed:
-            X = self._validate_input(X, in_fit=True)
+            X = self._validate_input(X, in_fit=False)
         else:
             if not (hasattr(X, 'dtype') and X.dtype.kind == 'b'):
                 raise ValueError("precomputed is True but the input data is "
                                  "not a mask")
-
-        if X.shape[1] != self._n_features:
-            raise ValueError("X has a different number of features "
-                             "than during fitting.")
 
         imputer_mask, features = self._get_missing_features_info(X)
 

@@ -1214,8 +1214,8 @@ def learning_curve(estimator, X, y, *, groups=None,
                    train_sizes=np.linspace(0.1, 1.0, 5), cv=None,
                    scoring=None, exploit_incremental_learning=False,
                    n_jobs=None, pre_dispatch="all", verbose=0, shuffle=False,
-                   random_state=None, error_score=np.nan,
-                   return_times=False):
+                   random_state=None, error_score=np.nan, return_times=False,
+                   fit_params=None):
     """Learning curve.
 
     Determines cross-validated training and test scores for different training
@@ -1319,6 +1319,11 @@ def learning_curve(estimator, X, y, *, groups=None,
     return_times : bool, default=False
         Whether to return the fit and score times.
 
+    fit_params : dict, default=None
+        Parameters to pass to the fit method of the estimator.
+
+        .. versionadded:: 0.24
+
     Returns
     -------
     train_sizes_abs : array of shape (n_unique_ticks,)
@@ -1377,7 +1382,8 @@ def learning_curve(estimator, X, y, *, groups=None,
         classes = np.unique(y) if is_classifier(estimator) else None
         out = parallel(delayed(_incremental_fit_estimator)(
             clone(estimator), X, y, classes, train, test, train_sizes_abs,
-            scorer, verbose, return_times, error_score=error_score)
+            scorer, verbose, return_times, error_score=error_score,
+            fit_params=fit_params)
             for train, test in cv_iter
         )
         out = np.asarray(out).transpose((2, 1, 0))
@@ -1389,7 +1395,7 @@ def learning_curve(estimator, X, y, *, groups=None,
 
         results = parallel(delayed(_fit_and_score)(
             clone(estimator), X, y, scorer, train, test, verbose,
-            parameters=None, fit_params=None, return_train_score=True,
+            parameters=None, fit_params=fit_params, return_train_score=True,
             error_score=error_score, return_times=return_times)
             for train, test in train_test_proportions
         )
@@ -1472,10 +1478,12 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
 
 def _incremental_fit_estimator(estimator, X, y, classes, train, test,
                                train_sizes, scorer, verbose,
-                               return_times, error_score):
+                               return_times, error_score, fit_params):
     """Train estimator on training subsets incrementally and compute scores."""
     train_scores, test_scores, fit_times, score_times = [], [], [], []
     partitions = zip(train_sizes, np.split(train, train_sizes)[:-1])
+    if fit_params is None:
+        fit_params = {}
     for n_train_samples, partial_train in partitions:
         train_subset = train[:n_train_samples]
         X_train, y_train = _safe_split(estimator, X, y, train_subset)
@@ -1484,10 +1492,11 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
         X_test, y_test = _safe_split(estimator, X, y, test, train_subset)
         start_fit = time.time()
         if y_partial_train is None:
-            estimator.partial_fit(X_partial_train, classes=classes)
+            estimator.partial_fit(X_partial_train, classes=classes,
+                                  **fit_params)
         else:
             estimator.partial_fit(X_partial_train, y_partial_train,
-                                  classes=classes)
+                                  classes=classes, **fit_params)
         fit_time = time.time() - start_fit
         fit_times.append(fit_time)
 
