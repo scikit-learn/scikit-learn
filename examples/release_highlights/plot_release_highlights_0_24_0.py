@@ -37,7 +37,7 @@ or with conda::
 # :class:`~sklearn.model_selection.RandomizedSearchCV`.
 # Successive halving is an iterative selection process. The first iteration is
 # run with a small amount of resources, resource meaning typically the
-# number of training samples, but also arbitrary numeric parameters such
+# number of training samples, but also arbitrary integer parameters such
 # as `n_estimators` in a random forest. Only some of the parameter candidates
 # are selected for the next iteration, with an increasing size of the
 # allocated resources.
@@ -81,18 +81,31 @@ rsh.best_params_
 # support for categorical features: they can consider splits on non-ordered,
 # categorical data. Read more in the :ref:`User Guide
 # <categorical_support_gbdt>`.
-#
-# .. figure:: ../ensemble/images/sphx_glr_plot_gradient_boosting_categorical_001.png
-#   :target: ../ensemble/plot_gradient_boosting_categorical.html
-#   :align: center
+
+from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.preprocessing import OrdinalEncoder
+from sklearn.datasets import fetch_openml
+survey = fetch_openml(data_id=534, as_frame=True)
+#print(survey.data.dtypes)
+X = survey.data.values
+print(X[0])
+y = survey.target.values.ravel()
+
+gbdt = HistGradientBoostingRegressor(
+    categorical_features=[False, True, True, False, True,
+                          False, True, True, True, True]
+)
+est = gbdt.fit(X, y)
+#print(est.score(X, y))
 
 ##############################################################################
 # Improved performances in HistGradientBoosting methods
 # -----------------------------------------------------
 # Histogram initialization is now done in parallel in
 # :class:`ensemble.HistGradientBoostingRegressor` and
-# :class:`ensemble.HistGradientBoostingClassifier` which results in speed
-# improvement.
+# :class:`ensemble.HistGradientBoostingClassifier` which results in memory
+# usage and speed improvement.
 # See more in the `Benchmark page
 # <https://scikit-learn.org/scikit-learn-benchmarks/>`_.
 
@@ -156,14 +169,13 @@ pipe.fit(X_train, y_train)
 # A new kind of partial dependence plot is available: the Individual
 # Conditional Expectation (ICE) plot. It visualizes the dependence of the
 # prediction on a feature for each sample separately with one line per sample.
-# See th :ref:`User Guide <individual_conditional>`
+# See the :ref:`User Guide <individual_conditional>`
 
 from sklearn.linear_model import BayesianRidge
 from sklearn.datasets import fetch_california_housing
 from sklearn.inspection import plot_partial_dependence
 
 X, y = fetch_california_housing(return_X_y=True, as_frame=True)
-print('Computing partial dependence plots...')
 features = ['MedInc', 'AveOccup', 'HouseAge', 'AveRooms']
 est = BayesianRidge()
 est.fit(X, y)
