@@ -622,6 +622,7 @@ def test_check_estimator_pairwise():
 
 
 class MinimalClassifier:
+    _estimator_type = "classifier"
 
     def __repr__(self):
         # Only required when using pytest-xdist to get an id not associated
@@ -666,6 +667,7 @@ class MinimalClassifier:
 
 
 class MinimalRegressor:
+    _estimator_type = "regressor"
 
     def __repr__(self):
         # Only required when using pytest-xdist to get an id not associated
