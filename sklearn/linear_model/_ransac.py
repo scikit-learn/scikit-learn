@@ -292,8 +292,8 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
 
         if self.loss == "absolute_loss":
             if y.ndim == 1:
-                def loss_function(y_true, y_pred): return np.abs(
-                    y_true - y_pred)
+                def loss_function(y_true, y_pred):
+                    return np.abs(y_true - y_pred)
             else:
                 def loss_function(y_true, y_pred): return np.sum(
                     np.abs(y_true - y_pred), axis=1)
