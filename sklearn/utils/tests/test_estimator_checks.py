@@ -173,37 +173,52 @@ class NoCheckinPredict(BaseBadClassifier):
         return self
 
 
-class BadFitExceptionSparseClassifier(LogisticRegression):
+class BadFitExceptionSparseClassifier(BaseBadClassifier):
     """An estimator that does not accept sparse inputs but
     returns a plain Exception instead of TypeError or ValueError"""
 
     def fit(self, X, y, *args, **kwargs):
-        X = check_array(X, accept_sparse=True)
+        X = self._validate_data(X, accept_sparse=True)
         if sp.issparse(X):
             raise Exception("Nonsensical Error")
-        return super(BadFitExceptionSparseClassifier, self).fit(X, y)
+        self.is_fitted_ = True
+        return self
+
+    def predict(self, X):
+        X = self._validate_data(X, reset=False, accept_sparse=True)
+        return super(BadFitExceptionSparseClassifier, self).predict(X)
 
 
-class BadFitTypeErrorSparseClassifier(LogisticRegression):
+class BadFitTypeErrorSparseClassifier(BaseBadClassifier):
     """An estimator that refuses sparse inputs that returns a TypeError
     (as allowed), but with the wrong message"""
 
     def fit(self, X, y, *args, **kwargs):
-        X = check_array(X, accept_sparse=True)
+        X = self._validate_data(X, accept_sparse=True)
         if sp.issparse(X):
             raise TypeError("Nonsensical Error")
-        return super(BadFitTypeErrorSparseClassifier, self).fit(X, y)
+        self.is_fitted_ = True
+        return self
+
+    def predict(self, X):
+        X = self._validate_data(X, reset=False, accept_sparse=True)
+        return super(BadFitTypeErrorSparseClassifier, self).predict(X)
 
 
-class BadFitValueErrorSparseClassifier(LogisticRegression):
+class BadFitValueErrorSparseClassifier(BaseBadClassifier):
     """An estimator that refuses sparse inputs that returns a ValueError
     (as allowed), but with the wrong message"""
 
     def fit(self, X, y, *args, **kwargs):
-        X = check_array(X, accept_sparse=True)
+        X = self._validate_data(X, accept_sparse=True)
         if sp.issparse(X):
             raise ValueError("Nonsensical Error")
-        return super(BadFitValueErrorSparseClassifier, self).fit(X, y)
+        self.is_fitted_ = True
+        return self
+
+    def predict(self, X):
+        X = self._validate_data(X, reset=False, accept_sparse=True)
+        return super(BadFitValueErrorSparseClassifier, self).predict(X)
 
 
 class SparseDenseDifferentPredict(LogisticRegression):
@@ -552,9 +567,9 @@ def test_check_estimator():
                         check_estimator, NotInvariantPredict())
     # check for sparse matrix input handling
     name = BadFitExceptionSparseClassifier.__name__
-    msg = ("Estimator %s doesn't seem to fail gracefully on sparse data: "
-           "it should raise a TypeError or a ValueError if sparse input "
-           "is explicitly not supported." % name)
+    msg = (f"Estimator {name} doesn't seem to fail gracefully on sparse data: "
+           f"it should raise a TypeError or a ValueError if sparse input "
+           f"is explicitly not supported.")
     assert_raises_regex(
         AssertionError, msg, check_estimator, BadFitExceptionSparseClassifier()
     )
