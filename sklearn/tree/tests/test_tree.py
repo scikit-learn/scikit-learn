@@ -1987,18 +1987,19 @@ def test_balance_property(criterion, Tree):
     assert np.sum(reg.predict(X)) == pytest.approx(np.sum(y))
 
 
-def test_poisson_zero_nodes():
+@pytest.mark.parametrize("seed", range(3))
+def test_poisson_zero_nodes(seed):
     # Test that sum(y)=0 and therefore y_pred=0 is forbidden on nodes.
     X = [[0, 0], [0, 1], [0, 2], [0, 3],
          [1, 0], [1, 2], [1, 2], [1, 3]]
     y = [0, 0, 0, 0, 1, 2, 3, 4]
     # Note that X[:, 0] == 0 is a 100% indicator for y == 0. The tree can
     # easily learn that:
-    reg = DecisionTreeRegressor(criterion="mse", random_state=1)
+    reg = DecisionTreeRegressor(criterion="mse", random_state=seed)
     reg.fit(X, y)
     assert np.amin(reg.predict(X)) == 0
     # whereas Poisson must predict strictly positive numbers
-    reg = DecisionTreeRegressor(criterion="poisson", random_state=1)
+    reg = DecisionTreeRegressor(criterion="poisson", random_state=seed)
     reg.fit(X, y)
     assert np.all(reg.predict(X) > 0)
 
@@ -2009,12 +2010,13 @@ def test_poisson_zero_nodes():
         n_samples=1_000,
         n_features=n_features,
         n_informative=n_features * 2 // 3,
+        random_state=seed,
     )
     # some excess zeros
     y[(-1 < y) & (y < 0)] = 0
     # make sure the target is positive
     y = np.abs(y)
-    reg = DecisionTreeRegressor(criterion='poisson', random_state=42)
+    reg = DecisionTreeRegressor(criterion='poisson', random_state=seed)
     reg.fit(X, y)
     assert np.all(reg.predict(X) > 0)
 
