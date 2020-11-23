@@ -319,6 +319,21 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
     def average_intercept_(self):
         return self._average_intercept
 
+    def _more_tags(self):
+        return {'_xfail_checks':
+                {'check_estimator_sparse_dense':
+                 "Default BaseSGD (and children classes) have a "
+                 "special intercept_decay for sparse inputs (see "
+                 "the constant "
+                 "`linear_model._base.SPARSE_INTERCEPT_DECAY`), "
+                 "which gives different results than the one for "
+                 "dense data. Therefore they are not tested in common "
+                 "tests but rather in `linear_model.test_sgd` (namely "
+                 "`test_sgd_sparse_dense_default`), with the sparse "
+                 "intercept set to the same value between sparse and "
+                 "dense, on a toy example."
+                 }}
+
 
 def _prepare_fit_binary(est, y, i):
     """Initialization for fit_binary.

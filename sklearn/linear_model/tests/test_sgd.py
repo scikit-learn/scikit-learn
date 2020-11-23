@@ -5,6 +5,8 @@ import numpy as np
 import scipy.sparse as sp
 import joblib
 
+from sklearn.linear_model._stochastic_gradient import BaseSGD
+from sklearn.utils import all_estimators
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
@@ -12,6 +14,7 @@ from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_raises_regexp
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import ignore_warnings
+from sklearn.utils.estimator_checks import check_estimator_sparse_dense
 from sklearn.utils.fixes import parse_version
 
 from sklearn import linear_model, datasets, metrics
@@ -1619,3 +1622,20 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     with joblib.parallel_backend(backend=backend):
         clf_parallel.fit(X, y)
     assert_array_almost_equal(clf_sequential.coef_, clf_parallel.coef_)
+
+
+@pytest.mark.parametrize('estimator_orig',
+                         [est() for _, est in all_estimators()
+                          if issubclass(est, BaseSGD)])
+def test_sgd_sparse_dense_default(estimator_orig):
+    """Tests that with default parameters, estimators that inherit from
+    `sklearn.linear_model._stochastic_gradient.BaseSGD`
+    return the same results on dense and sparse data. It's
+    tested here and not in common tests because for sparse data,
+    the "intercept decay" variable is set to a different value than for
+    dense data, which would give different results between sparse and
+    dense. Here we test that for toy examples, if this intercept
+    decay is set to the same value, the result is the same between
+    sparse and dense."""
+    linear_model._base.SPARSE_INTERCEPT_DECAY = 1.0
+    check_estimator_sparse_dense(None, estimator_orig)
