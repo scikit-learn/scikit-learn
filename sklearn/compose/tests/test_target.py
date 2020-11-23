@@ -209,7 +209,8 @@ def test_transform_target_regressor_3d_target():
     def unflatten_data(data):
         return data.reshape(data.shape[0], -1, 2)
 
-    transformer = FunctionTransformer(func=flatten_data, inverse_func=unflatten_data)
+    transformer = FunctionTransformer(func=flatten_data,
+                                      inverse_func=unflatten_data)
     regr = TransformedTargetRegressor(regressor=LinearRegression(),
                                       transformer=transformer)
     y_pred = regr.fit(X, y).predict(X)
