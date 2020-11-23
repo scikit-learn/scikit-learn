@@ -109,6 +109,7 @@ jobs:
           keys:
             - pypy3-ccache-{{ .Branch }}
             - pypy3-ccache
+      - run: apt-get -yq update && apt-get -yq install git ssh
       - checkout
       - run: conda init bash && source ~/.bashrc
       - run: ./build_tools/circle/build_test_pypy.sh
