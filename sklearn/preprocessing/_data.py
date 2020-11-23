@@ -939,7 +939,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
     def _more_tags(self):
         return {'allow_nan': True,
                 'preserves_dtype': [np.float64, np.float32],
-                '_xfail_cheks':
+                '_xfail_checks':
                     {'check_estimator_sparse_dense':
                      "Default StandardScaler don't support sparse inputs. "
                      "But StandardScaler is tested on sparse data in "
@@ -1453,7 +1453,7 @@ class RobustScaler(TransformerMixin, BaseEstimator):
 
     def _more_tags(self):
         return {'allow_nan': True,
-                '_xfail_cheks':
+                '_xfail_checks':
                     {'check_estimator_sparse_dense':
                      "Default RobustScaler don't support sparse inputs. "
                      "But RobustScaler is tested on sparse data in "
