@@ -29,15 +29,14 @@ or with conda::
 # -------------------------------------------------
 # Successive halving, a state of the art method, is now available to
 # explore the space of the parameters and identify their best combination.
-# It is still experimental, in order to import it `enable_halving_search_cv`
-# should be imported from `experimental`.
+# Successive halving is still experimental.
 # :class:`~sklearn.model_selection.HalvingGridSearchCV` and
 # :class:`~sklearn.model_selection.HalvingRandomSearchCV` can be
 # used as drop-in replacement for
 # :class:`~sklearn.model_selection.GridSearchCV` and
 # :class:`~sklearn.model_selection.RandomizedSearchCV`.
 # Successive halving is an iterative selection process. The first iteration is
-# run with a small amount of resources, by resource meaning typically the
+# run with a small amount of resources, resource meaning typically the
 # number of training samples, but also arbitrary numeric parameters such
 # as `n_estimators` in a random forest. Only some of the parameter candidates
 # are selected for the next iteration, with an increasing size of the
@@ -98,6 +97,15 @@ rsh.best_params_
 # <https://scikit-learn.org/scikit-learn-benchmarks/>`_.
 
 ##############################################################################
+# New self-training implementation
+# --------------------------------
+# A new self-training implementation, based on `Yarowski's algorithm
+# <https://doi.org/10.3115/981658.981684>`_ can now be called with any
+# classifier that implements `predict_proba`. This will make it behave as a
+# semi-supervised classifier, allowing it to learn from unlabeled data.
+# Read more in the :ref:`User guide <self_training>`.
+
+##############################################################################
 # New SequentialFeatureSelector transformer
 # -----------------------------------------
 # A new iterative transformer to select features is available:
@@ -141,20 +149,6 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=5000,
                                                     test_size=10000,
                                                     random_state=42)
 pipe.fit(X_train, y_train)
-
-##############################################################################
-# Retrieving datasets from literature as pandas dataframes
-# --------------------------------------------------------
-# All the relevant functions loading datasets have a new parameter `as_frame`
-# allowing to load the dataset as a pandas DataFrame including columns with
-# appropriate dtypes (numeric, string, or categorical) and names.
-# The target is a pandas DataFrame or Series depending on the number of
-# `target_columns`.
-
-from sklearn.datasets import fetch_kddcup99
-
-df_kddcup99 = fetch_kddcup99(as_frame=True)
-df_kddcup99.target.head()
 
 ##############################################################################
 # Individual Conditional Expectation
