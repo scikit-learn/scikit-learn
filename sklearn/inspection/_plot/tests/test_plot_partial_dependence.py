@@ -554,6 +554,8 @@ def test_plot_partial_dependence_subsampling(
 @pytest.mark.parametrize(
     "kind, line_kw, label",
     [
+        ("individual", {}, None),
+        ("individual", {"label": "xxx"}, None),
         ("average", {}, None),
         ("average", {"label": "xxx"}, "xxx"),
         ("both", {}, "average"),

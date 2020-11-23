@@ -340,7 +340,6 @@ def test_search_cv(estimator, check, request):
 # check_classifiers_train would need to be updated with the error message
 N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE = {
     'calibration',
-    'cluster',
     'compose',
     'covariance',
     'cross_decomposition',
@@ -349,10 +348,7 @@ N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE = {
     'feature_extraction',
     'feature_selection',
     'gaussian_process',
-    'impute',
     'isotonic',
-    'kernel_approximation',
-    'kernel_ridge',
     'linear_model',
     'manifold',
     'mixture',
