@@ -1,3 +1,8 @@
+/* Body */
+body {
+  word-break: normal;
+}
+
 /* Elements */
 a {
   color: #2878A2;
@@ -24,7 +29,6 @@ a.headerlink:hover {
 }
 
 p {
-  word-break: break-word;
   hyphens: auto;
 }
 
@@ -37,7 +41,6 @@ code {
   background-color: #ecf0f3;
   border-radius: 0.2rem;
   padding: 0.15rem;
-  word-break: normal;
 }
 
 nav {
@@ -673,7 +676,6 @@ dl.field-list {
 dl.field-list > dt {
   flex-basis: 100%;
   font-weight: bold;
-  word-break: break-word;
 }
 
 dl.field-list > dd {
@@ -940,7 +942,6 @@ table.docutils p {
 table.docutils p {
   white-space: pre-wrap;
   word-wrap: break-word;
-  word-break: initial;
 }
 
 /* gallery */
