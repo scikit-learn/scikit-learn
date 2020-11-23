@@ -38,7 +38,7 @@ or with conda::
 # :class:`~sklearn.model_selection.RandomizedSearchCV`.
 # Successive halving is an iterative selection process. The first iteration is
 # run with a small amount of resources, by resource meaning typically the
-# number of training samples, but also arbitrary numeric parameters such
+# number of training samples, but also arbitrary integer parameters such
 # as `n_estimators` in a random forest. Only some of the parameter candidates
 # are selected for the next iteration, with an increasing size of the
 # allocated resources.
