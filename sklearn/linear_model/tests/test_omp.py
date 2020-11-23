@@ -33,16 +33,16 @@ G, Xy = np.dot(X.T, X), np.dot(X.T, y)
 
 def test_correct_shapes():
     assert (orthogonal_mp(X, y[:, 0], n_nonzero_coefs=5).shape ==
-                 (n_features,))
+            (n_features,))
     assert (orthogonal_mp(X, y, n_nonzero_coefs=5).shape ==
-                 (n_features, 3))
+            (n_features, 3))
 
 
 def test_correct_shapes_gram():
     assert (orthogonal_mp_gram(G, Xy[:, 0], n_nonzero_coefs=5).shape ==
-                 (n_features,))
+            (n_features,))
     assert (orthogonal_mp_gram(G, Xy, n_nonzero_coefs=5).shape ==
-                 (n_features, 3))
+            (n_features, 3))
 
 
 def test_n_nonzero_coefs():

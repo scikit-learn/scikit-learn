@@ -106,6 +106,7 @@ def test_raises_value_error_if_positive_and_sparse():
     with pytest.raises(TypeError, match=error_msg):
         reg.fit(X, y)
 
+
 def test_raises_value_error_if_sample_weights_greater_than_1d():
     # Sample weights must be either scalar or 1D
 

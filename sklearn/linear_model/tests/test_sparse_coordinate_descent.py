@@ -268,7 +268,7 @@ def test_same_output_sparse_dense_lasso_and_enet_cv():
 
 def test_same_multiple_output_sparse_dense():
     for normalize in [True, False]:
-        l = ElasticNet(normalize=normalize)
+        elasticNet = ElasticNet(normalize=normalize)
         X = [[0, 1, 2, 3, 4],
              [0, 2, 5, 8, 11],
              [9, 10, 11, 12, 13],
@@ -277,9 +277,9 @@ def test_same_multiple_output_sparse_dense():
              [1, 3, 6, 9, 12],
              [10, 11, 12, 13, 14],
              [11, 12, 13, 14, 15]]
-        ignore_warnings(l.fit)(X, y)
+        ignore_warnings(elasticNet.fit)(X, y)
         sample = np.array([1, 2, 3, 4, 5]).reshape(1, -1)
-        predict_dense = l.predict(sample)
+        predict_dense = elasticNet.predict(sample)
 
         l_sp = ElasticNet(normalize=normalize)
         X_sp = sp.coo_matrix(X)

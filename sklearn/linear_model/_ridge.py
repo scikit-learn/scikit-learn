@@ -151,7 +151,8 @@ def _solve_cholesky(X, y, alpha):
         for coef, target, current_alpha in zip(coefs, Xy.T, alpha):
             A.flat[::n_features + 1] += current_alpha
             coef[:] = linalg.solve(A, target, sym_pos=True,
-                                   overwrite_a=False, check_finite=False).ravel()
+                                   overwrite_a=False,
+                                   check_finite=False).ravel()
             A.flat[::n_features + 1] -= current_alpha
         return coefs
 
@@ -207,7 +208,8 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
             K.flat[::n_samples + 1] += current_alpha
 
             dual_coef[:] = linalg.solve(K, target, sym_pos=True,
-                                        overwrite_a=False, check_finite=False).ravel()
+                                        overwrite_a=False,
+                                        check_finite=False).ravel()
 
             K.flat[::n_samples + 1] -= current_alpha
 
@@ -1066,6 +1068,7 @@ class _IdentityClassifier(LinearClassifierMixin):
     We inherit from LinearClassifierMixin to get the proper shape for the
     output `y`.
     """
+
     def __init__(self, classes):
         self.classes_ = classes
 
