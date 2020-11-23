@@ -626,7 +626,7 @@ class MinimalClassifier:
     def __repr__(self):
         # Only required when using pytest-xdist to get an id not associated
         # with the memory location
-        return self.__name__
+        return self.__class__.__name__
 
     def get_params(self, **params):
         return {}
@@ -660,7 +660,8 @@ class MinimalClassifier:
         return self.classes_[y_pred]
 
     def score(self, X, y):
-        return 1.0
+        from sklearn.metrics import accuracy_score
+        return accuracy_score(y, self.predict(X))
 
 
 class MinimalRegressor:
@@ -668,7 +669,7 @@ class MinimalRegressor:
     def __repr__(self):
         # Only required when using pytest-xdist to get an id not associated
         # with the memory location
-        return self.__name__
+        return self.__class__.__name__
 
     def get_params(self, **params):
         return {}
@@ -693,7 +694,8 @@ class MinimalRegressor:
         return np.ones(shape=(X.shape[0],)) * self._mean
 
     def score(self, X, y):
-        return 1.0
+        from sklearn.metrics import r2_score
+        return r2_score(y, self.predict(X))
 
 
 class MinimalTransformer:
@@ -701,7 +703,7 @@ class MinimalTransformer:
     def __repr__(self):
         # Only required when using pytest-xdist to get an id not associated
         # with the memory location
-        return self.__name__
+        return self.__class__.__name__
 
     def get_params(self, **params):
         return {}
