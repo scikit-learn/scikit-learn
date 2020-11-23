@@ -207,7 +207,7 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
     References
     ----------
     .. [1] https://en.wikipedia.org/wiki/RANSAC
-    .. [2] https://www.sri.com/sites/default/files/publications/ransac-publication.pdf
+    .. [2] https://bit.ly/396vBeB
     .. [3] http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf
     """  # noqa: E501
     def __init__(self, base_estimator=None, *, min_samples=None,
@@ -305,7 +305,8 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
                     FutureWarning
                 )
             if y.ndim == 1:
-                loss_function = lambda y_true, y_pred: np.abs(y_true - y_pred)
+                def loss_function(y_true, y_pred): return np.abs(
+                    y_true - y_pred)
             else:
                 loss_function = lambda \
                     y_true, y_pred: np.sum(np.abs(y_true - y_pred), axis=1)
@@ -319,10 +320,11 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
                     FutureWarning
                 )
             if y.ndim == 1:
-                loss_function = lambda y_true, y_pred: (y_true - y_pred) ** 2
+                def loss_function(y_true, y_pred): return (
+                    y_true - y_pred) ** 2
             else:
-                loss_function = lambda \
-                    y_true, y_pred: np.sum((y_true - y_pred) ** 2, axis=1)
+                def loss_function(y_true, y_pred): return np.sum(
+                    (y_true - y_pred) ** 2, axis=1)
 
         elif callable(self.loss):
             loss_function = self.loss
@@ -441,7 +443,7 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
 
             # break if sufficient number of inliers or score is reached
             if n_inliers_best >= self.stop_n_inliers or \
-                            score_best >= self.stop_score:
+                    score_best >= self.stop_score:
                 break
 
         # if none of the iterations met the required criteria
