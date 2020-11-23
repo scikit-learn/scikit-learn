@@ -305,8 +305,8 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
                     FutureWarning
                 )
             if y.ndim == 1:
-                def loss_function(y_true, y_pred): return np.abs(
-                    y_true - y_pred)
+                def loss_function(y_true, y_pred):
+                    return np.abs(y_true - y_pred)
             else:
                 loss_function = lambda \
                     y_true, y_pred: np.sum(np.abs(y_true - y_pred), axis=1)
