@@ -86,7 +86,7 @@ def _generalized_average(U, V, average_method):
 
 @_deprecate_positional_args
 def contingency_matrix(labels_true, labels_pred, *, eps=None, sparse=False,
-                       dtype=np.int):
+                       dtype=np.int64):
     """Build a contingency matrix describing the relationship between labels.
 
     Parameters
@@ -108,7 +108,7 @@ def contingency_matrix(labels_true, labels_pred, *, eps=None, sparse=False,
 
         .. versionadded:: 0.18
 
-    dtype : numeric type, default=np.int
+    dtype : numeric type, default=np.int64
         Output dtype. Ignored if `eps` is not `None`.
 
         .. versionadded:: 0.24
