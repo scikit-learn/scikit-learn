@@ -157,9 +157,9 @@ Making a release
   to avoid ABI incompatibility issues. Moreover, a new line have to be included
   in the ``pyproject.toml`` file for each new supported version of Python.
 
-4. Once the CD has completed successfully, collect the generated binary wheel
-   packages and upload them to PyPI by running the following commands in the
-   scikit-learn source folder (checked out at the release tag):
+4. Once the CD has completed successfully, collect the generated binary
+   wheel packages and upload them to PyPI by running the following commands
+   in the scikit-learn source folder (checked out at the release tag):
 
    .. prompt:: bash $
 
