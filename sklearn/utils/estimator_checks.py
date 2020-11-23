@@ -2350,12 +2350,14 @@ def check_classifiers_classes(name, classifier_orig, api_only=False):
     for X, y, y_names in problems:
         for y_names_i in [y_names, y_names.astype('O')]:
             y_ = _choose_check_classifiers_labels(name, y, y_names_i)
-            check_classifiers_predictions(X, y_, name, classifier_orig)
+            check_classifiers_predictions(X, y_, name, classifier_orig,
+                                          api_only=api_only)
 
     labels_binary = [-1, 1]
     y_names_binary = np.take(labels_binary, y_binary)
     y_binary = _choose_check_classifiers_labels(name, y_binary, y_names_binary)
-    check_classifiers_predictions(X_binary, y_binary, name, classifier_orig)
+    check_classifiers_predictions(X_binary, y_binary, name, classifier_orig,
+                                  api_only=api_only)
 
 
 @ignore_warnings(category=FutureWarning)
