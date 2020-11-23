@@ -28,7 +28,6 @@ from . import is_scalar_nan
 
 from ..linear_model import LogisticRegression
 from ..linear_model import Ridge
-from ..linear_model._stochastic_gradient import BaseSGD
 
 from ..base import (
     clone,
