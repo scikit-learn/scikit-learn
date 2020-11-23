@@ -1,5 +1,6 @@
 """Testing for the VotingClassifier and VotingRegressor"""
 
+import warnings
 import pytest
 import re
 import numpy as np
@@ -370,7 +371,11 @@ def test_set_estimator_drop():
                                          ('nb', clf3)],
                              voting='hard', weights=[1, 1, 0.5])
     with pytest.warns(None) as record:
-        eclf2.set_params(rf='drop').fit(X, y)
+        with warnings.catch_warnings():
+            # scipy 1.3.0 uses tostring which is deprecated in numpy
+            warnings.filterwarnings("ignore", "tostring", DeprecationWarning)
+            eclf2.set_params(rf='drop').fit(X, y)
+
     assert not record
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
 
@@ -382,7 +387,11 @@ def test_set_estimator_drop():
 
     eclf1.set_params(voting='soft').fit(X, y)
     with pytest.warns(None) as record:
-        eclf2.set_params(voting='soft').fit(X, y)
+        with warnings.catch_warnings():
+            # scipy 1.3.0 uses tostring which is deprecated in numpy
+            warnings.filterwarnings("ignore", "tostring", DeprecationWarning)
+            eclf2.set_params(voting='soft').fit(X, y)
+
     assert not record
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
     assert_array_almost_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
@@ -403,7 +412,10 @@ def test_set_estimator_drop():
                              voting='soft', weights=[1, 0.5],
                              flatten_transform=False)
     with pytest.warns(None) as record:
-        eclf2.set_params(rf='drop').fit(X1, y1)
+        with warnings.catch_warnings():
+            # scipy 1.3.0 uses tostring which is deprecated in numpy
+            warnings.filterwarnings("ignore", "tostring", DeprecationWarning)
+            eclf2.set_params(rf='drop').fit(X1, y1)
     assert not record
     assert_array_almost_equal(eclf1.transform(X1),
                               np.array([[[0.7, 0.3], [0.3, 0.7]],

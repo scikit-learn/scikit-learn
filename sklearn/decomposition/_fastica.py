@@ -476,7 +476,7 @@ class FastICA(TransformerMixin, BaseEstimator):
             X -= X_mean[:, np.newaxis]
 
             # Whitening and preprocessing by PCA
-            u, d, _ = linalg.svd(X, full_matrices=False)
+            u, d, _ = linalg.svd(X, full_matrices=False, check_finite=False)
 
             del _
             K = (u / d).T[:n_components]  # see (6.33) p.140
@@ -534,7 +534,7 @@ class FastICA(TransformerMixin, BaseEstimator):
         else:
             self.components_ = W
 
-        self.mixing_ = linalg.pinv(self.components_)
+        self.mixing_ = linalg.pinv(self.components_, check_finite=False)
         self._unmixing = W
 
         return S

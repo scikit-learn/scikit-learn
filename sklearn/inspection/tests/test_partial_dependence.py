@@ -100,7 +100,7 @@ def test_output_shape(Estimator, method, data, grid_resolution,
         est, X=X, features=features, method=method, kind=kind,
         grid_resolution=grid_resolution
     )
-    # FIXME: to be removed in 0.24
+    # FIXME: Remove 'legacy' support in 0.26
     pdp, axes = result if kind == 'legacy' else (result, result["values"])
 
     expected_pdp_shape = (n_targets,
