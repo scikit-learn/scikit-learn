@@ -162,14 +162,13 @@ df_kddcup99.target.head()
 # A new kind of partial dependence plot is available: the Individual
 # Conditional Expectation (ICE) plot. It visualizes the dependence of the
 # prediction on a feature for each sample separately with one line per sample.
-# See th :ref:`User Guide <individual_conditional>`
+# See the :ref:`User Guide <individual_conditional>`
 
 from sklearn.linear_model import BayesianRidge
 from sklearn.datasets import fetch_california_housing
 from sklearn.inspection import plot_partial_dependence
 
 X, y = fetch_california_housing(return_X_y=True, as_frame=True)
-print('Computing partial dependence plots...')
 features = ['MedInc', 'AveOccup', 'HouseAge', 'AveRooms']
 est = BayesianRidge()
 est.fit(X, y)
