@@ -81,23 +81,10 @@ rsh.best_params_
 # support for categorical features: they can consider splits on non-ordered,
 # categorical data. Read more in the :ref:`User Guide
 # <categorical_support_gbdt>`.
-
-from sklearn.experimental import enable_hist_gradient_boosting  # noqa
-from sklearn.ensemble import HistGradientBoostingRegressor
-from sklearn.preprocessing import OrdinalEncoder
-from sklearn.datasets import fetch_openml
-survey = fetch_openml(data_id=534, as_frame=True)
-#print(survey.data.dtypes)
-X = survey.data.values
-print(X[0])
-y = survey.target.values.ravel()
-
-gbdt = HistGradientBoostingRegressor(
-    categorical_features=[False, True, True, False, True,
-                          False, True, True, True, True]
-)
-est = gbdt.fit(X, y)
-#print(est.score(X, y))
+#
+# .. figure:: ../ensemble/images/sphx_glr_plot_gradient_boosting_categorical_001.png
+#   :target: ../ensemble/plot_gradient_boosting_categorical.html
+#   :align: center
 
 ##############################################################################
 # Improved performances in HistGradientBoosting methods
