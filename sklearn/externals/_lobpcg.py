@@ -90,7 +90,7 @@ def _makeOperator(operatorInput, expectedShape):
 def _applyConstraints(blockVectorV, factYBY, blockVectorBY, blockVectorY):
     """Changes blockVectorV in place."""
     YBV = np.dot(blockVectorBY.T.conj(), blockVectorV)
-    tmp = cho_solve(factYBY, YBV)
+    tmp = cho_solve(factYBY, YBV, check_finite=False)
     blockVectorV -= np.dot(blockVectorY, tmp)
 
 
@@ -108,8 +108,8 @@ def _b_orthonormalize(B, blockVectorV, blockVectorBV=None, retInvR=False):
     VBV = np.matmul(blockVectorV.T.conj(), blockVectorBV)
     try:
         # VBV is a Cholesky factor from now on...
-        VBV = cholesky(VBV, overwrite_a=True)
-        VBV = inv(VBV, overwrite_a=True)
+        VBV = cholesky(VBV, overwrite_a=True, check_finite=False)
+        VBV = inv(VBV, overwrite_a=True, check_finite=False)
         blockVectorV = np.matmul(blockVectorV, VBV)
         # blockVectorV = (cho_solve((VBV.T, True), blockVectorV.T)).T
         if B is not None:
@@ -383,7 +383,7 @@ def lobpcg(A, X,
         gramYBY = np.dot(blockVectorY.T.conj(), blockVectorBY)
         try:
             # gramYBY is a Cholesky factor from now on...
-            gramYBY = cho_factor(gramYBY)
+            gramYBY = cho_factor(gramYBY, check_finite=False)
         except LinAlgError as e:
             raise ValueError('cannot handle linearly dependent constraints') from e
 
