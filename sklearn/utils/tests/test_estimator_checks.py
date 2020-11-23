@@ -643,7 +643,8 @@ class MinimalClassifier:
     def fit(self, X, y):
         X = check_array(X)
         self.n_features_in_ = X.shape[1]
-        self.classes_ = np.unique(y)
+        self.classes_, counts = np.unique(y, return_counts=True)
+        self._most_frequent_class = self.classes_[counts.argmax()]
         return self
 
     def predict_proba(self, X):
@@ -651,7 +652,7 @@ class MinimalClassifier:
         X = check_array(X)
         proba_shape = (X.shape[0], self.classes_.size)
         y_proba = np.zeros(shape=proba_shape, dtype=np.float64)
-        y_proba[:, 0] = 1.0
+        y_proba[:, self._most_frequent_class] = 1.0
         return y_proba
 
     def predict(self, X):
