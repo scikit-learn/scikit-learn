@@ -621,18 +621,16 @@ def test_check_estimator_pairwise():
     check_estimator(est)
 
 
-class MinimalEstimator:
+class MinimalClassifier:
 
-    # Our minimal required supposed that the following are implemented
-    _get_param_names = BaseEstimator._get_param_names  # used by get_params
-    set_params = BaseEstimator.set_params
-    get_params = BaseEstimator.get_params
+    def get_params(self, **params):
+        return {}
+
+    def set_params(self, deep=True):
+        return self
 
     def __getstate__(self):
-        state = self.__dict__.copy()
-        # only because we are within scikit-learn source code
-        from sklearn import __version__
-        return dict(state.items(), _sklearn_version=__version__)
+        return self.__dict__.copy()
 
     def __setstate__(self, state):
         self.__dict__.update(state)
@@ -640,14 +638,8 @@ class MinimalEstimator:
     def fit(self, X, y):
         X = check_array(X)
         self.n_features_in_ = X.shape[1]
-        return self
-
-
-class MinimalClassifier(MinimalEstimator):
-
-    def fit(self, X, y):
         self.classes_ = np.unique(y)
-        return super().fit(X, y)
+        return self
 
     def predict_proba(self, X):
         check_is_fitted(self)
@@ -666,11 +658,25 @@ class MinimalClassifier(MinimalEstimator):
         return 1.0
 
 
-class MinimalRegressor(MinimalEstimator):
+class MinimalRegressor:
+
+    def get_params(self, **params):
+        return {}
+
+    def set_params(self, deep=True):
+        return self
+
+    def __getstate__(self):
+        return self.__dict__.copy()
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
 
     def fit(self, X, y):
+        X = check_array(X)
+        self.n_features_in_ = X.shape[1]
         self._mean = np.mean(y)
-        return super().fit(X, y)
+        return self
 
     def predict(self, X):
         X = check_array(X)
@@ -680,7 +686,24 @@ class MinimalRegressor(MinimalEstimator):
         return 1.0
 
 
-class MinimalTransformer(MinimalEstimator):
+class MinimalTransformer:
+
+    def get_params(self, **params):
+        return {}
+
+    def set_params(self, deep=True):
+        return self
+
+    def __getstate__(self):
+        return self.__dict__.copy()
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+
+    def fit(self, X, y):
+        X = check_array(X)
+        self.n_features_in_ = X.shape[1]
+        return self
 
     def transform(self, X, y=None):
         check_is_fitted(self)

@@ -1700,7 +1700,8 @@ def check_estimators_pickle(name, estimator_orig, api_only=False):
 
     # pickle and unpickle!
     pickled_estimator = pickle.dumps(estimator)
-    if estimator.__module__.startswith('sklearn.'):
+    module_name = estimator.__module__
+    if module_name.startswith('sklearn.') and "test_" not in module_name:
         assert b"version" in pickled_estimator
     unpickled_estimator = pickle.loads(pickled_estimator)
 
