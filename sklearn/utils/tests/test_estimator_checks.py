@@ -623,6 +623,11 @@ def test_check_estimator_pairwise():
 
 class MinimalClassifier:
 
+    def __repr__(self):
+        # Only required when using pytest-xdist to get an id not associated
+        # with the memory location
+        return self.__name__
+
     def get_params(self, **params):
         return {}
 
@@ -660,6 +665,11 @@ class MinimalClassifier:
 
 class MinimalRegressor:
 
+    def __repr__(self):
+        # Only required when using pytest-xdist to get an id not associated
+        # with the memory location
+        return self.__name__
+
     def get_params(self, **params):
         return {}
 
@@ -687,6 +697,11 @@ class MinimalRegressor:
 
 
 class MinimalTransformer:
+
+    def __repr__(self):
+        # Only required when using pytest-xdist to get an id not associated
+        # with the memory location
+        return self.__name__
 
     def get_params(self, **params):
         return {}
