@@ -93,13 +93,13 @@ Changelog
   When set to `True`, additional messages will be displayed which can aid with
   debugging. :pr:`18052` by :user:`Sean O. Stalley <sstalley>`.
 
-- |API| :class:`cluster.MiniBatchKMeans` attributes, `counts_` and
-  `init_size_`, are deprecated and will be removed in 0.26. :pr:`17864` by
-  :user:`Jérémie du Boisberranger <jeremiedbb>`.
-
 - |Enhancement| Added :func:`cluster.kmeans_plusplus` as public function. 
   Initialization by KMeans++ can now be called separately to generate
   initial cluster centroids. :pr:`17937` by :user:`g-walsh`
+
+- |API| :class:`cluster.MiniBatchKMeans` attributes, `counts_` and
+  `init_size_`, are deprecated and will be removed in 0.26. :pr:`17864` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.compose`
 ......................
@@ -171,6 +171,10 @@ Changelog
   files downloaded or cached to ensure data integrity.
   :pr:`14800` by :user:`Shashank Singh <shashanksingh28>` and `Joel Nothman`_.
 
+- |Feature| :func:`datasets.fetch_openml` now validates md5checksum of arff
+  files downloaded or cached to ensure data integrity.
+  :pr:`14800` by :user:`Shashank Singh <shashanksingh28>` and `Joel Nothman`_.
+
 - |Enhancement| :func:`datasets.fetch_openml` now allows argument `as_frame`
   to be 'auto', which tries to convert returned data to pandas DataFrame
   unless data is sparse.
@@ -189,18 +193,14 @@ Changelog
   :pr:`18280` by :user:`Alex Liang <tianchuliang>` and
   `Guillaume Lemaitre`_.
 
-- |Feature| :func:`datasets.fetch_openml` now validates md5checksum of arff
-  files downloaded or cached to ensure data integrity.
-  :pr:`14800` by :user:`Shashank Singh <shashanksingh28>` and `Joel Nothman`_.
-
-- |API| The default value of `as_frame` in :func:`datasets.fetch_openml` is
-  changed from False to 'auto'.
-  :pr:`17610` by :user:`Jiaxiang <fujiaxiang>`.
-
 - |Enhancement| :func:`datasets.fetch_20newsgroups_vectorized` now supports
   loading as a pandas ``DataFrame`` by setting ``as_frame=True``.
   :pr:`17499` by :user:`Brigitta Sipőcz <bsipocz>` and
   `Guillaume Lemaitre`_.
+
+- |API| The default value of `as_frame` in :func:`datasets.fetch_openml` is
+  changed from False to 'auto'.
+  :pr:`17610` by :user:`Jiaxiang <fujiaxiang>`.
 
 :mod:`sklearn.decomposition`
 ............................
@@ -477,10 +477,9 @@ Changelog
   optional in the matplotlib plot by setting `colorbar=False`. :pr:`17192` by
   :user:`Avi Gupta <avigupta2612>`
 
-- |Fix| Fixed a bug in
-  :func:`metrics.classification_report` which was raising AttributeError
-  when called with `output_dict=True` for 0-length values.
-  :pr:`17777` by :user:`Shubhanshu Mishra <napsternxg>`.
+- |Feature| :func:`metrics.plot_confusion_matrix` now supports making colorbar
+  optional in the matplotlib plot by setting colorbar=False. :pr:`17192` by
+  :user:`Avi Gupta <avigupta2612>`.
 
 - |Enhancement| Add `sample_weight` parameter to
   :func:`metrics.median_absolute_error`. :pr:`17225` by
@@ -491,14 +490,15 @@ Changelog
   class to be used when computing the precision and recall statistics.
   :pr:`17569` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Feature| :func:`metrics.plot_confusion_matrix` now supports making colorbar
-  optional in the matplotlib plot by setting colorbar=False. :pr:`17192` by
-  :user:`Avi Gupta <avigupta2612>`.
-
 - |Enhancement| Add `pos_label` parameter in
   :func:`metrics.plot_roc_curve` in order to specify the positive
   class to be used when computing the roc auc statistics.
   :pr:`17651` by :user:`Clara Matos <claramatos>`.
+
+- |Fix| Fixed a bug in
+  :func:`metrics.classification_report` which was raising AttributeError
+  when called with `output_dict=True` for 0-length values.
+  :pr:`17777` by :user:`Shubhanshu Mishra <napsternxg>`.
 
 - |Fix| Fixed a bug in
   :func:`metrics.classification_report` which was raising AttributeError
@@ -565,6 +565,10 @@ Changelog
   will be raised.
   :pr:`18343` by `Guillaume Lemaitre`_ and :user:`Devi Sandeep <dsandeep0138>`.
 
+- |Enhancement| :func:`model_selection.learning_curve` now accept fit_params
+  to pass additional estimator parameters.
+  :pr:`18595` by :user:`Amanda Dsouza <amy12xx>`.
+
 - |Fix| Fixed the `len` of :class:`model_selection.ParameterSampler` when
   all distributions are lists and `n_iter` is more than the number of unique
   parameter combinations. :pr:`18222` by `Nicolas Hug`_.
@@ -575,23 +579,19 @@ Changelog
   :pr:`18266` by :user:`Subrat Sahu <subrat93>`,
   :user:`Nirvan <Nirvan101>` and :user:`Arthur Book <ArthurBook>`.
 
-- |Enhancement| :func:`model_selection.learning_curve` now accept fit_params
-  to pass additional estimator parameters.
-  :pr:`18595` by :user:`Amanda Dsouza <amy12xx>`.
-
 :mod:`sklearn.multiclass`
 .........................
-
-- |Fix| A fix to allow :class:`multiclass.OutputCodeClassifier` to accept
-  sparse input data in its `fit` and `predict` methods. The check for
-  validity of the input is now delegated to the base estimator.
-  :pr:`17233` by :user:`Zolisa Bleki <zoj613>`.
 
 - |Enhancement| :class:`multiclass.OneVsOneClassifier` now accepts
   the inputs with missing values. Hence, estimators which can handle
   missing values (may be a pipeline with imputation step) can be used as
   a estimator for multiclass wrappers.
   :pr:`17987` by :user:`Venkatachalam N <venkyyuvy>`.
+
+- |Fix| A fix to allow :class:`multiclass.OutputCodeClassifier` to accept
+  sparse input data in its `fit` and `predict` methods. The check for
+  validity of the input is now delegated to the base estimator.
+  :pr:`17233` by :user:`Zolisa Bleki <zoj613>`.
 
 :mod:`sklearn.multioutput`
 ..........................
@@ -780,6 +780,10 @@ Changelog
   estimator methods are invariant if applied to the same dataset
   with different sample order :pr:`17598` by :user:`Jason Ngo <ngojason9>`.
 
+- |Enhancement| Add support for weights in
+  :func:`utils.sparse_func.incr_mean_variance_axis`.
+  By :user:`Maria Telenczuk <maikia>` and :user:`Alex Gramfort <agramfort>`.
+
 - |Fix| Raise ValueError with clear error message in :func:`check_array`
   for sparse DataFrames with mixed types.
   :pr:`17992` by :user:`Thomas J. Fan <thomasjpfan>` and
@@ -792,12 +796,6 @@ Changelog
 - |Fix| Check that we raise proper error when axis=1 and the
   dimensions do not match in :func:`utils.sparse_func.incr_mean_variance_axis`.
   By :user:`Alex Gramfort <agramfort>`.
-
-
-- |Enhancement| Add support for weights in
-  :func:`utils.sparse_func.incr_mean_variance_axis`.
-  By :user:`Maria Telenczuk <maikia>` and :user:`Alex Gramfort <agramfort>`.
-
 
 Miscellaneous
 .............
