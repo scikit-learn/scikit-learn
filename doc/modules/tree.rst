@@ -363,6 +363,11 @@ Tips on practical use
     classification with few classes, ``min_samples_leaf=1`` is often the best
     choice.
 
+    Note that ``min_samples_split`` considers samples directly and independent of
+    ``sample_weight``, if provided (e.g. a node with m weighted samples is still
+    treated as having exactly m samples). Consider ``min_weight_fraction_leaf`` or
+    ``min_impurity_decrease`` if accounting for sample weights is required at splits.
+
   * Balance your dataset before training to prevent the tree from being biased
     toward the classes that are dominant. Class balancing can be done by
     sampling an equal number of samples from each class, or preferably by

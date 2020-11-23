@@ -741,7 +741,7 @@ class PartialDependenceDisplay:
         else:
             ax.set_yticklabels([])
 
-        if line_kw.get("label", None):
+        if line_kw.get("label", None) and self.kind != 'individual':
             ax.legend()
 
     def _plot_two_way_partial_dependence(
@@ -866,7 +866,7 @@ class PartialDependenceDisplay:
 
         default_line_kws = {
             "color": "C0",
-            "label": None if self.kind == "average" else "average",
+            "label": "average" if self.kind == "both" else None,
         }
         line_kw = {**default_line_kws, **line_kw}
 

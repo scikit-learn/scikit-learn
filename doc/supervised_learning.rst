@@ -25,7 +25,7 @@ Supervised learning
     modules/ensemble
     modules/multiclass
     modules/feature_selection.rst
-    modules/label_propagation.rst
+    modules/semi_supervised.rst
     modules/isotonic.rst
     modules/calibration.rst
     modules/neural_networks_supervised

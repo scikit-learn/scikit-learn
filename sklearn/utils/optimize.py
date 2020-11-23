@@ -230,13 +230,18 @@ def _check_optimize_result(solver, result, max_iter=None,
     # handle both scipy and scikit-learn solver names
     if solver == "lbfgs":
         if result.status != 0:
+            try:
+                # The message is already decoded in scipy>=1.6.0
+                result_message = result.message.decode("latin1")
+            except AttributeError:
+                result_message = result.message
             warning_msg = (
                 "{} failed to converge (status={}):\n{}.\n\n"
                 "Increase the number of iterations (max_iter) "
                 "or scale the data as shown in:\n"
                 "    https://scikit-learn.org/stable/modules/"
                 "preprocessing.html"
-            ).format(solver, result.status, result.message.decode("latin1"))
+            ).format(solver, result.status, result_message)
             if extra_warning_msg is not None:
                 warning_msg += "\n" + extra_warning_msg
             warnings.warn(warning_msg, ConvergenceWarning, stacklevel=2)
