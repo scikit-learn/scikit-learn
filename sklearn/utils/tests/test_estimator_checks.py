@@ -21,7 +21,6 @@ from sklearn.utils.estimator_checks import check_fit_score_takes_y
 from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
 from sklearn.utils.estimator_checks import check_classifier_data_not_an_array
 from sklearn.utils.estimator_checks import check_regressor_data_not_an_array
-from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.estimator_checks import check_outlier_corruption
 from sklearn.utils.estimator_checks import parametrize_with_checks
 from sklearn.utils.fixes import np_version, parse_version
@@ -33,7 +32,12 @@ from sklearn.decomposition import NMF
 from sklearn.linear_model import MultiTaskElasticNet, LogisticRegression
 from sklearn.svm import SVC, NuSVC
 from sklearn.neighbors import KNeighborsRegressor
-from sklearn.utils.validation import check_array
+from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.validation import (
+    check_array,
+    check_is_fitted,
+    check_X_y,
+)
 from sklearn.utils import all_estimators
 from sklearn.exceptions import SkipTestWarning
 
@@ -642,18 +646,21 @@ class MinimalClassifier:
         self.__dict__.update(state)
 
     def fit(self, X, y):
-        X = check_array(X)
+        X, y = check_X_y(X, y)
+        check_classification_targets(y)
         self.n_features_in_ = X.shape[1]
         self.classes_, counts = np.unique(y, return_counts=True)
-        self._most_frequent_class = self.classes_[counts.argmax()]
+        self._most_frequent_class_idx = counts.argmax()
         return self
 
     def predict_proba(self, X):
         check_is_fitted(self)
         X = check_array(X)
+        if X.shape[1] != self.n_features_in_:
+            raise ValueError
         proba_shape = (X.shape[0], self.classes_.size)
         y_proba = np.zeros(shape=proba_shape, dtype=np.float64)
-        y_proba[:, self._most_frequent_class] = 1.0
+        y_proba[:, self._most_frequent_class_idx] = 1.0
         return y_proba
 
     def predict(self, X):
@@ -687,13 +694,16 @@ class MinimalRegressor:
         self.__dict__.update(state)
 
     def fit(self, X, y):
-        X = check_array(X)
+        X, y = check_X_y(X, y)
         self.n_features_in_ = X.shape[1]
         self._mean = np.mean(y)
         return self
 
     def predict(self, X):
+        check_is_fitted(self)
         X = check_array(X)
+        if X.shape[1] != self.n_features_in_:
+            raise ValueError
         return np.ones(shape=(X.shape[0],)) * self._mean
 
     def score(self, X, y):
@@ -720,7 +730,7 @@ class MinimalTransformer:
     def __setstate__(self, state):
         self.__dict__.update(state)
 
-    def fit(self, X, y):
+    def fit(self, X, y=None):
         X = check_array(X)
         self.n_features_in_ = X.shape[1]
         return self

@@ -2331,7 +2331,7 @@ def check_classifiers_predictions(X, y, name, classifier_orig,
                                (classifier, ", ".join(map(str, y_exp)),
                                 ", ".join(map(str, y_pred))))
 
-    if name != "ComplementNB":
+    if not api_only and name != "ComplementNB":
         # This is a pathological data set for ComplementNB.
         # For some specific cases 'ComplementNB' predicts less classes
         # than expected
