@@ -198,6 +198,24 @@ def test_transform_target_regressor_2d_transformer_multioutput():
     assert_allclose(regr.regressor_.coef_, lr.coef_)
 
 
+def test_transform_target_regressor_3d_target():
+    # Check with a 3D target with a transformer that reshapes the target
+    X = friedman[0]
+    y = np.tile(friedman[1].reshape(-1, 1, 1), [1, 3, 2])
+
+    def flatten_data(data):
+        return data.reshape(data.shape[0], -1)
+
+    def unflatten_data(data):
+        return data.reshape(data.shape[0], -1, 2)
+
+    transformer = FunctionTransformer(func=flatten_data, inverse_func=unflatten_data)
+    regr = TransformedTargetRegressor(regressor=LinearRegression(),
+                                      transformer=transformer)
+    y_pred = regr.fit(X, y).predict(X)
+    assert y.shape == y_pred.shape
+
+
 def test_transform_target_regressor_multi_to_single():
     X = friedman[0]
     y = np.transpose([friedman[1], (friedman[1] ** 2 + 1)])
