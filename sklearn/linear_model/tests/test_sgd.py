@@ -1637,5 +1637,12 @@ def test_sgd_sparse_dense_default(estimator_orig):
     dense. Here we test that for toy examples, if this intercept
     decay is set to the same value, the result is the same between
     sparse and dense."""
+    old_make_dataset = linear_model._base.make_dataset
+
+    def new_make_dataset(X, y, sample_weight, random_state=None):
+        dataset, intercept_decay = old_make_dataset(X, y, sample_weight,
+                                                    random_state)
+        return dataset, 0.01
+    linear_model._base.make_dataset = new_make_dataset
     linear_model._base.SPARSE_INTERCEPT_DECAY = 1.0
     check_estimator_sparse_dense(None, estimator_orig)
