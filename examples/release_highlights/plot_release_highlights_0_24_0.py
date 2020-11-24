@@ -84,11 +84,11 @@ rsh.best_params_
 
 ##############################################################################
 # Improved performances of HistGradientBoosting estimators
-# -----------------------------------------------------
-# Histogram initialization is now done in parallel in
-# :class:`ensemble.HistGradientBoostingRegressor` and
-# :class:`ensemble.HistGradientBoostingClassifier` which results in memory
-# usage and speed improvement.
+# --------------------------------------------------------
+# The memory footprint of :class:`ensemble.HistGradientBoostingRegressor` and
+# :class:`ensemble.HistGradientBoostingClassifier` has been significantly
+# improved during calls to fit. In addition, histogram initialization is now
+# done in parallel which results in slight speed improvement.
 # See more in the `Benchmark page
 # <https://scikit-learn.org/scikit-learn-benchmarks/>`_.
 
@@ -206,8 +206,14 @@ regressor.fit(X_train, y_train)
 # New examples and documentation pages
 # have been addeed in a continuous effort
 # to improve the understanding of data science practices.
-# Among others a new section about :ref:`common pitfalls and recommended
-# practices <common_pitfalls>` is now included, and an `example
-# <../model_selection/plot_grid_search_stats.html>`_ illustrating
-# how statistically compare the performance of models
-# evaluated using :class:`~sklearn.model_selection.GridSearchCV`.
+# Among others are now included:
+#
+# - a new section about :ref:`common pitfalls and recommended
+#   practices <common_pitfalls>`,
+# - an example illustrating how `statistically compare the performance of
+#   models <../model_selection/plot_grid_search_stats.html>`_
+#   evaluated using :class:`~sklearn.model_selection.GridSearchCV`.
+# - an `example <../cross_decomposition/plot_pcr_vs_pls.html>`_ comparing
+#   Principal Component Regression and Partial Least Squares when the target
+#   is strongly correlated with some directions in the data that have a low
+#   variance.
