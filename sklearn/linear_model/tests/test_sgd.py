@@ -1637,6 +1637,11 @@ def test_sgd_sparse_dense_default(estimator_orig):
     dense. Here we test that for toy examples, if this intercept
     decay is set to the same value, the result is the same between
     sparse and dense."""
+    old_dense_intercept_decay = linear_model._base.DENSE_INTERCEPT_DECAY
+    old_sparse_intercept_decay = linear_model._base.SPARSE_INTERCEPT_DECAY
     linear_model._base.DENSE_INTERCEPT_DECAY = 0.01
     linear_model._base.SPARSE_INTERCEPT_DECAY = 0.01
     check_estimator_sparse_dense(None, estimator_orig)
+    linear_model._base.DENSE_INTERCEPT_DECAY = old_dense_intercept_decay
+    linear_model._base.SPARSE_INTERCEPT_DECAY = old_sparse_intercept_decay
+
