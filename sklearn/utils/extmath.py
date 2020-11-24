@@ -488,7 +488,7 @@ def randomized_eigsh(M, n_components, *, n_oversamples=10, n_iter='auto',
         signs = np.sign(diag_VtU)
         lambdas_ = lambdas_ * signs
 
-    else:
+    else:  # pragma: no cover
         raise ValueError("Invalid `selection`: %r" % selection)
 
     return lambdas_, alphas_
