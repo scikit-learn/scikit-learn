@@ -1638,4 +1638,5 @@ def test_sgd_sparse_dense_default(estimator_orig):
     decay is set to the same value, the result is the same between
     sparse and dense."""
     linear_model._base.DENSE_INTERCEPT_DECAY = 0.01
+    linear_model._base.SPARSE_INTERCEPT_DECAY = 0.01
     check_estimator_sparse_dense(None, estimator_orig)
