@@ -375,9 +375,9 @@ def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
 
 
 @_deprecate_positional_args
-def randomized_eigsh(M, n_components, *, n_oversamples=10, n_iter='auto',
-                     power_iteration_normalizer='auto',
-                     selection='value', random_state=0):
+def _randomized_eigsh(M, n_components, *, n_oversamples=10, n_iter='auto',
+                      power_iteration_normalizer='auto',
+                      selection='module', random_state=0):
     """Computes a truncated eigendecomposition using randomized methods
 
     The choice of components to select can be tuned with the `selection`
@@ -415,12 +415,12 @@ def randomized_eigsh(M, n_components, *, n_oversamples=10, n_iter='auto',
         but can lose slightly in accuracy). The 'auto' mode applies no
         normalization if `n_iter` <= 2 and switches to LU otherwise.
 
-    selection : {'value', 'module'}, default='value'
+    selection : {'value', 'module'}, default='module'
         Strategy used to select the n components. When `selection` is `'value'`
-        (default, not yet implemented), the components corresponding to the n
-        largest eigenvalues are returned. When `selection` is `'module'`, the
-        components corresponding to the n eigenvalues with largest modules are
-        returned.
+        (not yet implemented, will become the default when implemented), the
+        components corresponding to the n largest eigenvalues are returned.
+        When `selection` is `'module'`, the components corresponding to the n
+        eigenvalues with largest modules are returned.
 
     random_state : int, RandomState instance, default=None
         The seed of the pseudo random number generator to use when shuffling

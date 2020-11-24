@@ -9,7 +9,7 @@ from scipy import linalg
 from scipy.sparse.linalg import eigsh
 
 from ..utils import check_random_state
-from ..utils.extmath import svd_flip, randomized_eigsh
+from ..utils.extmath import svd_flip, _randomized_eigsh
 from ..utils.validation import check_is_fitted, _check_psd_eigenvalues
 from ..utils.deprecation import deprecated
 from ..exceptions import NotFittedError
@@ -272,7 +272,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
                                                 maxiter=self.max_iter,
                                                 v0=v0)
         elif eigen_solver == 'randomized':
-            self.lambdas_, self.alphas_ = randomized_eigsh(
+            self.lambdas_, self.alphas_ = _randomized_eigsh(
                 K, n_components=n_components, n_iter=self.iterated_power,
                 random_state=self.random_state, selection='module'
             )
