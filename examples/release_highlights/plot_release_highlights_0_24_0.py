@@ -18,10 +18,6 @@ To install the latest version (with pip)::
 or with conda::
 
     conda install -c conda-forge scikit-learn
-
-.. meta::
-   :keywords: highlights
-
 """
 
 ##############################################################################
@@ -207,8 +203,7 @@ regressor.fit(X_train, y_train)
 # New documentation improvements
 # ------------------------------
 #
-# `New examples and documentation pages
-# <../../search.html?q=versionadded0.24>`_
+# New examples and documentation pages
 # have been addeed in a continuous effort
 # to improve the understanding of data science practices.
 # Among others a new section about :ref:`common pitfalls and recommended

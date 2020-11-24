@@ -4,9 +4,6 @@
 
 .. include:: includes/big_toc_css.rst
 
-.. meta::
-   :keywords: versionadded0.24
-
 .. _common_pitfalls:
 
 =========================================

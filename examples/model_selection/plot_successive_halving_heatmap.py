@@ -6,9 +6,6 @@ This example compares the parameter search performed by
 :class:`~sklearn.model_selection.HalvingGridSearchCV` and
 :class:`~sklearn.model_selection.GridSearchCV`.
 
-.. meta::
-   :keywords: versionadded0.24
-
 """
 from time import time
 
