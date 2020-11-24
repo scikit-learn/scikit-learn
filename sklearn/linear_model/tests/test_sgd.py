@@ -1644,4 +1644,3 @@ def test_sgd_sparse_dense_default(estimator_orig):
     check_estimator_sparse_dense(None, estimator_orig)
     linear_model._base.DENSE_INTERCEPT_DECAY = old_dense_intercept_decay
     linear_model._base.SPARSE_INTERCEPT_DECAY = old_sparse_intercept_decay
-
