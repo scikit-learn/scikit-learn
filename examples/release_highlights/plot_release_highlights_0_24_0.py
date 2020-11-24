@@ -97,9 +97,22 @@ rsh.best_params_
 # --------------------------------
 # A new self-training implementation, based on `Yarowski's algorithm
 # <https://doi.org/10.3115/981658.981684>`_ can now be used with any
-# classifier that implements :term:`predict_proba`. The sub-classifier will behave as a
+# classifier that implements :term:`predict_proba`. The sub-classifier
+# will behave as a
 # semi-supervised classifier, allowing it to learn from unlabeled data.
 # Read more in the :ref:`User guide <self_training>`.
+
+import numpy as np
+from sklearn import datasets
+from sklearn.semi_supervised import SelfTrainingClassifier
+from sklearn.svm import SVC
+rng = np.random.RandomState(42)
+iris = datasets.load_iris()
+random_unlabeled_points = rng.rand(iris.target.shape[0]) < 0.3
+iris.target[random_unlabeled_points] = -1
+svc = SVC(probability=True, gamma="auto")
+self_training_model = SelfTrainingClassifier(svc)
+self_training_model.fit(iris.data, iris.target)
 
 ##############################################################################
 # New SequentialFeatureSelector transformer
@@ -139,7 +152,7 @@ from sklearn.kernel_approximation import PolynomialCountSketch
 from sklearn.svm import LinearSVC
 
 X, y = fetch_covtype(return_X_y=True)
-pipe = make_pipeline(PolynomialCountSketch(degree=4, n_components=1000),
+pipe = make_pipeline(PolynomialCountSketch(degree=2, n_components=1000),
                      LinearSVC())
 X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=5000,
                                                     test_size=10000,
@@ -173,14 +186,6 @@ display.figure_.suptitle(
 display.figure_.subplots_adjust(hspace=0.3)
 
 ##############################################################################
-# New metrics available
-# ---------------------
-# A number of new metric functions are now available, as for example
-# :func:`metrics.top_k_accuracy_score` and :func:`metrics.det_curve`.
-# For a complete list see the `changelog
-# <../../whats_new/v0.24.html#sklearn-metrics>`_.
-
-##############################################################################
 # DecisionTreeRegressor now supports the new 'poisson' splitting criterion 
 # ------------------------------------------------------------------------
 # The integration of Poisson regression estimation continues from version 0.23
@@ -200,6 +205,14 @@ regressor = DecisionTreeRegressor(criterion='poisson', random_state=0)
 regressor.fit(X_train, y_train)
 
 ##############################################################################
+# New metrics available
+# ---------------------
+# A number of new metric functions are now available, as for example
+# :func:`metrics.top_k_accuracy_score` and :func:`metrics.det_curve`.
+# For a complete list see the `changelog
+# <../../whats_new/v0.24.html#sklearn-metrics>`_.
+
+##############################################################################
 # New documentation improvements
 # ------------------------------
 #
@@ -210,10 +223,9 @@ regressor.fit(X_train, y_train)
 #
 # - a new section about :ref:`common pitfalls and recommended
 #   practices <common_pitfalls>`,
-# - an example illustrating how `statistically compare the performance of
-#   models <../model_selection/plot_grid_search_stats.html>`_
-#   evaluated using :class:`~sklearn.model_selection.GridSearchCV`.
-# - an `example <../cross_decomposition/plot_pcr_vs_pls.html>`_ comparing
-#   Principal Component Regression and Partial Least Squares when the target
-#   is strongly correlated with some directions in the data that have a low
-#   variance.
+# - an example illustrating how to :ref:`statistically compare the performance of
+#   models <sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py>`
+#   evaluated using :class:`~sklearn.model_selection.GridSearchCV`,
+# - an :ref:`example
+#   <sphx_glr_auto_examples_cross_decomposition_plot_pcr_vs_pls.py>`
+#   comparing Principal Component Regression and Partial Least Squares.
