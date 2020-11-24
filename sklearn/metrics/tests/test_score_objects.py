@@ -973,3 +973,27 @@ def test_scorer_no_op_multiclass_select_proba():
         roc_auc_score, needs_proba=True, multi_class="ovo", labels=lr.classes_,
     )
     scorer(lr, X_test, y_test)
+
+
+def test_scorer_general_multiclass():
+    X, y = make_classification(
+        n_classes=3, n_informative=3, n_samples=50, random_state=0
+    )
+
+    # make sure split gives all classes out?
+    # also set a case where it doesn't and check the roc_group?
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    lr = LogisticRegression().fit(X_train, y_train)
+
+    binary_only = ['top_k_accuracy', 'f1', 'roc_auc', 'average_precision',
+                    'precision', 'recall', 'neg_log_loss', 'neg_brier_score', 
+                    'jaccard']
+
+    # Needs labels defined or to have # classes = # unique in y_true
+    roc_group = ['roc_auc_ovr', 'roc_auc_ovo', 'roc_auc_ovr_weighted',
+                    'roc_auc_ovo_weighted']
+
+    for name in CLF_SCORERS:
+        if name not in binary_only:
+            scorer = SCORERS[name]
+            scorer(lr, X_test, y_test)
