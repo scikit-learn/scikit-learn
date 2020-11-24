@@ -855,15 +855,9 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
                 f"match the number of features of the data {X.shape[1]}.")
 
     def _check_test_data(self, X):
-        X = check_array(X, accept_sparse='csr', dtype=[np.float64, np.float32],
-                        order='C', accept_large_sparse=False)
-        n_samples, n_features = X.shape
-        expected_n_features = self.cluster_centers_.shape[1]
-        if not n_features == expected_n_features:
-            raise ValueError(
-                f"Incorrect number of features. Got {n_features} features, "
-                f"expected {expected_n_features}.")
-
+        X = self._validate_data(X, accept_sparse='csr', reset=False,
+                                dtype=[np.float64, np.float32],
+                                order='C', accept_large_sparse=False)
         return X
 
     def _check_mkl_vcomp(self, X, n_samples):
