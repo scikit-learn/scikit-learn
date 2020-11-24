@@ -72,8 +72,8 @@ rsh.best_params_
 ##############################################################################
 # Native support for categorical features in HistGradientBoosting
 # ---------------------------------------------------------------
-# :class:`sklearn.ensemble.HistGradientBoostingClassifier` and
-# :class:`sklearn.ensemble.HistGradientBoostingRegressor` now have native
+# :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
+# :class:`~sklearn.ensemble.HistGradientBoostingRegressor` now have native
 # support for categorical features: they can consider splits on non-ordered,
 # categorical data. Read more in the :ref:`User Guide
 # <categorical_support_gbdt>`.
@@ -83,7 +83,7 @@ rsh.best_params_
 #   :align: center
 
 ##############################################################################
-# Improved performances in HistGradientBoosting methods
+# Improved performances of HistGradientBoosting estimators
 # -----------------------------------------------------
 # Histogram initialization is now done in parallel in
 # :class:`ensemble.HistGradientBoostingRegressor` and
@@ -93,11 +93,11 @@ rsh.best_params_
 # <https://scikit-learn.org/scikit-learn-benchmarks/>`_.
 
 ##############################################################################
-# New self-training implementation
+# New self-training meta-estimator
 # --------------------------------
 # A new self-training implementation, based on `Yarowski's algorithm
-# <https://doi.org/10.3115/981658.981684>`_ can now be called with any
-# classifier that implements `predict_proba`. This will make it behave as a
+# <https://doi.org/10.3115/981658.981684>`_ can now be used with any
+# classifier that implements :term:`predict_proba`. The sub-classifier will behave as a
 # semi-supervised classifier, allowing it to learn from unlabeled data.
 # Read more in the :ref:`User guide <self_training>`.
 
