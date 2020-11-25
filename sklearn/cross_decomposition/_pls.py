@@ -85,7 +85,7 @@ def _get_first_singular_vectors_svd(X, Y):
     Here the whole SVD is computed.
     """
     C = np.dot(X.T, Y)
-    U, _, Vt = svd(C, full_matrices=False, check_finite=False)
+    U, _, Vt = svd(C, full_matrices=False)
     return U[:, 0], Vt[0, :]
 
 
@@ -902,7 +902,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
 
         # Compute SVD of cross-covariance matrix
         C = np.dot(X.T, Y)
-        U, s, Vt = svd(C, full_matrices=False, check_finite=False)
+        U, s, Vt = svd(C, full_matrices=False)
         U = U[:, :n_components]
         Vt = Vt[:n_components]
         U, Vt = svd_flip(U, Vt)
