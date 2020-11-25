@@ -410,8 +410,8 @@ def _should_be_skipped_or_marked(estimator, check):
     # Return whether a check should be skipped (when using check_estimator())
     # or marked as XFAIL (when using @parametrize_with_checks()), along with a
     # reason.
-    # Currently, a check should be skipped or marked if:
-    # - the check is in the _xfail_checks tag of the estimator
+    # Currently, a check should be skipped or marked if
+    # the check is in the _xfail_checks tag of the estimator
 
     check_name = (check.func.__name__ if isinstance(check, partial)
                   else check.__name__)
