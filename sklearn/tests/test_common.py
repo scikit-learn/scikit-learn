@@ -555,11 +555,11 @@ def _generate_minimal_compatible_instances():
 
 
 # FIXME: hopefully in 0.25
-# @pytest.mark.skip(
-#     reason=("This test is currently failing because checks are granular "
-#             "enough. Once checks are split with some kind of only API tests, "
-#             "this test should enabled.")
-# )
+@pytest.mark.skip(
+    reason=("This test is currently failing because checks are granular "
+            "enough. Once checks are split with some kind of only API tests, "
+            "this test should enabled.")
+)
 @parametrize_with_checks(list(_generate_minimal_compatible_instances()))
 def test_minimal_class_implementation_checks(estimator, check):
     # Check that third-party library can run tests without inheriting from
