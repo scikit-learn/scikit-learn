@@ -17,6 +17,7 @@ from ._config import get_config
 from .utils import (
     _DEFAULT_TAGS,
     _IS_32BIT,
+    _safe_tags,
 )
 from .utils.validation import check_X_y
 from .utils.validation import check_array
@@ -840,11 +841,7 @@ def _is_pairwise(estimator):
         warnings.filterwarnings('ignore', category=FutureWarning)
         has_pairwise_attribute = hasattr(estimator, '_pairwise')
         pairwise_attribute = getattr(estimator, '_pairwise', False)
-
-    if hasattr(estimator, '_get_tags') and callable(estimator._get_tags):
-        pairwise_tag = estimator._get_tags().get('pairwise', False)
-    else:
-        pairwise_tag = False
+    pairwise_tag = _safe_tags(estimator, key="pairwise")
 
     if has_pairwise_attribute:
         if pairwise_attribute != pairwise_tag:

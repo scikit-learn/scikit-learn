@@ -1206,7 +1206,7 @@ def all_estimators(type_filter=None):
     return sorted(set(estimators), key=itemgetter(0))
 
 
-def _safe_tags(estimator, key=None):
+def _safe_tags(estimator, key=None, default=None):
     """Safely get estimator tags for common checks.
 
     :class:`~sklearn.BaseEstimator` provides the estimator tags machinery.
@@ -1219,6 +1219,10 @@ def _safe_tags(estimator, key=None):
         The estimator from which to get the tag.
     key : str, default=None
         Tag name to get. By default (`None`), all tags are returned.
+    default : list of {str, dtype} or bool, default=None
+        When `key is not None`, if the tag was not set in the estimator, the
+        default value set in `sklearn.utils._DEFAULT_TAGS` will be returned.
+        `default` allows to overwrite the default value.
 
     Returns
     -------
@@ -1232,5 +1236,7 @@ def _safe_tags(estimator, key=None):
         return {key: tags.get(key, _DEFAULT_TAGS[key])
                 for key in _DEFAULT_TAGS.keys()}
     if key is not None:
-        return _DEFAULT_TAGS[key]
+        if default is None:
+            return _DEFAULT_TAGS[key]
+        return default
     return _DEFAULT_TAGS

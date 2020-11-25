@@ -7,6 +7,7 @@ import numbers
 from ._base import SelectorMixin
 from ._base import _get_feature_importances
 from ..base import BaseEstimator, clone, MetaEstimatorMixin
+from ..utils import _safe_tags
 from ..utils.validation import check_is_fitted
 
 from ..exceptions import NotFittedError
@@ -283,9 +284,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         return self.estimator_.n_features_in_
 
     def _more_tags(self):
-        if (hasattr(self.estimator, '_get_tags') and
-                callable(self.estimator._get_tags)):
-            allow_nan_tag = self.estimator._get_tags().get('pairwise', True)
-        else:
-            allow_nan_tag = True
-        return {'allow_nan': allow_nan_tag}
+        return {
+            'allow_nan':
+            _safe_tags(self.estimator, key="pairwise", default=True)
+        }

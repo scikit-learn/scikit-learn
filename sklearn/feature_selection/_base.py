@@ -12,9 +12,12 @@ import numpy as np
 from scipy.sparse import issparse, csc_matrix
 
 from ..base import TransformerMixin
-from ..utils import check_array
-from ..utils import safe_mask
-from ..utils import safe_sqr
+from ..utils import (
+    check_array,
+    safe_mask,
+    safe_sqr,
+    _safe_tags,
+)
 
 
 class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
@@ -74,9 +77,13 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         X_r : array of shape [n_samples, n_selected_features]
             The input samples with only the selected features.
         """
-        tags = self._get_tags()
-        X = check_array(X, dtype=None, accept_sparse='csr',
-                        force_all_finite=not tags.get('allow_nan', True))
+        force_all_finite = not _safe_tags(self, key="allow_nan", default=True)
+        X = check_array(
+            X,
+            dtype=None,
+            accept_sparse="csr",
+            force_all_finite=force_all_finite,
+        )
         mask = self.get_support()
         if not mask.any():
             warn("No features were selected: either the data is"
