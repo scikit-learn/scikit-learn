@@ -45,7 +45,13 @@ from sklearn.utils.estimator_checks import (
     parametrize_with_checks,
     check_n_features_in_after_fitting,
 )
-from sklearn.utils.validation import check_non_negative, check_array
+from sklearn.multiclass import check_classification_targets
+from sklearn.utils.validation import (
+    check_array,
+    check_is_fitted,
+    check_non_negative,
+    check_X_y,
+)
 
 
 def test_all_estimator_no_base_class():
@@ -370,3 +376,146 @@ N_FEATURES_IN_AFTER_FIT_ESTIMATORS = [
 def test_check_n_features_in_after_fitting(estimator):
     _set_checking_parameters(estimator)
     check_n_features_in_after_fitting(estimator.__class__.__name__, estimator)
+
+
+class MinimalClassifier:
+    """Minimal classifier implementation with inheriting from BaseEstimator."""
+    _estimator_type = "classifier"
+
+    def __repr__(self):
+        # Only required when using pytest-xdist to get an id not associated
+        # with the memory location
+        return self.__class__.__name__
+
+    def get_params(self, **params):
+        return {}
+
+    def set_params(self, deep=True):
+        return self
+
+    def __getstate__(self):
+        return self.__dict__.copy()
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+
+    def fit(self, X, y):
+        X, y = check_X_y(X, y)
+        check_classification_targets(y)
+        self.n_features_in_ = X.shape[1]
+        self.classes_, counts = np.unique(y, return_counts=True)
+        self._most_frequent_class_idx = counts.argmax()
+        return self
+
+    def predict_proba(self, X):
+        check_is_fitted(self)
+        X = check_array(X)
+        if X.shape[1] != self.n_features_in_:
+            raise ValueError
+        proba_shape = (X.shape[0], self.classes_.size)
+        y_proba = np.zeros(shape=proba_shape, dtype=np.float64)
+        y_proba[:, self._most_frequent_class_idx] = 1.0
+        return y_proba
+
+    def predict(self, X):
+        y_proba = self.predict_proba(X)
+        y_pred = y_proba.argmax(axis=1)
+        return self.classes_[y_pred]
+
+    def score(self, X, y):
+        from sklearn.metrics import accuracy_score
+        return accuracy_score(y, self.predict(X))
+
+
+class MinimalRegressor:
+    """Minimal regressor implementation with inheriting from BaseEstimator."""
+    _estimator_type = "regressor"
+
+    def __repr__(self):
+        # Only required when using pytest-xdist to get an id not associated
+        # with the memory location
+        return self.__class__.__name__
+
+    def get_params(self, **params):
+        return {}
+
+    def set_params(self, deep=True):
+        return self
+
+    def __getstate__(self):
+        return self.__dict__.copy()
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+
+    def fit(self, X, y):
+        X, y = check_X_y(X, y)
+        self.n_features_in_ = X.shape[1]
+        self._mean = np.mean(y)
+        return self
+
+    def predict(self, X):
+        check_is_fitted(self)
+        X = check_array(X)
+        if X.shape[1] != self.n_features_in_:
+            raise ValueError
+        return np.ones(shape=(X.shape[0],)) * self._mean
+
+    def score(self, X, y):
+        from sklearn.metrics import r2_score
+        return r2_score(y, self.predict(X))
+
+
+class MinimalTransformer:
+    """Minimal transformer implementation with inheriting from
+    BaseEstimator."""
+
+    def __repr__(self):
+        # Only required when using pytest-xdist to get an id not associated
+        # with the memory location
+        return self.__class__.__name__
+
+    def get_params(self, **params):
+        return {}
+
+    def set_params(self, deep=True):
+        return self
+
+    def __getstate__(self):
+        return self.__dict__.copy()
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+
+    def fit(self, X, y=None):
+        X = check_array(X)
+        self.n_features_in_ = X.shape[1]
+        return self
+
+    def transform(self, X, y=None):
+        check_is_fitted(self)
+        X = check_array(X)
+        if X.shape[1] != self.n_features_in_:
+            raise ValueError
+        return X
+
+    def inverse_transform(self, X, y=None):
+        return self.transform(X)
+
+    def fit_transform(self, X, y=None):
+        return self.fit(X, y).transform(X, y)
+
+
+# FIXME: hopefully in 0.25
+@pytest.mark.skip(
+    reason=("This test is currently failing because checks are granular "
+            "enough. Once checks are split with some kind of only API tests, "
+            "this test should enabled.")
+)
+@parametrize_with_checks(
+    [MinimalClassifier(), MinimalRegressor(), MinimalTransformer()],
+)
+def test_check_estimator_minimal(estimator, check):
+    # Check that third-party library can run tests without inheriting from
+    # BaseEstimator.
+    check(estimator)

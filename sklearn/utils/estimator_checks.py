@@ -1682,7 +1682,10 @@ def check_estimators_pickle(name, estimator_orig, strict_mode=True):
 
     # pickle and unpickle!
     pickled_estimator = pickle.dumps(estimator)
-    if estimator.__module__.startswith('sklearn.'):
+    module_name = estimator.__module__
+    if module_name.startswith('sklearn.') and "test_" not in module_name:
+        # strict check for sklearn estimators that are not implemented in test
+        # modules.
         assert b"version" in pickled_estimator
     unpickled_estimator = pickle.loads(pickled_estimator)
 
