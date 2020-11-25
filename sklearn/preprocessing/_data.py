@@ -10,6 +10,7 @@
 
 
 from itertools import chain, combinations
+import numbers
 import warnings
 from itertools import combinations_with_replacement as combinations_w_r
 
