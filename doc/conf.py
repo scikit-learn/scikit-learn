@@ -42,6 +42,7 @@ extensions = [
     'sphinx_gallery.gen_gallery',
     'sphinx_issues',
     'add_toctree_functions',
+    'sphinx-prompt',
 ]
 
 # this is needed for some reason...
