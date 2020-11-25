@@ -8,12 +8,14 @@ import pytest
 import numpy as np
 import scipy.sparse as sp
 
+from sklearn.base import BaseEstimator
 from sklearn.utils._testing import (assert_array_equal,
                                     assert_allclose_dense_sparse,
                                     assert_warns_message,
                                     assert_no_warnings,
                                     _convert_container)
 from sklearn.utils import check_random_state
+from sklearn.utils import _DEFAULT_TAGS
 from sklearn.utils import _determine_key_type
 from sklearn.utils import deprecated
 from sklearn.utils import gen_batches
@@ -22,6 +24,7 @@ from sklearn.utils import resample
 from sklearn.utils import safe_mask
 from sklearn.utils import column_or_1d
 from sklearn.utils import _safe_indexing
+from sklearn.utils import _safe_tags
 from sklearn.utils import shuffle
 from sklearn.utils import gen_even_slices
 from sklearn.utils import _message_with_time, _print_elapsed_time
@@ -693,3 +696,37 @@ def test_to_object_array(sequence):
     assert isinstance(out, np.ndarray)
     assert out.dtype.kind == 'O'
     assert out.ndim == 1
+
+
+class NoTags:
+    pass
+
+
+class BaseEstimatorNotATag(BaseEstimator):
+    def _get_tags(self):
+        tags = super()._get_tags().copy()
+        del tags["allow_nan"]
+        return tags
+
+
+@pytest.mark.parametrize(
+    "estimator, key, default, expected_tags",
+    [
+        (NoTags(), None, None, _DEFAULT_TAGS),
+        (NoTags(), "allow_nan", None, _DEFAULT_TAGS["allow_nan"]),
+        (NoTags(), "allow_nan", True, True),
+        (BaseEstimator(), None, None, _DEFAULT_TAGS),
+        (BaseEstimator(), "allow_nan", None, _DEFAULT_TAGS["allow_nan"]),
+        (BaseEstimator(), "allow_nan", True, False),
+        (BaseEstimatorNotATag(), None, None, _DEFAULT_TAGS),
+        (
+            BaseEstimatorNotATag(),
+            "allow_nan",
+            None,
+            _DEFAULT_TAGS["allow_nan"],
+        ),
+        (BaseEstimatorNotATag(), "allow_nan", True, True),
+    ],
+)
+def test_safe_tags(estimator, key, default, expected_tags):
+    assert _safe_tags(estimator, key=key, default=default) == expected_tags
