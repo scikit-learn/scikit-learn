@@ -15,7 +15,7 @@ jobs:
   steps:
     - task: UsePythonVersion@0
       inputs:
-        versionSpec: '3.8'
+        versionSpec: '3.9'
     - bash: |
         pip install flake8 mypy==0.782
       displayName: Install linters
@@ -129,7 +129,7 @@ jobs:
       # It runs tests requiring lightgbm, pandas and PyAMG.
       pylatest_pip_openblas_pandas:
         DISTRIB: 'conda-pip-latest'
-        PYTHON_VERSION: '3.8'
+        PYTHON_VERSION: '3.9'
         PANDAS_VERSION: 'none'
         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
         TEST_DOCSTRINGS: 'true'
@@ -160,9 +160,10 @@ jobs:
     dependsOn: [linting]
     condition: and(ne(variables['Build.Reason'], 'Schedule'), succeeded('linting'))
     matrix:
-      pylatest_conda_mkl:
+      pylatest_conda_forge_mkl:
         DISTRIB: 'conda'
         BLAS: 'mkl'
+        CONDA_CHANNEL: 'conda-forge'
       pylatest_conda_mkl_no_openmp:
         DISTRIB: 'conda'
         BLAS: 'mkl'

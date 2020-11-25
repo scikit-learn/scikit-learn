@@ -907,7 +907,7 @@ class _BaseSparseCoding(TransformerMixin):
     def _transform(self, X, dictionary):
         """Private method allowing to accomodate both DictionaryLearning and
         SparseCoder."""
-        X = check_array(X)
+        X = self._validate_data(X, reset=False)
 
         code = sparse_encode(
             X, dictionary, algorithm=self.transform_algorithm,
@@ -1622,7 +1622,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         """
         if not hasattr(self, 'random_state_'):
             self.random_state_ = check_random_state(self.random_state)
-        X = check_array(X)
         if hasattr(self, 'components_'):
             dict_init = self.components_
         else:
@@ -1630,6 +1629,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         inner_stats = getattr(self, 'inner_stats_', None)
         if iter_offset is None:
             iter_offset = getattr(self, 'iter_offset_', 0)
+        X = self._validate_data(X, reset=(iter_offset == 0))
         U, (A, B) = dict_learning_online(
             X, self.n_components, alpha=self.alpha,
             n_iter=1, method=self.fit_algorithm,

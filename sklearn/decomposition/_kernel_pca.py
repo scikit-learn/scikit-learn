@@ -331,6 +331,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         X_new : ndarray of shape (n_samples, n_components)
         """
         check_is_fitted(self)
+        X = self._validate_data(X, accept_sparse='csr', reset=False)
 
         # Compute centered gram matrix between X and training data X_fit_
         K = self._centerer.transform(self._get_kernel(X, self.X_fit_))

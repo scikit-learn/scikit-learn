@@ -168,7 +168,7 @@ class MaskedArray(_MaskedArray):
 def _take_along_axis(arr, indices, axis):
     """Implements a simplified version of np.take_along_axis if numpy
     version < 1.15"""
-    if np_version > parse_version('1.14'):
+    if np_version >= parse_version('1.15'):
         return np.take_along_axis(arr=arr, indices=indices, axis=axis)
     else:
         if axis is None:

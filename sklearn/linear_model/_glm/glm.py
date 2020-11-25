@@ -48,7 +48,7 @@ def _y_pred_deviance_derivative(coef, X, y, weights, family, link):
     return y_pred, devp
 
 
-class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
+class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
     """Regression via a penalized Generalized Linear Model (GLM).
 
     GLMs based on a reproductive Exponential Dispersion Model (EDM) aim at

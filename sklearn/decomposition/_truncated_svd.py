@@ -218,8 +218,8 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
         X_new : ndarray of shape (n_samples, n_components)
             Reduced version of X. This will always be a dense array.
         """
-        X = check_array(X, accept_sparse=['csr', 'csc'])
         check_is_fitted(self)
+        X = self._validate_data(X, accept_sparse=['csr', 'csc'], reset=False)
         return safe_sparse_dot(X, self.components_.T)
 
     def inverse_transform(self, X):

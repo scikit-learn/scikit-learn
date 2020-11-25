@@ -712,7 +712,7 @@ class BayesianGaussianMixture(BaseMixture):
         """Estimate the lower bound of the model.
 
         The lower bound on the likelihood (of the training data with respect to
-        the model) is used to detect the convergence and has to decrease at
+        the model) is used to detect the convergence and has to increase at
         each iteration.
 
         Parameters
