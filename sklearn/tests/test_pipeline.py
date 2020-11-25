@@ -1264,3 +1264,11 @@ def test_feature_union_warns_unknown_transformer_weight():
     union = FeatureUnion(transformer_list, transformer_weights=weights)
     with pytest.raises(ValueError, match=expected_msg):
         union.fit(X, y)
+
+
+@pytest.mark.parametrize('passthrough', [None, 'passthrough'])
+def test_pipeline_get_tags_none(passthrough):
+    """Checks that tags are set correctly when passthrough is None or
+    'passthrough'"""
+    pipe = make_pipeline(passthrough, SVC())
+    assert not pipe._get_tags()['pairwise']
