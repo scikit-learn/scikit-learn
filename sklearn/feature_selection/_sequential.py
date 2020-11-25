@@ -7,6 +7,7 @@ import numpy as np
 
 from ._base import SelectorMixin
 from ..base import BaseEstimator, MetaEstimatorMixin, clone
+from ..utils import _safe_tags
 from ..utils.validation import check_is_fitted
 from ..model_selection import cross_val_score
 
@@ -129,11 +130,11 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
         self : object
         """
 
-        tags = self._get_tags()
+        force_all_finite = not _safe_tags(self, key="allow_nan", default=True)
         X, y = self._validate_data(
             X, y, accept_sparse="csc",
             ensure_min_features=2,
-            force_all_finite=not tags.get('allow_nan', True),
+            force_all_finite=force_all_finite,
             multi_output=True
         )
         n_features = X.shape[1]
@@ -207,8 +208,8 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
         return self.support_
 
     def _more_tags(self):
-        estimator_tags = self.estimator._get_tags()
         return {
-            'allow_nan': estimator_tags.get('allow_nan', True),
+            'allow_nan':
+            _safe_tags(self.estimator, key="allow_nan", default=True),
             'requires_y': True,
         }

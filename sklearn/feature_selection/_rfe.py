@@ -10,6 +10,7 @@ import numpy as np
 import numbers
 from joblib import Parallel, effective_n_jobs
 
+from ..utils import _safe_tags
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.metaestimators import _safe_split
 from ..utils.validation import check_is_fitted
@@ -187,11 +188,11 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         # and is used when implementing RFECV
         # self.scores_ will not be calculated when calling _fit through fit
 
-        tags = self._get_tags()
+        force_all_finite = not _safe_tags(self, key="allow_nan", default=True)
         X, y = self._validate_data(
             X, y, accept_sparse="csc",
             ensure_min_features=2,
-            force_all_finite=not tags.get('allow_nan', True),
+            force_all_finite=force_all_finite,
             multi_output=True
         )
         error_msg = ("n_features_to_select must be either None, a "
@@ -371,11 +372,12 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         return self.estimator_.predict_log_proba(self.transform(X))
 
     def _more_tags(self):
-        estimator_tags = self.estimator._get_tags()
-        return {'poor_score': True,
-                'allow_nan': estimator_tags.get('allow_nan', True),
-                'requires_y': True,
-                }
+        return {
+            'poor_score': True,
+            'allow_nan':
+            _safe_tags(self.estimator, key='allow_nan', default=True),
+            'requires_y': True,
+        }
 
 
 class RFECV(RFE):
@@ -556,10 +558,10 @@ class RFECV(RFE):
 
             .. versionadded:: 0.20
         """
-        tags = self._get_tags()
+        force_all_finite = not _safe_tags(self, key="allow_nan", default=True)
         X, y = self._validate_data(
             X, y, accept_sparse="csr", ensure_min_features=2,
-            force_all_finite=not tags.get('allow_nan', True),
+            force_all_finite=force_all_finite,
             multi_output=True
         )
 
