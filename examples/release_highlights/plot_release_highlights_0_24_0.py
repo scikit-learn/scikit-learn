@@ -142,22 +142,27 @@ print("Features selected by forward sequential selection: "
 # The new :class:`~sklearn.kernel_approximation.PolynomialCountSketch`
 # approximates a polynomial expansion of a feature space when used with linear
 # models, but uses much less memory than
-# :class:`~sklearn.preprocessing.PolynomialFeatures`, and is often faster than
-# using a polynomial kernel in SVM.
+# :class:`~sklearn.preprocessing.PolynomialFeatures`.
 
 from sklearn.datasets import fetch_covtype
 from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler
 from sklearn.kernel_approximation import PolynomialCountSketch
-from sklearn.svm import LinearSVC
+from sklearn.linear_model import LogisticRegression
 
 X, y = fetch_covtype(return_X_y=True)
-pipe = make_pipeline(PolynomialCountSketch(degree=2, n_components=1000),
-                     LinearSVC())
+pipe = make_pipeline(MinMaxScaler(),
+                     PolynomialCountSketch(degree=2, n_components=100),
+                     LogisticRegression(max_iter=1000))
 X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=5000,
                                                     test_size=10000,
                                                     random_state=42)
-pipe.fit(X_train, y_train)
+pipe.fit(X_train, y_train).score(X_test, y_test)
+
+linear_baseline = make_pipeline(MinMaxScaler(),
+                                LogisticRegression(max_iter=1000))
+linear_baseline.fit(X_train, y_train).score(X_test, y_test)
 
 ##############################################################################
 # Individual Conditional Expectation
@@ -207,7 +212,7 @@ regressor.fit(X_train, y_train)
 ##############################################################################
 # New metrics available
 # ---------------------
-# A number of new metric functions are now available, as for example
+# A number of new metric functions are now available, for example
 # :func:`metrics.top_k_accuracy_score` and :func:`metrics.det_curve`.
 # For a complete list see the `changelog
 # <../../whats_new/v0.24.html#sklearn-metrics>`_.
