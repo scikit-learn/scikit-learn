@@ -45,7 +45,10 @@ from .base import MetaEstimatorMixin, is_regressor
 from .base import _is_pairwise
 from .preprocessing import LabelBinarizer
 from .metrics.pairwise import euclidean_distances
-from .utils import check_random_state
+from .utils import (
+    check_random_state,
+    _safe_tags,
+)
 from .utils.deprecation import deprecated
 from .utils.validation import _num_samples
 from .utils.validation import check_is_fitted
@@ -499,8 +502,7 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
 
     def _more_tags(self):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
-        estimator_tags = self.estimator._get_tags()
-        return {'pairwise': estimator_tags.get('pairwise', False)}
+        return {'pairwise': _safe_tags(self.estimator, key="pairwise")}
 
     @property
     def _first_estimator(self):
@@ -780,8 +782,12 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
     def _more_tags(self):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
-        estimator_tags = self.estimator._get_tags()
-        return {'pairwise': estimator_tags.get('pairwise', True)}
+        if (hasattr(self.estimator, '_get_tags') and
+                callable(self.estimator._get_tags)):
+            pairwise_tag = self.estimator._get_tags().get('pairwise', True)
+        else:
+            pairwise_tag = True
+        return {'pairwise': pairwise_tag}
 
 
 class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
