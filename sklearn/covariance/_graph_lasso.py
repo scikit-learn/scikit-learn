@@ -168,7 +168,7 @@ def graphical_lasso(emp_cov, alpha, *, cov_init=None, mode='cd', tol=1e-4,
     _, n_features = emp_cov.shape
     if alpha == 0:
         if return_costs:
-            precision_ = linalg.inv(emp_cov, check_finite=False)
+            precision_ = linalg.inv(emp_cov)
             cost = - 2. * log_likelihood(emp_cov, precision_)
             cost += n_features * np.log(2 * np.pi)
             d_gap = np.sum(emp_cov * precision_) - n_features
@@ -194,7 +194,7 @@ def graphical_lasso(emp_cov, alpha, *, cov_init=None, mode='cd', tol=1e-4,
     covariance_ *= 0.95
     diagonal = emp_cov.flat[::n_features + 1]
     covariance_.flat[::n_features + 1] = diagonal
-    precision_ = linalg.pinvh(covariance_, check_finite=False)
+    precision_ = linalg.pinvh(covariance_)
 
     indices = np.arange(n_features)
     costs = list()
