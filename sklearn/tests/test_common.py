@@ -277,15 +277,6 @@ def test_strict_mode_check_estimator():
         check_estimator(MyNMFWithBadErrorMessage(), strict_mode=False)
 
 
-@parametrize_with_checks([LogisticRegression(),
-                          NuSVC(),
-                          MyNMFWithBadErrorMessage()],
-                         strict_mode=False)
-def test_strict_mode_parametrize_with_checks(estimator, check):
-    # Ideally we should assert that the strict checks are Xfailed...
-    check(estimator)
-
-
 def _generate_search_cv_instances():
     for SearchCV, (Estimator, param_grid) in zip(
         [GridSearchCV, RandomizedSearchCV],
