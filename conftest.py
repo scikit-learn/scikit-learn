@@ -49,14 +49,6 @@ def pytest_collection_modifyitems(config, items):
                 )
             )
             item.add_marker(marker)
-        # OpenML is not working for PyPy
-        elif (item.name.endswith("test_openml") and
-                platform.python_implementation() == "PyPy"):
-            marker = pytest.mark.xfail(
-                reason="Known failure of OpenML for PyPy. See: "
-                       "https://github.com/scikit-learn/scikit-"
-                       "learn/issues/18906 for details.")
-            item.add_marker(marker)
 
     # Skip tests which require internet if the flag is provided
     if (config.getoption("--skip-network")
