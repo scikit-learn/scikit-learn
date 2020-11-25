@@ -713,13 +713,11 @@ class KNeighborsMixin:
                     parse_version(joblib.__version__) < parse_version('0.12'))
             if old_joblib:
                 # Deal with change of API in joblib
-                delayed_query = delayed(_tree_query_parallel_helper)
                 parallel_kwargs = {"backend": "threading"}
             else:
-                delayed_query = delayed(_tree_query_parallel_helper)
                 parallel_kwargs = {"prefer": "threads"}
             chunked_results = Parallel(n_jobs, **parallel_kwargs)(
-                delayed_query(
+                delayed(_tree_query_parallel_helper)(
                     self._tree, X[s], n_neighbors, return_distance)
                 for s in gen_even_slices(X.shape[0], n_jobs)
             )
@@ -925,10 +923,10 @@ class RadiusNeighborsMixin:
             Whether or not to return the distances.
 
         sort_results : bool, default=False
-            If True, the distances and indices will be sorted before being
-            returned. If `False`, the results will not be sorted. If
-            `return_distance=False`, setting `sort_results=True` will
-            result in an error.
+            If True, the distances and indices will be sorted by increasing
+            distances before being returned. If False, the results may not
+            be sorted. If `return_distance=False`, setting `sort_results=True`
+            will result in an error.
 
             .. versionadded:: 0.22
 
@@ -1021,6 +1019,16 @@ class RadiusNeighborsMixin:
                 neigh_ind_list = sum(chunked_results, [])
                 results = _to_object_array(neigh_ind_list)
 
+            if sort_results:
+                if not return_distance:
+                    raise ValueError("return_distance must be True "
+                                     "if sort_results is True.")
+                for ii in range(len(neigh_dist)):
+                    order = np.argsort(neigh_dist[ii], kind='mergesort')
+                    neigh_ind[ii] = neigh_ind[ii][order]
+                    neigh_dist[ii] = neigh_dist[ii][order]
+                results = neigh_dist, neigh_ind
+
         elif self._fit_method in ['ball_tree', 'kd_tree']:
             if issparse(X):
                 raise ValueError(
@@ -1028,13 +1036,11 @@ class RadiusNeighborsMixin:
                     "or set algorithm='brute'" % self._fit_method)
 
             n_jobs = effective_n_jobs(self.n_jobs)
+            delayed_query = delayed(_tree_query_radius_parallel_helper)
             if parse_version(joblib.__version__) < parse_version('0.12'):
                 # Deal with change of API in joblib
-                delayed_query = delayed(_tree_query_radius_parallel_helper,
-                                        check_pickle=False)
                 parallel_kwargs = {"backend": "threading"}
             else:
-                delayed_query = delayed(_tree_query_radius_parallel_helper)
                 parallel_kwargs = {"prefer": "threads"}
 
             chunked_results = Parallel(n_jobs, **parallel_kwargs)(
@@ -1097,9 +1103,9 @@ class RadiusNeighborsMixin:
             edges are Euclidean distance between points.
 
         sort_results : bool, default=False
-            If True, the distances and indices will be sorted before being
-            returned. If False, the results will not be sorted.
-            Only used with mode='distance'.
+            If True, in each row of the result, the non-zero entries will be
+            sorted by increasing distances. If False, the non-zero entries may
+            not be sorted. Only used with mode='distance'.
 
             .. versionadded:: 0.22
 
