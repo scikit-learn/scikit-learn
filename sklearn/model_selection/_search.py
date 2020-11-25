@@ -33,7 +33,10 @@ from ._validation import _insert_error_scores
 from ._validation import _normalize_score_results
 from ..exceptions import NotFittedError
 from joblib import Parallel
-from ..utils import check_random_state
+from ..utils import (
+    check_random_state,
+    _safe_tags,
+)
 from ..utils.random import sample_without_replacement
 from ..utils.validation import indexable, check_is_fitted, _check_fit_params
 from ..utils.validation import _deprecate_positional_args
@@ -433,9 +436,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
     def _more_tags(self):
         # allows cross-validation to see 'precomputed' metrics
-        estimator_tags = self.estimator._get_tags()
         return {
-            'pairwise': estimator_tags.get('pairwise', False),
+            'pairwise': _safe_tags(self.estimator, "pairwise"),
             "_xfail_checks": {"check_supervised_y_2d":
                               "DataConversionWarning not caught"},
         }

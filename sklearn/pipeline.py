@@ -19,7 +19,11 @@ from joblib import Parallel
 from .base import clone, TransformerMixin
 from .utils._estimator_html_repr import _VisualBlock
 from .utils.metaestimators import if_delegate_has_method
-from .utils import Bunch, _print_elapsed_time
+from .utils import (
+    Bunch,
+    _print_elapsed_time,
+    _safe_tags,
+)
 from .utils.deprecation import deprecated
 from .utils.validation import check_memory
 from .utils.validation import _deprecate_positional_args
@@ -623,8 +627,7 @@ class Pipeline(_BaseComposition):
 
     def _more_tags(self):
         # check if first estimator expects pairwise input
-        estimator_tags = self.steps[0][1]._get_tags()
-        return {'pairwise': estimator_tags.get('pairwise', False)}
+        return {'pairwise': _safe_tags(self.steps[0][1], "pairwise")}
 
     # TODO: Remove in 0.26
     # mypy error: Decorated property not supported
