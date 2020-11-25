@@ -1642,7 +1642,7 @@ def test_top_k_accuracy_score_binary(y_score, k, true_score):
     y_true = [0, 0, 1, 1]
 
     threshold = .5 if y_score.min() >= 0 and y_score.max() <= 1 else 0
-    y_pred = (y_score > threshold).astype(np.int) if k == 1 else y_true
+    y_pred = (y_score > threshold).astype(np.int64) if k == 1 else y_true
 
     score = top_k_accuracy_score(y_true, y_score, k=k)
     score_acc = accuracy_score(y_true, y_pred)
