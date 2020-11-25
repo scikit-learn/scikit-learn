@@ -902,7 +902,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
 
         # Compute SVD of cross-covariance matrix
         C = np.dot(X.T, Y)
-        U, s, Vt = svd(C, full_matrices=False)
+        U, s, Vt = svd(C, full_matrices=False, check_finite=False)
         U = U[:, :n_components]
         Vt = Vt[:n_components]
         U, Vt = svd_flip(U, Vt)
