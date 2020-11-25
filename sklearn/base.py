@@ -231,6 +231,7 @@ class MetadataConsumer:
             return self
 
         self._metadata_request = _standardize_metadata_request(props)
+        return self
 
 
 class SampleWeightConsumer(MetadataConsumer):

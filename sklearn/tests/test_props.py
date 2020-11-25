@@ -55,7 +55,7 @@ GroupCVs = [
 
 N, M = 100, 4
 X = np.random.rand(N, M)
-y = np.random.randint(0, 1, size=N)
+y = np.random.randint(0, 2, size=N)
 my_groups = np.random.randint(0, 10, size=N)
 my_weights = np.random.rand(N)
 my_other_weights = np.random.rand(N)
@@ -323,3 +323,33 @@ def test_nongroup_splitter_metadata_requests(Klass):
 
     # test that setting split to False empties the metadata_request
     assert not hasattr(cv, "request_groups")
+
+
+def test_invalid_arg_given():
+    # tests that passing an invalid argument would raise an error
+    weighted_acc = make_scorer(accuracy_score, request_props=["sample_weight"])
+    model = LogisticRegression().request_sample_weight(fit=True)
+    param_grid = {"C": [0.1, 1]}
+    gs = GridSearchCV(
+        estimator=model,
+        cv=GroupKFold(),
+        scoring=weighted_acc,
+        param_grid=param_grid,
+    )
+    gs.fit(X, y, sample_weight=my_weights, groups=my_groups)
+    with pytest.raises(ValueError, match="Requested properties are"):
+        gs.fit(
+            X,
+            y,
+            sample_weigh=my_weights,
+            groups=my_groups,
+            sample_weight=my_weights,
+        )
+
+    with pytest.raises(ValueError, match="Requested properties are"):
+        gs.fit(
+            X,
+            y,
+            sample_weigh=my_weights,
+            groups=my_groups,
+        )

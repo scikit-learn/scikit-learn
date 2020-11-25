@@ -1648,11 +1648,11 @@ class _BaseRidgeCV(LinearModel):
                                  " are incompatible")
             parameters = {'alpha': self.alphas}
             solver = 'sparse_cg' if sparse.issparse(X) else 'auto'
-            model = RidgeClassifier if is_classifier(self) else Ridge
-            gs = GridSearchCV(model(fit_intercept=self.fit_intercept,
-                                    normalize=self.normalize,
-                                    solver=solver),
-                              parameters, cv=cv, scoring=self.scoring)
+            Klass = RidgeClassifier if is_classifier(self) else Ridge
+            model = Klass(fit_intercept=self.fit_intercept,
+                          normalize=self.normalize,
+                          solver=solver).request_sample_weight(fit=True)
+            gs = GridSearchCV(model, parameters, cv=cv, scoring=self.scoring)
             gs.fit(X, y, sample_weight=sample_weight)
             estimator = gs.best_estimator_
             self.alpha_ = gs.best_estimator_.alpha

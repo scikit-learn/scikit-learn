@@ -36,6 +36,7 @@ from joblib import Parallel
 from ..utils import check_random_state
 from ..utils import build_router_metadata_request
 from ..utils import build_method_metadata_params
+from ..utils import _validate_required_props
 from ..utils.random import sample_without_replacement
 from ..utils.validation import indexable, check_is_fitted, _check_fit_params
 from ..utils.validation import _deprecate_positional_args
@@ -808,6 +809,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         _cv_param_values = indexables[2:] if len(indexables) > 2 else []
         _cv_params = {name: value for name, value
                       in zip(_cv_param_names, _cv_param_values)}
+        _validate_required_props(self.get_metadata_request().fit, fit_params)
         _fit_params = _check_fit_params(X, _fit_params)
 
         n_splits = cv_orig.get_n_splits(X, y, **_cv_params)

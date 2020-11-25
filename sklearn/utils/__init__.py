@@ -1242,7 +1242,7 @@ def _validate_required_props(required_props, given_props):
     """
     required_props = _standardize_method_request(required_props)
     given_props = {} if given_props is None else given_props
-    if set(required_props.keys()) < set(given_props.keys()):
+    if set(given_props.keys()) - set(required_props.keys()):
         raise ValueError("Requested properties are: {}, but {} "
                          "provided".format(list(required_props),
                                            list(given_props)))

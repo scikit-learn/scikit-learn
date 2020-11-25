@@ -820,13 +820,14 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 
 
 # helper function for LogisticCV
-def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
+def _log_reg_scoring_path(X, y, train, test, *, pos_class=None, Cs=10,
                           scoring=None, fit_intercept=False,
                           max_iter=100, tol=1e-4, class_weight=None,
                           verbose=0, solver='lbfgs', penalty='l2',
                           dual=False, intercept_scaling=1.,
                           multi_class='auto', random_state=None,
                           max_squared_sum=None, sample_weight=None,
+                          score_params=None,
                           l1_ratio=None):
     """Computes scores across logistic_regression_path
 
@@ -1004,7 +1005,9 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         if scoring is None:
             scores.append(log_reg.score(X_test, y_test))
         else:
-            scores.append(scoring(log_reg, X_test, y_test))
+            if score_params is None:
+                score_params = {}
+            scores.append(scoring(log_reg, X_test, y_test, **score_params))
 
     return coefs, Cs, np.array(scores), n_iter
 
@@ -1766,7 +1769,7 @@ class LogisticRegressionCV(LogisticRegression,
         self.random_state = random_state
         self.l1_ratios = l1_ratios
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, **fit_params):
         """Fit the model according to the given training data.
 
         Parameters
@@ -1781,6 +1784,9 @@ class LogisticRegressionCV(LogisticRegression,
         sample_weight : array-like of shape (n_samples,) default=None
             Array of weights that are assigned to individual samples.
             If not provided, then each sample is given unit weight.
+
+        **fit_params : dict of str -> object
+            Parameters required for the scorer and the CV splitter
 
         Returns
         -------
