@@ -989,8 +989,10 @@ def test_scorer_general_multiclass():
     lr = LogisticRegression(random_state=0).fit(X_train, y_train)
 
     # don't use these scorers since they're not for multiclass
-    binary_only = ['top_k_accuracy', 'f1', 'roc_auc', 'average_precision',
-        'precision', 'recall', 'neg_log_loss', 'neg_brier_score', 'jaccard']
+    binary_only = [
+        'top_k_accuracy', 'f1', 'roc_auc', 'average_precision', 'precision',
+        'recall', 'neg_log_loss', 'neg_brier_score', 'jaccard'
+    ]
 
     for name in CLF_SCORERS:
         if name not in binary_only:
