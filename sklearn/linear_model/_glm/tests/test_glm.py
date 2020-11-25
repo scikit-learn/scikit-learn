@@ -26,6 +26,7 @@ from sklearn._loss.glm_distribution import (
 from sklearn.linear_model import Ridge
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.model_selection import train_test_split
+from sklearn.utils import _safe_tags
 
 
 @pytest.fixture(scope="module")
@@ -428,4 +429,4 @@ def test_tweedie_regression_family(regression_data):
         ],
 )
 def test_tags(estimator, value):
-    assert estimator._get_tags()['requires_positive_y'] is value
+    assert _safe_tags(estimator, key='requires_positive_y') is value

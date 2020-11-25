@@ -1231,14 +1231,12 @@ def _safe_tags(estimator, key=None, default=None):
     """
     if hasattr(estimator, "_get_tags"):
         if key is not None:
-            if default is not None:
-                return default
-            return estimator._get_tags().get(key, _DEFAULT_TAGS[key])
+            default = _DEFAULT_TAGS[key] if default is None else default
+            return estimator._get_tags().get(key, default)
         tags = estimator._get_tags()
         return {key: tags.get(key, _DEFAULT_TAGS[key])
                 for key in _DEFAULT_TAGS.keys()}
     if key is not None:
-        if default is None:
-            return _DEFAULT_TAGS[key]
+        default = _DEFAULT_TAGS[key] if default is None else default
         return default
     return _DEFAULT_TAGS

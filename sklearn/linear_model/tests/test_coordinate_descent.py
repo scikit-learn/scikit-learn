@@ -16,6 +16,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.utils import _safe_tags
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_almost_equal
@@ -315,7 +316,7 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
         LinearModel(normalize=False, fit_intercept=True, **params)
     )
 
-    is_multitask = model_normalize._get_tags().get("multioutput_only", False)
+    is_multitask = _safe_tags(model_normalize, key="multioutput_only")
 
     # prepare the data
     n_samples, n_features = 100, 2

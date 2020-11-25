@@ -17,8 +17,11 @@ from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
 from sklearn.utils.multiclass import (check_classification_targets,
                                       type_of_target)
-from sklearn.utils import check_array
-from sklearn.utils import shuffle
+from sklearn.utils import (
+    check_array,
+    shuffle,
+    _safe_tags,
+)
 
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
@@ -794,10 +797,10 @@ def test_pairwise_tag(MultiClassClassifier):
     clf_notprecomputed = svm.SVC()
 
     ovr_false = MultiClassClassifier(clf_notprecomputed)
-    assert not ovr_false._get_tags()['pairwise']
+    assert not _safe_tags(ovr_false, key='pairwise')
 
     ovr_true = MultiClassClassifier(clf_precomputed)
-    assert ovr_true._get_tags()['pairwise']
+    assert _safe_tags(ovr_true, key='pairwise')
 
 
 # TODO: Remove in 0.26

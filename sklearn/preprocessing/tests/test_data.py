@@ -54,7 +54,10 @@ from sklearn.base import clone
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import cross_val_predict
 from sklearn.svm import SVR
-from sklearn.utils import shuffle
+from sklearn.utils import (
+    shuffle,
+    _safe_tags,
+)
 
 from sklearn import datasets
 
@@ -2244,7 +2247,7 @@ def test_cv_pipeline_precomputed():
     pipeline = Pipeline([("kernel_centerer", kcent), ("svr", SVR())])
 
     # did the pipeline set the pairwise attribute?
-    assert pipeline._get_tags()['pairwise']
+    assert _safe_tags(pipeline, key='pairwise')
 
     # TODO: Remove in 0.26
     msg = r"Attribute _pairwise was deprecated in version 0\.24"

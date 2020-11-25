@@ -1,6 +1,7 @@
 import pytest
 import numpy as np
 
+from sklearn.utils import _safe_tags
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose
@@ -364,11 +365,11 @@ def test_transform_accepts_nan_inf():
 def test_allow_nan_tag_comes_from_estimator():
     allow_nan_est = NaNTag()
     model = SelectFromModel(estimator=allow_nan_est)
-    assert model._get_tags()['allow_nan'] is True
+    assert _safe_tags(model, key='allow_nan') is True
 
     no_nan_est = NoNaNTag()
     model = SelectFromModel(estimator=no_nan_est)
-    assert model._get_tags()['allow_nan'] is False
+    assert _safe_tags(model, key='allow_nan') is False
 
 
 def _pca_importances(pca_estimator):

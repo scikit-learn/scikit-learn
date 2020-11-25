@@ -23,6 +23,7 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn import datasets
 
 from sklearn.base import TransformerMixin
+from sklearn.utils import _safe_tags
 from sklearn.utils._mocking import MockDataFrame
 from sklearn import config_context
 import pickle
@@ -487,17 +488,17 @@ def test_tag_inheritance():
 
     nan_tag_est = NaNTag()
     no_nan_tag_est = NoNaNTag()
-    assert nan_tag_est._get_tags()['allow_nan']
-    assert not no_nan_tag_est._get_tags()['allow_nan']
+    assert _safe_tags(nan_tag_est, key='allow_nan')
+    assert not _safe_tags(no_nan_tag_est, key='allow_nan')
 
     redefine_tags_est = OverrideTag()
-    assert not redefine_tags_est._get_tags()['allow_nan']
+    assert not _safe_tags(redefine_tags_est, key='allow_nan')
 
     diamond_tag_est = DiamondOverwriteTag()
-    assert diamond_tag_est._get_tags()['allow_nan']
+    assert _safe_tags(diamond_tag_est, key='allow_nan')
 
     inherit_diamond_tag_est = InheritDiamondOverwriteTag()
-    assert inherit_diamond_tag_est._get_tags()['allow_nan']
+    assert _safe_tags(inherit_diamond_tag_est, key='allow_nan')
 
 
 def test_raises_on_get_params_non_attribute():

@@ -7,6 +7,7 @@ from scipy import sparse
 import pytest
 
 from sklearn.exceptions import NotFittedError
+from sklearn.utils import _safe_tags
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import _convert_container
@@ -827,7 +828,7 @@ def test_categories(density, drop):
 
 @pytest.mark.parametrize('Encoder', [OneHotEncoder, OrdinalEncoder])
 def test_encoders_has_categorical_tags(Encoder):
-    assert 'categorical' in Encoder()._get_tags()['X_types']
+    assert 'categorical' in _safe_tags(Encoder(), key='X_types')
 
 
 @pytest.mark.parametrize('input_dtype', ['O', 'U'])

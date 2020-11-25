@@ -13,6 +13,7 @@ import numpy as np
 import scipy.sparse as sp
 import pytest
 
+from sklearn.utils import _safe_tags
 from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_message
@@ -1954,7 +1955,7 @@ def test_search_cv_pairwise_property_delegated_to_base_estimator(pairwise):
     est = TestEstimator()
     attr_message = "BaseSearchCV pairwise tag must match estimator"
     cv = GridSearchCV(est, {'n_neighbors': [10]})
-    assert pairwise == cv._get_tags()['pairwise'], attr_message
+    assert pairwise == _safe_tags(cv, key='pairwise'), attr_message
 
 
 # TODO: Remove in 0.26
