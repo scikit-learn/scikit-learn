@@ -23,7 +23,6 @@ from sklearn.utils.estimator_checks import check_classifier_data_not_an_array
 from sklearn.utils.estimator_checks import check_regressor_data_not_an_array
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.estimator_checks import check_outlier_corruption
-from sklearn.utils.estimator_checks import parametrize_with_checks
 from sklearn.utils.fixes import np_version, parse_version
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression, SGDClassifier
@@ -617,42 +616,6 @@ def test_check_estimator_pairwise():
     # test precomputed metric
     est = KNeighborsRegressor(metric='precomputed')
     check_estimator(est)
-
-
-class MinimalEstimator:
-
-    # Our minimal required supposed that the following are implemented
-    _get_param_names = BaseEstimator._get_param_names  # used by get_params
-    set_params = BaseEstimator.set_params
-    get_params = BaseEstimator.get_params
-    __setstate__ = BaseEstimator.__setstate__
-    __getstate__ = BaseEstimator.__getstate__
-
-    def fit(self, X, y):
-        return self
-
-
-class MinimalClassifier(MinimalEstimator):
-
-    def fit(self, X, y):
-        self.classes_ = np.unique(y)
-        return super().fit(X, y)
-
-    def predict_proba(self, X):
-        proba_shape = (len(X), self.classes_.size)
-        y_proba = np.zeros(shape=proba_shape, dtype=np.float64)
-        y_proba[:, 0] = 1.0
-        return y_proba
-
-    def predict(self, X):
-        y_proba = self.predict_proba(X)
-        y_pred = y_proba.argmax(axis=1)
-        return self.classes_[y_pred]
-
-
-@parametrize_with_checks([MinimalClassifier()], strict_mode=False)
-def test_check_estimator_minimal(estimator, check):
-    check(estimator)
 
 
 def test_check_classifier_data_not_an_array():
