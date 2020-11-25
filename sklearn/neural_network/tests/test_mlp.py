@@ -94,6 +94,7 @@ def test_fit():
     mlp.intercepts_[1] = np.array([1.0])
     mlp._coef_grads = [] * 2
     mlp._intercept_grads = [] * 2
+    mlp.n_features_in_ = 3
 
     # Initialize parameters
     mlp.n_iter_ = 0

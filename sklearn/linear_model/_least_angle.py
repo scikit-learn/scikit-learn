@@ -853,10 +853,14 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         `y` values, to satisfy the model's assumption of
         one-at-a-time computations. Might help with stability.
 
+        .. versionadded:: 0.23
+
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for jittering. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`. Ignored if `jitter` is None.
+
+        .. versionadded:: 0.23
 
     Attributes
     ----------
@@ -1106,10 +1110,14 @@ class LassoLars(Lars):
         `y` values, to satisfy the model's assumption of
         one-at-a-time computations. Might help with stability.
 
+        .. versionadded:: 0.23
+
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for jittering. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`. Ignored if `jitter` is None.
+
+        .. versionadded:: 0.23
 
     Attributes
     ----------
@@ -1853,13 +1861,12 @@ class LassoLarsIC(LassoLars):
 
         X, y, Xmean, ymean, Xstd = LinearModel._preprocess_data(
             X, y, self.fit_intercept, self.normalize, copy_X)
-        max_iter = self.max_iter
 
         Gram = self.precompute
 
         alphas_, _, coef_path_, self.n_iter_ = lars_path(
             X, y, Gram=Gram, copy_X=copy_X, copy_Gram=True, alpha_min=0.0,
-            method='lasso', verbose=self.verbose, max_iter=max_iter,
+            method='lasso', verbose=self.verbose, max_iter=self.max_iter,
             eps=self.eps, return_n_iter=True, positive=self.positive)
 
         n_samples = X.shape[0]

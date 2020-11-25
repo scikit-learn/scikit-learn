@@ -568,26 +568,26 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         nullable integer dtypes with missing values, `missing_values`
         should be set to `np.nan`, since `pd.NA` will be converted to `np.nan`.
 
-    features : str, default=None
+    features : {'missing-only', 'all'}, default='missing-only'
         Whether the imputer mask should represent all or a subset of
         features.
 
-        - If "missing-only" (default), the imputer mask will only represent
+        - If 'missing-only' (default), the imputer mask will only represent
           features containing missing values during fit time.
-        - If "all", the imputer mask will represent all features.
+        - If 'all', the imputer mask will represent all features.
 
-    sparse : boolean or "auto", default=None
+    sparse : bool or 'auto', default='auto'
         Whether the imputer mask format should be sparse or dense.
 
-        - If "auto" (default), the imputer mask will be of same type as
+        - If 'auto' (default), the imputer mask will be of same type as
           input.
         - If True, the imputer mask will be a sparse matrix.
         - If False, the imputer mask will be a numpy array.
 
-    error_on_new : boolean, default=None
-        If True (default), transform will raise an error when there are
-        features with missing values in transform that have no missing values
-        in fit. This is applicable only when ``features="missing-only"``.
+    error_on_new : bool, default=True
+        If True, transform will raise an error when there are features with
+        missing values in transform that have no missing values in fit. This is
+        applicable only when `features='missing-only'`.
 
     Attributes
     ----------
@@ -793,15 +793,11 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         # Need not validate X again as it would have already been validated
         # in the Imputer calling MissingIndicator
         if not self._precomputed:
-            X = self._validate_input(X, in_fit=True)
+            X = self._validate_input(X, in_fit=False)
         else:
             if not (hasattr(X, 'dtype') and X.dtype.kind == 'b'):
                 raise ValueError("precomputed is True but the input data is "
                                  "not a mask")
-
-        if X.shape[1] != self._n_features:
-            raise ValueError("X has a different number of features "
-                             "than during fitting.")
 
         imputer_mask, features = self._get_missing_features_info(X)
 

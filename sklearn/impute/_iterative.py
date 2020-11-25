@@ -68,7 +68,7 @@ class IterativeImputer(_BaseImputer):
         Maximum number of imputation rounds to perform before returning the
         imputations computed during the final round. A round is a single
         imputation of each feature with missing values. The stopping criterion
-        is met once `abs(max(X_t - X_{t-1}))/abs(max(X[known_vals]))` < tol,
+        is met once `max(abs(X_t - X_{t-1}))/max(abs(X[known_vals]))` < tol,
         where `X_t` is `X` at iteration `t. Note that early stopping is only
         applied if ``sample_posterior=False``.
 
@@ -116,10 +116,16 @@ class IterativeImputer(_BaseImputer):
         scalar. If array-like, expects shape (n_features,), one min value for
         each feature. The default is `-np.inf`.
 
+        .. versionchanged:: 0.23
+           Added support for array-like.
+
     max_value : float or array-like of shape (n_features,), default=np.inf
         Maximum possible imputed value. Broadcast to shape (n_features,) if
         scalar. If array-like, expects shape (n_features,), one max value for
         each feature. The default is `np.inf`.
+
+        .. versionchanged:: 0.23
+           Added support for array-like.
 
     verbose : int, default=0
         Verbosity flag, controls the debug messages that are issued
@@ -468,7 +474,7 @@ class IterativeImputer(_BaseImputer):
         abs_corr_mat = normalize(abs_corr_mat, norm='l1', axis=0, copy=False)
         return abs_corr_mat
 
-    def _initial_imputation(self, X):
+    def _initial_imputation(self, X, in_fit=False):
         """Perform initial imputation for input X.
 
         Parameters
@@ -476,6 +482,9 @@ class IterativeImputer(_BaseImputer):
         X : ndarray, shape (n_samples, n_features)
             Input data, where "n_samples" is the number of samples and
             "n_features" is the number of features.
+
+        in_fit : bool, default=False
+            Whether function is called in fit.
 
         Returns
         -------
@@ -500,7 +509,7 @@ class IterativeImputer(_BaseImputer):
         else:
             force_all_finite = True
 
-        X = self._validate_data(X, dtype=FLOAT_DTYPES, order="F",
+        X = self._validate_data(X, dtype=FLOAT_DTYPES, order="F", reset=in_fit,
                                 force_all_finite=force_all_finite)
         _check_inputs_dtype(X, self.missing_values)
 
@@ -594,7 +603,8 @@ class IterativeImputer(_BaseImputer):
 
         self.initial_imputer_ = None
 
-        X, Xt, mask_missing_values, complete_mask = self._initial_imputation(X)
+        X, Xt, mask_missing_values, complete_mask = (
+            self._initial_imputation(X, in_fit=True))
 
         super()._fit_indicator(complete_mask)
         X_indicator = super()._transform_indicator(complete_mask)

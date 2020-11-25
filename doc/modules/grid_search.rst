@@ -98,6 +98,10 @@ evaluated and the best combination is retained.
       amount of flexibility in identifying the "best" estimator. This interface
       can also be used in multiple metrics evaluation.
 
+    - See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py`
+      for an example of how to do a statistical comparison on the outputs of
+      :class:`GridSearchCV`.
+
 .. _randomized_parameter_search:
 
 Randomized Parameter Optimization
@@ -213,10 +217,10 @@ is available through tuning the ``min_resources`` parameter.
 
 These estimators are still **experimental**: their predictions
 and their API might change without any deprecation cycle. To use them, you
-need to explicitly import ``enable_successive_halving``::
+need to explicitly import ``enable_halving_search_cv``::
 
   >>> # explicitly require this experimental feature
-  >>> from sklearn.experimental import enable_successive_halving  # noqa
+  >>> from sklearn.experimental import enable_halving_search_cv  # noqa
   >>> # now you can import normally from model_selection
   >>> from sklearn.model_selection import HalvingGridSearchCV
   >>> from sklearn.model_selection import HalvingRandomSearchCV
@@ -363,7 +367,7 @@ terms of the number of estimators of a random forest::
 
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.ensemble import RandomForestClassifier
-    >>> from sklearn.experimental import enable_successive_halving  # noqa
+    >>> from sklearn.experimental import enable_halving_search_cv  # noqa
     >>> from sklearn.model_selection import HalvingGridSearchCV
     >>> import pandas as pd
     >>>
@@ -392,7 +396,7 @@ resources, some of them might be wasted (i.e. not used)::
 
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.svm import SVC
-    >>> from sklearn.experimental import enable_successive_halving  # noqa
+    >>> from sklearn.experimental import enable_halving_search_cv  # noqa
     >>> from sklearn.model_selection import HalvingGridSearchCV
     >>> import pandas as pd
     >>> param_grid= {'kernel': ('linear', 'rbf'),
@@ -449,7 +453,7 @@ more than ``factor`` candidates::
 
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.svm import SVC
-    >>> from sklearn.experimental import enable_successive_halving  # noqa
+    >>> from sklearn.experimental import enable_halving_search_cv  # noqa
     >>> from sklearn.model_selection import HalvingGridSearchCV
     >>> import pandas as pd
     >>>

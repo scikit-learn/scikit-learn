@@ -38,16 +38,24 @@ _DEFAULT_TAGS = {
     'requires_fit': True,
     'preserves_dtype': [np.float64],
     'requires_y': False,
+    'pairwise': False,
     }
 
 
 @_deprecate_positional_args
 def clone(estimator, *, safe=True):
-    """Constructs a new estimator with the same parameters.
+    """Constructs a new unfitted estimator with the same parameters.
 
     Clone does a deep copy of the model in an estimator
     without actually copying attached data. It yields a new estimator
-    with the same parameters that has not been fit on any data.
+    with the same parameters that has not been fitted on any data.
+
+    If the estimator's `random_state` parameter is an integer (or if the
+    estimator doesn't have a `random_state` parameter), an *exact clone* is
+    returned: the clone and the original estimator will give the exact same
+    results. Otherwise, *statistical clone* is returned: the clone might
+    yield different results from the original estimator. More details can be
+    found in :ref:`randomness`.
 
     Parameters
     ----------
@@ -201,15 +209,7 @@ class BaseEstimator:
         """
         out = dict()
         for key in self._get_param_names():
-            try:
-                value = getattr(self, key)
-            except AttributeError:
-                warnings.warn('From version 0.24, get_params will raise an '
-                              'AttributeError if a parameter cannot be '
-                              'retrieved as an instance attribute. Previously '
-                              'it would return None.',
-                              FutureWarning)
-                value = None
+            value = getattr(self, key)
             if deep and hasattr(value, 'get_params'):
                 deep_items = value.get_params().items()
                 out.update((key + '__' + k, val) for k, val in deep_items)
@@ -358,27 +358,32 @@ class BaseEstimator:
             The input samples.
         reset : bool
             If True, the `n_features_in_` attribute is set to `X.shape[1]`.
-            Else, the attribute must already exist and the function checks
-            that it is equal to `X.shape[1]`.
+            If False and the attribute exists, then check that it is equal to
+            `X.shape[1]`. If False and the attribute does *not* exist, then
+            the check is skipped.
+            .. note::
+               It is recommended to call reset=True in `fit` and in the first
+               call to `partial_fit`. All other methods that validate `X`
+               should set `reset=False`.
         """
         n_features = X.shape[1]
 
         if reset:
             self.n_features_in_ = n_features
-        else:
-            if not hasattr(self, 'n_features_in_'):
-                raise RuntimeError(
-                    "The reset parameter is False but there is no "
-                    "n_features_in_ attribute. Is this estimator fitted?"
-                )
-            if n_features != self.n_features_in_:
-                raise ValueError(
-                    'X has {} features, but {} is expecting {} features '
-                    'as input.'.format(n_features, self.__class__.__name__,
-                                       self.n_features_in_)
-                )
+            return
 
-    def _validate_data(self, X, y=None, reset=True,
+        if not hasattr(self, "n_features_in_"):
+            # Skip this check if the expected number of expected input features
+            # was not recorded by calling fit first. This is typically the case
+            # for stateless transformers.
+            return
+
+        if n_features != self.n_features_in_:
+            raise ValueError(
+                f"X has {n_features} features, but {self.__class__.__name__} "
+                f"is expecting {self.n_features_in_} features as input.")
+
+    def _validate_data(self, X, y='no_validation', reset=True,
                        validate_separately=False, **check_params):
         """Validate input data and set or check the `n_features_in_` attribute.
 
@@ -387,13 +392,25 @@ class BaseEstimator:
         X : {array-like, sparse matrix, dataframe} of shape \
                 (n_samples, n_features)
             The input samples.
-        y : array-like of shape (n_samples,), default=None
-            The targets. If None, `check_array` is called on `X` and
-            `check_X_y` is called otherwise.
+        y : array-like of shape (n_samples,), default='no_validation'
+            The targets.
+
+            - If `None`, `check_array` is called on `X`. If the estimator's
+              requires_y tag is True, then an error will be raised.
+            - If `'no_validation'`, `check_array` is called on `X` and the
+              estimator's requires_y tag is ignored. This is a default
+              placeholder and is never meant to be explicitly set.
+            - Otherwise, both `X` and `y` are checked with either `check_array`
+              or `check_X_y` depending on `validate_separately`.
+
         reset : bool, default=True
             Whether to reset the `n_features_in_` attribute.
             If False, the input will be checked for consistency with data
             provided when reset was last True.
+            .. note::
+               It is recommended to call reset=True in `fit` and in the first
+               call to `partial_fit`. All other methods that validate `X`
+               should set `reset=False`.
         validate_separately : False or tuple of dicts, default=False
             Only used if y is not None.
             If False, call validate_X_y(). Else, it must be a tuple of kwargs
@@ -415,6 +432,9 @@ class BaseEstimator:
                     f"This {self.__class__.__name__} estimator "
                     f"requires y to be passed, but the target y is None."
                 )
+            X = check_array(X, **check_params)
+            out = X
+        elif isinstance(y, str) and y == 'no_validation':
             X = check_array(X, **check_params)
             out = X
         else:
@@ -811,3 +831,45 @@ def is_outlier_detector(estimator):
         True if estimator is an outlier detector and False otherwise.
     """
     return getattr(estimator, "_estimator_type", None) == "outlier_detector"
+
+
+def _is_pairwise(estimator):
+    """Returns True if estimator is pairwise.
+
+    - If the `_pairwise` attribute and the tag are present and consistent,
+      then use the value and not issue a warning.
+    - If the `_pairwise` attribute and the tag are present and not
+      consistent, use the `_pairwise` value and issue a deprecation
+      warning.
+    - If only the `_pairwise` attribute is present and it is not False,
+      issue a deprecation warning and use the `_pairwise` value.
+
+    Parameters
+    ----------
+    estimator : object
+        Estimator object to test.
+
+    Returns
+    -------
+    out : bool
+        True if the estimator is pairwise and False otherwise.
+    """
+    with warnings.catch_warnings():
+        warnings.filterwarnings('ignore', category=FutureWarning)
+        has_pairwise_attribute = hasattr(estimator, '_pairwise')
+        pairwise_attribute = getattr(estimator, '_pairwise', False)
+
+    if hasattr(estimator, '_get_tags') and callable(estimator._get_tags):
+        pairwise_tag = estimator._get_tags().get('pairwise', False)
+    else:
+        pairwise_tag = False
+
+    if has_pairwise_attribute:
+        if pairwise_attribute != pairwise_tag:
+            warnings.warn("_pairwise was deprecated in 0.24 and will be "
+                          "removed in 0.26. Set the estimator tags of your "
+                          "estimator instead", FutureWarning)
+        return pairwise_attribute
+
+    # use pairwise tag when the attribute is not present
+    return pairwise_tag
