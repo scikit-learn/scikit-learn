@@ -32,7 +32,6 @@ from ..linear_model import Ridge
 from ..base import (
     clone,
     ClusterMixin,
-    _DEFAULT_TAGS,
     is_classifier,
     is_regressor,
     is_outlier_detector,
@@ -52,7 +51,10 @@ from ..model_selection import ShuffleSplit
 from ..model_selection._validation import _safe_split
 from ..metrics.pairwise import (rbf_kernel, linear_kernel, pairwise_distances)
 
-from .import shuffle
+from .import (
+    shuffle,
+    _safe_tags,
+)
 from .validation import has_fit_parameter, _num_samples
 from ..preprocessing import StandardScaler
 from ..preprocessing import scale
@@ -65,36 +67,6 @@ from ..datasets import (
 
 REGRESSION_DATASET = None
 CROSS_DECOMPOSITION = ['PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']
-
-
-def _safe_tags(estimator, key=None):
-    """Safely get estimator tags for common checks.
-
-    :class:`~sklearn.BaseEstimator` provides the estimator tags machinery.
-    However, if a compatible estimator does not inherit from this base class,
-    we should default to the default tag.
-
-    Parameters
-    ----------
-    estimator : estimator object
-        The estimator from which to get the tag.
-    key : str, default=None
-        Tag name to get. By default (`None`), all tags are returned.
-
-    Returns
-    -------
-    tags : dict
-        The estimator tags.
-    """
-    if hasattr(estimator, "_get_tags"):
-        if key is not None:
-            return estimator._get_tags().get(key, _DEFAULT_TAGS[key])
-        tags = estimator._get_tags()
-        return {key: tags.get(key, _DEFAULT_TAGS[key])
-                for key in _DEFAULT_TAGS.keys()}
-    if key is not None:
-        return _DEFAULT_TAGS[key]
-    return _DEFAULT_TAGS
 
 
 def _yield_checks(estimator):

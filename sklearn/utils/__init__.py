@@ -43,6 +43,26 @@ from .. import get_config
 parallel_backend = _joblib.parallel_backend
 register_parallel_backend = _joblib.register_parallel_backend
 
+_DEFAULT_TAGS = {
+    'non_deterministic': False,
+    'requires_positive_X': False,
+    'requires_positive_y': False,
+    'X_types': ['2darray'],
+    'poor_score': False,
+    'no_validation': False,
+    'multioutput': False,
+    "allow_nan": False,
+    'stateless': False,
+    'multilabel': False,
+    '_skip_test': False,
+    '_xfail_checks': False,
+    'multioutput_only': False,
+    'binary_only': False,
+    'requires_fit': True,
+    'preserves_dtype': [np.float64],
+    'requires_y': False,
+    'pairwise': False,
+}
 
 __all__ = ["murmurhash3_32", "as_float_array",
            "assert_all_finite", "check_array",
@@ -53,7 +73,9 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "check_symmetric", "indices_to_mask", "deprecated",
            "parallel_backend", "register_parallel_backend",
            "resample", "shuffle", "check_matplotlib_support", "all_estimators",
-           "DataConversionWarning", "estimator_html_repr"
+           "DataConversionWarning", "estimator_html_repr",
+           "_DEFAULT_TAGS",
+           "_safe_tags",
            ]
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
@@ -1182,3 +1204,33 @@ def all_estimators(type_filter=None):
     # itemgetter is used to ensure the sort does not extend to the 2nd item of
     # the tuple
     return sorted(set(estimators), key=itemgetter(0))
+
+
+def _safe_tags(estimator, key=None):
+    """Safely get estimator tags for common checks.
+
+    :class:`~sklearn.BaseEstimator` provides the estimator tags machinery.
+    However, if a compatible estimator does not inherit from this base class,
+    we should default to the default tag.
+
+    Parameters
+    ----------
+    estimator : estimator object
+        The estimator from which to get the tag.
+    key : str, default=None
+        Tag name to get. By default (`None`), all tags are returned.
+
+    Returns
+    -------
+    tags : dict
+        The estimator tags.
+    """
+    if hasattr(estimator, "_get_tags"):
+        if key is not None:
+            return estimator._get_tags().get(key, _DEFAULT_TAGS[key])
+        tags = estimator._get_tags()
+        return {key: tags.get(key, _DEFAULT_TAGS[key])
+                for key in _DEFAULT_TAGS.keys()}
+    if key is not None:
+        return _DEFAULT_TAGS[key]
+    return _DEFAULT_TAGS

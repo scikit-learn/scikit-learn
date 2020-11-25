@@ -382,15 +382,23 @@ class MinimalClassifier:
     """Minimal classifier implementation with inheriting from BaseEstimator."""
     _estimator_type = "classifier"
 
+    def __init__(self, param=None):
+        self.param = param
+
     def __repr__(self):
         # Only required when using pytest-xdist to get an id not associated
         # with the memory location
         return self.__class__.__name__
 
-    def get_params(self, **params):
-        return {}
+    def get_params(self, deep=True):
+        return {"param": self.param}
 
-    def set_params(self, deep=True):
+    def set_params(self, **params):
+        valid_params = self.get_params()
+        for key, value in params.items():
+            if key not in valid_params:
+                raise ValueError("Wrong params")
+            setattr(self, key, value)
         return self
 
     def __getstate__(self):
@@ -431,15 +439,23 @@ class MinimalRegressor:
     """Minimal regressor implementation with inheriting from BaseEstimator."""
     _estimator_type = "regressor"
 
+    def __init__(self, param=None):
+        self.param = param
+
     def __repr__(self):
         # Only required when using pytest-xdist to get an id not associated
         # with the memory location
         return self.__class__.__name__
 
-    def get_params(self, **params):
-        return {}
+    def get_params(self, deep=True):
+        return {"param": self.param}
 
-    def set_params(self, deep=True):
+    def set_params(self, **params):
+        valid_params = self.get_params()
+        for key, value in params.items():
+            if key not in valid_params:
+                raise ValueError("Wrong params")
+            setattr(self, key, value)
         return self
 
     def __getstate__(self):
@@ -470,15 +486,23 @@ class MinimalTransformer:
     """Minimal transformer implementation with inheriting from
     BaseEstimator."""
 
+    def __init__(self, param=None):
+        self.param = param
+
     def __repr__(self):
         # Only required when using pytest-xdist to get an id not associated
         # with the memory location
         return self.__class__.__name__
 
-    def get_params(self, **params):
-        return {}
+    def get_params(self, deep=True):
+        return {"param": self.param}
 
-    def set_params(self, deep=True):
+    def set_params(self, **params):
+        valid_params = self.get_params()
+        for key, value in params.items():
+            if key not in valid_params:
+                raise ValueError("Wrong params")
+            setattr(self, key, value)
         return self
 
     def __getstate__(self):
@@ -506,16 +530,38 @@ class MinimalTransformer:
         return self.fit(X, y).transform(X, y)
 
 
+def _generate_minimal_compatible_instances():
+    """Generate instance containing estimators from minimal class compatible
+    implementation."""
+    for SearchCV, (Estimator, param_grid) in zip(
+        [GridSearchCV, RandomizedSearchCV],
+        [
+            (MinimalRegressor, {"param": [1, 10]}),
+            (MinimalClassifier, {"param": [1, 10]}),
+        ],
+    ):
+        yield SearchCV(Estimator(), param_grid)
+
+    for SearchCV, (Estimator, param_grid) in zip(
+        [GridSearchCV, RandomizedSearchCV],
+        [
+            (MinimalRegressor, {"param": [1, 10]}),
+            (MinimalClassifier, {"param": [1, 10]}),
+        ],
+    ):
+        yield SearchCV(
+            make_pipeline(MinimalTransformer(), Estimator()), param_grid
+        ).set_params(error_score="raise")
+
+
 # FIXME: hopefully in 0.25
-@pytest.mark.skip(
-    reason=("This test is currently failing because checks are granular "
-            "enough. Once checks are split with some kind of only API tests, "
-            "this test should enabled.")
-)
-@parametrize_with_checks(
-    [MinimalClassifier(), MinimalRegressor(), MinimalTransformer()],
-)
-def test_check_estimator_minimal(estimator, check):
+# @pytest.mark.skip(
+#     reason=("This test is currently failing because checks are granular "
+#             "enough. Once checks are split with some kind of only API tests, "
+#             "this test should enabled.")
+# )
+@parametrize_with_checks(list(_generate_minimal_compatible_instances()))
+def test_minimal_class_implementation_checks(estimator, check):
     # Check that third-party library can run tests without inheriting from
     # BaseEstimator.
     check(estimator)
