@@ -14,6 +14,7 @@ import pkgutil
 from inspect import isgenerator
 from functools import partial
 
+import numpy as np
 import pytest
 
 from sklearn.utils import all_estimators
