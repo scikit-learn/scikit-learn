@@ -1222,11 +1222,10 @@ def _safe_tags(estimator, key=None, default=None):
         Tag name to get. By default (`None`), all tags are returned.
 
     default : list of {str, dtype} or bool, default=None
-        For estimator not implementing `_get_tags`, `default` allows to define
-        the `default` value of a tag if it is not present in `_DEFAULT_TAGS` or
-        to overwrite the value in `_DEFAULT_TAGS` if it the tag is defined.
-        When `default is None`, no default values nor overwriting will take
-        place.
+        `default` allows to define the `default` value of a tag if it is not
+        present in `_DEFAULT_TAGS` or to overwrite the value in `_DEFAULT_TAGS`
+        if it the tag is defined. When `default is None`, no default values nor
+        overwriting will take place.
 
     Returns
     -------
@@ -1235,14 +1234,18 @@ def _safe_tags(estimator, key=None, default=None):
     """
     if hasattr(estimator, "_get_tags"):
         if key is not None:
-            try:
-                return estimator._get_tags().get(key, _DEFAULT_TAGS[key])
-            except KeyError as exc:
-                raise ValueError(
-                    f"The key {key} is neither defined in _more_tags() in the "
-                    f"class {repr(estimator)} nor a default estimator key in "
-                    f"_DEFAULT_TAGS: {repr(_DEFAULT_TAGS.keys())}"
-                ) from exc
+            if default is None:
+                try:
+                    return estimator._get_tags().get(key, _DEFAULT_TAGS[key])
+                except KeyError as exc:
+                    raise ValueError(
+                        f"The key {key} is neither defined in _more_tags() in "
+                        f"the class {repr(estimator)} nor a default estimator "
+                        f"key in _DEFAULT_TAGS. Use the parameter default if "
+                        f"you want to define a default value."
+                    ) from exc
+            else:
+                return default
         else:
             tags = estimator._get_tags()
             return {
