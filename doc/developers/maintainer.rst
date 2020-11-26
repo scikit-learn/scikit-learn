@@ -167,10 +167,10 @@ Making a release
        python setup.py fetch_artifacts
 
    This command will download all the binary packages accumulated in the `staging area on the anaconda.org
-   hosting service <https://anaconda.org/scikit-learn-wheels-staging/scikit-learn/files>` and put then in
+   hosting service <https://anaconda.org/scikit-learn-wheels-staging/scikit-learn/files>`_ and put them in
    your local `./dist` folder.
 
-5. Check the content of the `dist/` folder: it should contain all the wheels
+5. Check the content of the `./dist` folder: it should contain all the wheels
    along with the source tarball ("scikit-learn-RRR.tar.gz").
 
    Make sure that you do not have developer versions or older versions of
