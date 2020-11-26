@@ -141,7 +141,6 @@ Making a release
    The wheel building workflow is managed by GitHub Actions and the results be browsed at:
    https://github.com/scikit-learn/scikit-learn/actions?query=workflow%3A%22Wheel+builder%22
 
-   Then, you can upload the wheels and ``sdist`` to ``test.pypi.org`` for testing.
    Once all works, you can proceed with tagging. Create the tag and push it (if
    it's an RC, it can be ``0.xxrc1`` for instance):
 
@@ -211,8 +210,6 @@ The following GitHub checklist might be helpful in a release PR::
 
     * [ ] update news and what's new date in master and release branch
     * [ ] create tag
-    * [ ] update dependencies and release tag at
-      https://github.com/MacPython/scikit-learn-wheels
     * [ ] twine the wheels to PyPI when that's green
     * [ ] https://github.com/scikit-learn/scikit-learn/releases draft
     * [ ] confirm bot detected at
