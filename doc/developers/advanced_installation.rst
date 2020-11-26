@@ -210,8 +210,8 @@ For 64-bit Python, configure the build environment with:
 
     ::
 
-      SET DISTUTILS_USE_SDK=1
-      "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
+      $ SET DISTUTILS_USE_SDK=1
+      $ "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
 
 Replace ``x64`` by ``x86`` to build for 32-bit Python.
 
