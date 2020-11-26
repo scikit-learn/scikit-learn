@@ -140,6 +140,7 @@ class SimpleImputer(_BaseImputer):
           each column. Can only be used with numeric data.
         - If "most_frequent", then replace missing using the most frequent
           value along each column. Can be used with strings or numeric data.
+          If there is more than one such value, only the smallest is returned.
         - If "constant", then replace missing values with fill_value. Can be
           used with strings or numeric data.
 
