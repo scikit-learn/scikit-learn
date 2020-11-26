@@ -338,7 +338,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         Returns
         -------
         score : float
-            Eesult of calling score on the `base_estimator`.
+            Result of calling score on the `base_estimator`.
         """
         check_is_fitted(self)
         return self.base_estimator_.score(X, y)
