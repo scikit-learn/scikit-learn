@@ -1233,9 +1233,6 @@ def _validate_required_props(required_props, given_props):
     given_props: dict of {str: data}
         A ``dict`` with keys as given properties.
 
-    method: str
-        The method for which the given props is validated.
-
     Returns
     -------
     None
@@ -1355,7 +1352,8 @@ def build_router_metadata_request(children, routing):
     metadata_request : dict
         The metadata request built from the children.
     """
-    children_props = {k: _get_props_from_objs(v) for k, v in children.items()}
+    children_props = {k: _get_props_from_objs(v, mask_values=True)
+                      for k, v in children.items()}
     out = _empty_metadata_request()
     for child_role, router_method, child_method in routing:
         if router_method == child_method == "all":
@@ -1377,11 +1375,11 @@ def build_method_metadata_params(children, routing, metadata):
         children={'scorers': scorers,
                   'estimator': estimator,
                   'splitter': cv_orig},
-        routing={[
+        routing=[
             ('scorers', 'score', 'score'),
             ('estimator', 'fit', 'fit')
             ('splitter', 'split', 'split')
-        ]},
+        ],
         fit_params
     )
 
@@ -1405,7 +1403,8 @@ def build_method_metadata_params(children, routing, metadata):
         {'fit': {'sample_weight': sample_weight},
          'split': {'groups': groups}}
     """
-    children_props = {k: _get_props_from_objs(v) for k, v in children.items()}
+    children_props = {k: _get_props_from_objs(v, mask_values=False)
+                      for k, v in children.items()}
     out = Bunch(**{method: dict() for method in _empty_metadata_request()})
     for child_role, router_method, child_method in routing:
         props = _check_method_props(
@@ -1429,7 +1428,7 @@ def build_method_metadata_params(children, routing, metadata):
     return out
 
 
-def _get_props_from_objs(objs):
+def _get_props_from_objs(objs, mask_values):
     """Extracts the required props from a list of objects.
 
     This is useful for meta-estimators such as ``Pipeline``.
@@ -1438,6 +1437,15 @@ def _get_props_from_objs(objs):
     ----------
     objs: list of objects
       List of objects from which required props should be extracted.
+
+    mask_values: bool
+        Whether to mask the values in the routing of the objects or not. The
+        values should be ignored if this is called by a meta-estimator while
+        describing its own `metadata_request`, but should not be ignored while
+        figuring out which parameters should be sent to which sub-objects.
+        For instance, `build_method_metadata_params` calls this function with
+        `mask_values=False`, and `build_router_metadata_request` calls it with
+        `mask_values=True`.
 
     Returns
     -------
@@ -1459,7 +1467,12 @@ def _get_props_from_objs(objs):
             # print("object: ", obj, "props: ", obj_props)
             for method, m_props in obj_props.items():
                 if m_props:
-                    metadata_request[method].update({x: x for x in m_props})
+                    if mask_values:
+                        metadata_request[method].update(
+                            {x: x for x in m_props})
+                    else:
+                        metadata_request[method].update(
+                            {x: v for x, v in m_props.items()})
             # print("updated props request: ", metadata_request)
         except AttributeError:
             # print(f"obj {obj} doesn't have get_metadata_request: {e}")

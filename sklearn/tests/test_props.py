@@ -112,12 +112,13 @@ class MyTrs(
         self._metadata_request = {"fit": ["sample_weight"]}
 
     def fit(self, X, y=None, **fit_params):
-        req_props = self.get_metadata_request().fit
-        _validate_required_props(req_props, fit_params)
+        # extract the values from the metadata requests. Since this is not a
+        # meta-estimator, the values will always have exactly 1 member in the
+        # corresponding set.
+        req_props = [list(x)[0] for x in
+                     self.get_metadata_request().fit.values()]
+        assert set(fit_params.keys()) <= set(req_props)
         self._estimator = SelectKBest().fit(X, y)
-        assert set(fit_params.keys()) <= set(
-            [list(x)[0] for x in req_props.values()]
-        )
         return self
 
     def transform(self, X, y=None):

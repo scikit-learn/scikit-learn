@@ -24,8 +24,9 @@ from .utils import Bunch, _print_elapsed_time
 from .utils.deprecation import deprecated
 from .utils.validation import check_memory
 from .utils.validation import _deprecate_positional_args
-from .utils import (_get_props_from_objs, _check_method_props,
+from .utils import (_get_props_from_objs,
                     _validate_required_props)
+from .utils import build_method_metadata_params
 from .utils.fixes import delayed
 from .utils.metaestimators import _BaseComposition
 
@@ -253,7 +254,7 @@ class Pipeline(_BaseComposition):
             A union of the requested props by pipeline steps.
         """
         _, estimators = zip(*self.steps)
-        return _get_props_from_objs(estimators)
+        return _get_props_from_objs(estimators, mask_values=True)
 
     def _check_fit_params(self, **fit_params):
         fit_params_steps = {name: {} for name, step in self.steps
@@ -281,16 +282,11 @@ class Pipeline(_BaseComposition):
         required_props = self.get_metadata_request().fit
         _validate_required_props(required_props, fit_params)
         for _, name, transformer in self._iter(filter_passthrough=True):
-            if transformer is None:
-                continue
-            try:
-                transformer_fit_props = transformer.get_metadata_request().fit
-            except AttributeError:
-                transformer_fit_props = {}
+            fit_params_steps[name] = build_method_metadata_params(
+                children={'step': transformer},
+                routing=[('step', 'fit', 'fit')],
+                metadata=fit_params).fit
 
-            fit_params_steps[name] = _check_method_props(
-                transformer_fit_props, fit_params,
-                validate=False)
         return fit_params_steps
 
     # Estimator interface
