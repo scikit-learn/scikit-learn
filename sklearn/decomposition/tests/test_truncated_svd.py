@@ -191,3 +191,16 @@ def test_truncated_svd_eq_pca(X_sparse):
     assert_allclose(Xt_svd, Xt_pca, rtol=1e-9)
     assert_allclose(pca.mean_, 0, atol=1e-9)
     assert_allclose(svd.components_, pca.components_)
+
+
+@pytest.mark.parametrize("algorithm, tol", [
+    ('randomized', 0.), ('arpack', 1e-6), ('arpack', 0.)])
+@pytest.mark.parametrize('kind', ('dense', 'sparse'))
+def test_fit_transform(X_sparse, algorithm, tol, kind):
+    # fit_transform(X) should equal fit(X).transform(X)
+    X = X_sparse if kind == 'sparse' else X_sparse.toarray()
+    svd = TruncatedSVD(n_components=5, n_iter=7, random_state=42,
+                       algorithm=algorithm, tol=tol)
+    X_transformed_1 = svd.fit_transform(X)
+    X_transformed_2 = svd.fit(X).transform(X)
+    assert_allclose(X_transformed_1, X_transformed_2)

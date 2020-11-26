@@ -568,6 +568,17 @@ def check_array(array, accept_sparse=False, *, accept_large_sparse=True,
     if hasattr(array, 'sparse') and array.ndim > 1:
         # DataFrame.sparse only supports `to_coo`
         array = array.sparse.to_coo()
+        if array.dtype == np.dtype('object'):
+            unique_dtypes = set(
+                [dt.subtype.name for dt in array_orig.dtypes]
+            )
+            if len(unique_dtypes) > 1:
+                raise ValueError(
+                    "Pandas DataFrame with mixed sparse extension arrays "
+                    "generated a sparse matrix with object dtype which "
+                    "can not be converted to a scipy sparse matrix."
+                    "Sparse extension arrays should all have the same "
+                    "numeric type.")
 
     if sp.issparse(array):
         _ensure_no_complex_data(array)
@@ -621,20 +632,20 @@ def check_array(array, accept_sparse=False, *, accept_large_sparse=True,
                     "your data has a single feature or array.reshape(1, -1) "
                     "if it contains a single sample.".format(array))
 
-        # in the future np.flexible dtypes will be handled like object dtypes
-        if dtype_numeric and np.issubdtype(array.dtype, np.flexible):
-            warnings.warn(
-                "Beginning in version 0.22, arrays of bytes/strings will be "
-                "converted to decimal numbers if dtype='numeric'. "
-                "It is recommended that you convert the array to "
-                "a float dtype before using it in scikit-learn, "
-                "for example by using "
-                "your_array = your_array.astype(np.float64).",
-                FutureWarning, stacklevel=2)
-
         # make sure we actually converted to numeric:
-        if dtype_numeric and array.dtype.kind == "O":
-            array = array.astype(np.float64)
+        if dtype_numeric and array.dtype.kind in "OUSV":
+            warnings.warn("Arrays of bytes/strings is being converted to "
+                          "decimal numbers if dtype='numeric'. This behavior "
+                          "is deprecated in 0.24 and will be removed in 0.26 "
+                          "Please convert your data to numeric values "
+                          "explicitly instead.",
+                          FutureWarning, stacklevel=2)
+            try:
+                array = array.astype(np.float64)
+            except ValueError as e:
+                raise ValueError(
+                    "Unable to convert array of bytes/strings "
+                    "into decimal numbers with dtype='numeric'") from e
         if not allow_nd and array.ndim >= 3:
             raise ValueError("Found array with dim %d. %s expected <= 2."
                              % (array.ndim, estimator_name))
@@ -1119,8 +1130,8 @@ def _check_psd_eigenvalues(lambdas, enable_warnings=False):
       ``PositiveSpectrumWarning`` when ``enable_warnings=True``.
 
     Finally, all the positive eigenvalues that are too small (with a value
-    smaller than the maximum eigenvalue divided by 1e12) are set to zero.
-    This operation is traced with a ``PositiveSpectrumWarning`` when
+    smaller than the maximum eigenvalue multiplied by 1e-12 (2e-7)) are set to
+    zero. This operation is traced with a ``PositiveSpectrumWarning`` when
     ``enable_warnings=True``.
 
     Parameters
@@ -1183,7 +1194,7 @@ def _check_psd_eigenvalues(lambdas, enable_warnings=False):
     significant_imag_ratio = 1e-5
     significant_neg_ratio = 1e-5 if is_double_precision else 5e-3
     significant_neg_value = 1e-10 if is_double_precision else 1e-6
-    small_pos_ratio = 1e-12 if is_double_precision else 1e-7
+    small_pos_ratio = 1e-12 if is_double_precision else 2e-7
 
     # Check that there are no significant imaginary parts
     if not np.isreal(lambdas).all():
@@ -1269,7 +1280,7 @@ def _check_sample_weight(sample_weight, X, dtype=None):
     X : {ndarray, list, sparse matrix}
         Input data.
 
-    dtype: dtype
+    dtype: dtype, default=None
        dtype of the validated `sample_weight`.
        If None, and the input `sample_weight` is an array, the dtype of the
        input is preserved; otherwise an array with the default numpy dtype

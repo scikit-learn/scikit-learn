@@ -16,7 +16,7 @@ extends single output estimators to multioutput estimators.
 
 import numpy as np
 import scipy.sparse as sp
-from joblib import Parallel, delayed
+from joblib import Parallel
 
 from abc import ABCMeta, abstractmethod
 from .base import BaseEstimator, clone, MetaEstimatorMixin
@@ -27,6 +27,7 @@ from .utils.metaestimators import if_delegate_has_method
 from .utils.validation import (check_is_fitted, has_fit_parameter,
                                _check_fit_params, _deprecate_positional_args)
 from .utils.multiclass import check_classification_targets
+from .utils.fixes import delayed
 
 __all__ = ["MultiOutputRegressor", "MultiOutputClassifier",
            "ClassifierChain", "RegressorChain"]
@@ -101,6 +102,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin,
         self : object
         """
         X, y = check_X_y(X, y,
+                         force_all_finite=False,
                          multi_output=True,
                          accept_sparse=True)
 
@@ -144,6 +146,8 @@ class _MultiOutputEstimator(MetaEstimatorMixin,
         **fit_params : dict of string -> object
             Parameters passed to the ``estimator.fit`` method of each step.
 
+            .. versionadded:: 0.23
+
         Returns
         -------
         self : object
@@ -153,7 +157,9 @@ class _MultiOutputEstimator(MetaEstimatorMixin,
             raise ValueError("The base estimator should implement"
                              " a fit method")
 
-        X, y = self._validate_data(X, y, multi_output=True, accept_sparse=True)
+        X, y = self._validate_data(X, y,
+                                   force_all_finite=False,
+                                   multi_output=True, accept_sparse=True)
 
         if is_classifier(self):
             check_classification_targets(y)
@@ -196,7 +202,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin,
             raise ValueError("The base estimator should implement"
                              " a predict method")
 
-        X = check_array(X, accept_sparse=True)
+        X = check_array(X, force_all_finite=False, accept_sparse=True)
 
         y = Parallel(n_jobs=self.n_jobs)(
             delayed(e.predict)(X)
@@ -223,16 +229,19 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
         An estimator object implementing :term:`fit` and :term:`predict`.
 
     n_jobs : int or None, optional (default=None)
-        The number of jobs to run in parallel for :meth:`fit`.
+        The number of jobs to run in parallel.
+        :meth:`fit`, :meth:`predict` and :meth:`partial_fit` (if supported
+        by the passed estimator) will be parallelized for each target.
+
+        When individual estimators are fast to train or predict,
+        using ``n_jobs > 1`` can result in slower performance due
+        to the parallelism overhead.
+
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-        for more details.
+        ``-1`` means using all available processes / threads.
+        See :term:`Glossary <n_jobs>` for more details.
 
-        When individual estimators are fast to train or predict
-        using `n_jobs>1` can result in slower performance due
-        to the overhead of spawning processes.
-
-        .. versionchanged:: v0.20
+        .. versionchanged:: 0.20
            `n_jobs` default changed from 1 to None
 
     Attributes
@@ -295,13 +304,19 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         :term:`predict_proba`.
 
     n_jobs : int or None, optional (default=None)
-        The number of jobs to use for the computation.
-        It does each target variable in y in parallel.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-        for more details.
+        The number of jobs to run in parallel.
+        :meth:`fit`, :meth:`predict` and :meth:`partial_fit` (if supported
+        by the passed estimator) will be parallelized for each target.
 
-        .. versionchanged:: v0.20
+        When individual estimators are fast to train or predict,
+        using ``n_jobs > 1`` can result in slower performance due
+        to the parallelism overhead.
+
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all available processes / threads.
+        See :term:`Glossary <n_jobs>` for more details.
+
+        .. versionchanged:: 0.20
            `n_jobs` default changed from 1 to None
 
     Attributes
@@ -343,6 +358,8 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
             weights.
         **fit_params : dict of string -> object
             Parameters passed to the ``estimator.fit`` method of each step.
+
+            .. versionadded:: 0.23
 
         Returns
         -------
@@ -443,6 +460,8 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             The target values.
         **fit_params : dict of string -> object
             Parameters passed to the `fit` method of each step.
+
+            .. versionadded:: 0.23
 
         Returns
         -------
@@ -625,8 +644,8 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
 
     See Also
     --------
-    RegressorChain: Equivalent for regression
-    MultioutputClassifier: Classifies each output independently rather than
+    RegressorChain : Equivalent for regression.
+    MultioutputClassifier : Classifies each output independently rather than
         chaining.
 
     References
@@ -792,10 +811,10 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
            [1., 1.],
            [2., 0.]])
 
-    See also
+    See Also
     --------
-    ClassifierChain: Equivalent for classification
-    MultioutputRegressor: Learns each output independently rather than
+    ClassifierChain : Equivalent for classification.
+    MultioutputRegressor : Learns each output independently rather than
         chaining.
 
     """
@@ -813,6 +832,8 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
         **fit_params : dict of string -> object
             Parameters passed to the `fit` method at each step
             of the regressor chain.
+
+            .. versionadded:: 0.23
 
         Returns
         -------

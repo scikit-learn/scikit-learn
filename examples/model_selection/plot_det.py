@@ -8,9 +8,9 @@ detection error tradeoff (DET) curves for different classification algorithms
 for the same classification task.
 
 DET curves are commonly plotted in normal deviate scale.
-To achieve this we transform the error rates as returned by the
-:func:`~sklearn.metrics.detection_error_tradeoff_curve` function and the axis
-scale using :func:`scipy.stats.norm`.
+To achieve this `plot_det_curve` transforms the error rates as returned by the
+:func:`~sklearn.metrics.det_curve` and the axis scale using
+:func:`scipy.stats.norm`.
 
 The point of this example is to demonstrate two properties of DET curves,
 namely:
@@ -39,8 +39,8 @@ example plot over other classifiers available in scikit-learn.
     - See :func:`sklearn.metrics.roc_curve` for further information about ROC
       curves.
 
-    - See :func:`sklearn.metrics.detection_error_tradeoff_curve` for further
-      information about DET curves.
+    - See :func:`sklearn.metrics.det_curve` for further information about
+      DET curves.
 
     - This example is loosely based on
       :ref:`sphx_glr_auto_examples_classification_plot_classifier_comparison.py`
@@ -51,14 +51,12 @@ import matplotlib.pyplot as plt
 
 from sklearn.datasets import make_classification
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import detection_error_tradeoff_curve
+from sklearn.metrics import plot_det_curve
 from sklearn.metrics import plot_roc_curve
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import LinearSVC
-
-from scipy.stats import norm
 
 N_SAMPLES = 1000
 
@@ -79,43 +77,17 @@ X_train, X_test, y_train, y_test = train_test_split(
 # prepare plots
 fig, [ax_roc, ax_det] = plt.subplots(1, 2, figsize=(11, 5))
 
-# first prepare the ROC curve
-ax_roc.set_title('Receiver Operating Characteristic (ROC) curves')
-ax_roc.grid(linestyle='--')
-
-# second prepare the DET curve
-ax_det.set_title('Detection Error Tradeoff (DET) curves')
-ax_det.set_xlabel('False Positive Rate')
-ax_det.set_ylabel('False Negative Rate')
-ax_det.set_xlim(-3, 3)
-ax_det.set_ylim(-3, 3)
-ax_det.grid(linestyle='--')
-
-# customized ticks for DET curve plot to represent normal deviate scale
-ticks = [0.001, 0.01, 0.05, 0.20, 0.5, 0.80, 0.95, 0.99, 0.999]
-tick_locs = norm.ppf(ticks)
-tick_lbls = [
-    '{:.0%}'.format(s) if (100*s).is_integer() else '{:.1%}'.format(s)
-    for s in ticks
-]
-plt.sca(ax_det)
-plt.xticks(tick_locs, tick_lbls)
-plt.yticks(tick_locs, tick_lbls)
-
-# iterate over classifiers
 for name, clf in classifiers.items():
     clf.fit(X_train, y_train)
 
-    if hasattr(clf, "decision_function"):
-        y_score = clf.decision_function(X_test)
-    else:
-        y_score = clf.predict_proba(X_test)[:, 1]
-
     plot_roc_curve(clf, X_test, y_test, ax=ax_roc, name=name)
-    det_fpr, det_fnr, _ = detection_error_tradeoff_curve(y_test, y_score)
+    plot_det_curve(clf, X_test, y_test, ax=ax_det, name=name)
 
-    # transform errors into normal deviate scale
-    ax_det.plot(norm.ppf(det_fpr), norm.ppf(det_fnr), label=name)
+ax_roc.set_title('Receiver Operating Characteristic (ROC) curves')
+ax_det.set_title('Detection Error Tradeoff (DET) curves')
+
+ax_roc.grid(linestyle='--')
+ax_det.grid(linestyle='--')
 
 plt.legend()
 plt.show()

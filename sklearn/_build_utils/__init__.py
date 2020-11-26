@@ -13,7 +13,7 @@ from distutils.version import LooseVersion
 
 from .pre_build_helpers import basic_check_build
 from .openmp_helpers import check_openmp_support
-from .min_dependencies import CYTHON_MIN_VERSION
+from .._min_dependencies import CYTHON_MIN_VERSION
 
 
 DEFAULT_ROOT = 'sklearn'
@@ -25,9 +25,9 @@ def _check_cython_version():
                     CYTHON_MIN_VERSION)
     try:
         import Cython
-    except ModuleNotFoundError:
+    except ModuleNotFoundError as e:
         # Re-raise with more informative error message instead:
-        raise ModuleNotFoundError(message)
+        raise ModuleNotFoundError(message) from e
 
     if LooseVersion(Cython.__version__) < CYTHON_MIN_VERSION:
         message += (' The current version of Cython is {} installed in {}.'

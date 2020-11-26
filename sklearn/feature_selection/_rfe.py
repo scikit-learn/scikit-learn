@@ -8,12 +8,13 @@
 
 import numpy as np
 import numbers
-from joblib import Parallel, delayed, effective_n_jobs
+from joblib import Parallel, effective_n_jobs
 
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.metaestimators import _safe_split
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _deprecate_positional_args
+from ..utils.fixes import delayed
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
@@ -32,8 +33,10 @@ def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer):
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, y_test = _safe_split(estimator, X, y, test, train)
     return rfe._fit(
-        X_train, y_train, lambda estimator, features:
-        _score(estimator, X_test[:, features], y_test, scorer)).scores_
+        X_train, y_train,
+        lambda estimator, features: _score(
+            estimator, X_test[:, features], y_test, scorer
+        )).scores_
 
 
 class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
@@ -63,6 +66,9 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         selected. If integer, the parameter is the absolute number of features
         to select. If float between 0 and 1, it is the fraction of features to
         select.
+
+        .. versionchanged:: 0.24
+           Added float values for fractions.
 
     step : int or float, default=1
         If greater than or equal to 1, then ``step`` corresponds to the
@@ -128,10 +134,10 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     -----
     Allows NaN/Inf in the input if the underlying estimator does as well.
 
-    See also
+    See Also
     --------
     RFECV : Recursive feature elimination with built-in cross-validated
-        selection of the best number of features
+        selection of the best number of features.
     SelectFromModel : Feature selection based on thresholds of importance
         weights.
     SequentialFeatureSelector : Sequential cross-validation based feature
@@ -505,9 +511,9 @@ class RFECV(RFE):
     >>> selector.ranking_
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
 
-    See also
+    See Also
     --------
-    RFE : Recursive feature elimination
+    RFE : Recursive feature elimination.
 
     References
     ----------

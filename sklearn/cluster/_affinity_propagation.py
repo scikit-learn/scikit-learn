@@ -10,10 +10,12 @@ import warnings
 
 from ..exceptions import ConvergenceWarning
 from ..base import BaseEstimator, ClusterMixin
-from ..utils import as_float_array, check_array, check_random_state
+from ..utils import as_float_array, check_random_state
+from ..utils.deprecation import deprecated
 from ..utils.validation import check_is_fitted, _deprecate_positional_args
 from ..metrics import euclidean_distances
 from ..metrics import pairwise_distances_argmin
+from .._config import config_context
 
 
 def _equal_similarities_and_preferences(S, preference):
@@ -34,7 +36,7 @@ def _equal_similarities_and_preferences(S, preference):
 def affinity_propagation(S, *, preference=None, convergence_iter=15,
                          max_iter=200, damping=0.5, copy=True, verbose=False,
                          return_n_iter=False, random_state='warn'):
-    """Perform Affinity Propagation Clustering of data
+    """Perform Affinity Propagation Clustering of data.
 
     Read more in the :ref:`User Guide <affinity_propagation>`.
 
@@ -42,7 +44,7 @@ def affinity_propagation(S, *, preference=None, convergence_iter=15,
     ----------
 
     S : array-like of shape (n_samples, n_samples)
-        Matrix of similarities between points
+        Matrix of similarities between points.
 
     preference : array-like of shape (n_samples,) or float, default=None
         Preferences for each point - points with larger values of
@@ -65,15 +67,15 @@ def affinity_propagation(S, *, preference=None, convergence_iter=15,
 
     copy : bool, default=True
         If copy is False, the affinity matrix is modified inplace by the
-        algorithm, for memory efficiency
+        algorithm, for memory efficiency.
 
     verbose : bool, default=False
-        The verbosity level
+        The verbosity level.
 
     return_n_iter : bool, default=False
         Whether or not to return the number of iterations.
 
-    random_state : int or RandomState instance, default=0
+    random_state : int, RandomState instance or None, default=0
         Pseudo-random number generator to control the starting state.
         Use an int for reproducible results across function calls.
         See the :term:`Glossary <random_state>`.
@@ -85,13 +87,13 @@ def affinity_propagation(S, *, preference=None, convergence_iter=15,
     -------
 
     cluster_centers_indices : ndarray of shape (n_clusters,)
-        index of clusters centers
+        Index of clusters centers.
 
     labels : ndarray of shape (n_samples,)
-        cluster labels for each point
+        Cluster labels for each point.
 
     n_iter : int
-        number of iterations run. Returned only if `return_n_iter` is
+        Number of iterations run. Returned only if `return_n_iter` is
         set to True.
 
     Notes
@@ -292,7 +294,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     verbose : bool, default=False
         Whether to be verbose.
 
-    random_state : int or RandomState instance, default=0
+    random_state : int, RandomState instance or None, default=0
         Pseudo-random number generator to control the starting state.
         Use an int for reproducible results across function calls.
         See the :term:`Glossary <random_state>`.
@@ -303,13 +305,13 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     Attributes
     ----------
     cluster_centers_indices_ : ndarray of shape (n_clusters,)
-        Indices of cluster centers
+        Indices of cluster centers.
 
     cluster_centers_ : ndarray of shape (n_clusters, n_features)
         Cluster centers (if affinity != ``precomputed``).
 
     labels_ : ndarray of shape (n_samples,)
-        Labels of each point
+        Labels of each point.
 
     affinity_matrix_ : ndarray of shape (n_samples, n_samples)
         Stores the affinity matrix used in ``fit``.
@@ -373,9 +375,16 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         self.affinity = affinity
         self.random_state = random_state
 
+    # TODO: Remove in 0.26
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 0.26.")
     @property
     def _pairwise(self):
         return self.affinity == "precomputed"
+
+    def _more_tags(self):
+        return {'pairwise': self.affinity == 'precomputed'}
 
     def fit(self, X, y=None):
         """Fit the clustering from features, or affinity matrix.
@@ -438,13 +447,14 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
             Cluster labels.
         """
         check_is_fitted(self)
-        X = check_array(X)
+        X = self._validate_data(X, reset=False)
         if not hasattr(self, "cluster_centers_"):
             raise ValueError("Predict method is not supported when "
                              "affinity='precomputed'.")
 
         if self.cluster_centers_.shape[0] > 0:
-            return pairwise_distances_argmin(X, self.cluster_centers_)
+            with config_context(assume_finite=True):
+                return pairwise_distances_argmin(X, self.cluster_centers_)
         else:
             warnings.warn("This model does not have any cluster centers "
                           "because affinity propagation did not converge. "

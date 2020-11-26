@@ -202,7 +202,7 @@ class LeastSquaresError(RegressionLossFunction):
                 sample_weight * ((y - raw_predictions.ravel()) ** 2)))
 
     def negative_gradient(self, y, raw_predictions, **kargs):
-        """Compute the negative gradient.
+        """Compute half of the negative gradient.
 
         Parameters
         ----------
@@ -594,7 +594,7 @@ class BinomialDeviance(ClassificationLossFunction):
                                  np.logaddexp(0, raw_predictions))))
 
     def negative_gradient(self, y, raw_predictions, **kargs):
-        """Compute the residual (= negative gradient).
+        """Compute half of the negative gradient.
 
         Parameters
         ----------
