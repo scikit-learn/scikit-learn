@@ -164,9 +164,9 @@ def _pprint(params, offset=0, printer=repr):
 
 
 class _MetadataRequest:
-    def _add_defaults(self, defaults):
+    def _add_defaults(self, metadata_request, defaults):
         metadata_request = _standardize_metadata_request(
-            self._metadata_request)
+            metadata_request)
         defaults = _standardize_metadata_request(defaults)
         for method in defaults:
             if method not in metadata_request:
@@ -178,7 +178,7 @@ class _MetadataRequest:
                             break
                     else:
                         metadata_request[method][key] = defaults[method][key]
-        self._metadata_request = metadata_request
+        return metadata_request
 
     def get_metadata_request(self):
         """Get requested data properties.
@@ -193,13 +193,14 @@ class _MetadataRequest:
         if hasattr(self, '_metadata_request'):
             return _standardize_metadata_request(self._metadata_request)
 
-        self._metadata_request = _empty_metadata_request()
+        metadata_request = _empty_metadata_request()
 
         defaults = [x for x in dir(self)
                     if x.startswith('_metadata_request__')]
         for attr in defaults:
-            self._add_defaults(getattr(self, attr))
-        return _standardize_metadata_request(self._metadata_request)
+            metadata_request = self._add_defaults(
+                metadata_request, getattr(self, attr))
+        return _standardize_metadata_request(metadata_request)
 
 
 class MetadataConsumer:
