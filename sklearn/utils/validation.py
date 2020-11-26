@@ -40,25 +40,12 @@ def _deprecate_positional_args(func=None, *, version="0.25"):
 
     Parameters
     ----------
-    version : callable or str, default="0.25"
-        The version when positional arguments will result in error. If
-        callable, then "0.25" will be used for error message.
+    func : callable, default=None
+        Function to check arguments on.
+    version : callable, default="0.25"
+        The version when positional arguments will result in error.
     """
-
     def _inner_deprecate_positional_args(f):
-        """Decorator for methods that issues warnings for positional arguments.
-
-        Using the keyword-only argument syntax in pep 3102, arguments after the
-        * will issue a warning when passed as a positional argument.
-
-        Parameters
-        ----------
-        f : callable
-            Function to check arguments on.
-
-        version : str
-            The version when positional arguments will result in error.
-        """
         sig = signature(f)
         kwonly_args = []
         all_args = []
