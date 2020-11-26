@@ -238,7 +238,8 @@ def randomized_range_finder(A, *, size, n_iter,
 
     # Sample the range of A using by linear projection of Q
     # Extract an orthonormal basis
-    Q, _ = linalg.qr(safe_sparse_dot(A, Q), mode='economic')
+    Q, _ = linalg.qr(safe_sparse_dot(A, Q), mode='economic',
+                     check_finite=False)
     return Q
 
 
