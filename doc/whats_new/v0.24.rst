@@ -369,7 +369,7 @@ Changelog
   :user:`Roei Kahny <RoeiKa>`.
 
 - |API| Positional arguments are deprecated in
-  :methd:`inspection.PartialDependenceDisplay.plot` and will error in 0.26.
+  :meth:`inspection.PartialDependenceDisplay.plot` and will error in 0.26.
   :pr:`18293` by `Thomas Fan`_.
 
 :mod:`sklearn.isotonic`
