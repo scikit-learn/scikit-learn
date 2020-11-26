@@ -2,12 +2,13 @@ Metadata Routing
 ================
 
 This guide demonstrates how metadata such as ``sample_weight`` can be routed
-and passed along to estimators, meta-estimators, scorers, and CV splitters. In
-order to pass a metadata to a method such as ``fit`` or ``score``, the object
-accepting the metadata, should *request* it. For estimators and splitters this
-is done via ``request_*`` methods, e.g. ``request_sample_weight(...)``, and for
-scorers this is done via passing ``request_props`` to ``make_scorer``. For
-grouped splitters such as ``GroupKFold`` a ``groups`` parameter is requested by
+and passed along to estimators, scorers, and CV splitters through
+meta-estimators such as ``Pipeline`` and ``GridSearchCV``. In order to pass a
+metadata to a method such as ``fit`` or ``score``, the object accepting the
+metadata, should *request* it. For estimators and splitters this is done via
+``request_*`` methods, e.g. ``request_sample_weight(...)``, and for scorers
+this is done via passing ``request_props`` to ``make_scorer``. For grouped
+splitters such as ``GroupKFold`` a ``groups`` parameter is requested by
 default. This is best demonstrated by the following examples.
 
 Usage Examples
@@ -42,8 +43,9 @@ requested by any of its children.
 Weighted scoring and unweighted fitting
 ---------------------------------------
 
-Since ``LogisticRegressionCV`` requires that weights explicitly be requested,
-removing that request means the fitting is unweighted::
+Since ``LogisticRegressionCV``, like all scikit-learn estimators, requires that
+weights explicitly be requested, removing that request means the fitting is
+unweighted::
 
   >>> weighted_acc = make_scorer(accuracy_score,
   ...                            request_props=["sample_weight"])
@@ -118,8 +120,8 @@ instance, if an estimator supports ``sample_weight`` in ``fit`` and ``score``,
 it exposes ``estimator.request_sample_weight(fit=value, score=value)``. Here
 ``value`` can be:
 
-- ``True``: method expects a ``sample_weight``.
-- ``False``: method does not accept a ``sample_weight``.
+- ``True``: method requests a ``sample_weight``.
+- ``False``: method does not request a ``sample_weight``.
 - ``"param_name"``: if this estimator is used in a meta-estimator, the
   meta-estimator should forward ``"param_name"`` as ``sample_weight`` to this
   estimator.
