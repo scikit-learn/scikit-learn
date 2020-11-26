@@ -1225,7 +1225,8 @@ def _safe_tags(estimator, key=None, default=None):
         `default` allows to define the `default` value of a tag if it is not
         present in `_DEFAULT_TAGS` or to overwrite the value in `_DEFAULT_TAGS`
         if it the tag is defined. When `default is None`, no default values nor
-        overwriting will take place.
+        overwriting will take place. If `default is not None` but that the
+        tag is defined, `default` will be discarded.
 
     Returns
     -------
@@ -1245,10 +1246,7 @@ def _safe_tags(estimator, key=None, default=None):
                         f"you want to define a default value."
                     ) from exc
             else:
-                tags = estimator._get_tags()
-                if key in tags:
-                    raise ValueError("xxxx")
-                return default
+                return estimator._get_tags().get(key, default)
         else:
             tags = estimator._get_tags()
             return {
