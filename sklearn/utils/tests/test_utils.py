@@ -698,35 +698,51 @@ def test_to_object_array(sequence):
     assert out.ndim == 1
 
 
-class NoTags:
+class EstimatorNoTags:
     pass
 
 
-class BaseEstimatorNotATag(BaseEstimator):
-    def _get_tags(self):
-        tags = super()._get_tags().copy()
-        del tags["allow_nan"]
-        return tags
+@pytest.mark.parametrize(
+    "estimator, err_msg",
+    [
+        (BaseEstimator(), "The key xxx is neither defined in _more_tags"),
+        (EstimatorNoTags(), "The key xxx is not a default tags defined"),
+    ],
+)
+def test_safe_tags_error(estimator, err_msg):
+    # Check that safe_tags raises error in ambiguous case.
+    with pytest.raises(ValueError, match=err_msg):
+        _safe_tags(estimator, key="xxx")
 
 
 @pytest.mark.parametrize(
-    "estimator, key, default, expected_tags",
+    "estimator, key, expected_results",
     [
-        (NoTags(), None, None, _DEFAULT_TAGS),
-        (NoTags(), "allow_nan", None, _DEFAULT_TAGS["allow_nan"]),
-        (NoTags(), "allow_nan", True, True),
-        (BaseEstimator(), None, None, _DEFAULT_TAGS),
-        (BaseEstimator(), "allow_nan", None, _DEFAULT_TAGS["allow_nan"]),
-        (BaseEstimator(), "allow_nan", True, False),
-        (BaseEstimatorNotATag(), None, None, _DEFAULT_TAGS),
-        (
-            BaseEstimatorNotATag(),
-            "allow_nan",
-            None,
-            _DEFAULT_TAGS["allow_nan"],
-        ),
-        (BaseEstimatorNotATag(), "allow_nan", True, True),
+        (BaseEstimator(), None, _DEFAULT_TAGS),
+        (BaseEstimator(), "allow_nan", _DEFAULT_TAGS["allow_nan"]),
     ],
 )
-def test_safe_tags(estimator, key, default, expected_tags):
-    assert _safe_tags(estimator, key=key, default=default) == expected_tags
+def test_safe_tags_implement_get_tags(estimator, key, expected_results):
+    assert _safe_tags(estimator, key=key) == expected_results
+
+
+@pytest.mark.parametrize(
+    "estimator, key, default, expected_results",
+    [
+        (EstimatorNoTags(), None, None, _DEFAULT_TAGS),
+        (EstimatorNoTags(), "allow_nan", None, _DEFAULT_TAGS["allow_nan"]),
+        # Overwrite the default tags value
+        (
+            EstimatorNoTags(),
+            "allow_nan",
+            not _DEFAULT_TAGS["allow_nan"],
+            not _DEFAULT_TAGS["allow_nan"],
+        ),
+        # Define a default value for unknown tags
+        (EstimatorNoTags(), "xxx", True, True),
+    ],
+)
+def test_safe_tags_no_get_tags(estimator, key, default, expected_results):
+    # check the behaviour of _safe_tags when an estimator does not implement
+    # _get_tags
+    assert _safe_tags(estimator, key=key, default=default) == expected_results
