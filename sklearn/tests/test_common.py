@@ -473,8 +473,14 @@ def _generate_minimal_compatible_instances():
     for SearchCV, (Estimator, param_grid) in zip(
         [GridSearchCV, RandomizedSearchCV],
         [
-            (MinimalRegressor, {"minimalregressor__param": [1, 10]}),
-            (MinimalClassifier, {"minimalclassifier__param": [1, 10]}),
+            (MinimalRegressor, {
+                "minimaltransformer__param": [1, 10],
+                "minimalregressor__param": [1, 10],
+            }),
+            (MinimalClassifier, {
+                "minimaltransformer__param": [1, 10],
+                "minimalclassifier__param": [1, 10],
+            }),
         ],
     ):
         yield SearchCV(
