@@ -1245,6 +1245,9 @@ def _safe_tags(estimator, key=None, default=None):
                         f"you want to define a default value."
                     ) from exc
             else:
+                tags = estimator._get_tags()
+                if key in tags:
+                    raise ValueError("xxxx")
                 return default
         else:
             tags = estimator._get_tags()
