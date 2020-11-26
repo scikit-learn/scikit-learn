@@ -2950,9 +2950,19 @@ def check_estimator_sparse_dense(name, estimator_orig,
     rng = np.random.RandomState(42)
     estimator = clone(estimator_orig)
     estimator_sp = clone(estimator_orig)
-    tags = estimator_orig._get_tags()
-    centers = 2 if tags["binary_only"] else None
-    X, y = make_blobs(random_state=rng, cluster_std=0.5, centers=centers)
+    if is_regressor(estimator_orig):
+        n_samples = 10
+        n_features = 2
+        X = sparse.random(n_samples, n_features, density=0.8,
+                          random_state=rng).A
+        X = X[~np.all(X == 0, axis=1)]
+        assert len(np.where(X == 0)[0]) > 0
+        size_X = X.shape[0]
+        y = X.dot(np.array([0.1, -0.2])) + 1e-3 * rng.randn(size_X)
+    else:
+        tags = estimator_orig._get_tags()
+        centers = 2 if tags["binary_only"] else None
+        X, y = make_blobs(random_state=rng, cluster_std=0.5, centers=centers)
     # for put some points to zero to have a little bit of sparsity
     X = _enforce_estimator_tags_x(estimator_orig, X)
     X_csr = sparse.csr_matrix(X)
