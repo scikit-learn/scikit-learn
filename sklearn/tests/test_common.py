@@ -322,10 +322,7 @@ class MinimalClassifier:
         return {"param": self.param}
 
     def set_params(self, **params):
-        valid_params = self.get_params()
         for key, value in params.items():
-            if key not in valid_params:
-                raise ValueError("Wrong params")
             setattr(self, key, value)
         return self
 
@@ -379,10 +376,7 @@ class MinimalRegressor:
         return {"param": self.param}
 
     def set_params(self, **params):
-        valid_params = self.get_params()
         for key, value in params.items():
-            if key not in valid_params:
-                raise ValueError("Wrong params")
             setattr(self, key, value)
         return self
 
@@ -426,10 +420,7 @@ class MinimalTransformer:
         return {"param": self.param}
 
     def set_params(self, **params):
-        valid_params = self.get_params()
         for key, value in params.items():
-            if key not in valid_params:
-                raise ValueError("Wrong params")
             setattr(self, key, value)
         return self
 
@@ -450,9 +441,6 @@ class MinimalTransformer:
         if X.shape[1] != self.n_features_in_:
             raise ValueError
         return X
-
-    def inverse_transform(self, X, y=None):
-        return self.transform(X)
 
     def fit_transform(self, X, y=None):
         return self.fit(X, y).transform(X, y)
