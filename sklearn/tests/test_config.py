@@ -83,10 +83,10 @@ def test_set_config():
     assert_raises(TypeError, set_config, do_something_else=True)
 
 
-def set_assume_finite(assume_finite, sleep_dur):
-    """Return the value of assume_finite after waiting `sleep_dur`."""
+def set_assume_finite(assume_finite, sleep_duration):
+    """Return the value of assume_finite after waiting `sleep_duration`."""
     with config_context(assume_finite=assume_finite):
-        time.sleep(sleep_dur)
+        time.sleep(sleep_duration)
         return get_config()['assume_finite']
 
 
@@ -104,13 +104,13 @@ def test_config_threadsafe_joblib(backend):
             and backend == 'loky'):
         pytest.skip('loky backend does not exist in joblib <0.12')  # noqa
 
-    assume_finite_bools = [False, True]
-    sleep_seconds = [0.1, 0.2]
+    assume_finites = [False, True]
+    sleep_durations = [0.1, 0.2]
 
     items = Parallel(backend=backend, n_jobs=2)(
         delayed(set_assume_finite)(assume_finite, sleep_dur)
         for assume_finite, sleep_dur
-        in zip(assume_finite_bools, sleep_seconds))
+        in zip(assume_finites, sleep_durations))
 
     assert items == [False, True]
 
@@ -120,11 +120,11 @@ def test_config_threadsafe():
     between threads. Same test as `test_config_threadsafe_joblib` by with
     `ThreadPoolExecutor`."""
 
-    assume_finite_bools = [False, True]
-    sleep_seconds = [0.1, 0.2]
+    assume_finites = [False, True]
+    sleep_durations = [0.1, 0.2]
 
     with ThreadPoolExecutor(max_workers=2) as e:
         items = [output for output in
-                 e.map(set_assume_finite, assume_finite_bools, sleep_seconds)]
+                 e.map(set_assume_finite, assume_finites, sleep_durations)]
 
     assert items == [False, True]
