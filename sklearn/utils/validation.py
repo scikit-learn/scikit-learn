@@ -632,20 +632,20 @@ def check_array(array, accept_sparse=False, *, accept_large_sparse=True,
                     "your data has a single feature or array.reshape(1, -1) "
                     "if it contains a single sample.".format(array))
 
-        # in the future np.flexible dtypes will be handled like object dtypes
-        if dtype_numeric and np.issubdtype(array.dtype, np.flexible):
-            warnings.warn(
-                "Beginning in version 0.22, arrays of bytes/strings will be "
-                "converted to decimal numbers if dtype='numeric'. "
-                "It is recommended that you convert the array to "
-                "a float dtype before using it in scikit-learn, "
-                "for example by using "
-                "your_array = your_array.astype(np.float64).",
-                FutureWarning, stacklevel=2)
-
         # make sure we actually converted to numeric:
-        if dtype_numeric and array.dtype.kind == "O":
-            array = array.astype(np.float64)
+        if dtype_numeric and array.dtype.kind in "OUSV":
+            warnings.warn("Arrays of bytes/strings is being converted to "
+                          "decimal numbers if dtype='numeric'. This behavior "
+                          "is deprecated in 0.24 and will be removed in 0.26 "
+                          "Please convert your data to numeric values "
+                          "explicitly instead.",
+                          FutureWarning, stacklevel=2)
+            try:
+                array = array.astype(np.float64)
+            except ValueError as e:
+                raise ValueError(
+                    "Unable to convert array of bytes/strings "
+                    "into decimal numbers with dtype='numeric'") from e
         if not allow_nd and array.ndim >= 3:
             raise ValueError("Found array with dim %d. %s expected <= 2."
                              % (array.ndim, estimator_name))
