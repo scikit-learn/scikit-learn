@@ -1490,7 +1490,7 @@ def test_loss_log():
     ]
     _test_loss_common(loss, cases)
     assert_almost_equal(loss.py_dloss(18.1, 1.0), np.exp(-18.1) * -1.0, 16)
-    assert_almost_equal(loss.py_loss(18.1, 1.0), np.exp(-18.1) , 16)
+    assert_almost_equal(loss.py_loss(18.1, 1.0), np.exp(-18.1), 16)
     assert_almost_equal(loss.py_dloss(-18.1, -1.0), np.exp(-18.1) * 1.0, 16)
     assert_almost_equal(loss.py_loss(-18.1, 1.0), 18.1, 16)
 
