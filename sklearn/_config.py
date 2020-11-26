@@ -13,6 +13,12 @@ _global_config = {
 _threadlocal = threading.local()
 
 
+def _set_threadlocal():
+    """Set the configuration that is local to the thread."""
+    if not hasattr(_threadlocal, 'global_config'):
+        _threadlocal.global_config = _global_config.copy()
+
+
 def get_config():
     """Retrieve current values for configuration set by :func:`set_config`
 
@@ -26,8 +32,7 @@ def get_config():
     config_context : Context manager for global scikit-learn configuration.
     set_config : Set global scikit-learn configuration.
     """
-    if not hasattr(_threadlocal, 'global_config'):
-        _threadlocal.global_config = _global_config.copy()
+    _set_threadlocal()
     return _threadlocal.global_config.copy()
 
 
@@ -76,8 +81,7 @@ def set_config(assume_finite=None, working_memory=None,
     config_context : Context manager for global scikit-learn configuration.
     get_config : Retrieve current values of the global configuration.
     """
-    if not hasattr(_threadlocal, 'global_config'):
-        _threadlocal.global_config = _global_config.copy()
+    _set_threadlocal()
 
     if assume_finite is not None:
         _threadlocal.global_config['assume_finite'] = assume_finite

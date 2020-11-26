@@ -95,7 +95,7 @@ def test_config_threadsafe(backend):
 
     if (parse_version(joblib.__version__) < parse_version('0.12')
             and backend == 'loky'):
-        pytest.skip('loky backend does not exist in joblib <0.12')
+        pytest.skip('loky backend does not exist in joblib <0.12')  # noqa
 
     booleans = [False, True]
     sleep_seconds = [0.1, 0.2]
