@@ -2955,10 +2955,13 @@ def check_estimator_sparse_dense(name, estimator_orig,
         n_features = 2
         X = sparse.random(n_samples, n_features, density=0.8,
                           random_state=rng).A
-        X = X[~np.all(X == 0, axis=1)]
-        assert len(np.where(X == 0)[0]) > 0
+        X = np.round(X, decimals=2)  # to limit numerical pbs
+        X = X[~np.all(X == 0, axis=1)]  # we remove null rows
+        assert len(np.where(X == 0)[0]) > 0  # we should have sparsity
+        assert X.shape[0] > 5  # we mustn't have very few samples
         size_X = X.shape[0]
         y = X.dot(np.array([0.1, -0.2])) + 1e-3 * rng.randn(size_X)
+        y = np.round(y, decimals=2)
     else:
         tags = estimator_orig._get_tags()
         centers = 2 if tags["binary_only"] else None
