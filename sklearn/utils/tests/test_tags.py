@@ -49,16 +49,6 @@ def test_safe_tags_error(estimator, err_msg):
             not _DEFAULT_TAGS["allow_nan"],
             _DEFAULT_TAGS["allow_nan"],
         ),
-        (BaseEstimator(), "xxx", True, True),
-        (EstimatorOwnTags(), None, None, _DEFAULT_TAGS),
-        (EstimatorOwnTags(), "allow_nan", None, _DEFAULT_TAGS["allow_nan"]),
-        (
-            EstimatorOwnTags(),
-            "allow_nan",
-            not _DEFAULT_TAGS["allow_nan"],
-            not _DEFAULT_TAGS["allow_nan"],
-        ),
-        (EstimatorOwnTags(), "xxx", True, True),
     ],
 )
 def test_safe_tags_no_get_tags(estimator, key, default, expected_results):

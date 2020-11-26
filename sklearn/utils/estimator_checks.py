@@ -52,7 +52,10 @@ from ..model_selection._validation import _safe_split
 from ..metrics.pairwise import (rbf_kernel, linear_kernel, pairwise_distances)
 
 from .import shuffle
-from ._tags import _safe_tags
+from ._tags import (
+    _DEFAULT_TAGS,
+    _safe_tags,
+)
 from .validation import has_fit_parameter, _num_samples
 from ..preprocessing import StandardScaler
 from ..preprocessing import scale
@@ -115,6 +118,7 @@ def _yield_checks(estimator):
     # give the same answer as before.
     yield check_estimators_pickle
 
+    yield check_estimator_get_tags_default_keys
 
 def _yield_classifier_checks(classifier):
     tags = _safe_tags(classifier)
@@ -3151,3 +3155,15 @@ def check_n_features_in_after_fitting(name, estimator_orig):
 
     with raises(ValueError, match=msg):
         estimator.partial_fit(X_bad, y)
+
+
+def check_estimator_get_tags_default_keys(name, estimator_orig):
+    # check that if _get_tags is implemented, it contains all keys from
+    # _DEFAULT_KEYS
+    estimator = clone(estimator_orig)
+    if not hasattr(estimator, "_get_tags"):
+        return
+
+    tags_keys = set(estimator._get_tags().keys())
+    default_tags_keys = set(_DEFAULT_TAGS.keys())
+    assert tags_keys.intersection(default_tags_keys) == default_tags_keys

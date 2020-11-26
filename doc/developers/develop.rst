@@ -512,11 +512,15 @@ of estimators that allow programmatic inspection of their capabilities, such as
 sparse matrix support, supported output types and supported methods. The
 estimator tags are a dictionary returned by the method ``_get_tags()``. These
 tags are used by the common tests and the
-:func:`sklearn.utils.estimator_checks.check_estimator` function to decide what
-tests to run and what input data is appropriate. Tags can depend on estimator
-parameters or even system architecture and can in general only be determined at
-runtime. The default values for the estimator tags are defined in the
-``BaseEstimator`` class.
+:func:`~sklearn.utils.estimator_checks.check_estimator` function and
+:func:`~sklearn.utils.estimator_checks.parametrize_with_checks` decorator to
+decide what tests to run and what input data is appropriate. Tags can depend on
+estimator parameters or even system architecture and can in general only be
+determined at runtime. The default values for the estimator tags are defined in
+the :class:`~sklearn.base.BaseEstimator` class. If rolling your own estimator
+without inheriting from :class:`~sklearn.base.BaseEstimator`, you will need to
+implement the `_get_tags()` function. Besides, this function needs to at least
+return the tags defined below.
 
 The current set of estimator tags are:
 
