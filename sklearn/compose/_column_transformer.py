@@ -409,18 +409,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                     "The output of the '{0}' transformer should be 2D (scipy "
                     "matrix, array, or pandas DataFrame).".format(name))
 
-    def _validate_features(self, feature_names):
-        """Ensures feature counts and names are the same during fit and
-        transform.
-        """
-
-        if self._feature_names_in is None or feature_names is None:
-            return
-
-        if np.any(self._feature_names_in != np.asarray(feature_names)):
-            raise RuntimeError("Given feature/column names do not "
-                               "match the ones for the data given during fit.")
-
     def _log_message(self, name, idx, total):
         if not self.verbose:
             return None
@@ -560,7 +548,13 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             X_feature_names = None
 
         self._check_n_features(X, reset=False)
-        self._validate_features(X_feature_names)
+        if (self._feature_names_in is not None and
+            X_feature_names is not None and
+                np.any(self._feature_names_in != X_feature_names)):
+            raise RuntimeError(
+                "Given feature/column names do not match the ones for the "
+                "data given during fit."
+            )
         Xs = self._fit_transform(X, None, _transform_one, fitted=True)
         self._validate_output(Xs)
 
