@@ -812,9 +812,9 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         potentially scaling. If False, these operations will be done inplace,
         modifying both arrays.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, default=None
         The seed of the pseudo random number generator to initialize the
-        starting vector for svds.  If int, random_state is the seed used by
+        starting vector for `svds`. If int, random_state is the seed used by
         the random number generator; If RandomState instance, random_state
         is the random number generator; If None, the random number generator
         is the RandomState instance used by `np.random`.
@@ -867,10 +867,15 @@ class PLSSVD(TransformerMixin, BaseEstimator):
     PLSCanonical
     CCA
     """
-
     @_deprecate_positional_args
-    def __init__(self, n_components=2, *, scale=True, copy=True,
-                 random_state=None):
+    def __init__(
+        self,
+        n_components=2,
+        *,
+        scale=True,
+        copy=True,
+        random_state=None,
+    ):
         self.n_components = n_components
         self.scale = scale
         self.copy = copy
@@ -921,18 +926,17 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         # components is smaller than rank(X) - 1. Hence, if we want to extract
         # all the components (C.shape[1]), we have to use another one. Else,
         # let's use arpacks to compute only the interesting components.
-        if n_components >= np.min(C.shape):
+        n_min_dim = min(C.shape)
+        if n_components >= n_min_dim:
             U, s, Vt = svd(C, full_matrices=False)
         else:
-            v0 = _init_arpack_v0(min(C.shape), self.random_state)
+            v0 = _init_arpack_v0(n_min_dim, self.random_state)
             U, s, Vt = svds(C, k=n_components, v0=v0)
-        # Deterministic output
         U, Vt = svd_flip(U, Vt)
         V = Vt.T
 
         self._x_scores = np.dot(X, U)  # TODO: remove in 0.26
         self._y_scores = np.dot(Y, V)  # TODO: remove in 0.26
-
         self.x_weights_ = U
         self.y_weights_ = V
         return self

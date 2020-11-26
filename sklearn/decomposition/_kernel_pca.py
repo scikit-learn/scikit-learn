@@ -10,9 +10,7 @@ from scipy.sparse.linalg import eigsh
 from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import svd_flip
 from ..utils.validation import check_is_fitted, _check_psd_eigenvalues
-
 from ..utils.deprecation import deprecated
-
 from ..exceptions import NotFittedError
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import KernelCenterer
