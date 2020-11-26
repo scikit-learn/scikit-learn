@@ -85,7 +85,7 @@ def _get_first_singular_vectors_svd(X, Y):
     Here the whole SVD is computed.
     """
     C = np.dot(X.T, Y)
-    U, _, Vt = svd(C, full_matrices=False)
+    U, _, Vt = svd(C, full_matrices=False, check_finite=False)
     return U[:, 0], Vt[0, :]
 
 
