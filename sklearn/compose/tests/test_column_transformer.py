@@ -1192,7 +1192,7 @@ def test_column_transformer_reordered_column_names_remainder(explicit_colname):
     with pytest.raises(RuntimeError, match=err_msg):
         tf.transform(X_trans_df)
 
-    # RuntimeError for added columns
+    # ValueError for added columns
     X_extended_df = X_fit_df.copy()
     X_extended_df['third'] = [3, 6, 9]
     err_msg = ("X has 3 features, but ColumnTransformer is expecting 2 "
