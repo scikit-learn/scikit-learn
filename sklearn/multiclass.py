@@ -45,11 +45,9 @@ from .base import MetaEstimatorMixin, is_regressor
 from .base import _is_pairwise
 from .preprocessing import LabelBinarizer
 from .metrics.pairwise import euclidean_distances
-from .utils import (
-    check_random_state,
-    _safe_tags,
-)
+from .utils import check_random_state
 from .utils.deprecation import deprecated
+from .utils._tags import _safe_tags
 from .utils.validation import _num_samples
 from .utils.validation import check_is_fitted
 from .utils.validation import check_X_y, check_array

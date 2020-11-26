@@ -22,9 +22,9 @@ from .utils.metaestimators import if_delegate_has_method
 from .utils import (
     Bunch,
     _print_elapsed_time,
-    _safe_tags,
 )
 from .utils.deprecation import deprecated
+from .utils._tags import _safe_tags
 from .utils.validation import check_memory
 from .utils.validation import _deprecate_positional_args
 from .utils.fixes import delayed

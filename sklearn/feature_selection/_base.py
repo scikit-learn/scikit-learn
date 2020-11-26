@@ -16,8 +16,8 @@ from ..utils import (
     check_array,
     safe_mask,
     safe_sqr,
-    _safe_tags,
 )
+from ..utils._tags import _safe_tags
 
 
 class SelectorMixin(TransformerMixin, metaclass=ABCMeta):

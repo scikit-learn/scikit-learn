@@ -7,7 +7,7 @@ import numbers
 from ._base import SelectorMixin
 from ._base import _get_feature_importances
 from ..base import BaseEstimator, clone, MetaEstimatorMixin
-from ..utils import _safe_tags
+from ..utils._tags import _safe_tags
 from ..utils.validation import check_is_fitted
 
 from ..exceptions import NotFittedError

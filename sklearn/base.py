@@ -14,9 +14,9 @@ import numpy as np
 
 from . import __version__
 from ._config import get_config
-from .utils import (
+from .utils import _IS_32BIT
+from .utils._tags import (
     _DEFAULT_TAGS,
-    _IS_32BIT,
     _safe_tags,
 )
 from .utils.validation import check_X_y

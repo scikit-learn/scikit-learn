@@ -7,7 +7,7 @@ import numpy as np
 
 from ._base import SelectorMixin
 from ..base import BaseEstimator, MetaEstimatorMixin, clone
-from ..utils import _safe_tags
+from ..utils._tags import _safe_tags
 from ..utils.validation import check_is_fitted
 from ..model_selection import cross_val_score
 
