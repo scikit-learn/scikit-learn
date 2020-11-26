@@ -188,11 +188,11 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         # and is used when implementing RFECV
         # self.scores_ will not be calculated when calling _fit through fit
 
-        force_all_finite = not _safe_tags(self, key="allow_nan", default=True)
+        tags = self._get_tags()
         X, y = self._validate_data(
             X, y, accept_sparse="csc",
             ensure_min_features=2,
-            force_all_finite=force_all_finite,
+            force_all_finite=not tags.get("allow_nan", True),
             multi_output=True
         )
         error_msg = ("n_features_to_select must be either None, a "
@@ -558,10 +558,10 @@ class RFECV(RFE):
 
             .. versionadded:: 0.20
         """
-        force_all_finite = not _safe_tags(self, key="allow_nan", default=True)
+        tags = self._get_tags()
         X, y = self._validate_data(
             X, y, accept_sparse="csr", ensure_min_features=2,
-            force_all_finite=force_all_finite,
+            force_all_finite=not tags.get('allow_nan', True),
             multi_output=True
         )
 

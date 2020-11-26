@@ -129,12 +129,11 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
         -------
         self : object
         """
-
-        force_all_finite = not _safe_tags(self, key="allow_nan", default=True)
+        tags = self._get_tags()
         X, y = self._validate_data(
             X, y, accept_sparse="csc",
             ensure_min_features=2,
-            force_all_finite=force_all_finite,
+            force_all_finite=not tags.get("allow_nan", True),
             multi_output=True
         )
         n_features = X.shape[1]

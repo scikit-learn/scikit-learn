@@ -12,10 +12,7 @@ from inspect import signature
 import numpy as np
 
 import sklearn
-from sklearn.utils import (
-    IS_PYPY,
-    _safe_tags,
-)
+from sklearn.utils import IS_PYPY
 from sklearn.utils._testing import check_docstring_parameters
 from sklearn.utils._testing import _get_func_name
 from sklearn.utils._testing import ignore_warnings
@@ -230,9 +227,9 @@ def test_fit_docstring_attributes(name, Estimator):
     y = _enforce_estimator_tags_y(est, y)
     X = _enforce_estimator_tags_x(est, X)
 
-    if '1dlabels' in _safe_tags(est, key='X_types'):
+    if "1dlabels" in est._get_tags()["X_types"]:
         est.fit(y)
-    elif '2dlabels' in _safe_tags(est, key='X_types'):
+    elif "2dlabels" in est._get_tags()["X_types"]:
         est.fit(np.c_[y, y])
     else:
         est.fit(X, y)

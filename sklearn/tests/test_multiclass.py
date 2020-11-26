@@ -20,7 +20,6 @@ from sklearn.utils.multiclass import (check_classification_targets,
 from sklearn.utils import (
     check_array,
     shuffle,
-    _safe_tags,
 )
 
 from sklearn.metrics import precision_score
@@ -797,10 +796,10 @@ def test_pairwise_tag(MultiClassClassifier):
     clf_notprecomputed = svm.SVC()
 
     ovr_false = MultiClassClassifier(clf_notprecomputed)
-    assert not _safe_tags(ovr_false, key='pairwise')
+    assert not ovr_false._get_tags()["pairwise"]
 
     ovr_true = MultiClassClassifier(clf_precomputed)
-    assert _safe_tags(ovr_true, key='pairwise')
+    assert ovr_true._get_tags()["pairwise"]
 
 
 # TODO: Remove in 0.26

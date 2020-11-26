@@ -16,7 +16,6 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.utils import _safe_tags
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_almost_equal
@@ -301,7 +300,7 @@ def test_lasso_cv_positive_constraint():
      (Lars, {}),
      (LinearRegression, {}),
      (LassoLarsIC, {})]
- )
+)
 def test_model_pipeline_same_as_normalize_true(LinearModel, params):
     # Test that linear models (LinearModel) set with normalize set to True are
     # doing the same as the same linear model preceeded by StandardScaler
@@ -316,7 +315,7 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
         LinearModel(normalize=False, fit_intercept=True, **params)
     )
 
-    is_multitask = _safe_tags(model_normalize, key="multioutput_only")
+    is_multitask = model_normalize._get_tags()["multioutput_only"]
 
     # prepare the data
     n_samples, n_features = 100, 2

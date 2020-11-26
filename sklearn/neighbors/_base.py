@@ -26,7 +26,6 @@ from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import (
     check_array,
     gen_even_slices,
-    _safe_tags,
     _to_object_array,
 )
 from ..utils.deprecation import deprecated
@@ -359,7 +358,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             raise ValueError("p must be greater than one for minkowski metric")
 
     def _fit(self, X, y=None):
-        if _safe_tags(self, key="requires_y"):
+        if self._get_tags()["requires_y"]:
             if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
                 X, y = self._validate_data(X, y, accept_sparse="csr",
                                            multi_output=True)
