@@ -1445,6 +1445,8 @@ def _get_props_from_objs(objs):
         A union of the requested props by the given objects.
     """
     metadata_request = _empty_metadata_request()
+    if objs is None:
+        return metadata_request
     # print("------- _get_props_from_objs")
     # print("objects: ", objs)
     if isinstance(objs, dict):

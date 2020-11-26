@@ -24,6 +24,8 @@ from ..preprocessing import LabelEncoder, LabelBinarizer
 from ..svm._base import _fit_liblinear
 from ..utils import check_array, check_consistent_length, compute_class_weight
 from ..utils import check_random_state
+from ..utils import build_router_metadata_request
+from ..utils import build_method_metadata_params
 from ..utils.extmath import (log_logistic, safe_sparse_dot, softmax,
                              squared_norm)
 from ..utils.extmath import row_norms
@@ -1850,7 +1852,21 @@ class LogisticRegressionCV(LogisticRegression,
 
         # init cross-validation generator
         cv = check_cv(self.cv, y, classifier=True)
-        folds = list(cv.split(X, y))
+        scorer = get_scorer(self.scoring)
+        _params = build_method_metadata_params(
+            children={'base': super(LinearClassifierMixin),
+                      'splitter': cv,
+                      'scorer': scorer},
+            routing=[
+                ('base', 'fit', 'fit'),
+                ('splitter', 'split', 'split'),
+                ('scorer', 'score', 'score')
+            ],
+            metadata=fit_params
+        )
+        _cv_params = _params.split
+        _score_params = _params.score
+        folds = list(cv.split(X, y, **_cv_params))
 
         # Use the label encoded classes
         n_classes = len(encoded_labels)
@@ -1902,7 +1918,8 @@ class LogisticRegressionCV(LogisticRegression,
                       random_state=self.random_state,
                       max_squared_sum=max_squared_sum,
                       sample_weight=sample_weight,
-                      l1_ratio=l1_ratio
+                      l1_ratio=l1_ratio,
+                      score_params=_score_params
                       )
             for label in iter_encoded_labels
             for train, test in folds
@@ -2100,3 +2117,15 @@ class LogisticRegressionCV(LogisticRegression,
                 'zero sample_weight is not equivalent to removing samples',
             }
         }
+
+    def get_metadata_request(self):
+        return build_router_metadata_request(
+            children={"base": super(LinearClassifierMixin),
+                      "cv": [check_cv(self.cv)],
+                      "scorer": get_scorer(self.score)},
+            routing=[
+                ("base", "fit", "fit"),
+                ("cv", "fit", "split"),
+                ("base", "predict", "predict"),
+                ("scorer", "score", "score")
+            ])
