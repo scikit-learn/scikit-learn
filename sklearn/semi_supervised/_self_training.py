@@ -58,7 +58,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         The amount of samples to add in each iteration. Only used when
         `criterion` is k_best'.
 
-    max_iter : int or ``None``, default=10
+    max_iter : int or None, default=10
         Maximum number of iterations allowed. Should be greater than or equal
         to 0. If it is ``None``, the classifier will continue to predict labels
         until no new pseudo-labels are added, or all unlabeled samples have
