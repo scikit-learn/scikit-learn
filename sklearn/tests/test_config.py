@@ -1,4 +1,5 @@
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 from joblib import Parallel
 import joblib
@@ -83,6 +84,7 @@ def test_set_config():
 
 
 def set_assume_finite(assume_finite, sleep_dur):
+    """Return the value of assume_finite after waiting `sleep_dur`."""
     with config_context(assume_finite=assume_finite):
         time.sleep(sleep_dur)
         return get_config()['assume_finite']
@@ -90,18 +92,39 @@ def set_assume_finite(assume_finite, sleep_dur):
 
 @pytest.mark.parametrize("backend",
                          ["loky", "multiprocessing", "threading"])
-def test_config_threadsafe(backend):
-    """Test that the global config is threadsafe."""
+def test_config_threadsafe_joblib(backend):
+    """Test that the global config is threadsafe with all joblib backends.
+    Two jobs are spawned and sets assume_finite to two different values.
+    When the job with a duration 0.1s completes, the assume_finite value
+    should be the same as the value passed to the function. In other words,
+    it is not influenced by the other job setting assume_finite to True.
+    """
 
     if (parse_version(joblib.__version__) < parse_version('0.12')
             and backend == 'loky'):
         pytest.skip('loky backend does not exist in joblib <0.12')  # noqa
 
-    booleans = [False, True]
+    assume_finite_bools = [False, True]
     sleep_seconds = [0.1, 0.2]
 
     items = Parallel(backend=backend, n_jobs=2)(
-        delayed(set_assume_finite)(value, sleep_dur)
-        for value, sleep_dur in zip(booleans, sleep_seconds))
+        delayed(set_assume_finite)(assume_finite, sleep_dur)
+        for assume_finite, sleep_dur
+        in zip(assume_finite_bools, sleep_seconds))
+
+    assert items == [False, True]
+
+
+def test_config_threadsafe():
+    """Uses threads directly to test that the global config does not change
+    between threads. Same test as `test_config_threadsafe_joblib` by with
+    `ThreadPoolExecutor`."""
+
+    assume_finite_bools = [False, True]
+    sleep_seconds = [0.1, 0.2]
+
+    with ThreadPoolExecutor(max_workers=2) as e:
+        items = [output for output in
+                 e.map(set_assume_finite, assume_finite_bools, sleep_seconds)]
 
     assert items == [False, True]
