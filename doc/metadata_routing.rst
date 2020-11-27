@@ -25,7 +25,10 @@ Here GroupKFold requests ``groups`` by default. We need to explicitly request
 weights in ``make_scorer`` and for ``LogisticRegressionCV``. Both of these
 consumers understand the meaning of the key ``"sample_weight"``::
 
-  >>> from sklearn.metrics import make_scorer
+  >>> from sklearn.metrics import make_scorer, accuracy_score
+  >>> from sklearn.linear_model import LogisticRegressionCV
+  >>> from sklearn.model_selection import cross_validate
+  >>> from sklearn.model_selection import GroupKFold
   >>> weighted_acc = make_scorer(accuracy_score,
   ...                            request_props=["sample_weight"])
   >>> lr = LogisticRegressionCV(
@@ -69,6 +72,8 @@ Unweighted feature selection
 Like ``LogisticRegressionCV``, ``SelectKBest`` needs to request weights
 explicitly. Here it does not request them::
 
+  >>> from sklearn.feature_selection import SelectKBest
+  >>> from sklearn.pipeline import make_pipeline
   >>> weighted_acc = make_scorer(accuracy_score,
   ...                            request_props=["sample_weight"])
   >>> lr = LogisticRegressionCV(
