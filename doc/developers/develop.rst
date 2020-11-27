@@ -511,25 +511,14 @@ Scikit-learn introduced estimator tags in version 0.21. These are annotations
 of estimators that allow programmatic inspection of their capabilities, such as
 sparse matrix support, supported output types and supported methods. The
 estimator tags are a dictionary returned by the method ``_get_tags()``. These
-tags are used by the common tests and the
-:func:`~sklearn.utils.estimator_checks.check_estimator` function and
-:func:`~sklearn.utils.estimator_checks.parametrize_with_checks` decorator to
-decide what tests to run and what input data is appropriate. Tags can depend on
-estimator parameters or even system architecture and can in general only be
+tags are used in the common checks run by the
+:func:`~sklearn.utils.estimator_checks.check_estimator` function and the
+:func:`~sklearn.utils.estimator_checks.parametrize_with_checks` decorator.
+Tags determine which checks to run and what input data is appropriate. Tags
+can depend on estimator parameters or even system architecture and can in
+general only be
 determined at runtime. The default values for the estimator tags are defined in
 the :class:`~sklearn.base.BaseEstimator` class.
-
-When running integration checks, both
-:func:`~sklearn.utils.estimator_checks.check_estimator` function and
-:func:`~sklearn.utils.estimator_checks.parametrize_with_checks` decorator
-are retrieving necessary tag values from the following manner:
-
-* if your estimator inherits from :class:`~sklearn.base.BaseEstimator`,
-  it will use `_get_tags`. The tags values will corresponds to either the
-  default values or the values specified in `_more_tags()` that overwrite the
-  defaults;
-* if your estimator does not inherit from :class:`~sklearn.base.BaseEstimator`,
-  the tag values will be set to the defaults.
 
 The current set of estimator tags are:
 
@@ -631,16 +620,28 @@ X_types (default=['2darray'])
     ``'categorical'`` data. For now, the test for sparse data do not make use
     of the ``'sparse'`` tag.
 
+It is unlikely that the default values for each tag will suit the needs of
+your specific estimator. There are two ways to override the defaults in your
+own estimator:
 
-When inheriting from :class:`~sklearn.base.BaseEstimator`, the tags of a child
-class can be overridden, by defining the `_more_tags()` method and return a
-dict with the desired tags, e.g::
+* If your estimator inherits from :class:`~sklearn.base.BaseEstimator`, which
+  is recommended, you can define a `_more_tags()` method which returns a dict
+  with the desired overridden tags. For example::
 
     class MyMultiOutputEstimator(BaseEstimator):
 
         def _more_tags(self):
             return {'multioutput_only': True,
                     'non_deterministic': True}
+  
+  Any tag that is not in `_more_tags()` will just default to the value
+  documented above.
+
+* If your estimator does not inherit from :class:`~sklearn.base.BaseEstimator`,
+  you will need to implement a `_get_tags()` method which returns a dict,
+  similar to `_more_tags()`. Note however that **all tags must be present in
+  the dict**. If any of the keys documented above is not present in the
+  output of `_get_tags()`, an error might occur.
 
 If rolling your own estimator without inheriting from
 :class:`~sklearn.base.BaseEstimator`, you will need to implement the
