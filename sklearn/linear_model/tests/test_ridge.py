@@ -1026,12 +1026,13 @@ def test_ridgecv_sample_weight():
         sample_weight = 1.0 + rng.rand(n_samples)
 
         cv = KFold(5)
-        ridgecv = RidgeCV(alphas=alphas, cv=cv)
+        ridgecv = RidgeCV(alphas=alphas, cv=cv).request_sample_weight(fit=True)
         ridgecv.fit(X, y, sample_weight=sample_weight)
 
         # Check using GridSearchCV directly
         parameters = {'alpha': alphas}
-        gs = GridSearchCV(Ridge(), parameters, cv=cv)
+        gs = GridSearchCV(Ridge().request_sample_weight(fit=True),
+                          parameters, cv=cv)
         gs.fit(X, y, sample_weight=sample_weight)
 
         assert ridgecv.alpha_ == gs.best_estimator_.alpha
