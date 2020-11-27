@@ -4,8 +4,12 @@ import numpy as np
 from numpy import linalg
 
 from scipy.sparse import dok_matrix, csr_matrix, issparse
-from scipy.spatial.distance import cosine, cityblock, minkowski, wminkowski
+from scipy.spatial.distance import cosine, cityblock, minkowski
 from scipy.spatial.distance import cdist, pdist, squareform
+# wminkowki metric will be deprecated starting from scipy 1.6
+# and removed in scipy 1.8
+from scipy import version
+from scipy.spatial.distance import wminkowski
 
 import pytest
 
@@ -235,7 +239,6 @@ def test_pairwise_precomputed_non_negative():
 
 _wminkowski_kwds = {'w': np.arange(1, 5).astype('double', copy=False), 'p': 1}
 
-
 def callable_rbf_kernel(x, y, **kwds):
     # Callable version of pairwise.rbf_kernel.
     K = rbf_kernel(np.atleast_2d(x), np.atleast_2d(y), **kwds)
@@ -252,10 +255,16 @@ def callable_rbf_kernel(x, y, **kwds):
 @pytest.mark.parametrize('array_constr', [np.array, csr_matrix])
 @pytest.mark.parametrize('dtype', [np.float64, int])
 def test_pairwise_parallel(func, metric, kwds, array_constr, dtype):
+    # wminkowki metric will be deprecated starting from scipy 1.6
+    # and removed in scipy 1.8
+    if version.short_version >= '1.6.0' and (
+        metric==wminkowski or metric=='wminkowski'
+    ):
+        metric = 'minkowski'
     rng = np.random.RandomState(0)
     X = array_constr(5 * rng.random_sample((5, 4)), dtype=dtype)
     Y = array_constr(5 * rng.random_sample((3, 4)), dtype=dtype)
-
+    print(metric)
     try:
         S = func(X, metric=metric, n_jobs=1, **kwds)
     except (TypeError, ValueError) as exc:
