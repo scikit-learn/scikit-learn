@@ -27,10 +27,8 @@ random sampling procedures.
   eigenvalues.
 
 - |Fix| In ``fit`` and ``fit_transform`` from
-  :class:`decomposition.TruncatedSVD` and :class:`cross_decomposition.PLSSVD`
-  now initializes the v0 parameter correctly with value sampled from a uniform
-  distribution in `[-1, 1]` to avoid convergence issues with another
-  initialization.
+  :class:`decomposition.TruncatedSVD` provides a `random_state` parameter to
+  make the algorithm deterministic.
 
 - |Fix| :class:`linear_model.Perceptron` when `penalty='elasticnet'`
 
@@ -169,6 +167,12 @@ Changelog
   :class:`cross_decomposition.PLSSVD`, the `x_mean_`, `y_mean_`, `x_std_`, and
   `y_std_` attributes were deprecated and will be removed in 0.26.
   :pr:`18768` by :user:`Maren Westermann <marenwestermann>`.
+
+- |Fix| :class:`decomposition.TruncatedSVD` becomes deterministic by using the
+  `random_state`. It controls the weights' initialization of the underlying
+  ARPACK solver.
+  :pr:` #18302` by :user:`Gaurav Desai <gauravkdesai>` and
+  :user:`Ivan Panico <FollowKenny>`.
 
 :mod:`sklearn.datasets`
 .......................
@@ -798,14 +802,6 @@ Changelog
 - |Fix| Allow serialized tree based models to be unpickled on a machine
   with different endianness.
   :pr:`17644` by :user:`Qi Zhang <qzhang90>`.
-
-- |Fix| :class:`sklearn.cross_decomposition.PLSSVD` accepts a `random_state`
-  parameter. This parameter is used in ``fit`` and ``fit_transform``
-  methods and initializes the `v0` parameter correctly with value sampled from
-  a uniform distribution in `[-1, 1]` to avoid convergence issues with another
-  initialization.
-  :pr:` #18302` by :user:`Gaurav Desai <gauravkdesai>` and
-  :user:`Ivan Panico <FollowKenny>`.
 
 - |Fix| Check that we raise proper error when axis=1 and the
   dimensions do not match in :func:`utils.sparse_func.incr_mean_variance_axis`.

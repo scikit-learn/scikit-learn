@@ -10,12 +10,10 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 from scipy.linalg import pinv2, svd
-from scipy.sparse.linalg import svds
 
 from ..base import BaseEstimator, RegressorMixin, TransformerMixin
 from ..base import MultiOutputMixin
 from ..utils import check_array, check_consistent_length
-from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import svd_flip
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
 from ..utils.validation import _deprecate_positional_args
@@ -812,15 +810,6 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         potentially scaling. If False, these operations will be done inplace,
         modifying both arrays.
 
-    random_state : int, RandomState instance or None, default=None
-        The seed of the pseudo random number generator to initialize the
-        starting vector for `svds`. If int, random_state is the seed used by
-        the random number generator; If RandomState instance, random_state
-        is the random number generator; If None, the random number generator
-        is the RandomState instance used by `np.random`.
-
-        .. versionadded:: 0.24
-
     Attributes
     ----------
     x_weights_ : ndarray of shape (n_features, n_components)
@@ -868,18 +857,10 @@ class PLSSVD(TransformerMixin, BaseEstimator):
     CCA
     """
     @_deprecate_positional_args
-    def __init__(
-        self,
-        n_components=2,
-        *,
-        scale=True,
-        copy=True,
-        random_state=None,
-    ):
+    def __init__(self, n_components=2, *, scale=True, copy=True):
         self.n_components = n_components
         self.scale = scale
         self.copy = copy
-        self.random_state = random_state
 
     def fit(self, X, Y):
         """Fit model to data.
@@ -921,17 +902,9 @@ class PLSSVD(TransformerMixin, BaseEstimator):
 
         # Compute SVD of cross-covariance matrix
         C = np.dot(X.T, Y)
-
-        # The arpack svds solver only works if the number of extracted
-        # components is smaller than rank(X) - 1. Hence, if we want to extract
-        # all the components (C.shape[1]), we have to use another one. Else,
-        # let's use arpacks to compute only the interesting components.
-        n_min_dim = min(C.shape)
-        if n_components >= n_min_dim:
-            U, s, Vt = svd(C, full_matrices=False)
-        else:
-            v0 = _init_arpack_v0(n_min_dim, self.random_state)
-            U, s, Vt = svds(C, k=n_components, v0=v0)
+        U, s, Vt = svd(C, full_matrices=False)
+        U = U[:, :n_components]
+        Vt = Vt[:n_components]
         U, Vt = svd_flip(U, Vt)
         V = Vt.T
 
