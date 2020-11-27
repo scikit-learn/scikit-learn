@@ -82,6 +82,25 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
     >>> transformer.transform(X)
     array([[0.       , 0.6931...],
            [1.0986..., 1.3862...]])
+
+    FunctionTransformer can also be used to provide custom bin edges :
+
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import FunctionTransformer
+    >>> import pandas as pd
+    >>> bins = [0, 1, 13, 20, 60, np.inf]
+    >>> labels = ['infant', 'kid', 'teen', 'adult', 'senior']
+    >>> transformer = FunctionTransformer(pd.cut,
+                                          kw_args={'bins' : bins,
+                                                  'labels' : labels,
+                                                   'retbins' : False
+                                                  }
+                                         )
+    >>> X = np.array([0.2,2,15,25,61,99])
+    >>> Xt = transformer.fit_transform(X)
+    >>> Xt
+    ['infant', 'kid', 'teen', 'adult', 'senior citizen', 'senior']
+    Categories (5, object): ['infant' < 'kid' < 'teen' < 'adult' < 'senior']
     """
 
     @_deprecate_positional_args
