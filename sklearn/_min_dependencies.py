@@ -40,6 +40,7 @@ dependent_packages = {
     'sphinx-gallery': ('0.7.0', 'docs'),
     'numpydoc': ('1.0.0', 'docs'),
     'Pillow': ('7.1.2', 'docs'),
+    'sphinx-prompt': ('1.3.0', 'docs'),
 }
 
 
