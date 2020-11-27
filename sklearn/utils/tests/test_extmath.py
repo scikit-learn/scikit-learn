@@ -23,7 +23,7 @@ from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import skip_if_32bit
 
 from sklearn.utils.extmath import density, _safe_accumulator_op
-from sklearn.utils.extmath import randomized_svd
+from sklearn.utils.extmath import randomized_svd, _randomized_eigsh
 from sklearn.utils.extmath import row_norms
 from sklearn.utils.extmath import weighted_mode
 from sklearn.utils.extmath import cartesian
@@ -160,6 +160,26 @@ def check_randomized_svd_low_rank(dtype):
                          (np.int32, np.int64, np.float32, np.float64))
 def test_randomized_svd_low_rank_all_dtypes(dtype):
     check_randomized_svd_low_rank(dtype)
+
+
+@pytest.mark.parametrize('dtype',
+                         (np.int32, np.int64, np.float32, np.float64))
+def test_randomized_eigsh(dtype):
+    """Test that `_randomized_eigsh` returns the appropriate components"""
+
+    X = np.diag(np.array([1., -2., 0., 3.], dtype=dtype))
+
+    # with 'module' selection method, the negative eigenvalue shows up
+    lambd_, alph_ = _randomized_eigsh(X, n_components=2, selection='module')
+    # eigenvalues
+    assert lambd_.shape == (2,)
+    assert_array_almost_equal(lambd_, [3., -2.])  # negative eigenvalue here
+    # eigenvectors
+    assert alph_.shape == (4, 2)
+
+    # with 'value' selection method, the negative eigenvalue does not show up
+    with pytest.raises(NotImplementedError):
+        _randomized_eigsh(X, n_components=2, selection='value')
 
 
 @pytest.mark.parametrize('dtype',
