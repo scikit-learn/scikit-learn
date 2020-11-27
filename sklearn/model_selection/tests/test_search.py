@@ -13,6 +13,7 @@ import numpy as np
 import scipy.sparse as sp
 import pytest
 
+from sklearn.utils import _empty_metadata_request
 from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_message
@@ -1681,7 +1682,7 @@ def test_custom_run_search():
     for attr in dir(gscv):
         if (attr[0].islower() and attr[-1:] == '_' and
                 attr not in {'cv_results_', 'best_estimator_',
-                             'refit_time_', 'classes_'}):
+                             'refit_time_', 'classes_', 'scorer_'}):
             assert getattr(gscv, attr) == getattr(mycv, attr), \
                 "Attribute %s not equal" % attr
 
@@ -1776,6 +1777,9 @@ def test_searchcv_raise_warning_with_non_finite_score(
             if self.n_counts % 5 == 0:
                 return np.nan
             return 1
+
+        def get_metadata_request(self):
+            return _empty_metadata_request()
 
     grid = SearchCV(
         DecisionTreeClassifier(),
