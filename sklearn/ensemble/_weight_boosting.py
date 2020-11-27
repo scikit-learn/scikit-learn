@@ -110,9 +110,10 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         sample_weight = _check_sample_weight(sample_weight, X, np.float64)
         sample_weight /= sample_weight.sum()
-        if np.any(sample_weight < 0):
-            raise ValueError("sample_weight cannot contain negative weights")
-
+        if sample_weight.sum() <= 0:
+            raise ValueError(
+                    "Attempting to fit with a non-positive "
+                    "weighted number of samples.")
         # Check parameters
         self._validate_estimator()
 
