@@ -462,7 +462,7 @@ def test_discretenb_degenerate_single_class_case(cls):
     clf3 = cls()
     clf3.fit(X[:2], y[:2])
     assert clf3.class_count_.size == 1
-    assert clf1.predict(X[:1]) == y[0]
+    assert clf3.predict(X[:1]) == y[0]
 
 # TODO test partial_fit in the degenerate one-class case
 #     # degenerate one-class case: partial_fit method

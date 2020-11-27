@@ -616,16 +616,11 @@ class _BaseDiscreteNB(_BaseNB):
         labelbin = LabelBinarizer()
         Y = labelbin.fit_transform(y)
         self.classes_ = labelbin.classes_
-        # Y has shape (n_samples, 1) when the number of classes is two or one.
-        # For binary problems, we add a second indicator column.
-        # In the degenerate single-class case, we complement the single
-        # indicator column from all zeroes to all ones.
         if Y.shape[1] == 1:
-            first_class_indicator = 1 - Y
             if len(self.classes_) == 2:
-                Y = np.concatenate((first_class_indicator, Y), axis=1)
-            else:
-                Y = first_class_indicator
+                Y = np.concatenate((1 - Y, Y), axis=1)
+            else:    # degenerate case: just one class
+                Y = np.ones_like(Y)
 
         # LabelBinarizer().fit_transform() returns arrays with dtype=np.int64.
         # We convert it to np.float64 to support sample_weight consistently;
