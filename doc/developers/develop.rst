@@ -517,10 +517,19 @@ tags are used by the common tests and the
 decide what tests to run and what input data is appropriate. Tags can depend on
 estimator parameters or even system architecture and can in general only be
 determined at runtime. The default values for the estimator tags are defined in
-the :class:`~sklearn.base.BaseEstimator` class. If rolling your own estimator
-without inheriting from :class:`~sklearn.base.BaseEstimator`, you will need to
-implement the `_get_tags()` function. Besides, this function needs to at least
-return the tags defined below.
+the :class:`~sklearn.base.BaseEstimator` class.
+
+When running integration checks, both
+:func:`~sklearn.utils.estimator_checks.check_estimator` function and
+:func:`~sklearn.utils.estimator_checks.parametrize_with_checks` decorator
+are retrieving necessary tag values from the following manner:
+
+* if your estimator inherits from :class:`~sklearn.base.BaseEstimator`,
+  it will use `_get_tags`. The tags values will corresponds to either the
+  default values or the values specified in `_more_tags()` that overwrite the
+  defaults;
+* if your estimator does not inherit from :class:`~sklearn.base.BaseEstimator`,
+  the tag values will be set to the defaults.
 
 The current set of estimator tags are:
 
@@ -623,14 +632,20 @@ X_types (default=['2darray'])
     of the ``'sparse'`` tag.
 
 
-To override the tags of a child class, one must define the `_more_tags()`
-method and return a dict with the desired tags, e.g::
+When inheriting from :class:`~sklearn.base.BaseEstimator`, the tags of a child
+class can be overridden, by defining the `_more_tags()` method and return a
+dict with the desired tags, e.g::
 
     class MyMultiOutputEstimator(BaseEstimator):
 
         def _more_tags(self):
             return {'multioutput_only': True,
                     'non_deterministic': True}
+
+If rolling your own estimator without inheriting from
+:class:`~sklearn.base.BaseEstimator`, you will need to implement the
+`_get_tags()` method. Besides, this function needs to at least return the
+tags defined above.
 
 In addition to the tags, estimators also need to declare any non-optional
 parameters to ``__init__`` in the ``_required_parameters`` class attribute,
