@@ -279,8 +279,7 @@ class EmpiricalCovariance(BaseEstimator):
         if norm == "frobenius":
             squared_norm = np.sum(error ** 2)
         elif norm == "spectral":
-            squared_norm = np.amax(linalg.svdvals(np.dot(error.T, error),
-                                                  check_finite=False,))
+            squared_norm = np.amax(linalg.svdvals(np.dot(error.T, error),))
         else:
             raise NotImplementedError(
                 "Only spectral and frobenius norms are implemented")
