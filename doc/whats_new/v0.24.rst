@@ -111,6 +111,11 @@ Changelog
 - |Fix| :class:`compose.ColumnTransformer` now displays the remainder in the
   diagram display. :pr:`18167` by `Thomas Fan`_.
 
+- |Fix| :class:`compose.ColumnTransformer` enforces strict count and order
+  of column names between `fit` and `transform` by raising an error instead
+  of a warning, following the deprecation cycle.
+  :pr:`18256` by :user:`Madhura Jayratne <madhuracj>`.
+
 :mod:`sklearn.covariance`
 .........................
 
