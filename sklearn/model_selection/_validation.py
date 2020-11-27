@@ -350,6 +350,7 @@ def _normalize_score_results(scores, scaler_score_key='score'):
 @_deprecate_positional_args
 def cross_val_score(estimator, X, y=None, *, groups=None, scoring=None,
                     cv=None, n_jobs=None, verbose=0, fit_params=None,
+                    props=None,
                     pre_dispatch='2*n_jobs', error_score=np.nan):
     """Evaluate a score by cross-validation
 
@@ -416,6 +417,9 @@ def cross_val_score(estimator, X, y=None, *, groups=None, scoring=None,
     fit_params : dict, default=None
         Parameters to pass to the fit method of the estimator.
 
+    props : dict, default=None
+        The metadata required to be passed to the underlying relevant methods.
+
     pre_dispatch : int or str, default='2*n_jobs'
         Controls the number of jobs that get dispatched during parallel
         execution. Reducing this number can be useful to avoid an
@@ -475,6 +479,7 @@ def cross_val_score(estimator, X, y=None, *, groups=None, scoring=None,
                                 scoring={'score': scorer}, cv=cv,
                                 n_jobs=n_jobs, verbose=verbose,
                                 fit_params=fit_params,
+                                props=props,
                                 pre_dispatch=pre_dispatch,
                                 error_score=error_score)
     return cv_results['test_score']

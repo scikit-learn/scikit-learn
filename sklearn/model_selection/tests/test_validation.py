@@ -636,7 +636,7 @@ def test_cross_val_score_fit_params():
                   'dummy_str': DUMMY_STR,
                   'dummy_obj': DUMMY_OBJ,
                   'callback': assert_fit_params}
-    cross_val_score(clf, X, y, fit_params=fit_params)
+    cross_val_score(clf, X, y, props=fit_params)
 
 
 def test_cross_val_score_score_func():
@@ -1043,7 +1043,7 @@ def test_cross_val_score_sparse_fit_params():
     X, y = iris.data, iris.target
     clf = MockClassifier()
     fit_params = {'sparse_sample_weight': coo_matrix(np.eye(X.shape[0]))}
-    a = cross_val_score(clf, X, y, fit_params=fit_params, cv=3)
+    a = cross_val_score(clf, X, y, props=fit_params, cv=3)
     assert_array_equal(a, np.ones(3))
 
 
