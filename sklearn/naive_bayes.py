@@ -552,7 +552,7 @@ class _BaseDiscreteNB(_BaseNB):
         if _check_partial_fit_first_call(self, classes):
             # This is the first call to partial_fit:
             # initialize various cumulative counters
-            n_effective_classes = len(classes) if len(classes) > 1 else 2
+            n_effective_classes = len(classes)
             self._init_counters(n_effective_classes, n_features)
             self.n_features_ = n_features
         elif n_features != self.n_features_:
@@ -561,7 +561,10 @@ class _BaseDiscreteNB(_BaseNB):
 
         Y = label_binarize(y, classes=self.classes_)
         if Y.shape[1] == 1:
-            Y = np.concatenate((1 - Y, Y), axis=1)
+            if len(self.classes_) == 2:
+                Y = np.concatenate((1 - Y, Y), axis=1)
+            else:    # degenerate case: just one class
+                Y = np.ones_like(Y)
 
         if X.shape[0] != Y.shape[0]:
             msg = "X.shape[0]=%d and y.shape[0]=%d are incompatible."
@@ -636,7 +639,6 @@ class _BaseDiscreteNB(_BaseNB):
         # Count raw events from data before updating the class log prior
         # and feature log probas
         n_effective_classes = Y.shape[1]
-
         self._init_counters(n_effective_classes, n_features)
         self._count(X, Y)
         alpha = self._check_alpha()

@@ -464,12 +464,11 @@ def test_discretenb_degenerate_single_class_case(cls):
     assert clf3.class_count_.size == 1
     assert clf3.predict(X[:1]) == y[0]
 
-# TODO test partial_fit in the degenerate one-class case
-#     # degenerate one-class case: partial_fit method
-#     clf4 = cls()
-#     clf4.partial_fit(X, y, classes=[1])
-#     assert clf4.class_count_.size == 1
-#     assert clf4.predict(X[:1]) == y[0]
+    # degenerate one-class case: partial_fit method
+    clf4 = cls()
+    clf4.partial_fit(X[:2], y[:2], classes=[1])
+    assert clf4.class_count_.size == 1
+    assert clf4.predict(X[:1]) == y[0]
 
 
 @pytest.mark.parametrize('kind', ('dense', 'sparse'))
