@@ -328,6 +328,13 @@ General Concepts
         * sometimes in the :ref:`User Guide <user_guide>` (built from ``doc/``)
           alongside a technical description of the estimator.
 
+    experimental
+        An experimental tool is already usable but its public API, such as the
+        default values of its constructor arguments or its fitted attributed,
+        is still subject to change in future versions of scikit-learn without
+        going through the usual deprecation warning policy that applies to
+        non-experimental estimators.
+
     evaluation metric
     evaluation metrics
         Evaluation metrics give a measure of how well a model performs.  We may

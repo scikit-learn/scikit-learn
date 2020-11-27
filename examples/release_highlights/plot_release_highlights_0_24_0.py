@@ -25,7 +25,7 @@ or with conda::
 # -------------------------------------------------
 # Successive halving, a state of the art method, is now available to
 # explore the space of the parameters and identify their best combination.
-# Successive halving is still experimental.
+# Successive halving is still :term:`experimental <experimental>`.
 # :class:`~sklearn.model_selection.HalvingGridSearchCV` and
 # :class:`~sklearn.model_selection.HalvingRandomSearchCV` can be
 # used as drop-in replacement for
@@ -70,8 +70,8 @@ rsh.fit(X, y)
 rsh.best_params_
 
 ##############################################################################
-# Native support for categorical features in HistGradientBoosting
-# ---------------------------------------------------------------
+# Native support for categorical features in HistGradientBoosting estimators
+# --------------------------------------------------------------------------
 # :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
 # :class:`~sklearn.ensemble.HistGradientBoostingRegressor` now have native
 # support for categorical features: they can consider splits on non-ordered,
@@ -81,14 +81,21 @@ rsh.best_params_
 # .. figure:: ../ensemble/images/sphx_glr_plot_gradient_boosting_categorical_001.png
 #   :target: ../ensemble/plot_gradient_boosting_categorical.html
 #   :align: center
+#
+# The plot shows that the new native support for categorical features leads
+# to models that are almost as fast to train as model trained on arbitrarily
+# integer encoded categorical values while being even more expressive than both
+# OneHotEncoding and OrdinalEncoding. However to use the new
+# `categorical_features` parameter, it is still required to preprocess the
+# data with a pipeline as demonstrated in the :ref:`example <sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py>`.
 
 ##############################################################################
 # Improved performances of HistGradientBoosting estimators
 # --------------------------------------------------------
 # The memory footprint of :class:`ensemble.HistGradientBoostingRegressor` and
 # :class:`ensemble.HistGradientBoostingClassifier` has been significantly
-# improved during calls to fit. In addition, histogram initialization is now
-# done in parallel which results in slight speed improvement.
+# improved during calls to `fit`. In addition, histogram initialization is now
+# done in parallel which results in slight speed improvements.
 # See more in the `Benchmark page
 # <https://scikit-learn.org/scikit-learn-benchmarks/>`_.
 
@@ -119,7 +126,7 @@ self_training_model.fit(iris.data, iris.target)
 # -----------------------------------------
 # A new iterative transformer to select features is available:
 # :class:`~sklearn.feature_selection.SequentialFeatureSelector`.
-# Sequential Feature Selection can add features once at a time (forward
+# Sequential Feature Selection can add features one at a time (forward
 # selection) or remove features from the list of the available features
 # (backward selection), based on a cross-validated score maximization.
 # See the :ref:`User Guide <sequential_feature_selection>`.
@@ -134,7 +141,7 @@ knn = KNeighborsClassifier(n_neighbors=3)
 sfs = SequentialFeatureSelector(knn, n_features_to_select=2)
 sfs.fit(X, y)
 print("Features selected by forward sequential selection: "
-      f"{feature_names[sfs.get_support()]}")
+      f"{feature_names[sfs.get_support().tolist()]}")
 
 ##############################################################################
 # New PolynomialCountSketch kernel approximation function
@@ -153,12 +160,15 @@ from sklearn.linear_model import LogisticRegression
 
 X, y = fetch_covtype(return_X_y=True)
 pipe = make_pipeline(MinMaxScaler(),
-                     PolynomialCountSketch(degree=2, n_components=100),
+                     PolynomialCountSketch(degree=2, n_components=300),
                      LogisticRegression(max_iter=1000))
 X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=5000,
                                                     test_size=10000,
                                                     random_state=42)
 pipe.fit(X_train, y_train).score(X_test, y_test)
+
+##############################################################################
+# For comparison, here is the score of a linear baseline for the same data:
 
 linear_baseline = make_pipeline(MinMaxScaler(),
                                 LogisticRegression(max_iter=1000))
@@ -172,13 +182,13 @@ linear_baseline.fit(X_train, y_train).score(X_test, y_test)
 # prediction on a feature for each sample separately with one line per sample.
 # See the :ref:`User Guide <individual_conditional>`
 
-from sklearn.linear_model import BayesianRidge
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.datasets import fetch_california_housing
 from sklearn.inspection import plot_partial_dependence
 
 X, y = fetch_california_housing(return_X_y=True, as_frame=True)
 features = ['MedInc', 'AveOccup', 'HouseAge', 'AveRooms']
-est = BayesianRidge()
+est = RandomForestRegressor()
 est.fit(X, y)
 display = plot_partial_dependence(
        est, X, features, kind="individual", subsample=50,
@@ -213,7 +223,12 @@ regressor.fit(X_train, y_train)
 # New metrics available
 # ---------------------
 # A number of new metric functions are now available, for example
-# :func:`metrics.top_k_accuracy_score` and :func:`metrics.det_curve`.
+# :func:`metrics.top_k_accuracy_score` and :func:`~metrics.det_curve`.
+#
+# .. figure:: ../model_selection/images/sphx_glr_plot_det_001.png
+#   :target: ../model_selection/plot_det.html
+#   :align: center
+#
 # For a complete list see the `changelog
 # <../../whats_new/v0.24.html#sklearn-metrics>`_.
 
