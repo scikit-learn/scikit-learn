@@ -643,11 +643,6 @@ own estimator:
   the dict**. If any of the keys documented above is not present in the
   output of `_get_tags()`, an error might occur.
 
-If rolling your own estimator without inheriting from
-:class:`~sklearn.base.BaseEstimator`, you will need to implement the
-`_get_tags()` method. Besides, this function needs to at least return the
-tags defined above.
-
 In addition to the tags, estimators also need to declare any non-optional
 parameters to ``__init__`` in the ``_required_parameters`` class attribute,
 which is a list or tuple.  If ``_required_parameters`` is only
