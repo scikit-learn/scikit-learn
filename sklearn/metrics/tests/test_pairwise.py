@@ -243,6 +243,7 @@ def test_pairwise_precomputed_non_negative():
 
 _wminkowski_kwds = {'w': np.arange(1, 5).astype('double', copy=False), 'p': 1}
 
+
 def callable_rbf_kernel(x, y, **kwds):
     # Callable version of pairwise.rbf_kernel.
     K = rbf_kernel(np.atleast_2d(x), np.atleast_2d(y), **kwds)
@@ -268,6 +269,7 @@ def test_pairwise_parallel(func, metric, kwds, array_constr, dtype):
     rng = np.random.RandomState(0)
     X = array_constr(5 * rng.random_sample((5, 4)), dtype=dtype)
     Y = array_constr(5 * rng.random_sample((3, 4)), dtype=dtype)
+
     try:
         S = func(X, metric=metric, n_jobs=1, **kwds)
     except (TypeError, ValueError) as exc:
