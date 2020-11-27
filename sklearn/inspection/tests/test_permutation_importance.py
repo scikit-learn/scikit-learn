@@ -368,7 +368,7 @@ def test_permutation_importance_sample_weight():
     y[n_half_samples:] = x[n_half_samples:, 0] + 2 * x[n_half_samples:, 1]
 
     # Fitting linear regression with perfect prediction
-    lr = LinearRegression(fit_intercept=False)
+    lr = LinearRegression(fit_intercept=False).request_sample_weight(fit=True)
     lr.fit(x, y)
 
     # When all samples are weighted with the same weights, the ratio of

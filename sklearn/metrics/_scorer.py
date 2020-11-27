@@ -645,64 +645,132 @@ def make_scorer(score_func, *, greater_is_better=True, needs_proba=False,
 
 
 # Standard regression scores
-explained_variance_scorer = make_scorer(explained_variance_score)
-r2_scorer = make_scorer(r2_score)
+explained_variance_scorer = make_scorer(
+    explained_variance_score,
+    request_props=['sample_weight']
+)
+r2_scorer = make_scorer(
+    r2_score,
+    request_props=['sample_weight']
+)
 max_error_scorer = make_scorer(max_error,
                                greater_is_better=False)
-neg_mean_squared_error_scorer = make_scorer(mean_squared_error,
-                                            greater_is_better=False)
-neg_mean_squared_log_error_scorer = make_scorer(mean_squared_log_error,
-                                                greater_is_better=False)
-neg_mean_absolute_error_scorer = make_scorer(mean_absolute_error,
-                                             greater_is_better=False)
-neg_mean_absolute_percentage_error_scorer = make_scorer(
-    mean_absolute_percentage_error, greater_is_better=False
+neg_mean_squared_error_scorer = make_scorer(
+    mean_squared_error,
+    greater_is_better=False,
+    request_props=['sample_weight']
 )
-neg_median_absolute_error_scorer = make_scorer(median_absolute_error,
-                                               greater_is_better=False)
-neg_root_mean_squared_error_scorer = make_scorer(mean_squared_error,
-                                                 greater_is_better=False,
-                                                 squared=False)
+neg_mean_squared_log_error_scorer = make_scorer(
+    mean_squared_log_error,
+    greater_is_better=False,
+    request_props=['sample_weight']
+)
+neg_mean_absolute_error_scorer = make_scorer(
+    mean_absolute_error,
+    greater_is_better=False,
+    request_props=["sample_weight"]
+)
+neg_mean_absolute_percentage_error_scorer = make_scorer(
+    mean_absolute_percentage_error,
+    greater_is_better=False,
+    request_props=["sample_weight"]
+)
+neg_median_absolute_error_scorer = make_scorer(
+    median_absolute_error,
+    greater_is_better=False,
+    request_props=["sample_weight"]
+)
+neg_root_mean_squared_error_scorer = make_scorer(
+    mean_squared_error,
+    greater_is_better=False,
+    squared=False,
+    request_props=["sample_weight"]
+)
 neg_mean_poisson_deviance_scorer = make_scorer(
-    mean_poisson_deviance, greater_is_better=False
+    mean_poisson_deviance,
+    greater_is_better=False,
+    request_props=["sample_weight"]
 )
 
 neg_mean_gamma_deviance_scorer = make_scorer(
-    mean_gamma_deviance, greater_is_better=False
+    mean_gamma_deviance,
+    greater_is_better=False,
+    request_props=["sample_weight"]
 )
 
 # Standard Classification Scores
-accuracy_scorer = make_scorer(accuracy_score)
-balanced_accuracy_scorer = make_scorer(balanced_accuracy_score)
+accuracy_scorer = make_scorer(
+    accuracy_score,
+    request_props=["sample_weight"]
+)
+balanced_accuracy_scorer = make_scorer(
+    balanced_accuracy_score,
+    request_props=["sample_weight"]
+)
 
 # Score functions that need decision values
-top_k_accuracy_scorer = make_scorer(top_k_accuracy_score,
-                                    greater_is_better=True,
-                                    needs_threshold=True)
-roc_auc_scorer = make_scorer(roc_auc_score, greater_is_better=True,
-                             needs_threshold=True)
-average_precision_scorer = make_scorer(average_precision_score,
-                                       needs_threshold=True)
-roc_auc_ovo_scorer = make_scorer(roc_auc_score, needs_proba=True,
-                                 multi_class='ovo')
-roc_auc_ovo_weighted_scorer = make_scorer(roc_auc_score, needs_proba=True,
-                                          multi_class='ovo',
-                                          average='weighted')
-roc_auc_ovr_scorer = make_scorer(roc_auc_score, needs_proba=True,
-                                 multi_class='ovr')
-roc_auc_ovr_weighted_scorer = make_scorer(roc_auc_score, needs_proba=True,
-                                          multi_class='ovr',
-                                          average='weighted')
+top_k_accuracy_scorer = make_scorer(
+    top_k_accuracy_score,
+    greater_is_better=True,
+    needs_threshold=True,
+    request_props=["sample_weight"]
+)
+roc_auc_scorer = make_scorer(
+    roc_auc_score,
+    greater_is_better=True,
+    needs_threshold=True,
+    request_props=["sample_weight"]
+)
+average_precision_scorer = make_scorer(
+    average_precision_score,
+    needs_threshold=True,
+    request_props=["sample_weight"]
+)
+roc_auc_ovo_scorer = make_scorer(
+    roc_auc_score, needs_proba=True,
+    multi_class='ovo',
+    request_props=["sample_weight"]
+)
+roc_auc_ovo_weighted_scorer = make_scorer(
+    roc_auc_score,
+    needs_proba=True,
+    multi_class='ovo',
+    average='weighted',
+    request_props=["sample_weight"]
+)
+roc_auc_ovr_scorer = make_scorer(
+    roc_auc_score,
+    needs_proba=True,
+    multi_class='ovr',
+    request_props=["sample_weight"]
+)
+roc_auc_ovr_weighted_scorer = make_scorer(
+    roc_auc_score,
+    needs_proba=True,
+    multi_class='ovr',
+    average='weighted',
+    request_props=["sample_weight"]
+)
 
 # Score function for probabilistic classification
-neg_log_loss_scorer = make_scorer(log_loss, greater_is_better=False,
-                                  needs_proba=True)
-neg_brier_score_scorer = make_scorer(brier_score_loss,
-                                     greater_is_better=False,
-                                     needs_proba=True)
-brier_score_loss_scorer = make_scorer(brier_score_loss,
-                                      greater_is_better=False,
-                                      needs_proba=True)
+neg_log_loss_scorer = make_scorer(
+    log_loss,
+    greater_is_better=False,
+    needs_proba=True,
+    request_props=["sample_weight"]
+)
+neg_brier_score_scorer = make_scorer(
+    brier_score_loss,
+    greater_is_better=False,
+    needs_proba=True,
+    request_props=["sample_weight"]
+)
+brier_score_loss_scorer = make_scorer(
+    brier_score_loss,
+    greater_is_better=False,
+    needs_proba=True,
+    request_props=["sample_weight"]
+)
 
 
 # Clustering scores
