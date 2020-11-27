@@ -438,22 +438,38 @@ def test_discretenb_coef_intercept_shape(cls):
     assert clf.intercept_.shape == (1,)
 
 
-@pytest.mark.parametrize('cls', [MultinomialNB])
+@pytest.mark.parametrize("cls", [MultinomialNB, ComplementNB, BernoulliNB,
+                                 CategoricalNB])
 def test_discretenb_degenerate_single_class_case(cls):
     # class_count_ should have one element per class
     # Non-regression test for handling degenerate single-class case.
     X = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
     y = [1, 1, 2]
 
-    # two classes
+    # binary problem: fit method
     clf1 = cls()
     clf1.fit(X, y)
     assert clf1.class_count_.size == 2
+    assert clf1.predict(X[:1]) == y[0]
 
-    # degenerate one-class case
+    # binary problem: partial_fit method
     clf2 = cls()
-    clf2.fit(X[:2], y[:2])
-    assert clf2.class_count_.size == 1
+    clf2.partial_fit(X, y, classes=[1, 2])
+    assert clf2.class_count_.size == 2
+    assert clf2.predict(X[:1]) == y[0]
+
+    # degenerate one-class case: fit method
+    clf3 = cls()
+    clf3.fit(X[:2], y[:2])
+    assert clf3.class_count_.size == 1
+    assert clf1.predict(X[:1]) == y[0]
+
+# TODO test partial_fit in the degenerate one-class case
+#     # degenerate one-class case: partial_fit method
+#     clf4 = cls()
+#     clf4.partial_fit(X, y, classes=[1])
+#     assert clf4.class_count_.size == 1
+#     assert clf4.predict(X[:1]) == y[0]
 
 
 @pytest.mark.parametrize('kind', ('dense', 'sparse'))
