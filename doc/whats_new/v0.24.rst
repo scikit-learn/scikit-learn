@@ -26,7 +26,10 @@ random sampling procedures.
   between 32-bits and 64-bits data when the kernel has small positive
   eigenvalues.
 
-- |Fix| :class:`linear_model.Perceptron` when `penalty='elasticnet'`
+- |Fix| :class:`decomposition.TruncatedSVD` becomes deterministic by exposing
+  a `random_state` parameter.
+
+- |Fix| :class:`linear_model.Perceptron` when `penalty='elasticnet'`.
 
 Details are listed in the changelog below.
 
@@ -168,6 +171,12 @@ Changelog
   :class:`cross_decomposition.PLSSVD`, the `x_mean_`, `y_mean_`, `x_std_`, and
   `y_std_` attributes were deprecated and will be removed in 0.26.
   :pr:`18768` by :user:`Maren Westermann <marenwestermann>`.
+
+- |Fix| :class:`decomposition.TruncatedSVD` becomes deterministic by using the
+  `random_state`. It controls the weights' initialization of the underlying
+  ARPACK solver.
+  :pr:` #18302` by :user:`Gaurav Desai <gauravkdesai>` and
+  :user:`Ivan Panico <FollowKenny>`.
 
 :mod:`sklearn.datasets`
 .......................
