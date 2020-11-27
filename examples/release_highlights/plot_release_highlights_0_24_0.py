@@ -84,10 +84,10 @@ rsh.best_params_
 #
 # The plot shows that the new native support for categorical features leads
 # to models that are almost as fast to train as model trained on arbitrarily
-# integer encoded categorical values while being even more expressive than both
-# OneHotEncoding and OrdinalEncoding. However to use the new
+# integer-encoded categorical values, while being more expressive than both
+# one-hot encoding and ordinal encoding. However, to use the new
 # `categorical_features` parameter, it is still required to preprocess the
-# data with a pipeline as demonstrated in the :ref:`example <sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py>`.
+# data within a pipeline as demonstrated in this :ref:`example <sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py>`.
 
 ##############################################################################
 # Improved performances of HistGradientBoosting estimators
