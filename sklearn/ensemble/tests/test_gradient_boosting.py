@@ -1243,13 +1243,14 @@ def test_gradient_boosting_with_init_pipeline():
 
     X, y = make_regression(random_state=0)
     init = make_pipeline(LinearRegression())
-    gb = GradientBoostingRegressor(init=init)
+    gb = GradientBoostingRegressor(init=init).request_sample_weight(fit=True)
     gb.fit(X, y)  # pipeline without sample_weight works fine
 
     with pytest.raises(
             ValueError,
-            match='The initial estimator Pipeline does not support sample '
-                  'weights'):
+            # complete message would be:
+            #    "Requested properties are: [], but ['sample_weight'] provided"
+            match='Requested properties are:'):
         gb.fit(X, y, sample_weight=np.ones(X.shape[0]))
 
     # Passing sample_weight to a pipeline raises a ValueError. This test makes
@@ -1261,7 +1262,8 @@ def test_gradient_boosting_with_init_pipeline():
             match='nu <= 0 or nu > 1'):
         # Note that NuSVR properly supports sample_weight
         init = NuSVR(gamma='auto', nu=1.5)
-        gb = GradientBoostingRegressor(init=init)
+        gb = GradientBoostingRegressor(init=init).request_sample_weight(
+            fit=True)
         gb.fit(X, y, sample_weight=np.ones(X.shape[0]))
 
 
