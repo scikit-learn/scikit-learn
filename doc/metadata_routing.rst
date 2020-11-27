@@ -25,6 +25,7 @@ Here GroupKFold requests ``groups`` by default. We need to explicitly request
 weights in ``make_scorer`` and for ``LogisticRegressionCV``. Both of these
 consumers understand the meaning of the key ``"sample_weight"``::
 
+  >>> from sklearn.metrics import make_scorer
   >>> weighted_acc = make_scorer(accuracy_score,
   ...                            request_props=["sample_weight"])
   >>> lr = LogisticRegressionCV(
