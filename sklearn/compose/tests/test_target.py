@@ -299,6 +299,12 @@ def test_transform_target_regressor_count_fit(check_inverse):
 
 
 class DummyRegressorWithExtraFitParams(DummyRegressor):
+    def request_check_input(self, *, fit=None):
+        self._request_key_for_method(method='fit',
+                                     param='check_input',
+                                     user_provides=fit)
+        return self
+
     def fit(self, X, y, sample_weight=None, check_input=True):
         # on the test below we force this to false, we make sure this is
         # actually passed to the regressor
@@ -308,8 +314,11 @@ class DummyRegressorWithExtraFitParams(DummyRegressor):
 
 def test_transform_target_regressor_pass_fit_parameters():
     X, y = friedman
+    dummy_regr = DummyRegressorWithExtraFitParams()
+    dummy_regr.request_sample_weight(fit=True)
+    dummy_regr.request_check_input(fit=True)
     regr = TransformedTargetRegressor(
-        regressor=DummyRegressorWithExtraFitParams(),
+        regressor=dummy_regr,
         transformer=DummyTransformer()
     )
 
@@ -320,8 +329,10 @@ def test_transform_target_regressor_pass_fit_parameters():
 def test_transform_target_regressor_route_pipeline():
     X, y = friedman
 
+    dummy_regr = DummyRegressorWithExtraFitParams()
+    dummy_regr.request_check_input(fit=True)
     regr = TransformedTargetRegressor(
-        regressor=DummyRegressorWithExtraFitParams(),
+        regressor=dummy_regr,
         transformer=DummyTransformer()
     )
     estimators = [
@@ -329,6 +340,6 @@ def test_transform_target_regressor_route_pipeline():
     ]
 
     pip = Pipeline(estimators)
-    pip.fit(X, y, **{'est__check_input': False})
+    pip.fit(X, y, **{'check_input': False})
 
     assert regr.transformer_.fit_counter == 1
