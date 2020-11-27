@@ -258,7 +258,7 @@ def test_pairwise_parallel(func, metric, kwds, array_constr, dtype):
     # wminkowki metric will be deprecated starting from scipy 1.6
     # and removed in scipy 1.8
     if version.short_version >= '1.6.0' and (
-        metric==wminkowski or metric=='wminkowski'
+        metric == wminkowski or metric == 'wminkowski'
     ):
         metric = 'minkowski'
     rng = np.random.RandomState(0)
