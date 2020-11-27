@@ -1942,9 +1942,14 @@ def test_score():
 
     def two_params_scorer(estimator, X_test):
         return None
-    fit_and_score_args = [None, None, None, two_params_scorer, None]
+    fit_and_score_args = {
+        "estimator": None,
+        "X_test": None,
+        "y_test": None,
+        "scorer": two_params_scorer,
+        "score_params": None}
     assert_raise_message(ValueError, error_message,
-                         _score, *fit_and_score_args, error_score=np.nan)
+                         _score, **fit_and_score_args, error_score=np.nan)
 
 
 def test_callable_multimetric_confusion_matrix_cross_validate():

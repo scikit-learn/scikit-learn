@@ -46,6 +46,7 @@ from .cluster import fowlkes_mallows_score
 from ..utils.multiclass import type_of_target
 from ..base import is_regressor, _MetadataRequest, MetadataConsumer
 from ..utils import _check_method_props
+from ..utils import _empty_metadata_request
 from ..utils.validation import _deprecate_positional_args
 
 
@@ -396,9 +397,21 @@ def get_scorer(scoring):
     return scorer
 
 
-def _passthrough_scorer(estimator, *args, **kwargs):
-    """Function that wraps estimator.score"""
-    return estimator.score(*args, **kwargs)
+class _passthrough_scorer:
+    def __init__(self, estimator):
+        self.estimator = estimator
+
+    def __call__(self, estimator, *args, **kwargs):
+        """Function that wraps estimator.score"""
+        return estimator.score(*args, **kwargs)
+
+    def get_metadata_request(self):
+        res = _empty_metadata_request()
+        try:
+            res.score = self.estimator.get_metadata_request().score
+        except AttributeError:
+            pass
+        return res
 
 
 @_deprecate_positional_args
@@ -447,7 +460,7 @@ def check_scoring(estimator, scoring=None, *, allow_none=False):
         return get_scorer(scoring)
     elif scoring is None:
         if hasattr(estimator, 'score'):
-            return _passthrough_scorer
+            return _passthrough_scorer(estimator)
         elif allow_none:
             return None
         else:
