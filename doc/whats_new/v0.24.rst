@@ -93,7 +93,7 @@ Changelog
   When set to `True`, additional messages will be displayed which can aid with
   debugging. :pr:`18052` by :user:`Sean O. Stalley <sstalley>`.
 
-- |Enhancement| Added :func:`cluster.kmeans_plusplus` as public function. 
+- |Enhancement| Added :func:`cluster.kmeans_plusplus` as public function.
   Initialization by KMeans++ can now be called separately to generate
   initial cluster centroids. :pr:`17937` by :user:`g-walsh`
 
@@ -372,6 +372,10 @@ Changelog
 - |Feature| Add `sample_weight` parameter to
   :func:`inspection.permutation_importance`. :pr:`16906` by
   :user:`Roei Kahny <RoeiKa>`.
+
+- |API| Positional arguments are deprecated in
+  :meth:`inspection.PartialDependenceDisplay.plot` and will error in 0.26.
+  :pr:`18293` by `Thomas Fan`_.
 
 :mod:`sklearn.isotonic`
 .......................
@@ -741,7 +745,7 @@ Changelog
   when `handle_unknown='error'` and `drop=None` for samples
   encoded as all zeros. :pr:`14982` by
   :user:`Kevin Winata <kwinata>`.
-  
+
 :mod:`sklearn.semi_supervised`
 ..............................
 
