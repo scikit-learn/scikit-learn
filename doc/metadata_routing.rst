@@ -1,3 +1,6 @@
+
+.. _metadata_routing:
+
 Metadata Routing
 ================
 
