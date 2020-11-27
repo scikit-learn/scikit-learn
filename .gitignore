@@ -55,6 +55,7 @@ reuters/
 benchmarks/bench_covertype_data/
 
 *.prefs
+.project
 .pydevproject
 .idea
 .vscode
