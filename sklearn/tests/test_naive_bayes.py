@@ -205,7 +205,8 @@ def test_discretenb_deprecated_coef_intercept(cls):
             hasattr(est, att)
 
 
-@pytest.mark.parametrize("cls", [MultinomialNB, BernoulliNB, CategoricalNB])
+@pytest.mark.parametrize("cls", [MultinomialNB, ComplementNB, BernoulliNB,
+                                 CategoricalNB])
 def test_discretenb_prior(cls):
     # Test whether class priors are properly set.
     clf = cls().fit(X2, y2)
@@ -213,7 +214,8 @@ def test_discretenb_prior(cls):
                               clf.class_log_prior_, 8)
 
 
-@pytest.mark.parametrize("cls", [MultinomialNB, BernoulliNB, CategoricalNB])
+@pytest.mark.parametrize("cls", [MultinomialNB, ComplementNB, BernoulliNB,
+                                 CategoricalNB])
 def test_discretenb_partial_fit(cls):
     clf1 = cls()
     clf1.fit([[0, 1], [1, 0], [1, 1]], [0, 1, 1])
@@ -261,8 +263,8 @@ def test_discretenb_partial_fit(cls):
         assert_array_equal(clf1.feature_count_, clf3.feature_count_)
 
 
-@pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB, GaussianNB,
-                                 CategoricalNB])
+@pytest.mark.parametrize('cls', [MultinomialNB, ComplementNB, BernoulliNB,
+                                 CategoricalNB, GaussianNB])
 def test_discretenb_pickle(cls):
     # Test picklability of discrete naive Bayes classifiers
 
@@ -284,8 +286,8 @@ def test_discretenb_pickle(cls):
     assert_array_equal(y_pred, clf2.predict(X2))
 
 
-@pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB, GaussianNB,
-                                 CategoricalNB])
+@pytest.mark.parametrize('cls', [MultinomialNB, ComplementNB, BernoulliNB,
+                                 CategoricalNB, GaussianNB])
 def test_discretenb_input_check_fit(cls):
     # Test input checks for the fit method
 
@@ -297,7 +299,8 @@ def test_discretenb_input_check_fit(cls):
     assert_raises(ValueError, clf.predict, X2[:, :-1])
 
 
-@pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB, CategoricalNB])
+@pytest.mark.parametrize('cls', [MultinomialNB, ComplementNB, BernoulliNB,
+                                 CategoricalNB])
 def test_discretenb_input_check_partial_fit(cls):
     # check shape consistency
     assert_raises(ValueError, cls().partial_fit, X2, y2[:-1],
@@ -352,7 +355,8 @@ def test_discretenb_predict_proba():
         assert_almost_equal(np.sum(np.exp(clf.intercept_)), 1)
 
 
-@pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB, CategoricalNB])
+@pytest.mark.parametrize('cls', [MultinomialNB, ComplementNB, BernoulliNB,
+                                 CategoricalNB])
 def test_discretenb_uniform_prior(cls):
     # Test whether discrete NB classes fit a uniform prior
     # when fit_prior=False and class_prior=None
@@ -364,7 +368,8 @@ def test_discretenb_uniform_prior(cls):
     assert_array_almost_equal(prior, np.array([.5, .5]))
 
 
-@pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB, CategoricalNB])
+@pytest.mark.parametrize('cls', [MultinomialNB, ComplementNB, BernoulliNB,
+                                 CategoricalNB])
 def test_discretenb_provide_prior(cls):
     # Test whether discrete NB classes use provided prior
 
@@ -379,7 +384,8 @@ def test_discretenb_provide_prior(cls):
                   classes=[0, 1, 1])
 
 
-@pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB, CategoricalNB])
+@pytest.mark.parametrize('cls', [MultinomialNB, ComplementNB, BernoulliNB,
+                                 CategoricalNB])
 def test_discretenb_provide_prior_with_partial_fit(cls):
     # Test whether discrete NB classes use provided prior
     # when using partial_fit
@@ -399,7 +405,8 @@ def test_discretenb_provide_prior_with_partial_fit(cls):
                                   clf_partial.class_log_prior_)
 
 
-@pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB, CategoricalNB])
+@pytest.mark.parametrize('cls', [MultinomialNB, ComplementNB, BernoulliNB,
+                                 CategoricalNB])
 def test_discretenb_sample_weight_multiclass(cls):
     # check shape consistency for number of samples at fit time
     X = [
