@@ -438,6 +438,23 @@ def test_discretenb_coef_intercept_shape(cls):
     assert clf.intercept_.shape == (1,)
 
 
+@pytest.mark.parametrize('cls', [MultinomialNB])
+def test_discretenb_degenerate_single_class_case(cls):
+    # class_count_ should have one element per class
+    # Non-regression test for handling degenerate single-class case.
+    X = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+    y = [1, 1, 2]
+    clf = cls()
+
+    # two classes
+    clf.fit(X, y)
+    assert clf.class_count_.size == 2
+
+    # degenerate one-class case
+    clf.fit(X[:2], y[:2])
+    assert clf.class_count_.size == 1
+
+
 @pytest.mark.parametrize('kind', ('dense', 'sparse'))
 def test_mnnb(kind):
     # Test Multinomial Naive Bayes classification.
