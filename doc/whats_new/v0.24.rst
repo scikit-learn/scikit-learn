@@ -26,11 +26,10 @@ random sampling procedures.
   between 32-bits and 64-bits data when the kernel has small positive
   eigenvalues.
 
-- |Fix| In ``fit`` and ``fit_transform`` from
-  :class:`decomposition.TruncatedSVD` provides a `random_state` parameter to
-  make the algorithm deterministic.
+- |Fix| :class:`decomposition.TruncatedSVD` becomes deterministic by exposing
+  a `random_state` parameter.
 
-- |Fix| :class:`linear_model.Perceptron` when `penalty='elasticnet'`
+- |Fix| :class:`linear_model.Perceptron` when `penalty='elasticnet'`.
 
 Details are listed in the changelog below.
 
