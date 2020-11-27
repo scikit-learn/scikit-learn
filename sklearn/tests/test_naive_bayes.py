@@ -444,15 +444,16 @@ def test_discretenb_degenerate_single_class_case(cls):
     # Non-regression test for handling degenerate single-class case.
     X = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
     y = [1, 1, 2]
-    clf = cls()
 
     # two classes
-    clf.fit(X, y)
-    assert clf.class_count_.size == 2
+    clf1 = cls()
+    clf1.fit(X, y)
+    assert clf1.class_count_.size == 2
 
     # degenerate one-class case
-    clf.fit(X[:2], y[:2])
-    assert clf.class_count_.size == 1
+    clf2 = cls()
+    clf2.fit(X[:2], y[:2])
+    assert clf2.class_count_.size == 1
 
 
 @pytest.mark.parametrize('kind', ('dense', 'sparse'))

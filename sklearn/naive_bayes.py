@@ -560,16 +560,8 @@ class _BaseDiscreteNB(_BaseNB):
             raise ValueError(msg % (n_features, self.n_features_))
 
         Y = label_binarize(y, classes=self.classes_)
-        # Y has shape (n_samples, 1) when the number of classes is two or one.
-        # For binary problems, we add a second indicator column.
-        # In the degenerate single-class case, we complement the single
-        # indicator column from all zeroes to all ones.
         if Y.shape[1] == 1:
-            first_class_indicator = 1 - Y
-            if len(self.classes_) == 2:
-                Y = np.concatenate((first_class_indicator, Y), axis=1)
-            else:
-                Y = first_class_indicator
+            Y = np.concatenate((1 - Y, Y), axis=1)
 
         if X.shape[0] != Y.shape[0]:
             msg = "X.shape[0]=%d and y.shape[0]=%d are incompatible."
