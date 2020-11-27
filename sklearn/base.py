@@ -268,23 +268,32 @@ class SampleWeightConsumer(MetadataConsumer):
         >>> sample_weight = np.random.rand(len(X))
         >>> clf = LogisticRegression()
         >>> gs = GridSearchCV(clf, {"C": [.1, 1, 10]})
-        # Unweighted fitting and scoring
+        >>> # Unweighted fitting and scoring
         >>> gs.fit(X, y)
-        # Weighted fitting, unweighted scoring
-        >>> clf.request_sample_weight()
+        GridSearchCV(...)
+        >>> # Weighted fitting, unweighted scoring
+        >>> clf.request_sample_weight(fit=True, score=False)
+        LogisticRegression()
         >>> gs.fit(X, y, sample_weight=sample_weight)
-        # Weighted fitting and scoring
+        GridSearchCV(...)
+        >>> # Weighted fitting and scoring
         >>> clf.request_sample_weight(fit=True, score=True)
+        LogisticRegression()
         >>> gs.fit(X, y, sample_weight=sample_weight)
-        # Weighted scoring only
+        GridSearchCV(...)
+        >>> # Weighted scoring only
         >>> clf.request_sample_weight(fit=False, score=True)
+        LogisticRegression()
         >>> gs.fit(X, y, sample_weight=sample_weight)
-        # Distinct weights for fit and score
+        GridSearchCV(...)
+        >>> # Distinct weights for fit and score
         >>> score_sample_weight = np.random.rand(len(X))
         >>> clf.request_sample_weight(fit='fit_sample_weight',
         ...     score='score_sample_weight')
+        LogisticRegression()
         >>> gs.fit(X, y, fit_sample_weight=sample_weight,
         ...        score_sample_weight=score_sample_weight)
+        GridSearchCV(...)
         """
         self._request_key_for_method(method='fit',
                                      param='sample_weight',
