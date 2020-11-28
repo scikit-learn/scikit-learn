@@ -533,7 +533,7 @@ class _BaseDiscreteNB(_BaseNB):
         y : array-like of shape (n_samples,)
             Target values.
 
-        classes : array-like of shape (n_classes), default=None
+        classes : array-like of shape (n_classes,), default=None
             List of all the classes that can possibly appear in the y vector.
 
             Must be provided at the first call to partial_fit, can be omitted
@@ -702,7 +702,7 @@ class MultinomialNB(_BaseDiscreteNB):
         Number of samples encountered for each class during fitting. This
         value is weighted by the sample weight when provided.
 
-    class_log_prior_ : ndarray of shape (n_classes, )
+    class_log_prior_ : ndarray of shape (n_classes,)
         Smoothed empirical log probability for each class.
 
     classes_ : ndarray of shape (n_classes,)
@@ -946,11 +946,11 @@ class BernoulliNB(_BaseDiscreteNB):
 
     Attributes
     ----------
-    class_count_ : ndarray of shape (n_classes)
+    class_count_ : ndarray of shape (n_classes,)
         Number of samples encountered for each class during fitting. This
         value is weighted by the sample weight when provided.
 
-    class_log_prior_ : ndarray of shape (n_classes)
+    class_log_prior_ : ndarray of shape (n_classes,)
         Log probability of each class (smoothed).
 
     classes_ : ndarray of shape (n_classes,)
@@ -1157,7 +1157,7 @@ class CategoricalNB(_BaseDiscreteNB):
         y : array-like of shape (n_samples,)
             Target values.
 
-        sample_weight : array-like of shape (n_samples), default=None
+        sample_weight : array-like of shape (n_samples,), default=None
             Weights applied to individual samples (1. for unweighted).
 
         Returns
@@ -1191,16 +1191,16 @@ class CategoricalNB(_BaseDiscreteNB):
             total number of categories for the given feature. This can, for
             instance, be achieved with the help of OrdinalEncoder.
 
-        y : array-like of shape (n_samples)
+        y : array-like of shape (n_samples,)
             Target values.
 
-        classes : array-like of shape (n_classes), default=None
+        classes : array-like of shape (n_classes,), default=None
             List of all the classes that can possibly appear in the y vector.
 
             Must be provided at the first call to partial_fit, can be omitted
             in subsequent calls.
 
-        sample_weight : array-like of shape (n_samples), default=None
+        sample_weight : array-like of shape (n_samples,), default=None
             Weights applied to individual samples (1. for unweighted).
 
         Returns
