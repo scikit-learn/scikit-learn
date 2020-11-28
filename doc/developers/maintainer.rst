@@ -51,8 +51,6 @@ permissions given to maintainers, which includes:
 - become a member of the *scikit-learn* team on conda-forge by editing the 
   ``recipe/meta.yaml`` file on 
   ``https://github.com/conda-forge/scikit-learn-feedstock``
-- *maintainer* on ``https://github.com/MacPython/scikit-learn-wheels``
-
 
 .. _preparing_a_release_pr:
 
@@ -130,44 +128,19 @@ Making a release
    candidate period, the latest stable is two versions behind the master
    branch, instead of one.
 
-3. At this point all relevant PRs should have been merged into the `0.99.X`
-   branch. Create the source tarball:
-
-   - Wipe clean your repo:
-
-     .. prompt:: bash $
-
-       git clean -xfd
-
-   - Generate the tarball:
-
-     .. prompt:: bash $
-
-       python setup.py sdist
-
-   - You can also test a binary dist build using:
-
-     .. prompt:: bash $
-
-       python setup.py bdist_wheel
-
-   - You can test if PyPi is going to accept the package using:
-
-     .. prompt:: bash $
-
-       twine check dist/*
-
-   You can run ``twine check`` after step 5 (fetching artifacts) as well.
-
-   The result should be in the `dist/` folder. We will upload it later
-   with the wheels. Check that you can install it in a new virtualenv and
-   that the tests pass.
-
-4. Proceed with caution. Ideally, tags should be created when you're almost
+3. Proceed with caution. Ideally, tags should be created when you're almost
    certain that the release is ready, since adding a tag to the main repo can
-   trigger certain automated processes. You can test upload the ``sdist`` to
-   ``test.pypi.org``, and test the next step by setting ``BUILD_COMMIT`` to the
-   branch name (``0.99.X`` for instance) in a PR to the wheel building repo.
+   trigger certain automated processes. You can create a PR in the main repo
+   and trigger the wheel builder with the ``[cd build]`` commit marker using
+   the command:
+   
+   .. prompt:: bash $
+
+    git commit --allow-empty -m "Trigger wheel builder workflow: [cd build]"
+
+   The wheel building workflow is managed by GitHub Actions and the results be browsed at:
+   https://github.com/scikit-learn/scikit-learn/actions?query=workflow%3A%22Wheel+builder%22
+
    Once all works, you can proceed with tagging. Create the tag and push it (if
    it's an RC, it can be ``0.xxrc1`` for instance):
 
@@ -176,22 +149,28 @@ Making a release
      git tag -a 0.99  # in the 0.99.X branch
      git push git@github.com:scikit-learn/scikit-learn.git 0.99
 
-5. Update the dependency versions and set ``BUILD_COMMIT`` variable to the
-   release tag at:
+.. note::
+  
+  Before building the wheels, make sure that the ``pyproject.toml`` file is
+  up to date and using the oldest version of ``numpy`` for each Python version
+  to avoid ABI incompatibility issues. Moreover, a new line have to be included
+  in the ``pyproject.toml`` file for each new supported version of Python.
 
-   https://github.com/MacPython/scikit-learn-wheels
-
-   Once the CI has completed successfully, collect the generated binary wheel
-   packages and upload them to PyPI by running the following commands in the
-   scikit-learn source folder (checked out at the release tag):
+4. Once the CD has completed successfully, collect the generated binary
+   wheel packages and upload them to PyPI by running the following commands
+   in the scikit-learn source folder (checked out at the release tag):
 
    .. prompt:: bash $
 
-       rm -r dist # only if there's anything other than the sdist tar.gz there
+       rm -r dist
        pip install -U wheelhouse_uploader twine
        python setup.py fetch_artifacts
 
-6. Check the content of the `dist/` folder: it should contain all the wheels
+   This command will download all the binary packages accumulated in the `staging area on the anaconda.org
+   hosting service <https://anaconda.org/scikit-learn-wheels-staging/scikit-learn/files>`_ and put them in
+   your local `./dist` folder.
+
+5. Check the content of the `./dist` folder: it should contain all the wheels
    along with the source tarball ("scikit-learn-RRR.tar.gz").
 
    Make sure that you do not have developer versions or older versions of
@@ -209,7 +188,7 @@ Making a release
 
        twine upload dist/*
 
-7. For major/minor (not bug-fix release), update the symlink for ``stable``
+6. For major/minor (not bug-fix release), update the symlink for ``stable``
    and the ``latestStable`` variable in
    https://github.com/scikit-learn/scikit-learn.github.io:
 
@@ -231,8 +210,6 @@ The following GitHub checklist might be helpful in a release PR::
 
     * [ ] update news and what's new date in master and release branch
     * [ ] create tag
-    * [ ] update dependencies and release tag at
-      https://github.com/MacPython/scikit-learn-wheels
     * [ ] twine the wheels to PyPI when that's green
     * [ ] https://github.com/scikit-learn/scikit-learn/releases draft
     * [ ] confirm bot detected at
