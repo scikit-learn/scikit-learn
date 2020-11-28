@@ -16,7 +16,22 @@ default. This is best demonstrated by the following examples.
 
 Usage Examples
 **************
-Here we present a few examples to show different common usecases.
+Here we present a few examples to show different common usecases. The examples
+in this section require the following imports and data:
+
+  >>> import numpy as np
+  >>> from sklearn.metrics import make_scorer, accuracy_score
+  >>> from sklearn.linear_model import LogisticRegressionCV
+  >>> from sklearn.model_selection import cross_validate
+  >>> from sklearn.model_selection import GroupKFold
+  >>> from sklearn.feature_selection import SelectKBest
+  >>> from sklearn.pipeline import make_pipeline
+  >>> N, M = 100, 4
+  >>> X = np.random.rand(N, M)
+  >>> y = np.random.randint(0, 2, size=N)
+  >>> my_groups = np.random.randint(0, 10, size=N)
+  >>> my_weights = np.random.rand(N)
+  >>> my_other_weights = np.random.rand(N)
 
 Weighted scoring and fitting
 ----------------------------
@@ -25,16 +40,12 @@ Here GroupKFold requests ``groups`` by default. We need to explicitly request
 weights in ``make_scorer`` and for ``LogisticRegressionCV``. Both of these
 consumers understand the meaning of the key ``"sample_weight"``::
 
-  >>> from sklearn.metrics import make_scorer, accuracy_score
-  >>> from sklearn.linear_model import LogisticRegressionCV
-  >>> from sklearn.model_selection import cross_validate
-  >>> from sklearn.model_selection import GroupKFold
   >>> weighted_acc = make_scorer(accuracy_score,
   ...                            request_props=["sample_weight"])
   >>> lr = LogisticRegressionCV(
-  >>>     cv=GroupKFold(), scoring=weighted_acc,
+  ...     cv=GroupKFold(), scoring=weighted_acc,
   ...     ).request_sample_weight(fit="sample_weight")
-  >>> cross_validate(
+  >>> cv_results = cross_validate(
   ...     lr,
   ...     X,
   ...     y,
@@ -57,7 +68,7 @@ unweighted::
   >>> weighted_acc = make_scorer(accuracy_score,
   ...                            request_props=["sample_weight"])
   >>> lr = LogisticRegressionCV(cv=GroupKFold(), scoring=weighted_acc,)
-  >>> cross_validate(
+  >>> cv_results = cross_validate(
   ...     lr,
   ...     X,
   ...     y,
@@ -72,16 +83,14 @@ Unweighted feature selection
 Like ``LogisticRegressionCV``, ``SelectKBest`` needs to request weights
 explicitly. Here it does not request them::
 
-  >>> from sklearn.feature_selection import SelectKBest
-  >>> from sklearn.pipeline import make_pipeline
   >>> weighted_acc = make_scorer(accuracy_score,
   ...                            request_props=["sample_weight"])
   >>> lr = LogisticRegressionCV(
   ...     cv=GroupKFold(), scoring=weighted_acc,
   ... ).request_sample_weight(fit=True)
-  >>> sel = SelectKBest()
+  >>> sel = SelectKBest(k=2)
   >>> pipe = make_pipeline(sel, lr)
-  >>> cross_validate(
+  >>> cv_results = cross_validate(
   ...     pipe,
   ...     X,
   ...     y,
@@ -103,7 +112,7 @@ consumers::
   >>> lr = LogisticRegressionCV(
   ...     cv=GroupKFold(), scoring=weighted_acc,
   ... ).request_sample_weight(fit="fitting_weight")
-  >>> cross_validate(
+  >>> cv_results = cross_validate(
   ...     lr,
   ...     X,
   ...     y,
