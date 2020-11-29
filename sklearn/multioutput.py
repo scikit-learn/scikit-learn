@@ -22,7 +22,7 @@ from abc import ABCMeta, abstractmethod
 from .base import BaseEstimator, clone, MetaEstimatorMixin
 from .base import RegressorMixin, ClassifierMixin, is_classifier
 from .model_selection import cross_val_predict
-from .utils import check_array, check_X_y, check_random_state
+from .utils import check_array, check_X_y, check_random_state, _print_elapsed_time
 from .utils.metaestimators import if_delegate_has_method
 from .utils.validation import (check_is_fitted, has_fit_parameter,
                                _check_fit_params, _deprecate_positional_args)
@@ -442,11 +442,19 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
 class _BaseChain(BaseEstimator, metaclass=ABCMeta):
     @_deprecate_positional_args
     def __init__(self, base_estimator, *, order=None, cv=None,
-                 random_state=None):
+                 random_state=None, verbose=False):
         self.base_estimator = base_estimator
         self.order = order
         self.cv = cv
         self.random_state = random_state
+        self.verbose = verbose
+
+
+    def _log_message(self, idx, total, label):
+        if not self.verbose:
+            return None
+        return '(%d of %d) %s' % (idx, total, label)
+
 
     @abstractmethod
     def fit(self, X, Y, **fit_params):
@@ -505,9 +513,11 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         del Y_pred_chain
 
         for chain_idx, estimator in enumerate(self.estimators_):
+            message=self._log_message(chain_idx + 1, len(self.estimators_), "fit")
             y = Y[:, self.order_[chain_idx]]
-            estimator.fit(X_aug[:, :(X.shape[1] + chain_idx)], y,
-                          **fit_params)
+            with _print_elapsed_time("Chaining", message):
+                estimator.fit(X_aug[:, :(X.shape[1] + chain_idx)], y,
+                                **fit_params)
             if self.cv is not None and chain_idx < len(self.estimators_) - 1:
                 col_idx = X.shape[1] + chain_idx
                 cv_result = cross_val_predict(
