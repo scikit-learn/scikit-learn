@@ -321,16 +321,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef object X_new = np.array(X_list)
         cdef np.ndarray y_new = np.array(y_list)
 
-        # Initial capacity
-        cdef int init_capacity
-
-        if tree.max_depth <= 10:
-            init_capacity = (2 ** (tree.max_depth + 1)) - 1
-        else:
-            init_capacity = 2047
-
-        tree._resize(init_capacity)
-
         # Parameters
         cdef Splitter splitter = self.splitter
         cdef SIZE_t max_depth = self.max_depth
