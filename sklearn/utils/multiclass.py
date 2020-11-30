@@ -95,7 +95,8 @@ def unique_labels(*ys):
     # Get the unique set of labels
     _unique_labels = _FN_UNIQUE_LABELS.get(label_type, None)
     if not _unique_labels:
-        raise ValueError("Unknown label type: %s. Expected 'binary', 'multiclass', 'multilabel'." % repr(ys))
+        raise ValueError("Unknown label type: %s. Expected 'binary', "
+                         "'multiclass', 'multilabel'." % repr(ys))
 
     ys_labels = set(chain.from_iterable(_unique_labels(y) for y in ys))
 
@@ -180,8 +181,9 @@ def check_classification_targets(y):
     y_type = type_of_target(y)
     if y_type not in ['binary', 'multiclass', 'multiclass-multioutput',
                       'multilabel-indicator', 'multilabel-sequences']:
-        raise ValueError("Unknown label type: %r.Expected 'binary', 'multiclass', 'multiclass-multioutput',
-                         'multilabel-indicator', 'multilabel-sequences'." % y_type)
+        raise ValueError("Unknown label type: %r. Expected 'binary', 'multiclass', "
+                         "'multiclass-multioutput', 'multilabel-indicator', "
+                         "'multilabel-sequences'." % y_type)
 
 
 def type_of_target(y):
