@@ -705,8 +705,8 @@ def test_xfail_ignored_in_check_estimator():
     assert_warns(SkipTestWarning, check_estimator, NuSVC())
 
 
-# FIXME: this test should be uncommented when the checks will be enough
-# granular. In 0.24, these tests fail due to low estimator performance.
+# FIXME: this test should be uncommented when the checks will be granular
+# enough. In 0.24, these tests fail due to low estimator performance.
 def test_minimal_class_implementation_checks():
     # Check that third-party library can run tests without inheriting from
     # BaseEstimator.
