@@ -707,7 +707,7 @@ def test_xfail_ignored_in_check_estimator():
 
 # FIXME: this test should be uncommented when the checks will be enough
 # granular. In 0.24, these tests fail due to low estimator performance.
-def test_minimal_class_implementation_checks(estimator, check):
+def test_minimal_class_implementation_checks():
     # Check that third-party library can run tests without inheriting from
     # BaseEstimator.
     # FIXME
