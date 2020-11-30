@@ -330,7 +330,7 @@ General Concepts
 
     experimental
         An experimental tool is already usable but its public API, such as the
-        default values of its constructor arguments or its fitted attributed,
+        default values of its constructor arguments or its fitted attributes,
         is still subject to change in future versions of scikit-learn without
         going through the usual deprecation warning policy that applies to
         non-experimental estimators.
