@@ -169,15 +169,14 @@ class _MetadataRequest:
             metadata_request)
         defaults = _standardize_metadata_request(defaults)
         for method in defaults:
-            if method not in metadata_request:
-                metadata_request[method] = copy.deepcopy(defaults[method])
-            else:
-                for key in defaults[method]:
-                    for value in metadata_request[method]:
-                        if key in value:
-                            break
-                    else:
-                        metadata_request[method][key] = defaults[method][key]
+            for key in defaults[method]:
+                for value in metadata_request[method]:
+                    if key in value:
+                        # this means the user has explicitly set routing for
+                        # this parameter
+                        break
+                else:
+                    metadata_request[method][key] = defaults[method][key]
         return metadata_request
 
     def get_metadata_request(self):
@@ -204,6 +203,13 @@ class _MetadataRequest:
 
 
 class MetadataConsumer:
+    def _remove_param(self, *, method_params, param):
+        user_provides_list = list(method_params.keys())
+        for user_provides in user_provides_list:
+            method_params[user_provides] -= {param}
+            if method_params[user_provides] == set():
+                del method_params[user_provides]
+
     def _request_key_for_method(self, *, method, param, user_provides):
         if user_provides is None:
             return
@@ -212,14 +218,20 @@ class MetadataConsumer:
         self._metadata_request = _standardize_metadata_request(
             self._metadata_request)
 
+        if user_provides == param:
+            user_provides = True
+
         method_dict = self._metadata_request[method]
+        self._remove_param(method_params=method_dict, param=param)
+
         if user_provides is True:
-            method_dict[param] = param
+            method_dict[param] = {param}
         elif user_provides is False:
-            if param in method_dict:
-                del method_dict[param]
+            # the parameter is already removed, nothing to do here
+            pass
         elif isinstance(user_provides, str):
-            method_dict[user_provides] = param
+            routing = method_dict.get(user_provides, set())
+            method_dict[user_provides] = routing.union({param})
         else:
             raise TypeError
 

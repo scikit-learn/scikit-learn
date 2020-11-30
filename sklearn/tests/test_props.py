@@ -32,6 +32,8 @@ from sklearn.model_selection import GroupShuffleSplit
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.model_selection import PredefinedSplit
 
+from sklearn.base import _MetadataRequest
+
 NonGroupCVs = [
     KFold,
     LeaveOneOut,
@@ -354,3 +356,53 @@ def test_invalid_arg_given():
             sample_weigh=my_weights,
             groups=my_groups,
         )
+
+
+def test_MetadataRequest():
+    class TestDefaults(_MetadataRequest, SampleWeightConsumer):
+        _metadata_request__my_param = {
+            'score': ['my_param'],
+            # the following method would be ignored
+            'other_method': 'my_param'
+        }
+
+        def request_my_param(self, *, fit=None, score=None):
+            self._request_key_for_method(method='fit',
+                                         param='my_param',
+                                         user_provides=fit)
+            self._request_key_for_method(method='score',
+                                         param='my_param',
+                                         user_provides=score)
+            return self
+
+    expected = {
+        'score': {'my_param': {'my_param'}},
+        'fit': {},
+        'predict': {},
+        'transform': {},
+        'inverse_transform': {},
+        'split': {},
+    }
+    assert TestDefaults().get_metadata_request() == expected
+
+    est = TestDefaults().request_my_param(score='other_param')
+    expected = {
+        'score': {'other_param': {'my_param'}},
+        'fit': {},
+        'predict': {},
+        'transform': {},
+        'inverse_transform': {},
+        'split': {},
+    }
+    assert est.get_metadata_request() == expected
+
+    est = TestDefaults().request_sample_weight(fit=True)
+    expected = {
+        'score': {'my_param': {'my_param'}},
+        'fit': {'sample_weight': {'sample_weight'}},
+        'predict': {},
+        'transform': {},
+        'inverse_transform': {},
+        'split': {},
+    }
+    assert est.get_metadata_request() == expected
