@@ -7,20 +7,15 @@ from sklearn.utils._tags import (
 )
 
 
-class EstimatorNoTags:
+class NoTagsEstimator:
     pass
-
-
-class EstimatorOwnTags:
-    def _get_tags(self):
-        return {}
 
 
 @pytest.mark.parametrize(
     "estimator, err_msg",
     [
         (BaseEstimator(), "The key xxx is neither defined"),
-        (EstimatorNoTags(), "The key xxx is not a default tags defined"),
+        (NoTagsEstimator(), "The key xxx is not a default tags defined"),
     ],
 )
 def test_safe_tags_error(estimator, err_msg):
@@ -32,15 +27,15 @@ def test_safe_tags_error(estimator, err_msg):
 @pytest.mark.parametrize(
     "estimator, key, default, expected_results",
     [
-        (EstimatorNoTags(), None, None, _DEFAULT_TAGS),
-        (EstimatorNoTags(), "allow_nan", None, _DEFAULT_TAGS["allow_nan"]),
+        (NoTagsEstimator(), None, None, _DEFAULT_TAGS),
+        (NoTagsEstimator(), "allow_nan", None, _DEFAULT_TAGS["allow_nan"]),
         (
-            EstimatorNoTags(),
+            NoTagsEstimator(),
             "allow_nan",
             not _DEFAULT_TAGS["allow_nan"],
             not _DEFAULT_TAGS["allow_nan"],
         ),
-        (EstimatorNoTags(), "xxx", True, True),
+        (NoTagsEstimator(), "xxx", True, True),
         (BaseEstimator(), None, None, _DEFAULT_TAGS),
         (BaseEstimator(), "allow_nan", None, _DEFAULT_TAGS["allow_nan"]),
         (

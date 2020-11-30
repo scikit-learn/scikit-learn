@@ -13,7 +13,6 @@ import numpy as np
 import scipy.sparse as sp
 import pytest
 
-from sklearn.utils.estimator_checks import parametrize_with_checks
 from sklearn.utils._testing import (
     assert_raises,
     assert_warns,
@@ -33,7 +32,7 @@ from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
 from scipy.stats import bernoulli, expon, uniform
 
 from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.base import clone
+from sklearn.base import clone, is_classifier
 from sklearn.exceptions import NotFittedError
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_blobs
@@ -69,9 +68,11 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import confusion_matrix
+from sklearn.metrics import r2_score
+from sklearn.metrics import accuracy_score
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.impute import SimpleImputer
-from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.pipeline import Pipeline
 from sklearn.linear_model import Ridge, SGDClassifier, LinearRegression
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingClassifier
@@ -2087,54 +2088,33 @@ def test_scalar_fit_param_compat(SearchCV, param_search):
     model.fit(X_train, y_train, **fit_params)
 
 
-def _generate_search_cv_using_minimal_compatible_instances():
-    """Generate instance containing estimators from minimal class compatible
-    implementation that should be supported by `SearhCV`."""
-    for SearchCV, (Estimator, param_grid) in zip(
-        [GridSearchCV, RandomizedSearchCV],
-        [
-            (MinimalRegressor, {"param": [1, 10]}),
-            (MinimalClassifier, {"param": [1, 10]}),
-        ],
-    ):
-        yield SearchCV(Estimator(), param_grid)
-
-    for SearchCV, (Estimator, param_grid) in zip(
-        [GridSearchCV, RandomizedSearchCV],
-        [
-            (
-                MinimalRegressor,
-                {
-                    "minimaltransformer__param": [1, 10],
-                    "minimalregressor__param": [1, 10],
-                },
-            ),
-            (
-                MinimalClassifier,
-                {
-                    "minimaltransformer__param": [1, 10],
-                    "minimalclassifier__param": [1, 10],
-                },
-            ),
-        ],
-    ):
-        yield SearchCV(
-            make_pipeline(MinimalTransformer(), Estimator()), param_grid
-        ).set_params(error_score="raise")
-
-
-# FIXME: hopefully in 0.25
-@pytest.mark.xfail(
-    reason=(
-        "This test is currently failing because checks are granular "
-        "enough. Once checks are split with some kind of only API tests, "
-        "this test should enabled."
-    )
-)
-@parametrize_with_checks(
-    list(_generate_search_cv_using_minimal_compatible_instances())
-)
-def test_search_cv_using_minimal_compatible_estimator(estimator, check):
+# FIXME: Replace this test with a full `check_estimator` once we have API only
+# checks.
+@pytest.mark.filterwarnings("ignore:The total space of parameters 4 is")
+@pytest.mark.parametrize("SearchCV", [GridSearchCV, RandomizedSearchCV])
+@pytest.mark.parametrize("Predictor", [MinimalRegressor, MinimalClassifier])
+def test_search_cv_using_minimal_compatible_estimator(SearchCV, Predictor):
     # Check that third-party library can run tests without inheriting from
     # BaseEstimator.
-    check(estimator)
+    rng = np.random.RandomState(0)
+    X, y = rng.randn(25, 2), np.array([0] * 5 + [1] * 20)
+
+    model = Pipeline([
+        ("transformer", MinimalTransformer()), ("predictor", Predictor())
+    ])
+
+    params = {
+        "transformer__param": [1, 10], "predictor__parama": [1, 10],
+    }
+    search = SearchCV(model, params, error_score="raise")
+    search.fit(X, y)
+
+    assert search.best_params_.keys() == params.keys()
+
+    y_pred = search.predict(X)
+    if is_classifier(search):
+        assert_array_equal(y_pred, 1)
+        assert search.score(X, y) == pytest.approx(accuracy_score(y, y_pred))
+    else:
+        assert_allclose(y_pred, y.mean())
+        assert search.score(X, y) == pytest.approx(r2_score(y, y_pred))

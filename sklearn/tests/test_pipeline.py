@@ -12,7 +12,6 @@ import numpy as np
 from scipy import sparse
 import joblib
 
-from sklearn.utils.estimator_checks import parametrize_with_checks
 from sklearn.utils.fixes import parse_version
 from sklearn.utils._testing import (
     assert_raises,
@@ -27,12 +26,13 @@ from sklearn.utils._testing import (
     MinimalTransformer,
 )
 
-from sklearn.base import clone, BaseEstimator, TransformerMixin
+from sklearn.base import clone, is_classifier, BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
 from sklearn.svm import SVC
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.linear_model import LogisticRegression, Lasso
 from sklearn.linear_model import LinearRegression
+from sklearn.metrics import accuracy_score, r2_score
 from sklearn.cluster import KMeans
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.dummy import DummyRegressor
@@ -1289,18 +1289,24 @@ def _generate_pipeline_using_minimal_compatible_instances():
         yield make_pipeline(MinimalTransformer(), Predictor())
 
 
-# FIXME: hopefully in 0.25
-@pytest.mark.xfail(
-    reason=(
-        "This test is currently failing because checks are granular "
-        "enough. Once checks are split with some kind of only API tests, "
-        "this test should enabled."
-    )
-)
-@parametrize_with_checks(
-    list(_generate_pipeline_using_minimal_compatible_instances())
-)
-def test_pipeline_using_minimal_compatible_estimator(estimator, check):
-    # check that we can pass minimal estimator implementation within a
-    # pipeline.
-    check(estimator)
+# FIXME: Replace this test with a full `check_estimator` once we have API only
+# checks.
+@pytest.mark.parametrize("Predictor", [MinimalRegressor, MinimalClassifier])
+def test_search_cv_using_minimal_compatible_estimator(Predictor):
+    # Check that third-party library can run tests without inheriting from
+    # BaseEstimator.
+    rng = np.random.RandomState(0)
+    X, y = rng.randn(25, 2), np.array([0] * 5 + [1] * 20)
+
+    model = Pipeline([
+        ("transformer", MinimalTransformer()), ("predictor", Predictor())
+    ])
+    model.fit(X, y)
+
+    y_pred = model.predict(X)
+    if is_classifier(model):
+        assert_array_equal(y_pred, 1)
+        assert model.score(X, y) == pytest.approx(accuracy_score(y, y_pred))
+    else:
+        assert_allclose(y_pred, y.mean())
+        assert model.score(X, y) == pytest.approx(r2_score(y, y_pred))
