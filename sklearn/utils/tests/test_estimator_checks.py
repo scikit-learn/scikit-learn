@@ -7,10 +7,16 @@ import joblib
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils import deprecated
-from sklearn.utils._testing import (assert_raises_regex,
-                                    ignore_warnings,
-                                    assert_warns, assert_raises,
-                                    SkipTest)
+from sklearn.utils._testing import (
+    assert_raises,
+    assert_raises_regex,
+    assert_warns,
+    ignore_warnings,
+    MinimalClassifier,
+    MinimalRegressor,
+    MinimalTransformer,
+    SkipTest,
+)
 from sklearn.utils.estimator_checks import check_estimator, _NotAnArray
 from sklearn.utils.estimator_checks \
     import check_class_weight_balanced_linear_classifier
@@ -675,3 +681,17 @@ def test_xfail_ignored_in_check_estimator():
     # Make sure checks marked as xfail are just ignored and not run by
     # check_estimator(), but still raise a warning.
     assert_warns(SkipTestWarning, check_estimator, NuSVC())
+
+
+# FIXME: this test should be uncommented when the checks will be enough
+# granular. In 0.24, these tests fail due to low estimator performance.
+def test_minimal_class_implementation_checks(estimator, check):
+    # Check that third-party library can run tests without inheriting from
+    # BaseEstimator.
+    # FIXME
+    raise SkipTest
+    minimal_estimators = [
+        MinimalTransformer(), MinimalRegressor(), MinimalClassifier()
+    ]
+    for estimator in minimal_estimators:
+        check_estimator(estimator)

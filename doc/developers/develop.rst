@@ -516,9 +516,7 @@ tags are used in the common checks run by the
 :func:`~sklearn.utils.estimator_checks.parametrize_with_checks` decorator.
 Tags determine which checks to run and what input data is appropriate. Tags
 can depend on estimator parameters or even system architecture and can in
-general only be
-determined at runtime. The default values for the estimator tags are defined in
-the :class:`~sklearn.base.BaseEstimator` class.
+general only be determined at runtime.
 
 The current set of estimator tags are:
 
@@ -633,7 +631,7 @@ own estimator:
         def _more_tags(self):
             return {'multioutput_only': True,
                     'non_deterministic': True}
-  
+
   Any tag that is not in `_more_tags()` will just default to the value
   documented above.
 

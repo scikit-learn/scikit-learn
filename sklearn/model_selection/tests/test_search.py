@@ -13,15 +13,21 @@ import numpy as np
 import scipy.sparse as sp
 import pytest
 
-from sklearn.utils._testing import assert_raises
-from sklearn.utils._testing import assert_warns
-from sklearn.utils._testing import assert_warns_message
-from sklearn.utils._testing import assert_raise_message
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import ignore_warnings
+from sklearn.utils.estimator_checks import parametrize_with_checks
+from sklearn.utils._testing import (
+    assert_raises,
+    assert_warns,
+    assert_warns_message,
+    assert_raise_message,
+    assert_array_equal,
+    assert_array_almost_equal,
+    assert_allclose,
+    assert_almost_equal,
+    ignore_warnings,
+    MinimalClassifier,
+    MinimalRegressor,
+    MinimalTransformer,
+)
 from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
 
 from scipy.stats import bernoulli, expon, uniform
@@ -65,7 +71,7 @@ from sklearn.metrics import roc_auc_score
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.impute import SimpleImputer
-from sklearn.pipeline import Pipeline
+from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.linear_model import Ridge, SGDClassifier, LinearRegression
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingClassifier
@@ -2079,3 +2085,56 @@ def test_scalar_fit_param_compat(SearchCV, param_search):
         'scalar_param': 42,
     }
     model.fit(X_train, y_train, **fit_params)
+
+
+def _generate_search_cv_using_minimal_compatible_instances():
+    """Generate instance containing estimators from minimal class compatible
+    implementation that should be supported by `SearhCV`."""
+    for SearchCV, (Estimator, param_grid) in zip(
+        [GridSearchCV, RandomizedSearchCV],
+        [
+            (MinimalRegressor, {"param": [1, 10]}),
+            (MinimalClassifier, {"param": [1, 10]}),
+        ],
+    ):
+        yield SearchCV(Estimator(), param_grid)
+
+    for SearchCV, (Estimator, param_grid) in zip(
+        [GridSearchCV, RandomizedSearchCV],
+        [
+            (
+                MinimalRegressor,
+                {
+                    "minimaltransformer__param": [1, 10],
+                    "minimalregressor__param": [1, 10],
+                },
+            ),
+            (
+                MinimalClassifier,
+                {
+                    "minimaltransformer__param": [1, 10],
+                    "minimalclassifier__param": [1, 10],
+                },
+            ),
+        ],
+    ):
+        yield SearchCV(
+            make_pipeline(MinimalTransformer(), Estimator()), param_grid
+        ).set_params(error_score="raise")
+
+
+# FIXME: hopefully in 0.25
+@pytest.mark.xfail(
+    reason=(
+        "This test is currently failing because checks are granular "
+        "enough. Once checks are split with some kind of only API tests, "
+        "this test should enabled."
+    )
+)
+@parametrize_with_checks(
+    list(_generate_search_cv_using_minimal_compatible_instances())
+)
+def test_search_cv_using_minimal_compatible_estimator(estimator, check):
+    # Check that third-party library can run tests without inheriting from
+    # BaseEstimator.
+    check(estimator)

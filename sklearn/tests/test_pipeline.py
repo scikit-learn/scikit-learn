@@ -12,14 +12,20 @@ import numpy as np
 from scipy import sparse
 import joblib
 
-from sklearn.utils._testing import assert_raises
-from sklearn.utils._testing import assert_raises_regex
-from sklearn.utils._testing import assert_raise_message
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_no_warnings
+from sklearn.utils.estimator_checks import parametrize_with_checks
 from sklearn.utils.fixes import parse_version
+from sklearn.utils._testing import (
+    assert_raises,
+    assert_raises_regex,
+    assert_raise_message,
+    assert_allclose,
+    assert_array_equal,
+    assert_array_almost_equal,
+    assert_no_warnings,
+    MinimalClassifier,
+    MinimalRegressor,
+    MinimalTransformer,
+)
 
 from sklearn.base import clone, BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
@@ -1272,3 +1278,27 @@ def test_pipeline_get_tags_none(passthrough):
     'passthrough'"""
     pipe = make_pipeline(passthrough, SVC())
     assert not pipe._get_tags()['pairwise']
+
+
+def _generate_pipeline_using_minimal_compatible_instances():
+    """Generate pipeline containing estimators from minimal class compatible
+    implementation."""
+    for Predictor in [MinimalRegressor, MinimalClassifier]:
+        yield make_pipeline(MinimalTransformer(), Predictor())
+
+
+# FIXME: hopefully in 0.25
+@pytest.mark.xfail(
+    reason=(
+        "This test is currently failing because checks are granular "
+        "enough. Once checks are split with some kind of only API tests, "
+        "this test should enabled."
+    )
+)
+@parametrize_with_checks(
+    list(_generate_pipeline_using_minimal_compatible_instances())
+)
+def test_pipeline_using_minimal_compatible_estimator(estimator, check):
+    # check that we can pass minimal estimator implementation within a
+    # pipeline.
+    check(estimator)
