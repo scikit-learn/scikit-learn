@@ -39,7 +39,7 @@ or with conda::
 # resources. Only a subset of candidates will last until the end of the
 # iteration process, and the best parameter candidate is the one that has the
 # highest score on the last iteration.
-
+#
 # Read more in the :ref:`User Guide <successive_halving_user_guide>` (note:
 # the Successive Halving estimators are still :term:`experimental
 # <experimental>`).
@@ -59,7 +59,7 @@ rng = np.random.RandomState(0)
 
 X, y = make_classification(n_samples=700, random_state=rng)
 
-clf = RandomForestClassifier(n_estimators=20, random_state=rng)
+clf = RandomForestClassifier(n_estimators=10, random_state=rng)
 
 param_dist = {"max_depth": [3, None],
               "max_features": randint(1, 11),
@@ -117,6 +117,7 @@ import numpy as np
 from sklearn import datasets
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.svm import SVC
+
 rng = np.random.RandomState(42)
 iris = datasets.load_iris()
 random_unlabeled_points = rng.rand(iris.target.shape[0]) < 0.3
@@ -171,8 +172,8 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=5000,
                                                     random_state=42)
 pipe.fit(X_train, y_train).score(X_test, y_test)
 
-##############################################################################
-# For comparison, here is the score of a linear baseline for the same data:
+# ##############################################################################
+# # For comparison, here is the score of a linear baseline for the same data:
 
 linear_baseline = make_pipeline(MinMaxScaler(),
                                 LogisticRegression(max_iter=1000))
@@ -192,7 +193,7 @@ from sklearn.inspection import plot_partial_dependence
 
 X, y = fetch_california_housing(return_X_y=True, as_frame=True)
 features = ['MedInc', 'AveOccup', 'HouseAge', 'AveRooms']
-est = RandomForestRegressor()
+est = RandomForestRegressor(n_estimators=10)
 est.fit(X, y)
 display = plot_partial_dependence(
        est, X, features, kind="individual", subsample=50,
@@ -213,6 +214,8 @@ display.figure_.subplots_adjust(hspace=0.3)
 # if your target is a count or a frequency.
 
 from sklearn.tree import DecisionTreeRegressor
+from sklearn.model_selection import train_test_split
+import numpy as np
 
 n_samples, n_features = 1000, 20
 rng = np.random.RandomState(0)
@@ -236,7 +239,7 @@ regressor.fit(X_train, y_train)
 #   models <sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py>`
 #   evaluated using :class:`~sklearn.model_selection.GridSearchCV`,
 # - an example on how to :ref:`interpret coefficients of linear models
-#   <sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py>`
+#   <sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py>`,
 # - an :ref:`example
 #   <sphx_glr_auto_examples_cross_decomposition_plot_pcr_vs_pls.py>`
 #   comparing Principal Component Regression and Partial Least Squares.
