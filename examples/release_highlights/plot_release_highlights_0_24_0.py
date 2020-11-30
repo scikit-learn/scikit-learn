@@ -21,16 +21,16 @@ or with conda::
 """
 
 ##############################################################################
-# Searching parameter space with successive halving
-# -------------------------------------------------
-# Successive halving, a state of the art method, is now available to
+# Successive Halving estimators for tuning hyper-parameters
+# ---------------------------------------------------------
+# Successive Halving, a state of the art method, is now available to
 # explore the space of the parameters and identify their best combination.
 # :class:`~sklearn.model_selection.HalvingGridSearchCV` and
 # :class:`~sklearn.model_selection.HalvingRandomSearchCV` can be
 # used as drop-in replacement for
 # :class:`~sklearn.model_selection.GridSearchCV` and
 # :class:`~sklearn.model_selection.RandomizedSearchCV`.
-# Successive halving is an iterative selection process illustrated in the
+# Successive Halving is an iterative selection process illustrated in the
 # figure below. The first iteration is run with a small amount of resources,
 # where the resource typically corresponds to the number of training samples,
 # but can also be an arbitrary integer parameter such as `n_estimators` in a
