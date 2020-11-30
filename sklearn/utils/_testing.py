@@ -901,12 +901,6 @@ class MinimalClassifier:
             setattr(self, key, value)
         return self
 
-    def __getstate__(self):
-        return self.__dict__.copy()
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-
     def fit(self, X, y):
         X, y = check_X_y(X, y)
         check_classification_targets(y)
@@ -962,12 +956,6 @@ class MinimalRegressor:
             setattr(self, key, value)
         return self
 
-    def __getstate__(self):
-        return self.__dict__.copy()
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-
     def fit(self, X, y):
         X, y = check_X_y(X, y)
         self.n_features_in_ = X.shape[1]
@@ -1012,12 +1000,6 @@ class MinimalTransformer:
         for key, value in params.items():
             setattr(self, key, value)
         return self
-
-    def __getstate__(self):
-        return self.__dict__.copy()
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
 
     def fit(self, X, y=None):
         X = check_array(X)

@@ -27,7 +27,7 @@ def _safe_tags(estimator, key=None, default=None):
 
     :class:`~sklearn.BaseEstimator` provides the estimator tags machinery.
     However, if an estimator does not inherit from this base class, we should
-    default to the default tag.
+    fall-back to the default tags.
 
     For scikit-learn built-in estimators, we should still rely on
     `self._get_tags()`. `_safe_tags(est)` should be used when we are not sure

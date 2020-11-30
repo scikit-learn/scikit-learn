@@ -1614,7 +1614,9 @@ def check_estimators_pickle(name, estimator_orig):
     # pickle and unpickle!
     pickled_estimator = pickle.dumps(estimator)
     module_name = estimator.__module__
-    if module_name.startswith('sklearn.') and "test_" not in module_name:
+    if module_name.startswith('sklearn.') and not (
+        "test_" in module_name or module_name.endswith("_testing")
+    ):
         # strict check for sklearn estimators that are not implemented in test
         # modules.
         assert b"version" in pickled_estimator
@@ -3166,4 +3168,7 @@ def check_estimator_get_tags_default_keys(name, estimator_orig):
 
     tags_keys = set(estimator._get_tags().keys())
     default_tags_keys = set(_DEFAULT_TAGS.keys())
-    assert tags_keys.intersection(default_tags_keys) == default_tags_keys
+    assert tags_keys.intersection(default_tags_keys) == default_tags_keys, (
+        f"{name}._get_tags() is missing entries for the following default tags"
+        f": {default_tags_keys - tags_keys.intersection(default_tags_keys)}"
+    )

@@ -27,6 +27,8 @@ from sklearn.utils.estimator_checks import check_fit_score_takes_y
 from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
 from sklearn.utils.estimator_checks import check_classifier_data_not_an_array
 from sklearn.utils.estimator_checks import check_regressor_data_not_an_array
+from sklearn.utils.estimator_checks import \
+    check_estimator_get_tags_default_keys
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.estimator_checks import check_outlier_corruption
 from sklearn.utils.fixes import np_version, parse_version
@@ -374,6 +376,13 @@ class TaggedBinaryClassifier(UntaggedBinaryClassifier):
         return {'binary_only': True}
 
 
+class EstimatorMissingDefaultTags(BaseEstimator):
+    def _get_tags(self):
+        tags = super()._get_tags().copy()
+        del tags["allow_nan"]
+        return tags
+
+
 class RequiresPositiveYRegressor(LinearRegression):
 
     def fit(self, X, y):
@@ -638,6 +647,19 @@ def test_check_regressor_data_not_an_array():
                         check_regressor_data_not_an_array,
                         'estimator_name',
                         EstimatorInconsistentForPandas())
+
+
+def test_check_estimator_get_tags_default_keys():
+    estimator = EstimatorMissingDefaultTags()
+    err_msg = (r"EstimatorMissingDefaultTags._get_tags\(\) is missing entries"
+               r" for the following default tags: {'allow_nan'}")
+    assert_raises_regex(
+        AssertionError,
+        err_msg,
+        check_estimator_get_tags_default_keys,
+        estimator.__class__.__name__,
+        estimator,
+    )
 
 
 def run_tests_without_pytest():
