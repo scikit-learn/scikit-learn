@@ -241,6 +241,7 @@ def test_pairwise_precomputed_non_negative():
         pairwise_distances(np.full((5, 5), -1), metric='precomputed')
 
 
+_minkowski_kwds = {'w': np.arange(1, 5).astype('double', copy=False), 'p': 1}
 _wminkowski_kwds = {'w': np.arange(1, 5).astype('double', copy=False), 'p': 1}
 
 
@@ -253,6 +254,8 @@ def callable_rbf_kernel(x, y, **kwds):
 @pytest.mark.parametrize(
         'func, metric, kwds',
         [(pairwise_distances, 'euclidean', {}),
+         (pairwise_distances, minkowski, _minkowski_kwds),
+         (pairwise_distances, 'minkowski', _minkowski_kwds),
          (pairwise_distances, wminkowski, _wminkowski_kwds),
          (pairwise_distances, 'wminkowski', _wminkowski_kwds),
          (pairwise_kernels, 'polynomial', {'degree': 1}),
@@ -266,6 +269,11 @@ def test_pairwise_parallel(func, metric, kwds, array_constr, dtype):
         metric == wminkowski or metric == 'wminkowski'
     ):
         metric = 'minkowski'
+    if sp_version < parse_version("1.0") and (
+        metric == minkowski or metric == 'minkowski'
+    ):
+        pytest.skip("minkowski does not accept the w "
+                    "parameter prior to scipy 1.0.")
     rng = np.random.RandomState(0)
     X = array_constr(5 * rng.random_sample((5, 4)), dtype=dtype)
     Y = array_constr(5 * rng.random_sample((3, 4)), dtype=dtype)
