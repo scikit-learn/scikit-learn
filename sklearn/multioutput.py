@@ -450,10 +450,10 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         self.verbose = verbose
 
 
-    def _log_message(self, idx, total, label):
+    def _log_message(self, idx, total, feature):
         if not self.verbose:
             return None
-        return '(%d of %d) %s' % (idx, total, label)
+        return '(%d of %d) adding feature %s' % (idx, total, feature)
 
 
     @abstractmethod
@@ -519,7 +519,8 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             message=self._log_message(
                 chain_idx + 1,
                 len(self.estimators_),
-                "fitting chained model")
+                self.order_[chain_idx])
+                # "using feature " + str(self.order_[chain_idx]))
             y = Y[:, self.order_[chain_idx]]
             with _print_elapsed_time("Chain", message):
                 estimator.fit(X_aug[:, :(X.shape[1] + chain_idx)], y,
