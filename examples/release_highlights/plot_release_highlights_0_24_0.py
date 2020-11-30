@@ -25,21 +25,24 @@ or with conda::
 # -------------------------------------------------
 # Successive halving, a state of the art method, is now available to
 # explore the space of the parameters and identify their best combination.
-# Successive halving is still :term:`experimental <experimental>`.
 # :class:`~sklearn.model_selection.HalvingGridSearchCV` and
 # :class:`~sklearn.model_selection.HalvingRandomSearchCV` can be
 # used as drop-in replacement for
 # :class:`~sklearn.model_selection.GridSearchCV` and
 # :class:`~sklearn.model_selection.RandomizedSearchCV`.
-# Successive halving is an iterative selection process. The first iteration is
-# run with a small amount of resources, resource meaning typically the
-# number of training samples, but also arbitrary integer parameters such
-# as `n_estimators` in a random forest. Only some of the parameter candidates
-# are selected for the next iteration, with an increasing size of the
-# allocated resources.
-# As illustrated in the figure below,
-# only a subset of candidates will last until the end of the iteration process.
-# Read more in the :ref:`User Guide <successive_halving_user_guide>`.
+# Successive halving is an iterative selection process illustrated in the
+# figure below. The first iteration is run with a small amount of resources,
+# where the resource typically corresponds to the number of training samples,
+# but can also be an arbitrary integer parameter such as `n_estimators` in a
+# random forest. Only a subset of the parameter candidates are selected for the
+# next iteration, which will be run with an increasing amount of allocated
+# resources. Only a subset of candidates will last until the end of the
+# iteration process, and the best parameter candidate is the one that has the
+# highest score on the last iteration.
+
+# Read more in the :ref:`User Guide <successive_halving_user_guide>` (note:
+# the Successive Halving estimators are still :term:`experimental
+# <experimental>`).
 # 
 # .. figure:: ../model_selection/images/sphx_glr_plot_successive_halving_iterations_001.png
 #   :target: ../model_selection/plot_successive_halving_iterations.html
@@ -82,12 +85,13 @@ rsh.best_params_
 #   :target: ../ensemble/plot_gradient_boosting_categorical.html
 #   :align: center
 #
-# The plot shows that the new native support for categorical features leads
-# to models that are almost as fast to train as model trained on arbitrarily
-# integer-encoded categorical values, while being more expressive than both
-# one-hot encoding and ordinal encoding. However, to use the new
-# `categorical_features` parameter, it is still required to preprocess the
-# data within a pipeline as demonstrated in this :ref:`example <sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py>`.
+# The plot shows that the new native support for categorical features leads to
+# fitting times that are comparable to models where the categories are treated
+# as ordered quantities, i.e. simply ordinal-encoded. Native support is also
+# more expressive than both one-hot encoding and ordinal encoding. However, to
+# use the new `categorical_features` parameter, it is still required to
+# preprocess the data within a pipeline as demonstrated in this :ref:`example
+# <sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py>`.
 
 ##############################################################################
 # Improved performances of HistGradientBoosting estimators
@@ -175,11 +179,11 @@ linear_baseline = make_pipeline(MinMaxScaler(),
 linear_baseline.fit(X_train, y_train).score(X_test, y_test)
 
 ##############################################################################
-# Individual Conditional Expectation
-# ----------------------------------
+# Individual Conditional Expectation plots
+# ----------------------------------------
 # A new kind of partial dependence plot is available: the Individual
-# Conditional Expectation (ICE) plot. It visualizes the dependence of the
-# prediction on a feature for each sample separately with one line per sample.
+# Conditional Expectation (ICE) plot. ICE plots visualize the dependence of the
+# prediction on a feature for each sample separately, with one line per sample.
 # See the :ref:`User Guide <individual_conditional>`
 
 from sklearn.ensemble import RandomForestRegressor
@@ -201,9 +205,9 @@ display.figure_.suptitle(
 display.figure_.subplots_adjust(hspace=0.3)
 
 ##############################################################################
-# DecisionTreeRegressor now supports the new 'poisson' splitting criterion 
-# ------------------------------------------------------------------------
-# The integration of Poisson regression estimation continues from version 0.23
+# New Poisson splitting criterion for DecisionTreeRegressor
+# ---------------------------------------------------------
+# The integration of Poisson regression estimation continues from version 0.23.
 # :class:`~sklearn.tree.DecisionTreeRegressor` now supports a new `'poisson'`
 # splitting criterion. Setting `criterion="poisson"` might be a good choice
 # if your target is a count or a frequency.
@@ -220,32 +224,19 @@ regressor = DecisionTreeRegressor(criterion='poisson', random_state=0)
 regressor.fit(X_train, y_train)
 
 ##############################################################################
-# New metrics available
-# ---------------------
-# A number of new metric functions are now available, for example
-# :func:`metrics.top_k_accuracy_score` and :func:`~metrics.det_curve`.
-#
-# .. figure:: ../model_selection/images/sphx_glr_plot_det_001.png
-#   :target: ../model_selection/plot_det.html
-#   :align: center
-#
-# For a complete list see the `changelog
-# <../../whats_new/v0.24.html#sklearn-metrics>`_.
-
-##############################################################################
 # New documentation improvements
 # ------------------------------
 #
-# New examples and documentation pages
-# have been addeed in a continuous effort
-# to improve the understanding of data science practices.
-# Among others are now included:
+# New examples and documentation pages have been added, in a continuous effort
+# to improve the understanding of machine learning practices:
 #
 # - a new section about :ref:`common pitfalls and recommended
 #   practices <common_pitfalls>`,
 # - an example illustrating how to :ref:`statistically compare the performance of
 #   models <sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py>`
 #   evaluated using :class:`~sklearn.model_selection.GridSearchCV`,
+# - an example on how to :ref:`interpret coefficients of linear models
+#   <sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py>`
 # - an :ref:`example
 #   <sphx_glr_auto_examples_cross_decomposition_plot_pcr_vs_pls.py>`
 #   comparing Principal Component Regression and Partial Least Squares.
