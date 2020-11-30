@@ -856,8 +856,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
                                beta_loss='frobenius', tol=1e-4,
                                max_iter=200, alpha=0., l1_ratio=0.,
                                regularization=None, random_state=None,
-                               verbose=0, shuffle=False,
-                               check_input=True):
+                               verbose=0, shuffle=False):
     """Compute Non-negative Matrix Factorization (NMF).
 
     Find two non-negative matrices (W, H) whose product approximates the non-
