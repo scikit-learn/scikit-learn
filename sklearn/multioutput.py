@@ -476,6 +476,8 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         self : object
         """
         X, Y = self._validate_data(X, Y, multi_output=True, accept_sparse=True)
+        if len(Y.shape)!=2:
+            raise ValueError("invalid Y for multi-label fit. Y must be of shape (n_samples, n_classes)")
 
         random_state = check_random_state(self.random_state)
         check_array(X, accept_sparse=True)
@@ -513,9 +515,9 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         del Y_pred_chain
 
         for chain_idx, estimator in enumerate(self.estimators_):
-            message=self._log_message(chain_idx + 1, len(self.estimators_), "fit")
+            message=self._log_message(chain_idx + 1, len(self.estimators_), "fitting chained model")
             y = Y[:, self.order_[chain_idx]]
-            with _print_elapsed_time("Chaining", message):
+            with _print_elapsed_time("Chain", message):
                 estimator.fit(X_aug[:, :(X.shape[1] + chain_idx)], y,
                                 **fit_params)
             if self.cv is not None and chain_idx < len(self.estimators_) - 1:
