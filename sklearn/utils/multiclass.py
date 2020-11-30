@@ -95,7 +95,7 @@ def unique_labels(*ys):
     # Get the unique set of labels
     _unique_labels = _FN_UNIQUE_LABELS.get(label_type, None)
     if not _unique_labels:
-        raise ValueError("Unknown label type: %s" % repr(ys))
+        raise ValueError("Unknown label type: %s. Expected 'binary', 'multiclass', 'multilabel'." % repr(ys))
 
     ys_labels = set(chain.from_iterable(_unique_labels(y) for y in ys))
 
