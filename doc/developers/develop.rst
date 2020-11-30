@@ -632,14 +632,16 @@ own estimator:
             return {'multioutput_only': True,
                     'non_deterministic': True}
 
-  Any tag that is not in `_more_tags()` will just default to the value
-  documented above.
+  Any tag that is not in `_more_tags()` will just fall-back to the default
+  values documented above.
 
 * If your estimator does not inherit from :class:`~sklearn.base.BaseEstimator`,
-  you will need to implement a `_get_tags()` method which returns a dict,
-  similar to `_more_tags()`. Note however that **all tags must be present in
-  the dict**. If any of the keys documented above is not present in the
-  output of `_get_tags()`, an error might occur.
+  you will need to implement a `_get_tags()` method which returns a dict that
+  should contains all the necessary tags for that estimator, including the
+  default tags typically defined in :class:`~sklearn.base.BaseEstimator` and
+  other scikit-learn mixin classes. Note however that **all tags must be
+  present in the dict**. If any of the keys documented above is not present in
+  the output of `_get_tags()`, an error might occur.
 
 In addition to the tags, estimators also need to declare any non-optional
 parameters to ``__init__`` in the ``_required_parameters`` class attribute,
