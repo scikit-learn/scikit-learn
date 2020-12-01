@@ -14,6 +14,8 @@ on:
     branches:
       - master
       - "[0-9]+.[0-9]+.X"
+  # Manual run
+  workflow_dispatch:
 
 env:
   SCIKIT_LEARN_VERSION: 0.24.dev0
