@@ -726,7 +726,7 @@ def test_regressor_chain_verbose(capfd):
 
 
 def test_multi_label_y():
-    err_msg = "invalid Y for multi-label fit. " \
+    err_msg = "invalid Y for multi-label fit. "
         "Y must be of shape (n_samples, n_classes)"
 
     X, y = make_classification(

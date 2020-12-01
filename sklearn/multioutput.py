@@ -22,7 +22,8 @@ from abc import ABCMeta, abstractmethod
 from .base import BaseEstimator, clone, MetaEstimatorMixin
 from .base import RegressorMixin, ClassifierMixin, is_classifier
 from .model_selection import cross_val_predict
-from .utils import check_array, check_X_y, check_random_state, _print_elapsed_time
+from .utils import check_array, check_X_y, check_random_state
+from .utils import _print_elapsed_time
 from .utils.metaestimators import if_delegate_has_method
 from .utils.validation import (check_is_fitted, has_fit_parameter,
                                _check_fit_params, _deprecate_positional_args)
@@ -449,7 +450,6 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         self.random_state = random_state
         self.verbose = verbose
 
-
     def _log_message(self, idx, total, msg):
         if not self.verbose:
             return None
@@ -476,9 +476,9 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         self : object
         """
         X, Y = self._validate_data(X, Y, multi_output=True, accept_sparse=True)
-        if len(Y.shape)!=2:
-            raise ValueError("invalid Y for multi-label fit. " \
-                "Y must be of shape (n_samples, n_classes)")
+        if len(Y.shape) != 2:
+            raise ValueError("invalid Y for multi-label fit. "
+                             "Y must be of shape (n_samples, n_classes)")
 
         random_state = check_random_state(self.random_state)
         check_array(X, accept_sparse=True)
@@ -516,15 +516,14 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         del Y_pred_chain
 
         for chain_idx, estimator in enumerate(self.estimators_):
-            message=self._log_message(
+            message = self._log_message(
                 chain_idx + 1,
                 len(self.estimators_),
                 "adding feature " + str(self.order_[chain_idx]))
-                # "using feature " + str(self.order_[chain_idx]))
             y = Y[:, self.order_[chain_idx]]
             with _print_elapsed_time("Chain", message):
                 estimator.fit(X_aug[:, :(X.shape[1] + chain_idx)], y,
-                                **fit_params)
+                    **fit_params)
             if self.cv is not None and chain_idx < len(self.estimators_) - 1:
                 col_idx = X.shape[1] + chain_idx
                 cv_result = cross_val_predict(
