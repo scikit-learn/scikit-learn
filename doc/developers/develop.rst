@@ -623,11 +623,11 @@ specific estimator. Additional tags can be created or default tags can be
 overridden by defining a `_more_tags()` method which returns a dict with the
 desired overridden tags or new tags. For example::
 
-class MyMultiOutputEstimator(BaseEstimator):
+    class MyMultiOutputEstimator(BaseEstimator):
 
-    def _more_tags(self):
-        return {'multioutput_only': True,
-                'non_deterministic': True}
+        def _more_tags(self):
+            return {'multioutput_only': True,
+                    'non_deterministic': True}
 
 Any tag that is not in `_more_tags()` will just fall-back to the default values
 documented above.
