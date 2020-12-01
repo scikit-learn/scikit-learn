@@ -22,7 +22,7 @@ _DEFAULT_TAGS = {
 }
 
 
-def _safe_tags(estimator, key=None, default=None):
+def _safe_tags(estimator, key=None):
     """Safely get estimator tags.
 
     :class:`~sklearn.BaseEstimator` provides the estimator tags machinery.
@@ -41,13 +41,6 @@ def _safe_tags(estimator, key=None, default=None):
 
     key : str, default=None
         Tag name to get. By default (`None`), all tags are returned.
-
-    default : list of {str, dtype} or bool, default=None
-        When `esimator.get_tags()` is not implemented, default` allows to
-        define the default value of a tag if it is not present in
-        `_DEFAULT_TAGS` or to overwrite the value in `_DEFAULT_TAGS` if it the
-        tag is defined. When `default is None`, no default values nor
-        overwriting will take place.
 
     Returns
     -------
@@ -68,16 +61,15 @@ def _safe_tags(estimator, key=None, default=None):
             return estimator._get_tags()
     else:
         if key is not None:
-            if default is None:
-                try:
-                    default = _DEFAULT_TAGS[key]
-                except KeyError as exc:
-                    raise ValueError(
-                        f"The key {key} is not a default tags defined in "
-                        f"_DEFAULT_TAGS and thus no default values are "
-                        f"available. Use the parameter default if you want to "
-                        f"define a default value."
-                    ) from exc
+            try:
+                default = _DEFAULT_TAGS[key]
+            except KeyError as exc:
+                raise ValueError(
+                    f"The key {key} is not a default tags defined in "
+                    f"_DEFAULT_TAGS and thus no default values are "
+                    f"available. Use the parameter default if you want to "
+                    f"define a default value."
+                ) from exc
             return default
         else:
             return _DEFAULT_TAGS

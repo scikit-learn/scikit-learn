@@ -25,28 +25,16 @@ def test_safe_tags_error(estimator, err_msg):
 
 
 @pytest.mark.parametrize(
-    "estimator, key, default, expected_results",
+    "estimator, key, expected_results",
     [
-        (NoTagsEstimator(), None, None, _DEFAULT_TAGS),
-        (NoTagsEstimator(), "allow_nan", None, _DEFAULT_TAGS["allow_nan"]),
-        (
-            NoTagsEstimator(),
-            "allow_nan",
-            not _DEFAULT_TAGS["allow_nan"],
-            not _DEFAULT_TAGS["allow_nan"],
-        ),
-        (NoTagsEstimator(), "xxx", True, True),
-        (BaseEstimator(), None, None, _DEFAULT_TAGS),
-        (BaseEstimator(), "allow_nan", None, _DEFAULT_TAGS["allow_nan"]),
-        (
-            BaseEstimator(),
-            "allow_nan",
-            not _DEFAULT_TAGS["allow_nan"],
-            _DEFAULT_TAGS["allow_nan"],
-        ),
+        (NoTagsEstimator(), None, _DEFAULT_TAGS),
+        (NoTagsEstimator(), "allow_nan", _DEFAULT_TAGS["allow_nan"]),
+        (BaseEstimator(), None, _DEFAULT_TAGS),
+        (BaseEstimator(), "allow_nan", _DEFAULT_TAGS["allow_nan"]),
+        (BaseEstimator(), "allow_nan", _DEFAULT_TAGS["allow_nan"]),
     ],
 )
-def test_safe_tags_no_get_tags(estimator, key, default, expected_results):
+def test_safe_tags_no_get_tags(estimator, key, expected_results):
     # check the behaviour of _safe_tags when an estimator does not implement
     # _get_tags
-    assert _safe_tags(estimator, key=key, default=default) == expected_results
+    assert _safe_tags(estimator, key=key) == expected_results
