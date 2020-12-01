@@ -79,6 +79,3 @@ _configtest.o.d
 sklearn/utils/_seq_dataset.pyx
 sklearn/utils/_seq_dataset.pxd
 sklearn/linear_model/_sag_fast.pyx
-
-/env
-scratch.py
