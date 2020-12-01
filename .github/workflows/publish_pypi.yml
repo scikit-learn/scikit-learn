@@ -22,10 +22,12 @@ jobs:
       run: |
         pip install -U wheelhouse_uploader pyyaml
     - name: Downloading wheels and sdist from staging
+      env:
+        SKLEARN_VERSION: ${{ github.event.inputs.version }}
       run: |
-        echo "Download ${{ github.event.inputs.version }} wheels and sdist"
+        echo "Download $SKLEARN_VERSION wheels and sdist"
         python -m wheelhouse_uploader fetch \
-          --version ${{ github.event.inputs.version }} \
+          --version $SKLEARN_VERSION \
           --local-folder dist/ \
           scikit-learn \
           https://pypi.anaconda.org/scikit-learn-wheels-staging/simple/scikit-learn/
