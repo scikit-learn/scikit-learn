@@ -1293,8 +1293,8 @@ def _generate_pipeline_using_minimal_compatible_instances():
 # checks.
 @pytest.mark.parametrize("Predictor", [MinimalRegressor, MinimalClassifier])
 def test_search_cv_using_minimal_compatible_estimator(Predictor):
-    # Check that third-party library can run tests without inheriting from
-    # BaseEstimator.
+    # Check that third-party library estimators can be part of a pipeline
+    # and tuned by grid-search without inheriting from BaseEstimator.
     rng = np.random.RandomState(0)
     X, y = rng.randn(25, 2), np.array([0] * 5 + [1] * 20)
 
