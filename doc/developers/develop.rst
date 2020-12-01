@@ -618,30 +618,24 @@ X_types (default=['2darray'])
     ``'categorical'`` data. For now, the test for sparse data do not make use
     of the ``'sparse'`` tag.
 
-It is unlikely that the default values for each tag will suit the needs of
-your specific estimator. There are two ways to override the defaults in your
-own estimator:
+It is unlikely that the default values for each tag will suit the needs of your
+specific estimator. Additional tags can be created or default tags can be
+overridden by defining a `_more_tags()` method which returns a dict with the
+desired overridden tags or new tags. For example::
 
-* If your estimator inherits from :class:`~sklearn.base.BaseEstimator`, which
-  is recommended, you can define a `_more_tags()` method which returns a dict
-  with the desired overridden tags. For example::
+class MyMultiOutputEstimator(BaseEstimator):
 
-    class MyMultiOutputEstimator(BaseEstimator):
+    def _more_tags(self):
+        return {'multioutput_only': True,
+                'non_deterministic': True}
 
-        def _more_tags(self):
-            return {'multioutput_only': True,
-                    'non_deterministic': True}
+Any tag that is not in `_more_tags()` will just fall-back to the default values
+documented above.
 
-  Any tag that is not in `_more_tags()` will just fall-back to the default
-  values documented above.
-
-* If your estimator does not inherit from :class:`~sklearn.base.BaseEstimator`,
-  you will need to implement a `_get_tags()` method which returns a dict that
-  should contains all the necessary tags for that estimator, including the
-  default tags typically defined in :class:`~sklearn.base.BaseEstimator` and
-  other scikit-learn mixin classes. Note however that **all tags must be
-  present in the dict**. If any of the keys documented above is not present in
-  the output of `_get_tags()`, an error might occur.
+Even if it is not recommended, it is possible to override the method
+`_get_tags()`. Note however that **all tags must be present in the dict**. If
+any of the keys documented above is not present in the output of `_get_tags()`,
+an error will occur.
 
 In addition to the tags, estimators also need to declare any non-optional
 parameters to ``__init__`` in the ``_required_parameters`` class attribute,
