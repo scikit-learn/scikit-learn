@@ -1168,6 +1168,16 @@ def test_deprecate_positional_args_warns_for_function():
         f3(1, 2)
 
 
+def test_deprecate_positional_args_warns_for_function_version():
+    @_deprecate_positional_args(version="0.26")
+    def f1(a, *, b):
+        pass
+
+    with pytest.warns(FutureWarning,
+                      match=r"From version 0.26 passing these as positional"):
+        f1(1, 2)
+
+
 def test_deprecate_positional_args_warns_for_class():
 
     class A1:
