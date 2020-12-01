@@ -624,6 +624,8 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
+    verbose : bool, optional (default=False)
+
     Attributes
     ----------
     classes_ : list
@@ -807,6 +809,8 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
         exposes a `random_state`.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
+
+    verbose : bool, optional (default=False)
 
     Attributes
     ----------

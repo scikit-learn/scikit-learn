@@ -654,6 +654,7 @@ def test_classifier_chain_tuple_invalid_order():
     with pytest.raises(ValueError, match='invalid order'):
         chain.fit(X, y)
 
+
 def test_classifier_chain_verbose(capfd):
     X, y = make_multilabel_classification(
         n_samples=100,
@@ -722,6 +723,7 @@ def test_regressor_chain_verbose(capfd):
     chain.fit(X_train, y_train)
     out, err = capfd.readouterr()
     assert out != '' and err == ''
+
 
 def test_multi_label_y():
     err_msg = "invalid Y for multi-label fit. " \
