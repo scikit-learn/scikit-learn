@@ -18,11 +18,16 @@ jobs:
         with:
           fetch-depth: '0'
       - name: Sync with master
+        env:
+          # Assign the contributor-specified branch name to an environment
+          # variable to sanitize it and avoid arbitrary bash code injection by
+          # non-privileged users.
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
         run: |
           set -xe
           git remote add pr_remote ${{ github.event.pull_request.head.repo.html_url }}
-          git fetch pr_remote ${{ github.event.pull_request.head.ref }}
-          git checkout -b pr_branch pr_remote/${{ github.event.pull_request.head.ref }}
+          git fetch pr_remote $HEAD_REF
+          git checkout -b pr_branch pr_remote/$HEAD_REF
           git config user.name github-actions
           git config user.email github-actions@github.com
           git merge origin/master
