@@ -328,6 +328,12 @@ General Concepts
         * sometimes in the :ref:`User Guide <user_guide>` (built from ``doc/``)
           alongside a technical description of the estimator.
 
+    experimental
+        An experimental tool is already usable but its public API, such as
+        default parameter values or fitted attributes, is still subject to
+        change in future versions without the usual :term:`deprecation`
+        warning policy.
+
     evaluation metric
     evaluation metrics
         Evaluation metrics give a measure of how well a model performs.  We may
