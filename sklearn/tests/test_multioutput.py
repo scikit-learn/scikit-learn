@@ -13,7 +13,9 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn import datasets
 from sklearn.base import clone
-from sklearn.datasets import make_classification, make_regression
+from sklearn.datasets import make_classification
+from sklearn.datasets import make_multilabel_classification
+from sklearn.datasets import make_regression
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import Lasso
@@ -652,11 +654,74 @@ def test_classifier_chain_tuple_invalid_order():
     with pytest.raises(ValueError, match='invalid order'):
         chain.fit(X, y)
 
-def test_classifier_chain_verbose():
-    pass
+def test_classifier_chain_verbose(capfd):
+    X, y = make_multilabel_classification(
+        n_samples=100,
+        n_features=5,
+        n_classes=3,
+        n_labels=3,
+        random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
-def test_regressor_chain_verbose():
-    pass
+    # default verbose (False)
+    base_clf = DecisionTreeClassifier()
+    chain = ClassifierChain(
+        base_clf,
+        order='random',
+        random_state=0)
+    chain.fit(X_train, y_train)
+    out, err = capfd.readouterr()
+    assert out == err == ''
+
+    # verbose explicitly False
+    base_clf = DecisionTreeClassifier()
+    chain = ClassifierChain(
+        base_clf,
+        order='random',
+        random_state=0,
+        verbose=False)
+    chain.fit(X_train, y_train)
+    out, err = capfd.readouterr()
+    assert out == err == ''
+
+    # verbose True
+    chain = ClassifierChain(
+        base_clf,
+        order='random',
+        random_state=0,
+        verbose=True)
+    chain.fit(X_train, y_train)
+    out, err = capfd.readouterr()
+    assert out != '' and err == ''
+
+
+def test_regressor_chain_verbose(capfd):
+    X, y = make_regression(n_samples=125, n_targets=3, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+
+    # default verbose (False)
+    base_reg = LinearRegression()
+    chain = RegressorChain(base_reg, [1, 0, 2], random_state=0)
+    chain.fit(X_train, y_train)
+    chain.fit(X_train, y_train)
+    out, err = capfd.readouterr()
+    assert out == err == ''
+
+    # verbose explicitly False
+    base_reg = LinearRegression()
+    chain = RegressorChain(base_reg, [1, 0, 2], random_state=0, verbose=False)
+    chain.fit(X_train, y_train)
+    chain.fit(X_train, y_train)
+    out, err = capfd.readouterr()
+    assert out == err == ''
+
+    # verbose True
+    base_reg = LinearRegression()
+    chain = RegressorChain(base_reg, [1, 0, 2], random_state=0, verbose=True)
+    chain.fit(X_train, y_train)
+    chain.fit(X_train, y_train)
+    out, err = capfd.readouterr()
+    assert out != '' and err == ''
 
 def test_multi_label_y():
     err_msg = "invalid Y for multi-label fit. " \
