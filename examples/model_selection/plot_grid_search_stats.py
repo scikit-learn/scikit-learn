@@ -552,7 +552,7 @@ pairwise_comp_df
 
 # %%
 # .. topic:: References
-# 
+#
 #    .. [1] Dietterich, T. G. (1998). `Approximate statistical tests for
 #           comparing supervised classification learning algorithms
 #           <http://web.cs.iastate.edu/~jtian/cs573/Papers/Dietterich-98.pdf>`_.
