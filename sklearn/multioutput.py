@@ -522,7 +522,9 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
                 "adding feature " + str(self.order_[chain_idx]))
             y = Y[:, self.order_[chain_idx]]
             with _print_elapsed_time("Chain", message):
-                estimator.fit(X_aug[:, :(X.shape[1] + chain_idx)], y,
+                estimator.fit(
+                    X_aug[:, :(X.shape[1] + chain_idx)],
+                    y,
                     **fit_params)
             if self.cv is not None and chain_idx < len(self.estimators_) - 1:
                 col_idx = X.shape[1] + chain_idx
