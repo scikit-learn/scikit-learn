@@ -56,6 +56,9 @@ class MockClassifier:
     def set_params(self, **params):
         return self
 
+    def _more_tags(self):
+        return {"allow_nan": True}
+
 
 def test_rfe_features_importance():
     generator = check_random_state(0)
