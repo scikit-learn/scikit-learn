@@ -11,11 +11,16 @@ class NoTagsEstimator:
     pass
 
 
+class MoreTagsEstimator:
+    def _more_tags(self):
+        return {"allow_nan": True}
+
+
 @pytest.mark.parametrize(
     "estimator, err_msg",
     [
-        (BaseEstimator(), "The key xxx is neither defined"),
-        (NoTagsEstimator(), "The key xxx is not a default tags defined"),
+        (BaseEstimator(), "The key xxx is not defined in _get_tags"),
+        (NoTagsEstimator(), "The key xxx is not defined in _DEFAULT_TAGS"),
     ],
 )
 def test_safe_tags_error(estimator, err_msg):
@@ -29,6 +34,8 @@ def test_safe_tags_error(estimator, err_msg):
     [
         (NoTagsEstimator(), None, _DEFAULT_TAGS),
         (NoTagsEstimator(), "allow_nan", _DEFAULT_TAGS["allow_nan"]),
+        (MoreTagsEstimator(), None, {**_DEFAULT_TAGS, **{"allow_nan": True}}),
+        (MoreTagsEstimator(), "allow_nan", True),
         (BaseEstimator(), None, _DEFAULT_TAGS),
         (BaseEstimator(), "allow_nan", _DEFAULT_TAGS["allow_nan"]),
         (BaseEstimator(), "allow_nan", _DEFAULT_TAGS["allow_nan"]),

@@ -781,8 +781,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     def _more_tags(self):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
         return {
-            'pairwise':
-            _safe_tags(self.estimator, key="pairwise", default=True)
+            'pairwise': _safe_tags(self.estimator, key="pairwise")
         }
 
 

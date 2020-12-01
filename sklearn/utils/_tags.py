@@ -48,28 +48,20 @@ def _safe_tags(estimator, key=None):
         The estimator tags. A single value is returned if `key` is not None.
     """
     if hasattr(estimator, "_get_tags"):
-        if key is not None:
-            try:
-                return estimator._get_tags().get(key, _DEFAULT_TAGS[key])
-            except KeyError as exc:
-                raise ValueError(
-                    f"The key {key} is neither defined in _more_tags() in "
-                    f"the class {repr(estimator)} nor a default tag key in "
-                    f"_DEFAULT_TAGS."
-                ) from exc
-        else:
-            return estimator._get_tags()
+        tags_provider = "_get_tags()"
+        tags = estimator._get_tags()
+    elif hasattr(estimator, "_more_tags"):
+        tags_provider = "_more_tags()"
+        tags = {**_DEFAULT_TAGS, **estimator._more_tags()}
     else:
-        if key is not None:
-            try:
-                default = _DEFAULT_TAGS[key]
-            except KeyError as exc:
-                raise ValueError(
-                    f"The key {key} is not a default tags defined in "
-                    f"_DEFAULT_TAGS and thus no default values are "
-                    f"available. Use the parameter default if you want to "
-                    f"define a default value."
-                ) from exc
-            return default
-        else:
-            return _DEFAULT_TAGS
+        tags_provider = "_DEFAULT_TAGS"
+        tags = _DEFAULT_TAGS
+
+    if key is not None:
+        if key not in tags:
+            raise ValueError(
+                f"The key {key} is not defined in {tags_provider} for the "
+                f"class {repr(estimator)}."
+            )
+        return tags[key]
+    return tags

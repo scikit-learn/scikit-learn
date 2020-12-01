@@ -208,7 +208,6 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
 
     def _more_tags(self):
         return {
-            'allow_nan':
-            _safe_tags(self.estimator, key="allow_nan", default=True),
+            'allow_nan': _safe_tags(self.estimator, key="allow_nan"),
             'requires_y': True,
         }
