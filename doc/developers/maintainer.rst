@@ -197,8 +197,8 @@ Making a release
   packages). This can be seen as an extension to CI which stands for
   `Continuous Integration
   <https://en.wikipedia.org/wiki/Continuous_integration>`_. The CD workflow on
-  GitHub Actions is also used to automatically build and publish packages for
-  the developement branch of scikit-learn every night. See
+  GitHub Actions is also used to automatically create nightly builds and
+  publish packages for the developement branch of scikit-learn. See
   :ref:`install_nightly_builds`.
 
 4. Once all the CD jobs have completed successfully in the PR, merge it,
