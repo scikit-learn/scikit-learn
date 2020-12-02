@@ -66,26 +66,31 @@ under that branch.
 
 In terms of including changes, the first RC ideally counts as a *feature
 freeze*. Each coming release candidate and the final release afterwards will
-include minor documentation changes and bug fixes. Any major enhancement or
-feature should be excluded.
+include only minor documentation changes and bug fixes. Any major enhancement
+or feature should be excluded.
 
 The minor releases should include bug fixes and some relevant documentation
 changes only. Any PR resulting in a behavior change which is not a bug fix
 should be excluded.
 
-First, create a branch, **on your own fork** (to release e.g. `0.999.3`):
+For major releases, do not forget to prepare a Release Highlights page as a
+runnable example and check that its HTML rendering looks correct. These release
+higlights should be linked from the ``whats_new.html`` file for the new version
+of scikit-learn.
+
+First, create a branch, **on your own fork** (to release e.g. `0.99.3`):
 
 .. prompt:: bash $
 
     # assuming master and upstream/master are the same
-    git checkout -b release-0.999.3 master
+    git checkout -b release-0.99.3 master
 
-Then, create a PR **to the** `scikit-learn/0.999.X` **branch** (not to
+Then, create a PR **to the** `scikit-learn/0.99.X` **branch** (not to
 master!) with all the desired changes:
 
 .. prompt:: bash $
 
-	git rebase -i upstream/0.999.2
+	git rebase -i upstream/0.99.2
 
 Do not forget to add a commit updating sklearn.__version__.
 
@@ -109,17 +114,21 @@ Making a release
    the RC releases. These changes should be made in master and cherry-picked
    into the release branch, only before the final release.
 
-   - Edit the doc/whats_new.rst file to add release title and commit
-     statistics. You can retrieve commit statistics with:
+   - Edit the ``doc/v0.99/whats_new.rst`` file to add release title and list of
+     contributors.
+     You can retrieve the list of contributor names with:
 
      ::
 
-       $ git shortlog -s 0.99.33.. | cut -f2- | sort --ignore-case | tr '\n' ';' | sed 's/;/, /g;s/, $//'
+       $ git shortlog -s 0.98.33.. | cut -f2- | sort --ignore-case | tr '\n' ';' | sed 's/;/, /g;s/, $//'
+
+     For major releases, make sure that the release highlights example is
+     properly linked from the ``doc/v0.99/whats_new.rst`` file.
 
    - Update the release date in ``whats_new.rst``
 
-   - Edit the doc/templates/index.html to change the 'News' entry of the front
-     page.
+   - Edit the ``doc/templates/index.html`` to change the 'News' entry of the
+     front page (with the release month as well).
 
 2. On the branch for releasing, update the version number in
    `sklearn/__init__.py`, the ``__version__`` variable by removing ``dev*``
@@ -141,7 +150,21 @@ Making a release
    The wheel building workflow is managed by GitHub Actions and the results be browsed at:
    https://github.com/scikit-learn/scikit-learn/actions?query=workflow%3A%22Wheel+builder%22
 
-   Once all works, you can proceed with tagging. Create the tag and push it (if
+.. note::
+
+  Before building the wheels, make sure that the ``pyproject.toml`` file is
+  up to date and using the oldest version of ``numpy`` for each Python version
+  to avoid ABI incompatibility issues. Moreover, a new line have to be included
+  in the ``pyproject.toml`` file for each new supported version of Python.
+
+4. Once the CD has completed successfully, upload the generated artifacts
+   (.tar.gz and .whl files) to https://test.pypi.org using the "Run workflow"
+   form for the following GitHub Actions workflow:
+
+   https://github.com/scikit-learn/scikit-learn/actions?query=workflow%3A%22Publish+to+Pypi%22
+
+
+5. If this went fine, you can proceed with tagging. Create the tag and push it (if
    it's an RC, it can be ``0.xxrc1`` for instance):
 
    .. prompt:: bash $
@@ -149,16 +172,14 @@ Making a release
      git tag -a 0.99  # in the 0.99.X branch
      git push git@github.com:scikit-learn/scikit-learn.git 0.99
 
-.. note::
-  
-  Before building the wheels, make sure that the ``pyproject.toml`` file is
-  up to date and using the oldest version of ``numpy`` for each Python version
-  to avoid ABI incompatibility issues. Moreover, a new line have to be included
-  in the ``pyproject.toml`` file for each new supported version of Python.
+6. Trigger the GitHub Actions workflow again but this time to upload the artifacts
+   to the real https://pypi.org (replace "testpypi" by "pypi" in the "Run
+   workflow" form).
 
-4. Once the CD has completed successfully, collect the generated binary
-   wheel packages and upload them to PyPI by running the following commands
-   in the scikit-learn source folder (checked out at the release tag):
+7. Alternatively, it's possible to collect locally the generated binary wheel
+   packages and source tarbakk and upload them all to PyPI by running the
+   following commands in the scikit-learn source folder (checked out at the
+   release tag):
 
    .. prompt:: bash $
 
@@ -166,11 +187,12 @@ Making a release
        pip install -U wheelhouse_uploader twine
        python setup.py fetch_artifacts
 
-   This command will download all the binary packages accumulated in the `staging area on the anaconda.org
-   hosting service <https://anaconda.org/scikit-learn-wheels-staging/scikit-learn/files>`_ and put them in
-   your local `./dist` folder.
+   This command will download all the binary packages accumulated in the
+   `staging area on the anaconda.org hosting service
+   <https://anaconda.org/scikit-learn-wheels-staging/scikit-learn/files>`_ and
+   put them in your local `./dist` folder.
 
-5. Check the content of the `./dist` folder: it should contain all the wheels
+   Check the content of the `./dist` folder: it should contain all the wheels
    along with the source tarball ("scikit-learn-RRR.tar.gz").
 
    Make sure that you do not have developer versions or older versions of
@@ -188,7 +210,7 @@ Making a release
 
        twine upload dist/*
 
-6. For major/minor (not bug-fix release), update the symlink for ``stable``
+8. For major/minor (not bug-fix release), update the symlink for ``stable``
    and the ``latestStable`` variable in
    https://github.com/scikit-learn/scikit-learn.github.io:
 
@@ -209,8 +231,9 @@ Making a release
 The following GitHub checklist might be helpful in a release PR::
 
     * [ ] update news and what's new date in master and release branch
-    * [ ] create tag
-    * [ ] twine the wheels to PyPI when that's green
+    * [ ] check that the wheels can be built successfully
+    * [ ] create tag on the main github repo (after merging the release PR)
+    * [ ] upload the wheels and source tarball to PyPI
     * [ ] https://github.com/scikit-learn/scikit-learn/releases draft
     * [ ] confirm bot detected at
       https://github.com/conda-forge/scikit-learn-feedstock and wait for merge
