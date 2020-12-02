@@ -75,7 +75,7 @@ should be excluded.
 
 For major releases, do not forget to prepare a Release Highlights page as a
 runnable example and check that its HTML rendering looks correct. These release
-higlights should be linked from the ``whats_new.rst`` file for the new version
+higlights should be linked from the ``doc/whats_new/v0.99.rst`` file for the new version
 of scikit-learn.
 
 First, create a branch, **on your own fork** (to release e.g. `0.99.3`):
@@ -122,8 +122,7 @@ Making a release
 
        $ git shortlog -s 0.98.33.. | cut -f2- | sort --ignore-case | tr '\n' ';' | sed 's/;/, /g;s/, $//'
 
-     For major releases, make sure that the release highlights example is
-     properly linked from the ``doc/v0.99/whats_new.rst`` file.
+     - For major releases, link the release highlights example from the ``doc/whats_new/v0.99.rst`` file.
 
    - Update the release date in ``whats_new.rst``
 
@@ -154,8 +153,9 @@ Making a release
 
   Before building the wheels, make sure that the ``pyproject.toml`` file is
   up to date and using the oldest version of ``numpy`` for each Python version
-  to avoid ABI incompatibility issues. Moreover, a new line have to be included
-  in the ``pyproject.toml`` file for each new supported version of Python.
+  to avoid `ABI <https://en.wikipedia.org/wiki/Application_binary_interface>`_
+  incompatibility issues. Moreover, a new line have to be included in the
+  ``pyproject.toml`` file for each new supported version of Python.
 
 4. Once the CD has completed successfully, upload the generated artifacts
    (.tar.gz and .whl files) to https://test.pypi.org using the "Run workflow"
