@@ -661,6 +661,12 @@ def test_check_estimator_get_tags_default_keys():
         estimator,
     )
 
+    # noop check when _get_tags is not available
+    estimator = MinimalTransformer()
+    check_estimator_get_tags_default_keys(
+        estimator.__class__.__name__, estimator
+    )
+
 
 def run_tests_without_pytest():
     """Runs the tests in this file without using pytest.
