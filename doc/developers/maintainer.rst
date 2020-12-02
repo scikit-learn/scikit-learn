@@ -279,8 +279,9 @@ Release checklist
 
 The following GitHub checklist might be helpful in a release PR::
 
-    * [ ] update news and what's new date in master and release branch
-    * [ ] check that the wheels can be built successfully
+    * [ ] update news and what's new date in release branch
+    * [ ] update news and what's new date and sklearn dev0 version in master branch
+    * [ ] check that the for the release wheels can be built successfully
     * [ ] upload the wheels and source tarball to https://test.pypi.org
     * [ ] merge the release PR in the release branch
     * [ ] create tag on the main github repo
