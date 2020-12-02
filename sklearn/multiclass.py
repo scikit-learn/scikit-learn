@@ -47,6 +47,7 @@ from .preprocessing import LabelBinarizer
 from .metrics.pairwise import euclidean_distances
 from .utils import check_random_state
 from .utils.deprecation import deprecated
+from .utils._tags import _safe_tags
 from .utils.validation import _num_samples
 from .utils.validation import check_is_fitted
 from .utils.validation import check_X_y, check_array
@@ -499,8 +500,7 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
 
     def _more_tags(self):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
-        estimator_tags = self.estimator._get_tags()
-        return {'pairwise': estimator_tags.get('pairwise', False)}
+        return {'pairwise': _safe_tags(self.estimator, key="pairwise")}
 
     @property
     def _first_estimator(self):
@@ -780,8 +780,9 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
     def _more_tags(self):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
-        estimator_tags = self.estimator._get_tags()
-        return {'pairwise': estimator_tags.get('pairwise', True)}
+        return {
+            'pairwise': _safe_tags(self.estimator, key="pairwise")
+        }
 
 
 class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
