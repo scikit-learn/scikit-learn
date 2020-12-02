@@ -702,7 +702,10 @@ def test_regressor_chain_verbose(capfd):
 
     # default verbose (False)
     base_reg = LinearRegression()
-    chain = RegressorChain(base_reg, [1, 0, 2], random_state=0)
+    chain = RegressorChain(
+        base_reg,
+        order=[1, 0, 2],
+        random_state=0)
     chain.fit(X_train, y_train)
     chain.fit(X_train, y_train)
     out, err = capfd.readouterr()
@@ -710,7 +713,11 @@ def test_regressor_chain_verbose(capfd):
 
     # verbose explicitly False
     base_reg = LinearRegression()
-    chain = RegressorChain(base_reg, [1, 0, 2], random_state=0, verbose=False)
+    chain = RegressorChain(
+        base_reg,
+        order=[1, 0, 2],
+        random_state=0,
+        verbose=False)
     chain.fit(X_train, y_train)
     chain.fit(X_train, y_train)
     out, err = capfd.readouterr()
@@ -718,7 +725,11 @@ def test_regressor_chain_verbose(capfd):
 
     # verbose True
     base_reg = LinearRegression()
-    chain = RegressorChain(base_reg, [1, 0, 2], random_state=0, verbose=True)
+    chain = RegressorChain(
+        base_reg,
+        order=[1, 0, 2],
+        random_state=0,
+        verbose=True)
     chain.fit(X_train, y_train)
     chain.fit(X_train, y_train)
     out, err = capfd.readouterr()
