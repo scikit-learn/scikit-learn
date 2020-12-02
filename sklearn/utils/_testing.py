@@ -888,11 +888,6 @@ class MinimalClassifier:
     def __init__(self, param=None):
         self.param = param
 
-    def __repr__(self):
-        # Only required when using pytest-xdist to get an id not associated
-        # with the memory location
-        return self.__class__.__name__
-
     def get_params(self, deep=True):
         return {"param": self.param}
 
@@ -904,7 +899,6 @@ class MinimalClassifier:
     def fit(self, X, y):
         X, y = check_X_y(X, y)
         check_classification_targets(y)
-        self.n_features_in_ = X.shape[1]
         self.classes_, counts = np.unique(y, return_counts=True)
         self._most_frequent_class_idx = counts.argmax()
         return self
@@ -912,8 +906,6 @@ class MinimalClassifier:
     def predict_proba(self, X):
         check_is_fitted(self)
         X = check_array(X)
-        if X.shape[1] != self.n_features_in_:
-            raise ValueError
         proba_shape = (X.shape[0], self.classes_.size)
         y_proba = np.zeros(shape=proba_shape, dtype=np.float64)
         y_proba[:, self._most_frequent_class_idx] = 1.0
@@ -943,11 +935,6 @@ class MinimalRegressor:
     def __init__(self, param=None):
         self.param = param
 
-    def __repr__(self):
-        # Only required when using pytest-xdist to get an id not associated
-        # with the memory location
-        return self.__class__.__name__
-
     def get_params(self, deep=True):
         return {"param": self.param}
 
@@ -958,15 +945,13 @@ class MinimalRegressor:
 
     def fit(self, X, y):
         X, y = check_X_y(X, y)
-        self.n_features_in_ = X.shape[1]
+        self.is_fitted_ = True
         self._mean = np.mean(y)
         return self
 
     def predict(self, X):
         check_is_fitted(self)
         X = check_array(X)
-        if X.shape[1] != self.n_features_in_:
-            raise ValueError
         return np.ones(shape=(X.shape[0],)) * self._mean
 
     def score(self, X, y):
@@ -988,11 +973,6 @@ class MinimalTransformer:
     def __init__(self, param=None):
         self.param = param
 
-    def __repr__(self):
-        # Only required when using pytest-xdist to get an id not associated
-        # with the memory location
-        return self.__class__.__name__
-
     def get_params(self, deep=True):
         return {"param": self.param}
 
@@ -1003,14 +983,12 @@ class MinimalTransformer:
 
     def fit(self, X, y=None):
         X = check_array(X)
-        self.n_features_in_ = X.shape[1]
+        self.is_fitted_ = True
         return self
 
     def transform(self, X, y=None):
         check_is_fitted(self)
         X = check_array(X)
-        if X.shape[1] != self.n_features_in_:
-            raise ValueError
         return X
 
     def fit_transform(self, X, y=None):

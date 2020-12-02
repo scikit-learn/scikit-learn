@@ -1282,13 +1282,6 @@ def test_pipeline_get_tags_none(passthrough):
     assert not pipe._get_tags()['pairwise']
 
 
-def _generate_pipeline_using_minimal_compatible_instances():
-    """Generate pipeline containing estimators from minimal class compatible
-    implementation."""
-    for Predictor in [MinimalRegressor, MinimalClassifier]:
-        yield make_pipeline(MinimalTransformer(), Predictor())
-
-
 # FIXME: Replace this test with a full `check_estimator` once we have API only
 # checks.
 @pytest.mark.parametrize("Predictor", [MinimalRegressor, MinimalClassifier])

@@ -61,7 +61,7 @@ def _safe_tags(estimator, key=None):
         if key not in tags:
             raise ValueError(
                 f"The key {key} is not defined in {tags_provider} for the "
-                f"class {repr(estimator)}."
+                f"class {estimator.__class__.__name__}."
             )
         return tags[key]
     return tags
