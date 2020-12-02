@@ -177,7 +177,7 @@ Making a release
    workflow" form).
 
 7. Alternatively, it's possible to collect locally the generated binary wheel
-   packages and source tarbakk and upload them all to PyPI by running the
+   packages and source tarball and upload them all to PyPI by running the
    following commands in the scikit-learn source folder (checked out at the
    release tag):
 
