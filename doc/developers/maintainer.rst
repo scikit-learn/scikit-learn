@@ -92,7 +92,7 @@ master!) with all the desired changes:
 
 	git rebase -i upstream/0.99.2
 
-Do not forget to add a commit updating sklearn.__version__.
+Do not forget to add a commit updating ``sklearn.__version__``.
 
 It's nice to have a copy of the ``git rebase -i`` log in the PR to help others
 understand what's included.
@@ -114,13 +114,13 @@ Making a release
    the RC releases. These changes should be made in master and cherry-picked
    into the release branch, only before the final release.
 
-   - Edit the ``doc/v0.99/whats_new.rst`` file to add release title and list of
+   - Edit the ``doc/whats_new/v0.99.rst`` file to add release title and list of
      contributors.
      You can retrieve the list of contributor names with:
 
      ::
 
-       $ git shortlog -s 0.98.33.. | cut -f2- | sort --ignore-case | tr '\n' ';' | sed 's/;/, /g;s/, $//'
+       $ git shortlog -s 0.98.33.. | cut -f2- | sort --ignore-case | tr '\n' ';' | sed 's/;/, /g;s/, $//' | fold -s
 
      - For major releases, link the release highlights example from the ``doc/whats_new/v0.99.rst`` file.
 
