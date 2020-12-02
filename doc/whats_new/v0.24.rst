@@ -7,8 +7,11 @@
 Version 0.24.0
 ==============
 
-**In Development**
+**December 2020**
 
+For a short description of the main highlights of the release, please
+refer to
+:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_0_24_0.py`.
 
 .. include:: changelog_legend.inc
 
@@ -827,3 +830,346 @@ Code and Documentation Contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 0.23, including:
+
+1kastner, 211217613, @nkish, A. Flaxman, Aaron Alphonsus, Aaron Schumacher, 
+Aaron Staple, Aarshay Jain, Aashil, Abbie Popa, Abdur-Rahmaan Janhangeer, 
+abenbihi, Abhijeet Kolhe, Abhinav Sagar, Abhishek Jana, abhishek thakur, 
+Abhyuday Pratap Singh, Abo7atm, Abraham K. Lagat, absolutelyNoWarranty, Adam 
+Greenhall, Adam J. Stewart, Adam Kleczewski, Adam Richie-Halford, Adam 
+Spannbauer, adanhawth, adelr, Adithya Ganesh, Aditya Joshi, Aditya Vyas, 
+AdityaDaflapurkar, Adrien Gaidon, Adrin Jalali, adrinjalali, affanv14, 
+Agamemnon Krasoulis, ai8rahim, Aidan Fitzgerald, aishgrt1, AishwaryaRK, 
+aivision2020, Akash Shivram, akitty, Akshay, akshay0724, akshayah3, Alan 
+Liddell, Alan Yee, Albert Thomas, Alberto Torres, Aldrian Obaja, Alec Peters, 
+Alejandro Correa Bahnsen, Alejandro Weinstein, Aleksandr Sandrovskii, 
+Aleksandra Kocot, alemagnani, Alessandro Surace, alex, Alex Companioni, Alex 
+Egg, Alex Henrie, Alex Itkes, Alex Liang, Alexander Fabisch, Alexander Junge, 
+Alexander Lenail, Alexander Loginov, Alexander Measure, Alexander Minyushkin, 
+Alexander Rudy, Alexander-N, alexandercbooth, Alexandre Abadie, Alexandre 
+Abraham, Alexandre Batisse, Alexandre Boucaud, Alexandre de Siqueira, Alexandre 
+Gramfort, Alexandre Passos, Alexandre Saint, Alexandre Sevin, Alexey Grigorev, 
+alexfields, alexgoryainov, Alexis Metaireau, Alexis Mignon, alexshacked, Ali 
+Baharev, Alison, Allen Akinkunle, Allen Riddell, Almer, Alonso Silva Allende, 
+Alvaro Perez-Diaz, Alvaro Ulloa, Alyssa, Alyssa Batula, alyssaq, Aman Dalmia, 
+Aman Pratik, Amanda, Amit Aides, Amlan Kar, amormachine, Amos Waterland, 
+amourav, Ana Casado, Anaël Beaugnon, Anders Aagaard, Anders Kaseorg, Ando 
+Saabas, Andrea Esuli, Andrea Maldonado, Andrea Navarrete, Andreas 
+Bjerre-Nielsen, Andreas Mueller, Andreas Schuderer, Andreas van Cranenburgh, 
+andreh7, Andrew Ash, Andrew Clegg, andrew giessel, Andrew Jackson, Andrew Lamb, 
+Andrew McCulloh, Andrew Murray, Andrew Nystrom, Andrew Peng, Andrew Smith, 
+Andrew Tulloch, Andrew Walker, Andrew Winterman, andy, Andy Craze, Ang Lu, 
+Angela Ambroz, Angus Williams, Aniruddha Dave, Anish Shah, Anisha Keshavan, 
+Ankit Agrawal, Ankit Jha, Ankit810, Ankur Ankan, annaayzenshtat, Anne-Laure 
+Fouque, Anthony Erlinger, Anthony Gitter, Antoine Wendlinger, Antonin Carette, 
+Antonio Gutierrez, Antonio Quinonez, Antony Lee, Anubhav Marwaha, Anuja Kelkar, 
+Anze, ApproximateIdentity, Arafat, Archana Alva, Archit Sharma, Ari Rouvinen, 
+Arie Pratama Sutiono, Ariel Rokem, Arik Pamnani, Arnaud Joly, Arnaud Rachez, 
+arnaudstiegler, arpanchowdhry, Artem Golubin, Arthur Douillard, Arthur Imbert, 
+Arthur Mensch, Arthur Ozga, Artiem K, Artsiom, Arunav Konwar, Arunava, Arya 
+McCarthy, Aseem Bansal, Ash Hoover, ashimb9, Asish Mahapatra, assiaben, 
+Attractadore, Aurélien Bellet, Aurélien Geron, Aymeric Masurelle, Ayomide 
+Bamidele, Ayush Gupta, b0noI, Bala Subrahmanyam Varanasi, Balakumaran 
+Manoharan, Bangda Sun, banilo, Baptiste Lagarde, Baptiste Maingret, Baran 
+Buluttekin, Barmaley.exe, Barry Hart, barrycg, Bartosz Michałowski, Bartosz 
+Telenczuk, Basil Beirouti, Bastiaan van den Berg, Bastian Venthur, bauks, 
+Behzad Tabibian, Ben Davies, Ben Lawson, Ben Root, Benedikt Koehler, Benjamin 
+Beier Liu, Benjamin Peterson, benjamin wilson, benjaminirving, BenjaStudio, 
+Benn Roth, Bernardo Vecchia Stein, Bernhard Kratzwald, bernie gray, Bertrand 
+Thirion, bertrandhaut, Bharat Raghunathan, Bharathi Srinivasan, Bhargav 
+Mangipudi, bhsu, Bibhash Chandra Mitra, Bill Mill, Bing Tian Dai, Biswadip 
+Mandal, blackd0t, blakeflei, bob, Bob Baxley, Bogdan Trach, Boris Feld, Borja 
+Ayerdi, Boyuan Deng, brady salz, Brandon Carter, Brandyn A. White, Breno 
+Freitas, Brent Pedersen, Brent Yi, brentfagan, brett koonce, Brett Naul, Brett 
+Olsen, Brian A. Alfano, Brian Burns, Brian Cajes, Brian Cheung, Brian G. 
+Barkley, Brian Holt, Brian Kearns, Brian McFee, Brian Wignall, brigi, Brigitta 
+Sipőcz, Brooke Osborn, Bryan Lunt, Bryan Silverthorn, Bryan Woods, Bryan Yang, 
+Buddha Prakash, buguen, Bussonnier Matthias, bwignall, c56pony, Caio Oliveira, 
+Calvin Giles, Camil Staps, camilaagw, Camilo Lamus, campustrampus, Carlos H 
+Brandt, Carlos Scheidegger, Carol Willing, cartman_nabana, Cass, CastaChick, 
+castor, Cat Chenal, catajara, Cathy, Cathy Deng, cclauss, Celeo, CeShine Lee, 
+cgohlke, cgsavard, Chady Kamar, chalmerlowe, Charles Earl, Charles McCarthy, 
+Charles Truong, Charles Vesteghem, Charles-Pierre Astolfi, Charlie Brummitt, 
+Charlie Newey, Charlton Austin, Chayant T15h, chebee7i, Chen Liu, Cheuk Ting 
+Ho, Chi Zhang, Chiara Marmo, Chih-Wei Chang, Chinmaya Pancholi, chkoar, Chris, 
+chris, Chris Catalfo, Chris Choe, Chris Filo Gorgolewski, Chris Foster, Chris 
+Gregory, Chris Holdgraf, Christian Braune, Christian Danielsen, Christian 
+Hirsch, Christian Hogan, Christian Jauvin, Christian Kastner, Christian 
+Lorentzen, Christian Osendorfer, Christian Stade-Schuldt, Christof 
+Angermueller, Christoph Deil, Christoph Gohlke, Christophe Bourguignat, 
+Christopher Erick Moody, Christopher Jenness, Christos Aridas, Chung Yen, 
+Chyi-Kwei Yau, Cindy Sridharan, CJ Carey, cjlin, Claire Revillet, Clay Woolam, 
+Clemens Brunner, Clement Joudet, Clyde-fare, Clément Doumouro, cnx, codevig, 
+Cole Smith, Colin Ni, Connossor, Conrad Lee, Corey Levinson, Corey Lynch, 
+Corrie Bartelheimer, Cory Lorenz, Craig Thompson, csytracy, cwitte, Daiki 
+Aminaka, Dakota Grusak, Dallas Card, Dan Barkhorn, Dan Blanchard, Dan Ellis, 
+Dan O'Huiginn, Dan Shiebler, Dan Stine, Dan Yamins, danfrankj, Daniel, Daniel 
+Duckworth, Daniel Ferreira, Daniel Galvez, Daniel Gomez, Daniel Grady, Daniel 
+Hnyk, Daniel Klevebring, Daniel Kronovet, Daniel LeJeune, Daniel Mohns, Daniel 
+Nouri, Daniel Perry, Daniel Velkov, Daniele Medri, Danielle Shwed, 
+DanielWeitzenfeld, Danil Baibak, Daniël van Gelder, Danna Naser, Danny 
+Sullivan, Danylo Baibak, Daphne, Darius Morawiec, Data1010, daten-kieker, 
+DatenBergwerk, Dave Elliott, David, David Beach, David Breuer, David Burns, 
+David Cournapeau, David D Lowe, David DeTomaso, David Dormagen, David Dotson, 
+David Ellis, David Fletcher, David Gasquez, David Haberthür, David Heryanto, 
+David Kirkby, David Marek, David Nicholson, David Pickup, David Robles, David 
+Staub, David Thaler, David Warde-Farley, David Warshaw, david-cortes, Davide 
+Lasagna, dbauer9, Deborah, Deborah Gertrude Digges, deeplook, 
+definitelyuncertain, dengemann, Denis, Denis A. Engemann, Denis Engemann, Denis 
+Kataev, Denton Cockburn, Derek, Devansh D, Dickson, Didi Bar-Zev, Diego Molla, 
+diegodlh, Dillon Gardner, Dillon Niederhut, dilutedsauce, ditenberg, 
+Divyaprabha M, djipey, dlovell, Dmitrijs Milajevs, Dmitry Mottl, Dmitry Petrov, 
+Dmitry Spikhalskiy, Dmitry Vukolov, DOHMATOB Elvis, dokato, Don86, Dong-hee Na, 
+Donne Martin, Dor Cohen, Doug Coleman, Dougal J. Sutherland, Dougal Sutherland, 
+Douglas Duhaime, Dowon, draix, DraXus, drewmjohnston, DrGFreeman, Dror Atariah, 
+dsquareindia, Dylan Cashman, dzikie drożdże, E. Lynch-Klarup, Ed Rogers, Eddy L 
+O Jansson, Edouard DUCHESNAY, edson duarte, Eduardo Ariño de la Rubia, Eduardo 
+Caro, edvardlindelof, Edward J Brown, Edward Qian, edwinENSAE, Ekaterina 
+Borovikova, Ekaterina Krivich, Ekaterina Tuzova, elena-sharova, Elias Kuthe, 
+Elizabeth Ferriss, Elizabeth Sander, Ellen-Co2, ELNS, eltermann, Elvis 
+DOHMATOB, emanuele, Emily Taylor, Emmanuel Arias, Emmanuelle Gouillart, Eric 
+Chang, Eric Dean Sanchez, Eric Jacobsen, Eric Larson, Eric Leung, Eric Martin, 
+Eric Ndirangu, Erich Schubert, Erik Shilts, Erwin Marsi, esvhd, Ethan White, 
+Eugene Nizhibitsky, Eunji, Eunseop Jeong, Eustache Diemert, Evgeni Chasnovski, 
+Fabian Egli, Fabian Pedregosa, Fabiana, Fabio Ticconi, Facundo Ferrín, Falak, 
+Fan, Fang-Chieh Chou, Fanny, FarahSaeed, Fazlul Shahriar, fcostin, Feda Curic, 
+Federico Caselli, Federico Vaggi, federicopisanu, felix, Felix Brockherde, 
+Felix Divo, fenx, Fernando Carrillo, ferria, Feth Arezki, Fibinse Xavier`, 
+filipj8, Finn O'Shea, fisache, flaviomorelli, Florian Hoenig, Florian Wilhelm, 
+floydsoft, FranciDona, Francis O'Donovan, Francis T. O'Donovan, Franco M. 
+Luque, Francois Savard, Frank C. Eckert, Frank Hoang, Frank Zalkow, FrankHui, 
+Franz Wompner, Franziska Boenisch, François Boulogne, Frederic Haase, Freija 
+Descamps, frsi, fukatani, Félix Raimundo, Félix-Antoine Fortin, g0g0gadget, 
+Gabriel Altay, Gabriel do Vale Rios, Gabriel Marzinotto, Gabriel Vacaliuc, 
+Gabriele Calvo, Gael Varoquaux, ganevgv, Ganiev Ibraim, Garrett-R, Gary 
+Foreman, Gaurav Dhingra, Gaurav Sharma, GauravAhlawat, gdex1, gedeck, Geoffrey 
+Bolmier, Georgi Peev, getgaurav2, ghg, gholdman1, Gideon Sonoiya, Gil Forsyth, 
+Gilles Louppe, Giorgio Patrini, Giovanni Cherubin, Giovanni Giuseppe Costa, 
+Giovanni Lanzani, Giuseppe Vettigli, gkevinyen5418, Glenn Qian, 
+goncalo-rodrigues, Gonthier Nicolas, Gordon Chen, Gordon Mohr, govin-vatsan, 
+gpapadok, gpassino, Graham Clenaghan, Greg Gandenberger, Greg Mogavero, Greg 
+Reda, Greg Stupp, Gregory Morse, Gregory R. Lee, Gryllos Prokopis, Grzegorz 
+Szpak, Gui Miotto, Guilherme Trein, Guillaume "Vermeille" Sanchez, Guillaume 
+Fournier, Guillaume Lemaitre, Guillem García Subies, guiniol, guoci, Gustav 
+Mörtberg, Gustavo De Mari Pereira, gwulfs, H4dr1en, Hadrien Bertrand, hadshirt, 
+Hailey Nguyen, hakaa1, halwai, Hampus Bengtsson, hamzeh, Hamzeh Alsalhi, Hanmin 
+Qin, Hanna Wallach, Hannah Bohle, Hannah Bruce Macdonald, Hannes Schulz, Hao 
+Chun Chang, HaoYin, Harikrishnan S, Harizo Rajaona, haroldfox, Harry 
+Mavroforakis, Harsh Mahajan, Harsh Soni, hashcode55, Hasil Sharma, hdmetor, He 
+Chen, Helder, Hendrik Heuer, Henry Lin, Herve Bredin, hhu-luqi, Himanshu Garg, 
+Hirofumi Suzuki, Hobson Lane, Holger Peters, Hong, Honghe, hongkahjun, Honglu 
+Zhang, Hossein Pourbozorg, Hrishikesh Huilgolkar, hrishikeshio, Hristo, 
+Hsiang-Fu Yu, Hsuan-Tien Lin, huangk10, Hugo Bowne-Anderson, Hugo van Kemenade, 
+Hugues SALAMIN, Hunan Rostomyan, Hunter McGushion, Hye Sung Jung, Hélion du Mas 
+des Bourboux, i-am-xhy, iampat, Ian Gilmore, Ian Ozsvald, Ian Sanders, Ibraim 
+Ganiev, Icyblade Dai, Ignacio Rossi, Igor Andriushchenko, Ilambharathi Kanniah, 
+Ilya, Imaculate, Immanuel Bayer, Imran Haque, indecisiveuser, inderjeet, Ingrid 
+Spielman, Inki Hwang, Isaac Laughlin, Isaac Sijaranamual, Ishank Gulati, isms, 
+Issam Laradji, Ivan PANICO, Iver Jordal, IvicaJovic, Iván Vallés, J-A16, 
+j0rd1smit, Jack Hale, Jack Martin, JackLangerman, jackmartin, Jacob Schreiber, 
+Jacopo Notarstefano, Jacques Kvam, jaehong park, Jaewon Chung, Jaidev 
+Deshpande, Jaime Ferrando Huertas, Jake VanderPlas, JakeMick, jakirkham, James 
+A. Bednar, James Bergstra, James Bourbeau, James Fiedler, James Hill, James 
+Malcolm, James McDermott, James Myatt, James Routley, James Yu, jamestwebber, 
+Jamie Cox, Jan Dlabal, Jan Hendrik Metzen, Jan Koch, Jan Margeta, Jan S, Jan 
+Schlüter, Jan Vesely, Janine Harper, Janna Brettingen, jansoe, janvanrijn, 
+Jaques Grobler, jarfa, jaroslaw-weber, Jarrod Millman, Jason Laska, Jason 
+Wolosonovich, Jatin Shah, Javier López Peña, Jay, Jaye, jayzed82, jbDelafosse, 
+jblackburne, JC Liu, jdcaballero, jdethurens, Jean Helie, Jean Kossaifi, Jean 
+Michel Rouly, Jeb Bearer, Jeff Hammerbacher, jeff levesque, Jeffrey Blackburne, 
+Jeffrey04, Jelle Zijlstra, jeremiedbb, Jeremy, Jeremy Hintz, Jeremy Steward, 
+jeremynixon, Jeroen Van Goey, jeroko, jeromedockes, Jesper Dramsch, jess010, 
+Jessica Yung, JF, jfraj, Jiali Mei, Jill-Jênn Vie, Jim Holmström, Jimmy Jia, 
+Jimmy Wan, Jin-Hwan CHO, Jinkun Wang, Jiongyan Zhang, Jiyuan Qian, jjabl, 
+JJmistry, jkleint, jmontoyam, jnothman, joaak, Joan Massich, Joanna Zhang, 
+Jochen Wersdörfer, Joe Jevnik, Joel Nothman, Johann Faouzi, johannah, Johannes 
+Hansen, Johannes Schönberger, John, John B Nelson, John Benediktsson, John 
+Boersma, john collins, John Kirkham, John Moeller, John Schmidt, John Wei, John 
+Wittenauer, John Zwinck, JohnStott, Jon Crall, Jon Cusick, Jon Haitz Legarreta 
+Gorroño, Jonatan Samoocha, Jonathan Helmus, Jonathan LIgo, Jonathan Ohayon, 
+Jonathan Rahn, jonathan.striebel, joncrall, Joonas Sillanpää, Jordi, Jorge 
+Cañardo Alastuey, Joris Van den Bossche, Jose Ortiz, Jose Perez-Parras 
+Toledano, Joseph, Joseph Munoz, Joseph Perla, josephsalmon, Josh Karnofsky, 
+Josh Levy, Joshua Cook, Joshua Loyal, Joshua Vredevoogd, José Ricardo, jotasi, 
+Joël Billaud, JPFrancoia, jrfiedler, jschendel, Juan Carlos Alfaro Jiménez, 
+Juan Manuel Caicedo Carvajal, judithabk6, Julian Kuhlmann, JulianKahnert, 
+juliathebrave, Julien Aubert, Julien Chaumond, Julien Miotte, julietcl, jumon, 
+Jungkook Park, Justin Pati, Justin Shenk, Justin Vincent, Jérémie du 
+Boisberranger, Jérémie Méhault, Jörg Döpfert, Jörn Hees, Kai, Kaicheng Zhang, 
+kaichogami, KamalakerDadi, Kamel Ibn Hassen Derouiche, Kanika Sabharwal, Karan 
+Desai, Karl F, Karol Pysniak, Kashif Rasul, Kasper Primdal Lauritzen, Kat 
+Hempstalk, Katarina Slama, Kathryn Poole, Kathy Chen, Katie Luangkote, Katrin 
+Leinweber, Katrina Ni, Kaushik Lakshmikanth, kaushik94, Keith Goodman, 
+kellycarmody, Kemal Eren, ken, Ken Geis, Kennedy, Kennedy Kang'ethe, Kenneth C. 
+Arnold, Kenneth Lyons, Kenneth Myers, Kensuke Arai, Kenta Sato, Kernc, Kesshi 
+Jordan, Kevad, Kevin Hughes, Kevin Loftis, Kevin Markham, Kevin Wang, Kevin 
+Winata, Kevin Yap, Kevin Yu-Sheng Li, Kian Ho, kingjr, Kirill, Kirill Bobyrev, 
+Kirill Dolmatov, Kirthi Shankar Sivamani, kjell, kms15, Koen, Konstantin 
+Podshumok, Konstantin Shmelkov, Kornel Kielczewski, Kossori Aruku, kowalski87, 
+Krishna Kalyan, krishna katyal, Krishna Sangeeth, krishnachaitanya9, 
+krishnakalyan3, ksemb, Kuai Yu, Kulbear, Kumar Ashutosh, Kushal Chauhan, Kvle 
+Putnam, Kye Taylor, Kyeongpil Kang, Kyle Beauchamp, Kyle Gilliam, Kyle Jackson, 
+Kyle Kastner, Kyle Kelley, kyledrogo, Kyler Brown, Lagacherie Matthieu, Lakshmi 
+Krishnan, Lakshya KD, LalliAcqua, Lam Gia Thuan, Lars Buitinck, Laurent Direr, 
+Laurent Luce, Laurent Pierron, lbfin, ldavid, ldirer, Leandro Hermida, Lee 
+Murray, Lee Yi Jie Joel, leepei, leereeves, LeiG, LeightonZhang, Leland 
+McInnes, leonpalafox, Lera, Li Li, Liam Geron, Liang-Chi Hsieh, Lilian Besson, 
+Lily Xiong, Lisa Sarah Thomas, Lisa Schwetlick, Liutong Zhou, Lizao Li, lizsz, 
+ljwolf, LK, lkjcalc, lkubin, Loic Esteve, loopyme, lopusz, lostcoaster, louib, 
+Louis Huynh, Louis Tiao, lrjball, Luca Ionescu, Lucas Wiman, lucgiffon, Luciano 
+Viola, Lucija Gregov, Lucy Liu, lucyleeow, Ludwig Schwardt, Luis Osa, Luis 
+Pedro Coelho, luk-f-a, Lukas Kemkes, Lukas Michelbacher, Luke M Craig, Luke 
+Persola, Lutz Roeder, Léo DS, Léonard Binet, Léonie Borne, m-clare, m.fab, 
+Mabel, Mabel Villalba, Maciej J Mikulski, Madhura Jayaratne, Mads Jensen, Magda 
+Zielinska, MaggieChege, maheshakya, Maheshakya Wijewardena, maikia, mail-liam, 
+Mainak Jas, Maithreyi Venkatesh, Maltimore, Mandy Gu, Manimaran, Manish 
+Aradwad, Maniteja Nandana, Manoj Kumar, Manraj Singh, Manuel, Manuel 
+López-Ibáñez, Manvendra Singh, Maocx, Marc Meketon, Marc Torrellas, Marco De 
+Nadai, Marco Gaido, Marco Gorelli, MarcoFalke, MarcoGorelli, Maren Westermann, 
+Maria, Mariana Meireles, Marie Douriez, Marielle, marineLM, Mario Krell, Mario 
+Michael Krell, Mark Bao, Mark Hannel, Mark Roth, Mark Szepieniec, Mark Veronda, 
+MarkIwanchyshyn, Marko Burjek, MarkTab marktab.net, Markus, Markus Frey, Markus 
+Müller, MarsGuy, Martin, Martin Billinger, Martin Gubri, Martin Ku, Martin 
+Luessi, Martin Madsen, Martin Oywa, Martin Spacek, Martin Thoma, martin-hahn, 
+martin-kokos, Martina G. Vilas, MartinBpr, martinosorb, MaryanMorel, Masafumi 
+Oyamada, Masashi SHIBATA, Massil, Masstran, Mateusz Górski, Mateusz Susik, 
+Matheus, Mathieu Blondel, Mathieu Dubois, mathurinm, matrixorz, Matt Hall, Matt 
+Krump, Matt Pico, Matt Terry, Matteo Visconti di Oleggio Castello, Matteo 
+Visconti dOC, Matthew Brett, Matthew Roeschke, Matthias Ekman, Matthias Feurer, 
+Matthias Gilch, Matthieu Brucher, Matthieu Perrot, Matti Lyra, Maura Pintor, 
+Max Copeland, Max Linke, Max Moroz, Maxim Kolganov, Maxwell Aladago, Mayur 
+Kulkarni, mbillinger, mbillingr, mc4229, Meghann Agarwal, mehak-sachdeva, Mehdi 
+Cherti, Mehul Ahuja, Melanie Goetz, melsyt, Meng Xinfan, Meng, Peng, meyer89, 
+mferrari3, mhg, Micah Smith, Michael A. Alcorn, Michael Becker, Michael 
+Bommarito, Michael Dezube, Michael Eickenberg, Michael Hanke, Michael Heilman, 
+Michael Patterson, Michael Scherer, Michael Shoemaker, Michal Baumgartner, 
+Michal Romaniuk, Michał Słapek, Michele Lacchia, Michele Orrù, michiaki ariga, 
+Mickaël Schoentgen, midinas, Miguel Cabrera, miguelbarao, mikebenfield, Mikhail 
+Korobov, Milen Paskov, Mina Naghshhnejad, Ming Li, Minghui Liu, Minh Le, Minwoo 
+Jake Lee, Miroslav Batchkarov, Miroslav Shubernetskiy, Mitar, mlewis1729, MLG, 
+mlliou112, mo, Mohamed Ali Jamaoui, Mohamed Maskani, Mohammad Aftab, Mohammad 
+Shahebaz, Mohammed AbdelAal, Mohammed Ibraheem, Mojca Bertoncelj, Morikko, 
+motmoti, Moussa Taifi, mr.Shu, mrandrewandrade, Mridul Seth, MrMjauh, 
+mschaffenroth, mthorrell, Muayyad Alsadi, Muhammad Hassaan Rafique, murad, 
+mwestt, Nabarun Pal, nadya-p, Nagarjuna Kumar, NALEPA Emmanuel, Namiya, Nantas 
+Nardelli, Naoki Orii, Naoya Iijima, Naoya Kanai, narendramukherjee, Narendran 
+Santhanam, Narine Kokhlikyan, NarineK, Natasha Borders, Nate George, Nate 
+Guerin, Nathan Suh, Nathaniel Saul, ndingwall, Neeraj Gangwar, Nelle Varoquaux, 
+Nelson Liu, nezar-a, ngshya, Nicholas Nadeau, P.Eng., AVS, Nicholas Smith, 
+Nicholas Won, Nick Hoh, Nick James, Nick Wilson, NickleDave, Nico de Vos, 
+Nicola Montecchio, Nicolas, Nicolas Goix, Nicolas Hug, Nicolas Pinto, Nicolas 
+Trésegnie, nicolasservel, Nicolau Werneck, Nicole Vavrova, Nidhin Pattaniyil, 
+nielsenmarkus11, Nihar Sheth, Nikita Singh, Nikita Titov, Niklas, Nikolay 
+Mayorov, Nikolay Shebanov, Nilesh Kevlani, ningchi, Nirvan Anjirbag, Nishan 
+Singh Mann, Nitish Pandey, Nitya Mandyam, nlathia, Noa Tamir, Noel Dawe, 
+Norbert Crombach, norvan, notmatthancock, novaya, nuffe, nxorable, nzer0, nzw, 
+Okal Billy, okbalefthanded, Okhlopkov Daniil Olegovich, Oleg Stikhin, Oleksandr 
+Pavlyk, oliblum90, olicairns, Oliver Rausch, Oliver Urs Lenz, Olivier Grisel, 
+Olivier Hervieu, Om Prakash, Omar Saleem, Omer Katz, omtcyfz, Oren Milman, 
+Orestis, Osaid Rehman Nasir, Oscar Carlsson, Osman, Owen Flanagan, Pankaj 
+Jindal, Panos Louridas, panpiort8, Paolo, Paolo Losi, Paolo Puggioni, Paolo 
+Toccaceli, Paresh Mathur, Parminder Singh, parsons-kyle-89, pasbi, Patrick 
+Carlson, Patrick Fernandes, Patrick Olden, Patrick Pei, Paul Butler, Paul 
+Ganssle, Paul Paczuski, Paul Strickland, Paula, Pauli Virtanen, Paulo Haddad, 
+Pavel, Pavel Soriano, pavlos kallis, Pawel Sendyk, Paweł Lorek, Paweł Mandera, 
+peay, Pedro Morales, Peng Yu, Perrine Letellier, pestrickland, Pete Bachant, 
+Pete Green, Peter, Peter Bull, Peter Cock, Peter Csizsek, Peter Fischer, Peter 
+Hausamann, Peter Marko, Peter Prettenhofer, Peter St. John, Peter Wang, Peter 
+Welinder, Phil Roth, Philippe Gervais, pianomania, Pierre Delanoue, Pierre 
+Glaser, pierreablin, pierretallotte, Pieter Arthur de Jong, Pieter de Jong, 
+Pietro Berkes, Pietro Zambelli, pietruh, Pim de Haan, Pinaki Nath Chowdhury, 
+Ping-Yao, Chang, Piotr Szymański, plagree, pldtc325, polmauri, poorna-kumar, 
+popo, Prabakaran Kumaresshan, practicalswift, Pradeep Reddy Raamana, Pratap 
+Vardhan, Prathmesh Savale, Pravar D Mahajan, pravarmahajan, Preston Parry, 
+pspachtholz, Pulkit Maloo, Pulkit Mehta, Puneet Mathur, pvnguyen, qdeffense, 
+Qimu Zheng, QingYing Chen, Qizhi  Jiang, Quang Nguyễn, Quentin Batista, Quentin 
+Hibon, queqichao, R Sanjabi, rachelcjordan, Rachit Kansal, Radostin Stoyanov, 
+raduspaimoc, Raf Baluyot, Rafael Carrascosa, Rafael Cunha de Almeida, Rafael 
+Possas, Raghav RV, Rahiel Kasim, Rajat Garg, Rajat Khanduja, Rajdeep Dua, 
+Rajendra arora, RAKOTOARISON Herilalaina, Ralf Gommers, Ramana Subramanyam, 
+Ramana.S, Rameshwar Bhaskaran, Ramil Nugmanov, Rammig, Randall Mason, Randy 
+Olson, RankyLau, Raphaël Bournhonesque, rasbt, rashchedrin, Rasul Kerimov, Raul 
+Garreta, Ray, Ray Bell, Raúl García Calvo, Rebecca Bilbro, Rebekah Kim, 
+Reiichiro Nakano, Remi Rampin, Reshama Shaikh, Reza Gharibi, Riccardo Folloni, 
+Richard Payne, Richard T. Guy, Richard W, Rick Mackenbach, rickiepark, 
+Rishikesh, Ritchie Ng, rlms, Rob, Rob Alexander, Rob Hall, Rob Speer, Rob 
+Zinkov, Robert, Robert Bradshaw, Robert Juergens, Robert Layton, Robert Lutz, 
+Robert Marchman, Robert McGibbon, Robin Schucker, Rohan Jain, Rohan Lekhwani, 
+Rohan Ramanath, Rohan Singh, Rohan Varma, Rohit Kapoor, Rohit Sivaprasad, Rok 
+Mihevc, Roland Szabo, Rolando Espinoza La fuente, Romain Brault, Romain 
+Tavenard, Roman Feldbauer, Roman Kosobrodov, Roman Sinayev, Roman Yurchak, 
+Romuald M, Ron Weiss, Ronald Phlypo, Ronan Amicel, Ronan Lamy, Roopam Sharma, 
+root, Rory Hartong-Redden, Roy Hyunjin Han, rragundez, RuchitaGarde, Ruifeng 
+Zheng, Rupesh Kumar Srivastava, Rushabh Vasani, Russell Smith, Ruth Waithera, 
+Ryan, Ryan Wang, Ryan Yu, Rémy Léone, Rüdiger Busche, Sachin Agarwal, Sachin 
+Kelkar, Sackey, Sagnik Bhattacharya, saihttam, Sailesh Choyal, Saiwing Yeung, 
+Saket Choudhary, Salvatore Masecchia, Sam Dixon, Sam Nicholls, Sam 
+Radhakrishnan, Sam Shleifer, Sam Steingold, Sam Waterbury, Sam Zhang, Sambhav 
+Kothari, Samesh Lakhotia, Samson Tan, Samuel Bell, Samuel Charron, Samuel Duan, 
+Samuel O. Ronsin, Samuel St-Jean, Samuel Taylor, samuela, Samuël Weber, 
+SandroCasagrande, SanthoshBala18, santi, Santiago M. Mola, Saqib Nizam Shamsi, 
+Sarah Brown, Sarat Addepalli, Sarra Habchi, Sartaj Singh, Sasank Chilamkurthy, 
+SATISH J, Satrajit Ghosh, Saurabh Gupta, Saurabh Jha, saurabh.bansod, scibol, 
+scls19fr, Scott Andrews, Scott Cole, Scott Dickerson, Scott Gigante, Scott 
+Lowe, Scott Sievert, Scott White, sdenton4, seales, Seamus Abshere, 
+seanpwilliams, Sebastian Berg, Sebastian Flennerhag, Sebastian Kießling, 
+Sebastian Pölsterl, Sebastian Raschka, Sebastian Saeger, Sebastien Dubois, 
+Sebastin Santy, Sebastián Vanrell, Sergei Lebedev, Sergey Feldman, Sergey 
+Karayev, Sergey Melderis, sergeyf, Sergio, Sergio Medina, Sergio Pascual, 
+SergioDSR, Sergul Aydore, sethdandridge, SeWook Oh, shagun Sodhani, Shahebaz, 
+Shalil Awaley, Shane Keller, Shangwu Yao, shanmuga cv, Sharad Vijalapuram, 
+Sharan Yalburgi, Shashank Shekhar, Shaun Jackman, shawpan, she-dares, 
+shengxiduan, shenhanc78, Shiki-H, Shiqiao Du, Shivam Kotwalia, Shivam Rastogi, 
+shivamgargsya, Shivan Sornarajah, Shiyu Duan, Shota, Shreya V, Shu Haoran, 
+SHUBH CHATTERJEE, Shubham Bhardwaj, Shubham Mehta, shuckle16, Shuzhe Xiao, Sid 
+Kapur, Siddharth Gupta, siftikha, Simon Frid, simonamaggio, SimonCW, SimonPL, 
+Sinclert Pérez, sinhrks, Skipper Seabold, sklearn-ci, smarie, SmedbergM, 
+smujjiga, Snowhite, snuderl, SolutusImmensus, Somya Anand, Sonny Hu, Soumirai, 
+Sourav Singh, srajan paliwal, Sri Krishna, Sriharsha Hatwar, Srivatsan, 
+srvanrell, sseg, stareh, staubda, Stefan Otte, Stefan van der Walt, Stefan 
+Walk, stefan-matcovici, Stefano Lattarini, steinfurt, Stephan Hoyer, Stephan 
+Tulkens, Stephen Blystone, Stephen Cowley, Stephen Hoover, Stephen Marsh, 
+Stephen McDowell, Stephen Tierney, Steve Koch, Steve Tjoa, Steven Brown, Steven 
+C. Howell, Steven De Gryze, Steven Maude, Steven Seguin, Stijn Tonk, Sturla 
+Molden, Stéphane Couvreur, Subhodeep Moitra, Sunmi Yoon, surgan12, swu, syhw, 
+Sylvain Zimmer, SylvainLan, syonekura, Szabo Roland, Sébastien Lerique, Sönke 
+Behrends, t-aft, Tadej Janež, Taehoon Lee, Tahar, Takanori Hayashi, 
+TakingItCasual, talgatomarov, tamirlan1, Taranjeet, tarcusx, Tashay Green, 
+Taylor G Smith, tejesh95, terrycojones, th0rwas, themrmax, Theodore Vasiloudis, 
+Theofilos Papapanagiotou, theoptips, theotheo, theriley106, thibsej, Thierno 
+Ibrahima DIOP, Thierry, Thierry Guillemot, Thomas, Thomas A Caswell, Thomas 
+Delteil, Thomas Edwards, Thomas Fan, Thomas Hallock, Thomas Heavey, Thomas J 
+Fan, Thomas J. Fan, Thomas Jarosch, Thomas Li, Thomas Moreau, Thomas Schmitt, 
+Thomas Unterthiner, Thouis (Ray) Jones, Tiago Freitas Pereira, Tiago Nunes, 
+Tian Wang, Tilen Kusterle, Tim Bicker, Tim Head, Tim Nonner, Tim 
+Sheerman-Chase, Tim Staley, Tim Vink, Timothy Hopper, Timsaur, Tiphaine Viard, 
+Tirth Patel, Titus Christian, Tiziano Zito, tKammy, toastedcornflakes, Tobias 
+Madsen, tobycheese, tokoroten, Tola A, Tom Augspurger, Tom DLT, Tom Dupré la 
+Tour, Tomas Kazmar, TomDLT, Tommy, Tommy Boucher, Tommy Löfstedt, topisan, 
+Toshihiro Kamishima, tracer0tong, Trent Hauck, Trevor Stephens, trevorstephens, 
+trimeta, Trishnendu Ghorai, ttang131, tttthomasssss, Tue Vo, Tulio Casagrande, 
+twosigmajab, Tyler Folkman, Tyler Lanigan, Tzu-Ming Kuo, uber, Udi Weinsberg, 
+ugurcaliskan, ugurthemaster, Umar Farouk Umar, unknown, Urvang Patel, Utkarsh 
+Upadhyay, Vachan D A, Vadim Markovtsev, Valentin Haenel, Valentin Stolbunov, 
+Vandana Iyer, Varun, Varun Agrawal, Varun Jewalikar, Varun Shenoy, Vathsala 
+Achar, veerlosar, Venkatachalam N, Viacheslav V Kovalevskyi, vibrantabhi19, 
+Victor Luzgin, Victor Poughon, Vighnesh Birodkar, Vijay Ramesh, Vikas Pandey, 
+Vikram, Vilhelm von Ehrenheim, Villu Ruusmann, Vinayak Mehta, Vincent, Vincent 
+Dubourg, Vincent Jeanselme, Vincent Lostanlen, Vincent Michel, Vincent Pham, 
+Vincent Schut, Vinit, Vinod Kumar L, Viraj Mavani, Viraj Navkal, Virgile 
+Fritsch, Vishaal Kapoor, Vivek Kumar, Vjacheslav Murashkin, Vlad Niculae, 
+Vladimir Korolev, Vlasios Vasileiou, vnherdeiro, vqean3, Vrishank Bhardwaj, 
+vstolbunov, vufg, wadawson, waelbenamara, wallygauze, walter, wangz10, Warut 
+Vijitbenjaronk, waterponey, wconnell, wderose, wdevazelhes, Wei Li, Wei Xue, 
+Wenbo Zhao, Wendy Hu, Wenhao Zhang, Wenhua Yang, Wenjian Huang, wenliwyan, Wes 
+Barnett, Will, Will Lamond, Will Myers, Will Rosenfeld, Will Welch, 
+willdarnell, willduan, William de Vazelhes, Windber, wolframalpha, wornbb, Wu 
+Jiang, wyseguy7, x-martian, X006, x0l, xavier dupré, xcjason, xhan, Xin Xiong, 
+Xinfan Meng, Xing Han Lu, xinyuliu12, xor, xsat, xun-tang, xyguo, Yan Yi, Yang 
+Zhang, yangarbiter, yanlend, Yann Malet, Yann N. Dauphin, Yannick Schwartz, 
+Yaroslav Halchenko, yelite, Yen, YenChenLin, Yichuan Liu, Yiming (Paul) Li, 
+Yinglr, ymazari, Yoav Ram, yokasre, Yoni Ben-Meshulam, Yoshiki Vázquez Baeza, 
+Your Name, Yu-Chin, Yu-Hang "Maxin" Tang, Yucheng Low, Yufeng, Yuichi Fujikawa, 
+Yulia Zamriy, Yung Siang Liau, Yury V. Zaytsev, Yury Zhauniarovich, Zac 
+Stewart, Zach Griffith, Zach Miller, Zayd Hammoudeh, zhai_pro, Zheng RuiFeng, 
+Zhenqing Hu, Zhiqing Xiao, Zhuyi Xue, Zichen Wang, Zijie (ZJ) Poh, Zikes, Jan, 
+zivori, ZJ Poh, zxcvbnius, Zé Vinícius, Óscar Nájera, 赵丰 (Zhao Feng)
