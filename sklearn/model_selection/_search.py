@@ -415,7 +415,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     def __init__(self, estimator, *, scoring=None, n_jobs=None,
                  refit=True, cv=None, verbose=0,
                  pre_dispatch='2*n_jobs', error_score=np.nan,
-                 return_train_score=True):
+                 return_train_score=True, return_all_estimators=False):
 
         self.scoring = scoring
         self.estimator = estimator
@@ -426,6 +426,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         self.pre_dispatch = pre_dispatch
         self.error_score = error_score
         self.return_train_score = return_train_score
+        self.return_all_estimators = return_all_estimators
 
     @property
     def _estimator_type(self):
@@ -871,17 +872,30 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             self.best_params_ = results["params"][self.best_index_]
 
         if self.refit:
-            # we clone again after setting params in case some
-            # of the params are estimators as well.
-            self.best_estimator_ = clone(clone(base_estimator).set_params(
-                **self.best_params_))
-            refit_start_time = time.time()
-            if y is not None:
-                self.best_estimator_.fit(X, y, **fit_params)
+            estimators = []
+            self.refit_time_ = 0.0
+            if self.return_all_estimators:
+                params_grid = results["params"]
             else:
-                self.best_estimator_.fit(X, **fit_params)
-            refit_end_time = time.time()
-            self.refit_time_ = refit_end_time - refit_start_time
+                params_grid = [results["params"][self.best_index_]]
+            for params in params_grid:
+                # we clone again after setting params in case some
+                # of the params are estimators as well.
+                estimator = clone(clone(base_estimator).set_params(
+                    **params))
+                refit_start_time = time.time()
+                if y is not None:
+                    estimator.fit(X, y, **fit_params)
+                else:
+                    estimator.fit(X, **fit_params)
+                refit_end_time = time.time()
+                self.refit_time_ += refit_end_time - refit_start_time
+                estimators.append(estimator)
+            if self.return_all_estimators:
+                self.best_estimator_ = estimators[self.best_index_]
+                self.all_estimators_ = estimators
+            else:
+                self.best_estimator_ = estimators[0]
 
         # Store the only scorer not as a dict for single metric evaluation
         self.scorer_ = scorers
@@ -1274,12 +1288,14 @@ class GridSearchCV(BaseSearchCV):
     def __init__(self, estimator, param_grid, *, scoring=None,
                  n_jobs=None, refit=True, cv=None,
                  verbose=0, pre_dispatch='2*n_jobs',
-                 error_score=np.nan, return_train_score=False):
+                 error_score=np.nan, return_train_score=False,
+                 return_all_estimators=False):
         super().__init__(
             estimator=estimator, scoring=scoring,
             n_jobs=n_jobs, refit=refit, cv=cv, verbose=verbose,
             pre_dispatch=pre_dispatch, error_score=error_score,
-            return_train_score=return_train_score)
+            return_train_score=return_train_score,
+            return_all_estimators=return_all_estimators)
         self.param_grid = param_grid
         _check_param_grid(param_grid)
 
@@ -1604,7 +1620,7 @@ class RandomizedSearchCV(BaseSearchCV):
                  scoring=None, n_jobs=None, refit=True,
                  cv=None, verbose=0, pre_dispatch='2*n_jobs',
                  random_state=None, error_score=np.nan,
-                 return_train_score=False):
+                 return_train_score=False, return_all_estimators=False):
         self.param_distributions = param_distributions
         self.n_iter = n_iter
         self.random_state = random_state
@@ -1612,7 +1628,8 @@ class RandomizedSearchCV(BaseSearchCV):
             estimator=estimator, scoring=scoring,
             n_jobs=n_jobs, refit=refit, cv=cv, verbose=verbose,
             pre_dispatch=pre_dispatch, error_score=error_score,
-            return_train_score=return_train_score)
+            return_train_score=return_train_score,
+            return_all_estimators=return_all_estimators)
 
     def _run_search(self, evaluate_candidates):
         """Search n_iter candidates from param_distributions"""
