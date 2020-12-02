@@ -17,9 +17,6 @@ on:
   # Manual run
   workflow_dispatch:
 
-env:
-  SCIKIT_LEARN_VERSION: 0.24.dev0
-
 jobs:
   # Check whether to build the wheels and the source tarball
   check_build_trigger:
@@ -84,8 +81,7 @@ jobs:
         env:
           CONFTEST_PATH: ${{ github.workspace }}/conftest.py
           CONFTEST_NAME: conftest.py
-          CIBW_ENVIRONMENT: WHEEL_DIRNAME=scikit_learn-$SCIKIT_LEARN_VERSION
-                            OMP_NUM_THREADS=2
+          CIBW_ENVIRONMENT: OMP_NUM_THREADS=2
                             OPENBLAS_NUM_THREADS=2
                             SKLEARN_SKIP_NETWORK_TESTS=1
                             SKLEARN_BUILD_PARALLEL=3
