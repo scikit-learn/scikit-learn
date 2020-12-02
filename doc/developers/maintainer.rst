@@ -106,8 +106,8 @@ should be excluded.
 
 For major releases, do not forget to prepare a Release Highlights page as a
 runnable example and check that its HTML rendering looks correct. These release
-higlights should be linked from the ``doc/whats_new/v0.99.rst`` file for the new version
-of scikit-learn.
+higlights should be linked from the ``doc/whats_new/v0.99.rst`` file for the
+new version of scikit-learn.
 
 First, create a branch, **on your own fork** (to release e.g. `0.99.3`):
 
