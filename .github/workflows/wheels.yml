@@ -18,7 +18,7 @@ on:
   workflow_dispatch:
 
 env:
-  SCIKIT_LEARN_VERSION: 0.24.dev0
+  SCIKIT_LEARN_VERSION: 0.24.rc1
 
 jobs:
   # Check whether to build the wheels and the source tarball
