@@ -83,7 +83,8 @@ or feature should be excluded.
 
 Then you can prepare a local branch for the release itself, for instance:
 ``release-0.99.0rc1``, push it to your github fork and open a PR **to the**
-`scikit-learn/0.99.X` **branch**.
+`scikit-learn/0.99.X` **branch**. Copy the :ref:`release_checklist` templates
+in the description of the Pull Request to track progress.
 
 This PR will be used to push commits related to the release as explained in
 :ref:`making_a_release`.
@@ -122,6 +123,9 @@ master!) with all the desired changes:
 .. prompt:: bash $
 
 	git rebase -i upstream/0.99.2
+
+Copy the :ref:`release_checklist` templates in the description of the Pull
+Request to track progress.
 
 Do not forget to add a commit updating ``sklearn.__version__``.
 
@@ -268,11 +272,18 @@ Making a release
        git commit -m "Update stable to point to 0.999"
        git push origin master
 
+.. _release_checklist:
+
+Release checklist
+.................
+
 The following GitHub checklist might be helpful in a release PR::
 
     * [ ] update news and what's new date in master and release branch
     * [ ] check that the wheels can be built successfully
-    * [ ] create tag on the main github repo (after merging the release PR)
+    * [ ] upload the wheels and source tarball to https://test.pypi.org
+    * [ ] merge the release PR in the release branch
+    * [ ] create tag on the main github repo
     * [ ] upload the wheels and source tarball to PyPI
     * [ ] https://github.com/scikit-learn/scikit-learn/releases draft
     * [ ] confirm bot detected at
