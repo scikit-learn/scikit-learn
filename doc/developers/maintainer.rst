@@ -197,9 +197,13 @@ Making a release
   the developement branch of scikit-learn every night. See
   :ref:`install_nightly_builds`.
 
-4. Once all the CD jobs have completed successfully, upload the generated
-   artifacts (.tar.gz and .whl files) to https://test.pypi.org using the "Run
-   workflow" form for the following GitHub Actions workflow:
+4. Once all the CD jobs have completed successfully in the PR, merge it,
+   again with the `[cd build]` marker in the commit message. This time
+   the results will be uploaded to the staging area.
+
+   You should then be able to upload the generated artifacts (.tar.gz and .whl
+   files) to https://test.pypi.org using the "Run workflow" form for the
+   following GitHub Actions workflow:
 
    https://github.com/scikit-learn/scikit-learn/actions?query=workflow%3A%22Publish+to+Pypi%22
 
@@ -282,8 +286,8 @@ The following GitHub checklist might be helpful in a release PR::
     * [ ] update news and what's new date in release branch
     * [ ] update news and what's new date and sklearn dev0 version in master branch
     * [ ] check that the for the release wheels can be built successfully
+    * [ ] merge the PR with `[cd build]` commit message to upload wheels to the staging repo
     * [ ] upload the wheels and source tarball to https://test.pypi.org
-    * [ ] merge the release PR in the release branch
     * [ ] create tag on the main github repo
     * [ ] upload the wheels and source tarball to PyPI
     * [ ] https://github.com/scikit-learn/scikit-learn/releases draft
