@@ -60,6 +60,11 @@ Preparing a release PR
 Major version
 ~~~~~~~~~~~~~
 
+Prior to branching please do not forget to prepare a Release Highlights page as
+a runnable example and check that its HTML rendering looks correct. These
+release higlights should be linked from the ``doc/whats_new/v0.99.rst`` file
+for the new version of scikit-learn.
+
 Releasing the first RC of e.g. version `0.99` involves creating the release
 branch `0.99.X` directly on the main repo, where `X` really is the letter X,
 **not a placeholder**. The development for the major and minor releases of 0.99
@@ -71,7 +76,11 @@ branch:
 
    .. prompt:: bash $
 
+     # Assuming upstream is an alias for the main scikit-learn repo:
+     git fetch uptream master
+     git checkout uptream/master
      git checkout -b 0.99.X
+     git push --set-upstream uptream 0.99.X
 
    Again, `X` is literal here, and `99` is replaced by the release number.
    The branches are called ``0.19.X``, ``0.20.X``, etc.
@@ -104,11 +113,6 @@ Minor version release
 The minor releases should include bug fixes and some relevant documentation
 changes only. Any PR resulting in a behavior change which is not a bug fix
 should be excluded.
-
-For major releases, do not forget to prepare a Release Highlights page as a
-runnable example and check that its HTML rendering looks correct. These release
-higlights should be linked from the ``doc/whats_new/v0.99.rst`` file for the
-new version of scikit-learn.
 
 First, create a branch, **on your own fork** (to release e.g. `0.99.3`):
 
