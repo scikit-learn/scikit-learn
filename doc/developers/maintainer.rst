@@ -57,17 +57,48 @@ permissions given to maintainers, which includes:
 Preparing a release PR
 ......................
 
+Major version
+~~~~~~~~~~~~~
+
 Releasing the first RC of e.g. version `0.99` involves creating the release
 branch `0.99.X` directly on the main repo, where `X` really is the letter X,
-**not a placeholder**. This is considered the *feature freeze*. The
-development for the major and minor releases of 0.99 should
-**also** happen under `0.99.X`. Each release (rc, major, or minor) is a tag
-under that branch.
+**not a placeholder**. The development for the major and minor releases of 0.99
+should **also** happen under `0.99.X`. Each release (rc, major, or minor) is a
+tag under that branch.
+
+This is done only once, as the major and minor releases happen on the same
+branch:
+
+   .. prompt:: bash $
+
+     git checkout -b 0.99.X
+
+   Again, `X` is literal here, and `99` is replaced by the release number.
+   The branches are called ``0.19.X``, ``0.20.X``, etc.
 
 In terms of including changes, the first RC ideally counts as a *feature
 freeze*. Each coming release candidate and the final release afterwards will
 include only minor documentation changes and bug fixes. Any major enhancement
 or feature should be excluded.
+
+Then you can prepare a local branch for the release itself, for instance:
+``release-0.99.0rc1``, push it to your github fork and open a PR **to the**
+`scikit-learn/0.99.X` **branch**.
+
+This PR will be used to push commits related to the release as explained in
+:ref:`making_a_release`.
+
+You can also create a second PR from master and targeting master to increment
+the ``__version__`` variable in `sklearn/__init__.py` to increment the dev
+version. This means while we're in the release candidate period, the latest
+stable is two versions behind the master branch, instead of one. In this PR
+targeting master you should also include a new file for the matching version
+under the ``doc/whats_new/`` folder so PRs that target the next version can
+contribute their changelog entries to this file in parallel to the release
+process.
+
+Minor version release
+~~~~~~~~~~~~~~~~~~~~~
 
 The minor releases should include bug fixes and some relevant documentation
 changes only. Any PR resulting in a behavior change which is not a bug fix
@@ -97,18 +128,13 @@ Do not forget to add a commit updating ``sklearn.__version__``.
 It's nice to have a copy of the ``git rebase -i`` log in the PR to help others
 understand what's included.
 
+.. _making_a_release:
+
 Making a release
 ................
 
-0. Create the release branch on the main repo, if it does not exist. This is
-   done only once, as the major and minor releases happen on the same branch:
-
-   .. prompt:: bash $
-
-     git checkout -b 0.99.X
-
-   Again, `X` is literal here, and `99` is replaced by the release number.
-   The branches are called ``0.19.X``, ``0.20.X``, etc.
+0. Ensure that you have checkouted the branch of the release PR as explained
+   :ref:`preparing_a_release_pr` above.
 
 1. Update docs. Note that this is for the final release, not necessarily for
    the RC releases. These changes should be made in master and cherry-picked
@@ -130,16 +156,14 @@ Making a release
      front page (with the release month as well).
 
 2. On the branch for releasing, update the version number in
-   `sklearn/__init__.py`, the ``__version__`` variable by removing ``dev*``
-   only when ready to release. On master, increment the version in the same
-   place (when branching for release). This means while we're in the release
-   candidate period, the latest stable is two versions behind the master
-   branch, instead of one.
+   ``sklearn/__init__.py``, the ``__version__``.
 
-3. Proceed with caution. Ideally, tags should be created when you're almost
-   certain that the release is ready, since adding a tag to the main repo can
-   trigger certain automated processes. You can create a PR in the main repo
-   and trigger the wheel builder with the ``[cd build]`` commit marker using
+   For major releases, please add a 0 add the end: 0.99.0 instead of 0.99.
+
+   For a first release candidates, use the rc1 suffix on the expected final
+   release number: 0.99.0rc1.
+
+3. Trigger the wheel builder with the ``[cd build]`` commit marker using
    the command:
    
    .. prompt:: bash $
@@ -157,20 +181,36 @@ Making a release
   incompatibility issues. Moreover, a new line have to be included in the
   ``pyproject.toml`` file for each new supported version of Python.
 
-4. Once the CD has completed successfully, upload the generated artifacts
-   (.tar.gz and .whl files) to https://test.pypi.org using the "Run workflow"
-   form for the following GitHub Actions workflow:
+.. note::
+
+  The acronym CD in `[cd build]` stands for `Continuous Delivery
+  <https://en.wikipedia.org/wiki/Continuous_delivery>`_ and refers to the
+  automation used to generate the release artifacts (binary and source
+  packages). This can be seen as an extension to CI which stands for
+  `Continuous Integration
+  <https://en.wikipedia.org/wiki/Continuous_integration>`_. The CD workflow on
+  GitHub Actions is also used to automatically build and publish packages for
+  the developement branch of scikit-learn every night. See
+  :ref:`install_nightly_builds`.
+
+4. Once all the CD jobs have completed successfully, upload the generated
+   artifacts (.tar.gz and .whl files) to https://test.pypi.org using the "Run
+   workflow" form for the following GitHub Actions workflow:
 
    https://github.com/scikit-learn/scikit-learn/actions?query=workflow%3A%22Publish+to+Pypi%22
 
+5. If this went fine, you can proceed with tagging. Proceed with caution.
+   Ideally, tags should be created when you're almost certain that the release
+   is ready, since adding a tag to the main repo can trigger certain automated
+   processes.
 
-5. If this went fine, you can proceed with tagging. Create the tag and push it (if
-   it's an RC, it can be ``0.xxrc1`` for instance):
+   Create the tag and push it (if it's an RC, it can be ``0.xx.0rc1`` for
+   instance):
 
    .. prompt:: bash $
 
-     git tag -a 0.99  # in the 0.99.X branch
-     git push git@github.com:scikit-learn/scikit-learn.git 0.99
+     git tag -a 0.99.0  # in the 0.99.X branch
+     git push git@github.com:scikit-learn/scikit-learn.git 0.99.0
 
 6. Trigger the GitHub Actions workflow again but this time to upload the artifacts
    to the real https://pypi.org (replace "testpypi" by "pypi" in the "Run
