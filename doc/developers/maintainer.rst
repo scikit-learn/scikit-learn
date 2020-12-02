@@ -57,15 +57,15 @@ permissions given to maintainers, which includes:
 Preparing a release PR
 ......................
 
-Major version
-~~~~~~~~~~~~~
+Major version release
+~~~~~~~~~~~~~~~~~~~~~
 
 Prior to branching please do not forget to prepare a Release Highlights page as
 a runnable example and check that its HTML rendering looks correct. These
 release higlights should be linked from the ``doc/whats_new/v0.99.rst`` file
 for the new version of scikit-learn.
 
-Releasing the first RC of e.g. version `0.99` involves creating the release
+Releasing the first RC of e.g. version `0.99.0` involves creating the release
 branch `0.99.X` directly on the main repo, where `X` really is the letter X,
 **not a placeholder**. The development for the major and minor releases of 0.99
 should **also** happen under `0.99.X`. Each release (rc, major, or minor) is a
@@ -141,8 +141,8 @@ understand what's included.
 Making a release
 ................
 
-0. Ensure that you have checkouted the branch of the release PR as explained
-   :ref:`preparing_a_release_pr` above.
+0. Ensure that you have checked out the branch of the release PR as explained
+   in :ref:`preparing_a_release_pr` above.
 
 1. Update docs. Note that this is for the final release, not necessarily for
    the RC releases. These changes should be made in master and cherry-picked
@@ -166,9 +166,9 @@ Making a release
 2. On the branch for releasing, update the version number in
    ``sklearn/__init__.py``, the ``__version__``.
 
-   For major releases, please add a 0 add the end: 0.99.0 instead of 0.99.
+   For major releases, please add a 0 at the end: 0.99.0 instead of 0.99.
 
-   For a first release candidates, use the rc1 suffix on the expected final
+   For the first release candidate, use the rc1 suffix on the expected final
    release number: 0.99.0rc1.
 
 3. Trigger the wheel builder with the ``[cd build]`` commit marker using
