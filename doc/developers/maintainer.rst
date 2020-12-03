@@ -62,12 +62,12 @@ Major version release
 
 Prior to branching please do not forget to prepare a Release Highlights page as
 a runnable example and check that its HTML rendering looks correct. These
-release higlights should be linked from the ``doc/whats_new/v0.99.rst`` file
+release highlights should be linked from the ``doc/whats_new/v0.99.rst`` file
 for the new version of scikit-learn.
 
 Releasing the first RC of e.g. version `0.99.0` involves creating the release
 branch `0.99.X` directly on the main repo, where `X` really is the letter X,
-**not a placeholder**. The development for the major and minor releases of 0.99
+**not a placeholder**. The development for the major and minor releases of `0.99`
 should **also** happen under `0.99.X`. Each release (rc, major, or minor) is a
 tag under that branch.
 
@@ -77,10 +77,10 @@ branch:
    .. prompt:: bash $
 
      # Assuming upstream is an alias for the main scikit-learn repo:
-     git fetch uptream master
-     git checkout uptream/master
+     git fetch upstream master
+     git checkout upstream/master
      git checkout -b 0.99.X
-     git push --set-upstream uptream 0.99.X
+     git push --set-upstream upstream 0.99.X
 
    Again, `X` is literal here, and `99` is replaced by the release number.
    The branches are called ``0.19.X``, ``0.20.X``, etc.
@@ -166,10 +166,10 @@ Making a release
 2. On the branch for releasing, update the version number in
    ``sklearn/__init__.py``, the ``__version__``.
 
-   For major releases, please add a 0 at the end: 0.99.0 instead of 0.99.
+   For major releases, please add a 0 at the end: `0.99.0` instead of `0.99`.
 
-   For the first release candidate, use the rc1 suffix on the expected final
-   release number: 0.99.0rc1.
+   For the first release candidate, use the `rc1` suffix on the expected final
+   release number: `0.99.0rc1`.
 
 3. Trigger the wheel builder with the ``[cd build]`` commit marker using
    the command:
