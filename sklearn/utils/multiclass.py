@@ -181,8 +181,8 @@ def check_classification_targets(y):
     y_type = type_of_target(y)
     if y_type not in ['binary', 'multiclass', 'multiclass-multioutput',
                       'multilabel-indicator', 'multilabel-sequences']:
-        raise ValueError("Unknown label type: %r. Expected 'binary', 'multiclass', "
-                         "'multiclass-multioutput', 'multilabel-indicator', "
+        raise ValueError("Unknown label type: %r. Expected 'binary', "
+                         "'multiclass', 'multiclass-multioutput', 'multilabel-indicator', "
                          "'multilabel-sequences'." % y_type)
 
 
