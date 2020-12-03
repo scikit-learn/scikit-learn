@@ -558,24 +558,9 @@ def test_is_pairwise():
     with pytest.warns(FutureWarning, match=msg):
         assert not _is_pairwise(pca)
 
-    # the _pairwise attribute is present and set to False while the pairwise
-    # tag is not present
-    class FalsePairwise(BaseEstimator):
-        _pairwise = False
-
-        def _get_tags(self):
-            tags = super()._get_tags()
-            del tags['pairwise']
-            return tags
-
-    false_pairwise = FalsePairwise()
-    with pytest.warns(None) as record:
-        assert not _is_pairwise(false_pairwise)
-    assert not record
-
     # the _pairwise attribute is present and set to True while pairwise tag is
     # not present
-    class TruePairwise(FalsePairwise):
+    class TruePairwise(BaseEstimator):
         _pairwise = True
 
     true_pairwise = TruePairwise()
