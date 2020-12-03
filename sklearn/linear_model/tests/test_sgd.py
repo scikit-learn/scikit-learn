@@ -1435,7 +1435,7 @@ def test_tol_parameter():
 
 
 def _test_loss_common(loss_function, cases):
-    # Test gradient of different loss functions
+    # Test the different loss functions
     # cases is a list of (p, y, expected)
     for p, y, expected_loss, expected_dloss in cases:
         assert_almost_equal(loss_function.py_loss(p, y), expected_loss)
