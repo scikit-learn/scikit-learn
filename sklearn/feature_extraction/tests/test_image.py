@@ -39,6 +39,14 @@ def test_grid_to_graph():
     A = grid_to_graph(n_x=size, n_y=size, mask=mask, return_as=np.ndarray)
     assert connected_components(A)[0] == 2
 
+    # check ordering
+    mask = np.zeros((2, 3), dtype=np.bool)
+    mask[0, 0] = 1
+    mask[:, 2] = 1
+    graph = grid_to_graph(2, 3, 1, mask.ravel()).todense()
+    assert graph[1, 0] == 0
+    assert graph[2, 1] == 1
+
     # Checking that the function works whatever the type of mask is
     mask = np.ones((size, size), dtype=np.int16)
     A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask)
