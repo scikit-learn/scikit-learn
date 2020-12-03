@@ -43,7 +43,7 @@ def test_grid_to_graph():
     mask = np.zeros((2, 3), dtype=np.bool)
     mask[0, 0] = 1
     mask[:, 2] = 1
-    graph = grid_to_graph(2, 3, 1, mask.ravel()).todense()
+    graph = grid_to_graph(2, 3, 1, mask=mask.ravel()).todense()
     assert graph[1, 0] == 0
     assert graph[2, 1] == 1
 
