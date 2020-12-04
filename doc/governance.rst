@@ -110,7 +110,7 @@ Scikit-learn uses a "consensus seeking" process for making decisions. The group
 tries to find a resolution that has no open objections among core developers.
 At any point during the discussion, any core-developer can call for a vote, which will
 conclude one month from the call for the vote. Any vote must be backed by a
-`SLEP <slep>`. If no option can gather two thirds of the votes cast, the
+:ref:`SLEP <slep>`. If no option can gather two thirds of the votes cast, the
 decision is escalated to the TC, which in turn will use consensus seeking with
 the fallback option of a simple majority vote if no consensus can be found
 within a month. This is what we hereafter may refer to as “the decision making

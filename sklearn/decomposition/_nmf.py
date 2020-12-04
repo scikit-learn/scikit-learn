@@ -14,6 +14,7 @@ import warnings
 from math import sqrt
 
 from ._cdnmf_fast import _update_cdnmf_fast
+from .._config import config_context
 from ..base import BaseEstimator, TransformerMixin
 from ..exceptions import ConvergenceWarning
 from ..utils import check_random_state, check_array
@@ -1306,15 +1307,14 @@ class NMF(TransformerMixin, BaseEstimator):
         X = self._validate_data(X, accept_sparse=('csr', 'csc'),
                                 dtype=[np.float64, np.float32])
 
-        # XXX: input data validation is performed again in
-        # non_negative_factorization.
-        W, H, n_iter_ = non_negative_factorization(
-            X=X, W=W, H=H, n_components=self.n_components, init=self.init,
-            update_H=True, solver=self.solver, beta_loss=self.beta_loss,
-            tol=self.tol, max_iter=self.max_iter, alpha=self.alpha,
-            l1_ratio=self.l1_ratio, regularization=self.regularization,
-            random_state=self.random_state, verbose=self.verbose,
-            shuffle=self.shuffle)
+        with config_context(assume_finite=True):
+            W, H, n_iter_ = non_negative_factorization(
+                X=X, W=W, H=H, n_components=self.n_components, init=self.init,
+                update_H=True, solver=self.solver, beta_loss=self.beta_loss,
+                tol=self.tol, max_iter=self.max_iter, alpha=self.alpha,
+                l1_ratio=self.l1_ratio, regularization=self.regularization,
+                random_state=self.random_state, verbose=self.verbose,
+                shuffle=self.shuffle)
 
         self.reconstruction_err_ = _beta_divergence(X, W, H, self.beta_loss,
                                                     square_root=True)
@@ -1360,16 +1360,16 @@ class NMF(TransformerMixin, BaseEstimator):
                                 dtype=[np.float64, np.float32],
                                 reset=False)
 
-        # XXX: input data validation is performed again in
-        # non_negative_factorization.
-        W, _, n_iter_ = non_negative_factorization(
-            X=X, W=None, H=self.components_, n_components=self.n_components_,
-            init=self.init, update_H=False, solver=self.solver,
-            beta_loss=self.beta_loss, tol=self.tol, max_iter=self.max_iter,
-            alpha=self.alpha, l1_ratio=self.l1_ratio,
-            regularization=self.regularization,
-            random_state=self.random_state,
-            verbose=self.verbose, shuffle=self.shuffle)
+        with config_context(assume_finite=True):
+            W, _, n_iter_ = non_negative_factorization(
+                X=X, W=None, H=self.components_,
+                n_components=self.n_components_,
+                init=self.init, update_H=False, solver=self.solver,
+                beta_loss=self.beta_loss, tol=self.tol, max_iter=self.max_iter,
+                alpha=self.alpha, l1_ratio=self.l1_ratio,
+                regularization=self.regularization,
+                random_state=self.random_state,
+                verbose=self.verbose, shuffle=self.shuffle)
 
         return W
 
