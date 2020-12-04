@@ -14,9 +14,8 @@ on:
     branches:
       - master
       - "[0-9]+.[0-9]+.X"
-
-env:
-  SCIKIT_LEARN_VERSION: 0.24.dev0
+  # Manual run
+  workflow_dispatch:
 
 jobs:
   # Check whether to build the wheels and the source tarball
@@ -28,7 +27,9 @@ jobs:
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - id: check_build_trigger
         name: Check build trigger
@@ -80,8 +81,7 @@ jobs:
         env:
           CONFTEST_PATH: ${{ github.workspace }}/conftest.py
           CONFTEST_NAME: conftest.py
-          CIBW_ENVIRONMENT: WHEEL_DIRNAME=scikit_learn-$SCIKIT_LEARN_VERSION
-                            OMP_NUM_THREADS=2
+          CIBW_ENVIRONMENT: OMP_NUM_THREADS=2
                             OPENBLAS_NUM_THREADS=2
                             SKLEARN_SKIP_NETWORK_TESTS=1
                             SKLEARN_BUILD_PARALLEL=3
