@@ -2567,7 +2567,7 @@ def spherical_payoff_score(y_true, y_prob, *, sample_weight=None):
         y_true[y_true==category] = idx    
     
     # Spherical Payoff
-    correct_prob = y_prob[np.arange(y_prob.shape[0]), y_test]
+    correct_prob = y_prob[np.arange(y_prob.shape[0]), y_true]
     sqrt_all_prob = np.sqrt(np.power(y_prob, 2).sum(axis=1))
     
     return np.average(correct_prob/sqrt_all_prob, weights=sample_weight)
