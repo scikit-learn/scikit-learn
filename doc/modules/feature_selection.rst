@@ -160,9 +160,7 @@ For examples on how it is to be used refer to the sections below.
 
 .. topic:: Examples
 
-    * :ref:`sphx_glr_auto_examples_feature_selection_plot_select_from_model_diabetes.py`: Selecting the two
-      most important features from the diabetes dataset without knowing the
-      threshold beforehand.
+    * :ref:`sphx_glr_auto_examples_feature_selection_plot_select_from_model_diabetes.py`
 
 .. _l1_feature_selection:
 
@@ -174,10 +172,10 @@ L1-based feature selection
 :ref:`Linear models <linear_model>` penalized with the L1 norm have
 sparse solutions: many of their estimated coefficients are zero. When the goal
 is to reduce the dimensionality of the data to use with another classifier,
-they can be used along with :class:`feature_selection.SelectFromModel`
+they can be used along with :class:`~feature_selection.SelectFromModel`
 to select the non-zero coefficients. In particular, sparse estimators useful
-for this purpose are the :class:`linear_model.Lasso` for regression, and
-of :class:`linear_model.LogisticRegression` and :class:`svm.LinearSVC`
+for this purpose are the :class:`~linear_model.Lasso` for regression, and
+of :class:`~linear_model.LogisticRegression` and :class:`~svm.LinearSVC`
 for classification::
 
   >>> from sklearn.svm import LinearSVC
@@ -235,7 +233,7 @@ Tree-based feature selection
 Tree-based estimators (see the :mod:`sklearn.tree` module and forest
 of trees in the :mod:`sklearn.ensemble` module) can be used to compute
 impurity-based feature importances, which in turn can be used to discard irrelevant
-features (when coupled with the :class:`sklearn.feature_selection.SelectFromModel`
+features (when coupled with the :class:`~feature_selection.SelectFromModel`
 meta-transformer)::
 
   >>> from sklearn.ensemble import ExtraTreesClassifier
@@ -262,12 +260,61 @@ meta-transformer)::
     * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances_faces.py`: example
       on face recognition data.
 
+.. _sequential_feature_selection:
+
+Sequential Feature Selection
+============================
+
+Sequential Feature Selection [sfs]_ (SFS) is available in the
+:class:`~sklearn.feature_selection.SequentialFeatureSelector` transformer.
+SFS can be either forward or backward:
+
+Forward-SFS is a greedy procedure that iteratively finds the best new feature
+to add to the set of selected features. Concretely, we initially start with
+zero feature and find the one feature that maximizes a cross-validated score
+when an estimator is trained on this single feature. Once that first feature
+is selected, we repeat the procedure by adding a new feature to the set of
+selected features. The procedure stops when the desired number of selected
+features is reached, as determined by the `n_features_to_select` parameter.
+
+Backward-SFS follows the same idea but works in the opposite direction:
+instead of starting with no feature and greedily adding features, we start
+with *all* the features and greedily *remove* features from the set. The
+`direction` parameter controls whether forward or backward SFS is used.
+
+In general, forward and backward selection do not yield equivalent results.
+Also, one may be much faster than the other depending on the requested number
+of selected features: if we have 10 features and ask for 7 selected features,
+forward selection would need to perform 7 iterations while backward selection
+would only need to perform 3.
+
+SFS differs from :class:`~sklearn.feature_selection.RFE` and
+:class:`~sklearn.feature_selection.SelectFromModel` in that it does not
+require the underlying model to expose a `coef_` or `feature_importances_`
+attribute. It may however be slower considering that more models need to be
+evaluated, compared to the other approaches. For example in backward
+selection, the iteration going from `m` features to `m - 1` features using k-fold
+cross-validation requires fitting `m * k` models, while
+:class:`~sklearn.feature_selection.RFE` would require only a single fit, and
+:class:`~sklearn.feature_selection.SelectFromModel` always just does a single
+fit and requires no iterations.
+
+.. topic:: Examples
+
+    * :ref:`sphx_glr_auto_examples_feature_selection_plot_select_from_model_diabetes.py`
+
+.. topic:: References:
+
+   .. [sfs] Ferri et al, `Comparative study of techniques for
+      large-scale feature selection
+      <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.24.4369&rep=rep1&type=pdf>`_.
+
 Feature selection as part of a pipeline
 =======================================
 
 Feature selection is usually used as a pre-processing step before doing
 the actual learning. The recommended way to do this in scikit-learn is
-to use a :class:`sklearn.pipeline.Pipeline`::
+to use a :class:`~pipeline.Pipeline`::
 
   clf = Pipeline([
     ('feature_selection', SelectFromModel(LinearSVC(penalty="l1"))),
@@ -275,11 +322,11 @@ to use a :class:`sklearn.pipeline.Pipeline`::
   ])
   clf.fit(X, y)
 
-In this snippet we make use of a :class:`sklearn.svm.LinearSVC`
-coupled with :class:`sklearn.feature_selection.SelectFromModel`
+In this snippet we make use of a :class:`~svm.LinearSVC`
+coupled with :class:`~feature_selection.SelectFromModel`
 to evaluate feature importances and select the most relevant features.
-Then, a :class:`sklearn.ensemble.RandomForestClassifier` is trained on the
+Then, a :class:`~ensemble.RandomForestClassifier` is trained on the
 transformed output, i.e. using only relevant features. You can perform
 similar operations with the other feature selection methods and also
 classifiers that provide a way to evaluate feature importances of course.
-See the :class:`sklearn.pipeline.Pipeline` examples for more details.
+See the :class:`~pipeline.Pipeline` examples for more details.

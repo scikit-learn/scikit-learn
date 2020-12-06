@@ -15,9 +15,9 @@ jobs:
   steps:
     - task: UsePythonVersion@0
       inputs:
-        versionSpec: '3.8'
+        versionSpec: '3.9'
     - bash: |
-        pip install flake8 mypy==0.780
+        pip install flake8 mypy==0.782
       displayName: Install linters
     - bash: |
         set -ex
@@ -49,7 +49,7 @@ jobs:
           echo "Skipping mypy linting"
           exit 0
         else
-          mypy sklearn/ --ignore-missing-imports
+          mypy sklearn/
         fi
       displayName: Run mypy
     - bash: |
@@ -129,7 +129,7 @@ jobs:
       # It runs tests requiring lightgbm, pandas and PyAMG.
       pylatest_pip_openblas_pandas:
         DISTRIB: 'conda-pip-latest'
-        PYTHON_VERSION: '3.8'
+        PYTHON_VERSION: '3.9'
         PANDAS_VERSION: 'none'
         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
         TEST_DOCSTRINGS: 'true'
@@ -145,8 +145,9 @@ jobs:
       py36_ubuntu_atlas_32bit:
         DISTRIB: 'ubuntu-32'
         PYTHON_VERSION: '3.6'
-        PANDAS_VERSION: 'none'
         JOBLIB_VERSION: 'min'
+        # disable pytest xdist due to unknown bug with 32-bit container
+        PYTEST_XDIST_VERSION: 'none'
         # temporary pin pytest due to unknown failure with pytest 5.4 and
         # python 3.6
         PYTEST_VERSION: 'min'
@@ -159,9 +160,10 @@ jobs:
     dependsOn: [linting]
     condition: and(ne(variables['Build.Reason'], 'Schedule'), succeeded('linting'))
     matrix:
-      pylatest_conda_mkl:
+      pylatest_conda_forge_mkl:
         DISTRIB: 'conda'
         BLAS: 'mkl'
+        CONDA_CHANNEL: 'conda-forge'
       pylatest_conda_mkl_no_openmp:
         DISTRIB: 'conda'
         BLAS: 'mkl'

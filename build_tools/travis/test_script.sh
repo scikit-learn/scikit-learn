@@ -18,13 +18,8 @@ try:
 except ImportError:
     pass
 "
-python -c "import multiprocessing as mp; print('%d CPUs' % mp.cpu_count())"
-
-if [[ "$BUILD_WITH_ICC" == "true" ]]; then
-    # the tools in the oneAPI toolkits are configured via environment variables
-    # which are also required at runtime.
-    source /opt/intel/inteloneapi/setvars.sh
-fi
+python -c "import joblib; print(joblib.cpu_count(), 'CPUs')"
+python -c "import platform; print(platform.machine())"
 
 run_tests() {
     TEST_CMD="pytest --showlocals --durations=20 --pyargs"
@@ -36,12 +31,18 @@ run_tests() {
     cp setup.cfg $TEST_DIR
     cd $TEST_DIR
 
-    # Tests that require large downloads over the networks are skipped in CI.
-    # Here we make sure, that they are still run on a regular basis.
-    export SKLEARN_SKIP_NETWORK_TESTS=0
-
-    if [[ "$COVERAGE" == "true" ]]; then
-        TEST_CMD="$TEST_CMD --cov sklearn"
+    if [[ "$TRAVIS_CPU_ARCH" == "arm64" ]]; then
+        # use pytest-xdist for faster tests
+        TEST_CMD="$TEST_CMD -n $CI_CPU_COUNT"
+        # remove option to test docstring
+        sed -i -e 's/--doctest-modules//g' setup.cfg
+    else
+        # Tests that require large downloads over the networks are skipped in CI.
+        # Here we make sure, that they are still run on a regular basis.
+        #
+        # Note that using pytest-xdist is currently not compatible
+        # with fetching datasets in tests due to datasets cache corruptions issues.
+        export SKLEARN_SKIP_NETWORK_TESTS=0
     fi
 
     if [[ -n "$CHECK_WARNINGS" ]]; then

@@ -123,7 +123,7 @@ class KNeighborsClassifier(KNeighborsMixin,
     >>> print(neigh.predict_proba([[0.9]]))
     [[0.66666667 0.33333333]]
 
-    See also
+    See Also
     --------
     RadiusNeighborsClassifier
     KNeighborsRegressor
@@ -391,7 +391,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin,
     >>> print(neigh.predict_proba([[1.0]]))
     [[0.66666667 0.33333333]]
 
-    See also
+    See Also
     --------
     KNeighborsClassifier
     RadiusNeighborsRegressor

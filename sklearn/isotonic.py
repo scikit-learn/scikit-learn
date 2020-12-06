@@ -153,13 +153,14 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         or decrease with `X`. 'auto' will decide based on the Spearman
         correlation estimate's sign.
 
-    out_of_bounds : str, default="nan"
-        The ``out_of_bounds`` parameter handles how `X` values outside of the
-        training domain are handled.  When set to "nan", predictions
-        will be NaN.  When set to "clip", predictions will be
-        set to the value corresponding to the nearest train interval endpoint.
-        When set to "raise" a `ValueError` is raised.
+    out_of_bounds : {'nan', 'clip', 'raise'}, default='nan'
+        Handles how `X` values outside of the training domain are handled
+        during prediction.
 
+        - 'nan', predictions will be NaN.
+        - 'clip', predictions will be set to the value corresponding to
+          the nearest train interval endpoint.
+        - 'raise', a `ValueError` is raised.
 
     Attributes
     ----------
@@ -301,6 +302,9 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         X : array-like of shape (n_samples,) or (n_samples, 1)
             Training data.
 
+            .. versionchanged:: 0.24
+               Also accepts 2d array with 1 feature.
+
         y : array-like of shape (n_samples,)
             Training target.
 
@@ -344,6 +348,9 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         ----------
         T : array-like of shape (n_samples,) or (n_samples, 1)
             Data to transform.
+
+            .. versionchanged:: 0.24
+               Also accepts 2d array with 1 feature.
 
         Returns
         -------

@@ -93,6 +93,9 @@ def test_column_transformer():
         (slice(0, 2), X_res_both),
         # boolean mask
         (np.array([True, False]), X_res_first),
+        ([True, False], X_res_first),
+        (np.array([True, True]), X_res_both),
+        ([True, True], X_res_both),
     ]
 
     for selection, res in cases:
@@ -166,6 +169,7 @@ def test_column_transformer_dataframe():
         # boolean mask
         (np.array([True, False]), X_res_first),
         (pd.Series([True, False], index=['first', 'second']), X_res_first),
+        ([True, False], X_res_first),
     ]
 
     for selection, res in cases:
@@ -204,7 +208,7 @@ def test_column_transformer_dataframe():
     assert_array_equal(both.fit_transform(X_df), res)
     assert_array_equal(both.fit(X_df).transform(X_df), res)
     assert len(both.transformers_) == 2
-    assert ct.transformers_[-1][0] != 'remainder'
+    assert both.transformers_[-1][0] != 'remainder'
 
     # test multiple columns
     both = ColumnTransformer([('trans', Trans(), ['first', 'second'])],
@@ -212,14 +216,14 @@ def test_column_transformer_dataframe():
     assert_array_equal(both.fit_transform(X_df), 0.1 * X_res_both)
     assert_array_equal(both.fit(X_df).transform(X_df), 0.1 * X_res_both)
     assert len(both.transformers_) == 1
-    assert ct.transformers_[-1][0] != 'remainder'
+    assert both.transformers_[-1][0] != 'remainder'
 
     both = ColumnTransformer([('trans', Trans(), [0, 1])],
                              transformer_weights={'trans': .1})
     assert_array_equal(both.fit_transform(X_df), 0.1 * X_res_both)
     assert_array_equal(both.fit(X_df).transform(X_df), 0.1 * X_res_both)
     assert len(both.transformers_) == 1
-    assert ct.transformers_[-1][0] != 'remainder'
+    assert both.transformers_[-1][0] != 'remainder'
 
     # ensure pandas object is passes through
 
@@ -254,9 +258,12 @@ def test_column_transformer_dataframe():
 
 
 @pytest.mark.parametrize("pandas", [True, False], ids=['pandas', 'numpy'])
-@pytest.mark.parametrize("column", [[], np.array([False, False])],
-                         ids=['list', 'bool'])
-def test_column_transformer_empty_columns(pandas, column):
+@pytest.mark.parametrize("column_selection", [[], np.array([False, False]),
+                                              [False, False]],
+                         ids=['list', 'bool', 'bool_int'])
+@pytest.mark.parametrize("callable_column", [False, True])
+def test_column_transformer_empty_columns(pandas, column_selection,
+                                          callable_column):
     # test case that ensures that the column transformer does also work when
     # a given transformer doesn't have any columns to work on
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
@@ -268,34 +275,39 @@ def test_column_transformer_empty_columns(pandas, column):
     else:
         X = X_array
 
+    if callable_column:
+        column = lambda X: column_selection  # noqa
+    else:
+        column = column_selection
+
     ct = ColumnTransformer([('trans1', Trans(), [0, 1]),
-                            ('trans2', Trans(), column)])
+                            ('trans2', TransRaise(), column)])
     assert_array_equal(ct.fit_transform(X), X_res_both)
     assert_array_equal(ct.fit(X).transform(X), X_res_both)
     assert len(ct.transformers_) == 2
-    assert isinstance(ct.transformers_[1][1], Trans)
+    assert isinstance(ct.transformers_[1][1], TransRaise)
 
-    ct = ColumnTransformer([('trans1', Trans(), column),
+    ct = ColumnTransformer([('trans1', TransRaise(), column),
                             ('trans2', Trans(), [0, 1])])
     assert_array_equal(ct.fit_transform(X), X_res_both)
     assert_array_equal(ct.fit(X).transform(X), X_res_both)
     assert len(ct.transformers_) == 2
-    assert isinstance(ct.transformers_[0][1], Trans)
+    assert isinstance(ct.transformers_[0][1], TransRaise)
 
-    ct = ColumnTransformer([('trans', Trans(), column)],
+    ct = ColumnTransformer([('trans', TransRaise(), column)],
                            remainder='passthrough')
     assert_array_equal(ct.fit_transform(X), X_res_both)
     assert_array_equal(ct.fit(X).transform(X), X_res_both)
     assert len(ct.transformers_) == 2  # including remainder
-    assert isinstance(ct.transformers_[0][1], Trans)
+    assert isinstance(ct.transformers_[0][1], TransRaise)
 
     fixture = np.array([[], [], []])
-    ct = ColumnTransformer([('trans', Trans(), column)],
+    ct = ColumnTransformer([('trans', TransRaise(), column)],
                            remainder='drop')
     assert_array_equal(ct.fit_transform(X), fixture)
     assert_array_equal(ct.fit(X).transform(X), fixture)
     assert len(ct.transformers_) == 2  # including remainder
-    assert isinstance(ct.transformers_[0][1], Trans)
+    assert isinstance(ct.transformers_[0][1], TransRaise)
 
 
 def test_column_transformer_sparse_array():
@@ -502,12 +514,13 @@ def test_column_transformer_invalid_columns(remainder):
     ct = ColumnTransformer([('trans', Trans(), col)], remainder=remainder)
     ct.fit(X_array)
     X_array_more = np.array([[0, 1, 2], [2, 4, 6], [3, 6, 9]]).T
-    msg = ("Given feature/column names or counts do not match the ones for "
-           "the data given during fit.")
-    with pytest.warns(FutureWarning, match=msg):
-        ct.transform(X_array_more)  # Should accept added columns, for now
+    msg = ("X has 3 features, but ColumnTransformer is expecting 2 features "
+           "as input.")
+    with pytest.raises(ValueError, match=msg):
+        ct.transform(X_array_more)
     X_array_fewer = np.array([[0, 1, 2], ]).T
-    err_msg = 'Number of features'
+    err_msg = ("X has 1 features, but ColumnTransformer is expecting 2 "
+               "features as input.")
     with pytest.raises(ValueError, match=err_msg):
         ct.transform(X_array_fewer)
 
@@ -1174,17 +1187,18 @@ def test_column_transformer_reordered_column_names_remainder(explicit_colname):
                            remainder=Trans())
 
     tf.fit(X_fit_df)
-    err_msg = 'Column ordering must be equal'
-    warn_msg = ("Given feature/column names or counts do not match the ones "
-                "for the data given during fit.")
-    with pytest.raises(ValueError, match=err_msg):
+    err_msg = ("Given feature/column names do not match the ones for the "
+               "data given during fit.")
+    with pytest.raises(RuntimeError, match=err_msg):
         tf.transform(X_trans_df)
 
-    # No error for added columns if ordering is identical
+    # ValueError for added columns
     X_extended_df = X_fit_df.copy()
     X_extended_df['third'] = [3, 6, 9]
-    with pytest.warns(FutureWarning, match=warn_msg):
-        tf.transform(X_extended_df)  # No error should be raised, for now
+    err_msg = ("X has 3 features, but ColumnTransformer is expecting 2 "
+               "features as input.")
+    with pytest.raises(ValueError, match=err_msg):
+        tf.transform(X_extended_df)
 
     # No 'columns' AttributeError when transform input is a numpy array
     X_array = X_fit_array.copy()
@@ -1206,15 +1220,15 @@ def test_feature_name_validation():
     tf = ColumnTransformer([('bycol', Trans(), ['a', 'b'])])
     tf.fit(df)
 
-    msg = ("Given feature/column names or counts do not match the ones for "
-           "the data given during fit.")
-    with pytest.warns(FutureWarning, match=msg):
+    msg = ("X has 3 features, but ColumnTransformer is expecting 2 features "
+           "as input.")
+    with pytest.raises(ValueError, match=msg):
         tf.transform(df_extra)
 
     tf = ColumnTransformer([('bycol', Trans(), [0])])
     tf.fit(df)
 
-    with pytest.warns(FutureWarning, match=msg):
+    with pytest.raises(ValueError, match=msg):
         tf.transform(X_extra)
 
     with warnings.catch_warnings(record=True) as warns:
@@ -1224,23 +1238,8 @@ def test_feature_name_validation():
     tf = ColumnTransformer([('bycol', Trans(), ['a'])],
                            remainder=Trans())
     tf.fit(df)
-    with pytest.warns(FutureWarning, match=msg):
+    with pytest.raises(ValueError, match=msg):
         tf.transform(df_extra)
-
-    tf = ColumnTransformer([('bycol', Trans(), [0, -1])])
-    tf.fit(df)
-    msg = "At least one negative column was used to"
-    with pytest.raises(RuntimeError, match=msg):
-        tf.transform(df_extra)
-
-    tf = ColumnTransformer([('bycol', Trans(), slice(-1, -3, -1))])
-    tf.fit(df)
-    with pytest.raises(RuntimeError, match=msg):
-        tf.transform(df_extra)
-
-    with warnings.catch_warnings(record=True) as warns:
-        tf.transform(df)
-    assert not warns
 
 
 @pytest.mark.parametrize("array_type", [np.asarray, sparse.csr_matrix])
@@ -1369,3 +1368,55 @@ def test_feature_names_empty_columns(empty_col):
 
     ct.fit(df)
     assert ct.get_feature_names() == ['ohe__x0_a', 'ohe__x0_b', 'ohe__x1_z']
+
+
+@pytest.mark.parametrize('remainder', ["passthrough", StandardScaler()])
+def test_sk_visual_block_remainder(remainder):
+    # remainder='passthrough' or an estimator will be shown in repr_html
+    ohe = OneHotEncoder()
+    ct = ColumnTransformer(transformers=[('ohe', ohe, ["col1", "col2"])],
+                           remainder=remainder)
+    visual_block = ct._sk_visual_block_()
+    assert visual_block.names == ('ohe', 'remainder')
+    assert visual_block.name_details == (['col1', 'col2'], '')
+    assert visual_block.estimators == (ohe, remainder)
+
+
+def test_sk_visual_block_remainder_drop():
+    # remainder='drop' is not shown in repr_html
+    ohe = OneHotEncoder()
+    ct = ColumnTransformer(transformers=[('ohe', ohe, ["col1", "col2"])])
+    visual_block = ct._sk_visual_block_()
+    assert visual_block.names == ('ohe',)
+    assert visual_block.name_details == (['col1', 'col2'],)
+    assert visual_block.estimators == (ohe,)
+
+
+@pytest.mark.parametrize('remainder', ["passthrough", StandardScaler()])
+def test_sk_visual_block_remainder_fitted_pandas(remainder):
+    # Remainder shows the columns after fitting
+    pd = pytest.importorskip('pandas')
+    ohe = OneHotEncoder()
+    ct = ColumnTransformer(transformers=[('ohe', ohe, ["col1", "col2"])],
+                           remainder=remainder)
+    df = pd.DataFrame({"col1": ["a", "b", "c"], "col2": ["z", "z", "z"],
+                       "col3": [1, 2, 3], "col4": [3, 4, 5]})
+    ct.fit(df)
+    visual_block = ct._sk_visual_block_()
+    assert visual_block.names == ('ohe', 'remainder')
+    assert visual_block.name_details == (['col1', 'col2'], ['col3', 'col4'])
+    assert visual_block.estimators == (ohe, remainder)
+
+
+@pytest.mark.parametrize('remainder', ["passthrough", StandardScaler()])
+def test_sk_visual_block_remainder_fitted_numpy(remainder):
+    # Remainder shows the indices after fitting
+    X = np.array([[1, 2, 3], [4, 5, 6]], dtype=float)
+    scaler = StandardScaler()
+    ct = ColumnTransformer(transformers=[('scale', scaler, [0, 2])],
+                           remainder=remainder)
+    ct.fit(X)
+    visual_block = ct._sk_visual_block_()
+    assert visual_block.names == ('scale', 'remainder')
+    assert visual_block.name_details == ([0, 2], [1])
+    assert visual_block.estimators == (scaler, remainder)
