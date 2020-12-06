@@ -674,7 +674,7 @@ function from pandas library.::
 
   >>> import pandas
   >>> import numpy
-  >>> bins = [0, 1, 13, 20, 60, 90]
+  >>> bins = [0, 1, 13, 20, 60, numpy.inf]
   >>> labels = ['infant', 'kid', 'teen', 'adult', 'senior']
   >>> transformer = preprocessing.FunctionTransformer(pandas.cut,
   ...                                                 kw_args={'bins' : bins,
