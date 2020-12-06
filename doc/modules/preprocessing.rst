@@ -668,7 +668,7 @@ equally populated bins in each feature. The 'kmeans' strategy defines bins based
 on a k-means clustering procedure performed on each feature independently.
 
 Let the user know that custom bin edges can be use for discretization by using
-the :function:`FunctionTransformer` function mixed with the
+the :func:`FunctionTransformer` function mixed with the
 `cut<https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.cut.html>`
 function from pandas library.::
 
