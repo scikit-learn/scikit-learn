@@ -680,7 +680,7 @@ function from pandas library.::
   ...                                                 kw_args={'bins' : bins,
   ...                                                          'labels' : labels,
   ...                                                          'retbins' : False})
-  >>> transformer.fit_transform(numpy.array([0.2, 2, 15, 25, 61, 97]))
+  >>> transformer.fit_transform(numpy.array([0.2, 2, 15, 25, 97]))
   ['infant', 'kid', 'teen', 'adult', 'senior']
   Categories (5, object): ['infant' < 'kid' < 'teen' < 'adult' < 'senior']
 
