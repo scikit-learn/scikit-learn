@@ -671,6 +671,7 @@ Let the user know that custom bin edges can be use for discretization by using
 the :func:`FunctionTransformer` function mixed with the
 `cut<https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.cut.html>`
 function from pandas library.::
+
   >>> import pandas
   >>> import numpy
   >>> bins = [0, 1, 13, 20, 60, 90]
