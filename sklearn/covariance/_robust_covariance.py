@@ -228,7 +228,7 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
         (2 is enough to be close to the final solution. "Never" exceeds 20).
         This parameter must be a strictly positive integer.
 
-    verbose : bool, default False
+    verbose : bool, default=False
         Control the output verbosity.
 
     cov_computation_method : callable, \

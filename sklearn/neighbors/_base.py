@@ -23,8 +23,11 @@ from ..base import BaseEstimator, MultiOutputMixin
 from ..base import is_classifier
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
-from ..utils import check_array, gen_even_slices
-from ..utils import _to_object_array
+from ..utils import (
+    check_array,
+    gen_even_slices,
+    _to_object_array,
+)
 from ..utils.deprecation import deprecated
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted

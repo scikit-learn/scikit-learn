@@ -1985,15 +1985,3 @@ def test_validation_pairwise():
            "Set the estimator tags of your estimator instead")
     with pytest.warns(FutureWarning, match=msg):
         cross_validate(svm, linear_kernel, y, cv=2)
-
-    # the _pairwise attribute is present and set to True while the pairwise
-    # tag is not present
-    class NoEstimatorTagSVM(SVC):
-        def _get_tags(self):
-            tags = super()._get_tags()
-            del tags['pairwise']
-            return tags
-
-    svm = NoEstimatorTagSVM(kernel='precomputed')
-    with pytest.warns(FutureWarning, match=msg):
-        cross_validate(svm, linear_kernel, y, cv=2)
