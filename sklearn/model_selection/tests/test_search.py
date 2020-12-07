@@ -13,21 +13,26 @@ import numpy as np
 import scipy.sparse as sp
 import pytest
 
-from sklearn.utils._testing import assert_raises
-from sklearn.utils._testing import assert_warns
-from sklearn.utils._testing import assert_warns_message
-from sklearn.utils._testing import assert_raise_message
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import (
+    assert_raises,
+    assert_warns,
+    assert_warns_message,
+    assert_raise_message,
+    assert_array_equal,
+    assert_array_almost_equal,
+    assert_allclose,
+    assert_almost_equal,
+    ignore_warnings,
+    MinimalClassifier,
+    MinimalRegressor,
+    MinimalTransformer,
+)
 from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
 
 from scipy.stats import bernoulli, expon, uniform
 
 from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.base import clone
+from sklearn.base import clone, is_classifier
 from sklearn.exceptions import NotFittedError
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_blobs
@@ -63,6 +68,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import confusion_matrix
+from sklearn.metrics import r2_score
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
@@ -2079,3 +2085,35 @@ def test_scalar_fit_param_compat(SearchCV, param_search):
         'scalar_param': 42,
     }
     model.fit(X_train, y_train, **fit_params)
+
+
+# FIXME: Replace this test with a full `check_estimator` once we have API only
+# checks.
+@pytest.mark.filterwarnings("ignore:The total space of parameters 4 is")
+@pytest.mark.parametrize("SearchCV", [GridSearchCV, RandomizedSearchCV])
+@pytest.mark.parametrize("Predictor", [MinimalRegressor, MinimalClassifier])
+def test_search_cv_using_minimal_compatible_estimator(SearchCV, Predictor):
+    # Check that third-party library can run tests without inheriting from
+    # BaseEstimator.
+    rng = np.random.RandomState(0)
+    X, y = rng.randn(25, 2), np.array([0] * 5 + [1] * 20)
+
+    model = Pipeline([
+        ("transformer", MinimalTransformer()), ("predictor", Predictor())
+    ])
+
+    params = {
+        "transformer__param": [1, 10], "predictor__parama": [1, 10],
+    }
+    search = SearchCV(model, params, error_score="raise")
+    search.fit(X, y)
+
+    assert search.best_params_.keys() == params.keys()
+
+    y_pred = search.predict(X)
+    if is_classifier(search):
+        assert_array_equal(y_pred, 1)
+        assert search.score(X, y) == pytest.approx(accuracy_score(y, y_pred))
+    else:
+        assert_allclose(y_pred, y.mean())
+        assert search.score(X, y) == pytest.approx(r2_score(y, y_pred))
