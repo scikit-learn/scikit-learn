@@ -296,7 +296,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
             CHILD = depth_i
 
             if PARENT < 0:
-                parent_i = _TREE_UNDEFINED
+                parent_i = 0
             else:
                 parent_i = paths[i].indices[PARENT]
             child_i = paths[i].indices[CHILD]
