@@ -139,7 +139,6 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n,
     axis : {0, 1}
         Axis along which the axis should be computed.
 
-
     last_mean : ndarray of shape (n_features,) or (n_samples,), dtype=floating
         Array of means to update with the new data X.
         Should be of shape (n_features,) if axis=0 or (n_samples,) if axis=1.
@@ -167,7 +166,6 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n,
     means : ndarray of shape (n_features,) or (n_samples,), dtype=floating
         Updated feature-wise means if axis = 0 or
         sample-wise means if axis = 1.
-
 
     variances : ndarray of shape (n_features,) or (n_samples,), dtype=floating
         Updated feature-wise variances if axis = 0 or
