@@ -763,6 +763,29 @@ def dict_learning_online(X, n_components=2, *, alpha=1, n_iter=100,
     SparsePCA
     MiniBatchSparsePCA
     """
+    if (return_n_iter and not return_inner_stats and iter_offset == 0 and
+            inner_stats is None and callback is None):
+
+        # TODO: split method into fit & transform ?
+        transform_algorithm = "lasso_" + method
+
+        # TODO: add split_sign & method_n_nonzero_coef ?
+        est = MiniBatchDictionaryLearning(
+            n_components=n_components, alpha=alpha, n_iter=n_iter,
+            n_jobs=n_jobs, fit_algorithm=method, batch_size=batch_size,
+            shuffle=shuffle, dict_init=dict_init, random_state=random_state,
+            transform_algorithm=transform_algorithm, transform_alpha=alpha,
+            positive_code=positive_code, positive_dict=positive_dict,
+            transform_max_iter=method_max_iter, verbose=verbose).fit(X)
+
+        if not return_code:
+            return est.components_, est.n_iter_
+        else:
+            code = est.transform(X)
+            return code, est.components_, est.n_iter_
+
+    # Fallback to old behavior
+
     if n_components is None:
         n_components = X.shape[1]
 
@@ -1558,6 +1581,92 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self.split_sign = split_sign
         self.random_state = random_state
         self.positive_dict = positive_dict
+    
+    def _check_params(self, X):
+        # n_components
+        self._n_components = self.n_components
+        if self._n_components is None:
+            self._n_components = X.shape[1]
+        
+        # fit_algorithm
+        if self.fit_algorithm not in ('lars', 'cd'):
+            raise ValueError('Coding method not supported as a fit algorithm.')
+        _check_positive_coding(self.fit_algorithm, self.positive_code)
+        self._fit_algorithm = 'lasso_' + self.fit_algorithm
+
+        # batch_size
+        if self.batch_size < 0:
+            raise ValueError(
+                f"batch_size should be > 0, got {self.batch_size} instead.")
+
+        # TODO
+        #alpha
+        #n_iter
+        #shuffle
+        #dict_init
+        #transform_algorithm
+        #transform_n_nonzero_coefs
+        #transform_alpha
+        #transform_max_iter
+        #split_sign
+        #positive_code
+        #positive_dict
+    
+    def _initialize_dict(self, X, random_state):
+        """Initialization of the dictionary"""
+        if self.dict_init is not None:
+            dictionary = self.dict_init
+        else:
+           # Init V with SVD of X
+            _, S, dictionary = randomized_svd(X, self._n_components,
+                                              random_state=random_state)
+            dictionary = S[:, np.newaxis] * dictionary
+        r = len(dictionary)
+        if self._n_components <= r:
+            dictionary = dictionary[:self._n_components, :]
+        else:
+            dictionary = np.r_[dictionary,
+                               np.zeros((self._n_components - r,
+                                         dictionary.shape[1]))]
+
+        dictionary = check_array(dictionary, order='C', dtype=np.float64,
+                                 copy=False)
+        dictionary = np.require(dictionary, requirements='W')
+        
+        return dictionary
+    
+    def _minibatch_step(self, X, dictionary, random_state, iter_idx):
+        batch_size = X.shape[0]
+
+        # Compute code for this batch
+        code = sparse_encode(
+            X, dictionary, algorithm=self._fit_algorithm,
+            alpha=self.alpha, n_jobs=self.n_jobs, check_input=False,
+            positive=self.positive_code, max_iter=self.transform_max_iter,
+            verbose=self.verbose).T
+
+        # Update inner stats
+        self._update_inner_stats(X, code, batch_size, iter_idx)
+
+        # Update dictionary
+        A, B = self.inner_stats_
+        _update_dict(dictionary.T, B, A, verbose=self.verbose,
+                     random_state=random_state,
+                     positive=self.positive_dict)
+        # XXX: Can the residuals be of any use?
+
+    def _update_inner_stats(self, X, code, batch_size, iter_idx):
+        if iter_idx < batch_size - 1:
+            theta = (iter_idx + 1) * batch_size
+        else:
+            theta = batch_size ** 2 + iter_idx + 1 - batch_size
+        beta = (theta + 1 - batch_size) / (theta + 1)
+
+        A, B = self.inner_stats_
+        A *= beta
+        A += np.dot(code, code.T)
+        B *= beta
+        B += np.dot(X.T, code.T)
 
     def fit(self, X, y=None):
         """Fit the model from data in X.
@@ -1575,27 +1684,56 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        random_state = check_random_state(self.random_state)
-        X = self._validate_data(X)
+        X = self._validate_data(X, dtype=np.float64, order='C',
+                                copy=self.shuffle)
 
-        U, (A, B), self.n_iter_ = dict_learning_online(
-            X, self.n_components, alpha=self.alpha,
-            n_iter=self.n_iter, return_code=False,
-            method=self.fit_algorithm,
-            method_max_iter=self.transform_max_iter,
-            n_jobs=self.n_jobs, dict_init=self.dict_init,
-            batch_size=self.batch_size, shuffle=self.shuffle,
-            verbose=self.verbose, random_state=random_state,
-            return_inner_stats=True,
-            return_n_iter=True,
-            positive_dict=self.positive_dict,
-            positive_code=self.positive_code)
-        self.components_ = U
-        # Keep track of the state of the algorithm to be able to do
-        # some online fitting (partial_fit)
-        self.inner_stats_ = (A, B)
+        self._check_params(X)
+        random_state = check_random_state(self.random_state)
+        n_samples, n_features = X.shape
+
+        dictionary = self._initialize_dict(X, random_state)
+
+        if self.shuffle:
+            X_train = X.copy()
+            random_state.shuffle(X_train)
+        else:
+            X_train = X
+
+        if self.verbose == 1:
+            print('[dict_learning]', end=' ')
+
+        # Inner stats
+        self.inner_stats_ = (A, B) = (
+            np.zeros((self._n_components, self._n_components)),
+            np.zeros((n_features, self._n_components)))
+
+        batches = gen_batches(n_samples, self.batch_size)
+        batches = itertools.cycle(batches)
+
+        for i, batch in zip(range(self.n_iter), batches):
+            this_X = X_train[batch]
+
+            if self.verbose == 1:
+                sys.stdout.write(".")
+                sys.stdout.flush()
+            elif self.verbose:
+                pass
+
+            self._minibatch_step(this_X, dictionary, random_state, i)
+
+            # TODO decide what to do
+            # Maybe we need a stopping criteria based on the amount of
+            # modification in the dictionary
+            # if callback is not None:
+            #     callback(locals())
+
+        self.components_ = dictionary
+        self.n_iter_ = self.n_iter
+
+        # TODO deprecate (make private and use only for partial fit)
         self.iter_offset_ = self.n_iter
         self.random_state_ = random_state
+        
         return self
 
     def partial_fit(self, X, y=None, iter_offset=None):
@@ -1620,31 +1758,35 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        if not hasattr(self, 'random_state_'):
-            self.random_state_ = check_random_state(self.random_state)
-        if hasattr(self, 'components_'):
-            dict_init = self.components_
-        else:
-            dict_init = self.dict_init
-        inner_stats = getattr(self, 'inner_stats_', None)
-        if iter_offset is None:
-            iter_offset = getattr(self, 'iter_offset_', 0)
-        X = self._validate_data(X, reset=(iter_offset == 0))
-        U, (A, B) = dict_learning_online(
-            X, self.n_components, alpha=self.alpha,
-            n_iter=1, method=self.fit_algorithm,
-            method_max_iter=self.transform_max_iter,
-            n_jobs=self.n_jobs, dict_init=dict_init,
-            batch_size=len(X), shuffle=False,
-            verbose=self.verbose, return_code=False,
-            iter_offset=iter_offset, random_state=self.random_state_,
-            return_inner_stats=True, inner_stats=inner_stats,
-            positive_dict=self.positive_dict,
-            positive_code=self.positive_code)
-        self.components_ = U
+        is_first_call_to_partial_fit = not hasattr(self, 'components_')
 
-        # Keep track of the state of the algorithm to be able to do
-        # some online fitting (partial_fit)
-        self.inner_stats_ = (A, B)
-        self.iter_offset_ = iter_offset + 1
+        X = self._validate_data(X, dtype=np.float64, order='C',
+                                reset=is_first_call_to_partial_fit)
+
+        self._random_state = getattr(self, "_random_state",
+                                     check_random_state(self.random_state))
+
+        if iter_offset is None:
+            self.iter_offset_ = getattr(self, "iter_offset_", 0)
+        else:
+            self.iter_offset_ = iter_offset
+
+        if is_first_call_to_partial_fit:
+            # this is the first call to partial_fit on this object
+            self._check_params(X)
+
+            dictionary = self._initialize_dict(X, self._random_state)
+
+            self.inner_stats_ = (
+                np.zeros((self._n_components, self._n_components)),
+                np.zeros((X.shape[1], self._n_components)))
+        else:
+            dictionary = self.components_
+
+        self._minibatch_step(
+            X, dictionary, self._random_state, self.iter_offset_)
+
+        self.components_ = dictionary
+        self.iter_offset_ += 1
+
         return self
