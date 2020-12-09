@@ -722,10 +722,10 @@ def dict_learning_online(X, n_components=2, *, alpha=1, n_iter=100,
         (data approximation). Useful to restart the algorithm in an
         online setting. If `return_inner_stats` is `True`, `return_code` is
         ignored.
-    
+
         .. deprecated:: 1.0
-           ``return_inner_stats`` serves internal purpose only and will be removed
-           in 1.2.
+           ``return_inner_stats`` serves internal purpose only and will be
+           removed in 1.2.
 
     inner_stats : tuple of (A, B) ndarrays, default=None
         Inner sufficient statistics that are kept by the algorithm.
@@ -733,14 +733,14 @@ def dict_learning_online(X, n_components=2, *, alpha=1, n_iter=100,
         avoid losing the history of the evolution.
         `A` `(n_components, n_components)` is the dictionary covariance matrix.
         `B` `(n_features, n_components)` is the data approximation matrix.
-    
+
         .. deprecated:: 1.0
            ``inner_stats`` serves internal purpose only and will be removed
            in 1.2.
 
     return_n_iter : bool, default=False
         Whether or not to return the number of iterations.
-    
+
         .. deprecated:: 1.0
            ``return_n_iter`` will be removed in 1.2 and n_iter will always be
            returned.
@@ -785,19 +785,19 @@ def dict_learning_online(X, n_components=2, *, alpha=1, n_iter=100,
                       "will be removed in version 1.2.", FutureWarning)
     else:
         iter_offset = 0
-    
+
     if return_inner_stats != "deprecated":
         warnings.warn("'return_inner_stats' is deprecated in version 1.0 and "
                       "will be removed in version 1.2.", FutureWarning)
     else:
         return_inner_stats = False
-    
+
     if inner_stats != "deprecated":
         warnings.warn("'inner_stats' is deprecated in version 1.0 and "
                       "will be removed in version 1.2.", FutureWarning)
     else:
         inner_stats = None
-    
+
     if return_n_iter != "deprecated":
         warnings.warn("'return_n_iter' is deprecated in version 1.0 and "
                       "will be removed in version 1.2. From version 1.2 n_iter"
@@ -1566,7 +1566,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     random_state_ : RandomState instance
         RandomState instance that is generated either from a seed, the random
         number generattor or by `np.random`.
-    
+
         .. deprecated:: 1.0
            ``random_state_`` serves internal purpose only and will be removed
            in 1.2.
