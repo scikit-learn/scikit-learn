@@ -1672,7 +1672,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             raise ValueError(
                 f"batch_size should be > 0, got {self.batch_size} instead.")
 
-        #n_iter
+        # n_iter
         if self.n_iter < 0:
             raise ValueError(
                 f"n_iter should be > 0, got {self.n_iter} instead.")
