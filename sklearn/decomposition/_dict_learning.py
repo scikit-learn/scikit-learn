@@ -1660,7 +1660,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self._n_components = self.n_components
         if self._n_components is None:
             self._n_components = X.shape[1]
-        
+
         # fit_algorithm
         if self.fit_algorithm not in ('lars', 'cd'):
             raise ValueError('Coding method not supported as a fit algorithm.')
@@ -1677,15 +1677,14 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             raise ValueError(
                 f"n_iter should be > 0, got {self.n_iter} instead.")
 
-        # TODO
-        # sparse coding checks
-    
+        # TODO sparse coding checks
+
     def _initialize_dict(self, X, random_state):
         """Initialization of the dictionary"""
         if self.dict_init is not None:
             dictionary = self.dict_init
         else:
-           # Init V with SVD of X
+            # Init V with SVD of X
             _, S, dictionary = randomized_svd(X, self._n_components,
                                               random_state=random_state)
             dictionary = S[:, np.newaxis] * dictionary
@@ -1700,9 +1699,9 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         dictionary = check_array(dictionary, order='C', dtype=np.float64,
                                  copy=False)
         dictionary = np.require(dictionary, requirements='W')
-        
+
         return dictionary
-    
+
     def _minibatch_step(self, X, dictionary, random_state, iter_idx):
         """The guts of the algorithm"""
         batch_size = X.shape[0]
@@ -1803,7 +1802,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         # TODO remove in 1.2 (only useful in partial_fit)
         self._iter_offset = self.n_iter
         self._random_state = random_state
-        
+
         return self
 
     def partial_fit(self, X, y=None, iter_offset="deprecated"):
