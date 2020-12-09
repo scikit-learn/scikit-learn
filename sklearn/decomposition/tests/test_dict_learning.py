@@ -573,3 +573,46 @@ def test_sparse_coder_n_features_in():
     d = np.array([[1, 2, 3], [1, 2, 3]])
     sc = SparseCoder(d)
     assert sc.n_features_in_ == d.shape[1]
+
+
+@pytest.mark.parametrize(
+    "attr", ["iter_offset_", "inner_stats_", "random_state_"])
+def test_minibatch_dict_learning_deprecated_attributes(attr):
+    # check that we raise a deprecation warning when accessing the deprecated
+    # attributes of MiniBatchDictionaryLearning
+    # FIXME: remove in 1.2
+    depr_msg = (f"The attribute '{attr}' is deprecated in 1.0 and will be "
+                f"removed in 1.2.")
+    est = MiniBatchDictionaryLearning(n_components=2, n_iter=5, random_state=0)
+    est.fit(X)
+
+    with pytest.warns(FutureWarning, match=depr_msg):
+        getattr(est, attr)
+
+
+def test_minibatch_dict_learning_partial_fit_iter_offset_deprecated():
+    # check the deprecation warning of iter_offset in partial_fit
+    # FIXME: remove in 1.2
+    depr_msg = ("'iter_offset' was deprecated in version 1.0 and "
+                "will be removed in version 1.2")
+    est = MiniBatchDictionaryLearning(n_components=2, random_state=0)
+
+    with pytest.warns(FutureWarning, match=depr_msg):
+        est.partial_fit(X, iter_offset=0)
+
+
+@pytest.mark.parametrize("arg, val", [
+    ("iter_offset", 0),
+    ("inner_stats", None),
+    ("return_inner_stats", False),
+    ("return_n_iter", False)])
+def test_dict_learning_online_deprecated_args(arg, val):
+    # check the deprecation warning for the deprecated args of
+    # dict_learning_online
+    # FIXME: remove in 1.2
+    depr_msg = (f"'{arg}' is deprecated in version 1.0 and will be "
+                f"removed in version 1.2.")
+
+    with pytest.warns(FutureWarning, match=depr_msg):
+        dict_learning_online(X, n_components=2, n_iter=5, random_state=0,
+                             **{arg: val})

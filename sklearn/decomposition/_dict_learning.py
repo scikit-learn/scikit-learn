@@ -6,6 +6,7 @@
 import time
 import sys
 import itertools
+import warnings
 
 from math import ceil
 
@@ -636,9 +637,9 @@ def dict_learning(X, n_components, *, alpha, max_iter=100, tol=1e-8,
 def dict_learning_online(X, n_components=2, *, alpha=1, n_iter=100,
                          return_code=True, dict_init=None, callback=None,
                          batch_size=3, verbose=False, shuffle=True,
-                         n_jobs=None, method='lars', iter_offset=0,
-                         random_state=None, return_inner_stats=False,
-                         inner_stats=None, return_n_iter=False,
+                         n_jobs=None, method='lars', iter_offset="deprecated",
+                         random_state=None, return_inner_stats="deprecated",
+                         inner_stats="deprecated", return_n_iter="deprecated",
                          positive_dict=False, positive_code=False,
                          method_max_iter=1000):
     """Solves a dictionary learning matrix factorization problem online.
@@ -705,6 +706,10 @@ def dict_learning_online(X, n_components=2, *, alpha=1, n_iter=100,
         Number of previous iterations completed on the dictionary used for
         initialization.
 
+    .. deprecated:: 1.0
+       ``iter_offset`` serves internal purpose only and will be removed
+       in 1.2.
+
     random_state : int, RandomState instance or None, default=None
         Used for initializing the dictionary when ``dict_init`` is not
         specified, randomly shuffling the data when ``shuffle`` is set to
@@ -717,6 +722,10 @@ def dict_learning_online(X, n_components=2, *, alpha=1, n_iter=100,
         (data approximation). Useful to restart the algorithm in an
         online setting. If `return_inner_stats` is `True`, `return_code` is
         ignored.
+    
+    .. deprecated:: 1.0
+       ``return_inner_stats`` serves internal purpose only and will be removed
+       in 1.2.
 
     inner_stats : tuple of (A, B) ndarrays, default=None
         Inner sufficient statistics that are kept by the algorithm.
@@ -724,9 +733,17 @@ def dict_learning_online(X, n_components=2, *, alpha=1, n_iter=100,
         avoid losing the history of the evolution.
         `A` `(n_components, n_components)` is the dictionary covariance matrix.
         `B` `(n_features, n_components)` is the data approximation matrix.
+    
+    .. deprecated:: 1.0
+       ``inner_stats`` serves internal purpose only and will be removed
+       in 1.2.
 
     return_n_iter : bool, default=False
         Whether or not to return the number of iterations.
+    
+    .. deprecated:: 1.0
+       ``return_n_iter`` will be removed in 1.2 and n_iter will always be
+       returned.
 
     positive_dict : bool, default=False
         Whether to enforce positivity when finding the dictionary.
@@ -763,6 +780,31 @@ def dict_learning_online(X, n_components=2, *, alpha=1, n_iter=100,
     SparsePCA
     MiniBatchSparsePCA
     """
+    if iter_offset != "deprecated":
+        warnings.warn("'iter_offset' is deprecated in version 1.0 and "
+                      "will be removed in version 1.2.", FutureWarning)
+    else:
+        iter_offset = 0
+    
+    if return_inner_stats != "deprecated":
+        warnings.warn("'return_inner_stats' is deprecated in version 1.0 and "
+                      "will be removed in version 1.2.", FutureWarning)
+    else:
+        return_inner_stats = False
+    
+    if inner_stats != "deprecated":
+        warnings.warn("'inner_stats' is deprecated in version 1.0 and "
+                      "will be removed in version 1.2.", FutureWarning)
+    else:
+        inner_stats = None
+    
+    if return_n_iter != "deprecated":
+        warnings.warn("'return_n_iter' is deprecated in version 1.0 and "
+                      "will be removed in version 1.2. From version 1.2 n_iter"
+                      " will always be returned", FutureWarning)
+    else:
+        return_n_iter = False
+
     if (return_n_iter and not return_inner_stats and iter_offset == 0 and
             inner_stats is None and callback is None):
 
@@ -784,6 +826,7 @@ def dict_learning_online(X, n_components=2, *, alpha=1, n_iter=100,
             code = est.transform(X)
             return code, est.components_, est.n_iter_
 
+    # TODO remove the whole old behavior in 1.2
     # Fallback to old behavior
 
     if n_components is None:
@@ -1505,6 +1548,10 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         `A` `(n_components, n_components)` is the dictionary covariance matrix.
         `B` `(n_features, n_components)` is the data approximation matrix.
 
+    .. deprecated:: 1.0
+       ``inner_stats_`` serves internal purpose only and will be removed
+       in 1.2.
+
     n_iter_ : int
         Number of iterations run.
 
@@ -1512,9 +1559,17 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         The number of iteration on data batches that has been
         performed before.
 
+    .. deprecated:: 1.0
+       ``iter_offset_`` serves internal purpose only and will be removed
+       in 1.2.
+
     random_state_ : RandomState instance
         RandomState instance that is generated either from a seed, the random
         number generattor or by `np.random`.
+    
+    .. deprecated:: 1.0
+       ``random_state_`` serves internal purpose only and will be removed
+       in 1.2.
 
     Examples
     --------
@@ -1581,7 +1636,25 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self.split_sign = split_sign
         self.random_state = random_state
         self.positive_dict = positive_dict
-    
+
+    @deprecated("The attribute 'iter_offset_' is deprecated "  # type: ignore
+                "in 1.0 and will be removed in 1.2.")
+    @property
+    def iter_offset_(self):
+        return self._iter_offset
+
+    @deprecated("The attribute 'random_state_' is deprecated "  # type: ignore
+                "in 1.0 and will be removed in 1.2.")
+    @property
+    def random_state_(self):
+        return self._random_state
+
+    @deprecated("The attribute 'inner_stats_' is deprecated "  # type: ignore
+                "in 1.0 and will be removed in 1.2.")
+    @property
+    def inner_stats_(self):
+        return self._inner_stats
+
     def _check_params(self, X):
         # n_components
         self._n_components = self.n_components
@@ -1599,18 +1672,13 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             raise ValueError(
                 f"batch_size should be > 0, got {self.batch_size} instead.")
 
-        # TODO
-        #alpha
         #n_iter
-        #shuffle
-        #dict_init
-        #transform_algorithm
-        #transform_n_nonzero_coefs
-        #transform_alpha
-        #transform_max_iter
-        #split_sign
-        #positive_code
-        #positive_dict
+        if self.n_iter < 0:
+            raise ValueError(
+                f"n_iter should be > 0, got {self.n_iter} instead.")
+
+        # TODO
+        # sparse coding checks
     
     def _initialize_dict(self, X, random_state):
         """Initialization of the dictionary"""
@@ -1636,6 +1704,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         return dictionary
     
     def _minibatch_step(self, X, dictionary, random_state, iter_idx):
+        """The guts of the algorithm"""
         batch_size = X.shape[0]
 
         # Compute code for this batch
@@ -1649,20 +1718,21 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self._update_inner_stats(X, code, batch_size, iter_idx)
 
         # Update dictionary
-        A, B = self.inner_stats_
+        A, B = self._inner_stats
         _update_dict(dictionary.T, B, A, verbose=self.verbose,
                      random_state=random_state,
                      positive=self.positive_dict)
         # XXX: Can the residuals be of any use?
 
     def _update_inner_stats(self, X, code, batch_size, iter_idx):
+        """Update the inner stats inplace"""
         if iter_idx < batch_size - 1:
             theta = (iter_idx + 1) * batch_size
         else:
             theta = batch_size ** 2 + iter_idx + 1 - batch_size
         beta = (theta + 1 - batch_size) / (theta + 1)
 
-        A, B = self.inner_stats_
+        A, B = self._inner_stats
         A *= beta
         A += np.dot(code, code.T)
         B *= beta
@@ -1703,7 +1773,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             print('[dict_learning]', end=' ')
 
         # Inner stats
-        self.inner_stats_ = (A, B) = (
+        self._inner_stats = (A, B) = (
             np.zeros((self._n_components, self._n_components)),
             np.zeros((n_features, self._n_components)))
 
@@ -1730,13 +1800,13 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self.components_ = dictionary
         self.n_iter_ = self.n_iter
 
-        # TODO deprecate (make private and use only for partial fit)
-        self.iter_offset_ = self.n_iter
-        self.random_state_ = random_state
+        # TODO remove in 1.2 (only useful in partial_fit)
+        self._iter_offset = self.n_iter
+        self._random_state = random_state
         
         return self
 
-    def partial_fit(self, X, y=None, iter_offset=None):
+    def partial_fit(self, X, y=None, iter_offset="deprecated"):
         """Updates the model using the data in X as a mini-batch.
 
         Parameters
@@ -1753,6 +1823,9 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             if no number is passed, the memory of the object is
             used.
 
+        .. deprecated:: 1.0
+           ``iter_offset`` will be removed in 1.2.
+
         Returns
         -------
         self : object
@@ -1766,10 +1839,12 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self._random_state = getattr(self, "_random_state",
                                      check_random_state(self.random_state))
 
-        if iter_offset is None:
-            self.iter_offset_ = getattr(self, "iter_offset_", 0)
+        if iter_offset != "deprecated":
+            warnings.warn("'iter_offset' was deprecated in version 1.0 and "
+                          "will be removed in version 1.2", FutureWarning)
+            self._iter_offset = iter_offset
         else:
-            self.iter_offset_ = iter_offset
+            self._iter_offset = getattr(self, "_iter_offset", 0)
 
         if is_first_call_to_partial_fit:
             # this is the first call to partial_fit on this object
@@ -1777,16 +1852,16 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
             dictionary = self._initialize_dict(X, self._random_state)
 
-            self.inner_stats_ = (
+            self._inner_stats = (
                 np.zeros((self._n_components, self._n_components)),
                 np.zeros((X.shape[1], self._n_components)))
         else:
             dictionary = self.components_
 
         self._minibatch_step(
-            X, dictionary, self._random_state, self.iter_offset_)
+            X, dictionary, self._random_state, self._iter_offset)
 
         self.components_ = dictionary
-        self.iter_offset_ += 1
+        self._iter_offset += 1
 
         return self
