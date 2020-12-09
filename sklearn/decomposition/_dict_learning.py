@@ -706,9 +706,9 @@ def dict_learning_online(X, n_components=2, *, alpha=1, n_iter=100,
         Number of previous iterations completed on the dictionary used for
         initialization.
 
-    .. deprecated:: 1.0
-       ``iter_offset`` serves internal purpose only and will be removed
-       in 1.2.
+        .. deprecated:: 1.0
+           ``iter_offset`` serves internal purpose only and will be removed
+           in 1.2.
 
     random_state : int, RandomState instance or None, default=None
         Used for initializing the dictionary when ``dict_init`` is not
@@ -723,9 +723,9 @@ def dict_learning_online(X, n_components=2, *, alpha=1, n_iter=100,
         online setting. If `return_inner_stats` is `True`, `return_code` is
         ignored.
     
-    .. deprecated:: 1.0
-       ``return_inner_stats`` serves internal purpose only and will be removed
-       in 1.2.
+        .. deprecated:: 1.0
+           ``return_inner_stats`` serves internal purpose only and will be removed
+           in 1.2.
 
     inner_stats : tuple of (A, B) ndarrays, default=None
         Inner sufficient statistics that are kept by the algorithm.
@@ -734,16 +734,16 @@ def dict_learning_online(X, n_components=2, *, alpha=1, n_iter=100,
         `A` `(n_components, n_components)` is the dictionary covariance matrix.
         `B` `(n_features, n_components)` is the data approximation matrix.
     
-    .. deprecated:: 1.0
-       ``inner_stats`` serves internal purpose only and will be removed
-       in 1.2.
+        .. deprecated:: 1.0
+           ``inner_stats`` serves internal purpose only and will be removed
+           in 1.2.
 
     return_n_iter : bool, default=False
         Whether or not to return the number of iterations.
     
-    .. deprecated:: 1.0
-       ``return_n_iter`` will be removed in 1.2 and n_iter will always be
-       returned.
+        .. deprecated:: 1.0
+           ``return_n_iter`` will be removed in 1.2 and n_iter will always be
+           returned.
 
     positive_dict : bool, default=False
         Whether to enforce positivity when finding the dictionary.
@@ -1548,9 +1548,9 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         `A` `(n_components, n_components)` is the dictionary covariance matrix.
         `B` `(n_features, n_components)` is the data approximation matrix.
 
-    .. deprecated:: 1.0
-       ``inner_stats_`` serves internal purpose only and will be removed
-       in 1.2.
+        .. deprecated:: 1.0
+           ``inner_stats_`` serves internal purpose only and will be removed
+           in 1.2.
 
     n_iter_ : int
         Number of iterations run.
@@ -1559,17 +1559,17 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         The number of iteration on data batches that has been
         performed before.
 
-    .. deprecated:: 1.0
-       ``iter_offset_`` serves internal purpose only and will be removed
-       in 1.2.
+        .. deprecated:: 1.0
+           ``iter_offset_`` serves internal purpose only and will be removed
+           in 1.2.
 
     random_state_ : RandomState instance
         RandomState instance that is generated either from a seed, the random
         number generattor or by `np.random`.
     
-    .. deprecated:: 1.0
-       ``random_state_`` serves internal purpose only and will be removed
-       in 1.2.
+        .. deprecated:: 1.0
+           ``random_state_`` serves internal purpose only and will be removed
+           in 1.2.
 
     Examples
     --------
@@ -1822,8 +1822,8 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             if no number is passed, the memory of the object is
             used.
 
-        .. deprecated:: 1.0
-           ``iter_offset`` will be removed in 1.2.
+            .. deprecated:: 1.0
+               ``iter_offset`` will be removed in 1.2.
 
         Returns
         -------
