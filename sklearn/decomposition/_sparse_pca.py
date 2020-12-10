@@ -2,6 +2,8 @@
 # Author: Vlad Niculae, Gael Varoquaux, Alexandre Gramfort
 # License: BSD 3 clause
 
+import warnings
+
 import numpy as np
 
 from ..utils import check_random_state
@@ -341,16 +343,21 @@ class MiniBatchSparsePCA(SparsePCA):
             n_components = X.shape[1]
         else:
             n_components = self.n_components
-        Vt, _, self.n_iter_ = dict_learning_online(
-            X.T, n_components, alpha=self.alpha,
-            n_iter=self.n_iter, return_code=True,
-            dict_init=None, verbose=self.verbose,
-            callback=self.callback,
-            batch_size=self.batch_size,
-            shuffle=self.shuffle,
-            n_jobs=self.n_jobs, method=self.method,
-            random_state=random_state,
-            return_n_iter=True)
+
+        with warnings.catch_warnings():
+            # return_n_iter is deprecated. Remove in 1.2
+            warnings.simplefilter('ignore', category=FutureWarning)
+            Vt, _, self.n_iter_ = dict_learning_online(
+                X.T, n_components, alpha=self.alpha,
+                n_iter=self.n_iter, return_code=True,
+                dict_init=None, verbose=self.verbose,
+                callback=self.callback,
+                batch_size=self.batch_size,
+                shuffle=self.shuffle,
+                n_jobs=self.n_jobs, method=self.method,
+                random_state=random_state,
+                return_n_iter=True)
+
         self.components_ = Vt.T
 
         components_norm = np.linalg.norm(

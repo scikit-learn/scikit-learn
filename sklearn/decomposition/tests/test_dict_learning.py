@@ -398,7 +398,7 @@ def test_dict_learning_online_partial_fit():
                               decimal=2)
 
 
-def test_dict_learning_iter_offset():
+def test_minibatch_dict_learning_iter_offset():
     n_components = 12
     rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)
@@ -409,10 +409,10 @@ def test_dict_learning_iter_offset():
                                         dict_init=V, random_state=0,
                                         shuffle=False)
     dict1.fit(X)
-    for sample in X:
-        dict2.partial_fit(sample[np.newaxis, :])
+    for i in range(10):
+        dict2.partial_fit(X[[i]])
 
-    assert dict1.iter_offset_ == dict2.iter_offset_
+    assert dict1._iter_offset == dict2._iter_offset == 10
 
 
 def test_sparse_encode_shapes():
