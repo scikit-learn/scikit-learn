@@ -399,6 +399,7 @@ def test_dict_learning_online_partial_fit():
 
 
 def test_minibatch_dict_learning_iter_offset():
+    # Check that partial_fit ignores n_iter
     n_components = 12
     rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)
@@ -412,7 +413,7 @@ def test_minibatch_dict_learning_iter_offset():
     for i in range(10):
         dict2.partial_fit(X[[i]])
 
-    assert dict1._iter_offset == dict2._iter_offset == 10
+    assert dict1.n_iter_ == dict2.n_iter_ == 10
 
 
 def test_sparse_encode_shapes():

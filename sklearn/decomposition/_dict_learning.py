@@ -1641,7 +1641,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
                 "in 1.0 and will be removed in 1.2.")
     @property
     def iter_offset_(self):
-        return self._iter_offset
+        return self.n_iter_
 
     @deprecated("The attribute 'random_state_' is deprecated "  # type: ignore
                 "in 1.0 and will be removed in 1.2.")
@@ -1761,14 +1761,14 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
                                 copy=self.shuffle)
 
         self._check_params(X)
-        random_state = check_random_state(self.random_state)
+        self._random_state = check_random_state(self.random_state)
         n_samples, n_features = X.shape
 
-        dictionary = self._initialize_dict(X, random_state)
+        dictionary = self._initialize_dict(X, self._random_state)
 
         if self.shuffle:
             X_train = X.copy()
-            random_state.shuffle(X_train)
+            self._random_state.shuffle(X_train)
         else:
             X_train = X
 
@@ -1792,7 +1792,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             elif self.verbose:
                 pass
 
-            self._minibatch_step(this_X, dictionary, random_state, i)
+            self._minibatch_step(this_X, dictionary, self._random_state, i)
 
             # TODO decide what to do
             # Maybe we need a stopping criteria based on the amount of
@@ -1802,10 +1802,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         self.components_ = dictionary
         self.n_iter_ = self.n_iter
-
-        # TODO remove in 1.2 (only useful in partial_fit)
-        self._iter_offset = self.n_iter
-        self._random_state = random_state
 
         return self
 
@@ -1845,9 +1841,9 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         if iter_offset != "deprecated":
             warnings.warn("'iter_offset' was deprecated in version 1.0 and "
                           "will be removed in version 1.2", FutureWarning)
-            self._iter_offset = iter_offset
+            self.n_iter_ = iter_offset
         else:
-            self._iter_offset = getattr(self, "_iter_offset", 0)
+            self.n_iter_ = getattr(self, "n_iter_", 0)
 
         if is_first_call_to_partial_fit:
             # this is the first call to partial_fit on this object
@@ -1862,9 +1858,9 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             dictionary = self.components_
 
         self._minibatch_step(
-            X, dictionary, self._random_state, self._iter_offset)
+            X, dictionary, self._random_state, self.n_iter_)
 
         self.components_ = dictionary
-        self._iter_offset += 1
+        self.n_iter_ += 1
 
         return self
