@@ -11,6 +11,7 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils import check_array
 
 from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import TempMemmap
@@ -575,6 +576,18 @@ def test_sparse_coder_n_features_in():
     assert sc.n_features_in_ == d.shape[1]
 
 
+@pytest.mark.parametrize("param, match", [
+    ({"n_components": 0}, "n_components should be > 0"),
+    ({"fit_algorithm": "wrong"}, "Coding method not supported"),
+    ({"batch_size": 0}, "batch_size should be > 0"),
+    ({"n_iter": -1}, "n_iter should be >= 0")])
+def test_minibatch_dict_learning_wrong_params(param, match):
+    # Check that error are raised with clear error message when wrong values
+    # are passed for the parameters of MiniBatchDictionaryLearning
+    with pytest.raises(ValueError, match=match):
+        MiniBatchDictionaryLearning(**param).fit(X)
+
+
 @pytest.mark.parametrize(
     "attr", ["iter_offset_", "inner_stats_", "random_state_"])
 def test_minibatch_dict_learning_deprecated_attributes(attr):
@@ -616,3 +629,19 @@ def test_dict_learning_online_deprecated_args(arg, val):
     with pytest.warns(FutureWarning, match=depr_msg):
         dict_learning_online(X, n_components=2, n_iter=5, random_state=0,
                              **{arg: val})
+
+
+@pytest.mark.filterwarnings("ignore:'return_n_iter' is deprecated.*")
+def test_dict_learning_online_calls_class():
+    # Check that the result of dict_learning_online calling the class is the
+    # same as before
+    # It only holds when n_samples is a multiple of batch_size due to a bug in
+    # the old behavior
+    # FIXME remove in 1.2 when the deprecations are effective
+    code_new, dictionary_new, _ = dict_learning_online(
+        X, batch_size=5, return_n_iter=True, random_state=0)
+    code_old, dictionary_old = dict_learning_online(
+        X, batch_size=5, return_n_iter=False, random_state=0)
+    
+    assert_allclose(code_new, code_old)
+    assert_allclose(dictionary_new, dictionary_old)

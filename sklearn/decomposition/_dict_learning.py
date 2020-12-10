@@ -1657,6 +1657,10 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     def _check_params(self, X):
         # n_components
+        if self.n_components is not None and self.n_components <= 0:
+            raise ValueError(
+                f"n_components should be > 0, got "
+                f"{self.n_components} instead.")
         self._n_components = self.n_components
         if self._n_components is None:
             self._n_components = X.shape[1]
@@ -1668,14 +1672,14 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self._fit_algorithm = 'lasso_' + self.fit_algorithm
 
         # batch_size
-        if self.batch_size < 0:
+        if self.batch_size <= 0:
             raise ValueError(
                 f"batch_size should be > 0, got {self.batch_size} instead.")
 
         # n_iter
         if self.n_iter < 0:
             raise ValueError(
-                f"n_iter should be > 0, got {self.n_iter} instead.")
+                f"n_iter should be >= 0, got {self.n_iter} instead.")
 
         # TODO sparse coding checks
 
