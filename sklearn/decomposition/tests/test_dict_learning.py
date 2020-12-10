@@ -642,6 +642,6 @@ def test_dict_learning_online_calls_class():
         X, batch_size=5, return_n_iter=True, random_state=0)
     code_old, dictionary_old = dict_learning_online(
         X, batch_size=5, return_n_iter=False, random_state=0)
-    
+
     assert_allclose(code_new, code_old)
     assert_allclose(dictionary_new, dictionary_old)
