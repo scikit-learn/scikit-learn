@@ -9,6 +9,7 @@ import numpy as np
 import numpy.ma as ma
 from collections import Counter
 from scipy import sparse as sp
+from scipy import stats
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils.sparsefuncs import _get_median
@@ -34,12 +35,17 @@ def _most_frequent(array, extra_value, n_repeat):
        of the array."""
     # Compute the most frequent value in array only
     if array.size > 0:
-        counter = Counter(array)
-        most_frequent_count = counter.most_common(1)[0][1]
-        most_frequent_value = min(
-            value for value, count in counter.items()
-            if count == most_frequent_count
-        )
+        if array.dtype == object:
+            counter = Counter(array)
+            most_frequent_count = counter.most_common(1)[0][1]
+            most_frequent_value = min(
+                value for value, count in counter.items()
+                if count == most_frequent_count
+            )
+        else:
+            mode = stats.mode(array)
+            most_frequent_value = mode[0][0]
+            most_frequent_count = mode[1][0]
     else:
         most_frequent_value = 0
         most_frequent_count = 0
