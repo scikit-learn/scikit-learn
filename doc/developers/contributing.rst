@@ -36,9 +36,20 @@ See :ref:`new_contributors` to get started.
     issues, organizing and teaching tutorials, working on the website,
     improving the documentation, are all priceless contributions.
 
-    We abide by the principles of openness, respect, and consideration of
-    others of the Python Software Foundation:
-    https://www.python.org/psf/codeofconduct/
+Our Code of Conduct
+==================
+Here is a summary of our Code of Conduct:
+
+* Be respectful of differing viewpoints and experiences. Harrassment, insults, and threats are not tolerated.
+* Accept constructive criticism peacefully. When you disagree, please be courteous in raising your issues.
+* Do not publish others' private information, such as a physical or electronic address, without explicit permission.
+* Do not incite violence, including encouraging a person to commit suicide or engage in self-harm.
+* Do not insult or hold others up for ridicule.
+
+If you engage in behavior that violates this Code of Conduct, we may take any action we deem appropriate, including warnings or expulsion from the community.
+
+We abide by the principles of openness, respect, and consideration of
+others of the Python Software Foundation. For a more detailed overview of our principles, please visit: https://www.python.org/psf/codeofconduct/
 
 
 In case you experience issues using this package, do not hesitate to submit a
