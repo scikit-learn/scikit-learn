@@ -399,7 +399,7 @@ def test_dict_learning_online_partial_fit():
 
 
 def test_minibatch_dict_learning_iter_offset():
-    # Check that partial_fit ignores n_iter
+    # Check that partial_fit ignores n_iter (#17433)
     n_components = 12
     rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)
