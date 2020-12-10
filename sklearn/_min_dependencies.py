@@ -53,6 +53,12 @@ for package, (min_version, extras) in dependent_packages.items():
     for extra in extras.split(', '):
         tag_to_packages[extra].append("{}>={}".format(package, min_version))
 
+# extra dependencies
+extra_dependencies = {'numpy': 'numpy<1.20; python_version == "3.6"'}
+for package, extra_dep in extra_dependencies.items():
+    extras = dependent_packages[package][1]
+    for extra in extras.split(', '):
+        tag_to_packages[extra].append(extra_dep)
 
 # Used by CI to get the min dependencies
 if __name__ == '__main__':
