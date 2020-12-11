@@ -32,7 +32,7 @@ def compute_bench(samples_range, features_range):
                 'n_features': n_features,
                 'n_informative': n_features // 10,
                 'effective_rank': min(n_samples, n_features) / 10,
-                #'effective_rank': None,
+                # 'effective_rank': None,
                 'bias': 0.0,
             }
             print("n_samples: %d" % n_samples)
@@ -81,7 +81,7 @@ def compute_bench(samples_range, features_range):
 
 
 if __name__ == '__main__':
-    from mpl_toolkits.mplot3d import axes3d  # register the 3d projection
+    from mpl_toolkits.mplot3d import axes3d  # noqa register the 3d projection
     import matplotlib.pyplot as plt
 
     samples_range = np.linspace(10, 2000, 5).astype(int)

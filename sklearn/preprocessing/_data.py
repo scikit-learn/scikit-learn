@@ -2314,8 +2314,9 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
 
     # TODO: Remove in 0.26
     # mypy error: Decorated property not supported
-    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 0.26.")
+    @deprecated(  # type: ignore
+        "Attribute _pairwise was deprecated in "
+        "version 0.24 and will be removed in 0.26.")
     @property
     def _pairwise(self):
         return True

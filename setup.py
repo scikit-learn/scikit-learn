@@ -49,7 +49,7 @@ PROJECT_URLS = {
 
 # We can actually import a restricted version of sklearn that
 # does not need the compiled code
-import sklearn
+import sklearn  # noqa
 import sklearn._min_dependencies as min_deps  # noqa
 
 

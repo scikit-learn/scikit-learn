@@ -46,7 +46,6 @@ from sklearn.utils.validation import (
     _allclose_dense_sparse,
     FLOAT_DTYPES)
 from sklearn.utils.validation import _check_fit_params
-from sklearn.utils.fixes import parse_version
 
 import sklearn
 

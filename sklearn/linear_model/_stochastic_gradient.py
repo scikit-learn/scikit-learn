@@ -290,8 +290,9 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
             sample_weight[validation_mask], classes=classes)
 
     # mypy error: Decorated property not supported
-    @deprecated("Attribute standard_coef_ was deprecated "  # type: ignore
-                "in version 0.23 and will be removed in 0.25.")
+    @deprecated(  # type: ignore
+        "Attribute standard_coef_ was deprecated "
+        "in version 0.23 and will be removed in 0.25.")
     @property
     def standard_coef_(self):
         return self._standard_coef
@@ -306,15 +307,17 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         return self._standard_intercept
 
     # mypy error: Decorated property not supported
-    @deprecated("Attribute average_coef_ was deprecated "  # type: ignore
-                "in version 0.23 and will be removed in 0.25.")
+    @deprecated(  # type: ignore
+        "Attribute average_coef_ was deprecated "
+        "in version 0.23 and will be removed in 0.25.")
     @property
     def average_coef_(self):
         return self._average_coef
 
     # mypy error: Decorated property not supported
-    @deprecated("Attribute average_intercept_ was deprecated "  # type: ignore
-                "in version 0.23 and will be removed in 0.25.")
+    @deprecated(  # type: ignore
+        "Attribute average_intercept_ was deprecated "
+        "in version 0.23 and will be removed in 0.25.")
     @property
     def average_intercept_(self):
         return self._average_intercept
@@ -1100,7 +1103,7 @@ class SGDClassifier(BaseSGDClassifier):
         return {
             '_xfail_checks': {
                 'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
+                ('zero sample_weight is not equivalent to removing samples'),
             }
         }
 
@@ -1590,6 +1593,6 @@ class SGDRegressor(BaseSGDRegressor):
         return {
             '_xfail_checks': {
                 'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
+                ('zero sample_weight is not equivalent to removing samples'),
             }
         }
