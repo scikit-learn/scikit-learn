@@ -667,22 +667,22 @@ constant-width bins. The 'quantile' strategy uses the quantiles values to have
 equally populated bins in each feature. The 'kmeans' strategy defines bins based
 on a k-means clustering procedure performed on each feature independently.
 
-Let the user know that custom bin edges can be use for discretization by using
-the :func:`FunctionTransformer` function mixed with the
+Let the user know that custom bins can be used for discretization by using
+the :class:`FunctionTransformer` function mixed with the
 `cut<https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.cut.html>`
 function from pandas library.::
 
   >>> import pandas
   >>> import numpy
   >>> bins = [0, 1, 13, 20, 60, numpy.inf]
-  >>> labels = ['infant', 'kid', 'teen', 'adult', 'senior']
+  >>> labels = ['infant', 'kid', 'teen', 'adult', 'senior citizen']
   >>> transformer = preprocessing.FunctionTransformer(pandas.cut,
   ...                                                 kw_args={'bins' : bins,
   ...                                                          'labels' : labels,
   ...                                                          'retbins' : False})
   >>> transformer.fit_transform(numpy.array([0.2, 2, 15, 25, 97]))
-  ['infant', 'kid', 'teen', 'adult', 'senior']
-  Categories (5, object): ['infant' < 'kid' < 'teen' < 'adult' < 'senior']
+  ['infant', 'kid', 'teen', 'adult', 'senior citizen']
+  Categories (5, object): ['infant' < 'kid' < 'teen' < 'adult' < 'senior citizen']
 
 .. topic:: Examples:
 
