@@ -678,7 +678,7 @@ def dict_learning_online(X, n_components=2, *, alpha=1, n_iter=100,
         Initial value for the dictionary for warm restart scenarios.
 
     callback : callable, default=None
-        callable that gets invoked every five iterations.
+        callable that gets invoked at the end of each iteration.
 
     batch_size : int, default=3
         The number of samples to take in each batch.
@@ -806,7 +806,7 @@ def dict_learning_online(X, n_components=2, *, alpha=1, n_iter=100,
         return_n_iter = False
 
     if (return_n_iter and not return_inner_stats and iter_offset == 0 and
-            inner_stats is None and callback is None):
+            inner_stats is None):
 
         # TODO: split method into fit & transform ?
         transform_algorithm = "lasso_" + method
@@ -818,7 +818,8 @@ def dict_learning_online(X, n_components=2, *, alpha=1, n_iter=100,
             shuffle=shuffle, dict_init=dict_init, random_state=random_state,
             transform_algorithm=transform_algorithm, transform_alpha=alpha,
             positive_code=positive_code, positive_dict=positive_dict,
-            transform_max_iter=method_max_iter, verbose=verbose).fit(X)
+            transform_max_iter=method_max_iter, verbose=verbose,
+            callback=callback).fit(X)
 
         if not return_code:
             return est.components_, est.n_iter_
@@ -1535,6 +1536,11 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         .. versionadded:: 0.22
 
+    callback : callable, default=None
+        callable that gets invoked at the end of each iteration.
+
+        .. versionadded:: 1.0
+
     Attributes
     ----------
     components_ : ndarray of shape (n_components, n_features)
@@ -1619,7 +1625,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
                  transform_n_nonzero_coefs=None, transform_alpha=None,
                  verbose=False, split_sign=False, random_state=None,
                  positive_code=False, positive_dict=False,
-                 transform_max_iter=1000):
+                 transform_max_iter=1000, callback=None):
 
         super().__init__(
             transform_algorithm, transform_n_nonzero_coefs, transform_alpha,
@@ -1636,6 +1642,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self.split_sign = split_sign
         self.random_state = random_state
         self.positive_dict = positive_dict
+        self.callback = callback
 
     @deprecated("The attribute 'iter_offset_' is deprecated "  # type: ignore
                 "in 1.0 and will be removed in 1.2.")
@@ -1727,6 +1734,14 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
                      positive=self.positive_dict)
         # XXX: Can the residuals be of any use?
 
+        if self.verbose:
+            print(f"Iteration {iter_idx}.")
+
+        # Maybe we need a stopping criteria based on the amount of
+        # modification in the dictionary
+        if self.callback is not None:
+            self.callback(locals())
+
     def _update_inner_stats(self, X, code, batch_size, iter_idx):
         """Update the inner stats inplace"""
         if iter_idx < batch_size - 1:
@@ -1772,8 +1787,8 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         else:
             X_train = X
 
-        if self.verbose == 1:
-            print('[dict_learning]', end=' ')
+        if self.verbose:
+            print("[dict_learning]")
 
         # Inner stats
         self._inner_stats = (A, B) = (
@@ -1784,21 +1799,8 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         batches = itertools.cycle(batches)
 
         for i, batch in zip(range(self.n_iter), batches):
-            this_X = X_train[batch]
-
-            if self.verbose == 1:
-                sys.stdout.write(".")
-                sys.stdout.flush()
-            elif self.verbose:
-                pass
-
-            self._minibatch_step(this_X, dictionary, self._random_state, i)
-
-            # TODO decide what to do
-            # Maybe we need a stopping criteria based on the amount of
-            # modification in the dictionary
-            # if callback is not None:
-            #     callback(locals())
+            self._minibatch_step(X_train[batch], dictionary,
+                                 self._random_state, i)
 
         self.components_ = dictionary
         self.n_iter_ = self.n_iter
