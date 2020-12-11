@@ -681,6 +681,13 @@ class OrdinalEncoder(_BaseEncoder):
 
         .. versionadded:: 0.24
 
+    handle_missing : {'error', 'passthrough'}, default='error'
+        When set to 'error' an error will be raised when a missing value is
+        present. When set to 'passthrough', missing values will be encoded
+        as `np.nan`.
+
+        .. versionadded:: 0.25
+
     Attributes
     ----------
     categories_ : list of arrays
@@ -717,11 +724,13 @@ class OrdinalEncoder(_BaseEncoder):
 
     @_deprecate_positional_args
     def __init__(self, *, categories='auto', dtype=np.float64,
-                 handle_unknown='error', unknown_value=None):
+                 handle_unknown='error', unknown_value=None,
+                 handle_missing='error'):
         self.categories = categories
         self.dtype = dtype
         self.handle_unknown = handle_unknown
         self.unknown_value = unknown_value
+        self.handle_missing = handle_missing
 
     def fit(self, X, y=None):
         """
@@ -758,8 +767,15 @@ class OrdinalEncoder(_BaseEncoder):
                             f"handle_unknown is 'use_encoded_value', "
                             f"got {self.unknown_value}.")
 
-        self._fit(X)
+        if self.handle_missing == 'passthrough':
+            force_all_finite = 'allow-nan'
+        elif self.handle_missing == 'error':
+            force_all_finite = True
+        else:
+            raise ValueError("handle_missing can only be 'passthrough' or "
+                             "'missing'")
 
+        self._fit(X, force_all_finite=force_all_finite)
         if self.handle_unknown == 'use_encoded_value':
             for feature_cats in self.categories_:
                 if 0 <= self.unknown_value < len(feature_cats):
