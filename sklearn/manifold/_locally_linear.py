@@ -368,7 +368,7 @@ def locally_linear_embedding(
                                                  U[:, k:n_components])
                 j += n_components - k
 
-            Q, R = qr(Yi, check_finite=False)
+            Q, R = qr(Yi)
 
             w = Q[:, n_components + 1:]
             S = w.sum(0)
