@@ -12,8 +12,6 @@ from scipy.sparse import dok_matrix
 from scipy.sparse import lil_matrix
 
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils.estimator_checks import _NotAnArray
