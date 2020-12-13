@@ -1,8 +1,8 @@
 #!/bin/bash
 
 set -e
+set -x
 
-if [[ "$SKIP_TESTS" != "true" ]]; then
-    set -x
-    make test-doc
+if [[ "$TRAVIS_CPU_ARCH" != "arm64" ]]; then
+    PYTEST="pytest -n $CI_CPU_COUNT" make test-doc
 fi

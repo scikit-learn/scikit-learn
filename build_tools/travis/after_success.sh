@@ -10,10 +10,10 @@ if [[ "$COVERAGE" == "true" ]]; then
     # Need to run codecov from a git checkout, so we copy .coverage
     # from TEST_DIR where pytest has been run
     cp $TEST_DIR/.coverage $TRAVIS_BUILD_DIR
-    cd $TRAVIS_BUILD_DIR
+
     # Ignore codecov failures as the codecov server is not
     # very reliable but we don't want travis to report a failure
     # in the github UI just because the coverage report failed to
     # be published.
-    codecov || echo "codecov upload failed"
+    codecov --root $TRAVIS_BUILD_DIR || echo "codecov upload failed"
 fi

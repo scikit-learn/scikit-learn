@@ -4,7 +4,6 @@
 Based on: http://wxpsvg.googlecode.com/svn/trunk/svg/pathdata.py
 According to that project, this file is licensed under the LGPL
 """
-from __future__ import print_function
 
 try:
     from pyparsing import (ParserElement, Literal, Word, CaselessLiteral, 
@@ -29,7 +28,7 @@ class CaselessPreservingLiteral(CaselessLiteral):
         instead of as defined.
     """
     def __init__( self, matchString ):
-        super(CaselessPreservingLiteral,self).__init__( matchString.upper() )
+        super().__init__(matchString.upper())
         self.name = "'%s'" % matchString
         self.errmsg = "Expected " + self.name
         self.myException.msg = self.errmsg
@@ -55,8 +54,8 @@ sign = oneOf("+ -")
 def convertToFloat(s, loc, toks):
     try:
         return float(toks[0])
-    except:
-        raise ParseException(loc, "invalid float format %s"%toks[0])
+    except BaseException as e:
+        raise ParseException(loc, "invalid float format %s" % toks[0]) from e
 
 exponent = CaselessLiteral("e")+Optional(sign)+Word(nums)
 

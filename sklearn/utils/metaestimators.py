@@ -2,36 +2,38 @@
 # Author: Joel Nothman
 #         Andreas Mueller
 # License: BSD
+from typing import List, Any
 
 from abc import ABCMeta, abstractmethod
 from operator import attrgetter
 from functools import update_wrapper
 import numpy as np
 
-from ..utils import safe_indexing
-from ..externals import six
+from ..utils import _safe_indexing
 from ..base import BaseEstimator
+from ..base import _is_pairwise
 
 __all__ = ['if_delegate_has_method']
 
 
-class _BaseComposition(six.with_metaclass(ABCMeta, BaseEstimator)):
+class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
     """Handles parameter management for classifiers composed of named estimators.
     """
+    steps: List[Any]
+
     @abstractmethod
     def __init__(self):
         pass
 
     def _get_params(self, attr, deep=True):
-        out = super(_BaseComposition, self).get_params(deep=deep)
+        out = super().get_params(deep=deep)
         if not deep:
             return out
         estimators = getattr(self, attr)
         out.update(estimators)
         for name, estimator in estimators:
             if hasattr(estimator, 'get_params'):
-                for key, value in six.iteritems(
-                        estimator.get_params(deep=True)):
+                for key, value in estimator.get_params(deep=True).items():
                     out['%s__%s' % (name, key)] = value
         return out
 
@@ -45,11 +47,11 @@ class _BaseComposition(six.with_metaclass(ABCMeta, BaseEstimator)):
         names = []
         if items:
             names, _ = zip(*items)
-        for name in list(six.iterkeys(params)):
+        for name in list(params.keys()):
             if '__' not in name and name in names:
                 self._replace_estimator(attr, name, params.pop(name))
         # 3. Step parameters and other initialisation arguments
-        super(_BaseComposition, self).set_params(**params)
+        super().set_params(**params)
         return self
 
     def _replace_estimator(self, attr, name, new_val):
@@ -75,7 +77,7 @@ class _BaseComposition(six.with_metaclass(ABCMeta, BaseEstimator)):
                              '{0!r}'.format(invalid_names))
 
 
-class _IffHasAttrDescriptor(object):
+class _IffHasAttrDescriptor:
     """Implements a conditional property using the descriptor protocol.
 
     Using this class to create a decorator will raise an ``AttributeError``
@@ -155,6 +157,11 @@ def _safe_split(estimator, X, y, indices, train_indices=None):
     we slice rows using ``indices`` (assumed the test set) and columns
     using ``train_indices``, indicating the training set.
 
+    .. deprecated:: 0.24
+
+        The _pairwise attribute is deprecated in 0.24. From 0.26 and onward,
+        this function will check for the pairwise estimator tag.
+
     Labels y will always be indexed only along the first axis.
 
     Parameters
@@ -188,7 +195,7 @@ def _safe_split(estimator, X, y, indices, train_indices=None):
         Indexed targets.
 
     """
-    if getattr(estimator, "_pairwise", False):
+    if _is_pairwise(estimator):
         if not hasattr(X, "shape"):
             raise ValueError("Precomputed kernels or affinity matrices have "
                              "to be passed as arrays or sparse matrices.")
@@ -200,10 +207,10 @@ def _safe_split(estimator, X, y, indices, train_indices=None):
         else:
             X_subset = X[np.ix_(indices, train_indices)]
     else:
-        X_subset = safe_indexing(X, indices)
+        X_subset = _safe_indexing(X, indices)
 
     if y is not None:
-        y_subset = safe_indexing(y, indices)
+        y_subset = _safe_indexing(y, indices)
     else:
         y_subset = None
 

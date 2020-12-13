@@ -11,30 +11,31 @@ sparse matrices.
 # License: BSD 3 clause
 
 from scipy import sparse
-from scipy.sparse import csgraph
 
 from .graph_shortest_path import graph_shortest_path  # noqa
-from .deprecation import deprecated
+from .validation import _deprecate_positional_args
 
 
 ###############################################################################
 # Path and connected component analysis.
 # Code adapted from networkx
-
-def single_source_shortest_path_length(graph, source, cutoff=None):
+@_deprecate_positional_args
+def single_source_shortest_path_length(graph, source, *, cutoff=None):
     """Return the shortest path length from source to all reachable nodes.
 
     Returns a dictionary of shortest path lengths keyed by target.
 
     Parameters
     ----------
-    graph : sparse matrix or 2D array (preferably LIL matrix)
-        Adjacency matrix of the graph
-    source : integer
-       Starting node for path
-    cutoff : integer, optional
-        Depth to stop the search - only
-        paths of length <= cutoff are returned.
+    graph : {sparse matrix, ndarray} of shape (n, n)
+        Adjacency matrix of the graph. Sparse matrix of format LIL is
+        preferred.
+
+    source : int
+       Starting node for path.
+
+    cutoff : int, default=None
+        Depth to stop the search - only paths of length <= cutoff are returned.
 
     Examples
     --------
@@ -68,17 +69,3 @@ def single_source_shortest_path_length(graph, source, cutoff=None):
             break
         level += 1
     return seen  # return all path lengths as dictionary
-
-
-@deprecated("sklearn.utils.graph.connected_components was deprecated in "
-            "version 0.19 and will be removed in 0.21. Use "
-            "scipy.sparse.csgraph.connected_components instead.")
-def connected_components(*args, **kwargs):
-    return csgraph.connected_components(*args, **kwargs)
-
-
-@deprecated("sklearn.utils.graph.graph_laplacian was deprecated in version "
-            "0.19 and will be removed in 0.21. Use "
-            "scipy.sparse.csgraph.laplacian instead.")
-def graph_laplacian(*args, **kwargs):
-    return csgraph.laplacian(*args, **kwargs)

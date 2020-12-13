@@ -27,12 +27,19 @@ import time
 import numpy as np
 from scipy.ndimage.filters import gaussian_filter
 import matplotlib.pyplot as plt
+import skimage
 from skimage.data import coins
 from skimage.transform import rescale
 
 from sklearn.feature_extraction import image
 from sklearn.cluster import spectral_clustering
+from sklearn.utils.fixes import parse_version
 
+# these were introduced in skimage-0.14
+if parse_version(skimage.__version__) >= parse_version('0.14'):
+    rescale_params = {'anti_aliasing': False, 'multichannel': False}
+else:
+    rescale_params = {}
 
 # load the coins as a numpy array
 orig_coins = coins()
@@ -41,7 +48,8 @@ orig_coins = coins()
 # Applying a Gaussian filter for smoothing prior to down-scaling
 # reduces aliasing artifacts.
 smoothened_coins = gaussian_filter(orig_coins, sigma=2)
-rescaled_coins = rescale(smoothened_coins, 0.2, mode="reflect")
+rescaled_coins = rescale(smoothened_coins, 0.2, mode="reflect",
+                         **rescale_params)
 
 # Convert the image into a graph with the value of the gradient on the
 # edges.
@@ -58,7 +66,7 @@ graph.data = np.exp(-beta * graph.data / graph.data.std()) + eps
 # installed)
 N_REGIONS = 25
 
-#############################################################################
+# %%
 # Visualize the resulting regions
 
 for assign_labels in ('kmeans', 'discretize'):
