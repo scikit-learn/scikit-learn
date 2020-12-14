@@ -1474,3 +1474,33 @@ def test_simple_imputation_inverse_transform_exceptions(missing_value):
     with pytest.raises(ValueError,
                        match=f"Got 'add_indicator={imputer.add_indicator}'"):
         imputer.inverse_transform(X_1_trans)
+
+
+def test_simple_imputation_string_column_all_missing():
+    X_1 = [
+        ['Lion'],
+        ['Tiger'],
+        ['Bear'],
+        [np.nan],
+    ]
+
+    imputer = SimpleImputer(strategy='constant', fill_value='UNKNOWN')
+    X_1_trans = imputer.fit_transform(X_1)
+    assert all(a == b for a, b in zip(X_1_trans, [
+        ['Lion'],
+        ['Tiger'],
+        ['Bear'],
+        ['UNKNOWN'],
+    ]))
+
+    X_2 = [
+        [np.nan],
+        [np.nan],
+        [np.nan],
+    ]
+    X_2_trans = imputer.transform(X_2)
+    assert all(a == b for a, b in zip(X_2_trans, [
+        ['UNKNOWN'],
+        ['UNKNOWN'],
+        ['UNKNOWN'],
+    ]))
