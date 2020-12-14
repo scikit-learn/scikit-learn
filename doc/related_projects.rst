@@ -307,10 +307,10 @@ Translations of scikit-learn documentation
 ------------------------------------------
 
 The only official documentation for scikit-learn is the current English
-version, however some translations are available aiming to improve scikit-learn
+version. However, some translations are available aiming to improve scikit-learn
 dissemination among non-native English speaking. Those efforts are community
 initiatives and we have no control on them. If you want to contribute or
-report an issue with the translation please contact the authors
+report an issue with the translation, please contact the authors
 of the translation.
 Some available translations are linked here to improve their dissemination
 and promote community efforts.
@@ -319,5 +319,4 @@ and promote community efforts.
   (`source <https://github.com/apachecn/sklearn-doc-zh>`__)
 - `Persian translation <https://sklearn.ir/>`_
   (`source <https://github.com/mehrdad-dev/scikit-learn>`__)
-
 
