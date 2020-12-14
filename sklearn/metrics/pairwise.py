@@ -285,6 +285,8 @@ def euclidean_distances(X, Y=None, *, Y_norm_squared=None, squared=False,
                     "Incompatible dimensions for X and X_norm_squared")
             if XX.dtype == np.float32:
                 XX = None
+        else:
+            XX = X_norm_squared
     elif X.dtype == np.float32:
         XX = None
     else:
@@ -301,6 +303,8 @@ def euclidean_distances(X, Y=None, *, Y_norm_squared=None, squared=False,
                     "Incompatible dimensions for Y and Y_norm_squared")
             if YY.dtype == np.float32:
                 YY = None
+        else:
+            YY = Y_norm_squared
     elif Y.dtype == np.float32:
         YY = None
     else:
