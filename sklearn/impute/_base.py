@@ -4,10 +4,10 @@
 
 import numbers
 import warnings
+from collections import Counter
 
 import numpy as np
 import numpy.ma as ma
-from collections import Counter
 from scipy import sparse as sp
 from scipy import stats
 
@@ -36,8 +36,11 @@ def _most_frequent(array, extra_value, n_repeat):
     # Compute the most frequent value in array only
     if array.size > 0:
         if array.dtype == object:
+            # scipy.stats.mode is slow with object dtype array.
+            # Python Counter is more efficient
             counter = Counter(array)
             most_frequent_count = counter.most_common(1)[0][1]
+            # tie breaking similarly to scipy.stats.mode
             most_frequent_value = min(
                 value for value, count in counter.items()
                 if count == most_frequent_count
@@ -58,6 +61,7 @@ def _most_frequent(array, extra_value, n_repeat):
     elif most_frequent_count > n_repeat:
         return most_frequent_value
     elif most_frequent_count == n_repeat:
+        # tie breaking similarly to scipy.stats.mode
         return min(most_frequent_value, extra_value)
 
 
