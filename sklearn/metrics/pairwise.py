@@ -201,7 +201,7 @@ def check_paired_arrays(X, Y):
 # Pairwise distances
 @_deprecate_positional_args
 def euclidean_distances(X, Y=None, *, Y_norm_squared=None, squared=False,
-                        X_norm_squared=None):
+                        X_norm_squared=None, check_input=True):
     """
     Considering the rows of X (and Y=X) as vectors, compute the
     distance matrix between each pair of vectors.
@@ -269,20 +269,22 @@ def euclidean_distances(X, Y=None, *, Y_norm_squared=None, squared=False,
     array([[1.        ],
            [1.41421356]])
     """
-    X, Y = check_pairwise_arrays(X, Y)
+    if check_input:
+        X, Y = check_pairwise_arrays(X, Y)
 
     # If norms are passed as float32, they are unused. If arrays are passed as
     # float32, norms needs to be recomputed on upcast chunks.
     # TODO: use a float64 accumulator in row_norms to avoid the latter.
     if X_norm_squared is not None:
-        XX = check_array(X_norm_squared)
-        if XX.shape == (1, X.shape[0]):
-            XX = XX.T
-        elif XX.shape != (X.shape[0], 1):
-            raise ValueError(
-                "Incompatible dimensions for X and X_norm_squared")
-        if XX.dtype == np.float32:
-            XX = None
+        if check_input:
+            XX = check_array(X_norm_squared)
+            if XX.shape == (1, X.shape[0]):
+                XX = XX.T
+            elif XX.shape != (X.shape[0], 1):
+                raise ValueError(
+                    "Incompatible dimensions for X and X_norm_squared")
+            if XX.dtype == np.float32:
+                XX = None
     elif X.dtype == np.float32:
         XX = None
     else:
@@ -292,13 +294,13 @@ def euclidean_distances(X, Y=None, *, Y_norm_squared=None, squared=False,
         # shortcut in the common case euclidean_distances(X, X)
         YY = XX.T
     elif Y_norm_squared is not None:
-        YY = np.atleast_2d(Y_norm_squared)
-
-        if YY.shape != (1, Y.shape[0]):
-            raise ValueError(
-                "Incompatible dimensions for Y and Y_norm_squared")
-        if YY.dtype == np.float32:
-            YY = None
+        if check_input:
+            YY = np.atleast_2d(Y_norm_squared)
+            if YY.shape != (1, Y.shape[0]):
+                raise ValueError(
+                    "Incompatible dimensions for Y and Y_norm_squared")
+            if YY.dtype == np.float32:
+                YY = None
     elif Y.dtype == np.float32:
         YY = None
     else:

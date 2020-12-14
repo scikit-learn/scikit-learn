@@ -105,7 +105,7 @@ def _kmeans_plusplus(X, n_clusters, x_squared_norms,
     # Initialize list of closest distances and calculate current potential
     closest_dist_sq = euclidean_distances(
         centers[0, np.newaxis], X, Y_norm_squared=x_squared_norms,
-        squared=True)
+        squared=True, check_input=False)
     current_pot = closest_dist_sq.sum()
 
     # Pick the remaining n_clusters-1 points
@@ -121,7 +121,8 @@ def _kmeans_plusplus(X, n_clusters, x_squared_norms,
 
         # Compute distances to center candidates
         distance_to_candidates = euclidean_distances(
-            X[candidate_ids], X, Y_norm_squared=x_squared_norms, squared=True)
+            X[candidate_ids], X, Y_norm_squared=x_squared_norms, squared=True,
+            check_input=False)
 
         # update closest distances squared and potential for each candidate
         np.minimum(closest_dist_sq, distance_to_candidates,
