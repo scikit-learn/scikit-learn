@@ -286,7 +286,7 @@ def euclidean_distances(X, Y=None, *, Y_norm_squared=None, squared=False,
             if XX.dtype == np.float32:
                 XX = None
         else:
-            XX = X_norm_squared
+            XX = X_norm_squared.reshape(-1, 1)
     elif X.dtype == np.float32:
         XX = None
     else:
@@ -304,7 +304,7 @@ def euclidean_distances(X, Y=None, *, Y_norm_squared=None, squared=False,
             if YY.dtype == np.float32:
                 YY = None
         else:
-            YY = Y_norm_squared
+            YY = Y_norm_squared.reshape(1, -1)
     elif Y.dtype == np.float32:
         YY = None
     else:
