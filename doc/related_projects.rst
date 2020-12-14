@@ -316,8 +316,8 @@ Some available translations are linked here to improve their dissemination
 and promote community efforts.
 
 - `Chinese translation <https://sklearn.apachecn.org/>`_
-  (`source <https://github.com/apachecn/sklearn-doc-zh>`_)
+  (`source <https://github.com/apachecn/sklearn-doc-zh>`__)
 - `Persian translation <https://sklearn.ir/>`_
-  (`source <https://github.com/mehrdad-dev/scikit-learn>`_)
+  (`source <https://github.com/mehrdad-dev/scikit-learn>`__)
 
 
