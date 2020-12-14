@@ -27,7 +27,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn import tree
 from sklearn.random_projection import _sparse_random_matrix
 from sklearn.exceptions import ConvergenceWarning
-from .._base import _most_frequent
+from sklearn.impute._base import _most_frequent
 
 
 def _check_statistics(X, X_true,
@@ -1477,27 +1477,24 @@ def test_simple_imputation_inverse_transform_exceptions(missing_value):
         imputer.inverse_transform(X_1_trans)
 
 
-def test_most_frequent():
-    # collections.Counter
-    assert np.isnan(_most_frequent(np.array([]), 'extra_value', 0))
-    assert 'extra_value' == _most_frequent(
-        np.array(['a', 'b', 'c'], dtype=object), 'extra_value', 2
-    )
-    assert 'most_frequent_value' == _most_frequent(
-        np.array(
+@pytest.mark.parametrize(
+    "expected,array,dtype,extra_value,n_repeat",
+    [
+        ("extra_value", ['a', 'b', 'c'], object, "extra_value", 2),
+        (
+            "most_frequent_value",
             ['most_frequent_value', 'most_frequent_value', 'value'],
-            dtype=object), 'extra_value', 1
+            object, "extra_value", 1
+        ),
+        ("a", ['min_value', 'min_value' 'value'], object, "a", 2),
+        ("min_value", ['min_value', 'min_value', 'value'], object, "z", 2),
+        (10, [1, 2, 3], int, 10, 2),
+        (1, [1, 1, 2], int, 10, 1),
+        (10, [20, 20, 1], int, 10, 2),
+        (1, [1, 1, 20], int, 10, 2),
+    ]
+)
+def test_most_frequent(expected, array, dtype, extra_value, n_repeat):
+    assert expected == _most_frequent(
+        np.array(array, dtype=dtype), extra_value, n_repeat
     )
-    assert 'a' == _most_frequent(np.array(
-        ['min_value', 'min_value' 'value'], dtype=object), 'a', 2
-    )
-    assert 'min_value' == _most_frequent(
-        np.array(['min_value', 'min_value', 'value'], dtype=object), 'z', 2
-    )
-
-    # scipy.stats.mode
-    assert np.isnan(_most_frequent(np.array([]), 10, 0))
-    assert 10 == _most_frequent(np.array([1, 2, 3]), 10, 2)
-    assert 1 == _most_frequent(np.array([1, 1, 2]), 10, 1)
-    assert 10 == _most_frequent(np.array([20, 20, 1]), 10, 2)
-    assert 1 == _most_frequent(np.array([1, 1, 20], dtype=object), 10, 2)
