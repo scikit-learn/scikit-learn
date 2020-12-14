@@ -4,6 +4,7 @@
 
 import numbers
 import warnings
+from collections import Counter
 
 import numpy as np
 import numpy.ma as ma
@@ -34,15 +35,20 @@ def _most_frequent(array, extra_value, n_repeat):
        of the array."""
     # Compute the most frequent value in array only
     if array.size > 0:
-        with warnings.catch_warnings():
-            # stats.mode raises a warning when input array contains objects due
-            # to incapacity to detect NaNs. Irrelevant here since input array
-            # has already been NaN-masked.
-            warnings.simplefilter("ignore", RuntimeWarning)
+        if array.dtype == object:
+            # scipy.stats.mode is slow with object dtype array.
+            # Python Counter is more efficient
+            counter = Counter(array)
+            most_frequent_count = counter.most_common(1)[0][1]
+            # tie breaking similarly to scipy.stats.mode
+            most_frequent_value = min(
+                value for value, count in counter.items()
+                if count == most_frequent_count
+            )
+        else:
             mode = stats.mode(array)
-
-        most_frequent_value = mode[0][0]
-        most_frequent_count = mode[1][0]
+            most_frequent_value = mode[0][0]
+            most_frequent_count = mode[1][0]
     else:
         most_frequent_value = 0
         most_frequent_count = 0
@@ -55,11 +61,8 @@ def _most_frequent(array, extra_value, n_repeat):
     elif most_frequent_count > n_repeat:
         return most_frequent_value
     elif most_frequent_count == n_repeat:
-        # Ties the breaks. Copy the behaviour of scipy.stats.mode
-        if most_frequent_value < extra_value:
-            return most_frequent_value
-        else:
-            return extra_value
+        # tie breaking similarly to scipy.stats.mode
+        return min(most_frequent_value, extra_value)
 
 
 class _BaseImputer(TransformerMixin, BaseEstimator):

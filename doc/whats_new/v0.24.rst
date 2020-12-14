@@ -369,6 +369,10 @@ Changelog
   estimator's `random_state` attribute, allowing to use it with more external classes.
   :pr:`15636` by :user:`David Cortes <david-cortes>`.
 
+- |Efficiency| :class:`impute.SimpleImputer` is now faster with `object` dtype array.
+  when `strategy='most_frequent'` in :class:`~sklearn.impute.SimpleImputer`.
+  :pr:`18987` by :user:`David Katz <DavidKatz-il>`.
+
 :mod:`sklearn.inspection`
 .........................
 
