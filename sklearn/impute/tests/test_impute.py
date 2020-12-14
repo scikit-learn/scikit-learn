@@ -1480,6 +1480,7 @@ def test_simple_imputation_inverse_transform_exceptions(missing_value):
 @pytest.mark.parametrize(
     "expected,array,dtype,extra_value,n_repeat",
     [
+        # array of object dtype
         ("extra_value", ['a', 'b', 'c'], object, "extra_value", 2),
         (
             "most_frequent_value",
@@ -1488,6 +1489,7 @@ def test_simple_imputation_inverse_transform_exceptions(missing_value):
         ),
         ("a", ['min_value', 'min_value' 'value'], object, "a", 2),
         ("min_value", ['min_value', 'min_value', 'value'], object, "z", 2),
+        # array of numeric dtype
         (10, [1, 2, 3], int, 10, 2),
         (1, [1, 1, 2], int, 10, 1),
         (10, [20, 20, 1], int, 10, 2),
