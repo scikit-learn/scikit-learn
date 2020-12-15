@@ -1963,7 +1963,7 @@ def test_search_cv_pairwise_property_delegated_to_base_estimator(pairwise):
     assert pairwise == cv._get_tags()['pairwise'], attr_message
 
 
-# TODO: Remove in 0.26
+# TODO: Remove in 1.1
 @ignore_warnings(category=FutureWarning)
 def test_search_cv__pairwise_property_delegated_to_base_estimator():
     """

@@ -152,7 +152,7 @@ def test_graphical_lasso_cv(random_state=1):
     GraphicalLassoCV(alphas=[0.8, 0.5], tol=1e-1, n_jobs=1).fit(X)
 
 
-# TODO: Remove in 0.26 when grid_scores_ is deprecated
+# TODO: Remove in 1.1 when grid_scores_ is deprecated
 def test_graphical_lasso_cv_grid_scores_and_cv_alphas_deprecated():
     splits = 4
     n_alphas = 5

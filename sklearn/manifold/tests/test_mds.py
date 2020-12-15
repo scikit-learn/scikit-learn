@@ -65,7 +65,7 @@ def test_MDS():
     mds_clf.fit(sim)
 
 
-# TODO: Remove in 0.26
+# TODO: Remove in 1.1
 def test_MDS_pairwise_deprecated():
     mds_clf = mds.MDS(metric='precomputed')
     msg = r"Attribute _pairwise was deprecated in version 0\.24"
@@ -73,7 +73,7 @@ def test_MDS_pairwise_deprecated():
         mds_clf._pairwise
 
 
-# TODO: Remove in 0.26
+# TODO: Remove in 1.1
 @ignore_warnings(category=FutureWarning)
 @pytest.mark.parametrize("dissimilarity, expected_pairwise", [
    ("precomputed", True),

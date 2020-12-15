@@ -246,7 +246,7 @@ def test_affinity_propagation_float32():
     assert_array_equal(afp.labels_, expected)
 
 
-# TODO: Remove in 0.26
+# TODO: Remove in 1.1
 def test_affinity_propagation_pairwise_is_deprecated():
     afp = AffinityPropagation(affinity='precomputed')
     msg = r"Attribute _pairwise was deprecated in version 0\.24"

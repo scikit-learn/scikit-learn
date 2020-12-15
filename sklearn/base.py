@@ -846,7 +846,7 @@ def _is_pairwise(estimator):
     if has_pairwise_attribute:
         if pairwise_attribute != pairwise_tag:
             warnings.warn("_pairwise was deprecated in 0.24 and will be "
-                          "removed in 0.26. Set the estimator tags of your "
+                          "removed in 1.1. Set the estimator tags of your "
                           "estimator instead", FutureWarning)
         return pairwise_attribute
 

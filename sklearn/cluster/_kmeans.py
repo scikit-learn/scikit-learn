@@ -1512,13 +1512,13 @@ class MiniBatchKMeans(KMeans):
         Weigth sum of each cluster.
 
         .. deprecated:: 0.24
-           This attribute is deprecated in 0.24 and will be removed in 0.26.
+           This attribute is deprecated in 0.24 and will be removed in 1.1.
 
     init_size_ : int
         The effective number of samples used for the initialization.
 
         .. deprecated:: 0.24
-           This attribute is deprecated in 0.24 and will be removed in 0.26.
+           This attribute is deprecated in 0.24 and will be removed in 1.1.
 
     See Also
     --------
@@ -1577,19 +1577,19 @@ class MiniBatchKMeans(KMeans):
         self.reassignment_ratio = reassignment_ratio
 
     @deprecated("The attribute 'counts_' is deprecated in 0.24"  # type: ignore
-                " and will be removed in 0.26.")
+                " and will be removed in 1.1.")
     @property
     def counts_(self):
         return self._counts
 
     @deprecated("The attribute 'init_size_' is deprecated in "  # type: ignore
-                "0.24 and will be removed in 0.26.")
+                "0.24 and will be removed in 1.1.")
     @property
     def init_size_(self):
         return self._init_size
 
     @deprecated("The attribute 'random_state_' is deprecated "  # type: ignore
-                "in 0.24 and will be removed in 0.26.")
+                "in 0.24 and will be removed in 1.1.")
     @property
     def random_state_(self):
         return getattr(self, "_random_state", None)

@@ -328,10 +328,10 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             raise ValueError("min_impurity_decrease must be greater than "
                              "or equal to 0")
 
-        # TODO: Remove in v0.26
+        # TODO: Remove in v1.1
         if X_idx_sorted != "deprecated":
             warnings.warn("The parameter 'X_idx_sorted' is deprecated and has "
-                          "no effect. It will be removed in v0.26. You can "
+                          "no effect. It will be removed in v1.1. You can "
                           "suppress this warning by not passing any value to "
                           "the 'X_idx_sorted' parameter.", FutureWarning)
 
@@ -879,7 +879,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
         X_idx_sorted : deprecated, default="deprecated"
             This parameter is deprecated and has no effect.
-            It will be removed in v0.26.
+            It will be removed in v1.1.
 
             .. deprecated :: 0.24
 
@@ -1227,7 +1227,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
         X_idx_sorted : deprecated, default="deprecated"
             This parameter is deprecated and has no effect.
-            It will be removed in v0.26.
+            It will be removed in v1.1.
 
             .. deprecated :: 0.24
 

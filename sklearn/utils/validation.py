@@ -644,7 +644,7 @@ def check_array(array, accept_sparse=False, *, accept_large_sparse=True,
         if dtype_numeric and array.dtype.kind in "OUSV":
             warnings.warn("Arrays of bytes/strings is being converted to "
                           "decimal numbers if dtype='numeric'. This behavior "
-                          "is deprecated in 0.24 and will be removed in 0.26 "
+                          "is deprecated in 0.24 and will be removed in 1.1 "
                           "Please convert your data to numeric values "
                           "explicitly instead.",
                           FutureWarning, stacklevel=2)

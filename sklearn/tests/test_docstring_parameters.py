@@ -235,8 +235,8 @@ def test_fit_docstring_attributes(name, Estimator):
         est.fit(X, y)
 
     skipped_attributes = {'n_features_in_',
-                          'x_scores_',  # For PLS, TODO remove in 0.26
-                          'y_scores_'}  # For PLS, TODO remove in 0.26
+                          'x_scores_',  # For PLS, TODO remove in 1.1
+                          'y_scores_'}  # For PLS, TODO remove in 1.1
 
     for attr in attributes:
         if attr.name in skipped_attributes:

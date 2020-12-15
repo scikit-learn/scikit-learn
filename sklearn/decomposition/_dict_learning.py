@@ -1024,7 +1024,7 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         The unchanged dictionary atoms.
 
         .. deprecated:: 0.24
-           This attribute is deprecated in 0.24 and will be removed in 0.26.
+           This attribute is deprecated in 0.24 and will be removed in 1.1.
            Use `dictionary` instead.
 
     Examples
@@ -1089,7 +1089,7 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         return self
 
     @deprecated("The attribute 'components_' is deprecated "  # type: ignore
-                "in 0.24 and will be removed in 0.26. Use the "
+                "in 0.24 and will be removed in 1.1. Use the "
                 "'dictionary' instead.")
     @property
     def components_(self):
