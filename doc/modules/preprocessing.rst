@@ -667,10 +667,9 @@ constant-width bins. The 'quantile' strategy uses the quantiles values to have
 equally populated bins in each feature. The 'kmeans' strategy defines bins based
 on a k-means clustering procedure performed on each feature independently.
 
-Let the user know that custom bins can be used for discretization by using
-the :class:`FunctionTransformer` function mixed with the
-`cut<https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.cut.html>`
-function from pandas library.::
+Be aware that one can specify custom bins by passing a callable defining the
+discretization strategy to :class:`~sklearn.preprocessing.FunctionTransformer`.
+For instance, we can use the Pandas function :func:`pandas.cut`::
 
   >>> import pandas as pd
   >>> import numpy as np
