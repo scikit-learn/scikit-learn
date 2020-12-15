@@ -676,10 +676,9 @@ function from pandas library.::
   >>> import numpy as np
   >>> bins = [0, 1, 13, 20, 60, np.inf]
   >>> labels = ['infant', 'kid', 'teen', 'adult', 'senior citizen']
-  >>> transformer = preprocessing.FunctionTransformer(pandas.cut,
-  ...                                                 kw_args={'bins' : bins,
-  ...                                                          'labels' : labels,
-  ...                                                          'retbins' : False})
+  >>> transformer = preprocessing.FunctionTransformer(
+  ...     pd.cut, kw_args={'bins': bins, 'labels': labels, 'retbins': False}
+  ... )
   >>> transformer.fit_transform(numpy.array([0.2, 2, 15, 25, 97]))
   ['infant', 'kid', 'teen', 'adult', 'senior citizen']
   Categories (5, object): ['infant' < 'kid' < 'teen' < 'adult' < 'senior citizen']
