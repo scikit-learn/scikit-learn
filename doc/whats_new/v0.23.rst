@@ -649,8 +649,8 @@ Changelog
   deciles lines as attributes so they can be hidden or customized. :pr:`15785`
   by `Nicolas Hug`_
 
-:mod:`sklearn.multioutput`
-..............................
+  :mod:`sklearn.multioutput`
+  ..............................
 
 - |Fix| :func:`multioutput.ClassifierChain.decision_function` and
   :func:`multioutput.ClassifierChain.predict_proba` now both return a list of
