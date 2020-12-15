@@ -743,6 +743,39 @@ def test_precompute_invalid_argument():
                         "Got 'auto'", ElasticNet(precompute='auto').fit, X, y)
 
 
+def test_precompute_incorrect_gram():
+    X, y, _, _ = build_dataset()
+
+
+    X_centered = X - np.average(X, axis=0)
+    garbage = np.random.normal(size=X.shape)
+    precompute = np.dot(garbage.T, garbage)
+
+    clf = ElasticNet(alpha=0.01, precompute=precompute)
+
+    assert_raises_regex(ValueError, "Gram matrix.*did not pass validation.*",
+                        clf.fit, X_centered, y)
+
+def test_precompute_gram_weighted_samples():
+    X, y, _, _ = build_dataset()
+    sample_weight = np.random.lognormal(size=y.shape)
+
+    w_norm = sample_weight * (y.shape / np.sum(sample_weight))
+    X_offset = np.average(X, axis=0, weights=w_norm)
+    X_scale = np.ones(shape=X_offset.shape)
+    X_c = (X - np.average(X, axis=0, weights=w_norm))
+    X_r = X_c * np.sqrt(w_norm)[:, np.newaxis]
+    Gram = np.dot(X_r.T, X_r)
+
+    clf1 = ElasticNet(alpha=0.01, precompute=Gram)
+    clf1.fit(X_c, y, sample_weight=sample_weight.copy())
+
+    clf2 = ElasticNet(alpha=0.01, precompute=False)
+    clf2.fit(X, y, sample_weight=sample_weight.copy())
+
+    np.testing.assert_allclose(clf1.coef_, clf2.coef_)
+
+
 def test_warm_start_convergence():
     X, y, _, _ = build_dataset()
     model = ElasticNet(alpha=1e-3, tol=1e-3).fit(X, y)

@@ -36,7 +36,8 @@ from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
 from ..utils.fixes import sparse_lsqr
 from ..utils._seq_dataset import ArrayDataset32, CSRDataset32
 from ..utils._seq_dataset import ArrayDataset64, CSRDataset64
-from ..utils.validation import check_is_fitted, _check_sample_weight
+from ..utils.validation import (check_is_fitted, _check_sample_weight,
+                                _check_precomputed_gram_matrix)
 from ..utils.fixes import delayed
 from ..preprocessing import normalize as f_normalize
 
@@ -600,16 +601,20 @@ def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy,
             check_input=check_input, sample_weight=sample_weight)
     if sample_weight is not None:
         X, y = _rescale_data(X, y, sample_weight=sample_weight)
-    if hasattr(precompute, '__array__') and (
-        fit_intercept and not np.allclose(X_offset, np.zeros(n_features)) or
-            normalize and not np.allclose(X_scale, np.ones(n_features))):
-        warnings.warn("Gram matrix was provided but X was centered"
-                      " to fit intercept, "
-                      "or X was normalized : recomputing Gram matrix.",
-                      UserWarning)
-        # recompute Gram
-        precompute = 'auto'
-        Xy = None
+    if hasattr(precompute, '__array__'):
+        if (fit_intercept and not np.allclose(X_offset, np.zeros(n_features))
+            or normalize and not np.allclose(X_scale, np.ones(n_features))):
+            warnings.warn("Gram matrix was provided but X was centered"
+                          " to fit intercept, "
+                          "or X was normalized : recomputing Gram matrix.",
+                          UserWarning)
+            # recompute Gram
+            precompute = 'auto'
+            Xy = None
+        elif check_input:
+            # If we're going to use the user's precomputed gram matrix, we
+            # do a quick check to make sure its not totally bogus.
+            _check_precomputed_gram_matrix(X, precompute, X_offset, X_scale)
 
     # precompute if n_samples > n_features
     if isinstance(precompute, str) and precompute == 'auto':
