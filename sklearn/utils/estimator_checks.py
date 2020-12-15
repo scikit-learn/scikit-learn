@@ -2960,7 +2960,7 @@ def check_estimator_sparse_dense(name, estimator_orig,
         X = X[~np.all(X == 0, axis=1)]  # we remove null rows
         assert len(np.where(X == 0)[0]) > 0  # we should have sparsity
         assert X.shape[0] > 5  # we mustn't have very few samples
-        size_X = X.shape[0]
+        n_samples = X.shape[0]
         y = X.dot(np.array([0.1, -0.2])) + 0.01 * rng.randn(size_X)
         y = y.astype(np.float16).astype(np.float)
         # we check that limiting the precision keeps some noise
