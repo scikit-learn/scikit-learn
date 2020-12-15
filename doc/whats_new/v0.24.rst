@@ -7,8 +7,11 @@
 Version 0.24.0
 ==============
 
-**In Development**
+**December 2020**
 
+For a short description of the main highlights of the release, please
+refer to
+:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_0_24_0.py`.
 
 .. include:: changelog_legend.inc
 
@@ -831,3 +834,57 @@ Code and Documentation Contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 0.23, including:
+
+Abo7atm, Adam Spannbauer, Adrin Jalali, adrinjalali, Agamemnon Krasoulis,
+Akshay Deodhar, Albert Villanova del Moral, Alessandro Gentile, Alex Henrie,
+Alex Itkes, Alex Liang, Alexander Lenail, alexandracraciun, Alexandre Gramfort,
+alexshacked, Allan D Butler, Amanda Dsouza, amy12xx, Anand Tiwari, Anderson
+Nelson, Andreas Mueller, Ankit Choraria, Archana Subramaniyan, Arthur Imbert,
+Ashutosh Hathidara, Ashutosh Kushwaha, Atsushi Nukariya, Aura Munoz, AutoViz
+and Auto_ViML, Avi Gupta, Avinash Anakal, Ayako YAGI, barankarakus,
+barberogaston, beatrizsmg, Ben Mainye, Benjamin Bossan, Benjamin Pedigo, Bharat
+Raghunathan, Bhavika Devnani, Biprateep Dey, bmaisonn, Bo Chang, Boris
+Villazón-Terrazas, brigi, Brigitta Sipőcz, Bruno Charron, Byron Smith, Cary
+Goltermann, Cat Chenal, CeeThinwa, chaitanyamogal, Charles Patel, Chiara Marmo,
+Christian Kastner, Christian Lorentzen, Christoph Deil, Christos Aridas, Clara
+Matos, clmbst, Coelhudo, crispinlogan, Cristina Mulas, Daniel López, Daniel
+Mohns, darioka, Darshan N, david-cortes, Declan O'Neill, Deeksha Madan,
+Elizabeth DuPre, Eric Fiegel, Eric Larson, Erich Schubert, Erin Khoo, Erin R
+Hoffman, eschibli, Felix Wick, fhaselbeck, Forrest Koch, Francesco Casalegno,
+Frans Larsson, Gael Varoquaux, Gaurav Desai, Gaurav Sheni, genvalen, Geoffrey
+Bolmier, George Armstrong, George Kiragu, Gesa Stupperich, Ghislain Antony
+Vaillant, Gim Seng, Gordon Walsh, Gregory R. Lee, Guillaume Chevalier,
+Guillaume Lemaitre, Haesun Park, Hannah Bohle, Hao Chun Chang, Harry Scholes,
+Harsh Soni, Henry, Hirofumi Suzuki, Hitesh Somani, Hoda1394, Hugo Le Moine,
+hugorichard, indecisiveuser, Isuru Fernando, Ivan Wiryadi, j0rd1smit, Jaehyun
+Ahn, Jake Tae, James Hoctor, Jan Vesely, Jeevan Anand Anne, JeroenPeterBos,
+JHayes, Jiaxiang, Jie Zheng, Jigna Panchal, jim0421, Jin Li, Joaquin
+Vanschoren, Joel Nothman, Jona Sassenhagen, Jonathan, Jorge Gorbe Moya, Joseph
+Lucas, Joshua Newton, Juan Carlos Alfaro Jiménez, Julien Jerphanion, Justin
+Huber, Jérémie du Boisberranger, Kartik Chugh, Katarina Slama, kaylani2,
+Kendrick Cetina, Kenny Huynh, Kevin Markham, Kevin Winata, Kiril Isakov,
+kishimoto, Koki Nishihara, Krum Arnaudov, Kyle Kosic, Lauren Oldja, Laurenz
+Reitsam, Lisa Schwetlick, Louis Douge, Louis Guitton, Lucy Liu, Madhura
+Jayaratne, maikia, Manimaran, Manuel López-Ibáñez, Maren Westermann, Maria
+Telenczuk, Mariam-ke, Marijn van Vliet, Markus Löning, Martin Scheubrein,
+Martina G. Vilas, Martina Megasari, Mateusz Górski, mathschy, mathurinm,
+Matthias Bussonnier, Max Del Giudice, Michael, Milan Straka, Muoki Caleb, N.
+Haiat, Nadia Tahiri, Ph. D, Naoki Hamada, Neil Botelho, Nicolas Hug, Nils
+Werner, noelano, Norbert Preining, oj_lappi, Oleh Kozynets, Olivier Grisel,
+Pankaj Jindal, Pardeep Singh, Parthiv Chigurupati, Patrice Becker, Pete Green,
+pgithubs, Poorna Kumar, Prabakaran Kumaresshan, Probinette4, pspachtholz,
+pwalchessen, Qi Zhang, rachel fischoff, Rachit Toshniwal, Rafey Iqbal Rahman,
+Rahul Jakhar, Ram Rachum, RamyaNP, rauwuckl, Ravi Kiran Boggavarapu, Ray Bell,
+Reshama Shaikh, Richard Decal, Rishi Advani, Rithvik Rao, Rob Romijnders, roei,
+Romain Tavenard, Roman Yurchak, Ruby Werman, Ryotaro Tsukada, sadak, Saket
+Khandelwal, Sam, Sam Ezebunandu, Sam Kimbinyi, Sarah Brown, Saurabh Jain, Sean
+O. Stalley, Sergio, Shail Shah, Shane Keller, Shao Yang Hong, Shashank Singh,
+Shooter23, Shubhanshu Mishra, simonamaggio, Soledad Galli, Srimukh Sripada,
+Stephan Steinfurt, subrat93, Sunitha Selvan, Swier, Sylvain Marié, SylvainLan,
+t-kusanagi2, Teon L Brooks, Terence Honles, Thijs van den Berg, Thomas J Fan,
+Thomas J. Fan, Thomas S Benjamin, Thomas9292, Thorben Jensen, tijanajovanovic,
+Timo Kaufmann, tnwei, Tom Dupré la Tour, Trevor Waite, ufmayer, Umberto Lupo,
+Venkatachalam N, Vikas Pandey, Vinicius Rios Fuck, Violeta, watchtheblur, Wenbo
+Zhao, willpeppo, xavier dupré, Xethan, Xue Qianming, xun-tang, yagi-3, Yakov
+Pchelintsev, Yashika Sharma, Yi-Yan Ge, Yue Wu, Yutaro Ikeda, Zaccharie Ramzi,
+zoj613, マーティン, 赵丰 (Zhao Feng).
