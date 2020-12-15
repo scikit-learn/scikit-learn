@@ -86,6 +86,6 @@ def test_loguniform(low, high, base):
     )
 
 
-def test_masked_array_deprecated():  # TODO: remove in 0.25
+def test_masked_array_deprecated():  # TODO: remove in 1.0
     with pytest.warns(FutureWarning, match='is deprecated'):
         MaskedArray()

@@ -212,11 +212,11 @@ def test_fit_docstring_attributes(name, Estimator):
     if 'PLS' in Estimator.__name__ or 'CCA' in Estimator.__name__:
         est.n_components = 1  # default = 2 is invalid for single target.
 
-    # TO BE REMOVED for v0.25 (avoid FutureWarning)
+    # FIXME: TO BE REMOVED for 1.0 (avoid FutureWarning)
     if Estimator.__name__ == 'AffinityPropagation':
         est.random_state = 63
 
-    # TO BE REMOVED for v0.26 (avoid FutureWarning)
+    # FIXME: TO BE REMOVED for 1.1 (avoid FutureWarning)
     if Estimator.__name__ == 'NMF':
         est.init = 'nndsvda'
 

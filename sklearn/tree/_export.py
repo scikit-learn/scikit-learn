@@ -140,7 +140,7 @@ def plot_tree(decision_tree, *, max_depth=None, feature_names=None,
         it is kept here for backward compatibility.
 
         .. deprecated:: 0.23
-           ``rotate`` is deprecated in 0.23 and will be removed in 0.25.
+           ``rotate`` is deprecated in 0.23 and will be removed in 1.0.
 
 
     rounded : bool, default=False
@@ -182,7 +182,7 @@ def plot_tree(decision_tree, *, max_depth=None, feature_names=None,
 
     if rotate != 'deprecated':
         warnings.warn(("'rotate' has no effect and is deprecated in 0.23. "
-                       "It will be removed in 0.25."),
+                       "It will be removed in 1.0."),
                       FutureWarning)
 
     exporter = _MPLTreeExporter(

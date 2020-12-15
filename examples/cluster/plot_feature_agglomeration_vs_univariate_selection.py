@@ -101,7 +101,7 @@ plt.title("Feature Selection")
 plt.subplot(1, 3, 3)
 plt.imshow(coef_agglomeration_, interpolation="nearest", cmap=plt.cm.RdBu_r)
 plt.title("Feature Agglomeration")
-plt.subplots_adjust(0.04, 0.0, 0.98, 0.94, 0.16, 0.26)
+plt.subplots_adjust(0.04, 0.0, 0.98, 0.94, 0.16, 1.1)
 plt.show()
 
 # Attempt to remove the temporary cachedir, but don't worry if it fails
