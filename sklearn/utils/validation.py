@@ -1372,7 +1372,6 @@ def _check_precomputed_gram_matrix(X, precompute, X_offset, X_scale,
 
     Parameters
     ----------
-
     X : array-like of shape (n_samples, n_features)
         Data array.
 
