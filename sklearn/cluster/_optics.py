@@ -15,7 +15,7 @@ import warnings
 import numpy as np
 
 from ..utils import gen_batches, get_chunk_n_rows
-from ..utils.validation import _deprecate_positional_args
+from ..utils.validation import _deprecate_positional_args, check_memory
 from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics import pairwise_distances
@@ -137,6 +137,11 @@ class OPTICS(ClusterMixin, BaseEstimator):
         required to store the tree. The optimal value depends on the
         nature of the problem.
 
+    memory : str or object with the joblib.Memory interface, default=None
+        Used to cache the output of the computation of the tree.
+        By default, no caching is done. If a string is given, it is the
+        path to the caching directory.
+
     n_jobs : int, default=None
         The number of parallel jobs to run for neighbors search.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
@@ -206,7 +211,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
     def __init__(self, *, min_samples=5, max_eps=np.inf, metric='minkowski',
                  p=2, metric_params=None, cluster_method='xi', eps=None,
                  xi=0.05, predecessor_correction=True, min_cluster_size=None,
-                 algorithm='auto', leaf_size=30, n_jobs=None):
+                 algorithm='auto', leaf_size=30, memory=None, n_jobs=None):
         self.max_eps = max_eps
         self.min_samples = min_samples
         self.min_cluster_size = min_cluster_size
@@ -219,6 +224,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
         self.eps = eps
         self.xi = xi
         self.predecessor_correction = predecessor_correction
+        self.memory = memory
         self.n_jobs = n_jobs
 
     def fit(self, X, y=None):
@@ -244,6 +250,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
             The instance.
         """
         X = self._validate_data(X, dtype=float)
+        memory = check_memory(self.memory)
 
         if self.cluster_method not in ['dbscan', 'xi']:
             raise ValueError("cluster_method should be one of"
@@ -251,7 +258,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
                              self.cluster_method)
 
         (self.ordering_, self.core_distances_, self.reachability_,
-         self.predecessor_) = compute_optics_graph(
+         self.predecessor_) = memory.cache(compute_optics_graph)(
              X=X, min_samples=self.min_samples, algorithm=self.algorithm,
              leaf_size=self.leaf_size, metric=self.metric,
              metric_params=self.metric_params, p=self.p, n_jobs=self.n_jobs,
