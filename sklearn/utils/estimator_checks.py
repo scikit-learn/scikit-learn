@@ -2969,7 +2969,7 @@ def check_estimator_sparse_dense(name, estimator_orig,
         tags = estimator_orig._get_tags()
         centers = 2 if tags["binary_only"] else None
         X, y = make_blobs(random_state=rng, cluster_std=0.5, centers=centers)
-    # for put some points to zero to have a little bit of sparsity
+    # set some points to zero to have a little bit of sparsity
     X = _enforce_estimator_tags_x(estimator_orig, X)
     X_csr = sparse.csr_matrix(X)
     y = _enforce_estimator_tags_y(estimator_orig, y)
