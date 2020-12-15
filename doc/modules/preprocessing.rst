@@ -672,9 +672,9 @@ the :class:`FunctionTransformer` function mixed with the
 `cut<https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.cut.html>`
 function from pandas library.::
 
-  >>> import pandas
-  >>> import numpy
-  >>> bins = [0, 1, 13, 20, 60, numpy.inf]
+  >>> import pandas as pd
+  >>> import numpy as np
+  >>> bins = [0, 1, 13, 20, 60, np.inf]
   >>> labels = ['infant', 'kid', 'teen', 'adult', 'senior citizen']
   >>> transformer = preprocessing.FunctionTransformer(pandas.cut,
   ...                                                 kw_args={'bins' : bins,
