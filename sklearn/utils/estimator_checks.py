@@ -774,11 +774,6 @@ def check_estimator_sparse_data(name, estimator_orig, strict_mode=True):
     y = _enforce_estimator_tags_y(estimator, y)
     tags = estimator_orig._get_tags()
     for matrix_format, X in _generate_sparse_matrix(X_csr):
-        # catch deprecation warnings
-        with ignore_warnings(category=FutureWarning):
-            estimator = clone(estimator_orig)
-            if name in ['Scaler', 'StandardScaler']:
-                estimator.set_params(with_mean=False)
         # fit and predict
         try:
             with ignore_warnings(category=FutureWarning):
