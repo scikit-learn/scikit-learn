@@ -2994,16 +2994,13 @@ def check_estimator_sparse_dense(name, estimator_orig,
             # check_estimator_sparse_data
             pass
         else:
-            if hasattr(estimator, "predict"):
-                pred = estimator.predict(X_converted)
-                pred_sp = estimator_sp.predict(X_sp_converted)
-                assert_allclose(pred, pred_sp)
-                assert pred.shape == pred_sp.shape
-            if hasattr(estimator, 'predict_proba'):
-                probs = estimator.predict_proba(X_converted)
-                probs_sp = estimator_sp.predict_proba(X_sp_converted)
-                assert probs_sp.shape == (X.shape[0], len(np.unique(y)))
-                assert_allclose(probs, probs_sp)
+            for method in ["predict", "predict_proba", "decision_function",
+                           "transform", "score", "score_samples"]:
+                if hasattr(estimator, method):
+                    pred = getattr(estimator, method)(X_converted)
+                    pred_sp = getattr(estimator_sp, method)(X_sp_converted)
+                    assert_allclose(pred, pred_sp)
+                    assert pred.shape == pred_sp.shape
 
 
 @ignore_warnings(category=FutureWarning)
