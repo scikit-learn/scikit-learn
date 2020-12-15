@@ -8,7 +8,7 @@ from sklearn.linear_model import LogisticRegressionCV
 from sklearn.pipeline import make_pipeline
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.feature_selection import SelectKBest, chi2
-from sklearn import set_config
+from sklearn import set_config, config_context
 
 
 # Ignore flake8 (lots of line too long issues)
@@ -174,7 +174,7 @@ class SimpleImputer(BaseEstimator):
         self.copy = copy
 
 
-def test_basic():
+def test_basic(print_changed_only_false):
     # Basic pprint test
     lr = LogisticRegression()
     expected = """
@@ -189,8 +189,7 @@ LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
 
 
 def test_changed_only():
-    # Make sure the changed_only param is correctly used
-    set_config(print_changed_only=True)
+    # Make sure the changed_only param is correctly used when True (default)
     lr = LogisticRegression(C=99)
     expected = """LogisticRegression(C=99)"""
     assert lr.__repr__() == expected
@@ -216,10 +215,8 @@ LogisticRegression(C=99, class_weight=0.4, fit_intercept=False, tol=1234,
     # make sure array parameters don't throw error (see #13583)
     repr(LogisticRegressionCV(Cs=np.array([0.1, 1])))
 
-    set_config(print_changed_only=False)
 
-
-def test_pipeline():
+def test_pipeline(print_changed_only_false):
     # Render a pipeline object
     pipeline = make_pipeline(StandardScaler(), LogisticRegression(C=999))
     expected = """
@@ -240,7 +237,7 @@ Pipeline(memory=None,
     assert pipeline.__repr__() == expected
 
 
-def test_deeply_nested():
+def test_deeply_nested(print_changed_only_false):
     # Render a deeply nested estimator
     rfe = RFE(RFE(RFE(RFE(RFE(RFE(RFE(LogisticRegression())))))))
     expected = """
@@ -277,7 +274,7 @@ RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estima
     assert rfe.__repr__() == expected
 
 
-def test_gridsearch():
+def test_gridsearch(print_changed_only_false):
     # render a gridsearch
     param_grid = [{'kernel': ['rbf'], 'gamma': [1e-3, 1e-4],
                    'C': [1, 10, 100, 1000]},
@@ -302,7 +299,7 @@ GridSearchCV(cv=5, error_score='raise-deprecating',
     assert gs.__repr__() == expected
 
 
-def test_gridsearch_pipeline():
+def test_gridsearch_pipeline(print_changed_only_false):
     # render a pipeline inside a gridsearch
     pp = _EstimatorPrettyPrinter(compact=True, indent=1, indent_at_name=True)
 
@@ -371,7 +368,8 @@ GridSearchCV(cv=3, error_score='raise-deprecating',
                    'function chi2 at some_address>', repr_)
     assert repr_ == expected
 
-def test_n_max_elements_to_show():
+
+def test_n_max_elements_to_show(print_changed_only_false):
 
     n_max_elements_to_show = 30
     pp = _EstimatorPrettyPrinter(
@@ -397,7 +395,7 @@ CountVectorizer(analyzer='word', binary=False, decode_error='strict',
                             27: 27, 28: 28, 29: 29})"""
 
     expected = expected[1:]  # remove first \n
-    assert  pp.pformat(vectorizer) == expected
+    assert pp.pformat(vectorizer) == expected
 
     # Now with ellipsis
     vocabulary = {i: i for i in range(n_max_elements_to_show + 1)}
@@ -417,7 +415,7 @@ CountVectorizer(analyzer='word', binary=False, decode_error='strict',
                             27: 27, 28: 28, 29: 29, ...})"""
 
     expected = expected[1:]  # remove first \n
-    assert  pp.pformat(vectorizer) == expected
+    assert pp.pformat(vectorizer) == expected
 
     # Also test with lists
     param_grid = {'C': list(range(n_max_elements_to_show))}
@@ -437,7 +435,7 @@ GridSearchCV(cv='warn', error_score='raise-deprecating',
              scoring=None, verbose=0)"""
 
     expected = expected[1:]  # remove first \n
-    assert  pp.pformat(gs) == expected
+    assert pp.pformat(gs) == expected
 
     # Now with ellipsis
     param_grid = {'C': list(range(n_max_elements_to_show + 1))}
@@ -457,10 +455,10 @@ GridSearchCV(cv='warn', error_score='raise-deprecating',
              scoring=None, verbose=0)"""
 
     expected = expected[1:]  # remove first \n
-    assert  pp.pformat(gs) == expected
+    assert pp.pformat(gs) == expected
 
 
-def test_bruteforce_ellipsis():
+def test_bruteforce_ellipsis(print_changed_only_false):
     # Check that the bruteforce ellipsis (used when the number of non-blank
     # characters exceeds N_CHAR_MAX) renders correctly.
 
@@ -533,9 +531,46 @@ LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
     expected = expected[1:]  # remove first \n
     assert expected == lr.__repr__(N_CHAR_MAX=n_nonblank - 2)
 
+
 def test_builtin_prettyprinter():
     # non regression test than ensures we can still use the builtin
     # PrettyPrinter class for estimators (as done e.g. by joblib).
     # Used to be a bug
 
     PrettyPrinter().pprint(LogisticRegression())
+
+
+def test_kwargs_in_init():
+    # Make sure the changed_only=True mode is OK when an argument is passed as
+    # kwargs.
+    # Non-regression test for
+    # https://github.com/scikit-learn/scikit-learn/issues/17206
+
+    class WithKWargs(BaseEstimator):
+        # Estimator with a kwargs argument. These need to hack around
+        # set_params and get_params. Here we mimic what LightGBM does.
+        def __init__(self, a='willchange', b='unchanged', **kwargs):
+            self.a = a
+            self.b = b
+            self._other_params = {}
+            self.set_params(**kwargs)
+
+        def get_params(self, deep=True):
+            params = super().get_params(deep=deep)
+            params.update(self._other_params)
+            return params
+
+        def set_params(self, **params):
+            for key, value in params.items():
+                setattr(self, key, value)
+                self._other_params[key] = value
+            return self
+
+    est = WithKWargs(a='something', c='abcd', d=None)
+
+    expected = "WithKWargs(a='something', c='abcd', d=None)"
+    assert expected == est.__repr__()
+
+    with config_context(print_changed_only=False):
+        expected = "WithKWargs(a='something', b='unchanged', c='abcd', d=None)"
+        assert expected == est.__repr__()

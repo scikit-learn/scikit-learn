@@ -4,10 +4,8 @@ import pytest
 
 from scipy import linalg
 
-from sklearn.exceptions import ChangedBehaviorWarning
 from sklearn.utils import check_random_state
-from sklearn.utils._testing import (assert_array_equal, assert_no_warnings,
-                                   assert_warns_message)
+from sklearn.utils._testing import assert_array_equal, assert_no_warnings
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_almost_equal
@@ -76,7 +74,7 @@ def test_lda_predict():
                            'solver %s' % solver)
         y_log_proba_pred1 = clf.predict_log_proba(X1)
         assert_allclose(np.exp(y_log_proba_pred1), y_proba_pred1,
-                        rtol=1e-6, err_msg='solver %s' % solver)
+                        rtol=1e-6, atol=1e-6, err_msg='solver %s' % solver)
 
         # Primarily test for commit 2f34950 -- "reuse" of priors
         y_pred3 = clf.fit(X, y3).predict(X)

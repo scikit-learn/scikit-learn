@@ -1,4 +1,3 @@
-import pytest
 import numpy as np
 from scipy import sparse
 
@@ -7,12 +6,12 @@ from numpy.testing import assert_array_equal
 
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_warns
-from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_raises_regexp
 from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_allclose
 from sklearn.datasets import make_regression
-from sklearn.linear_model import LinearRegression, RANSACRegressor, Lasso
+from sklearn.linear_model import LinearRegression, RANSACRegressor
+from sklearn.linear_model import OrthogonalMatchingPursuit
 from sklearn.linear_model._ransac import _dynamic_max_trials
 from sklearn.exceptions import ConvergenceWarning
 
@@ -289,7 +288,9 @@ def test_ransac_none_estimator():
 
     ransac_estimator = RANSACRegressor(base_estimator, min_samples=2,
                                        residual_threshold=5, random_state=0)
-    ransac_none_estimator = RANSACRegressor(None, 2, 5, random_state=0)
+    ransac_none_estimator = RANSACRegressor(None, min_samples=2,
+                                            residual_threshold=5,
+                                            random_state=0)
 
     ransac_estimator.fit(X, y)
     ransac_none_estimator.fit(X, y)
@@ -487,11 +488,11 @@ def test_ransac_fit_sample_weight():
     y_ = np.append(y_, outlier_y)
     ransac_estimator.fit(X_, y_, sample_weight)
 
-    assert_almost_equal(ransac_estimator.estimator_.coef_, ref_coef_)
+    assert_allclose(ransac_estimator.estimator_.coef_, ref_coef_)
 
     # check that if base_estimator.fit doesn't support
     # sample_weight, raises error
-    base_estimator = Lasso()
+    base_estimator = OrthogonalMatchingPursuit()
     ransac_estimator = RANSACRegressor(base_estimator)
     assert_raises(ValueError, ransac_estimator.fit, X, y, weights)
 
@@ -511,4 +512,4 @@ def test_ransac_final_model_fit_sample_weight():
         sample_weight=sample_weight[mask_samples]
     )
 
-    assert_allclose(ransac.estimator_.coef_, final_model.coef_)
+    assert_allclose(ransac.estimator_.coef_, final_model.coef_, atol=1e-12)

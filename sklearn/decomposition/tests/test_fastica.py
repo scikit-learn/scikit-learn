@@ -158,7 +158,6 @@ def test_fastica_convergence_fail():
     s2 = np.ceil(np.sin(np.pi * t))
     s = np.c_[s1, s2].T
     center_and_norm(s)
-    s1, s2 = s
 
     # Mixing matrix
     mixing = rng.randn(6, 2)
@@ -170,7 +169,8 @@ def test_fastica_convergence_fail():
     assert_warns(ConvergenceWarning, ica.fit, m.T)
 
 
-def test_non_square_fastica(add_noise=False):
+@pytest.mark.parametrize('add_noise', [True, False])
+def test_non_square_fastica(add_noise):
     # Test the FastICA algorithm on very simple data.
     rng = np.random.RandomState(0)
 

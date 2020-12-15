@@ -50,8 +50,8 @@ from . import get_data_home
 from ._base import _fetch_remote
 from ._base import RemoteFileMetadata
 from ..utils import Bunch
+from ..utils.validation import _deprecate_positional_args
 from ._base import _pkl_filepath
-from ._base import _refresh_cache
 
 # The original data can be found at:
 # https://biodiversityinformatics.amnh.org/open_source/maxent/samples.zip
@@ -138,7 +138,8 @@ def construct_grids(batch):
     return (xgrid, ygrid)
 
 
-def fetch_species_distributions(data_home=None,
+@_deprecate_positional_args
+def fetch_species_distributions(*, data_home=None,
                                 download_if_missing=True):
     """Loader for species distribution dataset from Phillips et. al. (2006)
 
@@ -146,41 +147,38 @@ def fetch_species_distributions(data_home=None,
 
     Parameters
     ----------
-    data_home : optional, default: None
+    data_home : str, default=None
         Specify another download and cache folder for the datasets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
-    download_if_missing : optional, True by default
+    download_if_missing : bool, default=True
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
     Returns
     -------
-    The data is returned as a Bunch object with the following attributes:
+    data : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
 
-    coverages : array, shape = [14, 1592, 1212]
-        These represent the 14 features measured at each point of the map grid.
-        The latitude/longitude values for the grid are discussed below.
-        Missing data is represented by the value -9999.
+        coverages : array, shape = [14, 1592, 1212]
+            These represent the 14 features measured
+            at each point of the map grid.
+            The latitude/longitude values for the grid are discussed below.
+            Missing data is represented by the value -9999.
+        train : record array, shape = (1624,)
+            The training points for the data.  Each point has three fields:
 
-    train : record array, shape = (1624,)
-        The training points for the data.  Each point has three fields:
-
-        - train['species'] is the species name
-        - train['dd long'] is the longitude, in degrees
-        - train['dd lat'] is the latitude, in degrees
-
-    test : record array, shape = (620,)
-        The test points for the data.  Same format as the training data.
-
-    Nx, Ny : integers
-        The number of longitudes (x) and latitudes (y) in the grid
-
-    x_left_lower_corner, y_left_lower_corner : floats
-        The (x,y) position of the lower-left corner, in degrees
-
-    grid_size : float
-        The spacing between points of the grid, in degrees
+            - train['species'] is the species name
+            - train['dd long'] is the longitude, in degrees
+            - train['dd lat'] is the latitude, in degrees
+        test : record array, shape = (620,)
+            The test points for the data.  Same format as the training data.
+        Nx, Ny : integers
+            The number of longitudes (x) and latitudes (y) in the grid
+        x_left_lower_corner, y_left_lower_corner : floats
+            The (x,y) position of the lower-left corner, in degrees
+        grid_size : float
+            The spacing between points of the grid, in degrees
 
     References
     ----------
@@ -260,8 +258,6 @@ def fetch_species_distributions(data_home=None,
                       **extra_params)
         joblib.dump(bunch, archive_path, compress=9)
     else:
-        bunch = _refresh_cache([archive_path], 9)
-        # TODO: Revert to the following line in v0.23
-        # bunch = joblib.load(archive_path)
+        bunch = joblib.load(archive_path)
 
     return bunch

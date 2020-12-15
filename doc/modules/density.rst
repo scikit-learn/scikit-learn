@@ -93,7 +93,7 @@ Given this kernel form, the density estimate at a point :math:`y` within
 a group of points :math:`x_i; i=1\cdots N` is given by:
 
 .. math::
-    \rho_K(y) = \sum_{i=1}^{N} K((y - x_i) / h)
+    \rho_K(y) = \sum_{i=1}^{N} K(y - x_i; h)
 
 The bandwidth here acts as a smoothing parameter, controlling the tradeoff
 between bias and variance in the result.  A large bandwidth leads to a very

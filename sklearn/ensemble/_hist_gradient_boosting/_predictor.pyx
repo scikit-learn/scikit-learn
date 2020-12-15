@@ -18,6 +18,8 @@ from .common import Y_DTYPE
 from .common cimport X_BINNED_DTYPE_C
 from .common cimport node_struct
 
+np.import_array()
+
 
 def _predict_from_numeric_data(
         node_struct [:] nodes,

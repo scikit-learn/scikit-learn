@@ -18,6 +18,7 @@ import numpy as np
 
 from . import empirical_covariance, EmpiricalCovariance
 from ..utils import check_array
+from ..utils.validation import _deprecate_positional_args
 
 
 # ShrunkCovariance estimator
@@ -29,16 +30,16 @@ def shrunk_covariance(emp_cov, shrinkage=0.1):
 
     Parameters
     ----------
-    emp_cov : array-like, shape (n_features, n_features)
+    emp_cov : array-like of shape (n_features, n_features)
         Covariance matrix to be shrunk
 
-    shrinkage : float, 0 <= shrinkage <= 1
+    shrinkage : float, default=0.1
         Coefficient in the convex combination used for the computation
-        of the shrunk estimate.
+        of the shrunk estimate. Range is [0, 1].
 
     Returns
     -------
-    shrunk_cov : array-like
+    shrunk_cov : ndarray of shape (n_features, n_features)
         Shrunk covariance.
 
     Notes
@@ -48,7 +49,6 @@ def shrunk_covariance(emp_cov, shrinkage=0.1):
     (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
 
     where mu = trace(cov) / n_features
-
     """
     emp_cov = check_array(emp_cov)
     n_features = emp_cov.shape[0]
@@ -67,28 +67,28 @@ class ShrunkCovariance(EmpiricalCovariance):
 
     Parameters
     ----------
-    store_precision : boolean, default True
+    store_precision : bool, default=True
         Specify if the estimated precision is stored
 
-    assume_centered : boolean, default False
+    assume_centered : bool, default=False
         If True, data will not be centered before computation.
         Useful when working with data whose mean is almost, but not exactly
         zero.
         If False, data will be centered before computation.
 
-    shrinkage : float, 0 <= shrinkage <= 1, default 0.1
+    shrinkage : float, default=0.1
         Coefficient in the convex combination used for the computation
-        of the shrunk estimate.
+        of the shrunk estimate. Range is [0, 1].
 
     Attributes
     ----------
-    location_ : array-like, shape (n_features,)
-        Estimated location, i.e. the estimated mean.
-
-    covariance_ : array-like, shape (n_features, n_features)
+    covariance_ : ndarray of shape (n_features, n_features)
         Estimated covariance matrix
 
-    precision_ : array-like, shape (n_features, n_features)
+    location_ : ndarray of shape (n_features,)
+        Estimated location, i.e. the estimated mean.
+
+    precision_ : ndarray of shape (n_features, n_features)
         Estimated pseudo inverse matrix.
         (stored only if store_precision is True)
 
@@ -117,17 +117,17 @@ class ShrunkCovariance(EmpiricalCovariance):
     (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
 
     where mu = trace(cov) / n_features
-
     """
-    def __init__(self, store_precision=True, assume_centered=False,
+    @_deprecate_positional_args
+    def __init__(self, *, store_precision=True, assume_centered=False,
                  shrinkage=0.1):
         super().__init__(store_precision=store_precision,
                          assume_centered=assume_centered)
         self.shrinkage = shrinkage
 
     def fit(self, X, y=None):
-        """ Fits the shrunk covariance model
-        according to the given training data and parameters.
+        """Fit the shrunk covariance model according to the given training data
+        and parameters.
 
         Parameters
         ----------
@@ -135,15 +135,14 @@ class ShrunkCovariance(EmpiricalCovariance):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y
+        y: Ignored
             not used, present for API consistence purpose.
 
         Returns
         -------
         self : object
-
         """
-        X = check_array(X)
+        X = self._validate_data(X)
         # Not calling the parent object to fit, to avoid a potential
         # matrix inversion when setting the precision
         if self.assume_centered:
@@ -167,16 +166,16 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
 
     Parameters
     ----------
-    X : array-like, shape (n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
         Data from which to compute the Ledoit-Wolf shrunk covariance shrinkage.
 
-    assume_centered : bool
+    assume_centered : bool, default=False
         If True, data will not be centered before computation.
         Useful to work with data whose mean is significantly equal to
         zero but is not exactly zero.
         If False, data will be centered before computation.
 
-    block_size : int
+    block_size : int, default=1000
         Size of the blocks into which the covariance matrix will be split.
 
     Returns
@@ -192,7 +191,6 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
 
     where mu = trace(cov) / n_features
-
     """
     X = np.asarray(X)
     # for only one feature, the result is the same whatever the shrinkage
@@ -255,17 +253,18 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     return shrinkage
 
 
-def ledoit_wolf(X, assume_centered=False, block_size=1000):
+@_deprecate_positional_args
+def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
     """Estimates the shrunk Ledoit-Wolf covariance matrix.
 
     Read more in the :ref:`User Guide <shrunk_covariance>`.
 
     Parameters
     ----------
-    X : array-like, shape (n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
         Data from which to compute the covariance estimate
 
-    assume_centered : boolean, default=False
+    assume_centered : bool, default=False
         If True, data will not be centered before computation.
         Useful to work with data whose mean is significantly equal to
         zero but is not exactly zero.
@@ -277,7 +276,7 @@ def ledoit_wolf(X, assume_centered=False, block_size=1000):
 
     Returns
     -------
-    shrunk_cov : array-like, shape (n_features, n_features)
+    shrunk_cov : ndarray of shape (n_features, n_features)
         Shrunk covariance.
 
     shrinkage : float
@@ -291,7 +290,6 @@ def ledoit_wolf(X, assume_centered=False, block_size=1000):
     (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
 
     where mu = trace(cov) / n_features
-
     """
     X = np.asarray(X)
     # for only one feature, the result is the same whatever the shrinkage
@@ -347,19 +345,19 @@ class LedoitWolf(EmpiricalCovariance):
 
     Attributes
     ----------
-    location_ : array-like, shape (n_features,)
+    covariance_ : ndarray of shape (n_features, n_features)
+        Estimated covariance matrix.
+
+    location_ : ndarray of shape (n_features,)
         Estimated location, i.e. the estimated mean.
 
-    covariance_ : array-like, shape (n_features, n_features)
-        Estimated covariance matrix
-
-    precision_ : array-like, shape (n_features, n_features)
+    precision_ : ndarray of shape (n_features, n_features)
         Estimated pseudo inverse matrix.
         (stored only if store_precision is True)
 
-    shrinkage_ : float, 0 <= shrinkage <= 1
+    shrinkage_ : float
         Coefficient in the convex combination used for the computation
-        of the shrunk estimate.
+        of the shrunk estimate. Range is [0, 1].
 
     Examples
     --------
@@ -392,34 +390,33 @@ class LedoitWolf(EmpiricalCovariance):
     "A Well-Conditioned Estimator for Large-Dimensional Covariance Matrices",
     Ledoit and Wolf, Journal of Multivariate Analysis, Volume 88, Issue 2,
     February 2004, pages 365-411.
-
     """
-    def __init__(self, store_precision=True, assume_centered=False,
+    @_deprecate_positional_args
+    def __init__(self, *, store_precision=True, assume_centered=False,
                  block_size=1000):
         super().__init__(store_precision=store_precision,
                          assume_centered=assume_centered)
         self.block_size = block_size
 
     def fit(self, X, y=None):
-        """ Fits the Ledoit-Wolf shrunk covariance model
-        according to the given training data and parameters.
+        """Fit the Ledoit-Wolf shrunk covariance model according to the given
+        training data and parameters.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
-        y
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+        y : Ignored
             not used, present for API consistence purpose.
 
         Returns
         -------
         self : object
-
         """
         # Not calling the parent object to fit, to avoid computing the
         # covariance matrix (and potentially the precision)
-        X = check_array(X)
+        X = self._validate_data(X)
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
         else:
@@ -434,16 +431,16 @@ class LedoitWolf(EmpiricalCovariance):
 
 
 # OAS estimator
-
-def oas(X, assume_centered=False):
+@_deprecate_positional_args
+def oas(X, *, assume_centered=False):
     """Estimate covariance with the Oracle Approximating Shrinkage algorithm.
 
     Parameters
     ----------
-    X : array-like, shape (n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
         Data from which to compute the covariance estimate.
 
-    assume_centered : boolean
+    assume_centered : bool, default=False
       If True, data will not be centered before computation.
       Useful to work with data whose mean is significantly equal to
       zero but is not exactly zero.
@@ -451,7 +448,7 @@ def oas(X, assume_centered=False):
 
     Returns
     -------
-    shrunk_cov : array-like, shape (n_features, n_features)
+    shrunk_cov : array-like of shape (n_features, n_features)
         Shrunk covariance.
 
     shrinkage : float
@@ -468,7 +465,6 @@ def oas(X, assume_centered=False):
 
     The formula we used to implement the OAS is slightly modified compared
     to the one given in the article. See :class:`OAS` for more details.
-
     """
     X = np.asarray(X)
     # for only one feature, the result is the same whatever the shrinkage
@@ -528,16 +524,40 @@ class OAS(EmpiricalCovariance):
 
     Attributes
     ----------
-    covariance_ : array-like, shape (n_features, n_features)
+    covariance_ : ndarray of shape (n_features, n_features)
         Estimated covariance matrix.
 
-    precision_ : array-like, shape (n_features, n_features)
+    location_ : ndarray of shape (n_features,)
+        Estimated location, i.e. the estimated mean.
+
+    precision_ : ndarray of shape (n_features, n_features)
         Estimated pseudo inverse matrix.
         (stored only if store_precision is True)
 
-    shrinkage_ : float, 0 <= shrinkage <= 1
+    shrinkage_ : float
       coefficient in the convex combination used for the computation
-      of the shrunk estimate.
+      of the shrunk estimate. Range is [0, 1].
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.covariance import OAS
+    >>> from sklearn.datasets import make_gaussian_quantiles
+    >>> real_cov = np.array([[.8, .3],
+    ...                      [.3, .4]])
+    >>> rng = np.random.RandomState(0)
+    >>> X = rng.multivariate_normal(mean=[0, 0],
+    ...                             cov=real_cov,
+    ...                             size=500)
+    >>> oas = OAS().fit(X)
+    >>> oas.covariance_
+    array([[0.7533..., 0.2763...],
+           [0.2763..., 0.3964...]])
+    >>> oas.precision_
+    array([[ 1.7833..., -1.2431... ],
+           [-1.2431...,  3.3889...]])
+    >>> oas.shrinkage_
+    0.0195...
 
     Notes
     -----
@@ -552,27 +572,25 @@ class OAS(EmpiricalCovariance):
     ----------
     "Shrinkage Algorithms for MMSE Covariance Estimation"
     Chen et al., IEEE Trans. on Sign. Proc., Volume 58, Issue 10, October 2010.
-
     """
 
     def fit(self, X, y=None):
-        """ Fits the Oracle Approximating Shrinkage covariance model
+        """Fit the Oracle Approximating Shrinkage covariance model
         according to the given training data and parameters.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
-        y
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+        y : Ignored
             not used, present for API consistence purpose.
 
         Returns
         -------
         self : object
-
         """
-        X = check_array(X)
+        X = self._validate_data(X)
         # Not calling the parent object to fit, to avoid computing the
         # covariance matrix (and potentially the precision)
         if self.assume_centered:

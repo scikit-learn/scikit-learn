@@ -24,7 +24,7 @@ def _build_sparse_mtx():
     # Create 3 topics and each topic has 3 distinct words.
     # (Each word only belongs to a single topic.)
     n_components = 3
-    block = np.full((3, 3), n_components, dtype=np.int)
+    block = np.full((3, 3), n_components, dtype=int)
     blocks = [block] * n_components
     X = block_diag(*blocks)
     X = csr_matrix(X)

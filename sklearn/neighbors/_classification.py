@@ -14,16 +14,16 @@ from ..utils.extmath import weighted_mode
 from ..utils.validation import _is_arraylike, _num_samples
 
 import warnings
-from ._base import \
-    _check_weights, _get_weights, \
-    NeighborsBase, KNeighborsMixin,\
-    RadiusNeighborsMixin, SupervisedIntegerMixin
+from ._base import _check_weights, _get_weights
+from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
 from ..base import ClassifierMixin
 from ..utils import check_array
+from ..utils.validation import _deprecate_positional_args
 
 
-class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
-                           SupervisedIntegerMixin, ClassifierMixin):
+class KNeighborsClassifier(KNeighborsMixin,
+                           ClassifierMixin,
+                           NeighborsBase):
     """Classifier implementing the k-nearest neighbors vote.
 
     Read more in the :ref:`User Guide <classification>`.
@@ -71,10 +71,10 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
     metric : str or callable, default='minkowski'
         the distance metric to use for the tree.  The default metric is
         minkowski, and with p=2 is equivalent to the standard Euclidean
-        metric. See the documentation of the DistanceMetric class for a
+        metric. See the documentation of :class:`DistanceMetric` for a
         list of available metrics.
         If metric is "precomputed", X is assumed to be a distance matrix and
-        must be square during fit. X may be a :term:`Glossary <sparse graph>`,
+        must be square during fit. X may be a :term:`sparse graph`,
         in which case only "nonzero" elements may be considered neighbors.
 
     metric_params : dict, default=None
@@ -102,6 +102,9 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         will be same with `metric_params` parameter, but may also contain the
         `p` parameter value if the `effective_metric_` attribute is set to
         'minkowski'.
+
+    n_samples_fit_ : int
+        Number of samples in the fitted data.
 
     outputs_2d_ : bool
         False when `y`'s shape is (n_samples, ) or (n_samples, 1) during fit
@@ -142,7 +145,8 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
     https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
-    def __init__(self, n_neighbors=5,
+    @_deprecate_positional_args
+    def __init__(self, n_neighbors=5, *,
                  weights='uniform', algorithm='auto', leaf_size=30,
                  p=2, metric='minkowski', metric_params=None, n_jobs=None,
                  **kwargs):
@@ -153,6 +157,26 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
             metric_params=metric_params,
             n_jobs=n_jobs, **kwargs)
         self.weights = _check_weights(weights)
+
+    def fit(self, X, y):
+        """Fit the k-nearest neighbors classifier from the training dataset.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
+                (n_samples, n_samples) if metric='precomputed'
+            Training data.
+
+        y : {array-like, sparse matrix} of shape (n_samples,) or \
+                (n_samples, n_outputs)
+            Target values.
+
+        Returns
+        -------
+        self : KNeighborsClassifier
+            The fitted k-nearest neighbors classifier.
+        """
+        return self._fit(X, y)
 
     def predict(self, X):
         """Predict the class labels for the provided data.
@@ -251,8 +275,9 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         return probabilities
 
 
-class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
-                                SupervisedIntegerMixin, ClassifierMixin):
+class RadiusNeighborsClassifier(RadiusNeighborsMixin,
+                                ClassifierMixin,
+                                NeighborsBase):
     """Classifier implementing a vote among neighbors within a given radius
 
     Read more in the :ref:`User Guide <classification>`.
@@ -303,10 +328,10 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     metric : str or callable, default='minkowski'
         the distance metric to use for the tree.  The default metric is
         minkowski, and with p=2 is equivalent to the standard Euclidean
-        metric. See the documentation of the DistanceMetric class for a
+        metric. See the documentation of :class:`DistanceMetric` for a
         list of available metrics.
         If metric is "precomputed", X is assumed to be a distance matrix and
-        must be square during fit. X may be a :term:`Glossary <sparse graph>`,
+        must be square during fit. X may be a :term:`sparse graph`,
         in which case only "nonzero" elements may be considered neighbors.
 
     outlier_label : {manual label, 'most_frequent'}, default=None
@@ -331,7 +356,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     classes_ : ndarray of shape (n_classes,)
         Class labels known to the classifier.
 
-    effective_metric_ : str or callble
+    effective_metric_ : str or callable
         The distance metric used. It will be same as the `metric` parameter
         or a synonym of it, e.g. 'euclidean' if the `metric` parameter set to
         'minkowski' and `p` parameter set to 2.
@@ -341,6 +366,13 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         will be same with `metric_params` parameter, but may also contain the
         `p` parameter value if the `effective_metric_` attribute is set to
         'minkowski'.
+
+    n_samples_fit_ : int
+        Number of samples in the fitted data.
+
+    outlier_label_ : int or array-like of shape (n_class,)
+        Label which is given for outlier samples (samples with no neighbors
+        on given radius).
 
     outputs_2d_ : bool
         False when `y`'s shape is (n_samples, ) or (n_samples, 1) during fit
@@ -374,7 +406,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
-    def __init__(self, radius=1.0, weights='uniform',
+    @_deprecate_positional_args
+    def __init__(self, radius=1.0, *, weights='uniform',
                  algorithm='auto', leaf_size=30, p=2, metric='minkowski',
                  outlier_label=None, metric_params=None, n_jobs=None,
                  **kwargs):
@@ -388,22 +421,24 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         self.outlier_label = outlier_label
 
     def fit(self, X, y):
-        """Fit the model using X as training data and y as target values
+        """Fit the radius neighbors classifier from the training dataset.
 
         Parameters
         ----------
-        X : BallTree, KDTree or {array-like, sparse matrix} of shape \
-                (n_samples, n_features) or (n_samples, n_samples)
-            Training data. If array or matrix, the shape is (n_samples,
-            n_features), or (n_samples, n_samples) if metric='precomputed'.
+        X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
+                (n_samples, n_samples) if metric='precomputed'
+            Training data.
 
         y : {array-like, sparse matrix} of shape (n_samples,) or \
-                (n_samples, n_output)
+                (n_samples, n_outputs)
             Target values.
 
+        Returns
+        -------
+        self : RadiusNeighborsClassifier
+            The fitted radius neighbors classifier.
         """
-
-        SupervisedIntegerMixin.fit(self, X, y)
+        self._fit(X, y)
 
         classes_ = self.classes_
         _y = self._y
@@ -416,7 +451,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         elif self.outlier_label == 'most_frequent':
             outlier_label_ = []
-            # iterate over multi-output, get the most frequest label for each
+            # iterate over multi-output, get the most frequent label for each
             # output.
             for k, classes_k in enumerate(classes_):
                 label_count = np.bincount(_y[:, k])
@@ -448,6 +483,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                                     "y.".format(label, classes))
 
         self.outlier_label_ = outlier_label_
+
         return self
 
     def predict(self, X):
@@ -513,7 +549,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         n_queries = _num_samples(X)
 
         neigh_dist, neigh_ind = self.radius_neighbors(X)
-        outlier_mask = np.zeros(n_queries, dtype=np.bool)
+        outlier_mask = np.zeros(n_queries, dtype=bool)
         outlier_mask[:] = [len(nind) == 0 for nind in neigh_ind]
         outliers = np.flatnonzero(outlier_mask)
         inliers = np.flatnonzero(~outlier_mask)

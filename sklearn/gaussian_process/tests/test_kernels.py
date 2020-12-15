@@ -14,7 +14,7 @@ from sklearn.metrics.pairwise \
 from sklearn.gaussian_process.kernels \
     import (RBF, Matern, RationalQuadratic, ExpSineSquared, DotProduct,
             ConstantKernel, WhiteKernel, PairwiseKernel, KernelOperator,
-            Exponentiation, Kernel, CompoundKernel)
+            Exponentiation, CompoundKernel)
 from sklearn.base import clone
 
 from sklearn.utils._testing import (assert_almost_equal, assert_array_equal,
@@ -250,6 +250,7 @@ def test_kernel_clone_after_set_params(kernel):
                                                    isotropic_kernels):
         length_scale = params['length_scale']
         if np.iterable(length_scale):
+            # XXX unreached code as of v0.22
             params['length_scale'] = length_scale[0]
             params['length_scale_bounds'] = bounds
         else:
@@ -353,27 +354,6 @@ def test_repr_kernels(kernel):
     # Smoke-test for repr in kernels.
 
     repr(kernel)
-
-
-def test_warns_on_get_params_non_attribute():
-    class MyKernel(Kernel):
-        def __init__(self, param=5):
-            pass
-
-        def __call__(self, X, Y=None, eval_gradient=False):
-            return X
-
-        def diag(self, X):
-            return np.ones(X.shape[0])
-
-        def is_stationary(self):
-            return False
-
-    est = MyKernel()
-    with pytest.warns(FutureWarning, match='AttributeError'):
-        params = est.get_params()
-
-    assert params['param'] is None
 
 
 def test_rational_quadratic_kernel():

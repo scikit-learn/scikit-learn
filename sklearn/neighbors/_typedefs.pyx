@@ -4,6 +4,9 @@ import numpy as np
 cimport numpy as np
 from libc.math cimport sqrt
 
+np.import_array()
+
+
 # use a hack to determine the associated numpy data types
 # NOTE: the following requires the buffer interface, only available in
 #       numpy 1.5+.  We'll choose the DTYPE by hand instead.

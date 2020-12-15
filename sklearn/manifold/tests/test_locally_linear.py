@@ -131,7 +131,7 @@ def test_singular_matrix():
     M = np.ones((10, 3))
     f = ignore_warnings
     with pytest.raises(ValueError):
-        f(manifold.locally_linear_embedding(M, 2, 1,
+        f(manifold.locally_linear_embedding(M, n_neighbors=2, n_components=1,
                                             method='standard',
                                             eigen_solver='arpack'))
 

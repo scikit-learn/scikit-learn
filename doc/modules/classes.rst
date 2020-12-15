@@ -33,6 +33,7 @@ Base classes
    base.DensityMixin
    base.RegressorMixin
    base.TransformerMixin
+   feature_selection.SelectorMixin
 
 Functions
 ---------
@@ -430,16 +431,14 @@ Samples generator
 
 .. autosummary::
    :toctree: generated/
-   :template: class_without_init.rst
+   :template: class.rst
 
-   exceptions.ChangedBehaviorWarning
    exceptions.ConvergenceWarning
    exceptions.DataConversionWarning
    exceptions.DataDimensionalityWarning
    exceptions.EfficiencyWarning
    exceptions.FitFailedWarning
    exceptions.NotFittedError
-   exceptions.NonBLASDotWarning
    exceptions.UndefinedMetricWarning
 
 
@@ -707,6 +706,7 @@ Plotting
 
    kernel_approximation.AdditiveChi2Sampler
    kernel_approximation.Nystroem
+   kernel_approximation.PolynomialCountSketch
    kernel_approximation.RBFSampler
    kernel_approximation.SkewedChi2Sampler
 
@@ -836,6 +836,21 @@ Any estimator using the Huber loss would also be robust to outliers, e.g.
    linear_model.RANSACRegressor
    linear_model.TheilSenRegressor
 
+Generalized linear models (GLM) for regression
+----------------------------------------------
+
+These models allow for response variables to have error distributions other
+than a normal distribution:
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   linear_model.PoissonRegressor
+   linear_model.TweedieRegressor
+   linear_model.GammaRegressor
+
+
 Miscellaneous
 -------------
 
@@ -884,7 +899,7 @@ Miscellaneous
     manifold.smacof
     manifold.spectral_embedding
     manifold.trustworthiness
-	
+
 
 .. _metrics_ref:
 
@@ -932,6 +947,7 @@ details.
    metrics.cohen_kappa_score
    metrics.confusion_matrix
    metrics.dcg_score
+   metrics.detection_error_tradeoff_curve
    metrics.f1_score
    metrics.fbeta_score
    metrics.hamming_loss
@@ -965,6 +981,7 @@ details.
    metrics.mean_squared_error
    metrics.mean_squared_log_error
    metrics.median_absolute_error
+   metrics.mean_absolute_percentage_error
    metrics.r2_score
    metrics.mean_poisson_deviance
    metrics.mean_gamma_deviance
@@ -1178,12 +1195,6 @@ Hyper-parameter optimizers
    model_selection.RandomizedSearchCV
 
 
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   model_selection.fit_grid_point
-
 Model validation
 ----------------
 
@@ -1335,6 +1346,9 @@ Model validation
 .. automodule:: sklearn.pipeline
    :no-members:
    :no-inherited-members:
+
+**User guide:** See the :ref:`combining_estimators` section for further
+details.
 
 .. currentmodule:: sklearn
 
@@ -1545,6 +1559,7 @@ Plotting
    utils.arrayfuncs.min_pos
    utils.as_float_array
    utils.assert_all_finite
+   utils.Bunch
    utils.check_X_y
    utils.check_array
    utils.check_scalar
@@ -1555,6 +1570,7 @@ Plotting
    utils.deprecated
    utils.estimator_checks.check_estimator
    utils.estimator_checks.parametrize_with_checks
+   utils.estimator_html_repr
    utils.extmath.safe_sparse_dot
    utils.extmath.randomized_range_finder
    utils.extmath.randomized_svd
@@ -1605,11 +1621,5 @@ Utilities from joblib:
 Recently deprecated
 ===================
 
-To be removed in 0.24
+To be removed in 0.25
 ---------------------
-
-.. autosummary::
-   :toctree: generated/
-   :template: deprecated_function.rst
-
-   utils.safe_indexing

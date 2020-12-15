@@ -28,16 +28,23 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import make_moons, make_circles, make_classification
 from sklearn.neural_network import MLPClassifier
+from sklearn.pipeline import make_pipeline
 
 h = .02  # step size in the mesh
 
-alphas = np.logspace(-5, 3, 5)
-names = ['alpha ' + str(i) for i in alphas]
+alphas = np.logspace(-1, 1, 5)
 
 classifiers = []
-for i in alphas:
-    classifiers.append(MLPClassifier(solver='lbfgs', alpha=i, random_state=1,
-                                     hidden_layer_sizes=[100, 100]))
+names = []
+for alpha in alphas:
+    classifiers.append(make_pipeline(
+        StandardScaler(),
+        MLPClassifier(
+            solver='lbfgs', alpha=alpha, random_state=1, max_iter=2000,
+            early_stopping=True, hidden_layer_sizes=[100, 100],
+        )
+    ))
+    names.append(f"alpha {alpha:.2f}")
 
 X, y = make_classification(n_features=2, n_redundant=0, n_informative=2,
                            random_state=0, n_clusters_per_class=1)
@@ -53,8 +60,7 @@ figure = plt.figure(figsize=(17, 9))
 i = 1
 # iterate over datasets
 for X, y in datasets:
-    # preprocess dataset, split into training and test part
-    X = StandardScaler().fit_transform(X)
+    # split into training and test part
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.4)
 
     x_min, x_max = X[:, 0].min() - .5, X[:, 0].max() + .5
@@ -83,7 +89,7 @@ for X, y in datasets:
         score = clf.score(X_test, y_test)
 
         # Plot the decision boundary. For that, we will assign a color to each
-        # point in the mesh [x_min, x_max]x[y_min, y_max].
+        # point in the mesh [x_min, x_max] x [y_min, y_max].
         if hasattr(clf, "decision_function"):
             Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
         else:

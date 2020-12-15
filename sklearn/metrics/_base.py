@@ -156,7 +156,7 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score,
         Target scores corresponding to probability estimates of a sample
         belonging to a particular class
 
-    average : 'macro' or 'weighted', optional (default='macro')
+    average : {'macro', 'weighted'}, default='macro'
         Determines the type of averaging performed on the pairwise binary
         metric scores
         ``'macro'``:

@@ -45,7 +45,7 @@ for weights in ['uniform', 'distance']:
     # Put the result into a color plot
     Z = Z.reshape(xx.shape)
     plt.figure()
-    plt.pcolormesh(xx, yy, Z, cmap=cmap_light)
+    plt.contourf(xx, yy, Z, cmap=cmap_light)
 
     # Plot also the training points
     plt.scatter(X[:, 0], X[:, 1], c=y, cmap=cmap_bold,

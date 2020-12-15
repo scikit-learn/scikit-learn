@@ -4,8 +4,8 @@ The API and results of these estimators might change without any deprecation
 cycle.
 
 Importing this file dynamically sets the
-:class:`sklearn.ensemble.HistGradientBoostingClassifier` and
-:class:`sklearn.ensemble.HistGradientBoostingRegressor` as attributes of the
+:class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
+:class:`~sklearn.ensemble.HistGradientBoostingRegressor` as attributes of the
 ensemble module::
 
     >>> # explicitly require this experimental feature
@@ -26,7 +26,11 @@ from ..ensemble._hist_gradient_boosting.gradient_boosting import (
 
 from .. import ensemble
 
-ensemble.HistGradientBoostingClassifier = HistGradientBoostingClassifier
-ensemble.HistGradientBoostingRegressor = HistGradientBoostingRegressor
+# use settattr to avoid mypy errors when monkeypatching
+setattr(ensemble, "HistGradientBoostingClassifier",
+        HistGradientBoostingClassifier)
+setattr(ensemble, "HistGradientBoostingRegressor",
+        HistGradientBoostingRegressor)
+
 ensemble.__all__ += ['HistGradientBoostingClassifier',
                      'HistGradientBoostingRegressor']

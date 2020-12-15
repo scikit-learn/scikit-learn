@@ -22,12 +22,12 @@ from ._sag import sag_solver
 from ..base import RegressorMixin, MultiOutputMixin, is_classifier
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import row_norms
-from ..utils import check_X_y
 from ..utils import check_array
 from ..utils import check_consistent_length
 from ..utils import compute_sample_weight
 from ..utils import column_or_1d
 from ..utils.validation import _check_sample_weight
+from ..utils.validation import _deprecate_positional_args
 from ..preprocessing import LabelBinarizer
 from ..model_selection import GridSearchCV
 from ..metrics import check_scoring
@@ -235,7 +235,8 @@ def _get_valid_accept_sparse(is_X_sparse, solver):
         return ['csr', 'csc', 'coo']
 
 
-def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
+@_deprecate_positional_args
+def ridge_regression(X, y, alpha, *, sample_weight=None, solver='auto',
                      max_iter=None, tol=1e-3, verbose=0, random_state=None,
                      return_n_iter=False, return_intercept=False,
                      check_input=True):
@@ -256,8 +257,9 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
-        Alpha corresponds to ``C^-1`` in other linear models such as
-        LogisticRegression or LinearSVC. If an array is passed, penalties are
+        Alpha corresponds to ``1 / (2C)`` in other linear models such as
+        :class:`~sklearn.linear_model.LogisticRegression` or
+        :class:`~sklearn.svm.LinearSVC`. If an array is passed, penalties are
         assumed to be specific to the targets. Hence they must correspond in
         number.
 
@@ -518,7 +520,8 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
 class _BaseRidge(LinearModel, metaclass=ABCMeta):
     @abstractmethod
-    def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
+    @_deprecate_positional_args
+    def __init__(self, alpha=1.0, *, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=None, tol=1e-3, solver="auto",
                  random_state=None):
         self.alpha = alpha
@@ -536,10 +539,10 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         _dtype = [np.float64, np.float32]
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X),
                                                   self.solver)
-        X, y = check_X_y(X, y,
-                         accept_sparse=_accept_sparse,
-                         dtype=_dtype,
-                         multi_output=True, y_numeric=True)
+        X, y = self._validate_data(X, y,
+                                   accept_sparse=_accept_sparse,
+                                   dtype=_dtype,
+                                   multi_output=True, y_numeric=True)
         if sparse.issparse(X) and self.fit_intercept:
             if self.solver not in ['auto', 'sparse_cg', 'sag']:
                 raise ValueError(
@@ -618,22 +621,23 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
-        Alpha corresponds to ``C^-1`` in other linear models such as
-        LogisticRegression or LinearSVC. If an array is passed, penalties are
+        Alpha corresponds to ``1 / (2C)`` in other linear models such as
+        :class:`~sklearn.linear_model.LogisticRegression` or
+        :class:`~sklearn.svm.LinearSVC`. If an array is passed, penalties are
         assumed to be specific to the targets. Hence they must correspond in
         number.
 
     fit_intercept : bool, default=True
-        Whether to calculate the intercept for this model. If set
+        Whether to fit the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (i.e. data is expected to be centered).
+        (i.e. ``X`` and ``y`` are expected to be centered).
 
     normalize : bool, default=False
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
     copy_X : bool, default=True
@@ -711,7 +715,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
     --------
     RidgeClassifier : Ridge classifier
     RidgeCV : Ridge regression with built-in cross validation
-    :class:`sklearn.kernel_ridge.KernelRidge` : Kernel ridge regression
+    :class:`~sklearn.kernel_ridge.KernelRidge` : Kernel ridge regression
         combines ridge regression with the kernel trick
 
     Examples
@@ -726,8 +730,8 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
     >>> clf.fit(X, y)
     Ridge()
     """
-
-    def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
+    @_deprecate_positional_args
+    def __init__(self, alpha=1.0, *, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=None, tol=1e-3, solver="auto",
                  random_state=None):
         super().__init__(
@@ -773,8 +777,9 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
-        Alpha corresponds to ``C^-1`` in other linear models such as
-        LogisticRegression or LinearSVC.
+        Alpha corresponds to ``1 / (2C)`` in other linear models such as
+        :class:`~sklearn.linear_model.LogisticRegression` or
+        :class:`~sklearn.svm.LinearSVC`.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set to false, no
@@ -786,7 +791,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
     copy_X : bool, default=True
@@ -883,8 +888,8 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     >>> clf.score(X, y)
     0.9595...
     """
-
-    def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
+    @_deprecate_positional_args
+    def __init__(self, alpha=1.0, *, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=None, tol=1e-3, class_weight=None,
                  solver="auto", random_state=None):
         super().__init__(
@@ -918,8 +923,8 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         """
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X),
                                                   self.solver)
-        X, y = check_X_y(X, y, accept_sparse=_accept_sparse, multi_output=True,
-                         y_numeric=False)
+        X, y = self._validate_data(X, y, accept_sparse=_accept_sparse,
+                                   multi_output=True, y_numeric=False)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
@@ -1069,9 +1074,7 @@ class _IdentityClassifier(LinearClassifierMixin):
 
 
 class _RidgeGCV(LinearModel):
-    """Ridge regression with built-in Generalized Cross-Validation.
-
-    It allows efficient Leave-One-Out cross-validation.
+    """Ridge regression with built-in Leave-one-out Cross-Validation.
 
     This class is not intended to be used directly. Use RidgeCV instead.
 
@@ -1110,12 +1113,12 @@ class _RidgeGCV(LinearModel):
     http://cbcl.mit.edu/publications/ps/MIT-CSAIL-TR-2007-025.pdf
     https://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
     """
-
-    def __init__(self, alphas=(0.1, 1.0, 10.0),
+    @_deprecate_positional_args
+    def __init__(self, alphas=(0.1, 1.0, 10.0), *,
                  fit_intercept=True, normalize=False,
                  scoring=None, copy_X=True,
                  gcv_mode=None, store_cv_values=False,
-                 is_clf=False):
+                 is_clf=False, alpha_per_target=False):
         self.alphas = np.asarray(alphas)
         self.fit_intercept = fit_intercept
         self.normalize = normalize
@@ -1124,6 +1127,7 @@ class _RidgeGCV(LinearModel):
         self.gcv_mode = gcv_mode
         self.store_cv_values = store_cv_values
         self.is_clf = is_clf
+        self.alpha_per_target = alpha_per_target
 
     @staticmethod
     def _decomp_diag(v_prime, Q):
@@ -1447,8 +1451,14 @@ class _RidgeGCV(LinearModel):
         -------
         self : object
         """
-        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=[np.float64],
-                         multi_output=True, y_numeric=True)
+        X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc', 'coo'],
+                                   dtype=[np.float64],
+                                   multi_output=True, y_numeric=True)
+
+        # alpha_per_target cannot be used in classifier mode. All subclasses
+        # of _RidgeGCV that are classifiers keep alpha_per_target at its
+        # default value: False, so the condition below should never happen.
+        assert not (self.is_clf and self.alpha_per_target)
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X,
@@ -1490,19 +1500,23 @@ class _RidgeGCV(LinearModel):
         error = scorer is None
 
         n_y = 1 if len(y.shape) == 1 else y.shape[1]
+        n_alphas = 1 if np.ndim(self.alphas) == 0 else len(self.alphas)
 
         if self.store_cv_values:
             self.cv_values_ = np.empty(
-                (n_samples * n_y, len(self.alphas)), dtype=X.dtype)
+                (n_samples * n_y, n_alphas), dtype=X.dtype)
 
         best_coef, best_score, best_alpha = None, None, None
 
-        for i, alpha in enumerate(self.alphas):
+        for i, alpha in enumerate(np.atleast_1d(self.alphas)):
             G_inverse_diag, c = solve(
                 float(alpha), y, sqrt_sw, X_mean, *decomposition)
             if error:
                 squared_errors = (c / G_inverse_diag) ** 2
-                alpha_score = -squared_errors.mean()
+                if self.alpha_per_target:
+                    alpha_score = -squared_errors.mean(axis=0)
+                else:
+                    alpha_score = -squared_errors.mean()
                 if self.store_cv_values:
                     self.cv_values_[:, i] = squared_errors.ravel()
             else:
@@ -1514,15 +1528,40 @@ class _RidgeGCV(LinearModel):
                     identity_estimator = _IdentityClassifier(
                         classes=np.arange(n_y)
                     )
-                    predictions_, y_ = predictions, y.argmax(axis=1)
+                    alpha_score = scorer(identity_estimator,
+                                         predictions, y.argmax(axis=1))
                 else:
                     identity_estimator = _IdentityRegressor()
-                    predictions_, y_ = predictions.ravel(), y.ravel()
+                    if self.alpha_per_target:
+                        alpha_score = np.array([
+                            scorer(identity_estimator,
+                                   predictions[:, j], y[:, j])
+                            for j in range(n_y)
+                        ])
+                    else:
+                        alpha_score = scorer(identity_estimator,
+                                             predictions.ravel(), y.ravel())
 
-                alpha_score = scorer(identity_estimator, predictions_, y_)
-
-            if (best_score is None) or (alpha_score > best_score):
-                best_coef, best_score, best_alpha = c, alpha_score, alpha
+            # Keep track of the best model
+            if best_score is None:
+                # initialize
+                if self.alpha_per_target and n_y > 1:
+                    best_coef = c
+                    best_score = np.atleast_1d(alpha_score)
+                    best_alpha = np.full(n_y, alpha)
+                else:
+                    best_coef = c
+                    best_score = alpha_score
+                    best_alpha = alpha
+            else:
+                # update
+                if self.alpha_per_target and n_y > 1:
+                    to_update = alpha_score > best_score
+                    best_coef[:, to_update] = c[:, to_update]
+                    best_score[to_update] = alpha_score[to_update]
+                    best_alpha[to_update] = alpha
+                elif alpha_score > best_score:
+                    best_coef, best_score, best_alpha = c, alpha_score, alpha
 
         self.alpha_ = best_alpha
         self.best_score_ = best_score
@@ -1534,19 +1573,20 @@ class _RidgeGCV(LinearModel):
 
         if self.store_cv_values:
             if len(y.shape) == 1:
-                cv_values_shape = n_samples, len(self.alphas)
+                cv_values_shape = n_samples, n_alphas
             else:
-                cv_values_shape = n_samples, n_y, len(self.alphas)
+                cv_values_shape = n_samples, n_y, n_alphas
             self.cv_values_ = self.cv_values_.reshape(cv_values_shape)
 
         return self
 
 
 class _BaseRidgeCV(LinearModel):
-    def __init__(self, alphas=(0.1, 1.0, 10.0),
+    @_deprecate_positional_args
+    def __init__(self, alphas=(0.1, 1.0, 10.0), *,
                  fit_intercept=True, normalize=False, scoring=None,
-                 cv=None, gcv_mode=None,
-                 store_cv_values=False):
+                 cv=None, gcv_mode=None, store_cv_values=False,
+                 alpha_per_target=False):
         self.alphas = np.asarray(alphas)
         self.fit_intercept = fit_intercept
         self.normalize = normalize
@@ -1554,6 +1594,7 @@ class _BaseRidgeCV(LinearModel):
         self.cv = cv
         self.gcv_mode = gcv_mode
         self.store_cv_values = store_cv_values
+        self.alpha_per_target = alpha_per_target
 
     def fit(self, X, y, sample_weight=None):
         """Fit Ridge regression model with cv.
@@ -1578,8 +1619,8 @@ class _BaseRidgeCV(LinearModel):
         Notes
         -----
         When sample_weight is provided, the selected hyperparameter may depend
-        on whether we use generalized cross-validation (cv=None or cv='auto')
-        or another form of cross-validation, because only generalized
+        on whether we use leave-one-out cross-validation (cv=None or cv='auto')
+        or another form of cross-validation, because only leave-one-out
         cross-validation takes the sample weights into account when computing
         the validation score.
         """
@@ -1591,7 +1632,8 @@ class _BaseRidgeCV(LinearModel):
                                   scoring=self.scoring,
                                   gcv_mode=self.gcv_mode,
                                   store_cv_values=self.store_cv_values,
-                                  is_clf=is_classifier(self))
+                                  is_clf=is_classifier(self),
+                                  alpha_per_target=self.alpha_per_target)
             estimator.fit(X, y, sample_weight=sample_weight)
             self.alpha_ = estimator.alpha_
             self.best_score_ = estimator.best_score_
@@ -1599,7 +1641,10 @@ class _BaseRidgeCV(LinearModel):
                 self.cv_values_ = estimator.cv_values_
         else:
             if self.store_cv_values:
-                raise ValueError("cv!=None and store_cv_values=True "
+                raise ValueError("cv!=None and store_cv_values=True"
+                                 " are incompatible")
+            if self.alpha_per_target:
+                raise ValueError("cv!=None and alpha_per_target=True"
                                  " are incompatible")
             parameters = {'alpha': self.alphas}
             solver = 'sparse_cg' if sparse.issparse(X) else 'auto'
@@ -1615,6 +1660,7 @@ class _BaseRidgeCV(LinearModel):
 
         self.coef_ = estimator.coef_
         self.intercept_ = estimator.intercept_
+        self.n_features_in_ = estimator.n_features_in_
 
         return self
 
@@ -1624,7 +1670,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
 
     See glossary entry for :term:`cross-validation estimator`.
 
-    By default, it performs Generalized Cross-Validation, which is a form of
+    By default, it performs Leave-One-Out Cross-Validation, which is a form of
     efficient Leave-One-Out cross-validation.
 
     Read more in the :ref:`User Guide <ridge_regression>`.
@@ -1636,9 +1682,10 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
-        Alpha corresponds to ``C^-1`` in other linear models such as
-        LogisticRegression or LinearSVC.
-        If using generalized cross-validation, alphas must be positive.
+        Alpha corresponds to ``1 / (2C)`` in other linear models such as
+        :class:`~sklearn.linear_model.LogisticRegression` or
+        :class:`~sklearn.svm.LinearSVC`.
+        If using Leave-One-Out cross-validation, alphas must be positive.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
@@ -1650,7 +1697,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
     scoring : string, callable, default=None
@@ -1658,28 +1705,28 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
         If None, the negative mean squared error if cv is 'auto' or None
-        (i.e. when using generalized cross-validation), and r2 score otherwise.
+        (i.e. when using leave-one-out cross-validation), and r2 score
+        otherwise.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
         - None, to use the efficient Leave-One-Out cross-validation
-          (also known as Generalized Cross-Validation).
         - integer, to specify the number of folds.
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
-        :class:`sklearn.model_selection.StratifiedKFold` is used, else,
-        :class:`sklearn.model_selection.KFold` is used.
+        :class:`~sklearn.model_selection.StratifiedKFold` is used, else,
+        :class:`~sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
     gcv_mode : {'auto', 'svd', eigen'}, default='auto'
         Flag indicating which strategy to use when performing
-        Generalized Cross-Validation. Options are::
+        Leave-One-Out Cross-Validation. Options are::
 
             'auto' : use 'svd' if n_samples > n_features, otherwise use 'eigen'
             'svd' : force use of singular value decomposition of X when X is
@@ -1693,16 +1740,24 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         Flag indicating if the cross-validation values corresponding to
         each alpha should be stored in the ``cv_values_`` attribute (see
         below). This flag is only compatible with ``cv=None`` (i.e. using
-        Generalized Cross-Validation).
+        Leave-One-Out Cross-Validation).
+
+    alpha_per_target : bool, default=False
+        Flag indicating whether to optimize the alpha value (picked from the
+        `alphas` parameter list) for each target separately (for multi-output
+        settings: multiple prediction targets). When set to `True`, after
+        fitting, the `alpha_` attribute will contain a value for each target.
+        When set to `False`, a single alpha is used for all targets.
 
     Attributes
     ----------
     cv_values_ : ndarray of shape (n_samples, n_alphas) or \
         shape (n_samples, n_targets, n_alphas), optional
-        Cross-validation values for each alpha (if ``store_cv_values=True``\
-        and ``cv=None``). After ``fit()`` has been called, this attribute \
-        will contain the mean squared errors (by default) or the values \
-        of the ``{loss,score}_func`` function (if provided in the constructor).
+        Cross-validation values for each alpha (only available if
+        ``store_cv_values=True`` and ``cv=None``). After ``fit()`` has been
+        called, this attribute will contain the mean squared errors
+        (by default) or the values of the ``{loss,score}_func`` function
+        (if provided in the constructor).
 
     coef_ : ndarray of shape (n_features) or (n_targets, n_features)
         Weight vector(s).
@@ -1711,11 +1766,13 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         Independent term in decision function. Set to 0.0 if
         ``fit_intercept = False``.
 
-    alpha_ : float
-        Estimated regularization parameter.
+    alpha_ : float or ndarray of shape (n_targets,)
+        Estimated regularization parameter, or, if ``alpha_per_target=True``,
+        the estimated regularization parameter for each target.
 
-    best_score_ : float
-        Score of base estimator with best alpha.
+    best_score_ : float or ndarray of shape (n_targets,)
+        Score of base estimator with best alpha, or, if
+        ``alpha_per_target=True``, a score for each target.
 
     Examples
     --------
@@ -1739,9 +1796,8 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
     See glossary entry for :term:`cross-validation estimator`.
 
-    By default, it performs Generalized Cross-Validation, which is a form of
-    efficient Leave-One-Out cross-validation. Currently, only the n_features >
-    n_samples case is handled efficiently.
+    By default, it performs Leave-One-Out Cross-Validation. Currently,
+    only the n_features > n_samples case is handled efficiently.
 
     Read more in the :ref:`User Guide <ridge_regression>`.
 
@@ -1752,8 +1808,9 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
-        Alpha corresponds to ``C^-1`` in other linear models such as
-        LogisticRegression or LinearSVC.
+        Alpha corresponds to ``1 / (2C)`` in other linear models such as
+        :class:`~sklearn.linear_model.LogisticRegression` or
+        :class:`~sklearn.svm.LinearSVC`.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
@@ -1765,7 +1822,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
     scoring : string, callable, default=None
@@ -1797,7 +1854,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         Flag indicating if the cross-validation values corresponding to
         each alpha should be stored in the ``cv_values_`` attribute (see
         below). This flag is only compatible with ``cv=None`` (i.e. using
-        Generalized Cross-Validation).
+        Leave-One-Out Cross-Validation).
 
     Attributes
     ----------
@@ -1847,8 +1904,8 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     a one-versus-all approach. Concretely, this is implemented by taking
     advantage of the multi-variate response support in Ridge.
     """
-
-    def __init__(self, alphas=(0.1, 1.0, 10.0), fit_intercept=True,
+    @_deprecate_positional_args
+    def __init__(self, alphas=(0.1, 1.0, 10.0), *, fit_intercept=True,
                  normalize=False, scoring=None, cv=None, class_weight=None,
                  store_cv_values=False):
         super().__init__(
@@ -1877,8 +1934,8 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         -------
         self : object
         """
-        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
-                         multi_output=True, y_numeric=False)
+        X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc', 'coo'],
+                                   multi_output=True, y_numeric=False)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
@@ -1898,3 +1955,11 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     @property
     def classes_(self):
         return self._label_binarizer.classes_
+
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_sample_weights_invariance':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }

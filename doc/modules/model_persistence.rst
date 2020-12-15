@@ -20,7 +20,7 @@ Persistence example
 -------------------
 
 It is possible to save a model in scikit-learn by using Python's built-in
-persistence model, namely `pickle <https://docs.python.org/2/library/pickle.html>`_::
+persistence model, namely `pickle <https://docs.python.org/3/library/pickle.html>`_::
 
   >>> from sklearn import svm
   >>> from sklearn import datasets

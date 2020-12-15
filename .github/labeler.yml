@@ -1,0 +1,3 @@
+labels:
+  'Documentation':
+    - '\bDOC\b'

@@ -25,12 +25,14 @@ parser.add_argument('--catboost', action="store_true", default=False)
 parser.add_argument('--learning-rate', type=float, default=1.)
 parser.add_argument('--subsample', type=int, default=None)
 parser.add_argument('--max-bins', type=int, default=255)
+parser.add_argument('--no-predict', action="store_true", default=False)
+parser.add_argument('--cache-loc', type=str, default='/tmp')
 args = parser.parse_args()
 
 HERE = os.path.dirname(__file__)
 URL = ("https://archive.ics.uci.edu/ml/machine-learning-databases/00280/"
        "HIGGS.csv.gz")
-m = Memory(location='/tmp', mmap_mode='r')
+m = Memory(location=args.cache_loc, mmap_mode='r')
 
 n_leaf_nodes = args.n_leaf_nodes
 n_trees = args.n_trees
@@ -56,6 +58,27 @@ def load_data():
     return df
 
 
+def fit(est, data_train, target_train, libname):
+    print(f"Fitting a {libname} model...")
+    tic = time()
+    est.fit(data_train, target_train)
+    toc = time()
+    print(f"fitted in {toc - tic:.3f}s")
+
+
+def predict(est, data_test, target_test):
+    if args.no_predict:
+        return
+    tic = time()
+    predicted_test = est.predict(data_test)
+    predicted_proba_test = est.predict_proba(data_test)
+    toc = time()
+    roc_auc = roc_auc_score(target_test, predicted_proba_test[:, 1])
+    acc = accuracy_score(target_test, predicted_test)
+    print(f"predicted in {toc - tic:.3f}s, "
+          f"ROC AUC: {roc_auc:.4f}, ACC: {acc :.4f}")
+
+
 df = load_data()
 target = df.values[:, 0]
 data = np.ascontiguousarray(df.values[:, 1:])
@@ -68,56 +91,28 @@ if subsample is not None:
 n_samples, n_features = data_train.shape
 print(f"Training set with {n_samples} records with {n_features} features.")
 
-print("Fitting a sklearn model...")
-tic = time()
 est = HistGradientBoostingClassifier(loss='binary_crossentropy',
                                      learning_rate=lr,
                                      max_iter=n_trees,
                                      max_bins=max_bins,
                                      max_leaf_nodes=n_leaf_nodes,
-                                     n_iter_no_change=None,
+                                     early_stopping=False,
                                      random_state=0,
                                      verbose=1)
-est.fit(data_train, target_train)
-toc = time()
-predicted_test = est.predict(data_test)
-predicted_proba_test = est.predict_proba(data_test)
-roc_auc = roc_auc_score(target_test, predicted_proba_test[:, 1])
-acc = accuracy_score(target_test, predicted_test)
-print(f"done in {toc - tic:.3f}s, ROC AUC: {roc_auc:.4f}, ACC: {acc :.4f}")
+fit(est, data_train, target_train, 'sklearn')
+predict(est, data_test, target_test)
 
 if args.lightgbm:
-    print("Fitting a LightGBM model...")
-    tic = time()
-    lightgbm_est = get_equivalent_estimator(est, lib='lightgbm')
-    lightgbm_est.fit(data_train, target_train)
-    toc = time()
-    predicted_test = lightgbm_est.predict(data_test)
-    predicted_proba_test = lightgbm_est.predict_proba(data_test)
-    roc_auc = roc_auc_score(target_test, predicted_proba_test[:, 1])
-    acc = accuracy_score(target_test, predicted_test)
-    print(f"done in {toc - tic:.3f}s, ROC AUC: {roc_auc:.4f}, ACC: {acc :.4f}")
+    est = get_equivalent_estimator(est, lib='lightgbm')
+    fit(est, data_train, target_train, 'lightgbm')
+    predict(est, data_test, target_test)
 
 if args.xgboost:
-    print("Fitting an XGBoost model...")
-    tic = time()
-    xgboost_est = get_equivalent_estimator(est, lib='xgboost')
-    xgboost_est.fit(data_train, target_train)
-    toc = time()
-    predicted_test = xgboost_est.predict(data_test)
-    predicted_proba_test = xgboost_est.predict_proba(data_test)
-    roc_auc = roc_auc_score(target_test, predicted_proba_test[:, 1])
-    acc = accuracy_score(target_test, predicted_test)
-    print(f"done in {toc - tic:.3f}s, ROC AUC: {roc_auc:.4f}, ACC: {acc :.4f}")
+    est = get_equivalent_estimator(est, lib='xgboost')
+    fit(est, data_train, target_train, 'xgboost')
+    predict(est, data_test, target_test)
 
 if args.catboost:
-    print("Fitting a Catboost model...")
-    tic = time()
-    catboost_est = get_equivalent_estimator(est, lib='catboost')
-    catboost_est.fit(data_train, target_train)
-    toc = time()
-    predicted_test = catboost_est.predict(data_test)
-    predicted_proba_test = catboost_est.predict_proba(data_test)
-    roc_auc = roc_auc_score(target_test, predicted_proba_test[:, 1])
-    acc = accuracy_score(target_test, predicted_test)
-    print(f"done in {toc - tic:.3f}s, ROC AUC: {roc_auc:.4f}, ACC: {acc :.4f}")
+    est = get_equivalent_estimator(est, lib='catboost')
+    fit(est, data_train, target_train, 'catboost')
+    predict(est, data_test, target_test)

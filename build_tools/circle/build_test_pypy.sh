@@ -3,7 +3,7 @@ set -x
 set -e
 
 apt-get -yq update
-apt-get -yq install libatlas-dev libatlas-base-dev liblapack-dev gfortran ccache libopenblas-dev
+apt-get -yq install libatlas-base-dev liblapack-dev gfortran ccache libopenblas-dev
 
 pip install virtualenv
 
@@ -34,7 +34,7 @@ export LOKY_MAX_CPU_COUNT="2"
 export OMP_NUM_THREADS="1"
 
 python setup.py build_ext --inplace -j 3
-pip install -e .
+pip install --no-build-isolation -e .
 
 # Check that Python implementation is PyPy
 python - << EOL

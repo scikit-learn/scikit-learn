@@ -10,6 +10,8 @@ from ..base import BaseEstimator, RegressorMixin, clone
 from ..utils.validation import check_is_fitted
 from ..utils import check_array, _safe_indexing
 from ..preprocessing import FunctionTransformer
+from ..utils.validation import _deprecate_positional_args
+from ..exceptions import NotFittedError
 
 __all__ = ['TransformedTargetRegressor']
 
@@ -40,11 +42,14 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <transformed_target_regressor>`.
 
+    .. versionadded:: 0.20
+
     Parameters
     ----------
-    regressor : object, default=LinearRegression()
+    regressor : object, default=None
         Regressor object such as derived from ``RegressorMixin``. This
         regressor will automatically be cloned each time prior to fitting.
+        If regressor is ``None``, ``LinearRegression()`` is created and used.
 
     transformer : object, default=None
         Estimator object such as derived from ``TransformerMixin``. Cannot be
@@ -54,13 +59,13 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         transformer will be cloned during fitting. Also, the transformer is
         restricting ``y`` to be a numpy array.
 
-    func : function, optional
+    func : function, default=None
         Function to apply to ``y`` before passing to ``fit``. Cannot be set at
         the same time as ``transformer``. The function needs to return a
         2-dimensional array. If ``func`` is ``None``, the function used will be
         the identity function.
 
-    inverse_func : function, optional
+    inverse_func : function, default=None
         Function to apply to the prediction of the regressor. Cannot be set at
         the same time as ``transformer`` as well. The function needs to return
         a 2-dimensional array. The inverse function is used to return
@@ -104,7 +109,8 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
     <sphx_glr_auto_examples_compose_plot_transformed_target.py>`.
 
     """
-    def __init__(self, regressor=None, transformer=None,
+    @_deprecate_positional_args
+    def __init__(self, regressor=None, *, transformer=None,
                  func=None, inverse_func=None, check_inverse=True):
         self.regressor = regressor
         self.transformer = transformer
@@ -153,14 +159,14 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training vector, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : array-like, shape (n_samples,)
+        y : array-like of shape (n_samples,)
             Target values.
 
-        **fit_params : dict of string -> object
+        **fit_params : dict
             Parameters passed to the ``fit`` method of the underlying
             regressor.
 
@@ -215,7 +221,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
 
         Returns
         -------
-        y_hat : array, shape = (n_samples,)
+        y_hat : ndarray of shape (n_samples,)
             Predicted values.
 
         """
@@ -234,3 +240,17 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
 
     def _more_tags(self):
         return {'poor_score': True, 'no_validation': True}
+
+    @property
+    def n_features_in_(self):
+        # For consistency with other estimators we raise a AttributeError so
+        # that hasattr() returns False the estimator isn't fitted.
+        try:
+            check_is_fitted(self)
+        except NotFittedError as nfe:
+            raise AttributeError(
+                "{} object has no n_features_in_ attribute."
+                .format(self.__class__.__name__)
+            ) from nfe
+
+        return self.regressor_.n_features_in_

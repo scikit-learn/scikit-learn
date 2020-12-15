@@ -13,8 +13,10 @@ import scipy.sparse as sparse
 from ..base import clone
 from ..base import ClassifierMixin, RegressorMixin, TransformerMixin
 from ..base import is_classifier, is_regressor
+from ..exceptions import NotFittedError
+from ..utils._estimator_html_repr import _VisualBlock
 
-from ._base import _parallel_fit_estimator
+from ._base import _fit_single_estimator
 from ._base import _BaseHeterogeneousEnsemble
 
 from ..linear_model import LogisticRegression
@@ -30,6 +32,7 @@ from ..utils.metaestimators import if_delegate_has_method
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils.validation import column_or_1d
+from ..utils.validation import _deprecate_positional_args
 
 
 class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
@@ -37,7 +40,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
     """Base class for stacking method."""
 
     @abstractmethod
-    def __init__(self, estimators, final_estimator=None, cv=None,
+    def __init__(self, estimators, final_estimator=None, *, cv=None,
                  stack_method='auto', n_jobs=None, verbose=0,
                  passthrough=False):
         super().__init__(estimators=estimators)
@@ -122,6 +125,10 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
             Note that this is supported only if all underlying estimators
             support sample weights.
 
+            .. versionchanged:: 0.23
+               when not None, `sample_weight` is passed to all underlying
+               estimators
+
         Returns
         -------
         self : object
@@ -137,7 +144,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
         # base estimators will be used in transform, predict, and
         # predict_proba. They are exposed publicly.
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-            delayed(_parallel_fit_estimator)(clone(est), X, y, sample_weight)
+            delayed(_fit_single_estimator)(clone(est), X, y, sample_weight)
             for est in all_estimators if est != 'drop'
         )
 
@@ -165,10 +172,13 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
             self._method_name(name, est, meth)
             for name, est, meth in zip(names, all_estimators, stack_method)
         ]
-
+        fit_params = ({"sample_weight": sample_weight}
+                      if sample_weight is not None
+                      else None)
         predictions = Parallel(n_jobs=self.n_jobs)(
             delayed(cross_val_predict)(clone(est), X, y, cv=deepcopy(cv),
                                        method=meth, n_jobs=self.n_jobs,
+                                       fit_params=fit_params,
                                        verbose=self.verbose)
             for est, meth in zip(all_estimators, self.stack_method_)
             if est != 'drop'
@@ -182,23 +192,21 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
         ]
 
         X_meta = self._concatenate_predictions(X, predictions)
-        if sample_weight is not None:
-            try:
-                self.final_estimator_.fit(
-                    X_meta, y, sample_weight=sample_weight
-                )
-            except TypeError as exc:
-                if "unexpected keyword argument 'sample_weight'" in str(exc):
-                    raise TypeError(
-                        "Underlying estimator {} does not support sample "
-                        "weights."
-                        .format(self.final_estimator_.__class__.__name__)
-                    ) from exc
-                raise
-        else:
-            self.final_estimator_.fit(X_meta, y)
+        _fit_single_estimator(self.final_estimator_, X_meta, y,
+                              sample_weight=sample_weight)
 
         return self
+
+    @property
+    def n_features_in_(self):
+        """Number of features seen during :term:`fit`."""
+        try:
+            check_is_fitted(self)
+        except NotFittedError as nfe:
+            raise AttributeError(
+                f"{self.__class__.__name__} object has no attribute "
+                f"n_features_in_") from nfe
+        return self.estimators_[0].n_features_in_
 
     def _transform(self, X):
         """Concatenate and return the predictions of the estimators."""
@@ -237,6 +245,14 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
             self.transform(X), **predict_params
         )
 
+    def _sk_visual_block_(self, final_estimator):
+        names, estimators = zip(*self.estimators)
+        parallel = _VisualBlock('parallel', estimators, names=names,
+                                dash_wrapped=False)
+        serial = _VisualBlock('serial', (parallel, final_estimator),
+                              dash_wrapped=False)
+        return _VisualBlock('serial', [serial])
+
 
 class StackingClassifier(ClassifierMixin, _BaseStacking):
     """Stack of estimators with a final classifier.
@@ -263,7 +279,8 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
 
     final_estimator : estimator, default=None
         A classifier which will be used to combine the base estimators.
-        The default classifier is a `LogisticRegression`.
+        The default classifier is a
+        :class:`~sklearn.linear_model.LogisticRegression`.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy used in
@@ -276,8 +293,9 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         * An iterable yielding train, test splits.
 
         For integer/None inputs, if the estimator is a classifier and y is
-        either binary or multiclass, `StratifiedKFold` is used. In all other
-        cases, `KFold` is used.
+        either binary or multiclass,
+        :class:`~sklearn.model_selection.StratifiedKFold` is used.
+        In all other cases, :class:`~sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -310,14 +328,20 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         `final_estimator` is trained on the predictions as well as the
         original training data.
 
+    verbose : int, default=0
+        Verbosity level.
+
     Attributes
     ----------
+    classes_ : ndarray of shape (n_classes,)
+        Class labels.
+
     estimators_ : list of estimators
         The elements of the estimators parameter, having been fitted on the
         training data. If an estimator has been set to `'drop'`, it
         will not appear in `estimators_`.
 
-    named_estimators_ : Bunch
+    named_estimators_ : :class:`~sklearn.utils.Bunch`
         Attribute to access any fitted sub-estimators by name.
 
     final_estimator_ : estimator
@@ -365,7 +389,8 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     0.9...
 
     """
-    def __init__(self, estimators, final_estimator=None, cv=None,
+    @_deprecate_positional_args
+    def __init__(self, estimators, final_estimator=None, *, cv=None,
                  stack_method='auto', n_jobs=None, passthrough=False,
                  verbose=0):
         super().__init__(
@@ -493,6 +518,15 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         """
         return self._transform(X)
 
+    def _sk_visual_block_(self):
+        # If final_estimator's default changes then this should be
+        # updated.
+        if self.final_estimator is None:
+            final_estimator = LogisticRegression()
+        else:
+            final_estimator = self.final_estimator
+        return super()._sk_visual_block_(final_estimator)
+
 
 class StackingRegressor(RegressorMixin, _BaseStacking):
     """Stack of estimators with a final regressor.
@@ -519,7 +553,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
 
     final_estimator : estimator, default=None
         A regressor which will be used to combine the base estimators.
-        The default regressor is a `RidgeCV`.
+        The default regressor is a :class:`~sklearn.linear_model.RidgeCV`.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy used in
@@ -532,8 +566,9 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         * An iterable yielding train, test splits.
 
         For integer/None inputs, if the estimator is a classifier and y is
-        either binary or multiclass, `StratifiedKFold` is used. In all other
-        cases, `KFold` is used.
+        either binary or multiclass,
+        :class:`~sklearn.model_selection.StratifiedKFold` is used.
+        In all other cases, :class:`~sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -555,6 +590,9 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         `final_estimator` is trained on the predictions as well as the
         original training data.
 
+    verbose : int, default=0
+        Verbosity level.
+
     Attributes
     ----------
     estimators_ : list of estimator
@@ -562,8 +600,9 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         training data. If an estimator has been set to `'drop'`, it
         will not appear in `estimators_`.
 
-    named_estimators_ : Bunch
+    named_estimators_ : :class:`~sklearn.utils.Bunch`
         Attribute to access any fitted sub-estimators by name.
+
 
     final_estimator_ : estimator
         The regressor to stacked the base estimators fitted.
@@ -598,8 +637,9 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
     0.3...
 
     """
-    def __init__(self, estimators, final_estimator=None, cv=None, n_jobs=None,
-                 passthrough=False, verbose=0):
+    @_deprecate_positional_args
+    def __init__(self, estimators, final_estimator=None, *, cv=None,
+                 n_jobs=None, passthrough=False, verbose=0):
         super().__init__(
             estimators=estimators,
             final_estimator=final_estimator,
@@ -657,3 +697,12 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
             Prediction outputs for each estimator.
         """
         return self._transform(X)
+
+    def _sk_visual_block_(self):
+        # If final_estimator's default changes then this should be
+        # updated.
+        if self.final_estimator is None:
+            final_estimator = RidgeCV()
+        else:
+            final_estimator = self.final_estimator
+        return super()._sk_visual_block_(final_estimator)

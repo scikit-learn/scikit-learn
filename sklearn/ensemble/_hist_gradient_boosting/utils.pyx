@@ -38,7 +38,7 @@ def get_equivalent_estimator(estimator, lib='lightgbm'):
     if sklearn_params['loss'] == 'auto':
         raise ValueError('auto loss is not accepted. We need to know if '
                          'the problem is binary or multiclass classification.')
-    if sklearn_params['n_iter_no_change'] is not None:
+    if sklearn_params['early_stopping']:
         raise NotImplementedError('Early stopping should be deactivated.')
 
     lightgbm_loss_mapping = {
