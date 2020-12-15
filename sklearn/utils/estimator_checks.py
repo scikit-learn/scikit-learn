@@ -2953,10 +2953,14 @@ def check_estimator_sparse_dense(name, estimator_orig,
     if is_regressor(estimator_orig):
         n_samples = 10
         n_features = 2
+        # we build float64 precision numbers from low precision ones:
+        # this way, fewer numbers get dropped by the
+        # machine precision in multiplications/additions, so if those
+        # are done in a different order btw sparse/dense, the results
+        # are more likely to still be the same
         X = sparse.random(n_samples, n_features, density=0.8,
                           random_state=rng).A.astype(np.float16)
         X = X.astype(np.float)
-        # Less significative numbers for less numerical pbs
         X = X[~np.all(X == 0, axis=1)]  # we remove null rows
         assert len(np.where(X == 0)[0]) > 0  # we should have sparsity
         assert X.shape[0] > 5  # we mustn't have very few samples
