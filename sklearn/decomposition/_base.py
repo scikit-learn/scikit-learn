@@ -77,7 +77,7 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         return precision
 
     @abstractmethod
-    def fit(X, y=None):
+    def fit(self, X, y=None):
         """Placeholder for fit. Subclasses should implement this method!
 
         Fit the model with X.
