@@ -2,6 +2,27 @@
 set -x
 set -e
 
+get_build_type() {
+    if [ -z "$CIRCLE_SHA1" ]
+    then
+        echo SKIP: undefined CIRCLE_SHA1
+        return
+    fi
+    commit_msg=$(git log --format=%B -n 1 $CIRCLE_SHA1)
+    if [[ "$commit_msg" =~ \[pypy\ build\] ]]
+    then
+        echo BUILD: [pypy build] marker found
+        return
+    fi
+    echo SKIP: no pypy marker found
+    return
+}
+build_type=$(get_build_type)
+if [[ "$build_type" =~ ^SKIP ]]
+then
+    exit 0
+fi
+
 # System build tools
 apt-get -yq update
 apt-get -yq install wget bzip2 build-essential ccache
