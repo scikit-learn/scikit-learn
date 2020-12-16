@@ -1,0 +1,7 @@
+
+:mod:`sklearn.feature_extraction`
+..................................
+
+- |Fix| Fixed a bug in :function:`image._to_graph` where singleton
+    connected components were not handled properly, resulting in a wrong
+    vertex indexing.  :pr:`18964` by `Bertrand Thirion`_.
