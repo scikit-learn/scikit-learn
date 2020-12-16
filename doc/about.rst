@@ -156,14 +156,6 @@ Grisel, Guillaume Lemaitre, Jérémie du Boisberranger and Chiara Marmo.
    :width: 100pt
    :target: https://www.fujitsu.com/global/
 
-.. |intel| image:: images/intel.png
-   :width: 70pt
-   :target: https://www.intel.com/
-
-.. |nvidia| image:: images/nvidia.png
-   :width: 70pt
-   :target: https://www.nvidia.com/
-
 .. |dataiku| image:: images/dataiku.png
    :width: 70pt
    :target: https://www.dataiku.com/
@@ -181,17 +173,17 @@ Grisel, Guillaume Lemaitre, Jérémie du Boisberranger and Chiara Marmo.
    :class: sk-sponsor-table align-default
 
    +---------+----------+
-   | |msn|   |  |bcg|   |
+   |       |bcg|        |
    +---------+----------+
    |                    |
    +---------+----------+
    |  |axa|  |   |bnp|  |
    +---------+----------+
-   ||fujitsu||  |intel| |
+   ||fujitsu||  |msn|   |
    +---------+----------+
    |                    |
    +---------+----------+
-   ||dataiku|| |nvidia| |
+   |     |dataiku|      |
    +---------+----------+
    |                    |
    +---------+----------+
