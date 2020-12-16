@@ -25,6 +25,19 @@ def test_img_to_graph():
     np.testing.assert_array_equal(grad_x.data[grad_x.data > 0],
                                   grad_y.data[grad_y.data > 0])
 
+def test_img_to_graph_sparse():
+    # Check that the edges are in the right position
+    #  when using a sparse image with a singleton component
+    mask = np.zeros((2, 3), dtype=np.bool)
+    mask[0, 0] = 1
+    mask[:, 2] = 1
+    x = np.zeros((2, 3))
+    x[0, 0] = 1
+    x[0, 2] = -1
+    x[1, 2] = -2
+    grad_x = img_to_graph(x, mask=mask).todense()
+    desired = np.array([[1, 0, 0], [0, -1, 1], [0, 1, -2]]) 
+    np.testing.assert_array_equal(grad_x, desired)
 
 def test_grid_to_graph():
     # Checking that the function works with graphs containing no edges
