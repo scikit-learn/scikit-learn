@@ -22,6 +22,7 @@ from sklearn.utils import as_float_array, check_array, check_symmetric
 from sklearn.utils import check_X_y
 from sklearn.utils import deprecated
 from sklearn.utils._mocking import MockDataFrame
+from sklearn.utils.fixes import np_version, parse_version
 from sklearn.utils.estimator_checks import _NotAnArray
 from sklearn.random_projection import _sparse_random_matrix
 from sklearn.linear_model import ARDRegression
@@ -336,18 +337,41 @@ def test_check_array():
     result = check_array(X_no_array)
     assert isinstance(result, np.ndarray)
 
-    # deprecation warning if string-like array with dtype="numeric"
-    expected_warn_regex = r"converted to decimal numbers if dtype='numeric'"
-    X_str = [['11', '12'], ['13', 'xx']]
-    for X in [X_str, np.array(X_str, dtype='U'), np.array(X_str, dtype='S')]:
-        with pytest.warns(FutureWarning, match=expected_warn_regex):
-            check_array(X, dtype="numeric")
 
-    # deprecation warning if byte-like array with dtype="numeric"
-    X_bytes = [[b'a', b'b'], [b'c', b'd']]
-    for X in [X_bytes, np.array(X_bytes, dtype='V1')]:
-        with pytest.warns(FutureWarning, match=expected_warn_regex):
-            check_array(X, dtype="numeric")
+# TODO: Check for error in 0.26 when implicit conversation is removed
+@pytest.mark.parametrize("X", [
+   [['1', '2'], ['3', '4']],
+   np.array([['1', '2'], ['3', '4']], dtype='U'),
+   np.array([['1', '2'], ['3', '4']], dtype='S'),
+   [[b'1', b'2'], [b'3', b'4']],
+   np.array([[b'1', b'2'], [b'3', b'4']], dtype='V1')
+])
+def test_check_array_numeric_warns(X):
+    """Test that check_array warns when it converts a bytes/string into a
+    float."""
+    expected_msg = (r"Arrays of bytes/strings is being converted to decimal .*"
+                    r"deprecated in 0.24 and will be removed in 0.26")
+    with pytest.warns(FutureWarning, match=expected_msg):
+        check_array(X, dtype="numeric")
+
+
+# TODO: remove in 0.26
+@ignore_warnings(category=FutureWarning)
+@pytest.mark.parametrize("X", [
+   [['11', '12'], ['13', 'xx']],
+   np.array([['11', '12'], ['13', 'xx']], dtype='U'),
+   np.array([['11', '12'], ['13', 'xx']], dtype='S'),
+   [[b'a', b'b'], [b'c', b'd']],
+   np.array([[b'a', b'b'], [b'c', b'd']], dtype='V1')
+])
+def test_check_array_dtype_numeric_errors(X):
+    """Error when string-ike array can not be converted"""
+    if (np_version < parse_version("1.14")
+            and hasattr(X, "dtype") and X.dtype.kind == "V"):
+        pytest.skip("old numpy would convert V dtype into float silently")
+    expected_warn_msg = "Unable to convert array of bytes/strings"
+    with pytest.raises(ValueError, match=expected_warn_msg):
+        check_array(X, dtype="numeric")
 
 
 @pytest.mark.parametrize("pd_dtype", ["Int8", "Int16", "UInt8", "UInt16"])
@@ -381,16 +405,20 @@ def test_check_array_pandas_na_support(pd_dtype, dtype, expected_dtype):
         check_array(X, force_all_finite=True)
 
 
+# TODO: remove test in 0.26 once this behavior is deprecated
 def test_check_array_pandas_dtype_object_conversion():
     # test that data-frame like objects with dtype object
     # get converted
     X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=object)
     X_df = MockDataFrame(X)
-    assert check_array(X_df).dtype.kind == "f"
-    assert check_array(X_df, ensure_2d=False).dtype.kind == "f"
+    with pytest.warns(FutureWarning):
+        assert check_array(X_df).dtype.kind == "f"
+    with pytest.warns(FutureWarning):
+        assert check_array(X_df, ensure_2d=False).dtype.kind == "f"
     # smoke-test against dataframes with column named "dtype"
     X_df.dtype = "Hans"
-    assert check_array(X_df, ensure_2d=False).dtype.kind == "f"
+    with pytest.warns(FutureWarning):
+        assert check_array(X_df, ensure_2d=False).dtype.kind == "f"
 
 
 def test_check_array_pandas_dtype_casting():
@@ -1138,6 +1166,16 @@ def test_deprecate_positional_args_warns_for_function():
     with pytest.warns(FutureWarning,
                       match=r"Pass b=2 as keyword args"):
         f3(1, 2)
+
+
+def test_deprecate_positional_args_warns_for_function_version():
+    @_deprecate_positional_args(version="0.26")
+    def f1(a, *, b):
+        pass
+
+    with pytest.warns(FutureWarning,
+                      match=r"From version 0.26 passing these as positional"):
+        f1(1, 2)
 
 
 def test_deprecate_positional_args_warns_for_class():

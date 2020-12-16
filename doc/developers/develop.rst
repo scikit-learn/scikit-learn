@@ -511,12 +511,12 @@ Scikit-learn introduced estimator tags in version 0.21. These are annotations
 of estimators that allow programmatic inspection of their capabilities, such as
 sparse matrix support, supported output types and supported methods. The
 estimator tags are a dictionary returned by the method ``_get_tags()``. These
-tags are used by the common tests and the
-:func:`sklearn.utils.estimator_checks.check_estimator` function to decide what
-tests to run and what input data is appropriate. Tags can depend on estimator
-parameters or even system architecture and can in general only be determined at
-runtime. The default values for the estimator tags are defined in the
-``BaseEstimator`` class.
+tags are used in the common checks run by the
+:func:`~sklearn.utils.estimator_checks.check_estimator` function and the
+:func:`~sklearn.utils.estimator_checks.parametrize_with_checks` decorator.
+Tags determine which checks to run and what input data is appropriate. Tags
+can depend on estimator parameters or even system architecture and can in
+general only be determined at runtime.
 
 The current set of estimator tags are:
 
@@ -618,15 +618,24 @@ X_types (default=['2darray'])
     ``'categorical'`` data. For now, the test for sparse data do not make use
     of the ``'sparse'`` tag.
 
-
-To override the tags of a child class, one must define the `_more_tags()`
-method and return a dict with the desired tags, e.g::
+It is unlikely that the default values for each tag will suit the needs of your
+specific estimator. Additional tags can be created or default tags can be
+overridden by defining a `_more_tags()` method which returns a dict with the
+desired overridden tags or new tags. For example::
 
     class MyMultiOutputEstimator(BaseEstimator):
 
         def _more_tags(self):
             return {'multioutput_only': True,
                     'non_deterministic': True}
+
+Any tag that is not in `_more_tags()` will just fall-back to the default values
+documented above.
+
+Even if it is not recommended, it is possible to override the method
+`_get_tags()`. Note however that **all tags must be present in the dict**. If
+any of the keys documented above is not present in the output of `_get_tags()`,
+an error will occur.
 
 In addition to the tags, estimators also need to declare any non-optional
 parameters to ``__init__`` in the ``_required_parameters`` class attribute,

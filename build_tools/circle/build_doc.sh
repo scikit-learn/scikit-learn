@@ -182,6 +182,7 @@ conda create -n $CONDA_ENV_NAME --yes --quiet \
 source activate testenv
 pip install sphinx-gallery
 pip install numpydoc
+pip install sphinx-prompt
 
 # Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
 # workers with 2 cores when building the compiled extensions of scikit-learn.

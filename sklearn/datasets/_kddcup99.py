@@ -199,14 +199,14 @@ def fetch_kddcup99(*, subset=None, data_home=None, shuffle=False,
     with open(join(module_path, 'descr', 'kddcup99.rst')) as rst_file:
         fdescr = rst_file.read()
 
-    if return_X_y:
-        return data, target
-
     frame = None
     if as_frame:
         frame, data, target = _convert_data_dataframe(
             "fetch_kddcup99", data, target, feature_names, target_names
         )
+
+    if return_X_y:
+        return data, target
 
     return Bunch(
         data=data,
