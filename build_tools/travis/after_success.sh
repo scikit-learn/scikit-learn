@@ -10,7 +10,7 @@ set -e
 if [[ $BUILD_WHEEL == true && $TRAVIS_EVENT_TYPE != pull_request ]]; then
     # Nightly upload token and staging upload token are set in
     # Travis settings (originally generated at Anaconda cloud)
-    if [ $TRAVIS_EVENT_TYPE == cron ]; then
+    if [[ $TRAVIS_EVENT_TYPE == cron ]]; then
         ANACONDA_ORG="scipy-wheels-nightly"
         ANACONDA_TOKEN="$SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN"
     else
