@@ -11,7 +11,7 @@ apt-get -yq install wget bzip2 build-essential ccache
 # scipy as it would be to costly to build those from source.
 conda install -y mamba
 mamba create -n pypy -y \
-    pypy numpy scipy cython \
+    pypy numpy scipy cython pandas \
     joblib threadpoolctl pillow pytest \
     sphinx numpydoc docutils
 
