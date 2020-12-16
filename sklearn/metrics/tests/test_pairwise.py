@@ -678,7 +678,7 @@ def test_euclidean_distances_norm_shapes():
     D3 = euclidean_distances(X, Y,
                              X_norm_squared=X_norm_squared.reshape(1, -1),
                              Y_norm_squared=Y_norm_squared.reshape(1, -1))
-    
+
     assert_allclose(D2, D1)
     assert_allclose(D3, D1)
 
