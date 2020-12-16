@@ -275,23 +275,27 @@ def euclidean_distances(X, Y=None, *, Y_norm_squared=None, squared=False,
 
     if X_norm_squared is not None:
         X_norm_squared = check_array(X_norm_squared, ensure_2d=False)
+        original_shape = X_norm_squared.shape
         if X_norm_squared.shape == (X.shape[0],):
             X_norm_squared = X_norm_squared.reshape(-1, 1)
         if X_norm_squared.shape == (1, X.shape[0]):
             X_norm_squared = X_norm_squared.T
         if X_norm_squared.shape != (X.shape[0], 1):
             raise ValueError(
-                "Incompatible dimensions for X and X_norm_squared")
+                f"Incompatible dimensions for X of shape {X.shape} and "
+                f"X_norm_squared of shape {original_shape}.")
 
     if Y_norm_squared is not None:
         Y_norm_squared = check_array(Y_norm_squared, ensure_2d=False)
+        original_shape = Y_norm_squared.shape
         if Y_norm_squared.shape == (Y.shape[0],):
             Y_norm_squared = Y_norm_squared.reshape(1, -1)
         if Y_norm_squared.shape == (Y.shape[0], 1):
             Y_norm_squared = Y_norm_squared.T
         if Y_norm_squared.shape != (1, Y.shape[0]):
             raise ValueError(
-                "Incompatible dimensions for Y and Y_norm_squared")
+                f"Incompatible dimensions for Y of shape {Y.shape} and "
+                f"Y_norm_squared of shape {original_shape}.")
 
     return _euclidean_distances(X, Y, X_norm_squared, Y_norm_squared, squared)
 
