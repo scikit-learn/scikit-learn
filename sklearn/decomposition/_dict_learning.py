@@ -1448,7 +1448,17 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         Sparsity controlling parameter.
 
     n_iter : int, default=1000
-        Total number of iterations to perform.
+        Total number of iterations over data batches to perform.
+
+        .. deprecated:: 1.0
+           ``n_iter`` is deprecated in 1.0 and will be removed in 1.2. Use
+           ``max_iter`` instead.
+    
+    max_iter : int, default=None
+        Maximum number of iterations over the complete dataset before
+        stopping independently of any early stopping criterion heuristics.
+
+        .. versionadded:: 1.0
 
     fit_algorithm : {'lars', 'cd'}, default='lars'
         The algorithm used:
@@ -1505,7 +1515,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         `n_nonzero_coefs`.
         If `None`, default to 1.
 
-    verbose : bool, default=False
+    verbose : bool or int, default=False
         To control the verbosity of the procedure.
 
     split_sign : bool, default=False
@@ -1566,8 +1576,8 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         performed before.
 
         .. deprecated:: 1.0
-           ``iter_offset_`` serves internal purpose only and will be removed
-           in 1.2.
+           ``iter_offset_`` has been renamed ``n_batches_seen_`` and will be
+           removed in 1.2.
 
     random_state_ : RandomState instance
         RandomState instance that is generated either from a seed, the random
@@ -1576,6 +1586,12 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         .. deprecated:: 1.0
            ``random_state_`` serves internal purpose only and will be removed
            in 1.2.
+
+    n_batches_seen_ : int
+        The number of iteration on data batches that has been
+        performed before.
+
+        .. versionadded:: 1.0
 
     Examples
     --------
@@ -1620,11 +1636,11 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     """
     @_deprecate_positional_args
     def __init__(self, n_components=None, *, alpha=1, n_iter=1000,
-                 fit_algorithm='lars', n_jobs=None, batch_size=3, shuffle=True,
-                 dict_init=None, transform_algorithm='omp',
-                 transform_n_nonzero_coefs=None, transform_alpha=None,
-                 verbose=False, split_sign=False, random_state=None,
-                 positive_code=False, positive_dict=False,
+                 max_iter=None, fit_algorithm='lars', n_jobs=None,
+                 batch_size=3, shuffle=True, dict_init=None,
+                 transform_algorithm='omp', transform_n_nonzero_coefs=None,
+                 transform_alpha=None, verbose=False, split_sign=False,
+                 random_state=None, positive_code=False, positive_dict=False,
                  transform_max_iter=1000, callback=None):
 
         super().__init__(
@@ -1634,6 +1650,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self.n_components = n_components
         self.alpha = alpha
         self.n_iter = n_iter
+        self.max_iter = max_iter
         self.fit_algorithm = fit_algorithm
         self.dict_init = dict_init
         self.verbose = verbose
@@ -1734,11 +1751,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
                      positive=self.positive_dict)
         # XXX: Can the residuals be of any use?
 
-        if self.verbose:
-            print(f"Iteration {iter_idx}.")
-
-        # Maybe we need a stopping criteria based on the amount of
-        # modification in the dictionary
         if self.callback is not None:
             self.callback(locals())
 
@@ -1795,15 +1807,52 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             np.zeros((self._n_components, self._n_components)),
             np.zeros((n_features, self._n_components)))
 
-        batches = gen_batches(n_samples, self.batch_size)
-        batches = itertools.cycle(batches)
+        if self.max_iter is not None:
 
-        for i, batch in zip(range(self.n_iter), batches):
-            self._minibatch_step(X_train[batch], dictionary,
-                                 self._random_state, i)
+            self.n_batches_seen_ = 0
 
+            for epoch in range(self.max_iter):
+
+                # TODO suffle data or sample with replacement ?
+                batches = gen_batches(n_samples, self.batch_size)
+
+                for i, batch in enumerate(batches):
+                    self._minibatch_step(
+                        X_train[batch], dictionary, self._random_state,
+                        self.n_batches_seen_)
+                
+                    # TODO add a stopping criterion, maybe based on the amount
+                    # of modification in the dictionary, and change n_iter to
+                    # max_iter.
+                    trigger_verbose = (self.verbose and
+                        self.n_batches_seen_ % ceil(100. / self.verbose) == 0)
+                    if self.verbose > 10 or trigger_verbose:
+                        print(f"{self.n_batches_seen_} batches processed.")
+
+                self.n_iter_ = self.max_iter
+                self.n_batches_seen_ += 1
+        else:
+            if self.n_iter != "deprecated":
+                warnings.warn(
+                    "'n_iter' is deprecated in version 1.0 and will be removed"
+                    " in version 1.2. Use 'max_iter' instead.", FutureWarning)
+
+            batches = gen_batches(n_samples, self.batch_size)
+            batches = itertools.cycle(batches)
+
+            for i, batch in zip(range(self.n_iter), batches):
+                self._minibatch_step(X_train[batch], dictionary,
+                                    self._random_state, i)
+
+                trigger_verbose = (self.verbose and
+                    i % ceil(100. / self.verbose) == 0)
+                if self.verbose > 10 or trigger_verbose:
+                    print(f"{i} batches processed.")
+
+            self.n_iter_ = self.n_iter
+            self.n_batches_seen_ = self.n_iter
+            
         self.components_ = dictionary
-        self.n_iter_ = self.n_iter
 
         return self
 
@@ -1832,10 +1881,10 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        is_first_call_to_partial_fit = not hasattr(self, 'components_')
+        has_components = hasattr(self, 'components_')
 
         X = self._validate_data(X, dtype=np.float64, order='C',
-                                reset=is_first_call_to_partial_fit)
+                                reset=not has_components)
 
         self._random_state = getattr(self, "_random_state",
                                      check_random_state(self.random_state))
@@ -1843,11 +1892,11 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         if iter_offset != "deprecated":
             warnings.warn("'iter_offset' was deprecated in version 1.0 and "
                           "will be removed in version 1.2", FutureWarning)
-            self.n_iter_ = iter_offset
+            self.n_batches_seen_ = iter_offset
         else:
-            self.n_iter_ = getattr(self, "n_iter_", 0)
+            self.n_batches_seen_ = getattr(self, "n_batches_seen_", 0)
 
-        if is_first_call_to_partial_fit:
+        if not has_components:
             # this is the first call to partial_fit on this object
             self._check_params(X)
 
@@ -1860,9 +1909,9 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             dictionary = self.components_
 
         self._minibatch_step(
-            X, dictionary, self._random_state, self.n_iter_)
+            X, dictionary, self._random_state, self.n_batches_seen_)
 
         self.components_ = dictionary
-        self.n_iter_ += 1
+        self.n_batches_seen_ += 1
 
         return self

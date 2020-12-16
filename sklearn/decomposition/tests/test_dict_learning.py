@@ -413,7 +413,7 @@ def test_minibatch_dict_learning_iter_offset():
     for i in range(10):
         dict2.partial_fit(X[[i]])
 
-    assert dict1.n_iter_ == dict2.n_iter_ == 10
+    assert dict1.n_batches_seen_ == dict2.n_batches_seen_ == 10
 
 
 def test_sparse_encode_shapes():
