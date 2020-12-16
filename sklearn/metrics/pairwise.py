@@ -296,7 +296,7 @@ def euclidean_distances(X, Y=None, *, Y_norm_squared=None, squared=False,
     return _euclidean_distances(X, Y, X_norm_squared, Y_norm_squared, squared)
 
 
-def _euclidean_distances(X, Y=None, X_norm_squared=None, Y_norm_squared=None,
+def _euclidean_distances(X, Y, X_norm_squared=None, Y_norm_squared=None,
                          squared=False):
     """Computational part of euclidean_distances
 
@@ -306,9 +306,6 @@ def _euclidean_distances(X, Y=None, X_norm_squared=None, Y_norm_squared=None,
     float32, norms needs to be recomputed on upcast chunks.
     TODO: use a float64 accumulator in row_norms to avoid the latter.
     """
-    if Y is None:
-        Y = X
-
     if X_norm_squared is not None:
         if X_norm_squared.dtype == np.float32:
             XX = None
