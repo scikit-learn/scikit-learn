@@ -1453,7 +1453,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         .. deprecated:: 1.0
            ``n_iter`` is deprecated in 1.0 and will be removed in 1.2. Use
            ``max_iter`` instead.
-    
+
     max_iter : int, default=None
         Maximum number of iterations over the complete dataset before
         stopping independently of any early stopping criterion heuristics.
