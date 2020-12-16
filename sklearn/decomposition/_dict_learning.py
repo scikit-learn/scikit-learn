@@ -1820,11 +1820,12 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
                     self._minibatch_step(
                         X_train[batch], dictionary, self._random_state,
                         self.n_batches_seen_)
-                
+
                     # TODO add a stopping criterion, maybe based on the amount
                     # of modification in the dictionary, and change n_iter to
                     # max_iter.
-                    trigger_verbose = (self.verbose and
+                    trigger_verbose = (
+                        self.verbose and
                         self.n_batches_seen_ % ceil(100. / self.verbose) == 0)
                     if self.verbose > 10 or trigger_verbose:
                         print(f"{self.n_batches_seen_} batches processed.")
@@ -1842,16 +1843,16 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
             for i, batch in zip(range(self.n_iter), batches):
                 self._minibatch_step(X_train[batch], dictionary,
-                                    self._random_state, i)
+                                     self._random_state, i)
 
                 trigger_verbose = (self.verbose and
-                    i % ceil(100. / self.verbose) == 0)
+                                   i % ceil(100. / self.verbose) == 0)
                 if self.verbose > 10 or trigger_verbose:
                     print(f"{i} batches processed.")
 
             self.n_iter_ = self.n_iter
             self.n_batches_seen_ = self.n_iter
-            
+
         self.components_ = dictionary
 
         return self
