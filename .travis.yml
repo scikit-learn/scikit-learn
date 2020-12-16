@@ -88,9 +88,9 @@ jobs:
         - BUILD_WHEEL=true
         - CIBW_BUILD=cp39-manylinux_aarch64
 
-install: source build_tools/travis/install.sh
-script: source build_tools/travis/script.sh
-after_success: source build_tools/travis/after_success.sh
+install: source build_tools/travis/install.sh || travis_terminate 1
+script: source build_tools/travis/script.sh || travis_terminate 1
+after_success: source build_tools/travis/after_success.sh || travis_terminate 1
 
 notifications:
   webhooks:
