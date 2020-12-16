@@ -44,8 +44,8 @@ def test_grid_to_graph():
     mask[0, 0] = 1
     mask[:, 2] = 1
     graph = grid_to_graph(2, 3, 1, mask=mask.ravel()).todense()
-    assert graph[1, 0] == 0
-    assert graph[2, 1] == 1
+    desired = np.array([[1, 0, 0], [0, 1, 1], [0, 1, 1]]) 
+    np.testing.assert_array_equal(graph, desired)
 
     # Checking that the function works whatever the type of mask is
     mask = np.ones((size, size), dtype=np.int16)
