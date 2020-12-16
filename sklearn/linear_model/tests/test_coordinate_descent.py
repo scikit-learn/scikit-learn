@@ -746,10 +746,10 @@ def test_precompute_invalid_argument():
 def test_precompute_incorrect_gram():
     X, y, _, _ = build_dataset()
 
-    random_state = np.random.RandomState(0)
+    rng = np.random.RandomState(0)
 
     X_centered = X - np.average(X, axis=0)
-    garbage = random_state.standard_normal(X.shape)
+    garbage = rng.standard_normal(X.shape)
     precompute = np.dot(garbage.T, garbage)
 
     clf = ElasticNet(alpha=0.01, precompute=precompute)
@@ -760,7 +760,9 @@ def test_precompute_incorrect_gram():
 
 def test_precompute_gram_weighted_samples():
     X, y, _, _ = build_dataset()
-    sample_weight = np.random.lognormal(size=y.shape)
+
+    rng = np.random.RandomState(0)
+    sample_weight = rng.lognormal(size=y.shape)
 
     w_norm = sample_weight * (y.shape / np.sum(sample_weight))
     X_c = (X - np.average(X, axis=0, weights=w_norm))
