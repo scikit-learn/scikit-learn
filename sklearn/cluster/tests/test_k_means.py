@@ -856,7 +856,7 @@ def test_result_of_kmeans_equal_in_diff_n_threads():
 def test_precompute_distance_deprecated(precompute_distances):
     # FIXME: remove in 1.0
     depr_msg = ("'precompute_distances' was deprecated in version 0.23 and "
-                "will be removed in 1.0.")
+                "will be removed in 1.0")
     X, _ = make_blobs(n_samples=10, n_features=2, centers=2, random_state=0)
     kmeans = KMeans(n_clusters=2, n_init=1, init='random', random_state=0,
                     precompute_distances=precompute_distances)
@@ -869,7 +869,7 @@ def test_precompute_distance_deprecated(precompute_distances):
 def test_n_jobs_deprecated(n_jobs):
     # FIXME: remove in 1.0
     depr_msg = ("'n_jobs' was deprecated in version 0.23 and will be removed "
-                "in 1.0.")
+                "in 1.0")
     X, _ = make_blobs(n_samples=10, n_features=2, centers=2, random_state=0)
     kmeans = KMeans(n_clusters=2, n_init=1, init='random', random_state=0,
                     n_jobs=n_jobs)
@@ -883,7 +883,7 @@ def test_minibatch_kmeans_deprecated_attributes(attr):
     # check that we raise a deprecation warning when accessing `init_size_`
     # FIXME: remove in 1.1
     depr_msg = (f"The attribute '{attr}' is deprecated in 0.24 and will be "
-                f"removed in 1.1.")
+                f"removed in 1.1")
     km = MiniBatchKMeans(n_clusters=2, n_init=1, init='random', random_state=0)
     km.fit(X)
 

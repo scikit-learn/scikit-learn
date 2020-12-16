@@ -784,13 +784,13 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         # precompute_distances
         if self.precompute_distances != 'deprecated':
             warnings.warn("'precompute_distances' was deprecated in version "
-                          "0.23 and will be removed in 1.0. It has no "
-                          "effect", FutureWarning)
+                          "0.23 and will be removed in 1.0 (renaming of 0.25)"
+                          ". It has no effect", FutureWarning)
 
         # n_jobs
         if self.n_jobs != 'deprecated':
             warnings.warn("'n_jobs' was deprecated in version 0.23 and will be"
-                          " removed in 1.0.", FutureWarning)
+                          " removed in 1.0 (renaming of 0.25).", FutureWarning)
             self._n_threads = self.n_jobs
         else:
             self._n_threads = None

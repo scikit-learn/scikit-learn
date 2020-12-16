@@ -1245,7 +1245,7 @@ def test_svm_probA_proB_deprecated(SVMClass, data, deprecated_prob):
     clf = SVMClass().fit(*data)
 
     msg = ("The {} attribute is deprecated in version 0.23 and will be "
-           "removed in version 1.0.").format(deprecated_prob)
+           "removed in version 1.0").format(deprecated_prob)
     with pytest.warns(FutureWarning, match=msg):
         getattr(clf, deprecated_prob)
 

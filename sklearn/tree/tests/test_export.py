@@ -456,7 +456,7 @@ def test_plot_tree_rotate_deprecation(pyplot):
     tree.fit(X, y)
     # test that a warning is raised when rotate is used.
     match = ("'rotate' has no effect and is deprecated in 0.23. "
-             "It will be removed in 1.0.")
+             "It will be removed in 1.0 (renaming of 0.25).")
     with pytest.warns(FutureWarning, match=match):
         plot_tree(tree, rotate=True)
 

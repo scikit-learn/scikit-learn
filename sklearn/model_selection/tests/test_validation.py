@@ -1981,7 +1981,6 @@ def test_validation_pairwise():
             return {'pairwise': False}
 
     svm = IncorrectTagSVM(kernel='precomputed')
-    msg = ("_pairwise was deprecated in 0.24 and will be removed in 1.1. "
-           "Set the estimator tags of your estimator instead")
+    msg = "_pairwise was deprecated in 0.24 and will be removed in 1.1"
     with pytest.warns(FutureWarning, match=msg):
         cross_validate(svm, linear_kernel, y, cv=2)

@@ -553,8 +553,7 @@ def test_is_pairwise():
         _pairwise = False
 
     pca = IncorrectTagPCA(kernel='precomputed')
-    msg = ("_pairwise was deprecated in 0.24 and will be removed in 1.1. "
-           "Set the estimator tags of your estimator instead")
+    msg = "_pairwise was deprecated in 0.24 and will be removed in 1.1"
     with pytest.warns(FutureWarning, match=msg):
         assert not _is_pairwise(pca)
 

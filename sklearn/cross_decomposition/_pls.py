@@ -186,7 +186,8 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
                     f"As of version 0.24, n_components({n_components}) should "
                     f"be in [1, n_features]."
                     f"n_components={rank_upper_bound} will be used instead. "
-                    f"In version 1.1, an error will be raised.",
+                    f"In version 1.1 (renaming of 0.26), an error will be "
+                    f"raised.",
                     FutureWarning
                 )
                 n_components = rank_upper_bound
@@ -201,7 +202,8 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
                     f"be in [1, min(n_features, n_samples, n_targets)] = "
                     f"[1, {rank_upper_bound}]. "
                     f"n_components={rank_upper_bound} will be used instead. "
-                    f"In version 1.1, an error will be raised.",
+                    f"In version 1.1 (renaming of 0.26), an error will be "
+                    f"raised.",
                     FutureWarning
                 )
                 n_components = rank_upper_bound
@@ -446,8 +448,8 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
             pass
             warnings.warn(
                 "Attribute x_scores_ was deprecated in version 0.24 and "
-                "will be removed in 1.1. Use est.transform(X) on the "
-                "training data instead.",
+                "will be removed in 1.1 (renaming of 0.26). Use "
+                "est.transform(X) on the training data instead.",
                 FutureWarning
             )
         return self._x_scores
@@ -458,8 +460,8 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         if not isinstance(self, PLSRegression):
             warnings.warn(
                 "Attribute y_scores_ was deprecated in version 0.24 and "
-                "will be removed in 1.1. Use est.transform(X) on the "
-                "training data instead.",
+                "will be removed in 1.1 (renaming of 0.26). Use "
+                "est.transform(X) on the training data instead.",
                 FutureWarning
             )
         return self._y_scores
@@ -892,7 +894,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
                 f"in [1, min(n_features, n_samples, n_targets)] = "
                 f"[1, {rank_upper_bound}]. "
                 f"n_components={rank_upper_bound} will be used instead. "
-                f"In version 1.1, an error will be raised.",
+                f"In version 1.1 (renaming of 0.26), an error will be raised.",
                 FutureWarning
             )
             n_components = rank_upper_bound

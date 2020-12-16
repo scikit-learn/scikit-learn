@@ -1114,7 +1114,7 @@ shape (n_estimators, ``loss_.K``)
     def _warn_mae_for_criterion(self):
         # TODO: This should raise an error from 1.1
         warnings.warn("criterion='mae' was deprecated in version 0.24 and "
-                      "will be removed in version 1.1. Use "
+                      "will be removed in version 1.1 (renaming of 0.26). Use "
                       "criterion='friedman_mse' or 'mse' instead, as trees "
                       "should use a least-square criterion in Gradient "
                       "Boosting.", FutureWarning)
@@ -1625,9 +1625,9 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     def _warn_mae_for_criterion(self):
         # TODO: This should raise an error from 1.1
         warnings.warn("criterion='mae' was deprecated in version 0.24 and "
-                      "will be removed in version 1.1. The correct way of "
-                      "minimizing the absolute error is to use loss='lad' "
-                      "instead.", FutureWarning)
+                      "will be removed in version 1.1 (renaming of 0.26). The "
+                      "correct way of minimizing the absolute error is to use "
+                      " loss='lad' instead.", FutureWarning)
 
     def predict(self, X):
         """Predict regression target for X.

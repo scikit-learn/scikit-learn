@@ -208,12 +208,7 @@ def test_affinity_propagation_random_state():
 def test_affinity_propagation_random_state_warning():
     # test that a warning is raised when random_state is not defined.
     X = np.array([[0, 0], [1, 1], [-2, -2]])
-    match = ("'random_state' has been introduced in 0.23. "
-             "It will be set to None starting from 1.0 which "
-             "means that results will differ at every function "
-             "call. Set 'random_state' to None to silence this "
-             "warning, or to 0 to keep the behavior of versions "
-             "<0.23.")
+    match = "'random_state' has been introduced in 0.23."
     with pytest.warns(FutureWarning, match=match):
         AffinityPropagation().fit(X)
 

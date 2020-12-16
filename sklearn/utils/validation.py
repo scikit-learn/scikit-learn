@@ -32,7 +32,7 @@ from ..exceptions import DataConversionWarning
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
 
-def _deprecate_positional_args(func=None, *, version="1.0"):
+def _deprecate_positional_args(func=None, *, version="1.0 (renaming of 0.25)"):
     """Decorator for methods that issues warnings for positional arguments.
 
     Using the keyword-only argument syntax in pep 3102, arguments after the
@@ -642,12 +642,13 @@ def check_array(array, accept_sparse=False, *, accept_large_sparse=True,
 
         # make sure we actually converted to numeric:
         if dtype_numeric and array.dtype.kind in "OUSV":
-            warnings.warn("Arrays of bytes/strings is being converted to "
-                          "decimal numbers if dtype='numeric'. This behavior "
-                          "is deprecated in 0.24 and will be removed in 1.1 "
-                          "Please convert your data to numeric values "
-                          "explicitly instead.",
-                          FutureWarning, stacklevel=2)
+            warnings.warn(
+                "Arrays of bytes/strings is being converted to decimal "
+                "numbers if dtype='numeric'. This behavior is deprecated in "
+                "0.24 and will be removed in 1.1 (renaming of 0.26). Please "
+                "convert your data to numeric values explicitly instead.",
+                FutureWarning, stacklevel=2
+            )
             try:
                 array = array.astype(np.float64)
             except ValueError as e:

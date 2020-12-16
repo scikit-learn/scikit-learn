@@ -145,13 +145,14 @@ def affinity_propagation(S, *, preference=None, convergence_iter=15,
                     else (np.array([0]), np.array([0] * n_samples)))
 
     if random_state == 'warn':
-        warnings.warn(("'random_state' has been introduced in 0.23. "
-                       "It will be set to None starting from 1.0 which "
-                       "means that results will differ at every function "
-                       "call. Set 'random_state' to None to silence this "
-                       "warning, or to 0 to keep the behavior of versions "
-                       "<0.23."),
-                      FutureWarning)
+        warnings.warn(
+            "'random_state' has been introduced in 0.23. It will be set to "
+            "None starting from 1.0 (renaming of 0.25) which means that "
+            "results will differ at every function call. Set 'random_state' "
+            "to None to silence this warning, or to 0 to keep the behavior of "
+            "versions <0.23.",
+            FutureWarning
+        )
         random_state = 0
     random_state = check_random_state(random_state)
 

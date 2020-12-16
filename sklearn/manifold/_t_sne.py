@@ -688,14 +688,16 @@ class TSNE(BaseEstimator):
         if self.square_distances not in [True, 'legacy']:
             raise ValueError("'square_distances' must be True or 'legacy'.")
         if self.metric != "euclidean" and self.square_distances is not True:
-            warnings.warn(("'square_distances' has been introduced in 0.24"
-                           "to help phase out legacy squaring behavior. The "
-                           "'legacy' setting will be removed in 1.1, and the "
-                           "default setting will be changed to True. In 0.28, "
-                           "'square_distances' will be removed altogether,"
-                           "and distances will be squared by default. Set "
-                           "'square_distances'=True to silence this warning."),
-                          FutureWarning)
+            warnings.warn(
+                "'square_distances' has been introduced in 0.24 to help phase "
+                "out legacy squaring behavior. The 'legacy' setting will be "
+                "removed in 1.1 (renaming of 0.26), and the default setting "
+                "will be changed to True. In 1.3, 'square_distances' will be "
+                "removed altogether, and distances will be squared by "
+                "default. Set 'square_distances'=True to silence this "
+                "warning.",
+                FutureWarning
+            )
         if self.method == 'barnes_hut':
             X = self._validate_data(X, accept_sparse=['csr'],
                                     ensure_min_samples=2,

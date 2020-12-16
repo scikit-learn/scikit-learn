@@ -1344,6 +1344,6 @@ def test_criterion_mae_deprecation(estimator):
     # checks whether a deprecation warning is issues when criterion='mae'
     # is used.
     msg = ("criterion='mae' was deprecated in version 0.24 and "
-           "will be removed in version 1.1.")
+           "will be removed in version 1.1")
     with pytest.warns(FutureWarning, match=msg):
         estimator.fit(X, y)
