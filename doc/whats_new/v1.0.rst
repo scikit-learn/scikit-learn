@@ -45,6 +45,7 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+
 :mod:`sklearn.cluster`
 ......................
 
@@ -199,6 +200,14 @@ Changelog
 - |Enhancement| Add `fontname` argument in :func:`tree.export_graphviz`
   for non-English characters. :pr:`18959` by :user:`Zero <Zeroto521>`
   and :user:`wstates <wstates>`.
+
+:mod:`sklearn.feature_extraction`
+..................................
+
+- |Fix| Fixed a bug in :function:`image._to_graph` where singleton
+    connected components were not handled properly, resulting in a wrong
+    vertex indexing.  :pr:`18964` by `Bertrand Thirion`_.
+
 
 Code and Documentation Contributors
 -----------------------------------
