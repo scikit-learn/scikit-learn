@@ -671,15 +671,15 @@ Be aware that one can specify custom bins by passing a callable defining the
 discretization strategy to :class:`~sklearn.preprocessing.FunctionTransformer`.
 For instance, we can use the Pandas function :func:`pandas.cut`::
 
-  >>> import pandas as pd  # doctest: +SKIP
+  >>> import pandas as pd
   >>> import numpy as np
   >>> bins = [0, 1, 13, 20, 60, np.inf]
   >>> labels = ['infant', 'kid', 'teen', 'adult', 'senior citizen']
   >>> transformer = preprocessing.FunctionTransformer(
   ...     pd.cut, kw_args={'bins': bins, 'labels': labels, 'retbins': False}
-  ... )  # doctest: +SKIP
+  ... )
   >>> X = np.array([0.2, 2, 15, 25, 97])
-  >>> transformer.fit_transform(X)  # doctest: +SKIP
+  >>> transformer.fit_transform(X)
   ['infant', 'kid', 'teen', 'adult', 'senior citizen']
   Categories (5, object): ['infant' < 'kid' < 'teen' < 'adult' < 'senior citizen']
 
