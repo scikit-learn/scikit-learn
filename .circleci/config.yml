@@ -148,8 +148,10 @@ workflows:
           requires:
             - lint
       - pypy3:
-          requires:
-            - lint
+          filters:
+            branches:
+             only:
+              - 0.20.X
       - deploy:
           requires:
             - doc
