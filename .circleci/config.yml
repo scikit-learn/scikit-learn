@@ -150,8 +150,8 @@ workflows:
       - pypy3:
           filters:
             branches:
-             only:
-              - 0.20.X
+              only:
+                - 0.20.X
       - deploy:
           requires:
             - doc
