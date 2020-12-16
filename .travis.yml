@@ -27,9 +27,6 @@ env:
                         OPENBLAS_NUM_THREADS=2
                         SKLEARN_BUILD_PARALLEL=8
                         SKLEARN_SKIP_NETWORK_TESTS=1"
-    # Nightly upload token and staging upload token are set in Travis settings
-    - SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN=__token__
-    - SCIKIT_LEARN_STAGING_UPLOAD_TOKEN=__token__
 
 jobs:
   include:

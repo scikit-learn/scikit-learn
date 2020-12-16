@@ -8,6 +8,7 @@ set -e
 
 # The wheels cannot be uploaded on PRs
 if [[ $BUILD_WHEEL == true && $TRAVIS_EVENT_TYPE != pull_request ]]; then
+    # The tokens are set from Travis (originally generated at Anaconda cloud)
     if [ $TRAVIS_EVENT_TYPE == cron ]; then
         ANACONDA_ORG="scipy-wheels-nightly"
         ANACONDA_TOKEN="$SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN"
