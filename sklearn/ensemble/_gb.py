@@ -812,8 +812,9 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         .. versionadded:: 0.18
         .. deprecated:: 0.24
             `criterion='mae'` is deprecated and will be removed in version
-            1.1. Use `criterion='friedman_mse'` or `'mse'` instead, as trees
-            should use a least-square criterion in Gradient Boosting.
+            1.1 (renaming of 0.26). Use `criterion='friedman_mse'` or `'mse'`
+            instead, as trees should use a least-square criterion in
+            Gradient Boosting.
 
     min_samples_split : int or float, default=2
         The minimum number of samples required to split an internal node:
@@ -878,7 +879,8 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
            ``min_impurity_split`` has been deprecated in favor of
            ``min_impurity_decrease`` in 0.19. The default value of
            ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
-           will be removed in 1.0. Use ``min_impurity_decrease`` instead.
+           will be removed in 1.0 (renaming of 0.25).
+           Use ``min_impurity_decrease`` instead.
 
     init : estimator or 'zero', default=None
         An estimator object that is used to compute the initial predictions.
@@ -1339,8 +1341,8 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         .. versionadded:: 0.18
         .. deprecated:: 0.24
             `criterion='mae'` is deprecated and will be removed in version
-            1.1. The correct way of minimizing the absolute error is to use
-            `loss='lad'` instead.
+            1.1 (renaming of 0.26). The correct way of minimizing the absolute
+            error is to use `loss='lad'` instead.
 
     min_samples_split : int or float, default=2
         The minimum number of samples required to split an internal node:
@@ -1405,7 +1407,8 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
            ``min_impurity_split`` has been deprecated in favor of
            ``min_impurity_decrease`` in 0.19. The default value of
            ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
-           will be removed in 1.0. Use ``min_impurity_decrease`` instead.
+           will be removed in 1.0 (renaming of 0.25).
+           Use ``min_impurity_decrease`` instead.
 
     init : estimator or 'zero', default=None
         An estimator object that is used to compute the initial predictions.
@@ -1535,7 +1538,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
         .. deprecated:: 0.24
             Attribute ``n_classes_`` was deprecated in version 0.24 and
-            will be removed in 1.1.
+            will be removed in 1.1 (renaming of 0.26).
 
     n_estimators_ : int
         The number of estimators as selected by early stopping (if
@@ -1695,7 +1698,8 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     # FIXME: to be removed in 1.1
     # mypy error: Decorated property not supported
     @deprecated("Attribute n_classes_ was deprecated "  # type: ignore
-                "in version 0.24 and will be removed in 1.1.")
+                "in version 0.24 and will be removed in 1.1 "
+                "(renaming of 0.26).")
     @property
     def n_classes_(self):
         try:

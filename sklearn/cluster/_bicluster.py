@@ -240,7 +240,7 @@ class SpectralCoclustering(BaseSpectral):
 
         .. deprecated:: 0.23
             ``n_jobs`` was deprecated in version 0.23 and will be removed in
-            1.0.
+            1.0 (renaming of 0.25).
 
     random_state : int, RandomState instance, default=None
         Used for randomizing the singular value decomposition and the k-means
@@ -392,7 +392,7 @@ class SpectralBiclustering(BaseSpectral):
 
         .. deprecated:: 0.23
             ``n_jobs`` was deprecated in version 0.23 and will be removed in
-            1.0.
+            1.0 (renaming of 0.25).
 
     random_state : int, RandomState instance, default=None
         Used for randomizing the singular value decomposition and the k-means

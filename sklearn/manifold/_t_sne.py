@@ -611,8 +611,8 @@ class TSNE(BaseEstimator):
            legacy squaring behavior.
         .. deprecated:: 0.24
            Legacy squaring behavior was deprecated in 0.24. The ``'legacy'``
-           value will be removed in 1.1, at which point the default value will
-           change to ``True``.
+           value will be removed in 1.1 (renaming of 0.26), at which point the
+           default value will change to ``True``.
 
     Attributes
     ----------
@@ -675,7 +675,7 @@ class TSNE(BaseEstimator):
         self.method = method
         self.angle = angle
         self.n_jobs = n_jobs
-        # TODO Revisit deprecation of square_distances for 1.1-0.28 (#12401)
+        # TODO Revisit deprecation of square_distances for 1.1-1.3 (#12401)
         self.square_distances = square_distances
 
     def _fit(self, X, skip_num_points=0):

@@ -390,8 +390,8 @@ General Concepts
                 .. deprecated:: 0.24
 
                     The _pairwise attribute is deprecated in 0.24. From 1.1
-                    onward, the `pairwise` estimator tag should be used
-                    instead.
+                    (renaming of 0.26) onward, the `pairwise` estimator tag
+                    should be used instead.
 
         For more detailed info, see :ref:`estimator_tags`.
 

@@ -186,7 +186,7 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
 
         .. deprecated:: 0.24
             This attribute is deprecated in 0.24 and will
-            be removed in 1.1. If you use this attribute
+            be removed in 1.1 (renaming of 0.26). If you use this attribute
             in :class:`~sklearn.feature_selection.RFE` or
             :class:`~sklearn.feature_selection.SelectFromModel`,
             you may pass a callable to the `importance_getter`
@@ -200,7 +200,7 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
 
         .. deprecated:: 0.24
             This attribute is deprecated in 0.24 and will
-            be removed in 1.1. If you use this attribute
+            be removed in 1.1 (renaming of 0.26). If you use this attribute
             in :class:`~sklearn.feature_selection.RFE` or
             :class:`~sklearn.feature_selection.SelectFromModel`,
             you may pass a callable to the `importance_getter`
@@ -459,7 +459,7 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
     # TODO: Remove coef_ attribute in 1.1
     # mypy error: Decorated property not supported
     @deprecated("Attribute coef_ was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 1.1. "
+                "version 0.24 and will be removed in 1.1 (renaming of 0.26). "
                 "If you observe this warning while using RFE "
                 "or SelectFromModel, use the importance_getter "
                 "parameter instead.")
@@ -477,7 +477,7 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
     # TODO: Remove intercept_ attribute in 1.1
     # mypy error: Decorated property not supported
     @deprecated("Attribute intercept_ was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 1.1. "
+                "version 0.24 and will be removed in 1.1 (renaming of 0.26). "
                 "If you observe this warning while using RFE "
                 "or SelectFromModel, use the importance_getter "
                 "parameter instead.")
@@ -492,7 +492,7 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
     # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
     @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 1.1.")
+                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def _pairwise(self):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
@@ -591,9 +591,9 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         .. deprecated:: 0.24
 
-            The _pairwise attribute is deprecated in 0.24. From 1.1 and
-            onward, `pairwise_indices_` will use the pairwise estimator tag
-            instead.
+            The _pairwise attribute is deprecated in 0.24. From 1.1
+            (renaming of 0.25) and onward, `pairwise_indices_` will use the
+            pairwise estimator tag instead.
 
     Examples
     --------
@@ -772,7 +772,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
     @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 1.1.")
+                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def _pairwise(self):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""

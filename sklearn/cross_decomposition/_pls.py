@@ -408,35 +408,35 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
         "Attribute norm_y_weights was deprecated in version 0.24 and "
-        "will be removed in 1.1.")
+        "will be removed in 1.1 (renaming of 0.26).")
     @property
     def norm_y_weights(self):
         return self._norm_y_weights
 
     @deprecated(  # type: ignore
         "Attribute x_mean_ was deprecated in version 0.24 and "
-        "will be removed in 1.1.")
+        "will be removed in 1.1 (renaming of 0.26).")
     @property
     def x_mean_(self):
         return self._x_mean
 
     @deprecated(  # type: ignore
         "Attribute y_mean_ was deprecated in version 0.24 and "
-        "will be removed in 1.1.")
+        "will be removed in 1.1 (renaming of 0.26).")
     @property
     def y_mean_(self):
         return self._y_mean
 
     @deprecated(  # type: ignore
         "Attribute x_std_ was deprecated in version 0.24 and "
-        "will be removed in 1.1.")
+        "will be removed in 1.1 (renaming of 0.26).")
     @property
     def x_std_(self):
         return self._x_std
 
     @deprecated(  # type: ignore
         "Attribute y_std_ was deprecated in version 0.24 and "
-        "will be removed in 1.1.")
+        "will be removed in 1.1 (renaming of 0.26).")
     @property
     def y_std_(self):
         return self._y_std
@@ -627,15 +627,17 @@ class PLSCanonical(_PLS):
         The transformed training samples.
 
         .. deprecated:: 0.24
-           `x_scores_` is deprecated in 0.24 and will be removed in 1.1. You
-           can just call `transform` on the training data instead.
+           `x_scores_` is deprecated in 0.24 and will be removed in 1.1
+           (renaming of 0.26). You can just call `transform` on the training
+           data instead.
 
     y_scores_ : ndarray of shape (n_samples, n_components)
         The transformed training targets.
 
         .. deprecated:: 0.24
-           `y_scores_` is deprecated in 0.24 and will be removed in 1.1. You
-           can just call `transform` on the training data instead.
+           `y_scores_` is deprecated in 0.24 and will be removed in 1.1
+           (renaming of 0.26). You can just call `transform` on the training
+           data instead.
 
     x_rotations_ : ndarray of shape (n_features, n_components)
         The projection matrix used to transform `X`.
@@ -737,15 +739,17 @@ class CCA(_PLS):
         The transformed training samples.
 
         .. deprecated:: 0.24
-           `x_scores_` is deprecated in 0.24 and will be removed in 1.1. You
-           can just call `transform` on the training data instead.
+           `x_scores_` is deprecated in 0.24 and will be removed in 1.1
+           (renaming of 0.26). You can just call `transform` on the training
+           data instead.
 
     y_scores_ : ndarray of shape (n_samples, n_components)
         The transformed training targets.
 
         .. deprecated:: 0.24
-           `y_scores_` is deprecated in 0.24 and will be removed in 1.1. You
-           can just call `transform` on the training data instead.
+           `y_scores_` is deprecated in 0.24 and will be removed in 1.1
+           (renaming of 0.26). You can just call `transform` on the training
+           data instead.
 
     x_rotations_ : ndarray of shape (n_features, n_components)
         The projection matrix used to transform `X`.
@@ -826,15 +830,17 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         The transformed training samples.
 
         .. deprecated:: 0.24
-           `x_scores_` is deprecated in 0.24 and will be removed in 1.1. You
-           can just call `transform` on the training data instead.
+           `x_scores_` is deprecated in 0.24 and will be removed in 1.1
+           (renaming of 0.26). You can just call `transform` on the training
+           data instead.
 
     y_scores_ : ndarray of shape (n_samples, n_components)
         The transformed training targets.
 
         .. deprecated:: 0.24
-           `y_scores_` is deprecated in 0.24 and will be removed in 1.1. You
-           can just call `transform` on the training data instead.
+           `y_scores_` is deprecated in 0.24 and will be removed in 1.1
+           (renaming of 0.26). You can just call `transform` on the training
+           data instead.
 
     Examples
     --------
@@ -919,8 +925,9 @@ class PLSSVD(TransformerMixin, BaseEstimator):
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
         "Attribute x_scores_ was deprecated in version 0.24 and "
-        "will be removed in 1.1. Use est.transform(X) on the "
-        "training data instead.")
+        "will be removed in 1.1 (renaming of 0.26). Use est.transform(X) on "
+        "the training data instead."
+    )
     @property
     def x_scores_(self):
         return self._x_scores
@@ -928,36 +935,37 @@ class PLSSVD(TransformerMixin, BaseEstimator):
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
         "Attribute y_scores_ was deprecated in version 0.24 and "
-        "will be removed in 1.1. Use est.transform(X, Y) on the "
-        "training data instead.")
+        "will be removed in 1.1 (renaming of 0.26). Use est.transform(X, Y) "
+        "on the training data instead."
+    )
     @property
     def y_scores_(self):
         return self._y_scores
 
     @deprecated(  # type: ignore
         "Attribute x_mean_ was deprecated in version 0.24 and "
-        "will be removed in 1.1.")
+        "will be removed in 1.1 (renaming of 0.26).")
     @property
     def x_mean_(self):
         return self._x_mean
 
     @deprecated(  # type: ignore
         "Attribute y_mean_ was deprecated in version 0.24 and "
-        "will be removed in 1.1.")
+        "will be removed in 1.1 (renaming of 0.26).")
     @property
     def y_mean_(self):
         return self._y_mean
 
     @deprecated(  # type: ignore
         "Attribute x_std_ was deprecated in version 0.24 and "
-        "will be removed in 1.1.")
+        "will be removed in 1.1 (renaming of 0.26).")
     @property
     def x_std_(self):
         return self._x_std
 
     @deprecated(  # type: ignore
         "Attribute y_std_ was deprecated in version 0.24 and "
-        "will be removed in 1.1.")
+        "will be removed in 1.1 (renaming of 0.26).")
     @property
     def y_std_(self):
         return self._y_std

@@ -159,7 +159,7 @@ class loguniform(scipy.stats.reciprocal):
 
 @deprecated(
     'MaskedArray is deprecated in version 0.23 and will be removed in version '
-    '1.0. Use numpy.ma.MaskedArray instead.'
+    '1.0 (renaming of 0.25). Use numpy.ma.MaskedArray instead.'
 )
 class MaskedArray(_MaskedArray):
     pass  # TODO: remove in 1.0
