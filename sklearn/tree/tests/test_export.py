@@ -87,8 +87,8 @@ def test_graphviz_toy():
                                 rounded=True, out_file=None)
     contents2 = 'digraph Tree {\n' \
                 'node [shape=box, style="filled, rounded", color="black", ' \
-                'fontname=helvetica] ;\n' \
-                'edge [fontname=helvetica] ;\n' \
+                'fontname="helvetica"] ;\n' \
+                'edge [fontname="helvetica"] ;\n' \
                 '0 [label=<X<SUB>0</SUB> &le; 0.0<br/>samples = 100.0%<br/>' \
                 'value = [0.5, 0.5]>, fillcolor="#ffffff"] ;\n' \
                 '1 [label=<samples = 50.0%<br/>value = [1.0, 0.0]>, ' \
@@ -177,9 +177,9 @@ def test_graphviz_toy():
                                 out_file=None, rotate=True, rounded=True)
     contents2 = 'digraph Tree {\n' \
                 'node [shape=box, style="filled, rounded", color="black", ' \
-                'fontname=helvetica] ;\n' \
+                'fontname="helvetica"] ;\n' \
                 'graph [ranksep=equally, splines=polyline] ;\n' \
-                'edge [fontname=helvetica] ;\n' \
+                'edge [fontname="helvetica"] ;\n' \
                 'rankdir=LR ;\n' \
                 '0 [label="X[0] <= 0.0\\nmse = 1.0\\nsamples = 6\\n' \
                 'value = 0.0", fillcolor="#f2c09c"] ;\n' \
