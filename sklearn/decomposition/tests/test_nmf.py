@@ -598,10 +598,10 @@ def test_nmf_custom_init_dtype_error():
 # FIXME : should be removed in 1.1
 def test_init_default_deprecation():
     # Test FutureWarning on init default
-    msg = ("The 'init' value, when 'init=None' and "
-           "n_components is less than n_samples and "
-           "n_features, will be changed from 'nndsvd' to "
-           "'nndsvda' in 1.1 (renaming of 0.26).")
+    msg = (r"The 'init' value, when 'init=None' and "
+           r"n_components is less than n_samples and "
+           r"n_features, will be changed from 'nndsvd' to "
+           r"'nndsvda' in 1.1 \(renaming of 0.26\).")
     rng = np.random.mtrand.RandomState(42)
     A = np.abs(rng.randn(6, 5))
     with pytest.warns(FutureWarning, match=msg):

@@ -482,10 +482,10 @@ def test_ovr_deprecated_coef_intercept():
     ovr = OneVsRestClassifier(SVC(kernel="linear"))
     ovr = ovr.fit(iris.data, iris.target)
 
-    msg = ("Attribute {0} was deprecated in version 0.24 "
-           "and will be removed in 1.1 (renaming of 0.26). If you observe "
-           "this warning while using RFE or SelectFromModel, "
-           "use the importance_getter parameter instead.")
+    msg = (r"Attribute {0} was deprecated in version 0.24 "
+           r"and will be removed in 1.1 \(renaming of 0.26\). If you observe "
+           r"this warning while using RFE or SelectFromModel, "
+           r"use the importance_getter parameter instead.")
 
     for att in ["coef_", "intercept_"]:
         with pytest.warns(FutureWarning, match=msg.format(att)):
