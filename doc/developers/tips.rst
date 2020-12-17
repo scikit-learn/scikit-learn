@@ -55,13 +55,17 @@ Useful pytest aliases and flags
 The full test suite takes fairly long to run. For faster iterations,
 it is possibly to select a subset of tests using pytest selectors.
 In particular, one can run a `single test based on its node ID
-<https://docs.pytest.org/en/latest/example/markers.html#selecting-tests-based-on-their-node-id>`_::
+<https://docs.pytest.org/en/latest/example/markers.html#selecting-tests-based-on-their-node-id>`_:
+
+.. prompt:: bash $
 
   pytest -v sklearn/linear_model/tests/test_logistic.py::test_sparsify
 
 or use the `-k pytest parameter
 <https://docs.pytest.org/en/latest/example/markers.html#using-k-expr-to-select-tests-based-on-their-name>`_
-to select tests based on their name. For instance,::
+to select tests based on their name. For instance,:
+
+.. prompt:: bash $
 
   pytest sklearn/tests/test_common.py -v -k LogisticRegression
 
@@ -74,9 +78,11 @@ When a unit test fails, the following tricks can make debugging easier:
 
   2. The argument ``pytest --pdb`` drops into the Python debugger on failure. To
      instead drop into the rich IPython debugger ``ipdb``, you may set up a
-     shell alias to::
+     shell alias to:
+    
+.. prompt:: bash $
 
-         pytest --pdbcls=IPython.terminal.debugger:TerminalPdb --capture no
+    pytest --pdbcls=IPython.terminal.debugger:TerminalPdb --capture no
 
 Other `pytest` options that may become useful include:
 
@@ -246,9 +252,11 @@ code. Follow these steps:
      python suppressions. If you don't, you will have spurious output coming
      related to the python interpreter instead of your own code.
 
-  4. Run valgrind as follows::
+  4. Run valgrind as follows:
 
-       $> valgrind -v --suppressions=valgrind-python.supp python my_test_script.py
+.. prompt:: bash $
+
+  valgrind -v --suppressions=valgrind-python.supp python my_test_script.py
 
 .. _valgrind: http://valgrind.org
 .. _`README.valgrind`: https://github.com/python/cpython/blob/master/Misc/README.valgrind
@@ -283,7 +291,9 @@ https://github.com/multiarch/qemu-user-static).
     ppc64le, after changing the Docker image and Miniforge paths appropriately.
 
 Prepare a folder on the host filesystem and download the necessary tools and
-source code::
+source code:
+
+.. prompt:: bash $
 
     mkdir arm64
     pushd arm64
@@ -291,19 +301,25 @@ source code::
     git clone https://github.com/scikit-learn/scikit-learn.git
 
 Use docker to install QEMU user mode and run an ARM64v8 container with access
-to your shared folder under the `/io` mount point::
+to your shared folder under the `/io` mount point:
+
+.. prompt:: bash $
 
     docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
     docker run -v`pwd`:/io --rm -it arm64v8/ubuntu /bin/bash
 
 In the container, install miniforge3 for the ARM64 (a.k.a. aarch64)
-architecture::
+architecture:
+
+.. prompt:: bash $
 
     bash Miniforge3-Linux-aarch64.sh
     # Choose to install miniforge3 under: `/io/miniforge3`
 
 Whenever you restart a new container, you will need to reinit the conda env
-previously installed under `/io/miniforge3`::
+previously installed under `/io/miniforge3`:
+
+.. prompt:: bash $
 
     /io/miniforge3/bin/conda init
     source /root/.bashrc

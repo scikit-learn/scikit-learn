@@ -4,7 +4,7 @@ import pytest
 
 from sklearn.ensemble._hist_gradient_boosting.binning import (
     _BinMapper,
-    _find_binning_thresholds as _find_binning_thresholds_orig,
+    _find_binning_thresholds,
     _map_to_bins
 )
 from sklearn.ensemble._hist_gradient_boosting.common import X_DTYPE
@@ -17,45 +17,34 @@ DATA = np.random.RandomState(42).normal(
 ).astype(X_DTYPE)
 
 
-def _find_binning_thresholds(data, max_bins=255, subsample=int(2e5),
-                             random_state=None):
-    # Just a redef to avoid having to pass arguments all the time (as the
-    # function is private we don't use default values for parameters)
-    return _find_binning_thresholds_orig(data, max_bins, subsample,
-                                         random_state)
-
-
 def test_find_binning_thresholds_regular_data():
-    data = np.linspace(0, 10, 1001).reshape(-1, 1)
+    data = np.linspace(0, 10, 1001)
     bin_thresholds = _find_binning_thresholds(data, max_bins=10)
-    assert_allclose(bin_thresholds[0], [1, 2, 3, 4, 5, 6, 7, 8, 9])
-    assert len(bin_thresholds) == 1
+    assert_allclose(bin_thresholds, [1, 2, 3, 4, 5, 6, 7, 8, 9])
 
     bin_thresholds = _find_binning_thresholds(data, max_bins=5)
-    assert_allclose(bin_thresholds[0], [2, 4, 6, 8])
-    assert len(bin_thresholds) == 1
+    assert_allclose(bin_thresholds, [2, 4, 6, 8])
 
 
 def test_find_binning_thresholds_small_regular_data():
-    data = np.linspace(0, 10, 11).reshape(-1, 1)
+    data = np.linspace(0, 10, 11)
 
     bin_thresholds = _find_binning_thresholds(data, max_bins=5)
-    assert_allclose(bin_thresholds[0], [2, 4, 6, 8])
+    assert_allclose(bin_thresholds, [2, 4, 6, 8])
 
     bin_thresholds = _find_binning_thresholds(data, max_bins=10)
-    assert_allclose(bin_thresholds[0], [1, 2, 3, 4, 5, 6, 7, 8, 9])
+    assert_allclose(bin_thresholds, [1, 2, 3, 4, 5, 6, 7, 8, 9])
 
     bin_thresholds = _find_binning_thresholds(data, max_bins=11)
-    assert_allclose(bin_thresholds[0], np.arange(10) + .5)
+    assert_allclose(bin_thresholds, np.arange(10) + .5)
 
     bin_thresholds = _find_binning_thresholds(data, max_bins=255)
-    assert_allclose(bin_thresholds[0], np.arange(10) + .5)
+    assert_allclose(bin_thresholds, np.arange(10) + .5)
 
 
 def test_find_binning_thresholds_random_data():
-    bin_thresholds = _find_binning_thresholds(DATA, max_bins=255,
-                                              random_state=0)
-    assert len(bin_thresholds) == 2
+    bin_thresholds = [_find_binning_thresholds(DATA[:, i], max_bins=255)
+                      for i in range(2)]
     for i in range(len(bin_thresholds)):
         assert bin_thresholds[i].shape == (254,)  # 255 - 1
         assert bin_thresholds[i].dtype == DATA.dtype
@@ -68,9 +57,8 @@ def test_find_binning_thresholds_random_data():
 
 
 def test_find_binning_thresholds_low_n_bins():
-    bin_thresholds = _find_binning_thresholds(DATA, max_bins=128,
-                                              random_state=0)
-    assert len(bin_thresholds) == 2
+    bin_thresholds = [_find_binning_thresholds(DATA[:, i], max_bins=128)
+                      for i in range(2)]
     for i in range(len(bin_thresholds)):
         assert bin_thresholds[i].shape == (127,)  # 128 - 1
         assert bin_thresholds[i].dtype == DATA.dtype
@@ -94,8 +82,8 @@ def test_bin_mapper_n_features_transform():
 
 @pytest.mark.parametrize('max_bins', [16, 128, 255])
 def test_map_to_bins(max_bins):
-    bin_thresholds = _find_binning_thresholds(DATA, max_bins=max_bins,
-                                              random_state=0)
+    bin_thresholds = [_find_binning_thresholds(DATA[:, i], max_bins=max_bins)
+                      for i in range(2)]
     binned = np.zeros_like(DATA, dtype=X_BINNED_DTYPE, order='F')
     last_bin_idx = max_bins
     _map_to_bins(DATA, bin_thresholds, last_bin_idx, binned)
@@ -312,3 +300,121 @@ def test_infinite_values():
 
     expected_binned_X = np.array([0, 1, 2, 3]).reshape(-1, 1)
     assert_array_equal(bin_mapper.transform(X), expected_binned_X)
+
+
+@pytest.mark.parametrize("n_bins", [15, 256])
+def test_categorical_feature(n_bins):
+    # Basic test for categorical features
+    # we make sure that categories are mapped into [0, n_categories - 1] and
+    # that nans are mapped to the last bin
+    X = np.array([[4] * 500 +
+                  [1] * 3 +
+                  [10] * 4 +
+                  [0] * 4 +
+                  [13] +
+                  [7] * 5 +
+                  [np.nan] * 2], dtype=X_DTYPE).T
+    known_categories = [np.unique(X[~np.isnan(X)])]
+
+    bin_mapper = _BinMapper(n_bins=n_bins,
+                            is_categorical=np.array([True]),
+                            known_categories=known_categories).fit(X)
+    assert bin_mapper.n_bins_non_missing_ == [6]
+    assert_array_equal(bin_mapper.bin_thresholds_[0], [0, 1, 4, 7, 10, 13])
+
+    X = np.array([[0, 1, 4, np.nan, 7, 10, 13]], dtype=X_DTYPE).T
+    expected_trans = np.array([[0, 1, 2, n_bins - 1, 3, 4, 5]]).T
+    assert_array_equal(bin_mapper.transform(X), expected_trans)
+
+    # For unknown categories, the mapping is incorrect / undefined. This never
+    # happens in practice. This check is only for illustration purpose.
+    X = np.array([[-1, 100]], dtype=X_DTYPE).T
+    expected_trans = np.array([[0, 6]]).T
+    assert_array_equal(bin_mapper.transform(X), expected_trans)
+
+
+@pytest.mark.parametrize("n_bins", (128, 256))
+def test_categorical_with_numerical_features(n_bins):
+    # basic check for binmapper with mixed data
+    X1 = np.arange(10, 20).reshape(-1, 1)  # numerical
+    X2 = np.arange(10, 15).reshape(-1, 1)  # categorical
+    X2 = np.r_[X2, X2]
+    X = np.c_[X1, X2]
+    known_categories = [None, np.unique(X2).astype(X_DTYPE)]
+
+    bin_mapper = _BinMapper(n_bins=n_bins,
+                            is_categorical=np.array([False, True]),
+                            known_categories=known_categories).fit(X)
+
+    assert_array_equal(bin_mapper.n_bins_non_missing_, [10, 5])
+
+    bin_thresholds = bin_mapper.bin_thresholds_
+    assert len(bin_thresholds) == 2
+    assert_array_equal(bin_thresholds[1], np.arange(10, 15))
+
+    expected_X_trans = [[0, 0],
+                        [1, 1],
+                        [2, 2],
+                        [3, 3],
+                        [4, 4],
+                        [5, 0],
+                        [6, 1],
+                        [7, 2],
+                        [8, 3],
+                        [9, 4]]
+    assert_array_equal(bin_mapper.transform(X), expected_X_trans)
+
+
+def test_make_known_categories_bitsets():
+    # Check the output of make_known_categories_bitsets
+    X = np.array([[14, 2, 30],
+                  [30, 4, 70],
+                  [40, 10, 180],
+                  [40, 240, 180]], dtype=X_DTYPE)
+
+    bin_mapper = _BinMapper(n_bins=256,
+                            is_categorical=np.array([False, True, True]),
+                            known_categories=[None, X[:, 1], X[:, 2]])
+    bin_mapper.fit(X)
+
+    known_cat_bitsets, f_idx_map = bin_mapper.make_known_categories_bitsets()
+
+    # Note that for non-categorical features, values are left to 0
+    expected_f_idx_map = np.array([0, 0, 1], dtype=np.uint8)
+    assert_allclose(expected_f_idx_map, f_idx_map)
+
+    expected_cat_bitset = np.zeros((2, 8), dtype=np.uint32)
+
+    # first categorical feature: [2, 4, 10, 240]
+    f_idx = 1
+    mapped_f_idx = f_idx_map[f_idx]
+    expected_cat_bitset[mapped_f_idx, 0] = 2**2 + 2**4 + 2**10
+    # 240 = 32**7 + 16, therefore the 16th bit of the 7th array is 1.
+    expected_cat_bitset[mapped_f_idx, 7] = 2**16
+
+    # second categorical feature [30, 70, 180]
+    f_idx = 2
+    mapped_f_idx = f_idx_map[f_idx]
+    expected_cat_bitset[mapped_f_idx, 0] = 2**30
+    expected_cat_bitset[mapped_f_idx, 2] = 2**6
+    expected_cat_bitset[mapped_f_idx, 5] = 2**20
+
+    assert_allclose(expected_cat_bitset, known_cat_bitsets)
+
+
+@pytest.mark.parametrize('is_categorical, known_categories, match', [
+    (np.array([True]), [None],
+     'Known categories for feature 0 must be provided'),
+
+    (np.array([False]), np.array([1, 2, 3]),
+     "isn't marked as a categorical feature, but categories were passed")
+])
+def test_categorical_parameters(is_categorical, known_categories, match):
+    # test the validation of the is_categorical and known_categories parameters
+
+    X = np.array([[1, 2, 3]], dtype=X_DTYPE)
+
+    bin_mapper = _BinMapper(is_categorical=is_categorical,
+                            known_categories=known_categories)
+    with pytest.raises(ValueError, match=match):
+        bin_mapper.fit(X)

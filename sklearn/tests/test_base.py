@@ -500,7 +500,7 @@ def test_tag_inheritance():
     assert inherit_diamond_tag_est._get_tags()['allow_nan']
 
 
-def test_warns_on_get_params_non_attribute():
+def test_raises_on_get_params_non_attribute():
     class MyEstimator(BaseEstimator):
         def __init__(self, param=5):
             pass
@@ -509,10 +509,10 @@ def test_warns_on_get_params_non_attribute():
             return self
 
     est = MyEstimator()
-    with pytest.warns(FutureWarning, match='AttributeError'):
-        params = est.get_params()
+    msg = "'MyEstimator' object has no attribute 'param'"
 
-    assert params['param'] is None
+    with pytest.raises(AttributeError, match=msg):
+        est.get_params()
 
 
 def test_repr_mimebundle_():
@@ -558,24 +558,9 @@ def test_is_pairwise():
     with pytest.warns(FutureWarning, match=msg):
         assert not _is_pairwise(pca)
 
-    # the _pairwise attribute is present and set to False while the pairwise
-    # tag is not present
-    class FalsePairwise(BaseEstimator):
-        _pairwise = False
-
-        def _get_tags(self):
-            tags = super()._get_tags()
-            del tags['pairwise']
-            return tags
-
-    false_pairwise = FalsePairwise()
-    with pytest.warns(None) as record:
-        assert not _is_pairwise(false_pairwise)
-    assert not record
-
     # the _pairwise attribute is present and set to True while pairwise tag is
     # not present
-    class TruePairwise(FalsePairwise):
+    class TruePairwise(BaseEstimator):
         _pairwise = True
 
     true_pairwise = TruePairwise()

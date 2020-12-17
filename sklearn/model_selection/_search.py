@@ -35,6 +35,7 @@ from ..exceptions import NotFittedError
 from joblib import Parallel
 from ..utils import check_random_state
 from ..utils.random import sample_without_replacement
+from ..utils._tags import _safe_tags
 from ..utils.validation import indexable, check_is_fitted, _check_fit_params
 from ..utils.validation import _deprecate_positional_args
 from ..utils.metaestimators import if_delegate_has_method
@@ -433,8 +434,11 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
     def _more_tags(self):
         # allows cross-validation to see 'precomputed' metrics
-        estimator_tags = self.estimator._get_tags()
-        return {'pairwise': estimator_tags.get('pairwise', False)}
+        return {
+            'pairwise': _safe_tags(self.estimator, "pairwise"),
+            "_xfail_checks": {"check_supervised_y_2d":
+                              "DataConversionWarning not caught"},
+        }
 
     # TODO: Remove in 0.26
     # mypy error: Decorated property not supported
@@ -1238,6 +1242,9 @@ class GridSearchCV(BaseSearchCV):
 
         .. versionadded:: 0.20
 
+    multimetric_ : bool
+        Whether or not the scorers compute several metrics.
+
     Notes
     -----
     The parameters selected are those that maximize the score of the left out
@@ -1551,6 +1558,9 @@ class RandomizedSearchCV(BaseSearchCV):
         This is present only if ``refit`` is not False.
 
         .. versionadded:: 0.20
+
+    multimetric_ : bool
+        Whether or not the scorers compute several metrics.
 
     Notes
     -----

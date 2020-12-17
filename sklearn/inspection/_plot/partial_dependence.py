@@ -1,6 +1,5 @@
 import numbers
 from itertools import chain
-from itertools import count
 from math import ceil
 
 import numpy as np
@@ -12,18 +11,34 @@ from .. import partial_dependence
 from ...base import is_regressor
 from ...utils import check_array
 from ...utils import check_matplotlib_support  # noqa
+from ...utils import check_random_state
 from ...utils import _safe_indexing
 from ...utils.validation import _deprecate_positional_args
 from ...utils.fixes import delayed
 
 
 @_deprecate_positional_args
-def plot_partial_dependence(estimator, X, features, *, feature_names=None,
-                            target=None, response_method='auto', n_cols=3,
-                            grid_resolution=100, percentiles=(0.05, 0.95),
-                            method='auto', n_jobs=None, verbose=0,
-                            line_kw=None, contour_kw=None, ax=None,
-                            kind='average', subsample=1000):
+def plot_partial_dependence(
+    estimator,
+    X,
+    features,
+    *,
+    feature_names=None,
+    target=None,
+    response_method="auto",
+    n_cols=3,
+    grid_resolution=100,
+    percentiles=(0.05, 0.95),
+    method="auto",
+    n_jobs=None,
+    verbose=0,
+    line_kw=None,
+    contour_kw=None,
+    ax=None,
+    kind="average",
+    subsample=1000,
+    random_state=None,
+):
     """Partial dependence (PD) and individual conditional expectation (ICE)
     plots.
 
@@ -210,6 +225,13 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
 
         .. versionadded:: 0.24
 
+    random_state : int, RandomState instance or None, default=None
+        Controls the randomness of the selected samples when subsamples is not
+        `None` and `kind` is either `'both'` or `'individual'`.
+        See :term:`Glossary <random_state>` for details.
+
+        .. versionadded:: 0.24
+
     Returns
     -------
     display : :class:`~sklearn.inspection.PartialDependenceDisplay`
@@ -229,9 +251,6 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
     """
     check_matplotlib_support('plot_partial_dependence')  # noqa
     import matplotlib.pyplot as plt  # noqa
-    from matplotlib import transforms  # noqa
-    from matplotlib.ticker import MaxNLocator  # noqa
-    from matplotlib.ticker import ScalarFormatter  # noqa
 
     # set target_idx for multi-class estimators
     if hasattr(estimator, 'classes_') and np.size(estimator.classes_) > 2:
@@ -368,16 +387,20 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
             X_col = _safe_indexing(X, fx, axis=1)
             deciles[fx] = mquantiles(X_col, prob=np.arange(0.1, 1.0, 0.1))
 
-    display = PartialDependenceDisplay(pd_results=pd_results,
-                                       features=features,
-                                       feature_names=feature_names,
-                                       target_idx=target_idx,
-                                       pdp_lim=pdp_lim,
-                                       deciles=deciles,
-                                       kind=kind,
-                                       subsample=subsample)
-    return display.plot(ax=ax, n_cols=n_cols, line_kw=line_kw,
-                        contour_kw=contour_kw)
+    display = PartialDependenceDisplay(
+        pd_results=pd_results,
+        features=features,
+        feature_names=feature_names,
+        target_idx=target_idx,
+        pdp_lim=pdp_lim,
+        deciles=deciles,
+        kind=kind,
+        subsample=subsample,
+        random_state=random_state,
+    )
+    return display.plot(
+        ax=ax, n_cols=n_cols, line_kw=line_kw, contour_kw=contour_kw
+    )
 
 
 class PartialDependenceDisplay:
@@ -454,6 +477,12 @@ class PartialDependenceDisplay:
 
         .. versionadded:: 0.24
 
+    random_state : int, RandomState instance or None, default=None
+        Controls the randomness of the selected samples when subsamples is not
+        `None`. See :term:`Glossary <random_state>` for details.
+
+        .. versionadded:: 0.24
+
     Attributes
     ----------
     bounding_ax_ : matplotlib Axes or None
@@ -508,8 +537,19 @@ class PartialDependenceDisplay:
     plot_partial_dependence : Plot Partial Dependence.
     """
     @_deprecate_positional_args
-    def __init__(self, pd_results, *, features, feature_names, target_idx,
-                 pdp_lim, deciles, kind='average', subsample=1000):
+    def __init__(
+        self,
+        pd_results,
+        *,
+        features,
+        feature_names,
+        target_idx,
+        pdp_lim,
+        deciles,
+        kind="average",
+        subsample=1000,
+        random_state=None,
+    ):
         self.pd_results = pd_results
         self.features = features
         self.feature_names = feature_names
@@ -518,8 +558,10 @@ class PartialDependenceDisplay:
         self.deciles = deciles
         self.kind = kind
         self.subsample = subsample
+        self.random_state = random_state
 
     def _get_sample_count(self, n_samples):
+        """Compute the number of samples as an integer."""
         if isinstance(self.subsample, numbers.Integral):
             if self.subsample < n_samples:
                 return self.subsample
@@ -528,7 +570,255 @@ class PartialDependenceDisplay:
             return ceil(n_samples * self.subsample)
         return n_samples
 
-    def plot(self, ax=None, n_cols=3, line_kw=None, contour_kw=None):
+    def _plot_ice_lines(
+        self, preds, feature_values, n_ice_to_plot,
+        ax, pd_plot_idx, n_total_lines_by_plot, individual_line_kw
+    ):
+        """Plot the ICE lines.
+
+        Parameters
+        ----------
+        preds : ndarray of shape \
+                (n_instances, n_grid_points)
+            The predictions computed for all points of `feature_values` for a
+            given feature for all samples in `X`.
+        feature_values : ndarray of shape (n_grid_points,)
+            The feature values for which the predictions have been computed.
+        n_ice_to_plot : int
+            The number of ICE lines to plot.
+        ax : Matplotlib axes
+            The axis on which to plot the ICE lines.
+        pd_plot_idx : int
+            The sequential index of the plot. It will be unraveled to find the
+            matching 2D position in the grid layout.
+        n_total_lines_by_plot : int
+            The total number of lines expected to be plot on the axis.
+        individual_line_kw : dict
+            Dict with keywords passed when plotting the ICE lines.
+        """
+        rng = check_random_state(self.random_state)
+        # subsample ice
+        ice_lines_idx = rng.choice(
+            preds.shape[0], n_ice_to_plot, replace=False,
+        )
+        ice_lines_subsampled = preds[ice_lines_idx, :]
+        # plot the subsampled ice
+        for ice_idx, ice in enumerate(ice_lines_subsampled):
+            line_idx = np.unravel_index(
+                pd_plot_idx * n_total_lines_by_plot + ice_idx,
+                self.lines_.shape
+            )
+            self.lines_[line_idx] = ax.plot(
+                feature_values, ice.ravel(), **individual_line_kw
+            )[0]
+
+    def _plot_average_dependence(
+        self,
+        avg_preds,
+        feature_values,
+        ax,
+        pd_line_idx,
+        line_kw,
+    ):
+        """Plot the average partial dependence.
+
+        Parameters
+        ----------
+        avg_preds : ndarray of shape (n_grid_points,)
+            The average predictions for all points of `feature_values` for a
+            given feature for all samples in `X`.
+        feature_values : ndarray of shape (n_grid_points,)
+            The feature values for which the predictions have been computed.
+        ax : Matplotlib axes
+            The axis on which to plot the ICE lines.
+        pd_line_idx : int
+            The sequential index of the plot. It will be unraveled to find the
+            matching 2D position in the grid layout.
+        line_kw : dict
+            Dict with keywords passed when plotting the PD plot.
+        """
+        line_idx = np.unravel_index(pd_line_idx, self.lines_.shape)
+        self.lines_[line_idx] = ax.plot(
+            feature_values,
+            avg_preds,
+            **line_kw,
+        )[0]
+
+    def _plot_one_way_partial_dependence(
+        self,
+        preds,
+        avg_preds,
+        feature_values,
+        feature_idx,
+        n_ice_lines,
+        ax,
+        n_cols,
+        pd_plot_idx,
+        n_lines,
+        individual_line_kw,
+        line_kw,
+    ):
+        """Plot 1-way partial dependence: ICE and PDP.
+
+        Parameters
+        ----------
+        preds : ndarray of shape \
+                (n_instances, n_grid_points) or None
+            The predictions computed for all points of `feature_values` for a
+            given feature for all samples in `X`.
+        avg_preds : ndarray of shape (n_grid_points,)
+            The average predictions for all points of `feature_values` for a
+            given feature for all samples in `X`.
+        feature_values : ndarray of shape (n_grid_points,)
+            The feature values for which the predictions have been computed.
+        feature_idx : int
+            The index corresponding to the target feature.
+        n_ice_lines : int
+            The number of ICE lines to plot.
+        ax : Matplotlib axes
+            The axis on which to plot the ICE and PDP lines.
+        n_cols : int or None
+            The number of column in the axis.
+        pd_plot_idx : int
+            The sequential index of the plot. It will be unraveled to find the
+            matching 2D position in the grid layout.
+        n_lines : int
+            The total number of lines expected to be plot on the axis.
+        individual_line_kw : dict
+            Dict with keywords passed when plotting the ICE lines.
+        line_kw : dict
+            Dict with keywords passed when plotting the PD plot.
+        """
+        from matplotlib import transforms  # noqa
+
+        if self.kind in ("individual", "both"):
+            self._plot_ice_lines(
+                preds[self.target_idx],
+                feature_values,
+                n_ice_lines,
+                ax,
+                pd_plot_idx,
+                n_lines,
+                individual_line_kw,
+            )
+
+        if self.kind in ("average", "both"):
+            # the average is stored as the last line
+            if self.kind == "average":
+                pd_line_idx = pd_plot_idx
+            else:
+                pd_line_idx = pd_plot_idx * n_lines + n_ice_lines
+            self._plot_average_dependence(
+                avg_preds[self.target_idx].ravel(),
+                feature_values,
+                ax,
+                pd_line_idx,
+                line_kw,
+            )
+
+        trans = transforms.blended_transform_factory(
+            ax.transData, ax.transAxes
+        )
+        # create the decile line for the vertical axis
+        vlines_idx = np.unravel_index(pd_plot_idx, self.deciles_vlines_.shape)
+        self.deciles_vlines_[vlines_idx] = ax.vlines(
+            self.deciles[feature_idx[0]],
+            0,
+            0.05,
+            transform=trans,
+            color="k",
+        )
+        # reset ylim which was overwritten by vlines
+        ax.set_ylim(self.pdp_lim[1])
+
+        # Set xlabel if it is not already set
+        if not ax.get_xlabel():
+            ax.set_xlabel(self.feature_names[feature_idx[0]])
+
+        if n_cols is None or pd_plot_idx % n_cols == 0:
+            if not ax.get_ylabel():
+                ax.set_ylabel('Partial dependence')
+        else:
+            ax.set_yticklabels([])
+
+        if line_kw.get("label", None) and self.kind != 'individual':
+            ax.legend()
+
+    def _plot_two_way_partial_dependence(
+        self,
+        avg_preds,
+        feature_values,
+        feature_idx,
+        ax,
+        pd_plot_idx,
+        Z_level,
+        contour_kw,
+    ):
+        """Plot 2-way partial dependence.
+
+        Parameters
+        ----------
+        avg_preds : ndarray of shape \
+                (n_instances, n_grid_points, n_grid_points)
+            The average predictions for all points of `feature_values[0]` and
+            `feature_values[1]` for some given features for all samples in `X`.
+        feature_values : seq of 1d array
+            A sequence of array of the feature values for which the predictions
+            have been computed.
+        feature_idx : tuple of int
+            The indices of the target features
+        ax : Matplotlib axes
+            The axis on which to plot the ICE and PDP lines.
+        pd_plot_idx : int
+            The sequential index of the plot. It will be unraveled to find the
+            matching 2D position in the grid layout.
+        Z_level : ndarray of shape (8, 8)
+            The Z-level used to encode the average predictions.
+        contour_kw : dict
+            Dict with keywords passed when plotting the contours.
+        """
+        from matplotlib import transforms  # noqa
+
+        XX, YY = np.meshgrid(feature_values[0], feature_values[1])
+        Z = avg_preds[self.target_idx].T
+        CS = ax.contour(XX, YY, Z, levels=Z_level, linewidths=0.5, colors="k")
+        contour_idx = np.unravel_index(pd_plot_idx, self.contours_.shape)
+        self.contours_[contour_idx] = ax.contourf(
+            XX,
+            YY,
+            Z,
+            levels=Z_level,
+            vmax=Z_level[-1],
+            vmin=Z_level[0],
+            **contour_kw,
+        )
+        ax.clabel(CS, fmt="%2.2f", colors="k", fontsize=10, inline=True)
+
+        trans = transforms.blended_transform_factory(
+            ax.transData, ax.transAxes
+        )
+        # create the decile line for the vertical axis
+        xlim, ylim = ax.get_xlim(), ax.get_ylim()
+        vlines_idx = np.unravel_index(pd_plot_idx, self.deciles_vlines_.shape)
+        self.deciles_vlines_[vlines_idx] = ax.vlines(
+            self.deciles[feature_idx[0]], 0, 0.05, transform=trans, color="k",
+        )
+        # create the decile line for the horizontal axis
+        hlines_idx = np.unravel_index(pd_plot_idx, self.deciles_hlines_.shape)
+        self.deciles_hlines_[hlines_idx] = ax.hlines(
+            self.deciles[feature_idx[1]], 0, 0.05, transform=trans, color="k",
+        )
+        # reset xlim and ylim since they are overwritten by hlines and vlines
+        ax.set_xlim(xlim)
+        ax.set_ylim(ylim)
+
+        # set xlabel if it is not already set
+        if not ax.get_xlabel():
+            ax.set_xlabel(self.feature_names[feature_idx[0]])
+        ax.set_ylabel(self.feature_names[feature_idx[1]])
+
+    @_deprecate_positional_args(version="0.26")
+    def plot(self, *, ax=None, n_cols=3, line_kw=None, contour_kw=None):
         """Plot partial dependence plots.
 
         Parameters
@@ -562,9 +852,6 @@ class PartialDependenceDisplay:
 
         check_matplotlib_support("plot_partial_dependence")
         import matplotlib.pyplot as plt  # noqa
-        from matplotlib import transforms  # noqa
-        from matplotlib.ticker import MaxNLocator  # noqa
-        from matplotlib.ticker import ScalarFormatter  # noqa
         from matplotlib.gridspec import GridSpecFromSubplotSpec  # noqa
 
         if line_kw is None:
@@ -578,22 +865,31 @@ class PartialDependenceDisplay:
         default_contour_kws = {"alpha": 0.75}
         contour_kw = {**default_contour_kws, **contour_kw}
 
-        default_line_kws = {'color': 'C0'}
+        default_line_kws = {
+            "color": "C0",
+            "label": "average" if self.kind == "both" else None,
+        }
         line_kw = {**default_line_kws, **line_kw}
+
         individual_line_kw = line_kw.copy()
+        del individual_line_kw["label"]
 
         if self.kind == 'individual' or self.kind == 'both':
             individual_line_kw['alpha'] = 0.3
             individual_line_kw['linewidth'] = 0.5
 
         n_features = len(self.features)
-        n_sampled = 1
-        if self.kind == 'individual':
-            n_instances = len(self.pd_results[0].individual[0])
-            n_sampled = self._get_sample_count(n_instances)
-        elif self.kind == 'both':
-            n_instances = len(self.pd_results[0].individual[0])
-            n_sampled = self._get_sample_count(n_instances) + 1
+        if self.kind in ("individual", "both"):
+            n_ice_lines = self._get_sample_count(
+                len(self.pd_results[0].individual[0])
+            )
+            if self.kind == "individual":
+                n_lines = n_ice_lines
+            else:
+                n_lines = n_ice_lines + 1
+        else:
+            n_ice_lines = 0
+            n_lines = 1
 
         if isinstance(ax, plt.Axes):
             # If ax was set off, it has most likely been set to off
@@ -614,8 +910,7 @@ class PartialDependenceDisplay:
             if self.kind == 'average':
                 self.lines_ = np.empty((n_rows, n_cols), dtype=object)
             else:
-                self.lines_ = np.empty((n_rows, n_cols, n_sampled),
-                                       dtype=object)
+                self.lines_ = np.empty((n_rows, n_cols, n_lines), dtype=object)
             self.contours_ = np.empty((n_rows, n_cols), dtype=object)
 
             axes_ravel = self.axes_.ravel()
@@ -642,8 +937,7 @@ class PartialDependenceDisplay:
             if self.kind == 'average':
                 self.lines_ = np.empty_like(ax, dtype=object)
             else:
-                self.lines_ = np.empty(ax.shape + (n_sampled,),
-                                       dtype=object)
+                self.lines_ = np.empty(ax.shape + (n_lines,), dtype=object)
             self.contours_ = np.empty_like(ax, dtype=object)
 
         # create contour levels for two-way plots
@@ -653,18 +947,12 @@ class PartialDependenceDisplay:
         self.deciles_vlines_ = np.empty_like(self.axes_, dtype=object)
         self.deciles_hlines_ = np.empty_like(self.axes_, dtype=object)
 
-        # Create 1d views of these 2d arrays for easy indexing
-        lines_ravel = self.lines_.ravel(order='C')
-        contours_ravel = self.contours_.ravel(order='C')
-        vlines_ravel = self.deciles_vlines_.ravel(order='C')
-        hlines_ravel = self.deciles_hlines_.ravel(order='C')
-
-        for i, axi, fx, pd_result in zip(count(), self.axes_.ravel(),
-                                         self.features, self.pd_results):
-
+        for pd_plot_idx, (axi, feature_idx, pd_result) in enumerate(
+            zip(self.axes_.ravel(), self.features, self.pd_results)
+        ):
             avg_preds = None
             preds = None
-            values = pd_result["values"]
+            feature_values = pd_result["values"]
             if self.kind == 'individual':
                 preds = pd_result.individual
             elif self.kind == 'average':
@@ -673,69 +961,29 @@ class PartialDependenceDisplay:
                 avg_preds = pd_result.average
                 preds = pd_result.individual
 
-            if len(values) == 1:
-                if self.kind == 'individual' or self.kind == 'both':
-                    n_samples = self._get_sample_count(
-                        len(preds[self.target_idx])
-                    )
-                    ice_lines = preds[self.target_idx]
-                    sampled = ice_lines[np.random.choice(
-                        ice_lines.shape[0], n_samples, replace=False
-                    ), :]
-                    for j, ins in enumerate(sampled):
-                        lines_ravel[i * j + j] = axi.plot(
-                            values[0], ins.ravel(), **individual_line_kw
-                        )[0]
-                if self.kind == 'average':
-                    lines_ravel[i] = axi.plot(
-                        values[0], avg_preds[self.target_idx].ravel(),
-                        **line_kw
-                    )[0]
-                elif self.kind == 'both':
-                    lines_ravel[i] = axi.plot(
-                        values[0], avg_preds[self.target_idx].ravel(),
-                        label='average', **line_kw
-                    )[0]
-                    axi.legend()
+            if len(feature_values) == 1:
+                self._plot_one_way_partial_dependence(
+                    preds,
+                    avg_preds,
+                    feature_values[0],
+                    feature_idx,
+                    n_ice_lines,
+                    axi,
+                    n_cols,
+                    pd_plot_idx,
+                    n_lines,
+                    individual_line_kw,
+                    line_kw,
+                )
             else:
-                # contour plot
-                XX, YY = np.meshgrid(values[0], values[1])
-                Z = avg_preds[self.target_idx].T
-                CS = axi.contour(XX, YY, Z, levels=Z_level, linewidths=0.5,
-                                 colors='k')
-                contours_ravel[i] = axi.contourf(XX, YY, Z, levels=Z_level,
-                                                 vmax=Z_level[-1],
-                                                 vmin=Z_level[0],
-                                                 **contour_kw)
-                axi.clabel(CS, fmt='%2.2f', colors='k', fontsize=10,
-                           inline=True)
+                self._plot_two_way_partial_dependence(
+                    avg_preds,
+                    feature_values,
+                    feature_idx,
+                    axi,
+                    pd_plot_idx,
+                    Z_level,
+                    contour_kw,
+                )
 
-            trans = transforms.blended_transform_factory(axi.transData,
-                                                         axi.transAxes)
-            ylim = axi.get_ylim()
-            vlines_ravel[i] = axi.vlines(self.deciles[fx[0]], 0, 0.05,
-                                         transform=trans, color='k')
-            axi.set_ylim(ylim)
-
-            # Set xlabel if it is not already set
-            if not axi.get_xlabel():
-                axi.set_xlabel(self.feature_names[fx[0]])
-
-            if len(values) == 1:
-                if n_cols is None or i % n_cols == 0:
-                    if not axi.get_ylabel():
-                        axi.set_ylabel('Partial dependence')
-                else:
-                    axi.set_yticklabels([])
-                axi.set_ylim(self.pdp_lim[1])
-            else:
-                # contour plot
-                trans = transforms.blended_transform_factory(axi.transAxes,
-                                                             axi.transData)
-                xlim = axi.get_xlim()
-                hlines_ravel[i] = axi.hlines(self.deciles[fx[1]], 0, 0.05,
-                                             transform=trans, color='k')
-                # hline erases xlim
-                axi.set_ylabel(self.feature_names[fx[1]])
-                axi.set_xlim(xlim)
         return self

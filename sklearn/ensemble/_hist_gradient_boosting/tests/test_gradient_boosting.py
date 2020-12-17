@@ -3,14 +3,15 @@ import pytest
 from numpy.testing import assert_allclose, assert_array_equal
 from sklearn.datasets import make_classification, make_regression
 from sklearn.datasets import make_low_rank_matrix
-from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler
-from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler, OneHotEncoder
+from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.base import clone, BaseEstimator, TransformerMixin
 from sklearn.base import is_regressor
 from sklearn.pipeline import make_pipeline
 from sklearn.metrics import mean_poisson_deviance
 from sklearn.dummy import DummyRegressor
 from sklearn.exceptions import NotFittedError
+from sklearn.compose import make_column_transformer
 
 # To use this experimental feature, we need to explicitly ask for it:
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
@@ -794,6 +795,172 @@ def test_staged_predict(HistGradientBoosting, X, y):
 
             assert_allclose(staged_predictions, pred_aux)
             assert staged_predictions.shape == pred_aux.shape
+
+
+@pytest.mark.parametrize("insert_missing", [False, True])
+@pytest.mark.parametrize("Est", (HistGradientBoostingRegressor,
+                                 HistGradientBoostingClassifier))
+@pytest.mark.parametrize("bool_categorical_parameter", [True, False])
+def test_unknown_categories_nan(insert_missing, Est,
+                                bool_categorical_parameter):
+    # Make sure no error is raised at predict if a category wasn't seen during
+    # fit. We also make sure they're treated as nans.
+
+    rng = np.random.RandomState(0)
+    n_samples = 1000
+    f1 = rng.rand(n_samples)
+    f2 = rng.randint(4, size=n_samples)
+    X = np.c_[f1, f2]
+    y = np.zeros(shape=n_samples)
+    y[X[:, 1] % 2 == 0] = 1
+
+    if bool_categorical_parameter:
+        categorical_features = [False, True]
+    else:
+        categorical_features = [1]
+
+    if insert_missing:
+        mask = rng.binomial(1, 0.01, size=X.shape).astype(bool)
+        assert mask.sum() > 0
+        X[mask] = np.nan
+
+    est = Est(max_iter=20, categorical_features=categorical_features).fit(X, y)
+    assert_array_equal(est.is_categorical_, [False, True])
+
+    # Make sure no error is raised on unknown categories and nans
+    # unknown categories will be treated as nans
+    X_test = np.zeros((10, X.shape[1]), dtype=float)
+    X_test[:5, 1] = 30
+    X_test[5:, 1] = np.nan
+    assert len(np.unique(est.predict(X_test))) == 1
+
+
+def test_categorical_encoding_strategies():
+    # Check native categorical handling vs different encoding strategies. We
+    # make sure that native encoding needs only 1 split to achieve a perfect
+    # prediction on a simple dataset. In contrast, OneHotEncoded data needs
+    # more depth / splits, and treating categories as ordered (just using
+    # OrdinalEncoder) requires even more depth.
+
+    # dataset with one random continuous feature, and one categorical feature
+    # with values in [0, 5], e.g. from an OrdinalEncoder.
+    # class == 1 iff categorical value in {0, 2, 4}
+    rng = np.random.RandomState(0)
+    n_samples = 10_000
+    f1 = rng.rand(n_samples)
+    f2 = rng.randint(6, size=n_samples)
+    X = np.c_[f1, f2]
+    y = np.zeros(shape=n_samples)
+    y[X[:, 1] % 2 == 0] = 1
+
+    # make sure dataset is balanced so that the baseline_prediction doesn't
+    # influence predictions too much with max_iter = 1
+    assert 0.49 < y.mean() < 0.51
+
+    clf_cat = HistGradientBoostingClassifier(
+        max_iter=1, max_depth=1, categorical_features=[False, True])
+
+    # Using native categorical encoding, we get perfect predictions with just
+    # one split
+    assert cross_val_score(clf_cat, X, y).mean() == 1
+
+    # quick sanity check for the bitset: 0, 2, 4 = 2**0 + 2**2 + 2**4 = 21
+    expected_left_bitset = [21, 0, 0, 0, 0, 0, 0, 0]
+    left_bitset = clf_cat.fit(X, y)._predictors[0][0].raw_left_cat_bitsets[0]
+    assert_array_equal(left_bitset, expected_left_bitset)
+
+    # Treating categories as ordered, we need more depth / more splits to get
+    # the same predictions
+    clf_no_cat = HistGradientBoostingClassifier(max_iter=1, max_depth=4,
+                                                categorical_features=None)
+    assert cross_val_score(clf_no_cat, X, y).mean() < .9
+
+    clf_no_cat.set_params(max_depth=5)
+    assert cross_val_score(clf_no_cat, X, y).mean() == 1
+
+    # Using OHEd data, we need less splits than with pure OEd data, but we
+    # still need more splits than with the native categorical splits
+    ct = make_column_transformer((OneHotEncoder(sparse=False), [1]),
+                                 remainder='passthrough')
+    X_ohe = ct.fit_transform(X)
+    clf_no_cat.set_params(max_depth=2)
+    assert cross_val_score(clf_no_cat, X_ohe, y).mean() < .9
+
+    clf_no_cat.set_params(max_depth=3)
+    assert cross_val_score(clf_no_cat, X_ohe, y).mean() == 1
+
+
+@pytest.mark.parametrize('Est', (HistGradientBoostingClassifier,
+                                 HistGradientBoostingRegressor))
+@pytest.mark.parametrize("categorical_features, monotonic_cst, expected_msg", [
+    (["hello", "world"], None,
+     ("categorical_features must be an array-like of bools or array-like of "
+      "ints.")),
+    ([0, -1], None,
+     (r"categorical_features set as integer indices must be in "
+      r"\[0, n_features - 1\]")),
+    ([True, True, False, False, True], None,
+     r"categorical_features set as a boolean mask must have shape "
+     r"\(n_features,\)"),
+    ([True, True, False, False], [0, -1, 0, 1],
+     "Categorical features cannot have monotonic constraints"),
+])
+def test_categorical_spec_errors(Est, categorical_features, monotonic_cst,
+                                 expected_msg):
+    # Test errors when categories are specified incorrectly
+    n_samples = 100
+    X, y = make_classification(random_state=0, n_features=4,
+                               n_samples=n_samples)
+    rng = np.random.RandomState(0)
+    X[:, 0] = rng.randint(0, 10, size=n_samples)
+    X[:, 1] = rng.randint(0, 10, size=n_samples)
+    est = Est(categorical_features=categorical_features,
+              monotonic_cst=monotonic_cst)
+
+    with pytest.raises(ValueError, match=expected_msg):
+        est.fit(X, y)
+
+
+@pytest.mark.parametrize('Est', (HistGradientBoostingClassifier,
+                                 HistGradientBoostingRegressor))
+@pytest.mark.parametrize('categorical_features', ([False, False], []))
+@pytest.mark.parametrize('as_array', (True, False))
+def test_categorical_spec_no_categories(Est, categorical_features, as_array):
+    # Make sure we can properly detect that no categorical features are present
+    # even if the categorical_features parameter is not None
+    X = np.arange(10).reshape(5, 2)
+    y = np.arange(5)
+    if as_array:
+        categorical_features = np.asarray(categorical_features)
+    est = Est(categorical_features=categorical_features).fit(X, y)
+    assert est.is_categorical_ is None
+
+
+@pytest.mark.parametrize('Est', (HistGradientBoostingClassifier,
+                                 HistGradientBoostingRegressor))
+def test_categorical_bad_encoding_errors(Est):
+    # Test errors when categories are encoded incorrectly
+
+    gb = Est(categorical_features=[True], max_bins=2)
+
+    X = np.array([[0, 1, 2]]).T
+    y = np.arange(3)
+    msg = ("Categorical feature at index 0 is expected to have a "
+           "cardinality <= 2")
+    with pytest.raises(ValueError, match=msg):
+        gb.fit(X, y)
+
+    X = np.array([[0, 2]]).T
+    y = np.arange(2)
+    msg = ("Categorical feature at index 0 is expected to be encoded with "
+           "values < 2")
+    with pytest.raises(ValueError, match=msg):
+        gb.fit(X, y)
+
+    # nans are ignored in the counts
+    X = np.array([[0, 1, np.nan]]).T
+    y = np.arange(3)
+    gb.fit(X, y)
 
 
 @pytest.mark.parametrize('Est', (HistGradientBoostingClassifier,
