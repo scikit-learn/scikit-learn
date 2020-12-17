@@ -1,58 +1,101 @@
-# make it explicit that we favor the new container-based travis workers
+# Make it explicit that we favor the
+# new container-based Travis workers
 language: python
+dist: xenial
 
 cache:
   apt: true
   directories:
-  - $HOME/.cache/pip
-  - $HOME/.ccache
-
-dist: xenial
+    - $HOME/.cache/pip
+    - $HOME/.ccache
 
 env:
   global:
-    # Directory where tests are run from
-    - TEST_DIR=/tmp/sklearn
+    - CPU_COUNT=3
+    - TEST_DIR=/tmp/sklearn  # Test directory for continuous integration jobs
+    - PYTEST_VERSION=latest
     - OMP_NUM_THREADS=2
     - OPENBLAS_NUM_THREADS=2
-    - PYTEST_VERSION=latest
+    - SKLEARN_BUILD_PARALLEL=3
+    - SKLEARN_SKIP_NETWORK_TESTS=1
+    # Custom environment variables for the ARM wheel builder
+    - CIBW_BUILD_VERBOSITY=1
+    - CIBW_TEST_REQUIRES="pytest pytest-xdist threadpoolctl"
+    - CIBW_TEST_COMMAND="bash {project}/build_tools/travis/test_wheels.sh"
+    - CIBW_ENVIRONMENT="CPU_COUNT=8
+                        OMP_NUM_THREADS=2
+                        OPENBLAS_NUM_THREADS=2
+                        SKLEARN_BUILD_PARALLEL=8
+                        SKLEARN_SKIP_NETWORK_TESTS=1"
+    # Nightly upload token and staging upload token are set in Travis settings
+    - SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN=__token__
+    - SCIKIT_LEARN_STAGING_UPLOAD_TOKEN=__token__
 
-matrix:
+jobs:
   include:
-    # Linux environment to test scikit-learn against numpy and scipy master
-    # installed from their CI wheels in a virtualenv with the Python
-    # interpreter provided by travis.
+    # Linux environment to test scikit-learn against NumPy and SciPy
+    # master installed from their continuous integration wheels in a
+    # virtual environment with Python interpreter provided by Travis.
     - python: 3.7
       env:
-        - CHECK_WARNINGS="true"
-        - CI_CPU_COUNT="3"
+        - CHECK_WARNINGS=true
       if: type = cron OR commit_message =~ /\[scipy-dev\]/
 
-    # As above but build scikit-learn with Intel C compiler (ICC).
     - python: 3.7
       env:
-        - CHECK_WARNING="true"
-        - BUILD_WITH_ICC="true"
-        - CI_CPU_COUNT="3"
+        - CHECK_WARNING=true
+        - BUILD_WITH_ICC=true
       if: type = cron OR commit_message =~ /\[icc-build\]/
 
     - python: 3.7
-      env:
-        - CI_CPU_COUNT="8"
       os: linux
       arch: arm64
       if: type = cron OR commit_message =~ /\[arm64\]/
+      env:
+        - CPU_COUNT=8
+
+    # Linux environments to build the scikit-learn wheels
+    # for the ARM64 arquitecture and Python 3.6 and newer
+    - python: 3.6
+      os: linux
+      arch: arm64
+      if: type = cron or commit_message =~ /\[cd build\]/
+      env:
+        - BUILD_WHEEL=true
+        - CIBW_BUILD=cp36-manylinux_aarch64
+
+    - python: 3.7
+      os: linux
+      arch: arm64
+      if: type = cron or commit_message =~ /\[cd build\]/
+      env:
+        - BUILD_WHEEL=true
+        - CIBW_BUILD=cp37-manylinux_aarch64
+
+    - python: 3.8
+      os: linux
+      arch: arm64
+      if: type = cron or commit_message =~ /\[cd build\]/
+      env:
+        - BUILD_WHEEL=true
+        - CIBW_BUILD=cp38-manylinux_aarch64
+
+    - python: 3.9
+      os: linux
+      arch: arm64
+      if: type = cron or commit_message =~ /\[cd build\]/
+      env:
+        - BUILD_WHEEL=true
+        - CIBW_BUILD=cp39-manylinux_aarch64
 
 install: source build_tools/travis/install.sh
-script:
-  - bash build_tools/travis/test_script.sh || travis_terminate 1
-  - bash build_tools/travis/test_docs.sh || travis_terminate 1
-  - bash build_tools/travis/test_pytest_soft_dependency.sh || travis_terminate 1
+script: source build_tools/travis/script.sh
 after_success: source build_tools/travis/after_success.sh
+
 notifications:
   webhooks:
     urls:
       - https://webhooks.gitter.im/e/4ffabb4df010b70cd624
-    on_success: change  # options: [always|never|change] default: always
-    on_failure: always  # options: [always|never|change] default: always
-    on_start: never     # options: [always|never|change] default: always
+    on_success: change
+    on_failure: always
+    on_start: never
