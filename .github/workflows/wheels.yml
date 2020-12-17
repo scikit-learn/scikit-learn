@@ -22,6 +22,7 @@ jobs:
   check_build_trigger:
     name: Check build trigger
     runs-on: ubuntu-latest
+    if: github.repository == 'scikit-learn/scikit-learn'
     outputs:
       build: ${{ steps.check_build_trigger.outputs.build }}
 
@@ -86,7 +87,7 @@ jobs:
                             SKLEARN_SKIP_NETWORK_TESTS=1
                             SKLEARN_BUILD_PARALLEL=3
           CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
-          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: bash build_tools/github/repair_windows_wheels.sh {wheel} {dest_dir} ${{ matrix.bitness }} 
+          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: bash build_tools/github/repair_windows_wheels.sh {wheel} {dest_dir} ${{ matrix.bitness }}
           CIBW_BEFORE_TEST_WINDOWS: bash build_tools/github/build_minimal_windows_image.sh ${{ matrix.python }} ${{ matrix.bitness }}
           CIBW_TEST_REQUIRES: pytest pandas threadpoolctl
           CIBW_TEST_COMMAND: bash {project}/build_tools/github/test_wheels.sh
