@@ -36,7 +36,7 @@ The following actions are typically useful:
 
    Online discussions may be harder than it seems at first glance, in
    particular given that a person new to open-source may have a very
-   different understanding of the process than a seasonned maintainer.
+   different understanding of the process than a seasoned maintainer.
 
    Overall, it is useful to stay positive and assume good will. `The
    following article
