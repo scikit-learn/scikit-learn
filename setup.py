@@ -222,8 +222,7 @@ def check_package_status(package, min_version):
                               .format(package, package_status['version'],
                                       req_str, instructions))
         else:
-            raise ImportError("{} is not "
-                              "installed.\n{}{}"
+            raise ImportError("{} is not installed.\n{}{}"
                               .format(package, req_str, instructions))
 
 
