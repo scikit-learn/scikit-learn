@@ -15,31 +15,14 @@ import numpy as np
 from . import __version__
 from ._config import get_config
 from .utils import _IS_32BIT
+from .utils._tags import (
+    _DEFAULT_TAGS,
+    _safe_tags,
+)
 from .utils.validation import check_X_y
 from .utils.validation import check_array
 from .utils._estimator_html_repr import estimator_html_repr
 from .utils.validation import _deprecate_positional_args
-
-_DEFAULT_TAGS = {
-    'non_deterministic': False,
-    'requires_positive_X': False,
-    'requires_positive_y': False,
-    'X_types': ['2darray'],
-    'poor_score': False,
-    'no_validation': False,
-    'multioutput': False,
-    "allow_nan": False,
-    'stateless': False,
-    'multilabel': False,
-    '_skip_test': False,
-    '_xfail_checks': False,
-    'multioutput_only': False,
-    'binary_only': False,
-    'requires_fit': True,
-    'preserves_dtype': [np.float64],
-    'requires_y': False,
-    'pairwise': False,
-    }
 
 
 @_deprecate_positional_args
@@ -858,11 +841,7 @@ def _is_pairwise(estimator):
         warnings.filterwarnings('ignore', category=FutureWarning)
         has_pairwise_attribute = hasattr(estimator, '_pairwise')
         pairwise_attribute = getattr(estimator, '_pairwise', False)
-
-    if hasattr(estimator, '_get_tags') and callable(estimator._get_tags):
-        pairwise_tag = estimator._get_tags().get('pairwise', False)
-    else:
-        pairwise_tag = False
+    pairwise_tag = _safe_tags(estimator, key="pairwise")
 
     if has_pairwise_attribute:
         if pairwise_attribute != pairwise_tag:

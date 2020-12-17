@@ -667,6 +667,22 @@ constant-width bins. The 'quantile' strategy uses the quantiles values to have
 equally populated bins in each feature. The 'kmeans' strategy defines bins based
 on a k-means clustering procedure performed on each feature independently.
 
+Be aware that one can specify custom bins by passing a callable defining the
+discretization strategy to :class:`~sklearn.preprocessing.FunctionTransformer`.
+For instance, we can use the Pandas function :func:`pandas.cut`::
+
+  >>> import pandas as pd
+  >>> import numpy as np
+  >>> bins = [0, 1, 13, 20, 60, np.inf]
+  >>> labels = ['infant', 'kid', 'teen', 'adult', 'senior citizen']
+  >>> transformer = preprocessing.FunctionTransformer(
+  ...     pd.cut, kw_args={'bins': bins, 'labels': labels, 'retbins': False}
+  ... )
+  >>> X = np.array([0.2, 2, 15, 25, 97])
+  >>> transformer.fit_transform(X)
+  ['infant', 'kid', 'teen', 'adult', 'senior citizen']
+  Categories (5, object): ['infant' < 'kid' < 'teen' < 'adult' < 'senior citizen']
+
 .. topic:: Examples:
 
   * :ref:`sphx_glr_auto_examples_preprocessing_plot_discretization.py`
