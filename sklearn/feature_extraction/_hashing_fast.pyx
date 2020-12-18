@@ -68,7 +68,7 @@ def transform(raw_X, Py_ssize_t n_features, dtype,
             h = murmurhash3_bytes_s32(<bytes>f, seed)
 
             array.resize_smart(indices, len(indices) + 1)
-            indices[len(indices) - 1] = abs(h) % n_features
+            indices[len(indices) - 1] = abs(h % n_features)
             # improve inner product preservation in the hashed space
             if alternate_sign:
                 value *= (h >= 0) * 2 - 1
