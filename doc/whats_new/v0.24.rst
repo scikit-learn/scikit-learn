@@ -792,9 +792,9 @@ Changelog
 - |Enhancement| :func:`tree.plot_tree` now uses colors from the matplotlib
   configuration settings. :pr:`17187` by `Andreas Müller`_.
 
-- |Fix| Add `fontname` argument in :func:`tree.export_graphviz` for
-  non-English characters. :pr:`18959` by :user:`Zero <Zeroto521>` and
-  :user:`wstates <wstates>`.
+- |Fix| Add `fontname` argument in :func:`tree.export_graphviz` and
+  :func:`tree.plot_tree` for non-English characters.
+  :pr:`18959` by :user:`Zero <Zeroto521>` and :user:`wstates <wstates>`.
 
 - |API| The parameter ``X_idx_sorted`` is now deprecated in
   :meth:`tree.DecisionTreeClassifier.fit` and
