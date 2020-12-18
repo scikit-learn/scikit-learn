@@ -254,8 +254,18 @@ def callable_rbf_kernel(x, y, **kwds):
 @pytest.mark.parametrize(
         'func, metric, kwds',
         [(pairwise_distances, 'euclidean', {}),
-         (pairwise_distances, minkowski, _minkowski_kwds),
-         (pairwise_distances, 'minkowski', _minkowski_kwds),
+         pytest.param(
+             pairwise_distances, minkowski, _minkowski_kwds,
+             marks=pytest.mark.skipif(sp_version < parse_version("1.0"),
+             reason="minkowski does not accept the w "
+                    "parameter prior to scipy 1.0.")
+         ),
+         pytest.param(
+             pairwise_distances, 'minkowski', _minkowski_kwds,
+             marks=pytest.mark.skipif(sp_version < parse_version("1.0"),
+             reason="minkowski does not accept the w "
+                    "parameter prior to scipy 1.0.")
+         ),
          (pairwise_distances, wminkowski, _wminkowski_kwds),
          (pairwise_distances, 'wminkowski', _wminkowski_kwds),
          (pairwise_kernels, 'polynomial', {'degree': 1}),
@@ -269,11 +279,6 @@ def test_pairwise_parallel(func, metric, kwds, array_constr, dtype):
         metric == wminkowski or metric == 'wminkowski'
     ):
         metric = 'minkowski'
-    if sp_version < parse_version("1.0") and (
-        metric == minkowski or metric == 'minkowski'
-    ):
-        pytest.skip("minkowski does not accept the w "
-                    "parameter prior to scipy 1.0.")
     rng = np.random.RandomState(0)
     X = array_constr(5 * rng.random_sample((5, 4)), dtype=dtype)
     Y = array_constr(5 * rng.random_sample((3, 4)), dtype=dtype)
