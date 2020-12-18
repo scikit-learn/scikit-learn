@@ -212,7 +212,7 @@ def k_means(X, n_clusters, *, sample_weight=None, init='k-means++',
 
         .. deprecated:: 0.23
             'precompute_distances' was deprecated in version 0.23 and will be
-            removed in 0.25. It has no effect.
+            removed in 1.0 (renaming of 0.25). It has no effect.
 
     n_init : int, default=10
         Number of time the k-means algorithm will be run with different
@@ -254,7 +254,7 @@ def k_means(X, n_clusters, *, sample_weight=None, init='k-means++',
 
         .. deprecated:: 0.23
             ``n_jobs`` was deprecated in version 0.23 and will be removed in
-            0.25.
+            1.0 (renaming of 0.25).
 
     algorithm : {"auto", "full", "elkan"}, default="auto"
         K-means algorithm to use. The classical EM-style algorithm is "full".
@@ -657,7 +657,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
         .. deprecated:: 0.23
             'precompute_distances' was deprecated in version 0.22 and will be
-            removed in 0.25. It has no effect.
+            removed in 1.0 (renaming of 0.25). It has no effect.
 
     verbose : int, default=0
         Verbosity mode.
@@ -686,7 +686,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
         .. deprecated:: 0.23
             ``n_jobs`` was deprecated in version 0.23 and will be removed in
-            0.25.
+            1.0 (renaming of 0.25).
 
     algorithm : {"auto", "full", "elkan"}, default="auto"
         K-means algorithm to use. The classical EM-style algorithm is "full".
@@ -784,13 +784,13 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         # precompute_distances
         if self.precompute_distances != 'deprecated':
             warnings.warn("'precompute_distances' was deprecated in version "
-                          "0.23 and will be removed in 0.25. It has no "
-                          "effect", FutureWarning)
+                          "0.23 and will be removed in 1.0 (renaming of 0.25)"
+                          ". It has no effect", FutureWarning)
 
         # n_jobs
         if self.n_jobs != 'deprecated':
             warnings.warn("'n_jobs' was deprecated in version 0.23 and will be"
-                          " removed in 0.25.", FutureWarning)
+                          " removed in 1.0 (renaming of 0.25).", FutureWarning)
             self._n_threads = self.n_jobs
         else:
             self._n_threads = None
@@ -1512,13 +1512,15 @@ class MiniBatchKMeans(KMeans):
         Weigth sum of each cluster.
 
         .. deprecated:: 0.24
-           This attribute is deprecated in 0.24 and will be removed in 0.26.
+           This attribute is deprecated in 0.24 and will be removed in
+           1.1 (renaming of 0.26).
 
     init_size_ : int
         The effective number of samples used for the initialization.
 
         .. deprecated:: 0.24
-           This attribute is deprecated in 0.24 and will be removed in 0.26.
+           This attribute is deprecated in 0.24 and will be removed in
+           1.1 (renaming of 0.26).
 
     See Also
     --------
@@ -1577,19 +1579,19 @@ class MiniBatchKMeans(KMeans):
         self.reassignment_ratio = reassignment_ratio
 
     @deprecated("The attribute 'counts_' is deprecated in 0.24"  # type: ignore
-                " and will be removed in 0.26.")
+                " and will be removed in 1.1 (renaming of 0.26).")
     @property
     def counts_(self):
         return self._counts
 
     @deprecated("The attribute 'init_size_' is deprecated in "  # type: ignore
-                "0.24 and will be removed in 0.26.")
+                "0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def init_size_(self):
         return self._init_size
 
     @deprecated("The attribute 'random_state_' is deprecated "  # type: ignore
-                "in 0.24 and will be removed in 0.26.")
+                "in 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def random_state_(self):
         return getattr(self, "_random_state", None)

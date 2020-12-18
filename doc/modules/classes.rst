@@ -1637,5 +1637,5 @@ Utilities from joblib:
 Recently deprecated
 ===================
 
-To be removed in 0.25
----------------------
+To be removed in 1.0 (renaming of 0.25)
+---------------------------------------

@@ -312,7 +312,7 @@ def _initialize_nmf(X, n_components, init='warn', eps=1e-6,
         warnings.warn(("The 'init' value, when 'init=None' and "
                        "n_components is less than n_samples and "
                        "n_features, will be changed from 'nndsvd' to "
-                       "'nndsvda' in 0.26."), FutureWarning)
+                       "'nndsvda' in 1.1 (renaming of 0.26)."), FutureWarning)
         init = None
 
     check_non_negative(X, "NMF initialization")

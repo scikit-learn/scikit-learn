@@ -291,7 +291,8 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
 
     # mypy error: Decorated property not supported
     @deprecated("Attribute standard_coef_ was deprecated "  # type: ignore
-                "in version 0.23 and will be removed in 0.25.")
+                "in version 0.23 and will be removed in 1.0 "
+                "(renaming of 0.25).")
     @property
     def standard_coef_(self):
         return self._standard_coef
@@ -299,7 +300,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
         "Attribute standard_intercept_ was deprecated "
-        "in version 0.23 and will be removed in 0.25."
+        "in version 0.23 and will be removed in 1.0 (renaming of 0.25)."
     )
     @property
     def standard_intercept_(self):
@@ -307,14 +308,16 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
 
     # mypy error: Decorated property not supported
     @deprecated("Attribute average_coef_ was deprecated "  # type: ignore
-                "in version 0.23 and will be removed in 0.25.")
+                "in version 0.23 and will be removed in 1.0 "
+                "(renaming of 0.25).")
     @property
     def average_coef_(self):
         return self._average_coef
 
     # mypy error: Decorated property not supported
     @deprecated("Attribute average_intercept_ was deprecated "  # type: ignore
-                "in version 0.23 and will be removed in 0.25.")
+                "in version 0.23 and will be removed in 1.0 "
+                "(renaming of 0.25).")
     @property
     def average_intercept_(self):
         return self._average_intercept
@@ -1531,14 +1534,14 @@ class SGDRegressor(BaseSGDRegressor):
 
         .. deprecated:: 0.23
             Attribute ``average_coef_`` was deprecated
-            in version 0.23 and will be removed in 0.25.
+            in version 0.23 and will be removed in 1.0 (renaming of 0.25).
 
     average_intercept_ : ndarray of shape (1,)
         The averaged intercept term. Only available if ``average=True``.
 
         .. deprecated:: 0.23
             Attribute ``average_intercept_`` was deprecated
-            in version 0.23 and will be removed in 0.25.
+            in version 0.23 and will be removed in 1.0 (renaming of 0.25).
 
     n_iter_ : int
         The actual number of iterations before reaching the stopping criterion.
