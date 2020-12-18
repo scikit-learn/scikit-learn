@@ -81,9 +81,9 @@ SENTINEL = Sentinel()
 @_deprecate_positional_args
 def plot_tree(decision_tree, *, max_depth=None, feature_names=None,
               class_names=None, label='all', filled=False,
-              impurity=True, node_ids=False,
-              proportion=False, rotate='deprecated', rounded=False,
-              precision=3, ax=None, fontsize=None):
+              impurity=True, node_ids=False, proportion=False,
+              rotate='deprecated', rounded=False, precision=3,
+              ax=None, fontsize=None, fontname='helvetica'):
     """Plot a decision tree.
 
     The sample counts that are shown are weighted with any sample_weights that
@@ -158,6 +158,9 @@ def plot_tree(decision_tree, *, max_depth=None, feature_names=None,
     fontsize : int, default=None
         Size of text font. If None, determined automatically to fit figure.
 
+    fontname : str, default='helvetica'
+        Name of font used to render text.
+
     Returns
     -------
     annotations : list of artists
@@ -188,9 +191,9 @@ def plot_tree(decision_tree, *, max_depth=None, feature_names=None,
     exporter = _MPLTreeExporter(
         max_depth=max_depth, feature_names=feature_names,
         class_names=class_names, label=label, filled=filled,
-        impurity=impurity, node_ids=node_ids,
-        proportion=proportion, rotate=rotate, rounded=rounded,
-        precision=precision, fontsize=fontsize)
+        impurity=impurity, node_ids=node_ids, proportion=proportion,
+        rotate=rotate, rounded=rounded, precision=precision,
+        fontsize=fontsize, fontname=fontname)
     return exporter.export(decision_tree, ax=ax)
 
 
@@ -530,13 +533,15 @@ class _MPLTreeExporter(_BaseTreeExporter):
                  class_names=None, label='all', filled=False,
                  impurity=True, node_ids=False,
                  proportion=False, rotate=False, rounded=False,
-                 precision=3, fontsize=None):
+                 precision=3, fontsize=None, fontname='helvetica'):
 
         super().__init__(
             max_depth=max_depth, feature_names=feature_names,
-            class_names=class_names, label=label, filled=filled,
-            impurity=impurity, node_ids=node_ids, proportion=proportion,
-            rotate=rotate, rounded=rounded, precision=precision)
+            class_names=class_names, label=label,
+            filled=filled, impurity=impurity,
+            node_ids=node_ids, proportion=proportion,
+            rotate=rotate, rounded=rounded,
+            precision=precision, fontname=fontname)
         self.fontsize = fontsize
 
         # validate
