@@ -2,25 +2,29 @@ import numpy as np
 
 import pytest
 
-from sklearn.exceptions import ChangedBehaviorWarning
+from scipy import linalg
+
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import (assert_array_equal, assert_no_warnings,
-                                   assert_warns_message)
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import assert_array_equal, assert_no_warnings
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import ignore_warnings
 
 from sklearn.datasets import make_blobs
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 from sklearn.discriminant_analysis import _cov
+from sklearn.covariance import ledoit_wolf
+from sklearn.cluster import KMeans
 
+from sklearn.covariance import ShrunkCovariance
+from sklearn.covariance import LedoitWolf
+
+from sklearn.preprocessing import StandardScaler
 
 # Data is just 6 separable points in the plane
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]], dtype='f')
@@ -75,8 +79,8 @@ def test_lda_predict():
         assert_array_equal((y_proba_pred1[:, 1] > 0.5) + 1, y,
                            'solver %s' % solver)
         y_log_proba_pred1 = clf.predict_log_proba(X1)
-        assert_array_almost_equal(np.exp(y_log_proba_pred1), y_proba_pred1,
-                                  8, 'solver %s' % solver)
+        assert_allclose(np.exp(y_log_proba_pred1), y_proba_pred1,
+                        rtol=1e-6, atol=1e-6, err_msg='solver %s' % solver)
 
         # Primarily test for commit 2f34950 -- "reuse" of priors
         y_pred3 = clf.fit(X, y3).predict(X)
@@ -90,9 +94,104 @@ def test_lda_predict():
     assert_raises(ValueError, clf.fit, X, y)
     clf = LinearDiscriminantAnalysis(solver="svd", shrinkage="auto")
     assert_raises(NotImplementedError, clf.fit, X, y)
+    clf = LinearDiscriminantAnalysis(solver="lsqr", shrinkage=np.array([1, 2]))
+    with pytest.raises(TypeError,
+                       match="shrinkage must be a float or a string"):
+        clf.fit(X, y)
+    clf = LinearDiscriminantAnalysis(solver="lsqr",
+                                     shrinkage=0.1,
+                                     covariance_estimator=ShrunkCovariance())
+    with pytest.raises(ValueError,
+                       match=("covariance_estimator and shrinkage "
+                              "parameters are not None. "
+                              "Only one of the two can be set.")):
+        clf.fit(X, y)
     # Test unknown solver
     clf = LinearDiscriminantAnalysis(solver="dummy")
     assert_raises(ValueError, clf.fit, X, y)
+
+    # test bad solver with covariance_estimator
+    clf = LinearDiscriminantAnalysis(solver="svd",
+                                     covariance_estimator=LedoitWolf())
+    with pytest.raises(ValueError,
+                       match="covariance estimator is not supported with svd"):
+        clf.fit(X, y)
+
+    # test bad covariance estimator
+    clf = LinearDiscriminantAnalysis(solver="lsqr",
+                                     covariance_estimator=KMeans(n_clusters=2))
+    with pytest.raises(ValueError,
+                       match="KMeans does not have a covariance_ attribute"):
+        clf.fit(X, y)
+
+
+@pytest.mark.parametrize("n_classes", [2, 3])
+@pytest.mark.parametrize("solver", ["svd", "lsqr", "eigen"])
+def test_lda_predict_proba(solver, n_classes):
+    def generate_dataset(n_samples, centers, covariances, random_state=None):
+        """Generate a multivariate normal data given some centers and
+        covariances"""
+        rng = check_random_state(random_state)
+        X = np.vstack([rng.multivariate_normal(mean, cov,
+                                               size=n_samples // len(centers))
+                       for mean, cov in zip(centers, covariances)])
+        y = np.hstack([[clazz] * (n_samples // len(centers))
+                       for clazz in range(len(centers))])
+        return X, y
+
+    blob_centers = np.array([[0, 0], [-10, 40], [-30, 30]])[:n_classes]
+    blob_stds = np.array([[[10, 10], [10, 100]]] * len(blob_centers))
+    X, y = generate_dataset(
+        n_samples=90000, centers=blob_centers, covariances=blob_stds,
+        random_state=42
+    )
+    lda = LinearDiscriminantAnalysis(solver=solver, store_covariance=True,
+                                     shrinkage=None).fit(X, y)
+    # check that the empirical means and covariances are close enough to the
+    # one used to generate the data
+    assert_allclose(lda.means_, blob_centers, atol=1e-1)
+    assert_allclose(lda.covariance_, blob_stds[0], atol=1)
+
+    # implement the method to compute the probability given in The Elements
+    # of Statistical Learning (cf. p.127, Sect. 4.4.5 "Logistic Regression
+    # or LDA?")
+    precision = linalg.inv(blob_stds[0])
+    alpha_k = []
+    alpha_k_0 = []
+    for clazz in range(len(blob_centers) - 1):
+        alpha_k.append(
+            np.dot(precision,
+                   (blob_centers[clazz] - blob_centers[-1])[:, np.newaxis]))
+        alpha_k_0.append(
+            np.dot(- 0.5 * (blob_centers[clazz] +
+                            blob_centers[-1])[np.newaxis, :], alpha_k[-1]))
+
+    sample = np.array([[-22, 22]])
+
+    def discriminant_func(sample, coef, intercept, clazz):
+        return np.exp(intercept[clazz] + np.dot(sample, coef[clazz]))
+
+    prob = np.array([float(
+        discriminant_func(sample, alpha_k, alpha_k_0, clazz) /
+        (1 + sum([discriminant_func(sample, alpha_k, alpha_k_0, clazz)
+                  for clazz in range(n_classes - 1)]))) for clazz in range(
+                      n_classes - 1)])
+
+    prob_ref = 1 - np.sum(prob)
+
+    # check the consistency of the computed probability
+    # all probabilities should sum to one
+    prob_ref_2 = float(
+        1 / (1 + sum([discriminant_func(sample, alpha_k, alpha_k_0, clazz)
+                      for clazz in range(n_classes - 1)]))
+    )
+
+    assert prob_ref == pytest.approx(prob_ref_2)
+    # check that the probability of LDA are close to the theoretical
+    # probabilties
+    assert_allclose(lda.predict_proba(sample),
+                    np.hstack([prob, prob_ref])[np.newaxis],
+                    atol=1e-2)
 
 
 def test_lda_priors():
@@ -140,10 +239,10 @@ def test_lda_transform():
     # Test LDA transform.
     clf = LinearDiscriminantAnalysis(solver="svd", n_components=1)
     X_transformed = clf.fit(X, y).transform(X)
-    assert_equal(X_transformed.shape[1], 1)
+    assert X_transformed.shape[1] == 1
     clf = LinearDiscriminantAnalysis(solver="eigen", n_components=1)
     X_transformed = clf.fit(X, y).transform(X)
-    assert_equal(X_transformed.shape[1], 1)
+    assert X_transformed.shape[1] == 1
 
     clf = LinearDiscriminantAnalysis(solver="lsqr", n_components=1)
     clf.fit(X, y)
@@ -164,14 +263,14 @@ def test_lda_explained_variance_ratio():
     clf_lda_eigen = LinearDiscriminantAnalysis(solver="eigen")
     clf_lda_eigen.fit(X, y)
     assert_almost_equal(clf_lda_eigen.explained_variance_ratio_.sum(), 1.0, 3)
-    assert_equal(clf_lda_eigen.explained_variance_ratio_.shape, (2,),
-                 "Unexpected length for explained_variance_ratio_")
+    assert clf_lda_eigen.explained_variance_ratio_.shape == (2,), (
+        "Unexpected length for explained_variance_ratio_")
 
     clf_lda_svd = LinearDiscriminantAnalysis(solver="svd")
     clf_lda_svd.fit(X, y)
     assert_almost_equal(clf_lda_svd.explained_variance_ratio_.sum(), 1.0, 3)
-    assert_equal(clf_lda_svd.explained_variance_ratio_.shape, (2,),
-                 "Unexpected length for explained_variance_ratio_")
+    assert clf_lda_svd.explained_variance_ratio_.shape == (2,), (
+        "Unexpected length for explained_variance_ratio_")
 
     assert_array_almost_equal(clf_lda_svd.explained_variance_ratio_,
                               clf_lda_eigen.explained_variance_ratio_)
@@ -224,12 +323,12 @@ def test_lda_scaling():
     for solver in ('svd', 'lsqr', 'eigen'):
         clf = LinearDiscriminantAnalysis(solver=solver)
         # should be able to separate the data perfectly
-        assert_equal(clf.fit(x, y).score(x, y), 1.0,
-                     'using covariance: %s' % solver)
+        assert clf.fit(x, y).score(x, y) == 1.0, (
+            'using covariance: %s' % solver)
 
 
 def test_lda_store_covariance():
-    # Test for slover 'lsqr' and 'eigen'
+    # Test for solver 'lsqr' and 'eigen'
     # 'store_covariance' has no effect on 'lsqr' and 'eigen' solvers
     for solver in ('lsqr', 'eigen'):
         clf = LinearDiscriminantAnalysis(solver=solver).fit(X6, y6)
@@ -245,7 +344,7 @@ def test_lda_store_covariance():
             np.array([[0.422222, 0.088889], [0.088889, 0.533333]])
         )
 
-    # Test for SVD slover, the default is to not set the covariances_ attribute
+    # Test for SVD solver, the default is to not set the covariances_ attribute
     clf = LinearDiscriminantAnalysis(solver='svd').fit(X6, y6)
     assert not hasattr(clf, 'covariance_')
 
@@ -260,10 +359,60 @@ def test_lda_store_covariance():
     )
 
 
+@pytest.mark.parametrize('seed', range(10))
+def test_lda_shrinkage(seed):
+    # Test that shrunk covariance estimator and shrinkage parameter behave the
+    # same
+    rng = np.random.RandomState(seed)
+    X = rng.rand(100, 10)
+    y = rng.randint(3, size=(100))
+    c1 = LinearDiscriminantAnalysis(store_covariance=True, shrinkage=0.5,
+                                    solver="lsqr")
+    c2 = LinearDiscriminantAnalysis(
+            store_covariance=True,
+            covariance_estimator=ShrunkCovariance(shrinkage=0.5),
+            solver="lsqr")
+    c1.fit(X, y)
+    c2.fit(X, y)
+    assert_allclose(c1.means_, c2.means_)
+    assert_allclose(c1.covariance_, c2.covariance_)
+
+
+def test_lda_ledoitwolf():
+    # When shrinkage="auto" current implementation uses ledoitwolf estimation
+    # of covariance after standardizing the data. This checks that it is indeed
+    # the case
+    class StandardizedLedoitWolf():
+        def fit(self, X):
+            sc = StandardScaler()  # standardize features
+            X_sc = sc.fit_transform(X)
+            s = ledoit_wolf(X_sc)[0]
+            # rescale
+            s = sc.scale_[:, np.newaxis] * s * sc.scale_[np.newaxis, :]
+            self.covariance_ = s
+
+    rng = np.random.RandomState(0)
+    X = rng.rand(100, 10)
+    y = rng.randint(3, size=(100,))
+    c1 = LinearDiscriminantAnalysis(
+        store_covariance=True,
+        shrinkage="auto",
+        solver="lsqr"
+    )
+    c2 = LinearDiscriminantAnalysis(
+        store_covariance=True,
+        covariance_estimator=StandardizedLedoitWolf(),
+        solver="lsqr"
+    )
+    c1.fit(X, y)
+    c2.fit(X, y)
+    assert_allclose(c1.means_, c2.means_)
+    assert_allclose(c1.covariance_, c2.covariance_)
+
+
 @pytest.mark.parametrize('n_features', [3, 5])
 @pytest.mark.parametrize('n_classes', [5, 3])
 def test_lda_dimension_warning(n_classes, n_features):
-    # FIXME: Future warning to be removed in 0.23
     rng = check_random_state(0)
     n_samples = 10
     X = rng.randn(n_samples, n_features)
@@ -279,22 +428,14 @@ def test_lda_dimension_warning(n_classes, n_features):
 
     for n_components in [max_components + 1,
                          max(n_features, n_classes - 1) + 1]:
-        # if n_components > min(n_classes - 1, n_features), raise warning
+        # if n_components > min(n_classes - 1, n_features), raise error.
         # We test one unit higher than max_components, and then something
         # larger than both n_features and n_classes - 1 to ensure the test
         # works for any value of n_component
         lda = LinearDiscriminantAnalysis(n_components=n_components)
-        msg = ("n_components cannot be larger than min(n_features, "
-               "n_classes - 1). Using min(n_features, "
-               "n_classes - 1) = min(%d, %d - 1) = %d components." %
-               (n_features, n_classes, max_components))
-        assert_warns_message(ChangedBehaviorWarning, msg, lda.fit, X, y)
-        future_msg = ("In version 0.23, setting n_components > min("
-                      "n_features, n_classes - 1) will raise a "
-                      "ValueError. You should set n_components to None"
-                      " (default), or a value smaller or equal to "
-                      "min(n_features, n_classes - 1).")
-        assert_warns_message(FutureWarning, future_msg, lda.fit, X, y)
+        msg = "n_components cannot be larger than "
+        with pytest.raises(ValueError, match=msg):
+            lda.fit(X, y)
 
 
 @pytest.mark.parametrize("data_type, expected_type", [
@@ -358,7 +499,7 @@ def test_qda_priors():
     y_pred = clf.fit(X6, y6).predict(X6)
     n_pos2 = np.sum(y_pred == 2)
 
-    assert_greater(n_pos2, n_pos)
+    assert n_pos2 > n_pos
 
 
 def test_qda_store_covariance():

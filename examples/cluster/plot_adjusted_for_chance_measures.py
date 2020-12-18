@@ -56,8 +56,7 @@ def uniform_labelings_scores(score_func, n_samples, n_clusters_range,
 
 
 def ami_score(U, V):
-    return metrics.adjusted_mutual_info_score(U, V,
-                                              average_method='arithmetic')
+    return metrics.adjusted_mutual_info_score(U, V)
 
 score_funcs = [
     metrics.adjusted_rand_score,
@@ -69,7 +68,7 @@ score_funcs = [
 # 2 independent random clusterings with equal cluster number
 
 n_samples = 100
-n_clusters_range = np.linspace(2, n_samples, 10).astype(np.int)
+n_clusters_range = np.linspace(2, n_samples, 10).astype(int)
 
 plt.figure(1)
 
@@ -98,7 +97,7 @@ plt.ylim(bottom=-0.05, top=1.05)
 # with fixed number of clusters
 
 n_samples = 1000
-n_clusters_range = np.linspace(2, 100, 10).astype(np.int)
+n_clusters_range = np.linspace(2, 100, 10).astype(int)
 n_classes = 10
 
 plt.figure(2)

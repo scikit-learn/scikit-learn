@@ -77,7 +77,7 @@ used:
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> nbrs = NearestNeighbors(n_neighbors=2, algorithm='ball_tree').fit(X)
     >>> distances, indices = nbrs.kneighbors(X)
-    >>> indices                                           # doctest: +ELLIPSIS
+    >>> indices
     array([[0, 1],
            [1, 0],
            [2, 1],
@@ -110,9 +110,9 @@ The dataset is structured such that points nearby in index order are nearby
 in parameter space, leading to an approximately block-diagonal matrix of
 K-nearest neighbors.  Such a sparse graph is useful in a variety of
 circumstances which make use of spatial relationships between points for
-unsupervised learning: in particular, see :class:`sklearn.manifold.Isomap`,
-:class:`sklearn.manifold.LocallyLinearEmbedding`, and
-:class:`sklearn.cluster.SpectralClustering`.
+unsupervised learning: in particular, see :class:`~sklearn.manifold.Isomap`,
+:class:`~sklearn.manifold.LocallyLinearEmbedding`, and
+:class:`~sklearn.cluster.SpectralClustering`.
 
 KDTree and BallTree Classes
 ---------------------------
@@ -125,7 +125,7 @@ have the same interface; we'll show an example of using the KD Tree here:
     >>> import numpy as np
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> kdt = KDTree(X, leaf_size=30, metric='euclidean')
-    >>> kdt.query(X, k=2, return_distance=False)          # doctest: +ELLIPSIS
+    >>> kdt.query(X, k=2, return_distance=False)
     array([[0, 1],
            [1, 0],
            [2, 1],
@@ -135,8 +135,8 @@ have the same interface; we'll show an example of using the KD Tree here:
 
 Refer to the :class:`KDTree` and :class:`BallTree` class documentation
 for more information on the options available for nearest neighbors searches,
-including specification of query strategies, distance metrics, etc. For a list 
-of available metrics, see the documentation of the :class:`DistanceMetric` 
+including specification of query strategies, distance metrics, etc. For a list
+of available metrics, see the documentation of the :class:`DistanceMetric`
 class.
 
 .. _classification:
@@ -160,8 +160,8 @@ training point, where :math:`r` is a floating-point value specified by
 the user.
 
 The :math:`k`-neighbors classification in :class:`KNeighborsClassifier`
-is the most commonly used technique. The optimal choice of the value :math:`k` 
-is highly data-dependent: in general a larger :math:`k` suppresses the effects 
+is the most commonly used technique. The optimal choice of the value :math:`k`
+is highly data-dependent: in general a larger :math:`k` suppresses the effects
 of noise, but makes the classification boundaries less distinct.
 
 In cases where the data is not uniformly sampled, radius-based neighbors
@@ -230,12 +230,12 @@ which will be used to compute the weights.
    :scale: 75
 
 The use of multi-output nearest neighbors for regression is demonstrated in
-:ref:`sphx_glr_auto_examples_plot_multioutput_face_completion.py`. In this example, the inputs
+:ref:`sphx_glr_auto_examples_miscellaneous_plot_multioutput_face_completion.py`. In this example, the inputs
 X are the pixels of the upper half of faces and the outputs Y are the pixels of
 the lower half of those faces.
 
-.. figure:: ../auto_examples/images/sphx_glr_plot_multioutput_face_completion_001.png
-   :target: ../auto_examples/plot_multioutput_face_completion.html
+.. figure:: ../auto_examples/miscellaneous/images/sphx_glr_plot_multioutput_face_completion_001.png
+   :target: ../auto_examples/miscellaneous/plot_multioutput_face_completion.html
    :scale: 75
    :align: center
 
@@ -245,7 +245,7 @@ the lower half of those faces.
   * :ref:`sphx_glr_auto_examples_neighbors_plot_regression.py`: an example of regression
     using nearest neighbors.
 
-  * :ref:`sphx_glr_auto_examples_plot_multioutput_face_completion.py`: an example of
+  * :ref:`sphx_glr_auto_examples_miscellaneous_plot_multioutput_face_completion.py`: an example of
     multi-output regression using nearest neighbors.
 
 
@@ -320,7 +320,7 @@ To address the inefficiencies of KD Trees in higher dimensions, the *ball tree*
 data structure was developed.  Where KD trees partition data along
 Cartesian axes, ball trees partition data in a series of nesting
 hyper-spheres.  This makes tree construction more costly than that of the
-KD tree, but results in a data structure which can be very efficient on 
+KD tree, but results in a data structure which can be very efficient on
 highly structured data, even in very high dimensions.
 
 A ball tree recursively divides the data into
@@ -339,7 +339,7 @@ a *KD-tree* in high dimensions, though the actual performance is highly
 dependent on the structure of the training data.
 In scikit-learn, ball-tree-based
 neighbors searches are specified using the keyword ``algorithm = 'ball_tree'``,
-and are computed using the class :class:`sklearn.neighbors.BallTree`.
+and are computed using the class :class:`BallTree`.
 Alternatively, the user can work with the :class:`BallTree` class directly.
 
 .. topic:: References:
@@ -415,16 +415,25 @@ depends on a number of factors:
   a significant fraction of the total cost.  If very few query points
   will be required, brute force is better than a tree-based method.
 
-Currently, ``algorithm = 'auto'`` selects ``'kd_tree'`` if :math:`k < N/2`
-and the ``'effective_metric_'`` is in the ``'VALID_METRICS'`` list of
-``'kd_tree'``. It selects ``'ball_tree'`` if :math:`k < N/2` and the
-``'effective_metric_'`` is in the ``'VALID_METRICS'`` list of
-``'ball_tree'``. It selects ``'brute'`` if :math:`k < N/2` and the
-``'effective_metric_'`` is not in the ``'VALID_METRICS'`` list of
-``'kd_tree'`` or ``'ball_tree'``. It selects ``'brute'`` if :math:`k >= N/2`.
-This choice is based on the assumption that the number of query points is at
-least the same order as the number of training points, and that ``leaf_size``
-is close to its default value of ``30``.
+Currently, ``algorithm = 'auto'`` selects ``'brute'`` if any of the following
+conditions are verified:
+
+* input data is sparse
+* ``metric = 'precomputed'``
+* :math:`D > 15`
+* :math:`k >= N/2`
+* ``effective_metric_`` isn't in the ``VALID_METRICS`` list for either
+  ``'kd_tree'`` or ``'ball_tree'``
+
+Otherwise, it selects the first out of ``'kd_tree'`` and ``'ball_tree'`` that
+has ``effective_metric_`` in its ``VALID_METRICS`` list. This heuristic is
+based on the following assumptions:
+
+* the number of query points is at least the same order as the number of
+  training points
+* ``leaf_size`` is close to its default value of ``30``
+* when :math:`D > 15`, the intrinsic dimensionality of the data is generally
+  to high for tree-based methods
 
 Effect of ``leaf_size``
 -----------------------
@@ -462,22 +471,22 @@ Nearest Centroid Classifier
 
 The :class:`NearestCentroid` classifier is a simple algorithm that represents
 each class by the centroid of its members. In effect, this makes it
-similar to the label updating phase of the :class:`sklearn.KMeans` algorithm.
+similar to the label updating phase of the :class:`~sklearn.cluster.KMeans` algorithm.
 It also has no parameters to choose, making it a good baseline classifier. It
 does, however, suffer on non-convex classes, as well as when classes have
 drastically different variances, as equal variance in all dimensions is
-assumed. See Linear Discriminant Analysis (:class:`sklearn.discriminant_analysis.LinearDiscriminantAnalysis`)
-and Quadratic Discriminant Analysis (:class:`sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`)
+assumed. See Linear Discriminant Analysis (:class:`~sklearn.discriminant_analysis.LinearDiscriminantAnalysis`)
+and Quadratic Discriminant Analysis (:class:`~sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`)
 for more complex methods that do not make this assumption. Usage of the default
 :class:`NearestCentroid` is simple:
 
-    >>> from sklearn.neighbors.nearest_centroid import NearestCentroid
+    >>> from sklearn.neighbors import NearestCentroid
     >>> import numpy as np
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> y = np.array([1, 1, 1, 2, 2, 2])
     >>> clf = NearestCentroid()
     >>> clf.fit(X, y)
-    NearestCentroid(metric='euclidean', shrink_threshold=None)
+    NearestCentroid()
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -511,6 +520,93 @@ the model from 0.81 to 0.82.
   * :ref:`sphx_glr_auto_examples_neighbors_plot_nearest_centroid.py`: an example of
     classification using nearest centroid with different shrink thresholds.
 
+.. _neighbors_transformer:
+
+Nearest Neighbors Transformer
+=============================
+
+Many scikit-learn estimators rely on nearest neighbors: Several classifiers and
+regressors such as :class:`KNeighborsClassifier` and
+:class:`KNeighborsRegressor`, but also some clustering methods such as
+:class:`~sklearn.cluster.DBSCAN` and
+:class:`~sklearn.cluster.SpectralClustering`, and some manifold embeddings such
+as :class:`~sklearn.manifold.TSNE` and :class:`~sklearn.manifold.Isomap`.
+
+All these estimators can compute internally the nearest neighbors, but most of
+them also accept precomputed nearest neighbors :term:`sparse graph`,
+as given by :func:`~sklearn.neighbors.kneighbors_graph` and
+:func:`~sklearn.neighbors.radius_neighbors_graph`. With mode
+`mode='connectivity'`, these functions return a binary adjacency sparse graph
+as required, for instance, in :class:`~sklearn.cluster.SpectralClustering`.
+Whereas with `mode='distance'`, they return a distance sparse graph as required,
+for instance, in :class:`~sklearn.cluster.DBSCAN`. To include these functions in
+a scikit-learn pipeline, one can also use the corresponding classes
+:class:`KNeighborsTransformer` and :class:`RadiusNeighborsTransformer`.
+The benefits of this sparse graph API are multiple.
+
+First, the precomputed graph can be re-used multiple times, for instance while
+varying a parameter of the estimator. This can be done manually by the user, or
+using the caching properties of the scikit-learn pipeline:
+
+    >>> from sklearn.manifold import Isomap
+    >>> from sklearn.neighbors import KNeighborsTransformer
+    >>> from sklearn.pipeline import make_pipeline
+    >>> estimator = make_pipeline(
+    ...     KNeighborsTransformer(n_neighbors=5, mode='distance'),
+    ...     Isomap(neighbors_algorithm='precomputed'),
+    ...     memory='/path/to/cache')
+
+Second, precomputing the graph can give finer control on the nearest neighbors
+estimation, for instance enabling multiprocessing though the parameter
+`n_jobs`, which might not be available in all estimators.
+
+Finally, the precomputation can be performed by custom estimators to use
+different implementations, such as approximate nearest neighbors methods, or
+implementation with special data types. The precomputed neighbors
+:term:`sparse graph` needs to be formatted as in
+:func:`~sklearn.neighbors.radius_neighbors_graph` output:
+
+* a CSR matrix (although COO, CSC or LIL will be accepted).
+* only explicitly store nearest neighborhoods of each sample with respect to the
+  training data. This should include those at 0 distance from a query point,
+  including the matrix diagonal when computing the nearest neighborhoods
+  between the training data and itself.
+* each row's `data` should store the distance in increasing order (optional.
+  Unsorted data will be stable-sorted, adding a computational overhead).
+* all values in data should be non-negative.
+* there should be no duplicate `indices` in any row
+  (see https://github.com/scipy/scipy/issues/5807).
+* if the algorithm being passed the precomputed matrix uses k nearest neighbors
+  (as opposed to radius neighborhood), at least k neighbors must be stored in
+  each row (or k+1, as explained in the following note).
+
+.. note::
+  When a specific number of neighbors is queried (using
+  :class:`KNeighborsTransformer`), the definition of `n_neighbors` is ambiguous
+  since it can either include each training point as its own neighbor, or
+  exclude them. Neither choice is perfect, since including them leads to a
+  different number of non-self neighbors during training and testing, while
+  excluding them leads to a difference between `fit(X).transform(X)` and
+  `fit_transform(X)`, which is against scikit-learn API.
+  In :class:`KNeighborsTransformer` we use the definition which includes each
+  training point as its own neighbor in the count of `n_neighbors`. However,
+  for compatibility reasons with other estimators which use the other
+  definition, one extra neighbor will be computed when `mode == 'distance'`.
+  To maximise compatibility with all estimators, a safe choice is to always
+  include one extra neighbor in a custom nearest neighbors estimator, since
+  unnecessary neighbors will be filtered by following estimators.
+
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_neighbors_approximate_nearest_neighbors.py`:
+    an example of pipelining :class:`KNeighborsTransformer` and
+    :class:`~sklearn.manifold.TSNE`. Also proposes two custom nearest neighbors
+    estimators based on external packages.
+
+  * :ref:`sphx_glr_auto_examples_neighbors_plot_caching_nearest_neighbors.py`:
+    an example of pipelining :class:`KNeighborsTransformer` and
+    :class:`KNeighborsClassifier` to enable caching of the neighbors graph
+    during a hyper-parameter grid-search.
 
 .. _nca:
 
@@ -581,9 +677,9 @@ classes:
     >>> nca = NeighborhoodComponentsAnalysis(random_state=42)
     >>> knn = KNeighborsClassifier(n_neighbors=3)
     >>> nca_pipe = Pipeline([('nca', nca), ('knn', knn)])
-    >>> nca_pipe.fit(X_train, y_train) # doctest: +ELLIPSIS
+    >>> nca_pipe.fit(X_train, y_train)
     Pipeline(...)
-    >>> print(nca_pipe.score(X_test, y_test)) # doctest: +ELLIPSIS
+    >>> print(nca_pipe.score(X_test, y_test))
     0.96190476...
 
 .. |nca_classification_1| image:: ../auto_examples/neighbors/images/sphx_glr_plot_nca_classification_001.png
@@ -610,8 +706,8 @@ are projected onto a linear subspace consisting of the directions which
 minimize the NCA objective. The desired dimensionality can be set using the
 parameter ``n_components``. For instance, the following figure shows a
 comparison of dimensionality reduction with Principal Component Analysis
-(:class:`sklearn.decomposition.PCA`), Linear Discriminant Analysis
-(:class:`sklearn.discriminant_analysis.LinearDiscriminantAnalysis`) and
+(:class:`~sklearn.decomposition.PCA`), Linear Discriminant Analysis
+(:class:`~sklearn.discriminant_analysis.LinearDiscriminantAnalysis`) and
 Neighborhood Component Analysis (:class:`NeighborhoodComponentsAnalysis`) on
 the Digits dataset, a dataset with size :math:`n_{samples} = 1797` and
 :math:`n_{features} = 64`. The data set is split into a training and a test set
@@ -717,218 +813,10 @@ added space complexity in the operation.
 
 .. topic:: References:
 
-    .. [1] `"Neighbourhood Components Analysis". Advances in Neural Information"
+    .. [1] `"Neighbourhood Components Analysis"
       <http://www.cs.nyu.edu/~roweis/papers/ncanips.pdf>`_,
-      J. Goldberger, G. Hinton, S. Roweis, R. Salakhutdinov, Advances in
+      J. Goldberger, S. Roweis, G. Hinton, R. Salakhutdinov, Advances in
       Neural Information Processing Systems, Vol. 17, May 2005, pp. 513-520.
 
-    .. [2] `Wikipedia entry on Neighborhood Components Analysis
-      <https://en.wikipedia.org/wiki/Neighbourhood_components_analysis>`_
-
-
-.. _lmnn:
-
-Large Margin Nearest Neighbor
-=============================
-
-.. sectionauthor:: John Chiotellis <johnyc.code@gmail.com>
-
-Large Margin Nearest Neighbor (LMNN, :class:`LargeMarginNearestNeighbor`) is
-a metric learning algorithm which aims to improve the accuracy of
-nearest neighbors classification compared to the standard Euclidean distance.
-
-.. |lmnn_illustration_1| image:: ../auto_examples/neighbors/images/sphx_glr_plot_lmnn_illustration_001.png
-   :target: ../auto_examples/neighbors/plot_lmnn_illustration.html
-   :scale: 50
-
-.. |lmnn_illustration_2| image:: ../auto_examples/neighbors/images/sphx_glr_plot_lmnn_illustration_002.png
-   :target: ../auto_examples/neighbors/plot_lmnn_illustration.html
-   :scale: 50
-
-.. centered:: |lmnn_illustration_1| |lmnn_illustration_2|
-
-
-For each training sample, the algorithm fixes :math:`k` "target neighbors",
-namely the :math:`k`-nearest training samples (as measured by the Euclidean
-distance) that share the same label. Given these target neighbors, LMNN
-learns a linear transformation of the data by optimizing a trade-off between
-two goals. The first one is to make each (transformed) point closer to its
-target neighbors than to any differently-labeled point by a large margin,
-thereby enclosing the target neighbors in a sphere around the reference
-sample. Data samples from different classes that violate this margin are
-called "impostors". The second goal is to minimize the distances of each
-sample to its target neighbors, which can be seen as a form of regularization.
-
-Classification
---------------
-
-Combined with a nearest neighbors classifier (:class:`KNeighborsClassifier`),
-this method is attractive for classification because it can naturally
-handle multi-class problems without any increase in the model size, and only
-a single parameter (``n_neighbors``) has to be selected by the user before
-training.
-
-Large Margin Nearest Neighbor classification has been shown to work well in
-practice for data sets of varying size and difficulty. In contrast to
-related methods such as Linear Discriminant Analysis, LMNN does not make any
-assumptions about the class distributions. The nearest neighbor classification
-can naturally produce highly irregular decision boundaries.
-
-To use this model for classification, one needs to combine a :class:`LargeMarginNearestNeighbor`
-instance that learns the optimal transformation with a :class:`KNeighborsClassifier`
-instance that performs the classification in the embedded space. Here is an
-example using the two classes:
-
-    >>> from sklearn.neighbors import LargeMarginNearestNeighbor
-    >>> from sklearn.neighbors import KNeighborsClassifier
-    >>> from sklearn.datasets import load_iris
-    >>> from sklearn.model_selection import train_test_split
-    >>> X, y = load_iris(return_X_y=True)
-    >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
-    ... stratify=y, test_size=0.7, random_state=42)
-    >>> lmnn = LargeMarginNearestNeighbor(n_neighbors=3, random_state=42)
-    >>> lmnn.fit(X_train, y_train) # doctest: +ELLIPSIS
-    LargeMarginNearestNeighbor(...)
-    >>> # Apply the learned transformation when using KNeighborsClassifier
-    >>> knn = KNeighborsClassifier(n_neighbors=3)
-    >>> knn.fit(lmnn.transform(X_train), y_train) # doctest: +ELLIPSIS
-    KNeighborsClassifier(...)
-    >>> print(knn.score(lmnn.transform(X_test), y_test)) # doctest: +ELLIPSIS
-    0.971428...
-
-Alternatively, one can create a :class:`sklearn.pipeline.Pipeline` instance
-that automatically applies the transformation when fitting or predicting:
-
-    >>> from sklearn.pipeline import Pipeline
-    >>> lmnn = LargeMarginNearestNeighbor(n_neighbors=3, random_state=42)
-    >>> knn = KNeighborsClassifier(n_neighbors=3)
-    >>> lmnn_pipe = Pipeline([('lmnn', lmnn), ('knn', knn)])
-    >>> lmnn_pipe.fit(X_train, y_train) # doctest: +ELLIPSIS
-    Pipeline(...)
-    >>> print(lmnn_pipe.score(X_test, y_test)) # doctest: +ELLIPSIS
-    0.971428...
-
-.. |lmnn_classification_1| image:: ../auto_examples/neighbors/images/sphx_glr_plot_lmnn_classification_001.png
-   :target: ../auto_examples/neighbors/plot_lmnn_classification.html
-   :scale: 50
-
-.. |lmnn_classification_2| image:: ../auto_examples/neighbors/images/sphx_glr_plot_lmnn_classification_002.png
-   :target: ../auto_examples/neighbors/plot_lmnn_classification.html
-   :scale: 50
-
-.. centered:: |lmnn_classification_1| |lmnn_classification_2|
-
-
-The plot shows decision boundaries for nearest neighbor classification and
-large margin nearest neighbor classification.
-
-.. _lmnn_dim_reduction:
-
-Dimensionality reduction
-------------------------
-
-:class:`LargeMarginNearestNeighbor` can be used to perform supervised
-dimensionality reduction. The input data are mapped to a linear subspace
-consisting of the directions which minimize the LMNN objective. Unlike
-unsupervised methods which aim to maximize the uncorrelatedness (PCA) or even
-independence (ICA) of the components, LMNN aims to find components that
-maximize the nearest neighbors classification accuracy of the transformed
-inputs. The desired output dimensionality can be set using the parameter
-``n_components``. For instance, the following shows a comparison of
-dimensionality reduction with Principal Component Analysis (:class:`sklearn
-.decomposition.PCA`), Linear Discriminant Analysis (:class:`sklearn
-.discriminant_analysis.LinearDiscriminantAnalysis`) and Large Margin Nearest
-Neighbor (:class:`LargeMarginNearestNeighbor`) on the Olivetti dataset, a
-dataset with size :math:`n_{samples} = 400` and :math:`n_{features} = 64 \times 64 = 4096`.
-The data set is splitted in a training and test set of equal size. For
-evaluation the 3-nearest neighbor classification accuracy is computed on the
-2-dimensional embedding found by each method. Each data sample belongs to one
-of 40 classes.
-
-.. |lmnn_dim_reduction_1| image:: ../auto_examples/neighbors/images/sphx_glr_plot_lmnn_dim_reduction_001.png
-   :target: ../auto_examples/neighbors/plot_lmnn_dim_reduction.html
-   :width: 33%
-
-.. |lmnn_dim_reduction_2| image:: ../auto_examples/neighbors/images/sphx_glr_plot_lmnn_dim_reduction_002.png
-   :target: ../auto_examples/neighbors/plot_lmnn_dim_reduction.html
-   :width: 33%
-
-.. |lmnn_dim_reduction_3| image:: ../auto_examples/neighbors/images/sphx_glr_plot_lmnn_dim_reduction_003.png
-   :target: ../auto_examples/neighbors/plot_lmnn_dim_reduction.html
-   :width: 33%
-
-.. centered:: |lmnn_dim_reduction_1| |lmnn_dim_reduction_2| |lmnn_dim_reduction_3|
-
-
-Mathematical formulation
-------------------------
-
-LMNN learns a linear transformation matrix :math:`L` of
-size ``(n_components, n_features)``. The objective function consists of
-two competing terms, the pull loss that pulls target neighbors closer to
-their reference sample and the push loss that pushes impostors away:
-
-.. math::
-    \varepsilon_{\text{pull}} (L) = \sum_{i, j \rightsquigarrow i} ||L(x_i - x_j)||^2,
-.. math::
-    \varepsilon_{\text{push}} (L) = \sum_{i, j \rightsquigarrow i}
-    \sum_{l} (1 - y_{il}) [1 + || L(x_i - x_j)||^2 - || L
-    (x_i - x_l)||^2]_+,
-where :math:`y_{il} = 1` if :math:`y_i = y_l` and :math:`0` otherwise,
-:math:`[x]_+ = \max(0, x)` is the hinge loss, and :math:`j \rightsquigarrow i`
-means that the :math:`j^{th}` sample is a target neighbor of the
-:math:`i^{th}` sample.
-
-LMNN solves the following (nonconvex) minimization problem:
-
-.. math::
-    \min_L \varepsilon(L) = (1 - \mu) \varepsilon_{\text{pull}} (L) +
-    \mu \varepsilon_{\text{push}} (L) \text{, } \quad \mu \in [0,1].
-The parameter :math:`\mu` (``weight_push_loss``) calibrates the trade-off between
-penalizing large distances to target neighbors and penalizing margin
-violations by impostors. In practice, the two terms are usually weighted
-equally (:math:`\mu = 0.5`).
-
-
-Mahalanobis distance
-^^^^^^^^^^^^^^^^^^^^
-
-LMNN can be seen as learning a (squared) Mahalanobis distance metric:
-
-.. math::
-    || L(x_i - x_j)||^2 = (x_i - x_j)^TM(x_i - x_j),
-where :math:`M = L^T L` is a symmetric positive semi-definite matrix of size
-``(n_features, n_features)``. The objective function of LMNN can be
-rewritten and solved with respect to :math:`M` directly. This results in a
-convex but constrained problem (since :math:`M` must be symmetric positive
-semi-definite). See the journal paper in the References for more details.
-
-
-Implementation
---------------
-
-This implementation follows closely the MATLAB implementation found at
-https://bitbucket.org/mlcircus/lmnn which solves the unconstrained problem.
-It finds a linear transformation :math:`L` by optimization with L-BFGS instead
-of solving the constrained problem that finds the globally optimal distance
-metric. Different from the paper, the problem solved by this implementation is
-with the *squared* hinge loss (to make the problem differentiable).
-
-See the examples below and the doc string of :meth:`LargeMarginNearestNeighbor.fit`
-for further information.
-
-.. topic:: Examples:
-
- * :ref:`sphx_glr_auto_examples_neighbors_plot_lmnn_classification.py`
- * :ref:`sphx_glr_auto_examples_neighbors_plot_lmnn_dim_reduction.py`
-
-
-.. topic:: References:
-
-   * | `"Distance Metric Learning for Large Margin Nearest Neighbor Classification"
-       <http://jmlr.csail.mit.edu/papers/volume10/weinberger09a/weinberger09a.pdf>`_,
-     | Weinberger, Kilian Q., and Lawrence K. Saul, Journal of Machine Learning Research,
-     | Vol. 10, Feb. 2009, pp. 207-244.
-
-   * `Wikipedia entry on Large Margin Nearest Neighbor
-     <https://en.wikipedia.org/wiki/Large_margin_nearest_neighbor>`_
+    `Wikipedia entry on Neighborhood Components Analysis
+    <https://en.wikipedia.org/wiki/Neighbourhood_components_analysis>`_

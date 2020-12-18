@@ -38,22 +38,20 @@ Nearest neighbor and the curse of dimensionality
 
 .. topic:: Classifying irises:
 
-    .. image:: /auto_examples/datasets/images/sphx_glr_plot_iris_dataset_001.png
-        :target: ../../auto_examples/datasets/plot_iris_dataset.html
-        :align: right
-	:scale: 65
-
     The iris dataset is a classification task consisting in identifying 3
     different types of irises (Setosa, Versicolour, and Virginica) from
     their petal and sepal length and width::
 
         >>> import numpy as np
         >>> from sklearn import datasets
-        >>> iris = datasets.load_iris()
-        >>> iris_X = iris.data
-        >>> iris_y = iris.target
+        >>> iris_X, iris_y = datasets.load_iris(return_X_y=True)
         >>> np.unique(iris_y)
         array([0, 1, 2])
+
+    .. image:: /auto_examples/datasets/images/sphx_glr_plot_iris_dataset_001.png
+        :target: ../../auto_examples/datasets/plot_iris_dataset.html
+        :align: center
+	:scale: 50
 
 k-Nearest neighbors classifier
 -------------------------------
@@ -93,10 +91,8 @@ Scikit-learn documentation for more information about this type of classifier.)
     >>> # Create and fit a nearest-neighbor classifier
     >>> from sklearn.neighbors import KNeighborsClassifier
     >>> knn = KNeighborsClassifier()
-    >>> knn.fit(iris_X_train, iris_y_train) # doctest: +NORMALIZE_WHITESPACE
-    KNeighborsClassifier(algorithm='auto', leaf_size=30, metric='minkowski',
-               metric_params=None, n_jobs=None, n_neighbors=5, p=2,
-               weights='uniform')
+    >>> knn.fit(iris_X_train, iris_y_train)
+    KNeighborsClassifier()
     >>> knn.predict(iris_X_test)
     array([1, 2, 1, 0, 0, 0, 2, 1, 2, 0])
     >>> iris_y_test
@@ -140,11 +136,11 @@ Linear model: from regression to sparsity
     sex, weight, blood pressure) measure on 442 patients, and an
     indication of disease progression after one year::
 
-        >>> diabetes = datasets.load_diabetes()
-        >>> diabetes_X_train = diabetes.data[:-20]
-        >>> diabetes_X_test  = diabetes.data[-20:]
-        >>> diabetes_y_train = diabetes.target[:-20]
-        >>> diabetes_y_test  = diabetes.target[-20:]
+        >>> diabetes_X, diabetes_y = datasets.load_diabetes(return_X_y=True)
+        >>> diabetes_X_train = diabetes_X[:-20]
+        >>> diabetes_X_test  = diabetes_X[-20:]
+        >>> diabetes_y_train = diabetes_y[:-20]
+        >>> diabetes_y_test  = diabetes_y[-20:]
 
     The task at hand is to predict disease progression from physiological
     variables.
@@ -159,11 +155,6 @@ in its simplest form, fits a linear model to the data set by adjusting
 a set of parameters in order to make the sum of the squared residuals
 of the model as small as possible.
 
-.. image:: /auto_examples/linear_model/images/sphx_glr_plot_ols_001.png
-   :target: ../../auto_examples/linear_model/plot_ols.html
-   :scale: 40
-   :align: right
-
 Linear models: :math:`y = X\beta + \epsilon`
 
  * :math:`X`: data
@@ -171,14 +162,17 @@ Linear models: :math:`y = X\beta + \epsilon`
  * :math:`\beta`: Coefficients
  * :math:`\epsilon`: Observation noise
 
+.. image:: /auto_examples/linear_model/images/sphx_glr_plot_ols_001.png
+   :target: ../../auto_examples/linear_model/plot_ols.html
+   :scale: 50
+   :align: center
+
 ::
 
     >>> from sklearn import linear_model
     >>> regr = linear_model.LinearRegression()
     >>> regr.fit(diabetes_X_train, diabetes_y_train)
-    ...                                       # doctest: +NORMALIZE_WHITESPACE
-    LinearRegression(copy_X=True, fit_intercept=True, n_jobs=None,
-                     normalize=False)
+    LinearRegression()
     >>> print(regr.coef_)
     [   0.30349955 -237.63931533  510.53060544  327.73698041 -814.13170937
       492.81458798  102.84845219  184.60648906  743.51961675   76.09517222]
@@ -186,13 +180,12 @@ Linear models: :math:`y = X\beta + \epsilon`
 
     >>> # The mean square error
     >>> np.mean((regr.predict(diabetes_X_test) - diabetes_y_test)**2)
-    ...                                                   # doctest: +ELLIPSIS
     2004.56760268...
 
     >>> # Explained variance score: 1 is perfect prediction
     >>> # and 0 means that there is no linear relationship
     >>> # between X and y.
-    >>> regr.score(diabetes_X_test, diabetes_y_test) # doctest: +ELLIPSIS
+    >>> regr.score(diabetes_X_test, diabetes_y_test)
     0.5850753022690...
 
 
@@ -203,11 +196,6 @@ Shrinkage
 
 If there are few data points per dimension, noise in the observations
 induces high variance:
-
-.. image:: /auto_examples/linear_model/images/sphx_glr_plot_ols_ridge_variance_001.png
-   :target: ../../auto_examples/linear_model/plot_ols_ridge_variance.html
-   :scale: 70
-   :align: right
 
 ::
 
@@ -226,17 +214,14 @@ induces high variance:
     ...     plt.plot(test, regr.predict(test)) # doctest: +SKIP
     ...     plt.scatter(this_X, y, s=3)  # doctest: +SKIP
 
-
+.. image:: /auto_examples/linear_model/images/sphx_glr_plot_ols_ridge_variance_001.png
+   :target: ../../auto_examples/linear_model/plot_ols_ridge_variance.html
+   :align: center
 
 A solution in high-dimensional statistical learning is to *shrink* the
 regression coefficients to zero: any two randomly chosen set of
 observations are likely to be uncorrelated. This is called :class:`Ridge`
 regression:
-
-.. image:: /auto_examples/linear_model/images/sphx_glr_plot_ols_ridge_variance_002.png
-   :target: ../../auto_examples/linear_model/plot_ols_ridge_variance.html
-   :scale: 70
-   :align: right
 
 ::
 
@@ -251,6 +236,10 @@ regression:
     ...     plt.plot(test, regr.predict(test)) # doctest: +SKIP
     ...     plt.scatter(this_X, y, s=3) # doctest: +SKIP
 
+.. image:: /auto_examples/linear_model/images/sphx_glr_plot_ols_ridge_variance_002.png
+   :target: ../../auto_examples/linear_model/plot_ols_ridge_variance.html
+   :align: center
+
 This is an example of **bias/variance tradeoff**: the larger the ridge
 ``alpha`` parameter, the higher the bias and the lower the variance.
 
@@ -262,7 +251,6 @@ diabetes dataset rather than our synthetic data::
     ...            .fit(diabetes_X_train, diabetes_y_train)
     ...            .score(diabetes_X_test, diabetes_y_test)
     ...        for alpha in alphas])
-    ...                            # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     [0.5851110683883..., 0.5852073015444..., 0.5854677540698...,
      0.5855512036503..., 0.5830717085554..., 0.57058999437...]
 
@@ -333,13 +321,10 @@ application of Occam's razor: *prefer simpler models*.
     >>> best_alpha = alphas[scores.index(max(scores))]
     >>> regr.alpha = best_alpha
     >>> regr.fit(diabetes_X_train, diabetes_y_train)
-    ... # doctest: +NORMALIZE_WHITESPACE
-    Lasso(alpha=0.025118864315095794, copy_X=True, fit_intercept=True,
-       max_iter=1000, normalize=False, positive=False, precompute=False,
-       random_state=None, selection='cyclic', tol=0.0001, warm_start=False)
-    >>> print(regr.coef_)  # doctest: +NORMALIZE_WHITESPACE
-    [   0.         -212.43764548  517.19478111  313.77959962 -160.8303982    -0.
-     -187.19554705   69.38229038  508.66011217   71.84239008]
+    Lasso(alpha=0.025118864315095794)
+    >>> print(regr.coef_)
+    [   0.         -212.437...  517.194...  313.779... -160.830...
+       -0.         -187.195...   69.382...  508.660...   71.842...]
 
 .. topic:: **Different algorithms for the same problem**
 
@@ -357,16 +342,16 @@ application of Occam's razor: *prefer simpler models*.
 Classification
 ---------------
 
-.. image:: /auto_examples/linear_model/images/sphx_glr_plot_logistic_001.png
-   :target: ../../auto_examples/linear_model/plot_logistic.html
-   :scale: 65
-   :align: right
-
 For classification, as in the labeling
 `iris <https://en.wikipedia.org/wiki/Iris_flower_data_set>`_ task, linear
 regression is not the right approach as it will give too much weight to
 data far from the decision frontier. A linear approach is to fit a sigmoid
 function or **logistic** function:
+
+.. image:: /auto_examples/linear_model/images/sphx_glr_plot_logistic_001.png
+   :target: ../../auto_examples/linear_model/plot_logistic.html
+   :scale: 70
+   :align: center
 
 .. math::
 
@@ -375,19 +360,16 @@ function or **logistic** function:
 
 ::
 
-    >>> log = linear_model.LogisticRegression(solver='lbfgs', C=1e5,
-    ...                                       multi_class='multinomial')
-    >>> log.fit(iris_X_train, iris_y_train)  # doctest: +NORMALIZE_WHITESPACE
-    LogisticRegression(C=100000.0, class_weight=None, dual=False,
-        fit_intercept=True, intercept_scaling=1, l1_ratio=None, max_iter=100,
-        multi_class='multinomial', n_jobs=None, penalty='l2', random_state=None,
-        solver='lbfgs', tol=0.0001, verbose=0, warm_start=False)
+    >>> log = linear_model.LogisticRegression(C=1e5)
+    >>> log.fit(iris_X_train, iris_y_train)
+    LogisticRegression(C=100000.0)
 
 This is known as :class:`LogisticRegression`.
 
 .. image:: /auto_examples/linear_model/images/sphx_glr_plot_iris_logistic_001.png
    :target: ../../auto_examples/linear_model/plot_iris_logistic.html
    :scale: 83
+   :align: center
 
 .. topic:: Multiclass classification
 
@@ -413,7 +395,7 @@ This is known as :class:`LogisticRegression`.
    .. literalinclude:: ../../auto_examples/exercises/plot_digits_classification_exercise.py
        :lines: 15-19
 
-   Solution: :download:`../../auto_examples/exercises/plot_digits_classification_exercise.py`
+   A solution can be downloaded :download:`here <../../auto_examples/exercises/plot_digits_classification_exercise.py>`.
 
 
 Support vector machines (SVMs)
@@ -433,21 +415,15 @@ the separating line (less regularization).
 
 .. currentmodule :: sklearn.svm
 
-.. |svm_margin_unreg| image:: /auto_examples/svm/images/sphx_glr_plot_svm_margin_001.png
+.. figure:: /auto_examples/svm/images/sphx_glr_plot_svm_margin_001.png
    :target: ../../auto_examples/svm/plot_svm_margin.html
-   :scale: 70
 
-.. |svm_margin_reg| image:: /auto_examples/svm/images/sphx_glr_plot_svm_margin_002.png
+   **Unregularized SVM**
+
+.. figure:: /auto_examples/svm/images/sphx_glr_plot_svm_margin_002.png
    :target: ../../auto_examples/svm/plot_svm_margin.html
-   :scale: 70
 
-.. rst-class:: centered
-
-    ============================= ==============================
-     **Unregularized SVM**         **Regularized SVM (default)**
-    ============================= ==============================
-    |svm_margin_unreg|  	  |svm_margin_reg|
-    ============================= ==============================
+   **Regularized SVM (default)**
 
 .. topic:: Example:
 
@@ -461,11 +437,8 @@ classification --:class:`SVC` (Support Vector Classification).
 
     >>> from sklearn import svm
     >>> svc = svm.SVC(kernel='linear')
-    >>> svc.fit(iris_X_train, iris_y_train)    # doctest: +NORMALIZE_WHITESPACE
-    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-        decision_function_shape='ovr', degree=3, gamma='auto_deprecated',
-        kernel='linear', max_iter=-1, probability=False, random_state=None,
-        shrinking=True, tol=0.001, verbose=False)
+    >>> svc.fit(iris_X_train, iris_y_train)
+    SVC(kernel='linear')
 
 
 .. warning:: **Normalizing data**
@@ -477,79 +450,46 @@ classification --:class:`SVC` (Support Vector Classification).
 .. _using_kernels_tut:
 
 Using kernels
---------------
+-------------
 
 Classes are not always linearly separable in feature space. The solution is to
 build a decision function that is not linear but may be polynomial instead.
 This is done using the *kernel trick* that can be seen as
 creating a decision energy by positioning *kernels* on observations:
 
-.. |svm_kernel_linear| image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_001.png
+Linear kernel
+^^^^^^^^^^^^^
+
+::
+
+    >>> svc = svm.SVC(kernel='linear')
+
+.. image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_001.png
    :target: ../../auto_examples/svm/plot_svm_kernels.html
-   :scale: 65
 
-.. |svm_kernel_poly| image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_002.png
+Polynomial kernel
+^^^^^^^^^^^^^^^^^
+
+::
+
+    >>> svc = svm.SVC(kernel='poly',
+    ...               degree=3)
+    >>> # degree: polynomial degree
+
+.. image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_002.png
    :target: ../../auto_examples/svm/plot_svm_kernels.html
-   :scale: 65
 
-.. rst-class:: centered
+RBF kernel (Radial Basis Function)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-  .. list-table::
+::
 
-     *
+    >>> svc = svm.SVC(kernel='rbf')
+    >>> # gamma: inverse of size of
+    >>> # radial kernel
 
-       - **Linear kernel**
-
-       - **Polynomial kernel**
-
-
-
-     *
-
-       - |svm_kernel_linear|
-
-       - |svm_kernel_poly|
-
-
-
-     *
-
-       - ::
-
-            >>> svc = svm.SVC(kernel='linear')
-
-       - ::
-
-            >>> svc = svm.SVC(kernel='poly',
-            ...               degree=3)
-            >>> # degree: polynomial degree
-
-
-
-.. |svm_kernel_rbf| image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_003.png
+.. image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_003.png
    :target: ../../auto_examples/svm/plot_svm_kernels.html
-   :scale: 65
-
-.. rst-class:: centered
-
-  .. list-table::
-
-     *
-
-       - **RBF kernel (Radial Basis Function)**
-
-
-     *
-
-       - |svm_kernel_rbf|
-
-     *
-
-       - ::
-
-            >>> svc = svm.SVC(kernel='rbf')
-            >>> # gamma: inverse of size of
-            >>> # radial kernel
 
 
 
@@ -558,11 +498,6 @@ creating a decision energy by positioning *kernels* on observations:
    See the :ref:`SVM GUI <sphx_glr_auto_examples_applications_svm_gui.py>` to download
    ``svm_gui.py``; add data points of both classes with right and left button,
    fit the model and change parameters and data.
-
-.. image:: /auto_examples/datasets/images/sphx_glr_plot_iris_dataset_001.png
-    :target: ../../auto_examples/datasets/plot_iris_dataset.html
-    :align: right
-    :scale: 70
 
 .. topic:: **Exercise**
    :class: green
@@ -580,4 +515,10 @@ creating a decision energy by positioning *kernels* on observations:
    .. literalinclude:: ../../auto_examples/exercises/plot_iris_exercise.py
        :lines: 18-23
 
-   Solution: :download:`../../auto_examples/exercises/plot_iris_exercise.py`
+   .. image:: /auto_examples/datasets/images/sphx_glr_plot_iris_dataset_001.png
+      :target: ../../auto_examples/datasets/plot_iris_dataset.html
+      :align: center
+      :scale: 70
+
+
+   A solution can be downloaded :download:`here <../../auto_examples/exercises/plot_iris_exercise.py>`

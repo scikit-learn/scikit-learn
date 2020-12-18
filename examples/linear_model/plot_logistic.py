@@ -29,14 +29,14 @@ xmin, xmax = -5, 5
 n_samples = 100
 np.random.seed(0)
 X = np.random.normal(size=n_samples)
-y = (X > 0).astype(np.float)
+y = (X > 0).astype(float)
 X[X > 0] *= 4
 X += .3 * np.random.normal(size=n_samples)
 
 X = X[:, np.newaxis]
 
 # Fit the classifier
-clf = linear_model.LogisticRegression(C=1e5, solver='lbfgs')
+clf = linear_model.LogisticRegression(C=1e5)
 clf.fit(X, y)
 
 # and plot the result

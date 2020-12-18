@@ -38,15 +38,15 @@ Let's load the iris data set to fit a linear support vector machine on it::
   >>> from sklearn import datasets
   >>> from sklearn import svm
 
-  >>> iris = datasets.load_iris()
-  >>> iris.data.shape, iris.target.shape
+  >>> X, y = datasets.load_iris(return_X_y=True)
+  >>> X.shape, y.shape
   ((150, 4), (150,))
 
 We can now quickly sample a training set while holding out 40% of the
 data for testing (evaluating) our classifier::
 
   >>> X_train, X_test, y_train, y_test = train_test_split(
-  ...     iris.data, iris.target, test_size=0.4, random_state=0)
+  ...     X, y, test_size=0.4, random_state=0)
 
   >>> X_train.shape, y_train.shape
   ((90, 4), (90,))
@@ -54,7 +54,7 @@ data for testing (evaluating) our classifier::
   ((60, 4), (60,))
 
   >>> clf = svm.SVC(kernel='linear', C=1).fit(X_train, y_train)
-  >>> clf.score(X_test, y_test)                           # doctest: +ELLIPSIS
+  >>> clf.score(X_test, y_test)
   0.96...
 
 When evaluating different settings ("hyperparameters") for estimators,
@@ -116,16 +116,15 @@ a model and computing the score 5 consecutive times (with different splits each
 time)::
 
   >>> from sklearn.model_selection import cross_val_score
-  >>> clf = svm.SVC(kernel='linear', C=1)
-  >>> scores = cross_val_score(clf, iris.data, iris.target, cv=5)
-  >>> scores                                              # doctest: +ELLIPSIS
-  array([0.96..., 1.  ..., 0.96..., 0.96..., 1.        ])
+  >>> clf = svm.SVC(kernel='linear', C=1, random_state=42)
+  >>> scores = cross_val_score(clf, X, y, cv=5)
+  >>> scores
+  array([0.96..., 1. , 0.96..., 0.96..., 1. ])
 
-The mean score and the 95\% confidence interval of the score estimate are hence
-given by::
+The mean score and the standard deviation are hence given by::
 
-  >>> print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
-  Accuracy: 0.98 (+/- 0.03)
+  >>> print("%0.2f accuracy with a standard deviation of %0.2f" % (scores.mean(), scores.std()))
+  0.98 accuracy with a standard deviation of 0.02
 
 By default, the score computed at each CV iteration is the ``score``
 method of the estimator. It is possible to change this by using the
@@ -133,8 +132,8 @@ scoring parameter::
 
   >>> from sklearn import metrics
   >>> scores = cross_val_score(
-  ...     clf, iris.data, iris.target, cv=5, scoring='f1_macro')
-  >>> scores                                              # doctest: +ELLIPSIS
+  ...     clf, X, y, cv=5, scoring='f1_macro')
+  >>> scores
   array([0.96..., 1.  ..., 0.96..., 0.96..., 1.        ])
 
 See :ref:`scoring_parameter` for details.
@@ -150,9 +149,9 @@ It is also possible to use other cross validation strategies by passing a cross
 validation iterator instead, for instance::
 
   >>> from sklearn.model_selection import ShuffleSplit
-  >>> n_samples = iris.data.shape[0]
+  >>> n_samples = X.shape[0]
   >>> cv = ShuffleSplit(n_splits=5, test_size=0.3, random_state=0)
-  >>> cross_val_score(clf, iris.data, iris.target, cv=cv)  # doctest: +ELLIPSIS
+  >>> cross_val_score(clf, X, y, cv=cv)
   array([0.977..., 0.977..., 1.  ..., 0.955..., 1.        ])
 
 Another option is to use an iterable yielding (train, test) splits as arrays of
@@ -166,8 +165,8 @@ indices, for example::
   ...         yield idx, idx
   ...         i += 1
   ...
-  >>> custom_cv = custom_cv_2folds(iris.data)
-  >>> cross_val_score(clf, iris.data, iris.target, cv=custom_cv)
+  >>> custom_cv = custom_cv_2folds(X)
+  >>> cross_val_score(clf, X, y, cv=custom_cv)
   array([1.        , 0.973...])
 
 .. topic:: Data transformation with held out data
@@ -179,12 +178,12 @@ indices, for example::
 
       >>> from sklearn import preprocessing
       >>> X_train, X_test, y_train, y_test = train_test_split(
-      ...     iris.data, iris.target, test_size=0.4, random_state=0)
+      ...     X, y, test_size=0.4, random_state=0)
       >>> scaler = preprocessing.StandardScaler().fit(X_train)
       >>> X_train_transformed = scaler.transform(X_train)
       >>> clf = svm.SVC(C=1).fit(X_train_transformed, y_train)
       >>> X_test_transformed = scaler.transform(X_test)
-      >>> clf.score(X_test_transformed, y_test)  # doctest: +ELLIPSIS
+      >>> clf.score(X_test_transformed, y_test)
       0.9333...
 
     A :class:`Pipeline <sklearn.pipeline.Pipeline>` makes it easier to compose
@@ -192,8 +191,7 @@ indices, for example::
 
       >>> from sklearn.pipeline import make_pipeline
       >>> clf = make_pipeline(preprocessing.StandardScaler(), svm.SVC(C=1))
-      >>> cross_val_score(clf, iris.data, iris.target, cv=cv)
-      ...                                                 # doctest: +ELLIPSIS
+      >>> cross_val_score(clf, X, y, cv=cv)
       array([0.977..., 0.933..., 0.955..., 0.933..., 0.977...])
 
     See :ref:`combining_estimators`.
@@ -234,29 +232,28 @@ predefined scorer names::
     >>> from sklearn.metrics import recall_score
     >>> scoring = ['precision_macro', 'recall_macro']
     >>> clf = svm.SVC(kernel='linear', C=1, random_state=0)
-    >>> scores = cross_validate(clf, iris.data, iris.target, scoring=scoring,
-    ...                         cv=5)
+    >>> scores = cross_validate(clf, X, y, scoring=scoring)
     >>> sorted(scores.keys())
     ['fit_time', 'score_time', 'test_precision_macro', 'test_recall_macro']
-    >>> scores['test_recall_macro']                       # doctest: +ELLIPSIS
+    >>> scores['test_recall_macro']
     array([0.96..., 1.  ..., 0.96..., 0.96..., 1.        ])
 
 Or as a dict mapping scorer name to a predefined or custom scoring function::
 
-    >>> from sklearn.metrics.scorer import make_scorer
+    >>> from sklearn.metrics import make_scorer
     >>> scoring = {'prec_macro': 'precision_macro',
-    ...            'rec_micro': make_scorer(recall_score, average='macro')}
-    >>> scores = cross_validate(clf, iris.data, iris.target, scoring=scoring,
+    ...            'rec_macro': make_scorer(recall_score, average='macro')}
+    >>> scores = cross_validate(clf, X, y, scoring=scoring,
     ...                         cv=5, return_train_score=True)
-    >>> sorted(scores.keys())                 # doctest: +NORMALIZE_WHITESPACE
-    ['fit_time', 'score_time', 'test_prec_macro', 'test_rec_micro',
-     'train_prec_macro', 'train_rec_micro']
-    >>> scores['train_rec_micro']                         # doctest: +ELLIPSIS
+    >>> sorted(scores.keys())
+    ['fit_time', 'score_time', 'test_prec_macro', 'test_rec_macro',
+     'train_prec_macro', 'train_rec_macro']
+    >>> scores['train_rec_macro']
     array([0.97..., 0.97..., 0.99..., 0.98..., 0.98...])
 
 Here is an example of ``cross_validate`` using a single metric::
 
-    >>> scores = cross_validate(clf, iris.data, iris.target,
+    >>> scores = cross_validate(clf, X, y,
     ...                         scoring='precision_macro', cv=5,
     ...                         return_estimator=True)
     >>> sorted(scores.keys())
@@ -321,16 +318,17 @@ samples.
 
 The following cross-validators can be used in such cases.
 
-**NOTE**
+.. note::
 
-While i.i.d. data is a common assumption in machine learning theory, it rarely
-holds in practice. If one knows that the samples have been generated using a
-time-dependent process, it's safer to
-use a :ref:`time-series aware cross-validation scheme <timeseries_cv>`
-Similarly if we know that the generative process has a group structure
-(samples from collected from different subjects, experiments, measurement
-devices) it safer to use :ref:`group-wise cross-validation <group_cv>`.
+  While i.i.d. data is a common assumption in machine learning theory, it rarely
+  holds in practice. If one knows that the samples have been generated using a
+  time-dependent process, it is safer to
+  use a :ref:`time-series aware cross-validation scheme <timeseries_cv>`.
+  Similarly, if we know that the generative process has a group structure
+  (samples collected from different subjects, experiments, measurement
+  devices), it is safer to use :ref:`group-wise cross-validation <group_cv>`.
 
+.. _k_fold:
 
 K-fold
 ^^^^^^
@@ -368,6 +366,7 @@ Thus, one can create the training/test sets using numpy indexing::
   >>> y = np.array([0, 1, 0, 1])
   >>> X_train, X_test, y_train, y_test = X[train], X[test], y[train], y[test]
 
+.. _repeated_k_fold:
 
 Repeated K-Fold
 ^^^^^^^^^^^^^^^
@@ -395,6 +394,7 @@ Example of 2-fold K-Fold repeated 2 times::
 Similarly, :class:`RepeatedStratifiedKFold` repeats Stratified K-Fold n times
 with different randomization in each repetition.
 
+.. _leave_one_out:
 
 Leave One Out (LOO)
 ^^^^^^^^^^^^^^^^^^^
@@ -453,6 +453,7 @@ fold cross validation should be preferred to LOO.
  * G. James, D. Witten, T. Hastie, R Tibshirani, `An Introduction to
    Statistical Learning <https://www-bcf.usc.edu/~gareth/ISL/>`_, Springer 2013.
 
+.. _leave_p_out:
 
 Leave P Out (LPO)
 ^^^^^^^^^^^^^^^^^
@@ -484,8 +485,6 @@ Example of Leave-2-Out on a dataset with 4 samples::
 Random permutations cross-validation a.k.a. Shuffle & Split
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:class:`ShuffleSplit`
-
 The :class:`ShuffleSplit` iterator will generate a user defined number of
 independent train / test dataset splits. Samples are first shuffled and
 then split into a pair of train and test sets.
@@ -498,8 +497,7 @@ Here is a usage example::
 
   >>> from sklearn.model_selection import ShuffleSplit
   >>> X = np.arange(10)
-  >>> ss = ShuffleSplit(n_splits=5, test_size=0.25,
-  ...     random_state=0)
+  >>> ss = ShuffleSplit(n_splits=5, test_size=0.25, random_state=0)
   >>> for train_index, test_index in ss.split(X):
   ...     print("%s %s" % (train_index, test_index))
   [9 1 6 7 3 0 5] [2 8 4]
@@ -520,6 +518,8 @@ Here is a visualization of the cross-validation behavior. Note that
 validation that allows a finer control on the number of iterations and
 the proportion of samples on each side of the train / test split.
 
+.. _stratification:
+
 Cross-validation iterators with stratification based on class labels.
 ---------------------------------------------------------------------
 
@@ -530,6 +530,8 @@ stratified sampling as implemented in :class:`StratifiedKFold` and
 :class:`StratifiedShuffleSplit` to ensure that relative class frequencies is
 approximately preserved in each train and validation fold.
 
+.. _stratified_k_fold:
+
 Stratified k-fold
 ^^^^^^^^^^^^^^^^^
 
@@ -537,19 +539,30 @@ Stratified k-fold
 folds: each set contains approximately the same percentage of samples of each
 target class as the complete set.
 
-Example of stratified 3-fold cross-validation on a dataset with 10 samples from
-two slightly unbalanced classes::
+Here is an example of stratified 3-fold cross-validation on a dataset with 50 samples from
+two unbalanced classes.  We show the number of samples in each class and compare with
+:class:`KFold`.
 
-  >>> from sklearn.model_selection import StratifiedKFold
-
-  >>> X = np.ones(10)
-  >>> y = [0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
+  >>> from sklearn.model_selection import StratifiedKFold, KFold
+  >>> import numpy as np
+  >>> X, y = np.ones((50, 1)), np.hstack(([0] * 45, [1] * 5))
   >>> skf = StratifiedKFold(n_splits=3)
   >>> for train, test in skf.split(X, y):
-  ...     print("%s %s" % (train, test))
-  [2 3 6 7 8 9] [0 1 4 5]
-  [0 1 3 4 5 8 9] [2 6 7]
-  [0 1 2 4 5 6 7] [3 8 9]
+  ...     print('train -  {}   |   test -  {}'.format(
+  ...         np.bincount(y[train]), np.bincount(y[test])))
+  train -  [30  3]   |   test -  [15  2]
+  train -  [30  3]   |   test -  [15  2]
+  train -  [30  4]   |   test -  [15  1]
+  >>> kf = KFold(n_splits=3)
+  >>> for train, test in kf.split(X, y):
+  ...     print('train -  {}   |   test -  {}'.format(
+  ...         np.bincount(y[train]), np.bincount(y[test])))
+  train -  [28  5]   |   test -  [17]
+  train -  [28  5]   |   test -  [17]
+  train -  [34]   |   test -  [11  5]
+
+We can see that :class:`StratifiedKFold` preserves the class ratios
+(approximately 1 / 10) in both train and test dataset.
 
 Here is a visualization of the cross-validation behavior.
 
@@ -561,6 +574,7 @@ Here is a visualization of the cross-validation behavior.
 :class:`RepeatedStratifiedKFold` can be used to repeat Stratified K-Fold n times
 with different randomization in each repetition.
 
+.. _stratified_shuffle_split:
 
 Stratified Shuffle Split
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -598,6 +612,7 @@ The following cross-validation splitters can be used to do that.
 The grouping identifier for the samples is specified via the ``groups``
 parameter.
 
+.. _group_k_fold:
 
 Group k-fold
 ^^^^^^^^^^^^
@@ -635,6 +650,8 @@ Here is a visualization of the cross-validation behavior.
    :align: center
    :scale: 75%
 
+.. _leave_one_group_out:
+
 Leave One Group Out
 ^^^^^^^^^^^^^^^^^^^
 
@@ -666,6 +683,8 @@ Another common application is to use time information: for instance the
 groups could be the year of collection of the samples and thus allow
 for cross-validation against time-based splits.
 
+.. _leave_p_groups_out:
+
 Leave P Groups Out
 ^^^^^^^^^^^^^^^^^^
 
@@ -685,6 +704,8 @@ Example of Leave-2-Group Out::
   [4 5] [0 1 2 3]
   [2 3] [0 1 4 5]
   [0 1] [2 3 4 5]
+
+.. _group_shuffle_split:
 
 Group Shuffle Split
 ^^^^^^^^^^^^^^^^^^^
@@ -720,10 +741,11 @@ Here is a visualization of the cross-validation behavior.
 This class is useful when the behavior of :class:`LeavePGroupsOut` is
 desired, but the number of groups is large enough that generating all
 possible partitions with :math:`P` groups withheld would be prohibitively
-expensive.  In such a scenario, :class:`GroupShuffleSplit` provides
+expensive. In such a scenario, :class:`GroupShuffleSplit` provides
 a random sample (with replacement) of the train / test splits
 generated by :class:`LeavePGroupsOut`.
 
+.. _predefined_split:
 
 Predefined Fold-Splits / Validation-Sets
 ----------------------------------------
@@ -735,6 +757,35 @@ e.g. when searching for hyperparameters.
 
 For example, when using a validation set, set the ``test_fold`` to 0 for all
 samples that are part of the validation set, and to -1 for all other samples.
+
+Using cross-validation iterators to split train and test
+--------------------------------------------------------
+
+The above group cross-validation functions may also be useful for spitting a
+dataset into training and testing subsets. Note that the convenience
+function :func:`train_test_split` is a wrapper around :func:`ShuffleSplit`
+and thus only allows for stratified splitting (using the class labels)
+and cannot account for groups.
+
+To perform the train and test split, use the indices for the train and test
+subsets yielded by the generator output by the `split()` method of the
+cross-validation splitter. For example::
+
+  >>> import numpy as np
+  >>> from sklearn.model_selection import GroupShuffleSplit
+
+  >>> X = np.array([0.1, 0.2, 2.2, 2.4, 2.3, 4.55, 5.8, 0.001])
+  >>> y = np.array(["a", "b", "b", "b", "c", "c", "c", "a"])
+  >>> groups = np.array([1, 1, 2, 2, 3, 3, 4, 4])
+  >>> train_indx, test_indx = next(
+  ...     GroupShuffleSplit(random_state=7).split(X, y, groups)
+  ... )
+  >>> X_train, X_test, y_train, y_test = \
+  ...     X[train_indx], X[test_indx], y[train_indx], y[test_indx]
+  >>> X_train.shape, X_test.shape
+  ((6,), (2,))
+  >>> np.unique(groups[train_indx]), np.unique(groups[test_indx])
+  (array([1, 2, 4]), array([3]))
 
 .. _timeseries_cv:
 
@@ -752,6 +803,7 @@ to evaluate our model for time series data on the "future" observations
 least like those that are used to train the model. To achieve this, one
 solution is provided by :class:`TimeSeriesSplit`.
 
+.. _time_series_split:
 
 Time Series Split
 ^^^^^^^^^^^^^^^^^
@@ -773,8 +825,8 @@ Example of 3-split time series cross-validation on a dataset with 6 samples::
   >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4], [1, 2], [3, 4]])
   >>> y = np.array([1, 2, 3, 4, 5, 6])
   >>> tscv = TimeSeriesSplit(n_splits=3)
-  >>> print(tscv)  # doctest: +NORMALIZE_WHITESPACE
-  TimeSeriesSplit(max_train_size=None, n_splits=3)
+  >>> print(tscv)
+  TimeSeriesSplit(gap=0, max_train_size=None, n_splits=3, test_size=None)
   >>> for train, test in tscv.split(X):
   ...     print("%s %s" % (train, test))
   [0 1 2] [3]
@@ -814,9 +866,72 @@ to shuffle the data indices before splitting them. Note that:
   of parameters validated by a single call to its ``fit`` method.
 * To get identical results for each split, set ``random_state`` to an integer.
 
+For more details on how to control the randomness of cv splitters and avoid
+common pitfalls, see :ref:`randomness`.
+
 Cross validation and model selection
 ====================================
 
 Cross validation iterators can also be used to directly perform model
 selection using Grid Search for the optimal hyperparameters of the
 model. This is the topic of the next section: :ref:`grid_search`.
+
+.. _permutation_test_score:
+
+Permutation test score
+======================
+
+:func:`~sklearn.model_selection.permutation_test_score` offers another way
+to evaluate the performance of classifiers. It provides a permutation-based
+p-value, which represents how likely an observed performance of the
+classifier would be obtained by chance. The null hypothesis in this test is
+that the classifier fails to leverage any statistical dependency between the
+features and the labels to make correct predictions on left out data.
+:func:`~sklearn.model_selection.permutation_test_score` generates a null
+distribution by calculating `n_permutations` different permutations of the
+data. In each permutation the labels are randomly shuffled, thereby removing
+any dependency between the features and the labels. The p-value output
+is the fraction of permutations for which the average cross-validation score
+obtained by the model is better than the cross-validation score obtained by
+the model using the original data. For reliable results ``n_permutations``
+should typically be larger than 100 and ``cv`` between 3-10 folds.
+
+A low p-value provides evidence that the dataset contains real dependency
+between features and labels and the classifier was able to utilize this
+to obtain good results. A high p-value could be due to a lack of dependency
+between features and labels (there is no difference in feature values between
+the classes) or because the classifier was not able to use the dependency in
+the data. In the latter case, using a more appropriate classifier that
+is able to utilize the structure in the data, would result in a low
+p-value.
+
+Cross-validation provides information about how well a classifier generalizes,
+specifically the range of expected errors of the classifier. However, a
+classifier trained on a high dimensional dataset with no structure may still
+perform better than expected on cross-validation, just by chance.
+This can typically happen with small datasets with less than a few hundred
+samples.
+:func:`~sklearn.model_selection.permutation_test_score` provides information
+on whether the classifier has found a real class structure and can help in
+evaluating the performance of the classifier.
+
+It is important to note that this test has been shown to produce low
+p-values even if there is only weak structure in the data because in the
+corresponding permutated datasets there is absolutely no structure. This
+test is therefore only able to show when the model reliably outperforms
+random guessing.
+
+Finally, :func:`~sklearn.model_selection.permutation_test_score` is computed
+using brute force and interally fits ``(n_permutations + 1) * n_cv`` models.
+It is therefore only tractable with small datasets for which fitting an
+individual model is very fast.
+
+.. topic:: Examples
+
+    * :ref:`sphx_glr_auto_examples_feature_selection_plot_permutation_test_for_classification.py`
+
+.. topic:: References:
+
+ * Ojala and Garriga. `Permutation Tests for Studying Classifier Performance
+   <http://www.jmlr.org/papers/volume11/ojala10a/ojala10a.pdf>`_.
+   J. Mach. Learn. Res. 2010.

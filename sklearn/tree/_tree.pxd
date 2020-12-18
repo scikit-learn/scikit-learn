@@ -7,8 +7,6 @@
 #          Nelson Liu <nelson@nelsonliu.me>
 #
 # License: BSD 3 clause
-#
-# cython: language_level=3
 
 # See _tree.pyx for details.
 
@@ -102,6 +100,5 @@ cdef class TreeBuilder:
     cdef double min_impurity_decrease   # Impurity threshold for early stopping
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
-                np.ndarray sample_weight=*,
-                np.ndarray X_idx_sorted=*)
+                np.ndarray sample_weight=*)
     cdef _check_input(self, object X, np.ndarray y, np.ndarray sample_weight)

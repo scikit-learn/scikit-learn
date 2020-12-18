@@ -1,0 +1,18 @@
+
+name: Assign
+on:
+  issue_comment:
+    types: created
+
+jobs:
+  one:
+    runs-on: ubuntu-latest
+    if: >-
+      (github.event.comment.body == 'take' ||
+       github.event.comment.body == 'Take')
+      && !github.event.issue.assignee
+    steps:
+      - run: |
+          echo "Assigning issue ${{ github.event.issue.number }} to ${{ github.event.comment.user.login }}"
+          curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -d '{"assignees": ["${{ github.event.comment.user.login }}"]}' https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/assignees
+          curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -X "DELETE" https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/labels/help%20wanted

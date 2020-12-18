@@ -22,7 +22,7 @@ def configuration(parent_package="", top_path=None):
                          sources=["_barnes_hut_tsne.pyx"],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries,
-                         extra_compile_args=['-O4'])
+                         extra_compile_args=['-O3'])
 
     config.add_subpackage('tests')
 
