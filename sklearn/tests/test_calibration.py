@@ -544,7 +544,7 @@ def test_calibration_attributes(clf, cv):
         assert calib_clf.n_features_in_ == X.shape[1]
 
 
-# FIXME: remove in 0.26
+# FIXME: remove in 1.1
 def test_calibrated_classifier_cv_deprecation(data):
     # Check that we raise the proper deprecation warning if accessing
     # `calibrators_` from the `_CalibratedClassifier`.

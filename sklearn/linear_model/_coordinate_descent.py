@@ -1861,7 +1861,7 @@ class MultiTaskElasticNet(Lasso):
 
     See Also
     --------
-    MultiTaskElasticNet : Multi-task L1/L2 ElasticNet with built-in
+    MultiTaskElasticNetCV : Multi-task L1/L2 ElasticNet with built-in
         cross-validation.
     ElasticNet
     MultiTaskLasso
