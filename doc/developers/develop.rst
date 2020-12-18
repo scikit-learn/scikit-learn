@@ -228,8 +228,8 @@ to slice rows and columns.
 
 .. deprecated:: 0.24
 
-    The _pairwise attribute is deprecated in 0.24. From 0.26 onward,
-    the `pairwise` estimator tag should be used instead.
+    The _pairwise attribute is deprecated in 0.24. From 1.1 (renaming of 0.26)
+    onward, the `pairwise` estimator tag should be used instead.
 
 Universal attributes
 ^^^^^^^^^^^^^^^^^^^^

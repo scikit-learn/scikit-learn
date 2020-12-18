@@ -104,8 +104,8 @@ Changelog
   initial cluster centroids. :pr:`17937` by :user:`g-walsh`
 
 - |API| :class:`cluster.MiniBatchKMeans` attributes, `counts_` and
-  `init_size_`, are deprecated and will be removed in 0.26. :pr:`17864` by
-  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+  `init_size_`, are deprecated and will be removed in 1.1 (renaming of 0.26).
+  :pr:`17864` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.compose`
 ......................
@@ -128,7 +128,8 @@ Changelog
 - |API| Deprecates `cv_alphas_` in favor of `cv_results_['alphas']` and
   `grid_scores_` in favor of split scores in `cv_results_` in
   :class:`covariance.GraphicalLassoCV`. `cv_alphas_` and `grid_scores_` will be
-  removed in version 0.26. :pr:`16392` by `Thomas Fan`_.
+  removed in version 1.1 (renaming of 0.26).
+  :pr:`16392` by `Thomas Fan`_.
 
 :mod:`sklearn.cross_decomposition`
 ..................................
@@ -149,7 +150,7 @@ Changelog
 - |API| For :class:`cross_decomposition.NMF`,
   the `init` value, when 'init=None' and
   n_components <= min(n_samples, n_features) will be changed from
-  `'nndsvd'` to `'nndsvda'` in 0.26.
+  `'nndsvd'` to `'nndsvda'` in 1.1 (renaming of 0.26).
   :pr:`18525` by :user:`Chiara Marmo <cmarmo>`.
 
 - |API| The bounds of the `n_components` parameter is now restricted:
@@ -159,20 +160,23 @@ Changelog
     and :class:`cross_decomposition.PLSCanonical`.
   - into `[1, n_features]` or :class:`cross_decomposition.PLSRegression`.
 
-  An error will be raised in 0.26. :pr:`17095` by `Nicolas Hug`_.
+  An error will be raised in 1.1 (renaming of 0.26).
+  :pr:`17095` by `Nicolas Hug`_.
 
 - |API| For :class:`cross_decomposition.PLSSVD`,
   :class:`cross_decomposition.CCA`, and
   :class:`cross_decomposition.PLSCanonical`, the `x_scores_` and `y_scores_`
-  attributes were deprecated and will be removed in 0.26. They can be
-  retrieved by calling `transform` on the training data. The `norm_y_weights`
-  attribute will also be removed. :pr:`17095` by `Nicolas Hug`_.
+  attributes were deprecated and will be removed in 1.1 (renaming of 0.26).
+  They can be retrieved by calling `transform` on the training data.
+  The `norm_y_weights` attribute will also be removed.
+  :pr:`17095` by `Nicolas Hug`_.
 
 - |API| For :class:`cross_decomposition.PLSRegression`,
   :class:`cross_decomposition.PLSCanonical`,
   :class:`cross_decomposition.CCA`, and
   :class:`cross_decomposition.PLSSVD`, the `x_mean_`, `y_mean_`, `x_std_`, and
-  `y_std_` attributes were deprecated and will be removed in 0.26.
+  `y_std_` attributes were deprecated and will be removed in 1.1
+  (renaming of 0.26).
   :pr:`18768` by :user:`Maren Westermann <marenwestermann>`.
 
 - |Fix| :class:`decomposition.TruncatedSVD` becomes deterministic by using the
@@ -240,8 +244,9 @@ Changelog
 
 - |Fix| Fix :class:`decomposition.SparseCoder` such that it follows
   scikit-learn API and support cloning. The attribute `components_` is
-  deprecated in 0.24 and will be removed in 0.26. This attribute was
-  redundant with the `dictionary` attribute and constructor parameter.
+  deprecated in 0.24 and will be removed in 1.1 (renaming of 0.26).
+  This attribute was redundant with the `dictionary` attribute and constructor
+  parameter.
   :pr:`17679` by :user:`Xavier Dupré <sdpython>`.
 
 - |Fix| :meth:`TruncatedSVD.fit_transform` consistently returns the same
@@ -302,7 +307,8 @@ Changelog
 
 - |API| :class:`exceptions.ChangedBehaviorWarning` and
   :class:`exceptions.NonBLASDotWarning` are deprecated and will be removed in
-  v0.26, :pr:`17804` by `Adrin Jalali`_.
+  1.1 (renaming of 0.26).
+  :pr:`17804` by `Adrin Jalali`_.
 
 :mod:`sklearn.feature_extraction`
 .................................
@@ -390,7 +396,8 @@ Changelog
   :user:`Roei Kahny <RoeiKa>`.
 
 - |API| Positional arguments are deprecated in
-  :meth:`inspection.PartialDependenceDisplay.plot` and will error in 0.26.
+  :meth:`inspection.PartialDependenceDisplay.plot` and will error in 1.1
+  (renaming of 0.26).
   :pr:`18293` by `Thomas Fan`_.
 
 :mod:`sklearn.isotonic`
@@ -458,8 +465,8 @@ Changelog
 
 - |Enhancement| Add `square_distances` parameter to :class:`manifold.TSNE`,
   which provides backward compatibility during deprecation of legacy squaring
-  behavior. Distances will be squared by default in 0.26, and this parameter
-  will be removed in 0.28. :pr:`17662` by
+  behavior. Distances will be squared by default in 1.1 (renaming of 0.26),
+  and this parameter will be removed in 1.3. :pr:`17662` by
   :user:`Joshua Newton <joshuacwnewton>`.
 
 - |Fix| :class:`manifold.MDS` now correctly sets its `_pairwise` attribute.
@@ -645,8 +652,8 @@ Changelog
 - |API| The attributes ``coef_`` and ``intercept_`` are now deprecated in
   :class:`naive_bayes.MultinomialNB`, :class:`naive_bayes.ComplementNB`,
   :class:`naive_bayes.BernoulliNB` and :class:`naive_bayes.CategoricalNB`,
-  and will be removed in v0.26. :pr:`17427` by
-  :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
+  and will be removed in v1.1 (renaming of 0.26).
+  :pr:`17427` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
 :mod:`sklearn.neighbors`
 ........................
