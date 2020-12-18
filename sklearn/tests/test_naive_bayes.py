@@ -459,8 +459,9 @@ def test_discretenb_degenerate_one_class_case(
     # Most array attributes of a discrete naive Bayes classifier should have a
     # first-axis length equal to the number of classes. Exceptions include:
     # ComplementNB.feature_all_, CategoricalNB.n_categories_.
-    # Confirm that this is the case for binary problems and degenerate
-    # single-class problems when fitting with `fit` or `partial_fit`.
+    # Confirm that this is the case for binary problems and the degenerate
+    # case of a single class in the training set, when fitting with `fit` or
+    # `partial_fit`.
     # Non-regression test for handling degenerate one-class case:
     # https://github.com/scikit-learn/scikit-learn/issues/18974
 
