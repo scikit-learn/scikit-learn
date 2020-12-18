@@ -692,12 +692,10 @@ def _multiplicative_update_h(X, W, H, A, B, beta_loss, l1_reg_H, l2_reg_H,
     A : array-like of shape (n_components, n_features)
         Numerator auxiliary function, only used in
         :class:`sklearn.decomposition.MiniBatchNMF`.
-        Only returned if `batch_size` is not `None`.
 
     B : array-like of shape (n_components, n_features)
         Denominator auxiliary function, only used in
         :class:`sklearn.decomposition.MiniBatchNMF`.
-        Only returned if `batch_size` is not `None`.
     """
 
     if beta_loss == 2:
@@ -1018,22 +1016,23 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
         Initial guess for the numerator auxiliary function, only used in
         :class:`sklearn.decomposition.MiniBatchNMF`.
 
-        .. versionadded:: 0.XX
+        .. versionadded:: 1.0
 
     B : array-like of shape (n_components, n_features), default=None
         Initial guess for the denominator auxiliary function, only used in
         :class:`sklearn.decomposition.MiniBatchNMF`.
 
-        .. versionadded:: 0.XX
+        .. versionadded:: 1.0
 
     n_components : int, default=None
         Number of components, if n_components is not set all features
         are kept.
 
     batch_size : int, default=None
-        Number of samples per batch: only for MiniBatch implementation.
+        Number of samples per batch: setting `batch_size != None`
+        will select the MiniBatch implementation.
 
-        .. versionadded:: 0.XX
+        .. versionadded:: 1.0
 
     init : {'random', 'nndsvd', 'nndsvda', 'nndsvdar', 'custom'}, default=None
         Method used to initialize the procedure.
@@ -1072,8 +1071,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
             Alternating Least Squares (Fast HALS).
 
         - 'mu' is a Multiplicative Update solver
-            This is the only solver available in
-            the :class:`sklearn.decomposition.MiniBatchNMF` case.
+            This is the only solver available when `batch_size` is not `None`.
 
         .. versionadded:: 0.17
            Coordinate Descent solver.
@@ -1152,7 +1150,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
 
     iter_offset : int
         The number of iteration on data batches that has been
-        performed.
+        performed. Only returned if `batch_size` is not `None`.
 
     Examples
     --------
@@ -1234,13 +1232,17 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
         if not isinstance(batch_size, numbers.Integral) or batch_size < 0:
             raise ValueError("Number of samples per batch must be a positive "
                              "integer; got (batch_size=%r)" % batch_size)
+
         if A is None:
             A = H.copy()
+        else:
+            _check_init(A, (n_components, n_features), "NMF (input A)")
+
         if B is None:
             B = np.ones((n_components, n_features))
+        else:
+            _check_init(B, (n_components, n_features), "NMF (input B)")
 
-        _check_init(A, (n_components, n_features), "NMF (input A)")
-        _check_init(B, (n_components, n_features), "NMF (input B)")
 
     l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = _compute_regularization(
         alpha, l1_ratio, regularization)
@@ -1248,7 +1250,8 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
     if solver == 'cd':
         if batch_size is not None:
             raise ValueError("Coordinate descent algorithm is not available "
-                             "for MiniBatchNMF. Please set solver to 'mu'.")
+                             "when batch_size is not None. "
+                             "Please set solver to 'mu'.")
         W, H, n_iter = _fit_coordinate_descent(X, W, H, tol, max_iter,
                                                l1_reg_W, l1_reg_H,
                                                l2_reg_W, l2_reg_H,
@@ -1642,6 +1645,8 @@ class MiniBatchNMF(NMF):
     solver : 'mu'
         Numerical solver to use:
         'mu' is a Multiplicative Update solver.
+        For now, this is the only available solver in the
+        MiniBatch implementation.
 
     beta_loss : float or string, default 'itakura-saito'
         String must be in {'frobenius', 'kullback-leibler', 'itakura-saito'}.
@@ -1678,8 +1683,9 @@ class MiniBatchNMF(NMF):
         Whether to be verbose.
 
     forget_factor : float, default=0.7.
-        Amount of rescaling of past information. Its value is 1 for batch
-        NMF algorithm, it could be <1 for online NMF algorithm.
+        Amount of rescaling of past information. Its value could be =1 with
+        finite datasets. Choosing values <1 is recommended with infinite
+        datasets as more recent batches will weight more than past batches.
 
     Attributes
     ----------
