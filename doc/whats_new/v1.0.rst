@@ -51,7 +51,7 @@ Changelog
   classifiers (:class:`naive_bayes.BernoulliNB`,
   :class:`naive_bayes.CategoricalNB`, :class:`naive_bayes.ComplementNB`,
   and :class:`naive_bayes.MultinomialNB`) now correctly handle the degenerate
-  case of a single class `y`. :pr:`18925` by :user:`David Poznik <dpoznik>`.
+  case of a single-class `y`. :pr:`18925` by :user:`David Poznik <dpoznik>`.
 
 
 Code and Documentation Contributors
