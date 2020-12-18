@@ -270,8 +270,22 @@ def callable_rbf_kernel(x, y, **kwds):
                         "parameter prior to scipy 1.0."
              )
          ),
-         (pairwise_distances, wminkowski, _wminkowski_kwds),
-         (pairwise_distances, 'wminkowski', _wminkowski_kwds),
+         pytest.param(
+             pairwise_distances, wminkowski, _wminkowski_kwds,
+             marks=pytest.mark.skipif(
+                 sp_version < parse_version("1.6.0"),
+                 reason="wminkowski is now minkowski "
+                        "and it has been already tested."
+             )
+         ),
+         pytest.param(
+             pairwise_distances, 'wminkowski', _wminkowski_kwds,
+             marks=pytest.mark.skipif(
+                 sp_version < parse_version("1.6.0"),
+                 reason="wminkowski is now minkowski "
+                        "and it has been already tested."
+             )
+         ),
          (pairwise_kernels, 'polynomial', {'degree': 1}),
          (pairwise_kernels, callable_rbf_kernel, {'gamma': .1})])
 @pytest.mark.parametrize('array_constr', [np.array, csr_matrix])
