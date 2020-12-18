@@ -347,7 +347,7 @@ def test_spectral_embedding_first_eigen_vector():
         assert np.std(embedding[:, 1]) > 1e-3
 
 
-# TODO: Remove in 0.26
+# TODO: Remove in 1.1
 @pytest.mark.parametrize("affinity", ["precomputed",
                                       "precomputed_nearest_neighbors"])
 def test_spectral_embedding_pairwise_deprecated(affinity):

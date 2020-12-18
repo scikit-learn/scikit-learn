@@ -47,7 +47,7 @@ def test_initialize_nn_output():
 def test_parameter_checking():
     A = np.ones((2, 2))
     name = 'spam'
-    # FIXME : should be removed in 0.26
+    # FIXME : should be removed in 1.1
     init = 'nndsvda'
     msg = "Invalid solver parameter: got 'spam' instead of one of"
     assert_raise_message(ValueError, msg, NMF(solver=name, init=init).fit, A)
@@ -209,7 +209,7 @@ def test_n_components_greater_n_features(estimator):
     # Smoke test for the case of more components than features.
     rng = np.random.mtrand.RandomState(42)
     A = np.abs(rng.randn(30, 10))
-    # FIXME : should be removed in 0.26
+    # FIXME : should be removed in 1.1
     init = 'random'
     estimator(n_components=15, random_state=0, tol=1e-2, init=init).fit(A)
 
@@ -492,7 +492,7 @@ def test_nmf_regularization(estimator, solver):
     rng = np.random.mtrand.RandomState(42)
     X = np.abs(rng.randn(n_samples, n_features))
 
-    # FIXME : should be removed in 0.26
+    # FIXME : should be removed in 1.1
     init = 'nndsvda'
     # L1 regularization should increase the number of zeros
     l1_ratio = 1.
@@ -604,7 +604,7 @@ def test_nmf_dtype_match(estimator, dtype_in, dtype_out,
     # Check that NMF preserves dtype (float32 and float64)
     X = np.random.RandomState(0).randn(20, 15).astype(dtype_in, copy=False)
     np.abs(X, out=X)
-    # FIXME : should be removed in 0.26
+    # FIXME : should be removed in 1.1
     init = 'nndsvda'
     nmf = estimator(solver=solver, regularization=regularization, init=init)
 
@@ -622,7 +622,7 @@ def test_nmf_float32_float64_consistency(estimator, solver, regularization):
     # Check that the result of NMF is the same between float32 and float64
     X = np.random.RandomState(0).randn(50, 7)
     np.abs(X, out=X)
-    # FIXME : should be removed in 0.26
+    # FIXME : should be removed in 1.1
     init = 'nndsvda'
     nmf32 = estimator(solver=solver, regularization=regularization,
                       random_state=0, init=init)
@@ -713,13 +713,13 @@ def test_minibatch_nmf_auxiliary_matrices_and_iteroffset():
     assert np.sum((A-A3)**2., axis=(0, 1)) > 1e-3
 
 
-# FIXME : should be removed in 0.26
+# FIXME : should be removed in 1.1
 def test_init_default_deprecation():
     # Test FutureWarning on init default
-    msg = ("The 'init' value, when 'init=None' and "
-           "n_components is less than n_samples and "
-           "n_features, will be changed from 'nndsvd' to "
-           "'nndsvda' in 0.26.")
+    msg = (r"The 'init' value, when 'init=None' and "
+           r"n_components is less than n_samples and "
+           r"n_features, will be changed from 'nndsvd' to "
+           r"'nndsvda' in 1.1 \(renaming of 0.26\).")
     rng = np.random.mtrand.RandomState(42)
     A = np.abs(rng.randn(6, 5))
     with pytest.warns(FutureWarning, match=msg):
