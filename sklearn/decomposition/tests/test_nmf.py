@@ -662,7 +662,7 @@ def test_nmf_close_minibatch_nmf():
                          batch_size=48)
     W = nmf.fit_transform(X)
     mbW = mbnmf.fit_transform(X)
-    assert_array_almost_equal(W, mbW, decimal=2)
+    assert_array_almost_equal(W, mbW, decimal=7)
 
 
 def test_minibatch_nmf_partial_fit():
@@ -680,10 +680,12 @@ def test_minibatch_nmf_partial_fit():
 
     assert mbnmf1.n_iter_ == mbnmf2.n_iter_
     assert_array_almost_equal(mbnmf1.components_, mbnmf2.components_,
-                              decimal=2)
+                              decimal=7)
 
 
 def test_minibatch_nmf_auxiliary_matrices_and_iteroffset():
+    # Test that auxiliary matrix are unmodified when update_H is False
+    # Test iter_offset output
     rng = np.random.mtrand.RandomState(42)
     X = np.abs(rng.randn(48, 5))
 

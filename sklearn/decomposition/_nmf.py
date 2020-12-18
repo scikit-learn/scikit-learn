@@ -1684,8 +1684,8 @@ class MiniBatchNMF(NMF):
 
     forget_factor : float, default=0.7.
         Amount of rescaling of past information. Its value could be =1 with
-        finite datasets. Choosing values <1 is recommended with infinite
-        datasets as more recent batches will weight more than past batches.
+        finite datasets. Choosing values <1 is recommended with online
+        learning as more recent batches will weight more than past batches.
 
     Attributes
     ----------
