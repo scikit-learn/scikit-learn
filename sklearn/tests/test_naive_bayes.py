@@ -265,8 +265,8 @@ def test_discretenb_partial_fit(cls):
 
 @pytest.mark.parametrize('cls', [MultinomialNB, ComplementNB, BernoulliNB,
                                  CategoricalNB, GaussianNB])
-def test_discretenb_pickle(cls):
-    # Test picklability of discrete naive Bayes classifiers
+def test_naive_bayes_pickle(cls):
+    # Test picklability of naive Bayes classifiers
 
     clf = cls().fit(X2, y2)
     y_pred = clf.predict(X2)
@@ -288,7 +288,7 @@ def test_discretenb_pickle(cls):
 
 @pytest.mark.parametrize('cls', [MultinomialNB, ComplementNB, BernoulliNB,
                                  CategoricalNB, GaussianNB])
-def test_discretenb_input_check_fit(cls):
+def test_naive_bayes_input_check_fit(cls):
     # Test input checks for the fit method
 
     # check shape consistency for number of samples at fit time
@@ -453,7 +453,8 @@ def test_discretenb_degenerate_one_class_case(cls):
     #     ComplementNB.feature_all_, CategoricalNB.n_categories_.
     # Confirm that this is the case for binary problems and degenerate
     #     one-class problems when fitting with `fit` or `partial_fit`.
-    # Non-regression test for handling degenerate one-class case.
+    # Non-regression test for handling degenerate one-class case:
+    #     https://github.com/scikit-learn/scikit-learn/issues/18974
 
     attr_list = ['classes_', 'class_count_', 'class_log_prior_',
                  'feature_count_', 'feature_log_prob_']
