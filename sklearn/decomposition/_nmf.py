@@ -678,7 +678,7 @@ def _multiplicative_update_h(X, W, H, A, B, beta_loss, l1_reg_H, l2_reg_H,
 
     gamma : float, default=1.
         Exponent for Maximization-Minimization (MM) algorithm
-        [Fevotte 2011]
+        [Fevotte 2011].
 
     rho : float.
         Scaling factor for past information for online and minibatch
@@ -1640,7 +1640,7 @@ class MiniBatchNMF(NMF):
         - 'custom': use custom matrices W and H
 
     batch_size : int, default=1024
-        number of samples in each mini-batch
+        Number of samples in each mini-batch.
 
     solver : 'mu'
         Numerical solver to use:

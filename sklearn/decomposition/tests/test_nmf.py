@@ -517,7 +517,7 @@ def test_nmf_regularization(estimator, solver):
     assert W_regul_n_zeros > W_model_n_zeros
     assert H_regul_n_zeros > H_model_n_zeros
 
-    # L2 regularization should decrease the norm of the sum of tne matrices
+    # L2 regularization should decrease the sum of the squared norm of the matrices
     l1_ratio = 0.
     regul = estimator(n_components=n_components, solver=solver,
                       alpha=0.5, l1_ratio=l1_ratio, random_state=42,
@@ -651,7 +651,7 @@ def test_nmf_custom_init_dtype_error(estimator):
 
 
 def test_nmf_close_minibatch_nmf():
-    # Test that the decomposition with standard and minbatch nmf
+    # Test that the decomposition with standard and minibatch nmf
     # gives close results
     rng = np.random.mtrand.RandomState(42)
     X = np.abs(rng.randn(48, 5))
