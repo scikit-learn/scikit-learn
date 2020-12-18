@@ -445,60 +445,43 @@ def test_discretenb_coef_intercept_shape(cls):
     assert clf.intercept_.shape == (1,)
 
 
-@pytest.mark.parametrize("cls", [MultinomialNB, ComplementNB, BernoulliNB,
+@pytest.mark.parametrize('cls', [MultinomialNB, ComplementNB, BernoulliNB,
                                  CategoricalNB])
-def test_discretenb_degenerate_one_class_case(cls):
-    # The first axis of most array attributes of a discrete naive Bayes
-    #     classifier should have one element per class. Exceptions include:
-    #     ComplementNB.feature_all_, CategoricalNB.n_categories_.
+@pytest.mark.parametrize('use_partial_fit', [False, True])
+@pytest.mark.parametrize('num_samples,expected_first_axis_length',
+                         [(3, 2), (2, 1)])
+def test_discretenb_degenerate_one_class_case(
+        cls,
+        use_partial_fit,
+        num_samples,
+        expected_first_axis_length,
+):
+    # Most array attributes of a discrete naive Bayes classifier should have
+    #     a first-axis length equal to the number of classes. Exceptions
+    #     include: ComplementNB.feature_all_, CategoricalNB.n_categories_.
     # Confirm that this is the case for binary problems and degenerate
     #     one-class problems when fitting with `fit` or `partial_fit`.
     # Non-regression test for handling degenerate one-class case:
     #     https://github.com/scikit-learn/scikit-learn/issues/18974
 
-    attr_list = ['classes_', 'class_count_', 'class_log_prior_',
-                 'feature_count_', 'feature_log_prob_']
-    X = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
-    y = [1, 1, 2]
-
-    def test_first_axis_lengths(expected_first_axis_length):
-        # Test first axis lengths of array attributes of clf
-
-        for attr in attr_list:
-            if hasattr(clf, attr):  # CategoricalNB has no feature_count_
-                attribute = getattr(clf, attr)
-                if isinstance(attribute, np.ndarray):
-                    assert attribute.shape[0] == expected_first_axis_length
-                else:  # CategoricalNB.feature_log_prob_ is a list
-                    for element in attribute:
-                        assert element.shape[0] == expected_first_axis_length
-
-    def test_prediction():
-        assert clf.predict(X[:1]) == y[0]
-
-    # Binary problem, fit method
+    X = [[1, 0, 0], [0, 1, 0], [0, 0, 1]][:num_samples]
+    y = [1, 1, 2][:num_samples]
     clf = cls()
-    clf.fit(X, y)
-    test_first_axis_lengths(2)
-    test_prediction()
 
-    # Binary problem, partial_fit method
-    clf = cls()
-    clf.partial_fit(X, y, classes=[1, 2])
-    test_first_axis_lengths(2)
-    test_prediction()
-
-    # Degenerate one-class problem, fit method
-    clf = cls()
-    clf.fit(X[:2], y[:2])
-    test_first_axis_lengths(1)
-    test_prediction()
-
-    # Degenerate one-class problem, partial_fit method
-    clf = cls()
-    clf.partial_fit(X[:2], y[:2], classes=[1])
-    test_first_axis_lengths(1)
-    test_prediction()
+    if use_partial_fit:
+        clf.partial_fit(X, y, classes=list(set(y)))
+    else:
+        clf.fit(X, y)
+    assert clf.predict(X[:1]) == y[0]
+    for attr in ['classes_', 'class_count_', 'class_log_prior_',
+                 'feature_count_', 'feature_log_prob_']:
+        if hasattr(clf, attr):  # CategoricalNB has no feature_count_
+            attribute = getattr(clf, attr)
+            if isinstance(attribute, np.ndarray):
+                assert attribute.shape[0] == expected_first_axis_length
+            else:  # CategoricalNB.feature_log_prob_ is a list
+                for element in attribute:
+                    assert element.shape[0] == expected_first_axis_length
 
 
 @pytest.mark.parametrize('kind', ('dense', 'sparse'))
