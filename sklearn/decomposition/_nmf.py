@@ -788,7 +788,7 @@ def _multiplicative_update_h(X, W, H, A, B, beta_loss, l1_reg_H, l2_reg_H,
     return delta_H, A, B
 
 
-def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
+def _fit_multiplicative_update(X, W, H, A=None, B=None, beta_loss='frobenius',
                                batch_size=None,
                                max_iter=200, tol=1e-4,
                                l1_reg_W=0, l1_reg_H=0, l2_reg_W=0, l2_reg_H=0,

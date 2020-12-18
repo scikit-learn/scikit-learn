@@ -843,12 +843,12 @@ version of the non negative matrix factorization, better suited for
 large datasets.
 
 By default, :class:`MiniBatchNMF` divides the data into
-mini-batches and optimizes in an online manner by cycling over the mini-batches
+mini-batches and optimizes the NMF model in an online manner by cycling over the mini-batches
 for the specified number of iterations. The ``batch_size`` parameter controls
 the size of the batches.
 In order to speed up the mini-batch algorithm it is also possible to scale
 past batches, giving them less importance than newer batches. This is done
-introducing a so called forgetting factor defined in the ``forget_factor``
+introducing a so-called forgetting factor defined in the ``forget_factor``
 parameter.
 
 The estimator also implements ``partial_fit``, which updates the factorization
