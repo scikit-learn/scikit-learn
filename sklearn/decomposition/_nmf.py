@@ -1243,7 +1243,6 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
         else:
             _check_init(B, (n_components, n_features), "NMF (input B)")
 
-
     l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = _compute_regularization(
         alpha, l1_ratio, regularization)
 
