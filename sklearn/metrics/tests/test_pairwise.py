@@ -291,12 +291,6 @@ def callable_rbf_kernel(x, y, **kwds):
 @pytest.mark.parametrize('array_constr', [np.array, csr_matrix])
 @pytest.mark.parametrize('dtype', [np.float64, int])
 def test_pairwise_parallel(func, metric, kwds, array_constr, dtype):
-    # wminkowki metric will be deprecated starting from scipy 1.6
-    # and removed in scipy 1.8
-    if sp_version >= parse_version("1.6.0") and (
-        metric == wminkowski or metric == 'wminkowski'
-    ):
-        metric = 'minkowski'
     rng = np.random.RandomState(0)
     X = array_constr(5 * rng.random_sample((5, 4)), dtype=dtype)
     Y = array_constr(5 * rng.random_sample((3, 4)), dtype=dtype)
