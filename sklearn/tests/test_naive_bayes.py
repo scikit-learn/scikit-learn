@@ -457,12 +457,12 @@ def test_discretenb_degenerate_one_class_case(
         expected_first_axis_length,
 ):
     # Most array attributes of a discrete naive Bayes classifier should have
-    #     a first-axis length equal to the number of classes. Exceptions
-    #     include: ComplementNB.feature_all_, CategoricalNB.n_categories_.
+    # a first-axis length equal to the number of classes. Exceptions
+    # include: ComplementNB.feature_all_, CategoricalNB.n_categories_.
     # Confirm that this is the case for binary problems and degenerate
-    #     one-class problems when fitting with `fit` or `partial_fit`.
+    # one-class problems when fitting with `fit` or `partial_fit`.
     # Non-regression test for handling degenerate one-class case:
-    #     https://github.com/scikit-learn/scikit-learn/issues/18974
+    # https://github.com/scikit-learn/scikit-learn/issues/18974
 
     X = [[1, 0, 0], [0, 1, 0], [0, 0, 1]][:num_samples]
     y = [1, 1, 2][:num_samples]
@@ -473,15 +473,26 @@ def test_discretenb_degenerate_one_class_case(
     else:
         clf.fit(X, y)
     assert clf.predict(X[:1]) == y[0]
-    for attr in ['classes_', 'class_count_', 'class_log_prior_',
-                 'feature_count_', 'feature_log_prob_']:
-        if hasattr(clf, attr):  # CategoricalNB has no feature_count_
-            attribute = getattr(clf, attr)
-            if isinstance(attribute, np.ndarray):
-                assert attribute.shape[0] == expected_first_axis_length
-            else:  # CategoricalNB.feature_log_prob_ is a list
-                for element in attribute:
-                    assert element.shape[0] == expected_first_axis_length
+
+    # Checks that attributes are the proper shape
+    attributes = [
+        'classes_',
+        'class_count_',
+        'class_log_prior_',
+        'feature_count_',
+        'feature_log_prob_',
+    ]
+    for attribute_name in attributes:
+        attribute = getattr(clf, attribute_name, None)
+        if attribute is None:
+            # CategoricalNB has no feature_count_ attribute
+            continue
+        if isinstance(attribute, np.ndarray):
+            assert attribute.shape[0] == expected_first_axis_length
+        else:
+            # CategoricalNB.feature_log_prob_ is a list
+            for element in attribute:
+                assert element.shape[0] == expected_first_axis_length
 
 
 @pytest.mark.parametrize('kind', ('dense', 'sparse'))
