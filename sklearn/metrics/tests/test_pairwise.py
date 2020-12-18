@@ -273,7 +273,7 @@ def callable_rbf_kernel(x, y, **kwds):
          pytest.param(
              pairwise_distances, wminkowski, _wminkowski_kwds,
              marks=pytest.mark.skipif(
-                 sp_version < parse_version("1.6.0"),
+                 sp_version >= parse_version("1.6.0"),
                  reason="wminkowski is now minkowski "
                         "and it has been already tested."
              )
@@ -281,7 +281,7 @@ def callable_rbf_kernel(x, y, **kwds):
          pytest.param(
              pairwise_distances, 'wminkowski', _wminkowski_kwds,
              marks=pytest.mark.skipif(
-                 sp_version < parse_version("1.6.0"),
+                 sp_version >= parse_version("1.6.0"),
                  reason="wminkowski is now minkowski "
                         "and it has been already tested."
              )
