@@ -77,9 +77,7 @@ X, y = load_ames_housing()
 ##############################################################################
 #
 # Before we can use Ames dataset we still need to do some preprocessing.
-# First, we will create the element of the pipeline to automatically select
-# the categorical and numerical columns.
-
+# First, we will select the categorical and numerical columns of the dataset to construct the first step of the pipeline.
 # %%
 from sklearn.compose import make_column_selector
 
