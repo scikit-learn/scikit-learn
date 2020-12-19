@@ -25,7 +25,8 @@ from ..utils import _safe_indexing
 from ..utils import column_or_1d
 from ..exceptions import ConvergenceWarning
 from ..utils.extmath import safe_sparse_dot
-from ..utils.validation import check_is_fitted, _deprecate_positional_args, _check_sample_weight
+from ..utils.validation import check_is_fitted, _deprecate_positional_args, \
+    _check_sample_weight
 from ..utils.multiclass import _check_partial_fit_first_call, unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.optimize import _check_optimize_result
@@ -259,7 +260,9 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         if loss_func_name == 'log_loss' and self.out_activation_ == 'logistic':
             loss_func_name = 'binary_log_loss'
 
-        loss = LOSS_FUNCTIONS[loss_func_name](y, activations[-1], sample_weight)
+        loss = LOSS_FUNCTIONS[loss_func_name](y,
+                                              activations[-1],
+                                              sample_weight)
 
         # Add L2 regularization term to loss
         values = 0
@@ -571,7 +574,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                     if self.shuffle:
                         X_batch = _safe_indexing(X, sample_idx[batch_slice])
                         y_batch = y[sample_idx[batch_slice]]
-                        sample_weight_batch = sample_weight[sample_idx[batch_slice]]
+                        sample_weight_batch = \
+                            sample_weight[sample_idx[batch_slice]]
                     else:
                         X_batch = X[batch_slice]
                         y_batch = y[batch_slice]
