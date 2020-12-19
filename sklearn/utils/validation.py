@@ -1362,8 +1362,6 @@ def _allclose_dense_sparse(x, y, rtol=1e-7, atol=1e-9):
                      "matrix and an array")
 
 
-
-
 def _check_fit_params(X, fit_params, indices=None):
     """Check and validate the parameters passed during `fit`.
 
