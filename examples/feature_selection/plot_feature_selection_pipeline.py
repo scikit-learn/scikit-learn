@@ -34,6 +34,11 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 #
 # Here, we will demonstrate how to build a pipeline where the first step will
 # be the feature selection.
+#
+# When calling `fit` on the training data, a subset of feature will be selected
+# and the index of these selected features will be stored. The feature selector
+# will subsequently reduce the number of feature and pass this subset to the
+# classifier which will be trained.
 
 # %%
 from sklearn.feature_selection import SelectKBest, f_classif
@@ -43,15 +48,6 @@ from sklearn.svm import LinearSVC
 anova_filter = SelectKBest(f_classif, k=3)
 clf = LinearSVC()
 anova_svm = make_pipeline(anova_filter, clf)
-anova_svm
-
-# %%
-# When calling `fit` on the training data, a subset of feature will be selected
-# and the index of these selected features will be stored. The feature selector
-# will subsequently reduce the number of feature and pass this subset to the
-# classifier which will be trained.
-
-# %%
 anova_svm.fit(X_train, y_train)
 
 # %%
