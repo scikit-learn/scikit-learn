@@ -13,13 +13,14 @@ import time
 
 import numpy as np
 from scipy import linalg
-from joblib import Parallel, delayed
+from joblib import Parallel
 
 from . import empirical_covariance, EmpiricalCovariance, log_likelihood
 
 from ..exceptions import ConvergenceWarning
 from ..utils.validation import check_random_state
 from ..utils.validation import _deprecate_positional_args
+from ..utils.fixes import delayed
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
 from ..linear_model import _cd_fast as cd_fast  # type: ignore
 from ..linear_model import lars_path_gram
@@ -606,14 +607,16 @@ class GraphicalLassoCV(GraphicalLasso):
 
         .. deprecated:: 0.24
             The `cv_alphas_` attribute is deprecated in version 0.24 in favor
-            of `cv_results_['alphas']` and will be removed in version 0.26.
+            of `cv_results_['alphas']` and will be removed in version
+            1.1 (renaming of 0.26).
 
     grid_scores_ : ndarray of shape (n_alphas, n_folds)
         Log-likelihood score on left-out data across folds.
 
         .. deprecated:: 0.24
             The `grid_scores_` attribute is deprecated in version 0.24 in favor
-            of `cv_results_` and will be removed in version 0.26.
+            of `cv_results_` and will be removed in version
+            1.1 (renaming of 0.26).
 
     cv_results_ : dict of ndarrays
         A dict with keys:
@@ -827,11 +830,11 @@ class GraphicalLassoCV(GraphicalLasso):
             verbose=inner_verbose, return_n_iter=True)
         return self
 
-    # TODO: Remove in 0.26 when grid_scores_ is deprecated
+    # TODO: Remove in 1.1 when grid_scores_ is deprecated
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
         "The grid_scores_ attribute is deprecated in version 0.24 in favor "
-        "of cv_results_ and will be removed in version 0.26"
+        "of cv_results_ and will be removed in version 1.1 (renaming of 0.26)."
     )
     @property
     def grid_scores_(self):
@@ -841,11 +844,12 @@ class GraphicalLassoCV(GraphicalLasso):
             [self.cv_results_["split{}_score".format(i)]
              for i in range(n_alphas)]).T
 
-    # TODO: Remove in 0.26 when cv_alphas_ is deprecated
+    # TODO: Remove in 1.1 when cv_alphas_ is deprecated
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
         "The cv_alphas_ attribute is deprecated in version 0.24 in favor "
-        "of cv_results_['alpha'] and will be removed in version 0.26"
+        "of cv_results_['alpha'] and will be removed in version 1.1 "
+        "(renaming of 0.26)."
     )
     @property
     def cv_alphas_(self):

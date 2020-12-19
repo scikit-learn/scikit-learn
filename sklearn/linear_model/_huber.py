@@ -25,10 +25,10 @@ def _huber_loss_and_gradient(w, X, y, epsilon, alpha, sample_weight=None):
         w[-1] gives the scale factor and if the intercept is fit w[-2]
         gives the intercept factor.
 
-    X : ndarray, shape (n_samples, n_features)
+    X : ndarray of shape (n_samples, n_features)
         Input data.
 
-    y : ndarray, shape (n_samples,)
+    y : ndarray of shape (n_samples,)
         Target vector.
 
     epsilon : float
@@ -37,7 +37,7 @@ def _huber_loss_and_gradient(w, X, y, epsilon, alpha, sample_weight=None):
     alpha : float
         Regularization parameter.
 
-    sample_weight : ndarray, shape (n_samples,), optional
+    sample_weight : ndarray of shape (n_samples,), default=None
         Weight assigned to each sample.
 
     Returns

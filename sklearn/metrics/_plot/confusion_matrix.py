@@ -4,6 +4,7 @@ import numpy as np
 
 from .. import confusion_matrix
 from ...utils import check_matplotlib_support
+from ...utils.multiclass import unique_labels
 from ...utils.validation import _deprecate_positional_args
 from ...base import is_classifier
 
@@ -41,6 +42,12 @@ class ConfusionMatrixDisplay:
     figure_ : matplotlib Figure
         Figure containing the confusion matrix.
 
+    See Also
+    --------
+    confusion_matrix : Compute Confusion Matrix to evaluate the accuracy of a
+        classification.
+    plot_confusion_matrix : Plot Confusion Matrix.
+
     Examples
     --------
     >>> from sklearn.datasets import make_classification
@@ -59,6 +66,7 @@ class ConfusionMatrixDisplay:
     ...                               display_labels=clf.classes_)
     >>> disp.plot() # doctest: +SKIP
     """
+    @_deprecate_positional_args
     def __init__(self, confusion_matrix, *, display_labels=None):
         self.confusion_matrix = confusion_matrix
         self.display_labels = display_labels
@@ -174,7 +182,7 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Input values.
 
-    y : array-like of shape (n_samples,)
+    y_true : array-like of shape (n_samples,)
         Target values.
 
     labels : array-like of shape (n_classes,), default=None
@@ -224,8 +232,9 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
 
     See Also
     --------
-    confusion_matrix :
-        Compute confusion matrix to evaluate the accuracy of a classification
+    confusion_matrix : Compute Confusion Matrix to evaluate the accuracy of a
+        classification.
+    ConfusionMatrixDisplay : Confusion Matrix visualization.
 
     Examples
     --------
@@ -254,7 +263,7 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
 
     if display_labels is None:
         if labels is None:
-            display_labels = estimator.classes_
+            display_labels = unique_labels(y_true, y_pred)
         else:
             display_labels = labels
 

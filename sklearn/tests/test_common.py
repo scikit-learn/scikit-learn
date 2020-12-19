@@ -16,7 +16,6 @@ from functools import partial
 
 import pytest
 
-
 from sklearn.utils import all_estimators
 from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
@@ -25,16 +24,24 @@ from sklearn.utils.estimator_checks import check_estimator
 import sklearn
 from sklearn.base import BiclusterMixin
 
+from sklearn.decomposition import PCA
 from sklearn.linear_model._base import LinearClassifierMixin
 from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import Ridge
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import RandomizedSearchCV
+from sklearn.pipeline import make_pipeline
+
 from sklearn.utils import IS_PYPY
 from sklearn.utils._testing import SkipTest
 from sklearn.utils.estimator_checks import (
     _construct_instance,
     _set_checking_parameters,
-    _set_check_estimator_ids,
+    _get_check_estimator_ids,
     check_class_weight_balanced_linear_classifier,
-    parametrize_with_checks)
+    parametrize_with_checks,
+    check_n_features_in_after_fitting,
+)
 
 
 def test_all_estimator_no_base_class():
@@ -59,8 +66,8 @@ def _sample_func(x, y=1):
      "LogisticRegression(class_weight='balanced',random_state=1,"
      "solver='newton-cg',warm_start=True)")
 ])
-def test_set_check_estimator_ids(val, expected):
-    assert _set_check_estimator_ids(val) == expected
+def test_get_check_estimator_ids(val, expected):
+    assert _get_check_estimator_ids(val) == expected
 
 
 def _tested_estimators():
@@ -204,3 +211,89 @@ def test_class_support_removed():
 
     with pytest.raises(TypeError, match=msg):
         parametrize_with_checks([LogisticRegression])
+
+
+def _generate_search_cv_instances():
+    for SearchCV, (Estimator, param_grid) in zip(
+        [GridSearchCV, RandomizedSearchCV],
+        [
+            (Ridge, {"alpha": [0.1, 1.0]}),
+            (LogisticRegression, {"C": [0.1, 1.0]}),
+        ],
+    ):
+        yield SearchCV(Estimator(), param_grid)
+
+    for SearchCV, (Estimator, param_grid) in zip(
+        [GridSearchCV, RandomizedSearchCV],
+        [
+            (Ridge, {"ridge__alpha": [0.1, 1.0]}),
+            (LogisticRegression, {"logisticregression__C": [0.1, 1.0]}),
+        ],
+    ):
+        yield SearchCV(
+            make_pipeline(PCA(), Estimator()), param_grid
+        ).set_params(error_score="raise")
+
+
+@parametrize_with_checks(list(_generate_search_cv_instances()))
+def test_search_cv(estimator, check, request):
+    # Common tests for SearchCV instances
+    # We have a separate test because those meta-estimators can accept a
+    # wide range of base estimators (classifiers, regressors, pipelines)
+    with ignore_warnings(
+        category=(
+            FutureWarning,
+            ConvergenceWarning,
+            UserWarning,
+            FutureWarning,
+        )
+    ):
+        check(estimator)
+
+
+# TODO: When more modules get added, we can remove it from this list to make
+# sure it gets tested. After we finish each module we can move the checks
+# into sklearn.utils.estimator_checks.check_n_features_in.
+#
+# check_estimators_partial_fit_n_features can either be removed or updated
+# with the two more assertions:
+# 1. `n_features_in_` is set during the first call to `partial_fit`.
+# 2. More strict when it comes to the error message.
+#
+# check_classifiers_train would need to be updated with the error message
+N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE = {
+    'calibration',
+    'compose',
+    'covariance',
+    'cross_decomposition',
+    'discriminant_analysis',
+    'ensemble',
+    'feature_extraction',
+    'feature_selection',
+    'gaussian_process',
+    'isotonic',
+    'linear_model',
+    'manifold',
+    'mixture',
+    'model_selection',
+    'multiclass',
+    'multioutput',
+    'naive_bayes',
+    'neighbors',
+    'pipeline',
+    'random_projection',
+    'semi_supervised',
+    'svm',
+}
+
+N_FEATURES_IN_AFTER_FIT_ESTIMATORS = [
+    est for est in _tested_estimators() if est.__module__.split('.')[1] not in
+    N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE
+]
+
+
+@pytest.mark.parametrize("estimator", N_FEATURES_IN_AFTER_FIT_ESTIMATORS,
+                         ids=_get_check_estimator_ids)
+def test_check_n_features_in_after_fitting(estimator):
+    _set_checking_parameters(estimator)
+    check_n_features_in_after_fitting(estimator.__class__.__name__, estimator)

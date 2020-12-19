@@ -1051,6 +1051,68 @@ multiplying the gradients (and the hessians) by the sample weights. Note that
 the binning stage (specifically the quantiles computation) does not take the
 weights into account.
 
+.. _categorical_support_gbdt:
+
+Categorical Features Support
+----------------------------
+
+:class:`HistGradientBoostingClassifier` and
+:class:`HistGradientBoostingRegressor` have native support for categorical
+features: they can consider splits on non-ordered, categorical data.
+
+For datasets with categorical features, using the native categorical support
+is often better than relying on one-hot encoding
+(:class:`~sklearn.preprocessing.OneHotEncoder`), because one-hot encoding
+requires more tree depth to achieve equivalent splits. It is also usually
+better to rely on the native categorical support rather than to treat
+categorical features as continuous (ordinal), which happens for ordinal-encoded
+categorical data, since categories are nominal quantities where order does not
+matter.
+
+To enable categorical support, a boolean mask can be passed to the
+`categorical_features` parameter, indicating which feature is categorical. In
+the following, the first feature will be treated as categorical and the
+second feature as numerical::
+
+  >>> gbdt = HistGradientBoostingClassifier(categorical_features=[True, False])
+
+Equivalently, one can pass a list of integers indicating the indices of the
+categorical features::
+
+  >>> gbdt = HistGradientBoostingClassifier(categorical_features=[0])
+
+The cardinality of each categorical feature should be less than the `max_bins`
+parameter, and each categorical feature is expected to be encoded in
+`[0, max_bins - 1]`. To that end, it might be useful to pre-process the data
+with an :class:`~sklearn.preprocessing.OrdinalEncoder` as done in
+:ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py`.
+
+If there are missing values during training, the missing values will be
+treated as a proper category. If there are no missing values during training,
+then at prediction time, missing values are mapped to the child node that has
+the most samples (just like for continuous features). When predicting,
+categories that were not seen during fit time will be treated as missing
+values.
+
+**Split finding with categorical features**: The canonical way of considering
+categorical splits in a tree is to consider
+all of the :math:`2^{K - 1} - 1` partitions, where :math:`K` is the number of
+categories. This can quickly become prohibitive when :math:`K` is large.
+Fortunately, since gradient boosting trees are always regression trees (even
+for classification problems), there exist a faster strategy that can yield
+equivalent splits. First, the categories of a feature are sorted according to
+the variance of the target, for each category `k`. Once the categories are
+sorted, one can consider *continuous partitions*, i.e. treat the categories
+as if they were ordered continuous values (see Fisher [Fisher1958]_ for a
+formal proof). As a result, only :math:`K - 1` splits need to be considered
+instead of :math:`2^{K - 1} - 1`. The initial sorting is a
+:math:`\mathcal{O}(K \log(K))` operation, leading to a total complexity of
+:math:`\mathcal{O}(K \log(K) + K)`, instead of :math:`\mathcal{O}(2^K)`.
+
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py`
+
 .. _monotonic_cst_gbdt:
 
 Monotonic Constraints
@@ -1091,6 +1153,10 @@ In a binary classification context, imposing a monotonic constraint means
 that the feature is supposed to have a positive / negative effect on the
 probability to belong to the positive class. Monotonic constraints are not
 supported for multiclass context.
+
+.. note::
+    Since categories are unordered quantities, it is not possible to enforce
+    monotonic constraints on categorical features.
 
 .. topic:: Examples:
 
@@ -1158,6 +1224,8 @@ Finally, many parts of the implementation of
   .. [LightGBM] Ke et. al. `"LightGBM: A Highly Efficient Gradient
      BoostingDecision Tree" <https://papers.nips.cc/paper/
      6907-lightgbm-a-highly-efficient-gradient-boosting-decision-tree>`_
+  .. [Fisher1958] Walter D. Fisher. `"On Grouping for Maximum Homogeneity"
+     <http://www.csiss.org/SPACE/workshops/2004/SAC/files/fisher.pdf>`_
 
 .. _voting_classifier:
 

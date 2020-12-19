@@ -1,12 +1,12 @@
 """
-Multi-dimensional Scaling (MDS)
+Multi-dimensional Scaling (MDS).
 """
 
 # author: Nelle Varoquaux <nelle.varoquaux@gmail.com>
 # License: BSD
 
 import numpy as np
-from joblib import Parallel, delayed, effective_n_jobs
+from joblib import Parallel, effective_n_jobs
 
 import warnings
 
@@ -15,11 +15,13 @@ from ..metrics import euclidean_distances
 from ..utils import check_random_state, check_array, check_symmetric
 from ..isotonic import IsotonicRegression
 from ..utils.validation import _deprecate_positional_args
+from ..utils.deprecation import deprecated
+from ..utils.fixes import delayed
 
 
 def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
                    max_iter=300, verbose=0, eps=1e-3, random_state=None):
-    """Computes multidimensional scaling using SMACOF algorithm
+    """Computes multidimensional scaling using SMACOF algorithm.
 
     Parameters
     ----------
@@ -49,7 +51,7 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
         Relative tolerance with respect to stress at which to declare
         convergence.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines the random number generator used to initialize the centers.
         Pass an int for reproducible results across multiple function calls.
         See :term: `Glossary <random_state>`.
@@ -158,7 +160,7 @@ def smacof(dissimilarities, *, metric=True, n_components=2, init=None,
     dissimilarities : ndarray of shape (n_samples, n_samples)
         Pairwise dissimilarities between the points. Must be symmetric.
 
-    metric : boolean, optional, default: True
+    metric : bool, default=True
         Compute metric or nonmetric SMACOF algorithm.
 
     n_components : int, default=2
@@ -196,7 +198,7 @@ def smacof(dissimilarities, *, metric=True, n_components=2, init=None,
         Relative tolerance with respect to stress at which to declare
         convergence.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines the random number generator used to initialize the centers.
         Pass an int for reproducible results across multiple function calls.
         See :term: `Glossary <random_state>`.
@@ -275,7 +277,7 @@ def smacof(dissimilarities, *, metric=True, n_components=2, init=None,
 
 
 class MDS(BaseEstimator):
-    """Multidimensional scaling
+    """Multidimensional scaling.
 
     Read more in the :ref:`User Guide <multidimensional_scaling>`.
 
@@ -311,7 +313,7 @@ class MDS(BaseEstimator):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines the random number generator used to initialize the centers.
         Pass an int for reproducible results across multiple function calls.
         See :term: `Glossary <random_state>`.
@@ -384,13 +386,20 @@ class MDS(BaseEstimator):
         self.n_jobs = n_jobs
         self.random_state = random_state
 
+    def _more_tags(self):
+        return {'pairwise': self.dissimilarity == 'precomputed'}
+
+    # TODO: Remove in 1.1
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def _pairwise(self):
-        return self.kernel == "precomputed"
+        return self.dissimilarity == "precomputed"
 
     def fit(self, X, y=None, init=None):
         """
-        Computes the position of the points in the embedding space
+        Computes the position of the points in the embedding space.
 
         Parameters
         ----------
@@ -411,7 +420,7 @@ class MDS(BaseEstimator):
 
     def fit_transform(self, X, y=None, init=None):
         """
-        Fit the data from X, and returns the embedded coordinates
+        Fit the data from X, and returns the embedded coordinates.
 
         Parameters
         ----------

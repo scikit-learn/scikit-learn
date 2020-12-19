@@ -39,7 +39,7 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
         The amount of contamination of the data set, i.e. the proportion
         of outliers in the data set. Range is (0, 0.5).
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines the pseudo random number generator for shuffling
         the data. Pass an int for reproducible results across multiple function
         calls. See :term: `Glossary <random_state>`.
@@ -47,10 +47,10 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
     Attributes
     ----------
     location_ : ndarray of shape (n_features,)
-        Estimated robust location
+        Estimated robust location.
 
     covariance_ : ndarray of shape (n_features, n_features)
-        Estimated robust covariance matrix
+        Estimated robust covariance matrix.
 
     precision_ : ndarray of shape (n_features, n_features)
         Estimated pseudo inverse matrix.
@@ -156,7 +156,7 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
 
         Returns
         -------
-        decision : ndarray of shape (n_samples, )
+        decision : ndarray of shape (n_samples,)
             Decision function of the samples.
             It is equal to the shifted Mahalanobis distances.
             The threshold for being an outlier is 0, which ensures a

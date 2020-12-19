@@ -14,14 +14,20 @@ from itertools import islice
 
 import numpy as np
 from scipy import sparse
-from joblib import Parallel, delayed
+from joblib import Parallel
 
 from .base import clone, TransformerMixin
 from .utils._estimator_html_repr import _VisualBlock
 from .utils.metaestimators import if_delegate_has_method
-from .utils import Bunch, _print_elapsed_time
+from .utils import (
+    Bunch,
+    _print_elapsed_time,
+)
+from .utils.deprecation import deprecated
+from .utils._tags import _safe_tags
 from .utils.validation import check_memory
 from .utils.validation import _deprecate_positional_args
+from .utils.fixes import delayed
 
 from .utils.metaestimators import _BaseComposition
 
@@ -80,8 +86,7 @@ class Pipeline(_BaseComposition):
 
     See Also
     --------
-    sklearn.pipeline.make_pipeline : Convenience function for simplified
-        pipeline construction.
+    make_pipeline : Convenience function for simplified pipeline construction.
 
     Examples
     --------
@@ -115,6 +120,9 @@ class Pipeline(_BaseComposition):
     def get_params(self, deep=True):
         """Get parameters for this estimator.
 
+        Returns the parameters given in the constructor as well as the
+        estimators contained within the `steps` of the `Pipeline`.
+
         Parameters
         ----------
         deep : bool, default=True
@@ -131,7 +139,9 @@ class Pipeline(_BaseComposition):
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
 
-        Valid parameter keys can be listed with ``get_params()``.
+        Valid parameter keys can be listed with ``get_params()``. Note that
+        you can directly set the parameters of the estimators contained in
+        `steps`.
 
         Returns
         -------
@@ -202,8 +212,10 @@ class Pipeline(_BaseComposition):
         """
         if isinstance(ind, slice):
             if ind.step not in (1, None):
-                raise ValueError('Pipeline slicing only supports a step of 1')
-            return self.__class__(self.steps[ind])
+                raise ValueError("Pipeline slicing only supports a step of 1")
+            return self.__class__(
+                self.steps[ind], memory=self.memory, verbose=self.verbose
+            )
         try:
             name, est = self.steps[ind]
         except TypeError:
@@ -613,6 +625,14 @@ class Pipeline(_BaseComposition):
     def classes_(self):
         return self.steps[-1][-1].classes_
 
+    def _more_tags(self):
+        # check if first estimator expects pairwise input
+        return {'pairwise': _safe_tags(self.steps[0][1], "pairwise")}
+
+    # TODO: Remove in 1.1
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def _pairwise(self):
         # check if first estimator expects pairwise input
@@ -691,8 +711,8 @@ def make_pipeline(*steps, memory=None, verbose=False):
 
     See Also
     --------
-    sklearn.pipeline.Pipeline : Class for creating a pipeline of
-        transforms with a final estimator.
+    Pipeline : Class for creating a pipeline of transforms with a final
+        estimator.
 
     Examples
     --------
@@ -792,6 +812,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     transformer_weights : dict, default=None
         Multiplicative weights for features per transformer.
         Keys are transformer names, values the weights.
+        Raises ValueError if key not present in ``transformer_list``.
 
     verbose : bool, default=False
         If True, the time elapsed while fitting each transformer will be
@@ -799,8 +820,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
     See Also
     --------
-    sklearn.pipeline.make_union : Convenience function for simplified
-        feature union construction.
+    make_union : Convenience function for simplified feature union
+        construction.
 
     Examples
     --------
@@ -827,6 +848,10 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     def get_params(self, deep=True):
         """Get parameters for this estimator.
 
+        Returns the parameters given in the constructor as well as the
+        estimators contained within the `transformer_list` of the
+        `FeatureUnion`.
+
         Parameters
         ----------
         deep : bool, default=True
@@ -843,7 +868,9 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
 
-        Valid parameter keys can be listed with ``get_params()``.
+        Valid parameter keys can be listed with ``get_params()``. Note that
+        you can directly set the parameters of the estimators contained in
+        `tranformer_list`.
 
         Returns
         -------
@@ -867,6 +894,18 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
                 raise TypeError("All estimators should implement fit and "
                                 "transform. '%s' (type %s) doesn't" %
                                 (t, type(t)))
+
+    def _validate_transformer_weights(self):
+        if not self.transformer_weights:
+            return
+
+        transformer_names = set(name for name, _ in self.transformer_list)
+        for name in self.transformer_weights:
+            if name not in transformer_names:
+                raise ValueError(
+                    f'Attempting to weight transformer "{name}", '
+                    'but it is not present in transformer_list.'
+                )
 
     def _iter(self):
         """
@@ -957,6 +996,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         """Runs func in parallel on X and y"""
         self.transformer_list = list(self.transformer_list)
         self._validate_transformers()
+        self._validate_transformer_weights()
         transformers = list(self._iter())
 
         return Parallel(n_jobs=self.n_jobs)(delayed(func)(
@@ -1044,8 +1084,8 @@ def make_union(*transformers, n_jobs=None, verbose=False):
 
     See Also
     --------
-    sklearn.pipeline.FeatureUnion : Class for concatenating the results
-        of multiple transformer objects.
+    FeatureUnion : Class for concatenating the results of multiple transformer
+        objects.
 
     Examples
     --------

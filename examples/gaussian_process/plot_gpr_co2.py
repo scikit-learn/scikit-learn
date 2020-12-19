@@ -74,7 +74,7 @@ print(__doc__)
 
 
 def load_mauna_loa_atmospheric_co2():
-    ml_data = fetch_openml(data_id=41187)
+    ml_data = fetch_openml(data_id=41187, as_frame=False)
     months = []
     ppmv_sums = []
     counts = []

@@ -327,7 +327,7 @@ You can find more information about addition of gpu support at
 `Will you add GPU support?`_.
 
 Note that scikit-learn currently implements a simple multilayer perceptron
-in `sklearn.neural_network`. We will only accept bug fixes for this module.
+in :mod:`sklearn.neural_network`. We will only accept bug fixes for this module.
 If you want to implement more complex deep learning models, please turn to
 popular deep learning frameworks such as
 `tensorflow <https://www.tensorflow.org/>`_,
@@ -355,22 +355,7 @@ this reason.
 How do I set a ``random_state`` for an entire execution?
 ---------------------------------------------------------
 
-For testing and replicability, it is often important to have the entire execution
-controlled by a single seed for the pseudo-random number generator used in
-algorithms that have a randomized component. Scikit-learn does not use its own
-global random state; whenever a RandomState instance or an integer random seed
-is not provided as an argument, it relies on the numpy global random state,
-which can be set using :func:`numpy.random.seed`.
-For example, to set an execution's numpy global random state to 42, one could
-execute the following in his or her script::
-
-    import numpy as np
-    np.random.seed(42)
-
-However, a global random state is prone to modification by other code during
-execution. Thus, the only way to ensure replicability is to pass ``RandomState``
-instances everywhere and ensure that both estimators and cross-validation
-splitters have their ``random_state`` parameter set.
+Please refer to :ref:`randomness`.
 
 Why do categorical variables need preprocessing in scikit-learn, compared to other tools?
 -----------------------------------------------------------------------------------------
@@ -400,7 +385,7 @@ not being able to transform y in a pipeline.
 Follow on github issue
 `#4143 <https://github.com/scikit-learn/scikit-learn/issues/4143>`_.
 Meanwhile check out
-:class:`sklearn.compose.TransformedTargetRegressor`,
+:class:`~compose.TransformedTargetRegressor`,
 `pipegraph <https://github.com/mcasl/PipeGraph>`_,
 `imbalanced-learn <https://github.com/scikit-learn-contrib/imbalanced-learn>`_.
 Note that Scikit-learn solved for the case where y 

@@ -652,8 +652,15 @@ cdef class Tree:
 
         value_shape = (node_ndarray.shape[0], self.n_outputs,
                        self.max_n_classes)
+
+        if (node_ndarray.dtype != NODE_DTYPE):
+            # possible mismatch of big/little endian due to serialization
+            # on a different architecture. Try swapping the byte order.  
+            node_ndarray = node_ndarray.byteswap().newbyteorder()
+            if (node_ndarray.dtype != NODE_DTYPE):
+                raise ValueError('Did not recognise loaded array dytpe')
+
         if (node_ndarray.ndim != 1 or
-                node_ndarray.dtype != NODE_DTYPE or
                 not node_ndarray.flags.c_contiguous or
                 value_ndarray.shape != value_shape or
                 not value_ndarray.flags.c_contiguous or

@@ -186,12 +186,12 @@ def test_loader(loader_func, data_shape, target_shape, n_target, has_descr,
 
 
 @pytest.mark.parametrize("loader_func, data_dtype, target_dtype", [
-    (load_breast_cancer, np.float64, np.int64),
+    (load_breast_cancer, np.float64, int),
     (load_diabetes, np.float64, np.float64),
-    (load_digits, np.float64, np.int64),
-    (load_iris, np.float64, np.int64),
+    (load_digits, np.float64, int),
+    (load_iris, np.float64, int),
     (load_linnerud, np.float64, np.float64),
-    (load_wine, np.float64, np.int64),
+    (load_wine, np.float64, int),
 ])
 def test_toy_dataset_frame_dtype(loader_func, data_dtype, target_dtype):
     default_result = loader_func()

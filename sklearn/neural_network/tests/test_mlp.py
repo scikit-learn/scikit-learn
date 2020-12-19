@@ -95,6 +95,7 @@ def test_fit():
     mlp.intercepts_[1] = np.array([1.0])
     mlp._coef_grads = [] * 2
     mlp._intercept_grads = [] * 2
+    mlp.n_features_in_ = 3
 
     # Initialize parameters
     mlp.n_iter_ = 0
@@ -490,7 +491,7 @@ def test_predict_proba_binary():
 
     assert y_proba.shape == (n_samples, n_classes)
     assert_array_equal(proba_max, proba_log_max)
-    assert_array_equal(y_log_proba, np.log(y_proba))
+    assert_allclose(y_log_proba, np.log(y_proba))
 
     assert roc_auc_score(y, y_proba[:, 1]) == 1.0
 
@@ -513,7 +514,7 @@ def test_predict_proba_multiclass():
 
     assert y_proba.shape == (n_samples, n_classes)
     assert_array_equal(proba_max, proba_log_max)
-    assert_array_equal(y_log_proba, np.log(y_proba))
+    assert_allclose(y_log_proba, np.log(y_proba))
 
 
 def test_predict_proba_multilabel():
@@ -537,7 +538,7 @@ def test_predict_proba_multilabel():
 
     assert (y_proba.sum(1) - 1).dot(y_proba.sum(1) - 1) > 1e-10
     assert_array_equal(proba_max, proba_log_max)
-    assert_array_equal(y_log_proba, np.log(y_proba))
+    assert_allclose(y_log_proba, np.log(y_proba))
 
 
 def test_shuffle():
@@ -662,6 +663,23 @@ def test_warm_start():
                    ' Previously got [0 1 2], `y` has %s' % np.unique(y_i))
         with pytest.raises(ValueError, match=re.escape(message)):
             clf.fit(X, y_i)
+
+
+@pytest.mark.parametrize("MLPEstimator", [MLPClassifier, MLPRegressor])
+def test_warm_start_full_iteration(MLPEstimator):
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/16812
+    # Check that the MLP estimator accomplish `max_iter` with a
+    # warm started estimator.
+    X, y = X_iris, y_iris
+    max_iter = 3
+    clf = MLPEstimator(
+        hidden_layer_sizes=2, solver='sgd', warm_start=True, max_iter=max_iter
+    )
+    clf.fit(X, y)
+    assert max_iter == clf.n_iter_
+    clf.fit(X, y)
+    assert 2 * max_iter == clf.n_iter_
 
 
 def test_n_iter_no_change():
