@@ -450,10 +450,10 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         self.random_state = random_state
         self.verbose = verbose
 
-    def _log_message(self, idx, total, msg):
+    def _log_message(self, *, estimator_idx, n_estimators, processing_msg):
         if not self.verbose:
             return None
-        return '(%d of %d) %s' % (idx, total, msg)
+        return f"({estimator_idx} of {n_estimators}) {processing_msg}"
 
 
     @abstractmethod
@@ -517,15 +517,17 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
 
         for chain_idx, estimator in enumerate(self.estimators_):
             message = self._log_message(
-                chain_idx + 1,
-                len(self.estimators_),
-                "adding feature " + str(self.order_[chain_idx]))
+                estimator_idx=chain_idx + 1,
+                n_estimators=len(self.estimators_),
+                processing_msg=f"Adding feature {self.order_[chain_idx]}"
+            )
             y = Y[:, self.order_[chain_idx]]
             with _print_elapsed_time("Chain", message):
                 estimator.fit(
                     X_aug[:, :(X.shape[1] + chain_idx)],
                     y,
-                    **fit_params)
+                    **fit_params
+                )
             if self.cv is not None and chain_idx < len(self.estimators_) - 1:
                 col_idx = X.shape[1] + chain_idx
                 cv_result = cross_val_predict(
@@ -625,7 +627,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    verbose : bool, optional (default=False)
+    verbose : bool, default=False
 
     Attributes
     ----------
@@ -811,7 +813,7 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    verbose : bool, optional (default=False)
+    verbose : bool, default=False
 
     Attributes
     ----------
