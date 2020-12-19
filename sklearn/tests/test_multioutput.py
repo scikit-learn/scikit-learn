@@ -1,8 +1,8 @@
-
 import pytest
 import numpy as np
 import scipy.sparse as sp
 from joblib import cpu_count
+import re
 
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_raises
@@ -654,7 +654,20 @@ def test_classifier_chain_tuple_invalid_order():
         chain.fit(X, y)
 
 
-def test_classifier_chain_verbose(capfd):
+@pytest.mark.parametrize(
+    "classifier",
+    [ClassifierChain(
+        DecisionTreeClassifier(),
+        order=[0, 1, 2],
+        random_state=0,
+        verbose=True),
+     ClassifierChain(
+        RandomForestClassifier(),
+        order=[0, 1, 2],
+        random_state=0,
+        verbose=True)]
+)
+def test_classifier_chain_verbose(classifier, capsys):
     X, y = make_multilabel_classification(
         n_samples=100,
         n_features=5,
@@ -663,73 +676,34 @@ def test_classifier_chain_verbose(capfd):
         random_state=0)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
-    # default verbose (False)
-    base_clf = DecisionTreeClassifier()
-    chain = ClassifierChain(
-        base_clf,
-        order='random',
-        random_state=0)
-    chain.fit(X_train, y_train)
-    out, err = capfd.readouterr()
-    assert out == err == ''
+    pattern = (r'\[Chain\].*\(1 of 3\) Adding feature 0, total=.*\n'
+               r'\[Chain\].*\(2 of 3\) Adding feature 1, total=.*\n'
+               r'\[Chain\].*\(3 of 3\) Adding feature 2, total=.*\n$')
 
-    # verbose explicitly False
-    base_clf = DecisionTreeClassifier()
-    chain = ClassifierChain(
-        base_clf,
-        order='random',
+    classifier.fit(X_train, y_train)
+    assert re.match(pattern, capsys.readouterr()[0])
+
+
+@pytest.mark.parametrize(
+    "regressor",
+    [RegressorChain(
+        LinearRegression(),
+        order=[1, 0, 2],
         random_state=0,
-        verbose=False)
-    chain.fit(X_train, y_train)
-    out, err = capfd.readouterr()
-    assert out == err == ''
-
-    # verbose True
-    chain = ClassifierChain(
-        base_clf,
-        order='random',
+        verbose=True),
+    RegressorChain(
+        Ridge(),
+        order=[1, 0, 2],
         random_state=0,
-        verbose=True)
-    chain.fit(X_train, y_train)
-    out, err = capfd.readouterr()
-    assert out != '' and err == ''
-
-
-def test_regressor_chain_verbose(capfd):
+        verbose=True)]
+)
+def test_regressor_chain_verbose(regressor, capsys):
     X, y = make_regression(n_samples=125, n_targets=3, random_state=0)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
-    # default verbose (False)
-    base_reg = LinearRegression()
-    chain = RegressorChain(
-        base_reg,
-        order=[1, 0, 2],
-        random_state=0)
-    chain.fit(X_train, y_train)
-    chain.fit(X_train, y_train)
-    out, err = capfd.readouterr()
-    assert out == err == ''
+    pattern = (r'\[Chain\].*\(1 of 3\) Adding feature 1, total=.*\n'
+               r'\[Chain\].*\(2 of 3\) Adding feature 0, total=.*\n'
+               r'\[Chain\].*\(3 of 3\) Adding feature 2, total=.*\n$')
 
-    # verbose explicitly False
-    base_reg = LinearRegression()
-    chain = RegressorChain(
-        base_reg,
-        order=[1, 0, 2],
-        random_state=0,
-        verbose=False)
-    chain.fit(X_train, y_train)
-    chain.fit(X_train, y_train)
-    out, err = capfd.readouterr()
-    assert out == err == ''
-
-    # verbose True
-    base_reg = LinearRegression()
-    chain = RegressorChain(
-        base_reg,
-        order=[1, 0, 2],
-        random_state=0,
-        verbose=True)
-    chain.fit(X_train, y_train)
-    chain.fit(X_train, y_train)
-    out, err = capfd.readouterr()
-    assert out != '' and err == ''
+    regressor.fit(X_train, y_train)
+    assert re.match(pattern, capsys.readouterr()[0])
