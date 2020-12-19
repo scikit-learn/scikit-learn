@@ -84,13 +84,7 @@ from sklearn.model_selection import RepeatedKFold
 
 cv = RepeatedKFold(n_splits=10, n_repeats=10, random_state=0)
 cv_results = cross_validate(
-    model,
-    X_train,
-    y_train,
-    cv=cv,
-    return_estimator=True,
-    n_jobs=2,
-)
+    model, X_train, y_train, cv=cv, return_estimator=True, n_jobs=2)
 
 # %%
 # Here, we used a repeated K-fold cross-validation. At each round of
@@ -113,9 +107,8 @@ plt.hist(cv_score, bins=200, density=True)
 plt.xlim([0, 1])
 plt.ylabel("Density")
 plt.xlabel("R2 score")
-_ = plt.title(
-    "Distribution of the scores on the test sets\n during the cross-validation"
-)
+_ = plt.title("Distribution of the scores on the test sets\n "
+              "during the cross-validation")
 
 # %%
 # We start by plotting the empirical distribution of the test score computed
@@ -179,13 +172,12 @@ _ = plt.title("Distribution of alpha parameter \nduring cross-validation")
 # variance of these parameters as well.
 #
 # For the sake of simplicity, we are going to solely look at the `coef_`.
+
 # %%
 import pandas as pd
 
-coefficients = pd.DataFrame(
-    [est[-1].coef_ for est in cv_estimators],
-    columns=X.columns,
-)
+coefficients = pd.DataFrame([est[-1].coef_ for est in cv_estimators],
+                            columns=X.columns)
 coefficients
 
 # %%
@@ -199,14 +191,14 @@ plt.title("Coefficient variability")
 _ = plt.subplots_adjust(left=0.3)
 
 # %%
-# We observe that the coefficients do not vary meaning that all models trained
-# are similar. Each individual model is expected to more or less give the same
-# predictions.
+# We observe that the coefficients do not vary minimally, meaning that all the
+# trained models are similar. Each individual model is expected to more or less
+# give the same predictions.
 #
-# Put a predictive model in production
-# ------------------------------------
+# Putting a predictive model in production
+# ----------------------------------------
 #
-# With the above analysis, we can safely create a model by fixing the `alpha`
+# With the above analysis, we can safely create a model with a fixed `alpha`
 # hyperparameter. Subsequently, we can train the model on the full training
 # set.
 
@@ -217,22 +209,25 @@ production_model = make_pipeline(StandardScaler(), Ridge(alpha=40))
 production_model.fit(X_train, y_train)
 
 # %%
-# At the beginning of the process, we left out some data. Now, we can use it
-# to further check if the model performance is similar to what we could expect
-# from the analysis done within the cross-validation framework.
+# At the beginning of the process, when we split our data, we had a set of left
+# out data. Now, we can use it to further check if the model performs as we
+# would expect from the analysis done within the cross-validation framework.
 
 # %%
-print(
-    f"The performance of our production model: "
-    f"R2={production_model.score(X_test, y_test):.2f}"
-)
+print(f"The performance of our production model: "
+      f"R2={production_model.score(X_test, y_test):.2f}")
 
 # %%
-# We see that the performance are comparable to the above performance which is
-# not surprising. Similarly, we could look at the coefficients of the
-# production model and compare it with the coefficients obtained within the
-# cross-validation study.
+# We see that the statistical performance is comparable to the cross-validation
+# statistical performances which is not surprising. Similarly, we could look at
+# the coefficients of the production model and compare them with the
+# coefficients obtained within the cross-validation study.
 #
 # However, you should be aware that this latest step does not give any
 # information about the variance of the model. It should never be used to
 # evaluate the model itself.
+#
+# The example
+# :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py`
+# gives more information regarding the comparison that can be made during a
+# :class:`~sklearn.model_selection.GridSearchCV`.
