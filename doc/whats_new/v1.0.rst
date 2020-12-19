@@ -44,6 +44,14 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.multioutput`
+.................................
+
+- |API| Added boolean `verbose` flag to classes:
+  :class:`multioutput.ClassifierChain` and :class:`multioutput.RegressorChain`.
+  :pr:`18947` by :user:`Eric Fiegel <efiegel>`,
+  :user:`Chiara Marmo <cmarmo>`, and
+  :user:`Guillaume Lemaitre <glemaitre>`.
 
 
 Code and Documentation Contributors
