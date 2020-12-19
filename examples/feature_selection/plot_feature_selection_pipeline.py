@@ -23,12 +23,12 @@ from sklearn.model_selection import train_test_split
 
 X, y = make_classification(
     n_features=20, n_informative=3, n_redundant=0, n_classes=2,
-    n_clusters_per_class=2)
+    n_clusters_per_class=2, random_state=42)
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
 # %%
-# A common mistake done with feature selection is indeed to search a subset
-# of discriminative features on the full dataset instead of only using the
+# A common mistake done with feature selection is to search a subset of
+# discriminative features on the full dataset instead of only using the
 # training set. The usage of scikit-learn :func:`~sklearn.pipeline.Pipeline`
 # prevents to make such mistake.
 #
@@ -46,8 +46,6 @@ anova_svm = make_pipeline(anova_filter, clf)
 anova_svm
 
 # %%
-# We created a pipeline where a feature selection will be the first step of
-# the processing before to use its output in an SVM classifier.
 # When calling `fit` on the training data, a subset of feature will be selected
 # and the index of these selected features will be stored. The feature selector
 # will subsequently reduce the number of feature and pass this subset to the
@@ -71,7 +69,7 @@ y_pred = anova_svm.predict(X_test)
 print(classification_report(y_test, y_pred))
 
 # %%
-# Be aware that you can inspect part of the pipeline. For instance, we might
+# Be aware that you can inspect a step in the pipeline. For instance, we might
 # be interested about the parameters of the classifier. Since we selected
 # three features, we expect to have three coefficients.
 
