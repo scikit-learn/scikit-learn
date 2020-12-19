@@ -691,7 +691,7 @@ def test_classifier_chain_verbose(classifier, capsys):
         order=[1, 0, 2],
         random_state=0,
         verbose=True),
-    RegressorChain(
+     RegressorChain(
         Ridge(),
         order=[1, 0, 2],
         random_state=0,
