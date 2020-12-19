@@ -472,6 +472,9 @@ Changelog
 - |Fix| :class:`manifold.MDS` now correctly sets its `_pairwise` attribute.
   :pr:`18278` by `Thomas Fan`_.
 
+- |Enhancement| Validate user-supplied gram matrix passed to linear models
+  via the `precompute` argument. :pr:`19004` by :user:`Adam Midvidy <amidvidy>`.
+
 :mod:`sklearn.metrics`
 ......................
 
