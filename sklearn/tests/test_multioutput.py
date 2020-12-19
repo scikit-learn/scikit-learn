@@ -3,7 +3,6 @@ import pytest
 import numpy as np
 import scipy.sparse as sp
 from joblib import cpu_count
-import re
 
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_raises
