@@ -3,9 +3,10 @@
 Inspect and analyze estimator within cross-validation
 =====================================================
 
-Evaluating a predictive model involves :ref:`cross-validation <cross_validation>`. This example:
+Evaluating a predictive model involves :ref:`cross-validation
+<cross_validation>`. This example:
 
-* details how to interpret the results from a cross-validation framework ;
+* details how to interpret the results from a cross-validation framework;
 * highlights how to inspect the internals of a model when using the
   cross-validation framework.
 """
@@ -16,10 +17,10 @@ print(__doc__)
 # Dataset
 # -------
 #
-# We will use the :ref:`california_housing_dataset` where the goal is to predict the
-# average house value in a neighborhood. From the start, we will split our data
-# into two sets: a set that we will use for all our experiments and a set
-# that we will leave out for further confirmation.
+# We will use the :ref:`california_housing_dataset` where the goal is to
+# predict the average house value in a neighborhood. From the start, we will
+# split our data into two sets: a set that we will use for all our experiments
+# and a set that we will leave out for further confirmation.
 
 # %%
 from sklearn.datasets import fetch_california_housing
@@ -37,16 +38,18 @@ X_train, X_test, y_train, y_test = train_test_split(
 # ----------------
 #
 # In this example, we will use a linear model which should be a good baseline:
-# a :ref:`ridge model <ridge_regression>`. A ridge model enforces a L2 penalty on the coefficients.
-# The penalty parameter `alpha` thus has to be tuned. More importantly, this
-# parameter needs to be tuned for our specific problem: tuning on another
-# dataset does not ensure an optimal parameter value for the current dataset.
+# a :ref:`ridge model <ridge_regression>`. A ridge model enforces a L2 penalty
+# on the coefficients. The penalty parameter `alpha` thus has to be tuned. More
+# importantly, this parameter needs to be tuned for our specific problem:
+# tuning on another dataset does not ensure an optimal parameter value for the
+# current dataset.
 #
-# Here, we use the class :class:`~sklearn.linear_model.RidgeCV` that can
-# tune `alpha` by cross-validation.
+# Here, we use the class :class:`~sklearn.linear_model.RidgeCV` that can tune
+# `alpha` by cross-validation.
 #
-# We also add a preprocessing stage to :ref:`standardize <preprocessing_scaler>` the data such that the
-# optimization problem encountered by the ridge regressor is well-posed.
+# We also add a preprocessing stage to :ref:`standardize
+# <preprocessing_scaler>` the data such that the optimization problem
+# encountered by the ridge regressor is well-posed.
 
 # %%
 import numpy as np
@@ -67,12 +70,11 @@ model = make_pipeline(StandardScaler(), RidgeCV(alphas=alphas))
 # --------------------------
 #
 # Before putting such a predictive model into production, one needs to evaluate
-# the performance of the model to have an idea of what to expect in
-# production.
+# the performance of the model to have an idea of what to expect in production.
 #
 # Cross-validation should be used to make this analysis. First, it allows us to
-# quantify the variance of the model performance. A large variance of the
-# score metric will indicate that we cannot trust the reported performance nor try to
+# quantify the variance of the model performance. A large variance of the score
+# metric will indicate that we cannot trust the reported performance nor try to
 # interpret findings built on internal model's parameters. Usually large
 # variations are linked to small sample size but not only.
 
@@ -148,8 +150,9 @@ cv_estimators = cv_results["estimator"]
 #
 # Recall that in our case, our baseline model required tuning of the parameter
 # `alpha`. Therefore, up-to-now, we do not know if the optimal `alpha`
-# parameter for all models are similar. In other words, we are asking the question: what is the
-# variance of the `alpha` parameter value across iterations.
+# parameter for all models are similar. In other words, we are asking the
+# question: what is the variance of the `alpha` parameter value across
+# iterations.
 #
 # Indeed, if the `alpha` parameters vary depending on the input data, it
 # might be challenging to put our model in production because we would not be
