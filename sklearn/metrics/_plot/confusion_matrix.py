@@ -182,7 +182,7 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Input values.
 
-    y : array-like of shape (n_samples,)
+    y_true : array-like of shape (n_samples,)
         Target values.
 
     labels : array-like of shape (n_classes,), default=None
