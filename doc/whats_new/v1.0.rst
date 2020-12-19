@@ -48,8 +48,8 @@ Changelog
 ......................
 
 - |Efficiency| The "k-means++" initialization of :class:`cluster.KMeans` and
-  :class:`cluster.MiniBatchKMeans` is now faster, especially on multicore
-  setting. :pr:`19002` by :user:`Jon Crall <Erotemic>` and
+  :class:`cluster.MiniBatchKMeans` is now faster, especially in multicore
+  settings. :pr:`19002` by :user:`Jon Crall <Erotemic>` and
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 Code and Documentation Contributors
