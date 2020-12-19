@@ -468,6 +468,9 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         self : object
         """
         X, Y = self._validate_data(X, Y, multi_output=True, accept_sparse=True)
+        if Y.ndim == 1:
+            raise ValueError("invalid Y for multi-label fit. "
+                             "Y must be of shape (n_samples, n_classes)")
 
         random_state = check_random_state(self.random_state)
         check_array(X, accept_sparse=True)
