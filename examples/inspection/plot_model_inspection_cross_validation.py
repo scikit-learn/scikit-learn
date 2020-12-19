@@ -187,7 +187,7 @@ plt.figure(figsize=(9, 7))
 sns.swarmplot(data=coefficients, orient="h", color="k", alpha=0.5)
 sns.boxplot(data=coefficients, orient="h")
 plt.axvline(x=0, color=".5")
-plt.title("Coefficient variability")
+plt.title("Coefficient values our model")
 _ = plt.subplots_adjust(left=0.3)
 
 # %%
