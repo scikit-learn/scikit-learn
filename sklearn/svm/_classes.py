@@ -1265,7 +1265,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     nu : float, default=0.5
         An upper bound on the fraction of training
         errors and a lower bound of the fraction of support
-        vectors. Should be in the interval (0, 1]. By default 0.5
+        vectors. Should be in the interval (0, 1). By default 0.5
         will be taken.
 
     shrinking : bool, default=True
