@@ -48,8 +48,8 @@ X_train, X_test, y_train, y_test = train_test_split(
 # `alpha` by cross-validation.
 #
 # We also add a preprocessing stage to :ref:`standardize
-# <preprocessing_scaler>` the data such that the optimization problem
-# encountered by the ridge regressor is well-posed.
+# <preprocessing_scaler>` the data such that the regularization strength is
+# applied homogeneously on each coefficient.
 
 # %%
 import numpy as np
