@@ -84,8 +84,6 @@ from sklearn.compose import make_column_selector
 
 cat_selector = make_column_selector(dtype_include=object)
 num_selector = make_column_selector(dtype_include=np.number)
-
-# %%
 cat_selector(X)
 
 # %%
@@ -113,9 +111,7 @@ cat_tree_processor = OrdinalEncoder(
 num_tree_processor = SimpleImputer(strategy="mean", add_indicator=True)
 
 tree_preprocessor = make_column_transformer(
-    (num_tree_processor, num_selector),
-    (cat_tree_processor, cat_selector),
-)
+    (num_tree_processor, num_selector), (cat_tree_processor, cat_selector))
 tree_preprocessor
 
 # %%
@@ -128,13 +124,10 @@ from sklearn.preprocessing import StandardScaler
 
 cat_linear_processor = OneHotEncoder(handle_unknown="ignore")
 num_linear_processor = make_pipeline(
-    StandardScaler(), SimpleImputer(strategy="mean", add_indicator=True),
-)
+    StandardScaler(), SimpleImputer(strategy="mean", add_indicator=True))
 
 linear_preprocessor = make_column_transformer(
-    (num_linear_processor, num_selector),
-    (cat_linear_processor, cat_selector)
-)
+    (num_linear_processor, num_selector), (cat_linear_processor, cat_selector))
 linear_preprocessor
 
 # %%
@@ -150,10 +143,12 @@ linear_preprocessor
 # Here, we combine 3 learners (linear and non-linear) and use a ridge regressor
 # to combine their outputs together.
 #
-# Note: although we will make new pipelines with the processors which we wrote
-# in the previous section for the 3 learners, the final estimator RidgeCV()
-# does not need preprocessing of the data as it will be fed with the already
-# preprocessed output from the 3 learners.
+# .. note::
+#    Although we will make new pipelines with the processors which we wrote in
+#    the previous section for the 3 learners, the final estimator
+#    :class:`~sklearn.linear_model.RidgeCV()` does not need preprocessing of
+#    the data as it will be fed with the already preprocessed output from the 3
+#    learners.
 
 # %%
 from sklearn.linear_model import LassoCV
@@ -165,8 +160,7 @@ lasso_pipeline
 from sklearn.ensemble import RandomForestRegressor
 
 rf_pipeline = make_pipeline(
-    tree_preprocessor, RandomForestRegressor(random_state=42)
-)
+    tree_preprocessor, RandomForestRegressor(random_state=42))
 rf_pipeline
 
 # %%
@@ -174,8 +168,7 @@ from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
 
 gbdt_pipeline = make_pipeline(
-    tree_preprocessor, HistGradientBoostingRegressor(random_state=0)
-)
+    tree_preprocessor, HistGradientBoostingRegressor(random_state=0))
 gbdt_pipeline
 
 # %%
@@ -187,8 +180,7 @@ estimators = [('Random Forest', rf_pipeline),
               ('Gradient Boosting', gbdt_pipeline)]
 
 stacking_regressor = StackingRegressor(
-    estimators=estimators, final_estimator=RidgeCV()
-)
+    estimators=estimators, final_estimator=RidgeCV())
 stacking_regressor
 
 # %%
