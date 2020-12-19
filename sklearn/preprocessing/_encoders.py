@@ -512,8 +512,10 @@ class OneHotEncoder(_BaseEncoder):
         """
         Convert the data back to the original representation.
 
-        In case unknown categories are encountered (all zeros in the
-        one-hot encoding), ``None`` is used to represent this category.
+        When unknown categories are encountered (all zeros in the
+        one-hot encoding), ``None`` is used to represent this category. If the
+        feature with the unknown category has a dropped caregory, the dropped
+        category will be its inverse.
 
         Parameters
         ----------
@@ -574,7 +576,14 @@ class OneHotEncoder(_BaseEncoder):
                 unknown = np.asarray(sub.sum(axis=1) == 0).flatten()
                 # ignored unknown categories: we have a row of all zero
                 if unknown.any():
-                    found_unknown[i] = unknown
+                    # if categories were dropped then unknown categories will
+                    # be mapped to the dropped category
+                    if self.drop_idx_ is None or self.drop_idx_[i] is None:
+                        found_unknown[i] = unknown
+                    else:
+                        X_tr[unknown, i] = self.categories_[i][
+                            self.drop_idx_[i]
+                        ]
             else:
                 dropped = np.asarray(sub.sum(axis=1) == 0).flatten()
                 if dropped.any():

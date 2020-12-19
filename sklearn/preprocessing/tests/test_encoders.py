@@ -942,7 +942,7 @@ def test_ohe_drop_first_handle_unknown_ignore_warns():
 
     # inverse_transform maps to None
     X_inv = ohe.inverse_transform(X_expected)
-    assert_array_equal(X_inv, [[None, None]])
+    assert_array_equal(X_inv, np.array([['a', 0]], dtype=object))
 
 
 def test_ohe_drop_if_binary_handle_unknown_ignore_warns():
@@ -973,7 +973,7 @@ def test_ohe_drop_if_binary_handle_unknown_ignore_warns():
 
     # inverse_transform maps to None
     X_inv = ohe.inverse_transform(X_expected)
-    assert_array_equal(X_inv, [[None, None]])
+    assert_array_equal(X_inv, np.array([['a', None]], dtype=object))
 
 
 def test_ohe_drop_first_explicit_categories():
