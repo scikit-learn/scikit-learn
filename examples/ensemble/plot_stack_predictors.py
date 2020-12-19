@@ -77,7 +77,8 @@ X, y = load_ames_housing()
 ##############################################################################
 #
 # Before we can use Ames dataset we still need to do some preprocessing.
-# First, we will select the categorical and numerical columns of the dataset to construct the first step of the pipeline.
+# First, we will select the categorical and numerical columns of the dataset to
+# construct the first step of the pipeline.
 # %%
 from sklearn.compose import make_column_selector
 
@@ -85,12 +86,10 @@ cat_selector = make_column_selector(dtype_include=object)
 num_selector = make_column_selector(dtype_include=np.number)
 
 # %%
-cat_cols = cat_selector(X)
-cat_cols
+cat_selector(X)
 
 # %%
-num_cols = num_selector(X)
-num_cols
+num_selector(X)
 
 # %%
 # Then, we will need to design preprocessing pipelines which depends of the
@@ -114,8 +113,8 @@ cat_tree_processor = OrdinalEncoder(
 num_tree_processor = SimpleImputer(strategy="mean", add_indicator=True)
 
 tree_preprocessor = make_column_transformer(
-    (num_tree_processor, num_cols),
-    (cat_tree_processor, cat_cols),
+    (num_tree_processor, num_selector),
+    (cat_tree_processor, cat_selector),
 )
 tree_preprocessor
 
@@ -133,8 +132,8 @@ num_linear_processor = make_pipeline(
 )
 
 linear_preprocessor = make_column_transformer(
-    (num_linear_processor, num_cols),
-    (cat_linear_processor, cat_cols)
+    (num_linear_processor, num_selector),
+    (cat_linear_processor, cat_selector)
 )
 linear_preprocessor
 
