@@ -110,7 +110,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                         raise ValueError(msg)
             self.categories_.append(cats)
 
-    def _transform(self, X, handle_unknown='error', force_all_finite=True):
+    def _transform(self, X, handle_unknown='error', force_all_finite=True,
+                   warn_on_unknown=False):
         X_list, n_samples, n_features = self._check_X(
             X, force_all_finite=force_all_finite)
 
@@ -137,7 +138,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                            " during transform".format(diff, i))
                     raise ValueError(msg)
                 else:
-                    if handle_unknown == "warn":
+                    if warn_on_unknown:
                         columns_with_unknown.append(i)
                     # Set the problematic rows to an acceptable value and
                     # continue `The rows are marked `X_mask` and will be
@@ -459,11 +460,11 @@ class OneHotEncoder(_BaseEncoder):
         """
         check_is_fitted(self)
         # validation of X happens in _check_X called by _transform
-        handle_unknown = self.handle_unknown
-        if handle_unknown == "ignore" and self.drop is not None:
-            handle_unknown = "warn"
-        X_int, X_mask = self._transform(X, handle_unknown=handle_unknown,
-                                        force_all_finite='allow-nan')
+        warn_on_unknown = (self.handle_unknown == "ignore"
+                           and self.drop is not None)
+        X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown,
+                                        force_all_finite='allow-nan',
+                                        warn_on_unknown=warn_on_unknown)
 
         n_samples, n_features = X_int.shape
 
