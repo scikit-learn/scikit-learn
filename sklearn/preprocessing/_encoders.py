@@ -2,6 +2,7 @@
 #          Joris Van den Bossche <jorisvandenbossche@gmail.com>
 # License: BSD 3 clause
 
+import warnings
 import numpy as np
 from scipy import sparse
 import numbers
@@ -124,6 +125,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 .format(len(self.categories_,), n_features)
             )
 
+        columns_with_unknown = []
         for i in range(n_features):
             Xi = X_list[i]
             diff, valid_mask = _check_unknown(Xi, self.categories_[i],
@@ -135,6 +137,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                            " during transform".format(diff, i))
                     raise ValueError(msg)
                 else:
+                    if handle_unknown == "warn":
+                        columns_with_unknown.append(i)
                     # Set the problematic rows to an acceptable value and
                     # continue `The rows are marked `X_mask` and will be
                     # removed later.
@@ -152,6 +156,11 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             # already called above.
             X_int[:, i] = _encode(Xi, uniques=self.categories_[i],
                                   check_unknown=False)
+        if columns_with_unknown:
+            warnings.warn("Found unknown categories in columns "
+                          f"{columns_with_unknown} during transform. These "
+                          "unknown categories will be encoded as all zeros",
+                          UserWarning)
 
         return X_int, X_mask
 
@@ -326,15 +335,6 @@ class OneHotEncoder(_BaseEncoder):
             msg = ("handle_unknown should be either 'error' or 'ignore', "
                    "got {0}.".format(self.handle_unknown))
             raise ValueError(msg)
-        # If we have both dropped columns and ignored unknown
-        # values, there will be ambiguous cells. This creates difficulties
-        # in interpreting the model.
-        if (self.drop is not None
-                and self.handle_unknown not in ['error', 'warn']):
-            raise ValueError(
-                "`handle_unknown` must be 'error' when the drop parameter is "
-                "specified, as both would create categories that are all "
-                "zero.")
 
     def _compute_drop_idx(self):
         if self.drop is None:
@@ -459,7 +459,10 @@ class OneHotEncoder(_BaseEncoder):
         """
         check_is_fitted(self)
         # validation of X happens in _check_X called by _transform
-        X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown,
+        handle_unknown = self.handle_unknown
+        if handle_unknown == "ignore" and self.drop is not None:
+            handle_unknown = "warn"
+        X_int, X_mask = self._transform(X, handle_unknown=handle_unknown,
                                         force_all_finite='allow-nan')
 
         n_samples, n_features = X_int.shape
