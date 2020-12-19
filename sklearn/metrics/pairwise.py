@@ -304,7 +304,7 @@ def _euclidean_distances(X, Y, X_norm_squared=None, Y_norm_squared=None,
                          squared=False):
     """Computational part of euclidean_distances
 
-    Assumes inputs are alredy checked.
+    Assumes inputs are already checked.
 
     If norms are passed as float32, they are unused. If arrays are passed as
     float32, norms needs to be recomputed on upcast chunks.
