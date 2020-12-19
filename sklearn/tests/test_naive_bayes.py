@@ -448,13 +448,11 @@ def test_discretenb_coef_intercept_shape(cls):
 @pytest.mark.parametrize('DiscreteNaiveBayes', [MultinomialNB, ComplementNB,
                                                 BernoulliNB, CategoricalNB])
 @pytest.mark.parametrize('use_partial_fit', [False, True])
-@pytest.mark.parametrize('num_samples,expected_first_axis_length',
-                         [(3, 2), (2, 1)])
+@pytest.mark.parametrize('drop_sample', [False, True])
 def test_discretenb_degenerate_one_class_case(
         DiscreteNaiveBayes,
         use_partial_fit,
-        num_samples,
-        expected_first_axis_length,
+        drop_sample,
 ):
     # Most array attributes of a discrete naive Bayes classifier should have a
     # first-axis length equal to the number of classes. Exceptions include:
@@ -465,12 +463,17 @@ def test_discretenb_degenerate_one_class_case(
     # Non-regression test for handling degenerate one-class case:
     # https://github.com/scikit-learn/scikit-learn/issues/18974
 
-    X = [[1, 0, 0], [0, 1, 0], [0, 0, 1]][:num_samples]
-    y = [1, 1, 2][:num_samples]
-    clf = DiscreteNaiveBayes()
+    X = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+    y = [1, 1, 2]
+    if drop_sample:
+        X = X[:-1]
+        y = y[:-1]
+    classes = sorted(list(set(y)))
+    num_classes = len(classes)
 
+    clf = DiscreteNaiveBayes()
     if use_partial_fit:
-        clf.partial_fit(X, y, classes=list(set(y)))
+        clf.partial_fit(X, y, classes=classes)
     else:
         clf.fit(X, y)
     assert clf.predict(X[:1]) == y[0]
@@ -489,11 +492,11 @@ def test_discretenb_degenerate_one_class_case(
             # CategoricalNB has no feature_count_ attribute
             continue
         if isinstance(attribute, np.ndarray):
-            assert attribute.shape[0] == expected_first_axis_length
+            assert attribute.shape[0] == num_classes
         else:
             # CategoricalNB.feature_log_prob_ is a list of arrays
             for element in attribute:
-                assert element.shape[0] == expected_first_axis_length
+                assert element.shape[0] == num_classes
 
 
 @pytest.mark.parametrize('kind', ('dense', 'sparse'))
