@@ -153,6 +153,13 @@ class GaussianNB(_BaseNB):
     epsilon_ : float
         absolute additive value to variances
 
+    sigma_ : ndarray of shape (n_classes, n_features)
+        variance of each feature per class
+
+        .. deprecated:: 0.24
+            ``sigma_`` was deprecated in 0.24 and will be removed in 1.1.
+            Use var_ instead.
+
     var_ : ndarray of shape (n_classes, n_features)
         variance of each feature per class
 
@@ -457,11 +464,14 @@ class GaussianNB(_BaseNB):
         joint_log_likelihood = np.array(joint_log_likelihood).T
         return joint_log_likelihood
 
-    @deprecated("Attribute sigma_ was deprecated in "  # type: ignore
-                "version 0.24, use var_ instead")
+    @deprecated(  # type: ignore
+        "Attribute sigma_ was deprecated in 0.24 and will be removed in"
+        "1.1 (renaming of 0.26). Use var_ instead."
+    )
     @property
     def sigma_(self):
         return self.var_
+
 
 _ALPHA_MIN = 1e-10
 
