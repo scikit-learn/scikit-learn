@@ -1281,7 +1281,7 @@ def test_pairwise_distances_data_derived_params(n_jobs, metric, dist_function,
                 params = {'VI': np.linalg.inv(np.cov(np.vstack([X, Y]).T)).T}
 
         expected_dist_explicit_params = cdist(X, Y, metric=metric, **params)
-        # TODO: Remove warn_checker in 0.25
+        # TODO: Remove warn_checker in 1.0
         if y_is_x:
             warn_checker = pytest.warns(None)
         else:

@@ -194,7 +194,7 @@ def test_gnb_naive_bayes_scale_invariance():
     assert_array_equal(labels[1], labels[2])
 
 
-# TODO: Remove in version 0.26
+# TODO: Remove in version 1.1
 @pytest.mark.parametrize("cls", [MultinomialNB, ComplementNB, BernoulliNB,
                                  CategoricalNB])
 def test_discretenb_deprecated_coef_intercept(cls):
@@ -319,7 +319,7 @@ def test_discretenb_input_check_partial_fit(cls):
     assert_raises(ValueError, clf.predict, X2[:, :-1])
 
 
-# TODO: Remove in version 0.26
+# TODO: Remove in version 1.1
 @ignore_warnings(category=FutureWarning)
 def test_discretenb_predict_proba():
     # Test discrete NB classes' probability scores
@@ -423,7 +423,7 @@ def test_discretenb_sample_weight_multiclass(cls):
     assert_array_equal(clf.predict(X), [0, 1, 1, 2])
 
 
-# TODO: Remove in version 0.26
+# TODO: Remove in version 1.1
 @ignore_warnings(category=FutureWarning)
 @pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB])
 def test_discretenb_coef_intercept_shape(cls):
@@ -517,7 +517,7 @@ def test_mnb_prior_unobserved_targets():
     assert clf.predict([[1, 1]]) == 2
 
 
-# TODO: Remove in version 0.26
+# TODO: Remove in version 1.1
 @ignore_warnings(category=FutureWarning)
 def test_mnb_sample_weight():
     clf = MultinomialNB()
