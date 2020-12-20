@@ -655,12 +655,6 @@ Changelog
   and will be removed in v1.1 (renaming of 0.26).
   :pr:`17427` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
-- |Fix| A new parameter `force_alpha` was added to :class:`BernoulliNB` and
-  class:`MultinomialNB`, allowing user to set parameter alpha to a very
-  small number, greater or equal 0, which was earlier automatically changed
-  to `_ALPHA_MIN` instead.
-  :pr:`16747`, :pr:`18805` by :user:`arka204` and :user:`hongshaoyang`.
-
 :mod:`sklearn.neighbors`
 ........................
 

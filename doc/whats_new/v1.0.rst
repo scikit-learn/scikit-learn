@@ -44,7 +44,14 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.naive_bayes`
+..........................
 
+- |Fix| A new parameter `force_alpha` was added to :class:`BernoulliNB` and
+  class:`MultinomialNB`, allowing user to set parameter alpha to a very
+  small number, greater or equal 0, which was earlier automatically changed
+  to `_ALPHA_MIN` instead.
+  :pr:`16747`, :pr:`18805` by :user:`arka204` and :user:`hongshaoyang`.
 
 Code and Documentation Contributors
 -----------------------------------
