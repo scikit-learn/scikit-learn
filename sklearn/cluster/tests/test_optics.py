@@ -8,6 +8,7 @@ import pytest
 from sklearn.datasets import make_blobs
 from sklearn.cluster import OPTICS
 from sklearn.cluster._optics import _extend_region, _extract_xi_labels
+from sklearn.exceptions import DataConversionWarning
 from sklearn.metrics.cluster import contingency_matrix
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.cluster import DBSCAN
@@ -207,6 +208,39 @@ def test_bad_reachability():
     with pytest.warns(UserWarning, match=msg):
         clust = OPTICS(max_eps=5.0 * 0.003, min_samples=10, eps=0.015)
         clust.fit(X)
+
+
+def test_nowarn_if_metric_bool_data_bool():
+    pairwise_metric = 'rogerstanimoto'
+    X = np.random.randint(2, size=(5, 2), dtype=np.bool)
+
+    with pytest.warns(None) as warn_record:
+        OPTICS(metric=pairwise_metric).fit(X)
+        assert len(warn_record) == 0
+
+
+def test_warn_if_metric_bool_data_no_bool():
+    pairwise_metric = 'rogerstanimoto'
+    X = np.random.randint(2, size=(5, 2), dtype=np.int)
+    msg = f"Data will be converted to boolean for metric {pairwise_metric}," \
+          " to avoid this warning, you may convert the data prior to calling fit."
+
+    with pytest.warns(DataConversionWarning, match=msg) as warn_record:
+        OPTICS(metric=pairwise_metric).fit(X)
+        assert len(warn_record) == 1
+
+
+def test_nowarn_if_metric_no_bool():
+    pairwise_metric = 'minkowski'
+    X_bool = np.random.randint(2, size=(5, 2), dtype=np.bool)
+    X_num = np.random.randint(2, size=(5, 2), dtype=np.int)
+
+    with pytest.warns(None) as warn_record:
+        # fit boolean data
+        OPTICS(metric=pairwise_metric).fit(X_bool)
+        # fit numeric data
+        OPTICS(metric=pairwise_metric).fit(X_num)
+        assert len(warn_record) == 0
 
 
 def test_close_extract():
