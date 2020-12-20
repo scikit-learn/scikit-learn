@@ -810,11 +810,7 @@ def check_estimator_sparse_data(name, estimator_orig, strict_mode=True):
             for method in ["predict_proba", "decision_function"]:
                 if hasattr(estimator, method):
                     probs = getattr(estimator, method)(X)
-                    if tags['binary_only']:
-                        expected_probs_shape = (X.shape[0], 2)
-                    else:
-                        expected_probs_shape = (X.shape[0], 4)
-                    assert probs.shape == expected_probs_shape
+                    assert probs.shape[0] == X.shape[0]
             if hasattr(estimator, "transform"):
                 transformed = estimator.transform(X)
                 assert X.shape[0] == transformed.shape[0]
