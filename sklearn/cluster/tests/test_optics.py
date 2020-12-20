@@ -222,8 +222,9 @@ def test_nowarn_if_metric_bool_data_bool():
 def test_warn_if_metric_bool_data_no_bool():
     pairwise_metric = 'rogerstanimoto'
     X = np.random.randint(2, size=(5, 2), dtype=np.int)
-    msg = f"Data will be converted to boolean for metric {pairwise_metric}," \
-          " to avoid this warning, you may convert the data prior to calling fit."
+    msg = f"Data will be converted to boolean for" \
+          f" metric {pairwise_metric}, to avoid this warning" \
+          f", you may convert the data prior to calling fit."
 
     with pytest.warns(DataConversionWarning, match=msg) as warn_record:
         OPTICS(metric=pairwise_metric).fit(X)
