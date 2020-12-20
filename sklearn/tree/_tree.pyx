@@ -315,7 +315,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
         X_list = []
         y_list = []
-        for key, value in sorted(X_copy.items()):
+        for key, value in reversed(sorted(X_copy.items())):
             X_list = X_list + value
             y_list = y_list + y_copy[key]
         cdef object X_new = np.array(X_list)
@@ -354,7 +354,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef StackRecord stack_record
 
         # push reached leaf nodes onto stack
-        for key, value in sorted(false_roots.items()):
+        for key, value in reversed(sorted(false_roots.items())):
             end += value[0]
             rc = stack.push(start, end, value[1], key[0], key[1],
                             tree.impurity[key[0]], 0)
