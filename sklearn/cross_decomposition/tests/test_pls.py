@@ -489,6 +489,20 @@ def test_norm_y_weights_deprecation(Est):
         est.norm_y_weights
 
 
+# TODO: Remove test in 0.26
+@pytest.mark.parametrize('Estimator',
+                         (PLSRegression, PLSCanonical, CCA, PLSSVD))
+@pytest.mark.parametrize('attribute',
+                         ("x_mean_", "y_mean_", "x_std_", "y_std_"))
+def test_mean_and_std_deprecation(Estimator, attribute):
+    rng = np.random.RandomState(0)
+    X = rng.randn(10, 5)
+    Y = rng.randn(10, 3)
+    estimator = Estimator().fit(X, Y)
+    with pytest.warns(FutureWarning, match=f"{attribute} was deprecated"):
+        getattr(estimator, attribute)
+
+
 @pytest.mark.parametrize('n_samples, n_features', [(100, 10), (100, 200)])
 @pytest.mark.parametrize('seed', range(10))
 def test_singular_value_helpers(n_samples, n_features, seed):
