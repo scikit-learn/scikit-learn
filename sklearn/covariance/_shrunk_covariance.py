@@ -135,7 +135,7 @@ class ShrunkCovariance(EmpiricalCovariance):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y: Ignored
+        y : Ignored
             not used, present for API consistence purpose.
 
         Returns
