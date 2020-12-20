@@ -778,32 +778,6 @@ def check_estimator_sparse_data(name, estimator_orig, strict_mode=True):
         try:
             with ignore_warnings(category=FutureWarning):
                 estimator.fit(X, y)
-            if hasattr(estimator, "predict"):
-                pred = estimator.predict(X)
-                if tags['multioutput_only']:
-                    assert pred.shape == (X.shape[0], 1)
-                elif tags['multioutput']:
-                    assert (pred.shape == (X.shape[0], 1) or
-                            pred.shape == (X.shape[0],))
-                else:
-                    assert pred.shape == (X.shape[0],)
-            for method in ["predict_proba", "decision_function"]:
-                if hasattr(estimator, method):
-                    probs = getattr(estimator, method)(X)
-                    if tags['binary_only']:
-                        expected_probs_shape = (X.shape[0], 2)
-                    else:
-                        expected_probs_shape = (X.shape[0], 4)
-                    assert probs.shape == expected_probs_shape
-            if hasattr(estimator, "transform"):
-                transformed = estimator.transform(X)
-                assert X.shape[0] == transformed.shape[0]
-            if hasattr(estimator, "score"):
-                assert estimator.score(X, y) == 0
-            if hasattr(estimator, "score_samples"):
-                score = estimator.score_samples(X)
-                assert score.shape == (X.shape[0],)
-
         except (TypeError, ValueError) as e:
             if 'sparse' not in repr(e).lower():
                 if "64" in matrix_format:
@@ -823,6 +797,33 @@ def check_estimator_sparse_data(name, estimator_orig, strict_mode=True):
                    f"sparse data: it should raise a TypeError or a ValueError "
                    f"if sparse input is explicitly not supported.")
             raise AssertionError(msg)
+
+        if hasattr(estimator, "predict"):
+            pred = estimator.predict(X)
+            if tags['multioutput_only']:
+                assert pred.shape == (X.shape[0], 1)
+            elif tags['multioutput']:
+                assert (pred.shape == (X.shape[0], 1) or
+                        pred.shape == (X.shape[0],))
+            else:
+                assert pred.shape == (X.shape[0],)
+        for method in ["predict_proba", "decision_function"]:
+            if hasattr(estimator, method):
+                probs = getattr(estimator, method)(X)
+                if tags['binary_only']:
+                    expected_probs_shape = (X.shape[0], 2)
+                else:
+                    expected_probs_shape = (X.shape[0], 4)
+                assert probs.shape == expected_probs_shape
+        if hasattr(estimator, "transform"):
+            transformed = estimator.transform(X)
+            assert X.shape[0] == transformed.shape[0]
+        if hasattr(estimator, "score"):
+            score = estimator.score(X, y)
+            assert np.isscalar(score)
+        if hasattr(estimator, "score_samples"):
+            score = estimator.score_samples(X)
+            assert score.shape == (X.shape[0],)
 
 
 @ignore_warnings(category=FutureWarning)
