@@ -83,7 +83,7 @@ def _check_precision_positivity(precision, covariance_type):
 def _check_precision_matrix(precision, covariance_type):
     """Check a precision matrix is symmetric and positive-definite."""
     if not (np.allclose(precision, precision.T) and
-            np.all(linalg.eigvalsh(precision, check_finite=False) > 0.)):
+            np.all(linalg.eigvalsh(precision) > 0.)):
         raise ValueError("'%s precision' should be symmetric, "
                          "positive-definite" % covariance_type)
 
@@ -314,9 +314,7 @@ def _compute_precision_cholesky(covariances, covariance_type):
         precisions_chol = np.empty((n_components, n_features, n_features))
         for k, covariance in enumerate(covariances):
             try:
-                cov_chol = linalg.cholesky(covariance,
-                                           lower=True,
-                                           check_finite=False)
+                cov_chol = linalg.cholesky(covariance, lower=True)
             except linalg.LinAlgError:
                 raise ValueError(estimate_precision_error_message)
             precisions_chol[k] = linalg.solve_triangular(cov_chol,
@@ -671,12 +669,11 @@ class GaussianMixture(BaseMixture):
                 covariances, self.covariance_type)
         elif self.covariance_type == 'full':
             self.precisions_cholesky_ = np.array(
-                [linalg.cholesky(prec_init, lower=True, check_finite=False)
+                [linalg.cholesky(prec_init, lower=True)
                  for prec_init in self.precisions_init])
         elif self.covariance_type == 'tied':
             self.precisions_cholesky_ = linalg.cholesky(self.precisions_init,
-                                                        lower=True,
-                                                        check_finite=False)
+                                                        lower=True)
         else:
             self.precisions_cholesky_ = self.precisions_init
 
