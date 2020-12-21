@@ -7,10 +7,16 @@ import joblib
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils import deprecated
-from sklearn.utils._testing import (assert_raises_regex,
-                                    ignore_warnings,
-                                    assert_warns, assert_raises,
-                                    SkipTest)
+from sklearn.utils._testing import (
+    assert_raises,
+    assert_raises_regex,
+    assert_warns,
+    ignore_warnings,
+    MinimalClassifier,
+    MinimalRegressor,
+    MinimalTransformer,
+    SkipTest,
+)
 from sklearn.utils.estimator_checks import check_estimator, _NotAnArray
 from sklearn.utils.estimator_checks \
     import check_class_weight_balanced_linear_classifier
@@ -21,6 +27,8 @@ from sklearn.utils.estimator_checks import check_fit_score_takes_y
 from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
 from sklearn.utils.estimator_checks import check_classifier_data_not_an_array
 from sklearn.utils.estimator_checks import check_regressor_data_not_an_array
+from sklearn.utils.estimator_checks import \
+    check_estimator_get_tags_default_keys
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.estimator_checks import check_outlier_corruption
 from sklearn.utils.fixes import np_version, parse_version
@@ -368,6 +376,13 @@ class TaggedBinaryClassifier(UntaggedBinaryClassifier):
         return {'binary_only': True}
 
 
+class EstimatorMissingDefaultTags(BaseEstimator):
+    def _get_tags(self):
+        tags = super()._get_tags().copy()
+        del tags["allow_nan"]
+        return tags
+
+
 class RequiresPositiveYRegressor(LinearRegression):
 
     def fit(self, X, y):
@@ -418,8 +433,6 @@ def test_check_estimator():
     # check that we have a set_params and can clone
     msg = "Passing a class was deprecated"
     assert_raises_regex(TypeError, msg, check_estimator, object)
-    msg = "object has no attribute '_get_tags'"
-    assert_raises_regex(AttributeError, msg, check_estimator, object())
     msg = (
         "Parameter 'p' of estimator 'HasMutableParameters' is of type "
         "object which is not allowed"
@@ -636,6 +649,25 @@ def test_check_regressor_data_not_an_array():
                         EstimatorInconsistentForPandas())
 
 
+def test_check_estimator_get_tags_default_keys():
+    estimator = EstimatorMissingDefaultTags()
+    err_msg = (r"EstimatorMissingDefaultTags._get_tags\(\) is missing entries"
+               r" for the following default tags: {'allow_nan'}")
+    assert_raises_regex(
+        AssertionError,
+        err_msg,
+        check_estimator_get_tags_default_keys,
+        estimator.__class__.__name__,
+        estimator,
+    )
+
+    # noop check when _get_tags is not available
+    estimator = MinimalTransformer()
+    check_estimator_get_tags_default_keys(
+        estimator.__class__.__name__, estimator
+    )
+
+
 def run_tests_without_pytest():
     """Runs the tests in this file without using pytest.
     """
@@ -677,3 +709,17 @@ def test_xfail_ignored_in_check_estimator():
     # Make sure checks marked as xfail are just ignored and not run by
     # check_estimator(), but still raise a warning.
     assert_warns(SkipTestWarning, check_estimator, NuSVC())
+
+
+# FIXME: this test should be uncommented when the checks will be granular
+# enough. In 0.24, these tests fail due to low estimator performance.
+def test_minimal_class_implementation_checks():
+    # Check that third-party library can run tests without inheriting from
+    # BaseEstimator.
+    # FIXME
+    raise SkipTest
+    minimal_estimators = [
+        MinimalTransformer(), MinimalRegressor(), MinimalClassifier()
+    ]
+    for estimator in minimal_estimators:
+        check_estimator(estimator)

@@ -1466,7 +1466,7 @@ class _RidgeGCV(LinearModel):
 
         if np.any(self.alphas <= 0):
             raise ValueError(
-                "alphas must be positive. Got {} containing some "
+                "alphas must be strictly positive. Got {} containing some "
                 "negative or null value instead.".format(self.alphas))
 
         X, y, X_offset, y_offset, X_scale = LinearModel._preprocess_data(

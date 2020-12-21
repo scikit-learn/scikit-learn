@@ -2103,7 +2103,7 @@ def test_decision_tree_regressor_sample_weight_consistentcy(
     assert_allclose(tree1.predict(X), tree2.predict(X))
 
 
-# TODO: Remove in v0.26
+# TODO: Remove in v1.1
 @pytest.mark.parametrize("TreeEstimator", [DecisionTreeClassifier,
                                            DecisionTreeRegressor])
 def test_X_idx_sorted_deprecated(TreeEstimator):

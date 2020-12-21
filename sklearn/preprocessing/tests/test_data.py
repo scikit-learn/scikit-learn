@@ -2246,7 +2246,7 @@ def test_cv_pipeline_precomputed():
     # did the pipeline set the pairwise attribute?
     assert pipeline._get_tags()['pairwise']
 
-    # TODO: Remove in 0.26
+    # TODO: Remove in 1.1
     msg = r"Attribute _pairwise was deprecated in version 0\.24"
     with pytest.warns(FutureWarning, match=msg):
         assert pipeline._pairwise
@@ -2258,7 +2258,7 @@ def test_cv_pipeline_precomputed():
     assert_array_almost_equal(y_true, y_pred)
 
 
-# TODO: Remove in 0.26
+# TODO: Remove in 1.1
 def test_pairwise_deprecated():
     kcent = KernelCenterer()
     msg = r"Attribute _pairwise was deprecated in version 0\.24"

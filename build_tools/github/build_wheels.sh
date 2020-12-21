@@ -4,7 +4,7 @@ set -e
 set -x
 
 # OpenMP is not present on macOS by default
-if [ "$RUNNER_OS" == "macOS" ]; then
+if [[ "$RUNNER_OS" == "macOS" ]]; then
     brew install libomp
     export CC=/usr/bin/clang
     export CXX=/usr/bin/clang++
