@@ -655,9 +655,6 @@ Changelog
   and will be removed in v1.1 (renaming of 0.26).
   :pr:`17427` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
-- |API| The attribute ``sigma_`` is now deprecated in :class:`naive_bayes.GaussianNB`
-  and will be removed in v1.1. Use ``var_`` instead. :pr:`18842` by :user:`Hong Shao Yang <hongshaoyang>`.
-
 :mod:`sklearn.neighbors`
 ........................
 
