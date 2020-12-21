@@ -44,11 +44,21 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+
 :mod:`sklearn.feature_extraction`
 .................................
 
 - |Fix| :there will be a negative in indices of class:`feature_extraction.HashingVectorizer`
-    result when mumurhash function return -2**31. :pr:`19035` by :user:`Liu Yu <ly648499246>`.
+  result when mumurhash function return -2**31. :pr:`19035` by :user:`Liu Yu <ly648499246>`.
+
+:mod:`sklearn.cluster`
+......................
+
+- |Efficiency| The "k-means++" initialization of :class:`cluster.KMeans` and
+  :class:`cluster.MiniBatchKMeans` is now faster, especially in multicore
+  settings. :pr:`19002` by :user:`Jon Crall <Erotemic>` and
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 
 Code and Documentation Contributors
 -----------------------------------

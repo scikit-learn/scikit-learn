@@ -33,14 +33,6 @@ env:
 
 jobs:
   include:
-    # Linux environment to test scikit-learn against NumPy and SciPy
-    # master installed from their continuous integration wheels in a
-    # virtual environment with Python interpreter provided by Travis.
-    - python: 3.7
-      env:
-        - CHECK_WARNINGS=true
-      if: type = cron OR commit_message =~ /\[scipy-dev\]/
-
     - python: 3.7
       env:
         - CHECK_WARNING=true
