@@ -37,6 +37,7 @@ code {
   background-color: #ecf0f3;
   border-radius: 0.2rem;
   padding: 0.15rem;
+  word-break: normal;
 }
 
 nav {
