@@ -35,7 +35,7 @@ X = rng.uniform(0, 5, 20)[:, np.newaxis]
 y = 0.5 * np.sin(3 * X[:, 0]) + rng.normal(0, 0.5, X.shape[0])
 
 # First run
-plt.figure(0)
+plt.figure()
 kernel = 1.0 * RBF(length_scale=100.0, length_scale_bounds=(1e-2, 1e3)) \
     + WhiteKernel(noise_level=1, noise_level_bounds=(1e-10, 1e+1))
 gp = GaussianProcessRegressor(kernel=kernel,
@@ -54,7 +54,7 @@ plt.title("Initial: %s\nOptimum: %s\nLog-Marginal-Likelihood: %s"
 plt.tight_layout()
 
 # Second run
-plt.figure(1)
+plt.figure()
 kernel = 1.0 * RBF(length_scale=1.0, length_scale_bounds=(1e-2, 1e3)) \
     + WhiteKernel(noise_level=1e-5, noise_level_bounds=(1e-10, 1e+1))
 gp = GaussianProcessRegressor(kernel=kernel,
@@ -73,7 +73,7 @@ plt.title("Initial: %s\nOptimum: %s\nLog-Marginal-Likelihood: %s"
 plt.tight_layout()
 
 # Plot LML landscape
-plt.figure(2)
+plt.figure()
 theta0 = np.logspace(-2, 3, 49)
 theta1 = np.logspace(-2, 0, 50)
 Theta0, Theta1 = np.meshgrid(theta0, theta1)

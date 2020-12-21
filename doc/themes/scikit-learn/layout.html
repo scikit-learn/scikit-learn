@@ -26,6 +26,11 @@
   {% endif %}
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="{{ pathto('_static/js/bootstrap.min.js', 1)}}" type="text/javascript"></script>
+  <script>
+     VERSION_SUBDIR = (function(groups) {
+         return groups ? groups[1] : null;
+     })(location.href.match(/^https?:\/\/scikit-learn.org\/([^\/]+)/));
+  </script>
   <link rel="canonical" href="http://scikit-learn.org/stable/{{pagename}}.html" />
 
   <script type="text/javascript">
@@ -78,17 +83,20 @@
                  <span class="caret"></span>
               </a>
               <ul class="dropdown-menu">
-            <li class="link-title">Scikit-learn 0.19 (development)</li>
+            <li class="link-title">Scikit-learn <script>document.write(DOCUMENTATION_OPTIONS.VERSION + (VERSION_SUBDIR ? " (" + VERSION_SUBDIR + ")" : ""));</script></li>
             <li><a href="{{ pathto('tutorial/index') }}">Tutorials</a></li>
             <li><a href="{{ pathto('user_guide') }}">User guide</a></li>
             <li><a href="{{ pathto('modules/classes') }}">API</a></li>
+            <li><a href="{{ pathto('glossary') }}">Glossary</a></li>
             <li><a href="{{ pathto('faq') }}">FAQ</a></li>
-            <li><a href="{{ pathto('developers/contributing') }}">Contributing</a></li>
+            <li><a href="{{ pathto('developers/index') }}">Development</a></li>
+            <li><a href="{{ pathto('roadmap') }}">Roadmap</a></li>
+            <li><a href="{{ pathto('about') }}">About us</a></li>
             <li class="divider"></li>
-                <li><a href="http://scikit-learn.org/stable/documentation.html">Scikit-learn 0.18 (stable)</a></li>
-                <li><a href="http://scikit-learn.org/0.17/documentation.html">Scikit-learn 0.17</a></li>
-                <li><a href="http://scikit-learn.org/0.16/documentation.html">Scikit-learn 0.16</a></li>
-				<li><a href="{{ pathto('_downloads/scikit-learn-docs.pdf', 1) }}">PDF documentation</a></li>
+                <script>if (VERSION_SUBDIR != "stable") document.write('<li><a href="http://scikit-learn.org/stable/documentation.html">Stable version</a></li>')</script>
+                <script>if (VERSION_SUBDIR != "dev") document.write('<li><a href="http://scikit-learn.org/dev/documentation.html">Development version</a></li>')</script>
+                <li><a href="http://scikit-learn.org/dev/versions.html">All available versions</a></li>
+                <li><a href="{{ pathto('_downloads/scikit-learn-docs.pdf', 1) }}">PDF documentation</a></li>
               </ul>
             </div>
         </li>
@@ -142,8 +150,8 @@
 			     style="max-height: 200px; max-width: 629px; margin-left: -21px;"></div></a>
 		  </div>
 		  <div class="item">
-		    <a href="{{pathto('auto_examples/covariance/plot_outlier_detection') }}">
-		      <img src="_images/sphx_glr_plot_outlier_detection_003_carousel.png"></a>
+		    <a href="{{pathto('auto_examples/plot_anomaly_comparison') }}">
+		      <img src="_images/sphx_glr_plot_anomaly_comparison_thumb.png"></a>
 		  </div>
 		  <div class="item">
 		    <a href="{{pathto('auto_examples/neighbors/plot_species_kde') }}">
@@ -174,8 +182,8 @@
 		      <img src="_images/sphx_glr_plot_gmm_pdf_thumb.png"></a>
 		  </div>
 		  <div class="item">
-		    <a href="{{ pathto('auto_examples/cluster/plot_face_ward_segmentation') }}">
-		      <img src="_images/sphx_glr_plot_face_ward_segmentation_thumb.png"></a>
+		    <a href="{{ pathto('auto_examples/cluster/plot_coin_ward_segmentation') }}">
+		      <img src="_images/sphx_glr_plot_coin_ward_segmentation_thumb.png"></a>
 		  </div>
 		</div>
 		<!-- Carousel nav -->
@@ -273,7 +281,7 @@
 
     {%- if pagename != "install" %}
       <p class="doc-version"><b>{{project}} v{{ release|e }}</b><br/>
-      <a href="http://scikit-learn.org/stable/support.html#documentation-resources">Other versions</a></p>
+      <a href="http://scikit-learn.org/dev/versions.html">Other versions</a></p>
     {%- endif %}
     <p class="citing">Please <b><a href="{{ pathto('about').replace('#', '') }}#citing-scikit-learn" style="font-size: 110%;">cite us </a></b>if you use the software.</p>
     {{ toc }}
@@ -334,17 +342,13 @@
      </div>
 
     {% if theme_google_analytics|tobool %}
-    <script type="text/javascript">
-      var _gaq = _gaq || [];
-      _gaq.push(['_setAccount', 'UA-22606712-2']);
-      _gaq.push(['_trackPageview']);
-
-      (function() {
-        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-      })();
+    <script>
+        window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+        ga('create', 'UA-22606712-2', 'auto');
+        ga('set', 'anonymizeIp', true);
+        ga('send', 'pageview');
     </script>
+    <script async src='https://www.google-analytics.com/analytics.js'></script>
     {% endif %}
     <script>
       (function() {

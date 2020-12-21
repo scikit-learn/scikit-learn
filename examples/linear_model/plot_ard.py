@@ -76,7 +76,7 @@ plt.legend(loc=1)
 plt.figure(figsize=(6, 5))
 plt.title("Histogram of the weights")
 plt.hist(clf.coef_, bins=n_features, color='navy', log=True)
-plt.scatter(clf.coef_[relevant_features], 5 * np.ones(len(relevant_features)),
+plt.scatter(clf.coef_[relevant_features], np.full(len(relevant_features), 5.),
             color='gold', marker='o', label="Relevant features")
 plt.ylabel("Features")
 plt.xlabel("Values of the weights")

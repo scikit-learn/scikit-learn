@@ -10,7 +10,7 @@ This data sets consists of 3 different types of irises'
 length, stored in a 150x4 numpy.ndarray
 
 The rows being the samples and the columns being:
-Sepal Length, Sepal Width, Petal Length	and Petal Width.
+Sepal Length, Sepal Width, Petal Length and Petal Width.
 
 The below plot uses the first two features.
 See `here <https://en.wikipedia.org/wiki/Iris_flower_data_set>`_ for more

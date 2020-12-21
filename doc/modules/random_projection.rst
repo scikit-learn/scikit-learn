@@ -22,7 +22,7 @@ technique for distance based method.
 .. topic:: References:
 
  * Sanjoy Dasgupta. 2000.
-   `Experiments with random projection. <http://cseweb.ucsd.edu/~dasgupta/papers/randomf.pdf>`_
+   `Experiments with random projection. <https://cseweb.ucsd.edu/~dasgupta/papers/randomf.pdf>`_
    In Proceedings of the Sixteenth conference on Uncertainty in artificial
    intelligence (UAI'00), Craig Boutilier and Moisés Goldszmidt (Eds.). Morgan
    Kaufmann Publishers Inc., San Francisco, CA, USA, 143-151.
@@ -52,7 +52,7 @@ The main theoretical result behind the efficiency of random projection is the
   and can even be taken to be an orthogonal projection.
 
 Knowing only the number of samples, the
-:func:`sklearn.random_projection.johnson_lindenstrauss_min_dim` estimates
+:func:`johnson_lindenstrauss_min_dim` estimates
 conservatively the minimal size of the random subspace to guarantee a
 bounded distortion introduced by the random projection::
 
@@ -64,19 +64,19 @@ bounded distortion introduced by the random projection::
   >>> johnson_lindenstrauss_min_dim(n_samples=[1e4, 1e5, 1e6], eps=0.1)
   array([ 7894,  9868, 11841])
 
-.. figure:: ../auto_examples/images/sphx_glr_plot_johnson_lindenstrauss_bound_001.png
-   :target: ../auto_examples/plot_johnson_lindenstrauss_bound.html
+.. figure:: ../auto_examples/miscellaneous/images/sphx_glr_plot_johnson_lindenstrauss_bound_001.png
+   :target: ../auto_examples/miscellaneous/plot_johnson_lindenstrauss_bound.html
    :scale: 75
    :align: center
 
-.. figure:: ../auto_examples/images/sphx_glr_plot_johnson_lindenstrauss_bound_002.png
-   :target: ../auto_examples/plot_johnson_lindenstrauss_bound.html
+.. figure:: ../auto_examples/miscellaneous/images/sphx_glr_plot_johnson_lindenstrauss_bound_002.png
+   :target: ../auto_examples/miscellaneous/plot_johnson_lindenstrauss_bound.html
    :scale: 75
    :align: center
 
 .. topic:: Example:
 
-  * See :ref:`sphx_glr_auto_examples_plot_johnson_lindenstrauss_bound.py`
+  * See :ref:`sphx_glr_auto_examples_miscellaneous_plot_johnson_lindenstrauss_bound.py`
     for a theoretical explication on the Johnson-Lindenstrauss lemma and an
     empirical validation using sparse random matrices.
 
@@ -90,7 +90,7 @@ bounded distortion introduced by the random projection::
 
 Gaussian random projection
 ==========================
-The :class:`sklearn.random_projection.GaussianRandomProjection` reduces the
+The :class:`GaussianRandomProjection` reduces the
 dimensionality by projecting the original input space on a randomly generated
 matrix where components are drawn from the following distribution
 :math:`N(0, \frac{1}{n_{components}})`.
@@ -111,7 +111,7 @@ projection transformer::
 
 Sparse random projection
 ========================
-The :class:`sklearn.random_projection.SparseRandomProjection` reduces the
+The :class:`SparseRandomProjection` reduces the
 dimensionality by projecting the original input space using a sparse
 random matrix.
 
@@ -141,7 +141,7 @@ projection transformer::
 
   >>> import numpy as np
   >>> from sklearn import random_projection
-  >>> X = np.random.rand(100,10000)
+  >>> X = np.random.rand(100, 10000)
   >>> transformer = random_projection.SparseRandomProjection()
   >>> X_new = transformer.fit_transform(X)
   >>> X_new.shape
@@ -152,11 +152,11 @@ projection transformer::
 
  * D. Achlioptas. 2003.
    `Database-friendly random projections: Johnson-Lindenstrauss  with binary
-   coins <www.cs.ucsc.edu/~optas/papers/jl.pdf>`_.
+   coins <http://www.cs.ucsc.edu/~optas/papers/jl.pdf>`_.
    Journal of Computer and System Sciences 66 (2003) 671–687
 
  * Ping Li, Trevor J. Hastie, and Kenneth W. Church. 2006.
-   `Very sparse random projections. <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.62.585&rep=rep1&type=pdf>`_
+   `Very sparse random projections. <https://web.stanford.edu/~hastie/Papers/Ping/KDD06_rp.pdf>`_
    In Proceedings of the 12th ACM SIGKDD international conference on
    Knowledge discovery and data mining (KDD '06). ACM, New York, NY, USA,
    287-296.

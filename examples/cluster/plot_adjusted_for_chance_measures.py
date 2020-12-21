@@ -30,7 +30,6 @@ import matplotlib.pyplot as plt
 from time import time
 from sklearn import metrics
 
-
 def uniform_labelings_scores(score_func, n_samples, n_clusters_range,
                              fixed_n_classes=None, n_runs=5, seed=42):
     """Compute score for 2 random uniform cluster labelings.
@@ -55,17 +54,21 @@ def uniform_labelings_scores(score_func, n_samples, n_clusters_range,
             scores[i, j] = score_func(labels_a, labels_b)
     return scores
 
+
+def ami_score(U, V):
+    return metrics.adjusted_mutual_info_score(U, V)
+
 score_funcs = [
     metrics.adjusted_rand_score,
     metrics.v_measure_score,
-    metrics.adjusted_mutual_info_score,
+    ami_score,
     metrics.mutual_info_score,
 ]
 
 # 2 independent random clusterings with equal cluster number
 
 n_samples = 100
-n_clusters_range = np.linspace(2, n_samples, 10).astype(np.int)
+n_clusters_range = np.linspace(2, n_samples, 10).astype(int)
 
 plt.figure(1)
 
@@ -87,14 +90,14 @@ plt.title("Clustering measures for 2 random uniform labelings\n"
 plt.xlabel('Number of clusters (Number of samples is fixed to %d)' % n_samples)
 plt.ylabel('Score value')
 plt.legend(plots, names)
-plt.ylim(ymin=-0.05, ymax=1.05)
+plt.ylim(bottom=-0.05, top=1.05)
 
 
 # Random labeling with varying n_clusters against ground class labels
 # with fixed number of clusters
 
 n_samples = 1000
-n_clusters_range = np.linspace(2, 100, 10).astype(np.int)
+n_clusters_range = np.linspace(2, 100, 10).astype(int)
 n_classes = 10
 
 plt.figure(2)
@@ -117,6 +120,6 @@ plt.title("Clustering measures for random uniform labeling\n"
           "against reference assignment with %d classes" % n_classes)
 plt.xlabel('Number of clusters (Number of samples is fixed to %d)' % n_samples)
 plt.ylabel('Score value')
-plt.ylim(ymin=-0.05, ymax=1.05)
+plt.ylim(bottom=-0.05, top=1.05)
 plt.legend(plots, names)
 plt.show()

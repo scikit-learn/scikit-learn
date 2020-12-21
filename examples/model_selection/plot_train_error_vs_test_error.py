@@ -35,7 +35,7 @@ y_train, y_test = y[:n_samples_train], y[n_samples_train:]
 # #############################################################################
 # Compute train and test errors
 alphas = np.logspace(-5, 1, 60)
-enet = linear_model.ElasticNet(l1_ratio=0.7)
+enet = linear_model.ElasticNet(l1_ratio=0.7, max_iter=10000)
 train_errors = list()
 test_errors = list()
 for alpha in alphas:

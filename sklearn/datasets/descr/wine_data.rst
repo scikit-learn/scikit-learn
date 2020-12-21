@@ -1,29 +1,31 @@
-Wine Data Database
-====================
+.. _wine_dataset:
 
-Notes
------
-Data Set Characteristics:
+Wine recognition dataset
+------------------------
+
+**Data Set Characteristics:**
+
     :Number of Instances: 178 (50 in each of three classes)
     :Number of Attributes: 13 numeric, predictive attributes and the class
     :Attribute Information:
- 		- 1) Alcohol
- 		- 2) Malic acid
- 		- 3) Ash
-		- 4) Alcalinity of ash  
- 		- 5) Magnesium
-		- 6) Total phenols
- 		- 7) Flavanoids
- 		- 8) Nonflavanoid phenols
- 		- 9) Proanthocyanins
-		- 10)Color intensity
- 		- 11)Hue
- 		- 12)OD280/OD315 of diluted wines
- 		- 13)Proline
-        	- class:
-                - class_0
-                - class_1
-                - class_2
+ 		- Alcohol
+ 		- Malic acid
+ 		- Ash
+		- Alcalinity of ash  
+ 		- Magnesium
+		- Total phenols
+ 		- Flavanoids
+ 		- Nonflavanoid phenols
+ 		- Proanthocyanins
+		- Color intensity
+ 		- Hue
+ 		- OD280/OD315 of diluted wines
+ 		- Proline
+
+    - class:
+            - class_0
+            - class_1
+            - class_2
 		
     :Summary Statistics:
     
@@ -69,27 +71,25 @@ Via Brigata Salerno, 16147 Genoa, Italy.
 Citation:
 
 Lichman, M. (2013). UCI Machine Learning Repository
-[http://archive.ics.uci.edu/ml]. Irvine, CA: University of California,
+[https://archive.ics.uci.edu/ml]. Irvine, CA: University of California,
 School of Information and Computer Science. 
 
-References
-----------
-(1) 
-S. Aeberhard, D. Coomans and O. de Vel, 
-Comparison of Classifiers in High Dimensional Settings, 
-Tech. Rep. no. 92-02, (1992), Dept. of Computer Science and Dept. of 
-Mathematics and Statistics, James Cook University of North Queensland. 
-(Also submitted to Technometrics). 
+.. topic:: References
 
-The data was used with many others for comparing various 
-classifiers. The classes are separable, though only RDA 
-has achieved 100% correct classification. 
-(RDA : 100%, QDA 99.4%, LDA 98.9%, 1NN 96.1% (z-transformed data)) 
-(All results using the leave-one-out technique) 
+  (1) S. Aeberhard, D. Coomans and O. de Vel, 
+  Comparison of Classifiers in High Dimensional Settings, 
+  Tech. Rep. no. 92-02, (1992), Dept. of Computer Science and Dept. of  
+  Mathematics and Statistics, James Cook University of North Queensland. 
+  (Also submitted to Technometrics). 
 
-(2) 
-S. Aeberhard, D. Coomans and O. de Vel, 
-"THE CLASSIFICATION PERFORMANCE OF RDA" 
-Tech. Rep. no. 92-01, (1992), Dept. of Computer Science and Dept. of 
-Mathematics and Statistics, James Cook University of North Queensland. 
-(Also submitted to Journal of Chemometrics). 
+  The data was used with many others for comparing various 
+  classifiers. The classes are separable, though only RDA 
+  has achieved 100% correct classification. 
+  (RDA : 100%, QDA 99.4%, LDA 98.9%, 1NN 96.1% (z-transformed data)) 
+  (All results using the leave-one-out technique) 
+
+  (2) S. Aeberhard, D. Coomans and O. de Vel, 
+  "THE CLASSIFICATION PERFORMANCE OF RDA" 
+  Tech. Rep. no. 92-01, (1992), Dept. of Computer Science and Dept. of 
+  Mathematics and Statistics, James Cook University of North Queensland. 
+  (Also submitted to Journal of Chemometrics).

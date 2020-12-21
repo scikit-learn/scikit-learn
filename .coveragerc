@@ -1,8 +1,9 @@
 [run]
 branch = True
 source = sklearn
-include = */sklearn/*
+parallel = True
 omit =
     */sklearn/externals/*
+    */sklearn/_build_utils/*
     */benchmarks/*
-    */setup.py
+    **/setup.py

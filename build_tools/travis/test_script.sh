@@ -1,69 +1,39 @@
 #!/bin/bash
-# This script is meant to be called by the "script" step defined in
-# .travis.yml. See http://docs.travis-ci.com/ for more details.
-# The behavior of the script is controlled by environment variabled defined
-# in the .travis.yml in the top level folder of the project.
-
-# License: 3-clause BSD
 
 set -e
 
 python --version
-python -c "import numpy; print('numpy %s' % numpy.__version__)"
-python -c "import scipy; print('scipy %s' % scipy.__version__)"
+python -c "import numpy; print(f'numpy {numpy.__version__}')"
+python -c "import scipy; print(f'scipy {scipy.__version__}')"
 python -c "\
 try:
     import pandas
-    print('pandas %s' % pandas.__version__)
+    print(f'pandas {pandas.__version__}')
 except ImportError:
     pass
 "
-python -c "import multiprocessing as mp; print('%d CPUs' % mp.cpu_count())"
+python -c "import joblib; print(f'{joblib.cpu_count()} CPUs')"
+python -c "import platform; print(f'{platform.machine()}')"
 
-run_tests() {
-    if [[ "$USE_PYTEST" == "true" ]]; then
-        TEST_CMD="pytest --showlocals --durations=20 --pyargs"
-    else
-        TEST_CMD="nosetests --with-timer --timer-top-n 20"
-    fi
-    # Get into a temp directory to run test from the installed scikit-learn and
-    # check if we do not leave artifacts
-    mkdir -p $TEST_DIR
-    # We need the setup.cfg for the nose settings
-    cp setup.cfg $TEST_DIR
-    cd $TEST_DIR
+TEST_CMD="pytest --showlocals --durations=20 --pyargs"
 
-    # Skip tests that require large downloads over the network to save bandwidth
-    # usage as travis workers are stateless and therefore traditional local
-    # disk caching does not work.
-    export SKLEARN_SKIP_NETWORK_TESTS=1
+# Run the tests on the installed version
+mkdir -p $TEST_DIR
 
-    if [[ "$COVERAGE" == "true" ]]; then
-        TEST_CMD="$TEST_CMD --with-coverage"
-    fi
-    $TEST_CMD sklearn
+# Copy "setup.cfg" for the test settings
+cp setup.cfg $TEST_DIR
+cd $TEST_DIR
 
-    # Going back to git checkout folder needed to test documentation
-    cd $OLDPWD
+if [[ $TRAVIS_CPU_ARCH == arm64 ]]; then
+    # Faster run of the source code tests
+    TEST_CMD="$TEST_CMD -n $CPU_COUNT"
 
-    if [[ "$USE_PYTEST" == "true" ]]; then
-        # Do not run doctests in scipy-dev-wheels build for now
-        # (broken by numpy 1.14.dev array repr/str formatting
-        # change even with np.set_printoptions(sign='legacy')).
-        # See https://github.com/numpy/numpy/issues/9804 for more details
-        if [[ "$DISTRIB" != "scipy-dev-wheels" ]]; then
-            pytest $(find doc -name '*.rst' | sort)
-        fi
-    else
-        # Makefile is using nose
-        make test-doc
-    fi
-}
-
-if [[ "$RUN_FLAKE8" == "true" ]]; then
-    source build_tools/travis/flake8_diff.sh
+    # Remove the option to test the docstring
+    sed -i -e 's/--doctest-modules//g' setup.cfg
 fi
 
-if [[ "$SKIP_TESTS" != "true" ]]; then
-    run_tests
+if [[ -n $CHECK_WARNINGS ]]; then
+    TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning"
 fi
+
+$TEST_CMD sklearn
