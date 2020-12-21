@@ -386,7 +386,7 @@ class GraphicalLasso(EmpiricalCovariance):
             Data from which to compute the covariance estimate
 
         y : Ignored
-            Not used, present for API consistence purpose.
+            Not used, present for API consistency by convention.
 
         Returns
         -------
@@ -696,7 +696,7 @@ class GraphicalLassoCV(GraphicalLasso):
             Data from which to compute the covariance estimate
 
         y : Ignored
-            Not used, present for API consistence purpose.
+            Not used, present for API consistency by convention.
 
         Returns
         -------
