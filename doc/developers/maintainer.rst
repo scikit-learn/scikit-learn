@@ -374,9 +374,9 @@ Also, the (private) experimental features that are imported must be in a
 submodule/subpackage of the public subpackage, e.g.
 ``sklearn/ensemble/_hist_gradient_boosting/`` or
 ``sklearn/impute/_iterative.py``. This is needed so that pickles still work
-in the future when the features aren't experimental anymore
+in the future when the features aren't experimental anymore.
 
-To avoid type checker (e.g. mypy) errors a direct import of experimenal
+To avoid type checker (e.g. mypy) errors a direct import of experimental
 estimators should be done in the parent module, protected by the
 ``if typing.TYPE_CHECKING`` check. See `sklearn/ensemble/__init__.py
 <https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/ensemble/__init__.py>`_,
