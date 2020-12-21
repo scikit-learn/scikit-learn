@@ -83,7 +83,7 @@ def init_bounds_dense(
         floating min_dist, dist
         int best_cluster, i, j
 
-    for i in range(n_samples):
+    for i in prange(n_samples, schedule='static', nogil=True):
         best_cluster = 0
         min_dist = _euclidean_dense_dense(&X[i, 0], &centers[0, 0],
                                           n_features, False)
