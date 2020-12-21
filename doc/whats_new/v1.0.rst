@@ -52,6 +52,12 @@ Changelog
   settings. :pr:`19002` by :user:`Jon Crall <Erotemic>` and
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+:mod:`sklearn.linear_model`
+...........................
+
+- |Fix| :meth:`ElasticNet.fit` no longer modifies `sample_weight` in place.
+  :pr:`19055` by `Thomas Fan`_.
+
 Code and Documentation Contributors
 -----------------------------------
 
