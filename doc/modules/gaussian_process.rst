@@ -156,9 +156,9 @@ required for fitting and predicting: while fitting KRR is fast in principle,
 the grid-search for hyperparameter optimization scales exponentially with the
 number of hyperparameters ("curse of dimensionality"). The gradient-based
 optimization of the parameters in GPR does not suffer from this exponential
-scaling and is thus considerable faster on this example with 3-dimensional
+scaling and is thus considerably faster on this example with 3-dimensional
 hyperparameter space. The time for predicting is similar; however, generating
-the variance of the predictive distribution of GPR takes considerable longer
+the variance of the predictive distribution of GPR takes considerably longer
 than just predicting the mean.
 
 GPR on Mauna Loa CO2 data
@@ -294,7 +294,7 @@ with different choices of the hyperparameters. The first figure shows the
 predicted probability of GPC with arbitrarily chosen hyperparameters and with
 the hyperparameters corresponding to the maximum log-marginal-likelihood (LML).
 
-While the hyperparameters chosen by optimizing LML have a considerable larger
+While the hyperparameters chosen by optimizing LML have a considerably larger
 LML, they perform slightly worse according to the log-loss on test data. The
 figure shows that this is because they exhibit a steep change of the class
 probabilities at the class boundaries (which is good) but have predicted
@@ -384,7 +384,7 @@ equivalent call to ``__call__``: ``np.diag(k(X, X)) == k.diag(X)``
 
 Kernels are parameterized by a vector :math:`\theta` of hyperparameters. These
 hyperparameters can for instance control length-scales or periodicity of a
-kernel (see below). All kernels support computing analytic gradients 
+kernel (see below). All kernels support computing analytic gradients
 of the kernel's auto-covariance with respect to :math:`log(\theta)` via setting
 ``eval_gradient=True`` in the ``__call__`` method.
 That is, a ``(len(X), len(X), len(theta))`` array is returned where the entry
