@@ -138,7 +138,7 @@ class loguniform(scipy.stats.reciprocal):
 
     The logarithmic probability density function (PDF) is uniform. When
     ``x`` is a uniformly distributed random variable between 0 and 1, ``10**x``
-    are random variales that are equally likely to be returned.
+    are random variables that are equally likely to be returned.
 
     This class is an alias to ``scipy.stats.reciprocal``, which uses the
     reciprocal distribution:
