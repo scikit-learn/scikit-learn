@@ -56,7 +56,7 @@ Changelog
 ...........................
 
 - |Fix| :meth:`ElasticNet.fit` no longer modifies `sample_weight` in place.
-  :pr:`19055` by `Thomas Fan`_.
+  :pr:`19055` by :user:`Adam Midvidy <amidvidy>` and `Thomas Fan`_.
 
 Code and Documentation Contributors
 -----------------------------------
