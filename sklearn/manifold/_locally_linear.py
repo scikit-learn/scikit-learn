@@ -355,10 +355,10 @@ def locally_linear_embedding(
 
             # build Hessian estimator
             if use_svd:
-                U = svd(Gi, full_matrices=0, check_finite=False)[0]
+                U = svd(Gi, full_matrices=0)[0]
             else:
                 Ci = np.dot(Gi, Gi.T)
-                U = eigh(Ci, check_finite=False)[1][:, ::-1]
+                U = eigh(Ci)[1][:, ::-1]
 
             Yi[:, 1:1 + n_components] = U[:, :n_components]
 
@@ -405,14 +405,13 @@ def locally_linear_embedding(
             for i in range(N):
                 X_nbrs = X[neighbors[i]] - X[i]
                 V[i], evals[i], _ = svd(X_nbrs,
-                                        full_matrices=True,
-                                        check_finite=False)
+                                        full_matrices=True)
             evals **= 2
         else:
             for i in range(N):
                 X_nbrs = X[neighbors[i]] - X[i]
                 C_nbrs = np.dot(X_nbrs, X_nbrs.T)
-                evi, vi = eigh(C_nbrs, check_finite=False)
+                evi, vi = eigh(C_nbrs)
                 evals[i] = evi[::-1]
                 V[i] = vi[:, ::-1]
 
@@ -505,10 +504,10 @@ def locally_linear_embedding(
 
             # compute n_components largest eigenvalues of Xi * Xi^T
             if use_svd:
-                v = svd(Xi, full_matrices=True, check_finite=False)[0]
+                v = svd(Xi, full_matrices=True)[0]
             else:
                 Ci = np.dot(Xi, Xi.T)
-                v = eigh(Ci, check_finite=False)[1][:, ::-1]
+                v = eigh(Ci)[1][:, ::-1]
 
             Gi = np.zeros((n_neighbors, n_components + 1))
             Gi[:, 1:] = v[:, :n_components]
