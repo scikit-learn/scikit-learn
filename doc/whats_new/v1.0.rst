@@ -52,6 +52,10 @@ Changelog
   settings. :pr:`19002` by :user:`Jon Crall <Erotemic>` and
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Efficiency| :class:`cluster.KMeans` with `algorithm='elkan'` is now faster
+  in multicore settings. :pr:`19052` by
+  :user:`Yusuke Nagasaka <YusukeNagasaka>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
