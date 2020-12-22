@@ -1232,4 +1232,4 @@ def test_enet_sample_weight_does_not_overwrite_sample_weight(check_input):
     reg = ElasticNet()
     reg.fit(X, y, sample_weight=sample_weight, check_input=check_input)
 
-    assert_allclose(sample_weight, sample_weight_1_25)
+    assert_array_equal(sample_weight, sample_weight_1_25)
