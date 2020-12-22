@@ -159,7 +159,7 @@ def init_bounds_sparse(
 
         floating[::1] centers_squared_norms = row_norms(centers, squared=True)
 
-    for i in range(n_samples):
+    for i in prange(n_samples, schedule='static', nogil=True):
         best_cluster = 0
         min_dist = _euclidean_sparse_dense(
             X_data[X_indptr[i]: X_indptr[i + 1]],
