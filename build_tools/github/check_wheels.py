@@ -11,14 +11,24 @@ with gh_wheel_path.open('r') as f:
 build_matrix = wheel_config['jobs']['build_wheels']['strategy']['matrix']
 n_python_versions = len(build_matrix['python'])
 
-# For each python version we have: 6 wheels
+# For each python version we have: 5 wheels
 # 1 osx wheel (x86_64)
-# 3 linux wheel (i686 + x86_64 + arm64)
+# 2 linux wheel (i686 + x86_64)
 # 2 windows wheel (win32 + wind_amd64)
-n_wheels = 6 * n_python_versions
+n_wheels = 5 * n_python_versions
 
 # plus one more for the sdist
 n_wheels += 1
+
+# aarch64 builds from travis
+travis_config_path = Path.cwd() / ".travis.yml"
+with travis_config_path.open('r') as f:
+    travis_config = yaml.safe_load(f)
+
+jobs = travis_config['jobs']['include']
+travis_builds = [j for j in jobs
+                 if any("CIBW_BUILD" in env for env in j["env"])]
+n_wheels += len(travis_builds)
 
 dist_files = list(Path("dist").glob('**/*'))
 n_dist_files = len(dist_files)
