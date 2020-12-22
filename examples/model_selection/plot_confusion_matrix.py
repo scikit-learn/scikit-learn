@@ -55,7 +55,8 @@ for title, normalize in titles_options:
     disp = plot_confusion_matrix(classifier, X_test, y_test,
                                  display_labels=class_names,
                                  cmap=plt.cm.Blues,
-                                 normalize=normalize)
+                                 normalize=normalize,
+                                 values_size=16)
     disp.ax_.set_title(title)
 
     print(title)
