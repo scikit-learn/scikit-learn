@@ -1218,7 +1218,7 @@ def test_linear_models_cv_fit_for_all_backends(backend, estimator):
 
 @pytest.mark.parametrize("check_input", [True, False])
 def test_enet_sample_weight_does_not_overwrite_sample_weight(check_input):
-    """Check that elastic next does not overwrite sample_weights."""
+    """Check that ElasticNet does not overwrite sample_weights."""
 
     rng = np.random.RandomState(0)
     n_samples, n_features = 10, 5
