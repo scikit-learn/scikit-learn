@@ -104,8 +104,8 @@ Changelog
   initial cluster centroids. :pr:`17937` by :user:`g-walsh`
 
 - |API| :class:`cluster.MiniBatchKMeans` attributes, `counts_` and
-  `init_size_`, are deprecated and will be removed in 0.26. :pr:`17864` by
-  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+  `init_size_`, are deprecated and will be removed in 1.1 (renaming of 0.26).
+  :pr:`17864` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.compose`
 ......................
@@ -128,7 +128,8 @@ Changelog
 - |API| Deprecates `cv_alphas_` in favor of `cv_results_['alphas']` and
   `grid_scores_` in favor of split scores in `cv_results_` in
   :class:`covariance.GraphicalLassoCV`. `cv_alphas_` and `grid_scores_` will be
-  removed in version 0.26. :pr:`16392` by `Thomas Fan`_.
+  removed in version 1.1 (renaming of 0.26).
+  :pr:`16392` by `Thomas Fan`_.
 
 :mod:`sklearn.cross_decomposition`
 ..................................
@@ -149,7 +150,7 @@ Changelog
 - |API| For :class:`cross_decomposition.NMF`,
   the `init` value, when 'init=None' and
   n_components <= min(n_samples, n_features) will be changed from
-  `'nndsvd'` to `'nndsvda'` in 0.26.
+  `'nndsvd'` to `'nndsvda'` in 1.1 (renaming of 0.26).
   :pr:`18525` by :user:`Chiara Marmo <cmarmo>`.
 
 - |API| The bounds of the `n_components` parameter is now restricted:
@@ -159,20 +160,23 @@ Changelog
     and :class:`cross_decomposition.PLSCanonical`.
   - into `[1, n_features]` or :class:`cross_decomposition.PLSRegression`.
 
-  An error will be raised in 0.26. :pr:`17095` by `Nicolas Hug`_.
+  An error will be raised in 1.1 (renaming of 0.26).
+  :pr:`17095` by `Nicolas Hug`_.
 
 - |API| For :class:`cross_decomposition.PLSSVD`,
   :class:`cross_decomposition.CCA`, and
   :class:`cross_decomposition.PLSCanonical`, the `x_scores_` and `y_scores_`
-  attributes were deprecated and will be removed in 0.26. They can be
-  retrieved by calling `transform` on the training data. The `norm_y_weights`
-  attribute will also be removed. :pr:`17095` by `Nicolas Hug`_.
+  attributes were deprecated and will be removed in 1.1 (renaming of 0.26).
+  They can be retrieved by calling `transform` on the training data.
+  The `norm_y_weights` attribute will also be removed.
+  :pr:`17095` by `Nicolas Hug`_.
 
 - |API| For :class:`cross_decomposition.PLSRegression`,
   :class:`cross_decomposition.PLSCanonical`,
   :class:`cross_decomposition.CCA`, and
   :class:`cross_decomposition.PLSSVD`, the `x_mean_`, `y_mean_`, `x_std_`, and
-  `y_std_` attributes were deprecated and will be removed in 0.26.
+  `y_std_` attributes were deprecated and will be removed in 1.1
+  (renaming of 0.26).
   :pr:`18768` by :user:`Maren Westermann <marenwestermann>`.
 
 - |Fix| :class:`decomposition.TruncatedSVD` becomes deterministic by using the
@@ -240,8 +244,9 @@ Changelog
 
 - |Fix| Fix :class:`decomposition.SparseCoder` such that it follows
   scikit-learn API and support cloning. The attribute `components_` is
-  deprecated in 0.24 and will be removed in 0.26. This attribute was
-  redundant with the `dictionary` attribute and constructor parameter.
+  deprecated in 0.24 and will be removed in 1.1 (renaming of 0.26).
+  This attribute was redundant with the `dictionary` attribute and constructor
+  parameter.
   :pr:`17679` by :user:`Xavier Dupré <sdpython>`.
 
 - |Fix| :meth:`TruncatedSVD.fit_transform` consistently returns the same
@@ -302,7 +307,8 @@ Changelog
 
 - |API| :class:`exceptions.ChangedBehaviorWarning` and
   :class:`exceptions.NonBLASDotWarning` are deprecated and will be removed in
-  v0.26, :pr:`17804` by `Adrin Jalali`_.
+  1.1 (renaming of 0.26).
+  :pr:`17804` by `Adrin Jalali`_.
 
 :mod:`sklearn.feature_extraction`
 .................................
@@ -372,6 +378,10 @@ Changelog
   estimator's `random_state` attribute, allowing to use it with more external classes.
   :pr:`15636` by :user:`David Cortes <david-cortes>`.
 
+- |Efficiency| :class:`impute.SimpleImputer` is now faster with `object` dtype array.
+  when `strategy='most_frequent'` in :class:`~sklearn.impute.SimpleImputer`.
+  :pr:`18987` by :user:`David Katz <DavidKatz-il>`.
+
 :mod:`sklearn.inspection`
 .........................
 
@@ -386,7 +396,8 @@ Changelog
   :user:`Roei Kahny <RoeiKa>`.
 
 - |API| Positional arguments are deprecated in
-  :meth:`inspection.PartialDependenceDisplay.plot` and will error in 0.26.
+  :meth:`inspection.PartialDependenceDisplay.plot` and will error in 1.1
+  (renaming of 0.26).
   :pr:`18293` by `Thomas Fan`_.
 
 :mod:`sklearn.isotonic`
@@ -454,8 +465,8 @@ Changelog
 
 - |Enhancement| Add `square_distances` parameter to :class:`manifold.TSNE`,
   which provides backward compatibility during deprecation of legacy squaring
-  behavior. Distances will be squared by default in 0.26, and this parameter
-  will be removed in 0.28. :pr:`17662` by
+  behavior. Distances will be squared by default in 1.1 (renaming of 0.26),
+  and this parameter will be removed in 1.3. :pr:`17662` by
   :user:`Joshua Newton <joshuacwnewton>`.
 
 - |Fix| :class:`manifold.MDS` now correctly sets its `_pairwise` attribute.
@@ -641,8 +652,8 @@ Changelog
 - |API| The attributes ``coef_`` and ``intercept_`` are now deprecated in
   :class:`naive_bayes.MultinomialNB`, :class:`naive_bayes.ComplementNB`,
   :class:`naive_bayes.BernoulliNB` and :class:`naive_bayes.CategoricalNB`,
-  and will be removed in v0.26. :pr:`17427` by
-  :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
+  and will be removed in v1.1 (renaming of 0.26).
+  :pr:`17427` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
 :mod:`sklearn.neighbors`
 ........................
@@ -831,56 +842,56 @@ Code and Documentation Contributors
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 0.23, including:
 
-Abo7atm, Adam Spannbauer, Adrin Jalali, adrinjalali, Agamemnon Krasoulis, 
-Akshay Deodhar, Albert Villanova del Moral, Alessandro Gentile, Alex Henrie, 
-Alex Itkes, Alex Liang, Alexander Lenail, alexandracraciun, Alexandre Gramfort, 
-alexshacked, Allan D Butler, Amanda Dsouza, amy12xx, Anand Tiwari, Anderson 
-Nelson, Andreas Mueller, Ankit Choraria, Archana Subramaniyan, Arthur Imbert, 
-Ashutosh Hathidara, Ashutosh Kushwaha, Atsushi Nukariya, Aura Munoz, AutoViz 
-and Auto_ViML, Avi Gupta, Avinash Anakal, Ayako YAGI, barankarakus, 
-barberogaston, beatrizsmg, Ben Mainye, Benjamin Bossan, Benjamin Pedigo, Bharat 
-Raghunathan, Bhavika Devnani, Biprateep Dey, bmaisonn, Bo Chang, Boris 
-Villazón-Terrazas, brigi, Brigitta Sipőcz, Bruno Charron, Byron Smith, Cary 
-Goltermann, Cat Chenal, CeeThinwa, chaitanyamogal, Charles Patel, Chiara Marmo, 
-Christian Kastner, Christian Lorentzen, Christoph Deil, Christos Aridas, Clara 
-Matos, clmbst, Coelhudo, crispinlogan, Cristina Mulas, Daniel López, Daniel 
-Mohns, darioka, Darshan N, david-cortes, Declan O'Neill, Deeksha Madan, 
-Elizabeth DuPre, Eric Fiegel, Eric Larson, Erich Schubert, Erin Khoo, Erin R 
-Hoffman, eschibli, Felix Wick, fhaselbeck, Forrest Koch, Francesco Casalegno, 
-Frans Larsson, Gael Varoquaux, Gaurav Desai, Gaurav Sheni, genvalen, Geoffrey 
-Bolmier, George Armstrong, George Kiragu, Gesa Stupperich, Ghislain Antony 
-Vaillant, Gim Seng, Gordon Walsh, Gregory R. Lee, Guillaume Chevalier, 
-Guillaume Lemaitre, Haesun Park, Hannah Bohle, Hao Chun Chang, Harry Scholes, 
-Harsh Soni, Henry, Hirofumi Suzuki, Hitesh Somani, Hoda1394, Hugo Le Moine, 
-hugorichard, indecisiveuser, Isuru Fernando, Ivan Wiryadi, j0rd1smit, Jaehyun 
-Ahn, Jake Tae, James Hoctor, Jan Vesely, Jeevan Anand Anne, JeroenPeterBos, 
-JHayes, Jiaxiang, Jie Zheng, Jigna Panchal, jim0421, Jin Li, Joaquin 
-Vanschoren, Joel Nothman, Jona Sassenhagen, Jonathan, Jorge Gorbe Moya, Joseph 
-Lucas, Joshua Newton, Juan Carlos Alfaro Jiménez, Julien Jerphanion, Justin 
-Huber, Jérémie du Boisberranger, Kartik Chugh, Katarina Slama, kaylani2, 
-Kendrick Cetina, Kenny Huynh, Kevin Markham, Kevin Winata, Kiril Isakov, 
-kishimoto, Koki Nishihara, Krum Arnaudov, Kyle Kosic, Lauren Oldja, Laurenz 
-Reitsam, Lisa Schwetlick, Louis Douge, Louis Guitton, Lucy Liu, Madhura 
-Jayaratne, maikia, Manimaran, Manuel López-Ibáñez, Maren Westermann, Maria 
-Telenczuk, Mariam-ke, Marijn van Vliet, Markus Löning, Martin Scheubrein, 
-Martina G. Vilas, Martina Megasari, Mateusz Górski, mathschy, mathurinm, 
-Matthias Bussonnier, Max Del Giudice, Michael, Milan Straka, Muoki Caleb, N. 
-Haiat, Nadia Tahiri, Ph. D, Naoki Hamada, Neil Botelho, Nicolas Hug, Nils 
-Werner, noelano, Norbert Preining, oj_lappi, Oleh Kozynets, Olivier Grisel, 
-Pankaj Jindal, Pardeep Singh, Parthiv Chigurupati, Patrice Becker, Pete Green, 
-pgithubs, Poorna Kumar, Prabakaran Kumaresshan, Probinette4, pspachtholz, 
-pwalchessen, Qi Zhang, rachel fischoff, Rachit Toshniwal, Rafey Iqbal Rahman, 
-Rahul Jakhar, Ram Rachum, RamyaNP, rauwuckl, Ravi Kiran Boggavarapu, Ray Bell, 
-Reshama Shaikh, Richard Decal, Rishi Advani, Rithvik Rao, Rob Romijnders, roei, 
-Romain Tavenard, Roman Yurchak, Ruby Werman, Ryotaro Tsukada, sadak, Saket 
-Khandelwal, Sam, Sam Ezebunandu, Sam Kimbinyi, Sarah Brown, Saurabh Jain, Sean 
-O. Stalley, Sergio, Shail Shah, Shane Keller, Shao Yang Hong, Shashank Singh, 
-Shooter23, Shubhanshu Mishra, simonamaggio, Soledad Galli, Srimukh Sripada, 
-Stephan Steinfurt, subrat93, Sunitha Selvan, Swier, Sylvain Marié, SylvainLan, 
-t-kusanagi2, Teon L Brooks, Terence Honles, Thijs van den Berg, Thomas J Fan, 
-Thomas J. Fan, Thomas S Benjamin, Thomas9292, Thorben Jensen, tijanajovanovic, 
-Timo Kaufmann, tnwei, Tom Dupré la Tour, Trevor Waite, ufmayer, Umberto Lupo, 
-Venkatachalam N, Vikas Pandey, Vinicius Rios Fuck, Violeta, watchtheblur, Wenbo 
-Zhao, willpeppo, xavier dupré, Xethan, Xue Qianming, xun-tang, yagi-3, Yakov 
-Pchelintsev, Yashika Sharma, Yi-Yan Ge, Yue Wu, Yutaro Ikeda, Zaccharie Ramzi, 
+Abo7atm, Adam Spannbauer, Adrin Jalali, adrinjalali, Agamemnon Krasoulis,
+Akshay Deodhar, Albert Villanova del Moral, Alessandro Gentile, Alexander
+Lenail, alexandracraciun, Alexandre Gramfort, Alex Henrie, Alex Itkes, Alex
+Liang, alexshacked, Allan D Butler, Amanda Dsouza, amy12xx, Anand Tiwari,
+Anderson Nelson, Andreas Mueller, Ankit Choraria, Archana Subramaniyan, Arthur
+Imbert, Ashutosh Hathidara, Ashutosh Kushwaha, Atsushi Nukariya, Aura Munoz,
+AutoViz and Auto_ViML, Avi Gupta, Avinash Anakal, Ayako YAGI, barankarakus,
+barberogaston, beatrizsmg, Benjamin Bossan, Benjamin Pedigo, Ben Mainye, Bharat
+Raghunathan, Bhavika Devnani, Biprateep Dey, bmaisonn, Bo Chang, Boris
+Villazón-Terrazas, brigi, Brigitta Sipőcz, Bruno Charron, Byron Smith, Cary
+Goltermann, Cat Chenal, CeeThinwa, chaitanyamogal, Charles Patel, Chiara Marmo,
+Christian Kastner, Christian Lorentzen, Christoph Deil, Christos Aridas, Clara
+Matos, clmbst, Coelhudo, crispinlogan, Cristina Mulas, Daniel López, Daniel
+Mohns, darioka, Darshan N, david-cortes, Declan O'Neill, Deeksha Madan,
+Elizabeth DuPre, Eric Fiegel, Erich Schubert, Eric Larson, Erin Khoo, Erin R
+Hoffman, eschibli, Felix Wick, fhaselbeck, Forrest Koch, Francesco Casalegno,
+Frans Larsson, Gael Varoquaux, Gaurav Desai, Gaurav Sheni, genvalen, Geoffrey
+Bolmier, George Armstrong, George Kiragu, Gesa Stupperich, Ghislain Antony
+Vaillant, Gim Seng, Gordon Walsh, Gregory R. Lee, Guillaume Chevalier,
+Guillaume Lemaitre, Haesun Park, Hannah Bohle, Hao Chun Chang, Harry Scholes,
+Harsh Soni, Henry, Hirofumi Suzuki, Hitesh Somani, Hoda1394, Hugo Le Moine,
+hugorichard, indecisiveuser, Isuru Fernando, Ivan Wiryadi, j0rd1smit, Jaehyun
+Ahn, Jake Tae, James Hoctor, Jan Vesely, Jeevan Anand Anne, Jérémie du
+Boisberranger, JeroenPeterBos, JHayes, Jiaxiang, Jie Zheng, Jigna Panchal,
+jim0421, Jin Li, Joaquin Vanschoren, Joel Nothman, Jona Sassenhagen, Jonathan,
+Jorge Gorbe Moya, Joseph Lucas, Joshua Newton, Juan Carlos Alfaro Jiménez,
+Julien Jerphanion, Justin Huber, Kartik Chugh, Katarina Slama, kaylani2,
+Kendrick Cetina, Kenny Huynh, Kevin Markham, Kevin Winata, Kiril Isakov,
+kishimoto, Koki Nishihara, Krum Arnaudov, Kyle Kosic, Lauren Oldja, Laurenz
+Reitsam, Lisa Schwetlick, Louis Douge, Louis Guitton, Lucy Liu, Madhura
+Jayaratne, maikia, Manimaran, Manuel López-Ibáñez, Maren Westermann, Mariam-ke,
+Maria Telenczuk, Marijn van Vliet, Markus Löning, Martina G. Vilas, Martina
+Megasari, Martin Scheubrein, Mateusz Górski, mathschy, mathurinm, Matthias
+Bussonnier, Max Del Giudice, Michael, Milan Straka, Muoki Caleb, Nadia Tahiri,
+Ph. D, Naoki Hamada, Neil Botelho, N. Haiat, Nicolas Hug, Nils Werner, noelano,
+Norbert Preining, oj_lappi, Oleh Kozynets, Olivier Grisel, Pankaj Jindal,
+Pardeep Singh, Parthiv Chigurupati, Patrice Becker, Pete Green, pgithubs,
+Poorna Kumar, Prabakaran Kumaresshan, Probinette4, pspachtholz, pwalchessen, Qi
+Zhang, rachel fischoff, Rachit Toshniwal, Rafey Iqbal Rahman, Rahul Jakhar, Ram
+Rachum, RamyaNP, rauwuckl, Ravi Kiran Boggavarapu, Ray Bell, Reshama Shaikh,
+Richard Decal, Rishi Advani, Rithvik Rao, Rob Romijnders, roei, Romain
+Tavenard, Roman Yurchak, Ruby Werman, Ryotaro Tsukada, sadak, Saket Khandelwal,
+Sam, Sam Ezebunandu, Sam Kimbinyi, Sarah Brown, Saurabh Jain, Sean O. Stalley,
+Sergio, Shail Shah, Shane Keller, Shao Yang Hong, Shashank Singh, Shooter23,
+Shubhanshu Mishra, simonamaggio, Soledad Galli, Srimukh Sripada, Stephan
+Steinfurt, subrat93, Sunitha Selvan, Swier, SylvainLan, Sylvain Marié, Teon L
+Brooks, Terence Honles, Thijs van den Berg, Thomas9292, Thomas J Fan, Thomas J.
+Fan, Thomas S Benjamin, Thorben Jensen, tijanajovanovic, Timo Kaufmann,
+t-kusanagi2, tnwei, Tom Dupré la Tour, Trevor Waite, ufmayer, Umberto Lupo,
+Venkatachalam N, Vikas Pandey, Vinicius Rios Fuck, Violeta, watchtheblur, Wenbo
+Zhao, willpeppo, xavier dupré, Xethan, Xue Qianming, xun-tang, yagi-3, Yakov
+Pchelintsev, Yashika Sharma, Yi-Yan Ge, Yue Wu, Yutaro Ikeda, Zaccharie Ramzi,
 zoj613, Zhao Feng.

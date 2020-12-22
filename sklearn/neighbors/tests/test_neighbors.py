@@ -1733,7 +1733,7 @@ def test_auto_algorithm(X, metric, metric_params, expected_algo):
     assert model._fit_method == expected_algo
 
 
-# TODO: Remove in 0.26
+# TODO: Remove in 1.1
 @pytest.mark.parametrize("NearestNeighbors", [neighbors.KNeighborsClassifier,
                                               neighbors.KNeighborsRegressor,
                                               neighbors.NearestNeighbors])

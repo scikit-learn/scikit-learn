@@ -272,7 +272,8 @@ def setup_package():
                                                     'egg_info',
                                                     'dist_info',
                                                     '--version',
-                                                    'clean'))):
+                                                    'clean',
+                                                    'check'))):
         # These actions are required to succeed without Numpy for example when
         # pip is used to install Scikit-learn when Numpy is not yet present in
         # the system.

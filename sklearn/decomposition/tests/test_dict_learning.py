@@ -557,7 +557,7 @@ def test_sparse_coder_common_transformer():
     check_transformers_unfitted(sc.__class__.__name__, sc)
 
 
-# TODO: remove in 0.26
+# TODO: remove in 1.1
 def test_sparse_coder_deprecation():
     # check that we raise a deprecation warning when accessing `components_`
     rng = np.random.RandomState(777)

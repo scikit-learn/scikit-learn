@@ -19,7 +19,7 @@ import scipy.sparse as sp
 import scipy
 import scipy.stats
 from scipy.sparse.linalg import lsqr as sparse_lsqr  # noqa
-from numpy.ma import MaskedArray as _MaskedArray  # TODO: remove in 0.25
+from numpy.ma import MaskedArray as _MaskedArray  # TODO: remove in 1.0
 from .._config import config_context, get_config
 
 from .deprecation import deprecated
@@ -138,7 +138,7 @@ class loguniform(scipy.stats.reciprocal):
 
     The logarithmic probability density function (PDF) is uniform. When
     ``x`` is a uniformly distributed random variable between 0 and 1, ``10**x``
-    are random variales that are equally likely to be returned.
+    are random variables that are equally likely to be returned.
 
     This class is an alias to ``scipy.stats.reciprocal``, which uses the
     reciprocal distribution:
@@ -159,10 +159,10 @@ class loguniform(scipy.stats.reciprocal):
 
 @deprecated(
     'MaskedArray is deprecated in version 0.23 and will be removed in version '
-    '0.25. Use numpy.ma.MaskedArray instead.'
+    '1.0 (renaming of 0.25). Use numpy.ma.MaskedArray instead.'
 )
 class MaskedArray(_MaskedArray):
-    pass  # TODO: remove in 0.25
+    pass  # TODO: remove in 1.0
 
 
 def _take_along_axis(arr, indices, axis):
