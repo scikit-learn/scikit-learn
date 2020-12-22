@@ -772,12 +772,10 @@ def test_elasticnet_precompute_gram_weighted_samples():
     gram = np.dot(X_r.T, X_r)
 
     clf1 = ElasticNet(alpha=0.01, precompute=gram)
-    # TODO: remove copy when #19044 is resolved.
-    clf1.fit(X_c, y, sample_weight=sample_weight.copy())
+    clf1.fit(X_c, y, sample_weight=sample_weight)
 
     clf2 = ElasticNet(alpha=0.01, precompute=False)
-    # TODO: remove copy when #19044 is resolved.
-    clf2.fit(X, y, sample_weight=sample_weight.copy())
+    clf2.fit(X, y, sample_weight=sample_weight)
 
     assert_allclose(clf1.coef_, clf2.coef_)
 
