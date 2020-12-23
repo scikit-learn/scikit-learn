@@ -58,12 +58,12 @@ def test_gnb():
     assert_raises(ValueError, GaussianNB().partial_fit, X, y, classes=[0, 1])
 
 
-# TODO remove once sigma_ attribute is removed (GH #16760)
+# TODO remove in 1.2 once sigma_ attribute is removed (GH #16760)
 def test_gnb_var():
     clf = GaussianNB()
     clf.fit(X, y)
 
-    with pytest.warns(FutureWarning):
+    with pytest.warns(FutureWarning, match="Attribute sigma_ was deprecated"):
         assert_array_equal(clf.sigma_, clf.var_)
 
 
