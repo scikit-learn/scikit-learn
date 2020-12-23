@@ -58,7 +58,7 @@ def test_gnb():
     assert_raises(ValueError, GaussianNB().partial_fit, X, y, classes=[0, 1])
 
 
-# TODO remove in 1.2 once sigma_ attribute is removed (GH #16760)
+# TODO remove in 1.2 once sigma_ attribute is removed (GH #18842)
 def test_gnb_var():
     clf = GaussianNB()
     clf.fit(X, y)
