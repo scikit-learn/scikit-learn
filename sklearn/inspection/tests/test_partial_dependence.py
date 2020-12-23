@@ -100,7 +100,7 @@ def test_output_shape(Estimator, method, data, grid_resolution,
         est, X=X, features=features, method=method, kind=kind,
         grid_resolution=grid_resolution
     )
-    # FIXME: Remove 'legacy' support in 0.26
+    # FIXME: Remove 'legacy' support in 1.1
     pdp, axes = result if kind == 'legacy' else (result, result["values"])
 
     expected_pdp_shape = (n_targets,
@@ -711,7 +711,7 @@ def test_warning_for_kind_legacy():
     est.fit(X, y)
 
     err_msg = ("A Bunch will be returned in place of 'predictions' from "
-               "version 0.26")
+               "version 1.1")
     with pytest.warns(FutureWarning, match=err_msg):
         partial_dependence(est, X=X, features=[1, 2])
 

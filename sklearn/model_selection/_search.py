@@ -314,10 +314,10 @@ class ParameterSampler:
             return self.n_iter
 
 
-# FIXME Remove fit_grid_point in 0.25
+# FIXME Remove fit_grid_point in 1.0
 @deprecated(
     "fit_grid_point is deprecated in version 0.23 "
-    "and will be removed in version 0.25"
+    "and will be removed in version 1.0 (renaming of 0.25)"
 )
 def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
                    verbose, error_score=np.nan, **fit_params):
@@ -440,10 +440,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                               "DataConversionWarning not caught"},
         }
 
-    # TODO: Remove in 0.26
+    # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
     @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 0.26.")
+                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def _pairwise(self):
         # allows cross-validation to see 'precomputed' metrics

@@ -269,7 +269,7 @@ def test_plain_has_no_average_attr(klass):
     assert not hasattr(clf, '_standard_coef')
 
 
-# TODO: remove in 0.25
+# TODO: remove in 1.0
 @pytest.mark.parametrize('klass', [SGDClassifier, SGDRegressor])
 def test_sgd_deprecated_attr(klass):
     est = klass(average=True, eta0=.01)
