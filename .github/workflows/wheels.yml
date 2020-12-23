@@ -47,7 +47,9 @@ jobs:
       # Ensure that a wheel builder finishes even if another fails
       fail-fast: false
       matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
+        # Use the oldest supported version of macos to avoid having the
+        # vendored libomp depend on too recent system libs.
+        os: [windows-latest, ubuntu-latest, macos-10.13]
         python: [36, 37, 38, 39]
         bitness: [32, 64]
         include:
