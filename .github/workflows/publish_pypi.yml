@@ -40,10 +40,10 @@ jobs:
         user: __token__
         password: ${{ secrets.TEST_PYPI_TOKEN }}
         repository_url: https://test.pypi.org/legacy/
-      if: ${{ github.event.inputs.pypi_repo }} == 'testpypi'
+      if: ${{ github.event.inputs.pypi_repo == 'testpypi' }}
     - name: Publish package to PyPI
       uses: pypa/gh-action-pypi-publish@v1.4.1
       with:
         user: __token__
         password: ${{ secrets.PYPI_TOKEN }}
-      if: ${{ github.event.inputs.pypi_repo }} == 'pypi'
+      if: ${{ github.event.inputs.pypi_repo == 'pypi' }}
