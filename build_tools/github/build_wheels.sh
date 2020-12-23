@@ -5,8 +5,9 @@ set -x
 
 # OpenMP is not present on macOS by default
 if [[ "$RUNNER_OS" == "macOS" ]]; then
-    # Use the oldest support version of macos SDK as libomp will be vendored
-    # into the scikit-learn wheels on macos.
+    # Make sure to a libomp version binary compatible with the oldest supported
+    # version of the macos SDK as libomp will be vendored into the scikit-learn
+    # wheels for macos.
     wget https://homebrew.bintray.com/bottles/libomp-11.0.0.high_sierra.bottle.tar.gz
     brew install libomp-11.0.0.high_sierra.bottle.tar.gz
     export CC=/usr/bin/clang
