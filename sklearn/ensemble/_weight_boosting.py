@@ -33,7 +33,7 @@ from ._base import BaseEnsemble
 from ..base import ClassifierMixin, RegressorMixin, is_classifier, is_regressor
 
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
-from ..utils import check_array, check_random_state, _safe_indexing
+from ..utils import check_array, check_random_state, _safe_indexing, resample
 from ..utils.extmath import softmax
 from ..utils.extmath import stable_cumsum
 from ..metrics import accuracy_score, r2_score
@@ -328,6 +328,13 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         Thus, it is only used when `base_estimator` exposes a `random_state`.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
+    n_samples : int, default = None
+        If not set to None, the Classifier will pick n random samples at each
+        boosting iteration using the resample function. 
+    replace : boolean, default = True
+        This corresponds to the replace parameter of the resample function, 
+        which is used, when n_samples is greater than 0 and lower than the 
+        total sample size. 
 
     Attributes
     ----------
@@ -404,6 +411,8 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
                  n_estimators=50,
                  learning_rate=1.,
                  algorithm='SAMME.R',
+                 n_samples = None,
+                 replace = True,
                  random_state=None):
 
         super().__init__(
@@ -413,6 +422,8 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             random_state=random_state)
 
         self.algorithm = algorithm
+        self.n_samples = n_samples
+        self.replace = replace
 
     def fit(self, X, y, sample_weight=None):
         """Build a boosted classifier from the training set (X, y).
@@ -510,7 +521,14 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         """Implement a single boost using the SAMME.R real algorithm."""
         estimator = self._make_estimator(random_state=random_state)
 
-        estimator.fit(X, y, sample_weight=sample_weight)
+        # pick random sample stack of size n_samples
+        if self.n_samples != None and self.n_samples < len(y):
+            X_fit, y_fit, sample_weight_fit = resample(X, y, sample_weight, n_samples=self.n_samples, replace=self.replace, random_state=random_state)
+        else:
+            X_fit = X
+            y_fit = y
+            sample_weight_fit = sample_weight
+        estimator.fit(X_fit, y_fit, sample_weight=sample_weight_fit)
 
         y_predict_proba = estimator.predict_proba(X)
 
@@ -568,7 +586,14 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         """Implement a single boost using the SAMME discrete algorithm."""
         estimator = self._make_estimator(random_state=random_state)
 
-        estimator.fit(X, y, sample_weight=sample_weight)
+         # pick random sample stack of size n_samples
+        if self.n_samples != None and self.n_samples < len(y):
+            X_fit, y_fit, sample_weight_fit = resample(X, y, sample_weight, n_samples=self.n_samples, replace=self.replace, random_state=random_state)
+        else:
+            X_fit = X
+            y_fit = y
+            sample_weight_fit = sample_weight
+        estimator.fit(X_fit, y_fit, sample_weight=sample_weight_fit)
 
         y_predict = estimator.predict(X)
 
