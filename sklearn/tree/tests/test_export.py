@@ -84,11 +84,11 @@ def test_graphviz_toy():
     # Test plot_options
     contents1 = export_graphviz(clf, filled=True, impurity=False,
                                 proportion=True, special_characters=True,
-                                rounded=True, out_file=None)
+                                rounded=True, out_file=None, fontname="sans")
     contents2 = 'digraph Tree {\n' \
                 'node [shape=box, style="filled, rounded", color="black", ' \
-                'fontname="helvetica"] ;\n' \
-                'edge [fontname="helvetica"] ;\n' \
+                'fontname="sans"] ;\n' \
+                'edge [fontname="sans"] ;\n' \
                 '0 [label=<X<SUB>0</SUB> &le; 0.0<br/>samples = 100.0%<br/>' \
                 'value = [0.5, 0.5]>, fillcolor="#ffffff"] ;\n' \
                 '1 [label=<samples = 50.0%<br/>value = [1.0, 0.0]>, ' \
@@ -174,12 +174,13 @@ def test_graphviz_toy():
     clf.fit(X, y)
 
     contents1 = export_graphviz(clf, filled=True, leaves_parallel=True,
-                                out_file=None, rotate=True, rounded=True)
+                                out_file=None, rotate=True, rounded=True,
+                                fontname="sans")
     contents2 = 'digraph Tree {\n' \
                 'node [shape=box, style="filled, rounded", color="black", ' \
-                'fontname="helvetica"] ;\n' \
+                'fontname="sans"] ;\n' \
                 'graph [ranksep=equally, splines=polyline] ;\n' \
-                'edge [fontname="helvetica"] ;\n' \
+                'edge [fontname="sans"] ;\n' \
                 'rankdir=LR ;\n' \
                 '0 [label="X[0] <= 0.0\\nmse = 1.0\\nsamples = 6\\n' \
                 'value = 0.0", fillcolor="#f2c09c"] ;\n' \
