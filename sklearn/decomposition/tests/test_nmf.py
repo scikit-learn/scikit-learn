@@ -47,7 +47,7 @@ def test_initialize_nn_output():
 def test_parameter_checking():
     A = np.ones((2, 2))
     name = 'spam'
-    init = 'nndsvda' # FIXME : should be removed in 1.1
+    init = 'nndsvda'  # FIXME : should be removed in 1.1
     msg = "Invalid solver parameter: got 'spam' instead of one of"
     assert_raise_message(ValueError, msg, NMF(solver=name, init=init).fit, A)
     msg = "Invalid solver parameter: got 'spam' instead of one of"
@@ -208,7 +208,7 @@ def test_n_components_greater_n_features(Estimator):
     # Smoke test for the case of more components than features.
     rng = np.random.mtrand.RandomState(42)
     A = np.abs(rng.randn(30, 10))
-    init = 'random' # FIXME : should be removed in 1.1
+    init = 'random'  # FIXME : should be removed in 1.1
     Estimator(n_components=15, random_state=0, tol=1e-2, init=init).fit(A)
 
 
@@ -307,7 +307,7 @@ def test_non_negative_factorization_checking():
     msg = "Invalid regularization parameter: got 'spam' instead of one of"
     assert_raise_message(ValueError, msg, nnmf, A, A, 0 * A, 2, init='custom',
                          regularization='spam')
-    init = 'nndsvda' # FIXME : should be removed in 1.1
+    init = 'nndsvda'  # FIXME : should be removed in 1.1
     msg = ("Number of samples per batch must be a positive integer; "
            "got (batch_size=0.5)")
     assert_raise_message(ValueError, msg, nnmf, A, A, A, 2,
@@ -489,7 +489,7 @@ def test_nmf_regularization(Estimator, solver):
     rng = np.random.mtrand.RandomState(42)
     X = np.abs(rng.randn(n_samples, n_features))
 
-    init = 'nndsvda' # FIXME : should be removed in 1.1
+    init = 'nndsvda'  # FIXME : should be removed in 1.1
     # L1 regularization should increase the number of zeros
     l1_ratio = 1.
     regul = Estimator(n_components=n_components, solver=solver,
@@ -601,7 +601,7 @@ def test_nmf_dtype_match(Estimator, dtype_in, dtype_out,
     # Check that NMF preserves dtype (float32 and float64)
     X = np.random.RandomState(0).randn(20, 15).astype(dtype_in, copy=False)
     np.abs(X, out=X)
-    init = 'nndsvda' # FIXME : should be removed in 1.1
+    init = 'nndsvda'  # FIXME : should be removed in 1.1
     nmf = Estimator(solver=solver, regularization=regularization, init=init)
 
     assert nmf.fit(X).transform(X).dtype == dtype_out
@@ -618,7 +618,7 @@ def test_nmf_float32_float64_consistency(Estimator, solver, regularization):
     # Check that the result of NMF is the same between float32 and float64
     X = np.random.RandomState(0).randn(50, 7)
     np.abs(X, out=X)
-    init = 'nndsvda' # FIXME : should be removed in 1.1
+    init = 'nndsvda'  # FIXME : should be removed in 1.1
     nmf32 = Estimator(solver=solver, regularization=regularization,
                       random_state=0, init=init)
     W32 = nmf32.fit_transform(X.astype(np.float32))
@@ -660,15 +660,16 @@ def test_nmf_close_minibatch_nmf():
     assert_array_almost_equal(W, mbW, decimal=7)
 
 
-def test_minibatch_nmf_partial_fit():
+@pytest.mark.parametrize('batch_size', [32, 48])
+def test_minibatch_nmf_partial_fit(batch_size):
     rng = np.random.mtrand.RandomState(42)
     X = np.abs(rng.randn(48, 5))
     mbnmf1 = MiniBatchNMF(5, solver='mu', init='nndsvdar', random_state=0,
                           max_iter=1, beta_loss='kullback-leibler',
-                          batch_size=48)
+                          batch_size=batch_size)
     mbnmf2 = MiniBatchNMF(5, solver='mu', init='nndsvdar', random_state=0,
                           max_iter=1, beta_loss='kullback-leibler',
-                          batch_size=48)
+                          batch_size=batch_size)
 
     mbnmf1.fit(X)
     mbnmf2.partial_fit(X)
