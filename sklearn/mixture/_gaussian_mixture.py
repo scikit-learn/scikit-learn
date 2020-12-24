@@ -325,8 +325,7 @@ def _compute_precision_cholesky(covariances, covariance_type):
         _, n_features = covariances.shape
         try:
             cov_chol = linalg.cholesky(covariances,
-                                       lower=True,
-                                       check_finite=False)
+                                       lower=True)
         except linalg.LinAlgError:
             raise ValueError(estimate_precision_error_message)
         precisions_chol = linalg.solve_triangular(cov_chol,
