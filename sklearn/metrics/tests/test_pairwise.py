@@ -660,6 +660,34 @@ def test_euclidean_distances_with_norms(dtype, y_array_constr):
         assert_allclose(wrong_D, D1)
 
 
+def test_euclidean_distances_norm_shapes():
+    # Check all accepted shapes for the norms or appropriate error messages.
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((10, 10))
+    Y = rng.random_sample((20, 10))
+
+    X_norm_squared = (X ** 2).sum(axis=1)
+    Y_norm_squared = (Y ** 2).sum(axis=1)
+
+    D1 = euclidean_distances(X, Y,
+                             X_norm_squared=X_norm_squared,
+                             Y_norm_squared=Y_norm_squared)
+    D2 = euclidean_distances(X, Y,
+                             X_norm_squared=X_norm_squared.reshape(-1, 1),
+                             Y_norm_squared=Y_norm_squared.reshape(-1, 1))
+    D3 = euclidean_distances(X, Y,
+                             X_norm_squared=X_norm_squared.reshape(1, -1),
+                             Y_norm_squared=Y_norm_squared.reshape(1, -1))
+
+    assert_allclose(D2, D1)
+    assert_allclose(D3, D1)
+
+    with pytest.raises(ValueError, match="Incompatible dimensions for X"):
+        euclidean_distances(X, Y, X_norm_squared=X_norm_squared[:5])
+    with pytest.raises(ValueError, match="Incompatible dimensions for Y"):
+        euclidean_distances(X, Y, Y_norm_squared=Y_norm_squared[:5])
+
+
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 @pytest.mark.parametrize("x_array_constr", [np.array, csr_matrix],
                          ids=["dense", "sparse"])
