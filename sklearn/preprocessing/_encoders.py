@@ -785,6 +785,19 @@ class OrdinalEncoder(_BaseEncoder):
                                      f"{self.unknown_value} is one of the "
                                      f"values already used for encoding the "
                                      f"seen categories.")
+
+        if (self.handle_missing == 'passthrough' and
+                np.dtype(self.dtype).kind != 'f'):
+            for cat_idx, cats in enumerate(self.categories_):
+                missing_indices = [i for i, v in enumerate(cats)
+                                   if is_scalar_nan(v) or v is None]
+                if not missing_indices:
+                    continue
+                raise ValueError(
+                    f"There are missing values in feature {cat_idx}. With "
+                    "handle_missing=passthrough, OrdinalEncoder's dtype "
+                    "parameter must be float")
+
         return self
 
     def transform(self, X):

@@ -899,6 +899,18 @@ def test_ohe_missing_value_support_pandas_categorical(pd_nan_type):
     assert np.isnan(ohe.categories_[0][-1])
 
 
+def test_ordinal_encoder_passthrough_missing_values_float_errors_dtype():
+    """Test ordinal encoder with nan passthrough fails when dtype=np.int32"""
+
+    X = np.array([[np.nan, 3.0, 1.0, 3.0]]).T
+    oe = OrdinalEncoder(handle_missing="passthrough", dtype=np.int32)
+
+    msg = ("There are missing values in feature 0. With handle_missing="
+           "passthrough, OrdinalEncoder's dtype parameter must be float")
+    with pytest.raises(ValueError, match=msg):
+        oe.fit(X)
+
+
 def test_ordinal_encoder_passthrough_missing_values_float():
     """Test ordinal encoder with nan passthrough on float dtypes"""
 
