@@ -588,9 +588,9 @@ be encoded as all zeros::
     array([[0., 0., 0., 0., 0.]])
 
 All the categories in `X_test` are unknown during transform and will be mapped
-to all zeros. This means that unknown categories will have the same mapping
-as the dropped category. The :term:`inverse_transform` will map all zeros to the
-dropped category if a category is dropped and `None` if a category is
+to all zeros. This means that unknown categories will have the same mapping as
+the dropped category. :meth`OneHotEncoder.inverse_transform` will map all zeros
+to the dropped category if a category is dropped and `None` if a category is
 not dropped::
 
     >>> drop_enc = preprocessing.OneHotEncoder(drop='if_binary', sparse=False,
