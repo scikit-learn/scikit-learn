@@ -56,6 +56,13 @@ Changelog
   in multicore settings. :pr:`19052` by
   :user:`Yusuke Nagasaka <YusukeNagasaka>`.
 
+:mod:`sklearn.preprocessing`
+............................
+
+- |Feature| :class:`preprocessing.OrdinalEncoder` supports passing through
+  missing values by setting `handle_missing='passthrough'`. :pr:`19069` by
+  `Thomas Fan`_.
+
 :mod:`sklearn.linear_model`
 ...........................
 
