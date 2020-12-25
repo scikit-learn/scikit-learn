@@ -578,7 +578,7 @@ def _set_checking_parameters(estimator):
             estimator.set_params(max_iter=20)
         # NMF
         if estimator.__class__.__name__ == 'NMF':
-            # FIXME : init should be removed in 0.26
+            # FIXME : init should be removed in 1.1
             estimator.set_params(max_iter=500, init='nndsvda')
         # MLP
         if estimator.__class__.__name__ in ['MLPClassifier', 'MLPRegressor']:
@@ -3065,8 +3065,8 @@ def check_n_features_in(name, estimator_orig):
             "n_features_in_ attribute, unless the 'no_validation' tag is "
             "True. This attribute should be equal to the number of features "
             "passed to the fit method. "
-            "An error will be raised from version 0.25 when calling "
-            "check_estimator(). "
+            "An error will be raised from version 1.0 (renaming of 0.25) "
+            "when calling check_estimator(). "
             "See SLEP010: "
             "https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep010/proposal.html",  # noqa
             FutureWarning
@@ -3089,7 +3089,7 @@ def check_requires_y_none(name, estimator_orig):
     warning_msg = ("As of scikit-learn 0.23, estimators should have a "
                    "'requires_y' tag set to the appropriate value. "
                    "The default value of the tag is False. "
-                   "An error will be raised from version 0.25 when calling "
+                   "An error will be raised from version 1.0 when calling "
                    "check_estimator() if the tag isn't properly set.")
 
     expected_err_msgs = (

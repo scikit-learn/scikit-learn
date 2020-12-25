@@ -196,7 +196,7 @@ class EmpiricalCovariance(BaseEstimator):
           n_features is the number of features.
 
         y : Ignored
-            Not used, present for API consistence purpose.
+            Not used, present for API consistency by convention.
 
         Returns
         -------
@@ -226,7 +226,7 @@ class EmpiricalCovariance(BaseEstimator):
             the data used in fit (including centering).
 
         y : Ignored
-            Not used, present for API consistence purpose.
+            Not used, present for API consistency by convention.
 
         Returns
         -------
