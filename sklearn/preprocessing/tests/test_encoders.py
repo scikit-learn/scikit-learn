@@ -909,11 +909,26 @@ def test_ordinal_encoder_passthrough_missing_values_float():
     assert_allclose(oe.categories_[0], [1.0, 3.0, np.nan])
 
     X_trans = oe.transform(X)
-    assert X_trans.shape == (5, 1)
-    assert_allclose(X_trans[:, 0], [np.nan, 1.0, 0.0, 1.0])
+    assert_allclose(X_trans, [[np.nan], [1.0], [0.0], [1.0]])
 
     X_inverse = oe.inverse_transform(X_trans)
     assert_allclose(X_inverse, X)
+
+
+def test_ordinal_encoder_passthrough_missing_values_object_only_none():
+    """Test ordinal encoder with None passthrough with object types"""
+
+    X = np.array([[None, 3.0, 1.0, 3.0]]).T
+    oe = OrdinalEncoder(handle_missing="passthrough").fit(X)
+
+    assert len(oe.categories_) == 1
+    assert_array_equal(oe.categories_[0], [1.0, 3.0, None])
+
+    X_trans = oe.transform(X)
+    assert_allclose(X_trans, [[np.nan], [1.0], [0.0], [1.0]])
+
+    X_inverse = oe.inverse_transform(X_trans)
+    assert_array_equal(X_inverse, X)
 
 
 def test_ordinal_encoder_passthrough_missing_values_object():
@@ -926,14 +941,13 @@ def test_ordinal_encoder_passthrough_missing_values_object():
 
     assert_array_equal(categories_0[:2], ["a", "b"])
     assert categories_0[2] is None
-    assert np.isnan(categories_0)
+    assert np.isnan(categories_0[-1])
 
     X_trans = oe.transform(X)
-    assert X_trans.shape == (5, 1)
-    assert_allclose(X_trans[:, 0], [np.nan, 1.0, 1.0, 0.0, np.nan])
+    assert_allclose(X_trans, [[np.nan], [1.0], [1.0], [0.0], [np.nan]])
 
     X_inverse = oe.inverse_transform(X_trans)
-    assert X_inverse == (5, 1)
+    assert X_inverse.shape == (5, 1)
 
     X_inverse_0 = X_inverse[:, 0]
     assert_array_equal(X_inverse_0[1:-1], ["b", "b", "a"])
@@ -960,37 +974,37 @@ def test_ordinal_encoder_missing_value_support_pandas_categorical(pd_nan_type):
 
     oe = OrdinalEncoder(handle_missing="passthrough").fit(df)
     assert len(oe.categories_) == 1
-    assert_array_equal(oe.categories_[0], ['a', 'b', 'c'])
+    assert_array_equal(oe.categories_[0][:3], ['a', 'b', 'c'])
     assert np.isnan(oe.categories_[0][-1])
 
     df_trans = oe.transform(df)
 
-    assert_allclose(df_trans, [[2.0, 0.0, np.nan, 1.0, 0.0]])
+    assert_allclose(df_trans, [[2.0], [0.0], [np.nan], [1.0], [0.0]])
 
     X_inverse = oe.inverse_transform(df_trans)
     assert X_inverse.shape == (5, 1)
-    assert_allclose(X_inverse[:, 0], np.array(df['col1']))
+    assert_array_equal(X_inverse[:2, 0], ['c', 'a'])
+    assert_array_equal(X_inverse[3:, 0], ['b', 'a'])
+    assert np.isnan(X_inverse[2, 0])
 
 
 @pytest.mark.parametrize("X, X2, cats, cat_dtype", [
     ((np.array([['a', None]], dtype=object).T,
       np.array([['a', 'b']], dtype=object).T,
-     [np.array([['a', None, 'd']])], np.object_)),
+     [np.array(['a', None, 'd'])], np.object_)),
     ((np.array([['a', np.nan]], dtype=object).T,
       np.array([['a', 'b']], dtype=object).T,
-     [np.array([['a', np.nan, 'd']])], np.object_)),
+     [np.array(['a', np.nan, 'd'], dtype=object)], np.object_)),
     ((np.array([[2.0, np.nan]], dtype=np.float64).T,
       np.array([[3.0]], dtype=np.float64).T,
-     [np.array([[2.0, np.nan, 4.0]])], np.float64)),
+     [np.array([2.0, 4.0, np.nan])], np.float64)),
     ], ids=['object-None-missing-value', 'object-nan-missing_value',
             'numeric-missing-value'])
 def test_ordinal_encoder_specified_categories_missing_passthrough(
         X, X2, cats, cat_dtype):
     oe = OrdinalEncoder(categories=cats, handle_missing="passthrough")
-    exp = np.array([[0.], [1.]])
+    exp = np.array([[0.], [np.nan]])
     assert_array_equal(oe.fit_transform(X), exp)
-    assert list(oe.categories[0]) == list(cats[0])
-    assert oe.categories_[0].tolist() == list(cats[0])
     # manually specified categories should have same dtype as
     # the data when coerced from lists
     assert oe.categories_[0].dtype == cat_dtype

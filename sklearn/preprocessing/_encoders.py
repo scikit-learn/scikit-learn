@@ -10,6 +10,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, is_scalar_nan
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _deprecate_positional_args
+from ..utils._mask import _get_mask
 
 from ..utils._encode import _encode, _check_unknown, _unique
 
@@ -684,9 +685,10 @@ class OrdinalEncoder(_BaseEncoder):
     handle_missing : {'error', 'passthrough'}, default='error'
         When set to 'error' an error will be raised when a missing value is
         present. When set to 'passthrough', missing values will be encoded
-        as `np.nan`.
+        as `np.nan`. Both `None` and `np.nan` will be considered missing
+        values.
 
-        .. versionadded:: 0.25
+        .. versionadded:: 1.0
 
     Attributes
     ----------
@@ -783,7 +785,6 @@ class OrdinalEncoder(_BaseEncoder):
                                      f"{self.unknown_value} is one of the "
                                      f"values already used for encoding the "
                                      f"seen categories.")
-
         return self
 
     def transform(self, X):
@@ -800,8 +801,22 @@ class OrdinalEncoder(_BaseEncoder):
         X_out : sparse matrix or a 2-d array
             Transformed input.
         """
-        X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown)
+        if self.handle_missing == 'passthrough':
+            force_all_finite = 'allow-nan'
+        else:
+            force_all_finite = True
+
+        X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown,
+                                        force_all_finite=force_all_finite)
         X_trans = X_int.astype(self.dtype, copy=False)
+
+        if self.handle_missing == 'passthrough':
+            for cat_idx, cats in enumerate(self.categories_):
+                missing_indices = [i for i, v in enumerate(cats)
+                                   if is_scalar_nan(v) or v is None]
+                for missing_idx in missing_indices:
+                    X_missing_mask = X_int[:, cat_idx] == missing_idx
+                    X_trans[X_missing_mask, cat_idx] = np.nan
 
         # create separate category for unknown values
         if self.handle_unknown == 'use_encoded_value':
@@ -811,6 +826,10 @@ class OrdinalEncoder(_BaseEncoder):
     def inverse_transform(self, X):
         """
         Convert the data back to the original representation.
+
+        If `handle_missing='passthrough'` and the known categories contain
+        both `None` and `np.nan`, then `np.nan` will be used as the
+        inverse transform for `np.nan`.
 
         Parameters
         ----------
@@ -823,7 +842,12 @@ class OrdinalEncoder(_BaseEncoder):
             Inverse transformed array.
         """
         check_is_fitted(self)
-        X = check_array(X, accept_sparse='csr')
+        if self.handle_missing == 'passthrough':
+            force_all_finite = 'allow-nan'
+        else:
+            force_all_finite = True
+        X = check_array(X, accept_sparse='csr',
+                        force_all_finite=force_all_finite)
 
         n_samples, _ = X.shape
         n_features = len(self.categories_)
@@ -842,6 +866,18 @@ class OrdinalEncoder(_BaseEncoder):
 
         for i in range(n_features):
             labels = X[:, i].astype('int64', copy=False)
+
+            # place values of X[:, i] that were nan with actual indices
+            if self.handle_missing == 'passthrough':
+                cats = self.categories_[i]
+                missing_indices = [i for i, v in enumerate(cats)
+                                   if is_scalar_nan(v) or v is None]
+
+                # get nan mask only if missing values exists in categories
+                if missing_indices:
+                    X_i_mask = _get_mask(X[:, i], np.nan)
+                    labels[X_i_mask] = missing_indices[-1]
+
             if self.handle_unknown == 'use_encoded_value':
                 unknown_labels = labels == self.unknown_value
                 X_tr[:, i] = self.categories_[i][np.where(
