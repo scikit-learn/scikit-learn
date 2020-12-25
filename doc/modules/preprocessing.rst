@@ -589,7 +589,18 @@ be encoded as all zeros::
 
 All the categories in `X_test` are unknown during transform and will be mapped
 to all zeros. This means that unknown categories will have the same mapping
-as the dropped category.
+as the dropped category. The :term:`inverse_transform` will map all zeros to the
+dropped category if a category is dropped and `None` if a category is
+not dropped::
+
+    >>> drop_enc = preprocessing.OneHotEncoder(drop='if_binary', sparse=False,
+    ...                                        handle_unknown='ignore').fit(X)
+    >>> X_test = [['unknown', 'America', 'IE']]
+    >>> X_trans = drop_enc.transform(X_test)
+    >>> X_trans
+    array([[0., 0., 0., 0., 0., 0., 0.]])
+    >>> drop_enc.inverse_transform(X_trans)
+    array([['female', None, None]], dtype=object)
 
 :class:`OneHotEncoder` supports categorical features with missing values by
 considering the missing values as an additional category::
