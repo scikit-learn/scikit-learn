@@ -30,8 +30,7 @@ from sklearn.metrics import (
     r2_score,
     recall_score,
     roc_auc_score,
-    top_k_accuracy_score,
-    brier_score_loss
+    top_k_accuracy_score
 )
 from sklearn.metrics import cluster as cluster_module
 from sklearn.metrics import check_scoring
@@ -309,8 +308,7 @@ def test_make_scorer():
         make_scorer(f, needs_threshold=True, needs_proba=True)
 
 
-@pytest.mark.parametrize(
-    'scorer_name, metric', [
+@pytest.mark.parametrize('scorer_name, metric', [
     ('f1', f1_score),
     ('f1_weighted', partial(f1_score, average='weighted')),
     ('f1_macro', partial(f1_score, average='macro')),
@@ -343,8 +341,7 @@ def test_classification_binary_scores(scorer_name, metric):
 @pytest.mark.parametrize('clf', [
     DecisionTreeClassifier(random_state=0),
     LogisticRegression(random_state=0)])
-@pytest.mark.parametrize(
-    'scorer_name, metric', [
+@pytest.mark.parametrize('scorer_name, metric', [
     ('accuracy', accuracy_score),
     ('balanced_accuracy', balanced_accuracy_score),
     ('f1_weighted', partial(f1_score, average='weighted')),
