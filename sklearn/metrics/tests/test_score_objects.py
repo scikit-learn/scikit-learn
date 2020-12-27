@@ -92,10 +92,6 @@ MULTILABEL_ONLY_SCORERS = ['precision_samples', 'recall_samples', 'f1_samples',
 REQUIRE_POSITIVE_Y_SCORERS = ['neg_mean_poisson_deviance',
                               'neg_mean_gamma_deviance']
 
-BINARY_ONLY_SCORERS = ['top_k_accuracy', 'f1', 'roc_auc', 'average_precision',
-                       'precision', 'recall', 'neg_log_loss',
-                       'neg_brier_score', 'jaccard']
-
 
 def _require_positive_y(y):
     """Make targets strictly positive"""
@@ -312,8 +308,8 @@ def test_make_scorer():
         make_scorer(f, needs_threshold=True, needs_proba=True)
 
 
-def test_classification_scores():
-    # Test classification scorers.
+def test_classification_binary_scores():
+    # Test binary classification scorers
     X, y = make_blobs(random_state=0, centers=2)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     clf = LinearSVC(random_state=0)
@@ -359,7 +355,7 @@ def test_classification_scores():
 
 @pytest.mark.parametrize('clf', [
     DecisionTreeClassifier(random_state=0),
-    LogisticRegression(multi_class="multinomial", random_state=0)])
+    LogisticRegression(random_state=0)])
 @pytest.mark.parametrize(
     'scorer_name, metric', [
     ('accuracy', accuracy_score),
