@@ -28,7 +28,7 @@ Installing a nightly build is the quickest way to:
 
 .. prompt:: bash $
 
-  pip install --pre --extra-index https://pypi.anaconda.org/scipy-wheels-nightly/simple scikit-learn
+  pip install --use-deprecated legacy-resolver --pre --extra-index https://pypi.anaconda.org/scipy-wheels-nightly/simple scikit-learn
 
 
 .. _install_bleeding_edge:
