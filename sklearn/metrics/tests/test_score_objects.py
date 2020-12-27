@@ -30,7 +30,8 @@ from sklearn.metrics import (
     r2_score,
     recall_score,
     roc_auc_score,
-    top_k_accuracy_score
+    top_k_accuracy_score,
+    brier_score_loss
 )
 from sklearn.metrics import cluster as cluster_module
 from sklearn.metrics import check_scoring
@@ -308,35 +309,35 @@ def test_make_scorer():
         make_scorer(f, needs_threshold=True, needs_proba=True)
 
 
-def test_classification_binary_scores():
+@pytest.mark.parametrize(
+    'scorer_name, metric', [
+    ('f1', f1_score),
+    ('f1_weighted', partial(f1_score, average='weighted')),
+    ('f1_macro', partial(f1_score, average='macro')),
+    ('f1_micro', partial(f1_score, average='micro')),
+    ('precision', precision_score),
+    ('precision_weighted', partial(precision_score, average='weighted')),
+    ('precision_macro', partial(precision_score, average='macro')),
+    ('precision_micro', partial(precision_score, average='micro')),
+    ('recall', recall_score),
+    ('recall_weighted', partial(recall_score, average='weighted')),
+    ('recall_macro', partial(recall_score, average='macro')),
+    ('recall_micro', partial(recall_score, average='micro')),
+    ('jaccard', jaccard_score),
+    ('jaccard_weighted', partial(jaccard_score, average='weighted')),
+    ('jaccard_macro', partial(jaccard_score, average='macro')),
+    ('jaccard_micro', partial(jaccard_score, average='micro')),
+    ('top_k_accuracy', top_k_accuracy_score)])
+def test_classification_binary_scores(scorer_name, metric):
     # Test binary classification scorers
     X, y = make_blobs(random_state=0, centers=2)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     clf = LinearSVC(random_state=0)
     clf.fit(X_train, y_train)
 
-    for prefix, metric in [('f1', f1_score), ('precision', precision_score),
-                           ('recall', recall_score),
-                           ('jaccard', jaccard_score)]:
-
-        score1 = get_scorer('%s_weighted' % prefix)(clf, X_test, y_test)
-        score2 = metric(y_test, clf.predict(X_test), pos_label=None,
-                        average='weighted')
-        assert_almost_equal(score1, score2)
-
-        score1 = get_scorer('%s_macro' % prefix)(clf, X_test, y_test)
-        score2 = metric(y_test, clf.predict(X_test), pos_label=None,
-                        average='macro')
-        assert_almost_equal(score1, score2)
-
-        score1 = get_scorer('%s_micro' % prefix)(clf, X_test, y_test)
-        score2 = metric(y_test, clf.predict(X_test), pos_label=None,
-                        average='micro')
-        assert_almost_equal(score1, score2)
-
-        score1 = get_scorer('%s' % prefix)(clf, X_test, y_test)
-        score2 = metric(y_test, clf.predict(X_test), pos_label=1)
-        assert_almost_equal(score1, score2)
+    score = SCORERS[scorer_name](clf, X_test, y_test)
+    expected_score = metric(y_test, clf.predict(X_test))
+    assert_almost_equal(score, expected_score)
 
 
 @pytest.mark.parametrize('clf', [
