@@ -338,20 +338,6 @@ def test_classification_binary_scores():
         score2 = metric(y_test, clf.predict(X_test), pos_label=1)
         assert_almost_equal(score1, score2)
 
-    # test fbeta score that takes an argument
-    scorer = make_scorer(fbeta_score, beta=2)
-    score1 = scorer(clf, X_test, y_test)
-    score2 = fbeta_score(y_test, clf.predict(X_test), beta=2)
-    assert_almost_equal(score1, score2)
-
-    # test that custom scorer can be pickled
-    unpickled_scorer = pickle.loads(pickle.dumps(scorer))
-    score3 = unpickled_scorer(clf, X_test, y_test)
-    assert_almost_equal(score1, score3)
-
-    # smoke test the repr:
-    repr(fbeta_score)
-
 
 @pytest.mark.parametrize('clf', [
     DecisionTreeClassifier(random_state=0),
@@ -386,6 +372,23 @@ def test_classification_multiclass_scores(clf, scorer_name, metric):
     score = SCORERS[scorer_name](clf, X_test, y_test)
     expected_score = metric(y_test, clf.predict(X_test))
     assert_almost_equal(score, expected_score)
+
+
+def test_custom_scorer_pickling():
+    # test that custom scorer can be pickled
+    X, y = make_blobs(random_state=0, centers=2)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    clf = LinearSVC(random_state=0)
+    clf.fit(X_train, y_train)
+
+    scorer = make_scorer(fbeta_score, beta=2)
+    score1 = scorer(clf, X_test, y_test)
+    unpickled_scorer = pickle.loads(pickle.dumps(scorer))
+    score2 = unpickled_scorer(clf, X_test, y_test)
+    assert_almost_equal(score1, score2)
+
+    # smoke test the repr:
+    repr(fbeta_score)
 
 
 def test_regression_scorers():
