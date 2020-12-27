@@ -18,6 +18,8 @@ from sklearn.utils._testing import ignore_warnings
 
 from sklearn.base import BaseEstimator
 from sklearn.metrics import (
+    accuracy_score,
+    balanced_accuracy_score,
     average_precision_score,
     brier_score_loss,
     f1_score,
@@ -28,13 +30,13 @@ from sklearn.metrics import (
     r2_score,
     recall_score,
     roc_auc_score,
+    top_k_accuracy_score
 )
 from sklearn.metrics import cluster as cluster_module
 from sklearn.metrics import check_scoring
 from sklearn.metrics._scorer import (_PredictScorer, _passthrough_scorer,
                                      _MultimetricScorer,
                                      _check_multimetric_scoring)
-from sklearn.metrics import accuracy_score
 from sklearn.metrics import make_scorer, get_scorer, SCORERS
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import LinearSVC
@@ -89,6 +91,10 @@ MULTILABEL_ONLY_SCORERS = ['precision_samples', 'recall_samples', 'f1_samples',
 
 REQUIRE_POSITIVE_Y_SCORERS = ['neg_mean_poisson_deviance',
                               'neg_mean_gamma_deviance']
+
+BINARY_ONLY_SCORERS = ['top_k_accuracy', 'f1', 'roc_auc', 'average_precision',
+                       'precision', 'recall', 'neg_log_loss',
+                       'neg_brier_score', 'jaccard']
 
 
 def _require_positive_y(y):
@@ -349,6 +355,41 @@ def test_classification_scores():
 
     # smoke test the repr:
     repr(fbeta_score)
+
+
+@pytest.mark.parametrize('clf', [
+    DecisionTreeClassifier(random_state=0),
+    LogisticRegression(multi_class="multinomial", random_state=0)])
+@pytest.mark.parametrize(
+    'scorer_name, metric', [
+    ('accuracy', accuracy_score),
+    ('balanced_accuracy', balanced_accuracy_score),
+    ('f1_weighted', partial(f1_score, average='weighted')),
+    ('f1_macro', partial(f1_score, average='macro')),
+    ('f1_micro', partial(f1_score, average='micro')),
+    ('precision_weighted', partial(precision_score, average='weighted')),
+    ('precision_macro', partial(precision_score, average='macro')),
+    ('precision_micro', partial(precision_score, average='micro')),
+    ('recall_weighted', partial(recall_score, average='weighted')),
+    ('recall_macro', partial(recall_score, average='macro')),
+    ('recall_micro', partial(recall_score, average='micro')),
+    ('jaccard_weighted', partial(jaccard_score, average='weighted')),
+    ('jaccard_macro', partial(jaccard_score, average='macro')),
+    ('jaccard_micro', partial(jaccard_score, average='micro'))])
+def test_classification_multiclass_scores(clf, scorer_name, metric):
+    X, y = make_classification(
+        n_classes=3, n_informative=3, n_samples=30, random_state=0
+    )
+
+    # use `stratify` = y to ensure train and test sets capture all classes
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, random_state=0, stratify=y
+    )
+
+    clf.fit(X_train, y_train)
+    score = SCORERS[scorer_name](clf, X_test, y_test)
+    expected_score = metric(y_test, clf.predict(X_test))
+    assert_almost_equal(score, expected_score)
 
 
 def test_regression_scorers():
@@ -973,29 +1014,3 @@ def test_scorer_no_op_multiclass_select_proba():
         roc_auc_score, needs_proba=True, multi_class="ovo", labels=lr.classes_,
     )
     scorer(lr, X_test, y_test)
-
-
-def test_scorer_general_multiclass():
-    X, y = make_classification(
-        n_classes=3, n_informative=3, n_samples=30, random_state=0
-    )
-
-    # use `stratify` = y to ensure train and test sets capture all classes
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, random_state=0, stratify=y
-    )
-
-    tree = DecisionTreeClassifier(random_state=0).fit(X_train, y_train)
-    lr = LogisticRegression(random_state=0).fit(X_train, y_train)
-
-    # don't use these scorers since they're not for multiclass
-    binary_only = [
-        'top_k_accuracy', 'f1', 'roc_auc', 'average_precision', 'precision',
-        'recall', 'neg_log_loss', 'neg_brier_score', 'jaccard'
-    ]
-
-    for name in CLF_SCORERS:
-        if name not in binary_only:
-            scorer = SCORERS[name]
-            scorer(tree, X_test, y_test)
-            scorer(lr, X_test, y_test)
