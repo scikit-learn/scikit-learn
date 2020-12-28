@@ -474,7 +474,8 @@ def _fit_classifier_calibrator_pair(estimator, X, y, train, test, supports_sw,
     pred_method = _get_prediction_method(estimator)
     predictions = _compute_predictions(pred_method, X_test, n_classes)
 
-    sw_test = _safe_indexing(sample_weight, test)
+    sw_test = None if sample_weight is None else _safe_indexing(
+        sample_weight, test)
     calibrated_classifier = _fit_calibrator(
         estimator, predictions, y_test, classes, method, sample_weight=sw_test
     )
