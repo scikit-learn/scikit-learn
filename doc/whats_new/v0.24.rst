@@ -82,11 +82,6 @@ Changelog
   :pr:`17856` by :user:`Lucy Liu <lucyleeow>` and
   :user:`Andrea Esuli <aesuli>`.
 
-- |Enhancement| `fit` method of
-  :class:`calibration.CalibratedClassifierCV` now supports passing
-  `fit_params`, which are routed to the `BaseEstimator`. :pr:`18170`
-  by :user:`Benjamin Bossan <BenjaminBossan>`
-
 :mod:`sklearn.cluster`
 ......................
 
