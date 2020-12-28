@@ -4,6 +4,7 @@ from io import BytesIO
 import numpy as np
 import scipy.sparse as sp
 import os
+import pathlib
 import shutil
 from tempfile import NamedTemporaryFile
 
@@ -68,6 +69,15 @@ def test_load_svmlight_file_fd():
         assert_array_almost_equal(y1, y2)
     finally:
         os.close(fd)
+
+
+def test_load_svmlight_pathlib():
+    # test loading from file descriptor
+    X1, y1 = load_svmlight_file(datafile)
+    X2, y2 = load_svmlight_file(pathlib.Path(datafile))
+    
+    assert_array_almost_equal(X1.data, X2.data)
+    assert_array_almost_equal(y1, y2)
 
 
 def test_load_svmlight_file_multilabel():
