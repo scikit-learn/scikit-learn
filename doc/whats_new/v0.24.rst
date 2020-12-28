@@ -74,7 +74,6 @@ Changelog
   sparse matrix or dataframe at the start. :pr:`17546` by
   :user:`Lucy Liu <lucyleeow>`.
 
-=======
 - |Enhancement| Add `ensemble` parameter to
   :class:`calibration.CalibratedClassifierCV`, which enables implementation
   of calibration via an ensemble of calibrators (current method) or
@@ -82,7 +81,8 @@ Changelog
   :mod:`sklearn.svm` estimators with the `probabilities=True` parameter).
   :pr:`17856` by :user:`Lucy Liu <lucyleeow>` and
   :user:`Andrea Esuli <aesuli>`.
->- |Enhancement| `fit` method of
+
+- |Enhancement| `fit` method of
   :class:`calibration.CalibratedClassifierCV` now supports passing
   `fit_params`, which are routed to the `BaseEstimator`. :pr:`18170`
   by :user:`Benjamin Bossan <BenjaminBossan>`
