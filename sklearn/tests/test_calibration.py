@@ -33,7 +33,6 @@ from sklearn.utils._mocking import CheckingClassifier
 from sklearn.utils._testing import _convert_container
 
 
-
 N_SAMPLES = 200
 
 
