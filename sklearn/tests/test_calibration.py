@@ -33,10 +33,14 @@ from sklearn.utils._mocking import CheckingClassifier
 from sklearn.utils._testing import _convert_container
 
 
+
+N_SAMPLES = 200
+
+
 @pytest.fixture(scope="module")
 def data():
     X, y = make_classification(
-        n_samples=200, n_features=6, random_state=42
+        n_samples=N_SAMPLES, n_features=6, random_state=42
     )
     return X, y
 
@@ -45,7 +49,7 @@ def data():
 @pytest.mark.parametrize('ensemble', [True, False])
 def test_calibration(data, method, ensemble):
     # Test calibration objects with isotonic and sigmoid
-    n_samples = 100
+    n_samples = N_SAMPLES // 2
     X, y = data
     sample_weight = np.random.RandomState(seed=42).uniform(size=y.size)
 
@@ -156,7 +160,7 @@ def test_calibration_cv_splitter(data, ensemble):
 @pytest.mark.parametrize('method', ['sigmoid', 'isotonic'])
 @pytest.mark.parametrize('ensemble', [True, False])
 def test_sample_weight(data, method, ensemble):
-    n_samples = 100
+    n_samples = N_SAMPLES // 2
     X, y = data
 
     sample_weight = np.random.RandomState(seed=42).uniform(size=len(y))
@@ -582,8 +586,8 @@ def test_calibration_with_fit_params(fit_params_type, data):
 
 
 @pytest.mark.parametrize('sample_weight', [
-    [1.0] * 100,
-    np.ones(100),
+    [1.0] * N_SAMPLES,
+    np.ones(N_SAMPLES),
 ])
 def test_calibration_with_sample_weight_base_estimator(sample_weight, data):
     """Tests that sample_weight is passed to the underlying base
@@ -629,7 +633,7 @@ def test_calibration_with_fit_params_inconsistent_length(data):
 
     msg = (
         r"Found input variables with inconsistent numbers of "
-        r"samples: \[200, 5\]"
+        r"samples: \[" + str(N_SAMPLES) + r", 5\]"
     )
     with pytest.raises(ValueError, match=msg):
         pc_clf.fit(X, y, **fit_params)

@@ -321,8 +321,8 @@ class CalibratedClassifierCV(ClassifierMixin,
                                   "sample weights will only be used for the "
                                   "calibration itself." % estimator_name)
 
+            cv = check_cv(self.cv, y, classifier=True)
             if self.ensemble:
-                cv = check_cv(self.cv, y, classifier=True)
                 parallel = Parallel(n_jobs=self.n_jobs)
                 self.calibrated_classifiers_ = parallel(delayed(
                     _fit_classifier_calibrator_pair)(
@@ -332,6 +332,7 @@ class CalibratedClassifierCV(ClassifierMixin,
                         method=self.method,
                         classes=self.classes_,
                         sample_weight=sample_weight,
+                        supports_sw=supports_sw,
                         **fit_params
                     ) for train, test in cv.split(X, y))
             else:
