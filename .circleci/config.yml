@@ -103,13 +103,15 @@ jobs:
 
   pypy3:
     docker:
-      - image: pypy:3.6-7.2.0
+      - image: condaforge/miniforge3
     steps:
       - restore_cache:
           keys:
             - pypy3-ccache-{{ .Branch }}
             - pypy3-ccache
+      - run: apt-get -yq update && apt-get -yq install git ssh
       - checkout
+      - run: conda init bash && source ~/.bashrc
       - run: ./build_tools/circle/build_test_pypy.sh
       - save_cache:
           key: pypy3-ccache-{{ .Branch }}-{{ .BuildNum }}

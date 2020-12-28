@@ -42,6 +42,7 @@ extensions = [
     'sphinx_gallery.gen_gallery',
     'sphinx_issues',
     'add_toctree_functions',
+    'sphinx-prompt',
 ]
 
 # this is needed for some reason...
@@ -267,7 +268,7 @@ trim_doctests_flags = True
 intersphinx_mapping = {
     'python': ('https://docs.python.org/{.major}'.format(
         sys.version_info), None),
-    'numpy': ('https://docs.scipy.org/doc/numpy/', None),
+    'numpy': ('https://numpy.org/doc/stable', None),
     'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
     'matplotlib': ('https://matplotlib.org/', None),
     'pandas': ('https://pandas.pydata.org/pandas-docs/stable/', None),
@@ -460,8 +461,30 @@ def generate_min_dependency_substitutions(app):
 # we use the issues path for PRs since the issues URL will forward
 issues_github_path = 'scikit-learn/scikit-learn'
 
+# Hack to get kwargs to appear in docstring #18434
+# TODO: Remove when https://github.com/sphinx-doc/sphinx/pull/8234 gets
+# merged
+from sphinx.util import inspect  # noqa
+from sphinx.ext.autodoc import ClassDocumenter  # noqa
+
+
+class PatchedClassDocumenter(ClassDocumenter):
+
+    def _get_signature(self):
+        old_signature = inspect.signature
+
+        def patch_signature(subject, bound_method=False, follow_wrapped=True):
+            # changes the default of follow_wrapped to True
+            return old_signature(subject, bound_method=bound_method,
+                                 follow_wrapped=follow_wrapped)
+        inspect.signature = patch_signature
+        result = super()._get_signature()
+        inspect.signature = old_signature
+        return result
+
 
 def setup(app):
+    app.registry.documenters['class'] = PatchedClassDocumenter
     app.connect('builder-inited', generate_min_dependency_table)
     app.connect('builder-inited', generate_min_dependency_substitutions)
     # to hide/show the prompt in code examples:
