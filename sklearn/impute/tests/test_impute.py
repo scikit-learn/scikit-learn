@@ -704,7 +704,7 @@ def test_iterative_imputer_clip():
     n = 100
     d = 10
     X = _sparse_random_matrix(n, d, density=0.10,
-                             random_state=rng).toarray()
+                              random_state=rng).toarray()
 
     imputer = IterativeImputer(missing_values=0,
                                max_iter=1,
@@ -808,7 +808,7 @@ def test_iterative_imputer_transform_stochasticity():
     n = 100
     d = 10
     X = _sparse_random_matrix(n, d, density=0.10,
-                             random_state=rng1).toarray()
+                              random_state=rng1).toarray()
 
     # when sample_posterior=True, two transforms shouldn't be equal
     imputer = IterativeImputer(missing_values=0,
