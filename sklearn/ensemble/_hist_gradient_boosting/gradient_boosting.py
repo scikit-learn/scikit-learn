@@ -6,6 +6,8 @@ from functools import partial
 
 import numpy as np
 from timeit import default_timer as time
+from ..._loss.loss import (_LOSSES, BaseLoss, AbsoluteError, HalfPoissonLoss,
+                           HalfSquaredError)
 from ...base import (BaseEstimator, RegressorMixin, ClassifierMixin,
                      is_classifier)
 from ...utils import check_random_state, check_array, resample
@@ -14,16 +16,92 @@ from ...utils.validation import (check_is_fitted,
                                  _check_sample_weight,
                                  _deprecate_positional_args)
 from ...utils.multiclass import check_classification_targets
+from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ...metrics import check_scoring
 from ...model_selection import train_test_split
 from ...preprocessing import LabelEncoder
 from ._gradient_boosting import _update_raw_predictions
-from .common import Y_DTYPE, X_DTYPE, X_BINNED_DTYPE
+from .common import Y_DTYPE, X_DTYPE, X_BINNED_DTYPE, G_H_DTYPE
 
 from .binning import _BinMapper
 from .grower import TreeGrower
-from .loss import _LOSSES
-from .loss import BaseLoss
+_openmp_effective_n_threads
+
+
+_LOSSES = _LOSSES.copy()
+_LOSSES.update({
+    'least_squares': HalfSquaredError,
+    'least_absolute_deviation': AbsoluteError,
+    'poisson': HalfPoissonLoss,
+})
+
+
+def init_gradients_and_hessians(constant_hessian, n_samples, prediction_dim):
+    """Return initial gradients and hessians.
+
+    Unless hessians are constant, arrays are initialized with undefined
+    values.
+
+    Parameters
+    ----------
+    constant_hessian : bool
+        Usual input is loss.constant_hessian.
+
+    n_samples : int
+        The number of samples passed to `fit()`.
+
+    prediction_dim : int
+        The dimension of a raw prediction, i.e. the number of trees
+        built at each iteration. Equals 1 for regression and binary
+        classification, or K where K is the number of classes for
+        multiclass classification.
+
+    Returns
+    -------
+    gradients : ndarray, shape (prediction_dim, n_samples)
+        The initial gradients. The array is not initialized.
+    hessians : ndarray, shape (prediction_dim, n_samples)
+        If hessians are constant (e.g. for `LeastSquares` loss, the
+        array is initialized to ``1``. Otherwise, the array is allocated
+        without being initialized.
+    """
+    shape = (prediction_dim, n_samples)
+    gradients = np.empty(shape=shape, dtype=G_H_DTYPE)
+
+    if constant_hessian:
+        # If the hessians are constant, we consider they are equal to 1.
+        # - This is correct for the half LS loss
+        # - For the Absolute Error, hessians are actually 0, but they are
+        # always ignored anyway.
+        hessians = np.ones(shape=(1, 1), dtype=G_H_DTYPE)
+    else:
+        hessians = np.empty(shape=shape, dtype=G_H_DTYPE)
+
+    return gradients, hessians
+
+
+def update_leaves_values(loss, grower, y_true, raw_prediction,
+                         sample_weight):
+    # Update the values predicted by the tree with
+    # loss.fit_intercept_only(y_true - raw_predictions)
+    # This only works, if the loss is a function of the residual, as is the
+    # case for AbsoluteError and PinballLoss. (Otherwise, one would need to get
+    # the minimum of loss(y_true, raw_prediction + x) in x.)
+    # - AbsoluteError: median(y_true - raw_predictions).
+    # - PinballLoss: quantile(y_true - raw_predictions).
+    # See note about need_update_leaves_values in BaseLoss.
+
+    # TODO: ideally this should be computed in parallel over the leaves
+    # using something similar to _update_raw_predictions(), but this
+    # requires a cython version of median()
+    for leaf in grower.finalized_leaves:
+        indices = leaf.sample_indices
+        update = loss.fit_intercept_only(
+            y_true=y_true[indices] - raw_prediction[indices],
+            sample_weight=sample_weight
+        )
+        leaf.value = grower.shrinkage * update
+        # Note that the regularization is ignored here
 
 
 class BaseHistGradientBoosting(BaseEstimator, ABC):
@@ -213,6 +291,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         rng = check_random_state(self.random_state)
 
+        n_threads = _openmp_effective_n_threads()
+
         # When warm starting, we want to re-use the same seed that was used
         # the first time fit was called (e.g. for subsampling or for the
         # train/val split).
@@ -251,7 +331,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self._use_validation_data = self.validation_fraction is not None
         if self.do_early_stopping_ and self._use_validation_data:
             # stratify for classification
-            stratify = y if hasattr(self._loss, 'predict_proba') else None
+            stratify = y if self._loss.n_classes >= 2 else None
 
             # Save the state of the RNG for the training and validation split.
             # This is needed in order to have the same split when using
@@ -315,14 +395,16 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             # shape (n_trees_per_iteration, n_samples) where
             # n_trees_per_iterations is n_classes in multiclass classification,
             # else 1.
-            self._baseline_prediction = self._loss.get_baseline_prediction(
-                y_train, sample_weight_train, self.n_trees_per_iteration_
-            )
+            self._baseline_prediction = np.atleast_1d(
+                self._loss.fit_intercept_only(
+                    y_true=y_train, sample_weight=sample_weight_train
+                )
+            ).T
             raw_predictions = np.zeros(
                 shape=(self.n_trees_per_iteration_, n_samples),
                 dtype=self._baseline_prediction.dtype
             )
-            raw_predictions += self._baseline_prediction
+            raw_predictions += self._baseline_prediction[:, None]
 
             # predictors is a matrix (list of lists) of TreePredictor objects
             # with shape (n_iter_, n_trees_per_iteration)
@@ -355,12 +437,15 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                             dtype=self._baseline_prediction.dtype
                         )
 
-                        raw_predictions_val += self._baseline_prediction
+                        raw_predictions_val += (
+                            self._baseline_prediction[:, None]
+                        )
 
                     self._check_early_stopping_loss(raw_predictions, y_train,
                                                     sample_weight_train,
                                                     raw_predictions_val, y_val,
-                                                    sample_weight_val)
+                                                    sample_weight_val,
+                                                    n_threads)
                 else:
                     self._scorer = check_scoring(self, self.scoring)
                     # _scorer is a callable with signature (est, X, y) and
@@ -421,10 +506,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         # initialize gradients and hessians (empty arrays).
         # shape = (n_trees_per_iteration, n_samples).
-        gradients, hessians = self._loss.init_gradients_and_hessians(
+        gradients, hessians = init_gradients_and_hessians(
+            constant_hessian=self._loss.constant_hessian,
             n_samples=n_samples,
             prediction_dim=self.n_trees_per_iteration_,
-            sample_weight=sample_weight_train
         )
 
         for iteration in range(begin_at_stage, self.max_iter):
@@ -435,9 +520,27 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                       end='', flush=True)
 
             # Update gradients and hessians, inplace
-            self._loss.update_gradients_and_hessians(gradients, hessians,
-                                                     y_train, raw_predictions,
-                                                     sample_weight_train)
+            # Note that self._loss expects shape (n_samples,) for
+            # n_trees_per_iteration = 1 else shape
+            # (n_samples, n_trees_per_iteration)
+            # T (transpose) returns a view.
+            if self._loss.constant_hessian:
+                self._loss.gradient(
+                    y_true=y_train,
+                    raw_prediction=raw_predictions.T,
+                    sample_weight=sample_weight_train,
+                    out=gradients.T,
+                    n_threads=n_threads
+                )
+            else:
+                self._loss.gradient_hessian(
+                    y_true=y_train,
+                    raw_prediction=raw_predictions.T,
+                    sample_weight=sample_weight_train,
+                    gradient=gradients.T,
+                    hessian=hessians.T,
+                    n_threads=n_threads
+                )
 
             # Append a list since there may be more than 1 predictor per iter
             predictors.append([])
@@ -463,9 +566,13 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 acc_compute_hist_time += grower.total_compute_hist_time
 
                 if self._loss.need_update_leaves_values:
-                    self._loss.update_leaves_values(grower, y_train,
-                                                    raw_predictions[k, :],
-                                                    sample_weight_train)
+                    update_leaves_values(
+                        loss=self._loss,
+                        grower=grower,
+                        y_true=y_train,
+                        raw_prediction=raw_predictions[k, :],
+                        sample_weight=sample_weight_train
+                    )
 
                 predictor = grower.make_predictor(
                     binning_thresholds=self._bin_mapper.bin_thresholds_
@@ -494,7 +601,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
                     should_early_stop = self._check_early_stopping_loss(
                         raw_predictions, y_train, sample_weight_train,
-                        raw_predictions_val, y_val, sample_weight_val
+                        raw_predictions_val, y_val, sample_weight_val,
+                        n_threads
                     )
 
                 else:
@@ -615,19 +723,30 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                                    sample_weight_train,
                                    raw_predictions_val,
                                    y_val,
-                                   sample_weight_val):
+                                   sample_weight_val,
+                                   n_threads=1):
         """Check if fitting should be early-stopped based on loss.
 
         Scores are computed on validation data or on training data.
         """
 
         self.train_score_.append(
-            -self._loss(y_train, raw_predictions, sample_weight_train)
+            -self._loss(
+                y_true=y_train,
+                raw_prediction=raw_predictions.T,
+                sample_weight=sample_weight_train,
+                n_threads=n_threads
+            )
         )
 
         if self._use_validation_data:
             self.validation_score_.append(
-                -self._loss(y_val, raw_predictions_val, sample_weight_val)
+                -self._loss(
+                    y_true=y_val,
+                    raw_prediction=raw_predictions_val.T,
+                    sample_weight=sample_weight_val,
+                    n_threads=n_threads
+                )
             )
             return self._should_stop(self.validation_score_)
         else:
@@ -746,7 +865,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             shape=(self.n_trees_per_iteration_, n_samples),
             dtype=self._baseline_prediction.dtype
         )
-        raw_predictions += self._baseline_prediction
+        raw_predictions += self._baseline_prediction[:, None]
         self._predict_iterations(
             X, self._predictors, raw_predictions, is_binned
         )
@@ -802,7 +921,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             shape=(self.n_trees_per_iteration_, n_samples),
             dtype=self._baseline_prediction.dtype
         )
-        raw_predictions += self._baseline_prediction
+        raw_predictions += self._baseline_prediction[:, None]
         for iteration in range(len(self._predictors)):
             self._predict_iterations(
                 X,
@@ -1085,7 +1204,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         check_is_fitted(self)
         # Return inverse link of raw predictions after converting
         # shape (n_samples, 1) to (n_samples,)
-        return self._loss.inverse_link_function(self._raw_predict(X).ravel())
+        # loss.inverse is inverse link function
+        return self._loss.inverse(self._raw_predict(X).ravel())
 
     def staged_predict(self, X):
         """Predict regression target for each iteration
@@ -1106,7 +1226,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
             The predicted values of the input samples, for each iteration.
         """
         for raw_predictions in self._staged_raw_predict(X):
-            yield self._loss.inverse_link_function(raw_predictions.ravel())
+            yield self._loss.inverse(raw_predictions.ravel())
 
     def _encode_y(self, y):
         # Just convert y to the expected dtype
@@ -1377,7 +1497,7 @@ class HistGradientBoostingClassifier(ClassifierMixin,
             The class probabilities of the input samples.
         """
         raw_predictions = self._raw_predict(X)
-        return self._loss.predict_proba(raw_predictions)
+        return self._loss.predict_proba(raw_predictions.T)
 
     def staged_predict_proba(self, X):
         """Predict class probabilities at each iteration.
@@ -1397,7 +1517,7 @@ class HistGradientBoostingClassifier(ClassifierMixin,
             for each iteration.
         """
         for raw_predictions in self._staged_raw_predict(X):
-            yield self._loss.predict_proba(raw_predictions)
+            yield self._loss.predict_proba(raw_predictions.T)
 
     def decision_function(self, X):
         """Compute the decision function of ``X``.
@@ -1460,18 +1580,33 @@ class HistGradientBoostingClassifier(ClassifierMixin,
         return encoded_y
 
     def _get_loss(self, sample_weight):
-        if (self.loss == 'categorical_crossentropy' and
-                self.n_trees_per_iteration_ == 1):
-            raise ValueError("'categorical_crossentropy' is not suitable for "
-                             "a binary classification problem. Please use "
-                             "'auto' or 'binary_crossentropy' instead.")
-
         if self.loss == 'auto':
             if self.n_trees_per_iteration_ == 1:
                 return _LOSSES['binary_crossentropy'](
                     sample_weight=sample_weight)
             else:
                 return _LOSSES['categorical_crossentropy'](
-                    sample_weight=sample_weight)
+                    sample_weight=sample_weight,
+                    n_classes=self.n_trees_per_iteration_
+                )
 
-        return _LOSSES[self.loss](sample_weight=sample_weight)
+        if _LOSSES[self.loss] == _LOSSES['categorical_crossentropy']:
+            if self.n_trees_per_iteration_ == 1:
+                raise ValueError("'categorical_crossentropy' is not suitable "
+                                 "for a binary classification problem. Please "
+                                 "use 'auto' or 'binary_crossentropy' instead."
+                                 )
+            return _LOSSES[self.loss](
+                sample_weight=sample_weight,
+                n_classes=self.n_trees_per_iteration_
+            )
+        else:
+            if self.n_trees_per_iteration_ > 1:
+                raise ValueError(
+                    f"loss='binary_crossentropy' is not defined for multiclass"
+                    f" classification with n_classes="
+                    f"{self.n_trees_per_iteration_}, use loss="
+                    f"'categorical_crossentropy' instead")
+            return _LOSSES[self.loss](
+                sample_weight=sample_weight
+            )

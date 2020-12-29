@@ -1,6 +1,13 @@
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_array_equal
+from sklearn._loss.loss import (
+    AbsoluteError,
+    BinaryCrossEntropy,
+    CategoricalCrossEntropy,
+    HalfPoissonLoss,
+    HalfSquaredError
+)
 from sklearn.datasets import make_classification, make_regression
 from sklearn.datasets import make_low_rank_matrix
 from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler, OneHotEncoder
@@ -17,12 +24,21 @@ from sklearn.compose import make_column_transformer
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.ensemble import HistGradientBoostingClassifier
-from sklearn.ensemble._hist_gradient_boosting.loss import _LOSSES
-from sklearn.ensemble._hist_gradient_boosting.loss import LeastSquares
-from sklearn.ensemble._hist_gradient_boosting.loss import BinaryCrossEntropy
 from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
 from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
+from sklearn.ensemble._hist_gradient_boosting.gradient_boosting import (
+    init_gradients_and_hessians
+)
 from sklearn.utils import shuffle
+
+
+_LOSSES = {
+    'least_squares': HalfSquaredError,
+    'least_absolute_deviation': AbsoluteError,
+    'binary_crossentropy': BinaryCrossEntropy,
+    'categorical_crossentropy': CategoricalCrossEntropy,
+    'poisson': HalfPoissonLoss,
+}
 
 
 X_classification, y_classification = make_classification(random_state=0)
@@ -640,6 +656,36 @@ def test_sample_weight_effect(problem, duplication):
 
 @pytest.mark.parametrize('loss_name', ('least_squares',
                                        'least_absolute_deviation'))
+def test_init_gradient_and_hessians_sample_weight(loss_name):
+    # Make sure that passing sample_weight to a loss correctly influences the
+    # hessians_are_constant attribute, and consequently the shape of the
+    # hessians array.
+
+    prediction_dim = 2
+    n_samples = 5
+    sample_weight = None
+    loss = _LOSSES[loss_name](sample_weight=sample_weight)
+    _, hessians = init_gradients_and_hessians(
+        constant_hessian=loss.constant_hessian,
+        n_samples=n_samples,
+        prediction_dim=prediction_dim,
+    )
+    assert loss.constant_hessian
+    assert hessians.shape == (1, 1)
+
+    sample_weight = np.ones(n_samples)
+    loss = _LOSSES[loss_name](sample_weight=sample_weight)
+    _, hessians = init_gradients_and_hessians(
+        constant_hessian=loss.constant_hessian,
+        n_samples=n_samples,
+        prediction_dim=prediction_dim,
+    )
+    assert not loss.constant_hessian
+    assert hessians.shape == (prediction_dim, n_samples)
+
+
+@pytest.mark.parametrize('loss_name', ('least_squares',
+                                       'least_absolute_deviation'))
 def test_sum_hessians_are_sample_weight(loss_name):
     # For losses with constant hessians, the sum_hessians field of the
     # histograms must be equal to the sum of the sample weight of samples at
@@ -656,11 +702,19 @@ def test_sum_hessians_are_sample_weight(loss_name):
     sample_weight = rng.normal(size=n_samples)
 
     loss = _LOSSES[loss_name](sample_weight=sample_weight)
-    gradients, hessians = loss.init_gradients_and_hessians(
-        n_samples=n_samples, prediction_dim=1, sample_weight=sample_weight)
+    gradients, hessians = init_gradients_and_hessians(
+        constant_hessian=loss.constant_hessian,
+        n_samples=n_samples,
+        prediction_dim=1
+    )
     raw_predictions = rng.normal(size=(1, n_samples))
-    loss.update_gradients_and_hessians(gradients, hessians, y,
-                                       raw_predictions, sample_weight)
+    loss.gradient_hessian(
+        y_true=y,
+        raw_prediction=raw_predictions.T,
+        sample_weight=sample_weight,
+        gradient=gradients.T,
+        hessian=hessians.T
+    )
 
     # build sum_sample_weight which contains the sum of the sample weights at
     # each bin (for each feature). This must be equal to the sum_hessians
@@ -742,7 +796,7 @@ def test_single_node_trees(Est):
     ),
     (
         HistGradientBoostingRegressor,
-        LeastSquares(sample_weight=None),
+        HalfSquaredError(sample_weight=None),
         X_regression,
         y_regression
     )
