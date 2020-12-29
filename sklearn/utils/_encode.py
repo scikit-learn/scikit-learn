@@ -66,11 +66,12 @@ def _unique_np(values, return_inverse=False, return_counts=False):
     if uniques.size and is_scalar_nan(uniques[-1]):
         nan_idx = np.searchsorted(uniques, np.nan)
         uniques = uniques[:nan_idx + 1]
-        counts = counts[:nan_idx + 1]
         if return_inverse:
             inverse[inverse > nan_idx] = nan_idx
+
         if return_counts:
             counts[nan_idx] = np.sum(counts[nan_idx:])
+            counts = counts[:nan_idx + 1]
 
     ret = (uniques, )
 
@@ -79,6 +80,9 @@ def _unique_np(values, return_inverse=False, return_counts=False):
 
     if return_counts:
         ret += (counts, )
+
+    if len(ret) == 1:
+        ret = ret[0]
 
     return ret
 
@@ -173,7 +177,7 @@ def _unique_python(values, *, return_inverse, return_counts):
     ret = (uniques, )
 
     if return_inverse:
-        ret += (_map_to_integer(values, uniques))
+        ret += (_map_to_integer(values, uniques), )
 
     if return_counts:
         counts = _get_counts(values, uniques)
@@ -310,6 +314,28 @@ def _check_unknown(values, known_values, return_mask=False):
     return diff
 
 
+class _NaNCounter(Counter):
+    """Counter with support for nan values."""
+    def __init__(self, items):
+        super().__init__(self._generate_items(items))
+
+    def _generate_items(self, items):
+        """Generate items without nans. Stores the nan counts seperately."""
+        for item in items:
+            if not is_scalar_nan(item):
+                yield item
+                continue
+
+            if not hasattr(self, 'nan_count'):
+                self.nan_count = 0
+            self.nan_count += 1
+
+    def __missing__(self, key):
+        if hasattr(self, 'nan_count') and is_scalar_nan(key):
+            return self.nan_count
+        raise KeyError(key)
+
+
 def _get_counts(values, uniques):
     """Get the count of each of the `uniques` in `values`. The counts will use
     the order passed in by `uniques`.
@@ -317,16 +343,19 @@ def _get_counts(values, uniques):
     For non-object dtypes, `uniques` is assumed to be sorted.
     """
     if values.dtype == object:
-        counter = Counter(values)
-        counts = np.array([counter[item] for item in uniques],
-                          dtype=int)
-        return counts
+        counter = _NaNCounter(values)
+        return np.array([counter[item] for item in uniques], dtype=np.int64)
 
-    unique_values, counts = np.unique(values, return_counts=True)
+    unique_values, counts = _unique_np(values, return_counts=True)
     uniques_in_values = np.isin(uniques, unique_values, assume_unique=True)
+
+    # If there are nans, they will be mapped to the end.
+    if np.isnan(unique_values[-1]) and np.isnan(uniques[-1]):
+        uniques_in_values[-1] = True
+
     unique_valid_indices = np.searchsorted(unique_values,
                                            uniques[uniques_in_values])
 
-    output = np.zeros_like(uniques)
+    output = np.zeros_like(uniques, dtype=np.int64)
     output[uniques_in_values] = counts[unique_valid_indices]
     return output
