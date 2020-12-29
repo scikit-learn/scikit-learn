@@ -4,46 +4,22 @@
 
 import numbers
 import warnings
-from collections import Counter
 
 import numpy as np
 from scipy import sparse
-import numbers
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, is_scalar_nan
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _deprecate_positional_args
 
-from ..utils._encode import _encode, _check_unknown, _unique
+from ..utils._encode import _encode, _check_unknown, _unique, _get_counts
 
 
 __all__ = [
     'OneHotEncoder',
     'OrdinalEncoder'
 ]
-
-
-def _get_counts(values, uniques):
-    """Get the count of each of the `uniques` in `values`. The counts will use
-    the order passed in by `uniques`.
-
-    For non-object dtypes, `uniques` is assumed to be sorted.
-    """
-    if values.dtype.kind in 'UO':
-        counter = Counter(values)
-        counts = np.array([counter[item] for item in uniques],
-                          dtype=int)
-        return counts
-
-    unique_values, counts = np.unique(values, return_counts=True)
-    uniques_in_values = np.isin(uniques, unique_values, assume_unique=True)
-    unique_valid_indices = np.searchsorted(unique_values,
-                                           uniques[uniques_in_values])
-
-    output = np.zeros_like(uniques)
-    output[uniques_in_values] = counts[unique_valid_indices]
-    return output
 
 
 class _BaseEncoder(TransformerMixin, BaseEstimator):

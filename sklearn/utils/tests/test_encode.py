@@ -7,17 +7,23 @@ from numpy.testing import assert_array_equal
 from sklearn.utils._encode import _unique
 from sklearn.utils._encode import _encode
 from sklearn.utils._encode import _check_unknown
+from sklearn.utils._encode import _get_counts
 
 
 @pytest.mark.parametrize(
         "values, expected",
         [(np.array([2, 1, 3, 1, 3], dtype='int64'),
           np.array([1, 2, 3], dtype='int64')),
+         (np.array([2, 1, np.nan, 1, np.nan], dtype='float32'),
+          np.array([1, 2, np.nan], dtype='float32')),
          (np.array(['b', 'a', 'c', 'a', 'c'], dtype=object),
           np.array(['a', 'b', 'c'], dtype=object)),
+         (np.array(['b', 'a', None, 'a', None], dtype=object),
+          np.array(['a', 'b', None], dtype=object)),
          (np.array(['b', 'a', 'c', 'a', 'c']),
           np.array(['a', 'b', 'c']))],
-        ids=['int64', 'object', 'str'])
+        ids=['int64', 'float32-nan', 'object',
+             'object-None', 'str'])
 def test_encode_util(values, expected):
     uniques = _unique(values)
     assert_array_equal(uniques, expected)
@@ -184,9 +190,6 @@ def test_unique_util_missing_values_numeric():
     assert_array_equal(uniques, expected_uniques)
     assert_array_equal(inverse, expected_inverse)
 
-    _, counts = _unique(values, return_counts=True)
-    assert_array_equal(counts, [1, 2, 1, 2])
-
     encoded = _encode(values, uniques=uniques)
     assert_array_equal(encoded, expected_inverse)
 
@@ -204,9 +207,6 @@ def test_unique_util_with_all_missing_values():
     expected_inverse = [3, 0, 1, 1, 2, 3, 2]
     _, inverse = _unique(values, return_inverse=True)
     assert_array_equal(inverse, expected_inverse)
-
-    _, counts = _unique(values, return_counts=True)
-    assert_array_equal(counts, [1, 2, 2, 2])
 
 
 def test_check_unknown_with_both_missing_values():
@@ -227,3 +227,24 @@ def test_check_unknown_with_both_missing_values():
     assert np.isnan(diff[1])
     assert_array_equal(valid_mask,
                        [False, True, True, True, False, False, False])
+
+
+@pytest.mark.parametrize("values, uniques, expected_counts", [
+    (np.array([1] * 10 + [2] * 4 + [3] * 15),
+     np.array([1, 2, 3]), [10, 4, 15]),
+    (np.array([1] * 10 + [2] * 4 + [3] * 15),
+     np.array([1, 2, 3, 5]), [10, 4, 15, 0]),
+    (np.array([np.nan] * 10 + [2] * 4 + [3] * 15),
+     np.array([2, 3, np.nan]), [4, 15, 10]),
+    (np.array(['b'] * 4 + ['a'] * 16 + ['c'] * 20, dtype=object),
+     ['a', 'b', 'c'], [16, 4, 20]),
+    (np.array(['b'] * 4 + ['a'] * 16 + ['c'] * 20, dtype=object),
+     ['c', 'b', 'a'], [20, 4, 16]),
+    (np.array([np.nan] * 4 + ['a'] * 16 + ['c'] * 20, dtype=object),
+     ['c', np.nan, 'a'], [20, 4, 16]),
+    (np.array(['b'] * 4 + ['a'] * 16 + ['c'] * 20, dtype=object),
+     ['a', 'b', 'c', 'e'], [16, 4, 20, 0]),
+])
+def test_get_counts(values, uniques, expected_counts):
+    counts = _get_counts(values, uniques)
+    assert_array_equal(counts, expected_counts)

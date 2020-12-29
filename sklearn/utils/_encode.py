@@ -1,3 +1,5 @@
+from contextlib import suppress
+from collections import Counter
 from typing import NamedTuple
 
 import numpy as np
@@ -35,19 +37,26 @@ def _unique(values, *, return_inverse=False, return_counts=False):
         return _unique_python(values, return_inverse=return_inverse,
                               return_counts=return_counts)
     # numerical
-    out = np.unique(values, return_inverse=return_inverse,
-                    return_counts=return_counts)
+    return _unique_np(values, return_inverse=return_inverse,
+                      return_counts=return_counts)
+
+
+def _unique_np(values, return_inverse=False, return_counts=False):
+    """Helper function to find unique values for numpy arrays that correctly
+    accounts for nans. See `_unique` documentation for details."""
+    uniques = np.unique(values, return_inverse=return_inverse,
+                        return_counts=return_counts)
+
+    inverse, counts = None, None
+
+    if return_counts:
+        *uniques, counts = uniques
 
     if return_inverse:
-        if return_counts:
-            uniques, inverse, counts = out
-        else:
-            uniques, inverse = out
-    else:
-        if return_counts:
-            uniques, counts = out
-        else:
-            uniques = out
+        *uniques, inverse = uniques
+
+    if return_counts or return_inverse:
+        uniques = uniques[0]
 
     # np.unique will have duplicate missing values at the end of `uniques`
     # here we clip the nans and remove it from uniques
@@ -59,7 +68,7 @@ def _unique(values, *, return_inverse=False, return_counts=False):
 
         if return_counts:
             counts[nan_idx] = np.sum(counts[nan_idx:])
-            counts = counts[:nan_idx+1]
+            counts = counts[:nan_idx + 1]
 
     ret = (uniques, )
 
@@ -139,27 +148,6 @@ class _nandict(dict):
         raise KeyError(key)
 
 
-class _NaNCounter(dict):
-    """Counter that supports nans."""
-    def __init__(self, iterable):
-        for item in iterable:
-            if is_scalar_nan(item):
-                if not hasattr(self, 'nan_cnt'):
-                    self.nan_cnt = 0
-                self.nan_cnt += 1
-                continue
-
-            try:
-                self[item] += 1
-            except KeyError:
-                self[item] = 1
-
-    def __missing__(self, key):
-        if hasattr(self, 'nan_cnt') and is_scalar_nan(key):
-            return self.nan_cnt
-        raise KeyError(key)
-
-
 def _map_to_integer(values, uniques):
     """Map values based on its position in uniques."""
     table = _nandict({val: i for i, val in enumerate(uniques)})
@@ -186,15 +174,9 @@ def _unique_python(values, *, return_inverse, return_counts):
         ret += (_map_to_integer(values, uniques), )
 
     if return_counts:
-        uniques_dict = _NaNCounter(values)
-        counts = np.array([uniques_dict[item] for item in uniques],
-                          dtype=int)
-        ret += (counts, )
+        ret += (_get_counts(values, uniques), )
 
-    if len(ret) == 1:
-        ret = ret[0]
-
-    return ret
+    return ret[0] if len(ret) == 1 else ret
 
 
 def _encode(values, *, uniques, check_unknown=True):
@@ -320,3 +302,53 @@ def _check_unknown(values, known_values, return_mask=False):
     if return_mask:
         return diff, valid_mask
     return diff
+
+
+class _NaNCounter(Counter):
+    """Counter with support for nan values."""
+    def __init__(self, items):
+        super().__init__(self._generate_items(items))
+
+    def _generate_items(self, items):
+        """Generate items without nans. Stores the nan counts seperately."""
+        for item in items:
+            if not is_scalar_nan(item):
+                yield item
+                continue
+            if not hasattr(self, 'nan_count'):
+                self.nan_count = 0
+            self.nan_count += 1
+
+    def __missing__(self, key):
+        if hasattr(self, 'nan_count') and is_scalar_nan(key):
+            return self.nan_count
+        raise KeyError(key)
+
+
+def _get_counts(values, uniques):
+    """Get the count of each of the `uniques` in `values`. The counts will use
+    the order passed in by `uniques`.
+
+    For non-object dtypes, `uniques` is assumed to be sorted.
+    """
+    if values.dtype.kind in 'OU':
+        counter = _NaNCounter(values)
+        output = np.zeros(len(uniques), dtype=np.int64)
+        for i, item in enumerate(uniques):
+            with suppress(KeyError):
+                output[i] = counter[item]
+        return output
+
+    unique_values, counts = _unique_np(values, return_counts=True)
+    uniques_in_values = np.isin(uniques, unique_values, assume_unique=True)
+
+    # If there are nans, they will be mapped to the end.
+    if np.isnan(unique_values[-1]) and np.isnan(uniques[-1]):
+        uniques_in_values[-1] = True
+
+    unique_valid_indices = np.searchsorted(unique_values,
+                                           uniques[uniques_in_values])
+
+    output = np.zeros_like(uniques, dtype=np.int64)
+    output[uniques_in_values] = counts[unique_valid_indices]
+    return output
