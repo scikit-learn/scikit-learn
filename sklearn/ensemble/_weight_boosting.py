@@ -411,8 +411,8 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
                  n_estimators=50,
                  learning_rate=1.,
                  algorithm='SAMME.R',
-                 n_samples = None,
-                 replace = True,
+                 n_samples=None,
+                 replace=True,
                  random_state=None):
 
         super().__init__(
@@ -523,7 +523,10 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
 
         # pick random sample stack of size n_samples
         if self.n_samples is not None and self.n_samples < len(y):
-            X_fit, y_fit, sample_weight_fit = resample(X, y, sample_weight, n_samples=self.n_samples, replace=self.replace, random_state=random_state)
+            X_fit, y_fit, sample_weight_fit = resample(X, y, sample_weight, 
+                                                       n_samples=self.n_samples, 
+                                                       replace=self.replace, 
+                                                       random_state=random_state)
         else:
             X_fit = X
             y_fit = y
@@ -586,9 +589,12 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         """Implement a single boost using the SAMME discrete algorithm."""
         estimator = self._make_estimator(random_state=random_state)
 
-         # pick random sample stack of size n_samples
+        # pick random sample stack of size n_samples
         if self.n_samples is not None and self.n_samples < len(y):
-            X_fit, y_fit, sample_weight_fit = resample(X, y, sample_weight, n_samples=self.n_samples, replace=self.replace, random_state=random_state)
+            X_fit, y_fit, sample_weight_fit = resample(X, y, sample_weight, 
+                                                       n_samples=self.n_samples, 
+                                                       replace=self.replace, 
+                                                       random_state=random_state)
         else:
             X_fit = X
             y_fit = y
