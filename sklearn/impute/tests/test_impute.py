@@ -240,10 +240,16 @@ def test_imputation_mean_median_error_invalid_type(strategy, dtype):
     X = np.array([["a", "b", 3],
                   [4, "e", 6],
                   ["g", "h", 9]], dtype=dtype)
-    msg = "non-numeric data:\ncould not convert string to float: '"
-    with pytest.raises(ValueError, match=msg):
-        imputer = SimpleImputer(strategy=strategy)
-        imputer.fit_transform(X)
+    if dtype == object:
+        msg = "could not convert string to float: '"
+        with pytest.raises(ValueError, match=msg):
+            imputer = SimpleImputer(strategy=strategy)
+            imputer.fit_transform(X)
+    else:
+        msg = "non-numeric data:\ncould not convert string to float: '"
+        with pytest.raises(ValueError, match=msg):
+            imputer = SimpleImputer(strategy=strategy)
+            imputer.fit_transform(X)
 
 
 @pytest.mark.parametrize("strategy", ["mean", "median"])
@@ -258,6 +264,39 @@ def test_imputation_mean_median_error_invalid_type_list_pandas(strategy, type):
     msg = "non-numeric data:\ncould not convert string to float: '"
     with pytest.raises(ValueError, match=msg):
         imputer = SimpleImputer(strategy=strategy)
+        imputer.fit_transform(X)
+
+
+@pytest.mark.parametrize("marker", [None, np.nan, "NAN", "", 0])
+@pytest.mark.parametrize("strategy", ["mean", "median"])
+def test_imputation_mean_median_object(marker, strategy):
+    # test mix of numeric values with different markers
+    X = np.array([[-1], [2], [5], [np.nan]]).astype(object)
+    X[3, 0] = marker
+    imputer = SimpleImputer(missing_values=marker, strategy=strategy)
+    X_trans = imputer.fit_transform(X)
+    X_true = np.array([[-1.0], [2.0], [5.0], [2.0]])
+    assert_array_equal(X_trans, X_true)
+
+
+@pytest.mark.parametrize("marker1, marker2", [
+    (np.nan, None),
+    (np.nan, "NAN"),
+    (np.nan, "arbitrary string"),
+    (np.nan, ""),
+    (None, np.nan),
+    (None, "NAN"),
+    (None, "arbitrary string"),
+    (None, ""),
+])
+@pytest.mark.parametrize("strategy", ["mean", "median"])
+def test_imputation_mean_median_object_fail(marker1, marker2, strategy):
+    # test object array with missing_values=marker1 and another non-numeric
+    X = np.array([[-1], [2], [5], [None], [None]]).astype(object)
+    X[3, 0] = marker1
+    X[4, 0] = marker2
+    with pytest.raises(ValueError):
+        imputer = SimpleImputer(missing_values=marker1, strategy=strategy)
         imputer.fit_transform(X)
 
 

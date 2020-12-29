@@ -241,7 +241,10 @@ class SimpleImputer(_BaseImputer):
             else:
                 dtype = None
         else:
-            dtype = FLOAT_DTYPES
+            if isinstance(X, np.ndarray) and X.dtype.kind == "O":
+                dtype = object
+            else:
+                dtype = FLOAT_DTYPES
 
         if not is_scalar_nan(self.missing_values):
             force_all_finite = True
@@ -366,6 +369,27 @@ class SimpleImputer(_BaseImputer):
 
         return statistics
 
+    @staticmethod
+    def _prepare_dtype_object(masked_X, missing_mask, missing_values):
+        """Try to convert object array into float64 to prepare for mean/median calculation."""
+        if masked_X.data.dtype.kind == "O":
+            result = masked_X
+            result.data[missing_mask] = np.nan  # this can be converted converted safely
+            result = result.astype(np.float64)  # conversion is necessary to calculate mean/median
+            ind_notmasked_nan = np.isnan(result.data[~missing_mask])  # in the not-masked part non-numeric can remain
+            X_notmasked_nan = masked_X.data[~missing_mask][ind_notmasked_nan]  # here we have their original values
+            num_notmasked_nan = len(X_notmasked_nan)  # we want error message to be informative
+            num_show = min(num_notmasked_nan, 3)
+            if num_notmasked_nan > 0:
+                msg = (
+                    f"Non-numeric values other than missing_values={missing_values}, "
+                    f"showing {num_show}/{num_notmasked_nan}: {X_notmasked_nan[:num_show]}"
+                )
+                raise ValueError(msg)
+        else:
+            result = masked_X
+        return result
+
     def _dense_fit(self, X, strategy, missing_values, fill_value):
         """Fit the transformer on dense data."""
         missing_mask = _get_mask(X, missing_values)
@@ -375,6 +399,7 @@ class SimpleImputer(_BaseImputer):
 
         # Mean
         if strategy == "mean":
+            masked_X = self._prepare_dtype_object(masked_X, missing_mask, missing_values)
             mean_masked = np.ma.mean(masked_X, axis=0)
             # Avoid the warning "Warning: converting a masked element to nan."
             mean = np.ma.getdata(mean_masked)
@@ -384,6 +409,7 @@ class SimpleImputer(_BaseImputer):
 
         # Median
         elif strategy == "median":
+            masked_X = self._prepare_dtype_object(masked_X, missing_mask, missing_values)
             median_masked = np.ma.median(masked_X, axis=0)
             # Avoid the warning "Warning: converting a masked element to nan."
             median = np.ma.getdata(median_masked)
