@@ -522,7 +522,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         estimator = self._make_estimator(random_state=random_state)
 
         # pick random sample stack of size n_samples
-        if self.n_samples != None and self.n_samples < len(y):
+        if self.n_samples is not None and self.n_samples < len(y):
             X_fit, y_fit, sample_weight_fit = resample(X, y, sample_weight, n_samples=self.n_samples, replace=self.replace, random_state=random_state)
         else:
             X_fit = X
@@ -587,7 +587,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         estimator = self._make_estimator(random_state=random_state)
 
          # pick random sample stack of size n_samples
-        if self.n_samples != None and self.n_samples < len(y):
+        if self.n_samples is not None and self.n_samples < len(y):
             X_fit, y_fit, sample_weight_fit = resample(X, y, sample_weight, n_samples=self.n_samples, replace=self.replace, random_state=random_state)
         else:
             X_fit = X
