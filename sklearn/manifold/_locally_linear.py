@@ -16,7 +16,7 @@ from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
 from ..utils.validation import _deprecate_positional_args
-from ..neighbors import NearestNeighbors, BalldTree, KDTree
+from ..neighbors import NearestNeighbors, BallTree, KDTree
 
 
 def barycenter_weights(X, Y, indices, reg=1e-3):
