@@ -20,12 +20,11 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.model_selection import GridSearchCV
 from sklearn import datasets
 from sklearn.model_selection import cross_val_score, train_test_split
-from sklearn.datasets import make_multilabel_classification
 from sklearn.svm import SVC
-from sklearn.multiclass import OneVsRestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.dummy import DummyRegressor
+from sklearn.multioutput import RegressorChain
 
 
 # Load datasets
@@ -228,21 +227,6 @@ def test_predict_proba_on_toy_problem():
                                 ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
                                 voting='hard')
         eclf.fit(X, y).predict_proba(X)
-
-
-def test_multilabel():
-    """Check if error is raised for multilabel classification."""
-    X, y = make_multilabel_classification(n_classes=2, n_labels=1,
-                                          allow_unlabeled=False,
-                                          random_state=123)
-    clf = OneVsRestClassifier(SVC(kernel='linear'))
-
-    eclf = VotingClassifier(estimators=[('ovr', clf)], voting='hard')
-
-    try:
-        eclf.fit(X, y)
-    except NotImplementedError:
-        return
 
 
 def test_gridsearch():
@@ -541,3 +525,25 @@ def test_voting_verbose(estimator, capsys):
 
     estimator.fit(X, y)
     assert re.match(pattern, capsys.readouterr()[0])
+
+
+def test_mulilabel_regression():
+    X_r_multi, y_r_multi = datasets.load_linnerud(return_X_y=True)
+    X_train, X_test, y_train, _ = train_test_split(
+        X_r_multi, y_r_multi, test_size=.25)
+
+    base_regs = [DummyRegressor(strategy='mean'),
+                 DummyRegressor(strategy='median'),
+                 DummyRegressor(strategy='quantile', quantile=.2),
+                 DummyRegressor(strategy='constant', constant=0)]
+    multi_regs = [(est.strategy, RegressorChain(est, random_state=42))
+                  for est in base_regs]
+
+    v_reg = VotingRegressor(multi_regs)
+    v_pred = v_reg.fit(X_train, y_train).predict(X_test)
+
+    est_pred = [reg.fit(X_train, y_train).predict(X_test)
+                for _, reg in multi_regs]
+    avg = np.average(np.asarray(est_pred), axis=0)
+
+    assert_almost_equal(v_pred, avg, decimal=2)

@@ -25,7 +25,7 @@ from ..base import TransformerMixin
 from ..base import clone
 from ._base import _fit_single_estimator
 from ._base import _BaseHeterogeneousEnsemble
-from ..preprocessing import LabelEncoder
+from ..preprocessing import LabelEncoder, MultiLabelBinarizer
 from ..utils import Bunch
 from ..utils.validation import check_is_fitted
 from ..utils.multiclass import check_classification_targets
@@ -277,15 +277,22 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
         """
         check_classification_targets(y)
-        if isinstance(y, np.ndarray) and len(y.shape) > 1 and y.shape[1] > 1:
-            raise NotImplementedError('Multilabel and multi-output'
-                                      ' classification is not supported.')
 
         if self.voting not in ('soft', 'hard'):
             raise ValueError("Voting must be 'soft' or 'hard'; got (voting=%r)"
                              % self.voting)
 
-        self.le_ = LabelEncoder().fit(y)
+        if isinstance(y, np.ndarray) and len(y.shape) > 1 and y.shape[1] > 1:
+            if len(y.shape) > 2 and y.shape[2] > 1:
+                raise ValueError('y argument should be a 1 or 2D array-like,'
+                                 'got array with shape %f' % (str(y.shape)))
+            else:
+                self.multioutput_ = True
+                self.le_ = MultiLabelBinarizer().fit(y)
+        else:
+            self.multioutput_ = False
+            self.le_ = LabelEncoder().fit(y)
+
         self.classes_ = self.le_.classes_
         transformed_y = self.le_.transform(y)
 
@@ -305,15 +312,26 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
             Predicted class labels.
         """
         check_is_fitted(self)
+
         if self.voting == 'soft':
-            maj = np.argmax(self.predict_proba(X), axis=1)
+            predictions = self.predict_proba(X)
+            if self.multioutput_:
+                raise NotImplementedError()
+            else:
+                maj = np.argmax(predictions, axis=1)
 
         else:  # 'hard' voting
             predictions = self._predict(X)
-            maj = np.apply_along_axis(
-                lambda x: np.argmax(
-                    np.bincount(x, weights=self._weights_not_none)),
-                axis=1, arr=predictions)
+            if self.multioutput_:
+                maj = np.apply_along_axis(
+                        lambda x: np.argmax(
+                            np.bincount(x, weights=self._weights_not_none)),
+                        axis=2, arr=predictions)
+            else:
+                maj = np.apply_along_axis(
+                        lambda x: np.argmax(
+                            np.bincount(x, weights=self._weights_not_none)),
+                        axis=1, arr=predictions)
 
         maj = self.le_.inverse_transform(maj)
 
@@ -481,7 +499,16 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         self : object
             Fitted estimator.
         """
-        y = column_or_1d(y, warn=True)
+        if isinstance(y, np.ndarray) and len(y.shape) > 1 and y.shape[1] > 1:
+            if len(y.shape) > 2 and y.shape[2] > 1:
+                raise ValueError('y argument should be a 1 or 2D array-like,'
+                                 'got array with shape %f' % (str(y.shape)))
+            else:
+                self.multioutput_ = True
+        else:
+            self.multioutput_ = False
+            y = column_or_1d(y, warn=True)
+
         return super().fit(X, y, sample_weight)
 
     def predict(self, X):
@@ -501,8 +528,9 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
             The predicted values.
         """
         check_is_fitted(self)
-        return np.average(self._predict(X), axis=1,
-                          weights=self._weights_not_none)
+        axis = 2 if self.multioutput_ else 1
+        return np.average(self._predict(X), axis=axis,
+                          weights=self._weights_not_none).T
 
     def transform(self, X):
         """Return predictions for X for each estimator.
