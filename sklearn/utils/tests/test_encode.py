@@ -241,7 +241,9 @@ def test_check_unknown_with_both_missing_values():
     (np.array(['b'] * 4 + ['a'] * 16 + ['c'] * 20, dtype=object),
      ['c', 'b', 'a'], [20, 4, 16]),
     (np.array([np.nan] * 4 + ['a'] * 16 + ['c'] * 20, dtype=object),
-     ['c', np.nan, 'a'], [20, 4, 16])
+     ['c', np.nan, 'a'], [20, 4, 16]),
+    (np.array(['b'] * 4 + ['a'] * 16 + ['c'] * 20, dtype=object),
+     ['a', 'b', 'c', 'e'], [16, 4, 20, 0]),
 ])
 def test_get_counts(values, uniques, expected_counts):
     counts = _get_counts(values, uniques)

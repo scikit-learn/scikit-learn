@@ -1,3 +1,4 @@
+from contextlib import suppress
 from collections import Counter
 from typing import NamedTuple
 
@@ -81,10 +82,7 @@ def _unique_np(values, return_inverse=False, return_counts=False):
     if return_counts:
         ret += (counts, )
 
-    if len(ret) == 1:
-        ret = ret[0]
-
-    return ret
+    return ret[0] if len(ret) == 1 else ret
 
 
 class MissingValues(NamedTuple):
@@ -180,13 +178,9 @@ def _unique_python(values, *, return_inverse, return_counts):
         ret += (_map_to_integer(values, uniques), )
 
     if return_counts:
-        counts = _get_counts(values, uniques)
-        ret += (counts, )
+        ret += (_get_counts(values, uniques), )
 
-    if len(ret) == 1:
-        ret = ret[0]
-
-    return ret
+    return ret[0] if len(ret) == 1 else ret
 
 
 def _encode(values, *, uniques, check_unknown=True):
@@ -325,7 +319,6 @@ class _NaNCounter(Counter):
             if not is_scalar_nan(item):
                 yield item
                 continue
-
             if not hasattr(self, 'nan_count'):
                 self.nan_count = 0
             self.nan_count += 1
@@ -342,9 +335,13 @@ def _get_counts(values, uniques):
 
     For non-object dtypes, `uniques` is assumed to be sorted.
     """
-    if values.dtype == object:
+    if values.dtype.kind in 'OU':
         counter = _NaNCounter(values)
-        return np.array([counter[item] for item in uniques], dtype=np.int64)
+        output = np.zeros(len(uniques), dtype=np.int64)
+        for i, item in enumerate(uniques):
+            with suppress(KeyError):
+                output[i] = counter[item]
+        return output
 
     unique_values, counts = _unique_np(values, return_counts=True)
     uniques_in_values = np.isin(uniques, unique_values, assume_unique=True)
