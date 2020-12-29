@@ -645,7 +645,8 @@ def test_nmf_custom_init_dtype_error(Estimator):
         non_negative_factorization(X, H=H, update_H=False)
 
 
-def test_nmf_close_minibatch_nmf():
+@pytest.mark.parametrize('batch_size', [32, 48])
+def test_nmf_close_minibatch_nmf(batch_size):
     # Test that the decomposition with standard and minibatch nmf
     # gives close results
     rng = np.random.mtrand.RandomState(42)
@@ -654,22 +655,21 @@ def test_nmf_close_minibatch_nmf():
               max_iter=2000, beta_loss='kullback-leibler')
     mbnmf = MiniBatchNMF(5, solver='mu', init='nndsvdar', random_state=0,
                          max_iter=2000, beta_loss='kullback-leibler',
-                         batch_size=48)
+                         batch_size=batch_size)
     W = nmf.fit_transform(X)
     mbW = mbnmf.fit_transform(X)
     assert_array_almost_equal(W, mbW, decimal=7)
 
 
-@pytest.mark.parametrize('batch_size', [32, 48])
-def test_minibatch_nmf_partial_fit(batch_size):
+def test_minibatch_nmf_partial_fit():
     rng = np.random.mtrand.RandomState(42)
     X = np.abs(rng.randn(48, 5))
     mbnmf1 = MiniBatchNMF(5, solver='mu', init='nndsvdar', random_state=0,
                           max_iter=1, beta_loss='kullback-leibler',
-                          batch_size=batch_size)
+                          batch_size=48)
     mbnmf2 = MiniBatchNMF(5, solver='mu', init='nndsvdar', random_state=0,
                           max_iter=1, beta_loss='kullback-leibler',
-                          batch_size=batch_size)
+                          batch_size=48)
 
     mbnmf1.fit(X)
     mbnmf2.partial_fit(X)
