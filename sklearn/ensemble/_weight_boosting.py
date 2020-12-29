@@ -523,10 +523,11 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
 
         # pick random sample stack of size n_samples
         if self.n_samples is not None and self.n_samples < len(y):
-            X_fit, y_fit, sample_weight_fit = resample(X, y, sample_weight, 
-                                                       n_samples=self.n_samples, 
-                                                       replace=self.replace, 
-                                                       random_state=random_state)
+            (X_fit, y_fit,
+             sample_weight_fit) = resample(X, y, sample_weight,
+                                           n_samples=self.n_samples,
+                                           replace=self.replace,
+                                           random_state=random_state)
         else:
             X_fit = X
             y_fit = y
@@ -591,10 +592,11 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
 
         # pick random sample stack of size n_samples
         if self.n_samples is not None and self.n_samples < len(y):
-            X_fit, y_fit, sample_weight_fit = resample(X, y, sample_weight, 
-                                                       n_samples=self.n_samples, 
-                                                       replace=self.replace, 
-                                                       random_state=random_state)
+            (X_fit, y_fit,
+             sample_weight_fit) = resample(X, y, sample_weight,
+                                           n_samples=self.n_samples,
+                                           replace=self.replace,
+                                           random_state=random_state)
         else:
             X_fit = X
             y_fit = y
