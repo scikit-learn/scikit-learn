@@ -83,7 +83,8 @@ class TargetRegressorEncoder(_BaseEncoder):
             Transformed input.
         """
         check_is_fitted(self)
-        X_int, X_known = self._transform(X, handle_unknown='ignore')
+        X_int, X_known = self._transform(X, handle_unknown='ignore',
+                                         force_all_finite='allow-nan')
         return self._transform_X_int(X_int, X_known)
 
     def fit_transform(self, X, y):
@@ -119,8 +120,10 @@ class TargetRegressorEncoder(_BaseEncoder):
         """Fit the encoder"""
         y = column_or_1d(y, warn=True)
         fit_results = super()._fit(X, handle_unknown='ignore',
-                                   return_counts=True)
-        X_int, X_known = self._transform(X, handle_unknown='ignore')
+                                   return_counts=True,
+                                   force_all_finite='allow-nan')
+        X_int, X_known = self._transform(X, handle_unknown='ignore',
+                                         force_all_finite='allow-nan')
         # Makes sure unknown categories are not used fot fitting
         X_int[~X_known] = -1
         self.encoding_mean_ = y_mean = np.mean(y)
