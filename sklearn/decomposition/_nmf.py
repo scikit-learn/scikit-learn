@@ -1775,14 +1775,15 @@ class MiniBatchNMF(NMF):
         X = self._validate_data(X, accept_sparse=('csr', 'csc'),
                                 dtype=[np.float64, np.float32])
 
-        W, H, n_iter_, A, B, iter_offset_ = non_negative_factorization(
-            X=X, W=W, H=H, A=None, B=None, n_components=self.n_components,
-            batch_size=self.batch_size, init=self.init,
-            update_H=True, solver=self.solver, beta_loss=self.beta_loss,
-            tol=self.tol, max_iter=self.max_iter, alpha=self.alpha,
-            l1_ratio=self.l1_ratio, regularization=self.regularization,
-            random_state=self.random_state, verbose=self.verbose,
-            forget_factor=self.forget_factor)
+        with config_context(assume_finite=True):
+            W, H, n_iter_, A, B, iter_offset_ = non_negative_factorization(
+                X=X, W=W, H=H, A=None, B=None, n_components=self.n_components,
+                batch_size=self.batch_size, init=self.init,
+                update_H=True, solver=self.solver, beta_loss=self.beta_loss,
+                tol=self.tol, max_iter=self.max_iter, alpha=self.alpha,
+                l1_ratio=self.l1_ratio, regularization=self.regularization,
+                random_state=self.random_state, verbose=self.verbose,
+                forget_factor=self.forget_factor)
         # TODO internal iters for W
         self.reconstruction_err_ = _beta_divergence(X, W, H, self.beta_loss,
                                                     square_root=True)
@@ -1806,28 +1807,31 @@ class MiniBatchNMF(NMF):
 
         if not is_first_call_to_partial_fit:
 
-            # Compute W given H and X using NMF.transform
-            W, _, _ = non_negative_factorization(
-                X=X, W=None, H=self.components_,
-                n_components=self.n_components_,
-                init=self.init, update_H=False, solver=self.solver,
-                beta_loss=self.beta_loss, tol=0, max_iter=200,
-                alpha=self.alpha, l1_ratio=self.l1_ratio,
-                regularization=self.regularization,
-                random_state=self.random_state,
-                verbose=self.verbose)
+            with config_context(assume_finite=True):
+                # Compute W given H and X using NMF.transform
+                W, _, _ = non_negative_factorization(
+                    X=X, W=None, H=self.components_,
+                    n_components=self.n_components_,
+                    init=self.init, update_H=False, solver=self.solver,
+                    beta_loss=self.beta_loss, tol=0, max_iter=200,
+                    alpha=self.alpha, l1_ratio=self.l1_ratio,
+                    regularization=self.regularization,
+                    random_state=self.random_state,
+                    verbose=self.verbose)
 
-            # Add 1 iteration to the current estimation
-            W, H, n_iter, A, B, iter_offset = non_negative_factorization(
-                X=X, W=W, H=self.components_,
-                A=self._components_numerator, B=self._components_denominator,
-                n_components=self.n_components,
-                batch_size=self.batch_size, init='custom',
-                update_H=True, solver=self.solver, beta_loss=self.beta_loss,
-                tol=0, max_iter=1, alpha=self.alpha,
-                l1_ratio=self.l1_ratio, regularization=self.regularization,
-                random_state=self.random_state, verbose=self.verbose,
-                forget_factor=self.forget_factor)
+                # Add 1 iteration to the current estimation
+                W, H, n_iter, A, B, iter_offset = non_negative_factorization(
+                    X=X, W=W, H=self.components_,
+                    A=self._components_numerator,
+                    B=self._components_denominator,
+                    n_components=self.n_components,
+                    batch_size=self.batch_size, init='custom',
+                    update_H=True, solver=self.solver,
+                    beta_loss=self.beta_loss,
+                    tol=0, max_iter=1, alpha=self.alpha,
+                    l1_ratio=self.l1_ratio, regularization=self.regularization,
+                    random_state=self.random_state, verbose=self.verbose,
+                    forget_factor=self.forget_factor)
 
             self.n_components_ = H.shape[0]
             self.components_ = H
