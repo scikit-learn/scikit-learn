@@ -15,46 +15,39 @@ import numpy as np
 from . import __version__
 from ._config import get_config
 from .utils import _IS_32BIT
+from .utils._tags import (
+    _DEFAULT_TAGS,
+    _safe_tags,
+)
 from .utils.validation import check_X_y
 from .utils.validation import check_array
 from .utils._estimator_html_repr import estimator_html_repr
 from .utils.validation import _deprecate_positional_args
 
-_DEFAULT_TAGS = {
-    'non_deterministic': False,
-    'requires_positive_X': False,
-    'requires_positive_y': False,
-    'X_types': ['2darray'],
-    'poor_score': False,
-    'no_validation': False,
-    'multioutput': False,
-    "allow_nan": False,
-    'stateless': False,
-    'multilabel': False,
-    '_skip_test': False,
-    '_xfail_checks': False,
-    'multioutput_only': False,
-    'binary_only': False,
-    'requires_fit': True,
-    'requires_y': False,
-    }
-
 
 @_deprecate_positional_args
 def clone(estimator, *, safe=True):
-    """Constructs a new estimator with the same parameters.
+    """Constructs a new unfitted estimator with the same parameters.
 
     Clone does a deep copy of the model in an estimator
     without actually copying attached data. It yields a new estimator
-    with the same parameters that has not been fit on any data.
+    with the same parameters that has not been fitted on any data.
+
+    If the estimator's `random_state` parameter is an integer (or if the
+    estimator doesn't have a `random_state` parameter), an *exact clone* is
+    returned: the clone and the original estimator will give the exact same
+    results. Otherwise, *statistical clone* is returned: the clone might
+    yield different results from the original estimator. More details can be
+    found in :ref:`randomness`.
 
     Parameters
     ----------
-    estimator : {list, tuple, set} of estimator objects or estimator object
+    estimator : {list, tuple, set} of estimator instance or a single \
+            estimator instance
         The estimator or group of estimators to be cloned.
 
     safe : bool, default=True
-        If safe is false, clone will fall back to a deep copy on objects
+        If safe is False, clone will fall back to a deep copy on objects
         that are not estimators.
 
     """
@@ -146,7 +139,7 @@ def _pprint(params, offset=0, printer=repr):
 
 
 class BaseEstimator:
-    """Base class for all estimators in scikit-learn
+    """Base class for all estimators in scikit-learn.
 
     Notes
     -----
@@ -194,20 +187,12 @@ class BaseEstimator:
 
         Returns
         -------
-        params : mapping of string to any
+        params : dict
             Parameter names mapped to their values.
         """
         out = dict()
         for key in self._get_param_names():
-            try:
-                value = getattr(self, key)
-            except AttributeError:
-                warnings.warn('From version 0.24, get_params will raise an '
-                              'AttributeError if a parameter cannot be '
-                              'retrieved as an instance attribute. Previously '
-                              'it would return None.',
-                              FutureWarning)
-                value = None
+            value = getattr(self, key)
             if deep and hasattr(value, 'get_params'):
                 deep_items = value.get_params().items()
                 out.update((key + '__' + k, val) for k, val in deep_items)
@@ -219,9 +204,9 @@ class BaseEstimator:
         Set the parameters of this estimator.
 
         The method works on simple estimators as well as on nested objects
-        (such as pipelines). The latter have parameters of the form
-        ``<component>__<parameter>`` so that it's possible to update each
-        component of a nested object.
+        (such as :class:`~sklearn.pipeline.Pipeline`). The latter have
+        parameters of the form ``<component>__<parameter>`` so that it's
+        possible to update each component of a nested object.
 
         Parameters
         ----------
@@ -230,7 +215,7 @@ class BaseEstimator:
 
         Returns
         -------
-        self : object
+        self : estimator instance
             Estimator instance.
         """
         if not params:
@@ -356,27 +341,32 @@ class BaseEstimator:
             The input samples.
         reset : bool
             If True, the `n_features_in_` attribute is set to `X.shape[1]`.
-            Else, the attribute must already exist and the function checks
-            that it is equal to `X.shape[1]`.
+            If False and the attribute exists, then check that it is equal to
+            `X.shape[1]`. If False and the attribute does *not* exist, then
+            the check is skipped.
+            .. note::
+               It is recommended to call reset=True in `fit` and in the first
+               call to `partial_fit`. All other methods that validate `X`
+               should set `reset=False`.
         """
         n_features = X.shape[1]
 
         if reset:
             self.n_features_in_ = n_features
-        else:
-            if not hasattr(self, 'n_features_in_'):
-                raise RuntimeError(
-                    "The reset parameter is False but there is no "
-                    "n_features_in_ attribute. Is this estimator fitted?"
-                )
-            if n_features != self.n_features_in_:
-                raise ValueError(
-                    'X has {} features, but this {} is expecting {} features '
-                    'as input.'.format(n_features, self.__class__.__name__,
-                                       self.n_features_in_)
-                )
+            return
 
-    def _validate_data(self, X, y=None, reset=True,
+        if not hasattr(self, "n_features_in_"):
+            # Skip this check if the expected number of expected input features
+            # was not recorded by calling fit first. This is typically the case
+            # for stateless transformers.
+            return
+
+        if n_features != self.n_features_in_:
+            raise ValueError(
+                f"X has {n_features} features, but {self.__class__.__name__} "
+                f"is expecting {self.n_features_in_} features as input.")
+
+    def _validate_data(self, X, y='no_validation', reset=True,
                        validate_separately=False, **check_params):
         """Validate input data and set or check the `n_features_in_` attribute.
 
@@ -385,13 +375,25 @@ class BaseEstimator:
         X : {array-like, sparse matrix, dataframe} of shape \
                 (n_samples, n_features)
             The input samples.
-        y : array-like of shape (n_samples,), default=None
-            The targets. If None, `check_array` is called on `X` and
-            `check_X_y` is called otherwise.
+        y : array-like of shape (n_samples,), default='no_validation'
+            The targets.
+
+            - If `None`, `check_array` is called on `X`. If the estimator's
+              requires_y tag is True, then an error will be raised.
+            - If `'no_validation'`, `check_array` is called on `X` and the
+              estimator's requires_y tag is ignored. This is a default
+              placeholder and is never meant to be explicitly set.
+            - Otherwise, both `X` and `y` are checked with either `check_array`
+              or `check_X_y` depending on `validate_separately`.
+
         reset : bool, default=True
             Whether to reset the `n_features_in_` attribute.
             If False, the input will be checked for consistency with data
             provided when reset was last True.
+            .. note::
+               It is recommended to call reset=True in `fit` and in the first
+               call to `partial_fit`. All other methods that validate `X`
+               should set `reset=False`.
         validate_separately : False or tuple of dicts, default=False
             Only used if y is not None.
             If False, call validate_X_y(). Else, it must be a tuple of kwargs
@@ -413,6 +415,9 @@ class BaseEstimator:
                     f"This {self.__class__.__name__} estimator "
                     f"requires y to be passed, but the target y is None."
                 )
+            X = check_array(X, **check_params)
+            out = X
+        elif isinstance(y, str) and y == 'no_validation':
             X = check_array(X, **check_params)
             out = X
         else:
@@ -481,7 +486,7 @@ class ClassifierMixin:
             Test samples.
 
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
-            True labels for X.
+            True labels for `X`.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
@@ -489,7 +494,7 @@ class ClassifierMixin:
         Returns
         -------
         score : float
-            Mean accuracy of self.predict(X) wrt. y.
+            Mean accuracy of ``self.predict(X)`` wrt. `y`.
         """
         from .metrics import accuracy_score
         return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
@@ -503,27 +508,28 @@ class RegressorMixin:
     _estimator_type = "regressor"
 
     def score(self, X, y, sample_weight=None):
-        """Return the coefficient of determination R^2 of the prediction.
+        """Return the coefficient of determination :math:`R^2` of the
+        prediction.
 
-        The coefficient R^2 is defined as (1 - u/v), where u is the residual
-        sum of squares ((y_true - y_pred) ** 2).sum() and v is the total
-        sum of squares ((y_true - y_true.mean()) ** 2).sum().
-        The best possible score is 1.0 and it can be negative (because the
-        model can be arbitrarily worse). A constant model that always
-        predicts the expected value of y, disregarding the input features,
-        would get a R^2 score of 0.0.
+        The coefficient :math:`R^2` is defined as :math:`(1 - \\frac{u}{v})`,
+        where :math:`u` is the residual sum of squares ``((y_true - y_pred)
+        ** 2).sum()`` and :math:`v` is the total sum of squares ``((y_true -
+        y_true.mean()) ** 2).sum()``. The best possible score is 1.0 and it
+        can be negative (because the model can be arbitrarily worse). A
+        constant model that always predicts the expected value of `y`,
+        disregarding the input features, would get a :math:`R^2` score of
+        0.0.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Test samples. For some estimators this may be a
-            precomputed kernel matrix or a list of generic objects instead,
-            shape = (n_samples, n_samples_fitted),
-            where n_samples_fitted is the number of
-            samples used in the fitting for the estimator.
+            Test samples. For some estimators this may be a precomputed
+            kernel matrix or a list of generic objects instead with shape
+            ``(n_samples, n_samples_fitted)``, where ``n_samples_fitted``
+            is the number of samples used in the fitting for the estimator.
 
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
-            True values for X.
+            True values for `X`.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
@@ -531,11 +537,11 @@ class RegressorMixin:
         Returns
         -------
         score : float
-            R^2 of self.predict(X) wrt. y.
+            :math:`R^2` of ``self.predict(X)`` wrt. `y`.
 
         Notes
         -----
-        The R2 score used when calling ``score`` on a regressor uses
+        The :math:`R^2` score used when calling ``score`` on a regressor uses
         ``multioutput='uniform_average'`` from version 0.23 to keep consistent
         with default value of :func:`~sklearn.metrics.r2_score`.
         This influences the ``score`` method of all the multioutput
@@ -557,7 +563,7 @@ class ClusterMixin:
 
     def fit_predict(self, X, y=None):
         """
-        Perform clustering on X and returns cluster labels.
+        Perform clustering on `X` and returns cluster labels.
 
         Parameters
         ----------
@@ -569,7 +575,7 @@ class ClusterMixin:
 
         Returns
         -------
-        labels : ndarray of shape (n_samples,)
+        labels : ndarray of shape (n_samples,), dtype=np.int64
             Cluster labels.
         """
         # non-optimized default implementation; override when a better
@@ -577,9 +583,12 @@ class ClusterMixin:
         self.fit(X)
         return self.labels_
 
+    def _more_tags(self):
+        return {"preserves_dtype": []}
+
 
 class BiclusterMixin:
-    """Mixin class for all bicluster estimators in scikit-learn"""
+    """Mixin class for all bicluster estimators in scikit-learn."""
 
     @property
     def biclusters_(self):
@@ -590,7 +599,7 @@ class BiclusterMixin:
         return self.rows_, self.columns_
 
     def get_indices(self, i):
-        """Row and column indices of the i'th bicluster.
+        """Row and column indices of the `i`'th bicluster.
 
         Only works if ``rows_`` and ``columns_`` attributes exist.
 
@@ -612,7 +621,7 @@ class BiclusterMixin:
         return np.nonzero(rows)[0], np.nonzero(columns)[0]
 
     def get_shape(self, i):
-        """Shape of the i'th bicluster.
+        """Shape of the `i`'th bicluster.
 
         Parameters
         ----------
@@ -621,8 +630,11 @@ class BiclusterMixin:
 
         Returns
         -------
-        shape : tuple (int, int)
-            Number of rows and columns (resp.) in the bicluster.
+        n_rows : int
+            Number of rows in the bicluster.
+
+        n_cols : int
+            Number of columns in the bicluster.
         """
         indices = self.get_indices(i)
         return tuple(len(i) for i in indices)
@@ -634,13 +646,13 @@ class BiclusterMixin:
         ----------
         i : int
             The index of the cluster.
-        data : array-like
+        data : array-like of shape (n_samples, n_features)
             The data.
 
         Returns
         -------
-        submatrix : ndarray
-            The submatrix corresponding to bicluster i.
+        submatrix : ndarray of shape (n_rows, n_cols)
+            The submatrix corresponding to bicluster `i`.
 
         Notes
         -----
@@ -660,16 +672,16 @@ class TransformerMixin:
         """
         Fit to data, then transform it.
 
-        Fits transformer to X and y with optional parameters fit_params
-        and returns a transformed version of X.
+        Fits transformer to `X` and `y` with optional parameters `fit_params`
+        and returns a transformed version of `X`.
 
         Parameters
         ----------
-        X : {array-like, sparse matrix, dataframe} of shape \
-                (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Input samples.
 
-        y : ndarray of shape (n_samples,), default=None
+        y :  array-like of shape (n_samples,) or (n_samples, n_outputs), \
+                default=None
             Target values (None for unsupervised transformations).
 
         **fit_params : dict
@@ -695,11 +707,12 @@ class DensityMixin:
     _estimator_type = "DensityEstimator"
 
     def score(self, X, y=None):
-        """Return the score of the model on the data X
+        """Return the score of the model on the data `X`.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
+            Test samples.
 
         y : Ignored
             Not used, present for API consistency by convention.
@@ -776,7 +789,7 @@ def is_regressor(estimator):
 
     Parameters
     ----------
-    estimator : object
+    estimator : estimator instance
         Estimator object to test.
 
     Returns
@@ -792,7 +805,7 @@ def is_outlier_detector(estimator):
 
     Parameters
     ----------
-    estimator : object
+    estimator : estimator instance
         Estimator object to test.
 
     Returns
@@ -801,3 +814,44 @@ def is_outlier_detector(estimator):
         True if estimator is an outlier detector and False otherwise.
     """
     return getattr(estimator, "_estimator_type", None) == "outlier_detector"
+
+
+def _is_pairwise(estimator):
+    """Returns True if estimator is pairwise.
+
+    - If the `_pairwise` attribute and the tag are present and consistent,
+      then use the value and not issue a warning.
+    - If the `_pairwise` attribute and the tag are present and not
+      consistent, use the `_pairwise` value and issue a deprecation
+      warning.
+    - If only the `_pairwise` attribute is present and it is not False,
+      issue a deprecation warning and use the `_pairwise` value.
+
+    Parameters
+    ----------
+    estimator : object
+        Estimator object to test.
+
+    Returns
+    -------
+    out : bool
+        True if the estimator is pairwise and False otherwise.
+    """
+    with warnings.catch_warnings():
+        warnings.filterwarnings('ignore', category=FutureWarning)
+        has_pairwise_attribute = hasattr(estimator, '_pairwise')
+        pairwise_attribute = getattr(estimator, '_pairwise', False)
+    pairwise_tag = _safe_tags(estimator, key="pairwise")
+
+    if has_pairwise_attribute:
+        if pairwise_attribute != pairwise_tag:
+            warnings.warn(
+                "_pairwise was deprecated in 0.24 and will be removed in 1.1 "
+                "(renaming of 0.26). Set the estimator tags of your estimator "
+                "instead",
+                FutureWarning
+            )
+        return pairwise_attribute
+
+    # use pairwise tag when the attribute is not present
+    return pairwise_tag

@@ -9,7 +9,7 @@ import warnings
 
 from abc import ABCMeta, abstractmethod
 
-from joblib import Parallel, delayed
+from joblib import Parallel
 
 from ..base import clone, is_classifier
 from ._base import LinearClassifierMixin, SparseCoefMixin
@@ -20,6 +20,7 @@ from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.validation import _deprecate_positional_args
+from ..utils.fixes import delayed
 from ..exceptions import ConvergenceWarning
 from ..model_selection import StratifiedShuffleSplit, ShuffleSplit
 
@@ -163,22 +164,22 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
                         'squared_epsilon_insensitive'):
                 args = (self.epsilon, )
             return loss_class(*args)
-        except KeyError:
-            raise ValueError("The loss %s is not supported. " % loss)
+        except KeyError as e:
+            raise ValueError("The loss %s is not supported. " % loss) from e
 
     def _get_learning_rate_type(self, learning_rate):
         try:
             return LEARNING_RATE_TYPES[learning_rate]
-        except KeyError:
+        except KeyError as e:
             raise ValueError("learning rate %s "
-                             "is not supported. " % learning_rate)
+                             "is not supported. " % learning_rate) from e
 
     def _get_penalty_type(self, penalty):
         penalty = str(penalty).lower()
         try:
             return PENALTY_TYPES[penalty]
-        except KeyError:
-            raise ValueError("Penalty %s is not supported. " % penalty)
+        except KeyError as e:
+            raise ValueError("Penalty %s is not supported. " % penalty) from e
 
     def _allocate_parameter_mem(self, n_classes, n_features, coef_init=None,
                                 intercept_init=None):
@@ -290,7 +291,8 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
 
     # mypy error: Decorated property not supported
     @deprecated("Attribute standard_coef_ was deprecated "  # type: ignore
-                "in version 0.23 and will be removed in 0.25.")
+                "in version 0.23 and will be removed in 1.0 "
+                "(renaming of 0.25).")
     @property
     def standard_coef_(self):
         return self._standard_coef
@@ -298,7 +300,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
         "Attribute standard_intercept_ was deprecated "
-        "in version 0.23 and will be removed in 0.25."
+        "in version 0.23 and will be removed in 1.0 (renaming of 0.25)."
     )
     @property
     def standard_intercept_(self):
@@ -306,14 +308,16 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
 
     # mypy error: Decorated property not supported
     @deprecated("Attribute average_coef_ was deprecated "  # type: ignore
-                "in version 0.23 and will be removed in 0.25.")
+                "in version 0.23 and will be removed in 1.0 "
+                "(renaming of 0.25).")
     @property
     def average_coef_(self):
         return self._average_coef
 
     # mypy error: Decorated property not supported
     @deprecated("Attribute average_intercept_ was deprecated "  # type: ignore
-                "in version 0.23 and will be removed in 0.25.")
+                "in version 0.23 and will be removed in 1.0 "
+                "(renaming of 0.25).")
     @property
     def average_intercept_(self):
         return self._average_intercept
@@ -936,9 +940,9 @@ class SGDClassifier(BaseSGDClassifier):
 
     See Also
     --------
-    sklearn.svm.LinearSVC: Linear support vector classification.
-    LogisticRegression: Logistic regression.
-    Perceptron: Inherits from SGDClassifier. ``Perceptron()`` is equivalent to
+    sklearn.svm.LinearSVC : Linear support vector classification.
+    LogisticRegression : Logistic regression.
+    Perceptron : Inherits from SGDClassifier. ``Perceptron()`` is equivalent to
         ``SGDClassifier(loss="perceptron", eta0=1, learning_rate="constant",
         penalty=None)``.
 
@@ -1098,7 +1102,7 @@ class SGDClassifier(BaseSGDClassifier):
     def _more_tags(self):
         return {
             '_xfail_checks': {
-                'check_sample_weights_invariance(kind=zeros)':
+                'check_sample_weights_invariance':
                 'zero sample_weight is not equivalent to removing samples',
             }
         }
@@ -1530,14 +1534,14 @@ class SGDRegressor(BaseSGDRegressor):
 
         .. deprecated:: 0.23
             Attribute ``average_coef_`` was deprecated
-            in version 0.23 and will be removed in 0.25.
+            in version 0.23 and will be removed in 1.0 (renaming of 0.25).
 
     average_intercept_ : ndarray of shape (1,)
         The averaged intercept term. Only available if ``average=True``.
 
         .. deprecated:: 0.23
             Attribute ``average_intercept_`` was deprecated
-            in version 0.23 and will be removed in 0.25.
+            in version 0.23 and will be removed in 1.0 (renaming of 0.25).
 
     n_iter_ : int
         The actual number of iterations before reaching the stopping criterion.
@@ -1563,7 +1567,7 @@ class SGDRegressor(BaseSGDRegressor):
     Pipeline(steps=[('standardscaler', StandardScaler()),
                     ('sgdregressor', SGDRegressor())])
 
-    See also
+    See Also
     --------
     Ridge, ElasticNet, Lasso, sklearn.svm.SVR
 
@@ -1588,7 +1592,7 @@ class SGDRegressor(BaseSGDRegressor):
     def _more_tags(self):
         return {
             '_xfail_checks': {
-                'check_sample_weights_invariance(kind=zeros)':
+                'check_sample_weights_invariance':
                 'zero sample_weight is not equivalent to removing samples',
             }
         }

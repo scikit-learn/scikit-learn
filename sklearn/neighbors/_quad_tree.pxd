@@ -82,7 +82,7 @@ cdef class _QuadTree:
 
     # Create a summary of the Tree compare to a query point
     cdef long summarize(self, DTYPE_t[3] point, DTYPE_t* results,
-                        float squared_theta=*, int cell_id=*, long idx=*
+                        float squared_theta=*, SIZE_t cell_id=*, long idx=*
                         ) nogil
 
     # Internal cell initialization methods

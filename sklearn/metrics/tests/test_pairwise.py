@@ -660,6 +660,34 @@ def test_euclidean_distances_with_norms(dtype, y_array_constr):
         assert_allclose(wrong_D, D1)
 
 
+def test_euclidean_distances_norm_shapes():
+    # Check all accepted shapes for the norms or appropriate error messages.
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((10, 10))
+    Y = rng.random_sample((20, 10))
+
+    X_norm_squared = (X ** 2).sum(axis=1)
+    Y_norm_squared = (Y ** 2).sum(axis=1)
+
+    D1 = euclidean_distances(X, Y,
+                             X_norm_squared=X_norm_squared,
+                             Y_norm_squared=Y_norm_squared)
+    D2 = euclidean_distances(X, Y,
+                             X_norm_squared=X_norm_squared.reshape(-1, 1),
+                             Y_norm_squared=Y_norm_squared.reshape(-1, 1))
+    D3 = euclidean_distances(X, Y,
+                             X_norm_squared=X_norm_squared.reshape(1, -1),
+                             Y_norm_squared=Y_norm_squared.reshape(1, -1))
+
+    assert_allclose(D2, D1)
+    assert_allclose(D3, D1)
+
+    with pytest.raises(ValueError, match="Incompatible dimensions for X"):
+        euclidean_distances(X, Y, X_norm_squared=X_norm_squared[:5])
+    with pytest.raises(ValueError, match="Incompatible dimensions for Y"):
+        euclidean_distances(X, Y, Y_norm_squared=Y_norm_squared[:5])
+
+
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 @pytest.mark.parametrize("x_array_constr", [np.array, csr_matrix],
                          ids=["dense", "sparse"])
@@ -681,7 +709,7 @@ def test_euclidean_distances(dtype, x_array_constr, y_array_constr):
     distances = euclidean_distances(X, Y)
 
     # the default rtol=1e-7 is too close to the float32 precision
-    # and fails due too rounding errors.
+    # and fails due to rounding errors.
     assert_allclose(distances, expected, rtol=1e-6)
     assert distances.dtype == dtype
 
@@ -702,7 +730,7 @@ def test_euclidean_distances_sym(dtype, x_array_constr):
     distances = euclidean_distances(X)
 
     # the default rtol=1e-7 is too close to the float32 precision
-    # and fails due too rounding errors.
+    # and fails due to rounding errors.
     assert_allclose(distances, expected, rtol=1e-6)
     assert distances.dtype == dtype
 
@@ -729,7 +757,7 @@ def test_euclidean_distances_upcast(batch_size, x_array_constr,
     distances = np.sqrt(np.maximum(distances, 0))
 
     # the default rtol=1e-7 is too close to the float32 precision
-    # and fails due too rounding errors.
+    # and fails due to rounding errors.
     assert_allclose(distances, expected, rtol=1e-6)
 
 
@@ -749,7 +777,7 @@ def test_euclidean_distances_upcast_sym(batch_size, x_array_constr):
     distances = np.sqrt(np.maximum(distances, 0))
 
     # the default rtol=1e-7 is too close to the float32 precision
-    # and fails due too rounding errors.
+    # and fails due to rounding errors.
     assert_allclose(distances, expected, rtol=1e-6)
 
 
@@ -1281,7 +1309,7 @@ def test_pairwise_distances_data_derived_params(n_jobs, metric, dist_function,
                 params = {'VI': np.linalg.inv(np.cov(np.vstack([X, Y]).T)).T}
 
         expected_dist_explicit_params = cdist(X, Y, metric=metric, **params)
-        # TODO: Remove warn_checker in 0.25
+        # TODO: Remove warn_checker in 1.0
         if y_is_x:
             warn_checker = pytest.warns(None)
         else:
@@ -1294,3 +1322,47 @@ def test_pairwise_distances_data_derived_params(n_jobs, metric, dist_function,
 
         assert_allclose(dist, expected_dist_explicit_params)
         assert_allclose(dist, expected_dist_default_params)
+
+
+@pytest.mark.parametrize(
+        'metric', [
+            'braycurtis', 'canberra', 'chebyshev',
+            'correlation', 'hamming', 'mahalanobis', 'minkowski', 'seuclidean',
+            'sqeuclidean', 'cityblock', 'cosine', 'euclidean'])
+@pytest.mark.parametrize(
+        "dtype",
+        [np.float32, np.float64])
+@pytest.mark.parametrize("y_is_x", [True, False], ids=["Y is X", "Y is not X"])
+def test_numeric_pairwise_distances_datatypes(metric, dtype, y_is_x):
+    # Check that pairwise distances gives the same result as pdist and cdist
+    # regardless of input datatype when using any scipy metric for comparing
+    # numeric vectors
+    #
+    # This test is necessary because pairwise_distances used to throw an
+    # error when using metric='seuclidean' and the input data was not
+    # of type np.float64 (#15730)
+
+    rng = np.random.RandomState(0)
+
+    X = rng.random_sample((5, 4)).astype(dtype)
+
+    params = {}
+    if y_is_x:
+        Y = X
+        expected_dist = squareform(pdist(X, metric=metric))
+    else:
+        Y = rng.random_sample((5, 4)).astype(dtype)
+        expected_dist = cdist(X, Y, metric=metric)
+        # precompute parameters for seuclidean & mahalanobis when x is not y
+        if metric == 'seuclidean':
+            params = {'V': np.var(np.vstack([X, Y]),
+                                  axis=0, ddof=1, dtype=np.float64)}
+        elif metric == 'mahalanobis':
+            params = {'VI': np.linalg.inv(np.cov(np.vstack([X, Y]).T)).T}
+
+    dist = pairwise_distances(X, Y, metric=metric, **params)
+
+    # the default rtol=1e-7 is too close to the float32 precision
+    # and fails due to rounding errors
+    rtol = 1e-5 if dtype is np.float32 else 1e-7
+    assert_allclose(dist, expected_dist, rtol=rtol)

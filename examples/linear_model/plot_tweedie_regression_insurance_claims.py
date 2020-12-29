@@ -16,7 +16,7 @@ insurer to compensate for a loss covered by the insurance. The *claim amount*
 is the amount of money that the insurer must pay. The *exposure* is the
 duration of the insurance coverage of a given policy, in years.
 
-Here our goal goal is to predict the expected
+Here our goal is to predict the expected
 value, i.e. the mean, of the total claim amount per exposure unit also
 referred to as the pure premium.
 

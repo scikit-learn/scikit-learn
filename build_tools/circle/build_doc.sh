@@ -146,6 +146,7 @@ if [[ `type -t deactivate` ]]; then
   deactivate
 fi
 
+MINICONDA_PATH=$HOME/miniconda
 # Install dependencies with miniconda
 wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
    -O miniconda.sh
@@ -181,9 +182,11 @@ conda create -n $CONDA_ENV_NAME --yes --quiet \
 source activate testenv
 pip install sphinx-gallery
 pip install numpydoc
+pip install sphinx-prompt
 
-# Build and install scikit-learn in dev mode
-python setup.py build_ext --inplace -j 3
+# Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
+# workers with 2 cores when building the compiled extensions of scikit-learn.
+export SKLEARN_BUILD_PARALLEL=3
 python setup.py develop
 
 export OMP_NUM_THREADS=1

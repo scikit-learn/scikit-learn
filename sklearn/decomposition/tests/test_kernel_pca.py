@@ -10,6 +10,7 @@ from sklearn.datasets import make_circles
 from sklearn.datasets import make_blobs
 from sklearn.linear_model import Perceptron
 from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.utils.validation import _check_psd_eigenvalues
@@ -295,3 +296,29 @@ def test_kernel_pca_inverse_transform(kernel):
     X_trans = kp.fit_transform(X)
     X_inv = kp.inverse_transform(X_trans)
     assert_allclose(X, X_inv)
+
+
+def test_32_64_decomposition_shape():
+    """ Test that the decomposition is similar for 32 and 64 bits data """
+    # see https://github.com/scikit-learn/scikit-learn/issues/18146
+    X, y = make_blobs(
+        n_samples=30,
+        centers=[[0, 0, 0], [1, 1, 1]],
+        random_state=0,
+        cluster_std=0.1
+    )
+    X = StandardScaler().fit_transform(X)
+    X -= X.min()
+
+    # Compare the shapes (corresponds to the number of non-zero eigenvalues)
+    kpca = KernelPCA()
+    assert (kpca.fit_transform(X).shape ==
+            kpca.fit_transform(X.astype(np.float32)).shape)
+
+
+# TODO: Remove in 1.1
+def test_kernel_pcc_pairwise_is_deprecated():
+    kp = KernelPCA(kernel='precomputed')
+    msg = r"Attribute _pairwise was deprecated in version 0\.24"
+    with pytest.warns(FutureWarning, match=msg):
+        kp._pairwise

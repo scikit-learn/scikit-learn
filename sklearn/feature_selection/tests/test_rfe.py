@@ -56,8 +56,8 @@ class MockClassifier:
     def set_params(self, **params):
         return self
 
-    def _get_tags(self):
-        return {}
+    def _more_tags(self):
+        return {"allow_nan": True}
 
 
 def test_rfe_features_importance():
@@ -416,7 +416,7 @@ def test_rfe_wrapped_estimator(importance_getter, selector,
     # Non-regression test for
     # https://github.com/scikit-learn/scikit-learn/issues/15312
     X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
-    estimator = LinearSVR()
+    estimator = LinearSVR(random_state=0)
 
     log_estimator = TransformedTargetRegressor(regressor=estimator,
                                                func=np.log,
@@ -448,10 +448,7 @@ def test_rfe_importance_getter_validation(importance_getter, err_type,
         model.fit(X, y)
 
 
-@pytest.mark.parametrize("cv", [
-    None,
-    5
-])
+@pytest.mark.parametrize("cv", [None, 5])
 def test_rfe_allow_nan_inf_in_x(cv):
     iris = load_iris()
     X = iris.data

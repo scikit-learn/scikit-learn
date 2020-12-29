@@ -13,21 +13,26 @@ import numpy as np
 import scipy.sparse as sp
 import pytest
 
-from sklearn.utils._testing import assert_raises
-from sklearn.utils._testing import assert_warns
-from sklearn.utils._testing import assert_warns_message
-from sklearn.utils._testing import assert_raise_message
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import (
+    assert_raises,
+    assert_warns,
+    assert_warns_message,
+    assert_raise_message,
+    assert_array_equal,
+    assert_array_almost_equal,
+    assert_allclose,
+    assert_almost_equal,
+    ignore_warnings,
+    MinimalClassifier,
+    MinimalRegressor,
+    MinimalTransformer,
+)
 from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
 
 from scipy.stats import bernoulli, expon, uniform
 
 from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.base import clone
+from sklearn.base import clone, is_classifier
 from sklearn.exceptions import NotFittedError
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_blobs
@@ -62,6 +67,8 @@ from sklearn.metrics import recall_score
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import r2_score
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
@@ -1259,7 +1266,7 @@ def test_grid_search_correct_score_results():
                 assert_almost_equal(correct_score, cv_scores[i])
 
 
-# FIXME remove test_fit_grid_point as the function will be removed on 0.25
+# FIXME remove test_fit_grid_point as the function will be removed on 1.0
 @ignore_warnings(category=FutureWarning)
 def test_fit_grid_point():
     X, y = make_classification(random_state=0)
@@ -1290,13 +1297,13 @@ def test_fit_grid_point():
 
 
 # FIXME remove test_fit_grid_point_deprecated as
-# fit_grid_point will be removed on 0.25
+# fit_grid_point will be removed on 1.0
 def test_fit_grid_point_deprecated():
     X, y = make_classification(random_state=0)
     svc = LinearSVC(random_state=0)
     scorer = make_scorer(accuracy_score)
     msg = ("fit_grid_point is deprecated in version 0.23 "
-           "and will be removed in version 0.25")
+           "and will be removed in version 1.0")
     params = {'C': 0.1}
     train, test = next(StratifiedKFold().split(X, y))
 
@@ -1488,6 +1495,7 @@ def test_parameters_sampler_replacement():
     assert len(samples) == 8
     for values in ParameterGrid(params):
         assert values in samples
+    assert len(ParameterSampler(params, n_iter=1000)) == 8
 
     # test sampling without replacement in a large grid
     params = {'a': range(10), 'b': range(10), 'c': range(10)}
@@ -1748,6 +1756,177 @@ def test_random_search_bad_cv():
         ridge.fit(X[:train_size], y[:train_size])
 
 
+@pytest.mark.parametrize("return_train_score", [False, True])
+@pytest.mark.parametrize(
+    "SearchCV, specialized_params",
+    [(GridSearchCV, {"param_grid": {"max_depth": [2, 3]}}),
+     (RandomizedSearchCV,
+      {"param_distributions": {"max_depth": [2, 3]}, "n_iter": 2})])
+def test_searchcv_raise_warning_with_non_finite_score(
+        SearchCV, specialized_params, return_train_score):
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/10529
+    # Check that we raise a UserWarning when a non-finite score is
+    # computed in the SearchCV
+    X, y = make_classification(n_classes=2, random_state=0)
+
+    class FailingScorer:
+        """Scorer that will fail for some split but not all."""
+
+        def __init__(self):
+            self.n_counts = 0
+
+        def __call__(self, estimator, X, y):
+            self.n_counts += 1
+            if self.n_counts % 5 == 0:
+                return np.nan
+            return 1
+
+    grid = SearchCV(
+        DecisionTreeClassifier(),
+        scoring=FailingScorer(),
+        cv=3,
+        return_train_score=return_train_score,
+        **specialized_params
+    )
+
+    with pytest.warns(UserWarning) as warn_msg:
+        grid.fit(X, y)
+
+    set_with_warning = ["test", "train"] if return_train_score else ["test"]
+    assert len(warn_msg) == len(set_with_warning)
+    for msg, dataset in zip(warn_msg, set_with_warning):
+        assert (f"One or more of the {dataset} scores are non-finite" in
+                str(msg.message))
+
+
+def test_callable_multimetric_confusion_matrix():
+    # Test callable with many metrics inserts the correct names and metrics
+    # into the search cv object
+    def custom_scorer(clf, X, y):
+        y_pred = clf.predict(X)
+        cm = confusion_matrix(y, y_pred)
+        return {'tn': cm[0, 0], 'fp': cm[0, 1], 'fn': cm[1, 0], 'tp': cm[1, 1]}
+
+    X, y = make_classification(n_samples=40, n_features=4,
+                               random_state=42)
+    est = LinearSVC(random_state=42)
+    search = GridSearchCV(est, {'C': [0.1, 1]}, scoring=custom_scorer,
+                          refit='fp')
+
+    search.fit(X, y)
+
+    score_names = ['tn', 'fp', 'fn', 'tp']
+    for name in score_names:
+        assert "mean_test_{}".format(name) in search.cv_results_
+
+    y_pred = search.predict(X)
+    cm = confusion_matrix(y, y_pred)
+    assert search.score(X, y) == pytest.approx(cm[0, 1])
+
+
+def test_callable_multimetric_same_as_list_of_strings():
+    # Test callable multimetric is the same as a list of strings
+    def custom_scorer(est, X, y):
+        y_pred = est.predict(X)
+        return {'recall': recall_score(y, y_pred),
+                'accuracy': accuracy_score(y, y_pred)}
+
+    X, y = make_classification(n_samples=40, n_features=4,
+                               random_state=42)
+    est = LinearSVC(random_state=42)
+    search_callable = GridSearchCV(est, {'C': [0.1, 1]},
+                                   scoring=custom_scorer, refit='recall')
+    search_str = GridSearchCV(est, {'C': [0.1, 1]},
+                              scoring=['recall', 'accuracy'], refit='recall')
+
+    search_callable.fit(X, y)
+    search_str.fit(X, y)
+
+    assert search_callable.best_score_ == pytest.approx(search_str.best_score_)
+    assert search_callable.best_index_ == search_str.best_index_
+    assert search_callable.score(X, y) == pytest.approx(search_str.score(X, y))
+
+
+def test_callable_single_metric_same_as_single_string():
+    # Tests callable scorer is the same as scoring with a single string
+    def custom_scorer(est, X, y):
+        y_pred = est.predict(X)
+        return recall_score(y, y_pred)
+
+    X, y = make_classification(n_samples=40, n_features=4,
+                               random_state=42)
+    est = LinearSVC(random_state=42)
+    search_callable = GridSearchCV(est, {'C': [0.1, 1]},
+                                   scoring=custom_scorer, refit=True)
+    search_str = GridSearchCV(est, {'C': [0.1, 1]},
+                              scoring='recall', refit='recall')
+    search_list_str = GridSearchCV(est, {'C': [0.1, 1]},
+                                   scoring=['recall'], refit='recall')
+    search_callable.fit(X, y)
+    search_str.fit(X, y)
+    search_list_str.fit(X, y)
+
+    assert search_callable.best_score_ == pytest.approx(search_str.best_score_)
+    assert search_callable.best_index_ == search_str.best_index_
+    assert search_callable.score(X, y) == pytest.approx(search_str.score(X, y))
+
+    assert search_list_str.best_score_ == pytest.approx(search_str.best_score_)
+    assert search_list_str.best_index_ == search_str.best_index_
+    assert search_list_str.score(X, y) == pytest.approx(search_str.score(X, y))
+
+
+def test_callable_multimetric_error_on_invalid_key():
+    # Raises when the callable scorer does not return a dict with `refit` key.
+    def bad_scorer(est, X, y):
+        return {'bad_name': 1}
+
+    X, y = make_classification(n_samples=40, n_features=4,
+                               random_state=42)
+    clf = GridSearchCV(LinearSVC(random_state=42), {'C': [0.1, 1]},
+                       scoring=bad_scorer, refit='good_name')
+
+    msg = ('For multi-metric scoring, the parameter refit must be set to a '
+           'scorer key or a callable to refit')
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(X, y)
+
+
+def test_callable_multimetric_error_failing_clf():
+    # Warns when there is an estimator the fails to fit with a float
+    # error_score
+    def custom_scorer(est, X, y):
+        return {'acc': 1}
+
+    X, y = make_classification(n_samples=20, n_features=10, random_state=0)
+
+    clf = FailingClassifier()
+    gs = GridSearchCV(clf, [{'parameter': [0, 1, 2]}], scoring=custom_scorer,
+                      refit=False, error_score=0.1)
+
+    with pytest.warns(FitFailedWarning, match='Estimator fit failed'):
+        gs.fit(X, y)
+
+    assert_allclose(gs.cv_results_['mean_test_acc'], [1, 1, 0.1])
+
+
+def test_callable_multimetric_clf_all_fails():
+    # Warns and raises when all estimator fails to fit.
+    def custom_scorer(est, X, y):
+        return {'acc': 1}
+    X, y = make_classification(n_samples=20, n_features=10, random_state=0)
+
+    clf = FailingClassifier()
+
+    gs = GridSearchCV(clf, [{'parameter': [2, 2, 2]}], scoring=custom_scorer,
+                      refit=False, error_score=0.1)
+
+    with pytest.warns(FitFailedWarning, match='Estimator fit failed'), \
+            pytest.raises(NotFittedError,
+                          match="All estimators failed to fit"):
+        gs.fit(X, y)
+
+
 def test_n_features_in():
     # make sure grid search and random search delegate n_features_in to the
     # best estimator
@@ -1765,6 +1944,27 @@ def test_n_features_in():
     assert rs.n_features_in_ == n_features
 
 
+@pytest.mark.parametrize("pairwise", [True, False])
+def test_search_cv_pairwise_property_delegated_to_base_estimator(pairwise):
+    """
+    Test implementation of BaseSearchCV has the pairwise tag
+    which matches the pairwise tag of its estimator.
+    This test make sure pairwise tag is delegated to the base estimator.
+
+    Non-regression test for issue #13920.
+    """
+    class TestEstimator(BaseEstimator):
+        def _more_tags(self):
+            return {'pairwise': pairwise}
+
+    est = TestEstimator()
+    attr_message = "BaseSearchCV pairwise tag must match estimator"
+    cv = GridSearchCV(est, {'n_neighbors': [10]})
+    assert pairwise == cv._get_tags()['pairwise'], attr_message
+
+
+# TODO: Remove in 1.1
+@ignore_warnings(category=FutureWarning)
 def test_search_cv__pairwise_property_delegated_to_base_estimator():
     """
     Test implementation of BaseSearchCV has the _pairwise property
@@ -1782,10 +1982,10 @@ def test_search_cv__pairwise_property_delegated_to_base_estimator():
         assert _pairwise_setting == cv._pairwise, attr_message
 
 
-def test_search_cv__pairwise_property_equivalence_of_precomputed():
+def test_search_cv_pairwise_property_equivalence_of_precomputed():
     """
-    Test implementation of BaseSearchCV has the _pairwise property
-    which matches the _pairwise property of its estimator.
+    Test implementation of BaseSearchCV has the pairwise tag
+    which matches the pairwise tag of its estimator.
     This test ensures the equivalence of 'precomputed'.
 
     Non-regression test for issue #13920.
@@ -1801,7 +2001,7 @@ def test_search_cv__pairwise_property_equivalence_of_precomputed():
     cv.fit(X, y)
     preds_original = cv.predict(X)
 
-    # precompute euclidean metric to validate _pairwise is working
+    # precompute euclidean metric to validate pairwise is working
     X_precomputed = euclidean_distances(X)
     clf = KNeighborsClassifier(metric='precomputed')
     cv = GridSearchCV(clf, grid_params, cv=n_splits)
@@ -1885,3 +2085,35 @@ def test_scalar_fit_param_compat(SearchCV, param_search):
         'scalar_param': 42,
     }
     model.fit(X_train, y_train, **fit_params)
+
+
+# FIXME: Replace this test with a full `check_estimator` once we have API only
+# checks.
+@pytest.mark.filterwarnings("ignore:The total space of parameters 4 is")
+@pytest.mark.parametrize("SearchCV", [GridSearchCV, RandomizedSearchCV])
+@pytest.mark.parametrize("Predictor", [MinimalRegressor, MinimalClassifier])
+def test_search_cv_using_minimal_compatible_estimator(SearchCV, Predictor):
+    # Check that third-party library can run tests without inheriting from
+    # BaseEstimator.
+    rng = np.random.RandomState(0)
+    X, y = rng.randn(25, 2), np.array([0] * 5 + [1] * 20)
+
+    model = Pipeline([
+        ("transformer", MinimalTransformer()), ("predictor", Predictor())
+    ])
+
+    params = {
+        "transformer__param": [1, 10], "predictor__parama": [1, 10],
+    }
+    search = SearchCV(model, params, error_score="raise")
+    search.fit(X, y)
+
+    assert search.best_params_.keys() == params.keys()
+
+    y_pred = search.predict(X)
+    if is_classifier(search):
+        assert_array_equal(y_pred, 1)
+        assert search.score(X, y) == pytest.approx(accuracy_score(y, y_pred))
+    else:
+        assert_allclose(y_pred, y.mean())
+        assert search.score(X, y) == pytest.approx(r2_score(y, y_pred))

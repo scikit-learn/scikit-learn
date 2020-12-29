@@ -204,16 +204,11 @@ def test_affinity_propagation_random_state():
     assert np.mean((centers0 - centers76) ** 2) > 1
 
 
-# FIXME: to be removed in 0.25
+# FIXME: to be removed in 1.0
 def test_affinity_propagation_random_state_warning():
     # test that a warning is raised when random_state is not defined.
     X = np.array([[0, 0], [1, 1], [-2, -2]])
-    match = ("'random_state' has been introduced in 0.23. "
-             "It will be set to None starting from 0.25 which "
-             "means that results will differ at every function "
-             "call. Set 'random_state' to None to silence this "
-             "warning, or to 0 to keep the behavior of versions "
-             "<0.23.")
+    match = "'random_state' has been introduced in 0.23."
     with pytest.warns(FutureWarning, match=match):
         AffinityPropagation().fit(X)
 
@@ -231,3 +226,24 @@ def test_affinity_propagation_convergence_warning_dense_sparse(centers):
         assert_array_equal(ap.predict(X),
                            np.zeros(X.shape[0], dtype=int))
     assert len(record) == 0
+
+
+def test_affinity_propagation_float32():
+    # Test to fix incorrect clusters due to dtype change
+    # (non-regression test for issue #10832)
+    X = np.array([[1, 0, 0, 0],
+                  [0, 1, 1, 0],
+                  [0, 1, 1, 0],
+                  [0, 0, 0, 1]], dtype='float32')
+    afp = AffinityPropagation(preference=1, affinity='precomputed',
+                              random_state=0).fit(X)
+    expected = np.array([0, 1, 1, 2])
+    assert_array_equal(afp.labels_, expected)
+
+
+# TODO: Remove in 1.1
+def test_affinity_propagation_pairwise_is_deprecated():
+    afp = AffinityPropagation(affinity='precomputed')
+    msg = r"Attribute _pairwise was deprecated in version 0\.24"
+    with pytest.warns(FutureWarning, match=msg):
+        afp._pairwise
