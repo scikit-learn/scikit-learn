@@ -140,7 +140,7 @@ def test_singular_matrix():
 def test_invalid_metric():
     rand = np.random.RandomState(0)
     X = rand.randint(0, 100, size=(20, 3))
-    nbrs = neighbors.NearestNeighbors(2, metric='manhattan').fit(X)
+    nbrs = neighbors.NearestNeighbors(n_neighbors=2, metric='manhattan').fit(X)
 
     msg = "metric must be euclidean or equivalent"
     assert_raise_message(ValueError, msg, manifold.locally_linear_embedding,
