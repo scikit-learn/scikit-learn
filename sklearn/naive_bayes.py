@@ -782,6 +782,8 @@ class MultinomialNB(_BaseDiscreteNB):
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
+        if self.classes_.size == 1:
+            return np.full((X.shape[0], 1), np.inf)
         return (safe_sparse_dot(X, self.feature_log_prob_.T) +
                 self.class_log_prior_)
 

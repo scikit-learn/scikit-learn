@@ -530,6 +530,19 @@ def test_mnb_sample_weight():
                               [1 / 3., 2 / 3.])
 
 
+def test_mnb_one_class():
+    # Test when a MultinomialNB is given data with only one class observed
+    X = [
+        (0.072777, 0.334995),
+        (0.857577, 0.977991),
+        (0.310364, 0.230206)
+    ]
+    y = [0, 0, 0]
+    clf = MultinomialNB(fit_prior=False)
+    clf.fit(X, y)
+    assert_array_equal(clf.predict(X), y)
+
+
 def test_bnb():
     # Tests that BernoulliNB when alpha=1.0 gives the same values as
     # those given for the toy example in Manning, Raghavan, and
