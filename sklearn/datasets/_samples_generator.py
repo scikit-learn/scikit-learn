@@ -1156,8 +1156,10 @@ def make_low_rank_matrix(n_samples=100, n_features=100, *, effective_rank=10,
     n = min(n_samples, n_features)
 
     # Random (ortho normal) vectors
-    u, _ = linalg.qr(generator.randn(n_samples, n), mode='economic')
-    v, _ = linalg.qr(generator.randn(n_features, n), mode='economic')
+    u, _ = linalg.qr(generator.randn(n_samples, n), mode='economic',
+                     check_finite=False)
+    v, _ = linalg.qr(generator.randn(n_features, n), mode='economic',
+                     check_finite=False)
 
     # Index of the singular values
     singular_ind = np.arange(n, dtype=np.float64)
@@ -1315,7 +1317,7 @@ def make_spd_matrix(n_dim, *, random_state=None):
     generator = check_random_state(random_state)
 
     A = generator.rand(n_dim, n_dim)
-    U, _, Vt = linalg.svd(np.dot(A.T, A))
+    U, _, Vt = linalg.svd(np.dot(A.T, A), check_finite=False)
     X = np.dot(np.dot(U, 1.0 + np.diag(generator.rand(n_dim))), Vt)
 
     return X

@@ -84,7 +84,10 @@ elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
     setup_ccache
     python -m pip install -U pip
 
-    python -m pip install pandas matplotlib pyamg scikit-image
+    # Do not build scikit-image from source because it is an optional dependency
+    python -m pip install --only-binary :all: scikit-image || true
+
+    python -m pip install pandas matplotlib pyamg
     # do not install dependencies for lightgbm since it requires scikit-learn
     # and install a version less than 3.0.0 until the issue #18316 is solved.
     python -m pip install "lightgbm<3.0.0" --no-deps
@@ -130,19 +133,19 @@ try:
 except ImportError:
     print('pandas not installed')
 "
-python -m pip list
+# Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
+# workers with 2 cores when building the compiled extensions of scikit-learn.
+export SKLEARN_BUILD_PARALLEL=3
 
+python -m pip list
 if [[ "$DISTRIB" == "conda-pip-latest" ]]; then
-    # Check that pip can automatically install the build dependencies from
-    # pyproject.toml using an isolated build environment:
+    # Check that pip can automatically build scikit-learn with the build
+    # dependencies specified in pyproject.toml using an isolated build
+    # environment:
     pip install --verbose --editable .
 else
     # Use the pre-installed build dependencies and build directly in the
     # current environment.
-    # Use setup.py instead of `pip install -e .` to be able to pass the -j flag
-    # to speed-up the building multicore CI machines.
-    python setup.py build_ext --inplace -j 3
     python setup.py develop
 fi
-
 ccache -s
