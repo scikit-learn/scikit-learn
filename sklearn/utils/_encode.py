@@ -30,7 +30,7 @@ def _unique(values, *, return_inverse=False, return_counts=False):
         Only provided if `return_inverse` is True.
 
     unique_counts : ndarray
-        The number of times each of the unique values comes up in the originial
+        The number of times each of the unique values comes up in the original
         array. Only provided if `return_counts` is True.
     """
     if values.dtype == object:
