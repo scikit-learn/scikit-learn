@@ -809,10 +809,11 @@ def test_precision_recall_curve_toydata():
 
         y_true = [0, 0]
         y_score = [0.25, 0.75]
-        with pytest.raises(Exception):
-            precision_recall_curve(y_true, y_score)
-        with pytest.raises(Exception):
-            average_precision_score(y_true, y_score)
+        p, r, _ = precision_recall_curve(y_true, y_score)
+        auc_prc = average_precision_score(y_true, y_score)
+        assert_array_almost_equal(p, [0, 1])
+        assert_array_almost_equal(r, [1, 0.])
+        assert_almost_equal(auc_prc, 0.)
 
         y_true = [1, 1]
         y_score = [0.25, 0.75]
@@ -824,47 +825,69 @@ def test_precision_recall_curve_toydata():
         # Multi-label classification task
         y_true = np.array([[0, 1], [0, 1]])
         y_score = np.array([[0, 1], [0, 1]])
-        with pytest.raises(Exception):
-            average_precision_score(y_true, y_score, average="macro")
-        with pytest.raises(Exception):
-            average_precision_score(y_true, y_score, average="weighted")
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="samples"), 1.)
+                                                    average="macro"), 0.5)
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="micro"), 1.)
+                                                    average="weighted"), 1.)
+        assert_almost_equal(average_precision_score(y_true, y_score,
+                                                    average="samples"), 1.)
+        assert_almost_equal(average_precision_score(y_true, y_score,
+                                                    average="micro"), 1.)
 
         y_true = np.array([[0, 1], [0, 1]])
         y_score = np.array([[0, 1], [1, 0]])
-        with pytest.raises(Exception):
-            average_precision_score(y_true, y_score, average="macro")
-        with pytest.raises(Exception):
-            average_precision_score(y_true, y_score, average="weighted")
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="samples"), 0.75)
+                                                    average="macro"), 0.5)
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="micro"), 0.5)
+                                                    average="weighted"), 1.)
+        assert_almost_equal(average_precision_score(y_true, y_score,
+                                                    average="samples"), 0.75)
+        assert_almost_equal(average_precision_score(y_true, y_score,
+                                                    average="micro"), 0.5)
 
         y_true = np.array([[1, 0], [0, 1]])
         y_score = np.array([[0, 1], [1, 0]])
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="macro"), 0.5)
+                                                    average="macro"), 0.5)
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="weighted"), 0.5)
+                                                    average="weighted"), 0.5)
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="samples"), 0.5)
+                                                    average="samples"), 0.5)
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="micro"), 0.5)
+                                                    average="micro"), 0.5)
 
         y_true = np.array([[1, 0], [0, 1]])
         y_score = np.array([[0.5, 0.5], [0.5, 0.5]])
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="macro"), 0.5)
+                                                    average="macro"), 0.5)
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="weighted"), 0.5)
+                                                    average="weighted"), 0.5)
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="samples"), 0.5)
+                                                    average="samples"), 0.5)
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="micro"), 0.5)
+                                                    average="micro"), 0.5)
+
+        y_true = np.array([[0, 0], [0, 0]])
+        y_score = np.array([[0, 1], [0, 1]])
+        assert_almost_equal(average_precision_score(y_true, y_score,
+                                                    average="macro"), 0.)
+        assert_almost_equal(average_precision_score(y_true, y_score,
+                                                    average="weighted"), 0.)
+        assert_almost_equal(average_precision_score(y_true, y_score,
+                                                    average="samples"), 0.)
+        assert_almost_equal(average_precision_score(y_true, y_score,
+                                                    average="micro"), 0.)
+
+        y_true = np.array([[1, 1], [1, 1]])
+        y_score = np.array([[0, 1], [0, 1]])
+        assert_almost_equal(average_precision_score(y_true, y_score,
+                                                    average="macro"), 1.)
+        assert_almost_equal(average_precision_score(y_true, y_score,
+                                                    average="weighted"), 1.)
+        assert_almost_equal(average_precision_score(y_true, y_score,
+                                                    average="samples"), 1.)
+        assert_almost_equal(average_precision_score(y_true, y_score,
+                                                    average="micro"), 1.)
 
     with np.errstate(all="ignore"):
         # if one class is never present weighted should not be NaN
