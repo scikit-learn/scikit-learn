@@ -311,7 +311,7 @@ class IncrementalPCA(_BasePCA):
         self.explained_variance_ = explained_variance[:self.n_components_]
         self.explained_variance_ratio_ = \
             explained_variance_ratio[:self.n_components_]
-        if self.n_components_ < n_features:
+        if self.n_components_ not in (n_samples, n_features):
             self.noise_variance_ = \
                 explained_variance[self.n_components_:].mean()
         else:
