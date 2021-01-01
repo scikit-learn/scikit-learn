@@ -9,6 +9,7 @@ from scipy import linalg, optimize, sparse
 
 import pytest
 
+from sklearn._loss.loss import BinaryCrossEntropy, CategoricalCrossEntropy
 from sklearn.base import clone
 from sklearn.datasets import load_iris, make_classification
 from sklearn.metrics import log_loss
@@ -30,12 +31,13 @@ from sklearn.preprocessing import scale
 from sklearn.utils._testing import skip_if_no_parallel
 
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model._linear_loss import LinearLoss
 from sklearn.linear_model._logistic import (
+    _log_reg_scoring_path,
+    _logistic_regression_path,
     LogisticRegression,
-    _logistic_regression_path, LogisticRegressionCV,
-    _logistic_loss_and_grad, _logistic_grad_hess,
-    _multinomial_grad_hess, _logistic_loss,
-    _log_reg_scoring_path)
+    LogisticRegressionCV
+)
 
 X = [[-1, 0], [0, 1], [1, 1]]
 X_sp = sp.csr_matrix(X)
@@ -428,58 +430,87 @@ def test_liblinear_dual_random_state():
 
 
 def test_logistic_loss_and_grad():
-    X_ref, y = make_classification(n_samples=20, random_state=0)
+    n_samples, n_features = 20, 20
+    alpha = 1.
+    X_ref, y = make_classification(
+        n_samples=n_samples, n_features=n_features, random_state=0
+    )
+    # make last column of 1 to mimic intercept term
+    X_ref[:, -1] = 1
+    X_ref_inter = X_ref[:, :-1]  # exclude intercept column
+    y = y.astype(np.float64)
     n_features = X_ref.shape[1]
 
     X_sp = X_ref.copy()
     X_sp[X_sp < .1] = 0
     X_sp = sp.csr_matrix(X_sp)
-    for X in (X_ref, X_sp):
-        w = np.zeros(n_features)
+    X_sp_inter = sp.lil_matrix(X_sp)  # supports slicing
+    X_sp_inter = sp.csr_matrix(X_sp_inter[:, :-1])
+    for X, X_inter in ((X_ref, X_ref_inter), (X_sp, X_sp_inter)):
+        w = np.ones(n_features)
+        # make an intercept of 0.5
+        w[-1] = 0.5
 
+        logloss = LinearLoss(
+            loss=BinaryCrossEntropy(),
+            fit_intercept=False,
+        )
         # First check that our derivation of the grad is correct
-        loss, grad = _logistic_loss_and_grad(w, X, y, alpha=1.)
+        loss, grad = logloss.loss_gradient(w, X, y, alpha=alpha)
         approx_grad = optimize.approx_fprime(
-            w, lambda w: _logistic_loss_and_grad(w, X, y, alpha=1.)[0], 1e-3
+            w, lambda w: logloss.loss(w, X, y, alpha=alpha), 1e-3
         )
         assert_array_almost_equal(grad, approx_grad, decimal=2)
 
         # Second check that our intercept implementation is good
-        w = np.zeros(n_features + 1)
-        loss_interp, grad_interp = _logistic_loss_and_grad(
-            w, X, y, alpha=1.
+        logloss = LinearLoss(
+            loss=BinaryCrossEntropy(),
+            fit_intercept=True,
         )
-        assert_array_almost_equal(loss, loss_interp)
+        loss_inter, grad_inter = logloss.loss_gradient(
+            w, X_inter, y, alpha=alpha
+        )
+        # Note, that intercept gets no L2 penalty.
+        assert loss == pytest.approx(loss_inter + 0.5 * alpha * w[-1]**2)
 
         approx_grad = optimize.approx_fprime(
-            w, lambda w: _logistic_loss_and_grad(w, X, y, alpha=1.)[0], 1e-3
+            w, lambda w: logloss.loss(w, X_inter, y, alpha=alpha), 1e-3
         )
-        assert_array_almost_equal(grad_interp, approx_grad, decimal=2)
+        assert_array_almost_equal(grad_inter, approx_grad, decimal=2)
 
 
 def test_logistic_grad_hess():
     rng = np.random.RandomState(0)
     n_samples, n_features = 50, 5
+    alpha = 1.
     X_ref = rng.randn(n_samples, n_features)
     y = np.sign(X_ref.dot(5 * rng.randn(n_features)))
     X_ref -= X_ref.mean()
     X_ref /= X_ref.std()
+    # make last column of 1 to mimic intercept term
+    X_ref[:, :-1] = 1
     X_sp = X_ref.copy()
     X_sp[X_sp < .1] = 0
     X_sp = sp.csr_matrix(X_sp)
     for X in (X_ref, X_sp):
         w = np.full(n_features, .1)
+        logloss = LinearLoss(
+            loss=BinaryCrossEntropy(),
+            fit_intercept=False,
+        )
 
-        # First check that _logistic_grad_hess is consistent
-        # with _logistic_loss_and_grad
-        loss, grad = _logistic_loss_and_grad(w, X, y, alpha=1.)
-        grad_2, hess = _logistic_grad_hess(w, X, y, alpha=1.)
+        # First check that gradients from gradient(), loss_gradient() and
+        # gradient_hessp() are consistent
+        grad = logloss.gradient(w, X, y, alpha=alpha)
+        loss, grad_2 = logloss.loss_gradient(w, X, y, alpha=alpha)
+        grad_3, hessp = logloss.gradient_hessp(w, X, y, alpha=alpha)
         assert_array_almost_equal(grad, grad_2)
+        assert_array_almost_equal(grad, grad_3)
 
         # Now check our hessian along the second direction of the grad
         vector = np.zeros_like(grad)
         vector[1] = 1
-        hess_col = hess(vector)
+        hess_col = hessp(vector)
 
         # Computation of the Hessian is particularly fragile to numerical
         # errors when doing simple finite differences. Here we compute the
@@ -488,8 +519,7 @@ def test_logistic_grad_hess():
         e = 1e-3
         d_x = np.linspace(-e, e, 30)
         d_grad = np.array([
-            _logistic_loss_and_grad(w + t * vector, X, y, alpha=1.)[1]
-            for t in d_x
+            logloss.gradient(w + t * vector, X, y, alpha=alpha) for t in d_x
         ])
 
         d_grad -= d_grad.mean(axis=0)
@@ -499,11 +529,15 @@ def test_logistic_grad_hess():
 
         # Second check that our intercept implementation is good
         w = np.zeros(n_features + 1)
-        loss_interp, grad_interp = _logistic_loss_and_grad(w, X, y, alpha=1.)
-        loss_interp_2 = _logistic_loss(w, X, y, alpha=1.)
-        grad_interp_2, hess = _logistic_grad_hess(w, X, y, alpha=1.)
-        assert_array_almost_equal(loss_interp, loss_interp_2)
-        assert_array_almost_equal(grad_interp, grad_interp_2)
+        logloss = LinearLoss(
+            loss=BinaryCrossEntropy(),
+            fit_intercept=True,
+        )
+        loss_inter, grad_inter = logloss.loss_gradient(w, X, y, alpha=alpha)
+        loss_inter_2 = logloss.loss(w, X, y, alpha=alpha)
+        grad_inter_2, hess = logloss.gradient_hessp(w, X, y, alpha=alpha)
+        assert_array_almost_equal(loss_inter, loss_inter_2)
+        assert_array_almost_equal(grad_inter, grad_inter_2)
 
 
 def test_logistic_cv():
@@ -622,31 +656,40 @@ def test_intercept_logistic_helper():
     n_samples, n_features = 10, 5
     X, y = make_classification(n_samples=n_samples, n_features=n_features,
                                random_state=0)
+    y = y.astype(np.float64)
 
     # Fit intercept case.
+    logloss = LinearLoss(
+        loss=BinaryCrossEntropy(),
+        fit_intercept=True,
+    )
     alpha = 1.
     w = np.ones(n_features + 1)
-    grad_interp, hess_interp = _logistic_grad_hess(w, X, y, alpha)
-    loss_interp = _logistic_loss(w, X, y, alpha)
+    grad_inter, hess_inter = logloss.gradient_hessp(w, X, y, alpha=alpha)
+    loss_inter = logloss.loss(w, X, y, alpha=alpha)
 
     # Do not fit intercept. This can be considered equivalent to adding
-    # a feature vector of ones, i.e column of one vectors.
-    X_ = np.hstack((X, np.ones(10)[:, np.newaxis]))
-    grad, hess = _logistic_grad_hess(w, X_, y, alpha)
-    loss = _logistic_loss(w, X_, y, alpha)
+    # a feature vector of ones, i.e last column vector's elements are all one.
+    X_ = np.hstack((X, np.ones(n_samples)[:, np.newaxis]))
+    logloss = LinearLoss(
+        loss=BinaryCrossEntropy(),
+        fit_intercept=False,
+    )
+    grad, hessp = logloss.gradient_hessp(w, X_, y, alpha=alpha)
+    loss = logloss.loss(w, X_, y, alpha=alpha)
 
     # In the fit_intercept=False case, the feature vector of ones is
     # penalized. This should be taken care of.
-    assert_almost_equal(loss_interp + 0.5 * (w[-1] ** 2), loss)
+    assert_almost_equal(loss_inter + 0.5 * (w[-1] ** 2), loss)
 
     # Check gradient.
-    assert_array_almost_equal(grad_interp[:n_features], grad[:n_features])
-    assert_almost_equal(grad_interp[-1] + alpha * w[-1], grad[-1])
+    assert_array_almost_equal(grad_inter[:n_features], grad[:n_features])
+    assert_almost_equal(grad_inter[-1] + alpha * w[-1], grad[-1])
 
     rng = np.random.RandomState(0)
     grad = rng.rand(n_features + 1)
-    hess_interp = hess_interp(grad)
-    hess = hess(grad)
+    hess_interp = hess_inter(grad)
+    hess = hessp(grad)
     assert_array_almost_equal(hess_interp[:n_features], hess[:n_features])
     assert_almost_equal(hess_interp[-1] + alpha * grad[-1], hess[-1])
 
@@ -976,13 +1019,17 @@ def test_multinomial_grad_hess():
     n_samples, n_features, n_classes = 100, 5, 3
     X = rng.randn(n_samples, n_features)
     w = rng.rand(n_classes, n_features)
-    Y = np.zeros((n_samples, n_classes))
-    ind = np.argmax(np.dot(X, w.T), axis=1)
-    Y[range(0, n_samples), ind] = 1
+    y = np.argmax(np.dot(X, w.T), axis=1).astype(X.dtype)
     w = w.ravel()
     sample_weights = np.ones(X.shape[0])
-    grad, hessp = _multinomial_grad_hess(w, X, Y, alpha=1.,
-                                         sample_weight=sample_weights)
+    alpha = 1.
+    multinomial = LinearLoss(
+        loss=CategoricalCrossEntropy(n_classes=n_classes),
+        fit_intercept=False,
+    )
+    grad, hessp = multinomial.gradient_hessp(
+        w, X, y, alpha=alpha, sample_weight=sample_weights
+    )
     # extract first column of hessian matrix
     vec = np.zeros(n_features * n_classes)
     vec[0] = 1
@@ -993,8 +1040,8 @@ def test_multinomial_grad_hess():
     e = 1e-3
     d_x = np.linspace(-e, e, 30)
     d_grad = np.array([
-        _multinomial_grad_hess(w + t * vec, X, Y, alpha=1.,
-                               sample_weight=sample_weights)[0]
+        multinomial.gradient_hessp(
+            w + t * vec, X, y, alpha=alpha, sample_weight=sample_weights)[0]
         for t in d_x
     ])
     d_grad -= d_grad.mean(axis=0)
