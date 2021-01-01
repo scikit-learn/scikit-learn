@@ -463,6 +463,23 @@ class IsolationForest(OutlierMixin, BaseBagging):
         }
 
 
+def _average_path_length_small(n_samples_leaf):
+    c = (0.0, 0.0, 1.0, 1.6666666666666666667, 
+         2.1666666666666666667, 2.5666666666666666667, 2.9000000000000000000, 3.1857142857142857143, 
+         3.4357142857142857143, 3.6579365079365079365, 3.8579365079365079365, 4.0397546897546897547, 
+         4.2064213564213564214, 4.3602675102675102675, 4.5031246531246531247, 4.6364579864579864580, 
+         4.7614579864579864580, 4.8791050452815158698, 4.9902161563926269809, 5.0954793142873638230, 
+         5.1954793142873638230, 5.2907174095254590611, 5.3816265004345499702, 5.4685830221736804049, 
+         5.5519163555070137383, 5.6319163555070137383, 5.7088394324300906613, 5.7829135065041647354, 
+         5.8543420779327361640, 5.9233075951741154743, 5.9899742618407821410, 6.0544903908730402055, 
+         6.1169903908730402055, 6.1775964514791008116, 6.2364199808908655175, 6.2935628380337226603, 
+         6.3491183935892782159, 6.4031724476433322699, 6.4558040265907006910, 6.5070860778727519730, 
+         6.5570860778727519730, 6.6058665656776300218, 6.6534856132966776409, 6.6999972412036543850, 
+         6.7454517866581998396, 6.7898962311026442840, 6.8333744919722095014, 6.8759276834615712036, 
+         6.9175943501282378702, 6.9584106766588501151, 6.9984106766588501151, 7.0376263629333599190)
+    #return np.array(c)[n_samples_leaf]
+    return np.array(c)[np.maximum(0, n_samples_leaf)]
+
 def _average_path_length(n_samples_leaf):
     """
     The average path length in a n_samples iTree, which is equal to
@@ -485,15 +502,21 @@ def _average_path_length(n_samples_leaf):
     n_samples_leaf = n_samples_leaf.reshape((1, -1))
     average_path_length = np.zeros(n_samples_leaf.shape)
 
-    mask_1 = n_samples_leaf <= 1
-    mask_2 = n_samples_leaf == 2
-    not_mask = ~np.logical_or(mask_1, mask_2)
+    mask_small = n_samples_leaf < 52
+    not_mask = ~mask_small
 
-    average_path_length[mask_1] = 0.
-    average_path_length[mask_2] = 1.
+    average_path_length[mask_small] = _average_path_length_small(n_samples_leaf[mask_small])
+
+    # Average path length given by 2*(H(n)-1), where H(n) is the nth harmonic number.
+    # For the harmonic number calculation, see the following publications and references therein
+    # Villarino, M. Ramanujan's Harmonic Number Expansion into Negative Powers of a Triangular Number. https://arxiv.org/abs/0707.3950
+    # or
+    # Wang, W. Harmonic Number Expansions of the Ramanujan Type. Results Math 73, 161 (2018). https://doi.org/10.1007/s00025-018-0920-8
+
+    tmp = 1.0/np.square(n_samples_leaf[not_mask])
     average_path_length[not_mask] = (
-        2.0 * (np.log(n_samples_leaf[not_mask] - 1.0) + np.euler_gamma)
-        - 2.0 * (n_samples_leaf[not_mask] - 1.0) / n_samples_leaf[not_mask]
+        2.0 * (np.log(n_samples_leaf[not_mask]) - 1.0 + np.euler_gamma)
+        + 1.0/n_samples_leaf[not_mask] - tmp*(1.0/6.0 - tmp*(1.0/60.0 - tmp/126.0))
     )
 
     return average_path_length.reshape(n_samples_leaf_shape)
