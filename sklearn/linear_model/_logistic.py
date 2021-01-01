@@ -19,11 +19,14 @@ from scipy.special import expit, logsumexp
 from joblib import Parallel, effective_n_jobs
 
 from ._base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
+from ._linear_loss import LinearLoss
 from ._sag import sag_solver
+from .._loss.loss import HalfBinomialLoss, HalfMultinomialLoss
 from ..preprocessing import LabelEncoder, LabelBinarizer
 from ..svm._base import _fit_liblinear
 from ..utils import check_array, check_consistent_length, compute_class_weight
 from ..utils import check_random_state
+from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils.extmath import log_logistic, safe_sparse_dot, softmax, squared_norm
 from ..utils.extmath import row_norms
 from ..utils.optimize import _newton_cg, _check_optimize_result
@@ -505,6 +508,7 @@ def _logistic_regression_path(
     max_squared_sum=None,
     sample_weight=None,
     l1_ratio=None,
+    n_threads=1,
 ):
     """Compute a Logistic Regression model for a list of regularization
     parameters.
@@ -629,6 +633,9 @@ def _logistic_regression_path(
         to using ``penalty='l1'``. For ``0 < l1_ratio <1``, the penalty is a
         combination of L1 and L2.
 
+    n_threads : int, default=1
+       Number of OpenMP threads to use.
+
     Returns
     -------
     coefs : ndarray of shape (n_cs, n_features) or (n_cs, n_features + 1)
@@ -696,12 +703,16 @@ def _logistic_regression_path(
     # multinomial case this is not necessary.
     if multi_class == "ovr":
         w0 = np.zeros(n_features + int(fit_intercept), dtype=X.dtype)
-        mask_classes = np.array([-1, 1])
         mask = y == pos_class
         y_bin = np.ones(y.shape, dtype=X.dtype)
-        y_bin[~mask] = -1.0
-        # for compute_class_weight
+        if solver in ["lbfgs", "newton-cg"]:
+            mask_classes = np.array([0, 1])
+            y_bin[~mask] = 0.0
+        else:
+            mask_classes = np.array([-1, 1])
+            y_bin[~mask] = -1.0
 
+        # for compute_class_weight
         if class_weight == "balanced":
             class_weight_ = compute_class_weight(
                 class_weight, classes=mask_classes, y=y_bin
@@ -709,15 +720,17 @@ def _logistic_regression_path(
             sample_weight *= class_weight_[le.fit_transform(y_bin)]
 
     else:
-        if solver not in ["sag", "saga"]:
+        if solver in ["sag", "saga", "lbfgs", "newton-cg"]:
+            # SAG, lbfgs and newton-cg multinomial solvers need LabelEncoder,
+            # not LabelBinarizer, i.e. y is mapped to integers.
+            le = LabelEncoder()
+            Y_multi = le.fit_transform(y).astype(X.dtype, copy=False)
+        else:
+            # Apply LabelBinarizer, i.e. y is one-hot encoded.
             lbin = LabelBinarizer()
             Y_multi = lbin.fit_transform(y)
             if Y_multi.shape[1] == 1:
                 Y_multi = np.hstack([1 - Y_multi, Y_multi])
-        else:
-            # SAG multinomial solver needs LabelEncoder, not LabelBinarizer
-            le = LabelEncoder()
-            Y_multi = le.fit_transform(y).astype(X.dtype, copy=False)
 
         w0 = np.zeros(
             (classes.size, n_features + int(fit_intercept)), order="F", dtype=X.dtype
@@ -767,33 +780,28 @@ def _logistic_regression_path(
         # ravelled parameters.
         if solver in ["lbfgs", "newton-cg"]:
             w0 = w0.ravel()
+            loss = LinearLoss(
+                loss=HalfMultinomialLoss(n_classes=classes.size),
+                fit_intercept=fit_intercept,
+            )
         target = Y_multi
-        if solver == "lbfgs":
-
-            def func(x, *args):
-                return _multinomial_loss_grad(x, *args)[0:2]
-
+        if solver in "lbfgs":
+            func = loss.loss_gradient
         elif solver == "newton-cg":
-
-            def func(x, *args):
-                return _multinomial_loss(x, *args)[0]
-
-            def grad(x, *args):
-                return _multinomial_loss_grad(x, *args)[1]
-
-            hess = _multinomial_grad_hess
+            func = loss.loss
+            grad = loss.gradient
+            hess = loss.gradient_hessp  # hess = [gradient, hessp]
         warm_start_sag = {"coef": w0.T}
     else:
         target = y_bin
         if solver == "lbfgs":
-            func = _logistic_loss_and_grad
+            loss = LinearLoss(loss=HalfBinomialLoss(), fit_intercept=fit_intercept)
+            func = loss.loss_gradient
         elif solver == "newton-cg":
-            func = _logistic_loss
-
-            def grad(x, *args):
-                return _logistic_loss_and_grad(x, *args)[1]
-
-            hess = _logistic_grad_hess
+            loss = LinearLoss(loss=HalfBinomialLoss(), fit_intercept=fit_intercept)
+            func = loss.loss
+            grad = loss.gradient
+            hess = loss.gradient_hessp  # hess = [gradient, hessp]
         warm_start_sag = {"coef": np.expand_dims(w0, axis=1)}
 
     coefs = list()
@@ -808,7 +816,7 @@ def _logistic_regression_path(
                 w0,
                 method="L-BFGS-B",
                 jac=True,
-                args=(X, target, 1.0 / C, sample_weight),
+                args=(X, target, sample_weight, 1.0 / C, n_threads),
                 options={"iprint": iprint, "gtol": tol, "maxiter": max_iter},
             )
             n_iter_i = _check_optimize_result(
@@ -819,7 +827,7 @@ def _logistic_regression_path(
             )
             w0, loss = opt_res.x, opt_res.fun
         elif solver == "newton-cg":
-            args = (X, target, 1.0 / C, sample_weight)
+            args = (X, target, sample_weight, 1.0 / C, n_threads)
             w0, n_iter_i = _newton_cg(
                 hess, func, grad, w0, args=args, maxiter=max_iter, tol=tol
             )
@@ -1586,6 +1594,10 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             prefer = "threads"
         else:
             prefer = "processes"
+        if solver in ["lbfgs", "newton-cg"] and len(classes_) == 1:
+            n_threads = _openmp_effective_n_threads()
+        else:
+            n_threads = 1
         fold_coefs_ = Parallel(
             n_jobs=self.n_jobs,
             verbose=self.verbose,
@@ -1610,6 +1622,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 penalty=penalty,
                 max_squared_sum=max_squared_sum,
                 sample_weight=sample_weight,
+                n_threads=n_threads,
             )
             for class_, warm_start_coef_ in zip(classes_, warm_start_coef)
         )
