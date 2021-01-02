@@ -2035,12 +2035,12 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         degree = self.degree
         n_out = n_features * n_splines
         # We have to add degree number of knots below, and degree number knots
-        # above base the knots in order to make the spline basis complete.
+        # above the base knots in order to make the spline basis complete.
         # Eilers & Marx in "Flexible smoothing with B-splines and  penalties"
         # https://doi.org/10.1214/ss/1038425655 advice against repeating first
         # and last knot several times, which would have inferior behaviour at
         # boundaries if combined with a penalty (hence P-Spline). We follow
-        # this advice.
+        # this advice even if our splines are unpenalized.
         # Meaning we do not:
         # knots = np.r_[np.tile(base_knots.min(axis=0), reps=[degree, 1]),
         #              base_knots,
@@ -2086,7 +2086,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = check_array(X)
+        X = self._validate_data(X, accept_sparse=False)
 
         n_samples, n_features = X.shape
         n_splines = self.bsplines_[0].c.shape[0]
