@@ -4,8 +4,16 @@ import numpy as np
 from numpy import linalg
 
 from scipy.sparse import dok_matrix, csr_matrix, issparse
-from scipy.spatial.distance import cosine, cityblock, minkowski, wminkowski
+from scipy.spatial.distance import cosine, cityblock, minkowski
 from scipy.spatial.distance import cdist, pdist, squareform
+try:
+    from scipy.spatial.distance import wminkowski
+except ImportError:
+    # In scipy 1.6.0, wminkowski is deprecated and minkowski
+    # should be used instead.
+    from scipy.spatial.distance import minkowski as wminkowski
+
+from sklearn.utils.fixes import sp_version, parse_version
 
 import pytest
 
@@ -233,6 +241,7 @@ def test_pairwise_precomputed_non_negative():
         pairwise_distances(np.full((5, 5), -1), metric='precomputed')
 
 
+_minkowski_kwds = {'w': np.arange(1, 5).astype('double', copy=False), 'p': 1}
 _wminkowski_kwds = {'w': np.arange(1, 5).astype('double', copy=False), 'p': 1}
 
 
@@ -245,8 +254,38 @@ def callable_rbf_kernel(x, y, **kwds):
 @pytest.mark.parametrize(
         'func, metric, kwds',
         [(pairwise_distances, 'euclidean', {}),
-         (pairwise_distances, wminkowski, _wminkowski_kwds),
-         (pairwise_distances, 'wminkowski', _wminkowski_kwds),
+         pytest.param(
+             pairwise_distances, minkowski, _minkowski_kwds,
+             marks=pytest.mark.skipif(
+                 sp_version < parse_version("1.0"),
+                 reason="minkowski does not accept the w "
+                        "parameter prior to scipy 1.0."
+             )
+         ),
+         pytest.param(
+             pairwise_distances, 'minkowski', _minkowski_kwds,
+             marks=pytest.mark.skipif(
+                 sp_version < parse_version("1.0"),
+                 reason="minkowski does not accept the w "
+                        "parameter prior to scipy 1.0."
+             )
+         ),
+         pytest.param(
+             pairwise_distances, wminkowski, _wminkowski_kwds,
+             marks=pytest.mark.skipif(
+                 sp_version >= parse_version("1.6.0"),
+                 reason="wminkowski is now minkowski "
+                        "and it has been already tested."
+             )
+         ),
+         pytest.param(
+             pairwise_distances, 'wminkowski', _wminkowski_kwds,
+             marks=pytest.mark.skipif(
+                 sp_version >= parse_version("1.6.0"),
+                 reason="wminkowski is now minkowski "
+                        "and it has been already tested."
+             )
+         ),
          (pairwise_kernels, 'polynomial', {'degree': 1}),
          (pairwise_kernels, callable_rbf_kernel, {'gamma': .1})])
 @pytest.mark.parametrize('array_constr', [np.array, csr_matrix])
