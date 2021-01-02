@@ -1907,10 +1907,10 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
     bsplines_ : ndarray of shape (n_features, )
         Array of BSplines objects, one for each feature.
 
-    n_input_features_ : int
+    n_features_in_ : int
         The total number of input features.
 
-    n_output_features_ : int
+    n_features_out_ : int
         The total number of output features, which is computed as
         `n_features * n_splines`, where `n_splines` is
         the number of bases elements of the B-splines, `n_knots + degree - 1`.
@@ -1973,9 +1973,9 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         """
         n_splines = self.bsplines_[0].c.shape[0]
         if input_features is None:
-            input_features = ['x%d' % i for i in range(self.n_input_features_)]
+            input_features = ['x%d' % i for i in range(self.n_features_in_)]
         feature_names = []
-        for i in range(self.n_input_features_):
+        for i in range(self.n_features_in_):
             for j in range(n_splines - 1 + self.include_bias):
                 feature_names.append(f"{input_features[i]}_sp_{j}")
         return feature_names
@@ -1996,7 +1996,14 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         self : object
             Fitted transformer.
         """
-        X = self._validate_data(X, accept_sparse=False, ensure_min_samples=2)
+        X = self._validate_data(
+            X,
+            reset=True,
+            accept_sparse=False,
+            ensure_min_samples=2,
+            ensure_2d=True,
+
+        )
         n_samples, n_features = X.shape
 
         if not (isinstance(self.degree, numbers.Integral)
@@ -2058,7 +2065,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
         # With a diagonal coefficient matrix, we get back the spline basis
         # elements, i.e. the design matrix of the spline.
-        # Note, BSpline appreciate C-contiguous arrays.
+        # Note, BSpline appreciates C-contiguous arrays.
         coef = np.eye(n_knots + self.degree - 1, dtype=np.float64)
         extrapolate = self.extrapolation == "continue"
         bsplines = [BSpline(knots[:, i], coef, self.degree,
@@ -2066,8 +2073,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     for i in range(n_features)]
         self.bsplines_ = np.array(bsplines)
 
-        self.n_input_features_ = n_features
-        self.n_output_features_ = n_out - n_features * self.include_bias
+        self.n_features_out_ = n_out - n_features * self.include_bias
         return self
 
     def transform(self, X):
@@ -2086,17 +2092,16 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = self._validate_data(X, accept_sparse=False)
+        X = self._validate_data(
+            X, reset=False, accept_sparse=False, ensure_2d=True
+        )
 
         n_samples, n_features = X.shape
         n_splines = self.bsplines_[0].c.shape[0]
         degree = self.degree
 
-        if n_features != self.n_input_features_:
-            raise ValueError("X shape does not match training shape")
-
         # Note that scipy splines return float64.
-        n_out = self.n_output_features_ + n_features * self.include_bias
+        n_out = self.n_features_out_ + n_features * self.include_bias
         XBS = np.zeros((n_samples, n_out), dtype=np.float64,
                        order=self.order)
 
