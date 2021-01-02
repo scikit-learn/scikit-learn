@@ -272,7 +272,6 @@ N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE = {
     'ensemble',
     'feature_extraction',
     'feature_selection',
-    'gaussian_process',
     'isotonic',
     'linear_model',
     'manifold',
