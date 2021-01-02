@@ -17,8 +17,10 @@ from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
 from sklearn.utils.multiclass import (check_classification_targets,
                                       type_of_target)
-from sklearn.utils import check_array
-from sklearn.utils import shuffle
+from sklearn.utils import (
+    check_array,
+    shuffle,
+)
 
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
@@ -439,7 +441,7 @@ def test_ovr_pipeline():
     assert_array_equal(ovr.predict(iris.data), ovr_pipe.predict(iris.data))
 
 
-# TODO: Remove this test in version 0.26
+# TODO: Remove this test in version 1.1
 # when the coef_ attribute is removed
 @ignore_warnings(category=FutureWarning)
 def test_ovr_coef_():
@@ -459,7 +461,7 @@ def test_ovr_coef_():
                          sp.issparse(ovr.coef_))
 
 
-# TODO: Remove this test in version 0.26
+# TODO: Remove this test in version 1.1
 # when the coef_ attribute is removed
 @ignore_warnings(category=FutureWarning)
 def test_ovr_coef_exceptions():
@@ -474,16 +476,16 @@ def test_ovr_coef_exceptions():
     assert_raises(AttributeError, lambda x: ovr.coef_, None)
 
 
-# TODO: Remove this test in version 0.26 when
+# TODO: Remove this test in version 1.1 when
 # the coef_ and intercept_ attributes are removed
 def test_ovr_deprecated_coef_intercept():
     ovr = OneVsRestClassifier(SVC(kernel="linear"))
     ovr = ovr.fit(iris.data, iris.target)
 
-    msg = ("Attribute {0} was deprecated in version 0.24 "
-           "and will be removed in 0.26. If you observe "
-           "this warning while using RFE or SelectFromModel, "
-           "use the importance_getter parameter instead.")
+    msg = (r"Attribute {0} was deprecated in version 0.24 "
+           r"and will be removed in 1.1 \(renaming of 0.26\). If you observe "
+           r"this warning while using RFE or SelectFromModel, "
+           r"use the importance_getter parameter instead.")
 
     for att in ["coef_", "intercept_"]:
         with pytest.warns(FutureWarning, match=msg.format(att)):
@@ -794,13 +796,13 @@ def test_pairwise_tag(MultiClassClassifier):
     clf_notprecomputed = svm.SVC()
 
     ovr_false = MultiClassClassifier(clf_notprecomputed)
-    assert not ovr_false._get_tags()['pairwise']
+    assert not ovr_false._get_tags()["pairwise"]
 
     ovr_true = MultiClassClassifier(clf_precomputed)
-    assert ovr_true._get_tags()['pairwise']
+    assert ovr_true._get_tags()["pairwise"]
 
 
-# TODO: Remove in 0.26
+# TODO: Remove in 1.1
 @pytest.mark.parametrize("MultiClassClassifier", [OneVsRestClassifier,
                                                   OneVsOneClassifier])
 def test_pairwise_deprecated(MultiClassClassifier):

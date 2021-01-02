@@ -41,8 +41,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         Invoking the ``fit`` method will fit a clone of the passed estimator,
         which will be stored in the ``base_estimator_`` attribute.
 
-    criterion : {'threshold', 'k_best'}, optional \
-    (default='threshold')
+    criterion : {'threshold', 'k_best'}, default='threshold'
         The selection criterion used to select which labels to add to the
         training set. If 'threshold', pseudo-labels with prediction
         probabilities above `threshold` are added to the dataset. If 'k_best',
@@ -50,22 +49,22 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         added to the dataset. When using the 'threshold' criterion, a
         :ref:`well calibrated classifier <calibration>` should be used.
 
-    threshold : float, optional (default=0.75)
+    threshold : float, default=0.75
         The decision threshold for use with `criterion='threshold'`.
         Should be in [0, 1). When using the 'threshold' criterion, a
         :ref:`well calibrated classifier <calibration>` should be used.
 
-    k_best : int, optional (default=10)
+    k_best : int, default=10
         The amount of samples to add in each iteration. Only used when
         `criterion` is k_best'.
 
-    max_iter : int or ``None``, optional (default=10)
+    max_iter : int or None, default=10
         Maximum number of iterations allowed. Should be greater than or equal
         to 0. If it is ``None``, the classifier will continue to predict labels
         until no new pseudo-labels are added, or all unlabeled samples have
         been labeled.
 
-    verbose: bool, (default=False)
+    verbose: bool, default=False
         Enable verbose output.
 
     Attributes
@@ -73,15 +72,15 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
     base_estimator_ : estimator object
         The fitted estimator.
 
-    classes_ : array or list of array of shape (n_classes,)
+    classes_ : ndarray or list of ndarray of shape (n_classes,)
         Class labels for each output. (Taken from the trained
-        ``base_estimator_``)
+        ``base_estimator_``).
 
-    transduction_ : array, shape=(n_samples,)
+    transduction_ : ndarray of shape (n_samples,)
         The labels used for the final fit of the classifier, including
         pseudo-labels added during fit.
 
-    labeled_iter_ : array, shape=(n_samples,)
+    labeled_iter_ : ndarray of shape (n_samples,)
         The iteration in which each sample was labeled. When a sample has
         iteration 0, the sample was already labeled in the original dataset.
         When a sample has iteration -1, the sample was not labeled in any
@@ -144,17 +143,17 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
-            array representing the data
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Array representing the data.
 
-        y : array-like, shape = (n_samples,)
-            array representing the labels. Unlabeled samples should have the
+        y : {array-like, sparse matrix} of shape (n_samples,)
+            Array representing the labels. Unlabeled samples should have the
             label -1.
 
         Returns
         -------
         self : object
-            returns an instance of self.
+            Returns an instance of self.
         """
         # we need row slicing support for sparce matrices
         X, y = self._validate_data(X, y, accept_sparse=[
@@ -263,13 +262,13 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape=(n_samples, n_features)
-            array representing the data
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Array representing the data.
 
         Returns
         -------
-        y : array-like, shape=(n_samples,)
-            array with predicted labels
+        y : ndarray of shape (n_samples,)
+            Array with predicted labels.
         """
         check_is_fitted(self)
         return self.base_estimator_.predict(X)
@@ -279,30 +278,30 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape=(n_samples, n_features)
-            array representing the data
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Array representing the data.
 
         Returns
         -------
-        y : array-like, shape=(n_samples, n_features)
-            array with prediction probabilities
+        y : ndarray of shape (n_samples, n_features)
+            Array with prediction probabilities.
         """
         check_is_fitted(self)
         return self.base_estimator_.predict_proba(X)
 
     @if_delegate_has_method(delegate='base_estimator')
     def decision_function(self, X):
-        """Calls decision function of the base_estimator.
+        """Calls decision function of the `base_estimator`.
 
         Parameters
         ----------
-        X : array-like, shape=(n_samples, n_features)
-            array representing the data
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Array representing the data.
 
         Returns
         -------
-        y : array-like, shape=(n_samples, n_features)
-            result of the decision function of the base_estimator
+        y : ndarray of shape (n_samples, n_features)
+            Result of the decision function of the `base_estimator`.
         """
         check_is_fitted(self)
         return self.base_estimator_.decision_function(X)
@@ -313,33 +312,33 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape=(n_samples, n_features)
-            array representing the data
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Array representing the data.
 
         Returns
         -------
-        y : array-like, shape=(n_samples, n_features)
-            array with log prediction probabilities
+        y : ndarray of shape (n_samples, n_features)
+            Array with log prediction probabilities.
         """
         check_is_fitted(self)
         return self.base_estimator_.predict_log_proba(X)
 
     @if_delegate_has_method(delegate='base_estimator')
     def score(self, X, y):
-        """Calls score on the base_estimator.
+        """Calls score on the `base_estimator`.
 
         Parameters
         ----------
-        X : array-like, shape=(n_samples, n_features)
-            array representing the data
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Array representing the data.
 
-        y : array-like, shape=(n_samples,)
-            array representing the labels
+        y : array-like of shape (n_samples,)
+            Array representing the labels.
 
         Returns
         -------
         score : float
-            result of calling score on the base_estimator
+            Result of calling score on the `base_estimator`.
         """
         check_is_fitted(self)
         return self.base_estimator_.score(X, y)
