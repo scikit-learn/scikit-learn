@@ -272,9 +272,7 @@ N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE = {
     'ensemble',
     'feature_extraction',
     'feature_selection',
-    'gaussian_process',
     'isotonic',
-    'linear_model',
     'manifold',
     'mixture',
     'model_selection',
@@ -285,7 +283,6 @@ N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE = {
     'pipeline',
     'random_projection',
     'semi_supervised',
-    'svm',
 }
 
 N_FEATURES_IN_AFTER_FIT_ESTIMATORS = [
