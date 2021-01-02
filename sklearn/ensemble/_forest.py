@@ -405,6 +405,25 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         return self
 
+
+    def proximity_matrix(self, X, normalize=True):
+        """Return the proximity matrix."""
+        terminals = self.apply(X)
+        n_trees = terminals.shape[1]
+
+        a = terminals[:, 0]
+        proximity_matrix = np.equal.outer(a, a)
+
+        for i in range(1, n_trees):
+            a = terminals[:, i]
+            proximity_matrix += np.equal.outer(a, a)
+
+        if normalize:
+            proximity_matrix = proximity_matrix / n_trees
+
+        return proximity_matrix
+
+
     @abstractmethod
     def _set_oob_score(self, X, y):
         """
