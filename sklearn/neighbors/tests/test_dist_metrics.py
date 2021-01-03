@@ -1,6 +1,7 @@
 import itertools
 import pickle
 
+from copy import deepcopy
 import numpy as np
 from numpy.testing import assert_array_almost_equal
 
@@ -51,15 +52,18 @@ METRICS_DEFAULT_PARAMS = {'euclidean': {},
 
 @pytest.mark.parametrize('metric', METRICS_DEFAULT_PARAMS)
 def test_cdist(metric):
-    if sp_version >= parse_version('1.6.0') and metric == 'wminkowski':
-        pytest.skip("wminkowski is deprecated in 1.6.0 and will be removed in "
-                    "1.8.0. minkowski is already part of the parametrization")
-
     argdict = METRICS_DEFAULT_PARAMS[metric]
     keys = argdict.keys()
     for vals in itertools.product(*argdict.values()):
         kwargs = dict(zip(keys, vals))
-        D_true = cdist(X1, X2, metric, **kwargs)
+        if sp_version >= parse_version("1.6.0") and metric == "wminkowski":
+            # wminkowski is deprecated in 1.6.0 and will be removed in 1.8.0
+            new_kwargs = deepcopy(kwargs)
+            new_kwargs['w'] = kwargs['w'] ** kwargs['p']
+            D_true = cdist(X1, X2, "minkowski", **new_kwargs)
+        else:
+            D_true = cdist(X1, X2, metric, **kwargs)
+
         check_cdist(metric, kwargs, D_true)
 
 
@@ -83,15 +87,18 @@ def check_cdist_bool(metric, D_true):
 
 @pytest.mark.parametrize('metric', METRICS_DEFAULT_PARAMS)
 def test_pdist(metric):
-    if sp_version >= parse_version('1.6.0') and metric == 'wminkowski':
-        pytest.skip("wminkowski is deprecated in 1.6.0 and will be removed in "
-                    "1.8.0. minkowski is already part of the parametrization")
-
     argdict = METRICS_DEFAULT_PARAMS[metric]
     keys = argdict.keys()
     for vals in itertools.product(*argdict.values()):
         kwargs = dict(zip(keys, vals))
-        D_true = cdist(X1, X1, metric, **kwargs)
+        if sp_version >= parse_version("1.6.0") and metric == "wminkowski":
+            # wminkowski is deprecated in 1.6.0 and will be removed in 1.8.0
+            new_kwargs = kwargs.copy()
+            new_kwargs['w'] = kwargs['w'] ** kwargs['p']
+            D_true = cdist(X1, X2, "minkowski", **new_kwargs)
+        else:
+            D_true = cdist(X1, X2, metric, **kwargs)
+
         check_pdist(metric, kwargs, D_true)
 
 

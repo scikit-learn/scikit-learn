@@ -26,7 +26,6 @@ from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.validation import check_random_state
-from sklearn.utils.fixes import sp_version, parse_version
 
 import joblib
 
@@ -1245,10 +1244,6 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
     test = rng.rand(n_query_pts, n_features)
 
     for metric, metric_params in metrics:
-        if sp_version >= parse_version("1.6.0") and metric == 'wminkowski':
-            # wminkowski is deprecated in 1.6.0 and will be removed in 1.8.0"
-            # minkowski is already tested
-            continue
         results = {}
         p = metric_params.pop('p', 2)
         for algorithm in algorithms:
