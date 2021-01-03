@@ -93,11 +93,11 @@ def test_pdist(metric):
         kwargs = dict(zip(keys, vals))
         if sp_version >= parse_version("1.6.0") and metric == "wminkowski":
             # wminkowski is deprecated in 1.6.0 and will be removed in 1.8.0
-            new_kwargs = kwargs.copy()
-            new_kwargs['w'] = kwargs['w'] ** kwargs['p']
-            D_true = cdist(X1, X2, "minkowski", **new_kwargs)
+            new_kwargs = deepcopy(kwargs)
+            new_kwargs['w'] = new_kwargs['w'] ** new_kwargs['p']
+            D_true = cdist(X1, X1, "minkowski", **new_kwargs)
         else:
-            D_true = cdist(X1, X2, metric, **kwargs)
+            D_true = cdist(X1, X1, metric, **kwargs)
 
         check_pdist(metric, kwargs, D_true)
 
