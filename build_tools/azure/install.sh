@@ -96,7 +96,11 @@ elif [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
     python -m pip install -U pip
     echo "Installing numpy and scipy master wheels"
     dev_anaconda_url=https://pypi.anaconda.org/scipy-wheels-nightly/simple
-    pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url numpy scipy pandas
+    pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url numpy pandas
+
+    # issue with metadata in scipy dev builds https://github.com/scipy/scipy/issues/13196
+    # --use-deprecated=legacy-resolver needs to be included
+    pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url scipy --use-deprecated=legacy-resolver
     pip install --pre cython
     setup_ccache
     echo "Installing joblib master"
