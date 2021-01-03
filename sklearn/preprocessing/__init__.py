@@ -7,23 +7,23 @@ from ._function_transformer import FunctionTransformer
 
 from ._data import Binarizer
 from ._data import KernelCenterer
-from ._data import MaxAbsScaler
 from ._data import MinMaxScaler
+from ._data import MaxAbsScaler
 from ._data import Normalizer
-from ._data import PolynomialFeatures
-from ._data import PowerTransformer
-from ._data import QuantileTransformer
 from ._data import RobustScaler
 from ._data import StandardScaler
+from ._data import QuantileTransformer
 from ._data import add_dummy_feature
 from ._data import binarize
+from ._data import normalize
+from ._data import scale
+from ._data import robust_scale
 from ._data import maxabs_scale
 from ._data import minmax_scale
-from ._data import normalize
-from ._data import power_transform
 from ._data import quantile_transform
-from ._data import robust_scale
-from ._data import scale
+from ._data import power_transform
+from ._data import PowerTransformer
+from ._data import PolynomialFeatures
 
 from ._encoders import OneHotEncoder
 from ._encoders import OrdinalEncoder
@@ -44,24 +44,24 @@ __all__ = [
     'LabelBinarizer',
     'LabelEncoder',
     'MultiLabelBinarizer',
-    'MaxAbsScaler',
     'MinMaxScaler',
+    'MaxAbsScaler',
+    'QuantileTransformer',
     'Normalizer',
     'OneHotEncoder',
     'OrdinalEncoder',
-    'PolynomialFeatures',
     'PowerTransformer',
-    'QuantileTransformer',
     'RobustScaler',
     'StandardScaler',
     'add_dummy_feature',
+    'PolynomialFeatures',
     'binarize',
-    'label_binarize',
+    'normalize',
+    'scale',
+    'robust_scale',
     'maxabs_scale',
     'minmax_scale',
-    'normalize',
-    'power_transform',
+    'label_binarize',
     'quantile_transform',
-    'robust_scale',
-    'scale',
+    'power_transform',
 ]

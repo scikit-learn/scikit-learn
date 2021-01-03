@@ -21,10 +21,10 @@ __all__ = [
 
 
 class _BaseEncoder(TransformerMixin, BaseEstimator):
-    """Base class for encoders.
-
+    """
     Base class for encoders that includes the code to categorize and
     transform the input features.
+
     """
 
     def _check_X(self, X, force_all_finite=True):
@@ -160,7 +160,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
 
 class OneHotEncoder(_BaseEncoder):
-    """Encode categorical features as a one-hot numeric array.
+    """
+    Encode categorical features as a one-hot numeric array.
 
     The input to this transformer should be an array-like of integers or
     strings, denoting the values taken on by categorical (discrete) features.
@@ -396,7 +397,8 @@ class OneHotEncoder(_BaseEncoder):
             return np.array(drop_indices, dtype=object)
 
     def fit(self, X, y=None):
-        """Fit OneHotEncoder to X.
+        """
+        Fit OneHotEncoder to X.
 
         Parameters
         ----------
@@ -418,7 +420,8 @@ class OneHotEncoder(_BaseEncoder):
         return self
 
     def fit_transform(self, X, y=None):
-        """Fit OneHotEncoder to X, then transform X.
+        """
+        Fit OneHotEncoder to X, then transform X.
 
         Equivalent to fit(X).transform(X) but more convenient.
 
@@ -440,7 +443,8 @@ class OneHotEncoder(_BaseEncoder):
         return super().fit_transform(X, y)
 
     def transform(self, X):
-        """Transform X using one-hot encoding.
+        """
+        Transform X using one-hot encoding.
 
         Parameters
         ----------
@@ -501,7 +505,8 @@ class OneHotEncoder(_BaseEncoder):
             return out
 
     def inverse_transform(self, X):
-        """Convert the data back to the original representation.
+        """
+        Convert the data back to the original representation.
 
         In case unknown categories are encountered (all zeros in the
         one-hot encoding), ``None`` is used to represent this category.
@@ -595,7 +600,8 @@ class OneHotEncoder(_BaseEncoder):
         return X_tr
 
     def get_feature_names(self, input_features=None):
-        """Return feature names for output features.
+        """
+        Return feature names for output features.
 
         Parameters
         ----------
@@ -630,7 +636,8 @@ class OneHotEncoder(_BaseEncoder):
 
 
 class OrdinalEncoder(_BaseEncoder):
-    """Encode categorical features as an integer array.
+    """
+    Encode categorical features as an integer array.
 
     The input to this transformer should be an array-like of integers or
     strings, denoting the values taken on by categorical (discrete) features.
@@ -717,7 +724,8 @@ class OrdinalEncoder(_BaseEncoder):
         self.unknown_value = unknown_value
 
     def fit(self, X, y=None):
-        """Fit the OrdinalEncoder to X.
+        """
+        Fit the OrdinalEncoder to X.
 
         Parameters
         ----------
@@ -763,7 +771,8 @@ class OrdinalEncoder(_BaseEncoder):
         return self
 
     def transform(self, X):
-        """Transform X to ordinal codes.
+        """
+        Transform X to ordinal codes.
 
         Parameters
         ----------
@@ -784,7 +793,8 @@ class OrdinalEncoder(_BaseEncoder):
         return X_trans
 
     def inverse_transform(self, X):
-        """Convert the data back to the original representation.
+        """
+        Convert the data back to the original representation.
 
         Parameters
         ----------

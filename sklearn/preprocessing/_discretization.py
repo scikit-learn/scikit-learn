@@ -13,12 +13,14 @@ import warnings
 from . import OneHotEncoder
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils.validation import (check_array, check_is_fitted,
-                                _deprecate_positional_args)
+from ..utils.validation import check_array
+from ..utils.validation import check_is_fitted
+from ..utils.validation import _deprecate_positional_args
 
 
 class KBinsDiscretizer(TransformerMixin, BaseEstimator):
-    """Bin continuous data into intervals.
+    """
+    Bin continuous data into intervals.
 
     Read more in the :ref:`User Guide <preprocessing_discretization>`.
 
@@ -120,6 +122,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
            [-0.5,  2.5, -2.5, -0.5],
            [ 0.5,  3.5, -1.5,  0.5],
            [ 0.5,  3.5, -1.5,  1.5]])
+
     """
 
     @_deprecate_positional_args
@@ -131,7 +134,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         self.dtype = dtype
 
     def fit(self, X, y=None):
-        """Fit the estimator.
+        """
+        Fit the estimator.
 
         Parameters
         ----------
@@ -267,7 +271,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         return n_bins
 
     def transform(self, X):
-        """Discretize the data.
+        """
+        Discretize the data.
 
         Parameters
         ----------
@@ -313,7 +318,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         return Xt_enc
 
     def inverse_transform(self, Xt):
-        """Transform discretized data back to original feature space.
+        """
+        Transform discretized data back to original feature space.
 
         Note that this function does not regenerate the original data
         due to discretization rounding.
