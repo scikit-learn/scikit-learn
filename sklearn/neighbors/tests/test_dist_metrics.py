@@ -51,6 +51,10 @@ METRICS_DEFAULT_PARAMS = {'euclidean': {},
 
 @pytest.mark.parametrize('metric', METRICS_DEFAULT_PARAMS)
 def test_cdist(metric):
+    if sp_version >= parse_version('1.6.0') and metric == 'wminkowski':
+        pytest.skip("wminkowski is deprecated in 1.6.0 and will be removed in "
+                    "1.8.0")
+
     argdict = METRICS_DEFAULT_PARAMS[metric]
     keys = argdict.keys()
     for vals in itertools.product(*argdict.values()):
@@ -79,6 +83,10 @@ def check_cdist_bool(metric, D_true):
 
 @pytest.mark.parametrize('metric', METRICS_DEFAULT_PARAMS)
 def test_pdist(metric):
+    if sp_version >= parse_version('1.6.0') and metric == 'wminkowski':
+        pytest.skip("wminkowski is deprecated in 1.6.0 and will be removed in "
+                    "1.8.0")
+
     argdict = METRICS_DEFAULT_PARAMS[metric]
     keys = argdict.keys()
     for vals in itertools.product(*argdict.values()):
