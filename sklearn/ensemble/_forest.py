@@ -412,11 +412,11 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         n_trees = terminals.shape[1]
 
         a = terminals[:, 0]
-        proximity_matrix = np.equal.outer(a, a)
+        proximity_matrix = 1 * np.equal.outer(a, a)
 
         for i in range(1, n_trees):
             a = terminals[:, i]
-            proximity_matrix += np.equal.outer(a, a)
+            proximity_matrix += 1 * np.equal.outer(a, a)
 
         if normalize:
             proximity_matrix = proximity_matrix / n_trees
