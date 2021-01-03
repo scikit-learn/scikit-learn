@@ -1247,6 +1247,7 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
     for metric, metric_params in metrics:
         if sp_version >= parse_version("1.6.0") and metric == 'wminkowski':
             # wminkowski is deprecated in 1.6.0 and will be removed in 1.8.0"
+            # minkowski is already tested
             continue
         results = {}
         p = metric_params.pop('p', 2)
