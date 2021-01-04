@@ -49,6 +49,9 @@ METRICS_DEFAULT_PARAMS = {'euclidean': {},
                           'braycurtis': {}}
 
 
+@pytest.mark.filterwarnings(
+    "ignore:'wminkowski' metric is deprecated and will be removed"
+)
 @pytest.mark.parametrize('metric', METRICS_DEFAULT_PARAMS)
 def test_cdist(metric):
     argdict = METRICS_DEFAULT_PARAMS[metric]
@@ -77,6 +80,9 @@ def check_cdist_bool(metric, D_true):
     assert_array_almost_equal(D12, D_true)
 
 
+@pytest.mark.filterwarnings(
+    "ignore:'wminkowski' metric is deprecated and will be removed"
+)
 @pytest.mark.parametrize('metric', METRICS_DEFAULT_PARAMS)
 def test_pdist(metric):
     argdict = METRICS_DEFAULT_PARAMS[metric]

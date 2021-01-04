@@ -1220,6 +1220,9 @@ def test_neighbors_badargs():
     assert_raises(ValueError, nbrs.radius_neighbors_graph, X, mode='blah')
 
 
+@pytest.mark.filterwarnings(
+    "ignore:'wminkowski' metric is deprecated and will be removed"
+)
 def test_neighbors_metrics(n_samples=20, n_features=3,
                            n_query_pts=2, n_neighbors=5):
     # Test computing the neighbors for various metrics
