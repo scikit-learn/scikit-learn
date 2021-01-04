@@ -212,7 +212,7 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
 
 @_deprecate_positional_args
 def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
-                     normalize=None):
+                     normalize=None, pprint=False):
     """Compute confusion matrix to evaluate the accuracy of a classification.
 
     By definition a confusion matrix :math:`C` is such that :math:`C_{i, j}`
@@ -309,6 +309,7 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
         elif np.all([l not in y_true for l in labels]):
             raise ValueError("At least one label specified must be in y_true")
 
+
     if sample_weight is None:
         sample_weight = np.ones(y_true.shape[0], dtype=np.int64)
     else:
@@ -343,6 +344,14 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
                     shape=(n_labels, n_labels), dtype=dtype,
                     ).toarray()
 
+    if pprint:
+        labelList = labels.tolist()
+
+        cm_lol = cm.tolist()
+        cm_dict = {"pred_" + str(labelList[j]): {"true_" + str(labelList[i]): cm_lol[i][j] for i in
+                                                 range(0, len(labelList))} for j in range(0, len(cm_lol))}
+
+        return cm_dict
     with np.errstate(all='ignore'):
         if normalize == 'true':
             cm = cm / cm.sum(axis=1, keepdims=True)
