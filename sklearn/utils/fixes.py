@@ -24,11 +24,18 @@ from .._config import config_context, get_config
 
 from .deprecation import deprecated
 
-try:
-    from pkg_resources import parse_version  # type: ignore
-except ImportError:
-    # setuptools not installed
-    parse_version = LooseVersion  # type: ignore
+
+def parse_version(v):
+    if not set(v).issubset("0123456789."):
+        # Avoid importing pkg_resources (which is slow) unless we need to parse
+        # dev version numbers.
+        try:
+            import pkg_resources
+        except ImportError:  # setuptools not installed.
+            pass
+        else:
+            return pkg_resources.parse_version(v)
+    return LooseVersion(v)
 
 
 np_version = parse_version(np.__version__)
