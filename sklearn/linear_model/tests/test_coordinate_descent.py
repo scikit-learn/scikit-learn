@@ -369,7 +369,7 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
 
 
 # FIXME: 'normalize' to be removed in 1.2
-#@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize(
     "estimator, params, is_sparse",
     [(LinearRegression, {}, True),
