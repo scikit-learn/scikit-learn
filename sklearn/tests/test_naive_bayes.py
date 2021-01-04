@@ -448,11 +448,11 @@ def test_discretenb_coef_intercept_shape(cls):
 @pytest.mark.parametrize('DiscreteNaiveBayes', [MultinomialNB, ComplementNB,
                                                 BernoulliNB, CategoricalNB])
 @pytest.mark.parametrize('use_partial_fit', [False, True])
-@pytest.mark.parametrize('drop_sample', [False, True])
+@pytest.mark.parametrize('train_on_single_class_y', [False, True])
 def test_discretenb_degenerate_one_class_case(
         DiscreteNaiveBayes,
         use_partial_fit,
-        drop_sample,
+        train_on_single_class_y,
 ):
     # Most array attributes of a discrete naive Bayes classifier should have a
     # first-axis length equal to the number of classes. Exceptions include:
@@ -465,7 +465,7 @@ def test_discretenb_degenerate_one_class_case(
 
     X = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
     y = [1, 1, 2]
-    if drop_sample:
+    if train_on_single_class_y:
         X = X[:-1]
         y = y[:-1]
     classes = sorted(list(set(y)))
