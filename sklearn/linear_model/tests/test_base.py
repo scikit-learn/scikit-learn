@@ -153,7 +153,7 @@ def test_fit_intercept():
 
 @pytest.mark.parametrize('normalize', [True, False, 'deprecated'])
 @pytest.mark.parametrize('default', [True, False])
-# FIXME update test in 0.26 for new versions
+# FIXME update test in 1.2 for new versions
 def test_deprecate_normalize(normalize, default):
     if not default:
         if normalize == 'deprecated':
@@ -164,7 +164,7 @@ def test_deprecate_normalize(normalize, default):
         else:
             output = normalize
             expected = FutureWarning
-            warning_msg = ['0.26']
+            warning_msg = ['1.2']
             if not normalize:
                 warning_msg.append('default value')
             else:
@@ -174,7 +174,7 @@ def test_deprecate_normalize(normalize, default):
             # warning to pass False and use StandardScaler
             output = default
             expected = FutureWarning
-            warning_msg = ['False', '0.26', 'StandardScaler()']
+            warning_msg = ['False', '1.2', 'StandardScaler()']
         else:
             # no warning
             output = normalize
@@ -223,7 +223,7 @@ def test_linear_regression_sparse(random_state=0):
      (False, 1, FutureWarning),
      ("deprecated", 0, None)]
 )
-# FIXME remove test in 0.26
+# FIXME remove test in 1.6
 def test_assure_warning_when_normalize(normalize, n_warnings, warning):
     # check that we issue a FutureWarning when normalize was set
     rng = check_random_state(0)
@@ -241,7 +241,7 @@ def test_assure_warning_when_normalize(normalize, n_warnings, warning):
         assert "'normalize' was deprecated" in str(record[0].message)
 
 
-# FIXME: 'normalize' to be removed in 0.26
+# FIXME: 'normalize' to be removed in 1.2 in LinearRegression
 @pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize('normalize', [True, False])
 @pytest.mark.parametrize('fit_intercept', [True, False])
