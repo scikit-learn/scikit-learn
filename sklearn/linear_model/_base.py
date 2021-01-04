@@ -83,12 +83,7 @@ def _deprecate_normalize(normalize, default, est_name):
             " removed in 1.2. \nIf you still wish to normalize use"
             " Pipeline with a StandardScaler in a preprocessing stage:"
             "  model = make_pipeline(StandardScaler(),"
-            f" {est_name}()). \nIf you used sample_weight you can"
-            " now  pass it as follows:"
-            " model = make_pipeline(StandardScaler("
-            "sample_weight=your_sample_weight),"
-            f" {est_name}("
-            "sample_weight=your_sample_weight))", FutureWarning
+            f" {est_name}()). \n", FutureWarning
         )
     elif normalize != 'deprecated' and not normalize and not default:
         warnings.warn(
