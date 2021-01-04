@@ -821,7 +821,7 @@ class make_column_selector:
 
         Parameters
         ----------
-        df : pandas DataFrame
+        df : dataframe of shape (n_features, n_samples)
             DataFrame to select columns from.
         """
         if not hasattr(df, 'iloc'):
