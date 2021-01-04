@@ -22,12 +22,10 @@ print(__doc__)
 # split our data into two sets: a set that we will use for all our experiments
 # and a set that we will leave out for further confirmation.
 
-# %%
 from sklearn.datasets import fetch_california_housing
 from sklearn.model_selection import train_test_split
 
 X, y = fetch_california_housing(as_frame=True, return_X_y=True)
-y -= y.mean()
 
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.1, random_state=0)
@@ -50,7 +48,6 @@ X_train, X_test, y_train, y_test = train_test_split(
 # <preprocessing_scaler>` the data such that the regularization strength is
 # applied homogeneously on each coefficient.
 
-# %%
 import numpy as np
 from sklearn.linear_model import RidgeCV
 from sklearn.pipeline import make_pipeline
@@ -74,10 +71,9 @@ model = make_pipeline(StandardScaler(), RidgeCV(alphas=alphas))
 # Cross-validation should be used to make this analysis. First, it allows us to
 # quantify the variance of the model performance. A large variance of the score
 # metric will indicate that we cannot trust the reported performance nor try to
-# interpret findings built on internal model's parameters. Usually large
-# variations are linked to small sample size but not only.
+# interpret findings built on internal model's parameters. One possible cause
+# of large variations are small sample sizes.
 
-# %%
 from sklearn.model_selection import cross_validate
 from sklearn.model_selection import RepeatedKFold
 
@@ -98,7 +94,6 @@ cv_results = cross_validate(
 # As previously mentioned, one should look at the variance of the model
 # performance within the cross-validation framework.
 
-# %%
 import matplotlib.pyplot as plt
 
 cv_score = cv_results["test_score"]
@@ -133,7 +128,6 @@ _ = plt.title("Distribution of the scores on the test sets\n "
 # It allows us to get the different predictive models trained and tested within
 # cross-validation.
 
-# %%
 cv_estimators = cv_results["estimator"]
 
 # %%
@@ -152,7 +146,6 @@ cv_estimators = cv_results["estimator"]
 #
 # Let's check the `alpha` parameter variance.
 
-# %%
 alpha = [est[-1].alpha_ for est in cv_estimators]
 plt.hist(alpha, bins=30, density=True)
 plt.xlabel("Alpha")
@@ -172,7 +165,6 @@ _ = plt.title("Distribution of alpha parameter \nduring cross-validation")
 #
 # For the sake of simplicity, we are going to solely look at the `coef_`.
 
-# %%
 import pandas as pd
 
 coefficients = pd.DataFrame([est[-1].coef_ for est in cv_estimators],
@@ -201,7 +193,6 @@ _ = plt.subplots_adjust(left=0.3)
 # hyperparameter. Subsequently, we can train the model on the full training
 # set.
 
-# %%
 from sklearn.linear_model import Ridge
 
 production_model = make_pipeline(StandardScaler(), Ridge(alpha=40))
@@ -212,7 +203,6 @@ production_model.fit(X_train, y_train)
 # out data. Now, we can use it to further check if the model performs as we
 # would expect from the analysis done within the cross-validation framework.
 
-# %%
 print(f"The performance of our production model: "
       f"R2={production_model.score(X_test, y_test):.2f}")
 
