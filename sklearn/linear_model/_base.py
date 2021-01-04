@@ -53,6 +53,16 @@ SPARSE_INTERCEPT_DECAY = 0.01
 # in cases where now normalize=False. default value of 'normalize' should be
 # changed to False in linear models where now normalize=True
 def _deprecate_normalize(normalize, default, est_name):
+    """
+    Normalize is to be deprecated from linear models and a use of a pipeline
+    with a StandardScaler is to be recommended instead.
+    Here the appropriate message is selected to be displayed to the user
+    depending on the default normalize value (as it varies between the linear
+    models and normalize value selected by the user). Est_name is the name of
+    the linear estimator which calls this function.
+
+    TODO: it should be updated in v1.2 and removed completely in v1.4
+    """
     if normalize == 'deprecated':
         _normalize = default
     else:
