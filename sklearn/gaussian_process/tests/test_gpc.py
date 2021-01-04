@@ -3,6 +3,7 @@
 # Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 # License: BSD 3 clause
 
+import warnings
 import numpy as np
 
 from scipy.optimize import approx_fprime
@@ -201,7 +202,10 @@ def test_warning_bounds():
                   RBF(length_scale_bounds=[1e3, 1e5]))
     gpc_sum = GaussianProcessClassifier(kernel=kernel_sum)
     with pytest.warns(None) as record:
-        gpc_sum.fit(X, y)
+        with warnings.catch_warnings():
+            # scipy 1.3.0 uses tostring which is deprecated in numpy
+            warnings.filterwarnings("ignore", "tostring", DeprecationWarning)
+            gpc_sum.fit(X, y)
 
     assert len(record) == 2
     assert record[0].message.args[0] == ("The optimal value found for "
@@ -224,7 +228,10 @@ def test_warning_bounds():
     gpc_dims = GaussianProcessClassifier(kernel=kernel_dims)
 
     with pytest.warns(None) as record:
-        gpc_dims.fit(X_tile, y)
+        with warnings.catch_warnings():
+            # scipy 1.3.0 uses tostring which is deprecated in numpy
+            warnings.filterwarnings("ignore", "tostring", DeprecationWarning)
+            gpc_dims.fit(X_tile, y)
 
     assert len(record) == 2
     assert record[0].message.args[0] == ("The optimal value found for "

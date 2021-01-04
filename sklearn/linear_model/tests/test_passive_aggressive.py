@@ -267,7 +267,7 @@ def test_regressor_undefined_methods():
     for meth in ("transform",):
         assert_raises(AttributeError, lambda x: getattr(reg, x), meth)
 
-# TODO: remove in 0.25
+# TODO: remove in 1.0
 @pytest.mark.parametrize('klass', [PassiveAggressiveClassifier,
                                    PassiveAggressiveRegressor])
 def test_passive_aggressive_deprecated_attr(klass):
