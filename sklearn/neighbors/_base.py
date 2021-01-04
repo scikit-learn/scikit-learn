@@ -11,7 +11,6 @@ from functools import partial
 import warnings
 from abc import ABCMeta, abstractmethod
 import numbers
-from copy import deepcopy
 
 import numpy as np
 from scipy.sparse import csr_matrix, issparse
@@ -713,7 +712,7 @@ class KNeighborsMixin:
 
                 effective_metric = "minkowski"
                 p = self.effective_metric_params_.get('p', 2)
-                kwds = deepcopy(kwds)
+                kwds = kwds.copy()
                 kwds['w'] = kwds['w'] ** p
 
             chunked_results = list(pairwise_distances_chunked(
