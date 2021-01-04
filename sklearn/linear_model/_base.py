@@ -75,7 +75,12 @@ def _deprecate_normalize(normalize, default, est_name):
             " \nPass normalize=False and use Pipeline with a StandardScaler in"
             " a preprocessing stage:"
             "  model = make_pipeline(StandardScaler(),"
-            f" {est_name}())", FutureWarning
+            f" {est_name}(normalize=False))"
+            "\nIf you wish to use additional parameters in"
+            " the fit() you can include them as follows:"
+            " kwargs = {model.steps[-1][0] + "
+            "'__<your_param_name>': <your_param_value>}\n"
+            "model.fit(X, y, **kwargs)", FutureWarning
         )
     elif normalize != 'deprecated' and normalize and not default:
         warnings.warn(
@@ -83,7 +88,11 @@ def _deprecate_normalize(normalize, default, est_name):
             " removed in 1.2. \nIf you still wish to normalize use"
             " Pipeline with a StandardScaler in a preprocessing stage:"
             "  model = make_pipeline(StandardScaler(),"
-            f" {est_name}()). \n", FutureWarning
+            f" {est_name}()). \nIf you wish to use additional parameters in"
+            " the fit() you can include them as follows:"
+            " kwargs = {model.steps[-1][0] + "
+            "'__<your_param_name>': <your_param_value>}\n"
+            "model.fit(X, y, **kwargs)", FutureWarning
         )
     elif normalize != 'deprecated' and not normalize and not default:
         warnings.warn(
