@@ -1,7 +1,6 @@
 import itertools
 import pickle
 
-from copy import deepcopy
 import numpy as np
 from numpy.testing import assert_array_almost_equal
 
@@ -58,7 +57,7 @@ def test_cdist(metric):
         kwargs = dict(zip(keys, vals))
         if sp_version >= parse_version("1.6.0") and metric == "wminkowski":
             # wminkowski is deprecated in 1.6.0 and will be removed in 1.8.0
-            new_kwargs = deepcopy(kwargs)
+            new_kwargs = kwargs.copy()
             new_kwargs['w'] = kwargs['w'] ** kwargs['p']
             D_true = cdist(X1, X2, "minkowski", **new_kwargs)
         else:
@@ -93,7 +92,7 @@ def test_pdist(metric):
         kwargs = dict(zip(keys, vals))
         if sp_version >= parse_version("1.6.0") and metric == "wminkowski":
             # wminkowski is deprecated in 1.6.0 and will be removed in 1.8.0
-            new_kwargs = deepcopy(kwargs)
+            new_kwargs = kwargs.copy()
             new_kwargs['w'] = new_kwargs['w'] ** new_kwargs['p']
             D_true = cdist(X1, X1, "minkowski", **new_kwargs)
         else:
