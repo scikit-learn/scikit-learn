@@ -223,7 +223,7 @@ def test_linear_regression_sparse(random_state=0):
      (False, 1, FutureWarning),
      ("deprecated", 0, None)]
 )
-# FIXME remove test in 1.6
+# FIXME remove test in 1.4
 def test_assure_warning_when_normalize(normalize, n_warnings, warning):
     # check that we issue a FutureWarning when normalize was set
     rng = check_random_state(0)
@@ -392,7 +392,6 @@ def test_linear_regression_pd_sparse_dataframe_warning():
 
     with pytest.warns(None) as record:
         reg.fit(df.iloc[:, 0:2], df.iloc[:, 3])
-
     assert not record
 
 
