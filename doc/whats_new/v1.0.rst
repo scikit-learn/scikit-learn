@@ -44,6 +44,24 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.cluster`
+......................
+
+- |Efficiency| The "k-means++" initialization of :class:`cluster.KMeans` and
+  :class:`cluster.MiniBatchKMeans` is now faster, especially in multicore
+  settings. :pr:`19002` by :user:`Jon Crall <Erotemic>` and
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Efficiency| :class:`cluster.KMeans` with `algorithm='elkan'` is now faster
+  in multicore settings. :pr:`19052` by
+  :user:`Yusuke Nagasaka <YusukeNagasaka>`.
+
+:mod:`sklearn.linear_model`
+...........................
+
+- |Fix| :meth:`ElasticNet.fit` no longer modifies `sample_weight` in place.
+  :pr:`19055` by `Thomas Fan`_.
+
 :mod:`sklearn.naive_bayes`
 .............................
 
@@ -53,7 +71,6 @@ Changelog
   and :class:`naive_bayes.MultinomialNB`) now correctly handle the degenerate
   case of a single class in the training set. :pr:`18925` by
   :user:`David Poznik <dpoznik>`.
-
 
 Code and Documentation Contributors
 -----------------------------------

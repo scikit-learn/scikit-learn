@@ -653,7 +653,7 @@ class _BaseDiscreteNB(_BaseNB):
 
     # mypy error: Decorated property not supported
     @deprecated("Attribute coef_ was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 0.26.")
+                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def coef_(self):
         return (self.feature_log_prob_[1:]
@@ -661,7 +661,7 @@ class _BaseDiscreteNB(_BaseNB):
 
     # mypy error: Decorated property not supported
     @deprecated("Attribute intercept_ was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 0.26.")
+                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def intercept_(self):
         return (self.class_log_prior_[1:]
@@ -713,7 +713,8 @@ class MultinomialNB(_BaseDiscreteNB):
         as a linear model.
 
         .. deprecated:: 0.24
-            ``coef_`` is deprecated in 0.24 and will be removed in 0.26.
+            ``coef_`` is deprecated in 0.24 and will be removed in 1.1
+            (renaming of 0.26).
 
     feature_count_ : ndarray of shape (n_classes, n_features)
         Number of samples encountered for each (class, feature)
@@ -729,7 +730,8 @@ class MultinomialNB(_BaseDiscreteNB):
         as a linear model.
 
         .. deprecated:: 0.24
-            ``intercept_`` is deprecated in 0.24 and will be removed in 0.26.
+            ``intercept_`` is deprecated in 0.24 and will be removed in 1.1
+            (renaming of 0.26).
 
     n_features_ : int
         Number of features of each sample.
@@ -835,7 +837,8 @@ class ComplementNB(_BaseDiscreteNB):
         as a linear model.
 
         .. deprecated:: 0.24
-            ``coef_`` is deprecated in 0.24 and will be removed in 0.26.
+            ``coef_`` is deprecated in 0.24 and will be removed in 1.1
+            (renaming of 0.26).
 
     feature_all_ : ndarray of shape (n_features,)
         Number of samples encountered for each feature during fitting. This
@@ -853,7 +856,8 @@ class ComplementNB(_BaseDiscreteNB):
         as a linear model.
 
         .. deprecated:: 0.24
-            ``coef_`` is deprecated in 0.24 and will be removed in 0.26.
+            ``coef_`` is deprecated in 0.24 and will be removed in 1.1
+            (renaming of 0.26).
 
     n_features_ : int
         Number of features of each sample.

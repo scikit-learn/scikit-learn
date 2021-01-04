@@ -599,7 +599,7 @@ class _CalibratedClassifier:
 
         .. deprecated:: 0.24
            `calibrators_` is deprecated from 0.24 and will be removed in
-           0.26. Use `calibrators` instead.
+           1.1 (renaming of 0.26). Use `calibrators` instead.
     """
     def __init__(self, base_estimator, calibrators, *, classes,
                  method='sigmoid'):
@@ -608,11 +608,11 @@ class _CalibratedClassifier:
         self.classes = classes
         self.method = method
 
-    # TODO: Remove in 0.26
+    # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "calibrators_ is deprecated in 0.24 and will be removed in 0.26. "
-        "Use calibrators instead."
+        "calibrators_ is deprecated in 0.24 and will be removed in 1.1"
+        "(renaming of 0.26). Use calibrators instead."
     )
     @property
     def calibrators_(self):

@@ -790,7 +790,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
                                                      dtype=X.dtype)
             # simplify things by rescaling sw to sum up to n_samples
             # => np.average(x, weights=sw) = np.mean(sw * x)
-            sample_weight *= (n_samples / np.sum(sample_weight))
+            sample_weight = sample_weight * (n_samples / np.sum(sample_weight))
             # Objective function is:
             # 1/2 * np.average(squared error, weights=sw) + alpha * penalty
             # but coordinate descent minimizes:
