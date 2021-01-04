@@ -90,11 +90,11 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
     >>> v.transform({'foo': 4, 'unseen_feature': 3})
     array([[0., 0., 4.]])
 
-    See also
+    See Also
     --------
-    FeatureHasher : performs vectorization using only a hash function.
-    sklearn.preprocessing.OrdinalEncoder : handles nominal/categorical
-      features encoded as columns of arbitrary data types.
+    FeatureHasher : Performs vectorization using only a hash function.
+    sklearn.preprocessing.OrdinalEncoder : Handles nominal/categorical
+        features encoded as columns of arbitrary data types.
     """
     @_deprecate_positional_args
     def __init__(self, *, dtype=np.float64, separator="=", sparse=True,

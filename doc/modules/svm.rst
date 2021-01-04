@@ -453,7 +453,7 @@ Tips on Practical Use
     set to ``False`` the underlying implementation of :class:`LinearSVC` is
     not random and ``random_state`` has no effect on the results.
 
-  * Using L1 penalization as provided by ``LinearSVC(loss='l2', penalty='l1',
+  * Using L1 penalization as provided by ``LinearSVC(penalty='l1',
     dual=False)`` yields a sparse solution, i.e. only a subset of feature
     weights is different from zero and contribute to the decision function.
     Increasing ``C`` yields a more complex model (more features are selected).

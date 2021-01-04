@@ -23,7 +23,7 @@ from scipy import linalg
 from scipy import optimize
 from scipy import sparse
 from scipy.special import expit
-from joblib import Parallel, delayed
+from joblib import Parallel
 
 from ..base import (BaseEstimator, ClassifierMixin, RegressorMixin,
                     MultiOutputMixin)
@@ -37,6 +37,7 @@ from ..utils.fixes import sparse_lsqr
 from ..utils._seq_dataset import ArrayDataset32, CSRDataset32
 from ..utils._seq_dataset import ArrayDataset64, CSRDataset64
 from ..utils.validation import check_is_fitted, _check_sample_weight
+from ..utils.fixes import delayed
 from ..preprocessing import normalize as f_normalize
 
 # TODO: bayesian_ridge_regression and bayesian_regression_ard
@@ -216,7 +217,8 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
     def _decision_function(self, X):
         check_is_fitted(self)
 
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+        X = self._validate_data(X, accept_sparse=['csr', 'csc', 'coo'],
+                                reset=False)
         return safe_sparse_dot(X, self.coef_.T,
                                dense_output=True) + self.intercept_
 
@@ -280,13 +282,7 @@ class LinearClassifierMixin(ClassifierMixin):
         """
         check_is_fitted(self)
 
-        X = check_array(X, accept_sparse='csr')
-
-        n_features = self.coef_.shape[1]
-        if X.shape[1] != n_features:
-            raise ValueError("X has %d features per sample; expecting %d"
-                             % (X.shape[1], n_features))
-
+        X = self._validate_data(X, accept_sparse='csr', reset=False)
         scores = safe_sparse_dot(X, self.coef_.T,
                                  dense_output=True) + self.intercept_
         return scores.ravel() if scores.shape[1] == 1 else scores
@@ -446,12 +442,12 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
     See Also
     --------
-    sklearn.linear_model.Ridge : Ridge regression addresses some of the
+    Ridge : Ridge regression addresses some of the
         problems of Ordinary Least Squares by imposing a penalty on the
         size of the coefficients with l2 regularization.
-    sklearn.linear_model.Lasso : The Lasso is a linear model that estimates
+    Lasso : The Lasso is a linear model that estimates
         sparse coefficients with l1 regularization.
-    sklearn.linear_model.ElasticNet : Elastic-Net is a linear regression
+    ElasticNet : Elastic-Net is a linear regression
         model trained with both l1 and l2 -norm regularization of the
         coefficients.
 

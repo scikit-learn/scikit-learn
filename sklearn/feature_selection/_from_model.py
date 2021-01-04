@@ -7,6 +7,7 @@ import numbers
 from ._base import SelectorMixin
 from ._base import _get_feature_importances
 from ..base import BaseEstimator, clone, MetaEstimatorMixin
+from ..utils._tags import _safe_tags
 from ..utils.validation import check_is_fitted
 
 from ..exceptions import NotFittedError
@@ -159,7 +160,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
     --------
     RFE : Recursive feature elimination based on importance weights.
     RFECV : Recursive feature elimination with built-in cross-validated
-        selection of the best number of features
+        selection of the best number of features.
     SequentialFeatureSelector : Sequential cross-validation based feature
         selection. Does not rely on importance weights.
     """
@@ -283,5 +284,6 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         return self.estimator_.n_features_in_
 
     def _more_tags(self):
-        estimator_tags = self.estimator._get_tags()
-        return {'allow_nan': estimator_tags.get('allow_nan', True)}
+        return {
+            'allow_nan': _safe_tags(self.estimator, key="allow_nan")
+        }

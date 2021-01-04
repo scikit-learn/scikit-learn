@@ -10,14 +10,17 @@ at which the fixe is no longer needed.
 #
 # License: BSD 3 clause
 
+from functools import update_wrapper
 from distutils.version import LooseVersion
+import functools
 
 import numpy as np
 import scipy.sparse as sp
 import scipy
 import scipy.stats
 from scipy.sparse.linalg import lsqr as sparse_lsqr  # noqa
-from numpy.ma import MaskedArray as _MaskedArray  # TODO: remove in 0.25
+from numpy.ma import MaskedArray as _MaskedArray  # TODO: remove in 1.0
+from .._config import config_context, get_config
 
 from .deprecation import deprecated
 
@@ -135,7 +138,7 @@ class loguniform(scipy.stats.reciprocal):
 
     The logarithmic probability density function (PDF) is uniform. When
     ``x`` is a uniformly distributed random variable between 0 and 1, ``10**x``
-    are random variales that are equally likely to be returned.
+    are random variables that are equally likely to be returned.
 
     This class is an alias to ``scipy.stats.reciprocal``, which uses the
     reciprocal distribution:
@@ -156,16 +159,16 @@ class loguniform(scipy.stats.reciprocal):
 
 @deprecated(
     'MaskedArray is deprecated in version 0.23 and will be removed in version '
-    '0.25. Use numpy.ma.MaskedArray instead.'
+    '1.0 (renaming of 0.25). Use numpy.ma.MaskedArray instead.'
 )
 class MaskedArray(_MaskedArray):
-    pass  # TODO: remove in 0.25
+    pass  # TODO: remove in 1.0
 
 
 def _take_along_axis(arr, indices, axis):
     """Implements a simplified version of np.take_along_axis if numpy
     version < 1.15"""
-    if np_version > parse_version('1.14'):
+    if np_version >= parse_version('1.15'):
         return np.take_along_axis(arr=arr, indices=indices, axis=axis)
     else:
         if axis is None:
@@ -196,3 +199,24 @@ def _take_along_axis(arr, indices, axis):
 
         fancy_index = tuple(fancy_index)
         return arr[fancy_index]
+
+
+# remove when https://github.com/joblib/joblib/issues/1071 is fixed
+def delayed(function):
+    """Decorator used to capture the arguments of a function."""
+    @functools.wraps(function)
+    def delayed_function(*args, **kwargs):
+        return _FuncWrapper(function), args, kwargs
+    return delayed_function
+
+
+class _FuncWrapper:
+    """"Load the global configuration before calling the function."""
+    def __init__(self, function):
+        self.function = function
+        self.config = get_config()
+        update_wrapper(self, self.function)
+
+    def __call__(self, *args, **kwargs):
+        with config_context(**self.config):
+            return self.function(*args, **kwargs)

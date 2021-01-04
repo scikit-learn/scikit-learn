@@ -132,11 +132,10 @@ def load_svmlight_file(f, *, n_features=None, dtype=np.float64,
        query_id for each sample. Only returned when query_id is set to
        True.
 
-    See also
+    See Also
     --------
-    load_svmlight_files: similar function for loading multiple files in this
-                         format, enforcing the same number of features/columns
-                         on all of them.
+    load_svmlight_files : Similar function for loading multiple files in this
+        format, enforcing the same number of features/columns on all of them.
 
     Examples
     --------
@@ -287,7 +286,7 @@ def load_svmlight_files(files, *, n_features=None, dtype=np.float64,
     number of features (X_train.shape[1] == X_test.shape[1]). This may not
     be the case if you load the files individually with load_svmlight_file.
 
-    See also
+    See Also
     --------
     load_svmlight_file
     """

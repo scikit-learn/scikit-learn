@@ -5,22 +5,15 @@ Model persistence
 =================
 
 After training a scikit-learn model, it is desirable to have a way to persist
-the model for future use without having to retrain. The following section gives
-you an example of how to persist a model with pickle. We'll also review a few
-security and maintainability issues when working with pickle serialization.
+the model for future use without having to retrain. The following sections give
+you some hints on how to persist a scikit-learn model.
 
-An alternative to pickling is to export the model to another format using one
-of the model export tools listed under :ref:`related_projects`. Unlike
-pickling, once exported you cannot recover the full Scikit-learn estimator
-object, but you can deploy the model for prediction, usually by using tools
-supporting open model interchange formats such as `ONNX <https://onnx.ai/>`_ or
-`PMML <http://dmg.org/pmml/v4-4/GeneralStructure.html>`_.
-
-Persistence example
--------------------
+Python specific serialization
+-----------------------------
 
 It is possible to save a model in scikit-learn by using Python's built-in
-persistence model, namely `pickle <https://docs.python.org/3/library/pickle.html>`_::
+persistence model, namely `pickle
+<https://docs.python.org/3/library/pickle.html>`_::
 
   >>> from sklearn import svm
   >>> from sklearn import datasets
@@ -55,12 +48,13 @@ with::
 
    ``dump`` and ``load`` functions also accept file-like object
    instead of filenames. More information on data persistence with Joblib is
-   available `here <https://joblib.readthedocs.io/en/latest/persistence.html>`_.
+   available `here
+   <https://joblib.readthedocs.io/en/latest/persistence.html>`_.
 
 .. _persistence_limitations:
 
 Security & maintainability limitations
---------------------------------------
+......................................
 
 pickle (and joblib by extension), has some issues regarding maintainability
 and security. Because of this,
@@ -85,8 +79,44 @@ same range as before.
 
 Since a model internal representation may be different on two different
 architectures, dumping a model on one architecture and loading it on
-another architecture is not supported.
+another architecture is not a supported behaviour, even if it might work
+on some cases.
+To overcome the issue of portability, pickle models are often deployed in
+production using containers, like docker.
 
 If you want to know more about these issues and explore other possible
 serialization methods, please refer to this
-`talk by Alex Gaynor <https://pyvideo.org/video/2566/pickles-are-for-delis-not-software>`_.
+`talk by Alex Gaynor
+<https://pyvideo.org/video/2566/pickles-are-for-delis-not-software>`_.
+
+Interoperable formats
+---------------------
+
+For reproducibility and quality control needs, when different architectures
+and environments should be taken into account, exporting the model in
+`Open Neural Network
+Exchange <https://onnx.ai/>`_ format or `Predictive Model Markup Language
+(PMML) <http://dmg.org/pmml/v4-4-1/GeneralStructure.html>`_ format
+might be a better approach than using `pickle` alone.
+These are helpful where you may want to use your model for prediction in a
+different environment from where the model was trained.
+
+ONNX is a binary serialization of the model. It has been developed to improve
+the usability of the interoperable representation of data models.
+It aims to facilitate the conversion of the data
+models between different machine learning frameworks, and to improve their
+portability on different computing architectures. More details are available
+from the `ONNX tutorial <https://onnx.ai/get-started.html>`_.
+To convert scikit-learn model to ONNX a specific tool `sklearn-onnx
+<http://onnx.ai/sklearn-onnx/>`_ has been developed. 
+
+PMML is an implementation of the `XML
+<https://en.wikipedia.org/wiki/XML>`_ document standard
+defined to represent data models together with the data used to generate them.
+Being human and machine readable,
+PMML is a good option for model validation on different platforms and
+long term archiving. On the other hand, as XML in general, its verbosity does
+not help in production when performance is critical.
+To convert scikit-learn model to PMML you can use for example `sklearn2pmml
+<https://github.com/jpmml/sklearn2pmml>`_ distributed under the Affero GPLv3
+license.
