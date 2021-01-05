@@ -325,7 +325,7 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
 
     n_labels = labels.size
     # If labels are not consecutive integers starting from zero, then
-    # yt, yp must be converted into index form
+    # yt and yp must be converted into index form
     need_index_conversion = not (
         labels.dtype.kind in {'i', 'u', 'b'} and
         np.all(labels == np.arange(n_labels)) and
