@@ -365,6 +365,13 @@ def davies_bouldin_score(X, labels):
     return np.mean(scores)
 
 
+def _non_zero_add(sparse_matrix, value):
+    """Add value to non-zero entries of a sparse matrix"""
+    M = sparse_matrix.copy()
+    M.data += value
+    return M
+
+
 def prediction_strength_score(labels_train, labels_test):
     """Compute the prediction strength score.
 
@@ -409,9 +416,10 @@ def prediction_strength_score(labels_train, labels_test):
     if n_clusters == 1:
         return 1.0  # by definition
 
-    C = contingency_matrix(labels_train, labels_test)
-    pairs_matching = (C * (C - 1) / 2).sum(axis=0)
-    M = C.sum(axis=0)
+    C = contingency_matrix(labels_train, labels_test, sparse=True)
+    Cp = C.multiply(_non_zero_add(C, -1)) / 2
+    pairs_matching = np.asarray(Cp.sum(axis=0)).ravel()
+    M = np.asarray(C.sum(axis=0)).ravel()
     pairs_total = (M * (M - 1) / 2)
     nz = pairs_total.nonzero()[0]
 
