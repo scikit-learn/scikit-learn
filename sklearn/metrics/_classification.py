@@ -309,7 +309,6 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
         elif np.all([l not in y_true for l in labels]):
             raise ValueError("At least one label specified must be in y_true")
 
-
     if sample_weight is None:
         sample_weight = np.ones(y_true.shape[0], dtype=np.int64)
     else:
@@ -346,12 +345,12 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
 
     if pprint:
         labelList = labels.tolist()
-
         cm_lol = cm.tolist()
-        cm_dict = {"pred_" + str(labelList[j]): {"true_" + str(labelList[i]): cm_lol[i][j] for i in
-                                                 range(0, len(labelList))} for j in range(0, len(cm_lol))}
+        cm_dict = {(labelList[j], labelList[i]): cm_lol[j][i] for i in range(0, len(labelList))
+                   for j in range(0, len(cm_lol))}
 
         return cm_dict
+
     with np.errstate(all='ignore'):
         if normalize == 'true':
             cm = cm / cm.sum(axis=1, keepdims=True)
@@ -1990,7 +1989,7 @@ def classification_report(y_true, y_pred, *, labels=None, target_names=None,
         if labels_given:
             warnings.warn(
                 "labels size, {0}, does not match size of target_names, {1}"
-                .format(len(labels), len(target_names))
+                    .format(len(labels), len(target_names))
             )
         else:
             raise ValueError(
@@ -2052,8 +2051,8 @@ def classification_report(y_true, y_pred, *, labels=None, target_names=None,
         else:
             if line_heading == 'accuracy':
                 row_fmt_accuracy = '{:>{width}s} ' + \
-                        ' {:>9.{digits}}' * 2 + ' {:>9.{digits}f}' + \
-                        ' {:>9}\n'
+                                   ' {:>9.{digits}}' * 2 + ' {:>9.{digits}f}' + \
+                                   ' {:>9}\n'
                 report += row_fmt_accuracy.format(line_heading, '', '',
                                                   *avg[2:], width=width,
                                                   digits=digits)
