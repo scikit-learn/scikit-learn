@@ -153,7 +153,7 @@ def test_fit_intercept():
 
 @pytest.mark.parametrize('normalize', [True, False, 'deprecated'])
 @pytest.mark.parametrize('default', [True, False])
-# FIXME update test in 1.2 for new versions
+# FIXME update test in 1.2.0 for new versions
 def test_deprecate_normalize(normalize, default):
     if not default:
         if normalize == 'deprecated':
@@ -164,7 +164,7 @@ def test_deprecate_normalize(normalize, default):
         else:
             output = normalize
             expected = FutureWarning
-            warning_msg = ['1.2']
+            warning_msg = ['1.2.0']
             if not normalize:
                 warning_msg.append('default value')
             else:
@@ -174,31 +174,25 @@ def test_deprecate_normalize(normalize, default):
             # warning to pass False and use StandardScaler
             output = default
             expected = FutureWarning
-            warning_msg = ['False', '1.2', 'StandardScaler()']
+            warning_msg = ['False', '1.2.0', 'StandardScaler()']
         else:
             # no warning
             output = normalize
             expected = None
             warning_msg = []
 
-    if expected == AssertionError:
-        with pytest.raises(AssertionError) as record:
-            _normalize = _deprecate_normalize(normalize, default, 'estimator')
-        assert all(warning in str(record.value) for warning
-                   in warning_msg)
-    else:
-        with pytest.warns(expected) as record:
-            _normalize = _deprecate_normalize(normalize, default, 'estimator')
-        assert _normalize == output
+    with pytest.warns(expected) as record:
+        _normalize = _deprecate_normalize(normalize, default, 'estimator')
+    assert _normalize == output
 
-        if expected is None:
-            n_warnings = 0
-        else:
-            n_warnings = 1
-        assert len(record) == n_warnings
-        if n_warnings:
-            assert all([warning in str(record[0].message) for
-                        warning in warning_msg])
+    if expected is None:
+        n_warnings = 0
+    else:
+        n_warnings = 1
+    assert len(record) == n_warnings
+    if n_warnings:
+        assert all([warning in str(record[0].message) for
+                    warning in warning_msg])
 
 
 def test_linear_regression_sparse(random_state=0):
@@ -223,7 +217,7 @@ def test_linear_regression_sparse(random_state=0):
      (False, 1, FutureWarning),
      ("deprecated", 0, None)]
 )
-# FIXME remove test in 1.4
+# FIXME remove test in 1.4.0
 def test_assure_warning_when_normalize(normalize, n_warnings, warning):
     # check that we issue a FutureWarning when normalize was set
     rng = check_random_state(0)
@@ -241,7 +235,7 @@ def test_assure_warning_when_normalize(normalize, n_warnings, warning):
         assert "'normalize' was deprecated" in str(record[0].message)
 
 
-# FIXME: 'normalize' to be removed in 1.2 in LinearRegression
+# FIXME: 'normalize' to be removed in 1.2.0 in LinearRegression
 @pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize('normalize', [True, False])
 @pytest.mark.parametrize('fit_intercept', [True, False])
