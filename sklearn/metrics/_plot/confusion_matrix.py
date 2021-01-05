@@ -413,8 +413,8 @@ class ConfusionMatrixDisplay:
 
 
 @deprecated(
-    "Function plot_confusion_matrix is deprecated in 0.24 and will be "
-    "removed in 0.26. Use one of the class methods: "
+    "Function plot_confusion_matrix is deprecated in 1.0 and will be "
+    "removed in 1.2. Use one of the class methods: "
     "ConfusionMatrixDisplay.from_predictions or "
     "ConfusionMatrixDisplay.from_estimator."
 )
@@ -429,9 +429,9 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
 
     Read more in the :ref:`User Guide <confusion_matrix>`.
 
-    .. deprecated:: 0.24
-       `plot_confusion_matrix` is deprecated in 0.24 and will be removed in
-       0.26. Use one of the following class methods:
+    .. deprecated:: 1.0
+       `plot_confusion_matrix` is deprecated in 1.0 and will be removed in
+       1.2. Use one of the following class methods:
        :func:`~sklearn.metrics.ConfusionMatrixDisplay.from_predictions` or
        :func:`~sklearn.metrics.ConfusionMatrixDisplay.from_estimator`.
 

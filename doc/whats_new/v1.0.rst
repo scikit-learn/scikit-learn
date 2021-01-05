@@ -62,6 +62,18 @@ Changelog
 - |Fix| :meth:`ElasticNet.fit` no longer modifies `sample_weight` in place.
   :pr:`19055` by `Thomas Fan`_.
 
+
+:mod:`sklearn.metrics`
+......................
+
+- |API| :class:`metrics.ConfusionMatrixDisplay` exposes two class methods
+  :func:`~metrics.ConfusionMatrixDisplay.from_estimator` and
+  :func:`~metrics.ConfusionMatrixDisplay.from_predictions` allowing to create
+  a confusion matrix plot using an estimator or the predictions.
+  :func:`metrics.plot_confusion_matrix` is deprecated in favor of these two
+  class methods and will be removed in 1.2.
+  :pr:`18543` by `Guillaume Lemaitre`_.
+
 Code and Documentation Contributors
 -----------------------------------
 
