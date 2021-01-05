@@ -8,6 +8,8 @@
 import os
 import platform
 import sys
+from os import environ
+from functools import wraps
 
 import pytest
 from _pytest.doctest import DoctestItem
@@ -16,12 +18,56 @@ from sklearn.utils import _IS_32BIT
 from sklearn.externals import _pilutil
 from sklearn._min_dependencies import PYTEST_MIN_VERSION
 from sklearn.utils.fixes import np_version, parse_version
+from sklearn.datasets import fetch_20newsgroups
+from sklearn.datasets import fetch_20newsgroups_vectorized
+from sklearn.datasets import fetch_california_housing
+from sklearn.datasets import fetch_covtype
+from sklearn.datasets import fetch_kddcup99
+from sklearn.datasets import fetch_olivetti_faces
+from sklearn.datasets import fetch_rcv1
 
 
 if parse_version(pytest.__version__) < parse_version(PYTEST_MIN_VERSION):
     raise ImportError('Your version of pytest is too old, you should have '
                       'at least pytest >= {} installed.'
                       .format(PYTEST_MIN_VERSION))
+
+
+dataset_fetchers = {
+    'fetch_20newsgroups_fxt': fetch_20newsgroups,
+    'fetch_20newsgroups_vectorized_fxt': fetch_20newsgroups_vectorized,
+    'fetch_california_housing_fxt': fetch_california_housing,
+    'fetch_covtype_fxt': fetch_covtype,
+    'fetch_kddcup99_fxt': fetch_kddcup99,
+    'fetch_olivetti_faces_fxt': fetch_olivetti_faces,
+    'fetch_rcv1_fxt': fetch_rcv1,
+}
+
+
+# fetching a dataset with this fixture will never download if missing
+def _fetch_fixture(f):
+    """ Fetch dataset (download if missing and requested by environment) """
+    download_if_missing = environ.get('SKLEARN_SKIP_NETWORK_TESTS', '1') == '0'
+
+    @wraps(f)
+    def wrapped(*args, **kwargs):
+        kwargs['download_if_missing'] = download_if_missing
+        try:
+            return f(*args, **kwargs)
+        except IOError:
+            pytest.skip("test requires -m 'not skipnetwork' to run")
+    return pytest.fixture(lambda: wrapped)
+
+
+# Adds fixtures for fetching data
+fetch_20newsgroups_fxt = _fetch_fixture(fetch_20newsgroups)
+fetch_20newsgroups_vectorized_fxt = \
+    _fetch_fixture(fetch_20newsgroups_vectorized)
+fetch_california_housing_fxt = _fetch_fixture(fetch_california_housing)
+fetch_covtype_fxt = _fetch_fixture(fetch_covtype)
+fetch_kddcup99_fxt = _fetch_fixture(fetch_kddcup99)
+fetch_olivetti_faces_fxt = _fetch_fixture(fetch_olivetti_faces)
+fetch_rcv1_fxt = _fetch_fixture(fetch_rcv1)
 
 
 def pytest_addoption(parser):
@@ -50,11 +96,36 @@ def pytest_collection_modifyitems(config, items):
             )
             item.add_marker(marker)
 
+    run_network_tests = environ.get('SKLEARN_SKIP_NETWORK_TESTS', '1') == '0'
+    skip_network = pytest.mark.skip(
+        reason="test requires internet connectivity")
+
+    # download datasets during collection to avoid thread unsafe behavior
+    # when running pytest in parallel with pytest-xdist
+    dataset_features_set = set(dataset_fetchers)
+    datasets_to_download = set()
+
+    for item in items:
+        item_keywords = set(item.keywords)
+        dataset_to_fetch = item_keywords & dataset_features_set
+        if not dataset_to_fetch:
+            continue
+
+        if run_network_tests:
+            datasets_to_download |= dataset_to_fetch
+        else:
+            # network tests are skipped
+            item.add_marker(skip_network)
+
+    # download datasets that are needed to avoid thread unsafe behavior
+    # by pytest-xdist
+    if run_network_tests:
+        for name in datasets_to_download:
+            dataset_fetchers[name]()
+
     # Skip tests which require internet if the flag is provided
     if (config.getoption("--skip-network")
             or int(os.environ.get("SKLEARN_SKIP_NETWORK_TESTS", "0"))):
-        skip_network = pytest.mark.skip(
-            reason="test requires internet connectivity")
         for item in items:
             if "network" in item.keywords:
                 item.add_marker(skip_network)
