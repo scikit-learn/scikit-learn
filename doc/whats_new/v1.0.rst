@@ -62,6 +62,10 @@ Changelog
 - |Fix| :meth:`ElasticNet.fit` no longer modifies `sample_weight` in place.
   :pr:`19055` by `Thomas Fan`_.
 
+- |Fix| Correct docstring for `precompute` parameter in
+  :class:`linear_model.ElasticNet` with regard to sparse matrix handling.
+  :pr:`19106` by `Adam Midvidy <amidvidy>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
