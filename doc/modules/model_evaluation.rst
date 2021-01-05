@@ -86,6 +86,7 @@ Scoring                                Function                                 
 'homogeneity_score'                    :func:`metrics.homogeneity_score`
 'mutual_info_score'                    :func:`metrics.mutual_info_score`
 'normalized_mutual_info_score'         :func:`metrics.normalized_mutual_info_score`
+'rand_score'                           :func:`metrics.rand_score`
 'v_measure_score'                      :func:`metrics.v_measure_score`
 
 **Regression**
@@ -1422,7 +1423,7 @@ uniformly:
 
 .. math::
 
-   \frac{2}{c(c-1)}\sum_{j=1}^{c}\sum_{k > j}^c (\text{AUC}(j | k) +
+   \frac{1}{c(c-1)}\sum_{j=1}^{c}\sum_{k > j}^c (\text{AUC}(j | k) +
    \text{AUC}(k | j))
 
 where :math:`c` is the number of classes and :math:`\text{AUC}(j | k)` is the
@@ -1437,7 +1438,7 @@ prevalence:
 
 .. math::
 
-   \frac{2}{c(c-1)}\sum_{j=1}^{c}\sum_{k > j}^c p(j \cup k)(
+   \frac{1}{c(c-1)}\sum_{j=1}^{c}\sum_{k > j}^c p(j \cup k)(
    \text{AUC}(j | k) + \text{AUC}(k | j))
 
 where :math:`c` is the number of classes. This algorithm is used by setting

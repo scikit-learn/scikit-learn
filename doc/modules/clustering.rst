@@ -197,7 +197,11 @@ initializations of the centroids. One method to help address this issue is the
 k-means++ initialization scheme, which has been implemented in scikit-learn
 (use the ``init='k-means++'`` parameter). This initializes the centroids to be
 (generally) distant from each other, leading to provably better results than
-random initialization, as shown in the reference.
+random initialization, as shown in the reference. 
+
+K-means++ can also be called independently to select seeds for other 
+clustering algorithms, see :func:`sklearn.cluster.kmeans_plusplus` for details
+and example usage.
 
 The algorithm supports sample weights, which can be given by a parameter
 ``sample_weight``. This allows to assign more weight to some samples when
@@ -1043,86 +1047,121 @@ classes according to some similarity metric.
 
 .. currentmodule:: sklearn.metrics
 
+.. _rand_score:
 .. _adjusted_rand_score:
 
-Adjusted Rand index
--------------------
+Rand index
+----------
 
-Given the knowledge of the ground truth class assignments ``labels_true``
-and our clustering algorithm assignments of the same samples
-``labels_pred``, the **adjusted Rand index** is a function that measures
-the **similarity** of the two assignments, ignoring permutations and **with
-chance normalization**::
+Given the knowledge of the ground truth class assignments
+``labels_true`` and our clustering algorithm assignments of the same
+samples ``labels_pred``, the **(adjusted or unadjusted) Rand index**
+is a function that measures the **similarity** of the two assignments,
+ignoring permutations::
 
   >>> from sklearn import metrics
   >>> labels_true = [0, 0, 0, 1, 1, 1]
   >>> labels_pred = [0, 0, 1, 1, 2, 2]
+  >>> metrics.rand_score(labels_true, labels_pred)
+  0.66...
+
+The Rand index does not ensure to obtain a value close to 0.0 for a
+random labelling. The adjusted Rand index **corrects for chance** and
+will give such a baseline.
 
   >>> metrics.adjusted_rand_score(labels_true, labels_pred)
   0.24...
 
-One can permute 0 and 1 in the predicted labels, rename 2 to 3, and get
-the same score::
+As with all clustering metrics, one can permute 0 and 1 in the predicted
+labels, rename 2 to 3, and get the same score::
 
   >>> labels_pred = [1, 1, 0, 0, 3, 3]
+  >>> metrics.rand_score(labels_true, labels_pred)
+  0.66...
   >>> metrics.adjusted_rand_score(labels_true, labels_pred)
   0.24...
 
-Furthermore, :func:`adjusted_rand_score` is **symmetric**: swapping the argument
-does not change the score. It can thus be used as a **consensus
-measure**::
+Furthermore, both :func:`rand_score` :func:`adjusted_rand_score` are
+**symmetric**: swapping the argument does not change the scores. They can
+thus be used as **consensus measures**::
 
+  >>> metrics.rand_score(labels_pred, labels_true)
+  0.66...
   >>> metrics.adjusted_rand_score(labels_pred, labels_true)
   0.24...
 
 Perfect labeling is scored 1.0::
 
   >>> labels_pred = labels_true[:]
+  >>> metrics.rand_score(labels_true, labels_pred)
+  1.0
   >>> metrics.adjusted_rand_score(labels_true, labels_pred)
   1.0
 
-Bad (e.g. independent labelings) have negative or close to 0.0 scores::
+Poorly agreeing labels (e.g. independent labelings) have lower scores,
+and for the adjusted Rand index the score will be negative or close to
+zero. However, for the unadjusted Rand index the score, while lower,
+will not necessarily be close to zero.::
 
-  >>> labels_true = [0, 1, 2, 0, 3, 4, 5, 1]
-  >>> labels_pred = [1, 1, 0, 0, 2, 2, 2, 2]
+  >>> labels_true = [0, 0, 0, 0, 0, 0, 1, 1]
+  >>> labels_pred = [0, 1, 2, 3, 4, 5, 5, 6]
+  >>> metrics.rand_score(labels_true, labels_pred)
+  0.39...
   >>> metrics.adjusted_rand_score(labels_true, labels_pred)
-  -0.12...
+  -0.07...
 
 
 Advantages
 ~~~~~~~~~~
 
-- **Random (uniform) label assignments have a ARI score close to 0.0**
-  for any value of ``n_clusters`` and ``n_samples`` (which is not the
-  case for raw Rand index or the V-measure for instance).
+- **Interpretability**: The unadjusted Rand index is proportional
+  to the number of sample pairs whose labels are the same in both
+  `labels_pred` and `labels_true`, or are different in both.
 
-- **Bounded range [-1, 1]**: negative values are bad (independent
-  labelings), similar clusterings have a positive ARI, 1.0 is the perfect
-  match score.
+- **Random (uniform) label assignments have an adjusted Rand index
+  score close to 0.0** for any value of ``n_clusters`` and
+  ``n_samples`` (which is not the case for the unadjusted Rand index
+  or the V-measure for instance).
 
-- **No assumption is made on the cluster structure**: can be used
-  to compare clustering algorithms such as k-means which assumes isotropic
-  blob shapes with results of spectral clustering algorithms which can
-  find cluster with "folded" shapes.
+- **Bounded range**: Lower values indicate different labelings,
+  similar clusterings have a high (adjusted or unadjusted) Rand index,
+  1.0 is the perfect match score. The score range is [0, 1] for the
+  unadjusted Rand index and [-1, 1] for the adjusted Rand index.
+
+- **No assumption is made on the cluster structure**: The (adjusted or
+  unadjusted) Rand index can be used to compare all kinds of
+  clustering algorithms, and can be used to compare clustering
+  algorithms such as k-means which assumes isotropic blob shapes with
+  results of spectral clustering algorithms which can find cluster
+  with "folded" shapes.
 
 
 Drawbacks
 ~~~~~~~~~
 
-- Contrary to inertia, **ARI requires knowledge of the ground truth
-  classes** while is almost never available in practice or requires manual
-  assignment by human annotators (as in the supervised learning setting).
+- Contrary to inertia, the **(adjusted or unadjusted) Rand index
+  requires knowledge of the ground truth classes** which is almost
+  never available in practice or requires manual assignment by human
+  annotators (as in the supervised learning setting).
 
-  However ARI can also be useful in a purely unsupervised setting as a
-  building block for a Consensus Index that can be used for clustering
-  model selection (TODO).
+  However (adjusted or unadjusted) Rand index can also be useful in a
+  purely unsupervised setting as a building block for a Consensus
+  Index that can be used for clustering model selection (TODO).
 
+- The **unadjusted Rand index is often close to 1.0** even if the
+  clusterings themselves differ significantly. This can be understood
+  when interpreting the Rand index as the accuracy of element pair
+  labeling resulting from the clusterings: In practice there often is
+  a majority of element pairs that are assigned the ``different`` pair
+  label under both the predicted and the ground truth clustering
+  resulting in a high proportion of pair labels that agree, which
+  leads subsequently to a high score.
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`: Analysis of
-   the impact of the dataset size on the value of clustering measures
-   for random assignments.
+ * :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`:
+   Analysis of the impact of the dataset size on the value of
+   clustering measures for random assignments.
 
 
 Mathematical formulation
@@ -1137,14 +1176,16 @@ define :math:`a` and :math:`b` as:
 - :math:`b`, the number of pairs of elements that are in different sets
   in C and in different sets in K
 
-The raw (unadjusted) Rand index is then given by:
+The unadjusted Rand index is then given by:
 
 .. math:: \text{RI} = \frac{a + b}{C_2^{n_{samples}}}
 
-Where :math:`C_2^{n_{samples}}` is the total number of possible pairs
-in the dataset (without ordering).
+where :math:`C_2^{n_{samples}}` is the total number of possible pairs
+in the dataset. It does not matter if the calculation is performed on
+ordered pairs or unordered pairs as long as the calculation is
+performed consistently.
 
-However the RI score does not guarantee that random label assignments
+However, the Rand index does not guarantee that random label assignments
 will get a value close to zero (esp. if the number of clusters is in
 the same order of magnitude as the number of samples).
 
@@ -1159,8 +1200,16 @@ random labelings by defining the adjusted Rand index as follows:
    <https://link.springer.com/article/10.1007%2FBF01908075>`_
    L. Hubert and P. Arabie, Journal of Classification 1985
 
+ * `Properties of the Hubert-Arabie adjusted Rand index
+   <https://psycnet.apa.org/record/2004-17801-007>`_
+   D. Steinley, Psychological Methods 2004
+
+ * `Wikipedia entry for the Rand index
+   <https://en.wikipedia.org/wiki/Rand_index>`_
+
  * `Wikipedia entry for the adjusted Rand index
    <https://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index>`_
+
 
 .. _mutual_info_score:
 
@@ -1893,3 +1942,85 @@ Drawbacks
 
  * `Wikipedia entry for contingency matrix
    <https://en.wikipedia.org/wiki/Contingency_table>`_
+
+.. _pair_confusion_matrix:
+
+Pair Confusion Matrix
+---------------------
+
+The pair confusion matrix
+(:func:`sklearn.metrics.cluster.pair_confusion_matrix`) is a 2x2
+similarity matrix
+
+.. math::
+   C = \left[\begin{matrix}
+   C_{00} & C_{01} \\
+   C_{10} & C_{11}
+   \end{matrix}\right]
+
+between two clusterings computed by considering all pairs of samples and
+counting pairs that are assigned into the same or into different clusters
+under the true and predicted clusterings.
+
+It has the following entries:
+
+  :math:`C_{00}` : number of pairs with both clusterings having the samples
+  not clustered together
+
+  :math:`C_{10}` : number of pairs with the true label clustering having the
+  samples clustered together but the other clustering not having the samples
+  clustered together
+
+  :math:`C_{01}` : number of pairs with the true label clustering not having
+  the samples clustered together but the other clustering having the samples
+  clustered together
+
+  :math:`C_{11}` : number of pairs with both clusterings having the samples
+  clustered together
+
+Considering a pair of samples that is clustered together a positive pair,
+then as in binary classification the count of true negatives is
+:math:`C_{00}`, false negatives is :math:`C_{10}`, true positives is
+:math:`C_{11}` and false positives is :math:`C_{01}`.
+
+Perfectly matching labelings have all non-zero entries on the
+diagonal regardless of actual label values::
+
+   >>> from sklearn.metrics.cluster import pair_confusion_matrix
+   >>> pair_confusion_matrix([0, 0, 1, 1], [0, 0, 1, 1])
+   array([[8, 0],
+          [0, 4]])
+
+::
+
+   >>> pair_confusion_matrix([0, 0, 1, 1], [1, 1, 0, 0])
+   array([[8, 0],
+          [0, 4]])
+
+Labelings that assign all classes members to the same clusters
+are complete but may not always be pure, hence penalized, and
+have some off-diagonal non-zero entries::
+
+   >>> pair_confusion_matrix([0, 0, 1, 2], [0, 0, 1, 1])
+   array([[8, 2],
+          [0, 2]])
+
+The matrix is not symmetric::
+
+   >>> pair_confusion_matrix([0, 0, 1, 1], [0, 0, 1, 2])
+   array([[8, 0],
+          [2, 2]])
+
+If classes members are completely split across different clusters, the
+assignment is totally incomplete, hence the matrix has all zero
+diagonal entries::
+
+   >>> pair_confusion_matrix([0, 0, 0, 0], [0, 1, 2, 3])
+   array([[ 0,  0],
+          [12,  0]])
+
+.. topic:: References
+
+ * L. Hubert and P. Arabie, Comparing Partitions, Journal of
+   Classification 1985
+   <https://link.springer.com/article/10.1007%2FBF01908075>_

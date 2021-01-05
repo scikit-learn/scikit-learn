@@ -300,7 +300,7 @@ def test_lasso_cv_positive_constraint():
      (Lars, {}),
      (LinearRegression, {}),
      (LassoLarsIC, {})]
- )
+)
 def test_model_pipeline_same_as_normalize_true(LinearModel, params):
     # Test that linear models (LinearModel) set with normalize set to True are
     # doing the same as the same linear model preceeded by StandardScaler
@@ -315,7 +315,7 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
         LinearModel(normalize=False, fit_intercept=True, **params)
     )
 
-    is_multitask = model_normalize._get_tags().get("multioutput_only", False)
+    is_multitask = model_normalize._get_tags()["multioutput_only"]
 
     # prepare the data
     n_samples, n_features = 100, 2
@@ -1214,3 +1214,22 @@ def test_linear_models_cv_fit_for_all_backends(backend, estimator):
 
     with joblib.parallel_backend(backend=backend):
         estimator(n_jobs=2, cv=3).fit(X, y)
+
+
+@pytest.mark.parametrize("check_input", [True, False])
+def test_enet_sample_weight_does_not_overwrite_sample_weight(check_input):
+    """Check that ElasticNet does not overwrite sample_weights."""
+
+    rng = np.random.RandomState(0)
+    n_samples, n_features = 10, 5
+
+    X = rng.rand(n_samples, n_features)
+    y = rng.rand(n_samples)
+
+    sample_weight_1_25 = 1.25 * np.ones_like(y)
+    sample_weight = sample_weight_1_25.copy()
+
+    reg = ElasticNet()
+    reg.fit(X, y, sample_weight=sample_weight, check_input=check_input)
+
+    assert_array_equal(sample_weight, sample_weight_1_25)
