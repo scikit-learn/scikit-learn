@@ -10,6 +10,7 @@ from sklearn.metrics.cluster import silhouette_samples
 from sklearn.metrics import pairwise_distances
 from sklearn.metrics.cluster import calinski_harabasz_score
 from sklearn.metrics.cluster import davies_bouldin_score
+from sklearn.metrics.cluster import prediction_strength_score
 
 
 def test_silhouette():
@@ -250,3 +251,125 @@ def test_davies_bouldin_score():
     X = ([[0, 0], [2, 2], [3, 3], [5, 5]])
     labels = [0, 0, 1, 2]
     pytest.approx(davies_bouldin_score(X, labels), (5. / 4) / 3)
+
+
+def test_prediction_strength_score():
+    with pytest.raises(ValueError, match=r"Found array with 0 sample\(s\)"):
+        prediction_strength_score([], [])
+
+    with pytest.raises(ValueError,
+                       match="Found input variables with inconsistent numbers "
+                             "of samples"):
+        prediction_strength_score([1], [])
+    with pytest.raises(ValueError,
+                       match="Found input variables with inconsistent numbers "
+                             "of samples"):
+        prediction_strength_score([], [1])
+    with pytest.raises(ValueError,
+                       match="Found input variables with inconsistent numbers "
+                             "of samples"):
+        prediction_strength_score([1, 1], [1, 2, 3])
+
+    assert 1. == prediction_strength_score([1], [1])
+    assert 1. == prediction_strength_score([1], [2])
+    assert 1. == prediction_strength_score([2], [1])
+    assert 1. == prediction_strength_score([1, 1, 1], [1, 1, 1])
+    assert 1. == prediction_strength_score([1, 1, 1], [2, 2, 2])
+    assert 1. == prediction_strength_score([2, 2, 2], [1, 1, 1])
+
+    assert 1. == prediction_strength_score([1, 1, 0, 0, 2, 2],
+                                           [0, 0, 1, 1, 2, 2])
+    assert 1. == prediction_strength_score([1, 1, 0, 0, 2, 2],
+                                           [2, 2, 1, 1, 0, 0])
+    assert 1. == prediction_strength_score([1, 1, 0, 0, 2, 2],
+                                           [0, 0, 2, 2, 1, 1])
+    assert 1. == prediction_strength_score([1, 1, 0, 0, 2, 2],
+                                           [1, 1, 2, 2, 0, 0])
+    assert 1. == prediction_strength_score([1, 1, 0, 0, 2, 2],
+                                           [2, 2, 0, 0, 1, 1])
+    assert 1. == prediction_strength_score([1, 1, 0, 0, 2, 2],
+                                           [1, 1, 0, 0, 2, 2])
+    assert 1. == prediction_strength_score([3, 3, 6, 6, 9, 9],
+                                           [11, 11, 4, 4, 14, 14])
+
+    # 3 pairs in each cluster, 2 pairs (1-3 and 2-3) are assigned
+    # different clusters
+    assert 1. / 3. == prediction_strength_score([1, 1, 1, 2, 2, 2],
+                                                [1, 1, 2, 2, 2, 1])
+    assert 1. / 3. == prediction_strength_score([1, 1, 1, 2, 2, 2],
+                                                [2, 2, 1, 1, 1, 2])
+    assert 1. / 3. == prediction_strength_score([1, 1, 1, 2, 2, 2],
+                                                [2, 2, 3, 3, 3, 2])
+
+    # 3 pairs in each cluster, 2 pairs (1-2 and 1-3) are assigned
+    # different clusters
+    assert 1. / 3. == prediction_strength_score([1, 1, 1, 2, 2, 2],
+                                                [2, 1, 1, 1, 2, 2])
+    assert 1. / 3. == prediction_strength_score([1, 1, 1, 2, 2, 2],
+                                                [1, 2, 2, 2, 1, 1])
+    assert 1. / 3. == prediction_strength_score([1, 1, 1, 2, 2, 2],
+                                                [3, 2, 2, 2, 3, 3])
+
+    # 6 pairs in each cluster, 3 pairs (1-4, 2-4, and 3-4) are assigned
+    # different clusters
+    assert .5 == prediction_strength_score([1, 1, 1, 1, 2, 2, 2, 2],
+                                           [1, 1, 1, 2, 2, 2, 2, 1])
+    assert .5 == prediction_strength_score([1, 1, 1, 1, 2, 2, 2, 2],
+                                           [2, 2, 2, 1, 1, 1, 1, 2])
+    assert .5 == prediction_strength_score([1, 1, 1, 1, 2, 2, 2, 2],
+                                           [2, 2, 2, 3, 3, 3, 3, 2])
+
+    # 1 pair in each cluster, all clusters are completely different
+    assert .0 == prediction_strength_score([1, 1, 2, 2], [1, 2, 1, 2])
+    assert .0 == prediction_strength_score([1, 1, 2, 2], [2, 1, 2, 1])
+
+    # 3 pairs in each clusters, all clusters are completely different
+    assert .0 == prediction_strength_score([1, 2, 3, 1, 2, 3],
+                                           [1, 1, 1, 2, 2, 2])
+    assert .0 == prediction_strength_score([1, 2, 3, 1, 2, 3],
+                                           [2, 2, 2, 1, 1, 1])
+    assert .0 == prediction_strength_score([1, 2, 3, 1, 2, 3],
+                                           [3, 3, 3, 9, 9, 9])
+
+    # 1 pair in each cluster, clusters 1 and 3 are completely different
+    assert .0 == prediction_strength_score([1, 1, 2, 2, 3, 3],
+                                           [1, 3, 2, 2, 1, 3])
+
+    # different number of clusters, 3 pairs and 1 cluster,
+    # 2 pairs (1-3, 2-3) are assigned different clusters
+    assert 1. / 3. == prediction_strength_score([1, 1, 2], [1, 1, 1])
+
+    # different number of clusters, 2 pairs in each cluster
+    # all pairs are assigned the same cluster
+    assert 1. == prediction_strength_score([1, 1, 1, 1], [1, 1, 2, 2])
+
+    # different number of clusters, all clusters are completely different
+    assert .0 == prediction_strength_score([1, 1, 1, 2, 2, 2],
+                                           [1, 3, 2, 2, 1, 3])
+    assert .0 == prediction_strength_score([1, 1, 1, 2, 2, 2],
+                                           [2, 3, 1, 1, 2, 3])
+    assert .0 == prediction_strength_score([1, 1, 1, 2, 2, 2],
+                                           [2, 1, 3, 3, 2, 1])
+    assert .0 == prediction_strength_score([1, 1, 1, 2, 2, 2],
+                                           [3, 1, 2, 2, 3, 1])
+    assert .0 == prediction_strength_score([1, 1, 1, 2, 2, 2],
+                                           [3, 2, 1, 1, 3, 1])
+
+    # different number of clusters, cluster 3 is completely different
+    assert .0 == prediction_strength_score([1, 1, 1, 2, 2, 2],
+                                           [3, 1, 1, 2, 3, 1])
+    assert .0 == prediction_strength_score([1, 1, 1, 2, 2, 2],
+                                           [1, 3, 3, 2, 1, 3])
+    assert .0 == prediction_strength_score([1, 1, 1, 2, 2, 2],
+                                           [2, 1, 1, 3, 2, 1])
+    assert .0 == prediction_strength_score([1, 1, 1, 2, 2, 2],
+                                           [2, 3, 3, 1, 2, 3])
+    assert .0 == prediction_strength_score([1, 1, 1, 2, 2, 2],
+                                           [3, 2, 2, 1, 3, 2])
+
+    # different number of clusters, clusters 1 and 2 have each
+    # 2 different pairs
+    assert 1. / 3. == prediction_strength_score([3, 1, 1, 2, 3, 3],
+                                                [1, 1, 1, 2, 2, 2])
+    assert 1. / 3. == prediction_strength_score([3, 1, 1, 2, 3, 3],
+                                                [2, 2, 2, 1, 1, 1])

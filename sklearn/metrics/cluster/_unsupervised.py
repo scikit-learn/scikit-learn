@@ -5,11 +5,14 @@
 #          Thierry Guillemot <thierry.guillemot.work@gmail.com>
 # License: BSD 3 clause
 
-
+from itertools import chain
+from itertools import permutations
 import functools
 
 import numpy as np
 
+from ...utils import check_array
+from ...utils import check_consistent_length
 from ...utils import check_random_state
 from ...utils import check_X_y
 from ...utils import _safe_indexing
@@ -361,3 +364,66 @@ def davies_bouldin_score(X, labels):
     combined_intra_dists = intra_dists[:, None] + intra_dists
     scores = np.max(combined_intra_dists / centroid_distances, axis=1)
     return np.mean(scores)
+
+
+def prediction_strength_score(labels_train, labels_test):
+    """Compute the prediction strength score.
+
+    For each test cluster, we compute the proportion of observation pairs
+    in that cluster that are also assigned to the same cluster by the
+    training set centroids. The prediction strength is the minimum of this
+    quantity over the k test clusters.
+
+    The best value is 1.0 (if the assignments of `labels_train` and
+    `labels_test` are identical) and the worst value is 0 (if all samples of
+    one cluster of `labels_test` are not co-members of some cluster in
+    `labels_train`).
+
+    Parameters
+    ----------
+    labels_train : array-like, shape (``n_test_samples``,)
+        Predicted labels for each sample in the the test data
+        based on clusters derived from independent training data.
+
+    labels_test : array-like, shape (``n_test_samples``,)
+        Predicted labels for each sample in the test data
+        based on clusters derived from the same data.
+
+    Returns
+    -------
+    score : float
+        The resulting prediction strength score.
+
+    References
+    ----------
+    .. [1] `Robert Tibshirani and Guenther Walther (2005). "Cluster Validation
+    by Prediction Strength". Journal of Computational and Graphical Statistics,
+    14(3), 511-528. <http://doi.org/10.1198/106186005X59243>_`
+    """
+    check_consistent_length(labels_train, labels_test)
+
+    labels_train = check_array(labels_train, dtype=np.int32, ensure_2d=False)
+    labels_test = check_array(labels_test, dtype=np.int32, ensure_2d=False)
+
+    clusters = set(chain(labels_train, labels_test))
+    n_clusters = len(clusters)
+    if n_clusters == 1:
+        return 1.0  # by definition
+
+    strength = 1.0
+    for k in clusters:
+        # samples assigned to k-th cluster based on test data
+        samples_test_k = np.flatnonzero(labels_test == k)
+        cluster_test_size = samples_test_k.shape[0]
+
+        if cluster_test_size < 2:
+            continue
+
+        matches = 0
+        for i, j in permutations(range(cluster_test_size), 2):
+            if labels_train[samples_test_k[j]] == labels_train[samples_test_k[i]]:
+                matches += 1
+
+        strength = min(strength, matches / (cluster_test_size * (cluster_test_size - 1.)))
+
+    return strength

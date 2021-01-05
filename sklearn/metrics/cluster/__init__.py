@@ -23,6 +23,7 @@ from ._unsupervised import silhouette_samples
 from ._unsupervised import silhouette_score
 from ._unsupervised import calinski_harabasz_score
 from ._unsupervised import davies_bouldin_score
+from ._unsupervised import prediction_strength_score
 from ._bicluster import consensus_score
 
 __all__ = ["adjusted_mutual_info_score", "normalized_mutual_info_score",
@@ -32,4 +33,5 @@ __all__ = ["adjusted_mutual_info_score", "normalized_mutual_info_score",
            "homogeneity_score", "mutual_info_score", "v_measure_score",
            "fowlkes_mallows_score", "entropy", "silhouette_samples",
            "silhouette_score", "calinski_harabasz_score",
-           "davies_bouldin_score", "consensus_score"]
+           "davies_bouldin_score", "consensus_score",
+           "prediction_strength_score"]

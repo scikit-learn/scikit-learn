@@ -53,6 +53,7 @@ from .cluster import silhouette_score
 from .cluster import calinski_harabasz_score
 from .cluster import v_measure_score
 from .cluster import davies_bouldin_score
+from .cluster import prediction_strength_score
 
 from .pairwise import euclidean_distances
 from .pairwise import nan_euclidean_distances
@@ -156,6 +157,7 @@ __all__ = [
     'precision_recall_curve',
     'precision_recall_fscore_support',
     'precision_score',
+    'prediction_strength_score',
     'r2_score',
     'rand_score',
     'recall_score',
