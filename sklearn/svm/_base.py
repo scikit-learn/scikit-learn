@@ -471,8 +471,9 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
 
         if not callable(self.kernel):
-            X = check_array(X, accept_sparse='csr', dtype=np.float64,
-                            order="C", accept_large_sparse=False)
+            X = self._validate_data(X, accept_sparse='csr', dtype=np.float64,
+                                    order="C", accept_large_sparse=False,
+                                    reset=False)
 
         if self._sparse and not sp.isspmatrix(X):
             X = sp.csr_matrix(X)
@@ -489,10 +490,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                 raise ValueError("X.shape[1] = %d should be equal to %d, "
                                  "the number of samples at training time" %
                                  (X.shape[1], self.shape_fit_[0]))
-        elif not callable(self.kernel) and X.shape[1] != self.shape_fit_[1]:
-            raise ValueError("X.shape[1] = %d should be equal to %d, "
-                             "the number of features at training time" %
-                             (X.shape[1], self.shape_fit_[1]))
         return X
 
     @property
