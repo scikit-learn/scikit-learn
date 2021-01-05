@@ -58,12 +58,13 @@ def test_cdist(metric):
         if metric == "wminkowski":
             if sp_version >= parse_version("1.8.0"):
                 pytest.skip("wminkowski will be removed in SciPy 1.8.0")
-            with pytest.warns(DeprecationWarning) as rec:
-                D_true = cdist(X1, X2, metric, **kwargs)
 
+            # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
+            ExceptionToAssert = None
             if sp_version >= parse_version("1.6.0"):
-                # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
-                assert rec
+                ExceptionToAssert = DeprecationWarning
+            with pytest.warns(ExceptionToAssert):
+                D_true = cdist(X1, X2, metric, **kwargs)
         else:
             D_true = cdist(X1, X2, metric, **kwargs)
 
@@ -97,14 +98,15 @@ def test_pdist(metric):
         if metric == "wminkowski":
             if sp_version >= parse_version("1.8.0"):
                 pytest.skip("wminkowski will be removed in SciPy 1.8.0")
-            with pytest.warns(DeprecationWarning) as rec:
-                D_true = cdist(X1, X1, metric, **kwargs)
 
+            # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
+            ExceptionToAssert = None
             if sp_version >= parse_version("1.6.0"):
-                # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
-                assert rec
+                ExceptionToAssert = DeprecationWarning
+            with pytest.warns(ExceptionToAssert):
+                D_true = cdist(X1, X1, metric, **kwargs)
         else:
-            D_true = cdist(X1, X2, metric, **kwargs)
+            D_true = cdist(X1, X1, metric, **kwargs)
 
         check_pdist(metric, kwargs, D_true)
 

@@ -34,7 +34,6 @@ from ..utils.validation import check_is_fitted
 from ..utils.validation import check_non_negative
 from ..utils.fixes import delayed
 from ..utils.fixes import parse_version
-from ..utils.fixes import sp_version
 from ..exceptions import DataConversionWarning, EfficiencyWarning
 
 VALID_METRICS = dict(ball_tree=BallTree.valid_metrics,
@@ -703,21 +702,9 @@ class KNeighborsMixin:
             else:
                 kwds = self.effective_metric_params_
 
-            effective_metric = self.effective_metric_
-
-            # wminkowski is deprecated in 1.6.0 and will be removed in 1.8.0
-            if (sp_version >= parse_version("1.6.0")
-                    and self.metric == "wminkowski"
-                    and 'w' in self.effective_metric_params_):
-
-                effective_metric = "minkowski"
-                p = self.effective_metric_params_.get('p', 2)
-                kwds = kwds.copy()
-                kwds['w'] = kwds['w'] ** p
-
             chunked_results = list(pairwise_distances_chunked(
                 X, self._fit_X, reduce_func=reduce_func,
-                metric=effective_metric, n_jobs=n_jobs,
+                metric=self.effective_metric_, n_jobs=n_jobs,
                 **kwds))
 
         elif self._fit_method in ['ball_tree', 'kd_tree']:
