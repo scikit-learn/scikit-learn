@@ -47,9 +47,9 @@ Changelog
 :mod:`sklearn.tree`
 ...................
 
-- |Fix| Add `fontname` argument in :func:`tree.export_graphviz` and
-  :func:`tree.plot_tree` for non-English characters.
-  :pr:`18959` by :user:`Zero <Zeroto521>` and :user:`wstates <wstates>`.
+- |Fix| Add `fontname` argument in :func:`tree.export_graphviz`
+  for non-English characters. :pr:`18959` by :user:`Zero <Zeroto521>`
+  and :user:`wstates <wstates>`.
 
 :mod:`sklearn.cluster`
 ......................
