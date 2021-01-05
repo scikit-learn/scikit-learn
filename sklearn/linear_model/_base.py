@@ -589,13 +589,13 @@ def _check_precomputed_gram_matrix(X, precompute, X_offset, X_scale,
     X : ndarray of shape (n_samples, n_features)
         Data array.
 
-    precompute: array-like of shape (n_features, n_features)
+    precompute : array-like of shape (n_features, n_features)
         User-supplied gram matrix.
 
-    X_offset: ndarray of shape (n_features,)
+    X_offset : ndarray of shape (n_features,)
         Array of feature means used to center design matrix.
 
-    X_scale: ndarray of shape (n_features,)
+    X_scale : ndarray of shape (n_features,)
         Array of feature scale factors used to normalize design matrix.
 
     rtol : float, default=1e-7
@@ -605,6 +605,11 @@ def _check_precomputed_gram_matrix(X, precompute, X_offset, X_scale,
         absolute tolerance; see :func`numpy.allclose`. Note that the default
         here is more tolerant than the default for
         :func:`numpy.testing.assert_allclose`, where `atol=0`.
+
+    Raises
+    ------
+    ValueError
+        Raised when the provided Gram matrix is not consistent.
     """
 
     n_features = X.shape[1]

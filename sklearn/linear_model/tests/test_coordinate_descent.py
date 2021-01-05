@@ -744,6 +744,8 @@ def test_precompute_invalid_argument():
 
 
 def test_elasticnet_precompute_incorrect_gram():
+    # check that passing an invalid precomputed Gram matrix will raise an
+    # error.
     X, y, _, _ = build_dataset()
 
     rng = np.random.RandomState(0)

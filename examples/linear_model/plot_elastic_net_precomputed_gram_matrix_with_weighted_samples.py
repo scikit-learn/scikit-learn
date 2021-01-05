@@ -7,12 +7,13 @@ The following example shows how to precompute the gram matrix
 while using weighted samples with an ElasticNet.
 
 If weighted samples are used, the design matrix must be centered and then
-rescaled by the sqare root of the weight vector before the gram matrix
+rescaled by the square root of the weight vector before the gram matrix
 is computed.
 
 .. note::
-  `sample_weight`` vector is also rescaled to sum to `n_samples`, see comment
-  in :func:`linear_model.ElasticNet.fit`.
+  `sample_weight` vector is also rescaled to sum to `n_samples`, see the
+   documentation for the `sample_weight` parameter to
+   :func:`linear_model.ElasticNet.fit`.
 
 """
 
