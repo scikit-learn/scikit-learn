@@ -5,8 +5,6 @@
 #          Thierry Guillemot <thierry.guillemot.work@gmail.com>
 # License: BSD 3 clause
 
-from itertools import chain
-from itertools import permutations
 import functools
 
 import numpy as np
@@ -19,6 +17,7 @@ from ...utils import _safe_indexing
 from ..pairwise import pairwise_distances_chunked
 from ..pairwise import pairwise_distances
 from ...preprocessing import LabelEncoder
+from ._supervised import contingency_matrix
 from ...utils.validation import _deprecate_positional_args
 
 
@@ -405,25 +404,15 @@ def prediction_strength_score(labels_train, labels_test):
     labels_train = check_array(labels_train, dtype=np.int32, ensure_2d=False)
     labels_test = check_array(labels_test, dtype=np.int32, ensure_2d=False)
 
-    clusters = set(chain(labels_train, labels_test))
-    n_clusters = len(clusters)
+    n_clusters = max(np.unique(labels_train).shape[0],
+                     np.unique(labels_test).shape[0])
     if n_clusters == 1:
         return 1.0  # by definition
 
-    strength = 1.0
-    for k in clusters:
-        # samples assigned to k-th cluster based on test data
-        samples_test_k = np.flatnonzero(labels_test == k)
-        cluster_test_size = samples_test_k.shape[0]
+    C = contingency_matrix(labels_train, labels_test)
+    pairs_matching = (C * (C - 1) / 2).sum(axis=0)
+    M = C.sum(axis=0)
+    pairs_total = (M * (M - 1) / 2)
+    nz = pairs_total.nonzero()[0]
 
-        if cluster_test_size < 2:
-            continue
-
-        matches = 0
-        for i, j in permutations(range(cluster_test_size), 2):
-            if labels_train[samples_test_k[j]] == labels_train[samples_test_k[i]]:
-                matches += 1
-
-        strength = min(strength, matches / (cluster_test_size * (cluster_test_size - 1.)))
-
-    return strength
+    return (pairs_matching[nz] / pairs_total[nz]).min()
