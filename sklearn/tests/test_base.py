@@ -500,7 +500,7 @@ def test_tag_inheritance():
     assert inherit_diamond_tag_est._get_tags()['allow_nan']
 
 
-def test_warns_on_get_params_non_attribute():
+def test_raises_on_get_params_non_attribute():
     class MyEstimator(BaseEstimator):
         def __init__(self, param=5):
             pass
@@ -509,10 +509,10 @@ def test_warns_on_get_params_non_attribute():
             return self
 
     est = MyEstimator()
-    with pytest.warns(FutureWarning, match='AttributeError'):
-        params = est.get_params()
+    msg = "'MyEstimator' object has no attribute 'param'"
 
-    assert params['param'] is None
+    with pytest.raises(AttributeError, match=msg):
+        est.get_params()
 
 
 def test_repr_mimebundle_():
@@ -540,7 +540,7 @@ def test_repr_html_wraps():
         assert "<style>" in output
 
 
-# TODO: Remove in 0.26 when the _pairwise attribute is removed
+# TODO: Remove in 1.1 when the _pairwise attribute is removed
 def test_is_pairwise():
     # simple checks for _is_pairwise
     pca = KernelPCA(kernel='precomputed')
@@ -553,29 +553,13 @@ def test_is_pairwise():
         _pairwise = False
 
     pca = IncorrectTagPCA(kernel='precomputed')
-    msg = ("_pairwise was deprecated in 0.24 and will be removed in 0.26. "
-           "Set the estimator tags of your estimator instead")
+    msg = "_pairwise was deprecated in 0.24 and will be removed in 1.1"
     with pytest.warns(FutureWarning, match=msg):
         assert not _is_pairwise(pca)
 
-    # the _pairwise attribute is present and set to False while the pairwise
-    # tag is not present
-    class FalsePairwise(BaseEstimator):
-        _pairwise = False
-
-        def _get_tags(self):
-            tags = super()._get_tags()
-            del tags['pairwise']
-            return tags
-
-    false_pairwise = FalsePairwise()
-    with pytest.warns(None) as record:
-        assert not _is_pairwise(false_pairwise)
-    assert not record
-
     # the _pairwise attribute is present and set to True while pairwise tag is
     # not present
-    class TruePairwise(FalsePairwise):
+    class TruePairwise(BaseEstimator):
         _pairwise = True
 
     true_pairwise = TruePairwise()

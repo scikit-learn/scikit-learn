@@ -12,6 +12,7 @@ from scipy.sparse.linalg import svds
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, check_random_state
+from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import randomized_svd, safe_sparse_dot, svd_flip
 from ..utils.sparsefuncs import mean_variance_axis
 from ..utils.validation import _deprecate_positional_args
@@ -165,7 +166,8 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
         random_state = check_random_state(self.random_state)
 
         if self.algorithm == "arpack":
-            U, Sigma, VT = svds(X, k=self.n_components, tol=self.tol)
+            v0 = _init_arpack_v0(min(X.shape), random_state)
+            U, Sigma, VT = svds(X, k=self.n_components, tol=self.tol, v0=v0)
             # svds doesn't abide by scipy.linalg.svd/randomized_svd
             # conventions, so reverse its outputs.
             Sigma = Sigma[::-1]
