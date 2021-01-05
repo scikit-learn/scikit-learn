@@ -66,6 +66,10 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
+- |Enhancement| Validate user-supplied gram matrix passed to linear models
+  via the `precompute` argument.
+  :pr:`19004` by :user:`Adam Midvidy <amidvidy>`.
+
 - |API| :class:`metrics.ConfusionMatrixDisplay` exposes two class methods
   :func:`~metrics.ConfusionMatrixDisplay.from_estimator` and
   :func:`~metrics.ConfusionMatrixDisplay.from_predictions` allowing to create
@@ -73,6 +77,14 @@ Changelog
   :func:`metrics.plot_confusion_matrix` is deprecated in favor of these two
   class methods and will be removed in 1.2.
   :pr:`18543` by `Guillaume Lemaitre`_.
+
+:mod:`sklearn.naive_bayes`
+..........................
+
+- |API| The attribute ``sigma_`` is now deprecated in
+  :class:`naive_bayes.GaussianNB` and will be removed in 1.2.
+  Use ``var_`` instead.
+  :pr:`18842` by :user:`Hong Shao Yang <hongshaoyang>`.
 
 Code and Documentation Contributors
 -----------------------------------

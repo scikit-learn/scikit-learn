@@ -37,6 +37,7 @@ from ..utils.fixes import sparse_lsqr
 from ..utils._seq_dataset import ArrayDataset32, CSRDataset32
 from ..utils._seq_dataset import ArrayDataset64, CSRDataset64
 from ..utils.validation import check_is_fitted, _check_sample_weight
+
 from ..utils.fixes import delayed
 from ..preprocessing import normalize as f_normalize
 
@@ -570,6 +571,61 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         return self
 
 
+def _check_precomputed_gram_matrix(X, precompute, X_offset, X_scale,
+                                   rtol=1e-7,
+                                   atol=1e-5):
+    """Computes a single element of the gram matrix and compares it to
+    the corresponding element of the user supplied gram matrix.
+
+    If the values do not match a ValueError will be thrown.
+
+    Parameters
+    ----------
+    X : ndarray of shape (n_samples, n_features)
+        Data array.
+
+    precompute : array-like of shape (n_features, n_features)
+        User-supplied gram matrix.
+
+    X_offset : ndarray of shape (n_features,)
+        Array of feature means used to center design matrix.
+
+    X_scale : ndarray of shape (n_features,)
+        Array of feature scale factors used to normalize design matrix.
+
+    rtol : float, default=1e-7
+        Relative tolerance; see numpy.allclose.
+
+    atol : float, default=1e-5
+        absolute tolerance; see :func`numpy.allclose`. Note that the default
+        here is more tolerant than the default for
+        :func:`numpy.testing.assert_allclose`, where `atol=0`.
+
+    Raises
+    ------
+    ValueError
+        Raised when the provided Gram matrix is not consistent.
+    """
+
+    n_features = X.shape[1]
+    f1 = n_features // 2
+    f2 = min(f1+1, n_features-1)
+
+    v1 = (X[:, f1] - X_offset[f1]) * X_scale[f1]
+    v2 = (X[:, f2] - X_offset[f2]) * X_scale[f2]
+
+    expected = np.dot(v1, v2)
+    actual = precompute[f1, f2]
+
+    if not np.isclose(expected, actual, rtol=rtol, atol=atol):
+        raise ValueError("Gram matrix passed in via 'precompute' parameter "
+                         "did not pass validation when a single element was "
+                         "checked - please check that it was computed "
+                         f"properly. For element ({f1},{f2}) we computed "
+                         f"{expected} but the user-supplied value was "
+                         f"{actual}.")
+
+
 def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy,
              check_input=True, sample_weight=None):
     """Aux function used at beginning of fit in linear models
@@ -595,16 +651,22 @@ def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy,
             check_input=check_input, sample_weight=sample_weight)
     if sample_weight is not None:
         X, y = _rescale_data(X, y, sample_weight=sample_weight)
-    if hasattr(precompute, '__array__') and (
-        fit_intercept and not np.allclose(X_offset, np.zeros(n_features)) or
-            normalize and not np.allclose(X_scale, np.ones(n_features))):
-        warnings.warn("Gram matrix was provided but X was centered"
-                      " to fit intercept, "
-                      "or X was normalized : recomputing Gram matrix.",
-                      UserWarning)
-        # recompute Gram
-        precompute = 'auto'
-        Xy = None
+    if hasattr(precompute, '__array__'):
+        if (fit_intercept and not np.allclose(X_offset, np.zeros(n_features))
+                or normalize and not np.allclose(X_scale,
+                                                 np.ones(n_features))):
+            warnings.warn(
+                "Gram matrix was provided but X was centered to fit "
+                "intercept, or X was normalized : recomputing Gram matrix.",
+                UserWarning
+            )
+            # recompute Gram
+            precompute = 'auto'
+            Xy = None
+        elif check_input:
+            # If we're going to use the user's precomputed gram matrix, we
+            # do a quick check to make sure its not totally bogus.
+            _check_precomputed_gram_matrix(X, precompute, X_offset, X_scale)
 
     # precompute if n_samples > n_features
     if isinstance(precompute, str) and precompute == 'auto':
