@@ -164,6 +164,9 @@ jobs:
         DISTRIB: 'conda'
         BLAS: 'mkl'
         CONDA_CHANNEL: 'conda-forge'
+        # Deactivate "xdist" because the tests are failing
+        # when caching the datasets using parallel setting
+        PYTEST_XDIST_VERSION: 'none'
       pylatest_conda_mkl_no_openmp:
         DISTRIB: 'conda'
         BLAS: 'mkl'
