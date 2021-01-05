@@ -157,11 +157,11 @@ class GaussianNB(_BaseNB):
         Variance of each feature per class.
 
         .. deprecated:: 1.0
-            ``sigma_`` was deprecated in 1.0 and will be removed in 1.2.
-            Use var_ instead.
+           `sigma_` is deprecated in 1.0 and will be removed in 1.2.
+           Use `var_` instead.
 
     var_ : ndarray of shape (n_classes, n_features)
-        variance of each feature per class
+        Variance of each feature per class.
 
         .. versionadded:: 1.0
 
