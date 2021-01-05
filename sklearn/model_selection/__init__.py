@@ -29,6 +29,7 @@ from ._search import GridSearchCV
 from ._search import RandomizedSearchCV
 from ._search import ParameterGrid
 from ._search import ParameterSampler
+from ._search import PredictionStrengthGridSearchCV
 from ._search import fit_grid_point
 
 if typing.TYPE_CHECKING:
@@ -54,6 +55,7 @@ __all__ = ['BaseCrossValidator',
            'ParameterGrid',
            'ParameterSampler',
            'PredefinedSplit',
+           'PredictionStrengthGridSearchCV',
            'RandomizedSearchCV',
            'ShuffleSplit',
            'StratifiedKFold',

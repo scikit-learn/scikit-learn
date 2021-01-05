@@ -792,32 +792,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                           " totalling {2} fits".format(
                               n_splits, n_candidates, n_candidates * n_splits))
 
-                out = parallel(delayed(_fit_and_score)(clone(base_estimator),
-                                                       X, y,
-                                                       train=train, test=test,
-                                                       parameters=parameters,
-                                                       split_progress=(
-                                                           split_idx,
-                                                           n_splits),
-                                                       candidate_progress=(
-                                                           cand_idx,
-                                                           n_candidates),
-                                                       **fit_and_score_kwargs)
-                               for (cand_idx, parameters),
-                                   (split_idx, (train, test)) in product(
-                                   enumerate(candidate_params),
-                                   enumerate(cv.split(X, y, groups))))
-
-                if len(out) < 1:
-                    raise ValueError('No fits were performed. '
-                                     'Was the CV iterator empty? '
-                                     'Were there no candidates?')
-                elif len(out) != n_candidates * n_splits:
-                    raise ValueError('cv.split and cv.get_n_splits returned '
-                                     'inconsistent results. Expected {} '
-                                     'splits, got {}'
-                                     .format(n_splits,
-                                             len(out) // n_candidates))
+                out = self._fit_parallel(
+                    parallel, base_estimator, X, y, groups, cv, n_splits,
+                    candidate_params, fit_and_score_kwargs
+                )
 
                 # For callable self.scoring, the return type is only know after
                 # calling. If the return type is a dictionary, the error scores
@@ -864,8 +842,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                    self.best_index_ >= len(results["params"])):
                     raise IndexError('best_index_ index out of range')
             else:
-                self.best_index_ = results["rank_test_%s"
-                                           % refit_metric].argmin()
+                self.best_index_ = self._get_best_parameters(
+                    results, refit_metric)
                 self.best_score_ = results["mean_test_%s" % refit_metric][
                                            self.best_index_]
             self.best_params_ = results["params"][self.best_index_]
@@ -890,6 +868,42 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         self.n_splits_ = n_splits
 
         return self
+
+    def _get_best_parameters(self, results, refit_metric):
+        return results["rank_test_%s" % refit_metric].argmin()
+
+    def _fit_parallel(self, parallel, base_estimator, X, y, groups,
+                      cv, n_splits, candidate_params, fit_and_score_kwargs):
+        n_candidates = len(candidate_params)
+
+        out = parallel(delayed(_fit_and_score)(clone(base_estimator),
+                                               X, y,
+                                               train=train, test=test,
+                                               parameters=parameters,
+                                               split_progress=(
+                                                   split_idx,
+                                                   n_splits),
+                                               candidate_progress=(
+                                                   cand_idx,
+                                                   n_candidates),
+                                               **fit_and_score_kwargs)
+                       for (cand_idx, parameters),
+                           (split_idx, (train, test)) in product(
+            enumerate(candidate_params),
+            enumerate(cv.split(X, y, groups))))
+
+        if len(out) < 1:
+            raise ValueError('No fits were performed. '
+                             'Was the CV iterator empty? '
+                             'Were there no candidates?')
+        elif len(out) != n_candidates * n_splits:
+            raise ValueError('cv.split and cv.get_n_splits returned '
+                             'inconsistent results. Expected {} '
+                             'splits, got {}'
+                             .format(n_splits,
+                                     len(out) // n_candidates))
+
+        return out
 
     def _format_results(self, candidate_params, n_splits, out,
                         more_results=None):
@@ -1286,6 +1300,252 @@ class GridSearchCV(BaseSearchCV):
     def _run_search(self, evaluate_candidates):
         """Search all candidates in param_grid"""
         evaluate_candidates(ParameterGrid(self.param_grid))
+
+
+class PredictionStrengthGridSearchCV(GridSearchCV):
+    """Exhaustive search to determine optimal number of clusters for a
+    clusterer.
+
+    The optimal number of clusters is determined by cross-validated grid-search
+    over a parameter grid. Performance is evaluated using
+    :func:`sklearn.metrics.prediction_strength_score`. The clusters in the
+    training set are once predicted after training on the same training set
+    (1), and once after training on an independent test set (2). A stable
+    clustering has the property that observation pairs that are assigned to the
+    same cluster in (1) are also assigned to the same cluster in (2).
+    The optimal number of clusters k is the largest k such that the
+    corresponding prediction strength (averaged across all cross-validation
+    splits) is above some threshold.
+
+    In contrast to :class:`sklearn.model_selection.GridSearchCV`, the splits
+    obtained from a cross-validation generator are used interchangeably for
+    training and for testing, and performance is solely evaluated based on
+    :func:`sklearn.metrics.prediction_strength_score`.
+
+    Parameters
+    ----------
+    estimator : estimator object.
+        This is assumed to implement the scikit-learn estimator interface.
+
+    param_grid : dict or list of dictionaries
+        Dictionary with parameters names (string) as keys and lists of
+        parameter settings to try as values, or a list of such
+        dictionaries, in which case the grids spanned by each dictionary
+        in the list are explored. Must contain `n_clusters`.
+
+    threshold : float, default=0.8
+        The optimal number of clusters k is the largest k such that the
+        corresponding prediction strength is above the given threshold.
+        The threshold must be greater 0 and less or equal 1.
+
+    fit_params : dict, optional
+        Parameters to pass to the fit method.
+
+    n_jobs : int, default=1
+        Number of jobs to run in parallel.
+
+    pre_dispatch : int, or string, optional
+        Controls the number of jobs that get dispatched during parallel
+        execution. Reducing this number can be useful to avoid an
+        explosion of memory consumption when more jobs get dispatched
+        than CPUs can process. This parameter can be:
+
+            - None, in which case all the jobs are immediately
+              created and spawned. Use this for lightweight and
+              fast-running jobs, to avoid delays due to on-demand
+              spawning of the jobs
+
+            - An int, giving the exact number of total jobs that are
+              spawned
+
+            - A string, giving an expression as a function of n_jobs,
+              as in '2*n_jobs'
+
+    iid : boolean, default=True
+        If True, the data is assumed to be identically distributed across
+        the folds, and the loss minimized is the total loss per sample,
+        and not the mean loss across the folds.
+
+    cv : int, cross-validation generator or an iterable, optional
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+          - None, to use the default 3-fold cross validation,
+          - integer, to specify the number of folds in a `KFold`,
+          - An object to be used as a cross-validation generator.
+          - An iterable yielding train, test splits.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
+
+    refit : boolean, default=True
+        Refit the best estimator with the entire dataset.
+        If "False", it is impossible to make predictions using
+        this GridSearchCV instance after fitting.
+
+    verbose : integer
+        Controls the verbosity: the higher, the more messages.
+
+    error_score : 'raise' (default) or numeric
+        Value to assign to the score if an error occurs in estimator fitting.
+        If set to 'raise', the error is raised. If a numeric value is given,
+        FitFailedWarning is raised. This parameter does not affect the refit
+        step, which will always raise the error.
+
+    Attributes
+    ----------
+    cv_results_ : dict of numpy (masked) ndarrays
+        A dict with keys as column headers and values as columns, that can be
+        imported into a pandas ``DataFrame``. See :class:`GridSearchCV`: for
+        details.
+
+    best_estimator_ : estimator
+        Estimator that was chosen by the search, i.e. estimator
+        which gave highest score (or smallest loss if specified)
+        on the left out data. Not available if refit=False.
+
+    best_score_ : float
+        Score of best_estimator on the left out data.
+
+    best_params_ : dict
+        Parameter setting that gave the best results on the hold out data.
+
+    best_index_ : int
+        The index (of the ``cv_results_`` arrays) which corresponds to the best
+        candidate parameter setting.
+
+        The dict at ``search.cv_results_['params'][search.best_index_]`` gives
+        the parameter setting for the best model, that gives the highest
+        mean score (``search.best_score_``).
+
+    n_splits_ : int
+        The number of cross-validation splits (folds/iterations).
+
+    See Also
+    ---------
+    :func:`sklearn.metrics.prediction_strength_score`:
+       Prediction strength metric that is used during grid search.
+
+    References
+    ----------
+    .. [1] `Robert Tibshirani and Guenther Walther (2005). "Cluster Validation
+    by Prediction Strength". Journal of Computational and Graphical Statistics,
+    14(3), 511-528. <http://doi.org/10.1198/106186005X59243>_`
+    """
+    @_deprecate_positional_args
+    def __init__(self, estimator, param_grid, *, threshold=0.8,
+                 n_jobs=None, refit=True, cv=None, verbose=0,
+                 pre_dispatch='2*n_jobs', error_score=np.nan):
+        super().__init__(
+            estimator=estimator, param_grid=param_grid,
+            scoring=None,
+            n_jobs=n_jobs, refit=refit, cv=cv, verbose=verbose,
+            pre_dispatch=pre_dispatch, error_score=error_score,
+            return_train_score=False)
+        self.threshold = threshold
+
+    @_deprecate_positional_args
+    def fit(self, X, *, groups=None, **fit_params):
+        """Run fit with all sets of parameters.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training vector, where n_samples is the number of samples and
+            n_features is the number of features.
+
+        groups : array-like, with shape (n_samples,), optional
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
+
+        **fit_params : dict of string -> object
+            Parameters passed to the ``fit`` method of the estimator
+        """
+        if not np.isfinite(self.threshold):
+            raise ValueError("threshold must be finite")
+        if self.threshold <= 0 or self.threshold > 1:
+            raise ValueError("threshold must be in the interval (0, 1],"
+                             " but was %r" % self.threshold)
+        if "n_clusters" not in self.param_grid:
+            raise ValueError("param_grid must contain n_clusters")
+
+        return super().fit(X, y=None, groups=groups, **fit_params)
+
+    def _fit_parallel(self, parallel, base_estimator, X, y, groups,
+                      cv, n_splits, candidate_params, fit_and_score_kwargs):
+        n_candidates = len(candidate_params)
+
+        # (i) fit X_test, predict X_train
+        # (ii) fit X_train, predict X_train
+        # (iii) call prediction_strength_score
+        out_a = parallel(delayed(_fit_and_score)(clone(base_estimator),
+                                                 X, y,
+                                                 train=train, test=test,
+                                                 parameters=parameters,
+                                                 split_progress=(
+                                                     split_idx,
+                                                     n_splits),
+                                                 candidate_progress=(
+                                                     cand_idx,
+                                                     n_candidates),
+                                                 use_prediction_strength=True,
+                                                 **fit_and_score_kwargs)
+                         for (cand_idx, parameters),
+                             (split_idx, (train, test)) in product(
+            enumerate(candidate_params),
+            enumerate(cv.split(X, y, groups))))
+
+        # swap train and test
+        # (i) fit X_train, predict X_test
+        # (ii) fit X_test, predict X_test
+        # (iii) call prediction_strength_score
+        out_b = parallel(delayed(_fit_and_score)(clone(base_estimator),
+                                                 X, y,
+                                                 train=test, test=train,
+                                                 parameters=parameters,
+                                                 split_progress=(
+                                                     split_idx,
+                                                     n_splits),
+                                                 candidate_progress=(
+                                                     cand_idx,
+                                                     n_candidates),
+                                                 use_prediction_strength=True,
+                                                 **fit_and_score_kwargs)
+                         for (cand_idx, parameters),
+                             (split_idx, (train, test)) in product(
+            enumerate(candidate_params),
+            enumerate(cv.split(X, y, groups))))
+
+        def _combine(ret1, ret2):
+            # average prediction strength score
+            score1, score2 = ret1["test_scores"], ret2["test_scores"]
+            ret = {"test_scores": 0.5 * (score1 + score2)}
+            # sum remaining values (n_samples, fit_time, score_time)
+            for key in ret1.keys():
+                if key != "test_scores":
+                    ret[key] = ret1[key] + ret2[key]
+            return ret
+
+        out = [_combine(*v) for v in zip(out_a, out_b)]
+        return out
+
+    def _get_best_parameters(self, results, refit_metric):
+        best_index = None
+        test_scores = results["mean_test_%s" % refit_metric]
+        order = np.argsort(results["param_n_clusters"])
+        for i in order:
+            score = test_scores[i]
+            if score >= self.threshold:
+                best_index = i
+
+        if best_index is None:
+            warnings.warn(
+                ("No parameter exceeds threshold %f, try decreasing it. "
+                 "Falling back to parameters with highest score."
+                 % self.threshold),
+                stacklevel=3)
+            best_index = super()._get_best_parameters(results, refit_metric)
+
+        return best_index
 
 
 class RandomizedSearchCV(BaseSearchCV):
