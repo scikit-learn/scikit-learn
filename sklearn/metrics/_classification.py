@@ -332,7 +332,6 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
         y_true.min() >= 0 and y_pred.min() >= 0
     )
     if need_index_conversion:
-        # convert yt, yp into index
         label_to_ind = {y: x for x, y in enumerate(labels)}
         y_pred = np.array([label_to_ind.get(x, n_labels + 1) for x in y_pred])
         y_true = np.array([label_to_ind.get(x, n_labels + 1) for x in y_true])
