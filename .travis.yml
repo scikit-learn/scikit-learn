@@ -36,19 +36,12 @@ jobs:
         - BUILD_WITH_ICC=true
       if: type = cron OR commit_message =~ /\[icc-build\]/
 
-    - python: 3.7
-      os: linux
-      arch: arm64
-      if: type = cron OR commit_message =~ /\[arm64\]/
-      env:
-        - CPU_COUNT=8
-
     # Linux environments to build the scikit-learn wheels
     # for the ARM64 arquitecture and Python 3.6 and newer
     - python: 3.6
       os: linux
       arch: arm64
-      if: type = cron or commit_message =~ /\[cd build\]/
+      if: type = commit_message =~ /\[cd build\]/
       env:
         - BUILD_WHEEL=true
         - CIBW_BUILD=cp36-manylinux_aarch64
@@ -56,7 +49,7 @@ jobs:
     - python: 3.7
       os: linux
       arch: arm64
-      if: type = cron or commit_message =~ /\[cd build\]/
+      if: type = commit_message =~ /\[cd build\]/
       env:
         - BUILD_WHEEL=true
         - CIBW_BUILD=cp37-manylinux_aarch64
@@ -64,7 +57,7 @@ jobs:
     - python: 3.8
       os: linux
       arch: arm64
-      if: type = cron or commit_message =~ /\[cd build\]/
+      if: type = commit_message =~ /\[cd build\]/
       env:
         - BUILD_WHEEL=true
         - CIBW_BUILD=cp38-manylinux_aarch64
@@ -72,6 +65,8 @@ jobs:
     - python: 3.9
       os: linux
       arch: arm64
+      # Nighlyt build for linux/arm64 only on the most recent Python version
+      # so as to spare the limited Travis CI credits
       if: type = cron or commit_message =~ /\[cd build\]/
       env:
         - BUILD_WHEEL=true
