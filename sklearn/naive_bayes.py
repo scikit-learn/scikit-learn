@@ -154,7 +154,7 @@ class GaussianNB(_BaseNB):
         absolute additive value to variances
 
     sigma_ : ndarray of shape (n_classes, n_features)
-        variance of each feature per class
+        Variance of each feature per class.
 
         .. deprecated:: 1.0
             ``sigma_`` was deprecated in 1.0 and will be removed in 1.2.
