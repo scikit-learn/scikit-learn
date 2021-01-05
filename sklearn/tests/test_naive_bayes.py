@@ -58,6 +58,15 @@ def test_gnb():
     assert_raises(ValueError, GaussianNB().partial_fit, X, y, classes=[0, 1])
 
 
+# TODO remove in 1.2 once sigma_ attribute is removed (GH #18842)
+def test_gnb_var():
+    clf = GaussianNB()
+    clf.fit(X, y)
+
+    with pytest.warns(FutureWarning, match="Attribute sigma_ was deprecated"):
+        assert_array_equal(clf.sigma_, clf.var_)
+
+
 def test_gnb_prior():
     # Test whether class priors are properly set.
     clf = GaussianNB().fit(X, y)
@@ -76,7 +85,7 @@ def test_gnb_sample_weight():
     clf_sw = GaussianNB().fit(X, y, sw)
 
     assert_array_almost_equal(clf.theta_, clf_sw.theta_)
-    assert_array_almost_equal(clf.sigma_, clf_sw.sigma_)
+    assert_array_almost_equal(clf.var_, clf_sw.var_)
 
     # Fitting twice with half sample-weights should result
     # in same result as fitting once with full weights
@@ -86,7 +95,7 @@ def test_gnb_sample_weight():
     clf2.partial_fit(X, y, sample_weight=sw / 2)
 
     assert_array_almost_equal(clf1.theta_, clf2.theta_)
-    assert_array_almost_equal(clf1.sigma_, clf2.sigma_)
+    assert_array_almost_equal(clf1.var_, clf2.var_)
 
     # Check that duplicate entries and correspondingly increased sample
     # weights yield the same result
@@ -97,7 +106,7 @@ def test_gnb_sample_weight():
     clf_sw = GaussianNB().fit(X, y, sample_weight)
 
     assert_array_almost_equal(clf_dupl.theta_, clf_sw.theta_)
-    assert_array_almost_equal(clf_dupl.sigma_, clf_sw.sigma_)
+    assert_array_almost_equal(clf_dupl.var_, clf_sw.var_)
 
 
 def test_gnb_neg_priors():
@@ -174,13 +183,13 @@ def test_gnb_partial_fit():
     clf = GaussianNB().fit(X, y)
     clf_pf = GaussianNB().partial_fit(X, y, np.unique(y))
     assert_array_almost_equal(clf.theta_, clf_pf.theta_)
-    assert_array_almost_equal(clf.sigma_, clf_pf.sigma_)
+    assert_array_almost_equal(clf.var_, clf_pf.var_)
     assert_array_almost_equal(clf.class_prior_, clf_pf.class_prior_)
 
     clf_pf2 = GaussianNB().partial_fit(X[0::2, :], y[0::2], np.unique(y))
     clf_pf2.partial_fit(X[1::2], y[1::2])
     assert_array_almost_equal(clf.theta_, clf_pf2.theta_)
-    assert_array_almost_equal(clf.sigma_, clf_pf2.sigma_)
+    assert_array_almost_equal(clf.var_, clf_pf2.var_)
     assert_array_almost_equal(clf.class_prior_, clf_pf2.class_prior_)
 
 
