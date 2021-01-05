@@ -39,7 +39,7 @@ if [[ -n "$CHECK_WARNINGS" ]]; then
 fi
 
 if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
-    TEST_CMD="$TEST_CMD -n2"
+    # TEST_CMD="$TEST_CMD -n2"
 fi
 
 mkdir -p $TEST_DIR
