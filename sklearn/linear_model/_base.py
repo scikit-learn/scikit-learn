@@ -50,7 +50,7 @@ SPARSE_INTERCEPT_DECAY = 0.01
 # intercept oscillation.
 
 
-# FIXME in 1.2: variable 'normalize' should be removed from linear models
+# FIXME in v1.2.0: variable 'normalize' should be removed from linear models
 # in cases where now normalize=False. default value of 'normalize' should be
 # changed to False in linear models where now normalize=True
 def _deprecate_normalize(normalize, default, est_name):
@@ -62,7 +62,7 @@ def _deprecate_normalize(normalize, default, est_name):
     models and normalize value selected by the user). Est_name is the name of
     the linear estimator which calls this function.
 
-    TODO: it should be updated in v1.2 and removed completely in v1.4
+    TODO: it should be updated in v1.2.0 and removed completely in v1.4.0
     """
     if normalize == 'deprecated':
         _normalize = default
@@ -71,8 +71,8 @@ def _deprecate_normalize(normalize, default, est_name):
 
     if default and normalize == 'deprecated':
         warnings.warn(
-            " default of 'normalize' will be set to False in version 1.2 and"
-            " deprecated in version 1.4."
+            " default of 'normalize' will be set to False in version 1.2.0 and"
+            " deprecated in version 1.4.0"
             " \nPass normalize=False and use Pipeline with a StandardScaler in"
             " a preprocessing stage:"
             "  model = make_pipeline(StandardScaler(),"
@@ -85,8 +85,8 @@ def _deprecate_normalize(normalize, default, est_name):
         )
     elif normalize != 'deprecated' and normalize and not default:
         warnings.warn(
-            "'normalize' was deprecated in version 1.0 and will be"
-            " removed in 1.2. \nIf you still wish to normalize use"
+            "'normalize' was deprecated in version 1.0.0 and will be"
+            " removed in 1.2.0 \nIf you still wish to normalize use"
             " Pipeline with a StandardScaler in a preprocessing stage:"
             "  model = make_pipeline(StandardScaler(),"
             f" {est_name}()). \nIf you wish to use additional parameters in"
@@ -97,8 +97,8 @@ def _deprecate_normalize(normalize, default, est_name):
         )
     elif normalize != 'deprecated' and not normalize and not default:
         warnings.warn(
-            "'normalize' was deprecated in version 1.0 and will be"
-            " removed in 1.2. Don't set 'normalize' parameter"
+            "'normalize' was deprecated in version 1.0.0 and will be"
+            " removed in 1.2.0 Don't set 'normalize' parameter"
             " and leave it to its default value", FutureWarning
         )
 
@@ -463,9 +463,9 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0 and will be removed in
-            1.2.
+        .. deprecated:: 1.0.0
+            ``normalize`` was deprecated in version 1.0.0 and will be removed
+            in v1.2.0
 
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
@@ -715,7 +715,7 @@ def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy,
     if sample_weight is not None:
         X, y = _rescale_data(X, y, sample_weight=sample_weight)
 
-    # FIXME: 'normalize' to be removed in 1.2
+    # FIXME: 'normalize' to be removed in v1.2.0
     if hasattr(precompute, '__array__'):
         if (fit_intercept and not np.allclose(X_offset, np.zeros(n_features))
                 or normalize and not np.allclose(X_scale, np.ones(n_features)
