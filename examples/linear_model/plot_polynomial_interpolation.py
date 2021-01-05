@@ -9,11 +9,11 @@ degree ``degree`` by using ridge regression. We show two different ways given
 
 - :class:`~sklearn.preprocessing.PolynomialFeatures` generates all monomials
   up to ``degree``. This gives us the so called Vandermonde matrix with
-  ``n_samples`` rows and ``degree + 1`` columns:
+  ``n_samples`` rows and ``degree + 1`` columns::
 
-  [[1, x_0, x_0 ** 2, x_0 ** 3, ..., x_0 ** degree],
-   [1, x_1, x_1 ** 2, x_1 ** 3, ..., x_1 ** degree],
-   ...]
+    [[1, x_0, x_0 ** 2, x_0 ** 3, ..., x_0 ** degree],
+     [1, x_1, x_1 ** 2, x_1 ** 3, ..., x_1 ** degree],
+     ...]
 
   Intuitively, this matrix can be interpreted as a matrix of pseudo features
   (the points raised to some power). The matrix is akin to (but different from)
@@ -23,11 +23,11 @@ degree ``degree`` by using ridge regression. We show two different ways given
   functions. A basis function of a B-spline is a piece-wise polynomial function
   of degree ``degree`` that is non-zero only between ``degree+1`` consecutive
   knots. Given ``n_knots`` number of knots, this results in matrix of
-  ``n_samples`` rows and ``n_knots + degree - 1`` columns:
+  ``n_samples`` rows and ``n_knots + degree - 1`` columns::
 
-  [[basis_1(x_0), basis_2(x_0), ...],
-   [basis_1(x_1), basis_2(x_1), ...],
-   ...]
+    [[basis_1(x_0), basis_2(x_0), ...],
+     [basis_1(x_1), basis_2(x_1), ...],
+     ...]
 
 This example shows that these two transformers are well suited to model
 non-linear effects with a linear model, using a pipeline to add non-linear
