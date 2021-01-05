@@ -1,4 +1,5 @@
 """Testing for Spectral Clustering methods"""
+import re
 
 import numpy as np
 from scipy import sparse
@@ -177,7 +178,7 @@ def test_discretize(n_samples):
     for n_class in range(2, 10):
         # random class labels
         y_true = random_state.randint(0, n_class + 1, n_samples)
-        y_true = np.array(y_true, np.float)
+        y_true = np.array(y_true, float)
         # noise class assignment matrix
         y_indicator = sparse.coo_matrix((np.ones(n_samples),
                                          (np.arange(n_samples),
@@ -248,3 +249,30 @@ def test_n_components():
     labels_diff_ncomp = SpectralClustering(n_components=2,
                                            random_state=0).fit(X).labels_
     assert not np.array_equal(labels, labels_diff_ncomp)
+
+
+@pytest.mark.parametrize('assign_labels', ('kmeans', 'discretize'))
+def test_verbose(assign_labels, capsys):
+    # Check verbose mode of KMeans for better coverage.
+    X, y = make_blobs(n_samples=20, random_state=0,
+                      centers=[[1, 1], [-1, -1]], cluster_std=0.01)
+
+    SpectralClustering(n_clusters=2, random_state=42, verbose=1).fit(X)
+
+    captured = capsys.readouterr()
+
+    assert re.search(r"Computing label assignment using", captured.out)
+
+    if assign_labels == "kmeans":
+        assert re.search(r"Initialization complete", captured.out)
+        assert re.search(r"Iteration [0-9]+, inertia", captured.out)
+
+
+# TODO: Remove in 1.1
+@pytest.mark.parametrize("affinity", ["precomputed",
+                                      "precomputed_nearest_neighbors"])
+def test_pairwise_is_deprecated(affinity):
+    sp = SpectralClustering(affinity=affinity)
+    msg = r"Attribute _pairwise was deprecated in version 0\.24"
+    with pytest.warns(FutureWarning, match=msg):
+        sp._pairwise

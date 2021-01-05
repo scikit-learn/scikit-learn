@@ -76,11 +76,11 @@ X, y = load_ames_housing()
 # First, the dataset has many missing values. To impute them, we will exchange
 # categorical missing values with the new category 'missing' while the
 # numerical missing values with the 'mean' of the column. We will also encode
-# the categories with either :class:`sklearn.preprocessing.OneHotEncoder
+# the categories with either :class:`~sklearn.preprocessing.OneHotEncoder
 # <sklearn.preprocessing.OneHotEncoder>` or
-# :class:`sklearn.preprocessing.OrdinalEncoder
+# :class:`~sklearn.preprocessing.OrdinalEncoder
 # <sklearn.preprocessing.OrdinalEncoder>` depending for which type of model we
-# will use them (linear or non-linear model). To falicitate this preprocessing
+# will use them (linear or non-linear model). To facilitate this preprocessing
 # we will make two pipelines.
 # You can skip this section if your data is ready to use and does
 # not need preprocessing

@@ -14,6 +14,8 @@ from sklearn.datasets import fetch_openml
 from sklearn.datasets._openml import (_open_openml_url,
                                       _arff,
                                       _DATA_FILE,
+                                      _convert_arff_data,
+                                      _convert_arff_data_dataframe,
                                       _get_data_description_by_id,
                                       _get_local_path,
                                       _retry_with_clean_cache,
@@ -24,7 +26,9 @@ from sklearn.utils import is_scalar_nan
 from sklearn.utils._testing import assert_allclose, assert_array_equal
 from urllib.error import HTTPError
 from sklearn.datasets.tests.test_common import check_return_X_y
+from sklearn.externals._arff import ArffContainerType
 from functools import partial
+from sklearn.utils._testing import fails_if_pypy
 
 
 currdir = os.path.dirname(os.path.abspath(__file__))
@@ -49,7 +53,8 @@ def _test_features_list(data_id):
             # non-nominal attribute
             return data_bunch.data[:, col_idx]
 
-    data_bunch = fetch_openml(data_id=data_id, cache=False, target_column=None)
+    data_bunch = fetch_openml(data_id=data_id, cache=False,
+                              target_column=None, as_frame=False)
 
     # also obtain decoded arff
     data_description = _get_data_description_by_id(data_id, None)
@@ -85,18 +90,18 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
     # result. Note that this function can be mocked (by invoking
     # _monkey_patch_webbased_functions before invoking this function)
     data_by_name_id = fetch_openml(name=data_name, version=data_version,
-                                   cache=False)
+                                   cache=False, as_frame=False)
     assert int(data_by_name_id.details['id']) == data_id
 
     # Please note that cache=False is crucial, as the monkey patched files are
     # not consistent with reality
-    fetch_openml(name=data_name, cache=False)
+    fetch_openml(name=data_name, cache=False, as_frame=False)
     # without specifying the version, there is no guarantee that the data id
     # will be the same
 
     # fetch with dataset id
     data_by_id = fetch_openml(data_id=data_id, cache=False,
-                              target_column=target_column)
+                              target_column=target_column, as_frame=False)
     assert data_by_id.details['name'] == data_name
     assert data_by_id.data.shape == (expected_observations, expected_features)
     if isinstance(target_column, str):
@@ -123,7 +128,8 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
 
     if compare_default_target:
         # check whether the data by id and data by id target are equal
-        data_by_id_default = fetch_openml(data_id=data_id, cache=False)
+        data_by_id_default = fetch_openml(data_id=data_id, cache=False,
+                                          as_frame=False)
         np.testing.assert_allclose(data_by_id.data, data_by_id_default.data)
         if data_by_id.target.dtype == np.float64:
             np.testing.assert_allclose(data_by_id.target,
@@ -141,9 +147,35 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
 
     # test return_X_y option
     fetch_func = partial(fetch_openml, data_id=data_id, cache=False,
-                         target_column=target_column)
+                         target_column=target_column, as_frame=False)
     check_return_X_y(data_by_id, fetch_func)
     return data_by_id
+
+
+class _MockHTTPResponse:
+    def __init__(self, data, is_gzip):
+        self.data = data
+        self.is_gzip = is_gzip
+
+    def read(self, amt=-1):
+        return self.data.read(amt)
+
+    def close(self):
+        self.data.close()
+
+    def info(self):
+        if self.is_gzip:
+            return {'Content-Encoding': 'gzip'}
+        return {}
+
+    def __iter__(self):
+        return iter(self.data)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        return False
 
 
 def _monkey_patch_webbased_functions(context,
@@ -160,37 +192,6 @@ def _monkey_patch_webbased_functions(context,
     path_suffix = '.gz'
     read_fn = gzip.open
 
-    class MockHTTPResponse:
-        def __init__(self, data, is_gzip):
-            self.data = data
-            self.is_gzip = is_gzip
-
-        def read(self, amt=-1):
-            return self.data.read(amt)
-
-        def tell(self):
-            return self.data.tell()
-
-        def seek(self, pos, whence=0):
-            return self.data.seek(pos, whence)
-
-        def close(self):
-            self.data.close()
-
-        def info(self):
-            if self.is_gzip:
-                return {'Content-Encoding': 'gzip'}
-            return {}
-
-        def __iter__(self):
-            return iter(self.data)
-
-        def __enter__(self):
-            return self
-
-        def __exit__(self, exc_type, exc_val, exc_tb):
-            return False
-
     def _file_name(url, suffix):
         return (re.sub(r'\W', '-', url[len("https://openml.org/"):])
                 + suffix + path_suffix)
@@ -203,10 +204,10 @@ def _monkey_patch_webbased_functions(context,
 
         if has_gzip_header and gzip_response:
             fp = open(path, 'rb')
-            return MockHTTPResponse(fp, True)
+            return _MockHTTPResponse(fp, True)
         else:
             fp = read_fn(path, 'rb')
-            return MockHTTPResponse(fp, False)
+            return _MockHTTPResponse(fp, False)
 
     def _mock_urlopen_data_features(url, has_gzip_header):
         assert url.startswith(url_prefix_data_features)
@@ -214,10 +215,10 @@ def _monkey_patch_webbased_functions(context,
                             _file_name(url, '.json'))
         if has_gzip_header and gzip_response:
             fp = open(path, 'rb')
-            return MockHTTPResponse(fp, True)
+            return _MockHTTPResponse(fp, True)
         else:
             fp = read_fn(path, 'rb')
-            return MockHTTPResponse(fp, False)
+            return _MockHTTPResponse(fp, False)
 
     def _mock_urlopen_download_data(url, has_gzip_header):
         assert (url.startswith(url_prefix_download_data))
@@ -227,10 +228,10 @@ def _monkey_patch_webbased_functions(context,
 
         if has_gzip_header and gzip_response:
             fp = open(path, 'rb')
-            return MockHTTPResponse(fp, True)
+            return _MockHTTPResponse(fp, True)
         else:
             fp = read_fn(path, 'rb')
-            return MockHTTPResponse(fp, False)
+            return _MockHTTPResponse(fp, False)
 
     def _mock_urlopen_data_list(url, has_gzip_header):
         assert url.startswith(url_prefix_data_list)
@@ -247,10 +248,10 @@ def _monkey_patch_webbased_functions(context,
 
         if has_gzip_header:
             fp = open(json_file_path, 'rb')
-            return MockHTTPResponse(fp, True)
+            return _MockHTTPResponse(fp, True)
         else:
             fp = read_fn(json_file_path, 'rb')
-            return MockHTTPResponse(fp, False)
+            return _MockHTTPResponse(fp, False)
 
     def _mock_urlopen(request):
         url = request.get_full_url()
@@ -296,6 +297,9 @@ def test_feature_to_dtype_error(feature):
         _feature_to_dtype(feature)
 
 
+# Known failure of PyPy for OpenML. See the following issue:
+# https://github.com/scikit-learn/scikit-learn/issues/18906
+@fails_if_pypy
 def test_fetch_openml_iris_pandas(monkeypatch):
     # classification dataset with numeric only columns
     pd = pytest.importorskip('pandas')
@@ -337,6 +341,9 @@ def test_fetch_openml_iris_pandas(monkeypatch):
     assert frame.index.is_unique
 
 
+# Known failure of PyPy for OpenML. See the following issue:
+# https://github.com/scikit-learn/scikit-learn/issues/18906
+@fails_if_pypy
 def test_fetch_openml_iris_pandas_equal_to_no_frame(monkeypatch):
     # as_frame = True returns the same underlying data as as_frame = False
     pytest.importorskip('pandas')
@@ -356,6 +363,9 @@ def test_fetch_openml_iris_pandas_equal_to_no_frame(monkeypatch):
     assert_array_equal(norm_target, frame_target)
 
 
+# Known failure of PyPy for OpenML. See the following issue:
+# https://github.com/scikit-learn/scikit-learn/issues/18906
+@fails_if_pypy
 def test_fetch_openml_iris_multitarget_pandas(monkeypatch):
     # classification dataset with numeric only columns
     pd = pytest.importorskip('pandas')
@@ -398,6 +408,9 @@ def test_fetch_openml_iris_multitarget_pandas(monkeypatch):
     assert np.all(frame.dtypes == [np.float64] * 4 + [cat_dtype])
 
 
+# Known failure of PyPy for OpenML. See the following issue:
+# https://github.com/scikit-learn/scikit-learn/issues/18906
+@fails_if_pypy
 def test_fetch_openml_anneal_pandas(monkeypatch):
     # classification dataset with numeric and categorical columns
     pd = pytest.importorskip('pandas')
@@ -435,6 +448,9 @@ def test_fetch_openml_anneal_pandas(monkeypatch):
     assert frame.shape == frame_shape
 
 
+# Known failure of PyPy for OpenML. See the following issue:
+# https://github.com/scikit-learn/scikit-learn/issues/18906
+@fails_if_pypy
 def test_fetch_openml_cpu_pandas(monkeypatch):
     # regression dataset with numeric and categorical columns
     pd = pytest.importorskip('pandas')
@@ -489,6 +505,26 @@ def test_fetch_openml_australian_pandas_error_sparse(monkeypatch):
         fetch_openml(data_id=data_id, as_frame=True, cache=False)
 
 
+# Known failure of PyPy for OpenML. See the following issue:
+# https://github.com/scikit-learn/scikit-learn/issues/18906
+@fails_if_pypy
+def test_fetch_openml_as_frame_auto(monkeypatch):
+    pd = pytest.importorskip('pandas')
+
+    data_id = 61  # iris dataset version 1
+    _monkey_patch_webbased_functions(monkeypatch, data_id, True)
+    data = fetch_openml(data_id=data_id, as_frame='auto')
+    assert isinstance(data.data, pd.DataFrame)
+
+    data_id = 292  # Australian dataset version 1
+    _monkey_patch_webbased_functions(monkeypatch, data_id, True)
+    data = fetch_openml(data_id=data_id, as_frame='auto')
+    assert isinstance(data.data, scipy.sparse.csr_matrix)
+
+
+# Known failure of PyPy for OpenML. See the following issue:
+# https://github.com/scikit-learn/scikit-learn/issues/18906
+@fails_if_pypy
 def test_convert_arff_data_dataframe_warning_low_memory_pandas(monkeypatch):
     pytest.importorskip('pandas')
 
@@ -501,6 +537,9 @@ def test_convert_arff_data_dataframe_warning_low_memory_pandas(monkeypatch):
             fetch_openml(data_id=data_id, as_frame=True, cache=False)
 
 
+# Known failure of PyPy for OpenML. See the following issue:
+# https://github.com/scikit-learn/scikit-learn/issues/18906
+@fails_if_pypy
 def test_fetch_openml_adultcensus_pandas_return_X_y(monkeypatch):
     pd = pytest.importorskip('pandas')
     CategoricalDtype = pd.api.types.CategoricalDtype
@@ -529,6 +568,9 @@ def test_fetch_openml_adultcensus_pandas_return_X_y(monkeypatch):
     assert y.name == target_column
 
 
+# Known failure of PyPy for OpenML. See the following issue:
+# https://github.com/scikit-learn/scikit-learn/issues/18906
+@fails_if_pypy
 def test_fetch_openml_adultcensus_pandas(monkeypatch):
     pd = pytest.importorskip('pandas')
     CategoricalDtype = pd.api.types.CategoricalDtype
@@ -565,6 +607,9 @@ def test_fetch_openml_adultcensus_pandas(monkeypatch):
     assert frame.shape == frame_shape
 
 
+# Known failure of PyPy for OpenML. See the following issue:
+# https://github.com/scikit-learn/scikit-learn/issues/18906
+@fails_if_pypy
 def test_fetch_openml_miceprotein_pandas(monkeypatch):
     # JvR: very important check, as this dataset defined several row ids
     # and ignore attributes. Note that data_features json has 82 attributes,
@@ -605,6 +650,9 @@ def test_fetch_openml_miceprotein_pandas(monkeypatch):
     assert frame_n_floats == n_floats
 
 
+# Known failure of PyPy for OpenML. See the following issue:
+# https://github.com/scikit-learn/scikit-learn/issues/18906
+@fails_if_pypy
 def test_fetch_openml_emotions_pandas(monkeypatch):
     # classification dataset with multiple targets (natively)
     pd = pytest.importorskip('pandas')
@@ -643,6 +691,9 @@ def test_fetch_openml_emotions_pandas(monkeypatch):
     assert expected_frame_floats == n_floats
 
 
+# Known failure of PyPy for OpenML. See the following issue:
+# https://github.com/scikit-learn/scikit-learn/issues/18906
+@fails_if_pypy
 def test_fetch_openml_titanic_pandas(monkeypatch):
     # dataset with strings
     pd = pytest.importorskip('pandas')
@@ -1014,14 +1065,14 @@ def test_fetch_openml_cache(monkeypatch, gzip_response, tmpdir):
         monkeypatch, data_id, gzip_response)
     X_fetched, y_fetched = fetch_openml(data_id=data_id, cache=True,
                                         data_home=cache_directory,
-                                        return_X_y=True)
+                                        return_X_y=True, as_frame=False)
 
     monkeypatch.setattr(sklearn.datasets._openml, 'urlopen',
                         _mock_urlopen_raise)
 
     X_cached, y_cached = fetch_openml(data_id=data_id, cache=True,
                                       data_home=cache_directory,
-                                      return_X_y=True)
+                                      return_X_y=True, as_frame=False)
     np.testing.assert_array_equal(X_fetched, X_cached)
     np.testing.assert_array_equal(y_fetched, y_cached)
 
@@ -1035,7 +1086,7 @@ def test_fetch_openml_notarget(monkeypatch, gzip_response):
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     data = fetch_openml(data_id=data_id, target_column=target_column,
-                        cache=False)
+                        cache=False, as_frame=False)
     assert data.data.shape == (expected_observations, expected_features)
     assert data.target is None
 
@@ -1047,12 +1098,12 @@ def test_fetch_openml_inactive(monkeypatch, gzip_response):
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     glas2 = assert_warns_message(
         UserWarning, "Version 1 of dataset glass2 is inactive,", fetch_openml,
-        data_id=data_id, cache=False)
+        data_id=data_id, cache=False, as_frame=False)
     # fetch inactive dataset by name and version
     assert glas2.data.shape == (163, 9)
     glas2_by_version = assert_warns_message(
         UserWarning, "Version 1 of dataset glass2 is inactive,", fetch_openml,
-        data_id=None, name="glass2", version=1, cache=False)
+        data_id=None, name="glass2", version=1, cache=False, as_frame=False)
     assert int(glas2_by_version.details['id']) == data_id
 
 
@@ -1088,20 +1139,20 @@ def test_warn_ignore_attribute(monkeypatch, gzip_response):
     assert_warns_message(UserWarning, expected_row_id_msg.format('MouseID'),
                          fetch_openml, data_id=data_id,
                          target_column='MouseID',
-                         cache=False)
+                         cache=False, as_frame=False)
     assert_warns_message(UserWarning, expected_ignore_msg.format('Genotype'),
                          fetch_openml, data_id=data_id,
                          target_column='Genotype',
-                         cache=False)
+                         cache=False, as_frame=False)
     # multi column test
     assert_warns_message(UserWarning, expected_row_id_msg.format('MouseID'),
                          fetch_openml, data_id=data_id,
                          target_column=['MouseID', 'class'],
-                         cache=False)
+                         cache=False, as_frame=False)
     assert_warns_message(UserWarning, expected_ignore_msg.format('Genotype'),
                          fetch_openml, data_id=data_id,
                          target_column=['Genotype', 'class'],
-                         cache=False)
+                         cache=False, as_frame=False)
 
 
 @pytest.mark.parametrize('gzip_response', [True, False])
@@ -1112,7 +1163,8 @@ def test_string_attribute_without_dataframe(monkeypatch, gzip_response):
     assert_raise_message(ValueError,
                          ('STRING attributes are not supported for '
                           'array representation. Try as_frame=True'),
-                         fetch_openml, data_id=data_id, cache=False)
+                         fetch_openml, data_id=data_id, cache=False,
+                         as_frame=False)
 
 
 @pytest.mark.parametrize('gzip_response', [True, False])
@@ -1123,7 +1175,7 @@ def test_dataset_with_openml_error(monkeypatch, gzip_response):
         UserWarning,
         "OpenML registered a problem with the dataset. It might be unusable. "
         "Error:",
-        fetch_openml, data_id=data_id, cache=False
+        fetch_openml, data_id=data_id, cache=False, as_frame=False
     )
 
 
@@ -1135,7 +1187,7 @@ def test_dataset_with_openml_warning(monkeypatch, gzip_response):
         UserWarning,
         "OpenML raised a warning on the dataset. It might be unusable. "
         "Warning:",
-        fetch_openml, data_id=data_id, cache=False
+        fetch_openml, data_id=data_id, cache=False, as_frame=False
     )
 
 
@@ -1184,9 +1236,78 @@ def test_fetch_openml_with_ignored_feature(monkeypatch, gzip_response):
     data_id = 62
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
 
-    dataset = sklearn.datasets.fetch_openml(data_id=data_id, cache=False)
+    dataset = sklearn.datasets.fetch_openml(data_id=data_id, cache=False,
+                                            as_frame=False)
     assert dataset is not None
     # The dataset has 17 features, including 1 ignored (animal),
     # so we assert that we don't have the ignored feature in the final Bunch
     assert dataset['data'].shape == (101, 16)
     assert 'animal' not in dataset['feature_names']
+
+
+# Known failure of PyPy for OpenML. See the following issue:
+# https://github.com/scikit-learn/scikit-learn/issues/18906
+@fails_if_pypy
+@pytest.mark.parametrize('as_frame', [True, False])
+def test_fetch_openml_verify_checksum(monkeypatch, as_frame, cache, tmpdir):
+    if as_frame:
+        pytest.importorskip('pandas')
+
+    data_id = 2
+    _monkey_patch_webbased_functions(monkeypatch, data_id, True)
+
+    # create a temporary modified arff file
+    dataset_dir = os.path.join(currdir, 'data', 'openml', str(data_id))
+    original_data_path = os.path.join(dataset_dir,
+                                      'data-v1-download-1666876.arff.gz')
+    corrupt_copy = os.path.join(tmpdir, "test_invalid_checksum.arff")
+    with gzip.GzipFile(original_data_path, "rb") as orig_gzip, \
+            gzip.GzipFile(corrupt_copy, "wb") as modified_gzip:
+        data = bytearray(orig_gzip.read())
+        data[len(data)-1] = 37
+        modified_gzip.write(data)
+
+    # Requests are already mocked by monkey_patch_webbased_functions.
+    # We want to re-use that mock for all requests except file download,
+    # hence creating a thin mock over the original mock
+    mocked_openml_url = sklearn.datasets._openml.urlopen
+
+    def swap_file_mock(request):
+        url = request.get_full_url()
+        if url.endswith('data/v1/download/1666876'):
+            return _MockHTTPResponse(open(corrupt_copy, "rb"), is_gzip=True)
+        else:
+            return mocked_openml_url(request)
+
+    monkeypatch.setattr(sklearn.datasets._openml, 'urlopen', swap_file_mock)
+
+    # validate failed checksum
+    with pytest.raises(ValueError) as exc:
+        sklearn.datasets.fetch_openml(data_id=data_id, cache=False,
+                                      as_frame=as_frame)
+    # exception message should have file-path
+    assert exc.match("1666876")
+
+
+def test_convert_arff_data_type():
+    pytest.importorskip('pandas')
+
+    arff: ArffContainerType = {
+            'data': (el for el in range(2)),
+            'description': '',
+            'relation': '',
+            'attributes': []
+    }
+    msg = r"shape must be provided when arr\['data'\] is a Generator"
+    with pytest.raises(ValueError, match=msg):
+        _convert_arff_data(arff, [0], [0], shape=None)
+
+    arff = {
+            'data': list(range(2)),
+            'description': '',
+            'relation': '',
+            'attributes': []
+    }
+    msg = r"arff\['data'\] must be a generator when converting to pd.DataFrame"
+    with pytest.raises(ValueError, match=msg):
+        _convert_arff_data_dataframe(arff, ['a'], {})

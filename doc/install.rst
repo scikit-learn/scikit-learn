@@ -79,7 +79,7 @@ Then run:
         ><span class="sk-expandable" data-packager="pip" data-os="linux" data-venv="no">pip3 install -U scikit-learn</span
         ><span class="sk-expandable" data-packager="conda" data-venv="">conda create -n sklearn-env</span
         ><span class="sk-expandable" data-packager="conda" data-venv="">conda activate sklearn-env</span
-        ><span class="sk-expandable" data-packager="conda">conda install scikit-learn </span
+        ><span class="sk-expandable" data-packager="conda">conda install -c conda-forge scikit-learn </span
        ></code></pre></div>
 
 In order to check your installation you can use
@@ -104,7 +104,6 @@ In order to check your installation you can use
       ><span class="sk-expandable" data-packager="conda">python -c "import sklearn; sklearn.show_versions()"</span
       ></code></pre></div>
   </div>
-
 
 Note that in order to avoid potential conflicts with other packages it is
 strongly recommended to use a virtual environment, e.g. python3 ``virtualenv``
@@ -132,10 +131,12 @@ If you must install scikit-learn and its dependencies with pip, you can install
 it as ``scikit-learn[alldeps]``.
 
 Scikit-learn plotting capabilities (i.e., functions start with "plot\_"
-and classes end with "Display") require Matplotlib (>= 2.1.1). For running the
-examples Matplotlib >= 2.1.1 is required. A few examples require
-scikit-image >= 0.13, a few examples require pandas >= 0.18.0, some examples
-require seaborn >= 0.9.0.
+and classes end with "Display") require Matplotlib. The examples require
+Matplotlib and some examples require scikit-image, pandas, or seaborn. The
+minimum version of Scikit-learn dependencies are listed below along with its
+purpose.
+
+.. include:: min_dependency_table.rst
 
 .. warning::
 
@@ -173,9 +174,9 @@ Arch Linux's package is provided through the `official repositories
 ``python-scikit-learn`` for Python.
 It can be installed by typing the following command:
 
-.. code-block:: none
+.. prompt:: bash $
 
-   $ sudo pacman -S python-scikit-learn
+  sudo pacman -S python-scikit-learn
 
 
 Debian/Ubuntu
@@ -186,9 +187,11 @@ The Debian/Ubuntu package is splitted in three different packages called
 implementations and bindings), ``python3-sklearn-doc`` (documentation).
 Only the Python 3 version is available in the Debian Buster (the more recent
 Debian distribution).
-Packages can be installed using ``apt-get``::
+Packages can be installed using ``apt-get``:
 
-    $ sudo apt-get install python3-sklearn python3-sklearn-lib python3-sklearn-doc
+.. prompt:: bash $
+
+  sudo apt-get install python3-sklearn python3-sklearn-lib python3-sklearn-doc
 
 
 Fedora
@@ -196,9 +199,11 @@ Fedora
 
 The Fedora package is called ``python3-scikit-learn`` for the python 3 version,
 the only one available in Fedora30.
-It can be installed using ``dnf``::
+It can be installed using ``dnf``:
 
-    $ sudo dnf install python3-scikit-learn
+.. prompt:: bash $
+
+  sudo dnf install python3-scikit-learn
 
 
 NetBSD
@@ -216,9 +221,11 @@ MacPorts for Mac OSX
 The MacPorts package is named ``py<XY>-scikits-learn``,
 where ``XY`` denotes the Python version.
 It can be installed by typing the following
-command::
+command:
 
-    $ sudo port install py36-scikit-learn
+.. prompt:: bash $
+
+  sudo port install py36-scikit-learn
 
 
 Anaconda and Enthought Deployment Manager for all supported platforms
@@ -235,9 +242,11 @@ Anaconda offers scikit-learn as part of its free distribution.
 Intel conda channel
 -------------------
 
-Intel maintains a dedicated conda channel that ships scikit-learn::
+Intel maintains a dedicated conda channel that ships scikit-learn:
 
-    $ conda install -c intel scikit-learn
+.. prompt:: bash $
+
+  conda install -c intel scikit-learn
 
 This version of scikit-learn comes with alternative solvers for some common
 estimators. Those solvers come from the DAAL C++ library and are optimized for
@@ -289,6 +298,8 @@ using the ``regedit`` tool:
 #. Edit the value of the ``LongPathsEnabled`` property of that key and set
    it to 1.
 
-#. Reinstall scikit-learn (ignoring the previous broken installation)::
+#. Reinstall scikit-learn (ignoring the previous broken installation):
 
-       pip install --exists-action=i scikit-learn
+.. prompt:: python $
+
+    pip install --exists-action=i scikit-learn

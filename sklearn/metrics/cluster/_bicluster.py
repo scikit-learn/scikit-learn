@@ -64,7 +64,7 @@ def consensus_score(a, b, *, similarity="jaccard"):
     b : (rows, columns)
         Another set of biclusters like ``a``.
 
-    similarity : string or function, optional, default: "jaccard"
+    similarity : 'jaccard' or callable, default='jaccard'
         May be the string "jaccard" to use the Jaccard coefficient, or
         any function that takes four arguments, each of which is a 1d
         indicator vector: (a_rows, a_columns, b_rows, b_columns).

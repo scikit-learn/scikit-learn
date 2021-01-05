@@ -5,9 +5,9 @@
 # doc/modules/clustering.rst and use sklearn from the local folder rather than
 # the one from site-packages.
 
+import os
 import platform
 import sys
-from distutils.version import LooseVersion
 
 import pytest
 from _pytest.doctest import DoctestItem
@@ -22,10 +22,11 @@ from sklearn.datasets import fetch_kddcup99
 from sklearn.datasets import fetch_olivetti_faces
 from sklearn.datasets import fetch_rcv1
 
+from sklearn._min_dependencies import PYTEST_MIN_VERSION
+from sklearn.utils.fixes import np_version, parse_version
 
-PYTEST_MIN_VERSION = '3.3.0'
 
-if LooseVersion(pytest.__version__) < PYTEST_MIN_VERSION:
+if parse_version(pytest.__version__) < parse_version(PYTEST_MIN_VERSION):
     raise ImportError('Your version of pytest is too old, you should have '
                       'at least pytest >= {} installed.'
                       .format(PYTEST_MIN_VERSION))
@@ -64,15 +65,25 @@ fetch_rcv1_fxt = _fetch_fixture(fetch_rcv1)
 
 
 def pytest_collection_modifyitems(config, items):
+    for item in items:
+        # FeatureHasher is not compatible with PyPy
+        if (item.name.endswith(('_hash.FeatureHasher',
+                                'text.HashingVectorizer'))
+                and platform.python_implementation() == 'PyPy'):
+            marker = pytest.mark.skip(
+                reason='FeatureHasher is not compatible with PyPy')
+            item.add_marker(marker)
+        # Known failure on with GradientBoostingClassifier on ARM64
+        elif (item.name.endswith('GradientBoostingClassifier')
+                and platform.machine() == 'aarch64'):
 
-    # FeatureHasher is not compatible with PyPy
-    if platform.python_implementation() == 'PyPy':
-        skip_marker = pytest.mark.skip(
-            reason='FeatureHasher is not compatible with PyPy')
-        for item in items:
-            if item.name.endswith(('_hash.FeatureHasher',
-                                   'text.HashingVectorizer')):
-                item.add_marker(skip_marker)
+            marker = pytest.mark.xfail(
+                reason=(
+                    'know failure. See '
+                    'https://github.com/scikit-learn/scikit-learn/issues/17797'  # noqa
+                )
+            )
+            item.add_marker(marker)
 
     run_network_tests = 'not skipnetwork' in config.getoption("markexpr")
     skip_network = pytest.mark.skip(
@@ -105,8 +116,7 @@ def pytest_collection_modifyitems(config, items):
     # run doctests only for numpy >= 1.14.
     skip_doctests = False
     try:
-        import numpy as np
-        if LooseVersion(np.__version__) < LooseVersion('1.14'):
+        if np_version < parse_version('1.14'):
             reason = 'doctests are only run for numpy >= 1.14'
             skip_doctests = True
         elif _IS_32BIT:

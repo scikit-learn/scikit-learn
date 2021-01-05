@@ -16,7 +16,7 @@ To install the latest version (with pip)::
 
 or with conda::
 
-    conda install scikit-learn
+    conda install -c conda-forge scikit-learn
 """
 
 # %%
@@ -133,7 +133,6 @@ plt.show()
 
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingClassifier
-import numpy as np
 
 X = np.array([0, 1, 2, np.nan]).reshape(-1, 1)
 y = [0, 0, 1, 1]
@@ -189,7 +188,6 @@ with TemporaryDirectory(prefix="sklearn_cache_") as tmpdir:
 #
 # Read more in the :ref:`User Guide <knnimpute>`.
 
-import numpy as np
 from sklearn.impute import KNNImputer
 
 X = [[1, 2, np.nan], [3, 4, 3], [np.nan, 6, 5], [8, 8, 7]]

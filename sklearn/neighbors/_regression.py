@@ -14,16 +14,17 @@ import warnings
 
 import numpy as np
 
-from ._base import _get_weights, _check_weights, NeighborsBase, KNeighborsMixin
-from ._base import RadiusNeighborsMixin, SupervisedFloatMixin
+from ._base import _get_weights, _check_weights
+from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
 from ..base import RegressorMixin
 from ..utils import check_array
 from ..utils.validation import _deprecate_positional_args
+from ..utils.deprecation import deprecated
 
 
-class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
-                          SupervisedFloatMixin,
-                          RegressorMixin):
+class KNeighborsRegressor(KNeighborsMixin,
+                          RegressorMixin,
+                          NeighborsBase):
     """Regression based on k-nearest neighbors.
 
     The target is predicted by local interpolation of the targets
@@ -107,6 +108,9 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         `p` parameter value if the `effective_metric_` attribute is set to
         'minkowski'.
 
+    n_samples_fit_ : int
+        Number of samples in the fitted data.
+
     Examples
     --------
     >>> X = [[0], [1], [2], [3]]
@@ -118,7 +122,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
     >>> print(neigh.predict([[1.5]]))
     [0.5]
 
-    See also
+    See Also
     --------
     NearestNeighbors
     RadiusNeighborsRegressor
@@ -152,10 +156,38 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
               metric_params=metric_params, n_jobs=n_jobs, **kwargs)
         self.weights = _check_weights(weights)
 
+    def _more_tags(self):
+        # For cross-validation routines to split data correctly
+        return {'pairwise': self.metric == 'precomputed'}
+
+    # TODO: Remove in 1.1
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def _pairwise(self):
         # For cross-validation routines to split data correctly
         return self.metric == 'precomputed'
+
+    def fit(self, X, y):
+        """Fit the k-nearest neighbors regressor from the training dataset.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
+                (n_samples, n_samples) if metric='precomputed'
+            Training data.
+
+        y : {array-like, sparse matrix} of shape (n_samples,) or \
+                (n_samples, n_outputs)
+            Target values.
+
+        Returns
+        -------
+        self : KNeighborsRegressor
+            The fitted k-nearest neighbors regressor.
+        """
+        return self._fit(X, y)
 
     def predict(self, X):
         """Predict the target for the provided data
@@ -197,9 +229,9 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         return y_pred
 
 
-class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
-                               SupervisedFloatMixin,
-                               RegressorMixin):
+class RadiusNeighborsRegressor(RadiusNeighborsMixin,
+                               RegressorMixin,
+                               NeighborsBase):
     """Regression based on neighbors within a fixed radius.
 
     The target is predicted by local interpolation of the targets
@@ -283,6 +315,9 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
         `p` parameter value if the `effective_metric_` attribute is set to
         'minkowski'.
 
+    n_samples_fit_ : int
+        Number of samples in the fitted data.
+
     Examples
     --------
     >>> X = [[0], [1], [2], [3]]
@@ -294,7 +329,7 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
     >>> print(neigh.predict([[1.5]]))
     [0.5]
 
-    See also
+    See Also
     --------
     NearestNeighbors
     KNeighborsRegressor
@@ -321,6 +356,26 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
               p=p, metric=metric, metric_params=metric_params,
               n_jobs=n_jobs, **kwargs)
         self.weights = _check_weights(weights)
+
+    def fit(self, X, y):
+        """Fit the radius neighbors regressor from the training dataset.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
+                (n_samples, n_samples) if metric='precomputed'
+            Training data.
+
+        y : {array-like, sparse matrix} of shape (n_samples,) or \
+                (n_samples, n_outputs)
+            Target values.
+
+        Returns
+        -------
+        self : RadiusNeighborsRegressor
+            The fitted radius neighbors regressor.
+        """
+        return self._fit(X, y)
 
     def predict(self, X):
         """Predict the target for the provided data

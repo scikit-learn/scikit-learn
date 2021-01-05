@@ -148,7 +148,8 @@ __author_email__ = ('renato.ppontes@gmail.com, '
                     'joel.nothman@gmail.com')
 __version__ = '2.4.0'
 
-from typing import Optional
+from typing import TYPE_CHECKING
+from typing import Optional, List, Dict, Any, Iterator, Union, Tuple
 
 import re
 import sys
@@ -170,6 +171,23 @@ _RE_QUOTE_CHARS = re.compile(r'["\'\\\s%,\000-\031]', re.UNICODE)
 _RE_ESCAPE_CHARS = re.compile(r'(?=["\'\\%])|[\n\r\t\000-\031]')
 _RE_SPARSE_LINE = re.compile(r'^\s*\{.*\}\s*$', re.UNICODE)
 _RE_NONTRIVIAL_DATA = re.compile('["\'{}\\s]', re.UNICODE)
+
+ArffDenseDataType = Iterator[List]
+ArffSparseDataType = Tuple[List, ...]
+
+
+if TYPE_CHECKING:
+    # typing_extensions is available when mypy is installed
+    from typing_extensions import TypedDict
+
+    class ArffContainerType(TypedDict):
+        description: str
+        relation: str
+        attributes: List
+        data: Union[ArffDenseDataType, ArffSparseDataType]
+
+else:
+    ArffContainerType = Dict[str, Any]
 
 
 def _build_re_values():
@@ -247,8 +265,8 @@ def _escape_sub_callback(match):
     if len(s) == 2:
         try:
             return _ESCAPE_SUB_MAP[s]
-        except KeyError:
-            raise ValueError('Unsupported escape sequence: %s' % s)
+        except KeyError as e:
+            raise ValueError('Unsupported escape sequence: %s' % s) from e
     if s[1] == 'u':
         return unichr(int(s[2:], 16))
     else:
@@ -285,8 +303,8 @@ def _parse_values(s):
             # an ARFF syntax error in sparse data
             for match in _RE_SPARSE_KEY_VALUES.finditer(s):
                 if not match.group(1):
-                    raise BadLayout('Error parsing %r' % match.group())
-            raise BadLayout('Unknown parsing error')
+                    raise BadLayout('Error parsing %r' % match.group()) from exc
+            raise BadLayout('Unknown parsing error') from exc
     else:
         # an ARFF syntax error
         for match in _RE_DENSE_VALUES.finditer(s):
@@ -431,8 +449,8 @@ class EncodedNominalConversor(object):
     def __call__(self, value):
         try:
             return self.values[value]
-        except KeyError:
-            raise BadNominalValue(value)
+        except KeyError as e:
+            raise BadNominalValue(value) from e
 
 
 class NominalConversor(object):
@@ -480,7 +498,7 @@ class DenseGeneratorData(object):
                       in zip(conversors, values)]
         except ValueError as exc:
             if 'float: ' in str(exc):
-                raise BadNumericalValue()
+                raise BadNumericalValue from exc
         return values
 
     def encode_data(self, data, attributes):
@@ -539,11 +557,11 @@ class COOData(object):
                           for key, value in zip(row_cols, values)]
             except ValueError as exc:
                 if 'float: ' in str(exc):
-                    raise BadNumericalValue()
+                    raise BadNumericalValue from exc
                 raise
-            except IndexError:
+            except IndexError as e:
                 # conversor out of range
-                raise BadDataFormat(row)
+                raise BadDataFormat(row) from e
 
             data.extend(values)
             rows.extend([i] * len(values))
@@ -599,11 +617,11 @@ class LODGeneratorData(object):
                        for key, value in values.items()}
             except ValueError as exc:
                 if 'float: ' in str(exc):
-                    raise BadNumericalValue()
+                    raise BadNumericalValue from exc
                 raise
-            except IndexError:
+            except IndexError as e:
                 # conversor out of range
-                raise BadDataFormat(row)
+                raise BadDataFormat(row) from e
 
     def encode_data(self, data, attributes):
         current_row = 0
@@ -754,8 +772,8 @@ class ArffDecoder(object):
         if _RE_TYPE_NOMINAL.match(type_):
             try:
                 type_ = _parse_values(type_.strip('{} '))
-            except Exception:
-                raise BadAttributeType()
+            except Exception as e:
+                raise BadAttributeType from e
             if isinstance(type_, dict):
                 raise BadAttributeType()
 
@@ -778,7 +796,7 @@ class ArffDecoder(object):
             s = s.strip('\r\n ').replace('\r\n', '\n').split('\n')
 
         # Create the return object
-        obj = {
+        obj: ArffContainerType = {
             u'description': u'',
             u'relation': u'',
             u'attributes': [],

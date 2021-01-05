@@ -186,6 +186,13 @@ General Concepts
         :class:`~pipeline.Pipeline` and
         :class:`~pipeline.FeatureUnion`.)
 
+        If the estimator's `random_state` parameter is an integer (or if the
+        estimator doesn't have a `random_state` parameter), an *exact clone*
+        is returned: the clone and the original estimator will give the exact
+        same results. Otherwise, *statistical clone* is returned: the clone
+        might yield different results from the original estimator. More
+        details can be found in :ref:`randomness`.
+
     common tests
         This refers to the tests run on almost every estimator class in
         Scikit-learn to check they comply with basic API conventions.  They are
@@ -321,6 +328,12 @@ General Concepts
         * sometimes in the :ref:`User Guide <user_guide>` (built from ``doc/``)
           alongside a technical description of the estimator.
 
+    experimental
+        An experimental tool is already usable but its public API, such as
+        default parameter values or fitted attributes, is still subject to
+        change in future versions without the usual :term:`deprecation`
+        warning policy.
+
     evaluation metric
     evaluation metrics
         Evaluation metrics give a measure of how well a model performs.  We may
@@ -373,6 +386,12 @@ General Concepts
                 extracts a sub-sample of data intended for a pairwise estimator,
                 the data needs to be indexed on both axes, while other data is
                 indexed only on the first axis.
+
+                .. deprecated:: 0.24
+
+                    The _pairwise attribute is deprecated in 0.24. From 1.1
+                    (renaming of 0.26) onward, the `pairwise` estimator tag
+                    should be used instead.
 
         For more detailed info, see :ref:`estimator_tags`.
 
@@ -504,8 +523,9 @@ General Concepts
         representation of missing values in float arrays.  If the array has
         integer dtype, NaN cannot be represented. For this reason, we support
         specifying another ``missing_values`` value when :term:`imputation` or
-        learning can be performed in integer space.  :term:`Unlabeled data`
-        is a special case of missing values in the :term:`target`.
+        learning can be performed in integer space.
+        :term:`Unlabeled data <unlabeled data>` is a special case of missing
+        values in the :term:`target`.
 
     ``n_features``
         The number of :term:`features`.
@@ -638,9 +658,9 @@ General Concepts
         sample and each column to a training sample.
 
         Use of precomputed X is usually indicated by setting a ``metric``,
-        ``affinity`` or ``kernel`` parameter to the string 'precomputed'.  An
-        estimator should mark itself as being :term:`_pairwise` if this is the
-        case.
+        ``affinity`` or ``kernel`` parameter to the string 'precomputed'. If
+        this is the case, then the estimator should set the `pairwise`
+        estimator tag as True.
 
     rectangular
         Data that can be represented as a matrix with :term:`samples` on the
@@ -980,7 +1000,7 @@ such as:
         Cross-validation estimators are named `EstimatorCV` and tend to be
         roughly equivalent to `GridSearchCV(Estimator(), ...)`. The
         advantage of using a cross-validation estimator over the canonical
-        :term:`Estimator` class along with :ref:`grid search <grid_search>` is
+        :term:`estimator` class along with :ref:`grid search <grid_search>` is
         that they can take advantage of warm-starting by reusing precomputed
         results in the previous steps of the cross-validation process. This
         generally leads to speed improvements. An exception is the
@@ -1036,7 +1056,9 @@ Target Types
         identified as 'multiclass'.
 
     continuous multioutput
+    continuous multi-output
     multioutput continuous
+    multi-output continuous
         A regression problem where each sample's target consists of ``n_outputs``
         :term:`outputs`, each one a finite floating point number, for a
         fixed int ``n_outputs > 1`` in a particular dataset.
@@ -1051,6 +1073,7 @@ Target Types
         'multiclass-multioutput'.
 
     multiclass
+    multi-class
         A classification problem consisting of more than two classes.  A
         multiclass target may be represented as a 1-dimensional array of
         strings or integers.  A 2d column vector of integers (i.e. a
@@ -1074,7 +1097,9 @@ Target Types
         identically to 'multiclass'.
 
     multiclass multioutput
+    multi-class multi-output
     multioutput multiclass
+    multi-output multi-class
         A classification problem where each sample's target consists of
         ``n_outputs`` :term:`outputs`, each a class label, for a fixed int
         ``n_outputs > 1`` in a particular dataset.  Each output has a
@@ -1100,6 +1125,7 @@ Target Types
         'multiclass-multioutput' for multiclass multioutput input.
 
     multilabel
+    multi-label
         A :term:`multiclass multioutput` target where each output is
         :term:`binary`.  This may be represented as a 2d (dense) array or
         sparse matrix of integers, such that each column is a separate binary
@@ -1206,8 +1232,8 @@ Methods
         return the same value, wherein training data needs to be handled
         differently (due to model blending in stacked ensembles, for instance;
         such cases should be clearly documented).
-        :term:`Transductive` transformers may also provide ``fit_transform``
-        but not :term:`transform`.
+        :term:`Transductive <transductive>` transformers may also provide
+        ``fit_transform`` but not :term:`transform`.
 
         One reason to implement ``fit_transform`` is that performing ``fit``
         and ``transform`` separately would be less efficient than together.
@@ -1295,9 +1321,10 @@ Methods
 
         classifier
             An array of shape ``(n_samples,)`` ``(n_samples, n_outputs)``.
-            :term:`Multilabel` data may be represented as a sparse matrix if
-            a sparse matrix was used in fitting. Each element should be one
-            of the values in the classifier's :term:`classes_` attribute.
+            :term:`Multilabel <multilabel>` data may be represented as a sparse
+            matrix if a sparse matrix was used in fitting. Each element should
+            be one of the values in the classifier's :term:`classes_`
+            attribute.
 
         clusterer
             An array of shape ``(n_samples,)`` where each value is from 0 to
@@ -1570,6 +1597,9 @@ functions or non-estimator constructors.
         input ``random_state`` and return a :class:`~numpy.random.RandomState`
         instance.
 
+        For more details on how to control the randomness of scikit-learn
+        objects and avoid common pitfalls, you may refer to :ref:`randomness`.
+
     ``scoring``
         Specifies the score function to be maximized (usually by :ref:`cross
         validation <cross_validation>`), or -- in some cases -- multiple score
@@ -1581,10 +1611,10 @@ functions or non-estimator constructors.
         in the User Guide.
 
         Where multiple metrics can be evaluated, ``scoring`` may be given
-        either as a list of unique strings or a dictionary with names as keys
-        and callables as values. Note that this does *not* specify which score
-        function is to be maximized, and another parameter such as ``refit``
-        maybe used for this purpose.
+        either as a list of unique strings, a dictionary with names as keys and
+        callables as values or a callable that returns a dictionary. Note that
+        this does *not* specify which score function is to be maximized, and
+        another parameter such as ``refit`` maybe used for this purpose.
 
 
         The ``scoring`` parameter is validated and interpreted using

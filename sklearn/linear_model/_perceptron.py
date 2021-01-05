@@ -20,6 +20,13 @@ class Perceptron(BaseSGDClassifier):
         Constant that multiplies the regularization term if regularization is
         used.
 
+    l1_ratio : float, default=0.15
+        The Elastic Net mixing parameter, with `0 <= l1_ratio <= 1`.
+        `l1_ratio=0` corresponds to L2 penalty, `l1_ratio=1` to L1.
+        Only used if `penalty='elasticnet'`.
+
+        .. versionadded:: 0.24
+
     fit_intercept : bool, default=True
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered.
@@ -97,19 +104,23 @@ class Perceptron(BaseSGDClassifier):
 
     Attributes
     ----------
-    coef_ : ndarray of shape = [1, n_features] if n_classes == 2 else \
-        [n_classes, n_features]
+    classes_ : ndarray of shape (n_classes,)
+        The unique classes labels.
+
+    coef_ : ndarray of shape (1, n_features) if n_classes == 2 else \
+            (n_classes, n_features)
         Weights assigned to the features.
 
-    intercept_ : ndarray of shape = [1] if n_classes == 2 else [n_classes]
+    intercept_ : ndarray of shape (1,) if n_classes == 2 else (n_classes,)
         Constants in decision function.
+
+    loss_function_ : concrete LossFunction
+        The function that determines the loss, or difference between the
+        output of the algorithm and the target values.
 
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.
         For multiclass fits, it is the maximum over every binary fit.
-
-    classes_ : ndarray of shape (n_classes,)
-        The unique classes labels.
 
     t_ : int
         Number of weight updates performed during training.
@@ -134,9 +145,8 @@ class Perceptron(BaseSGDClassifier):
     >>> clf.score(X, y)
     0.939...
 
-    See also
+    See Also
     --------
-
     SGDClassifier
 
     References
@@ -145,13 +155,14 @@ class Perceptron(BaseSGDClassifier):
     https://en.wikipedia.org/wiki/Perceptron and references therein.
     """
     @_deprecate_positional_args
-    def __init__(self, *, penalty=None, alpha=0.0001, fit_intercept=True,
+    def __init__(self, *, penalty=None, alpha=0.0001, l1_ratio=0.15,
+                 fit_intercept=True,
                  max_iter=1000, tol=1e-3, shuffle=True, verbose=0, eta0=1.0,
                  n_jobs=None, random_state=0, early_stopping=False,
                  validation_fraction=0.1, n_iter_no_change=5,
                  class_weight=None, warm_start=False):
         super().__init__(
-            loss="perceptron", penalty=penalty, alpha=alpha, l1_ratio=0,
+            loss="perceptron", penalty=penalty, alpha=alpha, l1_ratio=l1_ratio,
             fit_intercept=fit_intercept, max_iter=max_iter, tol=tol,
             shuffle=shuffle, verbose=verbose, random_state=random_state,
             learning_rate="constant", eta0=eta0, early_stopping=early_stopping,

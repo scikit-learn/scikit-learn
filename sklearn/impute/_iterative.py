@@ -68,7 +68,7 @@ class IterativeImputer(_BaseImputer):
         Maximum number of imputation rounds to perform before returning the
         imputations computed during the final round. A round is a single
         imputation of each feature with missing values. The stopping criterion
-        is met once `abs(max(X_t - X_{t-1}))/abs(max(X[known_vals]))` < tol,
+        is met once `max(abs(X_t - X_{t-1}))/max(abs(X[known_vals]))` < tol,
         where `X_t` is `X` at iteration `t. Note that early stopping is only
         applied if ``sample_posterior=False``.
 
@@ -87,7 +87,7 @@ class IterativeImputer(_BaseImputer):
 
     initial_strategy : str, default='mean'
         Which strategy to use to initialize the missing values. Same as the
-        ``strategy`` parameter in :class:`sklearn.impute.SimpleImputer`
+        ``strategy`` parameter in :class:`~sklearn.impute.SimpleImputer`
         Valid values: {"mean", "median", "most_frequent", or "constant"}.
 
     imputation_order : str, default='ascending'
@@ -116,10 +116,16 @@ class IterativeImputer(_BaseImputer):
         scalar. If array-like, expects shape (n_features,), one min value for
         each feature. The default is `-np.inf`.
 
+        .. versionchanged:: 0.23
+           Added support for array-like.
+
     max_value : float or array-like of shape (n_features,), default=np.inf
         Maximum possible imputed value. Broadcast to shape (n_features,) if
         scalar. If array-like, expects shape (n_features,), one max value for
         each feature. The default is `np.inf`.
+
+        .. versionchanged:: 0.23
+           Added support for array-like.
 
     verbose : int, default=0
         Verbosity flag, controls the debug messages that are issued
@@ -143,7 +149,7 @@ class IterativeImputer(_BaseImputer):
 
     Attributes
     ----------
-    initial_imputer_ : object of type :class:`sklearn.impute.SimpleImputer`
+    initial_imputer_ : object of type :class:`~sklearn.impute.SimpleImputer`
         Imputer used to initialize the missing values.
 
     imputation_sequence_ : list of tuples
@@ -161,7 +167,7 @@ class IterativeImputer(_BaseImputer):
     n_features_with_missing_ : int
         Number of features with missing values.
 
-    indicator_ : :class:`sklearn.impute.MissingIndicator`
+    indicator_ : :class:`~sklearn.impute.MissingIndicator`
         Indicator used to add binary indicators for missing values.
         ``None`` if add_indicator is False.
 
@@ -169,7 +175,7 @@ class IterativeImputer(_BaseImputer):
         RandomState instance that is generated either from a seed, the random
         number generator or by `np.random`.
 
-    See also
+    See Also
     --------
     SimpleImputer : Univariate imputation of missing values.
 
@@ -468,7 +474,7 @@ class IterativeImputer(_BaseImputer):
         abs_corr_mat = normalize(abs_corr_mat, norm='l1', axis=0, copy=False)
         return abs_corr_mat
 
-    def _initial_imputation(self, X):
+    def _initial_imputation(self, X, in_fit=False):
         """Perform initial imputation for input X.
 
         Parameters
@@ -476,6 +482,9 @@ class IterativeImputer(_BaseImputer):
         X : ndarray, shape (n_samples, n_features)
             Input data, where "n_samples" is the number of samples and
             "n_features" is the number of features.
+
+        in_fit : bool, default=False
+            Whether function is called in fit.
 
         Returns
         -------
@@ -489,17 +498,23 @@ class IterativeImputer(_BaseImputer):
         mask_missing_values : ndarray, shape (n_samples, n_features)
             Input data's missing indicator matrix, where "n_samples" is the
             number of samples and "n_features" is the number of features.
+
+        X_missing_mask : ndarray, shape (n_samples, n_features)
+            Input data's mask matrix indicating missing datapoints, where
+            "n_samples" is the number of samples and "n_features" is the
+            number of features.
         """
         if is_scalar_nan(self.missing_values):
             force_all_finite = "allow-nan"
         else:
             force_all_finite = True
 
-        X = self._validate_data(X, dtype=FLOAT_DTYPES, order="F",
+        X = self._validate_data(X, dtype=FLOAT_DTYPES, order="F", reset=in_fit,
                                 force_all_finite=force_all_finite)
         _check_inputs_dtype(X, self.missing_values)
 
-        mask_missing_values = _get_mask(X, self.missing_values)
+        X_missing_mask = _get_mask(X, self.missing_values)
+        mask_missing_values = X_missing_mask.copy()
         if self.initial_imputer_ is None:
             self.initial_imputer_ = SimpleImputer(
                 missing_values=self.missing_values,
@@ -514,7 +529,7 @@ class IterativeImputer(_BaseImputer):
         Xt = X[:, valid_mask]
         mask_missing_values = mask_missing_values[:, valid_mask]
 
-        return Xt, X_filled, mask_missing_values
+        return Xt, X_filled, mask_missing_values, X_missing_mask
 
     @staticmethod
     def _validate_limit(limit, limit_type, n_features):
@@ -584,15 +599,16 @@ class IterativeImputer(_BaseImputer):
         else:
             self._estimator = clone(self.estimator)
 
-        if hasattr(self._estimator, 'random_state'):
-            self._estimator.random_state = self.random_state_
-
         self.imputation_sequence_ = []
 
         self.initial_imputer_ = None
-        super()._fit_indicator(X)
-        X_indicator = super()._transform_indicator(X)
-        X, Xt, mask_missing_values = self._initial_imputation(X)
+
+        X, Xt, mask_missing_values, complete_mask = (
+            self._initial_imputation(X, in_fit=True))
+
+        super()._fit_indicator(complete_mask)
+        X_indicator = super()._transform_indicator(complete_mask)
+
         if self.max_iter == 0 or np.all(mask_missing_values):
             self.n_iter_ = 0
             return super()._concatenate_indicator(Xt, X_indicator)
@@ -689,8 +705,9 @@ class IterativeImputer(_BaseImputer):
         """
         check_is_fitted(self)
 
-        X_indicator = super()._transform_indicator(X)
-        X, Xt, mask_missing_values = self._initial_imputation(X)
+        X, Xt, mask_missing_values, complete_mask = self._initial_imputation(X)
+
+        X_indicator = super()._transform_indicator(complete_mask)
 
         if self.n_iter_ == 0 or np.all(mask_missing_values):
             return super()._concatenate_indicator(Xt, X_indicator)

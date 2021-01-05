@@ -2,12 +2,12 @@
 from ._base import NeighborsBase
 from ._base import KNeighborsMixin
 from ._base import RadiusNeighborsMixin
-from ._base import UnsupervisedMixin
 from ..utils.validation import _deprecate_positional_args
 
 
-class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin,
-                       UnsupervisedMixin, NeighborsBase):
+class NearestNeighbors(KNeighborsMixin,
+                       RadiusNeighborsMixin,
+                       NeighborsBase):
     """Unsupervised learner for implementing neighbor searches.
 
     Read more in the :ref:`User Guide <unsupervised_neighbors>`.
@@ -73,24 +73,29 @@ class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin,
     effective_metric_params_ : dict
         Parameters for the metric used to compute distances to neighbors.
 
+    n_samples_fit_ : int
+        Number of samples in the fitted data.
+
     Examples
     --------
-      >>> import numpy as np
-      >>> from sklearn.neighbors import NearestNeighbors
-      >>> samples = [[0, 0, 2], [1, 0, 0], [0, 0, 1]]
+    >>> import numpy as np
+    >>> from sklearn.neighbors import NearestNeighbors
+    >>> samples = [[0, 0, 2], [1, 0, 0], [0, 0, 1]]
 
-      >>> neigh = NearestNeighbors(n_neighbors=2, radius=0.4)
-      >>> neigh.fit(samples)
-      NearestNeighbors(...)
+    >>> neigh = NearestNeighbors(n_neighbors=2, radius=0.4)
+    >>> neigh.fit(samples)
+    NearestNeighbors(...)
 
-      >>> neigh.kneighbors([[0, 0, 1.3]], 2, return_distance=False)
-      array([[2, 0]]...)
+    >>> neigh.kneighbors([[0, 0, 1.3]], 2, return_distance=False)
+    array([[2, 0]]...)
 
-      >>> nbrs = neigh.radius_neighbors([[0, 0, 1.3]], 0.4, return_distance=False)
-      >>> np.asarray(nbrs[0][0])
-      array(2)
+    >>> nbrs = neigh.radius_neighbors(
+    ...    [[0, 0, 1.3]], 0.4, return_distance=False
+    ... )
+    >>> np.asarray(nbrs[0][0])
+    array(2)
 
-    See also
+    See Also
     --------
     KNeighborsClassifier
     RadiusNeighborsClassifier
@@ -116,3 +121,22 @@ class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin,
               algorithm=algorithm,
               leaf_size=leaf_size, metric=metric, p=p,
               metric_params=metric_params, n_jobs=n_jobs)
+
+    def fit(self, X, y=None):
+        """Fit the nearest neighbors estimator from the training dataset.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
+                (n_samples, n_samples) if metric='precomputed'
+            Training data.
+
+        y : Ignored
+            Not used, present for API consistency by convention.
+
+        Returns
+        -------
+        self : NearestNeighbors
+            The fitted nearest neighbors estimator.
+        """
+        return self._fit(X)

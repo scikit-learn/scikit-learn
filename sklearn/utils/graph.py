@@ -27,13 +27,15 @@ def single_source_shortest_path_length(graph, source, *, cutoff=None):
 
     Parameters
     ----------
-    graph : sparse matrix or 2D array (preferably LIL matrix)
-        Adjacency matrix of the graph
-    source : integer
-       Starting node for path
-    cutoff : integer, optional
-        Depth to stop the search - only
-        paths of length <= cutoff are returned.
+    graph : {sparse matrix, ndarray} of shape (n, n)
+        Adjacency matrix of the graph. Sparse matrix of format LIL is
+        preferred.
+
+    source : int
+       Starting node for path.
+
+    cutoff : int, default=None
+        Depth to stop the search - only paths of length <= cutoff are returned.
 
     Examples
     --------

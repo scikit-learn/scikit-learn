@@ -20,9 +20,10 @@ import warnings
 import numpy as np
 import scipy.sparse as sp
 from scipy import linalg
+from scipy import optimize
 from scipy import sparse
 from scipy.special import expit
-from joblib import Parallel, delayed
+from joblib import Parallel
 
 from ..base import (BaseEstimator, ClassifierMixin, RegressorMixin,
                     MultiOutputMixin)
@@ -36,6 +37,8 @@ from ..utils.fixes import sparse_lsqr
 from ..utils._seq_dataset import ArrayDataset32, CSRDataset32
 from ..utils._seq_dataset import ArrayDataset64, CSRDataset64
 from ..utils.validation import check_is_fitted, _check_sample_weight
+
+from ..utils.fixes import delayed
 from ..preprocessing import normalize as f_normalize
 
 # TODO: bayesian_ridge_regression and bayesian_regression_ard
@@ -215,7 +218,8 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
     def _decision_function(self, X):
         check_is_fitted(self)
 
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+        X = self._validate_data(X, accept_sparse=['csr', 'csc', 'coo'],
+                                reset=False)
         return safe_sparse_dot(X, self.coef_.T,
                                dense_output=True) + self.intercept_
 
@@ -279,13 +283,7 @@ class LinearClassifierMixin(ClassifierMixin):
         """
         check_is_fitted(self)
 
-        X = check_array(X, accept_sparse='csr')
-
-        n_features = self.coef_.shape[1]
-        if X.shape[1] != n_features:
-            raise ValueError("X has %d features per sample; expecting %d"
-                             % (X.shape[1], n_features))
-
+        X = self._validate_data(X, accept_sparse='csr', reset=False)
         scores = safe_sparse_dot(X, self.coef_.T,
                                  dense_output=True) + self.intercept_
         return scores.ravel() if scores.shape[1] == 1 else scores
@@ -306,7 +304,7 @@ class LinearClassifierMixin(ClassifierMixin):
         """
         scores = self.decision_function(X)
         if len(scores.shape) == 1:
-            indices = (scores > 0).astype(np.int)
+            indices = (scores > 0).astype(int)
         else:
             indices = scores.argmax(axis=1)
         return self.classes_[indices]
@@ -406,8 +404,8 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit`` on
-        an estimator with ``normalize=False``.
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
+        on an estimator with ``normalize=False``.
 
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
@@ -418,6 +416,12 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
+
+    positive : bool, default=False
+        When set to ``True``, forces the coefficients to be positive. This
+        option is only supported for dense arrays.
+
+        .. versionadded:: 0.24
 
     Attributes
     ----------
@@ -439,19 +443,20 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
     See Also
     --------
-    sklearn.linear_model.Ridge : Ridge regression addresses some of the
+    Ridge : Ridge regression addresses some of the
         problems of Ordinary Least Squares by imposing a penalty on the
         size of the coefficients with l2 regularization.
-    sklearn.linear_model.Lasso : The Lasso is a linear model that estimates
+    Lasso : The Lasso is a linear model that estimates
         sparse coefficients with l1 regularization.
-    sklearn.linear_model.ElasticNet : Elastic-Net is a linear regression
+    ElasticNet : Elastic-Net is a linear regression
         model trained with both l1 and l2 -norm regularization of the
         coefficients.
 
     Notes
     -----
     From the implementation point of view, this is just plain Ordinary
-    Least Squares (scipy.linalg.lstsq) wrapped as a predictor object.
+    Least Squares (scipy.linalg.lstsq) or Non Negative Least Squares
+    (scipy.optimize.nnls) wrapped as a predictor object.
 
     Examples
     --------
@@ -472,11 +477,12 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     """
     @_deprecate_positional_args
     def __init__(self, *, fit_intercept=True, normalize=False, copy_X=True,
-                 n_jobs=None):
+                 n_jobs=None, positive=False):
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.copy_X = copy_X
         self.n_jobs = n_jobs
+        self.positive = positive
 
     def fit(self, X, y, sample_weight=None):
         """
@@ -502,7 +508,10 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         """
 
         n_jobs_ = self.n_jobs
-        X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc', 'coo'],
+
+        accept_sparse = False if self.positive else ['csr', 'csc', 'coo']
+
+        X, y = self._validate_data(X, y, accept_sparse=accept_sparse,
                                    y_numeric=True, multi_output=True)
 
         if sample_weight is not None:
@@ -518,7 +527,16 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
             # Sample weight can be implemented via a simple rescaling.
             X, y = _rescale_data(X, y, sample_weight)
 
-        if sp.issparse(X):
+        if self.positive:
+            if y.ndim < 2:
+                self.coef_, self._residues = optimize.nnls(X, y)
+            else:
+                # scipy.optimize.nnls cannot handle y with shape (M, K)
+                outs = Parallel(n_jobs=n_jobs_)(
+                        delayed(optimize.nnls)(X, y[:, j])
+                        for j in range(y.shape[1]))
+                self.coef_, self._residues = map(np.vstack, zip(*outs))
+        elif sp.issparse(X):
             X_offset_scale = X_offset / X_scale
 
             def matvec(b):
@@ -553,6 +571,61 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         return self
 
 
+def _check_precomputed_gram_matrix(X, precompute, X_offset, X_scale,
+                                   rtol=1e-7,
+                                   atol=1e-5):
+    """Computes a single element of the gram matrix and compares it to
+    the corresponding element of the user supplied gram matrix.
+
+    If the values do not match a ValueError will be thrown.
+
+    Parameters
+    ----------
+    X : ndarray of shape (n_samples, n_features)
+        Data array.
+
+    precompute : array-like of shape (n_features, n_features)
+        User-supplied gram matrix.
+
+    X_offset : ndarray of shape (n_features,)
+        Array of feature means used to center design matrix.
+
+    X_scale : ndarray of shape (n_features,)
+        Array of feature scale factors used to normalize design matrix.
+
+    rtol : float, default=1e-7
+        Relative tolerance; see numpy.allclose.
+
+    atol : float, default=1e-5
+        absolute tolerance; see :func`numpy.allclose`. Note that the default
+        here is more tolerant than the default for
+        :func:`numpy.testing.assert_allclose`, where `atol=0`.
+
+    Raises
+    ------
+    ValueError
+        Raised when the provided Gram matrix is not consistent.
+    """
+
+    n_features = X.shape[1]
+    f1 = n_features // 2
+    f2 = min(f1+1, n_features-1)
+
+    v1 = (X[:, f1] - X_offset[f1]) * X_scale[f1]
+    v2 = (X[:, f2] - X_offset[f2]) * X_scale[f2]
+
+    expected = np.dot(v1, v2)
+    actual = precompute[f1, f2]
+
+    if not np.isclose(expected, actual, rtol=rtol, atol=atol):
+        raise ValueError("Gram matrix passed in via 'precompute' parameter "
+                         "did not pass validation when a single element was "
+                         "checked - please check that it was computed "
+                         f"properly. For element ({f1},{f2}) we computed "
+                         f"{expected} but the user-supplied value was "
+                         f"{actual}.")
+
+
 def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy,
              check_input=True, sample_weight=None):
     """Aux function used at beginning of fit in linear models
@@ -578,16 +651,22 @@ def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy,
             check_input=check_input, sample_weight=sample_weight)
     if sample_weight is not None:
         X, y = _rescale_data(X, y, sample_weight=sample_weight)
-    if hasattr(precompute, '__array__') and (
-        fit_intercept and not np.allclose(X_offset, np.zeros(n_features)) or
-            normalize and not np.allclose(X_scale, np.ones(n_features))):
-        warnings.warn("Gram matrix was provided but X was centered"
-                      " to fit intercept, "
-                      "or X was normalized : recomputing Gram matrix.",
-                      UserWarning)
-        # recompute Gram
-        precompute = 'auto'
-        Xy = None
+    if hasattr(precompute, '__array__'):
+        if (fit_intercept and not np.allclose(X_offset, np.zeros(n_features))
+                or normalize and not np.allclose(X_scale,
+                                                 np.ones(n_features))):
+            warnings.warn(
+                "Gram matrix was provided but X was centered to fit "
+                "intercept, or X was normalized : recomputing Gram matrix.",
+                UserWarning
+            )
+            # recompute Gram
+            precompute = 'auto'
+            Xy = None
+        elif check_input:
+            # If we're going to use the user's precomputed gram matrix, we
+            # do a quick check to make sure its not totally bogus.
+            _check_precomputed_gram_matrix(X, precompute, X_offset, X_scale)
 
     # precompute if n_samples > n_features
     if isinstance(precompute, str) and precompute == 'auto':

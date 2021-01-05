@@ -162,7 +162,7 @@ class AnnoyTransformer(TransformerMixin, BaseEstimator):
         n_neighbors = self.n_neighbors + 1
 
         indices = np.empty((n_samples_transform, n_neighbors),
-                           dtype=np.int)
+                           dtype=int)
         distances = np.empty((n_samples_transform, n_neighbors))
 
         if X is None:

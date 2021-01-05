@@ -16,14 +16,16 @@ Seeding is performed using a binning technique for scalability.
 
 import numpy as np
 import warnings
-from joblib import Parallel, delayed
+from joblib import Parallel
 
 from collections import defaultdict
 from ..utils.validation import check_is_fitted, _deprecate_positional_args
+from ..utils.fixes import delayed
 from ..utils import check_random_state, gen_batches, check_array
 from ..base import BaseEstimator, ClusterMixin
 from ..neighbors import NearestNeighbors
 from ..metrics.pairwise import pairwise_distances_argmin
+from .._config import config_context
 
 
 @_deprecate_positional_args
@@ -218,6 +220,8 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
     bin_seeds : array-like of shape (n_samples, n_features)
         Points used as initial kernel positions in clustering.mean_shift.
     """
+    if bin_size == 0:
+        return X
 
     # Bin points
     bin_sizes = defaultdict(int)
@@ -419,7 +423,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
                                      key=lambda tup: (tup[1], tup[0]),
                                      reverse=True)
         sorted_centers = np.array([tup[0] for tup in sorted_by_intensity])
-        unique = np.ones(len(sorted_centers), dtype=np.bool)
+        unique = np.ones(len(sorted_centers), dtype=bool)
         nbrs = NearestNeighbors(radius=bandwidth,
                                 n_jobs=self.n_jobs).fit(sorted_centers)
         for i, center in enumerate(sorted_centers):
@@ -433,7 +437,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
         # ASSIGN LABELS: a point belongs to the cluster that it is closest to
         nbrs = NearestNeighbors(n_neighbors=1,
                                 n_jobs=self.n_jobs).fit(cluster_centers)
-        labels = np.zeros(n_samples, dtype=np.int)
+        labels = np.zeros(n_samples, dtype=int)
         distances, idxs = nbrs.kneighbors(X)
         if self.cluster_all:
             labels = idxs.flatten()
@@ -459,5 +463,6 @@ class MeanShift(ClusterMixin, BaseEstimator):
             Index of the cluster each sample belongs to.
         """
         check_is_fitted(self)
-
-        return pairwise_distances_argmin(X, self.cluster_centers_)
+        X = self._validate_data(X, reset=False)
+        with config_context(assume_finite=True):
+            return pairwise_distances_argmin(X, self.cluster_centers_)

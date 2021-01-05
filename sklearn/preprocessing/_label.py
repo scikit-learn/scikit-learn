@@ -47,7 +47,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
 
     Attributes
     ----------
-    classes_ : array of shape (n_class,)
+    classes_ : ndarray of shape (n_classes,)
         Holds the label for each class.
 
     Examples
@@ -78,17 +78,15 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
     >>> list(le.inverse_transform([2, 2, 1]))
     ['tokyo', 'tokyo', 'paris']
 
-    See also
+    See Also
     --------
-    sklearn.preprocessing.OrdinalEncoder : Encode categorical features
-        using an ordinal encoding scheme.
-
-    sklearn.preprocessing.OneHotEncoder : Encode categorical features
-        as a one-hot numeric array.
+    OrdinalEncoder : Encode categorical features using an ordinal encoding
+        scheme.
+    OneHotEncoder : Encode categorical features as a one-hot numeric array.
     """
 
     def fit(self, y):
-        """Fit label encoder
+        """Fit label encoder.
 
         Parameters
         ----------
@@ -104,16 +102,16 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
         return self
 
     def fit_transform(self, y):
-        """Fit label encoder and return encoded labels
+        """Fit label encoder and return encoded labels.
 
         Parameters
         ----------
-        y : array-like of shape [n_samples]
+        y : array-like of shape (n_samples,)
             Target values.
 
         Returns
         -------
-        y : array-like of shape [n_samples]
+        y : array-like of shape (n_samples,)
         """
         y = column_or_1d(y, warn=True)
         self.classes_, y = _unique(y, return_inverse=True)
@@ -124,12 +122,12 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        y : array-like of shape [n_samples]
+        y : array-like of shape (n_samples,)
             Target values.
 
         Returns
         -------
-        y : array-like of shape [n_samples]
+        y : array-like of shape (n_samples,)
         """
         check_is_fitted(self)
         y = column_or_1d(y, warn=True)
@@ -144,12 +142,12 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        y : numpy array of shape [n_samples]
+        y : ndarray of shape (n_samples,)
             Target values.
 
         Returns
         -------
-        y : numpy array of shape [n_samples]
+        y : ndarray of shape (n_samples,)
         """
         check_is_fitted(self)
         y = column_or_1d(y, warn=True)
@@ -169,7 +167,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
 
 
 class LabelBinarizer(TransformerMixin, BaseEstimator):
-    """Binarize labels in a one-vs-all fashion
+    """Binarize labels in a one-vs-all fashion.
 
     Several regression and binary classification algorithms are
     available in scikit-learn. A simple way to extend these algorithms
@@ -191,29 +189,29 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
     Parameters
     ----------
 
-    neg_label : int (default: 0)
+    neg_label : int, default=0
         Value with which negative labels must be encoded.
 
-    pos_label : int (default: 1)
+    pos_label : int, default=1
         Value with which positive labels must be encoded.
 
-    sparse_output : boolean (default: False)
+    sparse_output : bool, default=False
         True if the returned array from transform is desired to be in sparse
         CSR format.
 
     Attributes
     ----------
 
-    classes_ : array of shape [n_class]
+    classes_ : ndarray of shape (n_classes,)
         Holds the label for each class.
 
-    y_type_ : str,
+    y_type_ : str
         Represents the type of the target data as evaluated by
         utils.multiclass.type_of_target. Possible type are 'continuous',
         'continuous-multioutput', 'binary', 'multiclass',
         'multiclass-multioutput', 'multilabel-indicator', and 'unknown'.
 
-    sparse_input_ : boolean,
+    sparse_input_ : bool
         True if the input data to transform is given as a sparse matrix, False
         otherwise.
 
@@ -251,12 +249,12 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
            [0, 0, 1],
            [0, 1, 0]])
 
-    See also
+    See Also
     --------
-    label_binarize : function to perform the transform operation of
+    label_binarize : Function to perform the transform operation of
         LabelBinarizer with fixed classes.
-    sklearn.preprocessing.OneHotEncoder : encode categorical features
-        using a one-hot aka one-of-K scheme.
+    OneHotEncoder : Encode categorical features using a one-hot aka one-of-K
+        scheme.
     """
 
     @_deprecate_positional_args
@@ -276,11 +274,11 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
         self.sparse_output = sparse_output
 
     def fit(self, y):
-        """Fit label binarizer
+        """Fit label binarizer.
 
         Parameters
         ----------
-        y : array of shape [n_samples,] or [n_samples, n_classes]
+        y : ndarray of shape (n_samples,) or (n_samples, n_classes)
             Target values. The 2-d matrix should only contain 0 and 1,
             represents multilabel classification.
 
@@ -308,37 +306,39 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        y : array or sparse matrix of shape [n_samples,] or \
-            [n_samples, n_classes]
+        y : {ndarray, sparse matrix} of shape (n_samples,) or \
+                (n_samples, n_classes)
             Target values. The 2-d matrix should only contain 0 and 1,
             represents multilabel classification. Sparse matrix can be
             CSR, CSC, COO, DOK, or LIL.
 
         Returns
         -------
-        Y : array or CSR matrix of shape [n_samples, n_classes]
-            Shape will be [n_samples, 1] for binary problems.
+        Y : {ndarray, sparse matrix} of shape (n_samples, n_classes)
+            Shape will be (n_samples, 1) for binary problems. Sparse matrix
+            will be of CSR format.
         """
         return self.fit(y).transform(y)
 
     def transform(self, y):
-        """Transform multi-class labels to binary labels
+        """Transform multi-class labels to binary labels.
 
         The output of transform is sometimes referred to by some authors as
         the 1-of-K coding scheme.
 
         Parameters
         ----------
-        y : array or sparse matrix of shape [n_samples,] or \
-            [n_samples, n_classes]
+        y : {array, sparse matrix} of shape (n_samples,) or \
+                (n_samples, n_classes)
             Target values. The 2-d matrix should only contain 0 and 1,
             represents multilabel classification. Sparse matrix can be
             CSR, CSC, COO, DOK, or LIL.
 
         Returns
         -------
-        Y : numpy array or CSR matrix of shape [n_samples, n_classes]
-            Shape will be [n_samples, 1] for binary problems.
+        Y : {ndarray, sparse matrix} of shape (n_samples, n_classes)
+            Shape will be (n_samples, 1) for binary problems. Sparse matrix
+            will be of CSR format.
         """
         check_is_fitted(self)
 
@@ -353,15 +353,15 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
                               sparse_output=self.sparse_output)
 
     def inverse_transform(self, Y, threshold=None):
-        """Transform binary labels back to multi-class labels
+        """Transform binary labels back to multi-class labels.
 
         Parameters
         ----------
-        Y : numpy array or sparse matrix with shape [n_samples, n_classes]
+        Y : {ndarray, sparse matrix} of shape (n_samples, n_classes)
             Target values. All sparse matrices are converted to CSR before
             inverse transformation.
 
-        threshold : float or None
+        threshold : float, default=None
             Threshold used in the binary and multi-label cases.
 
             Use 0 when ``Y`` contains the output of decision_function
@@ -373,7 +373,8 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        y : numpy array or CSR matrix of shape [n_samples] Target values.
+        y : {ndarray, sparse matrix} of shape (n_samples,)
+            Target values. Sparse matrix will be of CSR format.
 
         Notes
         -----
@@ -408,7 +409,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
 @_deprecate_positional_args
 def label_binarize(y, *, classes, neg_label=0, pos_label=1,
                    sparse_output=False):
-    """Binarize labels in a one-vs-all fashion
+    """Binarize labels in a one-vs-all fashion.
 
     Several regression and binary classification algorithms are
     available in scikit-learn. A simple way to extend these algorithms
@@ -423,22 +424,23 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1,
     y : array-like
         Sequence of integer labels or multilabel data to encode.
 
-    classes : array-like of shape [n_classes]
+    classes : array-like of shape (n_classes,)
         Uniquely holds the label for each class.
 
-    neg_label : int (default: 0)
+    neg_label : int, default=0
         Value with which negative labels must be encoded.
 
-    pos_label : int (default: 1)
+    pos_label : int, default=1
         Value with which positive labels must be encoded.
 
-    sparse_output : boolean (default: False),
-        Set to true if output binary array is desired in CSR sparse format
+    sparse_output : bool, default=False,
+        Set to true if output binary array is desired in CSR sparse format.
 
     Returns
     -------
-    Y : numpy array or CSR matrix of shape [n_samples, n_classes]
-        Shape will be [n_samples, 1] for binary problems.
+    Y : {ndarray, sparse matrix} of shape (n_samples, n_classes)
+        Shape will be (n_samples, 1) for binary problems. Sparse matrix will
+        be of CSR format.
 
     Examples
     --------
@@ -461,10 +463,10 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1,
            [0],
            [1]])
 
-    See also
+    See Also
     --------
-    LabelBinarizer : class used to wrap the functionality of label_binarize and
-        allow for fitting to classes independently of the transform operation
+    LabelBinarizer : Class used to wrap the functionality of label_binarize and
+        allow for fitting to classes independently of the transform operation.
     """
     if not isinstance(y, list):
         # XXX Workaround that will be removed when list of list format is
@@ -504,7 +506,7 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1,
             if sparse_output:
                 return sp.csr_matrix((n_samples, 1), dtype=int)
             else:
-                Y = np.zeros((len(y), 1), dtype=np.int)
+                Y = np.zeros((len(y), 1), dtype=int)
                 Y += neg_label
                 return Y
         elif len(classes) >= 3:
@@ -629,12 +631,12 @@ def _inverse_binarize_thresholding(y, output_type, classes, threshold):
         if threshold > 0:
             if y.format not in ('csr', 'csc'):
                 y = y.tocsr()
-            y.data = np.array(y.data > threshold, dtype=np.int)
+            y.data = np.array(y.data > threshold, dtype=int)
             y.eliminate_zeros()
         else:
-            y = np.array(y.toarray() > threshold, dtype=np.int)
+            y = np.array(y.toarray() > threshold, dtype=int)
     else:
-        y = np.array(y > threshold, dtype=np.int)
+        y = np.array(y > threshold, dtype=int)
 
     # Inverse transform data
     if output_type == "binary":
@@ -656,7 +658,7 @@ def _inverse_binarize_thresholding(y, output_type, classes, threshold):
 
 
 class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
-    """Transform between iterable of iterables and a multilabel format
+    """Transform between iterable of iterables and a multilabel format.
 
     Although a list of sets or tuples is a very intuitive format for multilabel
     data, it is unwieldy to process. This transformer converts between this
@@ -665,18 +667,19 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    classes : array-like of shape [n_classes] (optional)
+    classes : array-like of shape (n_classes,), default=None
         Indicates an ordering for the class labels.
         All entries should be unique (cannot contain duplicate classes).
 
-    sparse_output : boolean (default: False),
-        Set to true if output binary array is desired in CSR sparse format
+    sparse_output : bool, default=False
+        Set to True if output binary array is desired in CSR sparse format.
 
     Attributes
     ----------
-    classes_ : array of labels
-        A copy of the `classes` parameter where provided,
-        or otherwise, the sorted set of classes found when fitting.
+    classes_ : ndarray of shape (n_classes,)
+        A copy of the `classes` parameter when provided.
+        Otherwise it corresponds to the sorted set of classes found
+        when fitting.
 
     Examples
     --------
@@ -711,10 +714,10 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
     >>> mlb.classes_
     array(['comedy', 'sci-fi', 'thriller'], dtype=object)
 
-    See also
+    See Also
     --------
-    sklearn.preprocessing.OneHotEncoder : encode categorical features
-        using a one-hot aka one-of-K scheme.
+    OneHotEncoder : Encode categorical features using a one-hot aka one-of-K
+        scheme.
     """
 
     @_deprecate_positional_args
@@ -723,7 +726,7 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
         self.sparse_output = sparse_output
 
     def fit(self, y):
-        """Fit the label sets binarizer, storing :term:`classes_`
+        """Fit the label sets binarizer, storing :term:`classes_`.
 
         Parameters
         ----------
@@ -745,13 +748,13 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
                              "them to MultiLabelBinarizer.")
         else:
             classes = self.classes
-        dtype = np.int if all(isinstance(c, int) for c in classes) else object
+        dtype = int if all(isinstance(c, int) for c in classes) else object
         self.classes_ = np.empty(len(classes), dtype=dtype)
         self.classes_[:] = classes
         return self
 
     def fit_transform(self, y):
-        """Fit the label sets binarizer and transform the given label sets
+        """Fit the label sets binarizer and transform the given label sets.
 
         Parameters
         ----------
@@ -762,9 +765,10 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        y_indicator : array or CSR matrix, shape (n_samples, n_classes)
-            A matrix such that `y_indicator[i, j] = 1` iff `classes_[j]` is in
-            `y[i]`, and 0 otherwise.
+        y_indicator : {ndarray, sparse matrix} of shape (n_samples, n_classes)
+            A matrix such that `y_indicator[i, j] = 1` i.f.f. `classes_[j]`
+            is in `y[i]`, and 0 otherwise. Sparse matrix will be of CSR
+            format.
         """
         self._cached_dict = None
 
@@ -780,7 +784,7 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
         tmp = sorted(class_mapping, key=class_mapping.get)
 
         # (make safe for tuples)
-        dtype = np.int if all(isinstance(c, int) for c in tmp) else object
+        dtype = int if all(isinstance(c, int) for c in tmp) else object
         class_mapping = np.empty(len(tmp), dtype=dtype)
         class_mapping[:] = tmp
         self.classes_, inverse = np.unique(class_mapping, return_inverse=True)
@@ -794,7 +798,7 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
         return yt
 
     def transform(self, y):
-        """Transform the given label sets
+        """Transform the given label sets.
 
         Parameters
         ----------
@@ -833,12 +837,12 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
         ----------
         y : iterable of iterables
         class_mapping : Mapping
-            Maps from label to column index in label indicator matrix
+            Maps from label to column index in label indicator matrix.
 
         Returns
         -------
-        y_indicator : sparse CSR matrix, shape (n_samples, n_classes)
-            Label indicator matrix
+        y_indicator : sparse matrix of shape (n_samples, n_classes)
+            Label indicator matrix. Will be of CSR format.
         """
         indices = array.array('i')
         indptr = array.array('i', [0])
@@ -861,11 +865,11 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
                              shape=(len(indptr) - 1, len(class_mapping)))
 
     def inverse_transform(self, yt):
-        """Transform the given indicator matrix into label sets
+        """Transform the given indicator matrix into label sets.
 
         Parameters
         ----------
-        yt : array or sparse matrix of shape (n_samples, n_classes)
+        yt : {ndarray, sparse matrix} of shape (n_samples, n_classes)
             A matrix containing only 1s ands 0s.
 
         Returns

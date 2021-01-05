@@ -146,6 +146,7 @@ if [[ `type -t deactivate` ]]; then
   deactivate
 fi
 
+MINICONDA_PATH=$HOME/miniconda
 # Install dependencies with miniconda
 wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
    -O miniconda.sh
@@ -163,20 +164,29 @@ if [[ "$CIRCLE_JOB" == "doc-min-dependencies" ]]; then
     conda config --set restore_free_channel true
 fi
 
+# imports get_dep
+source build_tools/shared.sh
+
 # packaging won't be needed once setuptools starts shipping packaging>=17.0
-conda create -n $CONDA_ENV_NAME --yes --quiet python="${PYTHON_VERSION:-*}" \
-  numpy="${NUMPY_VERSION:-*}" scipy="${SCIPY_VERSION:-*}" \
-  cython="${CYTHON_VERSION:-*}" pytest coverage \
-  matplotlib="${MATPLOTLIB_VERSION:-*}" sphinx=2.1.2 pillow \
-  scikit-image="${SCIKIT_IMAGE_VERSION:-*}" pandas="${PANDAS_VERSION:-*}" \
-  joblib memory_profiler packaging seaborn
+conda create -n $CONDA_ENV_NAME --yes --quiet \
+    python="${PYTHON_VERSION:-*}" \
+    "$(get_dep numpy $NUMPY_VERSION)" \
+    "$(get_dep scipy $SCIPY_VERSION)" \
+    "$(get_dep cython $CYTHON_VERSION)" \
+    "$(get_dep matplotlib $MATPLOTLIB_VERSION)" \
+    "$(get_dep sphinx $SPHINX_VERSION)" \
+    "$(get_dep scikit-image $SCIKIT_IMAGE_VERSION)" \
+    "$(get_dep pandas $PANDAS_VERSION)" \
+    joblib memory_profiler packaging seaborn pillow pytest coverage
 
 source activate testenv
 pip install sphinx-gallery
 pip install numpydoc
+pip install sphinx-prompt
 
-# Build and install scikit-learn in dev mode
-python setup.py build_ext --inplace -j 3
+# Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
+# workers with 2 cores when building the compiled extensions of scikit-learn.
+export SKLEARN_BUILD_PARALLEL=3
 python setup.py develop
 
 export OMP_NUM_THREADS=1
@@ -250,4 +260,3 @@ then
         exit 1
     fi
 fi
-

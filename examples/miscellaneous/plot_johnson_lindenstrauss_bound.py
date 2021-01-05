@@ -19,15 +19,15 @@ from time import time
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-from distutils.version import LooseVersion
 from sklearn.random_projection import johnson_lindenstrauss_min_dim
 from sklearn.random_projection import SparseRandomProjection
 from sklearn.datasets import fetch_20newsgroups_vectorized
 from sklearn.datasets import load_digits
 from sklearn.metrics.pairwise import euclidean_distances
+from sklearn.utils.fixes import parse_version
 
 # `normed` is being deprecated in favor of `density` in histograms
-if LooseVersion(matplotlib.__version__) >= '2.1':
+if parse_version(matplotlib.__version__) >= parse_version('2.1'):
     density_param = {'density': True}
 else:
     density_param = {'normed': True}
@@ -42,15 +42,15 @@ else:
 # .. math::
 #    (1 - eps) \|u - v\|^2 < \|p(u) - p(v)\|^2 < (1 + eps) \|u - v\|^2
 #
-# Where u and v are any rows taken from a dataset of shape [n_samples,
-# n_features] and p is a projection by a random Gaussian N(0, 1) matrix
-# with shape [n_components, n_features] (or a sparse Achlioptas matrix).
+# Where u and v are any rows taken from a dataset of shape (n_samples,
+# n_features) and p is a projection by a random Gaussian N(0, 1) matrix
+# of shape (n_components, n_features) (or a sparse Achlioptas matrix).
 #
 # The minimum number of components to guarantees the eps-embedding is
 # given by:
 #
 # .. math::
-#    n\_components >= 4 log(n\_samples) / (eps^2 / 2 - eps^3 / 3)
+#    n\_components \geq 4 log(n\_samples) / (eps^2 / 2 - eps^3 / 3)
 #
 #
 # The first plot shows that with an increasing number of samples ``n_samples``,
