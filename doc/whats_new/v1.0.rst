@@ -65,8 +65,10 @@ Changelog
 :mod:`sklearn.naive_bayes`
 ..........................
 
-- |API| The attribute ``sigma_`` is now deprecated in :class:`naive_bayes.GaussianNB`
-  and will be removed in v1.2. Use ``var_`` instead. :pr:`18842` by :user:`Hong Shao Yang <hongshaoyang>`.
+- |API| The attribute ``sigma_`` is now deprecated in
+  :class:`naive_bayes.GaussianNB` and will be removed in 1.2.
+  Use ``var_`` instead.
+  :pr:`18842` by :user:`Hong Shao Yang <hongshaoyang>`.
 
 Code and Documentation Contributors
 -----------------------------------
