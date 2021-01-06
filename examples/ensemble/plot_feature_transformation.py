@@ -23,7 +23,6 @@ high-dimensional categorical embedding of the data.
 #
 # License: BSD 3 clause
 
-# %%
 print(__doc__)
 
 from sklearn import set_config
@@ -40,7 +39,6 @@ set_config(display='diagram')
 # It is important to split the data in such way to avoid overfitting by leaking
 # data.
 
-# %%
 from sklearn.datasets import make_classification
 from sklearn.model_selection import train_test_split
 
@@ -49,14 +47,13 @@ X, y = make_classification(n_samples=80000, random_state=10)
 X_full_train, X_test, y_full_train, y_test = train_test_split(
     X, y, test_size=0.5, random_state=10)
 X_train_ensemble, X_train_linear, y_train_ensemble, y_train_linear = \
-    train_test_split(
-        X_full_train, y_full_train, test_size=0.5, random_state=10)
+    train_test_split(X_full_train, y_full_train, test_size=0.5,
+                     random_state=10)
 
 # %%
 # For each of the ensemble methods, we will use 10 estimators and a maximum
 # depth of 3 levels.
 
-# %%
 n_estimators = 10
 max_depth = 3
 
@@ -64,7 +61,6 @@ max_depth = 3
 # First, we will start by training the random forest and gradient boosting on
 # the separated training set
 
-# %%
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 
 random_forest = RandomForestClassifier(
@@ -79,7 +75,6 @@ _ = gradient_boosting.fit(X_train_ensemble, y_train_ensemble)
 # The :class:`~sklearn.ensemble.RandomTreesEmbedding` is an unsupervised method
 # and thus doest not required to be trained independently.
 
-# %%
 from sklearn.ensemble import RandomTreesEmbedding
 
 random_tree_embedding = RandomTreesEmbedding(
@@ -92,13 +87,11 @@ random_tree_embedding = RandomTreesEmbedding(
 # The random trees embedding can be directly pipelined with the logistic
 # regression because it is a standard scikit-learn transformer.
 
-# %%
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
 
 rt_model = make_pipeline(
-    random_tree_embedding, LogisticRegression(max_iter=1000)
-)
+    random_tree_embedding, LogisticRegression(max_iter=1000))
 rt_model.fit(X_train_linear, y_train_linear)
 
 # %%
@@ -106,13 +99,9 @@ rt_model.fit(X_train_linear, y_train_linear)
 # the id of the leaves which will be used as categories.
 
 
-# %%
 def find_tree_leaves(tree):
-    return [
-        node_id
-        for node_id in range(tree.tree_.node_count)
-        if tree.tree_.children_left[node_id] == -1
-    ]
+    return [node_id for node_id in range(tree.tree_.node_count)
+            if tree.tree_.children_left[node_id] == -1]
 
 
 # %%
@@ -121,7 +110,6 @@ def find_tree_leaves(tree):
 # method `apply`. The pipeline in scikit-learn expects a call to `transform`.
 # Therefore, we wrapped the call to `apply` within a `FunctionTransformer`.
 
-# %%
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.preprocessing import OneHotEncoder
 
@@ -131,15 +119,11 @@ def rf_apply(X, model):
 
 
 rf_leaves_yielder = FunctionTransformer(
-    rf_apply, kw_args={"model": random_forest}
-)
-rf_categories = [find_tree_leaves(tree) for tree in random_forest.estimators_]
+    rf_apply, kw_args={"model": random_forest})
 
 rf_model = make_pipeline(
-    rf_leaves_yielder,
-    OneHotEncoder(categories=rf_categories),
-    LogisticRegression(max_iter=1000)
-)
+    rf_leaves_yielder, OneHotEncoder(handle_unknown="ignore"),
+    LogisticRegression(max_iter=1000))
 rf_model.fit(X_train_linear, y_train_linear)
 
 
@@ -150,21 +134,15 @@ def gbdt_apply(X, model):
 
 gbdt_leaves_yielder = FunctionTransformer(
     gbdt_apply, kw_args={"model": gradient_boosting})
-gbdt_categories = [
-    find_tree_leaves(tree[0]) for tree in gradient_boosting.estimators_
-]
 
 gbdt_model = make_pipeline(
-    gbdt_leaves_yielder,
-    OneHotEncoder(categories=gbdt_categories),
-    LogisticRegression(max_iter=1000)
-)
+    gbdt_leaves_yielder, OneHotEncoder(handle_unknown="ignore"),
+    LogisticRegression(max_iter=1000))
 gbdt_model.fit(X_train_linear, y_train_linear)
 
 # %%
 # We can finally show the different ROC curves for all the models.
 
-# %%
 import matplotlib.pyplot as plt
 from sklearn.metrics import plot_roc_curve
 
