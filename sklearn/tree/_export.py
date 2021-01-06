@@ -736,8 +736,8 @@ def export_graphviz(decision_tree, out_file=None, *, max_depth=None,
         When set to ``True``, orient tree left to right rather than top-down.
 
     rounded : bool, default=False
-        When set to ``True``, draw node boxes with rounded corners and use
-        Helvetica fonts instead of Times-Roman.
+        When set to ``True``, draw node boxes with rounded corners and
+        could use fonts via `fontname` instead of Times-Roman.
 
     special_characters : bool, default=False
         When set to ``False``, ignore special characters for PostScript
@@ -748,7 +748,7 @@ def export_graphviz(decision_tree, out_file=None, *, max_depth=None,
         impurity, threshold and value attributes of each node.
 
     fontname : str, default='helvetica'
-        Name of font used to render text.
+        Name of font used to render text. Only used when `rounded=True`
 
     Returns
     -------
