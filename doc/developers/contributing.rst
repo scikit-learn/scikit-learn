@@ -739,7 +739,7 @@ Finally, follow the formatting rules below to make it consistently good:
 
     sample_weight : array-like of shape (n_samples,), default=None
 
-    multioutput_array : ndarray of shape (n_samples, n_classes) or list such arrays
+    multioutput_array : ndarray of shape (n_samples, n_classes) or list of such arrays
 
   In general have the following in mind:
 
