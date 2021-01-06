@@ -448,16 +448,17 @@ class _DOTTreeExporter(_BaseTreeExporter):
             self.out_file.write(
                 ', style="%s", color="black"'
                 % ", ".join(rounded_filled))
-        if self.rounded:
-            self.out_file.write(', fontname="%s"' % self.fontname)
+
+        self.out_file.write(', fontname="%s"' % self.fontname)
         self.out_file.write('] ;\n')
 
         # Specify graph & edge aesthetics
         if self.leaves_parallel:
             self.out_file.write(
                 'graph [ranksep=equally, splines=polyline] ;\n')
-        if self.rounded:
-            self.out_file.write('edge [fontname="%s"] ;\n' % self.fontname)
+
+        self.out_file.write('edge [fontname="%s"] ;\n' % self.fontname)
+
         if self.rotate:
             self.out_file.write('rankdir=LR ;\n')
 
@@ -734,8 +735,7 @@ def export_graphviz(decision_tree, out_file=None, *, max_depth=None,
         When set to ``True``, orient tree left to right rather than top-down.
 
     rounded : bool, default=False
-        When set to ``True``, draw node boxes with rounded corners and
-        could use fonts via `fontname` instead of Times-Roman.
+        When set to ``True``, draw node boxes with rounded corners.
 
     special_characters : bool, default=False
         When set to ``False``, ignore special characters for PostScript
@@ -746,7 +746,7 @@ def export_graphviz(decision_tree, out_file=None, *, max_depth=None,
         impurity, threshold and value attributes of each node.
 
     fontname : str, default='helvetica'
-        Name of font used to render text. Only used when `rounded=True`
+        Name of font used to render text.
 
     Returns
     -------
