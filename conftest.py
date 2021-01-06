@@ -5,7 +5,6 @@
 # doc/modules/clustering.rst and use sklearn from the local folder rather than
 # the one from site-packages.
 
-import os
 import platform
 import sys
 from os import environ
@@ -70,11 +69,6 @@ fetch_olivetti_faces_fxt = _fetch_fixture(fetch_olivetti_faces)
 fetch_rcv1_fxt = _fetch_fixture(fetch_rcv1)
 
 
-def pytest_addoption(parser):
-    parser.addoption("--skip-network", action="store_true", default=False,
-                     help="skip network tests")
-
-
 def pytest_collection_modifyitems(config, items):
     for item in items:
         # FeatureHasher is not compatible with PyPy
@@ -121,14 +115,8 @@ def pytest_collection_modifyitems(config, items):
     # by pytest-xdist
     if run_network_tests:
         for name in datasets_to_download:
+            print("Sequential pre-caching of dataset {name}...")
             dataset_fetchers[name]()
-
-    # Skip tests which require internet if the flag is provided
-    if (config.getoption("--skip-network")
-            or int(os.environ.get("SKLEARN_SKIP_NETWORK_TESTS", "0"))):
-        for item in items:
-            if "network" in item.keywords:
-                item.add_marker(skip_network)
 
     # numpy changed the str/repr formatting of numpy arrays in 1.14. We want to
     # run doctests only for numpy >= 1.14.
