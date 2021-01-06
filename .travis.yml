@@ -47,11 +47,11 @@ jobs:
         - CPU_COUNT=8
 
     # Linux environments to build the scikit-learn wheels for the ARM64
-    # arquitecture and Python 3.6 and newer. This is used both at release time
-    # with the manual trigger in the commit message in the releaase branch and
-    # as a scheduled task to build the weekly dev build on the master branch.
-    # The weekly frequency is meant to avoid depleting the Travis CI credits too
-    # much.
+    # architecture and Python 3.6 and newer. This is used both at release time
+    # with the manual trigger in the commit message in the release branch and as
+    # a scheduled task to build the weekly dev build on the master branch. The
+    # weekly frequency is meant to avoid depleting the Travis CI credits too
+    # fast.
     - python: 3.6
       os: linux
       arch: arm64
