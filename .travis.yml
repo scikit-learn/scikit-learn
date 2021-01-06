@@ -75,7 +75,7 @@ jobs:
     - python: 3.9
       os: linux
       arch: arm64
-      # Nighlyt wheek build for linux/arm64 only on the most recent Python
+      # Nightly wheek build for linux/arm64 only on the most recent Python
       # version so as to spare the limited travis CI credits. This also serves
       # as a regular linux/arm64 test run because those tests are not run by
       # default in individual PRs.
