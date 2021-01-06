@@ -3,7 +3,7 @@
 Inspect and analyze a linear model within cross-validation
 =====================================================
 
-Evaluating a predictive model involves :ref:`cross-validation
+Evaluating a predictive linear model involves :ref:`cross-validation
 <cross_validation>`. This example:
 
 * details how to interpret the results from a cross-validation framework;
@@ -155,7 +155,7 @@ _ = plt.title("Distribution of alpha parameter \nduring cross-validation")
 # %%
 # We see that the regularization parameter, `alpha`, values are centered and
 # condensed around 40. This is a good sign and means that most of the models
-# tuned within the cross-validation had similar `alpha values`.
+# tuned within the cross-validation had similar `alpha` values.
 #
 # However, not only hyperparameter such as `alpha` should be studied. The model
 # parameter coming out of the fitting process should analyzed. In our case, we
@@ -182,7 +182,7 @@ plt.title("Coefficient values our model")
 _ = plt.subplots_adjust(left=0.3)
 
 # %%
-# We observe that the coefficients do not vary minimally, meaning that all the
+# We observe that the coefficients vary minimally, meaning that all the
 # trained models are similar. Each individual model is expected to more or less
 # give the same predictions.
 #
