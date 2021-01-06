@@ -15,8 +15,8 @@ Changelog
 
 - |Fix| :class:`semi_supervised.SelfTrainingClassifier` is now accepting
   meta-estimator (e.g. :class:`ensemble.StackingClassifier`). The validation
-  of this estimator is done a fitted estimator, once we know the existence of
-  the method `predict_proba`.
+  of this estimator is done on the fitted estimator, once we know the existence
+  of the method `predict_proba`.
   :pr:`19126` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 .. _changes_0_24:
