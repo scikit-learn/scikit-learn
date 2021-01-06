@@ -47,11 +47,15 @@ jobs:
         - CPU_COUNT=8
 
     # Linux environments to build the scikit-learn wheels for the ARM64
-    # arquitecture and Python 3.6 and newer
+    # arquitecture and Python 3.6 and newer. This is used both at release time
+    # with the manual trigger in the commit message in the releaase branch and
+    # as a scheduled task to build the weekly dev build on the master branch.
+    # The weekly frequency is meant to avoid depleting the Travis CI credits too
+    # much.
     - python: 3.6
       os: linux
       arch: arm64
-      if: type = commit_message =~ /\[cd build\]/
+      if: type = cron or type = commit_message =~ /\[cd build\]/
       env:
         - BUILD_WHEEL=true
         - CIBW_BUILD=cp36-manylinux_aarch64
@@ -59,7 +63,7 @@ jobs:
     - python: 3.7
       os: linux
       arch: arm64
-      if: type = commit_message =~ /\[cd build\]/
+      if: type = cron or type = commit_message =~ /\[cd build\]/
       env:
         - BUILD_WHEEL=true
         - CIBW_BUILD=cp37-manylinux_aarch64
@@ -67,7 +71,7 @@ jobs:
     - python: 3.8
       os: linux
       arch: arm64
-      if: type = commit_message =~ /\[cd build\]/
+      if: type = cron or type = commit_message =~ /\[cd build\]/
       env:
         - BUILD_WHEEL=true
         - CIBW_BUILD=cp38-manylinux_aarch64
@@ -75,10 +79,6 @@ jobs:
     - python: 3.9
       os: linux
       arch: arm64
-      # Nightly wheek build for linux/arm64 only on the most recent Python
-      # version so as to spare the limited travis CI credits. This also serves
-      # as a regular linux/arm64 test run because those tests are not run by
-      # default in individual PRs.
       if: type = cron or commit_message =~ /\[cd build\]/
       env:
         - BUILD_WHEEL=true
