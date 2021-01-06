@@ -1,7 +1,7 @@
 """
-=====================================================
+==========================================================
 Inspect and analyze a linear model within cross-validation
-=====================================================
+==========================================================
 
 Evaluating a predictive linear model involves :ref:`cross-validation
 <cross_validation>`. This example:
@@ -175,7 +175,7 @@ coefficients
 import seaborn as sns
 
 plt.figure(figsize=(9, 7))
-sns.swarmplot(data=coefficients, orient="h", color="k", alpha=0.5)
+sns.stripplot(data=coefficients, orient="h", color="k", alpha=0.5)
 sns.boxplot(data=coefficients, orient="h")
 plt.axvline(x=0, color=".5")
 plt.title("Coefficient values our model")
@@ -189,9 +189,9 @@ _ = plt.subplots_adjust(left=0.3)
 # Putting a predictive model in production
 # ----------------------------------------
 #
-# With the above analysis, we can safely create a model with a fixed `alpha`
-# hyperparameter. Subsequently, we can train the model on the full training
-# set.
+# In the above analysis, we saw that the values of lambda did not vary much. We
+# can safely create a model with a fixed `alpha` hyperparameter. Subsequently,
+# we can train the model on the full training set.
 
 from sklearn.linear_model import Ridge
 
