@@ -149,7 +149,9 @@ def test_graphviz_toy():
     contents1 = export_graphviz(clf, filled=True,
                                 impurity=False, out_file=None)
     contents2 = 'digraph Tree {\n' \
-                'node [shape=box, style="filled", color="black"] ;\n' \
+                'node [shape=box, style="filled", color="black", ' \
+                'fontname="helvetica"] ;\n' \
+                'edge [fontname="helvetica"] ;\n' \
                 '0 [label="X[0] <= 0.0\\nsamples = 6\\n' \
                 'value = [[3.0, 1.5, 0.0]\\n' \
                 '[3.0, 1.0, 0.5]]", fillcolor="#ffffff"] ;\n' \
