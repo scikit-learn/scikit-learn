@@ -1,6 +1,6 @@
 """
 =====================================================
-Inspect and analyze estimator within cross-validation
+Inspect and analyze a linear model within cross-validation
 =====================================================
 
 Evaluating a predictive model involves :ref:`cross-validation
