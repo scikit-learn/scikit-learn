@@ -55,7 +55,7 @@ jobs:
     - python: 3.6
       os: linux
       arch: arm64
-      if: type = cron or type = commit_message =~ /\[cd build\]/
+      if: type = cron or commit_message =~ /\[cd build\]/
       env:
         - BUILD_WHEEL=true
         - CIBW_BUILD=cp36-manylinux_aarch64
@@ -63,7 +63,7 @@ jobs:
     - python: 3.7
       os: linux
       arch: arm64
-      if: type = cron or type = commit_message =~ /\[cd build\]/
+      if: type = cron or commit_message =~ /\[cd build\]/
       env:
         - BUILD_WHEEL=true
         - CIBW_BUILD=cp37-manylinux_aarch64
@@ -71,7 +71,7 @@ jobs:
     - python: 3.8
       os: linux
       arch: arm64
-      if: type = cron or type = commit_message =~ /\[cd build\]/
+      if: type = cron or commit_message =~ /\[cd build\]/
       env:
         - BUILD_WHEEL=true
         - CIBW_BUILD=cp38-manylinux_aarch64
