@@ -1388,6 +1388,6 @@ def test_tie_breaking_sample_order_invariance():
 
 # add test for pr 19035
 def test_nonnegative_hashing_vectorizer_result_indeices():
-    hashing = HashingVectorizer(n_features=1000000, ngram_range=(2,3))
+    hashing = HashingVectorizer(n_features=1000000, ngram_range=(2, 3))
     indices = hashing.transform(['22pcs efuture']).indices
     assert indices[0] >= 0
