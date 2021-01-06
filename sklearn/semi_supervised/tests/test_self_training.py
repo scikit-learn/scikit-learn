@@ -333,7 +333,7 @@ def test_base_estimator_meta_estimator():
         estimators=[
             ("svc_1", SVC(probability=True)), ("svc_2", SVC(probability=True)),
         ],
-        final_estimator=SVC(probability=True)
+        final_estimator=SVC(probability=True), cv=2
     )
 
     # make sure that the `base_estimator` does not expose `predict_proba`
