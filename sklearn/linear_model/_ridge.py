@@ -1670,8 +1670,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
 
     See glossary entry for :term:`cross-validation estimator`.
 
-    By default, it performs Leave-One-Out Cross-Validation, which is a form of
-    efficient Leave-One-Out cross-validation.
+    By default, it performs efficient Leave-One-Out Cross-Validation.
 
     Read more in the :ref:`User Guide <ridge_regression>`.
 
