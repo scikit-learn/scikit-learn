@@ -2126,8 +2126,6 @@ def train_test_split(*arrays,
     -------
     splitting : list, length=2 * len(arrays)
         List containing train-test split of inputs.
-        The order of the returned list is:
-        X_train, X_test, y_train, y_test.
 
         .. versionadded:: 0.16
             If the input is sparse, the output will be a
