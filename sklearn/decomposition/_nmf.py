@@ -1812,8 +1812,8 @@ class MiniBatchNMF(NMF):
                 W, _, _ = non_negative_factorization(
                     X=X, W=None, H=self.components_,
                     n_components=self.n_components_,
-                    init=self.init, update_H=False, solver=self.solver,
-                    beta_loss=self.beta_loss, tol=0, max_iter=200,
+                    init='custom', update_H=False, solver=self.solver,
+                    beta_loss=self.beta_loss, tol=self.tol, max_iter=10,
                     alpha=self.alpha, l1_ratio=self.l1_ratio,
                     regularization=self.regularization,
                     random_state=self.random_state,
