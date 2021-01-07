@@ -2,6 +2,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from scipy import linalg
+from sklearn.model_selection import train_test_split
 from sklearn.decomposition import NMF, MiniBatchNMF
 from sklearn.decomposition import non_negative_factorization
 from sklearn.decomposition import _nmf as nmf  # For testing internals
@@ -658,7 +659,28 @@ def test_nmf_close_minibatch_nmf(batch_size):
                          batch_size=batch_size)
     W = nmf.fit_transform(X)
     mbW = mbnmf.fit_transform(X)
-    assert_array_almost_equal(W, mbW, decimal=7)
+    assert_array_almost_equal(W, mbW, decimal=2)
+
+
+@pytest.mark.parametrize('batch_size', [512, 1024])
+def test_nmf_close_minibatch_nmf_predict(batch_size):
+    # Test that the decomposition with standard and minibatch nmf
+    # gives close results
+    rng = np.random.mtrand.RandomState(42)
+    X = np.abs(rng.randn(2048, 5))
+    X_train, X_test = train_test_split(X, test_size=0.33,
+                                       random_state=42)
+    nmf = NMF(5, solver='mu', init='nndsvdar', random_state=0,
+              max_iter=2000, beta_loss='kullback-leibler')
+    mbnmf = MiniBatchNMF(5, solver='mu', init='nndsvdar', random_state=0,
+                         max_iter=2000, beta_loss='kullback-leibler',
+                         batch_size=batch_size)
+    nmf.fit(X_train)
+    mbnmf.fit(X_train)
+    W = nmf.transform(X_test)
+    mbW = mbnmf.transform(X_test)
+
+    assert_array_almost_equal(W, mbW, decimal=2)
 
 
 def test_minibatch_nmf_partial_fit():
