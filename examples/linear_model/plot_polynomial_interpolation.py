@@ -54,7 +54,7 @@ from sklearn.pipeline import make_pipeline
 # plotting it.
 
 def f(x):
-    """ function to approximate by polynomial interpolation"""
+    """Function to be approximated by polynomial interpolation."""
     return x * np.sin(x)
 
 
@@ -146,7 +146,7 @@ plt.show()
 # basis functions of ``degree=3`` and also the four knot positions that were
 # chosen during ``fit``. Note that there are ``degree`` number of additional
 # knots each to the left and to the right of the fitted interval. These are
-# technical necessary, but of little practical importance, so we refrain from
-# showing them. Every basis function has local support and is continued as a
-# constant beyond the fitted range. This could be changed by the argument
+# there for technical reasons, so we refrain from showing them. Every basis
+# function has local support and is continued as a constant beyond the fitted
+# range. This extrapolating behaviour could be changed by the argument
 # ``extrapolation``.
