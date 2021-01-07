@@ -47,7 +47,7 @@ Changelog
 :mod:`sklearn.tree`
 ...................
 
-- |Fix| Add `fontname` argument in :func:`tree.export_graphviz`
+- |Enhancement| Add `fontname` argument in :func:`tree.export_graphviz`
   for non-English characters. :pr:`18959` by :user:`Zero <Zeroto521>`
   and :user:`wstates <wstates>`.
 
