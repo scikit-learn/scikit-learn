@@ -579,7 +579,7 @@ class GaussianMixture(BaseMixture):
         Number of step used by the best fit of EM to reach the convergence.
 
     lower_bound_ : float
-        Lower bound value on the model evidence (of the training data with
+        Lower bound value on the log-likelihood (of the training data with
         respect to the model) of the best fit of EM.
 
     Examples
