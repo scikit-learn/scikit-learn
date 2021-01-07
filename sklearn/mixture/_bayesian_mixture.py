@@ -239,7 +239,7 @@ class BayesianGaussianMixture(BaseMixture):
         convergence.
 
     lower_bound_ : float
-        Lower bound value on the likelihood (of the training data with
+        Lower bound value on the model evidence (of the training data with
         respect to the model) of the best fit of inference.
 
     weight_concentration_prior_ : tuple or float
