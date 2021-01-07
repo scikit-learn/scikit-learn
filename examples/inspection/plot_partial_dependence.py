@@ -118,7 +118,7 @@ tic = time()
 features = ['MedInc', 'AveOccup', 'HouseAge', 'AveRooms']
 display = plot_partial_dependence(
        est, X_train, features, kind="both", subsample=50,
-       n_jobs=3, grid_resolution=20
+       n_jobs=3, grid_resolution=20, random_state=0
 )
 print(f"done in {time() - tic:.3f}s")
 display.figure_.suptitle(
@@ -161,7 +161,7 @@ print('Computing partial dependence plots...')
 tic = time()
 display = plot_partial_dependence(
     est, X_train, features, kind="both", subsample=50,
-    n_jobs=3, grid_resolution=20
+    n_jobs=3, grid_resolution=20, random_state=0
 )
 print(f"done in {time() - tic:.3f}s")
 display.figure_.suptitle(

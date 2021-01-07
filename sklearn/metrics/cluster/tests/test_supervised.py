@@ -3,8 +3,10 @@ import pytest
 
 from sklearn.metrics.cluster import adjusted_mutual_info_score
 from sklearn.metrics.cluster import adjusted_rand_score
+from sklearn.metrics.cluster import rand_score
 from sklearn.metrics.cluster import completeness_score
 from sklearn.metrics.cluster import contingency_matrix
+from sklearn.metrics.cluster import pair_confusion_matrix
 from sklearn.metrics.cluster import entropy
 from sklearn.metrics.cluster import expected_mutual_information
 from sklearn.metrics.cluster import fowlkes_mallows_score
@@ -18,12 +20,14 @@ from sklearn.metrics.cluster._supervised import check_clusterings
 
 from sklearn.utils import assert_all_finite
 from sklearn.utils._testing import (
-        assert_almost_equal, ignore_warnings)
-from numpy.testing import assert_array_almost_equal
+    assert_almost_equal, ignore_warnings)
+from numpy.testing import (
+    assert_array_equal, assert_array_almost_equal, assert_allclose)
 
 
 score_funcs = [
     adjusted_rand_score,
+    rand_score,
     homogeneity_score,
     completeness_score,
     v_measure_score,
@@ -164,6 +168,11 @@ def test_non_consecutive_labels():
     ari_2 = adjusted_rand_score([0, 0, 0, 1, 1, 1], [0, 4, 0, 4, 2, 2])
     assert_almost_equal(ari_1, 0.24, 2)
     assert_almost_equal(ari_2, 0.24, 2)
+
+    ri_1 = rand_score([0, 0, 0, 1, 1, 1], [0, 1, 0, 1, 2, 2])
+    ri_2 = rand_score([0, 0, 0, 1, 1, 1], [0, 4, 0, 4, 2, 2])
+    assert_almost_equal(ri_1, 0.66, 2)
+    assert_almost_equal(ri_2, 0.66, 2)
 
 
 @ignore_warnings(category=FutureWarning)
@@ -370,3 +379,71 @@ def test_check_clustering_error():
 
     with pytest.warns(UserWarning, match=msg):
         check_clusterings(wavelength, noise)
+
+
+def test_pair_confusion_matrix_fully_dispersed():
+    # edge case: every element is its own cluster
+    N = 100
+    clustering1 = list(range(N))
+    clustering2 = clustering1
+    expected = np.array([[N * (N - 1), 0], [0, 0]])
+    assert_array_equal(
+        pair_confusion_matrix(clustering1, clustering2), expected
+    )
+
+
+def test_pair_confusion_matrix_single_cluster():
+    # edge case: only one cluster
+    N = 100
+    clustering1 = np.zeros((N,))
+    clustering2 = clustering1
+    expected = np.array([[0, 0], [0, N * (N - 1)]])
+    assert_array_equal(
+        pair_confusion_matrix(clustering1, clustering2), expected
+    )
+
+
+def test_pair_confusion_matrix():
+    # regular case: different non-trivial clusterings
+    n = 10
+    N = n ** 2
+    clustering1 = np.hstack([[i + 1] * n for i in range(n)])
+    clustering2 = np.hstack([[i + 1] * (n + 1) for i in range(n)])[:N]
+    # basic quadratic implementation
+    expected = np.zeros(shape=(2, 2), dtype=np.int64)
+    for i in range(len(clustering1)):
+        for j in range(len(clustering2)):
+            if i != j:
+                same_cluster_1 = int(clustering1[i] == clustering1[j])
+                same_cluster_2 = int(clustering2[i] == clustering2[j])
+                expected[same_cluster_1, same_cluster_2] += 1
+    assert_array_equal(
+        pair_confusion_matrix(clustering1, clustering2), expected
+    )
+
+
+@pytest.mark.parametrize(
+    "clustering1, clustering2",
+    [(list(range(100)), list(range(100))),
+     (np.zeros((100,)), np.zeros((100,)))]
+)
+def test_rand_score_edge_cases(clustering1, clustering2):
+    # edge case 1: every element is its own cluster
+    # edge case 2: only one cluster
+    assert_allclose(rand_score(clustering1, clustering2), 1.)
+
+
+def test_rand_score():
+    # regular case: different non-trivial clusterings
+    clustering1 = [0, 0, 0, 1, 1, 1]
+    clustering2 = [0, 1, 0, 1, 2, 2]
+    # pair confusion matrix
+    D11 = 2 * 2  # ordered pairs (1, 3), (5, 6)
+    D10 = 2 * 4  # ordered pairs (1, 2), (2, 3), (4, 5), (4, 6)
+    D01 = 2 * 1  # ordered pair (2, 4)
+    D00 = 5 * 6 - D11 - D01 - D10  # the remaining pairs
+    # rand score
+    expected_numerator = D00 + D11
+    expected_denominator = D00 + D01 + D10 + D11
+    expected = expected_numerator / expected_denominator
+    assert_allclose(rand_score(clustering1, clustering2), expected)

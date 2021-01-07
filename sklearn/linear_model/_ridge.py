@@ -1466,7 +1466,7 @@ class _RidgeGCV(LinearModel):
 
         if np.any(self.alphas <= 0):
             raise ValueError(
-                "alphas must be positive. Got {} containing some "
+                "alphas must be strictly positive. Got {} containing some "
                 "negative or null value instead.".format(self.alphas))
 
         X, y, X_offset, y_offset, X_scale = LinearModel._preprocess_data(
@@ -1670,8 +1670,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
 
     See glossary entry for :term:`cross-validation estimator`.
 
-    By default, it performs Leave-One-Out Cross-Validation, which is a form of
-    efficient Leave-One-Out cross-validation.
+    By default, it performs efficient Leave-One-Out Cross-Validation.
 
     Read more in the :ref:`User Guide <ridge_regression>`.
 
@@ -1775,6 +1774,8 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
     best_score_ : float or ndarray of shape (n_targets,)
         Score of base estimator with best alpha, or, if
         ``alpha_per_target=True``, a score for each target.
+
+        .. versionadded:: 0.23
 
     Examples
     --------
@@ -1881,6 +1882,8 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
     best_score_ : float
         Score of base estimator with best alpha.
+
+        .. versionadded:: 0.23
 
     classes_ : ndarray of shape (n_classes,)
         The classes labels.

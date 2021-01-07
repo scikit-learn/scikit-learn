@@ -14,14 +14,20 @@ from itertools import islice
 
 import numpy as np
 from scipy import sparse
-from joblib import Parallel, delayed
+from joblib import Parallel
 
 from .base import clone, TransformerMixin
 from .utils._estimator_html_repr import _VisualBlock
 from .utils.metaestimators import if_delegate_has_method
-from .utils import Bunch, _print_elapsed_time
+from .utils import (
+    Bunch,
+    _print_elapsed_time,
+)
+from .utils.deprecation import deprecated
+from .utils._tags import _safe_tags
 from .utils.validation import check_memory
 from .utils.validation import _deprecate_positional_args
+from .utils.fixes import delayed
 
 from .utils.metaestimators import _BaseComposition
 
@@ -206,8 +212,10 @@ class Pipeline(_BaseComposition):
         """
         if isinstance(ind, slice):
             if ind.step not in (1, None):
-                raise ValueError('Pipeline slicing only supports a step of 1')
-            return self.__class__(self.steps[ind])
+                raise ValueError("Pipeline slicing only supports a step of 1")
+            return self.__class__(
+                self.steps[ind], memory=self.memory, verbose=self.verbose
+            )
         try:
             name, est = self.steps[ind]
         except TypeError:
@@ -617,6 +625,14 @@ class Pipeline(_BaseComposition):
     def classes_(self):
         return self.steps[-1][-1].classes_
 
+    def _more_tags(self):
+        # check if first estimator expects pairwise input
+        return {'pairwise': _safe_tags(self.steps[0][1], "pairwise")}
+
+    # TODO: Remove in 1.1
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def _pairwise(self):
         # check if first estimator expects pairwise input

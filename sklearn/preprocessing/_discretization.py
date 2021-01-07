@@ -126,7 +126,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
     """
 
     @_deprecate_positional_args
-    def __init__(self, n_bins=5, encode='onehot', strategy='quantile',
+    def __init__(self, n_bins=5, *, encode='onehot', strategy='quantile',
                  dtype=None):
         self.n_bins = n_bins
         self.encode = encode
@@ -289,12 +289,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         # check input and attribute dtypes
         dtype = (np.float64, np.float32) if self.dtype is None else self.dtype
-        Xt = check_array(X, copy=True, dtype=dtype)
-
-        n_features = self.n_bins_.shape[0]
-        if Xt.shape[1] != n_features:
-            raise ValueError("Incorrect number of features. Expecting {}, "
-                             "received {}.".format(n_features, Xt.shape[1]))
+        Xt = self._validate_data(X, copy=True, dtype=dtype, reset=False)
 
         bin_edges = self.bin_edges_
         for jj in range(Xt.shape[1]):
