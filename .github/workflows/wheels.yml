@@ -68,6 +68,9 @@ jobs:
           - os: macos-latest
             bitness: 64
             platform_id: macosx_x86_64
+          - os: ubuntu-latest
+            bitness: 64
+            platform_id: manylinux_aarch64
         exclude:
           # Build ARM64 wheels only on Linux runner with QEMU installed
           - os: macos-latest
@@ -92,6 +95,7 @@ jobs:
         with:
           image: tonistiigi/binfmt:latest
           platforms: all
+        if: ${{ matrix.os == ubuntu-latest }}
 
       - name: Build and test wheels
         env:
