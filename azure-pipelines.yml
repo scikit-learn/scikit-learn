@@ -30,8 +30,11 @@ jobs:
 
 - job: linting
   dependsOn: [git_commit]
-  condition: and(not(contains(dependencies['git_commit']['outputs']['commit.message'], '[lint skip]')),
-                 not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')))
+  condition: |
+    and(
+      not(contains(dependencies['git_commit']['outputs']['commit.message'], '[lint skip]')),
+      not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
+    )
   displayName: Linting
   pool:
     vmImage: ubuntu-18.04
@@ -54,9 +57,14 @@ jobs:
     name: Linux_Nightly
     vmImage: ubuntu-18.04
     dependsOn: [git_commit, linting]
-    condition: and(not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
-                   or(eq(variables['Build.Reason'], 'Schedule'),
-                      contains(dependencies['git_commit']['outputs']['commit.message'], '[scipy-dev]')))
+    condition: |
+      and(
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
+            or(eq(variables['Build.Reason'], 'Schedule'),
+               contains(dependencies['git_commit']['outputs']['commit.message'], '[scipy-dev]'
+            )
+        )
+      )
     matrix:
       pylatest_pip_scipy_dev:
         DISTRIB: 'conda-pip-scipy-dev'
@@ -87,8 +95,11 @@ jobs:
     name: Linux
     vmImage: ubuntu-18.04
     dependsOn: [linting, git_commit]
-    condition: and(not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
-                   ne(variables['Build.Reason'], 'Schedule'))
+    condition: |
+      and(
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
+        ne(variables['Build.Reason'], 'Schedule')
+      )
     matrix:
       # Linux environment to test that scikit-learn can be built against
       # versions of numpy, scipy with ATLAS that comes with Ubuntu Bionic 18.04
@@ -132,8 +143,11 @@ jobs:
     name: Linux32
     vmImage: ubuntu-18.04
     dependsOn: [linting, git_commit]
-    condition: and(not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
-                   ne(variables['Build.Reason'], 'Schedule'))
+    condition: |
+      and(
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
+        ne(variables['Build.Reason'], 'Schedule')
+      )
     matrix:
       py36_ubuntu_atlas_32bit:
         DISTRIB: 'ubuntu-32'
@@ -151,8 +165,11 @@ jobs:
     name: macOS
     vmImage: macOS-10.14
     dependsOn: [linting, git_commit]
-    condition: and(not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
-                   ne(variables['Build.Reason'], 'Schedule'))
+    condition: |
+      and(
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
+        ne(variables['Build.Reason'], 'Schedule')
+      )
     matrix:
       pylatest_conda_forge_mkl:
         DISTRIB: 'conda'
@@ -169,8 +186,11 @@ jobs:
     name: Windows
     vmImage: vs2017-win2016
     dependsOn: [linting, git_commit]
-    condition: and(not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
-                   ne(variables['Build.Reason'], 'Schedule'))
+    condition: |
+      and(
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
+        ne(variables['Build.Reason'], 'Schedule')
+      )
     matrix:
       py37_conda_mkl:
         PYTHON_VERSION: '3.7'
