@@ -48,7 +48,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
-        arch: ["auto", "aarch64"]
+        arch: [auto, aarch64]
         python: [36, 37, 38, 39]
         bitness: [32, 64]
         include:
