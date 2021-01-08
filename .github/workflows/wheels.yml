@@ -77,7 +77,7 @@ jobs:
           - os: macos-latest
             bitness: 32
           - os: ubuntu-latest
-            aarch: aarch64
+            arch: aarch64
             bitness: 32
 
     steps:
