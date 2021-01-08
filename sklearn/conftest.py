@@ -70,8 +70,8 @@ def pytest_collection_modifyitems(config, items):
     datasets_to_download = set()
 
     for item in items:
-        item_keywords = set(item.keywords)
-        dataset_to_fetch = item_keywords & dataset_features_set
+        item_fixtures = set(item.fixturenames)
+        dataset_to_fetch = item_fixtures & dataset_features_set
         if not dataset_to_fetch:
             continue
 
@@ -85,7 +85,7 @@ def pytest_collection_modifyitems(config, items):
     # by pytest-xdist
     if run_network_tests:
         for name in datasets_to_download:
-            print("Sequential pre-caching of dataset {name}...")
+            print(f"Sequential pre-caching of dataset {name}...")
             dataset_fetchers[name]()
 
 
