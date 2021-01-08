@@ -1891,7 +1891,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Subset of the training data
+            Subset of the training data.
 
         sample_weight : array-like, shape (n_samples,), optional
             Weights applied to individual samples.
@@ -1951,13 +1951,13 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Training data
+            Training data.
 
         coef_init : array, shape (n_classes, n_features)
             The initial coefficients to warm-start the optimization.
 
         offset_init : array, shape (n_classes,)
-            The initial offset to warm-start the optimization
+            The initial offset to warm-start the optimization.
 
         sample_weight : array-like, shape (n_samples,), optional
             Weights applied to individual samples.
@@ -1986,7 +1986,8 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Testing data.
 
         Returns
         -------
@@ -2003,11 +2004,12 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         return decisions.ravel()
 
     def score_samples(self, X):
-        """Raw scoring function of the samples
+        """Raw scoring function of the samples.
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Testing data.
 
         Returns
         -------
@@ -2018,11 +2020,12 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         return score_samples
 
     def predict(self, X):
-        """Return labels (1 inlier, -1 outlier) of the samples
+        """Return labels (1 inlier, -1 outlier) of the samples.
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Testing data.
 
         Returns
         -------
