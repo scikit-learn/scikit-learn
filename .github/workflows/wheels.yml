@@ -95,7 +95,7 @@ jobs:
         with:
           image: tonistiigi/binfmt:latest
           platforms: all
-        if: ${{ matrix.os == ubuntu-latest }}
+        if: ${{ matrix.os == "ubuntu-latest" }}
 
       - name: Build and test wheels
         env:
