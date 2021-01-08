@@ -48,6 +48,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
+        arch: ["auto", "aarch64"]
         python: [36, 37, 38, 39]
         bitness: [32, 64]
         include:
@@ -68,7 +69,15 @@ jobs:
             bitness: 64
             platform_id: macosx_x86_64
         exclude:
+          # Build ARM64 wheels only on Linux runner with QEMU installed
           - os: macos-latest
+            arch: aarch64
+          - os: windows-latest
+            arch: aarch64
+          - os: macos-latest
+            bitness: 32
+          - os: ubuntu-latest
+            aarch: aarch64
             bitness: 32
 
     steps:
@@ -78,6 +87,12 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v2
 
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v1
+        with:
+          image: tonistiigi/binfmt:latest
+          platforms: all
+
       - name: Build and test wheels
         env:
           CONFTEST_PATH: ${{ github.workspace }}/conftest.py
@@ -86,6 +101,7 @@ jobs:
                             OPENBLAS_NUM_THREADS=2
                             SKLEARN_SKIP_NETWORK_TESTS=1
                             SKLEARN_BUILD_PARALLEL=3
+          CIBW_ARCHS_LINUX: ${{ matrix.arch }}
           CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: bash build_tools/github/repair_windows_wheels.sh {wheel} {dest_dir} ${{ matrix.bitness }}
           CIBW_BEFORE_TEST_WINDOWS: bash build_tools/github/build_minimal_windows_image.sh ${{ matrix.python }} ${{ matrix.bitness }}
