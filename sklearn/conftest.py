@@ -53,6 +53,13 @@ fetch_rcv1_fxt = _fetch_fixture(fetch_rcv1)
 
 
 def pytest_collection_modifyitems(config, items):
+    """Called after collect is completed.
+
+    Parameters
+    ----------
+    config : pytest config
+    items : list of collected items
+    """
     run_network_tests = environ.get('SKLEARN_SKIP_NETWORK_TESTS', '1') == '0'
     skip_network = pytest.mark.skip(
         reason="test requires internet connectivity")
@@ -80,7 +87,6 @@ def pytest_collection_modifyitems(config, items):
         for name in datasets_to_download:
             print("Sequential pre-caching of dataset {name}...")
             dataset_fetchers[name]()
-
 
 
 @pytest.fixture(scope='function')
