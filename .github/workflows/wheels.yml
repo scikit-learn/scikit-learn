@@ -60,17 +60,20 @@ jobs:
             bitness: 32
             platform_id: win32
           - os: ubuntu-latest
+            aarch: auto
             bitness: 64
             platform_id: manylinux_x86_64
           - os: ubuntu-latest
+            aarch: auto
             bitness: 32
             platform_id: manylinux_i686
+          - os: ubuntu-latest
+            arch: aarch64
+            bitness: 64
+            platform_id: manylinux_aarch64
           - os: macos-latest
             bitness: 64
             platform_id: macosx_x86_64
-          - os: ubuntu-latest
-            bitness: 64
-            platform_id: manylinux_aarch64
         exclude:
           # Build ARM64 wheels only on Linux runner with QEMU installed
           - os: macos-latest
