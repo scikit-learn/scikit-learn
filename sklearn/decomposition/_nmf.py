@@ -914,6 +914,7 @@ def _fit_multiplicative_update(X, W, H, A=None, B=None, beta_loss='frobenius',
         for iter_offset, slice in enumerate(
             gen_batches(n=n_samples, batch_size=batch_size)
         ):
+            #print(iter_offset, n_iter)
             # update W
             # H_sum, HHt and XHt are saved and reused if not update_H
             delta_W, H_sum, HHt, XHt = _multiplicative_update_w(
@@ -938,10 +939,10 @@ def _fit_multiplicative_update(X, W, H, A=None, B=None, beta_loss='frobenius',
                 if beta_loss <= 1:
                     H[H < np.finfo(np.float64).eps] = 0.
 
-        iter_offset += 1
+            iter_offset += 1
 
         # test convergence criterion every 10 iterations
-        if tol > 0 and n_iter % 10 == 0:
+        if tol > 0:
             error = _beta_divergence(X, W, H, beta_loss, square_root=True)
             if verbose:
                 iter_time = time.time()
@@ -953,7 +954,7 @@ def _fit_multiplicative_update(X, W, H, A=None, B=None, beta_loss='frobenius',
             previous_error = error
 
     # do not print if we have already printed in the convergence test
-    if verbose and (tol == 0 or n_iter % 10 != 0):
+    if verbose and tol == 0:
         end_time = time.time()
         print("Epoch %02d reached after %.3f seconds." %
               (n_iter, end_time - start_time))
