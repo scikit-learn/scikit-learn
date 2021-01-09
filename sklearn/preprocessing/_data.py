@@ -620,8 +620,8 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         Per feature relative scaling of the data to achieve zero mean and unit
         variance. Generally this is calculated using `np.sqrt(var_)`. If a
         variance is zero, we can't achieve unit variance, and the data is left
-        as-is, giving the scaling factor of 1. Equal to ``None`` when
-        ``with_std=False``.
+        as-is, giving a scaling factor of 1. `scale_` is equal to `None`
+        when `with_std=False`.
 
         .. versionadded:: 0.17
            *scale_*
