@@ -2655,7 +2655,7 @@ def test_minmax_scaler_clip(feature_range):
 
 
 def test_spline_transformer_input_validation():
-    # test that we raise errors for invalid input
+    """Test that we raise errors for invalid input in SplineTransformer."""
     X = [[1], [2]]
 
     for degree in [-1, 2.5, 'string']:
@@ -2671,7 +2671,7 @@ def test_spline_transformer_input_validation():
     # test manual knot points, is numeric 2d array-like, right shape, strictly
     # sorted.
     for knots, msg in (
-        ('string', "Expected 2D array, got scalar array instead:"),
+        ("string", "Expected 2D array, got scalar array instead:"),
         ([1, 2], "Expected 2D array, got 1D array instead:"),
         ([[1]], r"Number of knots, knots.shape\[0\], must be >= 2."),
         ([[1, 5], [2, 6]], r"knots.shape\[1\] == n_features is violated."),
@@ -2693,6 +2693,17 @@ def test_spline_transformer_input_validation():
     # Need at least 2 n_samples
     with pytest.raises(ValueError):
         SplineTransformer().fit([[1]])
+
+
+def test_spline_transformer_manual_knot_input():
+    """Test that manual knot positions in SplineTransformer are accepted."""
+    X = np.arange(20).reshape(10, 2)
+    knots = [[0.5, 1], [1.5, 2], [5, 10]]
+    st1 = SplineTransformer(degree=3, knots=knots).fit(X)
+    knots = np.asarray(knots)
+    st2 = SplineTransformer(degree=3, knots=knots).fit(X)
+    for i in range(X.shape[1]):
+        assert_allclose(st1.bsplines_[i].t, st2.bsplines_[i].t)
 
 
 def test_spline_transformer_feature_names():
