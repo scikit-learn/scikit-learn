@@ -66,7 +66,7 @@ x_plot = np.linspace(-1, 11, 100)
 
 x_train = np.linspace(0, 10, 100)
 rng = np.random.RandomState(0)
-x_train = rng.choice(x_train, size=20, replace=False).sort()
+x_train = np.sort(rng.choice(x_train, size=20, replace=False))
 y_train = f(x_train)
 
 # create 2D-array versions of these arrays to feed to transformers
