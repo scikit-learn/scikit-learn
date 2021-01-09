@@ -1867,12 +1867,14 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
     knots : {'uniform', 'quantile'} or array-like of shape \
         (n_knots, n_features), default='uniform'
         Set knot positions such that first knot <= features <= last knot.
-        If 'uniform', `n_knots´ number of knots are distributed uniformly from
-        min to max values of the features. If 'quantile', they are distributed
-        uniformly along the quantiles of the features.
-        If an ndarray is given, it directly specifies the sorted knot positions
-        including the boundary knots. Note that, internally, `degree` number of
-        knots are added below the first knot, the same above the last knot.
+        - If 'uniform', `n_knots´ number of knots are distributed uniformly
+          from min to max values of the features.
+        - If 'quantile', they are distributed uniformly along the quantiles of
+          the features.
+        - If an array-like is given, it directly specifies the sorted knot
+          positions including the boundary knots. Note that, internally,
+          `degree` number of knots are added below the first knot, the same
+          above the last knot.
 
     extrapolation : {'error', 'constant', 'linear', 'continue'}, \
         default='constant'
@@ -1905,8 +1907,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
     Attributes
     ----------
-    bsplines_ : ndarray of shape (n_features, )
-        Array of BSplines objects, one for each feature.
+    bsplines_ : list of shape (n_features,)
+        List of BSplines objects, one for each feature.
 
     n_features_in_ : int
         The total number of input features.
@@ -2015,7 +2017,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 and self.n_knots >= 2):
             raise ValueError("n_knots must be a positive integer >= 2.")
 
-        if self.knots in ['uniform', 'quantile']:
+        if (isinstance(self.knots, str)
+                and self.knots in ['uniform', 'quantile']):
             base_knots = self._get_base_knot_positions(
                 X, n_knots=self.n_knots, knots=self.knots)
         else:
@@ -2069,10 +2072,10 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         # Note, BSpline appreciates C-contiguous arrays.
         coef = np.eye(n_knots + self.degree - 1, dtype=np.float64)
         extrapolate = self.extrapolation == "continue"
-        bsplines = [BSpline(knots[:, i], coef, self.degree,
-                            extrapolate=extrapolate)
+        bsplines = [BSpline.construct_fast(knots[:, i], coef, self.degree,
+                                           extrapolate=extrapolate)
                     for i in range(n_features)]
-        self.bsplines_ = np.array(bsplines)
+        self.bsplines_ = bsplines
 
         self.n_features_out_ = n_out - n_features * self.include_bias
         return self
