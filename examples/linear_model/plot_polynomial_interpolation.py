@@ -80,32 +80,28 @@ X_plot = x_plot[:, np.newaxis]
 # plot function
 lw = 2
 fig, ax = plt.subplots()
-ax.plot(x_plot, f(x_plot), color='cornflowerblue', linewidth=lw,
-        label="ground truth")
+ax.set_prop_cycle(color=[
+    "black", "teal", "yellowgreen", "gold", "darkorange", "tomato"
+])
+ax.plot(x_plot, f(x_plot), linewidth=lw, label="ground truth")
 
 # plot training points
-ax.scatter(x_train, y_train, color='navy', s=30, marker='o',
-           label="training points")
-
-colors = ['teal', 'yellowgreen', 'gold']
+ax.scatter(x_train, y_train, label="training points")
 
 # polynomial features
-for count, degree in enumerate([3, 4, 5]):
+for degree in [3, 4, 5]:
     model = make_pipeline(PolynomialFeatures(degree), Ridge(alpha=1e-3))
     model.fit(X_train, y_train)
     y_plot = model.predict(X_plot)
-    ax.plot(x_plot, y_plot, color=colors[count], linewidth=lw,
-            label=f"degree {degree}")
+    ax.plot(x_plot, y_plot, label=f"degree {degree}")
 
 # B-spline with 4 + 3 - 1 = 6 basis functions
-degree = 3
-model = make_pipeline(SplineTransformer(n_knots=4, degree=degree),
+model = make_pipeline(SplineTransformer(n_knots=4, degree=3),
                       Ridge(alpha=1e-3))
 model.fit(X_train, y_train)
 
 y_plot = model.predict(X_plot)
-ax.plot(x_plot, y_plot, color='coral', linewidth=lw,
-        label="B-spline")
+ax.plot(x_plot, y_plot, label="B-spline")
 ax.legend(loc='lower center')
 ax.set_ylim(-20, 10)
 plt.show()
