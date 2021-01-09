@@ -1867,14 +1867,15 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
     knots : {'uniform', 'quantile'} or array-like of shape \
         (n_knots, n_features), default='uniform'
         Set knot positions such that first knot <= features <= last knot.
-        - If 'uniform', `n_knots´ number of knots are distributed uniformly
+
+        - If 'uniform', `n_knots` number of knots are distributed uniformly
           from min to max values of the features.
         - If 'quantile', they are distributed uniformly along the quantiles of
           the features.
         - If an array-like is given, it directly specifies the sorted knot
           positions including the boundary knots. Note that, internally,
-          `degree` number of knots are added below the first knot, the same
-          above the last knot.
+          `degree` number of knots are added before the first knot, the same
+          after the last knot.
 
     extrapolation : {'error', 'constant', 'linear', 'continue'}, \
         default='constant'
