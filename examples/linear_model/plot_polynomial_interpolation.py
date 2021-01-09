@@ -66,11 +66,10 @@ x_plot = np.linspace(-1, 11, 100)
 
 x_train = np.linspace(0, 10, 100)
 rng = np.random.RandomState(0)
-rng.shuffle(x_train)
-x_train = np.sort(x_train[:20])
+x_train = rng.choice(x_train, size=20, replace=False).sort()
 y_train = f(x_train)
 
-# create matrix versions of these arrays to feed to transformers
+# create 2D-array versions of these arrays to feed to transformers
 X_train = x_train[:, np.newaxis]
 X_plot = x_plot[:, np.newaxis]
 
