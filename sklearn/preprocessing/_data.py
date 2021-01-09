@@ -1946,18 +1946,20 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        knots : ndarray of shape (n_knots, n_features)
-            Knot positions (points) of base intercal.
+        knots : ndarray of shape (n_knots, n_features) and dtype=np.float64
+            Knot positions (points) of base interval.
         """
         if knots == 'quantile':
             knots = np.percentile(
-                X, 100 * np.linspace(start=0, stop=1, num=n_knots), axis=0)
+                X, 100 * np.linspace(
+                    start=0, stop=1, num=n_knots), axis=0, dtype=np.float64
+                )
         else:
             # knots == 'uniform':
             x_min = np.amin(X, axis=0)
             x_max = np.amax(X, axis=0)
             knots = linspace(start=x_min, stop=x_max, num=n_knots,
-                             endpoint=True)
+                             endpoint=True, dtype=np.float64)
 
         return knots
 
@@ -2069,7 +2071,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
         # With a diagonal coefficient matrix, we get back the spline basis
         # elements, i.e. the design matrix of the spline.
-        # Note, BSpline appreciates C-contiguous arrays.
+        # Note, BSpline appreciates C-contiguous float64 arrays.
         coef = np.eye(n_knots + self.degree - 1, dtype=np.float64)
         extrapolate = self.extrapolation == "continue"
         bsplines = [BSpline.construct_fast(knots[:, i], coef, self.degree,
