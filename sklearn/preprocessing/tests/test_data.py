@@ -2696,7 +2696,8 @@ def test_spline_transformer_input_validation():
 
 
 def test_spline_transformer_manual_knot_input():
-    """Test that manual knot positions in SplineTransformer are accepted."""
+    """Test that array-like knot positions in SplineTransformer are accepted.
+    """
     X = np.arange(20).reshape(10, 2)
     knots = [[0.5, 1], [1.5, 2], [5, 10]]
     st1 = SplineTransformer(degree=3, knots=knots).fit(X)
@@ -2707,6 +2708,7 @@ def test_spline_transformer_manual_knot_input():
 
 
 def test_spline_transformer_feature_names():
+    """Test that SplineTransformer generates correct features name."""
     X = np.arange(20).reshape(10, 2)
     splt = SplineTransformer(n_knots=3, degree=3, include_bias=True).fit(X)
     feature_names = splt.get_feature_names()
@@ -2725,8 +2727,11 @@ def test_spline_transformer_feature_names():
 @pytest.mark.parametrize('n_knots', range(3, 5))
 @pytest.mark.parametrize('knots', ['uniform', 'quantile'])
 def test_spline_transformer_unity_decomposition(degree, n_knots, knots):
-    # test that the splines are decomposition of unity,
-    # i.e. sum up to 1 per row, if we stay in between boundaries.
+    """Test that B-splines are indeed a decomposition of unity.
+
+    Splines basis functions must sum up to 1 per row, if we stay in between
+    boundaries.
+    """
     X = np.linspace(0, 1, 100)[:, None]
     # make the boundaries 0 and 1 part of X_train, for sure.
     X_train = np.r_[[[0]], X[::2, :], [[1]]]
@@ -2741,7 +2746,7 @@ def test_spline_transformer_unity_decomposition(degree, n_knots, knots):
 @pytest.mark.parametrize(['bias', 'intercept'],
                          [(True, False), (False, True)])
 def test_spline_transformer_linear_regression(bias, intercept):
-    # test that the splines fit a sinusodial curve pretty well
+    """Test that B-splines fit a sinusodial curve pretty well."""
     X = np.linspace(0, 10, 100)[:, None]
     y = np.sin(X[:, 0]) + 2  # +2 to avoid the value 0 in assert_allclose
     pipe = Pipeline(
@@ -2756,7 +2761,7 @@ def test_spline_transformer_linear_regression(bias, intercept):
                          [(True, False), (False, True)])
 @pytest.mark.parametrize('degree', [1, 2, 3, 4, 5])
 def test_spline_transformer_extrapolation(bias, intercept, degree):
-    # test that the spline extrapolation works correct
+    """Test that B-spline extrapolation works correctly."""
     # we use a straight line for that
     X = np.linspace(-1, 1, 100)[:, None]
     y = X.squeeze()
@@ -2790,7 +2795,7 @@ def test_spline_transformer_extrapolation(bias, intercept, degree):
 
 
 def test_spline_transformer_kbindiscretizer():
-    # test that spline of degree=0 are equivalent to KBinsDiscretizer
+    """Test that a B-spline of degree=0 is equivalent to KBinsDiscretizer."""
     rng = np.random.RandomState(97531)
     X = rng.randn(200).reshape(200, 1)
     n_bins = 5
