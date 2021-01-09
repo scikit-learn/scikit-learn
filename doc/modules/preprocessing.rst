@@ -835,9 +835,10 @@ Some of the advantages of splines over polynomials are:
       i.e. beyond the range of fitted values. Have a look at the option
       `extrapolation`.
     - B-splines generate a feature matrix with a banded structure. For a single
-      feature, every row contains only `degree + 1` consecutive non-zero (even
-      positive) elements. This results in a matrix with low condition number in
-      sharp contrast to a matrix of polynomials, which goes under the name
+      feature, every row contains only `degree + 1` non-zero elements, which
+      occur consecutively and are even positive. This results in a matrix with
+      good numerical properties, e.g. a low condition number, in sharp contrast
+      to a matrix of polynomials, which goes under the name
       `Vandermonde matrix <https://en.wikipedia.org/wiki/Vandermonde_matrix>`_.
       A low condition number is important for stable algorithms of linear
       models.
