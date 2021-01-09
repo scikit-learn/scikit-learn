@@ -813,9 +813,36 @@ Spline transformer
 
 Another way to add nonlinear terms instead of polynomials of features is to
 generate spline basis functions for each feature with the
-:class:`SplineTransformer`. This won't give interaction
-terms, but might be otherwise more versatile, in particular at the boundaries
-of the fitted range::
+:class:`SplineTransformer`. Splines are just piecewise polynomials,
+parameterized by their polynomial degree and the positions of the knots. The
+:class:`SplineTransformer` implements a B-spline basis, cf. the references
+below.
+
+.. note::
+
+    The :class:`SplineTransformer` treats each feature separately, i.e. it
+    won't give you interaction terms.
+
+Some of the advantages of splines over polynomials are:
+
+    - B-splines are very flexible and robust if you keep a fixed low degree,
+      usually 3, and parsimoniously adapt the number of knots. Polynomials
+      would need a higher degree, which leads to the next point.
+    - B-splines do not have oscillatory behaviour at the boundaries as have
+      polynomials (the higher the degree, the worse). This is known as `Runge's
+      phenomenon <https://en.wikipedia.org/wiki/Runge%27s_phenomenon>`_.
+    - B-splines provide good options for extrapolation beyond the boundaries,
+      i.e. beyond the range of fitted values. Have a look at the option
+      `extrapolation`.
+    - B-splines generate a feature matrix with a banded structure. For a single
+      feature, every row contains only `degree + 1` consecutive non-zero (even
+      positive) elements. This results in a matrix with low condition number in
+      sharp contrast to a matrix of polynomials, which goes under the name
+      `Vandermonde matrix <https://en.wikipedia.org/wiki/Vandermonde_matrix>`_.
+      A low condition number is important for stable algorithms of linear
+      models.
+
+The following code snippet shows splines in action::
 
     >>> import numpy as np
     >>> from sklearn.preprocessing import SplineTransformer
@@ -837,6 +864,10 @@ of the fitted range::
 As the `X` is sorted, one can easily see the banded matrix output. Only the
 three middle diagonals are non-zero for `degree=2`. The higher the degree, the
 more overlapping of the splines.
+
+.. topic:: Examples:
+
+    * :ref:`sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py`
 
 .. topic:: References:
 
