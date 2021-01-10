@@ -284,11 +284,12 @@ class LinearClassifierMixin(ClassifierMixin):
         check_is_fitted(self)
 
         X = self._validate_data(X, accept_sparse='csr', reset=False)
-
-        # Coefficients must be unit norm for the scores to be the distance to each hyperplane
-        coefn  = self.coef_ / np.linalg.norm(self.coef_, axis=1)[:, np.newaxis]
-        scores = safe_sparse_dot(X, coefn.T,
+        scores = safe_sparse_dot(X, self.coef_.T,
                                  dense_output=True) + self.intercept_
+        
+        coef_norms = np.linalg.norm(self.coef_, axis=1)        
+        scores    /= coef_norms
+        
         return scores.ravel() if scores.shape[1] == 1 else scores
 
     def predict(self, X):
