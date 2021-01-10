@@ -909,38 +909,28 @@ def test_bagging_get_estimators_indices():
                        clf.estimators_samples_[0])
 
 
-class DummyVoteClassifier(BaseEstimator):
-    '''Simple classifier intentionally not implementing predict_proba, so that
-    BaggingClassifier resorts to voting. It always predicts True.'''
+class ConstantClassifier(ClassifierMixin, BaseEstimator):
+    """Classifier that predict a constant value and that does not implement
+    `predict_proba`."""
 
-    def __init__(self):
-        self.classes_ = np.array([False, True])
-        pass
+    def __init__(self, constant=0):
+        self.constant = constant
 
-    def fit(self, X, Y, W=None):
+    def fit(self, X, y, sample_weight=None):
+        self.classes_ = np.unique(y)
         return self
 
     def predict(self, X):
-        return np.full(X.shape[0], True)
-
-    def score(self, X, Y):
-        YH = self.predict(X)
-        return (Y == YH).mean()
-
-    def get_params(self, deep=True):
-        return {}
-
-    def set_params(self, **params):
-        for k, v in params:
-            setattr(self, k, v)
-        return self
+        return np.full(X.shape[0], self.constant)
 
 
 def test_bagging_classifier_voting():
-    # Test BaggingClassifier when base_estimator doesn't define predict_proba
-    A = np.random.rand(10, 4)
-    Y = np.random.randint(2, size=10, dtype=np.bool)
-    bagging_classifier = BaggingClassifier(DummyVoteClassifier())
-    bagging_classifier.fit(A, Y)
-    # All ensemble members predict True; BaggingClassifier should predict True
-    assert(bagging_classifier.predict(A).all())
+    # check voting strategy is working properly with estimators that do not implement
+    # `predict_proba`.
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/13587
+    X = np.random.rand(10, 4)
+    y = np.random.randint(2, size=10, dtype=np.bool)
+    bagging_classifier = BaggingClassifier(ConstantClassifier(constant=True))
+    bagging_classifier.fit(X, y)
+    assert bagging_classifier.predict(X).all()
