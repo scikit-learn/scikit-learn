@@ -388,7 +388,7 @@ def test_oob_importances(name, dtype):
     clf = ForestEstimator(
         n_estimators=10,
         random_state=0,
-        importance_type="permutation",
+        feature_importances_type="permutation",
         bootstrap=True,
     )
     clf.fit(X, y)
@@ -416,7 +416,7 @@ def test_oob_importances_multi_class(name, dtype):
     clf = ForestEstimator(
         n_estimators=10,
         random_state=0,
-        importance_type="permutation",
+        feature_importances_type="permutation",
         bootstrap=True,
     )
     clf.fit(X, y)
@@ -434,7 +434,7 @@ def test_oob_importances_raise_error(name):
 
     if name in FOREST_TRANSFORMERS:
         assert_raises(
-            TypeError, ForestEstimator, importance_type="permutation"
+            TypeError, ForestEstimator, feature_importances_type="permutation"
         )
 
         assert_raises(
@@ -449,7 +449,7 @@ def test_oob_importances_raise_error(name):
         assert_raises(
             ValueError,
             ForestEstimator(
-                importance_type="permutation", bootstrap=False
+                feature_importances_type="permutation", bootstrap=False
             ).fit,
             X,
             y,

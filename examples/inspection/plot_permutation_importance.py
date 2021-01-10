@@ -176,3 +176,33 @@ ax.boxplot(result.importances[sorted_idx].T,
 ax.set_title("Permutation Importances (train set)")
 fig.tight_layout()
 plt.show()
+
+# %%
+# Finally, the permutation importance can also be calculated using the
+# out-of-bag data by setting ``feature_importances_type="permutation"`` and
+# re-running the pipeline. This confirms that ``sex``` is most important
+# and that the random features have low importances.
+rf = Pipeline([
+    ('preprocess', preprocessing),
+    ('classifier', RandomForestClassifier(random_state=42, feature_importances_type="permutation"))
+])
+rf.fit(X_train, y_train)
+
+ohe = (rf.named_steps['preprocess']
+         .named_transformers_['cat']
+         .named_steps['onehot'])
+feature_names = ohe.get_feature_names(input_features=categorical_columns)
+feature_names = np.r_[feature_names, numerical_columns]
+
+tree_feature_importances = (
+    rf.named_steps['classifier'].feature_importances_)
+sorted_idx = tree_feature_importances.argsort()
+
+y_ticks = np.arange(0, len(feature_names))
+fig, ax = plt.subplots()
+ax.barh(y_ticks, tree_feature_importances[sorted_idx])
+ax.set_yticklabels(feature_names[sorted_idx])
+ax.set_yticks(y_ticks)
+ax.set_title("Random Forest Feature Importances (MDI)")
+fig.tight_layout()
+plt.show()
