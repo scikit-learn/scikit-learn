@@ -116,7 +116,7 @@ a :class:`~sklearn.model_selection.GridSearchCV` (parallelized with joblib)
 with ``n_jobs=8`` over a
 :class:`~sklearn.ensemble.HistGradientBoostingClassifier` (parallelized with
 OpenMP). Each instance of
-:class:`~sklean.ensemble.HistGradientBoostingClassifier` will spawn 8 threads
+:class:`~sklearn.ensemble.HistGradientBoostingClassifier` will spawn 8 threads
 (since you have 8 CPUs). That's a total of ``8 * 8 = 64`` threads, which
 leads to oversubscription of physical CPU resources and to scheduling
 overhead.
