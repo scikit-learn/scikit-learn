@@ -128,8 +128,6 @@ and NumPy and SciPy are not recompiled from source, which can happen when using
 particular configurations of operating system and hardware (such as Linux on
 a Raspberry Pi).
 
-If you must install scikit-learn and all its optional dependencies with pip, you
-can install it as ``scikit-learn[alldeps]``.
 
 Scikit-learn plotting capabilities (i.e., functions start with "plot\_"
 and classes end with "Display") require Matplotlib. The examples require
