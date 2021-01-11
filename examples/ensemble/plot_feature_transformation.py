@@ -95,17 +95,7 @@ rt_model = make_pipeline(
 rt_model.fit(X_train_linear, y_train_linear)
 
 # %%
-# For the random forest and gradient boosting trees, we need to first find
-# the id of the leaves which will be used as categories.
-
-
-def find_tree_leaves(tree):
-    return [node_id for node_id in range(tree.tree_.node_count)
-            if tree.tree_.children_left[node_id] == -1]
-
-
-# %%
-# Then, we can pipe the random forest or gradient boosting into a logistic
+# Then, we can pipeline random forest or gradient boosting with a logistic
 # regression. However, the feature transformation will happen by calling the
 # method `apply`. The pipeline in scikit-learn expects a call to `transform`.
 # Therefore, we wrapped the call to `apply` within a `FunctionTransformer`.
@@ -156,14 +146,17 @@ models = [
     ("GBDT embedding -> LR", gbdt_model),
 ]
 
+model_displays = {}
 for name, pipeline in models:
-    disp = plot_roc_curve(pipeline, X_test, y_test, ax=ax, name=name)
+    model_displays[name] = plot_roc_curve(
+        pipeline, X_test, y_test, ax=ax, name=name)
 _ = ax.set_title('ROC curve')
 
 # %%
 fig, ax = plt.subplots()
 for name, pipeline in models:
-    disp = plot_roc_curve(pipeline, X_test, y_test, ax=ax, name=name)
+    model_displays[name].plot(ax=ax)
+
 ax.set_xlim(0, 0.2)
 ax.set_ylim(0.8, 1)
 _ = ax.set_title('ROC curve (zoomed in at top left)')
