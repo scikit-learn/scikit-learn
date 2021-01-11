@@ -33,10 +33,19 @@ def human_readable_data_quantity(quantity, multiple=1024):
             quantity /= multiple
 
 
-def get_zip_size(version):
+def get_file_extension(version):
+    current_version = LooseVersion(version)
+    min_zip_version = LooseVersion('1.0.0')
+
+    return '.zip' if current_version >= min_zip_version else '.pdf'
+
+
+def get_file_size(version):
     api_url = ROOT_URL + '%s/_downloads' % version
     for path_details in json_urlread(api_url):
-        if path_details['name'] == 'scikit-learn-docs.zip':
+        file_extension = get_file_extension(version)
+        file_path = f'scikit-learn-docs.{file_extension}'
+        if path_details['name'] == file_path:
             return human_readable_data_quantity(path_details['size'], 1000)
 
 
@@ -65,8 +74,8 @@ for path_details in root_listing:
     if path_details['type'] == 'dir':
         html = urlopen(RAW_FMT % name).read().decode('utf8')
         version_num = VERSION_RE.search(html).group(1)
-        zip_size = get_zip_size(name)
-        dirs[name] = (version_num, zip_size)
+        file_size = get_file_size(name)
+        dirs[name] = (version_num, file_size)
 
     if path_details['type'] == 'symlink':
         symlinks[name] = json_urlread(path_details['_links']['self'])['target']
@@ -82,7 +91,7 @@ seen = set()
 for name in (NAMED_DIRS +
              sorted((k for k in dirs if k[:1].isdigit()),
                     key=LooseVersion, reverse=True)):
-    version_num, zip_size = dirs[name]
+    version_num, file_size = dirs[name]
     if version_num in seen:
         # symlink came first
         continue
@@ -92,7 +101,8 @@ for name in (NAMED_DIRS +
     path = 'https://scikit-learn.org/%s/' % name
     out = ('* `Scikit-learn %s%s documentation <%s>`_'
            % (version_num, name_display, path))
-    if zip_size is not None:
-        out += (' (`ZIP %s <%s/_downloads/scikit-learn-docs.zip>`_)'
-                % (zip_size, path))
+    if file_size is not None:
+        file_extension = get_file_extension(version_num)
+        out += (f' (`{file_extension.upper()} {file_size} <{path}/'
+                f'_downloads/scikit-learn-docs.{file_extension}>`_)')
     print(out)
