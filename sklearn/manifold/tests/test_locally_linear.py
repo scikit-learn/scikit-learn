@@ -144,7 +144,7 @@ def test_invalid_metric():
 
     msg = "metric must be euclidean or equivalent"
     assert_raise_message(ValueError, msg, manifold.locally_linear_embedding,
-                         nbrs, 2, 1)
+                         nbrs, n_neighbors=2, n_components=1)
 
 
 
