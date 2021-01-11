@@ -192,8 +192,7 @@ rf = Pipeline(
 rf.fit(X_train, y_train)
 
 ohe = (rf.named_steps['preprocess']
-         .named_transformers_['cat']
-         .named_steps['onehot'])
+         .named_transformers_['cat'])
 feature_names = ohe.get_feature_names(input_features=categorical_columns)
 feature_names = np.r_[feature_names, numerical_columns]
 
@@ -206,6 +205,6 @@ fig, ax = plt.subplots()
 ax.barh(y_ticks, tree_feature_importances[sorted_idx])
 ax.set_yticklabels(feature_names[sorted_idx])
 ax.set_yticks(y_ticks)
-ax.set_title("Random Forest Feature Importances (MDI)")
+ax.set_title("Random Forest Feature Importances (OOB Permutation)")
 fig.tight_layout()
 plt.show()
