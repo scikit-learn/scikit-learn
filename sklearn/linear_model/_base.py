@@ -286,10 +286,8 @@ class LinearClassifierMixin(ClassifierMixin):
         X = self._validate_data(X, accept_sparse='csr', reset=False)
         scores = safe_sparse_dot(X, self.coef_.T,
                                  dense_output=True) + self.intercept_
-        
-        coef_norms = np.linalg.norm(self.coef_, axis=1)        
-        scores    /= coef_norms
-        
+        coef_norms = np.linalg.norm(self.coef_, axis=1)
+        scores /= coef_norms        
         return scores.ravel() if scores.shape[1] == 1 else scores
 
     def predict(self, X):
