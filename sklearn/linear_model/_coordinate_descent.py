@@ -729,7 +729,8 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             Target. Will be cast to X's dtype if necessary.
 
         sample_weight : float or array-like of shape (n_samples,), default=None
-            Sample weight.
+            Sample weight. Internally, the `sample_weight` vector will be
+            rescaled to sum to `n_samples`.
 
             .. versionadded:: 0.23
 
@@ -790,7 +791,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
                                                      dtype=X.dtype)
             # simplify things by rescaling sw to sum up to n_samples
             # => np.average(x, weights=sw) = np.mean(sw * x)
-            sample_weight *= (n_samples / np.sum(sample_weight))
+            sample_weight = sample_weight * (n_samples / np.sum(sample_weight))
             # Objective function is:
             # 1/2 * np.average(squared error, weights=sw) + alpha * penalty
             # but coordinate descent minimizes:
@@ -1861,7 +1862,7 @@ class MultiTaskElasticNet(Lasso):
 
     See Also
     --------
-    MultiTaskElasticNet : Multi-task L1/L2 ElasticNet with built-in
+    MultiTaskElasticNetCV : Multi-task L1/L2 ElasticNet with built-in
         cross-validation.
     ElasticNet
     MultiTaskLasso

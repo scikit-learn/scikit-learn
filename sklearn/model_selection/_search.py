@@ -35,6 +35,7 @@ from ..exceptions import NotFittedError
 from joblib import Parallel
 from ..utils import check_random_state
 from ..utils.random import sample_without_replacement
+from ..utils._tags import _safe_tags
 from ..utils.validation import indexable, check_is_fitted, _check_fit_params
 from ..utils.validation import _deprecate_positional_args
 from ..utils.metaestimators import if_delegate_has_method
@@ -313,10 +314,10 @@ class ParameterSampler:
             return self.n_iter
 
 
-# FIXME Remove fit_grid_point in 0.25
+# FIXME Remove fit_grid_point in 1.0
 @deprecated(
     "fit_grid_point is deprecated in version 0.23 "
-    "and will be removed in version 0.25"
+    "and will be removed in version 1.0 (renaming of 0.25)"
 )
 def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
                    verbose, error_score=np.nan, **fit_params):
@@ -431,6 +432,18 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     def _estimator_type(self):
         return self.estimator._estimator_type
 
+    def _more_tags(self):
+        # allows cross-validation to see 'precomputed' metrics
+        return {
+            'pairwise': _safe_tags(self.estimator, "pairwise"),
+            "_xfail_checks": {"check_supervised_y_2d":
+                              "DataConversionWarning not caught"},
+        }
+
+    # TODO: Remove in 1.1
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def _pairwise(self):
         # allows cross-validation to see 'precomputed' metrics
@@ -1229,6 +1242,9 @@ class GridSearchCV(BaseSearchCV):
 
         .. versionadded:: 0.20
 
+    multimetric_ : bool
+        Whether or not the scorers compute several metrics.
+
     Notes
     -----
     The parameters selected are those that maximize the score of the left out
@@ -1542,6 +1558,9 @@ class RandomizedSearchCV(BaseSearchCV):
         This is present only if ``refit`` is not False.
 
         .. versionadded:: 0.20
+
+    multimetric_ : bool
+        Whether or not the scorers compute several metrics.
 
     Notes
     -----

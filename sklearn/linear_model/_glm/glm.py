@@ -12,7 +12,6 @@ import numpy as np
 import scipy.optimize
 
 from ...base import BaseEstimator, RegressorMixin
-from ...utils import check_array, check_X_y
 from ...utils.optimize import _check_optimize_result
 from ...utils.validation import check_is_fitted, _check_sample_weight
 from ..._loss.glm_distribution import (
@@ -48,7 +47,7 @@ def _y_pred_deviance_derivative(coef, X, y, weights, family, link):
     return y_pred, devp
 
 
-class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
+class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
     """Regression via a penalized Generalized Linear Model (GLM).
 
     GLMs based on a reproductive Exponential Dispersion Model (EDM) aim at
@@ -221,9 +220,9 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         family = self._family_instance
         link = self._link_instance
 
-        X, y = check_X_y(X, y, accept_sparse=['csc', 'csr'],
-                         dtype=[np.float64, np.float32],
-                         y_numeric=True, multi_output=False)
+        X, y = self._validate_data(X, y, accept_sparse=['csc', 'csr'],
+                                   dtype=[np.float64, np.float32],
+                                   y_numeric=True, multi_output=False)
 
         weights = _check_sample_weight(sample_weight, X)
 
@@ -311,9 +310,9 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
             Returns predicted values of linear predictor.
         """
         check_is_fitted(self)
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                        dtype=[np.float64, np.float32], ensure_2d=True,
-                        allow_nd=False)
+        X = self._validate_data(X, accept_sparse=['csr', 'csc', 'coo'],
+                                dtype=[np.float64, np.float32], ensure_2d=True,
+                                allow_nd=False, reset=False)
         return X @ self.coef_ + self.intercept_
 
     def predict(self, X):

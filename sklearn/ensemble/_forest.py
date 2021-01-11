@@ -1054,8 +1054,8 @@ class RandomForestClassifier(ForestClassifier):
            ``min_impurity_split`` has been deprecated in favor of
            ``min_impurity_decrease`` in 0.19. The default value of
            ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
-           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
-
+           will be removed in 1.0 (renaming of 0.25).
+           Use ``min_impurity_decrease`` instead.
 
     bootstrap : bool, default=True
         Whether bootstrap samples are used when building trees. If False, the
@@ -1397,7 +1397,8 @@ class RandomForestRegressor(ForestRegressor):
            ``min_impurity_split`` has been deprecated in favor of
            ``min_impurity_decrease`` in 0.19. The default value of
            ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
-           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
+           will be removed in 1.0 (renaming of 0.25).
+           Use ``min_impurity_decrease`` instead.
 
     bootstrap : bool, default=True
         Whether bootstrap samples are used when building trees. If False, the
@@ -1699,7 +1700,8 @@ class ExtraTreesClassifier(ForestClassifier):
            ``min_impurity_split`` has been deprecated in favor of
            ``min_impurity_decrease`` in 0.19. The default value of
            ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
-           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
+           will be removed in 1.0 (renaming of 0.25).
+           Use ``min_impurity_decrease`` instead.
 
     bootstrap : bool, default=False
         Whether bootstrap samples are used when building trees. If False, the
@@ -2037,7 +2039,8 @@ class ExtraTreesRegressor(ForestRegressor):
            ``min_impurity_split`` has been deprecated in favor of
            ``min_impurity_decrease`` in 0.19. The default value of
            ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
-           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
+           will be removed in 1.0 (renaming of 0.25).
+           Use ``min_impurity_decrease`` instead.
 
     bootstrap : bool, default=False
         Whether bootstrap samples are used when building trees. If False, the
@@ -2316,7 +2319,8 @@ class RandomTreesEmbedding(BaseForest):
            ``min_impurity_split`` has been deprecated in favor of
            ``min_impurity_decrease`` in 0.19. The default value of
            ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
-           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
+           will be removed in 1.0 (renaming of 0.25).
+           Use ``min_impurity_decrease`` instead.
 
     sparse_output : bool, default=True
         Whether or not to return a sparse CSR matrix, as default behavior,

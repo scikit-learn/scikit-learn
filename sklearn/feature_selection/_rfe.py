@@ -10,8 +10,10 @@ import numpy as np
 import numbers
 from joblib import Parallel, effective_n_jobs
 
+
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.metaestimators import _safe_split
+from ..utils._tags import _safe_tags
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _deprecate_positional_args
 from ..utils.fixes import delayed
@@ -33,8 +35,10 @@ def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer):
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, y_test = _safe_split(estimator, X, y, test, train)
     return rfe._fit(
-        X_train, y_train, lambda estimator, features:
-        _score(estimator, X_test[:, features], y_test, scorer)).scores_
+        X_train, y_train,
+        lambda estimator, features: _score(
+            estimator, X_test[:, features], y_test, scorer
+        )).scores_
 
 
 class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
@@ -189,7 +193,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         X, y = self._validate_data(
             X, y, accept_sparse="csc",
             ensure_min_features=2,
-            force_all_finite=not tags.get('allow_nan', True),
+            force_all_finite=not tags.get("allow_nan", True),
             multi_output=True
         )
         error_msg = ("n_features_to_select must be either None, a "
@@ -369,11 +373,11 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         return self.estimator_.predict_log_proba(self.transform(X))
 
     def _more_tags(self):
-        estimator_tags = self.estimator._get_tags()
-        return {'poor_score': True,
-                'allow_nan': estimator_tags.get('allow_nan', True),
-                'requires_y': True,
-                }
+        return {
+            'poor_score': True,
+            'allow_nan': _safe_tags(self.estimator, key='allow_nan'),
+            'requires_y': True,
+        }
 
 
 class RFECV(RFE):
