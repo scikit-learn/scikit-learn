@@ -73,7 +73,7 @@ _ = gradient_boosting.fit(X_train_ensemble, y_train_ensemble)
 
 # %%
 # The :class:`~sklearn.ensemble.RandomTreesEmbedding` is an unsupervised method
-# and thus doest not required to be trained independently.
+# and thus does not required to be trained independently.
 
 from sklearn.ensemble import RandomTreesEmbedding
 
@@ -105,7 +105,7 @@ def find_tree_leaves(tree):
 
 
 # %%
-# Then, we can pipeline random forest or gradient boosting with a logistic
+# Then, we can pipe the random forest or gradient boosting into a logistic
 # regression. However, the feature transformation will happen by calling the
 # method `apply`. The pipeline in scikit-learn expects a call to `transform`.
 # Therefore, we wrapped the call to `apply` within a `FunctionTransformer`.
