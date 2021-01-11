@@ -187,6 +187,8 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         If True, the time elapsed while fitting will be printed as it
         is completed.
 
+        .. versionadded:: 0.23
+
     Attributes
     ----------
     estimators_ : list of classifiers
@@ -417,6 +419,8 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
     verbose : bool, default=False
         If True, the time elapsed while fitting will be printed as it
         is completed.
+
+        .. versionadded:: 0.23
 
     Attributes
     ----------

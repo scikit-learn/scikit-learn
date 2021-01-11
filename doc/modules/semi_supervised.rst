@@ -1,7 +1,7 @@
 .. _semi_supervised:
 
 ===================================================
-Semi-Supervised
+Semi-supervised learning
 ===================================================
 
 .. currentmodule:: sklearn.semi_supervised
@@ -17,9 +17,61 @@ labeled points and a large amount of unlabeled points.
 
 .. topic:: Unlabeled entries in `y`
 
-    It is important to assign an identifier to unlabeled points along with the
-    labeled data when training the model with the ``fit`` method. The identifier
-    that this implementation uses is the integer value :math:`-1`.
+   It is important to assign an identifier to unlabeled points along with the
+   labeled data when training the model with the ``fit`` method. The
+   identifier that this implementation uses is the integer value :math:`-1`.
+   Note that for string labels, the dtype of `y` should be object so that it
+   can contain both strings and integers.
+
+.. note::
+
+   Semi-supervised algorithms need to make assumptions about the distribution
+   of the dataset in order to achieve performance gains. See `here
+   <https://en.wikipedia.org/wiki/Semi-supervised_learning#Assumptions_used>`_
+   for more details.
+
+.. _self_training:
+
+Self Training
+=============
+
+This self-training implementation is based on Yarowsky's [1]_ algorithm. Using
+this algorithm, a given supervised classifier can function as a semi-supervised
+classifier, allowing it to learn from unlabeled data.
+
+:class:`SelfTrainingClassifier` can be called with any classifier that
+implements `predict_proba`, passed as the parameter `base_classifier`. In
+each iteration, the `base_classifier` predicts labels for the unlabeled
+samples and adds a subset of these labels to the labeled dataset.
+
+The choice of this subset is determined by the selection criterion. This
+selection can be done using a `threshold` on the prediction probabilities, or
+by choosing the `k_best` samples according to the prediction probabilities.
+
+The labels used for the final fit as well as the iteration in which each sample
+was labeled are available as attributes. The optional `max_iter` parameter
+specifies how many times the loop is executed at most.
+
+The `max_iter` parameter may be set to `None`, causing the algorithm to iterate
+until all samples have labels or no new samples are selected in that iteration.
+
+.. note::
+
+   When using the self-training classifier, the
+   :ref:`calibration <calibration>` of the classifier is important.
+
+.. topic:: Examples
+
+  * :ref:`sphx_glr_auto_examples_semi_supervised_plot_self_training_varying_threshold.py`
+  * :ref:`sphx_glr_auto_examples_semi_supervised_plot_semi_supervised_versus_svm_iris.py`
+
+.. topic:: References
+
+    .. [1] David Yarowsky. 1995. Unsupervised word sense disambiguation rivaling
+       supervised methods. In Proceedings of the 33rd annual meeting on
+       Association for Computational Linguistics (ACL '95). Association for
+       Computational Linguistics, Stroudsburg, PA, USA, 189-196. DOI:
+       https://doi.org/10.3115/981658.981684
 
 .. _label_propagation:
 
@@ -30,7 +82,7 @@ Label propagation denotes a few variations of semi-supervised graph
 inference algorithms. 
 
 A few features available in this model:
-  * Can be used for classification and regression tasks
+  * Used for classification tasks
   * Kernel methods to project data into alternate dimensional spaces
 
 `scikit-learn` provides two label propagation models:
@@ -84,17 +136,16 @@ which can drastically reduce running times.
 
 .. topic:: Examples
 
-  * :ref:`sphx_glr_auto_examples_semi_supervised_plot_label_propagation_versus_svm_iris.py`
+  * :ref:`sphx_glr_auto_examples_semi_supervised_plot_semi_supervised_versus_svm_iris.py`
   * :ref:`sphx_glr_auto_examples_semi_supervised_plot_label_propagation_structure.py`
   * :ref:`sphx_glr_auto_examples_semi_supervised_plot_label_propagation_digits.py`
   * :ref:`sphx_glr_auto_examples_semi_supervised_plot_label_propagation_digits_active_learning.py`
 
 .. topic:: References
 
-    [1] Yoshua Bengio, Olivier Delalleau, Nicolas Le Roux. In Semi-Supervised
+    [2] Yoshua Bengio, Olivier Delalleau, Nicolas Le Roux. In Semi-Supervised
     Learning (2006), pp. 193-216
 
-    [2] Olivier Delalleau, Yoshua Bengio, Nicolas Le Roux. Efficient
+    [3] Olivier Delalleau, Yoshua Bengio, Nicolas Le Roux. Efficient
     Non-Parametric Function Induction in Semi-Supervised Learning. AISTAT 2005
     https://research.microsoft.com/en-us/people/nicolasl/efficient_ssl.pdf
-

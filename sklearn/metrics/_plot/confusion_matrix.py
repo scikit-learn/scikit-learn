@@ -4,6 +4,7 @@ import numpy as np
 
 from .. import confusion_matrix
 from ...utils import check_matplotlib_support
+from ...utils.multiclass import unique_labels
 from ...utils.validation import _deprecate_positional_args
 from ...base import is_classifier
 
@@ -181,7 +182,7 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Input values.
 
-    y : array-like of shape (n_samples,)
+    y_true : array-like of shape (n_samples,)
         Target values.
 
     labels : array-like of shape (n_classes,), default=None
@@ -262,7 +263,7 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
 
     if display_labels is None:
         if labels is None:
-            display_labels = estimator.classes_
+            display_labels = unique_labels(y_true, y_pred)
         else:
             display_labels = labels
 

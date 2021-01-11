@@ -26,7 +26,7 @@ from scipy import linalg
 
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import check_array, check_random_state
+from ..utils import check_random_state
 from ..utils.extmath import fast_logdet, randomized_svd, squared_norm
 from ..utils.validation import check_is_fitted, _deprecate_positional_args
 from ..exceptions import ConvergenceWarning
@@ -212,7 +212,9 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         # to allow for unified computation of loglikelihood
         if self.svd_method == 'lapack':
             def my_svd(X):
-                _, s, Vt = linalg.svd(X, full_matrices=False)
+                _, s, Vt = linalg.svd(X,
+                                      full_matrices=False,
+                                      check_finite=False)
                 return (s[:n_components], Vt[:n_components],
                         squared_norm(s[n_components:]))
         elif self.svd_method == 'randomized':
@@ -279,7 +281,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = check_array(X)
+        X = self._validate_data(X, reset=False)
         Ih = np.eye(len(self.components_))
 
         X_transformed = X - self.mean_
@@ -350,7 +352,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
             Log-likelihood of each sample under the current model
         """
         check_is_fitted(self)
-
+        X = self._validate_data(X, reset=False)
         Xr = X - self.mean_
         precision = self.get_precision()
         n_features = X.shape[1]
