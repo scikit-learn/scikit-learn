@@ -356,7 +356,9 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             raise ValueError("Out of bag estimation only available"
                              " if bootstrap=True")
 
-        if not self.bootstrap and (self.feature_importances_type == 'permutation'):
+        if not self.bootstrap and (
+            self.feature_importances_type == "permutation"
+        ):
             raise ValueError("Out of bag estimation only available"
                              " if bootstrap=True")
 
@@ -438,12 +440,18 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             )
 
             scorer = check_scoring(estimator, scoring=self.scoring)
-            baseline = scorer(estimator, X[unsampled_indices, :], y[unsampled_indices, :])
+            baseline = scorer(
+                estimator, X[unsampled_indices, :], y[unsampled_indices, :]
+            )
 
             for col in range(X.shape[1]):
                 X_permuted = X.copy()
                 random_state.shuffle(X_permuted[:, col])
-                curr_perf = scorer(estimator, X_permuted[unsampled_indices, :], y[unsampled_indices, :])
+                curr_perf = scorer(
+                    estimator,
+                    X_permuted[unsampled_indices, :],
+                    y[unsampled_indices, :],
+                )
                 all_imp[i, col] = baseline - curr_perf
 
             n_predictions[unsampled_indices] += 1
