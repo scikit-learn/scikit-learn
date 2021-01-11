@@ -206,7 +206,8 @@ console:
 
     python -c "import struct; print(struct.calcsize('P') * 8)"
 
-For 64-bit Python, you can configure the build environment by running the following commands in ``cmd`` or ``Anaconda Prompt`` (if you use ``Anaconda``):
+For 64-bit Python, configure the build environment by running the following
+commands in ``cmd`` or an Anaconda Prompt (if you use Anaconda):
 
     ::
 
