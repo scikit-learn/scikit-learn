@@ -8,22 +8,24 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ contains(github.event.pull_request.labels.*.name, 'no-changelog') == 0 }}
     steps:
-      - name: Get PR number and author
+      - name: Get PR number
         run: |
           echo "PR_NUMBER=${{ github.event.pull_request.number }}" >> $GITHUB_ENV
-          echo "PR_AUTHOR=${{ github.event.pull_request.user.login }}" >> $GITHUB_ENV
       - uses: actions/checkout@v2
         with:
           fetch-depth: '0'
-      - name: Check the changelog
+      - name: Check the changelog only if tests have been modified
         run: |
           set -xe
-          result=`grep "$PR_NUMBER" ./doc/whats_new/v*.rst | grep "$PR_AUTHOR"`
-          if [ "$result" != "" ]
+          tests=$(git diff --name-only origin/master)
+          if [[ "$tests" =~ tests ]]
           then
-            echo $result
-          else
-          then
-            echo "Changelog entry is missing."
-            exit 1
+            result=$(cat ./doc/whats_new/v*.rst)
+            if [[ "$result" =~ :pr:\`$PR_NUMBER\` ]]
+            then
+              echo "Changelog has been updated."
+            else
+              echo "Changelog entry is missing."
+              exit 1
+            fi
           fi
