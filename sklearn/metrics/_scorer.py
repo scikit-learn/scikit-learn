@@ -203,6 +203,34 @@ class _BaseScorer:
         """Return non-default make_scorer arguments for repr."""
         return ""
 
+    def _call_score_on_preds(self, y_true, y_pred, sample_weight=None):
+        """Compute the score using the predictions.
+
+        Parameters
+        ----------
+        y_true : array-like
+            True targets.
+
+        y_pred : array-like
+            Predicted targets.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights.
+
+        Returns
+        -------
+        score : float
+            Score function applied to prediction of estimator on X.
+        """
+        if sample_weight is not None:
+            return self._sign * self._score_func(
+                y_true, y_pred, sample_weight=sample_weight, **self._kwargs
+            )
+        else:
+            return self._sign * self._score_func(
+                y_true, y_pred, **self._kwargs
+            )
+
 
 class _PredictScorer(_BaseScorer):
     def _score(self, method_caller, estimator, X, y_true, sample_weight=None):
@@ -234,13 +262,9 @@ class _PredictScorer(_BaseScorer):
         """
 
         y_pred = method_caller(estimator, "predict", X)
-        if sample_weight is not None:
-            return self._sign * self._score_func(y_true, y_pred,
-                                                 sample_weight=sample_weight,
-                                                 **self._kwargs)
-        else:
-            return self._sign * self._score_func(y_true, y_pred,
-                                                 **self._kwargs)
+        return self._call_score_on_preds(
+            y_true, y_pred, sample_weight=sample_weight
+        )
 
 
 class _ProbaScorer(_BaseScorer):
@@ -280,12 +304,9 @@ class _ProbaScorer(_BaseScorer):
             # problem: (when only 2 class are given to `y_true` during scoring)
             # Thus, we need to check for the shape of `y_pred`.
             y_pred = self._select_proba_binary(y_pred, clf.classes_)
-        if sample_weight is not None:
-            return self._sign * self._score_func(y, y_pred,
-                                                 sample_weight=sample_weight,
-                                                 **self._kwargs)
-        else:
-            return self._sign * self._score_func(y, y_pred, **self._kwargs)
+        return self._call_score_on_preds(
+            y, y_pred, sample_weight=sample_weight
+        )
 
     def _factory_args(self):
         return ", needs_proba=True"
@@ -354,12 +375,9 @@ class _ThresholdScorer(_BaseScorer):
                 elif isinstance(y_pred, list):
                     y_pred = np.vstack([p[:, -1] for p in y_pred]).T
 
-        if sample_weight is not None:
-            return self._sign * self._score_func(y, y_pred,
-                                                 sample_weight=sample_weight,
-                                                 **self._kwargs)
-        else:
-            return self._sign * self._score_func(y, y_pred, **self._kwargs)
+        return self._call_score_on_preds(
+            y, y_pred, sample_weight=sample_weight
+        )
 
     def _factory_args(self):
         return ", needs_threshold=True"

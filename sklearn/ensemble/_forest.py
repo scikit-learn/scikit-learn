@@ -51,8 +51,9 @@ from scipy.sparse import issparse
 from scipy.sparse import hstack as sparse_hstack
 from joblib import Parallel
 
+from ..base import is_classifier
 from ..base import ClassifierMixin, RegressorMixin, MultiOutputMixin
-from ..metrics import accuracy_score, r2_score
+from ..metrics import get_scorer
 from ..preprocessing import OneHotEncoder
 from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
                     ExtraTreeClassifier, ExtraTreeRegressor)
@@ -397,6 +398,11 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             self.estimators_.extend(trees)
 
         if self.oob_score:
+            if isinstance(self.oob_score, str):
+                scoring = self.oob_score
+            else:
+                scoring = "accuracy" if is_classifier(self) else "r2"
+            self._oob_score = get_scorer(scoring)
             self._set_oob_score(X, y)
 
         # Decapsulate classes_ attributes
@@ -438,7 +444,9 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         self.oob_score_ = 0.0
         for k in range(self.n_outputs_):
-            self.oob_score_ += self._scoring(y[:, k], predictions[:, k])
+            self.oob_score_ += self._oob_score._call_score_on_preds(
+                y[:, k], predictions[:, k]
+            )
         self.oob_score_ /= self.n_outputs_
 
     def _validate_y_class_weight(self, y):
@@ -537,7 +545,6 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             warm_start=warm_start,
             class_weight=class_weight,
             max_samples=max_samples)
-        self._scoring = accuracy_score
 
     @staticmethod
     def _oob_voting(predictions):
@@ -748,7 +755,6 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
             verbose=verbose,
             warm_start=warm_start,
             max_samples=max_samples)
-        self._scoring = r2_score
 
     def predict(self, X):
         """
@@ -827,6 +833,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         averaged_predictions /= len(self.estimators_)
 
         return averaged_predictions
+
 
 class RandomForestClassifier(ForestClassifier):
     """
@@ -945,9 +952,10 @@ class RandomForestClassifier(ForestClassifier):
         Whether bootstrap samples are used when building trees. If False, the
         whole dataset is used to build each tree.
 
-    oob_score : bool, default=False
-        Whether to use out-of-bag samples to estimate
-        the generalization accuracy.
+    oob_score : bool or str, default=False
+        Whether to use out-of-bag samples to estimate the generalization score.
+        If a string is provided, it corresponds to the score computed, see
+        :ref:`scoring_parameter`.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
@@ -1268,9 +1276,10 @@ class RandomForestRegressor(ForestRegressor):
         Whether bootstrap samples are used when building trees. If False, the
         whole dataset is used to build each tree.
 
-    oob_score : bool, default=False
-        whether to use out-of-bag samples to estimate
-        the R^2 on unseen data.
+    oob_score : bool or str, default=False
+        Whether to use out-of-bag samples to estimate the generalization score.
+        If a string is provided, it corresponds to the score computed, see
+        :ref:`scoring_parameter`.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
@@ -1551,9 +1560,10 @@ class ExtraTreesClassifier(ForestClassifier):
         Whether bootstrap samples are used when building trees. If False, the
         whole dataset is used to build each tree.
 
-    oob_score : bool, default=False
-        Whether to use out-of-bag samples to estimate
-        the generalization accuracy.
+    oob_score : bool or str, default=False
+        Whether to use out-of-bag samples to estimate the generalization score.
+        If a string is provided, it corresponds to the score computed, see
+        :ref:`scoring_parameter`.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
@@ -1870,8 +1880,10 @@ class ExtraTreesRegressor(ForestRegressor):
         Whether bootstrap samples are used when building trees. If False, the
         whole dataset is used to build each tree.
 
-    oob_score : bool, default=False
-        Whether to use out-of-bag samples to estimate the R^2 on unseen data.
+    oob_score : bool or str, default=False
+        Whether to use out-of-bag samples to estimate the generalization score.
+        If a string is provided, it corresponds to the score computed, see
+        :ref:`scoring_parameter`.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
