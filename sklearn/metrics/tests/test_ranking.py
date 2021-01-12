@@ -553,8 +553,18 @@ def test_multiclass_ovr_roc_auc_toydata(y_true, labels):
     out_0 = roc_auc_score([1, 0, 0, 0], y_scores[:, 0])
     out_1 = roc_auc_score([0, 1, 0, 0], y_scores[:, 1])
     out_2 = roc_auc_score([0, 0, 1, 1], y_scores[:, 2])
-    result_unweighted = (out_0 + out_1 + out_2) / 3.
+    assert_almost_equal(
+        roc_auc_score(
+            y_true,
+            y_scores,
+            multi_class='ovr',
+            labels=labels,
+            average=None),
+        [out_0, out_1, out_2]
+    )
 
+    # Compute unweighted results (default behaviour)
+    result_unweighted = (out_0 + out_1 + out_2) / 3.
     assert_almost_equal(
         roc_auc_score(y_true, y_scores, multi_class="ovr", labels=labels),
         result_unweighted)
@@ -609,9 +619,9 @@ def test_roc_auc_score_multiclass_labels_error(
 
 
 @pytest.mark.parametrize("msg, kwargs", [
-    ((r"average must be one of \('macro', 'weighted'\) for "
+    ((r"average must be one of \('macro', 'weighted', None\) for "
       r"multiclass problems"), {"average": "samples", "multi_class": "ovo"}),
-    ((r"average must be one of \('macro', 'weighted'\) for "
+    ((r"average must be one of \('macro', 'weighted', None\) for "
       r"multiclass problems"), {"average": "micro", "multi_class": "ovr"}),
     ((r"sample_weight is not supported for multiclass one-vs-one "
       r"ROC AUC, 'sample_weight' must be None in this case"),

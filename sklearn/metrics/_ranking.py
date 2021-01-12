@@ -598,7 +598,7 @@ def _multiclass_roc_auc_score(y_true, y_score, labels,
             "roc_auc, i.e. they should sum up to 1.0 over classes")
 
     # validation for multiclass parameter specifications
-    average_options = ("macro", "weighted")
+    average_options = ("macro", "weighted", None)
     if average not in average_options:
         raise ValueError("average must be one of {0} for "
                          "multiclass problems".format(average_options))
