@@ -69,7 +69,8 @@ def transform(raw_X, Py_ssize_t n_features, dtype,
 
             array.resize_smart(indices, len(indices) + 1)
             if h == - 2147483648:
-                # abs(-2**31) is undefined behavior
+                # abs(-2**31) is undefined behavior because h is a `np.int32`
+                # The following is defined such that it is equal to: abs(-2**31) % n_features
                 indices[len(indices) - 1] = (2147483647 - (n_features - 1)) % n_features
             else:
                 indices[len(indices) - 1] = abs(h) % n_features
