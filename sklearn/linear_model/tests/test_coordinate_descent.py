@@ -371,13 +371,13 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
 # FIXME: 'normalize' to be removed in 1.2
 @pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize(
-    "estimator, params, is_sparse",
+    "estimator, estimator_params, is_sparse",
     [(LinearRegression, {}, True),
      (LinearRegression, {}, False)
      ]
 )
 def test_linear_model_sample_weights_normalize_in_pipeline(estimator,
-                                                           params,
+                                                           estimator_params,
                                                            is_sparse):
     rng = np.random.RandomState(0)
 
@@ -394,13 +394,13 @@ def test_linear_model_sample_weights_normalize_in_pipeline(estimator,
         sample_weight = 1.0 + rng.rand(n_samples)
 
         # linear estimator with explicit sample_weight
-        reg = estimator(normalize=True, **params)
+        reg = estimator(normalize=True, **estimator_params)
         reg.fit(X, y, sample_weight=sample_weight)
 
         # linear estimator in a pipeline
         reg_pip = make_pipeline(
             StandardScaler(with_mean=False),
-            estimator(normalize=False, **params)
+            estimator(normalize=False, **estimator_params)
         )
         kwargs = {reg_pip.steps[-1][0] + '__sample_weight': sample_weight}
         reg_pip.fit(X, y, **kwargs)
