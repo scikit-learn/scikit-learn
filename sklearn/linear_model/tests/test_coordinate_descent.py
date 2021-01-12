@@ -411,7 +411,8 @@ def test_linear_model_sample_weights_normalize_in_pipeline(estimator,
 
         assert_allclose(
             reg_with_normalize.coef_ * reg_with_scalar[0].scale_,
-            reg_with_scalar[1].coef_)
+            reg_with_scalar[1].coef_
+            )
         assert_allclose(y_pred_norm, y_pred_pip)
 
 
