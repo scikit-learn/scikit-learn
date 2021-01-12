@@ -813,8 +813,8 @@ Spline transformer
 
 Another way to add nonlinear terms instead of polynomials of features is to
 generate spline basis functions for each feature with the
-:class:`SplineTransformer`. Splines are just piecewise polynomials,
-parameterized by their polynomial degree and the positions of the knots. The
+:class:`SplineTransformer`. Splines are piecewise polynomials, parametrized by
+their polynomial degree and the positions of the knots. The
 :class:`SplineTransformer` implements a B-spline basis, cf. the references
 below.
 
@@ -833,9 +833,9 @@ Some of the advantages of splines over polynomials are:
       phenomenon <https://en.wikipedia.org/wiki/Runge%27s_phenomenon>`_.
     - B-splines provide good options for extrapolation beyond the boundaries,
       i.e. beyond the range of fitted values. Have a look at the option
-      `extrapolation`.
+      ``extrapolation``.
     - B-splines generate a feature matrix with a banded structure. For a single
-      feature, every row contains only `degree + 1` non-zero elements, which
+      feature, every row contains only ``degree + 1`` non-zero elements, which
       occur consecutively and are even positive. This results in a matrix with
       good numerical properties, e.g. a low condition number, in sharp contrast
       to a matrix of polynomials, which goes under the name
@@ -862,9 +862,13 @@ The following code snippet shows splines in action::
            [0.   , 0.125, 0.75 , 0.125],
            [0.   , 0.   , 0.5  , 0.5  ]])
 
-As the `X` is sorted, one can easily see the banded matrix output. Only the
-three middle diagonals are non-zero for `degree=2`. The higher the degree, the
-more overlapping of the splines.
+As the ``X`` is sorted, one can easily see the banded matrix output. Only the
+three middle diagonals are non-zero for ``degree=2``. The higher the degree,
+the more overlapping of the splines.
+
+Interestingly, a :class:`SplineTransformer` of ``degree=0`` is the same as
+:class:`~sklearn.preprocessing.KBinsDiscretizer` with ``encode='onehot-dense``
+and ``n_bins = n_knots - 1`` if ``knots = strategy``.
 
 .. topic:: Examples:
 
