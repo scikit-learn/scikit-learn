@@ -1,5 +1,7 @@
 name: Check Changelog
-
+# This check makes sure that the changelog is properly updated
+# when a PR introduces a change in a test file.
+# To bypass this check, label the PR with  no-changelog.
 on:
   pull_request:
 
@@ -25,7 +27,7 @@ jobs:
             then
               echo "Changelog has been updated."
             else
-              echo "Changelog entry is missing."
+              echo "Changelog entry is missing. If no changelog entry is required for this PR, label the PR with no-changelog to bypass this check."
               exit 1
             fi
           fi
