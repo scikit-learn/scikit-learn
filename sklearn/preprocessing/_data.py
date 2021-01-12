@@ -2114,10 +2114,16 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         n_splines = self.bsplines_[0].c.shape[0]
         degree = self.degree
 
-        # Note that scipy splines return float64.
+        # Note that scipy BSpline returns float64 arrays and converts input
+        # x=X[:, i] to c-contiguous float64.
         n_out = self.n_features_out_ + n_features * self.include_bias
-        XBS = np.zeros((n_samples, n_out), dtype=np.float64,
-                       order=self.order)
+        if X.dtype in FLOAT_DTYPES:
+            dtype = X.dtype
+        else:
+            dtype = np.float64
+        XBS = np.zeros(
+            (n_samples, n_out), dtype=dtype, order=self.order
+        )
 
         for i in range(n_features):
             spl = self.bsplines_[i]
