@@ -440,7 +440,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
     def _set_oob_permutation_importance(self, X, y, sample_weight):
         """Compute feature importances from the out-of-bag samples."""
-        X = check_array(X, dtype=DTYPE, accept_sparse='csr')
+        X = check_array(X, dtype=DTYPE, accept_sparse=False)
 
         n_samples = y.shape[0]
 
@@ -448,8 +448,11 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             n_samples, self.max_samples
         )
 
-        all_imp = np.array(Parallel(n_jobs=self.n_jobs)\
-            (delayed(self._get_tree_oob_performance)(
+        if sample_weight is None:
+            sample_weight = np.ones(n_samples)
+
+        all_imp = np.array(Parallel(n_jobs=self.n_jobs)(
+            delayed(self._get_tree_oob_performance)(
                 estimator, X, y, n_samples, n_samples_bootstrap, sample_weight
             ) for estimator in self.estimators_))
 
@@ -1148,7 +1151,7 @@ class RandomForestClassifier(ForestClassifier):
           The importance corresponds with the average decrease in R2
           across all trees when a feature is permuted or shuffled.
 
-       .. versionadded: 1.0
+        .. versionadded: 1.0
 
     Attributes
     ----------
