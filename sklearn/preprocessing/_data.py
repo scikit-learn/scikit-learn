@@ -1964,6 +1964,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             )
         else:
             # knots == 'uniform':
+            # Note that the variable `knots` has already been validated and
+            # `else` is therefore safe.
             x_min = np.amin(X, axis=0)
             x_max = np.amax(X, axis=0)
             knots = linspace(start=x_min, stop=x_max, num=n_knots,
@@ -2046,7 +2048,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             raise ValueError("extrapolation must be one of 'error', "
                              "'constant', 'linear' or 'continue'.")
 
-        if not isinstance(self.include_bias, bool):
+        if not isinstance(self.include_bias, (bool, np.bool_)):
             raise ValueError("include_bias must be bool.")
 
         # number of knots for base interval
@@ -2079,7 +2081,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
         # With a diagonal coefficient matrix, we get back the spline basis
         # elements, i.e. the design matrix of the spline.
-        # Note, BSpline appreciates C-contiguous float64 arrays.
+        # Note, BSpline appreciates C-contiguous float64 arrays as c=coef.
         coef = np.eye(n_knots + self.degree - 1, dtype=np.float64)
         extrapolate = self.extrapolation == "continue"
         bsplines = [BSpline.construct_fast(knots[:, i], coef, self.degree,
