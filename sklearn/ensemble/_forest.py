@@ -46,12 +46,13 @@ import threading
 
 from abc import ABCMeta, abstractmethod
 import numpy as np
+from scipy.stats import mode
 from scipy.sparse import issparse
 from scipy.sparse import hstack as sparse_hstack
 from joblib import Parallel
 
 from ..base import ClassifierMixin, RegressorMixin, MultiOutputMixin
-from ..metrics import r2_score
+from ..metrics import accuracy_score, r2_score
 from ..preprocessing import OneHotEncoder
 from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
                     ExtraTreeClassifier, ExtraTreeRegressor)
@@ -405,10 +406,40 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         return self
 
-    @abstractmethod
     def _set_oob_score(self, X, y):
-        """
-        Calculate out of bag predictions and score."""
+        X = check_array(X, dtype=DTYPE, accept_sparse='csr')
+
+        n_samples = y.shape[0]
+        predictions = np.full(
+            shape=(n_samples, self.n_outputs_, len(self.estimators_)),
+            fill_value=np.nan,
+        )
+        n_samples_bootstrap = _get_n_samples_bootstrap(
+            n_samples, self.max_samples,
+        )
+        for estimator_idx, estimator in enumerate(self.estimators_):
+            unsampled_indices = _generate_unsampled_indices(
+                estimator.random_state, n_samples, n_samples_bootstrap,
+            )
+            y_pred = estimator.predict(
+                X[unsampled_indices, :], check_input=False
+            )
+            if y_pred.ndim == 1:
+                y_pred = y_pred[:, np.newaxis]
+            predictions[unsampled_indices, :, estimator_idx] = y_pred
+
+        predictions = self._oob_voting(predictions)
+        if np.isnan(predictions).any():
+            warn(
+                "Some inputs do not have OOB scores. This probably means too "
+                "few trees were used to compute any reliable oob estimates."
+            )
+            predictions = np.nan_to_num(predictions)
+
+        self.oob_score_ = 0.0
+        for k in range(self.n_outputs_):
+            self.oob_score_ += self._scoring(y[:, k], predictions[:, k])
+        self.oob_score_ /= self.n_outputs_
 
     def _validate_y_class_weight(self, y):
         # Default implementation
@@ -506,54 +537,12 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             warm_start=warm_start,
             class_weight=class_weight,
             max_samples=max_samples)
+        self._scoring = accuracy_score
 
-    def _set_oob_score(self, X, y):
-        """
-        Compute out-of-bag score."""
-        X = check_array(X, dtype=DTYPE, accept_sparse='csr')
-
-        n_classes_ = self.n_classes_
-        n_samples = y.shape[0]
-
-        oob_decision_function = []
-        oob_score = 0.0
-        predictions = [np.zeros((n_samples, n_classes_[k]))
-                       for k in range(self.n_outputs_)]
-
-        n_samples_bootstrap = _get_n_samples_bootstrap(
-            n_samples, self.max_samples
-        )
-
-        for estimator in self.estimators_:
-            unsampled_indices = _generate_unsampled_indices(
-                estimator.random_state, n_samples, n_samples_bootstrap)
-            p_estimator = estimator.predict_proba(X[unsampled_indices, :],
-                                                  check_input=False)
-
-            if self.n_outputs_ == 1:
-                p_estimator = [p_estimator]
-
-            for k in range(self.n_outputs_):
-                predictions[k][unsampled_indices, :] += p_estimator[k]
-
-        for k in range(self.n_outputs_):
-            if (predictions[k].sum(axis=1) == 0).any():
-                warn("Some inputs do not have OOB scores. "
-                     "This probably means too few trees were used "
-                     "to compute any reliable oob estimates.")
-
-            decision = (predictions[k] /
-                        predictions[k].sum(axis=1)[:, np.newaxis])
-            oob_decision_function.append(decision)
-            oob_score += np.mean(y[:, k] ==
-                                 np.argmax(predictions[k], axis=1), axis=0)
-
-        if self.n_outputs_ == 1:
-            self.oob_decision_function_ = oob_decision_function[0]
-        else:
-            self.oob_decision_function_ = oob_decision_function
-
-        self.oob_score_ = oob_score / self.n_outputs_
+    @staticmethod
+    def _oob_voting(predictions):
+        predictions, _ = mode(predictions, axis=2)
+        return predictions[:, :, 0]
 
     def _validate_y_class_weight(self, y):
         check_classification_targets(y)
@@ -759,6 +748,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
             verbose=verbose,
             warm_start=warm_start,
             max_samples=max_samples)
+        self._scoring = r2_score
 
     def predict(self, X):
         """
@@ -803,52 +793,9 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
 
         return y_hat
 
-    def _set_oob_score(self, X, y):
-        """
-        Compute out-of-bag scores."""
-        X = check_array(X, dtype=DTYPE, accept_sparse='csr')
-
-        n_samples = y.shape[0]
-
-        predictions = np.zeros((n_samples, self.n_outputs_))
-        n_predictions = np.zeros((n_samples, self.n_outputs_))
-
-        n_samples_bootstrap = _get_n_samples_bootstrap(
-            n_samples, self.max_samples
-        )
-
-        for estimator in self.estimators_:
-            unsampled_indices = _generate_unsampled_indices(
-                estimator.random_state, n_samples, n_samples_bootstrap)
-            p_estimator = estimator.predict(
-                X[unsampled_indices, :], check_input=False)
-
-            if self.n_outputs_ == 1:
-                p_estimator = p_estimator[:, np.newaxis]
-
-            predictions[unsampled_indices, :] += p_estimator
-            n_predictions[unsampled_indices, :] += 1
-
-        if (n_predictions == 0).any():
-            warn("Some inputs do not have OOB scores. "
-                 "This probably means too few trees were used "
-                 "to compute any reliable oob estimates.")
-            n_predictions[n_predictions == 0] = 1
-
-        predictions /= n_predictions
-        self.oob_prediction_ = predictions
-
-        if self.n_outputs_ == 1:
-            self.oob_prediction_ = \
-                self.oob_prediction_.reshape((n_samples, ))
-
-        self.oob_score_ = 0.0
-
-        for k in range(self.n_outputs_):
-            self.oob_score_ += r2_score(y[:, k],
-                                        predictions[:, k])
-
-        self.oob_score_ /= self.n_outputs_
+    @staticmethod
+    def _oob_voting(predictions):
+        return np.nanmean(predictions, axis=2)
 
     def _compute_partial_dependence_recursion(self, grid, target_features):
         """Fast partial dependence computation.

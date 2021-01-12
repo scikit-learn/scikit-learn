@@ -1377,3 +1377,10 @@ def test_little_tree_with_small_max_samples(ForestClass):
 
     msg = "Tree without `max_samples` restriction should have more nodes"
     assert tree1.node_count > tree2.node_count, msg
+
+
+def test_xxx():
+    from sklearn.datasets import make_multilabel_classification
+
+    X, y = make_multilabel_classification()
+    clf = RandomForestClassifier(oob_score=True).fit(X, y)
