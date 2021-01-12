@@ -398,18 +398,20 @@ def test_linear_model_sample_weights_normalize_in_pipeline(estimator,
         reg_with_normalize.fit(X, y, sample_weight=sample_weight)
 
         # linear estimator in a pipeline
-        reg_pip = make_pipeline(
+        reg_with_scalar = make_pipeline(
             StandardScaler(with_mean=False),
             estimator(normalize=False, **estimator_params)
         )
-        kwargs = {reg_pip.steps[-1][0] + '__sample_weight': sample_weight}
-        reg_pip.fit(X, y, **kwargs)
+        kwargs = {reg_with_scalar.steps[-1][0] + '__sample_weight':
+                  sample_weight}
+        reg_with_scalar.fit(X, y, **kwargs)
 
         y_pred_norm = reg_with_normalize.predict(X_test)
-        y_pred_pip = reg_pip.predict(X_test)
+        y_pred_pip = reg_with_scalar.predict(X_test)
 
         assert_allclose(
-            reg_with_normalize.coef_ * reg_pip[0].scale_, reg_pip[1].coef_)
+            reg_with_normalize.coef_ * reg_with_scalar[0].scale_,
+            reg_with_scalar[1].coef_)
         assert_allclose(y_pred_norm, y_pred_pip)
 
 
