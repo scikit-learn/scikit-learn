@@ -70,6 +70,8 @@ def pytest_collection_modifyitems(config, items):
     datasets_to_download = set()
 
     for item in items:
+        if not hasattr(item, "fixturenames"):
+            continue
         item_fixtures = set(item.fixturenames)
         dataset_to_fetch = item_fixtures & dataset_features_set
         if not dataset_to_fetch:
