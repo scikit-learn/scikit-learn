@@ -476,6 +476,7 @@ def test_oob_importance_ignores_random(name):
     assert np.all(impurity_importances[:3] > imp_level)
     assert impurity_importances[-1] > imp_level
 
+
 @pytest.mark.parametrize("name", FOREST_ESTIMATORS)
 def test_oob_importances_raise_error(name):
     ForestEstimator = FOREST_ESTIMATORS[name]
