@@ -398,8 +398,10 @@ def test_linear_model_sample_weights_normalize_in_pipeline(estimator,
         reg.fit(X, y, sample_weight=sample_weight)
 
         # linear estimator in a pipeline
-        reg_pip = make_pipeline(StandardScaler(with_mean=False),
-                                estimator(normalize=False, **params))
+        reg_pip = make_pipeline(
+            StandardScaler(with_mean=False),
+            estimator(normalize=False, **params)
+        )
         kwargs = {reg_pip.steps[-1][0] + '__sample_weight': sample_weight}
         reg_pip.fit(X, y, **kwargs)
 
