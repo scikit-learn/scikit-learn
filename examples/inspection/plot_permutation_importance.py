@@ -181,7 +181,7 @@ plt.show()
 rf = Pipeline(steps=[
     ("preprocess", preprocessing),
     ("classifier", RandomForestClassifier(
-          random_state=42, feature_importances_type="permutation))
+          random_state=42, feature_importances_type="permutation"))
 ])
 rf.fit(X_train, y_train)
 

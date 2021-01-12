@@ -377,11 +377,9 @@ def test_unfitted_feature_importances(name):
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
-@pytest.mark.parametrize("dtype", (np.float64, np.float32))
-def test_oob_importances(name, dtype):
-
-    X = X_large.astype(dtype=dtype, copy=False)
-    y = y_large.astype(dtype=dtype, copy=False)
+def test_oob_importances(name):
+    # Check that oob permutation importances correctly identify that
+    # there are 3 important features
 
     ForestEstimator = FOREST_ESTIMATORS[name]
 
@@ -391,7 +389,7 @@ def test_oob_importances(name, dtype):
         feature_importances_type="permutation",
         bootstrap=True,
     )
-    clf.fit(X, y)
+    clf.fit(X_large, y_large)
     importances = clf.feature_importances_
     if name in FOREST_CLASSIFIERS:
         imp_level = 0.025
@@ -405,11 +403,9 @@ def test_oob_importances(name, dtype):
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
-@pytest.mark.parametrize("dtype", (np.float64, np.float32))
-def test_oob_importances_multi_class(name, dtype):
-
-    X = X_large_multiclass.astype(dtype=dtype, copy=False)
-    y = y_large_multiclass.astype(dtype=dtype, copy=False)
+def test_oob_importances_multi_class(name):
+    # Check that oob permutation importances correctly identify that
+    # there are 3 important features in a multi-class setting
 
     ForestEstimator = FOREST_ESTIMATORS[name]
 
@@ -419,13 +415,17 @@ def test_oob_importances_multi_class(name, dtype):
         feature_importances_type="permutation",
         bootstrap=True,
     )
-    clf.fit(X, y)
+    clf.fit(X_large_multiclass, y_large_multiclass)
     importances = clf.feature_importances_
+    if name in FOREST_CLASSIFIERS:
+        imp_level = 0.025
+    else:
+        imp_level = 0.1
 
-    n_important = np.sum(importances > 0.05)
+    n_important = np.sum(importances > imp_level)
     assert importances.shape[0] == 10
     assert n_important == 3
-    assert np.all(importances[:3] > 0.05)
+    assert np.all(importances[:3] > imp_level)
 
 
 @pytest.mark.parametrize("name", FOREST_ESTIMATORS)
@@ -433,27 +433,16 @@ def test_oob_importances_raise_error(name):
     ForestEstimator = FOREST_ESTIMATORS[name]
 
     if name in FOREST_TRANSFORMERS:
-        assert_raises(
-            TypeError, ForestEstimator, feature_importances_type="permutation"
-        )
-
-        assert_raises(
-            NotImplementedError,
-            ForestEstimator()._set_oob_permutation_importance,
-            X,
-            y,
-        )
+        err_msg = "unexpected keyword argument 'feature_importances_type'"
+        with pytest.raises(TypeError, match=err_msg):
+            ForestEstimator(feature_importances_type="permutation")
 
     else:
         # No bootstrap
-        assert_raises(
-            ValueError,
-            ForestEstimator(
-                feature_importances_type="permutation", bootstrap=False
-            ).fit,
-            X,
-            y,
-        )
+        err_msg = "Out of bag estimation only available if bootstrap=True"
+        with pytest.raises(ValueError, match=err_msg):
+            ForestEstimator(feature_importances_type="permutation",
+                            bootstrap=False).fit(X, y)
 
 
 def check_oob_score(name, X, y, n_estimators=20):
