@@ -51,7 +51,7 @@ SPARSE_INTERCEPT_DECAY = 0.01
 
 
 # FIXME in v1.2.0: parameter 'normalize' should be removed from linear models
-# in cases where now normalize=False. default value of 'normalize' should be
+# in cases where now normalize=False. The default value of 'normalize' should be
 # changed to False in linear models where now normalize=True
 def _deprecate_normalize(normalize, default, est_name):
     """
