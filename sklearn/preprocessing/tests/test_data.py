@@ -2823,4 +2823,6 @@ def test_spline_transformer_kbindiscretizer():
                            strategy='quantile')
     kbins = kbd.fit_transform(X)
 
-    assert_array_equal(splines, kbins)
+    # Though they should be exactly equal, we test approximately with high
+    # accuracy.
+    assert_allclose(splines, kbins, rtol=1e-13)
