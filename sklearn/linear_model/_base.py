@@ -51,15 +51,14 @@ SPARSE_INTERCEPT_DECAY = 0.01
 
 
 # FIXME in v1.2.0: parameter 'normalize' should be removed from linear models
-# in cases where now normalize=False. The default value of 'normalize' should be
-# changed to False in linear models where now normalize=True
+# in cases where now normalize=False. The default value of 'normalize' should
+# be changed to False in linear models where now normalize=True
 def _deprecate_normalize(normalize, default, estimator_name):
-    """ Normalize is to be deprecated from linear models and a use of a pipeline
-    with a StandardScaler is to be recommended instead.
+    """ Normalize is to be deprecated from linear models and a use of
+    a pipeline with a StandardScaler is to be recommended instead.
     Here the appropriate message is selected to be displayed to the user
     depending on the default normalize value (as it varies between the linear
-    models and normalize value selected by the user). Est_name is the name of
-    the linear estimator which calls this function.
+    models and normalize value selected by the user).
 
     Parameters
     ----------
@@ -93,7 +92,7 @@ def _deprecate_normalize(normalize, default, estimator_name):
             " \nPass normalize=False and use Pipeline with a StandardScaler in"
             " a preprocessing stage:"
             "  model = make_pipeline(StandardScaler(),"
-            f" {est_name}(normalize=False))"
+            f" {estimator_name}(normalize=False))"
             "\nIf you wish to use additional parameters in"
             " the fit() you can include them as follows:"
             " kwargs = {model.steps[-1][0] + "
@@ -102,13 +101,13 @@ def _deprecate_normalize(normalize, default, estimator_name):
         )
     elif normalize != 'deprecated' and normalize and not default:
         warnings.warn(
-            "'normalize' was deprecated in version 1.0.0 and will be"
-            " removed in 1.2.0 \nIf you still wish to normalize use"
-            " Pipeline with a StandardScaler in a preprocessing stage:"
-            "  model = make_pipeline(StandardScaler(),"
-            f" {est_name}()). \nIf you wish to use additional parameters in"
-            " the fit() you can include them as follows:"
-            " kwargs = {model.steps[-1][0] + "
+            "'normalize' was deprecated in version 1.0.0 and will be "
+            "removed in 1.2.0 \nIf you still wish to normalize use "
+            "Pipeline with a StandardScaler in a preprocessing stage: "
+            "model = make_pipeline(StandardScaler(), "
+            f"{estimator_name}()). \nIf you wish to use additional "
+            "parameters in the fit() you can include them as follows: "
+            "kwargs = {model.steps[-1][0] + "
             "'__<your_param_name>': <your_param_value>}\n"
             "model.fit(X, y, **kwargs)", FutureWarning
         )
