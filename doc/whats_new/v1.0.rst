@@ -87,6 +87,14 @@ Changelog
   Use ``var_`` instead.
   :pr:`18842` by :user:`Hong Shao Yang <hongshaoyang>`.
 
+:mod:`sklearn.ensemble`
+......................
+
+- |Fix| Makes :class:`ensemble.BaggingClassifier` correctly handle
+  class labels when using voting and the `base_estimator` does not
+  implement `predict_proba`.
+  :pr:`13591` by `Nicholas T. Smith <nicholastoddsmith>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
