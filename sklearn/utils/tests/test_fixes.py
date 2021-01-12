@@ -109,6 +109,16 @@ def test_linspace():
     out2 = linspace(start=start, stop=stop, num=num, endpoint=True, axis=1)
     assert_array_equal(out2, out.T)
 
+    out, step = linspace(
+        start=start,
+        stop=stop,
+        num=num,
+        endpoint=True,
+        retstep=True,
+    )
+    assert_array_equal(out, res)
+    assert_array_equal(step, [2, 200])
+
     if np_version < parse_version('1.16'):
         with pytest.raises(ValueError):
             linspace(start=[0, 1], stop=10)
