@@ -428,6 +428,54 @@ def test_oob_importances_multi_class(name):
     assert np.all(importances[:3] > imp_level)
 
 
+@pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
+def test_oob_importance_ignores_random(name):
+    # Testing that a random feature with high cardinality registers as
+    # important using impurity-based feature importance but not out-of-bag
+    # permutation importance
+
+    X = X_large.copy()
+    y = y_large.copy()
+
+    X[:, :-1] = (X[:, :-1] > 0).astype(int)
+    ForestEstimator = FOREST_ESTIMATORS[name]
+
+    # Get oob importances
+    clf_oob = ForestEstimator(
+        n_estimators=10,
+        random_state=0,
+        feature_importances_type="permutation",
+        bootstrap=True,
+    )
+    clf_oob.fit(X, y)
+    oob_importances = clf_oob.feature_importances_
+
+    # Get impurity-based importances
+    clf_impurity = ForestEstimator(
+        n_estimators=10,
+        random_state=0,
+        feature_importances_type="impurity",
+        bootstrap=True,
+    )
+    clf_impurity.fit(X, y)
+    impurity_importances = clf_impurity.feature_importances_
+
+    # Test importance levels
+    imp_level = 0.1
+    if name in FOREST_CLASSIFIERS:
+        oob_imp_level = 0.025
+    else:
+        oob_imp_level = 0.1
+    oob_important = np.sum(oob_importances > oob_imp_level)
+    impurity_important = np.sum(impurity_importances > imp_level)
+
+    assert oob_important == 3
+    assert np.all(oob_importances[:3] > oob_imp_level)
+    assert oob_importances[-1] < oob_imp_level
+    assert impurity_important == 4
+    assert np.all(impurity_importances[:3] > imp_level)
+    assert impurity_importances[-1] > imp_level
+
 @pytest.mark.parametrize("name", FOREST_ESTIMATORS)
 def test_oob_importances_raise_error(name):
     ForestEstimator = FOREST_ESTIMATORS[name]
