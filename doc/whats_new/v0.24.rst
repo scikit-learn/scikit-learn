@@ -2,6 +2,23 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_0_24_1:
+
+Version 0.24.1
+==============
+
+Changelog
+---------
+
+:mod:`sklearn.semi_supervised`
+..............................
+
+- |Fix| :class:`semi_supervised.SelfTrainingClassifier` is now accepting
+  meta-estimator (e.g. :class:`ensemble.StackingClassifier`). The validation
+  of this estimator is done on the fitted estimator, once we know the existence
+  of the method `predict_proba`.
+  :pr:`19126` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 .. _changes_0_24:
 
 Version 0.24.0
