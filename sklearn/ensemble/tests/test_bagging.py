@@ -925,8 +925,8 @@ class ConstantClassifier(ClassifierMixin, BaseEstimator):
 
 
 def test_bagging_classifier_voting():
-    # check voting strategy is working properly with estimators that do not implement
-    # `predict_proba`.
+    # check voting strategy is working properly with estimators
+    # that do not implement `predict_proba`.
     # Non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/13587
     X = np.random.rand(10, 4)
