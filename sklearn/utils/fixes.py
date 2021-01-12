@@ -259,7 +259,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
                                              num=num, endpoint=endpoint,
                                              retstep=True, dtype=dtype)
         if axis != 0:
-            out = np.moveaxis(out, 0, axis=axis)
+            out = np.moveaxis(out, 0, axis)
 
         if retstep:
             return out, step
@@ -267,4 +267,4 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
             return out
     else:
         return np.linspace(start=start, stop=stop, num=num, endpoint=endpoint,
-                           retstep=retstep, dtype=dtype)
+                           retstep=retstep, dtype=dtype, axis=axis)

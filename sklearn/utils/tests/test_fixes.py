@@ -93,7 +93,7 @@ def test_masked_array_deprecated():  # TODO: remove in 1.0
 
 
 def test_linspace():
-    # test that linespace works like np.linespace as of numpy version 1.16
+    """Test that linespace works like np.linespace as of numpy version 1.16."""
     start, stop = 0, 10
     num = 6
     out = linspace(start=start, stop=stop, num=num, endpoint=True)
@@ -105,6 +105,9 @@ def test_linspace():
     res = np.c_[[0., 2, 4, 6, 8, 10],
                 [100, 300, 500, 700, 900, 1100]]
     assert_array_equal(out, res)
+
+    out2 = linspace(start=start, stop=stop, num=num, endpoint=True, axis=1)
+    assert_array_equal(out2, out.T)
 
     if np_version < parse_version('1.16'):
         with pytest.raises(ValueError):
