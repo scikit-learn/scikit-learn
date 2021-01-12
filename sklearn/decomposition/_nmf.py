@@ -1207,7 +1207,7 @@ class NMF(TransformerMixin, BaseEstimator):
            Regularization parameter *l1_ratio* used in the Coordinate Descent
            solver.
 
-    verbose : bool, default=False
+    verbose : int, default=0
         Whether to be verbose.
 
     shuffle : bool, default=False
