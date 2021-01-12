@@ -1146,7 +1146,9 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         Number of dictionary elements to extract.
 
     alpha : float, default=1.0
-        Sparsity controlling parameter.
+        Sparsity controlling parameter. Warning: the parameter transform_alpha 
+        used to compute the sparse codes once the dictionary is learned is not
+        equal to alpha by default.
 
     max_iter : int, default=1000
         Maximum number of iterations to perform.
