@@ -178,17 +178,11 @@ plt.show()
 # out-of-bag data by setting ``feature_importances_type="permutation"`` and
 # re-running the pipeline. This confirms that ``sex``` is most important
 # and that the random features have low importances.
-rf = Pipeline(
-    [
-        ("preprocess", preprocessing),
-        (
-            "classifier",
-            RandomForestClassifier(
-                random_state=42, feature_importances_type="permutation"
-            ),
-        ),
-    ]
-)
+rf = Pipeline(steps=[
+    ("preprocess", preprocessing),
+    ("classifier", RandomForestClassifier(
+          random_state=42, feature_importances_type="permutation))
+])
 rf.fit(X_train, y_train)
 
 ohe = (rf.named_steps['preprocess']

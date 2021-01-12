@@ -359,8 +359,9 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         if not self.bootstrap and (
             self.feature_importances_type == "permutation"
         ):
-            raise ValueError("Out of bag estimation only available"
-                             " if bootstrap=True")
+            raise ValueError(
+                "Out of bag estimation only available if bootstrap=True"
+            )
 
         random_state = check_random_state(self.random_state)
 
@@ -419,8 +420,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         return self
 
     def _set_oob_permutation_importance(self, X, y):
-        """
-        Calculate out of bag predictions and score."""
+        """Compute feature importances from the out-of-bag samples."""
         X = check_array(X, dtype=DTYPE, accept_sparse=False)
 
         n_samples = y.shape[0]
@@ -1141,15 +1141,17 @@ class RandomForestClassifier(ForestClassifier):
         .. versionadded:: 0.22
 
     feature_importances_type : {"impurity", "permutation"}, default="impurity"
-        The type of feature importance to calculate:
+        The type of feature importance to compute:
 
         - If "impurity", then gets impurity-based feature importance.
           The importance of a feature is computed as the (normalized)
           total reduction of the criterion brought by that feature.  It is also
           known as the Gini importance.
         - If "permutation", then gets out-of-bag permutation importance.
-          The importance corresponds with the average decrease in r2_score
-          across all tree when a feature is permuted or shuffled.
+          The importance corresponds with the average decrease in R2
+          across all trees when a feature is permuted or shuffled.
+          
+       .. versionadded: 1.0
 
     scoring : string, callable, or None, default=None
         Model evaluation used if feature_importance_type = "permutation".
