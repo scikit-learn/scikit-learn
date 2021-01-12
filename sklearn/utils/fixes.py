@@ -234,7 +234,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
 
     Returns
     -------
-    out : ndarray of shape (num, n_start) or (num, )
+    out : ndarray of shape (num, n_start) or (num,)
         The output array with `n_start=start.shape[0]` columns.
     """
     if np_version < parse_version('1.16'):

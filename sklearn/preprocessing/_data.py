@@ -2124,8 +2124,9 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 xmin = spl.t[degree]
                 xmax = spl.t[-degree - 1]
                 mask = (xmin <= X[:, i]) & (X[:, i] <= xmax)
-                XBS[mask, (i * n_splines):((i + 1) * n_splines)] = (
-                    spl(X[mask, i]))
+                XBS[mask, (i * n_splines):((i + 1) * n_splines)] = spl(
+                    X[mask, i]
+                )
 
             # Note for extrapolation:
             # 'continue' is already returned as is by scipy BSplines
@@ -2135,7 +2136,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 if np.any(np.isnan(
                         XBS[:, (i * n_splines):((i + 1) * n_splines)])):
                     raise ValueError(
-                        "X contains values beyond the limits of the knots.")
+                        "X contains values beyond the limits of the knots."
+                    )
             elif self.extrapolation == 'constant':
                 # Set all values beyond xmin and xmax to the value of the
                 # spline basis functions at those two positions.
@@ -2148,13 +2150,14 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 mask = X[:, i] < xmin
                 if np.any(mask):
                     XBS[mask, (i * n_splines):(i * n_splines + degree)] = (
-                        f_min[:degree])
+                        f_min[:degree]
+                    )
 
                 mask = X[:, i] > xmax
                 if np.any(mask):
-                    XBS[mask,
-                        ((i+1) * n_splines - degree):((i+1) * n_splines)] = (
-                        f_max[-degree:])
+                    XBS[
+                        mask, ((i+1) * n_splines - degree):((i+1) * n_splines)
+                    ] = f_max[-degree:]
             elif self.extrapolation == 'linear':
                 # Continue the degree first and degree last spline bases
                 # linearly beyond the boundaries, with slope = derivative at
@@ -2163,11 +2166,9 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 # boundaries.
 
                 # spline values at boundaries
-                f_min = spl(xmin)
-                f_max = spl(xmax)
+                f_min, f_max = spl(xmin), spl(xmax)
                 # spline derivatives = slopes at boundaries
-                fp_min = spl(xmin, nu=1)
-                fp_max = spl(xmax, nu=1)
+                fp_min, fp_max = spl(xmin, nu=1), spl(xmax, nu=1)
                 # Compute the linear continuation.
                 if degree <= 1:
                     # For degree=1, the derivative of 2nd spline is not zero at
@@ -2177,21 +2178,24 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     mask = X[:, i] < xmin
                     if np.any(mask):
                         XBS[mask, i * n_splines + j] = (
-                            f_min[j] + (X[mask, i] - xmin) * fp_min[j])
+                            f_min[j] + (X[mask, i] - xmin) * fp_min[j]
+                        )
 
                     mask = X[:, i] > xmax
                     if np.any(mask):
                         k = n_splines - 1 - j
                         XBS[mask, i * n_splines + k] = (
-                            f_max[k] + (X[mask, i] - xmax) * fp_max[k])
+                            f_max[k] + (X[mask, i] - xmax) * fp_max[k]
+                        )
 
         if self.include_bias:
             return XBS
         else:
             # We throw away one spline basis per feature.
             # We chose the last one.
-            indices = [j for j in range(XBS.shape[1])
-                       if (j + 1) % n_splines != 0]
+            indices = [
+                j for j in range(XBS.shape[1]) if (j + 1) % n_splines != 0
+            ]
             return XBS[:, indices]
 
 

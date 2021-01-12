@@ -61,6 +61,7 @@ from sklearn.utils import shuffle
 
 from sklearn import datasets
 
+
 iris = datasets.load_iris()
 
 # Make some data to be used many times
@@ -2712,15 +2713,19 @@ def test_spline_transformer_feature_names():
     X = np.arange(20).reshape(10, 2)
     splt = SplineTransformer(n_knots=3, degree=3, include_bias=True).fit(X)
     feature_names = splt.get_feature_names()
-    assert_array_equal(feature_names,
-                       ['x0_sp_0', 'x0_sp_1', 'x0_sp_2', 'x0_sp_3', 'x0_sp_4',
-                        'x1_sp_0', 'x1_sp_1', 'x1_sp_2', 'x1_sp_3', 'x1_sp_4'])
+    assert_array_equal(
+        feature_names,
+        ['x0_sp_0', 'x0_sp_1', 'x0_sp_2', 'x0_sp_3', 'x0_sp_4',
+         'x1_sp_0', 'x1_sp_1', 'x1_sp_2', 'x1_sp_3', 'x1_sp_4']
+    )
 
     splt = SplineTransformer(n_knots=3, degree=3, include_bias=False).fit(X)
     feature_names = splt.get_feature_names(['a', 'b'])
-    assert_array_equal(feature_names,
-                       ['a_sp_0', 'a_sp_1', 'a_sp_2', 'a_sp_3',
-                        'b_sp_0', 'b_sp_1', 'b_sp_2', 'b_sp_3'])
+    assert_array_equal(
+        feature_names,
+        ['a_sp_0', 'a_sp_1', 'a_sp_2', 'a_sp_3',
+         'b_sp_0', 'b_sp_1', 'b_sp_2', 'b_sp_3']
+    )
 
 
 @pytest.mark.parametrize('degree', range(1, 5))
@@ -2736,8 +2741,9 @@ def test_spline_transformer_unity_decomposition(degree, n_knots, knots):
     # make the boundaries 0 and 1 part of X_train, for sure.
     X_train = np.r_[[[0]], X[::2, :], [[1]]]
     X_test = X[1::2, :]
-    splt = SplineTransformer(n_knots=n_knots, degree=degree, knots=knots,
-                             include_bias=True)
+    splt = SplineTransformer(
+        n_knots=n_knots, degree=degree, knots=knots, include_bias=True
+    )
     splt.fit(X_train)
     for X in [X_train, X_test]:
         assert_allclose(np.sum(splt.transform(X), axis=1), 1)
@@ -2749,10 +2755,12 @@ def test_spline_transformer_linear_regression(bias, intercept):
     """Test that B-splines fit a sinusodial curve pretty well."""
     X = np.linspace(0, 10, 100)[:, None]
     y = np.sin(X[:, 0]) + 2  # +2 to avoid the value 0 in assert_allclose
-    pipe = Pipeline(
-        [['spline', SplineTransformer(n_knots=15, degree=3, include_bias=bias,
-                                      extrapolation='constant')],
-         ['ols', LinearRegression(fit_intercept=intercept)]])
+    pipe = Pipeline(steps=[
+        ('spline', SplineTransformer(
+            n_knots=15, degree=3, include_bias=bias, extrapolation='constant'
+        )),
+        ('ols', LinearRegression(fit_intercept=intercept))
+    ])
     pipe.fit(X, y)
     assert_allclose(pipe.predict(X), y, rtol=1e-3)
 
