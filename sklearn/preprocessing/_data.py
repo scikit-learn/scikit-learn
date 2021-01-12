@@ -1892,6 +1892,17 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         functions for each data point, they implicitly include a bias term,
         i.e. a column of ones. It acts as an intercept term in a linear models.
 
+    order : {'C', 'F'}, default='C'
+        Order of output array. 'F' order is faster to compute, but may slow
+        down subsequent estimators.
+
+    Notes
+    -----
+    High degrees and a high number of knots can cause overfitting.
+
+    See :ref:`examples/linear_model/plot_polynomial_interpolation.py
+    <sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py>`.
+
     Examples
     --------
     >>> import numpy as np
@@ -1920,13 +1931,6 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         the number of bases elements of the B-splines, `n_knots + degree - 1`.
         If `include_bias=False`, then it is only
         `n_features * (n_splines - 1)`.
-
-    Notes
-    -----
-    High degrees and a high number of knots can cause overfitting.
-
-    See :ref:`examples/linear_model/plot_polynomial_interpolation.py
-    <sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py>`
     """
     def __init__(self, n_knots=5, degree=3, *, knots='uniform',
                  extrapolation='constant', include_bias=True, order='C'):
@@ -1947,7 +1951,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        knots : ndarray of shape (n_knots, n_features) and dtype=np.float64
+        knots : ndarray of shape (n_knots, n_features), dtype=np.float64
             Knot positions (points) of base interval.
         """
         if knots == 'quantile':

@@ -224,7 +224,7 @@ class _FuncWrapper:
 
 def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
              axis=0):
-    """Implements simplified linspace as of numpy verion >= 1.16.
+    """Implements a simplified linspace function as of numpy verion >= 1.16.
 
     As of numpy 1.16, the arguments start and stop can be array-like and
     there is an optional argument `axis`.
