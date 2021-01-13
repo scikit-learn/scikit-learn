@@ -36,8 +36,7 @@ def _fetch_fixture(f):
         try:
             return f(*args, **kwargs)
         except IOError:
-            pytest.skip("test is enabled if SKLEARN_SKIP_NETWORK_TESTS is "
-                        "set to 0")
+            pytest.skip("test is enabled when SKLEARN_SKIP_NETWORK_TESTS=0")
     return pytest.fixture(lambda: wrapped)
 
 
@@ -62,7 +61,7 @@ def pytest_collection_modifyitems(config, items):
     """
     run_network_tests = environ.get('SKLEARN_SKIP_NETWORK_TESTS', '1') == '0'
     skip_network = pytest.mark.skip(
-        reason="test is enabled if SKLEARN_SKIP_NETWORK_TESTS is set to 0")
+        reason="test is enabled when SKLEARN_SKIP_NETWORK_TESTS=0")
 
     # download datasets during collection to avoid thread unsafe behavior
     # when running pytest in parallel with pytest-xdist
