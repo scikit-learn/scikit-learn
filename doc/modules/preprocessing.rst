@@ -624,7 +624,9 @@ of continuous attributes to one with only nominal attributes.
 
 One-hot encoded discretized features can make a model more expressive, while
 maintaining interpretability. For instance, pre-processing with a discretizer
-can introduce nonlinearity to linear models.
+can introduce nonlinearity to linear models. For more advanced possibilities,
+in particular smooth ones, see :ref:`generating_polynomial_features` further
+below.
 
 K-bins discretization
 ---------------------
