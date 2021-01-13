@@ -756,15 +756,24 @@ Imputation of missing values
 
 Tools for imputing missing values are discussed at :ref:`impute`.
 
-.. _polynomial_features:
+.. _generating_polynomial_features:
 
 Generating polynomial features
 ==============================
 
-Often it's useful to add complexity to the model by considering nonlinear
-features of the input data. A simple and common method to use is polynomial
-features, which can get features' high-order and interaction terms. It is
-implemented in :class:`PolynomialFeatures`::
+Often it's useful to add complexity to a model by considering nonlinear
+features of the input data. We show two possibilities that are both based on
+polynomials: The first one uses pure polynomials, the second one uses splines,
+i.e. piecewise polynomials.
+
+.. _polynomial_features:
+
+Polynomial features
+-------------------
+
+A simple and common method to use is polynomial features, which can get
+features' high-order and interaction terms. It is implemented in
+:class:`PolynomialFeatures`::
 
     >>> import numpy as np
     >>> from sklearn.preprocessing import PolynomialFeatures
@@ -809,10 +818,10 @@ for Ridge regression using created polynomial features.
 .. _spline_transformer:
 
 Spline transformer
-==================
+------------------
 
-Another way to add nonlinear terms instead of polynomials of features is to
-generate spline basis functions for each feature with the
+Another way to add nonlinear terms instead of pure polynomials of features is
+to generate spline basis functions for each feature with the
 :class:`SplineTransformer`. Splines are piecewise polynomials, parametrized by
 their polynomial degree and the positions of the knots. The
 :class:`SplineTransformer` implements a B-spline basis, cf. the references
