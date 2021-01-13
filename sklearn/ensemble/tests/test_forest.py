@@ -418,8 +418,12 @@ def check_oob_score_raise_error(name):
         for oob_score in [True, False]:
             assert_raises(TypeError, ForestEstimator, oob_score=oob_score)
 
-        assert_raises(NotImplementedError, ForestEstimator()._set_oob_score,
-                      X, y)
+        assert_raises(
+            NotImplementedError,
+            ForestEstimator()._set_oob_score_and_attributes,
+            X,
+            y
+        )
 
     else:
         # Unfitted /  no bootstrap / no oob_score

@@ -126,7 +126,7 @@ def _generate_sample_indices(random_state, n_samples, n_samples_bootstrap):
 
 def _generate_unsampled_indices(random_state, n_samples, n_samples_bootstrap):
     """
-    Private function used to forest._set_oob_score function."""
+    Private function used to forest._set_oob_score."""
     sample_indices = _generate_sample_indices(random_state, n_samples,
                                               n_samples_bootstrap)
     sample_counts = np.bincount(sample_indices, minlength=n_samples)
@@ -396,7 +396,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             self.estimators_.extend(trees)
 
         if self.oob_score:
-            self._set_oob_score(X, y)
+            self._set_oob_score_and_attributes(X, y)
 
         # Decapsulate classes_ attributes
         if hasattr(self, "classes_") and self.n_outputs_ == 1:
@@ -405,7 +405,34 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         return self
 
+    @abstractmethod
+    def _set_oob_score_and_attributes(self, X, y):
+        """Compute and set the OOB score and attributes.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            The data matrix.
+        y : ndarray of shape (n_samples, n_outputs)
+            The target matrix.
+        """
+
     def _set_oob_score(self, X, y):
+        """Compute and set the OOB score.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            The data matrix.
+        y : ndarray of shape (n_samples, n_outputs)
+            The target matrix.
+
+        Returns
+        -------
+        oob_pred : ndarray of shape (n_samples, n_classes, n_outputs) or \
+                (n_samples, 1, n_outputs)
+            The OOB predictions.
+      """
         X = check_array(X, dtype=DTYPE, accept_sparse='csr')
 
         n_samples = y.shape[0]
@@ -597,7 +624,16 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             oob_score += np.mean(y_true[:, k] == oob_pred_labels)
         return oob_score / n_outputs
 
-    def _set_oob_score(self, X, y):
+    def _set_oob_score_and_attributes(self, X, y):
+        """Compute and set the OOB score and attributes.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            The data matrix.
+        y : ndarray of shape (n_samples, n_outputs)
+            The target matrix.
+        """
         self.oob_decision_function_ = super()._set_oob_score(X, y).squeeze()
 
     def _validate_y_class_weight(self, y):
@@ -895,7 +931,16 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
             oob_score += r2_score(y_true[:, k], oob_pred[:, 0, k])
         return oob_score / n_outputs
 
-    def _set_oob_score(self, X, y):
+    def _set_oob_score_and_attributes(self, X, y):
+        """Compute and set the OOB score and attributes.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            The data matrix.
+        y : ndarray of shape (n_samples, n_outputs)
+            The target matrix.
+        """
         self.oob_prediction_ = super()._set_oob_score(X, y).squeeze()
 
     def _compute_partial_dependence_recursion(self, grid, target_features):
@@ -2336,7 +2381,7 @@ class RandomTreesEmbedding(BaseForest):
         self.min_impurity_split = min_impurity_split
         self.sparse_output = sparse_output
 
-    def _set_oob_score(self, X, y):
+    def _set_oob_score_and_attributes(self, X, y):
         raise NotImplementedError("OOB score not supported by tree embedding")
 
     def fit(self, X, y=None, sample_weight=None):
