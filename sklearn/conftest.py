@@ -83,9 +83,11 @@ def pytest_collection_modifyitems(config, items):
             # network tests are skipped
             item.add_marker(skip_network)
 
-    # download datasets that are needed to avoid thread unsafe behavior
-    # by pytest-xdist
-    if run_network_tests:
+    # Only download datasets on the first worker spawned by pytest-xdist
+    # to avoid thread unsafe behavior. If pytest-xdist is not used, we still
+    # download before tests run.
+    worker_id = environ.get("PYTEST_XDIST_WORKER", "gw0")
+    if worker_id == "gw0" and run_network_tests:
         for name in datasets_to_download:
             print(f"Sequential pre-caching of dataset {name}...")
             dataset_fetchers[name]()
