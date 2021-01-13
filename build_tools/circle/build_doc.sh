@@ -116,8 +116,8 @@ fi
 
 if [[ "$CIRCLE_BRANCH" =~ ^master$|^[0-9]+\.[0-9]+\.X$ && -z "$CI_PULL_REQUEST" ]]
 then
-    # PDF linked into HTML
-    make_args="dist LATEXMKOPTS=-halt-on-error"
+    # ZIP linked into HTML
+    make_args=dist
 elif [[ "$build_type" =~ ^QUICK ]]
 then
     make_args=html-noplot
@@ -133,13 +133,10 @@ fi
 make_args="SPHINXOPTS=-T $make_args"  # show full traceback on exception
 
 # Installing required system packages to support the rendering of math
-# notation in the HTML documentation
+# notation in the HTML documentation and to optimize the image files
 sudo -E apt-get -yq update
-sudo -E apt-get -yq remove texlive-binaries --purge
 sudo -E apt-get -yq --no-install-suggests --no-install-recommends \
-    install dvipng texlive-latex-base texlive-latex-extra \
-    texlive-latex-recommended texlive-fonts-recommended \
-    latexmk gsfonts ccache
+    install dvipng gsfonts ccache zip optipng
 
 # deactivate circleci virtualenv and setup a miniconda env instead
 if [[ `type -t deactivate` ]]; then

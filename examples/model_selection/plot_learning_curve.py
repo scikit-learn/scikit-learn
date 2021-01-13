@@ -77,7 +77,7 @@ def plot_learning_curve(estimator, title, X, y, axes=None, ylim=None, cv=None,
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    train_sizes : array-like of shape (n_ticks,), dtype={int, float}
+    train_sizes : array-like of shape (n_ticks,)
         Relative or absolute numbers of training examples that will be used to
         generate the learning curve. If the ``dtype`` is float, it is regarded
         as a fraction of the maximum size of the training set (that is
