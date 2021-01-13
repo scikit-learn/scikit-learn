@@ -883,13 +883,13 @@ example using the two classes:
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
     ... stratify=y, test_size=0.7, random_state=42)
     >>> lmnn = LargeMarginNearestNeighbor(n_neighbors=3, random_state=42)
-    >>> lmnn.fit(X_train, y_train) # doctest: +ELLIPSIS
+    >>> lmnn.fit(X_train, y_train)
     LargeMarginNearestNeighbor(...)
     >>> # Apply the learned transformation when using KNeighborsClassifier
     >>> knn = KNeighborsClassifier(n_neighbors=3)
-    >>> knn.fit(lmnn.transform(X_train), y_train) # doctest: +ELLIPSIS
+    >>> knn.fit(lmnn.transform(X_train), y_train)
     KNeighborsClassifier(...)
-    >>> print(knn.score(lmnn.transform(X_test), y_test)) # doctest: +ELLIPSIS
+    >>> print(knn.score(lmnn.transform(X_test), y_test))
     0.971428...
 
 Alternatively, one can create a :class:`sklearn.pipeline.Pipeline` instance
@@ -899,9 +899,9 @@ that automatically applies the transformation when fitting or predicting:
     >>> lmnn = LargeMarginNearestNeighbor(n_neighbors=3, random_state=42)
     >>> knn = KNeighborsClassifier(n_neighbors=3)
     >>> lmnn_pipe = Pipeline([('lmnn', lmnn), ('knn', knn)])
-    >>> lmnn_pipe.fit(X_train, y_train) # doctest: +ELLIPSIS
+    >>> lmnn_pipe.fit(X_train, y_train)
     Pipeline(...)
-    >>> print(lmnn_pipe.score(X_test, y_test)) # doctest: +ELLIPSIS
+    >>> print(lmnn_pipe.score(X_test, y_test))
     0.971428...
 
 .. |lmnn_classification_1| image:: ../auto_examples/neighbors/images/sphx_glr_plot_lmnn_classification_001.png
