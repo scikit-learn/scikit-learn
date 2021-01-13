@@ -126,7 +126,7 @@ def _generate_sample_indices(random_state, n_samples, n_samples_bootstrap):
 
 def _generate_unsampled_indices(random_state, n_samples, n_samples_bootstrap):
     """
-    Private function used to forest._set_oob_score."""
+    Private function used to forest._set_oob_score function."""
     sample_indices = _generate_sample_indices(random_state, n_samples,
                                               n_samples_bootstrap)
     sample_counts = np.bincount(sample_indices, minlength=n_samples)
