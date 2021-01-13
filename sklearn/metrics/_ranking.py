@@ -396,8 +396,9 @@ def roc_auc_score(y_true, y_score, *, average="macro", sample_weight=None,
 
     average : {'micro', 'macro', 'samples', 'weighted'} or None, \
             default='macro'
-        If ``None``, the scores for each class are returned. Otherwise,
-        this determines the type of averaging performed on the data:
+        If ``None``, the scores for each class are returned (only implemented
+        for ``multi_class='ovr'``). Otherwise, this determines the type of 
+        averaging performed on the data:
         Note: multiclass ROC AUC currently only handles the 'macro' and
         'weighted' averages.
 
@@ -609,6 +610,10 @@ def _multiclass_roc_auc_score(y_true, y_score, labels,
                          "for multiclass ROC AUC, multi_class must be "
                          "in {1}".format(
                                 multi_class, multiclass_options))
+
+    if average is None and multi_class == 'ovo':
+        raise NotImplementedError("average=None is not implemented for "
+                                  "multi_class='ovo'")
 
     if labels is not None:
         labels = column_or_1d(labels)

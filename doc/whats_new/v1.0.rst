@@ -87,6 +87,13 @@ Changelog
   Use ``var_`` instead.
   :pr:`18842` by :user:`Hong Shao Yang <hongshaoyang>`.
 
+:mod:`sklearn.metrics`
+......................
+
+- |Enhancement| :func:`metrics.roc_auc_score` now supports ``average=None``
+  in the multiclass case when ``multiclass='ovr'`` which will return the score
+  per class. :pr:`19158` by :user:`Nicki Skafte <SkafteNicki>`.
+
 Code and Documentation Contributors
 -----------------------------------
 

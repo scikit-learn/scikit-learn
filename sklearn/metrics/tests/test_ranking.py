@@ -508,6 +508,16 @@ def test_multiclass_ovo_roc_auc_toydata(y_true, labels):
             multi_class="ovo",
             average="weighted"), ovo_weighted_score)
 
+    # Check that average=None raises NotImplemented error
+    error_message = ("average=None is not implemented for multi_class='ovo'")
+    with pytest.raises(NotImplementedError, match=re.escape(error_message)):
+        roc_auc_score(
+            y_true,
+            y_scores,
+            labels=labels,
+            multi_class="ovo",
+            average=None)
+
 
 @pytest.mark.parametrize("y_true, labels",
                          [(np.array([0, 2, 0, 2]), [0, 1, 2]),
