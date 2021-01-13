@@ -397,7 +397,7 @@ def test_unfitted_feature_importances(name):
             *datasets.make_multilabel_classification(
                 n_samples=300, random_state=0
             ),
-            0.2,
+            0.18,
         ),
     ],
 )
