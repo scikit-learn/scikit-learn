@@ -46,14 +46,13 @@ import threading
 
 from abc import ABCMeta, abstractmethod
 import numpy as np
-from scipy.stats import mode
 from scipy.sparse import issparse
 from scipy.sparse import hstack as sparse_hstack
 from joblib import Parallel
 
 from ..base import is_classifier
 from ..base import ClassifierMixin, RegressorMixin, MultiOutputMixin
-from ..metrics import get_scorer
+from ..metrics import get_scorer, r2_score
 from ..preprocessing import OneHotEncoder
 from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
                     ExtraTreeClassifier, ExtraTreeRegressor)
@@ -416,38 +415,47 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         X = check_array(X, dtype=DTYPE, accept_sparse='csr')
 
         n_samples = y.shape[0]
-        predictions = np.full(
-            shape=(n_samples, self.n_outputs_, len(self.estimators_)),
-            fill_value=np.nan,
-        )
+        n_outputs = self.n_outputs_
+        if hasattr(self, "n_classes_"):
+            if isinstance(self.n_classes_, numbers.Integral):
+                n_classes = self.n_classes_
+            else:
+                n_classes = self.n_classes_[0]
+            oob_pred_shape = (n_samples, n_classes, n_outputs)
+        else:
+            n_classes = None
+            oob_pred_shape = (n_samples, 1, n_outputs)
+
+        oob_pred = np.zeros(shape=oob_pred_shape, dtype=np.float64)
+        n_oob_pred = np.zeros((n_samples, n_outputs), dtype=np.int64)
+
         n_samples_bootstrap = _get_n_samples_bootstrap(
             n_samples, self.max_samples,
         )
-        for estimator_idx, estimator in enumerate(self.estimators_):
+        for estimator in self.estimators_:
             unsampled_indices = _generate_unsampled_indices(
                 estimator.random_state, n_samples, n_samples_bootstrap,
             )
-            y_pred = estimator.predict(
-                X[unsampled_indices, :], check_input=False
-            )
-            if y_pred.ndim == 1:
-                y_pred = y_pred[:, np.newaxis]
-            predictions[unsampled_indices, :, estimator_idx] = y_pred
 
-        predictions = self._oob_voting(predictions)
-        if np.isnan(predictions).any():
-            warn(
-                "Some inputs do not have OOB scores. This probably means too "
-                "few trees were used to compute any reliable oob estimates."
+            y_pred = self._get_oob_predictions(
+                estimator, X[unsampled_indices, :]
             )
-            predictions = np.nan_to_num(predictions)
+            oob_pred[unsampled_indices, ...] += y_pred
+            n_oob_pred[unsampled_indices, :] += 1
 
-        self.oob_score_ = 0.0
-        for k in range(self.n_outputs_):
-            self.oob_score_ += self._oob_score._call_score_on_preds(
-                y[:, k], predictions[:, k]
-            )
-        self.oob_score_ /= self.n_outputs_
+        for k in range(n_outputs):
+            if (n_oob_pred == 0).any():
+                warn(
+                    "Some inputs do not have OOB scores. This probably means "
+                    "too few trees were used to compute any reliable OOB "
+                    "estimates."
+                )
+                n_oob_pred[n_oob_pred == 0] = 1
+            oob_pred[..., k] /= n_oob_pred[..., [k]]
+
+        self.oob_score_ = self._score_oob_predictions(y, oob_pred)
+
+        return oob_pred
 
     def _validate_y_class_weight(self, y):
         # Default implementation
@@ -547,9 +555,56 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             max_samples=max_samples)
 
     @staticmethod
-    def _oob_voting(predictions):
-        predictions, _ = mode(predictions, axis=2)
-        return predictions[:, :, 0]
+    def _get_oob_predictions(tree, X):
+        """Compute the OOB predictions for an individual tree.
+
+        Parameters
+        ----------
+        tree : DecisionTreeClassifier object
+            A single decision tree classifier.
+        X : ndarray of shape (n_samples, n_features)
+            The OOB samples.
+
+        Returns
+        -------
+        y_pred : ndarray of shape (n_samples, n_classes, n_outputs)
+            The OOB associated predictions.
+        """
+        y_pred = tree.predict_proba(X, check_input=False)
+        y_pred = np.array(y_pred, copy=False)
+        if y_pred.ndim == 2:
+            # binary and multiclass
+            y_pred = y_pred[..., np.newaxis]
+        else:
+            # swap such that the `n_outputs` is the last axis
+            y_pred = np.rollaxis(y_pred, axis=0, start=3)
+        return y_pred
+
+    @staticmethod
+    def _score_oob_predictions(y_true, oob_pred):
+        """Compute the average accuracy for the OOB samples.
+
+        Parameters
+        ----------
+        y_true : ndarray of shape (n_samples,) or (n_samples, n_outputs)
+            The true target.
+        oob_pred : ndarray of shape (n_samples, n_classes, n_outputs)
+            The OOB predictions.
+
+        Returns
+        -------
+        oob_score : float
+            The average accuracy score.
+        """
+        n_outputs = oob_pred.shape[-1]
+        oob_score = 0.0
+        for k in range(n_outputs):
+            oob_pred_labels = np.argmax(oob_pred[..., k], axis=1)
+            oob_score += np.mean(y_true[:, k] == oob_pred_labels)
+        return oob_score / n_outputs
+
+    def _set_oob_score(self, X, y):
+        self.oob_decision_function_ = super()._set_oob_score(X, y).squeeze()
 
     def _validate_y_class_weight(self, y):
         check_classification_targets(y)
@@ -800,8 +855,54 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         return y_hat
 
     @staticmethod
-    def _oob_voting(predictions):
-        return np.nanmean(predictions, axis=2)
+    def _get_oob_predictions(tree, X):
+        """Compute the OOB predictions for an individual tree.
+
+        Parameters
+        ----------
+        tree : DecisionTreeRegressor object
+            A single decision tree regressor.
+        X : ndarray of shape (n_samples, n_features)
+            The OOB samples.
+
+        Returns
+        -------
+        y_pred : ndarray of shape (n_samples, 1, n_outputs)
+            The OOB associated predictions.
+        """
+        y_pred = tree.predict(X, check_input=False)
+        if y_pred.ndim == 1:
+            # single output regression
+            y_pred = y_pred[:, np.newaxis, np.newaxis]
+        else:
+            # multioutput regression
+            y_pred = y_pred[..., np.newaxis]
+        return y_pred
+
+    @staticmethod
+    def _score_oob_predictions(y_true, oob_pred):
+        """Compute the average R2 score for the OOB samples.
+
+        Parameters
+        ----------
+        y_true : ndarray of shape (n_samples,) or (n_samples, n_outputs)
+            The true target.
+        oob_pred : ndarray of shape (n_samples, 1, n_outputs)
+            The OOB predictions.
+
+        Returns
+        -------
+        oob_score : float
+            The average accuracy score.
+        """
+        n_outputs = oob_pred.shape[-1]
+        oob_score = 0.0
+        for k in range(n_outputs):
+            oob_score += r2_score(y_true[:, k], oob_pred[:, 0, k])
+        return oob_score / n_outputs
+
+    def _set_oob_score(self, X, y):
+        self.oob_prediction_ = super()._set_oob_score(X, y).squeeze()
 
     def _compute_partial_dependence_recursion(self, grid, target_features):
         """Fast partial dependence computation.
@@ -952,10 +1053,8 @@ class RandomForestClassifier(ForestClassifier):
         Whether bootstrap samples are used when building trees. If False, the
         whole dataset is used to build each tree.
 
-    oob_score : bool or str, default=False
+    oob_score : bool, default=False
         Whether to use out-of-bag samples to estimate the generalization score.
-        If a string is provided, it corresponds to the score computed, see
-        :ref:`scoring_parameter`.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
@@ -1276,10 +1375,8 @@ class RandomForestRegressor(ForestRegressor):
         Whether bootstrap samples are used when building trees. If False, the
         whole dataset is used to build each tree.
 
-    oob_score : bool or str, default=False
+    oob_score : bool, default=False
         Whether to use out-of-bag samples to estimate the generalization score.
-        If a string is provided, it corresponds to the score computed, see
-        :ref:`scoring_parameter`.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
@@ -1560,10 +1657,8 @@ class ExtraTreesClassifier(ForestClassifier):
         Whether bootstrap samples are used when building trees. If False, the
         whole dataset is used to build each tree.
 
-    oob_score : bool or str, default=False
+    oob_score : bool, default=False
         Whether to use out-of-bag samples to estimate the generalization score.
-        If a string is provided, it corresponds to the score computed, see
-        :ref:`scoring_parameter`.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
@@ -1880,10 +1975,8 @@ class ExtraTreesRegressor(ForestRegressor):
         Whether bootstrap samples are used when building trees. If False, the
         whole dataset is used to build each tree.
 
-    oob_score : bool or str, default=False
+    oob_score : bool, default=False
         Whether to use out-of-bag samples to estimate the generalization score.
-        If a string is provided, it corresponds to the score computed, see
-        :ref:`scoring_parameter`.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
