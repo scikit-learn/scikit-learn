@@ -34,7 +34,7 @@ def human_readable_data_quantity(quantity, multiple=1024):
 
 
 def get_file_extension(version):
-    if version == 'dev':
+    if 'dev' in version:
         # The 'dev' branch should be explictly handled
         return 'zip'
 
