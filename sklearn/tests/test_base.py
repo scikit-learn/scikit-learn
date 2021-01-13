@@ -540,7 +540,7 @@ def test_repr_html_wraps():
         assert "<style>" in output
 
 
-# TODO: Remove in 0.26 when the _pairwise attribute is removed
+# TODO: Remove in 1.1 when the _pairwise attribute is removed
 def test_is_pairwise():
     # simple checks for _is_pairwise
     pca = KernelPCA(kernel='precomputed')
@@ -553,8 +553,7 @@ def test_is_pairwise():
         _pairwise = False
 
     pca = IncorrectTagPCA(kernel='precomputed')
-    msg = ("_pairwise was deprecated in 0.24 and will be removed in 0.26. "
-           "Set the estimator tags of your estimator instead")
+    msg = "_pairwise was deprecated in 0.24 and will be removed in 1.1"
     with pytest.warns(FutureWarning, match=msg):
         assert not _is_pairwise(pca)
 

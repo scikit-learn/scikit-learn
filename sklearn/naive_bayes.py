@@ -154,7 +154,16 @@ class GaussianNB(_BaseNB):
         absolute additive value to variances
 
     sigma_ : ndarray of shape (n_classes, n_features)
-        variance of each feature per class
+        Variance of each feature per class.
+
+        .. deprecated:: 1.0
+           `sigma_` is deprecated in 1.0 and will be removed in 1.2.
+           Use `var_` instead.
+
+    var_ : ndarray of shape (n_classes, n_features)
+        Variance of each feature per class.
+
+        .. versionadded:: 1.0
 
     theta_ : ndarray of shape (n_classes, n_features)
         mean of each feature per class
@@ -377,7 +386,7 @@ class GaussianNB(_BaseNB):
             n_features = X.shape[1]
             n_classes = len(self.classes_)
             self.theta_ = np.zeros((n_classes, n_features))
-            self.sigma_ = np.zeros((n_classes, n_features))
+            self.var_ = np.zeros((n_classes, n_features))
 
             self.class_count_ = np.zeros(n_classes, dtype=np.float64)
 
@@ -405,7 +414,7 @@ class GaussianNB(_BaseNB):
                 msg = "Number of features %d does not match previous data %d."
                 raise ValueError(msg % (X.shape[1], self.theta_.shape[1]))
             # Put epsilon back in each time
-            self.sigma_[:, :] -= self.epsilon_
+            self.var_[:, :] -= self.epsilon_
 
         classes = self.classes_
 
@@ -429,14 +438,14 @@ class GaussianNB(_BaseNB):
                 N_i = X_i.shape[0]
 
             new_theta, new_sigma = self._update_mean_variance(
-                self.class_count_[i], self.theta_[i, :], self.sigma_[i, :],
+                self.class_count_[i], self.theta_[i, :], self.var_[i, :],
                 X_i, sw_i)
 
             self.theta_[i, :] = new_theta
-            self.sigma_[i, :] = new_sigma
+            self.var_[i, :] = new_sigma
             self.class_count_[i] += N_i
 
-        self.sigma_[:, :] += self.epsilon_
+        self.var_[:, :] += self.epsilon_
 
         # Update if only no priors is provided
         if self.priors is None:
@@ -449,13 +458,21 @@ class GaussianNB(_BaseNB):
         joint_log_likelihood = []
         for i in range(np.size(self.classes_)):
             jointi = np.log(self.class_prior_[i])
-            n_ij = - 0.5 * np.sum(np.log(2. * np.pi * self.sigma_[i, :]))
+            n_ij = - 0.5 * np.sum(np.log(2. * np.pi * self.var_[i, :]))
             n_ij -= 0.5 * np.sum(((X - self.theta_[i, :]) ** 2) /
-                                 (self.sigma_[i, :]), 1)
+                                 (self.var_[i, :]), 1)
             joint_log_likelihood.append(jointi + n_ij)
 
         joint_log_likelihood = np.array(joint_log_likelihood).T
         return joint_log_likelihood
+
+    @deprecated(  # type: ignore
+        "Attribute sigma_ was deprecated in 1.0 and will be removed in"
+        "1.2. Use var_ instead."
+    )
+    @property
+    def sigma_(self):
+        return self.var_
 
 
 _ALPHA_MIN = 1e-10
@@ -648,7 +665,7 @@ class _BaseDiscreteNB(_BaseNB):
 
     # mypy error: Decorated property not supported
     @deprecated("Attribute coef_ was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 0.26.")
+                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def coef_(self):
         return (self.feature_log_prob_[1:]
@@ -656,7 +673,7 @@ class _BaseDiscreteNB(_BaseNB):
 
     # mypy error: Decorated property not supported
     @deprecated("Attribute intercept_ was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 0.26.")
+                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
     @property
     def intercept_(self):
         return (self.class_log_prior_[1:]
@@ -708,7 +725,8 @@ class MultinomialNB(_BaseDiscreteNB):
         as a linear model.
 
         .. deprecated:: 0.24
-            ``coef_`` is deprecated in 0.24 and will be removed in 0.26.
+            ``coef_`` is deprecated in 0.24 and will be removed in 1.1
+            (renaming of 0.26).
 
     feature_count_ : ndarray of shape (n_classes, n_features)
         Number of samples encountered for each (class, feature)
@@ -724,7 +742,8 @@ class MultinomialNB(_BaseDiscreteNB):
         as a linear model.
 
         .. deprecated:: 0.24
-            ``intercept_`` is deprecated in 0.24 and will be removed in 0.26.
+            ``intercept_`` is deprecated in 0.24 and will be removed in 1.1
+            (renaming of 0.26).
 
     n_features_ : int
         Number of features of each sample.
@@ -830,7 +849,8 @@ class ComplementNB(_BaseDiscreteNB):
         as a linear model.
 
         .. deprecated:: 0.24
-            ``coef_`` is deprecated in 0.24 and will be removed in 0.26.
+            ``coef_`` is deprecated in 0.24 and will be removed in 1.1
+            (renaming of 0.26).
 
     feature_all_ : ndarray of shape (n_features,)
         Number of samples encountered for each feature during fitting. This
@@ -848,7 +868,8 @@ class ComplementNB(_BaseDiscreteNB):
         as a linear model.
 
         .. deprecated:: 0.24
-            ``coef_`` is deprecated in 0.24 and will be removed in 0.26.
+            ``coef_`` is deprecated in 0.24 and will be removed in 1.1
+            (renaming of 0.26).
 
     n_features_ : int
         Number of features of each sample.
