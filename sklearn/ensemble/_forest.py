@@ -50,9 +50,8 @@ from scipy.sparse import issparse
 from scipy.sparse import hstack as sparse_hstack
 from joblib import Parallel
 
-from ..base import is_classifier
 from ..base import ClassifierMixin, RegressorMixin, MultiOutputMixin
-from ..metrics import get_scorer, r2_score
+from ..metrics import r2_score
 from ..preprocessing import OneHotEncoder
 from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
                     ExtraTreeClassifier, ExtraTreeRegressor)
@@ -397,11 +396,6 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             self.estimators_.extend(trees)
 
         if self.oob_score:
-            if isinstance(self.oob_score, str):
-                scoring = self.oob_score
-            else:
-                scoring = "accuracy" if is_classifier(self) else "r2"
-            self._oob_score = get_scorer(scoring)
             self._set_oob_score(X, y)
 
         # Decapsulate classes_ attributes
