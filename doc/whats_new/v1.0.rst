@@ -44,6 +44,16 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.ensemble`
+.......................
+
+- |Fix| Do not allow to compute OOB score in
+  :class:`ensemble.RandomForestClassifier` and
+  :class:`ensemble.ExtraTreesClassifier` with multiclass-multioutput target
+  since scikit-learn does not provide any metric supporting this type of
+  target. Additional private refactoring was performed.
+  :pr:`19162` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
