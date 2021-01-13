@@ -920,11 +920,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         oob_score : float
             The average accuracy score.
         """
-        n_outputs = oob_pred.shape[-1]
-        oob_score = 0.0
-        for k in range(n_outputs):
-            oob_score += r2_score(y_true[:, k], oob_pred[:, 0, k])
-        return oob_score / n_outputs
+        return r2_score(y_true, oob_pred[:, 0, :])
 
     def _set_oob_score_and_attributes(self, X, y):
         """Compute and set the OOB score and attributes.
