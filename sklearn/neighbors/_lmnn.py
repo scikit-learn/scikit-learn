@@ -27,6 +27,7 @@ from ..utils.random import check_random_state
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import (check_is_fitted, check_array, check_X_y,
                                 check_scalar)
+from ..utils.validation import _deprecate_positional_args
 
 
 class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
@@ -222,8 +223,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
            https://en.wikipedia.org/wiki/Large_margin_nearest_neighbor
 
     """
-
-    def __init__(self, n_neighbors=3, n_components=None, init='pca',
+    @_deprecate_positional_args
+    def __init__(self, n_neighbors=3, n_components=None, *, init='pca',
                  warm_start=False, max_impostors=500000, neighbors_params=None,
                  weight_push_loss=0.5, impostor_store='auto', max_iter=50,
                  tol=1e-5, callback=None, store_opt_result=False, verbose=0,
@@ -448,7 +449,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         # Check the preferred dimensionality of the transformed samples
         if self.n_components is not None:
-            check_scalar(self.n_components, 'n_components', integer_types, 1)
+            check_scalar(self.n_components, 'n_components', integer_types,
+                         min_val=1)
 
             if self.n_components > X.shape[1]:
                 raise ValueError('The preferred output dimensionality '
@@ -466,18 +468,20 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                                  .format(X.shape[1],
                                          self.components_.shape[1]))
 
-        check_scalar(self.n_neighbors, 'n_neighbors', integer_types, 1,
-                     X.shape[0] - 1)
-        check_scalar(self.max_iter, 'max_iter', integer_types, 1)
-        check_scalar(self.tol, 'tol', float, 0.)
-        check_scalar(self.weight_push_loss, 'weight_push_loss', float, 0., 1.)
+        check_scalar(self.n_neighbors, 'n_neighbors', integer_types, min_val=1,
+                     max_val=X.shape[0] - 1)
+        check_scalar(self.max_iter, 'max_iter', integer_types, min_val=1)
+        check_scalar(self.tol, 'tol', float, min_val=0.)
+        check_scalar(self.weight_push_loss, 'weight_push_loss', float,
+                     min_val=0., max_val=1.)
         if self.weight_push_loss == 0:
             raise ValueError('`weight_push_loss` cannot be zero.')
 
-        check_scalar(self.max_impostors, 'max_impostors', integer_types, 1)
+        check_scalar(self.max_impostors, 'max_impostors', integer_types,
+                     min_val=1)
         check_scalar(self.impostor_store, 'impostor_store', string_types)
         check_scalar(self.n_jobs, 'n_jobs', integer_types)
-        check_scalar(self.verbose, 'verbose', integer_types, 0)
+        check_scalar(self.verbose, 'verbose', integer_types, min_val=0)
 
         if self.impostor_store not in ['auto', 'sparse', 'list']:
             raise ValueError("`impostor_store` must be 'auto', 'sparse' or "

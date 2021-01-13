@@ -35,6 +35,8 @@ from sklearn.utils.extmath import _deterministic_vector_sign_flip
 from sklearn.utils.extmath import softmax
 from sklearn.utils.extmath import stable_cumsum
 from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.utils.extmath import _euclidean_distances_without_checks
+from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.datasets import make_low_rank_matrix
 
 
@@ -809,3 +811,22 @@ def test_safe_sparse_dot_dense_output(dense_output):
     if dense_output:
         expected = expected.toarray()
     assert_allclose_dense_sparse(actual, expected)
+
+
+def test_euclidean_distances_without_checks():
+    rng = np.random.RandomState(0)
+    X = rng.rand(100, 20)
+    Y = rng.rand(50, 20)
+
+    # 2 matrices with no precomputed norms
+    distances1 = euclidean_distances(X, Y)
+    distances2 = _euclidean_distances_without_checks(X, Y)
+
+    assert_array_equal(distances1, distances2)
+
+    # 1 matrix with itself with squared row_norms precomputed and transposed
+    XX = row_norms(X, squared=True)[np.newaxis, :]
+    distances1 = euclidean_distances(X, X_norm_squared=XX)
+    distances2 = _euclidean_distances_without_checks(X, X_norm_squared=XX)
+
+    assert_array_equal(distances1, distances2)

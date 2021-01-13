@@ -1,23 +1,21 @@
 import numpy as np
 from scipy.optimize import check_grad
 
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_equal
-
 from sklearn import datasets
 from sklearn.neighbors import LargeMarginNearestNeighbor
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.neighbors.lmnn import _paired_distances_chunked
-from sklearn.neighbors.lmnn import _compute_push_loss
+from sklearn.neighbors._lmnn import _paired_distances_chunked
+from sklearn.neighbors._lmnn import _compute_push_loss
 from sklearn.metrics.pairwise import paired_euclidean_distances
 from sklearn.model_selection import train_test_split
 from sklearn.utils import check_random_state
 from sklearn.utils.extmath import row_norms
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import assert_warns_message
 
 
 rng = np.random.RandomState(0)
@@ -79,7 +77,7 @@ def test_neighbors_digits():
     knn.fit(lmnn.transform(X_train.astype(float)), y_train)
     score_float = knn.score(lmnn.transform(X_test.astype(float)), y_test)
 
-    assert_equal(score_uint8, score_float)
+    assert score_uint8 == score_float
 
 
 def test_params_validation():
@@ -395,7 +393,7 @@ def test_store_opt_result():
                                       store_opt_result=True)
     lmnn.fit(X_train, y_train)
     transformation = lmnn.opt_result_.x
-    assert_equal(transformation.size, X.shape[1]**2)
+    assert transformation.size == X.shape[1]**2
 
 
 def test_verbose(capsys):

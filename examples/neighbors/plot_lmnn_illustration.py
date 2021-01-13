@@ -16,7 +16,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import make_classification
 from sklearn.neighbors import LargeMarginNearestNeighbor
-from sklearn.neighbors.lmnn import _select_target_neighbors
+from sklearn.neighbors._lmnn import _select_target_neighbors
 
 
 print(__doc__)

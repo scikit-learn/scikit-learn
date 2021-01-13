@@ -15,6 +15,7 @@ from ._nearest_centroid import NearestCentroid
 from ._kde import KernelDensity
 from ._lof import LocalOutlierFactor
 from ._nca import NeighborhoodComponentsAnalysis
+from ._lmnn import LargeMarginNearestNeighbor
 from ._base import VALID_METRICS, VALID_METRICS_SPARSE
 
 __all__ = ['BallTree',
@@ -23,6 +24,7 @@ __all__ = ['BallTree',
            'KNeighborsClassifier',
            'KNeighborsRegressor',
            'KNeighborsTransformer',
+           'LargeMarginNearestNeighbor',
            'NearestCentroid',
            'NearestNeighbors',
            'RadiusNeighborsClassifier',

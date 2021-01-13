@@ -45,6 +45,14 @@ Changelog
     where 123456 is the *pull request* number, not the issue number.
 
 
+:mod:`sklearn.neighbors`
+........................
+
+- |MajorFeature| A metric learning algorithm:
+  :class:`neighbors.LargeMarginNearestNeighbor`, which implements the
+  Large Margin Nearest Neighbor algorithm described in Weinberger et al.
+  (2006). :pr:`8602` by :user:`John Chiotellis <johny-c>`.
+
 
 Code and Documentation Contributors
 -----------------------------------
