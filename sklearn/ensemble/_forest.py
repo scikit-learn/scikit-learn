@@ -61,7 +61,7 @@ from ..exceptions import DataConversionWarning
 from ._base import BaseEnsemble, _partition_estimators
 from ..utils.fixes import delayed
 from ..utils.fixes import _joblib_parallel_args
-from ..utils.multiclass import check_classification_targets
+from ..utils.multiclass import check_classification_targets, type_of_target
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.validation import _deprecate_positional_args
 
@@ -396,6 +396,14 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             self.estimators_.extend(trees)
 
         if self.oob_score:
+            y_type = type_of_target(y)
+            if y_type in ("multiclass-multioutput", "unknown"):
+                raise ValueError(
+                    f"The type of target cannot be used to compute OOB "
+                    f"estimates. Got {y_type} while only the following are "
+                    f"supported: continuous, continuous-multioutput, binary, "
+                    f"multiclass, multilabel-indicator."
+                )
             self._set_oob_score_and_attributes(X, y)
 
         # Decapsulate classes_ attributes

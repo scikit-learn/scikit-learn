@@ -502,11 +502,20 @@ def test_forest_oob_warning(ForestEstimator):
 @pytest.mark.parametrize(
     "ForestEstimator", FOREST_CLASSIFIERS_REGRESSORS.values()
 )
-def test_forest_oob_error_without_bootstrap(ForestEstimator):
-    estimator = ForestEstimator(oob_score=True, bootstrap=False)
-    err_msg = "Out of bag estimation only available if bootstrap=True"
+@pytest.mark.parametrize(
+    "X, y, params, err_msg",
+    [
+        (iris.data, iris.target, {"oob_score": True, "bootstrap": False},
+         "Out of bag estimation only available if bootstrap=True"),
+        (iris.data, rng.randint(low=0, high=5, size=(iris.data.shape[0], 2)),
+         {"oob_score": True, "bootstrap": True},
+         "The type of target cannot be used to compute OOB estimates")
+    ]
+)
+def test_forest_oob_error(ForestEstimator, X, y, params, err_msg):
+    estimator = ForestEstimator(**params)
     with pytest.raises(ValueError, match=err_msg):
-        estimator.fit(iris.data, iris.target)
+        estimator.fit(X, y)
 
 
 @pytest.mark.parametrize("oob_score", [True, False])
