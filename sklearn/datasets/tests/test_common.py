@@ -1,6 +1,5 @@
 """Test loaders for common functionality."""
 import inspect
-import os
 
 import pytest
 import numpy as np
@@ -14,27 +13,6 @@ def is_pillow_installed():
         return True
     except ImportError:
         return False
-
-
-FETCH_PYTEST_MARKERS = {
-    "return_X_y": {
-        "fetch_20newsgroups": pytest.mark.xfail(
-            reason="X is a list and does not have a shape argument"
-        ),
-        "fetch_openml": pytest.mark.xfail(
-            reason="fetch_opeml requires a dataset name or id"
-        ),
-        "fetch_lfw_people": pytest.mark.skipif(
-            not is_pillow_installed(),
-            reason="pillow is not installed"
-        )
-    },
-    "as_frame": {
-        "fetch_openml": pytest.mark.xfail(
-            reason="fetch_opeml requires a dataset name or id"
-        ),
-    }
-}
 
 
 def check_pandas_dependency_message(fetch_func):
@@ -84,32 +62,62 @@ def check_as_frame(bunch, dataset_func,
         assert isinstance(frame_y, pd.Series)
 
 
-def _skip_network_tests():
-    return os.environ.get('SKLEARN_SKIP_NETWORK_TESTS', '1') == '1'
+@pytest.fixture(params=range(7),
+                ids=["20newsgroups", "20newsgroups_vectorized",
+                     "california_housing", "covtype",
+                     "kddcup99", "olivetti_faces", "rcv1"])
+def fetch_dataset(request,
+                  fetch_20newsgroups_fxt, fetch_20newsgroups_vectorized_fxt,
+                  fetch_california_housing_fxt, fetch_covtype_fxt,
+                  fetch_kddcup99_fxt, fetch_olivetti_faces_fxt,
+                  fetch_rcv1_fxt):
+    _fetch_datasets = [
+        fetch_20newsgroups_fxt, fetch_20newsgroups_vectorized_fxt,
+        fetch_california_housing_fxt, fetch_covtype_fxt, fetch_kddcup99_fxt,
+        fetch_olivetti_faces_fxt, fetch_rcv1_fxt
+    ]
+    return _fetch_datasets[request.param]
 
 
-def _generate_func_supporting_param(param, dataset_type=("load", "fetch")):
-    markers_fetch = FETCH_PYTEST_MARKERS.get(param, {})
-    for name, obj in inspect.getmembers(sklearn.datasets):
-        if not inspect.isfunction(obj):
-            continue
+def test_common_check_return_X_y_fetch(fetch_dataset):
+    """Test return_X_y for fetch_* functions."""
+    name = fetch_dataset.__name__
+    if name == "fetch_20newsgroups":
+        pytest.skip("X is a list and does not have a shape argument")
+    elif name == "fetch_lfw_people" and not is_pillow_installed():
+        pytest.skip("pillow is not installed")
 
-        is_dataset_type = any([name.startswith(t) for t in dataset_type])
-        is_support_param = param in inspect.signature(obj).parameters
-        if is_dataset_type and is_support_param:
-            # check if we should skip if we don't have network support
-            marks = [pytest.mark.skipif(
-                condition=name.startswith("fetch") and _skip_network_tests(),
-                reason="Skip because fetcher requires internet network",
-            )]
-            if name in markers_fetch:
-                marks.append(markers_fetch[name])
+    bunch = fetch_dataset()
+    check_return_X_y(bunch, fetch_dataset)
 
-            yield pytest.param(name, obj, marks=marks)
+
+def test_common_check_as_frame_fetch(fetch_dataset):
+    """Test as_frame for fetch_* functions."""
+    name = fetch_dataset.__name__
+    if "as_frame" not in inspect.signature(fetch_dataset).parameters:
+        pytest.skip(f"The as_frame keyword is not defined for {name}")
+
+    bunch = fetch_dataset()
+    check_as_frame(bunch, fetch_dataset)
+
+
+def test_common_check_pandas_dependency_fetch(fetch_dataset):
+    """Test pandas dependency messag for fetch_* functions."""
+    check_pandas_dependency_message(fetch_dataset)
+
+
+def _generate_load_func_supporting_param(param):
+    """Generate datasets for load_* functions."""
+    return inspect.getmembers(
+        sklearn.datasets,
+        predicate=lambda f:
+            inspect.isfunction(f) and
+            f.__name__.startswith("load_") and
+            param in inspect.signature(f).parameters)
 
 
 @pytest.mark.parametrize(
-    "name, dataset_func", _generate_func_supporting_param("return_X_y")
+    "name, dataset_func", _generate_load_func_supporting_param("return_X_y")
 )
 def test_common_check_return_X_y(name, dataset_func):
     bunch = dataset_func()
@@ -117,7 +125,7 @@ def test_common_check_return_X_y(name, dataset_func):
 
 
 @pytest.mark.parametrize(
-    "name, dataset_func", _generate_func_supporting_param("as_frame")
+    "name, dataset_func", _generate_load_func_supporting_param("as_frame")
 )
 def test_common_check_as_frame(name, dataset_func):
     bunch = dataset_func()
@@ -125,7 +133,7 @@ def test_common_check_as_frame(name, dataset_func):
 
 
 @pytest.mark.parametrize(
-    "name, dataset_func", _generate_func_supporting_param("as_frame")
+    "name, dataset_func", _generate_load_func_supporting_param("as_frame")
 )
 def test_common_check_pandas_dependency(name, dataset_func):
     check_pandas_dependency_message(dataset_func)
