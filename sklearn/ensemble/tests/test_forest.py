@@ -32,6 +32,7 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import _convert_container
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import skip_if_no_parallel
 from sklearn.utils.fixes import parse_version
@@ -46,6 +47,7 @@ from sklearn.ensemble import ExtraTreesRegressor
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import RandomTreesEmbedding
+from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 from sklearn.svm import LinearSVC
 from sklearn.utils.validation import check_random_state
@@ -369,6 +371,43 @@ def test_unfitted_feature_importances(name):
                .format(name))
     with pytest.raises(NotFittedError, match=err_msg):
         getattr(FOREST_ESTIMATORS[name](), 'feature_importances_')
+
+
+@pytest.mark.parametrize("ForestClassifier", FOREST_CLASSIFIERS.values())
+@pytest.mark.parametrize("X_type", ["array", "sparse_csr", "sparse_csc"])
+@pytest.mark.parametrize(
+    "X, y",
+    [
+        datasets.make_classification(
+            n_samples=300, n_classes=2, random_state=0
+        ),
+        datasets.make_classification(
+            n_samples=1000, n_classes=3, n_informative=6, random_state=0
+        ),
+        datasets.make_multilabel_classification(
+            n_samples=300, random_state=0
+        ),
+    ],
+)
+def test_forest_classifier_oob(ForestClassifier, X, y, X_type):
+    X = _convert_container(X, constructor_name=X_type)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X,
+        y,
+        test_size=0.5,
+        random_state=0,
+    )
+    classifier = ForestClassifier(
+        n_estimators=20,
+        bootstrap=True,
+        oob_score=True,
+        random_state=0,
+    )
+    classifier.fit(X_train, y_train)
+    test_score = classifier.score(X_test, y_test)
+
+    assert abs(test_score - classifier.oob_score_) < 0.1
+    print(classifier.oob_score)
 
 
 def check_oob_score(name, X, y, n_estimators=20):

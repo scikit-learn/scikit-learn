@@ -51,7 +51,7 @@ from scipy.sparse import hstack as sparse_hstack
 from joblib import Parallel
 
 from ..base import ClassifierMixin, RegressorMixin, MultiOutputMixin
-from ..metrics import r2_score
+from ..metrics import accuracy_score, r2_score
 from ..preprocessing import OneHotEncoder
 from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
                     ExtraTreeClassifier, ExtraTreeRegressor)
@@ -617,12 +617,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         oob_score : float
             The average accuracy score.
         """
-        n_outputs = oob_pred.shape[-1]
-        oob_score = 0.0
-        for k in range(n_outputs):
-            oob_pred_labels = np.argmax(oob_pred[..., k], axis=1)
-            oob_score += np.mean(y_true[:, k] == oob_pred_labels)
-        return oob_score / n_outputs
+        return accuracy_score(y_true, np.argmax(oob_pred, axis=1))
 
     def _set_oob_score_and_attributes(self, X, y):
         """Compute and set the OOB score and attributes.
