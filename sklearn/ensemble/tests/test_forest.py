@@ -499,36 +499,22 @@ def test_forest_oob_warning(ForestEstimator):
         estimator.fit(iris.data, iris.target)
 
 
-def check_oob_score_raise_error(name):
-    ForestEstimator = FOREST_ESTIMATORS[name]
-
-    if name in FOREST_TRANSFORMERS:
-        for oob_score in [True, False]:
-            assert_raises(TypeError, ForestEstimator, oob_score=oob_score)
-
-        assert_raises(
-            NotImplementedError,
-            ForestEstimator()._set_oob_score_and_attributes,
-            X,
-            y
-        )
-
-    else:
-        # Unfitted /  no bootstrap / no oob_score
-        for oob_score, bootstrap in [(True, False), (False, True),
-                                     (False, False)]:
-            est = ForestEstimator(oob_score=oob_score, bootstrap=bootstrap,
-                                  random_state=0)
-            assert not hasattr(est, "oob_score_")
-
-        # No bootstrap
-        assert_raises(ValueError, ForestEstimator(oob_score=True,
-                                                  bootstrap=False).fit, X, y)
+@pytest.mark.parametrize(
+    "ForestEstimator", FOREST_CLASSIFIERS_REGRESSORS.values()
+)
+def test_forest_oob_error_without_bootstrap(ForestEstimator):
+    estimator = ForestEstimator(oob_score=True, bootstrap=False)
+    err_msg = "Out of bag estimation only available if bootstrap=True"
+    with pytest.raises(ValueError, match=err_msg):
+        estimator.fit(iris.data, iris.target)
 
 
-@pytest.mark.parametrize('name', FOREST_ESTIMATORS)
-def test_oob_score_raise_error(name):
-    check_oob_score_raise_error(name)
+@pytest.mark.parametrize("oob_score", [True, False])
+def test_random_trees_embedding_raise_error_oob(oob_score):
+    with pytest.raises(TypeError, match="got an unexpected keyword argument"):
+        RandomTreesEmbedding(oob_score=oob_score)
+    with pytest.raises(NotImplementedError, match="OOB score not supported"):
+        RandomTreesEmbedding()._set_oob_score_and_attributes(X, y)
 
 
 def check_gridsearch(name):
