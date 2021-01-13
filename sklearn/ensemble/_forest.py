@@ -740,8 +740,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
 
         Returns
         -------
-        p : ndarray of shape (n_samples, n_classes), or a list of n_outputs
-            such arrays if n_outputs > 1.
+        p : ndarray of shape (n_samples, n_classes), or a list of such arrays
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
         """
@@ -787,8 +786,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
 
         Returns
         -------
-        p : ndarray of shape (n_samples, n_classes), or a list of n_outputs
-            such arrays if n_outputs > 1.
+        p : ndarray of shape (n_samples, n_classes), or a list of such arrays
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
         """
@@ -901,7 +899,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
             y_pred = y_pred[:, np.newaxis, np.newaxis]
         else:
             # multioutput regression
-            y_pred = y_pred[..., np.newaxis]
+            y_pred = y_pred[:, np.newaxis, :]
         return y_pred
 
     @staticmethod
@@ -1191,7 +1189,8 @@ class RandomForestClassifier(ForestClassifier):
         Score of the training dataset obtained using an out-of-bag estimate.
         This attribute exists only when ``oob_score`` is True.
 
-    oob_decision_function_ : ndarray of shape (n_samples, n_classes)
+    oob_decision_function_ : ndarray of shape (n_samples, n_classes) or \
+            (n_samples, n_classes, n_outputs)
         Decision function computed with out-of-bag estimate on the training
         set. If n_estimators is small it might be possible that a data point
         was never left out during the bootstrap. In this case,
@@ -1479,7 +1478,7 @@ class RandomForestRegressor(ForestRegressor):
         Score of the training dataset obtained using an out-of-bag estimate.
         This attribute exists only when ``oob_score`` is True.
 
-    oob_prediction_ : ndarray of shape (n_samples,)
+    oob_prediction_ : ndarray of shape (n_samples,) or (n_samples, n_outputs)
         Prediction computed with out-of-bag estimate on the training set.
         This attribute exists only when ``oob_score`` is True.
 
@@ -1799,7 +1798,8 @@ class ExtraTreesClassifier(ForestClassifier):
         Score of the training dataset obtained using an out-of-bag estimate.
         This attribute exists only when ``oob_score`` is True.
 
-    oob_decision_function_ : ndarray of shape (n_samples, n_classes)
+    oob_decision_function_ : ndarray of shape (n_samples, n_classes) or \
+            (n_samples, n_classes, n_outputs)
         Decision function computed with out-of-bag estimate on the training
         set. If n_estimators is small it might be possible that a data point
         was never left out during the bootstrap. In this case,
@@ -2083,7 +2083,7 @@ class ExtraTreesRegressor(ForestRegressor):
         Score of the training dataset obtained using an out-of-bag estimate.
         This attribute exists only when ``oob_score`` is True.
 
-    oob_prediction_ : ndarray of shape (n_samples,)
+    oob_prediction_ : ndarray of shape (n_samples,) or (n_samples, n_outputs)
         Prediction computed with out-of-bag estimate on the training set.
         This attribute exists only when ``oob_score`` is True.
 

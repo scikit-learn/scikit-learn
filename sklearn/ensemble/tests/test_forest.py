@@ -376,78 +376,127 @@ def test_unfitted_feature_importances(name):
 @pytest.mark.parametrize("ForestClassifier", FOREST_CLASSIFIERS.values())
 @pytest.mark.parametrize("X_type", ["array", "sparse_csr", "sparse_csc"])
 @pytest.mark.parametrize(
-    "X, y",
+    "X, y, lower_bound_accuracy",
     [
-        datasets.make_classification(
-            n_samples=300, n_classes=2, random_state=0
+        (
+            *datasets.make_classification(
+                n_samples=300, n_classes=2, random_state=0
+            ),
+            0.9,
         ),
-        datasets.make_classification(
-            n_samples=1000, n_classes=3, n_informative=6, random_state=0
+        (
+            *datasets.make_classification(
+                n_samples=1000, n_classes=3, n_informative=6, random_state=0
+            ),
+            0.65,
         ),
-        datasets.make_multilabel_classification(
-            n_samples=300, random_state=0
+        (
+            iris.data, iris.target * 2 + 1, 0.65,
+        ),
+        (
+            *datasets.make_multilabel_classification(
+                n_samples=300, random_state=0
+            ),
+            0.2,
         ),
     ],
 )
-def test_forest_classifier_oob(ForestClassifier, X, y, X_type):
+def test_forest_classifier_oob(
+    ForestClassifier, X, y, X_type, lower_bound_accuracy
+):
+    """Check that forest-based classifier provide an OOB score close to the
+    score on a test set."""
     X = _convert_container(X, constructor_name=X_type)
     X_train, X_test, y_train, y_test = train_test_split(
-        X,
-        y,
-        test_size=0.5,
-        random_state=0,
+        X, y, test_size=0.5, random_state=0,
     )
     classifier = ForestClassifier(
-        n_estimators=20,
-        bootstrap=True,
-        oob_score=True,
-        random_state=0,
+        n_estimators=40, bootstrap=True, oob_score=True, random_state=0,
     )
+
+    assert not hasattr(classifier, "oob_score_")
+    assert not hasattr(classifier, "oob_decision_function_")
+
     classifier.fit(X_train, y_train)
     test_score = classifier.score(X_test, y_test)
 
-    assert abs(test_score - classifier.oob_score_) < 0.1
-    print(classifier.oob_score)
+    assert abs(test_score - classifier.oob_score_) <= 0.1
+    assert classifier.oob_score_ >= lower_bound_accuracy
+
+    assert hasattr(classifier, "oob_score_")
+    assert not hasattr(classifier, "oob_prediction_")
+    assert hasattr(classifier, "oob_decision_function_")
+
+    if y.ndim == 1:
+        expected_shape = (X_train.shape[0], len(set(y)))
+    else:
+        expected_shape = (X_train.shape[0], len(set(y[:, 0])), y.shape[1])
+    assert classifier.oob_decision_function_.shape == expected_shape
 
 
-def check_oob_score(name, X, y, n_estimators=20):
-    # Check that oob prediction is a good estimation of the generalization
-    # error.
+@pytest.mark.parametrize("ForestRegressor", FOREST_REGRESSORS.values())
+@pytest.mark.parametrize("X_type", ["array", "sparse_csr", "sparse_csc"])
+@pytest.mark.parametrize(
+    "X, y, lower_bound_r2",
+    [
+        (
+            *datasets.make_regression(
+                n_samples=500, n_features=10, n_targets=1, random_state=0
+            ),
+            0.7,
+        ),
+        (
+            *datasets.make_regression(
+                n_samples=500, n_features=10, n_targets=2, random_state=0
+            ),
+            0.55,
+        ),
+    ],
+)
+def test_forest_regressor_oob(
+    ForestRegressor, X, y, X_type, lower_bound_r2
+):
+    """Check that forest-based regressor provide an OOB score close to the
+    score on a test set."""
+    X = _convert_container(X, constructor_name=X_type)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.5, random_state=0,
+    )
+    regressor = ForestRegressor(
+        n_estimators=50, bootstrap=True, oob_score=True, random_state=0,
+    )
 
-    # Proper behavior
-    est = FOREST_ESTIMATORS[name](oob_score=True, random_state=0,
-                                  n_estimators=n_estimators, bootstrap=True)
-    n_samples = X.shape[0]
-    est.fit(X[:n_samples // 2, :], y[:n_samples // 2])
-    test_score = est.score(X[n_samples // 2:, :], y[n_samples // 2:])
-    oob_score = est.oob_score_
+    assert not hasattr(regressor, "oob_score_")
+    assert not hasattr(regressor, "oob_prediction_")
 
-    assert abs(test_score - oob_score) < 0.1 and oob_score > 0.7
+    regressor.fit(X_train, y_train)
+    test_score = regressor.score(X_test, y_test)
 
-    # Check warning if not enough estimators
-    with np.errstate(divide="ignore", invalid="ignore"):
-        est = FOREST_ESTIMATORS[name](oob_score=True, random_state=0,
-                                      n_estimators=1, bootstrap=True)
-        assert_warns(UserWarning, est.fit, X, y)
+    assert abs(test_score - regressor.oob_score_) <= 0.1
+    assert regressor.oob_score_ >= lower_bound_r2
 
+    assert hasattr(regressor, "oob_score_")
+    assert hasattr(regressor, "oob_prediction_")
+    assert not hasattr(regressor, "oob_decision_function_")
 
-@pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
-def test_oob_score_classifiers(name):
-    check_oob_score(name, iris.data, iris.target)
-
-    # csc matrix
-    check_oob_score(name, csc_matrix(iris.data), iris.target)
-
-    # non-contiguous targets in classification
-    check_oob_score(name, iris.data, iris.target * 2 + 1)
+    if y.ndim == 1:
+        expected_shape = (X_train.shape[0],)
+    else:
+        expected_shape = (X_train.shape[0], y.ndim)
+    assert regressor.oob_prediction_.shape == expected_shape
 
 
-@pytest.mark.parametrize('name', FOREST_REGRESSORS)
-def test_oob_score_regressors(name):
-    check_oob_score(name, X_reg, y_reg, 50)
-
-    # csc matrix
-    check_oob_score(name, csc_matrix(X_reg), y_reg, 50)
+@pytest.mark.parametrize(
+    "ForestEstimator", FOREST_CLASSIFIERS_REGRESSORS.values()
+)
+def test_forest_oob_warning(ForestEstimator):
+    """Check that a warning is raised when not enough estimator and the OOB
+    estimates will be inacurrate."""
+    estimator = ForestEstimator(
+        n_estimators=1, oob_score=True, bootstrap=True, random_state=0,
+    )
+    with pytest.warns(UserWarning, match="Some inputs do not have OOB scores"):
+        estimator.fit(iris.data, iris.target)
 
 
 def check_oob_score_raise_error(name):
