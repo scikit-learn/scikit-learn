@@ -11,10 +11,10 @@ from warnings import warn
 
 import sys
 import time
+import numbers
 import numpy as np
 from scipy.optimize import minimize
 from scipy.sparse import csr_matrix, csc_matrix, coo_matrix
-from six import integer_types, string_types
 
 from ..base import BaseEstimator, TransformerMixin
 from ..neighbors import NearestNeighbors
@@ -153,6 +153,9 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
     n_iter_ : int
         Counts the number of iterations performed by the optimizer.
+
+    random_state_ : numpy.RandomState
+        Pseudo random number generator object used during initialization.
 
     opt_result_ : scipy.optimize.OptimizeResult (optional)
         A dictionary of information representing the optimization result.
@@ -449,7 +452,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         # Check the preferred dimensionality of the transformed samples
         if self.n_components is not None:
-            check_scalar(self.n_components, 'n_components', integer_types,
+            check_scalar(self.n_components, 'n_components', numbers.Integral,
                          min_val=1)
 
             if self.n_components > X.shape[1]:
@@ -468,20 +471,20 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                                  .format(X.shape[1],
                                          self.components_.shape[1]))
 
-        check_scalar(self.n_neighbors, 'n_neighbors', integer_types, min_val=1,
-                     max_val=X.shape[0] - 1)
-        check_scalar(self.max_iter, 'max_iter', integer_types, min_val=1)
+        check_scalar(self.n_neighbors, 'n_neighbors', numbers.Integral,
+                     min_val=1, max_val=X.shape[0] - 1)
+        check_scalar(self.max_iter, 'max_iter', numbers.Integral, min_val=1)
         check_scalar(self.tol, 'tol', float, min_val=0.)
         check_scalar(self.weight_push_loss, 'weight_push_loss', float,
                      min_val=0., max_val=1.)
         if self.weight_push_loss == 0:
             raise ValueError('`weight_push_loss` cannot be zero.')
 
-        check_scalar(self.max_impostors, 'max_impostors', integer_types,
+        check_scalar(self.max_impostors, 'max_impostors', numbers.Integral,
                      min_val=1)
-        check_scalar(self.impostor_store, 'impostor_store', string_types)
-        check_scalar(self.n_jobs, 'n_jobs', integer_types)
-        check_scalar(self.verbose, 'verbose', integer_types, min_val=0)
+        check_scalar(self.impostor_store, 'impostor_store', str)
+        check_scalar(self.n_jobs, 'n_jobs', numbers.Integral)
+        check_scalar(self.verbose, 'verbose', numbers.Integral, min_val=0)
 
         if self.impostor_store not in ['auto', 'sparse', 'list']:
             raise ValueError("`impostor_store` must be 'auto', 'sparse' or "

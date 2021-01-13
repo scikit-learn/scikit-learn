@@ -980,8 +980,8 @@ LMNN solves the following (nonconvex) minimization problem:
 .. math::
     \min_L \varepsilon(L) = (1 - \mu) \varepsilon_{\text{pull}} (L) +
     \mu \varepsilon_{\text{push}} (L) \text{, } \quad \mu \in [0,1].
-The parameter :math:`\mu` (``weight_push_loss``) calibrates the trade-off between
-penalizing large distances to target neighbors and penalizing margin
+The parameter :math:`\mu` (``weight_push_loss``) calibrates the trade-off
+between penalizing large distances to target neighbors and penalizing margin
 violations by impostors. In practice, the two terms are usually weighted
 equally (:math:`\mu = 0.5`).
 
@@ -1021,10 +1021,10 @@ for further information.
 
 .. topic:: References:
 
-   * | `"Distance Metric Learning for Large Margin Nearest Neighbor Classification"
-       <http://jmlr.csail.mit.edu/papers/volume10/weinberger09a/weinberger09a.pdf>`_,
-     | Weinberger, Kilian Q., and Lawrence K. Saul, Journal of Machine Learning Research,
-     | Vol. 10, Feb. 2009, pp. 207-244.
+   * `"Distance Metric Learning for Large Margin Nearest Neighbor Classification"
+     <http://jmlr.csail.mit.edu/papers/volume10/weinberger09a/weinberger09a.pdf>`_,
+     Weinberger, Kilian Q., and Lawrence K. Saul, Journal of Machine Learning
+     Research, Vol. 10, Feb. 2009, pp. 207-244.
 
    * `Wikipedia entry on Large Margin Nearest Neighbor
      <https://en.wikipedia.org/wiki/Large_margin_nearest_neighbor>`_
