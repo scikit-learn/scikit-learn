@@ -26,7 +26,6 @@ dataset_fetchers = {
 }
 
 
-# fetching a dataset with this fixture will never download if missing
 def _fetch_fixture(f):
     """Fetch dataset (download if missing and requested by environment)."""
     download_if_missing = environ.get('SKLEARN_SKIP_NETWORK_TESTS', '1') == '0'
