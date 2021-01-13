@@ -914,7 +914,6 @@ def _fit_multiplicative_update(X, W, H, A=None, B=None, beta_loss='frobenius',
         for iter_offset, slice in enumerate(
             gen_batches(n=n_samples, batch_size=batch_size)
         ):
-            #print(iter_offset, n_iter)
             # update W
             # H_sum, HHt and XHt are saved and reused if not update_H
             delta_W, H_sum, HHt, XHt = _multiplicative_update_w(
@@ -1640,7 +1639,8 @@ class MiniBatchNMF(NMF):
         - 'custom': use custom matrices W and H
 
     batch_size : int, default=1024
-        Number of samples in each mini-batch.
+        Number of samples in each mini-batch. Large batch sizes
+        give better long-term convergence at the cost of a slower start.
 
     solver : 'mu'
         Numerical solver to use:
