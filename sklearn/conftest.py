@@ -90,7 +90,6 @@ def pytest_collection_modifyitems(config, items):
     worker_id = environ.get("PYTEST_XDIST_WORKER", "gw0")
     if worker_id == "gw0" and run_network_tests:
         for name in datasets_to_download:
-            print(f"Sequential pre-caching of dataset {name}...")
             dataset_fetchers[name]()
 
 
