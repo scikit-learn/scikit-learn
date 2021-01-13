@@ -943,15 +943,15 @@ of 40 classes.
 
 .. |lmnn_dim_reduction_1| image:: ../auto_examples/neighbors/images/sphx_glr_plot_lmnn_dim_reduction_001.png
    :target: ../auto_examples/neighbors/plot_lmnn_dim_reduction.html
-   :width: 33%
+   :width: 32%
 
 .. |lmnn_dim_reduction_2| image:: ../auto_examples/neighbors/images/sphx_glr_plot_lmnn_dim_reduction_002.png
    :target: ../auto_examples/neighbors/plot_lmnn_dim_reduction.html
-   :width: 33%
+   :width: 32%
 
 .. |lmnn_dim_reduction_3| image:: ../auto_examples/neighbors/images/sphx_glr_plot_lmnn_dim_reduction_003.png
    :target: ../auto_examples/neighbors/plot_lmnn_dim_reduction.html
-   :width: 33%
+   :width: 32%
 
 .. centered:: |lmnn_dim_reduction_1| |lmnn_dim_reduction_2| |lmnn_dim_reduction_3|
 
@@ -970,6 +970,7 @@ their reference sample and the push loss that pushes impostors away:
     \varepsilon_{\text{push}} (L) = \sum_{i, j \rightsquigarrow i}
     \sum_{l} (1 - y_{il}) [1 + || L(x_i - x_j)||^2 - || L
     (x_i - x_l)||^2]_+,
+
 where :math:`y_{il} = 1` if :math:`y_i = y_l` and :math:`0` otherwise,
 :math:`[x]_+ = \max(0, x)` is the hinge loss, and :math:`j \rightsquigarrow i`
 means that the :math:`j^{th}` sample is a target neighbor of the
@@ -980,6 +981,7 @@ LMNN solves the following (nonconvex) minimization problem:
 .. math::
     \min_L \varepsilon(L) = (1 - \mu) \varepsilon_{\text{pull}} (L) +
     \mu \varepsilon_{\text{push}} (L) \text{, } \quad \mu \in [0,1].
+
 The parameter :math:`\mu` (``weight_push_loss``) calibrates the trade-off
 between penalizing large distances to target neighbors and penalizing margin
 violations by impostors. In practice, the two terms are usually weighted
@@ -993,6 +995,7 @@ LMNN can be seen as learning a (squared) Mahalanobis distance metric:
 
 .. math::
     || L(x_i - x_j)||^2 = (x_i - x_j)^TM(x_i - x_j),
+
 where :math:`M = L^T L` is a symmetric positive semi-definite matrix of size
 ``(n_features, n_features)``. The objective function of LMNN can be
 rewritten and solved with respect to :math:`M` directly. This results in a

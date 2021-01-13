@@ -135,7 +135,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         A pseudo random number generator object or a seed for it if int.
         Randomness arises from subsampling the impostors if they exceed
         ``max_impostors`` and from initializing the linear transformation
-        if PCA is used as initialization method (``init``='pca').
+        if PCA is used as initialization method (``init='pca'``).
 
     n_jobs : int, optional (default=1)
         The number of parallel jobs to run for neighbors search.
@@ -359,7 +359,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         -----
         A simple dot product is necessary and sufficient to transform the
         inputs into the learned subspace. Orthogonality of the components is
-        only enforced upon initialization if PCA is used (``init``='pca').
+        only enforced upon initialization if PCA is used (``init='pca'``).
 
         """
 
@@ -474,8 +474,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         check_scalar(self.n_neighbors, 'n_neighbors', numbers.Integral,
                      min_val=1, max_val=X.shape[0] - 1)
         check_scalar(self.max_iter, 'max_iter', numbers.Integral, min_val=1)
-        check_scalar(self.tol, 'tol', float, min_val=0.)
-        check_scalar(self.weight_push_loss, 'weight_push_loss', float,
+        check_scalar(self.tol, 'tol', numbers.Real, min_val=0.)
+        check_scalar(self.weight_push_loss, 'weight_push_loss', numbers.Real,
                      min_val=0., max_val=1.)
         if self.weight_push_loss == 0:
             raise ValueError('`weight_push_loss` cannot be zero.')

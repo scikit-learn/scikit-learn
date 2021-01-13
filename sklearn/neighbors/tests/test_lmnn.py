@@ -91,7 +91,7 @@ def test_params_validation():
     assert_raises(TypeError, LMNN(max_iter='21').fit, X, y)
     assert_raises(TypeError, LMNN(verbose='true').fit, X, y)
     assert_raises(TypeError, LMNN(max_impostors=23.1).fit, X, y)
-    assert_raises(TypeError, LMNN(tol=1).fit, X, y)
+    assert_raises(TypeError, LMNN(tol='1').fit, X, y)
     assert_raises(TypeError, LMNN(n_components='invalid').fit, X, y)
     assert_raises(TypeError, LMNN(n_jobs='yes').fit, X, y)
     assert_raises(TypeError, LMNN(warm_start=1).fit, X, y)
