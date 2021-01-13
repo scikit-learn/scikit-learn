@@ -1146,9 +1146,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         Number of dictionary elements to extract.
 
     alpha : float, default=1.0
-        Sparsity controlling parameter. Warning: the parameter transform_alpha 
-        used to compute the sparse codes once the dictionary is learned is not
-        equal to alpha by default.
+        Sparsity controlling parameter.
 
     max_iter : int, default=1000
         Maximum number of iterations to perform.
@@ -1186,19 +1184,15 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     transform_n_nonzero_coefs : int, default=None
         Number of nonzero coefficients to target in each column of the
-        solution. This is only used by `algorithm='lars'` and `algorithm='omp'`
-        and is overridden by `alpha` in the `omp` case. If `None`, then
-        `transform_n_nonzero_coefs=int(n_features / 10)`.
+        solution. This is only used by `algorithm='lars'` and `algorithm='omp'`.
+        If `None`, then `transform_n_nonzero_coefs=int(n_features / 10)`.
 
     transform_alpha : float, default=None
         If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`, `alpha` is the
         penalty applied to the L1 norm.
         If `algorithm='threshold'`, `alpha` is the absolute value of the
         threshold below which coefficients will be squashed to zero.
-        If `algorithm='omp'`, `alpha` is the tolerance parameter: the value of
-        the reconstruction error targeted. In this case, it overrides
-        `n_nonzero_coefs`.
-        If `None`, default to 1.0
+        If `None`, default to `alpha`.
 
     n_jobs : int or None, default=None
         Number of parallel jobs to run.
@@ -1302,6 +1296,9 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
                  n_jobs=None, code_init=None, dict_init=None, verbose=False,
                  split_sign=False, random_state=None, positive_code=False,
                  positive_dict=False, transform_max_iter=1000):
+
+        if transform_alpha is None:
+            transform_alpha = alpha
 
         super().__init__(
             transform_algorithm, transform_n_nonzero_coefs,
@@ -1426,19 +1423,15 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     transform_n_nonzero_coefs : int, default=None
         Number of nonzero coefficients to target in each column of the
-        solution. This is only used by `algorithm='lars'` and `algorithm='omp'`
-        and is overridden by `alpha` in the `omp` case. If `None`, then
-        `transform_n_nonzero_coefs=int(n_features / 10)`.
+        solution. This is only used by `algorithm='lars'` and `algorithm='omp'`.
+        If `None`, then `transform_n_nonzero_coefs=int(n_features / 10)`.
 
     transform_alpha : float, default=None
         If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`, `alpha` is the
         penalty applied to the L1 norm.
         If `algorithm='threshold'`, `alpha` is the absolute value of the
         threshold below which coefficients will be squashed to zero.
-        If `algorithm='omp'`, `alpha` is the tolerance parameter: the value of
-        the reconstruction error targeted. In this case, it overrides
-        `n_nonzero_coefs`.
-        If `None`, default to 1.
+        If `None`, default to `alpha`.
 
     verbose : bool, default=False
         To control the verbosity of the procedure.
@@ -1544,6 +1537,9 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
                  verbose=False, split_sign=False, random_state=None,
                  positive_code=False, positive_dict=False,
                  transform_max_iter=1000):
+
+        if transform_alpha is None:
+            transform_alpha = alpha
 
         super().__init__(
             transform_algorithm, transform_n_nonzero_coefs, transform_alpha,
