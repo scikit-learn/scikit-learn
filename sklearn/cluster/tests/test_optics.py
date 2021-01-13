@@ -1,6 +1,8 @@
 # Authors: Shane Grigsby <refuge@rocktalus.com>
 #          Adrin Jalali <adrin.jalali@gmail.com>
 # License: BSD 3 clause
+import platform
+import sys
 
 import numpy as np
 import pytest
@@ -15,8 +17,10 @@ from sklearn.utils import shuffle
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import assert_allclose
+from sklearn.utils.fixes import sp_version, parse_version
 
 from sklearn.cluster.tests.common import generate_clustered_data
+from sklearn.utils import _IS_32BIT
 
 
 rng = np.random.RandomState(0)
@@ -314,6 +318,11 @@ def test_processing_order():
     assert_array_equal(clust.ordering_, [0, 1, 2, 3])
 
 
+@pytest.mark.skipif(sp_version >= parse_version("1.6.0")
+                    and (platform.machine() == "aarch64" or
+                         (sys.platform == "linux" and _IS_32BIT)),
+                    reason=("Test fails for SciPy 1.6.0 on ARM and on 32-bit "
+                            "linux. See #19111"))
 def test_compare_to_ELKI():
     # Expected values, computed with (future) ELKI 0.7.5 using:
     # java -jar elki.jar cli -dbc.in csv -dbc.filter FixedDBIDsFilter

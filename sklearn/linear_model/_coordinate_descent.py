@@ -729,7 +729,8 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             Target. Will be cast to X's dtype if necessary.
 
         sample_weight : float or array-like of shape (n_samples,), default=None
-            Sample weight.
+            Sample weight. Internally, the `sample_weight` vector will be
+            rescaled to sum to `n_samples`.
 
             .. versionadded:: 0.23
 

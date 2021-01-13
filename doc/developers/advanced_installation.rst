@@ -206,7 +206,8 @@ console:
 
     python -c "import struct; print(struct.calcsize('P') * 8)"
 
-For 64-bit Python, configure the build environment with:
+For 64-bit Python, configure the build environment by running the following
+commands in ``cmd`` or an Anaconda Prompt (if you use Anaconda):
 
     ::
 
@@ -238,6 +239,11 @@ to enable OpenMP support:
 
 - or install `libomp` with Homebrew to extend the default Apple clang compiler.
 
+For Apple Silicon M1 hardware, only the conda-forge method below is known to
+work at the time of writing (January 2021). You can install the `macos/arm64`
+distribution of conda using the `miniforge installer
+<https://github.com/conda-forge/miniforge#miniforge>`_
+
 macOS compilers from conda-forge
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -257,7 +263,7 @@ scikit-learn from source:
 .. prompt:: bash $
 
     conda create -n sklearn-dev -c conda-forge python numpy scipy cython \
-        joblib threadpoolctl pytest "compilers>=1.0.4,!=1.1.0" llvm-openmp
+        joblib threadpoolctl pytest compilers llvm-openmp
     conda activate sklearn-dev
     make clean
     pip install --verbose --no-build-isolation --editable .
