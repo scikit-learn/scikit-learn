@@ -88,7 +88,7 @@ Changelog
   :pr:`18842` by :user:`Hong Shao Yang <hongshaoyang>`.
 
 :mod:`sklearn.ensemble`
-......................
+.......................
 
 - |Fix| Makes :class:`ensemble.BaggingClassifier` correctly handle
   class labels when using voting and the `base_estimator` does not
