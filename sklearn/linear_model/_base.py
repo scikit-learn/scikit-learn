@@ -92,7 +92,13 @@ def _deprecate_normalize(normalize, default, estimator_name):
     -------
     _normalize : bool
         The validated `normalize` value.
-    TODO: it should be updated in v1.2.0 and removed completely in v1.4.0
+    Notes
+    -----
+    This function should be update in 1.2:
+    
+    - explain the changes to do
+    
+    This function should be completely removed in 1.4.
     """
     if normalize == 'deprecated':
         _normalize = default
