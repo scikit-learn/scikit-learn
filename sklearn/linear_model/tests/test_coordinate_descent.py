@@ -371,49 +371,46 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
 # FIXME: 'normalize' to be removed in 1.2
 @pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize(
-    "estimator, estimator_params, is_sparse",
-    [(LinearRegression, {}, True),
-     (LinearRegression, {}, False)
+    "estimator, is_sparse",
+    [(LinearRegression, True),
+     (LinearRegression, False)
      ]
 )
 def test_linear_model_sample_weights_normalize_in_pipeline(estimator,
-                                                           estimator_params,
                                                            is_sparse):
     rng = np.random.RandomState(0)
+    n_samples, n_features = 6, 5
 
-    # It would not work with under-determined systems
-    for n_samples, n_features in ((6, 5), ):
+    y = rng.randn(n_samples)
+    X = rng.randn(n_samples, n_features)
+    X_test = rng.randn(n_samples, n_features)
+    if is_sparse:
+        X = sparse.csr_matrix(X)
+        X_test = sparse.csr_matrix(X)
 
-        y = rng.randn(n_samples)
-        X = rng.randn(n_samples, n_features)
-        X_test = rng.randn(n_samples, n_features)
-        if is_sparse:
-            X = sparse.csr_matrix(X)
-            X_test = sparse.csr_matrix(X)
+    sample_weight = 1.0 + rng.rand(n_samples)
 
-        sample_weight = 1.0 + rng.rand(n_samples)
+    # linear estimator with explicit sample_weight
+    reg_with_normalize = estimator(normalize=True)
+    reg_with_normalize.fit(X, y, sample_weight=sample_weight)
 
-        # linear estimator with explicit sample_weight
-        reg_with_normalize = estimator(normalize=True, **estimator_params)
-        reg_with_normalize.fit(X, y, sample_weight=sample_weight)
+    # linear estimator in a pipeline
+    reg_with_scalar = make_pipeline(
+        StandardScaler(with_mean=False),
+        estimator(normalize=False)
+    )
+    kwargs = {reg_with_scalar.steps[-1][0] + '__sample_weight':
+                sample_weight}
+    reg_with_scalar.fit(X, y, **kwargs)
 
-        # linear estimator in a pipeline
-        reg_with_scalar = make_pipeline(
-            StandardScaler(with_mean=False),
-            estimator(normalize=False, **estimator_params)
+    y_pred_norm = reg_with_normalize.predict(X_test)
+    y_pred_pip = reg_with_scalar.predict(X_test)
+
+    assert_allclose(
+        reg_with_normalize.coef_ * reg_with_scalar[0].scale_,
+        reg_with_scalar[1].coef_
         )
-        kwargs = {reg_with_scalar.steps[-1][0] + '__sample_weight':
-                  sample_weight}
-        reg_with_scalar.fit(X, y, **kwargs)
-
-        y_pred_norm = reg_with_normalize.predict(X_test)
-        y_pred_pip = reg_with_scalar.predict(X_test)
-
-        assert_allclose(
-            reg_with_normalize.coef_ * reg_with_scalar[0].scale_,
-            reg_with_scalar[1].coef_
-            )
-        assert_allclose(y_pred_norm, y_pred_pip)
+    assert_allclose(y_pred_norm, y_pred_pip)
 
 
 # FIXME: 'normalize' to be removed in 1.2
