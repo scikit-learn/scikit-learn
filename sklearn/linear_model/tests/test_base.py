@@ -178,13 +178,13 @@ def test_deprecate_normalize(normalize, default):
             if not normalize:
                 warning_msg.append('default value')
             else:
-                warning_msg.append('StandardScaler()')
+                warning_msg.append('StandardScaler(')
     elif default:
         if normalize == 'deprecated':
             # warning to pass False and use StandardScaler
             output = default
             expected = FutureWarning
-            warning_msg = ['False', '1.2', 'StandardScaler()']
+            warning_msg = ['False', '1.2', 'StandardScaler(']
         else:
             # no warning
             output = normalize
