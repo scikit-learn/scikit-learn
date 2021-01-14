@@ -27,6 +27,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
     `n_splines=n_knots + degree - 1` spline basis functions (B-splines) of
     polynomial order=`degree` for each feature.
 
+    Read more in the :ref:`User Guide <spline_transformer>`.
+
     .. versionadded:: 1.0
 
     Parameters
