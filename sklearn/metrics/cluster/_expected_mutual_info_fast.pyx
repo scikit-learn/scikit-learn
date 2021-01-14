@@ -22,7 +22,6 @@ def expected_mutual_information(contingency, int n_samples):
     cdef DOUBLE N, gln_N, emi, term2, term3, gln, log_N
     cdef np.ndarray[DOUBLE] gln_a, gln_b, gln_Na, gln_Nb, gln_nij, log_nij
     cdef np.ndarray[DOUBLE] nijs, term1
-    # cdef np.ndarray[DOUBLE, ndim=2] log_ab_outer
     cdef np.ndarray[DOUBLE] log_a, log_b
     cdef np.ndarray[np.int32_t] a, b
     #cdef np.ndarray[int, ndim=2] start, end
