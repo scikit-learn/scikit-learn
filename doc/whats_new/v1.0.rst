@@ -88,7 +88,7 @@ Changelog
   :pr:`18842` by :user:`Hong Shao Yang <hongshaoyang>`.
 
 :mod:`sklearn.preprocessing`
-......................
+............................
 
 - |Feature| The new :class:`preprocessing.SplineTransformer` is a feature
   preprocessing tool for the generation of B-splines, parametrized by the
