@@ -510,9 +510,8 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-        .. deprecated:: 1.0.0
-            ``normalize`` was deprecated in version 1.0.0 and will be removed
-            in v1.2.0
+        .. deprecated:: 1.0
+           `normalize` was deprecated in version 1.0 and will be removed in 1.2.
 
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
@@ -762,7 +761,7 @@ def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy,
     if sample_weight is not None:
         X, y = _rescale_data(X, y, sample_weight=sample_weight)
 
-    # FIXME: 'normalize' to be removed in v1.2.0
+    # FIXME: 'normalize' to be removed in 1.2
     if hasattr(precompute, '__array__'):
         if (fit_intercept and not np.allclose(X_offset, np.zeros(n_features))
                 or normalize and not np.allclose(X_scale, np.ones(n_features)
