@@ -373,8 +373,7 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
 @pytest.mark.parametrize(
     "estimator, estimator_params, is_sparse",
     [(LinearRegression, {}, True),
-     (LinearRegression, {}, False)
-     ]
+     (LinearRegression, {}, False)]
 )
 def test_linear_model_sample_weights_normalize_in_pipeline(estimator,
                                                            estimator_params,
