@@ -446,13 +446,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         n_samples = y.shape[0]
         n_outputs = self.n_outputs_
         if hasattr(self, "n_classes_"):
-            if isinstance(self.n_classes_, numbers.Integral):
-                n_classes = self.n_classes_
-            else:
-                n_classes = self.n_classes_[0]
-            oob_pred_shape = (n_samples, n_classes, n_outputs)
+            oob_pred_shape = (n_samples, self.n_classes_[0], n_outputs)
         else:
-            n_classes = None
             oob_pred_shape = (n_samples, 1, n_outputs)
 
         oob_pred = np.zeros(shape=oob_pred_shape, dtype=np.float64)
