@@ -95,11 +95,17 @@ def _deprecate_normalize(normalize, default, estimator_name):
     Notes
     -----
     This function should be update in 1.2:
-
-    (TODO: - explain the changes to do)
-
+    depending on value of `normalize`:
+    - True, warning: `normalize` was deprecated in 1.2 and will be removed in
+      1.4. Suggest to use pipeline instead
+    - False, `normalize` was deprecated in 1.2 and it will be removed in 1.4.
+      Leave normalize to its default value
+    - `deprecated` - this should only be possible with default == False as from
+      1.2 `normalize` in all the linear models should be either removed or the
+      default should be set to False
     This function should be completely removed in 1.4.
     """
+
     if normalize not in [True, False, 'deprecated']:
         raise ValueError("Leave 'normalize' to its default value or set it "
                          "to True or False")
