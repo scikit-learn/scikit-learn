@@ -151,6 +151,15 @@ def test_fit_intercept():
             lr3_without_intercept.coef_.ndim)
 
 
+def test_error_on_wrong_normalize():
+    normalize = 'wrong'
+    default = True
+    error_msg = "Leave 'normalize' to its default"
+    with pytest.raises(ValueError, match=error_msg):
+        _deprecate_normalize(normalize, default, 'estimator')
+    ValueError
+
+
 @pytest.mark.parametrize('normalize', [True, False, 'deprecated'])
 @pytest.mark.parametrize('default', [True, False])
 # FIXME update test in 1.2.0 for new versions

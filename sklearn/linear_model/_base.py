@@ -81,13 +81,13 @@ def _deprecate_normalize(normalize, default, estimator_name):
     ----------
     normalize : bool or str
         The value of `normalize` set in the estimator.
-        
+
     default : bool
         The previous default value of `normalize` in the estimator.
-        
+
     estimator_name : str
         The name of the linear model estimator.
-        
+
     Returns
     -------
     _normalize : bool
@@ -95,11 +95,15 @@ def _deprecate_normalize(normalize, default, estimator_name):
     Notes
     -----
     This function should be update in 1.2:
-    
-    - explain the changes to do
-    
+
+    (TODO: - explain the changes to do)
+
     This function should be completely removed in 1.4.
     """
+    if normalize not in [True, False, 'deprecated']:
+        raise ValueError("Leave 'normalize' to its default value or set it "
+                         "to True or False")
+
     if normalize == 'deprecated':
         _normalize = default
     else:
