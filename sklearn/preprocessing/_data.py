@@ -5,7 +5,6 @@
 #          Eric Martin <eric@ericmart.in>
 #          Giorgio Patrini <giorgio.patrini@anu.edu.au>
 #          Eric Chang <ericchang2017@u.northwestern.edu>
-#          Christian Lorentzen <lorentzen.ch@gmail.com>
 # License: BSD 3 clause
 
 
