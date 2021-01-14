@@ -142,7 +142,7 @@ def _deprecate_normalize(normalize, default, estimator_name):
             "'__<your_param_name>': <your_param_value>}\n"
             "model.fit(X, y, **kwargs)", FutureWarning
         )
-    elif normalize != 'deprecated' and not normalize and not default:
+    elif not normalize and not default:
         warnings.warn(
             "'normalize' was deprecated in version 1.0 and will be"
             " removed in 1.2 Don't set 'normalize' parameter"
