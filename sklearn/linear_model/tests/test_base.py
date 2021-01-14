@@ -245,7 +245,7 @@ def test_linear_regression_normalize_deprecation(normalize, n_warnings, warning)
         assert "'normalize' was deprecated" in str(record[0].message)
 
 
-# FIXME: 'normalize' to be removed in 1.2.0 in LinearRegression
+# FIXME: 'normalize' to be removed in 1.2 in LinearRegression
 @pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize('normalize', [True, False])
 @pytest.mark.parametrize('fit_intercept', [True, False])
