@@ -117,8 +117,8 @@ def _deprecate_normalize(normalize, default, estimator_name):
 
     if default and normalize == 'deprecated':
         warnings.warn(
-            " default of 'normalize' will be set to False in version 1.2.0 and"
-            " deprecated in version 1.4.0"
+            " default of 'normalize' will be set to False in version 1.2 and"
+            " deprecated in version 1.4"
             " \nPass normalize=False and use Pipeline with a StandardScaler in"
             " a preprocessing stage:"
             "  model = make_pipeline(StandardScaler(),"
@@ -131,8 +131,8 @@ def _deprecate_normalize(normalize, default, estimator_name):
         )
     elif normalize != 'deprecated' and normalize and not default:
         warnings.warn(
-            "'normalize' was deprecated in version 1.0.0 and will be "
-            "removed in 1.2.0 \nIf you still wish to normalize use "
+            "'normalize' was deprecated in version 1.0 and will be "
+            "removed in 1.2 \nIf you still wish to normalize use "
             "Pipeline with a StandardScaler in a preprocessing stage: "
             "model = make_pipeline(StandardScaler(), "
             f"{estimator_name}()). \nIf you wish to use additional "
@@ -143,8 +143,8 @@ def _deprecate_normalize(normalize, default, estimator_name):
         )
     elif normalize != 'deprecated' and not normalize and not default:
         warnings.warn(
-            "'normalize' was deprecated in version 1.0.0 and will be"
-            " removed in 1.2.0 Don't set 'normalize' parameter"
+            "'normalize' was deprecated in version 1.0 and will be"
+            " removed in 1.2 Don't set 'normalize' parameter"
             " and leave it to its default value", FutureWarning
         )
 
