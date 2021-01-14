@@ -511,7 +511,8 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         on an estimator with ``normalize=False``.
 
         .. deprecated:: 1.0
-           `normalize` was deprecated in version 1.0 and will be removed in 1.2.
+           `normalize` was deprecated in version 1.0 and will be
+           removed in 1.2.
 
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
