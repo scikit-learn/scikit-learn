@@ -198,8 +198,10 @@ def test_deprecate_normalize(normalize, default):
     n_warnings = 0 if expected is None else 1
     assert len(record) == n_warnings
     if n_warnings:
-        assert all([warning in str(record[0].message) for
-                    warning in warning_msg])
+        assert all([
+            warning in str(record[0].message)
+            for warning in warning_msg
+        ])
 
 
 def test_linear_regression_sparse(random_state=0):
