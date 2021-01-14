@@ -377,8 +377,9 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
      (LinearRegression, False)
      ]
 )
-def test_linear_model_sample_weights_normalize_in_pipeline(estimator,
-                                                           is_sparse):
+def test_linear_model_sample_weights_normalize_in_pipeline(
+        estimator, is_sparse
+):
     rng = np.random.RandomState(0)
     n_samples, n_features = 6, 5
 
