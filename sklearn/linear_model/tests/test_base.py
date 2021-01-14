@@ -195,10 +195,7 @@ def test_deprecate_normalize(normalize, default):
         _normalize = _deprecate_normalize(normalize, default, 'estimator')
     assert _normalize == output
 
-    if expected is None:
-        n_warnings = 0
-    else:
-        n_warnings = 1
+    n_warnings = 0 if expected is None else 1
     assert len(record) == n_warnings
     if n_warnings:
         assert all([warning in str(record[0].message) for
