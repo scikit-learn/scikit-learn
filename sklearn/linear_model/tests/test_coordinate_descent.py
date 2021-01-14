@@ -26,6 +26,7 @@ from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import _convert_container
 from sklearn.utils._testing import TempMemmap
 from sklearn.utils.fixes import parse_version
 
@@ -384,9 +385,10 @@ def test_linear_model_sample_weights_normalize_in_pipeline(estimator,
     y = rng.randn(n_samples)
     X = rng.randn(n_samples, n_features)
     X_test = rng.randn(n_samples, n_features)
+
     if is_sparse:
         X = sparse.csr_matrix(X)
-        X_test = sparse.csr_matrix(X)
+        X_test = _convert_container(X, 'sparse')
 
     sample_weight = 1.0 + rng.rand(n_samples)
 
