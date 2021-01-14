@@ -227,7 +227,7 @@ def test_linear_regression_sparse(random_state=0):
      ("deprecated", 0, None)]
 )
 # FIXME remove test in 1.4
-def test_assure_warning_when_normalize(normalize, n_warnings, warning):
+def test_linear_regression_normalize_deprecation(normalize, n_warnings, warning):
     # check that we issue a FutureWarning when normalize was set in
     # LinearRegression
     rng = check_random_state(0)
