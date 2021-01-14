@@ -234,7 +234,7 @@ def test_linear_regression_normalize_deprecation(normalize, n_warnings, warning)
     n_samples = 200
     n_features = 2
     X = rng.randn(n_samples, n_features)
-    X[X < 0.1] = 0.
+    X[X < 0.1] = 0.0
     y = rng.rand(n_samples)
 
     model = LinearRegression(normalize=normalize)
