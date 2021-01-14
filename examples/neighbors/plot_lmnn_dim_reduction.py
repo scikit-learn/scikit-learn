@@ -69,7 +69,7 @@ lda = LinearDiscriminantAnalysis(n_components=2)
 
 # Reduce dimension to 2 with LargeMarginNearestNeighbor
 lmnn = LargeMarginNearestNeighbor(n_neighbors=n_neighbors, n_components=2,
-                                  max_iter=20, verbose=1,
+                                  tol=0.1, verbose=1,
                                   random_state=random_state)
 
 # Use a nearest neighbor classifier to evaluate the methods
