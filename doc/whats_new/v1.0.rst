@@ -62,6 +62,14 @@ Changelog
 - |Fix| :meth:`ElasticNet.fit` no longer modifies `sample_weight` in place.
   :pr:`19055` by `Thomas Fan`_.
 
+:mod:`sklearn.preprocessing`
+......................
+
+- |Feature| The new :class:`preprocessing.SplineTransformer` is a feature
+  preprocessing tool for the generation of B-splines, parametrized by the
+  polynomial ``degree`` of the splines, number of knots ``n_knots`` and knot
+  positioning strategy ``knots``.
+
 Code and Documentation Contributors
 -----------------------------------
 
