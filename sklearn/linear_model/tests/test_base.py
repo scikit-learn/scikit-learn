@@ -174,7 +174,7 @@ def test_deprecate_normalize(normalize, default):
         else:
             output = normalize
             expected = FutureWarning
-            warning_msg = ['1.2.0']
+            warning_msg = ['1.2']
             if not normalize:
                 warning_msg.append('default value')
             else:
