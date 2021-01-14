@@ -766,10 +766,11 @@ def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy,
         if (fit_intercept and not np.allclose(X_offset, np.zeros(n_features))
                 or normalize and not np.allclose(X_scale, np.ones(n_features)
                                                  )):
-            warnings.warn("Gram matrix was provided but X was centered "
-                          "to fit intercept, or X was normalized : "
-                          "recomputing Gram matrix.", UserWarning
-                          )
+            warnings.warn(
+                "Gram matrix was provided but X was centered to fit "
+                "intercept, or X was normalized : recomputing Gram matrix.",
+                UserWarning
+            )
             # recompute Gram
             precompute = 'auto'
             Xy = None
