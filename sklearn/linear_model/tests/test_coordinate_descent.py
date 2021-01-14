@@ -390,7 +390,7 @@ def test_linear_model_sample_weights_normalize_in_pipeline(estimator,
         X = sparse.csr_matrix(X)
         X_test = _convert_container(X, 'sparse')
 
-    sample_weight = 1.0 + rng.rand(n_samples)
+    sample_weight = rng.rand(n_samples)
 
     # linear estimator with explicit sample_weight
     reg_with_normalize = estimator(normalize=True)
@@ -402,7 +402,7 @@ def test_linear_model_sample_weights_normalize_in_pipeline(estimator,
         estimator(normalize=False)
     )
     kwargs = {reg_with_scalar.steps[-1][0] + '__sample_weight':
-                sample_weight}
+              sample_weight}
     reg_with_scalar.fit(X, y, **kwargs)
 
     y_pred_norm = reg_with_normalize.predict(X_test)
