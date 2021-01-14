@@ -184,7 +184,7 @@ def test_deprecate_normalize(normalize, default):
             # warning to pass False and use StandardScaler
             output = default
             expected = FutureWarning
-            warning_msg = ['False', '1.2.0', 'StandardScaler()']
+            warning_msg = ['False', '1.2', 'StandardScaler()']
         else:
             # no warning
             output = normalize
