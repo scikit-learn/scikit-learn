@@ -759,7 +759,7 @@ def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy,
     if sample_weight is not None:
         X, y = _rescale_data(X, y, sample_weight=sample_weight)
 
-    # FIXME: 'normalize' to be removed in v1.2.0
+    # FIXME: 'normalize' to be removed in 1.2
     if hasattr(precompute, '__array__'):
         if (fit_intercept and not np.allclose(X_offset, np.zeros(n_features))
                 or normalize and not np.allclose(X_scale, np.ones(n_features)
