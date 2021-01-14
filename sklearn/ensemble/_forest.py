@@ -446,8 +446,14 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         n_samples = y.shape[0]
         n_outputs = self.n_outputs_
         if hasattr(self, "n_classes_"):
+            # n_classes_ is a ndarray at this stage
+            # all the supported type of target will have the same number of
+            # classes in all outputs
             oob_pred_shape = (n_samples, self.n_classes_[0], n_outputs)
         else:
+            # for regression, n_classes_ does not exist and we create an empty
+            # axis to be consistent with the classification case and make
+            # the array operations compatible with the 2 settings
             oob_pred_shape = (n_samples, 1, n_outputs)
 
         oob_pred = np.zeros(shape=oob_pred_shape, dtype=np.float64)
