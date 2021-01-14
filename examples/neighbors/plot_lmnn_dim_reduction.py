@@ -3,8 +3,6 @@
 Dimensionality Reduction with Large Margin Nearest Neighbor
 ===========================================================
 
-Sample usage of Large Margin Nearest Neighbor for dimensionality reduction.
-
 This example compares different (linear) dimensionality reduction methods
 applied on the Olivetti Faces data set. The data set contains ten different
 images of each of 40 distinct persons. For some subjects, the images were

@@ -3,7 +3,7 @@
 Large Margin Nearest Neighbor Illustration
 ==========================================
 
-An example illustrating the goal of learning a distance metric that maximizes
+This example illustrates the goal of learning a distance metric that maximizes
 the nearest neighbors classification accuracy. The example is solely for
 illustration purposes. Please refer to the :ref:`User Guide <lmnn>` for
 more information.
@@ -100,8 +100,8 @@ fill_between_circles(ax, X[3], [inner_radius, inner_radius + margin])
 
 # Annotate the impostors (1, 4, 5, 7)
 imp_centroid = (X[1] + X[4] + X[5] + X[7]) / 4
-imp_arrow_dict = dict(facecolor='black', color='gray', arrowstyle='->',
-                      connectionstyle="arc3,rad=0.3")
+imp_arrow_dict = dict(facecolor='black', arrowstyle='->',
+                      connectionstyle="arc3,rad=0.3", shrinkB=9)
 ax.annotate('', xy=X[1], xytext=imp_centroid, arrowprops=imp_arrow_dict)
 ax.annotate('', xy=X[4], xytext=imp_centroid, arrowprops=imp_arrow_dict)
 ax.annotate('', xy=X[5], xytext=imp_centroid, arrowprops=imp_arrow_dict)

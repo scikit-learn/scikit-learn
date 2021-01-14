@@ -3,7 +3,7 @@
 Comparing Nearest Neighbors with and without Large Margin Nearest Neighbor
 ==========================================================================
 
-An example comparing nearest neighbors classification with and without
+This example compares nearest neighbors classification with and without
 Large Margin Nearest Neighbor.
 
 It will plot the decision boundaries for each class determined by a simple
@@ -72,7 +72,7 @@ for name, clf in zip(names, classifiers):
     # Put the result into a color plot
     Z = Z.reshape(xx.shape)
     plt.figure()
-    plt.pcolormesh(xx, yy, Z, cmap=cmap_light, alpha=.8)
+    plt.pcolormesh(xx, yy, Z, cmap=cmap_light, alpha=.8, shading='auto')
 
     # Plot also the training and testing points
     plt.scatter(X[:, 0], X[:, 1], c=y, cmap=cmap_bold, edgecolor='k', s=20)
