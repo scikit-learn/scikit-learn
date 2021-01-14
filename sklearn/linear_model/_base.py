@@ -117,15 +117,14 @@ def _deprecate_normalize(normalize, default, estimator_name):
 
     if default and normalize == 'deprecated':
         warnings.warn(
-            " default of 'normalize' will be set to False in version 1.2 and"
-            " deprecated in version 1.4"
-            " \nPass normalize=False and use Pipeline with a StandardScaler in"
-            " a preprocessing stage:"
-            "  model = make_pipeline(StandardScaler(),"
-            f" {estimator_name}(normalize=False))"
-            "\nIf you wish to use additional parameters in"
-            " the fit() you can include them as follows:"
-            " kwargs = {model.steps[-1][0] + "
+            "The default of 'normalize' will be set to False in version 1.2 "
+            "and deprecated in version 1.4. \nPass normalize=False and use "
+            "Pipeline with a StandardScaler in a preprocessing stage: "
+            "model = make_pipeline(StandardScaler(), \n"
+            f"{estimator_name}(normalize=False))\n"
+            "If you wish to use additional parameters in "
+            "the fit() you can include them as follows:\n"
+            "kwargs = {model.steps[-1][0] + "
             "'__<your_param_name>': <your_param_value>}\n"
             "model.fit(X, y, **kwargs)", FutureWarning
         )
