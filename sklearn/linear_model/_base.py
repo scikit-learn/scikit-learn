@@ -508,9 +508,8 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-        .. deprecated:: 1.0.0
-            ``normalize`` was deprecated in version 1.0.0 and will be removed
-            in v1.2.0
+        .. deprecated:: 1.0
+           `normalize` was deprecated in version 1.0 and will be removed in 1.2.
 
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
