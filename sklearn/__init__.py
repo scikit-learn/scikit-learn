@@ -39,12 +39,8 @@ logger = logging.getLogger(__name__)
 # Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
 # 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
-<<<<<<< HEAD
-__version__ = '0.24.0'
-=======
-__version__ = '1.0.dev0'
->>>>>>> 9b2a3e8ba50804e5cd1e4302097e86aebd2e8464
 
+__version__ = '1.0.dev0'
 
 # On OSX, we can get a runtime error due to multiple OpenMP libraries loaded
 # simultaneously. This can happen for instance when calling BLAS inside a
