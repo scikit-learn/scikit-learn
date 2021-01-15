@@ -795,7 +795,7 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     log_outer = -np.log(outer) + log(pi.sum()) + log(pj.sum())
     mi = (contingency_nm * (log_contingency_nm - log(contingency_sum)) +
           contingency_nm * log_outer)
-    mi = np.where(np.abs(mi) < np.finfo(mi.dtype).eps, 0.0, mi)
+    np.around(mi, decimals=np.finfo(mi.dtype).precision, out=mi)
     return np.clip(mi.sum(), 0.0, None)
 
 
