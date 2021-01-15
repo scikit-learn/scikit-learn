@@ -23,6 +23,10 @@ from sklearn.naive_bayes import GaussianNB, BernoulliNB
 from sklearn.naive_bayes import MultinomialNB, ComplementNB
 from sklearn.naive_bayes import CategoricalNB
 
+DISCRETE_NAIVE_BAYES_CLASSES = [
+    BernoulliNB, CategoricalNB, ComplementNB, MultinomialNB]
+ALL_NAIVE_BAYES_CLASSES = DISCRETE_NAIVE_BAYES_CLASSES + [GaussianNB]
+
 
 # Data is just 6 separable points in the plane
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
@@ -204,8 +208,7 @@ def test_gnb_naive_bayes_scale_invariance():
 
 
 # TODO: Remove in version 1.1
-@pytest.mark.parametrize("cls", [MultinomialNB, ComplementNB, BernoulliNB,
-                                 CategoricalNB])
+@pytest.mark.parametrize('cls', DISCRETE_NAIVE_BAYES_CLASSES)
 def test_discretenb_deprecated_coef_intercept(cls):
     est = cls().fit(X2, y2)
 
@@ -214,8 +217,7 @@ def test_discretenb_deprecated_coef_intercept(cls):
             hasattr(est, att)
 
 
-@pytest.mark.parametrize("cls", [MultinomialNB, ComplementNB, BernoulliNB,
-                                 CategoricalNB])
+@pytest.mark.parametrize('cls', DISCRETE_NAIVE_BAYES_CLASSES)
 def test_discretenb_prior(cls):
     # Test whether class priors are properly set.
     clf = cls().fit(X2, y2)
@@ -223,8 +225,7 @@ def test_discretenb_prior(cls):
                               clf.class_log_prior_, 8)
 
 
-@pytest.mark.parametrize("cls", [MultinomialNB, ComplementNB, BernoulliNB,
-                                 CategoricalNB])
+@pytest.mark.parametrize('cls', DISCRETE_NAIVE_BAYES_CLASSES)
 def test_discretenb_partial_fit(cls):
     clf1 = cls()
     clf1.fit([[0, 1], [1, 0], [1, 1]], [0, 1, 1])
@@ -272,8 +273,7 @@ def test_discretenb_partial_fit(cls):
         assert_array_equal(clf1.feature_count_, clf3.feature_count_)
 
 
-@pytest.mark.parametrize('cls', [MultinomialNB, ComplementNB, BernoulliNB,
-                                 CategoricalNB, GaussianNB])
+@pytest.mark.parametrize('cls', ALL_NAIVE_BAYES_CLASSES)
 def test_naive_bayes_pickle(cls):
     # Test picklability of naive Bayes classifiers
 
@@ -295,8 +295,7 @@ def test_naive_bayes_pickle(cls):
     assert_array_equal(y_pred, clf2.predict(X2))
 
 
-@pytest.mark.parametrize('cls', [MultinomialNB, ComplementNB, BernoulliNB,
-                                 CategoricalNB, GaussianNB])
+@pytest.mark.parametrize('cls', ALL_NAIVE_BAYES_CLASSES)
 def test_naive_bayes_input_check_fit(cls):
     # Test input checks for the fit method
 
@@ -308,8 +307,7 @@ def test_naive_bayes_input_check_fit(cls):
     assert_raises(ValueError, clf.predict, X2[:, :-1])
 
 
-@pytest.mark.parametrize('cls', [MultinomialNB, ComplementNB, BernoulliNB,
-                                 CategoricalNB])
+@pytest.mark.parametrize('cls', DISCRETE_NAIVE_BAYES_CLASSES)
 def test_discretenb_input_check_partial_fit(cls):
     # check shape consistency
     assert_raises(ValueError, cls().partial_fit, X2, y2[:-1],
@@ -364,8 +362,7 @@ def test_discretenb_predict_proba():
         assert_almost_equal(np.sum(np.exp(clf.intercept_)), 1)
 
 
-@pytest.mark.parametrize('cls', [MultinomialNB, ComplementNB, BernoulliNB,
-                                 CategoricalNB])
+@pytest.mark.parametrize('cls', DISCRETE_NAIVE_BAYES_CLASSES)
 def test_discretenb_uniform_prior(cls):
     # Test whether discrete NB classes fit a uniform prior
     # when fit_prior=False and class_prior=None
@@ -377,8 +374,7 @@ def test_discretenb_uniform_prior(cls):
     assert_array_almost_equal(prior, np.array([.5, .5]))
 
 
-@pytest.mark.parametrize('cls', [MultinomialNB, ComplementNB, BernoulliNB,
-                                 CategoricalNB])
+@pytest.mark.parametrize('cls', DISCRETE_NAIVE_BAYES_CLASSES)
 def test_discretenb_provide_prior(cls):
     # Test whether discrete NB classes use provided prior
 
@@ -393,8 +389,7 @@ def test_discretenb_provide_prior(cls):
                   classes=[0, 1, 1])
 
 
-@pytest.mark.parametrize('cls', [MultinomialNB, ComplementNB, BernoulliNB,
-                                 CategoricalNB])
+@pytest.mark.parametrize('cls', DISCRETE_NAIVE_BAYES_CLASSES)
 def test_discretenb_provide_prior_with_partial_fit(cls):
     # Test whether discrete NB classes use provided prior
     # when using partial_fit
@@ -414,8 +409,7 @@ def test_discretenb_provide_prior_with_partial_fit(cls):
                                   clf_partial.class_log_prior_)
 
 
-@pytest.mark.parametrize('cls', [MultinomialNB, ComplementNB, BernoulliNB,
-                                 CategoricalNB])
+@pytest.mark.parametrize('cls', DISCRETE_NAIVE_BAYES_CLASSES)
 def test_discretenb_sample_weight_multiclass(cls):
     # check shape consistency for number of samples at fit time
     X = [
@@ -441,7 +435,7 @@ def test_discretenb_sample_weight_multiclass(cls):
 
 # TODO: Remove in version 1.1
 @ignore_warnings(category=FutureWarning)
-@pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB])
+@pytest.mark.parametrize('cls', [BernoulliNB, ComplementNB, MultinomialNB])
 def test_discretenb_coef_intercept_shape(cls):
     # coef_ and intercept_ should have shapes as in other linear models.
     # Non-regression test for issue #2127.
@@ -454,8 +448,7 @@ def test_discretenb_coef_intercept_shape(cls):
     assert clf.intercept_.shape == (1,)
 
 
-@pytest.mark.parametrize('DiscreteNaiveBayes', [MultinomialNB, ComplementNB,
-                                                BernoulliNB, CategoricalNB])
+@pytest.mark.parametrize('DiscreteNaiveBayes', DISCRETE_NAIVE_BAYES_CLASSES)
 @pytest.mark.parametrize('use_partial_fit', [False, True])
 @pytest.mark.parametrize('train_on_single_class_y', [False, True])
 def test_discretenb_degenerate_one_class_case(
