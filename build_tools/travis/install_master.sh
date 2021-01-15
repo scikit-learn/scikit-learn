@@ -50,6 +50,7 @@ conda update --yes conda
 conda create -n testenv --yes python=3.7
 
 source activate testenv
+<<<<<<< HEAD
 
 if [[ $TRAVIS_CPU_ARCH == amd64 ]]; then
     echo "Upgrading pip and setuptools."
@@ -67,6 +68,10 @@ else
     conda install -y scipy numpy pandas cython
     pip install joblib threadpoolctl
 fi
+=======
+conda install -y scipy numpy pandas cython
+pip install joblib threadpoolctl
+>>>>>>> 9b2a3e8ba50804e5cd1e4302097e86aebd2e8464
 
 pip install $(get_dep pytest $PYTEST_VERSION) pytest-xdist
 
