@@ -97,7 +97,7 @@ def test_params_validation():
     assert_raises(TypeError, LMNN(warm_start=1).fit, X, y)
     assert_raises(TypeError, LMNN(impostor_store=0.5).fit, X, y)
     assert_raises(TypeError, LMNN(neighbors_params=65).fit, X, y)
-    assert_raises(TypeError, LMNN(weight_push_loss='0.3').fit, X, y)
+    assert_raises(TypeError, LMNN(push_loss_weight='0.3').fit, X, y)
 
     # ValueError
     assert_raise_message(ValueError,
@@ -126,12 +126,12 @@ def test_params_validation():
                          LMNN(impostor_store='dense').fit, X, y)
 
     assert_raise_message(ValueError,
-                         '`weight_push_loss`= 2.0, must be <= 1.0.',
-                         LMNN(weight_push_loss=2.).fit, X, y)
+                         '`push_loss_weight`= 2.0, must be <= 1.0.',
+                         LMNN(push_loss_weight=2.).fit, X, y)
 
     assert_raise_message(ValueError,
-                         '`weight_push_loss` cannot be zero.',
-                         LMNN(weight_push_loss=0.).fit, X, y)
+                         '`push_loss_weight` cannot be zero.',
+                         LMNN(push_loss_weight=0.).fit, X, y)
 
     rng = np.random.RandomState(42)
     init = rng.rand(5, 3)
