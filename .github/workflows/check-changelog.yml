@@ -17,26 +17,33 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: '0'
-      - name: Check the changelog only if tests have been modified
+      - name: Check the changelog
         run: |
           set -xe
           tests=$(git diff --name-only origin/master)
+          # Changelog should be updated only if tests have been modified
           if [[ "$tests" =~ tests ]]
           then
             result=$(cat ./doc/whats_new/v*.rst)
             if [[ "$result" =~ :pr:\`$PR_NUMBER\` ]]
             then
               echo "Changelog has been updated."
-              check_mlstn=$(cat ./doc/whats_new/v${MILESTONE_TITLE:0:4}.rst)
-              if [[ "$check_mlstn" =~ :pr:\`$PR_NUMBER\` ]]
+              # If the pull request is milestoned check the correspondent changelog
+              if exist -f ./doc/whats_new/v${MILESTONE_TITLE:0:4}.rst
               then
-                echo "Changelog and milestone correspond."
-              else
-                echo "Changelog and milestone do not correspond. Please move the changelog description or change the milestone."
-                exit 1
+                check_mlstn=$(cat ./doc/whats_new/v${MILESTONE_TITLE:0:4}.rst)
+                if [[ "$check_mlstn" =~ :pr:\`$PR_NUMBER\` ]]
+                then
+                  echo "Changelog and milestone correspond."
+                else
+                  echo "Changelog and milestone do not correspond.
+                  echo "Move the changelog description or change the milestone."
+                  exit 1
+                fi
               fi
             else
-              echo "Changelog entry is missing. If no changelog entry is required for this PR, label the PR with 'No Changelog Needed' to bypass this check."
+              echo "Changelog entry is missing. If no changelog entry is required for this PR,
+              echo "label the PR with 'No Changelog Needed' to bypass this check."
               exit 1
             fi
           fi
