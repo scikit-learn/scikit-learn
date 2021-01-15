@@ -22,31 +22,33 @@ jobs:
           set -xe
           changed_files=$(git diff --name-only origin/master)
           # Changelog should be updated only if tests have been modified
-          if [[ "$changed_files" =~ tests ]]
+          if [[ ! "$changed_files" =~ tests ]]
           then
-            all_changelogs=$(cat ./doc/whats_new/v*.rst)
-            if [[ "$all_changelogs" =~ :pr:\`$PR_NUMBER\` ]]
-            then
-              echo "Changelog has been updated."
-              # If the pull request is milestoned check the correspondent changelog
-              if exist -f ./doc/whats_new/v${TAGGED_MILESTONE:0:4}.rst
-              then
-                expected_changelog=$(cat ./doc/whats_new/v${TAGGED_MILESTONE:0:4}.rst)
-                if [[ "$expected_changelog" =~ :pr:\`$PR_NUMBER\` ]]
-                then
-                  echo "Changelog and milestone correspond."
-                else
-                  echo "Changelog and milestone do not correspond."
-                  echo "If you see this error make sure that the tagged milestone for the PR"
-                  echo "and the changelog name properly match."
-                  exit 1
-                fi
-              fi
-            else
-              echo "Changelog entry is missing."
-              echo "If you see this error and there is already a changelog entry then make sure that"
-              echo "the PR number is correct. If no changelog entry is required for this PR,"
-              echo "label the PR with 'No Changelog Needed' to bypass this check."
-              exit 1
-            fi
+            exit 0
           fi
+          all_changelogs=$(cat ./doc/whats_new/v*.rst)
+          if [[ "$all_changelogs" =~ :pr:\`$PR_NUMBER\` ]]
+          then
+            echo "Changelog has been updated."
+            # If the pull request is milestoned check the correspondent changelog
+            if exist -f ./doc/whats_new/v${TAGGED_MILESTONE:0:4}.rst
+            then
+              expected_changelog=$(cat ./doc/whats_new/v${TAGGED_MILESTONE:0:4}.rst)
+              if [[ "$expected_changelog" =~ :pr:\`$PR_NUMBER\` ]]
+              then
+                echo "Changelog and milestone correspond."
+              else
+                echo "Changelog and milestone do not correspond."
+                echo "If you see this error make sure that the tagged milestone for the PR"
+                echo "and the changelog name properly match."
+                exit 1
+              fi
+            fi
+          else
+            echo "Changelog entry is missing."
+            echo "If you see this error and there is already a changelog entry then make sure that"
+            echo "the PR number is correct. If no changelog entry is required for this PR,"
+            echo "label the PR with 'No Changelog Needed' to bypass this check."
+            exit 1
+          fi
+
