@@ -20,19 +20,19 @@ jobs:
       - name: Check the changelog
         run: |
           set -xe
-          tests=$(git diff --name-only origin/master)
+          changed_files=$(git diff --name-only origin/master)
           # Changelog should be updated only if tests have been modified
-          if [[ "$tests" =~ tests ]]
+          if [[ "$changed_files" =~ tests ]]
           then
-            result=$(cat ./doc/whats_new/v*.rst)
-            if [[ "$result" =~ :pr:\`$PR_NUMBER\` ]]
+            all_changelogs=$(cat ./doc/whats_new/v*.rst)
+            if [[ "$all_changelogs" =~ :pr:\`$PR_NUMBER\` ]]
             then
               echo "Changelog has been updated."
               # If the pull request is milestoned check the correspondent changelog
               if exist -f ./doc/whats_new/v${MILESTONE_TITLE:0:4}.rst
               then
-                check_mlstn=$(cat ./doc/whats_new/v${MILESTONE_TITLE:0:4}.rst)
-                if [[ "$check_mlstn" =~ :pr:\`$PR_NUMBER\` ]]
+                expected_changelog=$(cat ./doc/whats_new/v${MILESTONE_TITLE:0:4}.rst)
+                if [[ "$expected_changelog" =~ :pr:\`$PR_NUMBER\` ]]
                 then
                   echo "Changelog and milestone correspond."
                 else
