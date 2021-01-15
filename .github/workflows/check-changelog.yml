@@ -1,7 +1,7 @@
 name: Check Changelog
 # This check makes sure that the changelog is properly updated
 # when a PR introduces a change in a test file.
-# To bypass this check, label the PR with no-changelog.
+# To bypass this check, label the PR with "No Changelog Needed".
 on:
   pull_request:
 
@@ -11,8 +11,9 @@ jobs:
     env:
       LABEL_LIST: ${{ github.event.pull_request.labels.*.name }}
       PR_NUMBER: ${{ github.event.pull_request.number }}
+      MILESTONE_TITLE: ${{ github.event.pull_request.milestone.title }}
       
-    if: ${{ contains($LABEL_LIST, 'no-changelog') == 0 }} ||
+    if: ${{ contains($LABEL_LIST, 'No Changelog Needed') == 0 }}
     steps:
       - uses: actions/checkout@v2
         with:
@@ -27,8 +28,16 @@ jobs:
             if [[ "$result" =~ :pr:\`$PR_NUMBER\` ]]
             then
               echo "Changelog has been updated."
+              check_mlstn=$(cat ./doc/whats_new/v${MILESTONE_TITLE:0:4}.rst)
+              if [[ "$check_mlstn" =~ :pr:\`$PR_NUMBER\` ]]
+              then
+                echo "Changelog and milestone correspond."
+              else
+                echo "Changelog and milestone do not correspond. Please move the changelog description or change the milestone."
+                exit 1
+              fi
             else
-              echo "Changelog entry is missing. If no changelog entry is required for this PR, label the PR with no-changelog to bypass this check."
+              echo "Changelog entry is missing. If no changelog entry is required for this PR, label the PR with 'No Changelog Needed' to bypass this check."
               exit 1
             fi
           fi
