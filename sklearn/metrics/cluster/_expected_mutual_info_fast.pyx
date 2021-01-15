@@ -38,8 +38,9 @@ def expected_mutual_information(contingency, int n_samples):
     term1 = nijs / N
     # term2 is log((N*nij) / (a * b)) == log(N * nij) - log(a * b)
     # term2 uses the outer product
-    log_a = np.log(a.astype(np.float64, copy=False))
-    log_b = np.log(b.astype(np.float64, copy=False))
+    log_a = np.log(a)
+    log_b = np.log(b)
+    # term2 uses N * nij
     log_Nnij = np.log(nijs) + np.log(N)
     # term3 is large, and involved many factorials. Calculate these in log
     # space to stop overflows.
