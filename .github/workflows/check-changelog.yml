@@ -36,13 +36,16 @@ jobs:
                 then
                   echo "Changelog and milestone correspond."
                 else
-                  echo "Changelog and milestone do not correspond.
-                  echo "Move the changelog description or change the milestone."
+                  echo "Changelog and milestone do not correspond."
+                  echo "If you see this error and there is already a changelog entry then make sure that"
+                  echo "the tagged milestone for the PR (if any) and the changelog name properly match."
                   exit 1
                 fi
               fi
             else
-              echo "Changelog entry is missing. If no changelog entry is required for this PR,
+              echo "Changelog entry is missing."
+              echo "If you see this error and there is already a changelog entry then make sure that"
+              echo "the PR number is correct. If no changelog entry is required for this PR,"
               echo "label the PR with 'No Changelog Needed' to bypass this check."
               exit 1
             fi
