@@ -64,11 +64,11 @@ class contingencyMatrixDisplay:
         if colorbar:
             fig.colorbar(self.im_, ax=ax)
         ax.set(xticks=np.arange(n_classes),
-            yticks=np.arange(n_classes),
-            xticklabels=display_labels,
-            yticklabels=display_labels,
-            ylabel="True label",
-            xlabel="Predicted label")
+                yticks=np.arange(n_classes),
+                xticklabels=display_labels,
+                yticklabels=display_labels,
+                ylabel="True label",
+                xlabel="Predicted label")
 
         ax.set_ylim((n_classes - 0.5, -0.5))
         plt.setp(ax.get_xticklabels(), rotation=xticks_rotation)
@@ -80,11 +80,11 @@ class contingencyMatrixDisplay:
 
 @_deprecate_positional_args
 def plot_contingency_matrix(estimator, X, y_true, *, labels=None,
-                          sample_weight=None, normalize=None,
-                          display_labels=None, include_values=True,
-                          xticks_rotation='horizontal',
-                          values_format=None,
-                          cmap='inferno', ax=None, colorbar=True):
+                            sample_weight=None, normalize=None,
+                            display_labels=None, include_values=True,
+                            xticks_rotation='horizontal',
+                            values_format=None,
+                            cmap='inferno', ax=None, colorbar=True):
   
     check_matplotlib_support("plot_contingency_matrix")
 
@@ -92,7 +92,9 @@ def plot_contingency_matrix(estimator, X, y_true, *, labels=None,
         raise ValueError("plot_contingency_matrix only supports classifiers")
 
     y_pred = estimator.predict(X)
-    cm = contingency_matrix(y_true, y_pred, eps=None, sparse=False)
+    cm = contingency_matrix(y_true,
+                            y_pred,
+                            eps=None, sparse=False)
 
     if display_labels is None:
         if labels is None:
@@ -101,7 +103,7 @@ def plot_contingency_matrix(estimator, X, y_true, *, labels=None,
             display_labels = labels
 
     disp = contingencyMatrixDisplay(contingency_matrix=cm,
-                                  display_labels=display_labels)
+                                     display_labels=display_labels)
     return disp.plot(include_values=include_values,
                      cmap=cmap, ax=ax, xticks_rotation=xticks_rotation,
                      values_format=values_format, colorbar=colorbar)
