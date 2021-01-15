@@ -92,7 +92,7 @@ def plot_contingency_matrix(estimator, X, y_true, *, labels=None,
         raise ValueError("plot_contingency_matrix only supports classifiers")
 
     y_pred = estimator.predict(X)
-    cm = contingency_matrix(y_true, y_pred, eps=None, sparse=False, dtype=np.int64)
+    cm = contingency_matrix(y_true, y_pred, eps=None, sparse=False)
 
     if display_labels is None:
         if labels is None:
