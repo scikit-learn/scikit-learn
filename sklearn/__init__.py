@@ -40,7 +40,6 @@ logger = logging.getLogger(__name__)
 # 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
 __version__ = '0.24.0'
-__version__ = '1.0.dev0'
 
 
 
