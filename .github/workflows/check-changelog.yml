@@ -13,7 +13,7 @@ jobs:
       - name: Get PR number and milestone
         run: |
           echo "PR_NUMBER=${{ github.event.pull_request.number }}" >> $GITHUB_ENV
-          echo "MILESTONE_TITLE=${{ github.event.pull_request.milestone.title }} >> $GITHUB_ENV
+          echo "TAGGED_MILESTONE=${{ github.event.pull_request.milestone.title }} >> $GITHUB_ENV
       - uses: actions/checkout@v2
         with:
           fetch-depth: '0'
@@ -29,16 +29,16 @@ jobs:
             then
               echo "Changelog has been updated."
               # If the pull request is milestoned check the correspondent changelog
-              if exist -f ./doc/whats_new/v${MILESTONE_TITLE:0:4}.rst
+              if exist -f ./doc/whats_new/v${TAGGED_MILESTONE:0:4}.rst
               then
-                expected_changelog=$(cat ./doc/whats_new/v${MILESTONE_TITLE:0:4}.rst)
+                expected_changelog=$(cat ./doc/whats_new/v${TAGGED_MILESTONE:0:4}.rst)
                 if [[ "$expected_changelog" =~ :pr:\`$PR_NUMBER\` ]]
                 then
                   echo "Changelog and milestone correspond."
                 else
                   echo "Changelog and milestone do not correspond."
-                  echo "If you see this error and there is already a changelog entry then make sure that"
-                  echo "the tagged milestone for the PR (if any) and the changelog name properly match."
+                  echo "If you see this error make sure that the tagged milestone for the PR"
+                  echo "and the changelog name properly match."
                   exit 1
                 fi
               fi
