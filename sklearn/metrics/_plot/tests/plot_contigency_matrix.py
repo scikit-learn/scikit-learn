@@ -19,7 +19,6 @@ class contingencyMatrixDisplay:
     def plot(self, *, include_values=True, cmap='viridis',
              xticks_rotation='horizontal', values_format=None,
              ax=None, colorbar=True):
-   
         check_matplotlib_support("contingencyMatrixDisplay.plot")
         import matplotlib.pyplot as plt
 
@@ -64,11 +63,11 @@ class contingencyMatrixDisplay:
         if colorbar:
             fig.colorbar(self.im_, ax=ax)
         ax.set(xticks=np.arange(n_classes),
-                yticks=np.arange(n_classes),
-                xticklabels=display_labels,
-                yticklabels=display_labels,
-                ylabel="True label",
-                xlabel="Predicted label")
+               yticks=np.arange(n_classes),
+               xticklabels=display_labels,
+               yticklabels=display_labels,
+               ylabel="True label",
+               xlabel="Predicted label")
 
         ax.set_ylim((n_classes - 0.5, -0.5))
         plt.setp(ax.get_xticklabels(), rotation=xticks_rotation)
@@ -85,7 +84,6 @@ def plot_contingency_matrix(estimator, X, y_true, *, labels=None,
                             xticks_rotation='horizontal',
                             values_format=None,
                             cmap='inferno', ax=None, colorbar=True):
-  
     check_matplotlib_support("plot_contingency_matrix")
 
     if not is_classifier(estimator):
@@ -103,7 +101,7 @@ def plot_contingency_matrix(estimator, X, y_true, *, labels=None,
             display_labels = labels
 
     disp = contingencyMatrixDisplay(contingency_matrix=cm,
-                                     display_labels=display_labels)
+                                    display_labels=display_labels)
     return disp.plot(include_values=include_values,
                      cmap=cmap, ax=ax, xticks_rotation=xticks_rotation,
                      values_format=values_format, colorbar=colorbar)
