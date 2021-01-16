@@ -1295,7 +1295,7 @@ def _check_sample_weight(sample_weight, X, dtype=None, copy=False):
        input is preserved; otherwise an array with the default numpy dtype
        is be allocated.  If `dtype` is not one of `float32`, `float64`,
        `None`, the output will be of dtype `float64`.
-    
+
     copy : bool, default=False
         If True, a copy of sample_weight will be created.
 
