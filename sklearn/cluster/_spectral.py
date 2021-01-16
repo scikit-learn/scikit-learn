@@ -356,7 +356,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         increase with similarity) should be used. This property is not checked
         by the clustering algorithm.
 
-    n_neighbors : int
+    n_neighbors : int, default=10
         Number of neighbors to use when constructing the affinity matrix using
         the nearest neighbors method. Ignored for ``affinity='rbf'``.
 
