@@ -1,11 +1,14 @@
 import numpy as np
+import scipy.sparse as sp
 from numpy.testing import assert_array_equal, assert_allclose
 import pytest
 
 from sklearn.ensemble._hist_gradient_boosting.binning import (
     _BinMapper,
     _find_binning_thresholds,
-    _map_to_bins
+    _map_to_bins,
+    _pack_matrix,
+    _unpack_matrix
 )
 from sklearn.ensemble._hist_gradient_boosting.common import X_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common import X_BINNED_DTYPE
@@ -54,6 +57,26 @@ def test_find_binning_thresholds_random_data():
 
     assert_allclose(bin_thresholds[1][[64, 128, 192]],
                     np.array([9.99, 10.00, 10.01]), atol=1e-2)
+
+
+def test_find_binning_thresholds_sparse_data():
+    data = np.linspace(0, 10, 11)
+    data = sp.csr_matrix(
+            (data, (data.astype(int), [0]*len(data))),
+            (len(data)+50, 1)
+            )
+
+    bin_thresholds = _find_binning_thresholds(data, max_bins=5)
+    assert_allclose(bin_thresholds, [2, 4, 6, 8])
+
+    bin_thresholds = _find_binning_thresholds(data, max_bins=10)
+    assert_allclose(bin_thresholds, [1, 2, 3, 4, 5, 6, 7, 8, 9])
+
+    bin_thresholds = _find_binning_thresholds(data, max_bins=11)
+    assert_allclose(bin_thresholds, np.arange(10) + .5)
+
+    bin_thresholds = _find_binning_thresholds(data, max_bins=255)
+    assert_allclose(bin_thresholds, np.arange(10) + .5)
 
 
 def test_find_binning_thresholds_low_n_bins():
@@ -149,6 +172,47 @@ def test_bin_mapper_small_random_data(n_samples, max_bins):
     assert binned.dtype == np.uint8
     assert_array_equal(binned.ravel()[np.argsort(data.ravel())],
                        np.arange(n_samples))
+
+
+@pytest.mark.parametrize("n_samples, density, max_bins", [
+    (5, 0.5, 5),
+    (50, 0.1, 10),
+    (1000, 0.2, 50)
+])
+def test_bin_mapper_sparse(n_samples, density, max_bins):
+    data = sp.random(n_samples, 1, density=density,
+                     random_state=42, format="csr")
+
+    # max_bins is the number of bins for non-missing values
+    n_bins = max_bins + 1
+    mapper = _BinMapper(n_bins=n_bins, random_state=42)
+    binned, actual_bin_zero = mapper.fit_transform(data)
+
+    assert binned.shape == data.shape
+    assert binned.dtype == np.uint8
+
+
+@pytest.mark.parametrize("n_samples, n_features", [
+    (10, 5),
+    (100, 50),
+    (100, 255),
+    (1000, 50)
+])
+def test_pack_unpack_matrix(n_samples, n_features):
+    data = sp.random(n_samples, n_features, density=0.5,
+                     random_state=42, format="csr")
+    packed, indices = _pack_matrix(data)
+    assert packed.shape[1] == n_features
+    max_n_samples = 0
+    for j in range(n_features):
+        unique = np.unique(data.getcol(j).toarray())
+        length = len(unique) - 1 if 0 in unique else len(unique)
+        if length > max_n_samples:
+            max_n_samples = length
+    assert packed.shape[0] == max_n_samples
+    unpacked = _unpack_matrix(packed, indices, data.shape)
+    assert unpacked.shape == data.shape
+    assert_array_equal(data.toarray().ravel(), unpacked.toarray().ravel())
 
 
 @pytest.mark.parametrize("max_bins, n_distinct, multiplier", [
