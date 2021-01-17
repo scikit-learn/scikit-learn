@@ -249,6 +249,10 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
         conditions or all the population. If None, confusion matrix will not be
         normalized.
 
+    pprint : bool, default=False
+        Returns a confusion matrix in dict representation with labels as keys
+        ('true', 'pred')
+
     Returns
     -------
     C : ndarray of shape (n_classes, n_classes)
@@ -256,6 +260,14 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
         column entry indicates the number of
         samples with true label being i-th class
         and predicted label being j-th class.
+
+    Or
+
+    C : dict with n_classes x n_classes length
+        Confusion matrix whose keys are tuples
+        as ('true_label', 'predicted_label') and value
+        indicates the number of samples with true
+        label and predicted label.
 
     See Also
     --------
@@ -281,10 +293,10 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
 
     >>> y_true = ["cat", "ant", "cat", "cat", "ant", "bird"]
     >>> y_pred = ["ant", "ant", "cat", "cat", "ant", "cat"]
-    >>> confusion_matrix(y_true, y_pred, labels=["ant", "bird", "cat"])
-    array([[2, 0, 0],
-           [0, 0, 1],
-           [1, 0, 2]])
+    >>> confusion_matrix(y_true, y_pred, labels=["ant", "bird", "cat"], pprint=True)
+    {('ant', 'ant'): 2, ('bird', 'ant'): 0, ('cat', 'ant'): 1,
+     ('ant', 'bird'): 0, ('bird', 'bird'): 0, ('cat', 'bird'): 0,
+     ('ant', 'cat'): 0, ('bird', 'cat'): 1, ('cat', 'cat'): 2}
 
     In the binary case, we can extract true positives, etc as follows:
 
