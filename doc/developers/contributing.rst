@@ -214,7 +214,6 @@ latest up-to-date workflow.
   <https://github.com/data-umbrella/event-transcripts/blob/main/2020/06-reshama-shaikh-sklearn-pr.md>`__
 
 - Sprint-specific instructions and practical tips:
-- ```
   `Video <https://youtu.be/p_2Uw2BxdhA>`__,
   `Transcript
   <https://github.com/data-umbrella/data-umbrella-scikit-learn-sprint/blob/master/3_transcript_ACM_video_vol2.md>`__
