@@ -79,6 +79,22 @@ def test_find_binning_thresholds_sparse_data():
     assert_allclose(bin_thresholds, np.arange(10) + .5)
 
 
+@pytest.mark.parametrize("n_samples, density, max_bins", [
+    (10, 0.8, 10),
+    (100, 0.5, 10),
+    (1000, 0.2, 50)
+])
+def test_find_binning_thresholds_big_large_sparse_data(n_samples, density,
+                                                       max_bins):
+    data = np.random.randn(n_samples).reshape(-1, 1)
+    data[:int(density*n_samples)] = 0
+    sparse_data = sp.csr_matrix(data)
+    thresholds = _find_binning_thresholds(data, max_bins=max_bins)
+    thresholds_sparse = _find_binning_thresholds(
+            sparse_data, max_bins=max_bins)
+    assert_array_equal(thresholds, thresholds_sparse)
+
+
 def test_find_binning_thresholds_low_n_bins():
     bin_thresholds = [_find_binning_thresholds(DATA[:, i], max_bins=128)
                       for i in range(2)]
