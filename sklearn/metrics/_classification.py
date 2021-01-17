@@ -346,7 +346,7 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
     if pprint:
         labelList = labels.tolist()
         cm_lol = cm.tolist()
-        cm_dict = {(labelList[j], labelList[i]): cm_lol[j][i] for i in range(0, len(labelList))
+        cm_dict = {(str(labelList[j]), str(labelList[i])): cm_lol[j][i] for i in range(0, len(labelList))
                    for j in range(0, len(cm_lol))}
 
         return cm_dict

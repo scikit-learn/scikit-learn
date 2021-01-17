@@ -1,4 +1,3 @@
-
 from functools import partial
 from itertools import product
 from itertools import chain
@@ -429,7 +428,6 @@ def test_multilabel_confusion_matrix_binary():
         cm = multilabel_confusion_matrix(y_true, y_pred)
         assert_array_equal(cm, [[[17, 8], [3, 22]],
                                 [[22, 3], [8, 17]]])
-
     test(y_true, y_pred)
     test([str(y) for y in y_true],
          [str(y) for y in y_pred])
@@ -588,6 +586,21 @@ def test_confusion_matrix_normalize_single_class():
     with pytest.warns(None) as rec:
         cm_pred = confusion_matrix(y_pred, y_test, normalize='true')
     assert not rec
+
+
+def test_confusion_matrix_pprint():
+    # Test pprint confusion matrix - binary classification case
+    y_true, y_pred, _ = make_prediction()
+
+    def test(y_true, y_pred):
+        cm = confusion_matrix(y_true, y_pred, pprint=True)
+        assert cm == {('0', '0'): 19, ('1', '0'): 4, ('2', '0'): 0, ('0', '1'): 4, ('1', '1'): 3, ('2', '1'): 2,
+                      ('0', '2'): 1, ('1', '2'): 24, ('2', '2'): 18}
+
+    test(y_true, y_pred)
+    test([str(y) for y in y_true],
+         [str(y) for y in y_pred])
+
 
 
 def test_cohen_kappa():
