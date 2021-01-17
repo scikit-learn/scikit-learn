@@ -24,7 +24,8 @@ from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.dummy import DummyRegressor
-from sklearn.multioutput import RegressorChain
+from sklearn.multioutput import RegressorChain, ClassifierChain
+from sklearn.metrics import jaccard_score
 
 
 # Load datasets
@@ -527,10 +528,10 @@ def test_voting_verbose(estimator, capsys):
     assert re.match(pattern, capsys.readouterr()[0])
 
 
-def test_mulilabel_regression():
+def test_multi_output_regression():
     X_r_multi, y_r_multi = datasets.load_linnerud(return_X_y=True)
     X_train, X_test, y_train, _ = train_test_split(
-        X_r_multi, y_r_multi, test_size=.25)
+        X_r_multi, y_r_multi, test_size=.25, random_state=42)
 
     base_regs = [DummyRegressor(strategy='mean'),
                  DummyRegressor(strategy='median'),
@@ -547,3 +548,32 @@ def test_mulilabel_regression():
     avg = np.average(np.asarray(est_pred), axis=0)
 
     assert_almost_equal(v_pred, avg, decimal=2)
+
+
+def test_multi_label_classification():
+    X, Y = datasets.make_multilabel_classification(n_samples=100, n_classes=8,
+                                                   n_labels=5, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=.25,
+                                                        random_state=42)
+    base_lr = LogisticRegression()
+    chains = [(str(i), ClassifierChain(base_lr, order='random',
+                                       random_state=i))
+              for i in range(10)]
+    est_pred = [est.fit(X_train, y_train).predict(X_test)
+                for _, est in chains]
+    avg_score = np.average([jaccard_score(y_test, pred, average='samples')
+                            for pred in est_pred])
+
+    # Hard voting
+    v_class = VotingClassifier(chains)
+    y_pred = v_class.fit(X_train, y_train).predict(X_test)
+    v_score = jaccard_score(y_test, y_pred, average='samples')
+    # At least close to the average performance of the individual models
+    assert v_score > avg_score - 0.01
+
+    # Soft voting
+    v_class = VotingClassifier(chains, voting='soft')
+    y_pred = v_class.fit(X_train, y_train).predict(X_test)
+    v_score = jaccard_score(y_test, y_pred, average='samples')
+    # At least close to the average performance of the individual models
+    assert v_score > avg_score - 0.01

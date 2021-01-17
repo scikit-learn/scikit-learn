@@ -28,7 +28,7 @@ from ._base import _BaseHeterogeneousEnsemble
 from ..preprocessing import LabelEncoder, MultiLabelBinarizer
 from ..utils import Bunch
 from ..utils.validation import check_is_fitted
-from ..utils.multiclass import check_classification_targets
+from ..utils.multiclass import type_of_target
 from ..utils.validation import column_or_1d
 from ..utils.validation import _deprecate_positional_args
 from ..exceptions import NotFittedError
@@ -276,25 +276,28 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         self : object
 
         """
-        check_classification_targets(y)
+        self._classif_type = type_of_target(y)
 
         if self.voting not in ('soft', 'hard'):
             raise ValueError("Voting must be 'soft' or 'hard'; got (voting=%r)"
                              % self.voting)
 
-        if isinstance(y, np.ndarray) and len(y.shape) > 1 and y.shape[1] > 1:
-            if len(y.shape) > 2 and y.shape[2] > 1:
-                raise ValueError('y argument should be a 1 or 2D array-like,'
-                                 'got array with shape %f' % (str(y.shape)))
-            else:
-                self.multioutput_ = True
-                self.le_ = MultiLabelBinarizer().fit(y)
-        else:
-            self.multioutput_ = False
+        if self._classif_type in ['binary', 'multiclass']:
             self.le_ = LabelEncoder().fit(y)
+        elif self._classif_type in ['multiclass-multioutput',
+                                    'multilabel-sequences']:
+            self.le_ = MultiLabelBinarizer().fit(y)
+        elif self._classif_type == 'multilabel-indicator':
+            self.le_ = None
+        else:
+            raise ValueError("Unsupported label type: %r" % self._classif_type)
 
-        self.classes_ = self.le_.classes_
-        transformed_y = self.le_.transform(y)
+        if self._classif_type == 'multilabel-indicator':
+            self.classes_ = None
+            transformed_y = y
+        else:
+            self.classes_ = self.le_.classes_
+            transformed_y = self.le_.transform(y)
 
         return super().fit(X, transformed_y, sample_weight)
 
@@ -315,26 +318,27 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
         if self.voting == 'soft':
             predictions = self.predict_proba(X)
-            if self.multioutput_:
-                raise NotImplementedError()
-            else:
+            if self._classif_type in ['binary', 'multiclass']:
                 maj = np.argmax(predictions, axis=1)
+            else:
+                maj = np.rint(predictions)
 
         else:  # 'hard' voting
             predictions = self._predict(X)
-            if self.multioutput_:
-                maj = np.apply_along_axis(
-                        lambda x: np.argmax(
-                            np.bincount(x, weights=self._weights_not_none)),
-                        axis=2, arr=predictions)
-            else:
+            if self._classif_type in ['binary', 'multiclass']:
                 maj = np.apply_along_axis(
                         lambda x: np.argmax(
                             np.bincount(x, weights=self._weights_not_none)),
                         axis=1, arr=predictions)
-
-        maj = self.le_.inverse_transform(maj)
-
+            else:
+                if not issubclass(predictions.dtype.type, np.integer):
+                    predictions = predictions.astype(np.int16)
+                maj = np.apply_along_axis(
+                        lambda x: np.argmax(
+                            np.bincount(x, weights=self._weights_not_none)),
+                        axis=2, arr=predictions).T
+        if self._classif_type != 'multilabel-indicator':
+            maj = self.le_.inverse_transform(maj)
         return maj
 
     def _collect_probas(self, X):
