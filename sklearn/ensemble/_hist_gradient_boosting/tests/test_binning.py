@@ -63,20 +63,20 @@ def test_find_binning_thresholds_sparse_data():
     data = np.linspace(0, 10, 11)
     data = sp.csr_matrix(
             (data, (data.astype(int), [0]*len(data))),
-            (len(data)+50, 1)
+            (len(data)+10, 1)
             )
 
     bin_thresholds = _find_binning_thresholds(data, max_bins=5)
-    assert_allclose(bin_thresholds, [2, 4, 6, 8])
+    assert_allclose(bin_thresholds, [0, 0, 2, 6])
 
     bin_thresholds = _find_binning_thresholds(data, max_bins=10)
-    assert_allclose(bin_thresholds, [1, 2, 3, 4, 5, 6, 7, 8, 9])
+    assert_allclose(bin_thresholds, [0, 0, 0, 0, 0, 2, 4, 6, 8])
 
-    bin_thresholds = _find_binning_thresholds(data, max_bins=11)
-    assert_allclose(bin_thresholds, np.arange(10) + .5)
+    bin_thresholds = _find_binning_thresholds(data, max_bins=21)
+    assert_allclose(bin_thresholds, [0]*10 + np.arange(10) + .5)
 
     bin_thresholds = _find_binning_thresholds(data, max_bins=255)
-    assert_allclose(bin_thresholds, np.arange(10) + .5)
+    assert_allclose(bin_thresholds, [0]*10 + np.arange(10) + .5)
 
 
 @pytest.mark.parametrize("n_samples, density, max_bins", [

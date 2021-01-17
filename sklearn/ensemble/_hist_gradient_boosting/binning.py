@@ -89,16 +89,18 @@ def _find_binning_thresholds(col_data, max_bins):
     if sp.issparse(col_data):
         # Since col_data is only used for get unique values
         # and computing percentile, zeros don't matter
-        values = col_data[col_data.nonzero()[0]].toarray()
+        distinct_values = col_data[col_data.nonzero()[0]].toarray()
         if 0 in col_data:
-            values = np.append(values, 0)
-        col_data = values
-    # ignore missing values when computing bin thresholds
-    missing_mask = np.isnan(col_data)
-    if missing_mask.any():
-        col_data = col_data[~missing_mask]
-    col_data = np.ascontiguousarray(col_data, dtype=X_DTYPE)
-    distinct_values = np.unique(col_data)
+            distinct_values = np.append(distinct_values, 0)
+        distinct_values = np.unique(distinct_values)
+        col_data = col_data.toarray()
+    else:
+        # ignore missing values when computing bin thresholds
+        missing_mask = np.isnan(col_data)
+        if missing_mask.any():
+            col_data = col_data[~missing_mask]
+        col_data = np.ascontiguousarray(col_data, dtype=X_DTYPE)
+        distinct_values = np.unique(col_data)
     if len(distinct_values) <= max_bins:
         midpoints = distinct_values[:-1] + distinct_values[1:]
         midpoints *= .5
