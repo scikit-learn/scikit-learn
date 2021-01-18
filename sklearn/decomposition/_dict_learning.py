@@ -408,8 +408,11 @@ def _update_dict(dictionary, Y, code, A=None, B=None, verbose=False,
                 print("Adding new random atom")
 
             newd = Y[random_state.choice(n_samples)]
+
             # add small noise to avoid making the sparse coding ill conditioned
-            noise = random_state.normal(0, 0.01 * newd.std(), size=len(newd))
+            noise_level = 0.01 * (newd.std() or 1)  # avoid 0 std
+            noise = random_state.normal(0, noise_level, size=len(newd))
+
             dictionary[k] = newd + noise
             code[:, k] = 0
 
