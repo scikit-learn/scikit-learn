@@ -869,6 +869,11 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
                 out = parallel(_generate_jobs())
 
+                if len(out) < 1:
+                    raise ValueError('No fits were performed. '
+                                     'Was the CV iterator empty? '
+                                     'Were there no candidates?')
+
                 # out is one list of warm candidate results for each
                 # (warm_group, cv_split) pair.
                 # We want it to be ordered by (candidate, cv split).
@@ -877,11 +882,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                     rolled.extend(zip(*out[i:i + n_splits]))
                 out = sum(rolled, ())
 
-                if len(out) < 1:
-                    raise ValueError('No fits were performed. '
-                                     'Was the CV iterator empty? '
-                                     'Were there no candidates?')
-                elif len(out) != n_candidates * n_splits:
+                if len(out) != n_candidates * n_splits:
                     raise ValueError('cv.split and cv.get_n_splits returned '
                                      'inconsistent results. Expected {} '
                                      'splits, got {}'
