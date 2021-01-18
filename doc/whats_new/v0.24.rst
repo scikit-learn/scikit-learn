@@ -7,7 +7,7 @@
 Version 0.24.1
 ==============
 
-**January 2020**
+**January 2021**
 
 Packaging
 ---------
