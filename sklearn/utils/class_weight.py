@@ -3,10 +3,12 @@
 # License: BSD 3 clause
 
 import numpy as np
-from ..externals import six
+
+from .validation import _deprecate_positional_args
 
 
-def compute_class_weight(class_weight, classes, y):
+@_deprecate_positional_args
+def compute_class_weight(class_weight, *, classes, y):
     """Estimate class weights for unbalanced datasets.
 
     Parameters
@@ -22,13 +24,13 @@ def compute_class_weight(class_weight, classes, y):
         Array of the classes occurring in the data, as given by
         ``np.unique(y_org)`` with ``y_org`` the original class labels.
 
-    y : array-like, shape (n_samples,)
-        Array of original class labels per sample;
+    y : array-like of shape (n_samples,)
+        Array of original class labels per sample.
 
     Returns
     -------
-    class_weight_vect : ndarray, shape (n_classes,)
-        Array with class_weight_vect[i] the weight for i-th class
+    class_weight_vect : ndarray of shape (n_classes,)
+        Array with class_weight_vect[i] the weight for i-th class.
 
     References
     ----------
@@ -70,12 +72,13 @@ def compute_class_weight(class_weight, classes, y):
     return weight
 
 
-def compute_sample_weight(class_weight, y, indices=None):
+@_deprecate_positional_args
+def compute_sample_weight(class_weight, y, *, indices=None):
     """Estimate sample weights by class for unbalanced datasets.
 
     Parameters
     ----------
-    class_weight : dict, list of dicts, "balanced", or None, optional
+    class_weight : dict, list of dicts, "balanced", or None
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
@@ -93,10 +96,10 @@ def compute_sample_weight(class_weight, y, indices=None):
 
         For multi-output, the weights of each column of y will be multiplied.
 
-    y : array-like, shape = [n_samples] or [n_samples, n_outputs]
+    y : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Array of original class labels per sample.
 
-    indices : array-like, shape (n_subsample,), or None
+    indices : array-like of shape (n_subsample,), default=None
         Array of indices to be used in a subsample. Can be of length less than
         n_samples in the case of a subsample, or equal to n_samples in the
         case of a bootstrap subsample with repeated indices. If None, the
@@ -105,8 +108,8 @@ def compute_sample_weight(class_weight, y, indices=None):
 
     Returns
     -------
-    sample_weight_vect : ndarray, shape (n_samples,)
-        Array with sample weights as applied to the original y
+    sample_weight_vect : ndarray of shape (n_samples,)
+        Array with sample weights as applied to the original y.
     """
 
     y = np.atleast_1d(y)
@@ -114,12 +117,12 @@ def compute_sample_weight(class_weight, y, indices=None):
         y = np.reshape(y, (-1, 1))
     n_outputs = y.shape[1]
 
-    if isinstance(class_weight, six.string_types):
+    if isinstance(class_weight, str):
         if class_weight not in ['balanced']:
             raise ValueError('The only valid preset for class_weight is '
                              '"balanced". Given "%s".' % class_weight)
     elif (indices is not None and
-          not isinstance(class_weight, six.string_types)):
+          not isinstance(class_weight, str)):
         raise ValueError('The only valid class_weight for subsampling is '
                          '"balanced". Given "%s".' % class_weight)
     elif n_outputs > 1:
@@ -150,18 +153,18 @@ def compute_sample_weight(class_weight, y, indices=None):
             y_subsample = y[indices, k]
             classes_subsample = np.unique(y_subsample)
 
-            weight_k = np.choose(np.searchsorted(classes_subsample,
-                                                 classes_full),
-                                 compute_class_weight(class_weight_k,
-                                                      classes_subsample,
-                                                      y_subsample),
-                                 mode='clip')
+            weight_k = np.take(compute_class_weight(class_weight_k,
+                                                    classes=classes_subsample,
+                                                    y=y_subsample),
+                               np.searchsorted(classes_subsample,
+                                               classes_full),
+                               mode='clip')
 
             classes_missing = set(classes_full) - set(classes_subsample)
         else:
             weight_k = compute_class_weight(class_weight_k,
-                                            classes_full,
-                                            y_full)
+                                            classes=classes_full,
+                                            y=y_full)
 
         weight_k = weight_k[np.searchsorted(classes_full, y_full)]
 

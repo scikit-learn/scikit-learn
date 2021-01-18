@@ -3,16 +3,19 @@
 Plot class probabilities calculated by the VotingClassifier
 ===========================================================
 
-Plot the class probabilities of the first sample in a toy dataset
-predicted by three different classifiers and averaged by the
-`VotingClassifier`.
+.. currentmodule:: sklearn
 
-First, three examplary classifiers are initialized (`LogisticRegression`,
-`GaussianNB`, and `RandomForestClassifier`) and used to initialize a
-soft-voting `VotingClassifier` with weights `[1, 1, 5]`, which means that
-the predicted probabilities of the `RandomForestClassifier` count 5 times
-as much as the weights of the other classifiers when the averaged probability
-is calculated.
+Plot the class probabilities of the first sample in a toy dataset predicted by
+three different classifiers and averaged by the
+:class:`~ensemble.VotingClassifier`.
+
+First, three examplary classifiers are initialized
+(:class:`~linear_model.LogisticRegression`, :class:`~naive_bayes.GaussianNB`,
+and :class:`~ensemble.RandomForestClassifier`) and used to initialize a
+soft-voting :class:`~ensemble.VotingClassifier` with weights `[1, 1, 5]`, which
+means that the predicted probabilities of the
+:class:`~ensemble.RandomForestClassifier` count 5 times as much as the weights
+of the other classifiers when the averaged probability is calculated.
 
 To visualize the probability weighting, we fit each classifier on the training
 set and plot the predicted class probabilities for the first sample in this
@@ -29,8 +32,8 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import VotingClassifier
 
-clf1 = LogisticRegression(random_state=123)
-clf2 = RandomForestClassifier(random_state=123)
+clf1 = LogisticRegression(max_iter=1000, random_state=123)
+clf2 = RandomForestClassifier(n_estimators=100, random_state=123)
 clf3 = GaussianNB()
 X = np.array([[-1.0, -1.0], [-1.2, -1.4], [-3.4, -2.2], [1.1, 1.2]])
 y = np.array([1, 1, 2, 2])
@@ -79,4 +82,5 @@ ax.set_xticklabels(['LogisticRegression\nweight 1',
 plt.ylim([0, 1])
 plt.title('Class probabilities for sample 1 by different classifiers')
 plt.legend([p1[0], p2[0]], ['class 1', 'class 2'], loc='upper left')
+plt.tight_layout()
 plt.show()

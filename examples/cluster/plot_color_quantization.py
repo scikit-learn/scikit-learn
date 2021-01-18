@@ -61,7 +61,7 @@ labels = kmeans.predict(image_array)
 print("done in %0.3fs." % (time() - t0))
 
 
-codebook_random = shuffle(image_array, random_state=0)[:n_colors + 1]
+codebook_random = shuffle(image_array, random_state=0)[:n_colors]
 print("Predicting color indices on the full image (random)")
 t0 = time()
 labels_random = pairwise_distances_argmin(codebook_random,

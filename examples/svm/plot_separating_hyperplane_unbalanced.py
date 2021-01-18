@@ -29,14 +29,17 @@ print(__doc__)
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import svm
+from sklearn.datasets import make_blobs
 
-# we create clusters with 1000 and 100 points
-rng = np.random.RandomState(0)
+# we create two clusters of random points
 n_samples_1 = 1000
 n_samples_2 = 100
-X = np.r_[1.5 * rng.randn(n_samples_1, 2),
-          0.5 * rng.randn(n_samples_2, 2) + [2, 2]]
-y = [0] * (n_samples_1) + [1] * (n_samples_2)
+centers = [[0.0, 0.0], [2.0, 2.0]]
+clusters_std = [1.5, 0.5]
+X, y = make_blobs(n_samples=[n_samples_1, n_samples_2],
+                  centers=centers,
+                  cluster_std=clusters_std,
+                  random_state=0, shuffle=False)
 
 # fit the model and get the separating hyperplane
 clf = svm.SVC(kernel='linear', C=1.0)
@@ -46,9 +49,8 @@ clf.fit(X, y)
 wclf = svm.SVC(kernel='linear', class_weight={1: 10})
 wclf.fit(X, y)
 
-# plot separating hyperplanes and samples
+# plot the samples
 plt.scatter(X[:, 0], X[:, 1], c=y, cmap=plt.cm.Paired, edgecolors='k')
-plt.legend()
 
 # plot the decision functions for both classifiers
 ax = plt.gca()

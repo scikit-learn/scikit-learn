@@ -6,17 +6,17 @@ import pickle
 
 import numpy as np
 
+import warnings
+
 from scipy.spatial import distance
 from scipy import sparse
 
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_in
-from sklearn.utils.testing import assert_not_in
+import pytest
+
+from sklearn.utils._testing import assert_array_equal
 from sklearn.neighbors import NearestNeighbors
-from sklearn.cluster.dbscan_ import DBSCAN
-from sklearn.cluster.dbscan_ import dbscan
+from sklearn.cluster import DBSCAN
+from sklearn.cluster import dbscan
 from sklearn.cluster.tests.common import generate_clustered_data
 from sklearn.metrics.pairwise import pairwise_distances
 
@@ -39,13 +39,13 @@ def test_dbscan_similarity():
     # number of clusters, ignoring noise if present
     n_clusters_1 = len(set(labels)) - (1 if -1 in labels else 0)
 
-    assert_equal(n_clusters_1, n_clusters)
+    assert n_clusters_1 == n_clusters
 
     db = DBSCAN(metric="precomputed", eps=eps, min_samples=min_samples)
     labels = db.fit(D).labels_
 
     n_clusters_2 = len(set(labels)) - int(-1 in labels)
-    assert_equal(n_clusters_2, n_clusters)
+    assert n_clusters_2 == n_clusters
 
 
 def test_dbscan_feature():
@@ -62,13 +62,13 @@ def test_dbscan_feature():
 
     # number of clusters, ignoring noise if present
     n_clusters_1 = len(set(labels)) - int(-1 in labels)
-    assert_equal(n_clusters_1, n_clusters)
+    assert n_clusters_1 == n_clusters
 
     db = DBSCAN(metric=metric, eps=eps, min_samples=min_samples)
     labels = db.fit(X).labels_
 
     n_clusters_2 = len(set(labels)) - int(-1 in labels)
-    assert_equal(n_clusters_2, n_clusters)
+    assert n_clusters_2 == n_clusters
 
 
 def test_dbscan_sparse():
@@ -79,10 +79,12 @@ def test_dbscan_sparse():
     assert_array_equal(labels_dense, labels_sparse)
 
 
-def test_dbscan_sparse_precomputed():
+@pytest.mark.parametrize('include_self', [False, True])
+def test_dbscan_sparse_precomputed(include_self):
     D = pairwise_distances(X)
     nn = NearestNeighbors(radius=.9).fit(X)
-    D_sparse = nn.radius_neighbors_graph(mode='distance')
+    X_ = X if include_self else None
+    D_sparse = nn.radius_neighbors_graph(X=X_, mode='distance')
     # Ensure it is sparse not merely on diagonals:
     assert D_sparse.nnz < D.shape[0] * (D.shape[0] - 1)
     core_sparse, labels_sparse = dbscan(D_sparse,
@@ -95,6 +97,38 @@ def test_dbscan_sparse_precomputed():
     assert_array_equal(labels_dense, labels_sparse)
 
 
+def test_dbscan_sparse_precomputed_different_eps():
+    # test that precomputed neighbors graph is filtered if computed with
+    # a radius larger than DBSCAN's eps.
+    lower_eps = 0.2
+    nn = NearestNeighbors(radius=lower_eps).fit(X)
+    D_sparse = nn.radius_neighbors_graph(X, mode='distance')
+    dbscan_lower = dbscan(D_sparse, eps=lower_eps, metric='precomputed')
+
+    higher_eps = lower_eps + 0.7
+    nn = NearestNeighbors(radius=higher_eps).fit(X)
+    D_sparse = nn.radius_neighbors_graph(X, mode='distance')
+    dbscan_higher = dbscan(D_sparse, eps=lower_eps, metric='precomputed')
+
+    assert_array_equal(dbscan_lower[0], dbscan_higher[0])
+    assert_array_equal(dbscan_lower[1], dbscan_higher[1])
+
+
+@pytest.mark.parametrize('use_sparse', [True, False])
+@pytest.mark.parametrize('metric', ['precomputed', 'minkowski'])
+def test_dbscan_input_not_modified(use_sparse, metric):
+    # test that the input is not modified by dbscan
+    X = np.random.RandomState(0).rand(10, 10)
+    X = sparse.csr_matrix(X) if use_sparse else X
+    X_copy = X.copy()
+    dbscan(X, metric=metric)
+
+    if use_sparse:
+        assert_array_equal(X.toarray(), X_copy.toarray())
+    else:
+        assert_array_equal(X, X_copy)
+
+
 def test_dbscan_no_core_samples():
     rng = np.random.RandomState(0)
     X = rng.rand(40, 10)
@@ -104,7 +138,7 @@ def test_dbscan_no_core_samples():
         db = DBSCAN(min_samples=6).fit(X_)
         assert_array_equal(db.components_, np.empty((0, X_.shape[1])))
         assert_array_equal(db.labels_, -1)
-        assert_equal(db.core_sample_indices_.shape, (0,))
+        assert db.core_sample_indices_.shape == (0,)
 
 
 def test_dbscan_callable():
@@ -123,14 +157,14 @@ def test_dbscan_callable():
 
     # number of clusters, ignoring noise if present
     n_clusters_1 = len(set(labels)) - int(-1 in labels)
-    assert_equal(n_clusters_1, n_clusters)
+    assert n_clusters_1 == n_clusters
 
     db = DBSCAN(metric=metric, eps=eps, min_samples=min_samples,
                 algorithm='ball_tree')
     labels = db.fit(X).labels_
 
     n_clusters_2 = len(set(labels)) - int(-1 in labels)
-    assert_equal(n_clusters_2, n_clusters)
+    assert n_clusters_2 == n_clusters
 
 
 def test_dbscan_metric_params():
@@ -140,8 +174,13 @@ def test_dbscan_metric_params():
     p = 1
 
     # Compute DBSCAN with metric_params arg
-    db = DBSCAN(metric='minkowski', metric_params={'p': p}, eps=eps,
-                min_samples=min_samples, algorithm='ball_tree').fit(X)
+
+    with warnings.catch_warnings(record=True) as warns:
+        db = DBSCAN(
+            metric='minkowski', metric_params={'p': p}, eps=eps,
+            p=None, min_samples=min_samples, algorithm='ball_tree'
+            ).fit(X)
+    assert not warns
     core_sample_1, labels_1 = db.core_sample_indices_, db.labels_
 
     # Test that sample labels are the same as passing Minkowski 'p' directly
@@ -160,6 +199,19 @@ def test_dbscan_metric_params():
     assert_array_equal(core_sample_1, core_sample_3)
     assert_array_equal(labels_1, labels_3)
 
+    with pytest.warns(
+        SyntaxWarning,
+        match="Parameter p is found in metric_params. "
+              "The corresponding parameter from __init__ "
+              "is ignored."):
+        # Test that checks p is ignored in favor of metric_params={'p': <val>}
+        db = DBSCAN(metric='minkowski', metric_params={'p': p}, eps=eps, p=p+1,
+                    min_samples=min_samples, algorithm='ball_tree').fit(X)
+        core_sample_4, labels_4 = db.core_sample_indices_, db.labels_
+
+    assert_array_equal(core_sample_1, core_sample_4)
+    assert_array_equal(labels_1, labels_4)
+
 
 def test_dbscan_balltree():
     # Tests the DBSCAN algorithm with balltree for neighbor calculation.
@@ -172,32 +224,32 @@ def test_dbscan_balltree():
 
     # number of clusters, ignoring noise if present
     n_clusters_1 = len(set(labels)) - int(-1 in labels)
-    assert_equal(n_clusters_1, n_clusters)
+    assert n_clusters_1 == n_clusters
 
     db = DBSCAN(p=2.0, eps=eps, min_samples=min_samples, algorithm='ball_tree')
     labels = db.fit(X).labels_
 
     n_clusters_2 = len(set(labels)) - int(-1 in labels)
-    assert_equal(n_clusters_2, n_clusters)
+    assert n_clusters_2 == n_clusters
 
     db = DBSCAN(p=2.0, eps=eps, min_samples=min_samples, algorithm='kd_tree')
     labels = db.fit(X).labels_
 
     n_clusters_3 = len(set(labels)) - int(-1 in labels)
-    assert_equal(n_clusters_3, n_clusters)
+    assert n_clusters_3 == n_clusters
 
     db = DBSCAN(p=1.0, eps=eps, min_samples=min_samples, algorithm='ball_tree')
     labels = db.fit(X).labels_
 
     n_clusters_4 = len(set(labels)) - int(-1 in labels)
-    assert_equal(n_clusters_4, n_clusters)
+    assert n_clusters_4 == n_clusters
 
     db = DBSCAN(leaf_size=20, eps=eps, min_samples=min_samples,
                 algorithm='ball_tree')
     labels = db.fit(X).labels_
 
     n_clusters_5 = len(set(labels)) - int(-1 in labels)
-    assert_equal(n_clusters_5, n_clusters)
+    assert n_clusters_5 == n_clusters
 
 
 def test_input_validation():
@@ -206,46 +258,40 @@ def test_input_validation():
     DBSCAN().fit(X)             # must not raise exception
 
 
-def test_dbscan_badargs():
+@pytest.mark.parametrize(
+    "args",
+    [{'eps': -1.0}, {'algorithm': 'blah'}, {'metric': 'blah'},
+     {'leaf_size': -1}, {'p': -1}]
+)
+def test_dbscan_badargs(args):
     # Test bad argument values: these should all raise ValueErrors
-    assert_raises(ValueError,
-                  dbscan,
-                  X, eps=-1.0)
-    assert_raises(ValueError,
-                  dbscan,
-                  X, algorithm='blah')
-    assert_raises(ValueError,
-                  dbscan,
-                  X, metric='blah')
-    assert_raises(ValueError,
-                  dbscan,
-                  X, leaf_size=-1)
-    assert_raises(ValueError,
-                  dbscan,
-                  X, p=-1)
+    with pytest.raises(ValueError):
+        dbscan(X, **args)
 
 
 def test_pickle():
     obj = DBSCAN()
     s = pickle.dumps(obj)
-    assert_equal(type(pickle.loads(s)), obj.__class__)
+    assert type(pickle.loads(s)) == obj.__class__
 
 
 def test_boundaries():
     # ensure min_samples is inclusive of core point
     core, _ = dbscan([[0], [1]], eps=2, min_samples=2)
-    assert_in(0, core)
+    assert 0 in core
     # ensure eps is inclusive of circumference
     core, _ = dbscan([[0], [1], [1]], eps=1, min_samples=2)
-    assert_in(0, core)
+    assert 0 in core
     core, _ = dbscan([[0], [1], [1]], eps=.99, min_samples=2)
-    assert_not_in(0, core)
+    assert 0 not in core
 
 
 def test_weighted_dbscan():
     # ensure sample_weight is validated
-    assert_raises(ValueError, dbscan, [[0], [1]], sample_weight=[2])
-    assert_raises(ValueError, dbscan, [[0], [1]], sample_weight=[2, 3, 4])
+    with pytest.raises(ValueError):
+        dbscan([[0], [1]], sample_weight=[2])
+    with pytest.raises(ValueError):
+        dbscan([[0], [1]], sample_weight=[2, 3, 4])
 
     # ensure sample_weight has an effect
     assert_array_equal([], dbscan([[0], [1]], sample_weight=None,
@@ -274,7 +320,7 @@ def test_weighted_dbscan():
     rng = np.random.RandomState(42)
     sample_weight = rng.randint(0, 5, X.shape[0])
     core1, label1 = dbscan(X, sample_weight=sample_weight)
-    assert_equal(len(label1), len(X))
+    assert len(label1) == len(X)
 
     X_repeated = np.repeat(X, sample_weight, axis=0)
     core_repeated, label_repeated = dbscan(X_repeated)
@@ -306,38 +352,38 @@ def test_weighted_dbscan():
     assert_array_equal(label1, est.labels_)
 
 
-def test_dbscan_core_samples_toy():
+@pytest.mark.parametrize('algorithm', ['brute', 'kd_tree', 'ball_tree'])
+def test_dbscan_core_samples_toy(algorithm):
     X = [[0], [2], [3], [4], [6], [8], [10]]
     n_samples = len(X)
 
-    for algorithm in ['brute', 'kd_tree', 'ball_tree']:
-        # Degenerate case: every sample is a core sample, either with its own
-        # cluster or including other close core samples.
-        core_samples, labels = dbscan(X, algorithm=algorithm, eps=1,
-                                      min_samples=1)
-        assert_array_equal(core_samples, np.arange(n_samples))
-        assert_array_equal(labels, [0, 1, 1, 1, 2, 3, 4])
+    # Degenerate case: every sample is a core sample, either with its own
+    # cluster or including other close core samples.
+    core_samples, labels = dbscan(X, algorithm=algorithm, eps=1,
+                                  min_samples=1)
+    assert_array_equal(core_samples, np.arange(n_samples))
+    assert_array_equal(labels, [0, 1, 1, 1, 2, 3, 4])
 
-        # With eps=1 and min_samples=2 only the 3 samples from the denser area
-        # are core samples. All other points are isolated and considered noise.
-        core_samples, labels = dbscan(X, algorithm=algorithm, eps=1,
-                                      min_samples=2)
-        assert_array_equal(core_samples, [1, 2, 3])
-        assert_array_equal(labels, [-1, 0, 0, 0, -1, -1, -1])
+    # With eps=1 and min_samples=2 only the 3 samples from the denser area
+    # are core samples. All other points are isolated and considered noise.
+    core_samples, labels = dbscan(X, algorithm=algorithm, eps=1,
+                                  min_samples=2)
+    assert_array_equal(core_samples, [1, 2, 3])
+    assert_array_equal(labels, [-1, 0, 0, 0, -1, -1, -1])
 
-        # Only the sample in the middle of the dense area is core. Its two
-        # neighbors are edge samples. Remaining samples are noise.
-        core_samples, labels = dbscan(X, algorithm=algorithm, eps=1,
-                                      min_samples=3)
-        assert_array_equal(core_samples, [2])
-        assert_array_equal(labels, [-1, 0, 0, 0, -1, -1, -1])
+    # Only the sample in the middle of the dense area is core. Its two
+    # neighbors are edge samples. Remaining samples are noise.
+    core_samples, labels = dbscan(X, algorithm=algorithm, eps=1,
+                                  min_samples=3)
+    assert_array_equal(core_samples, [2])
+    assert_array_equal(labels, [-1, 0, 0, 0, -1, -1, -1])
 
-        # It's no longer possible to extract core samples with eps=1:
-        # everything is noise.
-        core_samples, labels = dbscan(X, algorithm=algorithm, eps=1,
-                                      min_samples=4)
-        assert_array_equal(core_samples, [])
-        assert_array_equal(labels, -np.ones(n_samples))
+    # It's no longer possible to extract core samples with eps=1:
+    # everything is noise.
+    core_samples, labels = dbscan(X, algorithm=algorithm, eps=1,
+                                  min_samples=4)
+    assert_array_equal(core_samples, [])
+    assert_array_equal(labels, np.full(n_samples, -1.))
 
 
 def test_dbscan_precomputed_metric_with_degenerate_input_arrays():
@@ -345,11 +391,11 @@ def test_dbscan_precomputed_metric_with_degenerate_input_arrays():
     # more details
     X = np.eye(10)
     labels = DBSCAN(eps=0.5, metric='precomputed').fit(X).labels_
-    assert_equal(len(set(labels)), 1)
+    assert len(set(labels)) == 1
 
     X = np.zeros((10, 10))
     labels = DBSCAN(eps=0.5, metric='precomputed').fit(X).labels_
-    assert_equal(len(set(labels)), 1)
+    assert len(set(labels)) == 1
 
 
 def test_dbscan_precomputed_metric_with_initial_rows_zero():

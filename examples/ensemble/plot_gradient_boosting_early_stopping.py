@@ -25,7 +25,7 @@ The number of stages of the final model is available at the attribute
 ``n_estimators_``.
 
 This example illustrates how the early stopping can used in the
-:class:`sklearn.ensemble.GradientBoostingClassifier` model to achieve
+:class:`~sklearn.ensemble.GradientBoostingClassifier` model to achieve
 almost the same accuracy as compared to a model built without early stopping
 using many fewer estimators. This can significantly reduce training time,
 memory usage and prediction latency.
@@ -91,7 +91,7 @@ n = len(data_list)
 index = np.arange(0, n * bar_width, bar_width) * 2.5
 index = index[0:n]
 
-#######################################################################
+# %%
 # Compare scores with and without early stopping
 # ----------------------------------------------
 
@@ -129,9 +129,9 @@ plt.ylabel('Test score')
 plt.show()
 
 
-#######################################################################
+# %%
 # Compare fit times with and without early stopping
-# ----------------------------------------------
+# -------------------------------------------------
 
 plt.figure(figsize=(9, 5))
 

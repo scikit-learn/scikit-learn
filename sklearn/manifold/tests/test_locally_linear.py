@@ -3,14 +3,12 @@ from itertools import product
 import numpy as np
 from numpy.testing import assert_almost_equal, assert_array_almost_equal
 from scipy import linalg
+import pytest
 
 from sklearn import neighbors, manifold
-from sklearn.manifold.locally_linear import barycenter_kneighbors_graph
-from sklearn.utils.testing import assert_less
-from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_true
+from sklearn.manifold._locally_linear import barycenter_kneighbors_graph
+from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import assert_raise_message
 
 eigen_solvers = ['dense', 'arpack']
 
@@ -31,7 +29,7 @@ def test_barycenter_kneighbors_graph():
     # check that columns sum to one
     assert_array_almost_equal(np.sum(A.toarray(), 1), np.ones(3))
     pred = np.dot(A.toarray(), X)
-    assert_less(linalg.norm(pred - X) / X.shape[0], 1)
+    assert linalg.norm(pred - X) / X.shape[0] < 1
 
 
 # ----------------------------------------------------------------------
@@ -53,23 +51,23 @@ def test_lle_simple_grid():
 
     N = barycenter_kneighbors_graph(X, clf.n_neighbors).toarray()
     reconstruction_error = linalg.norm(np.dot(N, X) - X, 'fro')
-    assert_less(reconstruction_error, tol)
+    assert reconstruction_error < tol
 
     for solver in eigen_solvers:
         clf.set_params(eigen_solver=solver)
         clf.fit(X)
-        assert_true(clf.embedding_.shape[1] == n_components)
+        assert clf.embedding_.shape[1] == n_components
         reconstruction_error = linalg.norm(
             np.dot(N, clf.embedding_) - clf.embedding_, 'fro') ** 2
 
-        assert_less(reconstruction_error, tol)
+        assert reconstruction_error < tol
         assert_almost_equal(clf.reconstruction_error_,
                             reconstruction_error, decimal=1)
 
     # re-embed a noisy version of X using the transform method
     noise = rng.randn(*X.shape) / 100
     X_reembedded = clf.transform(X + noise)
-    assert_less(linalg.norm(X_reembedded - clf.embedding_), tol)
+    assert linalg.norm(X_reembedded - clf.embedding_) < tol
 
 
 def test_lle_manifold():
@@ -87,19 +85,19 @@ def test_lle_manifold():
 
         N = barycenter_kneighbors_graph(X, clf.n_neighbors).toarray()
         reconstruction_error = linalg.norm(np.dot(N, X) - X)
-        assert_less(reconstruction_error, tol)
+        assert reconstruction_error < tol
 
         for solver in eigen_solvers:
             clf.set_params(eigen_solver=solver)
             clf.fit(X)
-            assert_true(clf.embedding_.shape[1] == n_components)
+            assert clf.embedding_.shape[1] == n_components
             reconstruction_error = linalg.norm(
                 np.dot(N, clf.embedding_) - clf.embedding_, 'fro') ** 2
             details = ("solver: %s, method: %s" % (solver, method))
-            assert_less(reconstruction_error, tol, msg=details)
-            assert_less(np.abs(clf.reconstruction_error_ -
-                               reconstruction_error),
-                        tol * reconstruction_error, msg=details)
+            assert reconstruction_error < tol, details
+            assert (np.abs(clf.reconstruction_error_ -
+                           reconstruction_error) <
+                    tol * reconstruction_error), details
 
 
 # Test the error raised when parameter passed to lle is invalid
@@ -125,15 +123,17 @@ def test_pipeline():
         [('filter', manifold.LocallyLinearEmbedding(random_state=0)),
          ('clf', neighbors.KNeighborsClassifier())])
     clf.fit(X, y)
-    assert_less(.9, clf.score(X, y))
+    assert .9 < clf.score(X, y)
 
 
 # Test the error raised when the weight matrix is singular
 def test_singular_matrix():
     M = np.ones((10, 3))
     f = ignore_warnings
-    assert_raises(ValueError, f(manifold.locally_linear_embedding),
-                  M, 2, 1, method='standard', eigen_solver='arpack')
+    with pytest.raises(ValueError):
+        f(manifold.locally_linear_embedding(M, n_neighbors=2, n_components=1,
+                                            method='standard',
+                                            eigen_solver='arpack'))
 
 
 # regression test for #6033

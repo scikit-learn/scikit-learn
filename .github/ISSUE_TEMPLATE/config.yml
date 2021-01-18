@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Discussions
+    url: https://github.com/scikit-learn/scikit-learn/discussions
+    about: Ask questions and discuss with other scikit-learn community members
+  - name: Stack overflow
+    url: https://stackoverflow.com/questions/tagged/scikit-learn
+    about: Please ask and answer usage questions on stackoverflow
+  - name: Mailing list 
+    url: https://mail.python.org/mailman/listinfo/scikit-learn
+    about: General discussions and announcements on the mailing list
+  - name: Gitter
+    url: https://gitter.im/scikit-learn/scikit-learn
+    about: Users and developers can sometimes be found on the gitter channel

@@ -1,0 +1,8 @@
+extraction:
+  cpp:
+    before_index:
+      - pip3 install numpy==1.16.3
+      - pip3 install --no-deps scipy Cython
+    index:
+      build_command:
+        - python3 setup.py build_ext -i
