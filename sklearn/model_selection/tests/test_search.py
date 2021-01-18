@@ -188,25 +188,25 @@ def test_parameter_grid():
 def test_parameter_grid_sort():
     param_grid = {'a': [1, 2], 'b': [3, 4], 'c': [5, 6]}
     assert (list(ParameterGrid(param_grid)) ==
-                 [{'a': 1, 'b': 3, 'c': 5},
-                  {'a': 1, 'b': 3, 'c': 6},
-                  {'a': 1, 'b': 4, 'c': 5},
-                  {'a': 1, 'b': 4, 'c': 6},
-                  {'a': 2, 'b': 3, 'c': 5},
-                  {'a': 2, 'b': 3, 'c': 6},
-                  {'a': 2, 'b': 4, 'c': 5},
-                  {'a': 2, 'b': 4, 'c': 6},
-                  ])
+            [{'a': 1, 'b': 3, 'c': 5},
+             {'a': 1, 'b': 3, 'c': 6},
+             {'a': 1, 'b': 4, 'c': 5},
+             {'a': 1, 'b': 4, 'c': 6},
+             {'a': 2, 'b': 3, 'c': 5},
+             {'a': 2, 'b': 3, 'c': 6},
+             {'a': 2, 'b': 4, 'c': 5},
+             {'a': 2, 'b': 4, 'c': 6},
+             ])
     assert (list(ParameterGrid(param_grid, least_significant='a')) ==
-                 [{'a': 1, 'b': 3, 'c': 5},
-                  {'a': 2, 'b': 3, 'c': 5},
-                  {'a': 1, 'b': 3, 'c': 6},
-                  {'a': 2, 'b': 3, 'c': 6},
-                  {'a': 1, 'b': 4, 'c': 5},
-                  {'a': 2, 'b': 4, 'c': 5},
-                  {'a': 1, 'b': 4, 'c': 6},
-                  {'a': 2, 'b': 4, 'c': 6},
-                  ])
+            [{'a': 1, 'b': 3, 'c': 5},
+             {'a': 2, 'b': 3, 'c': 5},
+             {'a': 1, 'b': 3, 'c': 6},
+             {'a': 2, 'b': 3, 'c': 6},
+             {'a': 1, 'b': 4, 'c': 5},
+             {'a': 2, 'b': 4, 'c': 5},
+             {'a': 1, 'b': 4, 'c': 6},
+             {'a': 2, 'b': 4, 'c': 6},
+             ])
 
     assert (list(ParameterGrid(param_grid, least_significant='a')) ==
             list(ParameterGrid(param_grid, least_significant=['a'])))
@@ -214,15 +214,15 @@ def test_parameter_grid_sort():
             list(ParameterGrid(param_grid, least_significant=['c', 'a'])))
 
     assert (list(ParameterGrid(param_grid, least_significant=['b', 'a'])) ==
-                 [{'a': 1, 'b': 3, 'c': 5},
-                  {'a': 2, 'b': 3, 'c': 5},
-                  {'a': 1, 'b': 4, 'c': 5},
-                  {'a': 2, 'b': 4, 'c': 5},
-                  {'a': 1, 'b': 3, 'c': 6},
-                  {'a': 2, 'b': 3, 'c': 6},
-                  {'a': 1, 'b': 4, 'c': 6},
-                  {'a': 2, 'b': 4, 'c': 6},
-                  ])
+            [{'a': 1, 'b': 3, 'c': 5},
+             {'a': 2, 'b': 3, 'c': 5},
+             {'a': 1, 'b': 4, 'c': 5},
+             {'a': 2, 'b': 4, 'c': 5},
+             {'a': 1, 'b': 3, 'c': 6},
+             {'a': 2, 'b': 3, 'c': 6},
+             {'a': 1, 'b': 4, 'c': 6},
+             {'a': 2, 'b': 4, 'c': 6},
+             ])
 
 
 def test_grid_search():
