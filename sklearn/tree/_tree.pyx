@@ -89,7 +89,7 @@ cdef class TreeBuilder:
         pass
 
     cpdef update(self, Tree tree, object X, np.ndarray y,
-                np.ndarray sample_weight=None):
+                 np.ndarray sample_weight=None):
         """Update a decision tree with the training set (X, y)."""
         pass
 
@@ -273,7 +273,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
             raise MemoryError()
 
     cpdef update(self, Tree tree, object X, np.ndarray y,
-                np.ndarray sample_weight=None):
+                 np.ndarray sample_weight=None):
         """Update a decision tree with the training set (X, y)."""
 
         # check input
@@ -587,7 +587,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
             raise MemoryError()
 
     cpdef update(self, Tree tree, object X, np.ndarray y,
-                np.ndarray sample_weight=None):
+                 np.ndarray sample_weight=None):
         """Update a decision tree with the training set (X, y)."""
 
         # check input
