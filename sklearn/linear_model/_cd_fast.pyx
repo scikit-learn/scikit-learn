@@ -819,4 +819,5 @@ def enet_coordinate_descent_multi_task(
                               "increase the number of iterations. Duality "
                               "gap: {}, tolerance: {}".format(gap, tol),
                               ConvergenceWarning)
+
     return np.asarray(W), gap, tol, n_iter + 1
