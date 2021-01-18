@@ -222,14 +222,12 @@ def test_nowarn_if_metric_bool_data_bool():
 
 
 def test_warn_if_metric_bool_data_no_bool():
-	# make sure a *single* conversion warning is raised if metric is boolean
-	# but data isn't
-	# non regression test for https://github.com/scikit-learn/scikit-learn/issues/18996
+    # make sure a *single* conversion warning is raised if metric is boolean
+    # but data isn't
+    # non regression test for https://github.com/scikit-learn/scikit-learn/issues/18996
     pairwise_metric = 'rogerstanimoto'
     X = np.random.randint(2, size=(5, 2), dtype=np.int)
-    msg = f"Data will be converted to boolean for" \
-          f" metric {pairwise_metric}, to avoid this warning" \
-          f", you may convert the data prior to calling fit."
+    msg = f"Data will be converted to boolean for metric {pairwise_metric}"
 
     with pytest.warns(DataConversionWarning, match=msg) as warn_record:
         OPTICS(metric=pairwise_metric).fit(X)
@@ -237,8 +235,8 @@ def test_warn_if_metric_bool_data_no_bool():
 
 
 def test_nowarn_if_metric_no_bool():
-	# make sure no conversion warning is raised if 
-	# metric isn't boolean, no matter what the data type is
+    # make sure no conversion warning is raised if
+    # metric isn't boolean, no matter what the data type is
     pairwise_metric = 'minkowski'
     X_bool = np.random.randint(2, size=(5, 2), dtype=np.bool)
     X_num = np.random.randint(2, size=(5, 2), dtype=np.int)
