@@ -249,8 +249,7 @@ def enet_coordinate_descent(floating[::1] w,
                               "gap: {}, tolerance: {}".format(gap, tol),
                               ConvergenceWarning)
 
-    # scale gap: objective here is n_samples * objective in Lasso docstring.
-    return w, gap / n_samples, tol, n_iter + 1
+    return w, gap, tol, n_iter + 1
 
 
 def sparse_enet_coordinate_descent(floating [::1] w,
@@ -465,8 +464,7 @@ def sparse_enet_coordinate_descent(floating [::1] w,
                               "gap: {}, tolerance: {}".format(gap, tol),
                               ConvergenceWarning)
 
-    # scale gap: objective here is n_samples * objective in Lasso docstring.
-    return w, gap / n_samples, tol, n_iter + 1
+    return w, gap, tol, n_iter + 1
 
 
 def enet_coordinate_descent_gram(floating[::1] w,
@@ -619,8 +617,7 @@ def enet_coordinate_descent_gram(floating[::1] w,
                               "gap: {}, tolerance: {}".format(gap, tol),
                               ConvergenceWarning)
 
-    # scale gap: objective here is n_samples * objective in Lasso docstring.
-    return np.asarray(w), gap / n_samples, tol, n_iter + 1
+    return np.asarray(w), gap, tol, n_iter + 1
 
 
 def enet_coordinate_descent_multi_task(
@@ -822,5 +819,4 @@ def enet_coordinate_descent_multi_task(
                               "increase the number of iterations. Duality "
                               "gap: {}, tolerance: {}".format(gap, tol),
                               ConvergenceWarning)
-    # scale gap: objective here is n_samples * objective in Lasso docstring.
-    return np.asarray(W), gap / n_samples, tol, n_iter + 1
+    return np.asarray(W), gap, tol, n_iter + 1
