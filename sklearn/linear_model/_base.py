@@ -266,8 +266,8 @@ class LinearClassifierMixin(ClassifierMixin):
         """
         Predict confidence scores for samples.
 
-        The confidence score for a sample is the signed distance of that
-        sample to the hyperplane.
+        The confidence score for a sample is proportional to the signed
+        distance of that sample to the hyperplane.
 
         Parameters
         ----------

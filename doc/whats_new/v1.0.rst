@@ -44,6 +44,20 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |Fix| Fixed a bug in class:`feature_extraction.HashingVectorizer` where some
+  input strings would result in negative indices in the transformed data.
+  :pr:`19035` by :user:`Liu Yu <ly648499246>`.
+
+:mod:`sklearn.tree`
+...................
+
+- |Enhancement| Add `fontname` argument in :func:`tree.export_graphviz`
+  for non-English characters. :pr:`18959` by :user:`Zero <Zeroto521>`
+  and :user:`wstates <wstates>`.
+
 :mod:`sklearn.cluster`
 ......................
 
