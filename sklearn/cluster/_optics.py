@@ -248,9 +248,9 @@ class OPTICS(ClusterMixin, BaseEstimator):
 
         dtype = bool if self.metric in PAIRWISE_BOOLEAN_FUNCTIONS else float
         if dtype == bool and X.dtype != bool:
-            msg = f"Data will be converted to boolean for" \
-                  f" metric {self.metric}, to avoid this warning," \
-                  f" you may convert the data prior to calling fit."
+            msg = (f"Data will be converted to boolean for"
+                   f" metric {self.metric}, to avoid this warning,"
+                   f" you may convert the data prior to calling fit.")
             warnings.warn(msg, DataConversionWarning)
 
         X = self._validate_data(X, dtype=dtype)
