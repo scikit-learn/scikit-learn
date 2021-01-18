@@ -97,7 +97,7 @@ def _deprecate_normalize(normalize, default, estimator_name):
     -----
     This function should be updated in 1.2 depending on the value of `normalize`:
     - True, warning: `normalize` was deprecated in 1.2 and will be removed in
-      1.4. Suggest to use pipeline instead
+      1.4. Suggest to use pipeline instead.
     - False, `normalize` was deprecated in 1.2 and it will be removed in 1.4.
       Leave normalize to its default value
     - `deprecated` - this should only be possible with default == False as from
