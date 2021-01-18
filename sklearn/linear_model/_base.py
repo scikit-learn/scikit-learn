@@ -603,7 +603,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         _normalize = _deprecate_normalize(
             self.normalize, default=False,
             estimator_name=self.__class__.__name__
-            )
+        )
 
         n_jobs_ = self.n_jobs
 
