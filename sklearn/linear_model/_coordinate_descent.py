@@ -1956,6 +1956,9 @@ class MultiTaskElasticNet(Lasso):
                 self.coef_, l1_reg, l2_reg, X, y, self.max_iter, self.tol,
                 check_random_state(self.random_state), random)
 
+        # account for different objective scaling here and in cd_fast
+        self.dual_gap_ /= n_samples
+
         self._set_intercept(X_offset, y_offset, X_scale)
 
         # return self for chaining fit and predict calls
