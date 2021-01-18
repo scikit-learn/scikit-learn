@@ -212,7 +212,7 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
 
 @_deprecate_positional_args
 def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
-                     normalize=None, pprint=False):
+                     normalize=None, as_dict=False):
     """Compute confusion matrix to evaluate the accuracy of a classification.
 
     By definition a confusion matrix :math:`C` is such that :math:`C_{i, j}`
@@ -249,22 +249,20 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
         conditions or all the population. If None, confusion matrix will not be
         normalized.
 
-    pprint : bool, default=False
+    as_dict : bool, default=False
         Returns a confusion matrix in dict representation with labels as keys
-        ('true', 'pred')
+        ('true', 'pred'), it can be easily converted into a unstacked series.
+        Refer Examples.
 
     Returns
     -------
-    C : ndarray of shape (n_classes, n_classes)
-        Confusion matrix whose i-th row and j-th
+    C : ndarray of shape (n_classes, n_classes) OR dict with length (n_classes x n_classes)
+        Confusion matrix as a ndarry whose i-th row and j-th
         column entry indicates the number of
         samples with true label being i-th class
         and predicted label being j-th class.
 
-    Or
-
-    C : dict with n_classes x n_classes length
-        Confusion matrix whose keys are tuples
+        Confusion matrix as a dict whose keys are tuples
         as ('true_label', 'predicted_label') and value
         indicates the number of samples with true
         label and predicted label.
@@ -291,12 +289,24 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
            [0, 0, 1],
            [1, 0, 2]])
 
+    Using as_dict parameter as True,
+
     >>> y_true = ["cat", "ant", "cat", "cat", "ant", "bird"]
     >>> y_pred = ["ant", "ant", "cat", "cat", "ant", "cat"]
-    >>> confusion_matrix(y_true, y_pred, labels=["ant", "bird", "cat"], pprint=True)
+    >>> cm = confusion_matrix(y_true, y_pred, labels=["ant", "bird", "cat"], as_dict=True)
     {('ant', 'ant'): 2, ('bird', 'ant'): 0, ('cat', 'ant'): 1,
      ('ant', 'bird'): 0, ('bird', 'bird'): 0, ('cat', 'bird'): 0,
      ('ant', 'cat'): 0, ('bird', 'cat'): 1, ('cat', 'cat'): 2}
+
+    Dict can be converted to unstacked series,
+
+    >>> import pandas as pd
+    >>> pd.Series(cm).unstack()
+             ant  bird  cat
+      ant     2     0    0
+      bird    0     0    1
+      cat     1     0    2
+
 
     In the binary case, we can extract true positives, etc as follows:
 
@@ -355,10 +365,10 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
                     shape=(n_labels, n_labels), dtype=dtype,
                     ).toarray()
 
-    if pprint:
-        labelList = labels.tolist()
+    if as_dict:
+        label_list = labels.tolist()
         cm_lol = cm.tolist()
-        cm_dict = {(str(labelList[j]), str(labelList[i])): cm_lol[j][i] for i in range(0, len(labelList))
+        cm_dict = {(str(label_list[j]), str(label_list[i])): cm_lol[j][i] for i in range(0, len(label_list))
                    for j in range(0, len(cm_lol))}
 
         return cm_dict
