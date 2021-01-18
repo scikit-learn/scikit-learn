@@ -379,6 +379,10 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
 def test_linear_model_sample_weights_normalize_in_pipeline(
         estimator, is_sparse
 ):
+    # Test that the results for running linear regression LinearRegression with
+    # sample_weight set and with normalize set to True gives similar results as
+    # LinearRegression with no normalize in a pipeline with a StandardScaler
+    # and set sample_weight.
     rng = np.random.RandomState(0)
     n_samples, n_features = 6, 5
 
