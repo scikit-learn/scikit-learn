@@ -88,7 +88,7 @@ def _deprecate_normalize(normalize, default, estimator_name):
       Leave normalize to its default value.
     - `deprecated` - this should only be possible with default == False as from
       1.2 `normalize` in all the linear models should be either removed or the
-      default should be set to False
+      default should be set to False.
     This function should be completely removed in 1.4.
     """
 
