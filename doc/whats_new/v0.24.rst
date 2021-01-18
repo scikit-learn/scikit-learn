@@ -7,6 +7,17 @@
 Version 0.24.1
 ==============
 
+**January 2020**
+
+Packaging
+---------
+
+The 0.24.0 scikit-learn wheels were not working with MacOS <1.15 due to
+`libomp`. The version of `libomp` used to build the wheels was too recent for
+older macOS versions. This issue has been fixed for 0.24.1 scikit-learn wheels.
+Scikit-learn wheels published on PyPI.org now officially support macOS 10.13
+and later.
+
 Changelog
 ---------
 
@@ -56,20 +67,8 @@ Details are listed in the changelog below.
 (While we are trying to better inform users by providing this information, we
 cannot assure that this list is complete.)
 
-
 Changelog
 ---------
-
-..
-    Entries should be grouped by module (in alphabetic order) and prefixed with
-    one of the labels: |MajorFeature|, |Feature|, |Efficiency|, |Enhancement|,
-    |Fix| or |API| (see whats_new.rst for descriptions).
-    Entries should be ordered by those labels (e.g. |Fix| after |Efficiency|).
-    Changes not specific to a module should be listed under *Multiple Modules*
-    or *Miscellaneous*.
-    Entries should end with:
-    :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
-    where 123456 is the *pull request* number, not the issue number.
 
 :mod:`sklearn.base`
 ...................
