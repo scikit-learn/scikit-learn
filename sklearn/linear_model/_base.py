@@ -77,25 +77,11 @@ def _deprecate_normalize(normalize, default, estimator_name):
     normalize : bool,
         normalize value which should further be used by the estimator at this
         stage of the depreciation process
-    Parameters
-    ----------
-    normalize : bool or str
-        The value of `normalize` set in the estimator.
 
-    default : bool
-        The previous default value of `normalize` in the estimator.
-
-    estimator_name : str
-        The name of the linear model estimator.
-
-    Returns
-    -------
-    _normalize : bool
-        The validated `normalize` value.
-    
     Notes
     -----
-    This function should be updated in 1.2 depending on the value of `normalize`:
+    This function should be updated in 1.2 depending on the value of
+    `normalize`:
     - True, warning: `normalize` was deprecated in 1.2 and will be removed in
       1.4. Suggest to use pipeline instead.
     - False, `normalize` was deprecated in 1.2 and it will be removed in 1.4.
