@@ -232,6 +232,8 @@ def test_warn_if_metric_bool_data_no_bool():
 
 
 def test_nowarn_if_metric_no_bool():
+	# make sure no conversion warning is raised if 
+	# metric isn't boolean, no matter what the data type is
     pairwise_metric = 'minkowski'
     X_bool = np.random.randint(2, size=(5, 2), dtype=np.bool)
     X_num = np.random.randint(2, size=(5, 2), dtype=np.int)
