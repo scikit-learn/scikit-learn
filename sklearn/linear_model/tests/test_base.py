@@ -162,7 +162,7 @@ def test_error_on_wrong_normalize():
 
 @pytest.mark.parametrize('normalize', [True, False, 'deprecated'])
 @pytest.mark.parametrize('default', [True, False])
-# FIXME update test in 1.2.0 for new versions
+# FIXME update test in 1.2 for new versions
 def test_deprecate_normalize(normalize, default):
     # test all possible case of the normalize parameter deprecation
     if not default:
