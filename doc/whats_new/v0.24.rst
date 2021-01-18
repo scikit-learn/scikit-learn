@@ -21,6 +21,14 @@ and later.
 Changelog
 ---------
 
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Fix numerical stability bug that could happen in
+  :class:`metrics.cluster.adjusted_mutual_info_score` and
+  :class:`metrics.cluster.mutual_info_score` with NumPy 1.20+.
+  :pr:`19179` by `Thomas Fan`_.
+
 :mod:`sklearn.semi_supervised`
 ..............................
 
