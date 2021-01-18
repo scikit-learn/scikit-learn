@@ -14,8 +14,8 @@ Packaging
 
 The 0.24.0 scikit-learn wheels were not working with MacOS <1.15 due to
 `libopenmp`. The version of `libopenmp` used to build the wheel was too recent
-for older MacOS versions. This issue has been fixed for 0.24.1 scikit-learn
-wheels.
+for older macOS versions. This issue has been fixed for 0.24.1 scikit-learn
+wheels. Scikit-learn wheels published on PyPI.org now officially support macOS 10.13 and later.
 
 Changelog
 ---------
