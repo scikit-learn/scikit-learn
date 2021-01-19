@@ -1125,8 +1125,6 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
         Amount of rescaling of past information. Only for
         MiniBatch implementation.
 
-        .. versionadded:: 0.XX
-
     Returns
     -------
     W : ndarray of shape (n_samples, n_components)
@@ -1581,28 +1579,33 @@ class NMF(TransformerMixin, BaseEstimator):
 class MiniBatchNMF(NMF):
     r"""Mini-Batch and online Non-Negative Matrix Factorization (NMF)
 
-    .. versionadded:: 0.XX
+    .. versionadded:: 1.0
 
     Find two non-negative matrices (W, H) whose product approximates the non-
     negative matrix X. This factorization can be used for example for
     dimensionality reduction, source separation or topic extraction.
 
-    The objective function is::
+    The objective function is:
 
-        0.5 * ||X - WH||_Fro^2
-        + alpha * l1_ratio * ||vec(W)||_1
-        + alpha * l1_ratio * ||vec(H)||_1
-        + 0.5 * alpha * (1 - l1_ratio) * ||W||_Fro^2
-        + 0.5 * alpha * (1 - l1_ratio) * ||H||_Fro^2
+        .. math::
 
-    Where::
+            0.5 * ||X - WH||_{loss}^2 + alpha * l1_{ratio} * ||vec(W)||_1
 
-        ||A||_Fro^2 = \sum_{i,j} A_{ij}^2 (Frobenius norm)
-        ||vec(A)||_1 = \sum_{i,j} abs(A_{ij}) (Elementwise L1 norm)
+            + alpha * l1_{ratio} * ||vec(H)||_1
 
-    For multiplicative-update ('mu') solver, the Frobenius norm
-    (0.5 * ||X - WH||_Fro^2) can be changed into another beta-divergence loss,
-    by changing the beta_loss parameter.
+            + 0.5 * alpha * (1 - l1_{ratio}) * ||W||_{Fro}^2
+
+            + 0.5 * alpha * (1 - l1_{ratio}) * ||H||_{Fro}^2
+
+    Where:
+
+    :math:`||A||_{Fro}^2 = \\sum_{i,j} A_{ij}^2` (Frobenius norm)
+
+    :math:`||vec(A)||_1 = \\sum_{i,j} abs(A_{ij})` (Elementwise L1 norm)
+
+    The generic norm :math:`||X - WH||_{loss}^2` may represent
+    the Frobenius norm or another supported beta-divergence loss.
+    The choice between options is controlled by the `beta_loss` parameter.
 
     The objective function is minimized with an alternating minimization of W
     and H.
