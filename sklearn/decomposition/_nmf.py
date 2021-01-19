@@ -882,8 +882,8 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
     :math:`||vec(A)||_1 = \\sum_{i,j} abs(A_{ij})` (Elementwise L1 norm)
 
     The generic norm :math:`||X - WH||_{loss}^2` may represent
-    the Frobenius norm or another supported beta-divergence loss,
-    defined by changing the `beta_loss` parameter.
+    the Frobenius norm or another supported beta-divergence loss.
+    The choice between options is controlled by the `beta_loss` parameter.
 
     The objective function is minimized with an alternating minimization of W
     and H. If H is given and update_H=False, it solves for W only.
@@ -1119,8 +1119,8 @@ class NMF(TransformerMixin, BaseEstimator):
     :math:`||vec(A)||_1 = \\sum_{i,j} abs(A_{ij})` (Elementwise L1 norm)
 
     The generic norm :math:`||X - WH||_{loss}` may represent
-    the Frobenius norm or another supported beta-divergence loss,
-    defined by changing the `beta_loss` parameter.
+    the Frobenius norm or another supported beta-divergence loss.
+    The choice between options is controlled by the `beta_loss` parameter.
 
     The objective function is minimized with an alternating minimization of W
     and H.
