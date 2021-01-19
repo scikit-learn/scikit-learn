@@ -635,6 +635,12 @@ Changelog
   :pr:`18266` by :user:`Subrat Sahu <subrat93>`,
   :user:`Nirvan <Nirvan101>` and :user:`Arthur Book <ArthurBook>`.
 
+- |Enhancement| :class:`model_selection.GridSearchCV`,
+  :class:`model_selection.RandomizedSearchCV` and
+  :func:`model_selection.cross_validate` support `scoring` being a callable
+  returning a dictionary of of multiple metric names/values association.
+  :pr:`15126` by `Thomas Fan`_.
+
 :mod:`sklearn.multiclass`
 .........................
 
