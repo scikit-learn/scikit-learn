@@ -979,7 +979,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
 
         .. math::
 
-            0.5 * ||X - WH||_{Fro}^2 + alpha * l1_{ratio} * ||vec(W)||_1
+            0.5 * ||X - WH||_{loss}^2 + alpha * l1_{ratio} * ||vec(W)||_1
 
             + alpha * l1_{ratio} * ||vec(H)||_1
 
@@ -993,9 +993,9 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
 
     :math:`||vec(A)||_1 = \\sum_{i,j} abs(A_{ij})` (Elementwise L1 norm)
 
-    For multiplicative-update ('mu') solver, the Frobenius norm
-    :math:`(0.5 * ||X - WH||_{Fro}^2)` can be changed into another
-    beta-divergence loss, by changing the beta_loss parameter.
+    The generic norm :math:`||X - WH||_{loss}^2` may represent
+    the Frobenius norm or another supported beta-divergence loss.
+    The choice between options is controlled by the `beta_loss` parameter.
 
     The objective function is minimized with an alternating minimization of W
     and H. If H is given and update_H=False, it solves for W only.
@@ -1289,7 +1289,7 @@ class NMF(TransformerMixin, BaseEstimator):
 
         .. math::
 
-            0.5 * ||X - WH||_{Fro}^2 + alpha * l1_{ratio} * ||vec(W)||_1
+            0.5 * ||X - WH||_{loss}^2 + alpha * l1_{ratio} * ||vec(W)||_1
 
             + alpha * l1_{ratio} * ||vec(H)||_1
 
@@ -1303,9 +1303,9 @@ class NMF(TransformerMixin, BaseEstimator):
 
     :math:`||vec(A)||_1 = \\sum_{i,j} abs(A_{ij})` (Elementwise L1 norm)
 
-    For multiplicative-update ('mu') solver, the Frobenius norm
-    (:math:`0.5 * ||X - WH||_{Fro}^2`) can be changed into another
-    beta-divergence loss, by changing the beta_loss parameter.
+    The generic norm :math:`||X - WH||_{loss}` may represent
+    the Frobenius norm or another supported beta-divergence loss.
+    The choice between options is controlled by the `beta_loss` parameter.
 
     The objective function is minimized with an alternating minimization of W
     and H.
