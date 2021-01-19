@@ -77,7 +77,7 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
         If `scoring` reprents multiple scores, one can use:
 
         - a list or tuple of unique string;
-        - a callable returning a dictionary where they keys are the metric
+        - a callable returning a dictionary where the keys are the metric
           names and the values are the metric scores;
         - a dictionary with metric names as keys and callables a values.
 
