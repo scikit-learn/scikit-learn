@@ -10,6 +10,7 @@ from sklearn.exceptions import ConvergenceWarning
 
 from sklearn.utils import check_array
 
+from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import ignore_warnings
@@ -24,6 +25,8 @@ from sklearn.decomposition import sparse_encode
 from sklearn.utils.estimator_checks import check_transformer_data_not_an_array
 from sklearn.utils.estimator_checks import check_transformer_general
 from sklearn.utils.estimator_checks import check_transformers_unfitted
+
+from sklearn.decomposition._dict_learning import _update_dict
 
 
 rng_global = np.random.RandomState(0)
@@ -573,3 +576,32 @@ def test_sparse_coder_n_features_in():
     d = np.array([[1, 2, 3], [1, 2, 3]])
     sc = SparseCoder(d)
     assert sc.n_features_in_ == d.shape[1]
+
+
+def test_update_dict():
+    # Check that the dict update is correct in batch and online mode
+    code = np.array([[0.5, -0.5],
+                     [0.1, 0.9]])
+    dictionary = np.array([[1., 0.],
+                           [0.6, 0.8]])
+
+    # Create X s.t. the dictionary is already optimal
+    X = np.dot(code, dictionary)
+
+    # Since ||d_k|| = 1, we expect the update to not change the dictionary.
+    expected = dictionary.copy()
+
+    # batch mode
+    new_dict = dictionary.copy()
+    _update_dict(new_dict, X, code)
+
+    assert_allclose(new_dict, expected)
+
+    # online mode
+    A = np.dot(code.T, code)
+    B = np.dot(X.T, code)
+
+    new_dict = dictionary.copy()
+    _update_dict(new_dict, X, code, A, B)
+
+    assert_allclose(new_dict, expected)
