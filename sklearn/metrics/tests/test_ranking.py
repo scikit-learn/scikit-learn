@@ -700,14 +700,23 @@ def test_binary_clf_curve_implicit_pos_label(curve_func):
 
     # The error message is slightly different for bytes-encoded
     # class labels, but otherwise the behavior is the same:
-    msg = (("y_true takes value in {b'a', b'b'} and pos_label is "
-            "not specified: either make y_true take "
-            "value in {0, 1} or {-1, 1} or pass pos_label "
-            "explicitly."),
-           ('Labels represented as bytes is not supported.'
-            ' Convert the labels to a supported format.'
-            ' For example, y = y.astype'r'\(str\)'))
-    with pytest.raises(ValueError, match=re.compile('|'.join(msg))):
+    # msg = (("y_true takes value in {b'a', b'b'} and pos_label is "
+    #         "not specified: either make y_true take "
+    #         "value in {0, 1} or {-1, 1} or pass pos_label "
+    #         "explicitly."),
+    #        ('Labels are represented as bytes and are not supported. '
+    #         'Convert the labels to Python string or integral format.'))
+    # with pytest.raises(ValueError, match=re.compile('|'.join(msg))):
+    #     roc_curve(np.array([b"a", b"b"], dtype='<S1'), [0., 1.])
+    # The error message is slightly different for bytes-encoded
+    # class labels, but otherwise the behavior is the same:
+    # msg = ("y_true takes value in {b'a', b'b'} and pos_label is "
+    #        "not specified: either make y_true take "
+    #        "value in {0, 1} or {-1, 1} or pass pos_label "
+    #        "explicitly.")
+    msg = ('Labels are represented as bytes and are not supported. '
+           'Convert the labels to Python string or integral format.')
+    with pytest.raises(ValueError, match=msg):
         roc_curve(np.array([b"a", b"b"], dtype='<S1'), [0., 1.])
 
     # Check that it is possible to use floating point class labels

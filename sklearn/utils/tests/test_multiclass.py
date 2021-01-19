@@ -439,11 +439,17 @@ def test_ovr_decision_function():
     assert_allclose(dec_values, dec_values_one, atol=1e-6)
 
 
-def test_labels_in_bytes_format():
-    # test whether labels are represented in bytes format
-    # and display a helpful message
-    msg = ('Labels represented as bytes is not supported.'
-           ' Convert the labels to a supported format.'
-           ' For example, y = y.astype'r'\(str\)')
+@pytest.mark.parametrize("test_input,msg",[
+    (np.array([b'a', b'b'], dtype='<S1'),
+    ('Labels are represented as bytes and are not supported. '
+     'Convert the labels to Python string or integral format.')),
+    ([b'a', b'b'],
+    ('Labels are represented as bytes and are not supported. '
+     'Convert the labels to Python string or integral format.')),
+])
+def test_labels_in_bytes_format(test_input,msg):
+    # check that we raise an error with bytes encoded labels
+    # non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/16980
     with pytest.raises(ValueError, match=msg):
-        type_of_target(np.array([b'a', b'b'], dtype='<S1'))
+        type_of_target(test_input)
