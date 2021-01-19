@@ -1193,7 +1193,7 @@ class GridSearchCV(BaseSearchCV):
         the estimator's ``warm_start`` parameter to True.
 
         Candidate parameter settings will be reordered to maximise use of this
-        feature.
+        efficiency feature.
 
         .. versionadded:: TBC
 

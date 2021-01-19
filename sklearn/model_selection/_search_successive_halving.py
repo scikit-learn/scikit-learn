@@ -465,6 +465,17 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         expensive and is not strictly required to select the parameters that
         yield the best generalization performance.
 
+    use_warm_start : str or list of str, optional
+        The parameters named here will be searched over without clearing the
+        estimator state in between.  This allows efficient searches over
+        parameters where ``warm_start`` can be used. The user should also set
+        the estimator's ``warm_start`` parameter to True.
+
+        Candidate parameter settings will be reordered to maximise use of this
+        efficiency feature.
+
+        .. versionadded:: TBC
+
     random_state : int, RandomState instance or None, default=None
         Pseudo random number generator state used for subsampling the dataset
         when `resources != 'n_samples'`. Ignored otherwise.
@@ -594,8 +605,8 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
                  factor=3, resource='n_samples', max_resources='auto',
                  min_resources='exhaust', aggressive_elimination=False,
                  cv=5, scoring=None, refit=True, error_score=np.nan,
-                 return_train_score=True, random_state=None, n_jobs=None,
-                 verbose=0):
+                 return_train_score=True, use_warm_start=None,
+                 random_state=None, n_jobs=None, verbose=0):
         super().__init__(estimator, scoring=scoring,
                          n_jobs=n_jobs, refit=refit, verbose=verbose, cv=cv,
                          random_state=random_state, error_score=error_score,
@@ -604,10 +615,12 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
                          factor=factor, min_resources=min_resources,
                          aggressive_elimination=aggressive_elimination)
         self.param_grid = param_grid
+        self.use_warm_start = use_warm_start
         _check_param_grid(self.param_grid)
 
     def _generate_candidate_params(self):
-        return ParameterGrid(self.param_grid)
+        return ParameterGrid(self.param_grid,
+                             least_significant=self.use_warm_start)
 
 
 class HalvingRandomSearchCV(BaseSuccessiveHalving):

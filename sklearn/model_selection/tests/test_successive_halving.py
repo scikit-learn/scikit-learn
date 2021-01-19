@@ -7,11 +7,13 @@ import numpy as np
 from sklearn.datasets import make_classification
 from sklearn.dummy import DummyClassifier
 from sklearn.experimental import enable_halving_search_cv  # noqa
+from sklearn.linear_model import SGDClassifier
 from sklearn.model_selection import HalvingGridSearchCV
 from sklearn.model_selection import HalvingRandomSearchCV
 from sklearn.model_selection import KFold, ShuffleSplit
 from sklearn.model_selection._search_successive_halving import (
     _SubsampleMetaSplitter, _top_k, _refit_callable)
+from sklearn.utils._testing import assert_array_equal
 
 
 class FastClassifier(DummyClassifier):
@@ -562,3 +564,45 @@ def test_base_estimator_inputs(Est):
 
     assert (cv_results_df['params'] == passed_params).all()
     assert (cv_results_df['n_resources'] == passed_n_samples).all()
+
+
+class CountingSGDClassifier(SGDClassifier):
+    """An SGDClassifier which counts the number of calls to `fit`"""
+
+    def fit(self, X, y):
+        if not hasattr(self, 'n_fit_calls_'):
+            self.n_fit_calls_ = 0
+        self.n_fit_calls_ += 1
+        return super(CountingSGDClassifier, self).fit(X, y)
+
+
+def test_halving_grid_search_cv_use_warm_start():
+    X, y = make_classification(n_samples=1000, random_state=0)
+
+    # Check number of calls to fit is correct with respect to use_warm_start
+    clf = HalvingGridSearchCV(
+        CountingSGDClassifier(penalty='elasticnet',
+                              warm_start=True,
+                              random_state=0),
+        param_grid={'alpha': [1e-3, 1e-2],
+                    'l1_ratio': [0.15, 0.85],
+                    'loss': ['hinge', 'log']},
+        cv=2, refit=False,
+        scoring=lambda estimator, X, y: estimator.n_fit_calls_)
+
+    # Expected score: 1 everywhere
+    clf.set_params(use_warm_start=None).fit(X, y)
+    assert_array_equal(clf.cv_results_['std_test_score'], 0)
+    assert_array_equal(clf.cv_results_['mean_test_score'], 1)
+
+    # Check that score is sometimes 2, indicating that warm start is used
+    clf.set_params(use_warm_start='alpha').fit(X, y)
+    assert_array_equal(np.unique(clf.cv_results_['mean_test_score']), [1, 2])
+    res = clf.cv_results_
+    mask = ((res['param_alpha'][1:] != res['param_alpha'][:-1]) &
+            (res['param_l1_ratio'][1:] == res['param_l1_ratio'][:-1]) &
+            (res['param_loss'][1:] == res['param_loss'][:-1]) &
+            (np.asarray(res['iter'][1:]) == res['iter'][:-1]))
+    mask = np.concatenate([[False], mask])
+    assert_array_equal(clf.cv_results_['mean_test_score'][mask], 2)
+    assert_array_equal(clf.cv_results_['mean_test_score'][~mask], 1)
