@@ -579,29 +579,25 @@ def test_sparse_coder_n_features_in():
 
 
 def test_update_dict():
-    # Check that the dict update is correct in batch and online mode
+    # Check the dict update in batch mode vs online mode
+    rng = np.random.RandomState(0)
+
     code = np.array([[0.5, -0.5],
                      [0.1, 0.9]])
     dictionary = np.array([[1., 0.],
                            [0.6, 0.8]])
 
-    # Create X s.t. the dictionary is already optimal
-    X = np.dot(code, dictionary)
+    X = np.dot(code, dictionary) + rng.randn(2, 2)
 
-    # Since ||d_k|| = 1, we expect the update to not change the dictionary.
-    expected = dictionary.copy()
+    # batch update
+    newd_batch = dictionary.copy()
+    _update_dict(newd_batch, X, code)
 
-    # batch mode
-    new_dict = dictionary.copy()
-    _update_dict(new_dict, X, code)
-
-    assert_allclose(new_dict, expected)
-
-    # online mode
+    # online update
     A = np.dot(code.T, code)
     B = np.dot(X.T, code)
 
-    new_dict = dictionary.copy()
-    _update_dict(new_dict, X, code, A, B)
+    newd_online = dictionary.copy()
+    _update_dict(newd_online, X, code, A, B)
 
-    assert_allclose(new_dict, expected)
+    assert_allclose(newd_batch, newd_online)
