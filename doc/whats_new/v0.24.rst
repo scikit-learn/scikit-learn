@@ -36,7 +36,7 @@ Changelog
   :class:`model_selection.HalvingRandomSearchCV` and
   :class:`model_selection.HalvingGridSearchCV` were not properly converted to
   numpy arrays.
-  :pr:`TODO` by `Nicolas Hug`_.
+  :pr:`19211` by `Nicolas Hug`_.
 
 :mod:`sklearn.semi_supervised`
 ..............................
