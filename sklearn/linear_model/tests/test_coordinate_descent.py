@@ -220,7 +220,7 @@ def test_lasso_dual_gap():
     # dual pt: R / n_samples, dual constraint: norm(X.T @ theta, inf) <= alpha
     R /= np.max(np.abs(X.T @ R) / (n_samples * alpha))
     dual = 0.5 * (np.mean(y ** 2) - np.mean((y - R) ** 2))
-    np.testing.assert_allclose(clf.dual_gap_, primal - dual)
+    assert_allclose(clf.dual_gap_, primal - dual)
 
 
 def build_dataset(n_samples=50, n_features=200, n_informative_features=10,
