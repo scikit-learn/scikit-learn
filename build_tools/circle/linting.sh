@@ -137,10 +137,7 @@ check_files() {
 if [[ "$MODIFIED_FILES" == "no_match" ]]; then
     echo "No file outside sklearn/externals and doc/sphinxext has been modified"
 else
-
-    check_files "$(echo "$MODIFIED_FILES" | grep -v ^examples)"
-    check_files "$(echo "$MODIFIED_FILES" | grep ^examples)" \
-        --config ./examples/.flake8
+    check_files "$MODIFIED_FILES"
     # check code for unused imports
     flake8 --exclude=sklearn/externals/ --select=F401 sklearn/ examples/
 fi
@@ -159,5 +156,24 @@ then
     echo "property decorator should come before deprecated decorator"
     echo "found the following occurrencies:"
     echo $bad_deprecation_property_order
+    exit 1
+fi
+
+# Check for default doctest directives ELLIPSIS and NORMALIZE_WHITESPACE
+
+doctest_directive="$(git grep -nw -E "# doctest\: \+(ELLIPSIS|NORMALIZE_WHITESPACE)")"
+
+if [ ! -z "$doctest_directive" ]
+then
+    echo "ELLIPSIS and NORMALIZE_WHITESPACE doctest directives are enabled by default, but were found in:"
+    echo "$doctest_directive"
+    exit 1
+fi
+
+joblib_import="$(git grep -l -A 10 -E "joblib import.+delayed" -- "*.py" ":!sklearn/utils/_joblib.py" ":!sklearn/utils/fixes.py")"
+
+if [ ! -z "$joblib_import" ]; then
+    echo "Use from sklearn.utils.fixes import delayed instead of joblib delayed. The following files contains imports to joblib.delayed:"
+    echo "$joblib_import"
     exit 1
 fi

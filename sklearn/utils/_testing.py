@@ -13,17 +13,18 @@
 import os
 import os.path as op
 import inspect
-import pkgutil
 import warnings
 import sys
 import functools
 import tempfile
 from subprocess import check_output, STDOUT, CalledProcessError
 from subprocess import TimeoutExpired
+import re
+import contextlib
+from collections.abc import Iterable
 
 import scipy as sp
 from functools import wraps
-from operator import itemgetter
 from inspect import signature
 
 import shutil
@@ -47,37 +48,27 @@ import numpy as np
 import joblib
 
 import sklearn
-from sklearn.base import (BaseEstimator, ClassifierMixin, ClusterMixin,
-                          RegressorMixin, TransformerMixin)
-from sklearn.utils import deprecated, IS_PYPY, _IS_32BIT
+from sklearn.utils import IS_PYPY, _IS_32BIT
+from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.validation import (
+    check_array,
+    check_is_fitted,
+    check_X_y,
+)
 
 
-__all__ = ["assert_equal", "assert_not_equal", "assert_raises",
+__all__ = ["assert_raises",
            "assert_raises_regexp",
-           "assert_almost_equal", "assert_array_equal",
+           "assert_array_equal",
+           "assert_almost_equal",
            "assert_array_almost_equal", "assert_array_less",
-           "assert_less", "assert_less_equal",
-           "assert_greater", "assert_greater_equal",
            "assert_approx_equal", "assert_allclose",
-           "assert_run_python_script", "SkipTest", "all_estimators"]
+           "assert_run_python_script", "SkipTest"]
 
 _dummy = TestCase('__init__')
-deprecation_message = (
-    'This helper is deprecated in version 0.22 and will be removed in version '
-    '0.24. Please use "assert" instead'
-)
-assert_equal = deprecated(deprecation_message)(_dummy.assertEqual)
-assert_not_equal = deprecated(deprecation_message)(_dummy.assertNotEqual)
 assert_raises = _dummy.assertRaises
 SkipTest = unittest.case.SkipTest
 assert_dict_equal = _dummy.assertDictEqual
-assert_in = deprecated(deprecation_message)(_dummy.assertIn)
-assert_not_in = deprecated(deprecation_message)(_dummy.assertNotIn)
-assert_less = deprecated(deprecation_message)(_dummy.assertLess)
-assert_greater = deprecated(deprecation_message)(_dummy.assertGreater)
-assert_less_equal = deprecated(deprecation_message)(_dummy.assertLessEqual)
-assert_greater_equal = deprecated(deprecation_message)(
-    _dummy.assertGreaterEqual)
 
 assert_raises_regex = _dummy.assertRaisesRegex
 # assert_raises_regexp is deprecated in Python 3.4 in favor of
@@ -103,7 +94,6 @@ def assert_warns(warning_class, func, *args, **kw):
 
     Returns
     -------
-
     result : the return value of `func`
 
     """
@@ -138,7 +128,7 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
     warning_class : the warning class
         The class to test for, e.g. UserWarning.
 
-    message : str | callable
+    message : str or callable
         The message or a substring of the message to test for. If callable,
         it takes a string as the argument and will trigger an AssertionError
         if the callable returns `False`.
@@ -198,9 +188,10 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
 
 
 def assert_warns_div0(func, *args, **kw):
-    """Assume that numpy's warning for divide by zero is raised
+    """Assume that numpy's warning for divide by zero is raised.
 
-    Handles the case of platforms that do not support warning on divide by zero
+    Handles the case of platforms that do not support warning on divide by
+    zero.
 
     Parameters
     ----------
@@ -255,9 +246,9 @@ def ignore_warnings(obj=None, category=Warning):
 
     Parameters
     ----------
-    obj : callable or None
+    obj : callable, default=None
         callable where you want to ignore the warnings.
-    category : warning class, defaults to Warning.
+    category : warning class, default=Warning
         The category to filter. If Warning, all categories will be muted.
 
     Examples
@@ -296,7 +287,7 @@ class _IgnoreWarnings:
 
     Parameters
     ----------
-    category : tuple of warning class, default to Warning
+    category : tuple of warning class, default=Warning
         The category to filter. By default, all the categories will be muted.
 
     """
@@ -394,21 +385,21 @@ def assert_allclose_dense_sparse(x, y, rtol=1e-07, atol=1e-9, err_msg=''):
 
     Parameters
     ----------
-    x : array-like or sparse matrix
+    x : {array-like, sparse matrix}
         First array to compare.
 
-    y : array-like or sparse matrix
+    y : {array-like, sparse matrix}
         Second array to compare.
 
-    rtol : float, optional
-        relative tolerance; see numpy.allclose
+    rtol : float, default=1e-07
+        relative tolerance; see numpy.allclose.
 
-    atol : float, optional
+    atol : float, default=1e-9
         absolute tolerance; see numpy.allclose. Note that the default here is
         more tolerant than the default for numpy.testing.assert_allclose, where
         atol=0.
 
-    err_msg : string, default=''
+    err_msg : str, default=''
         Error message to raise.
     """
     if sp.sparse.issparse(x) and sp.sparse.issparse(y):
@@ -427,98 +418,14 @@ def assert_allclose_dense_sparse(x, y, rtol=1e-07, atol=1e-9, err_msg=''):
                          " not a sparse matrix and an array.")
 
 
-# TODO: Remove in 0.24. This class is now in utils.__init__.
-def all_estimators(type_filter=None):
-    """Get a list of all estimators from sklearn.
-
-    This function crawls the module and gets all classes that inherit
-    from BaseEstimator. Classes that are defined in test-modules are not
-    included.
-    By default meta_estimators such as GridSearchCV are also not included.
-
-    Parameters
-    ----------
-
-    type_filter : string, list of string,  or None, default=None
-        Which kind of estimators should be returned. If None, no filter is
-        applied and all estimators are returned.  Possible values are
-        'classifier', 'regressor', 'cluster' and 'transformer' to get
-        estimators only of these specific types, or a list of these to
-        get the estimators that fit at least one of the types.
-
-    Returns
-    -------
-    estimators : list of tuples
-        List of (name, class), where ``name`` is the class name as string
-        and ``class`` is the actual type of the class.
-    """
-    def is_abstract(c):
-        if not(hasattr(c, '__abstractmethods__')):
-            return False
-        if not len(c.__abstractmethods__):
-            return False
-        return True
-
-    all_classes = []
-    # get parent folder
-    path = sklearn.__path__
-    for importer, modname, ispkg in pkgutil.walk_packages(
-            path=path, prefix='sklearn.', onerror=lambda x: None):
-        if ".tests." in modname or "externals" in modname:
-            continue
-        if IS_PYPY and ('_svmlight_format_io' in modname or
-                        'feature_extraction._hashing_fast' in modname):
-            continue
-        # Ignore deprecation warnings triggered at import time.
-        with ignore_warnings(category=FutureWarning):
-            module = __import__(modname, fromlist="dummy")
-        classes = inspect.getmembers(module, inspect.isclass)
-        all_classes.extend(classes)
-
-    all_classes = set(all_classes)
-
-    estimators = [c for c in all_classes
-                  if (issubclass(c[1], BaseEstimator) and
-                      c[0] != 'BaseEstimator')]
-    # get rid of abstract base classes
-    estimators = [c for c in estimators if not is_abstract(c[1])]
-
-    if type_filter is not None:
-        if not isinstance(type_filter, list):
-            type_filter = [type_filter]
-        else:
-            type_filter = list(type_filter)  # copy
-        filtered_estimators = []
-        filters = {'classifier': ClassifierMixin,
-                   'regressor': RegressorMixin,
-                   'transformer': TransformerMixin,
-                   'cluster': ClusterMixin}
-        for name, mixin in filters.items():
-            if name in type_filter:
-                type_filter.remove(name)
-                filtered_estimators.extend([est for est in estimators
-                                            if issubclass(est[1], mixin)])
-        estimators = filtered_estimators
-        if type_filter:
-            raise ValueError("Parameter type_filter must be 'classifier', "
-                             "'regressor', 'transformer', 'cluster' or "
-                             "None, got"
-                             " %s." % repr(type_filter))
-
-    # drop duplicates, sort for reproducibility
-    # itemgetter is used to ensure the sort does not extend to the 2nd item of
-    # the tuple
-    return sorted(set(estimators), key=itemgetter(0))
-
-
 def set_random_state(estimator, random_state=0):
     """Set random state of an estimator if it has the `random_state` param.
 
     Parameters
     ----------
     estimator : object
-        The estimator
-    random_state : int, RandomState instance or None, optional, default=0
+        The estimator.
+    random_state : int, RandomState instance or None, default=0
         Pseudo random number generator state.
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -590,7 +497,7 @@ class TempMemmap:
     Parameters
     ----------
     data
-    mmap_mode
+    mmap_mode : str, default='r'
     """
     def __init__(self, data, mmap_mode='r'):
         self.mmap_mode = mmap_mode
@@ -610,8 +517,8 @@ def create_memmap_backed_data(data, mmap_mode='r', return_folder=False):
     Parameters
     ----------
     data
-    mmap_mode
-    return_folder
+    mmap_mode : str, default='r'
+    return_folder :  bool, default=False
     """
     temp_folder = tempfile.mkdtemp(prefix='sklearn_testing_')
     atexit.register(functools.partial(_delete_folder, temp_folder, warn=True))
@@ -627,7 +534,7 @@ def create_memmap_backed_data(data, mmap_mode='r', return_folder=False):
 
 
 def _get_args(function, varargs=False):
-    """Helper to get function arguments"""
+    """Helper to get function arguments."""
 
     try:
         params = signature(function).parameters
@@ -647,7 +554,7 @@ def _get_args(function, varargs=False):
 
 
 def _get_func_name(func):
-    """Get function full name
+    """Get function full name.
 
     Parameters
     ----------
@@ -673,15 +580,15 @@ def _get_func_name(func):
 
 
 def check_docstring_parameters(func, doc=None, ignore=None):
-    """Helper to check docstring
+    """Helper to check docstring.
 
     Parameters
     ----------
     func : callable
         The function object to test.
-    doc : str, optional (default: None)
+    doc : str, default=None
         Docstring if it is passed manually to the test.
-    ignore : None | list
+    ignore : list, default=None
         Parameters to ignore.
 
     Returns
@@ -810,7 +717,7 @@ def assert_run_python_script(source_code, timeout=60):
     ----------
     source_code : str
         The Python source code to execute.
-    timeout : int
+    timeout : int, default=60
         Time in seconds before timeout.
     """
     fd, source_file = tempfile.mkstemp(suffix='_src_test_sklearn.py')
@@ -871,3 +778,218 @@ def _convert_container(container, constructor_name, columns_name=None):
         return pd.Index(container)
     elif constructor_name == 'slice':
         return slice(container[0], container[1])
+    elif constructor_name == 'sparse_csr':
+        return sp.sparse.csr_matrix(container)
+    elif constructor_name == 'sparse_csc':
+        return sp.sparse.csc_matrix(container)
+
+
+def raises(expected_exc_type, match=None, may_pass=False, err_msg=None):
+    """Context manager to ensure exceptions are raised within a code block.
+
+    This is similar to and inspired from pytest.raises, but supports a few
+    other cases.
+
+    This is only intended to be used in estimator_checks.py where we don't
+    want to use pytest. In the rest of the code base, just use pytest.raises
+    instead.
+
+    Parameters
+    ----------
+    excepted_exc_type : Exception or list of Exception
+        The exception that should be raised by the block. If a list, the block
+        should raise one of the exceptions.
+    match : str or list of str, default=None
+        A regex that the exception message should match. If a list, one of
+        the entries must match. If None, match isn't enforced.
+    may_pass : bool, default=False
+        If True, the block is allowed to not raise an exception. Useful in
+        cases where some estimators may support a feature but others must
+        fail with an appropriate error message. By default, the context
+        manager will raise an exception if the block does not raise an
+        exception.
+    err_msg : str, default=None
+        If the context manager fails (e.g. the block fails to raise the
+        proper exception, or fails to match), then an AssertionError is
+        raised with this message. By default, an AssertionError is raised
+        with a default error message (depends on the kind of failure). Use
+        this to indicate how users should fix their estimators to pass the
+        checks.
+
+    Attributes
+    ----------
+    raised_and_matched : bool
+        True if an exception was raised and a match was found, False otherwise.
+    """
+    return _Raises(expected_exc_type, match, may_pass, err_msg)
+
+
+class _Raises(contextlib.AbstractContextManager):
+    # see raises() for parameters
+    def __init__(self, expected_exc_type, match, may_pass, err_msg):
+        self.expected_exc_types = (
+            expected_exc_type
+            if isinstance(expected_exc_type, Iterable)
+            else [expected_exc_type]
+        )
+        self.matches = [match] if isinstance(match, str) else match
+        self.may_pass = may_pass
+        self.err_msg = err_msg
+        self.raised_and_matched = False
+
+    def __exit__(self, exc_type, exc_value, _):
+        # see
+        # https://docs.python.org/2.5/whatsnew/pep-343.html#SECTION000910000000000000000
+
+        if exc_type is None:  # No exception was raised in the block
+            if self.may_pass:
+                return True  # CM is happy
+            else:
+                err_msg = (
+                    self.err_msg or f"Did not raise: {self.expected_exc_types}"
+                )
+                raise AssertionError(err_msg)
+
+        if not any(
+            issubclass(exc_type, expected_type)
+            for expected_type in self.expected_exc_types
+        ):
+            if self.err_msg is not None:
+                raise AssertionError(self.err_msg) from exc_value
+            else:
+                return False  # will re-raise the original exception
+
+        if self.matches is not None:
+            err_msg = self.err_msg or (
+                "The error message should contain one of the following "
+                "patterns:\n{}\nGot {}".format(
+                    "\n".join(self.matches), str(exc_value)
+                )
+            )
+            if not any(re.search(match, str(exc_value))
+                       for match in self.matches):
+                raise AssertionError(err_msg) from exc_value
+            self.raised_and_matched = True
+
+        return True
+
+
+class MinimalClassifier:
+    """Minimal classifier implementation with inheriting from BaseEstimator.
+
+    This estimator should be tested with:
+
+    * `check_estimator` in `test_estimator_checks.py`;
+    * within a `Pipeline` in `test_pipeline.py`;
+    * within a `SearchCV` in `test_search.py`.
+    """
+    _estimator_type = "classifier"
+
+    def __init__(self, param=None):
+        self.param = param
+
+    def get_params(self, deep=True):
+        return {"param": self.param}
+
+    def set_params(self, **params):
+        for key, value in params.items():
+            setattr(self, key, value)
+        return self
+
+    def fit(self, X, y):
+        X, y = check_X_y(X, y)
+        check_classification_targets(y)
+        self.classes_, counts = np.unique(y, return_counts=True)
+        self._most_frequent_class_idx = counts.argmax()
+        return self
+
+    def predict_proba(self, X):
+        check_is_fitted(self)
+        X = check_array(X)
+        proba_shape = (X.shape[0], self.classes_.size)
+        y_proba = np.zeros(shape=proba_shape, dtype=np.float64)
+        y_proba[:, self._most_frequent_class_idx] = 1.0
+        return y_proba
+
+    def predict(self, X):
+        y_proba = self.predict_proba(X)
+        y_pred = y_proba.argmax(axis=1)
+        return self.classes_[y_pred]
+
+    def score(self, X, y):
+        from sklearn.metrics import accuracy_score
+        return accuracy_score(y, self.predict(X))
+
+
+class MinimalRegressor:
+    """Minimal regressor implementation with inheriting from BaseEstimator.
+
+    This estimator should be tested with:
+
+    * `check_estimator` in `test_estimator_checks.py`;
+    * within a `Pipeline` in `test_pipeline.py`;
+    * within a `SearchCV` in `test_search.py`.
+    """
+    _estimator_type = "regressor"
+
+    def __init__(self, param=None):
+        self.param = param
+
+    def get_params(self, deep=True):
+        return {"param": self.param}
+
+    def set_params(self, **params):
+        for key, value in params.items():
+            setattr(self, key, value)
+        return self
+
+    def fit(self, X, y):
+        X, y = check_X_y(X, y)
+        self.is_fitted_ = True
+        self._mean = np.mean(y)
+        return self
+
+    def predict(self, X):
+        check_is_fitted(self)
+        X = check_array(X)
+        return np.ones(shape=(X.shape[0],)) * self._mean
+
+    def score(self, X, y):
+        from sklearn.metrics import r2_score
+        return r2_score(y, self.predict(X))
+
+
+class MinimalTransformer:
+    """Minimal transformer implementation with inheriting from
+    BaseEstimator.
+
+    This estimator should be tested with:
+
+    * `check_estimator` in `test_estimator_checks.py`;
+    * within a `Pipeline` in `test_pipeline.py`;
+    * within a `SearchCV` in `test_search.py`.
+    """
+
+    def __init__(self, param=None):
+        self.param = param
+
+    def get_params(self, deep=True):
+        return {"param": self.param}
+
+    def set_params(self, **params):
+        for key, value in params.items():
+            setattr(self, key, value)
+        return self
+
+    def fit(self, X, y=None):
+        X = check_array(X)
+        self.is_fitted_ = True
+        return self
+
+    def transform(self, X, y=None):
+        check_is_fitted(self)
+        X = check_array(X)
+        return X
+
+    def fit_transform(self, X, y=None):
+        return self.fit(X, y).transform(X, y)

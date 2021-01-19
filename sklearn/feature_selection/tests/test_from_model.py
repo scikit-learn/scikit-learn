@@ -15,6 +15,8 @@ from sklearn.ensemble import (RandomForestClassifier,
                               HistGradientBoostingClassifier)
 from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.base import BaseEstimator
+from sklearn.pipeline import make_pipeline
+from sklearn.decomposition import PCA
 
 
 class NaNTag(BaseEstimator):
@@ -116,7 +118,7 @@ def test_max_features():
 
     for n_features in range(1, X_new1.shape[1] + 1):
         transformer2 = SelectFromModel(estimator=Lasso(alpha=0.025,
-                                       random_state=42),
+                                                       random_state=42),
                                        max_features=n_features,
                                        threshold=-np.inf)
         X_new2 = transformer2.fit_transform(X, y)
@@ -218,7 +220,7 @@ def test_coef_default_threshold():
 
     # For the Lasso and related models, the threshold defaults to 1e-5
     transformer = SelectFromModel(estimator=Lasso(alpha=0.1,
-                                  random_state=42))
+                                                  random_state=42))
     transformer.fit(X, y)
     X_new = transformer.transform(X)
     mask = np.abs(transformer.estimator_.coef_) > 1e-5
@@ -367,3 +369,21 @@ def test_allow_nan_tag_comes_from_estimator():
     no_nan_est = NoNaNTag()
     model = SelectFromModel(estimator=no_nan_est)
     assert model._get_tags()['allow_nan'] is False
+
+
+def _pca_importances(pca_estimator):
+    return np.abs(pca_estimator.explained_variance_)
+
+
+@pytest.mark.parametrize(
+    "estimator, importance_getter",
+    [(make_pipeline(PCA(random_state=0), LogisticRegression()),
+      'named_steps.logisticregression.coef_'),
+     (PCA(random_state=0), _pca_importances)]
+)
+def test_importance_getter(estimator, importance_getter):
+    selector = SelectFromModel(
+        estimator, threshold="mean", importance_getter=importance_getter
+    )
+    selector.fit(data, y)
+    assert selector.transform(data).shape[1] == 1

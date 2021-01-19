@@ -16,7 +16,7 @@ import warnings
 import numpy as np
 from scipy import optimize, sparse
 from scipy.special import expit, logsumexp
-from joblib import Parallel, delayed, effective_n_jobs
+from joblib import Parallel, effective_n_jobs
 
 from ._base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
 from ._sag import sag_solver
@@ -29,8 +29,10 @@ from ..utils.extmath import (log_logistic, safe_sparse_dot, softmax,
 from ..utils.extmath import row_norms
 from ..utils.optimize import _newton_cg, _check_optimize_result
 from ..utils.validation import check_is_fitted, _check_sample_weight
+from ..utils.validation import _deprecate_positional_args
 from ..utils.multiclass import check_classification_targets
 from ..utils.fixes import _joblib_parallel_args
+from ..utils.fixes import delayed
 from ..model_selection import check_cv
 from ..metrics import get_scorer
 
@@ -661,7 +663,8 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     # the class_weights are assigned after masking the labels with a OvR.
     le = LabelEncoder()
     if isinstance(class_weight, dict) or multi_class == 'multinomial':
-        class_weight_ = compute_class_weight(class_weight, classes, y)
+        class_weight_ = compute_class_weight(class_weight,
+                                             classes=classes, y=y)
         sample_weight *= class_weight_[le.fit_transform(y)]
 
     # For doing a ovr, we need to mask the labels first. for the
@@ -675,8 +678,9 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         # for compute_class_weight
 
         if class_weight == "balanced":
-            class_weight_ = compute_class_weight(class_weight, mask_classes,
-                                                 y_bin)
+            class_weight_ = compute_class_weight(class_weight,
+                                                 classes=mask_classes,
+                                                 y=y_bin)
             sample_weight *= class_weight_[le.fit_transform(y_bin)]
 
     else:
@@ -1005,8 +1009,9 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
     return coefs, Cs, np.array(scores), n_iter
 
 
-class LogisticRegression(BaseEstimator, LinearClassifierMixin,
-                         SparseCoefMixin):
+class LogisticRegression(LinearClassifierMixin,
+                         SparseCoefMixin,
+                         BaseEstimator):
     """
     Logistic Regression (aka logit, MaxEnt) classifier.
 
@@ -1246,8 +1251,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     >>> clf.score(X, y)
     0.97...
     """
-
-    def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
+    @_deprecate_positional_args
+    def __init__(self, penalty='l2', *, dual=False, tol=1e-4, C=1.0,
                  fit_intercept=True, intercept_scaling=1, class_weight=None,
                  random_state=None, solver='lbfgs', max_iter=100,
                  multi_class='auto', verbose=0, warm_start=False, n_jobs=None,
@@ -1383,9 +1388,6 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                                         self.intercept_[:, np.newaxis],
                                         axis=1)
 
-        self.coef_ = list()
-        self.intercept_ = np.zeros(n_classes)
-
         # Hack so that we iterate only once for the multinomial case.
         if multi_class == 'multinomial':
             classes_ = [None]
@@ -1427,6 +1429,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         if self.fit_intercept:
             self.intercept_ = self.coef_[:, -1]
             self.coef_ = self.coef_[:, :-1]
+        else:
+            self.intercept_ = np.zeros(n_classes)
 
         return self
 
@@ -1495,8 +1499,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         return np.log(self.predict_proba(X))
 
 
-class LogisticRegressionCV(LogisticRegression, BaseEstimator,
-                           LinearClassifierMixin):
+class LogisticRegressionCV(LogisticRegression,
+                           LinearClassifierMixin,
+                           BaseEstimator):
     """Logistic Regression CV (aka logit, MaxEnt) classifier.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -1732,12 +1737,13 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     >>> clf.score(X, y)
     0.98...
 
-    See also
+    See Also
     --------
     LogisticRegression
 
     """
-    def __init__(self, Cs=10, fit_intercept=True, cv=None, dual=False,
+    @_deprecate_positional_args
+    def __init__(self, *, Cs=10, fit_intercept=True, cv=None, dual=False,
                  penalty='l2', scoring=None, solver='lbfgs', tol=1e-4,
                  max_iter=100, class_weight=None, n_jobs=None, verbose=0,
                  refit=True, intercept_scaling=1., multi_class='auto',
@@ -1865,9 +1871,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
         # compute the class weights for the entire dataset y
         if class_weight == "balanced":
-            class_weight = compute_class_weight(class_weight,
-                                                np.arange(len(self.classes_)),
-                                                y)
+            class_weight = compute_class_weight(
+                class_weight, classes=np.arange(len(self.classes_)), y=y)
             class_weight = dict(enumerate(class_weight))
 
         path_func = delayed(_log_reg_scoring_path)
@@ -2081,3 +2086,11 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         scoring = get_scorer(scoring)
 
         return scoring(self, X, y, sample_weight=sample_weight)
+
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_sample_weights_invariance':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }

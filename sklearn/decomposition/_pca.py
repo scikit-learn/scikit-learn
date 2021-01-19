@@ -1,4 +1,4 @@
-""" Principal Component Analysis
+""" Principal Component Analysis.
 """
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
@@ -21,7 +21,7 @@ from scipy.sparse.linalg import svds
 
 from ._base import _BasePCA
 from ..utils import check_random_state
-from ..utils import check_array
+from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
@@ -36,7 +36,7 @@ def _assess_dimension(spectrum, rank, n_samples):
 
     Parameters
     ----------
-    spectrum : array of shape (n_features)
+    spectrum : ndarray of shape (n_features,)
         Data spectrum.
     rank : int
         Tested rank value. It should be strictly lower than n_features,
@@ -47,8 +47,8 @@ def _assess_dimension(spectrum, rank, n_samples):
 
     Returns
     -------
-    ll : float,
-        The log-likelihood
+    ll : float
+        The log-likelihood.
 
     Notes
     -----
@@ -130,7 +130,7 @@ class PCA(_BasePCA):
 
     Parameters
     ----------
-    n_components : int, float, None or str
+    n_components : int, float or 'mle', default=None
         Number of components to keep.
         if n_components is not set all components are kept::
 
@@ -156,7 +156,7 @@ class PCA(_BasePCA):
         fit(X).transform(X) will not yield the expected results,
         use fit_transform(X) instead.
 
-    whiten : bool, optional (default False)
+    whiten : bool, default=False
         When True (False by default) the `components_` vectors are multiplied
         by the square root of n_samples and then divided by the singular values
         to ensure uncorrelated outputs with unit component-wise variances.
@@ -166,7 +166,7 @@ class PCA(_BasePCA):
         improve the predictive accuracy of the downstream estimators by
         making their data respect some hard-wired assumptions.
 
-    svd_solver : str {'auto', 'full', 'arpack', 'randomized'}
+    svd_solver : {'auto', 'full', 'arpack', 'randomized'}, default='auto'
         If auto :
             The solver is selected by a default policy based on `X.shape` and
             `n_components`: if the input data is larger than 500x500 and the
@@ -186,19 +186,21 @@ class PCA(_BasePCA):
 
         .. versionadded:: 0.18.0
 
-    tol : float >= 0, optional (default .0)
+    tol : float, default=0.0
         Tolerance for singular values computed by svd_solver == 'arpack'.
+        Must be of range [0.0, infinity).
 
         .. versionadded:: 0.18.0
 
-    iterated_power : int >= 0, or 'auto', (default 'auto')
+    iterated_power : int or 'auto', default='auto'
         Number of iterations for the power method computed by
         svd_solver == 'randomized'.
+        Must be of range [0, infinity).
 
         .. versionadded:: 0.18.0
 
-    random_state : int, RandomState instance, default=None
-        Used when ``svd_solver`` == 'arpack' or 'randomized'. Pass an int
+    random_state : int, RandomState instance or None, default=None
+        Used when the 'arpack' or 'randomized' solvers are used. Pass an int
         for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
@@ -206,12 +208,12 @@ class PCA(_BasePCA):
 
     Attributes
     ----------
-    components_ : array, shape (n_components, n_features)
+    components_ : ndarray of shape (n_components, n_features)
         Principal axes in feature space, representing the directions of
         maximum variance in the data. The components are sorted by
         ``explained_variance_``.
 
-    explained_variance_ : array, shape (n_components,)
+    explained_variance_ : ndarray of shape (n_components,)
         The amount of variance explained by each of the selected components.
 
         Equal to n_components largest eigenvalues
@@ -219,20 +221,20 @@ class PCA(_BasePCA):
 
         .. versionadded:: 0.18
 
-    explained_variance_ratio_ : array, shape (n_components,)
+    explained_variance_ratio_ : ndarray of shape (n_components,)
         Percentage of variance explained by each of the selected components.
 
         If ``n_components`` is not set then all components are stored and the
         sum of the ratios is equal to 1.0.
 
-    singular_values_ : array, shape (n_components,)
+    singular_values_ : ndarray of shape (n_components,)
         The singular values corresponding to each of the selected components.
         The singular values are equal to the 2-norms of the ``n_components``
         variables in the lower-dimensional space.
 
         .. versionadded:: 0.19
 
-    mean_ : array, shape (n_features,)
+    mean_ : ndarray of shape (n_features,)
         Per-feature empirical mean, estimated from the training set.
 
         Equal to `X.mean(axis=0)`.
@@ -320,7 +322,7 @@ class PCA(_BasePCA):
     [6.30061...]
     """
     @_deprecate_positional_args
-    def __init__(self, n_components=None, copy=True, whiten=False,
+    def __init__(self, n_components=None, *, copy=True, whiten=False,
                  svd_solver='auto', tol=0.0, iterated_power='auto',
                  random_state=None):
         self.n_components = n_components
@@ -336,12 +338,11 @@ class PCA(_BasePCA):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : None
-            Ignored variable.
+        y : Ignored
 
         Returns
         -------
@@ -356,16 +357,15 @@ class PCA(_BasePCA):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : None
-            Ignored variable.
+        y : Ignored
 
         Returns
         -------
-        X_new : array-like, shape (n_samples, n_components)
+        X_new : ndarray of shape (n_samples, n_components)
             Transformed values.
 
         Notes
@@ -373,14 +373,14 @@ class PCA(_BasePCA):
         This method returns a Fortran-ordered array. To convert it to a
         C-ordered array, use 'np.ascontiguousarray'.
         """
-        U, S, V = self._fit(X)
+        U, S, Vt = self._fit(X)
         U = U[:, :self.n_components_]
 
         if self.whiten:
             # X_new = X * V / S * sqrt(n_samples) = U * sqrt(n_samples)
             U *= sqrt(X.shape[0] - 1)
         else:
-            # X_new = X * V = U * S * V^T * V = U * S
+            # X_new = X * V = U * S * Vt * V = U * S
             U *= S[:self.n_components_]
 
         return U
@@ -428,7 +428,7 @@ class PCA(_BasePCA):
                              "".format(self._fit_svd_solver))
 
     def _fit_full(self, X, n_components):
-        """Fit the model by computing full SVD on X"""
+        """Fit the model by computing full SVD on X."""
         n_samples, n_features = X.shape
 
         if n_components == 'mle':
@@ -451,11 +451,11 @@ class PCA(_BasePCA):
         self.mean_ = np.mean(X, axis=0)
         X -= self.mean_
 
-        U, S, V = linalg.svd(X, full_matrices=False)
+        U, S, Vt = linalg.svd(X, full_matrices=False)
         # flip eigenvectors' sign to enforce deterministic output
-        U, V = svd_flip(U, V)
+        U, Vt = svd_flip(U, Vt)
 
-        components_ = V
+        components_ = Vt
 
         # Get variance explained by singular values
         explained_variance_ = (S ** 2) / (n_samples - 1)
@@ -491,11 +491,11 @@ class PCA(_BasePCA):
             explained_variance_ratio_[:n_components]
         self.singular_values_ = singular_values_[:n_components]
 
-        return U, S, V
+        return U, S, Vt
 
     def _fit_truncated(self, X, n_components, svd_solver):
         """Fit the model by computing truncated SVD (by ARPACK or randomized)
-        on X
+        on X.
         """
         n_samples, n_features = X.shape
 
@@ -528,24 +528,23 @@ class PCA(_BasePCA):
         X -= self.mean_
 
         if svd_solver == 'arpack':
-            # random init solution, as ARPACK does it internally
-            v0 = random_state.uniform(-1, 1, size=min(X.shape))
-            U, S, V = svds(X, k=n_components, tol=self.tol, v0=v0)
+            v0 = _init_arpack_v0(min(X.shape), random_state)
+            U, S, Vt = svds(X, k=n_components, tol=self.tol, v0=v0)
             # svds doesn't abide by scipy.linalg.svd/randomized_svd
             # conventions, so reverse its outputs.
             S = S[::-1]
             # flip eigenvectors' sign to enforce deterministic output
-            U, V = svd_flip(U[:, ::-1], V[::-1])
+            U, Vt = svd_flip(U[:, ::-1], Vt[::-1])
 
         elif svd_solver == 'randomized':
             # sign flipping is done inside
-            U, S, V = randomized_svd(X, n_components=n_components,
-                                     n_iter=self.iterated_power,
-                                     flip_sign=True,
-                                     random_state=random_state)
+            U, S, Vt = randomized_svd(X, n_components=n_components,
+                                      n_iter=self.iterated_power,
+                                      flip_sign=True,
+                                      random_state=random_state)
 
         self.n_samples_, self.n_features_ = n_samples, n_features
-        self.components_ = V
+        self.components_ = Vt
         self.n_components_ = n_components
 
         # Get variance explained by singular values
@@ -562,7 +561,7 @@ class PCA(_BasePCA):
         else:
             self.noise_variance_ = 0.
 
-        return U, S, V
+        return U, S, Vt
 
     def score_samples(self, X):
         """Return the log-likelihood of each sample.
@@ -573,17 +572,17 @@ class PCA(_BasePCA):
 
         Parameters
         ----------
-        X : array, shape(n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The data.
 
         Returns
         -------
-        ll : array, shape (n_samples,)
+        ll : ndarray of shape (n_samples,)
             Log-likelihood of each sample under the current model.
         """
         check_is_fitted(self)
 
-        X = check_array(X)
+        X = self._validate_data(X, dtype=[np.float64, np.float32], reset=False)
         Xr = X - self.mean_
         n_features = X.shape[1]
         precision = self.get_precision()
@@ -601,11 +600,10 @@ class PCA(_BasePCA):
 
         Parameters
         ----------
-        X : array, shape(n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The data.
 
-        y : None
-            Ignored variable.
+        y : Ignored
 
         Returns
         -------
@@ -613,3 +611,6 @@ class PCA(_BasePCA):
             Average log-likelihood of the samples under the current model.
         """
         return np.mean(self.score_samples(X))
+
+    def _more_tags(self):
+        return {'preserves_dtype': [np.float64, np.float32]}

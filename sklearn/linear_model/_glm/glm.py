@@ -12,7 +12,6 @@ import numpy as np
 import scipy.optimize
 
 from ...base import BaseEstimator, RegressorMixin
-from ...utils import check_array, check_X_y
 from ...utils.optimize import _check_optimize_result
 from ...utils.validation import check_is_fitted, _check_sample_weight
 from ..._loss.glm_distribution import (
@@ -48,7 +47,7 @@ def _y_pred_deviance_derivative(coef, X, y, weights, family, link):
     return y_pred, devp
 
 
-class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
+class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
     """Regression via a penalized Generalized Linear Model (GLM).
 
     GLMs based on a reproductive Exponential Dispersion Model (EDM) aim at
@@ -63,6 +62,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
     The parameter ``alpha`` corresponds to the lambda parameter in glmnet.
 
     Read more in the :ref:`User Guide <Generalized_linear_regression>`.
+
+    .. versionadded:: 0.23
 
     Parameters
     ----------
@@ -219,9 +220,9 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         family = self._family_instance
         link = self._link_instance
 
-        X, y = check_X_y(X, y, accept_sparse=['csc', 'csr'],
-                         dtype=[np.float64, np.float32],
-                         y_numeric=True, multi_output=False)
+        X, y = self._validate_data(X, y, accept_sparse=['csc', 'csr'],
+                                   dtype=[np.float64, np.float32],
+                                   y_numeric=True, multi_output=False)
 
         weights = _check_sample_weight(sample_weight, X)
 
@@ -309,9 +310,9 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
             Returns predicted values of linear predictor.
         """
         check_is_fitted(self)
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                        dtype=[np.float64, np.float32], ensure_2d=True,
-                        allow_nd=False)
+        X = self._validate_data(X, accept_sparse=['csr', 'csc', 'coo'],
+                                dtype=[np.float64, np.float32], ensure_2d=True,
+                                allow_nd=False, reset=False)
         return X @ self.coef_ + self.intercept_
 
     def predict(self, X):
@@ -391,6 +392,8 @@ class PoissonRegressor(GeneralizedLinearRegressor):
 
     Read more in the :ref:`User Guide <Generalized_linear_regression>`.
 
+    .. versionadded:: 0.23
+
     Parameters
     ----------
     alpha : float, default=1
@@ -430,6 +433,23 @@ class PoissonRegressor(GeneralizedLinearRegressor):
 
     n_iter_ : int
         Actual number of iterations used in the solver.
+
+    Examples
+    ----------
+    >>> from sklearn import linear_model
+    >>> clf = linear_model.PoissonRegressor()
+    >>> X = [[1, 2], [2, 3], [3, 4], [4, 3]]
+    >>> y = [12, 17, 22, 21]
+    >>> clf.fit(X, y)
+    PoissonRegressor()
+    >>> clf.score(X, y)
+    0.990...
+    >>> clf.coef_
+    array([0.121..., 0.158...])
+    >>> clf.intercept_
+    2.088...
+    >>> clf.predict([[1, 1], [3, 4]])
+    array([10.676..., 21.875...])
     """
     def __init__(self, *, alpha=1.0, fit_intercept=True, max_iter=100,
                  tol=1e-4, warm_start=False, verbose=0):
@@ -453,6 +473,8 @@ class GammaRegressor(GeneralizedLinearRegressor):
     """Generalized Linear Model with a Gamma distribution.
 
     Read more in the :ref:`User Guide <Generalized_linear_regression>`.
+
+    .. versionadded:: 0.23
 
     Parameters
     ----------
@@ -493,6 +515,23 @@ class GammaRegressor(GeneralizedLinearRegressor):
 
     n_iter_ : int
         Actual number of iterations used in the solver.
+
+    Examples
+    --------
+    >>> from sklearn import linear_model
+    >>> clf = linear_model.GammaRegressor()
+    >>> X = [[1, 2], [2, 3], [3, 4], [4, 3]]
+    >>> y = [19, 26, 33, 30]
+    >>> clf.fit(X, y)
+    GammaRegressor()
+    >>> clf.score(X, y)
+    0.773...
+    >>> clf.coef_
+    array([0.072..., 0.066...])
+    >>> clf.intercept_
+    2.896...
+    >>> clf.predict([[1, 0], [2, 8]])
+    array([19.483..., 35.795...])
     """
     def __init__(self, *, alpha=1.0, fit_intercept=True, max_iter=100,
                  tol=1e-4, warm_start=False, verbose=0):
@@ -519,6 +558,8 @@ class TweedieRegressor(GeneralizedLinearRegressor):
     ``power`` parameter, which determines the underlying distribution.
 
     Read more in the :ref:`User Guide <Generalized_linear_regression>`.
+
+    .. versionadded:: 0.23
 
     Parameters
     ----------
@@ -587,6 +628,23 @@ class TweedieRegressor(GeneralizedLinearRegressor):
 
     n_iter_ : int
         Actual number of iterations used in the solver.
+
+    Examples
+    ----------
+    >>> from sklearn import linear_model
+    >>> clf = linear_model.TweedieRegressor()
+    >>> X = [[1, 2], [2, 3], [3, 4], [4, 3]]
+    >>> y = [2, 3.5, 5, 5.5]
+    >>> clf.fit(X, y)
+    TweedieRegressor()
+    >>> clf.score(X, y)
+    0.839...
+    >>> clf.coef_
+    array([0.599..., 0.299...])
+    >>> clf.intercept_
+    1.600...
+    >>> clf.predict([[1, 1], [3, 4]])
+    array([2.500..., 4.599...])
     """
     def __init__(self, *, power=0.0, alpha=1.0, fit_intercept=True,
                  link='auto', max_iter=100, tol=1e-4,

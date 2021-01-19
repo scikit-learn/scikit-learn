@@ -2,6 +2,7 @@ import numpy as np
 from scipy.optimize import linear_sum_assignment
 
 from ...utils.validation import check_consistent_length, check_array
+from ...utils.validation import _deprecate_positional_args
 
 __all__ = ["consensus_score"]
 
@@ -44,7 +45,8 @@ def _pairwise_similarity(a, b, similarity):
     return result
 
 
-def consensus_score(a, b, similarity="jaccard"):
+@_deprecate_positional_args
+def consensus_score(a, b, *, similarity="jaccard"):
     """The similarity of two sets of biclusters.
 
     Similarity between individual biclusters is computed. Then the
@@ -62,7 +64,7 @@ def consensus_score(a, b, similarity="jaccard"):
     b : (rows, columns)
         Another set of biclusters like ``a``.
 
-    similarity : string or function, optional, default: "jaccard"
+    similarity : 'jaccard' or callable, default='jaccard'
         May be the string "jaccard" to use the Jaccard coefficient, or
         any function that takes four arguments, each of which is a 1d
         indicator vector: (a_rows, a_columns, b_rows, b_columns).

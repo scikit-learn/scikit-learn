@@ -5,12 +5,14 @@ from ..base import BaseEstimator, RegressorMixin, OutlierMixin
 from ..linear_model._base import LinearClassifierMixin, SparseCoefMixin, \
     LinearModel
 from ..utils.validation import _num_samples
+from ..utils.validation import _deprecate_positional_args
 from ..utils.multiclass import check_classification_targets
 from ..utils.deprecation import deprecated
 
 
-class LinearSVC(BaseEstimator, LinearClassifierMixin,
-                SparseCoefMixin):
+class LinearSVC(LinearClassifierMixin,
+                SparseCoefMixin,
+                BaseEstimator):
     """Linear Support Vector Classification.
 
     Similar to SVC with parameter kernel='linear', but implemented in terms of
@@ -33,7 +35,8 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     loss : {'hinge', 'squared_hinge'}, default='squared_hinge'
         Specifies the loss function. 'hinge' is the standard SVM loss
         (used e.g. by the SVC class) while 'squared_hinge' is the
-        square of the hinge loss.
+        square of the hinge loss. The combination of ``penalty='l1'``
+        and ``loss='hinge'`` is not supported.
 
     dual : bool, default=True
         Select the algorithm to either solve the dual or primal
@@ -86,7 +89,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         per-process runtime setting in liblinear that, if enabled, may not work
         properly in a multithreaded context.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the pseudo random number generation for shuffling the data for
         the dual coordinate descent (if ``dual=True``). When ``dual=False`` the
         underlying implementation of :class:`LinearSVC` is not random and
@@ -118,21 +121,20 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
 
     See Also
     --------
-    SVC
-        Implementation of Support Vector Machine classifier using libsvm:
+    SVC : Implementation of Support Vector Machine classifier using libsvm:
         the kernel can be non-linear but its SMO algorithm does not
         scale to large number of samples as LinearSVC does.
 
         Furthermore SVC multi-class mode is implemented using one
         vs one scheme while LinearSVC uses one vs the rest. It is
         possible to implement one vs the rest with SVC by using the
-        :class:`sklearn.multiclass.OneVsRestClassifier` wrapper.
+        :class:`~sklearn.multiclass.OneVsRestClassifier` wrapper.
 
         Finally SVC can fit dense data without memory copy if the input
         is C-contiguous. Sparse data will still incur memory copy though.
 
-    sklearn.linear_model.SGDClassifier
-        SGDClassifier can optimize the same cost function as LinearSVC
+    sklearn.linear_model.SGDClassifier : SGDClassifier can optimize the same
+        cost function as LinearSVC
         by adjusting the penalty and loss parameters. In addition it requires
         less memory, allows incremental (online) learning, and implements
         various loss functions and regularization regimes.
@@ -177,9 +179,9 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
     """
-
-    def __init__(self, penalty='l2', loss='squared_hinge', dual=True, tol=1e-4,
-                 C=1.0, multi_class='ovr', fit_intercept=True,
+    @_deprecate_positional_args
+    def __init__(self, penalty='l2', loss='squared_hinge', *, dual=True,
+                 tol=1e-4, C=1.0, multi_class='ovr', fit_intercept=True,
                  intercept_scaling=1, class_weight=None, verbose=0,
                  random_state=None, max_iter=1000):
         self.dual = dual
@@ -212,6 +214,8 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
             samples. If not provided,
             then each sample is given unit weight.
 
+            .. versionadded:: 0.18
+
         Returns
         -------
         self : object
@@ -240,6 +244,14 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
                 self.intercept_ = np.array([intercept])
 
         return self
+
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_sample_weights_invariance':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }
 
 
 class LinearSVR(RegressorMixin, LinearModel):
@@ -301,7 +313,7 @@ class LinearSVR(RegressorMixin, LinearModel):
         per-process runtime setting in liblinear that, if enabled, may not work
         properly in a multithreaded context.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the pseudo random number generation for shuffling the data.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -346,25 +358,24 @@ class LinearSVR(RegressorMixin, LinearModel):
     [-2.384...]
 
 
-    See also
+    See Also
     --------
-    LinearSVC
-        Implementation of Support Vector Machine classifier using the
+    LinearSVC : Implementation of Support Vector Machine classifier using the
         same library as this class (liblinear).
 
-    SVR
-        Implementation of Support Vector Machine regression using libsvm:
+    SVR : Implementation of Support Vector Machine regression using libsvm:
         the kernel can be non-linear but its SMO algorithm does not
         scale to large number of samples as LinearSVC does.
 
-    sklearn.linear_model.SGDRegressor
-        SGDRegressor can optimize the same cost function as LinearSVR
+    sklearn.linear_model.SGDRegressor : SGDRegressor can optimize the same cost
+        function as LinearSVR
         by adjusting the penalty and loss parameters. In addition it requires
         less memory, allows incremental (online) learning, and implements
         various loss functions and regularization regimes.
     """
 
-    def __init__(self, epsilon=0.0, tol=1e-4, C=1.0,
+    @_deprecate_positional_args
+    def __init__(self, *, epsilon=0.0, tol=1e-4, C=1.0,
                  loss='epsilon_insensitive', fit_intercept=True,
                  intercept_scaling=1., dual=True, verbose=0,
                  random_state=None, max_iter=1000):
@@ -396,6 +407,8 @@ class LinearSVR(RegressorMixin, LinearModel):
             samples. If not provided,
             then each sample is given unit weight.
 
+            .. versionadded:: 0.18
+
         Returns
         -------
         self : object
@@ -418,6 +431,14 @@ class LinearSVR(RegressorMixin, LinearModel):
 
         return self
 
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_sample_weights_invariance':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }
+
 
 class SVC(BaseSVC):
     """C-Support Vector Classification.
@@ -425,9 +446,9 @@ class SVC(BaseSVC):
     The implementation is based on libsvm. The fit time scales at least
     quadratically with the number of samples and may be impractical
     beyond tens of thousands of samples. For large datasets
-    consider using :class:`sklearn.svm.LinearSVC` or
-    :class:`sklearn.linear_model.SGDClassifier` instead, possibly after a
-    :class:`sklearn.kernel_approximation.Nystroem` transformer.
+    consider using :class:`~sklearn.svm.LinearSVC` or
+    :class:`~sklearn.linear_model.SGDClassifier` instead, possibly after a
+    :class:`~sklearn.kernel_approximation.Nystroem` transformer.
 
     The multiclass support is handled according to a one-vs-one scheme.
 
@@ -529,7 +550,7 @@ class SVC(BaseSVC):
 
         .. versionadded:: 0.22
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the pseudo random number generation for shuffling the data for
         probability estimates. Ignored when `probability` is False.
         Pass an int for reproducible output across multiple function calls.
@@ -537,16 +558,21 @@ class SVC(BaseSVC):
 
     Attributes
     ----------
-    support_ : ndarray of shape (n_SV,)
-        Indices of support vectors.
+    class_weight_ : ndarray of shape (n_classes,)
+        Multipliers of parameter C for each class.
+        Computed based on the ``class_weight`` parameter.
 
-    support_vectors_ : ndarray of shape (n_SV, n_features)
-        Support vectors.
+    classes_ : ndarray of shape (n_classes,)
+        The classes labels.
 
-    n_support_ : ndarray of shape (n_class,), dtype=int32
-        Number of support vectors for each class.
+    coef_ : ndarray of shape (n_classes * (n_classes - 1) / 2, n_features)
+        Weights assigned to the features (coefficients in the primal
+        problem). This is only available in the case of a linear kernel.
 
-    dual_coef_ : ndarray of shape (n_class-1, n_SV)
+        `coef_` is a readonly property derived from `dual_coef_` and
+        `support_vectors_`.
+
+    dual_coef_ : ndarray of shape (n_classes -1, n_SV)
         Dual coefficients of the support vector in the decision
         function (see :ref:`sgd_mathematical_formulation`), multiplied by
         their targets.
@@ -555,24 +581,23 @@ class SVC(BaseSVC):
         non-trivial. See the :ref:`multi-class section of the User Guide
         <svm_multi_class>` for details.
 
-    coef_ : ndarray of shape (n_class * (n_class-1) / 2, n_features)
-        Weights assigned to the features (coefficients in the primal
-        problem). This is only available in the case of a linear kernel.
-
-        `coef_` is a readonly property derived from `dual_coef_` and
-        `support_vectors_`.
-
-    intercept_ : ndarray of shape (n_class * (n_class-1) / 2,)
-        Constants in decision function.
-
     fit_status_ : int
         0 if correctly fitted, 1 otherwise (will raise warning)
 
-    classes_ : ndarray of shape (n_classes,)
-        The classes labels.
+    intercept_ : ndarray of shape (n_classes * (n_classes - 1) / 2,)
+        Constants in decision function.
 
-    probA_ : ndarray of shape (n_class * (n_class-1) / 2)
-    probB_ : ndarray of shape (n_class * (n_class-1) / 2)
+    support_ : ndarray of shape (n_SV)
+        Indices of support vectors.
+
+    support_vectors_ : ndarray of shape (n_SV, n_features)
+        Support vectors.
+
+    n_support_ : ndarray of shape (n_classes,), dtype=int32
+        Number of support vectors for each class.
+
+    probA_ : ndarray of shape (n_classes * (n_classes - 1) / 2)
+    probB_ : ndarray of shape (n_classes * (n_classes - 1) / 2)
         If `probability=True`, it corresponds to the parameters learned in
         Platt scaling to produce probability estimates from decision values.
         If `probability=False`, it's an empty array. Platt scaling uses the
@@ -581,10 +606,6 @@ class SVC(BaseSVC):
         where ``probA_`` and ``probB_`` are learned from the dataset [2]_. For
         more information on the multiclass case and training procedure see
         section 8 of [1]_.
-
-    class_weight_ : ndarray of shape (n_class,)
-        Multipliers of parameter C for each class.
-        Computed based on the ``class_weight`` parameter.
 
     shape_fit_ : tuple of int of shape (n_dimensions_of_X,)
         Array dimensions of training vector ``X``.
@@ -605,14 +626,12 @@ class SVC(BaseSVC):
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
-    See also
+    See Also
     --------
-    SVR
-        Support Vector Machine for Regression implemented using libsvm.
+    SVR : Support Vector Machine for Regression implemented using libsvm.
 
-    LinearSVC
-        Scalable Linear Support Vector Machine for classification
-        implemented using liblinear. Check the See also section of
+    LinearSVC : Scalable Linear Support Vector Machine for classification
+        implemented using liblinear. Check the See Also section of
         LinearSVC for more comparison element.
 
     References
@@ -627,7 +646,8 @@ class SVC(BaseSVC):
 
     _impl = 'c_svc'
 
-    def __init__(self, C=1.0, kernel='rbf', degree=3, gamma='scale',
+    @_deprecate_positional_args
+    def __init__(self, *, C=1.0, kernel='rbf', degree=3, gamma='scale',
                  coef0=0.0, shrinking=True, probability=False,
                  tol=1e-3, cache_size=200, class_weight=None,
                  verbose=False, max_iter=-1, decision_function_shape='ovr',
@@ -642,6 +662,14 @@ class SVC(BaseSVC):
             decision_function_shape=decision_function_shape,
             break_ties=break_ties,
             random_state=random_state)
+
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_sample_weights_invariance':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }
 
 
 class NuSVC(BaseSVC):
@@ -743,7 +771,7 @@ class NuSVC(BaseSVC):
 
         .. versionadded:: 0.22
 
-    random_state : int or RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the pseudo random number generation for shuffling the data for
         probability estimates. Ignored when `probability` is False.
         Pass an int for reproducible output across multiple function calls.
@@ -751,16 +779,21 @@ class NuSVC(BaseSVC):
 
     Attributes
     ----------
-    support_ : ndarray of shape (n_SV,)
-        Indices of support vectors.
+    class_weight_ : ndarray of shape (n_classes,)
+        Multipliers of parameter C of each class.
+        Computed based on the ``class_weight`` parameter.
 
-    support_vectors_ : ndarray of shape (n_SV, n_features)
-        Support vectors.
+    classes_ : ndarray of shape (n_classes,)
+        The unique classes labels.
 
-    n_support_ : ndarray of shape (n_class), dtype=int32
-        Number of support vectors for each class.
+    coef_ : ndarray of shape (n_classes * (n_classes -1) / 2, n_features)
+        Weights assigned to the features (coefficients in the primal
+        problem). This is only available in the case of a linear kernel.
 
-    dual_coef_ : ndarray of shape (n_class-1, n_SV)
+        `coef_` is readonly property derived from `dual_coef_` and
+        `support_vectors_`.
+
+    dual_coef_ : ndarray of shape (n_classes - 1, n_SV)
         Dual coefficients of the support vector in the decision
         function (see :ref:`sgd_mathematical_formulation`), multiplied by
         their targets.
@@ -769,24 +802,26 @@ class NuSVC(BaseSVC):
         non-trivial. See the :ref:`multi-class section of the User Guide
         <svm_multi_class>` for details.
 
-    coef_ : ndarray of shape (n_class * (n_class-1) / 2, n_features)
-        Weights assigned to the features (coefficients in the primal
-        problem). This is only available in the case of a linear kernel.
+    fit_status_ : int
+        0 if correctly fitted, 1 if the algorithm did not converge.
 
-        `coef_` is readonly property derived from `dual_coef_` and
-        `support_vectors_`.
-
-    intercept_ : ndarray of shape (n_class * (n_class-1) / 2,)
+    intercept_ : ndarray of shape (n_classes * (n_classes - 1) / 2,)
         Constants in decision function.
 
-    classes_ : ndarray of shape (n_classes,)
-        The unique classes labels.
+    support_ : ndarray of shape (n_SV,)
+        Indices of support vectors.
+
+    support_vectors_ : ndarray of shape (n_SV, n_features)
+        Support vectors.
+
+    n_support_ : ndarray of shape (n_classes,), dtype=int32
+        Number of support vectors for each class.
 
     fit_status_ : int
         0 if correctly fitted, 1 if the algorithm did not converge.
 
-    probA_ : ndarray of shape (n_class * (n_class-1) / 2,)
-    probB_ : ndarray of shape (n_class * (n_class-1) / 2,)
+    probA_ : ndarray of shape (n_classes * (n_classes - 1) / 2,)
+    probB_ : ndarray of shape (n_classes * (n_classes - 1) / 2,)
         If `probability=True`, it corresponds to the parameters learned in
         Platt scaling to produce probability estimates from decision values.
         If `probability=False`, it's an empty array. Platt scaling uses the
@@ -795,10 +830,6 @@ class NuSVC(BaseSVC):
         where ``probA_`` and ``probB_`` are learned from the dataset [2]_. For
         more information on the multiclass case and training procedure see
         section 8 of [1]_.
-
-    class_weight_ : ndarray of shape (n_class,)
-        Multipliers of parameter C of each class.
-        Computed based on the ``class_weight`` parameter.
 
     shape_fit_ : tuple of int of shape (n_dimensions_of_X,)
         Array dimensions of training vector ``X``.
@@ -817,13 +848,11 @@ class NuSVC(BaseSVC):
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
-    See also
+    See Also
     --------
-    SVC
-        Support Vector Machine for classification using libsvm.
+    SVC : Support Vector Machine for classification using libsvm.
 
-    LinearSVC
-        Scalable linear Support Vector Machine for classification using
+    LinearSVC : Scalable linear Support Vector Machine for classification using
         liblinear.
 
     References
@@ -838,7 +867,8 @@ class NuSVC(BaseSVC):
 
     _impl = 'nu_svc'
 
-    def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma='scale',
+    @_deprecate_positional_args
+    def __init__(self, *, nu=0.5, kernel='rbf', degree=3, gamma='scale',
                  coef0=0.0, shrinking=True, probability=False, tol=1e-3,
                  cache_size=200, class_weight=None, verbose=False, max_iter=-1,
                  decision_function_shape='ovr', break_ties=False,
@@ -855,10 +885,12 @@ class NuSVC(BaseSVC):
 
     def _more_tags(self):
         return {
-            '_xfail_test': {
+            '_xfail_checks': {
                 'check_methods_subset_invariance':
                 'fails for the decision_function method',
-                'check_class_weight_classifiers': 'class_weight is ignored.'
+                'check_class_weight_classifiers': 'class_weight is ignored.',
+                'check_sample_weights_invariance':
+                'zero sample_weight is not equivalent to removing samples',
             }
         }
 
@@ -871,9 +903,9 @@ class SVR(RegressorMixin, BaseLibSVM):
     The implementation is based on libsvm. The fit time complexity
     is more than quadratic with the number of samples which makes it hard
     to scale to datasets with more than a couple of 10000 samples. For large
-    datasets consider using :class:`sklearn.svm.LinearSVR` or
-    :class:`sklearn.linear_model.SGDRegressor` instead, possibly after a
-    :class:`sklearn.kernel_approximation.Nystroem` transformer.
+    datasets consider using :class:`~sklearn.svm.LinearSVR` or
+    :class:`~sklearn.linear_model.SGDRegressor` instead, possibly after a
+    :class:`~sklearn.kernel_approximation.Nystroem` transformer.
 
     Read more in the :ref:`User Guide <svm_regression>`.
 
@@ -935,14 +967,9 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     Attributes
     ----------
-    support_ : ndarray of shape (n_SV,)
-        Indices of support vectors.
-
-    support_vectors_ : ndarray of shape (n_SV, n_features)
-        Support vectors.
-
-    dual_coef_ : ndarray of shape (1, n_SV)
-        Coefficients of the support vector in the decision function.
+    class_weight_ : ndarray of shape (n_classes,)
+        Multipliers of parameter C for each class.
+        Computed based on the ``class_weight`` parameter.
 
     coef_ : ndarray of shape (1, n_features)
         Weights assigned to the features (coefficients in the primal
@@ -951,11 +978,26 @@ class SVR(RegressorMixin, BaseLibSVM):
         `coef_` is readonly property derived from `dual_coef_` and
         `support_vectors_`.
 
+    dual_coef_ : ndarray of shape (1, n_SV)
+        Coefficients of the support vector in the decision function.
+
     fit_status_ : int
         0 if correctly fitted, 1 otherwise (will raise warning)
 
     intercept_ : ndarray of shape (1,)
         Constants in decision function.
+
+    n_support_ : ndarray of shape (n_classes,), dtype=int32
+        Number of support vectors for each class.
+
+    shape_fit_ : tuple of int of shape (n_dimensions_of_X,)
+        Array dimensions of training vector ``X``.
+
+    support_ : ndarray of shape (n_SV,)
+        Indices of support vectors.
+
+    support_vectors_ : ndarray of shape (n_SV, n_features)
+        Support vectors.
 
     Examples
     --------
@@ -972,27 +1014,28 @@ class SVR(RegressorMixin, BaseLibSVM):
     Pipeline(steps=[('standardscaler', StandardScaler()),
                     ('svr', SVR(epsilon=0.2))])
 
-
-    See also
+    See Also
     --------
-    NuSVR
-        Support Vector Machine for regression implemented using libsvm
+    NuSVR : Support Vector Machine for regression implemented using libsvm
         using a parameter to control the number of support vectors.
 
-    LinearSVR
-        Scalable Linear Support Vector Machine for regression
+    LinearSVR : Scalable Linear Support Vector Machine for regression
         implemented using liblinear.
 
-    Notes
-    -----
-    **References:**
-    `LIBSVM: A Library for Support Vector Machines
-    <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`__
+    References
+    ----------
+    .. [1] `LIBSVM: A Library for Support Vector Machines
+        <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_
+
+    .. [2] `Platt, John (1999). "Probabilistic outputs for support vector
+        machines and comparison to regularizedlikelihood methods."
+        <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.41.1639>`_
     """
 
     _impl = 'epsilon_svr'
 
-    def __init__(self, kernel='rbf', degree=3, gamma='scale',
+    @_deprecate_positional_args
+    def __init__(self, *, kernel='rbf', degree=3, gamma='scale',
                  coef0=0.0, tol=1e-3, C=1.0, epsilon=0.1, shrinking=True,
                  cache_size=200, verbose=False, max_iter=-1):
 
@@ -1005,7 +1048,7 @@ class SVR(RegressorMixin, BaseLibSVM):
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
         "The probA_ attribute is deprecated in version 0.23 and will be "
-        "removed in version 0.25.")
+        "removed in version 1.0 (renaming of 0.25).")
     @property
     def probA_(self):
         return self._probA
@@ -1013,10 +1056,18 @@ class SVR(RegressorMixin, BaseLibSVM):
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
         "The probB_ attribute is deprecated in version 0.23 and will be "
-        "removed in version 0.25.")
+        "removed in version 1.0 (renaming of 0.25).")
     @property
     def probB_(self):
         return self._probB
+
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_sample_weights_invariance':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }
 
 
 class NuSVR(RegressorMixin, BaseLibSVM):
@@ -1085,14 +1136,9 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
     Attributes
     ----------
-    support_ : ndarray of shape (n_SV,)
-        Indices of support vectors.
-
-    support_vectors_ : ndarray of shape (n_SV, n_features)
-        Support vectors.
-
-    dual_coef_ : ndarray of shape (1, n_SV)
-        Coefficients of the support vector in the decision function.
+    class_weight_ : ndarray of shape (n_classes,)
+        Multipliers of parameter C for each class.
+        Computed based on the ``class_weight`` parameter.
 
     coef_ : ndarray of shape (1, n_features)
         Weights assigned to the features (coefficients in the primal
@@ -1101,8 +1147,26 @@ class NuSVR(RegressorMixin, BaseLibSVM):
         `coef_` is readonly property derived from `dual_coef_` and
         `support_vectors_`.
 
+    dual_coef_ : ndarray of shape (1, n_SV)
+        Coefficients of the support vector in the decision function.
+
+    fit_status_ : int
+        0 if correctly fitted, 1 otherwise (will raise warning)
+
     intercept_ : ndarray of shape (1,)
         Constants in decision function.
+
+    n_support_ : ndarray of shape (n_classes,), dtype=int32
+        Number of support vectors for each class.
+
+    shape_fit_ : tuple of int of shape (n_dimensions_of_X,)
+        Array dimensions of training vector ``X``.
+
+    support_ : ndarray of shape (n_SV,)
+        Indices of support vectors.
+
+    support_vectors_ : ndarray of shape (n_SV, n_features)
+        Support vectors.
 
     Examples
     --------
@@ -1119,25 +1183,28 @@ class NuSVR(RegressorMixin, BaseLibSVM):
     Pipeline(steps=[('standardscaler', StandardScaler()),
                     ('nusvr', NuSVR(nu=0.1))])
 
-    See also
+    See Also
     --------
-    NuSVC
-        Support Vector Machine for classification implemented with libsvm
+    NuSVC : Support Vector Machine for classification implemented with libsvm
         with a parameter to control the number of support vectors.
 
-    SVR
-        epsilon Support Vector Machine for regression implemented with libsvm.
+    SVR : Epsilon Support Vector Machine for regression implemented with
+        libsvm.
 
-    Notes
-    -----
-    **References:**
-    `LIBSVM: A Library for Support Vector Machines
-    <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`__
+    References
+    ----------
+    .. [1] `LIBSVM: A Library for Support Vector Machines
+        <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_
+
+    .. [2] `Platt, John (1999). "Probabilistic outputs for support vector
+        machines and comparison to regularizedlikelihood methods."
+        <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.41.1639>`_
     """
 
     _impl = 'nu_svr'
 
-    def __init__(self, nu=0.5, C=1.0, kernel='rbf', degree=3,
+    @_deprecate_positional_args
+    def __init__(self, *, nu=0.5, C=1.0, kernel='rbf', degree=3,
                  gamma='scale', coef0=0.0, shrinking=True,
                  tol=1e-3, cache_size=200, verbose=False, max_iter=-1):
 
@@ -1146,6 +1213,14 @@ class NuSVR(RegressorMixin, BaseLibSVM):
             tol=tol, C=C, nu=nu, epsilon=0., shrinking=shrinking,
             probability=False, cache_size=cache_size, class_weight=None,
             verbose=verbose, max_iter=max_iter, random_state=None)
+
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_sample_weights_invariance':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }
 
 
 class OneClassSVM(OutlierMixin, BaseLibSVM):
@@ -1210,24 +1285,28 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
     Attributes
     ----------
-    support_ : ndarray of shape (n_SV,)
-        Indices of support vectors.
-
-    support_vectors_ : ndarray of shape (n_SV, n_features)
-        Support vectors.
-
-    dual_coef_ : ndarray of shape (1, n_SV)
-        Coefficients of the support vectors in the decision function.
+    class_weight_ : ndarray of shape (n_classes,)
+        Multipliers of parameter C for each class.
+        Computed based on the ``class_weight`` parameter.
 
     coef_ : ndarray of shape (1, n_features)
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
 
         `coef_` is readonly property derived from `dual_coef_` and
-        `support_vectors_`
+        `support_vectors_`.
+
+    dual_coef_ : ndarray of shape (1, n_SV)
+        Coefficients of the support vectors in the decision function.
+
+    fit_status_ : int
+        0 if correctly fitted, 1 otherwise (will raise warning)
 
     intercept_ : ndarray of shape (1,)
         Constant in the decision function.
+
+    n_support_ : ndarray of shape (n_classes,), dtype=int32
+        Number of support vectors for each class.
 
     offset_ : float
         Offset used to define the decision function from the raw scores.
@@ -1235,8 +1314,16 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         The offset is the opposite of `intercept_` and is provided for
         consistency with other outlier detection algorithms.
 
-    fit_status_ : int
-        0 if correctly fitted, 1 otherwise (will raise warning)
+        .. versionadded:: 0.20
+
+    shape_fit_ : tuple of int of shape (n_dimensions_of_X,)
+        Array dimensions of training vector ``X``.
+
+    support_ : ndarray of shape (n_SV,)
+        Indices of support vectors.
+
+    support_vectors_ : ndarray of shape (n_SV, n_features)
+        Support vectors.
 
     Examples
     --------
@@ -1245,13 +1332,14 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     >>> clf = OneClassSVM(gamma='auto').fit(X)
     >>> clf.predict(X)
     array([-1,  1,  1,  1, -1])
-    >>> clf.score_samples(X)  # doctest: +ELLIPSIS
+    >>> clf.score_samples(X)
     array([1.7798..., 2.0547..., 2.0556..., 2.0561..., 1.7332...])
     """
 
     _impl = 'one_class'
 
-    def __init__(self, kernel='rbf', degree=3, gamma='scale',
+    @_deprecate_positional_args
+    def __init__(self, *, kernel='rbf', degree=3, gamma='scale',
                  coef0=0.0, tol=1e-3, nu=0.5, shrinking=True, cache_size=200,
                  verbose=False, max_iter=-1):
 
@@ -1346,7 +1434,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
         "The probA_ attribute is deprecated in version 0.23 and will be "
-        "removed in version 0.25.")
+        "removed in version 1.0.")
     @property
     def probA_(self):
         return self._probA
@@ -1354,7 +1442,15 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
         "The probB_ attribute is deprecated in version 0.23 and will be "
-        "removed in version 0.25.")
+        "removed in version 1.0.")
     @property
     def probB_(self):
         return self._probB
+
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_sample_weights_invariance':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }

@@ -26,7 +26,7 @@
    Modified 2020:
    - Improved random number generator by using a mersenne twister + tweaked
      lemire postprocessor. This fixed a convergence issue on windows targets.
-     Sylvain Marie
+     Sylvain Marie, Schneider Electric
      See <https://github.com/scikit-learn/scikit-learn/pull/13511#issuecomment-481729756>
 
  */

@@ -10,7 +10,7 @@ import numpy as np
 from abc import ABCMeta, abstractmethod
 from warnings import warn
 
-from joblib import Parallel, delayed
+from joblib import Parallel
 
 from ._base import BaseEnsemble, _partition_estimators
 from ..base import ClassifierMixin, RegressorMixin
@@ -23,6 +23,7 @@ from ..utils.multiclass import check_classification_targets
 from ..utils.random import sample_without_replacement
 from ..utils.validation import has_fit_parameter, check_is_fitted, \
     _check_sample_weight, _deprecate_positional_args
+from ..utils.fixes import delayed
 
 
 __all__ = ["BaggingClassifier",
@@ -149,7 +150,7 @@ def _parallel_predict_log_proba(estimators, estimators_features, X, n_classes):
     n_samples = X.shape[0]
     log_proba = np.empty((n_samples, n_classes))
     log_proba.fill(-np.inf)
-    all_classes = np.arange(n_classes, dtype=np.int)
+    all_classes = np.arange(n_classes, dtype=int)
 
     for estimator, features in zip(estimators, estimators_features):
         log_proba_estimator = estimator.predict_log_proba(X[:, features])
@@ -311,7 +312,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         # Validate max_features
         if isinstance(self.max_features, numbers.Integral):
             max_features = self.max_features
-        elif isinstance(self.max_features, np.float):
+        elif isinstance(self.max_features, float):
             max_features = self.max_features * self.n_features_
         else:
             raise ValueError("max_features must be int or float")
@@ -457,7 +458,8 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
     ----------
     base_estimator : object, default=None
         The base estimator to fit on random subsets of the dataset.
-        If None, then the base estimator is a decision tree.
+        If None, then the base estimator is a
+        :class:`~sklearn.tree.DecisionTreeClassifier`.
 
     n_estimators : int, default=10
         The number of base estimators in the ensemble.
@@ -502,7 +504,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         :obj:`joblib.parallel_backend` context. ``-1`` means using all
         processors. See :term:`Glossary <n_jobs>` for more details.
 
-    random_state : int or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the random resampling of the original dataset
         (sample wise and feature wise).
         If the base estimator accepts a `random_state` attribute, a different
@@ -865,7 +867,8 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
     ----------
     base_estimator : object, default=None
         The base estimator to fit on random subsets of the dataset.
-        If None, then the base estimator is a decision tree.
+        If None, then the base estimator is a
+        :class:`~sklearn.tree.DecisionTreeRegressor`.
 
     n_estimators : int, default=10
         The number of base estimators in the ensemble.
@@ -907,7 +910,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         :obj:`joblib.parallel_backend` context. ``-1`` means using all
         processors. See :term:`Glossary <n_jobs>` for more details.
 
-    random_state : int or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the random resampling of the original dataset
         (sample wise and feature wise).
         If the base estimator accepts a `random_state` attribute, a different

@@ -145,18 +145,9 @@ class LossFunction(metaclass=ABCMeta):
 
 
 class RegressionLossFunction(LossFunction, metaclass=ABCMeta):
-    """Base class for regression loss functions.
-
-    Parameters
-    ----------
-    n_classes : int
-        Number of classes.
-    """
-    def __init__(self, n_classes):
-        if n_classes != 1:
-            raise ValueError("``n_classes`` must be 1 for regression but "
-                             "was %r" % n_classes)
-        super().__init__(n_classes)
+    """Base class for regression loss functions."""
+    def __init__(self):
+        super().__init__(n_classes=1)
 
     def check_init_estimator(self, estimator):
         """Make sure estimator has the required fit and predict methods.
@@ -211,7 +202,7 @@ class LeastSquaresError(RegressionLossFunction):
                 sample_weight * ((y - raw_predictions.ravel()) ** 2)))
 
     def negative_gradient(self, y, raw_predictions, **kargs):
-        """Compute the negative gradient.
+        """Compute half of the negative gradient.
 
         Parameters
         ----------
@@ -328,9 +319,6 @@ class HuberLossFunction(RegressionLossFunction):
 
     Parameters
     ----------
-    n_classes : int
-        Number of classes.
-
     alpha : float, default=0.9
         Percentile at which to extract score.
 
@@ -340,8 +328,8 @@ class HuberLossFunction(RegressionLossFunction):
     Machine, The Annals of Statistics, Vol. 29, No. 5, 2001.
     """
 
-    def __init__(self, n_classes, alpha=0.9):
-        super().__init__(n_classes)
+    def __init__(self, alpha=0.9):
+        super().__init__()
         self.alpha = alpha
         self.gamma = None
 
@@ -439,14 +427,11 @@ class QuantileLossFunction(RegressionLossFunction):
 
     Parameters
     ----------
-    n_classes : int
-        Number of classes.
-
     alpha : float, default=0.9
         The percentile.
     """
-    def __init__(self, n_classes, alpha=0.9):
-        super().__init__(n_classes)
+    def __init__(self, alpha=0.9):
+        super().__init__()
         self.alpha = alpha
         self.percentile = alpha * 100
 
@@ -609,7 +594,7 @@ class BinomialDeviance(ClassificationLossFunction):
                                  np.logaddexp(0, raw_predictions))))
 
     def negative_gradient(self, y, raw_predictions, **kargs):
-        """Compute the residual (= negative gradient).
+        """Compute half of the negative gradient.
 
         Parameters
         ----------
@@ -710,13 +695,11 @@ class MultinomialDeviance(ClassificationLossFunction):
         for k in range(self.K):
             Y[:, k] = y == k
 
-        if sample_weight is None:
-            return np.sum(-1 * (Y * raw_predictions).sum(axis=1) +
-                          logsumexp(raw_predictions, axis=1))
-        else:
-            return np.sum(
-                -1 * sample_weight * (Y * raw_predictions).sum(axis=1) +
-                logsumexp(raw_predictions, axis=1))
+        return np.average(
+            -1 * (Y * raw_predictions).sum(axis=1) +
+            logsumexp(raw_predictions, axis=1),
+            weights=sample_weight
+        )
 
     def negative_gradient(self, y, raw_predictions, k=0, **kwargs):
         """Compute negative gradient for the ``k``-th class.
@@ -859,7 +842,7 @@ class ExponentialLoss(ClassificationLossFunction):
         return proba
 
     def _raw_prediction_to_decision(self, raw_predictions):
-        return (raw_predictions.ravel() >= 0).astype(np.int)
+        return (raw_predictions.ravel() >= 0).astype(int)
 
     def get_init_raw_predictions(self, X, estimator):
         probas = estimator.predict_proba(X)

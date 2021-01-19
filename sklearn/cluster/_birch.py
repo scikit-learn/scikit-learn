@@ -12,11 +12,11 @@ from math import sqrt
 from ..metrics import pairwise_distances_argmin
 from ..metrics.pairwise import euclidean_distances
 from ..base import TransformerMixin, ClusterMixin, BaseEstimator
-from ..utils import check_array
 from ..utils.extmath import row_norms
 from ..utils.validation import check_is_fitted, _deprecate_positional_args
 from ..exceptions import ConvergenceWarning
 from . import AgglomerativeClustering
+from .._config import config_context
 
 
 def _iterate_sparse_X(X):
@@ -112,28 +112,28 @@ class _CFNode:
 
     Attributes
     ----------
-    subclusters_ : array-like
-        list of subclusters for a particular CFNode.
+    subclusters_ : list
+        List of subclusters for a particular CFNode.
 
     prev_leaf_ : _CFNode
-        prev_leaf. Useful only if is_leaf is True.
+        Useful only if is_leaf is True.
 
     next_leaf_ : _CFNode
         next_leaf. Useful only if is_leaf is True.
         the final subclusters.
 
-    init_centroids_ : ndarray, shape (branching_factor + 1, n_features)
-        manipulate ``init_centroids_`` throughout rather than centroids_ since
+    init_centroids_ : ndarray of shape (branching_factor + 1, n_features)
+        Manipulate ``init_centroids_`` throughout rather than centroids_ since
         the centroids are just a view of the ``init_centroids_`` .
 
-    init_sq_norm_ : ndarray, shape (branching_factor + 1,)
+    init_sq_norm_ : ndarray of shape (branching_factor + 1,)
         manipulate init_sq_norm_ throughout. similar to ``init_centroids_``.
 
-    centroids_ : ndarray
-        view of ``init_centroids_``.
+    centroids_ : ndarray of shape (branching_factor + 1, n_features)
+        View of ``init_centroids_``.
 
-    squared_norm_ : ndarray
-        view of ``init_sq_norm_``.
+    squared_norm_ : ndarray of shape (branching_factor + 1,)
+        View of ``init_sq_norm_``.
 
     """
     def __init__(self, *, threshold, branching_factor, is_leaf, n_features):
@@ -249,7 +249,7 @@ class _CFSubcluster:
 
     Parameters
     ----------
-    linear_sum : ndarray, shape (n_features,), optional
+    linear_sum : ndarray of shape (n_features,), default=None
         Sample. This is kept optional to allow initialization of empty
         subclusters.
 
@@ -265,7 +265,7 @@ class _CFSubcluster:
     squared_sum_ : float
         Sum of the squared l2 norms of all samples belonging to a subcluster.
 
-    centroid_ : ndarray
+    centroid_ : ndarray of shape (branching_factor + 1, n_features)
         Centroid of the subcluster. Prevent recomputing of centroids when
         ``CFNode.centroids_`` is called.
 
@@ -273,7 +273,7 @@ class _CFSubcluster:
         Child Node of the subcluster. Once a given _CFNode is set as the child
         of the _CFNode, it is set to ``self.child_``.
 
-    sq_norm_ : ndarray
+    sq_norm_ : ndarray of shape (branching_factor + 1,)
         Squared norm of the subcluster. Used to prevent recomputing when
         pairwise minimum distances are computed.
     """
@@ -380,23 +380,21 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
     dummy_leaf_ : _CFNode
         Start pointer to all the leaves.
 
-    subcluster_centers_ : ndarray,
+    subcluster_centers_ : ndarray
         Centroids of all subclusters read directly from the leaves.
 
-    subcluster_labels_ : ndarray,
+    subcluster_labels_ : ndarray
         Labels assigned to the centroids of the subclusters after
         they are clustered globally.
 
-    labels_ : ndarray, shape (n_samples,)
+    labels_ : ndarray of shape (n_samples,)
         Array of labels assigned to the input data.
         if partial_fit is used instead of fit, they are assigned to the
         last batch of data.
 
     See Also
     --------
-
-    MiniBatchKMeans
-        Alternative  implementation that does incremental updates
+    MiniBatchKMeans : Alternative implementation that does incremental updates
         of the centers' positions using mini-batches.
 
     Notes
@@ -448,7 +446,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Input data.
 
         y : Ignored
@@ -463,7 +461,11 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         return self._fit(X)
 
     def _fit(self, X):
-        X = self._validate_data(X, accept_sparse='csr', copy=self.copy)
+        has_root = getattr(self, 'root_', None)
+        first_call = self.fit_ or self.partial_fit and not has_root
+
+        X = self._validate_data(X, accept_sparse='csr', copy=self.copy,
+                                reset=first_call)
         threshold = self.threshold
         branching_factor = self.branching_factor
 
@@ -473,9 +475,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
 
         # If partial_fit is called for the first time or fit is called, we
         # start a new tree.
-        partial_fit = getattr(self, 'partial_fit_')
-        has_root = getattr(self, 'root_', None)
-        if getattr(self, 'fit_') or (partial_fit and not has_root):
+        if first_call:
             # The first root is the leaf. Manipulate this object throughout.
             self.root_ = _CFNode(threshold=threshold,
                                  branching_factor=branching_factor,
@@ -523,7 +523,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        leaves : array-like
+        leaves : list of shape (n_leaves,)
             List of the leaf nodes.
         """
         leaf_ptr = self.dummy_leaf_.next_leaf_
@@ -539,7 +539,8 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features), None
+        X : {array-like, sparse matrix} of shape (n_samples, n_features), \
+            default=None
             Input data. If X is not provided, only the global clustering
             step is done.
 
@@ -557,7 +558,6 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
             self._global_clustering()
             return self
         else:
-            self._check_fit(X)
             return self._fit(X)
 
     def _check_fit(self, X):
@@ -577,22 +577,22 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Input data.
 
         Returns
         -------
-        labels : ndarray, shape(n_samples)
+        labels : ndarray of shape(n_samples,)
             Labelled data.
         """
-        X = check_array(X, accept_sparse='csr')
-        self._check_fit(X)
+        check_is_fitted(self)
+        X = self._validate_data(X, accept_sparse='csr', reset=False)
         kwargs = {'Y_norm_squared': self._subcluster_norms}
-        return self.subcluster_labels_[
-                pairwise_distances_argmin(X,
-                                          self.subcluster_centers_,
-                                          metric_kwargs=kwargs)
-            ]
+
+        with config_context(assume_finite=True):
+            argmin = pairwise_distances_argmin(X, self.subcluster_centers_,
+                                               metric_kwargs=kwargs)
+        return self.subcluster_labels_[argmin]
 
     def transform(self, X):
         """
@@ -603,16 +603,18 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Input data.
 
         Returns
         -------
-        X_trans : {array-like, sparse matrix}, shape (n_samples, n_clusters)
+        X_trans : {array-like, sparse matrix} of shape (n_samples, n_clusters)
             Transformed data.
         """
         check_is_fitted(self)
-        return euclidean_distances(X, self.subcluster_centers_)
+        self._validate_data(X, accept_sparse='csr', reset=False)
+        with config_context(assume_finite=True):
+            return euclidean_distances(X, self.subcluster_centers_)
 
     def _global_clustering(self, X=None):
         """

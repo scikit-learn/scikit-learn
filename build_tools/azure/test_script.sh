@@ -24,15 +24,21 @@ pip list
 TEST_CMD="python -m pytest --showlocals --durations=20 --junitxml=$JUNITXML"
 
 if [[ "$COVERAGE" == "true" ]]; then
+    # Note: --cov-report= is used to disable to long text output report in the
+    # CI logs. The coverage data is consolidated by codecov to get an online
+    # web report across all the platforms so there is no need for this text
+    # report that otherwise hides the test failures and forces long scrolls in
+    # the CI logs.
     export COVERAGE_PROCESS_START="$BUILD_SOURCESDIRECTORY/.coveragerc"
-    TEST_CMD="$TEST_CMD --cov-config=$COVERAGE_PROCESS_START --cov sklearn"
+    TEST_CMD="$TEST_CMD --cov-config=$COVERAGE_PROCESS_START --cov sklearn --cov-report="
 fi
 
 if [[ -n "$CHECK_WARNINGS" ]]; then
-    TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning"
+    # numpy's 1.19.0's tostring() deprecation is ignored until scipy and joblib removes its usage
+    TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning -Wignore:tostring:DeprecationWarning"
 fi
 
-if [[ "$PYTHON_VERSION" == "*" ]]; then
+if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
     TEST_CMD="$TEST_CMD -n2"
 fi
 

@@ -10,7 +10,6 @@
 
 import numpy as np
 cimport numpy as np
-from threadpoolctl import threadpool_limits
 cimport cython
 from cython cimport floating
 from cython.parallel import prange, parallel
@@ -19,6 +18,7 @@ from libc.stdlib cimport calloc, free
 from libc.string cimport memset, memcpy
 
 from ..utils.extmath import row_norms
+from ._k_means_fast import CHUNK_SIZE
 from ._k_means_fast cimport _relocate_empty_clusters_dense
 from ._k_means_fast cimport _relocate_empty_clusters_sparse
 from ._k_means_fast cimport _euclidean_dense_dense
@@ -28,18 +28,6 @@ from ._k_means_fast cimport _center_shift
 
 
 np.import_array()
-
-
-# Threadpoolctl wrappers to limit the number of threads in second level of
-# nested parallelism (i.e. BLAS) to avoid oversubsciption.
-def elkan_iter_chunked_dense(*args, **kwargs):
-    with threadpool_limits(limits=1, user_api="blas"):
-        _elkan_iter_chunked_dense(*args, **kwargs)
-
-
-def elkan_iter_chunked_sparse(*args, **kwargs):
-    with threadpool_limits(limits=1, user_api="blas"):
-        _elkan_iter_chunked_sparse(*args, **kwargs)
 
 
 def init_bounds_dense(
@@ -95,7 +83,7 @@ def init_bounds_dense(
         floating min_dist, dist
         int best_cluster, i, j
 
-    for i in range(n_samples):
+    for i in prange(n_samples, schedule='static', nogil=True):
         best_cluster = 0
         min_dist = _euclidean_dense_dense(&X[i, 0], &centers[0, 0],
                                           n_features, False)
@@ -171,7 +159,7 @@ def init_bounds_sparse(
 
         floating[::1] centers_squared_norms = row_norms(centers, squared=True)
 
-    for i in range(n_samples):
+    for i in prange(n_samples, schedule='static', nogil=True):
         best_cluster = 0
         min_dist = _euclidean_sparse_dense(
             X_data[X_indptr[i]: X_indptr[i + 1]],
@@ -193,7 +181,7 @@ def init_bounds_sparse(
         upper_bounds[i] = min_dist
 
 
-def _elkan_iter_chunked_dense(
+def elkan_iter_chunked_dense(
         np.ndarray[floating, ndim=2, mode='c'] X,  # IN
         floating[::1] sample_weight,               # IN
         floating[:, ::1] centers_old,              # IN
@@ -270,7 +258,7 @@ def _elkan_iter_chunked_dense(
 
         # hard-coded number of samples per chunk. Splitting in chunks is
         # necessary to get parallelism. Chunk size chosed to be same as lloyd's
-        int n_samples_chunk = 256 if n_samples > 256 else n_samples
+        int n_samples_chunk = CHUNK_SIZE if n_samples > CHUNK_SIZE else n_samples
         int n_chunks = n_samples // n_samples_chunk
         int n_samples_rem = n_samples % n_samples_chunk
         int chunk_idx, n_samples_chunk_eff
@@ -283,6 +271,9 @@ def _elkan_iter_chunked_dense(
 
     # count remainder chunk in total number of chunks
     n_chunks += n_samples != n_chunks * n_samples_chunk
+
+    # number of threads should not be bigger than number of chunks
+    n_threads = min(n_threads, n_chunks)
 
     if update_centers:
         memset(&centers_new[0, 0], 0, n_clusters * n_features * sizeof(floating))
@@ -321,6 +312,9 @@ def _elkan_iter_chunked_dense(
                     weight_in_clusters[j] += weight_in_clusters_chunk[j]
                     for k in range(n_features):
                         centers_new[j, k] += centers_new_chunk[j * n_features + k]
+
+        free(centers_new_chunk)
+        free(weight_in_clusters_chunk)
 
     if update_centers:
         _relocate_empty_clusters_dense(X, sample_weight, centers_old,
@@ -415,7 +409,7 @@ cdef void _update_chunk_dense(
                 centers_new[label * n_features + k] += X[i * n_features + k] * sample_weight[i]
 
 
-def _elkan_iter_chunked_sparse(
+def elkan_iter_chunked_sparse(
         X,                                       # IN
         floating[::1] sample_weight,             # IN
         floating[:, ::1] centers_old,            # IN
@@ -496,7 +490,7 @@ def _elkan_iter_chunked_sparse(
 
         # hard-coded number of samples per chunk. Splitting in chunks is
         # necessary to get parallelism. Chunk size chosed to be same as lloyd's
-        int n_samples_chunk = 256 if n_samples > 256 else n_samples
+        int n_samples_chunk = CHUNK_SIZE if n_samples > CHUNK_SIZE else n_samples
         int n_chunks = n_samples // n_samples_chunk
         int n_samples_rem = n_samples % n_samples_chunk
         int chunk_idx, n_samples_chunk_eff
@@ -511,6 +505,9 @@ def _elkan_iter_chunked_sparse(
 
     # count remainder chunk in total number of chunks
     n_chunks += n_samples != n_chunks * n_samples_chunk
+
+    # number of threads should not be bigger than number of chunks
+    n_threads = min(n_threads, n_chunks)
 
     if update_centers:
         memset(&centers_new[0, 0], 0, n_clusters * n_features * sizeof(floating))
@@ -552,6 +549,9 @@ def _elkan_iter_chunked_sparse(
                     weight_in_clusters[j] += weight_in_clusters_chunk[j]
                     for k in range(n_features):
                         centers_new[j, k] += centers_new_chunk[j * n_features + k]
+
+        free(centers_new_chunk)
+        free(weight_in_clusters_chunk)
 
     if update_centers:
         _relocate_empty_clusters_sparse(

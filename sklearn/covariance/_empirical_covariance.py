@@ -48,7 +48,8 @@ def log_likelihood(emp_cov, precision):
     return log_likelihood_
 
 
-def empirical_covariance(X, assume_centered=False):
+@_deprecate_positional_args
+def empirical_covariance(X, *, assume_centered=False):
     """Computes the Maximum likelihood covariance estimator
 
 
@@ -79,6 +80,7 @@ def empirical_covariance(X, assume_centered=False):
            [0.25, 0.25, 0.25]])
     """
     X = np.asarray(X)
+
     if X.ndim == 1:
         X = np.reshape(X, (1, -1))
 
@@ -165,7 +167,7 @@ class EmpiricalCovariance(BaseEstimator):
         self.covariance_ = covariance
         # set precision
         if self.store_precision:
-            self.precision_ = linalg.pinvh(covariance)
+            self.precision_ = linalg.pinvh(covariance, check_finite=False)
         else:
             self.precision_ = None
 
@@ -180,7 +182,7 @@ class EmpiricalCovariance(BaseEstimator):
         if self.store_precision:
             precision = self.precision_
         else:
-            precision = linalg.pinvh(self.covariance_)
+            precision = linalg.pinvh(self.covariance_, check_finite=False)
         return precision
 
     def fit(self, X, y=None):
@@ -194,7 +196,7 @@ class EmpiricalCovariance(BaseEstimator):
           n_features is the number of features.
 
         y : Ignored
-            Not used, present for API consistence purpose.
+            Not used, present for API consistency by convention.
 
         Returns
         -------
@@ -224,7 +226,7 @@ class EmpiricalCovariance(BaseEstimator):
             the data used in fit (including centering).
 
         y : Ignored
-            Not used, present for API consistence purpose.
+            Not used, present for API consistency by convention.
 
         Returns
         -------

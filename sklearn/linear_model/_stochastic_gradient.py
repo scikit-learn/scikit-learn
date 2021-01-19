@@ -9,16 +9,18 @@ import warnings
 
 from abc import ABCMeta, abstractmethod
 
-from joblib import Parallel, delayed
+from joblib import Parallel
 
 from ..base import clone, is_classifier
 from ._base import LinearClassifierMixin, SparseCoefMixin
 from ._base import make_dataset
 from ..base import BaseEstimator, RegressorMixin
-from ..utils import check_array, check_random_state, check_X_y
+from ..utils import check_random_state
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
 from ..utils.validation import check_is_fitted, _check_sample_weight
+from ..utils.validation import _deprecate_positional_args
+from ..utils.fixes import delayed
 from ..exceptions import ConvergenceWarning
 from ..model_selection import StratifiedShuffleSplit, ShuffleSplit
 
@@ -68,8 +70,8 @@ class _ValidationScoreCallback:
 
 class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for SGD classification and regression."""
-
-    def __init__(self, loss, penalty='l2', alpha=0.0001, C=1.0,
+    @_deprecate_positional_args
+    def __init__(self, loss, *, penalty='l2', alpha=0.0001, C=1.0,
                  l1_ratio=0.15, fit_intercept=True, max_iter=1000, tol=1e-3,
                  shuffle=True, verbose=0, epsilon=0.1, random_state=None,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
@@ -162,22 +164,22 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
                         'squared_epsilon_insensitive'):
                 args = (self.epsilon, )
             return loss_class(*args)
-        except KeyError:
-            raise ValueError("The loss %s is not supported. " % loss)
+        except KeyError as e:
+            raise ValueError("The loss %s is not supported. " % loss) from e
 
     def _get_learning_rate_type(self, learning_rate):
         try:
             return LEARNING_RATE_TYPES[learning_rate]
-        except KeyError:
+        except KeyError as e:
             raise ValueError("learning rate %s "
-                             "is not supported. " % learning_rate)
+                             "is not supported. " % learning_rate) from e
 
     def _get_penalty_type(self, penalty):
         penalty = str(penalty).lower()
         try:
             return PENALTY_TYPES[penalty]
-        except KeyError:
-            raise ValueError("Penalty %s is not supported. " % penalty)
+        except KeyError as e:
+            raise ValueError("Penalty %s is not supported. " % penalty) from e
 
     def _allocate_parameter_mem(self, n_classes, n_features, coef_init=None,
                                 intercept_init=None):
@@ -289,7 +291,8 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
 
     # mypy error: Decorated property not supported
     @deprecated("Attribute standard_coef_ was deprecated "  # type: ignore
-                "in version 0.23 and will be removed in 0.25.")
+                "in version 0.23 and will be removed in 1.0 "
+                "(renaming of 0.25).")
     @property
     def standard_coef_(self):
         return self._standard_coef
@@ -297,7 +300,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
         "Attribute standard_intercept_ was deprecated "
-        "in version 0.23 and will be removed in 0.25."
+        "in version 0.23 and will be removed in 1.0 (renaming of 0.25)."
     )
     @property
     def standard_intercept_(self):
@@ -305,14 +308,16 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
 
     # mypy error: Decorated property not supported
     @deprecated("Attribute average_coef_ was deprecated "  # type: ignore
-                "in version 0.23 and will be removed in 0.25.")
+                "in version 0.23 and will be removed in 1.0 "
+                "(renaming of 0.25).")
     @property
     def average_coef_(self):
         return self._average_coef
 
     # mypy error: Decorated property not supported
     @deprecated("Attribute average_intercept_ was deprecated "  # type: ignore
-                "in version 0.23 and will be removed in 0.25.")
+                "in version 0.23 and will be removed in 1.0 "
+                "(renaming of 0.25).")
     @property
     def average_intercept_(self):
         return self._average_intercept
@@ -461,7 +466,8 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
     }
 
     @abstractmethod
-    def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
+    @_deprecate_positional_args
+    def __init__(self, loss="hinge", *, penalty='l2', alpha=0.0001,
                  l1_ratio=0.15, fit_intercept=True, max_iter=1000, tol=1e-3,
                  shuffle=True, verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=None,
                  random_state=None, learning_rate="optimal", eta0=0.0,
@@ -485,8 +491,10 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
                      loss, learning_rate, max_iter,
                      classes, sample_weight,
                      coef_init, intercept_init):
-        X, y = check_X_y(X, y, 'csr', dtype=np.float64, order="C",
-                         accept_large_sparse=False)
+        first_call = not hasattr(self, "classes_")
+        X, y = self._validate_data(X, y, accept_sparse='csr', dtype=np.float64,
+                                   order="C", accept_large_sparse=False,
+                                   reset=first_call)
 
         n_samples, n_features = X.shape
 
@@ -495,8 +503,8 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         n_classes = self.classes_.shape[0]
 
         # Allocate datastructures from input arguments
-        self._expanded_class_weight = compute_class_weight(self.class_weight,
-                                                           self.classes_, y)
+        self._expanded_class_weight = compute_class_weight(
+            self.class_weight, classes=self.classes_, y=y)
         sample_weight = _check_sample_weight(sample_weight, X)
 
         if getattr(self, "coef_", None) is None or coef_init is not None:
@@ -679,7 +687,8 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         if self.class_weight in ['balanced']:
             raise ValueError("class_weight '{0}' is not supported for "
                              "partial_fit. In order to use 'balanced' weights,"
-                             " use compute_class_weight('{0}', classes, y). "
+                             " use compute_class_weight('{0}', "
+                             "classes=classes, y=y). "
                              "In place of y you can us a large enough sample "
                              "of the full training set target to properly "
                              "estimate the class frequency distributions. "
@@ -845,6 +854,9 @@ class SGDClassifier(BaseSGDClassifier):
           training loss by tol or fail to increase validation score by tol if
           early_stopping is True, the current learning rate is divided by 5.
 
+            .. versionadded:: 0.20
+                Added 'adaptive' option
+
     eta0 : double, default=0.0
         The initial learning rate for the 'constant', 'invscaling' or
         'adaptive' schedules. The default value is 0.0 as eta0 is not used by
@@ -861,6 +873,7 @@ class SGDClassifier(BaseSGDClassifier):
         improving by at least tol for n_iter_no_change consecutive epochs.
 
         .. versionadded:: 0.20
+            Added 'early_stopping' option
 
     validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for
@@ -868,11 +881,13 @@ class SGDClassifier(BaseSGDClassifier):
         Only used if `early_stopping` is True.
 
         .. versionadded:: 0.20
+            Added 'validation_fraction' option
 
     n_iter_no_change : int, default=5
         Number of iterations with no improvement to wait before early stopping.
 
         .. versionadded:: 0.20
+            Added 'n_iter_no_change' option
 
     class_weight : dict, {class_label: weight} or "balanced", default=None
         Preset for the class_weight fit parameter.
@@ -927,9 +942,9 @@ class SGDClassifier(BaseSGDClassifier):
 
     See Also
     --------
-    sklearn.svm.LinearSVC: Linear support vector classification.
-    LogisticRegression: Logistic regression.
-    Perceptron: Inherits from SGDClassifier. ``Perceptron()`` is equivalent to
+    sklearn.svm.LinearSVC : Linear support vector classification.
+    LogisticRegression : Logistic regression.
+    Perceptron : Inherits from SGDClassifier. ``Perceptron()`` is equivalent to
         ``SGDClassifier(loss="perceptron", eta0=1, learning_rate="constant",
         penalty=None)``.
 
@@ -950,8 +965,9 @@ class SGDClassifier(BaseSGDClassifier):
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
     """
-
-    def __init__(self, loss="hinge", penalty='l2', alpha=0.0001, l1_ratio=0.15,
+    @_deprecate_positional_args
+    def __init__(self, loss="hinge", *, penalty='l2', alpha=0.0001,
+                 l1_ratio=0.15,
                  fit_intercept=True, max_iter=1000, tol=1e-3, shuffle=True,
                  verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=None,
                  random_state=None, learning_rate="optimal", eta0=0.0,
@@ -987,7 +1003,7 @@ class SGDClassifier(BaseSGDClassifier):
         (clip(decision_function(X), -1, 1) + 1) / 2. For other loss functions
         it is necessary to perform proper probability calibration by wrapping
         the classifier with
-        :class:`sklearn.calibration.CalibratedClassifierCV` instead.
+        :class:`~sklearn.calibration.CalibratedClassifierCV` instead.
 
         Parameters
         ----------
@@ -1085,6 +1101,14 @@ class SGDClassifier(BaseSGDClassifier):
     def _predict_log_proba(self, X):
         return np.log(self.predict_proba(X))
 
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_sample_weights_invariance':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }
+
 
 class BaseSGDRegressor(RegressorMixin, BaseSGD):
 
@@ -1097,7 +1121,8 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
     }
 
     @abstractmethod
-    def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
+    @_deprecate_positional_args
+    def __init__(self, loss="squared_loss", *, penalty="l2", alpha=0.0001,
                  l1_ratio=0.15, fit_intercept=True, max_iter=1000, tol=1e-3,
                  shuffle=True, verbose=0, epsilon=DEFAULT_EPSILON,
                  random_state=None, learning_rate="invscaling", eta0=0.01,
@@ -1115,9 +1140,10 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
 
     def _partial_fit(self, X, y, alpha, C, loss, learning_rate,
                      max_iter, sample_weight, coef_init, intercept_init):
+        first_call = getattr(self, "coef_", None) is None
         X, y = self._validate_data(X, y, accept_sparse="csr", copy=False,
                                    order='C', dtype=np.float64,
-                                   accept_large_sparse=False)
+                                   accept_large_sparse=False, reset=first_call)
         y = y.astype(np.float64, copy=False)
 
         n_samples, n_features = X.shape
@@ -1125,12 +1151,9 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         sample_weight = _check_sample_weight(sample_weight, X)
 
         # Allocate datastructures from input arguments
-        if getattr(self, "coef_", None) is None:
+        if first_call:
             self._allocate_parameter_mem(1, n_features, coef_init,
                                          intercept_init)
-        elif n_features != self.coef_.shape[-1]:
-            raise ValueError("Number of features %d does not match previous "
-                             "data %d." % (n_features, self.coef_.shape[-1]))
         if self.average > 0 and getattr(self, "_average_coef", None) is None:
             self._average_coef = np.zeros(n_features,
                                           dtype=np.float64,
@@ -1246,7 +1269,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         """
         check_is_fitted(self)
 
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_data(X, accept_sparse='csr', reset=False)
 
         scores = safe_sparse_dot(X, self.coef_.T,
                                  dense_output=True) + self.intercept_
@@ -1442,6 +1465,9 @@ class SGDRegressor(BaseSGDRegressor):
           training loss by tol or fail to increase validation score by tol if
           early_stopping is True, the current learning rate is divided by 5.
 
+            .. versionadded:: 0.20
+                Added 'adaptive' option
+
     eta0 : double, default=0.01
         The initial learning rate for the 'constant', 'invscaling' or
         'adaptive' schedules. The default value is 0.01.
@@ -1458,6 +1484,7 @@ class SGDRegressor(BaseSGDRegressor):
         epochs.
 
         .. versionadded:: 0.20
+            Added 'early_stopping' option
 
     validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for
@@ -1465,11 +1492,13 @@ class SGDRegressor(BaseSGDRegressor):
         Only used if `early_stopping` is True.
 
         .. versionadded:: 0.20
+            Added 'validation_fraction' option
 
     n_iter_no_change : int, default=5
         Number of iterations with no improvement to wait before early stopping.
 
         .. versionadded:: 0.20
+            Added 'n_iter_no_change' option
 
     warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit as
@@ -1505,14 +1534,14 @@ class SGDRegressor(BaseSGDRegressor):
 
         .. deprecated:: 0.23
             Attribute ``average_coef_`` was deprecated
-            in version 0.23 and will be removed in 0.25.
+            in version 0.23 and will be removed in 1.0 (renaming of 0.25).
 
     average_intercept_ : ndarray of shape (1,)
         The averaged intercept term. Only available if ``average=True``.
 
         .. deprecated:: 0.23
             Attribute ``average_intercept_`` was deprecated
-            in version 0.23 and will be removed in 0.25.
+            in version 0.23 and will be removed in 1.0 (renaming of 0.25).
 
     n_iter_ : int
         The actual number of iterations before reaching the stopping criterion.
@@ -1538,12 +1567,13 @@ class SGDRegressor(BaseSGDRegressor):
     Pipeline(steps=[('standardscaler', StandardScaler()),
                     ('sgdregressor', SGDRegressor())])
 
-    See also
+    See Also
     --------
     Ridge, ElasticNet, Lasso, sklearn.svm.SVR
 
     """
-    def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
+    @_deprecate_positional_args
+    def __init__(self, loss="squared_loss", *, penalty="l2", alpha=0.0001,
                  l1_ratio=0.15, fit_intercept=True, max_iter=1000, tol=1e-3,
                  shuffle=True, verbose=0, epsilon=DEFAULT_EPSILON,
                  random_state=None, learning_rate="invscaling", eta0=0.01,
@@ -1558,3 +1588,11 @@ class SGDRegressor(BaseSGDRegressor):
             validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, warm_start=warm_start,
             average=average)
+
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_sample_weights_invariance':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }

@@ -16,6 +16,7 @@ from ..base import BaseEstimator, ClassifierMixin
 from ..metrics.pairwise import pairwise_distances
 from ..preprocessing import LabelEncoder
 from ..utils.validation import check_array, check_is_fitted
+from ..utils.validation import _deprecate_positional_args
 from ..utils.sparsefuncs import csc_median_axis_0
 from ..utils.multiclass import check_classification_targets
 
@@ -41,6 +42,9 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         If the "manhattan" metric is provided, this centroid is the median and
         for all other metrics, the centroid is now set to be the mean.
 
+        .. versionchanged:: 0.19
+            ``metric='precomputed'`` was deprecated and now raises an error
+
     shrink_threshold : float, default=None
         Threshold for shrinking centroids to remove features.
 
@@ -64,9 +68,9 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
-    See also
+    See Also
     --------
-    sklearn.neighbors.KNeighborsClassifier: nearest neighbors classifier
+    KNeighborsClassifier : Nearest neighbors classifier.
 
     Notes
     -----
@@ -82,7 +86,8 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
 
     """
 
-    def __init__(self, metric='euclidean', shrink_threshold=None):
+    @_deprecate_positional_args
+    def __init__(self, metric='euclidean', *, shrink_threshold=None):
         self.metric = metric
         self.shrink_threshold = shrink_threshold
 
@@ -149,6 +154,9 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
                 self.centroids_[cur_class] = X[center_mask].mean(axis=0)
 
         if self.shrink_threshold:
+            if np.all(np.ptp(X, axis=0) == 0):
+                raise ValueError("All features have zero variance. "
+                                 "Division by zero.")
             dataset_centroid_ = np.mean(X, axis=0)
 
             # m parameter for determining deviation

@@ -1,0 +1,33 @@
+{
+    // "regular": Bencharks are run on small to medium datasets. Each benchmark
+    //            is run multiple times and averaged.
+    // "fast": Benchmarks are run on small to medium datasets. Each benchmark
+    //         is run only once. May provide unstable benchmarks.
+    // "large_scale": Benchmarks are run on large datasets. Each benchmark is
+    //                run multiple times and averaged. This profile is meant to
+    //                benchmark scalability and will take hours on single core.
+    // Can be overridden by environment variable SKLBENCH_PROFILE.
+    "profile": "regular",
+
+    // List of values of n_jobs to use for estimators which accept this 
+    // parameter (-1 means all cores). An empty list means all values from 1 to
+    // the maximum number of available cores.
+    // Can be overridden by environment variable SKLBENCH_NJOBS.
+    "n_jobs_vals": [1],
+
+    // If true, fitted estimators are saved in ./cache/estimators/<commit hash>
+    // Can be overridden by environment variable SKLBENCH_SAVE_ESTIMATORS.
+    "save_estimators": false,
+
+    // Commit hash to compare estimator predictions with.
+    // If null, predictions are not compared.
+    // Can be overridden by environment variable SKLBENCH_BASE_COMMIT.
+    "base_commit": null,
+
+    // If false, the predict (resp. transform) method of the estimators won't
+    // be benchmarked.
+    // Can be overridden by environment variables SKLBENCH_PREDICT and
+    // SKLBENCH_TRANSFORM.
+    "bench_predict": true,
+    "bench_transform": true
+}
