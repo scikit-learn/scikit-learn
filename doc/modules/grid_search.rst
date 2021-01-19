@@ -671,7 +671,7 @@ but not ``max_depth``, ``min_samples_split``, etc.
 
 .. topic:: Example
 
-    :ref:`sphx_glr_auto_examples_model_selection_grid_search_use_warm_start.py`
+    :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_use_warm_start.py`
 
 Robustness to failure
 ---------------------
