@@ -853,9 +853,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                     cand_idx = 0
                     warm_start_groups = self._generate_warm_start_groups(
                         candidate_params)
+                    splits = list(cv.split(X, y, groups))
                     for warm_candidates in warm_start_groups:
-                        splits = enumerate(cv.split(X, y, groups))
-                        for (split_idx, (train, test)) in splits:
+                        for (split_idx, (train, test)) in enumerate(splits):
                             yield delayed(_warm_fit_and_score)(
                                 clone(base_estimator),
                                 warm_candidates,
@@ -1365,14 +1365,11 @@ class GridSearchCV(BaseSearchCV):
         _check_param_grid(param_grid)
         self.use_warm_start = use_warm_start
 
-    def _get_param_iterator(self):
-        """Return ParameterGrid instance for the given param_grid"""
-        return ParameterGrid(self.param_grid,
-                             least_significant=self.use_warm_start)
-
     def _run_search(self, evaluate_candidates):
         """Search all candidates in param_grid"""
-        evaluate_candidates(ParameterGrid(self.param_grid))
+        candidates = ParameterGrid(self.param_grid,
+                                   least_significant=self.use_warm_start)
+        evaluate_candidates(candidates)
 
 
 class RandomizedSearchCV(BaseSearchCV):
