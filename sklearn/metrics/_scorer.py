@@ -472,14 +472,9 @@ def _check_multimetric_scoring(estimator, scoring):
         Strategy to evaluate the performance of the cross-validated model on
         the test set.
 
-        If `scoring` represents a single score, one can use:
+        The possibilities are:
 
-        - a single string (see :ref:`scoring_parameter`);
-        - a callable (see :ref:`scoring`) that returns a single value.
-
-        If `scoring` reprents multiple scores, one can use:
-
-        - a list or tuple of unique string;
+        - a list or tuple of unique strings;
         - a callable returning a dictionary where they keys are the metric
           names and the values are the metric scores;
         - a dictionary with metric names as keys and callables a values.
