@@ -65,8 +65,13 @@ def test_parameter_checking():
     assert_raise_message(
         ValueError, msg, MiniBatchNMF(solver='mu', beta_loss=name).fit, A
     )
-    msg = ("Coordinate descent algorithm is not available "
-           "when batch_size is not None. Please set solver to 'mu'.")
+    msg = ("Invalid beta_loss parameter 'frobenius' "
+           "or invalid solver 'cd' not supported "
+           "when batch_size is not None.")
+    assert_raise_message(
+        ValueError, msg,
+        MiniBatchNMF(solver='mu', beta_loss='frobenius').fit, A
+    )
     assert_raise_message(
         ValueError, msg,
         MiniBatchNMF(solver='cd', beta_loss='frobenius').fit, A

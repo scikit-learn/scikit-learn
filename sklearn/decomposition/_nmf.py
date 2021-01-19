@@ -203,7 +203,7 @@ def _compute_regularization(alpha, l1_ratio, regularization):
     return l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H
 
 
-def _check_string_param(solver, regularization, beta_loss, init):
+def _check_string_param(solver, regularization, beta_loss, init, batch_size):
     allowed_solver = ('cd', 'mu')
     if solver not in allowed_solver:
         raise ValueError(
@@ -221,6 +221,12 @@ def _check_string_param(solver, regularization, beta_loss, init):
         raise ValueError(
             'Invalid beta_loss parameter: solver %r does not handle beta_loss'
             ' = %r' % (solver, beta_loss))
+
+    if batch_size is not None:
+        if beta_loss in (2, 'frobenius') or solver == 'cd':
+            raise ValueError("Invalid beta_loss parameter 'frobenius' "
+                             "or invalid solver 'cd' not supported "
+                             "when batch_size is not None.")
 
     if solver == 'mu' and init == 'nndsvd':
         warnings.warn("The multiplicative update ('mu') solver cannot update "
@@ -664,7 +670,8 @@ def _multiplicative_update_h(X, W, H, A, B, beta_loss, l1_reg_H, l2_reg_H,
         and the dot product WH. Note that values different from 'frobenius'
         (or 2) and 'kullback-leibler' (or 1) lead to significantly slower
         fits. Note that for beta_loss <= 0 (or 'itakura-saito'), the input
-        matrix X cannot contain zeros.
+        matrix X cannot contain zeros. When
+        `batch_size` is not `None` `beta_loss` cannot be `'frobenius'`.
 
     l1_reg_H : float, default=0.
         L1 regularization parameter for H.
@@ -823,7 +830,8 @@ def _fit_multiplicative_update(X, W, H, A=None, B=None, beta_loss='frobenius',
         and the dot product WH. Note that values different from 'frobenius'
         (or 2) and 'kullback-leibler' (or 1) lead to significantly slower
         fits. Note that for beta_loss <= 0 (or 'itakura-saito'), the input
-        matrix X cannot contain zeros.
+        matrix X cannot contain zeros. When `batch_size` is not `None`
+        `beta_loss` cannot be `'frobenius'`.
 
     batch_size : int, default=None
         Number of samples in each mini-batch.
@@ -1085,7 +1093,8 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
         and the dot product WH. Note that values different from 'frobenius'
         (or 2) and 'kullback-leibler' (or 1) lead to significantly slower
         fits. Note that for beta_loss <= 0 (or 'itakura-saito'), the input
-        matrix X cannot contain zeros. Used only in 'mu' solver.
+        matrix X cannot contain zeros. Used only in 'mu' solver. When
+        `batch_size` is not `None` `beta_loss` cannot be `'frobenius'`.
 
         .. versionadded:: 0.19
 
@@ -1124,6 +1133,8 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
     forget_factor : float, default=None.
         Amount of rescaling of past information. Only for
         MiniBatch implementation.
+
+        .. versionadded:: 1.0
 
     Returns
     -------
@@ -1176,7 +1187,8 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
     X = check_array(X, accept_sparse=('csr', 'csc'),
                     dtype=[np.float64, np.float32])
     check_non_negative(X, "NMF (input X)")
-    beta_loss = _check_string_param(solver, regularization, beta_loss, init)
+    beta_loss = _check_string_param(solver, regularization, beta_loss,
+                                    init, batch_size)
 
     if X.min() == 0 and beta_loss <= 0:
         raise ValueError("When beta_loss <= 0 and X contains zeros, "
@@ -1245,10 +1257,6 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
         alpha, l1_ratio, regularization)
 
     if solver == 'cd':
-        if batch_size is not None:
-            raise ValueError("Coordinate descent algorithm is not available "
-                             "when batch_size is not None. "
-                             "Please set solver to 'mu'.")
         W, H, n_iter = _fit_coordinate_descent(X, W, H, tol, max_iter,
                                                l1_reg_W, l1_reg_H,
                                                l2_reg_W, l2_reg_H,
@@ -1652,10 +1660,10 @@ class MiniBatchNMF(NMF):
         MiniBatch implementation.
 
     beta_loss : float or string, default 'itakura-saito'
-        String must be in {'frobenius', 'kullback-leibler', 'itakura-saito'}.
+        String must be in {'kullback-leibler', 'itakura-saito'}.
         Beta divergence to be minimized, measuring the distance between X
-        and the dot product WH. Note that values different from 'frobenius'
-        (or 2) and 'kullback-leibler' (or 1) lead to significantly slower
+        and the dot product WH. Note that values different from
+        'kullback-leibler' (or 1) lead to significantly slower
         fits. Note that for beta_loss <= 0 (or 'itakura-saito'), the input
         matrix X cannot contain zeros. Used only in 'mu' solver.
 
@@ -1740,7 +1748,7 @@ class MiniBatchNMF(NMF):
     @_deprecate_positional_args
     def __init__(self, n_components=None, *, init=None, solver='mu',
                  batch_size=1024,
-                 beta_loss='frobenius', tol=1e-4, max_iter=200,
+                 beta_loss='itakura-saito', tol=1e-4, max_iter=200,
                  random_state=None, alpha=0., l1_ratio=0., verbose=0,
                  regularization='both', forget_factor=0.7):
 
@@ -1816,7 +1824,7 @@ class MiniBatchNMF(NMF):
                 W, _, _ = non_negative_factorization(
                     X=X, W=None, H=self.components_,
                     n_components=self.n_components_,
-                    init='custom', update_H=False, solver=self.solver,
+                    init=self.init, update_H=False, solver=self.solver,
                     beta_loss=self.beta_loss,
                     tol=self.tol, max_iter=self.max_iter,
                     alpha=self.alpha, l1_ratio=self.l1_ratio,
