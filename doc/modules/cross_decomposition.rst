@@ -89,8 +89,7 @@ the projections of the training data :math:`X` and :math:`Y`, respectively.
 
 Step *a)* may be performed in two ways: either by computing the whole SVD of
 :math:`C` and only retain the singular vectors with the biggest singular
-values, or by directly computing the singular vectors using the power method (cf section 11.3 in [1]_),
-which corresponds to the `'nipals'` option of the `algorithm` parameter.
+values, or by directly computing the singular vectors using the power method (cf section 11.3 in [1]_).
 
 
 Transforming data
@@ -143,8 +142,7 @@ PLSRegression
 -------------
 
 The :class:`PLSRegression` estimator is similar to
-:class:`PLSCanonical` with `algorithm='nipals'`, with 2 significant
-differences:
+:class:`PLSCanonical`, with 2 significant differences:
 
 - at step a) in the power method to compute :math:`u_k` and :math:`v_k`,
   :math:`v_k` is never normalized.

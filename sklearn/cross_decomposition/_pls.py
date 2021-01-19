@@ -139,13 +139,12 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
     @abstractmethod
     def __init__(self, n_components=2, *, scale=True,
                  deflation_mode="regression",
-                 mode="A", algorithm="nipals", max_iter=500, tol=1e-06,
+                 mode="A", max_iter=500, tol=1e-06,
                  copy=True):
         self.n_components = n_components
         self.deflation_mode = deflation_mode
         self.mode = mode
         self.scale = scale
-        self.algorithm = algorithm
         self.max_iter = max_iter
         self.tol = tol
         self.copy = copy
@@ -208,10 +207,6 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
                 )
                 n_components = rank_upper_bound
 
-        if self.algorithm not in ("svd", "nipals"):
-            raise ValueError("algorithm should be 'svd' or 'nipals', got "
-                             f"{self.algorithm}.")
-
         self._norm_y_weights = (self.deflation_mode == 'canonical')  # 1.1
         norm_y_weights = self._norm_y_weights
 
@@ -234,19 +229,15 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         for k in range(n_components):
             # Find first left and right singular vectors of the X.T.dot(Y)
             # cross-covariance matrix.
-            if self.algorithm == "nipals":
-                # Replace columns that are all close to zero with zeros
-                Yk_mask = np.all(np.abs(Yk) < 10 * Y_eps, axis=0)
-                Yk[:, Yk_mask] = 0.0
+            # Replace columns that are all close to zero with zeros
+            Yk_mask = np.all(np.abs(Yk) < 10 * Y_eps, axis=0)
+            Yk[:, Yk_mask] = 0.0
 
-                x_weights, y_weights, n_iter_ = \
-                    _get_first_singular_vectors_power_method(
-                        Xk, Yk, mode=self.mode, max_iter=self.max_iter,
-                        tol=self.tol, norm_y_weights=norm_y_weights)
-                self.n_iter_.append(n_iter_)
-
-            elif self.algorithm == "svd":
-                x_weights, y_weights = _get_first_singular_vectors_svd(Xk, Yk)
+            x_weights, y_weights, n_iter_ = \
+                _get_first_singular_vectors_power_method(
+                    Xk, Yk, mode=self.mode, max_iter=self.max_iter,
+                    tol=self.tol, norm_y_weights=norm_y_weights)
+            self.n_iter_.append(n_iter_)
 
             # inplace sign flip for consistency across solvers and archs
             _svd_flip_1d(x_weights, y_weights)
@@ -490,14 +481,8 @@ class PLSRegression(_PLS):
     scale : bool, default=True
         Whether to scale `X` and `Y`.
 
-    algorithm : {'nipals', 'svd'}, default='nipals'
-        The algorithm used to estimate the first singular vectors of the
-        cross-covariance matrix. 'nipals' uses the power method while 'svd'
-        will compute the whole SVD.
-
     max_iter : int, default=500
-        The maximum number of iterations of the power method when
-        `algorithm='nipals'`. Ignored otherwise.
+        The maximum number of iterations of the power method.
 
     tol : float, default=1e-06
         The tolerance used as convergence criteria in the power method: the
@@ -543,7 +528,7 @@ class PLSRegression(_PLS):
 
     n_iter_ : list of shape (n_components,)
         Number of iterations of the power method, for each
-        component. Empty if `algorithm='svd'`.
+        component.
 
     Examples
     --------
@@ -568,7 +553,7 @@ class PLSRegression(_PLS):
         super().__init__(
             n_components=n_components, scale=scale,
             deflation_mode="regression", mode="A",
-            algorithm='nipals', max_iter=max_iter,
+            max_iter=max_iter,
             tol=tol, copy=copy)
 
 
@@ -588,14 +573,8 @@ class PLSCanonical(_PLS):
     scale : bool, default=True
         Whether to scale `X` and `Y`.
 
-    algorithm : {'nipals', 'svd'}, default='nipals'
-        The algorithm used to estimate the first singular vectors of the
-        cross-covariance matrix. 'nipals' uses the power method while 'svd'
-        will compute the whole SVD.
-
     max_iter : int, default=500
-        the maximum number of iterations of the power method when
-        `algorithm='nipals'`. Ignored otherwise.
+        the maximum number of iterations of the power method.
 
     tol : float, default=1e-06
         The tolerance used as convergence criteria in the power method: the
@@ -651,7 +630,7 @@ class PLSCanonical(_PLS):
 
     n_iter_ : list of shape (n_components,)
         Number of iterations of the power method, for each
-        component. Empty if `algorithm='svd'`.
+        component.
 
     Examples
     --------
@@ -677,12 +656,11 @@ class PLSCanonical(_PLS):
     # y_weights to one.
 
     @_deprecate_positional_args
-    def __init__(self, n_components=2, *, scale=True, algorithm="nipals",
+    def __init__(self, n_components=2, *, scale=True,
                  max_iter=500, tol=1e-06, copy=True):
         super().__init__(
             n_components=n_components, scale=scale,
             deflation_mode="canonical", mode="A",
-            algorithm=algorithm,
             max_iter=max_iter, tol=tol, copy=copy)
 
 
@@ -780,7 +758,7 @@ class CCA(_PLS):
                  max_iter=500, tol=1e-06, copy=True):
         super().__init__(n_components=n_components, scale=scale,
                          deflation_mode="canonical", mode="B",
-                         algorithm="nipals", max_iter=max_iter, tol=tol,
+                         max_iter=max_iter, tol=tol,
                          copy=copy)
 
 
