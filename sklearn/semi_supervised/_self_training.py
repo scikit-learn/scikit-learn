@@ -205,10 +205,10 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
                 X[safe_mask(X, has_label)],
                 self.transduction_[has_label])
 
-            if self.n_iter_ == 1:
-                # Only validate in the first iteration so that n_iter=0 is
-                # equivalent to the base_estimator itself.
-                _validate_estimator(self.base_estimator)
+            # Validate the fitted estimator since `predict_proba` can be
+            # delegated to an underlying "final" fitted estimator as
+            # generally done in meta-estimator or pipeline.
+            _validate_estimator(self.base_estimator_)
 
             # Predict on the unlabeled samples
             prob = self.base_estimator_.predict_proba(
