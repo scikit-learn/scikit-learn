@@ -53,7 +53,8 @@ def _assess_dimension(spectrum, rank, n_samples):
     Notes
     -----
     This implements the method of `Thomas P. Minka:
-    Automatic Choice of Dimensionality for PCA. NIPS 2000: 598-604`
+    Automatic Choice of Dimensionality for PCA. NIPS 2000: 598-604
+    <https://proceedings.neurips.cc/paper/2000/file/7503cfacd12053d309b6bed5c89de212-Paper.pdf>`_
     """
 
     n_features = spectrum.shape[0]
@@ -273,6 +274,7 @@ class PCA(_BasePCA):
     ----------
     For n_components == 'mle', this class uses the method of *Minka, T. P.
     "Automatic choice of dimensionality for PCA". In NIPS, pp. 598-604*
+    See https://tminka.github.io/papers/pca/
 
     Implements the probabilistic PCA model from:
     Tipping, M. E., and Bishop, C. M. (1999). "Probabilistic principal
