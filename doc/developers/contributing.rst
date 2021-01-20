@@ -213,6 +213,11 @@ latest up-to-date workflow.
   `Transcript
   <https://github.com/data-umbrella/event-transcripts/blob/main/2020/06-reshama-shaikh-sklearn-pr.md>`__
 
+- Sprint-specific instructions and practical tips:
+  `Video <https://youtu.be/p_2Uw2BxdhA>`__,
+  `Transcript
+  <https://github.com/data-umbrella/data-umbrella-scikit-learn-sprint/blob/master/3_transcript_ACM_video_vol2.md>`__
+
 How to contribute
 -----------------
 
@@ -779,6 +784,8 @@ Finally, follow the formatting rules below to make it consistently good:
 
     sample_weight : array-like of shape (n_samples,), default=None
 
+    multioutput_array : ndarray of shape (n_samples, n_classes) or list of such arrays
+
   In general have the following in mind:
 
       1. Use Python basic types. (``bool`` instead of ``boolean``)
@@ -792,10 +799,18 @@ Finally, follow the formatting rules below to make it consistently good:
       5. Specify ``dataframe`` when "frame-like" features are being used, such
          as the column names.
       6. When specifying the data type of a list, use ``of`` as a delimiter:
-         ``list of int``.
+         ``list of int``. When the parameter supports arrays giving details
+         about the shape and/or data type and a list of such arrays, you can
+         use one of ``array-like of shape (n_samples,) or list of such arrays``.
       7. When specifying the dtype of an ndarray, use e.g. ``dtype=np.int32``
          after defining the shape:
-         ``ndarray of shape (n_samples,), dtype=np.int32``.
+         ``ndarray of shape (n_samples,), dtype=np.int32``. You can specify
+         multiple dtype as a set:
+         ``array-like of shape (n_samples,), dtype={np.float64, np.float32}``.
+         If one wants to mention arbitrary precision, use `integral` and
+         `floating` rather than the Python dtype `int` and `float`. When both
+         `int` and `floating` are supported, there is no need to specify the
+         dtype.
       8. When the default is ``None``, ``None`` only needs to be specified at the
          end with ``default=None``. Be sure to include in the docstring, what it
          means for the parameter or attribute to be ``None``.

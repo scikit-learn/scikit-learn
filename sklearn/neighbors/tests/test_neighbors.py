@@ -26,6 +26,7 @@ from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.validation import check_random_state
+from sklearn.utils.fixes import sp_version, parse_version
 
 import joblib
 
@@ -1244,6 +1245,9 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
     test = rng.rand(n_query_pts, n_features)
 
     for metric, metric_params in metrics:
+        if metric == "wminkowski" and sp_version >= parse_version("1.8.0"):
+            # wminkowski will be removed in SciPy 1.8.0
+            continue
         results = {}
         p = metric_params.pop('p', 2)
         for algorithm in algorithms:
@@ -1265,8 +1269,16 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
                           if metric == 'haversine' else slice(None))
 
             neigh.fit(X[:, feature_sl])
-            results[algorithm] = neigh.kneighbors(test[:, feature_sl],
-                                                  return_distance=True)
+
+            # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
+            ExceptionToAssert = None
+            if (metric == "wminkowski" and algorithm == 'brute'
+                    and sp_version >= parse_version("1.6.0")):
+                ExceptionToAssert = DeprecationWarning
+
+            with pytest.warns(ExceptionToAssert):
+                results[algorithm] = neigh.kneighbors(test[:, feature_sl],
+                                                      return_distance=True)
 
         assert_array_almost_equal(results['brute'][0], results['ball_tree'][0])
         assert_array_almost_equal(results['brute'][1], results['ball_tree'][1])

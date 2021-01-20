@@ -50,23 +50,8 @@ conda update --yes conda
 conda create -n testenv --yes python=3.7
 
 source activate testenv
-
-if [[ $TRAVIS_CPU_ARCH == amd64 ]]; then
-    echo "Upgrading pip and setuptools."
-    pip install --upgrade pip setuptools
-    echo "Installing numpy, scipy and pandas master wheels."
-    dev_anaconda_url=https://pypi.anaconda.org/scipy-wheels-nightly/simple
-    pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url numpy scipy pandas
-    echo "Installing cython pre-release wheels."
-    pip install --pre cython
-    echo "Installing joblib master."
-    pip install https://github.com/joblib/joblib/archive/master.zip
-    echo "Installing pillow master."
-    pip install https://github.com/python-pillow/Pillow/archive/master.zip
-else
-    conda install -y scipy numpy pandas cython
-    pip install joblib threadpoolctl
-fi
+conda install -y scipy numpy pandas cython
+pip install joblib threadpoolctl
 
 pip install $(get_dep pytest $PYTEST_VERSION) pytest-xdist
 
