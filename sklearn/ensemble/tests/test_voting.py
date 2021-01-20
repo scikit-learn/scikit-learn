@@ -578,7 +578,7 @@ def test_multi_label_classification_binarized(voting_rule):
     base_clsf = AdaBoostClassifier()
     chains = [(str(i), ClassifierChain(base_clsf, order='random',
                                        random_state=i))
-              for i in range(10)]
+              for i in range(5)]
 
     est_pred = [est.fit(X_train, y_train).predict(X_test)
                 for _, est in chains]
@@ -599,7 +599,7 @@ def test_multi_label_classification_not_binarized():
     base_clsf = AdaBoostClassifier()
     chains = [(str(i), ClassifierChain(base_clsf, order='random',
                                        random_state=i))
-              for i in range(10)]
+              for i in range(5)]
 
     v_class = VotingClassifier(chains)
     y_pred = v_class.fit(X_train, y_train).predict(X_test)
