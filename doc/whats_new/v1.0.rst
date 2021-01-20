@@ -47,7 +47,7 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
-- |Fix| Do not allow to compute OOB score in
+- |Fix| Do not allow to compute out-of-bag (OOB) score in
   :class:`ensemble.RandomForestClassifier` and
   :class:`ensemble.ExtraTreesClassifier` with multiclass-multioutput target
   since scikit-learn does not provide any metric supporting this type of
