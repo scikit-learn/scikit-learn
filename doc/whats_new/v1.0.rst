@@ -79,6 +79,10 @@ Changelog
 - |Enhancement| Validate user-supplied gram matrix passed to linear models
   via the `precompute` argument. :pr:`19004` by :user:`Adam Midvidy <amidvidy>`.
 
+- |Fix| :class:`Lasso`, :class:`ElasticNet` no longer have a `dual_gap_`
+  not corresponding to their objective. :pr:`19172` by
+  :user:`Mathurin Massias <mathurinm>`
+
 :mod:`sklearn.naive_bayes`
 ..........................
 
