@@ -186,7 +186,7 @@ class ConfusionMatrixDisplay:
 
         Read more in the :ref:`User Guide <confusion_matrix>`.
 
-        .. versionadded:: 0.24
+        .. versionadded:: 1.0
 
         Parameters
         ----------
