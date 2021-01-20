@@ -74,7 +74,7 @@ class ConfusionMatrixDisplay:
     @_deprecate_positional_args
     def plot(self, *, include_values=True, cmap='viridis',
              xticks_rotation='horizontal', values_format=None,
-             values_size=None, ax=None, colorbar=True):
+             ax=None, colorbar=True):
         """Plot visualization.
 
         Parameters
@@ -92,10 +92,6 @@ class ConfusionMatrixDisplay:
         values_format : str, default=None
             Format specification for values in confusion matrix. If `None`,
             the format specification is 'd' or '.2g' whichever is shorter.
-
-        values_size : int, default=None
-            Font size of the values in the confusion matrix. If `None`,
-            `plt.rcParams["font-size"]` will be used.
 
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is
@@ -143,7 +139,7 @@ class ConfusionMatrixDisplay:
                 self.text_[i, j] = ax.text(
                     j, i, text_cm,
                     ha="center", va="center",
-                    color=color, fontsize=values_size)
+                    color=color)
 
         if self.display_labels is None:
             display_labels = np.arange(n_classes)
@@ -171,7 +167,7 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
                           sample_weight=None, normalize=None,
                           display_labels=None, include_values=True,
                           xticks_rotation='horizontal',
-                          values_format=None, values_size=None,
+                          values_format=None,
                           cmap='viridis', ax=None, colorbar=True):
     """Plot Confusion Matrix.
 
@@ -217,10 +213,6 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
     values_format : str, default=None
         Format specification for values in confusion matrix. If `None`,
         the format specification is 'd' or '.2g' whichever is shorter.
-
-    values_size : int, default=None
-        Font size of the values in the confusion matrix. If `None`,
-        `plt.rcParams["font-size"]` will be used.
 
     cmap : str or matplotlib Colormap, default='viridis'
         Colormap recognized by matplotlib.
@@ -279,5 +271,4 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
                                   display_labels=display_labels)
     return disp.plot(include_values=include_values,
                      cmap=cmap, ax=ax, xticks_rotation=xticks_rotation,
-                     values_format=values_format, values_size=values_size,
-                     colorbar=colorbar)
+                     values_format=values_format, colorbar=colorbar)
