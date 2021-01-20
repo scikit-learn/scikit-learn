@@ -947,8 +947,9 @@ def _fit_multiplicative_update(X, W, H, A=None, B=None, beta_loss='frobenius',
                     H[H < np.finfo(np.float64).eps] = 0.
 
             iter_offset += 1
+        n_iter += iter_offset
 
-        # test convergence criterion every 10 iterations
+        # test convergence criterion every iteration
         if tol > 0:
             error = _beta_divergence(X, W, H, beta_loss, square_root=True)
             if verbose:
