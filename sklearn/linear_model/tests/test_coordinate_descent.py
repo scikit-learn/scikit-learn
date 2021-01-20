@@ -372,42 +372,44 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
 # FIXME: 'normalize' to be removed in 1.2
 @pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize(
-    "estimator, is_sparse",
-    [(LinearRegression, True),
-     (LinearRegression, False)]
+    "estimator, is_sparse, with_mean",
+    [(LinearRegression, True, False),
+     (LinearRegression, False, True),
+     (LinearRegression, False, False)]
 )
 def test_linear_model_sample_weights_normalize_in_pipeline(
-        estimator, is_sparse
+        estimator, is_sparse, with_mean
 ):
     # Test that the results for running linear regression LinearRegression with
     # sample_weight set and with normalize set to True gives similar results as
     # LinearRegression with no normalize in a pipeline with a StandardScaler
     # and set sample_weight.
     rng = np.random.RandomState(0)
-    n_samples, n_features = 6, 5
-
-    y = rng.randn(n_samples)
-    X = rng.randn(n_samples, n_features)
-    X_test = rng.randn(n_samples, n_features)
-
+    X, y = make_regression(n_samples=20, n_features=5, noise=1e-2,
+                           random_state=rng)
+    # make sure the data is not centered to make the problem more
+    # difficult
+    X += 10
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5,
+                                                        random_state=rng)
     if is_sparse:
-        X = sparse.csr_matrix(X)
-        X_test = _convert_container(X, 'sparse')
+        X_train = sparse.csr_matrix(X_train)
+        X_test = _convert_container(X_train, 'sparse')
 
-    sample_weight = rng.rand(n_samples)
+    sample_weight = rng.rand(X_train.shape[0])
 
     # linear estimator with explicit sample_weight
     reg_with_normalize = estimator(normalize=True)
-    reg_with_normalize.fit(X, y, sample_weight=sample_weight)
+    reg_with_normalize.fit(X_train, y_train, sample_weight=sample_weight)
 
     # linear estimator in a pipeline
     reg_with_scaler = make_pipeline(
-        StandardScaler(with_mean=False),
+        StandardScaler(with_mean=with_mean),
         estimator(normalize=False)
     )
     kwargs = {reg_with_scaler.steps[-1][0] + '__sample_weight':
               sample_weight}
-    reg_with_scaler.fit(X, y, **kwargs)
+    reg_with_scaler.fit(X_train, y_train, **kwargs)
 
     y_pred_norm = reg_with_normalize.predict(X_test)
     y_pred_pip = reg_with_scaler.predict(X_test)
