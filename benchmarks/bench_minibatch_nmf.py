@@ -13,25 +13,15 @@ from sklearn.decomposition import NMF, MiniBatchNMF, non_negative_factorization
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 
-
-def get_optimal_w(X, H):
-    W, _, _ = non_negative_factorization(
-        X=X, W=None, H=H,
-        n_components=n_components,
-        init='custom', update_H=False, solver='mu',
-        beta_loss=beta_loss, tol=1e-4, max_iter=200, alpha=0.,
-        l1_ratio=0., regularization=None, random_state=None,
-        verbose=0, shuffle=False)
-    return W
-
-
 n_components = 10
 n_features = 500
 beta_loss = 'kullback-leibler'
+tol = 1e-4
+init = 'nndsvda'
 n_train = 12000
 n_test = 7000
-batch_sizes = [1000, 2000, 4000]
-forget_factors = [1., 0.5]
+batch_sizes = [1000]#, 2000, 4000]
+forget_factors = [0.7]
 random_state = 12
 color = ['b', 'g', 'c', 'm', 'y', 'k']
 
@@ -69,8 +59,8 @@ print("done in %0.3fs." % (time() - t0))
 X_test = X[:n_test, :]
 X = X[n_test:n_train + n_test, :]
 
-max_iter_nmf = [1, 5, 10, 30, 50, 100]
-n_iter_minibatch_nmf = 50
+max_iter_nmf = [20, 30, 50, 100, 200]
+n_iter_minibatch_nmf = 20
 
 fig, ax = plt.subplots()
 plt.xscale('log')
@@ -88,9 +78,9 @@ for batch_size in batch_sizes:
 
         minibatch_nmf = MiniBatchNMF(
             n_components=n_components, beta_loss=beta_loss,
-            batch_size=batch_size,
-            solver='mu', random_state=random_state, max_iter=3,
-            forget_factor=forget_factor)
+            batch_size=batch_size, init=init,
+            solver='mu', random_state=random_state, max_iter=n_iter_minibatch_nmf,
+            forget_factor=forget_factor, tol=tol)
 
         total_time = 0
         time_nmf = []
@@ -113,7 +103,7 @@ for batch_size in batch_sizes:
                 total_time += tf
                 if ((j % 11 == 9) and (n_iter <= 1)) or j == n_batch - 1:
                     time_nmf.append(total_time)
-                    W = get_optimal_w(X_test, minibatch_nmf.components_)
+                    W = minibatch_nmf.transform(X_test)
                     loss = _beta_divergence(X_test, W,
                                             minibatch_nmf.components_,
                                             minibatch_nmf.beta_loss) / n_test
@@ -123,6 +113,7 @@ for batch_size in batch_sizes:
                              label=labels[-1])
                     plt.pause(.01)
 
+            n_iter = minibatch_nmf.n_iter_
             print('Time MiniBatchNMF: %.1fs.' % total_time)
             print('KL-div MiniBatchNMF: %.2f' % loss)
             del W
@@ -134,15 +125,15 @@ time_nmf = []
 loss_nmf = []
 for i, max_iter in enumerate(max_iter_nmf):
     nmf = NMF(n_components=n_components, beta_loss=beta_loss,
-              solver='mu', max_iter=max_iter,
-              random_state=random_state, tol=0)
+              solver='mu', max_iter=max_iter, init=init,
+              random_state=random_state, tol=tol)
     t0 = time()
     nmf.fit(X)
     tf = time() - t0
     total_time += tf
     time_nmf.append(total_time)
     print('Time NMF: %.1fs.' % total_time)
-    W = get_optimal_w(X_test, nmf.components_)
+    W = nmf.transform(X_test)
     loss = _beta_divergence(X_test, W, nmf.components_,
                             nmf.beta_loss) / n_test
     loss_nmf.append(loss)
