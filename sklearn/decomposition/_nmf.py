@@ -1809,28 +1809,48 @@ class MiniBatchNMF(NMF):
 
         return W
 
+    def transform(self, X):
+        """Transform the data X according to the fitted NMF model.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Data matrix to be transformed by the model.
+
+        Returns
+        -------
+        W : ndarray of shape (n_samples, n_components)
+            Transformed data.
+        """
+        check_is_fitted(self)
+        X = self._validate_data(X, accept_sparse=('csr', 'csc'),
+                                dtype=[np.float64, np.float32],
+                                reset=False)
+
+        with config_context(assume_finite=True):
+            W, _, _, A, B, iter_offset = non_negative_factorization(
+                X=X, W=None, H=self.components_,
+                A=self._components_numerator,
+                B=self._components_denominator,
+                n_components=self.n_components_,
+                init=self.init, update_H=False, solver=self.solver,
+                batch_size=self.batch_size, beta_loss=self.beta_loss,
+                tol=self.tol, max_iter=self.max_iter,
+                alpha=self.alpha, l1_ratio=self.l1_ratio,
+                regularization=self.regularization,
+                random_state=self.random_state,
+                verbose=self.verbose)
+
+        return W
+
     def partial_fit(self, X, y=None, **params):
         is_first_call_to_partial_fit = not hasattr(self, 'components_')
-
-        X = self._validate_data(X, accept_sparse='csr',
-                                dtype=[np.float64, np.float32],
-                                order='C', accept_large_sparse=False,
-                                reset=is_first_call_to_partial_fit)
 
         if not is_first_call_to_partial_fit:
 
             with config_context(assume_finite=True):
-                # Compute W given H and X using NMF.transform
-                W, _, _ = non_negative_factorization(
-                    X=X, W=None, H=self.components_,
-                    n_components=self.n_components_,
-                    init=self.init, update_H=False, solver=self.solver,
-                    beta_loss=self.beta_loss,
-                    tol=self.tol, max_iter=self.max_iter,
-                    alpha=self.alpha, l1_ratio=self.l1_ratio,
-                    regularization=self.regularization,
-                    random_state=self.random_state,
-                    verbose=self.verbose)
+                # Compute W given H and X using transform
+                W = self.transform(X)
 
                 # Add 1 iteration to the current estimation
                 W, H, n_iter, A, B, iter_offset = non_negative_factorization(
