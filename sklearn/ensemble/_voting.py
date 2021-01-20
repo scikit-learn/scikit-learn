@@ -161,7 +161,8 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         If 'hard', uses predicted class labels for majority rule voting.
         Else if 'soft', predicts the class label based on the argmax of
         the sums of the predicted probabilities, which is recommended for
-        an ensemble of well-calibrated classifiers.
+        an ensemble of well-calibrated classifiers. 'soft' not handled for
+        multiouput-multilabel problems.
 
     weights : array-like of shape (n_classifiers,), default=None
         Sequence of weights (`float` or `int`) to weight the occurrences of
@@ -261,7 +262,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
             Training vectors, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : array-like of shape (n_samples,)
+        y : array-like
             Target values.
 
         sample_weight : array-like of shape (n_samples,), default=None
@@ -291,7 +292,7 @@ multiclass-multioutput problems")
         return super().fit(X, transformed_y, sample_weight)
 
     def _define_encoder(self, y):
-        "Define the appropriate encode according the classification type"
+        "Define the appropriate encode according the classification type."
         if self._classif_type in ['binary', 'multiclass']:
             self.le_ = LabelEncoder().fit(y)
             self.classes_ = self.le_.classes_
@@ -308,7 +309,7 @@ multiclass-multioutput problems")
             raise ValueError("Unsupported label type: %r" % self._classif_type)
 
     def _transform_y(self, y):
-        "Transform y for the classification task"
+        "Transform y for the classification task."
         if self._classif_type == 'multilabel-indicator':
             return y
         elif self._classif_type == 'multiclass-multioutput':
@@ -319,7 +320,7 @@ multiclass-multioutput problems")
             return self.le_.transform(y)
 
     def _inverse_transform_y(self, y):
-        "Transform y for the classification task"
+        "Transform y for the classification task."
         if not issubclass(y.dtype.type, np.integer):
             y = y.astype(np.int32)
 
@@ -342,7 +343,7 @@ multiclass-multioutput problems")
 
         Returns
         -------
-        maj : array-like of shape (n_samples,)
+        maj : array-like
             Predicted class labels.
         """
         check_is_fitted(self)
