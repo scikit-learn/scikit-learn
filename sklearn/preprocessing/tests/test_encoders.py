@@ -903,10 +903,10 @@ def test_ordinal_encoder_passthrough_missing_values_float_errors_dtype():
     """Test ordinal encoder with nan passthrough fails when dtype=np.int32"""
 
     X = np.array([[np.nan, 3.0, 1.0, 3.0]]).T
-    oe = OrdinalEncoder(handle_missing="passthrough", dtype=np.int32)
+    oe = OrdinalEncoder(dtype=np.int32)
 
-    msg = ("There are missing values in feature 0. With handle_missing="
-           "passthrough, OrdinalEncoder's dtype parameter must be float")
+    msg = ("There are missing values in feature 0. For OrdinalEncoder to "
+           "passthrough missing values, the dtype parameter must be a float")
     with pytest.raises(ValueError, match=msg):
         oe.fit(X)
 
@@ -914,8 +914,8 @@ def test_ordinal_encoder_passthrough_missing_values_float_errors_dtype():
 def test_ordinal_encoder_passthrough_missing_values_float():
     """Test ordinal encoder with nan passthrough on float dtypes"""
 
-    X = np.array([[np.nan, 3.0, 1.0, 3.0]]).T
-    oe = OrdinalEncoder(handle_missing="passthrough").fit(X)
+    X = np.array([[np.nan, 3.0, 1.0, 3.0]], dtype=np.float64).T
+    oe = OrdinalEncoder().fit(X)
 
     assert len(oe.categories_) == 1
     assert_allclose(oe.categories_[0], [1.0, 3.0, np.nan])
@@ -930,8 +930,8 @@ def test_ordinal_encoder_passthrough_missing_values_float():
 def test_ordinal_encoder_passthrough_missing_values_object_only_none():
     """Test ordinal encoder with None passthrough with object types"""
 
-    X = np.array([[None, 3.0, 1.0, 3.0]]).T
-    oe = OrdinalEncoder(handle_missing="passthrough").fit(X)
+    X = np.array([[None, 3.0, 1.0, 3.0]], dtype=object).T
+    oe = OrdinalEncoder().fit(X)
 
     assert len(oe.categories_) == 1
     assert_array_equal(oe.categories_[0], [1.0, 3.0, None])
@@ -947,7 +947,7 @@ def test_ordinal_encoder_passthrough_missing_values_object():
     """Test ordinal encoder with missing value passthrough on object dtypes"""
 
     X = np.array([[None, "b", "b", "a", np.nan]], dtype=object).T
-    oe = OrdinalEncoder(handle_missing="passthrough").fit(X)
+    oe = OrdinalEncoder().fit(X)
     assert len(oe.categories_) == 1
     categories_0 = oe.categories_[0]
 
@@ -984,7 +984,7 @@ def test_ordinal_encoder_missing_value_support_pandas_categorical(pd_nan_type):
                           dtype='category'),
     })
 
-    oe = OrdinalEncoder(handle_missing="passthrough").fit(df)
+    oe = OrdinalEncoder().fit(df)
     assert len(oe.categories_) == 1
     assert_array_equal(oe.categories_[0][:3], ['a', 'b', 'c'])
     assert np.isnan(oe.categories_[0][-1])
@@ -1014,7 +1014,7 @@ def test_ordinal_encoder_missing_value_support_pandas_categorical(pd_nan_type):
             'numeric-missing-value'])
 def test_ordinal_encoder_specified_categories_missing_passthrough(
         X, X2, cats, cat_dtype):
-    oe = OrdinalEncoder(categories=cats, handle_missing="passthrough")
+    oe = OrdinalEncoder(categories=cats)
     exp = np.array([[0.], [np.nan]])
     assert_array_equal(oe.fit_transform(X), exp)
     # manually specified categories should have same dtype as
@@ -1050,21 +1050,10 @@ def test_ordinal_encoder_handle_missing_and_missing(
 ):
     """Test the interaction between handle_missing and handle_unknown"""
 
-    oe = OrdinalEncoder(handle_missing="passthrough",
-                        handle_unknown="use_encoded_value",
+    oe = OrdinalEncoder(handle_unknown="use_encoded_value",
                         unknown_value=-1)
 
     X_trans = oe.fit_transform(X)
     assert_allclose(X_trans, expected_X_trans)
 
     assert_allclose(oe.transform(X_test), [[-1.0]])
-
-
-def test_ordinal_encoder_error_invalid_handle_missing():
-    """Test invalid handle_missing"""
-    X = np.array([['a']], dtype=object)
-    oe = OrdinalEncoder(handle_missing="wow")
-
-    msg = "handle_missing can only be 'passthrough' or 'missing'"
-    with pytest.raises(ValueError, match=msg):
-        oe.fit(X)
