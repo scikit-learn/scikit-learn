@@ -14,7 +14,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.ensemble import VotingClassifier, VotingRegressor
+from sklearn.ensemble import (
+    VotingClassifier, VotingRegressor, AdaBoostClassifier)
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.model_selection import GridSearchCV
@@ -26,13 +27,31 @@ from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.dummy import DummyRegressor
 from sklearn.multioutput import RegressorChain, ClassifierChain
 from sklearn.metrics import jaccard_score
+from sklearn.utils import shuffle
 
 
 # Load datasets
+
+# Classification
 iris = datasets.load_iris()
 X, y = iris.data[:, 1:3], iris.target
 
+# Regression
 X_r, y_r = datasets.load_diabetes(return_X_y=True)
+
+# Multioutput regression
+X_r_multi, y_r_multi = datasets.load_linnerud(return_X_y=True)
+
+# Multiouput binarized classification
+X_multi_bin, y_multi_bin = datasets.make_multilabel_classification(
+    n_samples=100, n_classes=8, n_labels=5, random_state=42)
+iris = datasets.load_iris()
+
+# Multiouput classification
+X_multi = X
+y1 = iris.target
+y2 = shuffle(y1, random_state=42)
+y_multi = np.column_stack((y1, y2))
 
 
 @pytest.mark.parametrize(
@@ -529,7 +548,6 @@ def test_voting_verbose(estimator, capsys):
 
 
 def test_multi_output_regression():
-    X_r_multi, y_r_multi = datasets.load_linnerud(return_X_y=True)
     X_train, X_test, y_train, _ = train_test_split(
         X_r_multi, y_r_multi, test_size=.25, random_state=42)
 
@@ -550,30 +568,47 @@ def test_multi_output_regression():
     assert_almost_equal(v_pred, avg, decimal=2)
 
 
-def test_multi_label_classification():
-    X, Y = datasets.make_multilabel_classification(n_samples=100, n_classes=8,
-                                                   n_labels=5, random_state=42)
-    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=.25,
-                                                        random_state=42)
-    base_lr = LogisticRegression()
-    chains = [(str(i), ClassifierChain(base_lr, order='random',
+@pytest.mark.parametrize(
+    "voting_rule",
+    ["hard", "soft"]
+)
+def test_multi_label_classification_binarized(voting_rule):
+    X_train, X_test, y_train, y_test = train_test_split(
+        X_multi_bin, y_multi_bin, test_size=.25, random_state=42)
+    base_clsf = AdaBoostClassifier()
+    chains = [(str(i), ClassifierChain(base_clsf, order='random',
                                        random_state=i))
               for i in range(10)]
+
     est_pred = [est.fit(X_train, y_train).predict(X_test)
                 for _, est in chains]
     avg_score = np.average([jaccard_score(y_test, pred, average='samples')
                             for pred in est_pred])
 
-    # Hard voting
+    v_class = VotingClassifier(chains, voting=voting_rule)
+    y_pred = v_class.fit(X_train, y_train).predict(X_test)
+    v_score = jaccard_score(y_test, y_pred, average='samples')
+    assert y_pred.shape == y_test.shape  # Correct output format
+    assert v_score > avg_score  # Better performance than an individual model
+
+
+def test_multi_label_classification_not_binarized():
+    X_train, X_test, y_train, y_test = train_test_split(
+        X_multi, y_multi, test_size=.25, random_state=42)
+
+    base_clsf = AdaBoostClassifier()
+    chains = [(str(i), ClassifierChain(base_clsf, order='random',
+                                       random_state=i))
+              for i in range(10)]
+
     v_class = VotingClassifier(chains)
     y_pred = v_class.fit(X_train, y_train).predict(X_test)
-    v_score = jaccard_score(y_test, y_pred, average='samples')
-    # At least close to the average performance of the individual models
-    assert v_score > avg_score - 0.01
+    assert y_pred.shape == y_test.shape  # Correct output format
+    # Second feature is random, so the resultats can't be that high
+    assert _matrix_similarity(y_pred, y_test) > 0.5  # Random is 0.33
 
-    # Soft voting
-    v_class = VotingClassifier(chains, voting='soft')
-    y_pred = v_class.fit(X_train, y_train).predict(X_test)
-    v_score = jaccard_score(y_test, y_pred, average='samples')
-    # At least close to the average performance of the individual models
-    assert v_score > avg_score - 0.01
+
+# To replace jaccard score for multiouput multilabel
+def _matrix_similarity(y_pred, y_true):
+    nb_similar_values = np.count_nonzero(y_pred == y_true)
+    return nb_similar_values / y_pred.size

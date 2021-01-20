@@ -281,25 +281,56 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         if self.voting not in ('soft', 'hard'):
             raise ValueError("Voting must be 'soft' or 'hard'; got (voting=%r)"
                              % self.voting)
+        if (self._classif_type == 'multiclass-multioutput' and
+                self.voting == 'soft'):
+            raise ValueError("Soft voting not handled yet for \
+multiclass-multioutput problems")
+        self._define_encoder(y)
+        transformed_y = self._transform_y(y)
 
+        return super().fit(X, transformed_y, sample_weight)
+
+    def _define_encoder(self, y):
+        "Define the appropriate encode according the classification type"
         if self._classif_type in ['binary', 'multiclass']:
             self.le_ = LabelEncoder().fit(y)
-        elif self._classif_type in ['multiclass-multioutput',
-                                    'multilabel-sequences']:
+            self.classes_ = self.le_.classes_
+        elif self._classif_type in 'multilabel-sequences':
             self.le_ = MultiLabelBinarizer().fit(y)
+            self.classes_ = self.le_.classes_
+        elif self._classif_type == 'multiclass-multioutput':
+            self.le_ = [LabelEncoder().fit(column) for column in y.T]
+            self.classes_ = [encoder.classes_ for encoder in self.le_]
         elif self._classif_type == 'multilabel-indicator':
             self.le_ = None
+            self.classes_ = None
         else:
             raise ValueError("Unsupported label type: %r" % self._classif_type)
 
+    def _transform_y(self, y):
+        "Transform y for the classification task"
         if self._classif_type == 'multilabel-indicator':
-            self.classes_ = None
-            transformed_y = y
+            return y
+        elif self._classif_type == 'multiclass-multioutput':
+            values = [encoder.transform(col)
+                      for encoder, col in zip(self.le_, y.T)]
+            return np.array(values, dtype=np.int32).T
         else:
-            self.classes_ = self.le_.classes_
-            transformed_y = self.le_.transform(y)
+            return self.le_.transform(y)
 
-        return super().fit(X, transformed_y, sample_weight)
+    def _inverse_transform_y(self, y):
+        "Transform y for the classification task"
+        if not issubclass(y.dtype.type, np.integer):
+            y = y.astype(np.int32)
+
+        if self._classif_type == 'multilabel-indicator':
+            return y
+        elif self._classif_type == 'multiclass-multioutput':
+            values = [encoder.inverse_transform(col)
+                      for encoder, col in zip(self.le_, y.T)]
+            return np.array(values).T
+        else:
+            return self.le_.inverse_transform(y)
 
     def predict(self, X):
         """Predict class labels for X.
@@ -317,29 +348,29 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         check_is_fitted(self)
 
         if self.voting == 'soft':
-            predictions = self.predict_proba(X)
+            probas = self.predict_proba(X)
             if self._classif_type in ['binary', 'multiclass']:
-                maj = np.argmax(predictions, axis=1)
+                maj = np.argmax(probas, axis=1)
             else:
-                maj = np.rint(predictions)
+                # We have to return a binary matrix
+                maj = np.rint(probas)
 
         else:  # 'hard' voting
             predictions = self._predict(X)
+            if not issubclass(predictions.dtype.type, np.integer):
+                predictions = predictions.astype(np.int32)
             if self._classif_type in ['binary', 'multiclass']:
                 maj = np.apply_along_axis(
                         lambda x: np.argmax(
                             np.bincount(x, weights=self._weights_not_none)),
                         axis=1, arr=predictions)
             else:
-                if not issubclass(predictions.dtype.type, np.integer):
-                    predictions = predictions.astype(np.int16)
                 maj = np.apply_along_axis(
                         lambda x: np.argmax(
                             np.bincount(x, weights=self._weights_not_none)),
                         axis=2, arr=predictions).T
-        if self._classif_type != 'multilabel-indicator':
-            maj = self.le_.inverse_transform(maj)
-        return maj
+
+        return self._inverse_transform_y(maj)
 
     def _collect_probas(self, X):
         """Collect results from clf.predict calls."""
