@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-from sklearn.decomposition import NMF, MiniBatchNMF, non_negative_factorization
+from sklearn.decomposition import NMF, MiniBatchNMF
 
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
@@ -20,7 +20,7 @@ tol = 1e-4
 init = 'nndsvda'
 n_train = 12000
 n_test = 7000
-batch_sizes = [1000]#, 2000, 4000]
+batch_sizes = [1000]
 forget_factors = [0.7]
 random_state = 12
 color = ['b', 'g', 'c', 'm', 'y', 'k']
@@ -79,7 +79,8 @@ for batch_size in batch_sizes:
         minibatch_nmf = MiniBatchNMF(
             n_components=n_components, beta_loss=beta_loss,
             batch_size=batch_size, init=init,
-            solver='mu', random_state=random_state, max_iter=n_iter_minibatch_nmf,
+            solver='mu', random_state=random_state,
+            max_iter=n_iter_minibatch_nmf,
             forget_factor=forget_factor, tol=tol)
 
         total_time = 0
