@@ -482,10 +482,9 @@ scikit-learn estimators, as these expect continuous input, and would interpret
 the categories as being ordered, which is often not desired (i.e. the set of
 browsers was ordered arbitrarily).
 
-:class:`OrdinalEncoder` can passthrough missing values by setting
-`handle_missing='passthrough'`::
+:class:`OrdinalEncoder` will also passthrough missing values::
 
-    >>> enc = preprocessing.OrdinalEncoder(handle_missing='passthrough')
+    >>> enc = preprocessing.OrdinalEncoder()
     >>> X = [['male'], ['female'], [np.nan]]
     >>> enc.fit_transform(X)
     array([[ 1.],

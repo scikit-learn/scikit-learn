@@ -74,8 +74,7 @@ Changelog
 ............................
 
 - |Feature| :class:`preprocessing.OrdinalEncoder` supports passing through
-  missing values by setting `handle_missing='passthrough'`. :pr:`19069` by
-  `Thomas Fan`_.
+  missing values by default. :pr:`19069` by `Thomas Fan`_.
 
 :mod:`sklearn.linear_model`
 ...........................
