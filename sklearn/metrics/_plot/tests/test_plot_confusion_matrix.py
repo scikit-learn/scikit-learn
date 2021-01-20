@@ -282,22 +282,6 @@ def test_confusion_matrix_text_format(pyplot, data, y_pred, n_classes,
     assert_array_equal(expected_text, text_text)
 
 
-@pytest.mark.parametrize("values_size", [4, 16, 42])
-def test_confusion_matrix_text_size(pyplot, data, y_pred, n_classes,
-                                    fitted_clf, values_size):
-    # Make sure plot text is formatted with 'values_format'.
-    X, y = data
-    disp = plot_confusion_matrix(fitted_clf, X, y,
-                                 include_values=True,
-                                 values_size=values_size)
-
-    assert disp.text_.shape == (n_classes, n_classes)
-
-    sizes = np.array([text.get_fontsize() for text in disp.text_.ravel()])
-
-    assert np.all(sizes == values_size)
-
-
 def test_confusion_matrix_standard_format(pyplot):
     cm = np.array([[10000000, 0], [123456, 12345678]])
     plotted_text = ConfusionMatrixDisplay(
