@@ -909,6 +909,9 @@ class _BaseSparseCoding(TransformerMixin):
         SparseCoder."""
         X = self._validate_data(X, reset=False)
 
+        if hasattr(self, "alpha") and self.transform_alpha is None:
+            self.transform_alpha = self.alpha
+
         code = sparse_encode(
             X, dictionary, algorithm=self.transform_algorithm,
             n_nonzero_coefs=self.transform_n_nonzero_coefs,
@@ -1297,9 +1300,6 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
                  split_sign=False, random_state=None, positive_code=False,
                  positive_dict=False, transform_max_iter=1000):
 
-        if transform_alpha is None:
-            transform_alpha = alpha
-
         super().__init__(
             transform_algorithm, transform_n_nonzero_coefs,
             transform_alpha, split_sign, n_jobs, positive_code,
@@ -1537,9 +1537,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
                  verbose=False, split_sign=False, random_state=None,
                  positive_code=False, positive_dict=False,
                  transform_max_iter=1000):
-
-        if transform_alpha is None:
-            transform_alpha = alpha
 
         super().__init__(
             transform_algorithm, transform_n_nonzero_coefs, transform_alpha,
