@@ -284,8 +284,8 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
                              % self.voting)
         if (self._classif_type == 'multiclass-multioutput' and
                 self.voting == 'soft'):
-            raise ValueError("Soft voting not handled yet for \
-multiclass-multioutput problems")
+            raise ValueError(("Soft voting not handled yet for "
+                              "multiclass-multioutput problems"))
         self._define_encoder(y)
         transformed_y = self._transform_y(y)
 
@@ -306,7 +306,8 @@ multiclass-multioutput problems")
             self.le_ = None
             self.classes_ = None
         else:
-            raise ValueError("Unknown label type: %r" % self._classif_type)
+            raise ValueError('y argument should be a 1 or 2D array-like,'
+                             'got array with shape %s' % (str(y.shape)))
 
     def _transform_y(self, y):
         "Transform y for the classification task."
@@ -538,9 +539,8 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         if isinstance(y, np.ndarray) and len(y.shape) > 1 and y.shape[1] > 1:
             if len(y.shape) > 2 and y.shape[2] > 1:
                 raise ValueError('y argument should be a 1 or 2D array-like,'
-                                 'got array with shape %f' % (str(y.shape)))
-            else:
-                self.multioutput_ = True
+                                 'got array with shape %s' % (str(y.shape)))
+            self.multioutput_ = True
         else:
             self.multioutput_ = False
             y = column_or_1d(y, warn=True)

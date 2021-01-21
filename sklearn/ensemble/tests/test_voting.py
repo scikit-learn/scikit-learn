@@ -607,8 +607,39 @@ def test_multi_label_classification_not_binarized():
     # Second feature is random, so the resultats can't be that high
     assert _matrix_similarity(y_pred, y_test) > 0.5  # Random is 0.33
 
+    v_class = VotingClassifier(chains, voting='soft')
+    msg = ("Soft voting not handled yet for "
+           "multiclass-multioutput problems")
+    assert_raise_message(ValueError, msg, v_class.fit,
+                         X_train, y_train)
+
 
 # To replace jaccard score for multiouput multilabel
 def _matrix_similarity(y_pred, y_true):
     nb_similar_values = np.count_nonzero(y_pred == y_true)
     return nb_similar_values / y_pred.size
+
+
+def test_incorrect_output_shape():
+    X = np.random.rand(10, 5)
+    y_r = np.random.rand(10, 2, 2)
+    y = np.random.randint(5, size=(10, 2, 3))
+    msg = ('y argument should be a 1 or 2D array-like,'
+           'got array with shape %s')
+
+    base_regs = [DummyRegressor(strategy='mean'),
+                 DummyRegressor(strategy='median')]
+    multi_regs = [(est.strategy, RegressorChain(est, random_state=42))
+                  for est in base_regs]
+    v_reg = VotingRegressor(multi_regs)
+    assert_raise_message(ValueError, msg % str(y_r.shape), v_reg.fit,
+                         X, y_r)
+
+    base_clsf = AdaBoostClassifier()
+    chains = [(str(i), ClassifierChain(base_clsf, order='random',
+                                       random_state=i))
+              for i in range(5)]
+
+    v_class = VotingClassifier(chains)
+    assert_raise_message(ValueError, msg % str(y.shape), v_class.fit,
+                         X, y)
