@@ -815,9 +815,8 @@ class OrdinalEncoder(_BaseEncoder):
         """
         Convert the data back to the original representation.
 
-        If there are categories that are missing, then
-        both `None` and `np.nan` are inverse transformed as `np.nan`, i.e.
-        `inverse_transform(transform([None])) == np.nan`.
+        If a categorical feature uses `None` *and* `np.nan` as a missing
+        value indicator, the inverse_transform will map `np.nan` to `np.nan`.
 
         Parameters
         ----------

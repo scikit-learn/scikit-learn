@@ -900,7 +900,7 @@ def test_ohe_missing_value_support_pandas_categorical(pd_nan_type):
 
 
 def test_ordinal_encoder_passthrough_missing_values_float_errors_dtype():
-    """Test ordinal encoder with nan passthrough fails when dtype=np.int32"""
+    """Test ordinal encoder with nan passthrough fails when dtype=np.int32."""
 
     X = np.array([[np.nan, 3.0, 1.0, 3.0]]).T
     oe = OrdinalEncoder(dtype=np.int32)
@@ -912,7 +912,7 @@ def test_ordinal_encoder_passthrough_missing_values_float_errors_dtype():
 
 
 def test_ordinal_encoder_passthrough_missing_values_float():
-    """Test ordinal encoder with nan passthrough on float dtypes"""
+    """Test ordinal encoder with nan on float dtypes."""
 
     X = np.array([[np.nan, 3.0, 1.0, 3.0]], dtype=np.float64).T
     oe = OrdinalEncoder().fit(X)
@@ -928,7 +928,7 @@ def test_ordinal_encoder_passthrough_missing_values_float():
 
 
 def test_ordinal_encoder_passthrough_missing_values_object_only_none():
-    """Test ordinal encoder with None passthrough with object types"""
+    """Test ordinal encoder with None with object types."""
 
     X = np.array([[None, 3.0, 1.0, 3.0]], dtype=object).T
     oe = OrdinalEncoder().fit(X)
@@ -944,7 +944,8 @@ def test_ordinal_encoder_passthrough_missing_values_object_only_none():
 
 
 def test_ordinal_encoder_passthrough_missing_values_object():
-    """Test ordinal encoder with missing value passthrough on object dtypes"""
+    """Test ordinal encoder with both missing value indictors on object
+    dtypes."""
 
     X = np.array([[None, "b", "b", "a", np.nan]], dtype=object).T
     oe = OrdinalEncoder().fit(X)
@@ -963,13 +964,16 @@ def test_ordinal_encoder_passthrough_missing_values_object():
 
     X_inverse_0 = X_inverse[:, 0]
     assert_array_equal(X_inverse_0[1:-1], ["b", "b", "a"])
+
+    # The first value was original None, this is inverse_transformed to
+    # np.nan because the original feature contains both `None` and `np.nan`
     assert np.isnan(X_inverse_0[0])
     assert np.isnan(X_inverse_0[-1])
 
 
 @pytest.mark.parametrize('pd_nan_type', ['pd.NA', 'np.nan'])
 def test_ordinal_encoder_missing_value_support_pandas_categorical(pd_nan_type):
-    """Checks ordinal encoder """
+    """Check ordinal encoder is compatible with pandas."""
     # checks pandas dataframe with categorical features
     if pd_nan_type == 'pd.NA':
         # pd.NA is in pandas 1.0
