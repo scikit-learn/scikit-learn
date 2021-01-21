@@ -1195,7 +1195,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         penalty applied to the L1 norm.
         If `algorithm='threshold'`, `alpha` is the absolute value of the
         threshold below which coefficients will be squashed to zero.
-        If `None`, default to `alpha`.
+        If `None`, defaults to `alpha`.
 
     n_jobs : int or None, default=None
         Number of parallel jobs to run.
