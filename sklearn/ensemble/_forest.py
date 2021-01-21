@@ -50,6 +50,7 @@ from scipy.sparse import issparse
 from scipy.sparse import hstack as sparse_hstack
 from joblib import Parallel
 
+from ..base import is_classifier
 from ..base import ClassifierMixin, RegressorMixin, MultiOutputMixin
 from ..metrics import accuracy_score, r2_score
 from ..preprocessing import OneHotEncoder
@@ -445,7 +446,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         n_samples = y.shape[0]
         n_outputs = self.n_outputs_
-        if hasattr(self, "n_classes_"):
+        if is_classifier(self) and hasattr(self, "n_classes_"):
             # n_classes_ is a ndarray at this stage
             # all the supported type of target will have the same number of
             # classes in all outputs
@@ -478,7 +479,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 warn(
                     "Some inputs do not have OOB scores. This probably means "
                     "too few trees were used to compute any reliable OOB "
-                    "estimates."
+                    "estimates.", UserWarning
                 )
                 n_oob_pred[n_oob_pred == 0] = 1
             oob_pred[..., k] /= n_oob_pred[..., [k]]
@@ -606,7 +607,9 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             # binary and multiclass
             y_pred = y_pred[..., np.newaxis]
         else:
-            # swap such that the `n_outputs` is the last axis
+            # Roll the first `n_outputs` axis to the last axis. We will reshape
+            # from a shape of (n_outputs, n_samples, n_classes) to a shape of
+            # (n_samples, n_classes, n_outputs).
             y_pred = np.rollaxis(y_pred, axis=0, start=3)
         return y_pred
 
