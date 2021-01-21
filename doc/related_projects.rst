@@ -157,6 +157,10 @@ and tasks.
 - `skorch <https://github.com/dnouri/skorch>`_ A scikit-learn compatible
   neural network library that wraps PyTorch.
 
+- `scikeras <https://github.com/adriangb/scikeras>`_ provides a wrapper around
+  Keras to interface it with scikit-learn. SciKeras is the successor
+  of `tf.keras.wrappers.scikit_learn`.
+
 **Broad scope**
 
 - `mlxtend <https://github.com/rasbt/mlxtend>`_ Includes a number of additional
