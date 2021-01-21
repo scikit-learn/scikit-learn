@@ -18,7 +18,7 @@ Changelog
 - |Fix| Validate the constructor parameter `handle_unknown` in
   :class:`preprocessing.OrdinalEncoder` to only allow for `'error'` and
   `'use_encoded_value'` strategies.
-  :pr:`xxx` by `Guillaume Lemaitre <glemaitre>`.
+  :pr:`19234` by `Guillaume Lemaitre <glemaitre>`.
 
 .. _changes_0_24_1:
 
