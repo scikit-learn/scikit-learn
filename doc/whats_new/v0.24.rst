@@ -2,7 +2,23 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_0_24_2:
+
+Version 0.24.2
+==============
+
+**TBA**
+
 .. _changes_0_24_1:
+
+Changelog
+---------
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Fix| :class:`OrdinalEncoder` now correctly checks the handle_unknown
+  parameter. :pr:`19232` by `Thomas Fan`_.
 
 Version 0.24.1
 ==============
