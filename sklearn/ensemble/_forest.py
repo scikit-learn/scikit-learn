@@ -641,7 +641,12 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         y : ndarray of shape (n_samples, n_outputs)
             The target matrix.
         """
-        self.oob_decision_function_ = super()._set_oob_score(X, y).squeeze()
+        self.oob_decision_function_ = super()._set_oob_score(X, y)
+        if self.oob_decision_function_.shape[-1] == 1:
+            # drop the n_outputs axis if there is a single output
+            self.oob_decision_function_ = self.oob_decision_function_.squeeze(
+                axis=-1
+            )
 
     def _validate_y_class_weight(self, y):
         check_classification_targets(y)
@@ -942,7 +947,10 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         y : ndarray of shape (n_samples, n_outputs)
             The target matrix.
         """
-        self.oob_prediction_ = super()._set_oob_score(X, y).squeeze()
+        self.oob_prediction_ = super()._set_oob_score(X, y).squeeze(axis=1)
+        if self.oob_prediction_.shape[-1] == 1:
+            # drop the n_outputs axis if there is a single output
+            self.oob_prediction_ = self.oob_prediction_.squeeze(axis=-1)
 
     def _compute_partial_dependence_recursion(self, grid, target_features):
         """Fast partial dependence computation.
