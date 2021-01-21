@@ -407,7 +407,21 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
 
     def proximity_matrix(self, X, normalize=True):
-        """Return the proximity matrix."""
+        """Return the proximity matrix.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The training input samples.
+        normalize : boolean, default=True
+            Normalization of the matrix, if True, then it will be normalized.
+
+        Returns
+        -------
+        proximity_matrix : ndarray of shape (n_estimators, n_estimators)
+            The proximity matrix of X.
+
+        """
         terminals = self.apply(X)
         n_trees = terminals.shape[1]
 
