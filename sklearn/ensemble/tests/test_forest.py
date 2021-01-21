@@ -404,8 +404,7 @@ def test_unfitted_feature_importances(name):
 def test_forest_classifier_oob(
     ForestClassifier, X, y, X_type, lower_bound_accuracy
 ):
-    """Check that forest-based classifier provide an OOB score close to the
-    score on a test set."""
+    """Check that OOB score is close to score on a test set."""
     X = _convert_container(X, constructor_name=X_type)
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.5, random_state=0,
