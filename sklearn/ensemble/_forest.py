@@ -399,6 +399,10 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         if self.oob_score:
             y_type = type_of_target(y)
             if y_type in ("multiclass-multioutput", "unknown"):
+                # FIXME: we could consider to support multiclass-multioutput if
+                # we introduce or reuse a constructor parameter (e.g.
+                # oob_score) allowing our user to pass a callable defining the
+                # scoring strategy on OOB sample.
                 raise ValueError(
                     f"The type of target cannot be used to compute OOB "
                     f"estimates. Got {y_type} while only the following are "
@@ -611,24 +615,6 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             y_pred = np.rollaxis(y_pred, axis=0, start=3)
         return y_pred
 
-    @staticmethod
-    def _score_oob_predictions(y_true, oob_pred):
-        """Compute the average accuracy for the OOB samples.
-
-        Parameters
-        ----------
-        y_true : ndarray of shape (n_samples,) or (n_samples, n_outputs)
-            The true target.
-        oob_pred : ndarray of shape (n_samples, n_classes, n_outputs)
-            The OOB predictions.
-
-        Returns
-        -------
-        oob_score : float
-            The average accuracy score.
-        """
-        return accuracy_score(y_true, np.argmax(oob_pred, axis=1))
-
     def _set_oob_score_and_attributes(self, X, y):
         """Compute and set the OOB score and attributes.
 
@@ -639,14 +625,15 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         y : ndarray of shape (n_samples, n_outputs)
             The target matrix.
         """
-        oob_pred = super()._compute_oob_predictions(X, y)
-        self.oob_score_ = self._score_oob_predictions(y, oob_pred)
-        self.oob_decision_function_ = oob_pred
+        self.oob_decision_function_ = super()._compute_oob_predictions(X, y)
         if self.oob_decision_function_.shape[-1] == 1:
             # drop the n_outputs axis if there is a single output
             self.oob_decision_function_ = self.oob_decision_function_.squeeze(
                 axis=-1
             )
+        self.oob_score_ = accuracy_score(
+            y, np.argmax(self.oob_decision_function_, axis=1)
+        )
 
     def _validate_y_class_weight(self, y):
         check_classification_targets(y)
@@ -919,24 +906,6 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
             y_pred = y_pred[:, np.newaxis, :]
         return y_pred
 
-    @staticmethod
-    def _score_oob_predictions(y_true, oob_pred):
-        """Compute the average R2 score for the OOB samples.
-
-        Parameters
-        ----------
-        y_true : ndarray of shape (n_samples,) or (n_samples, n_outputs)
-            The true target.
-        oob_pred : ndarray of shape (n_samples, 1, n_outputs)
-            The OOB predictions.
-
-        Returns
-        -------
-        oob_score : float
-            The average accuracy score.
-        """
-        return r2_score(y_true, oob_pred[:, 0, :])
-
     def _set_oob_score_and_attributes(self, X, y):
         """Compute and set the OOB score and attributes.
 
@@ -947,12 +916,13 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         y : ndarray of shape (n_samples, n_outputs)
             The target matrix.
         """
-        oob_pred = super()._compute_oob_predictions(X, y)
-        self.oob_score_ = self._score_oob_predictions(y, oob_pred)
-        self.oob_prediction_ = oob_pred.squeeze(axis=1)
+        self.oob_prediction_ = super()._compute_oob_predictions(X, y).squeeze(
+            axis=1
+        )
         if self.oob_prediction_.shape[-1] == 1:
             # drop the n_outputs axis if there is a single output
             self.oob_prediction_ = self.oob_prediction_.squeeze(axis=-1)
+        self.oob_score_ = r2_score(y, self.oob_prediction_)
 
     def _compute_partial_dependence_recursion(self, grid, target_features):
         """Fast partial dependence computation.
