@@ -30,10 +30,6 @@ enhance the functionality of scikit-learn's estimators.
 - `sklearn_xarray <https://github.com/phausamann/sklearn-xarray/>`_ provides
   compatibility of scikit-learn estimators with xarray data structures.
 
-- `scikeras <https://github.com/adriangb/scikeras>`_ provides a wrapper around
-  Keras to interface it with Scikit-Learn. SciKeras is the successor
-  of `tf.keras.wrappers.scikit_learn`.
-
 **Auto-ML**
 
 - `auto-sklearn <https://github.com/automl/auto-sklearn/>`_
@@ -160,6 +156,10 @@ and tasks.
 
 - `skorch <https://github.com/dnouri/skorch>`_ A scikit-learn compatible
   neural network library that wraps PyTorch.
+
+- `scikeras <https://github.com/adriangb/scikeras>`_ provides a wrapper around
+  Keras to interface it with scikit-learn. SciKeras is the successor
+  of `tf.keras.wrappers.scikit_learn`.
 
 **Broad scope**
 
