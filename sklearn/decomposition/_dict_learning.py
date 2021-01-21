@@ -355,7 +355,7 @@ def sparse_encode(X, dictionary, *, gram=None, cov=None,
 
 
 def _update_dict(dictionary, Y, code, A=None, B=None, verbose=False,
-                 return_r2=False, random_state=None, positive=False):
+                 random_state=None, positive=False):
     """Update the dense dictionary factor in place.
 
     Parameters
@@ -392,13 +392,14 @@ def _update_dict(dictionary, Y, code, A=None, B=None, verbose=False,
     random_state = check_random_state(random_state)
 
     if A is None:
-        A = np.dot(code.T, code)
+        A = code.T @ code
     if B is None:
-        B = np.dot(Y.T, code)
+        B = Y.T @ code
 
     for k in range(n_components):
         if A[k, k] > 1e-6:
-            dictionary[k] += (B[:, k] - A[k].dot(dictionary)) / A[k, k]
+            # 1e-6 is arbitrary but consistent with the spams implementation
+            dictionary[k] += (B[:, k] - A[k] @ dictionary) / A[k, k]
         else:
             # kth atom is almost never used -> sample a new one from the data
             if verbose == 1:
