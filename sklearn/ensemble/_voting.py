@@ -306,8 +306,15 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
             self.le_ = None
             self.classes_ = None
         else:
-            raise ValueError('y argument should be a 1 or 2D array-like,'
-                             'got array with shape %s' % (str(y.shape)))
+            if isinstance(y, np.ndarray):
+                array_y = y
+            else:
+                array_y = np.array(y)
+            if len(array_y.shape) > 2 and array_y.shape[2] > 1:
+                raise ValueError('y argument should be a 1 or 2D array-like,'
+                                 'got array with shape %s' % (str(y.shape)))
+            else:
+                raise ValueError('Unknown label type: %r' % self._classif_type)
 
     def _transform_y(self, y):
         "Transform y for the classification task."
