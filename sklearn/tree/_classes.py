@@ -141,7 +141,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         return self.tree_.n_leaves
 
     def fit(self, X, y, sample_weight=None, check_input=True,
-            X_idx_sorted="deprecated", update_tree=False):
+            X_idx_sorted="deprecated"):
 
         random_state = check_random_state(self.random_state)
 
@@ -183,35 +183,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             # reshape is necessary to preserve the data contiguity against vs
             # [:, np.newaxis] that does not.
             y = np.reshape(y, (-1, 1))
-
-        if update_tree:
-            # TODO: find a way to build on previous tree
-            # See if there is an existing tree
-            try:
-                self.tree_
-            except AttributeError:
-                print("No existing tree to update")
-                return self
-
-            if is_classification:
-                check_classification_targets(y)
-                y = np.copy(y)
-
-                y_encoded = np.zeros(y.shape, dtype=int)
-                for k in range(self.n_outputs_):
-                    classes_k, y_encoded[:, k] = np.unique(y[:, k],
-                                                           return_inverse=True)
-                y = y_encoded
-
-            if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
-                y = np.ascontiguousarray(y, dtype=DOUBLE)
-
-            # Update tree
-            self.builder_.update(self.tree_, X, y, sample_weight)
-
-            self._prune_tree()
-
-            return self
 
         self.n_outputs_ = y.shape[1]
 
@@ -341,11 +312,13 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         min_impurity_split = self.min_impurity_split
         if min_impurity_split is not None:
-            warnings.warn("The min_impurity_split parameter is deprecated. "
-                          "Its default value has changed from 1e-7 to 0 in "
-                          "version 0.23, and it will be removed in 0.25. "
-                          "Use the min_impurity_decrease parameter instead.",
-                          FutureWarning)
+            warnings.warn(
+                "The min_impurity_split parameter is deprecated. Its default "
+                "value has changed from 1e-7 to 0 in version 0.23, and it "
+                "will be removed in 1.0 (renaming of 0.25). Use the "
+                "min_impurity_decrease parameter instead.",
+                FutureWarning
+            )
 
             if min_impurity_split < 0.:
                 raise ValueError("min_impurity_split must be greater than "
@@ -357,12 +330,15 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             raise ValueError("min_impurity_decrease must be greater than "
                              "or equal to 0")
 
-        # TODO: Remove in v0.26
+        # TODO: Remove in 1.1
         if X_idx_sorted != "deprecated":
-            warnings.warn("The parameter 'X_idx_sorted' is deprecated and has "
-                          "no effect. It will be removed in v0.26. You can "
-                          "suppress this warning by not passing any value to "
-                          "the 'X_idx_sorted' parameter.", FutureWarning)
+            warnings.warn(
+                "The parameter 'X_idx_sorted' is deprecated and has no "
+                "effect. It will be removed in 1.1 (renaming of 0.26). You "
+                "can suppress this warning by not passing any value to the "
+                "'X_idx_sorted' parameter.",
+                FutureWarning
+            )
 
         # Build tree
         criterion = self.criterion
@@ -396,25 +372,97 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         # Use BestFirst if max_leaf_nodes given; use DepthFirst otherwise
         if max_leaf_nodes < 0:
             self.builder_ = DepthFirstTreeBuilder(splitter, min_samples_split,
-                                            min_samples_leaf,
-                                            min_weight_leaf,
-                                            max_depth,
-                                            self.min_impurity_decrease,
-                                            min_impurity_split)
+                                                  min_samples_leaf,
+                                                  min_weight_leaf,
+                                                  max_depth,
+                                                  self.min_impurity_decrease,
+                                                  min_impurity_split)
         else:
             self.builder_ = BestFirstTreeBuilder(splitter, min_samples_split,
-                                           min_samples_leaf,
-                                           min_weight_leaf,
-                                           max_depth,
-                                           max_leaf_nodes,
-                                           self.min_impurity_decrease,
-                                           min_impurity_split)
+                                                 min_samples_leaf,
+                                                 min_weight_leaf,
+                                                 max_depth,
+                                                 max_leaf_nodes,
+                                                 self.min_impurity_decrease,
+                                                 min_impurity_split)
 
         self.builder_.build(self.tree_, X, y, sample_weight)
 
         if self.n_outputs_ == 1 and is_classification:
             self.n_classes_ = self.n_classes_[0]
             self.classes_ = self.classes_[0]
+
+        self._prune_tree()
+
+        return self
+
+    def partial_fit(self, X, y, sample_weight=None, check_input=True):
+        # Fit if no tree exists yet
+        try:
+            self.tree_
+        except AttributeError:
+            self.fit(
+                X, y,
+                sample_weight=sample_weight,
+                check_input=check_input)
+            return self
+
+        random_state = check_random_state(self.random_state)
+
+        if self.ccp_alpha < 0.0:
+            raise ValueError("ccp_alpha must be greater than or equal to 0")
+
+        if check_input:
+            # Need to validate separately here.
+            # We can't pass multi_ouput=True because that would allow y to be
+            # csr.
+            check_X_params = dict(dtype=DTYPE, accept_sparse="csc")
+            check_y_params = dict(ensure_2d=False, dtype=None)
+            X, y = self._validate_data(X, y,
+                                       validate_separately=(check_X_params,
+                                                            check_y_params))
+            if issparse(X):
+                X.sort_indices()
+
+                if X.indices.dtype != np.intc or X.indptr.dtype != np.intc:
+                    raise ValueError("No support for np.int64 index based "
+                                     "sparse matrices")
+
+            if self.criterion == "poisson":
+                if np.any(y < 0):
+                    raise ValueError("Some value(s) of y are negative which is"
+                                     " not allowed for Poisson regression.")
+                if np.sum(y) <= 0:
+                    raise ValueError("Sum of y is not positive which is "
+                                     "necessary for Poisson regression.")
+
+        # Determine output settings
+        n_samples, self.n_features_ = X.shape
+        is_classification = is_classifier(self)
+
+        y = np.atleast_1d(y)
+        expanded_class_weight = None
+
+        if y.ndim == 1:
+            # reshape is necessary to preserve the data contiguity against vs
+            # [:, np.newaxis] that does not.
+            y = np.reshape(y, (-1, 1))
+
+        if is_classification:
+            check_classification_targets(y)
+            y = np.copy(y)
+
+            y_encoded = np.zeros(y.shape, dtype=int)
+            for k in range(self.n_outputs_):
+                classes_k, y_encoded[:, k] = np.unique(y[:, k],
+                                                       return_inverse=True)
+            y = y_encoded
+
+        if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
+            y = np.ascontiguousarray(y, dtype=DOUBLE)
+
+        # Update tree
+        self.builder_.update(self.tree_, X, y, sample_weight)
 
         self._prune_tree()
 
@@ -885,7 +933,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             ccp_alpha=ccp_alpha)
 
     def fit(self, X, y, sample_weight=None, check_input=True,
-            X_idx_sorted="deprecated", update_tree=False):
+            X_idx_sorted="deprecated"):
         """Build a decision tree classifier from the training set (X, y).
 
         Parameters
@@ -915,9 +963,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
             .. deprecated :: 0.24
 
-        update_tree : bool, default=False
-            Choice of updating the existing tree or creating a new one.
-
         Returns
         -------
         self : DecisionTreeClassifier
@@ -928,8 +973,43 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             X, y,
             sample_weight=sample_weight,
             check_input=check_input,
-            X_idx_sorted=X_idx_sorted,
-            update_tree=update_tree)
+            X_idx_sorted=X_idx_sorted)
+        return self
+
+    def partial_fit(self, X, y, sample_weight=None, check_input=True):
+        """Update a decision tree classifier from the training set (X, y).
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The training input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csc_matrix``.
+
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
+            The target values (class labels) as integers or strings.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights. If None, then samples are equally weighted. Splits
+            that would create child nodes with net zero or negative weight are
+            ignored while searching for a split in each node. Splits are also
+            ignored if they would result in any single class carrying a
+            negative weight in either child node.
+
+        check_input : bool, default=True
+            Allow to bypass several input checking.
+            Don't use this parameter unless you know what you do.
+
+        Returns
+        -------
+        self : DecisionTreeClassifier
+            Fitted estimator.
+        """
+
+        super().partial_fit(
+            X, y,
+            sample_weight=sample_weight,
+            check_input=check_input)
         return self
 
     def predict_proba(self, X, check_input=True):
@@ -1241,7 +1321,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             ccp_alpha=ccp_alpha)
 
     def fit(self, X, y, sample_weight=None, check_input=True,
-            X_idx_sorted="deprecated", update_tree=False):
+            X_idx_sorted="deprecated"):
         """Build a decision tree regressor from the training set (X, y).
 
         Parameters
@@ -1270,9 +1350,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
             .. deprecated :: 0.24
 
-        update_tree : bool, default=False
-            Choice of updating the existing tree or creating a new one.
-
         Returns
         -------
         self : DecisionTreeRegressor
@@ -1283,8 +1360,43 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             X, y,
             sample_weight=sample_weight,
             check_input=check_input,
-            X_idx_sorted=X_idx_sorted,
-            update_tree=update_tree)
+            X_idx_sorted=X_idx_sorted)
+        return self
+
+    def partial_fit(self, X, y, sample_weight=None, check_input=True):
+        """Update a decision tree classifier from the training set (X, y).
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The training input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csc_matrix``.
+
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
+            The target values (class labels) as integers or strings.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights. If None, then samples are equally weighted. Splits
+            that would create child nodes with net zero or negative weight are
+            ignored while searching for a split in each node. Splits are also
+            ignored if they would result in any single class carrying a
+            negative weight in either child node.
+
+        check_input : bool, default=True
+            Allow to bypass several input checking.
+            Don't use this parameter unless you know what you do.
+
+        Returns
+        -------
+        self : DecisionTreeClassifier
+            Fitted estimator.
+        """
+
+        super().partial_fit(
+            X, y,
+            sample_weight=sample_weight,
+            check_input=check_input)
         return self
 
     def _compute_partial_dependence_recursion(self, grid, target_features):
