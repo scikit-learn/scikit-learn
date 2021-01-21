@@ -25,7 +25,7 @@ from ..base import TransformerMixin
 from ..base import clone
 from ._base import _fit_single_estimator
 from ._base import _BaseHeterogeneousEnsemble
-from ..preprocessing import LabelEncoder, MultiLabelBinarizer
+from ..preprocessing import LabelEncoder
 from ..utils import Bunch
 from ..utils.validation import check_is_fitted
 from ..utils.multiclass import type_of_target
@@ -295,9 +295,6 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         "Define the appropriate encode according the classification type."
         if self._classif_type in ['binary', 'multiclass']:
             self.le_ = LabelEncoder().fit(y)
-            self.classes_ = self.le_.classes_
-        elif self._classif_type in 'multilabel-sequences':
-            self.le_ = MultiLabelBinarizer().fit(y)
             self.classes_ = self.le_.classes_
         elif self._classif_type == 'multiclass-multioutput':
             self.le_ = [LabelEncoder().fit(column) for column in y.T]

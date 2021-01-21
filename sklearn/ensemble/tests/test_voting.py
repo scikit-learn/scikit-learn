@@ -614,6 +614,27 @@ def test_multi_label_classification_not_binarized():
                          X_train, y_train)
 
 
+def test_label_sequence():
+    X = np.array([[1, 2, 3],
+                  [1, 2, 4],
+                  [0, 0, 0],
+                  [0, 0, 4]])
+    y = [["label1"],
+         ["label1"],
+         [],
+         ["label1", "label2"]]
+
+    base_clsf = AdaBoostClassifier()
+    chains = [(str(i), ClassifierChain(base_clsf, order='random',
+                                       random_state=i))
+              for i in range(5)]
+
+    v_class = VotingClassifier(chains)
+
+    msg = 'You appear to be using a legacy multi-label data'
+    assert_raise_message(ValueError, msg, v_class.fit, X, y)
+
+
 # To replace jaccard score for multiouput multilabel
 def _matrix_similarity(y_pred, y_true):
     nb_similar_values = np.count_nonzero(y_pred == y_true)
