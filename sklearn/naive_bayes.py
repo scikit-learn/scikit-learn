@@ -154,7 +154,16 @@ class GaussianNB(_BaseNB):
         absolute additive value to variances
 
     sigma_ : ndarray of shape (n_classes, n_features)
-        variance of each feature per class
+        Variance of each feature per class.
+
+        .. deprecated:: 1.0
+           `sigma_` is deprecated in 1.0 and will be removed in 1.2.
+           Use `var_` instead.
+
+    var_ : ndarray of shape (n_classes, n_features)
+        Variance of each feature per class.
+
+        .. versionadded:: 1.0
 
     theta_ : ndarray of shape (n_classes, n_features)
         mean of each feature per class
@@ -377,7 +386,7 @@ class GaussianNB(_BaseNB):
             n_features = X.shape[1]
             n_classes = len(self.classes_)
             self.theta_ = np.zeros((n_classes, n_features))
-            self.sigma_ = np.zeros((n_classes, n_features))
+            self.var_ = np.zeros((n_classes, n_features))
 
             self.class_count_ = np.zeros(n_classes, dtype=np.float64)
 
@@ -405,7 +414,7 @@ class GaussianNB(_BaseNB):
                 msg = "Number of features %d does not match previous data %d."
                 raise ValueError(msg % (X.shape[1], self.theta_.shape[1]))
             # Put epsilon back in each time
-            self.sigma_[:, :] -= self.epsilon_
+            self.var_[:, :] -= self.epsilon_
 
         classes = self.classes_
 
@@ -429,14 +438,14 @@ class GaussianNB(_BaseNB):
                 N_i = X_i.shape[0]
 
             new_theta, new_sigma = self._update_mean_variance(
-                self.class_count_[i], self.theta_[i, :], self.sigma_[i, :],
+                self.class_count_[i], self.theta_[i, :], self.var_[i, :],
                 X_i, sw_i)
 
             self.theta_[i, :] = new_theta
-            self.sigma_[i, :] = new_sigma
+            self.var_[i, :] = new_sigma
             self.class_count_[i] += N_i
 
-        self.sigma_[:, :] += self.epsilon_
+        self.var_[:, :] += self.epsilon_
 
         # Update if only no priors is provided
         if self.priors is None:
@@ -449,13 +458,21 @@ class GaussianNB(_BaseNB):
         joint_log_likelihood = []
         for i in range(np.size(self.classes_)):
             jointi = np.log(self.class_prior_[i])
-            n_ij = - 0.5 * np.sum(np.log(2. * np.pi * self.sigma_[i, :]))
+            n_ij = - 0.5 * np.sum(np.log(2. * np.pi * self.var_[i, :]))
             n_ij -= 0.5 * np.sum(((X - self.theta_[i, :]) ** 2) /
-                                 (self.sigma_[i, :]), 1)
+                                 (self.var_[i, :]), 1)
             joint_log_likelihood.append(jointi + n_ij)
 
         joint_log_likelihood = np.array(joint_log_likelihood).T
         return joint_log_likelihood
+
+    @deprecated(  # type: ignore
+        "Attribute sigma_ was deprecated in 1.0 and will be removed in"
+        "1.2. Use var_ instead."
+    )
+    @property
+    def sigma_(self):
+        return self.var_
 
 
 _ALPHA_MIN = 1e-10

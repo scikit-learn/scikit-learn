@@ -255,6 +255,13 @@ General Concepts
         or vectorizing.  Our estimators do not work with struct arrays, for
         instance.
 
+        Our documentation can sometimes give information about the dtype
+        precision, e.g. `np.int32`, `np.int64`, etc. When the precision is
+        provided, it refers to the NumPy dtype. If an arbitrary precision is
+        used, the documentation will refer to dtype `integer` or `floating`.
+        Note that in this case, the precision can be platform dependent.
+        The `numeric` dtype refers to accepting both `integer` and `floating`.
+
         TODO: Mention efficiency and precision issues; casting policy.
 
     duck typing
