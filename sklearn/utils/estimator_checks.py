@@ -2917,7 +2917,7 @@ def check_decision_proba_consistency(name, estimator_orig):
         estimator.fit(X_train, y_train)
         # Since the link function from decision_function() to predict_proba()
         # is sometimes not precise enough (typically expit), we round to the
-        # 10th decimal to avoid numerical issues: we rather compare the rank
+        # 10th decimal to avoid numerical issues: we compare the rank
         # with deterministic ties rather than get platform specific rank
         # inversions in case of machine level differences.
         a = estimator.predict_proba(X_test)[:, 1].round(decimals=10)
