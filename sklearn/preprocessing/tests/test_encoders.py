@@ -652,6 +652,12 @@ def test_ordinal_encoder_handle_unknowns_raise():
     with pytest.raises(ValueError, match=msg):
         enc.fit(X)
 
+    enc = OrdinalEncoder(handle_unknown='ignore')
+    msg = ("handle_unknown should be either 'error' or 'use_encoded_value', "
+           "got ignore")
+    with pytest.raises(ValueError, match=msg):
+        enc.fit(X)
+
 
 def test_ordinal_encoder_handle_unknowns_nan():
     # Make sure unknown_value=np.nan properly works
