@@ -740,6 +740,14 @@ class OrdinalEncoder(_BaseEncoder):
         -------
         self
         """
+        handle_unknown_strategies = ("error", "use_encoded_value")
+        if self.handle_unknown not in handle_unknown_strategies:
+            raise ValueError(
+                f"Unknown strategy for handle_unknown attribute. The strategy "
+                f"should be one of: {', '.join(handle_unknown_strategies)}. "
+                f"Got {self.handle_unknown} instead."
+            )
+
         if self.handle_unknown == 'use_encoded_value':
             if is_scalar_nan(self.unknown_value):
                 if np.dtype(self.dtype).kind != 'f':
