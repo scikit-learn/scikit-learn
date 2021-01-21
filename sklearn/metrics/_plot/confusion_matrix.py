@@ -201,17 +201,24 @@ class ConfusionMatrixDisplay:
             Target values.
 
         labels : array-like of shape (n_classes,), default=None
-            List of labels to index the matrix. This may be used to reorder or
-            select a subset of labels. If `None` is given, those that appear at
-            least once in `y_true` or `y_pred` are used in sorted order.
+            List of labels to index the confusion matrix. This may be used to
+            reorder or select a subset of labels. If `None` is given, those
+            that appear at least once in `y_true` or `y_pred` are used in
+            sorted order.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
         normalize : {'true', 'pred', 'all'}, default=None
-            Normalizes confusion matrix over the true (rows), predicted
-            (columns) conditions or all the population. If None, confusion
-            matrix will not be normalized.
+            Either to normalize the counts display in the matrix:
+
+            - if `'true'`, the confusion matrix is normalized over the true
+              conditions (e.g. rows);
+            - if `'pred'`, the confusion matrix is normalized over the
+              predicted conditions (e.g. columns);
+            - if `'all'`, the confusion matrix is normalized by the total
+              number of samples;
+            - if `None` (default), the confusion matrix will not be normalized.
 
         display_labels : array-like of shape (n_classes,), default=None
             Target names used for plotting. By default, `labels` will be used
@@ -319,17 +326,24 @@ class ConfusionMatrixDisplay:
             classifier.
 
         labels : array-like of shape (n_classes,), default=None
-            List of labels to index the matrix. This may be used to reorder or
-            select a subset of labels. If `None` is given, those that appear at
-            least once in `y_true` or `y_pred` are used in sorted order.
+            List of labels to index the confusion matrix. This may be used to
+            reorder or select a subset of labels. If `None` is given, those
+            that appear at least once in `y_true` or `y_pred` are used in
+            sorted order.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
         normalize : {'true', 'pred', 'all'}, default=None
-            Normalizes confusion matrix over the true (rows), predicted
-            (columns) conditions or all the population. If None, confusion
-            matrix will not be normalized.
+            Either to normalize the counts display in the matrix:
+
+            - if `'true'`, the confusion matrix is normalized over the true
+              conditions (e.g. rows);
+            - if `'pred'`, the confusion matrix is normalized over the
+              predicted conditions (e.g. columns);
+            - if `'all'`, the confusion matrix is normalized by the total
+              number of samples;
+            - if `None` (default), the confusion matrix will not be normalized.
 
         display_labels : array-like of shape (n_classes,), default=None
             Target names used for plotting. By default, `labels` will be used
@@ -456,9 +470,15 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
         Sample weights.
 
     normalize : {'true', 'pred', 'all'}, default=None
-        Normalizes confusion matrix over the true (rows), predicted (columns)
-        conditions or all the population. If None, confusion matrix will not be
-        normalized.
+        Either to normalize the counts display in the matrix:
+
+            - if `'true'`, the confusion matrix is normalized over the true
+              conditions (e.g. rows);
+            - if `'pred'`, the confusion matrix is normalized over the
+              predicted conditions (e.g. columns);
+            - if `'all'`, the confusion matrix is normalized by the total
+              number of samples;
+            - if `None` (default), the confusion matrix will not be normalized.
 
     display_labels : array-like of shape (n_classes,), default=None
         Target names used for plotting. By default, `labels` will be used if
