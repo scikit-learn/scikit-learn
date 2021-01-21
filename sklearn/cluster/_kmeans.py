@@ -20,6 +20,7 @@ from threadpoolctl import threadpool_info
 
 from ..base import BaseEstimator, ClusterMixin, TransformerMixin
 from ..metrics.pairwise import euclidean_distances
+from ..metrics.pairwise import _euclidean_distances
 from ..utils.extmath import row_norms, stable_cumsum
 from ..utils.sparsefuncs_fast import assign_rows_csr
 from ..utils.sparsefuncs import mean_variance_axis
@@ -103,7 +104,7 @@ def _kmeans_plusplus(X, n_clusters, x_squared_norms,
     indices[0] = center_id
 
     # Initialize list of closest distances and calculate current potential
-    closest_dist_sq = euclidean_distances(
+    closest_dist_sq = _euclidean_distances(
         centers[0, np.newaxis], X, Y_norm_squared=x_squared_norms,
         squared=True)
     current_pot = closest_dist_sq.sum()
@@ -120,7 +121,7 @@ def _kmeans_plusplus(X, n_clusters, x_squared_norms,
                 out=candidate_ids)
 
         # Compute distances to center candidates
-        distance_to_candidates = euclidean_distances(
+        distance_to_candidates = _euclidean_distances(
             X[candidate_ids], X, Y_norm_squared=x_squared_norms, squared=True)
 
         # update closest distances squared and potential for each candidate

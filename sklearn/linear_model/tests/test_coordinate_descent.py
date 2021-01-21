@@ -205,6 +205,24 @@ def test_enet_toy():
     assert_almost_equal(clf.dual_gap_, 0)
 
 
+def test_lasso_dual_gap():
+    """
+    Check that Lasso.dual_gap_ matches its objective formulation, with the
+    datafit normalized by n_samples
+    """
+    X, y, _, _ = build_dataset(n_samples=10, n_features=30)
+    n_samples = len(y)
+    alpha = 0.01 * np.max(np.abs(X.T @ y)) / n_samples
+    clf = Lasso(alpha=alpha, fit_intercept=False).fit(X, y)
+    w = clf.coef_
+    R = y - X @ w
+    primal = 0.5 * np.mean(R ** 2) + clf.alpha * np.sum(np.abs(w))
+    # dual pt: R / n_samples, dual constraint: norm(X.T @ theta, inf) <= alpha
+    R /= np.max(np.abs(X.T @ R) / (n_samples * alpha))
+    dual = 0.5 * (np.mean(y ** 2) - np.mean((y - R) ** 2))
+    assert_allclose(clf.dual_gap_, primal - dual)
+
+
 def build_dataset(n_samples=50, n_features=200, n_informative_features=10,
                   n_targets=1):
     """
@@ -743,6 +761,45 @@ def test_precompute_invalid_argument():
                         "Got 'auto'", ElasticNet(precompute='auto').fit, X, y)
 
 
+def test_elasticnet_precompute_incorrect_gram():
+    # check that passing an invalid precomputed Gram matrix will raise an
+    # error.
+    X, y, _, _ = build_dataset()
+
+    rng = np.random.RandomState(0)
+
+    X_centered = X - np.average(X, axis=0)
+    garbage = rng.standard_normal(X.shape)
+    precompute = np.dot(garbage.T, garbage)
+
+    clf = ElasticNet(alpha=0.01, precompute=precompute)
+    msg = "Gram matrix.*did not pass validation.*"
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(X_centered, y)
+
+
+def test_elasticnet_precompute_gram_weighted_samples():
+    # check the equivalence between passing a precomputed Gram matrix and
+    # internal computation using sample weights.
+    X, y, _, _ = build_dataset()
+
+    rng = np.random.RandomState(0)
+    sample_weight = rng.lognormal(size=y.shape)
+
+    w_norm = sample_weight * (y.shape / np.sum(sample_weight))
+    X_c = (X - np.average(X, axis=0, weights=w_norm))
+    X_r = X_c * np.sqrt(w_norm)[:, np.newaxis]
+    gram = np.dot(X_r.T, X_r)
+
+    clf1 = ElasticNet(alpha=0.01, precompute=gram)
+    clf1.fit(X_c, y, sample_weight=sample_weight)
+
+    clf2 = ElasticNet(alpha=0.01, precompute=False)
+    clf2.fit(X, y, sample_weight=sample_weight)
+
+    assert_allclose(clf1.coef_, clf2.coef_)
+
+
 def test_warm_start_convergence():
     X, y, _, _ = build_dataset()
     model = ElasticNet(alpha=1e-3, tol=1e-3).fit(X, y)
@@ -1214,3 +1271,22 @@ def test_linear_models_cv_fit_for_all_backends(backend, estimator):
 
     with joblib.parallel_backend(backend=backend):
         estimator(n_jobs=2, cv=3).fit(X, y)
+
+
+@pytest.mark.parametrize("check_input", [True, False])
+def test_enet_sample_weight_does_not_overwrite_sample_weight(check_input):
+    """Check that ElasticNet does not overwrite sample_weights."""
+
+    rng = np.random.RandomState(0)
+    n_samples, n_features = 10, 5
+
+    X = rng.rand(n_samples, n_features)
+    y = rng.rand(n_samples)
+
+    sample_weight_1_25 = 1.25 * np.ones_like(y)
+    sample_weight = sample_weight_1_25.copy()
+
+    reg = ElasticNet()
+    reg.fit(X, y, sample_weight=sample_weight, check_input=check_input)
+
+    assert_array_equal(sample_weight, sample_weight_1_25)
