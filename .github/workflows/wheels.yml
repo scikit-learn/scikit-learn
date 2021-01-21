@@ -88,18 +88,17 @@ jobs:
           CIBW_TEST_COMMAND: bash {project}/build_tools/github/test_wheels.sh
           CIBW_TEST_COMMAND_WINDOWS: bash {project}/build_tools/github/test_windows_wheels.sh ${{ matrix.python }} ${{ matrix.bitness }}
 
-        # run: bash build_tools/github/build_wheels.sh
-        run: echo "Ran"
+        run: bash build_tools/github/build_wheels.sh
 
-      # - name: Store artifacts
-      #   uses: actions/upload-artifact@v2
-      #   with:
-      #     path: wheelhouse/*.whl
+      - name: Store artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          path: wheelhouse/*.whl
 
   # Build the wheels for Linux
   build_wheels_linux:
     name: Build wheel for cp${{ matrix.python }}-${{ matrix.platform_id }}-${{ matrix.manylinux_image }}
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     needs: check_build_trigger
     if: needs.check_build_trigger.outputs.build
 
@@ -107,16 +106,13 @@ jobs:
       # Ensure that a wheel builder finishes even if another fails
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
         python: [36, 37, 38, 39]
         bitness: [32, 64]
         manylinux_image: [manylinux1, manylinux2010]
         include:
-          - os: ubuntu-latest
-            bitness: 64
+          - bitness: 64
             platform_id: manylinux_x86_64
-          - os: ubuntu-latest
-            bitness: 32
+          - bitness: 32
             platform_id: manylinux_i686
 
     steps:
@@ -144,64 +140,68 @@ jobs:
           CIBW_TEST_COMMAND: bash {project}/build_tools/github/test_wheels.sh
           CIBW_TEST_COMMAND_WINDOWS: bash {project}/build_tools/github/test_windows_wheels.sh ${{ matrix.python }} ${{ matrix.bitness }}
 
-        # run: bash build_tools/github/build_wheels.sh
-        run: echo "Ran"
+        run: bash build_tools/github/build_wheels.sh
 
-  # # Build the source distribution under Linux
-  # build_sdist:
-  #   name: Source distribution
-  #   runs-on: ubuntu-latest
-  #   needs: check_build_trigger
-  #   if: needs.check_build_trigger.outputs.build
+      - name: Store artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          path: wheelhouse/*.whl
 
-  #   steps:
-  #     - name: Checkout scikit-learn
-  #       uses: actions/checkout@v1
+  # Build the source distribution under Linux
+  build_sdist:
+    name: Source distribution
+    runs-on: ubuntu-latest
+    needs: check_build_trigger
+    if: needs.check_build_trigger.outputs.build
 
-  #     - name: Setup Python
-  #       uses: actions/setup-python@v2
+    steps:
+      - name: Checkout scikit-learn
+        uses: actions/checkout@v1
 
-  #     - name: Build source distribution
-  #       run: bash build_tools/github/build_source.sh
-  #       env:
-  #         SKLEARN_BUILD_PARALLEL: 3
+      - name: Setup Python
+        uses: actions/setup-python@v2
 
-  #     - name: Test source distribution
-  #       run: bash build_tools/github/test_source.sh
-  #       env:
-  #         OMP_NUM_THREADS: 2
-  #         OPENBLAS_NUM_THREADS: 2
-  #         SKLEARN_SKIP_NETWORK_TESTS: 1
+      - name: Build source distribution
+        run: bash build_tools/github/build_source.sh
+        env:
+          SKLEARN_BUILD_PARALLEL: 3
 
-  #     - name: Store artifacts
-  #       uses: actions/upload-artifact@v2
-  #       with:
-  #         path: dist/*.tar.gz
+      - name: Test source distribution
+        run: bash build_tools/github/test_source.sh
+        env:
+          OMP_NUM_THREADS: 2
+          OPENBLAS_NUM_THREADS: 2
+          SKLEARN_SKIP_NETWORK_TESTS: 1
 
-  # # Upload the wheels and the source distribution
-  # upload_anaconda:
-  #   name: Upload to Anaconda
-  #   runs-on: ubuntu-latest
-  #   needs: [build_wheels, build_sdist]
-  #   # The artifacts cannot be uploaded on PRs
-  #   if: github.event_name != 'pull_request'
+      - name: Store artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          path: dist/*.tar.gz
 
-  #   steps:
-  #     - name: Checkout scikit-learn
-  #       uses: actions/checkout@v1
+  # Upload the wheels and the source distribution
+  upload_anaconda:
+    name: Upload to Anaconda
+    runs-on: ubuntu-latest
+    needs: [build_wheels_windows_osx, build_wheels_linux, build_sdist]
+    # The artifacts cannot be uploaded on PRs
+    if: github.event_name != 'pull_request'
 
-  #     - name: Download artifacts
-  #       uses: actions/download-artifact@v2
-  #       with:
-  #         path: dist
+    steps:
+      - name: Checkout scikit-learn
+        uses: actions/checkout@v1
 
-  #     - name: Setup Python
-  #       uses: actions/setup-python@v2
+      - name: Download artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: dist
 
-  #     - name: Upload artifacts
-  #       env:
-  #         # Secret variables need to be mapped to environment variables explicitly
-  #         SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN: ${{ secrets.SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN }}
-  #         SCIKIT_LEARN_STAGING_UPLOAD_TOKEN: ${{ secrets.SCIKIT_LEARN_STAGING_UPLOAD_TOKEN }}
-  #       # Force a replacement if the remote file already exists
-  #       run: bash build_tools/github/upload_anaconda.sh
+      - name: Setup Python
+        uses: actions/setup-python@v2
+
+      - name: Upload artifacts
+        env:
+          # Secret variables need to be mapped to environment variables explicitly
+          SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN: ${{ secrets.SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN }}
+          SCIKIT_LEARN_STAGING_UPLOAD_TOKEN: ${{ secrets.SCIKIT_LEARN_STAGING_UPLOAD_TOKEN }}
+        # Force a replacement if the remote file already exists
+        run: bash build_tools/github/upload_anaconda.sh
