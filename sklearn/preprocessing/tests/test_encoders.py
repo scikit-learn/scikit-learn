@@ -654,8 +654,8 @@ def test_ordinal_encoder_handle_unknowns_numeric(dtype):
         (
             {"handle_unknown": "ignore"},
             ValueError,
-            "Unknown strategy for handle_unknown attribute. The strategy "
-            "should be one of: error, use_encoded_value. Got ignore instead.",
+            "handle_unknown should be either 'error' or 'use_encoded_value', "
+            "got ignore.",
         ),
     ],
 )

@@ -743,9 +743,8 @@ class OrdinalEncoder(_BaseEncoder):
         handle_unknown_strategies = ("error", "use_encoded_value")
         if self.handle_unknown not in handle_unknown_strategies:
             raise ValueError(
-                f"Unknown strategy for handle_unknown attribute. The strategy "
-                f"should be one of: {', '.join(handle_unknown_strategies)}. "
-                f"Got {self.handle_unknown} instead."
+                f"handle_unknown should be either 'error' or "
+                f"'use_encoded_value', got {self.handle_unknown}."
             )
 
         if self.handle_unknown == 'use_encoded_value':
