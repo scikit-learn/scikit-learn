@@ -6,6 +6,7 @@
 import time
 import sys
 import itertools
+import warnings
 
 from math import ceil
 
@@ -909,13 +910,20 @@ class _BaseSparseCoding(TransformerMixin):
         SparseCoder."""
         X = self._validate_data(X, reset=False)
 
+        # transform_alpha has to be changed in _transform
+        # this is done for consistency with the value of alpha
         if hasattr(self, "alpha") and self.transform_alpha is None:
-            self.transform_alpha = self.alpha
+            warnings.warn("By default transform_alpha will be equal to"
+                          "alpha instead of 1.0 starting from 1.2",
+                          FutureWarning)
+            transform_alpha = 1.  # TODO change to self.alpha in 1.2
+        else:
+            transform_alpha = self.transform_alpha
 
         code = sparse_encode(
             X, dictionary, algorithm=self.transform_algorithm,
             n_nonzero_coefs=self.transform_n_nonzero_coefs,
-            alpha=self.transform_alpha, max_iter=self.transform_max_iter,
+            alpha=transform_alpha, max_iter=self.transform_max_iter,
             n_jobs=self.n_jobs, positive=self.positive_code)
 
         if self.split_sign:
@@ -1187,8 +1195,9 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     transform_n_nonzero_coefs : int, default=None
         Number of nonzero coefficients to target in each column of the
-        solution. This is only used by `algorithm='lars'` and `algorithm='omp'`.
-        If `None`, then `transform_n_nonzero_coefs=int(n_features / 10)`.
+        solution. This is only used by `algorithm='lars'` and 
+        `algorithm='omp'`. If `None`, then
+        `transform_n_nonzero_coefs=int(n_features / 10)`.
 
     transform_alpha : float, default=None
         If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`, `alpha` is the
@@ -1314,7 +1323,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self.dict_init = dict_init
         self.verbose = verbose
         self.random_state = random_state
-        self.positive_dict = positive_dict
+        self.positive_dict = positive_dict            
 
     def fit(self, X, y=None):
         """Fit the model from data in X.
@@ -1423,8 +1432,9 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     transform_n_nonzero_coefs : int, default=None
         Number of nonzero coefficients to target in each column of the
-        solution. This is only used by `algorithm='lars'` and `algorithm='omp'`.
-        If `None`, then `transform_n_nonzero_coefs=int(n_features / 10)`.
+        solution. This is only used by `algorithm='lars'` and
+        `algorithm='omp'`. If `None`, then
+        `transform_n_nonzero_coefs=int(n_features / 10)`.
 
     transform_alpha : float, default=None
         If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`, `alpha` is the
