@@ -1018,6 +1018,7 @@ def test_ordinal_encoder_missing_value_support_pandas_categorical(pd_nan_type):
             'numeric-missing-value'])
 def test_ordinal_encoder_specified_categories_missing_passthrough(
         X, X2, cats, cat_dtype):
+    """Test ordinal encoder for specified categories."""
     oe = OrdinalEncoder(categories=cats)
     exp = np.array([[0.], [np.nan]])
     assert_array_equal(oe.fit_transform(X), exp)
