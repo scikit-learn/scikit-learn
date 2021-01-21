@@ -306,7 +306,7 @@ multiclass-multioutput problems")
             self.le_ = None
             self.classes_ = None
         else:
-            raise ValueError("Unsupported label type: %r" % self._classif_type)
+            raise ValueError("Unknown label type: %r" % self._classif_type)
 
     def _transform_y(self, y):
         "Transform y for the classification task."
