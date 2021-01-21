@@ -1195,7 +1195,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     transform_n_nonzero_coefs : int, default=None
         Number of nonzero coefficients to target in each column of the
-        solution. This is only used by `algorithm='lars'` and 
+        solution. This is only used by `algorithm='lars'` and
         `algorithm='omp'`. If `None`, then
         `transform_n_nonzero_coefs=int(n_features / 10)`.
 
@@ -1323,7 +1323,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self.dict_init = dict_init
         self.verbose = verbose
         self.random_state = random_state
-        self.positive_dict = positive_dict            
+        self.positive_dict = positive_dict
 
     def fit(self, X, y=None):
         """Fit the model from data in X.

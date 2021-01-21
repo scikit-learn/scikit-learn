@@ -70,6 +70,16 @@ Changelog
   in multicore settings. :pr:`19052` by
   :user:`Yusuke Nagasaka <YusukeNagasaka>`.
 
+:mod:`sklearn.decomposition`
+............................
+
+- |API| In :class:`decomposition.DictionaryLearning`,
+  :class:`decomposition.MiniBatchDictionaryLearning`,
+  :func:`dict_learning` and :func:`dict_learning_online`,
+  `transform_alpha` will be equal to `alpha` instead of 1.0 by default 
+  starting from 1.2
+  :pr:`19159` by :user:`Benoît Malézieux <bmalezieux>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
