@@ -426,7 +426,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             The target matrix.
         """
 
-    def _set_oob_score(self, X, y):
+    def _compute_oob_predictions(self, X, y):
         """Compute and set the OOB score.
 
         Parameters
@@ -483,8 +483,6 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 )
                 n_oob_pred[n_oob_pred == 0] = 1
             oob_pred[..., k] /= n_oob_pred[..., [k]]
-
-        self.oob_score_ = self._score_oob_predictions(y, oob_pred)
 
         return oob_pred
 
@@ -641,7 +639,9 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         y : ndarray of shape (n_samples, n_outputs)
             The target matrix.
         """
-        self.oob_decision_function_ = super()._set_oob_score(X, y)
+        oob_pred = super()._compute_oob_predictions(X, y)
+        self.oob_score_ = self._score_oob_predictions(y, oob_pred)
+        self.oob_decision_function_ = oob_pred
         if self.oob_decision_function_.shape[-1] == 1:
             # drop the n_outputs axis if there is a single output
             self.oob_decision_function_ = self.oob_decision_function_.squeeze(
@@ -947,7 +947,9 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         y : ndarray of shape (n_samples, n_outputs)
             The target matrix.
         """
-        self.oob_prediction_ = super()._set_oob_score(X, y).squeeze(axis=1)
+        oob_pred = super()._compute_oob_predictions(X, y)
+        self.oob_score_ = self._score_oob_predictions(y, oob_pred)
+        self.oob_prediction_ = oob_pred.squeeze(axis=1)
         if self.oob_prediction_.shape[-1] == 1:
             # drop the n_outputs axis if there is a single output
             self.oob_prediction_ = self.oob_prediction_.squeeze(axis=-1)
