@@ -1431,7 +1431,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         penalty applied to the L1 norm.
         If `algorithm='threshold'`, `alpha` is the absolute value of the
         threshold below which coefficients will be squashed to zero.
-        If `None`, default to `alpha`.
+        If `None`, defaults to `alpha`.
 
     verbose : bool, default=False
         To control the verbosity of the procedure.
