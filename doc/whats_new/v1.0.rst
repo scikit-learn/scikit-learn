@@ -70,11 +70,8 @@ Changelog
   in multicore settings. :pr:`19052` by
   :user:`Yusuke Nagasaka <YusukeNagasaka>`.
 
-:mod:`sklearn.preprocessing`
-............................
-
-- |Feature| :class:`preprocessing.OrdinalEncoder` supports passing through
-  missing values by default. :pr:`19069` by `Thomas Fan`_.
+- |Fix| Fixes incorrect multiple data-conversion warnings when clustering
+  boolean data. :pr:`19046` by :user:`Surya Prakash <jdsurya>`.
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -96,6 +93,12 @@ Changelog
   :class:`naive_bayes.GaussianNB` and will be removed in 1.2.
   Use ``var_`` instead.
   :pr:`18842` by :user:`Hong Shao Yang <hongshaoyang>`.
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Feature| :class:`preprocessing.OrdinalEncoder` supports passing through
+  missing values by default. :pr:`19069` by `Thomas Fan`_.
 
 Code and Documentation Contributors
 -----------------------------------
