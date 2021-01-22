@@ -52,7 +52,7 @@ jobs:
         bitness: [32, 64]
         manylinux_image: [manylinux1, manylinux2010]
         include:
-          # Run 32 and 64 bit version in parallel for Windows
+          # Run 32 and 64 bit version in parallel for Linux and Windows
           - os: windows-latest
             bitness: 64
             platform_id: win_amd64
@@ -145,29 +145,29 @@ jobs:
           path: dist/*.tar.gz
 
   # Upload the wheels and the source distribution
-  # upload_anaconda:
-  #   name: Upload to Anaconda
-  #   runs-on: ubuntu-latest
-  #   needs: [build_wheels, build_sdist]
-  #   # The artifacts cannot be uploaded on PRs
-  #   if: github.event_name != 'pull_request'
+  upload_anaconda:
+    name: Upload to Anaconda
+    runs-on: ubuntu-latest
+    needs: [build_wheels, build_sdist]
+    # The artifacts cannot be uploaded on PRs
+    if: github.event_name != 'pull_request'
 
-  #   steps:
-  #     - name: Checkout scikit-learn
-  #       uses: actions/checkout@v1
+    steps:
+      - name: Checkout scikit-learn
+        uses: actions/checkout@v1
 
-  #     - name: Download artifacts
-  #       uses: actions/download-artifact@v2
-  #       with:
-  #         path: dist
+      - name: Download artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: dist
 
-  #     - name: Setup Python
-  #       uses: actions/setup-python@v2
+      - name: Setup Python
+        uses: actions/setup-python@v2
 
-  #     - name: Upload artifacts
-  #       env:
-  #         # Secret variables need to be mapped to environment variables explicitly
-  #         SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN: ${{ secrets.SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN }}
-  #         SCIKIT_LEARN_STAGING_UPLOAD_TOKEN: ${{ secrets.SCIKIT_LEARN_STAGING_UPLOAD_TOKEN }}
-  #       # Force a replacement if the remote file already exists
-  #       run: bash build_tools/github/upload_anaconda.sh
+      - name: Upload artifacts
+        env:
+          # Secret variables need to be mapped to environment variables explicitly
+          SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN: ${{ secrets.SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN }}
+          SCIKIT_LEARN_STAGING_UPLOAD_TOKEN: ${{ secrets.SCIKIT_LEARN_STAGING_UPLOAD_TOKEN }}
+        # Force a replacement if the remote file already exists
+        run: bash build_tools/github/upload_anaconda.sh
