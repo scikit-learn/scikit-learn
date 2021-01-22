@@ -28,7 +28,7 @@
     //     "PIP_NO_BUILD_ISOLATION=false python -mpip wheel --no-deps --no-index -w {build_cache_dir} {build_dir}"
     // ],
 
-    // List of branches to benchmark. If not provided, defaults to "main"
+    // List of branches to benchmark. If not provided, defaults to "master
     // (for git) or "default" (for mercurial).
     // "branches": ["main"], // for git
     // "branches": ["default"],    // for mercurial
