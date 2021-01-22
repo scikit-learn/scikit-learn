@@ -521,9 +521,9 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 class _BaseRidge(LinearModel, metaclass=ABCMeta):
     @abstractmethod
     @_deprecate_positional_args
-    def __init__(self, alpha=1.0, *, fit_intercept=True, normalize='deprecate',
-                 copy_X=True, max_iter=None, tol=1e-3, solver="auto",
-                 random_state=None):
+    def __init__(self, alpha=1.0, *, fit_intercept=True,
+                 normalize='deprecated', copy_X=True, max_iter=None, tol=1e-3,
+                 solver="auto", random_state=None):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
         self.normalize = normalize
@@ -536,7 +536,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
     def fit(self, X, y, sample_weight=None):
 
         # all other solvers work at both float precision levels
-        if self.normalize != "deprecate":
+        if self.normalize != "deprecated":
             if not self.normalize:
                 warnings.warn(
                     "'normalize' was deprecated in version 0.24 and will be"
@@ -755,9 +755,9 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
     Ridge()
     """
     @_deprecate_positional_args
-    def __init__(self, alpha=1.0, *, fit_intercept=True, normalize='deprecate',
-                 copy_X=True, max_iter=None, tol=1e-3, solver="auto",
-                 random_state=None):
+    def __init__(self, alpha=1.0, *, fit_intercept=True,
+                 normalize='deprecated', copy_X=True, max_iter=None, tol=1e-3,
+                 solver="auto", random_state=None):
         super().__init__(
             alpha=alpha, fit_intercept=fit_intercept,
             normalize=normalize, copy_X=copy_X,
@@ -918,9 +918,10 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     0.9595...
     """
     @_deprecate_positional_args
-    def __init__(self, alpha=1.0, *, fit_intercept=True, normalize='deprecate',
-                 copy_X=True, max_iter=None, tol=1e-3, class_weight=None,
-                 solver="auto", random_state=None):
+    def __init__(self, alpha=1.0, *, fit_intercept=True,
+                 normalize='deprecated', copy_X=True, max_iter=None,
+                 tol=1e-3, class_weight=None, solver="auto",
+                 random_state=None):
         super().__init__(
             alpha=alpha, fit_intercept=fit_intercept, normalize=normalize,
             copy_X=copy_X, max_iter=max_iter, tol=tol, solver=solver,
@@ -1145,7 +1146,7 @@ class _RidgeGCV(LinearModel):
     """
     @_deprecate_positional_args
     def __init__(self, alphas=(0.1, 1.0, 10.0), *,
-                 fit_intercept=True, normalize='deprecate',
+                 fit_intercept=True, normalize='deprecated',
                  scoring=None, copy_X=True,
                  gcv_mode=None, store_cv_values=False,
                  is_clf=False, alpha_per_target=False):
@@ -1482,7 +1483,7 @@ class _RidgeGCV(LinearModel):
         self : object
         """
         # warning message shown elsewhere
-        if self.normalize != "deprecate":
+        if self.normalize != "deprecated":
             if not self.normalize:
                 warnings.warn(
                     "'normalize' was deprecated in version 0.24 and will be"
@@ -1634,7 +1635,7 @@ class _RidgeGCV(LinearModel):
 class _BaseRidgeCV(LinearModel):
     @_deprecate_positional_args
     def __init__(self, alphas=(0.1, 1.0, 10.0), *,
-                 fit_intercept=True, normalize='deprecate', scoring=None,
+                 fit_intercept=True, normalize='deprecated', scoring=None,
                  cv=None, gcv_mode=None, store_cv_values=False,
                  alpha_per_target=False):
         self.alphas = np.asarray(alphas)
@@ -1970,7 +1971,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     """
     @_deprecate_positional_args
     def __init__(self, alphas=(0.1, 1.0, 10.0), *, fit_intercept=True,
-                 normalize='deprecate', scoring=None, cv=None,
+                 normalize='deprecated', scoring=None, cv=None,
                  class_weight=None, store_cv_values=False):
         super().__init__(
             alphas=alphas, fit_intercept=fit_intercept, normalize=normalize,
