@@ -19,9 +19,14 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils import as_float_array, check_array, check_symmetric
+from sklearn.utils import _safe_indexing
 from sklearn.utils import check_X_y
 from sklearn.utils import deprecated
-from sklearn.utils._mocking import MockDataFrame
+from sklearn.utils._mocking import (
+    EstimatorWithFit,
+    MockDataFrame,
+    MockEstimatorOnOffPrediction,
+)
 from sklearn.utils.fixes import np_version, parse_version
 from sklearn.utils.estimator_checks import _NotAnArray
 from sklearn.random_projection import _sparse_random_matrix
@@ -29,14 +34,7 @@ from sklearn.linear_model import ARDRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.datasets import make_blobs
-from sklearn.random_projection import _sparse_random_matrix
 from sklearn.svm import SVR
-from sklearn.utils import (
-    as_float_array,
-    check_array,
-    check_symmetric,
-    _safe_indexing,
-)
 from sklearn.utils.validation import (
     has_fit_parameter,
     check_is_fitted,
@@ -44,26 +42,15 @@ from sklearn.utils.validation import (
     assert_all_finite,
     check_memory,
     check_non_negative,
+    _num_samples,
     _check_response_method,
     check_scalar,
     _check_psd_eigenvalues,
     _deprecate_positional_args,
-    _num_samples,
     _check_sample_weight,
     _allclose_dense_sparse,
-    FLOAT_DTYPES,
-)
+    FLOAT_DTYPES)
 from sklearn.utils.validation import _check_fit_params
-from sklearn.utils.fixes import np_version, parse_version
-from sklearn.utils import check_X_y
-from sklearn.utils import deprecated
-from sklearn.utils.estimator_checks import _NotAnArray
-
-from sklearn.utils._mocking import (
-    EstimatorWithFit,
-    MockDataFrame,
-    MockEstimatorOnOffPrediction,
-)
 
 from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
 
