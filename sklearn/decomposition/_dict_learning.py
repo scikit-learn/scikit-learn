@@ -370,10 +370,10 @@ def _update_dict(dictionary, Y, code, A=None, B=None, verbose=False,
         Sparse coding of the data against which to optimize the dictionary.
 
     A : ndarray of shape (n_components, n_components), default=None
-        With B, sufficient stats of the online model.
+        With `B`, sufficient stats of the online model.
 
     B : ndarray of shape (n_features, n_components), default=None
-        With A, sufficient stats of the online model.
+        With `A`, sufficient stats of the online model.
 
     verbose: bool, default=False
         Degree of output the procedure will print.
@@ -396,18 +396,14 @@ def _update_dict(dictionary, Y, code, A=None, B=None, verbose=False,
     if B is None:
         B = Y.T @ code
 
+    n_unused = 0
+
     for k in range(n_components):
         if A[k, k] > 1e-6:
             # 1e-6 is arbitrary but consistent with the spams implementation
             dictionary[k] += (B[:, k] - A[k] @ dictionary) / A[k, k]
         else:
             # kth atom is almost never used -> sample a new one from the data
-            if verbose == 1:
-                sys.stdout.write("+")
-                sys.stdout.flush()
-            elif verbose:
-                print("Adding new random atom")
-
             newd = Y[random_state.choice(n_samples)]
 
             # add small noise to avoid making the sparse coding ill conditioned
@@ -416,12 +412,16 @@ def _update_dict(dictionary, Y, code, A=None, B=None, verbose=False,
 
             dictionary[k] = newd + noise
             code[:, k] = 0
+            n_unused += 1
 
         if positive:
             np.clip(dictionary[k], 0, None, out=dictionary[k])
 
         # Projection on the constraint ||V_k|| == 1
         dictionary[k] /= linalg.norm(dictionary[k])
+
+    if verbose:
+        print(f"{n_unused} unused atoms resampled.")
 
 
 @_deprecate_positional_args
