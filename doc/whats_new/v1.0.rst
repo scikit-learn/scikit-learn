@@ -94,6 +94,18 @@ Changelog
   Use ``var_`` instead.
   :pr:`18842` by :user:`Hong Shao Yang <hongshaoyang>`.
 
+- |API|: The parameter ``normalize`` of :class:`linear_model.LinearRegression`
+  is deprecated and will be removed in 1.2.
+  Motivation for this deprecation: ``normalize`` parameter did not take any
+  effect if ``fit_intercept`` was set to False and therefore was deemed
+  confusing.
+  The behavior of the deprecated LinearRegression(normalize=True) can be
+  reproduced with :class:`~sklearn.pipeline.Pipeline` with
+  :class:`~sklearn.preprocessing.StandardScaler`as follows:
+  make_pipeline(StandardScaler(with_mean=False), LinearRegression()).
+  :pr:`17743` by :user:`Maria Telenczuk <maikia>` and
+  :user:`Alexandre Gramfort <agramfort>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
