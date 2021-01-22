@@ -7,12 +7,12 @@ on:
     - cron: "42 3 */1 * *"
   push:
     branches:
-      - master
+      - main
       # Release branches
       - "[0-9]+.[0-9]+.X"
   pull_request:
     branches:
-      - master
+      - main
       - "[0-9]+.[0-9]+.X"
   # Manual run
   workflow_dispatch:
