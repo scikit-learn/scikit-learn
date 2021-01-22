@@ -12,7 +12,6 @@ from sklearn.datasets import make_regression
 
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import Ridge
-from sklearn.linear_model._ridge import _RidgeGCV
 from sklearn.linear_model import RidgeCV
 from sklearn.linear_model import RidgeClassifier
 from sklearn.linear_model import RidgeClassifierCV
@@ -28,7 +27,7 @@ from sklearn.utils._testing import _convert_container
 @pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize(
     "estimator",
-    [LinearRegression]
+    [LinearRegression, Ridge, RidgeCV, RidgeClassifier, RidgeClassifierCV]
 )
 @pytest.mark.parametrize(
     "is_sparse, with_mean",
