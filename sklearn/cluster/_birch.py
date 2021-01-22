@@ -333,15 +333,16 @@ class _CFSubcluster:
 
 
 class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
-    """Implements the BIRCH clustering algorithm.
+    """Implements a variant of the BIRCH clustering algorithm.
 
-    It is a memory-efficient, online-learning algorithm provided as an
+    BIRCH is a memory-efficient, online-learning algorithm provided as an
     alternative to :class:`MiniBatchKMeans`. It constructs a tree
     data structure with the cluster centroids being read off the leaf.
     These can be either the final cluster centroids or can be provided as input
     to another clustering algorithm such as :class:`AgglomerativeClustering`.
 
-    Read more in the :ref:`User Guide <birch>`.
+    Read more in the :ref:`User Guide <birch>`, in particular on the
+    differences between this implementation and the original BIRCH algorithm.
 
     .. versionadded:: 0.16
 

@@ -952,7 +952,7 @@ represented as children of a larger parent cluster.
 BIRCH
 =====
 
-The :class:`Birch` builds a tree called the Clustering Feature Tree (CFT)
+The :class:`Birch` builds a tree called the Clustering Feature Tree (CF-Tree)
 for the given data. The data is essentially lossy compressed to a set of
 Clustering Feature nodes (CF Nodes). The CF Nodes have a number of
 subclusters called Clustering Feature subclusters (CF Subclusters)
@@ -971,11 +971,13 @@ the need to hold the entire input data in memory. This information includes:
 The BIRCH algorithm has two parameters, the threshold and the branching factor.
 The branching factor limits the number of subclusters in a node and the
 threshold limits the distance between the entering sample and the existing
-subclusters.
+subclusters. The ``threshold`` parameter is responsible for controlling the
+tree size, a too large value will produce results of poor quality, while a too
+small value will cause a large tree and hence high runtime and memory consumption.
 
 This algorithm can be viewed as an instance or data reduction method,
 since it reduces the input data to a set of subclusters which are obtained directly
-from the leaves of the CFT. This reduced data can be further processed by feeding
+from the leaves of the CF-Tree. This reduced data can be further processed by feeding
 it into a global clusterer. This global clusterer can be set by ``n_clusters``.
 If ``n_clusters`` is set to None, the subclusters from the leaves are directly
 read off, otherwise a global clustering step labels these subclusters into global
@@ -1001,6 +1003,35 @@ clusters (labels) and the samples are mapped to the global label of the nearest 
   for a new subcluster, then the parent is split into two. If there is no room,
   then this node is again split into two and the process is continued
   recursively, till it reaches the root.
+
+**Differences to the original BIRCH algorithm:**
+
+This is not a complete implementation of the original BIRCH algorithm.
+It differs from BIRCH in the following aspects:
+
+- This implementation does not have a memory limit parameter, and the threshold is
+  hence not adapted automatically to prevent the tree from becoming too large.
+  Instead, the user has to choose a desirable ``threshold`` in advance to control
+  the tree size.
+
+- The original BIRCH Clustering Features only stored the number of samples, the linear sum
+  and the squared sum. This implementation hence needs more memory (about 3x as much
+  because of an additional redundancy, :issue:`19258`).
+
+- Only the radius criterion for merging is implemented, the diameter is not available.
+
+- Only Euclidean distance (D0) is supported, D1-D4 are not supported
+
+- Handling of outliers is not implemented
+
+- Phase 2 (tree condensation) is not implemented
+
+- Phase 3 clustering uses only the centroids of the leaves, not the number of samples.
+  The original BIRCH publication used distances D2 or D4 not implemented here.
+
+- Phase 4 (cluster refinement) is not implemented
+
+- Clustering quality measures Q1 to Q4 are not implemented
 
 **BIRCH or MiniBatchKMeans?**
 
