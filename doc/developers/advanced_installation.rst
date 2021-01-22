@@ -7,7 +7,7 @@
 Installing the development version of scikit-learn
 ==================================================
 
-This section introduces how to install the **master branch** of scikit-learn.
+This section introduces how to install the **main branch** of scikit-learn.
 This can be done by either installing a nightly build or building from source.
 
 .. _install_nightly_builds:
@@ -22,7 +22,7 @@ basis.
 Installing a nightly build is the quickest way to:
 
 - try a new feature that will be shipped in the next release (that is, a
-  feature from a pull-request that was recently merged to the master branch);
+  feature from a pull-request that was recently merged to the main branch);
 
 - check whether a bug you encountered has been fixed since the last release.
 
