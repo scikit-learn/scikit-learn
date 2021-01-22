@@ -44,20 +44,6 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
-:mod:`sklearn.feature_extraction`
-.................................
-
-- |Fix| Fixed a bug in class:`feature_extraction.HashingVectorizer` where some
-  input strings would result in negative indices in the transformed data.
-  :pr:`19035` by :user:`Liu Yu <ly648499246>`.
-
-:mod:`sklearn.tree`
-...................
-
-- |Enhancement| Add `fontname` argument in :func:`tree.export_graphviz`
-  for non-English characters. :pr:`18959` by :user:`Zero <Zeroto521>`
-  and :user:`wstates <wstates>`.
-
 :mod:`sklearn.cluster`
 ......................
 
@@ -73,26 +59,25 @@ Changelog
 - |Fix| Fixes incorrect multiple data-conversion warnings when clustering
   boolean data. :pr:`19046` by :user:`Surya Prakash <jdsurya>`.
 
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |Fix| Fixed a bug in class:`feature_extraction.HashingVectorizer` where some
+  input strings would result in negative indices in the transformed data.
+  :pr:`19035` by :user:`Liu Yu <ly648499246>`.
+
 :mod:`sklearn.linear_model`
 ...........................
-
-- |Fix| :meth:`ElasticNet.fit` no longer modifies `sample_weight` in place.
-  :pr:`19055` by `Thomas Fan`_.
 
 - |Enhancement| Validate user-supplied gram matrix passed to linear models
   via the `precompute` argument. :pr:`19004` by :user:`Adam Midvidy <amidvidy>`.
 
+- |Fix| :meth:`ElasticNet.fit` no longer modifies `sample_weight` in place.
+  :pr:`19055` by `Thomas Fan`_.
+
 - |Fix| :class:`Lasso`, :class:`ElasticNet` no longer have a `dual_gap_`
   not corresponding to their objective. :pr:`19172` by
   :user:`Mathurin Massias <mathurinm>`
-
-:mod:`sklearn.naive_bayes`
-..........................
-
-- |API| The attribute ``sigma_`` is now deprecated in
-  :class:`naive_bayes.GaussianNB` and will be removed in 1.2.
-  Use ``var_`` instead.
-  :pr:`18842` by :user:`Hong Shao Yang <hongshaoyang>`.
 
 - |API|: The parameter ``normalize`` of :class:`linear_model.LinearRegression`
   is deprecated and will be removed in 1.2.
@@ -105,6 +90,21 @@ Changelog
   make_pipeline(StandardScaler(with_mean=False), LinearRegression()).
   :pr:`17743` by :user:`Maria Telenczuk <maikia>` and
   :user:`Alexandre Gramfort <agramfort>`.
+
+:mod:`sklearn.naive_bayes`
+..........................
+
+- |API| The attribute ``sigma_`` is now deprecated in
+  :class:`naive_bayes.GaussianNB` and will be removed in 1.2.
+  Use ``var_`` instead.
+  :pr:`18842` by :user:`Hong Shao Yang <hongshaoyang>`.
+
+:mod:`sklearn.tree`
+...................
+
+- |Enhancement| Add `fontname` argument in :func:`tree.export_graphviz`
+  for non-English characters. :pr:`18959` by :user:`Zero <Zeroto521>`
+  and :user:`wstates <wstates>`.
 
 Code and Documentation Contributors
 -----------------------------------
