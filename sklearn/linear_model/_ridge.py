@@ -575,7 +575,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
 
         # when X is sparse we only remove offset from y
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
-            X, y, self.fit_intercept, normalize=_normalize, self.copy_X,
+            X, y, self.fit_intercept, _normalize, self.copy_X,
             sample_weight=sample_weight, return_mean=True)
 
         if solver == 'sag' and sparse.issparse(X) and self.fit_intercept:
@@ -1490,7 +1490,7 @@ class _RidgeGCV(LinearModel):
                 "negative or null value instead.".format(self.alphas))
 
         X, y, X_offset, y_offset, X_scale = LinearModel._preprocess_data(
-            X, y, self.fit_intercept, normalize=_normalize, self.copy_X,
+            X, y, self.fit_intercept, _normalize, self.copy_X,
             sample_weight=sample_weight)
 
         gcv_mode = _check_gcv_mode(X, self.gcv_mode)
