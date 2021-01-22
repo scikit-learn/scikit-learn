@@ -305,8 +305,7 @@ class _CFSubcluster:
         new_n = self.n_samples_ + nominee_cluster.n_samples_
         new_centroid = (1 / new_n) * new_ls
         new_norm = np.dot(new_centroid, new_centroid)
-        dot_product = (-2 * new_n) * new_norm
-        sq_radius = (new_ss + dot_product) / new_n + new_norm
+        sq_radius = new_ss / new_n - new_norm
         if sq_radius <= threshold ** 2:
             (self.n_samples_, self.linear_sum_, self.squared_sum_,
              self.centroid_, self.sq_norm_) = \
@@ -317,10 +316,7 @@ class _CFSubcluster:
     @property
     def radius(self):
         """Return radius of the subcluster"""
-        dot_product = -2 * np.dot(self.linear_sum_, self.centroid_)
-        return sqrt(
-            ((self.squared_sum_ + dot_product) / self.n_samples_) +
-            self.sq_norm_)
+        return sqrt(self.squared_sum_ / self.n_samples_ - self.sq_norm_)
 
 
 class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
