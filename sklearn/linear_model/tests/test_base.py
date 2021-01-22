@@ -157,7 +157,6 @@ def test_error_on_wrong_normalize():
     error_msg = "Leave 'normalize' to its default"
     with pytest.raises(ValueError, match=error_msg):
         _deprecate_normalize(normalize, default, 'estimator')
-    ValueError
 
 
 @pytest.mark.parametrize('normalize', [True, False, 'deprecated'])
