@@ -1888,5 +1888,4 @@ def test_sample_weight_not_modified(multi_class, class_weight):
                              max_iter=200,
                              multi_class=multi_class)
     clf.fit(X, y, sample_weight=W)
-    actual = W
-    assert_allclose(expected, actual)
+    assert_allclose(expected, W)
