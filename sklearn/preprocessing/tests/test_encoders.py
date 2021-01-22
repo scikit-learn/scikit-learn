@@ -624,33 +624,48 @@ def test_ordinal_encoder_handle_unknowns_numeric(dtype):
     assert_array_equal(X_trans_inv, inv_exp)
 
 
-def test_ordinal_encoder_handle_unknowns_raise():
+@pytest.mark.parametrize(
+    "params, err_type, err_msg",
+    [
+        (
+            {"handle_unknown": "use_encoded_value"},
+            TypeError,
+            "unknown_value should be an integer or np.nan when handle_unknown "
+            "is 'use_encoded_value', got None.",
+        ),
+        (
+            {"unknown_value": -2},
+            TypeError,
+            "unknown_value should only be set when handle_unknown is "
+            "'use_encoded_value', got -2.",
+        ),
+        (
+            {"handle_unknown": "use_encoded_value", "unknown_value": "bla"},
+            TypeError,
+            "unknown_value should be an integer or np.nan when handle_unknown "
+            "is 'use_encoded_value', got bla.",
+        ),
+        (
+            {"handle_unknown": "use_encoded_value", "unknown_value": 1},
+            ValueError,
+            "The used value for unknown_value (1) is one of the values "
+            "already used for encoding the seen categories.",
+        ),
+        (
+            {"handle_unknown": "ignore"},
+            ValueError,
+            "handle_unknown should be either 'error' or 'use_encoded_value', "
+            "got ignore.",
+        ),
+    ],
+)
+def test_ordinal_encoder_handle_unknowns_raise(params, err_type, err_msg):
+    # Check error message when validating input parameters
     X = np.array([['a', 'x'], ['b', 'y']], dtype=object)
 
-    enc = OrdinalEncoder(handle_unknown='use_encoded_value')
-    msg = ("unknown_value should be an integer or np.nan when handle_unknown "
-           "is 'use_encoded_value', got None.")
-    with pytest.raises(TypeError, match=msg):
-        enc.fit(X)
-
-    enc = OrdinalEncoder(unknown_value=-2)
-    msg = ("unknown_value should only be set when handle_unknown is "
-           "'use_encoded_value', got -2.")
-    with pytest.raises(TypeError, match=msg):
-        enc.fit(X)
-
-    enc = OrdinalEncoder(handle_unknown='use_encoded_value',
-                         unknown_value='bla')
-    msg = ("unknown_value should be an integer or np.nan when handle_unknown "
-           "is 'use_encoded_value', got bla.")
-    with pytest.raises(TypeError, match=msg):
-        enc.fit(X)
-
-    enc = OrdinalEncoder(handle_unknown='use_encoded_value', unknown_value=1)
-    msg = ("The used value for unknown_value (1) is one of the values already "
-           "used for encoding the seen categories.")
-    with pytest.raises(ValueError, match=msg):
-        enc.fit(X)
+    encoder = OrdinalEncoder(**params)
+    with pytest.raises(err_type, match=err_msg):
+        encoder.fit(X)
 
 
 def test_ordinal_encoder_handle_unknowns_nan():
