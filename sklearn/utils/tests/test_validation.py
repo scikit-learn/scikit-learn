@@ -19,7 +19,6 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils import as_float_array, check_array, check_symmetric
-from sklearn.utils import _safe_indexing
 from sklearn.utils import check_X_y
 from sklearn.utils import deprecated
 from sklearn.utils._mocking import (
@@ -33,8 +32,9 @@ from sklearn.random_projection import _sparse_random_matrix
 from sklearn.linear_model import ARDRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.datasets import make_blobs
 from sklearn.svm import SVR
+from sklearn.datasets import make_blobs
+from sklearn.utils import _safe_indexing
 from sklearn.utils.validation import (
     has_fit_parameter,
     check_is_fitted,
