@@ -420,7 +420,7 @@ def _update_dict(dictionary, Y, code, A=None, B=None, verbose=False,
         # Projection on the constraint ||V_k|| == 1
         dictionary[k] /= linalg.norm(dictionary[k])
 
-    if verbose:
+    if verbose and n_unused > 0:
         print(f"{n_unused} unused atoms resampled.")
 
 
