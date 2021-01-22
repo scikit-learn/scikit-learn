@@ -2,6 +2,24 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_0_24_2:
+
+Version 0.24.2
+==============
+
+**TBD 2021**
+
+Changelog
+---------
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Fix| Validate the constructor parameter `handle_unknown` in
+  :class:`preprocessing.OrdinalEncoder` to only allow for `'error'` and
+  `'use_encoded_value'` strategies.
+  :pr:`19234` by `Guillaume Lemaitre <glemaitre>`.
+
 .. _changes_0_24_1:
 
 Version 0.24.1
