@@ -26,7 +26,6 @@ from ..exceptions import DataConversionWarning
 from .deprecation import deprecated
 from .fixes import np_version, parse_version
 from ._estimator_html_repr import estimator_html_repr
-from .. import get_config
 from .validation import (as_float_array,
                          assert_all_finite,
                          _check_response_method,
@@ -34,6 +33,7 @@ from .validation import (as_float_array,
                          check_consistent_length, check_X_y, indexable,
                          check_symmetric, check_scalar,
                          _deprecate_positional_args)
+from .. import get_config
 from .multiclass import type_of_target
 
 

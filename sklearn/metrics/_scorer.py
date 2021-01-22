@@ -18,9 +18,9 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 # License: Simplified BSD
 
-from collections import Counter
 from collections.abc import Iterable
 from functools import partial
+from collections import Counter
 from inspect import signature
 
 import numpy as np
