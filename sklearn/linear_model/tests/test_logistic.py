@@ -1881,16 +1881,12 @@ def test_sample_weight_not_modified(multi_class, class_weight):
     W = np.ones(n_features)
     W[:n_features // 2] = 2
 
-    expected = W.sum()
+    expected = W.copy()
 
     clf = LogisticRegression(random_state=0,
                              class_weight=class_weight,
                              max_iter=200,
                              multi_class=multi_class)
     clf.fit(X, y, sample_weight=W)
-    actual = W.sum()
-    msg = (
-        f'Sum of weight before ({expected}) should be the same as'
-        f'sum if weight after ({actual})'
-    )
-    assert_allclose(expected, actual, err_msg=msg)
+    actual = W
+    assert_allclose(expected, actual)
