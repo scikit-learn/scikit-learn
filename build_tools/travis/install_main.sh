@@ -55,7 +55,7 @@ pip install joblib threadpoolctl
 
 pip install $(get_dep pytest $PYTEST_VERSION) pytest-xdist
 
-# Build scikit-learn in this script to collapse the 
+# Build scikit-learn in this script to collapse the
 # verbose build output in the Travis output when it
 # succeeds
 python --version

@@ -78,8 +78,8 @@ source_suffix = '.rst'
 # The encoding of source files.
 #source_encoding = 'utf-8'
 
-# The master toctree document.
-master_doc = 'contents'
+# The main toctree document.
+main_doc = 'contents'
 
 # General information about the project.
 project = 'scikit-learn'
@@ -283,7 +283,7 @@ if v.release is None:
         'PEP440'.format(version))
 
 if v.is_devrelease:
-    binder_branch = 'master'
+    binder_branch = 'main'
 else:
     major, minor = v.release[:2]
     binder_branch = '{}.{}.X'.format(major, minor)
