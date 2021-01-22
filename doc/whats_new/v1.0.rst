@@ -72,6 +72,9 @@ Changelog
 - |Enhancement| Validate user-supplied gram matrix passed to linear models
   via the `precompute` argument. :pr:`19004` by :user:`Adam Midvidy <amidvidy>`.
 
+- |Fix| :meth:`ElasticNet.fit` no longer modifies `sample_weight` in place.
+  :pr:`19055` by `Thomas Fan`_.
+
 - |Fix| :class:`Lasso`, :class:`ElasticNet` no longer have a `dual_gap_`
   not corresponding to their objective. :pr:`19172` by
   :user:`Mathurin Massias <mathurinm>`
@@ -87,9 +90,6 @@ Changelog
   make_pipeline(StandardScaler(with_mean=False), LinearRegression()).
   :pr:`17743` by :user:`Maria Telenczuk <maikia>` and
   :user:`Alexandre Gramfort <agramfort>`.
-
-- |Fix| :meth:`ElasticNet.fit` no longer modifies `sample_weight` in place.
-  :pr:`19055` by `Thomas Fan`_.
 
 :mod:`sklearn.metrics`
 ......................
