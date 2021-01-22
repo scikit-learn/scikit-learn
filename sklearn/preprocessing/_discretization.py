@@ -139,7 +139,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features), dtype={int, float}
+        X : array-like of shape (n_samples, n_features)
             Data to be discretized.
 
         y : None
@@ -276,7 +276,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features), dtype={int, float}
+        X : array-like of shape (n_samples, n_features)
             Data to be discretized.
 
         Returns
@@ -289,12 +289,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         # check input and attribute dtypes
         dtype = (np.float64, np.float32) if self.dtype is None else self.dtype
-        Xt = check_array(X, copy=True, dtype=dtype)
-
-        n_features = self.n_bins_.shape[0]
-        if Xt.shape[1] != n_features:
-            raise ValueError("Incorrect number of features. Expecting {}, "
-                             "received {}.".format(n_features, Xt.shape[1]))
+        Xt = self._validate_data(X, copy=True, dtype=dtype, reset=False)
 
         bin_edges = self.bin_edges_
         for jj in range(Xt.shape[1]):
@@ -331,7 +326,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        Xt : array-like of shape (n_samples, n_features), dtype={int, float}
+        Xt : array-like of shape (n_samples, n_features)
             Transformed data in the binned space.
 
         Returns

@@ -116,8 +116,8 @@ fi
 
 if [[ "$CIRCLE_BRANCH" =~ ^master$|^[0-9]+\.[0-9]+\.X$ && -z "$CI_PULL_REQUEST" ]]
 then
-    # PDF linked into HTML
-    make_args="dist LATEXMKOPTS=-halt-on-error"
+    # ZIP linked into HTML
+    make_args=dist
 elif [[ "$build_type" =~ ^QUICK ]]
 then
     make_args=html-noplot
@@ -133,13 +133,10 @@ fi
 make_args="SPHINXOPTS=-T $make_args"  # show full traceback on exception
 
 # Installing required system packages to support the rendering of math
-# notation in the HTML documentation
+# notation in the HTML documentation and to optimize the image files
 sudo -E apt-get -yq update
-sudo -E apt-get -yq remove texlive-binaries --purge
 sudo -E apt-get -yq --no-install-suggests --no-install-recommends \
-    install dvipng texlive-latex-base texlive-latex-extra \
-    texlive-latex-recommended texlive-fonts-recommended \
-    latexmk gsfonts ccache
+    install dvipng gsfonts ccache zip optipng
 
 # deactivate circleci virtualenv and setup a miniconda env instead
 if [[ `type -t deactivate` ]]; then
@@ -182,9 +179,11 @@ conda create -n $CONDA_ENV_NAME --yes --quiet \
 source activate testenv
 pip install sphinx-gallery
 pip install numpydoc
+pip install sphinx-prompt
 
-# Build and install scikit-learn in dev mode
-python setup.py build_ext --inplace -j 3
+# Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
+# workers with 2 cores when building the compiled extensions of scikit-learn.
+export SKLEARN_BUILD_PARALLEL=3
 python setup.py develop
 
 export OMP_NUM_THREADS=1

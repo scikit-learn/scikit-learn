@@ -748,7 +748,7 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None,
     intuitively the ability of the classifier to find all the positive samples.
 
     The last precision and recall values are 1. and 0. respectively and do not
-    have a corresponding threshold.  This ensures that the graph starts on the
+    have a corresponding threshold. This ensures that the graph starts on the
     y axis.
 
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
@@ -1702,7 +1702,7 @@ def top_k_accuracy_score(y_true, y_score, *, k=2, normalize=True,
     if y_type == 'binary':
         if k == 1:
             threshold = .5 if y_score.min() >= 0 and y_score.max() <= 1 else 0
-            y_pred = (y_score > threshold).astype(np.int)
+            y_pred = (y_score > threshold).astype(np.int64)
             hits = y_pred == y_true_encoded
         else:
             hits = np.ones_like(y_score, dtype=np.bool_)
