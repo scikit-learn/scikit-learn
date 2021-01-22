@@ -1406,7 +1406,7 @@ def _check_response_method(estimator, response_method=None):
     Parameters
     ----------
     estimator : estimator instance
-        Classifier to check.
+        Classifier or regressor to check.
 
     response_method : {'predict_proba', 'decision_function', 'predict'} or \
             list of str, default=None.
