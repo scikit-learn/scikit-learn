@@ -71,14 +71,12 @@ jobs:
         exclude:
           - os: macos-latest
             bitness: 32
+          # Remove one of the manylinux1 from the windows and osx build matrix
+          # since manylinux_image is not used for these platforms
           - os: windows-latest
             manylinux_image: manylinux1
-          - os: windows-latest
-            manylinux_image: manylinux2010
           - os: macos-latest
             manylinux_image: manylinux1
-          - os: macos-latest
-            manylinux_image: manylinux2010
 
     steps:
       - name: Checkout scikit-learn
