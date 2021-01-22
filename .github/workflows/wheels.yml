@@ -71,6 +71,14 @@ jobs:
         exclude:
           - os: macos-latest
             bitness: 32
+          - os: windows-latest
+            manylinux_image: manylinux_1
+          - os: windows-latest
+            manylinux_image: manylinux_2010
+          - os: macos-latest
+            manylinux_image: manylinux_1
+          - os: macos-latest
+            manylinux_image: manylinux_2010
 
     steps:
       - name: Checkout scikit-learn
@@ -100,43 +108,43 @@ jobs:
         # run: bash build_tools/github/build_wheels.sh
         run: Echo "ran"
 
-  #     - name: Store artifacts
-  #       uses: actions/upload-artifact@v2
-  #       with:
-  #         path: wheelhouse/*.whl
+      # - name: Store artifacts
+      #   uses: actions/upload-artifact@v2
+      #   with:
+      #     path: wheelhouse/*.whl
 
-  # # Build the source distribution under Linux
-  # build_sdist:
-  #   name: Source distribution
-  #   runs-on: ubuntu-latest
-  #   needs: check_build_trigger
-  #   if: needs.check_build_trigger.outputs.build
+  # Build the source distribution under Linux
+  build_sdist:
+    name: Source distribution
+    runs-on: ubuntu-latest
+    needs: check_build_trigger
+    if: needs.check_build_trigger.outputs.build
 
-  #   steps:
-  #     - name: Checkout scikit-learn
-  #       uses: actions/checkout@v1
+    steps:
+      - name: Checkout scikit-learn
+        uses: actions/checkout@v1
 
-  #     - name: Setup Python
-  #       uses: actions/setup-python@v2
+      - name: Setup Python
+        uses: actions/setup-python@v2
 
-  #     - name: Build source distribution
-  #       run: bash build_tools/github/build_source.sh
-  #       env:
-  #         SKLEARN_BUILD_PARALLEL: 3
+      - name: Build source distribution
+        run: bash build_tools/github/build_source.sh
+        env:
+          SKLEARN_BUILD_PARALLEL: 3
 
-  #     - name: Test source distribution
-  #       run: bash build_tools/github/test_source.sh
-  #       env:
-  #         OMP_NUM_THREADS: 2
-  #         OPENBLAS_NUM_THREADS: 2
-  #         SKLEARN_SKIP_NETWORK_TESTS: 1
+      - name: Test source distribution
+        run: bash build_tools/github/test_source.sh
+        env:
+          OMP_NUM_THREADS: 2
+          OPENBLAS_NUM_THREADS: 2
+          SKLEARN_SKIP_NETWORK_TESTS: 1
 
-  #     - name: Store artifacts
-  #       uses: actions/upload-artifact@v2
-  #       with:
-  #         path: dist/*.tar.gz
+      - name: Store artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          path: dist/*.tar.gz
 
-  # # Upload the wheels and the source distribution
+  # Upload the wheels and the source distribution
   # upload_anaconda:
   #   name: Upload to Anaconda
   #   runs-on: ubuntu-latest
