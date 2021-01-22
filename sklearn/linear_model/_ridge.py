@@ -536,7 +536,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
 
     def fit(self, X, y, sample_weight=None):
 
-        _normalize = _deprecate_normalize(
+        self._normalize = _deprecate_normalize(
             self.normalize, default=False,
             estimator_name=self.__class__.__name__
         )
@@ -575,7 +575,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
 
         # when X is sparse we only remove offset from y
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
-            X, y, self.fit_intercept, _normalize, self.copy_X,
+            X, y, self.fit_intercept, self._normalize, self.copy_X,
             sample_weight=sample_weight, return_mean=True)
 
         if solver == 'sag' and sparse.issparse(X) and self.fit_intercept:
@@ -768,7 +768,6 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         -------
         self : returns an instance of self.
         """
-
         return super().fit(X, y, sample_weight=sample_weight)
 
 
@@ -936,7 +935,6 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         self : object
             Instance of the estimator.
         """
-
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X),
                                                   self.solver)
         X, y = self._validate_data(X, y, accept_sparse=_accept_sparse,
@@ -1471,6 +1469,7 @@ class _RidgeGCV(LinearModel):
             self.normalize, default=False,
             estimator_name=self.__class__.__name__
         )
+
         X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc', 'coo'],
                                    dtype=[np.float64],
                                    multi_output=True, y_numeric=True)
@@ -1645,15 +1644,11 @@ class _BaseRidgeCV(LinearModel):
         the validation score.
         """
 
-        _normalize = _deprecate_normalize(
-            self.normalize, default=False,
-            estimator_name=self.__class__.__name__
-        )
         cv = self.cv
         if cv is None:
             estimator = _RidgeGCV(self.alphas,
                                   fit_intercept=self.fit_intercept,
-                                  normalize=_normalize,
+                                  normalize=self.normalize,
                                   scoring=self.scoring,
                                   gcv_mode=self.gcv_mode,
                                   store_cv_values=self.store_cv_values,
@@ -1675,7 +1670,7 @@ class _BaseRidgeCV(LinearModel):
             solver = 'sparse_cg' if sparse.issparse(X) else 'auto'
             model = RidgeClassifier if is_classifier(self) else Ridge
             gs = GridSearchCV(model(fit_intercept=self.fit_intercept,
-                                    normalize=_normalize,
+                                    normalize=self.normalize,
                                     solver=solver),
                               parameters, cv=cv, scoring=self.scoring)
             gs.fit(X, y, sample_weight=sample_weight)

@@ -86,8 +86,13 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
      (False, 1, FutureWarning),
      ("deprecated", 0, None)]
 )
+@pytest.mark.parametrize(
+    "estimator",
+    [LinearRegression, Ridge, RidgeCV, RidgeClassifier, RidgeClassifierCV]
+)
 # FIXME remove test in 1.4
 def test_linear_model_normalize_deprecation_message(
+     estimator,
      normalize, n_warnings, warning
 ):
     # check that we issue a FutureWarning when normalize was set in
@@ -99,7 +104,7 @@ def test_linear_model_normalize_deprecation_message(
     X[X < 0.1] = 0.0
     y = rng.rand(n_samples)
 
-    model = LinearRegression(normalize=normalize)
+    model = estimator(normalize=normalize)
     with pytest.warns(warning) as record:
         model.fit(X, y)
     assert len(record) == n_warnings
