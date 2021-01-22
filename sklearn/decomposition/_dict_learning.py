@@ -487,10 +487,12 @@ def dict_learning(X, n_components, *, alpha, max_iter=100, tol=1e-8,
         for more details.
 
     dict_init : ndarray of shape (n_components, n_features), default=None
-        Initial value for the dictionary for warm restart scenarios.
+        Initial value for the dictionary for warm restart scenarios. Only used
+        if `code_init` and `dict_init` are not None.
 
     code_init : ndarray of shape (n_samples, n_components), default=None
-        Initial value for the sparse code for warm restart scenarios.
+        Initial value for the sparse code for warm restart scenarios. Only used
+        if `code_init` and `dict_init` are not None.
 
     callback : callable, default=None
         Callable that gets invoked every five iterations
@@ -1205,10 +1207,12 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         for more details.
 
     code_init : ndarray of shape (n_samples, n_components), default=None
-        Initial value for the code, for warm restart.
+        Initial value for the code, for warm restart. Only used if `code_init`
+        and `dict_init` are not None.
 
     dict_init : ndarray of shape (n_components, n_features), default=None
-        Initial values for the dictionary, for warm restart.
+        Initial values for the dictionary, for warm restart. Only used if
+        `code_init` and `dict_init` are not None.
 
     verbose : bool, default=False
         To control the verbosity of the procedure.
