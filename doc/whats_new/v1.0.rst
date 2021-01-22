@@ -70,6 +70,9 @@ Changelog
   in multicore settings. :pr:`19052` by
   :user:`Yusuke Nagasaka <YusukeNagasaka>`.
 
+- |Fix| Fixes incorrect multiple data-conversion warnings when clustering
+  boolean data. :pr:`19046` by :user:`Surya Prakash <jdsurya>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
@@ -93,6 +96,10 @@ Changelog
 - |Enhancement| Validate user-supplied gram matrix passed to linear models
   via the `precompute` argument. :pr:`19004` by :user:`Adam Midvidy <amidvidy>`.
 
+- |Fix| :class:`Lasso`, :class:`ElasticNet` no longer have a `dual_gap_`
+  not corresponding to their objective. :pr:`19172` by
+  :user:`Mathurin Massias <mathurinm>`
+
 :mod:`sklearn.naive_bayes`
 ..........................
 
@@ -100,6 +107,18 @@ Changelog
   :class:`naive_bayes.GaussianNB` and will be removed in 1.2.
   Use ``var_`` instead.
   :pr:`18842` by :user:`Hong Shao Yang <hongshaoyang>`.
+
+- |API|: The parameter ``normalize`` of :class:`linear_model.LinearRegression`
+  is deprecated and will be removed in 1.2.
+  Motivation for this deprecation: ``normalize`` parameter did not take any
+  effect if ``fit_intercept`` was set to False and therefore was deemed
+  confusing.
+  The behavior of the deprecated LinearRegression(normalize=True) can be
+  reproduced with :class:`~sklearn.pipeline.Pipeline` with
+  :class:`~sklearn.preprocessing.StandardScaler`as follows:
+  make_pipeline(StandardScaler(with_mean=False), LinearRegression()).
+  :pr:`17743` by :user:`Maria Telenczuk <maikia>` and
+  :user:`Alexandre Gramfort <agramfort>`.
 
 Code and Documentation Contributors
 -----------------------------------

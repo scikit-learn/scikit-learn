@@ -39,7 +39,7 @@ def get_file_extension(version):
         return 'zip'
 
     current_version = LooseVersion(version)
-    min_zip_version = LooseVersion('1.0.0')
+    min_zip_version = LooseVersion('0.24')
 
     return 'zip' if current_version >= min_zip_version else 'pdf'
 
