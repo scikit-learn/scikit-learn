@@ -184,7 +184,7 @@ class _MetadataRequest:
 
         Returns
         -------
-        request : dict of dict of {str: str}
+        request : Bunch of dict of {str: str}
             The key to the top level dict is the method for which the prop is
             used. Under each key, there is a dict of the form
             ``{input_param_name: required_param_name}``.

@@ -1406,6 +1406,16 @@ def build_method_metadata_params(children, routing, metadata):
     children_props = {k: _get_props_from_objs(v, mask_values=False)
                       for k, v in children.items()}
     out = Bunch(**{method: dict() for method in _empty_metadata_request()})
+    # expand "all"
+    tmp = []
+    for child_role, router_method, child_method in routing:
+        if router_method == child_method == "all":
+            for method in children_props[child_role]:
+                tmp.append((child_role, method, method))
+        else:
+            tmp.append((child_role, router_method, child_method))
+    routing = tmp
+
     for child_role, router_method, child_method in routing:
         props = _check_method_props(
             children_props[child_role][child_method], metadata, validate=False)
@@ -1415,7 +1425,7 @@ def build_method_metadata_params(children, routing, metadata):
             # empty dict, initiate it with what we got
             out[router_method] = props
         else:
-            for param, value in props:
+            for param, value in props.items():
                 if param in out[router_method]:
                     if value == out[router_method][param]:
                         # the same parameter with the same value, no issues

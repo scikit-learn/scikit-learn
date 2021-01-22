@@ -16,6 +16,8 @@ from sklearn.pipeline import make_pipeline
 from sklearn.svm import SVC
 from sklearn.utils import _standardize_metadata_request
 from sklearn.utils import _validate_required_props
+from sklearn.utils import build_method_metadata_params
+from sklearn.utils import build_router_metadata_request
 
 from sklearn.model_selection import KFold
 from sklearn.model_selection import GroupKFold
@@ -117,8 +119,9 @@ class MyTrs(
         # extract the values from the metadata requests. Since this is not a
         # meta-estimator, the values will always have exactly 1 member in the
         # corresponding set.
-        req_props = [list(x)[0] for x in
-                     self.get_metadata_request().fit.values()]
+        req_props = [
+            list(x)[0] for x in self.get_metadata_request().fit.values()
+        ]
         assert set(fit_params.keys()) <= set(req_props)
         self._estimator = SelectKBest().fit(X, y)
         return self
@@ -351,58 +354,141 @@ def test_invalid_arg_given():
 
     with pytest.raises(ValueError, match="Requested properties are"):
         gs.fit(
-            X,
-            y,
-            sample_weigh=my_weights,
-            groups=my_groups,
+            X, y, sample_weigh=my_weights, groups=my_groups,
         )
 
 
 def test_MetadataRequest():
     class TestDefaults(_MetadataRequest, SampleWeightConsumer):
         _metadata_request__my_param = {
-            'score': ['my_param'],
+            "score": ["my_param"],
             # the following method would be ignored
-            'other_method': 'my_param'
+            "other_method": "my_param",
+        }
+
+        _metadata_request__my_other_param = {
+            "score": ["my_other_param"],
+            "fit": "my_param",
         }
 
         def request_my_param(self, *, fit=None, score=None):
-            self._request_key_for_method(method='fit',
-                                         param='my_param',
-                                         user_provides=fit)
-            self._request_key_for_method(method='score',
-                                         param='my_param',
-                                         user_provides=score)
+            self._request_key_for_method(
+                method="fit", param="my_param", user_provides=fit
+            )
+            self._request_key_for_method(
+                method="score", param="my_param", user_provides=score
+            )
             return self
 
     expected = {
-        'score': {'my_param': {'my_param'}},
-        'fit': {},
-        'predict': {},
-        'transform': {},
-        'inverse_transform': {},
-        'split': {},
+        "score": {"my_param": {"my_param"}},
+        "fit": {},
+        "predict": {},
+        "transform": {},
+        "inverse_transform": {},
+        "split": {},
     }
     assert TestDefaults().get_metadata_request() == expected
 
-    est = TestDefaults().request_my_param(score='other_param')
+    est = TestDefaults().request_my_param(score="other_param")
     expected = {
-        'score': {'other_param': {'my_param'}},
-        'fit': {},
-        'predict': {},
-        'transform': {},
-        'inverse_transform': {},
-        'split': {},
+        "score": {"other_param": {"my_param"}},
+        "fit": {},
+        "predict": {},
+        "transform": {},
+        "inverse_transform": {},
+        "split": {},
     }
     assert est.get_metadata_request() == expected
 
     est = TestDefaults().request_sample_weight(fit=True)
     expected = {
-        'score': {'my_param': {'my_param'}},
-        'fit': {'sample_weight': {'sample_weight'}},
-        'predict': {},
-        'transform': {},
-        'inverse_transform': {},
-        'split': {},
+        "score": {"my_param": {"my_param"}},
+        "fit": {"sample_weight": {"sample_weight"}},
+        "predict": {},
+        "transform": {},
+        "inverse_transform": {},
+        "split": {},
     }
     assert est.get_metadata_request() == expected
+
+
+def test_build_router_metadata_request():
+    cv = GroupKFold().request_groups(split="my_groups")
+    est = LogisticRegression().request_sample_weight(fit=True, score=True)
+    scorer = make_scorer(
+        accuracy_score, request_props={"my_weights": "sample_weight"}
+    )
+    got = build_router_metadata_request(
+        children={"base": est, "cv": cv, "scorer": scorer},
+        routing=[
+            ("base", "all", "all"),
+            ("cv", "split", "split"),
+            ("scorer", "fit", "score"),
+            ("scorer", "score", "score"),
+        ],
+    )
+    expected = {
+        "score": {
+            "my_weights": {"my_weights"},
+            "sample_weight": {"sample_weight"},
+        },
+        "fit": {
+            "sample_weight": {"sample_weight"},
+            "my_weights": {"my_weights"},
+        },
+        "predict": {},
+        "transform": {},
+        "inverse_transform": {},
+        "split": {"my_groups": {"my_groups"}},
+    }
+    assert expected == got
+
+
+def test_build_method_metadata_params():
+    cv = GroupKFold().request_groups(split="my_groups")
+    est = LogisticRegression().request_sample_weight(fit=True, score=True)
+    scorer = make_scorer(
+        accuracy_score, request_props={"my_weights": "sample_weight"}
+    )
+
+    with pytest.raises(ValueError, match="Conflicting parameters"):
+        build_method_metadata_params(
+            children={"base": est, "cv": cv, "scorer": scorer},
+            routing=[
+                ("base", "all", "all"),
+                ("cv", "split", "split"),
+                ("scorer", "fit", "score"),
+                ("scorer", "score", "score"),
+            ],
+            metadata={
+                "my_weights": [1],
+                "sample_weight": [2],
+                "my_groups": [3],
+            },
+        )
+
+    # in fit
+    got = build_method_metadata_params(
+        children={"base": est, "scorer": scorer},
+        routing=[
+            ("base", "fit", "fit"),
+            ("scorer", "score", "score"),
+        ],
+        metadata={"my_weights": [1], "sample_weight": [2], "my_groups": [3]},
+    )
+    expected = {
+        "score": {
+            "my_weights": {"my_weights"},
+            "sample_weight": {"sample_weight"},
+        },
+        "fit": {
+            "sample_weight": {"sample_weight"},
+            "my_weights": {"my_weights"},
+        },
+        "predict": {},
+        "transform": {},
+        "inverse_transform": {},
+        "split": {"my_groups": {"my_groups"}},
+    }
+    assert expected == got
