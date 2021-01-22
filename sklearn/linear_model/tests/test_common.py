@@ -1,11 +1,10 @@
-# Author: Maria Telenczuk <maikia>
+# Author: Maria Telenczuk <https://github.com/maikia>
 #
 # License: BSD 3 clause
 
 import pytest
 
 import numpy as np
-
 from scipy import sparse
 
 from sklearn.datasets import make_regression
@@ -19,6 +18,8 @@ from sklearn.linear_model import RidgeClassifierCV
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
+
+from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import _convert_container
 
@@ -77,3 +78,30 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
         reg_with_scaler[1].coef_
     )
     assert_allclose(y_pred_norm, y_pred_pip)
+
+
+@pytest.mark.parametrize(
+    'normalize, n_warnings, warning',
+    [(True, 1, FutureWarning),
+     (False, 1, FutureWarning),
+     ("deprecated", 0, None)]
+)
+# FIXME remove test in 1.4
+def test_linear_model_normalize_deprecation_message(
+     normalize, n_warnings, warning
+):
+    # check that we issue a FutureWarning when normalize was set in
+    # LinearRegression
+    rng = check_random_state(0)
+    n_samples = 200
+    n_features = 2
+    X = rng.randn(n_samples, n_features)
+    X[X < 0.1] = 0.0
+    y = rng.rand(n_samples)
+
+    model = LinearRegression(normalize=normalize)
+    with pytest.warns(warning) as record:
+        model.fit(X, y)
+    assert len(record) == n_warnings
+    if n_warnings:
+        assert "'normalize' was deprecated" in str(record[0].message)
