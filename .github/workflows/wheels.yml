@@ -71,14 +71,6 @@ jobs:
         exclude:
           - os: macos-latest
             bitness: 32
-          - os: windows-latest
-            manylinux_image: manylinux_1
-          - os: windows-latest
-            manylinux_image: manylinux_2010
-          - os: macos-latest
-            manylinux_image: manylinux_1
-          - os: macos-latest
-            manylinux_image: manylinux_2010
 
     steps:
       - name: Checkout scikit-learn
