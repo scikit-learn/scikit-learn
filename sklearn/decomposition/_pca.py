@@ -275,7 +275,7 @@ class PCA(_BasePCA):
     ----------
     For n_components == 'mle', this class uses the method from:
     `Minka, T. P.. "Automatic choice of dimensionality for PCA".
-    In NIPS, pp. 598-604 <https://tminka.github.io/papers/pca/>`_
+    In NIPS, pp. 598-604 <https://tminka.github.io/papers/pca/minka-pca.pdf>`_
 
     Implements the probabilistic PCA model from:
     `Tipping, M. E., and Bishop, C. M. (1999). "Probabilistic principal
