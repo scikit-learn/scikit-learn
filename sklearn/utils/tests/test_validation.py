@@ -52,10 +52,11 @@ from sklearn.utils.validation import (
     FLOAT_DTYPES)
 from sklearn.utils.validation import _check_fit_params
 
+import sklearn
+
 from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
 
 from sklearn.utils._testing import TempMemmap
-import sklearn
 
 
 def test_as_float_array():
