@@ -72,13 +72,13 @@ jobs:
           - os: macos-latest
             bitness: 32
           - os: windows-latest
-            manylinux_image: manylinux_1
+            manylinux_image: manylinux1
           - os: windows-latest
-            manylinux_image: manylinux_2010
+            manylinux_image: manylinux2010
           - os: macos-latest
-            manylinux_image: manylinux_1
+            manylinux_image: manylinux1
           - os: macos-latest
-            manylinux_image: manylinux_2010
+            manylinux_image: manylinux2010
 
     steps:
       - name: Checkout scikit-learn
