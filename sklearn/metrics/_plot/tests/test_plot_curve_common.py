@@ -10,11 +10,9 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier
 
-from sklearn.metrics import (
-    plot_det_curve,
-    plot_precision_recall_curve,
-    plot_roc_curve,
-)
+from sklearn.metrics import plot_det_curve
+from sklearn.metrics import plot_precision_recall_curve
+from sklearn.metrics import plot_roc_curve
 
 
 @pytest.fixture(scope="module")

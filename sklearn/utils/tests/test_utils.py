@@ -18,39 +18,32 @@ from sklearn.linear_model import (
 )
 from sklearn.tree import DecisionTreeClassifier
 
+from sklearn.utils._testing import (assert_array_equal,
+                                    assert_allclose,
+                                    assert_allclose_dense_sparse,
+                                    assert_warns_message,
+                                    assert_no_warnings,
+                                    _convert_container)
+from sklearn.utils import check_random_state
+from sklearn.utils import _determine_key_type
+from sklearn.utils import deprecated
+from sklearn.utils import gen_batches
+from sklearn.utils import _get_column_indices
+from sklearn.utils import _get_response
+from sklearn.utils import resample
+from sklearn.utils import safe_mask
+from sklearn.utils import column_or_1d
+from sklearn.utils import _safe_indexing
+from sklearn.utils import shuffle
+from sklearn.utils import gen_even_slices
+from sklearn.utils import _message_with_time, _print_elapsed_time
+from sklearn.utils import get_chunk_n_rows
+from sklearn.utils import is_scalar_nan
+from sklearn.utils import _to_object_array
 from sklearn.utils._mocking import (
     MockDataFrame,
     MockEstimatorOnOffPrediction,
 )
-from sklearn.utils._testing import (
-    assert_allclose,
-    assert_allclose_dense_sparse,
-    assert_array_equal,
-    assert_warns_message,
-    assert_no_warnings,
-    _convert_container,
-)
-
-from sklearn.utils import (
-    check_random_state,
-    column_or_1d,
-    _determine_key_type,
-    deprecated,
-    is_scalar_nan,
-    gen_batches,
-    get_chunk_n_rows,
-    gen_even_slices,
-    _get_column_indices,
-    _get_response,
-    _message_with_time,
-    _print_elapsed_time,
-    resample,
-    _safe_indexing,
-    safe_mask,
-    shuffle,
-    _to_object_array,
-)
-
 from sklearn import config_context
 
 # toy array

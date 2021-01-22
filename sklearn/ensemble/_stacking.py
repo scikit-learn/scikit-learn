@@ -30,12 +30,10 @@ from ..preprocessing import LabelEncoder
 from ..utils import Bunch
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.multiclass import check_classification_targets
-from ..utils.validation import (
-    check_is_fitted,
-    _check_response_method,
-    column_or_1d,
-    _deprecate_positional_args,
-)
+from ..utils.validation import check_is_fitted
+from ..utils.validation import _check_response_method
+from ..utils.validation import column_or_1d
+from ..utils.validation import _deprecate_positional_args
 from ..utils.fixes import delayed
 
 

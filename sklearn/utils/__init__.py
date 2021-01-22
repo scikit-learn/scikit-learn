@@ -3,52 +3,38 @@ The :mod:`sklearn.utils` module includes various utilities.
 """
 import pkgutil
 import inspect
-from itertools import (
-    compress,
-    islice,
-)
+from importlib import import_module
+from operator import itemgetter
+from collections.abc import Sequence
+from contextlib import contextmanager
+from itertools import compress
+from itertools import islice
 import numbers
 import platform
 import struct
 import timeit
-import warnings
-
-from collections.abc import Sequence
-from contextlib import contextmanager
-from importlib import import_module
 from pathlib import Path
-from operator import itemgetter
 
+import warnings
 import numpy as np
 from scipy.sparse import issparse
 
-from .. import get_config
-from ..exceptions import DataConversionWarning
-
-from . import _joblib
-from .class_weight import (
-    compute_class_weight,
-    compute_sample_weight,
-)
-from .deprecation import deprecated
-from ._estimator_html_repr import estimator_html_repr
-from .fixes import np_version, parse_version
-from .multiclass import type_of_target
 from .murmurhash import murmurhash3_32
-from .validation import (
-    as_float_array,
-    assert_all_finite,
-    check_array,
-    check_consistent_length,
-    check_X_y,
-    check_random_state,
-    _check_response_method,
-    check_symmetric,
-    check_scalar,
-    column_or_1d,
-    _deprecate_positional_args,
-    indexable,
-)
+from .class_weight import compute_class_weight, compute_sample_weight
+from . import _joblib
+from ..exceptions import DataConversionWarning
+from .deprecation import deprecated
+from .fixes import np_version, parse_version
+from ._estimator_html_repr import estimator_html_repr
+from .. import get_config
+from .validation import (as_float_array,
+                         assert_all_finite,
+                         _check_response_method,
+                         check_random_state, column_or_1d, check_array,
+                         check_consistent_length, check_X_y, indexable,
+                         check_symmetric, check_scalar,
+                         _deprecate_positional_args)
+from .multiclass import type_of_target
 
 
 # Do not deprecate parallel_backend and register_parallel_backend as they are

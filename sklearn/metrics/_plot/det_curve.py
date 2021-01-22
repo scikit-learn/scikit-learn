@@ -1,12 +1,12 @@
 import scipy as sp
 
-from .. import det_curve
-
 from ...base import is_classifier
 from ...utils import (
     check_matplotlib_support,
     _get_response,
 )
+
+from .. import det_curve
 
 
 class DetCurveDisplay:
