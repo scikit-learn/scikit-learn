@@ -9,7 +9,14 @@ import numpy as np
 from scipy import sparse
 
 from sklearn.datasets import make_regression
+
 from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import Ridge
+from sklearn.linear_model._ridge import _RidgeGCV
+from sklearn.linear_model import RidgeCV
+from sklearn.linear_model import RidgeClassifier
+from sklearn.linear_model import RidgeClassifierCV
+
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
@@ -20,10 +27,14 @@ from sklearn.utils._testing import _convert_container
 # FIXME: 'normalize' to be removed in 1.2
 @pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize(
-    "estimator, is_sparse, with_mean",
-    [(LinearRegression, True, False),
-     (LinearRegression, False, True),
-     (LinearRegression, False, False)]
+    "estimator",
+    [LinearRegression]
+)
+@pytest.mark.parametrize(
+    "is_sparse, with_mean",
+    [(True, False),
+     (False, True),
+     (False, False)]
 )
 def test_linear_model_sample_weights_normalize_in_pipeline(
         estimator, is_sparse, with_mean
