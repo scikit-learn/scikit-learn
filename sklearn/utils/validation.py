@@ -25,53 +25,59 @@ from contextlib import suppress
 
 from .fixes import _object_dtype_isnan, parse_version
 from .. import get_config as _get_config
-from ..exceptions import NonBLASDotWarning, PositiveSpectrumWarning
+from ..exceptions import PositiveSpectrumWarning
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
-# Silenced by default to reduce verbosity. Turn on at runtime for
-# performance profiling.
-warnings.simplefilter('ignore', NonBLASDotWarning)
 
-
-def _deprecate_positional_args(f):
-    """Decorator for methods that issues warnings for positional arguments
+def _deprecate_positional_args(func=None, *, version="1.0 (renaming of 0.25)"):
+    """Decorator for methods that issues warnings for positional arguments.
 
     Using the keyword-only argument syntax in pep 3102, arguments after the
     * will issue a warning when passed as a positional argument.
 
     Parameters
     ----------
-    f : function
-        function to check arguments on
+    func : callable, default=None
+        Function to check arguments on.
+    version : callable, default="1.0 (renaming of 0.25)"
+        The version when positional arguments will result in error.
     """
-    sig = signature(f)
-    kwonly_args = []
-    all_args = []
+    def _inner_deprecate_positional_args(f):
+        sig = signature(f)
+        kwonly_args = []
+        all_args = []
 
-    for name, param in sig.parameters.items():
-        if param.kind == Parameter.POSITIONAL_OR_KEYWORD:
-            all_args.append(name)
-        elif param.kind == Parameter.KEYWORD_ONLY:
-            kwonly_args.append(name)
+        for name, param in sig.parameters.items():
+            if param.kind == Parameter.POSITIONAL_OR_KEYWORD:
+                all_args.append(name)
+            elif param.kind == Parameter.KEYWORD_ONLY:
+                kwonly_args.append(name)
 
-    @wraps(f)
-    def inner_f(*args, **kwargs):
-        extra_args = len(args) - len(all_args)
-        if extra_args > 0:
-            # ignore first 'self' argument for instance methods
+        @wraps(f)
+        def inner_f(*args, **kwargs):
+            extra_args = len(args) - len(all_args)
+            if extra_args <= 0:
+                return f(*args, **kwargs)
+
+            # extra_args > 0
             args_msg = ['{}={}'.format(name, arg)
                         for name, arg in zip(kwonly_args[:extra_args],
                                              args[-extra_args:])]
-            warnings.warn("Pass {} as keyword args. From version 0.25 "
-                          "passing these as positional arguments will "
-                          "result in an error".format(", ".join(args_msg)),
-                          FutureWarning)
-        kwargs.update(zip(sig.parameters, args))
-        return f(**kwargs)
-    return inner_f
+            args_msg = ", ".join(args_msg)
+            warnings.warn(f"Pass {args_msg} as keyword args. From version "
+                          f"{version} passing these as positional arguments "
+                          "will result in an error", FutureWarning)
+            kwargs.update(zip(sig.parameters, args))
+            return f(**kwargs)
+        return inner_f
+
+    if func is not None:
+        return _inner_deprecate_positional_args(func)
+
+    return _inner_deprecate_positional_args
 
 
 def _assert_all_finite(X, allow_nan=False, msg_dtype=None):
@@ -111,9 +117,9 @@ def assert_all_finite(X, *, allow_nan=False):
 
     Parameters
     ----------
-    X : array or sparse matrix
+    X : {ndarray, sparse matrix}
 
-    allow_nan : bool
+    allow_nan : bool, default=False
     """
     _assert_all_finite(X.data if sp.issparse(X) else X, allow_nan)
 
@@ -130,11 +136,11 @@ def as_float_array(X, *, copy=True, force_all_finite=True):
     ----------
     X : {array-like, sparse matrix}
 
-    copy : bool, optional
+    copy : bool, default=True
         If True, a copy of X will be created. If False, a copy may still be
         returned if X's dtype is not a floating point type.
 
-    force_all_finite : boolean or 'allow-nan', default=True
+    force_all_finite : bool or 'allow-nan', default=True
         Whether to raise an error on np.inf, np.nan, pd.NA in X. The
         possibilities are:
 
@@ -151,8 +157,8 @@ def as_float_array(X, *, copy=True, force_all_finite=True):
 
     Returns
     -------
-    XT : {array, sparse matrix}
-        An array of type float
+    XT : {ndarray, sparse matrix}
+        An array of type float.
     """
     if isinstance(X, np.matrix) or (not isinstance(X, np.ndarray)
                                     and not sp.issparse(X)):
@@ -172,7 +178,7 @@ def as_float_array(X, *, copy=True, force_all_finite=True):
 
 
 def _is_arraylike(x):
-    """Returns whether the input is array-like"""
+    """Returns whether the input is array-like."""
     return (hasattr(x, '__len__') or
             hasattr(x, 'shape') or
             hasattr(x, '__array__'))
@@ -202,8 +208,8 @@ def _num_samples(x):
 
     try:
         return len(x)
-    except TypeError:
-        raise TypeError(message)
+    except TypeError as type_error:
+        raise TypeError(message) from type_error
 
 
 def check_memory(memory):
@@ -265,7 +271,7 @@ def _make_indexable(iterable):
 
     Parameters
     ----------
-    iterable : {list, dataframe, array, sparse} or None
+    iterable : {list, dataframe, ndarray, sparse matrix} or None
         Object to be converted to an indexable iterable.
     """
     if sp.issparse(iterable):
@@ -286,7 +292,7 @@ def indexable(*iterables):
 
     Parameters
     ----------
-    *iterables : lists, dataframes, arrays, sparse matrices
+    *iterables : {lists, dataframes, ndarrays, sparse matrices}
         List of objects to ensure sliceability.
     """
     result = [_make_indexable(X) for X in iterables]
@@ -302,24 +308,24 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
 
     Parameters
     ----------
-    spmatrix : scipy sparse matrix
+    spmatrix : sparse matrix
         Input to validate and convert.
 
-    accept_sparse : string, boolean or list/tuple of strings
+    accept_sparse : str, bool or list/tuple of str
         String[s] representing allowed sparse matrix formats ('csc',
         'csr', 'coo', 'dok', 'bsr', 'lil', 'dia'). If the input is sparse but
         not in the allowed format, it will be converted to the first listed
         format. True allows the input to be any format. False means
         that a sparse matrix input will raise an error.
 
-    dtype : string, type or None
+    dtype : str, type or None
         Data type of result. If None, the dtype of the input is preserved.
 
-    copy : boolean
+    copy : bool
         Whether a forced copy will be triggered. If copy=False, a copy might
         be triggered by a conversion.
 
-    force_all_finite : boolean or 'allow-nan', default=True
+    force_all_finite : bool or 'allow-nan'
         Whether to raise an error on np.inf, np.nan, pd.NA in X. The
         possibilities are:
 
@@ -336,7 +342,7 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
 
     Returns
     -------
-    spmatrix_converted : scipy sparse matrix.
+    spmatrix_converted : sparse matrix.
         Matrix that is ensured to have an allowed type.
     """
     if dtype is None:
@@ -412,7 +418,7 @@ def check_array(array, accept_sparse=False, *, accept_large_sparse=True,
     array : object
         Input object to check / convert.
 
-    accept_sparse : string, boolean or list/tuple of strings, default=False
+    accept_sparse : str, bool or list/tuple of str, default=False
         String[s] representing allowed sparse matrix formats, such as 'csc',
         'csr', etc. If the input is sparse but not in the allowed format,
         it will be converted to the first listed format. True allows the input
@@ -426,24 +432,24 @@ def check_array(array, accept_sparse=False, *, accept_large_sparse=True,
 
         .. versionadded:: 0.20
 
-    dtype : string, type, list of types or None, default="numeric"
+    dtype : 'numeric', type, list of type or None, default='numeric'
         Data type of result. If None, the dtype of the input is preserved.
         If "numeric", dtype is preserved unless array.dtype is object.
         If dtype is a list of types, conversion on the first type is only
         performed if the dtype of the input is not in the list.
 
-    order : 'F', 'C' or None, default=None
+    order : {'F', 'C'} or None, default=None
         Whether an array will be forced to be fortran or c-style.
         When order is None (default), then if copy=False, nothing is ensured
         about the memory layout of the output array; otherwise (copy=True)
         the memory layout of the returned array is kept as close as possible
         to the original array.
 
-    copy : boolean, default=False
+    copy : bool, default=False
         Whether a forced copy will be triggered. If copy=False, a copy might
         be triggered by a conversion.
 
-    force_all_finite : boolean or 'allow-nan', default=True
+    force_all_finite : bool or 'allow-nan', default=True
         Whether to raise an error on np.inf, np.nan, pd.NA in array. The
         possibilities are:
 
@@ -458,10 +464,10 @@ def check_array(array, accept_sparse=False, *, accept_large_sparse=True,
         .. versionchanged:: 0.23
            Accepts `pd.NA` and converts it into `np.nan`
 
-    ensure_2d : boolean, default=True
+    ensure_2d : bool, default=True
         Whether to raise a value error if array is not 2D.
 
-    allow_nd : boolean, default=False
+    allow_nd : bool, default=False
         Whether to allow array.ndim > 2.
 
     ensure_min_samples : int, default=1
@@ -570,6 +576,17 @@ def check_array(array, accept_sparse=False, *, accept_large_sparse=True,
     if hasattr(array, 'sparse') and array.ndim > 1:
         # DataFrame.sparse only supports `to_coo`
         array = array.sparse.to_coo()
+        if array.dtype == np.dtype('object'):
+            unique_dtypes = set(
+                [dt.subtype.name for dt in array_orig.dtypes]
+            )
+            if len(unique_dtypes) > 1:
+                raise ValueError(
+                    "Pandas DataFrame with mixed sparse extension arrays "
+                    "generated a sparse matrix with object dtype which "
+                    "can not be converted to a scipy sparse matrix."
+                    "Sparse extension arrays should all have the same "
+                    "numeric type.")
 
     if sp.issparse(array):
         _ensure_no_complex_data(array)
@@ -597,9 +614,9 @@ def check_array(array, accept_sparse=False, *, accept_large_sparse=True,
                     array = array.astype(dtype, casting="unsafe", copy=False)
                 else:
                     array = np.asarray(array, order=order, dtype=dtype)
-            except ComplexWarning:
+            except ComplexWarning as complex_warning:
                 raise ValueError("Complex data not supported\n"
-                                 "{}\n".format(array))
+                                 "{}\n".format(array)) from complex_warning
 
         # It is possible that the np.array(..) gave no warning. This happens
         # when no dtype conversion happened, for example dtype = None. The
@@ -623,20 +640,21 @@ def check_array(array, accept_sparse=False, *, accept_large_sparse=True,
                     "your data has a single feature or array.reshape(1, -1) "
                     "if it contains a single sample.".format(array))
 
-        # in the future np.flexible dtypes will be handled like object dtypes
-        if dtype_numeric and np.issubdtype(array.dtype, np.flexible):
-            warnings.warn(
-                "Beginning in version 0.22, arrays of bytes/strings will be "
-                "converted to decimal numbers if dtype='numeric'. "
-                "It is recommended that you convert the array to "
-                "a float dtype before using it in scikit-learn, "
-                "for example by using "
-                "your_array = your_array.astype(np.float64).",
-                FutureWarning, stacklevel=2)
-
         # make sure we actually converted to numeric:
-        if dtype_numeric and array.dtype.kind == "O":
-            array = array.astype(np.float64)
+        if dtype_numeric and array.dtype.kind in "OUSV":
+            warnings.warn(
+                "Arrays of bytes/strings is being converted to decimal "
+                "numbers if dtype='numeric'. This behavior is deprecated in "
+                "0.24 and will be removed in 1.1 (renaming of 0.26). Please "
+                "convert your data to numeric values explicitly instead.",
+                FutureWarning, stacklevel=2
+            )
+            try:
+                array = array.astype(np.float64)
+            except ValueError as e:
+                raise ValueError(
+                    "Unable to convert array of bytes/strings "
+                    "into decimal numbers with dtype='numeric'") from e
         if not allow_nd and array.ndim >= 3:
             raise ValueError("Found array with dim %d. %s expected <= 2."
                              % (array.ndim, estimator_name))
@@ -703,13 +721,13 @@ def check_X_y(X, y, accept_sparse=False, *, accept_large_sparse=True,
 
     Parameters
     ----------
-    X : nd-array, list or sparse matrix
+    X : {ndarray, list, sparse matrix}
         Input data.
 
-    y : nd-array, list or sparse matrix
+    y : {ndarray, list, sparse matrix}
         Labels.
 
-    accept_sparse : string, boolean or list of string, default=False
+    accept_sparse : str, bool or list of str, default=False
         String[s] representing allowed sparse matrix formats, such as 'csc',
         'csr', etc. If the input is sparse but not in the allowed format,
         it will be converted to the first listed format. True allows the input
@@ -723,20 +741,20 @@ def check_X_y(X, y, accept_sparse=False, *, accept_large_sparse=True,
 
         .. versionadded:: 0.20
 
-    dtype : string, type, list of types or None, default="numeric"
+    dtype : 'numeric', type, list of type or None, default='numeric'
         Data type of result. If None, the dtype of the input is preserved.
         If "numeric", dtype is preserved unless array.dtype is object.
         If dtype is a list of types, conversion on the first type is only
         performed if the dtype of the input is not in the list.
 
-    order : 'F', 'C' or None, default=None
+    order : {'F', 'C'}, default=None
         Whether an array will be forced to be fortran or c-style.
 
-    copy : boolean, default=False
+    copy : bool, default=False
         Whether a forced copy will be triggered. If copy=False, a copy might
         be triggered by a conversion.
 
-    force_all_finite : boolean or 'allow-nan', default=True
+    force_all_finite : bool or 'allow-nan', default=True
         Whether to raise an error on np.inf, np.nan, pd.NA in X. This parameter
         does not influence whether y can have np.inf, np.nan, pd.NA values.
         The possibilities are:
@@ -752,13 +770,13 @@ def check_X_y(X, y, accept_sparse=False, *, accept_large_sparse=True,
         .. versionchanged:: 0.23
            Accepts `pd.NA` and converts it into `np.nan`
 
-    ensure_2d : boolean, default=True
+    ensure_2d : bool, default=True
         Whether to raise a value error if X is not 2D.
 
-    allow_nd : boolean, default=False
+    allow_nd : bool, default=False
         Whether to allow X.ndim > 2.
 
-    multi_output : boolean, default=False
+    multi_output : bool, default=False
         Whether to allow 2D y (array or sparse matrix). If false, y will be
         validated as a vector. y cannot have np.nan or np.inf values if
         multi_output=True.
@@ -774,7 +792,7 @@ def check_X_y(X, y, accept_sparse=False, *, accept_large_sparse=True,
         is originally 1D and ``ensure_2d`` is True. Setting to 0 disables
         this check.
 
-    y_numeric : boolean, default=False
+    y_numeric : bool, default=False
         Whether to ensure that y has a numeric type. If dtype of y is object,
         it is converted to float64. Should only be used for regression
         algorithms.
@@ -817,18 +835,18 @@ def check_X_y(X, y, accept_sparse=False, *, accept_large_sparse=True,
 
 @_deprecate_positional_args
 def column_or_1d(y, *, warn=False):
-    """ Ravel column or 1d numpy array, else raises an error
+    """ Ravel column or 1d numpy array, else raises an error.
 
     Parameters
     ----------
     y : array-like
 
-    warn : boolean, default False
+    warn : bool, default=False
        To control display of warnings.
 
     Returns
     -------
-    y : array
+    y : ndarray
 
     """
     y = np.asarray(y)
@@ -853,7 +871,7 @@ def check_random_state(seed):
 
     Parameters
     ----------
-    seed : None | int | instance of RandomState
+    seed : None, int or instance of RandomState
         If seed is None, return the RandomState singleton used by np.random.
         If seed is an int, return a new RandomState instance seeded with seed.
         If seed is already a RandomState instance, return it.
@@ -907,19 +925,22 @@ def check_symmetric(array, *, tol=1E-10, raise_warning=True,
 
     Parameters
     ----------
-    array : nd-array or sparse matrix
+    array : {ndarray, sparse matrix}
         Input object to check / convert. Must be two-dimensional and square,
         otherwise a ValueError will be raised.
-    tol : float
+
+    tol : float, default=1e-10
         Absolute tolerance for equivalence of arrays. Default = 1E-10.
-    raise_warning : boolean, default=True
+
+    raise_warning : bool, default=True
         If True then raise a warning if conversion is required.
-    raise_exception : boolean, default=False
+
+    raise_exception : bool, default=False
         If True then raise an exception if array is not symmetric.
 
     Returns
     -------
-    array_sym : ndarray or sparse matrix
+    array_sym : {ndarray, sparse matrix}
         Symmetrized version of the input array, i.e. the average of array
         and array.transpose(). If sparse, then duplicate entries are first
         summed and zeros are eliminated.
@@ -966,7 +987,7 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
 
     Parameters
     ----------
-    estimator : estimator instance.
+    estimator : estimator instance
         estimator instance for which the check is performed.
 
     attributes : str, list or tuple of str, default=None
@@ -977,7 +998,7 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
         attribute that ends with a underscore and does not start with double
         underscore.
 
-    msg : string
+    msg : str, default=None
         The default error message is, "This %(name)s instance is not fitted
         yet. Call 'fit' with appropriate arguments before using this
         estimator."
@@ -1026,10 +1047,10 @@ def check_non_negative(X, whom):
 
     Parameters
     ----------
-    X : array-like or sparse matrix
+    X : {array-like, sparse matrix}
         Input data.
 
-    whom : string
+    whom : str
         Who passed X to this function.
     """
     # avoid X.min() on sparse matrix since it also sorts the indices
@@ -1118,8 +1139,8 @@ def _check_psd_eigenvalues(lambdas, enable_warnings=False):
       ``PositiveSpectrumWarning`` when ``enable_warnings=True``.
 
     Finally, all the positive eigenvalues that are too small (with a value
-    smaller than the maximum eigenvalue divided by 1e12) are set to zero.
-    This operation is traced with a ``PositiveSpectrumWarning`` when
+    smaller than the maximum eigenvalue multiplied by 1e-12 (2e-7)) are set to
+    zero. This operation is traced with a ``PositiveSpectrumWarning`` when
     ``enable_warnings=True``.
 
     Parameters
@@ -1182,7 +1203,7 @@ def _check_psd_eigenvalues(lambdas, enable_warnings=False):
     significant_imag_ratio = 1e-5
     significant_neg_ratio = 1e-5 if is_double_precision else 5e-3
     significant_neg_value = 1e-10 if is_double_precision else 1e-6
-    small_pos_ratio = 1e-12
+    small_pos_ratio = 1e-12 if is_double_precision else 2e-7
 
     # Check that there are no significant imaginary parts
     if not np.isreal(lambdas).all():
@@ -1265,10 +1286,10 @@ def _check_sample_weight(sample_weight, X, dtype=None):
     sample_weight : {ndarray, Number or None}, shape (n_samples,)
        Input sample weights.
 
-    X : nd-array, list or sparse matrix
+    X : {ndarray, list, sparse matrix}
         Input data.
 
-    dtype: dtype
+    dtype: dtype, default=None
        dtype of the validated `sample_weight`.
        If None, and the input `sample_weight` is an array, the dtype of the
        input is preserved; otherwise an array with the default numpy dtype
@@ -1277,7 +1298,7 @@ def _check_sample_weight(sample_weight, X, dtype=None):
 
     Returns
     -------
-    sample_weight : ndarray, shape (n_samples,)
+    sample_weight : ndarray of shape (n_samples,)
        Validated sample weight. It is guaranteed to be "C" contiguous.
     """
     n_samples = _num_samples(X)
@@ -1313,16 +1334,16 @@ def _allclose_dense_sparse(x, y, rtol=1e-7, atol=1e-9):
 
     Parameters
     ----------
-    x : array-like or sparse matrix
+    x : {array-like, sparse matrix}
         First array to compare.
 
-    y : array-like or sparse matrix
+    y : {array-like, sparse matrix}
         Second array to compare.
 
-    rtol : float, optional
-        relative tolerance; see numpy.allclose
+    rtol : float, default=1e-7
+        Relative tolerance; see numpy.allclose.
 
-    atol : float, optional
+    atol : float, default=1e-9
         absolute tolerance; see numpy.allclose. Note that the default here is
         more tolerant than the default for numpy.testing.assert_allclose, where
         atol=0.

@@ -484,16 +484,17 @@ class GaussianMixture(BaseMixture):
 
     weights_init : array-like of shape (n_components, ), default=None
         The user-provided initial weights.
-        If it None, weights are initialized using the `init_params` method.
+        If it is None, weights are initialized using the `init_params` method.
 
     means_init : array-like of shape (n_components, n_features), default=None
         The user-provided initial means,
-        If it None, means are initialized using the `init_params` method.
+        If it is None, means are initialized using the `init_params` method.
 
     precisions_init : array-like, default=None
         The user-provided initial precisions (inverse of the covariance
         matrices).
-        If it None, precisions are initialized using the 'init_params' method.
+        If it is None, precisions are initialized using the 'init_params'
+        method.
         The shape depends on 'covariance_type'::
 
             (n_components,)                        if 'spherical',

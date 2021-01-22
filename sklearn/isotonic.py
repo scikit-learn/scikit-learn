@@ -153,13 +153,14 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         or decrease with `X`. 'auto' will decide based on the Spearman
         correlation estimate's sign.
 
-    out_of_bounds : str, default="nan"
-        The ``out_of_bounds`` parameter handles how `X` values outside of the
-        training domain are handled.  When set to "nan", predictions
-        will be NaN.  When set to "clip", predictions will be
-        set to the value corresponding to the nearest train interval endpoint.
-        When set to "raise" a `ValueError` is raised.
+    out_of_bounds : {'nan', 'clip', 'raise'}, default='nan'
+        Handles how `X` values outside of the training domain are handled
+        during prediction.
 
+        - 'nan', predictions will be NaN.
+        - 'clip', predictions will be set to the value corresponding to
+          the nearest train interval endpoint.
+        - 'raise', a `ValueError` is raised.
 
     Attributes
     ----------
@@ -189,7 +190,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
     Notes
     -----
-    Ties are broken using the secondary method from Leeuw, 1977.
+    Ties are broken using the secondary method from de Leeuw, 1977.
 
     References
     ----------
@@ -200,18 +201,18 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
     Isotone Optimization in R : Pool-Adjacent-Violators
     Algorithm (PAVA) and Active Set Methods
-    Leeuw, Hornik, Mair
+    de Leeuw, Hornik, Mair
     Journal of Statistical Software 2009
 
     Correctness of Kruskal's algorithms for monotone regression with ties
-    Leeuw, Psychometrica, 1977
+    de Leeuw, Psychometrica, 1977
 
     Examples
     --------
     >>> from sklearn.datasets import make_regression
     >>> from sklearn.isotonic import IsotonicRegression
     >>> X, y = make_regression(n_samples=10, n_features=1, random_state=41)
-    >>> iso_reg = IsotonicRegression().fit(X.flatten(), y)
+    >>> iso_reg = IsotonicRegression().fit(X, y)
     >>> iso_reg.predict([.1, .2])
     array([1.8628..., 3.7256...])
     """
@@ -223,9 +224,11 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         self.increasing = increasing
         self.out_of_bounds = out_of_bounds
 
-    def _check_fit_data(self, X, y, sample_weight=None):
-        if len(X.shape) != 1:
-            raise ValueError("X should be a 1d array")
+    def _check_input_data_shape(self, X):
+        if not (X.ndim == 1 or (X.ndim == 2 and X.shape[1] == 1)):
+            msg = "Isotonic regression input X should be a 1d array or " \
+                  "2d array with 1 feature"
+            raise ValueError(msg)
 
     def _build_f(self, X, y):
         """Build the f_ interp1d function."""
@@ -246,7 +249,8 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
     def _build_y(self, X, y, sample_weight, trim_duplicates=True):
         """Build the y_ IsotonicRegression."""
-        self._check_fit_data(X, y, sample_weight)
+        self._check_input_data_shape(X)
+        X = X.reshape(-1)  # use 1d view
 
         # Determine increasing if auto-determination requested
         if self.increasing == 'auto':
@@ -295,8 +299,11 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples,)
+        X : array-like of shape (n_samples,) or (n_samples, 1)
             Training data.
+
+            .. versionchanged:: 0.24
+               Also accepts 2d array with 1 feature.
 
         y : array-like of shape (n_samples,)
             Training target.
@@ -339,8 +346,11 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        T : array-like of shape (n_samples,)
+        T : array-like of shape (n_samples,) or (n_samples, 1)
             Data to transform.
+
+            .. versionchanged:: 0.24
+               Also accepts 2d array with 1 feature.
 
         Returns
         -------
@@ -355,8 +365,8 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
         T = check_array(T, dtype=dtype, ensure_2d=False)
 
-        if len(T.shape) != 1:
-            raise ValueError("Isotonic regression input should be a 1d array")
+        self._check_input_data_shape(T)
+        T = T.reshape(-1)  # use 1d view
 
         # Handle the out_of_bounds argument by clipping if needed
         if self.out_of_bounds not in ["raise", "nan", "clip"]:
@@ -379,7 +389,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        T : array-like of shape (n_samples,)
+        T : array-like of shape (n_samples,) or (n_samples, 1)
             Data to transform.
 
         Returns

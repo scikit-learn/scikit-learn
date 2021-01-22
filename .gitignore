@@ -17,7 +17,8 @@ doc/_build/
 doc/auto_examples/
 doc/modules/generated/
 doc/datasets/generated/
-doc/min_dependency.rst
+doc/min_dependency_table.rst
+doc/min_dependency_substitutions.rst
 *.pdf
 pip-log.txt
 scikit_learn.egg-info/

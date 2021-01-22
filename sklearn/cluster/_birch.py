@@ -12,11 +12,11 @@ from math import sqrt
 from ..metrics import pairwise_distances_argmin
 from ..metrics.pairwise import euclidean_distances
 from ..base import TransformerMixin, ClusterMixin, BaseEstimator
-from ..utils import check_array
 from ..utils.extmath import row_norms
 from ..utils.validation import check_is_fitted, _deprecate_positional_args
 from ..exceptions import ConvergenceWarning
 from . import AgglomerativeClustering
+from .._config import config_context
 
 
 def _iterate_sparse_X(X):
@@ -394,9 +394,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
 
     See Also
     --------
-
-    MiniBatchKMeans
-        Alternative  implementation that does incremental updates
+    MiniBatchKMeans : Alternative implementation that does incremental updates
         of the centers' positions using mini-batches.
 
     Notes
@@ -463,7 +461,11 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         return self._fit(X)
 
     def _fit(self, X):
-        X = self._validate_data(X, accept_sparse='csr', copy=self.copy)
+        has_root = getattr(self, 'root_', None)
+        first_call = self.fit_ or self.partial_fit and not has_root
+
+        X = self._validate_data(X, accept_sparse='csr', copy=self.copy,
+                                reset=first_call)
         threshold = self.threshold
         branching_factor = self.branching_factor
 
@@ -473,9 +475,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
 
         # If partial_fit is called for the first time or fit is called, we
         # start a new tree.
-        partial_fit = getattr(self, 'partial_fit_')
-        has_root = getattr(self, 'root_', None)
-        if getattr(self, 'fit_') or (partial_fit and not has_root):
+        if first_call:
             # The first root is the leaf. Manipulate this object throughout.
             self.root_ = _CFNode(threshold=threshold,
                                  branching_factor=branching_factor,
@@ -558,7 +558,6 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
             self._global_clustering()
             return self
         else:
-            self._check_fit(X)
             return self._fit(X)
 
     def _check_fit(self, X):
@@ -586,14 +585,14 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         labels : ndarray of shape(n_samples,)
             Labelled data.
         """
-        X = check_array(X, accept_sparse='csr')
-        self._check_fit(X)
+        check_is_fitted(self)
+        X = self._validate_data(X, accept_sparse='csr', reset=False)
         kwargs = {'Y_norm_squared': self._subcluster_norms}
-        return self.subcluster_labels_[
-                pairwise_distances_argmin(X,
-                                          self.subcluster_centers_,
-                                          metric_kwargs=kwargs)
-            ]
+
+        with config_context(assume_finite=True):
+            argmin = pairwise_distances_argmin(X, self.subcluster_centers_,
+                                               metric_kwargs=kwargs)
+        return self.subcluster_labels_[argmin]
 
     def transform(self, X):
         """
@@ -613,7 +612,9 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
             Transformed data.
         """
         check_is_fitted(self)
-        return euclidean_distances(X, self.subcluster_centers_)
+        self._validate_data(X, accept_sparse='csr', reset=False)
+        with config_context(assume_finite=True):
+            return euclidean_distances(X, self.subcluster_centers_)
 
     def _global_clustering(self, X=None):
         """

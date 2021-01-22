@@ -48,7 +48,7 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 from scipy.sparse import issparse
 from scipy.sparse import hstack as sparse_hstack
-from joblib import Parallel, delayed
+from joblib import Parallel
 
 from ..base import ClassifierMixin, RegressorMixin, MultiOutputMixin
 from ..metrics import r2_score
@@ -59,6 +59,7 @@ from ..tree._tree import DTYPE, DOUBLE
 from ..utils import check_random_state, check_array, compute_sample_weight
 from ..exceptions import DataConversionWarning
 from ._base import BaseEnsemble, _partition_estimators
+from ..utils.fixes import delayed
 from ..utils.fixes import _joblib_parallel_args
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted, _check_sample_weight
@@ -990,8 +991,8 @@ class RandomForestClassifier(ForestClassifier):
            ``min_impurity_split`` has been deprecated in favor of
            ``min_impurity_decrease`` in 0.19. The default value of
            ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
-           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
-
+           will be removed in 1.0 (renaming of 0.25).
+           Use ``min_impurity_decrease`` instead.
 
     bootstrap : bool, default=True
         Whether bootstrap samples are used when building trees. If False, the
@@ -1008,7 +1009,7 @@ class RandomForestClassifier(ForestClassifier):
         context. ``-1`` means using all processors. See :term:`Glossary
         <n_jobs>` for more details.
 
-    random_state : int or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls both the randomness of the bootstrapping of the samples used
         when building trees (if ``bootstrap=True``) and the sampling of the
         features to consider when looking for the best split at each node
@@ -1313,7 +1314,8 @@ class RandomForestRegressor(ForestRegressor):
            ``min_impurity_split`` has been deprecated in favor of
            ``min_impurity_decrease`` in 0.19. The default value of
            ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
-           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
+           will be removed in 1.0 (renaming of 0.25).
+           Use ``min_impurity_decrease`` instead.
 
     bootstrap : bool, default=True
         Whether bootstrap samples are used when building trees. If False, the
@@ -1330,7 +1332,7 @@ class RandomForestRegressor(ForestRegressor):
         context. ``-1`` means using all processors. See :term:`Glossary
         <n_jobs>` for more details.
 
-    random_state : int or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls both the randomness of the bootstrapping of the samples used
         when building trees (if ``bootstrap=True``) and the sampling of the
         features to consider when looking for the best split at each node
@@ -1595,7 +1597,8 @@ class ExtraTreesClassifier(ForestClassifier):
            ``min_impurity_split`` has been deprecated in favor of
            ``min_impurity_decrease`` in 0.19. The default value of
            ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
-           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
+           will be removed in 1.0 (renaming of 0.25).
+           Use ``min_impurity_decrease`` instead.
 
     bootstrap : bool, default=False
         Whether bootstrap samples are used when building trees. If False, the
@@ -1612,7 +1615,7 @@ class ExtraTreesClassifier(ForestClassifier):
         context. ``-1`` means using all processors. See :term:`Glossary
         <n_jobs>` for more details.
 
-    random_state : int, RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls 3 sources of randomness:
 
         - the bootstrapping of the samples used when building trees
@@ -1913,7 +1916,8 @@ class ExtraTreesRegressor(ForestRegressor):
            ``min_impurity_split`` has been deprecated in favor of
            ``min_impurity_decrease`` in 0.19. The default value of
            ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
-           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
+           will be removed in 1.0 (renaming of 0.25).
+           Use ``min_impurity_decrease`` instead.
 
     bootstrap : bool, default=False
         Whether bootstrap samples are used when building trees. If False, the
@@ -1929,7 +1933,7 @@ class ExtraTreesRegressor(ForestRegressor):
         context. ``-1`` means using all processors. See :term:`Glossary
         <n_jobs>` for more details.
 
-    random_state : int or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls 3 sources of randomness:
 
         - the bootstrapping of the samples used when building trees
@@ -2003,8 +2007,8 @@ class ExtraTreesRegressor(ForestRegressor):
 
     See Also
     --------
-    sklearn.tree.ExtraTreeRegressor: Base estimator for this ensemble.
-    RandomForestRegressor: Ensemble regressor using trees with optimal splits.
+    sklearn.tree.ExtraTreeRegressor : Base estimator for this ensemble.
+    RandomForestRegressor : Ensemble regressor using trees with optimal splits.
 
     Notes
     -----
@@ -2172,7 +2176,8 @@ class RandomTreesEmbedding(BaseForest):
            ``min_impurity_split`` has been deprecated in favor of
            ``min_impurity_decrease`` in 0.19. The default value of
            ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
-           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
+           will be removed in 1.0 (renaming of 0.25).
+           Use ``min_impurity_decrease`` instead.
 
     sparse_output : bool, default=True
         Whether or not to return a sparse CSR matrix, as default behavior,
@@ -2185,7 +2190,7 @@ class RandomTreesEmbedding(BaseForest):
         context. ``-1`` means using all processors. See :term:`Glossary
         <n_jobs>` for more details.
 
-    random_state : int or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the generation of the random `y` used to fit the trees
         and the draw of the splits for each feature at the trees' nodes.
         See :term:`Glossary <random_state>` for details.
