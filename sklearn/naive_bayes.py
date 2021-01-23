@@ -1058,8 +1058,8 @@ class BernoulliNB(_BaseDiscreteNB):
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
-        n_classes, n_features = self.feature_log_prob_.shape
-        n_samples, n_features_X = X.shape
+        n_features = self.feature_log_prob_.shape[1]
+        n_features_X = X.shape[1]
 
         if n_features_X != n_features:
             raise ValueError("Expected input with %d features, got %d instead"
