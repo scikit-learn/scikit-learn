@@ -569,8 +569,8 @@ class _BaseDiscreteNB(_BaseNB):
         if _check_partial_fit_first_call(self, classes):
             # This is the first call to partial_fit:
             # initialize various cumulative counters
-            n_effective_classes = len(classes)
-            self._init_counters(n_effective_classes, n_features)
+            n_classes = len(classes)
+            self._init_counters(n_classes, n_features)
             self.n_features_ = n_features
         elif n_features != self.n_features_:
             msg = "Number of features %d does not match previous data %d."
@@ -655,17 +655,17 @@ class _BaseDiscreteNB(_BaseNB):
 
         # Count raw events from data before updating the class log prior
         # and feature log probas
-        n_effective_classes = Y.shape[1]
-        self._init_counters(n_effective_classes, n_features)
+        n_classes = Y.shape[1]
+        self._init_counters(n_classes, n_features)
         self._count(X, Y)
         alpha = self._check_alpha()
         self._update_feature_log_prob(alpha)
         self._update_class_log_prior(class_prior=class_prior)
         return self
 
-    def _init_counters(self, n_effective_classes, n_features):
-        self.class_count_ = np.zeros(n_effective_classes, dtype=np.float64)
-        self.feature_count_ = np.zeros((n_effective_classes, n_features),
+    def _init_counters(self, n_classes, n_features):
+        self.class_count_ = np.zeros(n_classes, dtype=np.float64)
+        self.feature_count_ = np.zeros((n_classes, n_features),
                                        dtype=np.float64)
 
     # mypy error: Decorated property not supported
@@ -1246,9 +1246,9 @@ class CategoricalNB(_BaseDiscreteNB):
         check_non_negative(X, "CategoricalNB (input X)")
         return X, y
 
-    def _init_counters(self, n_effective_classes, n_features):
-        self.class_count_ = np.zeros(n_effective_classes, dtype=np.float64)
-        self.category_count_ = [np.zeros((n_effective_classes, 0))
+    def _init_counters(self, n_classes, n_features):
+        self.class_count_ = np.zeros(n_classes, dtype=np.float64)
+        self.category_count_ = [np.zeros((n_classes, 0))
                                 for _ in range(n_features)]
 
     @staticmethod
