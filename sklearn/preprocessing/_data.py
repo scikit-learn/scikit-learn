@@ -617,8 +617,11 @@ class StandardScaler(TransformerMixin, BaseEstimator):
     Attributes
     ----------
     scale_ : ndarray of shape (n_features,) or None
-        Per feature relative scaling of the data. This is calculated using
-        `np.sqrt(var_)`. Equal to ``None`` when ``with_std=False``.
+        Per feature relative scaling of the data to achieve zero mean and unit
+        variance. Generally this is calculated using `np.sqrt(var_)`. If a
+        variance is zero, we can't achieve unit variance, and the data is left
+        as-is, giving a scaling factor of 1. `scale_` is equal to `None`
+        when `with_std=False`.
 
         .. versionadded:: 0.17
            *scale_*
@@ -2312,10 +2315,10 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
     def _more_tags(self):
         return {'pairwise': True}
 
-    # TODO: Remove in 0.26
+    # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
     @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 0.26.")
+                "version 0.24 and will be removed in 1.1.")
     @property
     def _pairwise(self):
         return True

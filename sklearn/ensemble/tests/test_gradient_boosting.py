@@ -13,7 +13,7 @@ import pytest
 
 from sklearn import datasets
 from sklearn.base import clone
-from sklearn.datasets import (make_classification, fetch_california_housing,
+from sklearn.datasets import (make_classification,
                               make_regression)
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
@@ -345,8 +345,7 @@ def test_max_feature_regression():
     assert deviance < 0.5, "GB failed with deviance %.4f" % deviance
 
 
-@pytest.mark.network
-def test_feature_importance_regression():
+def test_feature_importance_regression(fetch_california_housing_fxt):
     """Test that Gini importance is calculated correctly.
 
     This test follows the example from [1]_ (pg. 373).
@@ -354,7 +353,7 @@ def test_feature_importance_regression():
     .. [1] Friedman, J., Hastie, T., & Tibshirani, R. (2001). The elements
        of statistical learning. New York: Springer series in statistics.
     """
-    california = fetch_california_housing()
+    california = fetch_california_housing_fxt()
     X, y = california.data, california.target
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
@@ -1308,7 +1307,7 @@ def test_gbr_degenerate_feature_importances():
                        np.zeros(10, dtype=np.float64))
 
 
-# TODO: Remove in 0.26 when `n_classes_` is deprecated
+# TODO: Remove in 1.1 when `n_classes_` is deprecated
 def test_gbr_deprecated_attr():
     # check that accessing n_classes_ in GradientBoostingRegressor raises
     # a deprecation warning
@@ -1320,7 +1319,7 @@ def test_gbr_deprecated_attr():
         gbr.n_classes_
 
 
-# TODO: Remove in 0.26 when `n_classes_` is deprecated
+# TODO: Remove in 1.1 when `n_classes_` is deprecated
 @pytest.mark.filterwarnings("ignore:Attribute n_classes_ was deprecated")
 def test_attr_error_raised_if_not_fitted():
     # check that accessing n_classes_ in not fitted GradientBoostingRegressor
@@ -1335,7 +1334,7 @@ def test_attr_error_raised_if_not_fitted():
         gbr.n_classes_
 
 
-# TODO: Update in 0.26 to check for the error raised
+# TODO: Update in 1.1 to check for the error raised
 @pytest.mark.parametrize('estimator', [
     GradientBoostingClassifier(criterion='mae'),
     GradientBoostingRegressor(criterion='mae')
@@ -1344,6 +1343,6 @@ def test_criterion_mae_deprecation(estimator):
     # checks whether a deprecation warning is issues when criterion='mae'
     # is used.
     msg = ("criterion='mae' was deprecated in version 0.24 and "
-           "will be removed in version 0.26.")
+           "will be removed in version 1.1")
     with pytest.warns(FutureWarning, match=msg):
         estimator.fit(X, y)

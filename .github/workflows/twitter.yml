@@ -1,12 +1,12 @@
 # Tweet the URL of a commit on @sklearn_commits whenever a push event
-# happens on the master branch
+# happens on the main branch
 name: Twitter Push Notification
 
 
 on:
   push:
     branches:
-      - master
+      - main
 
 
 jobs:
