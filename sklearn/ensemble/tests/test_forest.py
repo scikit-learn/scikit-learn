@@ -1379,11 +1379,9 @@ def test_little_tree_with_small_max_samples(ForestClass):
     assert tree1.node_count > tree2.node_count, msg
 
 
-def check_symmetry_proximity_matrix(name):
-    """Check if the proximity matrix is symmetric."""
-    ForestClassifier = FOREST_CLASSIFIERS[name]
-
-    clf = ForestClassifier(n_estimators=10, random_state=1)
+def check_symmetry_proximity_matrix():
+    # Check if the proximity matrix is symmetric.
+    clf = RandomForestClassifier(n_estimators=10, random_state=1)
     clf.fit(X, y)
     prox = clf.proximity_matrix(X, normalize=True)
     assert np.allclose(prox, prox.T)
