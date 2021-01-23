@@ -537,8 +537,7 @@ class PLSRegression(_PLS):
         `Y = X @ coef_`.
 
     n_iter_ : list of shape (n_components,)
-        Number of iterations of the power method, for each
-        component. Empty if `algorithm='svd'`.
+        Number of iterations of the power method.
 
     Examples
     --------
