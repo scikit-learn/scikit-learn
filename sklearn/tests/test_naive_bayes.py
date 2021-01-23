@@ -1,6 +1,4 @@
 
-import pickle
-from io import BytesIO
 import numpy as np
 import scipy.sparse
 import pytest
@@ -271,28 +269,6 @@ def test_discretenb_partial_fit(DiscreteNaiveBayes):
         assert_array_equal(clf1.category_count_[1][1], np.array([1, 1]))
     else:
         assert_array_equal(clf1.feature_count_, clf3.feature_count_)
-
-
-@pytest.mark.parametrize('NaiveBayes', ALL_NAIVE_BAYES_CLASSES)
-def test_naive_bayes_pickle(NaiveBayes):
-    # Test picklability of naive Bayes classifiers
-
-    clf = NaiveBayes().fit(X2, y2)
-    y_pred = clf.predict(X2)
-
-    store = BytesIO()
-    pickle.dump(clf, store)
-    clf = pickle.load(BytesIO(store.getvalue()))
-
-    assert_array_equal(y_pred, clf.predict(X2))
-
-    # Test pickling of estimator trained with partial_fit
-    clf2 = NaiveBayes().partial_fit(X2[:3], y2[:3], classes=np.unique(y2))
-    clf2.partial_fit(X2[3:], y2[3:])
-    store = BytesIO()
-    pickle.dump(clf2, store)
-    clf2 = pickle.load(BytesIO(store.getvalue()))
-    assert_array_equal(y_pred, clf2.predict(X2))
 
 
 @pytest.mark.parametrize('NaiveBayes', ALL_NAIVE_BAYES_CLASSES)
