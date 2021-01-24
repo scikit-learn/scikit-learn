@@ -38,15 +38,19 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         samples that belong to that particular class are minimized.
         If the "manhattan" metric is provided, this centroid is the median and
         for all other metrics, the centroid is now set to be the mean.
+
     shrink_threshold : float, optional (default = None)
         Threshold for shrinking centroids to remove features.
+
     true_classes_ : array-like, shape = [n_classes]
         List of all the possible classes, used as memory for partial_fit
         and passed during the first call.
+
     Attributes
     ----------
     centroids_ : array-like, shape = [n_classes, n_features]
         Centroid of each class
+
     Examples
     --------
     >>> from sklearn.neighbors.nearest_centroid import NearestCentroid
@@ -58,13 +62,16 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
     NearestCentroid(metric='euclidean', shrink_threshold=None)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
+
     See also
     --------
     sklearn.neighbors.KNeighborsClassifier: nearest neighbors classifier
+
     Notes
     -----
     When used for text classification with tf-idf vectors, this classifier is
     also known as the Rocchio classifier.
+
     References
     ----------
     Tibshirani, R., Hastie, T., Narasimhan, B., & Chu, G. (2002). Diagnosis of
@@ -86,6 +93,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
             Training vector, where n_samples is the number of samples and
             n_features is the number of features.
             Note that centroid shrinking cannot be used with sparse matrices.
+
         y : array, shape = [n_samples]
             Target values (integers)
         """
@@ -104,8 +112,10 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
             Training vector, where n_samples is the number of samples and
             n_features is the number of features.
             Note that centroid shrinking cannot be used with sparse matrices.
+
         y : array, shape = [n_samples]
             Target values (integers)
+
         classes : array-like, shape = [n_classes], optional (default=None)
             List of all the classes that can possibly appear in the y vector.
             Must be provided at the first call to partial_fit, can be omitted
@@ -118,18 +128,22 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
     def _partial_fit(self, X, y, classes=None, _refit=False):
         """
         Actual implementation of the Nearest Centroid fitting.
+
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Training vector, where n_samples is the number of samples and
             n_features is the number of features.
             Note that centroid shrinking cannot be used with sparse matrices.
+            
         y : array, shape = [n_samples]
             Target values (integers)
+
         classes : array-like, shape = [n_classes], optional (default=None)
             List of all the classes that can possibly appear in the y vector.
             Must be provided at the first call to partial_fit, can be omitted
             in subsequent calls.
+
         _refit : bool, optional (default=False)
             If true, act as though this were the first time we called
             _partial_fit (ie, throw away any past fitting and start over).
@@ -255,12 +269,15 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
     def predict(self, X):
         """Perform classification on an array of test vectors X.
         The predicted class C for each sample in X is returned.
+
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
+
         Returns
         -------
         C : array, shape = [n_samples]
+        
         Notes
         -----
         If the metric constructor parameter is "precomputed", X is assumed to
