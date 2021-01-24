@@ -110,6 +110,15 @@ Changelog
   Use ``var_`` instead.
   :pr:`18842` by :user:`Hong Shao Yang <hongshaoyang>`.
 
+:mod:`sklearn.preprocessing`
+............................
+
+- |Feature| The new :class:`preprocessing.SplineTransformer` is a feature
+  preprocessing tool for the generation of B-splines, parametrized by the
+  polynomial ``degree`` of the splines, number of knots ``n_knots`` and knot
+  positioning strategy ``knots``.
+  :pr:`18368` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 :mod:`sklearn.tree`
 ...................
 
