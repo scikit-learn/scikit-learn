@@ -821,11 +821,6 @@ div.versionchanged {
   border-color: #fbeed5;
 }
 
-div.versionadded {
-  background-color: #f0ffed;
-  border-color: #d4febc;
-}
-
 dt.label {
   float: left;
   padding-right: 0.5rem;
