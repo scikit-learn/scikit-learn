@@ -15,23 +15,20 @@ from scipy import sparse as sp
 from ..base import BaseEstimator, ClassifierMixin
 from ..metrics.pairwise import pairwise_distances
 from ..preprocessing import LabelEncoder
-from ..utils.validation import check_array, check_is_fitted
-from ..utils.validation import _deprecate_positional_args
+from ..utils.validation import check_array, check_X_y, check_is_fitted
 from ..utils.sparsefuncs import csc_median_axis_0
-from ..utils.multiclass import check_classification_targets
+from ..utils.multiclass import (check_classification_targets,
+                                _check_partial_fit_first_call)
 
 
-class NearestCentroid(ClassifierMixin, BaseEstimator):
+class NearestCentroid(BaseEstimator, ClassifierMixin):
     """Nearest centroid classifier.
-
     Each class is represented by its centroid, with test samples classified to
     the class with the nearest centroid.
-
-    Read more in the :ref:`User Guide <nearest_centroid_classifier>`.
-
+    Read more in the :ref:` >`.
     Parameters
     ----------
-    metric : str or callable
+    metric : string, or callable
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string or callable, it must be one of
         the options allowed by metrics.pairwise.pairwise_distances for its
@@ -41,77 +38,110 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         samples that belong to that particular class are minimized.
         If the "manhattan" metric is provided, this centroid is the median and
         for all other metrics, the centroid is now set to be the mean.
-
-        .. versionchanged:: 0.19
-            ``metric='precomputed'`` was deprecated and now raises an error
-
-    shrink_threshold : float, default=None
+    shrink_threshold : float, optional (default = None)
         Threshold for shrinking centroids to remove features.
-
+    true_classes_ : array-like, shape = [n_classes]
+        List of all the possible classes, used as memory for partial_fit
+        during the first call.
     Attributes
     ----------
-    centroids_ : array-like of shape (n_classes, n_features)
-        Centroid of each class.
-
-    classes_ : array of shape (n_classes,)
-        The unique classes labels.
-
+    centroids_ : array-like, shape = [n_classes, n_features]
+        Centroid of each class
     Examples
     --------
-    >>> from sklearn.neighbors import NearestCentroid
+    >>> from sklearn.neighbors.nearest_centroid import NearestCentroid
     >>> import numpy as np
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> y = np.array([1, 1, 1, 2, 2, 2])
     >>> clf = NearestCentroid()
     >>> clf.fit(X, y)
-    NearestCentroid()
+    NearestCentroid(metric='euclidean', shrink_threshold=None)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
-
-    See Also
+    See also
     --------
-    KNeighborsClassifier : Nearest neighbors classifier.
-
+    sklearn.neighbors.KNeighborsClassifier: nearest neighbors classifier
     Notes
     -----
     When used for text classification with tf-idf vectors, this classifier is
     also known as the Rocchio classifier.
-
     References
     ----------
     Tibshirani, R., Hastie, T., Narasimhan, B., & Chu, G. (2002). Diagnosis of
     multiple cancer types by shrunken centroids of gene expression. Proceedings
     of the National Academy of Sciences of the United States of America,
     99(10), 6567-6572. The National Academy of Sciences.
-
     """
 
-    @_deprecate_positional_args
-    def __init__(self, metric='euclidean', *, shrink_threshold=None):
+    def __init__(self, metric='euclidean', shrink_threshold=None):
         self.metric = metric
         self.shrink_threshold = shrink_threshold
 
     def fit(self, X, y):
         """
         Fit the NearestCentroid model according to the given training data.
-
         Parameters
         ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Training vector, where n_samples is the number of samples and
             n_features is the number of features.
             Note that centroid shrinking cannot be used with sparse matrices.
-        y : array-like of shape (n_samples,)
+        y : array, shape = [n_samples]
             Target values (integers)
+        """
+        return self._partial_fit(X, y, np.unique(y), _refit=True)
+
+    def partial_fit(self, X, y, classes=None):
+        """Incremental fit on a batch of samples.
+        This method is expected to be called several times consecutively
+        on different chunks of a dataset so as to implement out-of-core
+        or online learning.
+        This is especially useful when the whole dataset is too big to fit in
+        memory at once.
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Training vector, where n_samples is the number of samples and
+            n_features is the number of features.
+            Note that centroid shrinking cannot be used with sparse matrices.
+        y : array, shape = [n_samples]
+            Target values (integers)
+        classes : array-like, shape = [n_classes], optional (default=None)
+            List of all the classes that can possibly appear in the y vector.
+            Must be provided at the first call to partial_fit, can be omitted
+            in subsequent calls.
+        """
+        if self.metric == 'manhattan':
+            raise ValueError("Partial fitting with manhattan not supported.")
+        return self._partial_fit(X, y, classes, _refit=False)
+
+    def _partial_fit(self, X, y, classes=None, _refit=False):
+        """
+        Actual implementation of the Nearest Centroid fitting.
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Training vector, where n_samples is the number of samples and
+            n_features is the number of features.
+            Note that centroid shrinking cannot be used with sparse matrices.
+        y : array, shape = [n_samples]
+            Target values (integers)
+        classes : array-like, shape = [n_classes], optional (default=None)
+            List of all the classes that can possibly appear in the y vector.
+            Must be provided at the first call to partial_fit, can be omitted
+            in subsequent calls.
+        _refit : bool, optional (default=False)
+            If true, act as though this were the first time we called
+            _partial_fit (ie, throw away any past fitting and start over).
         """
         if self.metric == 'precomputed':
             raise ValueError("Precomputed is not supported.")
         # If X is sparse and the metric is "manhattan", store it in a csc
         # format is easier to calculate the median.
         if self.metric == 'manhattan':
-            X, y = self._validate_data(X, y, accept_sparse=['csc'])
+            X, y = check_X_y(X, y, ['csc'])
         else:
-            X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc'])
+            X, y = check_X_y(X, y, ['csr', 'csc'])
         is_X_sparse = sp.issparse(X)
         if is_X_sparse and self.shrink_threshold:
             raise ValueError("threshold shrinking not supported"
@@ -119,56 +149,98 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         check_classification_targets(y)
 
         n_samples, n_features = X.shape
+
+        if _refit or _check_partial_fit_first_call(self, classes):
+            if self.metric != 'euclidean':
+                warnings.warn("Averaging for metrics other than "
+                              "euclidean and manhattan not supported. "
+                              "The average is set to be the mean."
+                              )
+            self.true_classes_ = classes = np.asarray(classes)
+            # Mask mapping each class to its members.
+            self.true_centroids_ = np.zeros((classes.size, n_features),
+                                            dtype=np.float64)
+            # Number of clusters in each class.
+            self.nk_ = np.zeros(classes.size)
+
+            if self.shrink_threshold:
+                self.ssd_ = np.zeros((classes.size, n_features),
+                                     dtype=np.float64)
+                self.dataset_centroid_ = np.mean(X, axis=0)
+
         le = LabelEncoder()
-        y_ind = le.fit_transform(y)
-        self.classes_ = classes = le.classes_
-        n_classes = classes.size
+        le.fit(self.true_classes_)
+        y_ind = le.transform(y)
+        n_classes = self.true_classes_.size
         if n_classes < 2:
             raise ValueError('The number of classes has to be greater than'
                              ' one; got %d class' % (n_classes))
+        if self.shrink_threshold:
+            old_nk = self.nk_.copy()
+            old_centroids = self.true_centroids_.copy()
 
-        # Mask mapping each class to its members.
-        self.centroids_ = np.empty((n_classes, n_features), dtype=np.float64)
-        # Number of clusters in each class.
-        nk = np.zeros(n_classes)
+        for cl in range(n_classes):
+            cl_mask = y_ind == cl
 
-        for cur_class in range(n_classes):
-            center_mask = y_ind == cur_class
-            nk[cur_class] = np.sum(center_mask)
+            # Ignore if no data for this class
+            if X[cl_mask].size == 0:
+                continue
             if is_X_sparse:
-                center_mask = np.where(center_mask)[0]
+                cl_mask = np.where(cl_mask)[0]
 
             # XXX: Update other averaging methods according to the metrics.
             if self.metric == "manhattan":
+                self.nk_[cl] += np.sum(cl_mask)
                 # NumPy does not calculate median of sparse matrices.
                 if not is_X_sparse:
-                    self.centroids_[cur_class] = np.median(X[center_mask], axis=0)
+                    self.true_centroids_[cl] = np.median(X[cl_mask], axis=0)
                 else:
-                    self.centroids_[cur_class] = csc_median_axis_0(X[center_mask])
+                    self.true_centroids_[cl] = csc_median_axis_0(X[cl_mask])
             else:
-                if self.metric != 'euclidean':
-                    warnings.warn("Averaging for metrics other than "
-                                  "euclidean and manhattan not supported. "
-                                  "The average is set to be the mean."
-                                  )
-                self.centroids_[cur_class] = X[center_mask].mean(axis=0)
+                # Update each centroid weighted by the number of samples
+                self.true_centroids_[cl] = (X[cl_mask].mean(axis=0) *
+                                            np.sum(cl_mask) +
+                                            self.true_centroids_[cl] *
+                                            self.nk_[cl])
+                self.nk_[cl] += np.sum(cl_mask)
+                self.true_centroids_[cl] /= self.nk_[cl]
+
+        # Filtering out centroids without any data
+        self.classes_ = self.true_classes_[self.nk_ != 0]
+        self.centroids_ = self.true_centroids_[self.nk_ != 0]
 
         if self.shrink_threshold:
-            if np.all(np.ptp(X, axis=0) == 0):
-                raise ValueError("All features have zero variance. "
-                                 "Division by zero.")
-            dataset_centroid_ = np.mean(X, axis=0)
+            n_total = np.sum(self.nk_)
+            self.dataset_centroid_ = (self.dataset_centroid_ *
+                                      old_nk.sum(axis=0) +
+                                      np.sum(X, axis=0)) / n_total
+
+            # Update sum of square distances of each class
+            for cl in range(n_classes):
+                n_old = old_nk[cl]
+                n_new = self.nk_[cl] - n_old
+                if n_new == 0:
+                    continue
+                center_mask = y_ind == cl
+                old_ssd = self.ssd_[cl]
+                new_ssd = ((X[center_mask] - X[center_mask].mean(axis=0))**2)
+                new_ssd = new_ssd.sum(axis=0)
+                self.ssd_[cl] = (old_ssd + new_ssd +
+                                 (n_old / float(n_new * (n_new + n_old))) *
+                                 (n_new * old_centroids[cl] - n_new *
+                                  X[center_mask].mean(axis=0)) ** 2)
 
             # m parameter for determining deviation
-            m = np.sqrt((1. / nk) - (1. / n_samples))
+            m = np.sqrt((1. / self.nk_) - (1. / np.sum(self.nk_)))
+
             # Calculate deviation using the standard deviation of centroids.
-            variance = (X - self.centroids_[y_ind]) ** 2
-            variance = variance.sum(axis=0)
-            s = np.sqrt(variance / (n_samples - n_classes))
+            ssd = self.ssd_.sum(axis=0)
+            s = np.sqrt(ssd / (n_total - n_classes))
             s += np.median(s)  # To deter outliers from affecting the results.
             mm = m.reshape(len(m), 1)  # Reshape to allow broadcasting.
             ms = mm * s
-            deviation = ((self.centroids_ - dataset_centroid_) / ms)
+            deviation = ((self.true_centroids_ - self.dataset_centroid_) / ms)
+
             # Soft thresholding: if the deviation crosses 0 during shrinking,
             # it becomes zero.
             signs = np.sign(deviation)
@@ -177,29 +249,25 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
             deviation *= signs
             # Now adjust the centroids using the deviation
             msd = ms * deviation
-            self.centroids_ = dataset_centroid_[np.newaxis, :] + msd
+            self.centroids_ = self.dataset_centroid_[np.newaxis, :] + msd
         return self
 
     def predict(self, X):
         """Perform classification on an array of test vectors X.
-
         The predicted class C for each sample in X is returned.
-
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-
+        X : array-like, shape = [n_samples, n_features]
         Returns
         -------
-        C : ndarray of shape (n_samples,)
-
+        C : array, shape = [n_samples]
         Notes
         -----
         If the metric constructor parameter is "precomputed", X is assumed to
         be the distance matrix between the data to be predicted and
         ``self.centroids_``.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, 'centroids_')
 
         X = check_array(X, accept_sparse='csr')
         return self.classes_[pairwise_distances(
