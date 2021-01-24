@@ -162,9 +162,9 @@ def test_partial_fit():
     assert_array_equal(clf_complete_pred, true_result)
     assert(not np.array_equal(clf_complete_pred, clf_partial_pred))
 
-    # clf_fit = NearestCentroid()
-    # clf_fit = clf_fit.fit(X, y)
-    # assert_array_equal(clf_fit.predict(T), clf_complete_pred)
+    clf_fit = NearestCentroid()
+    clf_fit = clf_fit.fit(X, y)
+    assert_array_equal(clf_fit.predict(T), clf_complete_pred)
 
 
 def test_partial_shrinkage_correct():
