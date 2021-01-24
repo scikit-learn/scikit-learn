@@ -518,6 +518,8 @@ Here is a visualization of the cross-validation behavior. Note that
 validation that allows a finer control on the number of iterations and
 the proportion of samples on each side of the train / test split.
 
+.. _stratification:
+
 Cross-validation iterators with stratification based on class labels.
 ---------------------------------------------------------------------
 

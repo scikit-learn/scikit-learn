@@ -1,5 +1,6 @@
 import os
 import sys
+import warnings
 import numpy as np
 from numpy.testing import assert_allclose, assert_almost_equal
 from numpy.testing import assert_array_almost_equal, assert_array_equal
@@ -391,8 +392,11 @@ def test_logistic_regression_path_convergence_fail():
     # advice (scaling the data) and to the logistic regression specific
     # documentation that includes hints on the solver configuration.
     with pytest.warns(ConvergenceWarning) as record:
-        _logistic_regression_path(
-            X, y, Cs=Cs, tol=0., max_iter=1, random_state=0, verbose=0)
+        with warnings.catch_warnings():
+            # scipy 1.3.0 uses tostring which is deprecated in numpy
+            warnings.filterwarnings("ignore", "tostring", DeprecationWarning)
+            _logistic_regression_path(
+                X, y, Cs=Cs, tol=0., max_iter=1, random_state=0, verbose=0)
 
     assert len(record) == 1
     warn_msg = record[0].message.args[0]

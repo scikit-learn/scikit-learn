@@ -197,7 +197,11 @@ initializations of the centroids. One method to help address this issue is the
 k-means++ initialization scheme, which has been implemented in scikit-learn
 (use the ``init='k-means++'`` parameter). This initializes the centroids to be
 (generally) distant from each other, leading to provably better results than
-random initialization, as shown in the reference.
+random initialization, as shown in the reference. 
+
+K-means++ can also be called independently to select seeds for other 
+clustering algorithms, see :func:`sklearn.cluster.kmeans_plusplus` for details
+and example usage.
 
 The algorithm supports sample weights, which can be given by a parameter
 ``sample_weight``. This allows to assign more weight to some samples when
@@ -1733,7 +1737,7 @@ Ratio Criterion - can be used to evaluate the model, where a higher
 Calinski-Harabasz score relates to a model with better defined clusters.
 
 The index is the ratio of the sum of between-clusters dispersion and of
-inter-cluster dispersion for all clusters (where dispersion is defined as the
+within-cluster dispersion for all clusters (where dispersion is defined as the
 sum of distances squared):
 
   >>> from sklearn import metrics

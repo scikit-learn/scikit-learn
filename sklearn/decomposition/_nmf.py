@@ -14,6 +14,7 @@ import warnings
 from math import sqrt
 
 from ._cdnmf_fast import _update_cdnmf_fast
+from .._config import config_context
 from ..base import BaseEstimator, TransformerMixin
 from ..exceptions import ConvergenceWarning
 from ..utils import check_random_state, check_array
@@ -311,7 +312,7 @@ def _initialize_nmf(X, n_components, init='warn', eps=1e-6,
         warnings.warn(("The 'init' value, when 'init=None' and "
                        "n_components is less than n_samples and "
                        "n_features, will be changed from 'nndsvd' to "
-                       "'nndsvda' in 0.26."), FutureWarning)
+                       "'nndsvda' in 1.1 (renaming of 0.26)."), FutureWarning)
         init = None
 
     check_non_negative(X, "NMF initialization")
@@ -866,7 +867,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
 
         .. math::
 
-            0.5 * ||X - WH||_{Fro}^2 + alpha * l1_{ratio} * ||vec(W)||_1
+            0.5 * ||X - WH||_{loss}^2 + alpha * l1_{ratio} * ||vec(W)||_1
 
             + alpha * l1_{ratio} * ||vec(H)||_1
 
@@ -880,9 +881,9 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
 
     :math:`||vec(A)||_1 = \\sum_{i,j} abs(A_{ij})` (Elementwise L1 norm)
 
-    For multiplicative-update ('mu') solver, the Frobenius norm
-    :math:`(0.5 * ||X - WH||_{Fro}^2)` can be changed into another
-    beta-divergence loss, by changing the beta_loss parameter.
+    The generic norm :math:`||X - WH||_{loss}^2` may represent
+    the Frobenius norm or another supported beta-divergence loss.
+    The choice between options is controlled by the `beta_loss` parameter.
 
     The objective function is minimized with an alternating minimization of W
     and H. If H is given and update_H=False, it solves for W only.
@@ -1103,7 +1104,7 @@ class NMF(TransformerMixin, BaseEstimator):
 
         .. math::
 
-            0.5 * ||X - WH||_{Fro}^2 + alpha * l1_{ratio} * ||vec(W)||_1
+            0.5 * ||X - WH||_{loss}^2 + alpha * l1_{ratio} * ||vec(W)||_1
 
             + alpha * l1_{ratio} * ||vec(H)||_1
 
@@ -1117,9 +1118,9 @@ class NMF(TransformerMixin, BaseEstimator):
 
     :math:`||vec(A)||_1 = \\sum_{i,j} abs(A_{ij})` (Elementwise L1 norm)
 
-    For multiplicative-update ('mu') solver, the Frobenius norm
-    (:math:`0.5 * ||X - WH||_{Fro}^2`) can be changed into another
-    beta-divergence loss, by changing the beta_loss parameter.
+    The generic norm :math:`||X - WH||_{loss}` may represent
+    the Frobenius norm or another supported beta-divergence loss.
+    The choice between options is controlled by the `beta_loss` parameter.
 
     The objective function is minimized with an alternating minimization of W
     and H.
@@ -1137,23 +1138,23 @@ class NMF(TransformerMixin, BaseEstimator):
         Default: None.
         Valid options:
 
-        - None: 'nndsvd' if n_components <= min(n_samples, n_features),
-            otherwise random.
+        - `None`: 'nndsvd' if n_components <= min(n_samples, n_features),
+          otherwise random.
 
-        - 'random': non-negative random matrices, scaled with:
-            sqrt(X.mean() / n_components)
+        - `'random'`: non-negative random matrices, scaled with:
+          sqrt(X.mean() / n_components)
 
-        - 'nndsvd': Nonnegative Double Singular Value Decomposition (NNDSVD)
-            initialization (better for sparseness)
+        - `'nndsvd'`: Nonnegative Double Singular Value Decomposition (NNDSVD)
+          initialization (better for sparseness)
 
-        - 'nndsvda': NNDSVD with zeros filled with the average of X
-            (better when sparsity is not desired)
+        - `'nndsvda'`: NNDSVD with zeros filled with the average of X
+          (better when sparsity is not desired)
 
-        - 'nndsvdar': NNDSVD with zeros filled with small random values
-            (generally faster, less accurate alternative to NNDSVDa
-            for when sparsity is not desired)
+        - `'nndsvdar'` NNDSVD with zeros filled with small random values
+          (generally faster, less accurate alternative to NNDSVDa
+          for when sparsity is not desired)
 
-        - 'custom': use custom matrices W and H
+        - `'custom'`: use custom matrices W and H
 
     solver : {'cd', 'mu'}, default='cd'
         Numerical solver to use:
@@ -1206,7 +1207,7 @@ class NMF(TransformerMixin, BaseEstimator):
            Regularization parameter *l1_ratio* used in the Coordinate Descent
            solver.
 
-    verbose : bool, default=False
+    verbose : int, default=0
         Whether to be verbose.
 
     shuffle : bool, default=False
@@ -1306,15 +1307,14 @@ class NMF(TransformerMixin, BaseEstimator):
         X = self._validate_data(X, accept_sparse=('csr', 'csc'),
                                 dtype=[np.float64, np.float32])
 
-        # XXX: input data validation is performed again in
-        # non_negative_factorization.
-        W, H, n_iter_ = non_negative_factorization(
-            X=X, W=W, H=H, n_components=self.n_components, init=self.init,
-            update_H=True, solver=self.solver, beta_loss=self.beta_loss,
-            tol=self.tol, max_iter=self.max_iter, alpha=self.alpha,
-            l1_ratio=self.l1_ratio, regularization=self.regularization,
-            random_state=self.random_state, verbose=self.verbose,
-            shuffle=self.shuffle)
+        with config_context(assume_finite=True):
+            W, H, n_iter_ = non_negative_factorization(
+                X=X, W=W, H=H, n_components=self.n_components, init=self.init,
+                update_H=True, solver=self.solver, beta_loss=self.beta_loss,
+                tol=self.tol, max_iter=self.max_iter, alpha=self.alpha,
+                l1_ratio=self.l1_ratio, regularization=self.regularization,
+                random_state=self.random_state, verbose=self.verbose,
+                shuffle=self.shuffle)
 
         self.reconstruction_err_ = _beta_divergence(X, W, H, self.beta_loss,
                                                     square_root=True)
@@ -1360,16 +1360,16 @@ class NMF(TransformerMixin, BaseEstimator):
                                 dtype=[np.float64, np.float32],
                                 reset=False)
 
-        # XXX: input data validation is performed again in
-        # non_negative_factorization.
-        W, _, n_iter_ = non_negative_factorization(
-            X=X, W=None, H=self.components_, n_components=self.n_components_,
-            init=self.init, update_H=False, solver=self.solver,
-            beta_loss=self.beta_loss, tol=self.tol, max_iter=self.max_iter,
-            alpha=self.alpha, l1_ratio=self.l1_ratio,
-            regularization=self.regularization,
-            random_state=self.random_state,
-            verbose=self.verbose, shuffle=self.shuffle)
+        with config_context(assume_finite=True):
+            W, _, n_iter_ = non_negative_factorization(
+                X=X, W=None, H=self.components_,
+                n_components=self.n_components_,
+                init=self.init, update_H=False, solver=self.solver,
+                beta_loss=self.beta_loss, tol=self.tol, max_iter=self.max_iter,
+                alpha=self.alpha, l1_ratio=self.l1_ratio,
+                regularization=self.regularization,
+                random_state=self.random_state,
+                verbose=self.verbose, shuffle=self.shuffle)
 
         return W
 

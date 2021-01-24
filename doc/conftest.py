@@ -3,8 +3,6 @@ from os.path import exists
 from os.path import join
 import warnings
 
-import numpy as np
-
 from sklearn.utils import IS_PYPY
 from sklearn.utils._testing import SkipTest
 from sklearn.utils._testing import check_skip_network
@@ -72,6 +70,13 @@ def setup_grid_search():
         raise SkipTest("Skipping grid_search.rst, pandas not installed")
 
 
+def setup_preprocessing():
+    try:
+        import pandas  # noqa
+    except ImportError:
+        raise SkipTest("Skipping preprocessing.rst, pandas not installed")
+
+
 def setup_unsupervised_learning():
     try:
         import skimage  # noqa
@@ -105,5 +110,7 @@ def pytest_runtest_setup(item):
         setup_impute()
     elif fname.endswith('modules/grid_search.rst'):
         setup_grid_search()
+    elif fname.endswith('modules/preprocessing.rst'):
+        setup_preprocessing()
     elif fname.endswith('statistical_inference/unsupervised_learning.rst'):
         setup_unsupervised_learning()
