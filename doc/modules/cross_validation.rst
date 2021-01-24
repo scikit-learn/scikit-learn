@@ -677,7 +677,7 @@ Example::
 Implementation notes:
 
 - This implementation iterates over groups sorted by standard deviation of
-  labels. That means that when shuffle=True only groups with the same labels
+  classes. That means that when shuffle=True only groups with the same classes
   distribution will be shuffled.
 - The algorithm greedily assigns each group to one of n_splits test sets,
   choosing the test set that minimises the variance in class distribution
