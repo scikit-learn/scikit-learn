@@ -430,7 +430,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             return None
         return '(%d of %d) Processing %s' % (idx, total, name)
 
-    def _fit_transform(self, X, y, func, fitted=False):
+    def _fit_transform(self, X, y, func, fitted=False,
+                       remainder_columns_as_strings=False):
         """
         Private function to fit and/or transform on demand.
 
@@ -439,8 +440,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         ``fitted=True`` ensures the fitted transformers are used.
         """
         transformers = list(
-            self._iter(fitted=fitted, replace_strings=True,
-                       remainder_columns_as_strings=True))
+            self._iter(
+                fitted=fitted, replace_strings=True,
+                remainder_columns_as_strings=remainder_columns_as_strings))
         try:
             return Parallel(n_jobs=self.n_jobs)(
                 delayed(func)(
@@ -560,10 +562,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         check_is_fitted(self)
         X = _check_X(X)
 
-        if self._feature_names_in is not None:  # fitted on dataframe
-            if not hasattr(X, "columns"):
-                raise ValueError("Fitted on a dataframe but transforming "
-                                 "a non-dataframe")
+        fit_dataframe_and_transform_ndarray = (
+            self._feature_names_in is not None and hasattr(X, "columns"))
+
+        if fit_dataframe_and_transform_ndarray:
             named_transformers = self.named_transformers_
             # check that all names seen in fit are in transform, unless
             # they were dropped
@@ -583,7 +585,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             # ndarray was used for training
             self._check_n_features(X, reset=False)
 
-        Xs = self._fit_transform(X, None, _transform_one, fitted=True)
+        Xs = self._fit_transform(
+            X, None, _transform_one, fitted=True,
+            remainder_columns_as_strings=fit_dataframe_and_transform_ndarray)
         self._validate_output(Xs)
 
         if not Xs:

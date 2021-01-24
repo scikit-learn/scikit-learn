@@ -1196,7 +1196,7 @@ def test_column_transformer_reordered_column_names_remainder(explicit_colname,
 
     # No 'columns' AttributeError when transform input is a numpy array
     X_array = X_fit_array.copy()
-    err_msg = "Fitted on a dataframe but transforming a non-dataframe"
+    err_msg = 'Specifying the columns'
     with pytest.raises(ValueError, match=err_msg):
         tf.transform(X_array)
 
