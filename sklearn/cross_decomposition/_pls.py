@@ -499,7 +499,7 @@ class PLSRegression(_PLS):
         The maximum number of iterations of the power method when
         `algorithm='nipals'`. Ignored otherwise.
 
-    tol : real, default 1e-06
+    tol : float, default=1e-06
         The tolerance used as convergence criteria in the power method: the
         algorithm stops whenever the squared norm of `u_i - u_{i-1}` is less
         than `tol`, where `u` corresponds to the left singular vector.
@@ -597,7 +597,7 @@ class PLSCanonical(_PLS):
         the maximum number of iterations of the power method when
         `algorithm='nipals'`. Ignored otherwise.
 
-    tol : real, default 1e-06
+    tol : float, default=1e-06
         The tolerance used as convergence criteria in the power method: the
         algorithm stops whenever the squared norm of `u_i - u_{i-1}` is less
         than `tol`, where `u` corresponds to the left singular vector.
@@ -700,16 +700,10 @@ class CCA(_PLS):
     scale : bool, default=True
         Whether to scale `X` and `Y`.
 
-    algorithm : {'nipals', 'svd'}, default='nipals'
-        The algorithm used to estimate the first singular vectors of the
-        cross-covariance matrix. 'nipals' uses the power method while 'svd'
-        will compute the whole SVD.
-
     max_iter : int, default=500
-        the maximum number of iterations of the power method when
-        `algorithm='nipals'`. Ignored otherwise.
+        the maximum number of iterations of the power method.
 
-    tol : real, default 1e-06
+    tol : float, default=1e-06
         The tolerance used as convergence criteria in the power method: the
         algorithm stops whenever the squared norm of `u_i - u_{i-1}` is less
         than `tol`, where `u` corresponds to the left singular vector.
@@ -763,7 +757,7 @@ class CCA(_PLS):
 
     n_iter_ : list of shape (n_components,)
         Number of iterations of the power method, for each
-        component. Empty if `algorithm='svd'`.
+        component.
 
     Examples
     --------

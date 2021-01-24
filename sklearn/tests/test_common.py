@@ -19,6 +19,7 @@ import pytest
 from sklearn.utils import all_estimators
 from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.exceptions import FitFailedWarning
 from sklearn.utils.estimator_checks import check_estimator
 
 import sklearn
@@ -246,6 +247,7 @@ def test_search_cv(estimator, check, request):
             ConvergenceWarning,
             UserWarning,
             FutureWarning,
+            FitFailedWarning,
         )
     ):
         check(estimator)
@@ -270,9 +272,7 @@ N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE = {
     'ensemble',
     'feature_extraction',
     'feature_selection',
-    'gaussian_process',
     'isotonic',
-    'linear_model',
     'manifold',
     'mixture',
     'model_selection',
@@ -283,7 +283,6 @@ N_FEATURES_IN_AFTER_FIT_MODULES_TO_IGNORE = {
     'pipeline',
     'random_projection',
     'semi_supervised',
-    'svm',
 }
 
 N_FEATURES_IN_AFTER_FIT_ESTIMATORS = [

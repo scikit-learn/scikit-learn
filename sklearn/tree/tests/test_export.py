@@ -33,7 +33,8 @@ def test_graphviz_toy():
     # Test export code
     contents1 = export_graphviz(clf, out_file=None)
     contents2 = 'digraph Tree {\n' \
-                'node [shape=box] ;\n' \
+                'node [shape=box, fontname="helvetica"] ;\n' \
+                'edge [fontname="helvetica"] ;\n' \
                 '0 [label="X[0] <= 0.0\\ngini = 0.5\\nsamples = 6\\n' \
                 'value = [3, 3]"] ;\n' \
                 '1 [label="gini = 0.0\\nsamples = 3\\nvalue = [3, 0]"] ;\n' \
@@ -50,7 +51,8 @@ def test_graphviz_toy():
     contents1 = export_graphviz(clf, feature_names=["feature0", "feature1"],
                                 out_file=None)
     contents2 = 'digraph Tree {\n' \
-                'node [shape=box] ;\n' \
+                'node [shape=box, fontname="helvetica"] ;\n' \
+                'edge [fontname="helvetica"] ;\n' \
                 '0 [label="feature0 <= 0.0\\ngini = 0.5\\nsamples = 6\\n' \
                 'value = [3, 3]"] ;\n' \
                 '1 [label="gini = 0.0\\nsamples = 3\\nvalue = [3, 0]"] ;\n' \
@@ -66,7 +68,8 @@ def test_graphviz_toy():
     # Test with class_names
     contents1 = export_graphviz(clf, class_names=["yes", "no"], out_file=None)
     contents2 = 'digraph Tree {\n' \
-                'node [shape=box] ;\n' \
+                'node [shape=box, fontname="helvetica"] ;\n' \
+                'edge [fontname="helvetica"] ;\n' \
                 '0 [label="X[0] <= 0.0\\ngini = 0.5\\nsamples = 6\\n' \
                 'value = [3, 3]\\nclass = yes"] ;\n' \
                 '1 [label="gini = 0.0\\nsamples = 3\\nvalue = [3, 0]\\n' \
@@ -84,11 +87,11 @@ def test_graphviz_toy():
     # Test plot_options
     contents1 = export_graphviz(clf, filled=True, impurity=False,
                                 proportion=True, special_characters=True,
-                                rounded=True, out_file=None)
+                                rounded=True, out_file=None, fontname="sans")
     contents2 = 'digraph Tree {\n' \
                 'node [shape=box, style="filled, rounded", color="black", ' \
-                'fontname=helvetica] ;\n' \
-                'edge [fontname=helvetica] ;\n' \
+                'fontname="sans"] ;\n' \
+                'edge [fontname="sans"] ;\n' \
                 '0 [label=<X<SUB>0</SUB> &le; 0.0<br/>samples = 100.0%<br/>' \
                 'value = [0.5, 0.5]>, fillcolor="#ffffff"] ;\n' \
                 '1 [label=<samples = 50.0%<br/>value = [1.0, 0.0]>, ' \
@@ -107,7 +110,8 @@ def test_graphviz_toy():
     contents1 = export_graphviz(clf, max_depth=0,
                                 class_names=True, out_file=None)
     contents2 = 'digraph Tree {\n' \
-                'node [shape=box] ;\n' \
+                'node [shape=box, fontname="helvetica"] ;\n' \
+                'edge [fontname="helvetica"] ;\n' \
                 '0 [label="X[0] <= 0.0\\ngini = 0.5\\nsamples = 6\\n' \
                 'value = [3, 3]\\nclass = y[0]"] ;\n' \
                 '1 [label="(...)"] ;\n' \
@@ -122,7 +126,9 @@ def test_graphviz_toy():
     contents1 = export_graphviz(clf, max_depth=0, filled=True,
                                 out_file=None, node_ids=True)
     contents2 = 'digraph Tree {\n' \
-                'node [shape=box, style="filled", color="black"] ;\n' \
+                'node [shape=box, style="filled", color="black", '\
+                'fontname="helvetica"] ;\n' \
+                'edge [fontname="helvetica"] ;\n' \
                 '0 [label="node #0\\nX[0] <= 0.0\\ngini = 0.5\\n' \
                 'samples = 6\\nvalue = [3, 3]", fillcolor="#ffffff"] ;\n' \
                 '1 [label="(...)", fillcolor="#C0C0C0"] ;\n' \
@@ -143,7 +149,9 @@ def test_graphviz_toy():
     contents1 = export_graphviz(clf, filled=True,
                                 impurity=False, out_file=None)
     contents2 = 'digraph Tree {\n' \
-                'node [shape=box, style="filled", color="black"] ;\n' \
+                'node [shape=box, style="filled", color="black", ' \
+                'fontname="helvetica"] ;\n' \
+                'edge [fontname="helvetica"] ;\n' \
                 '0 [label="X[0] <= 0.0\\nsamples = 6\\n' \
                 'value = [[3.0, 1.5, 0.0]\\n' \
                 '[3.0, 1.0, 0.5]]", fillcolor="#ffffff"] ;\n' \
@@ -174,12 +182,13 @@ def test_graphviz_toy():
     clf.fit(X, y)
 
     contents1 = export_graphviz(clf, filled=True, leaves_parallel=True,
-                                out_file=None, rotate=True, rounded=True)
+                                out_file=None, rotate=True, rounded=True,
+                                fontname="sans")
     contents2 = 'digraph Tree {\n' \
                 'node [shape=box, style="filled, rounded", color="black", ' \
-                'fontname=helvetica] ;\n' \
+                'fontname="sans"] ;\n' \
                 'graph [ranksep=equally, splines=polyline] ;\n' \
-                'edge [fontname=helvetica] ;\n' \
+                'edge [fontname="sans"] ;\n' \
                 'rankdir=LR ;\n' \
                 '0 [label="X[0] <= 0.0\\nmse = 1.0\\nsamples = 6\\n' \
                 'value = 0.0", fillcolor="#f2c09c"] ;\n' \
@@ -203,7 +212,9 @@ def test_graphviz_toy():
 
     contents1 = export_graphviz(clf, filled=True, out_file=None)
     contents2 = 'digraph Tree {\n' \
-                'node [shape=box, style="filled", color="black"] ;\n' \
+                'node [shape=box, style="filled", color="black", '\
+                'fontname="helvetica"] ;\n' \
+                'edge [fontname="helvetica"] ;\n' \
                 '0 [label="gini = 0.0\\nsamples = 6\\nvalue = 6.0", ' \
                 'fillcolor="#ffffff"] ;\n' \
                 '}'
