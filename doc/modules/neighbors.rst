@@ -181,20 +181,18 @@ be accomplished through the ``weights`` keyword.  The default value,
 distance from the query point.  Alternatively, a user-defined function of the
 distance can be supplied to compute the weights.
 
-.. |classification_1| image:: ../auto_examples/neighbors/images/sphx_glr_plot_classification_001.png
-   :target: ../auto_examples/neighbors/plot_classification.html
-   :scale: 50
-
-.. |classification_2| image:: ../auto_examples/neighbors/images/sphx_glr_plot_classification_002.png
-   :target: ../auto_examples/neighbors/plot_classification.html
-   :scale: 50
-
-.. centered:: |classification_1| |classification_2|
+.. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_variables_choice_001.png
+   :target: ../auto_examples/neighbors/plot_variables_choice.html
+   :align: center
+   :scale: 75
 
 .. topic:: Examples:
 
   * :ref:`sphx_glr_auto_examples_neighbors_plot_classification.py`: an example of
     classification using nearest neighbors.
+
+  * :ref:`sphx_glr_auto_examples_neighbors_plot_variables_choice.py`: an example of
+    classification using nearest neighbors and tweaking ``k`` and the ``weights``.
 
 .. _regression:
 
