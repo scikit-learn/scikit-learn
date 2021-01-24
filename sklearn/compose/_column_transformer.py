@@ -19,7 +19,6 @@ from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
 from ..utils import _safe_indexing
 from ..utils import _get_column_indices
-from ..utils import _determine_key_type
 from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_array, check_is_fitted
 from ..utils.validation import _deprecate_positional_args
@@ -237,7 +236,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         self._set_params('_transformers', **kwargs)
         return self
 
-    def _iter(self, fitted=False, replace_strings=False):
+    def _iter(self, fitted=False, replace_strings=False,
+              remainder_columns_as_strings=False):
         """
         Generate (name, trans, column, weight) tuples.
 
@@ -255,7 +255,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 in zip(self.transformers, self._columns)
             ]
             # add transformer tuple for remainder
-            if self._remainder[2] is not None:
+            if self._remainder[2]:
                 transformers = chain(transformers, [self._remainder])
         get_weight = (self.transformer_weights or {}).get
 
@@ -271,6 +271,12 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                     continue
                 elif _is_empty_column_selection(column):
                     continue
+
+            # Convert columns to strings if possible
+            if (remainder_columns_as_strings
+                    and self._feature_names_in is not None
+                    and name == 'remainder' and column):
+                column = self._feature_names_in[column]
 
             yield (name, trans, column, get_weight(name))
 
@@ -299,11 +305,15 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         Converts callable column specifications.
         """
         columns = []
-        for _, _, column in self.transformers:
+        name_to_indices = {}
+        for name, _, column in self.transformers:
             if callable(column):
                 column = column(X)
             columns.append(column)
+            name_to_indices[name] = _get_column_indices(X, column)
+
         self._columns = columns
+        self._name_to_indices = name_to_indices
 
     def _validate_remainder(self, X):
         """
@@ -320,19 +330,11 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 "'passthrough', or estimator. '%s' was passed instead" %
                 self.remainder)
 
-        # Make it possible to check for reordered named columns on transform
-        self._has_str_cols = any(_determine_key_type(cols) == 'str'
-                                 for cols in self._columns)
-        if hasattr(X, 'columns'):
-            self._df_columns = X.columns
-
         self._n_features = X.shape[1]
-        cols = []
-        for columns in self._columns:
-            cols.extend(_get_column_indices(X, columns))
-
-        remaining_idx = sorted(set(range(self._n_features)) - set(cols))
-        self._remainder = ('remainder', self.remainder, remaining_idx or None)
+        cols = set(chain(*self._name_to_indices.values()))
+        remaining = sorted(set(range(self._n_features)) - cols)
+        self._remainder = ('remainder', self.remainder, remaining)
+        self._name_to_indices['remainder'] = remaining
 
     @property
     def named_transformers_(self):
@@ -362,12 +364,12 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                     hasattr(column, '__len__') and not len(column)):
                 continue
             if trans == 'passthrough':
-                if hasattr(self, '_df_columns'):
+                if self._feature_names_in is not None:
                     if ((not isinstance(column, slice))
                             and all(isinstance(col, str) for col in column)):
                         feature_names.extend(column)
                     else:
-                        feature_names.extend(self._df_columns[column])
+                        feature_names.extend(self._feature_names_in[column])
                 else:
                     indices = np.arange(self._n_features)
                     feature_names.extend(['x%d' % i for i in indices[column]])
@@ -430,7 +432,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         ``fitted=True`` ensures the fitted transformers are used.
         """
         transformers = list(
-            self._iter(fitted=fitted, replace_strings=True))
+            self._iter(fitted=fitted, replace_strings=True,
+                       remainder_columns_as_strings=True))
         try:
             return Parallel(n_jobs=self.n_jobs)(
                 delayed(func)(
@@ -441,7 +444,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                     message_clsname='ColumnTransformer',
                     message=self._log_message(name, idx, len(transformers)))
                 for idx, (name, trans, column, weight) in enumerate(
-                        self._iter(fitted=fitted, replace_strings=True), 1))
+                        transformers, 1))
         except ValueError as e:
             if "Expected 2D array, got 1D array instead" in str(e):
                 raise ValueError(_ERR_MSG_1DCOLUMN) from e
@@ -549,19 +552,30 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         """
         check_is_fitted(self)
         X = _check_X(X)
-        if hasattr(X, "columns"):
-            X_feature_names = np.asarray(X.columns)
-        else:
-            X_feature_names = None
 
-        self._check_n_features(X, reset=False)
-        if (self._feature_names_in is not None and
-            X_feature_names is not None and
-                np.any(self._feature_names_in != X_feature_names)):
-            raise RuntimeError(
-                "Given feature/column names do not match the ones for the "
-                "data given during fit."
-            )
+        if self._feature_names_in is not None:  # fitted on dataframe
+            if not hasattr(X, "columns"):
+                raise ValueError("Fitted on a dataframe but transforming "
+                                 "a non-dataframe")
+            named_transformers = self.named_transformers_
+            # check that all names seen in fit are in transform, unless
+            # they were dropped
+            non_dropped_indices = [
+                ind for name, ind in self._name_to_indices.items()
+                if name in named_transformers and
+                isinstance(named_transformers[name], str) and
+                named_transformers[name] != 'drop']
+
+            all_indices = set(chain(*non_dropped_indices))
+            all_names = set(self._feature_names_in[ind] for ind in all_indices)
+
+            diff = all_names - set(X.columns)
+            if diff:
+                raise ValueError(f"columns are missing: {diff}")
+        else:
+            # ndarray was used for training
+            self._check_n_features(X, reset=False)
+
         Xs = self._fit_transform(X, None, _transform_one, fitted=True)
         self._validate_output(Xs)
 
@@ -606,10 +620,12 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             transformers = self.transformers
         elif hasattr(self, "_remainder"):
             remainder_columns = self._remainder[2]
-            if hasattr(self, '_df_columns'):
+            if (self._feature_names_in is not None and
+                    remainder_columns and
+                    not all(isinstance(col, str)
+                            for col in remainder_columns)):
                 remainder_columns = (
-                    self._df_columns[remainder_columns].tolist()
-                )
+                    self._feature_names_in[remainder_columns].tolist())
             transformers = chain(self.transformers,
                                  [('remainder', self.remainder,
                                    remainder_columns)])

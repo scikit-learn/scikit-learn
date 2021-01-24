@@ -4,7 +4,6 @@ Test the ColumnTransformer.
 import re
 import pickle
 
-import warnings
 import numpy as np
 from scipy import sparse
 import pytest
@@ -1167,14 +1166,10 @@ def test_column_transformer_negative_column_indexes():
 
 
 @pytest.mark.parametrize("explicit_colname", ['first', 'second'])
-def test_column_transformer_reordered_column_names_remainder(explicit_colname):
-    """Regression test for issue #14223: 'Named col indexing fails with
-       ColumnTransformer remainder on changing DataFrame column ordering'
-
-       Should raise error on changed order combined with remainder.
-       Should allow for added columns in `transform` input DataFrame
-       as long as all preceding columns match.
-    """
+@pytest.mark.parametrize("remainder", [Trans(), 'passthrough', 'drop'])
+def test_column_transformer_reordered_column_names_remainder(explicit_colname,
+                                                             remainder):
+    """Test the interaction between remainder and column transformer"""
     pd = pytest.importorskip('pandas')
 
     X_fit_array = np.array([[0, 1, 2], [2, 4, 6]]).T
@@ -1184,62 +1179,62 @@ def test_column_transformer_reordered_column_names_remainder(explicit_colname):
     X_trans_df = pd.DataFrame(X_trans_array, columns=['second', 'first'])
 
     tf = ColumnTransformer([('bycol', Trans(), explicit_colname)],
-                           remainder=Trans())
+                           remainder=remainder)
 
     tf.fit(X_fit_df)
-    err_msg = ("Given feature/column names do not match the ones for the "
-               "data given during fit.")
-    with pytest.raises(RuntimeError, match=err_msg):
-        tf.transform(X_trans_df)
+    X_fit_trans = tf.transform(X_fit_df)
 
-    # ValueError for added columns
+    # Changing the order still works
+    X_trans = tf.transform(X_trans_df)
+    assert_allclose(X_trans, X_fit_trans)
+
+    # extra columns are ignored
     X_extended_df = X_fit_df.copy()
     X_extended_df['third'] = [3, 6, 9]
-    err_msg = ("X has 3 features, but ColumnTransformer is expecting 2 "
-               "features as input.")
-    with pytest.raises(ValueError, match=err_msg):
-        tf.transform(X_extended_df)
+    X_trans = tf.transform(X_extended_df)
+    assert_allclose(X_trans, X_fit_trans)
 
     # No 'columns' AttributeError when transform input is a numpy array
     X_array = X_fit_array.copy()
-    err_msg = 'Specifying the columns'
+    err_msg = "Fitted on a dataframe but transforming a non-dataframe"
     with pytest.raises(ValueError, match=err_msg):
         tf.transform(X_array)
 
 
-def test_feature_name_validation():
-    """Tests if the proper warning/error is raised if the columns do not match
-    during fit and transform."""
+def test_feature_name_validation_missing_columns_drop_passthough():
+    """Test the interaction between {'drop', 'passthrough'} and
+    missing column names."""
     pd = pytest.importorskip("pandas")
 
-    X = np.ones(shape=(3, 2))
-    X_extra = np.ones(shape=(3, 3))
-    df = pd.DataFrame(X, columns=['a', 'b'])
-    df_extra = pd.DataFrame(X_extra, columns=['a', 'b', 'c'])
+    X = np.ones(shape=(3, 4))
+    df = pd.DataFrame(X, columns=['a', 'b', 'c', 'd'])
 
-    tf = ColumnTransformer([('bycol', Trans(), ['a', 'b'])])
+    df_dropped = df.drop('c', axis=1)
+
+    # with remainder='passthrough', all columns seen during `fit` must be
+    # present
+    tf = ColumnTransformer([('bycol', Trans(), [1])], remainder='passthrough')
+    tf.fit(df)
+    msg = r"columns are missing: {'c'}"
+    with pytest.raises(ValueError, match=msg):
+        tf.transform(df_dropped)
+
+    # with remainder='drop', thus it is allowed to have 'c' missing
+    tf = ColumnTransformer([('bycol', Trans(), [1])],
+                           remainder='drop')
     tf.fit(df)
 
-    msg = ("X has 3 features, but ColumnTransformer is expecting 2 features "
-           "as input.")
-    with pytest.raises(ValueError, match=msg):
-        tf.transform(df_extra)
+    df_dropped_trans = tf.transform(df_dropped)
+    df_fit_trans = tf.transform(df)
+    assert_allclose(df_dropped_trans, df_fit_trans)
 
-    tf = ColumnTransformer([('bycol', Trans(), [0])])
+    # bycol drops 'c', thus it is allowed for 'c' to be missing
+    tf = ColumnTransformer([('bycol', 'drop', ['c'])],
+                           remainder='passthrough')
     tf.fit(df)
-
-    with pytest.raises(ValueError, match=msg):
-        tf.transform(X_extra)
-
-    with warnings.catch_warnings(record=True) as warns:
-        tf.transform(X)
-    assert not warns
-
-    tf = ColumnTransformer([('bycol', Trans(), ['a'])],
-                           remainder=Trans())
-    tf.fit(df)
-    with pytest.raises(ValueError, match=msg):
-        tf.transform(df_extra)
+    df_dropped_trans = tf.transform(df_dropped)
+    df_fit_trans = tf.transform(df)
+    assert_allclose(df_dropped_trans, df_fit_trans)
 
 
 @pytest.mark.parametrize("array_type", [np.asarray, sparse.csr_matrix])
