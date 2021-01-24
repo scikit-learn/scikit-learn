@@ -333,12 +333,14 @@ def test_transform_target_regressor_route_pipeline():
 
     assert regr.transformer_.fit_counter == 1
 
+
 class DummyRegressorWithExtraPredictParams(DummyRegressor):
     def fit(self, X, check_input=True):
-        #In the test below we make sure that the check input parameter is
+        # In the test below we make sure that the check input parameter is
         # passed as false
         assert not check_input
         return super().predict(X)
+
 
 def test_transform_target_regressor_pass_extra_predict_parameters():
     X, y = friedman
