@@ -550,7 +550,7 @@ class _BaseDiscreteNB(_BaseNB):
         y : array-like of shape (n_samples,)
             Target values.
 
-        classes : array-like of shape (n_classes), default=None
+        classes : array-like of shape (n_classes,), default=None
             List of all the classes that can possibly appear in the y vector.
 
             Must be provided at the first call to partial_fit, can be omitted
@@ -569,8 +569,8 @@ class _BaseDiscreteNB(_BaseNB):
         if _check_partial_fit_first_call(self, classes):
             # This is the first call to partial_fit:
             # initialize various cumulative counters
-            n_effective_classes = len(classes) if len(classes) > 1 else 2
-            self._init_counters(n_effective_classes, n_features)
+            n_classes = len(classes)
+            self._init_counters(n_classes, n_features)
             self.n_features_ = n_features
         elif n_features != self.n_features_:
             msg = "Number of features %d does not match previous data %d."
@@ -578,7 +578,10 @@ class _BaseDiscreteNB(_BaseNB):
 
         Y = label_binarize(y, classes=self.classes_)
         if Y.shape[1] == 1:
-            Y = np.concatenate((1 - Y, Y), axis=1)
+            if len(self.classes_) == 2:
+                Y = np.concatenate((1 - Y, Y), axis=1)
+            else:    # degenerate case: just one class
+                Y = np.ones_like(Y)
 
         if X.shape[0] != Y.shape[0]:
             msg = "X.shape[0]=%d and y.shape[0]=%d are incompatible."
@@ -634,7 +637,10 @@ class _BaseDiscreteNB(_BaseNB):
         Y = labelbin.fit_transform(y)
         self.classes_ = labelbin.classes_
         if Y.shape[1] == 1:
-            Y = np.concatenate((1 - Y, Y), axis=1)
+            if len(self.classes_) == 2:
+                Y = np.concatenate((1 - Y, Y), axis=1)
+            else:    # degenerate case: just one class
+                Y = np.ones_like(Y)
 
         # LabelBinarizer().fit_transform() returns arrays with dtype=np.int64.
         # We convert it to np.float64 to support sample_weight consistently;
@@ -649,18 +655,17 @@ class _BaseDiscreteNB(_BaseNB):
 
         # Count raw events from data before updating the class log prior
         # and feature log probas
-        n_effective_classes = Y.shape[1]
-
-        self._init_counters(n_effective_classes, n_features)
+        n_classes = Y.shape[1]
+        self._init_counters(n_classes, n_features)
         self._count(X, Y)
         alpha = self._check_alpha()
         self._update_feature_log_prob(alpha)
         self._update_class_log_prior(class_prior=class_prior)
         return self
 
-    def _init_counters(self, n_effective_classes, n_features):
-        self.class_count_ = np.zeros(n_effective_classes, dtype=np.float64)
-        self.feature_count_ = np.zeros((n_effective_classes, n_features),
+    def _init_counters(self, n_classes, n_features):
+        self.class_count_ = np.zeros(n_classes, dtype=np.float64)
+        self.feature_count_ = np.zeros((n_classes, n_features),
                                        dtype=np.float64)
 
     # mypy error: Decorated property not supported
@@ -714,7 +719,7 @@ class MultinomialNB(_BaseDiscreteNB):
         Number of samples encountered for each class during fitting. This
         value is weighted by the sample weight when provided.
 
-    class_log_prior_ : ndarray of shape (n_classes, )
+    class_log_prior_ : ndarray of shape (n_classes,)
         Smoothed empirical log probability for each class.
 
     classes_ : ndarray of shape (n_classes,)
@@ -962,11 +967,11 @@ class BernoulliNB(_BaseDiscreteNB):
 
     Attributes
     ----------
-    class_count_ : ndarray of shape (n_classes)
+    class_count_ : ndarray of shape (n_classes,)
         Number of samples encountered for each class during fitting. This
         value is weighted by the sample weight when provided.
 
-    class_log_prior_ : ndarray of shape (n_classes)
+    class_log_prior_ : ndarray of shape (n_classes,)
         Log probability of each class (smoothed).
 
     classes_ : ndarray of shape (n_classes,)
@@ -1053,8 +1058,8 @@ class BernoulliNB(_BaseDiscreteNB):
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
-        n_classes, n_features = self.feature_log_prob_.shape
-        n_samples, n_features_X = X.shape
+        n_features = self.feature_log_prob_.shape[1]
+        n_features_X = X.shape[1]
 
         if n_features_X != n_features:
             raise ValueError("Expected input with %d features, got %d instead"
@@ -1173,7 +1178,7 @@ class CategoricalNB(_BaseDiscreteNB):
         y : array-like of shape (n_samples,)
             Target values.
 
-        sample_weight : array-like of shape (n_samples), default=None
+        sample_weight : array-like of shape (n_samples,), default=None
             Weights applied to individual samples (1. for unweighted).
 
         Returns
@@ -1207,16 +1212,16 @@ class CategoricalNB(_BaseDiscreteNB):
             total number of categories for the given feature. This can, for
             instance, be achieved with the help of OrdinalEncoder.
 
-        y : array-like of shape (n_samples)
+        y : array-like of shape (n_samples,)
             Target values.
 
-        classes : array-like of shape (n_classes), default=None
+        classes : array-like of shape (n_classes,), default=None
             List of all the classes that can possibly appear in the y vector.
 
             Must be provided at the first call to partial_fit, can be omitted
             in subsequent calls.
 
-        sample_weight : array-like of shape (n_samples), default=None
+        sample_weight : array-like of shape (n_samples,), default=None
             Weights applied to individual samples (1. for unweighted).
 
         Returns
@@ -1241,9 +1246,9 @@ class CategoricalNB(_BaseDiscreteNB):
         check_non_negative(X, "CategoricalNB (input X)")
         return X, y
 
-    def _init_counters(self, n_effective_classes, n_features):
-        self.class_count_ = np.zeros(n_effective_classes, dtype=np.float64)
-        self.category_count_ = [np.zeros((n_effective_classes, 0))
+    def _init_counters(self, n_classes, n_features):
+        self.class_count_ = np.zeros(n_classes, dtype=np.float64)
+        self.category_count_ = [np.zeros((n_classes, 0))
                                 for _ in range(n_features)]
 
     @staticmethod

@@ -105,6 +105,13 @@ Changelog
 :mod:`sklearn.naive_bayes`
 ..........................
 
+- |Fix| The `fit` and `partial_fit` methods of the discrete naive Bayes
+  classifiers (:class:`naive_bayes.BernoulliNB`,
+  :class:`naive_bayes.CategoricalNB`, :class:`naive_bayes.ComplementNB`,
+  and :class:`naive_bayes.MultinomialNB`) now correctly handle the degenerate
+  case of a single class in the training set.
+  :pr:`18925` by :user:`David Poznik <dpoznik>`.
+
 - |API| The attribute ``sigma_`` is now deprecated in
   :class:`naive_bayes.GaussianNB` and will be removed in 1.2.
   Use ``var_`` instead.
