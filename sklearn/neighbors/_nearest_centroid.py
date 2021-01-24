@@ -42,7 +42,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         Threshold for shrinking centroids to remove features.
     true_classes_ : array-like, shape = [n_classes]
         List of all the possible classes, used as memory for partial_fit
-        during the first call.
+        and passed during the first call.
     Attributes
     ----------
     centroids_ : array-like, shape = [n_classes, n_features]
