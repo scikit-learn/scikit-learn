@@ -338,9 +338,6 @@ def test_classification_binary_scores(scorer_name, metric):
     assert_almost_equal(score, expected_score)
 
 
-@pytest.mark.parametrize('clf', [
-    DecisionTreeClassifier(random_state=0),
-    LogisticRegression(random_state=0)])
 @pytest.mark.parametrize('scorer_name, metric', [
     ('accuracy', accuracy_score),
     ('balanced_accuracy', balanced_accuracy_score),
@@ -356,7 +353,7 @@ def test_classification_binary_scores(scorer_name, metric):
     ('jaccard_weighted', partial(jaccard_score, average='weighted')),
     ('jaccard_macro', partial(jaccard_score, average='macro')),
     ('jaccard_micro', partial(jaccard_score, average='micro'))])
-def test_classification_multiclass_scores(clf, scorer_name, metric):
+def test_classification_multiclass_scores(scorer_name, metric):
     X, y = make_classification(
         n_classes=3, n_informative=3, n_samples=30, random_state=0
     )
@@ -366,6 +363,7 @@ def test_classification_multiclass_scores(clf, scorer_name, metric):
         X, y, random_state=0, stratify=y
     )
 
+    clf = DecisionTreeClassifier(random_state=0)
     clf.fit(X_train, y_train)
     score = SCORERS[scorer_name](clf, X_test, y_test)
     expected_score = metric(y_test, clf.predict(X_test))
