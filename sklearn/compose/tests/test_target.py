@@ -343,7 +343,7 @@ class DummyRegressorWithExtraPredictParams(DummyRegressor):
 def test_transform_target_regressor_pass_extra_predict_parameters():
     X, y = friedman
     regr = TransformedTargetRegressor(
-        regressor=DummyRegressorWithExtraFitParams(),
+        regressor=DummyRegressorWithExtraPredictParams(),
         transformer=DummyTransformer()
     )
 
