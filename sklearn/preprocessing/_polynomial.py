@@ -58,10 +58,10 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         default='constant'
         If 'error', values outside the min and max values of the training
         features raises a `ValueError`. If 'constant', the value of the
-        splines at mininum and maximum value of the features is used as
+        splines at minimum and maximum value of the features is used as
         constant extrapolation. If 'linear', a linear extrapolation is used.
         If 'continue', the splines are extrapolated as is, i.e. option
-        `extrapolate=True` in scipy.interpolate.BSpline.
+        `extrapolate=True` in :class:`scipy.interpolate.BSpline`.
 
     include_bias : bool, default=True
         If True (default), then the last spline element inside the data range
@@ -72,6 +72,28 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
     order : {'C', 'F'}, default='C'
         Order of output array. 'F' order is faster to compute, but may slow
         down subsequent estimators.
+
+    Attributes
+    ----------
+    bsplines_ : list of shape (n_features,)
+        List of BSplines objects, one for each feature.
+
+    n_features_in_ : int
+        The total number of input features.
+
+    n_features_out_ : int
+        The total number of output features, which is computed as
+        `n_features * n_splines`, where `n_splines` is
+        the number of bases elements of the B-splines, `n_knots + degree - 1`.
+        If `include_bias=False`, then it is only
+        `n_features * (n_splines - 1)`.
+
+    See Also
+    --------
+    KBinsDiscretizer : Transformer that bins continuous data into intervals.
+
+    PolynomialFeatures : Transformer that generates polynomial and interaction
+        features.
 
     Notes
     -----
@@ -93,21 +115,6 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
            [0.  , 0.32, 0.66, 0.02],
            [0.  , 0.08, 0.74, 0.18],
            [0.  , 0.  , 0.5 , 0.5 ]])
-
-    Attributes
-    ----------
-    bsplines_ : list of shape (n_features,)
-        List of BSplines objects, one for each feature.
-
-    n_features_in_ : int
-        The total number of input features.
-
-    n_features_out_ : int
-        The total number of output features, which is computed as
-        `n_features * n_splines`, where `n_splines` is
-        the number of bases elements of the B-splines, `n_knots + degree - 1`.
-        If `include_bias=False`, then it is only
-        `n_features * (n_splines - 1)`.
     """
 
     def __init__(
