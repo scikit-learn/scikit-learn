@@ -811,20 +811,6 @@ class StratifiedGroupKFold(_BaseKFold):
       there is a small number of groups containing a large number of samples
       the stratification will not be possible and the behavior will be close
       to GroupKFold.
-    * Implementation is based on this kaggle kernel:
-      https://www.kaggle.com/jakubwasikowski/stratified-group-k-fold-cross-validation
-
-      Changelist:
-
-      - Refactored function to a class following scikit-learn KFold interface.
-      - Added heuristic for assigning group to the least populated fold in
-        cases when all other criteria are equal
-      - Swtch from using python ``Counter`` to ``np.unique`` to get class
-        distribution
-      - Added scikit-learn checks for input: checking that target is binary or
-        multiclass, checking passed random state, checking that number of
-        splits is less than number of members in each class, checking that
-        least populated class has more members than there are splits.
 
     See also
     --------
@@ -840,6 +826,21 @@ class StratifiedGroupKFold(_BaseKFold):
                          random_state=random_state)
 
     def _iter_test_indices(self, X, y, groups):
+        # Implementation is based on this kaggle kernel:
+        # https://www.kaggle.com/jakubwasikowski/stratified-group-k-fold-cross-validation
+        # and is a subject to Apache 2.0 License. You may obtain a copy of the
+        # License at http://www.apache.org/licenses/LICENSE-2.0
+        # Changelist:
+        # - Refactored function to a class following scikit-learn KFold
+        #   interface.
+        # - Added heuristic for assigning group to the least populated fold in
+        #   cases when all other criteria are equal
+        # - Swtch from using python ``Counter`` to ``np.unique`` to get class
+        #   distribution
+        # - Added scikit-learn checks for input: checking that target is binary
+        #   or multiclass, checking passed random state, checking that number
+        #   of splits is less than number of members in each class, checking
+        #   that least populated class has more members than there are splits.
         rng = check_random_state(self.random_state)
         y = np.asarray(y)
         type_of_target_y = type_of_target(y)
