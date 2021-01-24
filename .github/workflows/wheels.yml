@@ -7,28 +7,30 @@ on:
     - cron: "42 3 */1 * *"
   push:
     branches:
-      - master
+      - main
       # Release branches
       - "[0-9]+.[0-9]+.X"
   pull_request:
     branches:
-      - master
+      - main
       - "[0-9]+.[0-9]+.X"
-
-env:
-  SCIKIT_LEARN_VERSION: 0.24.dev0
+  # Manual run
+  workflow_dispatch:
 
 jobs:
   # Check whether to build the wheels and the source tarball
   check_build_trigger:
     name: Check build trigger
     runs-on: ubuntu-latest
+    if: github.repository == 'scikit-learn/scikit-learn'
     outputs:
       build: ${{ steps.check_build_trigger.outputs.build }}
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - id: check_build_trigger
         name: Check build trigger
@@ -80,13 +82,13 @@ jobs:
         env:
           CONFTEST_PATH: ${{ github.workspace }}/conftest.py
           CONFTEST_NAME: conftest.py
-          CIBW_ENVIRONMENT: WHEEL_DIRNAME=scikit_learn-$SCIKIT_LEARN_VERSION
-                            OMP_NUM_THREADS=2
+          CIBW_ENVIRONMENT: OMP_NUM_THREADS=2
                             OPENBLAS_NUM_THREADS=2
                             SKLEARN_SKIP_NETWORK_TESTS=1
                             SKLEARN_BUILD_PARALLEL=3
+                            MACOSX_DEPLOYMENT_TARGET=10.13
           CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
-          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: bash build_tools/github/repair_windows_wheels.sh {wheel} {dest_dir} ${{ matrix.bitness }} 
+          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: bash build_tools/github/repair_windows_wheels.sh {wheel} {dest_dir} ${{ matrix.bitness }}
           CIBW_BEFORE_TEST_WINDOWS: bash build_tools/github/build_minimal_windows_image.sh ${{ matrix.python }} ${{ matrix.bitness }}
           CIBW_TEST_REQUIRES: pytest pandas threadpoolctl
           CIBW_TEST_COMMAND: bash {project}/build_tools/github/test_wheels.sh

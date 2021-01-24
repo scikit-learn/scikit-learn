@@ -820,7 +820,7 @@ def test_unknown_categories_nan(insert_missing, Est,
         categorical_features = [1]
 
     if insert_missing:
-        mask = rng.binomial(1, 0.01, size=X.shape).astype(np.bool)
+        mask = rng.binomial(1, 0.01, size=X.shape).astype(bool)
         assert mask.sum() > 0
         X[mask] = np.nan
 
