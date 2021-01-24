@@ -434,7 +434,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                     message_clsname='ColumnTransformer',
                     message=self._log_message(name, idx, len(transformers)))
                 for idx, (name, trans, column, weight) in enumerate(
-                        self._iter(fitted=fitted, replace_strings=True), 1))
+                    transformers, 1))
         except ValueError as e:
             if "Expected 2D array, got 1D array instead" in str(e):
                 raise ValueError(_ERR_MSG_1DCOLUMN) from e
