@@ -325,9 +325,11 @@ def test_make_scorer():
     ('jaccard_weighted', partial(jaccard_score, average='weighted')),
     ('jaccard_macro', partial(jaccard_score, average='macro')),
     ('jaccard_micro', partial(jaccard_score, average='micro')),
-    ('top_k_accuracy', top_k_accuracy_score)])
+    ('top_k_accuracy', top_k_accuracy_score),
+])
 def test_classification_binary_scores(scorer_name, metric):
-    # Test binary classification scorers
+    # check consistency between score and scorer for scores supporting
+    # binary classification.
     X, y = make_blobs(random_state=0, centers=2)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     clf = LinearSVC(random_state=0)
@@ -352,8 +354,11 @@ def test_classification_binary_scores(scorer_name, metric):
     ('recall_micro', partial(recall_score, average='micro')),
     ('jaccard_weighted', partial(jaccard_score, average='weighted')),
     ('jaccard_macro', partial(jaccard_score, average='macro')),
-    ('jaccard_micro', partial(jaccard_score, average='micro'))])
+    ('jaccard_micro', partial(jaccard_score, average='micro')),
+])
 def test_classification_multiclass_scores(scorer_name, metric):
+    # check consistency between score and scorer for scores supporting
+    # multiclass classification.
     X, y = make_classification(
         n_classes=3, n_informative=3, n_samples=30, random_state=0
     )
@@ -367,7 +372,7 @@ def test_classification_multiclass_scores(scorer_name, metric):
     clf.fit(X_train, y_train)
     score = SCORERS[scorer_name](clf, X_test, y_test)
     expected_score = metric(y_test, clf.predict(X_test))
-    assert_almost_equal(score, expected_score)
+    assert score == pytest.approx(expected_score)
 
 
 def test_custom_scorer_pickling():
@@ -381,7 +386,7 @@ def test_custom_scorer_pickling():
     score1 = scorer(clf, X_test, y_test)
     unpickled_scorer = pickle.loads(pickle.dumps(scorer))
     score2 = unpickled_scorer(clf, X_test, y_test)
-    assert_almost_equal(score1, score2)
+    assert score1 == pytest.approx(score2)
 
     # smoke test the repr:
     repr(fbeta_score)
