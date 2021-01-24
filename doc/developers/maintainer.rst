@@ -48,8 +48,8 @@ permissions given to maintainers, which includes:
 
 - *maintainer* role on ``scikit-learn`` projects on ``pypi.org`` and
   ``test.pypi.org``, separately.
-- become a member of the *scikit-learn* team on conda-forge by editing the 
-  ``recipe/meta.yaml`` file on 
+- become a member of the *scikit-learn* team on conda-forge by editing the
+  ``recipe/meta.yaml`` file on
   ``https://github.com/conda-forge/scikit-learn-feedstock``
 
 .. _preparing_a_release_pr:
@@ -77,8 +77,8 @@ branch:
    .. prompt:: bash $
 
      # Assuming upstream is an alias for the main scikit-learn repo:
-     git fetch upstream master
-     git checkout upstream/master
+     git fetch upstream main
+     git checkout upstream/main
      git checkout -b 0.99.X
      git push --set-upstream upstream 0.99.X
 
@@ -98,11 +98,11 @@ in the description of the Pull Request to track progress.
 This PR will be used to push commits related to the release as explained in
 :ref:`making_a_release`.
 
-You can also create a second PR from master and targeting master to increment
+You can also create a second PR from main and targeting main to increment
 the ``__version__`` variable in `sklearn/__init__.py` to increment the dev
 version. This means while we're in the release candidate period, the latest
-stable is two versions behind the master branch, instead of one. In this PR
-targeting master you should also include a new file for the matching version
+stable is two versions behind the main branch, instead of one. In this PR
+targeting main you should also include a new file for the matching version
 under the ``doc/whats_new/`` folder so PRs that target the next version can
 contribute their changelog entries to this file in parallel to the release
 process.
@@ -118,11 +118,11 @@ First, create a branch, **on your own fork** (to release e.g. `0.99.3`):
 
 .. prompt:: bash $
 
-    # assuming master and upstream/master are the same
-    git checkout -b release-0.99.3 master
+    # assuming main and upstream/main are the same
+    git checkout -b release-0.99.3 main
 
 Then, create a PR **to the** `scikit-learn/0.99.X` **branch** (not to
-master!) with all the desired changes:
+main!) with all the desired changes:
 
 .. prompt:: bash $
 
@@ -145,7 +145,7 @@ Making a release
    in :ref:`preparing_a_release_pr` above.
 
 1. Update docs. Note that this is for the final release, not necessarily for
-   the RC releases. These changes should be made in master and cherry-picked
+   the RC releases. These changes should be made in main and cherry-picked
    into the release branch, only before the final release.
 
    - Edit the ``doc/whats_new/v0.99.rst`` file to add release title and list of
@@ -173,7 +173,7 @@ Making a release
 
 3. Trigger the wheel builder with the ``[cd build]`` commit marker using
    the command:
-   
+
    .. prompt:: bash $
 
     git commit --allow-empty -m "Trigger wheel builder workflow: [cd build]"
@@ -288,7 +288,7 @@ Release checklist
 The following GitHub checklist might be helpful in a release PR::
 
     * [ ] update news and what's new date in release branch
-    * [ ] update news and what's new date and sklearn dev0 version in master branch
+    * [ ] update news and what's new date and sklearn dev0 version in main branch
     * [ ] check that the for the release wheels can be built successfully
     * [ ] merge the PR with `[cd build]` commit message to upload wheels to the staging repo
     * [ ] upload the wheels and source tarball to https://test.pypi.org
@@ -363,10 +363,10 @@ deprecation cycle.
 
 To create an experimental module, you can just copy and modify the content of
 `enable_hist_gradient_boosting.py
-<https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/experimental/enable_hist_gradient_boosting.py>`_,
+<https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/experimental/enable_hist_gradient_boosting.py>`_,
 or
 `enable_iterative_imputer.py
-<https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/experimental/enable_iterative_imputer.py>`_.
+<https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/experimental/enable_iterative_imputer.py>`_.
 
 Note that the public import path must be to a public subpackage (like
 ``sklearn/ensemble`` or ``sklearn/impute``), not just a ``.py`` module.
@@ -379,14 +379,14 @@ in the future when the features aren't experimental anymore.
 To avoid type checker (e.g. mypy) errors a direct import of experimental
 estimators should be done in the parent module, protected by the
 ``if typing.TYPE_CHECKING`` check. See `sklearn/ensemble/__init__.py
-<https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/ensemble/__init__.py>`_,
+<https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/ensemble/__init__.py>`_,
 or `sklearn/impute/__init__.py
-<https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/impute/__init__.py>`_
+<https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/impute/__init__.py>`_
 for an example.
 
 Please also write basic tests following those in
 `test_enable_hist_gradient_boosting.py
-<https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/experimental/tests/test_enable_hist_gradient_boosting.py>`_.
+<https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/experimental/tests/test_enable_hist_gradient_boosting.py>`_.
 
 Make sure every user-facing code you write explicitly mentions that the feature
 is experimental, and add a ``# noqa`` comment to avoid pep8-related warnings::
