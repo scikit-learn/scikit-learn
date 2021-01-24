@@ -23,9 +23,11 @@ from ..utils.multiclass import (check_classification_targets,
 
 class NearestCentroid(BaseEstimator, ClassifierMixin):
     """Nearest centroid classifier.
+
     Each class is represented by its centroid, with test samples classified to
     the class with the nearest centroid.
     Read more in the :ref:` >`.
+
     Parameters
     ----------
     metric : string, or callable
@@ -87,6 +89,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
     def fit(self, X, y):
         """
         Fit the NearestCentroid model according to the given training data.
+
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
@@ -101,11 +104,13 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
 
     def partial_fit(self, X, y, classes=None):
         """Incremental fit on a batch of samples.
+
         This method is expected to be called several times consecutively
         on different chunks of a dataset so as to implement out-of-core
         or online learning.
         This is especially useful when the whole dataset is too big to fit in
         memory at once.
+
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
@@ -126,8 +131,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         return self._partial_fit(X, y, classes, _refit=False)
 
     def _partial_fit(self, X, y, classes=None, _refit=False):
-        """
-        Actual implementation of the Nearest Centroid fitting.
+        """Actual implementation of the Nearest Centroid fitting.
 
         Parameters
         ----------
@@ -135,7 +139,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
             Training vector, where n_samples is the number of samples and
             n_features is the number of features.
             Note that centroid shrinking cannot be used with sparse matrices.
-            
+
         y : array, shape = [n_samples]
             Target values (integers)
 
@@ -268,6 +272,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
 
     def predict(self, X):
         """Perform classification on an array of test vectors X.
+
         The predicted class C for each sample in X is returned.
 
         Parameters
@@ -277,7 +282,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         Returns
         -------
         C : array, shape = [n_samples]
-        
+
         Notes
         -----
         If the metric constructor parameter is "precomputed", X is assumed to
