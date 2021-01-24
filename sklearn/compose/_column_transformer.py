@@ -19,6 +19,7 @@ from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
 from ..utils import _safe_indexing
 from ..utils import _get_column_indices
+from ..utils import _determine_key_type
 from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_array, check_is_fitted
 from ..utils.validation import _deprecate_positional_args
@@ -272,7 +273,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 elif _is_empty_column_selection(column):
                     continue
 
-            # Convert columns to strings if possible
+            # Convert remainder columns to strings if possible
             if (remainder_columns_as_strings
                     and self._feature_names_in is not None
                     and name == 'remainder' and column):
@@ -330,6 +331,12 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 "'passthrough', or estimator. '%s' was passed instead" %
                 self.remainder)
 
+        # Make it possible to check for reordered named columns on transform
+        self._has_str_cols = any(_determine_key_type(cols) == 'str'
+                                 for cols in self._columns)
+        if hasattr(X, 'columns'):
+            self._df_columns = X.columns
+
         self._n_features = X.shape[1]
         cols = set(chain(*self._name_to_indices.values()))
         remaining = sorted(set(range(self._n_features)) - cols)
@@ -364,12 +371,12 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                     hasattr(column, '__len__') and not len(column)):
                 continue
             if trans == 'passthrough':
-                if self._feature_names_in is not None:
+                if hasattr(self, '_df_columns'):
                     if ((not isinstance(column, slice))
                             and all(isinstance(col, str) for col in column)):
                         feature_names.extend(column)
                     else:
-                        feature_names.extend(self._feature_names_in[column])
+                        feature_names.extend(self._df_columns[column])
                 else:
                     indices = np.arange(self._n_features)
                     feature_names.extend(['x%d' % i for i in indices[column]])
