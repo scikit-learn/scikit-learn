@@ -42,7 +42,7 @@ def test_initialize_nn_output():
 def test_parameter_checking():
     A = np.ones((2, 2))
     name = 'spam'
-    # FIXME : should be removed in 0.26
+    # FIXME : should be removed in 1.1
     init = 'nndsvda'
     msg = "Invalid solver parameter: got 'spam' instead of one of"
     assert_raise_message(ValueError, msg, NMF(solver=name, init=init).fit, A)
@@ -179,7 +179,7 @@ def test_n_components_greater_n_features():
     # Smoke test for the case of more components than features.
     rng = np.random.mtrand.RandomState(42)
     A = np.abs(rng.randn(30, 10))
-    # FIXME : should be removed in 0.26
+    # FIXME : should be removed in 1.1
     init = 'random'
     NMF(n_components=15, random_state=0, tol=1e-2, init=init).fit(A)
 
@@ -441,7 +441,7 @@ def test_nmf_regularization():
     rng = np.random.mtrand.RandomState(42)
     X = np.abs(rng.randn(n_samples, n_features))
 
-    # FIXME : should be removed in 0.26
+    # FIXME : should be removed in 1.1
     init = 'nndsvda'
     # L1 regularization should increase the number of zeros
     l1_ratio = 1.
@@ -552,7 +552,7 @@ def test_nmf_dtype_match(dtype_in, dtype_out, solver, regularization):
     # Check that NMF preserves dtype (float32 and float64)
     X = np.random.RandomState(0).randn(20, 15).astype(dtype_in, copy=False)
     np.abs(X, out=X)
-    # FIXME : should be removed in 0.26
+    # FIXME : should be removed in 1.1
     init = 'nndsvda'
     nmf = NMF(solver=solver, regularization=regularization, init=init)
 
@@ -568,7 +568,7 @@ def test_nmf_float32_float64_consistency(solver, regularization):
     # Check that the result of NMF is the same between float32 and float64
     X = np.random.RandomState(0).randn(50, 7)
     np.abs(X, out=X)
-    # FIXME : should be removed in 0.26
+    # FIXME : should be removed in 1.1
     init = 'nndsvda'
     nmf32 = NMF(solver=solver, regularization=regularization, random_state=0,
                 init=init)
@@ -595,13 +595,13 @@ def test_nmf_custom_init_dtype_error():
         non_negative_factorization(X, H=H, update_H=False)
 
 
-# FIXME : should be removed in 0.26
+# FIXME : should be removed in 1.1
 def test_init_default_deprecation():
     # Test FutureWarning on init default
-    msg = ("The 'init' value, when 'init=None' and "
-           "n_components is less than n_samples and "
-           "n_features, will be changed from 'nndsvd' to "
-           "'nndsvda' in 0.26.")
+    msg = (r"The 'init' value, when 'init=None' and "
+           r"n_components is less than n_samples and "
+           r"n_features, will be changed from 'nndsvd' to "
+           r"'nndsvda' in 1.1 \(renaming of 0.26\).")
     rng = np.random.mtrand.RandomState(42)
     A = np.abs(rng.randn(6, 5))
     with pytest.warns(FutureWarning, match=msg):
