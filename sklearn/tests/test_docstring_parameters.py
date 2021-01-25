@@ -212,11 +212,11 @@ def test_fit_docstring_attributes(name, Estimator):
     if 'PLS' in Estimator.__name__ or 'CCA' in Estimator.__name__:
         est.n_components = 1  # default = 2 is invalid for single target.
 
-    # TO BE REMOVED for v0.25 (avoid FutureWarning)
+    # FIXME: TO BE REMOVED for 1.0 (avoid FutureWarning)
     if Estimator.__name__ == 'AffinityPropagation':
         est.random_state = 63
 
-    # TO BE REMOVED for v0.26 (avoid FutureWarning)
+    # FIXME: TO BE REMOVED for 1.1 (avoid FutureWarning)
     if Estimator.__name__ == 'NMF':
         est.init = 'nndsvda'
 
@@ -235,8 +235,8 @@ def test_fit_docstring_attributes(name, Estimator):
         est.fit(X, y)
 
     skipped_attributes = {'n_features_in_',
-                          'x_scores_',  # For PLS, TODO remove in 0.26
-                          'y_scores_'}  # For PLS, TODO remove in 0.26
+                          'x_scores_',  # For PLS, TODO remove in 1.1
+                          'y_scores_'}  # For PLS, TODO remove in 1.1
 
     for attr in attributes:
         if attr.name in skipped_attributes:

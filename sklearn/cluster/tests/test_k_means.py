@@ -261,7 +261,7 @@ def _check_fitted_model(km):
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
 def test_all_init(Estimator, data, init):
     # Check KMeans and MiniBatchKMeans with all possible init.
-    n_init = 10 if type(init) is str else 1
+    n_init = 10 if isinstance(init, str) else 1
     km = Estimator(init=init, n_clusters=n_clusters, random_state=42,
                    n_init=n_init).fit(data)
     _check_fitted_model(km)
@@ -272,7 +272,9 @@ def test_all_init(Estimator, data, init):
                          ids=["random", "k-means++", "ndarray", "callable"])
 def test_minibatch_kmeans_partial_fit_init(init):
     # Check MiniBatchKMeans init with partial_fit
-    km = MiniBatchKMeans(init=init, n_clusters=n_clusters, random_state=0)
+    n_init = 10 if isinstance(init, str) else 1
+    km = MiniBatchKMeans(init=init, n_clusters=n_clusters, random_state=0,
+                         n_init=n_init)
     for i in range(100):
         # "random" init requires many batches to recover the true labels.
         km.partial_fit(X)
@@ -588,7 +590,7 @@ def test_predict(Estimator, algorithm, init, dtype, array_constr):
 def test_predict_dense_sparse(Estimator, init):
     # check that models trained on sparse input also works for dense input at
     # predict time and vice versa.
-    n_init = 10 if type(init) is str else 1
+    n_init = 10 if isinstance(init, str) else 1
     km = Estimator(n_clusters=n_clusters, init=init, n_init=n_init,
                    random_state=0)
 
@@ -852,9 +854,9 @@ def test_result_of_kmeans_equal_in_diff_n_threads():
 
 @pytest.mark.parametrize("precompute_distances", ["auto", False, True])
 def test_precompute_distance_deprecated(precompute_distances):
-    # FIXME: remove in 0.25
+    # FIXME: remove in 1.0
     depr_msg = ("'precompute_distances' was deprecated in version 0.23 and "
-                "will be removed in 0.25.")
+                "will be removed in 1.0")
     X, _ = make_blobs(n_samples=10, n_features=2, centers=2, random_state=0)
     kmeans = KMeans(n_clusters=2, n_init=1, init='random', random_state=0,
                     precompute_distances=precompute_distances)
@@ -865,9 +867,9 @@ def test_precompute_distance_deprecated(precompute_distances):
 
 @pytest.mark.parametrize("n_jobs", [None, 1])
 def test_n_jobs_deprecated(n_jobs):
-    # FIXME: remove in 0.25
+    # FIXME: remove in 1.0
     depr_msg = ("'n_jobs' was deprecated in version 0.23 and will be removed "
-                "in 0.25.")
+                "in 1.0")
     X, _ = make_blobs(n_samples=10, n_features=2, centers=2, random_state=0)
     kmeans = KMeans(n_clusters=2, n_init=1, init='random', random_state=0,
                     n_jobs=n_jobs)
@@ -879,9 +881,9 @@ def test_n_jobs_deprecated(n_jobs):
 @pytest.mark.parametrize("attr", ["counts_", "init_size_", "random_state_"])
 def test_minibatch_kmeans_deprecated_attributes(attr):
     # check that we raise a deprecation warning when accessing `init_size_`
-    # FIXME: remove in 0.26
+    # FIXME: remove in 1.1
     depr_msg = (f"The attribute '{attr}' is deprecated in 0.24 and will be "
-                f"removed in 0.26.")
+                f"removed in 1.1")
     km = MiniBatchKMeans(n_clusters=2, n_init=1, init='random', random_state=0)
     km.fit(X)
 
@@ -1005,8 +1007,10 @@ def test_sample_weight_unchanged(Estimator):
 def test_wrong_params(Estimator, param, match):
     # Check that error are raised with clear error message when wrong values
     # are passed for the parameters
+    # Set n_init=1 by default to avoid warning with precomputed init
+    km = Estimator(n_init=1)
     with pytest.raises(ValueError, match=match):
-        Estimator(**param).fit(X)
+        km.set_params(**param).fit(X)
 
 
 @pytest.mark.parametrize("param, match", [
