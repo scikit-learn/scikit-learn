@@ -15,7 +15,7 @@ IF "%PYTHON_ARCH%"=="64" (
 
     call activate %VIRTUALENV%
 
-    pip install threadpoolctl typing-extensions
+    pip install threadpoolctl
 
     IF "%PYTEST_VERSION%"=="*" (
         pip install pytest
@@ -23,7 +23,7 @@ IF "%PYTHON_ARCH%"=="64" (
         pip install pytest==%PYTEST_VERSION%
     )
 ) else (
-    pip install numpy scipy cython pytest wheel pillow joblib threadpoolctl typing-extensions
+    pip install numpy scipy cython pytest wheel pillow joblib threadpoolctl
 )
 
 IF "%PYTEST_XDIST%" == "true" (
