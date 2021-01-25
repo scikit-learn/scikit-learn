@@ -234,7 +234,9 @@ def test_nmf_sparse_input(Estimator, solver, beta_loss, regularization):
     A[:, 2 * np.arange(5)] = 0
     A_sparse = csc_matrix(A)
 
-    est1 = Estimator(solver=solver, n_components=5, init='random',
+    init = 'nndsvd'  # FIXME : should be removed in 1.1
+
+    est1 = Estimator(solver=solver, n_components=5, init=init,
                      regularization=regularization, random_state=0,
                      beta_loss=beta_loss)
     est2 = clone(est1)
@@ -244,8 +246,8 @@ def test_nmf_sparse_input(Estimator, solver, beta_loss, regularization):
     H1 = est1.components_
     H2 = est2.components_
 
-    assert_array_almost_equal(W1, W2)
-    assert_array_almost_equal(H1, H2)
+    assert_array_almost_equal(W1, W2, decimal=4)
+    assert_array_almost_equal(H1, H2, decimal=4)
 
 
 @pytest.mark.parametrize(['Estimator', 'solver', 'beta_loss'],
@@ -258,8 +260,10 @@ def test_nmf_sparse_transform(Estimator, solver, beta_loss):
     A[1, 1] = 0
     A = csc_matrix(A)
 
+    init = 'nndsvd'  # FIXME : should be removed in 1.1
+
     model = Estimator(solver=solver, random_state=0, n_components=2,
-                      beta_loss=beta_loss, max_iter=400, init='nndsvd')
+                      beta_loss=beta_loss, max_iter=400, init=init)
     A_fit_tr = model.fit_transform(A)
     A_tr = model.transform(A)
     assert_array_almost_equal(A_fit_tr, A_tr, decimal=4)
@@ -636,7 +640,7 @@ def test_nmf_float32_float64_consistency(Estimator, solver,
                       random_state=0, init=init, beta_loss=beta_loss)
     W64 = nmf64.fit_transform(X)
 
-    assert_allclose(W32, W64, rtol=1e-5, atol=1e-4)
+    assert_allclose(W32, W64, rtol=1e-6, atol=1e-5)
 
 
 @pytest.mark.parametrize('Estimator', [NMF, MiniBatchNMF])
@@ -708,38 +712,6 @@ def test_minibatch_nmf_partial_fit():
     assert mbnmf1.n_iter_ == mbnmf2.n_iter_
     assert_array_almost_equal(mbnmf1.components_, mbnmf2.components_,
                               decimal=7)
-
-
-def test_minibatch_nmf_auxiliary_matrices_and_iteroffset():
-    # Test that auxiliary matrix are unmodified when update_H is False
-    # Test iter_offset output
-    rng = np.random.mtrand.RandomState(42)
-    X = np.abs(rng.randn(48, 5))
-
-    beta_loss = 'itakura-saito'
-
-    W1, H1, n_iter, A1, B1, iter_offset = non_negative_factorization(
-        X, init='nndsvdar', solver='mu',
-        beta_loss=beta_loss,
-        random_state=1, tol=1e-2, batch_size=48, max_iter=1)
-
-    assert iter_offset == 1
-
-    A = A1.copy()
-    B = B1.copy()
-
-    delta_H, A2, B2 = nmf._multiplicative_update_h(
-        X, W1, H1, A1, B1, 0, 0, 0, True, 1, 1
-    )
-
-    assert_array_equal(A, A2)
-    assert_array_equal(B, B2)
-
-    delta_H, A3, B3 = nmf._multiplicative_update_h(
-        X, W1, H1, A1, B1, 0, 0, 0, False, 1, 1
-    )
-
-    assert np.sum((A-A3)**2., axis=(0, 1)) > 1e-3
 
 
 # FIXME : should be removed in 1.1
