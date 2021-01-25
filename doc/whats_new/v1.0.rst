@@ -59,6 +59,13 @@ Changelog
 - |Fix| Fixes incorrect multiple data-conversion warnings when clustering
   boolean data. :pr:`19046` by :user:`Surya Prakash <jdsurya>`.
 
+:mod:`sklearn.compose`
+......................
+
+- |Enhancement| :meth:`compose.ColumnTransformer.transform` now only requires
+  non-dropped columns to appear, regardless of the order. :pr:`19263` by
+  `Thomas Fan`_
+
 :mod:`sklearn.feature_extraction`
 .................................
 
