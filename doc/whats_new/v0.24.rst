@@ -12,6 +12,15 @@ Version 0.24.2
 Changelog
 ---------
 
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Samples with zero `sample_weight` values do not affect the results
+  from :func:`metrics.det_curve`, :func:`metrics.precision_recall_curve`
+  and :func:`metrics.roc_curve`.
+  :pr:`18328` by :user:`Albert Villanova del Moral <albertvillanova>` and
+  :user:`Alonso Silva Allende <alonsosilvaallende>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
@@ -589,12 +598,6 @@ Changelog
   ``y_true`` is missing some labels that are provided explictly in the
   ``labels`` parameter.
   :pr:`17935` by :user:`Cary Goltermann <Ultramann>`.
-
-- |Fix| Samples with zero `sample_weight` values do not affect the results
-  from :func:`metrics.det_curve`, :func:`metrics.precision_recall_curve`
-  and :func:`metrics.roc_curve`.
-  :pr:`18328` by :user:`Albert Villanova del Moral <albertvillanova>` and
-  :user:`Alonso Silva Allende <alonsosilvaallende>`.
 
 - |Fix| Fix scorers that accept a pos_label parameter and compute their metrics
   from values returned by `decision_function` or `predict_proba`. Previously,
