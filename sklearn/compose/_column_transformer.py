@@ -277,12 +277,12 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             if (column_as_strings
                     and self._only_str_columns
                     and self._feature_names_in is not None):
-                column_is_str = isinstance(column, str)
+                column_is_scalar = np.isscalar(column)
 
                 indices = self._name_to_indices[name]
                 column = self._feature_names_in[indices]
 
-                if column_is_str:
+                if column_is_scalar:
                     # selection is done with one dimension
                     column = column[0]
 
