@@ -41,6 +41,13 @@ from sklearn.linear_model import LogisticRegression
 ###############################################################################
 # Utilities for testing
 
+CURVE_FUNCS = [
+    det_curve,
+    precision_recall_curve,
+    roc_curve,
+]
+
+
 def make_prediction(dataset=None, binary=False):
     """Make some classification predictions on a toy dataset using a SVC
 
@@ -668,11 +675,7 @@ def test_auc_score_non_binary_class():
             roc_auc_score(y_true, y_pred)
 
 
-@pytest.mark.parametrize("curve_func", [
-    det_curve,
-    precision_recall_curve,
-    roc_curve,
-])
+@pytest.mark.parametrize("curve_func", CURVE_FUNCS)
 def test_binary_clf_curve_multiclass_error(curve_func):
     rng = check_random_state(404)
     y_true = rng.randint(0, 3, size=10)
@@ -682,11 +685,7 @@ def test_binary_clf_curve_multiclass_error(curve_func):
         curve_func(y_true, y_pred)
 
 
-@pytest.mark.parametrize("curve_func", [
-    det_curve,
-    precision_recall_curve,
-    roc_curve,
-])
+@pytest.mark.parametrize("curve_func", CURVE_FUNCS)
 def test_binary_clf_curve_implicit_pos_label(curve_func):
     # Check that using string class labels raises an informative
     # error for any supported string dtype:
@@ -718,11 +717,7 @@ def test_binary_clf_curve_implicit_pos_label(curve_func):
         np.testing.assert_allclose(int_curve_part, float_curve_part)
 
 
-@pytest.mark.parametrize("curve_func", [
-    det_curve,
-    precision_recall_curve,
-    roc_curve,
-])
+@pytest.mark.parametrize("curve_func", CURVE_FUNCS)
 def test_binary_clf_curve_zero_sample_weight(curve_func):
     y_true = [0, 0, 1, 1, 1]
     y_score = [0.1, 0.2, 0.3, 0.4, 0.5]
