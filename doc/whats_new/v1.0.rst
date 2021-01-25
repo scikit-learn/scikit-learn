@@ -66,6 +66,16 @@ Changelog
   non-dropped columns to appear, regardless of the order. :pr:`19263` by
   `Thomas Fan`_
 
+:mod:`sklearn.ensemble`
+.......................
+
+- |Fix| Do not allow to compute out-of-bag (OOB) score in
+  :class:`ensemble.RandomForestClassifier` and
+  :class:`ensemble.ExtraTreesClassifier` with multiclass-multioutput target
+  since scikit-learn does not provide any metric supporting this type of
+  target. Additional private refactoring was performed.
+  :pr:`19162` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
