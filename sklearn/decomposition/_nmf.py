@@ -948,8 +948,8 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
             # update W
             # H_sum, HHt and XHt are saved and reused if not update_H
             if AW is not None and AW.shape[0] > W[slice].shape[0]:
-                AW = AW[0:W[slice].shape[0],:]
-                BW = BW[0:W[slice].shape[0],:]
+                AW = AW[0:W[slice].shape[0] , :]
+                BW = BW[0:W[slice].shape[0] , :]
             delta_W, AW, BW, H_sum, HHt, XHt = _multiplicative_update_w(
                 X[slice], W[slice], H, AW, BW, beta_loss, l1_reg_W, l2_reg_W,
                 single_batch, gamma, rho, H_sum, HHt, XHt, update_H)
