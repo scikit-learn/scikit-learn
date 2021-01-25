@@ -1415,6 +1415,7 @@ details.
    preprocessing.PowerTransformer
    preprocessing.QuantileTransformer
    preprocessing.RobustScaler
+   preprocessing.SplineTransformer
    preprocessing.StandardScaler
 
 .. autosummary::
