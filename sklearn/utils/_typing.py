@@ -1,58 +1,101 @@
 import inspect
 import numbers
 import typing
-
-from typing import TYPE_CHECKING
 from typing import Union
-from typing import Any
+from typing import TypeVar
 
 import numpy as np
 
-RandomState = Union[int, np.random.RandomState, None]
 
-if TYPE_CHECKING:
-    from typing_extensions import Literal  # type: ignore  # noqa
+try:
+    import typing_extensions  # noqa
+
+    TYPING_EXTENSION_INSTALLED = True
+except ImportError:
+    TYPING_EXTENSION_INSTALLED = False
+
+
+if typing.TYPE_CHECKING or TYPING_EXTENSION_INSTALLED:
+    from typing_extensions import Literal  # noqa
 else:
-    Literal = None
+
+    class _SimpleLiteral:
+        def __getitem__(self, values):
+            return typing.Any
+
+    Literal = _SimpleLiteral()
 
 
-def _get_annotation_class_name(annotation):
-    """Get class name for annnotation"""
-    if annotation is None:
-        return 'None'
-    elif annotation is Any:
-        return 'Any'
+ArrayLike = TypeVar("ArrayLike")
+NDArray = TypeVar("NDArray")
+EstimatorType = TypeVar("EstimatorType")
+JoblibMemory = TypeVar("JoblibMemory")
+RandomStateType = Union[int, np.random.RandomState, None]
+MemoryType = Union[str, JoblibMemory, None]
 
-    if getattr(annotation, '__qualname__', None):
+
+def get_annotation_class_name(annotation) -> str:
+    # Special cases
+    if annotation is None or annotation is type(None):  # noqa
+        return "None"
+
+    if getattr(annotation, "__qualname__", None):
         return annotation.__qualname__
-    elif getattr(annotation, '_name', None):
-        # generic for >= 3.7
+    elif getattr(
+        annotation, "_name", None
+    ):  # Required for generic aliases on Python 3.7+
         return annotation._name
 
-    origin = getattr(annotation, '__origin__', None)
+    origin = getattr(annotation, "__origin__", None)
     if origin:
-        return _get_annotation_class_name(annotation.__origin__)
+        if getattr(origin, "__qualname__", None):
+            # Required for Protocol subclasses
+            return origin.__qualname__
+        elif getattr(origin, "_name", None):
+            # Required for Union on Python 3.7+
+            return origin._name
+        else:
+            return origin.__class__.__qualname__.lstrip(
+                "_"
+            )  # Required for Union on Python < 3.7
 
-    # generic for < 3.7 (Literal)
-    return annotation.__class__.__qualname__.lstrip('_')
+    annotation_cls = (annotation
+                      if inspect.isclass(annotation) else annotation.__class__)
+    return annotation_cls.__qualname__.lstrip("_")
 
 
-def _format_docstring_annotation(annotation):
+def format_docstring_annotation(annotation):
     """Convert annotation to docstring."""
-    class_name = _get_annotation_class_name(annotation)
 
-    if class_name == 'BaseEstimator':
-        return 'estimator instance'
-    elif class_name == 'NoneType':
-        return 'None'
-    elif class_name == 'RandomState':
-        return 'RandomState instance'
+    # handle some annotations directly
+    if annotation == np.random.RandomState:
+        return "RandomState instance"
+
+    class_name = get_annotation_class_name(annotation)
+
+    if class_name == "None":
+        return "None"
+    elif class_name == "TypeVar":
+        name = annotation.__name__
+        if name == "EstimatorType":
+            return "estimator instance"
+        elif name == "ArrayLike":
+            return "array-like"
+        elif name == "NDArray":
+            return "ndarray"
+        elif name == "JoblibMemory":
+            return "object with the joblib.Memory interface"
+        else:
+            raise ValueError(f"Unrecognized TypeVar: {annotation}")
+
     elif class_name == 'Union':
-        values = [_format_docstring_annotation(t) for t in annotation.__args__]
+        values = [format_docstring_annotation(t)
+                  for t in annotation.__args__]
         if len(values) == 2:
             return ' or '.join(values)
         first = ', '.join(values[:-1])
         return f'{first} or {values[-1]}'
+
     elif class_name == 'Literal':
         if hasattr(annotation, '__values__'):
             # For Python == 3.6 support
@@ -64,8 +107,9 @@ def _format_docstring_annotation(annotation):
             return items[0]
         values = ', '.join(items)
         return f'{{{values}}}'
+
     elif class_name == 'List':
-        values = ', '.join(_format_docstring_annotation(t)
+        values = ', '.join(format_docstring_annotation(t)
                            for t in annotation.__args__)
         return f'list of {values}'
 
@@ -90,8 +134,7 @@ def get_docstring_annotations(obj):
     if not hasattr(obj, '__annotations__'):
         return {}
 
-    from typing_extensions import Literal
-    annotations = typing.get_type_hints(obj, {'Literal': Literal})
+    annotations = typing.get_type_hints(obj)
     # get defaults
     params = inspect.signature(obj).parameters
     defaults = {p: v.default for p, v in params.items()
@@ -99,7 +142,7 @@ def get_docstring_annotations(obj):
 
     output = {}
     for name, annotation in annotations.items():
-        anno = _format_docstring_annotation(annotation)
+        anno = format_docstring_annotation(annotation)
         if name in defaults:
             default = defaults[name]
             if (isinstance(default, numbers.Real) and

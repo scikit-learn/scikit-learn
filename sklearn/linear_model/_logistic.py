@@ -20,7 +20,6 @@ from scipy import optimize, sparse
 from scipy.special import expit, logsumexp
 from joblib import Parallel, effective_n_jobs
 
-from ..utils._typing import RandomState
 from ._base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
 from ._sag import sag_solver
 from ..preprocessing import LabelEncoder, LabelBinarizer
@@ -36,6 +35,7 @@ from ..utils.validation import _deprecate_positional_args
 from ..utils.multiclass import check_classification_targets
 from ..utils.fixes import _joblib_parallel_args
 from ..utils._typing import Literal
+from ..utils._typing import RandomStateType
 from ..utils.fixes import delayed
 from ..model_selection import check_cv
 from ..metrics import get_scorer
@@ -1255,26 +1255,21 @@ class LogisticRegression(LinearClassifierMixin,
     >>> clf.score(X, y)
     0.97...
     """
-    classes_: np.ndarray
-    coef_: np.ndarray
-    intercept_: np.ndarray
-    n_iter_: np.ndarray
-
     @_deprecate_positional_args
     def __init__(self,
-                 penalty: "Literal['l1', 'l2', 'elasticnet', 'none']" = 'l2',
+                 penalty: Literal["l1", "l2", "elasticnet", "none"] = "l2",
                  *,
                  dual: bool = False,
                  tol: float = 1e-4,
                  C: float = 1.0,
                  fit_intercept: bool = True,
                  intercept_scaling: float = 1,
-                 class_weight: Union[dict, "Literal['balanced']"] = None,
-                 random_state: RandomState = None,
-                 solver: "Literal['newton-cg', 'lbfgs', 'liblinear', 'sag', "
-                         "'saga']" = 'lbfgs',
+                 class_weight: Union[dict, Literal["balanced"]] = None,
+                 random_state: RandomStateType = None,
+                 solver: Literal["newton-cg", "lbfgs", "liblinear", "sag",
+                                 "saga"] = "lbfgs",
                  max_iter: int = 100,
-                 multi_class: "Literal['auto', 'ovr', 'multinomial']" = 'auto',
+                 multi_class: Literal["auto", "ovr", "multinomial"] = "auto",
                  verbose: int = 0,
                  warm_start: bool = False,
                  n_jobs: Optional[int] = None,
