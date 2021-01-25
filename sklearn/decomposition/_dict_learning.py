@@ -488,10 +488,12 @@ def dict_learning(X, n_components, *, alpha, max_iter=100, tol=1e-8,
         for more details.
 
     dict_init : ndarray of shape (n_components, n_features), default=None
-        Initial value for the dictionary for warm restart scenarios.
+        Initial value for the dictionary for warm restart scenarios. Only used
+        if `code_init` and `dict_init` are not None.
 
     code_init : ndarray of shape (n_samples, n_components), default=None
-        Initial value for the sparse code for warm restart scenarios.
+        Initial value for the sparse code for warm restart scenarios. Only used
+        if `code_init` and `dict_init` are not None.
 
     callback : callable, default=None
         Callable that gets invoked every five iterations
@@ -1169,10 +1171,10 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     fit_algorithm : {'lars', 'cd'}, default='lars'
         * `'lars'`: uses the least angle regression method to solve the lasso
-           problem (`linear_model.lars_path`);
+          problem (:func:`~sklearn.linear_model.lars_path`);
         * `'cd'`: uses the coordinate descent method to compute the
-          Lasso solution (`linear_model.Lasso`). Lars will be faster if
-          the estimated components are sparse.
+          Lasso solution (:class:`~sklearn.linear_model.Lasso`). Lars will be
+          faster if the estimated components are sparse.
 
         .. versionadded:: 0.17
            *cd* coordinate descent method to improve speed.
@@ -1182,11 +1184,11 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         Algorithm used to transform the data:
 
         - `'lars'`: uses the least angle regression method
-          (`linear_model.lars_path`);
+          (:func:`~sklearn.linear_model.lars_path`);
         - `'lasso_lars'`: uses Lars to compute the Lasso solution.
         - `'lasso_cd'`: uses the coordinate descent method to compute the
-          Lasso solution (`linear_model.Lasso`). `'lasso_lars'` will be faster
-          if the estimated components are sparse.
+          Lasso solution (:class:`~sklearn.linear_model.Lasso`). `'lasso_lars'`
+          will be faster if the estimated components are sparse.
         - `'omp'`: uses orthogonal matching pursuit to estimate the sparse
           solution.
         - `'threshold'`: squashes to zero all coefficients less than alpha from
@@ -1215,10 +1217,12 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         for more details.
 
     code_init : ndarray of shape (n_samples, n_components), default=None
-        Initial value for the code, for warm restart.
+        Initial value for the code, for warm restart. Only used if `code_init`
+        and `dict_init` are not None.
 
     dict_init : ndarray of shape (n_components, n_features), default=None
-        Initial values for the dictionary, for warm restart.
+        Initial values for the dictionary, for warm restart. Only used if
+        `code_init` and `dict_init` are not None.
 
     verbose : bool, default=False
         To control the verbosity of the procedure.
@@ -1414,7 +1418,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     shuffle : bool, default=True
         Whether to shuffle the samples before forming batches.
 
-    dict_init : nbarray of shape (n_components, n_features), default=None
+    dict_init : ndarray of shape (n_components, n_features), default=None
         initial value of the dictionary for warm restart scenarios
 
     transform_algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', \

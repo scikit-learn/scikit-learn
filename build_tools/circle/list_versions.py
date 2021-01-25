@@ -34,12 +34,12 @@ def human_readable_data_quantity(quantity, multiple=1024):
 
 
 def get_file_extension(version):
-    if version == 'dev':
+    if 'dev' in version:
         # The 'dev' branch should be explictly handled
         return 'zip'
 
     current_version = LooseVersion(version)
-    min_zip_version = LooseVersion('1.0.0')
+    min_zip_version = LooseVersion('0.24')
 
     return 'zip' if current_version >= min_zip_version else 'pdf'
 

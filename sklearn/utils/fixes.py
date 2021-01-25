@@ -220,3 +220,51 @@ class _FuncWrapper:
     def __call__(self, *args, **kwargs):
         with config_context(**self.config):
             return self.function(*args, **kwargs)
+
+
+def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
+             axis=0):
+    """Implements a simplified linspace function as of numpy verion >= 1.16.
+
+    As of numpy 1.16, the arguments start and stop can be array-like and
+    there is an optional argument `axis`.
+    For simplicity, we only allow 1d array-like to be passed to start and stop.
+    See: https://github.com/numpy/numpy/pull/12388 and numpy 1.16 release
+    notes about start and stop arrays for linspace logspace and geomspace.
+
+    Returns
+    -------
+    out : ndarray of shape (num, n_start) or (num,)
+        The output array with `n_start=start.shape[0]` columns.
+    """
+    if np_version < parse_version('1.16'):
+        start = np.asanyarray(start) * 1.0
+        stop = np.asanyarray(stop) * 1.0
+        dt = np.result_type(start, stop, float(num))
+        if dtype is None:
+            dtype = dt
+
+        if start.ndim == 0 == stop.ndim:
+            return np.linspace(start=start, stop=stop, num=num,
+                               endpoint=endpoint, retstep=retstep, dtype=dtype)
+
+        if start.ndim != 1 or stop.ndim != 1 or start.shape != stop.shape:
+            raise ValueError("start and stop must be 1d array-like of same"
+                             " shape.")
+        n_start = start.shape[0]
+        out = np.empty((num, n_start), dtype=dtype)
+        step = np.empty(n_start, dtype=np.float)
+        for i in range(n_start):
+            out[:, i], step[i] = np.linspace(start=start[i], stop=stop[i],
+                                             num=num, endpoint=endpoint,
+                                             retstep=True, dtype=dtype)
+        if axis != 0:
+            out = np.moveaxis(out, 0, axis)
+
+        if retstep:
+            return out, step
+        else:
+            return out
+    else:
+        return np.linspace(start=start, stop=stop, num=num, endpoint=endpoint,
+                           retstep=retstep, dtype=dtype, axis=axis)

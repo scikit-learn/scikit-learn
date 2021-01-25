@@ -7,12 +7,12 @@ on:
     - cron: "42 3 */1 * *"
   push:
     branches:
-      - master
+      - main
       # Release branches
       - "[0-9]+.[0-9]+.X"
   pull_request:
     branches:
-      - master
+      - main
       - "[0-9]+.[0-9]+.X"
   # Manual run
   workflow_dispatch:
@@ -38,7 +38,7 @@ jobs:
 
   # Build the wheels for Linux, Windows and macOS for Python 3.6 and newer
   build_wheels:
-    name: Build wheel for cp${{ matrix.python }}-${{ matrix.platform_id }}
+    name: Build wheel for cp${{ matrix.python }}-${{ matrix.platform_id }}-${{ matrix.manylinux_image }}
     runs-on: ${{ matrix.os }}
     needs: check_build_trigger
     if: needs.check_build_trigger.outputs.build
@@ -50,6 +50,7 @@ jobs:
         os: [windows-latest, ubuntu-latest, macos-latest]
         python: [36, 37, 38, 39]
         bitness: [32, 64]
+        manylinux_image: [manylinux1, manylinux2010]
         include:
           # Run 32 and 64 bit version in parallel for Linux and Windows
           - os: windows-latest
@@ -70,6 +71,12 @@ jobs:
         exclude:
           - os: macos-latest
             bitness: 32
+          # Remove manylinux1 from the windows and osx build matrix since
+          # manylinux_image is not used for these platforms
+          - os: windows-latest
+            manylinux_image: manylinux1
+          - os: macos-latest
+            manylinux_image: manylinux1
 
     steps:
       - name: Checkout scikit-learn
@@ -88,6 +95,8 @@ jobs:
                             SKLEARN_BUILD_PARALLEL=3
                             MACOSX_DEPLOYMENT_TARGET=10.13
           CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
+          CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.manylinux_image }}
+          CIBW_MANYLINUX_I686_IMAGE: ${{ matrix.manylinux_image }}
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: bash build_tools/github/repair_windows_wheels.sh {wheel} {dest_dir} ${{ matrix.bitness }}
           CIBW_BEFORE_TEST_WINDOWS: bash build_tools/github/build_minimal_windows_image.sh ${{ matrix.python }} ${{ matrix.bitness }}
           CIBW_TEST_REQUIRES: pytest pandas threadpoolctl

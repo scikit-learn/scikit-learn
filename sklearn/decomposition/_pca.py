@@ -130,7 +130,7 @@ class PCA(_BasePCA):
 
     Parameters
     ----------
-    n_components : int, float or str, default=None
+    n_components : int, float or 'mle', default=None
         Number of components to keep.
         if n_components is not set all components are kept::
 
