@@ -633,11 +633,12 @@ def test_nmf_float32_float64_consistency(Estimator, solver,
     X = np.random.RandomState(0).randn(50, 7)
     np.abs(X, out=X)
     init = 'nndsvda'  # FIXME : should be removed in 1.1
+    tol = 1e-6
     nmf32 = Estimator(solver=solver, regularization=regularization,
-                      random_state=0, init=init, beta_loss=beta_loss)
+                      random_state=0, init=init, beta_loss=beta_loss, tol=tol)
     W32 = nmf32.fit_transform(X.astype(np.float32))
     nmf64 = Estimator(solver=solver, regularization=regularization,
-                      random_state=0, init=init, beta_loss=beta_loss)
+                      random_state=0, init=init, beta_loss=beta_loss, tol=tol)
     W64 = nmf64.fit_transform(X)
 
     assert_allclose(W32, W64, rtol=1e-6, atol=1e-5)
