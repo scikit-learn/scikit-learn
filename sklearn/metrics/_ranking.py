@@ -817,7 +817,6 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None,
     array([0.35, 0.4 , 0.8 ])
 
     """
-
     fps, tps, thresholds = _binary_clf_curve(y_true, probas_pred,
                                              pos_label=pos_label,
                                              sample_weight=sample_weight)
