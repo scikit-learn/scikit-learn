@@ -1737,7 +1737,7 @@ Ratio Criterion - can be used to evaluate the model, where a higher
 Calinski-Harabasz score relates to a model with better defined clusters.
 
 The index is the ratio of the sum of between-clusters dispersion and of
-inter-cluster dispersion for all clusters (where dispersion is defined as the
+within-cluster dispersion for all clusters (where dispersion is defined as the
 sum of distances squared):
 
   >>> from sklearn import metrics
