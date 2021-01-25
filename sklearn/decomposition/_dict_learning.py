@@ -1785,7 +1785,10 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             X, dictionary, algorithm=self._fit_algorithm,
             alpha=self.alpha, n_jobs=self.n_jobs, check_input=False,
             positive=self.positive_code, max_iter=self.transform_max_iter,
-            verbose=self.verbose).T
+            verbose=self.verbose)
+
+        batch_cost = (0.5 * ((X - code @ dictionary)**2).sum()
+                      + self.alpha * np.sum(np.abs(code))) / batch_size
 
         # Update inner stats
         self._update_inner_stats(X, code, batch_size, step)
@@ -1793,13 +1796,11 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         # Update dictionary
         A, B = self._inner_stats
 
-        _, self.used_atoms = _update_dict(dictionary.T, B, A, verbose=self.verbose,
-                                          random_state=random_state, positive=self.positive_dict)
+        _update_dict(dictionary, X, code, A, B, verbose=self.verbose,
+                     random_state=random_state, positive=self.positive_dict)
 
-        print("D")
-        print(dictionary)
-        batch_cost = (0.5 * ((X - code.T.dot(dictionary))**2).sum()
-                      + self.alpha * np.sum(np.abs(code))) / batch_size
+        batch_cost2 = (0.5 * ((X - code @ dictionary)**2).sum()
+                       + self.alpha * np.sum(np.abs(code))) / batch_size
 
         # from functools import partial
         # se = partial(sparse_encode, dictionary=dictionary, algorithm=self._fit_algorithm,
@@ -1823,16 +1824,17 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         A, B = self._inner_stats
         A *= beta
-        A += np.dot(code, code.T)
+        A += np.dot(code.T, code)
         B *= beta
-        B += np.dot(X.T, code.T)
+        B += np.dot(X.T, code)
 
     def _minibatch_convergence(self, X, batch_cost, dictionary, dict_buffer,
                                n_samples, step):
         """Helper function to encapsulate the early stopping logic"""
         batch_size = X.shape[0]
 
-        # Ignore first iteration
+        # Ignore first iteration because dictionary is not projected on the
+        # constraint set yet.
         if step == 0:
             if self.verbose:
                 print(f"Minibatch iteration {step}: "
@@ -1923,11 +1925,12 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             print("[dict_learning]")
 
         # Inner stats
-        self._inner_stats = (A, B) = (
+        self._inner_stats = (
             np.zeros((self._n_components, self._n_components)),
             np.zeros((n_features, self._n_components)))
 
         import time
+        from ..metrics.pairwise import paired_cosine_distances
 
         if self.max_iter is not None:
 
@@ -1967,19 +1970,21 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
                                                dict_buffer, n_samples, i):
                     break
 
-                max_diff = ((dictionary[self.used_atoms] - dict_buffer[self.used_atoms])**2).sum()
-                max_diff /= (dict_buffer[self.used_atoms]**2).sum()
-                max_diff = np.sqrt(max_diff)
+                max_diff = linalg.norm(dictionary - dict_buffer)
+                max_diff /= self._n_components
 
-                dict_buffer[:] = dictionary[:]
+                max_diff2 = paired_cosine_distances(dictionary, dict_buffer).mean()
+
+                dict_buffer[:] = dictionary
 
                 delta_t = time.time() - t
 
                 if self.callback is not None:
                     self.callback(cost=batch_cost, ewa=self._ewa_cost, max_diff=max_diff,
+                    max_diff2=max_diff2,
                     t=delta_t, se=se, dictionary=dictionary, alpha=self.alpha)
                     #self.callback(locals())
-
+            
             self.n_steps_ = i + 1
             self.n_iter_ = self.n_steps_ // n_steps_per_epoch
         else:
