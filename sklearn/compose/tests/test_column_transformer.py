@@ -1165,7 +1165,7 @@ def test_column_transformer_negative_column_indexes():
     assert_array_equal(tf_1.fit_transform(X), tf_2.fit_transform(X))
 
 
-@pytest.mark.parametrize("explicit_colname", ['first', 'second'])
+@pytest.mark.parametrize("explicit_colname", ['first', 'second', 0, 1])
 @pytest.mark.parametrize("remainder", [Trans(), 'passthrough', 'drop'])
 def test_column_transformer_reordered_column_names_remainder(explicit_colname,
                                                              remainder):
@@ -1194,11 +1194,13 @@ def test_column_transformer_reordered_column_names_remainder(explicit_colname,
     X_trans = tf.transform(X_extended_df)
     assert_allclose(X_trans, X_fit_trans)
 
-    # No 'columns' AttributeError when transform input is a numpy array
-    X_array = X_fit_array.copy()
-    err_msg = 'Specifying the columns'
-    with pytest.raises(ValueError, match=err_msg):
-        tf.transform(X_array)
+    if isinstance(explicit_colname, str):
+        # No 'columns' AttributeError when transform input is a numpy array
+        # and columns are specified by position
+        X_array = X_fit_array.copy()
+        err_msg = 'Specifying the columns'
+        with pytest.raises(ValueError, match=err_msg):
+            tf.transform(X_array)
 
 
 def test_feature_name_validation_missing_columns_drop_passthough():

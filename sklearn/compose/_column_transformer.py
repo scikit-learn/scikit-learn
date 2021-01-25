@@ -238,7 +238,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         return self
 
     def _iter(self, fitted=False, replace_strings=False,
-              remainder_columns_as_strings=False):
+              column_as_strings=False):
         """
         Generate (name, trans, column, weight) tuples.
 
@@ -274,10 +274,11 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                     continue
 
             # Convert remainder columns to strings if possible
-            if (remainder_columns_as_strings
-                    and self._feature_names_in is not None
-                    and name == 'remainder' and column):
-                column = self._feature_names_in[column]
+            if (column_as_strings
+                    and self._only_str_columns
+                    and self._feature_names_in is not None):
+                indices = self._name_to_indices[name]
+                column = self._feature_names_in[indices]
 
             yield (name, trans, column, get_weight(name))
 
@@ -431,7 +432,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         return '(%d of %d) Processing %s' % (idx, total, name)
 
     def _fit_transform(self, X, y, func, fitted=False,
-                       remainder_columns_as_strings=False):
+                       column_as_strings=False):
         """
         Private function to fit and/or transform on demand.
 
@@ -442,7 +443,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         transformers = list(
             self._iter(
                 fitted=fitted, replace_strings=True,
-                remainder_columns_as_strings=remainder_columns_as_strings))
+                column_as_strings=column_as_strings))
         try:
             return Parallel(n_jobs=self.n_jobs)(
                 delayed(func)(
@@ -508,6 +509,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         # TODO: this should be `feature_names_in_` when we start having it
         if hasattr(X, "columns"):
             self._feature_names_in = np.asarray(X.columns)
+            self._only_str_columns = all(isinstance(cols, str)
+                                         for cols in self._feature_names_in)
         else:
             self._feature_names_in = None
         X = _check_X(X)
@@ -587,7 +590,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         Xs = self._fit_transform(
             X, None, _transform_one, fitted=True,
-            remainder_columns_as_strings=fit_dataframe_and_transform_ndarray)
+            column_as_strings=fit_dataframe_and_transform_ndarray)
         self._validate_output(Xs)
 
         if not Xs:
