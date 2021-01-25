@@ -23,12 +23,15 @@ def _map_to_bins(const X_DTYPE_C [:, :] data,
                  list binning_thresholds,
                  const unsigned char missing_values_bin_idx,
                  X_BINNED_DTYPE_C [::1, :] binned):
-    """Bin numerical values to discrete integer-coded levels.
+    """Bin continuous and categorical values to discrete integer-coded levels.
+
+    A given value x is mapped into bin value i iff
+    thresholds[i - 1] < x <= thresholds[i]
 
     Parameters
     ----------
     data : ndarray, shape (n_samples, n_features)
-        The numerical data to bin.
+        The data to bin.
     binning_thresholds : list of arrays
         For each feature, stores the increasing numeric values that are
         used to separate the bins.
@@ -39,13 +42,13 @@ def _map_to_bins(const X_DTYPE_C [:, :] data,
         int feature_idx
 
     for feature_idx in range(data.shape[1]):
-        _map_num_col_to_bins(data[:, feature_idx],
+        _map_col_to_bins(data[:, feature_idx],
                              binning_thresholds[feature_idx],
                              missing_values_bin_idx,
                              binned[:, feature_idx])
 
 
-cdef void _map_num_col_to_bins(const X_DTYPE_C [:] data,
+cdef void _map_col_to_bins(const X_DTYPE_C [:] data,
                                const X_DTYPE_C [:] binning_thresholds,
                                const unsigned char missing_values_bin_idx,
                                X_BINNED_DTYPE_C [:] binned):
@@ -70,4 +73,5 @@ cdef void _map_num_col_to_bins(const X_DTYPE_C [:] data,
                     right = middle
                 else:
                     left = middle + 1
+
             binned[i] = left

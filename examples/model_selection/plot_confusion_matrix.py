@@ -31,7 +31,7 @@ import matplotlib.pyplot as plt
 
 from sklearn import svm, datasets
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import plot_confusion_matrix
+from sklearn.metrics import ConfusionMatrixDisplay
 
 # import some data to play with
 iris = datasets.load_iris()
@@ -52,10 +52,10 @@ np.set_printoptions(precision=2)
 titles_options = [("Confusion matrix, without normalization", None),
                   ("Normalized confusion matrix", 'true')]
 for title, normalize in titles_options:
-    disp = plot_confusion_matrix(classifier, X_test, y_test,
-                                 display_labels=class_names,
-                                 cmap=plt.cm.Blues,
-                                 normalize=normalize)
+    disp = ConfusionMatrixDisplay.from_estimator(
+        classifier, X_test, y_test, display_labels=class_names,
+        cmap=plt.cm.Blues, normalize=normalize
+    )
     disp.ax_.set_title(title)
 
     print(title)
