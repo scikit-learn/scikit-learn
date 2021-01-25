@@ -3,6 +3,7 @@ import numbers
 import typing
 from typing import Union
 from typing import TypeVar
+from typing import Iterator
 
 import numpy as np
 
@@ -26,6 +27,20 @@ else:
     Literal = _SimpleLiteral()
 
 
+if typing.TYPE_CHECKING or TYPING_EXTENSION_INSTALLED:
+    from typing_extensions import Protocol  # noqa
+
+    class CVSplitter(Protocol):
+        def get_n_splits(self):
+            """Get the number of splits."""
+
+        def split(self, X, y=None, groups=None):
+            """Split data"""
+
+else:
+    CVSplitter = TypeVar("CVSplitter")  # typing: ignore
+
+CVType = Union[int, CVSplitter, Iterator, None]
 ArrayLike = TypeVar("ArrayLike")
 NDArray = TypeVar("NDArray")
 EstimatorType = TypeVar("EstimatorType")
@@ -70,6 +85,10 @@ def format_docstring_annotation(annotation):
     # handle some annotations directly
     if annotation == np.random.RandomState:
         return "RandomState instance"
+    elif annotation == CVSplitter:
+        return "cross-validation generator"
+    elif annotation == Iterator:
+        return "iterable"
 
     class_name = get_annotation_class_name(annotation)
 

@@ -13,6 +13,7 @@ from sklearn.utils._typing import Literal
 from sklearn.utils._typing import get_annotation_class_name
 from sklearn.utils._typing import format_docstring_annotation
 from sklearn.utils._typing import get_docstring_annotations
+from sklearn.utils._typing import CVType
 
 
 @pytest.mark.parametrize("annotation, expected_class", [
@@ -26,6 +27,7 @@ from sklearn.utils._typing import get_docstring_annotations
     (Union[int, float], 'Union'),
     (Dict, 'Dict'),
     (Callable, 'Callable'),
+    (CVType, 'Union'),
     (Callable[[str], str], 'Callable'),
 ])
 def test_get_annotation_class_name(annotation, expected_class):
@@ -46,7 +48,8 @@ def test_get_annotation_class_name(annotation, expected_class):
     (List[EstimatorType], "list of estimator instance"),
     (Optional[EstimatorType], "estimator instance or None"),
     (Union[int, float], "int or float"),
-    (RandomStateType, "int, RandomState instance or None")
+    (RandomStateType, "int, RandomState instance or None"),
+    (CVType, "int, cross-validation generator, iterable or None")
 ])
 def test_format_docstring_annotation(annotation, expected_str):
     """Check format for auto generation annotations."""
