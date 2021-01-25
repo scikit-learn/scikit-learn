@@ -220,7 +220,7 @@ def test_nowarn_if_metric_bool_data_bool():
     # https://github.com/scikit-learn/scikit-learn/issues/18996
 
     pairwise_metric = 'rogerstanimoto'
-    X = np.random.randint(2, size=(5, 2), dtype=np.bool_)
+    X = np.random.randint(2, size=(5, 2), dtype=bool)
 
     with pytest.warns(None) as warn_record:
         OPTICS(metric=pairwise_metric).fit(X)
@@ -246,7 +246,7 @@ def test_nowarn_if_metric_no_bool():
     # make sure no conversion warning is raised if
     # metric isn't boolean, no matter what the data type is
     pairwise_metric = 'minkowski'
-    X_bool = np.random.randint(2, size=(5, 2), dtype=np.bool_)
+    X_bool = np.random.randint(2, size=(5, 2), dtype=bool)
     X_num = np.random.randint(2, size=(5, 2), dtype=np.int32)
 
     with pytest.warns(None) as warn_record:
