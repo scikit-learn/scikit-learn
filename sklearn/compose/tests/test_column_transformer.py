@@ -1165,80 +1165,6 @@ def test_column_transformer_negative_column_indexes():
     assert_array_equal(tf_1.fit_transform(X), tf_2.fit_transform(X))
 
 
-@pytest.mark.parametrize("explicit_colname", ['first', 'second', 0, 1])
-@pytest.mark.parametrize("remainder", [Trans(), 'passthrough', 'drop'])
-def test_column_transformer_reordered_column_names_remainder(explicit_colname,
-                                                             remainder):
-    """Test the interaction between remainder and column transformer"""
-    pd = pytest.importorskip('pandas')
-
-    X_fit_array = np.array([[0, 1, 2], [2, 4, 6]]).T
-    X_fit_df = pd.DataFrame(X_fit_array, columns=['first', 'second'])
-
-    X_trans_array = np.array([[2, 4, 6], [0, 1, 2]]).T
-    X_trans_df = pd.DataFrame(X_trans_array, columns=['second', 'first'])
-
-    tf = ColumnTransformer([('bycol', Trans(), explicit_colname)],
-                           remainder=remainder)
-
-    tf.fit(X_fit_df)
-    X_fit_trans = tf.transform(X_fit_df)
-
-    # Changing the order still works
-    X_trans = tf.transform(X_trans_df)
-    assert_allclose(X_trans, X_fit_trans)
-
-    # extra columns are ignored
-    X_extended_df = X_fit_df.copy()
-    X_extended_df['third'] = [3, 6, 9]
-    X_trans = tf.transform(X_extended_df)
-    assert_allclose(X_trans, X_fit_trans)
-
-    if isinstance(explicit_colname, str):
-        # No 'columns' AttributeError when transform input is a numpy array
-        # and columns are specified by position
-        X_array = X_fit_array.copy()
-        err_msg = 'Specifying the columns'
-        with pytest.raises(ValueError, match=err_msg):
-            tf.transform(X_array)
-
-
-def test_feature_name_validation_missing_columns_drop_passthough():
-    """Test the interaction between {'drop', 'passthrough'} and
-    missing column names."""
-    pd = pytest.importorskip("pandas")
-
-    X = np.ones(shape=(3, 4))
-    df = pd.DataFrame(X, columns=['a', 'b', 'c', 'd'])
-
-    df_dropped = df.drop('c', axis=1)
-
-    # with remainder='passthrough', all columns seen during `fit` must be
-    # present
-    tf = ColumnTransformer([('bycol', Trans(), [1])], remainder='passthrough')
-    tf.fit(df)
-    msg = r"columns are missing: {'c'}"
-    with pytest.raises(ValueError, match=msg):
-        tf.transform(df_dropped)
-
-    # with remainder='drop', thus it is allowed to have 'c' missing
-    tf = ColumnTransformer([('bycol', Trans(), [1])],
-                           remainder='drop')
-    tf.fit(df)
-
-    df_dropped_trans = tf.transform(df_dropped)
-    df_fit_trans = tf.transform(df)
-    assert_allclose(df_dropped_trans, df_fit_trans)
-
-    # bycol drops 'c', thus it is allowed for 'c' to be missing
-    tf = ColumnTransformer([('bycol', 'drop', ['c'])],
-                           remainder='passthrough')
-    tf.fit(df)
-    df_dropped_trans = tf.transform(df_dropped)
-    df_fit_trans = tf.transform(df)
-    assert_allclose(df_dropped_trans, df_fit_trans)
-
-
 @pytest.mark.parametrize("array_type", [np.asarray, sparse.csr_matrix])
 def test_column_transformer_mask_indexing(array_type):
     # Regression test for #14510
@@ -1417,3 +1343,77 @@ def test_sk_visual_block_remainder_fitted_numpy(remainder):
     assert visual_block.names == ('scale', 'remainder')
     assert visual_block.name_details == ([0, 2], [1])
     assert visual_block.estimators == (scaler, remainder)
+
+
+@pytest.mark.parametrize("explicit_colname", ['first', 'second', 0, 1])
+@pytest.mark.parametrize("remainder", [Trans(), 'passthrough', 'drop'])
+def test_column_transformer_reordered_column_names_remainder(explicit_colname,
+                                                             remainder):
+    """Test the interaction between remainder and column transformer"""
+    pd = pytest.importorskip('pandas')
+
+    X_fit_array = np.array([[0, 1, 2], [2, 4, 6]]).T
+    X_fit_df = pd.DataFrame(X_fit_array, columns=['first', 'second'])
+
+    X_trans_array = np.array([[2, 4, 6], [0, 1, 2]]).T
+    X_trans_df = pd.DataFrame(X_trans_array, columns=['second', 'first'])
+
+    tf = ColumnTransformer([('bycol', Trans(), explicit_colname)],
+                           remainder=remainder)
+
+    tf.fit(X_fit_df)
+    X_fit_trans = tf.transform(X_fit_df)
+
+    # Changing the order still works
+    X_trans = tf.transform(X_trans_df)
+    assert_allclose(X_trans, X_fit_trans)
+
+    # extra columns are ignored
+    X_extended_df = X_fit_df.copy()
+    X_extended_df['third'] = [3, 6, 9]
+    X_trans = tf.transform(X_extended_df)
+    assert_allclose(X_trans, X_fit_trans)
+
+    if isinstance(explicit_colname, str):
+        # No 'columns' AttributeError when transform input is a numpy array
+        # and columns are specified by position
+        X_array = X_fit_array.copy()
+        err_msg = 'Specifying the columns'
+        with pytest.raises(ValueError, match=err_msg):
+            tf.transform(X_array)
+
+
+def test_feature_name_validation_missing_columns_drop_passthough():
+    """Test the interaction between {'drop', 'passthrough'} and
+    missing column names."""
+    pd = pytest.importorskip("pandas")
+
+    X = np.ones(shape=(3, 4))
+    df = pd.DataFrame(X, columns=['a', 'b', 'c', 'd'])
+
+    df_dropped = df.drop('c', axis=1)
+
+    # with remainder='passthrough', all columns seen during `fit` must be
+    # present
+    tf = ColumnTransformer([('bycol', Trans(), [1])], remainder='passthrough')
+    tf.fit(df)
+    msg = r"columns are missing: {'c'}"
+    with pytest.raises(ValueError, match=msg):
+        tf.transform(df_dropped)
+
+    # with remainder='drop', thus it is allowed to have 'c' missing
+    tf = ColumnTransformer([('bycol', Trans(), [1])],
+                           remainder='drop')
+    tf.fit(df)
+
+    df_dropped_trans = tf.transform(df_dropped)
+    df_fit_trans = tf.transform(df)
+    assert_allclose(df_dropped_trans, df_fit_trans)
+
+    # bycol drops 'c', thus it is allowed for 'c' to be missing
+    tf = ColumnTransformer([('bycol', 'drop', ['c'])],
+                           remainder='passthrough')
+    tf.fit(df)
+    df_dropped_trans = tf.transform(df_dropped)
+    df_fit_trans = tf.transform(df)
+    assert_allclose(df_dropped_trans, df_fit_trans)
