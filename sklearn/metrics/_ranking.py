@@ -751,7 +751,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
 
 
 @_deprecate_positional_args
-def precision_recall_curve(y_true, y_score, *, pos_label=None,
+def precision_recall_curve(y_true, probas_pred, *, pos_label=None,
                            sample_weight=None):
     """Compute precision-recall pairs for different probability thresholds.
 
@@ -778,7 +778,7 @@ def precision_recall_curve(y_true, y_score, *, pos_label=None,
         True binary labels. If labels are not either {-1, 1} or {0, 1}, then
         pos_label should be explicitly given.
 
-    y_score : ndarray of shape (n_samples,)
+    probas_pred : ndarray of shape (n_samples,)
         Target scores, can either be probability estimates of the positive
         class, or non-thresholded measure of decisions (as returned by
         `decision_function` on some classifiers).
@@ -803,7 +803,7 @@ def precision_recall_curve(y_true, y_score, *, pos_label=None,
 
     thresholds : ndarray of shape (n_thresholds,)
         Increasing thresholds on the decision function used to compute
-        precision and recall. n_thresholds <= len(np.unique(y_score)).
+        precision and recall. n_thresholds <= len(np.unique(probas_pred)).
 
     See Also
     --------
@@ -831,7 +831,7 @@ def precision_recall_curve(y_true, y_score, *, pos_label=None,
 
     """
 
-    fps, tps, thresholds = _binary_clf_curve(y_true, y_score,
+    fps, tps, thresholds = _binary_clf_curve(y_true, probas_pred,
                                              pos_label=pos_label,
                                              sample_weight=sample_weight)
 
