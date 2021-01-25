@@ -59,6 +59,8 @@ TYPING_IGNORED = {
     "GraphicalLasso",
     "GraphicalLassoCV",
     "GridSearchCV",
+    "HalvingGridSearchCV",
+    "HalvingRandomSearchCV",
     "HashingVectorizer",
     "HistGradientBoostingClassifier",
     "HistGradientBoostingRegressor",
@@ -167,6 +169,7 @@ TYPING_IGNORED = {
     "RidgeClassifier",
     "RidgeClassifierCV",
     "RobustScaler",
+    "SelfTrainingClassifier",
     "SGDClassifier",
     "SGDRegressor",
     "SVC",
@@ -188,6 +191,7 @@ TYPING_IGNORED = {
     "SpectralClustering",
     "SpectralCoclustering",
     "SpectralEmbedding",
+    "SplineTransformer",
     "StackingClassifier",
     "StackingRegressor",
     "StandardScaler",
@@ -218,26 +222,17 @@ def test_estimators_typestring(name, Estimator):
     doc = docscrape.ClassDoc(Estimator)
     parameters = doc['Parameters']
     parameter_annnotations = get_docstring_annotations(Estimator.__init__)
-    _check_annotations(parameters, parameter_annnotations)
+    assert len(parameters) == len(parameter_annnotations)
 
-    attributes = doc['Attributes']
-    attribute_annotations = get_docstring_annotations(Estimator)
-    _check_annotations(attributes, attribute_annotations)
-
-
-def _check_annotations(docstring_items, expected_annotations):
-
-    assert len(docstring_items) == len(expected_annotations)
-
-    for item in docstring_items:
+    for item in parameters:
         name, type_str = item.name, item.type
 
         # skip annotations with "shape of" for now, this can be added when
         # we support Annotated
-        if "of shape" in type_str:
+        if "shape of" in type_str:
             continue
 
         # whitespaces are collapsed to one whitespace
         type_str = ' '.join(item.type.split())
-        assert type_str.startswith(expected_annotations[name]), (
+        assert type_str.startswith(parameter_annnotations[name]), (
             f"{name} has incorrectly formated docstring")

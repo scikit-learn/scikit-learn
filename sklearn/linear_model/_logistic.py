@@ -1100,7 +1100,7 @@ class LogisticRegression(LinearClassifierMixin,
         data. See :term:`Glossary <random_state>` for details.
 
     solver : {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'}, \
-             default='lbfgs'
+            default='lbfgs'
 
         Algorithm to use in the optimization problem.
 
