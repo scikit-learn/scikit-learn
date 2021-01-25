@@ -11,6 +11,7 @@ from scipy.sparse.linalg import eigsh
 
 from ..base import BaseEstimator, TransformerMixin, _UnstableArchMixin
 from ..utils import check_random_state, check_array
+from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
@@ -162,9 +163,7 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
             eigen_solver = 'dense'
 
     if eigen_solver == 'arpack':
-        random_state = check_random_state(random_state)
-        # initialize with [-1,1] as in ARPACK
-        v0 = random_state.uniform(-1, 1, M.shape[0])
+        v0 = _init_arpack_v0(M.shape[0], random_state)
         try:
             eigen_values, eigen_vectors = eigsh(M, k + k_skip, sigma=0.0,
                                                 tol=tol, maxiter=max_iter,

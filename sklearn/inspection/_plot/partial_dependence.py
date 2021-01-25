@@ -741,7 +741,7 @@ class PartialDependenceDisplay:
         else:
             ax.set_yticklabels([])
 
-        if line_kw.get("label", None):
+        if line_kw.get("label", None) and self.kind != 'individual':
             ax.legend()
 
     def _plot_two_way_partial_dependence(
@@ -817,7 +817,8 @@ class PartialDependenceDisplay:
             ax.set_xlabel(self.feature_names[feature_idx[0]])
         ax.set_ylabel(self.feature_names[feature_idx[1]])
 
-    def plot(self, ax=None, n_cols=3, line_kw=None, contour_kw=None):
+    @_deprecate_positional_args(version="1.1")
+    def plot(self, *, ax=None, n_cols=3, line_kw=None, contour_kw=None):
         """Plot partial dependence plots.
 
         Parameters
@@ -866,7 +867,7 @@ class PartialDependenceDisplay:
 
         default_line_kws = {
             "color": "C0",
-            "label": None if self.kind == "average" else "average",
+            "label": "average" if self.kind == "both" else None,
         }
         line_kw = {**default_line_kws, **line_kw}
 

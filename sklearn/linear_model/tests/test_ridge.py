@@ -1126,13 +1126,13 @@ def test_ridgecv_negative_alphas():
     # Negative integers
     ridge = RidgeCV(alphas=(-1, -10, -100))
     assert_raises_regex(ValueError,
-                        "alphas must be positive",
+                        "alphas must be strictly positive",
                         ridge.fit, X, y)
 
     # Negative floats
     ridge = RidgeCV(alphas=(-0.1, -1.0, -10.0))
     assert_raises_regex(ValueError,
-                        "alphas must be positive",
+                        "alphas must be strictly positive",
                         ridge.fit, X, y)
 
 
